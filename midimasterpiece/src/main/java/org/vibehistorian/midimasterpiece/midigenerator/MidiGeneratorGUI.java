@@ -119,6 +119,7 @@ public class MidiGeneratorGUI extends JFrame
 	JTextField spiceChance;
 	JTextField chordTransitionChance;
 	JTextField chordFlam;
+	JTextField secondChordFlam;
 	JTextField transposeScore;
 	
 	JComboBox<String> arpCount;
@@ -548,8 +549,11 @@ public class MidiGeneratorGUI extends JFrame
 		chordPanel850.add(new JLabel("Rhythm%"));
 		chordPanel850.add(chordTransitionChance);
 		chordFlam = new JTextField("60", 4);
-		chordPanel850.add(new JLabel("Strum(ms):"));
+		secondChordFlam = new JTextField("60", 4);
+		chordPanel850.add(new JLabel("Ch1 strum:"));
 		chordPanel850.add(chordFlam);
+		chordPanel850.add(new JLabel("Ch2 strum:"));
+		chordPanel850.add(secondChordFlam);
 		
 		spiceChance = new JTextField("8", 3);
 		chordPanel850.add(new JLabel("Spice%:"));
@@ -1123,6 +1127,7 @@ public class MidiGeneratorGUI extends JFrame
 							: userMelodySeed.getText());
 			
 			MelodyGenerator.CHORD_FLAM = Integer.valueOf(chordFlam.getText());
+			MelodyGenerator.SECOND_CHORD_FLAM = Integer.valueOf(secondChordFlam.getText());
 			MelodyGenerator.CHORD_TRANSITION_CHANCE = Integer
 					.valueOf(chordTransitionChance.getText());
 			
@@ -1380,6 +1385,7 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
 		guiConfig.setChordTransitionChance(Integer.valueOf(chordTransitionChance.getText()));
 		guiConfig.setChordFlam(Integer.valueOf(chordFlam.getText()));
+		guiConfig.setSecondChordFlam(Integer.valueOf(secondChordFlam.getText()));
 		
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
 		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
@@ -1447,6 +1453,7 @@ public class MidiGeneratorGUI extends JFrame
 		spiceAllowDimAug.setSelected(guiConfig.isDimAugEnabled());
 		chordTransitionChance.setText(String.valueOf(guiConfig.getChordTransitionChance()));
 		chordFlam.setText(String.valueOf(guiConfig.getChordFlam()));
+		secondChordFlam.setText(String.valueOf(guiConfig.getSecondChordFlam()));
 		
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
 		lastChordSelection.setSelectedItem(guiConfig.getLastChord());

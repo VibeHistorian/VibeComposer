@@ -84,6 +84,7 @@ public class MelodyGenerator implements JMC {
 	public static boolean SPICE_ALLOW_DIM_AUG = false;
 	public static int CHORD_FLAM = 0;
 	public static int CHORD_TRANSITION_CHANCE = 0;
+	public static int SECOND_CHORD_FLAM = 0;
 	
 	public static int ARPS_PER_CHORD = 3;
 	public static boolean ARP_RANDOM_SHUFFLE = true;
@@ -488,13 +489,20 @@ public class MelodyGenerator implements JMC {
 		arp2CPhrase.setStartTime(startTimeDelay);
 		cphraseBassRoot.setStartTime(startTimeDelay);
 		
+		CPhrase cphrase2 = cphrase.copy();
+		
 		if (CHORD_FLAM > 0) {
 			cphrase.flam(CHORD_FLAM / 1000.0d);
 		}
 		
+		
+		if (SECOND_CHORD_FLAM > 0) {
+			cphrase2.flam(SECOND_CHORD_FLAM / 1000.0d);
+		}
+		
 		mainMelody.addPhrase(melody);
 		mainChords.addCPhrase(cphrase);
-		chordsSecond.addCPhrase(cphrase);
+		chordsSecond.addCPhrase(cphrase2);
 		chordsThirdArp.addCPhrase(arpCPhrase);
 		chordsFourthArp.addCPhrase(arp2CPhrase);
 		bassChordRoots.addCPhrase(cphraseBassRoot);
