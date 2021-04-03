@@ -363,13 +363,19 @@ public class MidiGeneratorGUI extends JFrame
 		p50.add(randomMelodyOnRegenerate);
 		p50.add(clearUserMelodySeed);
 		
+		chordFlam = new JTextField("250", 4);
+		secondChordFlam = new JTextField("500", 4);
 		p60.add(addChords1);
 		p60.add(chords1Lock);
 		p60.add(chords1Inst);
+		p60.add(new JLabel("Ch1 strum:"));
+		p60.add(chordFlam);
 		
 		p70.add(addChords2);
 		p70.add(chords2Lock);
 		p70.add(chords2Inst);
+		p70.add(new JLabel("Ch2 strum:"));
+		p70.add(secondChordFlam);
 		
 		
 		arpCount = new JComboBox<String>();
@@ -569,14 +575,8 @@ public class MidiGeneratorGUI extends JFrame
 		
 		
 		chordTransitionChance = new JTextField("25", 3);
-		chordPanel850.add(new JLabel("Rhythm%"));
+		chordPanel850.add(new JLabel("Transition chord%"));
 		chordPanel850.add(chordTransitionChance);
-		chordFlam = new JTextField("60", 4);
-		secondChordFlam = new JTextField("60", 4);
-		chordPanel850.add(new JLabel("Ch1 strum:"));
-		chordPanel850.add(chordFlam);
-		chordPanel850.add(new JLabel("Ch2 strum:"));
-		chordPanel850.add(secondChordFlam);
 		
 		spiceChance = new JTextField("8", 3);
 		chordPanel850.add(new JLabel("Spice%:"));
