@@ -5,6 +5,7 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
@@ -310,6 +311,28 @@ public class MidiGeneratorGUI extends JFrame
 		selectJComboBoxByInst(chords4Inst, 4);
 		
 		selectJComboBoxByInst(bassRootsInst, 74);
+		
+		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
+				arpMelodyLockInst.setSelected(false);
+			}
+			
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				// do nothing
+			}
+		});
+		
+		for (Component c : melodyInst.getComponents()) {
+			c.addMouseListener(new java.awt.event.MouseAdapter() {
+				public void mouseClicked(java.awt.event.MouseEvent evt) {
+					arpMelodyLockInst.setSelected(false);
+				}
+				
+				public void mouseEntered(java.awt.event.MouseEvent evt) {
+					// do nothing
+				}
+			});
+		}
 		
 		melodyLock = new JCheckBox("Lock Inst.", false);
 		chords1Lock = new JCheckBox("Lock Inst.", true);
