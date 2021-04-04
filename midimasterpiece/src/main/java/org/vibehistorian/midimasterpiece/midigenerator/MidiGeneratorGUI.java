@@ -651,6 +651,9 @@ public class MidiGeneratorGUI extends JFrame
 		JButton copySeed = new JButton("Copy seed");
 		copySeed.addActionListener(this);
 		copySeed.setActionCommand("CopySeed");
+		JButton copyChords = new JButton("Copy chords");
+		copyChords.addActionListener(this);
+		copyChords.setActionCommand("CopyChords");
 		JButton clearSeed = new JButton("Clear");
 		clearSeed.addActionListener(this);
 		clearSeed.setActionCommand("ClearSeed");
@@ -664,6 +667,7 @@ public class MidiGeneratorGUI extends JFrame
 		controlPanel900.add(compose);
 		controlPanel900.add(regenerate);
 		controlPanel900.add(copySeed);
+		controlPanel900.add(copyChords);
 		controlPanel900.add(clearSeed);
 		controlPanel900.add(loadConfig);
 		
@@ -939,13 +943,14 @@ public class MidiGeneratorGUI extends JFrame
 				
 				if (synth != null) {
 					// already opened correctly, do nothing
+					//saveWavFile("wavtest2.wav", synth);
 				} else if (fileFound && (synthesizer != null)) {
 					for (Transmitter tm : sequencer.getTransmitters()) {
 						tm.close();
 					}
 					sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
-					/*saveWavFile("wavtest2.wav", synthesizer);
-					synthesizer.open();*/
+					//saveWavFile("wavtest2.wav", synthesizer);
+					//synthesizer.open();
 					synth = synthesizer;
 				} else {
 					for (Transmitter tm : sequencer.getTransmitters()) {
@@ -954,7 +959,7 @@ public class MidiGeneratorGUI extends JFrame
 					Synthesizer defSynth = MidiSystem.getSynthesizer();
 					defSynth.open();
 					sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
-					
+					//saveWavFile("wavtest2.wav", defSynth);
 				}
 				
 				
@@ -1025,12 +1030,6 @@ public class MidiGeneratorGUI extends JFrame
 					FileUtils.copyFile(currentMidi, savedMidi);
 					copyGUItoConfig();
 					marshal(finalFilePath);
-					/*List listOfFiles = new ArrayList();
-					listOfFiles.add(savedMidi);
-					
-					FileTransferable ft = new FileTransferable(listOfFiles);
-					
-					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ft, null);*/
 				} catch (IOException | JAXBException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -1058,6 +1057,12 @@ public class MidiGeneratorGUI extends JFrame
 			clipboard.setContents(strSel, null);*/
 			randomSeed.setText(str);
 			System.out.println("Copied to random seed: " + str);
+		}
+		
+		if (ae.getActionCommand() == "CopyChords") {
+			String str = StringUtils.join(MelodyGenerator.chordInts, ",");
+			userChords.setText(str);
+			System.out.println("Copied chords: " + str);
 		}
 		
 		if (ae.getActionCommand() == "ClearSeed") {
