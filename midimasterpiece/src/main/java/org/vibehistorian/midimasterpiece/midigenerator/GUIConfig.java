@@ -318,6 +318,7 @@ public class GUIConfig {
 	private int secondArpPauseChance = 50;
 	private int spiceChance = 8;
 	private int chordTransitionChance = 0;
+	private int chordSlashChance = 0;
 	private int chordFlam = 0;
 	private int secondChordFlam = 0;
 	
@@ -530,13 +531,21 @@ public class GUIConfig {
 	public void setChordFlam(int chordFlam) {
 		this.chordFlam = chordFlam;
 	}
-
+	
 	public int getSecondChordFlam() {
 		return secondChordFlam;
 	}
-
+	
 	public void setSecondChordFlam(int secondChordFlam) {
 		this.secondChordFlam = secondChordFlam;
+	}
+
+	public int getChordSlashChance() {
+		return chordSlashChance;
+	}
+
+	public void setChordSlashChance(int chordSlashChance) {
+		this.chordSlashChance = chordSlashChance;
 	}
 	
 }

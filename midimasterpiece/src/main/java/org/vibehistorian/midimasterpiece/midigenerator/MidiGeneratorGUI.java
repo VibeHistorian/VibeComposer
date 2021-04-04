@@ -119,6 +119,7 @@ public class MidiGeneratorGUI extends JFrame
 	
 	JTextField spiceChance;
 	JTextField chordTransitionChance;
+	JTextField chordSlashChance;
 	JTextField chordFlam;
 	JTextField secondChordFlam;
 	JTextField transposeScore;
@@ -577,6 +578,10 @@ public class MidiGeneratorGUI extends JFrame
 		chordTransitionChance = new JTextField("25", 3);
 		chordPanel850.add(new JLabel("Transition chord%"));
 		chordPanel850.add(chordTransitionChance);
+		
+		chordSlashChance = new JTextField("25", 3);
+		chordPanel850.add(new JLabel("Slash chord%"));
+		chordPanel850.add(chordSlashChance);
 		
 		spiceChance = new JTextField("8", 3);
 		chordPanel850.add(new JLabel("Spice%:"));
@@ -1158,6 +1163,7 @@ public class MidiGeneratorGUI extends JFrame
 			MelodyGenerator.SECOND_CHORD_FLAM = Integer.valueOf(secondChordFlam.getText());
 			MelodyGenerator.CHORD_TRANSITION_CHANCE = Integer
 					.valueOf(chordTransitionChance.getText());
+			MelodyGenerator.CHORD_SLASH_CHANCE = Integer.valueOf(chordSlashChance.getText());
 			
 			if (userChordsEnabled.isSelected()) {
 				String[] userChordsSplit = userChords.getText().split(",");
@@ -1412,6 +1418,7 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getText()));
 		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
 		guiConfig.setChordTransitionChance(Integer.valueOf(chordTransitionChance.getText()));
+		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getText()));
 		guiConfig.setChordFlam(Integer.valueOf(chordFlam.getText()));
 		guiConfig.setSecondChordFlam(Integer.valueOf(secondChordFlam.getText()));
 		
@@ -1480,6 +1487,7 @@ public class MidiGeneratorGUI extends JFrame
 		spiceChance.setText(String.valueOf(guiConfig.getSpiceChance()));
 		spiceAllowDimAug.setSelected(guiConfig.isDimAugEnabled());
 		chordTransitionChance.setText(String.valueOf(guiConfig.getChordTransitionChance()));
+		chordSlashChance.setText(String.valueOf(guiConfig.getChordSlashChance()));
 		chordFlam.setText(String.valueOf(guiConfig.getChordFlam()));
 		secondChordFlam.setText(String.valueOf(guiConfig.getSecondChordFlam()));
 		

@@ -84,6 +84,7 @@ public class MelodyGenerator implements JMC {
 	public static boolean SPICE_ALLOW_DIM_AUG = false;
 	public static int CHORD_FLAM = 0;
 	public static int CHORD_TRANSITION_CHANCE = 0;
+	public static int CHORD_SLASH_CHANCE = 0;
 	public static int SECOND_CHORD_FLAM = 0;
 	
 	public static int ARPS_PER_CHORD = 3;
@@ -362,6 +363,7 @@ public class MelodyGenerator implements JMC {
 		Part chordsFourthArp = new Part("ChordsFourth", EPIANO, 4);
 		Part bassChordRoots = new Part("BassChordRoots", BASS, 5);
 		Part drums = new Part("MainDrums", PIANO, 9);
+		Part chordSlash = new Part("ChordSlash", PIANO, 6);
 		
 		EnumMap<PARTS, Part> enumMap = new EnumMap<>(PARTS.class);
 		enumMap.put(PARTS.MELODY, mainMelody);
@@ -376,6 +378,9 @@ public class MelodyGenerator implements JMC {
 		for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
 			Integer instrumentChoice = PARTS_INSTRUMENT_MAP.get(part);
 			enumMap.get(part).setInstrument(instrumentChoice);
+			if (part == PARTS.CHORDS1) {
+				chordSlash.setInstrument(instrumentChoice);
+			}
 		}
 		
 		// Generate chords..
@@ -413,11 +418,13 @@ public class MelodyGenerator implements JMC {
 		CPhrase arpCPhrase = new CPhrase();
 		CPhrase arp2CPhrase = new CPhrase();
 		CPhrase cphraseBassRoot = new CPhrase();
+		CPhrase chordSlashCPhrase = new CPhrase();
 		
 		for (int i = 0; i < PIECE_LENGTH; i++) {
 			Note previousChordsNote = null;
 			
 			Random exceptionGenerator = new Random(mainGeneratorSeed + 1);
+			Random chordSlashGenerator = new Random(mainGeneratorSeed + 2);
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 				boolean exception = exceptionGenerator.nextInt(100) < CHORD_TRANSITION_CHANCE;
@@ -430,6 +437,18 @@ public class MelodyGenerator implements JMC {
 					cphrase.addChord(actualProgression.get(excChord), duration2);
 				} else {
 					cphrase.addChord(actualProgression.get(j), progressionDurations.get(j));
+				}
+				
+				// pick random chord, take first/root pitch
+				boolean isChordSlash = chordSlashGenerator.nextInt(100) < CHORD_SLASH_CHANCE;
+				int slashChord = chordSlashGenerator.nextInt(6) + 1;
+				int[] mappedChord = MidiUtils.mappedChord(slashChord);
+				if (isChordSlash) {
+					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },
+							progressionDurations.get(j));
+				} else {
+					chordSlashCPhrase.addChord(new int[] { Integer.MIN_VALUE },
+							progressionDurations.get(j));
 				}
 			}
 			
@@ -477,6 +496,8 @@ public class MelodyGenerator implements JMC {
 		Mod.transpose(arpCPhrase, -12 + TRANSPOSE_SCORE);
 		Mod.transpose(arp2CPhrase, -24 + TRANSPOSE_SCORE + SECOND_ARP_OCTAVE_ADJUST);
 		Mod.transpose(melody, TRANSPOSE_SCORE);
+		Mod.transpose(chordSlashCPhrase, -24 + TRANSPOSE_SCORE);
+		
 		
 		melody.setDynamic(80);
 		cphrase.setDynamic(80);
@@ -488,6 +509,7 @@ public class MelodyGenerator implements JMC {
 		arpCPhrase.setStartTime(startTimeDelay);
 		arp2CPhrase.setStartTime(startTimeDelay);
 		cphraseBassRoot.setStartTime(startTimeDelay);
+		chordSlashCPhrase.setStartTime(startTimeDelay);
 		
 		CPhrase cphrase2 = cphrase.copy();
 		
@@ -506,12 +528,15 @@ public class MelodyGenerator implements JMC {
 		chordsThirdArp.addCPhrase(arpCPhrase);
 		chordsFourthArp.addCPhrase(arp2CPhrase);
 		bassChordRoots.addCPhrase(cphraseBassRoot);
+		chordSlash.addCPhrase(chordSlashCPhrase);
 		
 		for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
 			if (part != PARTS.DRUMS) {
 				score.add(enumMap.get(part));
 			}
 		}
+		score.add(chordSlash);
+		
 		// fill drums		
 		if (PARTS_INSTRUMENT_MAP.containsKey(PARTS.DRUMS) && DRUM_PARTS.size() > 0) {
 			Map<Integer, List<Integer>> drumMap = generateDrumMap();
