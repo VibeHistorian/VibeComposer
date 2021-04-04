@@ -48,6 +48,7 @@ public class MidiUtils {
 		cpMap.put(5, new ArrayList<>(Arrays.asList(1, 20, 4, 60)));
 		cpMap.put(60, new ArrayList<>(Arrays.asList(1, 20, 30, 5)));
 		cpMap.put(70, new ArrayList<>(Arrays.asList(1, 30, 4)));
+		
 		cpMap.put(10, new ArrayList<>());
 		cpMap.put(2, new ArrayList<>());
 		cpMap.put(3, new ArrayList<>());

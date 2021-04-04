@@ -247,25 +247,17 @@ public class MelodyGenerator implements JMC {
 					: next.get(nextInt);
 			
 			int spiceResult = 1;
-			
-			//SPICE CHANCE
+			int spiceSelectPow = generator.nextInt(2) + 1;
+			//SPICE CHANCE - multiply by 100 or 10000 to get aug/dim or maj/min 7th
 			if (generator.nextInt(100) < SPICE_CHANCE) {
-				int spiceInt = 10;
-				int spiceSelectPow = generator.nextInt(4) + 1;
+				int spiceInt = 100;
 				
-				if (!SPICE_ALLOW_DIM_AUG && spiceSelectPow < 3) {
+				
+				if (!SPICE_ALLOW_DIM_AUG && spiceSelectPow == 1) {
 					// move to maj/min 7th
-					spiceSelectPow += 2;
+					spiceSelectPow = 2;
 				}
 				
-				if (chordInt < 10) {
-					spiceSelectPow++;
-				}
-				
-				
-				/*if ((chordInt > 10) && (spiceSelectPow == 3)) {
-					spiceSelectPow++;
-				}*/
 				spiceResult = (int) Math.pow(spiceInt, spiceSelectPow);
 				chordInt *= spiceResult;
 			}
