@@ -279,43 +279,44 @@ public class MidiGeneratorGUI extends JFrame
 		
 		addMelody = new JCheckBox("Add Melody", false);
 		melodyInst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, melodyInst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.MELODY), melodyInst);
 		arpMelodyLockInst = new JCheckBox("Inst. copy ARP1", true);
 		
 		addChords1 = new JCheckBox("Add Chords1", true);
 		chords1Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.CHORD_INST_NAMES, chords1Inst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1), chords1Inst);
 		
 		addChords2 = new JCheckBox("Add Chords2", true);
 		chords2Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, chords2Inst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2), chords2Inst);
 		
 		addArp1 = new JCheckBox("Add ARP1", true);
 		arp1Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, arp1Inst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.ARP1), arp1Inst);
 		
 		addArp2 = new JCheckBox("Add ARP2", true);
 		arp2Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, arp2Inst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), arp2Inst);
 		arp2LockInst = new JCheckBox("Inst. copy ARP1", false);
 		
 		addBassRoots = new JCheckBox("Add BassRoots", true);
 		bassRootsInst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.BASS_INST_NAMES, bassRootsInst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS), bassRootsInst);
 		
 		addDrums = new JCheckBox("Drums", false);
 		
-		selectJComboBoxByInst(melodyInst, MelodyGenerator.PLUCKY_INST_NAMES, 12);
+		selectJComboBoxByInst(melodyInst, MidiUtils.PART_INST_NAMES.get(PARTS.MELODY), 12);
 		
-		selectJComboBoxByInst(chords1Inst, MelodyGenerator.CHORD_INST_NAMES, 4);
+		selectJComboBoxByInst(chords1Inst, MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1), 4);
 		
-		selectJComboBoxByInst(chords2Inst, MelodyGenerator.PLUCKY_INST_NAMES, 46);
+		selectJComboBoxByInst(chords2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2), 46);
 		
-		selectJComboBoxByInst(arp1Inst, MelodyGenerator.PLUCKY_INST_NAMES, 11);
+		selectJComboBoxByInst(arp1Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP1), 11);
 		
-		selectJComboBoxByInst(arp2Inst, MelodyGenerator.PLUCKY_INST_NAMES, 4);
+		selectJComboBoxByInst(arp2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), 4);
 		
-		selectJComboBoxByInst(bassRootsInst, MelodyGenerator.BASS_INST_NAMES, 74);
+		selectJComboBoxByInst(bassRootsInst, MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS),
+				74);
 		
 		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -442,9 +443,9 @@ public class MidiGeneratorGUI extends JFrame
 		clearPatternSeeds.setActionCommand("ClearPatterns");
 		
 		drumInst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.DRUM_NAMES, drumInst);
+		addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS), drumInst);
 		
-		selectDrumJComboBoxByInst(drumInst, 42);
+		selectJComboBoxByInst(drumInst, MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS), 42);
 		
 		randomDrumsCount = new JTextField("4", 2);
 		
@@ -819,33 +820,33 @@ public class MidiGeneratorGUI extends JFrame
 			Random instGen = new Random();
 			if (!melodyLock.isSelected()) {
 				melodyInst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
+						instGen.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.MELODY).length));
 			}
 			
 			if (!chords1Lock.isSelected()) {
 				
-				chords1Inst
-						.setSelectedIndex(instGen.nextInt(MelodyGenerator.CHORD_INST_NAMES.length));
+				chords1Inst.setSelectedIndex(
+						instGen.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1).length));
 			}
 			if (!chords2Lock.isSelected()) {
 				
 				chords2Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
+						instGen.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2).length));
 			}
 			if (!arp1Lock.isSelected()) {
 				
 				arp1Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
+						instGen.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.ARP1).length));
 			}
 			if (!arp2Lock.isSelected()) {
 				
 				arp2Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
+						instGen.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.ARP2).length));
 			}
 			if (!bassRootsLock.isSelected()) {
 				
-				bassRootsInst
-						.setSelectedIndex(instGen.nextInt(MelodyGenerator.BASS_INST_NAMES.length));
+				bassRootsInst.setSelectedIndex(instGen
+						.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS).length));
 			}
 			System.out.println("RANDOMIZED INSTS!");
 		}
@@ -1272,23 +1273,29 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			
 			if (addMelody.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.MELODY, getInstByIndex(
-						melodyInst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.MELODY,
+						getInstByIndex(melodyInst.getSelectedIndex(),
+								MidiUtils.PART_INST_NAMES.get(PARTS.MELODY)));
 			if (addChords1.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS1, getInstByIndex(
-						chords1Inst.getSelectedIndex(), MelodyGenerator.CHORD_INST_NAMES));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS1,
+						getInstByIndex(chords1Inst.getSelectedIndex(),
+								MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1)));
 			if (addChords2.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS2, getInstByIndex(
-						chords2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS2,
+						getInstByIndex(chords2Inst.getSelectedIndex(),
+								MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2)));
 			if (addArp1.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP1, getInstByIndex(
-						arp1Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP1,
+						getInstByIndex(arp1Inst.getSelectedIndex(),
+								MidiUtils.PART_INST_NAMES.get(PARTS.ARP1)));
 			if (addArp2.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP2, getInstByIndex(
-						arp2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP2,
+						getInstByIndex(arp2Inst.getSelectedIndex(),
+								MidiUtils.PART_INST_NAMES.get(PARTS.ARP2)));
 			if (addBassRoots.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS, getInstByIndex(
-						bassRootsInst.getSelectedIndex(), MelodyGenerator.BASS_INST_NAMES));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS,
+						getInstByIndex(bassRootsInst.getSelectedIndex(),
+								MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS)));
 			if (addDrums.isSelected()) {
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.DRUMS, 0);
 				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels();
@@ -1436,18 +1443,18 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setDrumsEnable(addDrums.isSelected());
 		guiConfig.setDrumParts(getDrumPartsFromDrumPanels());
 		
-		guiConfig.setMelodyInst(
-				getInstByIndex(melodyInst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
-		guiConfig.setChords1Inst(
-				getInstByIndex(chords1Inst.getSelectedIndex(), MelodyGenerator.CHORD_INST_NAMES));
-		guiConfig.setChords2Inst(
-				getInstByIndex(chords2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
-		guiConfig.setArp1ArpInst(
-				getInstByIndex(arp1Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
-		guiConfig.setArp2ArpInst(
-				getInstByIndex(arp2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
-		guiConfig.setBassRootsInst(
-				getInstByIndex(bassRootsInst.getSelectedIndex(), MelodyGenerator.BASS_INST_NAMES));
+		guiConfig.setMelodyInst(getInstByIndex(melodyInst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.MELODY)));
+		guiConfig.setChords1Inst(getInstByIndex(chords1Inst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1)));
+		guiConfig.setChords2Inst(getInstByIndex(chords2Inst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2)));
+		guiConfig.setArp1ArpInst(getInstByIndex(arp1Inst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.ARP1)));
+		guiConfig.setArp2ArpInst(getInstByIndex(arp2Inst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.ARP2)));
+		guiConfig.setBassRootsInst(getInstByIndex(bassRootsInst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS)));
 		
 		guiConfig.setUserMelodySeed(!StringUtils.isEmpty(userMelodySeed.getText())
 				? Long.valueOf(userMelodySeed.getText())
@@ -1508,22 +1515,22 @@ public class MidiGeneratorGUI extends JFrame
 		addDrums.setSelected(guiConfig.isDrumsEnable());
 		recreateDrumPanelsFromDrumParts(guiConfig.getDrumParts());
 		
-		selectJComboBoxByInst(melodyInst, MelodyGenerator.PLUCKY_INST_NAMES,
+		selectJComboBoxByInst(melodyInst, MidiUtils.PART_INST_NAMES.get(PARTS.MELODY),
 				guiConfig.getMelodyInst());
 		
-		selectJComboBoxByInst(chords1Inst, MelodyGenerator.CHORD_INST_NAMES,
+		selectJComboBoxByInst(chords1Inst, MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1),
 				guiConfig.getChords1Inst());
 		
-		selectJComboBoxByInst(chords2Inst, MelodyGenerator.PLUCKY_INST_NAMES,
+		selectJComboBoxByInst(chords2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2),
 				guiConfig.getChords2Inst());
 		
-		selectJComboBoxByInst(arp1Inst, MelodyGenerator.PLUCKY_INST_NAMES,
+		selectJComboBoxByInst(arp1Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP1),
 				guiConfig.getArp1ArpInst());
 		
-		selectJComboBoxByInst(arp2Inst, MelodyGenerator.PLUCKY_INST_NAMES,
+		selectJComboBoxByInst(arp2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP2),
 				guiConfig.getArp2ArpInst());
 		
-		selectJComboBoxByInst(bassRootsInst, MelodyGenerator.BASS_INST_NAMES,
+		selectJComboBoxByInst(bassRootsInst, MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS),
 				guiConfig.getBassRootsInst());
 		
 		userMelodySeed.setText(String.valueOf(guiConfig.getUserMelodySeed()));
@@ -1552,23 +1559,14 @@ public class MidiGeneratorGUI extends JFrame
 	
 	public static void selectJComboBoxByInst(JComboBox<String> choice, String[] instPool,
 			Integer number) {
-		List<Integer> instPoolNumbers = MelodyGenerator.getInstNumbers(instPool);
+		List<Integer> instPoolNumbers = MidiUtils.getInstNumbers(instPool);
 		int index = instPoolNumbers.indexOf(number);
 		choice.setSelectedIndex(index);
 	}
 	
 	public static Integer getInstByIndex(int index, String[] instPool) {
-		List<Integer> instPoolNumbers = MelodyGenerator.getInstNumbers(instPool);
+		List<Integer> instPoolNumbers = MidiUtils.getInstNumbers(instPool);
 		return instPoolNumbers.get(index);
-	}
-	
-	public static void selectDrumJComboBoxByInst(JComboBox<String> choice, Integer number) {
-		int index = MelodyGenerator.DRUM_NAMES_NUMBERS.indexOf(number);
-		choice.setSelectedIndex(index);
-	}
-	
-	public static Integer getDrumInstByIndex(int index) {
-		return MelodyGenerator.DRUM_NAMES_NUMBERS.get(index);
 	}
 	
 	public DrumPanel addDrumPanelToLayout() {
@@ -1585,7 +1583,8 @@ public class MidiGeneratorGUI extends JFrame
 		DrumPanel drumJPanel = new DrumPanel(this);
 		drumJPanel.setDrumPanelOrder(drumPanels.size());
 		drumJPanel.initComponents();
-		drumJPanel.setPitch(getDrumInstByIndex(drumInst.getSelectedIndex()));
+		drumJPanel.setPitch(getInstByIndex(drumInst.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
 		drumPanels.add(drumJPanel);
 		add(drumJPanel, constraints);
 		return drumJPanel;
@@ -1649,8 +1648,10 @@ public class MidiGeneratorGUI extends JFrame
 		
 		for (int i = 0; i < panelCount; i++) {
 			DrumPanel dp = addDrumPanelToLayout();
-			dp.setPitch(getDrumInstByIndex(
-					drumPanelGenerator.nextInt(MelodyGenerator.DRUM_NAMES.length)));
+			dp.setPitch(getInstByIndex(
+					drumPanelGenerator
+							.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS).length),
+					MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
 			//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 			
 			
