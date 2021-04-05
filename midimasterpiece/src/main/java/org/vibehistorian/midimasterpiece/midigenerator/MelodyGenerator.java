@@ -525,9 +525,12 @@ public class MelodyGenerator implements JMC {
 		for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
 			if (part != PARTS.DRUMS) {
 				score.add(enumMap.get(part));
+				if (part == PARTS.CHORDS1 || part == PARTS.CHORDS2) {
+					score.add(chordSlash);
+				}
 			}
 		}
-		score.add(chordSlash);
+		
 		
 		// fill drums		
 		if (PARTS_INSTRUMENT_MAP.containsKey(PARTS.DRUMS) && DRUM_PARTS.size() > 0) {
