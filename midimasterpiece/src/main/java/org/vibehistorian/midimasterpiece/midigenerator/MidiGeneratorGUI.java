@@ -89,7 +89,6 @@ public class MidiGeneratorGUI extends JFrame
 			32 };
 	private static final double[] SECOND_CHORD_STRUM_MULTIPLIER = { 1, 1.25, 1.5, 2, 3, 4 };
 	
-	
 	private static boolean isDarkMode = false;
 	JLabel mainTitle;
 	JLabel subTitle;
@@ -141,23 +140,23 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox addMelody;
 	JCheckBox addChords1;
 	JCheckBox addChords2;
-	JCheckBox addChords3;
-	JCheckBox addChords4;
+	JCheckBox addArp1;
+	JCheckBox addArp2;
 	JCheckBox addBassRoots;
 	JCheckBox addDrums;
 	
 	JCheckBox melodyLock;
 	JCheckBox chords1Lock;
 	JCheckBox chords2Lock;
-	JCheckBox chords3Lock;
-	JCheckBox chords4Lock;
+	JCheckBox arp1Lock;
+	JCheckBox arp2Lock;
 	JCheckBox bassRootsLock;
 	
 	JComboBox<String> melodyInst;
 	JComboBox<String> chords1Inst;
 	JComboBox<String> chords2Inst;
-	JComboBox<String> chords3Inst;
-	JComboBox<String> chords4Inst;
+	JComboBox<String> arp1Inst;
+	JComboBox<String> arp2Inst;
 	JComboBox<String> bassRootsInst;
 	JComboBox<String> drumInst;
 	
@@ -280,43 +279,43 @@ public class MidiGeneratorGUI extends JFrame
 		
 		addMelody = new JCheckBox("Add Melody", false);
 		melodyInst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.NICE_INSTRUMENTS_NAMES, melodyInst);
+		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, melodyInst);
 		arpMelodyLockInst = new JCheckBox("Inst. copy ARP1", true);
 		
 		addChords1 = new JCheckBox("Add Chords1", true);
 		chords1Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.NICE_INSTRUMENTS_NAMES, chords1Inst);
+		addAllToJComboBox(MelodyGenerator.CHORD_INST_NAMES, chords1Inst);
 		
 		addChords2 = new JCheckBox("Add Chords2", true);
 		chords2Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.NICE_INSTRUMENTS_NAMES, chords2Inst);
+		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, chords2Inst);
 		
-		addChords3 = new JCheckBox("Add ARP1", true);
-		chords3Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.NICE_INSTRUMENTS_NAMES, chords3Inst);
+		addArp1 = new JCheckBox("Add ARP1", true);
+		arp1Inst = new JComboBox<String>();
+		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, arp1Inst);
 		
-		addChords4 = new JCheckBox("Add ARP2", true);
-		chords4Inst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.NICE_INSTRUMENTS_NAMES, chords4Inst);
+		addArp2 = new JCheckBox("Add ARP2", true);
+		arp2Inst = new JComboBox<String>();
+		addAllToJComboBox(MelodyGenerator.PLUCKY_INST_NAMES, arp2Inst);
 		arp2LockInst = new JCheckBox("Inst. copy ARP1", false);
 		
 		addBassRoots = new JCheckBox("Add BassRoots", true);
 		bassRootsInst = new JComboBox<String>();
-		addAllToJComboBox(MelodyGenerator.NICE_INSTRUMENTS_NAMES, bassRootsInst);
+		addAllToJComboBox(MelodyGenerator.BASS_INST_NAMES, bassRootsInst);
 		
 		addDrums = new JCheckBox("Drums", false);
 		
-		selectJComboBoxByInst(melodyInst, 12);
+		selectJComboBoxByInst(melodyInst, MelodyGenerator.PLUCKY_INST_NAMES, 12);
 		
-		selectJComboBoxByInst(chords1Inst, 4);
+		selectJComboBoxByInst(chords1Inst, MelodyGenerator.CHORD_INST_NAMES, 4);
 		
-		selectJComboBoxByInst(chords2Inst, 46);
+		selectJComboBoxByInst(chords2Inst, MelodyGenerator.PLUCKY_INST_NAMES, 46);
 		
-		selectJComboBoxByInst(chords3Inst, 92);
+		selectJComboBoxByInst(arp1Inst, MelodyGenerator.PLUCKY_INST_NAMES, 11);
 		
-		selectJComboBoxByInst(chords4Inst, 4);
+		selectJComboBoxByInst(arp2Inst, MelodyGenerator.PLUCKY_INST_NAMES, 4);
 		
-		selectJComboBoxByInst(bassRootsInst, 74);
+		selectJComboBoxByInst(bassRootsInst, MelodyGenerator.BASS_INST_NAMES, 74);
 		
 		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -343,8 +342,8 @@ public class MidiGeneratorGUI extends JFrame
 		melodyLock = new JCheckBox("Lock Inst.", false);
 		chords1Lock = new JCheckBox("Lock Inst.", true);
 		chords2Lock = new JCheckBox("Lock Inst.", true);
-		chords3Lock = new JCheckBox("Lock Inst.", false);
-		chords4Lock = new JCheckBox("Lock Inst.", false);
+		arp1Lock = new JCheckBox("Lock Inst.", false);
+		arp2Lock = new JCheckBox("Lock Inst.", false);
 		bassRootsLock = new JCheckBox("Lock Inst.", false);
 		
 		userMelodySeed = new JTextField("0", 10);
@@ -394,9 +393,9 @@ public class MidiGeneratorGUI extends JFrame
 		pauseChance = new JTextField("25", 3);
 		
 		
-		p80.add(addChords3);
-		p80.add(chords3Lock);
-		p80.add(chords3Inst);
+		p80.add(addArp1);
+		p80.add(arp1Lock);
+		p80.add(arp1Inst);
 		p80.add(new JLabel("Arps#"));
 		p80.add(arpCount);
 		p80.add(randomArpCount);
@@ -418,9 +417,9 @@ public class MidiGeneratorGUI extends JFrame
 		
 		secondArpPauseChance = new JTextField("50", 3);
 		
-		p90.add(addChords4);
-		p90.add(chords4Lock);
-		p90.add(chords4Inst);
+		p90.add(addArp2);
+		p90.add(arp2Lock);
+		p90.add(arp2Inst);
 		p90.add(arp2LockInst);
 		p90.add(new JLabel("Repeats#"));
 		p90.add(secondArpMultiplier);
@@ -787,7 +786,7 @@ public class MidiGeneratorGUI extends JFrame
 		if (melodyLock.isSelected()) {
 			arpMelodyLockInst.setSelected(false);
 		}
-		if (chords4Lock.isSelected()) {
+		if (arp2Lock.isSelected()) {
 			arp2LockInst.setSelected(false);
 		}
 		
@@ -820,33 +819,33 @@ public class MidiGeneratorGUI extends JFrame
 			Random instGen = new Random();
 			if (!melodyLock.isSelected()) {
 				melodyInst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.NICE_INSTRUMENTS_NAMES.length));
+						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
 			}
 			
 			if (!chords1Lock.isSelected()) {
 				
-				chords1Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.NICE_INSTRUMENTS_NAMES.length));
+				chords1Inst
+						.setSelectedIndex(instGen.nextInt(MelodyGenerator.CHORD_INST_NAMES.length));
 			}
 			if (!chords2Lock.isSelected()) {
 				
 				chords2Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.NICE_INSTRUMENTS_NAMES.length));
+						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
 			}
-			if (!chords3Lock.isSelected()) {
+			if (!arp1Lock.isSelected()) {
 				
-				chords3Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.NICE_INSTRUMENTS_NAMES.length));
+				arp1Inst.setSelectedIndex(
+						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
 			}
-			if (!chords4Lock.isSelected()) {
+			if (!arp2Lock.isSelected()) {
 				
-				chords4Inst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.NICE_INSTRUMENTS_NAMES.length));
+				arp2Inst.setSelectedIndex(
+						instGen.nextInt(MelodyGenerator.PLUCKY_INST_NAMES.length));
 			}
 			if (!bassRootsLock.isSelected()) {
 				
-				bassRootsInst.setSelectedIndex(
-						instGen.nextInt(MelodyGenerator.NICE_INSTRUMENTS_NAMES.length));
+				bassRootsInst
+						.setSelectedIndex(instGen.nextInt(MelodyGenerator.BASS_INST_NAMES.length));
 			}
 			System.out.println("RANDOMIZED INSTS!");
 		}
@@ -1265,31 +1264,31 @@ public class MidiGeneratorGUI extends JFrame
 			MelodyGenerator.PARTS_INSTRUMENT_MAP.clear();
 			
 			if (arpMelodyLockInst.isSelected()) {
-				melodyInst.setSelectedIndex(chords3Inst.getSelectedIndex());
+				melodyInst.setSelectedIndex(arp1Inst.getSelectedIndex());
 			}
 			
 			if (arp2LockInst.isSelected()) {
-				chords4Inst.setSelectedIndex(chords3Inst.getSelectedIndex());
+				arp2Inst.setSelectedIndex(arp1Inst.getSelectedIndex());
 			}
 			
 			if (addMelody.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.MELODY,
-						getInstByIndex(melodyInst.getSelectedIndex()));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.MELODY, getInstByIndex(
+						melodyInst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
 			if (addChords1.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS1,
-						getInstByIndex(chords1Inst.getSelectedIndex()));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS1, getInstByIndex(
+						chords1Inst.getSelectedIndex(), MelodyGenerator.CHORD_INST_NAMES));
 			if (addChords2.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS2,
-						getInstByIndex(chords2Inst.getSelectedIndex()));
-			if (addChords3.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS3,
-						getInstByIndex(chords3Inst.getSelectedIndex()));
-			if (addChords4.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS4,
-						getInstByIndex(chords4Inst.getSelectedIndex()));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS2, getInstByIndex(
+						chords2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+			if (addArp1.isSelected())
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP1, getInstByIndex(
+						arp1Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+			if (addArp2.isSelected())
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP2, getInstByIndex(
+						arp2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
 			if (addBassRoots.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS,
-						getInstByIndex(bassRootsInst.getSelectedIndex()));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS, getInstByIndex(
+						bassRootsInst.getSelectedIndex(), MelodyGenerator.BASS_INST_NAMES));
 			if (addDrums.isSelected()) {
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.DRUMS, 0);
 				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels();
@@ -1430,19 +1429,25 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setMelodyEnable(addMelody.isSelected());
 		guiConfig.setChords1Enable(addChords1.isSelected());
 		guiConfig.setChords2Enable(addChords2.isSelected());
-		guiConfig.setChords3ArpEnable(addChords3.isSelected());
-		guiConfig.setChords4ArpEnable(addChords4.isSelected());
+		guiConfig.setArp1ArpEnable(addArp1.isSelected());
+		guiConfig.setArp2ArpEnable(addArp2.isSelected());
 		guiConfig.setBassRootsEnable(addBassRoots.isSelected());
 		
 		guiConfig.setDrumsEnable(addDrums.isSelected());
 		guiConfig.setDrumParts(getDrumPartsFromDrumPanels());
 		
-		guiConfig.setMelodyInst(getInstByIndex(melodyInst.getSelectedIndex()));
-		guiConfig.setChords1Inst(getInstByIndex(chords1Inst.getSelectedIndex()));
-		guiConfig.setChords2Inst(getInstByIndex(chords2Inst.getSelectedIndex()));
-		guiConfig.setChords3ArpInst(getInstByIndex(chords3Inst.getSelectedIndex()));
-		guiConfig.setChords4ArpInst(getInstByIndex(chords4Inst.getSelectedIndex()));
-		guiConfig.setBassRootsInst(getInstByIndex(bassRootsInst.getSelectedIndex()));
+		guiConfig.setMelodyInst(
+				getInstByIndex(melodyInst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+		guiConfig.setChords1Inst(
+				getInstByIndex(chords1Inst.getSelectedIndex(), MelodyGenerator.CHORD_INST_NAMES));
+		guiConfig.setChords2Inst(
+				getInstByIndex(chords2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+		guiConfig.setArp1ArpInst(
+				getInstByIndex(arp1Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+		guiConfig.setArp2ArpInst(
+				getInstByIndex(arp2Inst.getSelectedIndex(), MelodyGenerator.PLUCKY_INST_NAMES));
+		guiConfig.setBassRootsInst(
+				getInstByIndex(bassRootsInst.getSelectedIndex(), MelodyGenerator.BASS_INST_NAMES));
 		
 		guiConfig.setUserMelodySeed(!StringUtils.isEmpty(userMelodySeed.getText())
 				? Long.valueOf(userMelodySeed.getText())
@@ -1496,24 +1501,30 @@ public class MidiGeneratorGUI extends JFrame
 		addMelody.setSelected(guiConfig.isMelodyEnable());
 		addChords1.setSelected(guiConfig.isChords1Enable());
 		addChords2.setSelected(guiConfig.isChords2Enable());
-		addChords3.setSelected(guiConfig.isChords3ArpEnable());
-		addChords4.setSelected(guiConfig.isChords4ArpEnable());
+		addArp1.setSelected(guiConfig.isArp1ArpEnable());
+		addArp2.setSelected(guiConfig.isArp2ArpEnable());
 		addBassRoots.setSelected(guiConfig.isBassRootsEnable());
 		
 		addDrums.setSelected(guiConfig.isDrumsEnable());
 		recreateDrumPanelsFromDrumParts(guiConfig.getDrumParts());
 		
-		selectJComboBoxByInst(melodyInst, guiConfig.getMelodyInst());
+		selectJComboBoxByInst(melodyInst, MelodyGenerator.PLUCKY_INST_NAMES,
+				guiConfig.getMelodyInst());
 		
-		selectJComboBoxByInst(chords1Inst, guiConfig.getChords1Inst());
+		selectJComboBoxByInst(chords1Inst, MelodyGenerator.CHORD_INST_NAMES,
+				guiConfig.getChords1Inst());
 		
-		selectJComboBoxByInst(chords2Inst, guiConfig.getChords2Inst());
+		selectJComboBoxByInst(chords2Inst, MelodyGenerator.PLUCKY_INST_NAMES,
+				guiConfig.getChords2Inst());
 		
-		selectJComboBoxByInst(chords3Inst, guiConfig.getChords3ArpInst());
+		selectJComboBoxByInst(arp1Inst, MelodyGenerator.PLUCKY_INST_NAMES,
+				guiConfig.getArp1ArpInst());
 		
-		selectJComboBoxByInst(chords4Inst, guiConfig.getChords4ArpInst());
+		selectJComboBoxByInst(arp2Inst, MelodyGenerator.PLUCKY_INST_NAMES,
+				guiConfig.getArp2ArpInst());
 		
-		selectJComboBoxByInst(bassRootsInst, guiConfig.getBassRootsInst());
+		selectJComboBoxByInst(bassRootsInst, MelodyGenerator.BASS_INST_NAMES,
+				guiConfig.getBassRootsInst());
 		
 		userMelodySeed.setText(String.valueOf(guiConfig.getUserMelodySeed()));
 		
@@ -1539,13 +1550,16 @@ public class MidiGeneratorGUI extends JFrame
 		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
 	}
 	
-	public static void selectJComboBoxByInst(JComboBox<String> choice, Integer number) {
-		int index = MelodyGenerator.NICE_INSTRUMENTS_NUMBERS.indexOf(number);
+	public static void selectJComboBoxByInst(JComboBox<String> choice, String[] instPool,
+			Integer number) {
+		List<Integer> instPoolNumbers = MelodyGenerator.getInstNumbers(instPool);
+		int index = instPoolNumbers.indexOf(number);
 		choice.setSelectedIndex(index);
 	}
 	
-	public static Integer getInstByIndex(int index) {
-		return MelodyGenerator.NICE_INSTRUMENTS_NUMBERS.get(index);
+	public static Integer getInstByIndex(int index, String[] instPool) {
+		List<Integer> instPoolNumbers = MelodyGenerator.getInstNumbers(instPool);
+		return instPoolNumbers.get(index);
 	}
 	
 	public static void selectDrumJComboBoxByInst(JComboBox<String> choice, Integer number) {

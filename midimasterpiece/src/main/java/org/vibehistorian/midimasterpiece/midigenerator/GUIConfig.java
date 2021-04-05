@@ -81,12 +81,12 @@ public class GUIConfig {
 		this.chords2Enable = chords2Enable;
 	}
 	
-	public boolean isChords3ArpEnable() {
-		return chords3ArpEnable;
+	public boolean isArp1ArpEnable() {
+		return arp1ArpEnable;
 	}
 	
-	public void setChords3ArpEnable(boolean chords3ArpEnable) {
-		this.chords3ArpEnable = chords3ArpEnable;
+	public void setArp1ArpEnable(boolean arp1ArpEnable) {
+		this.arp1ArpEnable = arp1ArpEnable;
 	}
 	
 	public boolean isBassRootsEnable() {
@@ -121,12 +121,12 @@ public class GUIConfig {
 		this.chords2Inst = chords2Inst;
 	}
 	
-	public int getChords3ArpInst() {
-		return chords3ArpInst;
+	public int getArp1ArpInst() {
+		return arp1ArpInst;
 	}
 	
-	public void setChords3ArpInst(int chords3ArpInst) {
-		this.chords3ArpInst = chords3ArpInst;
+	public void setArp1ArpInst(int arp1ArpInst) {
+		this.arp1ArpInst = arp1ArpInst;
 	}
 	
 	public int getBassRootsInst() {
@@ -285,15 +285,15 @@ public class GUIConfig {
 	private boolean melodyEnable = true;
 	private boolean chords1Enable = false;
 	private boolean chords2Enable = false;
-	private boolean chords3ArpEnable = true;
-	private boolean chords4ArpEnable = true;
+	private boolean arp1ArpEnable = true;
+	private boolean arp2ArpEnable = true;
 	private boolean bassRootsEnable = true;
 	
 	private int melodyInst = 46;
 	private int chords1Inst = 107;
 	private int chords2Inst = 95;
-	private int chords3ArpInst = 46;
-	private int chords4ArpInst = 4;
+	private int arp1ArpInst = 46;
+	private int arp2ArpInst = 4;
 	private int bassRootsInst = 33;
 	
 	private boolean drumsEnable = false;
@@ -344,17 +344,17 @@ public class GUIConfig {
 	private transient boolean lockMelody = false;
 	private transient boolean lockChords1 = true;
 	private transient boolean lockChords2 = true;
-	private transient boolean lockChords3Arp = false;
-	private transient boolean lockChords4Arp = false;
+	private transient boolean lockArp1Arp = false;
+	private transient boolean lockArp2Arp = false;
 	private transient boolean lockBassRoots = false;
 	
 	
-	public boolean isLockChords4Arp() {
-		return lockChords4Arp;
+	public boolean isLockArp2Arp() {
+		return lockArp2Arp;
 	}
 	
-	public void setLockChords4Arp(boolean lockChords4Arp) {
-		this.lockChords4Arp = lockChords4Arp;
+	public void setLockArp2Arp(boolean lockArp2Arp) {
+		this.lockArp2Arp = lockArp2Arp;
 	}
 	
 	
@@ -385,13 +385,13 @@ public class GUIConfig {
 		this.lockChords2 = lockChords2;
 	}
 	
-	public boolean isLockChords3Arp() {
-		return lockChords3Arp;
+	public boolean isLockArp1Arp() {
+		return lockArp1Arp;
 	}
 	
 	@XmlTransient
-	public void setLockChords3Arp(boolean lockChords3Arp) {
-		this.lockChords3Arp = lockChords3Arp;
+	public void setLockArp1Arp(boolean lockArp1Arp) {
+		this.lockArp1Arp = lockArp1Arp;
 	}
 	
 	public boolean isLockBassRoots() {
@@ -404,20 +404,20 @@ public class GUIConfig {
 	}
 	//end-transients
 	
-	public boolean isChords4ArpEnable() {
-		return chords4ArpEnable;
+	public boolean isArp2ArpEnable() {
+		return arp2ArpEnable;
 	}
 	
-	public void setChords4ArpEnable(boolean chords4ArpEnable) {
-		this.chords4ArpEnable = chords4ArpEnable;
+	public void setArp2ArpEnable(boolean arp2ArpEnable) {
+		this.arp2ArpEnable = arp2ArpEnable;
 	}
 	
-	public int getChords4ArpInst() {
-		return chords4ArpInst;
+	public int getArp2ArpInst() {
+		return arp2ArpInst;
 	}
 	
-	public void setChords4ArpInst(int chords4ArpInst) {
-		this.chords4ArpInst = chords4ArpInst;
+	public void setArp2ArpInst(int arp2ArpInst) {
+		this.arp2ArpInst = arp2ArpInst;
 	}
 	
 	public String getCustomChordDurations() {

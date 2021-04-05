@@ -361,8 +361,8 @@ public class MelodyGenerator implements JMC {
 		enumMap.put(PARTS.MELODY, mainMelody);
 		enumMap.put(PARTS.CHORDS1, mainChords);
 		enumMap.put(PARTS.CHORDS2, chordsSecond);
-		enumMap.put(PARTS.CHORDS3, chordsThirdArp);
-		enumMap.put(PARTS.CHORDS4, chordsFourthArp);
+		enumMap.put(PARTS.ARP1, chordsThirdArp);
+		enumMap.put(PARTS.ARP2, chordsFourthArp);
 		enumMap.put(PARTS.BASSROOTS, bassChordRoots);
 		enumMap.put(PARTS.DRUMS, drums);
 		
@@ -721,27 +721,43 @@ public class MelodyGenerator implements JMC {
 			"NATURE = 122", "BIRD = 123", "TELEPHONE = 124", "HELICOPTER = 125", "APPLAUSE = 126",
 			"GUNSHOT = 127" };
 	
-	public static final String[] NICE_INSTRUMENTS_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
-			"HONKYTONK = 3", "EPIANO = 4", "EPIANO2 = 5", "HARPSICHORD = 6", "CLAV = 7",
-			"CELESTE = 8", "MUSIC_BOX = 10", "VIBRAPHONE = 11", "MARIMBA = 12", "XYLOPHONE = 13",
-			"TUBULAR_BELL = 14", "NOTHING = 15", "ORGAN = 16", "ORGAN2 = 17", "REED_ORGAN = 20",
-			"ACCORDION = 21", "HARMONICA = 22", "BANDNEON = 23", "STEEL_GUITAR = 25",
+	public static final String[] BASS_INST_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
+			"EPIANO = 4", "AAH = 52", "OOH = 53", "SYNVOX = 54", "FLUTE = 73", "RECORDER = 74",
+			"PAN_FLUTE = 75", "SYNTH_CALLIOPE = 82", "SOLO_VOX = 85", "ECHO_DROPS = 102" };
+	
+	public static final String[] CHORD_INST_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
+			"EPIANO = 4", "CELESTE = 8", "MUSIC_BOX = 10", "VIBRAPHONE = 11", "MARIMBA = 12",
+			"XYLOPHONE = 13", "ORGAN = 16", "ORGAN2 = 17", "REED_ORGAN = 20", "STEEL_GUITAR = 25",
 			"CLEAN_GUITAR = 27", "ACOUSTIC_BASS = 32", "FINGERED_BASS = 33", "PICKED_BASS = 34",
 			"FRETLESS_BASS = 35", "SLAP_BASS = 36", "VIOLIN = 40", "VIOLA = 41", "CELLO = 42",
 			"CONTRABASS = 43", "TREMOLO_STRINGS = 44", "PIZZICATO_STRINGS = 45", "HARP = 46",
-			"STRINGS = 48", "STRING_ENSEMBLE_2 = 49", "SLOW_STRINGS = 51", "AAH = 52", "OOH = 53",
-			"SYNVOX = 54", "TRUMPET = 56", "TROMBONE = 57", "TUBA = 58", "FRENCH_HORN = 60",
-			"BRASS = 61", "SOPRANO_SAX = 64", "ALTO_SAX = 65", "BARITONE_SAX = 67", "OBOE = 68",
-			"ENGLISH_HORN = 69", "BASSOON = 70", "CLARINET = 71", "PICCOLO = 72", "FLUTE = 73",
-			"RECORDER = 74", "PAN_FLUTE = 75", "BOTTLE_BLOW = 76", "SYNTH_CALLIOPE = 82",
-			"SOLO_VOX = 85", "FANTASIA = 88", "SPACE_VOICE = 91", "BOWED_GLASS = 92",
-			"METAL_PAD = 93", "HALO_PAD = 94", "SWEEP_PAD = 95", "ICE_RAIN = 96", "SOUNDTRACK = 97",
-			"ATMOSPHERE = 99", "ECHO_DROPS = 102", "SITAR = 104", "BANJO = 105", "SHAMISEN = 106",
+			"STRINGS = 48", "STRING_ENSEMBLE_2 = 49", "BASSOON = 70", "FANTASIA = 88", };
+	
+	
+	public static final String[] PLUCKY_INST_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
+			"HONKYTONK = 3", "EPIANO = 4", "EPIANO2 = 5", "HARPSICHORD = 6", "CLAV = 7",
+			"CELESTE = 8", "MUSIC_BOX = 10", "VIBRAPHONE = 11", "MARIMBA = 12", "XYLOPHONE = 13",
+			"TUBULAR_BELL = 14", "NOTHING = 15", "STEEL_GUITAR = 25", "CLEAN_GUITAR = 27",
+			"ACOUSTIC_BASS = 32", "FINGERED_BASS = 33", "PICKED_BASS = 34", "FRETLESS_BASS = 35",
+			"SLAP_BASS = 36", "PIZZICATO_STRINGS = 45", "HARP = 46", "AAH = 52", "OOH = 53",
+			"SYNVOX = 54", "FLUTE = 73", "PAN_FLUTE = 75", "SYNTH_CALLIOPE = 82", "SOLO_VOX = 85",
+			"FANTASIA = 88", "ATMOSPHERE = 99", "SITAR = 104", "BANJO = 105", "SHAMISEN = 106",
 			"KOTO = 107", "AGOGO = 113", "TAIKO = 116" };
 	
-	public static final List<Integer> NICE_INSTRUMENTS_NUMBERS = Arrays
-			.asList(NICE_INSTRUMENTS_NAMES).stream().map(e -> Integer.valueOf(e.split(" = ")[1]))
-			.collect(Collectors.toList());
+	public static final String[] SUSTAINY_INST_NAMES = { "ORGAN = 16", "ORGAN2 = 17",
+			"REED_ORGAN = 20", "ACCORDION = 21", "HARMONICA = 22", "BANDNEON = 23", "VIOLIN = 40",
+			"VIOLA = 41", "CELLO = 42", "CONTRABASS = 43", "TREMOLO_STRINGS = 44", "STRINGS = 48",
+			"STRING_ENSEMBLE_2 = 49", "SLOW_STRINGS = 51", "TRUMPET = 56", "TROMBONE = 57",
+			"TUBA = 58", "FRENCH_HORN = 60", "BRASS = 61", "SOPRANO_SAX = 64", "ALTO_SAX = 65",
+			"BARITONE_SAX = 67", "OBOE = 68", "ENGLISH_HORN = 69", "BASSOON = 70", "CLARINET = 71",
+			"PICCOLO = 72", "RECORDER = 74", "BOTTLE_BLOW = 76", "SPACE_VOICE = 91",
+			"BOWED_GLASS = 92", "METAL_PAD = 93", "HALO_PAD = 94", "SWEEP_PAD = 95" };
+	
+	public static List<Integer> getInstNumbers(String[] instArray) {
+		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1]))
+				.collect(Collectors.toList());
+	}
+	
 	
 	public static final String[] DRUM_NAMES = { "KICK = 36", "SNARE = 38", "CLOSED_HH = 42",
 			"CYMBAL = 53" };
@@ -754,6 +770,16 @@ public class MelodyGenerator implements JMC {
 	
 	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.asList(DRUM_KITS).stream()
 			.map(e -> Integer.valueOf(e.split(" = ")[1])).collect(Collectors.toList());
+	
+	public static final Map<PARTS, String[]> PART_INST_NAMES = new HashMap<>();
+	static {
+		PART_INST_NAMES.put(PARTS.MELODY, PLUCKY_INST_NAMES);
+		PART_INST_NAMES.put(PARTS.CHORDS1, CHORD_INST_NAMES);
+		PART_INST_NAMES.put(PARTS.CHORDS2, PLUCKY_INST_NAMES);
+		PART_INST_NAMES.put(PARTS.ARP1, PLUCKY_INST_NAMES);
+		PART_INST_NAMES.put(PARTS.ARP2, PLUCKY_INST_NAMES);
+		PART_INST_NAMES.put(PARTS.BASSROOTS, BASS_INST_NAMES);
+	}
 	
 	public Note[] deepCopyNotes(Note[] originals, int[] chord, Random melodyGenerator) {
 		Note[] copied = new Note[originals.length];

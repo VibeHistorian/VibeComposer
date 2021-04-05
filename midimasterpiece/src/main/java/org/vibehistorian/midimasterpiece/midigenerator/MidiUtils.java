@@ -15,7 +15,7 @@ import jm.music.data.Note;
 public class MidiUtils {
 	
 	public enum PARTS {
-		MELODY, CHORDS1, CHORDS2, CHORDS3, CHORDS4, BASSROOTS, DRUMS;
+		MELODY, CHORDS1, CHORDS2, ARP1, ARP2, BASSROOTS, DRUMS;
 	}
 	
 	//full scale
