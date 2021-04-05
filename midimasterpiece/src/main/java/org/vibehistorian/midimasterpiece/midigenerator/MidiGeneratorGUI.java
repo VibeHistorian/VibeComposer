@@ -315,8 +315,7 @@ public class MidiGeneratorGUI extends JFrame
 		
 		selectJComboBoxByInst(arp2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), 4);
 		
-		selectJComboBoxByInst(bassRootsInst, MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS),
-				74);
+		selectJComboBoxByInst(bassRootsInst, MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS), 74);
 		
 		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -341,8 +340,8 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		
 		melodyLock = new JCheckBox("Lock Inst.", false);
-		chords1Lock = new JCheckBox("Lock Inst.", true);
-		chords2Lock = new JCheckBox("Lock Inst.", true);
+		chords1Lock = new JCheckBox("Lock Inst.", false);
+		chords2Lock = new JCheckBox("Lock Inst.", false);
 		arp1Lock = new JCheckBox("Lock Inst.", false);
 		arp2Lock = new JCheckBox("Lock Inst.", false);
 		bassRootsLock = new JCheckBox("Lock Inst.", false);
@@ -362,12 +361,42 @@ public class MidiGeneratorGUI extends JFrame
 		p50.add(melodyLock);
 		p50.add(melodyInst);
 		p50.add(arpMelodyLockInst);
-		p50.add(new JLabel("Pause%:"));
+		p50.add(new JLabel("Pause%"));
 		p50.add(melodyPauseChance);
 		p50.add(generateUserMelodySeed);
 		p50.add(userMelodySeed);
 		p50.add(randomMelodyOnRegenerate);
 		p50.add(clearUserMelodySeed);
+		
+		
+		// ------------------- NOTE SETTINGS --------------------------------------
+		
+		JPanel p55 = new JPanel();
+		maxJump = new JTextField("4", 2);
+		maxExceptions = new JTextField("1", 2);
+		p55.add(new JLabel("Max Note Jump:"));
+		p55.add(maxJump);
+		p55.add(new JLabel("Max Exceptions:"));
+		p55.add(maxExceptions);
+		randomChordNote = new JCheckBox();
+		randomChordNote.setSelected(true);
+		melodyFirstNoteFromChord = new JCheckBox();
+		melodyFirstNoteFromChord.setSelected(true);
+		
+		
+		p55.add(new JLabel("Note#1 From Chord:"));
+		p55.add(melodyFirstNoteFromChord);
+		p55.add(new JLabel("But Randomized:"));
+		p55.add(randomChordNote);
+		
+		
+		constraints.gridx = 1;
+		constraints.gridy = 55;
+		constraints.gridwidth = 2;
+		constraints.gridheight = 1;
+		constraints.anchor = GridBagConstraints.CENTER;
+		add(p55, constraints);
+		constraints.anchor = GridBagConstraints.WEST;
 		
 		chordStrum = new JTextField("250", 4);
 		secondChordStrum = new JTextField("500", 4);
@@ -403,7 +432,7 @@ public class MidiGeneratorGUI extends JFrame
 		p80.add(randomArpPattern);
 		p80.add(arpPatternRepeat);
 		p80.add(arpAllowPauses);
-		p80.add(new JLabel("%:"));
+		p80.add(new JLabel("%"));
 		p80.add(pauseChance);
 		
 		secondArpMultiplier = new JComboBox<String>();
@@ -428,7 +457,7 @@ public class MidiGeneratorGUI extends JFrame
 		
 		p90.add(new JLabel("Transpose+-"));
 		p90.add(secondArpOctaveAdjust);
-		p90.add(new JLabel("Pause%:"));
+		p90.add(new JLabel("Pause%"));
 		p90.add(secondArpPauseChance);
 		
 		p100.add(addBassRoots);
@@ -468,9 +497,9 @@ public class MidiGeneratorGUI extends JFrame
 		p110.add(randomDrumsOnCompose);
 		p110.add(randomDrumSlide);
 		p110.add(randomDrumPattern);
-		p110.add(new JLabel("Velocity pattern%:"));
+		p110.add(new JLabel("Velocity pattern%"));
 		p110.add(velocityPatternChance);
-		p110.add(new JLabel("Rotation chance%:"));
+		p110.add(new JLabel("Rotation chance%"));
 		p110.add(rotationChance);
 		
 		
@@ -530,32 +559,7 @@ public class MidiGeneratorGUI extends JFrame
 		add(p650, constraints);
 		
 		
-		// ------------------- SETTINGS --------------------------------------
-		
-		JPanel p750 = new JPanel();
-		maxJump = new JTextField("4", 2);
-		maxExceptions = new JTextField("1", 2);
-		p750.add(new JLabel("Max Note Jump:"));
-		p750.add(maxJump);
-		p750.add(new JLabel("Max Exceptions:"));
-		p750.add(maxExceptions);
-		randomChordNote = new JCheckBox();
-		randomChordNote.setSelected(true);
-		melodyFirstNoteFromChord = new JCheckBox();
-		melodyFirstNoteFromChord.setSelected(true);
-		
-		
-		p750.add(new JLabel("Note#1 From Chord:"));
-		p750.add(melodyFirstNoteFromChord);
-		p750.add(new JLabel("But Randomized:"));
-		p750.add(randomChordNote);
-		
-		
-		constraints.gridx = 1;
-		constraints.gridy = 750;
-		constraints.gridwidth = 2;
-		constraints.gridheight = 1;
-		add(p750, constraints);
+		// ------- BPM / TRANSPOSE -----------
 		
 		JPanel p700 = new JPanel();
 		
@@ -578,9 +582,40 @@ public class MidiGeneratorGUI extends JFrame
 		constraints.gridheight = 1;
 		add(p700, constraints);
 		
-		// CHORD SETTINGS 1
+		// ---- CHORD SETTINGS 1 ----
 		
-		JPanel chordPanel850 = new JPanel();
+		JPanel p850 = new JPanel();
+		chordTransitionChance = new JTextField("25", 3);
+		p850.add(new JLabel("Transition chord%"));
+		p850.add(chordTransitionChance);
+		
+		chordSlashChance = new JTextField("25", 3);
+		p850.add(new JLabel("Ch1 slash chord%"));
+		p850.add(chordSlashChance);
+		
+		spiceChance = new JTextField("8", 3);
+		p850.add(new JLabel("Spice%"));
+		p850.add(spiceChance);
+		
+		spiceAllowDimAug = new JCheckBox("Dim/Aug");
+		spiceAllowDimAug.setSelected(false);
+		p850.add(spiceAllowDimAug);
+		
+		JButton randomizeStrums = new JButton("Randomize strums");
+		randomizeStrums.addActionListener(this);
+		randomizeStrums.setActionCommand("RandStrums");
+		p850.add(randomizeStrums);
+		
+		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
+		randomizeChordStrumsOnCompose.setSelected(true);
+		p850.add(randomizeChordStrumsOnCompose);
+		
+		constraints.gridy = 850;
+		add(p850, constraints);
+		
+		// CHORD SETTINGS 2
+		
+		JPanel chordPanel870 = new JPanel();
 		
 		
 		firstChordSelection = new JComboBox<String>();
@@ -589,8 +624,8 @@ public class MidiGeneratorGUI extends JFrame
 		firstChordSelection.addItem("V");
 		firstChordSelection.addItem("vi");
 		firstChordSelection.addItemListener(this);
-		chordPanel850.add(new JLabel("First Chord:"));
-		chordPanel850.add(firstChordSelection);
+		chordPanel870.add(new JLabel("First Chord:"));
+		chordPanel870.add(firstChordSelection);
 		lastChordSelection = new JComboBox<String>();
 		lastChordSelection.addItem("R");
 		lastChordSelection.addItem("I");
@@ -598,58 +633,28 @@ public class MidiGeneratorGUI extends JFrame
 		lastChordSelection.addItem("vi");
 		lastChordSelection.addItemListener(this);
 		lastChordSelection.setSelectedIndex(0);
-		chordPanel850.add(new JLabel("Last Chord:"));
-		chordPanel850.add(lastChordSelection);
+		chordPanel870.add(new JLabel("Last Chord:"));
+		chordPanel870.add(lastChordSelection);
 		
 		userChordsEnabled = new JCheckBox();
 		userChordsEnabled.setSelected(false);
 		
 		
-		chordPanel850.add(new JLabel("Custom chords:"));
-		chordPanel850.add(userChordsEnabled);
+		chordPanel870.add(new JLabel("Custom chords:"));
+		chordPanel870.add(userChordsEnabled);
 		
 		userChords = new JTextField("R", 8);
-		chordPanel850.add(new JLabel("Chords:"));
-		chordPanel850.add(userChords);
+		chordPanel870.add(new JLabel("Chords:"));
+		chordPanel870.add(userChords);
 		userChordsDurations = new JTextField("2,2,2,2", 6);
-		chordPanel850.add(new JLabel("Chord durations (max. 8):"));
-		chordPanel850.add(userChordsDurations);
+		chordPanel870.add(new JLabel("Chord durations (max. 8):"));
+		chordPanel870.add(userChordsDurations);
 		constraints.gridx = 1;
-		constraints.gridy = 850;
+		constraints.gridy = 870;
 		constraints.gridwidth = 3;
 		constraints.gridheight = 1;
-		add(chordPanel850, constraints);
+		add(chordPanel870, constraints);
 		
-		// ---- CHORD SETTINGS 2 ----
-		
-		JPanel p870 = new JPanel();
-		chordTransitionChance = new JTextField("25", 3);
-		p870.add(new JLabel("Transition chord%"));
-		p870.add(chordTransitionChance);
-		
-		chordSlashChance = new JTextField("25", 3);
-		p870.add(new JLabel("Slash chord%"));
-		p870.add(chordSlashChance);
-		
-		spiceChance = new JTextField("8", 3);
-		p870.add(new JLabel("Spice%:"));
-		p870.add(spiceChance);
-		
-		spiceAllowDimAug = new JCheckBox("Dim/Aug");
-		spiceAllowDimAug.setSelected(false);
-		p870.add(spiceAllowDimAug);
-		
-		JButton randomizeStrums = new JButton("Randomize strums");
-		randomizeStrums.addActionListener(this);
-		randomizeStrums.setActionCommand("RandStrums");
-		p870.add(randomizeStrums);
-		
-		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
-		randomizeChordStrumsOnCompose.setSelected(true);
-		p870.add(randomizeChordStrumsOnCompose);
-		
-		constraints.gridy = 870;
-		add(p870, constraints);
 		
 		// CONTROL PANEL
 		
@@ -845,8 +850,8 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			if (!bassRootsLock.isSelected()) {
 				
-				bassRootsInst.setSelectedIndex(instGen
-						.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS).length));
+				bassRootsInst.setSelectedIndex(
+						instGen.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS).length));
 			}
 			System.out.println("RANDOMIZED INSTS!");
 		}
@@ -1285,13 +1290,11 @@ public class MidiGeneratorGUI extends JFrame
 						getInstByIndex(chords2Inst.getSelectedIndex(),
 								MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS2)));
 			if (addArp1.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP1,
-						getInstByIndex(arp1Inst.getSelectedIndex(),
-								MidiUtils.PART_INST_NAMES.get(PARTS.ARP1)));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP1, getInstByIndex(
+						arp1Inst.getSelectedIndex(), MidiUtils.PART_INST_NAMES.get(PARTS.ARP1)));
 			if (addArp2.isSelected())
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP2,
-						getInstByIndex(arp2Inst.getSelectedIndex(),
-								MidiUtils.PART_INST_NAMES.get(PARTS.ARP2)));
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARP2, getInstByIndex(
+						arp2Inst.getSelectedIndex(), MidiUtils.PART_INST_NAMES.get(PARTS.ARP2)));
 			if (addBassRoots.isSelected())
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS,
 						getInstByIndex(bassRootsInst.getSelectedIndex(),
@@ -1649,8 +1652,7 @@ public class MidiGeneratorGUI extends JFrame
 		for (int i = 0; i < panelCount; i++) {
 			DrumPanel dp = addDrumPanelToLayout();
 			dp.setPitch(getInstByIndex(
-					drumPanelGenerator
-							.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS).length),
+					drumPanelGenerator.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS).length),
 					MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
 			//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 			
