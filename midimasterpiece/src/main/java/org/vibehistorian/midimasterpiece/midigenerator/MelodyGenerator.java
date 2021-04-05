@@ -348,22 +348,22 @@ public class MelodyGenerator implements JMC {
 		
 		
 		Score score = new Score("MainScore", 120);
-		Part mainMelody = new Part("MainMelody", melodyProgramChange, 0);
-		Part mainChords = new Part("MainChords", 53, 1);
-		Part chordsSecond = new Part("ChordsSecond", GOBLIN, 2);
-		Part chordsThirdArp = new Part("ChordsThird", XYLOPHONE, 3);
-		Part chordsFourthArp = new Part("ChordsFourth", EPIANO, 4);
-		Part bassChordRoots = new Part("BassChordRoots", BASS, 5);
-		Part drums = new Part("MainDrums", PIANO, 9);
+		Part melody = new Part("Melody", melodyProgramChange, 0);
+		Part chords1 = new Part("Chords1", 53, 1);
+		Part chords2 = new Part("Chords2", GOBLIN, 2);
+		Part arp1 = new Part("Arp1", XYLOPHONE, 3);
+		Part arp2 = new Part("Arp2", EPIANO, 4);
+		Part bassRoots = new Part("BassRoots", BASS, 5);
+		Part drums = new Part("Drums", PIANO, 9);
 		Part chordSlash = new Part("ChordSlash", PIANO, 6);
 		
 		EnumMap<PARTS, Part> enumMap = new EnumMap<>(PARTS.class);
-		enumMap.put(PARTS.MELODY, mainMelody);
-		enumMap.put(PARTS.CHORDS1, mainChords);
-		enumMap.put(PARTS.CHORDS2, chordsSecond);
-		enumMap.put(PARTS.ARP1, chordsThirdArp);
-		enumMap.put(PARTS.ARP2, chordsFourthArp);
-		enumMap.put(PARTS.BASSROOTS, bassChordRoots);
+		enumMap.put(PARTS.MELODY, melody);
+		enumMap.put(PARTS.CHORDS1, chords1);
+		enumMap.put(PARTS.CHORDS2, chords2);
+		enumMap.put(PARTS.ARP1, arp1);
+		enumMap.put(PARTS.ARP2, arp2);
+		enumMap.put(PARTS.BASSROOTS, bassRoots);
 		enumMap.put(PARTS.DRUMS, drums);
 		
 		
@@ -405,9 +405,9 @@ public class MelodyGenerator implements JMC {
 			melodyGenerator.setSeed(mainGeneratorSeed);
 		}
 		
-		CPhrase cphrase = new CPhrase();
-		Phrase melody = new Phrase();
-		CPhrase arpCPhrase = new CPhrase();
+		CPhrase chords1CPhrase = new CPhrase();
+		Phrase melodyPhrase = new Phrase();
+		CPhrase arp1CPhrase = new CPhrase();
 		CPhrase arp2CPhrase = new CPhrase();
 		CPhrase cphraseBassRoot = new CPhrase();
 		CPhrase chordSlashCPhrase = new CPhrase();
@@ -425,10 +425,10 @@ public class MelodyGenerator implements JMC {
 					double duration2 = progressionDurations.get(j) * 3 / 8;
 					int excChord = (exceptionGenerator.nextInt(100) < CHORD_TRANSITION_CHANCE) ? j
 							: (j + 1) % actualProgression.size();
-					cphrase.addChord(actualProgression.get(j), duration1);
-					cphrase.addChord(actualProgression.get(excChord), duration2);
+					chords1CPhrase.addChord(actualProgression.get(j), duration1);
+					chords1CPhrase.addChord(actualProgression.get(excChord), duration2);
 				} else {
-					cphrase.addChord(actualProgression.get(j), progressionDurations.get(j));
+					chords1CPhrase.addChord(actualProgression.get(j), progressionDurations.get(j));
 				}
 				
 				// pick random chord, take first/root pitch
@@ -473,53 +473,53 @@ public class MelodyGenerator implements JMC {
 				if (i == 0 && j == 1) {
 					pair15 = deepCopyNotes(generatedMelody, null, null);
 				}
-				melody.addNoteList(generatedMelody);
+				melodyPhrase.addNoteList(generatedMelody);
 			}
 			
 			
 		}
 		
 		// fill arp
-		fillArpCPhrase(arpCPhrase, arpMap, actualProgression, 1);
+		fillArpCPhrase(arp1CPhrase, arpMap, actualProgression, 1);
 		fillArpCPhrase(arp2CPhrase, arp2Map, actualProgression, SECOND_ARP_COUNT_MULTIPLIER);
 		
 		Mod.transpose(cphraseBassRoot, -24 + TRANSPOSE_SCORE);
-		Mod.transpose(cphrase, -12 + TRANSPOSE_SCORE);
-		Mod.transpose(arpCPhrase, -12 + TRANSPOSE_SCORE);
+		Mod.transpose(chords1CPhrase, -12 + TRANSPOSE_SCORE);
+		Mod.transpose(arp1CPhrase, -12 + TRANSPOSE_SCORE);
 		Mod.transpose(arp2CPhrase, -24 + TRANSPOSE_SCORE + SECOND_ARP_OCTAVE_ADJUST);
-		Mod.transpose(melody, TRANSPOSE_SCORE);
+		Mod.transpose(melodyPhrase, TRANSPOSE_SCORE);
 		Mod.transpose(chordSlashCPhrase, -24 + TRANSPOSE_SCORE);
 		
 		
-		melody.setDynamic(80);
-		cphrase.setDynamic(80);
-		arpCPhrase.setDynamic(70);
+		melodyPhrase.setDynamic(80);
+		chords1CPhrase.setDynamic(80);
+		arp1CPhrase.setDynamic(70);
 		arp2CPhrase.setDynamic(65);
 		
-		melody.setStartTime(startTimeDelay);
-		cphrase.setStartTime(startTimeDelay);
-		arpCPhrase.setStartTime(startTimeDelay);
+		melodyPhrase.setStartTime(startTimeDelay);
+		chords1CPhrase.setStartTime(startTimeDelay);
+		arp1CPhrase.setStartTime(startTimeDelay);
 		arp2CPhrase.setStartTime(startTimeDelay);
 		cphraseBassRoot.setStartTime(startTimeDelay);
 		chordSlashCPhrase.setStartTime(startTimeDelay);
 		
-		CPhrase cphrase2 = cphrase.copy();
+		CPhrase chords2CPhrase = chords1CPhrase.copy();
 		
 		if (CHORD_STRUM > 0) {
-			cphrase.flam(CHORD_STRUM / 1000.0d);
+			chords1CPhrase.flam(CHORD_STRUM / 1000.0d);
 		}
 		
 		
 		if (SECOND_CHORD_STRUM > 0) {
-			cphrase2.flam(SECOND_CHORD_STRUM / 1000.0d);
+			chords2CPhrase.flam(SECOND_CHORD_STRUM / 1000.0d);
 		}
 		
-		mainMelody.addPhrase(melody);
-		mainChords.addCPhrase(cphrase);
-		chordsSecond.addCPhrase(cphrase2);
-		chordsThirdArp.addCPhrase(arpCPhrase);
-		chordsFourthArp.addCPhrase(arp2CPhrase);
-		bassChordRoots.addCPhrase(cphraseBassRoot);
+		melody.addPhrase(melodyPhrase);
+		chords1.addCPhrase(chords1CPhrase);
+		chords2.addCPhrase(chords2CPhrase);
+		arp1.addCPhrase(arp1CPhrase);
+		arp2.addCPhrase(arp2CPhrase);
+		bassRoots.addCPhrase(cphraseBassRoot);
 		chordSlash.addCPhrase(chordSlashCPhrase);
 		
 		for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
