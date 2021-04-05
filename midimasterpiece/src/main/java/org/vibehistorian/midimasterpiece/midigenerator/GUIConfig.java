@@ -319,8 +319,8 @@ public class GUIConfig {
 	private int spiceChance = 8;
 	private int chordTransitionChance = 0;
 	private int chordSlashChance = 0;
-	private int chordFlam = 0;
-	private int secondChordFlam = 0;
+	private int chordStrum = 0;
+	private int secondChordStrum = 0;
 	
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private boolean drumPatternAffectsVelocity = true;
@@ -524,26 +524,26 @@ public class GUIConfig {
 		this.chordTransitionChance = chordTransitionChance;
 	}
 	
-	public int getChordFlam() {
-		return chordFlam;
+	public int getChordStrum() {
+		return chordStrum;
 	}
 	
-	public void setChordFlam(int chordFlam) {
-		this.chordFlam = chordFlam;
+	public void setChordStrum(int chordStrum) {
+		this.chordStrum = chordStrum;
 	}
 	
-	public int getSecondChordFlam() {
-		return secondChordFlam;
+	public int getSecondChordStrum() {
+		return secondChordStrum;
 	}
 	
-	public void setSecondChordFlam(int secondChordFlam) {
-		this.secondChordFlam = secondChordFlam;
+	public void setSecondChordStrum(int secondChordStrum) {
+		this.secondChordStrum = secondChordStrum;
 	}
-
+	
 	public int getChordSlashChance() {
 		return chordSlashChance;
 	}
-
+	
 	public void setChordSlashChance(int chordSlashChance) {
 		this.chordSlashChance = chordSlashChance;
 	}
