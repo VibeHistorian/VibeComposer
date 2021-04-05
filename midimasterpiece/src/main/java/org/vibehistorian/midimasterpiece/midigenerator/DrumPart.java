@@ -23,6 +23,7 @@ public class DrumPart {
 	private DrumPattern pattern = DrumPattern.RANDOM;
 	private boolean isVelocityPattern = true;
 	private int patternRotation = 0;
+	private int order = 1;
 	
 	public DrumPart() {
 		
@@ -195,6 +196,14 @@ public class DrumPart {
 		if (velocityMin != other.velocityMin)
 			return false;
 		return true;
+	}
+
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
 	}
 	
 }

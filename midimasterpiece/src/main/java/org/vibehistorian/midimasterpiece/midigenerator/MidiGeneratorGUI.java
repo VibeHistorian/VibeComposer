@@ -1575,16 +1575,18 @@ public class MidiGeneratorGUI extends JFrame
 	public DrumPanel addDrumPanelToLayout() {
 		GridBagConstraints constraints = new GridBagConstraints();
 		
+		int panelOrder = (drumPanels.size() > 0) ? getHighestDrumPanelNumber(drumPanels) + 1 : 1;
+		
 		constraints.weightx = 100;
 		constraints.weighty = 100;
 		constraints.gridx = 1;
-		constraints.gridy = 200 + drumPanels.size();
+		constraints.gridy = 200 + panelOrder;
 		constraints.gridwidth = 2;
 		constraints.gridheight = 1;
 		constraints.anchor = GridBagConstraints.WEST;
 		
 		DrumPanel drumJPanel = new DrumPanel(this);
-		drumJPanel.setDrumPanelOrder(drumPanels.size());
+		drumJPanel.setDrumPanelOrder(panelOrder);
 		drumJPanel.initComponents();
 		drumJPanel.setPitch(getInstByIndex(drumInst.getSelectedIndex(),
 				MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
@@ -1593,13 +1595,13 @@ public class MidiGeneratorGUI extends JFrame
 		return drumJPanel;
 	}
 	
-	private void removeDrumPanel(int index, boolean singleRemove) {
-		DrumPanel panel = drumPanels.get(index);
+	private void removeDrumPanel(int order, boolean singleRemove) {
+		DrumPanel panel = getDrumPanelByOrder(order, drumPanels);
 		remove(panel);
 		drumPanels.remove(panel);
 		
 		if (singleRemove) {
-			reorderDrumPanels();
+			//reorderDrumPanels();
 			pack();
 			repaint();
 		}
@@ -1622,7 +1624,6 @@ public class MidiGeneratorGUI extends JFrame
 		for (DrumPart part : parts) {
 			DrumPanel panel = addDrumPanelToLayout();
 			panel.setFromDrumPart(part);
-			panel.setDrumPanelOrder(counter++);
 		}
 		
 		pack();
@@ -1717,5 +1718,17 @@ public class MidiGeneratorGUI extends JFrame
 		public int getSourceActions(JComponent c) {
 			return COPY_OR_MOVE;
 		}
+	}
+	
+	private static int getHighestDrumPanelNumber(List<DrumPanel> panels) {
+		int highest = 1;
+		for (DrumPanel p : panels) {
+			highest = (p.getDrumPanelOrder() > highest) ? p.getDrumPanelOrder() : highest;
+		}
+		return highest;
+	}
+	
+	private static DrumPanel getDrumPanelByOrder(int order, List<DrumPanel> panels) {
+		return panels.stream().filter(e -> e.getDrumPanelOrder() == order).findFirst().get();
 	}
 }

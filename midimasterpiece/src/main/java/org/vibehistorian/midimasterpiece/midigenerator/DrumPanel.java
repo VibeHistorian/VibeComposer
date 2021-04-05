@@ -15,14 +15,14 @@ public class DrumPanel extends JPanel {
 	 */
 	private static final long serialVersionUID = 6219184197272490684L;
 	
-	private int drumPanelOrder = 0;
+	private JLabel drumPanelOrder = new JLabel("0");
 	
 	public int getDrumPanelOrder() {
-		return drumPanelOrder;
+		return Integer.valueOf(drumPanelOrder.getText());
 	}
 	
 	public void setDrumPanelOrder(int drumPanelOrder) {
-		this.drumPanelOrder = drumPanelOrder;
+		this.drumPanelOrder.setText("" + drumPanelOrder);
 		removeButton.setActionCommand("RemoveDrum," + drumPanelOrder);
 	}
 	
@@ -46,6 +46,9 @@ public class DrumPanel extends JPanel {
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
+		this.add(new JLabel("#"));
+		this.add(drumPanelOrder);
+		this.add(new JLabel(" "));
 		this.add(new JLabel("Pitch"));
 		this.add(pitch);
 		this.add(new JLabel("Hits#"));
@@ -170,6 +173,7 @@ public class DrumPanel extends JPanel {
 				getPauseChance(), getExceptionChance(), getVelocityMin(), getVelocityMax(),
 				getSlideMiliseconds(), (getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed,
 				getPattern(), getIsVelocityPattern(), getPatternRotation());
+		part.setOrder(getDrumPanelOrder());
 		return part;
 	}
 	
@@ -192,6 +196,8 @@ public class DrumPanel extends JPanel {
 		
 		setIsVelocityPattern(part.isVelocityPattern());
 		setPatternRotation(part.getPatternRotation());
+		
+		setDrumPanelOrder(part.getOrder());
 		
 	}
 	

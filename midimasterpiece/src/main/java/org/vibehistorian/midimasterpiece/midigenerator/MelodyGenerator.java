@@ -630,7 +630,8 @@ public class MelodyGenerator implements JMC {
 			// drum parts iter
 			for (int i = 0; i < DRUM_PARTS.size(); i++) {
 				// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
-				Random exceptionGenerator = new Random(DRUM_PARTS.get(i).getPatternSeed() + i);
+				Random exceptionGenerator = new Random(
+						DRUM_PARTS.get(i).getPatternSeed() + DRUM_PARTS.get(i).getOrder());
 				int chordSpan = DRUM_PARTS.get(i).getChordSpan();
 				// chord iter
 				for (int j = 0; j < chordsCount; j += chordSpan) {
@@ -780,7 +781,8 @@ public class MelodyGenerator implements JMC {
 		Map<Integer, List<Integer>> drumMap = new HashMap<>();
 		
 		for (int i = 0; i < DRUM_PARTS.size(); i++) {
-			Random uiGenerator1drumPattern = new Random(DRUM_PARTS.get(i).getPatternSeed() + i);
+			Random uiGenerator1drumPattern = new Random(
+					DRUM_PARTS.get(i).getPatternSeed() + DRUM_PARTS.get(i).getOrder());
 			List<Integer> premadePattern = DRUM_PARTS.get(i).getPattern()
 					.getPatternByLength(DRUM_PARTS.get(i).getHitsPerPattern());
 			List<Integer> drumPattern = new ArrayList<>();
@@ -813,7 +815,7 @@ public class MelodyGenerator implements JMC {
 		
 		for (int i = 0; i < DRUM_PARTS.size(); i++) {
 			Random uiGenerator1drumVelocityPattern = new Random(
-					DRUM_PARTS.get(i).getPatternSeed() + i);
+					DRUM_PARTS.get(i).getPatternSeed() + DRUM_PARTS.get(i).getOrder());
 			List<Integer> drumVelocityPattern = new ArrayList<>();
 			
 			for (int j = 0; j < DRUM_PARTS.get(i).getHitsPerPattern(); j++) {
