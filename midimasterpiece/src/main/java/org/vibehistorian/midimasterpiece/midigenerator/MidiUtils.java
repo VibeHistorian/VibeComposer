@@ -276,7 +276,8 @@ public class MidiUtils {
 	
 	public static final String[] BASS_INST_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
 			"EPIANO = 4", "AAH = 52", "OOH = 53", "SYNVOX = 54", "FLUTE = 73", "RECORDER = 74",
-			"PAN_FLUTE = 75", "SYNTH_CALLIOPE = 82", "SOLO_VOX = 85", "ECHO_DROPS = 102" };
+			"PAN_FLUTE = 75", "SYNTH_CALLIOPE = 82", "SOLO_VOX = 85", "SPACE_VOICE = 91",
+			"ECHO_DROPS = 102" };
 	
 	public static final String[] CHORD_INST_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
 			"EPIANO = 4", "CELESTE = 8", "MUSIC_BOX = 10", "VIBRAPHONE = 11", "MARIMBA = 12",
@@ -292,9 +293,8 @@ public class MidiUtils {
 			"TUBULAR_BELL = 14", "NOTHING = 15", "STEEL_GUITAR = 25", "CLEAN_GUITAR = 27",
 			"ACOUSTIC_BASS = 32", "FINGERED_BASS = 33", "PICKED_BASS = 34", "FRETLESS_BASS = 35",
 			"SLAP_BASS = 36", "PIZZICATO_STRINGS = 45", "HARP = 46", "AAH = 52", "OOH = 53",
-			"SYNVOX = 54", "FLUTE = 73", "PAN_FLUTE = 75", "FANTASIA = 88", "ATMOSPHERE = 99",
-			"SITAR = 104", "BANJO = 105", "SHAMISEN = 106", "KOTO = 107", "AGOGO = 113",
-			"TAIKO = 116" };
+			"FANTASIA = 88", "SITAR = 104", "BANJO = 105", "SHAMISEN = 106", "KOTO = 107",
+			"AGOGO = 113", "TAIKO = 116" };
 	
 	public static final String[] SUSTAINY_INST_NAMES = { "ORGAN = 16", "ORGAN2 = 17",
 			"REED_ORGAN = 20", "ACCORDION = 21", "HARMONICA = 22", "BANDNEON = 23", "VIOLIN = 40",

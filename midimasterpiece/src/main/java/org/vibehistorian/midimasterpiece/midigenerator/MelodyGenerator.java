@@ -490,20 +490,22 @@ public class MelodyGenerator implements JMC {
 		Mod.transpose(melodyPhrase, TRANSPOSE_SCORE);
 		Mod.transpose(chordSlashCPhrase, -24 + TRANSPOSE_SCORE);
 		
-		
+		CPhrase chords2CPhrase = chords1CPhrase.copy();
 		melodyPhrase.setDynamic(80);
+		chords1CPhrase.setDynamic(65);
 		chords1CPhrase.setDynamic(80);
 		arp1CPhrase.setDynamic(70);
 		arp2CPhrase.setDynamic(65);
+		cphraseBassRoot.setDynamic(65);
 		
 		melodyPhrase.setStartTime(startTimeDelay);
 		chords1CPhrase.setStartTime(startTimeDelay);
+		chords2CPhrase.setStartTime(startTimeDelay);
 		arp1CPhrase.setStartTime(startTimeDelay);
 		arp2CPhrase.setStartTime(startTimeDelay);
 		cphraseBassRoot.setStartTime(startTimeDelay);
 		chordSlashCPhrase.setStartTime(startTimeDelay);
 		
-		CPhrase chords2CPhrase = chords1CPhrase.copy();
 		
 		if (CHORD_STRUM > 0) {
 			chords1CPhrase.flam(CHORD_STRUM / 1000.0d);

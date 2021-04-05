@@ -403,13 +403,13 @@ public class MidiGeneratorGUI extends JFrame
 		p60.add(addChords1);
 		p60.add(chords1Lock);
 		p60.add(chords1Inst);
-		p60.add(new JLabel("Ch1 strum:"));
+		p60.add(new JLabel("Ch1 strum(ms):"));
 		p60.add(chordStrum);
 		
 		p70.add(addChords2);
 		p70.add(chords2Lock);
 		p70.add(chords2Inst);
-		p70.add(new JLabel("Ch2 strum:"));
+		p70.add(new JLabel("Ch2 strum(ms):"));
 		p70.add(secondChordStrum);
 		
 		
