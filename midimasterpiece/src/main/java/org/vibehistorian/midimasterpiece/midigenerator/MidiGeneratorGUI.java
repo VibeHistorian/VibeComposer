@@ -1137,8 +1137,8 @@ public class MidiGeneratorGUI extends JFrame
 		if (ae.getActionCommand() == "ClearPatterns") {
 			for (DrumPanel dp : drumPanels) {
 				dp.setPatternSeed(0);
-				if (dp.getPattern() != DrumPattern.RANDOM) {
-					dp.setPattern(DrumPattern.RANDOM);
+				if (dp.getPattern() != RhythmPattern.RANDOM) {
+					dp.setPattern(RhythmPattern.RANDOM);
 					dp.setPauseChance(3 * dp.getPauseChance());
 				}
 				
@@ -1676,7 +1676,7 @@ public class MidiGeneratorGUI extends JFrame
 			dp.setChordSpan(drumPanelGenerator.nextInt(2) + 1);
 			int patternOrder = 0;
 			if (randomDrumPattern.isSelected()) {
-				patternOrder = drumPanelGenerator.nextInt(DrumPattern.values().length);
+				patternOrder = drumPanelGenerator.nextInt(RhythmPattern.values().length);
 			}
 			int hits = 4;
 			while (drumPanelGenerator.nextInt(10) < 5 && hits < 32) {
@@ -1690,7 +1690,7 @@ public class MidiGeneratorGUI extends JFrame
 			
 			int adjustVelocity = (dp.getHitsPerPattern() / 2) / dp.getChordSpan();
 			
-			dp.setPattern(DrumPattern.values()[patternOrder]);
+			dp.setPattern(RhythmPattern.values()[patternOrder]);
 			int velocityMin = drumPanelGenerator.nextInt(50 - adjustVelocity) + 20;
 			dp.setVelocityMin(velocityMin);
 			dp.setVelocityMax(1 + velocityMin + drumPanelGenerator.nextInt(40 - adjustVelocity));

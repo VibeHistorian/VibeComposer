@@ -11,15 +11,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "GUIConfig")
 @XmlType(propOrder = {})
 public class GUIConfig {
-	/*
-	 * soundbank, piece length, fixed duration CB, minor CB,
-	 * melody/c1/c2/arp/bass/drums CB and inst choice, arp#, random#, 
-	 * random pattern, repeatable, pauses CBs
-	 * transpose, bpm
-	 * max note jump, note#1 from chord, randomized, pause%, spice%, dim/aug
-	 * first/last c, CUSTOM CHORDS, chord durations
-	 * random seed
-	 */
 	
 	public GUIConfig() {
 		

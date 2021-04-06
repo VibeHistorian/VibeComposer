@@ -8,15 +8,15 @@ import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(name = "drumPattern")
+@XmlType(name = "rhythmPattern")
 @XmlEnum
-public enum DrumPattern {
+public enum RhythmPattern {
 	RANDOM(new int[] { 1 }), ALTERNATE2(new int[] { 1, 0 }), ONEPER4(new int[] { 1, 0, 0, 0 }),
-	TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 });
+	TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 }), SINGLE(new int[] { 1, 0, 0, 0, 0, 0, 0, 0 });
 	
 	public final int[] pattern;
 	
-	private DrumPattern(int[] pattern) {
+	private RhythmPattern(int[] pattern) {
 		this.pattern = pattern;
 	}
 	

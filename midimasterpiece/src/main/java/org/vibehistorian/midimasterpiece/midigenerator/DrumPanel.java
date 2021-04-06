@@ -81,7 +81,7 @@ public class DrumPanel extends JPanel {
 	}
 	
 	public DrumPanel(ActionListener l) {
-		for (DrumPattern d : DrumPattern.values()) {
+		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}
 		removeButton.addActionListener(l);
@@ -160,11 +160,11 @@ public class DrumPanel extends JPanel {
 		this.patternSeed.setText(String.valueOf(patternSeed));
 	}
 	
-	public DrumPattern getPattern() {
-		return DrumPattern.valueOf((String) pattern.getSelectedItem());
+	public RhythmPattern getPattern() {
+		return RhythmPattern.valueOf((String) pattern.getSelectedItem());
 	}
 	
-	public void setPattern(DrumPattern pattern) {
+	public void setPattern(RhythmPattern pattern) {
 		this.pattern.setSelectedItem((String.valueOf(pattern.toString())));
 	}
 	

@@ -20,7 +20,7 @@ public class DrumPart {
 	private int slideMiliseconds = 0;
 	
 	private int patternSeed = 0;
-	private DrumPattern pattern = DrumPattern.RANDOM;
+	private RhythmPattern pattern = RhythmPattern.RANDOM;
 	private boolean isVelocityPattern = true;
 	private int patternRotation = 0;
 	private int order = 1;
@@ -31,7 +31,8 @@ public class DrumPart {
 	
 	public DrumPart(int pitch, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, int velocityMin, int velocityMax, int slideMiliseconds,
-			int patternSeed, DrumPattern pattern, boolean isVelocityPattern, int patternRotation) {
+			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern,
+			int patternRotation) {
 		this.pitch = pitch;
 		this.hitsPerPattern = hitsPerPattern;
 		this.chordSpan = chordSpan;
@@ -46,7 +47,7 @@ public class DrumPart {
 		this.patternRotation = patternRotation;
 	}
 	
-	@XmlAttribute
+	
 	public int getPitch() {
 		return pitch;
 	}
@@ -119,11 +120,11 @@ public class DrumPart {
 		this.patternSeed = patternSeed;
 	}
 	
-	public DrumPattern getPattern() {
+	public RhythmPattern getPattern() {
 		return pattern;
 	}
 	
-	public void setPattern(DrumPattern pattern) {
+	public void setPattern(RhythmPattern pattern) {
 		this.pattern = pattern;
 	}
 	
@@ -197,11 +198,12 @@ public class DrumPart {
 			return false;
 		return true;
 	}
-
+	
+	@XmlAttribute
 	public int getOrder() {
 		return order;
 	}
-
+	
 	public void setOrder(int order) {
 		this.order = order;
 	}
