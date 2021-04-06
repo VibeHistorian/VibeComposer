@@ -58,7 +58,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
@@ -90,6 +92,9 @@ public class MidiGeneratorGUI extends JFrame
 	private static final double[] SECOND_CHORD_STRUM_MULTIPLIER = { 1, 1.5, 2, 3, 4 };
 	
 	private static boolean isDarkMode = false;
+	
+	private static List<JSeparator> separators = new ArrayList<>();
+	
 	JLabel mainTitle;
 	JLabel subTitle;
 	JButton switchDarkMode;
@@ -265,7 +270,7 @@ public class MidiGeneratorGUI extends JFrame
 		add(p10, constraints);
 		
 		constraints.anchor = GridBagConstraints.WEST;
-		
+		createHorizontalSeparator(15, this, constraints);
 		// -------- INSTRUMENTS -------------------
 		
 		JPanel p50 = new JPanel();
@@ -481,6 +486,7 @@ public class MidiGeneratorGUI extends JFrame
 		velocityPatternChance = new JTextField("100", 3);
 		rotationChance = new JTextField("25", 3);
 		
+		
 		p110.add(addDrums);
 		p110.add(drumInst);
 		p110.add(drumAddJButton);
@@ -510,6 +516,8 @@ public class MidiGeneratorGUI extends JFrame
 		add(p90, constraints);
 		constraints.gridy = 100;
 		add(p100, constraints);
+		createHorizontalSeparator(105, this, constraints);
+		
 		constraints.gridy = 110;
 		add(p110, constraints);
 		
@@ -522,6 +530,8 @@ public class MidiGeneratorGUI extends JFrame
 		
 		
 		// ---- BPM/TRANS ----
+		
+		createHorizontalSeparator(645, this, constraints);
 		
 		JPanel p650 = new JPanel();
 		
@@ -570,7 +580,7 @@ public class MidiGeneratorGUI extends JFrame
 		constraints.gridy = 650;
 		add(p650, constraints);
 		
-		
+		createHorizontalSeparator(655, this, constraints);
 		// ------- BPM / TRANSPOSE -----------
 		
 		JPanel p700 = new JPanel();
@@ -658,11 +668,11 @@ public class MidiGeneratorGUI extends JFrame
 		constraints.gridheight = 1;
 		add(chordPanel870, constraints);
 		
-		
+		createHorizontalSeparator(875, this, constraints);
 		// CONTROL PANEL
 		
 		JPanel controlPanel900 = new JPanel();
-		randomSeed = new JTextField("0", 16);
+		randomSeed = new JTextField("0", 8);
 		JButton compose = new JButton("Compose");
 		compose.addActionListener(this);
 		compose.setActionCommand("Compose");
@@ -1180,6 +1190,9 @@ public class MidiGeneratorGUI extends JFrame
 			mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 			subTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 			messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+			for (JSeparator x : separators) {
+				x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+			}
 			pack();
 			setVisible(true);
 			repaint();
@@ -1732,5 +1745,19 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private static DrumPanel getDrumPanelByOrder(int order, List<DrumPanel> panels) {
 		return panels.stream().filter(e -> e.getDrumPanelOrder() == order).findFirst().get();
+	}
+	
+	private static void createHorizontalSeparator(int y, JFrame f, GridBagConstraints c) {
+		int anchorTemp = c.anchor;
+		JSeparator x = new JSeparator(SwingConstants.HORIZONTAL);
+		x.setPreferredSize(new Dimension(1200, 3));
+		x.setForeground(isDarkMode ? Color.CYAN : Color.BLUE);
+		JPanel sepPanel = new JPanel();
+		sepPanel.add(x);
+		c.gridy = y;
+		c.anchor = GridBagConstraints.CENTER;
+		f.add(sepPanel, c);
+		c.anchor = anchorTemp;
+		separators.add(x);
 	}
 }

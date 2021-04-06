@@ -31,16 +31,16 @@ public class DrumPanel extends JPanel {
 	private JTextField chordSpan = new JTextField("1", 1);
 	
 	private JTextField pauseChance = new JTextField("70", 2);
-	private JTextField exceptionChance = new JTextField("5", 3);
+	private JTextField exceptionChance = new JTextField("5", 2);
 	
 	private JTextField velocityMin = new JTextField("60", 3);
 	private JTextField velocityMax = new JTextField("100", 3);
 	
 	private JTextField slideMiliseconds = new JTextField("0", 4);
 	
-	private JTextField patternSeed = new JTextField("0", 12);
+	private JTextField patternSeed = new JTextField("0", 8);
 	private JComboBox<String> pattern = new JComboBox<String>();
-	private JCheckBox isVelocityPattern = new JCheckBox("Velocity pattern", true);
+	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 	private JTextField patternRotation = new JTextField("0", 1);
 	
 	private JButton removeButton = new JButton("X");
@@ -74,7 +74,7 @@ public class DrumPanel extends JPanel {
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
 		this.add(isVelocityPattern);
-		this.add(new JLabel("Rotate by"));
+		this.add(new JLabel("Rot."));
 		this.add(patternRotation);
 		
 		this.add(removeButton);
