@@ -87,7 +87,7 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private static final double[] CHORD_STRUM_DIVISION_ARRAY = { 10000, 2, 3, 4, 5, 6, 8, 12, 16,
 			32 };
-	private static final double[] SECOND_CHORD_STRUM_MULTIPLIER = { 1, 1.25, 1.5, 2, 3, 4 };
+	private static final double[] SECOND_CHORD_STRUM_MULTIPLIER = { 1, 1.5, 2, 3, 4 };
 	
 	private static boolean isDarkMode = false;
 	JLabel mainTitle;
@@ -476,13 +476,6 @@ public class MidiGeneratorGUI extends JFrame
 		
 		selectJComboBoxByInst(drumInst, MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS), 42);
 		
-		randomDrumsCount = new JTextField("4", 2);
-		
-		JButton randomizeDrums = new JButton("Randomize New Drums:");
-		randomizeDrums.addActionListener(this);
-		randomizeDrums.setActionCommand("RandDrums");
-		
-		randomDrumsOnCompose = new JCheckBox("on compose", true);
 		randomDrumSlide = new JCheckBox("Random slide", true);
 		randomDrumPattern = new JCheckBox("Include presets", true);
 		velocityPatternChance = new JTextField("100", 3);
@@ -492,9 +485,6 @@ public class MidiGeneratorGUI extends JFrame
 		p110.add(drumInst);
 		p110.add(drumAddJButton);
 		p110.add(clearPatternSeeds);
-		p110.add(randomizeDrums);
-		p110.add(randomDrumsCount);
-		p110.add(randomDrumsOnCompose);
 		p110.add(randomDrumSlide);
 		p110.add(randomDrumPattern);
 		p110.add(new JLabel("Velocity pattern%"));
@@ -535,6 +525,14 @@ public class MidiGeneratorGUI extends JFrame
 		
 		JPanel p650 = new JPanel();
 		
+		randomDrumsCount = new JTextField("4", 2);
+		
+		JButton randomizeDrums = new JButton("Randomize New Drums:");
+		randomizeDrums.addActionListener(this);
+		randomizeDrums.setActionCommand("RandDrums");
+		
+		randomDrumsOnCompose = new JCheckBox("on compose", true);
+		
 		JButton randomizeInstruments = new JButton("Randomize Inst.");
 		randomizeInstruments.addActionListener(this);
 		randomizeInstruments.setActionCommand("RandomizeInst");
@@ -548,12 +546,26 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeInstOnCompose.setSelected(true);
 		randomizeBmpTransOnCompose.setSelected(true);
 		
+		
 		constraints.anchor = GridBagConstraints.CENTER;
 		
+		p650.add(randomizeDrums);
+		p650.add(randomDrumsCount);
+		p650.add(randomDrumsOnCompose);
 		p650.add(randomizeInstruments);
 		p650.add(randomizeInstOnCompose);
 		p650.add(randomizeBpmTransp);
 		p650.add(randomizeBmpTransOnCompose);
+		
+		
+		JButton randomizeStrums = new JButton("Randomize strums");
+		randomizeStrums.addActionListener(this);
+		randomizeStrums.setActionCommand("RandStrums");
+		p650.add(randomizeStrums);
+		
+		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
+		randomizeChordStrumsOnCompose.setSelected(true);
+		p650.add(randomizeChordStrumsOnCompose);
 		
 		constraints.gridy = 650;
 		add(p650, constraints);
@@ -600,15 +612,6 @@ public class MidiGeneratorGUI extends JFrame
 		spiceAllowDimAug = new JCheckBox("Dim/Aug");
 		spiceAllowDimAug.setSelected(false);
 		p850.add(spiceAllowDimAug);
-		
-		JButton randomizeStrums = new JButton("Randomize strums");
-		randomizeStrums.addActionListener(this);
-		randomizeStrums.setActionCommand("RandStrums");
-		p850.add(randomizeStrums);
-		
-		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
-		randomizeChordStrumsOnCompose.setSelected(true);
-		p850.add(randomizeChordStrumsOnCompose);
 		
 		constraints.gridy = 850;
 		add(p850, constraints);
@@ -860,7 +863,11 @@ public class MidiGeneratorGUI extends JFrame
 				&& randomizeBmpTransOnCompose.isSelected())) {
 			Random instGen = new Random();
 			
-			mainBpm.setText(String.valueOf(instGen.nextInt(30) + 70));
+			int bpm = instGen.nextInt(30) + 50;
+			if (arpAffectsBpm.isSelected() && secondArpMultiplier.getSelectedIndex() > 1) {
+				bpm *= (1 / ((secondArpMultiplier.getSelectedIndex() + 1) / 2.0));
+			}
+			mainBpm.setText("" + bpm);
 			transposeScore.setText(String.valueOf(instGen.nextInt(12) - 6));
 			
 			System.out.println("RANDOMIZED BPM/Transpose!");
@@ -1250,11 +1257,6 @@ public class MidiGeneratorGUI extends JFrame
 					+ 1;
 			MelodyGenerator.SECOND_ARP_OCTAVE_ADJUST = Integer
 					.valueOf((String) secondArpOctaveAdjust.getSelectedItem());
-			if (arpAffectsBpm.isSelected() && MelodyGenerator.SECOND_ARP_COUNT_MULTIPLIER > 1) {
-				MelodyGenerator.MAIN_BPM *= (2.0
-						/ (MelodyGenerator.SECOND_ARP_COUNT_MULTIPLIER + 1));
-				// mainBpm.setText(String.valueOf(MelodyGenerator.MAIN_BPM));
-			}
 			
 			
 			MelodyGenerator.ARPS_PER_CHORD = arpCount.getSelectedIndex() + 1;
