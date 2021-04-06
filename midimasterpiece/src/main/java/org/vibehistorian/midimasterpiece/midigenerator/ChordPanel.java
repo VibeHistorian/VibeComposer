@@ -8,6 +8,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
+
 public class ChordPanel extends JPanel {
 	
 	/**
@@ -16,6 +18,8 @@ public class ChordPanel extends JPanel {
 	private static final long serialVersionUID = 7721347698114633901L;
 	
 	private JLabel chordPanelOrder = new JLabel("0");
+	
+	private JComboBox<String> instrument = new JComboBox<String>();
 	
 	private JTextField transitionChance = new JTextField("0", 2);
 	private JTextField transitionSplit = new JTextField("625", 3);
@@ -32,17 +36,20 @@ public class ChordPanel extends JPanel {
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
+		
+		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1), instrument);
+		
 		this.add(new JLabel("#"));
 		this.add(chordPanelOrder);
-		this.add(new JLabel(" "));
-		this.add(new JLabel("Transition"));
+		this.add(instrument);
+		this.add(new JLabel("Transition%"));
 		this.add(transitionChance);
 		this.add(new JLabel("Split(ms)"));
 		this.add(transitionSplit);
 		this.add(new JLabel("Strum(ms)"));
 		this.add(strum);
 		
-		this.add(new JLabel("Delay start(ms)"));
+		this.add(new JLabel("Start+(ms)"));
 		this.add(delay);
 		
 		this.add(new JLabel("Transpose"));
@@ -138,6 +145,41 @@ public class ChordPanel extends JPanel {
 	
 	public void setPatternRotation(int rotation) {
 		patternRotation.setText(String.valueOf(rotation));
+	}
+	
+	public int getInstrument() {
+		return MidiUtils.getInstByIndex(instrument.getSelectedIndex(),
+				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1));
+	}
+	
+	public void setInstrument(int instrument) {
+		MidiUtils.selectJComboBoxByInst(this.instrument,
+				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1), instrument);
+	}
+	
+	public ChordPart toChordPart(int lastRandomSeed) {
+		ChordPart part = new ChordPart(getInstrument(), getTransitionChance(), getTransitionSplit(),
+				getStrum(), getDelay(), getTranspose(),
+				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
+				getPatternRotation(), getChordPanelOrder());
+		return part;
+	}
+	
+	public void setFromChordPart(ChordPart part) {
+		setInstrument(part.getInstrument());
+		setTransitionChance(part.getTransitionChance());
+		setTransitionSplit(part.getTransitionSplit());
+		setTranspose(part.getTranspose());
+		
+		setStrum(part.getStrum());
+		setDelay(part.getDelay());
+		
+		setPatternSeed(part.getPatternSeed());
+		setPattern(part.getPattern());
+		setPatternRotation(part.getPatternRotation());
+		
+		setChordPanelOrder(part.getOrder());
+		
 	}
 	
 }

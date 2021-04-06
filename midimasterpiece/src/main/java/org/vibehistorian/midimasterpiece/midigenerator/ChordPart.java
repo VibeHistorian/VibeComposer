@@ -6,6 +6,8 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})
 public class ChordPart {
+	private int instrument = 46;
+	
 	private int transitionChance = 0;
 	private int transitionSplit = 625;
 	
@@ -22,9 +24,11 @@ public class ChordPart {
 		
 	}
 	
-	public ChordPart(int transitionChance, int transitionSplit, int strum, int delay, int transpose,
-			int patternSeed, RhythmPattern pattern, int patternRotation, int order) {
+	public ChordPart(int instrument, int transitionChance, int transitionSplit, int strum,
+			int delay, int transpose, int patternSeed, RhythmPattern pattern, int patternRotation,
+			int order) {
 		super();
+		this.setInstrument(instrument);
 		this.transitionChance = transitionChance;
 		this.transitionSplit = transitionSplit;
 		this.strum = strum;
@@ -35,6 +39,7 @@ public class ChordPart {
 		this.patternRotation = patternRotation;
 		this.order = order;
 	}
+	
 	
 	public int getTransitionChance() {
 		return transitionChance;
@@ -106,5 +111,13 @@ public class ChordPart {
 	
 	public void setPatternSeed(int patternSeed) {
 		this.patternSeed = patternSeed;
+	}
+	
+	public int getInstrument() {
+		return instrument;
+	}
+	
+	public void setInstrument(int instrument) {
+		this.instrument = instrument;
 	}
 }

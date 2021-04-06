@@ -11,6 +11,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.swing.JComboBox;
+
 import jm.constants.Durations;
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
@@ -338,6 +340,24 @@ public class MidiUtils {
 		PART_INST_NAMES.put(PARTS.ARP2, PLUCKY_INST_NAMES);
 		PART_INST_NAMES.put(PARTS.BASSROOTS, BASS_INST_NAMES);
 		PART_INST_NAMES.put(PARTS.DRUMS, DRUM_INST_NAMES);
+	}
+	
+	public static Integer getInstByIndex(int index, String[] instPool) {
+		List<Integer> instPoolNumbers = getInstNumbers(instPool);
+		return instPoolNumbers.get(index);
+	}
+	
+	public static void selectJComboBoxByInst(JComboBox<String> choice, String[] instPool,
+			Integer number) {
+		List<Integer> instPoolNumbers = getInstNumbers(instPool);
+		int index = instPoolNumbers.indexOf(number);
+		choice.setSelectedIndex(index);
+	}
+
+	public static void addAllToJComboBox(String[] choices, JComboBox<String> choice) {
+		for (String c : choices) {
+			choice.addItem(c);
+		}
 	}
 	
 	
