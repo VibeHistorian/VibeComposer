@@ -55,7 +55,13 @@ public class MelodyGenerator implements JMC {
 	
 	public static List<DrumPart> DRUM_PARTS = new ArrayList<>();
 	public static List<ChordPart> CHORD_PARTS = new ArrayList<>();
-	public static double startTimeDelay = 0.5;
+	
+	public static ChordGenSettings CHORD_SETTINGS = new ChordGenSettings();
+	public static DrumGenSettings DRUM_SETTINGS = new DrumGenSettings();
+	public static ArpGenSettings ARP_SETTINGS = new ArpGenSettings();
+	
+	public static double START_TIME_DELAY = 0.5;
+	public static double DEFAULT_CHORD_SPLIT = 625;
 	
 	private static final String ARP_PATTERN_KEY = "ARP_PATTERN";
 	private static final String ARP_OCTAVE_KEY = "ARP_OCTAVE";
@@ -425,8 +431,11 @@ public class MelodyGenerator implements JMC {
 					boolean transition = transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
 							.getTransitionChance();
 					if (transition) {
-						double duration1 = progressionDurations.get(j)
-								* CHORD_PARTS.get(k).getTransitionSplit() / 1000.0;
+						double splitTime = CHORD_SETTINGS.isUseSplit()
+								? CHORD_PARTS.get(k).getTransitionSplit()
+								: DEFAULT_CHORD_SPLIT;
+						
+						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
 						double duration2 = progressionDurations.get(j) - duration1;
 						int transChord = (transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
 								.getTransitionChance()) ? j : (j + 1) % actualProgression.size();
@@ -497,8 +506,9 @@ public class MelodyGenerator implements JMC {
 		
 		Mod.transpose(cphraseBassRoot, -24 + TRANSPOSE_SCORE);
 		for (int i = 0; i < CHORD_PARTS.size(); i++) {
-			Mod.transpose(chordsCPhrases.get(i),
-					-12 + TRANSPOSE_SCORE + CHORD_PARTS.get(i).getTranspose());
+			int extraTranspose = CHORD_SETTINGS.isUseTranspose() ? CHORD_PARTS.get(i).getTranspose()
+					: 0;
+			Mod.transpose(chordsCPhrases.get(i), -12 + TRANSPOSE_SCORE + extraTranspose);
 		}
 		Mod.transpose(arp1CPhrase, -12 + TRANSPOSE_SCORE);
 		Mod.transpose(arp2CPhrase, -24 + TRANSPOSE_SCORE + SECOND_ARP_OCTAVE_ADJUST);
@@ -513,20 +523,28 @@ public class MelodyGenerator implements JMC {
 		arp2CPhrase.setDynamic(65);
 		cphraseBassRoot.setDynamic(65);
 		
-		melodyPhrase.setStartTime(startTimeDelay);
-		for (int i = 0; i < CHORD_PARTS.size(); i++) {
-			chordsCPhrases.get(i)
-					.setStartTime(startTimeDelay + (CHORD_PARTS.get(i).getDelay() / 1000.0));
-		}
-		arp1CPhrase.setStartTime(startTimeDelay);
-		arp2CPhrase.setStartTime(startTimeDelay);
-		cphraseBassRoot.setStartTime(startTimeDelay);
-		chordSlashCPhrase.setStartTime(startTimeDelay);
-		
+		melodyPhrase.setStartTime(START_TIME_DELAY);
 		
 		for (int i = 0; i < CHORD_PARTS.size(); i++) {
-			chordsCPhrases.get(i).flam(CHORD_PARTS.get(i).getStrum() / 1000.0);
+			double additionalDelay = 0;
+			if (CHORD_SETTINGS.isUseDelay()) {
+				additionalDelay = (CHORD_PARTS.get(i).getDelay() / 1000.0);
+			}
+			chordsCPhrases.get(i).setStartTime(START_TIME_DELAY + additionalDelay);
 		}
+		
+		
+		arp1CPhrase.setStartTime(START_TIME_DELAY);
+		arp2CPhrase.setStartTime(START_TIME_DELAY);
+		cphraseBassRoot.setStartTime(START_TIME_DELAY);
+		chordSlashCPhrase.setStartTime(START_TIME_DELAY);
+		
+		if (CHORD_SETTINGS.isUseStrum()) {
+			for (int i = 0; i < CHORD_PARTS.size(); i++) {
+				chordsCPhrases.get(i).flam(CHORD_PARTS.get(i).getStrum() / 1000.0);
+			}
+		}
+		
 		
 		melody.addPhrase(melodyPhrase);
 		arp1.addCPhrase(arp1CPhrase);
@@ -697,7 +715,7 @@ public class MelodyGenerator implements JMC {
 				continue;
 			}
 			drumPhrases[i].setStartTime(
-					startTimeDelay + (DRUM_PARTS.get(i).getSlideMiliseconds() / 1000.0));
+					START_TIME_DELAY + (DRUM_PARTS.get(i).getSlideMiliseconds() / 1000.0));
 			
 			parts[i].addPhrase(drumPhrases[i]);
 			scr.addPart(parts[i]);

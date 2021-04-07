@@ -297,6 +297,9 @@ public class GUIConfig {
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	
+	
+	private ChordGenSettings chordGenSettings = new ChordGenSettings();
+	
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 	private boolean dimAugEnabled = false;
@@ -500,6 +503,14 @@ public class GUIConfig {
 	
 	public void setChordParts(List<ChordPart> chordParts) {
 		this.chordParts = chordParts;
+	}
+
+	public ChordGenSettings getChordGenSettings() {
+		return chordGenSettings;
+	}
+
+	public void setChordGenSettings(ChordGenSettings chordGenSettings) {
+		this.chordGenSettings = chordGenSettings;
 	}
 	
 }
