@@ -56,20 +56,12 @@ public class GUIConfig {
 		this.melodyEnable = melodyEnable;
 	}
 	
-	public boolean isChords1Enable() {
-		return chords1Enable;
+	public boolean isChordsEnable() {
+		return chordsEnable;
 	}
 	
-	public void setChords1Enable(boolean chords1Enable) {
-		this.chords1Enable = chords1Enable;
-	}
-	
-	public boolean isChords2Enable() {
-		return chords2Enable;
-	}
-	
-	public void setChords2Enable(boolean chords2Enable) {
-		this.chords2Enable = chords2Enable;
+	public void setChordsEnable(boolean chordsEnable) {
+		this.chordsEnable = chordsEnable;
 	}
 	
 	public boolean isArp1ArpEnable() {
@@ -96,20 +88,12 @@ public class GUIConfig {
 		this.melodyInst = melodyInst;
 	}
 	
-	public int getChords1Inst() {
-		return chords1Inst;
+	public int getChordsInst() {
+		return chordsInst;
 	}
 	
-	public void setChords1Inst(int chords1Inst) {
-		this.chords1Inst = chords1Inst;
-	}
-	
-	public int getChords2Inst() {
-		return chords2Inst;
-	}
-	
-	public void setChords2Inst(int chords2Inst) {
-		this.chords2Inst = chords2Inst;
+	public void setChordsInst(int chordsInst) {
+		this.chordsInst = chordsInst;
 	}
 	
 	public int getArp1ArpInst() {
@@ -274,15 +258,13 @@ public class GUIConfig {
 	private boolean minor = false;
 	
 	private boolean melodyEnable = true;
-	private boolean chords1Enable = false;
-	private boolean chords2Enable = false;
+	private boolean chordsEnable = false;
 	private boolean arp1ArpEnable = true;
 	private boolean arp2ArpEnable = true;
 	private boolean bassRootsEnable = true;
 	
 	private int melodyInst = 46;
-	private int chords1Inst = 107;
-	private int chords2Inst = 95;
+	private int chordsInst = 107;
 	private int arp1ArpInst = 46;
 	private int arp2ArpInst = 4;
 	private int bassRootsInst = 33;
@@ -311,10 +293,9 @@ public class GUIConfig {
 	private int chordTransitionChance = 0;
 	private int chordSlashChance = 0;
 	private int chordStrum = 0;
-	private int secondChordStrum = 0;
 	
+	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
-	private boolean drumPatternAffectsVelocity = true;
 	
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
@@ -333,8 +314,7 @@ public class GUIConfig {
 	
 	//start-transients
 	private transient boolean lockMelody = false;
-	private transient boolean lockChords1 = true;
-	private transient boolean lockChords2 = true;
+	private transient boolean lockChords = true;
 	private transient boolean lockArp1Arp = false;
 	private transient boolean lockArp2Arp = false;
 	private transient boolean lockBassRoots = false;
@@ -358,22 +338,13 @@ public class GUIConfig {
 		this.lockMelody = lockMelody;
 	}
 	
-	public boolean isLockChords1() {
-		return lockChords1;
+	public boolean isLockChords() {
+		return lockChords;
 	}
 	
 	@XmlTransient
-	public void setLockChords1(boolean lockChords1) {
-		this.lockChords1 = lockChords1;
-	}
-	
-	public boolean isLockChords2() {
-		return lockChords2;
-	}
-	
-	@XmlTransient
-	public void setLockChords2(boolean lockChords2) {
-		this.lockChords2 = lockChords2;
+	public void setLockChords(boolean lockChords) {
+		this.lockChords = lockChords;
 	}
 	
 	public boolean isLockArp1Arp() {
@@ -499,14 +470,6 @@ public class GUIConfig {
 		this.drumParts = drumParts;
 	}
 	
-	public boolean isDrumPatternAffectsVelocity() {
-		return drumPatternAffectsVelocity;
-	}
-	
-	public void setDrumPatternAffectsVelocity(boolean drumPatternAffectsVelocity) {
-		this.drumPatternAffectsVelocity = drumPatternAffectsVelocity;
-	}
-	
 	public int getChordTransitionChance() {
 		return chordTransitionChance;
 	}
@@ -523,20 +486,20 @@ public class GUIConfig {
 		this.chordStrum = chordStrum;
 	}
 	
-	public int getSecondChordStrum() {
-		return secondChordStrum;
-	}
-	
-	public void setSecondChordStrum(int secondChordStrum) {
-		this.secondChordStrum = secondChordStrum;
-	}
-	
 	public int getChordSlashChance() {
 		return chordSlashChance;
 	}
 	
 	public void setChordSlashChance(int chordSlashChance) {
 		this.chordSlashChance = chordSlashChance;
+	}
+	
+	public List<ChordPart> getChordParts() {
+		return chordParts;
+	}
+	
+	public void setChordParts(List<ChordPart> chordParts) {
+		this.chordParts = chordParts;
 	}
 	
 }

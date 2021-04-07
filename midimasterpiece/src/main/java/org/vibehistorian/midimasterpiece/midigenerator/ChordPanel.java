@@ -3,6 +3,7 @@ package org.vibehistorian.midimasterpiece.midigenerator;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,14 +34,17 @@ public class ChordPanel extends JPanel {
 	private JComboBox<String> pattern = new JComboBox<String>();
 	private JTextField patternRotation = new JTextField("0", 1);
 	
+	private JCheckBox lockInst = new JCheckBox("Lock", false);
+	
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
 		
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1), instrument);
+		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), instrument);
 		
 		this.add(new JLabel("#"));
 		this.add(chordPanelOrder);
+		this.add(lockInst);
 		this.add(instrument);
 		this.add(new JLabel("Transition%"));
 		this.add(transitionChance);
@@ -92,7 +96,7 @@ public class ChordPanel extends JPanel {
 	}
 	
 	public int getTransitionSplit() {
-		return Integer.valueOf(transitionChance.getText());
+		return Integer.valueOf(transitionSplit.getText());
 	}
 	
 	public void setTransitionSplit(int transitionSplit) {
@@ -100,7 +104,7 @@ public class ChordPanel extends JPanel {
 	}
 	
 	public int getStrum() {
-		return Integer.valueOf(transitionChance.getText());
+		return Integer.valueOf(strum.getText());
 	}
 	
 	public void setStrum(int strum) {
@@ -108,7 +112,7 @@ public class ChordPanel extends JPanel {
 	}
 	
 	public int getDelay() {
-		return Integer.valueOf(transitionChance.getText());
+		return Integer.valueOf(delay.getText());
 	}
 	
 	public void setDelay(int delay) {
@@ -116,7 +120,7 @@ public class ChordPanel extends JPanel {
 	}
 	
 	public int getTranspose() {
-		return Integer.valueOf(transitionChance.getText());
+		return Integer.valueOf(transpose.getText());
 	}
 	
 	public void setTranspose(int transpose) {
@@ -149,12 +153,12 @@ public class ChordPanel extends JPanel {
 	
 	public int getInstrument() {
 		return MidiUtils.getInstByIndex(instrument.getSelectedIndex(),
-				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1));
+				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS));
 	}
 	
 	public void setInstrument(int instrument) {
 		MidiUtils.selectJComboBoxByInst(this.instrument,
-				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS1), instrument);
+				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), instrument);
 	}
 	
 	public ChordPart toChordPart(int lastRandomSeed) {
@@ -180,6 +184,14 @@ public class ChordPanel extends JPanel {
 		
 		setChordPanelOrder(part.getOrder());
 		
+	}
+	
+	public boolean getLockInst() {
+		return lockInst.isSelected();
+	}
+	
+	public void setLockInst(boolean selected) {
+		this.lockInst.setSelected(selected);
 	}
 	
 }

@@ -1,5 +1,6 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -97,6 +98,7 @@ public class ChordPart {
 		this.patternRotation = patternRotation;
 	}
 	
+	@XmlAttribute
 	public int getOrder() {
 		return order;
 	}

@@ -21,7 +21,7 @@ import jm.music.data.Note;
 public class MidiUtils {
 	
 	public enum PARTS {
-		MELODY, CHORDS1, CHORDS2, ARP1, ARP2, BASSROOTS, DRUMS;
+		MELODY, CHORDS, ARP1, ARP2, BASSROOTS, DRUMS;
 	}
 	
 	//full scale
@@ -334,8 +334,7 @@ public class MidiUtils {
 	public static final Map<PARTS, String[]> PART_INST_NAMES = new HashMap<>();
 	static {
 		PART_INST_NAMES.put(PARTS.MELODY, PLUCKY_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.CHORDS1, CHORD_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.CHORDS2, PLUCKY_INST_NAMES);
+		PART_INST_NAMES.put(PARTS.CHORDS, PLUCKY_INST_NAMES);
 		PART_INST_NAMES.put(PARTS.ARP1, PLUCKY_INST_NAMES);
 		PART_INST_NAMES.put(PARTS.ARP2, PLUCKY_INST_NAMES);
 		PART_INST_NAMES.put(PARTS.BASSROOTS, BASS_INST_NAMES);
@@ -353,7 +352,7 @@ public class MidiUtils {
 		int index = instPoolNumbers.indexOf(number);
 		choice.setSelectedIndex(index);
 	}
-
+	
 	public static void addAllToJComboBox(String[] choices, JComboBox<String> choice) {
 		for (String c : choices) {
 			choice.addItem(c);
