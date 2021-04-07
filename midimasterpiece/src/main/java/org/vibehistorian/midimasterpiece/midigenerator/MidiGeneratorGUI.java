@@ -240,25 +240,26 @@ public class MidiGeneratorGUI extends JFrame
 		// ---- INSTRUMENTS ----
 		{
 			// melody
-			initMelodySettings(20, GridBagConstraints.CENTER);
-			initMelody(25, GridBagConstraints.CENTER);
+			initMelodySettings(20, GridBagConstraints.WEST);
+			initMelody(25, GridBagConstraints.WEST);
 			createHorizontalSeparator(30, this);
 			
 			// chords
-			initChordSettings(40, GridBagConstraints.CENTER);
+			initChordSettings(40, GridBagConstraints.WEST);
 			initChords(50, GridBagConstraints.CENTER);
 			createHorizontalSeparator(100, this);
 			
 			// arps
-			initArps(110, GridBagConstraints.CENTER);
+			initArps(110, GridBagConstraints.WEST);
 			createHorizontalSeparator(150, this);
 			
 			// bass
-			initBassRoots(170, GridBagConstraints.CENTER);
+			initBassRoots(170, GridBagConstraints.WEST);
 			createHorizontalSeparator(175, this);
 			
 			// drums
-			initDrums(180, GridBagConstraints.CENTER);
+			initDrumSettings(190, GridBagConstraints.WEST);
+			initDrums(200, GridBagConstraints.CENTER);
 			createHorizontalSeparator(290, this);
 		}
 		
@@ -484,7 +485,7 @@ public class MidiGeneratorGUI extends JFrame
 		JButton randomizeChords = new JButton("Randomize Chords:");
 		randomizeChords.addActionListener(this);
 		randomizeChords.setActionCommand("RandChords");
-		randomChordsOnCompose = new JCheckBox("on compose", true);
+		randomChordsOnCompose = new JCheckBox("on compose", false);
 		chordSettingsPanel.add(randomizeChords);
 		chordSettingsPanel.add(randomChordsCount);
 		chordSettingsPanel.add(randomChordsOnCompose);
@@ -499,7 +500,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomChordDelay = new JCheckBox("Use delay", false);
 		randomChordStrum = new JCheckBox("Use strum", true);
 		randomChordSplit = new JCheckBox("Use split", false);
-		randomChordTranspose = new JCheckBox("Use transpose", true);
+		randomChordTranspose = new JCheckBox("Use transpose", false);
 		randomChordPattern = new JCheckBox("Include presets", true);
 		chordRotationChance = new JTextField("25", 3);
 		
@@ -519,9 +520,6 @@ public class MidiGeneratorGUI extends JFrame
 		// ---- CHORDS ----
 		// gridy 50 - 99 range
 		
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		
 		
 		JPanel scrollableChordPanels = new JPanel();
 		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
@@ -538,9 +536,10 @@ public class MidiGeneratorGUI extends JFrame
 		chordScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		
 		if (addChords.isSelected()) {
-			createRandomChordPanels(4);
+			createRandomChordPanels(2);
 		}
-		constraints.gridy = startY + 40;
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
 		add(chordScrollPane, constraints);
 	}
 	
@@ -637,9 +636,9 @@ public class MidiGeneratorGUI extends JFrame
 		add(bassRootsPanel, constraints);
 	}
 	
-	private void initDrums(int startY, int anchorSide) {
+	private void initDrumSettings(int startY, int anchorSide) {
 		JPanel drumsPanel = new JPanel();
-		addDrums = new JCheckBox("Drums", true);
+		addDrums = new JCheckBox("Add Drums", false);
 		
 		
 		drumInst = new JComboBox<String>();
@@ -680,15 +679,12 @@ public class MidiGeneratorGUI extends JFrame
 		drumsPanel.add(new JLabel("Rotation chance%"));
 		drumsPanel.add(rotationChance);
 		
-		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(drumsPanel, constraints);
-		
-		// ---- GENERATED DRUMS ----
-		// gridy 200 - 300 range
-		
-		
+	}
+	
+	private void initDrums(int startY, int anchorSide) {
 		JPanel scrollableDrumPanels = new JPanel();
 		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
 		scrollableDrumPanels.setAutoscrolls(true);
@@ -708,7 +704,8 @@ public class MidiGeneratorGUI extends JFrame
 			createRandomDrumPanels(4);
 		}
 		
-		constraints.gridy = startY + 40;
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
 		add(drumScrollPane, constraints);
 		
 	}
@@ -1473,6 +1470,7 @@ public class MidiGeneratorGUI extends JFrame
 						MidiUtils.getInstByIndex(bassRootsInst.getSelectedIndex(),
 								MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS)));
 			if (addDrums.isSelected()) {
+				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.DRUMS, 0);
 				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels();
 			}
 			
