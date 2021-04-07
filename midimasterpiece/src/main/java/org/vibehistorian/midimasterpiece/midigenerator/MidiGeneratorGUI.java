@@ -97,6 +97,10 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private static List<JSeparator> separators = new ArrayList<>();
 	
+	private static int chordGenStart = 50;
+	private static int arpGenStart = 100;
+	private static int drumGenStart = 200;
+	
 	JLabel mainTitle;
 	JLabel subTitle;
 	JButton switchDarkMode;
@@ -215,12 +219,95 @@ public class MidiGeneratorGUI extends JFrame
 	public MidiGeneratorGUI(String title) {
 		super(title);
 		
-		//register the closebox event
+		// register the closebox event
 		this.addWindowListener(this);
 		
 		setLayout(new GridBagLayout());
 		GridBagConstraints constraints = new GridBagConstraints();
 		
+		initTitles(constraints, 0, GridBagConstraints.CENTER);
+		createHorizontalSeparator(15, this, constraints);
+		// ---- INSTRUMENTS ----
+		
+		// melody
+		initMelodySettings(constraints, 20, GridBagConstraints.CENTER);
+		initMelody(constraints, 25, GridBagConstraints.WEST);
+		createHorizontalSeparator(30, this, constraints);
+		
+		// chords
+		initChordSettings(constraints, 40, GridBagConstraints.CENTER);
+		initChords(constraints, 50, GridBagConstraints.WEST);
+		createHorizontalSeparator(100, this, constraints);
+		
+		// arps
+		initArps(constraints, 110, GridBagConstraints.WEST);
+		createHorizontalSeparator(150, this, constraints);
+		
+		// bass
+		initBassRoots(constraints, 170, GridBagConstraints.WEST);
+		createHorizontalSeparator(175, this, constraints);
+		
+		// drums
+		initDrums(constraints, 180, GridBagConstraints.WEST);
+		createHorizontalSeparator(290, this, constraints);
+		
+		
+		// ---- OTHER SETTINGS ----
+		
+		// randomization buttons
+		initRandomButtons(constraints, 300, GridBagConstraints.CENTER);
+		
+		// bpm/transpose
+		initBpmTrans(constraints, 320, GridBagConstraints.CENTER);
+		
+		// chord settings - variety/spice
+		initChordSettingsVariety(constraints, 340, GridBagConstraints.CENTER);
+		
+		// chord settings - progressions
+		initChordSettingsProgression(constraints, 360, GridBagConstraints.CENTER);
+		createHorizontalSeparator(370, this, constraints);
+		
+		// ---- CONTROL PANEL -----
+		initControlPanel(constraints, 400, GridBagConstraints.CENTER);
+		
+		// ---- PLAY PANEL ----
+		
+		initPlayPanel(constraints, 420, GridBagConstraints.CENTER);
+		
+		
+		// --- GENERATED MIDI DRAG n DROP ---
+		
+		JPanel p960 = new JPanel();
+		
+		generatedMidi = new JList<File>();
+		generatedMidi.setTransferHandler(new FileTransferHandler());
+		generatedMidi.setDragEnabled(true);
+		p960.add(new JLabel("Midi Drag'N'Drop:"));
+		p960.add(generatedMidi);
+		constraints.gridy = 960;
+		add(p960, constraints);
+		
+		// ---- MESSAGE PANEL ----
+		
+		JPanel messagePanel999 = new JPanel();
+		messageLabel = new JLabel("Click something!");
+		messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		messagePanel999.add(messageLabel);
+		constraints.gridy = 999;
+		add(messagePanel999, constraints);
+		
+		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+		int screenHeight = d.height;
+		int screenWidth = d.width;
+		setSize(screenWidth / 2, screenHeight / 2);
+		setLocation(screenWidth / 4, screenHeight / 4);
+		pack();
+		setVisible(true);
+		repaint();
+	}
+	
+	private void initTitles(GridBagConstraints constraints, int startY, int anchorSide) {
 		mainTitle = new JLabel("General MIDI Generator (Beta)");
 		mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -229,18 +316,18 @@ public class MidiGeneratorGUI extends JFrame
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		constraints.weightx = 100;
 		constraints.weighty = 100;
-		constraints.gridx = 1;
-		constraints.gridy = 0;
-		constraints.gridwidth = 2;
+		constraints.gridx = 0;
+		constraints.gridy = startY;
+		constraints.gridwidth = 3;
 		constraints.gridheight = 1;
-		constraints.anchor = GridBagConstraints.CENTER;
+		constraints.anchor = anchorSide;
 		add(mainTitle, constraints);
 		constraints.gridy = 1;
 		add(subTitle, constraints);
 		
 		JPanel p5 = new JPanel();
 		
-		constraints.gridy = 5;
+		constraints.gridy = startY + 5;
 		JButton switchDarkModeButton = new JButton("Switch Dark Mode");
 		switchDarkModeButton.addActionListener(this);
 		switchDarkModeButton.setActionCommand("SwitchDarkMode");
@@ -268,58 +355,48 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams10.add(new JLabel("Minor Key:"));
 		macroParams10.add(minorScale);
 		
-		constraints.gridx = 1;
-		constraints.gridy = 10;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
+		constraints.gridy = startY + 10;
 		add(macroParams10, constraints);
 		
 		constraints.anchor = GridBagConstraints.WEST;
-		createHorizontalSeparator(15, this, constraints);
-		// -------- INSTRUMENTS -------------------
-		
-		JPanel melody20 = new JPanel();
-		JPanel arpOne100 = new JPanel();
-		JPanel arpTwo110 = new JPanel();
-		JPanel bass120 = new JPanel();
-		JPanel drumSettings180 = new JPanel();
-		
-		
+	}
+	
+	
+	private void initMelodySettings(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel melodySettingsPanel = new JPanel();
 		addMelody = new JCheckBox("Add Melody", false);
+		
+		maxJump = new JTextField("4", 2);
+		maxExceptions = new JTextField("1", 2);
+		melodySettingsPanel.add(new JLabel("Max Note Jump:"));
+		melodySettingsPanel.add(maxJump);
+		melodySettingsPanel.add(new JLabel("Max Exceptions:"));
+		melodySettingsPanel.add(maxExceptions);
+		randomChordNote = new JCheckBox();
+		randomChordNote.setSelected(true);
+		melodyFirstNoteFromChord = new JCheckBox();
+		melodyFirstNoteFromChord.setSelected(true);
+		
+		melodySettingsPanel.add(addMelody);
+		melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
+		melodySettingsPanel.add(melodyFirstNoteFromChord);
+		melodySettingsPanel.add(new JLabel("But Randomized:"));
+		melodySettingsPanel.add(randomChordNote);
+		
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(melodySettingsPanel, constraints);
+	}
+	
+	private void initMelody(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel melodyPanel = new JPanel();
+		
 		melodyInst = new JComboBox<String>();
 		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.MELODY), melodyInst);
 		arpMelodyLockInst = new JCheckBox("Inst. copy ARP1", true);
 		
-		addChords = new JCheckBox("Add Chords", true);
-		chordsInst = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), chordsInst);
-		
-		addArp1 = new JCheckBox("Add ARP1", true);
-		arp1Inst = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.ARP1), arp1Inst);
-		
-		addArp2 = new JCheckBox("Add ARP2", true);
-		arp2Inst = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), arp2Inst);
-		arp2LockInst = new JCheckBox("Inst. copy ARP1", false);
-		
-		addBassRoots = new JCheckBox("Add BassRoots", true);
-		bassRootsInst = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS), bassRootsInst);
-		
-		addDrums = new JCheckBox("Drums", false);
-		
 		MidiUtils.selectJComboBoxByInst(melodyInst, MidiUtils.PART_INST_NAMES.get(PARTS.MELODY),
 				12);
-		
-		MidiUtils.selectJComboBoxByInst(chordsInst, MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), 4);
-		
-		MidiUtils.selectJComboBoxByInst(arp1Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP1), 11);
-		
-		MidiUtils.selectJComboBoxByInst(arp2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), 4);
-		
-		MidiUtils.selectJComboBoxByInst(bassRootsInst,
-				MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS), 74);
 		
 		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -344,9 +421,6 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		
 		melodyLock = new JCheckBox("Lock Inst.", false);
-		arp1Lock = new JCheckBox("Lock Inst.", false);
-		arp2Lock = new JCheckBox("Lock Inst.", false);
-		bassRootsLock = new JCheckBox("Lock Inst.", false);
 		
 		userMelodySeed = new JTextField("0", 10);
 		JButton generateUserMelodySeed = new JButton("Random");
@@ -359,49 +433,86 @@ public class MidiGeneratorGUI extends JFrame
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		
 		
-		melody20.add(addMelody);
-		melody20.add(melodyLock);
-		melody20.add(melodyInst);
-		melody20.add(arpMelodyLockInst);
-		melody20.add(new JLabel("Pause%"));
-		melody20.add(melodyPauseChance);
-		melody20.add(generateUserMelodySeed);
-		melody20.add(userMelodySeed);
-		melody20.add(randomMelodyOnRegenerate);
-		melody20.add(clearUserMelodySeed);
+		melodyPanel.add(melodyLock);
+		melodyPanel.add(melodyInst);
+		melodyPanel.add(arpMelodyLockInst);
+		melodyPanel.add(new JLabel("Pause%"));
+		melodyPanel.add(melodyPauseChance);
+		melodyPanel.add(generateUserMelodySeed);
+		melodyPanel.add(userMelodySeed);
+		melodyPanel.add(randomMelodyOnRegenerate);
+		melodyPanel.add(clearUserMelodySeed);
+		
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(melodyPanel, constraints);
 		
 		
-		// ------------------- MELODY SETTINGS --------------------------------------
+	}
+	
+	
+	private void initChordSettings(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel chordSettingsPanel = new JPanel();
 		
-		JPanel melodySettings25 = new JPanel();
-		maxJump = new JTextField("4", 2);
-		maxExceptions = new JTextField("1", 2);
-		melodySettings25.add(new JLabel("Max Note Jump:"));
-		melodySettings25.add(maxJump);
-		melodySettings25.add(new JLabel("Max Exceptions:"));
-		melodySettings25.add(maxExceptions);
-		randomChordNote = new JCheckBox();
-		randomChordNote.setSelected(true);
-		melodyFirstNoteFromChord = new JCheckBox();
-		melodyFirstNoteFromChord.setSelected(true);
+		addChords = new JCheckBox("Add Chords", true);
+		chordsInst = new JComboBox<String>();
+		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), chordsInst);
+		MidiUtils.selectJComboBoxByInst(chordsInst, MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), 4);
+		
+		JButton chordAddJButton = new JButton("+Chord");
+		chordAddJButton.addActionListener(this);
+		chordAddJButton.setActionCommand("AddChord");
+		JButton clearChordPatternSeeds = new JButton("Clear patterns");
+		clearChordPatternSeeds.addActionListener(this);
+		clearChordPatternSeeds.setActionCommand("ClearChordPatterns");
+		
+		randomChordDelay = new JCheckBox("Random delay", true);
+		randomChordPattern = new JCheckBox("Include presets", true);
+		chordRotationChance = new JTextField("25", 3);
 		
 		
-		melodySettings25.add(new JLabel("Note#1 From Chord:"));
-		melodySettings25.add(melodyFirstNoteFromChord);
-		melodySettings25.add(new JLabel("But Randomized:"));
-		melodySettings25.add(randomChordNote);
+		chordSettingsPanel.add(addChords);
+		chordSettingsPanel.add(chordsInst);
+		chordSettingsPanel.add(chordAddJButton);
+		chordSettingsPanel.add(clearChordPatternSeeds);
+		chordSettingsPanel.add(randomChordDelay);
+		chordSettingsPanel.add(randomChordPattern);
+		chordSettingsPanel.add(new JLabel("Rotation chance%"));
+		chordSettingsPanel.add(chordRotationChance);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(chordSettingsPanel, constraints);
+	}
+	
+	private void initChords(GridBagConstraints constraints, int startY, int anchorSide) {
+		// ---- CHORDS ----
+		// gridy 50 - 99 range
 		
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
 		
-		constraints.gridx = 1;
-		constraints.gridy = 25;
-		constraints.gridwidth = 2;
-		constraints.gridheight = 1;
-		constraints.anchor = GridBagConstraints.CENTER;
-		add(melodySettings25, constraints);
-		constraints.anchor = GridBagConstraints.WEST;
-		
+		if (addChords.isSelected()) {
+			createRandomChordPanels(4);
+		}
+	}
+	
+	private void initArps(GridBagConstraints constraints, int startY, int anchorSide) {
 		// --- ARPS -----------
+		JPanel arp1Panel = new JPanel();
+		JPanel arp2Panel = new JPanel();
+		addArp1 = new JCheckBox("Add ARP1", true);
+		arp1Inst = new JComboBox<String>();
+		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.ARP1), arp1Inst);
 		
+		addArp2 = new JCheckBox("Add ARP2", true);
+		arp2Inst = new JComboBox<String>();
+		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), arp2Inst);
+		arp2LockInst = new JCheckBox("Inst. copy ARP1", false);
+		MidiUtils.selectJComboBoxByInst(arp1Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP1), 11);
+		
+		MidiUtils.selectJComboBoxByInst(arp2Inst, MidiUtils.PART_INST_NAMES.get(PARTS.ARP2), 4);
+		arp1Lock = new JCheckBox("Lock Inst.", false);
+		arp2Lock = new JCheckBox("Lock Inst.", false);
 		arpCount = new JComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
 				arpCount);
@@ -413,17 +524,17 @@ public class MidiGeneratorGUI extends JFrame
 		pauseChance = new JTextField("25", 3);
 		
 		
-		arpOne100.add(addArp1);
-		arpOne100.add(arp1Lock);
-		arpOne100.add(arp1Inst);
-		arpOne100.add(new JLabel("Arps#"));
-		arpOne100.add(arpCount);
-		arpOne100.add(randomArpCount);
-		arpOne100.add(randomArpPattern);
-		arpOne100.add(arpPatternRepeat);
-		arpOne100.add(arpAllowPauses);
-		arpOne100.add(new JLabel("%"));
-		arpOne100.add(pauseChance);
+		arp1Panel.add(addArp1);
+		arp1Panel.add(arp1Lock);
+		arp1Panel.add(arp1Inst);
+		arp1Panel.add(new JLabel("Arps#"));
+		arp1Panel.add(arpCount);
+		arp1Panel.add(randomArpCount);
+		arp1Panel.add(randomArpPattern);
+		arp1Panel.add(arpPatternRepeat);
+		arp1Panel.add(arpAllowPauses);
+		arp1Panel.add(new JLabel("%"));
+		arp1Panel.add(pauseChance);
 		
 		secondArpMultiplier = new JComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4" }, secondArpMultiplier);
@@ -438,22 +549,49 @@ public class MidiGeneratorGUI extends JFrame
 		
 		secondArpPauseChance = new JTextField("50", 3);
 		
-		arpTwo110.add(addArp2);
-		arpTwo110.add(arp2Lock);
-		arpTwo110.add(arp2Inst);
-		arpTwo110.add(arp2LockInst);
-		arpTwo110.add(new JLabel("Repeats#"));
-		arpTwo110.add(secondArpMultiplier);
-		arpTwo110.add(secondArpMultiplierRandom);
+		arp2Panel.add(addArp2);
+		arp2Panel.add(arp2Lock);
+		arp2Panel.add(arp2Inst);
+		arp2Panel.add(arp2LockInst);
+		arp2Panel.add(new JLabel("Repeats#"));
+		arp2Panel.add(secondArpMultiplier);
+		arp2Panel.add(secondArpMultiplierRandom);
 		
-		arpTwo110.add(new JLabel("Transpose+-"));
-		arpTwo110.add(secondArpOctaveAdjust);
-		arpTwo110.add(new JLabel("Pause%"));
-		arpTwo110.add(secondArpPauseChance);
+		arp2Panel.add(new JLabel("Transpose+-"));
+		arp2Panel.add(secondArpOctaveAdjust);
+		arp2Panel.add(new JLabel("Pause%"));
+		arp2Panel.add(secondArpPauseChance);
 		
-		bass120.add(addBassRoots);
-		bass120.add(bassRootsLock);
-		bass120.add(bassRootsInst);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(arp1Panel, constraints);
+		constraints.gridy = startY + 10;
+		add(arp2Panel, constraints);
+	}
+	
+	private void initBassRoots(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel bassRootsPanel = new JPanel();
+		addBassRoots = new JCheckBox("Add BassRoots", true);
+		bassRootsInst = new JComboBox<String>();
+		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS), bassRootsInst);
+		MidiUtils.selectJComboBoxByInst(bassRootsInst,
+				MidiUtils.PART_INST_NAMES.get(PARTS.BASSROOTS), 74);
+		
+		
+		bassRootsLock = new JCheckBox("Lock Inst.", false);
+		
+		
+		bassRootsPanel.add(addBassRoots);
+		bassRootsPanel.add(bassRootsLock);
+		bassRootsPanel.add(bassRootsInst);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(bassRootsPanel, constraints);
+	}
+	
+	private void initDrums(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel drumsPanel = new JPanel();
+		addDrums = new JCheckBox("Drums", false);
 		
 		JButton drumAddJButton = new JButton("+Drum");
 		drumAddJButton.addActionListener(this);
@@ -473,91 +611,32 @@ public class MidiGeneratorGUI extends JFrame
 		rotationChance = new JTextField("25", 3);
 		
 		
-		drumSettings180.add(addDrums);
-		drumSettings180.add(drumInst);
-		drumSettings180.add(drumAddJButton);
-		drumSettings180.add(clearPatternSeeds);
-		drumSettings180.add(randomDrumSlide);
-		drumSettings180.add(randomDrumPattern);
-		drumSettings180.add(new JLabel("Velocity pattern%"));
-		drumSettings180.add(velocityPatternChance);
-		drumSettings180.add(new JLabel("Rotation chance%"));
-		drumSettings180.add(rotationChance);
+		drumsPanel.add(addDrums);
+		drumsPanel.add(drumInst);
+		drumsPanel.add(drumAddJButton);
+		drumsPanel.add(clearPatternSeeds);
+		drumsPanel.add(randomDrumSlide);
+		drumsPanel.add(randomDrumPattern);
+		drumsPanel.add(new JLabel("Velocity pattern%"));
+		drumsPanel.add(velocityPatternChance);
+		drumsPanel.add(new JLabel("Rotation chance%"));
+		drumsPanel.add(rotationChance);
 		
 		
-		constraints.gridx = 0;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
-		//add(p6, constraints);
-		constraints.gridy = 20;
-		add(melody20, constraints);
-		//constraints.gridy = 60;
-		//add(p60, constraints);
-		//constraints.gridy = 70;
-		//add(p70, constraints);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(drumsPanel, constraints);
 		
-		createHorizontalSeparator(40, this, constraints);
-		
-		JPanel chordSettings45 = new JPanel();
-		
-		JButton chordAddJButton = new JButton("+Chord");
-		chordAddJButton.addActionListener(this);
-		chordAddJButton.setActionCommand("AddChord");
-		JButton clearChordPatternSeeds = new JButton("Clear patterns");
-		clearChordPatternSeeds.addActionListener(this);
-		clearChordPatternSeeds.setActionCommand("ClearChordPatterns");
-		
-		randomChordDelay = new JCheckBox("Random delay", true);
-		randomChordPattern = new JCheckBox("Include presets", true);
-		chordRotationChance = new JTextField("25", 3);
-		
-		
-		chordSettings45.add(addChords);
-		chordSettings45.add(chordsInst);
-		chordSettings45.add(chordAddJButton);
-		chordSettings45.add(clearChordPatternSeeds);
-		chordSettings45.add(randomChordDelay);
-		chordSettings45.add(randomChordPattern);
-		chordSettings45.add(new JLabel("Rotation chance%"));
-		chordSettings45.add(chordRotationChance);
-		constraints.gridy = 45;
-		add(chordSettings45, constraints);
-		
-		// ---- CHORDS ----
-		// gridy 50 - 100 range
-		if (addChords.isSelected()) {
-			createRandomChordPanels(4);
-		}
-		
-		createHorizontalSeparator(99, this, constraints);
-		
-		constraints.gridy = 100;
-		add(arpOne100, constraints);
-		constraints.gridy = 110;
-		add(arpTwo110, constraints);
-		
-		createHorizontalSeparator(115, this, constraints);
-		
-		constraints.gridy = 120;
-		add(bass120, constraints);
-		createHorizontalSeparator(150, this, constraints);
-		
-		constraints.gridy = 180;
-		add(drumSettings180, constraints);
-		
-		// ---- DRUMS ----
+		// ---- GENERATED DRUMS ----
 		// gridy 200 - 300 range
 		
 		if (addDrums.isSelected()) {
 			createRandomDrumPanels(4);
 		}
-		
-		
-		// ---- BPM/TRANS ----
-		
-		createHorizontalSeparator(645, this, constraints);
-		
-		JPanel p650 = new JPanel();
+	}
+	
+	private void initRandomButtons(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel randomButtonsPanel = new JPanel();
 		
 		randomChordsCount = new JTextField("4", 2);
 		
@@ -592,76 +671,83 @@ public class MidiGeneratorGUI extends JFrame
 		
 		constraints.anchor = GridBagConstraints.CENTER;
 		
-		p650.add(randomizeChords);
-		p650.add(randomChordsCount);
-		p650.add(randomChordsOnCompose);
-		p650.add(randomizeDrums);
-		p650.add(randomDrumsCount);
-		p650.add(randomDrumsOnCompose);
-		p650.add(randomizeInstruments);
-		p650.add(randomizeInstOnCompose);
-		p650.add(randomizeBpmTransp);
-		p650.add(randomizeBmpTransOnCompose);
+		randomButtonsPanel.add(randomizeChords);
+		randomButtonsPanel.add(randomChordsCount);
+		randomButtonsPanel.add(randomChordsOnCompose);
+		randomButtonsPanel.add(randomizeDrums);
+		randomButtonsPanel.add(randomDrumsCount);
+		randomButtonsPanel.add(randomDrumsOnCompose);
+		randomButtonsPanel.add(randomizeInstruments);
+		randomButtonsPanel.add(randomizeInstOnCompose);
+		randomButtonsPanel.add(randomizeBpmTransp);
+		randomButtonsPanel.add(randomizeBmpTransOnCompose);
 		
 		
 		JButton randomizeStrums = new JButton("Randomize strums");
 		randomizeStrums.addActionListener(this);
 		randomizeStrums.setActionCommand("RandStrums");
-		p650.add(randomizeStrums);
+		randomButtonsPanel.add(randomizeStrums);
 		
 		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
 		randomizeChordStrumsOnCompose.setSelected(true);
-		p650.add(randomizeChordStrumsOnCompose);
+		randomButtonsPanel.add(randomizeChordStrumsOnCompose);
 		
-		constraints.gridy = 650;
-		add(p650, constraints);
-		
-		createHorizontalSeparator(655, this, constraints);
-		// ------- BPM / TRANSPOSE -----------
-		
-		JPanel p700 = new JPanel();
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(randomButtonsPanel, constraints);
+	}
+	
+	
+	private void initBpmTrans(GridBagConstraints constraints, int startY, int anchorSide) {
+		// bpm/transpose
+		JPanel bpmTransPanel = new JPanel();
 		
 		transposeScore = new JTextField("0", 3);
-		p700.add(new JLabel("Transpose:"));
-		p700.add(transposeScore);
+		bpmTransPanel.add(new JLabel("Transpose:"));
+		bpmTransPanel.add(transposeScore);
 		
 		Random bpmRand = new Random();
 		mainBpm = new JTextField(String.valueOf(bpmRand.nextInt(30) + 70), 3);
 		
 		arpAffectsBpm = new JCheckBox("Slowed by ARP2", true);
 		
-		p700.add(new JLabel("BPM:"));
-		p700.add(mainBpm);
-		p700.add(arpAffectsBpm);
+		bpmTransPanel.add(new JLabel("BPM:"));
+		bpmTransPanel.add(mainBpm);
+		bpmTransPanel.add(arpAffectsBpm);
 		
-		constraints.gridx = 1;
-		constraints.gridy = 700;
-		constraints.gridwidth = 2;
-		constraints.gridheight = 1;
-		add(p700, constraints);
-		
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(bpmTransPanel, constraints);
+	}
+	
+	private void initChordSettingsVariety(GridBagConstraints constraints, int startY,
+			int anchorSide) {
 		// ---- CHORD SETTINGS 1 ----
 		
-		JPanel p850 = new JPanel();
+		JPanel chordSettingsVarietyPanel = new JPanel();
 		
 		chordSlashChance = new JTextField("25", 3);
-		p850.add(new JLabel("Ch1 slash chord%"));
-		p850.add(chordSlashChance);
+		chordSettingsVarietyPanel.add(new JLabel("Ch1 slash chord%"));
+		chordSettingsVarietyPanel.add(chordSlashChance);
 		
 		spiceChance = new JTextField("8", 3);
-		p850.add(new JLabel("Spice%"));
-		p850.add(spiceChance);
+		chordSettingsVarietyPanel.add(new JLabel("Spice%"));
+		chordSettingsVarietyPanel.add(spiceChance);
 		
 		spiceAllowDimAug = new JCheckBox("Dim/Aug");
 		spiceAllowDimAug.setSelected(false);
-		p850.add(spiceAllowDimAug);
+		chordSettingsVarietyPanel.add(spiceAllowDimAug);
 		
-		constraints.gridy = 850;
-		add(p850, constraints);
-		
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(chordSettingsVarietyPanel, constraints);
+	}
+	
+	private void initChordSettingsProgression(GridBagConstraints constraints, int startY,
+			int anchorSide) {
 		// CHORD SETTINGS 2
 		
-		JPanel chordPanel870 = new JPanel();
+		JPanel chordSettingsProgressionPanel = new JPanel();
 		
 		
 		firstChordSelection = new JComboBox<String>();
@@ -670,8 +756,8 @@ public class MidiGeneratorGUI extends JFrame
 		firstChordSelection.addItem("V");
 		firstChordSelection.addItem("vi");
 		firstChordSelection.addItemListener(this);
-		chordPanel870.add(new JLabel("First Chord:"));
-		chordPanel870.add(firstChordSelection);
+		chordSettingsProgressionPanel.add(new JLabel("First Chord:"));
+		chordSettingsProgressionPanel.add(firstChordSelection);
 		lastChordSelection = new JComboBox<String>();
 		lastChordSelection.addItem("R");
 		lastChordSelection.addItem("I");
@@ -679,53 +765,33 @@ public class MidiGeneratorGUI extends JFrame
 		lastChordSelection.addItem("vi");
 		lastChordSelection.addItemListener(this);
 		lastChordSelection.setSelectedIndex(0);
-		chordPanel870.add(new JLabel("Last Chord:"));
-		chordPanel870.add(lastChordSelection);
+		chordSettingsProgressionPanel.add(new JLabel("Last Chord:"));
+		chordSettingsProgressionPanel.add(lastChordSelection);
 		
 		userChordsEnabled = new JCheckBox();
 		userChordsEnabled.setSelected(false);
 		
 		
-		chordPanel870.add(new JLabel("Custom chords:"));
-		chordPanel870.add(userChordsEnabled);
+		chordSettingsProgressionPanel.add(new JLabel("Custom chords:"));
+		chordSettingsProgressionPanel.add(userChordsEnabled);
 		
 		userChords = new JTextField("R", 8);
-		chordPanel870.add(new JLabel("Chords:"));
-		chordPanel870.add(userChords);
+		chordSettingsProgressionPanel.add(new JLabel("Chords:"));
+		chordSettingsProgressionPanel.add(userChords);
 		userChordsDurations = new JTextField("2,2,2,2", 6);
-		chordPanel870.add(new JLabel("Chord durations (max. 8):"));
-		chordPanel870.add(userChordsDurations);
-		constraints.gridx = 1;
-		constraints.gridy = 870;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
-		add(chordPanel870, constraints);
-		
-		createHorizontalSeparator(875, this, constraints);
-		// CONTROL PANEL
-		
-		JPanel controlPanel900 = new JPanel();
+		chordSettingsProgressionPanel.add(new JLabel("Chord durations (max. 8):"));
+		chordSettingsProgressionPanel.add(userChordsDurations);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(chordSettingsProgressionPanel, constraints);
+	}
+	
+	private void initControlPanel(GridBagConstraints constraints, int startY, int anchorSide) {
+		JPanel controlPanel = new JPanel();
 		randomSeed = new JTextField("0", 8);
 		JButton compose = new JButton("Compose");
 		compose.addActionListener(this);
 		compose.setActionCommand("Compose");
-		JButton stopMidi = new JButton("STOP");
-		stopMidi.addActionListener(this);
-		stopMidi.setActionCommand("StopMidi");
-		JButton startMidi = new JButton("PLAY");
-		startMidi.addActionListener(this);
-		startMidi.setActionCommand("StartMidi");
-		
-		JButton save3Star = new JButton("Save 3*");
-		save3Star.addActionListener(this);
-		save3Star.setActionCommand("Save 3*");
-		JButton save4Star = new JButton("Save 4*");
-		save4Star.addActionListener(this);
-		save4Star.setActionCommand("Save 4*");
-		JButton save5Star = new JButton("Save 5*");
-		save5Star.addActionListener(this);
-		save5Star.setActionCommand("Save 5*");
-		
 		JButton regenerate = new JButton("Regenerate");
 		regenerate.addActionListener(this);
 		regenerate.setActionCommand("Regenerate");
@@ -743,62 +809,51 @@ public class MidiGeneratorGUI extends JFrame
 		loadConfig.addActionListener(this);
 		loadConfig.setActionCommand("LoadGUIConfig");
 		
-		controlPanel900.add(new JLabel("Random Seed:"));
-		controlPanel900.add(randomSeed);
-		controlPanel900.add(compose);
-		controlPanel900.add(regenerate);
-		controlPanel900.add(copySeed);
-		controlPanel900.add(copyChords);
-		controlPanel900.add(clearSeed);
-		controlPanel900.add(loadConfig);
+		controlPanel.add(new JLabel("Random Seed:"));
+		controlPanel.add(randomSeed);
+		controlPanel.add(compose);
+		controlPanel.add(regenerate);
+		controlPanel.add(copySeed);
+		controlPanel.add(copyChords);
+		controlPanel.add(clearSeed);
+		controlPanel.add(loadConfig);
 		
-		constraints.gridx = 0;
-		constraints.gridy = 900;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
-		add(controlPanel900, constraints);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(controlPanel, constraints);
+	}
+	
+	private void initPlayPanel(GridBagConstraints constraints, int startY, int anchorSide) {
 		
-		JPanel playSavePanel950 = new JPanel();
-		playSavePanel950.add(startMidi);
-		playSavePanel950.add(stopMidi);
-		playSavePanel950.add(save3Star);
-		playSavePanel950.add(save4Star);
-		playSavePanel950.add(save5Star);
+		JPanel playSavePanel = new JPanel();
 		
-		constraints.gridx = 0;
-		constraints.gridy = 950;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
-		add(playSavePanel950, constraints);
+		JButton stopMidi = new JButton("STOP");
+		stopMidi.addActionListener(this);
+		stopMidi.setActionCommand("StopMidi");
+		JButton startMidi = new JButton("PLAY");
+		startMidi.addActionListener(this);
+		startMidi.setActionCommand("StartMidi");
 		
-		// --- GENERATED MIDI ---
+		JButton save3Star = new JButton("Save 3*");
+		save3Star.addActionListener(this);
+		save3Star.setActionCommand("Save 3*");
+		JButton save4Star = new JButton("Save 4*");
+		save4Star.addActionListener(this);
+		save4Star.setActionCommand("Save 4*");
+		JButton save5Star = new JButton("Save 5*");
+		save5Star.addActionListener(this);
+		save5Star.setActionCommand("Save 5*");
 		
-		JPanel p960 = new JPanel();
 		
-		generatedMidi = new JList<File>();
-		generatedMidi.setTransferHandler(new FileTransferHandler());
-		generatedMidi.setDragEnabled(true);
-		p960.add(new JLabel("Midi Drag'N'Drop:"));
-		p960.add(generatedMidi);
-		constraints.gridy = 960;
-		add(p960, constraints);
+		playSavePanel.add(startMidi);
+		playSavePanel.add(stopMidi);
+		playSavePanel.add(save3Star);
+		playSavePanel.add(save4Star);
+		playSavePanel.add(save5Star);
 		
-		JPanel messagePanel999 = new JPanel();
-		messageLabel = new JLabel("Click something!");
-		messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		messagePanel999.add(messageLabel);
-		constraints.gridy = 999;
-		add(messagePanel999, constraints);
-		
-		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-		int screenHeight = d.height;
-		int screenWidth = d.width;
-		setSize(screenWidth / 2, screenHeight / 2);
-		setLocation(screenWidth / 4, screenHeight / 4);
-		pack();
-		setVisible(true);
-		repaint();
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(playSavePanel, constraints);
 	}
 	
 	// Deal with the window closebox
@@ -1636,12 +1691,7 @@ public class MidiGeneratorGUI extends JFrame
 		
 		int panelOrder = (drumPanels.size() > 0) ? getHighestDrumPanelNumber(drumPanels) + 1 : 1;
 		
-		constraints.weightx = 100;
-		constraints.weighty = 100;
-		constraints.gridx = 1;
-		constraints.gridy = 200 + panelOrder;
-		constraints.gridwidth = 2;
-		constraints.gridheight = 1;
+		constraints.gridy = drumGenStart + panelOrder;
 		constraints.anchor = GridBagConstraints.WEST;
 		
 		DrumPanel drumJPanel = new DrumPanel(this);
@@ -1775,12 +1825,7 @@ public class MidiGeneratorGUI extends JFrame
 		
 		int panelOrder = (chordPanels.size() > 0) ? getHighestChordPanelNumber(chordPanels) + 1 : 1;
 		
-		constraints.weightx = 100;
-		constraints.weighty = 100;
-		constraints.gridx = 1;
-		constraints.gridy = 50 + panelOrder;
-		constraints.gridwidth = 2;
-		constraints.gridheight = 1;
+		constraints.gridy = chordGenStart + panelOrder;
 		constraints.anchor = GridBagConstraints.WEST;
 		
 		ChordPanel chordJPanel = new ChordPanel(this);
