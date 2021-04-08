@@ -1923,6 +1923,7 @@ public class MidiGeneratorGUI extends JFrame
 		ChordPanel cp = new ChordPanel(this);
 		cp.setChordPanelOrder(panelOrder);
 		cp.initComponents();
+		cp.setInstPool(POOL.CHORD);
 		cp.setInstrument(MidiUtils.getInstByIndex(chordsInst.getSelectedIndex(),
 				MidiUtils.INST_POOLS.get(cp.getInstPool())));
 		chordPanels.add(cp);
