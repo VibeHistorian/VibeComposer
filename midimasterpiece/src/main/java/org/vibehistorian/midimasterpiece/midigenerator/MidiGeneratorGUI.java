@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -1823,11 +1825,18 @@ public class MidiGeneratorGUI extends JFrame
 			slide = drumPanelGenerator.nextInt(300) - 150;
 		}
 		
+		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
-			DrumPanel dp = addDrumPanelToLayout();
-			dp.setPitch(MidiUtils.getInstByIndex(
+			pitches.add(MidiUtils.getInstByIndex(
 					drumPanelGenerator.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS).length),
 					MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
+		}
+		Collections.sort(pitches);
+		
+		
+		for (int i = 0; i < panelCount; i++) {
+			DrumPanel dp = addDrumPanelToLayout();
+			dp.setPitch(pitches.get(i));
 			//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 			
 			
@@ -1944,10 +1953,16 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private void createRandomChordPanels(int panelCount) {
 		Random chordPanelGenerator = new Random();
-		for (ChordPanel panel : chordPanels) {
-			((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
+		for (Iterator<ChordPanel> panelI = chordPanels.iterator(); panelI.hasNext();) {
+			ChordPanel panel = panelI.next();
+			if (!panel.getLockInst()) {
+				((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
+				panelI.remove();
+			}
 		}
-		chordPanels.clear();
+		
+		// create only remaining
+		panelCount -= chordPanels.size();
 		
 		for (int i = 0; i < panelCount; i++) {
 			ChordPanel cp = addChordPanelToLayout();
@@ -1957,7 +1972,7 @@ public class MidiGeneratorGUI extends JFrame
 			
 			cp.setInstrument(availableInstruments
 					.get(chordPanelGenerator.nextInt(availableInstruments.size())));
-			cp.setTransitionChance(chordPanelGenerator.nextInt(50));
+			cp.setTransitionChance(chordPanelGenerator.nextInt(25));
 			cp.setTransitionSplit(
 					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_LARGE)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
