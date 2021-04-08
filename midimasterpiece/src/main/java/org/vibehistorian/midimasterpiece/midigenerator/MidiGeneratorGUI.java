@@ -479,7 +479,7 @@ public class MidiGeneratorGUI extends JFrame
 		MidiUtils.selectJComboBoxByInst(chordsInst, MidiUtils.INST_POOLS.get(MidiUtils.POOL.CHORD),
 				4);
 		chordSettingsPanel.add(addChords);
-		chordSettingsPanel.add(chordsInst);
+		//chordSettingsPanel.add(chordsInst);
 		
 		JButton chordAddJButton = new JButton("+Chord");
 		chordAddJButton.addActionListener(this);
@@ -652,10 +652,10 @@ public class MidiGeneratorGUI extends JFrame
 		
 		
 		drumInst = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS), drumInst);
-		MidiUtils.selectJComboBoxByInst(drumInst, MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS), 42);
+		MidiUtils.addAllToJComboBox(MidiUtils.DRUM_INST_NAMES, drumInst);
+		MidiUtils.selectJComboBoxByInst(drumInst, MidiUtils.DRUM_INST_NAMES, 36);
 		drumsPanel.add(addDrums);
-		drumsPanel.add(drumInst);
+		//drumsPanel.add(drumInst);
 		
 		
 		JButton drumAddJButton = new JButton("+Drum");
@@ -1782,8 +1782,8 @@ public class MidiGeneratorGUI extends JFrame
 		DrumPanel drumJPanel = new DrumPanel(this);
 		drumJPanel.setDrumPanelOrder(panelOrder);
 		drumJPanel.initComponents();
-		drumJPanel.setPitch(MidiUtils.getInstByIndex(drumInst.getSelectedIndex(),
-				MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
+		drumJPanel.setPitch(
+				MidiUtils.getInstByIndex(drumInst.getSelectedIndex(), MidiUtils.DRUM_INST_NAMES));
 		drumPanels.add(drumJPanel);
 		((JPanel) drumScrollPane.getViewport().getView()).add(drumJPanel);
 		return drumJPanel;
@@ -1841,8 +1841,8 @@ public class MidiGeneratorGUI extends JFrame
 		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
 			pitches.add(MidiUtils.getInstByIndex(
-					drumPanelGenerator.nextInt(MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS).length),
-					MidiUtils.PART_INST_NAMES.get(PARTS.DRUMS)));
+					drumPanelGenerator.nextInt(MidiUtils.DRUM_INST_NAMES.length),
+					MidiUtils.DRUM_INST_NAMES));
 		}
 		Collections.sort(pitches);
 		

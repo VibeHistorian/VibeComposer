@@ -296,9 +296,9 @@ public class MidiUtils {
 			"PIZZICATO_STRINGS = 45", "HARP = 46", "AAH = 52", "OOH = 53", "FANTASIA = 88",
 			"BANJO = 105", "SHAMISEN = 106", "KOTO = 107", "AGOGO = 113", "TAIKO = 116" };
 	
-	public static final String[] LONG_INST_NAMES = { "ORGAN = 16", "ORGAN2 = 17",
-			"REED_ORGAN = 20", "ACCORDION = 21", "HARMONICA = 22", "BANDNEON = 23", "VIOLIN = 40",
-			"VIOLA = 41", "CELLO = 42", "CONTRABASS = 43", "TREMOLO_STRINGS = 44", "STRINGS = 48",
+	public static final String[] LONG_INST_NAMES = { "ORGAN = 16", "ORGAN2 = 17", "REED_ORGAN = 20",
+			"ACCORDION = 21", "HARMONICA = 22", "BANDNEON = 23", "VIOLIN = 40", "VIOLA = 41",
+			"CELLO = 42", "CONTRABASS = 43", "TREMOLO_STRINGS = 44", "STRINGS = 48",
 			"STRING_ENSEMBLE_2 = 49", "SLOW_STRINGS = 51", "TRUMPET = 56", "TROMBONE = 57",
 			"TUBA = 58", "FRENCH_HORN = 60", "BRASS = 61", "SOPRANO_SAX = 64", "ALTO_SAX = 65",
 			"BARITONE_SAX = 67", "OBOE = 68", "ENGLISH_HORN = 69", "BASSOON = 70", "CLARINET = 71",
@@ -330,16 +330,6 @@ public class MidiUtils {
 	
 	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.asList(DRUM_KITS).stream()
 			.map(e -> Integer.valueOf(e.split(" = ")[1])).collect(Collectors.toList());
-	
-	public static final Map<PARTS, String[]> PART_INST_NAMES = new HashMap<>();
-	static {
-		PART_INST_NAMES.put(PARTS.MELODY, PLUCK_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.CHORDS, PLUCK_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.ARP1, PLUCK_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.ARP2, PLUCK_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.BASSROOTS, BASS_INST_NAMES);
-		PART_INST_NAMES.put(PARTS.DRUMS, DRUM_INST_NAMES);
-	}
 	
 	public enum POOL {
 		PLUCK, LONG, CHORD, BASS, ALL;
