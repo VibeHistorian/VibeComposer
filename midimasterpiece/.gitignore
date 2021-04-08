@@ -9,9 +9,8 @@
 .DS_Store
 
 error-screenshots/
-/randomSeedHistory.txt
-/wavtest1.wav
-/MuseScore_General.sf2
+*.txt
 /guiConfig1.xml
-/RDrumKitSF2.sf2
+*.sf2
 /consoleLog2.txt
+*.wav

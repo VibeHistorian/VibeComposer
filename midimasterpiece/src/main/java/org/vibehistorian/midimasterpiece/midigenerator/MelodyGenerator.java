@@ -69,7 +69,7 @@ public class MelodyGenerator implements JMC {
 	
 	public static EnumMap<PARTS, Integer> PARTS_INSTRUMENT_MAP = new EnumMap<>(PARTS.class);
 	
-	private static int MAXIMUM_ARP_COUNT = 8;
+	public static int MAXIMUM_ARP_COUNT = 8;
 	
 	public static boolean MINOR_SONG = false;
 	public static int MAX_JUMP = 4;
@@ -430,24 +430,43 @@ public class MelodyGenerator implements JMC {
 					CPhrase cp = chordsCPhrases.get(k);
 					boolean transition = transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
 							.getTransitionChance();
-					if (transition) {
+					int transChord = (transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
+							.getTransitionChance()) ? (j + 1) % actualProgression.size() : j;
+					
+					// random = use generated split with potential to transition to 2nd chord early
+					// otherwise = use pattern within single chord
+					if (CHORD_PARTS.get(k).getPattern() == RhythmPattern.RANDOM) {
 						double splitTime = CHORD_SETTINGS.isUseSplit()
 								? CHORD_PARTS.get(k).getTransitionSplit()
 								: DEFAULT_CHORD_SPLIT;
 						
 						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
 						double duration2 = progressionDurations.get(j) - duration1;
-						int transChord = (transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
-								.getTransitionChance()) ? j : (j + 1) % actualProgression.size();
-						cp.addChord(Arrays.copyOf(actualProgression.get(j),
-								actualProgression.get(j).length), duration1);
-						cp.addChord(Arrays.copyOf(actualProgression.get(transChord),
-								actualProgression.get(transChord).length), duration2);
+						if (transition) {
+							cp.addChord(Arrays.copyOf(actualProgression.get(j),
+									actualProgression.get(j).length), duration1);
+							cp.addChord(Arrays.copyOf(actualProgression.get(transChord),
+									actualProgression.get(transChord).length), duration2);
+						} else {
+							cp.addChord(
+									Arrays.copyOf(actualProgression.get(j),
+											actualProgression.get(j).length),
+									progressionDurations.get(j));
+						}
+						
 					} else {
-						cp.addChord(
-								Arrays.copyOf(actualProgression.get(j),
-										actualProgression.get(j).length),
-								progressionDurations.get(j));
+						double duration = progressionDurations.get(j) / MAXIMUM_ARP_COUNT;
+						List<Integer> pattern = CHORD_PARTS.get(k).getPattern()
+								.getPatternByLength(MAXIMUM_ARP_COUNT);
+						for (int p = 0; p < pattern.size(); p++) {
+							if (pattern.get(p) > 0) {
+								cp.addChord(Arrays.copyOf(actualProgression.get(j),
+										actualProgression.get(j).length), duration);
+							} else {
+								cp.addChord(new int[] { Integer.MIN_VALUE }, duration);
+							}
+						}
+						
 					}
 				}
 				
@@ -541,7 +560,11 @@ public class MelodyGenerator implements JMC {
 		
 		if (CHORD_SETTINGS.isUseStrum()) {
 			for (int i = 0; i < CHORD_PARTS.size(); i++) {
-				chordsCPhrases.get(i).flam(CHORD_PARTS.get(i).getStrum() / 1000.0);
+				if (CHORD_PARTS.get(i).getPattern() == RhythmPattern.RANDOM) {
+					chordsCPhrases.get(i).flam(CHORD_PARTS.get(i).getStrum() / 1000.0);
+				} else {
+					chordsCPhrases.get(i).flam(10 / 1000.0);
+				}
 			}
 		}
 		
@@ -741,7 +764,7 @@ public class MelodyGenerator implements JMC {
 		return copied;
 	}
 	
-	public Map<String, List<Integer>> generateArpMap(int mainGeneratorSeed, boolean needToGenerate,
+	public Map<String, List<Integer>> generateArpMap(int mainGeneratorSeed, boolean needToReport,
 			int pauseChance) {
 		
 		Random mainGenerator = new Random(mainGeneratorSeed);
@@ -750,14 +773,6 @@ public class MelodyGenerator implements JMC {
 		Random uiGenerator2arpPattern = new Random(mainGenerator.nextInt());
 		Random uiGenerator3arpOctave = new Random(mainGenerator.nextInt());
 		Random uiGenerator4arpPauses = new Random(mainGenerator.nextInt());
-		
-		if (RANDOM_ARPS_PER_CHORD && needToGenerate) {
-			ARPS_PER_CHORD = uiGenerator1arpCount.nextInt(MAXIMUM_ARP_COUNT - 1) + 2;
-			//reduced chance of 5 or 7 but not eliminated
-			if (ARPS_PER_CHORD == 5 || ARPS_PER_CHORD == 7) {
-				ARPS_PER_CHORD = uiGenerator1arpCount.nextInt(MAXIMUM_ARP_COUNT - 1) + 2;
-			}
-		}
 		
 		int[] arpPatternArray = IntStream.range(0, MAXIMUM_ARP_COUNT).toArray();
 		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24).limit(MAXIMUM_ARP_COUNT * 2)
@@ -800,7 +815,7 @@ public class MelodyGenerator implements JMC {
 		arpMap.put(ARP_OCTAVE_KEY, arpOctavePattern);
 		arpMap.put(ARP_PAUSES_KEY, arpPausesPattern);
 		
-		if (needToGenerate) {
+		if (needToReport) {
 			System.out.println("Arp count: " + ARPS_PER_CHORD);
 			System.out.println("Arp pattern: " + arpPattern.toString());
 			System.out.println("Arp octaves: " + arpOctavePattern.toString());

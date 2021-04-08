@@ -22,7 +22,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,6 +36,7 @@ import java.util.Random;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
@@ -106,9 +106,12 @@ public class MidiGeneratorGUI extends JFrame
 	private static int drumGenPanelStart = 200;
 	private static int arpGenPanelStart = 100;
 	
+	private static Soundbank soundfont = null;
+	
 	JLabel mainTitle;
 	JLabel subTitle;
 	JButton switchDarkMode;
+	JButton switchOnComposeRandom;
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
 	
@@ -755,6 +758,11 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeChordStrumsOnCompose.setSelected(true);
 		randomButtonsPanel.add(randomizeChordStrumsOnCompose);
 		
+		switchOnComposeRandom = new JButton("Uncheck all 'on compose'");
+		switchOnComposeRandom.addActionListener(this);
+		switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
+		randomButtonsPanel.add(switchOnComposeRandom);
+		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(randomButtonsPanel, constraints);
@@ -879,6 +887,7 @@ public class MidiGeneratorGUI extends JFrame
 		controlPanel.add(clearSeed);
 		controlPanel.add(loadConfig);
 		
+		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(controlPanel, constraints);
@@ -905,16 +914,210 @@ public class MidiGeneratorGUI extends JFrame
 		save5Star.addActionListener(this);
 		save5Star.setActionCommand("Save 5*");
 		
+		JButton saveWavFile = new JButton("Export as .wav");
+		saveWavFile.addActionListener(this);
+		saveWavFile.setActionCommand("SaveWavFile");
+		
 		
 		playSavePanel.add(startMidi);
 		playSavePanel.add(stopMidi);
 		playSavePanel.add(save3Star);
 		playSavePanel.add(save4Star);
 		playSavePanel.add(save5Star);
+		playSavePanel.add(saveWavFile);
 		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(playSavePanel, constraints);
+	}
+	
+	private void switchAllOnComposeCheckboxes(boolean state) {
+		randomChordsOnCompose.setSelected(state);
+		randomDrumsOnCompose.setSelected(state);
+		randomizeBmpTransOnCompose.setSelected(state);
+		randomizeChordStrumsOnCompose.setSelected(state);
+		randomizeInstOnCompose.setSelected(state);
+		secondArpMultiplierRandom.setSelected(state);
+		randomArpCount.setSelected(state);
+	}
+	
+	private void switchDarkMode() {
+		System.out.println("Switching dark mode!");
+		if (isDarkMode) {
+			FlatIntelliJLaf.install();
+		} else {
+			FlatDarculaLaf.install();
+		}
+		isDarkMode = !isDarkMode;
+		SwingUtilities.updateComponentTreeUI(this);
+		mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		subTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		for (JSeparator x : separators) {
+			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		}
+		pack();
+		setVisible(true);
+		repaint();
+	}
+	
+	private void composeMidi(boolean regenerate) {
+		Integer masterpieceSeed = 0;
+		
+		Integer parsedSeed = (NumberUtils.isCreatable(randomSeed.getText()))
+				? Integer.valueOf(randomSeed.getText())
+				: 0;
+		
+		if (regenerate) {
+			masterpieceSeed = lastRandomSeed;
+			if (parsedSeed != 0) {
+				masterpieceSeed = parsedSeed;
+			}
+			if (randomMelodyOnRegenerate.isSelected()) {
+				Random rand = new Random();
+				int melodySeed = rand.nextInt();
+				userMelodySeed.setText(String.valueOf(melodySeed));
+			}
+		}
+		
+		Random seedGenerator = new Random();
+		int randomVal = seedGenerator.nextInt();
+		if (masterpieceSeed != 0) {
+			System.out.println("Skipping, regenerated seed: " + masterpieceSeed);
+		} else if ((!StringUtils.isEmpty(randomSeed.getText()) && !"0".equals(randomSeed.getText())
+				&& (StringUtils.isNumeric(randomSeed.getText())
+						|| StringUtils.isNumeric(randomSeed.getText().substring(1))))) {
+			masterpieceSeed = Integer.valueOf(randomSeed.getText());
+		} else {
+			masterpieceSeed = randomVal;
+		}
+		
+		System.out.println("Melody seed: " + masterpieceSeed);
+		lastRandomSeed = masterpieceSeed;
+		
+		MelodyGenerator melodyGen = new MelodyGenerator();
+		fillUserParameters();
+		
+		File makeDir = new File(MIDIS_FOLDER);
+		makeDir.mkdir();
+		
+		String seedData = "" + masterpieceSeed;
+		if (MelodyGenerator.USER_MELODY_SEED != 0 && addMelody.isSelected()) {
+			seedData += "_" + userMelodySeed.getText();
+		}
+		
+		String fileName = "seed" + seedData;
+		String relPath = MIDIS_FOLDER + "/" + fileName + ".mid";
+		int melodyInstrument = jm.constants.ProgramChanges.KALIMBA;
+		melodyGen.generateMasterpiece(masterpieceSeed, relPath, melodyInstrument);
+		currentMidi = null;
+		
+		
+		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(new Date().toString() + ", Seed: " + seedData);
+		} catch (IOException e) {
+			System.out.println(
+					"Yikers! An exception while writing a single line at the end of a .txt file!");
+		}
+		
+		try {
+			if (sequencer != null) {
+				sequencer.stop();
+			}
+			Synthesizer synthesizer = loadSynth();
+			
+			
+			if (sequencer != null) {
+				// do nothing
+			} else {
+				sequencer = MidiSystem.getSequencer(synthesizer == null); // Get the default Sequencer
+				if (sequencer == null) {
+					System.err.println("Sequencer device not supported");
+					return;
+				}
+				sequencer.open(); // Open device
+			}
+			
+			
+			// Create sequence, the File must contain MIDI file data.
+			currentMidi = new File(relPath);
+			generatedMidi.setListData(new File[] { currentMidi });
+			pack();
+			Sequence sequence = MidiSystem.getSequence(currentMidi);
+			sequencer.setSequence(sequence); // load it into sequencer
+			
+			if (synth != null) {
+				// soundbank synth already opened correctly, do nothing
+			} else if (synthesizer != null) {
+				// open soundbank synth
+				for (Transmitter tm : sequencer.getTransmitters()) {
+					tm.close();
+				}
+				sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
+				synth = synthesizer;
+			} else {
+				// use default system synth
+				for (Transmitter tm : sequencer.getTransmitters()) {
+					tm.close();
+				}
+				Synthesizer defSynth = MidiSystem.getSynthesizer();
+				defSynth.open();
+				sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
+			}
+			
+			
+			/*if (synth != null) {
+				double vol = 0.9D;
+				ShortMessage volumeMessage = new ShortMessage();
+				for (int i = 0; i < 16; i++) {
+					volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
+							(int) (vol * 127));
+					synth.getReceiver().send(volumeMessage, -1);
+				}
+			}*/
+			
+			sequencer.setTickPosition(0);
+			sequencer.start();  // start the playback
+			
+		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	private Synthesizer loadSynth() {
+		Synthesizer synthesizer = null;
+		try {
+			File soundbankFile = new File(soundbankFilename.getText());
+			if (soundbankFile.isFile()) {
+				if (synth == null) {
+					
+					soundfont = MidiSystem.getSoundbank(
+							new BufferedInputStream(new FileInputStream(soundbankFile)));
+					synthesizer = MidiSystem.getSynthesizer();
+					
+					synthesizer.isSoundbankSupported(soundfont);
+					synthesizer.open();
+					synthesizer.loadAllInstruments(soundfont);
+				}
+				System.out.println("Playing using soundbank: " + soundbankFilename.getText());
+			} else {
+				synthesizer = null;
+				synth = null;
+				soundfont = null;
+				System.out.println("NO SOUNDBANK WITH THAT NAME FOUND!");
+			}
+			
+			
+		} catch (InvalidMidiDataException | IOException | MidiUnavailableException ex) {
+			synthesizer = null;
+			synth = null;
+			soundfont = null;
+			ex.printStackTrace();
+			System.out.println("NO SOUNDBANK WITH THAT NAME FOUND!");
+		}
+		return synthesizer;
 	}
 	
 	// Deal with the window closebox
@@ -958,6 +1161,16 @@ public class MidiGeneratorGUI extends JFrame
 			arp2LockInst.setSelected(false);
 		}
 		
+		
+		if (ae.getActionCommand() == "Compose" && randomArpCount.isSelected()) {
+			Random instGen = new Random();
+			int value = instGen.nextInt(MelodyGenerator.MAXIMUM_ARP_COUNT - 1) + 2;
+			if (value == 5 || value == 7) {
+				//reduced chance of 5 or 7 but not eliminated
+				value = instGen.nextInt(MelodyGenerator.MAXIMUM_ARP_COUNT - 1) + 2;
+			}
+			arpCount.setSelectedItem(String.valueOf(value));
+		}
 		
 		if (ae.getActionCommand() == "Compose" && secondArpMultiplierRandom.isSelected()) {
 			Random instGen = new Random();
@@ -1032,166 +1245,14 @@ public class MidiGeneratorGUI extends JFrame
 		
 		
 		// midi generation
-		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate") {
-			Integer masterpieceSeed = 0;
-			
-			Integer parsedSeed = (NumberUtils.isCreatable(randomSeed.getText()))
-					? Integer.valueOf(randomSeed.getText())
-					: 0;
-			
-			if (ae.getActionCommand() == "Regenerate") {
-				masterpieceSeed = lastRandomSeed;
-				if (parsedSeed != 0) {
-					masterpieceSeed = parsedSeed;
-				}
-				if (randomMelodyOnRegenerate.isSelected()) {
-					Random rand = new Random();
-					int melodySeed = rand.nextInt();
-					userMelodySeed.setText(String.valueOf(melodySeed));
-				}
-			}
-			
-			Random seedGenerator = new Random();
-			int randomVal = seedGenerator.nextInt();
-			if (masterpieceSeed != 0) {
-				System.out.println("Skipping, regenerated seed: " + masterpieceSeed);
-			} else if ((!StringUtils.isEmpty(randomSeed.getText())
-					&& !"0".equals(randomSeed.getText())
-					&& (StringUtils.isNumeric(randomSeed.getText())
-							|| StringUtils.isNumeric(randomSeed.getText().substring(1))))) {
-				masterpieceSeed = Integer.valueOf(randomSeed.getText());
-			} else {
-				masterpieceSeed = randomVal;
-			}
-			
-			System.out.println("Melody seed: " + masterpieceSeed);
-			lastRandomSeed = masterpieceSeed;
-			
-			MelodyGenerator melodyGen = new MelodyGenerator();
-			fillUserParameters();
-			
-			File makeDir = new File(MIDIS_FOLDER);
-			makeDir.mkdir();
-			
-			String seedData = "" + masterpieceSeed;
-			if (MelodyGenerator.USER_MELODY_SEED != 0 && addMelody.isSelected()) {
-				seedData += "_" + userMelodySeed.getText();
-			}
-			
-			String fileName = "seed" + seedData;
-			String relPath = MIDIS_FOLDER + "/" + fileName + ".mid";
-			int melodyInstrument = jm.constants.ProgramChanges.KALIMBA;
-			melodyGen.generateMasterpiece(masterpieceSeed, relPath, melodyInstrument);
-			currentMidi = null;
-			
-			arpCount.setSelectedIndex(MelodyGenerator.ARPS_PER_CHORD - 1);
-			
-			
-			try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
-					BufferedWriter bw = new BufferedWriter(fw);
-					PrintWriter out = new PrintWriter(bw)) {
-				out.println(new Date().toString() + ", Seed: " + seedData);
-			} catch (IOException e) {
-				//exception handling left as an exercise for the reader
-				System.out.println(
-						"Yikers! An exception while writing a single line at the end of a .txt file!");
-			}
-			
-			try {
-				if (sequencer != null) {
-					sequencer.stop();
-				}
-				boolean fileFound = false;
-				Synthesizer synthesizer = null;
-				try {
-					
-					
-					File soundbankFile = new File(soundbankFilename.getText());
-					if (soundbankFile.isFile()) {
-						if (synth == null) {
-							
-							Soundbank soundfont = MidiSystem.getSoundbank(
-									new BufferedInputStream(new FileInputStream(soundbankFile)));
-							synthesizer = MidiSystem.getSynthesizer();
-							
-							synthesizer.isSoundbankSupported(soundfont);
-							synthesizer.open();
-							synthesizer.loadAllInstruments(soundfont);
-							fileFound = true;
-						}
-						System.out
-								.println("Playing using soundbank: " + soundbankFilename.getText());
-					} else {
-						fileFound = false;
-						synth = null;
-						System.out.println("NO SOUNDBANK WITH THAT NAME FOUND!");
-					}
-					
-					
-				} catch (FileNotFoundException ex) {
-					fileFound = false;
-					synth = null;
-					System.out.println("NO SOUNDBANK WITH THAT NAME FOUND!");
-				}
-				
-				if (sequencer != null) {
-					// do nothing
-				} else {
-					sequencer = MidiSystem.getSequencer(!fileFound); // Get the default Sequencer
-					if (sequencer == null) {
-						System.err.println("Sequencer device not supported");
-						return;
-					}
-					sequencer.open(); // Open device
-				}
-				
-				
-				// Create sequence, the File must contain MIDI file data.
-				currentMidi = new File(relPath);
-				generatedMidi.setListData(new File[] { currentMidi });
-				pack();
-				Sequence sequence = MidiSystem.getSequence(currentMidi);
-				sequencer.setSequence(sequence); // load it into sequencer
-				
-				if (synth != null) {
-					// already opened correctly, do nothing
-					//saveWavFile("wavtest2.wav", synth);
-				} else if (fileFound && (synthesizer != null)) {
-					for (Transmitter tm : sequencer.getTransmitters()) {
-						tm.close();
-					}
-					sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
-					//saveWavFile("wavtest2.wav", synthesizer);
-					//synthesizer.open();
-					synth = synthesizer;
-				} else {
-					for (Transmitter tm : sequencer.getTransmitters()) {
-						tm.close();
-					}
-					Synthesizer defSynth = MidiSystem.getSynthesizer();
-					defSynth.open();
-					sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
-					//saveWavFile("wavtest2.wav", defSynth);
-				}
-				
-				
-				/*if (synth != null) {
-					double vol = 0.9D;
-					ShortMessage volumeMessage = new ShortMessage();
-					for (int i = 0; i < 16; i++) {
-						volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
-								(int) (vol * 127));
-						synth.getReceiver().send(volumeMessage, -1);
-					}
-				}*/
-				
-				sequencer.setTickPosition(0);
-				sequencer.start();  // start the playback
-				
-			} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
-				ex.printStackTrace();
-			}
+		if (ae.getActionCommand() == "Compose") {
+			composeMidi(false);
 		}
+		
+		if (ae.getActionCommand() == "Regenerate") {
+			composeMidi(true);
+		}
+		
 		if (ae.getActionCommand() == "StopMidi") {
 			if (sequencer != null) {
 				System.out.println("Stopping Midi..");
@@ -1248,6 +1309,40 @@ public class MidiGeneratorGUI extends JFrame
 				}
 			} else {
 				System.out.println("currentMidi is NULL!");
+			}
+		}
+		
+		if (ae.getActionCommand() == "UncheckComposeRandom") {
+			switchAllOnComposeCheckboxes(false);
+			switchOnComposeRandom.setText("Check all 'on compose'");
+			switchOnComposeRandom.setActionCommand("CheckComposeRandom");
+		}
+		
+		if (ae.getActionCommand() == "CheckComposeRandom") {
+			switchAllOnComposeCheckboxes(true);
+			switchOnComposeRandom.setText("Uncheck all 'on compose'");
+			switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
+		}
+		
+		if (ae.getActionCommand() == "SaveWavFile") {
+			Synthesizer defSynth;
+			try {
+				defSynth = (synth != null) ? synth : MidiSystem.getSynthesizer();
+				saveWavFile("wavtest2.wav", defSynth);
+				defSynth.open();
+				if (soundfont != null) {
+					defSynth.unloadAllInstruments(soundfont);
+					defSynth.loadAllInstruments(soundfont);
+				}
+				for (Transmitter tm : sequencer.getTransmitters()) {
+					tm.close();
+				}
+				sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
+				pack();
+				repaint();
+			} catch (MidiUnavailableException | IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
 		}
 		
@@ -1348,23 +1443,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		
 		if (ae.getActionCommand() == "SwitchDarkMode") {
-			System.out.println("Switching dark mode!");
-			if (isDarkMode) {
-				FlatIntelliJLaf.install();
-			} else {
-				FlatDarculaLaf.install();
-			}
-			isDarkMode = !isDarkMode;
-			SwingUtilities.updateComponentTreeUI(this);
-			mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-			subTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-			messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-			for (JSeparator x : separators) {
-				x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-			}
-			pack();
-			setVisible(true);
-			repaint();
+			switchDarkMode();
 		}
 		
 		System.out.println("::" + ae.getActionCommand() + "::");
@@ -1532,6 +1611,7 @@ public class MidiGeneratorGUI extends JFrame
 		return chord;
 	}
 	
+	@SuppressWarnings("restriction")
 	protected void saveWavFile(final String wavFileName, Synthesizer normalSynth)
 			throws MidiUnavailableException, IOException {
 		AudioSynthesizer synth = null;
@@ -1540,9 +1620,14 @@ public class MidiGeneratorGUI extends JFrame
 		try {
 			synth = (AudioSynthesizer) normalSynth;
 			synth.close();
+			
 			// Open AudioStream from AudioSynthesizer with default values
 			stream1 = synth.openStream(null, null);
-			
+			synth.open();
+			if (soundfont != null) {
+				synth.unloadAllInstruments(soundfont);
+				synth.loadAllInstruments(soundfont);
+			}
 			// Play Sequence into AudioSynthesizer Receiver.
 			double totalLength = this.sendOutputSequenceMidiEvents(synth.getReceiver());
 			
@@ -1554,7 +1639,7 @@ public class MidiGeneratorGUI extends JFrame
 			
 			
 			// Write the wave file to disk
-			AudioSystem.write(stream2, AudioFileFormat.Type.WAVE, new File("wavtest1.wav"));
+			AudioSystem.write(stream2, AudioFileFormat.Type.WAVE, new File(wavFileName));
 		} finally {
 			if (stream1 != null)
 				stream1.close();
@@ -1594,6 +1679,23 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		
 		return totalTime / 1000000.0;
+	}
+	
+	@SuppressWarnings("restriction")
+	private static AudioSynthesizer getAudioSynthesizer() throws MidiUnavailableException {
+		// First check if default synthesizer is AudioSynthesizer.
+		Synthesizer synth = MidiSystem.getSynthesizer();
+		if (synth instanceof AudioSynthesizer)
+			return (AudioSynthesizer) synth;
+		
+		// now check the others...        
+		for (MidiDevice.Info info : MidiSystem.getMidiDeviceInfo()) {
+			MidiDevice device = MidiSystem.getMidiDevice(info);
+			if (device instanceof AudioSynthesizer)
+				return (AudioSynthesizer) device;
+		}
+		
+		throw new MidiUnavailableException("The AudioSynthesizer is not available.");
 	}
 	
 	public void marshal(String path) throws JAXBException, IOException {

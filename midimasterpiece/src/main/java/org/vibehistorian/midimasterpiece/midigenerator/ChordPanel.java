@@ -50,7 +50,7 @@ public class ChordPanel extends JPanel {
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(instPool);
-		this.add(new JLabel("Transition%"));
+		this.add(new JLabel("Random split%"));
 		this.add(transitionChance);
 		this.add(new JLabel("Split(ms)"));
 		this.add(transitionSplit);
