@@ -1327,8 +1327,13 @@ public class MidiGeneratorGUI extends JFrame
 		if (ae.getActionCommand() == "SaveWavFile") {
 			Synthesizer defSynth;
 			try {
+				SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+				f.applyPattern("yyMMdd-HH-mm-ss");
+				Date date = new Date();
 				defSynth = (synth != null) ? synth : MidiSystem.getSynthesizer();
-				saveWavFile("wavtest2.wav", defSynth);
+				String soundbankOptional = (soundfont != null) ? "SB_" : "";
+				String filename = f.format(date) + "_" + soundbankOptional + currentMidi.getName();
+				saveWavFile(filename + "-export.wav", defSynth);
 				defSynth.open();
 				if (soundfont != null) {
 					defSynth.unloadAllInstruments(soundfont);
