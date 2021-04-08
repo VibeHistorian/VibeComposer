@@ -12,6 +12,7 @@ public class ChordGenSettings {
 	private boolean useTranspose = true;
 	private boolean includePresets = true;
 	private int rotationChance = 25;
+	private int sustainChance = 25;
 	
 	public boolean isUseDelay() {
 		return useDelay;
@@ -59,6 +60,14 @@ public class ChordGenSettings {
 	
 	public void setRotationChance(int rotationChance) {
 		this.rotationChance = rotationChance;
+	}
+	
+	public int getSustainChance() {
+		return sustainChance;
+	}
+	
+	public void setSustainChance(int sustainChance) {
+		this.sustainChance = sustainChance;
 	}
 	
 	

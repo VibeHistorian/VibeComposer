@@ -1,6 +1,8 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -8,8 +10,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 
 public class ChordPanel extends JPanel {
 	
@@ -35,20 +35,21 @@ public class ChordPanel extends JPanel {
 	private JTextField patternRotation = new JTextField("0", 1);
 	
 	private JCheckBox lockInst = new JCheckBox("Lock", false);
-	
 	private JCheckBox muteInst = new JCheckBox("Mute", false);
+	private JComboBox<String> instPool = new JComboBox<String>();
 	
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
 		
-		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), instrument);
+		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(MidiUtils.POOL.CHORD), instrument);
 		
 		this.add(new JLabel("#"));
 		this.add(chordPanelOrder);
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
+		this.add(instPool);
 		this.add(new JLabel("Transition%"));
 		this.add(transitionChance);
 		this.add(new JLabel("Split(ms)"));
@@ -76,6 +77,19 @@ public class ChordPanel extends JPanel {
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}
+		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {
+			instPool.addItem(p.toString());
+		}
+		
+		instPool.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				if (event.getStateChange() == ItemEvent.SELECTED) {
+					setInstPool(getInstPool());
+				}
+			}
+		});
+		
 		removeButton.addActionListener(l);
 		removeButton.setActionCommand("RemoveChord," + chordPanelOrder);
 	}
@@ -156,12 +170,12 @@ public class ChordPanel extends JPanel {
 	
 	public int getInstrument() {
 		return MidiUtils.getInstByIndex(instrument.getSelectedIndex(),
-				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS));
+				MidiUtils.INST_POOLS.get(getInstPool()));
 	}
 	
 	public void setInstrument(int instrument) {
-		MidiUtils.selectJComboBoxByInst(this.instrument,
-				MidiUtils.PART_INST_NAMES.get(PARTS.CHORDS), instrument);
+		MidiUtils.selectJComboBoxByInst(this.instrument, MidiUtils.INST_POOLS.get(getInstPool()),
+				instrument);
 	}
 	
 	public ChordPart toChordPart(int lastRandomSeed) {
@@ -169,10 +183,12 @@ public class ChordPanel extends JPanel {
 				getStrum(), getDelay(), getTranspose(),
 				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
 				getPatternRotation(), getChordPanelOrder());
+		part.setInstPool(getInstPool());
 		return part;
 	}
 	
 	public void setFromChordPart(ChordPart part) {
+		setInstPool(part.getInstPool());
 		setInstrument(part.getInstrument());
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
@@ -203,6 +219,17 @@ public class ChordPanel extends JPanel {
 	
 	public void setMuteInst(boolean selected) {
 		this.muteInst.setSelected(selected);
+	}
+	
+	public MidiUtils.POOL getInstPool() {
+		return MidiUtils.POOL.valueOf((String) instPool.getSelectedItem());
+	}
+	
+	public void setInstPool(MidiUtils.POOL pool) {
+		instPool.setSelectedItem(pool.name());
+		instrument.removeAllItems();
+		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(getInstPool()), instrument);
+		instrument.setSelectedIndex(0);
 	}
 	
 }

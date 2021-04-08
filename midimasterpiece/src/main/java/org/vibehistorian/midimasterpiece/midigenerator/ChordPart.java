@@ -21,6 +21,8 @@ public class ChordPart {
 	private int patternRotation = 0;
 	private int order = 1;
 	
+	private MidiUtils.POOL instPool = MidiUtils.POOL.PLUCK;
+	
 	public ChordPart() {
 		
 	}
@@ -121,5 +123,13 @@ public class ChordPart {
 	
 	public void setInstrument(int instrument) {
 		this.instrument = instrument;
+	}
+
+	public MidiUtils.POOL getInstPool() {
+		return instPool;
+	}
+
+	public void setInstPool(MidiUtils.POOL instPool) {
+		this.instPool = instPool;
 	}
 }
