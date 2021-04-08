@@ -43,12 +43,14 @@ public class DrumPanel extends JPanel {
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 	private JTextField patternRotation = new JTextField("0", 1);
 	
+	private JCheckBox muteInst = new JCheckBox("Mute", false);
+	
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
 		this.add(new JLabel("#"));
 		this.add(drumPanelOrder);
-		this.add(new JLabel(" "));
+		this.add(muteInst);
 		this.add(new JLabel("Pitch"));
 		this.add(pitch);
 		this.add(new JLabel("Hits#"));
@@ -215,5 +217,13 @@ public class DrumPanel extends JPanel {
 	
 	public void setPatternRotation(int rotation) {
 		patternRotation.setText(String.valueOf(rotation));
+	}
+	
+	public boolean getMuteInst() {
+		return muteInst.isSelected();
+	}
+	
+	public void setMuteInst(boolean selected) {
+		this.muteInst.setSelected(selected);
 	}
 }

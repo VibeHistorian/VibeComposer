@@ -36,6 +36,8 @@ public class ChordPanel extends JPanel {
 	
 	private JCheckBox lockInst = new JCheckBox("Lock", false);
 	
+	private JCheckBox muteInst = new JCheckBox("Mute", false);
+	
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
@@ -44,6 +46,7 @@ public class ChordPanel extends JPanel {
 		
 		this.add(new JLabel("#"));
 		this.add(chordPanelOrder);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(new JLabel("Transition%"));
@@ -192,6 +195,14 @@ public class ChordPanel extends JPanel {
 	
 	public void setLockInst(boolean selected) {
 		this.lockInst.setSelected(selected);
+	}
+	
+	public boolean getMuteInst() {
+		return muteInst.isSelected();
+	}
+	
+	public void setMuteInst(boolean selected) {
+		this.muteInst.setSelected(selected);
 	}
 	
 }

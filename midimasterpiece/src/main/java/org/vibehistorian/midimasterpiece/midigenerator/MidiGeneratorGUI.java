@@ -91,10 +91,10 @@ public class MidiGeneratorGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 	
-	private static final double[] MILISECOND_ARRAY = { 0, 500, 333, 250, 200, 166, 125, 83, 62,
-			31 };
-	private static final double[] MILISECOND_ARRAY_SMALL = { 0, 63, 125, 250, 333 };
-	private static final double[] MILISECOND_ARRAY_LARGE = { 500, 625, 750 };
+	private static final double[] MILISECOND_ARRAY_STRUM = { 0, 1000, 750, 500, 333, 250, 200, 166,
+			125, 83, 62, 31 };
+	private static final double[] MILISECOND_ARRAY_DELAY = { 0, 63, 125, 250, 333 };
+	private static final double[] MILISECOND_ARRAY_SPLIT = { 500, 625, 750 };
 	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 	
 	private static boolean isDarkMode = false;
@@ -412,8 +412,7 @@ public class MidiGeneratorGUI extends JFrame
 		MidiUtils.addAllToJComboBox(MidiUtils.PART_INST_NAMES.get(PARTS.MELODY), melodyInst);
 		arpMelodyLockInst = new JCheckBox("Inst. copy ARP1", true);
 		
-		MidiUtils.selectJComboBoxByInst(melodyInst, MidiUtils.PART_INST_NAMES.get(PARTS.MELODY),
-				12);
+		MidiUtils.selectJComboBoxByInst(melodyInst, MidiUtils.PART_INST_NAMES.get(PARTS.MELODY), 8);
 		
 		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -437,7 +436,7 @@ public class MidiGeneratorGUI extends JFrame
 			});
 		}
 		
-		melodyLock = new JCheckBox("Lock Inst.", false);
+		melodyLock = new JCheckBox("Lock Inst.", true);
 		
 		userMelodySeed = new JTextField("0", 10);
 		JButton generateUserMelodySeed = new JButton("Random");
@@ -959,8 +958,10 @@ public class MidiGeneratorGUI extends JFrame
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
 				& randomizeChordStrumsOnCompose.isSelected())) {
 			Random strumsGen = new Random();
-			double strum1 = getRandomFromArray(strumsGen, MILISECOND_ARRAY);
-			double strum2 = strum1 * getRandomFromArray(strumsGen, MILISECOND_MULTIPLIER_ARRAY);
+			for (ChordPanel p : chordPanels) {
+				p.setStrum((int) getRandomFromArray(strumsGen, MILISECOND_ARRAY_STRUM));
+			}
+			
 		}
 		
 		
@@ -1793,7 +1794,9 @@ public class MidiGeneratorGUI extends JFrame
 	private List<DrumPart> getDrumPartsFromDrumPanels() {
 		List<DrumPart> parts = new ArrayList<>();
 		for (DrumPanel p : drumPanels) {
-			parts.add(p.toDrumPart(lastRandomSeed));
+			if (!p.getMuteInst()) {
+				parts.add(p.toDrumPart(lastRandomSeed));
+			}
 		}
 		return parts;
 	}
@@ -1932,7 +1935,9 @@ public class MidiGeneratorGUI extends JFrame
 	private List<ChordPart> getChordPartsFromChordPanels() {
 		List<ChordPart> parts = new ArrayList<>();
 		for (ChordPanel p : chordPanels) {
-			parts.add(p.toChordPart(lastRandomSeed));
+			if (!p.getMuteInst()) {
+				parts.add(p.toChordPart(lastRandomSeed));
+			}
 		}
 		return parts;
 	}
@@ -1974,11 +1979,11 @@ public class MidiGeneratorGUI extends JFrame
 					.get(chordPanelGenerator.nextInt(availableInstruments.size())));
 			cp.setTransitionChance(chordPanelGenerator.nextInt(25));
 			cp.setTransitionSplit(
-					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_LARGE)));
+					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
 			
-			cp.setStrum(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY))));
-			cp.setDelay(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SMALL))));
+			cp.setStrum(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_STRUM))));
+			cp.setDelay(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY))));
 			
 			int patternOrder = 0;
 			if (randomChordPattern.isSelected()) {
