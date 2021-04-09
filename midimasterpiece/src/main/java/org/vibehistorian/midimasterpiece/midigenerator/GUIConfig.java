@@ -296,9 +296,12 @@ public class GUIConfig {
 	
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
+	private List<ArpPart> arpParts = new ArrayList<>();
 	
 	
 	private ChordGenSettings chordGenSettings = new ChordGenSettings();
+	private DrumGenSettings drumGenSettings = new DrumGenSettings();
+	private ArpGenSettings arpGenSettings = new ArpGenSettings();
 	
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
@@ -504,13 +507,37 @@ public class GUIConfig {
 	public void setChordParts(List<ChordPart> chordParts) {
 		this.chordParts = chordParts;
 	}
-
+	
 	public ChordGenSettings getChordGenSettings() {
 		return chordGenSettings;
 	}
-
+	
 	public void setChordGenSettings(ChordGenSettings chordGenSettings) {
 		this.chordGenSettings = chordGenSettings;
+	}
+
+	public List<ArpPart> getArpParts() {
+		return arpParts;
+	}
+
+	public void setArpParts(List<ArpPart> arpParts) {
+		this.arpParts = arpParts;
+	}
+
+	public DrumGenSettings getDrumGenSettings() {
+		return drumGenSettings;
+	}
+
+	public void setDrumGenSettings(DrumGenSettings drumGenSettings) {
+		this.drumGenSettings = drumGenSettings;
+	}
+
+	public ArpGenSettings getArpGenSettings() {
+		return arpGenSettings;
+	}
+
+	public void setArpGenSettings(ArpGenSettings arpGenSettings) {
+		this.arpGenSettings = arpGenSettings;
 	}
 	
 }
