@@ -579,7 +579,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomArpsCount = new JTextField("4", 2);
 		JButton randomizeArps = new JButton("Randomize Arps:");
 		randomizeArps.addActionListener(this);
-		randomizeArps.setActionCommand("RandDrums");
+		randomizeArps.setActionCommand("RandArps");
 		randomArpsOnCompose = new JCheckBox("on compose", true);
 		arpsSettingsPanel.add(randomizeArps);
 		arpsSettingsPanel.add(randomArpsCount);
@@ -1171,6 +1171,10 @@ public class MidiGeneratorGUI extends JFrame
 			
 		}
 		
+		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
+				&& addArps.isSelected() && randomArpsOnCompose.isSelected())) {
+			createRandomArpPanels(Integer.valueOf(randomArpsCount.getText()));
+		}
 		
 		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
 				&& addDrums.isSelected() && randomDrumsOnCompose.isSelected())) {
