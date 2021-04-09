@@ -68,7 +68,7 @@ public class GUIConfig {
 		return arp1ArpEnable;
 	}
 	
-	public void setArp1ArpEnable(boolean arp1ArpEnable) {
+	public void setArpsEnable(boolean arp1ArpEnable) {
 		this.arp1ArpEnable = arp1ArpEnable;
 	}
 	
@@ -100,7 +100,7 @@ public class GUIConfig {
 		return arp1ArpInst;
 	}
 	
-	public void setArp1ArpInst(int arp1ArpInst) {
+	public void setArpsInst(int arp1ArpInst) {
 		this.arp1ArpInst = arp1ArpInst;
 	}
 	

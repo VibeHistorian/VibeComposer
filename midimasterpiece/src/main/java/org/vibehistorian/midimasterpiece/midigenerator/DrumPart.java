@@ -22,7 +22,7 @@ public class DrumPart {
 	private int patternSeed = 0;
 	private RhythmPattern pattern = RhythmPattern.RANDOM;
 	private boolean isVelocityPattern = true;
-	private int patternRotation = 0;
+	private int patternShift = 0;
 	private int order = 1;
 	
 	public DrumPart() {
@@ -32,7 +32,7 @@ public class DrumPart {
 	public DrumPart(int pitch, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, int velocityMin, int velocityMax, int slideMiliseconds,
 			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern,
-			int patternRotation) {
+			int patternShift) {
 		this.pitch = pitch;
 		this.hitsPerPattern = hitsPerPattern;
 		this.chordSpan = chordSpan;
@@ -44,7 +44,7 @@ public class DrumPart {
 		this.patternSeed = patternSeed;
 		this.pattern = pattern;
 		this.isVelocityPattern = isVelocityPattern;
-		this.patternRotation = patternRotation;
+		this.patternShift = patternShift;
 	}
 	
 	
@@ -136,12 +136,12 @@ public class DrumPart {
 		this.isVelocityPattern = isVelocityPattern;
 	}
 	
-	public int getPatternRotation() {
-		return patternRotation;
+	public int getPatternShift() {
+		return patternShift;
 	}
 	
-	public void setPatternRotation(int patternRotation) {
-		this.patternRotation = patternRotation;
+	public void setPatternShift(int patternShift) {
+		this.patternShift = patternShift;
 	}
 	
 	@Override
@@ -153,7 +153,7 @@ public class DrumPart {
 		result = prime * result + hitsPerPattern;
 		result = prime * result + (isVelocityPattern ? 1231 : 1237);
 		result = prime * result + ((pattern == null) ? 0 : pattern.hashCode());
-		result = prime * result + patternRotation;
+		result = prime * result + patternShift;
 		result = prime * result + patternSeed;
 		result = prime * result + pauseChance;
 		result = prime * result + pitch;
@@ -182,7 +182,7 @@ public class DrumPart {
 			return false;
 		if (pattern != other.pattern)
 			return false;
-		if (patternRotation != other.patternRotation)
+		if (patternShift != other.patternShift)
 			return false;
 		if (patternSeed != other.patternSeed)
 			return false;

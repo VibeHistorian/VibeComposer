@@ -21,7 +21,7 @@ import jm.music.data.Note;
 public class MidiUtils {
 	
 	public enum PARTS {
-		MELODY, CHORDS, ARP1, ARP2, BASSROOTS, DRUMS;
+		MELODY, CHORDS, ARPS, BASSROOTS, DRUMS;
 	}
 	
 	//full scale
@@ -196,23 +196,23 @@ public class MidiUtils {
 	
 	public static List<int[]> squishChordProgression(List<int[]> chords) {
 		double avg = MidiUtils.calculateAverageNote(chords);
-		System.out.println("AVG: " + avg);
+		//System.out.println("AVG: " + avg);
 		
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
 			if (avg - c[0] > 6) {
 				c[0] += 12;
-				System.out.println("SWAP UP: " + i);
+				//System.out.println("SWAP UP: " + i);
 			}
 			if (c[c.length - 1] - avg > 6) {
 				c[c.length - 1] -= 12;
-				System.out.println("SWAP DOWN: " + i);
+				//System.out.println("SWAP DOWN: " + i);
 			}
 			Arrays.sort(c);
 			squishedChords.add(c);
 		}
-		System.out.println("NEW AVG: " + MidiUtils.calculateAverageNote(squishedChords));
+		//System.out.println("NEW AVG: " + MidiUtils.calculateAverageNote(squishedChords));
 		return squishedChords;
 	}
 	

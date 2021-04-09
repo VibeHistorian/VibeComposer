@@ -1,5 +1,6 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -22,11 +23,15 @@ public class ArpPart {
 	
 	private int patternSeed = 0;
 	private RhythmPattern pattern = RhythmPattern.RANDOM;
-	private int patternRotation = 0;
+	private int patternShift = 0;
+	
+	public ArpPart() {
+		
+	}
 	
 	public ArpPart(int instrument, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, boolean repeatableNotes, int patternRepeat, int transpose,
-			int order, int patternSeed, RhythmPattern pattern, int patternRotation) {
+			int order, int patternSeed, RhythmPattern pattern, int patternShift) {
 		super();
 		this.instrument = instrument;
 		this.hitsPerPattern = hitsPerPattern;
@@ -39,7 +44,7 @@ public class ArpPart {
 		this.order = order;
 		this.patternSeed = patternSeed;
 		this.pattern = pattern;
-		this.patternRotation = patternRotation;
+		this.patternShift = patternShift;
 	}
 	
 	public int getInstrument() {
@@ -106,6 +111,7 @@ public class ArpPart {
 		this.transpose = transpose;
 	}
 	
+	@XmlAttribute
 	public int getOrder() {
 		return order;
 	}
@@ -130,12 +136,12 @@ public class ArpPart {
 		this.pattern = pattern;
 	}
 	
-	public int getPatternRotation() {
-		return patternRotation;
+	public int getPatternShift() {
+		return patternShift;
 	}
 	
-	public void setPatternRotation(int patternRotation) {
-		this.patternRotation = patternRotation;
+	public void setPatternShift(int patternShift) {
+		this.patternShift = patternShift;
 	}
 	
 	

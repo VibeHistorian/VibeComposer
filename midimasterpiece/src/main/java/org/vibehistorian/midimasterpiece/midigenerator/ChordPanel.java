@@ -32,7 +32,7 @@ public class ChordPanel extends JPanel {
 	
 	private JTextField patternSeed = new JTextField("0", 8);
 	private JComboBox<String> pattern = new JComboBox<String>();
-	private JTextField patternRotation = new JTextField("0", 1);
+	private JTextField patternShift = new JTextField("0", 1);
 	
 	private JCheckBox lockInst = new JCheckBox("Lock", false);
 	private JCheckBox muteInst = new JCheckBox("Mute", false);
@@ -67,8 +67,8 @@ public class ChordPanel extends JPanel {
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
-		this.add(new JLabel("Rot."));
-		this.add(patternRotation);
+		this.add(new JLabel("Shift"));
+		this.add(patternShift);
 		
 		this.add(removeButton);
 	}
@@ -160,12 +160,12 @@ public class ChordPanel extends JPanel {
 		this.pattern.setSelectedItem((String.valueOf(pattern.toString())));
 	}
 	
-	public int getPatternRotation() {
-		return Integer.valueOf(patternRotation.getText());
+	public int getPatternShift() {
+		return Integer.valueOf(patternShift.getText());
 	}
 	
-	public void setPatternRotation(int rotation) {
-		patternRotation.setText(String.valueOf(rotation));
+	public void setPatternShift(int shift) {
+		patternShift.setText(String.valueOf(shift));
 	}
 	
 	public int getInstrument() {
@@ -182,7 +182,7 @@ public class ChordPanel extends JPanel {
 		ChordPart part = new ChordPart(getInstrument(), getTransitionChance(), getTransitionSplit(),
 				getStrum(), getDelay(), getTranspose(),
 				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternRotation(), getPanelOrder());
+				getPatternShift(), getPanelOrder());
 		part.setInstPool(getInstPool());
 		return part;
 	}
@@ -199,7 +199,7 @@ public class ChordPanel extends JPanel {
 		
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
-		setPatternRotation(part.getPatternRotation());
+		setPatternShift(part.getPatternShift());
 		
 		setPanelOrder(part.getOrder());
 		

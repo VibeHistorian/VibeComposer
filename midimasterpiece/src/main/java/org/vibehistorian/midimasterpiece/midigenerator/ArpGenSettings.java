@@ -9,7 +9,7 @@ public class ArpGenSettings {
 	
 	private boolean useTranspose = true;
 	private boolean includePresets = true;
-	private int rotationChance = 25;
+	private int shiftChance = 25;
 	
 	
 	public boolean isUseTranspose() {
@@ -28,11 +28,11 @@ public class ArpGenSettings {
 		this.includePresets = includePresets;
 	}
 	
-	public int getRotationChance() {
-		return rotationChance;
+	public int getShiftChance() {
+		return shiftChance;
 	}
 	
-	public void setRotationChance(int rotationChance) {
-		this.rotationChance = rotationChance;
+	public void setShiftChance(int shiftChance) {
+		this.shiftChance = shiftChance;
 	}
 }

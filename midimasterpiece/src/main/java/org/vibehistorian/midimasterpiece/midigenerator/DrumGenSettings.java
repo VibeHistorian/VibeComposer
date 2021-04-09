@@ -9,7 +9,7 @@ public class DrumGenSettings {
 	private boolean useSlide = true;
 	private boolean includePresets = true;
 	private int velocityPatternChance = 100;
-	private int patternRotationChance = 25;
+	private int patternShiftChance = 25;
 	
 	public boolean isUseSlide() {
 		return useSlide;
@@ -35,12 +35,12 @@ public class DrumGenSettings {
 		this.velocityPatternChance = velocityPatternChance;
 	}
 	
-	public int getPatternRotationChance() {
-		return patternRotationChance;
+	public int getPatternShiftChance() {
+		return patternShiftChance;
 	}
 	
-	public void setPatternRotationChance(int patternRotationChance) {
-		this.patternRotationChance = patternRotationChance;
+	public void setPatternShiftChance(int patternShiftChance) {
+		this.patternShiftChance = patternShiftChance;
 	}
 	
 	

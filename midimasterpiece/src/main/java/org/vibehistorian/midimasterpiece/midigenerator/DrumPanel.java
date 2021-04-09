@@ -41,7 +41,7 @@ public class DrumPanel extends JPanel {
 	private JTextField patternSeed = new JTextField("0", 8);
 	private JComboBox<String> pattern = new JComboBox<String>();
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
-	private JTextField patternRotation = new JTextField("0", 1);
+	private JTextField patternShift = new JTextField("0", 1);
 	
 	private JCheckBox muteInst = new JCheckBox("Mute", false);
 	
@@ -76,8 +76,8 @@ public class DrumPanel extends JPanel {
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
 		this.add(isVelocityPattern);
-		this.add(new JLabel("Rot."));
-		this.add(patternRotation);
+		this.add(new JLabel("Shift"));
+		this.add(patternShift);
 		
 		this.add(removeButton);
 	}
@@ -174,7 +174,7 @@ public class DrumPanel extends JPanel {
 		DrumPart part = new DrumPart(getPitch(), getHitsPerPattern(), getChordSpan(),
 				getPauseChance(), getExceptionChance(), getVelocityMin(), getVelocityMax(),
 				getSlideMiliseconds(), (getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed,
-				getPattern(), getIsVelocityPattern(), getPatternRotation());
+				getPattern(), getIsVelocityPattern(), getPatternShift());
 		part.setOrder(getPanelOrder());
 		return part;
 	}
@@ -197,7 +197,7 @@ public class DrumPanel extends JPanel {
 		setPattern(part.getPattern());
 		
 		setIsVelocityPattern(part.isVelocityPattern());
-		setPatternRotation(part.getPatternRotation());
+		setPatternShift(part.getPatternShift());
 		
 		setPanelOrder(part.getOrder());
 		
@@ -211,12 +211,12 @@ public class DrumPanel extends JPanel {
 		this.isVelocityPattern.setSelected(isVelocityPattern);
 	}
 	
-	public int getPatternRotation() {
-		return Integer.valueOf(patternRotation.getText());
+	public int getPatternShift() {
+		return Integer.valueOf(patternShift.getText());
 	}
 	
-	public void setPatternRotation(int rotation) {
-		patternRotation.setText(String.valueOf(rotation));
+	public void setPatternShift(int shift) {
+		patternShift.setText(String.valueOf(shift));
 	}
 	
 	public boolean getMuteInst() {

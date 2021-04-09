@@ -18,7 +18,7 @@ public class ChordPart {
 	
 	private int patternSeed = 0;
 	private RhythmPattern pattern = RhythmPattern.RANDOM;
-	private int patternRotation = 0;
+	private int patternShift = 0;
 	private int order = 1;
 	
 	private MidiUtils.POOL instPool = MidiUtils.POOL.PLUCK;
@@ -28,7 +28,7 @@ public class ChordPart {
 	}
 	
 	public ChordPart(int instrument, int transitionChance, int transitionSplit, int strum,
-			int delay, int transpose, int patternSeed, RhythmPattern pattern, int patternRotation,
+			int delay, int transpose, int patternSeed, RhythmPattern pattern, int patternShift,
 			int order) {
 		super();
 		this.setInstrument(instrument);
@@ -39,7 +39,7 @@ public class ChordPart {
 		this.transpose = transpose;
 		this.patternSeed = patternSeed;
 		this.pattern = pattern;
-		this.patternRotation = patternRotation;
+		this.patternShift = patternShift;
 		this.order = order;
 	}
 	
@@ -92,12 +92,12 @@ public class ChordPart {
 		this.pattern = pattern;
 	}
 	
-	public int getPatternRotation() {
-		return patternRotation;
+	public int getPatternShift() {
+		return patternShift;
 	}
 	
-	public void setPatternRotation(int patternRotation) {
-		this.patternRotation = patternRotation;
+	public void setPatternShift(int patternShift) {
+		this.patternShift = patternShift;
 	}
 	
 	@XmlAttribute
