@@ -121,6 +121,7 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private List<DrumPanel> drumPanels = new ArrayList<>();
 	private List<ChordPanel> chordPanels = new ArrayList<>();
+	private List<ArpPanel> arpPanels = new ArrayList<>();
 	
 	JTextField soundbankFilename;
 	
@@ -134,6 +135,7 @@ public class MidiGeneratorGUI extends JFrame
 	
 	JScrollPane drumScrollPane;
 	JScrollPane chordScrollPane;
+	JScrollPane arpScrollPane;
 	
 	JTextField maxJump;
 	JTextField maxExceptions;
@@ -156,8 +158,7 @@ public class MidiGeneratorGUI extends JFrame
 	
 	JCheckBox spiceAllowDimAug;
 	JCheckBox melodyFirstNoteFromChord;
-	JCheckBox randomArpPattern;
-	JCheckBox randomArpCount;
+	
 	JCheckBox addMelody;
 	JCheckBox addChords;
 	JCheckBox addArp1;
@@ -191,11 +192,18 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox randomChordTranspose;
 	JCheckBox randomChordPattern;
 	
+	JCheckBox randomArpTranspose;
+	JCheckBox randomArpPattern;
+	JCheckBox randomArpCount;
+	JCheckBox randomArpLockInst;
+	
 	JTextField chordSustainChance;
 	JTextField chordRotationChance;
 	
 	JTextField velocityPatternChance;
 	JTextField rotationChance;
+	
+	JTextField arpRotationChance;
 	
 	JCheckBox randomChordNote;
 	JCheckBox minorScale;
@@ -257,7 +265,8 @@ public class MidiGeneratorGUI extends JFrame
 			createHorizontalSeparator(100, this);
 			
 			// arps
-			initArps(110, GridBagConstraints.WEST);
+			initArpSettings(105, GridBagConstraints.WEST);
+			initArps(110, GridBagConstraints.CENTER);
 			createHorizontalSeparator(150, this);
 			
 			// bass
@@ -539,7 +548,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(1300, 200);
+				return new Dimension(1300, 150);
 			}
 		};
 		chordScrollPane.setViewportView(scrollableChordPanels);
@@ -554,79 +563,56 @@ public class MidiGeneratorGUI extends JFrame
 		add(chordScrollPane, constraints);
 	}
 	
-	private void initArps(int startY, int anchorSide) {
-		// --- ARPS -----------
+	private void initArpSettings(int startY, int anchorSide) {
 		JPanel arp1Panel = new JPanel();
-		JPanel arp2Panel = new JPanel();
-		addArp1 = new JCheckBox("Add ARP1", true);
 		arp1Inst = new JComboBox<String>();
+		addArp1 = new JCheckBox("Add ARPS", true);
 		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK), arp1Inst);
-		
-		addArp2 = new JCheckBox("Add ARP2", true);
-		arp2Inst = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK), arp2Inst);
-		arp2LockInst = new JCheckBox("Inst. copy ARP1", false);
 		MidiUtils.selectJComboBoxByInst(arp1Inst, MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK),
-				11);
-		
-		MidiUtils.selectJComboBoxByInst(arp2Inst, MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK),
-				4);
-		arp1Lock = new JCheckBox("Lock Inst.", false);
-		arp2Lock = new JCheckBox("Lock Inst.", false);
-		arpCount = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
-				arpCount);
-		arpCount.setSelectedIndex(2);
-		randomArpPattern = new JCheckBox("Random pattern", true);
-		randomArpCount = new JCheckBox("Random#", true);
-		arpPatternRepeat = new JCheckBox("Repeatable", true);
-		arpAllowPauses = new JCheckBox("Pauses", true);
-		pauseChance = new JTextField("25", 3);
-		
-		
+				8);
 		arp1Panel.add(addArp1);
-		arp1Panel.add(arp1Lock);
-		arp1Panel.add(arp1Inst);
-		arp1Panel.add(new JLabel("Arps#"));
-		arp1Panel.add(arpCount);
+		
+		randomArpTranspose = new JCheckBox("Use transpose", true);
+		randomArpPattern = new JCheckBox("Pattern presets", true);
+		randomArpCount = new JCheckBox("Random #", true);
+		randomArpLockInst = new JCheckBox("All same inst.", true);
+		arpRotationChance = new JTextField("25", 3);
+		
+		arp1Panel.add(randomArpLockInst);
 		arp1Panel.add(randomArpCount);
+		arp1Panel.add(randomArpTranspose);
 		arp1Panel.add(randomArpPattern);
-		arp1Panel.add(arpPatternRepeat);
-		arp1Panel.add(arpAllowPauses);
-		arp1Panel.add(new JLabel("%"));
-		arp1Panel.add(pauseChance);
-		
-		secondArpMultiplier = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4" }, secondArpMultiplier);
-		secondArpMultiplier.setSelectedItem("2");
-		
-		secondArpOctaveAdjust = new JComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "-24", "-12", "0", "12", "24" },
-				secondArpOctaveAdjust);
-		secondArpOctaveAdjust.setSelectedItem("0");
-		
-		secondArpMultiplierRandom = new JCheckBox("random", true);
-		
-		secondArpPauseChance = new JTextField("50", 3);
-		
-		arp2Panel.add(addArp2);
-		arp2Panel.add(arp2Lock);
-		arp2Panel.add(arp2Inst);
-		arp2Panel.add(arp2LockInst);
-		arp2Panel.add(new JLabel("Repeats#"));
-		arp2Panel.add(secondArpMultiplier);
-		arp2Panel.add(secondArpMultiplierRandom);
-		
-		arp2Panel.add(new JLabel("Transpose+-"));
-		arp2Panel.add(secondArpOctaveAdjust);
-		arp2Panel.add(new JLabel("Pause%"));
-		arp2Panel.add(secondArpPauseChance);
+		arp1Panel.add(arpRotationChance);
 		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(arp1Panel, constraints);
-		constraints.gridy = startY + 10;
-		add(arp2Panel, constraints);
+	}
+	
+	private void initArps(int startY, int anchorSide) {
+		// --- ARPS -----------
+		
+		
+		JPanel scrollableArpPanels = new JPanel();
+		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
+		scrollableArpPanels.setAutoscrolls(true);
+		
+		arpScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(1300, 150);
+			}
+		};
+		arpScrollPane.setViewportView(scrollableArpPanels);
+		arpScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		
+		if (addArp1.isSelected()) {
+			createRandomArpPanels(2);
+		}
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(arpScrollPane, constraints);
 	}
 	
 	private void initBassRoots(int startY, int anchorSide) {
@@ -705,7 +691,7 @@ public class MidiGeneratorGUI extends JFrame
 		drumScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(1300, 200);
+				return new Dimension(1300, 150);
 			}
 		};
 		drumScrollPane.setViewportView(scrollableDrumPanels);
@@ -2136,6 +2122,113 @@ public class MidiGeneratorGUI extends JFrame
 	}
 	
 	private static ChordPanel getChordPanelByOrder(int order, List<ChordPanel> panels) {
+		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
+	}
+	
+	public ArpPanel addArpPanelToLayout() {
+		int panelOrder = (arpPanels.size() > 0) ? getHighestArpPanelNumber(arpPanels) + 1 : 1;
+		
+		constraints.gridy = arpGenPanelStart + panelOrder;
+		constraints.anchor = GridBagConstraints.CENTER;
+		
+		ArpPanel ap = new ArpPanel(this);
+		ap.setPanelOrder(panelOrder);
+		ap.initComponents();
+		ap.setInstrument(MidiUtils.getInstByIndex(arp1Inst.getSelectedIndex(),
+				MidiUtils.INST_POOLS.get(POOL.PLUCK)));
+		arpPanels.add(ap);
+		((JPanel) arpScrollPane.getViewport().getView()).add(ap);
+		return ap;
+	}
+	
+	private void removeArpPanel(int order, boolean singleRemove) {
+		ArpPanel panel = getArpPanelByOrder(order, arpPanels);
+		((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
+		arpPanels.remove(panel);
+		
+		if (singleRemove) {
+			//reorderArpPanels();
+			pack();
+			repaint();
+		}
+	}
+	
+	private List<ArpPart> getArpPartsFromArpPanels() {
+		List<ArpPart> parts = new ArrayList<>();
+		for (ArpPanel p : arpPanels) {
+			if (!p.getMuteInst()) {
+				parts.add(p.toArpPart(lastRandomSeed));
+			}
+		}
+		return parts;
+	}
+	
+	private void recreateArpPanelsFromArpParts(List<ArpPart> parts) {
+		for (ArpPanel panel : arpPanels) {
+			((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
+		}
+		arpPanels.clear();
+		for (ArpPart part : parts) {
+			ArpPanel panel = addArpPanelToLayout();
+			panel.setFromArpPart(part);
+		}
+		
+		pack();
+		repaint();
+	}
+	
+	private void createRandomArpPanels(int panelCount) {
+		Random arpPanelGenerator = new Random();
+		for (Iterator<ArpPanel> panelI = arpPanels.iterator(); panelI.hasNext();) {
+			ArpPanel panel = panelI.next();
+			if (!panel.getLockInst()) {
+				((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
+				panelI.remove();
+			}
+		}
+		
+		// create only remaining
+		panelCount -= arpPanels.size();
+		
+		for (int i = 0; i < panelCount; i++) {
+			ArpPanel ap = addArpPanelToLayout();
+			
+			List<Integer> availableInstruments = MidiUtils
+					.getInstNumbers(MidiUtils.INST_POOLS.get(POOL.PLUCK));
+			
+			ap.setInstrument(availableInstruments
+					.get(arpPanelGenerator.nextInt(availableInstruments.size())));
+			ap.setTranspose((arpPanelGenerator.nextInt(3) - 1) * 12);
+			
+			
+			int patternOrder = 0;
+			if (randomArpPattern.isSelected()) {
+				patternOrder = arpPanelGenerator.nextInt(RhythmPattern.values().length);
+			}
+			ap.setPattern(RhythmPattern.values()[patternOrder]);
+			
+			if (arpPanelGenerator.nextInt(100) < Integer.valueOf(arpRotationChance.getText())
+					&& patternOrder > 0) {
+				ap.setPatternRotation(
+						arpPanelGenerator.nextInt(ap.getPattern().pattern.length - 1) + 1);
+			}
+			
+		}
+		
+		pack();
+		repaint();
+	}
+	
+	
+	private static int getHighestArpPanelNumber(List<ArpPanel> panels) {
+		int highest = 1;
+		for (ArpPanel p : panels) {
+			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
+		}
+		return highest;
+	}
+	
+	private static ArpPanel getArpPanelByOrder(int order, List<ArpPanel> panels) {
 		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 	
