@@ -345,7 +345,7 @@ public class MelodyGenerator implements JMC {
 		Part melody = new Part("Melody", melodyProgramChange, 0);
 		Part chords = new Part("Chords", 53, 1);
 		Part arps = new Part("Arps", XYLOPHONE, 2);
-		Part bassRoots = new Part("BassRoots", BASS, 4);
+		Part bassRoots = new Part("BassRoots", BASS, 8);
 		Part drums = new Part("Drums", PIANO, 9);
 		Part chordSlash = new Part("ChordSlash", PIANO, 6);
 		
@@ -574,18 +574,19 @@ public class MelodyGenerator implements JMC {
 		for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
 			if (part != PARTS.DRUMS) {
 				if (part == PARTS.CHORDS) {
-					for (int i = 0; i < CHORD_PARTS.size(); i++) {
-						Part p = new Part("Chords" + i, CHORD_PARTS.get(i).getInstrument(), 1);
+					for (int i = 0; i < CHORD_PARTS.size() && i < 7; i++) {
+						Part p = new Part("Chords" + i, CHORD_PARTS.get(i).getInstrument(), 1 + i);
 						p.addCPhrase(chordsCPhrases.get(i));
 						score.add(p);
 					}
+					chordSlash.setInstrument(CHORD_PARTS.get(0).getInstrument());
 					score.add(chordSlash);
 					continue;
 				}
 				
 				if (part == PARTS.ARPS) {
-					for (int i = 0; i < ARP_PARTS.size(); i++) {
-						Part p = new Part("Arps" + i, ARP_PARTS.get(i).getInstrument(), 2);
+					for (int i = 0; i < ARP_PARTS.size() && i < 6; i++) {
+						Part p = new Part("Arps" + i, ARP_PARTS.get(i).getInstrument(), 10 + i);
 						p.addCPhrase(arpCPhrases.get(i));
 						score.add(p);
 					}
