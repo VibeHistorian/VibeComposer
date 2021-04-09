@@ -66,6 +66,7 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
 import javax.xml.bind.JAXBContext;
@@ -228,6 +229,12 @@ public class MidiGeneratorGUI extends JFrame
 	JList<File> generatedMidi;
 	Sequencer sequencer = null;
 	File currentMidi = null;
+	
+	JButton compose;
+	JButton regenerate;
+	JButton startMidi;
+	JButton stopMidi;
+	
 	
 	JLabel messageLabel;
 	
@@ -842,10 +849,10 @@ public class MidiGeneratorGUI extends JFrame
 	private void initControlPanel(int startY, int anchorSide) {
 		JPanel controlPanel = new JPanel();
 		randomSeed = new JTextField("0", 8);
-		JButton compose = new JButton("Compose");
+		compose = new JButton("Compose");
 		compose.addActionListener(this);
 		compose.setActionCommand("Compose");
-		JButton regenerate = new JButton("Regenerate");
+		regenerate = new JButton("Regenerate");
 		regenerate.addActionListener(this);
 		regenerate.setActionCommand("Regenerate");
 		JButton copySeed = new JButton("Copy seed");
@@ -881,10 +888,10 @@ public class MidiGeneratorGUI extends JFrame
 		
 		JPanel playSavePanel = new JPanel();
 		
-		JButton stopMidi = new JButton("STOP");
+		stopMidi = new JButton("STOP");
 		stopMidi.addActionListener(this);
 		stopMidi.setActionCommand("StopMidi");
-		JButton startMidi = new JButton("PLAY");
+		startMidi = new JButton("PLAY");
 		startMidi.addActionListener(this);
 		startMidi.setActionCommand("StartMidi");
 		
@@ -923,6 +930,14 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeInstOnCompose.setSelected(state);
 		//TODO:secondArpMultiplierRandom.setSelected(state);
 		randomArpCount.setSelected(state);
+	}
+	
+	private void switchMidiButtons(boolean state) {
+		startMidi.setEnabled(state);
+		stopMidi.setEnabled(state);
+		compose.setEnabled(state);
+		regenerate.setEnabled(state);
+		
 	}
 	
 	private void switchDarkMode() {
@@ -1300,30 +1315,50 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		
 		if (ae.getActionCommand() == "SaveWavFile") {
-			Synthesizer defSynth;
-			try {
-				SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-				f.applyPattern("yyMMdd-HH-mm-ss");
-				Date date = new Date();
-				defSynth = (synth != null) ? synth : MidiSystem.getSynthesizer();
-				String soundbankOptional = (soundfont != null) ? "SB_" : "";
-				String filename = f.format(date) + "_" + soundbankOptional + currentMidi.getName();
-				saveWavFile(filename + "-export.wav", defSynth);
-				defSynth.open();
-				if (soundfont != null) {
-					defSynth.unloadAllInstruments(soundfont);
-					defSynth.loadAllInstruments(soundfont);
-				}
-				for (Transmitter tm : sequencer.getTransmitters()) {
-					tm.close();
-				}
-				sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
-				pack();
-				repaint();
-			} catch (MidiUnavailableException | IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			
+			if (currentMidi == null) {
+				messageLabel.setText("Need to compose first!");
+				messageLabel.repaint(0);
+				return;
 			}
+			switchMidiButtons(false);
+			pack();
+			repaint();
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+				@Override
+				protected Void doInBackground()
+						throws InterruptedException, MidiUnavailableException, IOException {
+					SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+					Synthesizer defSynth;
+					f.applyPattern("yyMMdd-HH-mm-ss");
+					Date date = new Date();
+					defSynth = (synth != null) ? synth : MidiSystem.getSynthesizer();
+					String soundbankOptional = (soundfont != null) ? "SB_" : "";
+					String filename = f.format(date) + "_" + soundbankOptional
+							+ currentMidi.getName();
+					saveWavFile(filename + "-export.wav", defSynth);
+					defSynth.open();
+					if (soundfont != null) {
+						defSynth.unloadAllInstruments(soundfont);
+						defSynth.loadAllInstruments(soundfont);
+					}
+					for (Transmitter tm : sequencer.getTransmitters()) {
+						tm.close();
+					}
+					sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
+					return null;
+				}
+				
+				@Override
+				protected void done() {
+					switchMidiButtons(true);
+					messageLabel.setText("PROCESSED WAV!");
+					repaint();
+				}
+			};
+			worker.execute(); //here the process thread initiates
+			
+			
 		}
 		
 		if (ae.getActionCommand() == "GenMelody") {
