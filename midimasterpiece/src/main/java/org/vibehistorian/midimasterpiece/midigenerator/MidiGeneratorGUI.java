@@ -1887,7 +1887,7 @@ public class MidiGeneratorGUI extends JFrame
 		constraints.anchor = GridBagConstraints.CENTER;
 		
 		DrumPanel drumJPanel = new DrumPanel(this);
-		drumJPanel.setDrumPanelOrder(panelOrder);
+		drumJPanel.setPanelOrder(panelOrder);
 		drumJPanel.initComponents();
 		drumJPanel.setPitch(
 				MidiUtils.getInstByIndex(drumInst.getSelectedIndex(), MidiUtils.DRUM_INST_NAMES));
@@ -2012,13 +2012,13 @@ public class MidiGeneratorGUI extends JFrame
 	private static int getHighestDrumPanelNumber(List<DrumPanel> panels) {
 		int highest = 1;
 		for (DrumPanel p : panels) {
-			highest = (p.getDrumPanelOrder() > highest) ? p.getDrumPanelOrder() : highest;
+			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
 		}
 		return highest;
 	}
 	
 	private static DrumPanel getDrumPanelByOrder(int order, List<DrumPanel> panels) {
-		return panels.stream().filter(e -> e.getDrumPanelOrder() == order).findFirst().get();
+		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 	
 	public ChordPanel addChordPanelToLayout() {
@@ -2028,7 +2028,7 @@ public class MidiGeneratorGUI extends JFrame
 		constraints.anchor = GridBagConstraints.CENTER;
 		
 		ChordPanel cp = new ChordPanel(this);
-		cp.setChordPanelOrder(panelOrder);
+		cp.setPanelOrder(panelOrder);
 		cp.initComponents();
 		cp.setInstPool(POOL.CHORD);
 		cp.setInstrument(MidiUtils.getInstByIndex(chordsInst.getSelectedIndex(),
@@ -2130,13 +2130,13 @@ public class MidiGeneratorGUI extends JFrame
 	private static int getHighestChordPanelNumber(List<ChordPanel> panels) {
 		int highest = 1;
 		for (ChordPanel p : panels) {
-			highest = (p.getChordPanelOrder() > highest) ? p.getChordPanelOrder() : highest;
+			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
 		}
 		return highest;
 	}
 	
 	private static ChordPanel getChordPanelByOrder(int order, List<ChordPanel> panels) {
-		return panels.stream().filter(e -> e.getChordPanelOrder() == order).findFirst().get();
+		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 	
 	private static double getRandomFromArray(Random generator, double[] array) {

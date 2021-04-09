@@ -18,7 +18,7 @@ public class ChordPanel extends JPanel {
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 	
-	private JLabel chordPanelOrder = new JLabel("0");
+	private JLabel panelOrder = new JLabel("0");
 	
 	private JComboBox<String> instrument = new JComboBox<String>();
 	
@@ -45,7 +45,7 @@ public class ChordPanel extends JPanel {
 		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(MidiUtils.POOL.CHORD), instrument);
 		
 		this.add(new JLabel("#"));
-		this.add(chordPanelOrder);
+		this.add(panelOrder);
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
@@ -91,17 +91,17 @@ public class ChordPanel extends JPanel {
 		});
 		
 		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveChord," + chordPanelOrder);
+		removeButton.setActionCommand("RemoveChord," + panelOrder);
 	}
 	
 	
-	public int getChordPanelOrder() {
-		return Integer.valueOf(chordPanelOrder.getText());
+	public int getPanelOrder() {
+		return Integer.valueOf(panelOrder.getText());
 	}
 	
-	public void setChordPanelOrder(int chordPanelOrder) {
-		this.chordPanelOrder.setText("" + chordPanelOrder);
-		removeButton.setActionCommand("RemoveChord," + chordPanelOrder);
+	public void setPanelOrder(int panelOrder) {
+		this.panelOrder.setText("" + panelOrder);
+		removeButton.setActionCommand("RemoveChord," + panelOrder);
 	}
 	
 	public int getTransitionChance() {
@@ -182,7 +182,7 @@ public class ChordPanel extends JPanel {
 		ChordPart part = new ChordPart(getInstrument(), getTransitionChance(), getTransitionSplit(),
 				getStrum(), getDelay(), getTranspose(),
 				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternRotation(), getChordPanelOrder());
+				getPatternRotation(), getPanelOrder());
 		part.setInstPool(getInstPool());
 		return part;
 	}
@@ -201,7 +201,7 @@ public class ChordPanel extends JPanel {
 		setPattern(part.getPattern());
 		setPatternRotation(part.getPatternRotation());
 		
-		setChordPanelOrder(part.getOrder());
+		setPanelOrder(part.getOrder());
 		
 	}
 	
