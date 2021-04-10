@@ -529,10 +529,10 @@ public class MelodyGenerator implements JMC {
 		melodyPhrase.setDynamic(80);
 		cphraseBassRoot.setDynamic(65);
 		for (int i = 0; i < CHORD_PARTS.size(); i++) {
-			chordsCPhrases.get(i).setDynamic(70 - i * 5);
+			chordsCPhrases.get(i).setDynamic(70 - i * 2);
 		}
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
-			arpCPhrases.get(i).setDynamic(70 - i * 5);
+			arpCPhrases.get(i).setDynamic(70 - i * 2);
 		}
 		
 		// Delay start time
@@ -608,7 +608,8 @@ public class MelodyGenerator implements JMC {
 		
 		for (Part p : score.getPartArray()) {
 			if (p.getHighestPitch() <= 0) {
-				System.out.println("Removing inst: " + p.getInstrument());
+				System.out.println(
+						"Removing inst: " + p.getInstrument() + ", in part: " + p.getTitle());
 				score.removePart(p);
 			}
 		}
@@ -791,13 +792,19 @@ public class MelodyGenerator implements JMC {
 		}
 		List<Integer> arpPausesPattern = new ArrayList<>();
 		
-		for (int i = 0; i < MAXIMUM_ARP_COUNT; i++) {
-			if (uiGenerator4arpPauses.nextInt(100) < ap.getPauseChance()) {
-				arpPausesPattern.add(0);
-			} else {
-				arpPausesPattern.add(1);
+		if (ap.getPattern() == RhythmPattern.RANDOM) {
+			for (int i = 0; i < MAXIMUM_ARP_COUNT; i++) {
+				if (uiGenerator4arpPauses.nextInt(100) < ap.getPauseChance()) {
+					arpPausesPattern.add(0);
+				} else {
+					arpPausesPattern.add(1);
+				}
 			}
+		} else {
+			arpPausesPattern.addAll(ap.getPattern().getPatternByLength(MAXIMUM_ARP_COUNT));
+			Collections.rotate(arpPausesPattern, ap.getPatternShift());
 		}
+		
 		List<Integer> arpOctavePattern = Arrays.stream(arpOctaveArray).boxed()
 				.collect(Collectors.toList());
 		
