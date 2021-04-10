@@ -233,7 +233,7 @@ public class MidiGeneratorGUI extends JFrame
 	// seed / midi
 	JTextField randomSeed;
 	int lastRandomSeed = 0;
-	int realBpm = 60;
+	double realBpm = 60;
 	
 	JList<File> generatedMidi;
 	Sequencer sequencer = null;
@@ -734,7 +734,7 @@ public class MidiGeneratorGUI extends JFrame
 		
 		
 		randomDrumSlide = new JCheckBox("Random slide", true);
-		randomDrumPattern = new JCheckBox("Include presets", true);
+		randomDrumPattern = new JCheckBox("Pattern presets", true);
 		drumVelocityPatternChance = new JTextField("100", 3);
 		drumShiftChance = new JTextField("25", 3);
 		
@@ -1245,7 +1245,7 @@ public class MidiGeneratorGUI extends JFrame
 						instGen.nextInt(MidiUtils.INST_POOLS.get(MidiUtils.POOL.BASS).length));
 			}
 		}
-		realBpm = Integer.valueOf(mainBpm.getText());
+		realBpm = Double.valueOf(mainBpm.getText());
 		if (ae.getActionCommand() == "RandomizeBpmTrans" || (ae.getActionCommand() == "Compose"
 				&& randomizeBmpTransOnCompose.isSelected())) {
 			Random instGen = new Random();
