@@ -505,8 +505,8 @@ public class MelodyGenerator implements JMC {
 		// Generate and fill arps
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
 			CPhrase arpCPhrase = arpCPhrases.get(i);
-			Map<String, List<Integer>> arpMap = generateArpMap(mainGeneratorSeed, i == 0,
-					ARP_PARTS.get(i));
+			Map<String, List<Integer>> arpMap = generateArpMap(ARP_PARTS.get(i).getPatternSeed(),
+					i == 0, ARP_PARTS.get(i));
 			fillArpCPhrase(arpCPhrase, arpMap, actualProgression, ARP_PARTS.get(i));
 		}
 		

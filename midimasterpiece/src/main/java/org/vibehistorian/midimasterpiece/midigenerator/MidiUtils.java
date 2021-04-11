@@ -277,7 +277,7 @@ public class MidiUtils {
 			"GUNSHOT = 127" };
 	
 	public static final String[] BASS_INST_NAMES = { "PIANO = 0", "BRIGHT_ACOUSTIC = 1",
-			"EPIANO = 4", "AAH = 52", "OOH = 53", "SYNVOX = 54", "FLUTE = 73", "RECORDER = 74",
+			"EPIANO = 4", "OOH = 53", "SYNVOX = 54", "FLUTE = 73", "RECORDER = 74",
 			"PAN_FLUTE = 75", "SYNTH_CALLIOPE = 82", "SOLO_VOX = 85", "SPACE_VOICE = 91",
 			"ECHO_DROPS = 102" };
 	
@@ -294,7 +294,7 @@ public class MidiUtils {
 			"MARIMBA = 12", "XYLOPHONE = 13", "TUBULAR_BELL = 14", "NOTHING = 15",
 			"STEEL_GUITAR = 25", "CLEAN_GUITAR = 27", "ACOUSTIC_BASS = 32", "FINGERED_BASS = 33",
 			"PICKED_BASS = 34", "FRETLESS_BASS = 35", "SLAP_BASS = 36", "PIZZICATO_STRINGS = 45",
-			"HARP = 46", "OOH = 53", "FANTASIA = 88", "BANJO = 105", "SHAMISEN = 106", "KOTO = 107",
+			"HARP = 46", "FANTASIA = 88", "BANJO = 105", "SHAMISEN = 106", "KOTO = 107",
 			"AGOGO = 113", "TAIKO = 116" };
 	
 	public static final String[] LONG_INST_NAMES = { "ORGAN = 16", "ORGAN2 = 17", "REED_ORGAN = 20",
