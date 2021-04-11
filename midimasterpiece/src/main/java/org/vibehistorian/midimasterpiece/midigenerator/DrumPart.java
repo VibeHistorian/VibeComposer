@@ -20,9 +20,12 @@ public class DrumPart {
 	private int slideMiliseconds = 0;
 	
 	private int patternSeed = 0;
-	private DrumPattern pattern = DrumPattern.RANDOM;
+	private RhythmPattern pattern = RhythmPattern.RANDOM;
 	private boolean isVelocityPattern = true;
-	private int patternRotation = 0;
+	private int patternShift = 0;
+	private int order = 1;
+	
+	private boolean muted = false;
 	
 	public DrumPart() {
 		
@@ -30,7 +33,8 @@ public class DrumPart {
 	
 	public DrumPart(int pitch, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, int velocityMin, int velocityMax, int slideMiliseconds,
-			int patternSeed, DrumPattern pattern, boolean isVelocityPattern, int patternRotation) {
+			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern, int patternShift,
+			boolean muted) {
 		this.pitch = pitch;
 		this.hitsPerPattern = hitsPerPattern;
 		this.chordSpan = chordSpan;
@@ -42,10 +46,11 @@ public class DrumPart {
 		this.patternSeed = patternSeed;
 		this.pattern = pattern;
 		this.isVelocityPattern = isVelocityPattern;
-		this.patternRotation = patternRotation;
+		this.patternShift = patternShift;
+		this.setMuted(muted);
 	}
 	
-	@XmlAttribute
+	
 	public int getPitch() {
 		return pitch;
 	}
@@ -118,11 +123,11 @@ public class DrumPart {
 		this.patternSeed = patternSeed;
 	}
 	
-	public DrumPattern getPattern() {
+	public RhythmPattern getPattern() {
 		return pattern;
 	}
 	
-	public void setPattern(DrumPattern pattern) {
+	public void setPattern(RhythmPattern pattern) {
 		this.pattern = pattern;
 	}
 	
@@ -134,12 +139,12 @@ public class DrumPart {
 		this.isVelocityPattern = isVelocityPattern;
 	}
 	
-	public int getPatternRotation() {
-		return patternRotation;
+	public int getPatternShift() {
+		return patternShift;
 	}
 	
-	public void setPatternRotation(int patternRotation) {
-		this.patternRotation = patternRotation;
+	public void setPatternShift(int patternShift) {
+		this.patternShift = patternShift;
 	}
 	
 	@Override
@@ -151,7 +156,7 @@ public class DrumPart {
 		result = prime * result + hitsPerPattern;
 		result = prime * result + (isVelocityPattern ? 1231 : 1237);
 		result = prime * result + ((pattern == null) ? 0 : pattern.hashCode());
-		result = prime * result + patternRotation;
+		result = prime * result + patternShift;
 		result = prime * result + patternSeed;
 		result = prime * result + pauseChance;
 		result = prime * result + pitch;
@@ -180,7 +185,7 @@ public class DrumPart {
 			return false;
 		if (pattern != other.pattern)
 			return false;
-		if (patternRotation != other.patternRotation)
+		if (patternShift != other.patternShift)
 			return false;
 		if (patternSeed != other.patternSeed)
 			return false;
@@ -195,6 +200,23 @@ public class DrumPart {
 		if (velocityMin != other.velocityMin)
 			return false;
 		return true;
+	}
+	
+	@XmlAttribute
+	public int getOrder() {
+		return order;
+	}
+	
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
+	public boolean isMuted() {
+		return muted;
+	}
+
+	public void setMuted(boolean muted) {
+		this.muted = muted;
 	}
 	
 }
