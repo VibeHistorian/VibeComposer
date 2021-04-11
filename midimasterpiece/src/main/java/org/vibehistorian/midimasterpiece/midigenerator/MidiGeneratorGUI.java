@@ -5,18 +5,18 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -92,8 +92,6 @@ public class MidiGeneratorGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener {
 	
 	private static final long serialVersionUID = -677536546851756969L;
-	
-	private InputHandler inputHandler;
 	
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
@@ -367,12 +365,28 @@ public class MidiGeneratorGUI extends JFrame
 		setFocusable(true);
 		requestFocus();
 		requestFocusInWindow();
-		this.inputHandler = new InputHandler();
-		addKeyListener(this.inputHandler);
+		
 		
 		pack();
 		setVisible(true);
 		repaint();
+		
+		// switch pane using C/A/D (chords/arps/drums)
+		
+		KeyboardFocusManager.getCurrentKeyboardFocusManager()
+				.addKeyEventDispatcher(new KeyEventDispatcher() {
+					public boolean dispatchKeyEvent(KeyEvent e) {
+						if (e.getID() == KeyEvent.KEY_RELEASED) {
+							if (e.getKeyCode() == KeyEvent.VK_C)
+								instrumentTabPane.setSelectedIndex(0);
+							else if (e.getKeyCode() == KeyEvent.VK_A)
+								instrumentTabPane.setSelectedIndex(1);
+							else if (e.getKeyCode() == KeyEvent.VK_D)
+								instrumentTabPane.setSelectedIndex(2);
+						}
+						return false;
+					}
+				});
 	}
 	
 	private void initTitles(int startY, int anchorSide) {
@@ -475,7 +489,7 @@ public class MidiGeneratorGUI extends JFrame
 		MidiUtils.selectJComboBoxByInst(melodyInst, MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK),
 				8);
 		
-		melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
+		/*melodyInst.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
 				arpMelodyLockInst.setSelected(false);
 			}
@@ -495,7 +509,7 @@ public class MidiGeneratorGUI extends JFrame
 					// do nothing
 				}
 			});
-		}
+		}*/
 		
 		melodyLock = new JCheckBox("Lock Inst.", true);
 		
@@ -633,7 +647,7 @@ public class MidiGeneratorGUI extends JFrame
 		arpsSettingsPanel.add(randomArpsOnCompose);
 		
 		randomArpTranspose = new JCheckBox("Use transpose", true);
-		randomArpPattern = new JCheckBox("Pattern presets", true);
+		randomArpPattern = new JCheckBox("Pattern presets", false);
 		fixedArpCountPicker = new JComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
 				fixedArpCountPicker);
@@ -1199,21 +1213,6 @@ public class MidiGeneratorGUI extends JFrame
 			
 		}
 		
-		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
-				&& addArps.isSelected() && randomArpsOnCompose.isSelected())) {
-			createRandomArpPanels(Integer.valueOf(randomArpsCount.getText()));
-		}
-		
-		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
-				&& addDrums.isSelected() && randomDrumsOnCompose.isSelected())) {
-			createRandomDrumPanels(Integer.valueOf(randomDrumsCount.getText()));
-		}
-		
-		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
-				&& addChords.isSelected() && randomChordsOnCompose.isSelected())) {
-			createRandomChordPanels(Integer.valueOf(randomChordsCount.getText()));
-		}
-		
 		if (ae.getActionCommand() == "RandomizeInst"
 				|| (ae.getActionCommand() == "Compose" && randomizeInstOnCompose.isSelected())) {
 			Random instGen = new Random();
@@ -1233,13 +1232,8 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			if (!melodyLock.isSelected()) {
 				
-				if (arpMelodyLockInst.isSelected()) {
-					MidiUtils.selectJComboBoxByInst(melodyInst,
-							MidiUtils.INST_POOLS.get(POOL.PLUCK), arpPanels.get(0).getInstrument());
-				} else {
-					melodyInst.setSelectedIndex(
-							instGen.nextInt(MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK).length));
-				}
+				melodyInst.setSelectedIndex(
+						instGen.nextInt(MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK).length));
 			}
 			
 			if (!bassRootsLock.isSelected()) {
@@ -1248,14 +1242,32 @@ public class MidiGeneratorGUI extends JFrame
 						instGen.nextInt(MidiUtils.INST_POOLS.get(MidiUtils.POOL.BASS).length));
 			}
 		}
+		
+		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
+				&& addArps.isSelected() && randomArpsOnCompose.isSelected())) {
+			createRandomArpPanels(Integer.valueOf(randomArpsCount.getText()));
+		}
+		
+		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
+				&& addDrums.isSelected() && randomDrumsOnCompose.isSelected())) {
+			createRandomDrumPanels(Integer.valueOf(randomDrumsCount.getText()));
+		}
+		
+		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
+				&& addChords.isSelected() && randomChordsOnCompose.isSelected())) {
+			createRandomChordPanels(Integer.valueOf(randomChordsCount.getText()));
+		}
+		
+		
 		realBpm = Double.valueOf(mainBpm.getText());
 		if (ae.getActionCommand() == "RandomizeBpmTrans" || (ae.getActionCommand() == "Compose"
 				&& randomizeBmpTransOnCompose.isSelected())) {
 			Random instGen = new Random();
 			
 			int bpm = instGen.nextInt(30) + 50;
-			if (arpAffectsBpm.isSelected()) {
-				int highestArpPattern = arpPanels.stream().map(e -> e.getPatternRepeat())
+			if (arpAffectsBpm.isSelected() && !arpPanels.isEmpty()) {
+				int highestArpPattern = arpPanels.stream()
+						.map(e -> e.getPatternRepeat() / e.getChordSpan())
 						.max((e1, e2) -> Integer.compare(e1, e2)).get();
 				if (highestArpPattern > 2) {
 					bpm *= (2 / ((double) highestArpPattern));
@@ -2220,16 +2232,24 @@ public class MidiGeneratorGUI extends JFrame
 			fixedArpCountPicker.setSelectedItem("" + allSameArpCount);
 		}
 		
+		List<Integer> availableInstruments = MidiUtils
+				.getInstNumbers(MidiUtils.INST_POOLS.get(POOL.PLUCK));
+		
 		int fixedInstrument = -1;
+		
+		if (arpMelodyLockInst.isSelected() && addMelody.isSelected()) {
+			fixedInstrument = MidiUtils.getInstByIndex(melodyInst.getSelectedIndex(),
+					MidiUtils.INST_POOLS.get(POOL.PLUCK));
+			if (arpPanels.size() > 0) {
+				arpPanels.get(0).setInstrument(fixedInstrument);
+			}
+		}
 		
 		// create only remaining
 		panelCount -= arpPanels.size();
 		
 		for (int i = 0; i < panelCount; i++) {
 			ArpPanel ap = addArpPanelToLayout();
-			
-			List<Integer> availableInstruments = MidiUtils
-					.getInstNumbers(MidiUtils.INST_POOLS.get(POOL.PLUCK));
 			
 			
 			if (randomArpCount.isSelected()) {
@@ -2254,6 +2274,7 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			int instrument = availableInstruments
 					.get(arpPanelGenerator.nextInt(availableInstruments.size()));
+			
 			if (randomArpLockInst.isSelected()) {
 				if (fixedInstrument >= 0) {
 					instrument = fixedInstrument;
@@ -2261,10 +2282,23 @@ public class MidiGeneratorGUI extends JFrame
 					fixedInstrument = instrument;
 				}
 			}
+			ap.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
 			ap.setInstrument(instrument);
-			ap.setTranspose((arpPanelGenerator.nextInt(3) - 1) * 12);
+			if (arpPanels.size() == 1 && i == 0) {
+				ap.setTranspose(12);
+				if (arpMelodyLockInst.isSelected() && addMelody.isSelected()) {
+					ap.setInstrument(fixedInstrument);
+				}
+			} else {
+				ap.setTranspose((arpPanelGenerator.nextInt(3) - 1) * 12);
+			}
 			ap.setPauseChance(arpPanelGenerator.nextInt(50));
-			ap.setPatternRepeat(arpPanelGenerator.nextInt(4) + 1);
+			if (ap.getChordSpan() == 1) {
+				ap.setPatternRepeat(arpPanelGenerator.nextInt(4) + 1);
+			} else {
+				ap.setPatternRepeat(1);
+			}
+			
 			
 			int patternOrder = 0;
 			if (randomArpPattern.isSelected()) {
@@ -2279,10 +2313,13 @@ public class MidiGeneratorGUI extends JFrame
 			}
 		}
 		
-		ArpPanel lowest = arpPanels.get(0);
-		if (!lowest.getLockInst()) {
-			lowest.setPatternRepeat(1);
+		if (!arpPanels.isEmpty()) {
+			ArpPanel lowest = arpPanels.get(0);
+			if (!lowest.getLockInst()) {
+				lowest.setPatternRepeat(1);
+			}
 		}
+		
 		
 		pack();
 		repaint();
@@ -2303,23 +2340,5 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private static double getRandomFromArray(Random generator, double[] array) {
 		return array[generator.nextInt(array.length)];
-	}
-	
-	class InputHandler extends KeyAdapter {
-		@Override
-		public void keyPressed(KeyEvent e) {
-			// do nothing
-		}
-		
-		@Override
-		public void keyReleased(KeyEvent e) {
-			if (e.getKeyCode() == KeyEvent.VK_C)
-				instrumentTabPane.setSelectedIndex(0);
-			else if (e.getKeyCode() == KeyEvent.VK_A)
-				instrumentTabPane.setSelectedIndex(1);
-			else if (e.getKeyCode() == KeyEvent.VK_D)
-				instrumentTabPane.setSelectedIndex(2);
-			System.out.println("Key released + " + e.getKeyCode());
-		}
 	}
 }

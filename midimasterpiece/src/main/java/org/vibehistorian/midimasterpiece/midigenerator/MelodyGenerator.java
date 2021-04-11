@@ -519,13 +519,11 @@ public class MelodyGenerator implements JMC {
 					: 0;
 			Mod.transpose(chordsCPhrases.get(i), -12 + TRANSPOSE_SCORE + extraTranspose);
 		}
+		
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
 			int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ARP_PARTS.get(i).getTranspose()
 					: 0;
-			if (i > 0) {
-				extraTranspose -= 12;
-			}
-			Mod.transpose(arpCPhrases.get(i), -12 + TRANSPOSE_SCORE + extraTranspose);
+			Mod.transpose(arpCPhrases.get(i), -24 + TRANSPOSE_SCORE + extraTranspose);
 		}
 		
 		// Midi velocity / dynamic
@@ -582,8 +580,11 @@ public class MelodyGenerator implements JMC {
 						p.addCPhrase(chordsCPhrases.get(i));
 						score.add(p);
 					}
-					chordSlash.setInstrument(CHORD_PARTS.get(0).getInstrument());
-					score.add(chordSlash);
+					if (!CHORD_PARTS.isEmpty()) {
+						chordSlash.setInstrument(CHORD_PARTS.get(0).getInstrument());
+						score.add(chordSlash);
+					}
+					
 					continue;
 				}
 				
@@ -659,27 +660,53 @@ public class MelodyGenerator implements JMC {
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
 		
 		for (int i = 0; i < PIECE_LENGTH; i++) {
+			int chordSpanPart = 0;
 			for (int j = 0; j < actualProgression.size(); j++) {
 				double chordDurationArp = progressionDurations.get(j)
 						/ ((double) repeatedArpsPerChord);
 				int[] chord = actualProgression.get(j);
-				for (int r = 0; r < ap.getPatternRepeat(); r++) {
-					for (int p = 0; p < ap.getHitsPerPattern(); p++) {
-						Integer k = arpPattern.get(p);
-						
-						int octaveAdjustment = (k < 2) ? -12 : ((k < 6) ? 0 : 12);
-						
-						int pitch = chord[k % chord.length] + octaveAdjustment
-								+ arpOctavePattern.get(p);
-						if (arpPausesPattern.get(p) == 0) {
-							pitch = Integer.MIN_VALUE;
-						}
-						
-						arpCPhrase.addChord(new int[] { pitch }, chordDurationArp);
+				for (int p = 0; p < repeatedArpsPerChord; p++) {
+					Integer k = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
+					
+					int octaveAdjustment = (k < 2) ? -12 : ((k < 6) ? 0 : 12);
+					
+					int pitch = chord[k % chord.length] + octaveAdjustment
+							+ partOfList(chordSpanPart, ap.getChordSpan(), arpOctavePattern).get(p);
+					if (partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
+							.get(p) == 0) {
+						pitch = Integer.MIN_VALUE;
 					}
+					
+					arpCPhrase.addChord(new int[] { pitch }, chordDurationArp);
+				}
+				chordSpanPart++;
+				if (chordSpanPart >= ap.getChordSpan()) {
+					chordSpanPart = 0;
 				}
 			}
 		}
+	}
+	
+	private <T> List<T> partOfList(int part, int partCount, List<T> list) {
+		double size = Math.ceil(list.size() / ((double) partCount));
+		List<T> returnList = new ArrayList<>();
+		for (int i = 0; i < list.size(); i++) {
+			if (i >= part * size && i <= (part + 1) * size) {
+				returnList.add(list.get(i));
+			}
+		}
+		return returnList;
+	}
+	
+	private List<Integer> intersperse(int number, int times, List<Integer> list) {
+		List<Integer> interspersed = new ArrayList<>();
+		for (Integer i : list) {
+			interspersed.add(i);
+			for (int j = 0; j < times; j++) {
+				interspersed.add(number);
+			}
+		}
+		return interspersed;
 	}
 	
 	private void fillDrumsCPhrases(Score scr, Map<Integer, List<Integer>> drumPatternMap,
@@ -821,17 +848,35 @@ public class MelodyGenerator implements JMC {
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 		arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		
-		Map<String, List<Integer>> arpMap = new HashMap<>();
-		arpMap.put(ARP_PATTERN_KEY, arpPattern);
-		arpMap.put(ARP_OCTAVE_KEY, arpOctavePattern);
-		arpMap.put(ARP_PAUSES_KEY, arpPausesPattern);
-		
 		if (needToReport) {
 			System.out.println("Arp count: " + ap.getHitsPerPattern());
 			System.out.println("Arp pattern: " + arpPattern.toString());
 			System.out.println("Arp octaves: " + arpOctavePattern.toString());
 		}
 		System.out.println("Arp pauses : " + arpPausesPattern.toString());
+		
+		if (ap.getChordSpan() > 1) {
+			arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
+			arpOctavePattern = intersperse(0, ap.getChordSpan() - 1, arpOctavePattern);
+			arpPausesPattern = intersperse(0, ap.getChordSpan() - 1, arpPausesPattern);
+		}
+		
+		// pattern repeat
+		
+		List<Integer> repArpPattern = new ArrayList<>();
+		List<Integer> repOctPattern = new ArrayList<>();
+		List<Integer> repPausePattern = new ArrayList<>();
+		for (int i = 0; i < ap.getPatternRepeat(); i++) {
+			repArpPattern.addAll(arpPattern);
+			repOctPattern.addAll(arpOctavePattern);
+			repPausePattern.addAll(arpPausesPattern);
+		}
+		
+		
+		Map<String, List<Integer>> arpMap = new HashMap<>();
+		arpMap.put(ARP_PATTERN_KEY, repArpPattern);
+		arpMap.put(ARP_OCTAVE_KEY, repOctPattern);
+		arpMap.put(ARP_PAUSES_KEY, repPausePattern);
 		
 		
 		return arpMap;
