@@ -9,15 +9,12 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedInputStream;
@@ -272,8 +269,9 @@ public class MidiGeneratorGUI extends JFrame
 		// ---- INSTRUMENTS ----
 		{
 			// melody
-			initMelodyGenSettings(20, GridBagConstraints.WEST);
-			initMelody(25, GridBagConstraints.WEST);
+			initMelody(20, GridBagConstraints.WEST);
+			initMelodyGenSettings(25, GridBagConstraints.CENTER);
+			
 			createHorizontalSeparator(30, this);
 			
 			// bass
@@ -370,23 +368,25 @@ public class MidiGeneratorGUI extends JFrame
 		pack();
 		setVisible(true);
 		repaint();
-		
+		/*
 		// switch pane using C/A/D (chords/arps/drums)
 		
 		KeyboardFocusManager.getCurrentKeyboardFocusManager()
 				.addKeyEventDispatcher(new KeyEventDispatcher() {
 					public boolean dispatchKeyEvent(KeyEvent e) {
-						if (e.getID() == KeyEvent.KEY_RELEASED) {
-							if (e.getKeyCode() == KeyEvent.VK_C)
-								instrumentTabPane.setSelectedIndex(0);
-							else if (e.getKeyCode() == KeyEvent.VK_A)
-								instrumentTabPane.setSelectedIndex(1);
-							else if (e.getKeyCode() == KeyEvent.VK_D)
-								instrumentTabPane.setSelectedIndex(2);
+						if (!soundbankFilename.isFocusOwner()) {
+							if (e.getID() == KeyEvent.KEY_RELEASED) {
+								if (e.getKeyCode() == KeyEvent.VK_C)
+									instrumentTabPane.setSelectedIndex(0);
+								else if (e.getKeyCode() == KeyEvent.VK_A)
+									instrumentTabPane.setSelectedIndex(1);
+								else if (e.getKeyCode() == KeyEvent.VK_D)
+									instrumentTabPane.setSelectedIndex(2);
+							}
 						}
 						return false;
 					}
-				});
+				});*/
 	}
 	
 	private void initTitles(int startY, int anchorSide) {
@@ -1281,11 +1281,42 @@ public class MidiGeneratorGUI extends JFrame
 		
 		// midi generation
 		if (ae.getActionCommand() == "Compose") {
-			composeMidi(false);
+			switchMidiButtons(false);
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+				@Override
+				protected Void doInBackground()
+						throws InterruptedException, MidiUnavailableException, IOException {
+					composeMidi(false);
+					return null;
+				}
+				
+				@Override
+				protected void done() {
+					switchMidiButtons(true);
+					repaint();
+				}
+			};
+			worker.execute(); //here the process thread initiates
+			
 		}
 		
 		if (ae.getActionCommand() == "Regenerate") {
-			composeMidi(true);
+			switchMidiButtons(false);
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+				@Override
+				protected Void doInBackground()
+						throws InterruptedException, MidiUnavailableException, IOException {
+					composeMidi(true);
+					return null;
+				}
+				
+				@Override
+				protected void done() {
+					switchMidiButtons(true);
+					repaint();
+				}
+			};
+			worker.execute(); //here the process thread initiates
 		}
 		
 		if (ae.getActionCommand() == "StopMidi") {
@@ -2317,6 +2348,7 @@ public class MidiGeneratorGUI extends JFrame
 			ArpPanel lowest = arpPanels.get(0);
 			if (!lowest.getLockInst()) {
 				lowest.setPatternRepeat(1);
+				lowest.setChordSpan(1);
 			}
 		}
 		
