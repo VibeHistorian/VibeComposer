@@ -182,7 +182,7 @@ public class ChordPanel extends JPanel {
 		ChordPart part = new ChordPart(getInstrument(), getTransitionChance(), getTransitionSplit(),
 				getStrum(), getDelay(), getTranspose(),
 				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternShift(), getPanelOrder());
+				getPatternShift(), getPanelOrder(), getMuteInst());
 		part.setInstPool(getInstPool());
 		return part;
 	}
@@ -202,6 +202,8 @@ public class ChordPanel extends JPanel {
 		setPatternShift(part.getPatternShift());
 		
 		setPanelOrder(part.getOrder());
+		
+		setMuteInst(part.isMuted());
 		
 	}
 	

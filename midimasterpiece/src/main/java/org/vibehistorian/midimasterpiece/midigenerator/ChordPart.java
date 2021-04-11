@@ -23,13 +23,15 @@ public class ChordPart {
 	
 	private MidiUtils.POOL instPool = MidiUtils.POOL.PLUCK;
 	
+	private boolean muted = false;
+	
 	public ChordPart() {
 		
 	}
 	
 	public ChordPart(int instrument, int transitionChance, int transitionSplit, int strum,
 			int delay, int transpose, int patternSeed, RhythmPattern pattern, int patternShift,
-			int order) {
+			int order, boolean muted) {
 		super();
 		this.setInstrument(instrument);
 		this.transitionChance = transitionChance;
@@ -41,6 +43,7 @@ public class ChordPart {
 		this.pattern = pattern;
 		this.patternShift = patternShift;
 		this.order = order;
+		this.muted = muted;
 	}
 	
 	
@@ -124,12 +127,20 @@ public class ChordPart {
 	public void setInstrument(int instrument) {
 		this.instrument = instrument;
 	}
-
+	
 	public MidiUtils.POOL getInstPool() {
 		return instPool;
 	}
-
+	
 	public void setInstPool(MidiUtils.POOL instPool) {
 		this.instPool = instPool;
+	}
+	
+	public boolean isMuted() {
+		return muted;
+	}
+	
+	public void setMuted(boolean muted) {
+		this.muted = muted;
 	}
 }

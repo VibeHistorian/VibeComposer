@@ -522,6 +522,9 @@ public class MelodyGenerator implements JMC {
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
 			int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ARP_PARTS.get(i).getTranspose()
 					: 0;
+			if (i > 0) {
+				extraTranspose -= 12;
+			}
 			Mod.transpose(arpCPhrases.get(i), -12 + TRANSPOSE_SCORE + extraTranspose);
 		}
 		
@@ -774,7 +777,7 @@ public class MelodyGenerator implements JMC {
 			ArpPart ap) {
 		Random mainGenerator = new Random(mainGeneratorSeed);
 		
-		//Random uiGenerator1arpCount = new Random(mainGenerator.nextInt());
+		Random uiGenerator1arpCount = new Random(mainGenerator.nextInt());
 		Random uiGenerator2arpPattern = new Random(mainGenerator.nextInt());
 		Random uiGenerator3arpOctave = new Random(mainGenerator.nextInt());
 		Random uiGenerator4arpPauses = new Random(mainGenerator.nextInt());
@@ -839,7 +842,7 @@ public class MelodyGenerator implements JMC {
 		
 		for (int i = 0; i < DRUM_PARTS.size(); i++) {
 			Random uiGenerator1drumPattern = new Random(
-					DRUM_PARTS.get(i).getPatternSeed() + DRUM_PARTS.get(i).getOrder());
+					DRUM_PARTS.get(i).getPatternSeed() + DRUM_PARTS.get(i).getOrder() - 1);
 			List<Integer> premadePattern = DRUM_PARTS.get(i).getPattern()
 					.getPatternByLength(DRUM_PARTS.get(i).getHitsPerPattern());
 			List<Integer> drumPattern = new ArrayList<>();

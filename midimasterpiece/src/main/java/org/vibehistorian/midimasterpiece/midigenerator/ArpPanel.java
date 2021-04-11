@@ -205,7 +205,7 @@ public class ArpPanel extends JPanel {
 				getPauseChance(), getExceptionChance(), getRepeatableNotes(), getPatternRepeat(),
 				getTranspose(), getPanelOrder(),
 				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternShift());
+				getPatternShift(), getMuteInst());
 		return part;
 	}
 	
@@ -223,5 +223,7 @@ public class ArpPanel extends JPanel {
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
 		setPatternShift(part.getPatternShift());
+		
+		setMuteInst(part.isMuted());
 	}
 }

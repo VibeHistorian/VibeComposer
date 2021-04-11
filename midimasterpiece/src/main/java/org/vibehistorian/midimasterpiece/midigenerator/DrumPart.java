@@ -25,14 +25,16 @@ public class DrumPart {
 	private int patternShift = 0;
 	private int order = 1;
 	
+	private boolean muted = false;
+	
 	public DrumPart() {
 		
 	}
 	
 	public DrumPart(int pitch, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, int velocityMin, int velocityMax, int slideMiliseconds,
-			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern,
-			int patternShift) {
+			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern, int patternShift,
+			boolean muted) {
 		this.pitch = pitch;
 		this.hitsPerPattern = hitsPerPattern;
 		this.chordSpan = chordSpan;
@@ -45,6 +47,7 @@ public class DrumPart {
 		this.pattern = pattern;
 		this.isVelocityPattern = isVelocityPattern;
 		this.patternShift = patternShift;
+		this.setMuted(muted);
 	}
 	
 	
@@ -206,6 +209,14 @@ public class DrumPart {
 	
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+	public boolean isMuted() {
+		return muted;
+	}
+
+	public void setMuted(boolean muted) {
+		this.muted = muted;
 	}
 	
 }

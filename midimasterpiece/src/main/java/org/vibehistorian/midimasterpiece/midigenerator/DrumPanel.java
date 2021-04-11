@@ -174,7 +174,7 @@ public class DrumPanel extends JPanel {
 		DrumPart part = new DrumPart(getPitch(), getHitsPerPattern(), getChordSpan(),
 				getPauseChance(), getExceptionChance(), getVelocityMin(), getVelocityMax(),
 				getSlideMiliseconds(), (getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed,
-				getPattern(), getIsVelocityPattern(), getPatternShift());
+				getPattern(), getIsVelocityPattern(), getPatternShift(), getMuteInst());
 		part.setOrder(getPanelOrder());
 		return part;
 	}
@@ -200,6 +200,7 @@ public class DrumPanel extends JPanel {
 		setPatternShift(part.getPatternShift());
 		
 		setPanelOrder(part.getOrder());
+		setMuteInst(part.isMuted());
 		
 	}
 	
