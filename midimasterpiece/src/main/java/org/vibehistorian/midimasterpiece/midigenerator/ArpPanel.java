@@ -38,11 +38,16 @@ public class ArpPanel extends JPanel {
 	private JCheckBox lockInst = new JCheckBox("Lock", false);
 	private JCheckBox muteInst = new JCheckBox("Mute", false);
 	
+	private JComboBox<String> midiChannel = new JComboBox<>();
+	
 	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
 		
 		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK), instrument);
+		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
+				"11", "12", "13", "14", "15" }, midiChannel);
+		midiChannel.setSelectedItem("2");
 		
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
@@ -72,6 +77,9 @@ public class ArpPanel extends JPanel {
 		this.add(pattern);
 		this.add(new JLabel("Shift"));
 		this.add(patternShift);
+		
+		this.add(new JLabel("Midi ch.:"));
+		this.add(midiChannel);
 		
 		this.add(removeButton);
 	}
@@ -205,7 +213,7 @@ public class ArpPanel extends JPanel {
 				getPauseChance(), getExceptionChance(), getRepeatableNotes(), getPatternRepeat(),
 				getTranspose(), getPanelOrder(),
 				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternShift(), getMuteInst());
+				getPatternShift(), getMuteInst(), getMidiChannel());
 		return part;
 	}
 	
@@ -224,6 +232,16 @@ public class ArpPanel extends JPanel {
 		setPattern(part.getPattern());
 		setPatternShift(part.getPatternShift());
 		
+		setMidiChannel(part.getMidiChannel());
+		
 		setMuteInst(part.isMuted());
+	}
+	
+	public int getMidiChannel() {
+		return Integer.valueOf((String) midiChannel.getSelectedItem());
+	}
+	
+	public void setMidiChannel(int midiChannel) {
+		this.midiChannel.setSelectedItem("" + midiChannel);
 	}
 }

@@ -79,6 +79,8 @@ public class DrumPanel extends JPanel {
 		this.add(new JLabel("Shift"));
 		this.add(patternShift);
 		
+		this.add(new JLabel("Midi ch. 10"));
+		
 		this.add(removeButton);
 	}
 	

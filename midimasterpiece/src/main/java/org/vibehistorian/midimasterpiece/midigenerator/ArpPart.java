@@ -25,6 +25,8 @@ public class ArpPart {
 	private RhythmPattern pattern = RhythmPattern.RANDOM;
 	private int patternShift = 0;
 	
+	private int midiChannel = 10;
+	
 	private boolean muted = false;
 	
 	public ArpPart() {
@@ -33,7 +35,8 @@ public class ArpPart {
 	
 	public ArpPart(int instrument, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, boolean repeatableNotes, int patternRepeat, int transpose,
-			int order, int patternSeed, RhythmPattern pattern, int patternShift, boolean muted) {
+			int order, int patternSeed, RhythmPattern pattern, int patternShift, boolean muted,
+			int midiChannel) {
 		super();
 		this.instrument = instrument;
 		this.hitsPerPattern = hitsPerPattern;
@@ -48,6 +51,7 @@ public class ArpPart {
 		this.pattern = pattern;
 		this.patternShift = patternShift;
 		this.setMuted(muted);
+		this.midiChannel = midiChannel;
 	}
 	
 	public int getInstrument() {
@@ -146,13 +150,21 @@ public class ArpPart {
 	public void setPatternShift(int patternShift) {
 		this.patternShift = patternShift;
 	}
-
+	
 	public boolean isMuted() {
 		return muted;
 	}
-
+	
 	public void setMuted(boolean muted) {
 		this.muted = muted;
+	}
+	
+	public int getMidiChannel() {
+		return midiChannel;
+	}
+	
+	public void setMidiChannel(int midiChannel) {
+		this.midiChannel = midiChannel;
 	}
 	
 	
