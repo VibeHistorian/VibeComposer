@@ -234,6 +234,10 @@ public class MidiGeneratorGUI extends JFrame
 	JList<File> generatedMidi;
 	Sequencer sequencer = null;
 	File currentMidi = null;
+	MidiDevice device = null;
+	
+	JCheckBox midiMode;
+	JComboBox<String> midiModeDevices;
 	
 	JButton compose;
 	JButton regenerate;
@@ -473,6 +477,7 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(new JLabel("But Randomized:"));
 		melodySettingsPanel.add(randomChordNote);
 		
+		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(melodySettingsPanel, constraints);
@@ -533,6 +538,9 @@ public class MidiGeneratorGUI extends JFrame
 		melodyPanel.add(userMelodySeed);
 		melodyPanel.add(randomMelodyOnRegenerate);
 		melodyPanel.add(clearUserMelodySeed);
+		
+		
+		melodyPanel.add(new JLabel("Midi ch.: 1"));
 		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -719,6 +727,9 @@ public class MidiGeneratorGUI extends JFrame
 		bassRootsPanel.add(addBassRoots);
 		bassRootsPanel.add(bassRootsLock);
 		bassRootsPanel.add(bassRootsInst);
+		
+		bassRootsPanel.add(new JLabel("Midi ch.: 9"));
+		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(bassRootsPanel, constraints);
@@ -961,6 +972,34 @@ public class MidiGeneratorGUI extends JFrame
 		saveWavFile.addActionListener(this);
 		saveWavFile.setActionCommand("SaveWavFile");
 		
+		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", true);
+		midiModeDevices = new JComboBox<String>();
+		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+		MidiDevice dev = null;
+		for (int i = 0; i < infos.length; i++) {
+			try {
+				dev = MidiSystem.getMidiDevice(infos[i]);
+				if (dev.getMaxReceivers() != 0 && dev.getMaxTransmitters() == 0) {
+					midiModeDevices.addItem(infos[i].toString());
+					System.out.println("Added device: " + infos[i].toString());
+				}
+			} catch (MidiUnavailableException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		midiModeDevices.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (device != null) {
+					device.close();
+				}
+				device = null;
+				
+			}
+			
+		});
 		
 		playSavePanel.add(startMidi);
 		playSavePanel.add(stopMidi);
@@ -968,6 +1007,8 @@ public class MidiGeneratorGUI extends JFrame
 		playSavePanel.add(save4Star);
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveWavFile);
+		playSavePanel.add(midiMode);
+		playSavePanel.add(midiModeDevices);
 		
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -1014,6 +1055,15 @@ public class MidiGeneratorGUI extends JFrame
 	}
 	
 	private void composeMidi(boolean regenerate) {
+		if (midiMode.isSelected()) {
+			synth = null;
+		} else {
+			if (device != null) {
+				device.close();
+			}
+			device = null;
+		}
+		
 		Integer masterpieceSeed = 0;
 		
 		Integer parsedSeed = (NumberUtils.isCreatable(randomSeed.getText()))
@@ -1100,23 +1150,57 @@ public class MidiGeneratorGUI extends JFrame
 			Sequence sequence = MidiSystem.getSequence(currentMidi);
 			sequencer.setSequence(sequence); // load it into sequencer
 			
-			if (synth != null) {
-				// soundbank synth already opened correctly, do nothing
-			} else if (synthesizer != null) {
-				// open soundbank synth
-				for (Transmitter tm : sequencer.getTransmitters()) {
-					tm.close();
+			if (midiMode.isSelected()) {
+				if (device == null) {
+					for (Transmitter tm : sequencer.getTransmitters()) {
+						tm.close();
+					}
+					device = null;
+					MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+					for (int i = 0; i < infos.length; i++) {
+						if (infos[i].toString()
+								.equalsIgnoreCase((String) midiModeDevices.getSelectedItem())) {
+							device = MidiSystem.getMidiDevice(infos[i]);
+							System.out.println(
+									infos[i].toString() + "| max recv: " + device.getMaxReceivers()
+											+ ", max trm: " + device.getMaxTransmitters());
+							if (device.getMaxReceivers() != 0) {
+								System.out.println(
+										"Found max receivers != 0, opening midi receiver device: "
+												+ infos[i].toString());
+								device.open();
+								break;
+							}
+							
+						}
+					}
+					sequencer.getTransmitter().setReceiver(device.getReceiver());
 				}
-				sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
-				synth = synthesizer;
+				
+				
 			} else {
-				// use default system synth
-				for (Transmitter tm : sequencer.getTransmitters()) {
-					tm.close();
+				if (synth != null) {
+					// soundbank synth already opened correctly, do nothing
+				} else if (synthesizer != null) {
+					// open soundbank synth
+					for (Transmitter tm : sequencer.getTransmitters()) {
+						tm.close();
+					}
+					
+					sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
+					synth = synthesizer;
+					
+				} else {
+					// use default system synth
+					for (Transmitter tm : sequencer.getTransmitters()) {
+						tm.close();
+					}
+					Synthesizer defSynth = MidiSystem.getSynthesizer();
+					defSynth.open();
+					sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
+					
+					
 				}
-				Synthesizer defSynth = MidiSystem.getSynthesizer();
-				defSynth.open();
-				sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
 			}
 			
 			
@@ -2187,6 +2271,8 @@ public class MidiGeneratorGUI extends JFrame
 						chordPanelGenerator.nextInt(cp.getPattern().pattern.length - 1) + 1);
 			}
 			
+			cp.setMidiChannel(11 + (cp.getPanelOrder() - 1) % 5);
+			
 		}
 		
 		pack();
@@ -2374,6 +2460,8 @@ public class MidiGeneratorGUI extends JFrame
 				ap.setPatternShift(
 						arpPanelGenerator.nextInt(ap.getPattern().pattern.length - 1) + 1);
 			}
+			
+			ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);
 		}
 		
 		if (!arpPanels.isEmpty()) {

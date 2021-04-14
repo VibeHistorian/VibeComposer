@@ -347,7 +347,7 @@ public class MelodyGenerator implements JMC {
 		Part arps = new Part("Arps", XYLOPHONE, 2);
 		Part bassRoots = new Part("BassRoots", BASS, 8);
 		Part drums = new Part("Drums", PIANO, 9);
-		Part chordSlash = new Part("ChordSlash", PIANO, 6);
+		Part chordSlash = new Part("ChordSlash", PIANO, 10);
 		
 		EnumMap<PARTS, Part> enumMap = new EnumMap<>(PARTS.class);
 		enumMap.put(PARTS.MELODY, melody);
@@ -527,13 +527,13 @@ public class MelodyGenerator implements JMC {
 		}
 		
 		// Midi velocity / dynamic
-		melodyPhrase.setDynamic(80);
-		cphraseBassRoot.setDynamic(65);
+		melodyPhrase.setDynamic(100);
+		cphraseBassRoot.setDynamic(70);
 		for (int i = 0; i < CHORD_PARTS.size(); i++) {
-			chordsCPhrases.get(i).setDynamic(70 - i * 2);
+			chordsCPhrases.get(i).setDynamic(85 - i * 2);
 		}
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
-			arpCPhrases.get(i).setDynamic(70 - i * 2);
+			arpCPhrases.get(i).setDynamic(90 - i * 2);
 		}
 		
 		// Delay start time
@@ -575,8 +575,9 @@ public class MelodyGenerator implements JMC {
 		for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
 			if (part != PARTS.DRUMS) {
 				if (part == PARTS.CHORDS) {
-					for (int i = 0; i < CHORD_PARTS.size() && i < 7; i++) {
-						Part p = new Part("Chords" + i, CHORD_PARTS.get(i).getInstrument(), 1 + i);
+					for (int i = 0; i < CHORD_PARTS.size(); i++) {
+						Part p = new Part("Chords" + i, CHORD_PARTS.get(i).getInstrument(),
+								CHORD_PARTS.get(i).getMidiChannel() - 1);
 						p.addCPhrase(chordsCPhrases.get(i));
 						score.add(p);
 					}
@@ -589,8 +590,9 @@ public class MelodyGenerator implements JMC {
 				}
 				
 				if (part == PARTS.ARPS) {
-					for (int i = 0; i < ARP_PARTS.size() && i < 6; i++) {
-						Part p = new Part("Arps" + i, ARP_PARTS.get(i).getInstrument(), 10 + i);
+					for (int i = 0; i < ARP_PARTS.size(); i++) {
+						Part p = new Part("Arps" + i, ARP_PARTS.get(i).getInstrument(),
+								ARP_PARTS.get(i).getMidiChannel() - 1);
 						p.addCPhrase(arpCPhrases.get(i));
 						score.add(p);
 					}
@@ -714,7 +716,7 @@ public class MelodyGenerator implements JMC {
 		
 		Part[] parts = new Part[DRUM_PARTS.size()];
 		Phrase[] drumPhrases = new Phrase[DRUM_PARTS.size()];
-		for (int i = 0; i < drumPhrases.length; i++) {
+		for (int i = 0; i < DRUM_PARTS.size(); i++) {
 			drumPhrases[i] = new Phrase();
 			parts[i] = new Part("MainDrums", 0, 9);
 		}
