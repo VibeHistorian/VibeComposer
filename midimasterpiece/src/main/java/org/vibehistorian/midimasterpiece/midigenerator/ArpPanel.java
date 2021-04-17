@@ -17,7 +17,7 @@ public class ArpPanel extends JPanel {
 	 */
 	private static final long serialVersionUID = 6648220153568966988L;
 	
-	private JComboBox<String> instrument = new JComboBox<String>();
+	private InstComboBox instrument = new InstComboBox();
 	
 	private JTextField hitsPerPattern = new JTextField("8", 2);
 	private JTextField chordSpan = new JTextField("1", 1);
@@ -44,7 +44,7 @@ public class ArpPanel extends JPanel {
 	
 	public void initComponents() {
 		
-		MidiUtils.addAllToJComboBox(MidiUtils.INST_POOLS.get(MidiUtils.POOL.PLUCK), instrument);
+		instrument.initInstPool(POOL.PLUCK);
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("2");
@@ -167,13 +167,11 @@ public class ArpPanel extends JPanel {
 	}
 	
 	public int getInstrument() {
-		return MidiUtils.getInstByIndex(instrument.getSelectedIndex(),
-				MidiUtils.INST_POOLS.get(POOL.PLUCK));
+		return this.instrument.getInstrument();
 	}
 	
 	public void setInstrument(int instrument) {
-		MidiUtils.selectJComboBoxByInst(this.instrument, MidiUtils.INST_POOLS.get(POOL.PLUCK),
-				instrument);
+		this.instrument.setInstrument(instrument);
 	}
 	
 	public boolean getLockInst() {

@@ -42,7 +42,6 @@ import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
-import jm.util.View;
 import jm.util.Write;
 
 public class MelodyGenerator implements JMC {
@@ -171,12 +170,6 @@ public class MelodyGenerator implements JMC {
 			generatedPitch = MidiUtils.maX(previousPitch - direction * change,
 					maxAllowedScaleNotes);
 			samePitchCount = 0;
-		}
-		
-		if (false) {
-			System.out.println(chordScale.get(generatedPitch) + ",\t Dir: " + direction
-					+ ",\t Prev.: " + previousPitch + ",\t Cur.: " + generatedPitch + ",\t Chg: "
-					+ change + ",\t Dur: " + dur);
 		}
 		previousPitch = generatedPitch;
 		if (isPause) {
@@ -634,7 +627,7 @@ public class MelodyGenerator implements JMC {
 		System.setOut(originalStream);
 		
 		// view midi
-		View.pianoRoll(score);
+		// View.pianoRoll(score);
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 	
