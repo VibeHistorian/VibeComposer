@@ -1,5 +1,9 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+
 import javax.swing.JComboBox;
 
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
@@ -7,6 +11,8 @@ import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 public class InstComboBox extends JComboBox<String> {
 	
 	private static final long serialVersionUID = -2820153952228324714L;
+	
+	public static Set<String> BANNED_INSTS = new HashSet<>();
 	
 	private MidiUtils.POOL instPool = POOL.ALL;
 	
@@ -23,7 +29,9 @@ public class InstComboBox extends JComboBox<String> {
 		this.removeAllItems();
 		String[] choices = MidiUtils.INST_POOLS.get(instPool);
 		for (String c : choices) {
-			this.addItem(c);
+			if (!isBanned(c)) {
+				this.addItem(c);
+			}
 		}
 	}
 	
@@ -41,6 +49,15 @@ public class InstComboBox extends JComboBox<String> {
 	
 	public int getInstrument() {
 		return Integer.valueOf(getItemAt(getSelectedIndex()).split(" = ")[1].trim());
+	}
+	
+	public int getRandomInstrument() {
+		Random rand = new Random();
+		return Integer.valueOf(getItemAt(rand.nextInt(getItemCount())).split(" = ")[1].trim());
+	}
+	
+	private boolean isBanned(String inst) {
+		return BANNED_INSTS.contains(inst.split(" = ")[1].trim());
 	}
 	
 	private boolean instSet(int instrument) {

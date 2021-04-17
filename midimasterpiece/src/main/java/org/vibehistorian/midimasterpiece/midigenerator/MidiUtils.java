@@ -340,8 +340,12 @@ public class MidiUtils {
 		PLUCK, LONG, CHORD, BASS, DRUM, ALL;
 	}
 	
-	public static final Map<POOL, String[]> INST_POOLS = new HashMap<>();
+	public static Map<POOL, String[]> INST_POOLS = new HashMap<>();
 	static {
+		initNormalInsts();
+	}
+	
+	public static void initNormalInsts() {
 		INST_POOLS.put(POOL.PLUCK, PLUCK_INST_NAMES);
 		INST_POOLS.put(POOL.LONG, LONG_INST_NAMES);
 		INST_POOLS.put(POOL.CHORD, CHORD_INST_NAMES);
@@ -350,17 +354,18 @@ public class MidiUtils {
 		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
 	}
 	
+	public static void initAllInsts() {
+		INST_POOLS.put(POOL.PLUCK, INSTRUMENTS_NAMES);
+		INST_POOLS.put(POOL.LONG, INSTRUMENTS_NAMES);
+		INST_POOLS.put(POOL.CHORD, INSTRUMENTS_NAMES);
+		INST_POOLS.put(POOL.BASS, INSTRUMENTS_NAMES);
+		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
+		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
+	}
+	
 	public static Integer getInstByIndex(int index, POOL instPool) {
 		List<Integer> instPoolNumbers = getInstNumbers(INST_POOLS.get(instPool));
 		return instPoolNumbers.get(index % instPoolNumbers.size());
-	}
-	
-	public static void selectJComboBoxByInst(JComboBox<String> choice, POOL instPool,
-			Integer number) {
-		String[] pool = INST_POOLS.get(instPool);
-		List<Integer> instPoolNumbers = getInstNumbers(pool);
-		int index = instPoolNumbers.indexOf(number);
-		choice.setSelectedIndex(index);
 	}
 	
 	public static void addAllToJComboBox(String[] choices, JComboBox<String> choice) {
