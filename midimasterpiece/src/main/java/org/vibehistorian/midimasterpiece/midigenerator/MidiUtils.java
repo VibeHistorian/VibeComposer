@@ -310,7 +310,7 @@ public class MidiUtils {
 			"SWEEP_PAD = 95 " };
 	
 	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ", "SNARE = 38 ",
-			"CLAP = 39 ", "EL. SNARE = 40 ", "CLOSED_HH = 42 ", "RIDE = 53 ", "RIM = 60 " };
+			"EL. SNARE = 40 ", "CLOSED_HH = 42 ", "RIDE = 53 ", "RIM = 60 " };
 	
 	
 	public static List<Integer> getInstNumbers(String[] instArray) {

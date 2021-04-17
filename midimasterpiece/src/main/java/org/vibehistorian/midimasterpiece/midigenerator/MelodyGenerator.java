@@ -738,6 +738,7 @@ public class MelodyGenerator implements JMC {
 						continue;
 					}
 					List<Integer> drumVelocityPattern = drumVelocityPatternMap.get(i);
+					int swingPercentAmount = DRUM_PARTS.get(i).getSwingPercent();
 					for (int k = 0; k < drumPattern.size(); k++) {
 						int drum = drumPattern.get(k);
 						int velocity = drumVelocityPattern.get(k);
@@ -747,16 +748,19 @@ public class MelodyGenerator implements JMC {
 							pitch = DRUM_PARTS.get(i).getPitch();
 						}
 						
+						double swingDuration = drumDuration
+								* (swingPercentAmount / ((double) 50.0));
+						swingPercentAmount = 100 - swingPercentAmount;
 						
 						boolean exception = exceptionGenerator.nextInt(100) < DRUM_PARTS.get(i)
 								.getExceptionChance();
 						if (exception) {
 							int secondVelocity = (velocity * 8) / 10;
-							drumPhrases[i].addNote(new Note(pitch, drumDuration / 2, velocity));
+							drumPhrases[i].addNote(new Note(pitch, swingDuration / 2, velocity));
 							drumPhrases[i]
-									.addNote(new Note(pitch, drumDuration / 2, secondVelocity));
+									.addNote(new Note(pitch, swingDuration / 2, secondVelocity));
 						} else {
-							drumPhrases[i].addNote(new Note(pitch, drumDuration, velocity));
+							drumPhrases[i].addNote(new Note(pitch, swingDuration, velocity));
 						}
 						
 					}

@@ -37,6 +37,7 @@ public class DrumPanel extends JPanel {
 	private JTextField velocityMax = new JTextField("100", 3);
 	
 	private JTextField slideMiliseconds = new JTextField("0", 4);
+	private JTextField swingPercent = new JTextField("50", 2);
 	
 	private JTextField patternSeed = new JTextField("0", 8);
 	private JComboBox<String> pattern = new JComboBox<String>();
@@ -68,6 +69,8 @@ public class DrumPanel extends JPanel {
 		this.add(new JLabel("MaxVel"));
 		this.add(velocityMax);
 		
+		this.add(new JLabel("Swing(%)"));
+		this.add(swingPercent);
 		this.add(new JLabel("Slide(ms)"));
 		this.add(slideMiliseconds);
 		
@@ -176,7 +179,8 @@ public class DrumPanel extends JPanel {
 		DrumPart part = new DrumPart(getPitch(), getHitsPerPattern(), getChordSpan(),
 				getPauseChance(), getExceptionChance(), getVelocityMin(), getVelocityMax(),
 				getSlideMiliseconds(), (getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed,
-				getPattern(), getIsVelocityPattern(), getPatternShift(), getMuteInst());
+				getPattern(), getIsVelocityPattern(), getPatternShift(), getMuteInst(),
+				getSwingPercent());
 		part.setOrder(getPanelOrder());
 		return part;
 	}
@@ -194,6 +198,7 @@ public class DrumPanel extends JPanel {
 		setVelocityMax(part.getVelocityMax());
 		
 		setSlideMiliseconds(part.getSlideMiliseconds());
+		setSwingPercent(part.getSwingPercent());
 		
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
@@ -228,5 +233,13 @@ public class DrumPanel extends JPanel {
 	
 	public void setMuteInst(boolean selected) {
 		this.muteInst.setSelected(selected);
+	}
+	
+	public int getSwingPercent() {
+		return Integer.valueOf(swingPercent.getText());
+	}
+	
+	public void setSwingPercent(int swingPercent) {
+		this.swingPercent.setText("" + swingPercent);
 	}
 }

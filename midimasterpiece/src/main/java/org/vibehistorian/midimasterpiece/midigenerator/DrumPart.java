@@ -18,6 +18,7 @@ public class DrumPart {
 	private int velocityMax = 100;
 	
 	private int slideMiliseconds = 0;
+	private int swingPercent = 50;
 	
 	private int patternSeed = 0;
 	private RhythmPattern pattern = RhythmPattern.RANDOM;
@@ -34,7 +35,7 @@ public class DrumPart {
 	public DrumPart(int pitch, int hitsPerPattern, int chordSpan, int pauseChance,
 			int exceptionChance, int velocityMin, int velocityMax, int slideMiliseconds,
 			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern, int patternShift,
-			boolean muted) {
+			boolean muted, int swingPercent) {
 		this.pitch = pitch;
 		this.hitsPerPattern = hitsPerPattern;
 		this.chordSpan = chordSpan;
@@ -47,7 +48,8 @@ public class DrumPart {
 		this.pattern = pattern;
 		this.isVelocityPattern = isVelocityPattern;
 		this.patternShift = patternShift;
-		this.setMuted(muted);
+		this.muted = muted;
+		this.swingPercent = swingPercent;
 	}
 	
 	
@@ -147,6 +149,7 @@ public class DrumPart {
 		this.patternShift = patternShift;
 	}
 	
+	/*
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -201,7 +204,7 @@ public class DrumPart {
 			return false;
 		return true;
 	}
-	
+	*/
 	@XmlAttribute
 	public int getOrder() {
 		return order;
@@ -210,13 +213,21 @@ public class DrumPart {
 	public void setOrder(int order) {
 		this.order = order;
 	}
-
+	
 	public boolean isMuted() {
 		return muted;
 	}
-
+	
 	public void setMuted(boolean muted) {
 		this.muted = muted;
+	}
+	
+	public int getSwingPercent() {
+		return swingPercent;
+	}
+	
+	public void setSwingPercent(int swingPercent) {
+		this.swingPercent = swingPercent;
 	}
 	
 }

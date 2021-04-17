@@ -762,9 +762,9 @@ public class MidiGeneratorGUI extends JFrame
 		clearPatternSeeds.setActionCommand("ClearPatterns");
 		
 		
-		randomDrumSlide = new JCheckBox("Random slide", true);
+		randomDrumSlide = new JCheckBox("Random slide", false);
 		randomDrumPattern = new JCheckBox("Pattern presets", true);
-		drumVelocityPatternChance = new JTextField("100", 3);
+		drumVelocityPatternChance = new JTextField("50", 3);
 		drumShiftChance = new JTextField("25", 3);
 		
 		drumsPanel.add(randomDrumSlide);
@@ -1297,8 +1297,15 @@ public class MidiGeneratorGUI extends JFrame
 		InstComboBox.BANNED_INSTS.clear();
 		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(bannedInsts.getText().split(",")));
 		
-		melodyInst.initInstPool(melodyInst.getInstPool());
-		bassRootsInst.initInstPool(bassRootsInst.getInstPool());
+		{
+			int inst = melodyInst.getInstrument();
+			melodyInst.initInstPool(melodyInst.getInstPool());
+			melodyInst.setInstrument(inst);
+			inst = bassRootsInst.getInstrument();
+			bassRootsInst.initInstPool(bassRootsInst.getInstPool());
+			bassRootsInst.setInstrument(inst);
+		}
+		
 		
 		if (ae.getActionCommand() == "InitAllInsts") {
 			if (useAllInsts.isSelected()) {
@@ -2095,7 +2102,13 @@ public class MidiGeneratorGUI extends JFrame
 		int slide = 0;
 		
 		if (randomDrumSlide.isSelected()) {
-			slide = drumPanelGenerator.nextInt(300) - 150;
+			slide = drumPanelGenerator.nextInt(100) - 50;
+		}
+		
+		int swingPercent = 50;
+		
+		if (true) {
+			swingPercent = 30 + drumPanelGenerator.nextInt(40);
 		}
 		
 		List<Integer> pitches = new ArrayList<>();
@@ -2132,7 +2145,7 @@ public class MidiGeneratorGUI extends JFrame
 			
 			dp.setHitsPerPattern(hits);
 			
-			int adjustVelocity = -1 * (dp.getHitsPerPattern() / 2) / dp.getChordSpan();
+			int adjustVelocity = -1 * dp.getHitsPerPattern() / dp.getChordSpan();
 			
 			if (dp.getPitch() == 35 || dp.getPitch() == 36 || dp.getPitch() == 38
 					|| dp.getPitch() == 40) {
@@ -2140,20 +2153,27 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			
 			dp.setPattern(RhythmPattern.values()[patternOrder]);
-			int velocityMin = drumPanelGenerator.nextInt(50) + 20 + adjustVelocity;
+			int velocityMin = drumPanelGenerator.nextInt(30) + 50 + adjustVelocity;
 			dp.setVelocityMin(velocityMin);
-			dp.setVelocityMax(1 + velocityMin + drumPanelGenerator.nextInt(40));
+			dp.setVelocityMax(1 + velocityMin + drumPanelGenerator.nextInt(25));
 			
 			if (patternOrder > 0) {
 				dp.setPauseChance(drumPanelGenerator.nextInt(5) + 0);
 			} else {
 				dp.setPauseChance(drumPanelGenerator.nextInt(40) + 40);
 			}
-			dp.setExceptionChance(drumPanelGenerator.nextInt(15));
 			
-			if (dp.getPitch() > 40) {
+			
+			if (dp.getPitch() > 41) {
 				dp.setSlideMiliseconds(slide);
 			}
+			if (dp.getPitch() > 39) {
+				dp.setSwingPercent(swingPercent);
+				dp.setExceptionChance(drumPanelGenerator.nextInt(10));
+			} else {
+				dp.setExceptionChance(drumPanelGenerator.nextInt(3));
+			}
+			
 			
 			dp.setIsVelocityPattern(drumPanelGenerator.nextInt(100) < Integer
 					.valueOf(drumVelocityPatternChance.getText()));
