@@ -6,26 +6,14 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})
-public class ChordPart {
-	private int instrument = 46;
-	
+public class ChordPart extends InstPart {
 	private int transitionChance = 0;
 	private int transitionSplit = 625;
 	
 	private int strum = 0;
-	private int delay = 0;
-	private int transpose = 0;
 	
-	private int patternSeed = 0;
-	private RhythmPattern pattern = RhythmPattern.RANDOM;
-	private int patternShift = 0;
-	private int order = 1;
 	
 	private MidiUtils.POOL instPool = MidiUtils.POOL.PLUCK;
-	
-	private int midiChannel = 2;
-	
-	private boolean muted = false;
 	
 	public ChordPart() {
 		
@@ -74,37 +62,6 @@ public class ChordPart {
 		this.strum = strum;
 	}
 	
-	public int getDelay() {
-		return delay;
-	}
-	
-	public void setDelay(int delay) {
-		this.delay = delay;
-	}
-	
-	public int getTranspose() {
-		return transpose;
-	}
-	
-	public void setTranspose(int transpose) {
-		this.transpose = transpose;
-	}
-	
-	public RhythmPattern getPattern() {
-		return pattern;
-	}
-	
-	public void setPattern(RhythmPattern pattern) {
-		this.pattern = pattern;
-	}
-	
-	public int getPatternShift() {
-		return patternShift;
-	}
-	
-	public void setPatternShift(int patternShift) {
-		this.patternShift = patternShift;
-	}
 	
 	@XmlAttribute
 	public int getOrder() {
@@ -115,21 +72,6 @@ public class ChordPart {
 		this.order = order;
 	}
 	
-	public int getPatternSeed() {
-		return patternSeed;
-	}
-	
-	public void setPatternSeed(int patternSeed) {
-		this.patternSeed = patternSeed;
-	}
-	
-	public int getInstrument() {
-		return instrument;
-	}
-	
-	public void setInstrument(int instrument) {
-		this.instrument = instrument;
-	}
 	
 	public MidiUtils.POOL getInstPool() {
 		return instPool;
@@ -139,19 +81,4 @@ public class ChordPart {
 		this.instPool = instPool;
 	}
 	
-	public boolean isMuted() {
-		return muted;
-	}
-	
-	public void setMuted(boolean muted) {
-		this.muted = muted;
-	}
-	
-	public int getMidiChannel() {
-		return midiChannel;
-	}
-	
-	public void setMidiChannel(int midiChannel) {
-		this.midiChannel = midiChannel;
-	}
 }

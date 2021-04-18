@@ -124,7 +124,7 @@ public class DrumPanel extends InstPanel {
 		setVelocityMin(part.getVelocityMin());
 		setVelocityMax(part.getVelocityMax());
 		
-		setDelay(part.getSlideMiliseconds());
+		setDelay(part.getDelay());
 		setSwingPercent(part.getSwingPercent());
 		
 		setPatternSeed(part.getPatternSeed());

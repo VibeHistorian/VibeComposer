@@ -792,7 +792,7 @@ public class MelodyGenerator implements JMC {
 				continue;
 			}
 			drumPhrases[i].setStartTime(
-					START_TIME_DELAY + (DRUM_PARTS.get(i).getSlideMiliseconds() / 1000.0));
+					START_TIME_DELAY + (DRUM_PARTS.get(i).getDelay() / 1000.0));
 			
 			parts[i].addPhrase(drumPhrases[i]);
 			scr.addPart(parts[i]);
