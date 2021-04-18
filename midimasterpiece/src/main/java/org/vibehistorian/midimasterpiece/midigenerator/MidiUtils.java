@@ -291,13 +291,9 @@ public class MidiUtils {
 			"PAN_FLUTE = 75 ", "SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SPACE_VOICE = 91 ",
 			"ECHO_DROPS = 102 " };
 	
-	public static final String[] CHORD_INST_NAMES = { "BRIGHT_ACOUSTIC = 1 ", "EPIANO = 4 ",
-			"CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
-			"XYLOPHONE = 13 ", "ORGAN = 16 ", "ORGAN2 = 17 ", "STEEL_GUITAR = 25 ",
-			"CLEAN_GUITAR = 27 ", "ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ", "PICKED_BASS = 34 ",
-			"FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "TREMOLO_STRINGS = 44 ",
-			"PIZZICATO_STRINGS = 45 ", "HARP = 46 ", "STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ",
-			"AAH = 52 ", "BASSOON = 70 ", "FANTASIA = 88 ", };
+	public static final String[] CHORD_INST_NAMES = { "EPIANO = 4 ", "ORGAN = 16 ", "ORGAN2 = 17 ",
+			"ACOUSTIC_BASS = 32 ", "TREMOLO_STRINGS = 44 ", "STRINGS = 48 ",
+			"STRING_ENSEMBLE_2 = 49 ", "AAH = 52 ", "BASSOON = 70 " };
 	
 	public static final String[] PLUCK_INST_NAMES = { "BRIGHT_ACOUSTIC = 1 ", "HONKYTONK = 3 ",
 			"EPIANO2 = 5 ", "CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
@@ -356,7 +352,7 @@ public class MidiUtils {
 	public static void initNormalInsts() {
 		INST_POOLS.put(POOL.PLUCK, PLUCK_INST_NAMES);
 		INST_POOLS.put(POOL.LONG, LONG_INST_NAMES);
-		INST_POOLS.put(POOL.CHORD, CHORD_INST_NAMES);
+		INST_POOLS.put(POOL.CHORD, LONG_INST_NAMES);
 		INST_POOLS.put(POOL.BASS, BASS_INST_NAMES);
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
 		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);

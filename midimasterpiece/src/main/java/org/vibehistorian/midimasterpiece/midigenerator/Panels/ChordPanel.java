@@ -9,8 +9,8 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
-import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
 
 public class ChordPanel extends InstPanel {
@@ -140,6 +140,7 @@ public class ChordPanel extends InstPanel {
 	
 	public void setFromChordPart(ChordPart part) {
 		instrument.initInstPool(part.getInstPool());
+		setInstPool(part.getInstPool());
 		setFromInstPart(part);
 		
 		setTransitionChance(part.getTransitionChance());
