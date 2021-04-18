@@ -4,45 +4,25 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 
-public class ChordPanel extends JPanel {
+public class ChordPanel extends InstPanel {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 	
-	private JLabel panelOrder = new JLabel("0");
-	
-	private InstComboBox instrument = new InstComboBox();
-	
 	private JTextField transitionChance = new JTextField("0", 2);
 	private JTextField transitionSplit = new JTextField("625", 3);
 	
 	private JTextField strum = new JTextField("0", 3);
-	private JTextField delay = new JTextField("0", 3);
 	
-	private JTextField transpose = new JTextField("0", 2);
-	
-	private JTextField patternSeed = new JTextField("0", 8);
-	private JComboBox<String> pattern = new JComboBox<String>();
-	private JTextField patternShift = new JTextField("0", 1);
-	
-	private JCheckBox lockInst = new JCheckBox("Lock", false);
-	private JCheckBox muteInst = new JCheckBox("Mute", false);
 	private JComboBox<String> instPoolPicker = new JComboBox<String>();
-	
-	private JComboBox<String> midiChannel = new JComboBox<>();
-	
-	private JButton removeButton = new JButton("X");
 	
 	public void initComponents() {
 		
@@ -141,54 +121,6 @@ public class ChordPanel extends JPanel {
 		this.strum.setText("" + strum);
 	}
 	
-	public int getDelay() {
-		return Integer.valueOf(delay.getText());
-	}
-	
-	public void setDelay(int delay) {
-		this.delay.setText("" + delay);
-	}
-	
-	public int getTranspose() {
-		return Integer.valueOf(transpose.getText());
-	}
-	
-	public void setTranspose(int transpose) {
-		this.transpose.setText("" + transpose);
-	}
-	
-	public int getPatternSeed() {
-		return Integer.valueOf(patternSeed.getText());
-	}
-	
-	public void setPatternSeed(int patternSeed) {
-		this.patternSeed.setText(String.valueOf(patternSeed));
-	}
-	
-	public RhythmPattern getPattern() {
-		return RhythmPattern.valueOf((String) pattern.getSelectedItem());
-	}
-	
-	public void setPattern(RhythmPattern pattern) {
-		this.pattern.setSelectedItem((String.valueOf(pattern.toString())));
-	}
-	
-	public int getPatternShift() {
-		return Integer.valueOf(patternShift.getText());
-	}
-	
-	public void setPatternShift(int shift) {
-		patternShift.setText(String.valueOf(shift));
-	}
-	
-	public int getInstrument() {
-		return this.instrument.getInstrument();
-	}
-	
-	public void setInstrument(int instrument) {
-		setInstPool(this.instrument.setInstrument(instrument));
-	}
-	
 	public ChordPart toChordPart(int lastRandomSeed) {
 		ChordPart part = new ChordPart(getInstrument(), getTransitionChance(), getTransitionSplit(),
 				getStrum(), getDelay(), getTranspose(),
@@ -220,22 +152,6 @@ public class ChordPanel extends JPanel {
 		
 	}
 	
-	public boolean getLockInst() {
-		return lockInst.isSelected();
-	}
-	
-	public void setLockInst(boolean selected) {
-		this.lockInst.setSelected(selected);
-	}
-	
-	public boolean getMuteInst() {
-		return muteInst.isSelected();
-	}
-	
-	public void setMuteInst(boolean selected) {
-		this.muteInst.setSelected(selected);
-	}
-	
 	public MidiUtils.POOL getInstPool() {
 		return MidiUtils.POOL.valueOf((String) instPoolPicker.getSelectedItem());
 	}
@@ -245,17 +161,5 @@ public class ChordPanel extends JPanel {
 		instPoolPicker.setSelectedItem(pool.name());
 	}
 	
-	public InstComboBox getInstrumentBox() {
-		return instrument;
-	}
-	
-	
-	public int getMidiChannel() {
-		return Integer.valueOf((String) midiChannel.getSelectedItem());
-	}
-	
-	public void setMidiChannel(int midiChannel) {
-		this.midiChannel.setSelectedItem("" + midiChannel);
-	}
 	
 }

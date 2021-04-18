@@ -497,7 +497,7 @@ public class MidiGeneratorGUI extends JFrame
 	
 	private void initMelody(int startY, int anchorSide) {
 		JPanel melodyPanel = new JPanel();
-		addMelody = new JCheckBox("Enable Melody", false);
+		addMelody = new JCheckBox("Enable Melody", true);
 		melodyPanel.add(addMelody);
 		melodyInst = new InstComboBox();
 		melodyInst.initInstPool(POOL.PLUCK);
@@ -527,7 +527,7 @@ public class MidiGeneratorGUI extends JFrame
 			});
 		}*/
 		
-		melodyLock = new JCheckBox("Lock Inst.", true);
+		melodyLock = new JCheckBox("Lock Inst.", false);
 		
 		userMelodySeed = new JTextField("0", 10);
 		JButton generateUserMelodySeed = new JButton("Random");
@@ -1766,7 +1766,8 @@ public class MidiGeneratorGUI extends JFrame
 			
 			
 		} catch (Exception e) {
-			System.out.println("User screwed up his inputs!" + e);
+			System.out.println("User screwed up his inputs!");
+			e.printStackTrace();
 		}
 		
 	}
@@ -2165,7 +2166,7 @@ public class MidiGeneratorGUI extends JFrame
 			
 			
 			if (dp.getPitch() > 41) {
-				dp.setSlideMiliseconds(slide);
+				dp.setDelay(slide);
 			}
 			if (dp.getPitch() > 39) {
 				dp.setSwingPercent(swingPercent);
@@ -2471,6 +2472,8 @@ public class MidiGeneratorGUI extends JFrame
 				}
 			}
 			ap.setPattern(RhythmPattern.values()[patternOrder]);
+			ap.setChordSpanFill(ChordSpanFill.values()[arpPanelGenerator
+					.nextInt(ChordSpanFill.values().length)]);
 			
 			if (arpPanelGenerator.nextInt(100) < Integer.valueOf(arpShiftChance.getText())
 					&& patternOrder > 0) {
