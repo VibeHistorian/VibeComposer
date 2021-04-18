@@ -152,6 +152,7 @@ public class MidiGeneratorGUI extends JFrame
 	JTextField spiceChance;
 	JTextField chordSlashChance;
 	JCheckBox spiceAllowDimAug;
+	JCheckBox spiceAllow9th13th;
 	
 	
 	// add/skip instruments
@@ -870,6 +871,10 @@ public class MidiGeneratorGUI extends JFrame
 		spiceAllowDimAug = new JCheckBox("Dim/Aug");
 		spiceAllowDimAug.setSelected(false);
 		chordSettingsProgressionPanel.add(spiceAllowDimAug);
+		
+		spiceAllow9th13th = new JCheckBox("9th/13th");
+		spiceAllow9th13th.setSelected(true);
+		chordSettingsProgressionPanel.add(spiceAllow9th13th);
 		
 		// CHORD SETTINGS 2 - chord progression
 		firstChordSelection = new JComboBox<String>();
@@ -1695,6 +1700,7 @@ public class MidiGeneratorGUI extends JFrame
 			
 			MelodyGenerator.SPICE_CHANCE = Integer.valueOf(spiceChance.getText());
 			MelodyGenerator.SPICE_ALLOW_DIM_AUG = spiceAllowDimAug.isSelected();
+			MelodyGenerator.SPICE_ALLOW_9th_13th = spiceAllow9th13th.isSelected();
 			MelodyGenerator.CHORD_SLASH_CHANCE = Integer.valueOf(chordSlashChance.getText());
 			
 			MelodyGenerator.FIRST_CHORD = chordSelect(

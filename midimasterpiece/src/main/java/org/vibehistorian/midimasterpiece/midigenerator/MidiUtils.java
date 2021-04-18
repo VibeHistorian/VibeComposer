@@ -36,6 +36,12 @@ public class MidiUtils {
 	public static final int[] cDim4 = { Pitches.C4, Pitches.EF4, Pitches.GF4 };
 	public static final int[] cMaj7th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4 };
 	public static final int[] cMin7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4 };
+	public static final int[] c9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4,
+			Pitches.D5 };
+	public static final int[] c13th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4,
+			Pitches.D5, Pitches.A5 };
+	
+	public static final int[] SPICE_SELECT = { 10, 100, 1000, 10000, 100000, 1000000 };
 	
 	
 	public static final Map<Integer, List<Integer>> cpRulesMap = createChordProgressionRulesMap();
@@ -88,6 +94,8 @@ public class MidiUtils {
 			chordMap.put(1000 * i, transposeChord(cDim4, diaTransMap.get(i)));
 			chordMap.put(10000 * i, transposeChord(cMaj7th4, diaTransMap.get(i)));
 			chordMap.put(100000 * i, transposeChord(cMin7th4, diaTransMap.get(i)));
+			chordMap.put(1000000 * i, transposeChord(c9th4, diaTransMap.get(i)));
+			chordMap.put(10000000 * i, transposeChord(c13th4, diaTransMap.get(i)));
 		}
 		return chordMap;
 		

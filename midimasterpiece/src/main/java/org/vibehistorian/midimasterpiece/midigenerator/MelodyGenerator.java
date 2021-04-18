@@ -89,6 +89,7 @@ public class MelodyGenerator implements JMC {
 	public static boolean FIRST_NOTE_FROM_CHORD = true;
 	public static Integer SPICE_CHANCE = 0;
 	public static boolean SPICE_ALLOW_DIM_AUG = false;
+	public static boolean SPICE_ALLOW_9th_13th = true;
 	public static int CHORD_SLASH_CHANCE = 0;
 	
 	public double[] MELODY_DUR_ARRAY = { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
@@ -234,18 +235,28 @@ public class MelodyGenerator implements JMC {
 					: next.get(nextInt);
 			
 			int spiceResult = 1;
-			int spiceSelectPow = generator.nextInt(2) + 1;
-			//SPICE CHANCE - multiply by 100 or 10000 to get aug/dim or maj/min 7th
+			int spiceSelectPow = generator.nextInt(MidiUtils.SPICE_SELECT.length) + 1;
+			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
+			// 
 			if (generator.nextInt(100) < SPICE_CHANCE) {
-				int spiceInt = 100;
+				int spiceInt = 10;
 				
-				
-				if (!SPICE_ALLOW_DIM_AUG && spiceSelectPow == 1) {
+				// 60 -> 600/6000 block 
+				if (!SPICE_ALLOW_DIM_AUG && spiceSelectPow <= 2) {
 					// move to maj/min 7th
-					spiceSelectPow = 2;
+					spiceSelectPow += 2;
+				}
+				
+				// 60 -> 6000000/60000000 block
+				if (!SPICE_ALLOW_9th_13th && spiceSelectPow >= 5) {
+					// move to maj/min 7th
+					spiceSelectPow -= 2;
 				}
 				
 				spiceResult = (int) Math.pow(spiceInt, spiceSelectPow);
+				if (chordInt < 10) {
+					spiceResult *= 10;
+				}
 				chordInt *= spiceResult;
 			}
 			
