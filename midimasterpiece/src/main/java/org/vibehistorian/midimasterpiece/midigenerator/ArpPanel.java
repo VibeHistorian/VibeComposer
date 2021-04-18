@@ -66,33 +66,15 @@ public class ArpPanel extends InstPanel {
 	
 	
 	public ArpPart toArpPart(int lastRandomSeed) {
-		ArpPart part = new ArpPart(getInstrument(), getHitsPerPattern(), getChordSpan(),
-				getPauseChance(), getExceptionChance(), getRepeatableNotes(), getPatternRepeat(),
-				getTranspose(), getPanelOrder(),
-				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternShift(), getMuteInst(), getMidiChannel(), getChordSpanFill());
+		ArpPart part = new ArpPart();
+		part.setFromPanel(this, lastRandomSeed);
+		part.setOrder(getPanelOrder());
 		return part;
 	}
 	
 	public void setFromArpPart(ArpPart part) {
-		setInstrument(part.getInstrument());
-		setHitsPerPattern(part.getHitsPerPattern());
-		setChordSpan(part.getChordSpan());
-		setChordSpanFill(part.getChordSpanFill());
-		setPauseChance(part.getPauseChance());
-		setExceptionChance(part.getExceptionChance());
-		setRepeatableNotes(part.isRepeatableNotes());
-		setPatternRepeat(part.getPatternRepeat());
-		setTranspose(part.getTranspose());
+		setFromInstPart(part);
 		setPanelOrder(part.getOrder());
-		
-		setPatternSeed(part.getPatternSeed());
-		setPattern(part.getPattern());
-		setPatternShift(part.getPatternShift());
-		
-		setMidiChannel(part.getMidiChannel());
-		
-		setMuteInst(part.isMuted());
 	}
 	
 	

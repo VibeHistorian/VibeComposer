@@ -41,6 +41,31 @@ public abstract class InstPanel extends JPanel {
 	
 	protected JButton removeButton = new JButton("X");
 	
+	public void setFromInstPart(InstPart part) {
+		setInstrument(part.getInstrument());
+		
+		setHitsPerPattern(part.getHitsPerPattern());
+		setChordSpan(part.getChordSpan());
+		setChordSpanFill(part.getChordSpanFill());
+		
+		setPauseChance(part.getPauseChance());
+		setExceptionChance(part.getExceptionChance());
+		
+		setRepeatableNotes(part.isRepeatableNotes());
+		setPatternRepeat(part.getPatternRepeat());
+		
+		setTranspose(part.getTranspose());
+		setDelay(part.getDelay());
+		
+		setPatternSeed(part.getPatternSeed());
+		setPattern(part.getPattern());
+		setPatternShift(part.getPatternShift());
+		
+		setMidiChannel(part.getMidiChannel());
+		
+		setMuteInst(part.isMuted());
+	}
+	
 	public int getHitsPerPattern() {
 		return Integer.valueOf(hitsPerPattern.getText());
 	}

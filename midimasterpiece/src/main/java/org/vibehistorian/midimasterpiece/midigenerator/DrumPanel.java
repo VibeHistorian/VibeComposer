@@ -32,6 +32,10 @@ public class DrumPanel extends InstPanel {
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 	
 	public void initComponents() {
+		
+		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
+		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
+		
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		this.add(muteInst);
@@ -103,38 +107,32 @@ public class DrumPanel extends InstPanel {
 	}
 	
 	public DrumPart toDrumPart(int lastRandomSeed) {
-		DrumPart part = new DrumPart(getPitch(), getHitsPerPattern(), getChordSpan(),
-				getPauseChance(), getExceptionChance(), getVelocityMin(), getVelocityMax(),
-				getDelay(), (getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed,
-				getPattern(), getIsVelocityPattern(), getPatternShift(), getMuteInst(),
-				getSwingPercent());
+		DrumPart part = new DrumPart();
+		part.setFromPanel(this, lastRandomSeed);
+		part.setPitch(getPitch());
+		part.setVelocityMin(getVelocityMin());
+		part.setVelocityMax(getVelocityMax());
+		part.setVelocityPattern(getIsVelocityPattern());
+		part.setSwingPercent(getSwingPercent());
+		
 		part.setOrder(getPanelOrder());
 		return part;
 	}
 	
 	public void setFromDrumPart(DrumPart part) {
 		
-		setPitch(part.getPitch());
-		setHitsPerPattern(part.getHitsPerPattern());
-		setChordSpan(part.getChordSpan());
+		setFromInstPart(part);
 		
-		setPauseChance(part.getPauseChance());
-		setExceptionChance(part.getExceptionChance());
+		setPitch(part.getPitch());
 		
 		setVelocityMin(part.getVelocityMin());
 		setVelocityMax(part.getVelocityMax());
 		
-		setDelay(part.getDelay());
 		setSwingPercent(part.getSwingPercent());
 		
-		setPatternSeed(part.getPatternSeed());
-		setPattern(part.getPattern());
-		
 		setIsVelocityPattern(part.isVelocityPattern());
-		setPatternShift(part.getPatternShift());
 		
 		setPanelOrder(part.getOrder());
-		setMuteInst(part.isMuted());
 		
 	}
 	

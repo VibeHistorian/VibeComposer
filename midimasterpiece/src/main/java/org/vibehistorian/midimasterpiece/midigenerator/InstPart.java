@@ -25,6 +25,30 @@ public abstract class InstPart {
 	
 	protected boolean muted = false;
 	
+	public void setFromPanel(InstPanel panel, int lastRandomSeed) {
+		setInstrument(panel.getInstrument());
+		
+		setHitsPerPattern(panel.getHitsPerPattern());
+		setChordSpan(panel.getChordSpan());
+		setChordSpanFill(panel.getChordSpanFill());
+		
+		setPauseChance(panel.getPauseChance());
+		setExceptionChance(panel.getExceptionChance());
+		setRepeatableNotes(panel.getRepeatableNotes());
+		setPatternRepeat(panel.getPatternRepeat());
+		
+		setTranspose(panel.getTranspose());
+		setDelay(panel.getDelay());
+		
+		setPatternSeed((panel.getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed);
+		setPattern(panel.getPattern());
+		setPatternShift(panel.getPatternShift());
+		
+		setMuted(panel.getMuteInst());
+		
+		setMidiChannel(panel.getMidiChannel());
+		
+	}
 	
 	public int getDelay() {
 		return delay;

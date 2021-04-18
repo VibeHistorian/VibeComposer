@@ -30,6 +30,7 @@ public class ChordPanel extends InstPanel {
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("11");
+		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 		
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
@@ -122,33 +123,28 @@ public class ChordPanel extends InstPanel {
 	}
 	
 	public ChordPart toChordPart(int lastRandomSeed) {
-		ChordPart part = new ChordPart(getInstrument(), getTransitionChance(), getTransitionSplit(),
-				getStrum(), getDelay(), getTranspose(),
-				(getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed, getPattern(),
-				getPatternShift(), getPanelOrder(), getMuteInst(), getMidiChannel());
+		ChordPart part = new ChordPart();
+		part.setFromPanel(this, lastRandomSeed);
+		part.setTransitionChance(getTransitionChance());
+		part.setTransitionSplit(getTransitionSplit());
+		part.setStrum(getStrum());
+		
 		part.setInstPool(getInstPool());
+		
+		part.setOrder(getPanelOrder());
 		return part;
 	}
 	
 	public void setFromChordPart(ChordPart part) {
 		instrument.initInstPool(part.getInstPool());
-		setInstrument(part.getInstrument());
+		setFromInstPart(part);
+		
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
-		setTranspose(part.getTranspose());
 		
 		setStrum(part.getStrum());
-		setDelay(part.getDelay());
-		
-		setPatternSeed(part.getPatternSeed());
-		setPattern(part.getPattern());
-		setPatternShift(part.getPatternShift());
 		
 		setPanelOrder(part.getOrder());
-		
-		setMidiChannel(part.getMidiChannel());
-		
-		setMuteInst(part.isMuted());
 		
 	}
 	
