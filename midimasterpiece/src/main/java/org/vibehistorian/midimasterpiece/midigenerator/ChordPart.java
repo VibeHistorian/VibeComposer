@@ -19,24 +19,6 @@ public class ChordPart extends InstPart {
 		
 	}
 	
-	public ChordPart(int instrument, int transitionChance, int transitionSplit, int strum,
-			int delay, int transpose, int patternSeed, RhythmPattern pattern, int patternShift,
-			int order, boolean muted, int midiChannel) {
-		super();
-		this.setInstrument(instrument);
-		this.transitionChance = transitionChance;
-		this.transitionSplit = transitionSplit;
-		this.strum = strum;
-		this.delay = delay;
-		this.transpose = transpose;
-		this.patternSeed = patternSeed;
-		this.pattern = pattern;
-		this.patternShift = patternShift;
-		this.order = order;
-		this.muted = muted;
-		this.midiChannel = midiChannel;
-	}
-	
 	
 	public int getTransitionChance() {
 		return transitionChance;

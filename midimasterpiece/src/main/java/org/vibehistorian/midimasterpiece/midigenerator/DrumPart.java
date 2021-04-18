@@ -20,26 +20,6 @@ public class DrumPart extends InstPart {
 		
 	}
 	
-	public DrumPart(int pitch, int hitsPerPattern, int chordSpan, int pauseChance,
-			int exceptionChance, int velocityMin, int velocityMax, int slideMiliseconds,
-			int patternSeed, RhythmPattern pattern, boolean isVelocityPattern, int patternShift,
-			boolean muted, int swingPercent) {
-		this.pitch = pitch;
-		this.hitsPerPattern = hitsPerPattern;
-		this.chordSpan = chordSpan;
-		this.pauseChance = pauseChance;
-		this.exceptionChance = exceptionChance;
-		this.velocityMin = velocityMin;
-		this.velocityMax = velocityMax;
-		this.delay = slideMiliseconds;
-		this.patternSeed = patternSeed;
-		this.pattern = pattern;
-		this.isVelocityPattern = isVelocityPattern;
-		this.patternShift = patternShift;
-		this.muted = muted;
-		this.swingPercent = swingPercent;
-	}
-	
 	
 	public int getPitch() {
 		return pitch;

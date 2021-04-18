@@ -40,7 +40,7 @@ public abstract class InstPart {
 		setTranspose(panel.getTranspose());
 		setDelay(panel.getDelay());
 		
-		setPatternSeed((panel.getPatternSeed() != 0) ? getPatternSeed() : lastRandomSeed);
+		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
 		setPatternShift(panel.getPatternShift());
 		
