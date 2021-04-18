@@ -157,7 +157,6 @@ public class ChordPanel extends InstPanel {
 	}
 	
 	public void setInstPool(MidiUtils.POOL pool) {
-		instrument.setInstPool(pool);
 		instPoolPicker.setSelectedItem(pool.name());
 	}
 	

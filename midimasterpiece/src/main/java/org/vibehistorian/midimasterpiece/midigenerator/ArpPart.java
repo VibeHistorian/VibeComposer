@@ -11,7 +11,7 @@ public class ArpPart {
 	
 	private int hitsPerPattern = 8;
 	private int chordSpan = 1;
-	private ChordSpanFill cspanFill = ChordSpanFill.ALL;
+	private ChordSpanFill chordSpanFill = ChordSpanFill.ALL;
 	
 	private int pauseChance = 70;
 	private int exceptionChance = 5;
@@ -53,7 +53,7 @@ public class ArpPart {
 		this.patternShift = patternShift;
 		this.muted = muted;
 		this.midiChannel = midiChannel;
-		this.cspanFill = fill;
+		this.chordSpanFill = fill;
 	}
 	
 	public int getInstrument() {
@@ -169,12 +169,12 @@ public class ArpPart {
 		this.midiChannel = midiChannel;
 	}
 	
-	public ChordSpanFill getCspanFill() {
-		return cspanFill;
+	public ChordSpanFill getChordSpanFill() {
+		return chordSpanFill;
 	}
 	
-	public void setCspanFill(ChordSpanFill cspanFill) {
-		this.cspanFill = cspanFill;
+	public void setChordSpanFill(ChordSpanFill cspanFill) {
+		this.chordSpanFill = cspanFill;
 	}
 	
 	

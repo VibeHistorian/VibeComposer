@@ -206,6 +206,7 @@ public class MidiGeneratorGUI extends JFrame
 	// drum gen settings
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsOnCompose;
+	JTextField randomDrumMaxSwingAdjust;
 	JCheckBox randomDrumSlide;
 	JCheckBox randomDrumPattern;
 	JTextField drumVelocityPatternChance;
@@ -761,11 +762,14 @@ public class MidiGeneratorGUI extends JFrame
 		clearPatternSeeds.addActionListener(this);
 		clearPatternSeeds.setActionCommand("ClearPatterns");
 		
-		
-		randomDrumSlide = new JCheckBox("Random slide", false);
+		randomDrumMaxSwingAdjust = new JTextField("20", 2);
+		randomDrumSlide = new JCheckBox("Random delay", false);
 		randomDrumPattern = new JCheckBox("Pattern presets", true);
 		drumVelocityPatternChance = new JTextField("50", 3);
 		drumShiftChance = new JTextField("25", 3);
+		
+		drumsPanel.add(new JLabel("Max swing%+-"));
+		drumsPanel.add(randomDrumMaxSwingAdjust);
 		
 		drumsPanel.add(randomDrumSlide);
 		drumsPanel.add(randomDrumPattern);
@@ -2109,7 +2113,10 @@ public class MidiGeneratorGUI extends JFrame
 		int swingPercent = 50;
 		
 		if (true) {
-			swingPercent = 30 + drumPanelGenerator.nextInt(40);
+			swingPercent = 50
+					+ drumPanelGenerator
+							.nextInt(Integer.valueOf(randomDrumMaxSwingAdjust.getText()) * 2 + 1)
+					- Integer.valueOf(randomDrumMaxSwingAdjust.getText());
 		}
 		
 		List<Integer> pitches = new ArrayList<>();
@@ -2271,6 +2278,7 @@ public class MidiGeneratorGUI extends JFrame
 					.valueOf(chordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
 			
 			cp.getInstrumentBox().initInstPool(pool);
+			cp.setInstPool(pool);
 			
 			cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 			cp.setTransitionChance(chordPanelGenerator.nextInt(25));

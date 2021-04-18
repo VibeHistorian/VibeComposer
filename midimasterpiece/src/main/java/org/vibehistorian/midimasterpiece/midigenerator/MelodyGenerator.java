@@ -671,11 +671,11 @@ public class MelodyGenerator implements JMC {
 							.get(p) == 0) {
 						pitch = Integer.MIN_VALUE;
 					}
-					if (ap.getCspanFill() != ChordSpanFill.ALL) {
-						if ((ap.getCspanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
+					if (ap.getChordSpanFill() != ChordSpanFill.ALL) {
+						if ((ap.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
 							pitch = Integer.MIN_VALUE;
 						}
-						if ((ap.getCspanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
+						if ((ap.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
 							pitch = Integer.MIN_VALUE;
 						}
 					}

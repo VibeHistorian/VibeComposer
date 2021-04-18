@@ -78,6 +78,7 @@ public class ArpPanel extends InstPanel {
 		setInstrument(part.getInstrument());
 		setHitsPerPattern(part.getHitsPerPattern());
 		setChordSpan(part.getChordSpan());
+		setChordSpanFill(part.getChordSpanFill());
 		setPauseChance(part.getPauseChance());
 		setExceptionChance(part.getExceptionChance());
 		setRepeatableNotes(part.isRepeatableNotes());
