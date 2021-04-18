@@ -41,6 +41,10 @@ public abstract class InstPanel extends JPanel {
 	
 	protected JButton removeButton = new JButton("X");
 	
+	public InstPanel() {
+		
+	}
+	
 	public void setFromInstPart(InstPart part) {
 		setInstrument(part.getInstrument());
 		

@@ -6,6 +6,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+
 public class DrumPanel extends InstPanel {
 	/**
 	 * 
@@ -33,6 +35,7 @@ public class DrumPanel extends InstPanel {
 	
 	public void initComponents() {
 		
+		instrument.initInstPool(POOL.ALL);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 		
