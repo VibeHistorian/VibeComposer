@@ -32,7 +32,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.DrumGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ArpPart;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.DrumPart;
 
 import jm.JMC;
 import jm.constants.Durations;

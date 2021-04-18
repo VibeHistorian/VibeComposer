@@ -1,4 +1,4 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Enums;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;

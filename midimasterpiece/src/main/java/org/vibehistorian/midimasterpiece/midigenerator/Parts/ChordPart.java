@@ -1,8 +1,11 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Parts;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})

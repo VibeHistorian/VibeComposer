@@ -1,4 +1,4 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Panels;
 
 import java.awt.event.ActionListener;
 
@@ -6,7 +6,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.DrumPart;
 
 public class DrumPanel extends InstPanel {
 	/**

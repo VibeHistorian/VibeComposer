@@ -77,8 +77,18 @@ import javax.xml.bind.Marshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
+import org.vibehistorian.midimasterpiece.midigenerator.Helpers.FileTransferable;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpPanel;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordPanel;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.DrumPanel;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ArpPart;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.DrumPart;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;

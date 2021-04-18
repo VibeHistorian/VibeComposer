@@ -1,4 +1,4 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Panels;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -8,7 +8,10 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
 
 public class ChordPanel extends InstPanel {
 	

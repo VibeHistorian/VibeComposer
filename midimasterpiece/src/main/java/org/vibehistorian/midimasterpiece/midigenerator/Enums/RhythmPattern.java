@@ -1,4 +1,4 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Enums;
 
 import java.util.ArrayList;
 import java.util.Arrays;

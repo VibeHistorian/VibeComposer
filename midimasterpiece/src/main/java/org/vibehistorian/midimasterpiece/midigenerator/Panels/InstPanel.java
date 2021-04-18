@@ -1,4 +1,4 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Panels;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -7,7 +7,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.vibehistorian.midimasterpiece.midigenerator.InstComboBox;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.InstPart;
 
 public abstract class InstPanel extends JPanel {
 	

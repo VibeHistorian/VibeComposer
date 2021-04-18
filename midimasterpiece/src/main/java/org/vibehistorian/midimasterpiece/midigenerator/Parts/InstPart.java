@@ -1,4 +1,8 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Parts;
+
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
+import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.InstPanel;
 
 public abstract class InstPart {
 	protected int instrument = 46;
