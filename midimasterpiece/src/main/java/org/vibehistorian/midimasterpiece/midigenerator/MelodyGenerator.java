@@ -32,9 +32,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpGenSettings;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordGenSettings;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.DrumGenSettings;
@@ -50,6 +50,7 @@ import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
+import jm.util.View;
 import jm.util.Write;
 
 public class MelodyGenerator implements JMC {
@@ -79,6 +80,7 @@ public class MelodyGenerator implements JMC {
 	
 	public static int MAXIMUM_ARP_COUNT = 8;
 	
+	public static boolean DISPLAY_SCORE = false;
 	public static boolean MINOR_SONG = false;
 	public static int MAX_JUMP = 4;
 	public static int MAX_EXCEPTIONS = 1;
@@ -261,6 +263,13 @@ public class MelodyGenerator implements JMC {
 					spiceSelectPow -= 2;
 				}
 				
+				// use 7th with correct maj/min chord
+				if (chordInt < 10 && spiceSelectPow == 4) {
+					spiceSelectPow--;
+				} else if (chordInt >= 10 && spiceSelectPow == 3) {
+					spiceSelectPow++;
+				}
+				
 				spiceResult = (int) Math.pow(spiceInt, spiceSelectPow);
 				if (chordInt < 10) {
 					spiceResult *= 10;
@@ -414,58 +423,12 @@ public class MelodyGenerator implements JMC {
 		CPhrase cphraseBassRoot = new CPhrase();
 		CPhrase chordSlashCPhrase = new CPhrase();
 		
+		
 		for (int i = 0; i < PIECE_LENGTH; i++) {
-			Note previousChordsNote = null;
-			
-			Random transitionGenerator = new Random(mainGeneratorSeed + 1);
 			Random chordSlashGenerator = new Random(mainGeneratorSeed + 2);
-			// fill chords
+			
+			// fill slash chord slashes
 			for (int j = 0; j < actualProgression.size(); j++) {
-				for (int k = 0; k < CHORD_PARTS.size(); k++) {
-					CPhrase cp = chordsCPhrases.get(k);
-					boolean transition = transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
-							.getTransitionChance();
-					int transChord = (transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
-							.getTransitionChance()) ? (j + 1) % actualProgression.size() : j;
-					
-					// random = use generated split with potential to transition to 2nd chord early
-					// otherwise = use pattern within single chord
-					if (CHORD_PARTS.get(k).getPattern() == RhythmPattern.RANDOM) {
-						double splitTime = CHORD_SETTINGS.isUseSplit()
-								? CHORD_PARTS.get(k).getTransitionSplit()
-								: DEFAULT_CHORD_SPLIT;
-						
-						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
-						double duration2 = progressionDurations.get(j) - duration1;
-						if (transition) {
-							cp.addChord(Arrays.copyOf(actualProgression.get(j),
-									actualProgression.get(j).length), duration1);
-							cp.addChord(Arrays.copyOf(actualProgression.get(transChord),
-									actualProgression.get(transChord).length), duration2);
-						} else {
-							cp.addChord(
-									Arrays.copyOf(actualProgression.get(j),
-											actualProgression.get(j).length),
-									progressionDurations.get(j));
-						}
-						
-					} else {
-						double duration = progressionDurations.get(j) / MAXIMUM_ARP_COUNT;
-						List<Integer> pattern = CHORD_PARTS.get(k).getPattern()
-								.getPatternByLength(MAXIMUM_ARP_COUNT);
-						for (int p = 0; p < pattern.size(); p++) {
-							if (pattern.get(p) > 0) {
-								cp.addChord(Arrays.copyOf(actualProgression.get(j),
-										actualProgression.get(j).length), duration);
-							} else {
-								cp.addChord(new int[] { Integer.MIN_VALUE }, duration);
-							}
-						}
-						
-					}
-				}
-				
-				
 				// pick random chord, take first/root pitch
 				boolean isChordSlash = chordSlashGenerator.nextInt(100) < CHORD_SLASH_CHANCE;
 				int slashChord = chordSlashGenerator.nextInt(6) + 1;
@@ -486,6 +449,7 @@ public class MelodyGenerator implements JMC {
 			}
 			
 			// generate+fill melody
+			Note previousChordsNote = null;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
 				Note[] generatedMelody = null;
 				
@@ -513,6 +477,10 @@ public class MelodyGenerator implements JMC {
 			
 			
 		}
+		
+		// Fill chords
+		
+		fillChordCPhrases(chordsCPhrases, actualProgression, mainGeneratorSeed);
 		
 		// Generate and fill arps
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
@@ -617,9 +585,7 @@ public class MelodyGenerator implements JMC {
 		
 		// fill drums		
 		if (PARTS_INSTRUMENT_MAP.containsKey(PARTS.DRUMS) && DRUM_PARTS.size() > 0) {
-			Map<Integer, List<Integer>> drumMap = generateDrumMap();
-			Map<Integer, List<Integer>> drumVelocityMap = generateDrumVelocityMap();
-			fillDrumsCPhrases(score, drumMap, drumVelocityMap, actualProgression.size());
+			fillDrumsCPhrases(score, actualProgression.size());
 		}
 		
 		score.setTempo(MAIN_BPM);
@@ -646,7 +612,9 @@ public class MelodyGenerator implements JMC {
 		System.setOut(originalStream);
 		
 		// view midi
-		// View.pianoRoll(score);
+		if (DISPLAY_SCORE) {
+			View.pianoRoll(score);
+		}
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 	
@@ -662,6 +630,78 @@ public class MelodyGenerator implements JMC {
 		}
 		
 		return ascDirectionList;
+	}
+	
+	private void fillChordCPhrases(List<CPhrase> chordsCPhrases, List<int[]> actualProgression,
+			int mainGeneratorSeed) {
+		for (int i = 0; i < PIECE_LENGTH; i++) {
+			Random transitionGenerator = new Random(mainGeneratorSeed + 1);
+			// fill chords
+			for (int j = 0; j < actualProgression.size(); j++) {
+				for (int k = 0; k < CHORD_PARTS.size(); k++) {
+					CPhrase cp = chordsCPhrases.get(k);
+					boolean transition = transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
+							.getTransitionChance();
+					int transChord = (transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
+							.getTransitionChance()) ? (j + 1) % actualProgression.size() : j;
+					
+					// random = use generated split with potential to transition to 2nd chord early
+					// otherwise = use pattern within single chord
+					
+					boolean silent = false;
+					
+					if (CHORD_PARTS.get(k).getChordSpanFill() != ChordSpanFill.ALL) {
+						if ((CHORD_PARTS.get(k).getChordSpanFill() == ChordSpanFill.EVEN)
+								&& (j % 2 != 0)) {
+							silent = true;
+						}
+						if ((CHORD_PARTS.get(k).getChordSpanFill() == ChordSpanFill.ODD)
+								&& (j % 2 == 0)) {
+							silent = true;
+						}
+					}
+					
+					if (silent) {
+						cp.addChord(new int[] { Integer.MIN_VALUE }, progressionDurations.get(j));
+						continue;
+					}
+					
+					if (CHORD_PARTS.get(k).getPattern() == RhythmPattern.RANDOM) {
+						double splitTime = CHORD_SETTINGS.isUseSplit()
+								? CHORD_PARTS.get(k).getTransitionSplit()
+								: DEFAULT_CHORD_SPLIT;
+						
+						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
+						double duration2 = progressionDurations.get(j) - duration1;
+						if (transition) {
+							cp.addChord(Arrays.copyOf(actualProgression.get(j),
+									actualProgression.get(j).length), duration1);
+							cp.addChord(Arrays.copyOf(actualProgression.get(transChord),
+									actualProgression.get(transChord).length), duration2);
+						} else {
+							cp.addChord(
+									Arrays.copyOf(actualProgression.get(j),
+											actualProgression.get(j).length),
+									progressionDurations.get(j));
+						}
+						
+					} else {
+						double duration = progressionDurations.get(j) / MAXIMUM_ARP_COUNT;
+						List<Integer> pattern = CHORD_PARTS.get(k).getPattern()
+								.getPatternByLength(MAXIMUM_ARP_COUNT);
+						for (int p = 0; p < pattern.size(); p++) {
+							if (pattern.get(p) > 0) {
+								cp.addChord(Arrays.copyOf(actualProgression.get(j),
+										actualProgression.get(j).length), duration);
+							} else {
+								cp.addChord(new int[] { Integer.MIN_VALUE }, duration);
+							}
+						}
+						
+					}
+				}
+			}
+		}
 	}
 	
 	private void fillArpCPhrase(CPhrase arpCPhrase, Map<String, List<Integer>> arpMap,
@@ -709,30 +749,11 @@ public class MelodyGenerator implements JMC {
 		}
 	}
 	
-	private <T> List<T> partOfList(int part, int partCount, List<T> list) {
-		double size = Math.ceil(list.size() / ((double) partCount));
-		List<T> returnList = new ArrayList<>();
-		for (int i = 0; i < list.size(); i++) {
-			if (i >= part * size && i <= (part + 1) * size) {
-				returnList.add(list.get(i));
-			}
-		}
-		return returnList;
-	}
 	
-	private List<Integer> intersperse(int number, int times, List<Integer> list) {
-		List<Integer> interspersed = new ArrayList<>();
-		for (Integer i : list) {
-			interspersed.add(i);
-			for (int j = 0; j < times; j++) {
-				interspersed.add(number);
-			}
-		}
-		return interspersed;
-	}
-	
-	private void fillDrumsCPhrases(Score scr, Map<Integer, List<Integer>> drumPatternMap,
-			Map<Integer, List<Integer>> drumVelocityPatternMap, int chordsCount) {
+	private void fillDrumsCPhrases(Score scr, int chordsCount) {
+		
+		Map<Integer, List<Integer>> drumPatternMap = generateDrumMap();
+		Map<Integer, List<Integer>> drumVelocityPatternMap = generateDrumVelocityMap();
 		
 		Part[] parts = new Part[DRUM_PARTS.size()];
 		Phrase[] drumPhrases = new Phrase[DRUM_PARTS.size()];
@@ -799,13 +820,35 @@ public class MelodyGenerator implements JMC {
 			if (drumPhrases[i].length() == 0) {
 				continue;
 			}
-			drumPhrases[i].setStartTime(
-					START_TIME_DELAY + (DRUM_PARTS.get(i).getDelay() / 1000.0));
+			drumPhrases[i].setStartTime(START_TIME_DELAY + (DRUM_PARTS.get(i).getDelay() / 1000.0));
 			
 			parts[i].addPhrase(drumPhrases[i]);
 			scr.addPart(parts[i]);
 		}
 		
+	}
+	
+	
+	private <T> List<T> partOfList(int part, int partCount, List<T> list) {
+		double size = Math.ceil(list.size() / ((double) partCount));
+		List<T> returnList = new ArrayList<>();
+		for (int i = 0; i < list.size(); i++) {
+			if (i >= part * size && i <= (part + 1) * size) {
+				returnList.add(list.get(i));
+			}
+		}
+		return returnList;
+	}
+	
+	private List<Integer> intersperse(int number, int times, List<Integer> list) {
+		List<Integer> interspersed = new ArrayList<>();
+		for (Integer i : list) {
+			interspersed.add(i);
+			for (int j = 0; j < times; j++) {
+				interspersed.add(number);
+			}
+		}
+		return interspersed;
 	}
 	
 	public void applyRuleToMelody(Note[] melody, Consumer<Note[]> melodyRule) {
