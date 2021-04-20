@@ -163,6 +163,8 @@ public class MidiGeneratorGUI extends JFrame
 	JTextField chordSlashChance;
 	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
+	JComboBox<String> chordStretchType;
+	JComboBox<String> fixedChordStretchPicker;
 	
 	
 	// add/skip instruments
@@ -199,6 +201,7 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox randomChordPattern;
 	JTextField chordSustainChance;
 	JTextField chordShiftChance;
+	JTextField chordMaxSplitChance;
 	JCheckBox randomChordUseChordFill;
 	
 	// arp gen settings
@@ -288,6 +291,32 @@ public class MidiGeneratorGUI extends JFrame
 		initTitles(0, GridBagConstraints.CENTER);
 		
 		
+		// chord tool tip
+		
+		JPanel chordToolTip = new JPanel();
+		tipLabel = new JLabel(
+				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor)");
+		tipLabel.setForeground(isDarkMode ? Color.CYAN : Color.BLUE);
+		chordToolTip.add(tipLabel);
+		constraints.gridy = 298;
+		constraints.anchor = GridBagConstraints.CENTER;
+		add(chordToolTip, constraints);
+		
+		// ---- OTHER SETTINGS ----
+		{
+			initMacroParams(300, GridBagConstraints.CENTER);
+			
+			// chord settings - variety/spice
+			// chord settings - progressions
+			initChordSettings(310, GridBagConstraints.CENTER);
+			
+			// randomization buttons
+			initRandomButtons(320, GridBagConstraints.CENTER);
+			
+		}
+		createHorizontalSeparator(390, this);
+		
+		
 		// ---- INSTRUMENTS ----
 		{
 			// melody
@@ -320,30 +349,6 @@ public class MidiGeneratorGUI extends JFrame
 			add(instrumentTabPane, constraints);
 		}
 		
-		// chord tool tip
-		
-		JPanel chordToolTip = new JPanel();
-		tipLabel = new JLabel(
-				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor)");
-		tipLabel.setForeground(isDarkMode ? Color.CYAN : Color.BLUE);
-		chordToolTip.add(tipLabel);
-		constraints.gridy = 298;
-		constraints.anchor = GridBagConstraints.CENTER;
-		add(chordToolTip, constraints);
-		
-		// ---- OTHER SETTINGS ----
-		{
-			initMacroParams(300, GridBagConstraints.CENTER);
-			
-			// chord settings - variety/spice
-			// chord settings - progressions
-			initChordSettings(310, GridBagConstraints.CENTER);
-			
-			// randomization buttons
-			initRandomButtons(320, GridBagConstraints.CENTER);
-			
-		}
-		createHorizontalSeparator(390, this);
 		// ---- CONTROL PANEL -----
 		initControlPanel(400, GridBagConstraints.CENTER);
 		
@@ -596,15 +601,15 @@ public class MidiGeneratorGUI extends JFrame
 		chordSettingsPanel.add(randomChordsToGenerate);
 		chordSettingsPanel.add(randomChordsGenerateOnCompose);
 		
-		
-		randomChordDelay = new JCheckBox("Use delay", false);
-		randomChordStrum = new JCheckBox("Use strum", true);
-		randomChordSplit = new JCheckBox("Use split", false);
-		randomChordTranspose = new JCheckBox("Use transpose", true);
+		randomChordDelay = new JCheckBox("Delay", false);
+		randomChordStrum = new JCheckBox("Strum", true);
+		randomChordSplit = new JCheckBox("RandSplit", false);
+		randomChordTranspose = new JCheckBox("Transpose", true);
 		chordSustainChance = new JTextField("25", 2);
-		randomChordPattern = new JCheckBox("Pattern presets", false);
+		randomChordPattern = new JCheckBox("Presets", false);
 		chordShiftChance = new JTextField("25", 3);
-		randomChordUseChordFill = new JCheckBox("Alternating fills", true);
+		randomChordUseChordFill = new JCheckBox("Fills", true);
+		chordMaxSplitChance = new JTextField("25", 3);
 		
 		chordSettingsPanel.add(randomChordDelay);
 		chordSettingsPanel.add(randomChordStrum);
@@ -613,11 +618,13 @@ public class MidiGeneratorGUI extends JFrame
 		chordSettingsPanel.add(randomChordUseChordFill);
 		chordSettingsPanel.add(new JLabel("Chord%"));
 		chordSettingsPanel.add(chordSustainChance);
+		chordSettingsPanel.add(new JLabel("Max split%"));
+		chordSettingsPanel.add(chordMaxSplitChance);
 		chordSettingsPanel.add(randomChordPattern);
-		chordSettingsPanel.add(new JLabel("Pattern shift%"));
+		chordSettingsPanel.add(new JLabel("Shift%"));
 		chordSettingsPanel.add(chordShiftChance);
 		
-		JButton clearChordPatternSeeds = new JButton("Clear patterns");
+		JButton clearChordPatternSeeds = new JButton("Clear presets");
 		clearChordPatternSeeds.addActionListener(this);
 		clearChordPatternSeeds.setActionCommand("ClearChordPatterns");
 		
@@ -673,16 +680,16 @@ public class MidiGeneratorGUI extends JFrame
 		arpsSettingsPanel.add(randomArpsToGenerate);
 		arpsSettingsPanel.add(randomArpsGenerateOnCompose);
 		
-		randomArpTranspose = new JCheckBox("Use transpose", true);
-		randomArpPattern = new JCheckBox("Pattern presets", false);
+		randomArpTranspose = new JCheckBox("Transpose", true);
+		randomArpPattern = new JCheckBox("Presets", false);
 		fixedArpHitsPicker = new JComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
 				fixedArpHitsPicker);
 		fixedArpHitsPicker.setSelectedItem("4");
 		randomArpHitsPerPattern = new JCheckBox("Random#", true);
-		randomArpAllSameInst = new JCheckBox("All same inst.", false);
-		randomArpAllSameHits = new JCheckBox("All same #", true);
-		randomArpUseChordFill = new JCheckBox("Alternating fills", true);
+		randomArpAllSameInst = new JCheckBox("One inst.", false);
+		randomArpAllSameHits = new JCheckBox("One #", true);
+		randomArpUseChordFill = new JCheckBox("Fills", true);
 		arpShiftChance = new JTextField("25", 3);
 		
 		
@@ -697,7 +704,7 @@ public class MidiGeneratorGUI extends JFrame
 		arpsSettingsPanel.add(new JLabel("Pattern shift%"));
 		arpsSettingsPanel.add(arpShiftChance);
 		
-		JButton clearArpPatternSeeds = new JButton("Clear patterns");
+		JButton clearArpPatternSeeds = new JButton("Clear presets");
 		clearArpPatternSeeds.addActionListener(this);
 		clearArpPatternSeeds.setActionCommand("ClearArpPatterns");
 		
@@ -876,6 +883,17 @@ public class MidiGeneratorGUI extends JFrame
 	private void initChordSettings(int startY, int anchorSide) {
 		// CHORD SETTINGS 1 - chord variety 
 		JPanel chordSettingsProgressionPanel = new JPanel();
+		
+		
+		chordStretchType = new JComboBox<>();
+		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "PER_INST" }, chordStretchType);
+		chordStretchType.setSelectedItem("PER_INST");
+		chordSettingsProgressionPanel.add(new JLabel("StretCh."));
+		chordSettingsProgressionPanel.add(chordStretchType);
+		fixedChordStretchPicker = new JComboBox<>();
+		MidiUtils.addAllToJComboBox(new String[] { "3", "4", "5", "6" }, fixedChordStretchPicker);
+		fixedChordStretchPicker.setSelectedItem("4");
+		chordSettingsProgressionPanel.add(fixedChordStretchPicker);
 		
 		chordSlashChance = new JTextField("25", 3);
 		chordSettingsProgressionPanel.add(new JLabel("Ch1 slash chord%"));
@@ -2296,6 +2314,11 @@ public class MidiGeneratorGUI extends JFrame
 		// create only remaining
 		panelCount -= chordPanels.size();
 		
+		int fixedChordStretch = -1;
+		if (chordStretchType.getSelectedItem().equals("FIXED")) {
+			fixedChordStretch = Integer.valueOf((String) fixedChordStretchPicker.getSelectedItem());
+		}
+		
 		for (int i = 0; i < panelCount; i++) {
 			ChordPanel cp = addChordPanelToLayout();
 			
@@ -2306,7 +2329,8 @@ public class MidiGeneratorGUI extends JFrame
 			cp.setInstPool(pool);
 			
 			cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
-			cp.setTransitionChance(chordPanelGenerator.nextInt(25));
+			cp.setTransitionChance(
+					chordPanelGenerator.nextInt(Integer.valueOf(chordMaxSplitChance.getText())));
 			cp.setTransitionSplit(
 					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
@@ -2324,6 +2348,17 @@ public class MidiGeneratorGUI extends JFrame
 					patternOrder = chordPanelGenerator.nextInt(RhythmPattern.values().length);
 				}
 			}
+			if (!chordStretchType.getSelectedItem().equals("NONE")) {
+				cp.setStretchEnabled(true);
+				if (fixedChordStretch < 0) {
+					cp.setChordStretch(chordPanelGenerator.nextInt(4) + 3);
+				} else {
+					cp.setChordStretch(fixedChordStretch);
+				}
+			} else {
+				cp.setStretchEnabled(false);
+			}
+			
 			cp.setPattern(RhythmPattern.values()[patternOrder]);
 			
 			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(chordShiftChance.getText())
@@ -2412,11 +2447,12 @@ public class MidiGeneratorGUI extends JFrame
 		int fixedHitsGenerated = -1;
 		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
 			Random instGen = new Random();
-			fixedHitsGenerated = instGen.nextInt(MelodyGenerator.MAXIMUM_ARP_COUNT - 1) + 2;
+			fixedHitsGenerated = instGen.nextInt(MelodyGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 			
 			if (fixedHitsGenerated == 5) {
 				// reduced chance of 5
-				fixedHitsGenerated = instGen.nextInt(MelodyGenerator.MAXIMUM_ARP_COUNT - 1) + 2;
+				fixedHitsGenerated = instGen.nextInt(MelodyGenerator.MAXIMUM_PATTERN_LENGTH - 1)
+						+ 2;
 			}
 			if (fixedHitsGenerated == 7) {
 				// eliminate 7
@@ -2435,6 +2471,11 @@ public class MidiGeneratorGUI extends JFrame
 			}
 		}
 		
+		int fixedChordStretch = -1;
+		if (chordStretchType.getSelectedItem().equals("FIXED")) {
+			fixedChordStretch = Integer.valueOf((String) fixedChordStretchPicker.getSelectedItem());
+		}
+		
 		// create only remaining
 		panelCount -= arpPanels.size();
 		
@@ -2443,7 +2484,7 @@ public class MidiGeneratorGUI extends JFrame
 				fixedInstrument = arpPanels.get(0).getInstrument();
 			}
 			if (randomArpAllSameHits.isSelected() && arpPanels.size() > 0 && fixedHits < 0) {
-				fixedHits = arpPanels.get(0).getHitsPerPattern();
+				fixedHits = arpPanels.get(0).getHitsPerPattern() / arpPanels.get(0).getChordSpan();
 			}
 			
 			ArpPanel ap = addArpPanelToLayout();
@@ -2457,11 +2498,11 @@ public class MidiGeneratorGUI extends JFrame
 						ap.setHitsPerPattern(fixedHitsGenerated);
 					} else {
 						Random instGen = new Random();
-						int value = instGen.nextInt(MelodyGenerator.MAXIMUM_ARP_COUNT - 1) + 2;
+						int value = instGen.nextInt(MelodyGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 						
 						if (value == 5) {
 							// reduced chance of 5
-							value = instGen.nextInt(MelodyGenerator.MAXIMUM_ARP_COUNT - 1) + 2;
+							value = instGen.nextInt(MelodyGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 						}
 						if (value == 7) {
 							// eliminate 7
@@ -2497,8 +2538,21 @@ public class MidiGeneratorGUI extends JFrame
 				ap.setPatternRepeat(arpPanelGenerator.nextInt(4) + 1);
 			} else {
 				ap.setPatternRepeat(1);
+				if (arpPanelGenerator.nextBoolean() == true) {
+					ap.setHitsPerPattern(ap.getHitsPerPattern() * ap.getChordSpan());
+				}
 			}
 			
+			if (!chordStretchType.getSelectedItem().equals("NONE")) {
+				ap.setStretchEnabled(true);
+				if (fixedChordStretch < 0) {
+					ap.setChordStretch(arpPanelGenerator.nextInt(4) + 3);
+				} else {
+					ap.setChordStretch(fixedChordStretch);
+				}
+			} else {
+				ap.setStretchEnabled(false);
+			}
 			
 			int patternOrder = 0;
 			// use pattern in half the cases if checkbox selected

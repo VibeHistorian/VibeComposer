@@ -78,7 +78,7 @@ public class MelodyGenerator implements JMC {
 	
 	public static EnumMap<PARTS, Integer> PARTS_INSTRUMENT_MAP = new EnumMap<>(PARTS.class);
 	
-	public static int MAXIMUM_ARP_COUNT = 8;
+	public static int MAXIMUM_PATTERN_LENGTH = 8;
 	
 	public static boolean DISPLAY_SCORE = false;
 	public static boolean MINOR_SONG = false;
@@ -422,7 +422,7 @@ public class MelodyGenerator implements JMC {
 		Phrase melodyPhrase = new Phrase();
 		CPhrase cphraseBassRoot = new CPhrase();
 		CPhrase chordSlashCPhrase = new CPhrase();
-		
+		System.out.println("Initialized phrases/cphrases..");
 		
 		for (int i = 0; i < PIECE_LENGTH; i++) {
 			Random chordSlashGenerator = new Random(mainGeneratorSeed + 2);
@@ -478,9 +478,13 @@ public class MelodyGenerator implements JMC {
 			
 		}
 		
+		System.out.println("Filled chord slash and melody..");
+		
 		// Fill chords
 		
 		fillChordCPhrases(chordsCPhrases, actualProgression, mainGeneratorSeed);
+		
+		System.out.println("Filled chords..");
 		
 		// Generate and fill arps
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
@@ -489,6 +493,8 @@ public class MelodyGenerator implements JMC {
 					i == 0, ARP_PARTS.get(i));
 			fillArpCPhrase(arpCPhrase, arpMap, actualProgression, ARP_PARTS.get(i));
 		}
+		
+		System.out.println("Filled arps..");
 		
 		// Transpose 
 		Mod.transpose(melodyPhrase, TRANSPOSE_SCORE);
@@ -639,62 +645,66 @@ public class MelodyGenerator implements JMC {
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 				for (int k = 0; k < CHORD_PARTS.size(); k++) {
-					CPhrase cp = chordsCPhrases.get(k);
-					boolean transition = transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
+					ChordPart cp = CHORD_PARTS.get(k);
+					CPhrase cpr = chordsCPhrases.get(k);
+					boolean transition = transitionGenerator.nextInt(100) < cp
 							.getTransitionChance();
-					int transChord = (transitionGenerator.nextInt(100) < CHORD_PARTS.get(k)
-							.getTransitionChance()) ? (j + 1) % actualProgression.size() : j;
+					int transChord = (transitionGenerator.nextInt(100) < cp.getTransitionChance())
+							? (j + 1) % actualProgression.size()
+							: j;
 					
 					// random = use generated split with potential to transition to 2nd chord early
 					// otherwise = use pattern within single chord
 					
 					boolean silent = false;
 					
-					if (CHORD_PARTS.get(k).getChordSpanFill() != ChordSpanFill.ALL) {
-						if ((CHORD_PARTS.get(k).getChordSpanFill() == ChordSpanFill.EVEN)
-								&& (j % 2 != 0)) {
+					if (cp.getChordSpanFill() != ChordSpanFill.ALL) {
+						if ((cp.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
 							silent = true;
 						}
-						if ((CHORD_PARTS.get(k).getChordSpanFill() == ChordSpanFill.ODD)
-								&& (j % 2 == 0)) {
+						if ((cp.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
 							silent = true;
 						}
 					}
 					
 					if (silent) {
-						cp.addChord(new int[] { Integer.MIN_VALUE }, progressionDurations.get(j));
+						cpr.addChord(new int[] { Integer.MIN_VALUE }, progressionDurations.get(j));
 						continue;
 					}
 					
-					if (CHORD_PARTS.get(k).getPattern() == RhythmPattern.RANDOM) {
-						double splitTime = CHORD_SETTINGS.isUseSplit()
-								? CHORD_PARTS.get(k).getTransitionSplit()
+					if (cp.getPattern() == RhythmPattern.RANDOM) {
+						double splitTime = CHORD_SETTINGS.isUseSplit() ? cp.getTransitionSplit()
 								: DEFAULT_CHORD_SPLIT;
 						
 						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
 						double duration2 = progressionDurations.get(j) - duration1;
 						if (transition) {
-							cp.addChord(Arrays.copyOf(actualProgression.get(j),
-									actualProgression.get(j).length), duration1);
-							cp.addChord(Arrays.copyOf(actualProgression.get(transChord),
-									actualProgression.get(transChord).length), duration2);
+							cpr.addChord(
+									MidiUtils.convertChordToLength(actualProgression.get(j),
+											cp.getChordStretch(), cp.isStretchEnabled()),
+									duration1);
+							cpr.addChord(MidiUtils.convertChordToLength(
+									actualProgression.get(transChord), cp.getChordStretch(),
+									cp.isStretchEnabled()), duration2);
 						} else {
-							cp.addChord(
-									Arrays.copyOf(actualProgression.get(j),
-											actualProgression.get(j).length),
+							cpr.addChord(
+									MidiUtils.convertChordToLength(actualProgression.get(j),
+											cp.getChordStretch(), cp.isStretchEnabled()),
 									progressionDurations.get(j));
 						}
 						
 					} else {
-						double duration = progressionDurations.get(j) / MAXIMUM_ARP_COUNT;
-						List<Integer> pattern = CHORD_PARTS.get(k).getPattern()
-								.getPatternByLength(MAXIMUM_ARP_COUNT);
+						double duration = progressionDurations.get(j) / MAXIMUM_PATTERN_LENGTH;
+						List<Integer> pattern = cp.getPattern()
+								.getPatternByLength(MAXIMUM_PATTERN_LENGTH);
 						for (int p = 0; p < pattern.size(); p++) {
 							if (pattern.get(p) > 0) {
-								cp.addChord(Arrays.copyOf(actualProgression.get(j),
-										actualProgression.get(j).length), duration);
+								cpr.addChord(
+										MidiUtils.convertChordToLength(actualProgression.get(j),
+												cp.getChordStretch(), cp.isStretchEnabled()),
+										duration);
 							} else {
-								cp.addChord(new int[] { Integer.MIN_VALUE }, duration);
+								cpr.addChord(new int[] { Integer.MIN_VALUE }, duration);
 							}
 						}
 						
@@ -718,7 +728,8 @@ public class MelodyGenerator implements JMC {
 			for (int j = 0; j < actualProgression.size(); j++) {
 				double chordDurationArp = progressionDurations.get(j)
 						/ ((double) repeatedArpsPerChord);
-				int[] chord = actualProgression.get(j);
+				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
+						ap.getChordStretch(), ap.isStretchEnabled());
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 					Integer k = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
 					
@@ -878,12 +889,9 @@ public class MelodyGenerator implements JMC {
 		Random uiGenerator3arpOctave = new Random(mainGenerator.nextInt());
 		Random uiGenerator4arpPauses = new Random(mainGenerator.nextInt());
 		
-		int[] arpPatternArray = IntStream.range(0, MAXIMUM_ARP_COUNT).toArray();
-		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24).limit(MAXIMUM_ARP_COUNT * 2)
-				.toArray();
-		for (int i = 0; i < arpOctaveArray.length; i++) {
-			//arpOctaveArray[i] -= 12;
-		}
+		int[] arpPatternArray = IntStream.range(0, ap.getHitsPerPattern()).toArray();
+		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24)
+				.limit(ap.getHitsPerPattern() * 2).toArray();
 		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
 				.collect(Collectors.toList());
 		if (ap.isRepeatableNotes()) {
@@ -892,7 +900,7 @@ public class MelodyGenerator implements JMC {
 		List<Integer> arpPausesPattern = new ArrayList<>();
 		
 		if (ap.getPattern() == RhythmPattern.RANDOM) {
-			for (int i = 0; i < MAXIMUM_ARP_COUNT; i++) {
+			for (int i = 0; i < ap.getHitsPerPattern(); i++) {
 				if (uiGenerator4arpPauses.nextInt(100) < ap.getPauseChance()) {
 					arpPausesPattern.add(0);
 				} else {
@@ -900,7 +908,7 @@ public class MelodyGenerator implements JMC {
 				}
 			}
 		} else {
-			arpPausesPattern.addAll(ap.getPattern().getPatternByLength(MAXIMUM_ARP_COUNT));
+			arpPausesPattern.addAll(ap.getPattern().getPatternByLength(ap.getHitsPerPattern()));
 			Collections.rotate(arpPausesPattern, ap.getPatternShift());
 		}
 		
@@ -912,7 +920,8 @@ public class MelodyGenerator implements JMC {
 		Collections.shuffle(arpPattern, uiGenerator2arpPattern);
 		Collections.shuffle(arpOctavePattern, uiGenerator3arpOctave);
 		//}
-		// always generate maximum, cut off however many are needed (support for seed randoms)
+		// always generate ap.getHitsPerPattern(), 
+		// cut off however many are needed (support for seed randoms)
 		arpPattern = arpPattern.subList(0, ap.getHitsPerPattern());
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 		arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());

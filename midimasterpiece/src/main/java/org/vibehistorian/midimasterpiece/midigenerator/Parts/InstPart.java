@@ -11,6 +11,9 @@ public abstract class InstPart {
 	protected int chordSpan = 1;
 	protected ChordSpanFill chordSpanFill = ChordSpanFill.ALL;
 	
+	protected int chordStretch = 3;
+	protected boolean stretchEnabled = false;
+	
 	protected int pauseChance = 70;
 	protected int exceptionChance = 5;
 	protected boolean repeatableNotes = true;
@@ -35,6 +38,9 @@ public abstract class InstPart {
 		setHitsPerPattern(panel.getHitsPerPattern());
 		setChordSpan(panel.getChordSpan());
 		setChordSpanFill(panel.getChordSpanFill());
+		
+		setChordStretch(panel.getChordStretch());
+		setStretchEnabled(panel.getStretchEnabled());
 		
 		setPauseChance(panel.getPauseChance());
 		setExceptionChance(panel.getExceptionChance());
@@ -172,5 +178,21 @@ public abstract class InstPart {
 	
 	public void setChordSpanFill(ChordSpanFill cspanFill) {
 		this.chordSpanFill = cspanFill;
+	}
+	
+	public int getChordStretch() {
+		return chordStretch;
+	}
+	
+	public void setChordStretch(int chordStretch) {
+		this.chordStretch = chordStretch;
+	}
+	
+	public boolean isStretchEnabled() {
+		return stretchEnabled;
+	}
+	
+	public void setStretchEnabled(boolean stretchEnabled) {
+		this.stretchEnabled = stretchEnabled;
 	}
 }

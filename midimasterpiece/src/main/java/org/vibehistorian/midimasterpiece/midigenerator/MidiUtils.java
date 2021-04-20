@@ -144,6 +144,37 @@ public class MidiUtils {
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 	
+	public static int[] convertChordToLength(int[] chord, int length, boolean conversionNeeded) {
+		int[] chordCopy = Arrays.copyOf(chord, chord.length);
+		
+		if (!conversionNeeded || chord.length == length) {
+			return chordCopy;
+		}
+		int[] converted = new int[length];
+		if (chord.length < length) {
+			// repeat from start with +12 transpose
+			for (int i = 0; i < length; i++) {
+				converted[i] = chordCopy[(i % chord.length)] + 12 * (i / chord.length);
+			}
+		} else {
+			// alternate from beginning and end
+			int filled = 0;
+			int frontIndex = 0;
+			int backIndex = 0;
+			while (filled < length) {
+				if (filled % 2 == 0) {
+					converted[frontIndex] = chordCopy[frontIndex];
+					frontIndex++;
+				} else {
+					converted[length - backIndex - 1] = chordCopy[chord.length - backIndex - 1];
+					backIndex++;
+				}
+				filled++;
+			}
+		}
+		return converted;
+	}
+	
 	public static CPhrase chordProgressionToPhrase(List<int[]> cpr) {
 		CPhrase phr = new CPhrase();
 		for (int i = 0; i < cpr.size(); i++) {

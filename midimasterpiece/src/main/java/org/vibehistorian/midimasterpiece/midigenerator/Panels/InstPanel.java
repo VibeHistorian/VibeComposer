@@ -8,10 +8,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.vibehistorian.midimasterpiece.midigenerator.InstComboBox;
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.InstPart;
 
 public abstract class InstPanel extends JPanel {
@@ -24,6 +23,9 @@ public abstract class InstPanel extends JPanel {
 	
 	protected JTextField hitsPerPattern = new JTextField("8", 2);
 	protected JTextField chordSpan = new JTextField("1", 1);
+	
+	protected JTextField chordStretch = new JTextField("3", 1);
+	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 	
 	protected JTextField pauseChance = new JTextField("25", 1);
 	protected JTextField exceptionChance = new JTextField("5", 1);
@@ -56,6 +58,9 @@ public abstract class InstPanel extends JPanel {
 		setHitsPerPattern(part.getHitsPerPattern());
 		setChordSpan(part.getChordSpan());
 		setChordSpanFill(part.getChordSpanFill());
+		
+		setChordStretch(part.getChordStretch());
+		setStretchEnabled(part.isStretchEnabled());
 		
 		setPauseChance(part.getPauseChance());
 		setExceptionChance(part.getExceptionChance());
@@ -213,5 +218,21 @@ public abstract class InstPanel extends JPanel {
 	
 	public void setDelay(int delay) {
 		this.delay.setText("" + delay);
+	}
+	
+	public int getChordStretch() {
+		return Integer.valueOf(chordStretch.getText());
+	}
+	
+	public void setChordStretch(int chordStretch) {
+		this.chordStretch.setText("" + chordStretch);
+	}
+	
+	public boolean getStretchEnabled() {
+		return stretchEnabled.isSelected();
+	}
+	
+	public void setStretchEnabled(boolean stretchEnabled) {
+		this.stretchEnabled.setSelected(stretchEnabled);
 	}
 }
