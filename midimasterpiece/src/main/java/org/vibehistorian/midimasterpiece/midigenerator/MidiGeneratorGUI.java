@@ -2315,8 +2315,7 @@ public class MidiGeneratorGUI extends JFrame
 			cp.setDelay(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY))));
 			
 			if (randomChordUseChordFill.isSelected()) {
-				cp.setChordSpanFill(ChordSpanFill.values()[chordPanelGenerator
-						.nextInt(ChordSpanFill.values().length)]);
+				cp.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
 			}
 			int patternOrder = 0;
 			// use pattern in half the cases if checkbox selected
@@ -2510,8 +2509,7 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			ap.setPattern(RhythmPattern.values()[patternOrder]);
 			if (randomArpUseChordFill.isSelected()) {
-				ap.setChordSpanFill(ChordSpanFill.values()[arpPanelGenerator
-						.nextInt(ChordSpanFill.values().length)]);
+				ap.setChordSpanFill(ChordSpanFill.getWeighted(arpPanelGenerator.nextInt(100)));
 			}
 			
 			
