@@ -45,7 +45,7 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Fill"));
 		this.add(chordSpanFill);
 		this.add(stretchEnabled);
-		this.add(chordStretch);
+		this.add(chordNotesStretch);
 		
 		this.add(new JLabel("Split%"));
 		this.add(transitionChance);

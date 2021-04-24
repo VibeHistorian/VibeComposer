@@ -24,7 +24,7 @@ public abstract class InstPanel extends JPanel {
 	protected JTextField hitsPerPattern = new JTextField("8", 2);
 	protected JTextField chordSpan = new JTextField("1", 1);
 	
-	protected JTextField chordStretch = new JTextField("3", 1);
+	protected JTextField chordNotesStretch = new JTextField("3", 1);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 	
 	protected JTextField pauseChance = new JTextField("25", 1);
@@ -59,7 +59,7 @@ public abstract class InstPanel extends JPanel {
 		setChordSpan(part.getChordSpan());
 		setChordSpanFill(part.getChordSpanFill());
 		
-		setChordStretch(part.getChordStretch());
+		setChordNotesStretch(part.getChordNotesStretch());
 		setStretchEnabled(part.isStretchEnabled());
 		
 		setPauseChance(part.getPauseChance());
@@ -220,12 +220,12 @@ public abstract class InstPanel extends JPanel {
 		this.delay.setText("" + delay);
 	}
 	
-	public int getChordStretch() {
-		return Integer.valueOf(chordStretch.getText());
+	public int getChordNotesStretch() {
+		return Integer.valueOf(chordNotesStretch.getText());
 	}
 	
-	public void setChordStretch(int chordStretch) {
-		this.chordStretch.setText("" + chordStretch);
+	public void setChordNotesStretch(int chordStretch) {
+		this.chordNotesStretch.setText("" + chordStretch);
 	}
 	
 	public boolean getStretchEnabled() {

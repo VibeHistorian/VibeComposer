@@ -39,7 +39,7 @@ public class ArpPanel extends InstPanel {
 		this.add(new JLabel("Repeat#"));
 		this.add(patternRepeat);
 		this.add(stretchEnabled);
-		this.add(chordStretch);
+		this.add(chordNotesStretch);
 		this.add(repeatableNotes);
 		
 		this.add(new JLabel("Transpose"));

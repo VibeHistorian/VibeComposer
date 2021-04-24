@@ -11,7 +11,7 @@ public abstract class InstPart {
 	protected int chordSpan = 1;
 	protected ChordSpanFill chordSpanFill = ChordSpanFill.ALL;
 	
-	protected int chordStretch = 3;
+	protected int chordNotesStretch = 3;
 	protected boolean stretchEnabled = false;
 	
 	protected int pauseChance = 70;
@@ -39,7 +39,7 @@ public abstract class InstPart {
 		setChordSpan(panel.getChordSpan());
 		setChordSpanFill(panel.getChordSpanFill());
 		
-		setChordStretch(panel.getChordStretch());
+		setChordNotesStretch(panel.getChordNotesStretch());
 		setStretchEnabled(panel.getStretchEnabled());
 		
 		setPauseChance(panel.getPauseChance());
@@ -180,12 +180,12 @@ public abstract class InstPart {
 		this.chordSpanFill = cspanFill;
 	}
 	
-	public int getChordStretch() {
-		return chordStretch;
+	public int getChordNotesStretch() {
+		return chordNotesStretch;
 	}
 	
-	public void setChordStretch(int chordStretch) {
-		this.chordStretch = chordStretch;
+	public void setChordNotesStretch(int chordStretch) {
+		this.chordNotesStretch = chordStretch;
 	}
 	
 	public boolean isStretchEnabled() {

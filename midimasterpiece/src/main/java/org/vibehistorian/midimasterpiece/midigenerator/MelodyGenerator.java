@@ -681,15 +681,15 @@ public class MelodyGenerator implements JMC {
 						if (transition) {
 							cpr.addChord(
 									MidiUtils.convertChordToLength(actualProgression.get(j),
-											cp.getChordStretch(), cp.isStretchEnabled()),
+											cp.getChordNotesStretch(), cp.isStretchEnabled()),
 									duration1);
 							cpr.addChord(MidiUtils.convertChordToLength(
-									actualProgression.get(transChord), cp.getChordStretch(),
+									actualProgression.get(transChord), cp.getChordNotesStretch(),
 									cp.isStretchEnabled()), duration2);
 						} else {
 							cpr.addChord(
 									MidiUtils.convertChordToLength(actualProgression.get(j),
-											cp.getChordStretch(), cp.isStretchEnabled()),
+											cp.getChordNotesStretch(), cp.isStretchEnabled()),
 									progressionDurations.get(j));
 						}
 						
@@ -701,7 +701,7 @@ public class MelodyGenerator implements JMC {
 							if (pattern.get(p) > 0) {
 								cpr.addChord(
 										MidiUtils.convertChordToLength(actualProgression.get(j),
-												cp.getChordStretch(), cp.isStretchEnabled()),
+												cp.getChordNotesStretch(), cp.isStretchEnabled()),
 										duration);
 							} else {
 								cpr.addChord(new int[] { Integer.MIN_VALUE }, duration);
@@ -729,7 +729,7 @@ public class MelodyGenerator implements JMC {
 				double chordDurationArp = progressionDurations.get(j)
 						/ ((double) repeatedArpsPerChord);
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
-						ap.getChordStretch(), ap.isStretchEnabled());
+						ap.getChordNotesStretch(), ap.isStretchEnabled());
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 					Integer k = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
 					

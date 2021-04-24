@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "chordStretchType")
 @XmlEnum
 public enum ChordStretchType {
-	NONE, FIXED, PER_INST;
+	NONE, FIXED, AT_MOST;
 	
 	private static final int[] weights = new int[] { 50, 75, 100 };
 	
