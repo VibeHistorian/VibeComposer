@@ -8,6 +8,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.DrumGenSettings;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ArpPart;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
+import org.vibehistorian.midimasterpiece.midigenerator.Parts.DrumPart;
+
 @XmlRootElement(name = "GUIConfig")
 @XmlType(propOrder = {})
 public class GUIConfig {

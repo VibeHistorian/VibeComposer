@@ -1,4 +1,4 @@
-package org.vibehistorian.midimasterpiece.midigenerator;
+package org.vibehistorian.midimasterpiece.midigenerator.Helpers;
 
 import java.util.Random;
 import java.util.function.Consumer;
