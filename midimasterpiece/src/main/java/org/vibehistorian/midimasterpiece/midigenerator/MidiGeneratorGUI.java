@@ -456,7 +456,7 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(new JLabel("Soundbank name:"));
 		macroParams.add(soundbankFilename);
 
-		pieceLength = new JTextField("2", 2);
+		pieceLength = new JTextField("1", 2);
 		macroParams.add(new JLabel("Piece Length:"));
 		macroParams.add(pieceLength);
 
@@ -1830,6 +1830,11 @@ public class MidiGeneratorGUI extends JFrame
 				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels(true);
 			}
 
+			if (useArrangement.isSelected()) {
+				Arrangement arr = new Arrangement();
+				arr.generateDefaultArrangement(lastRandomSeed);
+				MelodyGenerator.ARRANGEMENT = arr;
+			}
 
 		} catch (Exception e) {
 			System.out.println("User screwed up his inputs!");

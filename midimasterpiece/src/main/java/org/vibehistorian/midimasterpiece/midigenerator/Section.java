@@ -1,21 +1,36 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
+import java.util.List;
+
+import jm.music.data.CPhrase;
+import jm.music.data.Phrase;
+
 public class Section {
-	public enum SectionType{
-		INTRO, VERSE1, VERSE2, CHORUS1, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS2, ADVANCED_CHORUS, OUTRO; 
+	public enum SectionType {
+		INTRO, VERSE1, VERSE2, CHORUS1, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS2, ADVANCED_CHORUS,
+		OUTRO;
 	}
-	
+
 	private SectionType type;
 	private int measures;
-	
+
+	private double startTime;
+
 	private int melodyChance = 50;
 	private int bassChance = 50;
 	private int chordChance = 50;
 	private int arpChance = 50;
 	private int drumChance = 50;
-	
-	public Section(SectionType type, int measures, int melodyChance, int bassChance, int chordChance, int arpChance,
-			int drumChance) {
+
+	private Phrase melody;
+	private CPhrase bass;
+	private List<CPhrase> chords;
+	private List<CPhrase> arps;
+	private List<Phrase> drums;
+	private CPhrase chordSlash;
+
+	public Section(SectionType type, int measures, int melodyChance, int bassChance,
+			int chordChance, int arpChance, int drumChance) {
 		super();
 		this.type = type;
 		this.measures = measures;
@@ -81,6 +96,62 @@ public class Section {
 	public void setDrumChance(int drumChance) {
 		this.drumChance = drumChance;
 	}
-	
-	
+
+	public Phrase getMelody() {
+		return melody;
+	}
+
+	public void setMelody(Phrase melody) {
+		this.melody = melody;
+	}
+
+	public CPhrase getBass() {
+		return bass;
+	}
+
+	public void setBass(CPhrase bass) {
+		this.bass = bass;
+	}
+
+	public List<CPhrase> getChords() {
+		return chords;
+	}
+
+	public void setChords(List<CPhrase> chords) {
+		this.chords = chords;
+	}
+
+	public List<CPhrase> getArps() {
+		return arps;
+	}
+
+	public void setArps(List<CPhrase> arps) {
+		this.arps = arps;
+	}
+
+	public List<Phrase> getDrums() {
+		return drums;
+	}
+
+	public void setDrums(List<Phrase> drums) {
+		this.drums = drums;
+	}
+
+	public CPhrase getChordSlash() {
+		return chordSlash;
+	}
+
+	public void setChordSlash(CPhrase chordSlash) {
+		this.chordSlash = chordSlash;
+	}
+
+	public double getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(double startTime) {
+		this.startTime = startTime;
+	}
+
+
 }
