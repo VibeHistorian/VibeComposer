@@ -590,7 +590,6 @@ public class MelodyGenerator implements JMC {
 			counter++;
 			Random rand = new Random(mainGeneratorSeed);
 			for (PARTS part : PARTS_INSTRUMENT_MAP.keySet()) {
-				int threshold = rand.nextInt(100);
 
 				Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
 				Phrase emptyPhrase = new Phrase();
@@ -602,7 +601,7 @@ public class MelodyGenerator implements JMC {
 				List<Phrase> copiedPhrases = new ArrayList<>();
 
 				if (part == PARTS.MELODY) {
-					if (threshold < sec.getMelodyChance()) {
+					if (rand.nextInt(100) < sec.getMelodyChance()) {
 						sec.setMelody(melodyPhrase.copy());
 					} else {
 						sec.setMelody(emptyPhrase.copy());
@@ -611,7 +610,7 @@ public class MelodyGenerator implements JMC {
 				}
 
 				if (part == PARTS.BASSROOTS) {
-					if (threshold < sec.getBassChance()) {
+					if (rand.nextInt(100) < sec.getBassChance()) {
 						sec.setBass(cphraseBassRoot.copy());
 					} else {
 						sec.setBass(emptyCPhrase.copy());
@@ -620,51 +619,42 @@ public class MelodyGenerator implements JMC {
 				}
 
 				if (part == PARTS.CHORDS) {
-					if (threshold < sec.getChordChance()) {
-
-						for (int i = 0; i < CHORD_PARTS.size(); i++) {
+					for (int i = 0; i < CHORD_PARTS.size(); i++) {
+						if (rand.nextInt(100) < sec.getChordChance()) {
 							copiedCPhrases.add(chordsCPhrases.get(i).copy());
-						}
-						sec.setChords(copiedCPhrases);
-						if (!CHORD_PARTS.isEmpty()) {
-							sec.setChordSlash(chordSlashCPhrase);
-						}
-					} else {
-						for (int i = 0; i < CHORD_PARTS.size(); i++) {
+						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
-						sec.setChords(copiedCPhrases);
+					}
+					sec.setChords(copiedCPhrases);
+					if (rand.nextInt(100) < sec.getChordChance() && !CHORD_PARTS.isEmpty()) {
+						sec.setChordSlash(chordSlashCPhrase);
+					} else {
 						sec.setChordSlash(emptyCPhrase.copy());
 					}
 
 				}
 
 				if (part == PARTS.ARPS) {
-					if (threshold < sec.getArpChance()) {
-						for (int i = 0; i < ARP_PARTS.size(); i++) {
+					for (int i = 0; i < ARP_PARTS.size(); i++) {
+						if (rand.nextInt(100) < sec.getArpChance()) {
 							copiedCPhrases.add(arpCPhrases.get(i).copy());
-						}
-						sec.setArps(copiedCPhrases);
-					} else {
-						for (int i = 0; i < ARP_PARTS.size(); i++) {
+						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
-						sec.setArps(copiedCPhrases);
 					}
+					sec.setArps(copiedCPhrases);
 				}
 
 				if (part == PARTS.DRUMS) {
-					if (threshold < sec.getDrumChance()) {
-						for (int i = 0; i < DRUM_PARTS.size(); i++) {
+					for (int i = 0; i < DRUM_PARTS.size(); i++) {
+						if (rand.nextInt(100) < sec.getDrumChance()) {
 							copiedPhrases.add(drumPhrases.get(i).copy());
-						}
-						sec.setDrums(copiedPhrases);
-					} else {
-						for (int i = 0; i < DRUM_PARTS.size(); i++) {
+						} else {
 							copiedPhrases.add(emptyPhrase.copy());
 						}
-						sec.setDrums(copiedPhrases);
 					}
+					sec.setDrums(copiedPhrases);
 				}
 
 			}
@@ -673,6 +663,7 @@ public class MelodyGenerator implements JMC {
 
 		for (Section sec : ARRANGEMENT.getSections()) {
 			Phrase mp = sec.getMelody();
+			System.out.println("Melody size in phrase: " + mp.getSize());
 			mp.setStartTime(mp.getStartTime() + sec.getStartTime());
 			melody.add(mp);
 			CPhrase bp = sec.getBass();
@@ -956,9 +947,6 @@ public class MelodyGenerator implements JMC {
 		}
 
 		for (int i = 0; i < DRUM_PARTS.size(); i++) {
-			if (drumPhrases.get(i).length() == 0) {
-				continue;
-			}
 			drumPhrases.get(i)
 					.setStartTime(START_TIME_DELAY + (DRUM_PARTS.get(i).getDelay() / 1000.0));
 		}
