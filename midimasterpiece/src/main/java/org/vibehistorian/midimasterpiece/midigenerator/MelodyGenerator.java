@@ -663,7 +663,6 @@ public class MelodyGenerator implements JMC {
 
 		for (Section sec : ARRANGEMENT.getSections()) {
 			Phrase mp = sec.getMelody();
-			System.out.println("Melody size in phrase: " + mp.getSize());
 			mp.setStartTime(mp.getStartTime() + sec.getStartTime());
 			melody.add(mp);
 			CPhrase bp = sec.getBass();

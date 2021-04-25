@@ -79,6 +79,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.Section.SectionType;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Helpers.FileTransferable;
@@ -1833,6 +1834,11 @@ public class MidiGeneratorGUI extends JFrame
 			if (useArrangement.isSelected()) {
 				Arrangement arr = new Arrangement();
 				arr.generateDefaultArrangement(lastRandomSeed);
+				MelodyGenerator.ARRANGEMENT = arr;
+			} else {
+				Arrangement arr = new Arrangement();
+				arr.getSections()
+						.add(new Section(SectionType.ADVANCED_CHORUS, 1, 100, 100, 100, 100, 100));
 				MelodyGenerator.ARRANGEMENT = arr;
 			}
 
