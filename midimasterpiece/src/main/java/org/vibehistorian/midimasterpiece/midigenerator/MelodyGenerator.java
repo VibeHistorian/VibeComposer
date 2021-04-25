@@ -142,10 +142,10 @@ public class MelodyGenerator implements JMC {
 			
 			int chosenPitch = 60 + (firstChord[chordNote] % 12);
 			
-			previousPitch = chordScale.indexOf(new Integer(chosenPitch));
+			previousPitch = chordScale.indexOf(Integer.valueOf(chosenPitch));
 			if (previousPitch == -1) {
 				System.out.println("ERROR PITCH -1 for: " + chosenPitch);
-				previousPitch = chordScale.indexOf(new Integer(chosenPitch + 1));
+				previousPitch = chordScale.indexOf(Integer.valueOf(chosenPitch + 1));
 				if (previousPitch == -1) {
 					System.out.println("NOT EVEN +1 pitch exists for " + chosenPitch + "!");
 				}
@@ -220,7 +220,7 @@ public class MelodyGenerator implements JMC {
 		List<Integer> next = r.get(0);
 		if (LAST_CHORD != 0) {
 			next = new ArrayList<Integer>();
-			next.add(new Integer(LAST_CHORD));
+			next.add(Integer.valueOf(LAST_CHORD));
 		}
 		List<String> debugMsg = new ArrayList<>();
 		
@@ -632,7 +632,7 @@ public class MelodyGenerator implements JMC {
 		for (int i = 0; i < generatedRootProgression.size(); i++) {
 			int current = generatedRootProgression.get(i)[0];
 			int next = generatedRootProgression.get((i + 1) % generatedRootProgression.size())[0];
-			ascDirectionList.add(new Boolean(current <= next));
+			ascDirectionList.add(Boolean.valueOf(current <= next));
 		}
 		
 		return ascDirectionList;
@@ -723,14 +723,17 @@ public class MelodyGenerator implements JMC {
 		
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
 		
+		double longestChord = progressionDurations.stream().max((e1,e2) -> Double.compare(e1, e2)).get();
 		for (int i = 0; i < PIECE_LENGTH; i++) {
 			int chordSpanPart = 0;
 			for (int j = 0; j < actualProgression.size(); j++) {
-				double chordDurationArp = progressionDurations.get(j)
+				double chordDurationArp = longestChord
 						/ ((double) repeatedArpsPerChord);
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
+				double durationNow = 0;
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
+					
 					Integer k = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
 					
 					int octaveAdjustment = (k < 2) ? -12 : ((k < 6) ? 0 : 12);
@@ -749,8 +752,13 @@ public class MelodyGenerator implements JMC {
 							pitch = Integer.MIN_VALUE;
 						}
 					}
-					
-					arpCPhrase.addChord(new int[] { pitch }, chordDurationArp);
+					if (durationNow + chordDurationArp > progressionDurations.get(j)) {
+						arpCPhrase.addChord(new int[] { pitch }, progressionDurations.get(j)-durationNow);
+						break;
+					} else {
+						arpCPhrase.addChord(new int[] { pitch }, chordDurationArp);
+					}
+					durationNow += chordDurationArp;
 				}
 				chordSpanPart++;
 				if (chordSpanPart >= ap.getChordSpan()) {

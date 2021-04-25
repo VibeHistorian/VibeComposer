@@ -266,7 +266,7 @@ public class MidiUtils {
 		
 		for (int j = 0; j < chord.length; j++) {
 			int pitch = chord[j];
-			int originalIndex = modeList.indexOf(new Integer(pitch % 12));
+			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
 			
 			if (originalIndex == -1) {
 				transposedChord[j] = pitch - 1;

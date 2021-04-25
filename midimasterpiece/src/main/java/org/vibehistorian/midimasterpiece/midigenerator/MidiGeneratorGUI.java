@@ -2493,12 +2493,14 @@ public class MidiGeneratorGUI extends JFrame
 		// create only remaining
 		panelCount -= arpPanels.size();
 		
+		ArpPanel first = (arpPanels.isEmpty()) ? null : arpPanels.get(0);
+		
 		for (int i = 0; i < panelCount; i++) {
-			if (randomArpAllSameInst.isSelected() && arpPanels.size() > 0 && fixedInstrument < 0) {
+			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {
 				fixedInstrument = arpPanels.get(0).getInstrument();
 			}
-			if (randomArpAllSameHits.isSelected() && arpPanels.size() > 0 && fixedHits < 0) {
-				fixedHits = arpPanels.get(0).getHitsPerPattern() / arpPanels.get(0).getChordSpan();
+			if (randomArpAllSameHits.isSelected() && first != null && fixedHits < 0) {
+				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
 			}
 			
 			ArpPanel ap = addArpPanelToLayout();
@@ -2539,7 +2541,7 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			ap.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
 			ap.setInstrument(instrument);
-			if (arpPanels.size() == 1 && i == 0) {
+			if (first == null && i == 0) {
 				ap.setTranspose(12);
 				if (arpCopyMelodyInst.isSelected() && addMelody.isSelected()) {
 					ap.setInstrument(fixedInstrument);
@@ -2553,7 +2555,10 @@ public class MidiGeneratorGUI extends JFrame
 			} else {
 				ap.setPatternRepeat(1);
 				if (arpPanelGenerator.nextBoolean() == true) {
-					ap.setHitsPerPattern(ap.getHitsPerPattern() * ap.getChordSpan());
+					if ((first == null && i > 1) || (first != null)) {
+						ap.setHitsPerPattern(ap.getHitsPerPattern() * ap.getChordSpan());
+					}
+					
 				}
 			}
 			
@@ -2595,7 +2600,8 @@ public class MidiGeneratorGUI extends JFrame
 			ArpPanel lowest = arpPanels.get(0);
 			if (!lowest.getLockInst()) {
 				lowest.setPatternRepeat(1);
-				lowest.setChordSpan(1);
+					lowest.setChordSpan(1);
+				
 			}
 		}
 		

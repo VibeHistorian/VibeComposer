@@ -4,7 +4,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 
 @XmlRootElement(name = "chordPart")
@@ -16,7 +15,7 @@ public class ChordPart extends InstPart {
 	private int strum = 0;
 	
 	
-	private MidiUtils.POOL instPool = MidiUtils.POOL.PLUCK;
+	private POOL instPool = POOL.PLUCK;
 	
 	public ChordPart() {
 		
@@ -58,11 +57,11 @@ public class ChordPart extends InstPart {
 	}
 	
 	
-	public MidiUtils.POOL getInstPool() {
+	public POOL getInstPool() {
 		return instPool;
 	}
 	
-	public void setInstPool(MidiUtils.POOL instPool) {
+	public void setInstPool(POOL instPool) {
 		this.instPool = instPool;
 	}
 	
