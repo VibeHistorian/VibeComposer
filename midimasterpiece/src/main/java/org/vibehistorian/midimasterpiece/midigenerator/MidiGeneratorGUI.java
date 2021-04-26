@@ -15,6 +15,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedInputStream;
@@ -63,6 +67,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -269,6 +274,11 @@ public class MidiGeneratorGUI extends JFrame
 	JButton startMidi;
 	JButton stopMidi;
 
+	JSlider slider;
+	boolean isKeySeeking = false;
+	boolean isDragging = false;
+	long pauseMs;
+
 	JLabel tipLabel;
 	JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
@@ -356,6 +366,7 @@ public class MidiGeneratorGUI extends JFrame
 		// ---- CONTROL PANEL -----
 		initControlPanel(400, GridBagConstraints.CENTER);
 
+		initSliderPanel(410, GridBagConstraints.CENTER);
 
 		// ---- PLAY PANEL ----
 		initPlayPanel(420, GridBagConstraints.CENTER);
@@ -968,6 +979,122 @@ public class MidiGeneratorGUI extends JFrame
 		add(chordSettingsProgressionPanel, constraints);
 	}
 
+	public long msToTicks(long ms) {
+		if (ms == 0)
+			return 0;
+		float fps = sequencer.getSequence().getDivisionType();
+		try {
+			if (fps == Sequence.PPQ)
+				return (long) (ms * sequencer.getTempoInBPM()
+						* sequencer.getSequence().getResolution() / 60000000);
+			else if (fps > Sequence.PPQ)
+				return (long) (ms * fps * sequencer.getSequence().getResolution() / 1000000);
+			else
+				throw new Exception();
+		} catch (Exception e) {
+			return 0;
+		}
+	}
+
+	public void midiNavigate(long time) {
+		long timeTicks = msToTicks(time);
+		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
+			if (time >= 0) {
+				sequencer.setMicrosecondPosition(time);
+				//midiPauseProg = timeTicks;
+				//midiPauseProgMs = time;
+
+			} else {
+				sequencer.setMicrosecondPosition(0);
+				//midiPauseProg = 0;
+				//midiPauseProgMs = 0;
+			}
+		}
+	}
+
+	private void initSliderPanel(int startY, int anchorSide) {
+		JPanel sliderPanel = new JPanel();
+		slider = new JSlider();
+		slider.setMaximum(0);
+		slider.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+
+				if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+					isKeySeeking = true;
+					if (!isDragging)
+						slider.setValue(slider.getValue() - 5000);
+				} else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+					isKeySeeking = true;
+					if (!isDragging)
+						slider.setValue(slider.getValue() + 5000);
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+
+				if ((e.getKeyCode() == KeyEvent.VK_LEFT | e.getKeyCode() == KeyEvent.VK_RIGHT)
+						&& !isDragging)
+					midiNavigate(((long) slider.getValue()) * 1000);
+				isKeySeeking = false;
+			}
+		});
+		slider.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+
+				isDragging = true;
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+
+				if (isDragging) {
+					if (sequencer != null)
+						midiNavigate(((long) slider.getValue()) * 1000);
+					isDragging = false;
+				}
+			}
+		});
+		sliderPanel.add(slider);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(sliderPanel, constraints);
+
+
+		// init thread
+
+		Thread cycle = new Thread() {
+
+			public void run() {
+
+				while (true) {
+					if (sequencer != null && sequencer.isRunning()) {
+						if (!isDragging && !isKeySeeking)
+							slider.setValue((int) (sequencer.getMicrosecondPosition() / 1000));
+					} else {
+						if (!isDragging && !isKeySeeking) {
+							//slider.setValue((int) (pauseMs / 1000));
+						}
+						//if (!isDragging && !isKeySeeking)
+						//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
+						//else
+						//currentTime.setText(millisecondsToTimeString(slider.getValue()));
+					}
+					try {
+						sleep(25);
+					} catch (InterruptedException e) {
+
+					}
+				}
+			}
+		};
+		cycle.start();
+	}
+
 	private void initControlPanel(int startY, int anchorSide) {
 		JPanel controlPanel = new JPanel();
 		randomSeed = new JTextField("0", 8);
@@ -1281,7 +1408,11 @@ public class MidiGeneratorGUI extends JFrame
 			}*/
 
 			sequencer.setTickPosition(0);
+
+
 			sequencer.start();  // start the playback
+			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
+			System.out.println("Slider max: " + slider.getMaximum());
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
