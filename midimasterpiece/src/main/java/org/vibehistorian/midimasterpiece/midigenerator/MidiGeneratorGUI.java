@@ -15,8 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -275,6 +273,8 @@ public class MidiGeneratorGUI extends JFrame
 	JButton stopMidi;
 
 	JSlider slider;
+	JLabel currentTime;
+	JLabel totalTime;
 	boolean isKeySeeking = false;
 	boolean isDragging = false;
 	long pauseMs;
@@ -310,7 +310,6 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel chordToolTip = new JPanel();
 		tipLabel = new JLabel(
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor)");
-		tipLabel.setForeground(isDarkMode ? Color.CYAN : Color.BLUE);
 		chordToolTip.add(tipLabel);
 		constraints.gridy = 298;
 		constraints.anchor = GridBagConstraints.CENTER;
@@ -366,11 +365,9 @@ public class MidiGeneratorGUI extends JFrame
 		// ---- CONTROL PANEL -----
 		initControlPanel(400, GridBagConstraints.CENTER);
 
-		initSliderPanel(410, GridBagConstraints.CENTER);
-
 		// ---- PLAY PANEL ----
 		initPlayPanel(420, GridBagConstraints.CENTER);
-
+		initSliderPanel(440, GridBagConstraints.CENTER);
 
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -390,7 +387,6 @@ public class MidiGeneratorGUI extends JFrame
 
 		JPanel messagePanel = new JPanel();
 		messageLabel = new JLabel("Click something!");
-		messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		messagePanel.add(messageLabel);
 		constraints.gridy = 999;
@@ -406,7 +402,8 @@ public class MidiGeneratorGUI extends JFrame
 		requestFocus();
 		requestFocusInWindow();
 
-
+		isDarkMode = !isDarkMode;
+		switchDarkMode();
 		pack();
 		setVisible(true);
 		repaint();
@@ -433,10 +430,8 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void initTitles(int startY, int anchorSide) {
 		mainTitle = new JLabel("General MIDI Generator (Beta)");
-		mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		subTitle = new JLabel("by Vibe Historian");
-		subTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		constraints.weightx = 100;
 		constraints.weighty = 100;
@@ -979,6 +974,30 @@ public class MidiGeneratorGUI extends JFrame
 		add(chordSettingsProgressionPanel, constraints);
 	}
 
+	private static String microsecondsToTimeString(long l) {
+		long i = l / 1000000;
+		long m = i / 60;
+		long s = i % 60;
+		String sM = String.valueOf(m);
+		String sS = String.valueOf(s);
+		if (sS.length() < 2)
+			sS = "0" + sS;
+		String v = sM + ":" + sS;
+		return v;
+	}
+
+	private static String millisecondsToTimeString(int l) {
+		long i = l / 1000;
+		long m = i / 60;
+		long s = i % 60;
+		String sM = String.valueOf(m);
+		String sS = String.valueOf(s);
+		if (sS.length() < 2)
+			sS = "0" + sS;
+		String v = sM + ":" + sS;
+		return v;
+	}
+
 	public long msToTicks(long ms) {
 		if (ms == 0)
 			return 0;
@@ -1014,33 +1033,13 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void initSliderPanel(int startY, int anchorSide) {
 		JPanel sliderPanel = new JPanel();
+		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
+		sliderPanel.setPreferredSize(new Dimension(800, 20));
+
+
 		slider = new JSlider();
 		slider.setMaximum(0);
-		slider.addKeyListener(new KeyAdapter() {
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-
-				if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-					isKeySeeking = true;
-					if (!isDragging)
-						slider.setValue(slider.getValue() - 5000);
-				} else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-					isKeySeeking = true;
-					if (!isDragging)
-						slider.setValue(slider.getValue() + 5000);
-				}
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-
-				if ((e.getKeyCode() == KeyEvent.VK_LEFT | e.getKeyCode() == KeyEvent.VK_RIGHT)
-						&& !isDragging)
-					midiNavigate(((long) slider.getValue()) * 1000);
-				isKeySeeking = false;
-			}
-		});
+		//slider.setMinimumSize(new Dimension(1000, 3));
 		slider.addMouseListener(new MouseAdapter() {
 
 			@Override
@@ -1060,6 +1059,18 @@ public class MidiGeneratorGUI extends JFrame
 			}
 		});
 		sliderPanel.add(slider);
+
+
+		currentTime = new JLabel("0:00");
+		currentTime.setMaximumSize(new Dimension(50, 20));
+
+		totalTime = new JLabel("0:00");
+		totalTime.setMaximumSize(new Dimension(50, 20));
+
+		sliderPanel.add(currentTime);
+		sliderPanel.add(new JLabel(" / "));
+		sliderPanel.add(totalTime);
+
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		add(sliderPanel, constraints);
@@ -1075,10 +1086,15 @@ public class MidiGeneratorGUI extends JFrame
 					if (sequencer != null && sequencer.isRunning()) {
 						if (!isDragging && !isKeySeeking)
 							slider.setValue((int) (sequencer.getMicrosecondPosition() / 1000));
+						if (!isDragging && !isKeySeeking)
+							currentTime.setText(
+									microsecondsToTimeString(sequencer.getMicrosecondPosition()));
+						else
+							currentTime.setText(millisecondsToTimeString(slider.getValue()));
 					} else {
-						if (!isDragging && !isKeySeeking) {
-							//slider.setValue((int) (pauseMs / 1000));
-						}
+						//if (!isDragging && !isKeySeeking) {
+						//slider.setValue((int) (pauseMs / 1000));
+						//}
 						//if (!isDragging && !isKeySeeking)
 						//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
 						//else
@@ -1207,11 +1223,11 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
 		randomChordsGenerateOnCompose.setSelected(state);
+		randomArpsGenerateOnCompose.setSelected(state);
 		randomDrumsGenerateOnCompose.setSelected(state);
 		randomizeBmpTransOnCompose.setSelected(state);
 		randomizeChordStrumsOnCompose.setSelected(state);
 		randomizeInstOnCompose.setSelected(state);
-		//TODO:secondArpMultiplierRandom.setSelected(state);
 		randomArpHitsPerPattern.setSelected(state);
 	}
 
@@ -1236,6 +1252,17 @@ public class MidiGeneratorGUI extends JFrame
 		subTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		tipLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		currentTime.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		totalTime.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomChordsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomArpsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomDrumsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		switchOnComposeRandom.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		compose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomArpHitsPerPattern.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomizeInstOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomizeBmpTransOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		for (JSeparator x : separators) {
 			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		}
@@ -1408,10 +1435,12 @@ public class MidiGeneratorGUI extends JFrame
 			}*/
 
 			sequencer.setTickPosition(0);
-
-
+			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));
 			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
+			slider.setPaintTicks(true);
+			slider.setMajorTickSpacing(
+					slider.getMaximum() / MelodyGenerator.ARRANGEMENT.getSections().size());
 			System.out.println("Slider max: " + slider.getMaximum());
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
@@ -1612,6 +1641,8 @@ public class MidiGeneratorGUI extends JFrame
 			if (sequencer != null) {
 				System.out.println("Stopping Midi..");
 				sequencer.stop();
+				slider.setValue(0);
+				sequencer.setTickPosition(0);
 				System.out.println("Stopped Midi!");
 			} else {
 				System.out.println("Sequencer is NULL!");
@@ -1628,6 +1659,18 @@ public class MidiGeneratorGUI extends JFrame
 				System.out.println("Sequencer is NULL!");
 			}
 		}
+
+		/*if (ae.getActionCommand() == "PauseMidi") {
+			if (sequencer != null) {
+				System.out.println("Pausing Midi..");
+				sequencer.stop();
+				startMidi.setText("Start");
+				startMidi.setActionCommand("StartMidi");
+				System.out.println("Paused Midi!");
+			} else {
+				System.out.println("Sequencer is NULL!");
+			}
+		}*/
 
 		if (ae.getActionCommand().startsWith("Save ")) {
 			if (currentMidi != null) {
@@ -2238,7 +2281,6 @@ public class MidiGeneratorGUI extends JFrame
 		int anchorTemp = constraints.anchor;
 		JSeparator x = new JSeparator(SwingConstants.HORIZONTAL);
 		x.setPreferredSize(new Dimension(1420, 2));
-		x.setForeground(isDarkMode ? Color.CYAN : Color.BLUE);
 		JPanel sepPanel = new JPanel();
 		sepPanel.add(x);
 		constraints.gridy = y;
