@@ -1441,7 +1441,6 @@ public class MidiGeneratorGUI extends JFrame
 			slider.setPaintTicks(true);
 			slider.setMajorTickSpacing(
 					slider.getMaximum() / MelodyGenerator.ARRANGEMENT.getSections().size());
-			System.out.println("Slider max: " + slider.getMaximum());
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
@@ -1537,6 +1536,8 @@ public class MidiGeneratorGUI extends JFrame
 			} else {
 				MidiUtils.initNormalInsts();
 			}
+			melodyInst.initInstPool(POOL.PLUCK);
+			bassRootsInst.initInstPool(POOL.BASS);
 		}
 
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
