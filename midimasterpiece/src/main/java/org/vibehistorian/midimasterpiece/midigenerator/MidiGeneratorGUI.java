@@ -67,12 +67,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -82,7 +85,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
-import org.vibehistorian.midimasterpiece.midigenerator.Section.SectionType;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Helpers.FileTransferable;
@@ -142,6 +144,8 @@ public class MidiGeneratorGUI extends JFrame
 	JScrollPane drumScrollPane;
 	JScrollPane chordScrollPane;
 	JScrollPane arpScrollPane;
+	JScrollPane arrangementScrollPane;
+	JTable scrollableArrangementTable;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -275,6 +279,7 @@ public class MidiGeneratorGUI extends JFrame
 	JSlider slider;
 	JLabel currentTime;
 	JLabel totalTime;
+	JLabel sectionText;
 	boolean isKeySeeking = false;
 	boolean isDragging = false;
 	long pauseMs;
@@ -361,6 +366,9 @@ public class MidiGeneratorGUI extends JFrame
 			constraints.gridy = 295;
 			add(instrumentTabPane, constraints);
 		}
+
+		// arrangement
+		initArrangementSettings(300, GridBagConstraints.CENTER);
 
 		// ---- CONTROL PANEL -----
 		initControlPanel(400, GridBagConstraints.CENTER);
@@ -870,6 +878,78 @@ public class MidiGeneratorGUI extends JFrame
 
 	}
 
+	private void initArrangementSettings(int startY, int anchorSide) {
+		scrollableArrangementTable = new JTable(5, 5);
+		TableModel model = new DefaultTableModel(7, 11);
+
+
+		scrollableArrangementTable.setModel(model);
+		arrangementScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		arrangementScrollPane.setViewportView(scrollableArrangementTable);
+		JList<String> list = new JList<>();
+		list.setListData(
+				new String[] { "Section", "Bars", "Melody%", "Bass%", "Chord%", "Arp%", "Drum%" });
+		list.setFixedCellHeight(scrollableArrangementTable.getRowHeight()
+				+ scrollableArrangementTable.getRowMargin());
+		arrangementScrollPane.setRowHeaderView(list);
+		arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+		Arrangement arr = new Arrangement();
+		arr.generateDefaultArrangement();
+		if (useArrangement.isSelected()) {
+			arr.setPreviewChorus(false);
+		} else {
+			arr.setPreviewChorus(true);
+		}
+		MelodyGenerator.ARRANGEMENT = arr;
+		scrollableArrangementTable.setModel(arr.convertToTableModel());
+
+		/*scrollableArrangementTable.getColumnModel()
+				.addColumnModelListener(new TableColumnModelListener() {
+		
+					@Override
+					public void columnAdded(TableColumnModelEvent e) {
+						// 
+		
+					}
+		
+					@Override
+					public void columnRemoved(TableColumnModelEvent e) {
+						//
+		
+					}
+		
+					@Override
+					public void columnMoved(TableColumnModelEvent e) {
+						MelodyGenerator.ARRANGEMENT.resortByIndexes(scrollableArrangementTable);
+		
+					}
+		
+					@Override
+					public void columnMarginChanged(ChangeEvent e) {
+						// 
+		
+					}
+		
+					@Override
+					public void columnSelectionChanged(ListSelectionEvent e) {
+						// 
+		
+					}
+					//etc.
+				});
+		*/
+		//constraints.gridy = startY;
+		//constraints.anchor = anchorSide;
+		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
+	}
+
 	private void initRandomButtons(int startY, int anchorSide) {
 		JPanel randomButtonsPanel = new JPanel();
 
@@ -1039,6 +1119,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		slider = new JSlider();
 		slider.setMaximum(0);
+		slider.setToolTipText("Test");
 		//slider.setMinimumSize(new Dimension(1000, 3));
 		slider.addMouseListener(new MouseAdapter() {
 
@@ -1059,21 +1140,28 @@ public class MidiGeneratorGUI extends JFrame
 			}
 		});
 		sliderPanel.add(slider);
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(sliderPanel, constraints);
 
-
+		JPanel sliderInfoPanel = new JPanel();
 		currentTime = new JLabel("0:00");
 		currentTime.setMaximumSize(new Dimension(50, 20));
 
 		totalTime = new JLabel("0:00");
 		totalTime.setMaximumSize(new Dimension(50, 20));
 
-		sliderPanel.add(currentTime);
-		sliderPanel.add(new JLabel(" / "));
-		sliderPanel.add(totalTime);
+		sectionText = new JLabel("INTRO");
+		sectionText.setMaximumSize(new Dimension(100, 20));
 
-		constraints.gridy = startY;
+		sliderInfoPanel.add(currentTime);
+		sliderInfoPanel.add(new JLabel(" / "));
+		sliderInfoPanel.add(totalTime);
+		sliderInfoPanel.add(new JLabel(" | "));
+		sliderInfoPanel.add(sectionText);
+		constraints.gridy = startY + 1;
 		constraints.anchor = anchorSide;
-		add(sliderPanel, constraints);
+		add(sliderInfoPanel, constraints);
 
 
 		// init thread
@@ -1099,6 +1187,20 @@ public class MidiGeneratorGUI extends JFrame
 						//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
 						//else
 						//currentTime.setText(millisecondsToTimeString(slider.getValue()));
+					}
+					if (MelodyGenerator.ARRANGEMENT != null && slider.getMaximum() > 0) {
+						int val = slider.getValue();
+						int divisor = slider.getMaximum()
+								/ MelodyGenerator.ARRANGEMENT.getSections().size();
+						int sectIndex = val / divisor;
+						if (sectIndex >= MelodyGenerator.ARRANGEMENT.getSections().size()) {
+							sectionText.setText("End");
+						} else {
+							String sectionName = MelodyGenerator.ARRANGEMENT.getSections()
+									.get((val - 1) / divisor).getType().toString();
+							sectionText.setText(sectionName);
+						}
+
 					}
 					try {
 						sleep(25);
@@ -1907,6 +2009,8 @@ public class MidiGeneratorGUI extends JFrame
 			instrumentTabPane.setTitleAt(0, "Chords (" + chordPanels.size() + ")");
 			instrumentTabPane.setTitleAt(1, "Arps (" + arpPanels.size() + ")");
 			instrumentTabPane.setTitleAt(2, "Drums (" + drumPanels.size() + ")");
+			instrumentTabPane.setTitleAt(3,
+					"Arrangement (" + MelodyGenerator.ARRANGEMENT.getSections().size() + ")");
 		}
 
 		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");
@@ -2007,17 +2111,13 @@ public class MidiGeneratorGUI extends JFrame
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.DRUMS, 0);
 				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels(true);
 			}
-
-			if (useArrangement.isSelected()) {
-				Arrangement arr = new Arrangement();
-				arr.generateDefaultArrangement(lastRandomSeed);
-				MelodyGenerator.ARRANGEMENT = arr;
+			if (!useArrangement.isSelected()) {
+				MelodyGenerator.ARRANGEMENT.setPreviewChorus(true);
 			} else {
-				Arrangement arr = new Arrangement();
-				arr.getSections()
-						.add(new Section(SectionType.ADVANCED_CHORUS, 1, 100, 100, 100, 100, 100));
-				MelodyGenerator.ARRANGEMENT = arr;
+				MelodyGenerator.ARRANGEMENT.setPreviewChorus(false);
+				MelodyGenerator.ARRANGEMENT.setFromModel(scrollableArrangementTable);
 			}
+
 
 		} catch (Exception e) {
 			System.out.println("User screwed up his inputs!");

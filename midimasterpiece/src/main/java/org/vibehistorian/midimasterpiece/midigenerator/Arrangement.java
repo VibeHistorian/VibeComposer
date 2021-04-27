@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
 import org.vibehistorian.midimasterpiece.midigenerator.Section.SectionType;
 
 public class Arrangement {
@@ -13,6 +17,7 @@ public class Arrangement {
 					SectionType.ADVANCED_CHORUS, SectionType.OUTRO }));
 
 	private List<Section> sections = new ArrayList<>();
+	private boolean previewChorus = false;
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -20,6 +25,7 @@ public class Arrangement {
 	}
 
 	public Arrangement() {
+		resetArrangement();
 	}
 
 	public List<Section> getSections() {
@@ -30,7 +36,12 @@ public class Arrangement {
 		this.sections = sections;
 	}
 
-	public void generateDefaultArrangement(int randomSeed) {
+	public void resetArrangement() {
+		sections.clear();
+		sections.add(new Section(SectionType.ADVANCED_CHORUS, 1, 100, 100, 100, 100, 100));
+	}
+
+	public void generateDefaultArrangement() {
 		sections.clear();
 		// type, length, melody%, bass%, chord%, arp%, drum%
 		sections.add(new Section(SectionType.INTRO, 1, 30, 10, 40, 40, 20));
@@ -44,5 +55,59 @@ public class Arrangement {
 		sections.add(new Section(SectionType.CHORUS2, 1, 100, 100, 80, 80, 85));
 		sections.add(new Section(SectionType.ADVANCED_CHORUS, 2, 100, 100, 100, 100, 100));
 		sections.add(new Section(SectionType.OUTRO, 1, 60, 50, 50, 40, 20));
+	}
+
+	public TableModel convertToTableModel() {
+		TableModel model = new DefaultTableModel(7, getSections().size());
+		for (int i = 0; i < getSections().size(); i++) {
+			Section s = getSections().get(i);
+			model.setValueAt(s.getType().toString(), 0, i);
+			model.setValueAt(s.getMeasures(), 1, i);
+			model.setValueAt(s.getMelodyChance(), 2, i);
+			model.setValueAt(s.getBassChance(), 3, i);
+			model.setValueAt(s.getChordChance(), 4, i);
+			model.setValueAt(s.getArpChance(), 5, i);
+			model.setValueAt(s.getDrumChance(), 6, i);
+		}
+		return model;
+	}
+
+	public void setFromModel(JTable t) {
+		TableModel m = t.getModel();
+		List<Section> sections = getSections();
+		sections.clear();
+		for (int i = 0; i < m.getColumnCount(); i++) {
+			int k = t.convertColumnIndexToModel(i);
+			Section s = new Section(SectionType.valueOf((String) m.getValueAt(0, k)),
+					(int) m.getValueAt(1, k), (int) m.getValueAt(2, k), (int) m.getValueAt(3, k),
+					(int) m.getValueAt(4, k), (int) m.getValueAt(5, k), (int) m.getValueAt(6, k));
+			sections.add(s);
+
+		}
+	}
+
+	public boolean isPreviewChorus() {
+		return previewChorus;
+	}
+
+	public void setPreviewChorus(boolean previewChorus) {
+		this.previewChorus = previewChorus;
+	}
+
+	public void resortByIndexes(JTable scrollableArrangementTable) {
+		// TODO: arrangement.resortByIndexes
+		// convertColumnIndexToModel
+		// adv chorus at index 0 -> model says 7
+		// tempsections[0] = sections().get(7)
+		// arrays as list
+
+		TableModel m = scrollableArrangementTable.getModel();
+		int[] indexes = new int[m.getColumnCount()];
+		Section[] tempSections = new Section[m.getColumnCount()];
+		for (int i = 0; i < indexes.length; i++) {
+			tempSections[0] = sections.get(scrollableArrangementTable.convertColumnIndexToModel(i));
+		}
+		sections = Arrays.asList(tempSections);
+
 	}
 }

@@ -585,7 +585,9 @@ public class MelodyGenerator implements JMC {
 			measureLength += d;
 		}
 		int counter = 0;
-		for (Section sec : ARRANGEMENT.getSections()) {
+
+		Arrangement arr = (ARRANGEMENT.isPreviewChorus()) ? new Arrangement() : ARRANGEMENT;
+		for (Section sec : arr.getSections()) {
 			sec.setStartTime(measureLength * counter);
 			counter++;
 			Random rand = new Random(mainGeneratorSeed);
@@ -661,7 +663,7 @@ public class MelodyGenerator implements JMC {
 		}
 		System.out.println("Added phrases/cphrases to sections..");
 
-		for (Section sec : ARRANGEMENT.getSections()) {
+		for (Section sec : arr.getSections()) {
 			if (PARTS_INSTRUMENT_MAP.containsKey(PARTS.MELODY)) {
 				Phrase mp = sec.getMelody();
 				mp.setStartTime(mp.getStartTime() + sec.getStartTime());
