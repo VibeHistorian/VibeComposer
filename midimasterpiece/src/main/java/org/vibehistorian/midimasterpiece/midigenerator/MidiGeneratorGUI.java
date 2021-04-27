@@ -1982,7 +1982,9 @@ public class MidiGeneratorGUI extends JFrame
 
 
 			MelodyGenerator.PARTS_INSTRUMENT_MAP.clear();
-
+			MelodyGenerator.CHORD_PARTS.clear();
+			MelodyGenerator.ARP_PARTS.clear();
+			MelodyGenerator.DRUM_PARTS.clear();
 			if (addMelody.isSelected())
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.MELODY, melodyInst.getInstrument());
 			if (addChords.isSelected()) {
