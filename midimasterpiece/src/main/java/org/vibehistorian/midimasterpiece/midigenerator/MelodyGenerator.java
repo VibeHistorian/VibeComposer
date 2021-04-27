@@ -662,12 +662,17 @@ public class MelodyGenerator implements JMC {
 		System.out.println("Added phrases/cphrases to sections..");
 
 		for (Section sec : ARRANGEMENT.getSections()) {
-			Phrase mp = sec.getMelody();
-			mp.setStartTime(mp.getStartTime() + sec.getStartTime());
-			melody.add(mp);
-			CPhrase bp = sec.getBass();
-			bp.setStartTime(bp.getStartTime() + sec.getStartTime());
-			bassRoots.addCPhrase(bp);
+			if (PARTS_INSTRUMENT_MAP.containsKey(PARTS.MELODY)) {
+				Phrase mp = sec.getMelody();
+				mp.setStartTime(mp.getStartTime() + sec.getStartTime());
+				melody.add(mp);
+			}
+			if (PARTS_INSTRUMENT_MAP.containsKey(PARTS.BASSROOTS)) {
+				CPhrase bp = sec.getBass();
+				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
+				bassRoots.addCPhrase(bp);
+			}
+
 			for (int i = 0; i < CHORD_PARTS.size(); i++) {
 				CPhrase cp = sec.getChords().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
@@ -685,9 +690,12 @@ public class MelodyGenerator implements JMC {
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				drumParts.get(i).addPhrase(p);
 			}
-			CPhrase cscp = sec.getChordSlash();
-			cscp.setStartTime(cscp.getStartTime() + sec.getStartTime());
-			chordSlash.addCPhrase(cscp);
+			if (CHORD_PARTS.size() > 0) {
+				CPhrase cscp = sec.getChordSlash();
+				cscp.setStartTime(cscp.getStartTime() + sec.getStartTime());
+				chordSlash.addCPhrase(cscp);
+			}
+
 		}
 		System.out.println("Added sections to parts..");
 		score.add(melody);
