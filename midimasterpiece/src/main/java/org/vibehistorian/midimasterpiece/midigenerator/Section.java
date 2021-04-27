@@ -29,6 +29,10 @@ public class Section {
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
 
+	public Section() {
+
+	}
+
 	public Section(SectionType type, int measures, int melodyChance, int bassChance,
 			int chordChance, int arpChance, int drumChance) {
 		super();

@@ -78,9 +78,20 @@ public class Arrangement {
 		sections.clear();
 		for (int i = 0; i < m.getColumnCount(); i++) {
 			int k = t.convertColumnIndexToModel(i);
-			Section s = new Section(SectionType.valueOf((String) m.getValueAt(0, k)),
-					(int) m.getValueAt(1, k), (int) m.getValueAt(2, k), (int) m.getValueAt(3, k),
-					(int) m.getValueAt(4, k), (int) m.getValueAt(5, k), (int) m.getValueAt(6, k));
+			Section s = new Section();
+			s.setType(SectionType.valueOf((String) m.getValueAt(0, k)));
+			Object k1 = m.getValueAt(1, k);
+			Object k2 = m.getValueAt(2, k);
+			Object k3 = m.getValueAt(3, k);
+			Object k4 = m.getValueAt(4, k);
+			Object k5 = m.getValueAt(5, k);
+			Object k6 = m.getValueAt(6, k);
+			s.setMeasures(k1 instanceof Integer ? (Integer) k1 : Integer.valueOf((String) k1));
+			s.setMelodyChance(k2 instanceof Integer ? (Integer) k2 : Integer.valueOf((String) k2));
+			s.setBassChance(k3 instanceof Integer ? (Integer) k3 : Integer.valueOf((String) k3));
+			s.setChordChance(k4 instanceof Integer ? (Integer) k4 : Integer.valueOf((String) k4));
+			s.setArpChance(k5 instanceof Integer ? (Integer) k5 : Integer.valueOf((String) k5));
+			s.setDrumChance(k6 instanceof Integer ? (Integer) k6 : Integer.valueOf((String) k6));
 			sections.add(s);
 
 		}

@@ -1196,9 +1196,14 @@ public class MidiGeneratorGUI extends JFrame
 						if (sectIndex >= MelodyGenerator.ARRANGEMENT.getSections().size()) {
 							sectionText.setText("End");
 						} else {
-							String sectionName = MelodyGenerator.ARRANGEMENT.getSections()
-									.get((val - 1) / divisor).getType().toString();
-							sectionText.setText(sectionName);
+							if (useArrangement.isSelected()) {
+								String sectionName = MelodyGenerator.ARRANGEMENT.getSections()
+										.get((val - 1) / divisor).getType().toString();
+								sectionText.setText(sectionName);
+							} else {
+								sectionText.setText("ALL INST");
+							}
+
 						}
 
 					}
