@@ -165,6 +165,7 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox minorScale;
 	JCheckBox fixedLengthChords;
 	JCheckBox useArrangement;
+	JCheckBox randomizeArrangementOnCompose;
 
 
 	// chord variety settings
@@ -464,8 +465,6 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void initMacroParams(int startY, int anchorSide) {
 		JPanel macroParams = new JPanel();
-		useArrangement = new JCheckBox("Arrange", true);
-		macroParams.add(useArrangement);
 
 		soundbankFilename = new JTextField(SOUNDBANK_DEFAULT, 18);
 		macroParams.add(new JLabel("Soundbank name:"));
@@ -901,9 +900,19 @@ public class MidiGeneratorGUI extends JFrame
 	private void initArrangementSettings(int startY, int anchorSide) {
 		JPanel arrangementSettings = new JPanel();
 
+		useArrangement = new JCheckBox("Arrange", true);
+		arrangementSettings.add(useArrangement);
+
 		JButton resetArrangementBtn = new JButton("Reset arr.");
 		resetArrangementBtn.addActionListener(this);
 		resetArrangementBtn.setActionCommand("ArrangementReset");
+
+		JButton randomizeArrangementBtn = new JButton("Randomize arr.");
+		randomizeArrangementBtn.addActionListener(this);
+		randomizeArrangementBtn.setActionCommand("ArrangementRandomize");
+
+		randomizeArrangementOnCompose = new JCheckBox("on Compose", false);
+
 
 		JButton addLastSectionBtn = new JButton("Add section");
 		addLastSectionBtn.addActionListener(this);
@@ -913,9 +922,12 @@ public class MidiGeneratorGUI extends JFrame
 		removeLastSectionBtn.addActionListener(this);
 		removeLastSectionBtn.setActionCommand("ArrangementRemoveLast");
 
-		arrangementSettings.add(resetArrangementBtn);
+		arrangementSettings.add(randomizeArrangementBtn);
+		arrangementSettings.add(randomizeArrangementOnCompose);
+
 		arrangementSettings.add(addLastSectionBtn);
 		arrangementSettings.add(removeLastSectionBtn);
+		arrangementSettings.add(resetArrangementBtn);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -1378,6 +1390,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeChordStrumsOnCompose.setSelected(state);
 		randomizeInstOnCompose.setSelected(state);
 		randomArpHitsPerPattern.setSelected(state);
+		randomizeArrangementOnCompose.setSelected(state);
 	}
 
 	private void switchMidiButtons(boolean state) {

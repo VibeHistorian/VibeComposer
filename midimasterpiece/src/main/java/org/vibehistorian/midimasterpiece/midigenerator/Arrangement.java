@@ -38,23 +38,23 @@ public class Arrangement {
 
 	public void resetArrangement() {
 		sections.clear();
-		sections.add(new Section(SectionType.ADVANCED_CHORUS, 1, 100, 100, 100, 100, 100));
+		sections.add(
+				new Section(SectionType.ADVANCED_CHORUS.toString(), 1, 100, 100, 100, 100, 100));
 	}
 
 	public void generateDefaultArrangement() {
 		sections.clear();
 		// type, length, melody%, bass%, chord%, arp%, drum%
-		sections.add(new Section(SectionType.INTRO, 1, 30, 10, 40, 40, 20));
-		sections.add(new Section(SectionType.VERSE1, 1, 65, 60, 40, 50, 60));
-		sections.add(new Section(SectionType.VERSE2, 1, 80, 60, 60, 60, 70));
-		sections.add(new Section(SectionType.CHORUS1, 1, 100, 80, 70, 70, 80));
-		sections.add(new Section(SectionType.BREAKDOWN, 1, 40, 70, 50, 50, 40));
-		sections.add(new Section(SectionType.CHILL, 1, 30, 50, 60, 30, 20));
-		sections.add(new Section(SectionType.VERSE3, 1, 90, 80, 60, 60, 70));
-		sections.add(new Section(SectionType.BUILDUP, 1, 30, 80, 40, 40, 80));
-		sections.add(new Section(SectionType.CHORUS2, 1, 100, 100, 80, 80, 85));
-		sections.add(new Section(SectionType.ADVANCED_CHORUS, 2, 100, 100, 100, 100, 100));
-		sections.add(new Section(SectionType.OUTRO, 1, 60, 50, 50, 40, 20));
+		sections.add(new Section("INTRO", 1, 30, 10, 40, 25, 20));
+		sections.add(new Section("VERSE1", 1, 65, 60, 40, 25, 60));
+		sections.add(new Section("CHORUS1", 1, 100, 80, 70, 35, 70));
+		sections.add(new Section("CHORUS2", 1, 100, 80, 80, 50, 70));
+		sections.add(new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
+		sections.add(new Section("CHILL", 1, 30, 50, 60, 70, 20));
+		sections.add(new Section("VERSE2", 1, 65, 60, 60, 60, 70));
+		sections.add(new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
+		sections.add(new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
+		sections.add(new Section("OUTRO", 1, 100, 70, 50, 40, 10));
 	}
 
 	public TableModel convertToTableModel() {
@@ -79,7 +79,7 @@ public class Arrangement {
 		for (int i = 0; i < m.getColumnCount(); i++) {
 			int k = t.convertColumnIndexToModel(i);
 			Section s = new Section();
-			s.setType(SectionType.valueOf((String) m.getValueAt(0, k)));
+			s.setType((String) m.getValueAt(0, k));
 			Object k1 = m.getValueAt(1, k);
 			Object k2 = m.getValueAt(2, k);
 			Object k3 = m.getValueAt(3, k);
@@ -123,7 +123,7 @@ public class Arrangement {
 	}
 
 	public void addSectionLast() {
-		sections.add(new Section(SectionType.ADVANCED_CHORUS, 1, 100, 100, 100, 100, 100));
+		sections.add(new Section("ADVANCED CHORUS", 1, 100, 100, 100, 100, 100));
 
 	}
 

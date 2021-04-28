@@ -11,7 +11,7 @@ public class Section {
 		OUTRO;
 	}
 
-	private SectionType type;
+	private String type;
 	private int measures;
 
 	private double startTime;
@@ -33,8 +33,8 @@ public class Section {
 
 	}
 
-	public Section(SectionType type, int measures, int melodyChance, int bassChance,
-			int chordChance, int arpChance, int drumChance) {
+	public Section(String type, int measures, int melodyChance, int bassChance, int chordChance,
+			int arpChance, int drumChance) {
 		super();
 		this.type = type;
 		this.measures = measures;
@@ -45,11 +45,11 @@ public class Section {
 		this.drumChance = drumChance;
 	}
 
-	public SectionType getType() {
+	public String getType() {
 		return type;
 	}
 
-	public void setType(SectionType type) {
+	public void setType(String type) {
 		this.type = type;
 	}
 
