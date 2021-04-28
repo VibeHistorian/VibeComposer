@@ -116,9 +116,20 @@ public class Arrangement {
 		int[] indexes = new int[m.getColumnCount()];
 		Section[] tempSections = new Section[m.getColumnCount()];
 		for (int i = 0; i < indexes.length; i++) {
-			tempSections[0] = sections.get(scrollableArrangementTable.convertColumnIndexToModel(i));
+			tempSections[i] = sections.get(scrollableArrangementTable.convertColumnIndexToModel(i));
 		}
-		sections = Arrays.asList(tempSections);
+		sections = new ArrayList<>(Arrays.asList(tempSections));
+
+	}
+
+	public void addSectionLast() {
+		sections.add(new Section(SectionType.ADVANCED_CHORUS, 1, 100, 100, 100, 100, 100));
+
+	}
+
+	public void removeSectionLast(JTable scrollableArrangementTable) {
+		resortByIndexes(scrollableArrangementTable);
+		sections.remove(sections.size() - 1);
 
 	}
 }

@@ -316,20 +316,20 @@ public class MidiGeneratorGUI extends JFrame
 		tipLabel = new JLabel(
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor)");
 		chordToolTip.add(tipLabel);
-		constraints.gridy = 298;
+		constraints.gridy = 335;
 		constraints.anchor = GridBagConstraints.CENTER;
 		add(chordToolTip, constraints);
 
 		// ---- OTHER SETTINGS ----
 		{
-			initMacroParams(300, GridBagConstraints.CENTER);
+			initMacroParams(340, GridBagConstraints.CENTER);
 
 			// chord settings - variety/spice
 			// chord settings - progressions
-			initChordSettings(310, GridBagConstraints.CENTER);
+			initChordSettings(350, GridBagConstraints.CENTER);
 
 			// randomization buttons
-			initRandomButtons(320, GridBagConstraints.CENTER);
+			initRandomButtons(360, GridBagConstraints.CENTER);
 
 		}
 		createHorizontalSeparator(390, this);
@@ -878,7 +878,49 @@ public class MidiGeneratorGUI extends JFrame
 
 	}
 
+	private void handleArrangementAction(String action) {
+		if (action.equalsIgnoreCase("ArrangementReset")) {
+			MelodyGenerator.ARRANGEMENT.generateDefaultArrangement();
+		}
+
+		if (action.equalsIgnoreCase("ArrangementAddLast")) {
+			MelodyGenerator.ARRANGEMENT.addSectionLast();
+		}
+
+		if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
+			MelodyGenerator.ARRANGEMENT.removeSectionLast(scrollableArrangementTable);
+		}
+
+		if (action.equalsIgnoreCase("ArrangementRandomize")) {
+			// TODO : MelodyGenerator.ARRANGEMENT.generateRandom();
+			// on compose -> this must happen before compose part
+		}
+		scrollableArrangementTable.setModel(MelodyGenerator.ARRANGEMENT.convertToTableModel());
+	}
+
 	private void initArrangementSettings(int startY, int anchorSide) {
+		JPanel arrangementSettings = new JPanel();
+
+		JButton resetArrangementBtn = new JButton("Reset arr.");
+		resetArrangementBtn.addActionListener(this);
+		resetArrangementBtn.setActionCommand("ArrangementReset");
+
+		JButton addLastSectionBtn = new JButton("Add section");
+		addLastSectionBtn.addActionListener(this);
+		addLastSectionBtn.setActionCommand("ArrangementAddLast");
+
+		JButton removeLastSectionBtn = new JButton("Remove last section");
+		removeLastSectionBtn.addActionListener(this);
+		removeLastSectionBtn.setActionCommand("ArrangementRemoveLast");
+
+		arrangementSettings.add(resetArrangementBtn);
+		arrangementSettings.add(addLastSectionBtn);
+		arrangementSettings.add(removeLastSectionBtn);
+
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		add(arrangementSettings, constraints);
+
 		scrollableArrangementTable = new JTable(5, 5);
 		TableModel model = new DefaultTableModel(7, 11);
 
@@ -1998,6 +2040,10 @@ public class MidiGeneratorGUI extends JFrame
 				ap.setPattern(RhythmPattern.RANDOM);
 
 			}
+		}
+
+		if (ae.getActionCommand().startsWith("Arrangement")) {
+			handleArrangementAction(ae.getActionCommand());
 		}
 
 
