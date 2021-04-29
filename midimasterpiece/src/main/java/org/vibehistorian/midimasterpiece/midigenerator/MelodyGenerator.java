@@ -755,6 +755,24 @@ public class MelodyGenerator implements JMC {
 
 		// view midi
 		if (DISPLAY_SCORE) {
+			List<Part> partsToRemove = new ArrayList<>();
+			for (Object p : score.getPartList()) {
+				Part part = (Part) p;
+				if (part.getTitle().equalsIgnoreCase("MainDrums")) {
+					partsToRemove.add(part);
+					continue;
+				}
+				List<Phrase> phrasesToRemove = new ArrayList<>();
+				for (Object vec : part.getPhraseList()) {
+					Phrase ph = (Phrase) vec;
+					if (ph.getHighestPitch() < 0) {
+						phrasesToRemove.add(ph);
+					}
+
+				}
+				phrasesToRemove.forEach(e -> part.removePhrase(e));
+			}
+			partsToRemove.forEach(e -> score.removePart(e));
 			View.pianoRoll(score);
 		}
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
