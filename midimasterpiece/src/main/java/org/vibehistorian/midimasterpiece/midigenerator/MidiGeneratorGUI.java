@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
@@ -230,6 +231,7 @@ public class MidiGeneratorGUI extends JFrame
 
 	// bass roots settings
 	JCheckBox bassRootsLock;
+	JCheckBox useBassRhythm;
 
 	// drum gen settings
 	JTextField randomDrumsToGenerate;
@@ -269,6 +271,7 @@ public class MidiGeneratorGUI extends JFrame
 	File currentMidi = null;
 	MidiDevice device = null;
 
+	JCheckBox showScore;
 	JCheckBox midiMode;
 	JComboBox<String> midiModeDevices;
 
@@ -797,6 +800,9 @@ public class MidiGeneratorGUI extends JFrame
 		bassRootsPanel.add(addBassRoots);
 		bassRootsPanel.add(bassRootsLock);
 		bassRootsPanel.add(bassRootsInst);
+
+		useBassRhythm = new JCheckBox("Use Rhythm", true);
+		bassRootsPanel.add(useBassRhythm);
 
 		bassRootsPanel.add(new JLabel("Midi ch.: 9"));
 
@@ -1336,6 +1342,9 @@ public class MidiGeneratorGUI extends JFrame
 		saveWavFile.addActionListener(this);
 		saveWavFile.setActionCommand("SaveWavFile");
 
+		showScore = new JCheckBox("Show score", true);
+
+
 		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", true);
 		midiModeDevices = new JComboBox<String>();
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
@@ -1374,6 +1383,7 @@ public class MidiGeneratorGUI extends JFrame
 		playSavePanel.add(save4Star);
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveWavFile);
+		playSavePanel.add(showScore);
 		playSavePanel.add(midiMode);
 		playSavePanel.add(midiModeDevices);
 
@@ -1739,19 +1749,34 @@ public class MidiGeneratorGUI extends JFrame
 			}
 		}
 
+
+		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
+				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
+			List<Integer> chordInsts = chordPanels.stream().map(e -> e.getInstrument())
+					.collect(Collectors.toList());
+			createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false);
+			for (int i = 0; i < chordInsts.size() && i < chordPanels.size(); i++) {
+				chordPanels.get(i).setInstrument(chordInsts.get(i));
+			}
+		}
 		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
 				&& addArps.isSelected() && randomArpsGenerateOnCompose.isSelected())) {
+			List<Integer> arpInsts = arpPanels.stream().map(e -> e.getInstrument())
+					.collect(Collectors.toList());
 			createRandomArpPanels(Integer.valueOf(randomArpsToGenerate.getText()), false);
+			for (int i = 0; i < arpInsts.size() && i < arpPanels.size(); i++) {
+				arpPanels.get(i).setInstrument(arpInsts.get(i));
+			}
 		}
 
 		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
 				&& addDrums.isSelected() && randomDrumsGenerateOnCompose.isSelected())) {
+			List<Integer> drumInsts = drumPanels.stream().map(e -> e.getPitch())
+					.collect(Collectors.toList());
 			createRandomDrumPanels(Integer.valueOf(randomDrumsToGenerate.getText()), false);
-		}
-
-		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
-				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
-			createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false);
+			for (int i = 0; i < drumInsts.size() && i < drumPanels.size(); i++) {
+				drumPanels.get(i).setPitch(drumInsts.get(i));
+			}
 		}
 
 
@@ -1783,7 +1808,13 @@ public class MidiGeneratorGUI extends JFrame
 				@Override
 				protected Void doInBackground()
 						throws InterruptedException, MidiUnavailableException, IOException {
-					composeMidi(isRegenerateOnly);
+					try {
+						composeMidi(isRegenerateOnly);
+					} catch (Throwable ex) {
+						ex.printStackTrace();
+						throw ex;
+					}
+
 					return null;
 				}
 
@@ -1796,6 +1827,7 @@ public class MidiGeneratorGUI extends JFrame
 					repaint();
 				}
 			};
+
 			worker.execute();
 
 		}
@@ -2083,7 +2115,7 @@ public class MidiGeneratorGUI extends JFrame
 
 	public void fillUserParameters() {
 		try {
-			MelodyGenerator.DISPLAY_SCORE = !midiMode.isSelected();
+			MelodyGenerator.DISPLAY_SCORE = showScore.isSelected();
 
 			MelodyGenerator.PIECE_LENGTH = Integer.valueOf(pieceLength.getText());
 			MelodyGenerator.FIXED_LENGTH = fixedLengthChords.isSelected();
@@ -2168,9 +2200,12 @@ public class MidiGeneratorGUI extends JFrame
 				//MelodyGenerator.ARP_SETTINGS = getAr
 			}
 
-			if (addBassRoots.isSelected())
+			if (addBassRoots.isSelected()) {
+				MelodyGenerator.USE_BASS_RHYTHM = useBassRhythm.isSelected();
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS,
 						bassRootsInst.getInstrument());
+			}
+
 			if (addDrums.isSelected()) {
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.DRUMS, 0);
 				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels(true);

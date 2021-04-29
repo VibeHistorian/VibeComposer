@@ -47,11 +47,11 @@ public class Arrangement {
 		// type, length, melody%, bass%, chord%, arp%, drum%
 		sections.add(new Section("INTRO", 1, 30, 10, 40, 25, 20));
 		sections.add(new Section("VERSE1", 1, 65, 60, 40, 25, 60));
-		sections.add(new Section("CHORUS1", 1, 100, 80, 70, 35, 70));
-		sections.add(new Section("CHORUS2", 1, 100, 80, 80, 50, 70));
+		sections.add(new Section("CHORUS1", 1, 100, 90, 70, 35, 70));
+		sections.add(new Section("CHORUS2", 1, 100, 100, 80, 50, 70));
 		sections.add(new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
 		sections.add(new Section("CHILL", 1, 30, 50, 60, 70, 20));
-		sections.add(new Section("VERSE2", 1, 65, 60, 60, 60, 70));
+		sections.add(new Section("VERSE2", 1, 65, 60, 60, 70, 70));
 		sections.add(new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
 		sections.add(new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
 		sections.add(new Section("OUTRO", 1, 100, 70, 50, 40, 10));

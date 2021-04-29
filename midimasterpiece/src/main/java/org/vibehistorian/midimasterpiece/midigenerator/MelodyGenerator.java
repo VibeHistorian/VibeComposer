@@ -76,6 +76,8 @@ public class MelodyGenerator implements JMC {
 	private static final String ARP_OCTAVE_KEY = "ARP_OCTAVE";
 	private static final String ARP_PAUSES_KEY = "ARP_PAUSES";
 
+	public static boolean USE_BASS_RHYTHM = true;
+
 	public static EnumMap<PARTS, Integer> PARTS_INSTRUMENT_MAP = new EnumMap<>(PARTS.class);
 	public static Arrangement ARRANGEMENT = null;
 
@@ -466,9 +468,20 @@ public class MelodyGenerator implements JMC {
 			}
 
 			// fill bass roots
+
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
-				cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
-						progressionDurations.get(j));
+				if (USE_BASS_RHYTHM) {
+					Rhythm bassRhythm = new Rhythm(mainGeneratorSeed, progressionDurations.get(j));
+					for (Double dur : bassRhythm.getDurations()) {
+						cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
+								dur);
+					}
+				} else {
+					cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
+							progressionDurations.get(j));
+				}
+
+
 			}
 
 			// generate+fill melody
