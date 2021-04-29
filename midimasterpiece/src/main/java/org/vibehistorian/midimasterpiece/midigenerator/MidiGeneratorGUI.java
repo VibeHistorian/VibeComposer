@@ -253,7 +253,7 @@ public class MidiGeneratorGUI extends JFrame
 	JTextField userChordsDurations;
 
 	// randomization button settings
-	JCheckBox randomizeInstOnCompose;
+	JCheckBox randomizeInstOnComposeOrGen;
 	JCheckBox randomizeBmpTransOnCompose;
 	JCheckBox randomizeChordStrumsOnCompose;
 	JCheckBox arpAffectsBpm;
@@ -1021,9 +1021,9 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeBpmTransp.addActionListener(this);
 		randomizeBpmTransp.setActionCommand("RandomizeBpmTrans");
 
-		randomizeInstOnCompose = new JCheckBox("on Compose");
+		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen");
 		randomizeBmpTransOnCompose = new JCheckBox("on Compose");
-		randomizeInstOnCompose.setSelected(true);
+		randomizeInstOnComposeOrGen.setSelected(true);
 		randomizeBmpTransOnCompose.setSelected(true);
 
 
@@ -1031,7 +1031,7 @@ public class MidiGeneratorGUI extends JFrame
 
 
 		randomButtonsPanel.add(randomizeInstruments);
-		randomButtonsPanel.add(randomizeInstOnCompose);
+		randomButtonsPanel.add(randomizeInstOnComposeOrGen);
 		randomButtonsPanel.add(randomizeBpmTransp);
 		randomButtonsPanel.add(randomizeBmpTransOnCompose);
 		arpAffectsBpm = new JCheckBox("Slowed by ARP", true);
@@ -1398,7 +1398,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomDrumsGenerateOnCompose.setSelected(state);
 		randomizeBmpTransOnCompose.setSelected(state);
 		randomizeChordStrumsOnCompose.setSelected(state);
-		randomizeInstOnCompose.setSelected(state);
+		randomizeInstOnComposeOrGen.setSelected(state);
 		randomArpHitsPerPattern.setSelected(state);
 		randomizeArrangementOnCompose.setSelected(state);
 	}
@@ -1432,7 +1432,7 @@ public class MidiGeneratorGUI extends JFrame
 		switchOnComposeRandom.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		compose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomArpHitsPerPattern.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomizeInstOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomizeInstOnComposeOrGen.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeBmpTransOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		for (JSeparator x : separators) {
@@ -1721,15 +1721,59 @@ public class MidiGeneratorGUI extends JFrame
 
 		}
 
-		if (ae.getActionCommand() == "RandomizeInst"
-				|| (ae.getActionCommand() == "Compose" && randomizeInstOnCompose.isSelected())) {
+
+		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
+				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
+			List<InstComboBox> chordInsts = chordPanels.stream().map(e -> e.getInstrumentBox())
+					.collect(Collectors.toList());
+			createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false);
+			if (!randomizeInstOnComposeOrGen.isSelected()) {
+				for (int i = 0; i < chordInsts.size() && i < chordPanels.size(); i++) {
+					chordPanels.get(i).getInstrumentBox()
+							.initInstPool(chordInsts.get(i).getInstPool());
+					chordPanels.get(i).setInstPool(chordInsts.get(i).getInstPool());
+					chordPanels.get(i).setInstrument(chordInsts.get(i).getInstrument());
+				}
+			}
+
+		}
+		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
+				&& addArps.isSelected() && randomArpsGenerateOnCompose.isSelected())) {
+			List<Integer> arpInsts = arpPanels.stream().map(e -> e.getInstrument())
+					.collect(Collectors.toList());
+			createRandomArpPanels(Integer.valueOf(randomArpsToGenerate.getText()), false);
+			if (!randomizeInstOnComposeOrGen.isSelected()) {
+				for (int i = 0; i < arpInsts.size() && i < arpPanels.size(); i++) {
+					arpPanels.get(i).setInstrument(arpInsts.get(i));
+				}
+			}
+		}
+
+		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
+				&& addDrums.isSelected() && randomDrumsGenerateOnCompose.isSelected())) {
+			/*List<Integer> drumInsts = drumPanels.stream().map(e -> e.getPitch())
+					.collect(Collectors.toList());*/
+			createRandomDrumPanels(Integer.valueOf(randomDrumsToGenerate.getText()), false);
+			/*for (int i = 0; i < drumInsts.size() && i < drumPanels.size(); i++) {
+				drumPanels.get(i).setPitch(drumInsts.get(i));
+			}*/
+		}
+
+		if (ae.getActionCommand() == "RandomizeInst" || (ae.getActionCommand() == "Compose"
+				&& randomizeInstOnComposeOrGen.isSelected())) {
 			Random instGen = new Random();
 
 
 			for (ChordPanel cp : chordPanels) {
 				if (!cp.getLockInst()) {
-					cp.getInstrumentBox().setSelectedIndex(
-							instGen.nextInt(cp.getInstrumentBox().getItemCount()));
+
+					MidiUtils.POOL pool = (instGen.nextInt(100) < Integer
+							.valueOf(randomChordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
+
+					cp.getInstrumentBox().initInstPool(pool);
+					cp.setInstPool(pool);
+
+					cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 				}
 			}
 			for (ArpPanel ap : arpPanels) {
@@ -1748,37 +1792,6 @@ public class MidiGeneratorGUI extends JFrame
 				bassRootsInst.setSelectedIndex(instGen.nextInt(bassRootsInst.getItemCount()));
 			}
 		}
-
-
-		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
-				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
-			List<Integer> chordInsts = chordPanels.stream().map(e -> e.getInstrument())
-					.collect(Collectors.toList());
-			createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false);
-			for (int i = 0; i < chordInsts.size() && i < chordPanels.size(); i++) {
-				chordPanels.get(i).setInstrument(chordInsts.get(i));
-			}
-		}
-		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
-				&& addArps.isSelected() && randomArpsGenerateOnCompose.isSelected())) {
-			List<Integer> arpInsts = arpPanels.stream().map(e -> e.getInstrument())
-					.collect(Collectors.toList());
-			createRandomArpPanels(Integer.valueOf(randomArpsToGenerate.getText()), false);
-			for (int i = 0; i < arpInsts.size() && i < arpPanels.size(); i++) {
-				arpPanels.get(i).setInstrument(arpInsts.get(i));
-			}
-		}
-
-		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
-				&& addDrums.isSelected() && randomDrumsGenerateOnCompose.isSelected())) {
-			List<Integer> drumInsts = drumPanels.stream().map(e -> e.getPitch())
-					.collect(Collectors.toList());
-			createRandomDrumPanels(Integer.valueOf(randomDrumsToGenerate.getText()), false);
-			for (int i = 0; i < drumInsts.size() && i < drumPanels.size(); i++) {
-				drumPanels.get(i).setPitch(drumInsts.get(i));
-			}
-		}
-
 
 		realBpm = Double.valueOf(mainBpm.getText());
 		if (ae.getActionCommand() == "RandomizeBpmTrans" || (ae.getActionCommand() == "Compose"
@@ -2727,7 +2740,6 @@ public class MidiGeneratorGUI extends JFrame
 
 		for (int i = 0; i < panelCount; i++) {
 			ChordPanel cp = addChordPanelToLayout();
-
 			MidiUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
 					.valueOf(randomChordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
 

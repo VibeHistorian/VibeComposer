@@ -29,7 +29,8 @@ public class ChordPanel extends InstPanel {
 
 	public void initComponents() {
 
-		instrument.initInstPool(POOL.CHORD);
+		instrument.initInstPool(POOL.PLUCK);
+		instPoolPicker.setSelectedItem("PLUCK");
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("11");
