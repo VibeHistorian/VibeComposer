@@ -1721,6 +1721,40 @@ public class MidiGeneratorGUI extends JFrame
 
 		}
 
+		if (ae.getActionCommand() == "RandomizeInst" || (ae.getActionCommand() == "Compose"
+				&& randomizeInstOnComposeOrGen.isSelected())) {
+			Random instGen = new Random();
+
+
+			for (ChordPanel cp : chordPanels) {
+				if (!cp.getLockInst()) {
+
+					MidiUtils.POOL pool = (instGen.nextInt(100) < Integer
+							.valueOf(randomChordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
+
+					cp.getInstrumentBox().initInstPool(pool);
+					cp.setInstPool(pool);
+
+					cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
+				}
+			}
+			for (ArpPanel ap : arpPanels) {
+				if (!ap.getLockInst()) {
+					ap.getInstrumentBox().setSelectedIndex(
+							instGen.nextInt(ap.getInstrumentBox().getItemCount()));
+				}
+			}
+			if (!melodyLock.isSelected()) {
+
+				melodyInst.setSelectedIndex(instGen.nextInt(melodyInst.getItemCount()));
+			}
+
+			if (!bassRootsLock.isSelected()) {
+
+				bassRootsInst.setSelectedIndex(instGen.nextInt(bassRootsInst.getItemCount()));
+			}
+		}
+
 
 		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
 				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
@@ -1759,39 +1793,6 @@ public class MidiGeneratorGUI extends JFrame
 			}*/
 		}
 
-		if (ae.getActionCommand() == "RandomizeInst" || (ae.getActionCommand() == "Compose"
-				&& randomizeInstOnComposeOrGen.isSelected())) {
-			Random instGen = new Random();
-
-
-			for (ChordPanel cp : chordPanels) {
-				if (!cp.getLockInst()) {
-
-					MidiUtils.POOL pool = (instGen.nextInt(100) < Integer
-							.valueOf(randomChordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
-
-					cp.getInstrumentBox().initInstPool(pool);
-					cp.setInstPool(pool);
-
-					cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
-				}
-			}
-			for (ArpPanel ap : arpPanels) {
-				if (!ap.getLockInst()) {
-					ap.getInstrumentBox().setSelectedIndex(
-							instGen.nextInt(ap.getInstrumentBox().getItemCount()));
-				}
-			}
-			if (!melodyLock.isSelected()) {
-
-				melodyInst.setSelectedIndex(instGen.nextInt(melodyInst.getItemCount()));
-			}
-
-			if (!bassRootsLock.isSelected()) {
-
-				bassRootsInst.setSelectedIndex(instGen.nextInt(bassRootsInst.getItemCount()));
-			}
-		}
 
 		realBpm = Double.valueOf(mainBpm.getText());
 		if (ae.getActionCommand() == "RandomizeBpmTrans" || (ae.getActionCommand() == "Compose"
