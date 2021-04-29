@@ -36,6 +36,12 @@ public class ChordPanel extends InstPanel {
 		midiChannel.setSelectedItem("11");
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 
+		/*JSlider volSlider = new JSlider();
+		volSlider.setMaximum(100);
+		volSlider.setOrientation(JSlider.VERTICAL);
+		volSlider.setPreferredSize(new Dimension(20, 50));
+		this.add(volSlider);*/
+
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		this.add(muteInst);

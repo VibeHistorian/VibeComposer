@@ -556,12 +556,12 @@ public class MelodyGenerator implements JMC {
 		// Midi velocity / dynamic
 		melodyPhrase.setDynamic(100);
 		cphraseBassRoot.setDynamic(70);
-		for (int i = 0; i < CHORD_PARTS.size(); i++) {
+		/*for (int i = 0; i < CHORD_PARTS.size(); i++) {
 			chordsCPhrases.get(i).setDynamic(85 - i * 2);
 		}
 		for (int i = 0; i < ARP_PARTS.size(); i++) {
-			arpCPhrases.get(i).setDynamic(90 - i * 2);
-		}
+			*arpCPhrases.get(i).setDynamic(90 - i * 2);
+		}*/
 
 		// Delay start time
 		melodyPhrase.setStartTime(START_TIME_DELAY);
