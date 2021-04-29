@@ -778,11 +778,18 @@ public class MelodyGenerator implements JMC {
 			int mainGeneratorSeed) {
 		for (int i = 0; i < PIECE_LENGTH; i++) {
 			Random transitionGenerator = new Random(mainGeneratorSeed + 1);
+
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 				for (int k = 0; k < CHORD_PARTS.size(); k++) {
+
 					ChordPart cp = CHORD_PARTS.get(k);
 					CPhrase cpr = chordsCPhrases.get(k);
+
+					Random velocityGenerator = new Random(cp.getPatternSeed() + j);
+					int velocity = velocityGenerator.nextInt(
+							cp.getVelocityMax() - cp.getVelocityMin()) + cp.getVelocityMin();
+
 					boolean transition = transitionGenerator.nextInt(100) < cp
 							.getTransitionChance();
 					int transChord = (transitionGenerator.nextInt(100) < cp.getTransitionChance())
@@ -818,17 +825,17 @@ public class MelodyGenerator implements JMC {
 							cpr.addChord(
 									MidiUtils.convertChordToLength(actualProgression.get(j),
 											cp.getChordNotesStretch(), cp.isStretchEnabled()),
-									duration1);
+									duration1, velocity);
 							cpr.addChord(
 									MidiUtils.convertChordToLength(
 											actualProgression.get(transChord),
 											cp.getChordNotesStretch(), cp.isStretchEnabled()),
-									duration2);
+									duration2, velocity);
 						} else {
 							cpr.addChord(
 									MidiUtils.convertChordToLength(actualProgression.get(j),
 											cp.getChordNotesStretch(), cp.isStretchEnabled()),
-									progressionDurations.get(j));
+									progressionDurations.get(j), velocity);
 						}
 
 					} else {
@@ -840,9 +847,9 @@ public class MelodyGenerator implements JMC {
 								cpr.addChord(
 										MidiUtils.convertChordToLength(actualProgression.get(j),
 												cp.getChordNotesStretch(), cp.isStretchEnabled()),
-										duration);
+										duration, velocity);
 							} else {
-								cpr.addChord(new int[] { Integer.MIN_VALUE }, duration);
+								cpr.addChord(new int[] { Integer.MIN_VALUE }, duration, velocity);
 							}
 						}
 
@@ -865,12 +872,18 @@ public class MelodyGenerator implements JMC {
 				.get();
 		for (int i = 0; i < PIECE_LENGTH; i++) {
 			int chordSpanPart = 0;
+
+			Random velocityGenerator = new Random(ap.getPatternSeed());
 			for (int j = 0; j < actualProgression.size(); j++) {
+
 				double chordDurationArp = longestChord / ((double) repeatedArpsPerChord);
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
 				double durationNow = 0;
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
+
+					int velocity = velocityGenerator.nextInt(
+							ap.getVelocityMax() - ap.getVelocityMin()) + ap.getVelocityMin();
 
 					Integer k = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
 
@@ -892,10 +905,10 @@ public class MelodyGenerator implements JMC {
 					}
 					if (durationNow + chordDurationArp > progressionDurations.get(j)) {
 						arpCPhrase.addChord(new int[] { pitch },
-								progressionDurations.get(j) - durationNow);
+								progressionDurations.get(j) - durationNow, velocity);
 						break;
 					} else {
-						arpCPhrase.addChord(new int[] { pitch }, chordDurationArp);
+						arpCPhrase.addChord(new int[] { pitch }, chordDurationArp, velocity);
 					}
 					durationNow += chordDurationArp;
 				}

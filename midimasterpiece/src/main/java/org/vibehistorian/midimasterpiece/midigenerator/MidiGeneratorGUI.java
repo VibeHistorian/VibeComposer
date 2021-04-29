@@ -2769,6 +2769,10 @@ public class MidiGeneratorGUI extends JFrame
 
 			cp.setPattern(RhythmPattern.values()[patternOrder]);
 
+			int velocityMin = chordPanelGenerator.nextInt(15) + 63;
+			cp.setVelocityMin(velocityMin);
+			cp.setVelocityMax(1 + velocityMin + chordPanelGenerator.nextInt(20));
+
 			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(randomChordShiftChance.getText())
 					&& patternOrder > 0) {
 				cp.setPatternShift(
@@ -2979,6 +2983,10 @@ public class MidiGeneratorGUI extends JFrame
 			if (randomArpUseChordFill.isSelected()) {
 				ap.setChordSpanFill(ChordSpanFill.getWeighted(arpPanelGenerator.nextInt(100)));
 			}
+
+			int velocityMin = arpPanelGenerator.nextInt(15) + 63;
+			ap.setVelocityMin(velocityMin);
+			ap.setVelocityMax(1 + velocityMin + arpPanelGenerator.nextInt(20));
 
 
 			if (arpPanelGenerator.nextInt(100) < Integer.valueOf(arpShiftChance.getText())
