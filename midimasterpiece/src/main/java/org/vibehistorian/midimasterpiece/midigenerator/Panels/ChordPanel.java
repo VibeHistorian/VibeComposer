@@ -29,19 +29,15 @@ public class ChordPanel extends InstPanel {
 
 	public void initComponents() {
 
+
 		instrument.initInstPool(POOL.PLUCK);
 		instPoolPicker.setSelectedItem("PLUCK");
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("11");
-		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 
-		/*JSlider volSlider = new JSlider();
-		volSlider.setMaximum(100);
-		volSlider.setOrientation(JSlider.VERTICAL);
-		volSlider.setPreferredSize(new Dimension(20, 50));
-		this.add(volSlider);*/
-
+		initDefaults();
+		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		this.add(muteInst);

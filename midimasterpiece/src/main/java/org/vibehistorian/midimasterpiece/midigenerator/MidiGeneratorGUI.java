@@ -47,6 +47,7 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
+import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.sound.midi.Track;
@@ -280,6 +281,7 @@ public class MidiGeneratorGUI extends JFrame
 	JButton startMidi;
 	JButton stopMidi;
 
+	JCheckBox useVolumeSliders;
 	JSlider slider;
 	JLabel currentTime;
 	JLabel totalTime;
@@ -1266,7 +1268,50 @@ public class MidiGeneratorGUI extends JFrame
 
 						}
 
+
 					}
+
+					if (useVolumeSliders.isSelected()) {
+						try {
+							for (int i = 0; i < chordPanels.size(); i++) {
+								double vol = chordPanels.get(i).getVolSlider().getValue() / 100.0;
+								ShortMessage volumeMessage = new ShortMessage();
+								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
+										chordPanels.get(i).getMidiChannel() - 1, 7,
+										(int) (vol * 127));
+								if (synth != null) {
+									synth.getReceiver().send(volumeMessage, -1);
+
+								}
+								if (device != null) {
+									device.getReceiver().send(volumeMessage, -1);
+								}
+							}
+
+							for (int i = 0; i < arpPanels.size(); i++) {
+								double vol = arpPanels.get(i).getVolSlider().getValue() / 100.0;
+								ShortMessage volumeMessage = new ShortMessage();
+								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
+										arpPanels.get(i).getMidiChannel() - 1, 7,
+										(int) (vol * 127));
+								if (synth != null) {
+									synth.getReceiver().send(volumeMessage, -1);
+
+								}
+								if (device != null) {
+									device.getReceiver().send(volumeMessage, -1);
+								}
+							}
+						} catch (InvalidMidiDataException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (MidiUnavailableException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+					}
+
 					try {
 						sleep(25);
 					} catch (InterruptedException e) {
@@ -1344,6 +1389,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		showScore = new JCheckBox("Show score", true);
 
+		useVolumeSliders = new JCheckBox("Use vol. sliders", true);
 
 		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", true);
 		midiModeDevices = new JComboBox<String>();
@@ -1384,6 +1430,7 @@ public class MidiGeneratorGUI extends JFrame
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveWavFile);
 		playSavePanel.add(showScore);
+		playSavePanel.add(useVolumeSliders);
 		playSavePanel.add(midiMode);
 		playSavePanel.add(midiModeDevices);
 
@@ -1595,16 +1642,6 @@ public class MidiGeneratorGUI extends JFrame
 				}
 			}
 
-
-			/*if (synth != null) {
-				double vol = 0.9D;
-				ShortMessage volumeMessage = new ShortMessage();
-				for (int i = 0; i < 16; i++) {
-					volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
-							(int) (vol * 127));
-					synth.getReceiver().send(volumeMessage, -1);
-				}
-			}*/
 
 			sequencer.setTickPosition(0);
 			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));

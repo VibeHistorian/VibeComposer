@@ -38,8 +38,8 @@ public class DrumPanel extends InstPanel {
 
 		instrument.initInstPool(POOL.ALL);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
-		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 
+		initDefaults();
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		this.add(muteInst);

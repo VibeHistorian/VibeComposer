@@ -21,8 +21,9 @@ public class ArpPanel extends InstPanel {
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("2");
-		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 
+		initDefaults();
+		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		this.add(muteInst);

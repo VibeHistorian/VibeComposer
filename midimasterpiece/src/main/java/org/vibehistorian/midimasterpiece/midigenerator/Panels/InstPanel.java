@@ -1,13 +1,17 @@
 package org.vibehistorian.midimasterpiece.midigenerator.Panels;
 
+import java.awt.Dimension;
+
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
 
 import org.vibehistorian.midimasterpiece.midigenerator.InstComboBox;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
@@ -47,12 +51,23 @@ public abstract class InstPanel extends JPanel {
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
 	protected JCheckBox muteInst = new JCheckBox("Mute", false);
 
+	protected JSlider volSlider = new JSlider();
+
 	protected JComboBox<String> midiChannel = new JComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
 
 	public InstPanel() {
 
+	}
+
+	public void initDefaults() {
+		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
+
+		volSlider.setMaximum(100);
+		volSlider.setOrientation(JSlider.VERTICAL);
+		volSlider.setPreferredSize(new Dimension(30, 50));
+		volSlider.setPaintTicks(true);
 	}
 
 	public void setFromInstPart(InstPart part) {
@@ -261,5 +276,13 @@ public abstract class InstPanel extends JPanel {
 
 	public void setVelocityMax(int velocityMax) {
 		this.velocityMax.setText(String.valueOf(velocityMax));
+	}
+
+	public JSlider getVolSlider() {
+		return volSlider;
+	}
+
+	public void setVolSlider(JSlider volSlider) {
+		this.volSlider = volSlider;
 	}
 }
