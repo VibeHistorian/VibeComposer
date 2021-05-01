@@ -65,6 +65,7 @@ public abstract class InstPanel extends JPanel {
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
 
 		volSlider.setMaximum(100);
+		volSlider.setValue(100);
 		volSlider.setOrientation(JSlider.VERTICAL);
 		volSlider.setPreferredSize(new Dimension(30, 50));
 		volSlider.setPaintTicks(true);

@@ -190,6 +190,7 @@ public class MidiGeneratorGUI extends JFrame
 	InstComboBox bassRootsInst;
 
 	// melody gen settings
+	JSlider melodyVolSlider;
 	JCheckBox melodyLock;
 	JCheckBox arpCopyMelodyInst;
 	JTextField maxJump;
@@ -543,6 +544,14 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void initMelody(int startY, int anchorSide) {
 		JPanel melodyPanel = new JPanel();
+		melodyVolSlider = new JSlider();
+		melodyVolSlider.setMaximum(100);
+		melodyVolSlider.setValue(100);
+		melodyVolSlider.setOrientation(JSlider.VERTICAL);
+		melodyVolSlider.setPreferredSize(new Dimension(30, 50));
+		melodyVolSlider.setPaintTicks(true);
+		melodyPanel.add(melodyVolSlider);
+
 		addMelody = new JCheckBox("Enable Melody", true);
 		melodyPanel.add(addMelody);
 		melodyInst = new InstComboBox();
@@ -1270,9 +1279,21 @@ public class MidiGeneratorGUI extends JFrame
 
 
 					}
+					try {
+						if (useVolumeSliders.isSelected()) {
 
-					if (useVolumeSliders.isSelected()) {
-						try {
+							double melodyVol = melodyVolSlider.getValue() / 100.0;
+							ShortMessage melodyVolumeMessage = new ShortMessage();
+							melodyVolumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, 0, 7,
+									(int) (melodyVol * 127));
+							if (synth != null) {
+								synth.getReceiver().send(melodyVolumeMessage, -1);
+
+							}
+							if (device != null) {
+								device.getReceiver().send(melodyVolumeMessage, -1);
+							}
+
 							for (int i = 0; i < chordPanels.size(); i++) {
 								double vol = chordPanels.get(i).getVolSlider().getValue() / 100.0;
 								ShortMessage volumeMessage = new ShortMessage();
@@ -1302,16 +1323,30 @@ public class MidiGeneratorGUI extends JFrame
 									device.getReceiver().send(volumeMessage, -1);
 								}
 							}
-						} catch (InvalidMidiDataException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (MidiUnavailableException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+
+
+						} else {
+							for (int i = 0; i < 16; i++) {
+								double vol = 1.0;
+								ShortMessage volumeMessage = new ShortMessage();
+								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
+										(int) (vol * 127));
+								if (synth != null) {
+									synth.getReceiver().send(volumeMessage, -1);
+
+								}
+								if (device != null) {
+									device.getReceiver().send(volumeMessage, -1);
+								}
+							}
 						}
-
+					} catch (InvalidMidiDataException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (MidiUnavailableException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-
 					try {
 						sleep(25);
 					} catch (InterruptedException e) {
