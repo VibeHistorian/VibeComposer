@@ -87,6 +87,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.ScaleMode;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Helpers.FileTransferable;
@@ -164,7 +165,7 @@ public class MidiGeneratorGUI extends JFrame
 	// macro params
 	JTextField soundbankFilename;
 	JTextField pieceLength;
-	JCheckBox minorScale;
+	JComboBox<String> scaleMode;
 	JCheckBox fixedLengthChords;
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
@@ -496,11 +497,15 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(new JLabel("Chord duration fixed: "));
 		macroParams.add(fixedLengthChords);
 
-		minorScale = new JCheckBox();
-		minorScale.setSelected(false);
+		scaleMode = new JComboBox<String>();
+		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
+		for (int i = 0; i < MidiUtils.ScaleMode.values().length; i++) {
+			scaleModes[i] = MidiUtils.ScaleMode.values()[i].toString();
+		}
+		MidiUtils.addAllToJComboBox(scaleModes, scaleMode);
 
-		macroParams.add(new JLabel("Minor Key:"));
-		macroParams.add(minorScale);
+		macroParams.add(new JLabel("Mode:"));
+		macroParams.add(scaleMode);
 
 
 		useAllInsts = new JCheckBox("Use all inst., except:", false);
@@ -2206,7 +2211,7 @@ public class MidiGeneratorGUI extends JFrame
 			MelodyGenerator.PIECE_LENGTH = Integer.valueOf(pieceLength.getText());
 			MelodyGenerator.FIXED_LENGTH = fixedLengthChords.isSelected();
 			MelodyGenerator.TRANSPOSE_SCORE = Integer.valueOf(transposeScore.getText());
-			MelodyGenerator.MINOR_SONG = minorScale.isSelected();
+			MelodyGenerator.SCALE_MODE = ScaleMode.valueOf((String) scaleMode.getSelectedItem());
 			MelodyGenerator.MAIN_BPM = Double.valueOf(mainBpm.getText());
 
 
@@ -2457,7 +2462,7 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setRandomSeed(lastRandomSeed);
 
 		guiConfig.setSoundbankName(soundbankFilename.getText());
-		guiConfig.setMinor(minorScale.isSelected());
+		//guiConfig.setMinor(minorScale.isSelected());
 		guiConfig.setPieceLength(Integer.valueOf(pieceLength.getText()));
 		guiConfig.setFixedDuration(fixedLengthChords.isSelected());
 
@@ -2507,7 +2512,7 @@ public class MidiGeneratorGUI extends JFrame
 		lastRandomSeed = (int) guiConfig.getRandomSeed();
 
 		soundbankFilename.setText(guiConfig.getSoundbankName());
-		minorScale.setSelected(guiConfig.isMinor());
+		//minorScale.setSelected(guiConfig.isMinor());
 		pieceLength.setText(String.valueOf(guiConfig.getPieceLength()));
 		fixedLengthChords.setSelected(guiConfig.isFixedDuration());
 

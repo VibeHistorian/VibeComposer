@@ -24,11 +24,58 @@ public class MidiUtils {
 		MELODY, ARPS, CHORDS, BASSROOTS, DRUMS;
 	}
 
+	public interface Scales {
+
+		public static final int[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+				MAJOR_SCALE = { 0, 2, 4, 5, 7, 9, 11 }, MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
+				HARMONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 11 },
+				MELODIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 9, 10, 11 }, // mix of ascend and descend
+				NATURAL_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
+				DIATONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
+				AEOLIAN_SCALE = { 0, 2, 3, 5, 7, 8, 10 }, DORIAN_SCALE = { 0, 2, 3, 5, 7, 9, 10 },
+				PHRYGIAN_SCALE = { 0, 1, 3, 5, 7, 8, 10 }, LYDIAN_SCALE = { 0, 2, 4, 6, 7, 9, 11 },
+				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
+				BLUES_SCALE = { 0, 2, 3, 4, 5, 7, 9, 10, 11 },
+				TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 }, INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 },
+				LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 };
+
+	}
+
 	//full scale
-	public static final List<Integer> cMajScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+	public static final List<Integer> cIonianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
-	public static final List<Integer> cMinScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+	public static final List<Integer> cDorianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cPhrygianScale4 = new ArrayList<>(
+			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4,
+					Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cLydianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.E4, Pitches.FS4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
+	public static final List<Integer> cMixolydianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cAeolianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cLocrianScale4 = new ArrayList<>(
+			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
+					Pitches.AF4, Pitches.BF4, Pitches.C5));
+
+	public enum ScaleMode {
+		IONIAN(Scales.MAJOR_SCALE, cIonianScale4), DORIAN(Scales.DORIAN_SCALE, cDorianScale4),
+		PHRYGIAN(Scales.PHRYGIAN_SCALE, cPhrygianScale4),
+		LYDIAN(Scales.LYDIAN_SCALE, cLydianScale4),
+		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, cMixolydianScale4),
+		AEOLIAN(Scales.AEOLIAN_SCALE, cAeolianScale4),
+		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4);
+
+		public int[] noteAdjustScale;
+		public List<Integer> absoluteNotesC;
+
+		private ScaleMode(int[] adjust, List<Integer> absolute) {
+			this.noteAdjustScale = adjust;
+			this.absoluteNotesC = absolute;
+		}
+	}
+
 	//chords
 	public static final int[] cMaj4 = { Pitches.C4, Pitches.E4, Pitches.G4 };
 	public static final int[] cMin4 = { Pitches.C4, Pitches.EF4, Pitches.G4 };

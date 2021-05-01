@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.ScaleMode;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpGenSettings;
@@ -84,7 +85,7 @@ public class MelodyGenerator implements JMC {
 	public static int MAXIMUM_PATTERN_LENGTH = 8;
 
 	public static boolean DISPLAY_SCORE = false;
-	public static boolean MINOR_SONG = false;
+	public static ScaleMode SCALE_MODE = ScaleMode.IONIAN;
 	public static int MAX_JUMP = 4;
 	public static int MAX_EXCEPTIONS = 1;
 	public static int PIECE_LENGTH = 4;
@@ -115,7 +116,7 @@ public class MelodyGenerator implements JMC {
 
 	public static int TRANSPOSE_SCORE = 0;
 
-	public static List<Integer> MELODY_SCALE = MidiUtils.cMajScale4;
+	public static List<Integer> MELODY_SCALE = MidiUtils.cIonianScale4;
 
 	public List<Double> progressionDurations = new ArrayList<>();
 
@@ -282,10 +283,8 @@ public class MelodyGenerator implements JMC {
 
 			chordInts.add(chordInt);
 			int[] mappedChord = MidiUtils.mappedChord(chordInt);
-			if (MINOR_SONG) {
-				mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
-						Mod.MINOR_SCALE);
-			}
+			mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
+					SCALE_MODE.noteAdjustScale);
 
 
 			debugMsg.add("Generated int: " + nextInt + ", for chord: " + chordInt + ", dur: " + dur
@@ -420,7 +419,7 @@ public class MelodyGenerator implements JMC {
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression);
 
 
-		MELODY_SCALE = (MINOR_SONG) ? MidiUtils.cMinScale4 : MidiUtils.cMajScale4;
+		MELODY_SCALE = SCALE_MODE.absoluteNotesC;
 
 		// Generate melody and fill other parts..
 		Note[] pair024 = null;
