@@ -634,6 +634,7 @@ public class MelodyGenerator implements JMC {
 
 				if (part == PARTS.CHORDS) {
 					for (int i = 0; i < CHORD_PARTS.size(); i++) {
+						rand.setSeed(mainGeneratorSeed + 100 + CHORD_PARTS.get(i).getOrder());
 						if (rand.nextInt(100) < sec.getChordChance()) {
 							copiedCPhrases.add(chordsCPhrases.get(i).copy());
 						} else {
@@ -650,7 +651,9 @@ public class MelodyGenerator implements JMC {
 				}
 
 				if (part == PARTS.ARPS) {
+
 					for (int i = 0; i < ARP_PARTS.size(); i++) {
+						rand.setSeed(mainGeneratorSeed + 200 + ARP_PARTS.get(i).getOrder());
 						if (rand.nextInt(100) < sec.getArpChance()) {
 							copiedCPhrases.add(arpCPhrases.get(i).copy());
 						} else {
@@ -662,6 +665,7 @@ public class MelodyGenerator implements JMC {
 
 				if (part == PARTS.DRUMS) {
 					for (int i = 0; i < DRUM_PARTS.size(); i++) {
+						rand.setSeed(mainGeneratorSeed + 300 + DRUM_PARTS.get(i).getOrder());
 						if (rand.nextInt(100) < sec.getDrumChance()) {
 							copiedPhrases.add(drumPhrases.get(i).copy());
 						} else {
