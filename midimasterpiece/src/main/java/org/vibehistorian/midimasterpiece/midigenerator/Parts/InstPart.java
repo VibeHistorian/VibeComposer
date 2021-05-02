@@ -31,6 +31,8 @@ public abstract class InstPart {
 	protected RhythmPattern pattern = RhythmPattern.RANDOM;
 	protected int patternShift = 0;
 
+	protected int sliderVolume = 100;
+
 	protected int midiChannel = 10;
 
 	protected boolean muted = false;
@@ -61,6 +63,8 @@ public abstract class InstPart {
 		setPatternShift(panel.getPatternShift());
 
 		setMuted(panel.getMuteInst());
+
+		setSliderVolume(panel.getVolSlider().getValue());
 
 		setMidiChannel(panel.getMidiChannel());
 
@@ -218,4 +222,14 @@ public abstract class InstPart {
 	public void setVelocityMax(int velocityMax) {
 		this.velocityMax = velocityMax;
 	}
+
+	public int getSliderVolume() {
+		return sliderVolume;
+	}
+
+	public void setSliderVolume(int sliderVolume) {
+		this.sliderVolume = sliderVolume;
+	}
+
+
 }

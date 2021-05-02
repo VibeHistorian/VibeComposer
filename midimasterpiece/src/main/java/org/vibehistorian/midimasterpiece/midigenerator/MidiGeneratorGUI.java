@@ -2196,7 +2196,6 @@ public class MidiGeneratorGUI extends JFrame
 			MelodyGenerator.MAX_EXCEPTIONS = Integer.valueOf(maxExceptions.getText());
 			MelodyGenerator.FIRST_NOTE_FROM_CHORD = melodyFirstNoteFromChord.isSelected();
 			MelodyGenerator.RANDOM_CHORD_NOTE = randomChordNote.isSelected();
-			//MelodyGenerator.MELODY_PAUSE_CHANCE = Integer.valueOf(melodyPauseChance.getText());
 
 			MelodyGenerator.SPICE_CHANCE = Integer.valueOf(spiceChance.getText());
 			MelodyGenerator.SPICE_ALLOW_DIM_AUG = spiceAllowDimAug.isSelected();
@@ -2231,7 +2230,6 @@ public class MidiGeneratorGUI extends JFrame
 						MelodyGenerator.userChords = userChordsParsed;
 						MelodyGenerator.userChordsDurations = userChordsDurationsParsed;
 						System.out.println(userChordsDurationsParsed.toString());
-						//MelodyGenerator.FIXED_LENGTH = false;
 					} else {
 						MelodyGenerator.userChords.clear();
 						MelodyGenerator.userChordsDurations.clear();
@@ -2259,14 +2257,11 @@ public class MidiGeneratorGUI extends JFrame
 			if (addChords.isSelected()) {
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS, 0);
 				MelodyGenerator.CHORD_PARTS = getChordPartsFromChordPanels(true);
-
-
 				MelodyGenerator.CHORD_SETTINGS = getChordSettingsFromUI();
 			}
 			if (addArps.isSelected()) {
 				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARPS, 0);
 				MelodyGenerator.ARP_PARTS = getArpPartsFromArpPanels(true);
-				//MelodyGenerator.ARP_SETTINGS = getAr
 			}
 
 			if (!bassPanel.getMuteInst()) {
@@ -2307,7 +2302,7 @@ public class MidiGeneratorGUI extends JFrame
 		return chordSettings;
 	}
 
-	private void setChordSettingsFromUI(ChordGenSettings settings) {
+	private void setChordSettingsInUI(ChordGenSettings settings) {
 		randomChordPattern.setSelected(settings.isIncludePresets());
 		randomChordDelay.setSelected(settings.isUseDelay());
 		randomChordStrum.setSelected(settings.isUseStrum());
@@ -2437,100 +2432,105 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	public void copyGUItoConfig() {
+		// seed
 		guiConfig.setRandomSeed(lastRandomSeed);
 
+		// arrangement
+		guiConfig.setArrangement(MelodyGenerator.ARRANGEMENT);
+
+		// macro
+		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
 		guiConfig.setSoundbankName(soundbankFilename.getText());
-		//guiConfig.setMinor(minorScale.isSelected());
 		guiConfig.setPieceLength(Integer.valueOf(pieceLength.getText()));
 		guiConfig.setFixedDuration(fixedLengthChords.isSelected());
-
 		guiConfig.setTranspose(Integer.valueOf(transposeScore.getText()));
 		guiConfig.setBpm(Double.valueOf(mainBpm.getText()));
 		guiConfig.setArpAffectsBpm(arpAffectsBpm.isSelected());
 
-		//guiConfig.setMelodyEnable(addMelody.isSelected());
+		// parts
+		guiConfig.setMelodyPart(melodyPanel.toMelodyPart(lastRandomSeed));
+		guiConfig.setBassPart(bassPanel.toBassPart(lastRandomSeed));
+
 		guiConfig.setChordsEnable(addChords.isSelected());
 		guiConfig.setArpsEnable(addArps.isSelected());
-		//guiConfig.setBassRootsEnable(addBassRoots.isSelected());
 		guiConfig.setDrumsEnable(addDrums.isSelected());
-
 		guiConfig.setDrumParts(getDrumPartsFromDrumPanels(false));
 		guiConfig.setChordParts(getChordPartsFromChordPanels(false));
 		guiConfig.setArpParts(getArpPartsFromArpPanels(false));
 
 		guiConfig.setChordGenSettings(getChordSettingsFromUI());
-		//guiConfig.setArpGenSettings(getArpSettingsFromUI());
 
-		/*guiConfig.setMelodyInst(melodyInst.getInstrument());
-		guiConfig.setBassRootsInst(bassRootsInst.getInstrument());*/
-
-		/*guiConfig.setUserMelodySeed(!StringUtils.isEmpty(userMelodySeed.getText())
-				? Long.valueOf(userMelodySeed.getText())
-				: 0);*/
-
+		// melody
 		guiConfig.setMaxNoteJump(Integer.valueOf(maxJump.getText()));
 		guiConfig.setMaxExceptions(Integer.valueOf(maxExceptions.getText()));
-		/*guiConfig.setMelodyPauseChance(Integer.valueOf(melodyPauseChance.getText()));*/
-		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getText()));
-		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
-		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getText()));
+		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
+		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 
+
+		// chords
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
 		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
 		guiConfig.setCustomChordsEnabled(userChordsEnabled.isSelected());
 		guiConfig.setCustomChords(StringUtils.join(MelodyGenerator.chordInts, ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
+		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getText()));
+		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
+		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
+		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getText()));
 
-		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
-		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
+
 	}
 
 	public void copyConfigToGUI() {
+		// seed
 		randomSeed.setText(String.valueOf(guiConfig.getRandomSeed()));
 		lastRandomSeed = (int) guiConfig.getRandomSeed();
 
+		// arrangement
+		MelodyGenerator.ARRANGEMENT = guiConfig.getArrangement();
+
+		// macro
+		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
 		soundbankFilename.setText(guiConfig.getSoundbankName());
-		//minorScale.setSelected(guiConfig.isMinor());
 		pieceLength.setText(String.valueOf(guiConfig.getPieceLength()));
 		fixedLengthChords.setSelected(guiConfig.isFixedDuration());
-
 		transposeScore.setText(String.valueOf(guiConfig.getTranspose()));
 		mainBpm.setText(String.valueOf(guiConfig.getBpm()));
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
 
-		//addMelody.setSelected(guiConfig.isMelodyEnable());
-		addChords.setSelected(guiConfig.isChordsEnable());
-		addArps.setSelected(guiConfig.isArp1ArpEnable());
-		//addBassRoots.setSelected(guiConfig.isBassRootsEnable());
+		// parts
+		melodyPanel = new MelodyPanel(this);
+		melodyPanel.setFromMelodyPart(guiConfig.getMelodyPart());
+		bassPanel = new BassPanel(this);
+		bassPanel.setFromBassPart(guiConfig.getBassPart());
 
+		addChords.setSelected(guiConfig.isChordsEnable());
+		addArps.setSelected(guiConfig.isArpsEnable());
 		addDrums.setSelected(guiConfig.isDrumsEnable());
-		recreateDrumPanelsFromDrumParts(guiConfig.getDrumParts());
 		recreateChordPanelsFromChordParts(guiConfig.getChordParts());
 		recreateArpPanelsFromArpParts(guiConfig.getArpParts());
+		recreateDrumPanelsFromDrumParts(guiConfig.getDrumParts());
 
-		setChordSettingsFromUI(guiConfig.getChordGenSettings());
+		setChordSettingsInUI(guiConfig.getChordGenSettings());
 
-		/*melodyInst.setInstrument(guiConfig.getMelodyInst());
-		
-		bassRootsInst.setInstrument(guiConfig.getBassRootsInst());*/
-
-		/*userMelodySeed.setText(String.valueOf(guiConfig.getUserMelodySeed()));*/
-
+		// melody
+		melodyFirstNoteFromChord.setSelected(guiConfig.isFirstNoteFromChord());
+		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
 		maxJump.setText(String.valueOf(guiConfig.getMaxNoteJump()));
 		maxExceptions.setText(String.valueOf(guiConfig.getMaxExceptions()));
-		/*melodyPauseChance.setText(String.valueOf(guiConfig.getMelodyPauseChance()));*/
+
+		// chords
 		spiceChance.setText(String.valueOf(guiConfig.getSpiceChance()));
 		spiceAllowDimAug.setSelected(guiConfig.isDimAugEnabled());
+		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		chordSlashChance.setText(String.valueOf(guiConfig.getChordSlashChance()));
-
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
 		lastChordSelection.setSelectedItem(guiConfig.getLastChord());
 		userChordsEnabled.setSelected(guiConfig.isCustomChordsEnabled());
 		userChords.setText(guiConfig.getCustomChords());
 		userChordsDurations.setText(guiConfig.getCustomChordDurations());
 
-		melodyFirstNoteFromChord.setSelected(guiConfig.isFirstNoteFromChord());
-		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
+
 	}
 
 	private class FileTransferHandler extends TransferHandler {

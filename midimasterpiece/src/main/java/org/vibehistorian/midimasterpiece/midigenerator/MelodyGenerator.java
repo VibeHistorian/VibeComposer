@@ -58,6 +58,7 @@ import jm.util.Write;
 
 public class MelodyGenerator implements JMC {
 
+	private GUIConfig gc;
 
 	/*private static final String[] DRUM_MAP_KEYS = { "KICK", "SNARE", "OPENHAT", "CLOSEDHAT",
 	"CYMBAL" };*/
