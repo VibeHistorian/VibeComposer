@@ -14,7 +14,7 @@ public abstract class InstPart {
 	protected int chordNotesStretch = 3;
 	protected boolean stretchEnabled = false;
 
-	protected int pauseChance = 70;
+	protected int pauseChance = 20;
 	protected int exceptionChance = 5;
 	protected boolean repeatableNotes = true;
 	protected int patternRepeat = 2;
@@ -22,8 +22,8 @@ public abstract class InstPart {
 	protected int delay = 0;
 	protected int transpose = 0;
 
-	protected int velocityMin = 60;
-	protected int velocityMax = 100;
+	protected int velocityMin = 70;
+	protected int velocityMax = 90;
 
 	protected int order = 1;
 

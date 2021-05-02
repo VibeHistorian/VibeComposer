@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.InstComboBox;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
@@ -31,7 +32,7 @@ public abstract class InstPanel extends JPanel {
 	protected JTextField chordNotesStretch = new JTextField("3", 1);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
-	protected JTextField pauseChance = new JTextField("25", 2);
+	protected JTextField pauseChance = new JTextField("20", 2);
 	protected JTextField exceptionChance = new JTextField("5", 1);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
 	protected JTextField patternRepeat = new JTextField("2", 1);
@@ -39,8 +40,8 @@ public abstract class InstPanel extends JPanel {
 	protected JTextField transpose = new JTextField("0", 2);
 	protected JTextField delay = new JTextField("0", 3);
 
-	protected JTextField velocityMin = new JTextField("60", 3);
-	protected JTextField velocityMax = new JTextField("100", 3);
+	protected JTextField velocityMin = new JTextField("70", 3);
+	protected JTextField velocityMax = new JTextField("90", 3);
 
 	protected JLabel panelOrder = new JLabel("0");
 
@@ -151,6 +152,9 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public RhythmPattern getPattern() {
+		if (StringUtils.isEmpty((String) pattern.getSelectedItem())) {
+			return RhythmPattern.RANDOM;
+		}
 		return RhythmPattern.valueOf((String) pattern.getSelectedItem());
 	}
 
