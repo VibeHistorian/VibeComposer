@@ -363,7 +363,8 @@ public class MelodyGenerator implements JMC {
 			}
 			previousNote = note;
 			currentDuration += (note.getDuration() * 10.0 / 9.0);
-			Note transposedNote = new Note(note.getPitch(), note.getRhythmValue());
+			Note transposedNote = new Note(note.getPitch(), note.getRhythmValue(),
+					note.getDynamic());
 			notes.add(transposedNote);
 		}
 		return notes.toArray(new Note[0]);
@@ -571,16 +572,6 @@ public class MelodyGenerator implements JMC {
 					: 0;
 			Mod.transpose(arpCPhrases.get(i), -24 + TRANSPOSE_SCORE + extraTranspose);
 		}
-
-		// Midi velocity / dynamic
-		melodyPhrase.setDynamic(100);
-		cphraseBassRoot.setDynamic(70);
-		/*for (int i = 0; i < CHORD_PARTS.size(); i++) {
-			chordsCPhrases.get(i).setDynamic(85 - i * 2);
-		}
-		for (int i = 0; i < ARP_PARTS.size(); i++) {
-			*arpCPhrases.get(i).setDynamic(90 - i * 2);
-		}*/
 
 		// Delay start time
 		melodyPhrase.setStartTime(START_TIME_DELAY);

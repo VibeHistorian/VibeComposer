@@ -18,6 +18,8 @@ public class MelodyPanel extends InstPanel {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
 		instrument.initInstPool(instPool);
 		setInstrument(8);
+		setVelocityMin(80);
+		setVelocityMax(105);
 		initDefaults();
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
