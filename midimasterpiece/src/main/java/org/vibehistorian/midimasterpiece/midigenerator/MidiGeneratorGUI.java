@@ -85,7 +85,6 @@ import javax.xml.bind.Marshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.PARTS;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.ScaleMode;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
@@ -140,6 +139,8 @@ public class MidiGeneratorGUI extends JFrame
 	private List<ChordPanel> chordPanels = new ArrayList<>();
 	private List<ArpPanel> arpPanels = new ArrayList<>();
 	private List<DrumPanel> drumPanels = new ArrayList<>();
+
+	private Arrangement arrangement;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -312,7 +313,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		JPanel chordToolTip = new JPanel();
 		tipLabel = new JLabel(
-				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor)");
+				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor), 1000000 = 9th, 10000000 = 13th");
 		chordToolTip.add(tipLabel);
 		constraints.gridy = 335;
 		constraints.anchor = GridBagConstraints.CENTER;
@@ -831,22 +832,22 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void handleArrangementAction(String action) {
 		if (action.equalsIgnoreCase("ArrangementReset")) {
-			MelodyGenerator.ARRANGEMENT.generateDefaultArrangement();
+			arrangement.generateDefaultArrangement();
 		}
 
 		if (action.equalsIgnoreCase("ArrangementAddLast")) {
-			MelodyGenerator.ARRANGEMENT.addSectionLast();
+			arrangement.addSectionLast();
 		}
 
 		if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
-			MelodyGenerator.ARRANGEMENT.removeSectionLast(scrollableArrangementTable);
+			arrangement.removeSectionLast(scrollableArrangementTable);
 		}
 
 		if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// TODO : MelodyGenerator.ARRANGEMENT.generateRandom();
 			// on compose -> this must happen before compose part
 		}
-		scrollableArrangementTable.setModel(MelodyGenerator.ARRANGEMENT.convertToTableModel());
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
@@ -906,15 +907,14 @@ public class MidiGeneratorGUI extends JFrame
 		arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-		Arrangement arr = new Arrangement();
-		arr.generateDefaultArrangement();
+		arrangement = new Arrangement();
+		arrangement.generateDefaultArrangement();
 		if (useArrangement.isSelected()) {
-			arr.setPreviewChorus(false);
+			arrangement.setPreviewChorus(false);
 		} else {
-			arr.setPreviewChorus(true);
+			arrangement.setPreviewChorus(true);
 		}
-		MelodyGenerator.ARRANGEMENT = arr;
-		scrollableArrangementTable.setModel(arr.convertToTableModel());
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 
 		/*scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
@@ -1194,16 +1194,15 @@ public class MidiGeneratorGUI extends JFrame
 						//else
 						//currentTime.setText(millisecondsToTimeString(slider.getValue()));
 					}
-					if (MelodyGenerator.ARRANGEMENT != null && slider.getMaximum() > 0) {
+					if (arrangement != null && slider.getMaximum() > 0) {
 						int val = slider.getValue();
-						int divisor = slider.getMaximum()
-								/ MelodyGenerator.ARRANGEMENT.getSections().size();
+						int divisor = slider.getMaximum() / arrangement.getSections().size();
 						int sectIndex = val / divisor;
-						if (sectIndex >= MelodyGenerator.ARRANGEMENT.getSections().size()) {
+						if (sectIndex >= arrangement.getSections().size()) {
 							sectionText.setText("End");
 						} else {
 							if (useArrangement.isSelected()) {
-								String sectionName = MelodyGenerator.ARRANGEMENT.getSections()
+								String sectionName = arrangement.getSections()
 										.get((val - 1) / divisor).getType().toString();
 								sectionText.setText(sectionName);
 							} else {
@@ -1368,6 +1367,18 @@ public class MidiGeneratorGUI extends JFrame
 								device.getReceiver().send(melodyVolumeMessage, -1);
 							}
 
+							double bassVol = bassPanel.getVolSlider().getValue() / 100.0;
+							ShortMessage bassVolumeMessage = new ShortMessage();
+							bassVolumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, 8, 7,
+									(int) (bassVol * 127));
+							if (synth != null && synth.isOpen()) {
+								synth.getReceiver().send(bassVolumeMessage, -1);
+
+							}
+							if (midiMode.isSelected() && device != null) {
+								device.getReceiver().send(bassVolumeMessage, -1);
+							}
+
 							for (int i = 0; i < chordPanels.size(); i++) {
 								double vol = chordPanels.get(i).getVolSlider().getValue() / 100.0;
 								ShortMessage volumeMessage = new ShortMessage();
@@ -1493,15 +1504,17 @@ public class MidiGeneratorGUI extends JFrame
 			synth = null;
 		} else {
 			if (sequencer != null) {
+				sequencer.stop();
 				sequencer.close();
 				sequencer = null;
+				System.out.println("CLOSED SEQUENCER!");
 			}
 
 			if (device != null) {
 				device.close();
-				System.out.println("CLOSED DEVICE/SEQUENCER!");
+				device = null;
+				System.out.println("CLOSED DEVICE!");
 			}
-			device = null;
 		}
 
 		Integer masterpieceSeed = 0;
@@ -1537,7 +1550,7 @@ public class MidiGeneratorGUI extends JFrame
 		System.out.println("Melody seed: " + masterpieceSeed);
 		lastRandomSeed = masterpieceSeed;
 
-		MelodyGenerator melodyGen = new MelodyGenerator();
+		MelodyGenerator melodyGen = new MelodyGenerator(copyGUItoConfig());
 		fillUserParameters();
 
 		File makeDir = new File(MIDIS_FOLDER);
@@ -1638,9 +1651,9 @@ public class MidiGeneratorGUI extends JFrame
 					for (Transmitter tm : sequencer.getTransmitters()) {
 						tm.close();
 					}
-					Synthesizer defSynth = MidiSystem.getSynthesizer();
-					defSynth.open();
-					sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
+					synth = MidiSystem.getSynthesizer();
+					synth.open();
+					sequencer.getTransmitter().setReceiver(synth.getReceiver());
 
 
 				}
@@ -1652,8 +1665,9 @@ public class MidiGeneratorGUI extends JFrame
 			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
-			slider.setMajorTickSpacing(
-					slider.getMaximum() / MelodyGenerator.ARRANGEMENT.getSections().size());
+			slider.setMajorTickSpacing(slider.getMaximum() / arrangement.getSections().size());
+			//TODO: track soloing?
+			//sequencer.setTrackSolo(1, true);
 			startVolumeSliderThread();
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
@@ -1666,8 +1680,8 @@ public class MidiGeneratorGUI extends JFrame
 		try {
 			File soundbankFile = new File(soundbankFilename.getText());
 			if (soundbankFile.isFile()) {
-				if (synth == null) {
-
+				if (synth == null || synth.equals(MidiSystem.getSynthesizer())) {
+					synth = null;
 					soundfont = MidiSystem.getSoundbank(
 							new BufferedInputStream(new FileInputStream(soundbankFile)));
 					synthesizer = MidiSystem.getSynthesizer();
@@ -2172,7 +2186,7 @@ public class MidiGeneratorGUI extends JFrame
 			instrumentTabPane.setTitleAt(1, "Arps (" + arpPanels.size() + ")");
 			instrumentTabPane.setTitleAt(2, "Drums (" + drumPanels.size() + ")");
 			instrumentTabPane.setTitleAt(3,
-					"Arrangement (" + MelodyGenerator.ARRANGEMENT.getSections().size() + ")");
+					"Arrangement (" + arrangement.getSections().size() + ")");
 		}
 
 		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");
@@ -2182,23 +2196,6 @@ public class MidiGeneratorGUI extends JFrame
 	public void fillUserParameters() {
 		try {
 			MelodyGenerator.DISPLAY_SCORE = showScore.isSelected();
-
-			MelodyGenerator.PIECE_LENGTH = Integer.valueOf(pieceLength.getText());
-			MelodyGenerator.FIXED_LENGTH = fixedLengthChords.isSelected();
-			MelodyGenerator.TRANSPOSE_SCORE = Integer.valueOf(transposeScore.getText());
-			MelodyGenerator.SCALE_MODE = ScaleMode.valueOf((String) scaleMode.getSelectedItem());
-			MelodyGenerator.MAIN_BPM = Double.valueOf(mainBpm.getText());
-
-
-			MelodyGenerator.MAX_JUMP = Integer.valueOf(maxJump.getText());
-			MelodyGenerator.MAX_EXCEPTIONS = Integer.valueOf(maxExceptions.getText());
-			MelodyGenerator.FIRST_NOTE_FROM_CHORD = melodyFirstNoteFromChord.isSelected();
-			MelodyGenerator.RANDOM_CHORD_NOTE = randomChordNote.isSelected();
-
-			MelodyGenerator.SPICE_CHANCE = Integer.valueOf(spiceChance.getText());
-			MelodyGenerator.SPICE_ALLOW_DIM_AUG = spiceAllowDimAug.isSelected();
-			MelodyGenerator.SPICE_ALLOW_9th_13th = spiceAllow9th13th.isSelected();
-			MelodyGenerator.CHORD_SLASH_CHANCE = Integer.valueOf(chordSlashChance.getText());
 
 			MelodyGenerator.FIRST_CHORD = chordSelect(
 					(String) firstChordSelection.getSelectedItem());
@@ -2240,45 +2237,17 @@ public class MidiGeneratorGUI extends JFrame
 				MelodyGenerator.userChords.clear();
 				MelodyGenerator.userChordsDurations.clear();
 			}
+			MelodyGenerator.CHORD_SETTINGS = getChordSettingsFromUI();
 
-
-			MelodyGenerator.PARTS_INSTRUMENT_MAP.clear();
-			MelodyGenerator.MELODY_PART = null;
-			MelodyGenerator.BASS_PART = null;
-			MelodyGenerator.CHORD_PARTS.clear();
-			MelodyGenerator.ARP_PARTS.clear();
-			MelodyGenerator.DRUM_PARTS.clear();
-			if (!melodyPanel.getMuteInst()) {
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.MELODY, melodyPanel.getInstrument());
-				MelodyGenerator.MELODY_PART = melodyPanel.toMelodyPart(lastRandomSeed);
+			if (!addChords.isSelected()) {
+				MelodyGenerator.gc.setChordParts(new ArrayList<>());
 			}
-			if (addChords.isSelected()) {
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.CHORDS, 0);
-				MelodyGenerator.CHORD_PARTS = getChordPartsFromChordPanels(true);
-				MelodyGenerator.CHORD_SETTINGS = getChordSettingsFromUI();
+			if (!addArps.isSelected()) {
+				MelodyGenerator.gc.setArpParts(new ArrayList<>());
 			}
-			if (addArps.isSelected()) {
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.ARPS, 0);
-				MelodyGenerator.ARP_PARTS = getArpPartsFromArpPanels(true);
+			if (!addDrums.isSelected()) {
+				MelodyGenerator.gc.setDrumParts(new ArrayList<>());
 			}
-
-			if (!bassPanel.getMuteInst()) {
-				MelodyGenerator.BASS_PART = bassPanel.toBassPart(lastRandomSeed);
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.BASSROOTS,
-						bassPanel.getInstrument());
-			}
-
-			if (addDrums.isSelected()) {
-				MelodyGenerator.PARTS_INSTRUMENT_MAP.put(PARTS.DRUMS, 0);
-				MelodyGenerator.DRUM_PARTS = getDrumPartsFromDrumPanels(true);
-			}
-			if (!useArrangement.isSelected()) {
-				MelodyGenerator.ARRANGEMENT.setPreviewChorus(true);
-			} else {
-				MelodyGenerator.ARRANGEMENT.setPreviewChorus(false);
-				MelodyGenerator.ARRANGEMENT.setFromModel(scrollableArrangementTable);
-			}
-
 
 		} catch (Exception e) {
 			System.out.println("User screwed up his inputs!");
@@ -2372,7 +2341,7 @@ public class MidiGeneratorGUI extends JFrame
 		// this method is only designed to handle the PPQ division type.
 		assert sequence.getDivisionType() == Sequence.PPQ : sequence.getDivisionType();
 
-		int microsecondsPerQtrNote = (int) (500000 * 120 / MelodyGenerator.MAIN_BPM);
+		int microsecondsPerQtrNote = (int) (500000 * 120 / guiConfig.getBpm());
 		int seqRes = sequence.getResolution();
 		long totalTime = 0;
 
@@ -2429,12 +2398,18 @@ public class MidiGeneratorGUI extends JFrame
 		return (GUIConfig) context.createUnmarshaller().unmarshal(new FileReader(f));
 	}
 
-	public void copyGUItoConfig() {
+	public GUIConfig copyGUItoConfig() {
 		// seed
 		guiConfig.setRandomSeed(lastRandomSeed);
 
 		// arrangement
-		guiConfig.setArrangement(MelodyGenerator.ARRANGEMENT);
+		if (!useArrangement.isSelected()) {
+			arrangement.setPreviewChorus(true);
+		} else {
+			arrangement.setPreviewChorus(false);
+			arrangement.setFromModel(scrollableArrangementTable);
+		}
+		guiConfig.setArrangement(arrangement);
 
 		// macro
 		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
@@ -2476,7 +2451,7 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
 		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getText()));
 
-
+		return guiConfig;
 	}
 
 	public void copyConfigToGUI() {
@@ -2485,7 +2460,7 @@ public class MidiGeneratorGUI extends JFrame
 		lastRandomSeed = (int) guiConfig.getRandomSeed();
 
 		// arrangement
-		MelodyGenerator.ARRANGEMENT = guiConfig.getArrangement();
+		arrangement = guiConfig.getArrangement();
 
 		// macro
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
