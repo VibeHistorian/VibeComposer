@@ -272,6 +272,7 @@ public class MidiGeneratorGUI extends JFrame
 	JButton startMidi;
 	JButton stopMidi;
 
+	Thread cycle;
 	JCheckBox useVolumeSliders;
 	JSlider slider;
 	JLabel currentTime;
@@ -1344,7 +1345,11 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	private void startVolumeSliderThread() {
-		Thread cycle = new Thread() {
+		if (cycle != null && cycle.isAlive()) {
+			System.out.println("Volume slider thread already exists!");
+			return;
+		}
+		cycle = new Thread() {
 
 			public void run() {
 
@@ -1485,6 +1490,7 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	private void composeMidi(boolean regenerate) {
+
 		if (midiMode.isSelected()) {
 			synth = null;
 		} else {
