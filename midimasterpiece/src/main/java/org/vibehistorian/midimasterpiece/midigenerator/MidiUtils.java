@@ -19,16 +19,63 @@ import jm.music.data.CPhrase;
 import jm.music.data.Note;
 
 public class MidiUtils {
-	
+
 	public enum PARTS {
 		MELODY, ARPS, CHORDS, BASSROOTS, DRUMS;
 	}
-	
+
+	public interface Scales {
+
+		public static final int[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+				MAJOR_SCALE = { 0, 2, 4, 5, 7, 9, 11 }, MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
+				HARMONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 11 },
+				MELODIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 9, 10, 11 }, // mix of ascend and descend
+				NATURAL_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
+				DIATONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
+				AEOLIAN_SCALE = { 0, 2, 3, 5, 7, 8, 10 }, DORIAN_SCALE = { 0, 2, 3, 5, 7, 9, 10 },
+				PHRYGIAN_SCALE = { 0, 1, 3, 5, 7, 8, 10 }, LYDIAN_SCALE = { 0, 2, 4, 6, 7, 9, 11 },
+				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
+				BLUES_SCALE = { 0, 2, 3, 4, 5, 7, 9, 10, 11 },
+				TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 }, INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 },
+				LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 };
+
+	}
+
 	//full scale
-	public static final List<Integer> cMajScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+	public static final List<Integer> cIonianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
-	public static final List<Integer> cMinScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+	public static final List<Integer> cDorianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cPhrygianScale4 = new ArrayList<>(
+			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4,
+					Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cLydianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.E4, Pitches.FS4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
+	public static final List<Integer> cMixolydianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cAeolianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cLocrianScale4 = new ArrayList<>(
+			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
+					Pitches.AF4, Pitches.BF4, Pitches.C5));
+
+	public enum ScaleMode {
+		IONIAN(Scales.MAJOR_SCALE, cIonianScale4), DORIAN(Scales.DORIAN_SCALE, cDorianScale4),
+		PHRYGIAN(Scales.PHRYGIAN_SCALE, cPhrygianScale4),
+		LYDIAN(Scales.LYDIAN_SCALE, cLydianScale4),
+		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, cMixolydianScale4),
+		AEOLIAN(Scales.AEOLIAN_SCALE, cAeolianScale4),
+		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4);
+
+		public int[] noteAdjustScale;
+		public List<Integer> absoluteNotesC;
+
+		private ScaleMode(int[] adjust, List<Integer> absolute) {
+			this.noteAdjustScale = adjust;
+			this.absoluteNotesC = absolute;
+		}
+	}
+
 	//chords
 	public static final int[] cMaj4 = { Pitches.C4, Pitches.E4, Pitches.G4 };
 	public static final int[] cMin4 = { Pitches.C4, Pitches.EF4, Pitches.G4 };
@@ -40,15 +87,15 @@ public class MidiUtils {
 			Pitches.D5 };
 	public static final int[] c13th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4,
 			Pitches.D5, Pitches.A5 };
-	
+
 	public static final int[] SPICE_SELECT = { 10, 100, 1000, 10000, 100000, 1000000 };
-	
-	
+
+
 	public static final Map<Integer, List<Integer>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
 	public static final Map<Integer, int[]> chordsMap = createChordMap();
-	
-	
+
+
 	private static Map<Integer, List<Integer>> createChordProgressionRulesMap() {
 		Map<Integer, List<Integer>> cpMap = new HashMap<>();
 		//0 is an imaginary last element which can grow into the correct last elements
@@ -60,7 +107,7 @@ public class MidiUtils {
 		cpMap.put(5, new ArrayList<>(Arrays.asList(1, 20, 4, 60)));
 		cpMap.put(60, new ArrayList<>(Arrays.asList(1, 20, 30, 5)));
 		cpMap.put(70, new ArrayList<>(Arrays.asList(1, 30, 4)));
-		
+
 		cpMap.put(10, new ArrayList<>());
 		cpMap.put(2, new ArrayList<>());
 		cpMap.put(3, new ArrayList<>());
@@ -69,9 +116,9 @@ public class MidiUtils {
 		cpMap.put(6, new ArrayList<>(Arrays.asList(1, 4)));
 		cpMap.put(7, new ArrayList<>(Arrays.asList(1, 30, 4)));
 		return cpMap;
-		
+
 	}
-	
+
 	private static Map<Integer, Integer> createDiaTransMap() {
 		Map<Integer, Integer> diaMap = new HashMap<>();
 		diaMap.put(1, 0);
@@ -82,9 +129,9 @@ public class MidiUtils {
 		diaMap.put(6, 9);
 		diaMap.put(7, 11);
 		return diaMap;
-		
+
 	}
-	
+
 	private static Map<Integer, int[]> createChordMap() {
 		Map<Integer, int[]> chordMap = new HashMap<>();
 		for (int i = 1; i <= 7; i++) {
@@ -98,9 +145,9 @@ public class MidiUtils {
 			chordMap.put(10000000 * i, transposeChord(c13th4, diaTransMap.get(i)));
 		}
 		return chordMap;
-		
+
 	}
-	
+
 	public static int[] transposeChord(int[] chord, int transposeBy) {
 		int[] transposed = Arrays.copyOf(chord, chord.length);
 		for (int i = 0; i < chord.length; i++) {
@@ -108,13 +155,13 @@ public class MidiUtils {
 		}
 		return transposed;
 	}
-	
+
 	public static List<Integer> transposeScale(List<Integer> scale, int transposeBy,
 			boolean diatonic) {
 		List<Integer> newScale = new ArrayList<>();
 		if (diatonic) {
 			for (int i = 0; i < 8; i++) {
-				
+
 				if (transposeBy > 0 && i + transposeBy > 7) {
 					newScale.add(scale.get((i + transposeBy) % 8) + 12);
 				} else if (transposeBy < 0 && i + transposeBy < 0) {
@@ -130,7 +177,7 @@ public class MidiUtils {
 		}
 		return newScale;
 	}
-	
+
 	public static int maX(int value, int x) {
 		if (value > x)
 			return x;
@@ -138,15 +185,15 @@ public class MidiUtils {
 			return 0;
 		return value;
 	}
-	
+
 	public static int[] mappedChord(Integer chordInt) {
 		int[] mappedChord = chordsMap.get(chordInt);
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
-	
+
 	public static int[] convertChordToLength(int[] chord, int length, boolean conversionNeeded) {
 		int[] chordCopy = Arrays.copyOf(chord, chord.length);
-		
+
 		if (!conversionNeeded || chord.length == length) {
 			return chordCopy;
 		}
@@ -174,7 +221,7 @@ public class MidiUtils {
 		}
 		return converted;
 	}
-	
+
 	public static CPhrase chordProgressionToPhrase(List<int[]> cpr) {
 		CPhrase phr = new CPhrase();
 		for (int i = 0; i < cpr.size(); i++) {
@@ -183,12 +230,12 @@ public class MidiUtils {
 		}
 		return phr;
 	}
-	
+
 	public static int getStandardizedPitch(int pitch, int scaleTranspose, int tolerance) {
 		int result = pitch;
 		int lowBound = Pitches.C4 + scaleTranspose - tolerance;
 		int highBound = Pitches.C5 + scaleTranspose + tolerance;
-		
+
 		while (result > highBound) {
 			result -= 12;
 		}
@@ -197,7 +244,7 @@ public class MidiUtils {
 		}
 		return result;
 	}
-	
+
 	public static List<Integer> extendScaleByOctaveUpDown(List<Integer> scale) {
 		List<Integer> extended = new ArrayList<>();
 		extended.addAll(transposeScale(scale, -12, false));
@@ -205,7 +252,7 @@ public class MidiUtils {
 		extended.addAll(transposeScale(scale, 12, false));
 		return extended;
 	}
-	
+
 	public static double pickDurationWeightedRandom(Random generator, double durationLeft,
 			double[] durs, double[] chances, double defaultValue) {
 		if (durs.length != chances.length) {
@@ -219,7 +266,7 @@ public class MidiUtils {
 		}
 		return defaultValue;
 	}
-	
+
 	public static double calculateAverageNote(List<int[]> chords) {
 		double noteCount = 0.001;
 		double noteSum = 0;
@@ -229,14 +276,14 @@ public class MidiUtils {
 				noteSum += c[i];
 			}
 		}
-		
+
 		return noteSum / noteCount;
 	}
-	
+
 	public static List<int[]> squishChordProgression(List<int[]> chords) {
 		double avg = MidiUtils.calculateAverageNote(chords);
 		//System.out.println("AVG: " + avg);
-		
+
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
@@ -254,36 +301,36 @@ public class MidiUtils {
 		//System.out.println("NEW AVG: " + MidiUtils.calculateAverageNote(squishedChords));
 		return squishedChords;
 	}
-	
+
 	public static int[] transposeChord(int[] chord, final int[] mode, final int[] modeTo) {
 		int[] transposedChord = new int[chord.length];
-		
+
 		List<Integer> modeList = new ArrayList<>();
 		for (int num : mode) {
 			modeList.add(num);
 		}
-		
-		
+
+
 		for (int j = 0; j < chord.length; j++) {
 			int pitch = chord[j];
 			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
-			
+
 			if (originalIndex == -1) {
 				transposedChord[j] = pitch - 1;
 				continue;
 			}
-			
-			
+
+
 			int originalMovement = mode[originalIndex];
 			int newMovement = modeTo[originalIndex];
-			
+
 			if (pitch != Note.REST) {
 				transposedChord[j] = pitch - originalMovement + newMovement;
 			}
 		}
 		return transposedChord;
 	}
-	
+
 	public static final String[] INSTRUMENTS_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
 			"ELECTRIC_GRAND = 2 ", "HONKYTONK = 3 ", "EPIANO = 4 ", "EPIANO2 = 5 ",
 			"HARPSICHORD = 6 ", "CLAV = 7 ", "CELESTE = 8 ", "GLOCKENSPIEL = 9 ", "MUSIC_BOX = 10 ",
@@ -316,23 +363,23 @@ public class MidiUtils {
 			"SYNTH_DRUM = 118 ", "REVERSE_CYMBAL = 119 ", "FRETNOISE = 120 ", "BREATHNOISE = 121 ",
 			"NATURE = 122 ", "BIRD = 123 ", "TELEPHONE = 124 ", "HELICOPTER = 125 ",
 			"APPLAUSE = 126 ", "GUNSHOT = 127 " };
-	
+
 	public static final String[] BASS_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
 			"EPIANO = 4 ", "OOH = 53 ", "SYNVOX = 54 ", "FLUTE = 73 ", "RECORDER = 74 ",
 			"PAN_FLUTE = 75 ", "SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SPACE_VOICE = 91 ",
 			"ECHO_DROPS = 102 " };
-	
+
 	public static final String[] CHORD_INST_NAMES = { "EPIANO = 4 ", "ORGAN = 16 ", "ORGAN2 = 17 ",
 			"ACOUSTIC_BASS = 32 ", "TREMOLO_STRINGS = 44 ", "STRINGS = 48 ",
 			"STRING_ENSEMBLE_2 = 49 ", "AAH = 52 ", "BASSOON = 70 " };
-	
+
 	public static final String[] PLUCK_INST_NAMES = { "BRIGHT_ACOUSTIC = 1 ", "HONKYTONK = 3 ",
 			"EPIANO2 = 5 ", "CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
 			"XYLOPHONE = 13 ", "TUBULAR_BELL = 14 ", "NOTHING = 15 ", "STEEL_GUITAR = 25 ",
 			"CLEAN_GUITAR = 27 ", "ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ", "PICKED_BASS = 34 ",
 			"FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
 			"FANTASIA = 88 " };
-	
+
 	public static final String[] LONG_INST_NAMES = { "ORGAN = 16 ", "ORGAN2 = 17 ",
 			"REED_ORGAN = 20 ", "ACCORDION = 21 ", "HARMONICA = 22 ", "BANDNEON = 23 ",
 			"VIOLIN = 40 ", "VIOLA = 41 ", "CELLO = 42 ", "CONTRABASS = 43 ",
@@ -343,16 +390,16 @@ public class MidiUtils {
 			"CLARINET = 71 ", "PICCOLO = 72 ", "RECORDER = 74 ", "BOTTLE_BLOW = 76 ",
 			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
 			"SWEEP_PAD = 95 " };
-	
+
 	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ", "SNARE = 38 ",
 			"EL. SNARE = 40 ", "CLOSED_HH = 42 ", "RIDE = 53 ", "RIM = 60 " };
-	
-	
+
+
 	public static List<Integer> getInstNumbers(String[] instArray) {
 		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
 				.collect(Collectors.toList());
 	}
-	
+
 	public static String[] combineInstrumentPools(String[]... instPools) {
 		Set<String> allInstruments = new HashSet<>();
 		for (String[] pool : instPools) {
@@ -364,22 +411,22 @@ public class MidiUtils {
 						.compareTo(Integer.valueOf(o2.split(" = ")[1].trim())));
 		return allInstrumentsSorted.toArray(new String[] {});
 	}
-	
+
 	public static final String[] DRUM_KITS = { "DRUMKIT0 = 0", "DRUMKIT1 = 1", "DRUMKIT2 = 2",
 			"DRUMKIT3 = 3" };
-	
+
 	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.asList(DRUM_KITS).stream()
 			.map(e -> Integer.valueOf(e.split(" = ")[1].trim())).collect(Collectors.toList());
-	
+
 	public enum POOL {
 		PLUCK, LONG, CHORD, BASS, DRUM, ALL;
 	}
-	
+
 	public static Map<POOL, String[]> INST_POOLS = new HashMap<>();
 	static {
 		initNormalInsts();
 	}
-	
+
 	public static void initNormalInsts() {
 		INST_POOLS.put(POOL.PLUCK, PLUCK_INST_NAMES);
 		INST_POOLS.put(POOL.LONG, LONG_INST_NAMES);
@@ -388,7 +435,7 @@ public class MidiUtils {
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
 		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
 	}
-	
+
 	public static void initAllInsts() {
 		INST_POOLS.put(POOL.PLUCK, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.LONG, INSTRUMENTS_NAMES);
@@ -397,17 +444,17 @@ public class MidiUtils {
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
 		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
 	}
-	
+
 	public static Integer getInstByIndex(int index, POOL instPool) {
 		List<Integer> instPoolNumbers = getInstNumbers(INST_POOLS.get(instPool));
 		return instPoolNumbers.get(index % instPoolNumbers.size());
 	}
-	
+
 	public static void addAllToJComboBox(String[] choices, JComboBox<String> choice) {
 		for (String c : choices) {
 			choice.addItem(c);
 		}
 	}
-	
-	
+
+
 }
