@@ -875,8 +875,9 @@ public class MidiGeneratorGUI extends JFrame
 		removeLastSectionBtn.addActionListener(this);
 		removeLastSectionBtn.setActionCommand("ArrangementRemoveLast");
 
-		arrangementSettings.add(randomizeArrangementBtn);
-		arrangementSettings.add(randomizeArrangementOnCompose);
+		// TODO: impl arrangement randomization first
+		/*arrangementSettings.add(randomizeArrangementBtn);
+		arrangementSettings.add(randomizeArrangementOnCompose);*/
 
 		arrangementSettings.add(addLastSectionBtn);
 		arrangementSettings.add(removeLastSectionBtn);
