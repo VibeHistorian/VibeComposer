@@ -978,7 +978,7 @@ public class MelodyGenerator implements JMC {
 							/ DRUM_PARTS.get(i).getHitsPerPattern();
 					List<Integer> drumPattern = drumPatternMap.get(i);
 					if (!DRUM_PARTS.get(i).isVelocityPattern()
-							&& drumPattern.indexOf(DRUM_PARTS.get(i).getPitch()) == -1) {
+							&& drumPattern.indexOf(DRUM_PARTS.get(i).getInstrument()) == -1) {
 						continue;
 					}
 					List<Integer> drumVelocityPattern = drumVelocityPatternMap.get(i);
@@ -989,7 +989,7 @@ public class MelodyGenerator implements JMC {
 						int pitch = (drum >= 0) ? drum : Integer.MIN_VALUE;
 						if (drum < 0 && DRUM_PARTS.get(i).isVelocityPattern()) {
 							velocity = (velocity * 5) / 10;
-							pitch = DRUM_PARTS.get(i).getPitch();
+							pitch = DRUM_PARTS.get(i).getInstrument();
 						}
 
 						double swingDuration = drumDuration
@@ -1157,17 +1157,17 @@ public class MelodyGenerator implements JMC {
 						|| !premadePattern.get(j).equals(1)) {
 					drumPattern.add(-1);
 				} else {
-					if (DRUM_PARTS.get(i).getPitch() == 42
+					if (DRUM_PARTS.get(i).getInstrument() == 42
 							&& uiGenerator1drumPattern.nextInt(100) < OPENHAT_CHANCE) {
 						drumPattern.add(46);
 					} else {
-						drumPattern.add(DRUM_PARTS.get(i).getPitch());
+						drumPattern.add(DRUM_PARTS.get(i).getInstrument());
 					}
 
 				}
 			}
 			Collections.rotate(drumPattern, DRUM_PARTS.get(i).getPatternShift());
-			System.out.println("Drum pattern for " + DRUM_PARTS.get(i).getPitch() + " : "
+			System.out.println("Drum pattern for " + DRUM_PARTS.get(i).getInstrument() + " : "
 					+ drumPattern.toString());
 			drumMap.put(i, drumPattern);
 		}
@@ -1192,8 +1192,8 @@ public class MelodyGenerator implements JMC {
 
 				drumVelocityPattern.add(velocity);
 			}
-			System.out.println("Drum velocity pattern for " + DRUM_PARTS.get(i).getPitch() + " : "
-					+ drumVelocityPattern.toString());
+			System.out.println("Drum velocity pattern for " + DRUM_PARTS.get(i).getInstrument()
+					+ " : " + drumVelocityPattern.toString());
 			drumVelocityMap.put(i, drumVelocityPattern);
 		}
 		return drumVelocityMap;

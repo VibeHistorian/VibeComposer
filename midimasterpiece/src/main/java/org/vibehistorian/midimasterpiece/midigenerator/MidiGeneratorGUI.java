@@ -1215,74 +1215,7 @@ public class MidiGeneratorGUI extends JFrame
 
 
 					}
-					try {
-						if (useVolumeSliders.isSelected()) {
 
-							double melodyVol = melodyPanel.getVolSlider().getValue() / 100.0;
-							ShortMessage melodyVolumeMessage = new ShortMessage();
-							melodyVolumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, 0, 7,
-									(int) (melodyVol * 127));
-							if (synth != null) {
-								synth.getReceiver().send(melodyVolumeMessage, -1);
-
-							}
-							if (device != null) {
-								device.getReceiver().send(melodyVolumeMessage, -1);
-							}
-
-							for (int i = 0; i < chordPanels.size(); i++) {
-								double vol = chordPanels.get(i).getVolSlider().getValue() / 100.0;
-								ShortMessage volumeMessage = new ShortMessage();
-								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
-										chordPanels.get(i).getMidiChannel() - 1, 7,
-										(int) (vol * 127));
-								if (synth != null) {
-									synth.getReceiver().send(volumeMessage, -1);
-
-								}
-								if (device != null) {
-									device.getReceiver().send(volumeMessage, -1);
-								}
-							}
-
-							for (int i = 0; i < arpPanels.size(); i++) {
-								double vol = arpPanels.get(i).getVolSlider().getValue() / 100.0;
-								ShortMessage volumeMessage = new ShortMessage();
-								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
-										arpPanels.get(i).getMidiChannel() - 1, 7,
-										(int) (vol * 127));
-								if (synth != null) {
-									synth.getReceiver().send(volumeMessage, -1);
-
-								}
-								if (device != null) {
-									device.getReceiver().send(volumeMessage, -1);
-								}
-							}
-
-
-						} else {
-							for (int i = 0; i < 16; i++) {
-								double vol = 1.0;
-								ShortMessage volumeMessage = new ShortMessage();
-								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
-										(int) (vol * 127));
-								if (synth != null) {
-									synth.getReceiver().send(volumeMessage, -1);
-
-								}
-								if (device != null) {
-									device.getReceiver().send(volumeMessage, -1);
-								}
-							}
-						}
-					} catch (InvalidMidiDataException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (MidiUnavailableException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
 					try {
 						sleep(25);
 					} catch (InterruptedException e) {
@@ -1410,6 +1343,96 @@ public class MidiGeneratorGUI extends JFrame
 		add(playSavePanel, constraints);
 	}
 
+	private void startVolumeSliderThread() {
+		Thread cycle = new Thread() {
+
+			public void run() {
+
+				while (sequencer != null && sequencer.isRunning()) {
+
+					try {
+						if (useVolumeSliders.isSelected()) {
+
+							double melodyVol = melodyPanel.getVolSlider().getValue() / 100.0;
+							ShortMessage melodyVolumeMessage = new ShortMessage();
+							melodyVolumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, 0, 7,
+									(int) (melodyVol * 127));
+							if (synth != null && synth.isOpen()) {
+								synth.getReceiver().send(melodyVolumeMessage, -1);
+
+							}
+							if (midiMode.isSelected() && device != null) {
+								device.getReceiver().send(melodyVolumeMessage, -1);
+							}
+
+							for (int i = 0; i < chordPanels.size(); i++) {
+								double vol = chordPanels.get(i).getVolSlider().getValue() / 100.0;
+								ShortMessage volumeMessage = new ShortMessage();
+								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
+										chordPanels.get(i).getMidiChannel() - 1, 7,
+										(int) (vol * 127));
+								if (synth != null && synth.isOpen()) {
+									synth.getReceiver().send(volumeMessage, -1);
+
+								}
+								if (midiMode.isSelected() && device != null) {
+									device.getReceiver().send(volumeMessage, -1);
+								}
+							}
+
+							for (int i = 0; i < arpPanels.size(); i++) {
+								double vol = arpPanels.get(i).getVolSlider().getValue() / 100.0;
+								ShortMessage volumeMessage = new ShortMessage();
+								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
+										arpPanels.get(i).getMidiChannel() - 1, 7,
+										(int) (vol * 127));
+								if (synth != null && synth.isOpen()) {
+									synth.getReceiver().send(volumeMessage, -1);
+
+								}
+								if (midiMode.isSelected() && device != null) {
+									device.getReceiver().send(volumeMessage, -1);
+								}
+							}
+
+
+						} else {
+							for (int i = 0; i < 16; i++) {
+								double vol = 1.0;
+								ShortMessage volumeMessage = new ShortMessage();
+								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
+										(int) (vol * 127));
+								if (synth != null && synth.isOpen()) {
+									synth.getReceiver().send(volumeMessage, -1);
+
+								}
+								if (midiMode.isSelected() && device != null) {
+									device.getReceiver().send(volumeMessage, -1);
+								}
+							}
+						}
+					} catch (InvalidMidiDataException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						return;
+					} catch (MidiUnavailableException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						return;
+					}
+					try {
+						sleep(25);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						return;
+					}
+				}
+				System.out.println("ENDED VOLUME SLIDER THREAD!");
+			}
+		};
+		cycle.start();
+	}
+
 	private void switchAllOnComposeCheckboxes(boolean state) {
 		randomChordsGenerateOnCompose.setSelected(state);
 		randomArpsGenerateOnCompose.setSelected(state);
@@ -1465,8 +1488,14 @@ public class MidiGeneratorGUI extends JFrame
 		if (midiMode.isSelected()) {
 			synth = null;
 		} else {
+			if (sequencer != null) {
+				sequencer.close();
+				sequencer = null;
+			}
+
 			if (device != null) {
 				device.close();
+				System.out.println("CLOSED DEVICE/SEQUENCER!");
 			}
 			device = null;
 		}
@@ -1621,6 +1650,7 @@ public class MidiGeneratorGUI extends JFrame
 			slider.setPaintTicks(true);
 			slider.setMajorTickSpacing(
 					slider.getMaximum() / MelodyGenerator.ARRANGEMENT.getSections().size());
+			startVolumeSliderThread();
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
@@ -1836,7 +1866,7 @@ public class MidiGeneratorGUI extends JFrame
 						composeMidi(isRegenerateOnly);
 					} catch (Throwable ex) {
 						ex.printStackTrace();
-						throw ex;
+						return null;
 					}
 
 					return null;
@@ -1871,8 +1901,16 @@ public class MidiGeneratorGUI extends JFrame
 		if (ae.getActionCommand() == "StartMidi") {
 			if (sequencer != null) {
 				System.out.println("Starting Midi..");
+				sequencer.stop();
 				sequencer.setTickPosition(0);
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				sequencer.start();
+				startVolumeSliderThread();
 				System.out.println("Started Midi!");
 			} else {
 				System.out.println("Sequencer is NULL!");
@@ -2604,7 +2642,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		for (int i = 0; i < panelCount; i++) {
 			DrumPanel dp = addDrumPanelToLayout();
-			dp.setPitch(pitches.get(i));
+			dp.setInstrument(pitches.get(i));
 			//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 
 
@@ -2628,8 +2666,8 @@ public class MidiGeneratorGUI extends JFrame
 
 			int adjustVelocity = -1 * dp.getHitsPerPattern() / dp.getChordSpan();
 
-			if (dp.getPitch() == 35 || dp.getPitch() == 36 || dp.getPitch() == 38
-					|| dp.getPitch() == 40) {
+			if (dp.getInstrument() == 35 || dp.getInstrument() == 36 || dp.getInstrument() == 38
+					|| dp.getInstrument() == 40) {
 				adjustVelocity += 15;
 			}
 
@@ -2645,10 +2683,10 @@ public class MidiGeneratorGUI extends JFrame
 			}
 
 
-			if (dp.getPitch() > 41) {
+			if (dp.getInstrument() > 41) {
 				dp.setDelay(slide);
 			}
-			if (dp.getPitch() > 39) {
+			if (dp.getInstrument() > 39) {
 				dp.setSwingPercent(swingPercent);
 				dp.setExceptionChance(drumPanelGenerator.nextInt(10));
 			} else {

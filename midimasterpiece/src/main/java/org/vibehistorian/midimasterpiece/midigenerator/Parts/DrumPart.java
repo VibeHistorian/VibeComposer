@@ -7,7 +7,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "drumPart")
 @XmlType(propOrder = {})
 public class DrumPart extends InstPart {
-	private int pitch = 36;
 
 	private int swingPercent = 50;
 
@@ -15,15 +14,6 @@ public class DrumPart extends InstPart {
 
 	public DrumPart() {
 
-	}
-
-
-	public int getPitch() {
-		return pitch;
-	}
-
-	public void setPitch(int pitch) {
-		this.pitch = pitch;
 	}
 
 

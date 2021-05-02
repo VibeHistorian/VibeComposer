@@ -28,23 +28,21 @@ public class DrumPanel extends InstPanel {
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);
 	}
 
-	private JTextField pitch = new JTextField("36", 2);
-
 
 	private JTextField swingPercent = new JTextField("50", 2);
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 
 	public void initComponents() {
 
-		instrument.initInstPool(POOL.ALL);
+		instrument.initInstPool(POOL.DRUM);
+		instrument.setInstrument(35);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
 
 		initDefaults();
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		this.add(muteInst);
-		this.add(new JLabel("Pitch"));
-		this.add(pitch);
+		this.add(instrument);
 		this.add(new JLabel("Hits#"));
 		this.add(hitsPerPattern);
 		this.add(new JLabel("Chords#"));
@@ -86,18 +84,9 @@ public class DrumPanel extends InstPanel {
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);
 	}
 
-	public int getPitch() {
-		return Integer.valueOf(pitch.getText());
-	}
-
-	public void setPitch(int pitch) {
-		this.pitch.setText(String.valueOf(pitch));
-	}
-
 	public DrumPart toDrumPart(int lastRandomSeed) {
 		DrumPart part = new DrumPart();
 		part.setFromPanel(this, lastRandomSeed);
-		part.setPitch(getPitch());
 
 		part.setVelocityPattern(getIsVelocityPattern());
 		part.setSwingPercent(getSwingPercent());
@@ -109,8 +98,6 @@ public class DrumPanel extends InstPanel {
 	public void setFromDrumPart(DrumPart part) {
 
 		setFromInstPart(part);
-
-		setPitch(part.getPitch());
 
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
