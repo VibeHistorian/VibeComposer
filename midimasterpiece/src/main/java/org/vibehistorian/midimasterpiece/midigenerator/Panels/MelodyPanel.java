@@ -47,6 +47,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public MelodyPanel(ActionListener l) {
+		initComponents();
 	}
 
 

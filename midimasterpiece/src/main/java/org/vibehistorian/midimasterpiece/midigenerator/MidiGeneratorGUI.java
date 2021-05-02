@@ -554,7 +554,6 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void initMelody(int startY, int anchorSide) {
 		melodyPanel = new MelodyPanel(this);
-		melodyPanel.initComponents();
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -750,7 +749,6 @@ public class MidiGeneratorGUI extends JFrame
 
 	private void initBass(int startY, int anchorSide) {
 		bassPanel = new BassPanel(this);
-		bassPanel.initComponents();
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -2499,9 +2497,7 @@ public class MidiGeneratorGUI extends JFrame
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
 
 		// parts
-		melodyPanel = new MelodyPanel(this);
 		melodyPanel.setFromMelodyPart(guiConfig.getMelodyPart());
-		bassPanel = new BassPanel(this);
 		bassPanel.setFromBassPart(guiConfig.getBassPart());
 
 		addChords.setSelected(guiConfig.isChordsEnable());
@@ -2566,7 +2562,6 @@ public class MidiGeneratorGUI extends JFrame
 
 		DrumPanel drumJPanel = new DrumPanel(this);
 		drumJPanel.setPanelOrder(panelOrder);
-		drumJPanel.initComponents();
 		drumPanels.add(drumJPanel);
 		((JPanel) drumScrollPane.getViewport().getView()).add(drumJPanel);
 		return drumJPanel;
@@ -2733,7 +2728,6 @@ public class MidiGeneratorGUI extends JFrame
 
 		ChordPanel cp = new ChordPanel(this);
 		cp.setPanelOrder(panelOrder);
-		cp.initComponents();
 		chordPanels.add(cp);
 		((JPanel) chordScrollPane.getViewport().getView()).add(cp);
 		return cp;
@@ -2873,7 +2867,6 @@ public class MidiGeneratorGUI extends JFrame
 
 		ArpPanel ap = new ArpPanel(this);
 		ap.setPanelOrder(panelOrder);
-		ap.initComponents();
 		arpPanels.add(ap);
 		((JPanel) arpScrollPane.getViewport().getView()).add(ap);
 		return ap;

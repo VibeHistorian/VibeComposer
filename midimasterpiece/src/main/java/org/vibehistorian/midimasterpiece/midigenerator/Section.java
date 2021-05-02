@@ -2,9 +2,16 @@ package org.vibehistorian.midimasterpiece.midigenerator;
 
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+
 import jm.music.data.CPhrase;
 import jm.music.data.Phrase;
 
+@XmlRootElement(name = "section")
+@XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
 		INTRO, VERSE1, VERSE2, CHORUS1, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS2, ADVANCED_CHORUS,
@@ -45,6 +52,7 @@ public class Section {
 		this.drumChance = drumChance;
 	}
 
+	@XmlAttribute
 	public String getType() {
 		return type;
 	}
@@ -105,6 +113,7 @@ public class Section {
 		return melody;
 	}
 
+	@XmlTransient
 	public void setMelody(Phrase melody) {
 		this.melody = melody;
 	}
@@ -113,6 +122,7 @@ public class Section {
 		return bass;
 	}
 
+	@XmlTransient
 	public void setBass(CPhrase bass) {
 		this.bass = bass;
 	}
@@ -121,6 +131,7 @@ public class Section {
 		return chords;
 	}
 
+	@XmlTransient
 	public void setChords(List<CPhrase> chords) {
 		this.chords = chords;
 	}
@@ -129,6 +140,7 @@ public class Section {
 		return arps;
 	}
 
+	@XmlTransient
 	public void setArps(List<CPhrase> arps) {
 		this.arps = arps;
 	}
@@ -137,6 +149,7 @@ public class Section {
 		return drums;
 	}
 
+	@XmlTransient
 	public void setDrums(List<Phrase> drums) {
 		this.drums = drums;
 	}
@@ -145,6 +158,7 @@ public class Section {
 		return chordSlash;
 	}
 
+	@XmlTransient
 	public void setChordSlash(CPhrase chordSlash) {
 		this.chordSlash = chordSlash;
 	}

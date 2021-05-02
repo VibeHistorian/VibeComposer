@@ -51,6 +51,7 @@ public class BassPanel extends InstPanel {
 	}
 
 	public BassPanel(ActionListener l) {
+		initComponents();
 	}
 
 

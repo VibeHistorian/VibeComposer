@@ -70,6 +70,8 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public ArpPanel(ActionListener l) {
+		initComponents();
+
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}

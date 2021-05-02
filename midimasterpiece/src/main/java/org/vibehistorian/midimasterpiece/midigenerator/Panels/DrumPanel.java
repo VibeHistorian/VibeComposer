@@ -77,6 +77,7 @@ public class DrumPanel extends InstPanel {
 	}
 
 	public DrumPanel(ActionListener l) {
+		initComponents();
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}

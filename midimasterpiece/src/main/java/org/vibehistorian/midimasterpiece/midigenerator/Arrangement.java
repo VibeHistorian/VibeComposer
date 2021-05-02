@@ -7,15 +7,19 @@ import java.util.List;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 import org.vibehistorian.midimasterpiece.midigenerator.Section.SectionType;
 
+@XmlRootElement(name = "arrangement")
+@XmlType(propOrder = {})
 public class Arrangement {
-	private static final List<SectionType> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
+	/*private static final List<SectionType> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
 			Arrays.asList(new SectionType[] { SectionType.INTRO, SectionType.VERSE1,
 					SectionType.CHORUS1, SectionType.BREAKDOWN, SectionType.CHORUS2,
 					SectionType.ADVANCED_CHORUS, SectionType.OUTRO }));
-
+	*/
 	private List<Section> sections = new ArrayList<>();
 	private boolean previewChorus = false;
 
