@@ -521,7 +521,7 @@ public class MidiGeneratorGUI extends JFrame
 
 
 		maxJump = new JTextField("4", 2);
-		maxExceptions = new JTextField("1", 2);
+		maxExceptions = new JTextField("2", 2);
 		melodySettingsPanel.add(new JLabel("Max Note Jump:"));
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(new JLabel("Max Exceptions:"));
@@ -568,7 +568,7 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel chordSettingsPanel = new JPanel();
 		chordSettingsPanel.add(new JLabel("CHORDS"));
 
-		addChords = new JCheckBox("Enable", true);
+		addChords = new JCheckBox("Enable", false);
 		chordSettingsPanel.add(addChords);
 
 		JButton chordAddJButton = new JButton("+Chord");
@@ -760,7 +760,7 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.add(new JLabel("DRUMS "));
 
-		addDrums = new JCheckBox("Enable", true);
+		addDrums = new JCheckBox("Enable", false);
 		drumsPanel.add(addDrums);
 		//drumsPanel.add(drumInst);
 
@@ -853,7 +853,7 @@ public class MidiGeneratorGUI extends JFrame
 	private void initArrangementSettings(int startY, int anchorSide) {
 		JPanel arrangementSettings = new JPanel();
 
-		useArrangement = new JCheckBox("Arrange", true);
+		useArrangement = new JCheckBox("Arrange", false);
 		arrangementSettings.add(useArrangement);
 
 		JButton resetArrangementBtn = new JButton("Reset arr.");
@@ -1294,7 +1294,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		useVolumeSliders = new JCheckBox("Use vol. sliders", true);
 
-		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", true);
+		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", false);
 		midiModeDevices = new JComboBox<String>();
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
@@ -2240,6 +2240,7 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			MelodyGenerator.CHORD_SETTINGS = getChordSettingsFromUI();
 
+			// to include it in the XML when saving, but not when generating
 			if (!addChords.isSelected()) {
 				MelodyGenerator.gc.setChordParts(new ArrayList<>());
 			}

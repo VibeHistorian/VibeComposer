@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Vector;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -81,8 +82,159 @@ public class MelodyGenerator implements JMC {
 
 
 	public MelodyGenerator(GUIConfig gc) {
-		this.gc = gc;
+		MelodyGenerator.gc = gc;
 	}
+
+	private int selectClosestIndexFromChord(int[] chord, int previousNotePitch,
+			boolean directionUp) {
+		if (directionUp) {
+			for (int i = 0; i < chord.length; i++) {
+				if (previousNotePitch < chord[i]) {
+					return i;
+				}
+			}
+			return chord.length - 1;
+		} else {
+			for (int i = chord.length - 1; i > 0; i--) {
+				if (previousNotePitch > chord[i]) {
+					return i;
+				}
+			}
+			return 0;
+		}
+
+	}
+
+	private int pickRandomBetweenIndexesInclusive(int[] chord, int startIndex, int endIndex,
+			Random generator) {
+		//clamp
+		if (startIndex < 0)
+			startIndex = 0;
+		if (endIndex > chord.length - 1) {
+			endIndex = chord.length - 1;
+		}
+		int index = generator.nextInt(endIndex - startIndex + 1) + startIndex;
+		return chord[index];
+	}
+
+	public List<Note> generateMelodySkeletonFromChords(List<int[]> chords) {
+		//155816678 seed
+
+		// TODO: parameter in melodypart like max jump 
+		int MAX_JUMP_SKELETON_CHORD = 2;
+
+		int seed = gc.getMelodyPart().getPatternSeed();
+
+		List<Note> noteList = new ArrayList<>();
+		Random generator = new Random(seed);
+		Random velocityGenerator = new Random(seed + 1);
+		Random exceptionGenerator = new Random(seed + 2);
+
+		double[] melodySkeletonDurations = { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
+				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
+		int[] melodySkeletonDurationWeights = { 25, 50, 85, 100 };
+
+		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(chords, false);
+
+		// TODO: fix here if 6 not enough
+		List<int[]> stretchedChords = chords.stream()
+				.map(e -> MidiUtils.convertChordToLength(e, 6, true)).collect(Collectors.toList());
+		int previousNotePitch = 0;
+
+		for (int i = 0; i < stretchedChords.size(); i++) {
+			Rhythm rhythm = new Rhythm(seed, progressionDurations.get(i), melodySkeletonDurations,
+					melodySkeletonDurationWeights);
+			List<Double> durations = rhythm.regenerateDurations();
+			int[] chord = stretchedChords.get(i);
+			int exceptionCounter = gc.getMaxExceptions();
+			boolean direction = directions.get(i);
+			for (int j = 0; j < durations.size(); j++) {
+
+				if (j > 0 && exceptionCounter > 0 && exceptionGenerator.nextInt(100) < 33) {
+					previousNotePitch = 0;
+					exceptionCounter--;
+				}
+				int pitch = 0;
+				int startIndex = 0;
+				int endIndex = chord.length - 1;
+				if (previousNotePitch != 0) {
+					// up, or down
+					if (direction) {
+						startIndex = selectClosestIndexFromChord(chord, previousNotePitch, true);
+						while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
+							endIndex--;
+						}
+					} else {
+						endIndex = selectClosestIndexFromChord(chord, previousNotePitch, false);
+						while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
+							startIndex++;
+						}
+					}
+				}
+				pitch = pickRandomBetweenIndexesInclusive(chord, startIndex, endIndex, generator);
+				Note n = new Note(pitch, durations.get(j),
+						velocityGenerator
+								.nextInt(1 + gc.getMelodyPart().getVelocityMax()
+										- gc.getMelodyPart().getVelocityMin())
+								+ gc.getMelodyPart().getVelocityMin());
+				//TODO: make sound good
+				previousNotePitch = pitch;
+				noteList.add(n);
+			}
+
+		}
+
+		return noteList;
+	}
+
+	private int getAllowedPitchFromRange(int min, int max) {
+		List<Integer> allowedPitches = gc.getScaleMode().absoluteNotesC;
+		int adjustment = 0;
+		while (max < allowedPitches.get(0)) {
+			min += 12;
+			max += 12;
+			adjustment -= 12;
+		}
+		while (min > allowedPitches.get(allowedPitches.size() - 1)) {
+			min -= 12;
+			max -= 12;
+			adjustment += 12;
+		}
+		for (Integer i : allowedPitches) {
+			if (i >= min && i <= max) {
+				return i + adjustment;
+			}
+		}
+		return 40;
+	}
+
+	public List<Note> convertMelodySkeletonToFullMelody(List<Note> skeleton) {
+		Random splitGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 4);
+		int splitChance = 20;
+		List<Note> fullMelody = new ArrayList<>();
+		for (int i = 0; i < skeleton.size(); i++) {
+			if (skeleton.get(i).getDuration() > Durations.SIXTEENTH_NOTE
+					&& splitGenerator.nextInt(100) < splitChance) {
+				Note n1 = skeleton.get(i);
+				Note n2 = skeleton.get((i + 1) % skeleton.size());
+				int pitch = 0;
+				if (n1.getPitch() >= n2.getPitch()) {
+					pitch = getAllowedPitchFromRange(n2.getPitch(), n1.getPitch());
+				} else {
+					pitch = getAllowedPitchFromRange(n1.getPitch(), n2.getPitch());
+				}
+				double duration = 10.0 * n1.getDuration() / 18.0;
+				Note n1split1 = new Note(n1.getPitch(), duration, n1.getDynamic());
+				Note n1split2 = new Note(pitch, duration, n1.getDynamic() - 10);
+				fullMelody.add(n1split1);
+				fullMelody.add(n1split2);
+			} else {
+				fullMelody.add(skeleton.get(i));
+			}
+		}
+		return fullMelody;
+	}
+
 
 	public Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
 			Note previousNote, Random generator, double durationLeft) {
@@ -354,7 +506,7 @@ public class MelodyGenerator implements JMC {
 		}
 
 		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
-				generatedRootProgression);
+				generatedRootProgression, true);
 		//System.out.println(directionProgression.toString());
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression);
 
@@ -418,7 +570,7 @@ public class MelodyGenerator implements JMC {
 							seed += (j % 2);
 						}
 						Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j));
-						for (Double dur : bassRhythm.getDurations()) {
+						for (Double dur : bassRhythm.regenerateDurations()) {
 							cphraseBassRoot.addChord(
 									new int[] { generatedRootProgression.get(j)[0] }, dur,
 									bassDynamics.nextInt(velSpace)
@@ -436,7 +588,7 @@ public class MelodyGenerator implements JMC {
 			// generate+fill melody
 			if (!gc.getMelodyPart().isMuted()) {
 				Note previousChordsNote = null;
-				for (int j = 0; j < generatedRootProgression.size(); j++) {
+				for (int j = 10; j < generatedRootProgression.size(); j++) {
 					Note[] generatedMelody = null;
 
 					if ((i > 0 || j > 0) && (j == 0 || j == 2)) {
@@ -460,6 +612,10 @@ public class MelodyGenerator implements JMC {
 					}
 					melodyPhrase.addNoteList(generatedMelody);
 				}
+
+				List<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression);
+				List<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
+				melodyPhrase.addNoteList(new Vector<>(fullMelody), true);
 			}
 
 
@@ -733,15 +889,24 @@ public class MelodyGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	private List<Boolean> generateMelodyDirectionsFromChordProgression(
-			List<int[]> generatedRootProgression) {
+	private List<Boolean> generateMelodyDirectionsFromChordProgression(List<int[]> progression,
+			boolean roots) {
 
 		List<Boolean> ascDirectionList = new ArrayList<>();
 
-		for (int i = 0; i < generatedRootProgression.size(); i++) {
-			int current = generatedRootProgression.get(i)[0];
-			int next = generatedRootProgression.get((i + 1) % generatedRootProgression.size())[0];
-			ascDirectionList.add(Boolean.valueOf(current <= next));
+		for (int i = 0; i < progression.size(); i++) {
+			if (roots) {
+				int current = progression.get(i)[0];
+				int next = progression.get((i + 1) % progression.size())[0];
+				ascDirectionList.add(Boolean.valueOf(current <= next));
+			} else {
+				int current = progression.get(i)[progression.get(i).length - 1];
+				int next = progression.get((i + 1)
+						% progression.size())[progression.get((i + 1) % progression.size()).length
+								- 1];
+				ascDirectionList.add(Boolean.valueOf(current <= next));
+			}
+
 		}
 
 		return ascDirectionList;

@@ -51,8 +51,8 @@ public class GUIConfig {
 	private String customChordDurations = "2,2,2,2";
 
 	// individual parts
-	private MelodyPart melodyPart;
-	private BassPart bassPart;
+	private MelodyPart melodyPart = new MelodyPart();
+	private BassPart bassPart = new BassPart();
 
 	// tabbed parts
 	private List<ChordPart> chordParts = new ArrayList<>();
