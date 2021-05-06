@@ -35,7 +35,10 @@ public class GUIConfig {
 
 	// melody gen
 	private int maxNoteJump = 4;
-	private int maxExceptions = 1;
+	private int maxExceptions = 2;
+	private int melodyAlternateRhythmChance = 50;
+	private int melodySameRhythmChance = 20;
+	private int melodyUseOldAlgoChance = 20;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 
@@ -337,6 +340,30 @@ public class GUIConfig {
 
 	public void setEnable9th13th(boolean enable9th13th) {
 		this.enable9th13th = enable9th13th;
+	}
+
+	public int getMelodyAlternateRhythmChance() {
+		return melodyAlternateRhythmChance;
+	}
+
+	public void setMelodyAlternateRhythmChance(int melodyAlternateRhythmChance) {
+		this.melodyAlternateRhythmChance = melodyAlternateRhythmChance;
+	}
+
+	public int getMelodySameRhythmChance() {
+		return melodySameRhythmChance;
+	}
+
+	public void setMelodySameRhythmChance(int melodySameRhythmChance) {
+		this.melodySameRhythmChance = melodySameRhythmChance;
+	}
+
+	public int getMelodyUseOldAlgoChance() {
+		return melodyUseOldAlgoChance;
+	}
+
+	public void setMelodyUseOldAlgoChance(int melodyUseOldAlgoChance) {
+		this.melodyUseOldAlgoChance = melodyUseOldAlgoChance;
 	}
 
 

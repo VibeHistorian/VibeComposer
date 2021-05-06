@@ -189,6 +189,9 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox arpCopyMelodyInst;
 	JTextField maxJump;
 	JTextField maxExceptions;
+	JTextField melodyAlternateRhythmChance;
+	JTextField melodySameRhythmChance;
+	JTextField melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox melodyFirstNoteFromChord;
 	JCheckBox randomChordNote;
@@ -522,10 +525,20 @@ public class MidiGeneratorGUI extends JFrame
 
 		maxJump = new JTextField("4", 2);
 		maxExceptions = new JTextField("2", 2);
+		melodyAlternateRhythmChance = new JTextField("100", 2);
+		melodySameRhythmChance = new JTextField("0", 2);
+		melodyUseOldAlgoChance = new JTextField("0", 2);
 		melodySettingsPanel.add(new JLabel("Max Note Jump:"));
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(new JLabel("Max Exceptions:"));
 		melodySettingsPanel.add(maxExceptions);
+		melodySettingsPanel.add(new JLabel("Alternate rhythm%:"));
+		melodySettingsPanel.add(melodyAlternateRhythmChance);
+		melodySettingsPanel.add(new JLabel("Doubled rhythm%:"));
+		melodySettingsPanel.add(melodySameRhythmChance);
+		melodySettingsPanel.add(new JLabel("Legacy algorithm%:"));
+		melodySettingsPanel.add(melodyUseOldAlgoChance);
+
 		randomChordNote = new JCheckBox();
 		randomChordNote.setSelected(true);
 		melodyFirstNoteFromChord = new JCheckBox();
@@ -568,7 +581,7 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel chordSettingsPanel = new JPanel();
 		chordSettingsPanel.add(new JLabel("CHORDS"));
 
-		addChords = new JCheckBox("Enable", false);
+		addChords = new JCheckBox("Enable", true);
 		chordSettingsPanel.add(addChords);
 
 		JButton chordAddJButton = new JButton("+Chord");
@@ -2238,7 +2251,6 @@ public class MidiGeneratorGUI extends JFrame
 				MelodyGenerator.userChords.clear();
 				MelodyGenerator.userChordsDurations.clear();
 			}
-			MelodyGenerator.CHORD_SETTINGS = getChordSettingsFromUI();
 
 			// to include it in the XML when saving, but not when generating
 			if (!addChords.isSelected()) {
@@ -2438,6 +2450,10 @@ public class MidiGeneratorGUI extends JFrame
 		// melody
 		guiConfig.setMaxNoteJump(Integer.valueOf(maxJump.getText()));
 		guiConfig.setMaxExceptions(Integer.valueOf(maxExceptions.getText()));
+		guiConfig.setMelodyAlternateRhythmChance(
+				Integer.valueOf(melodyAlternateRhythmChance.getText()));
+		guiConfig.setMelodySameRhythmChance(Integer.valueOf(melodySameRhythmChance.getText()));
+		guiConfig.setMelodyUseOldAlgoChance(Integer.valueOf(melodyUseOldAlgoChance.getText()));
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 
@@ -2491,6 +2507,10 @@ public class MidiGeneratorGUI extends JFrame
 		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
 		maxJump.setText(String.valueOf(guiConfig.getMaxNoteJump()));
 		maxExceptions.setText(String.valueOf(guiConfig.getMaxExceptions()));
+		melodyAlternateRhythmChance
+				.setText(String.valueOf(guiConfig.getMelodyAlternateRhythmChance()));
+		melodySameRhythmChance.setText(String.valueOf(guiConfig.getMelodySameRhythmChance()));
+		melodyUseOldAlgoChance.setText(String.valueOf(guiConfig.getMelodyUseOldAlgoChance()));
 
 		// chords
 		spiceChance.setText(String.valueOf(guiConfig.getSpiceChance()));
