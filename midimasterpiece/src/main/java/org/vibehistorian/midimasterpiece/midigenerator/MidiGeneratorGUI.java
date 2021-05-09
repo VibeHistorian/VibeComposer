@@ -1211,14 +1211,25 @@ public class MidiGeneratorGUI extends JFrame
 					}
 					if (arrangement != null && slider.getMaximum() > 0) {
 						int val = slider.getValue();
-						int divisor = slider.getMaximum() / arrangement.getSections().size();
-						int sectIndex = val / divisor;
-						if (sectIndex >= arrangement.getSections().size()) {
+						int arrangementSize = arrangement.getSections().stream()
+								.mapToInt(e -> e.getMeasures()).sum();
+						int divisor = slider.getMaximum() / arrangementSize;
+						int sectIndex = (val - 1) / divisor;
+						if (sectIndex >= arrangementSize) {
 							sectionText.setText("End");
 						} else {
 							if (useArrangement.isSelected()) {
-								String sectionName = arrangement.getSections()
-										.get((val - 1) / divisor).getType().toString();
+								Section sec = null;
+								int sizeCounter = 0;
+								for (Section arrSec : arrangement.getSections()) {
+									if (sizeCounter == sectIndex
+											|| (sectIndex < sizeCounter + arrSec.getMeasures())) {
+										sec = arrSec;
+										break;
+									}
+									sizeCounter += arrSec.getMeasures();
+								}
+								String sectionName = sec.getType().toString();
 								sectionText.setText(sectionName);
 							} else {
 								sectionText.setText("ALL INST");
@@ -1685,7 +1696,8 @@ public class MidiGeneratorGUI extends JFrame
 			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
-			slider.setMajorTickSpacing(slider.getMaximum() / arrangement.getSections().size());
+			slider.setMajorTickSpacing(slider.getMaximum()
+					/ arrangement.getSections().stream().mapToInt(e -> e.getMeasures()).sum());
 			//TODO: track soloing?
 			//sequencer.setTrackSolo(1, true);
 			startVolumeSliderThread();

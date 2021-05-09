@@ -116,7 +116,31 @@ public class MelodyGenerator implements JMC {
 		return chord[index];
 	}
 
-	public Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures) {
+
+	private List<Boolean> generateMelodyDirectionsFromChordProgression(List<int[]> progression,
+			boolean roots) {
+
+		List<Boolean> ascDirectionList = new ArrayList<>();
+
+		for (int i = 0; i < progression.size(); i++) {
+			if (roots) {
+				int current = progression.get(i)[0];
+				int next = progression.get((i + 1) % progression.size())[0];
+				ascDirectionList.add(Boolean.valueOf(current <= next));
+			} else {
+				int current = progression.get(i)[progression.get(i).length - 1];
+				int next = progression.get((i + 1)
+						% progression.size())[progression.get((i + 1) % progression.size()).length
+								- 1];
+				ascDirectionList.add(Boolean.valueOf(current <= next));
+			}
+
+		}
+
+		return ascDirectionList;
+	}
+
+	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures) {
 		//155816678 seed
 
 		// TODO: parameter in melodypart like max jump 
@@ -236,7 +260,7 @@ public class MelodyGenerator implements JMC {
 		return 40;
 	}
 
-	public Vector<Note> convertMelodySkeletonToFullMelody(Vector<Note> skeleton) {
+	private Vector<Note> convertMelodySkeletonToFullMelody(Vector<Note> skeleton) {
 		Random splitGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 4);
 		Random pauseGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 5);
 		int splitChance = 20;
@@ -294,7 +318,7 @@ public class MelodyGenerator implements JMC {
 	}
 
 
-	public Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
+	private Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
 			Note previousNote, Random generator, double durationLeft) {
 		// int randPitch = generator.nextInt(8);
 		int velMin = gc.getMelodyPart().getVelocityMin();
@@ -358,7 +382,7 @@ public class MelodyGenerator implements JMC {
 
 	}
 
-	public List<int[]> generateChordProgression(int mainGeneratorSeed, boolean fixedLength,
+	private List<int[]> generateChordProgression(int mainGeneratorSeed, boolean fixedLength,
 			double maxDuration) {
 
 		if (!userChords.isEmpty()) {
@@ -489,7 +513,7 @@ public class MelodyGenerator implements JMC {
 		return cpr;
 	}
 
-	public Note[] generateMelodyForChord(int[] chord, double maxDuration, Random generator,
+	private Note[] generateMelodyForChord(int[] chord, double maxDuration, Random generator,
 			Note previousChordsNote, boolean isAscDirection) {
 		List<Integer> scale = MidiUtils.transposeScale(MELODY_SCALE, 0, false);
 
@@ -787,7 +811,7 @@ public class MelodyGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	private CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
+	protected CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
 		CPhrase chordSlashCPhrase = new CPhrase();
 		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
 		for (int i = 0; i < measures; i++) {
@@ -813,7 +837,7 @@ public class MelodyGenerator implements JMC {
 
 	}
 
-	private CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
+	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
 		CPhrase cphraseBassRoot = new CPhrase();
 		for (int i = 0; i < measures; i++) {
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
@@ -844,7 +868,7 @@ public class MelodyGenerator implements JMC {
 
 	}
 
-	private Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
+	protected Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
 			int measures) {
 		Phrase melodyPhrase = new Phrase();
 		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
@@ -901,30 +925,9 @@ public class MelodyGenerator implements JMC {
 		return melodyPhrase;
 	}
 
-	private List<Boolean> generateMelodyDirectionsFromChordProgression(List<int[]> progression,
-			boolean roots) {
 
-		List<Boolean> ascDirectionList = new ArrayList<>();
-
-		for (int i = 0; i < progression.size(); i++) {
-			if (roots) {
-				int current = progression.get(i)[0];
-				int next = progression.get((i + 1) % progression.size())[0];
-				ascDirectionList.add(Boolean.valueOf(current <= next));
-			} else {
-				int current = progression.get(i)[progression.get(i).length - 1];
-				int next = progression.get((i + 1)
-						% progression.size())[progression.get((i + 1) % progression.size()).length
-								- 1];
-				ascDirectionList.add(Boolean.valueOf(current <= next));
-			}
-
-		}
-
-		return ascDirectionList;
-	}
-
-	private CPhrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression, int measures) {
+	protected CPhrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression,
+			int measures) {
 		int mainGeneratorSeed = (int) gc.getRandomSeed();
 		CPhrase cpr = new CPhrase();
 		for (int i = 0; i < measures; i++) {
@@ -1028,7 +1031,7 @@ public class MelodyGenerator implements JMC {
 		return cpr;
 	}
 
-	private CPhrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures) {
+	protected CPhrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures) {
 
 		CPhrase arpCPhrase = new CPhrase();
 
@@ -1103,7 +1106,7 @@ public class MelodyGenerator implements JMC {
 	}
 
 
-	private Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures) {
+	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures) {
 		Phrase drumPhrase = new Phrase();
 
 		int chordsCount = actualProgression.size();
@@ -1185,11 +1188,11 @@ public class MelodyGenerator implements JMC {
 		return interspersed;
 	}
 
-	public void applyRuleToMelody(Note[] melody, Consumer<Note[]> melodyRule) {
+	private void applyRuleToMelody(Note[] melody, Consumer<Note[]> melodyRule) {
 		melodyRule.accept(melody);
 	}
 
-	public Note[] deepCopyNotes(Note[] originals, int[] chord, Random melodyGenerator) {
+	private Note[] deepCopyNotes(Note[] originals, int[] chord, Random melodyGenerator) {
 		Note[] copied = new Note[originals.length];
 		for (int i = 0; i < originals.length; i++) {
 			Note n = originals[i];
@@ -1204,14 +1207,11 @@ public class MelodyGenerator implements JMC {
 		return copied;
 	}
 
-	public Map<String, List<Integer>> generateArpMap(int mainGeneratorSeed, boolean needToReport,
+	private Map<String, List<Integer>> generateArpMap(int mainGeneratorSeed, boolean needToReport,
 			ArpPart ap) {
-		Random mainGenerator = new Random(mainGeneratorSeed);
-
-		Random uiGenerator1arpCount = new Random(mainGenerator.nextInt());
-		Random uiGenerator2arpPattern = new Random(mainGenerator.nextInt());
-		Random uiGenerator3arpOctave = new Random(mainGenerator.nextInt());
-		Random uiGenerator4arpPauses = new Random(mainGenerator.nextInt());
+		Random uiGenerator2arpPattern = new Random(mainGeneratorSeed + 1);
+		Random uiGenerator3arpOctave = new Random(mainGeneratorSeed + 2);
+		Random uiGenerator4arpPauses = new Random(mainGeneratorSeed + 3);
 
 		int[] arpPatternArray = IntStream.range(0, ap.getHitsPerPattern()).toArray();
 		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24)
@@ -1284,7 +1284,7 @@ public class MelodyGenerator implements JMC {
 		return arpMap;
 	}
 
-	public List<Integer> generateDrumPatternFromPart(DrumPart dp) {
+	private List<Integer> generateDrumPatternFromPart(DrumPart dp) {
 		Random uiGenerator1drumPattern = new Random(dp.getPatternSeed() + dp.getOrder() - 1);
 		List<Integer> premadePattern = dp.getPattern().getPatternByLength(dp.getHitsPerPattern());
 		List<Integer> drumPattern = new ArrayList<>();
@@ -1309,7 +1309,7 @@ public class MelodyGenerator implements JMC {
 		return drumPattern;
 	}
 
-	public List<Integer> generateDrumVelocityPatternFromPart(DrumPart dp) {
+	private List<Integer> generateDrumVelocityPatternFromPart(DrumPart dp) {
 		Random uiGenerator1drumVelocityPattern = new Random(dp.getPatternSeed() + dp.getOrder());
 		List<Integer> drumVelocityPattern = new ArrayList<>();
 
