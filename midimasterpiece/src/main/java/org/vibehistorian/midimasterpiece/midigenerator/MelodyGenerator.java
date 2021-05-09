@@ -591,7 +591,7 @@ public class MelodyGenerator implements JMC {
 			rand.setSeed(mainGeneratorSeed);
 			if (!gc.getMelodyPart().isMuted()) {
 				if (rand.nextInt(100) < sec.getMelodyChance()) {
-					sec.setMelody(generateMelody(actualProgression, generatedRootProgression,
+					sec.setMelody(fillMelody(actualProgression, generatedRootProgression,
 							sec.getMeasures()));
 				} else {
 					sec.setMelody(emptyPhrase.copy());
@@ -601,7 +601,7 @@ public class MelodyGenerator implements JMC {
 			rand.setSeed(mainGeneratorSeed + 10);
 			if (!gc.getBassPart().isMuted()) {
 				if (rand.nextInt(100) < sec.getBassChance()) {
-					sec.setBass(generateBassRoots(generatedRootProgression, sec.getMeasures()));
+					sec.setBass(fillBassRoots(generatedRootProgression, sec.getMeasures()));
 				} else {
 					sec.setBass(emptyCPhrase.copy());
 				}
@@ -613,7 +613,7 @@ public class MelodyGenerator implements JMC {
 				for (int i = 0; i < gc.getChordParts().size(); i++) {
 					rand.setSeed(mainGeneratorSeed + 100 + gc.getChordParts().get(i).getOrder());
 					if (rand.nextInt(100) < sec.getChordChance()) {
-						copiedCPhrases.add(generateChordsFromPart(gc.getChordParts().get(i),
+						copiedCPhrases.add(fillChordsFromPart(gc.getChordParts().get(i),
 								actualProgression, sec.getMeasures()));
 					} else {
 						copiedCPhrases.add(emptyCPhrase.copy());
@@ -636,14 +636,14 @@ public class MelodyGenerator implements JMC {
 					if (i == 0 && gc.getArpParts().get(i).getInstrument() == gc.getMelodyPart()
 							.getInstrument()) {
 						if (counter > arr.getSections().size() / 2) {
-							copiedCPhrases.add(generateArpFromPart(gc.getArpParts().get(i),
+							copiedCPhrases.add(fillArpFromPart(gc.getArpParts().get(i),
 									actualProgression, sec.getMeasures()));
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
 					} else {
 						if (rand.nextInt(100) < sec.getArpChance()) {
-							copiedCPhrases.add(generateArpFromPart(gc.getArpParts().get(i),
+							copiedCPhrases.add(fillArpFromPart(gc.getArpParts().get(i),
 									actualProgression, sec.getMeasures()));
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
@@ -659,7 +659,7 @@ public class MelodyGenerator implements JMC {
 				for (int i = 0; i < gc.getDrumParts().size(); i++) {
 					rand.setSeed(mainGeneratorSeed + 300 + gc.getDrumParts().get(i).getOrder());
 					if (rand.nextInt(100) < sec.getDrumChance()) {
-						copiedPhrases.add(generateDrumsFromPart(gc.getDrumParts().get(i),
+						copiedPhrases.add(fillDrumsFromPart(gc.getDrumParts().get(i),
 								actualProgression, sec.getMeasures()));
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
@@ -813,7 +813,7 @@ public class MelodyGenerator implements JMC {
 
 	}
 
-	private CPhrase generateBassRoots(List<int[]> generatedRootProgression, int measures) {
+	private CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
 		CPhrase cphraseBassRoot = new CPhrase();
 		for (int i = 0; i < measures; i++) {
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
@@ -844,14 +844,14 @@ public class MelodyGenerator implements JMC {
 
 	}
 
-	private Phrase generateMelody(List<int[]> actualProgression,
-			List<int[]> generatedRootProgression, int measures) {
+	private Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
+			int measures) {
 		Phrase melodyPhrase = new Phrase();
 		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
 				generatedRootProgression, true);
 		Random algoGenerator = new Random(gc.getRandomSeed());
 		Note previousChordsNote = null;
-		if (algoGenerator.nextInt() < gc.getMelodyUseOldAlgoChance()) {
+		if (algoGenerator.nextInt(100) < gc.getMelodyUseOldAlgoChance()) {
 			Note[] pair024 = null;
 			Note[] pair15 = null;
 			Random melodyGenerator = new Random();
@@ -924,8 +924,7 @@ public class MelodyGenerator implements JMC {
 		return ascDirectionList;
 	}
 
-	private CPhrase generateChordsFromPart(ChordPart cp, List<int[]> actualProgression,
-			int measures) {
+	private CPhrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression, int measures) {
 		int mainGeneratorSeed = (int) gc.getRandomSeed();
 		CPhrase cpr = new CPhrase();
 		for (int i = 0; i < measures; i++) {
@@ -1029,7 +1028,7 @@ public class MelodyGenerator implements JMC {
 		return cpr;
 	}
 
-	private CPhrase generateArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures) {
+	private CPhrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures) {
 
 		CPhrase arpCPhrase = new CPhrase();
 
@@ -1104,7 +1103,7 @@ public class MelodyGenerator implements JMC {
 	}
 
 
-	private Phrase generateDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures) {
+	private Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures) {
 		Phrase drumPhrase = new Phrase();
 
 		int chordsCount = actualProgression.size();
