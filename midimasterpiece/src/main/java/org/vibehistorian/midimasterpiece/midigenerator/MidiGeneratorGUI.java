@@ -128,6 +128,7 @@ public class MidiGeneratorGUI extends JFrame
 
 
 	private Synthesizer synth = null;
+	private boolean isSoundbankSynth = false;
 
 	private GUIConfig guiConfig = new GUIConfig();
 
@@ -1517,14 +1518,17 @@ public class MidiGeneratorGUI extends JFrame
 		if (midiMode.isSelected()) {
 			synth = null;
 		} else {
-			if (sequencer != null) {
-				sequencer.stop();
-				sequencer.close();
-				sequencer = null;
-				System.out.println("CLOSED SEQUENCER!");
-			}
-
 			if (device != null) {
+				if (synth != null) {
+					synth.close();
+					synth = null;
+				}
+				if (sequencer != null) {
+					sequencer.stop();
+					sequencer.close();
+					sequencer = null;
+					System.out.println("CLOSED SEQUENCER!");
+				}
 				device.close();
 				device = null;
 				System.out.println("CLOSED DEVICE!");
@@ -1649,9 +1653,7 @@ public class MidiGeneratorGUI extends JFrame
 
 
 			} else {
-				if (synth != null) {
-					// soundbank synth already opened correctly, do nothing
-				} else if (synthesizer != null) {
+				if (synthesizer != null) {
 					// open soundbank synth
 					for (Transmitter tm : sequencer.getTransmitters()) {
 						tm.close();
@@ -1659,7 +1661,10 @@ public class MidiGeneratorGUI extends JFrame
 
 					sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
 					synth = synthesizer;
+					isSoundbankSynth = true;
 
+				} else if (synth != null) {
+					// do nothing, all set
 				} else {
 					// use default system synth
 					for (Transmitter tm : sequencer.getTransmitters()) {
@@ -1668,6 +1673,7 @@ public class MidiGeneratorGUI extends JFrame
 					synth = MidiSystem.getSynthesizer();
 					synth.open();
 					sequencer.getTransmitter().setReceiver(synth.getReceiver());
+					isSoundbankSynth = false;
 
 
 				}
@@ -1694,7 +1700,7 @@ public class MidiGeneratorGUI extends JFrame
 		try {
 			File soundbankFile = new File(soundbankFilename.getText());
 			if (soundbankFile.isFile()) {
-				if (synth == null || synth.equals(MidiSystem.getSynthesizer())) {
+				if (synth == null || !isSoundbankSynth) {
 					synth = null;
 					soundfont = MidiSystem.getSoundbank(
 							new BufferedInputStream(new FileInputStream(soundbankFile)));
@@ -1706,6 +1712,10 @@ public class MidiGeneratorGUI extends JFrame
 				}
 				System.out.println("Playing using soundbank: " + soundbankFilename.getText());
 			} else {
+				if (synth != null) {
+					synth.unloadAllInstruments(soundfont);
+					synth.close();
+				}
 				synthesizer = null;
 				synth = null;
 				soundfont = null;
@@ -1890,31 +1900,33 @@ public class MidiGeneratorGUI extends JFrame
 		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate") {
 			boolean isRegenerateOnly = ae.getActionCommand() == "Regenerate";
 			switchMidiButtons(false);
-			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			composeMidi(isRegenerateOnly);
+			switchMidiButtons(true);
+			currentChords
+					.setText("Chords:[" + StringUtils.join(MelodyGenerator.chordInts, ",") + "]");
+			pack();
+			repaint();
+			/*SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 				@Override
 				protected Void doInBackground()
 						throws InterruptedException, MidiUnavailableException, IOException {
 					try {
-						composeMidi(isRegenerateOnly);
+						
 					} catch (Throwable ex) {
 						ex.printStackTrace();
 						return null;
 					}
-
+			
 					return null;
 				}
-
+			
 				@Override
 				protected void done() {
-					switchMidiButtons(true);
-					currentChords.setText(
-							"Chords:[" + StringUtils.join(MelodyGenerator.chordInts, ",") + "]");
-					pack();
-					repaint();
+					
 				}
 			};
-
-			worker.execute();
+			
+			worker.execute();*/
 
 		}
 
@@ -1980,7 +1992,7 @@ public class MidiGeneratorGUI extends JFrame
 				File makeSavedDir = new File(MIDIS_FOLDER + ratingDirectory);
 				makeSavedDir.mkdir();
 
-				String soundbankLoadedString = (synth != null) ? "SB_" : "";
+				String soundbankLoadedString = (isSoundbankSynth) ? "SB_" : "";
 
 				String finalFilePath = currentMidi.getParent() + ratingDirectory + f.format(date)
 						+ "_" + soundbankLoadedString + currentMidi.getName();
@@ -2029,7 +2041,8 @@ public class MidiGeneratorGUI extends JFrame
 					Synthesizer defSynth;
 					f.applyPattern("yyMMdd-HH-mm-ss");
 					Date date = new Date();
-					defSynth = (synth != null) ? synth : MidiSystem.getSynthesizer();
+					defSynth = (isSoundbankSynth && synth != null) ? synth
+							: MidiSystem.getSynthesizer();
 					String soundbankOptional = (soundfont != null) ? "SB_" : "";
 					String filename = f.format(date) + "_" + soundbankOptional
 							+ currentMidi.getName();
