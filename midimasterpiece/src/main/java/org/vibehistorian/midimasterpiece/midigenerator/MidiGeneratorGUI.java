@@ -2619,14 +2619,11 @@ public class MidiGeneratorGUI extends JFrame
 			slide = drumPanelGenerator.nextInt(100) - 50;
 		}
 
-		int swingPercent = 50;
+		int swingPercent = 50
+				+ drumPanelGenerator
+						.nextInt(Integer.valueOf(randomDrumMaxSwingAdjust.getText()) * 2 + 1)
+				- Integer.valueOf(randomDrumMaxSwingAdjust.getText());
 
-		if (true) {
-			swingPercent = 50
-					+ drumPanelGenerator
-							.nextInt(Integer.valueOf(randomDrumMaxSwingAdjust.getText()) * 2 + 1)
-					- Integer.valueOf(randomDrumMaxSwingAdjust.getText());
-		}
 
 		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
@@ -2647,16 +2644,23 @@ public class MidiGeneratorGUI extends JFrame
 			dp.setChordSpan(drumPanelGenerator.nextInt(2) + 1);
 			int patternOrder = 0;
 			// use pattern in half the cases if checkbox selected
-			if (drumPanelGenerator.nextBoolean() == true) {
-				if (randomDrumPattern.isSelected()) {
-					patternOrder = drumPanelGenerator.nextInt(RhythmPattern.values().length);
+
+			if (randomDrumPattern.isSelected()) {
+				int[] patternWeights = { 15, 65, 85, 100, 100 };
+				int randomWeight = drumPanelGenerator.nextInt(100);
+				for (int j = 0; j < patternWeights.length; j++) {
+					if (randomWeight < patternWeights[j]) {
+						patternOrder = j;
+						break;
+					}
 				}
 			}
+
 			int hits = 4;
-			while (drumPanelGenerator.nextInt(10) < 5 && hits < 32) {
+			while (drumPanelGenerator.nextBoolean() && hits < 16) {
 				hits *= 2;
 			}
-			if ((hits / dp.getChordSpan() >= 16)) {
+			if ((hits / dp.getChordSpan() >= 8)) {
 				hits /= 2;
 			}
 
