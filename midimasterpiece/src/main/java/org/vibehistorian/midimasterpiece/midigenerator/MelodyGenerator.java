@@ -811,62 +811,6 @@ public class MelodyGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	protected CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
-		CPhrase chordSlashCPhrase = new CPhrase();
-		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
-		for (int i = 0; i < measures; i++) {
-			// fill slash chord slashes
-			for (int j = 0; j < actualProgression.size(); j++) {
-				// pick random chord, take first/root pitch
-				boolean isChordSlash = chordSlashGenerator.nextInt(100) < gc.getChordSlashChance();
-				int slashChord = chordSlashGenerator.nextInt(6) + 1;
-				int[] mappedChord = MidiUtils.mappedChord(slashChord);
-				if (isChordSlash) {
-					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },
-							progressionDurations.get(j));
-				} else {
-					chordSlashCPhrase.addChord(new int[] { Integer.MIN_VALUE },
-							progressionDurations.get(j));
-				}
-			}
-		}
-		Mod.transpose(chordSlashCPhrase, -24 + gc.getTranspose());
-		chordSlashCPhrase.setStartTime(START_TIME_DELAY);
-		return chordSlashCPhrase;
-
-
-	}
-
-	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
-		CPhrase cphraseBassRoot = new CPhrase();
-		for (int i = 0; i < measures; i++) {
-			for (int j = 0; j < generatedRootProgression.size(); j++) {
-				Random bassDynamics = new Random(gc.getRandomSeed());
-				int velSpace = gc.getBassPart().getVelocityMax()
-						- gc.getBassPart().getVelocityMin();
-				if (gc.getBassPart().isUseRhythm()) {
-					int seed = (int) gc.getRandomSeed();
-					if (gc.getBassPart().isAlternatingRhythm()) {
-						seed += (j % 2);
-					}
-					Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j));
-					for (Double dur : bassRhythm.regenerateDurations()) {
-						cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
-								dur,
-								bassDynamics.nextInt(velSpace) + gc.getBassPart().getVelocityMin());
-					}
-				} else {
-					cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
-							progressionDurations.get(j),
-							bassDynamics.nextInt(velSpace) + gc.getBassPart().getVelocityMin());
-				}
-			}
-		}
-		Mod.transpose(cphraseBassRoot, -24 + gc.getTranspose());
-		cphraseBassRoot.setStartTime(START_TIME_DELAY);
-		return cphraseBassRoot;
-
-	}
 
 	protected Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
 			int measures) {
@@ -925,6 +869,36 @@ public class MelodyGenerator implements JMC {
 		return melodyPhrase;
 	}
 
+	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
+		CPhrase cphraseBassRoot = new CPhrase();
+		for (int i = 0; i < measures; i++) {
+			for (int j = 0; j < generatedRootProgression.size(); j++) {
+				Random bassDynamics = new Random(gc.getRandomSeed());
+				int velSpace = gc.getBassPart().getVelocityMax()
+						- gc.getBassPart().getVelocityMin();
+				if (gc.getBassPart().isUseRhythm()) {
+					int seed = (int) gc.getRandomSeed();
+					if (gc.getBassPart().isAlternatingRhythm()) {
+						seed += (j % 2);
+					}
+					Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j));
+					for (Double dur : bassRhythm.regenerateDurations()) {
+						cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
+								dur,
+								bassDynamics.nextInt(velSpace) + gc.getBassPart().getVelocityMin());
+					}
+				} else {
+					cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
+							progressionDurations.get(j),
+							bassDynamics.nextInt(velSpace) + gc.getBassPart().getVelocityMin());
+				}
+			}
+		}
+		Mod.transpose(cphraseBassRoot, -24 + gc.getTranspose());
+		cphraseBassRoot.setStartTime(START_TIME_DELAY);
+		return cphraseBassRoot;
+
+	}
 
 	protected CPhrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression,
 			int measures) {
@@ -1165,6 +1139,31 @@ public class MelodyGenerator implements JMC {
 
 	}
 
+	protected CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
+		CPhrase chordSlashCPhrase = new CPhrase();
+		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
+		for (int i = 0; i < measures; i++) {
+			// fill slash chord slashes
+			for (int j = 0; j < actualProgression.size(); j++) {
+				// pick random chord, take first/root pitch
+				boolean isChordSlash = chordSlashGenerator.nextInt(100) < gc.getChordSlashChance();
+				int slashChord = chordSlashGenerator.nextInt(6) + 1;
+				int[] mappedChord = MidiUtils.mappedChord(slashChord);
+				if (isChordSlash) {
+					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },
+							progressionDurations.get(j));
+				} else {
+					chordSlashCPhrase.addChord(new int[] { Integer.MIN_VALUE },
+							progressionDurations.get(j));
+				}
+			}
+		}
+		Mod.transpose(chordSlashCPhrase, -24 + gc.getTranspose());
+		chordSlashCPhrase.setStartTime(START_TIME_DELAY);
+		return chordSlashCPhrase;
+
+
+	}
 
 	private <T> List<T> partOfList(int part, int partCount, List<T> list) {
 		double size = Math.ceil(list.size() / ((double) partCount));
