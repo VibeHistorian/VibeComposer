@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpGenSettings;
@@ -36,6 +37,8 @@ import jm.util.View;
 import jm.util.Write;
 
 public class MelodyGenerator implements JMC {
+
+	private static final boolean debugEnabled = false;
 
 	// big G
 	public static GUIConfig gc;
@@ -558,8 +561,12 @@ public class MelodyGenerator implements JMC {
 				(!gc.getMelodyPart().isMuted()) ? gc.getMelodyPart().getInstrument() : 0, 0);
 		Part bassRoots = new Part("BassRoots",
 				(!gc.getBassPart().isMuted()) ? gc.getBassPart().getInstrument() : 74, 8);
+		// do not copy instrument unless it's pluck
 		Part chordSlash = new Part("ChordSlash",
-				(gc.getChordParts().size() > 0) ? gc.getChordParts().get(0).getInstrument() : 4,
+				(gc.getChordParts().size() > 0
+						&& gc.getChordParts().get(0).getInstPool() == POOL.PLUCK)
+								? gc.getChordParts().get(0).getInstrument()
+								: 4,
 				10);
 
 		List<Part> chordParts = new ArrayList<>();
@@ -588,6 +595,15 @@ public class MelodyGenerator implements JMC {
 		}
 
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression);
+
+		if (!debugEnabled) {
+			PrintStream dummyStream = new PrintStream(new OutputStream() {
+				public void write(int b) {
+					// NO-OP
+				}
+			});
+			System.setOut(dummyStream);
+		}
 
 		// Arrangement process..
 		System.out.println("Starting arrangement..");

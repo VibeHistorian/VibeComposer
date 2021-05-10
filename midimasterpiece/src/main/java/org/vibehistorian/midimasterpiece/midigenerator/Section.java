@@ -171,5 +171,10 @@ public class Section {
 		this.startTime = startTime;
 	}
 
+	public Section deepCopy() {
+		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
+				drumChance);
+		return sec;
+	}
 
 }

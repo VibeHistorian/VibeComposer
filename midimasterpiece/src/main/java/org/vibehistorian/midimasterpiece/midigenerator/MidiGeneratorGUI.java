@@ -844,7 +844,7 @@ public class MidiGeneratorGUI extends JFrame
 
 	}
 
-	private void handleArrangementAction(String action) {
+	private void handleArrangementAction(String action, int seed) {
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 		}
@@ -858,8 +858,8 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		if (action.equalsIgnoreCase("ArrangementRandomize")) {
-			// TODO : MelodyGenerator.ARRANGEMENT.generateRandom();
 			// on compose -> this must happen before compose part
+			arrangement.randomizeFully(seed, 30, 30, 2, 4, 15);
 		}
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 	}
@@ -889,9 +889,8 @@ public class MidiGeneratorGUI extends JFrame
 		removeLastSectionBtn.addActionListener(this);
 		removeLastSectionBtn.setActionCommand("ArrangementRemoveLast");
 
-		// TODO: impl arrangement randomization first
-		/*arrangementSettings.add(randomizeArrangementBtn);
-		arrangementSettings.add(randomizeArrangementOnCompose);*/
+		arrangementSettings.add(randomizeArrangementBtn);
+		arrangementSettings.add(randomizeArrangementOnCompose);
 
 		arrangementSettings.add(addLastSectionBtn);
 		arrangementSettings.add(removeLastSectionBtn);
@@ -1579,6 +1578,10 @@ public class MidiGeneratorGUI extends JFrame
 		System.out.println("Melody seed: " + masterpieceSeed);
 		lastRandomSeed = masterpieceSeed;
 
+		if (randomizeArrangementOnCompose.isSelected()) {
+			handleArrangementAction("ArrangementRandomize", lastRandomSeed);
+		}
+
 		MelodyGenerator melodyGen = new MelodyGenerator(copyGUItoConfig());
 		fillUserParameters();
 
@@ -1724,7 +1727,7 @@ public class MidiGeneratorGUI extends JFrame
 				}
 				System.out.println("Playing using soundbank: " + soundbankFilename.getText());
 			} else {
-				if (synth != null) {
+				if (synth != null && isSoundbankSynth) {
 					synth.unloadAllInstruments(soundfont);
 					synth.close();
 				}
@@ -1912,33 +1915,33 @@ public class MidiGeneratorGUI extends JFrame
 		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate") {
 			boolean isRegenerateOnly = ae.getActionCommand() == "Regenerate";
 			switchMidiButtons(false);
-			composeMidi(isRegenerateOnly);
-			switchMidiButtons(true);
-			currentChords
-					.setText("Chords:[" + StringUtils.join(MelodyGenerator.chordInts, ",") + "]");
-			pack();
-			repaint();
-			/*SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 				@Override
 				protected Void doInBackground()
 						throws InterruptedException, MidiUnavailableException, IOException {
 					try {
-						
+						composeMidi(isRegenerateOnly);
 					} catch (Throwable ex) {
 						ex.printStackTrace();
 						return null;
 					}
-			
+
 					return null;
 				}
-			
+
 				@Override
 				protected void done() {
-					
+					switchMidiButtons(true);
+					currentChords.setText(
+							"Chords:[" + StringUtils.join(MelodyGenerator.chordInts, ",") + "]");
+					pack();
+					repaint();
 				}
 			};
-			
-			worker.execute();*/
+
+			worker.execute();
 
 		}
 
@@ -2207,7 +2210,8 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		if (ae.getActionCommand().startsWith("Arrangement")) {
-			handleArrangementAction(ae.getActionCommand());
+			Random arrGen = new Random();
+			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt());
 		}
 
 
