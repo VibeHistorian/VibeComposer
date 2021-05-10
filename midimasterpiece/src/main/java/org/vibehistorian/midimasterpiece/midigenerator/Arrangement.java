@@ -66,7 +66,7 @@ public class Arrangement {
 	private static final List<String> variableSections = new ArrayList<>(
 			Arrays.asList(new String[] { "VERSE2", "CHORUS2", "CLIMAX", "CHILL", "OUTRO" }));
 
-	public void randomizeFully(int seed, int replacementChance, int insertChance,
+	public void randomizeFully(int maxLength, int seed, int replacementChance, int insertChance,
 			int maxInsertsPerSection, int maxInsertsTotal, int variabilityChance) {
 		Random arrGen = new Random(seed);
 		List<String> newArrangementSkeleton = new ArrayList<>(MANDATORY_SECTIONS_ORDER);
@@ -80,10 +80,12 @@ public class Arrangement {
 		}
 		List<String> fullArrangement = new ArrayList<>();
 		int totalInsertsCounter = 0;
-		for (String s : newArrangementSkeleton) {
+		for (int i = 0; i < newArrangementSkeleton.size(); i++) {
+			String s = newArrangementSkeleton.get(i);
 			int sectionInsertsCounter = 0;
 			fullArrangement.add(s);
-			if (afterinsertsMap.containsKey(s) && totalInsertsCounter < maxInsertsTotal) {
+			if (afterinsertsMap.containsKey(s) && totalInsertsCounter < maxInsertsTotal
+					&& (fullArrangement.size() + newArrangementSkeleton.size() - i) < maxLength) {
 				while (sectionInsertsCounter < maxInsertsPerSection
 						&& arrGen.nextInt(100) < insertChance) {
 					String[] options = afterinsertsMap.get(s);

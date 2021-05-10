@@ -472,10 +472,6 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(new JLabel("Soundbank name:"));
 		macroParams.add(soundbankFilename);
 
-		pieceLength = new JTextField("1", 2);
-		macroParams.add(new JLabel("Piece Length:"));
-		macroParams.add(pieceLength);
-
 		transposeScore = new JTextField("0", 3);
 		macroParams.add(new JLabel("Transpose:"));
 		macroParams.add(transposeScore);
@@ -844,22 +840,27 @@ public class MidiGeneratorGUI extends JFrame
 
 	}
 
-	private void handleArrangementAction(String action, int seed) {
+	private void handleArrangementAction(String action, int seed, int maxLength) {
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
+			pieceLength.setText("12");
 		}
 
 		if (action.equalsIgnoreCase("ArrangementAddLast")) {
 			arrangement.addSectionLast();
+			if (arrangement.getSections().size() > maxLength) {
+				pieceLength.setText("" + ++maxLength);
+			}
 		}
 
 		if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
 			arrangement.removeSectionLast(scrollableArrangementTable);
+			//pieceLength.setText("" + --maxLength);
 		}
 
 		if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// on compose -> this must happen before compose part
-			arrangement.randomizeFully(seed, 30, 30, 2, 4, 15);
+			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
 		}
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 	}
@@ -869,6 +870,10 @@ public class MidiGeneratorGUI extends JFrame
 
 		useArrangement = new JCheckBox("Arrange", false);
 		arrangementSettings.add(useArrangement);
+
+		pieceLength = new JTextField("12", 2);
+		arrangementSettings.add(new JLabel("Max Length(8+):"));
+		arrangementSettings.add(pieceLength);
 
 		JButton resetArrangementBtn = new JButton("Reset arr.");
 		resetArrangementBtn.addActionListener(this);
@@ -1579,7 +1584,8 @@ public class MidiGeneratorGUI extends JFrame
 		lastRandomSeed = masterpieceSeed;
 
 		if (randomizeArrangementOnCompose.isSelected()) {
-			handleArrangementAction("ArrangementRandomize", lastRandomSeed);
+			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
+					Integer.valueOf(pieceLength.getText()));
 		}
 
 		MelodyGenerator melodyGen = new MelodyGenerator(copyGUItoConfig());
@@ -2211,7 +2217,8 @@ public class MidiGeneratorGUI extends JFrame
 
 		if (ae.getActionCommand().startsWith("Arrangement")) {
 			Random arrGen = new Random();
-			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt());
+			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
+					Integer.valueOf(pieceLength.getText()));
 		}
 
 
