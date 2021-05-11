@@ -1154,6 +1154,7 @@ public class MelodyGenerator implements JMC {
 
 					int pitch = chord[k % chord.length] + octaveAdjustment
 							+ partOfList(chordSpanPart, ap.getChordSpan(), arpOctavePattern).get(p);
+					pitch += extraTranspose;
 					if (partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
 							.get(p) == 0) {
 						pitch = Integer.MIN_VALUE;
@@ -1167,12 +1168,11 @@ public class MelodyGenerator implements JMC {
 						}
 					}
 					if (durationNow + chordDurationArp > progressionDurations.get(j)) {
-						arpCPhrase.addChord(new int[] { pitch + extraTranspose },
+						arpCPhrase.addChord(new int[] { pitch },
 								progressionDurations.get(j) - durationNow, velocity);
 						break;
 					} else {
-						arpCPhrase.addChord(new int[] { pitch + extraTranspose }, chordDurationArp,
-								velocity);
+						arpCPhrase.addChord(new int[] { pitch }, chordDurationArp, velocity);
 					}
 					durationNow += chordDurationArp;
 				}
