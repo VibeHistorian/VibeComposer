@@ -1583,7 +1583,7 @@ public class MidiGeneratorGUI extends JFrame
 		System.out.println("Melody seed: " + masterpieceSeed);
 		lastRandomSeed = masterpieceSeed;
 
-		if (randomizeArrangementOnCompose.isSelected()) {
+		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
 		}

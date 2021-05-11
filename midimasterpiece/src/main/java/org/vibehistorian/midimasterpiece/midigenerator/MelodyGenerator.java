@@ -38,7 +38,7 @@ import jm.util.Write;
 
 public class MelodyGenerator implements JMC {
 
-	private static final boolean debugEnabled = false;
+	private static final boolean debugEnabled = true;
 
 	// big G
 	public static GUIConfig gc;
@@ -78,6 +78,8 @@ public class MelodyGenerator implements JMC {
 
 	private List<Integer> MELODY_SCALE = MidiUtils.cIonianScale4;
 	private List<Double> progressionDurations = new ArrayList<>();
+	private List<int[]> chordProgression = new ArrayList<>();
+	private List<int[]> rootProgression = new ArrayList<>();
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
@@ -587,15 +589,18 @@ public class MelodyGenerator implements JMC {
 			drumParts.add(p);
 		}
 
-		// Generate chords..
+
 		List<int[]> generatedRootProgression = generateChordProgression(mainGeneratorSeed,
 				gc.isFixedDuration(), 4 * Durations.HALF_NOTE);
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
+		List<Double> actualDurations = progressionDurations;
 
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression);
 
+
+		PrintStream originalStream = System.out;
 		if (!debugEnabled) {
 			PrintStream dummyStream = new PrintStream(new OutputStream() {
 				public void write(int b) {
@@ -613,12 +618,36 @@ public class MelodyGenerator implements JMC {
 		}
 		int counter = 0;
 
+		// prepare progressions
+		chordProgression = actualProgression;
+		rootProgression = generatedRootProgression;
+		List<Double> altProgressionDurations = new ArrayList<>();
+		List<int[]> altChordProgression = new ArrayList<>();
+		List<int[]> altRootProgression = new ArrayList<>();
+
+		fillAlternates(altProgressionDurations, altChordProgression, altRootProgression);
+
 		Arrangement arr = (gc.getArrangement().isPreviewChorus()) ? new Arrangement()
 				: gc.getArrangement();
 		for (Section sec : arr.getSections()) {
+			Random variationGen = new Random(mainGeneratorSeed);
 			sec.setStartTime(measureLength * counter);
 			counter += sec.getMeasures();
 			Random rand = new Random();
+
+			int usedMeasures = sec.getMeasures();
+
+			if (sec.getMeasures() > 1 && variationGen.nextInt(100) < Section.VARIATION_CHANCE) {
+				System.out.println("USING VARIATION!");
+				progressionDurations = altProgressionDurations;
+				rootProgression = altRootProgression;
+				chordProgression = altChordProgression;
+				usedMeasures = 1;
+			} else {
+				progressionDurations = actualDurations;
+				rootProgression = generatedRootProgression;
+				chordProgression = actualProgression;
+			}
 
 			// copied into empty sections
 			Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
@@ -631,8 +660,7 @@ public class MelodyGenerator implements JMC {
 			rand.setSeed(mainGeneratorSeed);
 			if (!gc.getMelodyPart().isMuted()) {
 				if (rand.nextInt(100) < sec.getMelodyChance()) {
-					sec.setMelody(fillMelody(actualProgression, generatedRootProgression,
-							sec.getMeasures()));
+					sec.setMelody(fillMelody(chordProgression, rootProgression, usedMeasures));
 				} else {
 					sec.setMelody(emptyPhrase.copy());
 				}
@@ -641,7 +669,7 @@ public class MelodyGenerator implements JMC {
 			rand.setSeed(mainGeneratorSeed + 10);
 			if (!gc.getBassPart().isMuted()) {
 				if (rand.nextInt(100) < sec.getBassChance()) {
-					sec.setBass(fillBassRoots(generatedRootProgression, sec.getMeasures()));
+					sec.setBass(fillBassRoots(rootProgression, usedMeasures));
 				} else {
 					sec.setBass(emptyCPhrase.copy());
 				}
@@ -654,14 +682,14 @@ public class MelodyGenerator implements JMC {
 					rand.setSeed(mainGeneratorSeed + 100 + gc.getChordParts().get(i).getOrder());
 					if (rand.nextInt(100) < sec.getChordChance()) {
 						copiedCPhrases.add(fillChordsFromPart(gc.getChordParts().get(i),
-								actualProgression, sec.getMeasures()));
+								chordProgression, usedMeasures));
 					} else {
 						copiedCPhrases.add(emptyCPhrase.copy());
 					}
 				}
 				sec.setChords(copiedCPhrases);
 				if (rand.nextInt(100) < sec.getChordChance()) {
-					sec.setChordSlash(fillChordSlash(actualProgression, sec.getMeasures()));
+					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
 					sec.setChordSlash(emptyCPhrase.copy());
 				}
@@ -677,14 +705,14 @@ public class MelodyGenerator implements JMC {
 							.getInstrument()) {
 						if (counter > arr.getSections().size() / 2) {
 							copiedCPhrases.add(fillArpFromPart(gc.getArpParts().get(i),
-									actualProgression, sec.getMeasures()));
+									chordProgression, usedMeasures));
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
 					} else {
 						if (rand.nextInt(100) < sec.getArpChance()) {
 							copiedCPhrases.add(fillArpFromPart(gc.getArpParts().get(i),
-									actualProgression, sec.getMeasures()));
+									chordProgression, usedMeasures));
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
@@ -700,7 +728,7 @@ public class MelodyGenerator implements JMC {
 					rand.setSeed(mainGeneratorSeed + 300 + gc.getDrumParts().get(i).getOrder());
 					if (rand.nextInt(100) < sec.getDrumChance()) {
 						copiedPhrases.add(fillDrumsFromPart(gc.getDrumParts().get(i),
-								actualProgression, sec.getMeasures()));
+								chordProgression, usedMeasures));
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
 					}
@@ -790,7 +818,6 @@ public class MelodyGenerator implements JMC {
 		}
 
 		// write midi without log
-		PrintStream originalStream = System.out;
 
 		PrintStream dummyStream = new PrintStream(new OutputStream() {
 			public void write(int b) {
@@ -827,6 +854,28 @@ public class MelodyGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
+
+	private void fillAlternates(List<Double> altProgressionDurations,
+			List<int[]> altChordProgression, List<int[]> altRootProgression) {
+		// TODO: other variations on how to generate alternates?
+
+		// 1: chord trick, max two measures
+		// 60 30 4 1 -> 60 30 1 - , 60 30 4 1
+		for (int i = 0; i < 2; i++) {
+			altProgressionDurations.addAll(progressionDurations);
+			altChordProgression.addAll(chordProgression);
+			altRootProgression.addAll(rootProgression);
+		}
+		double duration = progressionDurations.get(progressionDurations.size() - 1)
+				+ progressionDurations.get(progressionDurations.size() - 2);
+		altProgressionDurations.set(progressionDurations.size() - 2, duration);
+		altProgressionDurations.remove(progressionDurations.size() - 1);
+
+		altChordProgression.remove(progressionDurations.size() - 2);
+		altRootProgression.remove(progressionDurations.size() - 2);
+
+
+	}
 
 	protected Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
 			int measures) {

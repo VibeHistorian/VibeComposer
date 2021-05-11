@@ -18,8 +18,11 @@ public class Section {
 		OUTRO;
 	}
 
+	public static final int VARIATION_CHANCE = 30;
+
 	private String type;
 	private int measures;
+	private boolean useVariation = false;
 
 	private double startTime;
 
@@ -29,6 +32,7 @@ public class Section {
 	private int arpChance = 50;
 	private int drumChance = 50;
 
+	// data (transient)
 	private Phrase melody;
 	private CPhrase bass;
 	private List<CPhrase> chords;
@@ -175,6 +179,14 @@ public class Section {
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);
 		return sec;
+	}
+
+	public boolean isUseVariation() {
+		return useVariation;
+	}
+
+	public void setUseVariation(boolean useVariation) {
+		this.useVariation = useVariation;
 	}
 
 }
