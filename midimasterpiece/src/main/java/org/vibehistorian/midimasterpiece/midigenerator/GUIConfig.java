@@ -23,6 +23,7 @@ public class GUIConfig {
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
+	private int arrangementVariationChance = 30;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -35,7 +36,10 @@ public class GUIConfig {
 
 	// melody gen
 	private int maxNoteJump = 4;
-	private int maxExceptions = 1;
+	private int maxExceptions = 2;
+	private int melodyAlternateRhythmChance = 50;
+	private int melodySameRhythmChance = 20;
+	private int melodyUseOldAlgoChance = 20;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 
@@ -51,8 +55,8 @@ public class GUIConfig {
 	private String customChordDurations = "2,2,2,2";
 
 	// individual parts
-	private MelodyPart melodyPart;
-	private BassPart bassPart;
+	private MelodyPart melodyPart = new MelodyPart();
+	private BassPart bassPart = new BassPart();
 
 	// tabbed parts
 	private List<ChordPart> chordParts = new ArrayList<>();
@@ -337,6 +341,38 @@ public class GUIConfig {
 
 	public void setEnable9th13th(boolean enable9th13th) {
 		this.enable9th13th = enable9th13th;
+	}
+
+	public int getMelodyAlternateRhythmChance() {
+		return melodyAlternateRhythmChance;
+	}
+
+	public void setMelodyAlternateRhythmChance(int melodyAlternateRhythmChance) {
+		this.melodyAlternateRhythmChance = melodyAlternateRhythmChance;
+	}
+
+	public int getMelodySameRhythmChance() {
+		return melodySameRhythmChance;
+	}
+
+	public void setMelodySameRhythmChance(int melodySameRhythmChance) {
+		this.melodySameRhythmChance = melodySameRhythmChance;
+	}
+
+	public int getMelodyUseOldAlgoChance() {
+		return melodyUseOldAlgoChance;
+	}
+
+	public void setMelodyUseOldAlgoChance(int melodyUseOldAlgoChance) {
+		this.melodyUseOldAlgoChance = melodyUseOldAlgoChance;
+	}
+
+	public int getArrangementVariationChance() {
+		return arrangementVariationChance;
+	}
+
+	public void setArrangementVariationChance(int arrangementVariationChance) {
+		this.arrangementVariationChance = arrangementVariationChance;
 	}
 
 

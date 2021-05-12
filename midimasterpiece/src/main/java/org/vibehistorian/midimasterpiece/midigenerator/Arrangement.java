@@ -2,7 +2,11 @@ package org.vibehistorian.midimasterpiece.midigenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -15,11 +19,100 @@ import org.vibehistorian.midimasterpiece.midigenerator.Section.SectionType;
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
 public class Arrangement {
-	/*private static final List<SectionType> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
-			Arrays.asList(new SectionType[] { SectionType.INTRO, SectionType.VERSE1,
-					SectionType.CHORUS1, SectionType.BREAKDOWN, SectionType.CHORUS2,
-					SectionType.ADVANCED_CHORUS, SectionType.OUTRO }));
-	*/
+	private static final List<String> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
+			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
+					"CHORUS3", "CLIMAX", "OUTRO" }));
+
+	private static final Map<String, Section> defaultSections = new LinkedHashMap<>();
+	static {
+		defaultSections.put("INTRO", new Section("INTRO", 1, 30, 10, 40, 25, 20));
+		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 40, 25, 60));
+		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 100, 90, 70, 35, 70));
+		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 100, 100, 80, 50, 70));
+		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
+		defaultSections.put("CHILL", new Section("CHILL", 1, 30, 50, 60, 70, 20));
+		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 60, 70, 60));
+		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 90, 20, 40, 85));
+		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
+		defaultSections.put("CLIMAX", new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
+		defaultSections.put("OUTRO", new Section("OUTRO", 1, 100, 70, 50, 40, 10));
+	}
+
+	private static final Map<String, String[]> replacementMap = new HashMap<>();
+	static {
+		replacementMap.put("INTRO", new String[] { "BUILDUP", "CHORUS2", "BREAKDOWN", "OUTRO" });
+
+		replacementMap.put("CHORUS1", new String[] { "VERSE2" });
+
+		replacementMap.put("CHORUS2", new String[] { "CHORUS3" });
+
+		replacementMap.put("CHILL", new String[] { "VERSE2" });
+
+		replacementMap.put("BREAKDOWN", new String[] { "OUTRO" });
+	}
+
+
+	private static final Map<String, String[]> afterinsertsMap = new HashMap<>();
+	static {
+		afterinsertsMap.put("INTRO", new String[] { "VERSE1", "VERSE2", "BUILDUP" });
+
+		afterinsertsMap.put("CHORUS1", new String[] { "VERSE2" });
+
+		afterinsertsMap.put("BREAKDOWN", new String[] { "INTRO" });
+
+		afterinsertsMap.put("CHILL", new String[] { "VERSE2", "BUILDUP" });
+	}
+
+	private static final List<String> variableSections = new ArrayList<>(
+			Arrays.asList(new String[] { "VERSE2", "CHORUS2", "CLIMAX", "CHILL", "OUTRO" }));
+
+	public void randomizeFully(int maxLength, int seed, int replacementChance, int insertChance,
+			int maxInsertsPerSection, int maxInsertsTotal, int variabilityChance) {
+		Random arrGen = new Random(seed);
+		List<String> newArrangementSkeleton = new ArrayList<>(MANDATORY_SECTIONS_ORDER);
+		for (int i = 0; i < newArrangementSkeleton.size(); i++) {
+			String s = newArrangementSkeleton.get(i);
+			if (arrGen.nextInt(100) < replacementChance && replacementMap.containsKey(s)) {
+				String[] options = replacementMap.get(s);
+				String pickedOption = options[arrGen.nextInt(options.length)];
+				newArrangementSkeleton.set(i, pickedOption);
+			}
+		}
+		List<String> fullArrangement = new ArrayList<>();
+		int totalInsertsCounter = 0;
+		for (int i = 0; i < newArrangementSkeleton.size(); i++) {
+			String s = newArrangementSkeleton.get(i);
+			int sectionInsertsCounter = 0;
+			fullArrangement.add(s);
+			if (afterinsertsMap.containsKey(s) && totalInsertsCounter < maxInsertsTotal
+					&& (fullArrangement.size() + newArrangementSkeleton.size() - i) < maxLength) {
+				while (sectionInsertsCounter < maxInsertsPerSection
+						&& arrGen.nextInt(100) < insertChance) {
+					String[] options = afterinsertsMap.get(s);
+					String pickedOption = options[arrGen.nextInt(options.length)];
+					fullArrangement.add(pickedOption);
+					sectionInsertsCounter++;
+					totalInsertsCounter++;
+				}
+			}
+		}
+
+		sections.clear();
+		for (String s : fullArrangement) {
+			Section sec = defaultSections.get(s).deepCopy();
+			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
+				// climax gets shortened, others get lengthened
+				if (sec.getMeasures() > 1) {
+					sec.setMeasures(1);
+				} else {
+					sec.setMeasures(2);
+				}
+			}
+			sections.add(sec);
+		}
+	}
+
+
 	private List<Section> sections = new ArrayList<>();
 	private boolean previewChorus = false;
 
@@ -49,16 +142,11 @@ public class Arrangement {
 	public void generateDefaultArrangement() {
 		sections.clear();
 		// type, length, melody%, bass%, chord%, arp%, drum%
-		sections.add(new Section("INTRO", 1, 30, 10, 40, 25, 20));
-		sections.add(new Section("VERSE1", 1, 65, 60, 40, 25, 60));
-		sections.add(new Section("CHORUS1", 1, 100, 90, 70, 35, 70));
-		sections.add(new Section("CHORUS2", 1, 100, 100, 80, 50, 70));
-		sections.add(new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
-		sections.add(new Section("CHILL", 1, 30, 50, 60, 70, 20));
-		sections.add(new Section("VERSE2", 1, 65, 60, 60, 70, 70));
-		sections.add(new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
-		sections.add(new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
-		sections.add(new Section("OUTRO", 1, 100, 70, 50, 40, 10));
+		for (Section s : defaultSections.values()) {
+			if (!s.getType().equals("BUILDUP")) {
+				sections.add(s.deepCopy());
+			}
+		}
 	}
 
 	public TableModel convertToTableModel() {

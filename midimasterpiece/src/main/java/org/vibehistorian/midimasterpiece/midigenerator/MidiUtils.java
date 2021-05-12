@@ -149,6 +149,8 @@ public class MidiUtils {
 	}
 
 	public static int[] transposeChord(int[] chord, int transposeBy) {
+		if (transposeBy == 0)
+			return chord;
 		int[] transposed = Arrays.copyOf(chord, chord.length);
 		for (int i = 0; i < chord.length; i++) {
 			transposed[i] += transposeBy;
