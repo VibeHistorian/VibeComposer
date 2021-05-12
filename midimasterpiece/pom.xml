@@ -95,6 +95,44 @@
             <target>1.8</target>
         </configuration>
     </plugin>
+
+    
+    <plugin>
+          <groupId>com.akathist.maven.plugins.launch4j</groupId>
+          <artifactId>launch4j-maven-plugin</artifactId>
+          <executions>
+             <execution>
+               <id>jmidigen-gui</id>
+               <phase>package</phase>
+               <goals><goal>launch4j</goal></goals>
+               <configuration>
+                 <headerType>gui</headerType>
+                 <outfile>target/midimasterpiece.exe</outfile>
+                 <jar>target/midimasterpiece-1.0-SNAPSHOT-jar-with-dependencies.jar</jar>
+                 <errTitle>enccg</errTitle>
+                 <classPath>
+                   <mainClass>org.vibehistorian.midimasterpiece.midigenerator.MidiGeneratorGUI</mainClass>
+                 </classPath>
+                 <jre>
+                   <minVersion>1.8.0</minVersion>
+                 </jre>
+                 <versionInfo>
+                   <fileVersion>1.1.1.1</fileVersion>
+                   <txtFileVersion>1.1</txtFileVersion>
+                   <fileDescription>MidiGenerator</fileDescription>
+                   <copyright>Copyright VibeHistorian 2021</copyright>
+                   <productVersion>1.1.1.1</productVersion>
+                   <txtProductVersion>1.1</txtProductVersion>
+                   <productName>MidiGenerator</productName>
+                   <internalName>MidiGenerator</internalName>
+                   <originalFilename>MidiGenerator.exe</originalFilename>
+                 </versionInfo>
+               </configuration>
+             </execution>
+          </executions>
+        </plugin>
+        
+            
     <plugin>
       <artifactId>maven-assembly-plugin</artifactId>
       <configuration>
