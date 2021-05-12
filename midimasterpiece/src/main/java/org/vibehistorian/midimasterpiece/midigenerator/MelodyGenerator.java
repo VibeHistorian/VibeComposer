@@ -777,7 +777,7 @@ public class MelodyGenerator implements JMC {
 						Phrase d = fillDrumsFromPart(gc.getDrumParts().get(i), chordProgression,
 								usedMeasures);
 						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
-							Mod.accent(d, 0.25);
+							// TODO Mod.accent(d, 0.25);
 						}
 						copiedPhrases.add(d);
 					} else {
@@ -1121,12 +1121,10 @@ public class MelodyGenerator implements JMC {
 
 		// chord strum
 		if (gc.getChordGenSettings().isUseStrum()) {
-			for (int i = 0; i < gc.getChordParts().size(); i++) {
-				if (gc.getChordParts().get(i).getPattern() == RhythmPattern.RANDOM) {
-					cpr.flam(gc.getChordParts().get(i).getStrum() / 1000.0);
-				} else {
-					cpr.flam(10 / 1000.0);
-				}
+			if (cp.getPattern() == RhythmPattern.RANDOM) {
+				cpr.flam(cp.getStrum() / 1000.0);
+			} else {
+				cpr.flam(10 / 1000.0);
 			}
 		}
 
