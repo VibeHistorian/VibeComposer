@@ -1,6 +1,8 @@
 
 package org.vibehistorian.midimasterpiece.midigenerator;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -631,6 +633,18 @@ public class MelodyGenerator implements JMC {
 
 		Arrangement arr = (gc.getArrangement().isPreviewChorus()) ? new Arrangement()
 				: gc.getArrangement();
+
+		boolean never = false;
+		if (never) {
+			InputStream is = new InputStream() {
+
+				@Override
+				public int read() throws IOException {
+					// TODO Auto-generated method stub
+					return 0;
+				}
+			};
+		}
 
 		for (Section sec : arr.getSections()) {
 

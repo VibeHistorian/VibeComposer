@@ -120,7 +120,7 @@ public class MidiGeneratorGUI extends JFrame
 	private static final double[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 
-	private static boolean isDarkMode = false;
+	private static boolean isDarkMode = true;
 
 	private static List<JSeparator> separators = new ArrayList<>();
 
@@ -291,6 +291,9 @@ public class MidiGeneratorGUI extends JFrame
 	JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
 
+	JPanel everythingPanel;
+	JScrollPane everythingPane;
+
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static void main(String args[]) {
@@ -301,6 +304,18 @@ public class MidiGeneratorGUI extends JFrame
 
 	public MidiGeneratorGUI(String title) {
 		super(title);
+
+		everythingPanel = new JPanel();
+		everythingPanel.setLayout(new GridBagLayout());
+		everythingPane = new JScrollPane() {
+			@Override
+			public Dimension getMinimumSize() {
+				return new Dimension(1300, 1000);
+			}
+		};
+		everythingPane.setViewportView(everythingPanel);
+		everythingPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		everythingPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		// register the closebox event
 		this.addWindowListener(this);
@@ -321,7 +336,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordToolTip.add(tipLabel);
 		constraints.gridy = 335;
 		constraints.anchor = GridBagConstraints.CENTER;
-		add(chordToolTip, constraints);
+		everythingPanel.add(chordToolTip, constraints);
 
 		// ---- OTHER SETTINGS ----
 		{
@@ -367,7 +382,7 @@ public class MidiGeneratorGUI extends JFrame
 			//createHorizontalSeparator(290, this);
 
 			constraints.gridy = 295;
-			add(instrumentTabPane, constraints);
+			everythingPanel.add(instrumentTabPane, constraints);
 		}
 
 		// arrangement
@@ -392,7 +407,7 @@ public class MidiGeneratorGUI extends JFrame
 		midiDragAndDropPanel.add(new JLabel("Midi Drag'N'Drop:"));
 		midiDragAndDropPanel.add(generatedMidi);
 		constraints.gridy = 960;
-		add(midiDragAndDropPanel, constraints);
+		everythingPanel.add(midiDragAndDropPanel, constraints);
 
 		// ---- MESSAGE PANEL ----
 
@@ -401,7 +416,7 @@ public class MidiGeneratorGUI extends JFrame
 		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		messagePanel.add(messageLabel);
 		constraints.gridy = 999;
-		add(messagePanel, constraints);
+		everythingPanel.add(messagePanel, constraints);
 
 		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 		int screenHeight = d.height;
@@ -415,6 +430,11 @@ public class MidiGeneratorGUI extends JFrame
 
 		isDarkMode = !isDarkMode;
 		switchDarkMode();
+
+		everythingPane.setViewportView(everythingPanel);
+		add(everythingPane, constraints);
+
+
 		pack();
 		setVisible(true);
 		repaint();
@@ -451,9 +471,9 @@ public class MidiGeneratorGUI extends JFrame
 		constraints.gridwidth = 3;
 		constraints.gridheight = 1;
 		constraints.anchor = anchorSide;
-		add(mainTitle, constraints);
+		everythingPanel.add(mainTitle, constraints);
 		constraints.gridy = 1;
-		add(subTitle, constraints);
+		everythingPanel.add(subTitle, constraints);
 
 		JPanel darkModeSwitchPanel = new JPanel();
 
@@ -462,7 +482,7 @@ public class MidiGeneratorGUI extends JFrame
 		switchDarkModeButton.addActionListener(this);
 		switchDarkModeButton.setActionCommand("SwitchDarkMode");
 		darkModeSwitchPanel.add(switchDarkModeButton);
-		add(darkModeSwitchPanel, constraints);
+		everythingPanel.add(darkModeSwitchPanel, constraints);
 	}
 
 	private void initMacroParams(int startY, int anchorSide) {
@@ -509,7 +529,7 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(reinitInstPools);
 
 		constraints.gridy = startY;
-		add(macroParams, constraints);
+		everythingPanel.add(macroParams, constraints);
 	}
 
 	private void initMelodyGenSettings(int startY, int anchorSide) {
@@ -560,7 +580,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(melodySettingsPanel, constraints);
+		everythingPanel.add(melodySettingsPanel, constraints);
 	}
 
 	private void initMelody(int startY, int anchorSide) {
@@ -568,7 +588,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(melodyPanel, constraints);
+		everythingPanel.add(melodyPanel, constraints);
 
 
 	}
@@ -636,7 +656,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordSettingsPanel.add(clearChordPatternSeeds);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(chordSettingsPanel, constraints);
+		everythingPanel.add(chordSettingsPanel, constraints);
 	}
 
 	private void initChords(int startY, int anchorSide) {
@@ -730,7 +750,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(arpsSettingsPanel, constraints);
+		everythingPanel.add(arpsSettingsPanel, constraints);
 	}
 
 	private void initArps(int startY, int anchorSide) {
@@ -763,7 +783,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(bassPanel, constraints);
+		everythingPanel.add(bassPanel, constraints);
 	}
 
 	private void initDrumGenSettings(int startY, int anchorSide) {
@@ -812,7 +832,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(drumsPanel, constraints);
+		everythingPanel.add(drumsPanel, constraints);
 	}
 
 	private void initDrums(int startY, int anchorSide) {
@@ -903,7 +923,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(arrangementSettings, constraints);
+		everythingPanel.add(arrangementSettings, constraints);
 
 		scrollableArrangementTable = new JTable(5, 5);
 		TableModel model = new DefaultTableModel(7, 11);
@@ -1018,7 +1038,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(randomButtonsPanel, constraints);
+		everythingPanel.add(randomButtonsPanel, constraints);
 	}
 
 	private void initChordSettings(int startY, int anchorSide) {
@@ -1076,7 +1096,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordSettingsProgressionPanel.add(userChordsDurations);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(chordSettingsProgressionPanel, constraints);
+		everythingPanel.add(chordSettingsProgressionPanel, constraints);
 	}
 
 	private static String microsecondsToTimeString(long l) {
@@ -1167,7 +1187,7 @@ public class MidiGeneratorGUI extends JFrame
 		sliderPanel.add(slider);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(sliderPanel, constraints);
+		everythingPanel.add(sliderPanel, constraints);
 
 		JPanel sliderInfoPanel = new JPanel();
 		currentTime = new JLabel("0:00");
@@ -1186,7 +1206,7 @@ public class MidiGeneratorGUI extends JFrame
 		sliderInfoPanel.add(sectionText);
 		constraints.gridy = startY + 1;
 		constraints.anchor = anchorSide;
-		add(sliderInfoPanel, constraints);
+		everythingPanel.add(sliderInfoPanel, constraints);
 
 
 		// init thread
@@ -1291,7 +1311,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(controlPanel, constraints);
+		everythingPanel.add(controlPanel, constraints);
 	}
 
 	private void initPlayPanel(int startY, int anchorSide) {
@@ -1368,7 +1388,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		add(playSavePanel, constraints);
+		everythingPanel.add(playSavePanel, constraints);
 	}
 
 	private void startVolumeSliderThread() {
@@ -2577,7 +2597,7 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 
-	private static void createHorizontalSeparator(int y, JFrame f) {
+	private void createHorizontalSeparator(int y, JFrame f) {
 		int anchorTemp = constraints.anchor;
 		JSeparator x = new JSeparator(SwingConstants.HORIZONTAL);
 		x.setPreferredSize(new Dimension(1420, 2));
@@ -2585,7 +2605,7 @@ public class MidiGeneratorGUI extends JFrame
 		sepPanel.add(x);
 		constraints.gridy = y;
 		constraints.anchor = GridBagConstraints.CENTER;
-		f.add(sepPanel, constraints);
+		everythingPanel.add(sepPanel, constraints);
 		constraints.anchor = anchorTemp;
 		separators.add(x);
 	}
