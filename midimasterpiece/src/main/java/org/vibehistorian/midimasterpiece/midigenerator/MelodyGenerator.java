@@ -180,7 +180,8 @@ public class MelodyGenerator implements JMC {
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
 			int extraTranspose = (o > 0
-					&& variationGenerator.nextInt(100) < Section.VARIATION_CHANCE) ? 12 : 0;
+					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
+							: 0;
 			for (int i = 0; i < stretchedChords.size(); i++) {
 				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 
@@ -654,7 +655,8 @@ public class MelodyGenerator implements JMC {
 
 			int usedMeasures = sec.getMeasures();
 			Random variationGen = new Random(mainGeneratorSeed + counter);
-			if (sec.getMeasures() > 1 && variationGen.nextInt(100) < Section.VARIATION_CHANCE) {
+			if (sec.getMeasures() > 1
+					&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
 				System.out.println("USING VARIATION!");
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
@@ -679,7 +681,7 @@ public class MelodyGenerator implements JMC {
 			if (!gc.getMelodyPart().isMuted()) {
 				if (rand.nextInt(100) < sec.getMelodyChance()) {
 					Phrase m = fillMelody(chordProgression, rootProgression, usedMeasures);
-					if (variationGen.nextInt() < Section.VARIATION_CHANCE) {
+					if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 						// TODO
 					}
 					sec.setMelody(m);
@@ -693,7 +695,7 @@ public class MelodyGenerator implements JMC {
 			if (!gc.getBassPart().isMuted()) {
 				CPhrase b = fillBassRoots(rootProgression, usedMeasures);
 				if (rand.nextInt(100) < sec.getBassChance()) {
-					if (variationGen.nextInt() < Section.VARIATION_CHANCE) {
+					if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 						// TODO
 					}
 					sec.setBass(b);
@@ -712,7 +714,7 @@ public class MelodyGenerator implements JMC {
 					if (rand.nextInt(100) < sec.getChordChance()) {
 						CPhrase c = fillChordsFromPart(gc.getChordParts().get(i), chordProgression,
 								usedMeasures);
-						if (variationGen.nextInt() < Section.VARIATION_CHANCE) {
+						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 							// TODO Mod.transpose(c, 12);
 						}
 						copiedCPhrases.add(c);
@@ -741,7 +743,7 @@ public class MelodyGenerator implements JMC {
 						if (counter > arr.getSections().size() / 2) {
 							CPhrase a = fillArpFromPart(gc.getArpParts().get(i), chordProgression,
 									usedMeasures);
-							if (variationGen.nextInt() < Section.VARIATION_CHANCE) {
+							if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 								// TODO Mod.transpose(a, 12);
 							}
 							copiedCPhrases.add(a);
@@ -752,7 +754,7 @@ public class MelodyGenerator implements JMC {
 						if (rand.nextInt(100) < sec.getArpChance()) {
 							CPhrase a = fillArpFromPart(gc.getArpParts().get(i), chordProgression,
 									usedMeasures);
-							if (variationGen.nextInt() < Section.VARIATION_CHANCE) {
+							if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 								// TODO Mod.transpose(a, 12);
 							}
 							copiedCPhrases.add(a);
@@ -774,7 +776,7 @@ public class MelodyGenerator implements JMC {
 					if (rand.nextInt(100) < sec.getDrumChance()) {
 						Phrase d = fillDrumsFromPart(gc.getDrumParts().get(i), chordProgression,
 								usedMeasures);
-						if (variationGen.nextInt() < Section.VARIATION_CHANCE) {
+						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 							Mod.accent(d, 0.25);
 						}
 						copiedPhrases.add(d);
@@ -987,9 +989,9 @@ public class MelodyGenerator implements JMC {
 		CPhrase cphraseBassRoot = new CPhrase();
 		Random variationGenerator = new Random(gc.getRandomSeed() + 1);
 		for (int i = 0; i < measures; i++) {
-			int extraSeed = (i > 0 && variationGenerator.nextInt(100) < Section.VARIATION_CHANCE)
-					? 100
-					: 0;
+			int extraSeed = (i > 0
+					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 100
+							: 0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
 				Random bassDynamics = new Random(gc.getRandomSeed());
 				int velSpace = gc.getBassPart().getVelocityMax()
@@ -1027,7 +1029,8 @@ public class MelodyGenerator implements JMC {
 		for (int i = 0; i < measures; i++) {
 			Random transitionGenerator = new Random(mainGeneratorSeed);
 			int extraTranspose = (i > 0
-					&& variationGenerator.nextInt(100) < Section.VARIATION_CHANCE) ? 12 : 0;
+					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
+							: 0;
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 
@@ -1149,7 +1152,8 @@ public class MelodyGenerator implements JMC {
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
 			int extraTranspose = (i > 0
-					&& variationGenerator.nextInt(100) < Section.VARIATION_CHANCE) ? 12 : 0;
+					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
+							: 0;
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			for (int j = 0; j < actualProgression.size(); j++) {
 

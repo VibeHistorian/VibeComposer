@@ -23,6 +23,7 @@ public class GUIConfig {
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
+	private int arrangementVariationChance = 30;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -364,6 +365,14 @@ public class GUIConfig {
 
 	public void setMelodyUseOldAlgoChance(int melodyUseOldAlgoChance) {
 		this.melodyUseOldAlgoChance = melodyUseOldAlgoChance;
+	}
+
+	public int getArrangementVariationChance() {
+		return arrangementVariationChance;
+	}
+
+	public void setArrangementVariationChance(int arrangementVariationChance) {
+		this.arrangementVariationChance = arrangementVariationChance;
 	}
 
 

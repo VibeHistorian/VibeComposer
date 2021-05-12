@@ -141,7 +141,9 @@ public class MidiGeneratorGUI extends JFrame
 	private List<ArpPanel> arpPanels = new ArrayList<>();
 	private List<DrumPanel> drumPanels = new ArrayList<>();
 
+	// arrangement
 	private Arrangement arrangement;
+	JTextField arrangementVariationChance;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -310,7 +312,7 @@ public class MidiGeneratorGUI extends JFrame
 		everythingPane = new JScrollPane() {
 			@Override
 			public Dimension getMinimumSize() {
-				return new Dimension(1300, 1000);
+				return new Dimension(2000, 2000);
 			}
 		};
 		everythingPane.setViewportView(everythingPanel);
@@ -895,6 +897,10 @@ public class MidiGeneratorGUI extends JFrame
 		arrangementSettings.add(new JLabel("Max Length(8+):"));
 		arrangementSettings.add(pieceLength);
 
+		arrangementVariationChance = new JTextField("30", 2);
+		arrangementSettings.add(new JLabel("Variation%:"));
+		arrangementSettings.add(arrangementVariationChance);
+
 		JButton resetArrangementBtn = new JButton("Reset arr.");
 		resetArrangementBtn.addActionListener(this);
 		resetArrangementBtn.setActionCommand("ArrangementReset");
@@ -1290,7 +1296,7 @@ public class MidiGeneratorGUI extends JFrame
 		JButton copyChords = new JButton("Copy chords");
 		copyChords.addActionListener(this);
 		copyChords.setActionCommand("CopyChords");
-		JButton clearSeed = new JButton("Clear");
+		JButton clearSeed = new JButton("Clear All Seeds");
 		clearSeed.addActionListener(this);
 		clearSeed.setActionCommand("ClearSeed");
 
@@ -1543,7 +1549,7 @@ public class MidiGeneratorGUI extends JFrame
 		for (JSeparator x : separators) {
 			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		}
-		pack();
+		sizeRespectingPack();
 		setVisible(true);
 		repaint();
 	}
@@ -1660,7 +1666,7 @@ public class MidiGeneratorGUI extends JFrame
 			// Create sequence, the File must contain MIDI file data.
 			currentMidi = new File(relPath);
 			generatedMidi.setListData(new File[] { currentMidi });
-			pack();
+			sizeRespectingPack();
 			Sequence sequence = MidiSystem.getSequence(currentMidi);
 			sequencer.setSequence(sequence); // load it into sequencer
 
@@ -1962,7 +1968,7 @@ public class MidiGeneratorGUI extends JFrame
 					switchMidiButtons(true);
 					currentChords.setText(
 							"Chords:[" + StringUtils.join(MelodyGenerator.chordInts, ",") + "]");
-					pack();
+					sizeRespectingPack();
 					repaint();
 				}
 			};
@@ -2072,7 +2078,7 @@ public class MidiGeneratorGUI extends JFrame
 				return;
 			}
 			switchMidiButtons(false);
-			pack();
+			sizeRespectingPack();
 			repaint();
 			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 				@Override
@@ -2140,6 +2146,11 @@ public class MidiGeneratorGUI extends JFrame
 
 		if (ae.getActionCommand() == "ClearSeed") {
 			randomSeed.setText("0");
+			chordPanels.forEach(e -> e.setPatternSeed(0));
+			arpPanels.forEach(e -> e.setPatternSeed(0));
+			drumPanels.forEach(e -> e.setPatternSeed(0));
+			melodyPanel.setPatternSeed(0);
+			bassPanel.setPatternSeed(0);
 		}
 
 
@@ -2180,7 +2191,7 @@ public class MidiGeneratorGUI extends JFrame
 			//addDrumPanelToLayout();
 			createRandomDrumPanels(drumPanels.size() + 1, true);
 			randomDrumsToGenerate.setText("" + drumPanels.size());
-			pack();
+			sizeRespectingPack();
 			repaint();
 		}
 
@@ -2203,7 +2214,7 @@ public class MidiGeneratorGUI extends JFrame
 			createRandomChordPanels(chordPanels.size() + 1, true);
 			randomChordsToGenerate.setText("" + chordPanels.size());
 
-			pack();
+			sizeRespectingPack();
 			repaint();
 		}
 
@@ -2217,7 +2228,7 @@ public class MidiGeneratorGUI extends JFrame
 			//addArpPanelToLayout();
 			createRandomArpPanels(arpPanels.size() + 1, true);
 			randomArpsToGenerate.setText("" + arpPanels.size());
-			pack();
+			sizeRespectingPack();
 			repaint();
 		}
 
@@ -2480,6 +2491,8 @@ public class MidiGeneratorGUI extends JFrame
 			arrangement.setFromModel(scrollableArrangementTable);
 		}
 		guiConfig.setArrangement(arrangement);
+		guiConfig.setArrangementVariationChance(
+				Integer.valueOf(arrangementVariationChance.getText()));
 
 		// macro
 		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
@@ -2535,6 +2548,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		// arrangement
 		arrangement = guiConfig.getArrangement();
+		arrangementVariationChance.setText(guiConfig.getArrangementVariationChance() + "");
 
 		// macro
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
@@ -2596,6 +2610,16 @@ public class MidiGeneratorGUI extends JFrame
 		}
 	}
 
+	private void sizeRespectingPack() {
+		Dimension oldSize = getSize();
+		//int ver = everythingPane.getVerticalScrollBar().getValue();
+		//int hor = everythingPane.getHorizontalScrollBar().getValue();
+		pack();
+		setSize(oldSize);
+		//everythingPane.getVerticalScrollBar().setValue(ver);
+		//everythingPane.getHorizontalScrollBar().setValue(hor);
+
+	}
 
 	private void createHorizontalSeparator(int y, JFrame f) {
 		int anchorTemp = constraints.anchor;
@@ -2627,7 +2651,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		if (singleRemove) {
 			//reorderDrumPanels();
-			pack();
+			sizeRespectingPack();
 			repaint();
 		}
 	}
@@ -2652,7 +2676,7 @@ public class MidiGeneratorGUI extends JFrame
 			panel.setFromDrumPart(part);
 		}
 
-		pack();
+		sizeRespectingPack();
 		repaint();
 	}
 
@@ -2763,7 +2787,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		}
 
-		pack();
+		sizeRespectingPack();
 		repaint();
 	}
 
@@ -2797,7 +2821,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		if (singleRemove) {
 			//reorderChordPanels();
-			pack();
+			sizeRespectingPack();
 			repaint();
 		}
 	}
@@ -2822,7 +2846,7 @@ public class MidiGeneratorGUI extends JFrame
 			panel.setFromChordPart(part);
 		}
 
-		pack();
+		sizeRespectingPack();
 		repaint();
 	}
 
@@ -2902,7 +2926,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		}
 
-		pack();
+		sizeRespectingPack();
 		repaint();
 	}
 
@@ -2936,7 +2960,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		if (singleRemove) {
 			//reorderArpPanels();
-			pack();
+			sizeRespectingPack();
 			repaint();
 		}
 	}
@@ -2961,7 +2985,7 @@ public class MidiGeneratorGUI extends JFrame
 			panel.setFromArpPart(part);
 		}
 
-		pack();
+		sizeRespectingPack();
 		repaint();
 	}
 
@@ -3126,7 +3150,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 
-		pack();
+		sizeRespectingPack();
 		repaint();
 	}
 
