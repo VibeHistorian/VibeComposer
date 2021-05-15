@@ -555,8 +555,8 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(melodyAlternateRhythmChance);
 		melodySettingsPanel.add(new JLabel("Doubled rhythm%:"));
 		melodySettingsPanel.add(melodySameRhythmChance);
-		melodySettingsPanel.add(new JLabel("Legacy algorithm%:"));
-		melodySettingsPanel.add(melodyUseOldAlgoChance);
+		//melodySettingsPanel.add(new JLabel("Legacy algorithm%:"));
+		//melodySettingsPanel.add(melodyUseOldAlgoChance);
 
 		randomChordNote = new JCheckBox();
 		randomChordNote.setSelected(true);
@@ -564,10 +564,10 @@ public class MidiGeneratorGUI extends JFrame
 		melodyFirstNoteFromChord.setSelected(true);
 
 
-		melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
-		melodySettingsPanel.add(melodyFirstNoteFromChord);
-		melodySettingsPanel.add(new JLabel("But Randomized:"));
-		melodySettingsPanel.add(randomChordNote);
+		//melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
+		//melodySettingsPanel.add(melodyFirstNoteFromChord);
+		//melodySettingsPanel.add(new JLabel("But Randomized:"));
+		//melodySettingsPanel.add(randomChordNote);
 
 		JButton generateUserMelodySeed = new JButton("Randomize seed");
 		generateUserMelodySeed.addActionListener(this);

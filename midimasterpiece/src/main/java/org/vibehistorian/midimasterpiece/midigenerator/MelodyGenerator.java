@@ -846,23 +846,26 @@ public class MelodyGenerator implements JMC {
 				score.add(arpParts.get(i));
 			}
 		}
+		if (gc.getChordParts().size() > 0) {
+			score.add(chordSlash);
+		}
+
+
+		Mod.transpose(score, gc.getScaleMode().ordinal(), Mod.MAJOR_SCALE, 0);
+		int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11 };
+		Mod.transpose(score, gc.getTranspose() - backTranspose[gc.getScaleMode().ordinal()]);
+
+		// add drums after transposing transposable parts
 
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
 			if (!gc.getDrumParts().get(i).isMuted()) {
 				score.add(drumParts.get(i));
 			}
 		}
-		if (gc.getChordParts().size() > 0) {
-			score.add(chordSlash);
-		}
+
 
 		System.out.println("Added parts to score..");
 
-		Mod.transpose(score, gc.getScaleMode().ordinal(), Mod.MAJOR_SCALE, 0);
-
-		int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11 };
-
-		Mod.transpose(score, gc.getTranspose() - backTranspose[gc.getScaleMode().ordinal()]);
 
 		score.setTempo(gc.getBpm());
 
