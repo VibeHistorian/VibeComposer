@@ -35,7 +35,7 @@ public class GUIConfig {
 	private boolean arpAffectsBpm = true;
 
 	// melody gen
-	private int maxNoteJump = 4;
+	private int maxNoteJump = 2;
 	private int maxExceptions = 2;
 	private int melodyAlternateRhythmChance = 50;
 	private int melodySameRhythmChance = 20;

@@ -115,8 +115,8 @@ public class MidiGeneratorGUI extends JFrame
 	private static final String MIDIS_FOLDER = "midis";
 
 	private static final double[] MILISECOND_ARRAY_STRUM = { 0, 1000, 750, 500, 333, 250, 166, 125,
-			62 };
-	private static final double[] MILISECOND_ARRAY_DELAY = { 0, 63, 125, 250, 333 };
+			62, 62, 31 };
+	private static final double[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	private static final double[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 
@@ -542,7 +542,7 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(arpCopyMelodyInst);
 
 
-		maxJump = new JTextField("4", 2);
+		maxJump = new JTextField("2", 2);
 		maxExceptions = new JTextField("2", 2);
 		melodyAlternateRhythmChance = new JTextField("100", 2);
 		melodySameRhythmChance = new JTextField("0", 2);
@@ -1549,9 +1549,29 @@ public class MidiGeneratorGUI extends JFrame
 		for (JSeparator x : separators) {
 			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		}
+
+		//switchFullMode(isDarkMode);
+
 		sizeRespectingPack();
 		setVisible(true);
 		repaint();
+	}
+
+	private void switchFullMode(boolean aFlag) {
+		melodySameRhythmChance.setVisible(aFlag);
+		melodyUseOldAlgoChance.setVisible(aFlag);
+		melodyFirstNoteFromChord.setVisible(aFlag);
+		randomChordNote.setVisible(aFlag);
+
+		randomArpStretchPicker.setVisible(aFlag);
+		randomArpStretchType.setVisible(aFlag);
+		randomChordStretchPicker.setVisible(aFlag);
+		randomChordStretchType.setVisible(aFlag);
+
+		randomChordStrum.setVisible(aFlag);
+		randomChordSplit.setVisible(aFlag);
+		randomChordMaxSplitChance.setVisible(aFlag);
+		randomChordStretchType.setVisible(aFlag);
 	}
 
 	private void composeMidi(boolean regenerate) {

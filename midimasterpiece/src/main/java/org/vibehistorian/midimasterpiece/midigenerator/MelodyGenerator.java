@@ -151,7 +151,7 @@ public class MelodyGenerator implements JMC {
 		//155816678 seed
 
 		// TODO: parameter in melodypart like max jump 
-		int MAX_JUMP_SKELETON_CHORD = 1;
+		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
 		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
 
@@ -481,8 +481,8 @@ public class MelodyGenerator implements JMC {
 
 			chordInts.add(chordInt);
 			int[] mappedChord = MidiUtils.mappedChord(chordInt);
-			mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
-					gc.getScaleMode().noteAdjustScale);
+			/*mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
+					gc.getScaleMode().noteAdjustScale);*/
 
 
 			debugMsg.add("Generated int: " + nextInt + ", for chord: " + chordInt + ", dur: " + dur
@@ -561,7 +561,7 @@ public class MelodyGenerator implements JMC {
 	public void generateMasterpiece(int mainGeneratorSeed, String fileName,
 			int melodyProgramChange) {
 		System.out.println("--- GENERATING MASTERPIECE.. ---");
-		MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
+		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
 		Score score = new Score("MainScore", 120);
 		Part melody = new Part("Melody",
@@ -858,6 +858,12 @@ public class MelodyGenerator implements JMC {
 
 		System.out.println("Added parts to score..");
 
+		Mod.transpose(score, gc.getScaleMode().ordinal(), Mod.MAJOR_SCALE, 0);
+
+		int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11 };
+
+		Mod.transpose(score, gc.getTranspose() - backTranspose[gc.getScaleMode().ordinal()]);
+
 		score.setTempo(gc.getBpm());
 
 		for (Part p : score.getPartArray()) {
@@ -980,7 +986,7 @@ public class MelodyGenerator implements JMC {
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
 			melodyPhrase.addNoteList(fullMelody, true);
 		}
-		Mod.transpose(melodyPhrase, gc.getTranspose());
+		//Mod.transpose(melodyPhrase, gc.getTranspose());
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;
 	}
@@ -1015,7 +1021,7 @@ public class MelodyGenerator implements JMC {
 				}
 			}
 		}
-		Mod.transpose(cphraseBassRoot, -24 + gc.getTranspose());
+		//Mod.transpose(cphraseBassRoot, -24 + gc.getTranspose());
 		cphraseBassRoot.setStartTime(START_TIME_DELAY);
 		return cphraseBassRoot;
 
@@ -1110,7 +1116,7 @@ public class MelodyGenerator implements JMC {
 
 		// transpose
 		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? cp.getTranspose() : 0;
-		Mod.transpose(cpr, -12 + gc.getTranspose() + extraTranspose);
+		Mod.transpose(cpr, -12 + extraTranspose);
 
 		// delay
 		double additionalDelay = 0;
@@ -1199,7 +1205,7 @@ public class MelodyGenerator implements JMC {
 			}
 		}
 		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ap.getTranspose() : 0;
-		Mod.transpose(arpCPhrase, -24 + gc.getTranspose() + extraTranspose);
+		Mod.transpose(arpCPhrase, -24 + extraTranspose);
 
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {
@@ -1288,7 +1294,7 @@ public class MelodyGenerator implements JMC {
 				}
 			}
 		}
-		Mod.transpose(chordSlashCPhrase, -24 + gc.getTranspose());
+		Mod.transpose(chordSlashCPhrase, -24);
 		chordSlashCPhrase.setStartTime(START_TIME_DELAY);
 		return chordSlashCPhrase;
 
