@@ -5,6 +5,7 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
@@ -77,6 +78,7 @@ import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -153,7 +155,9 @@ public class MidiGeneratorGUI extends JFrame
 	JScrollPane chordScrollPane;
 	JScrollPane arpScrollPane;
 	JScrollPane arrangementScrollPane;
+	JScrollPane arrangementActualScrollPane;
 	JTable scrollableArrangementTable;
+	JTable scrollableArrangementActualTable;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -166,6 +170,8 @@ public class MidiGeneratorGUI extends JFrame
 	JButton switchDarkMode;
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
+	Color actualArrangementDarkMode = new Color(50, 50, 50);
+	Color actualArrangementLightMode = new Color(120, 120, 200);
 
 	// macro params
 	JTextField soundbankFilename;
@@ -230,6 +236,8 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox randomArpUseChordFill;
 	JComboBox<String> randomArpStretchType;
 	JComboBox<String> randomArpStretchPicker;
+	JCheckBox randomArpUseOctaveAdjustments;
+	JTextField randomArpMaxSwing;
 
 
 	// drum gen settings
@@ -542,7 +550,7 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(arpCopyMelodyInst);
 
 
-		maxJump = new JTextField("2", 2);
+		maxJump = new JTextField("1", 2);
 		maxExceptions = new JTextField("2", 2);
 		melodyAlternateRhythmChance = new JTextField("100", 2);
 		melodySameRhythmChance = new JTextField("0", 2);
@@ -608,7 +616,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordAddJButton.setActionCommand("AddChord");
 		chordSettingsPanel.add(chordAddJButton);
 
-		randomChordsToGenerate = new JTextField("5", 2);
+		randomChordsToGenerate = new JTextField("2", 4);
 		JButton randomizeChords = new JButton("Generate Chords:");
 		randomizeChords.addActionListener(this);
 		randomizeChords.setActionCommand("RandChords");
@@ -700,7 +708,7 @@ public class MidiGeneratorGUI extends JFrame
 		arpAddJButton.setActionCommand("AddArp");
 		arpsSettingsPanel.add(arpAddJButton);
 
-		randomArpsToGenerate = new JTextField("5", 2);
+		randomArpsToGenerate = new JTextField("3", 4);
 		JButton randomizeArps = new JButton("Generate Arps:    ");
 		randomizeArps.addActionListener(this);
 		randomizeArps.setActionCommand("RandArps");
@@ -731,7 +739,8 @@ public class MidiGeneratorGUI extends JFrame
 		randomArpAllSameHits = new JCheckBox("One #", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
 		arpShiftChance = new JTextField("25", 3);
-
+		randomArpUseOctaveAdjustments = new JCheckBox("Randomize octaves", false);
+		randomArpMaxSwing = new JTextField("50", 3);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -740,6 +749,9 @@ public class MidiGeneratorGUI extends JFrame
 		arpsSettingsPanel.add(randomArpAllSameInst);
 		arpsSettingsPanel.add(randomArpUseChordFill);
 		arpsSettingsPanel.add(randomArpTranspose);
+		arpsSettingsPanel.add(randomArpUseOctaveAdjustments);
+		arpsSettingsPanel.add(new JLabel("Swing%"));
+		arpsSettingsPanel.add(randomArpMaxSwing);
 		arpsSettingsPanel.add(randomArpPattern);
 		arpsSettingsPanel.add(new JLabel("Pattern shift%"));
 		arpsSettingsPanel.add(arpShiftChance);
@@ -792,7 +804,7 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.add(new JLabel("DRUMS "));
 
-		addDrums = new JCheckBox("Enable", false);
+		addDrums = new JCheckBox("Enable", true);
 		drumsPanel.add(addDrums);
 		//drumsPanel.add(drumInst);
 
@@ -802,7 +814,7 @@ public class MidiGeneratorGUI extends JFrame
 		drumAddJButton.setActionCommand("AddDrum");
 		drumsPanel.add(drumAddJButton);
 
-		randomDrumsToGenerate = new JTextField("6", 2);
+		randomDrumsToGenerate = new JTextField("8", 2);
 		JButton randomizeDrums = new JButton("Generate Drums: ");
 		randomizeDrums.addActionListener(this);
 		randomizeDrums.setActionCommand("RandDrums");
@@ -909,7 +921,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeArrangementBtn.addActionListener(this);
 		randomizeArrangementBtn.setActionCommand("ArrangementRandomize");
 
-		randomizeArrangementOnCompose = new JCheckBox("on Compose", false);
+		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
 
 		JButton addLastSectionBtn = new JButton("Add section");
@@ -998,7 +1010,56 @@ public class MidiGeneratorGUI extends JFrame
 		*/
 		//constraints.gridy = startY;
 		//constraints.anchor = anchorSide;
+
+		scrollableArrangementActualTable = new JTable(5, 5) {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
+				Component comp = super.prepareRenderer(renderer, row, col);
+				String value = (String) getModel().getValueAt(row, col);
+				if (value == null)
+					return comp;
+				comp.setForeground(actualArrangementDarkMode);
+				if (row >= 2) {
+					if (value.equalsIgnoreCase("")) {
+						comp.setBackground(new Color(70, 70, 70));
+					} else {
+						int count = StringUtils.countMatches(value, ",");
+						int color = 120 + count * 10;
+						comp.setBackground(new Color(color, color, color));
+					}
+				} else {
+					comp.setBackground(new Color(100, 100, 150));
+				}
+
+				return comp;
+			}
+		};
+		TableModel actualModel = new DefaultTableModel(7, 11);
+
+
+		scrollableArrangementActualTable.setModel(actualModel);
+		arrangementActualScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		arrangementActualScrollPane.setViewportView(scrollableArrangementActualTable);
+		JList<String> actualList = new JList<>();
+		actualList.setListData(
+				new String[] { "Section", "Bars", "Melody", "Bass", "Chord", "Arp", "Drum" });
+		actualList.setFixedCellHeight(scrollableArrangementActualTable.getRowHeight()
+				+ scrollableArrangementActualTable.getRowMargin());
+		arrangementActualScrollPane.setRowHeaderView(actualList);
+		arrangementActualScrollPane
+				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
+		instrumentTabPane.addTab("Generated", arrangementActualScrollPane);
 	}
 
 	private void initRandomButtons(int startY, int anchorSide) {
@@ -1349,7 +1410,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		useVolumeSliders = new JCheckBox("Use vol. sliders", true);
 
-		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", false);
+		midiMode = new JCheckBox("MIDI transmitter mode (select device and regenerate)", true);
 		midiModeDevices = new JComboBox<String>();
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
@@ -1650,6 +1711,11 @@ public class MidiGeneratorGUI extends JFrame
 		int melodyInstrument = jm.constants.ProgramChanges.KALIMBA;
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath, melodyInstrument);
 		currentMidi = null;
+
+
+		// TODO: from real parts - set after generation!
+		scrollableArrangementActualTable
+				.setModel(MelodyGenerator.gc.getArrangement().convertToActualTableModel());
 
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
@@ -2558,6 +2624,10 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
 		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getText()));
 
+		// arps
+		guiConfig.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
+		guiConfig.setMaxArpSwing(Integer.valueOf(randomArpMaxSwing.getText()));
+
 		return guiConfig;
 	}
 
@@ -2613,6 +2683,9 @@ public class MidiGeneratorGUI extends JFrame
 		userChords.setText(guiConfig.getCustomChords());
 		userChordsDurations.setText(guiConfig.getCustomChordDurations());
 
+		// arps
+		randomArpUseOctaveAdjustments.setSelected(guiConfig.isUseOctaveAdjustments());
+		randomArpMaxSwing.setText(String.valueOf(guiConfig.getMaxArpSwing()));
 
 	}
 

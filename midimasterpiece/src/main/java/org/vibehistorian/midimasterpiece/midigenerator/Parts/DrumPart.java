@@ -8,7 +8,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(propOrder = {})
 public class DrumPart extends InstPart {
 
-	private int swingPercent = 50;
 
 	private boolean isVelocityPattern = true;
 
@@ -34,12 +33,5 @@ public class DrumPart extends InstPart {
 		this.order = order;
 	}
 
-	public int getSwingPercent() {
-		return swingPercent;
-	}
-
-	public void setSwingPercent(int swingPercent) {
-		this.swingPercent = swingPercent;
-	}
 
 }

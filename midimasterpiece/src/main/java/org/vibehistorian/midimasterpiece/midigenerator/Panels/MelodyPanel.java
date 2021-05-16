@@ -38,12 +38,17 @@ public class MelodyPanel extends InstPanel {
 		this.add(velocityMax);
 
 		this.add(new JLabel("Pause%"));
+		pauseChance.setText("0");
 		this.add(pauseChance);
+
+		this.add(new JLabel("Swing(%)"));
+		this.add(swingPercent);
 
 		this.add(new JLabel("Seed"));
 		this.add(patternSeed);
 
 		this.add(new JLabel("Midi ch.: 1"));
+		setPanelOrder(1);
 	}
 
 	public MelodyPanel(ActionListener l) {

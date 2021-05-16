@@ -292,6 +292,9 @@ public class MelodyGenerator implements JMC {
 			int p = pauseGenerator.nextInt(100);
 			boolean pause1 = p < gc.getMelodyPart().getPauseChance();
 			boolean pause2 = p < (gc.getMelodyPart().getPauseChance() / 2);
+
+			int swingPercentAmount = gc.getMelodyPart().getSwingPercent();
+
 			if (adjDur > Durations.SIXTEENTH_NOTE && splitGenerator.nextInt(100) < splitChance) {
 				Note n1 = skeleton.get(i);
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
@@ -301,9 +304,15 @@ public class MelodyGenerator implements JMC {
 				} else {
 					pitch = getAllowedPitchFromRange(n1.getPitch(), n2.getPitch());
 				}
-				double duration = adjDur / 2.0;
-				Note n1split1 = new Note(n1.getPitch(), duration, n1.getDynamic());
-				Note n1split2 = new Note(pitch, duration, n1.getDynamic() - 10);
+
+				double swingDuration1 = adjDur * (swingPercentAmount / ((double) 100.0));
+				double swingDuration2 = adjDur - swingDuration1;
+				//swingPercentAmount = 100 - swingPercentAmount;
+				System.out.println("Split dur: " + adjDur + " into: " + swingDuration1 + ", "
+						+ swingDuration2);
+
+				Note n1split1 = new Note(n1.getPitch(), swingDuration1, n1.getDynamic());
+				Note n1split2 = new Note(pitch, swingDuration2, n1.getDynamic() - 10);
 				if (pause2) {
 					fullMelody.add(n1split1);
 					fullMelody.add(emptyNoteHalf);
@@ -685,6 +694,7 @@ public class MelodyGenerator implements JMC {
 						// TODO
 					}
 					sec.setMelody(m);
+					sec.getMelodyPresence().add(gc.getMelodyPart().getOrder());
 				} else {
 					sec.setMelody(emptyPhrase.copy());
 				}
@@ -699,6 +709,7 @@ public class MelodyGenerator implements JMC {
 						// TODO
 					}
 					sec.setBass(b);
+					sec.getBassPresence().add(gc.getBassPart().getOrder());
 				} else {
 					sec.setBass(emptyCPhrase.copy());
 				}
@@ -718,6 +729,7 @@ public class MelodyGenerator implements JMC {
 							// TODO Mod.transpose(c, 12);
 						}
 						copiedCPhrases.add(c);
+						sec.getChordPresence().add(gc.getChordParts().get(i).getOrder());
 					} else {
 						copiedCPhrases.add(emptyCPhrase.copy());
 					}
@@ -747,6 +759,7 @@ public class MelodyGenerator implements JMC {
 								// TODO Mod.transpose(a, 12);
 							}
 							copiedCPhrases.add(a);
+							sec.getArpPresence().add(gc.getArpParts().get(i).getOrder());
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
@@ -758,6 +771,7 @@ public class MelodyGenerator implements JMC {
 								// TODO Mod.transpose(a, 12);
 							}
 							copiedCPhrases.add(a);
+							sec.getArpPresence().add(gc.getArpParts().get(i).getOrder());
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
@@ -780,6 +794,7 @@ public class MelodyGenerator implements JMC {
 							// TODO Mod.accent(d, 0.25);
 						}
 						copiedPhrases.add(d);
+						sec.getDrumPresence().add(gc.getDrumParts().get(i).getOrder());
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
 					}
@@ -830,6 +845,13 @@ public class MelodyGenerator implements JMC {
 		if (!gc.getMelodyPart().isMuted()) {
 			score.add(melody);
 		}
+
+		for (int i = 0; i < gc.getArpParts().size(); i++) {
+			if (!gc.getArpParts().get(i).isMuted()) {
+				score.add(arpParts.get(i));
+			}
+		}
+
 		if (!gc.getBassPart().isMuted()) {
 			score.add(bassRoots);
 		}
@@ -841,11 +863,7 @@ public class MelodyGenerator implements JMC {
 
 		}
 
-		for (int i = 0; i < gc.getArpParts().size(); i++) {
-			if (!gc.getArpParts().get(i).isMuted()) {
-				score.add(arpParts.get(i));
-			}
-		}
+
 		if (gc.getChordParts().size() > 0) {
 			score.add(chordSlash);
 		}
@@ -1024,7 +1042,7 @@ public class MelodyGenerator implements JMC {
 				}
 			}
 		}
-		//Mod.transpose(cphraseBassRoot, -24 + gc.getTranspose());
+		Mod.transpose(cphraseBassRoot, -24);
 		cphraseBassRoot.setStartTime(START_TIME_DELAY);
 		return cphraseBassRoot;
 
@@ -1168,17 +1186,25 @@ public class MelodyGenerator implements JMC {
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
 				double durationNow = 0;
+				int swingPercentAmount = gc.getMaxArpSwing();
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 
 					int velocity = velocityGenerator.nextInt(
 							ap.getVelocityMax() - ap.getVelocityMin()) + ap.getVelocityMin();
 
-					Integer k = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
+					Integer patternNum = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern)
+							.get(p);
 
-					int octaveAdjustment = (k < 2) ? -12 : ((k < 6) ? 0 : 12);
+					int octaveAdjustGenerated = partOfList(chordSpanPart, ap.getChordSpan(),
+							arpOctavePattern).get(p);
+					int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
+							: ((patternNum < 6) ? 0 : 12);
 
-					int pitch = chord[k % chord.length] + octaveAdjustment
-							+ partOfList(chordSpanPart, ap.getChordSpan(), arpOctavePattern).get(p);
+					int pitch = chord[patternNum % chord.length];
+					if (gc.isUseOctaveAdjustments()) {
+						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
+					}
+
 					pitch += extraTranspose;
 					if (partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
 							.get(p) == 0) {
@@ -1192,14 +1218,19 @@ public class MelodyGenerator implements JMC {
 							pitch = Integer.MIN_VALUE;
 						}
 					}
-					if (durationNow + chordDurationArp > progressionDurations.get(j)) {
+
+					double swingDuration = chordDurationArp
+							* (swingPercentAmount / ((double) 50.0));
+					swingPercentAmount = 100 - swingPercentAmount;
+
+					if (durationNow + swingDuration > progressionDurations.get(j)) {
 						arpCPhrase.addChord(new int[] { pitch },
 								progressionDurations.get(j) - durationNow, velocity);
 						break;
 					} else {
-						arpCPhrase.addChord(new int[] { pitch }, chordDurationArp, velocity);
+						arpCPhrase.addChord(new int[] { pitch }, swingDuration, velocity);
 					}
-					durationNow += chordDurationArp;
+					durationNow += swingDuration;
 				}
 				chordSpanPart++;
 				if (chordSpanPart >= ap.getChordSpan()) {

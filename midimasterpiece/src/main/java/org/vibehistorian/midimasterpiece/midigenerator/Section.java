@@ -1,5 +1,6 @@
 package org.vibehistorian.midimasterpiece.midigenerator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -39,6 +40,13 @@ public class Section {
 	private List<CPhrase> arps;
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
+
+	// display data (transient)
+	private List<Integer> melodyPresence = new ArrayList<>();
+	private List<Integer> bassPresence = new ArrayList<>();
+	private List<Integer> chordPresence = new ArrayList<>();
+	private List<Integer> arpPresence = new ArrayList<>();
+	private List<Integer> drumPresence = new ArrayList<>();
 
 	public Section() {
 
@@ -187,6 +195,51 @@ public class Section {
 
 	public void setUseVariation(boolean useVariation) {
 		this.useVariation = useVariation;
+	}
+
+	public List<Integer> getMelodyPresence() {
+		return melodyPresence;
+	}
+
+	@XmlTransient
+	public void setMelodyPresence(List<Integer> melodyPresence) {
+		this.melodyPresence = melodyPresence;
+	}
+
+	public List<Integer> getBassPresence() {
+		return bassPresence;
+	}
+
+	@XmlTransient
+	public void setBassPresence(List<Integer> bassPresence) {
+		this.bassPresence = bassPresence;
+	}
+
+	public List<Integer> getChordPresence() {
+		return chordPresence;
+	}
+
+	@XmlTransient
+	public void setChordPresence(List<Integer> chordPresence) {
+		this.chordPresence = chordPresence;
+	}
+
+	public List<Integer> getArpPresence() {
+		return arpPresence;
+	}
+
+	@XmlTransient
+	public void setArpPresence(List<Integer> arpPresence) {
+		this.arpPresence = arpPresence;
+	}
+
+	public List<Integer> getDrumPresence() {
+		return drumPresence;
+	}
+
+	@XmlTransient
+	public void setDrumPresence(List<Integer> drumPresence) {
+		this.drumPresence = drumPresence;
 	}
 
 }

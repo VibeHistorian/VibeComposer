@@ -393,8 +393,9 @@ public class MidiUtils {
 			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
 			"SWEEP_PAD = 95 " };
 
-	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ", "SNARE = 38 ",
-			"EL. SNARE = 40 ", "CLOSED_HH = 42 ", "RIDE = 53 ", "RIM = 60 " };
+	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
+			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "CLOSED_HH = 42 ",
+			"PEDAL_HH = 44", "RIDE = 53 ", "TAMBOURINE = 54", "HI BONGO = 60 ", "SHAKER = 82" };
 
 
 	public static List<Integer> getInstNumbers(String[] instArray) {

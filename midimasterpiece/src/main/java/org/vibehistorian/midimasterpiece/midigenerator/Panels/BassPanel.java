@@ -48,6 +48,7 @@ public class BassPanel extends InstPanel {
 		this.add(patternSeed);
 
 		this.add(new JLabel("Midi ch.: 9"));
+		setPanelOrder(1);
 	}
 
 	public BassPanel(ActionListener l) {

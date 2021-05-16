@@ -25,6 +25,9 @@ public abstract class InstPart {
 	protected int velocityMin = 70;
 	protected int velocityMax = 90;
 
+	protected int swingPercent = 50;
+
+
 	protected int order = 1;
 
 	protected int patternSeed = 0;
@@ -57,6 +60,8 @@ public abstract class InstPart {
 
 		setVelocityMin(panel.getVelocityMin());
 		setVelocityMax(panel.getVelocityMax());
+
+		setSwingPercent(panel.getSwingPercent());
 
 		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
@@ -231,5 +236,12 @@ public abstract class InstPart {
 		this.sliderVolume = sliderVolume;
 	}
 
+	public int getSwingPercent() {
+		return swingPercent;
+	}
+
+	public void setSwingPercent(int swingPercent) {
+		this.swingPercent = swingPercent;
+	}
 
 }

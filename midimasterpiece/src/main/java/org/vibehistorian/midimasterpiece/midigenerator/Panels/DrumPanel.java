@@ -4,7 +4,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
@@ -29,7 +28,6 @@ public class DrumPanel extends InstPanel {
 	}
 
 
-	private JTextField swingPercent = new JTextField("50", 2);
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 
 	public void initComponents() {
@@ -115,11 +113,4 @@ public class DrumPanel extends InstPanel {
 		this.isVelocityPattern.setSelected(isVelocityPattern);
 	}
 
-	public int getSwingPercent() {
-		return Integer.valueOf(swingPercent.getText());
-	}
-
-	public void setSwingPercent(int swingPercent) {
-		this.swingPercent.setText("" + swingPercent);
-	}
 }

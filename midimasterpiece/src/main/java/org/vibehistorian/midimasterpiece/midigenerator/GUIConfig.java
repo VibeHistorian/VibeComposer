@@ -42,6 +42,7 @@ public class GUIConfig {
 	private int melodyUseOldAlgoChance = 20;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
+	private int maxMelodySwing = 50;
 
 	// chord gen
 	private boolean dimAugEnabled = false;
@@ -53,6 +54,10 @@ public class GUIConfig {
 	private boolean customChordsEnabled = true;
 	private String customChords = "R";
 	private String customChordDurations = "2,2,2,2";
+
+	// arp gen
+	private boolean useOctaveAdjustments = true;
+	private int maxArpSwing = 50;
 
 	// individual parts
 	private MelodyPart melodyPart = new MelodyPart();
@@ -373,6 +378,30 @@ public class GUIConfig {
 
 	public void setArrangementVariationChance(int arrangementVariationChance) {
 		this.arrangementVariationChance = arrangementVariationChance;
+	}
+
+	public boolean isUseOctaveAdjustments() {
+		return useOctaveAdjustments;
+	}
+
+	public void setUseOctaveAdjustments(boolean useOctaveAdjustments) {
+		this.useOctaveAdjustments = useOctaveAdjustments;
+	}
+
+	public int getMaxArpSwing() {
+		return maxArpSwing;
+	}
+
+	public void setMaxArpSwing(int maxArpSwing) {
+		this.maxArpSwing = maxArpSwing;
+	}
+
+	public int getMaxMelodySwing() {
+		return maxMelodySwing;
+	}
+
+	public void setMaxMelodySwing(int maxMelodySwing) {
+		this.maxMelodySwing = maxMelodySwing;
 	}
 
 

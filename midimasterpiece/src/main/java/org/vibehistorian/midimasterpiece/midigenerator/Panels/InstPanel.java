@@ -43,6 +43,8 @@ public abstract class InstPanel extends JPanel {
 	protected JTextField velocityMin = new JTextField("70", 3);
 	protected JTextField velocityMax = new JTextField("90", 3);
 
+	protected JTextField swingPercent = new JTextField("50", 2);
+
 	protected JLabel panelOrder = new JLabel("0");
 
 	protected JTextField patternSeed = new JTextField("0", 8);
@@ -93,6 +95,8 @@ public abstract class InstPanel extends JPanel {
 
 		setVelocityMin(part.getVelocityMin());
 		setVelocityMax(part.getVelocityMax());
+
+		setSwingPercent(part.getSwingPercent());
 
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
@@ -291,5 +295,14 @@ public abstract class InstPanel extends JPanel {
 
 	public void setVolSlider(JSlider volSlider) {
 		this.volSlider = volSlider;
+	}
+
+
+	public int getSwingPercent() {
+		return Integer.valueOf(swingPercent.getText());
+	}
+
+	public void setSwingPercent(int swingPercent) {
+		this.swingPercent.setText("" + swingPercent);
 	}
 }

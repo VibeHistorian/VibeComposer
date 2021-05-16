@@ -14,6 +14,7 @@ import javax.swing.table.TableModel;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.Section.SectionType;
 
 @XmlRootElement(name = "arrangement")
@@ -32,10 +33,10 @@ public class Arrangement {
 		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
 		defaultSections.put("CHILL", new Section("CHILL", 1, 30, 50, 60, 70, 20));
 		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 60, 70, 60));
-		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 90, 20, 40, 85));
+		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
 		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
 		defaultSections.put("CLIMAX", new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
-		defaultSections.put("OUTRO", new Section("OUTRO", 1, 100, 70, 50, 40, 10));
+		defaultSections.put("OUTRO", new Section("OUTRO", 1, 80, 70, 50, 40, 10));
 	}
 
 	private static final Map<String, String[]> replacementMap = new HashMap<>();
@@ -153,13 +154,38 @@ public class Arrangement {
 		TableModel model = new DefaultTableModel(7, getSections().size());
 		for (int i = 0; i < getSections().size(); i++) {
 			Section s = getSections().get(i);
-			model.setValueAt(s.getType().toString(), 0, i);
+			model.setValueAt(s.getType(), 0, i);
 			model.setValueAt(s.getMeasures(), 1, i);
 			model.setValueAt(s.getMelodyChance(), 2, i);
 			model.setValueAt(s.getBassChance(), 3, i);
 			model.setValueAt(s.getChordChance(), 4, i);
 			model.setValueAt(s.getArpChance(), 5, i);
 			model.setValueAt(s.getDrumChance(), 6, i);
+		}
+		return model;
+	}
+
+	public TableModel convertToActualTableModel() {
+		TableModel model = new DefaultTableModel(7, getSections().size());
+		for (int i = 0; i < getSections().size(); i++) {
+			Section s = getSections().get(i);
+			model.setValueAt(s.getType(), 0, i);
+			model.setValueAt(String.valueOf(s.getMeasures()), 1, i);
+			String mp = StringUtils.join(s.getMelodyPresence());
+			String bp = StringUtils.join(s.getBassPresence());
+			String cp = StringUtils.join(s.getChordPresence());
+			String ap = StringUtils.join(s.getArpPresence());
+			String dp = StringUtils.join(s.getDrumPresence());
+			mp = mp.replaceAll("\\[", "").replaceAll("\\]", "");
+			bp = bp.replaceAll("\\[", "").replaceAll("\\]", "");
+			cp = cp.replaceAll("\\[", "").replaceAll("\\]", "");
+			ap = ap.replaceAll("\\[", "").replaceAll("\\]", "");
+			dp = dp.replaceAll("\\[", "").replaceAll("\\]", "");
+			model.setValueAt(mp, 2, i);
+			model.setValueAt(bp, 3, i);
+			model.setValueAt(cp, 4, i);
+			model.setValueAt(ap, 5, i);
+			model.setValueAt(dp, 6, i);
 		}
 		return model;
 	}
