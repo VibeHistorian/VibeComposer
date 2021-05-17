@@ -308,8 +308,8 @@ public class MelodyGenerator implements JMC {
 				double swingDuration1 = adjDur * (swingPercentAmount / ((double) 100.0));
 				double swingDuration2 = adjDur - swingDuration1;
 				//swingPercentAmount = 100 - swingPercentAmount;
-				System.out.println("Split dur: " + adjDur + " into: " + swingDuration1 + ", "
-						+ swingDuration2);
+				/*System.out.println("Split dur: " + adjDur + " into: " + swingDuration1 + ", "
+						+ swingDuration2);*/
 
 				Note n1split1 = new Note(n1.getPitch(), swingDuration1, n1.getDynamic());
 				Note n1split2 = new Note(pitch, swingDuration2, n1.getDynamic() - 10);
@@ -655,7 +655,7 @@ public class MelodyGenerator implements JMC {
 				}
 			};
 		}
-
+		boolean overridden = arr.isOverridden();
 		for (Section sec : arr.getSections()) {
 
 			sec.setStartTime(measureLength * counter);
@@ -688,13 +688,17 @@ public class MelodyGenerator implements JMC {
 			rand.setSeed(mainGeneratorSeed);
 			variationGen.setSeed(mainGeneratorSeed);
 			if (!gc.getMelodyPart().isMuted()) {
-				if (rand.nextInt(100) < sec.getMelodyChance()) {
+				boolean added = (overridden
+						&& sec.getMelodyPresence().contains(gc.getMelodyPart().getOrder()))
+						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
+				if (added) {
 					Phrase m = fillMelody(chordProgression, rootProgression, usedMeasures);
 					if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 						// TODO
 					}
 					sec.setMelody(m);
-					sec.getMelodyPresence().add(gc.getMelodyPart().getOrder());
+					if (!overridden)
+						sec.getMelodyPresence().add(gc.getMelodyPart().getOrder());
 				} else {
 					sec.setMelody(emptyPhrase.copy());
 				}
@@ -703,13 +707,18 @@ public class MelodyGenerator implements JMC {
 			rand.setSeed(mainGeneratorSeed + 10);
 			variationGen.setSeed(mainGeneratorSeed + 10);
 			if (!gc.getBassPart().isMuted()) {
-				CPhrase b = fillBassRoots(rootProgression, usedMeasures);
-				if (rand.nextInt(100) < sec.getBassChance()) {
+
+				boolean added = (overridden
+						&& sec.getBassPresence().contains(gc.getBassPart().getOrder()))
+						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
+				if (added) {
+					CPhrase b = fillBassRoots(rootProgression, usedMeasures);
 					if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 						// TODO
 					}
 					sec.setBass(b);
-					sec.getBassPresence().add(gc.getBassPart().getOrder());
+					if (!overridden)
+						sec.getBassPresence().add(gc.getBassPart().getOrder());
 				} else {
 					sec.setBass(emptyCPhrase.copy());
 				}
@@ -719,17 +728,19 @@ public class MelodyGenerator implements JMC {
 			if (!gc.getChordParts().isEmpty()) {
 				List<CPhrase> copiedCPhrases = new ArrayList<>();
 				for (int i = 0; i < gc.getChordParts().size(); i++) {
-					rand.setSeed(mainGeneratorSeed + 100 + gc.getChordParts().get(i).getOrder());
-					variationGen.setSeed(
-							mainGeneratorSeed + 100 + gc.getChordParts().get(i).getOrder());
-					if (rand.nextInt(100) < sec.getChordChance()) {
-						CPhrase c = fillChordsFromPart(gc.getChordParts().get(i), chordProgression,
-								usedMeasures);
+					ChordPart cp = gc.getChordParts().get(i);
+					rand.setSeed(mainGeneratorSeed + 100 + cp.getOrder());
+					variationGen.setSeed(mainGeneratorSeed + 100 + cp.getOrder());
+					boolean added = (overridden && sec.getChordPresence().contains(cp.getOrder()))
+							|| (!overridden && rand.nextInt(100) < sec.getChordChance());
+					if (added && !cp.isMuted()) {
+						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures);
 						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 							// TODO Mod.transpose(c, 12);
 						}
 						copiedCPhrases.add(c);
-						sec.getChordPresence().add(gc.getChordParts().get(i).getOrder());
+						if (!overridden)
+							sec.getChordPresence().add(cp.getOrder());
 					} else {
 						copiedCPhrases.add(emptyCPhrase.copy());
 					}
@@ -746,37 +757,40 @@ public class MelodyGenerator implements JMC {
 			if (!gc.getArpParts().isEmpty()) {
 				List<CPhrase> copiedCPhrases = new ArrayList<>();
 				for (int i = 0; i < gc.getArpParts().size(); i++) {
-					rand.setSeed(mainGeneratorSeed + 200 + gc.getArpParts().get(i).getOrder());
-					variationGen
-							.setSeed(mainGeneratorSeed + 200 + gc.getArpParts().get(i).getOrder());
+					ArpPart ap = gc.getArpParts().get(i);
+					rand.setSeed(mainGeneratorSeed + 200 + ap.getOrder());
+					variationGen.setSeed(mainGeneratorSeed + 200 + ap.getOrder());
 					// if arp1 supports melody with same instrument, always introduce it in second half
-					if (i == 0 && gc.getArpParts().get(i).getInstrument() == gc.getMelodyPart()
-							.getInstrument()) {
-						if (counter > arr.getSections().size() / 2) {
-							CPhrase a = fillArpFromPart(gc.getArpParts().get(i), chordProgression,
-									usedMeasures);
-							if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
-								// TODO Mod.transpose(a, 12);
-							}
+					CPhrase a = fillArpFromPart(ap, chordProgression, usedMeasures);
+					if (overridden) {
+						if (sec.getArpPresence().contains(ap.getOrder())) {
 							copiedCPhrases.add(a);
-							sec.getArpPresence().add(gc.getArpParts().get(i).getOrder());
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
 						}
 					} else {
-						if (rand.nextInt(100) < sec.getArpChance()) {
-							CPhrase a = fillArpFromPart(gc.getArpParts().get(i), chordProgression,
-									usedMeasures);
-							if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
-								// TODO Mod.transpose(a, 12);
+						if (i == 0 && ap.getInstrument() == gc.getMelodyPart().getInstrument()) {
+							if (counter > arr.getSections().size() / 2 && !ap.isMuted()) {
+								if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+									// TODO Mod.transpose(a, 12);
+								}
+								copiedCPhrases.add(a);
+								sec.getArpPresence().add(ap.getOrder());
+							} else {
+								copiedCPhrases.add(emptyCPhrase.copy());
 							}
-							copiedCPhrases.add(a);
-							sec.getArpPresence().add(gc.getArpParts().get(i).getOrder());
 						} else {
-							copiedCPhrases.add(emptyCPhrase.copy());
+							if (rand.nextInt(100) < sec.getArpChance() && !ap.isMuted()) {
+								if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+									// TODO Mod.transpose(a, 12);
+								}
+								copiedCPhrases.add(a);
+								sec.getArpPresence().add(ap.getOrder());
+							} else {
+								copiedCPhrases.add(emptyCPhrase.copy());
+							}
 						}
 					}
-
 				}
 				sec.setArps(copiedCPhrases);
 			}
@@ -784,17 +798,19 @@ public class MelodyGenerator implements JMC {
 			if (!gc.getDrumParts().isEmpty()) {
 				List<Phrase> copiedPhrases = new ArrayList<>();
 				for (int i = 0; i < gc.getDrumParts().size(); i++) {
-					rand.setSeed(mainGeneratorSeed + 300 + gc.getDrumParts().get(i).getOrder());
-					variationGen
-							.setSeed(mainGeneratorSeed + 300 + gc.getDrumParts().get(i).getOrder());
-					if (rand.nextInt(100) < sec.getDrumChance()) {
-						Phrase d = fillDrumsFromPart(gc.getDrumParts().get(i), chordProgression,
-								usedMeasures);
+					DrumPart dp = gc.getDrumParts().get(i);
+					rand.setSeed(mainGeneratorSeed + 300 + dp.getOrder());
+					variationGen.setSeed(mainGeneratorSeed + 300 + dp.getOrder());
+					boolean added = (overridden && sec.getDrumPresence().contains(dp.getOrder()))
+							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
+					if (added && !dp.isMuted()) {
+						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures);
 						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 							// TODO Mod.accent(d, 0.25);
 						}
 						copiedPhrases.add(d);
-						sec.getDrumPresence().add(gc.getDrumParts().get(i).getOrder());
+						if (!overridden)
+							sec.getDrumPresence().add(dp.getOrder());
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
 					}

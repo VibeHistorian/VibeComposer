@@ -146,6 +146,7 @@ public class MidiGeneratorGUI extends JFrame
 	// arrangement
 	private Arrangement arrangement;
 	JTextField arrangementVariationChance;
+	JCheckBox arrangementManualOverride;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -939,6 +940,9 @@ public class MidiGeneratorGUI extends JFrame
 		arrangementSettings.add(removeLastSectionBtn);
 		arrangementSettings.add(resetArrangementBtn);
 
+		arrangementManualOverride = new JCheckBox("Allow manual change", true);
+		arrangementSettings.add(arrangementManualOverride);
+
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(arrangementSettings, constraints);
@@ -1022,11 +1026,15 @@ public class MidiGeneratorGUI extends JFrame
 					return comp;
 				comp.setForeground(actualArrangementDarkMode);
 				if (row >= 2) {
+
+					// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
+					int[] maxCounts = new int[] { 0, 0, 1, 1, chordPanels.size(), arpPanels.size(),
+							drumPanels.size() };
 					if (value.equalsIgnoreCase("")) {
 						comp.setBackground(new Color(70, 70, 70));
 					} else {
-						int count = StringUtils.countMatches(value, ",");
-						int color = 120 + count * 10;
+						int count = StringUtils.countMatches(value, ",") + 1;
+						int color = 120 + (70 * count) / maxCounts[row];
 						comp.setBackground(new Color(color, color, color));
 					}
 				} else {
@@ -1463,6 +1471,7 @@ public class MidiGeneratorGUI extends JFrame
 			System.out.println("Volume slider thread already exists!");
 			return;
 		}
+		System.out.println("Starting new slider thread..!");
 		cycle = new Thread() {
 
 			public void run() {
@@ -1694,8 +1703,12 @@ public class MidiGeneratorGUI extends JFrame
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
 		}
-
-		MelodyGenerator melodyGen = new MelodyGenerator(copyGUItoConfig());
+		if (regenerate && (currentMidi != null) && arrangementManualOverride.isSelected()) {
+			arrangement.setOverridden(true);
+		} else {
+			arrangement.setOverridden(false);
+		}
+		MelodyGenerator melodyGen = new MelodyGenerator(copyGUItoConfig(false));
 		fillUserParameters();
 
 		File makeDir = new File(MIDIS_FOLDER);
@@ -1822,6 +1835,7 @@ public class MidiGeneratorGUI extends JFrame
 			//TODO: track soloing?
 			//sequencer.setTrackSolo(1, true);
 			startVolumeSliderThread();
+			recalculateTabPaneCounts();
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
@@ -2133,7 +2147,7 @@ public class MidiGeneratorGUI extends JFrame
 				File savedMidi = new File(finalFilePath);
 				try {
 					FileUtils.copyFile(currentMidi, savedMidi);
-					copyGUItoConfig();
+					copyGUItoConfig(true);
 					marshal(finalFilePath);
 				} catch (IOException | JAXBException e) {
 					// TODO Auto-generated catch block
@@ -2349,15 +2363,18 @@ public class MidiGeneratorGUI extends JFrame
 			//randomArpsToGenerate.setText("" + arpPanels.size());
 			//randomDrumsCount.setText("" + drumPanels.size());
 
-			instrumentTabPane.setTitleAt(0, "Chords (" + chordPanels.size() + ")");
-			instrumentTabPane.setTitleAt(1, "Arps (" + arpPanels.size() + ")");
-			instrumentTabPane.setTitleAt(2, "Drums (" + drumPanels.size() + ")");
-			instrumentTabPane.setTitleAt(3,
-					"Arrangement (" + arrangement.getSections().size() + ")");
+			recalculateTabPaneCounts();
 		}
 
 		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
+	}
+
+	private void recalculateTabPaneCounts() {
+		instrumentTabPane.setTitleAt(0, "Chords (" + chordPanels.size() + ")");
+		instrumentTabPane.setTitleAt(1, "Arps (" + arpPanels.size() + ")");
+		instrumentTabPane.setTitleAt(2, "Drums (" + drumPanels.size() + ")");
+		instrumentTabPane.setTitleAt(3, "Arrangement (" + arrangement.getSections().size() + ")");
 	}
 
 	public void fillUserParameters() {
@@ -2565,7 +2582,7 @@ public class MidiGeneratorGUI extends JFrame
 		return (GUIConfig) context.createUnmarshaller().unmarshal(new FileReader(f));
 	}
 
-	public GUIConfig copyGUItoConfig() {
+	public GUIConfig copyGUItoConfig(boolean storage) {
 		// seed
 		guiConfig.setRandomSeed(lastRandomSeed);
 
@@ -2574,7 +2591,13 @@ public class MidiGeneratorGUI extends JFrame
 			arrangement.setPreviewChorus(true);
 		} else {
 			arrangement.setPreviewChorus(false);
-			arrangement.setFromModel(scrollableArrangementTable);
+			boolean overrideSuccessful = !storage
+					&& arrangement.setFromActualTable(scrollableArrangementActualTable);
+			System.out.println("OVERRIDE OK?: " + overrideSuccessful);
+			if (!overrideSuccessful) {
+				arrangement.setFromModel(scrollableArrangementTable);
+			}
+
 		}
 		guiConfig.setArrangement(arrangement);
 		guiConfig.setArrangementVariationChance(

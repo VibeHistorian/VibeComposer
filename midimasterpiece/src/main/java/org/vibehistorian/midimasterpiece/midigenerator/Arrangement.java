@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -116,6 +117,7 @@ public class Arrangement {
 
 	private List<Section> sections = new ArrayList<>();
 	private boolean previewChorus = false;
+	private boolean overridden;
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -151,6 +153,7 @@ public class Arrangement {
 	}
 
 	public TableModel convertToTableModel() {
+
 		TableModel model = new DefaultTableModel(7, getSections().size());
 		for (int i = 0; i < getSections().size(); i++) {
 			Section s = getSections().get(i);
@@ -213,6 +216,7 @@ public class Arrangement {
 			sections.add(s);
 
 		}
+		setOverridden(false);
 	}
 
 	public boolean isPreviewChorus() {
@@ -249,5 +253,55 @@ public class Arrangement {
 		resortByIndexes(scrollableArrangementTable);
 		sections.remove(sections.size() - 1);
 
+	}
+
+	public boolean setFromActualTable(JTable t) {
+		if (!overridden)
+			return false;
+		// TODO: possiblity to catch errors and return false
+		TableModel m = t.getModel();
+		List<Section> sections = getSections();
+		//sections.clear();
+		for (int i = 0; i < m.getColumnCount(); i++) {
+			int k = t.convertColumnIndexToModel(i);
+			Section s = sections.get(i);
+			s.setType((String) m.getValueAt(0, k));
+			Object k1 = m.getValueAt(1, k);
+			List<Integer> k2 = integerListFromCell(m.getValueAt(2, k));
+			List<Integer> k3 = integerListFromCell(m.getValueAt(3, k));
+			List<Integer> k4 = integerListFromCell(m.getValueAt(4, k));
+			List<Integer> k5 = integerListFromCell(m.getValueAt(5, k));
+			List<Integer> k6 = integerListFromCell(m.getValueAt(6, k));
+			if (k2.isEmpty() && k3.isEmpty() && k4.isEmpty() && k5.isEmpty() && k6.isEmpty()) {
+				return false;
+			}
+			s.setMeasures(k1 instanceof Integer ? (Integer) k1 : Integer.valueOf((String) k1));
+			s.setMelodyPresence(k2);
+			s.setBassPresence(k3);
+			s.setChordPresence(k4);
+			s.setArpPresence(k5);
+			s.setDrumPresence(k6);
+			//sections.add(s);
+
+		}
+		return true;
+	}
+
+	private List<Integer> integerListFromCell(Object cell) {
+		if (cell == null) {
+			return new ArrayList<>();
+		}
+		String sCell = (String) cell;
+		sCell = sCell.replaceAll(" ", "");
+		return Arrays.asList(sCell.split(",")).stream().filter(e -> !e.isBlank())
+				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
+	}
+
+	public boolean isOverridden() {
+		return overridden;
+	}
+
+	public void setOverridden(boolean overridden) {
+		this.overridden = overridden;
 	}
 }
