@@ -178,8 +178,6 @@ public class MelodyGenerator implements JMC {
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		System.out.println("Alt: " + alternateRhythm);
-		double swingPercentAmount = gc.getMelodyPart().getSwingPercent();
-
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
 			int extraTranspose = (o > 0
@@ -206,9 +204,6 @@ public class MelodyGenerator implements JMC {
 				int[] chord = stretchedChords.get(i);
 				int exceptionCounter = gc.getMaxExceptions();
 				boolean direction = directions.get(i);
-				double currentDuration = 0.0;
-				double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
-						- swingUnitOfTime;
 				for (int j = 0; j < durations.size(); j++) {
 
 					if (j > 0 && exceptionCounter > 0 && exceptionGenerator.nextInt(100) < 33) {
@@ -238,19 +233,6 @@ public class MelodyGenerator implements JMC {
 
 
 					double swingDuration = durations.get(j);
-					// if current position isn't on the grid, or current duration is at least 2x longer, skip
-					/*if (!isMultiple(currentDuration, swingUnitOfTime)
-							|| !isMultiple(durations.get(j) / 2, swingUnitOfTime)) {
-						// skip
-					} else {
-						swingDuration += swingAdjust;
-						swingAdjust *= -1;
-					}
-					if (j == durations.size() - 1) {
-						if (!roughlyEqual(currentDuration + swingDuration, rhythmDuration)) {
-							swingDuration = rhythmDuration - currentDuration;
-						}
-					}*/
 					Note n = new Note(pitch + extraTranspose, swingDuration,
 							velocityGenerator
 									.nextInt(1 + gc.getMelodyPart().getVelocityMax()
@@ -260,7 +242,6 @@ public class MelodyGenerator implements JMC {
 					if (previousNotePitch == pitch) {
 						direction = !direction;
 					}
-					currentDuration += swingDuration;
 					previousNotePitch = pitch;
 					noteList.add(n);
 				}
@@ -315,9 +296,6 @@ public class MelodyGenerator implements JMC {
 		int chordCounter = 0;
 		double durCounter = 0.0;
 		double currentChordDur = progressionDurations.get(0);
-		int swingPercentAmount = gc.getMelodyPart().getSwingPercent();
-		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
-				- swingUnitOfTime;
 		for (int i = 0; i < skeleton.size(); i++) {
 			double adjDur = skeleton.get(i).getRhythmValue();
 			if (durCounter + adjDur > currentChordDur) {
@@ -326,8 +304,6 @@ public class MelodyGenerator implements JMC {
 				currentChordDur = progressionDurations.get(chordCounter);
 				splitGenerator.setSeed(gc.getMelodyPart().getPatternSeed() + 4);
 				pauseGenerator.setSeed(gc.getMelodyPart().getPatternSeed() + 5);
-				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
-						- swingUnitOfTime;
 			}
 			Note emptyNote = new Note(Integer.MIN_VALUE, adjDur);
 			Note emptyNoteHalf = new Note(Integer.MIN_VALUE, adjDur / 2.0);
@@ -349,15 +325,7 @@ public class MelodyGenerator implements JMC {
 
 
 				double swingDuration1 = adjDur * 0.5;
-				/*if (isMultiple(adjDur, swingUnitOfTime)) {
-					System.out.println("Is multiple!");
-					swingDuration1 += swingAdjust;
-				}*/
 				double swingDuration2 = adjDur - swingDuration1;
-				//swingAdjust *= -1;
-				//swingPercentAmount = 100 - swingPercentAmount;
-				/*System.out.println("Split dur: " + adjDur + " into: " + swingDuration1 + ", "
-						+ swingDuration2);*/
 
 				Note n1split1 = new Note(n1.getPitch(), swingDuration1, n1.getDynamic());
 				Note n1split2 = new Note(pitch, swingDuration2, n1.getDynamic() - 10);
@@ -399,20 +367,18 @@ public class MelodyGenerator implements JMC {
 				adjComparison = swingAdjust;
 			}
 			if (durCounter + adjDur + adjComparison - 0.001 > currentChordDur) {
-				//System.out.println("Switching chord!");
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
 				currentChordDur = progressionDurations.get(chordCounter);
 				durCounter = 0.0;
 				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
 						- swingUnitOfTime;
 			}
-			//System.out.println("Note dur: " + adjDur);
 			if (isMultiple(durCounter + adjDur, 2 * swingUnitOfTime)) {
 				// do nothing, it ends on the main grid
 			} else {
 				// needs swing
-				//System.out.println("Swinging at: " + durCounter + ", ends at: "
-				//+ (durCounter + adjDur) + ", added: " + swingAdjust);
+				/*System.out.println("Swinging at: " + durCounter + ", ends at: "
+						+ (durCounter + adjDur) + ", added: " + swingAdjust);*/
 				adjDur += swingAdjust;
 				n.setDuration(adjDur * Note.DEFAULT_DURATION_MULTIPLIER);
 				n.setRhythmValue(adjDur);
