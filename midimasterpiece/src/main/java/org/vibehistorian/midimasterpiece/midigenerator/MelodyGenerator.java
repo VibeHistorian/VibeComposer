@@ -47,6 +47,7 @@ public class MelodyGenerator implements JMC {
 
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
+	private static final double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
 	private static final int OPENHAT_CHANCE = 15;
 	private static final int PROGRESSION_LENGTH = 4;
 	private static final int maxAllowedScaleNotes = 7;
@@ -177,6 +178,8 @@ public class MelodyGenerator implements JMC {
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		System.out.println("Alt: " + alternateRhythm);
+		double swingPercentAmount = gc.getMelodyPart().getSwingPercent();
+
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
 			int extraTranspose = (o > 0
@@ -203,6 +206,9 @@ public class MelodyGenerator implements JMC {
 				int[] chord = stretchedChords.get(i);
 				int exceptionCounter = gc.getMaxExceptions();
 				boolean direction = directions.get(i);
+				double currentDuration = 0.0;
+				double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
+						- swingUnitOfTime;
 				for (int j = 0; j < durations.size(); j++) {
 
 					if (j > 0 && exceptionCounter > 0 && exceptionGenerator.nextInt(100) < 33) {
@@ -229,7 +235,23 @@ public class MelodyGenerator implements JMC {
 					}
 					pitch = pickRandomBetweenIndexesInclusive(chord, startIndex, endIndex,
 							generator);
-					Note n = new Note(pitch + extraTranspose, durations.get(j),
+
+
+					double swingDuration = durations.get(j);
+					// if current position isn't on the grid, or current duration is at least 2x longer, skip
+					/*if (!isMultiple(currentDuration, swingUnitOfTime)
+							|| !isMultiple(durations.get(j) / 2, swingUnitOfTime)) {
+						// skip
+					} else {
+						swingDuration += swingAdjust;
+						swingAdjust *= -1;
+					}
+					if (j == durations.size() - 1) {
+						if (!roughlyEqual(currentDuration + swingDuration, rhythmDuration)) {
+							swingDuration = rhythmDuration - currentDuration;
+						}
+					}*/
+					Note n = new Note(pitch + extraTranspose, swingDuration,
 							velocityGenerator
 									.nextInt(1 + gc.getMelodyPart().getVelocityMax()
 											- gc.getMelodyPart().getVelocityMin())
@@ -238,6 +260,7 @@ public class MelodyGenerator implements JMC {
 					if (previousNotePitch == pitch) {
 						direction = !direction;
 					}
+					currentDuration += swingDuration;
 					previousNotePitch = pitch;
 					noteList.add(n);
 				}
@@ -247,6 +270,20 @@ public class MelodyGenerator implements JMC {
 
 
 		return noteList;
+	}
+
+	private boolean isMultiple(double first, double second) {
+		double result = first / second;
+		double rounded = Math.round(result);
+		if (roughlyEqual(result, rounded)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private boolean roughlyEqual(double first, double second) {
+		return Math.abs(first - second) < 0.001;
 	}
 
 	private int getAllowedPitchFromRange(int min, int max) {
@@ -278,14 +315,19 @@ public class MelodyGenerator implements JMC {
 		int chordCounter = 0;
 		double durCounter = 0.0;
 		double currentChordDur = progressionDurations.get(0);
+		int swingPercentAmount = gc.getMelodyPart().getSwingPercent();
+		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
+				- swingUnitOfTime;
 		for (int i = 0; i < skeleton.size(); i++) {
-			double adjDur = 10.0 * skeleton.get(i).getDuration() / 9.0;
+			double adjDur = skeleton.get(i).getRhythmValue();
 			if (durCounter + adjDur > currentChordDur) {
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
 				durCounter = 0.0;
 				currentChordDur = progressionDurations.get(chordCounter);
 				splitGenerator.setSeed(gc.getMelodyPart().getPatternSeed() + 4);
 				pauseGenerator.setSeed(gc.getMelodyPart().getPatternSeed() + 5);
+				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
+						- swingUnitOfTime;
 			}
 			Note emptyNote = new Note(Integer.MIN_VALUE, adjDur);
 			Note emptyNoteHalf = new Note(Integer.MIN_VALUE, adjDur / 2.0);
@@ -293,9 +335,9 @@ public class MelodyGenerator implements JMC {
 			boolean pause1 = p < gc.getMelodyPart().getPauseChance();
 			boolean pause2 = p < (gc.getMelodyPart().getPauseChance() / 2);
 
-			int swingPercentAmount = gc.getMelodyPart().getSwingPercent();
 
-			if (adjDur > Durations.SIXTEENTH_NOTE && splitGenerator.nextInt(100) < splitChance) {
+			if (adjDur > Durations.SIXTEENTH_NOTE * 1.4
+					&& splitGenerator.nextInt(100) < splitChance) {
 				Note n1 = skeleton.get(i);
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
 				int pitch = 0;
@@ -305,8 +347,14 @@ public class MelodyGenerator implements JMC {
 					pitch = getAllowedPitchFromRange(n1.getPitch(), n2.getPitch());
 				}
 
-				double swingDuration1 = adjDur * (swingPercentAmount / ((double) 100.0));
+
+				double swingDuration1 = adjDur * 0.5;
+				/*if (isMultiple(adjDur, swingUnitOfTime)) {
+					System.out.println("Is multiple!");
+					swingDuration1 += swingAdjust;
+				}*/
 				double swingDuration2 = adjDur - swingDuration1;
+				//swingAdjust *= -1;
 				//swingPercentAmount = 100 - swingPercentAmount;
 				/*System.out.println("Split dur: " + adjDur + " into: " + swingDuration1 + ", "
 						+ swingDuration2);*/
@@ -336,6 +384,45 @@ public class MelodyGenerator implements JMC {
 		return fullMelody;
 	}
 
+	private Vector<Note> swingMelody(Vector<Note> fullMelody) {
+		double currentChordDur = progressionDurations.get(0);
+		int chordCounter = 0;
+
+		int swingPercentAmount = gc.getMelodyPart().getSwingPercent();
+		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
+				- swingUnitOfTime;
+		double durCounter = 0.0;
+		for (Note n : fullMelody) {
+			double adjDur = n.getRhythmValue();
+			double adjComparison = 0;
+			if (!isMultiple(durCounter + adjDur, 2 * swingUnitOfTime)) {
+				adjComparison = swingAdjust;
+			}
+			if (durCounter + adjDur + adjComparison - 0.001 > currentChordDur) {
+				//System.out.println("Switching chord!");
+				chordCounter = (chordCounter + 1) % progressionDurations.size();
+				currentChordDur = progressionDurations.get(chordCounter);
+				durCounter = 0.0;
+				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
+						- swingUnitOfTime;
+			}
+			//System.out.println("Note dur: " + adjDur);
+			if (isMultiple(durCounter + adjDur, 2 * swingUnitOfTime)) {
+				// do nothing, it ends on the main grid
+			} else {
+				// needs swing
+				//System.out.println("Swinging at: " + durCounter + ", ends at: "
+				//+ (durCounter + adjDur) + ", added: " + swingAdjust);
+				adjDur += swingAdjust;
+				n.setDuration(adjDur * Note.DEFAULT_DURATION_MULTIPLIER);
+				n.setRhythmValue(adjDur);
+				swingAdjust *= -1;
+			}
+
+			durCounter += adjDur;
+		}
+		return fullMelody;
+	}
 
 	private Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
 			Note previousNote, Random generator, double durationLeft) {
@@ -559,7 +646,7 @@ public class MelodyGenerator implements JMC {
 				exceptionsLeft--;
 			}
 			previousNote = note;
-			currentDuration += (note.getDuration() * 10.0 / 9.0);
+			currentDuration += note.getRhythmValue();
 			Note transposedNote = new Note(note.getPitch(), note.getRhythmValue(),
 					note.getDynamic());
 			notes.add(transposedNote);
@@ -1021,12 +1108,14 @@ public class MelodyGenerator implements JMC {
 			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression,
 					measures);
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
+			Vector<Note> swingedMelody = swingMelody(fullMelody);
 			melodyPhrase.addNoteList(fullMelody, true);
 		}
 		//Mod.transpose(melodyPhrase, gc.getTranspose());
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;
 	}
+
 
 	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
 		CPhrase cphraseBassRoot = new CPhrase();
@@ -1135,6 +1224,7 @@ public class MelodyGenerator implements JMC {
 					double duration = progressionDurations.get(j) / MAXIMUM_PATTERN_LENGTH;
 					List<Integer> pattern = cp.getPattern()
 							.getPatternByLength(MAXIMUM_PATTERN_LENGTH);
+					Collections.rotate(pattern, cp.getPatternShift());
 					for (int p = 0; p < pattern.size(); p++) {
 						if (pattern.get(p) > 0) {
 							cpr.addChord(MidiUtils.convertChordToLength(
@@ -1418,9 +1508,9 @@ public class MelodyGenerator implements JMC {
 			}
 		} else {
 			arpPausesPattern.addAll(ap.getPattern().getPatternByLength(ap.getHitsPerPattern()));
-			Collections.rotate(arpPausesPattern, ap.getPatternShift());
-		}
 
+		}
+		Collections.rotate(arpPausesPattern, ap.getPatternShift());
 		List<Integer> arpOctavePattern = Arrays.stream(arpOctaveArray).boxed()
 				.collect(Collectors.toList());
 
