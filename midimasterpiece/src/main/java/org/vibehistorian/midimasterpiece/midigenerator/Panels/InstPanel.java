@@ -45,7 +45,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JTextField swingPercent = new JTextField("50", 2);
 
-	protected JLabel panelOrder = new JLabel("0");
+	protected JLabel panelOrder = new JLabel("1");
 
 	protected JTextField patternSeed = new JTextField("0", 8);
 	protected JComboBox<String> pattern = new JComboBox<String>();
@@ -304,5 +304,9 @@ public abstract class InstPanel extends JPanel {
 
 	public void setSwingPercent(int swingPercent) {
 		this.swingPercent.setText("" + swingPercent);
+	}
+
+	public int getPanelOrder() {
+		return Integer.valueOf(panelOrder.getText());
 	}
 }

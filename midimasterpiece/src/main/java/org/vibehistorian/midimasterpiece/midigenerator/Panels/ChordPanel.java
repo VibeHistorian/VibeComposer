@@ -105,11 +105,6 @@ public class ChordPanel extends InstPanel {
 		removeButton.setActionCommand("RemoveChord," + panelOrder);
 	}
 
-
-	public int getPanelOrder() {
-		return Integer.valueOf(panelOrder.getText());
-	}
-
 	public void setPanelOrder(int panelOrder) {
 		this.panelOrder.setText("" + panelOrder);
 		removeButton.setActionCommand("RemoveChord," + panelOrder);

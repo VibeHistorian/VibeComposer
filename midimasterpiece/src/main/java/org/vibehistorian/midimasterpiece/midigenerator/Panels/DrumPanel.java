@@ -16,12 +16,6 @@ public class DrumPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6219184197272490684L;
 
-	private JLabel panelOrder = new JLabel("0");
-
-	public int getPanelOrder() {
-		return Integer.valueOf(panelOrder.getText());
-	}
-
 	public void setPanelOrder(int panelOrder) {
 		this.panelOrder.setText("" + panelOrder);
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);

@@ -94,10 +94,6 @@ public class ArpPanel extends InstPanel {
 	}
 
 
-	public int getPanelOrder() {
-		return Integer.valueOf(panelOrder.getText());
-	}
-
 	public void setPanelOrder(int panelOrder) {
 		this.panelOrder.setText("" + panelOrder);
 		removeButton.setActionCommand("RemoveArp," + panelOrder);

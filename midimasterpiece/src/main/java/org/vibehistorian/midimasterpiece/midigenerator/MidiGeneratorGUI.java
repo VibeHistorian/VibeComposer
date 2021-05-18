@@ -97,6 +97,7 @@ import org.vibehistorian.midimasterpiece.midigenerator.Panels.BassPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordGenSettings;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.DrumPanel;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.InstPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.MelodyPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.ArpPart;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
@@ -2551,22 +2552,22 @@ public class MidiGeneratorGUI extends JFrame
 		return totalTime / 1000000.0;
 	}
 
-	@SuppressWarnings("restriction")
+	/*@SuppressWarnings("restriction")
 	private static AudioSynthesizer getAudioSynthesizer() throws MidiUnavailableException {
 		// First check if default synthesizer is AudioSynthesizer.
 		Synthesizer synth = MidiSystem.getSynthesizer();
 		if (synth instanceof AudioSynthesizer)
 			return (AudioSynthesizer) synth;
-
+	
 		// now check the others...        
 		for (MidiDevice.Info info : MidiSystem.getMidiDeviceInfo()) {
 			MidiDevice device = MidiSystem.getMidiDevice(info);
 			if (device instanceof AudioSynthesizer)
 				return (AudioSynthesizer) device;
 		}
-
+	
 		throw new MidiUnavailableException("The AudioSynthesizer is not available.");
-	}
+	}*/
 
 	public void marshal(String path) throws JAXBException, IOException {
 		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
@@ -2751,7 +2752,7 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	public DrumPanel addDrumPanelToLayout() {
-		int panelOrder = (drumPanels.size() > 0) ? getHighestDrumPanelNumber(drumPanels) + 1 : 1;
+		int panelOrder = (drumPanels.size() > 0) ? getHighestPanelNumber(drumPanels) : 1;
 
 		DrumPanel drumJPanel = new DrumPanel(this);
 		drumJPanel.setPanelOrder(panelOrder);
@@ -2761,7 +2762,7 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	private void removeDrumPanel(int order, boolean singleRemove) {
-		DrumPanel panel = getDrumPanelByOrder(order, drumPanels);
+		InstPanel panel = getPanelByOrder(order, drumPanels);
 		((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
 		drumPanels.remove(panel);
 
@@ -2907,21 +2908,8 @@ public class MidiGeneratorGUI extends JFrame
 		repaint();
 	}
 
-
-	private static int getHighestDrumPanelNumber(List<DrumPanel> panels) {
-		int highest = 1;
-		for (DrumPanel p : panels) {
-			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
-		}
-		return highest;
-	}
-
-	private static DrumPanel getDrumPanelByOrder(int order, List<DrumPanel> panels) {
-		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
-	}
-
 	public ChordPanel addChordPanelToLayout() {
-		int panelOrder = (chordPanels.size() > 0) ? getHighestChordPanelNumber(chordPanels) + 1 : 1;
+		int panelOrder = (chordPanels.size() > 0) ? getHighestPanelNumber(chordPanels) : 1;
 
 		ChordPanel cp = new ChordPanel(this);
 		cp.setPanelOrder(panelOrder);
@@ -2931,7 +2919,7 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	private void removeChordPanel(int order, boolean singleRemove) {
-		ChordPanel panel = getChordPanelByOrder(order, chordPanels);
+		InstPanel panel = getPanelByOrder(order, chordPanels);
 		((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
 		chordPanels.remove(panel);
 
@@ -3046,21 +3034,8 @@ public class MidiGeneratorGUI extends JFrame
 		repaint();
 	}
 
-
-	private static int getHighestChordPanelNumber(List<ChordPanel> panels) {
-		int highest = 1;
-		for (ChordPanel p : panels) {
-			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
-		}
-		return highest;
-	}
-
-	private static ChordPanel getChordPanelByOrder(int order, List<ChordPanel> panels) {
-		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
-	}
-
 	public ArpPanel addArpPanelToLayout() {
-		int panelOrder = (arpPanels.size() > 0) ? getHighestArpPanelNumber(arpPanels) + 1 : 1;
+		int panelOrder = (arpPanels.size() > 0) ? getHighestPanelNumber(arpPanels) : 1;
 
 		ArpPanel ap = new ArpPanel(this);
 		ap.setPanelOrder(panelOrder);
@@ -3070,7 +3045,7 @@ public class MidiGeneratorGUI extends JFrame
 	}
 
 	private void removeArpPanel(int order, boolean singleRemove) {
-		ArpPanel panel = getArpPanelByOrder(order, arpPanels);
+		InstPanel panel = getPanelByOrder(order, arpPanels);
 		((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
 		arpPanels.remove(panel);
 
@@ -3270,16 +3245,36 @@ public class MidiGeneratorGUI extends JFrame
 		repaint();
 	}
 
-
-	private static int getHighestArpPanelNumber(List<ArpPanel> panels) {
-		int highest = 1;
-		for (ArpPanel p : panels) {
-			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
+	private static int getValidPanelNumber(List<? extends InstPanel> panels) {
+		panels.sort((e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+		if (panels.stream().anyMatch(e -> e.getLockInst())) {
+			return getLowestAvailablePanelNumber(panels);
+		} else {
+			return getHighestPanelNumber(panels);
 		}
-		return highest;
 	}
 
-	private static ArpPanel getArpPanelByOrder(int order, List<ArpPanel> panels) {
+	private static int getHighestPanelNumber(List<? extends InstPanel> panels) {
+		int highest = 0;
+		for (InstPanel p : panels) {
+			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
+		}
+		return highest + 1;
+	}
+
+
+	private static int getLowestAvailablePanelNumber(List<? extends InstPanel> panels) {
+		int lowest = 0;
+		for (InstPanel p : panels) {
+			if (p.getPanelOrder() - lowest > 1) {
+				return lowest + 1;
+			}
+			lowest++;
+		}
+		return lowest + 1;
+	}
+
+	private static InstPanel getPanelByOrder(int order, List<? extends InstPanel> panels) {
 		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 
