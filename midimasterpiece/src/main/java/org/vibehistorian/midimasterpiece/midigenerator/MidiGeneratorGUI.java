@@ -182,6 +182,8 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox fixedLengthChords;
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
+	JCheckBox globalSwingOverride;
+	JTextField globalSwingOverrideValue;
 
 
 	// chord variety settings
@@ -530,6 +532,11 @@ public class MidiGeneratorGUI extends JFrame
 
 		macroParams.add(new JLabel("Mode:"));
 		macroParams.add(scaleMode);
+
+		globalSwingOverride = new JCheckBox("Global Swing override:", false);
+		globalSwingOverrideValue = new JTextField("50", 3);
+		macroParams.add(globalSwingOverride);
+		macroParams.add(globalSwingOverrideValue);
 
 
 		useAllInsts = new JCheckBox("Use all inst., except:", false);
@@ -1705,6 +1712,8 @@ public class MidiGeneratorGUI extends JFrame
 		System.out.println("Melody seed: " + masterpieceSeed);
 		lastRandomSeed = masterpieceSeed;
 
+		// TODO: refactor into "pre config phase" method?
+
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
@@ -1714,6 +1723,18 @@ public class MidiGeneratorGUI extends JFrame
 		} else {
 			arrangement.setOverridden(false);
 		}
+
+		if (globalSwingOverride.isSelected()) {
+			int swing = Integer.valueOf(globalSwingOverrideValue.getText());
+			melodyPanel.setSwingPercent(swing);
+			randomArpMaxSwing.setText("" + swing);
+			drumPanels.forEach(e -> {
+				if (e.getInstrument() > 40) {
+					e.setSwingPercent(swing);
+				}
+			});
+		}
+
 		MelodyGenerator melodyGen = new MelodyGenerator(copyGUItoConfig(false));
 		fillUserParameters();
 

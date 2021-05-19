@@ -1103,7 +1103,7 @@ public class MelodyGenerator implements JMC {
 			melodyPhrase.addNoteList(fullMelody, true);
 
 		} else {
-			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(generatedRootProgression,
+			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression,
 					measures);
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
 			Vector<Note> swingedMelody = swingMelody(fullMelody);
@@ -1290,7 +1290,9 @@ public class MelodyGenerator implements JMC {
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
 				double durationNow = 0;
-				int swingPercentAmount = gc.getMaxArpSwing();
+				int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
+						? gc.getMaxArpSwing()
+						: 50;
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 
 					int velocity = velocityGenerator.nextInt(
