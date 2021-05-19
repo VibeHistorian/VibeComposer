@@ -268,7 +268,7 @@ public class MelodyGenerator implements JMC {
 	}
 
 	private int getAllowedPitchFromRange(int min, int max) {
-		List<Integer> allowedPitches = gc.getScaleMode().absoluteNotesC;
+		List<Integer> allowedPitches = MELODY_SCALE;
 		int adjustment = 0;
 		while (max < allowedPitches.get(0)) {
 			min += 12;
