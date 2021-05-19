@@ -29,13 +29,13 @@ import org.vibehistorian.midimasterpiece.midigenerator.Parts.DrumPart;
 
 import jm.JMC;
 import jm.constants.Durations;
+import jm.gui.show.ShowScore;
 import jm.music.data.CPhrase;
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
-import jm.util.View;
 import jm.util.Write;
 
 public class MelodyGenerator implements JMC {
@@ -44,6 +44,10 @@ public class MelodyGenerator implements JMC {
 
 	// big G
 	public static GUIConfig gc;
+
+	// opened windows
+	public static List<ShowScore> showScores = new ArrayList<>();
+	public static int windowLoc = 5;
 
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
@@ -69,6 +73,7 @@ public class MelodyGenerator implements JMC {
 	public static int LAST_CHORD = 0;
 
 	public static boolean DISPLAY_SCORE = false;
+	public static int showScoreMode = 0;
 
 	// for internal use only
 	private double[] MELODY_DUR_ARRAY = { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
@@ -981,7 +986,10 @@ public class MelodyGenerator implements JMC {
 			List<Part> partsToRemove = new ArrayList<>();
 			for (Object p : score.getPartList()) {
 				Part part = (Part) p;
-				if (part.getTitle().equalsIgnoreCase("MainDrums")) {
+				if (part.getTitle().equalsIgnoreCase("MainDrums") && showScoreMode < 1) {
+					partsToRemove.add(part);
+					continue;
+				} else if (!part.getTitle().equalsIgnoreCase("MainDrums") && showScoreMode == 1) {
 					partsToRemove.add(part);
 					continue;
 				}
@@ -996,11 +1004,27 @@ public class MelodyGenerator implements JMC {
 				phrasesToRemove.forEach(e -> part.removePhrase(e));
 			}
 			partsToRemove.forEach(e -> score.removePart(e));
-			View.pianoRoll(score);
+			pianoRoll(score);
 		}
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
+	public static void pianoRoll(Score s) {
+		if (showScores.size() > 2) {
+			ShowScore scr = showScores.get(0);
+			showScores.remove(0);
+			scr.dispose();
+		}
+		int x = (windowLoc % 10 == 0) ? 50 : 0;
+		int y = (windowLoc % 15 == 0) ? 50 : 0;
+		ShowScore nextScr = new ShowScore(s, x, y);
+		windowLoc += 5;
+		if (windowLoc > 15) {
+			windowLoc = 5;
+		}
+		showScores.add(nextScr);
+
+	}
 
 	private void fillAlternates(List<Double> altProgressionDurations,
 			List<int[]> altChordProgression, List<int[]> altRootProgression) {

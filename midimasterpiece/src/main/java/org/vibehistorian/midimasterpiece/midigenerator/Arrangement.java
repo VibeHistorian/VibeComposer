@@ -31,6 +31,7 @@ public class Arrangement {
 		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 40, 25, 60));
 		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 100, 90, 70, 35, 70));
 		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 100, 100, 80, 50, 70));
+		defaultSections.put("HALF_CHORUS", new Section("HALF_CHORUS", 1, 0, 100, 80, 50, 80));
 		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
 		defaultSections.put("CHILL", new Section("CHILL", 1, 30, 50, 60, 70, 20));
 		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 60, 70, 60));
@@ -42,7 +43,8 @@ public class Arrangement {
 
 	private static final Map<String, String[]> replacementMap = new HashMap<>();
 	static {
-		replacementMap.put("INTRO", new String[] { "BUILDUP", "CHORUS2", "BREAKDOWN", "OUTRO" });
+		replacementMap.put("INTRO",
+				new String[] { "HALF_CHORUS", "CHORUS1", "BREAKDOWN", "OUTRO" });
 
 		replacementMap.put("CHORUS1", new String[] { "VERSE2" });
 
@@ -60,7 +62,7 @@ public class Arrangement {
 
 		afterinsertsMap.put("CHORUS1", new String[] { "VERSE2" });
 
-		afterinsertsMap.put("BREAKDOWN", new String[] { "INTRO" });
+		//afterinsertsMap.put("BREAKDOWN", new String[] { "INTRO" });
 
 		afterinsertsMap.put("CHILL", new String[] { "VERSE2", "BUILDUP" });
 	}

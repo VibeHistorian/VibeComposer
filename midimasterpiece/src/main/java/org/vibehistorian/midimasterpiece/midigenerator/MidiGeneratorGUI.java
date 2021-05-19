@@ -281,6 +281,7 @@ public class MidiGeneratorGUI extends JFrame
 	MidiDevice device = null;
 
 	JCheckBox showScore;
+	JComboBox<String> showScorePicker;
 	JCheckBox midiMode;
 	JComboBox<String> midiModeDevices;
 
@@ -1416,6 +1417,9 @@ public class MidiGeneratorGUI extends JFrame
 		saveWavFile.setActionCommand("SaveWavFile");
 
 		showScore = new JCheckBox("Show score", true);
+		showScorePicker = new JComboBox<String>();
+		MidiUtils.addAllToJComboBox(new String[] { "w/o DRUMS", "DRUMS ONLY", "ALL" },
+				showScorePicker);
 
 		useVolumeSliders = new JCheckBox("Use vol. sliders", true);
 
@@ -1458,6 +1462,7 @@ public class MidiGeneratorGUI extends JFrame
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveWavFile);
 		playSavePanel.add(showScore);
+		playSavePanel.add(showScorePicker);
 		playSavePanel.add(useVolumeSliders);
 		playSavePanel.add(midiMode);
 		playSavePanel.add(midiModeDevices);
@@ -2182,6 +2187,7 @@ public class MidiGeneratorGUI extends JFrame
 			sizeRespectingPack();
 			repaint();
 			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
 				@Override
 				protected Void doInBackground()
 						throws InterruptedException, MidiUnavailableException, IOException {
@@ -2220,6 +2226,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "GenMelody") {
+
 			Random rand = new Random();
 			int melodySeed = rand.nextInt();
 			melodyPanel.setPatternSeed(melodySeed);
@@ -2267,9 +2274,13 @@ public class MidiGeneratorGUI extends JFrame
 			else {
 				System.out.println("You chose " + filename);
 				try {
-					guiConfig = unmarshall(files[0]);
+					guiConfig =
+
+							unmarshall(files[0]);
 					copyConfigToGUI();
-				} catch (JAXBException | IOException e) {
+				} catch (JAXBException |
+
+						IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -2298,11 +2309,14 @@ public class MidiGeneratorGUI extends JFrame
 
 		if (ae.getActionCommand().startsWith("RemoveDrum,")) {
 			String drumNumber = ae.getActionCommand().split(",")[1];
+
 			removeDrumPanel(Integer.valueOf(drumNumber), true);
 			randomDrumsToGenerate.setText("" + drumPanels.size());
 		}
 
-		if (ae.getActionCommand() == "ClearChordPatterns") {
+		if (ae.getActionCommand() == "ClearChordPatterns")
+
+		{
 			for (ChordPanel cp : chordPanels) {
 				cp.setPatternSeed(0);
 				cp.setPattern(RhythmPattern.RANDOM);
@@ -2381,6 +2395,7 @@ public class MidiGeneratorGUI extends JFrame
 	public void fillUserParameters() {
 		try {
 			MelodyGenerator.DISPLAY_SCORE = showScore.isSelected();
+			MelodyGenerator.showScoreMode = showScorePicker.getSelectedIndex();
 
 			MelodyGenerator.FIRST_CHORD = chordSelect(
 					(String) firstChordSelection.getSelectedItem());
