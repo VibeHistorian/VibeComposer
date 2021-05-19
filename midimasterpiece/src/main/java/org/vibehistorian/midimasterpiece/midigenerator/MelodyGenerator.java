@@ -836,7 +836,7 @@ public class MelodyGenerator implements JMC {
 						}
 					} else {
 						if (i == 0 && ap.getInstrument() == gc.getMelodyPart().getInstrument()) {
-							if (counter > arr.getSections().size() / 2 && !ap.isMuted()) {
+							if (counter > ((arr.getSections().size() + 1) / 2) && !ap.isMuted()) {
 								if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 									// TODO Mod.transpose(a, 12);
 								}
