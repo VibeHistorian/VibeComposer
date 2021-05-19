@@ -236,7 +236,15 @@ public class MelodyGenerator implements JMC {
 					pitch = pickRandomBetweenIndexesInclusive(chord, startIndex, endIndex,
 							generator);
 
-
+					/*// override for first note
+					if ((i % 2 == 0) && (j == 0)) {
+						pitch = 60;
+					}
+					
+					// override for last note
+					if ((i % 2 == 1) && (j == durations.size() - 1)) {
+						pitch = 60;
+					}*/
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch + extraTranspose, swingDuration,
 							velocityGenerator
@@ -1095,7 +1103,7 @@ public class MelodyGenerator implements JMC {
 			melodyPhrase.addNoteList(fullMelody, true);
 
 		} else {
-			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression,
+			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(generatedRootProgression,
 					measures);
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
 			Vector<Note> swingedMelody = swingMelody(fullMelody);
