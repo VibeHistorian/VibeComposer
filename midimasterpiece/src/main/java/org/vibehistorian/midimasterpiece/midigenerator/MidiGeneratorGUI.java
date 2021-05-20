@@ -208,6 +208,8 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox melodyFirstNoteFromChord;
 	JCheckBox randomChordNote;
+	JTextField melodySplitChance;
+	JTextField melodyExceptionChance;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -565,6 +567,8 @@ public class MidiGeneratorGUI extends JFrame
 		melodyAlternateRhythmChance = new JTextField("100", 2);
 		melodySameRhythmChance = new JTextField("0", 2);
 		melodyUseOldAlgoChance = new JTextField("0", 2);
+		melodySplitChance = new JTextField("20", 3);
+		melodyExceptionChance = new JTextField("33", 3);
 		melodySettingsPanel.add(new JLabel("Max Note Jump:"));
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(new JLabel("Max Exceptions:"));
@@ -573,6 +577,10 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(melodyAlternateRhythmChance);
 		melodySettingsPanel.add(new JLabel("Doubled rhythm%:"));
 		melodySettingsPanel.add(melodySameRhythmChance);
+		melodySettingsPanel.add(new JLabel("Split chance%:"));
+		melodySettingsPanel.add(melodySplitChance);
+		melodySettingsPanel.add(new JLabel("Exception chance%:"));
+		melodySettingsPanel.add(melodyExceptionChance);
 		//melodySettingsPanel.add(new JLabel("Legacy algorithm%:"));
 		//melodySettingsPanel.add(melodyUseOldAlgoChance);
 
@@ -1971,6 +1979,9 @@ public class MidiGeneratorGUI extends JFrame
 			Random strumsGen = new Random();
 			for (ChordPanel p : chordPanels) {
 				p.setStrum((int) getRandomFromArray(strumsGen, MILISECOND_ARRAY_STRUM));
+				if (p.getStretchEnabled() && p.getChordNotesStretch() > 4 && p.getStrum() > 499) {
+					p.setStrum(p.getStrum() / 2);
+				}
 			}
 
 		}
@@ -2669,6 +2680,8 @@ public class MidiGeneratorGUI extends JFrame
 				Integer.valueOf(melodyAlternateRhythmChance.getText()));
 		guiConfig.setMelodySameRhythmChance(Integer.valueOf(melodySameRhythmChance.getText()));
 		guiConfig.setMelodyUseOldAlgoChance(Integer.valueOf(melodyUseOldAlgoChance.getText()));
+		guiConfig.setMelodySplitChance(Integer.valueOf(melodySplitChance.getText()));
+		guiConfig.setMelodyExceptionChance(Integer.valueOf(melodyExceptionChance.getText()));
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 
@@ -2731,6 +2744,8 @@ public class MidiGeneratorGUI extends JFrame
 				.setText(String.valueOf(guiConfig.getMelodyAlternateRhythmChance()));
 		melodySameRhythmChance.setText(String.valueOf(guiConfig.getMelodySameRhythmChance()));
 		melodyUseOldAlgoChance.setText(String.valueOf(guiConfig.getMelodyUseOldAlgoChance()));
+		melodySplitChance.setText(String.valueOf(guiConfig.getMelodySplitChance()));
+		melodyExceptionChance.setText(String.valueOf(guiConfig.getMelodyExceptionChance()));
 
 		// chords
 		spiceChance.setText(String.valueOf(guiConfig.getSpiceChance()));
@@ -3045,6 +3060,9 @@ public class MidiGeneratorGUI extends JFrame
 					cp.setChordNotesStretch(chordPanelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					cp.setChordNotesStretch(fixedChordStretch);
+				}
+				if (cp.getChordNotesStretch() > 4 && cp.getStrum() > 499) {
+					cp.setStrum(cp.getStrum() / 2);
 				}
 			} else {
 				cp.setStretchEnabled(false);

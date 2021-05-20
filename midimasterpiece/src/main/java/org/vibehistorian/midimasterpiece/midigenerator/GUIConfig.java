@@ -43,6 +43,8 @@ public class GUIConfig {
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 	private int maxMelodySwing = 50;
+	private int melodySplitChance = 20;
+	private int melodyExceptionChance = 33;
 
 	// chord gen
 	private boolean dimAugEnabled = false;
@@ -402,6 +404,22 @@ public class GUIConfig {
 
 	public void setMaxMelodySwing(int maxMelodySwing) {
 		this.maxMelodySwing = maxMelodySwing;
+	}
+
+	public int getMelodySplitChance() {
+		return melodySplitChance;
+	}
+
+	public void setMelodySplitChance(int melodySplitChance) {
+		this.melodySplitChance = melodySplitChance;
+	}
+
+	public int getMelodyExceptionChance() {
+		return melodyExceptionChance;
+	}
+
+	public void setMelodyExceptionChance(int melodyExceptionChance) {
+		this.melodyExceptionChance = melodyExceptionChance;
 	}
 
 

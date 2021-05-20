@@ -153,18 +153,20 @@ public class MelodyGenerator implements JMC {
 		return ascDirectionList;
 	}
 
-	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures) {
+	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures,
+			int notesSeedOffset) {
 		//155816678 seed
 
 		// TODO: parameter in melodypart like max jump 
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
 		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
+		int EXCEPTION_CHANCE = gc.getMelodyExceptionChance();
 
 		int seed = gc.getMelodyPart().getPatternSeed();
 
 		Vector<Note> noteList = new Vector<>();
-		Random generator = new Random(seed);
+		Random generator = new Random(seed + notesSeedOffset);
 		Random velocityGenerator = new Random(seed + 1);
 		Random exceptionGenerator = new Random(seed + 2);
 		Random sameRhythmGenerator = new Random(seed + 3);
@@ -198,7 +200,7 @@ public class MelodyGenerator implements JMC {
 						melodySkeletonDurationWeights);
 				if (i % 2 == 0) {
 					previousNotePitch = 0;
-					generator.setSeed(seed);
+					generator.setSeed(seed + notesSeedOffset);
 					exceptionGenerator.setSeed(seed + 2);
 				}
 				List<Double> durations = rhythm.regenerateDurations();
@@ -209,9 +211,11 @@ public class MelodyGenerator implements JMC {
 				int[] chord = stretchedChords.get(i);
 				int exceptionCounter = gc.getMaxExceptions();
 				boolean direction = directions.get(i);
+				boolean allowException = true;
 				for (int j = 0; j < durations.size(); j++) {
 
-					if (j > 0 && exceptionCounter > 0 && exceptionGenerator.nextInt(100) < 33) {
+					if (allowException && j > 0 && exceptionCounter > 0
+							&& exceptionGenerator.nextInt(100) < EXCEPTION_CHANCE) {
 						direction = !direction;
 						exceptionCounter--;
 					}
@@ -254,6 +258,9 @@ public class MelodyGenerator implements JMC {
 					//TODO: make sound good
 					if (previousNotePitch == pitch) {
 						direction = !direction;
+						allowException = false;
+					} else {
+						allowException = true;
 					}
 					previousNotePitch = pitch;
 					noteList.add(n);
@@ -281,6 +288,7 @@ public class MelodyGenerator implements JMC {
 	}
 
 	private int getAllowedPitchFromRange(int min, int max) {
+
 		List<Integer> allowedPitches = MELODY_SCALE;
 		int adjustment = 0;
 		while (max < allowedPitches.get(0)) {
@@ -294,7 +302,16 @@ public class MelodyGenerator implements JMC {
 			adjustment += 12;
 		}
 		for (Integer i : allowedPitches) {
+			if (i > min && i < max) {
+				System.out
+						.println("Min: " + min + ", Max: " + max + ", Final: " + (i + adjustment));
+				return i + adjustment;
+			}
+		}
+		for (Integer i : allowedPitches) {
 			if (i >= min && i <= max) {
+				System.out.println("Boring Pitch - Min: " + min + ", Max: " + max + ", Final: "
+						+ (i + adjustment));
 				return i + adjustment;
 			}
 		}
@@ -304,7 +321,7 @@ public class MelodyGenerator implements JMC {
 	private Vector<Note> convertMelodySkeletonToFullMelody(Vector<Note> skeleton) {
 		Random splitGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 4);
 		Random pauseGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 5);
-		int splitChance = 20;
+		int splitChance = gc.getMelodySplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
 		double durCounter = 0.0;
@@ -758,10 +775,14 @@ public class MelodyGenerator implements JMC {
 						&& sec.getMelodyPresence().contains(gc.getMelodyPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
 				if (added) {
-					Phrase m = fillMelody(chordProgression, rootProgression, usedMeasures);
-					if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
-						// TODO
+					int notesSeedOffset = 0;
+					if (!sec.getType().contains("CLIMAX") && !sec.getType().contains("CHORUS")
+							&& variationGen.nextInt() < gc.getArrangementVariationChance()) {
+						notesSeedOffset = 1;
 					}
+					Phrase m = fillMelody(chordProgression, rootProgression, usedMeasures,
+							notesSeedOffset);
+
 					sec.setMelody(m);
 					if (!overridden)
 						sec.getMelodyPresence().add(gc.getMelodyPart().getOrder());
@@ -1057,7 +1078,7 @@ public class MelodyGenerator implements JMC {
 	}
 
 	protected Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
-			int measures) {
+			int measures, int notesSeedOffset) {
 		Phrase melodyPhrase = new Phrase();
 		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
 				generatedRootProgression, true);
@@ -1104,7 +1125,7 @@ public class MelodyGenerator implements JMC {
 
 		} else {
 			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression,
-					measures);
+					measures, notesSeedOffset);
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
 			Vector<Note> swingedMelody = swingMelody(fullMelody);
 			melodyPhrase.addNoteList(fullMelody, true);
@@ -1284,6 +1305,7 @@ public class MelodyGenerator implements JMC {
 					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
 							: 0;
 			Random velocityGenerator = new Random(ap.getPatternSeed());
+			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
 
 				double chordDurationArp = longestChord / ((double) repeatedArpsPerChord);
@@ -1293,6 +1315,11 @@ public class MelodyGenerator implements JMC {
 				int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
 						? gc.getMaxArpSwing()
 						: 50;
+
+				// reset every 2
+				if (j % 2 == 0) {
+					exceptionGenerator.setSeed(ap.getPatternSeed() + 1);
+				}
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 
 					int velocity = velocityGenerator.nextInt(
@@ -1334,7 +1361,13 @@ public class MelodyGenerator implements JMC {
 								progressionDurations.get(j) - durationNow, velocity);
 						break;
 					} else {
-						arpCPhrase.addChord(new int[] { pitch }, swingDuration, velocity);
+						if (exceptionGenerator.nextInt(100) < ap.getExceptionChance()) {
+							double splitDuration = swingDuration / 2;
+							arpCPhrase.addChord(new int[] { pitch }, splitDuration, velocity);
+							arpCPhrase.addChord(new int[] { pitch }, splitDuration, velocity - 15);
+						} else {
+							arpCPhrase.addChord(new int[] { pitch }, swingDuration, velocity);
+						}
 					}
 					durationNow += swingDuration;
 				}
