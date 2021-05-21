@@ -288,6 +288,7 @@ public class MidiGeneratorGUI extends JFrame
 	JComboBox<String> showScorePicker;
 	JCheckBox midiMode;
 	JComboBox<String> midiModeDevices;
+	JCheckBox collapseDrumTracks;
 
 	JButton compose;
 	JButton regenerate;
@@ -564,11 +565,11 @@ public class MidiGeneratorGUI extends JFrame
 
 		maxJump = new JTextField("1", 2);
 		maxExceptions = new JTextField("2", 2);
-		melodyAlternateRhythmChance = new JTextField("100", 2);
-		melodySameRhythmChance = new JTextField("0", 2);
+		melodyAlternateRhythmChance = new JTextField("50", 2);
+		melodySameRhythmChance = new JTextField("50", 2);
 		melodyUseOldAlgoChance = new JTextField("0", 2);
-		melodySplitChance = new JTextField("20", 3);
-		melodyExceptionChance = new JTextField("33", 3);
+		melodySplitChance = new JTextField("50", 3);
+		melodyExceptionChance = new JTextField("50", 3);
 		melodySettingsPanel.add(new JLabel("Max Note Jump:"));
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(new JLabel("Max Exceptions:"));
@@ -861,6 +862,9 @@ public class MidiGeneratorGUI extends JFrame
 		drumsPanel.add(new JLabel("Pattern shift%"));
 		drumsPanel.add(randomDrumShiftChance);
 		drumsPanel.add(clearPatternSeeds);
+
+		collapseDrumTracks = new JCheckBox("Collapse Drum Tracks", true);
+		drumsPanel.add(collapseDrumTracks);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -2428,6 +2432,7 @@ public class MidiGeneratorGUI extends JFrame
 		try {
 			MelodyGenerator.DISPLAY_SCORE = showScore.isSelected();
 			MelodyGenerator.showScoreMode = showScorePicker.getSelectedIndex();
+			MelodyGenerator.COLLAPSE_DRUM_TRACKS = collapseDrumTracks.isSelected();
 
 			MelodyGenerator.FIRST_CHORD = chordSelect(
 					(String) firstChordSelection.getSelectedItem());
@@ -2933,10 +2938,10 @@ public class MidiGeneratorGUI extends JFrame
 			}
 
 
-			if (dp.getInstrument() > 41) {
+			if (dp.getInstrument() > 40) {
 				dp.setDelay(slide);
 			}
-			if (dp.getInstrument() > 39) {
+			if (dp.getInstrument() > 40) {
 				dp.setSwingPercent(swingPercent);
 				dp.setExceptionChance(drumPanelGenerator.nextInt(10));
 			} else {

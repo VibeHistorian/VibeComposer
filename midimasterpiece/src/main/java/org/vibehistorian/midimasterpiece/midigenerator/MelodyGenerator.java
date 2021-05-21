@@ -75,6 +75,8 @@ public class MelodyGenerator implements JMC {
 	public static boolean DISPLAY_SCORE = false;
 	public static int showScoreMode = 0;
 
+	public static boolean COLLAPSE_DRUM_TRACKS = true;
+
 	// for internal use only
 	private double[] MELODY_DUR_ARRAY = { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
 			Durations.EIGHTH_NOTE, Durations.SIXTEENTH_NOTE };
@@ -303,15 +305,11 @@ public class MelodyGenerator implements JMC {
 		}
 		for (Integer i : allowedPitches) {
 			if (i > min && i < max) {
-				System.out
-						.println("Min: " + min + ", Max: " + max + ", Final: " + (i + adjustment));
 				return i + adjustment;
 			}
 		}
 		for (Integer i : allowedPitches) {
 			if (i >= min && i <= max) {
-				System.out.println("Boring Pitch - Min: " + min + ", Max: " + max + ", Final: "
-						+ (i + adjustment));
 				return i + adjustment;
 			}
 		}
@@ -779,6 +777,7 @@ public class MelodyGenerator implements JMC {
 					if (!sec.getType().contains("CLIMAX") && !sec.getType().contains("CHORUS")
 							&& variationGen.nextInt() < gc.getArrangementVariationChance()) {
 						notesSeedOffset = 1;
+						System.out.println("Melody offset by 1..");
 					}
 					Phrase m = fillMelody(chordProgression, rootProgression, usedMeasures,
 							notesSeedOffset);
@@ -935,7 +934,13 @@ public class MelodyGenerator implements JMC {
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
-				drumParts.get(i).addPhrase(p);
+				if (COLLAPSE_DRUM_TRACKS) {
+					p.setAppend(false);
+					drumParts.get(0).addPhrase(p);
+				} else {
+					drumParts.get(i).addPhrase(p);
+				}
+
 			}
 			if (gc.getChordParts().size() > 0) {
 				CPhrase cscp = sec.getChordSlash();
@@ -1559,11 +1564,11 @@ public class MelodyGenerator implements JMC {
 		arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 
 		if (needToReport) {
-			System.out.println("Arp count: " + ap.getHitsPerPattern());
-			System.out.println("Arp pattern: " + arpPattern.toString());
-			System.out.println("Arp octaves: " + arpOctavePattern.toString());
+			//System.out.println("Arp count: " + ap.getHitsPerPattern());
+			//System.out.println("Arp pattern: " + arpPattern.toString());
+			//System.out.println("Arp octaves: " + arpOctavePattern.toString());
 		}
-		System.out.println("Arp pauses : " + arpPausesPattern.toString());
+		//System.out.println("Arp pauses : " + arpPausesPattern.toString());
 
 		if (ap.getChordSpan() > 1) {
 			arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
@@ -1612,8 +1617,8 @@ public class MelodyGenerator implements JMC {
 			}
 		}
 		Collections.rotate(drumPattern, dp.getPatternShift());
-		System.out
-				.println("Drum pattern for " + dp.getInstrument() + " : " + drumPattern.toString());
+		/*System.out
+				.println("Drum pattern for " + dp.getInstrument() + " : " + drumPattern.toString());*/
 		return drumPattern;
 	}
 
@@ -1629,8 +1634,8 @@ public class MelodyGenerator implements JMC {
 
 			drumVelocityPattern.add(velocity);
 		}
-		System.out.println("Drum velocity pattern for " + dp.getInstrument() + " : "
-				+ drumVelocityPattern.toString());
+		/*System.out.println("Drum velocity pattern for " + dp.getInstrument() + " : "
+				+ drumVelocityPattern.toString());*/
 		return drumVelocityPattern;
 	}
 }
