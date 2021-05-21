@@ -832,7 +832,8 @@ public class MelodyGenerator implements JMC {
 					}
 				}
 				sec.setChords(copiedCPhrases);
-				if (rand.nextInt(100) < sec.getChordChance()) {
+				if (!gc.getChordParts().get(0).isMuted() && sec.getChordPresence().contains(0)
+						&& rand.nextInt(100) < sec.getChordChance()) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
 					sec.setChordSlash(emptyCPhrase.copy());
