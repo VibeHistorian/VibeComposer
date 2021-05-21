@@ -29,7 +29,7 @@ public class GUIConfig {
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
 	private String soundbankName = "MuseScore_General.sf2";
 	private int pieceLength = 4;
-	private boolean fixedDuration = true;
+	private int fixedDuration = 4;
 	private int transpose = 0;
 	private double bpm = 80;
 	private boolean arpAffectsBpm = true;
@@ -99,11 +99,11 @@ public class GUIConfig {
 		this.pieceLength = pieceLength;
 	}
 
-	public boolean isFixedDuration() {
+	public int getFixedDuration() {
 		return fixedDuration;
 	}
 
-	public void setFixedDuration(boolean fixedDuration) {
+	public void setFixedDuration(int fixedDuration) {
 		this.fixedDuration = fixedDuration;
 	}
 

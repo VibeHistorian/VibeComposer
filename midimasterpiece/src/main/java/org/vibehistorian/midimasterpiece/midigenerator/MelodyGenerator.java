@@ -482,7 +482,7 @@ public class MelodyGenerator implements JMC {
 
 	}
 
-	private List<int[]> generateChordProgression(int mainGeneratorSeed, boolean fixedLength,
+	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
 
 		if (!userChords.isEmpty()) {
@@ -506,7 +506,11 @@ public class MelodyGenerator implements JMC {
 		Map<Integer, List<Integer>> r = MidiUtils.cpRulesMap;
 		chordInts.clear();
 
-		int maxLength = (fixedLength) ? PROGRESSION_LENGTH : 8;
+		int maxLength = (fixedLength > 0) ? fixedLength : 8;
+		if (fixedLength == 8) {
+			maxDuration *= 2;
+		}
+		double fixedDuration = maxDuration / maxLength;
 		int currentLength = 0;
 		double currentDuration = 0.0;
 		List<Integer> next = r.get(0);
@@ -522,7 +526,7 @@ public class MelodyGenerator implements JMC {
 				&& currentLength < maxLength) {
 			double durationLeft = maxDuration - Durations.EIGHTH_NOTE - currentDuration;
 
-			double dur = (fixedLength) ? Durations.HALF_NOTE
+			double dur = (fixedLength > 0) ? fixedDuration
 					: MidiUtils.pickDurationWeightedRandom(durationGenerator, durationLeft,
 							CHORD_DUR_ARRAY, CHORD_DUR_CHANCE, Durations.QUARTER_NOTE);
 
@@ -686,7 +690,7 @@ public class MelodyGenerator implements JMC {
 
 
 		List<int[]> generatedRootProgression = generateChordProgression(mainGeneratorSeed,
-				gc.isFixedDuration(), 4 * Durations.HALF_NOTE);
+				gc.getFixedDuration(), 4 * Durations.HALF_NOTE);
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}

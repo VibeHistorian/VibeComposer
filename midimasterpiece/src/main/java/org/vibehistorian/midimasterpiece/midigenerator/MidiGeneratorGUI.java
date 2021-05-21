@@ -179,7 +179,7 @@ public class MidiGeneratorGUI extends JFrame
 	JTextField soundbankFilename;
 	JTextField pieceLength;
 	JComboBox<String> scaleMode;
-	JCheckBox fixedLengthChords;
+	JComboBox<String> fixedLengthChords;
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	JCheckBox globalSwingOverride;
@@ -521,8 +521,9 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(new JLabel("BPM:"));
 		macroParams.add(mainBpm);
 
-		fixedLengthChords = new JCheckBox();
-		fixedLengthChords.setSelected(true);
+		fixedLengthChords = new JComboBox<>();
+		MidiUtils.addAllToJComboBox(new String[] { "4", "8", "NOT" }, fixedLengthChords);
+		fixedLengthChords.setSelectedItem(0);
 		macroParams.add(new JLabel("Chord duration fixed: "));
 		macroParams.add(fixedLengthChords);
 
@@ -2660,7 +2661,13 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
 		guiConfig.setSoundbankName(soundbankFilename.getText());
 		guiConfig.setPieceLength(Integer.valueOf(pieceLength.getText()));
-		guiConfig.setFixedDuration(fixedLengthChords.isSelected());
+		if (fixedLengthChords.getSelectedIndex() < 2) {
+			guiConfig.setFixedDuration(
+					Integer.valueOf((String) fixedLengthChords.getSelectedItem()));
+		} else {
+			guiConfig.setFixedDuration(0);
+		}
+
 		guiConfig.setTranspose(Integer.valueOf(transposeScore.getText()));
 		guiConfig.setBpm(Double.valueOf(mainBpm.getText()));
 		guiConfig.setArpAffectsBpm(arpAffectsBpm.isSelected());
@@ -2722,7 +2729,11 @@ public class MidiGeneratorGUI extends JFrame
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
 		soundbankFilename.setText(guiConfig.getSoundbankName());
 		pieceLength.setText(String.valueOf(guiConfig.getPieceLength()));
-		fixedLengthChords.setSelected(guiConfig.isFixedDuration());
+		if (guiConfig.getFixedDuration() == 0) {
+			fixedLengthChords.setSelectedItem("NOT");
+		} else {
+			fixedLengthChords.setSelectedItem("" + guiConfig.getFixedDuration());
+		}
 		transposeScore.setText(String.valueOf(guiConfig.getTranspose()));
 		mainBpm.setText(String.valueOf(guiConfig.getBpm()));
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
