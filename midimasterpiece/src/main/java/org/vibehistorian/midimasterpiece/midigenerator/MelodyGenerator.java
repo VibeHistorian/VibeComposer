@@ -945,7 +945,8 @@ public class MelodyGenerator implements JMC {
 			if (gc.getChordParts().size() > 0) {
 				CPhrase cscp = sec.getChordSlash();
 				cscp.setStartTime(cscp.getStartTime() + sec.getStartTime());
-				chordSlash.addCPhrase(cscp);
+				cscp.setAppend(false);
+				chordParts.get(0).addCPhrase(cscp);
 			}
 
 		}
