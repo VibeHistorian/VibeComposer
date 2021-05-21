@@ -832,7 +832,8 @@ public class MelodyGenerator implements JMC {
 					}
 				}
 				sec.setChords(copiedCPhrases);
-				if (!gc.getChordParts().get(0).isMuted() && sec.getChordPresence().contains(0)
+				if (!gc.getChordParts().get(0).isMuted()
+						&& sec.getChordPresence().contains(gc.getChordParts().get(0).getOrder())
 						&& rand.nextInt(100) < sec.getChordChance()) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
@@ -974,11 +975,6 @@ public class MelodyGenerator implements JMC {
 		}
 
 
-		if (gc.getChordParts().size() > 0) {
-			score.add(chordSlash);
-		}
-
-
 		Mod.transpose(score, gc.getScaleMode().ordinal(), Mod.MAJOR_SCALE, 0);
 		int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11 };
 		Mod.transpose(score, gc.getTranspose() - backTranspose[gc.getScaleMode().ordinal()]);
@@ -998,7 +994,8 @@ public class MelodyGenerator implements JMC {
 		score.setTempo(gc.getBpm());
 
 		for (Part p : score.getPartArray()) {
-			if (p.getHighestPitch() <= 0) {
+			if (COLLAPSE_DRUM_TRACKS && p.getHighestPitch() <= 0
+					&& p.getTitle().equalsIgnoreCase("MainDrums")) {
 				System.out.println(
 						"Removing inst: " + p.getInstrument() + ", in part: " + p.getTitle());
 				score.removePart(p);
