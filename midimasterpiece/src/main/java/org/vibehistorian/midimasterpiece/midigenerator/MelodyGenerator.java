@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.ChordSpanFill;
 import org.vibehistorian.midimasterpiece.midigenerator.Enums.RhythmPattern;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.ArpGenSettings;
@@ -662,13 +661,6 @@ public class MelodyGenerator implements JMC {
 				(!gc.getMelodyPart().isMuted()) ? gc.getMelodyPart().getInstrument() : 0, 0);
 		Part bassRoots = new Part("BassRoots",
 				(!gc.getBassPart().isMuted()) ? gc.getBassPart().getInstrument() : 74, 8);
-		// do not copy instrument unless it's pluck
-		Part chordSlash = new Part("ChordSlash",
-				(gc.getChordParts().size() > 0
-						&& gc.getChordParts().get(0).getInstPool() == POOL.PLUCK)
-								? gc.getChordParts().get(0).getInstrument()
-								: 4,
-				10);
 
 		List<Part> chordParts = new ArrayList<>();
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
@@ -917,7 +909,7 @@ public class MelodyGenerator implements JMC {
 			if (!gc.getMelodyPart().isMuted()) {
 				Phrase mp = sec.getMelody();
 				mp.setStartTime(mp.getStartTime() + sec.getStartTime());
-				melody.add(mp);
+				melody.addPhrase(mp);
 			}
 			if (!gc.getBassPart().isMuted()) {
 				CPhrase bp = sec.getBass();

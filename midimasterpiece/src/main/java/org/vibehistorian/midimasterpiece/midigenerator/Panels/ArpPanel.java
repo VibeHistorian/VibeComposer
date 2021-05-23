@@ -29,8 +29,9 @@ public class ArpPanel extends InstPanel {
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
+		this.add(removeButton);
 
-		this.add(new JLabel("Hits#"));
+		this.add(new JLabel("    Hits#"));
 		this.add(hitsPerPattern);
 		this.add(new JLabel("Chords#"));
 		this.add(chordSpan);
@@ -66,7 +67,7 @@ public class ArpPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
-		this.add(removeButton);
+
 	}
 
 	public ArpPanel(ActionListener l) {

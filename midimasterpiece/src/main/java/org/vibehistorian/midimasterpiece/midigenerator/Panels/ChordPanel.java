@@ -44,8 +44,9 @@ public class ChordPanel extends InstPanel {
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(instPoolPicker);
+		this.add(removeButton);
 
-		this.add(new JLabel("Fill"));
+		this.add(new JLabel("    Fill"));
 		this.add(chordSpanFill);
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
@@ -77,7 +78,7 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
-		this.add(removeButton);
+
 	}
 
 	public ChordPanel(ActionListener l) {

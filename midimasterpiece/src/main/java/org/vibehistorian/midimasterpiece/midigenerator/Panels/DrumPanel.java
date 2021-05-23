@@ -35,7 +35,9 @@ public class DrumPanel extends InstPanel {
 		this.add(panelOrder);
 		this.add(muteInst);
 		this.add(instrument);
-		this.add(new JLabel("Hits#"));
+		this.add(removeButton);
+
+		this.add(new JLabel("    Hits#"));
 		this.add(hitsPerPattern);
 		this.add(new JLabel("Chords#"));
 		this.add(chordSpan);
@@ -65,7 +67,7 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch. 10"));
 
-		this.add(removeButton);
+
 	}
 
 	public DrumPanel(ActionListener l) {
