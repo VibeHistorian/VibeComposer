@@ -64,12 +64,12 @@ public class MelodyGenerator implements JMC {
 	public static DrumGenSettings DRUM_SETTINGS = new DrumGenSettings();
 	public static ArpGenSettings ARP_SETTINGS = new ArpGenSettings();
 
-	public static List<Integer> userChords = new ArrayList<>();
+	public static List<Long> userChords = new ArrayList<>();
 	public static List<Double> userChordsDurations = new ArrayList<>();
-	public static List<Integer> chordInts = new ArrayList<>();
+	public static List<Long> chordInts = new ArrayList<>();
 
-	public static int FIRST_CHORD = 0;
-	public static int LAST_CHORD = 0;
+	public static long FIRST_CHORD = 0;
+	public static long LAST_CHORD = 0;
 
 	public static boolean DISPLAY_SCORE = false;
 	public static int showScoreMode = 0;
@@ -488,7 +488,7 @@ public class MelodyGenerator implements JMC {
 			List<int[]> userProgression = new ArrayList<>();
 			chordInts.clear();
 			chordInts.addAll(userChords);
-			for (Integer chordInt : userChords) {
+			for (Long chordInt : userChords) {
 				userProgression.add(MidiUtils.mappedChord(chordInt));
 			}
 			System.out.println(
@@ -502,7 +502,7 @@ public class MelodyGenerator implements JMC {
 		Random durationGenerator = new Random();
 		durationGenerator.setSeed(mainGeneratorSeed);
 
-		Map<Integer, List<Integer>> r = MidiUtils.cpRulesMap;
+		Map<Long, List<Long>> r = MidiUtils.cpRulesMap;
 		chordInts.clear();
 
 		int maxLength = (fixedLength > 0) ? fixedLength : 8;
@@ -512,10 +512,10 @@ public class MelodyGenerator implements JMC {
 		double fixedDuration = maxDuration / maxLength;
 		int currentLength = 0;
 		double currentDuration = 0.0;
-		List<Integer> next = r.get(0);
+		List<Long> next = r.get(0L);
 		if (LAST_CHORD != 0) {
-			next = new ArrayList<Integer>();
-			next.add(Integer.valueOf(LAST_CHORD));
+			next = new ArrayList<Long>();
+			next.add(Long.valueOf(LAST_CHORD));
 		}
 		List<String> debugMsg = new ArrayList<>();
 
@@ -536,7 +536,7 @@ public class MelodyGenerator implements JMC {
 			int nextInt = generator.nextInt(next.size());
 
 			// if last and not empty first chord
-			Integer chordInt = (durationLeft - dur < 0.01 && FIRST_CHORD != 0) ? FIRST_CHORD
+			Long chordInt = (durationLeft - dur < 0.01 && FIRST_CHORD != 0) ? (long) FIRST_CHORD
 					: next.get(nextInt);
 
 			int spiceResult = 1;
@@ -544,7 +544,6 @@ public class MelodyGenerator implements JMC {
 			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
 			// 
 			if (generator.nextInt(100) < gc.getSpiceChance()) {
-				int spiceInt = 10;
 
 				// 60 -> 600/6000 block 
 				if (!gc.isDimAugEnabled() && spiceSelectPow <= 2) {
@@ -553,10 +552,12 @@ public class MelodyGenerator implements JMC {
 				}
 
 				// 60 -> 6000000/60000000 block
-				if (!gc.isEnable9th13th() && spiceSelectPow >= 5) {
+				if (!gc.isEnable9th13th() && spiceSelectPow >= 5 && spiceSelectPow < 7) {
 					// move to maj/min 7th
 					spiceSelectPow -= 2;
 				}
+
+				// TODO: checkbox for sus chords
 
 				// use 7th with correct maj/min chord
 				if (chordInt < 10 && spiceSelectPow == 4) {
@@ -565,7 +566,7 @@ public class MelodyGenerator implements JMC {
 					spiceSelectPow++;
 				}
 
-				spiceResult = (int) Math.pow(spiceInt, spiceSelectPow);
+				spiceResult = (int) Math.pow(10, spiceSelectPow);
 				if (chordInt < 10) {
 					spiceResult *= 10;
 				}
@@ -933,7 +934,7 @@ public class MelodyGenerator implements JMC {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				if (COLLAPSE_DRUM_TRACKS) {
-					p.setAppend(false);
+					//p.setAppend(false);
 					drumParts.get(0).addPhrase(p);
 				} else {
 					drumParts.get(i).addPhrase(p);
@@ -1456,7 +1457,7 @@ public class MelodyGenerator implements JMC {
 			for (int j = 0; j < actualProgression.size(); j++) {
 				// pick random chord, take first/root pitch
 				boolean isChordSlash = chordSlashGenerator.nextInt(100) < gc.getChordSlashChance();
-				int slashChord = chordSlashGenerator.nextInt(6) + 1;
+				long slashChord = chordSlashGenerator.nextInt(6) + 1;
 				int[] mappedChord = MidiUtils.mappedChord(slashChord);
 				if (isChordSlash) {
 					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },

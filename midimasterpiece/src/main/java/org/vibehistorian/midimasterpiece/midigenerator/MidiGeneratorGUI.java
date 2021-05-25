@@ -355,7 +355,8 @@ public class MidiGeneratorGUI extends JFrame
 
 		JPanel chordToolTip = new JPanel();
 		tipLabel = new JLabel(
-				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), 100000 = i7(minor), 1000000 = 9th, 10000000 = 13th");
+				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), "
+						+ "100000 = i7(minor), 1000000 = 9th, 10000000 = 13th, 100000000 = Sus4, 1000000000 = Sus2, 10000000000 = Sus7");
 		chordToolTip.add(tipLabel);
 		constraints.gridy = 335;
 		constraints.anchor = GridBagConstraints.CENTER;
@@ -980,7 +981,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		if (action.equalsIgnoreCase("ArrangementAddLast")) {
-			arrangement.addSectionLast();
+			arrangement.addSectionLast(scrollableArrangementTable);
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
 			}
@@ -2535,11 +2536,11 @@ public class MidiGeneratorGUI extends JFrame
 					if (userChordsRandom
 							|| (userChordsSplit.length == userChordsDurationsSplit.length)) {
 						System.out.println("Trying to solve user chords!");
-						List<Integer> userChordsParsed = new ArrayList<>();
+						List<Long> userChordsParsed = new ArrayList<>();
 						List<Double> userChordsDurationsParsed = new ArrayList<>();
 						for (int i = 0; i < userChordsDurationsSplit.length; i++) {
 							if (!userChordsRandom) {
-								userChordsParsed.add(Integer.valueOf(userChordsSplit[i]));
+								userChordsParsed.add(Long.valueOf(userChordsSplit[i]));
 							}
 							userChordsDurationsParsed
 									.add(Double.valueOf(userChordsDurationsSplit[i]));

@@ -87,34 +87,38 @@ public class MidiUtils {
 			Pitches.D5 };
 	public static final int[] c13th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4,
 			Pitches.D5, Pitches.A5 };
+	public static final int[] cSus4th4 = { Pitches.C4, Pitches.F4, Pitches.G4 };
+	public static final int[] cSus2nd4 = { Pitches.C4, Pitches.D4, Pitches.G4 };
+	public static final int[] cSus7th4 = { Pitches.C4, Pitches.F4, Pitches.G4, Pitches.BF4 };
 
-	public static final int[] SPICE_SELECT = { 10, 100, 1000, 10000, 100000, 1000000 };
+	public static final int[] SPICE_SELECT = { 10, 100, 1000, 10000, 100000, 1000000, 10000000,
+			100000000 };
 
 
-	public static final Map<Integer, List<Integer>> cpRulesMap = createChordProgressionRulesMap();
+	public static final Map<Long, List<Long>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
-	public static final Map<Integer, int[]> chordsMap = createChordMap();
+	public static final Map<Long, int[]> chordsMap = createChordMap();
 
 
-	private static Map<Integer, List<Integer>> createChordProgressionRulesMap() {
-		Map<Integer, List<Integer>> cpMap = new HashMap<>();
+	private static Map<Long, List<Long>> createChordProgressionRulesMap() {
+		Map<Long, List<Long>> cpMap = new HashMap<>();
 		//0 is an imaginary last element which can grow into the correct last elements
-		cpMap.put(0, new ArrayList<>(Arrays.asList(1, 5, 60)));
-		cpMap.put(1, new ArrayList<>(Arrays.asList(4, 5)));
-		cpMap.put(20, new ArrayList<>(Arrays.asList(4, 60)));
-		cpMap.put(30, new ArrayList<>(Arrays.asList(60)));
-		cpMap.put(4, new ArrayList<>(Arrays.asList(1, 20, 30, 5, 60)));
-		cpMap.put(5, new ArrayList<>(Arrays.asList(1, 20, 4, 60)));
-		cpMap.put(60, new ArrayList<>(Arrays.asList(1, 20, 30, 5)));
-		cpMap.put(70, new ArrayList<>(Arrays.asList(1, 30, 4)));
+		cpMap.put(0L, new ArrayList<>(Arrays.asList(1L, 5L, 60L)));
+		cpMap.put(1L, new ArrayList<>(Arrays.asList(4L, 5L)));
+		cpMap.put(20L, new ArrayList<>(Arrays.asList(4L, 60L)));
+		cpMap.put(30L, new ArrayList<>(Arrays.asList(60L)));
+		cpMap.put(4L, new ArrayList<>(Arrays.asList(1L, 20L, 30L, 5L, 60L)));
+		cpMap.put(5L, new ArrayList<>(Arrays.asList(1L, 20L, 4L, 60L)));
+		cpMap.put(60L, new ArrayList<>(Arrays.asList(1L, 20L, 30L, 5L)));
+		cpMap.put(70L, new ArrayList<>(Arrays.asList(1L, 30L, 4L)));
 
-		cpMap.put(10, new ArrayList<>());
-		cpMap.put(2, new ArrayList<>());
-		cpMap.put(3, new ArrayList<>());
-		cpMap.put(40, new ArrayList<>());
-		cpMap.put(50, new ArrayList<>());
-		cpMap.put(6, new ArrayList<>(Arrays.asList(1, 4)));
-		cpMap.put(7, new ArrayList<>(Arrays.asList(1, 30, 4)));
+		cpMap.put(10L, new ArrayList<>());
+		cpMap.put(2L, new ArrayList<>());
+		cpMap.put(3L, new ArrayList<>());
+		cpMap.put(40L, new ArrayList<>());
+		cpMap.put(50L, new ArrayList<>());
+		cpMap.put(6L, new ArrayList<>(Arrays.asList(1L, 4L)));
+		cpMap.put(7L, new ArrayList<>(Arrays.asList(1L, 30L, 4L)));
 		return cpMap;
 
 	}
@@ -132,17 +136,20 @@ public class MidiUtils {
 
 	}
 
-	private static Map<Integer, int[]> createChordMap() {
-		Map<Integer, int[]> chordMap = new HashMap<>();
+	private static Map<Long, int[]> createChordMap() {
+		Map<Long, int[]> chordMap = new HashMap<>();
 		for (int i = 1; i <= 7; i++) {
-			chordMap.put(i, transposeChord(cMaj4, diaTransMap.get(i)));
-			chordMap.put(10 * i, transposeChord(cMin4, diaTransMap.get(i)));
-			chordMap.put(100 * i, transposeChord(cAug4, diaTransMap.get(i)));
-			chordMap.put(1000 * i, transposeChord(cDim4, diaTransMap.get(i)));
-			chordMap.put(10000 * i, transposeChord(cMaj7th4, diaTransMap.get(i)));
-			chordMap.put(100000 * i, transposeChord(cMin7th4, diaTransMap.get(i)));
-			chordMap.put(1000000 * i, transposeChord(c9th4, diaTransMap.get(i)));
-			chordMap.put(10000000 * i, transposeChord(c13th4, diaTransMap.get(i)));
+			chordMap.put((long) i, transposeChord(cMaj4, diaTransMap.get(i)));
+			chordMap.put((long) 10L * i, transposeChord(cMin4, diaTransMap.get(i)));
+			chordMap.put((long) 100L * i, transposeChord(cAug4, diaTransMap.get(i)));
+			chordMap.put((long) 1000L * i, transposeChord(cDim4, diaTransMap.get(i)));
+			chordMap.put((long) 10000L * i, transposeChord(cMaj7th4, diaTransMap.get(i)));
+			chordMap.put((long) 100000L * i, transposeChord(cMin7th4, diaTransMap.get(i)));
+			chordMap.put((long) 1000000L * i, transposeChord(c9th4, diaTransMap.get(i)));
+			chordMap.put((long) 10000000L * i, transposeChord(c13th4, diaTransMap.get(i)));
+			chordMap.put((long) 100000000L * i, transposeChord(cSus4th4, diaTransMap.get(i)));
+			chordMap.put((long) 1000000000L * i, transposeChord(cSus2nd4, diaTransMap.get(i)));
+			chordMap.put((long) 10000000000L * i, transposeChord(cSus7th4, diaTransMap.get(i)));
 		}
 		return chordMap;
 
@@ -188,7 +195,7 @@ public class MidiUtils {
 		return value;
 	}
 
-	public static int[] mappedChord(Integer chordInt) {
+	public static int[] mappedChord(Long chordInt) {
 		int[] mappedChord = chordsMap.get(chordInt);
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}

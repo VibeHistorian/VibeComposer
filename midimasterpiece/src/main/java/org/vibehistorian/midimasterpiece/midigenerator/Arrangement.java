@@ -246,8 +246,10 @@ public class Arrangement {
 
 	}
 
-	public void addSectionLast() {
-		sections.add(new Section("ADVANCED CHORUS", 1, 100, 100, 100, 100, 100));
+	public void addSectionLast(JTable scrollableArrangementTable) {
+		resortByIndexes(scrollableArrangementTable);
+		Section lastSection = sections.get(sections.size() - 1);
+		sections.add(new Section(lastSection));
 
 	}
 
@@ -264,6 +266,11 @@ public class Arrangement {
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		//sections.clear();
+		if (m.getColumnCount() != sections.size()) {
+			overridden = false;
+			return false;
+		}
+
 		for (int i = 0; i < m.getColumnCount(); i++) {
 			int k = t.convertColumnIndexToModel(i);
 			Section s = sections.get(i);
@@ -275,6 +282,7 @@ public class Arrangement {
 			List<Integer> k5 = integerListFromCell(m.getValueAt(5, k));
 			List<Integer> k6 = integerListFromCell(m.getValueAt(6, k));
 			if (k2.isEmpty() && k3.isEmpty() && k4.isEmpty() && k5.isEmpty() && k6.isEmpty()) {
+				overridden = false;
 				return false;
 			}
 			s.setMeasures(k1 instanceof Integer ? (Integer) k1 : Integer.valueOf((String) k1));
