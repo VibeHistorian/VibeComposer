@@ -2190,8 +2190,9 @@ public class MidiGeneratorGUI extends JFrame
 				@Override
 				protected void done() {
 					switchMidiButtons(true);
-					currentChords.setText(
-							"Chords:[" + StringUtils.join(MelodyGenerator.chordInts, ",") + "]");
+					List<String> prettyChords = MelodyGenerator.chordInts.stream()
+							.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList());
+					currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
 					sizeRespectingPack();
 					repaint();
 				}

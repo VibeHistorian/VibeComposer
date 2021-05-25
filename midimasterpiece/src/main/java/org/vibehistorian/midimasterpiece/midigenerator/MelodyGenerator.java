@@ -539,7 +539,7 @@ public class MelodyGenerator implements JMC {
 			Long chordInt = (durationLeft - dur < 0.01 && FIRST_CHORD != 0) ? (long) FIRST_CHORD
 					: next.get(nextInt);
 
-			int spiceResult = 1;
+			long spiceResult = 1;
 			int spiceSelectPow = generator.nextInt(MidiUtils.SPICE_SELECT.length) + 1;
 			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
 			// 
@@ -566,7 +566,7 @@ public class MelodyGenerator implements JMC {
 					spiceSelectPow++;
 				}
 
-				spiceResult = (int) Math.pow(10, spiceSelectPow);
+				spiceResult = (long) Math.pow(10, spiceSelectPow);
 				if (chordInt < 10) {
 					spiceResult *= 10;
 				}
@@ -574,6 +574,7 @@ public class MelodyGenerator implements JMC {
 			}
 
 			chordInts.add(chordInt);
+			System.out.println("Fetching chord: " + chordInt);
 			int[] mappedChord = MidiUtils.mappedChord(chordInt);
 			/*mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
 					gc.getScaleMode().noteAdjustScale);*/
@@ -1131,7 +1132,7 @@ public class MelodyGenerator implements JMC {
 			Vector<Note> swingedMelody = swingMelody(fullMelody);
 			melodyPhrase.addNoteList(fullMelody, true);
 		}
-		//Mod.transpose(melodyPhrase, gc.getTranspose());
+		Mod.transpose(melodyPhrase, gc.getMelodyPart().getTranspose());
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;
 	}

@@ -91,8 +91,15 @@ public class MidiUtils {
 	public static final int[] cSus2nd4 = { Pitches.C4, Pitches.D4, Pitches.G4 };
 	public static final int[] cSus7th4 = { Pitches.C4, Pitches.F4, Pitches.G4, Pitches.BF4 };
 
-	public static final int[] SPICE_SELECT = { 10, 100, 1000, 10000, 100000, 1000000, 10000000,
-			100000000 };
+	public static final Long[] SPICE_SELECT = { 10L, 100L, 1000L, 10000L, 100000L, 1000000L,
+			10000000L, 100000000L, 1000000000L };
+
+	public static final List<Long> SPICE_SELECT_LIST = Arrays.asList(SPICE_SELECT);
+
+	public static final String[] SPICE_SELECT_PRETTY = { "aug", "dim", "maj7", "m7", "9", "13",
+			"sus4", "sus2", "sus7" };
+	// index 0 unused
+	public static final String[] NUM_TO_LETTER = { "X", "C", "D", "E", "F", "G", "A", "B" };
 
 
 	public static final Map<Long, List<Long>> cpRulesMap = createChordProgressionRulesMap();
@@ -139,20 +146,38 @@ public class MidiUtils {
 	private static Map<Long, int[]> createChordMap() {
 		Map<Long, int[]> chordMap = new HashMap<>();
 		for (int i = 1; i <= 7; i++) {
-			chordMap.put((long) i, transposeChord(cMaj4, diaTransMap.get(i)));
-			chordMap.put((long) 10L * i, transposeChord(cMin4, diaTransMap.get(i)));
-			chordMap.put((long) 100L * i, transposeChord(cAug4, diaTransMap.get(i)));
-			chordMap.put((long) 1000L * i, transposeChord(cDim4, diaTransMap.get(i)));
-			chordMap.put((long) 10000L * i, transposeChord(cMaj7th4, diaTransMap.get(i)));
-			chordMap.put((long) 100000L * i, transposeChord(cMin7th4, diaTransMap.get(i)));
-			chordMap.put((long) 1000000L * i, transposeChord(c9th4, diaTransMap.get(i)));
-			chordMap.put((long) 10000000L * i, transposeChord(c13th4, diaTransMap.get(i)));
-			chordMap.put((long) 100000000L * i, transposeChord(cSus4th4, diaTransMap.get(i)));
-			chordMap.put((long) 1000000000L * i, transposeChord(cSus2nd4, diaTransMap.get(i)));
-			chordMap.put((long) 10000000000L * i, transposeChord(cSus7th4, diaTransMap.get(i)));
+			chordMap.put(Long.valueOf(i), transposeChord(cMaj4, diaTransMap.get(i)));
+			chordMap.put(10L * i, transposeChord(cMin4, diaTransMap.get(i)));
+			chordMap.put(100L * i, transposeChord(cAug4, diaTransMap.get(i)));
+			chordMap.put(1000L * i, transposeChord(cDim4, diaTransMap.get(i)));
+			chordMap.put(10000L * i, transposeChord(cMaj7th4, diaTransMap.get(i)));
+			chordMap.put(100000L * i, transposeChord(cMin7th4, diaTransMap.get(i)));
+			chordMap.put(1000000L * i, transposeChord(c9th4, diaTransMap.get(i)));
+			chordMap.put(10000000L * i, transposeChord(c13th4, diaTransMap.get(i)));
+			chordMap.put(100000000L * i, transposeChord(cSus4th4, diaTransMap.get(i)));
+			chordMap.put(1000000000L * i, transposeChord(cSus2nd4, diaTransMap.get(i)));
+			chordMap.put(10000000000L * i, transposeChord(cSus7th4, diaTransMap.get(i)));
 		}
 		return chordMap;
 
+	}
+
+	public static String prettyChord(long chordNum) {
+		String chordString = String.valueOf(chordNum);
+		int firstNum = Character.digit(chordString.charAt(0), 10);
+		String chordLetter = NUM_TO_LETTER[firstNum];
+		String chordQualifier = "";
+		//Long normalizedNum = Long.valueOf(chordNum / firstNum);
+		//System.out.println("Normalized: " + normalizedNum);
+		if (chordNum < 10) {
+			return chordLetter;
+		} else if (chordNum < 100) {
+			return chordLetter + "m";
+		} else {
+			int numIndex = SPICE_SELECT_LIST.indexOf(Long.valueOf((chordNum / firstNum) / 10L));
+			chordQualifier = SPICE_SELECT_PRETTY[numIndex];
+			return chordLetter + chordQualifier;
+		}
 	}
 
 	public static int[] transposeChord(int[] chord, int transposeBy) {
