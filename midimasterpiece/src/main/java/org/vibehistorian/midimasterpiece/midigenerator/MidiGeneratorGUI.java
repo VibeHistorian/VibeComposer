@@ -1262,7 +1262,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordSettingsProgressionPanel.add(new JLabel("Custom chords:"));
 		chordSettingsProgressionPanel.add(userChordsEnabled);
 
-		userChords = new JTextField("R", 8);
+		userChords = new JTextField("R", 15);
 		chordSettingsProgressionPanel.add(new JLabel("Chords:"));
 		chordSettingsProgressionPanel.add(userChords);
 		userChordsDurations = new JTextField("2,2,2,2", 6);
@@ -2366,7 +2366,8 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "CopyChords") {
-			String str = StringUtils.join(MelodyGenerator.chordInts, ",");
+			String str = StringUtils.join(MelodyGenerator.chordInts.stream()
+					.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList()), ",");
 			userChords.setText(str);
 			System.out.println("Copied chords: " + str);
 		}
@@ -2541,7 +2542,12 @@ public class MidiGeneratorGUI extends JFrame
 						List<Double> userChordsDurationsParsed = new ArrayList<>();
 						for (int i = 0; i < userChordsDurationsSplit.length; i++) {
 							if (!userChordsRandom) {
-								userChordsParsed.add(Long.valueOf(userChordsSplit[i]));
+								if (userChordsSplit[i].matches("[0-9]+")) {
+									userChordsParsed.add(Long.valueOf(userChordsSplit[i]));
+								} else {
+									userChordsParsed
+											.add(MidiUtils.unprettyChord(userChordsSplit[i]));
+								}
 							}
 							userChordsDurationsParsed
 									.add(Double.valueOf(userChordsDurationsSplit[i]));
@@ -2788,7 +2794,8 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
 		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
 		guiConfig.setCustomChordsEnabled(userChordsEnabled.isSelected());
-		guiConfig.setCustomChords(StringUtils.join(MelodyGenerator.chordInts, ","));
+		guiConfig.setCustomChords(StringUtils.join(MelodyGenerator.chordInts.stream()
+				.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList()), ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
 		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getText()));
 		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());

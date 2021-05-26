@@ -96,10 +96,11 @@ public class MidiUtils {
 
 	public static final List<Long> SPICE_SELECT_LIST = Arrays.asList(SPICE_SELECT);
 
-	public static final String[] SPICE_SELECT_PRETTY = { "aug", "dim", "maj7", "m7", "9", "13",
-			"sus4", "sus2", "sus7" };
+	public static final List<String> SPICE_SELECT_PRETTY = Arrays
+			.asList(new String[] { "aug", "dim", "maj7", "m7", "9", "13", "sus4", "sus2", "sus7" });
 	// index 0 unused
-	public static final String[] NUM_TO_LETTER = { "X", "C", "D", "E", "F", "G", "A", "B" };
+	public static final List<String> NUM_TO_LETTER = Arrays
+			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
 
 
 	public static final Map<Long, List<Long>> cpRulesMap = createChordProgressionRulesMap();
@@ -165,7 +166,7 @@ public class MidiUtils {
 	public static String prettyChord(long chordNum) {
 		String chordString = String.valueOf(chordNum);
 		int firstNum = Character.digit(chordString.charAt(0), 10);
-		String chordLetter = NUM_TO_LETTER[firstNum];
+		String chordLetter = NUM_TO_LETTER.get(firstNum);
 		String chordQualifier = "";
 		//Long normalizedNum = Long.valueOf(chordNum / firstNum);
 		//System.out.println("Normalized: " + normalizedNum);
@@ -175,9 +176,23 @@ public class MidiUtils {
 			return chordLetter + "m";
 		} else {
 			int numIndex = SPICE_SELECT_LIST.indexOf(Long.valueOf((chordNum / firstNum) / 10L));
-			chordQualifier = SPICE_SELECT_PRETTY[numIndex];
+			chordQualifier = SPICE_SELECT_PRETTY.get(numIndex);
 			return chordLetter + chordQualifier;
 		}
+	}
+
+	public static long unprettyChord(String chord) {
+		int firstNum = NUM_TO_LETTER.indexOf(String.valueOf(chord.charAt(0)));
+		if (chord.length() == 1) {
+			return firstNum;
+		}
+		if (chord.length() == 2 && chord.charAt(1) == 'm') {
+			return firstNum * 10;
+		}
+		int chordQualifierIndex = SPICE_SELECT_PRETTY.indexOf(chord.substring(1));
+		long chordLong = SPICE_SELECT_LIST.get(chordQualifierIndex) * 10;
+		return chordLong * firstNum;
+
 	}
 
 	public static int[] transposeChord(int[] chord, int transposeBy) {
