@@ -354,11 +354,28 @@ public class MidiGeneratorGUI extends JFrame
 		// chord tool tip
 
 		JPanel chordToolTip = new JPanel();
-		tipLabel = new JLabel(
+		/*tipLabel = new JLabel(
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), "
-						+ "100000 = i7(minor), 1000000 = 9th, 10000000 = 13th, 100000000 = Sus4, 1000000000 = Sus2, 10000000000 = Sus7");
+						+ "100000 = i7(minor), 1000000 = 9th, 10000000 = 13th, 100000000 = Sus4, 1000000000 = Sus2, 10000000000 = Sus7");*/
+		tipLabel = new JLabel(
+				"Allowed chords: C/D/E/F/G/A/B + m / aug / dim / maj7 / m7 / 9 / 13 / sus4 / sus2 / sus7");
 		chordToolTip.add(tipLabel);
-		constraints.gridy = 335;
+
+		userChordsEnabled = new JCheckBox();
+		userChordsEnabled.setSelected(false);
+
+
+		chordToolTip.add(new JLabel("Custom chords:"));
+		chordToolTip.add(userChordsEnabled);
+
+		userChords = new JTextField("R", 15);
+		chordToolTip.add(new JLabel("Chords:"));
+		chordToolTip.add(userChords);
+		userChordsDurations = new JTextField("2,2,2,2", 6);
+		chordToolTip.add(new JLabel("Chord durations (max. 8):"));
+		chordToolTip.add(userChordsDurations);
+
+		constraints.gridy = 355;
 		constraints.anchor = GridBagConstraints.CENTER;
 		everythingPanel.add(chordToolTip, constraints);
 
@@ -1255,19 +1272,7 @@ public class MidiGeneratorGUI extends JFrame
 		chordSettingsProgressionPanel.add(new JLabel("Last Chord:"));
 		chordSettingsProgressionPanel.add(lastChordSelection);
 
-		userChordsEnabled = new JCheckBox();
-		userChordsEnabled.setSelected(false);
 
-
-		chordSettingsProgressionPanel.add(new JLabel("Custom chords:"));
-		chordSettingsProgressionPanel.add(userChordsEnabled);
-
-		userChords = new JTextField("R", 15);
-		chordSettingsProgressionPanel.add(new JLabel("Chords:"));
-		chordSettingsProgressionPanel.add(userChords);
-		userChordsDurations = new JTextField("2,2,2,2", 6);
-		chordSettingsProgressionPanel.add(new JLabel("Chord durations (max. 8):"));
-		chordSettingsProgressionPanel.add(userChordsDurations);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(chordSettingsProgressionPanel, constraints);
