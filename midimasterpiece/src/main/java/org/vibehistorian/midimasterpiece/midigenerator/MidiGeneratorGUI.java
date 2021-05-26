@@ -1416,6 +1416,10 @@ public class MidiGeneratorGUI extends JFrame
 						int val = slider.getValue();
 						int arrangementSize = arrangement.getSections().stream()
 								.mapToInt(e -> e.getMeasures()).sum();
+						if (arrangementSize == 0) {
+							arrangementSize = 1;
+							System.out.println("ARRANGEMENT WAS 0!");
+						}
 						int divisor = slider.getMaximum() / arrangementSize;
 						int sectIndex = (val - 1) / divisor;
 						if (sectIndex >= arrangementSize) {
@@ -2532,7 +2536,9 @@ public class MidiGeneratorGUI extends JFrame
 			MelodyGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
 			if (userChordsEnabled.isSelected()) {
-				String[] userChordsSplit = userChords.getText().split(",");
+				String text = userChords.getText().replaceAll(" ", "");
+				userChords.setText(text);
+				String[] userChordsSplit = text.split(",");
 				System.out.println(StringUtils.join(userChordsSplit, ";"));
 				String[] userChordsDurationsSplit = userChordsDurations.getText().split(",");
 				try {
