@@ -45,6 +45,7 @@ public class GUIConfig {
 	private int maxMelodySwing = 50;
 	private int melodySplitChance = 20;
 	private int melodyExceptionChance = 33;
+	private int melodyQuickness = 100;
 
 	// chord gen
 	private boolean dimAugEnabled = false;
@@ -420,6 +421,14 @@ public class GUIConfig {
 
 	public void setMelodyExceptionChance(int melodyExceptionChance) {
 		this.melodyExceptionChance = melodyExceptionChance;
+	}
+
+	public int getMelodyQuickness() {
+		return melodyQuickness;
+	}
+
+	public void setMelodyQuickness(int melodyQuickness) {
+		this.melodyQuickness = melodyQuickness;
 	}
 
 

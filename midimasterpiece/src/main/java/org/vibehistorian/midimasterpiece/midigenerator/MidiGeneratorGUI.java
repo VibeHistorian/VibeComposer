@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
@@ -33,7 +34,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -215,6 +218,7 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox randomChordNote;
 	JTextField melodySplitChance;
 	JTextField melodyExceptionChance;
+	JSlider melodyQuicknessSlider;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -317,12 +321,14 @@ public class MidiGeneratorGUI extends JFrame
 	JPanel everythingPanel;
 	JScrollPane everythingPane;
 
+	private static MidiGeneratorGUI midiGeneratorGUI = null;
+
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
 		isDarkMode = true;
-		MidiGeneratorGUI midiGeneratorGUI = new MidiGeneratorGUI("General MIDI Generator (BETA)");
+		midiGeneratorGUI = new MidiGeneratorGUI("General MIDI Generator (BETA)");
 	}
 
 	public MidiGeneratorGUI(String title) {
@@ -634,6 +640,68 @@ public class MidiGeneratorGUI extends JFrame
 		melodyFirstNoteFromChord = new JCheckBox();
 		melodyFirstNoteFromChord.setSelected(true);
 
+		melodyQuicknessSlider = new JSlider();
+		melodyQuicknessSlider.setMaximum(100);
+		melodyQuicknessSlider.setValue(100);
+		melodyQuicknessSlider.setPreferredSize(new Dimension(50, 40));
+		Dictionary<Integer, JComponent> dict = new Hashtable<>();
+		JLabel sliderLabel = new JLabel("100");
+		sliderLabel.setFont(new Font(sliderLabel.getFont().getName(), Font.PLAIN, 10));
+		dict.put(0, sliderLabel);
+		melodyQuicknessSlider.setLabelTable(dict);
+		melodyQuicknessSlider.setPaintLabels(true);
+		melodyQuicknessSlider.addMouseListener(new MouseAdapter() {
+			boolean dragging = false;
+			Thread quicknessCycle = null;
+
+			@Override
+			public void mousePressed(MouseEvent me) {
+				dragging = true;
+				startVolumeSliderThread(me);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent me) {
+				dragging = false;
+			}
+
+			public void startVolumeSliderThread(MouseEvent me) {
+				if (quicknessCycle != null && quicknessCycle.isAlive()) {
+					System.out.println("Label slider thread already exists!");
+					return;
+				}
+				System.out.println("Starting new label slider thread..!");
+				quicknessCycle = new Thread() {
+
+					public void run() {
+						while (dragging) {
+							updateToolTip();
+							try {
+								sleep(25);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				};
+				quicknessCycle.start();
+
+			}
+
+			public void updateToolTip() {
+				sliderLabel.setText(melodyQuicknessSlider.getValue() + "");
+				midiGeneratorGUI.repaint();
+			}
+		});
+		/*JDialog windu = new JDialog();
+		windu.setUndecorated(true);
+		//windu.setVisible(true);
+		melodyQuicknessSlider.addMouseListener(new SliderPopupListener(windu, this));*/
+
+		melodySettingsPanel.add(new JLabel("Quickness:"));
+		melodySettingsPanel.add(melodyQuicknessSlider);
+		//melodySettingsPanel.add(sliderLabel);
 
 		//melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
 		//melodySettingsPanel.add(melodyFirstNoteFromChord);
@@ -1344,6 +1412,7 @@ public class MidiGeneratorGUI extends JFrame
 		slider = new JSlider();
 		slider.setMaximum(0);
 		slider.setToolTipText("Test");
+
 		//slider.setMinimumSize(new Dimension(1000, 3));
 		slider.addMouseListener(new MouseAdapter() {
 
@@ -2799,6 +2868,7 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setMelodyExceptionChance(Integer.valueOf(melodyExceptionChance.getText()));
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
+		guiConfig.setMelodyQuickness(melodyQuicknessSlider.getValue());
 
 
 		// chords
@@ -2866,6 +2936,7 @@ public class MidiGeneratorGUI extends JFrame
 		melodyUseOldAlgoChance.setText(String.valueOf(guiConfig.getMelodyUseOldAlgoChance()));
 		melodySplitChance.setText(String.valueOf(guiConfig.getMelodySplitChance()));
 		melodyExceptionChance.setText(String.valueOf(guiConfig.getMelodyExceptionChance()));
+		melodyQuicknessSlider.setValue(guiConfig.getMelodyQuickness());
 
 		// chords
 		spiceChance.setText(String.valueOf(guiConfig.getSpiceChance()));

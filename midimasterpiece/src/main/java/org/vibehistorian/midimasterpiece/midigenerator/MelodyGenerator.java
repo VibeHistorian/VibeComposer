@@ -52,7 +52,6 @@ public class MelodyGenerator implements JMC {
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	private static final double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
 	private static final int OPENHAT_CHANCE = 15;
-	private static final int PROGRESSION_LENGTH = 4;
 	private static final int maxAllowedScaleNotes = 7;
 	private static final double START_TIME_DELAY = 0.5;
 	private static final double DEFAULT_CHORD_SPLIT = 625;
@@ -176,7 +175,12 @@ public class MelodyGenerator implements JMC {
 
 		double[] melodySkeletonDurations = { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
-		int[] melodySkeletonDurationWeights = { 25, 50, 85, 100 };
+
+		int weightIncreaser = gc.getMelodyQuickness() / 4;
+		int weightReducer = 25 - weightIncreaser / 2;
+
+		int[] melodySkeletonDurationWeights = { 0 + weightIncreaser, 50 - weightReducer,
+				85 - weightReducer, 100 };
 
 		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(chords, true);
 		System.out.println(directions);
@@ -318,7 +322,7 @@ public class MelodyGenerator implements JMC {
 	private Vector<Note> convertMelodySkeletonToFullMelody(Vector<Note> skeleton) {
 		Random splitGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 4);
 		Random pauseGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 5);
-		int splitChance = gc.getMelodySplitChance();
+		int splitChance = gc.getMelodySplitChance() * gc.getMelodyQuickness() / 100;
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
 		double durCounter = 0.0;
