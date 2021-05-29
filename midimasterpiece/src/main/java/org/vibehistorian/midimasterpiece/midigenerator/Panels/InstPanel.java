@@ -1,6 +1,9 @@
 package org.vibehistorian.midimasterpiece.midigenerator.Panels;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -60,6 +63,8 @@ public abstract class InstPanel extends JPanel {
 
 	protected JButton removeButton = new JButton("X");
 
+	protected Set<Component> toggleableComponents = new HashSet<>();
+
 	public InstPanel() {
 
 	}
@@ -72,6 +77,18 @@ public abstract class InstPanel extends JPanel {
 		volSlider.setOrientation(JSlider.VERTICAL);
 		volSlider.setPreferredSize(new Dimension(30, 50));
 		volSlider.setPaintTicks(true);
+
+		toggleableComponents.add(hitsPerPattern);
+		toggleableComponents.add(chordSpan);
+		toggleableComponents.add(chordNotesStretch);
+		toggleableComponents.add(pauseChance);
+		toggleableComponents.add(exceptionChance);
+		toggleableComponents.add(patternRepeat);
+		toggleableComponents.add(transpose);
+		toggleableComponents.add(delay);
+		toggleableComponents.add(velocityMin);
+		toggleableComponents.add(velocityMax);
+		toggleableComponents.add(patternShift);
 	}
 
 	public void setFromInstPart(InstPart part) {
@@ -308,5 +325,13 @@ public abstract class InstPanel extends JPanel {
 
 	public int getPanelOrder() {
 		return Integer.valueOf(panelOrder.getText());
+	}
+
+	public Set<Component> getToggleableComponents() {
+		return toggleableComponents;
+	}
+
+	public void setToggleableComponents(Set<Component> toggleableComponents) {
+		this.toggleableComponents = toggleableComponents;
 	}
 }

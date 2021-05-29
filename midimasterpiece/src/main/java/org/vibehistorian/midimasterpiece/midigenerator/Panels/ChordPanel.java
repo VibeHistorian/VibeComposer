@@ -6,7 +6,6 @@ import java.awt.event.ItemListener;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils;
 import org.vibehistorian.midimasterpiece.midigenerator.MidiUtils.POOL;
@@ -20,10 +19,10 @@ public class ChordPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 
-	private JTextField transitionChance = new JTextField("0", 2);
-	private JTextField transitionSplit = new JTextField("625", 3);
+	private NumPanel transitionChance = new NumPanel("Split%", 0);
+	private NumPanel transitionSplit = new NumPanel("Split(ms)", 625, 0, 1000);
 
-	private JTextField strum = new JTextField("0", 3);
+	private NumPanel strum = new NumPanel("Strum(ms)", 0, 0, 1000);
 
 	private JComboBox<String> instPoolPicker = new JComboBox<String>();
 
@@ -51,11 +50,8 @@ public class ChordPanel extends InstPanel {
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
 
-		this.add(new JLabel("Split%"));
 		this.add(transitionChance);
-		this.add(new JLabel("Split(ms)"));
 		this.add(transitionSplit);
-		this.add(new JLabel("Strum(ms)"));
 		this.add(strum);
 
 		this.add(delay);
@@ -73,6 +69,9 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
+		toggleableComponents.add(transitionChance);
+		toggleableComponents.add(transitionSplit);
+		toggleableComponents.add(strum);
 
 	}
 
@@ -107,27 +106,27 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getTransitionChance() {
-		return Integer.valueOf(transitionChance.getText());
+		return Integer.valueOf(transitionChance.getInt());
 	}
 
 	public void setTransitionChance(int transitionChance) {
-		this.transitionChance.setText("" + transitionChance);
+		this.transitionChance.setInt(transitionChance);
 	}
 
 	public int getTransitionSplit() {
-		return Integer.valueOf(transitionSplit.getText());
+		return Integer.valueOf(transitionSplit.getInt());
 	}
 
 	public void setTransitionSplit(int transitionSplit) {
-		this.transitionSplit.setText("" + transitionSplit);
+		this.transitionSplit.setInt(transitionSplit);
 	}
 
 	public int getStrum() {
-		return Integer.valueOf(strum.getText());
+		return Integer.valueOf(strum.getInt());
 	}
 
 	public void setStrum(int strum) {
-		this.strum.setText("" + strum);
+		this.strum.setInt(strum);
 	}
 
 	public ChordPart toChordPart(int lastRandomSeed) {

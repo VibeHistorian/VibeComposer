@@ -158,6 +158,7 @@ public class MidiGeneratorGUI extends JFrame
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
 	Dimension scrollPaneDimension = new Dimension(1600, 200);
+	Dimension scrollPaneDimensionToggled = new Dimension(1000, 200);
 
 	JScrollPane drumScrollPane;
 	JScrollPane chordScrollPane;
@@ -362,7 +363,7 @@ public class MidiGeneratorGUI extends JFrame
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), "
 						+ "100000 = i7(minor), 1000000 = 9th, 10000000 = 13th, 100000000 = Sus4, 1000000000 = Sus2, 10000000000 = Sus7");*/
 		tipLabel = new JLabel(
-				"Allowed chords: C/D/E/F/G/A/B + m / aug / dim / maj7 / m7 / 9 / 13 / sus4 / sus2 / sus7");
+				"[Allowed chords: C/D/E/F/G/A/B + m / aug / dim / maj7 / m7 / 9 / 13 / sus4 / sus2 / sus7]");
 		chordToolTip.add(tipLabel);
 
 		userChordsEnabled = new JCheckBox();
@@ -431,7 +432,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		// arrangement
-		initArrangementSettings(300, GridBagConstraints.CENTER);
+		initArrangementSettings(280, GridBagConstraints.WEST);
 
 		// ---- CONTROL PANEL -----
 		initControlPanel(400, GridBagConstraints.CENTER);
@@ -443,16 +444,6 @@ public class MidiGeneratorGUI extends JFrame
 		// --- GENERATED MIDI DRAG n DROP ---
 
 		constraints.anchor = GridBagConstraints.CENTER;
-
-		JPanel midiDragAndDropPanel = new JPanel();
-
-		generatedMidi = new JList<File>();
-		generatedMidi.setTransferHandler(new FileTransferHandler());
-		generatedMidi.setDragEnabled(true);
-		midiDragAndDropPanel.add(new JLabel("Midi Drag'N'Drop:"));
-		midiDragAndDropPanel.add(generatedMidi);
-		constraints.gridy = 960;
-		everythingPanel.add(midiDragAndDropPanel, constraints);
 
 		// ---- MESSAGE PANEL ----
 
@@ -479,6 +470,7 @@ public class MidiGeneratorGUI extends JFrame
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
 
+		recalculateTabPaneCounts();
 
 		pack();
 		setVisible(true);
@@ -636,6 +628,12 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(randomMelodyOnRegenerate);
 		melodySettingsPanel.add(clearUserMelodySeed);
 
+		toggleableComponents.add(maxJump);
+		toggleableComponents.add(maxExceptions);
+		toggleableComponents.add(melodyAlternateRhythmChance);
+		toggleableComponents.add(melodySameRhythmChance);
+		toggleableComponents.add(melodySplitChance);
+		toggleableComponents.add(melodyExceptionChance);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -986,19 +984,18 @@ public class MidiGeneratorGUI extends JFrame
 	private void initArrangementSettings(int startY, int anchorSide) {
 		JPanel arrangementSettings = new JPanel();
 
-		useArrangement = new JCheckBox("Arrange", false);
+		arrangementSettings.add(new JLabel("ARRANGEMENT"));
+
+		useArrangement = new JCheckBox("Enable", false);
 		arrangementSettings.add(useArrangement);
 
 		pieceLength = new JTextField("12", 2);
-		arrangementSettings.add(new JLabel("Max Length(8+):"));
-		arrangementSettings.add(pieceLength);
+		//arrangementSettings.add(new JLabel("Max Length:"));
 
-		arrangementVariationChance = new NumPanel("Variation", 30);
-		arrangementSettings.add(arrangementVariationChance);
 
 		JButton resetArrangementBtn = makeButton("Reset arr.", "ArrangementReset");
 
-		JButton randomizeArrangementBtn = makeButton("Randomize arr.", "ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize sections:", "ArrangementRandomize");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
@@ -1008,7 +1005,11 @@ public class MidiGeneratorGUI extends JFrame
 		JButton removeLastSectionBtn = makeButton("Remove last section", "ArrangementRemoveLast");
 
 		arrangementSettings.add(randomizeArrangementBtn);
+		arrangementSettings.add(pieceLength);
 		arrangementSettings.add(randomizeArrangementOnCompose);
+
+		arrangementVariationChance = new NumPanel("Variation", 30);
+		arrangementSettings.add(arrangementVariationChance);
 
 		arrangementSettings.add(addLastSectionBtn);
 		arrangementSettings.add(removeLastSectionBtn);
@@ -1410,7 +1411,8 @@ public class MidiGeneratorGUI extends JFrame
 	private void initControlPanel(int startY, int anchorSide) {
 		JPanel controlPanel = new JPanel();
 		randomSeed = new JTextField("0", 8);
-		compose = makeButton("Compose", "Compose");
+		compose = makeButton("COMPOSE", "Compose");
+		compose.setBackground(new Color(150, 150, 60));
 		regenerate = makeButton("Regenerate", "Regenerate");
 		JButton copySeed = makeButton("Copy seed", "CopySeed");
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
@@ -1486,21 +1488,34 @@ public class MidiGeneratorGUI extends JFrame
 
 		});
 
+		generatedMidi = new JList<File>();
+		generatedMidi.setTransferHandler(new FileTransferHandler());
+		generatedMidi.setDragEnabled(true);
+
 		playSavePanel.add(startMidi);
 		playSavePanel.add(stopMidi);
 		playSavePanel.add(save3Star);
 		playSavePanel.add(save4Star);
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveWavFile);
-		playSavePanel.add(showScore);
-		playSavePanel.add(showScorePicker);
-		playSavePanel.add(useVolumeSliders);
-		playSavePanel.add(midiMode);
-		playSavePanel.add(midiModeDevices);
+		playSavePanel.add(new JLabel("Midi Drag'N'Drop:"));
+		playSavePanel.add(generatedMidi);
+
+		JPanel playSettingsPanel = new JPanel();
+
+		playSettingsPanel.add(showScore);
+		playSettingsPanel.add(showScorePicker);
+		playSettingsPanel.add(useVolumeSliders);
+		playSettingsPanel.add(midiMode);
+		playSettingsPanel.add(midiModeDevices);
+
+		constraints.gridy = startY + 5;
+		constraints.anchor = anchorSide;
+		everythingPanel.add(playSavePanel, constraints);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(playSavePanel, constraints);
+		everythingPanel.add(playSettingsPanel, constraints);
 	}
 
 	private void startVolumeSliderThread() {
@@ -1619,6 +1634,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomizeInstOnComposeOrGen.setSelected(state);
 		randomArpHitsPerPattern.setSelected(state);
 		randomizeArrangementOnCompose.setSelected(state);
+
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -1649,10 +1665,12 @@ public class MidiGeneratorGUI extends JFrame
 		randomDrumsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		switchOnComposeRandom.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		compose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		regenerate.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomArpHitsPerPattern.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeInstOnComposeOrGen.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeBmpTransOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		randomizeArrangementOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		for (JSeparator x : separators) {
 			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		}
@@ -1668,7 +1686,12 @@ public class MidiGeneratorGUI extends JFrame
 		isFullMode = !isFullMode;
 
 		toggleableComponents.forEach(e -> e.setVisible(isFullMode));
-
+		melodyPanel.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
+		bassPanel.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
+		chordPanels
+				.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
+		arpPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
+		drumPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
 		/*melodySameRhythmChance.setVisible(aFlag);
 		melodyUseOldAlgoChance.setVisible(aFlag);
 		melodyFirstNoteFromChord.setVisible(aFlag);
@@ -1683,6 +1706,12 @@ public class MidiGeneratorGUI extends JFrame
 		randomChordSplit.setVisible(aFlag);
 		randomChordMaxSplitChance.setVisible(aFlag);
 		randomChordStretchType.setVisible(aFlag);*/
+
+
+		/*instrumentTabPane
+				.setPreferredSize(isFullMode ? scrollPaneDimension : scrollPaneDimensionToggled);*/
+		if (isFullMode)
+			pack();
 	}
 
 	private void composeMidi(boolean regenerate) {
@@ -2792,6 +2821,9 @@ public class MidiGeneratorGUI extends JFrame
 		recreateChordPanelsFromChordParts(guiConfig.getChordParts());
 		recreateArpPanelsFromArpParts(guiConfig.getArpParts());
 		recreateDrumPanelsFromDrumParts(guiConfig.getDrumParts());
+		randomChordsToGenerate.setText(chordPanels.size() + "");
+		randomArpsToGenerate.setText(arpPanels.size() + "");
+		randomDrumsToGenerate.setText(drumPanels.size() + "");
 
 		setChordSettingsInUI(guiConfig.getChordGenSettings());
 

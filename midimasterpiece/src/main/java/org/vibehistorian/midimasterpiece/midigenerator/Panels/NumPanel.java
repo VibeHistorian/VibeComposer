@@ -102,10 +102,10 @@ public class NumPanel extends JPanel {
 
 			public void startNumSliderThread(MouseEvent me) {
 				if (numCycle != null && numCycle.isAlive()) {
-					System.out.println("Label slider thread already exists! " + label.getText());
+					//System.out.println("Label slider thread already exists! " + label.getText());
 					return;
 				}
-				System.out.println("Starting new label slider thread..! " + label.getText());
+				//System.out.println("Starting new label slider thread..! " + label.getText());
 				numCycle = new Thread() {
 
 					public void run() {
