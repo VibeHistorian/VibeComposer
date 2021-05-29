@@ -1,0 +1,137 @@
+package org.vibehistorian.midimasterpiece.midigenerator.Panels;
+
+import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class NumPanel extends JPanel {
+
+	private static final long serialVersionUID = -2145278227995141172L;
+
+	private JTextField text = null;
+	private JLabel label = null;
+	private JSlider slider = null;
+
+	public NumPanel(String name, int value, int maximum) {
+		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		label = new JLabel(name);
+		text = new JTextField(String.valueOf(value), maximum > 100 ? 3 : 2);
+		slider = new JSlider();
+		initSlider(maximum, value);
+		initText();
+		add(label);
+		add(text);
+		add(slider);
+	}
+
+	private void initSlider(int maximum, int value) {
+		slider.setMinimum(0);
+		slider.setMaximum(maximum);
+		slider.setValue(value);
+		slider.setPreferredSize(new Dimension(50, 30));
+		slider.addMouseListener(new MouseAdapter() {
+			boolean dragging = false;
+			Thread numCycle = null;
+
+			@Override
+			public void mousePressed(MouseEvent me) {
+				dragging = true;
+				startNumSliderThread(me);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent me) {
+				dragging = false;
+			}
+
+			public void startNumSliderThread(MouseEvent me) {
+				if (numCycle != null && numCycle.isAlive()) {
+					System.out.println("Label slider thread already exists! " + label.getText());
+					return;
+				}
+				System.out.println("Starting new label slider thread..! " + label.getText());
+				numCycle = new Thread() {
+
+					public void run() {
+						while (dragging) {
+							updateToolTip();
+							try {
+								sleep(25);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				};
+				numCycle.start();
+
+			}
+
+			public void updateToolTip() {
+				text.setText(String.valueOf(slider.getValue()));
+			}
+		});
+	}
+
+	private void initText() {
+		text.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				tryUpdate();
+
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				tryUpdate();
+
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				tryUpdate();
+
+			}
+
+		});
+	}
+
+	private void tryUpdate() {
+		if (StringUtils.isEmpty(text.getText())) {
+			return;
+		}
+		int tryValue = 0;
+		try {
+			tryValue = Integer.valueOf(text.getText());
+			if (tryValue > slider.getMaximum()) {
+				slider.setValue(slider.getMaximum());
+				text.setText(slider.getMaximum() + "");
+			} else {
+				slider.setValue(tryValue);
+			}
+
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid value: " + text.getText());
+		}
+	}
+
+	public String getName() {
+		return label.getText();
+	}
+
+	public int getInt() {
+		return Integer.valueOf(text.getText());
+	}
+}

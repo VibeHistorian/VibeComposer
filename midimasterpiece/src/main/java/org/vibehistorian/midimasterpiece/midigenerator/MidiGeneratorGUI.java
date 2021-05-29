@@ -8,7 +8,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
@@ -34,9 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Dictionary;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -104,6 +101,7 @@ import org.vibehistorian.midimasterpiece.midigenerator.Panels.ChordPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.DrumPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.InstPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Panels.MelodyPanel;
+import org.vibehistorian.midimasterpiece.midigenerator.Panels.NumPanel;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.ArpPart;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.ChordPart;
 import org.vibehistorian.midimasterpiece.midigenerator.Parts.DrumPart;
@@ -612,7 +610,6 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(arpCopyMelodyInst);
 		toggleableComponents.add(arpCopyMelodyInst);
 
-
 		maxJump = new JTextField("1", 2);
 		maxExceptions = new JTextField("2", 2);
 		melodyAlternateRhythmChance = new JTextField("50", 2);
@@ -640,7 +637,7 @@ public class MidiGeneratorGUI extends JFrame
 		melodyFirstNoteFromChord = new JCheckBox();
 		melodyFirstNoteFromChord.setSelected(true);
 
-		melodyQuicknessSlider = new JSlider();
+		/*melodyQuicknessSlider = new JSlider();
 		melodyQuicknessSlider.setMaximum(100);
 		melodyQuicknessSlider.setValue(100);
 		melodyQuicknessSlider.setPreferredSize(new Dimension(50, 40));
@@ -653,18 +650,18 @@ public class MidiGeneratorGUI extends JFrame
 		melodyQuicknessSlider.addMouseListener(new MouseAdapter() {
 			boolean dragging = false;
 			Thread quicknessCycle = null;
-
+		
 			@Override
 			public void mousePressed(MouseEvent me) {
 				dragging = true;
 				startVolumeSliderThread(me);
 			}
-
+		
 			@Override
 			public void mouseReleased(MouseEvent me) {
 				dragging = false;
 			}
-
+		
 			public void startVolumeSliderThread(MouseEvent me) {
 				if (quicknessCycle != null && quicknessCycle.isAlive()) {
 					System.out.println("Label slider thread already exists!");
@@ -672,7 +669,7 @@ public class MidiGeneratorGUI extends JFrame
 				}
 				System.out.println("Starting new label slider thread..!");
 				quicknessCycle = new Thread() {
-
+		
 					public void run() {
 						while (dragging) {
 							updateToolTip();
@@ -686,21 +683,22 @@ public class MidiGeneratorGUI extends JFrame
 					}
 				};
 				quicknessCycle.start();
-
+		
 			}
-
+		
 			public void updateToolTip() {
 				sliderLabel.setText(melodyQuicknessSlider.getValue() + "");
 				midiGeneratorGUI.repaint();
 			}
-		});
+		});*/
 		/*JDialog windu = new JDialog();
 		windu.setUndecorated(true);
 		//windu.setVisible(true);
 		melodyQuicknessSlider.addMouseListener(new SliderPopupListener(windu, this));*/
 
-		melodySettingsPanel.add(new JLabel("Quickness:"));
-		melodySettingsPanel.add(melodyQuicknessSlider);
+		//melodySettingsPanel.add(new JLabel("Quickness:"));
+		//melodySettingsPanel.add(melodyQuicknessSlider);
+		melodySettingsPanel.add(new NumPanel("Quickness", 100, 100));
 		//melodySettingsPanel.add(sliderLabel);
 
 		//melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
