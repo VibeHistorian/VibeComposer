@@ -1400,7 +1400,7 @@ public class MidiGeneratorGUI extends JFrame
 		controlPanel.add(transposeScore);
 
 		Random bpmRand = new Random();
-		mainBpm = new JTextField(String.valueOf(bpmRand.nextInt(30) + 70), 3);
+		mainBpm = new JTextField(String.valueOf(bpmRand.nextInt(30) + 50), 3);
 
 
 		controlPanel.add(new JLabel("BPM:"));
@@ -2143,11 +2143,13 @@ public class MidiGeneratorGUI extends JFrame
 
 			int bpm = instGen.nextInt(30) + 50;
 			if (arpAffectsBpm.isSelected() && !arpPanels.isEmpty()) {
-				int highestArpPattern = arpPanels.stream()
-						.map(e -> e.getPatternRepeat() / e.getChordSpan())
-						.max((e1, e2) -> Integer.compare(e1, e2)).get();
-				if (highestArpPattern > 2) {
-					bpm *= (2 / ((double) highestArpPattern));
+				double highestArpPattern = arpPanels.stream()
+						.map(e -> (e.getPatternRepeat() * e.getHitsPerPattern())
+								/ (e.getChordSpan() * 8.0))
+						.max((e1, e2) -> Double.compare(e1, e2)).get();
+				System.out.println("Repeater value: " + highestArpPattern);
+				if (highestArpPattern > 1) {
+					bpm *= 1 / (0.5 + highestArpPattern * 0.5);
 				}
 			}
 			mainBpm.setText("" + bpm);

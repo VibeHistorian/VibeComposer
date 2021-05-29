@@ -192,9 +192,19 @@ public class MelodyGenerator implements JMC {
 		System.out.println("Alt: " + alternateRhythm);
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
-			int extraTranspose = (o > 0
-					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
-							: 0;
+			int extraTranspose = 0;
+			if (o > 0) {
+				if (variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) {
+					// pick one variation
+					int numberOfVars = 2;
+					int variationInt = variationGenerator.nextInt(numberOfVars);
+					if (variationInt == 0) {
+						extraTranspose = 12;
+					} else if (variationInt == 1) {
+						MAX_JUMP_SKELETON_CHORD = ((MAX_JUMP_SKELETON_CHORD + 1) % 4) + 1;
+					}
+				}
+			}
 			for (int i = 0; i < stretchedChords.size(); i++) {
 				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 
