@@ -998,8 +998,8 @@ public class MelodyGenerator implements JMC {
 		for (Part p : score.getPartArray()) {
 			if (COLLAPSE_DRUM_TRACKS && p.getHighestPitch() <= 0
 					&& p.getTitle().equalsIgnoreCase("MainDrums")) {
-				System.out.println(
-						"Removing inst: " + p.getInstrument() + ", in part: " + p.getTitle());
+				/*System.out.println(
+						"Removing inst: " + p.getInstrument() + ", in part: " + p.getTitle());*/
 				score.removePart(p);
 			}
 		}

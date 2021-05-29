@@ -22,6 +22,9 @@ public class NumPanel extends JPanel {
 	private JTextField text = null;
 	private JLabel label = null;
 	private JSlider slider = null;
+	boolean needToReset = false;
+	private int naturalMax = 100;
+	private int naturalMin = 0;
 
 	public NumPanel(String name, int value) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
@@ -45,6 +48,8 @@ public class NumPanel extends JPanel {
 		add(label);
 		add(text);
 		add(slider);
+		naturalMax = maximum;
+		naturalMin = minimum;
 	}
 
 	private void initSlider(int minimum, int maximum, int value) {
@@ -61,6 +66,15 @@ public class NumPanel extends JPanel {
 
 			@Override
 			public void mousePressed(MouseEvent me) {
+				if (me.isShiftDown()) {
+					needToReset = true;
+					int potentialMax = slider.getValue() + slider.getMaximum() / 10;
+					int potentialMin = slider.getValue() - slider.getMaximum() / 10;
+					slider.setMaximum((potentialMax > slider.getMaximum()) ? slider.getMaximum()
+							: potentialMax);
+					slider.setMinimum((potentialMin < slider.getMinimum()) ? slider.getMinimum()
+							: potentialMin);
+				}
 				dragging = true;
 				startNumSliderThread(me);
 			}
@@ -68,6 +82,11 @@ public class NumPanel extends JPanel {
 			@Override
 			public void mouseReleased(MouseEvent me) {
 				dragging = false;
+				if (needToReset) {
+					needToReset = false;
+					slider.setMaximum(naturalMax);
+					slider.setMinimum(naturalMin);
+				}
 			}
 
 			public void startNumSliderThread(MouseEvent me) {
