@@ -31,9 +31,7 @@ public class ArpPanel extends InstPanel {
 		this.add(instrument);
 		this.add(removeButton);
 
-		this.add(new JLabel("    Hits#"));
 		this.add(hitsPerPattern);
-		this.add(new JLabel("Chords#"));
 		this.add(chordSpan);
 
 		this.add(new JLabel("Fill"));
@@ -44,24 +42,18 @@ public class ArpPanel extends InstPanel {
 		this.add(chordNotesStretch);
 		this.add(repeatableNotes);
 
-		this.add(new JLabel("Transpose"));
 		this.add(transpose);
 
-		this.add(new JLabel("MinVel"));
 		this.add(velocityMin);
-		this.add(new JLabel("MaxVel"));
 		this.add(velocityMax);
 
-		this.add(new JLabel("Pause%"));
 		this.add(pauseChance);
-		this.add(new JLabel("Exception%"));
 		this.add(exceptionChance);
 
 		this.add(new JLabel("Seed"));
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
-		this.add(new JLabel("Shift"));
 		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch.:"));

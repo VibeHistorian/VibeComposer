@@ -39,9 +39,7 @@ public class BassPanel extends InstPanel {
 		/*this.add(new JLabel("Transpose"));
 		this.add(transpose);*/
 
-		this.add(new JLabel("MinVel"));
 		this.add(velocityMin);
-		this.add(new JLabel("MaxVel"));
 		this.add(velocityMax);
 
 		this.add(new JLabel("Seed"));

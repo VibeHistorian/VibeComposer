@@ -29,19 +29,14 @@ public class MelodyPanel extends InstPanel {
 		this.add(lockInst);
 		this.add(instrument);
 
-		this.add(new JLabel("Transpose"));
 		this.add(transpose);
 
-		this.add(new JLabel("MinVel"));
 		this.add(velocityMin);
-		this.add(new JLabel("MaxVel"));
 		this.add(velocityMax);
 
-		this.add(new JLabel("Pause%"));
-		pauseChance.setText("0");
+		pauseChance.setInt(0);
 		this.add(pauseChance);
 
-		this.add(new JLabel("Swing(%)"));
 		this.add(swingPercent);
 
 		this.add(new JLabel("Seed"));

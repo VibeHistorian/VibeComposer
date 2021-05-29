@@ -26,30 +26,30 @@ public abstract class InstPanel extends JPanel {
 	protected POOL instPool = POOL.PLUCK;
 	protected JComboBox<String> chordSpanFill = new JComboBox<String>();
 
-	protected JTextField hitsPerPattern = new JTextField("8", 2);
-	protected JTextField chordSpan = new JTextField("1", 1);
+	protected NumPanel hitsPerPattern = new NumPanel("Hits#", 8, 1, 32);
+	protected NumPanel chordSpan = new NumPanel("Chords#", 1, 1, 4);
 
-	protected JTextField chordNotesStretch = new JTextField("3", 1);
+	protected NumPanel chordNotesStretch = new NumPanel("", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
-	protected JTextField pauseChance = new JTextField("20", 2);
-	protected JTextField exceptionChance = new JTextField("5", 1);
+	protected NumPanel pauseChance = new NumPanel("Pause%", 20);
+	protected NumPanel exceptionChance = new NumPanel("Exc.%", 5);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
-	protected JTextField patternRepeat = new JTextField("2", 1);
+	protected NumPanel patternRepeat = new NumPanel("Repeat#", 2, 1, 4);
 
-	protected JTextField transpose = new JTextField("0", 2);
-	protected JTextField delay = new JTextField("0", 3);
+	protected NumPanel transpose = new NumPanel("Transpose", 0, -36, 36);
+	protected NumPanel delay = new NumPanel("Delay", 0, -500, 500);
 
-	protected JTextField velocityMin = new JTextField("70", 3);
-	protected JTextField velocityMax = new JTextField("90", 3);
+	protected NumPanel velocityMin = new NumPanel("MinVel", 70, 0, 126);
+	protected NumPanel velocityMax = new NumPanel("MaxVel", 90, 1, 127);
 
-	protected JTextField swingPercent = new JTextField("50", 2);
+	protected NumPanel swingPercent = new NumPanel("Swing%", 50);
 
 	protected JLabel panelOrder = new JLabel("1");
 
 	protected JTextField patternSeed = new JTextField("0", 8);
 	protected JComboBox<String> pattern = new JComboBox<String>();
-	protected JTextField patternShift = new JTextField("0", 1);
+	protected NumPanel patternShift = new NumPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
 	protected JCheckBox muteInst = new JCheckBox("Mute", false);
@@ -110,43 +110,43 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getHitsPerPattern() {
-		return Integer.valueOf(hitsPerPattern.getText());
+		return Integer.valueOf(hitsPerPattern.getInt());
 	}
 
 	public void setHitsPerPattern(int hitsPerPattern) {
-		this.hitsPerPattern.setText(String.valueOf(hitsPerPattern));
+		this.hitsPerPattern.setInt(hitsPerPattern);
 	}
 
 	public int getChordSpan() {
-		return Integer.valueOf(chordSpan.getText());
+		return Integer.valueOf(chordSpan.getInt());
 	}
 
 	public void setChordSpan(int chordSpan) {
-		this.chordSpan.setText(String.valueOf(chordSpan));
+		this.chordSpan.setInt(chordSpan);
 	}
 
 	public int getPauseChance() {
-		return Integer.valueOf(pauseChance.getText());
+		return Integer.valueOf(pauseChance.getInt());
 	}
 
 	public void setPauseChance(int pauseChance) {
-		this.pauseChance.setText(String.valueOf(pauseChance));
+		this.pauseChance.setInt(pauseChance);
 	}
 
 	public int getExceptionChance() {
-		return Integer.valueOf(exceptionChance.getText());
+		return Integer.valueOf(exceptionChance.getInt());
 	}
 
 	public void setExceptionChance(int exceptionChance) {
-		this.exceptionChance.setText(String.valueOf(exceptionChance));
+		this.exceptionChance.setInt(exceptionChance);
 	}
 
 	public int getTranspose() {
-		return Integer.valueOf(transpose.getText());
+		return Integer.valueOf(transpose.getInt());
 	}
 
 	public void setTranspose(int transpose) {
-		this.transpose.setText("" + transpose);
+		this.transpose.setInt(transpose);
 	}
 
 	public int getPatternSeed() {
@@ -169,11 +169,11 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPatternShift() {
-		return Integer.valueOf(patternShift.getText());
+		return Integer.valueOf(patternShift.getInt());
 	}
 
 	public void setPatternShift(int shift) {
-		patternShift.setText(String.valueOf(shift));
+		patternShift.setInt(shift);
 	}
 
 	public int getInstrument() {
@@ -209,11 +209,11 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPatternRepeat() {
-		return Integer.valueOf(patternRepeat.getText());
+		return Integer.valueOf(patternRepeat.getInt());
 	}
 
 	public void setPatternRepeat(int patternRepeat) {
-		this.patternRepeat.setText(String.valueOf(patternRepeat));
+		this.patternRepeat.setInt(patternRepeat);
 	}
 
 	public int getMidiChannel() {
@@ -250,19 +250,19 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getDelay() {
-		return Integer.valueOf(delay.getText());
+		return Integer.valueOf(delay.getInt());
 	}
 
 	public void setDelay(int delay) {
-		this.delay.setText("" + delay);
+		this.delay.setInt(delay);
 	}
 
 	public int getChordNotesStretch() {
-		return Integer.valueOf(chordNotesStretch.getText());
+		return Integer.valueOf(chordNotesStretch.getInt());
 	}
 
 	public void setChordNotesStretch(int chordStretch) {
-		this.chordNotesStretch.setText("" + chordStretch);
+		this.chordNotesStretch.setInt(chordStretch);
 	}
 
 	public boolean getStretchEnabled() {
@@ -274,19 +274,19 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getVelocityMin() {
-		return Integer.valueOf(velocityMin.getText());
+		return Integer.valueOf(velocityMin.getInt());
 	}
 
 	public void setVelocityMin(int velocityMin) {
-		this.velocityMin.setText(String.valueOf(velocityMin));
+		this.velocityMin.setInt(velocityMin);
 	}
 
 	public int getVelocityMax() {
-		return Integer.valueOf(velocityMax.getText());
+		return Integer.valueOf(velocityMax.getInt());
 	}
 
 	public void setVelocityMax(int velocityMax) {
-		this.velocityMax.setText(String.valueOf(velocityMax));
+		this.velocityMax.setInt(velocityMax);
 	}
 
 	public JSlider getVolSlider() {
@@ -299,11 +299,11 @@ public abstract class InstPanel extends JPanel {
 
 
 	public int getSwingPercent() {
-		return Integer.valueOf(swingPercent.getText());
+		return Integer.valueOf(swingPercent.getInt());
 	}
 
 	public void setSwingPercent(int swingPercent) {
-		this.swingPercent.setText("" + swingPercent);
+		this.swingPercent.setInt(swingPercent);
 	}
 
 	public int getPanelOrder() {

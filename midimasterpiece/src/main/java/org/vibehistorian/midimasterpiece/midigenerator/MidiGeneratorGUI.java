@@ -152,12 +152,12 @@ public class MidiGeneratorGUI extends JFrame
 
 	// arrangement
 	private Arrangement arrangement;
-	JTextField arrangementVariationChance;
+	NumPanel arrangementVariationChance;
 	JCheckBox arrangementManualOverride;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
-	Dimension scrollPaneDimension = new Dimension(1400, 200);
+	Dimension scrollPaneDimension = new Dimension(1600, 200);
 
 	JScrollPane drumScrollPane;
 	JScrollPane chordScrollPane;
@@ -189,12 +189,12 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	JCheckBox globalSwingOverride;
-	JTextField globalSwingOverrideValue;
+	NumPanel globalSwingOverrideValue;
 
 
 	// chord variety settings
-	JTextField spiceChance;
-	JTextField chordSlashChance;
+	NumPanel spiceChance;
+	NumPanel chordSlashChance;
 	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
 
@@ -206,17 +206,17 @@ public class MidiGeneratorGUI extends JFrame
 
 	// melody gen settings
 	JCheckBox arpCopyMelodyInst;
-	JTextField maxJump;
-	JTextField maxExceptions;
-	JTextField melodyAlternateRhythmChance;
-	JTextField melodySameRhythmChance;
-	JTextField melodyUseOldAlgoChance;
+	NumPanel maxJump;
+	NumPanel maxExceptions;
+	NumPanel melodyAlternateRhythmChance;
+	NumPanel melodySameRhythmChance;
+	NumPanel melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox melodyFirstNoteFromChord;
 	JCheckBox randomChordNote;
-	JTextField melodySplitChance;
-	JTextField melodyExceptionChance;
-	JSlider melodyQuicknessSlider;
+	NumPanel melodySplitChance;
+	NumPanel melodyExceptionChance;
+	NumPanel melodyQuickness;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -278,7 +278,7 @@ public class MidiGeneratorGUI extends JFrame
 	JCheckBox randomizeChordStrumsOnCompose;
 	JCheckBox arpAffectsBpm;
 	JTextField mainBpm;
-	JTextField transposeScore;
+	NumPanel transposeScore;
 	JButton switchOnComposeRandom;
 
 	// seed / midi
@@ -523,15 +523,9 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel darkModeSwitchPanel = new JPanel();
 
 		constraints.gridy = startY + 3;
-		JButton switchDarkModeButton = new JButton("Toggle Dark Mode");
-		switchDarkModeButton.addActionListener(this);
-		switchDarkModeButton.setActionCommand("SwitchDarkMode");
-		darkModeSwitchPanel.add(switchDarkModeButton);
+		darkModeSwitchPanel.add(makeButton("Toggle Dark Mode", this, "SwitchDarkMode"));
 
-		JButton switchAdvancedFeaturesButton = new JButton("Toggle Adv. Features");
-		switchAdvancedFeaturesButton.addActionListener(this);
-		switchAdvancedFeaturesButton.setActionCommand("ToggleAdv");
-		darkModeSwitchPanel.add(switchAdvancedFeaturesButton);
+		darkModeSwitchPanel.add(makeButton("Toggle Adv. Features", this, "ToggleAdv"));
 
 		everythingPanel.add(darkModeSwitchPanel, constraints);
 	}
@@ -544,9 +538,7 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(soundbankLabel);
 		macroParams.add(soundbankFilename);
 
-		transposeScore = new JTextField("0", 3);
-		JLabel transposeScoreLabel = new JLabel("Transpose:");
-		macroParams.add(transposeScoreLabel);
+		transposeScore = new NumPanel("Global Transpose", 0, -24, 24);
 		macroParams.add(transposeScore);
 
 		Random bpmRand = new Random();
@@ -574,7 +566,7 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(scaleMode);
 
 		globalSwingOverride = new JCheckBox("Global Swing override:", false);
-		globalSwingOverrideValue = new JTextField("50", 3);
+		globalSwingOverrideValue = new NumPanel("", 50);
 		macroParams.add(globalSwingOverride);
 		macroParams.add(globalSwingOverrideValue);
 
@@ -583,9 +575,7 @@ public class MidiGeneratorGUI extends JFrame
 		macroParams.add(useAllInsts);
 		bannedInsts = new JTextField("", 8);
 		macroParams.add(bannedInsts);
-		reinitInstPools = new JButton("Initialize all inst.");
-		reinitInstPools.addActionListener(this);
-		reinitInstPools.setActionCommand("InitAllInsts");
+		reinitInstPools = makeButton("Initialize all inst.", this, "InitAllInsts");
 		macroParams.add(reinitInstPools);
 
 		toggleableComponents.add(soundbankFilename);
@@ -610,25 +600,21 @@ public class MidiGeneratorGUI extends JFrame
 		melodySettingsPanel.add(arpCopyMelodyInst);
 		toggleableComponents.add(arpCopyMelodyInst);
 
-		maxJump = new JTextField("1", 2);
-		maxExceptions = new JTextField("2", 2);
-		melodyAlternateRhythmChance = new JTextField("50", 2);
-		melodySameRhythmChance = new JTextField("50", 2);
-		melodyUseOldAlgoChance = new JTextField("0", 2);
-		melodySplitChance = new JTextField("50", 3);
-		melodyExceptionChance = new JTextField("50", 3);
-		melodySettingsPanel.add(new JLabel("Max Note Jump:"));
+		maxJump = new NumPanel("Max Note Jump", 1, 0, 4);
+		maxExceptions = new NumPanel("Max Exceptions", 2, 0, 4);
+		melodyAlternateRhythmChance = new NumPanel("Alternating Rhythm", 50);
+		melodySameRhythmChance = new NumPanel("Doubled rhythm", 50);
+		melodyUseOldAlgoChance = new NumPanel("Legacy algo", 0);
+		melodySplitChance = new NumPanel("Split%", 50);
+		melodyExceptionChance = new NumPanel("Exception%", 50);
+		melodyQuickness = new NumPanel("Quickness", 100);
 		melodySettingsPanel.add(maxJump);
-		melodySettingsPanel.add(new JLabel("Max Exceptions:"));
 		melodySettingsPanel.add(maxExceptions);
-		melodySettingsPanel.add(new JLabel("Alternating rhythm%:"));
 		melodySettingsPanel.add(melodyAlternateRhythmChance);
-		melodySettingsPanel.add(new JLabel("Doubled rhythm%:"));
 		melodySettingsPanel.add(melodySameRhythmChance);
-		melodySettingsPanel.add(new JLabel("Split chance%:"));
 		melodySettingsPanel.add(melodySplitChance);
-		melodySettingsPanel.add(new JLabel("Exception chance%:"));
 		melodySettingsPanel.add(melodyExceptionChance);
+		melodySettingsPanel.add(melodyQuickness);
 		//melodySettingsPanel.add(new JLabel("Legacy algorithm%:"));
 		//melodySettingsPanel.add(melodyUseOldAlgoChance);
 
@@ -637,81 +623,14 @@ public class MidiGeneratorGUI extends JFrame
 		melodyFirstNoteFromChord = new JCheckBox();
 		melodyFirstNoteFromChord.setSelected(true);
 
-		/*melodyQuicknessSlider = new JSlider();
-		melodyQuicknessSlider.setMaximum(100);
-		melodyQuicknessSlider.setValue(100);
-		melodyQuicknessSlider.setPreferredSize(new Dimension(50, 40));
-		Dictionary<Integer, JComponent> dict = new Hashtable<>();
-		JLabel sliderLabel = new JLabel("100");
-		sliderLabel.setFont(new Font(sliderLabel.getFont().getName(), Font.PLAIN, 10));
-		dict.put(0, sliderLabel);
-		melodyQuicknessSlider.setLabelTable(dict);
-		melodyQuicknessSlider.setPaintLabels(true);
-		melodyQuicknessSlider.addMouseListener(new MouseAdapter() {
-			boolean dragging = false;
-			Thread quicknessCycle = null;
-		
-			@Override
-			public void mousePressed(MouseEvent me) {
-				dragging = true;
-				startVolumeSliderThread(me);
-			}
-		
-			@Override
-			public void mouseReleased(MouseEvent me) {
-				dragging = false;
-			}
-		
-			public void startVolumeSliderThread(MouseEvent me) {
-				if (quicknessCycle != null && quicknessCycle.isAlive()) {
-					System.out.println("Label slider thread already exists!");
-					return;
-				}
-				System.out.println("Starting new label slider thread..!");
-				quicknessCycle = new Thread() {
-		
-					public void run() {
-						while (dragging) {
-							updateToolTip();
-							try {
-								sleep(25);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-					}
-				};
-				quicknessCycle.start();
-		
-			}
-		
-			public void updateToolTip() {
-				sliderLabel.setText(melodyQuicknessSlider.getValue() + "");
-				midiGeneratorGUI.repaint();
-			}
-		});*/
-		/*JDialog windu = new JDialog();
-		windu.setUndecorated(true);
-		//windu.setVisible(true);
-		melodyQuicknessSlider.addMouseListener(new SliderPopupListener(windu, this));*/
-
-		//melodySettingsPanel.add(new JLabel("Quickness:"));
-		//melodySettingsPanel.add(melodyQuicknessSlider);
-		melodySettingsPanel.add(new NumPanel("Quickness", 100, 100));
-		//melodySettingsPanel.add(sliderLabel);
 
 		//melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
 		//melodySettingsPanel.add(melodyFirstNoteFromChord);
 		//melodySettingsPanel.add(new JLabel("But Randomized:"));
 		//melodySettingsPanel.add(randomChordNote);
 
-		JButton generateUserMelodySeed = new JButton("Randomize seed");
-		generateUserMelodySeed.addActionListener(this);
-		generateUserMelodySeed.setActionCommand("GenMelody");
-		JButton clearUserMelodySeed = new JButton("Clear(0)");
-		clearUserMelodySeed.addActionListener(this);
-		clearUserMelodySeed.setActionCommand("ClearMelody");
+		JButton generateUserMelodySeed = makeButton("Randomize seed", this, "GenMelody");
+		JButton clearUserMelodySeed = makeButton("Clear(0)", this, "ClearMelody");
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		melodySettingsPanel.add(generateUserMelodySeed);
 		melodySettingsPanel.add(randomMelodyOnRegenerate);
@@ -741,15 +660,11 @@ public class MidiGeneratorGUI extends JFrame
 		addChords = new JCheckBox("Enable", true);
 		chordSettingsPanel.add(addChords);
 
-		JButton chordAddJButton = new JButton("+Chord");
-		chordAddJButton.addActionListener(this);
-		chordAddJButton.setActionCommand("AddChord");
+		JButton chordAddJButton = makeButton("+Chord", "AddChord");
 		chordSettingsPanel.add(chordAddJButton);
 
-		randomChordsToGenerate = new JTextField("2", 4);
-		JButton randomizeChords = new JButton("Generate Chords:");
-		randomizeChords.addActionListener(this);
-		randomizeChords.setActionCommand("RandChords");
+		randomChordsToGenerate = new JTextField("2", 2);
+		JButton randomizeChords = makeButton("Generate Chords:", "RandChords");
 		randomChordsGenerateOnCompose = new JCheckBox("on Compose", true);
 		chordSettingsPanel.add(randomizeChords);
 		chordSettingsPanel.add(randomChordsToGenerate);
@@ -809,9 +724,7 @@ public class MidiGeneratorGUI extends JFrame
 		toggleableComponents.add(chordShiftChance);
 		toggleableComponents.add(randomChordShiftChance);
 
-		JButton clearChordPatternSeeds = new JButton("Clear presets");
-		clearChordPatternSeeds.addActionListener(this);
-		clearChordPatternSeeds.setActionCommand("ClearChordPatterns");
+		JButton clearChordPatternSeeds = makeButton("Clear presets", "ClearChordPatterns");
 
 		chordSettingsPanel.add(clearChordPatternSeeds);
 		toggleableComponents.add(clearChordPatternSeeds);
@@ -855,15 +768,11 @@ public class MidiGeneratorGUI extends JFrame
 		addArps = new JCheckBox("Enable", true);
 		arpsSettingsPanel.add(addArps);
 
-		JButton arpAddJButton = new JButton("  +Arp ");
-		arpAddJButton.addActionListener(this);
-		arpAddJButton.setActionCommand("AddArp");
+		JButton arpAddJButton = makeButton("  +Arp ", "AddArp");
 		arpsSettingsPanel.add(arpAddJButton);
 
-		randomArpsToGenerate = new JTextField("3", 4);
-		JButton randomizeArps = new JButton("Generate Arps:    ");
-		randomizeArps.addActionListener(this);
-		randomizeArps.setActionCommand("RandArps");
+		randomArpsToGenerate = new JTextField("3", 2);
+		JButton randomizeArps = makeButton("Generate Arps:    ", "RandArps");
 		randomArpsGenerateOnCompose = new JCheckBox("on Compose", true);
 		arpsSettingsPanel.add(randomizeArps);
 		arpsSettingsPanel.add(randomArpsToGenerate);
@@ -892,7 +801,7 @@ public class MidiGeneratorGUI extends JFrame
 		randomArpAllSameHits = new JCheckBox("One #", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
 		arpShiftChance = new JTextField("25", 3);
-		randomArpUseOctaveAdjustments = new JCheckBox("Randomize oct.", false);
+		randomArpUseOctaveAdjustments = new JCheckBox("Rand. oct.", false);
 		randomArpMaxSwing = new JTextField("50", 3);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
@@ -925,9 +834,7 @@ public class MidiGeneratorGUI extends JFrame
 		toggleableComponents.add(patternShiftLabel);
 		toggleableComponents.add(arpShiftChance);
 
-		JButton clearArpPatternSeeds = new JButton("Clear presets");
-		clearArpPatternSeeds.addActionListener(this);
-		clearArpPatternSeeds.setActionCommand("ClearArpPatterns");
+		JButton clearArpPatternSeeds = makeButton("Clear presets", "ClearArpPatterns");
 
 		arpsSettingsPanel.add(clearArpPatternSeeds);
 		toggleableComponents.add(clearArpPatternSeeds);
@@ -979,23 +886,17 @@ public class MidiGeneratorGUI extends JFrame
 		//drumsPanel.add(drumInst);
 
 
-		JButton drumAddJButton = new JButton(" +Drum ");
-		drumAddJButton.addActionListener(this);
-		drumAddJButton.setActionCommand("AddDrum");
+		JButton drumAddJButton = makeButton(" +Drum ", "AddDrum");
 		drumsPanel.add(drumAddJButton);
 
 		randomDrumsToGenerate = new JTextField("8", 2);
-		JButton randomizeDrums = new JButton("Generate Drums: ");
-		randomizeDrums.addActionListener(this);
-		randomizeDrums.setActionCommand("RandDrums");
+		JButton randomizeDrums = makeButton("Generate Drums: ", "RandDrums");
 		randomDrumsGenerateOnCompose = new JCheckBox("on Compose", true);
 		drumsPanel.add(randomizeDrums);
 		drumsPanel.add(randomDrumsToGenerate);
 		drumsPanel.add(randomDrumsGenerateOnCompose);
 
-		JButton clearPatternSeeds = new JButton("Clear patterns");
-		clearPatternSeeds.addActionListener(this);
-		clearPatternSeeds.setActionCommand("ClearPatterns");
+		JButton clearPatternSeeds = makeButton("Clear patterns", "ClearPatterns");
 
 		randomDrumMaxSwingAdjust = new JTextField("20", 2);
 		randomDrumSlide = new JCheckBox("Random delay", false);
@@ -1092,28 +993,19 @@ public class MidiGeneratorGUI extends JFrame
 		arrangementSettings.add(new JLabel("Max Length(8+):"));
 		arrangementSettings.add(pieceLength);
 
-		arrangementVariationChance = new JTextField("30", 2);
-		arrangementSettings.add(new JLabel("Variation%:"));
+		arrangementVariationChance = new NumPanel("Variation", 30);
 		arrangementSettings.add(arrangementVariationChance);
 
-		JButton resetArrangementBtn = new JButton("Reset arr.");
-		resetArrangementBtn.addActionListener(this);
-		resetArrangementBtn.setActionCommand("ArrangementReset");
+		JButton resetArrangementBtn = makeButton("Reset arr.", "ArrangementReset");
 
-		JButton randomizeArrangementBtn = new JButton("Randomize arr.");
-		randomizeArrangementBtn.addActionListener(this);
-		randomizeArrangementBtn.setActionCommand("ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize arr.", "ArrangementRandomize");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
 
-		JButton addLastSectionBtn = new JButton("Add section");
-		addLastSectionBtn.addActionListener(this);
-		addLastSectionBtn.setActionCommand("ArrangementAddLast");
+		JButton addLastSectionBtn = makeButton("Add section", "ArrangementAddLast");
 
-		JButton removeLastSectionBtn = new JButton("Remove last section");
-		removeLastSectionBtn.addActionListener(this);
-		removeLastSectionBtn.setActionCommand("ArrangementRemoveLast");
+		JButton removeLastSectionBtn = makeButton("Remove last section", "ArrangementRemoveLast");
 
 		arrangementSettings.add(randomizeArrangementBtn);
 		arrangementSettings.add(randomizeArrangementOnCompose);
@@ -1255,13 +1147,9 @@ public class MidiGeneratorGUI extends JFrame
 	private void initRandomButtons(int startY, int anchorSide) {
 		JPanel randomButtonsPanel = new JPanel();
 
-		JButton randomizeInstruments = new JButton("Randomize Inst.");
-		randomizeInstruments.addActionListener(this);
-		randomizeInstruments.setActionCommand("RandomizeInst");
+		JButton randomizeInstruments = makeButton("Randomize Inst.", "RandomizeInst");
 
-		JButton randomizeBpmTransp = new JButton("Randomize BPM+Transpose");
-		randomizeBpmTransp.addActionListener(this);
-		randomizeBpmTransp.setActionCommand("RandomizeBpmTrans");
+		JButton randomizeBpmTransp = makeButton("Randomize BPM+Transpose", "RandomizeBpmTrans");
 
 		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen");
 		randomizeBmpTransOnCompose = new JCheckBox("on Compose");
@@ -1279,18 +1167,14 @@ public class MidiGeneratorGUI extends JFrame
 		arpAffectsBpm = new JCheckBox("Slowed by ARP", true);
 		randomButtonsPanel.add(arpAffectsBpm);
 
-		JButton randomizeStrums = new JButton("Randomize strums");
-		randomizeStrums.addActionListener(this);
-		randomizeStrums.setActionCommand("RandStrums");
+		JButton randomizeStrums = makeButton("Randomize strums", "RandStrums");
 		randomButtonsPanel.add(randomizeStrums);
 
 		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
 		randomizeChordStrumsOnCompose.setSelected(true);
 		randomButtonsPanel.add(randomizeChordStrumsOnCompose);
 
-		switchOnComposeRandom = new JButton("Uncheck all 'on Compose'");
-		switchOnComposeRandom.addActionListener(this);
-		switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
+		switchOnComposeRandom = makeButton("Uncheck all 'on Compose'", "UncheckComposeRandom");
 		randomButtonsPanel.add(switchOnComposeRandom);
 
 		constraints.gridy = startY;
@@ -1303,12 +1187,10 @@ public class MidiGeneratorGUI extends JFrame
 		JPanel chordSettingsProgressionPanel = new JPanel();
 		toggleableComponents.add(chordSettingsProgressionPanel);
 
-		chordSlashChance = new JTextField("25", 3);
-		chordSettingsProgressionPanel.add(new JLabel("Ch1 slash chord%"));
+		chordSlashChance = new NumPanel("Chord1 slash%", 25);
 		chordSettingsProgressionPanel.add(chordSlashChance);
 
-		spiceChance = new JTextField("8", 3);
-		chordSettingsProgressionPanel.add(new JLabel("Spice%"));
+		spiceChance = new NumPanel("Spice", 8);
 		chordSettingsProgressionPanel.add(spiceChance);
 
 		spiceAllowDimAug = new JCheckBox("Dim/Aug");
@@ -1528,25 +1410,13 @@ public class MidiGeneratorGUI extends JFrame
 	private void initControlPanel(int startY, int anchorSide) {
 		JPanel controlPanel = new JPanel();
 		randomSeed = new JTextField("0", 8);
-		compose = new JButton("Compose");
-		compose.addActionListener(this);
-		compose.setActionCommand("Compose");
-		regenerate = new JButton("Regenerate");
-		regenerate.addActionListener(this);
-		regenerate.setActionCommand("Regenerate");
-		JButton copySeed = new JButton("Copy seed");
-		copySeed.addActionListener(this);
-		copySeed.setActionCommand("CopySeed");
-		JButton copyChords = new JButton("Copy chords");
-		copyChords.addActionListener(this);
-		copyChords.setActionCommand("CopyChords");
-		JButton clearSeed = new JButton("Clear All Seeds");
-		clearSeed.addActionListener(this);
-		clearSeed.setActionCommand("ClearSeed");
+		compose = makeButton("Compose", "Compose");
+		regenerate = makeButton("Regenerate", "Regenerate");
+		JButton copySeed = makeButton("Copy seed", "CopySeed");
+		JButton copyChords = makeButton("Copy chords", "CopyChords");
+		JButton clearSeed = makeButton("Clear All Seeds", "ClearSeed");
 
-		JButton loadConfig = new JButton("Load Config");
-		loadConfig.addActionListener(this);
-		loadConfig.setActionCommand("LoadGUIConfig");
+		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
 
 		controlPanel.add(new JLabel("Random Seed:"));
 		controlPanel.add(randomSeed);
@@ -1568,26 +1438,14 @@ public class MidiGeneratorGUI extends JFrame
 
 		JPanel playSavePanel = new JPanel();
 
-		stopMidi = new JButton("STOP");
-		stopMidi.addActionListener(this);
-		stopMidi.setActionCommand("StopMidi");
-		startMidi = new JButton("PLAY");
-		startMidi.addActionListener(this);
-		startMidi.setActionCommand("StartMidi");
+		stopMidi = makeButton("STOP", "StopMidi");
+		startMidi = makeButton("PLAY", "StartMidi");
 
-		JButton save3Star = new JButton("Save 3*");
-		save3Star.addActionListener(this);
-		save3Star.setActionCommand("Save 3*");
-		JButton save4Star = new JButton("Save 4*");
-		save4Star.addActionListener(this);
-		save4Star.setActionCommand("Save 4*");
-		JButton save5Star = new JButton("Save 5*");
-		save5Star.addActionListener(this);
-		save5Star.setActionCommand("Save 5*");
+		JButton save3Star = makeButton("Save 3*", "Save 3*");
+		JButton save4Star = makeButton("Save 4*", "Save 4*");
+		JButton save5Star = makeButton("Save 5*", "Save 5*");
 
-		JButton saveWavFile = new JButton("Export as .wav");
-		saveWavFile.addActionListener(this);
-		saveWavFile.setActionCommand("SaveWavFile");
+		JButton saveWavFile = makeButton("Export as .wav", "SaveWavFile");
 
 		showScore = new JCheckBox("Show score", true);
 		showScorePicker = new JComboBox<String>();
@@ -1895,7 +1753,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 
 		if (globalSwingOverride.isSelected()) {
-			int swing = Integer.valueOf(globalSwingOverrideValue.getText());
+			int swing = globalSwingOverrideValue.getInt();
 			melodyPanel.setSwingPercent(swing);
 			randomArpMaxSwing.setText("" + swing);
 			drumPanels.forEach(e -> {
@@ -2077,6 +1935,20 @@ public class MidiGeneratorGUI extends JFrame
 		return synthesizer;
 	}
 
+	private JButton makeButton(String name, ActionListener listener, String actionCommand) {
+		JButton butt = new JButton(name);
+		butt.addActionListener(listener);
+		butt.setActionCommand(actionCommand);
+		return butt;
+	}
+
+	private JButton makeButton(String name, String actionCommand) {
+		JButton butt = new JButton(name);
+		butt.addActionListener(this);
+		butt.setActionCommand(actionCommand);
+		return butt;
+	}
+
 	// Deal with the window closebox
 	public void windowClosing(WindowEvent we) {
 		if (sequencer != null) {
@@ -2239,7 +2111,7 @@ public class MidiGeneratorGUI extends JFrame
 			}
 			mainBpm.setText("" + bpm);
 			realBpm = bpm;
-			transposeScore.setText(String.valueOf(instGen.nextInt(12) - 6));
+			transposeScore.setInt(instGen.nextInt(12) - 6);
 		}
 
 
@@ -2825,7 +2697,7 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		guiConfig.setArrangement(arrangement);
 		guiConfig.setArrangementVariationChance(
-				Integer.valueOf(arrangementVariationChance.getText()));
+				Integer.valueOf(arrangementVariationChance.getInt()));
 
 		// macro
 		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
@@ -2838,7 +2710,7 @@ public class MidiGeneratorGUI extends JFrame
 			guiConfig.setFixedDuration(0);
 		}
 
-		guiConfig.setTranspose(Integer.valueOf(transposeScore.getText()));
+		guiConfig.setTranspose(transposeScore.getInt());
 		guiConfig.setBpm(Double.valueOf(mainBpm.getText()));
 		guiConfig.setArpAffectsBpm(arpAffectsBpm.isSelected());
 
@@ -2856,17 +2728,17 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setChordGenSettings(getChordSettingsFromUI());
 
 		// melody
-		guiConfig.setMaxNoteJump(Integer.valueOf(maxJump.getText()));
-		guiConfig.setMaxExceptions(Integer.valueOf(maxExceptions.getText()));
+		guiConfig.setMaxNoteJump(Integer.valueOf(maxJump.getInt()));
+		guiConfig.setMaxExceptions(Integer.valueOf(maxExceptions.getInt()));
 		guiConfig.setMelodyAlternateRhythmChance(
-				Integer.valueOf(melodyAlternateRhythmChance.getText()));
-		guiConfig.setMelodySameRhythmChance(Integer.valueOf(melodySameRhythmChance.getText()));
-		guiConfig.setMelodyUseOldAlgoChance(Integer.valueOf(melodyUseOldAlgoChance.getText()));
-		guiConfig.setMelodySplitChance(Integer.valueOf(melodySplitChance.getText()));
-		guiConfig.setMelodyExceptionChance(Integer.valueOf(melodyExceptionChance.getText()));
+				Integer.valueOf(melodyAlternateRhythmChance.getInt()));
+		guiConfig.setMelodySameRhythmChance(Integer.valueOf(melodySameRhythmChance.getInt()));
+		guiConfig.setMelodyUseOldAlgoChance(Integer.valueOf(melodyUseOldAlgoChance.getInt()));
+		guiConfig.setMelodySplitChance(Integer.valueOf(melodySplitChance.getInt()));
+		guiConfig.setMelodyExceptionChance(Integer.valueOf(melodyExceptionChance.getInt()));
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
-		guiConfig.setMelodyQuickness(melodyQuicknessSlider.getValue());
+		guiConfig.setMelodyQuickness(melodyQuickness.getInt());
 
 
 		// chords
@@ -2876,10 +2748,10 @@ public class MidiGeneratorGUI extends JFrame
 		guiConfig.setCustomChords(StringUtils.join(MelodyGenerator.chordInts.stream()
 				.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList()), ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
-		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getText()));
+		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getInt()));
 		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
-		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getText()));
+		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getInt()));
 
 		// arps
 		guiConfig.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
@@ -2895,7 +2767,7 @@ public class MidiGeneratorGUI extends JFrame
 
 		// arrangement
 		arrangement = guiConfig.getArrangement();
-		arrangementVariationChance.setText(guiConfig.getArrangementVariationChance() + "");
+		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
 
 		// macro
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
@@ -2906,7 +2778,7 @@ public class MidiGeneratorGUI extends JFrame
 		} else {
 			fixedLengthChords.setSelectedItem("" + guiConfig.getFixedDuration());
 		}
-		transposeScore.setText(String.valueOf(guiConfig.getTranspose()));
+		transposeScore.setInt(guiConfig.getTranspose());
 		mainBpm.setText(String.valueOf(guiConfig.getBpm()));
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
 
@@ -2926,21 +2798,20 @@ public class MidiGeneratorGUI extends JFrame
 		// melody
 		melodyFirstNoteFromChord.setSelected(guiConfig.isFirstNoteFromChord());
 		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
-		maxJump.setText(String.valueOf(guiConfig.getMaxNoteJump()));
-		maxExceptions.setText(String.valueOf(guiConfig.getMaxExceptions()));
-		melodyAlternateRhythmChance
-				.setText(String.valueOf(guiConfig.getMelodyAlternateRhythmChance()));
-		melodySameRhythmChance.setText(String.valueOf(guiConfig.getMelodySameRhythmChance()));
-		melodyUseOldAlgoChance.setText(String.valueOf(guiConfig.getMelodyUseOldAlgoChance()));
-		melodySplitChance.setText(String.valueOf(guiConfig.getMelodySplitChance()));
-		melodyExceptionChance.setText(String.valueOf(guiConfig.getMelodyExceptionChance()));
-		melodyQuicknessSlider.setValue(guiConfig.getMelodyQuickness());
+		maxJump.setInt(guiConfig.getMaxNoteJump());
+		maxExceptions.setInt(guiConfig.getMaxExceptions());
+		melodyAlternateRhythmChance.setInt(guiConfig.getMelodyAlternateRhythmChance());
+		melodySameRhythmChance.setInt(guiConfig.getMelodySameRhythmChance());
+		melodyUseOldAlgoChance.setInt(guiConfig.getMelodyUseOldAlgoChance());
+		melodySplitChance.setInt(guiConfig.getMelodySplitChance());
+		melodyExceptionChance.setInt(guiConfig.getMelodyExceptionChance());
+		melodyQuickness.setInt(guiConfig.getMelodyQuickness());
 
 		// chords
-		spiceChance.setText(String.valueOf(guiConfig.getSpiceChance()));
+		spiceChance.setInt(guiConfig.getSpiceChance());
 		spiceAllowDimAug.setSelected(guiConfig.isDimAugEnabled());
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
-		chordSlashChance.setText(String.valueOf(guiConfig.getChordSlashChance()));
+		chordSlashChance.setInt(guiConfig.getChordSlashChance());
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
 		lastChordSelection.setSelectedItem(guiConfig.getLastChord());
 		userChordsEnabled.setSelected(guiConfig.isCustomChordsEnabled());

@@ -60,6 +60,10 @@ public abstract class InstPart {
 
 		setVelocityMin(panel.getVelocityMin());
 		setVelocityMax(panel.getVelocityMax());
+		if (velocityMax <= velocityMin) {
+			velocityMax = velocityMin + 1;
+			panel.setVelocityMax(velocityMax);
+		}
 
 		setSwingPercent(panel.getSwingPercent());
 

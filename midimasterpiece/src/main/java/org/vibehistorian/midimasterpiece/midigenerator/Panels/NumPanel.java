@@ -9,6 +9,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -22,23 +23,38 @@ public class NumPanel extends JPanel {
 	private JLabel label = null;
 	private JSlider slider = null;
 
-	public NumPanel(String name, int value, int maximum) {
+	public NumPanel(String name, int value) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		label = new JLabel(name);
-		text = new JTextField(String.valueOf(value), maximum > 100 ? 3 : 2);
+		text = new JTextField(String.valueOf(value), 2);
 		slider = new JSlider();
-		initSlider(maximum, value);
+		initSlider(0, 100, value);
 		initText();
 		add(label);
 		add(text);
 		add(slider);
 	}
 
-	private void initSlider(int maximum, int value) {
-		slider.setMinimum(0);
+	public NumPanel(String name, int value, int minimum, int maximum) {
+		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		label = new JLabel(name);
+		text = new JTextField(String.valueOf(value), maximum > 999 ? 3 : 2);
+		slider = new JSlider();
+		initSlider(minimum, maximum, value);
+		initText();
+		add(label);
+		add(text);
+		add(slider);
+	}
+
+	private void initSlider(int minimum, int maximum, int value) {
+		slider.setMinimum(minimum);
 		slider.setMaximum(maximum);
 		slider.setValue(value);
-		slider.setPreferredSize(new Dimension(50, 30));
+		slider.setOrientation(JSlider.VERTICAL);
+		slider.setPreferredSize(new Dimension(20, 40));
+		//slider.setPaintTicks(true);
+
 		slider.addMouseListener(new MouseAdapter() {
 			boolean dragging = false;
 			Thread numCycle = null;
@@ -85,6 +101,7 @@ public class NumPanel extends JPanel {
 	}
 
 	private void initText() {
+		//text.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
 		text.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -117,7 +134,7 @@ public class NumPanel extends JPanel {
 			tryValue = Integer.valueOf(text.getText());
 			if (tryValue > slider.getMaximum()) {
 				slider.setValue(slider.getMaximum());
-				text.setText(slider.getMaximum() + "");
+				updateTextLater();
 			} else {
 				slider.setValue(tryValue);
 			}
@@ -127,11 +144,25 @@ public class NumPanel extends JPanel {
 		}
 	}
 
+	private void updateTextLater() {
+		Runnable doAssist = new Runnable() {
+			@Override
+			public void run() {
+				text.setText(slider.getMaximum() + "");
+			}
+		};
+		SwingUtilities.invokeLater(doAssist);
+	}
+
 	public String getName() {
 		return label.getText();
 	}
 
 	public int getInt() {
 		return Integer.valueOf(text.getText());
+	}
+
+	public void setInt(int val) {
+		text.setText(val + "");
 	}
 }

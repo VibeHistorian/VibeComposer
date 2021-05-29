@@ -37,24 +37,16 @@ public class DrumPanel extends InstPanel {
 		this.add(instrument);
 		this.add(removeButton);
 
-		this.add(new JLabel("    Hits#"));
 		this.add(hitsPerPattern);
-		this.add(new JLabel("Chords#"));
 		this.add(chordSpan);
 
-		this.add(new JLabel("Pause%"));
 		this.add(pauseChance);
-		this.add(new JLabel("Exception%"));
 		this.add(exceptionChance);
 
-		this.add(new JLabel("MinVel"));
 		this.add(velocityMin);
-		this.add(new JLabel("MaxVel"));
 		this.add(velocityMax);
 
-		this.add(new JLabel("Swing(%)"));
 		this.add(swingPercent);
-		this.add(new JLabel("Delay(ms)"));
 		this.add(delay);
 
 		this.add(new JLabel("Seed"));
@@ -62,7 +54,6 @@ public class DrumPanel extends InstPanel {
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
 		this.add(isVelocityPattern);
-		this.add(new JLabel("Shift"));
 		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch. 10"));
