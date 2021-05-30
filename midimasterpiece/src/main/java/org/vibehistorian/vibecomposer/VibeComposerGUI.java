@@ -89,11 +89,11 @@ import javax.xml.bind.Marshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -321,14 +321,14 @@ public class VibeComposerGUI extends JFrame
 	JPanel everythingPanel;
 	JScrollPane everythingPane;
 
-	private static VibeComposerGUI midiGeneratorGUI = null;
+	private static VibeComposerGUI vibeComposerGUI = null;
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
 		isDarkMode = true;
-		midiGeneratorGUI = new VibeComposerGUI("General MIDI Generator (BETA)");
+		vibeComposerGUI = new VibeComposerGUI("VibeComposer (BETA)");
 	}
 
 	public VibeComposerGUI(String title) {
@@ -476,6 +476,8 @@ public class VibeComposerGUI extends JFrame
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
 
+		switchFullMode();
+		instrumentTabPane.setSelectedIndex(4);
 		recalculateTabPaneCounts();
 
 		pack();
@@ -503,7 +505,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initTitles(int startY, int anchorSide) {
-		mainTitle = new JLabel("General MIDI Generator (Beta)");
+		mainTitle = new JLabel("VibeComposer (BETA)");
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		subTitle = new JLabel("by Vibe Historian");
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -1001,7 +1003,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(removeLastSectionBtn);
 		arrangementSettings.add(resetArrangementBtn);
 
-		arrangementManualOverride = new JCheckBox("Allow manual change", true);
+		arrangementManualOverride = new JCheckBox("Allow manual change", false);
 		arrangementSettings.add(arrangementManualOverride);
 
 		constraints.gridy = startY;
@@ -1128,7 +1130,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
-		instrumentTabPane.addTab("Generated", arrangementActualScrollPane);
+		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
 	}
 
 	private void initRandomButtons(int startY, int anchorSide) {

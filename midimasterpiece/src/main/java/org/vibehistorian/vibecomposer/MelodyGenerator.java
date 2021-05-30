@@ -483,7 +483,7 @@ public class MelodyGenerator implements JMC {
 
 			//top3.entrySet().stream().forEach(System.out::println);
 			Long chordLong = MidiUtils.applyChordFreqMap(top3.keySet());
-			System.out.println("Chord: " + chordLong);
+			System.out.println("Alternate chord #" + i + ": " + chordLong);
 			int[] chordLongMapped = MidiUtils.chordsMap.get(chordLong);
 			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, 1));
 			alternateChordProg.add(chordLongMapped);
