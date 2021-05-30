@@ -263,6 +263,7 @@ public class MidiGeneratorGUI extends JFrame
 	JTextField randomDrumVelocityPatternChance;
 	JTextField randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
+	JButton changeMidiMapping;
 
 	// chord settings - progression
 	JComboBox<String> firstChordSelection;
@@ -896,6 +897,8 @@ public class MidiGeneratorGUI extends JFrame
 		drumsPanel.add(patternShiftLabel);
 		drumsPanel.add(randomDrumShiftChance);
 		drumsPanel.add(clearPatternSeeds);
+		changeMidiMapping = makeButton("Map MIDI to semitones", "RemapDrumMIDI,Semi");
+		drumsPanel.add(changeMidiMapping);
 
 		toggleableComponents.add(randomDrumSlide);
 		toggleableComponents.add(randomDrumPattern);
@@ -904,6 +907,7 @@ public class MidiGeneratorGUI extends JFrame
 		toggleableComponents.add(patternShiftLabel);
 		toggleableComponents.add(randomDrumShiftChance);
 		toggleableComponents.add(clearPatternSeeds);
+		toggleableComponents.add(changeMidiMapping);
 
 		collapseDrumTracks = new JCheckBox("Collapse Drum Tracks", true);
 		drumsPanel.add(collapseDrumTracks);
@@ -2425,6 +2429,23 @@ public class MidiGeneratorGUI extends JFrame
 			randomDrumsToGenerate.setText("" + drumPanels.size());
 		}
 
+		if (ae.getActionCommand().startsWith("RemapDrumMIDI,")) {
+			String remapType = ae.getActionCommand().split(",")[1];
+			if (remapType.equalsIgnoreCase("Semi")) {
+				drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES_SEMI));
+				changeMidiMapping.setActionCommand("RemapDrumMIDI,Normal");
+				changeMidiMapping.setText("Map to General MIDI");
+				MidiUtils.INST_POOLS.put(POOL.DRUM, MidiUtils.DRUM_INST_NAMES_SEMI);
+			} else {
+				drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES));
+				changeMidiMapping.setActionCommand("RemapDrumMIDI,Semi");
+				changeMidiMapping.setText("Map MIDI to semitones");
+				MidiUtils.INST_POOLS.put(POOL.DRUM, MidiUtils.DRUM_INST_NAMES);
+			}
+
+		}
+
+
 		if (ae.getActionCommand() == "ClearChordPatterns")
 
 		{
@@ -2986,8 +3007,14 @@ public class MidiGeneratorGUI extends JFrame
 		}
 		Collections.sort(pitches);
 		if (!onlyAdd && pitches.size() > 2) {
-			pitches.set(0, 35);
-			pitches.set(1, 36);
+			if (changeMidiMapping.getActionCommand().contains("Normal")) {
+				pitches.set(0, 36);
+				pitches.set(1, 37);
+			} else {
+				pitches.set(0, 35);
+				pitches.set(1, 36);
+			}
+
 		}
 
 		for (int i = 0; i < panelCount; i++) {

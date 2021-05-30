@@ -187,7 +187,7 @@ public class MidiUtils {
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
 						LinkedHashMap::new));
 
-		top3.entrySet().stream().forEach(System.out::println);
+		//top3.entrySet().stream().forEach(System.out::println);
 		// return second most matching chord 
 		if (top3.keySet().size() > 1) {
 			return (Long) top3.keySet().toArray()[1];
@@ -495,6 +495,13 @@ public class MidiUtils {
 			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "CLOSED_HH = 42 ",
 			"PEDAL_HH = 44", "RIDE = 53 ", "TAMBOURINE = 54", "HI BONGO = 60 ", "SHAKER = 82" };
 
+	public static final String[] DRUM_INST_NAMES_SEMI = { "BASSKICK = 36 ", "KICK = 37 ",
+			"SIDE STICK = 38", "SNARE = 39 ", "CLAP = 40", "EL. SNARE = 41 ", "CLOSED_HH = 42 ",
+			"PEDAL_HH = 43", "RIDE = 44 ", "TAMBOURINE = 45", "HI BONGO = 46 ", "SHAKER = 47" };
+
+	public static final String[] DRUM_INST_NAMES_WHOLE = { "BASSKICK = 36 ", "KICK = 38 ",
+			"SIDE STICK = 40", "SNARE = 41 ", "CLAP = 43", "EL. SNARE = 45 ", "CLOSED_HH = 47 ",
+			"PEDAL_HH = 48", "RIDE = 50 ", "TAMBOURINE = 52", "HI BONGO = 53 ", "SHAKER = 55" };
 
 	public static List<Integer> getInstNumbers(String[] instArray) {
 		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))

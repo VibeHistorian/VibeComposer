@@ -27,7 +27,7 @@ public class DrumPanel extends InstPanel {
 	public void initComponents() {
 
 		instrument.initInstPool(POOL.DRUM);
-		instrument.setInstrument(35);
+		instrument.setInstrument(36);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
 
 		initDefaults();
@@ -98,6 +98,11 @@ public class DrumPanel extends InstPanel {
 
 	public void setIsVelocityPattern(boolean isVelocityPattern) {
 		this.isVelocityPattern.setSelected(isVelocityPattern);
+	}
+
+
+	public void transitionToPool(String[] pool) {
+		instrument.changeInstPoolMapping(pool);
 	}
 
 }
