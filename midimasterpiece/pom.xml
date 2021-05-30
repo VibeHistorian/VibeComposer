@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.vibehistorian.midimasterpiece</groupId>
-    <artifactId>midimasterpiece</artifactId>
-    <name>MidiMasterpiece</name>
+    <groupId>org.vibehistorian.vibecomposer</groupId>
+    <artifactId>vibecomposer</artifactId>
+    <name>VibeComposer</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -107,11 +107,11 @@
                <goals><goal>launch4j</goal></goals>
                <configuration>
                  <headerType>gui</headerType>
-                 <outfile>target/midimasterpiece.exe</outfile>
-                 <jar>target/midimasterpiece-1.0-SNAPSHOT-jar-with-dependencies.jar</jar>
+                 <outfile>target/VibeComposer.exe</outfile>
+                 <jar>target/VibeComposer-1.0-SNAPSHOT-jar-with-dependencies.jar</jar>
                  <errTitle>enccg</errTitle>
                  <classPath>
-                   <mainClass>org.vibehistorian.midimasterpiece.midigenerator.MidiGeneratorGUI</mainClass>
+                   <mainClass>org.vibehistorian.vibecomposer.VibeComposerGUI</mainClass>
                  </classPath>
                  <jre>
                    <minVersion>1.8.0</minVersion>
@@ -119,13 +119,13 @@
                  <versionInfo>
                    <fileVersion>1.1.1.1</fileVersion>
                    <txtFileVersion>1.1</txtFileVersion>
-                   <fileDescription>MidiGenerator</fileDescription>
+                   <fileDescription>VibeComposer</fileDescription>
                    <copyright>Copyright VibeHistorian 2021</copyright>
                    <productVersion>1.1.1.1</productVersion>
                    <txtProductVersion>1.1</txtProductVersion>
-                   <productName>MidiGenerator</productName>
-                   <internalName>MidiGenerator</internalName>
-                   <originalFilename>MidiGenerator.exe</originalFilename>
+                   <productName>VibeComposer</productName>
+                   <internalName>VibeComposer</internalName>
+                   <originalFilename>VibeComposer.exe</originalFilename>
                  </versionInfo>
                </configuration>
              </execution>
@@ -138,7 +138,7 @@
       <configuration>
         <archive>
           <manifest>
-            <mainClass>org.vibehistorian.midimasterpiece.midigenerator.MidiGeneratorGUI</mainClass>
+            <mainClass>org.vibehistorian.vibecomposer.VibeComposerGUI</mainClass>
           </manifest>
         </archive>
         <descriptorRefs>
