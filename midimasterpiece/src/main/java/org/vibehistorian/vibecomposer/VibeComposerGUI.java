@@ -112,7 +112,7 @@ import com.sun.media.sound.AudioSynthesizer;
 
 // main class
 
-public class MidiGeneratorGUI extends JFrame
+public class VibeComposerGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener {
 
 	private static final long serialVersionUID = -677536546851756969L;
@@ -321,17 +321,17 @@ public class MidiGeneratorGUI extends JFrame
 	JPanel everythingPanel;
 	JScrollPane everythingPane;
 
-	private static MidiGeneratorGUI midiGeneratorGUI = null;
+	private static VibeComposerGUI midiGeneratorGUI = null;
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
 		isDarkMode = true;
-		midiGeneratorGUI = new MidiGeneratorGUI("General MIDI Generator (BETA)");
+		midiGeneratorGUI = new VibeComposerGUI("General MIDI Generator (BETA)");
 	}
 
-	public MidiGeneratorGUI(String title) {
+	public VibeComposerGUI(String title) {
 		super(title);
 
 		everythingPanel = new JPanel();
