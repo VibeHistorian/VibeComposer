@@ -8,7 +8,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -89,6 +91,9 @@ public class MelodyGenerator implements JMC {
 	private List<int[]> chordProgression = new ArrayList<>();
 	private List<int[]> rootProgression = new ArrayList<>();
 
+	private Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
+	private List<int[]> alternateChordProgression = new ArrayList<>();
+
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
 
@@ -156,8 +161,11 @@ public class MelodyGenerator implements JMC {
 	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures,
 			int notesSeedOffset) {
 		//155816678 seed
+		boolean fillChordMelodyMap = false;
+		if (chordMelodyMap1.isEmpty()) {
+			fillChordMelodyMap = true;
+		}
 
-		// TODO: parameter in melodypart like max jump 
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
 		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
@@ -183,13 +191,13 @@ public class MelodyGenerator implements JMC {
 				85 - weightReducer, 100 };
 
 		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(chords, true);
-		System.out.println(directions);
+		//System.out.println(directions);
 		// TODO: fix here if 6 not enough
 		List<int[]> stretchedChords = chords.stream()
 				.map(e -> MidiUtils.convertChordToLength(e, 4, true)).collect(Collectors.toList());
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
-		System.out.println("Alt: " + alternateRhythm);
+		//System.out.println("Alt: " + alternateRhythm);
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
 			int extraTranspose = 0;
@@ -206,6 +214,13 @@ public class MelodyGenerator implements JMC {
 				}
 			}
 			for (int i = 0; i < stretchedChords.size(); i++) {
+				if (fillChordMelodyMap) {
+					if (!chordMelodyMap1.containsKey(Integer.valueOf(i))) {
+						chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
+					}
+				}
+
+
 				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 
 				double rhythmDuration = sameRhythmTwice ? progressionDurations.get(i) / 2.0
@@ -279,12 +294,17 @@ public class MelodyGenerator implements JMC {
 					}
 					previousNotePitch = pitch;
 					noteList.add(n);
+					if (fillChordMelodyMap && o == 0) {
+						chordMelodyMap1.get(Integer.valueOf(i)).add(n);
+					}
 				}
 
 			}
 		}
 
-
+		if (fillChordMelodyMap) {
+			makeMelodyPitchFrequencyMap();
+		}
 		return noteList;
 	}
 
@@ -341,6 +361,9 @@ public class MelodyGenerator implements JMC {
 			double adjDur = skeleton.get(i).getRhythmValue();
 			if (durCounter + adjDur > currentChordDur) {
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
+				if (chordCounter == 0) {
+					// when measure resets
+				}
 				durCounter = 0.0;
 				currentChordDur = progressionDurations.get(chordCounter);
 				splitGenerator.setSeed(gc.getMelodyPart().getPatternSeed() + 4);
@@ -429,6 +452,31 @@ public class MelodyGenerator implements JMC {
 			durCounter += adjDur;
 		}
 		return fullMelody;
+	}
+
+	private void makeMelodyPitchFrequencyMap() {
+		List<int[]> alternateChordProg = new ArrayList<>();
+		for (int i = 0; i < chordMelodyMap1.keySet().size(); i++) {
+			List<Integer> chordFreqs = chordMelodyMap1.get(Integer.valueOf(i)).stream()
+					.map(e -> Integer.valueOf(e.getPitch() % 12)).collect(Collectors.toList());
+			Map<Integer, Long> freqCounts = chordFreqs.stream()
+					.collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+
+			/*Stream<Map.Entry<Integer,Long>> sorted =
+					freqCounts.entrySet().stream()
+				       .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));*/
+
+			Map<Integer, Long> top3 = freqCounts.entrySet().stream()
+					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(3)
+					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+							(e1, e2) -> e1, LinkedHashMap::new));
+
+			//top3.entrySet().stream().forEach(System.out::println);
+			Long chordLong = MidiUtils.applyChordFreqMap(top3.keySet());
+			System.out.println("Chord: " + chordLong);
+			alternateChordProg.add(MidiUtils.chordsMap.get(chordLong));
+		}
+		alternateChordProgression = MidiUtils.squishChordProgression(alternateChordProg);
 	}
 
 	private Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
@@ -588,7 +636,7 @@ public class MelodyGenerator implements JMC {
 			}
 
 			chordInts.add(chordInt);
-			System.out.println("Fetching chord: " + chordInt);
+			//System.out.println("Fetching chord: " + chordInt);
 			int[] mappedChord = MidiUtils.mappedChord(chordInt);
 			/*mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
 					gc.getScaleMode().noteAdjustScale);*/
@@ -750,7 +798,7 @@ public class MelodyGenerator implements JMC {
 		}
 		boolean overridden = arr.isOverridden();
 		for (Section sec : arr.getSections()) {
-
+			System.out.println("Processing section.. " + sec.getType());
 			sec.setStartTime(measureLength * counter);
 			counter += sec.getMeasures();
 			Random rand = new Random();
@@ -786,12 +834,19 @@ public class MelodyGenerator implements JMC {
 						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
 				if (added) {
 					int notesSeedOffset = 0;
+					List<int[]> usedMelodyProg = chordProgression;
 					if (!sec.getType().contains("CLIMAX") && !sec.getType().contains("CHORUS")
 							&& variationGen.nextInt() < gc.getArrangementVariationChance()) {
-						notesSeedOffset = 1;
-						System.out.println("Melody offset by 1..");
+						if (variationGen.nextBoolean() || alternateChordProgression.isEmpty()) {
+							notesSeedOffset = 1;
+							System.out.println("Melody offset by 1..");
+						} else {
+							usedMelodyProg = alternateChordProgression;
+							System.out.println("Melody uses ALTERNATE PROGRESSION!");
+						}
+
 					}
-					Phrase m = fillMelody(chordProgression, rootProgression, usedMeasures,
+					Phrase m = fillMelody(usedMelodyProg, rootProgression, usedMeasures,
 							notesSeedOffset);
 
 					sec.setMelody(m);

@@ -3,8 +3,10 @@ package org.vibehistorian.midimasterpiece.midigenerator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -131,6 +133,7 @@ public class MidiUtils {
 
 	}
 
+	// diaTransMap.get(i) == MAJOR_SCALE.get(i) ? 
 	private static Map<Integer, Integer> createDiaTransMap() {
 		Map<Integer, Integer> diaMap = new HashMap<>();
 		diaMap.put(1, 0);
@@ -161,6 +164,54 @@ public class MidiUtils {
 		}
 		return chordMap;
 
+	}
+
+	// order freq map by which chord contains most of the passed in notes
+	// -> create map 
+	public static Long applyChordFreqMap(Set<Integer> frequentNotes) {
+		Map<Long, Set<Integer>> freqMap = createChordFreqMap();
+		Map<Long, Long> chordMatchesMap = new LinkedHashMap<>();
+
+		for (Long l : freqMap.keySet()) {
+			int counter = 0;
+			for (Integer i : frequentNotes) {
+				if (freqMap.get(l).contains(i)) {
+					counter++;
+				}
+			}
+			chordMatchesMap.put(l, Long.valueOf(counter));
+		}
+
+		Map<Long, Long> top3 = chordMatchesMap.entrySet().stream()
+				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(2)
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
+						LinkedHashMap::new));
+
+		top3.entrySet().stream().forEach(System.out::println);
+		// return second most matching chord 
+		if (top3.keySet().size() > 1) {
+			return (Long) top3.keySet().toArray()[1];
+		}
+		System.out.println("Only one chord matches? Huh..");
+		return (Long) top3.keySet().toArray()[0];
+	}
+
+	private static Map<Long, Set<Integer>> createChordFreqMap() {
+		Map<Long, Set<Integer>> freqMap = new HashMap<>();
+		List<Long> chords = Arrays.asList(new Long[] { 1L, 20L, 30L, 4L, 5L, 60L, 7000L });
+		for (Long l : chords) {
+			freqMap.put(l, intArrToList(chordsMap.get(l)).stream().map(e -> e % 12)
+					.collect(Collectors.toSet()));
+		}
+		return freqMap;
+	}
+
+	public static List<Integer> intArrToList(int[] intArr) {
+		List<Integer> intList = new ArrayList<Integer>(intArr.length);
+		for (int i : intArr) {
+			intList.add(i);
+		}
+		return intList;
 	}
 
 	public static String prettyChord(long chordNum) {
