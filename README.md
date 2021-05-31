@@ -11,6 +11,7 @@ How to use it:
 2. If such a device isn't visible, uncheck "MIDI transmitter mode" and click 'Compose'
 3. If you want to output the MIDI notes into your DAW instead, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter options
+4. For everything else, refer to the user manual: https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf
 
 How it should look:
 
