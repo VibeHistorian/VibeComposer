@@ -16,6 +16,7 @@ public class MelodyPanel extends InstPanel {
 
 	public void initComponents() {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
+		midiChannel.setSelectedItem("1");
 		instrument.initInstPool(instPool);
 		setInstrument(8);
 		setVelocityMin(80);

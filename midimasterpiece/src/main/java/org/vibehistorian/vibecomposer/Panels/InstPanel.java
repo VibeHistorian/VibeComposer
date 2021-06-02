@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -81,6 +82,7 @@ public abstract class InstPanel extends JPanel {
 	protected JComboBox<String> midiChannel = new JComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
+	protected JButton soloButton = new JButton("S");
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
@@ -96,6 +98,9 @@ public abstract class InstPanel extends JPanel {
 		volSlider.setOrientation(JSlider.VERTICAL);
 		volSlider.setPreferredSize(new Dimension(30, 50));
 		volSlider.setPaintTicks(true);
+
+		soloButton.addActionListener(VibeComposerGUI.vibeComposerGUI);
+		soloButton.setActionCommand("SoloTrack");
 
 		toggleableComponents.add(hitsPerPattern);
 		toggleableComponents.add(chordSpan);

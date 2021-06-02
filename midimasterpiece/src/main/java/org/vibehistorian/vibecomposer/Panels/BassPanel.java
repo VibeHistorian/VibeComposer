@@ -21,6 +21,7 @@ public class BassPanel extends InstPanel {
 
 	public void initComponents() {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
+		midiChannel.setSelectedItem("9");
 		instPool = POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);

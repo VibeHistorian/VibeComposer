@@ -326,6 +326,28 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
+	public void duplicateSection(JTable tbl) {
+		resortByIndexes(tbl);
+		int column = tbl.getSelectedColumn();
+		if (column == -1)
+			return;
+		Section sec = sections.get(column);
+		sections.add(column, sec.deepCopy());
+	}
+
+	public void removeSection(JTable tbl) {
+		resortByIndexes(tbl);
+		int[] columns = tbl.getSelectedColumns();
+		if (columns.length == 0) {
+			return;
+		}
+		List<Section> secs = new ArrayList<>();
+		for (int i : columns) {
+			secs.add(sections.get(i));
+		}
+		sections.removeAll(secs);
+	}
+
 	public boolean isOverridden() {
 		return overridden;
 	}

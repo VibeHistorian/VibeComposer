@@ -57,7 +57,7 @@ import jm.music.data.Score;
 import jm.music.tools.Mod;
 import jm.util.Write;
 
-public class MelodyGenerator implements JMC {
+public class MidiGenerator implements JMC {
 
 	private static final boolean debugEnabled = true;
 
@@ -117,8 +117,8 @@ public class MelodyGenerator implements JMC {
 	private int previousPitch = 0;
 
 
-	public MelodyGenerator(GUIConfig gc) {
-		MelodyGenerator.gc = gc;
+	public MidiGenerator(GUIConfig gc) {
+		MidiGenerator.gc = gc;
 	}
 
 	private int selectClosestIndexFromChord(int[] chord, int previousNotePitch,
@@ -179,9 +179,10 @@ public class MelodyGenerator implements JMC {
 
 	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures,
 			int notesSeedOffset) {
-		//155816678 seed
+
 		boolean fillChordMelodyMap = false;
-		if (chordMelodyMap1.isEmpty() && notesSeedOffset == 0) {
+		if (chordMelodyMap1.isEmpty() && notesSeedOffset == 0
+				&& (chords.size() == progressionDurations.size())) {
 			fillChordMelodyMap = true;
 		}
 
@@ -233,7 +234,7 @@ public class MelodyGenerator implements JMC {
 				}
 			}
 			for (int i = 0; i < stretchedChords.size(); i++) {
-				if (fillChordMelodyMap) {
+				if (fillChordMelodyMap && o == 0) {
 					if (!chordMelodyMap1.containsKey(Integer.valueOf(i))) {
 						chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
 					}
