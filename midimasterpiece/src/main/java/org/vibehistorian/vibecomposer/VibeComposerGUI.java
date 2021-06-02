@@ -582,7 +582,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.add(arpCopyMelodyInst);
 		toggleableComponents.add(arpCopyMelodyInst);
 
-		maxJump = new NumPanel("Max Note Jump", 1, 0, 4);
+		maxJump = new NumPanel("Max Note Jump", 1, 1, 4);
 		maxExceptions = new NumPanel("Max Exceptions", 2, 0, 4);
 		melodyAlternateRhythmChance = new NumPanel("Alternating Rhythm", 50);
 		melodySameRhythmChance = new NumPanel("Doubled rhythm", 50);
@@ -1244,6 +1244,7 @@ public class VibeComposerGUI extends JFrame
 		lastChordSelection = new JComboBox<String>();
 		lastChordSelection.addItem("R");
 		lastChordSelection.addItem("I");
+		lastChordSelection.addItem("IV");
 		lastChordSelection.addItem("V");
 		lastChordSelection.addItem("vi");
 		lastChordSelection.addItemListener(this);
@@ -2672,6 +2673,8 @@ public class VibeComposerGUI extends JFrame
 			chord = 0;
 		} else if (s == "I") {
 			chord = 1;
+		} else if (s == "IV") {
+			chord = 4;
 		} else if (s == "V") {
 			chord = 5;
 		} else if (s == "vi") {

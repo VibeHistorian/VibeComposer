@@ -132,7 +132,7 @@ public class MidiUtils {
 	private static Map<Long, List<Long>> createChordProgressionRulesMap() {
 		Map<Long, List<Long>> cpMap = new HashMap<>();
 		//0 is an imaginary last element which can grow into the correct last elements
-		cpMap.put(0L, new ArrayList<>(Arrays.asList(1L, 5L, 60L)));
+		cpMap.put(0L, new ArrayList<>(Arrays.asList(1L, 4L, 5L, 60L)));
 		cpMap.put(1L, new ArrayList<>(Arrays.asList(4L, 5L)));
 		cpMap.put(20L, new ArrayList<>(Arrays.asList(4L, 60L)));
 		cpMap.put(30L, new ArrayList<>(Arrays.asList(60L)));
@@ -399,21 +399,24 @@ public class MidiUtils {
 		return noteSum / noteCount;
 	}
 
-	public static List<int[]> squishChordProgression(List<int[]> chords) {
+	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords) {
 		double avg = MidiUtils.calculateAverageNote(chords);
 		//System.out.println("AVG: " + avg);
 
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
-			if (avg - c[0] > 6) {
-				c[0] += 12;
-				//System.out.println("SWAP UP: " + i);
+			if (c.length <= 3 || !squishBigChords) {
+				if (avg - c[0] > 6) {
+					c[0] += 12;
+					//System.out.println("SWAP UP: " + i);
+				}
+				if (c[c.length - 1] - avg > 6) {
+					c[c.length - 1] -= 12;
+					//System.out.println("SWAP DOWN: " + i);
+				}
 			}
-			if (c[c.length - 1] - avg > 6) {
-				c[c.length - 1] -= 12;
-				//System.out.println("SWAP DOWN: " + i);
-			}
+
 			Arrays.sort(c);
 			squishedChords.add(c);
 		}

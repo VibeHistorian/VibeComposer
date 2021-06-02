@@ -277,12 +277,12 @@ public class MidiGenerator implements JMC {
 						if (direction) {
 							startIndex = selectClosestIndexFromChord(chord, previousNotePitch,
 									true);
-							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
+							while (endIndex - startIndex >= MAX_JUMP_SKELETON_CHORD) {
 								endIndex--;
 							}
 						} else {
 							endIndex = selectClosestIndexFromChord(chord, previousNotePitch, false);
-							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
+							while (endIndex - startIndex >= MAX_JUMP_SKELETON_CHORD) {
 								startIndex++;
 							}
 						}
@@ -512,7 +512,7 @@ public class MidiGenerator implements JMC {
 						chordProgression.get(chordMelodyMap1.keySet().size() - 1).length));
 		melodyBasedRootProgression
 				.add(Arrays.copyOf(rootProgression.get(rootProgression.size() - 1), 1));
-		melodyBasedChordProgression = MidiUtils.squishChordProgression(alternateChordProg);
+		melodyBasedChordProgression = MidiUtils.squishChordProgression(alternateChordProg, false);
 	}
 
 	private Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
@@ -793,7 +793,8 @@ public class MidiGenerator implements JMC {
 		}
 		List<Double> actualDurations = progressionDurations;
 
-		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression);
+		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression,
+				false);
 
 
 		PrintStream originalStream = System.out;
@@ -837,6 +838,7 @@ public class MidiGenerator implements JMC {
 				}
 			};
 		}
+		boolean isPreview = arr.getSections().size() == 1;
 		boolean overridden = arr.isOverridden();
 		for (Section sec : arr.getSections()) {
 			System.out.println("Processing section.. " + sec.getType());
@@ -973,7 +975,8 @@ public class MidiGenerator implements JMC {
 						}
 					} else {
 						if (i == 0 && ap.getInstrument() == gc.getMelodyPart().getInstrument()) {
-							if (counter > ((arr.getSections().size() + 1) / 2) && !ap.isMuted()) {
+							if (isPreview || counter > ((arr.getSections().size() + 1) / 2)
+									&& !ap.isMuted()) {
 								if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
 									// TODO Mod.transpose(a, 12);
 								}
