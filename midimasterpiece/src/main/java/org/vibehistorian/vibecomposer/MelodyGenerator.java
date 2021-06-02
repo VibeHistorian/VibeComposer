@@ -1,3 +1,21 @@
+/* --------------------
+* @author Vibe Historian
+* ---------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
 
 package org.vibehistorian.vibecomposer;
 
@@ -560,6 +578,11 @@ public class MelodyGenerator implements JMC {
 
 	}
 
+	public void generatePrettyUserChords(int mainGeneratorSeed, int fixedLength,
+			double maxDuration) {
+		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration(), 4 * Durations.HALF_NOTE);
+	}
+
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
 
@@ -1103,7 +1126,12 @@ public class MelodyGenerator implements JMC {
 		System.setOut(dummyStream);
 
 		Write.midi(score, fileName);
-		System.setOut(originalStream);
+		if (VibeComposerGUI.dconsole == null) {
+			System.setOut(originalStream);
+		} else {
+			VibeComposerGUI.dconsole.redirectOut();
+		}
+
 
 		// view midi
 		if (DISPLAY_SCORE) {

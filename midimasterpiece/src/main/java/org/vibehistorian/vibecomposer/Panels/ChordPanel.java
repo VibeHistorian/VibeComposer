@@ -8,8 +8,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 
 public class ChordPanel extends InstPanel {
@@ -36,6 +36,7 @@ public class ChordPanel extends InstPanel {
 		midiChannel.setSelectedItem("11");
 
 		initDefaults();
+		volSlider.setValue(60);
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
