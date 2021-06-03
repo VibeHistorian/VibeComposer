@@ -19,6 +19,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.util.HashSet;
@@ -100,6 +101,7 @@ public abstract class InstPanel extends JPanel {
 		volSlider.setPaintTicks(true);
 
 		soloButton.setActionCommand("SoloTrack");
+		soloButton.setBackground(null);
 
 		copyButton.setActionCommand("CopyPart");
 
@@ -358,5 +360,13 @@ public abstract class InstPanel extends JPanel {
 
 	public void setToggleableComponents(Set<Component> toggleableComponents) {
 		this.toggleableComponents = toggleableComponents;
+	}
+
+	public void turnOnSoloButton() {
+		soloButton.setBackground(new Color(120, 180, 120));
+	}
+
+	public void turnOffSoloButton() {
+		soloButton.setBackground(null);
 	}
 }

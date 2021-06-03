@@ -175,6 +175,7 @@ public class VibeComposerGUI extends JFrame
 	private List<ArpPanel> arpPanels = new ArrayList<>();
 	private List<DrumPanel> drumPanels = new ArrayList<>();
 
+
 	// arrangement
 	private Arrangement arrangement;
 	NumPanel arrangementVariationChance;
@@ -345,6 +346,8 @@ public class VibeComposerGUI extends JFrame
 	JLabel tipLabel;
 	JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
+	JButton unsoloAll;
+	int soloCounter = 0;
 
 	JPanel everythingPanel;
 	JScrollPane everythingPane;
@@ -529,6 +532,12 @@ public class VibeComposerGUI extends JFrame
 		JPanel mainButtonsPanel = new JPanel();
 
 		constraints.gridy = startY + 3;
+
+		unsoloAll = makeButton("S", "UnsoloAllTracks");
+
+		mainButtonsPanel.add(unsoloAll);
+		unsoloAll.setBackground(null);
+
 		mainButtonsPanel.add(makeButton("Toggle Dark Mode", "SwitchDarkMode"));
 
 		mainButtonsPanel.add(makeButton("Toggle Adv. Features", "ToggleAdv"));
@@ -2565,11 +2574,35 @@ public class VibeComposerGUI extends JFrame
 								&& sourcePanel.getPanelOrder() == ((InstPart) e).getOrder())
 						.findFirst().get();
 				Integer trackOrder = MidiGenerator.trackList.indexOf(part);
+				if (!sequencer.getTrackSolo(trackOrder + 1)) {
+					sequencer.setTrackSolo(trackOrder + 1, true);
+					sourcePanel.turnOnSoloButton();
+					unsoloAll.setBackground(new Color(120, 180, 120));
+					soloCounter++;
+				} else {
+					sequencer.setTrackSolo(trackOrder + 1, false);
+					sourcePanel.turnOffSoloButton();
+					soloCounter--;
+					if (soloCounter == 0) {
+						unsoloAll.setBackground(null);
+					}
+				}
+
+				System.out.println("Toggle sequencer solo for Track#: " + (trackOrder + 1));
+			}
+		}
+
+		if (ae.getActionCommand() == "UnsoloAllTracks") {
+			if (sequencer != null && sequencer.isOpen()) {
 				for (int i = 0; i < sequencer.getSequence().getTracks().length; i++) {
 					sequencer.setTrackSolo(i, false);
 				}
-				sequencer.setTrackSolo(trackOrder + 1, true);
-				System.out.println("Set sequencer solo: " + (trackOrder + 1));
+				melodyPanel.turnOffSoloButton();
+				bassPanel.turnOffSoloButton();
+				chordPanels.forEach(e -> e.turnOffSoloButton());
+				arpPanels.forEach(e -> e.turnOffSoloButton());
+				unsoloAll.setBackground(null);
+				soloCounter = 0;
 			}
 		}
 
