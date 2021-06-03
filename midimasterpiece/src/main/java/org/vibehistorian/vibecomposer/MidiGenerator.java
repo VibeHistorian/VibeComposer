@@ -1342,7 +1342,8 @@ public class MidiGenerator implements JMC {
 					continue;
 				}
 
-				double shortenedTo = cp.getInstPool() == POOL.PLUCK ? 0.2 : 1.0;
+				double shortenedTo = (gc.getChordGenSettings().isUseShortening()
+						&& cp.getInstPool() == POOL.PLUCK) ? 0.2 : 1.0;
 
 				if (cp.getPattern() == RhythmPattern.RANDOM) {
 					double splitTime = gc.getChordGenSettings().isUseSplit()

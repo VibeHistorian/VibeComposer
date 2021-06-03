@@ -176,6 +176,7 @@ public class VibeComposerGUI extends JFrame
 	private Arrangement arrangement;
 	NumPanel arrangementVariationChance;
 	JCheckBox arrangementManualOverride;
+	JTextField pieceLength;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -206,7 +207,7 @@ public class VibeComposerGUI extends JFrame
 
 	// macro params
 	JTextField soundbankFilename;
-	JTextField pieceLength;
+
 	JComboBox<String> scaleMode;
 	JComboBox<String> fixedLengthChords;
 	JCheckBox useArrangement;
@@ -252,9 +253,10 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordSplit;
 	JCheckBox randomChordTranspose;
 	JCheckBox randomChordPattern;
-	JTextField randomChordSustainChance;
-	JTextField randomChordShiftChance;
-	JTextField randomChordMaxSplitChance;
+	JCheckBox randomChordSustainUseShortening;
+	NumPanel randomChordSustainChance;
+	NumPanel randomChordShiftChance;
+	NumPanel randomChordMaxSplitChance;
 	JCheckBox randomChordUseChordFill;
 	JComboBox<String> randomChordStretchType;
 	JComboBox<String> randomChordStretchPicker;
@@ -267,13 +269,13 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomArpHitsPerPattern;
 	JCheckBox randomArpAllSameInst;
 	JCheckBox randomArpAllSameHits;
-	JTextField arpShiftChance;
+	NumPanel arpShiftChance;
 	JComboBox<String> randomArpHitsPicker;
 	JCheckBox randomArpUseChordFill;
 	JComboBox<String> randomArpStretchType;
 	JComboBox<String> randomArpStretchPicker;
 	JCheckBox randomArpUseOctaveAdjustments;
-	JTextField randomArpMaxSwing;
+	NumPanel randomArpMaxSwing;
 
 
 	// drum gen settings
@@ -282,8 +284,8 @@ public class VibeComposerGUI extends JFrame
 	JTextField randomDrumMaxSwingAdjust;
 	JCheckBox randomDrumSlide;
 	JCheckBox randomDrumPattern;
-	JTextField randomDrumVelocityPatternChance;
-	JTextField randomDrumShiftChance;
+	NumPanel randomDrumVelocityPatternChance;
+	NumPanel randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
 	JButton changeMidiMapping;
 
@@ -675,26 +677,22 @@ public class VibeComposerGUI extends JFrame
 		randomChordStrum = new JCheckBox("Strum", true);
 		randomChordSplit = new JCheckBox("RandSplit", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
-		randomChordSustainChance = new JTextField("25", 2);
+		randomChordSustainChance = new NumPanel("Chord%", 25);
+		randomChordSustainUseShortening = new JCheckBox("Shorten plucks", true);
 		randomChordPattern = new JCheckBox("Presets", false);
-		randomChordShiftChance = new JTextField("25", 3);
+		randomChordShiftChance = new NumPanel("Max split%", 25);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
-		randomChordMaxSplitChance = new JTextField("25", 3);
+		randomChordMaxSplitChance = new NumPanel("Shift%", 25);
 
 		chordSettingsPanel.add(randomChordDelay);
 		chordSettingsPanel.add(randomChordStrum);
 		chordSettingsPanel.add(randomChordSplit);
 		chordSettingsPanel.add(randomChordTranspose);
 		chordSettingsPanel.add(randomChordUseChordFill);
-		JLabel chordChance = new JLabel("Chord%");
-		chordSettingsPanel.add(chordChance);
 		chordSettingsPanel.add(randomChordSustainChance);
-		JLabel maxSplitChance = new JLabel("Max split%");
-		chordSettingsPanel.add(maxSplitChance);
+		chordSettingsPanel.add(randomChordSustainUseShortening);
 		chordSettingsPanel.add(randomChordMaxSplitChance);
 		chordSettingsPanel.add(randomChordPattern);
-		JLabel chordShiftChance = new JLabel("Shift%");
-		chordSettingsPanel.add(chordShiftChance);
 		chordSettingsPanel.add(randomChordShiftChance);
 
 		toggleableComponents.add(randomChordDelay);
@@ -705,12 +703,10 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(randomChordSplit);
 		toggleableComponents.add(randomChordTranspose);
 		toggleableComponents.add(randomChordUseChordFill);
-		toggleableComponents.add(chordChance);
 		toggleableComponents.add(randomChordSustainChance);
-		toggleableComponents.add(maxSplitChance);
+		toggleableComponents.add(randomChordSustainUseShortening);
 		toggleableComponents.add(randomChordMaxSplitChance);
 		toggleableComponents.add(randomChordPattern);
-		toggleableComponents.add(chordShiftChance);
 		toggleableComponents.add(randomChordShiftChance);
 
 		JButton clearChordPatternSeeds = makeButton("Clear presets", "ClearChordPatterns");
@@ -789,9 +785,9 @@ public class VibeComposerGUI extends JFrame
 		randomArpAllSameInst = new JCheckBox("One inst.", false);
 		randomArpAllSameHits = new JCheckBox("One #", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
-		arpShiftChance = new JTextField("25", 3);
+		arpShiftChance = new NumPanel("Pattern shift%", 25);
 		randomArpUseOctaveAdjustments = new JCheckBox("Rand. oct.", false);
-		randomArpMaxSwing = new JTextField("50", 3);
+		randomArpMaxSwing = new NumPanel("Swing%", 50);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -801,12 +797,8 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.add(randomArpUseChordFill);
 		arpsSettingsPanel.add(randomArpTranspose);
 		arpsSettingsPanel.add(randomArpUseOctaveAdjustments);
-		JLabel arpSwingLabel = new JLabel("Swing%");
-		arpsSettingsPanel.add(arpSwingLabel);
 		arpsSettingsPanel.add(randomArpMaxSwing);
 		arpsSettingsPanel.add(randomArpPattern);
-		JLabel patternShiftLabel = new JLabel("Pattern shift%");
-		arpsSettingsPanel.add(patternShiftLabel);
 		arpsSettingsPanel.add(arpShiftChance);
 
 		toggleableComponents.add(stretchLabel);
@@ -817,10 +809,8 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(randomArpUseChordFill);
 		toggleableComponents.add(randomArpTranspose);
 		toggleableComponents.add(randomArpUseOctaveAdjustments);
-		toggleableComponents.add(arpSwingLabel);
 		toggleableComponents.add(randomArpMaxSwing);
 		toggleableComponents.add(randomArpPattern);
-		toggleableComponents.add(patternShiftLabel);
 		toggleableComponents.add(arpShiftChance);
 
 		JButton clearArpPatternSeeds = makeButton("Clear presets", "ClearArpPatterns");
@@ -890,19 +880,15 @@ public class VibeComposerGUI extends JFrame
 		randomDrumMaxSwingAdjust = new JTextField("20", 2);
 		randomDrumSlide = new JCheckBox("Random delay", false);
 		randomDrumPattern = new JCheckBox("Pattern presets", true);
-		randomDrumVelocityPatternChance = new JTextField("50", 3);
-		randomDrumShiftChance = new JTextField("25", 3);
+		randomDrumVelocityPatternChance = new NumPanel("Velocity pattern%", 50);
+		randomDrumShiftChance = new NumPanel("Pattern shift%", 25);
 
 		drumsPanel.add(new JLabel("Max swing%+-"));
 		drumsPanel.add(randomDrumMaxSwingAdjust);
 
 		drumsPanel.add(randomDrumSlide);
 		drumsPanel.add(randomDrumPattern);
-		JLabel velocityPatternLabel = new JLabel("Velocity pattern%");
-		drumsPanel.add(velocityPatternLabel);
 		drumsPanel.add(randomDrumVelocityPatternChance);
-		JLabel patternShiftLabel = new JLabel("Pattern shift%");
-		drumsPanel.add(patternShiftLabel);
 		drumsPanel.add(randomDrumShiftChance);
 		drumsPanel.add(clearPatternSeeds);
 		changeMidiMapping = makeButton("Map MIDI to semitones", "RemapDrumMIDI,Semi");
@@ -910,9 +896,7 @@ public class VibeComposerGUI extends JFrame
 
 		toggleableComponents.add(randomDrumSlide);
 		toggleableComponents.add(randomDrumPattern);
-		toggleableComponents.add(velocityPatternLabel);
 		toggleableComponents.add(randomDrumVelocityPatternChance);
-		toggleableComponents.add(patternShiftLabel);
 		toggleableComponents.add(randomDrumShiftChance);
 		toggleableComponents.add(clearPatternSeeds);
 		toggleableComponents.add(changeMidiMapping);
@@ -1787,7 +1771,7 @@ public class VibeComposerGUI extends JFrame
 		if (globalSwingOverride.isSelected()) {
 			int swing = globalSwingOverrideValue.getInt();
 			melodyPanel.setSwingPercent(swing);
-			randomArpMaxSwing.setText("" + swing);
+			randomArpMaxSwing.setInt(swing);
 			drumPanels.forEach(e -> {
 				if (e.getInstrument() > 40) {
 					e.setSwingPercent(swing);
@@ -2091,7 +2075,7 @@ public class VibeComposerGUI extends JFrame
 				if (!cp.getLockInst()) {
 
 					MidiUtils.POOL pool = (instGen.nextInt(100) < Integer
-							.valueOf(randomChordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
+							.valueOf(randomChordSustainChance.getInt())) ? POOL.CHORD : POOL.PLUCK;
 
 					cp.getInstrumentBox().initInstPool(pool);
 					cp.setInstPool(pool);
@@ -2651,8 +2635,9 @@ public class VibeComposerGUI extends JFrame
 		chordSettings.setUseStrum(randomChordStrum.isSelected());
 		chordSettings.setUseSplit(randomChordSplit.isSelected());
 		chordSettings.setUseTranspose(randomChordTranspose.isSelected());
-		chordSettings.setShiftChance(Integer.valueOf(randomChordShiftChance.getText()));
-		chordSettings.setSustainChance(Integer.valueOf(randomChordSustainChance.getText()));
+		chordSettings.setShiftChance(Integer.valueOf(randomChordShiftChance.getInt()));
+		chordSettings.setSustainChance(Integer.valueOf(randomChordSustainChance.getInt()));
+		chordSettings.setUseShortening(randomChordSustainUseShortening.isSelected());
 		return chordSettings;
 	}
 
@@ -2662,8 +2647,9 @@ public class VibeComposerGUI extends JFrame
 		randomChordStrum.setSelected(settings.isUseStrum());
 		randomChordSplit.setSelected(settings.isUseSplit());
 		randomChordTranspose.setSelected(settings.isUseTranspose());
-		randomChordShiftChance.setText("" + settings.getShiftChance());
-		randomChordSustainChance.setText("" + settings.getSustainChance());
+		randomChordShiftChance.setInt(settings.getShiftChance());
+		randomChordSustainChance.setInt(settings.getSustainChance());
+		randomChordSustainUseShortening.setSelected(settings.isUseShortening());
 	}
 
 	//returns a string[] given a upper or lower case roman numeral
@@ -2864,7 +2850,7 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		guiConfig.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
-		guiConfig.setMaxArpSwing(Integer.valueOf(randomArpMaxSwing.getText()));
+		guiConfig.setMaxArpSwing(Integer.valueOf(randomArpMaxSwing.getInt()));
 
 		return guiConfig;
 	}
@@ -2932,7 +2918,7 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		randomArpUseOctaveAdjustments.setSelected(guiConfig.isUseOctaveAdjustments());
-		randomArpMaxSwing.setText(String.valueOf(guiConfig.getMaxArpSwing()));
+		randomArpMaxSwing.setInt(guiConfig.getMaxArpSwing());
 
 	}
 
@@ -3136,9 +3122,9 @@ public class VibeComposerGUI extends JFrame
 
 
 			dp.setIsVelocityPattern(drumPanelGenerator.nextInt(100) < Integer
-					.valueOf(randomDrumVelocityPatternChance.getText()));
+					.valueOf(randomDrumVelocityPatternChance.getInt()));
 
-			if (drumPanelGenerator.nextInt(100) < Integer.valueOf(randomDrumShiftChance.getText())
+			if (drumPanelGenerator.nextInt(100) < Integer.valueOf(randomDrumShiftChance.getInt())
 					&& patternOrder > 0) {
 				dp.setPatternShift(
 						drumPanelGenerator.nextInt(dp.getPattern().pattern.length - 1) + 1);
@@ -3219,14 +3205,14 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < panelCount; i++) {
 			ChordPanel cp = addChordPanelToLayout();
 			MidiUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
-					.valueOf(randomChordSustainChance.getText())) ? POOL.CHORD : POOL.PLUCK;
+					.valueOf(randomChordSustainChance.getInt())) ? POOL.CHORD : POOL.PLUCK;
 
 			cp.getInstrumentBox().initInstPool(pool);
 			cp.setInstPool(pool);
 
 			cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 			cp.setTransitionChance(chordPanelGenerator
-					.nextInt(Integer.valueOf(randomChordMaxSplitChance.getText())));
+					.nextInt(Integer.valueOf(randomChordMaxSplitChance.getInt())));
 			cp.setTransitionSplit(
 					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
@@ -3266,7 +3252,7 @@ public class VibeComposerGUI extends JFrame
 			cp.setVelocityMin(velocityMin);
 			cp.setVelocityMax(1 + velocityMin + chordPanelGenerator.nextInt(20));
 
-			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(randomChordShiftChance.getText())
+			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(randomChordShiftChance.getInt())
 					&& patternOrder > 0) {
 				cp.setPatternShift(
 						chordPanelGenerator.nextInt(cp.getPattern().pattern.length - 1) + 1);
@@ -3468,7 +3454,7 @@ public class VibeComposerGUI extends JFrame
 			ap.setVelocityMax(1 + velocityMin + arpPanelGenerator.nextInt(20));
 
 
-			if (arpPanelGenerator.nextInt(100) < Integer.valueOf(arpShiftChance.getText())
+			if (arpPanelGenerator.nextInt(100) < Integer.valueOf(arpShiftChance.getInt())
 					&& patternOrder > 0) {
 				ap.setPatternShift(
 						arpPanelGenerator.nextInt(ap.getPattern().pattern.length - 1) + 1);
