@@ -793,6 +793,12 @@ public class MidiGenerator implements JMC {
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
+		if (gc.isDoubledDurations()) {
+			for (int i = 0; i < progressionDurations.size(); i++) {
+				progressionDurations.set(i, progressionDurations.get(i) * 2);
+			}
+		}
+
 		List<Double> actualDurations = progressionDurations;
 
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression,
@@ -1451,6 +1457,7 @@ public class MidiGenerator implements JMC {
 				if (ap.getArpPattern() != ArpPattern.RANDOM) {
 					arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
 							chord.length, ap.getPatternRepeat());
+					arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
 				}
 
 				double durationNow = 0;

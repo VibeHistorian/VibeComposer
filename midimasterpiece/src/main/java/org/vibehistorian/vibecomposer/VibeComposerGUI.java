@@ -210,6 +210,7 @@ public class VibeComposerGUI extends JFrame
 
 	JComboBox<String> scaleMode;
 	JComboBox<String> fixedLengthChords;
+	JCheckBox useDoubledDurations;
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	JCheckBox globalSwingOverride;
@@ -544,9 +545,12 @@ public class VibeComposerGUI extends JFrame
 		fixedLengthChords = new JComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "4", "8", "NOT" }, fixedLengthChords);
 		fixedLengthChords.setSelectedItem(0);
-		JLabel chordDurationFixedLabel = new JLabel("Chord duration fixed: ");
+		JLabel chordDurationFixedLabel = new JLabel("Chord prog. length fixed:");
 		macroParams.add(chordDurationFixedLabel);
 		macroParams.add(fixedLengthChords);
+
+		useDoubledDurations = new JCheckBox("Double bar durations", false);
+		macroParams.add(useDoubledDurations);
 
 		globalSwingOverride = new JCheckBox("Global Swing override:", false);
 		globalSwingOverrideValue = new NumPanel("", 50);
@@ -2808,6 +2812,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setTranspose(transposeScore.getInt());
 		guiConfig.setBpm(Double.valueOf(mainBpm.getText()));
 		guiConfig.setArpAffectsBpm(arpAffectsBpm.isSelected());
+		guiConfig.setDoubledDurations(useDoubledDurations.isSelected());
 
 		// parts
 		guiConfig.setMelodyPart(melodyPanel.toMelodyPart(lastRandomSeed));
@@ -2876,6 +2881,7 @@ public class VibeComposerGUI extends JFrame
 		transposeScore.setInt(guiConfig.getTranspose());
 		mainBpm.setText(String.valueOf(guiConfig.getBpm()));
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
+		useDoubledDurations.setSelected(guiConfig.isDoubledDurations());
 
 		// parts
 		melodyPanel.setFromMelodyPart(guiConfig.getMelodyPart());

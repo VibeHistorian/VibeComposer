@@ -52,6 +52,7 @@ public class GUIConfig {
 	private int transpose = 0;
 	private double bpm = 80;
 	private boolean arpAffectsBpm = true;
+	private boolean doubledDurations = false;
 
 	// melody gen
 	private int maxNoteJump = 2;
@@ -448,6 +449,14 @@ public class GUIConfig {
 
 	public void setMelodyQuickness(int melodyQuickness) {
 		this.melodyQuickness = melodyQuickness;
+	}
+
+	public boolean isDoubledDurations() {
+		return doubledDurations;
+	}
+
+	public void setDoubledDurations(boolean doubledDurations) {
+		this.doubledDurations = doubledDurations;
 	}
 
 
