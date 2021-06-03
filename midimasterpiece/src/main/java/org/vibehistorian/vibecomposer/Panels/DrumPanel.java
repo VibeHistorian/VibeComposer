@@ -24,7 +24,7 @@ public class DrumPanel extends InstPanel {
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 
 		instrument.initInstPool(POOL.DRUM);
 		instrument.setInstrument(36);
@@ -58,11 +58,14 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch. 10"));
 
+		copyButton.addActionListener(l);
+		this.add(copyButton);
+
 
 	}
 
 	public DrumPanel(ActionListener l) {
-		initComponents();
+		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}

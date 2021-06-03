@@ -120,8 +120,11 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
@@ -2544,9 +2547,61 @@ public class VibeComposerGUI extends JFrame
 			if (sequencer != null && sequencer.isOpen()) {
 				JButton source = (JButton) ae.getSource();
 				InstPanel sourcePanel = (InstPanel) source.getParent();
-				sequencer.setTrackSolo(sourcePanel.getMidiChannel() - 1, true);
-				System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
+				Class classMatch = null;
+				if (sourcePanel instanceof ChordPanel) {
+					classMatch = ChordPart.class;
+				} else if (sourcePanel instanceof ArpPanel) {
+					classMatch = ArpPart.class;
+				} else if (sourcePanel instanceof DrumPanel) {
+					classMatch = DrumPart.class;
+				} else if (sourcePanel instanceof MelodyPanel) {
+					classMatch = MelodyPart.class;
+				} else if (sourcePanel instanceof BassPanel) {
+					classMatch = BassPart.class;
+				}
+				final Class decidedClassMatch = classMatch;
+				InstPart part = MidiGenerator.trackList.stream()
+						.filter(e -> e.getClass().equals(decidedClassMatch)
+								&& sourcePanel.getPanelOrder() == ((InstPart) e).getOrder())
+						.findFirst().get();
+				Integer trackOrder = MidiGenerator.trackList.indexOf(part);
+				for (int i = 0; i < sequencer.getSequence().getTracks().length; i++) {
+					sequencer.setTrackSolo(i, false);
+				}
+				sequencer.setTrackSolo(trackOrder + 1, true);
+				System.out.println("Set sequencer solo: " + (trackOrder + 1));
 			}
+		}
+
+		if (ae.getActionCommand() == "CopyPart") {
+
+			JButton source = (JButton) ae.getSource();
+			InstPanel sourcePanel = (InstPanel) source.getParent();
+			InstPart part = null;
+			if (sourcePanel instanceof ChordPanel) {
+				part = ((ChordPanel) sourcePanel).toChordPart(lastRandomSeed);
+				ChordPanel newPanel = addChordPanelToLayout();
+				newPanel.setFromChordPart((ChordPart) part);
+				newPanel.setPanelOrder(
+						(chordPanels.size() > 0) ? getHighestPanelNumber(chordPanels) : 1);
+
+				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+			} else if (sourcePanel instanceof ArpPanel) {
+				part = ((ArpPanel) sourcePanel).toArpPart(lastRandomSeed);
+				ArpPanel newPanel = addArpPanelToLayout();
+				newPanel.setFromArpPart((ArpPart) part);
+				newPanel.setPanelOrder(
+						(arpPanels.size() > 0) ? getHighestPanelNumber(arpPanels) : 1);
+				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
+			} else if (sourcePanel instanceof DrumPanel) {
+				part = ((DrumPanel) sourcePanel).toDrumPart(lastRandomSeed);
+				DrumPanel newPanel = addDrumPanelToLayout();
+				newPanel.setFromDrumPart((DrumPart) part);
+				newPanel.setPanelOrder(
+						(drumPanels.size() > 0) ? getHighestPanelNumber(drumPanels) : 1);
+			}
+
+			System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
 		}
 
 		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");

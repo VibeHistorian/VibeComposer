@@ -47,6 +47,7 @@ import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import jm.JMC;
 import jm.constants.Durations;
@@ -69,6 +70,9 @@ public class MidiGenerator implements JMC {
 	// opened windows
 	public static List<ShowScore> showScores = new ArrayList<>();
 	public static int windowLoc = 5;
+
+	// track map for Solo
+	public static List<InstPart> trackList = new ArrayList<>();
 
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
@@ -761,6 +765,7 @@ public class MidiGenerator implements JMC {
 	public void generateMasterpiece(int mainGeneratorSeed, String fileName,
 			int melodyProgramChange) {
 		System.out.println("--- GENERATING MASTERPIECE.. ---");
+		trackList.clear();
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
 		Score score = new Score("MainScore", 120);
@@ -1079,23 +1084,28 @@ public class MidiGenerator implements JMC {
 
 		}
 		System.out.println("Added sections to parts..");
+		int trackCounter = 0;
 		if (!gc.getMelodyPart().isMuted()) {
 			score.add(melody);
+			trackList.add(trackCounter++, gc.getMelodyPart());
 		}
 
 		for (int i = 0; i < gc.getArpParts().size(); i++) {
 			if (!gc.getArpParts().get(i).isMuted()) {
 				score.add(arpParts.get(i));
+				trackList.add(trackCounter++, gc.getArpParts().get(i));
 			}
 		}
 
 		if (!gc.getBassPart().isMuted()) {
 			score.add(bassRoots);
+			trackList.add(trackCounter++, gc.getBassPart());
 		}
 
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
 			if (!gc.getChordParts().get(i).isMuted()) {
 				score.add(chordParts.get(i));
+				trackList.add(trackCounter++, gc.getChordParts().get(i));
 			}
 
 		}
@@ -1110,6 +1120,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
 			if (!gc.getDrumParts().get(i).isMuted()) {
 				score.add(drumParts.get(i));
+				trackList.add(trackCounter++, gc.getDrumParts().get(i));
 			}
 		}
 

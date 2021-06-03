@@ -26,7 +26,7 @@ public class ChordPanel extends InstPanel {
 
 	private JComboBox<String> instPoolPicker = new JComboBox<String>();
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 
 
 		instrument.initInstPool(POOL.PLUCK);
@@ -40,6 +40,8 @@ public class ChordPanel extends InstPanel {
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
+		soloButton.addActionListener(l);
+		this.add(soloButton);
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
@@ -70,6 +72,9 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
+		copyButton.addActionListener(l);
+		this.add(copyButton);
+
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(strum);
@@ -77,7 +82,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public ChordPanel(ActionListener l) {
-		initComponents();
+		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}

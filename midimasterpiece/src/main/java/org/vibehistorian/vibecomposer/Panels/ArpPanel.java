@@ -19,7 +19,7 @@ public class ArpPanel extends InstPanel {
 
 	private JComboBox<String> arpPattern = new JComboBox<>();
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 
 		instrument.initInstPool(instPool);
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -31,6 +31,8 @@ public class ArpPanel extends InstPanel {
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
+		soloButton.addActionListener(l);
+		this.add(soloButton);
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
@@ -67,11 +69,16 @@ public class ArpPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
+		copyButton.addActionListener(l);
+		this.add(copyButton);
+
+		toggleableComponents.add(arpPattern);
+
 
 	}
 
 	public ArpPanel(ActionListener l) {
-		initComponents();
+		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());

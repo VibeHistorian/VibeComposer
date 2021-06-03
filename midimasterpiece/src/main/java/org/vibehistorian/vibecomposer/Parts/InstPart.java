@@ -19,6 +19,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Parts;
 
+import javax.xml.bind.annotation.XmlAttribute;
+
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -265,6 +267,15 @@ public abstract class InstPart {
 
 	public void setSwingPercent(int swingPercent) {
 		this.swingPercent = swingPercent;
+	}
+
+	@XmlAttribute
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
 	}
 
 }

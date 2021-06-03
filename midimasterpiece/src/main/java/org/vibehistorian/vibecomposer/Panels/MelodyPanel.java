@@ -14,7 +14,7 @@ public class MelodyPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = -7861296600641561431L;
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
 		midiChannel.setSelectedItem("1");
 		instrument.initInstPool(instPool);
@@ -26,6 +26,8 @@ public class MelodyPanel extends InstPanel {
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
 		this.add(new JLabel("MELODY"));
+		soloButton.addActionListener(l);
+		this.add(soloButton);
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
@@ -48,7 +50,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public MelodyPanel(ActionListener l) {
-		initComponents();
+		initComponents(l);
 	}
 
 
