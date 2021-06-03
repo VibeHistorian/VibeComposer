@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
@@ -1420,6 +1421,11 @@ public class MidiGenerator implements JMC {
 		List<Integer> arpPattern = arpMap.get(ARP_PATTERN_KEY);
 		List<Integer> arpOctavePattern = arpMap.get(ARP_OCTAVE_KEY);
 		List<Integer> arpPausesPattern = arpMap.get(ARP_PAUSES_KEY);
+
+		if (ap.getArpPattern() != ArpPattern.RANDOM) {
+
+			arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern());
+		}
 
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
 
