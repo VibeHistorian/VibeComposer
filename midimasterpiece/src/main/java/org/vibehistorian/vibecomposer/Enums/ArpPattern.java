@@ -21,13 +21,27 @@ public enum ArpPattern {
 		this.pattern = pattern;
 	}
 
-	public List<Integer> getPatternByLength(int length) {
+	public List<Integer> getPatternByLength(int hits, int chordLength, int patternRepeat) {
 		List<Integer> result = new ArrayList<>();
 
-		while (result.size() < length) {
-			result.addAll(Arrays.stream(pattern).boxed().collect(Collectors.toList()));
+		int maxL = 6;
+
+		int[] cutPattern = null;
+		if (pattern[0] != maxL - 1) {
+			cutPattern = Arrays.copyOf(pattern, chordLength);
+		} else {
+			cutPattern = Arrays.copyOfRange(pattern, maxL - chordLength, maxL);
 		}
-		result = result.subList(0, length);
-		return result;
+
+
+		while (result.size() < hits) {
+			result.addAll(Arrays.stream(cutPattern).boxed().collect(Collectors.toList()));
+		}
+		result = result.subList(0, hits);
+		List<Integer> repResult = new ArrayList<>();
+		for (int i = 0; i < patternRepeat; i++) {
+			repResult.addAll(result);
+		}
+		return repResult;
 	}
 }

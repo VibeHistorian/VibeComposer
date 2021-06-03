@@ -107,6 +107,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
@@ -3471,6 +3472,19 @@ public class VibeComposerGUI extends JFrame
 					&& patternOrder > 0) {
 				ap.setPatternShift(
 						arpPanelGenerator.nextInt(ap.getPattern().pattern.length - 1) + 1);
+			}
+
+			if (arpPanelGenerator.nextBoolean()) {
+				int arpPatternOrder = 0;
+				int[] patternWeights = { 60, 70, 80, 90, 100 };
+				int randomWeight = arpPanelGenerator.nextInt(100);
+				for (int j = 0; j < patternWeights.length; j++) {
+					if (randomWeight < patternWeights[j]) {
+						arpPatternOrder = j;
+						break;
+					}
+				}
+				ap.setArpPattern(ArpPattern.values()[arpPatternOrder]);
 			}
 
 			ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);

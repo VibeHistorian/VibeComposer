@@ -1422,10 +1422,6 @@ public class MidiGenerator implements JMC {
 		List<Integer> arpOctavePattern = arpMap.get(ARP_OCTAVE_KEY);
 		List<Integer> arpPausesPattern = arpMap.get(ARP_PAUSES_KEY);
 
-		if (ap.getArpPattern() != ArpPattern.RANDOM) {
-
-			arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern());
-		}
 
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
 
@@ -1444,6 +1440,11 @@ public class MidiGenerator implements JMC {
 				double chordDurationArp = longestChord / ((double) repeatedArpsPerChord);
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
+				if (ap.getArpPattern() != ArpPattern.RANDOM) {
+					arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
+							chord.length, ap.getPatternRepeat());
+				}
+
 				double durationNow = 0;
 				int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
 						? gc.getMaxArpSwing()
