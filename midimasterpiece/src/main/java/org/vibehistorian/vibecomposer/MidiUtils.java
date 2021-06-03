@@ -38,6 +38,7 @@ import jm.constants.Durations;
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
 import jm.music.data.Note;
+import jm.music.data.Phrase;
 
 public class MidiUtils {
 
@@ -263,6 +264,25 @@ public class MidiUtils {
 		long chordLong = SPICE_SELECT_LIST.get(chordQualifierIndex) * 10;
 		return chordLong * firstNum;
 
+	}
+
+	public static void addShortenedChord(CPhrase cpr, int[] chord, double rhythmValue, int dynamic,
+			double shortenedTo) {
+		cpr.addChord(chord, rhythmValue * shortenedTo, dynamic);
+		if (shortenedTo > 0.999) {
+			return;
+		}
+		cpr.addChord(new int[] { Integer.MIN_VALUE }, rhythmValue * (1 - shortenedTo), dynamic);
+	}
+
+	public static void addShortenedNote(Phrase pr, Note n, double shortenedTo) {
+		double rv = n.getRhythmValue();
+		n.setRhythmValue(shortenedTo * rv);
+		pr.addNote(n);
+		if (shortenedTo > 0.999) {
+			return;
+		}
+		pr.addNote(Integer.MIN_VALUE, (1 - shortenedTo) * rv);
 	}
 
 	public static int[] transposeChord(int[] chord, int transposeBy) {

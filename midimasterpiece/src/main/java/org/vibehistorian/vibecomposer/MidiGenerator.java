@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -1341,6 +1342,8 @@ public class MidiGenerator implements JMC {
 					continue;
 				}
 
+				double shortenedTo = cp.getInstPool() == POOL.PLUCK ? 0.2 : 1.0;
+
 				if (cp.getPattern() == RhythmPattern.RANDOM) {
 					double splitTime = gc.getChordGenSettings().isUseSplit()
 							? cp.getTransitionSplit()
@@ -1349,22 +1352,25 @@ public class MidiGenerator implements JMC {
 					double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
 					double duration2 = progressionDurations.get(j) - duration1;
 					if (transition) {
-						cpr.addChord(MidiUtils.convertChordToLength(
-								MidiUtils.transposeChord(actualProgression.get(j), extraTranspose),
-								cp.getChordNotesStretch(), cp.isStretchEnabled()), duration1,
-								velocity);
-						cpr.addChord(MidiUtils.convertChordToLength(
-								MidiUtils.transposeChord(actualProgression.get(transChord),
-										extraTranspose),
-								cp.getChordNotesStretch(), cp.isStretchEnabled()), duration2,
-								velocity);
-					} else {
-						cpr.addChord(
+						MidiUtils.addShortenedChord(cpr,
 								MidiUtils.convertChordToLength(
 										MidiUtils.transposeChord(actualProgression.get(j),
 												extraTranspose),
 										cp.getChordNotesStretch(), cp.isStretchEnabled()),
-								progressionDurations.get(j), velocity);
+								duration1, velocity, shortenedTo);
+						MidiUtils.addShortenedChord(cpr,
+								MidiUtils.convertChordToLength(
+										MidiUtils.transposeChord(actualProgression.get(transChord),
+												extraTranspose),
+										cp.getChordNotesStretch(), cp.isStretchEnabled()),
+								duration2, velocity, shortenedTo);
+					} else {
+						MidiUtils.addShortenedChord(cpr,
+								MidiUtils.convertChordToLength(
+										MidiUtils.transposeChord(actualProgression.get(j),
+												extraTranspose),
+										cp.getChordNotesStretch(), cp.isStretchEnabled()),
+								progressionDurations.get(j), velocity, shortenedTo);
 					}
 
 				} else {
@@ -1374,11 +1380,12 @@ public class MidiGenerator implements JMC {
 					Collections.rotate(pattern, cp.getPatternShift());
 					for (int p = 0; p < pattern.size(); p++) {
 						if (pattern.get(p) > 0) {
-							cpr.addChord(MidiUtils.convertChordToLength(
-									MidiUtils.transposeChord(actualProgression.get(j),
-											extraTranspose),
-									cp.getChordNotesStretch(), cp.isStretchEnabled()), duration,
-									velocity);
+							MidiUtils.addShortenedChord(cpr,
+									MidiUtils.convertChordToLength(
+											MidiUtils.transposeChord(actualProgression.get(j),
+													extraTranspose),
+											cp.getChordNotesStretch(), cp.isStretchEnabled()),
+									duration, velocity, shortenedTo);
 						} else {
 							cpr.addChord(new int[] { Integer.MIN_VALUE }, duration, velocity);
 						}
