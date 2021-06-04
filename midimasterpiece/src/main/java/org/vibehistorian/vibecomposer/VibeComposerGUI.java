@@ -484,7 +484,7 @@ public class VibeComposerGUI extends JFrame
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
 
-		switchFullMode();
+		//switchFullMode();
 		instrumentTabPane.setSelectedIndex(4);
 		recalculateTabPaneCounts();
 
@@ -1313,72 +1313,88 @@ public class VibeComposerGUI extends JFrame
 		constraints.anchor = anchorSide;
 		everythingPanel.add(sliderInfoPanel, constraints);
 
+		startSeqSliderThread();
 
+	}
+
+	private void startSeqSliderThread() {
 		// init thread
 
 		Thread cycle = new Thread() {
 
 			public void run() {
 
+
 				while (true) {
-					if (sequencer != null && sequencer.isRunning()) {
-						if (!isDragging && !isKeySeeking)
-							slider.setValue((int) (sequencer.getMicrosecondPosition() / 1000));
-						if (!isDragging && !isKeySeeking)
-							currentTime.setText(
-									microsecondsToTimeString(sequencer.getMicrosecondPosition()));
-						else
-							currentTime.setText(millisecondsToTimeString(slider.getValue()));
-					} else {
-						//if (!isDragging && !isKeySeeking) {
-						//slider.setValue((int) (pauseMs / 1000));
-						//}
-						//if (!isDragging && !isKeySeeking)
-						//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
-						//else
-						//currentTime.setText(millisecondsToTimeString(slider.getValue()));
-					}
-					if (arrangement != null && slider.getMaximum() > 0) {
-						int val = slider.getValue();
-						int arrangementSize = arrangement.getSections().stream()
-								.mapToInt(e -> e.getMeasures()).sum();
-						if (arrangementSize == 0) {
-							arrangementSize = 1;
-							System.out.println("ARRANGEMENT WAS 0!");
-						}
-						int divisor = slider.getMaximum() / arrangementSize;
-						int sectIndex = (val - 1) / divisor;
-						if (sectIndex >= arrangementSize) {
-							sectionText.setText("End");
+					try {
+						if (sequencer != null && sequencer.isRunning()) {
+							if (!isDragging && !isKeySeeking)
+								slider.setValue((int) (sequencer.getMicrosecondPosition() / 1000));
+							if (!isDragging && !isKeySeeking)
+								currentTime.setText(microsecondsToTimeString(
+										sequencer.getMicrosecondPosition()));
+							else
+								currentTime.setText(millisecondsToTimeString(slider.getValue()));
 						} else {
-							if (useArrangement.isSelected()) {
-								Section sec = null;
-								int sizeCounter = 0;
-								for (Section arrSec : arrangement.getSections()) {
-									if (sizeCounter == sectIndex
-											|| (sectIndex < sizeCounter + arrSec.getMeasures())) {
-										sec = arrSec;
-										break;
-									}
-									sizeCounter += arrSec.getMeasures();
-								}
-								String sectionName = sec.getType().toString();
-								sectionText.setText(sectionName);
+							//if (!isDragging && !isKeySeeking) {
+							//slider.setValue((int) (pauseMs / 1000));
+							//}
+							//if (!isDragging && !isKeySeeking)
+							//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
+							//else
+							//currentTime.setText(millisecondsToTimeString(slider.getValue()));
+						}
+						if (arrangement != null && slider.getMaximum() > 0) {
+							int val = slider.getValue();
+							int arrangementSize = arrangement.getSections().stream()
+									.mapToInt(e -> e.getMeasures()).sum();
+							if (arrangementSize == 0) {
+								arrangementSize = 1;
+								System.out.println("ARRANGEMENT WAS 0!");
+							}
+							int divisor = slider.getMaximum() / arrangementSize;
+							int sectIndex = (val - 1) / divisor;
+							if (sectIndex >= arrangementSize) {
+								sectionText.setText("End");
 							} else {
-								sectionText.setText("ALL INST");
+								if (useArrangement.isSelected()) {
+									Section sec = null;
+									int sizeCounter = 0;
+									for (Section arrSec : arrangement.getSections()) {
+										if (sizeCounter == sectIndex || (sectIndex < sizeCounter
+												+ arrSec.getMeasures())) {
+											sec = arrSec;
+											break;
+										}
+										sizeCounter += arrSec.getMeasures();
+									}
+									String sectionName = sec.getType().toString();
+									sectionText.setText(sectionName);
+								} else {
+									sectionText.setText("ALL INST");
+								}
+
 							}
 
+
 						}
 
+						try {
+							sleep(25);
+						} catch (InterruptedException e) {
 
-					}
+						}
+					} catch (Exception e) {
+						System.out.println("Exception in SEQUENCE SLIDER:");
+						e.printStackTrace();
+						try {
+							sleep(200);
+						} catch (InterruptedException e2) {
 
-					try {
-						sleep(25);
-					} catch (InterruptedException e) {
-
+						}
 					}
 				}
+
 			}
 		};
 		cycle.start();
@@ -3165,7 +3181,7 @@ public class VibeComposerGUI extends JFrame
 			// use pattern in half the cases if checkbox selected
 
 			if (randomDrumPattern.isSelected()) {
-				int[] patternWeights = { 15, 65, 85, 100, 100 };
+				int[] patternWeights = { 40, 65, 85, 100, 100 };
 				int randomWeight = drumPanelGenerator.nextInt(100);
 				for (int j = 0; j < patternWeights.length; j++) {
 					if (randomWeight < patternWeights[j]) {
