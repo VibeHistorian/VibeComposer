@@ -1429,7 +1429,7 @@ public class MidiGenerator implements JMC {
 			if (cp.getPattern() == RhythmPattern.RANDOM) {
 				cpr.flam(cp.getStrum() / 1000.0);
 			} else {
-				cpr.flam(10 / 1000.0);
+				//cpr.flam(10 / 1000.0);
 			}
 		}
 

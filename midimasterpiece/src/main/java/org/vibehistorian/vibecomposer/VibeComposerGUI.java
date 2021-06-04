@@ -145,7 +145,7 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 
-	private static final double[] MILISECOND_ARRAY_STRUM = { 0, 1000, 750, 500, 333, 250, 166, 125,
+	private static final double[] MILISECOND_ARRAY_STRUM = { 15, 1000, 750, 500, 333, 250, 166, 125,
 			62, 62, 31 };
 	private static final double[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	private static final double[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
