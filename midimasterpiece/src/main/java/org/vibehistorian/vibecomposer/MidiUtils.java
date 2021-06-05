@@ -80,6 +80,9 @@ public class MidiUtils {
 	public static final List<Integer> cLocrianScale4 = new ArrayList<>(
 			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
 					Pitches.AF4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cBluesScale4 = new ArrayList<>(
+			Arrays.asList(Pitches.C4, Pitches.EF4, Pitches.F4, Pitches.GF4, Pitches.G4, Pitches.BF4,
+					Pitches.BF4, Pitches.C5));
 
 	public enum ScaleMode {
 		IONIAN(Scales.MAJOR_SCALE, cIonianScale4), DORIAN(Scales.DORIAN_SCALE, cDorianScale4),
@@ -87,7 +90,7 @@ public class MidiUtils {
 		LYDIAN(Scales.LYDIAN_SCALE, cLydianScale4),
 		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, cMixolydianScale4),
 		AEOLIAN(Scales.AEOLIAN_SCALE, cAeolianScale4),
-		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4);
+		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4), BLUES(Scales.BLUES_SCALE, cBluesScale4);
 
 		public int[] noteAdjustScale;
 		public List<Integer> absoluteNotesC;

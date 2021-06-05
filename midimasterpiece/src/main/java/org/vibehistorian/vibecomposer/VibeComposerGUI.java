@@ -42,6 +42,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -123,6 +124,7 @@ import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.DrumPartsWrapper;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
@@ -920,9 +922,35 @@ public class VibeComposerGUI extends JFrame
 		collapseDrumTracks = new JCheckBox("Collapse Drum Tracks", true);
 		drumsPanel.add(collapseDrumTracks);
 
+		drumsPanel.add(makeButton("Save Drums", "DrumSave"));
+		drumsPanel.add(makeButton("Load Drums", "DrumLoad"));
+
+		JComboBox<String> drumPartPresetBox = new JComboBox<>();
+		MidiUtils.addAllToJComboBox(new String[] { "POP", "DNB", "HIPHOP" }, drumPartPresetBox);
+		drumPartPresetBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				if (event.getStateChange() == ItemEvent.SELECTED) {
+					String item = (String) event.getItem();
+					InputStream is = VibeComposerGUI.class
+							.getResourceAsStream("/drums/" + item + ".xml");
+					try {
+						unmarshallDrumsFromResource(is);
+					} catch (JAXBException | IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					// do something with object
+				}
+			}
+		});
+		drumsPanel.add(drumPartPresetBox);
+
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(drumsPanel, constraints);
+
 	}
 
 	private void initDrums(int startY, int anchorSide) {
@@ -2311,6 +2339,51 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
+		if (ae.getActionCommand() == "DrumSave") {
+			Date date = new Date();
+
+
+			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+			f.applyPattern("yyMMdd-HH-mm-ss");
+
+			String drumsDirectory = "drums/";
+
+			File makeSavedDir = new File(drumsDirectory);
+			makeSavedDir.mkdir();
+
+			String finalFilePath = drumsDirectory + f.format(date) + "_DRUMS";
+
+			try {
+				marshalDrums(finalFilePath);
+			} catch (IOException | JAXBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		if (ae.getActionCommand() == "DrumLoad") {
+			FileDialog fd = new FileDialog(this, "Choose a file", FileDialog.LOAD);
+			fd.setDirectory(null);
+			fd.setFile("*.xml");
+			fd.setVisible(true);
+			String filename = fd.getFile();
+			File[] files = fd.getFiles();
+			if (filename == null)
+				System.out.println("You cancelled the choice");
+			else {
+				System.out.println("You chose " + filename);
+				try {
+					unmarshallDrums(files[0]);
+				} catch (JAXBException |
+
+						IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		}
+
 		if (ae.getActionCommand() == "UncheckComposeRandom") {
 			switchAllOnComposeCheckboxes(false);
 			switchOnComposeRandom.setText("Check all 'on Compose'");
@@ -2462,7 +2535,10 @@ public class VibeComposerGUI extends JFrame
 			randomDrumsToGenerate.setText("" + drumPanels.size());
 		}
 
-		if (ae.getActionCommand().startsWith("RemapDrumMIDI,")) {
+		if (ae.getActionCommand().startsWith("RemapDrumMIDI,"))
+
+		{
+
 			String remapType = ae.getActionCommand().split(",")[1];
 			if (remapType.equalsIgnoreCase("Semi")) {
 				drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES_SEMI));
@@ -2500,11 +2576,14 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand().startsWith("RemoveChord,")) {
 			String chordNumber = ae.getActionCommand().split(",")[1];
+
 			removeChordPanel(Integer.valueOf(chordNumber), true);
 			randomChordsToGenerate.setText("" + chordPanels.size());
 		}
 
-		if (ae.getActionCommand() == "AddArp") {
+		if (ae.getActionCommand() == "AddArp")
+
+		{
 			//addArpPanelToLayout();
 			createRandomArpPanels(arpPanels.size() + 1, true);
 			randomArpsToGenerate.setText("" + arpPanels.size());
@@ -2867,13 +2946,37 @@ public class VibeComposerGUI extends JFrame
 		throw new MidiUnavailableException("The AudioSynthesizer is not available.");
 	}*/
 
+	public void marshalDrums(String path) throws JAXBException, IOException {
+		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+		f.applyPattern("yyMMdd-hh-mm-ss");
+		JAXBContext context = JAXBContext.newInstance(DrumPartsWrapper.class);
+		Marshaller mar = context.createMarshaller();
+		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		DrumPartsWrapper wrapper = new DrumPartsWrapper();
+		wrapper.setDrumParts(getDrumPartsFromDrumPanels(false));
+		mar.marshal(wrapper, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
+	}
+
+	public void unmarshallDrums(File f) throws JAXBException, IOException {
+		JAXBContext context = JAXBContext.newInstance(DrumPartsWrapper.class);
+		DrumPartsWrapper wrapper = (DrumPartsWrapper) context.createUnmarshaller()
+				.unmarshal(new FileReader(f));
+		recreateDrumPanelsFromDrumParts(wrapper.getDrumParts());
+	}
+
+	public void unmarshallDrumsFromResource(InputStream f) throws JAXBException, IOException {
+		JAXBContext context = JAXBContext.newInstance(DrumPartsWrapper.class);
+		DrumPartsWrapper wrapper = (DrumPartsWrapper) context.createUnmarshaller().unmarshal(f);
+		recreateDrumPanelsFromDrumParts(wrapper.getDrumParts());
+	}
+
 	public void marshal(String path) throws JAXBException, IOException {
 		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 		f.applyPattern("yyMMdd-hh-mm-ss");
 		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		mar.marshal(guiConfig, new File(path.substring(0, path.length() - 4) + "-guiConfig.xml"));
+		mar.marshal(guiConfig, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
 	}
 
 	public GUIConfig unmarshall(File f) throws JAXBException, IOException {
@@ -3181,7 +3284,7 @@ public class VibeComposerGUI extends JFrame
 			// use pattern in half the cases if checkbox selected
 
 			if (randomDrumPattern.isSelected()) {
-				int[] patternWeights = { 40, 65, 85, 100, 100 };
+				int[] patternWeights = { 35, 60, 80, 90, 90, 100 };
 				int randomWeight = drumPanelGenerator.nextInt(100);
 				for (int j = 0; j < patternWeights.length; j++) {
 					if (randomWeight < patternWeights[j]) {
