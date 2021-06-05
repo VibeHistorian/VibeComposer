@@ -63,6 +63,7 @@ import jm.util.Write;
 public class MidiGenerator implements JMC {
 
 	private static final boolean debugEnabled = true;
+	private static final PrintStream originalStream = System.out;
 
 	// big G
 	public static GUIConfig gc;
@@ -232,10 +233,16 @@ public class MidiGenerator implements JMC {
 					// pick one variation
 					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
-					if (variationInt == 0) {
+
+					switch (variationInt) {
+					case 0:
 						extraTranspose = 12;
-					} else if (variationInt == 1) {
+						break;
+					case 1:
 						MAX_JUMP_SKELETON_CHORD = ((MAX_JUMP_SKELETON_CHORD + 1) % 4) + 1;
+						break;
+					default:
+						throw new IllegalArgumentException("Too much variation!");
 					}
 				}
 			}
@@ -378,6 +385,7 @@ public class MidiGenerator implements JMC {
 	private Vector<Note> convertMelodySkeletonToFullMelody(Vector<Note> skeleton) {
 		Random splitGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 4);
 		Random pauseGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 5);
+		Random variationGenerator = new Random(gc.getMelodyPart().getPatternSeed() + 6);
 		int splitChance = gc.getMelodySplitChance() * gc.getMelodyQuickness() / 100;
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
@@ -389,6 +397,9 @@ public class MidiGenerator implements JMC {
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
 				if (chordCounter == 0) {
 					// when measure resets
+					if (variationGenerator.nextInt() < gc.getArrangementPartVariationChance()) {
+						splitChance = (int) (splitChance * 1.2);
+					}
 				}
 				durCounter = 0.0;
 				currentChordDur = progressionDurations.get(chordCounter);
@@ -809,8 +820,6 @@ public class MidiGenerator implements JMC {
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression,
 				false);
 
-
-		PrintStream originalStream = System.out;
 		if (!debugEnabled) {
 			PrintStream dummyStream = new PrintStream(new OutputStream() {
 				public void write(int b) {
@@ -929,7 +938,7 @@ public class MidiGenerator implements JMC {
 						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
 				if (added) {
 					CPhrase b = fillBassRoots(rootProgression, usedMeasures);
-					if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+					if (variationGen.nextInt() < gc.getArrangementPartVariationChance()) {
 						// TODO
 					}
 					sec.setBass(b);
@@ -951,7 +960,7 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getChordChance());
 					if (added && !cp.isMuted()) {
 						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures);
-						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+						if (variationGen.nextInt() < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.transpose(c, 12);
 						}
 						copiedCPhrases.add(c);
@@ -990,7 +999,8 @@ public class MidiGenerator implements JMC {
 						if (i == 0 && ap.getInstrument() == gc.getMelodyPart().getInstrument()) {
 							if (isPreview || counter > ((arr.getSections().size() + 1) / 2)
 									&& !ap.isMuted()) {
-								if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+								if (variationGen.nextInt() < gc
+										.getArrangementPartVariationChance()) {
 									// TODO Mod.transpose(a, 12);
 								}
 								copiedCPhrases.add(a);
@@ -1000,7 +1010,8 @@ public class MidiGenerator implements JMC {
 							}
 						} else {
 							if (rand.nextInt(100) < sec.getArpChance() && !ap.isMuted()) {
-								if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+								if (variationGen.nextInt() < gc
+										.getArrangementPartVariationChance()) {
 									// TODO Mod.transpose(a, 12);
 								}
 								copiedCPhrases.add(a);
@@ -1024,7 +1035,7 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
 					if (added && !dp.isMuted()) {
 						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures);
-						if (variationGen.nextInt() < gc.getArrangementVariationChance()) {
+						if (variationGen.nextInt() < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.accent(d, 0.25);
 						}
 						copiedPhrases.add(d);
@@ -1149,7 +1160,7 @@ public class MidiGenerator implements JMC {
 		System.setOut(dummyStream);
 
 		Write.midi(score, fileName);
-		if (VibeComposerGUI.dconsole == null) {
+		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
 			System.setOut(originalStream);
 		} else {
 			VibeComposerGUI.dconsole.redirectOut();
@@ -1287,7 +1298,8 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(gc.getRandomSeed() + 1);
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = (i > 0
-					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 100
+					&& variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance())
+							? 100
 							: 0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
 				Random bassDynamics = new Random(gc.getRandomSeed());
@@ -1325,9 +1337,26 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(mainGeneratorSeed + 100);
 		for (int i = 0; i < measures; i++) {
 			Random transitionGenerator = new Random(mainGeneratorSeed);
-			int extraTranspose = (i > 0
-					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
-							: 0;
+			int extraTranspose = 0;
+			boolean ignoreChordSpanFill = false;
+			if (i > 0) {
+				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+					// pick one variation
+					int numberOfVars = 2;
+					int variationInt = variationGenerator.nextInt(numberOfVars);
+
+					switch (variationInt) {
+					case 0:
+						extraTranspose = 12;
+						break;
+					case 1:
+						ignoreChordSpanFill = true;
+						break;
+					default:
+						throw new IllegalArgumentException("Too much variation!");
+					}
+				}
+			}
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 
@@ -1345,7 +1374,7 @@ public class MidiGenerator implements JMC {
 
 				boolean silent = false;
 
-				if (cp.getChordSpanFill() != ChordSpanFill.ALL) {
+				if (!ignoreChordSpanFill && (cp.getChordSpanFill() != ChordSpanFill.ALL)) {
 					if ((cp.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
 						silent = true;
 					}
@@ -1455,9 +1484,26 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(ap.getPatternSeed() + ap.getOrder());
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
-			int extraTranspose = (i > 0
-					&& variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) ? 12
-							: 0;
+			int extraTranspose = 0;
+			boolean ignoreChordSpanFill = false;
+			if (i > 0) {
+				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+					// pick one variation
+					int numberOfVars = 2;
+					int variationInt = variationGenerator.nextInt(numberOfVars);
+
+					switch (variationInt) {
+					case 0:
+						extraTranspose = 12;
+						break;
+					case 1:
+						ignoreChordSpanFill = true;
+						break;
+					default:
+						throw new IllegalArgumentException("Too much variation!");
+					}
+				}
+			}
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
@@ -1503,7 +1549,7 @@ public class MidiGenerator implements JMC {
 							.get(p) == 0) {
 						pitch = Integer.MIN_VALUE;
 					}
-					if (ap.getChordSpanFill() != ChordSpanFill.ALL) {
+					if (!ignoreChordSpanFill && (ap.getChordSpanFill() != ChordSpanFill.ALL)) {
 						if ((ap.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
 							pitch = Integer.MIN_VALUE;
 						}

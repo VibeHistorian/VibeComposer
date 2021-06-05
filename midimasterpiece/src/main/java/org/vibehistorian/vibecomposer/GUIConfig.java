@@ -43,6 +43,7 @@ public class GUIConfig {
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
+	private int arrangementPartVariationChance = 30;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -457,6 +458,14 @@ public class GUIConfig {
 
 	public void setDoubledDurations(boolean doubledDurations) {
 		this.doubledDurations = doubledDurations;
+	}
+
+	public int getArrangementPartVariationChance() {
+		return arrangementPartVariationChance;
+	}
+
+	public void setArrangementPartVariationChance(int arrangementPartVariationChance) {
+		this.arrangementPartVariationChance = arrangementPartVariationChance;
 	}
 
 

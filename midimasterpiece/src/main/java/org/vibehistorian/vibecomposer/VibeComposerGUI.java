@@ -181,6 +181,7 @@ public class VibeComposerGUI extends JFrame
 	// arrangement
 	private Arrangement arrangement;
 	NumPanel arrangementVariationChance;
+	NumPanel arrangementPartVariationChance;
 	JCheckBox arrangementManualOverride;
 	JTextField pieceLength;
 
@@ -1030,8 +1031,10 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(pieceLength);
 		arrangementSettings.add(randomizeArrangementOnCompose);
 
-		arrangementVariationChance = new NumPanel("Variation", 30);
+		arrangementVariationChance = new NumPanel("Risky variations", 30);
 		arrangementSettings.add(arrangementVariationChance);
+		arrangementPartVariationChance = new NumPanel("Safe variations", 30);
+		arrangementSettings.add(arrangementPartVariationChance);
 
 		arrangementSettings.add(addLastSectionBtn);
 		arrangementSettings.add(removeLastSectionBtn);
@@ -3004,6 +3007,8 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setArrangement(arrangement);
 		guiConfig.setArrangementVariationChance(
 				Integer.valueOf(arrangementVariationChance.getInt()));
+		guiConfig.setArrangementPartVariationChance(
+				Integer.valueOf(arrangementPartVariationChance.getInt()));
 
 		// macro
 		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
@@ -3075,6 +3080,7 @@ public class VibeComposerGUI extends JFrame
 		// arrangement
 		arrangement = guiConfig.getArrangement();
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
+		arrangementPartVariationChance.setInt(guiConfig.getArrangementVariationChance());
 
 		// macro
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
