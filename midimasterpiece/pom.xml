@@ -102,7 +102,7 @@
           <artifactId>launch4j-maven-plugin</artifactId>
           <executions>
              <execution>
-               <id>jmidigen-gui</id>
+               <id>VibeComposer</id>
                <phase>package</phase>
                <goals><goal>launch4j</goal></goals>
                <configuration>
