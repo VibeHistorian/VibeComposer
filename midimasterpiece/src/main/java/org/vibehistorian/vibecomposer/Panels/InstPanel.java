@@ -93,11 +93,11 @@ public abstract class InstPanel extends JPanel {
 
 	public void initDefaults() {
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
-
+		//setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		volSlider.setMaximum(100);
 		volSlider.setValue(100);
 		volSlider.setOrientation(JSlider.VERTICAL);
-		volSlider.setPreferredSize(new Dimension(30, 50));
+		volSlider.setPreferredSize(new Dimension(30, 40));
 		volSlider.setPaintTicks(true);
 
 		soloButton.setActionCommand("SoloTrack");

@@ -9,6 +9,9 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "drumParts")
 @XmlType(propOrder = {})
 public class DrumPartsWrapper {
+
+	private boolean useSemitonalMapping = false;
+
 	List<DrumPart> drumParts = new ArrayList<>();
 
 	public List<DrumPart> getDrumParts() {
@@ -17,6 +20,14 @@ public class DrumPartsWrapper {
 
 	public void setDrumParts(List<DrumPart> drumParts) {
 		this.drumParts = drumParts;
+	}
+
+	public boolean isUseSemitonalMapping() {
+		return useSemitonalMapping;
+	}
+
+	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
+		this.useSemitonalMapping = useSemitonalMapping;
 	}
 
 }

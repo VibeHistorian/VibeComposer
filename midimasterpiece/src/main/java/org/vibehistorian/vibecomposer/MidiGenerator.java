@@ -1129,10 +1129,8 @@ public class MidiGenerator implements JMC {
 		// add drums after transposing transposable parts
 
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			if (!gc.getDrumParts().get(i).isMuted()) {
-				score.add(drumParts.get(i));
-				trackList.add(trackCounter++, gc.getDrumParts().get(i));
-			}
+			score.add(drumParts.get(i));
+			trackList.add(trackCounter++, gc.getDrumParts().get(i));
 		}
 
 
