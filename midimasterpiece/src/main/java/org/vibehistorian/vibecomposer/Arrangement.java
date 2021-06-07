@@ -139,6 +139,7 @@ public class Arrangement {
 	private List<Section> sections = new ArrayList<>();
 	private boolean previewChorus = false;
 	private boolean overridden;
+	private int seed = 0;
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -354,5 +355,13 @@ public class Arrangement {
 
 	public void setOverridden(boolean overridden) {
 		this.overridden = overridden;
+	}
+
+	public int getSeed() {
+		return seed;
+	}
+
+	public void setSeed(int seed) {
+		this.seed = seed;
 	}
 }

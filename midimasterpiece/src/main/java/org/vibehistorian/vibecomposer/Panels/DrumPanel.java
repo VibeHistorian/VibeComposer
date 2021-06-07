@@ -49,6 +49,9 @@ public class DrumPanel extends InstPanel {
 		this.add(swingPercent);
 		this.add(delay);
 
+		this.add(new JLabel("Fill"));
+		this.add(chordSpanFill);
+
 		this.add(new JLabel("Seed"));
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));

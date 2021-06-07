@@ -422,14 +422,16 @@ public class MidiUtils {
 		return noteSum / noteCount;
 	}
 
-	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords) {
+	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords,
+			long seed, int chance) {
+		Random r = new Random(seed);
 		double avg = MidiUtils.calculateAverageNote(chords);
 		//System.out.println("AVG: " + avg);
 
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
-			if (c.length <= 3 || !squishBigChords) {
+			if (r.nextInt(100) < chance && (c.length <= 3 || !squishBigChords)) {
 				if (avg - c[0] > 6) {
 					c[0] += 12;
 					//System.out.println("SWAP UP: " + i);
