@@ -37,6 +37,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.swing.SwingUtilities;
+
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -1190,7 +1192,16 @@ public class MidiGenerator implements JMC {
 				phrasesToRemove.forEach(e -> part.removePhrase(e));
 			}
 			partsToRemove.forEach(e -> score.removePart(e));
-			pianoRoll(score);
+			SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					pianoRoll(score);
+
+				}
+
+			});
+
 		}
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}

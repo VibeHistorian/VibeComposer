@@ -1476,6 +1476,35 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(sliderInfoPanel, constraints);
 
 		startOmnipresentThread();
+		startSoloButtonControlThread();
+
+	}
+
+	private void startSoloButtonControlThread() {
+		Thread cycle = new Thread() {
+
+			public void run() {
+				while (true) {
+					try {
+						if (soloCounter > 0) {
+							unsoloAll.setBackground(new Color(120, 180, 120));
+						} else {
+							unsoloAll.setBackground(null);
+							soloAllDrums.setBackground(null);
+						}
+						try {
+							sleep(250);
+						} catch (InterruptedException e) {
+
+						}
+					} catch (Exception e) {
+						System.out.println("Exception in SOLO buttons thread.");
+					}
+				}
+			}
+		};
+		cycle.start();
+
 
 	}
 
@@ -1539,13 +1568,6 @@ public class VibeComposerGUI extends JFrame
 							}
 
 
-						}
-
-						if (soloCounter > 0) {
-							unsoloAll.setBackground(new Color(120, 180, 120));
-						} else {
-							unsoloAll.setBackground(null);
-							soloAllDrums.setBackground(null);
 						}
 
 						try {
@@ -2236,7 +2258,6 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 			for (Integer i : tracksToUnsolo) {
-				soloCounter--;
 				sequencer.setTrackSolo(i, false);
 			}
 		}

@@ -75,7 +75,7 @@
     <drumParts order="4">
         <chordNotesStretch>3</chordNotesStretch>
         <chordSpan>1</chordSpan>
-        <chordSpanFill>ALL</chordSpanFill>
+        <chordSpanFill>EVEN</chordSpanFill>
         <delay>27</delay>
         <exceptionChance>0</exceptionChance>
         <hitsPerPattern>6</hitsPerPattern>
@@ -92,14 +92,14 @@
         <stretchEnabled>false</stretchEnabled>
         <swingPercent>50</swingPercent>
         <transpose>0</transpose>
-        <velocityMax>74</velocityMax>
-        <velocityMin>66</velocityMin>
+        <velocityMax>64</velocityMax>
+        <velocityMin>50</velocityMin>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="5">
         <chordNotesStretch>3</chordNotesStretch>
         <chordSpan>1</chordSpan>
-        <chordSpanFill>ALL</chordSpanFill>
+        <chordSpanFill>EVEN</chordSpanFill>
         <delay>54</delay>
         <exceptionChance>0</exceptionChance>
         <hitsPerPattern>6</hitsPerPattern>
@@ -116,8 +116,8 @@
         <stretchEnabled>false</stretchEnabled>
         <swingPercent>38</swingPercent>
         <transpose>0</transpose>
-        <velocityMax>76</velocityMax>
-        <velocityMin>74</velocityMin>
+        <velocityMax>64</velocityMax>
+        <velocityMin>44</velocityMin>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="6">
