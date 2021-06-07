@@ -1983,11 +1983,18 @@ public class VibeComposerGUI extends JFrame
 
 		// TODO: refactor into "pre config phase" method?
 
+		if (arpCopyMelodyInst.isSelected() && !melodyPanel.getMuteInst()) {
+			if (arpPanels.size() > 0) {
+				arpPanels.get(0).setInstrument(melodyPanel.getInstrument());
+			}
+		}
+
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
 		}
-		if (regenerate && (currentMidi != null) && arrangementManualOverride.isSelected()) {
+		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
+				&& arrangementManualOverride.isSelected()) {
 			arrangement.setOverridden(true);
 		} else {
 			arrangement.setOverridden(false);
@@ -2032,8 +2039,7 @@ public class VibeComposerGUI extends JFrame
 				PrintWriter out = new PrintWriter(bw)) {
 			out.println(new Date().toString() + ", Seed: " + seedData);
 		} catch (IOException e) {
-			System.out.println(
-					"Yikers! An exception while writing a single line at the end of a .txt file!");
+			System.out.println("Failed to write into Random Seed History..");
 		}
 
 		try {
