@@ -37,13 +37,14 @@ public class ArpPanel extends InstPanel {
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(removeButton);
+		copyButton.addActionListener(l);
+		this.add(copyButton);
 
 		this.add(hitsPerPattern);
 		this.add(chordSpan);
 
 		this.add(new JLabel("Fill"));
 		this.add(chordSpanFill);
-		this.add(new JLabel("Repeat#"));
 		this.add(patternRepeat);
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
@@ -57,7 +58,8 @@ public class ArpPanel extends InstPanel {
 		this.add(pauseChance);
 		this.add(exceptionChance);
 
-		this.add(new JLabel("Note preset"));
+		JLabel notePresetLabel = new JLabel("Note preset");
+		this.add(notePresetLabel);
 		this.add(arpPattern);
 
 		this.add(new JLabel("Seed"));
@@ -69,10 +71,10 @@ public class ArpPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
-		copyButton.addActionListener(l);
-		this.add(copyButton);
 
-		toggleableComponents.add(arpPattern);
+		//toggleableComponents.add(arpPattern);
+		//toggleableComponents.add(notePresetLabel);
+		toggleableComponents.add(repeatableNotes);
 
 
 	}

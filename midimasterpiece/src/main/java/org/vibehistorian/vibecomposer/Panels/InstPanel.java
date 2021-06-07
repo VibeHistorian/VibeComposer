@@ -22,6 +22,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,7 +84,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JButton removeButton = new JButton("X");
 	protected JButton soloButton = new JButton("S");
-	protected JButton copyButton = new JButton("Copy");
+	protected JButton copyButton = new JButton("Cc");
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
@@ -104,14 +105,14 @@ public abstract class InstPanel extends JPanel {
 		soloButton.setBackground(null);
 
 		copyButton.setActionCommand("CopyPart");
+		copyButton.setPreferredSize(new Dimension(25, 30));
+		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
-		toggleableComponents.add(hitsPerPattern);
 		toggleableComponents.add(chordSpan);
+		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
-		toggleableComponents.add(pauseChance);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(patternRepeat);
-		toggleableComponents.add(transpose);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(velocityMin);
 		toggleableComponents.add(velocityMax);

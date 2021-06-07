@@ -674,8 +674,6 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.add(randomMelodyOnRegenerate);
 		melodySettingsPanel.add(clearUserMelodySeed);
 
-		toggleableComponents.add(maxJump);
-		toggleableComponents.add(maxExceptions);
 		toggleableComponents.add(melodyAlternateRhythmChance);
 		toggleableComponents.add(melodySameRhythmChance);
 		toggleableComponents.add(melodySplitChance);

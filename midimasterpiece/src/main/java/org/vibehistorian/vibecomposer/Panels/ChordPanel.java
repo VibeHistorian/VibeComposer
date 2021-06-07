@@ -47,6 +47,8 @@ public class ChordPanel extends InstPanel {
 		this.add(instrument);
 		this.add(instPoolPicker);
 		this.add(removeButton);
+		copyButton.addActionListener(l);
+		this.add(copyButton);
 
 		this.add(new JLabel("    Fill"));
 		this.add(chordSpanFill);
@@ -72,8 +74,6 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
-		copyButton.addActionListener(l);
-		this.add(copyButton);
 
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
