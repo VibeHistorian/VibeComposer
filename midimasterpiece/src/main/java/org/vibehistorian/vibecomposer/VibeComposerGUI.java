@@ -429,6 +429,8 @@ public class VibeComposerGUI extends JFrame
 
 			initMelodyGenSettings(220, GridBagConstraints.WEST);
 
+			createHorizontalSeparator(240, this);
+
 		}
 
 		{
@@ -624,11 +626,11 @@ public class VibeComposerGUI extends JFrame
 
 	private void initMelodyGenSettings(int startY, int anchorSide) {
 		JPanel melodySettingsPanel = new JPanel();
-		JLabel csExtra = new JLabel("MELODY SETTINGS+");
-		csExtra.setPreferredSize(new Dimension(120, 30));
-		csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		JLabel csExtra = new JLabel("MELODY  ");
+		csExtra.setPreferredSize(new Dimension(120, 40));
+		//csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsPanel.add(csExtra);
-		//melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		melodyQuickness = new NumPanel("Quickness", 100);
 		melodySettingsPanel.add(melodyQuickness);
 
