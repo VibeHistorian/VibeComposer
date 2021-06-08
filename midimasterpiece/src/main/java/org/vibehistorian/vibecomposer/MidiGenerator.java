@@ -191,7 +191,7 @@ public class MidiGenerator implements JMC {
 
 		boolean fillChordMelodyMap = false;
 		if (chordMelodyMap1.isEmpty() && notesSeedOffset == 0
-				&& (chords.size() == progressionDurations.size())) {
+				&& (chords.size() == chordInts.size())) {
 			fillChordMelodyMap = true;
 		}
 
@@ -1038,7 +1038,9 @@ public class MidiGenerator implements JMC {
 					boolean added = (overridden && sec.getDrumPresence().contains(dp.getOrder()))
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
 					if (added && !dp.isMuted()) {
-						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures);
+						int sectionChanceModifier = 75 + (sec.getDrumChance() / 4);
+						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures,
+								sectionChanceModifier);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.accent(d, 0.25);
 						}
@@ -1606,7 +1608,8 @@ public class MidiGenerator implements JMC {
 	}
 
 
-	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures) {
+	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures,
+			int sectionChanceModifier) {
 		Phrase drumPhrase = new Phrase();
 
 		int chordsCount = actualProgression.size();
@@ -1663,6 +1666,8 @@ public class MidiGenerator implements JMC {
 						velocity = (velocity * 5) / 10;
 						pitch = dp.getInstrument();
 					}
+
+					velocity = (velocity * sectionChanceModifier / 100);
 					boolean isEven = ((j + (k / oneChordPatternSize)) % 2 == 0);
 					if (!ignoreChordSpanFill && (dp.getChordSpanFill() != ChordSpanFill.ALL)) {
 						if ((dp.getChordSpanFill() == ChordSpanFill.EVEN) && !isEven) {

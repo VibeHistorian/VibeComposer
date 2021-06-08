@@ -309,6 +309,7 @@ public class VibeComposerGUI extends JFrame
 	NumPanel randomDrumVelocityPatternChance;
 	NumPanel randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
+	JCheckBox arrangementAffectsDrumVelocity;
 	JButton changeMidiMapping;
 
 	// chord settings - progression
@@ -1070,6 +1071,8 @@ public class VibeComposerGUI extends JFrame
 
 		drumMidiSettings.add(randomDrumPattern);
 		drumMidiSettings.add(randomDrumVelocityPatternChance);
+		arrangementAffectsDrumVelocity = new JCheckBox("Adj. Vel. in Arr.", true);
+		drumMidiSettings.add(arrangementAffectsDrumVelocity);
 		drumMidiSettings.add(randomDrumShiftChance);
 		drumMidiSettings.add(clearPatternSeeds);
 
@@ -3250,7 +3253,8 @@ public class VibeComposerGUI extends JFrame
 				Integer.valueOf(arrangementVariationChance.getInt()));
 		guiConfig.setArrangementPartVariationChance(
 				Integer.valueOf(arrangementPartVariationChance.getInt()));
-
+		guiConfig.setArrangementReduceDrumVelocityFromSectionChance(
+				arrangementAffectsDrumVelocity.isSelected());
 
 		// macro
 		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
@@ -3323,6 +3327,8 @@ public class VibeComposerGUI extends JFrame
 		arrangement = guiConfig.getArrangement();
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(guiConfig.getArrangementVariationChance());
+		arrangementAffectsDrumVelocity
+				.setSelected(guiConfig.isArrangementReduceDrumVelocityFromSectionChance());
 		arrangementSeed.setText("" + arrangement.getSeed());
 
 		// macro

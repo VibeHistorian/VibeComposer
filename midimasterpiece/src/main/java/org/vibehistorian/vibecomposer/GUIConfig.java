@@ -44,6 +44,7 @@ public class GUIConfig {
 	private Arrangement arrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
 	private int arrangementPartVariationChance = 30;
+	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -466,6 +467,15 @@ public class GUIConfig {
 
 	public void setArrangementPartVariationChance(int arrangementPartVariationChance) {
 		this.arrangementPartVariationChance = arrangementPartVariationChance;
+	}
+
+	public boolean isArrangementReduceDrumVelocityFromSectionChance() {
+		return arrangementReduceDrumVelocityFromSectionChance;
+	}
+
+	public void setArrangementReduceDrumVelocityFromSectionChance(
+			boolean arrangementReduceDrumVelocityFromSectionChance) {
+		this.arrangementReduceDrumVelocityFromSectionChance = arrangementReduceDrumVelocityFromSectionChance;
 	}
 
 
