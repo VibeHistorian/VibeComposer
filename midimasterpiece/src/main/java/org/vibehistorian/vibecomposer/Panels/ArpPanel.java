@@ -46,21 +46,21 @@ public class ArpPanel extends InstPanel {
 		this.add(new JLabel("Fill"));
 		this.add(chordSpanFill);
 		this.add(patternRepeat);
+		//this.add(repeatableNotes);
+		this.add(transpose);
+		this.add(pauseChance);
+		JLabel notePresetLabel = new JLabel("Note Direction");
+		this.add(notePresetLabel);
+		this.add(arpPattern);
+
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
-		this.add(repeatableNotes);
-
-		this.add(transpose);
-
 		this.add(velocityMin);
 		this.add(velocityMax);
 
-		this.add(pauseChance);
+
 		this.add(exceptionChance);
 
-		JLabel notePresetLabel = new JLabel("Note preset");
-		this.add(notePresetLabel);
-		this.add(arpPattern);
 
 		this.add(new JLabel("Seed"));
 		this.add(patternSeed);

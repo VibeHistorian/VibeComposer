@@ -743,7 +743,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new NumPanel("Max Split%", 25);
 		chordSlashChance = new NumPanel("Ch#1 Slash%", 25);
-		randomChordPattern = new JCheckBox("Presets", false);
+		randomChordPattern = new JCheckBox("Patterns", false);
 		randomChordShiftChance = new NumPanel("Shift%", 25);
 		randomChordVoicingChance = new NumPanel("Flatten Voicing%", 100);
 
@@ -847,7 +847,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		randomArpTranspose = new JCheckBox("Transpose", true);
-		randomArpPattern = new JCheckBox("Presets", false);
+		randomArpPattern = new JCheckBox("Patterns", false);
 		randomArpHitsPicker = new JComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
 				randomArpHitsPicker);
@@ -1003,7 +1003,7 @@ public class VibeComposerGUI extends JFrame
 		randomDrumMaxSwingAdjust = new JTextField("20", 2);
 		randomDrumSlide = new JCheckBox("Random Delay", false);
 		randomDrumUseChordFill = new JCheckBox("Fills", true);
-		randomDrumPattern = new JCheckBox("Presets", true);
+		randomDrumPattern = new JCheckBox("Patterns", true);
 		randomDrumVelocityPatternChance = new NumPanel("Dynamic%", 50);
 		randomDrumShiftChance = new NumPanel("Shift%", 50);
 
