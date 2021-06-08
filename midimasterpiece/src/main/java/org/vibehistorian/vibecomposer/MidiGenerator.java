@@ -849,8 +849,15 @@ public class MidiGenerator implements JMC {
 
 		fillAlternates(altProgressionDurations, altChordProgression, altRootProgression);
 
-		Arrangement arr = (gc.getArrangement().isPreviewChorus()) ? new Arrangement()
-				: gc.getArrangement();
+		Arrangement arr = null;
+		if (gc.getArrangement().isPreviewChorus()) {
+			arr = new Arrangement();
+			gc.setArrangementPartVariationChance(0);
+			gc.setArrangementVariationChance(0);
+		} else {
+			arr = gc.getArrangement();
+		}
+
 
 		boolean never = false;
 		if (never) {
@@ -1039,8 +1046,12 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
 					if (added && !dp.isMuted()) {
 						int sectionChanceModifier = 75 + (sec.getDrumChance() / 4);
+						boolean sectionForcedDynamics = (sec.getType().contains("CLIMAX")
+								|| sec.getType().contains("CHORUS"))
+								&& variationGen.nextInt(100) < gc
+										.getArrangementPartVariationChance();
 						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures,
-								sectionChanceModifier);
+								sectionChanceModifier, sectionForcedDynamics);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.accent(d, 0.25);
 						}
@@ -1609,7 +1620,7 @@ public class MidiGenerator implements JMC {
 
 
 	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures,
-			int sectionChanceModifier) {
+			int sectionChanceModifier, boolean sectionForcedDynamics) {
 		Phrase drumPhrase = new Phrase();
 
 		int chordsCount = actualProgression.size();
@@ -1662,7 +1673,7 @@ public class MidiGenerator implements JMC {
 					int drum = drumPattern.get(k);
 					int velocity = drumVelocityPattern.get(k);
 					int pitch = (drum >= 0) ? drum : Integer.MIN_VALUE;
-					if (drum < 0 && dp.isVelocityPattern()) {
+					if (drum < 0 && (dp.isVelocityPattern() || (o > 0 && sectionForcedDynamics))) {
 						velocity = (velocity * 5) / 10;
 						pitch = dp.getInstrument();
 					}

@@ -35,7 +35,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Section.SectionType;
 
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
@@ -148,6 +147,7 @@ public class Arrangement {
 
 	public Arrangement() {
 		resetArrangement();
+		setPreviewChorus(true);
 	}
 
 	public List<Section> getSections() {
@@ -160,8 +160,7 @@ public class Arrangement {
 
 	public void resetArrangement() {
 		sections.clear();
-		sections.add(
-				new Section(SectionType.ADVANCED_CHORUS.toString(), 1, 100, 100, 100, 100, 100));
+		sections.add(new Section("PREVIEW", 1, 100, 100, 100, 100, 100));
 	}
 
 	public void generateDefaultArrangement() {
