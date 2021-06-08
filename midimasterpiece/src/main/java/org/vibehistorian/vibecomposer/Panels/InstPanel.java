@@ -370,4 +370,8 @@ public abstract class InstPanel extends JPanel {
 	public void turnOffSoloButton() {
 		soloButton.setBackground(null);
 	}
+
+	public boolean isSolo() {
+		return new Color(120, 180, 120).equals(soloButton.getBackground());
+	}
 }

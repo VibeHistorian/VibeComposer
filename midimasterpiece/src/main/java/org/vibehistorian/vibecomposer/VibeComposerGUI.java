@@ -362,7 +362,6 @@ public class VibeComposerGUI extends JFrame
 	JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
 	JButton unsoloAll;
-	public static int soloCounter = 0;
 
 	JPanel everythingPanel;
 	JScrollPane everythingPane;
@@ -1488,11 +1487,20 @@ public class VibeComposerGUI extends JFrame
 			public void run() {
 				while (true) {
 					try {
-						if (soloCounter > 0) {
+
+						boolean anySolo = false;
+						anySolo |= melodyPanel.isSolo();
+						anySolo |= bassPanel.isSolo();
+						anySolo |= chordPanels.stream().anyMatch(e -> e.isSolo());
+						anySolo |= arpPanels.stream().anyMatch(e -> e.isSolo());
+						anySolo |= new Color(120, 180, 120).equals(soloAllDrums.getBackground());
+
+						if (anySolo) {
 							unsoloAll.setBackground(new Color(120, 180, 120));
 						} else {
 							unsoloAll.setBackground(null);
 							soloAllDrums.setBackground(null);
+							unsoloAllTracks(false);
 						}
 						try {
 							sleep(250);
@@ -2245,9 +2253,6 @@ public class VibeComposerGUI extends JFrame
 								&& ip.getPanelOrder() == ((InstPart) e).getOrder())
 						.findFirst().get();
 				Integer trackOrder = MidiGenerator.trackList.indexOf(part);
-				if (!sequencer.getTrackSolo(trackOrder + 1)) {
-					soloCounter++;
-				}
 				sequencer.setTrackSolo(trackOrder + 1, true);
 				soloedTracks.add(trackOrder + 1);
 				ip.turnOnSoloButton();
@@ -2259,12 +2264,6 @@ public class VibeComposerGUI extends JFrame
 	public void unsoloAllDrumTracks(List<? extends InstPanel> panels, Class partClass,
 			List<Integer> tracksToUnsolo) {
 		if (sequencer != null && sequencer.isOpen()) {
-
-			for (Integer i : tracksToUnsolo) {
-				if (!sequencer.getTrackSolo(i)) {
-					soloCounter--;
-				}
-			}
 			for (Integer i : tracksToUnsolo) {
 				sequencer.setTrackSolo(i, false);
 			}
@@ -2296,15 +2295,9 @@ public class VibeComposerGUI extends JFrame
 			if (!sequencer.getTrackSolo(trackOrder + 1)) {
 				sequencer.setTrackSolo(trackOrder + 1, true);
 				sourcePanel.turnOnSoloButton();
-				unsoloAll.setBackground(new Color(120, 180, 120));
-				soloCounter++;
 			} else {
 				sequencer.setTrackSolo(trackOrder + 1, false);
 				sourcePanel.turnOffSoloButton();
-				soloCounter--;
-				if (soloCounter == 0) {
-					unsoloAll.setBackground(null);
-				}
 			}
 
 			System.out.println("Toggle sequencer solo for Track#: " + (trackOrder + 1));
@@ -2891,17 +2884,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "UnsoloAllTracks") {
-			if (sequencer != null && sequencer.isOpen()) {
-				for (int i = 0; i < sequencer.getSequence().getTracks().length; i++) {
-					sequencer.setTrackSolo(i, false);
-				}
-				melodyPanel.turnOffSoloButton();
-				bassPanel.turnOffSoloButton();
-				chordPanels.forEach(e -> e.turnOffSoloButton());
-				arpPanels.forEach(e -> e.turnOffSoloButton());
-				unsoloAll.setBackground(null);
-				soloCounter = 0;
-			}
+			unsoloAllTracks(true);
 		}
 
 		if (ae.getActionCommand() == "CopyPart") {
@@ -2937,6 +2920,22 @@ public class VibeComposerGUI extends JFrame
 
 		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
+	}
+
+	private void unsoloAllTracks(boolean resetButtons) {
+		if (sequencer != null && sequencer.isOpen()) {
+			for (int i = 0; i < sequencer.getSequence().getTracks().length; i++) {
+				sequencer.setTrackSolo(i, false);
+			}
+			if (resetButtons) {
+				melodyPanel.turnOffSoloButton();
+				bassPanel.turnOffSoloButton();
+				chordPanels.forEach(e -> e.turnOffSoloButton());
+				arpPanels.forEach(e -> e.turnOffSoloButton());
+				soloAllDrums.setBackground(null);
+			}
+		}
+
 	}
 
 	private void remapDrums(String remapType) {
@@ -3429,6 +3428,7 @@ public class VibeComposerGUI extends JFrame
 	private void removeDrumPanel(int order, boolean singleRemove) {
 		InstPanel panel = getPanelByOrder(order, drumPanels);
 		((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+
 		drumPanels.remove(panel);
 
 		if (singleRemove) {

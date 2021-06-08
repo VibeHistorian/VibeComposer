@@ -110,11 +110,9 @@ public class SettingsPanel extends JPanel {
 				if (!VibeComposerGUI.sequencer.getTrackSolo(trackOrder + 1)) {
 					VibeComposerGUI.sequencer.setTrackSolo(trackOrder + 1, true);
 					ip.turnOnSoloButton();
-					VibeComposerGUI.soloCounter++;
 				} else {
 					VibeComposerGUI.sequencer.setTrackSolo(trackOrder + 1, false);
 					ip.turnOffSoloButton();
-					VibeComposerGUI.soloCounter--;
 				}
 			}
 		} else {

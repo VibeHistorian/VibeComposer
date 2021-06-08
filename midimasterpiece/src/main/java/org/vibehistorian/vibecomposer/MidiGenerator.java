@@ -1621,16 +1621,19 @@ public class MidiGenerator implements JMC {
 			int chordSpan = dp.getChordSpan();
 			int oneChordPatternSize = drumPattern.size() / chordSpan;
 			boolean ignoreChordSpanFill = false;
-
+			int extraExceptionChance = 0;
 			if (o > 0) {
 				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 					// pick one variation
-					int numberOfVars = 1;
+					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
 
 					switch (variationInt) {
 					case 0:
 						ignoreChordSpanFill = true;
+						break;
+					case 1:
+						extraExceptionChance += 10;
 						break;
 					default:
 						throw new IllegalArgumentException("Too much variation!");
@@ -1674,7 +1677,8 @@ public class MidiGenerator implements JMC {
 					double swingDuration = drumDuration * (swingPercentAmount / ((double) 50.0));
 					swingPercentAmount = 100 - swingPercentAmount;
 
-					boolean exception = exceptionGenerator.nextInt(100) < dp.getExceptionChance();
+					boolean exception = exceptionGenerator
+							.nextInt(100) < (dp.getExceptionChance() + extraExceptionChance);
 					if (exception) {
 						int secondVelocity = (velocity * 8) / 10;
 						drumPhrase.addNote(new Note(pitch, swingDuration / 2, velocity));
