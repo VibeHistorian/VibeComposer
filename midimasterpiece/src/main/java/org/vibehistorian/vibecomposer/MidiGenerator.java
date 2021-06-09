@@ -242,7 +242,7 @@ public class MidiGenerator implements JMC {
 					// pick one variation
 					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
-
+					System.out.println("Melody variation: " + variationInt);
 					switch (variationInt) {
 					case 0:
 						extraTranspose = 12;
@@ -1375,7 +1375,7 @@ public class MidiGenerator implements JMC {
 					// pick one variation
 					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
-
+					System.out.println("Chord #" + cp.getOrder() + " variation: " + variationInt);
 					switch (variationInt) {
 					case 0:
 						extraTranspose = 12;
@@ -1522,7 +1522,7 @@ public class MidiGenerator implements JMC {
 					// pick one variation
 					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
-
+					System.out.println("Arp #" + ap.getOrder() + " variation: " + variationInt);
 					switch (variationInt) {
 					case 0:
 						extraTranspose = 12;
@@ -1648,7 +1648,7 @@ public class MidiGenerator implements JMC {
 					// pick one variation
 					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
-
+					System.out.println("Drum #" + dp.getOrder() + " variation: " + variationInt);
 					switch (variationInt) {
 					case 0:
 						ignoreChordSpanFill = true;
