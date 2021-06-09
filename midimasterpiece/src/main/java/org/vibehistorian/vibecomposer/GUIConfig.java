@@ -68,6 +68,7 @@ public class GUIConfig {
 	private int melodySplitChance = 20;
 	private int melodyExceptionChance = 33;
 	private int melodyQuickness = 100;
+	private boolean melodyBasicChordsOnly = true;
 
 	// chord gen
 	private boolean dimAugEnabled = false;
@@ -476,6 +477,14 @@ public class GUIConfig {
 	public void setArrangementReduceDrumVelocityFromSectionChance(
 			boolean arrangementReduceDrumVelocityFromSectionChance) {
 		this.arrangementReduceDrumVelocityFromSectionChance = arrangementReduceDrumVelocityFromSectionChance;
+	}
+
+	public boolean isMelodyBasicChordsOnly() {
+		return melodyBasicChordsOnly;
+	}
+
+	public void setMelodyBasicChordsOnly(boolean melodyBasicChordsOnly) {
+		this.melodyBasicChordsOnly = melodyBasicChordsOnly;
 	}
 
 

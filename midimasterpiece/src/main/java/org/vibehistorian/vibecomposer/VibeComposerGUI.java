@@ -259,6 +259,7 @@ public class VibeComposerGUI extends JFrame
 	NumPanel melodySplitChance;
 	NumPanel melodyExceptionChance;
 	NumPanel melodyQuickness;
+	JCheckBox melodyBasicChordsOnly;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -678,6 +679,9 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.add(generateUserMelodySeed);
 		melodySettingsPanel.add(randomMelodyOnRegenerate);
 		melodySettingsPanel.add(clearUserMelodySeed);
+		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
+		melodySettingsPanel.add(melodyBasicChordsOnly);
+
 
 		toggleableComponents.add(melodyAlternateRhythmChance);
 		toggleableComponents.add(melodySameRhythmChance);
@@ -687,6 +691,7 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(generateUserMelodySeed);
 		toggleableComponents.add(randomMelodyOnRegenerate);
 		toggleableComponents.add(clearUserMelodySeed);
+		toggleableComponents.add(melodyBasicChordsOnly);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -3297,6 +3302,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 		guiConfig.setMelodyQuickness(melodyQuickness.getInt());
+		guiConfig.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
 
 
 		// chords
@@ -3372,6 +3378,7 @@ public class VibeComposerGUI extends JFrame
 		melodySplitChance.setInt(guiConfig.getMelodySplitChance());
 		melodyExceptionChance.setInt(guiConfig.getMelodyExceptionChance());
 		melodyQuickness.setInt(guiConfig.getMelodyQuickness());
+		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());

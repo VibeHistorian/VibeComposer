@@ -215,21 +215,20 @@ public class MidiGenerator implements JMC {
 
 		int weightIncreaser = gc.getMelodyQuickness() / 4;
 		int weightReducer = 25 - weightIncreaser / 2;
-
 		int[] melodySkeletonDurationWeights = { 0 + weightIncreaser, 50 - weightReducer,
 				85 - weightReducer, 100 };
 
+		List<int[]> usedChords = null;
+		if (gc.isMelodyBasicChordsOnly()) {
+			List<int[]> basicChordsUnsquished = MidiUtils.getBasicChordsFromRoots(roots);
 
-		//System.out.println(directions);
-		// TODO: build from basic chords, not spicy 
-		List<int[]> basicChordsUnsquished = MidiUtils.getBasicChordsFromRoots(rootProgression);
+			usedChords = MidiUtils.squishChordProgression(basicChordsUnsquished, false,
+					gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
+		} else {
+			usedChords = chords;
+		}
 
-		// TODO: squish here using same squishing seed 
-		List<int[]> basicChords = MidiUtils.squishChordProgression(basicChordsUnsquished, false,
-				gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
-
-		// TODO: fix here if 6 not enough
-		List<int[]> stretchedChords = basicChords.stream()
+		List<int[]> stretchedChords = usedChords.stream()
 				.map(e -> MidiUtils.convertChordToLength(e, 4, true)).collect(Collectors.toList());
 		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(stretchedChords,
 				true);
