@@ -650,6 +650,9 @@ public class MidiGenerator implements JMC {
 
 		List<int[]> cpr = new ArrayList<>();
 		int[] prevChord = null;
+		boolean canRepeatChord = true;
+		Long lastUnspicedChord = 0L;
+		Random chordRepeatGenerator = new Random(gc.getRandomSeed());
 		while ((currentDuration <= maxDuration - Durations.EIGHTH_NOTE)
 				&& currentLength < maxLength) {
 			double durationLeft = maxDuration - Durations.EIGHTH_NOTE - currentDuration;
@@ -665,8 +668,13 @@ public class MidiGenerator implements JMC {
 			int nextInt = generator.nextInt(next.size());
 
 			// if last and not empty first chord
-			Long chordInt = (durationLeft - dur < 0.01 && FIRST_CHORD != 0) ? (long) FIRST_CHORD
-					: next.get(nextInt);
+			boolean isLastChord = durationLeft - dur < 0.01;
+			Long chordInt = (isLastChord && FIRST_CHORD != 0) ? FIRST_CHORD : next.get(nextInt);
+			if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
+					&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 15) {
+				chordInt = Long.valueOf(lastUnspicedChord);
+				canRepeatChord = false;
+			}
 
 			long spiceResult = 1;
 			int spiceSelectPow = generator.nextInt(MidiUtils.SPICE_SELECT.length) + 1;
@@ -704,9 +712,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			chordInts.add(chordInt);
-			if (fixedLength == 8 && chordInts.size() == 4) {
-				FIRST_CHORD = chordInt;
-			}
+
 			//System.out.println("Fetching chord: " + chordInt);
 			int[] mappedChord = MidiUtils.mappedChord(chordInt);
 			/*mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
@@ -722,6 +728,9 @@ public class MidiGenerator implements JMC {
 			prevChord = mappedChord;
 			next = r.get(chordInt);
 
+			if (fixedLength == 8 && chordInts.size() == 4) {
+				FIRST_CHORD = chordInt;
+			}
 
 			// if last and empty first chord
 			if (durationLeft - dur < 0 && FIRST_CHORD == 0) {
@@ -729,6 +738,7 @@ public class MidiGenerator implements JMC {
 			}
 			currentLength += 1;
 			currentDuration += dur;
+			lastUnspicedChord = chordInt;
 
 		}
 		System.out.println("CHORD PROG LENGTH: " + cpr.size());

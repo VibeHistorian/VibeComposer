@@ -55,6 +55,8 @@ public class GUIConfig {
 	private double bpm = 80;
 	private boolean arpAffectsBpm = true;
 	private boolean doubledDurations = false;
+	private boolean allowChordRepeats = false;
+
 
 	// melody gen
 	private int maxNoteJump = 2;
@@ -102,6 +104,7 @@ public class GUIConfig {
 
 	// seed
 	private long randomSeed = 0;
+
 
 	public GUIConfig() {
 
@@ -487,5 +490,12 @@ public class GUIConfig {
 		this.melodyBasicChordsOnly = melodyBasicChordsOnly;
 	}
 
+	public boolean isAllowChordRepeats() {
+		return allowChordRepeats;
+	}
+
+	public void setAllowChordRepeats(boolean allowChordRepeats) {
+		this.allowChordRepeats = allowChordRepeats;
+	}
 
 }
