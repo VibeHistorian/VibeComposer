@@ -26,6 +26,7 @@ import java.awt.Insets;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -33,6 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
@@ -93,8 +95,10 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void initDefaults() {
+		setAlignmentX(Component.LEFT_ALIGNMENT);
+		setMaximumSize(new Dimension(3000, 50));
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
-		//setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		volSlider.setMaximum(100);
 		volSlider.setValue(100);
 		volSlider.setOrientation(JSlider.VERTICAL);
@@ -108,11 +112,9 @@ public abstract class InstPanel extends JPanel {
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
-		toggleableComponents.add(chordSpan);
 		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
 		toggleableComponents.add(exceptionChance);
-		toggleableComponents.add(patternRepeat);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(velocityMin);
 		toggleableComponents.add(velocityMax);

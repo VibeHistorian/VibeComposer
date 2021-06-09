@@ -885,6 +885,12 @@ public class MidiGenerator implements JMC {
 			counter += sec.getMeasures();
 			Random rand = new Random();
 
+			if (sec.getType().equals("CLIMAX")) {
+				// risky *1.4, safe *2
+				gc.setArrangementVariationChance(gc.getArrangementVariationChance() * 10 / 7);
+				gc.setArrangementPartVariationChance(gc.getArrangementPartVariationChance() * 2);
+			}
+
 			int usedMeasures = sec.getMeasures();
 			Random variationGen = new Random(arrSeed + counter);
 			if (sec.getMeasures() > 1

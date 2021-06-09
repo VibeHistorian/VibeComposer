@@ -190,8 +190,8 @@ public class VibeComposerGUI extends JFrame
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
-	Dimension scrollPaneDimension = new Dimension(1600, 200);
-	Dimension scrollPaneDimensionToggled = new Dimension(1000, 200);
+	Dimension scrollPaneDimension = new Dimension(1600, 400);
+	Dimension scrollPaneDimensionToggled = new Dimension(1000, 400);
 
 	JScrollPane melodyScrollPane;
 	JScrollPane bassScrollPane;
@@ -433,7 +433,7 @@ public class VibeComposerGUI extends JFrame
 
 			initMelodyGenSettings(220, GridBagConstraints.WEST);
 
-			createHorizontalSeparator(240, this);
+			//createHorizontalSeparator(240, this);
 
 		}
 
@@ -452,15 +452,15 @@ public class VibeComposerGUI extends JFrame
 			initArps(312, GridBagConstraints.WEST);
 			initDrums(313, GridBagConstraints.WEST);
 
-			// arrangement
-			initArrangementSettings(280, GridBagConstraints.WEST);
-
-			createHorizontalSeparator(290, this);
 
 			constraints.gridy = 320;
 			everythingPanel.add(instrumentTabPane, constraints);
+
+			// arrangement
+			initArrangementSettings(325, GridBagConstraints.CENTER);
 		}
 
+		createHorizontalSeparator(327, this);
 
 		// ---- OTHER SETTINGS ----
 		{
@@ -521,6 +521,7 @@ public class VibeComposerGUI extends JFrame
 
 		//switchFullMode();
 		instrumentTabPane.setSelectedIndex(0);
+		instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
 
 		pack();
@@ -612,15 +613,6 @@ public class VibeComposerGUI extends JFrame
 		reinitInstPools = makeButton("Initialize all inst.", "InitAllInsts");
 		macroParams.add(reinitInstPools);
 
-		/*toggleableComponents.add(soundbankFilename);
-		toggleableComponents.add(fixedLengthChords);
-		toggleableComponents.add(globalSwingOverride);
-		toggleableComponents.add(globalSwingOverrideValue);
-		toggleableComponents.add(useAllInsts);
-		toggleableComponents.add(bannedInsts);
-		toggleableComponents.add(reinitInstPools);
-		toggleableComponents.add(soundbankLabel);
-		toggleableComponents.add(chordDurationFixedLabel);*/
 		toggleableComponents.add(macroParams);
 
 		constraints.gridy = startY;
@@ -629,9 +621,24 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initMelodyGenSettings(int startY, int anchorSide) {
+
+		JPanel scrollableMelodyPanels = new JPanel();
+		scrollableMelodyPanels.setLayout(new BoxLayout(scrollableMelodyPanels, BoxLayout.Y_AXIS));
+		scrollableMelodyPanels.setAutoscrolls(true);
+
+		melodyScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(1300, 150);
+			}
+		};
+		melodyScrollPane.setViewportView(scrollableMelodyPanels);
+		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
 		JPanel melodySettingsPanel = new JPanel();
 		JLabel csExtra = new JLabel("MELODY  ");
-		csExtra.setPreferredSize(new Dimension(120, 40));
+		//csExtra.setPreferredSize(new Dimension(120, 40));
 		//csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsPanel.add(csExtra);
 		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -693,29 +700,17 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(clearUserMelodySeed);
 		toggleableComponents.add(melodyBasicChordsOnly);
 
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(melodySettingsPanel, constraints);
+		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
+		scrollableMelodyPanels.add(melodySettingsPanel);
+		addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 	}
 
 	private void initMelody(int startY, int anchorSide) {
 
-		JPanel scrollableMelodyPanels = new JPanel();
-		scrollableMelodyPanels.setLayout(new BoxLayout(scrollableMelodyPanels, BoxLayout.Y_AXIS));
-		scrollableMelodyPanels.setAutoscrolls(true);
-
-		melodyScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(1300, 150);
-			}
-		};
-		melodyScrollPane.setViewportView(scrollableMelodyPanels);
-		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		melodyPanel = new MelodyPanel(this);
-		scrollableMelodyPanels.add(melodyPanel);
+		((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -726,6 +721,20 @@ public class VibeComposerGUI extends JFrame
 
 
 	private void initChordGenSettings(int startY, int anchorSide) {
+		JPanel scrollableChordPanels = new JPanel();
+		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
+		scrollableChordPanels.setAutoscrolls(true);
+
+		chordScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(1300, 150);
+			}
+		};
+		chordScrollPane.setViewportView(scrollableChordPanels);
+		chordScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		chordScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
 		JPanel chordSettingsPanel = new JPanel();
 		chordSettingsPanel.add(new JLabel("CHORDS"));
 		chordSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -807,32 +816,21 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(chordSettingsExtraPanel);
 
 
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(chordSettingsPanel, constraints);
-
-		constraints.gridy = startY + 1;
-		everythingPanel.add(chordSettingsExtraPanel, constraints);
+		//constraints.gridy = startY;
+		//constraints.anchor = anchorSide;
+		chordSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		chordSettingsPanel.setMaximumSize(new Dimension(1800, 50));
+		scrollableChordPanels.add(chordSettingsPanel);
+		chordSettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		chordSettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
+		//constraints.gridy = startY + 1;
+		scrollableChordPanels.add(chordSettingsExtraPanel);
+		addHorizontalSeparatorToPanel(scrollableChordPanels);
 	}
 
 	private void initChords(int startY, int anchorSide) {
 		// ---- CHORDS ----
 		// gridy 50 - 99 range
-
-
-		JPanel scrollableChordPanels = new JPanel();
-		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
-		scrollableChordPanels.setAutoscrolls(true);
-
-		chordScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(1300, 150);
-			}
-		};
-		chordScrollPane.setViewportView(scrollableChordPanels);
-		chordScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		chordScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 
 		createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false);
@@ -843,6 +841,20 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initArpGenSettings(int startY, int anchorSide) {
+		JPanel scrollableArpPanels = new JPanel();
+		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
+		scrollableArpPanels.setAutoscrolls(true);
+
+		arpScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(1300, 150);
+			}
+		};
+		arpScrollPane.setViewportView(scrollableArpPanels);
+		arpScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
 		JPanel arpsSettingsPanel = new JPanel();
 		arpsSettingsPanel.add(new JLabel("ARPS      "));
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -919,31 +931,19 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(arpSettingsExtraPanel);
 
 
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(arpsSettingsPanel, constraints);
-
-		constraints.gridy = startY + 1;
-		everythingPanel.add(arpSettingsExtraPanel, constraints);
+		arpsSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		arpsSettingsPanel.setMaximumSize(new Dimension(1800, 50));
+		scrollableArpPanels.add(arpsSettingsPanel);
+		arpSettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		arpSettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
+		//constraints.gridy = startY + 1;
+		scrollableArpPanels.add(arpSettingsExtraPanel);
+		addHorizontalSeparatorToPanel(scrollableArpPanels);
 	}
 
 	private void initArps(int startY, int anchorSide) {
 		// --- ARPS -----------
 
-
-		JPanel scrollableArpPanels = new JPanel();
-		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
-		scrollableArpPanels.setAutoscrolls(true);
-
-		arpScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(1300, 150);
-			}
-		};
-		arpScrollPane.setViewportView(scrollableArpPanels);
-		arpScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		createRandomArpPanels(Integer.valueOf(randomArpsToGenerate.getText()), false);
 
@@ -977,6 +977,21 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initDrumGenSettings(int startY, int anchorSide) {
+		JPanel scrollableDrumPanels = new JPanel();
+		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
+		scrollableDrumPanels.setAutoscrolls(true);
+
+		drumScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		drumScrollPane.setViewportView(scrollableDrumPanels);
+
+		drumScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		drumScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.add(new JLabel("DRUMS "));
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -1083,31 +1098,18 @@ public class VibeComposerGUI extends JFrame
 
 
 		toggleableComponents.add(drumMidiSettings);
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(drumsPanel, constraints);
 
-		constraints.gridy = startY + 1;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(drumMidiSettings, constraints);
-
+		drumsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		drumsPanel.setMaximumSize(new Dimension(1800, 50));
+		scrollableDrumPanels.add(drumsPanel);
+		drumMidiSettings.setAlignmentX(Component.LEFT_ALIGNMENT);
+		drumMidiSettings.setMaximumSize(new Dimension(1800, 50));
+		//constraints.gridy = startY + 1;
+		scrollableDrumPanels.add(drumMidiSettings);
+		addHorizontalSeparatorToPanel(scrollableDrumPanels);
 	}
 
 	private void initDrums(int startY, int anchorSide) {
-		JPanel scrollableDrumPanels = new JPanel();
-		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
-		scrollableDrumPanels.setAutoscrolls(true);
-
-		drumScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
-			}
-		};
-		drumScrollPane.setViewportView(scrollableDrumPanels);
-
-		drumScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		drumScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 
 		createRandomDrumPanels((Integer.valueOf(randomDrumsToGenerate.getText())), false);
@@ -1145,7 +1147,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initArrangementSettings(int startY, int anchorSide) {
 		JPanel arrangementSettings = new JPanel();
-		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		//arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		arrangementSettings.add(new JLabel("ARRANGEMENT"));
 
 		useArrangement = new JCheckBox("Enable", false);
@@ -1445,7 +1447,7 @@ public class VibeComposerGUI extends JFrame
 	private void initSliderPanel(int startY, int anchorSide) {
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
-		sliderPanel.setPreferredSize(new Dimension(800, 20));
+		sliderPanel.setPreferredSize(new Dimension(1200, 20));
 
 
 		slider = new JSlider();
@@ -1645,7 +1647,10 @@ public class VibeComposerGUI extends JFrame
 
 		randomSeed = new JTextField("0", 8);
 		compose = makeButton("COMPOSE", "Compose");
-		compose.setBackground(new Color(150, 150, 60));
+		compose.setBackground(new Color(180, 150, 90));
+		compose.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		//compose.setBorderPainted(true);
+		compose.setPreferredSize(new Dimension(80, 40));
 		regenerate = makeButton("Regenerate", "Regenerate");
 		JButton copySeed = makeButton("Copy seed", "CopySeed");
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
@@ -3437,6 +3442,16 @@ public class VibeComposerGUI extends JFrame
 		constraints.anchor = anchorTemp;
 		separators.add(x);
 		constraints.fill = GridBagConstraints.NONE;
+	}
+
+	private void addHorizontalSeparatorToPanel(JPanel panel) {
+		JPanel sepPanel = new JPanel();
+		sepPanel.setLayout(new BoxLayout(sepPanel, BoxLayout.X_AXIS));
+		sepPanel.setMaximumSize(new Dimension(5000, 5));
+		JSeparator x = new JSeparator(SwingConstants.HORIZONTAL);
+		sepPanel.add(x);
+		panel.add(sepPanel);
+		separators.add(x);
 	}
 
 	public DrumPanel addDrumPanelToLayout() {

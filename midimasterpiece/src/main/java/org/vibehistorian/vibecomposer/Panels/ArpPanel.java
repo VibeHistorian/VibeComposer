@@ -74,7 +74,7 @@ public class ArpPanel extends InstPanel {
 
 		//toggleableComponents.add(arpPattern);
 		//toggleableComponents.add(notePresetLabel);
-		toggleableComponents.add(repeatableNotes);
+		//toggleableComponents.add(repeatableNotes);
 
 
 	}

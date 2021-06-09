@@ -52,15 +52,14 @@ public class ChordPanel extends InstPanel {
 
 		this.add(new JLabel("    Fill"));
 		this.add(chordSpanFill);
+		this.add(strum);
+		this.add(transpose);
+
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
-
 		this.add(transitionChance);
 		this.add(transitionSplit);
-		this.add(strum);
-
 		this.add(delay);
-		this.add(transpose);
 
 		this.add(velocityMin);
 		this.add(velocityMax);
@@ -77,7 +76,6 @@ public class ChordPanel extends InstPanel {
 
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
-		toggleableComponents.add(strum);
 
 	}
 
