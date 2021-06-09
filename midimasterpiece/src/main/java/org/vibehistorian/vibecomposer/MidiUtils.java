@@ -48,7 +48,7 @@ public class MidiUtils {
 
 	public interface Scales {
 
-		public static final int[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		public static final Integer[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
 				MAJOR_SCALE = { 0, 2, 4, 5, 7, 9, 11 }, MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
 				HARMONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 11 },
 				MELODIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 9, 10, 11 }, // mix of ascend and descend
@@ -92,10 +92,10 @@ public class MidiUtils {
 		AEOLIAN(Scales.AEOLIAN_SCALE, cAeolianScale4),
 		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4), BLUES(Scales.BLUES_SCALE, cBluesScale4);
 
-		public int[] noteAdjustScale;
+		public Integer[] noteAdjustScale;
 		public List<Integer> absoluteNotesC;
 
-		private ScaleMode(int[] adjust, List<Integer> absolute) {
+		private ScaleMode(Integer[] adjust, List<Integer> absolute) {
 			this.noteAdjustScale = adjust;
 			this.absoluteNotesC = absolute;
 		}
@@ -126,7 +126,8 @@ public class MidiUtils {
 	// index 0 unused
 	public static final List<String> NUM_TO_LETTER = Arrays
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
-
+	public static final List<Long> MAJOR_CHORDS = Arrays
+			.asList(new Long[] { 1L, 20L, 30L, 4L, 5L, 60L, 7000L });
 
 	public static final Map<Long, List<Long>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
@@ -221,8 +222,8 @@ public class MidiUtils {
 
 	private static Map<Long, Set<Integer>> createChordFreqMap() {
 		Map<Long, Set<Integer>> freqMap = new HashMap<>();
-		List<Long> chords = Arrays.asList(new Long[] { 1L, 20L, 30L, 4L, 5L, 60L, 7000L });
-		for (Long l : chords) {
+
+		for (Long l : MAJOR_CHORDS) {
 			freqMap.put(l, intArrToList(chordsMap.get(l)).stream().map(e -> e % 12)
 					.collect(Collectors.toSet()));
 		}
@@ -420,6 +421,17 @@ public class MidiUtils {
 		}
 
 		return noteSum / noteCount;
+	}
+
+	public static List<int[]> getBasicChordsFromRoots(List<int[]> roots) {
+		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<int[]> basicChords = new ArrayList<>();
+		for (int[] r : roots) {
+			int index = majorScaleNormalized.indexOf(r[0] % 12);
+			Long chordLong = MAJOR_CHORDS.get(index);
+			basicChords.add(mappedChord(chordLong));
+		}
+		return basicChords;
 	}
 
 	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords,

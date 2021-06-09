@@ -186,12 +186,12 @@ public class MidiGenerator implements JMC {
 		return ascDirectionList;
 	}
 
-	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, int measures,
-			int notesSeedOffset) {
+	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, List<int[]> roots,
+			int measures, int notesSeedOffset) {
 
 		boolean fillChordMelodyMap = false;
 		if (chordMelodyMap1.isEmpty() && notesSeedOffset == 0
-				&& (chords.size() == chordInts.size())) {
+				&& (roots.size() == chordInts.size())) {
 			fillChordMelodyMap = true;
 		}
 
@@ -219,12 +219,20 @@ public class MidiGenerator implements JMC {
 		int[] melodySkeletonDurationWeights = { 0 + weightIncreaser, 50 - weightReducer,
 				85 - weightReducer, 100 };
 
-		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(chords, true);
-		//System.out.println(directions);
-		// TODO: fix here if 6 not enough
-		List<int[]> stretchedChords = chords.stream()
-				.map(e -> MidiUtils.convertChordToLength(e, 4, true)).collect(Collectors.toList());
 
+		//System.out.println(directions);
+		// TODO: build from basic chords, not spicy 
+		List<int[]> basicChordsUnsquished = MidiUtils.getBasicChordsFromRoots(rootProgression);
+
+		// TODO: squish here using same squishing seed 
+		List<int[]> basicChords = MidiUtils.squishChordProgression(basicChordsUnsquished, false,
+				gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
+
+		// TODO: fix here if 6 not enough
+		List<int[]> stretchedChords = basicChords.stream()
+				.map(e -> MidiUtils.convertChordToLength(e, 4, true)).collect(Collectors.toList());
+		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(stretchedChords,
+				true);
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
 		for (int o = 0; o < measures; o++) {
@@ -455,7 +463,7 @@ public class MidiGenerator implements JMC {
 		return fullMelody;
 	}
 
-	private Vector<Note> swingMelody(Vector<Note> fullMelody) {
+	private void swingMelody(Vector<Note> fullMelody) {
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
 
@@ -490,7 +498,6 @@ public class MidiGenerator implements JMC {
 
 			durCounter += adjDur;
 		}
-		return fullMelody;
 	}
 
 	private void makeMelodyPitchFrequencyMap() {
@@ -918,6 +925,7 @@ public class MidiGenerator implements JMC {
 				if (added) {
 					int notesSeedOffset = 0;
 					List<int[]> usedMelodyProg = chordProgression;
+					List<int[]> usedRoots = rootProgression;
 					if (!sec.getType().contains("CLIMAX") && !sec.getType().contains("CHORUS")
 							&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
 						if (variationGen.nextBoolean() || melodyBasedChordProgression.isEmpty()) {
@@ -925,12 +933,12 @@ public class MidiGenerator implements JMC {
 							System.out.println("Melody offset by 1..");
 						} else {
 							usedMelodyProg = melodyBasedChordProgression;
+							usedRoots = melodyBasedRootProgression;
 							System.out.println("Melody uses MELODY BASED CHORDS!");
 						}
 
 					}
-					Phrase m = fillMelody(usedMelodyProg, rootProgression, usedMeasures,
-							notesSeedOffset);
+					Phrase m = fillMelody(usedMelodyProg, usedRoots, usedMeasures, notesSeedOffset);
 
 					sec.setMelody(m);
 					if (!overridden)
@@ -1306,9 +1314,9 @@ public class MidiGenerator implements JMC {
 
 		} else {
 			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression,
-					measures, notesSeedOffset);
+					generatedRootProgression, measures, notesSeedOffset);
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
-			Vector<Note> swingedMelody = swingMelody(fullMelody);
+			swingMelody(fullMelody);
 			melodyPhrase.addNoteList(fullMelody, true);
 		}
 		Mod.transpose(melodyPhrase, gc.getMelodyPart().getTranspose());
