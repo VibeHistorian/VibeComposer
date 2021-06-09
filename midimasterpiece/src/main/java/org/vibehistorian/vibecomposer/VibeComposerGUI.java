@@ -1529,7 +1529,7 @@ public class VibeComposerGUI extends JFrame
 
 						}
 					} catch (Exception e) {
-						System.out.println("Exception in SOLO buttons thread.");
+						System.out.println("Exception in SOLO buttons thread:" + e);
 					}
 				}
 			}

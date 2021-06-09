@@ -672,7 +672,8 @@ public class MidiGenerator implements JMC {
 			int spiceSelectPow = generator.nextInt(MidiUtils.SPICE_SELECT.length) + 1;
 			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
 			// 
-			if (generator.nextInt(100) < gc.getSpiceChance()) {
+			if (generator.nextInt(100) < gc.getSpiceChance()
+					&& (chordInts.size() < 7 || FIRST_CHORD == 0)) {
 
 				// 60 -> 600/6000 block 
 				if (!gc.isDimAugEnabled() && spiceSelectPow <= 2) {
@@ -703,6 +704,9 @@ public class MidiGenerator implements JMC {
 			}
 
 			chordInts.add(chordInt);
+			if (fixedLength == 8 && chordInts.size() == 4) {
+				FIRST_CHORD = chordInt;
+			}
 			//System.out.println("Fetching chord: " + chordInt);
 			int[] mappedChord = MidiUtils.mappedChord(chordInt);
 			/*mappedChord = MidiUtils.transposeChord(mappedChord, Mod.MAJOR_SCALE,
@@ -717,6 +721,7 @@ public class MidiGenerator implements JMC {
 
 			prevChord = mappedChord;
 			next = r.get(chordInt);
+
 
 			// if last and empty first chord
 			if (durationLeft - dur < 0 && FIRST_CHORD == 0) {
