@@ -1014,8 +1014,7 @@ public class MidiGenerator implements JMC {
 				}
 				sec.setChords(copiedCPhrases);
 				if (!gc.getChordParts().get(0).isMuted()
-						&& sec.getChordPresence().contains(gc.getChordParts().get(0).getOrder())
-						&& rand.nextInt(100) < sec.getChordChance()) {
+						&& sec.getChordPresence().contains(gc.getChordParts().get(0).getOrder())) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
 					sec.setChordSlash(emptyPhrase.copy());
