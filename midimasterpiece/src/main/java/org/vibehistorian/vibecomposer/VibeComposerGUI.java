@@ -23,8 +23,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
@@ -98,6 +103,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
+import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -157,6 +163,8 @@ public class VibeComposerGUI extends JFrame
 	private static final double[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 
+
+	private static Color panelColorHigh, panelColorLow;
 	private static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
 
@@ -404,8 +412,10 @@ public class VibeComposerGUI extends JFrame
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
+
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
+
 		isDarkMode = true;
 		vibeComposerGUI = new VibeComposerGUI("VibeComposer (BETA)");
 		vibeComposerGUI.init();
@@ -416,7 +426,23 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void init() {
-		everythingPanel = new JPanel();
+		everythingPanel = new JPanel() {
+
+			@Override
+			protected void paintComponent(Graphics g) {
+				super.paintComponent(g);
+				Graphics2D g2d = (Graphics2D) g;
+				g2d.setRenderingHint(RenderingHints.KEY_RENDERING,
+						RenderingHints.VALUE_RENDER_QUALITY);
+				int w = getWidth();
+				int h = getHeight();
+				Color color1 = panelColorHigh;
+				Color color2 = panelColorLow;
+				GradientPaint gp = new GradientPaint(0, 0, color1, 0, h, color2);
+				g2d.setPaint(gp);
+				g2d.fillRect(0, 0, w, h);
+			}
+		};
 		everythingPanel.setLayout(new GridBagLayout());
 		everythingPane = new JScrollPane() {
 			@Override
@@ -527,6 +553,7 @@ public class VibeComposerGUI extends JFrame
 		// ---- MESSAGE PANEL ----
 
 		JPanel messagePanel = new JPanel();
+		messagePanel.setOpaque(false);
 		messageLabel = new JLabel("Click something!");
 		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		messagePanel.add(messageLabel);
@@ -551,7 +578,7 @@ public class VibeComposerGUI extends JFrame
 
 		//switchFullMode();
 		instrumentTabPane.setSelectedIndex(0);
-		instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
 
 		pack();
@@ -597,7 +624,7 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(subTitle, constraints);
 
 		JPanel mainButtonsPanel = new JPanel();
-
+		mainButtonsPanel.setOpaque(false);
 		constraints.gridy = startY + 3;
 
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
@@ -623,6 +650,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initSoloMuters(int startY, int anchorSide) {
 		JPanel soloMuterPanel = new JPanel();
+		soloMuterPanel.setOpaque(false);
 		JLabel emptySmLabel = new JLabel("");
 		emptySmLabel.setPreferredSize(new Dimension(1, 3));
 		soloMuterPanel.add(emptySmLabel);
@@ -641,6 +669,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initMacroParams(int startY, int anchorSide) {
 		JPanel macroParams = new JPanel();
+		macroParams.setOpaque(false);
 		//macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		fixedLengthChords = new JComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "4", "8", "NOT" }, fixedLengthChords);
@@ -1182,6 +1211,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initArrangementSettings(int startY, int anchorSide) {
 		JPanel arrangementSettings = new JPanel();
+		arrangementSettings.setOpaque(false);
 		//arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		arrangementSettings.add(new JLabel("ARRANGEMENT"));
 
@@ -1354,6 +1384,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initRandomButtons(int startY, int anchorSide) {
 		JPanel randomButtonsPanel = new JPanel();
+		randomButtonsPanel.setOpaque(false);
 		//randomButtonsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		JButton randomizeInstruments = makeButton("Randomize Inst.", "RandomizeInst");
 
@@ -1402,6 +1433,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initCustomChords(int startY, int anchorSide) {
 		JPanel chordToolTip = new JPanel();
+		chordToolTip.setOpaque(false);
 		//chordToolTip.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		/*tipLabel = new JLabel(
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), "
@@ -1436,6 +1468,7 @@ public class VibeComposerGUI extends JFrame
 	private void initChordProgressionSettings(int startY, int anchorSide) {
 		// CHORD SETTINGS 1 - chord variety 
 		JPanel chordProgressionSettingsPanel = new JPanel();
+		chordProgressionSettingsPanel.setOpaque(false);
 		/*chordProgressionSettingsPanel
 				.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));*/
 		toggleableComponents.add(chordProgressionSettingsPanel);
@@ -1481,6 +1514,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initSliderPanel(int startY, int anchorSide) {
 		JPanel sliderPanel = new JPanel();
+		sliderPanel.setOpaque(false);
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
 		sliderPanel.setPreferredSize(new Dimension(1200, 20));
 
@@ -1514,6 +1548,7 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(sliderPanel, constraints);
 
 		JPanel sliderInfoPanel = new JPanel();
+		sliderInfoPanel.setOpaque(false);
 		currentTime = new JLabel("0:00");
 		currentTime.setMaximumSize(new Dimension(50, 20));
 
@@ -1739,6 +1774,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initControlPanel(int startY, int anchorSide) {
 		JPanel controlPanel = new JPanel();
+		controlPanel.setOpaque(false);
 
 		transposeScore = new NumPanel("Global Transpose", 0, -24, 24);
 		controlPanel.add(transposeScore);
@@ -1766,7 +1802,9 @@ public class VibeComposerGUI extends JFrame
 		compose.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		//compose.setBorderPainted(true);
 		compose.setPreferredSize(new Dimension(80, 40));
+		compose.setFont(compose.getFont().deriveFont(Font.BOLD));
 		regenerate = makeButton("Regenerate", "Regenerate");
+		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
 		JButton copySeed = makeButton("Copy seed", "CopySeed");
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
 		JButton clearSeed = makeButton("Clear All Seeds", "ClearSeed");
@@ -1792,7 +1830,7 @@ public class VibeComposerGUI extends JFrame
 	private void initPlayPanel(int startY, int anchorSide) {
 
 		JPanel playSavePanel = new JPanel();
-
+		playSavePanel.setOpaque(false);
 		stopMidi = makeButton("STOP", "StopMidi");
 		startMidi = makeButton("PLAY", "StartMidi");
 
@@ -1861,6 +1899,7 @@ public class VibeComposerGUI extends JFrame
 		playSavePanel.add(generatedMidi);
 
 		JPanel playSettingsPanel = new JPanel();
+		playSettingsPanel.setOpaque(false);
 
 		soundbankFilename = new JTextField(SOUNDBANK_DEFAULT, 18);
 		JLabel soundbankLabel = new JLabel("Soundbank name:");
@@ -2018,6 +2057,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			FlatDarculaLaf.install();
 		}
+		//UIManager.put("TabbedPane.contentOpaque", false);
 		isDarkMode = !isDarkMode;
 		SwingUtilities.updateComponentTreeUI(this);
 		mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
@@ -2041,6 +2081,9 @@ public class VibeComposerGUI extends JFrame
 		for (JSeparator x : separators) {
 			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		}
+
+		panelColorHigh = UIManager.getColor("Panel.background").darker();
+		panelColorLow = UIManager.getColor("Panel.background").brighter();
 
 		//switchFullMode(isDarkMode);
 

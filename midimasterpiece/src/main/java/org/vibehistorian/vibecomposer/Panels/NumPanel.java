@@ -32,20 +32,12 @@ public class NumPanel extends JPanel {
 	private int defaultValue = 50;
 
 	public NumPanel(String name, int value) {
-		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-		defaultValue = value;
-		label = new JLabel(name);
-		text = new JTextField(String.valueOf(value), 2);
-		slider = new JSlider();
-		initSlider(0, 100, value);
-		initText();
-		add(label);
-		add(text);
-		add(slider);
+		this(name, value, 0, 100);
 	}
 
 	public NumPanel(String name, int value, int minimum, int maximum) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		setOpaque(false);
 		defaultValue = value;
 		label = new JLabel(name);
 		text = new JTextField(String.valueOf(value), maximum > 999 ? 3 : 2);

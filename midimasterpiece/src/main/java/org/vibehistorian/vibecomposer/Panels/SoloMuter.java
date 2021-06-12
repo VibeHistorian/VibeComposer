@@ -103,6 +103,10 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void toggleSolo(boolean recalc) {
+		if (!VibeComposerGUI.sequenceReady()) {
+			return;
+		}
+
 		if (soloState != State.OFF) {
 			unsolo();
 			if (type == Type.SINGLE) {
@@ -143,6 +147,9 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void toggleMute(boolean recalc) {
+		if (!VibeComposerGUI.sequenceReady()) {
+			return;
+		}
 		if (muteState != State.OFF) {
 			unmute();
 			if (type == Type.SINGLE) {
