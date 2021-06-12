@@ -29,10 +29,11 @@ public class BassPanel extends InstPanel {
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
-		this.add(new JLabel("BASS"));
-		soloButton.addActionListener(l);
-		this.add(soloButton);
-		this.add(muteInst);
+		this.add(new JLabel("#"));
+		this.add(panelOrder);
+		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 
@@ -53,6 +54,7 @@ public class BassPanel extends InstPanel {
 	}
 
 	public BassPanel(ActionListener l) {
+		setPartClass(BassPart.class);
 		initComponents(l);
 	}
 

@@ -45,6 +45,7 @@ public class GUIConfig {
 	private int arrangementVariationChance = 30;
 	private int arrangementPartVariationChance = 30;
 	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
+	private boolean arrangementEnabled = false;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -86,6 +87,9 @@ public class GUIConfig {
 	// arp gen
 	private boolean useOctaveAdjustments = true;
 	private int maxArpSwing = 50;
+
+	// drum gen
+	private boolean useSemitonalMapping = false;
 
 	// individual parts
 	private MelodyPart melodyPart = new MelodyPart();
@@ -496,6 +500,22 @@ public class GUIConfig {
 
 	public void setAllowChordRepeats(boolean allowChordRepeats) {
 		this.allowChordRepeats = allowChordRepeats;
+	}
+
+	public boolean isArrangementEnabled() {
+		return arrangementEnabled;
+	}
+
+	public void setArrangementEnabled(boolean arrangementEnabled) {
+		this.arrangementEnabled = arrangementEnabled;
+	}
+
+	public boolean isUseSemitonalMapping() {
+		return useSemitonalMapping;
+	}
+
+	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
+		this.useSemitonalMapping = useSemitonalMapping;
 	}
 
 }

@@ -31,9 +31,9 @@ public class ArpPanel extends InstPanel {
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloButton.addActionListener(l);
-		this.add(soloButton);
-		this.add(muteInst);
+		soloMuter = new SoloMuter(3, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(removeButton);
@@ -80,6 +80,7 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public ArpPanel(ActionListener l) {
+		setPartClass(ArpPart.class);
 		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {

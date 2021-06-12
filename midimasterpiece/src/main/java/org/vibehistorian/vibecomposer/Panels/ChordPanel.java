@@ -40,9 +40,9 @@ public class ChordPanel extends InstPanel {
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloButton.addActionListener(l);
-		this.add(soloButton);
-		this.add(muteInst);
+		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(instPoolPicker);
@@ -80,6 +80,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public ChordPanel(ActionListener l) {
+		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());

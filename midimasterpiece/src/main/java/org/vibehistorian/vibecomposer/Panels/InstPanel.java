@@ -19,7 +19,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -42,6 +41,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public abstract class InstPanel extends JPanel {
@@ -78,17 +78,20 @@ public abstract class InstPanel extends JPanel {
 	protected NumPanel patternShift = new NumPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
-	protected JCheckBox muteInst = new JCheckBox("Mute", false);
+	protected JCheckBox muteInst = new JCheckBox("Exclude", false);
 
 	protected JSlider volSlider = new JSlider();
 
 	protected JComboBox<String> midiChannel = new JComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
-	protected JButton soloButton = new JButton("S");
+	protected SoloMuter soloMuter;
 	protected JButton copyButton = new JButton("Cc");
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
+
+	protected Class<? extends InstPart> partClass = InstPart.class;
+	protected Integer sequenceTrack = -1;
 
 	public InstPanel() {
 
@@ -105,12 +108,12 @@ public abstract class InstPanel extends JPanel {
 		volSlider.setPreferredSize(new Dimension(30, 40));
 		volSlider.setPaintTicks(true);
 
-		soloButton.setActionCommand("SoloTrack");
-		soloButton.setBackground(null);
-
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
+
+		transpose.getSlider().setMajorTickSpacing(12);
+		transpose.getSlider().setSnapToTicks(true);
 
 		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
@@ -365,15 +368,34 @@ public abstract class InstPanel extends JPanel {
 		this.toggleableComponents = toggleableComponents;
 	}
 
-	public void turnOnSoloButton() {
-		soloButton.setBackground(new Color(120, 180, 120));
+	public SoloMuter getSoloMuter() {
+		return soloMuter;
 	}
 
-	public void turnOffSoloButton() {
-		soloButton.setBackground(null);
+	public void setSoloMuter(SoloMuter sm) {
+		if (sm.soloState == State.FULL) {
+			soloMuter.solo();
+		}
+		if (sm.muteState == State.FULL) {
+			soloMuter.mute();
+		}
 	}
 
-	public boolean isSolo() {
-		return new Color(120, 180, 120).equals(soloButton.getBackground());
+	public Class<? extends InstPart> getPartClass() {
+		return partClass;
 	}
+
+	public void setPartClass(Class<? extends InstPart> partClass) {
+		this.partClass = partClass;
+	}
+
+	public Integer getSequenceTrack() {
+		return sequenceTrack;
+	}
+
+	public void setSequenceTrack(Integer sequenceTrack) {
+		this.sequenceTrack = sequenceTrack;
+	}
+
+
 }

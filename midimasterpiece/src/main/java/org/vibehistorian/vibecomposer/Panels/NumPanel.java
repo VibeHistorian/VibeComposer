@@ -229,4 +229,8 @@ public class NumPanel extends JPanel {
 	public void setInt(int val) {
 		text.setText(val + "");
 	}
+
+	public JSlider getSlider() {
+		return slider;
+	}
 }

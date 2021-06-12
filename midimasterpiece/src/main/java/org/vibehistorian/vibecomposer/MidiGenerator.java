@@ -46,6 +46,7 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
@@ -124,7 +125,7 @@ public class MidiGenerator implements JMC {
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
-
+	private boolean measureVariationOverride = false;
 
 	public MidiGenerator(GUIConfig gc) {
 		MidiGenerator.gc = gc;
@@ -797,8 +798,7 @@ public class MidiGenerator implements JMC {
 		return notes.toArray(new Note[0]);
 	}
 
-	public void generateMasterpiece(int mainGeneratorSeed, String fileName,
-			int melodyProgramChange) {
+	public void generateMasterpiece(int mainGeneratorSeed, String fileName) {
 		System.out.println("--- GENERATING MASTERPIECE.. ---");
 		trackList.clear();
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
@@ -908,13 +908,14 @@ public class MidiGenerator implements JMC {
 
 			int usedMeasures = sec.getMeasures();
 			Random variationGen = new Random(arrSeed + counter);
-			if (sec.getMeasures() > 1
+			if (sec.getMeasures() == 2
 					&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
 				System.out.println("USING VARIATION!");
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
 				chordProgression = altChordProgression;
 				usedMeasures = 1;
+				measureVariationOverride = true;
 			} else {
 				if (!melodyBasedChordProgression.isEmpty()
 						&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
@@ -926,6 +927,7 @@ public class MidiGenerator implements JMC {
 					chordProgression = actualProgression;
 				}
 				progressionDurations = actualDurations;
+				measureVariationOverride = false;
 			}
 
 			// copied into empty sections
@@ -1140,28 +1142,33 @@ public class MidiGenerator implements JMC {
 
 		}
 		System.out.println("Added sections to parts..");
-		int trackCounter = 0;
+		int trackCounter = 1;
 		if (!gc.getMelodyPart().isMuted()) {
 			score.add(melody);
-			trackList.add(trackCounter++, gc.getMelodyPart());
+			VibeComposerGUI.melodyPanel.setSequenceTrack(trackCounter++);
 		}
 
 		for (int i = 0; i < gc.getArpParts().size(); i++) {
 			if (!gc.getArpParts().get(i).isMuted()) {
 				score.add(arpParts.get(i));
-				trackList.add(trackCounter++, gc.getArpParts().get(i));
+				InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
+						VibeComposerGUI.arpPanels);
+				ip.setSequenceTrack(trackCounter++);
+				//if (VibeComposerGUI.apSm)
 			}
 		}
 
 		if (!gc.getBassPart().isMuted()) {
 			score.add(bassRoots);
-			trackList.add(trackCounter++, gc.getBassPart());
+			VibeComposerGUI.bassPanel.setSequenceTrack(trackCounter++);
 		}
 
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
 			if (!gc.getChordParts().get(i).isMuted()) {
 				score.add(chordParts.get(i));
-				trackList.add(trackCounter++, gc.getChordParts().get(i));
+				InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getChordParts().get(i).getOrder(),
+						VibeComposerGUI.chordPanels);
+				ip.setSequenceTrack(trackCounter++);
 			}
 
 		}
@@ -1175,7 +1182,12 @@ public class MidiGenerator implements JMC {
 
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
 			score.add(drumParts.get(i));
-			trackList.add(trackCounter++, gc.getDrumParts().get(i));
+			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
+					VibeComposerGUI.drumPanels);
+			ip.setSequenceTrack(trackCounter++);
+			if (COLLAPSE_DRUM_TRACKS) {
+				break;
+			}
 		}
 
 
@@ -1183,15 +1195,6 @@ public class MidiGenerator implements JMC {
 
 
 		score.setTempo(gc.getBpm());
-
-		for (Part p : score.getPartArray()) {
-			if (COLLAPSE_DRUM_TRACKS && p.getHighestPitch() <= 0
-					&& p.getTitle().equalsIgnoreCase("MainDrums")) {
-				/*System.out.println(
-						"Removing inst: " + p.getInstrument() + ", in part: " + p.getTitle());*/
-				score.removePart(p);
-			}
-		}
 
 		// write midi without log
 

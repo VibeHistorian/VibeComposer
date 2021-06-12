@@ -33,7 +33,9 @@ public class DrumPanel extends InstPanel {
 		initDefaults();
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		this.add(muteInst);
+		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(instrument);
 		this.add(removeButton);
 		copyButton.addActionListener(l);
@@ -67,6 +69,7 @@ public class DrumPanel extends InstPanel {
 	}
 
 	public DrumPanel(ActionListener l) {
+		setPartClass(DrumPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());

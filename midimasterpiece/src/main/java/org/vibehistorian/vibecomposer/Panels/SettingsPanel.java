@@ -109,10 +109,8 @@ public class SettingsPanel extends JPanel {
 				Integer trackOrder = MidiGenerator.trackList.indexOf(part);
 				if (!VibeComposerGUI.sequencer.getTrackSolo(trackOrder + 1)) {
 					VibeComposerGUI.sequencer.setTrackSolo(trackOrder + 1, true);
-					ip.turnOnSoloButton();
 				} else {
 					VibeComposerGUI.sequencer.setTrackSolo(trackOrder + 1, false);
-					ip.turnOffSoloButton();
 				}
 			}
 		} else {

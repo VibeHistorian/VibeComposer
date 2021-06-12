@@ -25,10 +25,11 @@ public class MelodyPanel extends InstPanel {
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
-		this.add(new JLabel("MELODY"));
-		soloButton.addActionListener(l);
-		this.add(soloButton);
-		this.add(muteInst);
+		this.add(new JLabel("#"));
+		this.add(panelOrder);
+		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 
@@ -50,6 +51,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public MelodyPanel(ActionListener l) {
+		setPartClass(MelodyPart.class);
 		initComponents(l);
 	}
 
