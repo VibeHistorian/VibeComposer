@@ -239,7 +239,7 @@ public class MidiGenerator implements JMC {
 			int previousNotePitch = 0;
 			int extraTranspose = 0;
 			if (o > 0) {
-				if (variationGenerator.nextInt(100) < gc.getArrangementVariationChance()) {
+				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 					// pick one variation
 					int numberOfVars = 2;
 					int variationInt = variationGenerator.nextInt(numberOfVars);
@@ -901,8 +901,7 @@ public class MidiGenerator implements JMC {
 			Random rand = new Random();
 
 			if (sec.getType().equals("CLIMAX")) {
-				// risky *1.4, safe *2
-				gc.setArrangementVariationChance(gc.getArrangementVariationChance() * 10 / 7);
+				// safe *2
 				gc.setArrangementPartVariationChance(gc.getArrangementPartVariationChance() * 2);
 			}
 
@@ -933,8 +932,10 @@ public class MidiGenerator implements JMC {
 			// copied into empty sections
 			Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
 			Phrase emptyPhrase = new Phrase();
+			emptyPhrase.setStartTime(START_TIME_DELAY);
 			emptyPhrase.add(emptyMeasureNote);
 			CPhrase emptyCPhrase = new CPhrase();
+			emptyCPhrase.setStartTime(START_TIME_DELAY);
 			emptyCPhrase.addChord(new int[] { Integer.MIN_VALUE }, measureLength);
 
 
@@ -1017,7 +1018,7 @@ public class MidiGenerator implements JMC {
 						&& rand.nextInt(100) < sec.getChordChance()) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
-					sec.setChordSlash(emptyCPhrase.copy());
+					sec.setChordSlash(emptyPhrase.copy());
 				}
 
 			}
@@ -1126,7 +1127,7 @@ public class MidiGenerator implements JMC {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				if (COLLAPSE_DRUM_TRACKS) {
-					//p.setAppend(false);
+					p.setAppend(false);
 					drumParts.get(0).addPhrase(p);
 				} else {
 					drumParts.get(i).addPhrase(p);
@@ -1134,10 +1135,10 @@ public class MidiGenerator implements JMC {
 
 			}
 			if (gc.getChordParts().size() > 0) {
-				CPhrase cscp = sec.getChordSlash();
+				Phrase cscp = sec.getChordSlash();
 				cscp.setStartTime(cscp.getStartTime() + sec.getStartTime());
 				cscp.setAppend(false);
-				chordParts.get(0).addCPhrase(cscp);
+				chordParts.get(0).addPhrase(cscp);
 			}
 
 		}
@@ -1746,8 +1747,8 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	protected CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
-		CPhrase chordSlashCPhrase = new CPhrase();
+	protected Phrase fillChordSlash(List<int[]> actualProgression, int measures) {
+		Phrase chordSlashCPhrase = new Phrase();
 		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
 		for (int i = 0; i < measures; i++) {
 			// fill slash chord slashes

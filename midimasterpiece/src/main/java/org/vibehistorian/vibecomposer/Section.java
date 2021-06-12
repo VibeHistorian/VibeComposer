@@ -58,7 +58,7 @@ public class Section {
 	private List<CPhrase> chords;
 	private List<CPhrase> arps;
 	private List<Phrase> drums;
-	private CPhrase chordSlash;
+	private Phrase chordSlash;
 
 	// display data (transient)
 	private List<Integer> melodyPresence = new ArrayList<>();
@@ -196,12 +196,12 @@ public class Section {
 		this.drums = drums;
 	}
 
-	public CPhrase getChordSlash() {
+	public Phrase getChordSlash() {
 		return chordSlash;
 	}
 
 	@XmlTransient
-	public void setChordSlash(CPhrase chordSlash) {
+	public void setChordSlash(Phrase chordSlash) {
 		this.chordSlash = chordSlash;
 	}
 
