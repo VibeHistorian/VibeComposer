@@ -78,7 +78,7 @@ public abstract class InstPanel extends JPanel {
 	protected NumPanel patternShift = new NumPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
-	protected JCheckBox muteInst = new JCheckBox("Exclude", false);
+	protected JCheckBox muteInst = new JCheckBox("Excl.", false);
 
 	protected JSlider volSlider = new JSlider();
 

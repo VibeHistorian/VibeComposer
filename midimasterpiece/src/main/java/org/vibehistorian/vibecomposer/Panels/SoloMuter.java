@@ -42,6 +42,7 @@ public class SoloMuter extends JPanel {
 
 	public SoloMuter(Integer inst, Type type) {
 		super();
+		setOpaque(false);
 		this.type = type;
 		if (type == Type.GROUP) {
 			setPreferredSize(new Dimension(70, 35));

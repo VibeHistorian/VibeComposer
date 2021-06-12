@@ -576,7 +576,7 @@ public class VibeComposerGUI extends JFrame
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
 
-		//switchFullMode();
+		switchFullMode();
 		instrumentTabPane.setSelectedIndex(0);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
