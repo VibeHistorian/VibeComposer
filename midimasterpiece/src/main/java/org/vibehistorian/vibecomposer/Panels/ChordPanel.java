@@ -8,8 +8,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 
 public class ChordPanel extends InstPanel {
@@ -26,7 +26,7 @@ public class ChordPanel extends InstPanel {
 
 	private JComboBox<String> instPoolPicker = new JComboBox<String>();
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 
 
 		instrument.initInstPool(POOL.PLUCK);
@@ -36,26 +36,30 @@ public class ChordPanel extends InstPanel {
 		midiChannel.setSelectedItem("11");
 
 		initDefaults();
+		volSlider.setValue(60);
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		this.add(muteInst);
+		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(instPoolPicker);
 		this.add(removeButton);
+		copyButton.addActionListener(l);
+		this.add(copyButton);
 
 		this.add(new JLabel("    Fill"));
 		this.add(chordSpanFill);
+		this.add(strum);
+		this.add(transpose);
+
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
-
 		this.add(transitionChance);
 		this.add(transitionSplit);
-		this.add(strum);
-
 		this.add(delay);
-		this.add(transpose);
 
 		this.add(velocityMin);
 		this.add(velocityMax);
@@ -69,14 +73,15 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
+
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
-		toggleableComponents.add(strum);
 
 	}
 
 	public ChordPanel(ActionListener l) {
-		initComponents();
+		setPartClass(ChordPart.class);
+		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}

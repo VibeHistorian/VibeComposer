@@ -1,3 +1,22 @@
+/* --------------------
+* @author Vibe Historian
+* ---------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
@@ -16,7 +35,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Section.SectionType;
 
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
@@ -27,18 +45,18 @@ public class Arrangement {
 
 	private static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
-		defaultSections.put("INTRO", new Section("INTRO", 1, 30, 10, 40, 25, 20));
-		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 40, 25, 60));
-		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 100, 90, 70, 35, 70));
-		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 100, 100, 80, 50, 70));
-		defaultSections.put("HALF_CHORUS", new Section("HALF_CHORUS", 1, 0, 100, 80, 50, 80));
-		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 70, 50, 25, 40));
-		defaultSections.put("CHILL", new Section("CHILL", 1, 30, 50, 60, 70, 20));
-		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 60, 70, 60));
+		defaultSections.put("INTRO", new Section("INTRO", 1, 20, 10, 40, 25, 20));
+		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 30, 25, 40));
+		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 100, 90, 50, 35, 50));
+		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 100, 100, 60, 50, 50));
+		defaultSections.put("HALF_CHORUS", new Section("HALF_CHORUS", 1, 0, 100, 60, 50, 80));
+		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 60, 60, 25, 40));
+		defaultSections.put("CHILL", new Section("CHILL", 1, 10, 30, 70, 70, 10));
+		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 40, 50, 50));
 		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
 		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
 		defaultSections.put("CLIMAX", new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
-		defaultSections.put("OUTRO", new Section("OUTRO", 1, 80, 70, 50, 40, 10));
+		defaultSections.put("OUTRO", new Section("OUTRO", 1, 50, 70, 60, 40, 10));
 	}
 
 	private static final Map<String, String[]> replacementMap = new HashMap<>();
@@ -120,6 +138,7 @@ public class Arrangement {
 	private List<Section> sections = new ArrayList<>();
 	private boolean previewChorus = false;
 	private boolean overridden;
+	private int seed = 0;
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -128,6 +147,7 @@ public class Arrangement {
 
 	public Arrangement() {
 		resetArrangement();
+		setPreviewChorus(true);
 	}
 
 	public List<Section> getSections() {
@@ -140,8 +160,7 @@ public class Arrangement {
 
 	public void resetArrangement() {
 		sections.clear();
-		sections.add(
-				new Section(SectionType.ADVANCED_CHORUS.toString(), 1, 100, 100, 100, 100, 100));
+		sections.add(new Section("PREVIEW", 1, 100, 100, 100, 100, 100));
 	}
 
 	public void generateDefaultArrangement() {
@@ -307,11 +326,41 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
+	public void duplicateSection(JTable tbl) {
+		resortByIndexes(tbl);
+		int column = tbl.getSelectedColumn();
+		if (column == -1)
+			return;
+		Section sec = sections.get(column);
+		sections.add(column, sec.deepCopy());
+	}
+
+	public void removeSection(JTable tbl) {
+		resortByIndexes(tbl);
+		int[] columns = tbl.getSelectedColumns();
+		if (columns.length == 0) {
+			return;
+		}
+		List<Section> secs = new ArrayList<>();
+		for (int i : columns) {
+			secs.add(sections.get(i));
+		}
+		sections.removeAll(secs);
+	}
+
 	public boolean isOverridden() {
 		return overridden;
 	}
 
 	public void setOverridden(boolean overridden) {
 		this.overridden = overridden;
+	}
+
+	public int getSeed() {
+		return seed;
+	}
+
+	public void setSeed(int seed) {
+		this.seed = seed;
 	}
 }

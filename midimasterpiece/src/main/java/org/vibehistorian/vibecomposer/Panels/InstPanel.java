@@ -1,10 +1,31 @@
+/* --------------------
+* @author Vibe Historian
+* ---------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -12,13 +33,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public abstract class InstPanel extends JPanel {
@@ -55,36 +78,46 @@ public abstract class InstPanel extends JPanel {
 	protected NumPanel patternShift = new NumPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
-	protected JCheckBox muteInst = new JCheckBox("Mute", false);
+	protected JCheckBox muteInst = new JCheckBox("Excl.", false);
 
 	protected JSlider volSlider = new JSlider();
 
 	protected JComboBox<String> midiChannel = new JComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
+	protected SoloMuter soloMuter;
+	protected JButton copyButton = new JButton("Cc");
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
+
+	protected Class<? extends InstPart> partClass = InstPart.class;
+	protected Integer sequenceTrack = -1;
 
 	public InstPanel() {
 
 	}
 
 	public void initDefaults() {
+		setAlignmentX(Component.LEFT_ALIGNMENT);
+		setMaximumSize(new Dimension(3000, 50));
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
-
+		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		volSlider.setMaximum(100);
 		volSlider.setValue(100);
 		volSlider.setOrientation(JSlider.VERTICAL);
-		volSlider.setPreferredSize(new Dimension(30, 50));
+		volSlider.setPreferredSize(new Dimension(30, 40));
 		volSlider.setPaintTicks(true);
 
-		toggleableComponents.add(hitsPerPattern);
-		toggleableComponents.add(chordSpan);
+		copyButton.setActionCommand("CopyPart");
+		copyButton.setPreferredSize(new Dimension(25, 30));
+		copyButton.setMargin(new Insets(0, 0, 0, 0));
+
+		transpose.getSlider().setMajorTickSpacing(12);
+		transpose.getSlider().setSnapToTicks(true);
+
+		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
-		toggleableComponents.add(pauseChance);
 		toggleableComponents.add(exceptionChance);
-		toggleableComponents.add(patternRepeat);
-		toggleableComponents.add(transpose);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(velocityMin);
 		toggleableComponents.add(velocityMax);
@@ -334,4 +367,35 @@ public abstract class InstPanel extends JPanel {
 	public void setToggleableComponents(Set<Component> toggleableComponents) {
 		this.toggleableComponents = toggleableComponents;
 	}
+
+	public SoloMuter getSoloMuter() {
+		return soloMuter;
+	}
+
+	public void setSoloMuter(SoloMuter sm) {
+		if (sm.soloState == State.FULL) {
+			soloMuter.solo();
+		}
+		if (sm.muteState == State.FULL) {
+			soloMuter.mute();
+		}
+	}
+
+	public Class<? extends InstPart> getPartClass() {
+		return partClass;
+	}
+
+	public void setPartClass(Class<? extends InstPart> partClass) {
+		this.partClass = partClass;
+	}
+
+	public Integer getSequenceTrack() {
+		return sequenceTrack;
+	}
+
+	public void setSequenceTrack(Integer sequenceTrack) {
+		this.sequenceTrack = sequenceTrack;
+	}
+
+
 }

@@ -1,3 +1,22 @@
+/* --------------------
+* @author Vibe Historian
+* ---------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
@@ -19,6 +38,7 @@ import jm.constants.Durations;
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
 import jm.music.data.Note;
+import jm.music.data.Phrase;
 
 public class MidiUtils {
 
@@ -28,7 +48,7 @@ public class MidiUtils {
 
 	public interface Scales {
 
-		public static final int[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		public static final Integer[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
 				MAJOR_SCALE = { 0, 2, 4, 5, 7, 9, 11 }, MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
 				HARMONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 11 },
 				MELODIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 9, 10, 11 }, // mix of ascend and descend
@@ -60,6 +80,9 @@ public class MidiUtils {
 	public static final List<Integer> cLocrianScale4 = new ArrayList<>(
 			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
 					Pitches.AF4, Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cBluesScale4 = new ArrayList<>(
+			Arrays.asList(Pitches.C4, Pitches.EF4, Pitches.F4, Pitches.GF4, Pitches.G4, Pitches.BF4,
+					Pitches.BF4, Pitches.C5));
 
 	public enum ScaleMode {
 		IONIAN(Scales.MAJOR_SCALE, cIonianScale4), DORIAN(Scales.DORIAN_SCALE, cDorianScale4),
@@ -67,12 +90,12 @@ public class MidiUtils {
 		LYDIAN(Scales.LYDIAN_SCALE, cLydianScale4),
 		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, cMixolydianScale4),
 		AEOLIAN(Scales.AEOLIAN_SCALE, cAeolianScale4),
-		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4);
+		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4), BLUES(Scales.BLUES_SCALE, cBluesScale4);
 
-		public int[] noteAdjustScale;
+		public Integer[] noteAdjustScale;
 		public List<Integer> absoluteNotesC;
 
-		private ScaleMode(int[] adjust, List<Integer> absolute) {
+		private ScaleMode(Integer[] adjust, List<Integer> absolute) {
 			this.noteAdjustScale = adjust;
 			this.absoluteNotesC = absolute;
 		}
@@ -103,7 +126,8 @@ public class MidiUtils {
 	// index 0 unused
 	public static final List<String> NUM_TO_LETTER = Arrays
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
-
+	public static final List<Long> MAJOR_CHORDS = Arrays
+			.asList(new Long[] { 1L, 20L, 30L, 4L, 5L, 60L, 7000L });
 
 	public static final Map<Long, List<Long>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
@@ -113,7 +137,7 @@ public class MidiUtils {
 	private static Map<Long, List<Long>> createChordProgressionRulesMap() {
 		Map<Long, List<Long>> cpMap = new HashMap<>();
 		//0 is an imaginary last element which can grow into the correct last elements
-		cpMap.put(0L, new ArrayList<>(Arrays.asList(1L, 5L, 60L)));
+		cpMap.put(0L, new ArrayList<>(Arrays.asList(1L, 4L, 5L, 60L)));
 		cpMap.put(1L, new ArrayList<>(Arrays.asList(4L, 5L)));
 		cpMap.put(20L, new ArrayList<>(Arrays.asList(4L, 60L)));
 		cpMap.put(30L, new ArrayList<>(Arrays.asList(60L)));
@@ -198,8 +222,8 @@ public class MidiUtils {
 
 	private static Map<Long, Set<Integer>> createChordFreqMap() {
 		Map<Long, Set<Integer>> freqMap = new HashMap<>();
-		List<Long> chords = Arrays.asList(new Long[] { 1L, 20L, 30L, 4L, 5L, 60L, 7000L });
-		for (Long l : chords) {
+
+		for (Long l : MAJOR_CHORDS) {
 			freqMap.put(l, intArrToList(chordsMap.get(l)).stream().map(e -> e % 12)
 					.collect(Collectors.toSet()));
 		}
@@ -244,6 +268,25 @@ public class MidiUtils {
 		long chordLong = SPICE_SELECT_LIST.get(chordQualifierIndex) * 10;
 		return chordLong * firstNum;
 
+	}
+
+	public static void addShortenedChord(CPhrase cpr, int[] chord, double rhythmValue, int dynamic,
+			double shortenedTo) {
+		cpr.addChord(chord, rhythmValue * shortenedTo, dynamic);
+		if (shortenedTo > 0.999) {
+			return;
+		}
+		cpr.addChord(new int[] { Integer.MIN_VALUE }, rhythmValue * (1 - shortenedTo), dynamic);
+	}
+
+	public static void addShortenedNote(Phrase pr, Note n, double shortenedTo) {
+		double rv = n.getRhythmValue();
+		n.setRhythmValue(shortenedTo * rv);
+		pr.addNote(n);
+		if (shortenedTo > 0.999) {
+			return;
+		}
+		pr.addNote(Integer.MIN_VALUE, (1 - shortenedTo) * rv);
 	}
 
 	public static int[] transposeChord(int[] chord, int transposeBy) {
@@ -380,21 +423,37 @@ public class MidiUtils {
 		return noteSum / noteCount;
 	}
 
-	public static List<int[]> squishChordProgression(List<int[]> chords) {
+	public static List<int[]> getBasicChordsFromRoots(List<int[]> roots) {
+		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<int[]> basicChords = new ArrayList<>();
+		for (int[] r : roots) {
+			int index = majorScaleNormalized.indexOf(r[0] % 12);
+			Long chordLong = MAJOR_CHORDS.get(index);
+			basicChords.add(mappedChord(chordLong));
+		}
+		return basicChords;
+	}
+
+	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords,
+			long seed, int chance) {
+		Random r = new Random(seed);
 		double avg = MidiUtils.calculateAverageNote(chords);
 		//System.out.println("AVG: " + avg);
 
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
-			if (avg - c[0] > 6) {
-				c[0] += 12;
-				//System.out.println("SWAP UP: " + i);
+			if (r.nextInt(100) < chance && (c.length <= 3 || squishBigChords)) {
+				if (avg - c[0] > 6) {
+					c[0] += 12;
+					//System.out.println("SWAP UP: " + i);
+				}
+				if (c[c.length - 1] - avg > 6) {
+					c[c.length - 1] -= 12;
+					//System.out.println("SWAP DOWN: " + i);
+				}
 			}
-			if (c[c.length - 1] - avg > 6) {
-				c[c.length - 1] -= 12;
-				//System.out.println("SWAP DOWN: " + i);
-			}
+
 			Arrays.sort(c);
 			squishedChords.add(c);
 		}

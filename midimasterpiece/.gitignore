@@ -14,3 +14,5 @@ error-screenshots/
 *.sf2
 /consoleLog2.txt
 *.wav
+
+/drums/

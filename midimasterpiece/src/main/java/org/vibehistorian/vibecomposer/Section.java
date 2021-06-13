@@ -1,3 +1,22 @@
+/* --------------------
+* @author Vibe Historian
+* ---------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
@@ -39,7 +58,7 @@ public class Section {
 	private List<CPhrase> chords;
 	private List<CPhrase> arps;
 	private List<Phrase> drums;
-	private CPhrase chordSlash;
+	private Phrase chordSlash;
 
 	// display data (transient)
 	private List<Integer> melodyPresence = new ArrayList<>();
@@ -177,12 +196,12 @@ public class Section {
 		this.drums = drums;
 	}
 
-	public CPhrase getChordSlash() {
+	public Phrase getChordSlash() {
 		return chordSlash;
 	}
 
 	@XmlTransient
-	public void setChordSlash(CPhrase chordSlash) {
+	public void setChordSlash(Phrase chordSlash) {
 		this.chordSlash = chordSlash;
 	}
 

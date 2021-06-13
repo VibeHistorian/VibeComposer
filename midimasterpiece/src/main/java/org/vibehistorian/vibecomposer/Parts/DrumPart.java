@@ -1,6 +1,5 @@
 package org.vibehistorian.vibecomposer.Parts;
 
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -22,15 +21,6 @@ public class DrumPart extends InstPart {
 
 	public void setVelocityPattern(boolean isVelocityPattern) {
 		this.isVelocityPattern = isVelocityPattern;
-	}
-
-	@XmlAttribute
-	public int getOrder() {
-		return order;
-	}
-
-	public void setOrder(int order) {
-		this.order = order;
 	}
 
 

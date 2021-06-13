@@ -1,8 +1,11 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -26,21 +29,16 @@ public class NumPanel extends JPanel {
 	private int naturalMax = 100;
 	private int naturalMin = 0;
 	private int buttonPresses = 0;
+	private int defaultValue = 50;
 
 	public NumPanel(String name, int value) {
-		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-		label = new JLabel(name);
-		text = new JTextField(String.valueOf(value), 2);
-		slider = new JSlider();
-		initSlider(0, 100, value);
-		initText();
-		add(label);
-		add(text);
-		add(slider);
+		this(name, value, 0, 100);
 	}
 
 	public NumPanel(String name, int value, int minimum, int maximum) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		setOpaque(false);
+		defaultValue = value;
 		label = new JLabel(name);
 		text = new JTextField(String.valueOf(value), maximum > 999 ? 3 : 2);
 		slider = new JSlider();
@@ -64,6 +62,33 @@ public class NumPanel extends JPanel {
 		slider.addMouseListener(new MouseAdapter() {
 			boolean dragging = false;
 			Thread numCycle = null;
+			private Timer timer;
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+
+				if (e.getButton() == MouseEvent.BUTTON1) {
+					if (timer == null) {
+						timer = new Timer();
+						timer.schedule(new TimerTask() {
+
+							@Override
+							public void run() { // timer expired before another click received, therefore = single click
+								this.cancel();
+								timer = null;
+								/* single-click actions in here */
+							}
+
+						}, (Integer) Toolkit.getDefaultToolkit()
+								.getDesktopProperty("awt.multiClickInterval"));
+					} else { // received another click before previous click (timer) expired, therefore = double click
+						timer.cancel();
+						timer = null;
+						/* double-click actions in here */
+						setInt(defaultValue);
+					}
+				}
+			}
 
 			@Override
 			public void mousePressed(MouseEvent me) {
@@ -127,6 +152,7 @@ public class NumPanel extends JPanel {
 			public void updateToolTip() {
 				text.setText(String.valueOf(slider.getValue()));
 			}
+
 		});
 	}
 
@@ -194,5 +220,9 @@ public class NumPanel extends JPanel {
 
 	public void setInt(int val) {
 		text.setText(val + "");
+	}
+
+	public JSlider getSlider() {
+		return slider;
 	}
 }

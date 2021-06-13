@@ -1,3 +1,22 @@
+/* --------------------
+* @author Vibe Historian
+* ---------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
@@ -24,6 +43,9 @@ public class GUIConfig {
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
+	private int arrangementPartVariationChance = 30;
+	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
+	private boolean arrangementEnabled = false;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -33,6 +55,9 @@ public class GUIConfig {
 	private int transpose = 0;
 	private double bpm = 80;
 	private boolean arpAffectsBpm = true;
+	private boolean doubledDurations = false;
+	private boolean allowChordRepeats = false;
+
 
 	// melody gen
 	private int maxNoteJump = 2;
@@ -46,6 +71,7 @@ public class GUIConfig {
 	private int melodySplitChance = 20;
 	private int melodyExceptionChance = 33;
 	private int melodyQuickness = 100;
+	private boolean melodyBasicChordsOnly = true;
 
 	// chord gen
 	private boolean dimAugEnabled = false;
@@ -61,6 +87,9 @@ public class GUIConfig {
 	// arp gen
 	private boolean useOctaveAdjustments = true;
 	private int maxArpSwing = 50;
+
+	// drum gen
+	private boolean useSemitonalMapping = false;
 
 	// individual parts
 	private MelodyPart melodyPart = new MelodyPart();
@@ -79,6 +108,7 @@ public class GUIConfig {
 
 	// seed
 	private long randomSeed = 0;
+
 
 	public GUIConfig() {
 
@@ -431,5 +461,61 @@ public class GUIConfig {
 		this.melodyQuickness = melodyQuickness;
 	}
 
+	public boolean isDoubledDurations() {
+		return doubledDurations;
+	}
+
+	public void setDoubledDurations(boolean doubledDurations) {
+		this.doubledDurations = doubledDurations;
+	}
+
+	public int getArrangementPartVariationChance() {
+		return arrangementPartVariationChance;
+	}
+
+	public void setArrangementPartVariationChance(int arrangementPartVariationChance) {
+		this.arrangementPartVariationChance = arrangementPartVariationChance;
+	}
+
+	public boolean isArrangementReduceDrumVelocityFromSectionChance() {
+		return arrangementReduceDrumVelocityFromSectionChance;
+	}
+
+	public void setArrangementReduceDrumVelocityFromSectionChance(
+			boolean arrangementReduceDrumVelocityFromSectionChance) {
+		this.arrangementReduceDrumVelocityFromSectionChance = arrangementReduceDrumVelocityFromSectionChance;
+	}
+
+	public boolean isMelodyBasicChordsOnly() {
+		return melodyBasicChordsOnly;
+	}
+
+	public void setMelodyBasicChordsOnly(boolean melodyBasicChordsOnly) {
+		this.melodyBasicChordsOnly = melodyBasicChordsOnly;
+	}
+
+	public boolean isAllowChordRepeats() {
+		return allowChordRepeats;
+	}
+
+	public void setAllowChordRepeats(boolean allowChordRepeats) {
+		this.allowChordRepeats = allowChordRepeats;
+	}
+
+	public boolean isArrangementEnabled() {
+		return arrangementEnabled;
+	}
+
+	public void setArrangementEnabled(boolean arrangementEnabled) {
+		this.arrangementEnabled = arrangementEnabled;
+	}
+
+	public boolean isUseSemitonalMapping() {
+		return useSemitonalMapping;
+	}
+
+	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
+		this.useSemitonalMapping = useSemitonalMapping;
+	}
 
 }

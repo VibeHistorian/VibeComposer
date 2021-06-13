@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.Point;

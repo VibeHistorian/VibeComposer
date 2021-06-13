@@ -19,8 +19,9 @@ public class BassPanel extends InstPanel {
 	private JCheckBox useRhythm = new JCheckBox("Use rhythm", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
+		midiChannel.setSelectedItem("9");
 		instPool = POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
@@ -28,8 +29,11 @@ public class BassPanel extends InstPanel {
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
-		this.add(new JLabel("BASS"));
-		this.add(muteInst);
+		this.add(new JLabel("#"));
+		this.add(panelOrder);
+		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 
@@ -50,7 +54,8 @@ public class BassPanel extends InstPanel {
 	}
 
 	public BassPanel(ActionListener l) {
-		initComponents();
+		setPartClass(BassPart.class);
+		initComponents(l);
 	}
 
 

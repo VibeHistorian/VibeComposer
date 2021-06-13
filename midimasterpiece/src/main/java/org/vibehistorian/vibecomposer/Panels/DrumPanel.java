@@ -6,8 +6,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 
 public class DrumPanel extends InstPanel {
@@ -24,7 +24,7 @@ public class DrumPanel extends InstPanel {
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 
-	public void initComponents() {
+	public void initComponents(ActionListener l) {
 
 		instrument.initInstPool(POOL.DRUM);
 		instrument.setInstrument(36);
@@ -33,9 +33,13 @@ public class DrumPanel extends InstPanel {
 		initDefaults();
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		this.add(muteInst);
+		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
+		this.add(soloMuter);
+		//this.add(muteInst);
 		this.add(instrument);
 		this.add(removeButton);
+		copyButton.addActionListener(l);
+		this.add(copyButton);
 
 		this.add(hitsPerPattern);
 		this.add(chordSpan);
@@ -48,6 +52,9 @@ public class DrumPanel extends InstPanel {
 
 		this.add(swingPercent);
 		this.add(delay);
+
+		this.add(new JLabel("Fill"));
+		this.add(chordSpanFill);
 
 		this.add(new JLabel("Seed"));
 		this.add(patternSeed);
@@ -62,7 +69,8 @@ public class DrumPanel extends InstPanel {
 	}
 
 	public DrumPanel(ActionListener l) {
-		initComponents();
+		setPartClass(DrumPart.class);
+		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
 			pattern.addItem(d.toString());
 		}
