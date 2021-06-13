@@ -1671,24 +1671,28 @@ public class VibeComposerGUI extends JFrame
 	public static void recalcGroupSolo(int order) {
 		long soloCount = getInstList(order).stream()
 				.filter(e -> e.getSoloMuter().soloState == SoloMuter.State.FULL).count();
-		if (soloCount > 0) {
-			groupSoloMuters.get(order).solo();
-			//globalSoloMuter.solo();
-		} else {
+		if (soloCount == 0) {
 			groupSoloMuters.get(order).unsolo();
+			//globalSoloMuter.solo();
+		} else if (soloCount < getInstList(order).size()) {
+			groupSoloMuters.get(order).halfSolo();
 			//globalSoloMuter.unsolo();
+		} else {
+			groupSoloMuters.get(order).solo();
 		}
 	}
 
 	public static void recalcGroupMute(int order) {
 		long muteCount = getInstList(order).stream()
 				.filter(e -> e.getSoloMuter().muteState == SoloMuter.State.FULL).count();
-		if (muteCount > 0) {
-			groupSoloMuters.get(order).mute();
-			//globalSoloMuter.mute();
-		} else {
+		if (muteCount == 0) {
 			groupSoloMuters.get(order).unmute();
+			//globalSoloMuter.mute();
+		} else if (muteCount < getInstList(order).size()) {
+			groupSoloMuters.get(order).halfMute();
 			//globalSoloMuter.unmute();
+		} else {
+			groupSoloMuters.get(order).mute();
 		}
 	}
 
@@ -2138,11 +2142,6 @@ public class VibeComposerGUI extends JFrame
 	private void composeMidi(boolean regenerate) {
 		if (sequencer != null) {
 			sequencer.stop();
-			/*for (int i = 0; i < sequencer.getSequence().getTracks().length; i++) {
-				sequencer.setTrackSolo(i, false);
-				sequencer.setTrackMute(i, false);
-			}
-			*/
 		}
 		if (midiMode.isSelected()) {
 			synth = null;
@@ -2358,8 +2357,7 @@ public class VibeComposerGUI extends JFrame
 			slider.setPaintTicks(true);
 			slider.setMajorTickSpacing(slider.getMaximum()
 					/ arrangement.getSections().stream().mapToInt(e -> e.getMeasures()).sum());
-			//TODO: track soloing?
-			//sequencer.setTrackSolo(1, true);
+
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
 
@@ -2394,6 +2392,11 @@ public class VibeComposerGUI extends JFrame
 		drumPanels.forEach(e -> sequencer.setTrackSolo(e.getSequenceTrack(),
 				e.getSoloMuter().soloState == State.FULL));
 
+		if (collapseDrumTracks.isSelected()) {
+			sequencer.setTrackSolo(drumPanels.get(0).getSequenceTrack(),
+					groupSoloMuters.get(4).soloState != State.OFF);
+		}
+
 		// set by muteState
 		sequencer.setTrackMute(melodyPanel.getSequenceTrack(),
 				melodyPanel.getSoloMuter().muteState == State.FULL);
@@ -2405,6 +2408,11 @@ public class VibeComposerGUI extends JFrame
 				e.getSoloMuter().muteState == State.FULL));
 		drumPanels.forEach(e -> sequencer.setTrackMute(e.getSequenceTrack(),
 				e.getSoloMuter().muteState == State.FULL));
+
+		if (collapseDrumTracks.isSelected()) {
+			sequencer.setTrackMute(drumPanels.get(0).getSequenceTrack(),
+					groupSoloMuters.get(4).muteState != State.OFF);
+		}
 
 	}
 

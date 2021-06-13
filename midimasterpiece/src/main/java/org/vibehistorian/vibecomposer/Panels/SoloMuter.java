@@ -62,14 +62,6 @@ public class SoloMuter extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				toggleSolo(true);
-
-				/*for (InstPanel ip : VibeComposerGUI.getInstList(inst)) {
-					if (sequenceReady()) {
-						VibeComposerGUI.sequencer.setTrackSolo(ip.getSequenceTrack(), true);
-					}
-				
-				}*/
-
 			}
 
 		});
@@ -78,13 +70,6 @@ public class SoloMuter extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				toggleMute(true);
-				/*for (InstPanel ip : VibeComposerGUI.getInstList(inst)) {
-					if (sequenceReady()) {
-						VibeComposerGUI.sequencer.setTrackMute(ip.getSequenceTrack(), true);
-					}
-				
-					ip.setMuteInst(true);
-				}*/
 			}
 
 		});
