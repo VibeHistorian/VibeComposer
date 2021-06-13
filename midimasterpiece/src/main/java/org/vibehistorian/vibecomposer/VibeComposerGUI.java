@@ -105,6 +105,8 @@ import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -1144,6 +1146,15 @@ public class VibeComposerGUI extends JFrame
 
 
 		collapseDrumTracks = new JCheckBox("Combine Drum MIDI Tracks", true);
+		collapseDrumTracks.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				drumPanels.forEach(
+						f -> f.getSoloMuter().setVisible(!collapseDrumTracks.isSelected()));
+			}
+
+		});
 		drumMidiSettings.add(collapseDrumTracks);
 
 		drumMidiSettings.add(makeButton("Save Drums As", "DrumSave"));
@@ -3070,24 +3081,24 @@ public class VibeComposerGUI extends JFrame
 			if (sourcePanel instanceof ChordPanel) {
 				part = ((ChordPanel) sourcePanel).toChordPart(lastRandomSeed);
 				ChordPanel newPanel = addChordPanelToLayout();
+				int order = newPanel.getPanelOrder();
 				newPanel.setFromChordPart((ChordPart) part);
-				newPanel.setPanelOrder(
-						(chordPanels.size() > 0) ? getHighestPanelNumber(chordPanels) : 1);
+				newPanel.setPanelOrder(order);
 
 				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
 			} else if (sourcePanel instanceof ArpPanel) {
 				part = ((ArpPanel) sourcePanel).toArpPart(lastRandomSeed);
 				ArpPanel newPanel = addArpPanelToLayout();
+				int order = newPanel.getPanelOrder();
 				newPanel.setFromArpPart((ArpPart) part);
-				newPanel.setPanelOrder(
-						(arpPanels.size() > 0) ? getHighestPanelNumber(arpPanels) : 1);
+				newPanel.setPanelOrder(order);
 				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
 			} else if (sourcePanel instanceof DrumPanel) {
 				part = ((DrumPanel) sourcePanel).toDrumPart(lastRandomSeed);
 				DrumPanel newPanel = addDrumPanelToLayout();
+				int order = newPanel.getPanelOrder();
 				newPanel.setFromDrumPart((DrumPart) part);
-				newPanel.setPanelOrder(
-						(drumPanels.size() > 0) ? getHighestPanelNumber(drumPanels) : 1);
+				newPanel.setPanelOrder(order);
 			}
 
 			System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
@@ -3739,13 +3750,14 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public DrumPanel addDrumPanelToLayout() {
-		int panelOrder = (drumPanels.size() > 0) ? getHighestPanelNumber(drumPanels) : 1;
+		int panelOrder = (drumPanels.size() > 0) ? getValidPanelNumber(drumPanels) : 1;
 
 		DrumPanel dp = new DrumPanel(this);
 		dp.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
 		dp.setPanelOrder(panelOrder);
 		drumPanels.add(dp);
-		((JPanel) drumScrollPane.getViewport().getView()).add(dp);
+		dp.getSoloMuter().setVisible(!collapseDrumTracks.isSelected());
+		((JPanel) drumScrollPane.getViewport().getView()).add(dp, panelOrder + 1);
 		return dp;
 	}
 
@@ -3919,13 +3931,13 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public ChordPanel addChordPanelToLayout() {
-		int panelOrder = (chordPanels.size() > 0) ? getHighestPanelNumber(chordPanels) : 1;
+		int panelOrder = (chordPanels.size() > 0) ? getValidPanelNumber(chordPanels) : 1;
 
 		ChordPanel cp = new ChordPanel(this);
 		cp.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
 		cp.setPanelOrder(panelOrder);
 		chordPanels.add(cp);
-		((JPanel) chordScrollPane.getViewport().getView()).add(cp);
+		((JPanel) chordScrollPane.getViewport().getView()).add(cp, panelOrder + 1);
 		return cp;
 	}
 
@@ -4048,13 +4060,13 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public ArpPanel addArpPanelToLayout() {
-		int panelOrder = (arpPanels.size() > 0) ? getHighestPanelNumber(arpPanels) : 1;
+		int panelOrder = (arpPanels.size() > 0) ? getValidPanelNumber(arpPanels) : 1;
 
 		ArpPanel ap = new ArpPanel(this);
 		ap.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
 		ap.setPanelOrder(panelOrder);
 		arpPanels.add(ap);
-		((JPanel) arpScrollPane.getViewport().getView()).add(ap);
+		((JPanel) arpScrollPane.getViewport().getView()).add(ap, panelOrder + 1);
 		return ap;
 	}
 
@@ -4274,7 +4286,7 @@ public class VibeComposerGUI extends JFrame
 		if (panels.stream().anyMatch(e -> e.getLockInst())) {
 			return getLowestAvailablePanelNumber(panels);
 		} else {
-			return getHighestPanelNumber(panels);
+			return getLowestAvailablePanelNumber(panels);
 		}
 	}
 
