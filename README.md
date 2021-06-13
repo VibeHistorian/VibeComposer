@@ -15,6 +15,8 @@ How to use it:
     
 For everything else, refer to the (OLD) user manual: https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf
 
-How it should look:
+Quick showcase (3 min): https://youtu.be/aDGb5QGIvcQ
+
+UI preview:
 
 ![VibeComposer Simple UI](https://i.imgur.com/TueQWIt.png)
