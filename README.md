@@ -8,8 +8,8 @@ How to run it (on Windows):
 (Note: Linux/Mac users might be able to run it using the .jar instead of the .exe file)
 
 How to use it:
-1. If a MIDI device called 'Gervill' is visible, you can click 'Compose' - this is the default Windows MIDI device for output.
-2. If such a device isn't visible, uncheck "MIDI transmitter mode" and click 'Compose', which will hopefully pick up some correct default MIDI device
+1. If a MIDI device called 'Gervill' is visible, you can click 'Compose' - this is the default Java MIDI device for output.
+2. If such a device isn't visible, uncheck "MIDI transmitter mode" and click 'Compose', which will hopefully pick up some correct default system MIDI device
 3. If you want to output the MIDI notes into your DAW instead, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu
     
