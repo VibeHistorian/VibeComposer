@@ -2299,7 +2299,6 @@ public class VibeComposerGUI extends JFrame
 					for (Transmitter tm : sequencer.getTransmitters()) {
 						tm.close();
 					}
-					device = null;
 					MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 					for (int i = 0; i < infos.length; i++) {
 						if (infos[i].toString()
@@ -3285,7 +3284,7 @@ public class VibeComposerGUI extends JFrame
 				System.out.println(StringUtils.join(userChordsSplit, ";"));
 				String[] userChordsDurationsSplit = userChordsDurations.getText().split(",");
 				if (((String) fixedLengthChords.getSelectedItem()).equals("8")
-						&& userChordsDurationsSplit.length != 8) {
+						&& userChordsSplit.length == 8 && userChordsDurationsSplit.length != 8) {
 					userChordsDurations.setText("2,2,2,2,2,2,2,2");
 					userChordsDurationsSplit = userChordsDurations.getText().split(",");
 				}
