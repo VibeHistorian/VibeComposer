@@ -3,7 +3,7 @@
 
 How to run it (on Windows):
 1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
-2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/latest
+2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v1.3-beta
 3. Run the executable
 (Note: Linux/Mac users might be able to run it using the .jar instead of the .exe file)
 
