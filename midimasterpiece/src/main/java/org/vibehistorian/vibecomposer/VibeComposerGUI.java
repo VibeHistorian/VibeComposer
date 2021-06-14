@@ -266,6 +266,7 @@ public class VibeComposerGUI extends JFrame
 	NumPanel chordSlashChance;
 	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
+	JCheckBox spiceFlattenBigChords;
 
 
 	// add/skip instruments
@@ -344,6 +345,8 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomDrumUseChordFill;
 	JCheckBox arrangementAffectsDrumVelocity;
 	JButton changeMidiMapping;
+	JComboBox<String> randomDrumHitsMultiplier;
+	int randomDrumHitsMultiplierLastState = 2;
 
 	// chord settings - progression
 	JComboBox<String> firstChordSelection;
@@ -1110,6 +1113,35 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumMaxSwingAdjust);
 		drumsPanel.add(randomDrumUseChordFill);
 
+		randomDrumHitsMultiplier = new JComboBox<>();
+		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" },
+				randomDrumHitsMultiplier);
+		randomDrumHitsMultiplier.setSelectedItem("2");
+		randomDrumHitsMultiplier.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				if (event.getStateChange() == ItemEvent.SELECTED) {
+					String item = (String) event.getItem();
+					if ("---".equals(item)) {
+						return;
+					}
+					int newState = Integer.valueOf(item);
+					if (newState != randomDrumHitsMultiplierLastState) {
+						for (int i = 0; i < drumPanels.size(); i++) {
+							int newHits = drumPanels.get(i).getHitsPerPattern() * newState
+									/ randomDrumHitsMultiplierLastState;
+							drumPanels.get(i).setHitsPerPattern(newHits);
+						}
+						randomDrumHitsMultiplierLastState = newState;
+					}
+
+				}
+			}
+		});
+
+		drumsPanel.add(new JLabel("Hits Multiplier:"));
+		drumsPanel.add(randomDrumHitsMultiplier);
 		drumsPanel.add(randomDrumSlide);
 		JComboBox<String> drumPartPresetBox = new JComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "---", "POP", "DNB" }, drumPartPresetBox);
@@ -1130,7 +1162,6 @@ public class VibeComposerGUI extends JFrame
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					// do something with object
 				}
 			}
 		});
@@ -1268,7 +1299,31 @@ public class VibeComposerGUI extends JFrame
 		constraints.anchor = anchorSide;
 		everythingPanel.add(arrangementSettings, constraints);
 
-		scrollableArrangementTable = new JTable(5, 5);
+		scrollableArrangementTable = new JTable(5, 5) {
+
+			private static final long serialVersionUID = 3846279087936376003L;
+
+			@Override
+			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
+				Component comp = super.prepareRenderer(renderer, row, col);
+				comp.setForeground(actualArrangementDarkMode);
+				if (row >= 2) {
+					Integer value = (Integer) getModel().getValueAt(row, col);
+					// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
+					int[] maxCounts = new int[] { 0, 0, 100, 100, 100, 100, 100 };
+					if (value == 0) {
+						comp.setBackground(new Color(70, 70, 70));
+					} else {
+						int color = 120 + (70 * value) / maxCounts[row];
+						comp.setBackground(new Color(color, color, color));
+					}
+				} else {
+					comp.setBackground(new Color(100, 100, 150));
+				}
+
+				return comp;
+			}
+		};
 		TableModel model = new DefaultTableModel(7, 11);
 
 
@@ -1279,6 +1334,8 @@ public class VibeComposerGUI extends JFrame
 				return scrollPaneDimension;
 			}
 		};
+		scrollableArrangementTable.setRowHeight(35);
+		scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
 		arrangementScrollPane.setViewportView(scrollableArrangementTable);
 		JList<String> list = new JList<>();
 		list.setListData(
@@ -1335,8 +1392,6 @@ public class VibeComposerGUI extends JFrame
 					//etc.
 				});
 		*/
-		//constraints.gridy = startY;
-		//constraints.anchor = anchorSide;
 
 		scrollableArrangementActualTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 1L;
@@ -1369,7 +1424,8 @@ public class VibeComposerGUI extends JFrame
 		};
 		TableModel actualModel = new DefaultTableModel(7, 11);
 
-
+		scrollableArrangementActualTable.setRowHeight(35);
+		scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
 		scrollableArrangementActualTable.setModel(actualModel);
 		arrangementActualScrollPane = new JScrollPane() {
 			@Override
@@ -1495,6 +1551,9 @@ public class VibeComposerGUI extends JFrame
 		spiceAllow9th13th = new JCheckBox("9th/13th");
 		spiceAllow9th13th.setSelected(false);
 		chordProgressionSettingsPanel.add(spiceAllow9th13th);
+
+		spiceFlattenBigChords = new JCheckBox("Spicy voicing", false);
+		chordProgressionSettingsPanel.add(spiceFlattenBigChords);
 
 		// CHORD SETTINGS 2 - chord progression
 		firstChordSelection = new JComboBox<String>();
@@ -3610,6 +3669,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getInt()));
 		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
+		guiConfig.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
 		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getInt()));
 
 		// arps
@@ -3691,6 +3751,7 @@ public class VibeComposerGUI extends JFrame
 		spiceChance.setInt(guiConfig.getSpiceChance());
 		spiceAllowDimAug.setSelected(guiConfig.isDimAugEnabled());
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
+		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
 		lastChordSelection.setSelectedItem(guiConfig.getLastChord());
@@ -3887,7 +3948,7 @@ public class VibeComposerGUI extends JFrame
 				hits /= 2;
 			}
 
-			dp.setHitsPerPattern(hits);
+			dp.setHitsPerPattern(hits * randomDrumHitsMultiplierLastState);
 
 			int adjustVelocity = -1 * dp.getHitsPerPattern() / dp.getChordSpan();
 

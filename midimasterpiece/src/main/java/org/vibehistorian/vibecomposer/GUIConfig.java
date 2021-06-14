@@ -77,6 +77,7 @@ public class GUIConfig {
 	private boolean dimAugEnabled = false;
 	private boolean enable9th13th = true;
 	private int spiceChance = 8;
+	private boolean spiceFlattenBigChords = false;
 	private int chordSlashChance = 0;
 	private String firstChord = "R";
 	private String lastChord = "R";
@@ -516,6 +517,14 @@ public class GUIConfig {
 
 	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
 		this.useSemitonalMapping = useSemitonalMapping;
+	}
+
+	public boolean isSpiceFlattenBigChords() {
+		return spiceFlattenBigChords;
+	}
+
+	public void setSpiceFlattenBigChords(boolean spiceFlattenBigChords) {
+		this.spiceFlattenBigChords = spiceFlattenBigChords;
 	}
 
 }

@@ -223,8 +223,9 @@ public class MidiGenerator implements JMC {
 		if (gc.isMelodyBasicChordsOnly()) {
 			List<int[]> basicChordsUnsquished = MidiUtils.getBasicChordsFromRoots(roots);
 
-			usedChords = MidiUtils.squishChordProgression(basicChordsUnsquished, false,
-					gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
+			usedChords = MidiUtils.squishChordProgression(basicChordsUnsquished,
+					gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
+					gc.getChordGenSettings().getFlattenVoicingChance());
 		} else {
 			usedChords = chords;
 		}
@@ -238,25 +239,28 @@ public class MidiGenerator implements JMC {
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
 			int extraTranspose = 0;
-			if (o > 0) {
-				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
-					// pick one variation
-					int numberOfVars = 2;
-					int variationInt = variationGenerator.nextInt(numberOfVars);
-					System.out.println("Melody variation: " + variationInt);
-					switch (variationInt) {
-					case 0:
-						extraTranspose = 12;
-						break;
-					case 1:
-						MAX_JUMP_SKELETON_CHORD = ((MAX_JUMP_SKELETON_CHORD + 1) % 4) + 1;
-						break;
-					default:
-						throw new IllegalArgumentException("Too much variation!");
+
+			for (int i = 0; i < stretchedChords.size(); i++) {
+				// either after first measure, or after first half of combined chord prog
+				if ((i == 0 && o > 0) || (i == chordInts.size())) {
+					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+						// pick one variation
+						int numberOfVars = 2;
+						int variationInt = variationGenerator.nextInt(numberOfVars);
+						System.out.println("Melody variation: " + variationInt);
+						switch (variationInt) {
+						case 0:
+							extraTranspose = 12;
+							break;
+						case 1:
+							MAX_JUMP_SKELETON_CHORD = ((MAX_JUMP_SKELETON_CHORD + 1) % 4) + 1;
+							break;
+						default:
+							throw new IllegalArgumentException("Too much variation!");
+						}
 					}
 				}
-			}
-			for (int i = 0; i < stretchedChords.size(); i++) {
+
 				if (fillChordMelodyMap && o == 0) {
 					if (!chordMelodyMap1.containsKey(Integer.valueOf(i))) {
 						chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
@@ -538,8 +542,9 @@ public class MidiGenerator implements JMC {
 						chordProgression.get(chordMelodyMap1.keySet().size() - 1).length));
 		melodyBasedRootProgression
 				.add(Arrays.copyOf(rootProgression.get(rootProgression.size() - 1), 1));
-		melodyBasedChordProgression = MidiUtils.squishChordProgression(alternateChordProg, false,
-				gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
+		melodyBasedChordProgression = MidiUtils.squishChordProgression(alternateChordProg,
+				gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
+				gc.getChordGenSettings().getFlattenVoicingChance());
 	}
 
 	private Note generateNote(int[] chord, boolean isAscDirection, List<Integer> chordScale,
@@ -842,7 +847,8 @@ public class MidiGenerator implements JMC {
 		List<Double> actualDurations = progressionDurations;
 
 		List<int[]> actualProgression = MidiUtils.squishChordProgression(generatedRootProgression,
-				false, gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
+				gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
+				gc.getChordGenSettings().getFlattenVoicingChance());
 
 		if (!debugEnabled) {
 			PrintStream dummyStream = new PrintStream(new OutputStream() {
@@ -1394,27 +1400,28 @@ public class MidiGenerator implements JMC {
 			Random transitionGenerator = new Random(mainGeneratorSeed);
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
-			if (i > 0) {
-				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
-					// pick one variation
-					int numberOfVars = 2;
-					int variationInt = variationGenerator.nextInt(numberOfVars);
-					System.out.println("Chord #" + cp.getOrder() + " variation: " + variationInt);
-					switch (variationInt) {
-					case 0:
-						extraTranspose = 12;
-						break;
-					case 1:
-						ignoreChordSpanFill = true;
-						break;
-					default:
-						throw new IllegalArgumentException("Too much variation!");
-					}
-				}
-			}
+
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
-
+				if ((j == 0 && i > 0) || (j == chordInts.size())) {
+					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+						// pick one variation
+						int numberOfVars = 2;
+						int variationInt = variationGenerator.nextInt(numberOfVars);
+						System.out
+								.println("Chord #" + cp.getOrder() + " variation: " + variationInt);
+						switch (variationInt) {
+						case 0:
+							extraTranspose = 12;
+							break;
+						case 1:
+							ignoreChordSpanFill = true;
+							break;
+						default:
+							throw new IllegalArgumentException("Too much variation!");
+						}
+					}
+				}
 				Random velocityGenerator = new Random(mainGeneratorSeed + j);
 				int velocity = velocityGenerator.nextInt(cp.getVelocityMax() - cp.getVelocityMin())
 						+ cp.getVelocityMin();
@@ -1541,28 +1548,28 @@ public class MidiGenerator implements JMC {
 			int chordSpanPart = 0;
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
-			if (i > 0) {
-				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
-					// pick one variation
-					int numberOfVars = 2;
-					int variationInt = variationGenerator.nextInt(numberOfVars);
-					System.out.println("Arp #" + ap.getOrder() + " variation: " + variationInt);
-					switch (variationInt) {
-					case 0:
-						extraTranspose = 12;
-						break;
-					case 1:
-						ignoreChordSpanFill = true;
-						break;
-					default:
-						throw new IllegalArgumentException("Too much variation!");
-					}
-				}
-			}
+
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
-
+				if ((j == 0 && i > 0) || (j == chordInts.size())) {
+					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+						// pick one variation
+						int numberOfVars = 2;
+						int variationInt = variationGenerator.nextInt(numberOfVars);
+						System.out.println("Arp #" + ap.getOrder() + " variation: " + variationInt);
+						switch (variationInt) {
+						case 0:
+							extraTranspose = 12;
+							break;
+						case 1:
+							ignoreChordSpanFill = true;
+							break;
+						default:
+							throw new IllegalArgumentException("Too much variation!");
+						}
+					}
+				}
 				double chordDurationArp = longestChord / ((double) repeatedArpsPerChord);
 				int[] chord = MidiUtils.convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
@@ -1667,27 +1674,28 @@ public class MidiGenerator implements JMC {
 			int oneChordPatternSize = drumPattern.size() / chordSpan;
 			boolean ignoreChordSpanFill = false;
 			int extraExceptionChance = 0;
-			if (o > 0) {
-				if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
-					// pick one variation
-					int numberOfVars = 2;
-					int variationInt = variationGenerator.nextInt(numberOfVars);
-					System.out.println("Drum #" + dp.getOrder() + " variation: " + variationInt);
-					switch (variationInt) {
-					case 0:
-						ignoreChordSpanFill = true;
-						break;
-					case 1:
-						extraExceptionChance += 10;
-						break;
-					default:
-						throw new IllegalArgumentException("Too much variation!");
-					}
-				}
-			}
 
 			// chord iter
 			for (int j = 0; j < chordsCount; j += chordSpan) {
+				if ((j == 0 && o > 0) || (j == chordInts.size())) {
+					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+						// pick one variation
+						int numberOfVars = 2;
+						int variationInt = variationGenerator.nextInt(numberOfVars);
+						System.out
+								.println("Drum #" + dp.getOrder() + " variation: " + variationInt);
+						switch (variationInt) {
+						case 0:
+							ignoreChordSpanFill = true;
+							break;
+						case 1:
+							extraExceptionChance += 10;
+							break;
+						default:
+							throw new IllegalArgumentException("Too much variation!");
+						}
+					}
+				}
 				double patternDurationTotal = 0.0;
 				for (int k = 0; k < chordSpan; k++) {
 					patternDurationTotal += (progressionDurations.size() > j + k)
