@@ -1,5 +1,7 @@
 # VibeComposer
-#### Tool for generating MIDI scores using GM (General MIDI) instruments
+## Free, algorithmic generator of musical scores
+
+#### Quick showcase (first 20 seconds) + adjustments/export into DAW: https://youtu.be/aDGb5QGIvcQ
 
 How to run it (on Windows):
 1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
@@ -15,7 +17,7 @@ How to use it:
     
 For everything else, refer to the (OLD) user manual: https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf
 
-Quick showcase (3 min): https://youtu.be/aDGb5QGIvcQ
+
 
 UI preview:
 
