@@ -1396,6 +1396,7 @@ public class MidiGenerator implements JMC {
 		int mainGeneratorSeed = (int) cp.getPatternSeed() + cp.getOrder();
 		CPhrase cpr = new CPhrase();
 		Random variationGenerator = new Random(mainGeneratorSeed + 100);
+		int stretch = cp.getChordNotesStretch();
 		for (int i = 0; i < measures; i++) {
 			Random transitionGenerator = new Random(mainGeneratorSeed);
 			int extraTranspose = 0;
@@ -1406,7 +1407,7 @@ public class MidiGenerator implements JMC {
 				if ((j == 0 && i > 0) || (j == chordInts.size())) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
-						int numberOfVars = 2;
+						int numberOfVars = 3;
 						int variationInt = variationGenerator.nextInt(numberOfVars);
 						System.out
 								.println("Chord #" + cp.getOrder() + " variation: " + variationInt);
@@ -1416,6 +1417,12 @@ public class MidiGenerator implements JMC {
 							break;
 						case 1:
 							ignoreChordSpanFill = true;
+							break;
+						case 2:
+							if (stretch < 6) {
+								int randomStretchAdd = variationGenerator.nextInt(6 - stretch) + 1;
+								stretch += randomStretchAdd;
+							}
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");

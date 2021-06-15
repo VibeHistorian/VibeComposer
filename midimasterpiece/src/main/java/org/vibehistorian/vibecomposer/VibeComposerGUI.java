@@ -331,6 +331,7 @@ public class VibeComposerGUI extends JFrame
 	JComboBox<String> randomArpStretchPicker;
 	JCheckBox randomArpUseOctaveAdjustments;
 	NumPanel randomArpMaxSwing;
+	NumPanel randomArpMaxRepeat;
 	NumPanel randomArpMinVel;
 	NumPanel randomArpMaxVel;
 
@@ -974,6 +975,7 @@ public class VibeComposerGUI extends JFrame
 		arpShiftChance = new NumPanel("Shift%", 25);
 		randomArpUseOctaveAdjustments = new JCheckBox("Rand. Oct.", false);
 		randomArpMaxSwing = new NumPanel("Swing%", 50);
+		randomArpMaxRepeat = new NumPanel("MaxRep", 2, 1, 4);
 		randomArpMinVel = new NumPanel("MinVel", 65, 0, 126);
 		randomArpMaxVel = new NumPanel("MaxVel", 90, 1, 127);
 
@@ -1012,6 +1014,7 @@ public class VibeComposerGUI extends JFrame
 		arpSettingsExtraPanel.add(randomArpAllSameInst);
 		arpSettingsExtraPanel.add(randomArpUseOctaveAdjustments);
 		arpSettingsExtraPanel.add(randomArpMaxSwing);
+		arpSettingsExtraPanel.add(randomArpMaxRepeat);
 		arpSettingsExtraPanel.add(randomArpMinVel);
 		arpSettingsExtraPanel.add(randomArpMaxVel);
 		arpSettingsExtraPanel.add(randomArpPattern);
@@ -4275,7 +4278,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			ap.setPauseChance(arpPanelGenerator.nextInt(50));
 			if (ap.getChordSpan() == 1) {
-				ap.setPatternRepeat(arpPanelGenerator.nextInt(4) + 1);
+				ap.setPatternRepeat(arpPanelGenerator.nextInt(randomArpMaxRepeat.getInt()) + 1);
 			} else {
 				ap.setPatternRepeat(1);
 				if (arpPanelGenerator.nextBoolean() == true) {
