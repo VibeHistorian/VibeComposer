@@ -285,4 +285,24 @@ public class Section {
 			return offset;
 		}
 	}
+
+	public int getTypeMelodyOffset() {
+		if (StringUtils.isEmpty(type)) {
+			return 0;
+		} else {
+			if (type.startsWith("CHORUS") || type.startsWith("CLIMAX")
+					|| type.startsWith("PREVIEW")) {
+				return 0;
+			}
+			if (type.startsWith("INTRO") || type.startsWith("OUTRO") || type.startsWith("BUILDUP")
+					|| type.startsWith("BREAKDOWN") || type.startsWith("CHILL")) {
+				return 1;
+			}
+			if (type.startsWith("VERSE")) {
+				return 2;
+			} else {
+				return 0;
+			}
+		}
+	}
 }

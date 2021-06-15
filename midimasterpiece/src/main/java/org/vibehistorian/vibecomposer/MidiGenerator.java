@@ -205,8 +205,8 @@ public class MidiGenerator implements JMC {
 
 		Vector<Note> noteList = new Vector<>();
 		Random generator = new Random(seed + notesSeedOffset);
-		Random velocityGenerator = new Random(seed + 1);
-		Random exceptionGenerator = new Random(seed + 2);
+		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
+		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
 		Random variationGenerator = new Random(seed + 5);
@@ -278,7 +278,7 @@ public class MidiGenerator implements JMC {
 				if (i % 2 == 0) {
 					previousNotePitch = 0;
 					generator.setSeed(seed + notesSeedOffset);
-					exceptionGenerator.setSeed(seed + 2);
+					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
 				}
 				List<Double> durations = rhythm.regenerateDurations();
 				if (sameRhythmTwice) {
@@ -952,20 +952,16 @@ public class MidiGenerator implements JMC {
 						&& sec.getMelodyPresence().contains(gc.getMelodyPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
 				if (added) {
-					int notesSeedOffset = 0;
+					int notesSeedOffset = sec.getTypeMelodyOffset();
+					System.out.println("Melody offset by " + notesSeedOffset + "..");
 					List<int[]> usedMelodyProg = chordProgression;
 					List<int[]> usedRoots = rootProgression;
-					if (!sec.getType().contains("CLIMAX") && !sec.getType().contains("CHORUS")
-							&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
-						if (variationGen.nextBoolean() || melodyBasedChordProgression.isEmpty()) {
-							notesSeedOffset = 1;
-							System.out.println("Melody offset by 1..");
-						} else {
-							usedMelodyProg = melodyBasedChordProgression;
-							usedRoots = melodyBasedRootProgression;
-							System.out.println("Melody uses MELODY BASED CHORDS!");
-						}
 
+					if (notesSeedOffset > 0 && !melodyBasedChordProgression.isEmpty()
+							&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
+						usedMelodyProg = melodyBasedChordProgression;
+						usedRoots = melodyBasedRootProgression;
+						System.out.println("Melody uses MELODY BASED CHORDS!");
 					}
 					Phrase m = fillMelody(usedMelodyProg, usedRoots, usedMeasures, notesSeedOffset);
 
