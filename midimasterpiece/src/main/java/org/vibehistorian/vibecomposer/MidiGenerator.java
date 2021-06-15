@@ -903,7 +903,7 @@ public class MidiGenerator implements JMC {
 		for (Section sec : arr.getSections()) {
 			System.out.println("Processing section.. " + sec.getType());
 			sec.setStartTime(measureLength * counter);
-			counter += sec.getMeasures();
+
 			Random rand = new Random();
 
 			if (sec.getType().equals("CLIMAX")) {
@@ -912,7 +912,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			int usedMeasures = sec.getMeasures();
-			Random variationGen = new Random(arrSeed + counter);
+			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
 			if (sec.getMeasures() == 2
 					&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
 				System.out.println("USING VARIATION!");
@@ -1101,6 +1101,7 @@ public class MidiGenerator implements JMC {
 				sec.setDrums(copiedPhrases);
 			}
 
+			counter += sec.getMeasures();
 		}
 		System.out.println("Added phrases/cphrases to sections..");
 

@@ -27,6 +27,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.commons.lang3.StringUtils;
+
 import jm.music.data.CPhrase;
 import jm.music.data.Phrase;
 
@@ -272,4 +274,15 @@ public class Section {
 		this.drumPresence = drumPresence;
 	}
 
+	public int getTypeSeedOffset() {
+		if (StringUtils.isEmpty(type)) {
+			return 0;
+		} else {
+			int offset = 0;
+			for (int i = 0; i < type.length(); i++) {
+				offset += type.charAt(i);
+			}
+			return offset;
+		}
+	}
 }
