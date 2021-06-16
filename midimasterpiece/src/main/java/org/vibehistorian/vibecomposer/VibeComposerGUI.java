@@ -1487,14 +1487,14 @@ public class VibeComposerGUI extends JFrame
 		randomButtonsPanel.add(randomizeStrums);
 
 		randomizeChordStrumsOnCompose = new JCheckBox("On compose");
-		randomizeChordStrumsOnCompose.setSelected(true);
-		randomButtonsPanel.add(randomizeChordStrumsOnCompose);
+		randomizeChordStrumsOnCompose.setSelected(false);
+		//randomButtonsPanel.add(randomizeChordStrumsOnCompose);
 
 		switchOnComposeRandom = makeButton("Uncheck all 'on Compose'", "UncheckComposeRandom");
 		randomButtonsPanel.add(switchOnComposeRandom);
 
-		toggleableComponents.add(randomizeStrums);
-		toggleableComponents.add(randomizeChordStrumsOnCompose);
+		//toggleableComponents.add(randomizeStrums);
+		//toggleableComponents.add(randomizeChordStrumsOnCompose);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -2112,7 +2112,7 @@ public class VibeComposerGUI extends JFrame
 		randomDrumsGenerateOnCompose.setSelected(state);
 		randomizeBpmOnCompose.setSelected(state);
 		randomizeTransposeOnCompose.setSelected(state);
-		randomizeChordStrumsOnCompose.setSelected(state);
+		//randomizeChordStrumsOnCompose.setSelected(state);
 		randomizeInstOnComposeOrGen.setSelected(state);
 		randomArpHitsPerPattern.setSelected(state);
 		randomizeArrangementOnCompose.setSelected(state);
@@ -2153,7 +2153,7 @@ public class VibeComposerGUI extends JFrame
 		randomizeInstOnComposeOrGen.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeBpmOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeTransposeOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+		//randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		randomizeArrangementOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
 		for (JSeparator x : separators) {
 			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
