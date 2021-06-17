@@ -188,7 +188,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private Vector<Note> generateMelodySkeletonFromChords(List<int[]> chords, List<int[]> roots,
-			int measures, int notesSeedOffset) {
+			int measures, int notesSeedOffset, Section sec) {
 
 		boolean fillChordMelodyMap = false;
 		if (chordMelodyMap1.isEmpty() && notesSeedOffset == 0
@@ -229,6 +229,11 @@ public class MidiGenerator implements JMC {
 		} else {
 			usedChords = chords;
 		}
+
+		int minVel = gc.getMelodyPart().getVelocityMin() + (5 * sec.getMelodyChance()) / 10 - 50;
+		minVel = (minVel < 0) ? 0 : minVel;
+		int maxVel = gc.getMelodyPart().getVelocityMax() + (5 * sec.getMelodyChance()) / 10 - 50;
+		maxVel = (maxVel < 1) ? 1 : maxVel;
 
 		List<int[]> stretchedChords = usedChords.stream()
 				.map(e -> MidiUtils.convertChordToLength(e, 4, true)).collect(Collectors.toList());
@@ -328,10 +333,7 @@ public class MidiGenerator implements JMC {
 					}*/
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch + extraTranspose, swingDuration,
-							velocityGenerator
-									.nextInt(1 + gc.getMelodyPart().getVelocityMax()
-											- gc.getMelodyPart().getVelocityMin())
-									+ gc.getMelodyPart().getVelocityMin());
+							velocityGenerator.nextInt(1 + maxVel - minVel) + minVel);
 					//TODO: make sound good
 					if (previousNotePitch == pitch) {
 						direction = !direction;
@@ -957,13 +959,15 @@ public class MidiGenerator implements JMC {
 					List<int[]> usedMelodyProg = chordProgression;
 					List<int[]> usedRoots = rootProgression;
 
-					if (notesSeedOffset > 0 && !melodyBasedChordProgression.isEmpty()
+					if (usedMeasures == sec.getMeasures() && notesSeedOffset > 0
+							&& !melodyBasedChordProgression.isEmpty()
 							&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
 						usedMelodyProg = melodyBasedChordProgression;
 						usedRoots = melodyBasedRootProgression;
 						System.out.println("Melody uses MELODY BASED CHORDS!");
 					}
-					Phrase m = fillMelody(usedMelodyProg, usedRoots, usedMeasures, notesSeedOffset);
+					Phrase m = fillMelody(usedMelodyProg, usedRoots, usedMeasures, notesSeedOffset,
+							sec);
 
 					sec.setMelody(m);
 					if (!overridden)
@@ -981,7 +985,7 @@ public class MidiGenerator implements JMC {
 						&& sec.getBassPresence().contains(gc.getBassPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
 				if (added) {
-					CPhrase b = fillBassRoots(rootProgression, usedMeasures);
+					CPhrase b = fillBassRoots(rootProgression, usedMeasures, sec);
 					if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// TODO
 					}
@@ -1293,7 +1297,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	protected Phrase fillMelody(List<int[]> actualProgression, List<int[]> generatedRootProgression,
-			int measures, int notesSeedOffset) {
+			int measures, int notesSeedOffset, Section sec) {
 		Phrase melodyPhrase = new Phrase();
 		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
 				generatedRootProgression, true);
@@ -1340,7 +1344,7 @@ public class MidiGenerator implements JMC {
 
 		} else {
 			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(actualProgression,
-					generatedRootProgression, measures, notesSeedOffset);
+					generatedRootProgression, measures, notesSeedOffset, sec);
 			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(skeletonNotes);
 			swingMelody(fullMelody);
 			melodyPhrase.addNoteList(fullMelody, true);
@@ -1351,8 +1355,13 @@ public class MidiGenerator implements JMC {
 	}
 
 
-	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures) {
+	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures,
+			Section sec) {
 		CPhrase cphraseBassRoot = new CPhrase();
+		int minVel = gc.getBassPart().getVelocityMin() + (5 * sec.getBassChance()) / 10 - 50;
+		minVel = (minVel < 0) ? 0 : minVel;
+		int maxVel = gc.getBassPart().getVelocityMax() + (5 * sec.getBassChance()) / 10 - 50;
+		maxVel = (maxVel < 1) ? 1 : maxVel;
 		Random variationGenerator = new Random(gc.getRandomSeed() + 1);
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = (i > 0
@@ -1361,8 +1370,7 @@ public class MidiGenerator implements JMC {
 							: 0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
 				Random bassDynamics = new Random(gc.getRandomSeed());
-				int velSpace = gc.getBassPart().getVelocityMax()
-						- gc.getBassPart().getVelocityMin();
+				int velSpace = maxVel - minVel;
 				if (gc.getBassPart().isUseRhythm()) {
 					int seed = (int) gc.getRandomSeed();
 					seed += extraSeed;
@@ -1372,13 +1380,11 @@ public class MidiGenerator implements JMC {
 					Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j));
 					for (Double dur : bassRhythm.regenerateDurations()) {
 						cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
-								dur,
-								bassDynamics.nextInt(velSpace) + gc.getBassPart().getVelocityMin());
+								dur, bassDynamics.nextInt(velSpace) + minVel);
 					}
 				} else {
 					cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
-							progressionDurations.get(j),
-							bassDynamics.nextInt(velSpace) + gc.getBassPart().getVelocityMin());
+							progressionDurations.get(j), bassDynamics.nextInt(velSpace) + minVel);
 				}
 			}
 		}
