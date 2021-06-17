@@ -142,6 +142,7 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
+import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -233,6 +234,9 @@ public class VibeComposerGUI extends JFrame
 	JScrollPane arrangementActualScrollPane;
 	JTable scrollableArrangementTable;
 	JTable scrollableArrangementActualTable;
+
+	JPanel actualArrangementCombinedPanel;
+	JPanel arrangementCombinedPanel;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -1230,27 +1234,27 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void handleArrangementAction(String action, int seed, int maxLength) {
+
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
-		}
-
-		if (action.equalsIgnoreCase("ArrangementAddLast")) {
+		} else if (action.equalsIgnoreCase("ArrangementAddLast")) {
 			arrangement.duplicateSection(scrollableArrangementTable);
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
 			}
-		}
-
-		if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
+		} else if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
 			arrangement.removeSection(scrollableArrangementTable);
 			//pieceLength.setText("" + --maxLength);
-		}
-
-		if (action.equalsIgnoreCase("ArrangementRandomize")) {
+		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// on compose -> this must happen before compose part
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
+		} else if (action.startsWith("ArrangementOpenVariation")) {
+			VariationPopup variationJD = new VariationPopup();
+			variationJD.getFrame().setTitle(action);
 		}
+
+
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 	}
 
@@ -1436,7 +1440,18 @@ public class VibeComposerGUI extends JFrame
 				return scrollPaneDimension;
 			}
 		};
-		arrangementActualScrollPane.setViewportView(scrollableArrangementActualTable);
+		actualArrangementCombinedPanel = new JPanel();
+		actualArrangementCombinedPanel
+				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
+		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
+		JPanel variationButtonsPanel = new JPanel();
+		for (int i = 0; i < 10; i++) {
+			JButton butt = makeButton("Variations", "ArrangementOpenVariation" + i);
+			butt.setPreferredSize(new Dimension(150, 50));
+			variationButtonsPanel.add(butt);
+		}
+		actualArrangementCombinedPanel.add(variationButtonsPanel);
+		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 		JList<String> actualList = new JList<>();
 		actualList.setListData(
 				new String[] { "Section", "Bars", "Melody", "Bass", "Chord", "Arp", "Drum" });
