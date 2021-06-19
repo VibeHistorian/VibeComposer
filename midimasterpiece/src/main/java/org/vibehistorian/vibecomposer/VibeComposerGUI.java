@@ -3625,7 +3625,7 @@ public class VibeComposerGUI extends JFrame
 		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		mar.marshal(guiConfig, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
+		mar.marshal(guiConfig, new File(path.substring(0, path.length() - 4) + "-guiConfig.xml"));
 	}
 
 	public GUIConfig unmarshall(File f) throws JAXBException, IOException {
