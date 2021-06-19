@@ -1265,7 +1265,7 @@ public class VibeComposerGUI extends JFrame
 			variationJD.getFrame().setTitle(action);
 		}
 
-		if (instrumentTabPane.getSelectedIndex() == 5) {
+		if (instrumentTabPane.getSelectedIndex() == 5 && !arrangementManualOverride.isSelected()) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		} else {
 			setActualModel(arrangement.convertToActualTableModel());
