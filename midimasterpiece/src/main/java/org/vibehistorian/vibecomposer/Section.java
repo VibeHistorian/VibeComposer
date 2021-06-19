@@ -218,6 +218,11 @@ public class Section {
 	public Section deepCopy() {
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);
+		sec.melodyPresence.addAll(melodyPresence);
+		sec.bassPresence.addAll(bassPresence);
+		sec.chordPresence.addAll(chordPresence);
+		sec.arpPresence.addAll(arpPresence);
+		sec.drumPresence.addAll(drumPresence);
 		return sec;
 	}
 

@@ -1233,18 +1233,29 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void handleArrangementAction(String action, int seed, int maxLength) {
+	private void setActualModel(TableModel model) {
+		scrollableArrangementActualTable.setModel(model);
+	}
 
+	private void handleArrangementAction(String action, int seed, int maxLength) {
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
 		} else if (action.equalsIgnoreCase("ArrangementAddLast")) {
-			arrangement.duplicateSection(scrollableArrangementTable);
+			if (instrumentTabPane.getSelectedIndex() == 5) {
+				arrangement.duplicateSection(scrollableArrangementTable, false);
+			} else {
+				arrangement.duplicateSection(scrollableArrangementActualTable, true);
+			}
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
 			}
 		} else if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
-			arrangement.removeSection(scrollableArrangementTable);
+			if (instrumentTabPane.getSelectedIndex() == 5) {
+				arrangement.removeSection(scrollableArrangementTable, false);
+			} else {
+				arrangement.removeSection(scrollableArrangementActualTable, true);
+			}
 			//pieceLength.setText("" + --maxLength);
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// on compose -> this must happen before compose part
@@ -1254,8 +1265,12 @@ public class VibeComposerGUI extends JFrame
 			variationJD.getFrame().setTitle(action);
 		}
 
+		if (instrumentTabPane.getSelectedIndex() == 5) {
+			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
+		} else {
+			setActualModel(arrangement.convertToActualTableModel());
+		}
 
-		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
@@ -1273,7 +1288,8 @@ public class VibeComposerGUI extends JFrame
 
 		JButton resetArrangementBtn = makeButton("Reset arr.", "ArrangementReset");
 
-		JButton randomizeArrangementBtn = makeButton("Randomize sections:", "ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize sections (Max):",
+				"ArrangementRandomize");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
@@ -1315,7 +1331,17 @@ public class VibeComposerGUI extends JFrame
 				Component comp = super.prepareRenderer(renderer, row, col);
 				comp.setForeground(actualArrangementDarkMode);
 				if (row >= 2) {
-					Integer value = (Integer) getModel().getValueAt(row, col);
+					Object objValue = getModel().getValueAt(row, col);
+					Integer value = (objValue instanceof String)
+							? Integer.valueOf((String) objValue)
+							: (Integer) objValue;
+					if (value > 100) {
+						value = 100;
+						getModel().setValueAt(value, row, col);
+					} else if (value < 0) {
+						value = 0;
+						getModel().setValueAt(value, row, col);
+					}
 					// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
 					int[] maxCounts = new int[] { 0, 0, 100, 100, 100, 100, 100 };
 					if (value == 0) {
@@ -1343,6 +1369,7 @@ public class VibeComposerGUI extends JFrame
 		};
 		scrollableArrangementTable.setRowHeight(35);
 		scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
+
 		arrangementScrollPane.setViewportView(scrollableArrangementTable);
 		JList<String> list = new JList<>();
 		list.setListData(
@@ -1363,7 +1390,7 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		scrollableArrangementTable.setRowSelectionAllowed(false);
 		scrollableArrangementTable.setColumnSelectionAllowed(true);
-
+		scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(2000, 30));
 		/*scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
 		
@@ -1443,18 +1470,20 @@ public class VibeComposerGUI extends JFrame
 		actualArrangementCombinedPanel = new JPanel();
 		actualArrangementCombinedPanel
 				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
+		scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(2000, 30));
+		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
 		JPanel variationButtonsPanel = new JPanel();
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 11; i++) {
 			JButton butt = makeButton("Variations", "ArrangementOpenVariation" + i);
-			butt.setPreferredSize(new Dimension(150, 50));
+			butt.setPreferredSize(new Dimension(1480 / 11, 50));
 			variationButtonsPanel.add(butt);
 		}
 		actualArrangementCombinedPanel.add(variationButtonsPanel);
 		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 		JList<String> actualList = new JList<>();
 		actualList.setListData(
-				new String[] { "Section", "Bars", "Melody", "Bass", "Chord", "Arp", "Drum" });
+				new String[] { "", "Section", "Bars", "Melody", "Bass", "Chord", "Arp", "Drum" });
 		actualList.setFixedCellHeight(scrollableArrangementActualTable.getRowHeight()
 				+ scrollableArrangementActualTable.getRowMargin());
 		arrangementActualScrollPane.setRowHeaderView(actualList);
@@ -2330,8 +2359,7 @@ public class VibeComposerGUI extends JFrame
 		currentMidi = null;
 
 		// TODO: from real parts - set after generation!
-		scrollableArrangementActualTable
-				.setModel(MidiGenerator.gc.getArrangement().convertToActualTableModel());
+		setActualModel(MidiGenerator.gc.getArrangement().convertToActualTableModel());
 
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);

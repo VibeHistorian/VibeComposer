@@ -29,6 +29,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import javax.swing.JTable;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -211,6 +213,11 @@ public class Arrangement {
 			model.setValueAt(ap, 5, i);
 			model.setValueAt(dp, 6, i);
 		}
+		model.addTableModelListener(new TableModelListener() {
+			public void tableChanged(TableModelEvent evt) {
+				// here goes your code "on cell update"
+			}
+		});
 		return model;
 	}
 
@@ -313,6 +320,7 @@ public class Arrangement {
 			//sections.add(s);
 
 		}
+		System.out.println("setFromActualTable SUCCESS!");
 		return true;
 	}
 
@@ -326,20 +334,36 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
-	public void duplicateSection(JTable tbl) {
+	public void duplicateSection(JTable tbl, boolean isActual) {
 		resortByIndexes(tbl);
+
 		int column = tbl.getSelectedColumn();
 		if (column == -1)
 			return;
+		if (isActual) {
+			overridden = true;
+			setFromActualTable(tbl);
+		} else {
+			overridden = false;
+			setFromModel(tbl);
+		}
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
 
-	public void removeSection(JTable tbl) {
+	public void removeSection(JTable tbl, boolean isActual) {
 		resortByIndexes(tbl);
+
 		int[] columns = tbl.getSelectedColumns();
 		if (columns.length == 0) {
 			return;
+		}
+		if (isActual) {
+			overridden = true;
+			setFromActualTable(tbl);
+		} else {
+			overridden = false;
+			setFromModel(tbl);
 		}
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
