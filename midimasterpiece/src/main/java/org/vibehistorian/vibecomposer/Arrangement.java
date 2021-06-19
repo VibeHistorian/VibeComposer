@@ -256,12 +256,6 @@ public class Arrangement {
 	}
 
 	public void resortByIndexes(JTable scrollableArrangementTable) {
-		// TODO: arrangement.resortByIndexes
-		// convertColumnIndexToModel
-		// adv chorus at index 0 -> model says 7
-		// tempsections[0] = sections().get(7)
-		// arrays as list
-
 		TableModel m = scrollableArrangementTable.getModel();
 		int[] indexes = new int[m.getColumnCount()];
 		Section[] tempSections = new Section[m.getColumnCount()];
@@ -285,13 +279,19 @@ public class Arrangement {
 
 	}
 
-	public boolean setFromActualTable(JTable t) {
+	public boolean setFromActualTable(JTable t, boolean forceColumns) {
 		if (!overridden)
 			return false;
 		// TODO: possiblity to catch errors and return false
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		//sections.clear();
+		if (forceColumns) {
+			sections.clear();
+			for (int i = 0; i < m.getColumnCount(); i++) {
+				sections.add(new Section());
+			}
+		}
 		if (m.getColumnCount() != sections.size()) {
 			overridden = false;
 			return false;
@@ -335,24 +335,25 @@ public class Arrangement {
 	}
 
 	public void duplicateSection(JTable tbl, boolean isActual) {
-		resortByIndexes(tbl);
+
 
 		int column = tbl.getSelectedColumn();
 		if (column == -1)
 			return;
 		if (isActual) {
 			overridden = true;
-			setFromActualTable(tbl);
+			setFromActualTable(tbl, true);
 		} else {
 			overridden = false;
 			setFromModel(tbl);
 		}
+		//resortByIndexes(tbl);
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
 
 	public void removeSection(JTable tbl, boolean isActual) {
-		resortByIndexes(tbl);
+
 
 		int[] columns = tbl.getSelectedColumns();
 		if (columns.length == 0) {
@@ -360,11 +361,12 @@ public class Arrangement {
 		}
 		if (isActual) {
 			overridden = true;
-			setFromActualTable(tbl);
+			setFromActualTable(tbl, true);
 		} else {
 			overridden = false;
 			setFromModel(tbl);
 		}
+		//resortByIndexes(tbl);
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));

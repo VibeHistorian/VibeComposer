@@ -1331,7 +1331,8 @@ public class VibeComposerGUI extends JFrame
 				Component comp = super.prepareRenderer(renderer, row, col);
 				comp.setForeground(actualArrangementDarkMode);
 				if (row >= 2) {
-					Object objValue = getModel().getValueAt(row, col);
+					Object objValue = getModel().getValueAt(row,
+							scrollableArrangementTable.convertColumnIndexToModel(col));
 					Integer value = (objValue instanceof String)
 							? Integer.valueOf((String) objValue)
 							: (Integer) objValue;
@@ -1433,7 +1434,8 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
-				String value = (String) getModel().getValueAt(row, col);
+				String value = (String) getModel().getValueAt(row,
+						scrollableArrangementActualTable.convertColumnIndexToModel(col));
 				if (value == null)
 					return comp;
 				comp.setForeground(actualArrangementDarkMode);
@@ -3641,7 +3643,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			arrangement.setPreviewChorus(false);
 			boolean overrideSuccessful = !storage
-					&& arrangement.setFromActualTable(scrollableArrangementActualTable);
+					&& arrangement.setFromActualTable(scrollableArrangementActualTable, false);
 			System.out.println("OVERRIDE OK?: " + overrideSuccessful);
 			if (!overrideSuccessful) {
 				arrangement.setFromModel(scrollableArrangementTable);
