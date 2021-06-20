@@ -1261,7 +1261,8 @@ public class VibeComposerGUI extends JFrame
 			// on compose -> this must happen before compose part
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation")) {
-			VariationPopup variationJD = new VariationPopup();
+			VariationPopup variationJD = new VariationPopup(
+					new String[] { "Transpose", "Var.seed", "Re-rhythm" }, 4);
 			variationJD.getFrame().setTitle(action);
 		}
 
