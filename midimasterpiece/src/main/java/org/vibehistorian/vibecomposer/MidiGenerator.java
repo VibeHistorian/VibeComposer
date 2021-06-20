@@ -951,7 +951,7 @@ public class MidiGenerator implements JMC {
 			variationGen.setSeed(arrSeed);
 			if (!gc.getMelodyPart().isMuted()) {
 				boolean added = (overridden
-						&& sec.getMelodyPresence().contains(gc.getMelodyPart().getOrder()))
+						&& sec.getPresence(0).contains(gc.getMelodyPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
 				if (added) {
 					int notesSeedOffset = sec.getTypeMelodyOffset();
@@ -971,7 +971,7 @@ public class MidiGenerator implements JMC {
 
 					sec.setMelody(m);
 					if (!overridden)
-						sec.getMelodyPresence().add(gc.getMelodyPart().getOrder());
+						sec.getPresence(0).add(gc.getMelodyPart().getOrder());
 				} else {
 					sec.setMelody(emptyPhrase.copy());
 				}
@@ -982,7 +982,7 @@ public class MidiGenerator implements JMC {
 			if (!gc.getBassPart().isMuted()) {
 
 				boolean added = (overridden
-						&& sec.getBassPresence().contains(gc.getBassPart().getOrder()))
+						&& sec.getPresence(1).contains(gc.getBassPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
 				if (added) {
 					CPhrase b = fillBassRoots(rootProgression, usedMeasures, sec);
@@ -991,7 +991,7 @@ public class MidiGenerator implements JMC {
 					}
 					sec.setBass(b);
 					if (!overridden)
-						sec.getBassPresence().add(gc.getBassPart().getOrder());
+						sec.getPresence(1).add(gc.getBassPart().getOrder());
 				} else {
 					sec.setBass(emptyCPhrase.copy());
 				}
@@ -1004,7 +1004,7 @@ public class MidiGenerator implements JMC {
 					ChordPart cp = gc.getChordParts().get(i);
 					rand.setSeed(arrSeed + 100 + cp.getOrder());
 					variationGen.setSeed(arrSeed + 100 + cp.getOrder());
-					boolean added = (overridden && sec.getChordPresence().contains(cp.getOrder()))
+					boolean added = (overridden && sec.getPresence(2).contains(cp.getOrder()))
 							|| (!overridden && rand.nextInt(100) < sec.getChordChance());
 					if (added && !cp.isMuted()) {
 						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures);
@@ -1013,14 +1013,14 @@ public class MidiGenerator implements JMC {
 						}
 						copiedCPhrases.add(c);
 						if (!overridden)
-							sec.getChordPresence().add(cp.getOrder());
+							sec.getPresence(2).add(cp.getOrder());
 					} else {
 						copiedCPhrases.add(emptyCPhrase.copy());
 					}
 				}
 				sec.setChords(copiedCPhrases);
 				if (!gc.getChordParts().get(0).isMuted()
-						&& sec.getChordPresence().contains(gc.getChordParts().get(0).getOrder())) {
+						&& sec.getPresence(2).contains(gc.getChordParts().get(0).getOrder())) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
 					sec.setChordSlash(emptyPhrase.copy());
@@ -1037,7 +1037,7 @@ public class MidiGenerator implements JMC {
 					// if arp1 supports melody with same instrument, always introduce it in second half
 					CPhrase a = fillArpFromPart(ap, chordProgression, usedMeasures);
 					if (overridden) {
-						if (sec.getArpPresence().contains(ap.getOrder())) {
+						if (sec.getPresence(3).contains(ap.getOrder())) {
 							copiedCPhrases.add(a);
 						} else {
 							copiedCPhrases.add(emptyCPhrase.copy());
@@ -1051,7 +1051,7 @@ public class MidiGenerator implements JMC {
 									// TODO Mod.transpose(a, 12);
 								}
 								copiedCPhrases.add(a);
-								sec.getArpPresence().add(ap.getOrder());
+								sec.getPresence(3).add(ap.getOrder());
 							} else {
 								copiedCPhrases.add(emptyCPhrase.copy());
 							}
@@ -1062,7 +1062,7 @@ public class MidiGenerator implements JMC {
 									// TODO Mod.transpose(a, 12);
 								}
 								copiedCPhrases.add(a);
-								sec.getArpPresence().add(ap.getOrder());
+								sec.getPresence(3).add(ap.getOrder());
 							} else {
 								copiedCPhrases.add(emptyCPhrase.copy());
 							}
@@ -1078,7 +1078,7 @@ public class MidiGenerator implements JMC {
 					DrumPart dp = gc.getDrumParts().get(i);
 					rand.setSeed(arrSeed + 300 + dp.getOrder());
 					variationGen.setSeed(arrSeed + 300 + dp.getOrder());
-					boolean added = (overridden && sec.getDrumPresence().contains(dp.getOrder()))
+					boolean added = (overridden && sec.getPresence(4).contains(dp.getOrder()))
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
 					if (added && !dp.isMuted()) {
 						int sectionChanceModifier = 75 + (sec.getDrumChance() / 4);
@@ -1093,7 +1093,7 @@ public class MidiGenerator implements JMC {
 						}
 						copiedPhrases.add(d);
 						if (!overridden)
-							sec.getDrumPresence().add(dp.getOrder());
+							sec.getPresence(4).add(dp.getOrder());
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
 					}

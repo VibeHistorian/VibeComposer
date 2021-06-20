@@ -20,7 +20,10 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -70,14 +73,17 @@ public class Section {
 	private List<Integer> drumPresence = new ArrayList<>();
 
 	// map integer(what), map integer(part order), list integer(section variation)
+	private Map<Integer, Map<Integer, List<Integer>>> partPresenceVariationMap = new HashMap<>();
 
 	public Section() {
-
+		for (int i = 0; i < 5; i++) {
+			partPresenceVariationMap.put(i, new HashMap<>());
+		}
 	}
 
 	public Section(String type, int measures, int melodyChance, int bassChance, int chordChance,
 			int arpChance, int drumChance) {
-		super();
+		this();
 		this.type = type;
 		this.measures = measures;
 		this.melodyChance = melodyChance;
@@ -88,7 +94,7 @@ public class Section {
 	}
 
 	public Section(Section orig) {
-		super();
+		this();
 		this.type = orig.type;
 		this.measures = orig.measures;
 		this.melodyChance = orig.melodyChance;
@@ -237,7 +243,7 @@ public class Section {
 	}
 
 	public List<Integer> getMelodyPresence() {
-		return melodyPresence;
+		return new ArrayList<>(partPresenceVariationMap.get(0).keySet());
 	}
 
 	@XmlTransient
@@ -246,7 +252,7 @@ public class Section {
 	}
 
 	public List<Integer> getBassPresence() {
-		return bassPresence;
+		return new ArrayList<>(partPresenceVariationMap.get(1).keySet());
 	}
 
 	@XmlTransient
@@ -255,7 +261,7 @@ public class Section {
 	}
 
 	public List<Integer> getChordPresence() {
-		return chordPresence;
+		return new ArrayList<>(partPresenceVariationMap.get(2).keySet());
 	}
 
 	@XmlTransient
@@ -264,7 +270,7 @@ public class Section {
 	}
 
 	public List<Integer> getArpPresence() {
-		return arpPresence;
+		return new ArrayList<>(partPresenceVariationMap.get(3).keySet());
 	}
 
 	@XmlTransient
@@ -273,12 +279,16 @@ public class Section {
 	}
 
 	public List<Integer> getDrumPresence() {
-		return drumPresence;
+		return new ArrayList<>(partPresenceVariationMap.get(4).keySet());
 	}
 
 	@XmlTransient
 	public void setDrumPresence(List<Integer> drumPresence) {
 		this.drumPresence = drumPresence;
+	}
+
+	public Set<Integer> getPresence(int part) {
+		return partPresenceVariationMap.get(part).keySet();
 	}
 
 	public int getTypeSeedOffset() {

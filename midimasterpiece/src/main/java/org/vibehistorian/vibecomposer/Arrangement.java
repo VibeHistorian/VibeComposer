@@ -197,21 +197,11 @@ public class Arrangement {
 			Section s = getSections().get(i);
 			model.setValueAt(s.getType(), 0, i);
 			model.setValueAt(String.valueOf(s.getMeasures()), 1, i);
-			String mp = StringUtils.join(s.getMelodyPresence());
-			String bp = StringUtils.join(s.getBassPresence());
-			String cp = StringUtils.join(s.getChordPresence());
-			String ap = StringUtils.join(s.getArpPresence());
-			String dp = StringUtils.join(s.getDrumPresence());
-			mp = mp.replaceAll("\\[", "").replaceAll("\\]", "");
-			bp = bp.replaceAll("\\[", "").replaceAll("\\]", "");
-			cp = cp.replaceAll("\\[", "").replaceAll("\\]", "");
-			ap = ap.replaceAll("\\[", "").replaceAll("\\]", "");
-			dp = dp.replaceAll("\\[", "").replaceAll("\\]", "");
-			model.setValueAt(mp, 2, i);
-			model.setValueAt(bp, 3, i);
-			model.setValueAt(cp, 4, i);
-			model.setValueAt(ap, 5, i);
-			model.setValueAt(dp, 6, i);
+			for (int j = 0; j < 5; j++) {
+				String pres = StringUtils.join(s.getPresence(j));
+				pres = pres.replaceAll("\\[", "").replaceAll("\\]", "");
+				model.setValueAt(pres, j + 2, i);
+			}
 		}
 		model.addTableModelListener(new TableModelListener() {
 			public void tableChanged(TableModelEvent evt) {
