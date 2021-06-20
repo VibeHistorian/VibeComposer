@@ -3,9 +3,6 @@ package org.vibehistorian.vibecomposer.Popups;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -14,17 +11,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
 
 public class VariationPopup {
 
 	public static final String[] tableNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
-	public static final String[][] variationDescriptions = {
-			{ "#", "Incl.", "Transpose", "MaxJump" }, { "#", "Incl.", "OffsetSeed" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill" },
-			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
+
 
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
@@ -32,14 +25,16 @@ public class VariationPopup {
 
 	JScrollPane scroll;
 
-	public VariationPopup(int section) {
+	public VariationPopup(int section, Section sec) {
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		for (int i = 0; i < 5; i++) {
-			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
-			Collections.sort(rowOrders);
+
 			JTable table = new JTable();
-			table.setModel(new BooleanTableModel(variationDescriptions[i], rowOrders));
+			if (sec.getPartPresenceVariationMap().get(i) == null) {
+				sec.initPartMap();
+			}
+			table.setModel(new BooleanTableModel(sec.getPartPresenceVariationMap().get(i),
+					Section.variationDescriptions[i]));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

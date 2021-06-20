@@ -1260,9 +1260,10 @@ public class VibeComposerGUI extends JFrame
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// on compose -> this must happen before compose part
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
-		} else if (action.startsWith("ArrangementOpenVariation")) {
-			VariationPopup variationJD = new VariationPopup(
-					Integer.valueOf(action.substring(action.length() - 1)));
+		} else if (action.startsWith("ArrangementOpenVariation,")) {
+			Integer secOrder = Integer.valueOf(action.split(",")[1]);
+			VariationPopup variationJD = new VariationPopup(secOrder,
+					arrangement.getSections().get(secOrder - 1));
 			//variationJD.getFrame().setTitle(action);
 		}
 
@@ -1479,7 +1480,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel variationButtonsPanel = new JPanel();
 		for (int i = 0; i < 11; i++) {
 			JButton butt = makeButton("Variations " + (i + 1),
-					"ArrangementOpenVariation" + (i + 1));
+					"ArrangementOpenVariation," + (i + 1));
 			butt.setPreferredSize(new Dimension(1480 / 11, 50));
 			variationButtonsPanel.add(butt);
 		}

@@ -292,21 +292,7 @@ public class Arrangement {
 			Section s = sections.get(i);
 			s.setType((String) m.getValueAt(0, k));
 			Object k1 = m.getValueAt(1, k);
-			List<Integer> k2 = integerListFromCell(m.getValueAt(2, k));
-			List<Integer> k3 = integerListFromCell(m.getValueAt(3, k));
-			List<Integer> k4 = integerListFromCell(m.getValueAt(4, k));
-			List<Integer> k5 = integerListFromCell(m.getValueAt(5, k));
-			List<Integer> k6 = integerListFromCell(m.getValueAt(6, k));
-			if (k2.isEmpty() && k3.isEmpty() && k4.isEmpty() && k5.isEmpty() && k6.isEmpty()) {
-				overridden = false;
-				return false;
-			}
 			s.setMeasures(k1 instanceof Integer ? (Integer) k1 : Integer.valueOf((String) k1));
-			s.setMelodyPresence(k2);
-			s.setBassPresence(k3);
-			s.setChordPresence(k4);
-			s.setArpPresence(k5);
-			s.setDrumPresence(k6);
 			//sections.add(s);
 
 		}

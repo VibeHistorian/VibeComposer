@@ -1,7 +1,5 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.List;
-
 import javax.swing.table.AbstractTableModel;
 
 public class BooleanTableModel extends AbstractTableModel {
@@ -63,14 +61,8 @@ public class BooleanTableModel extends AbstractTableModel {
 		return column > 0;
 	}
 
-	public BooleanTableModel(String[] colNames, List<Integer> rowNames) {
-		tableData = new Object[rowNames.size()][colNames.length + 1];
-		for (int i = 0; i < rowNames.size(); i++) {
-			tableData[i][0] = rowNames.get(i);
-			for (int j = 1; j < colNames.length + 1; j++) {
-				tableData[i][j] = Boolean.FALSE;
-			}
-		}
+	public BooleanTableModel(Object[][] data, String[] colNames) {
+		tableData = data;
 		columnNames = colNames;
 	}
 }

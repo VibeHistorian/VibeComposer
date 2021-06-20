@@ -19,11 +19,13 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -42,6 +44,12 @@ public class Section {
 		INTRO, VERSE1, VERSE2, CHORUS1, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS2, ADVANCED_CHORUS,
 		OUTRO;
 	}
+
+	public static final String[][] variationDescriptions = {
+			{ "#", "Incl.", "Transpose", "MaxJump" }, { "#", "Incl.", "OffsetSeed" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill" },
+			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -65,20 +73,19 @@ public class Section {
 	private List<Phrase> drums;
 	private Phrase chordSlash;
 
-	// display data (transient)
-	private List<Integer> melodyPresence = new ArrayList<>();
-	private List<Integer> bassPresence = new ArrayList<>();
-	private List<Integer> chordPresence = new ArrayList<>();
-	private List<Integer> arpPresence = new ArrayList<>();
-	private List<Integer> drumPresence = new ArrayList<>();
-
 	// map integer(what), map integer(part order), list integer(section variation)
-	private Map<Integer, Map<Integer, List<Integer>>> partPresenceVariationMap = new HashMap<>();
+	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
+
+	public Map<Integer, Object[][]> getPartPresenceVariationMap() {
+		return partPresenceVariationMap;
+	}
+
+	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
+		this.partPresenceVariationMap = partPresenceVariationMap;
+	}
 
 	public Section() {
-		for (int i = 0; i < 5; i++) {
-			partPresenceVariationMap.put(i, new HashMap<>());
-		}
+
 	}
 
 	public Section(String type, int measures, int melodyChance, int bassChance, int chordChance,
@@ -224,13 +231,18 @@ public class Section {
 	}
 
 	public Section deepCopy() {
+		initPartMapIfNull();
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);
-		sec.melodyPresence.addAll(melodyPresence);
-		sec.bassPresence.addAll(bassPresence);
-		sec.chordPresence.addAll(chordPresence);
-		sec.arpPresence.addAll(arpPresence);
-		sec.drumPresence.addAll(drumPresence);
+		Map<Integer, Object[][]> dataCopy = new HashMap<>();
+		for (int i = 0; i < 5; i++) {
+			Object[][] data = new Object[partPresenceVariationMap
+					.get(i).length][partPresenceVariationMap.get(i)[0].length];
+			for (int k = 0; k < data.length; k++) {
+				data[k] = partPresenceVariationMap.get(i)[k].clone();
+			}
+		}
+		sec.partPresenceVariationMap = dataCopy;
 		return sec;
 	}
 
@@ -242,53 +254,16 @@ public class Section {
 		this.useVariation = useVariation;
 	}
 
-	public List<Integer> getMelodyPresence() {
-		return new ArrayList<>(partPresenceVariationMap.get(0).keySet());
-	}
-
-	@XmlTransient
-	public void setMelodyPresence(List<Integer> melodyPresence) {
-		this.melodyPresence = melodyPresence;
-	}
-
-	public List<Integer> getBassPresence() {
-		return new ArrayList<>(partPresenceVariationMap.get(1).keySet());
-	}
-
-	@XmlTransient
-	public void setBassPresence(List<Integer> bassPresence) {
-		this.bassPresence = bassPresence;
-	}
-
-	public List<Integer> getChordPresence() {
-		return new ArrayList<>(partPresenceVariationMap.get(2).keySet());
-	}
-
-	@XmlTransient
-	public void setChordPresence(List<Integer> chordPresence) {
-		this.chordPresence = chordPresence;
-	}
-
-	public List<Integer> getArpPresence() {
-		return new ArrayList<>(partPresenceVariationMap.get(3).keySet());
-	}
-
-	@XmlTransient
-	public void setArpPresence(List<Integer> arpPresence) {
-		this.arpPresence = arpPresence;
-	}
-
-	public List<Integer> getDrumPresence() {
-		return new ArrayList<>(partPresenceVariationMap.get(4).keySet());
-	}
-
-	@XmlTransient
-	public void setDrumPresence(List<Integer> drumPresence) {
-		this.drumPresence = drumPresence;
-	}
-
 	public Set<Integer> getPresence(int part) {
-		return partPresenceVariationMap.get(part).keySet();
+		initPartMapIfNull();
+		Set<Integer> pres = new HashSet<>();
+		Object[][] data = partPresenceVariationMap.get(part);
+		for (int i = 0; i < data.length; i++) {
+			if (data[i][1] == Boolean.TRUE) {
+				pres.add(i);
+			}
+		}
+		return pres;
 	}
 
 	public int getTypeSeedOffset() {
@@ -320,6 +295,28 @@ public class Section {
 			} else {
 				return 0;
 			}
+		}
+	}
+
+	public void initPartMap() {
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+					data[j][k] = Boolean.FALSE;
+				}
+			}
+			partPresenceVariationMap.put(i, data);
+		}
+	}
+
+	public void initPartMapIfNull() {
+		if (partPresenceVariationMap.get(0) == null) {
+			initPartMap();
 		}
 	}
 }
