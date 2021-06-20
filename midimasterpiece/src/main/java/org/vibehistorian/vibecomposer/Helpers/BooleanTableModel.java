@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import java.util.List;
+
 import javax.swing.table.AbstractTableModel;
 
 public class BooleanTableModel extends AbstractTableModel {
@@ -10,38 +12,46 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	String columnNames[];
 
+	@Override
 	public int getColumnCount() {
 		return columnNames.length;
 	}
 
+	@Override
 	public String getColumnName(int column) {
 		return columnNames[column];
 	}
 
+	@Override
 	public int getRowCount() {
 		return tableData.length;
 	}
 
+	@Override
 	public Object getValueAt(int row, int column) {
 		return tableData[row][column];
 	}
 
+	@Override
 	public Class getColumnClass(int column) {
 		return (getValueAt(0, column).getClass());
 	}
 
+	@Override
 	public void setValueAt(Object value, int row, int column) {
 		tableData[row][column] = value;
 	}
 
+	@Override
 	public boolean isCellEditable(int row, int column) {
-		return (column != 0);
+		return column > 0;
 	}
 
-	public BooleanTableModel(String[] colNames, int rowCount) {
-		tableData = new Boolean[colNames.length][rowCount];
-		for (int i = 0; i < colNames.length; i++) {
-			for (int j = 0; j < rowCount; j++) {
+	public BooleanTableModel(String[] colNames, List<Integer> rowNames) {
+		tableData = new Object[rowNames.size()][colNames.length + 1];
+		for (int i = 0; i < rowNames.size(); i++) {
+			tableData[i][0] = rowNames.get(i);
+			for (int j = 1; j < colNames.length + 1; j++) {
 				tableData[i][j] = Boolean.FALSE;
 			}
 		}

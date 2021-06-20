@@ -1,26 +1,68 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import java.awt.Dimension;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
 
 public class VariationPopup {
+
+	public static final String[] tableNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
+	public static final String[][] variationDescriptions = { { "#", "Transpose", "MaxJump" },
+			{ "#", "OffsetSeed" }, { "#", "Transpose", "IgnoreFill", "UpStretch" },
+			{ "#", "Transpose", "IgnoreFill" }, { "#", "IgnoreFill", "MoreExceptions" } };
+
 	final JFrame frame = new JFrame();
-	JTable table;
-	Boolean[][] tableData;
+	JPanel tablesPanel = new JPanel();
+	JTable[] tables = new JTable[5];
 
 	JScrollPane scroll;
 
-	public VariationPopup(String[] variationDescriptions, int partsCount) {
-		table = new JTable(partsCount, variationDescriptions.length);
-		table.setModel(new BooleanTableModel(variationDescriptions, 3));
-		//table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
-		scroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+	public VariationPopup(int section) {
+		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			JTable table = new JTable();
+			table.setModel(new BooleanTableModel(variationDescriptions[i], rowOrders));
+			table.setRowSelectionAllowed(false);
+			table.setColumnSelectionAllowed(false);
+			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+			table.getColumnModel().getColumn(0).setMaxWidth(27);
+			//table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
+
+			/*JList<String> list = new JList<>();
+			String[] listData = new String[rowCount];
+			for (int j = 0; j < rowCount; j++) {
+				listData[j] = String.valueOf(j);
+			}
+			list.setListData(listData);
+			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
+
+			tables[i] = table;
+			tablesPanel.add(new JLabel(tableNames[i]));
+			tablesPanel.add(tables[i].getTableHeader());
+			tablesPanel.add(tables[i]);
+		}
+
+
+		scroll = new JScrollPane(tablesPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
+		frame.setPreferredSize(new Dimension(400, 600));
 		frame.add(scroll);
+		frame.setTitle("Variations - Section " + section);
 		frame.pack();
 		frame.setVisible(true);
 

@@ -1262,8 +1262,8 @@ public class VibeComposerGUI extends JFrame
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation")) {
 			VariationPopup variationJD = new VariationPopup(
-					new String[] { "Transpose", "Var.seed", "Re-rhythm" }, 4);
-			variationJD.getFrame().setTitle(action);
+					Integer.valueOf(action.substring(action.length() - 1)));
+			//variationJD.getFrame().setTitle(action);
 		}
 
 		if (instrumentTabPane.getSelectedIndex() == 5 && !arrangementManualOverride.isSelected()) {
@@ -1478,7 +1478,8 @@ public class VibeComposerGUI extends JFrame
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
 		JPanel variationButtonsPanel = new JPanel();
 		for (int i = 0; i < 11; i++) {
-			JButton butt = makeButton("Variations", "ArrangementOpenVariation" + i);
+			JButton butt = makeButton("Variations " + (i + 1),
+					"ArrangementOpenVariation" + (i + 1));
 			butt.setPreferredSize(new Dimension(1480 / 11, 50));
 			variationButtonsPanel.add(butt);
 		}
