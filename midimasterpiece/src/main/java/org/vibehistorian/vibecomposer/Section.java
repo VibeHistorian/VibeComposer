@@ -69,6 +69,8 @@ public class Section {
 	private List<Integer> arpPresence = new ArrayList<>();
 	private List<Integer> drumPresence = new ArrayList<>();
 
+	// map integer(what), map integer(part order), list integer(section variation)
+
 	public Section() {
 
 	}

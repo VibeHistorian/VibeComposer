@@ -20,9 +20,11 @@ import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
 public class VariationPopup {
 
 	public static final String[] tableNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
-	public static final String[][] variationDescriptions = { { "#", "Transpose", "MaxJump" },
-			{ "#", "OffsetSeed" }, { "#", "Transpose", "IgnoreFill", "UpStretch" },
-			{ "#", "Transpose", "IgnoreFill" }, { "#", "IgnoreFill", "MoreExceptions" } };
+	public static final String[][] variationDescriptions = {
+			{ "#", "Incl.", "Transpose", "MaxJump" }, { "#", "Incl.", "OffsetSeed" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill" },
+			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();

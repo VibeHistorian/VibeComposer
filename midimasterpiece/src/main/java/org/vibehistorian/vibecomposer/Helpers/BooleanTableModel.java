@@ -29,7 +29,11 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int row, int column) {
-		return tableData[row][column];
+		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
+			return Boolean.FALSE;
+		} else {
+			return tableData[row][column];
+		}
 	}
 
 	@Override
@@ -39,7 +43,19 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int column) {
-		tableData[row][column] = value;
+		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
+			tableData[row][column] = Boolean.FALSE;
+		} else {
+			tableData[row][column] = value;
+			if (column == 1 && tableData[row][column] == Boolean.FALSE) {
+				for (int i = 2; i < tableData[row].length; i++) {
+					tableData[row][i] = Boolean.FALSE;
+				}
+				fireTableDataChanged();
+			}
+
+		}
+
 	}
 
 	@Override
