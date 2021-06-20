@@ -1,13 +1,15 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -51,7 +53,17 @@ public class VariationPopup {
 			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
 
 			tables[i] = table;
-			tablesPanel.add(new JLabel(tableNames[i]));
+			JButton namedTableToggle = new JButton(tableNames[i] + "(+)");
+			namedTableToggle.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					table.setVisible(!table.isVisible());
+
+				}
+
+			});
+			tablesPanel.add(namedTableToggle);
 			tablesPanel.add(tables[i].getTableHeader());
 			tablesPanel.add(tables[i]);
 		}
