@@ -2498,7 +2498,7 @@ public class VibeComposerGUI extends JFrame
 		drumPanels.forEach(e -> sequencer.setTrackSolo(e.getSequenceTrack(),
 				e.getSoloMuter().soloState == State.FULL));
 
-		if (collapseDrumTracks.isSelected()) {
+		if (collapseDrumTracks.isSelected() && drumPanels.size() > 0) {
 			sequencer.setTrackSolo(drumPanels.get(0).getSequenceTrack(),
 					groupSoloMuters.get(4).soloState != State.OFF);
 		}
@@ -2515,7 +2515,7 @@ public class VibeComposerGUI extends JFrame
 		drumPanels.forEach(e -> sequencer.setTrackMute(e.getSequenceTrack(),
 				e.getSoloMuter().muteState == State.FULL));
 
-		if (collapseDrumTracks.isSelected()) {
+		if (collapseDrumTracks.isSelected() && drumPanels.size() > 0) {
 			sequencer.setTrackMute(drumPanels.get(0).getSequenceTrack(),
 					groupSoloMuters.get(4).muteState != State.OFF);
 		}
