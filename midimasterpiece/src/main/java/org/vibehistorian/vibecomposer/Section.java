@@ -19,6 +19,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -258,13 +259,30 @@ public class Section {
 	public Set<Integer> getPresence(int part) {
 		initPartMapIfNull();
 		Set<Integer> pres = new HashSet<>();
+
 		Object[][] data = partPresenceVariationMap.get(part);
 		for (int i = 0; i < data.length; i++) {
 			if (data[i][1] == Boolean.TRUE) {
-				pres.add(i);
+				pres.add((Integer) data[i][0]);
 			}
 		}
 		return pres;
+	}
+
+	public void setPresence(int part, int partOrder) {
+		initPartMapIfNull();
+		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.TRUE;
+	}
+
+	public List<Integer> getVariation(int part, int partOrder) {
+		initPartMapIfNull();
+		List<Integer> variations = new ArrayList<>();
+		for (int i = 2; i < partPresenceVariationMap.get(part)[partOrder].length; i++) {
+			if (partPresenceVariationMap.get(part)[partOrder][i] == Boolean.TRUE) {
+				variations.add(i - 2);
+			}
+		}
+		return variations;
 	}
 
 	public int getTypeSeedOffset() {

@@ -213,7 +213,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	// arrangement
-	private Arrangement arrangement;
+	public static Arrangement arrangement;
 	NumPanel arrangementVariationChance;
 	NumPanel arrangementPartVariationChance;
 	JCheckBox arrangementManualOverride;
@@ -232,8 +232,8 @@ public class VibeComposerGUI extends JFrame
 	JScrollPane drumScrollPane;
 	JScrollPane arrangementScrollPane;
 	JScrollPane arrangementActualScrollPane;
-	JTable scrollableArrangementTable;
-	JTable scrollableArrangementActualTable;
+	public static JTable scrollableArrangementTable;
+	public static JTable scrollableArrangementActualTable;
 
 	JPanel actualArrangementCombinedPanel;
 	JPanel arrangementCombinedPanel;
@@ -1233,7 +1233,7 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void setActualModel(TableModel model) {
+	public static void setActualModel(TableModel model) {
 		scrollableArrangementActualTable.setModel(model);
 	}
 

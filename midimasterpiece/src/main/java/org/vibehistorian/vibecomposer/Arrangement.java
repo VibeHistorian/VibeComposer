@@ -257,19 +257,6 @@ public class Arrangement {
 
 	}
 
-	public void addSectionLast(JTable scrollableArrangementTable) {
-		resortByIndexes(scrollableArrangementTable);
-		Section lastSection = sections.get(sections.size() - 1);
-		sections.add(new Section(lastSection));
-
-	}
-
-	public void removeSectionLast(JTable scrollableArrangementTable) {
-		resortByIndexes(scrollableArrangementTable);
-		sections.remove(sections.size() - 1);
-
-	}
-
 	public boolean setFromActualTable(JTable t, boolean forceColumns) {
 		if (!overridden)
 			return false;
@@ -317,14 +304,16 @@ public class Arrangement {
 		int column = tbl.getSelectedColumn();
 		if (column == -1)
 			return;
-		if (isActual) {
+		/*if (isActual) {
 			overridden = true;
 			setFromActualTable(tbl, true);
 		} else {
 			overridden = false;
 			setFromModel(tbl);
+		}*/
+		if (column != tbl.convertColumnIndexToModel(column)) {
+			resortByIndexes(tbl);
 		}
-		//resortByIndexes(tbl);
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
@@ -336,14 +325,14 @@ public class Arrangement {
 		if (columns.length == 0) {
 			return;
 		}
-		if (isActual) {
+		/*if (isActual) {
 			overridden = true;
 			setFromActualTable(tbl, true);
 		} else {
 			overridden = false;
 			setFromModel(tbl);
-		}
-		//resortByIndexes(tbl);
+		}*/
+		resortByIndexes(tbl);
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));

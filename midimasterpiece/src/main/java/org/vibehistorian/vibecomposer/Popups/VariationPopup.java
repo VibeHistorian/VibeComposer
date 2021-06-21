@@ -3,6 +3,8 @@ package org.vibehistorian.vibecomposer.Popups;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -12,6 +14,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
 
 public class VariationPopup {
@@ -26,6 +29,8 @@ public class VariationPopup {
 	JScrollPane scroll;
 
 	public VariationPopup(int section, Section sec) {
+		addFrameWindowOperation();
+
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		for (int i = 0; i < 5; i++) {
 
@@ -76,6 +81,56 @@ public class VariationPopup {
 		frame.setVisible(true);
 
 		System.out.println("Opened arrangement variation page!");
+	}
+
+	private void addFrameWindowOperation() {
+		frame.addWindowListener(new WindowListener() {
+
+			@Override
+			public void windowOpened(WindowEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowClosing(WindowEvent e) {
+				VibeComposerGUI
+						.setActualModel(VibeComposerGUI.arrangement.convertToActualTableModel());
+
+			}
+
+			@Override
+			public void windowClosed(WindowEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowActivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+		});
+
 	}
 
 	public JFrame getFrame() {
