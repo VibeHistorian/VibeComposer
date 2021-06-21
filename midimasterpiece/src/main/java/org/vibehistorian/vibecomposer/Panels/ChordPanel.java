@@ -42,7 +42,7 @@ public class ChordPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(instPoolPicker);

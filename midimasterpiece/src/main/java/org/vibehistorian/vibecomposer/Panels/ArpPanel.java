@@ -33,7 +33,7 @@ public class ArpPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(3, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(removeButton);

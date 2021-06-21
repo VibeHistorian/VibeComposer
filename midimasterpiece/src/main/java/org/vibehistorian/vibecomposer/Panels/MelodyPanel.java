@@ -29,7 +29,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 

@@ -4125,7 +4125,7 @@ public class VibeComposerGUI extends JFrame
 
 			cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 			cp.setTransitionChance(chordPanelGenerator
-					.nextInt(Integer.valueOf(randomChordMaxSplitChance.getInt())));
+					.nextInt(Integer.valueOf(randomChordMaxSplitChance.getInt() + 1)));
 			cp.setTransitionSplit(
 					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);

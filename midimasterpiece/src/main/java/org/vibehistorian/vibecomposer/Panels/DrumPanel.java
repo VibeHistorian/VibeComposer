@@ -35,7 +35,7 @@ public class DrumPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(instrument);
 		this.add(removeButton);
 		copyButton.addActionListener(l);

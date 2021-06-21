@@ -241,6 +241,7 @@ public class Section {
 			for (int k = 0; k < data.length; k++) {
 				data[k] = partPresenceVariationMap.get(i)[k].clone();
 			}
+			dataCopy.put(i, data);
 		}
 		sec.partPresenceVariationMap = dataCopy;
 		return sec;
