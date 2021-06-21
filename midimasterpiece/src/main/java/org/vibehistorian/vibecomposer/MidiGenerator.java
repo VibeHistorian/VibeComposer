@@ -368,6 +368,9 @@ public class MidiGenerator implements JMC {
 		if (fillChordMelodyMap) {
 			makeMelodyPitchFrequencyMap();
 		}
+		if (genVars && variations != null) {
+			sec.setVariation(0, 0, variations);
+		}
 		return noteList;
 	}
 
@@ -1024,7 +1027,7 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getChordChance());
 					if (added && !cp.isMuted()) {
 						List<Integer> variations = (overridden) ? sec.getVariation(2, i) : null;
-						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures,
+						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures, sec,
 								variations);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.transpose(c, 12);
@@ -1055,7 +1058,8 @@ public class MidiGenerator implements JMC {
 					variationGen.setSeed(arrSeed + 200 + ap.getOrder());
 					// if arp1 supports melody with same instrument, always introduce it in second half
 					List<Integer> variations = (overridden) ? sec.getVariation(3, i) : null;
-					CPhrase a = fillArpFromPart(ap, chordProgression, usedMeasures, variations);
+					CPhrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec,
+							variations);
 					if (overridden) {
 						if (presences.contains(ap.getOrder())) {
 							copiedCPhrases.add(a);
@@ -1109,7 +1113,7 @@ public class MidiGenerator implements JMC {
 										.getArrangementPartVariationChance();
 						List<Integer> variations = (overridden) ? sec.getVariation(4, i) : null;
 						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures,
-								sectionChanceModifier, sectionForcedDynamics, variations);
+								sectionChanceModifier, sectionForcedDynamics, sec, variations);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.accent(d, 0.25);
 						}
@@ -1388,11 +1392,34 @@ public class MidiGenerator implements JMC {
 		maxVel = (maxVel < 1) ? 1 : maxVel;
 		Random variationGenerator = new Random(gc.getRandomSeed() + 1);
 		for (int i = 0; i < measures; i++) {
-			int extraSeed = (i > 0
-					&& variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance())
-							? 100
-							: 0;
+			int extraSeed = 0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
+				if (genVars && ((j == 0 && i > 0) || (j == chordInts.size()))) {
+					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
+						// pick one variation
+						int numberOfVars = 1;
+						int variationInt = variationGenerator.nextInt(numberOfVars);
+						System.out.println("Bass #1 variation: " + variationInt);
+						if (variations == null) {
+							variations = new ArrayList<>();
+						}
+						variations.add(variationInt);
+					}
+				}
+
+				if ((variations != null) && (j == 0 || j == chordInts.size())) {
+					for (Integer var : variations) {
+						switch (var) {
+						case 0:
+							extraSeed = 100;
+							break;
+						default:
+							throw new IllegalArgumentException("Too much variation!");
+						}
+					}
+				}
+
+
 				Random bassDynamics = new Random(gc.getRandomSeed());
 				int velSpace = maxVel - minVel;
 				if (gc.getBassPart().isUseRhythm()) {
@@ -1414,12 +1441,15 @@ public class MidiGenerator implements JMC {
 		}
 		Mod.transpose(cphraseBassRoot, -24);
 		cphraseBassRoot.setStartTime(START_TIME_DELAY);
+		if (genVars && variations != null) {
+			sec.setVariation(4, 0, variations);
+		}
 		return cphraseBassRoot;
 
 	}
 
 	protected CPhrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression, int measures,
-			List<Integer> variations) {
+			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
 		int mainGeneratorSeed = (int) cp.getPatternSeed() + cp.getOrder();
@@ -1569,12 +1599,14 @@ public class MidiGenerator implements JMC {
 				//cpr.flam(10 / 1000.0);
 			}
 		}
-
+		if (genVars && variations != null) {
+			sec.setVariation(2, getAbsoluteOrder(2, cp), variations);
+		}
 		return cpr;
 	}
 
 	protected CPhrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures,
-			List<Integer> variations) {
+			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 		CPhrase arpCPhrase = new CPhrase();
 
@@ -1710,12 +1742,16 @@ public class MidiGenerator implements JMC {
 			additionalDelay = (gc.getArpParts().get(i).getDelay() / 1000.0);
 		}*/
 		arpCPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
+		if (genVars && variations != null) {
+			sec.setVariation(3, getAbsoluteOrder(3, ap), variations);
+		}
 		return arpCPhrase;
 	}
 
 
 	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures,
-			int sectionChanceModifier, boolean sectionForcedDynamics, List<Integer> variations) {
+			int sectionChanceModifier, boolean sectionForcedDynamics, Section sec,
+			List<Integer> variations) {
 		boolean genVars = variations == null;
 		Phrase drumPhrase = new Phrase();
 
@@ -1814,13 +1850,23 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
-
+		if (genVars && variations != null) {
+			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
+		}
 
 		drumPhrase.setStartTime(START_TIME_DELAY + (dp.getDelay() / 1000.0));
-
-
 		return drumPhrase;
 
+	}
+
+	private int getAbsoluteOrder(int partNum, InstPart part) {
+		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(partNum);
+		for (int i = 0; i < panels.size(); i++) {
+			if (panels.get(i).getPanelOrder() == part.getOrder()) {
+				return i;
+			}
+		}
+		throw new IllegalArgumentException("Absolute order not found!");
 	}
 
 	protected Phrase fillChordSlash(List<int[]> actualProgression, int measures) {

@@ -285,6 +285,14 @@ public class Section {
 		return variations;
 	}
 
+	public void setVariation(int part, int partOrder, List<Integer> vars) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i + 2] = vars
+					.contains(Integer.valueOf(i));
+		}
+	}
+
 	public int getTypeSeedOffset() {
 		if (StringUtils.isEmpty(type)) {
 			return 0;

@@ -237,6 +237,7 @@ public class VibeComposerGUI extends JFrame
 
 	JPanel actualArrangementCombinedPanel;
 	JPanel arrangementCombinedPanel;
+	JPanel variationButtonsPanel;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -1273,6 +1274,8 @@ public class VibeComposerGUI extends JFrame
 			setActualModel(arrangement.convertToActualTableModel());
 		}
 
+		refreshVariationPopupButtons(arrangement.getSections().size());
+
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
@@ -1477,13 +1480,12 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(2000, 30));
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
-		JPanel variationButtonsPanel = new JPanel();
-		for (int i = 0; i < 11; i++) {
-			JButton butt = makeButton("Variations " + (i + 1),
-					"ArrangementOpenVariation," + (i + 1));
-			butt.setPreferredSize(new Dimension(1480 / 11, 50));
-			variationButtonsPanel.add(butt);
-		}
+
+
+		variationButtonsPanel = new JPanel();
+		refreshVariationPopupButtons(11);
+
+
 		actualArrangementCombinedPanel.add(variationButtonsPanel);
 		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 		JList<String> actualList = new JList<>();
@@ -1499,6 +1501,18 @@ public class VibeComposerGUI extends JFrame
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
+	}
+
+	private void refreshVariationPopupButtons(int count) {
+		if (count == variationButtonsPanel.getComponents().length) {
+			return;
+		}
+		variationButtonsPanel.removeAll();
+		for (int i = 0; i < count; i++) {
+			JButton butt = makeButton("Edit " + (i + 1), "ArrangementOpenVariation," + (i + 1));
+			butt.setPreferredSize(new Dimension(1480 / count, 50));
+			variationButtonsPanel.add(butt);
+		}
 	}
 
 	private void initRandomButtons(int startY, int anchorSide) {
@@ -2365,7 +2379,7 @@ public class VibeComposerGUI extends JFrame
 
 		// TODO: from real parts - set after generation!
 		setActualModel(MidiGenerator.gc.getArrangement().convertToActualTableModel());
-
+		refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
 				BufferedWriter bw = new BufferedWriter(fw);
