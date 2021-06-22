@@ -166,6 +166,8 @@ public class VibeComposerGUI extends JFrame
 	private static final double[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 
+	public static VariationPopup varPopup = null;
+
 
 	private static Color panelColorHigh, panelColorLow;
 	private static boolean isDarkMode = true;
@@ -1263,8 +1265,10 @@ public class VibeComposerGUI extends JFrame
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
-			VariationPopup variationJD = new VariationPopup(secOrder,
-					arrangement.getSections().get(secOrder - 1));
+			if (varPopup != null) {
+				varPopup.getFrame().dispose();
+			}
+			varPopup = new VariationPopup(secOrder, arrangement.getSections().get(secOrder - 1));
 			//variationJD.getFrame().setTitle(action);
 		}
 
