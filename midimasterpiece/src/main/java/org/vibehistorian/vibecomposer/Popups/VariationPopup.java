@@ -11,6 +11,7 @@ import java.awt.event.WindowListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -104,6 +105,9 @@ public class VariationPopup {
 			tablesPanel.add(header);
 			tablesPanel.add(tables[i]);
 		}
+
+		addRiskyVariations(sec);
+
 		scroll = new JScrollPane(tablesPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
@@ -114,6 +118,46 @@ public class VariationPopup {
 		frame.setVisible(true);
 
 		System.out.println("Opened arrangement variation page!");
+	}
+
+	private void addRiskyVariations(Section sec) {
+		JCheckBox chordTrick = new JCheckBox("Skip N-1 chord", false);
+		JCheckBox chordSwap = new JCheckBox("Swap Chords", false);
+		JCheckBox melodySwap = new JCheckBox("Swap Melody", false);
+
+		if (sec.getRiskyVariations() != null) {
+			chordTrick.setSelected(sec.getRiskyVariations().get(0));
+			chordSwap.setSelected(sec.getRiskyVariations().get(1));
+			melodySwap.setSelected(sec.getRiskyVariations().get(2));
+		}
+
+		chordTrick.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setRiskyVariation(0, chordTrick.isSelected());
+			}
+
+		});
+		chordSwap.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setRiskyVariation(1, chordSwap.isSelected());
+			}
+
+		});
+		melodySwap.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setRiskyVariation(2, melodySwap.isSelected());
+			}
+
+		});
+		tablesPanel.add(chordTrick);
+		tablesPanel.add(chordSwap);
+		tablesPanel.add(melodySwap);
 	}
 
 	private void addFrameWindowOperation() {

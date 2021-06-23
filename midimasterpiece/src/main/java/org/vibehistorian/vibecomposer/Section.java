@@ -77,13 +77,8 @@ public class Section {
 	// map integer(what), map integer(part order), list integer(section variation)
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
-	public Map<Integer, Object[][]> getPartPresenceVariationMap() {
-		return partPresenceVariationMap;
-	}
-
-	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
-		this.partPresenceVariationMap = partPresenceVariationMap;
-	}
+	private List<Boolean> riskyVariations = null;
+	public static final int RISKY_VARIATION_COUNT = 3;
 
 	public Section() {
 
@@ -345,5 +340,33 @@ public class Section {
 		if (partPresenceVariationMap.get(0) == null) {
 			initPartMap();
 		}
+	}
+
+
+	public Map<Integer, Object[][]> getPartPresenceVariationMap() {
+		return partPresenceVariationMap;
+	}
+
+	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
+		this.partPresenceVariationMap = partPresenceVariationMap;
+	}
+
+	public List<Boolean> getRiskyVariations() {
+		return riskyVariations;
+	}
+
+	public void setRiskyVariations(List<Boolean> riskyVariations) {
+		this.riskyVariations = riskyVariations;
+	}
+
+	public void setRiskyVariation(int order, Boolean value) {
+		if (riskyVariations == null) {
+			List<Boolean> riskyVars = new ArrayList<>();
+			for (int i = 0; i < Section.RISKY_VARIATION_COUNT; i++) {
+				riskyVars.add(Boolean.FALSE);
+			}
+			setRiskyVariations(riskyVars);
+		}
+		riskyVariations.set(order, value);
 	}
 }

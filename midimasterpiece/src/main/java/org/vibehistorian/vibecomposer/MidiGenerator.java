@@ -929,11 +929,20 @@ public class MidiGenerator implements JMC {
 				// safe *2
 				gc.setArrangementPartVariationChance(gc.getArrangementPartVariationChance() * 2);
 			}
+			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
+			List<Boolean> riskyVariations = sec.getRiskyVariations();
+			if (riskyVariations == null) {
+				riskyVariations = new ArrayList<>();
+				for (int i = 0; i < Section.RISKY_VARIATION_COUNT; i++) {
+					boolean isVariation = variationGen.nextInt(100) < gc
+							.getArrangementVariationChance();
+					riskyVariations.add(isVariation);
+				}
+			}
 
 			int usedMeasures = sec.getMeasures();
-			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
-			if (sec.getMeasures() == 2
-					&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
+
+			if (sec.getMeasures() == 2 && riskyVariations.get(0)) {
 				System.out.println("USING VARIATION!");
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
@@ -941,8 +950,7 @@ public class MidiGenerator implements JMC {
 				usedMeasures = 1;
 				measureVariationOverride = true;
 			} else {
-				if (!melodyBasedChordProgression.isEmpty()
-						&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
+				if (!melodyBasedChordProgression.isEmpty() && riskyVariations.get(1)) {
 					System.out.println("SWAPPED TO MELODY BASED CHORDS/ROOTS!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
@@ -977,8 +985,7 @@ public class MidiGenerator implements JMC {
 					List<int[]> usedRoots = rootProgression;
 
 					if (usedMeasures == sec.getMeasures() && notesSeedOffset > 0
-							&& !melodyBasedChordProgression.isEmpty()
-							&& variationGen.nextInt(100) < gc.getArrangementVariationChance()) {
+							&& !melodyBasedChordProgression.isEmpty() && riskyVariations.get(2)) {
 						usedMelodyProg = melodyBasedChordProgression;
 						usedRoots = melodyBasedRootProgression;
 						System.out.println("Melody uses MELODY BASED CHORDS!");
