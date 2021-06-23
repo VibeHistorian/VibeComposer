@@ -29,8 +29,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import javax.swing.JTable;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -193,7 +191,16 @@ public class Arrangement {
 	}
 
 	public TableModel convertToActualTableModel() {
-		TableModel model = new DefaultTableModel(7, getSections().size());
+		TableModel model = new DefaultTableModel(7, getSections().size()) {
+
+			private static final long serialVersionUID = 2770352745917910024L;
+
+			@Override
+			public boolean isCellEditable(int row, int col) {
+				return (row == 0);
+			}
+
+		};
 		for (int i = 0; i < getSections().size(); i++) {
 			Section s = getSections().get(i);
 			model.setValueAt(s.getType(), 0, i);
@@ -204,11 +211,11 @@ public class Arrangement {
 				model.setValueAt(pres, j + 2, i);
 			}
 		}
-		model.addTableModelListener(new TableModelListener() {
+		/*model.addTableModelListener(new TableModelListener() {
 			public void tableChanged(TableModelEvent evt) {
 				// here goes your code "on cell update"
 			}
-		});
+		});*/
 		return model;
 	}
 

@@ -99,6 +99,7 @@ import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -1238,6 +1239,8 @@ public class VibeComposerGUI extends JFrame
 
 	public static void setActualModel(TableModel model) {
 		scrollableArrangementActualTable.setModel(model);
+		scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
 	}
 
 	private void handleArrangementAction(String action, int seed, int maxLength) {
@@ -1478,6 +1481,9 @@ public class VibeComposerGUI extends JFrame
 				return scrollPaneDimension;
 			}
 		};
+		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+		scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		actualArrangementCombinedPanel = new JPanel();
 		actualArrangementCombinedPanel
 				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
