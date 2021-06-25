@@ -1244,6 +1244,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void handleArrangementAction(String action, int seed, int maxLength) {
+		boolean refreshActual = false;
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
@@ -1252,6 +1253,7 @@ public class VibeComposerGUI extends JFrame
 				arrangement.duplicateSection(scrollableArrangementTable, false);
 			} else {
 				arrangement.duplicateSection(scrollableArrangementActualTable, true);
+				refreshActual = true;
 			}
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
@@ -1261,6 +1263,7 @@ public class VibeComposerGUI extends JFrame
 				arrangement.removeSection(scrollableArrangementTable, false);
 			} else {
 				arrangement.removeSection(scrollableArrangementActualTable, true);
+				refreshActual = true;
 			}
 			//pieceLength.setText("" + --maxLength);
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
@@ -1272,17 +1275,16 @@ public class VibeComposerGUI extends JFrame
 				varPopup.getFrame().dispose();
 			}
 			varPopup = new VariationPopup(secOrder, arrangement.getSections().get(secOrder - 1));
+			refreshActual = true;
 			//variationJD.getFrame().setTitle(action);
 		}
 
-		if (instrumentTabPane.getSelectedIndex() == 5 && !arrangementManualOverride.isSelected()) {
+		if (!refreshActual) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		} else {
 			setActualModel(arrangement.convertToActualTableModel());
+			refreshVariationPopupButtons(arrangement.getSections().size());
 		}
-
-		refreshVariationPopupButtons(arrangement.getSections().size());
-
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
