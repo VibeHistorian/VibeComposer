@@ -41,7 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 public class Arrangement {
 	private static final List<String> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
-					"CHORUS3", "CLIMAX", "OUTRO" }));
+					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
 
 	private static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
@@ -55,7 +55,7 @@ public class Arrangement {
 		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 40, 50, 50));
 		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
 		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
-		defaultSections.put("CLIMAX", new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
+		defaultSections.put("CLIMAX", new Section("CLIMAX", 1, 100, 100, 100, 100, 100));
 		defaultSections.put("OUTRO", new Section("OUTRO", 1, 50, 70, 60, 40, 10));
 	}
 
@@ -124,7 +124,7 @@ public class Arrangement {
 			//System.out.println("DeepCopy for " + s);
 			Section sec = defaultSections.get(s).deepCopy();
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
-				// climax gets shortened, others get lengthened
+
 				if (sec.getMeasures() > 1) {
 					sec.setMeasures(1);
 				} else {

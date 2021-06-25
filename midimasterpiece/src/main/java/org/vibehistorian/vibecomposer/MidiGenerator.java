@@ -126,7 +126,6 @@ public class MidiGenerator implements JMC {
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
-	private boolean measureVariationOverride = false;
 
 	public MidiGenerator(GUIConfig gc) {
 		MidiGenerator.gc = gc;
@@ -252,7 +251,7 @@ public class MidiGenerator implements JMC {
 			for (int i = 0; i < stretchedChords.size(); i++) {
 				// either after first measure, or after first half of combined chord prog
 
-				if (genVars && ((i == 0 && o > 0) || (i == chordInts.size()))) {
+				if (genVars && ((i == 0) || (i == chordInts.size()))) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
 						int numberOfVars = 2;
@@ -895,6 +894,10 @@ public class MidiGenerator implements JMC {
 
 		fillAlternates(altProgressionDurations, altChordProgression, altRootProgression);
 
+		// run one empty pass through melody generation
+		generateMelodySkeletonFromChords(actualProgression, generatedRootProgression, 1, 0,
+				new Section(), null);
+
 		Arrangement arr = null;
 		if (gc.getArrangement().isPreviewChorus()) {
 			arr = new Arrangement();
@@ -918,8 +921,12 @@ public class MidiGenerator implements JMC {
 		}
 		boolean isPreview = arr.getSections().size() == 1;
 		boolean overridden = arr.isOverridden();
+		System.out.println("MidiGenerator - Overridden: " + overridden);
 		int arrSeed = (arr.getSeed() != 0) ? arr.getSeed() : mainGeneratorSeed;
+
+		int secOrder = -1;
 		for (Section sec : arr.getSections()) {
+			secOrder++;
 			System.out.println("Processing section.. " + sec.getType());
 			sec.setStartTime(measureLength * counter);
 
@@ -929,6 +936,9 @@ public class MidiGenerator implements JMC {
 				// safe *2
 				gc.setArrangementPartVariationChance(gc.getArrangementPartVariationChance() * 2);
 			}
+			int notesSeedOffset = sec.getTypeMelodyOffset();
+			System.out.println("Note offset category: " + notesSeedOffset);
+
 			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
 			List<Boolean> riskyVariations = sec.getRiskyVariations();
 			if (riskyVariations == null) {
@@ -936,22 +946,30 @@ public class MidiGenerator implements JMC {
 				for (int i = 0; i < Section.RISKY_VARIATION_COUNT; i++) {
 					boolean isVariation = variationGen.nextInt(100) < gc
 							.getArrangementVariationChance();
+					// generate "chord swap/melody swap" only for non-critical sections
+					if (i == 0) {
+						// if not last, and next section has the same Type
+						isVariation &= (secOrder < arr.getSections().size() - 1 && arr.getSections()
+								.get(secOrder + 1).getType().equals(sec.getType()));
+					}
+
+					if (i == 1 || i == 2) {
+						isVariation &= notesSeedOffset > 0;
+					}
 					riskyVariations.add(isVariation);
 				}
 			}
 
 			int usedMeasures = sec.getMeasures();
 
-			if (sec.getMeasures() == 2 && riskyVariations.get(0)) {
-				System.out.println("USING VARIATION!");
+			if (riskyVariations.get(0)) {
+				System.out.println("Risky Variation: Skip N-1 Chord!");
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
 				chordProgression = altChordProgression;
-				usedMeasures = 1;
-				measureVariationOverride = true;
 			} else {
-				if (!melodyBasedChordProgression.isEmpty() && riskyVariations.get(1)) {
-					System.out.println("SWAPPED TO MELODY BASED CHORDS/ROOTS!");
+				if (riskyVariations.get(1)) {
+					System.out.println("Risky Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
 				} else {
@@ -959,7 +977,6 @@ public class MidiGenerator implements JMC {
 					chordProgression = actualProgression;
 				}
 				progressionDurations = actualDurations;
-				measureVariationOverride = false;
 			}
 
 			// copied into empty sections
@@ -979,16 +996,15 @@ public class MidiGenerator implements JMC {
 				boolean added = (overridden && presences.contains(gc.getMelodyPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
 				if (added) {
-					int notesSeedOffset = sec.getTypeMelodyOffset();
-					System.out.println("Melody offset by " + notesSeedOffset + "..");
+
+
 					List<int[]> usedMelodyProg = chordProgression;
 					List<int[]> usedRoots = rootProgression;
 
-					if (usedMeasures == sec.getMeasures() && notesSeedOffset > 0
-							&& !melodyBasedChordProgression.isEmpty() && riskyVariations.get(2)) {
+					if (riskyVariations.get(2)) {
 						usedMelodyProg = melodyBasedChordProgression;
 						usedRoots = melodyBasedRootProgression;
-						System.out.println("Melody uses MELODY BASED CHORDS!");
+						System.out.println("Risky Variation: Melody Swap!");
 					}
 					List<Integer> variations = (overridden) ? sec.getVariation(0, 0) : null;
 					Phrase m = fillMelody(usedMelodyProg, usedRoots, usedMeasures, notesSeedOffset,
@@ -1313,7 +1329,7 @@ public class MidiGenerator implements JMC {
 
 		// 1: chord trick, max two measures
 		// 60 30 4 1 -> 60 30 1 - , 60 30 4 1
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 1; i++) {
 			altProgressionDurations.addAll(progressionDurations);
 			altChordProgression.addAll(chordProgression);
 			altRootProgression.addAll(rootProgression);
@@ -1401,7 +1417,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = 0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
-				if (genVars && ((j == 0 && i > 0) || (j == chordInts.size()))) {
+				if (genVars && ((j == 0) || (j == chordInts.size()))) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
 						int numberOfVars = 1;
@@ -1470,7 +1486,7 @@ public class MidiGenerator implements JMC {
 
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
-				if (genVars && ((j == 0 && i > 0) || (j == chordInts.size()))) {
+				if (genVars && ((j == 0) || (j == chordInts.size()))) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
 						int numberOfVars = 3;
@@ -1638,7 +1654,7 @@ public class MidiGenerator implements JMC {
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
-				if (genVars && ((j == 0 && i > 0) || (j == chordInts.size()))) {
+				if (genVars && ((j == 0) || (j == chordInts.size()))) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
 						int numberOfVars = 2;
@@ -1779,7 +1795,7 @@ public class MidiGenerator implements JMC {
 			// chord iter
 			for (int j = 0; j < chordsCount; j += chordSpan) {
 
-				if (genVars && ((j == 0 && o > 0) || (j == chordInts.size()))) {
+				if (genVars && ((j == 0) || (j == chordInts.size()))) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
 						int numberOfVars = 2;

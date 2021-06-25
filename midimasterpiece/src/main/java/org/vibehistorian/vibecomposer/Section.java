@@ -56,7 +56,6 @@ public class Section {
 
 	private String type;
 	private int measures;
-	private boolean useVariation = false;
 
 	private double startTime;
 
@@ -241,14 +240,6 @@ public class Section {
 		}
 		sec.partPresenceVariationMap = dataCopy;
 		return sec;
-	}
-
-	public boolean isUseVariation() {
-		return useVariation;
-	}
-
-	public void setUseVariation(boolean useVariation) {
-		this.useVariation = useVariation;
 	}
 
 	public Set<Integer> getPresence(int part) {
