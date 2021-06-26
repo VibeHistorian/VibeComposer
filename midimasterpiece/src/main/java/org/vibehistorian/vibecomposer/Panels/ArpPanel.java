@@ -84,7 +84,9 @@ public class ArpPanel extends InstPanel {
 		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			if (d != RhythmPattern.CUSTOM) {
+				pattern.addItem(d.toString());
+			}
 		}
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d.toString());

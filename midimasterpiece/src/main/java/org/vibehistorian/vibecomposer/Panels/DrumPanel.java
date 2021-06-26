@@ -63,6 +63,8 @@ public class DrumPanel extends InstPanel {
 		this.add(isVelocityPattern);
 		this.add(patternShift);
 
+		this.add(new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift));
+
 		this.add(new JLabel("Midi ch. 10"));
 
 
