@@ -2038,7 +2038,9 @@ public class MidiGenerator implements JMC {
 
 	private List<Integer> generateDrumPatternFromPart(DrumPart dp) {
 		Random uiGenerator1drumPattern = new Random(dp.getPatternSeed() + dp.getOrder() - 1);
-		List<Integer> premadePattern = dp.getPattern().getPatternByLength(dp.getHitsPerPattern());
+		List<Integer> premadePattern = (dp.getPattern() != RhythmPattern.CUSTOM)
+				? dp.getPattern().getPatternByLength(dp.getHitsPerPattern())
+				: dp.getCustomPattern();
 		List<Integer> drumPattern = new ArrayList<>();
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
 			// if random pause or not present in pattern: pause

@@ -23,6 +23,7 @@ public class DrumPanel extends InstPanel {
 
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
+	private DrumHitsPatternPanel comboPanel = null;
 
 	public void initComponents(ActionListener l) {
 
@@ -63,7 +64,8 @@ public class DrumPanel extends InstPanel {
 		this.add(isVelocityPattern);
 		this.add(patternShift);
 
-		this.add(new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift));
+		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift);
+		this.add(comboPanel);
 
 		this.add(new JLabel("Midi ch. 10"));
 
@@ -86,6 +88,7 @@ public class DrumPanel extends InstPanel {
 
 		part.setVelocityPattern(getIsVelocityPattern());
 		part.setSwingPercent(getSwingPercent());
+		part.setCustomPattern(comboPanel.getTruePattern());
 
 		part.setOrder(getPanelOrder());
 		return part;
@@ -94,7 +97,7 @@ public class DrumPanel extends InstPanel {
 	public void setFromDrumPart(DrumPart part) {
 
 		setFromInstPart(part);
-
+		comboPanel.setTruePattern(part.getCustomPattern());
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
 
