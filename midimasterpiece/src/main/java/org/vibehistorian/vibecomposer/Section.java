@@ -338,6 +338,7 @@ public class Section {
 		return partPresenceVariationMap;
 	}
 
+	@XmlTransient
 	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
 		this.partPresenceVariationMap = partPresenceVariationMap;
 	}
