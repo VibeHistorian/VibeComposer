@@ -1552,7 +1552,7 @@ public class MidiGenerator implements JMC {
 				double shortenedTo = (gc.getChordGenSettings().isUseShortening()
 						&& cp.getInstPool() == POOL.PLUCK) ? 0.2 : 1.0;
 
-				if (cp.getPattern() == RhythmPattern.RANDOM) {
+				if (cp.getPattern() == RhythmPattern.FULL) {
 					double splitTime = gc.getChordGenSettings().isUseSplit()
 							? cp.getTransitionSplit()
 							: DEFAULT_CHORD_SPLIT;
@@ -1616,7 +1616,7 @@ public class MidiGenerator implements JMC {
 
 		// chord strum
 		if (gc.getChordGenSettings().isUseStrum()) {
-			if (cp.getPattern() == RhythmPattern.RANDOM) {
+			if (cp.getPattern() == RhythmPattern.FULL) {
 				cpr.flam(cp.getStrum() / 1000.0);
 			} else {
 				//cpr.flam(10 / 1000.0);
@@ -1975,7 +1975,7 @@ public class MidiGenerator implements JMC {
 		}
 		List<Integer> arpPausesPattern = new ArrayList<>();
 
-		if (ap.getPattern() == RhythmPattern.RANDOM) {
+		if (ap.getPattern() == RhythmPattern.FULL) {
 			for (int i = 0; i < ap.getHitsPerPattern(); i++) {
 				if (uiGenerator4arpPauses.nextInt(100) < ap.getPauseChance()) {
 					arpPausesPattern.add(0);

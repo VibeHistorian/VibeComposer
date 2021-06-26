@@ -209,7 +209,7 @@ public abstract class InstPanel extends JPanel {
 
 	public RhythmPattern getPattern() {
 		if (StringUtils.isEmpty((String) pattern.getSelectedItem())) {
-			return RhythmPattern.RANDOM;
+			return RhythmPattern.FULL;
 		}
 		return RhythmPattern.valueOf((String) pattern.getSelectedItem());
 	}

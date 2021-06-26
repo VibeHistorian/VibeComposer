@@ -42,30 +42,34 @@ public class DrumPanel extends InstPanel {
 		copyButton.addActionListener(l);
 		this.add(copyButton);
 
+		// pattern business
 		this.add(hitsPerPattern);
-		this.add(chordSpan);
+		this.add(new JLabel("Pattern"));
+		this.add(pattern);
+		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, this);
+		this.add(comboPanel);
+		this.add(patternShift);
+		this.add(isVelocityPattern);
 
+		this.add(chordSpan);
 		this.add(pauseChance);
+
+		this.add(swingPercent);
+		this.add(new JLabel("Fill"));
+		this.add(chordSpanFill);
+
 		this.add(exceptionChance);
 
 		this.add(velocityMin);
 		this.add(velocityMax);
 
-		this.add(swingPercent);
+
 		this.add(delay);
 
-		this.add(new JLabel("Fill"));
-		this.add(chordSpanFill);
 
 		this.add(new JLabel("Seed"));
 		this.add(patternSeed);
-		this.add(new JLabel("Pattern"));
-		this.add(pattern);
-		this.add(isVelocityPattern);
-		this.add(patternShift);
 
-		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift);
-		this.add(comboPanel);
 
 		this.add(new JLabel("Midi ch. 10"));
 

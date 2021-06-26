@@ -3101,8 +3101,8 @@ public class VibeComposerGUI extends JFrame
 		if (ae.getActionCommand() == "ClearPatterns") {
 			for (DrumPanel dp : drumPanels) {
 				dp.setPatternSeed(0);
-				if (dp.getPattern() != RhythmPattern.RANDOM) {
-					dp.setPattern(RhythmPattern.RANDOM);
+				if (dp.getPattern() != RhythmPattern.FULL) {
+					dp.setPattern(RhythmPattern.FULL);
 					dp.setPauseChance(3 * dp.getPauseChance());
 				}
 
@@ -3139,7 +3139,7 @@ public class VibeComposerGUI extends JFrame
 		{
 			for (ChordPanel cp : chordPanels) {
 				cp.setPatternSeed(0);
-				cp.setPattern(RhythmPattern.RANDOM);
+				cp.setPattern(RhythmPattern.FULL);
 
 			}
 		}
@@ -3179,7 +3179,7 @@ public class VibeComposerGUI extends JFrame
 		if (ae.getActionCommand() == "ClearArpPatterns") {
 			for (ArpPanel ap : arpPanels) {
 				ap.setPatternSeed(0);
-				ap.setPattern(RhythmPattern.RANDOM);
+				ap.setPattern(RhythmPattern.FULL);
 
 			}
 		}
