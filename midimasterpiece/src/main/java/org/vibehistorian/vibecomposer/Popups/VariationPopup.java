@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -36,7 +37,7 @@ public class VariationPopup {
 
 	JScrollPane scroll;
 
-	public VariationPopup(int section, Section sec) {
+	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
 		JPanel measuresPanel = new JPanel();
 		measuresPanel.add(new JLabel("Measures "));
@@ -111,7 +112,12 @@ public class VariationPopup {
 		scroll = new JScrollPane(tablesPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
-		frame.setPreferredSize(new Dimension(400, 600));
+
+		int heightLimit = 800;
+		frame.setPreferredSize(new Dimension(400,
+				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
+		int newLocX = parentLoc.x - 190;
+		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);
 		frame.add(scroll);
 		frame.setTitle("Variations - Section " + section);
 		frame.pack();

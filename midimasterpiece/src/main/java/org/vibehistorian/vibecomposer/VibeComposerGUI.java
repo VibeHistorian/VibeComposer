@@ -29,6 +29,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Transferable;
@@ -1274,7 +1276,10 @@ public class VibeComposerGUI extends JFrame
 			if (varPopup != null) {
 				varPopup.getFrame().dispose();
 			}
-			varPopup = new VariationPopup(secOrder, arrangement.getSections().get(secOrder - 1));
+			varPopup = new VariationPopup(secOrder, arrangement.getSections().get(secOrder - 1),
+					new Point(MouseInfo.getPointerInfo().getLocation().x,
+							vibeComposerGUI.getLocation().y),
+					vibeComposerGUI.getSize());
 			refreshActual = true;
 			//variationJD.getFrame().setTitle(action);
 		}
