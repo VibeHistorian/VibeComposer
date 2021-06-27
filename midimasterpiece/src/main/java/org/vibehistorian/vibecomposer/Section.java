@@ -49,7 +49,7 @@ public class Section {
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" }, { "#", "Incl.", "OffsetSeed" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "ForceRandOct" },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 
 	public static final int VARIATION_CHANCE = 30;

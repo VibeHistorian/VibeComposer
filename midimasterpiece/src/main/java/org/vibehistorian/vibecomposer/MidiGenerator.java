@@ -1657,6 +1657,7 @@ public class MidiGenerator implements JMC {
 			int chordSpanPart = 0;
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
+			boolean forceRandomOct = false;
 
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
@@ -1664,7 +1665,7 @@ public class MidiGenerator implements JMC {
 				if (genVars && (j == 0)) {
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// pick one variation
-						int numberOfVars = 2;
+						int numberOfVars = 3;
 						int variationInt = variationGenerator.nextInt(numberOfVars);
 
 						if (variations == null) {
@@ -1686,6 +1687,9 @@ public class MidiGenerator implements JMC {
 							break;
 						case 1:
 							ignoreChordSpanFill = true;
+							break;
+						case 2:
+							forceRandomOct = true;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -1725,7 +1729,7 @@ public class MidiGenerator implements JMC {
 							: ((patternNum < 6) ? 0 : 12);
 
 					int pitch = chord[patternNum % chord.length];
-					if (gc.isUseOctaveAdjustments()) {
+					if (gc.isUseOctaveAdjustments() || forceRandomOct) {
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
 					}
 
