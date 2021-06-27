@@ -107,6 +107,8 @@ public class DrumHitsPatternPanel extends JPanel {
 					@Override
 					public void run() {
 						int nowHits = hitsPanel.getInt();
+						if (nowHits > 32)
+							nowHits = 32;
 						if (nowHits > lastHits) {
 							for (int i = lastHits; i < nowHits; i++) {
 								hitChecks[i].setVisible(true);
