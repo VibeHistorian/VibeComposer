@@ -265,8 +265,7 @@ public class Arrangement {
 	}
 
 	public boolean setFromActualTable(JTable t, boolean forceColumns) {
-		if (!overridden)
-			return false;
+
 		// TODO: possiblity to catch errors and return false
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
@@ -277,8 +276,8 @@ public class Arrangement {
 				sections.add(new Section());
 			}
 		}
-		if (m.getColumnCount() != sections.size()) {
-			overridden = false;
+
+		if (sections.size() != m.getColumnCount()) {
 			return false;
 		}
 

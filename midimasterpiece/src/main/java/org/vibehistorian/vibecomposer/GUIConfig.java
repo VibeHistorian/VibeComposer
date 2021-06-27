@@ -42,6 +42,7 @@ public class GUIConfig {
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
+	private Arrangement actualArrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
 	private int arrangementPartVariationChance = 30;
 	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
@@ -362,8 +363,16 @@ public class GUIConfig {
 		return arrangement;
 	}
 
+	public Arrangement getActualArrangement() {
+		return actualArrangement;
+	}
+
 	public void setArrangement(Arrangement arrangement) {
 		this.arrangement = arrangement;
+	}
+
+	public void setActualArrangement(Arrangement arrangement) {
+		this.actualArrangement = arrangement;
 	}
 
 	public ScaleMode getScaleMode() {

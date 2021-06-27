@@ -178,8 +178,8 @@ public class VariationPopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				VibeComposerGUI.varPopup = null;
-				VibeComposerGUI
-						.setActualModel(VibeComposerGUI.arrangement.convertToActualTableModel());
+				VibeComposerGUI.setActualModel(
+						VibeComposerGUI.actualArrangement.convertToActualTableModel());
 
 			}
 

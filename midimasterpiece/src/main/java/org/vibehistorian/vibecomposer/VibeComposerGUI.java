@@ -218,6 +218,7 @@ public class VibeComposerGUI extends JFrame
 
 	// arrangement
 	public static Arrangement arrangement;
+	public static Arrangement actualArrangement;
 	NumPanel arrangementVariationChance;
 	NumPanel arrangementPartVariationChance;
 	JCheckBox arrangementManualOverride;
@@ -1253,7 +1254,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSection(scrollableArrangementTable, false);
 			} else {
-				arrangement.duplicateSection(scrollableArrangementActualTable, true);
+				actualArrangement.duplicateSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
 			}
 			if (arrangement.getSections().size() > maxLength) {
@@ -1263,7 +1264,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSection(scrollableArrangementTable, false);
 			} else {
-				arrangement.removeSection(scrollableArrangementActualTable, true);
+				actualArrangement.removeSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
 			}
 			//pieceLength.setText("" + --maxLength);
@@ -1275,7 +1276,8 @@ public class VibeComposerGUI extends JFrame
 			if (varPopup != null) {
 				varPopup.getFrame().dispose();
 			}
-			varPopup = new VariationPopup(secOrder, arrangement.getSections().get(secOrder - 1),
+			varPopup = new VariationPopup(secOrder,
+					actualArrangement.getSections().get(secOrder - 1),
 					new Point(MouseInfo.getPointerInfo().getLocation().x,
 							vibeComposerGUI.getLocation().y),
 					vibeComposerGUI.getSize());
@@ -1286,8 +1288,8 @@ public class VibeComposerGUI extends JFrame
 		if (!refreshActual) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		} else {
-			setActualModel(arrangement.convertToActualTableModel());
-			refreshVariationPopupButtons(arrangement.getSections().size());
+			setActualModel(actualArrangement.convertToActualTableModel());
+			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
 	}
 
@@ -1400,11 +1402,15 @@ public class VibeComposerGUI extends JFrame
 		arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		arrangement = new Arrangement();
+		actualArrangement = new Arrangement();
 		arrangement.generateDefaultArrangement();
+		actualArrangement.generateDefaultArrangement();
 		if (useArrangement.isSelected()) {
 			arrangement.setPreviewChorus(false);
+			actualArrangement.setPreviewChorus(false);
 		} else {
 			arrangement.setPreviewChorus(true);
+			actualArrangement.setPreviewChorus(true);
 		}
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		scrollableArrangementTable.setRowSelectionAllowed(false);
@@ -1476,11 +1482,10 @@ public class VibeComposerGUI extends JFrame
 				return comp;
 			}
 		};
-		TableModel actualModel = new DefaultTableModel(7, 11);
 
 		scrollableArrangementActualTable.setRowHeight(35);
 		scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
-		scrollableArrangementActualTable.setModel(actualModel);
+		scrollableArrangementActualTable.setModel(actualArrangement.convertToActualTableModel());
 		arrangementActualScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
@@ -1872,9 +1877,9 @@ public class VibeComposerGUI extends JFrame
 							//else
 							//currentTime.setText(millisecondsToTimeString(slider.getValue()));
 						}
-						if (arrangement != null && slider.getMaximum() > 0) {
+						if (actualArrangement != null && slider.getMaximum() > 0) {
 							int val = slider.getValue();
-							int arrangementSize = arrangement.getSections().stream()
+							int arrangementSize = actualArrangement.getSections().stream()
 									.mapToInt(e -> e.getMeasures()).sum();
 							if (arrangementSize > 0) {
 								int divisor = slider.getMaximum() / arrangementSize;
@@ -1885,7 +1890,7 @@ public class VibeComposerGUI extends JFrame
 									if (useArrangement.isSelected()) {
 										Section sec = null;
 										int sizeCounter = 0;
-										for (Section arrSec : arrangement.getSections()) {
+										for (Section arrSec : actualArrangement.getSections()) {
 											if (sizeCounter == sectIndex || (sectIndex < sizeCounter
 													+ arrSec.getMeasures())) {
 												sec = arrSec;
@@ -2366,7 +2371,7 @@ public class VibeComposerGUI extends JFrame
 			});
 		}
 
-		MidiGenerator melodyGen = new MidiGenerator(copyGUItoConfig(false));
+		MidiGenerator melodyGen = new MidiGenerator(copyGUItoConfig());
 		fillUserParameters();
 
 		File makeDir = new File(MIDIS_FOLDER);
@@ -2391,7 +2396,20 @@ public class VibeComposerGUI extends JFrame
 		currentMidi = null;
 
 		// TODO: from real parts - set after generation!
-		setActualModel(MidiGenerator.gc.getArrangement().convertToActualTableModel());
+		if (MidiGenerator.gc.getArrangement().isOverridden()) {
+			System.out.println("WRITING FROM ACTUAL!");
+			setActualModel(MidiGenerator.gc.getActualArrangement().convertToActualTableModel());
+		} else {
+			setActualModel(MidiGenerator.gc.getArrangement().convertToActualTableModel());
+		}
+
+		actualArrangement = new Arrangement();
+		actualArrangement.setPreviewChorus(false);
+		actualArrangement.getSections().clear();
+		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
+			actualArrangement.getSections().add(sec.deepCopy());
+		}
+
 		refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
@@ -2491,8 +2509,8 @@ public class VibeComposerGUI extends JFrame
 			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
-			slider.setMajorTickSpacing(slider.getMaximum()
-					/ arrangement.getSections().stream().mapToInt(e -> e.getMeasures()).sum());
+			slider.setMajorTickSpacing(slider.getMaximum() / actualArrangement.getSections()
+					.stream().mapToInt(e -> e.getMeasures()).sum());
 
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
@@ -2605,7 +2623,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void randomizeUserChords() {
-		MidiGenerator mg = new MidiGenerator(copyGUItoConfig(false));
+		MidiGenerator mg = new MidiGenerator(copyGUItoConfig());
 		MidiGenerator.FIRST_CHORD = 0;
 		MidiGenerator.LAST_CHORD = 0;
 		MidiGenerator.userChords.clear();
@@ -2922,7 +2940,7 @@ public class VibeComposerGUI extends JFrame
 				File savedMidi = new File(finalFilePath);
 				try {
 					FileUtils.copyFile(currentMidi, savedMidi);
-					copyGUItoConfig(true);
+					copyGUItoConfig();
 					marshal(finalFilePath);
 				} catch (IOException | JAXBException e) {
 					// TODO Auto-generated catch block
@@ -3402,6 +3420,8 @@ public class VibeComposerGUI extends JFrame
 		instrumentTabPane.setTitleAt(3, " Arps  (" + arpPanels.size() + ")");
 		instrumentTabPane.setTitleAt(4, " Drums (" + drumPanels.size() + ")");
 		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangement.getSections().size() + ")");
+		instrumentTabPane.setTitleAt(6,
+				"Generated Arrangement (" + actualArrangement.getSections().size() + ")");
 	}
 
 	public void fillUserParameters() {
@@ -3663,8 +3683,12 @@ public class VibeComposerGUI extends JFrame
 		return (GUIConfig) context.createUnmarshaller().unmarshal(new FileReader(f));
 	}
 
-	public GUIConfig copyGUItoConfig(boolean storage) {
+	public GUIConfig copyGUItoConfig() {
 		// seed
+		//GUIConfig gc = new GUIConfig();
+
+		System.out.println("Sections in actual BEFORE: " + actualArrangement.getSections().size());
+
 		guiConfig.setRandomSeed(lastRandomSeed);
 
 		// arrangement
@@ -3672,18 +3696,26 @@ public class VibeComposerGUI extends JFrame
 			arrangement.setPreviewChorus(true);
 		} else {
 			arrangement.setPreviewChorus(false);
-			boolean overrideSuccessful = !storage
-					&& arrangement.setFromActualTable(scrollableArrangementActualTable, false);
-			System.out.println("OVERRIDE OK?: " + overrideSuccessful);
-			if (!overrideSuccessful) {
-				arrangement.setFromModel(scrollableArrangementTable);
-			}
-
 		}
+		arrangement.setFromModel(scrollableArrangementTable);
+		boolean overrideSuccessful = actualArrangement.setFromActualTable(
+				scrollableArrangementActualTable, false) && arrangementManualOverride.isSelected();
+		System.out.println("OVERRIDE OK?: " + overrideSuccessful);
+		if (overrideSuccessful) {
+			arrangement.setOverridden(true);
+		} else {
+			arrangement.setOverridden(false);
+		}
+
 		arrangement.setSeed((Integer.valueOf(arrangementSeed.getText()) != 0)
 				? Integer.valueOf(arrangementSeed.getText())
 				: lastRandomSeed);
+		actualArrangement.setSeed((Integer.valueOf(arrangementSeed.getText()) != 0)
+				? Integer.valueOf(arrangementSeed.getText())
+				: lastRandomSeed);
+		System.out.println("Sections in actual AFTER: " + actualArrangement.getSections().size());
 		guiConfig.setArrangement(arrangement);
+		guiConfig.setActualArrangement(actualArrangement);
 		guiConfig.setArrangementVariationChance(
 				Integer.valueOf(arrangementVariationChance.getInt()));
 		guiConfig.setArrangementPartVariationChance(
@@ -3767,6 +3799,7 @@ public class VibeComposerGUI extends JFrame
 
 		// arrangement
 		arrangement = guiConfig.getArrangement();
+		actualArrangement = guiConfig.getActualArrangement();
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(guiConfig.getArrangementPartVariationChance());
 		arrangementAffectsDrumVelocity

@@ -903,12 +903,16 @@ public class MidiGenerator implements JMC {
 				new Section(), null);
 
 		Arrangement arr = null;
-		if (gc.getArrangement().isPreviewChorus()) {
-			arr = new Arrangement();
-			gc.setArrangementPartVariationChance(0);
-			gc.setArrangementVariationChance(0);
+		if (gc.getArrangement().isOverridden()) {
+			arr = gc.getActualArrangement();
 		} else {
-			arr = gc.getArrangement();
+			if (gc.getArrangement().isPreviewChorus()) {
+				arr = new Arrangement();
+				gc.setArrangementPartVariationChance(0);
+				gc.setArrangementVariationChance(0);
+			} else {
+				arr = gc.getArrangement();
+			}
 		}
 
 
@@ -1303,6 +1307,8 @@ public class MidiGenerator implements JMC {
 			});
 
 		}
+
+		gc.setActualArrangement(arr);
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
