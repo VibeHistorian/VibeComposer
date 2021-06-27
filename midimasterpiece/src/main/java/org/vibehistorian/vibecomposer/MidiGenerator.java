@@ -1013,7 +1013,17 @@ public class MidiGenerator implements JMC {
 					List<Integer> variations = (overridden) ? sec.getVariation(0, 0) : null;
 					Phrase m = fillMelody(usedMelodyProg, usedRoots, usedMeasures, notesSeedOffset,
 							sec, variations);
-
+					// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part
+					if (notesSeedOffset == 0
+							&& sec.getVariation(0, 0).contains(Integer.valueOf(0))) {
+						Phrase m2 = m.copy();
+						Mod.transpose(m2, -12);
+						Part melPart = new Part();
+						melPart.add(m2);
+						melPart.add(m);
+						Mod.consolidate(melPart);
+						m = melPart.getPhrase(0);
+					}
 					sec.setMelody(m);
 					if (!overridden)
 						sec.setPresence(0, 0);
