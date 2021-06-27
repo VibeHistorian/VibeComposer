@@ -3800,6 +3800,10 @@ public class VibeComposerGUI extends JFrame
 		// arrangement
 		arrangement = guiConfig.getArrangement();
 		actualArrangement = guiConfig.getActualArrangement();
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
+		setActualModel(actualArrangement.convertToActualTableModel());
+		refreshVariationPopupButtons(actualArrangement.getSections().size());
+
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(guiConfig.getArrangementPartVariationChance());
 		arrangementAffectsDrumVelocity

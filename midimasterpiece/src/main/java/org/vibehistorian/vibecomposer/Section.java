@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -239,6 +240,9 @@ public class Section {
 			dataCopy.put(i, data);
 		}
 		sec.partPresenceVariationMap = dataCopy;
+		if (riskyVariations != null) {
+			sec.riskyVariations = new Vector<>(riskyVariations);
+		}
 		return sec;
 	}
 
@@ -338,7 +342,7 @@ public class Section {
 		return partPresenceVariationMap;
 	}
 
-	@XmlTransient
+
 	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
 		this.partPresenceVariationMap = partPresenceVariationMap;
 	}

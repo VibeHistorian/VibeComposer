@@ -903,8 +903,10 @@ public class MidiGenerator implements JMC {
 				new Section(), null);
 
 		Arrangement arr = null;
+		boolean overridden = false;
 		if (gc.getArrangement().isOverridden()) {
 			arr = gc.getActualArrangement();
+			overridden = true;
 		} else {
 			if (gc.getArrangement().isPreviewChorus()) {
 				arr = new Arrangement();
@@ -928,7 +930,6 @@ public class MidiGenerator implements JMC {
 			};
 		}
 		boolean isPreview = arr.getSections().size() == 1;
-		boolean overridden = arr.isOverridden();
 		System.out.println("MidiGenerator - Overridden: " + overridden);
 		int arrSeed = (arr.getSeed() != 0) ? arr.getSeed() : mainGeneratorSeed;
 
@@ -1153,7 +1154,9 @@ public class MidiGenerator implements JMC {
 				}
 				sec.setDrums(copiedPhrases);
 			}
-
+			if (sec.getRiskyVariations() == null) {
+				sec.setRiskyVariations(riskyVariations);
+			}
 			counter += sec.getMeasures();
 		}
 		System.out.println("Added phrases/cphrases to sections..");
