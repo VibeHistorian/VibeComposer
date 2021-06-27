@@ -101,7 +101,6 @@ import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -1490,7 +1489,7 @@ public class VibeComposerGUI extends JFrame
 		};
 		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
 		scrollableArrangementActualTable.setRowSelectionAllowed(false);
-		scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		actualArrangementCombinedPanel = new JPanel();
 		actualArrangementCombinedPanel
 				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
@@ -1877,32 +1876,29 @@ public class VibeComposerGUI extends JFrame
 							int val = slider.getValue();
 							int arrangementSize = arrangement.getSections().stream()
 									.mapToInt(e -> e.getMeasures()).sum();
-							if (arrangementSize == 0) {
-								arrangementSize = 1;
-								System.out.println("ARRANGEMENT WAS 0!");
-							}
-							int divisor = slider.getMaximum() / arrangementSize;
-							int sectIndex = (val - 1) / divisor;
-							if (sectIndex >= arrangementSize) {
-								sectionText.setText("End");
-							} else {
-								if (useArrangement.isSelected()) {
-									Section sec = null;
-									int sizeCounter = 0;
-									for (Section arrSec : arrangement.getSections()) {
-										if (sizeCounter == sectIndex || (sectIndex < sizeCounter
-												+ arrSec.getMeasures())) {
-											sec = arrSec;
-											break;
-										}
-										sizeCounter += arrSec.getMeasures();
-									}
-									String sectionName = sec.getType().toString();
-									sectionText.setText(sectionName);
+							if (arrangementSize > 0) {
+								int divisor = slider.getMaximum() / arrangementSize;
+								int sectIndex = (val - 1) / divisor;
+								if (sectIndex >= arrangementSize) {
+									sectionText.setText("End");
 								} else {
-									sectionText.setText("ALL INST");
+									if (useArrangement.isSelected()) {
+										Section sec = null;
+										int sizeCounter = 0;
+										for (Section arrSec : arrangement.getSections()) {
+											if (sizeCounter == sectIndex || (sectIndex < sizeCounter
+													+ arrSec.getMeasures())) {
+												sec = arrSec;
+												break;
+											}
+											sizeCounter += arrSec.getMeasures();
+										}
+										String sectionName = sec.getType().toString();
+										sectionText.setText(sectionName);
+									} else {
+										sectionText.setText("ALL INST");
+									}
 								}
-
 							}
 
 
