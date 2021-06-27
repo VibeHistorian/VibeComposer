@@ -3675,6 +3675,7 @@ public class VibeComposerGUI extends JFrame
 		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
 		mar.marshal(guiConfig, new File(path.substring(0, path.length() - 4) + "-guiConfig.xml"));
 	}
 
