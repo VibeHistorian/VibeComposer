@@ -935,6 +935,7 @@ public class MidiGenerator implements JMC {
 		System.out.println("MidiGenerator - Overridden: " + overridden);
 		int arrSeed = (arr.getSeed() != 0) ? arr.getSeed() : mainGeneratorSeed;
 
+		int originalPartVariationChance = gc.getArrangementPartVariationChance();
 		int secOrder = -1;
 		for (Section sec : arr.getSections()) {
 			secOrder++;
@@ -944,8 +945,11 @@ public class MidiGenerator implements JMC {
 			Random rand = new Random();
 
 			if (sec.getType().equals("CLIMAX")) {
-				// safe *2
-				gc.setArrangementPartVariationChance(gc.getArrangementPartVariationChance() * 2);
+				// increase variations in follow-up CLIMAX sections, reset when climax ends
+				gc.setArrangementPartVariationChance(
+						gc.getArrangementPartVariationChance() + originalPartVariationChance);
+			} else {
+				gc.setArrangementPartVariationChance(originalPartVariationChance);
 			}
 			int notesSeedOffset = sec.getTypeMelodyOffset();
 			System.out.println("Note offset category: " + notesSeedOffset);
