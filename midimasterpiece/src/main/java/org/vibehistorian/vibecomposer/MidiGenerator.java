@@ -1101,11 +1101,11 @@ public class MidiGenerator implements JMC {
 					// if arp1 supports melody with same instrument, always introduce it in second half
 					List<Integer> variations = (overridden) ? sec.getVariation(3, i) : null;
 					boolean added = (overridden && presences.contains(ap.getOrder()))
-							|| (!overridden && rand.nextInt(100) < sec.getArpChance()
+							|| (!overridden && rand.nextInt(100) < sec.getArpChance() && i > 0
 									&& !ap.isMuted());
 					added |= (!overridden && i == 0
 							&& ap.getInstrument() == gc.getMelodyPart().getInstrument()
-							&& (isPreview || counter > ((arr.getSections().size() + 1) / 2)
+							&& ((isPreview || counter > ((arr.getSections().size() - 1) / 2))
 									&& !ap.isMuted()));
 
 					if (added) {
