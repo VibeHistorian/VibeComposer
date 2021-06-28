@@ -52,30 +52,30 @@ public abstract class InstPanel extends JPanel {
 	protected POOL instPool = POOL.PLUCK;
 	protected JComboBox<String> chordSpanFill = new JComboBox<String>();
 
-	protected NumPanel hitsPerPattern = new NumPanel("Hits#", 8, 1, 32);
-	protected NumPanel chordSpan = new NumPanel("Chords#", 1, 1, 4);
+	protected KnobPanel hitsPerPattern = new KnobPanel("Hits#", 8, 1, 32);
+	protected KnobPanel chordSpan = new KnobPanel("Chords#", 1, 1, 4);
 
-	protected NumPanel chordNotesStretch = new NumPanel("", 3, 2, 6);
+	protected KnobPanel chordNotesStretch = new KnobPanel("", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
-	protected NumPanel pauseChance = new NumPanel("Pause%", 0);
-	protected NumPanel exceptionChance = new NumPanel("Exc.%", 5);
+	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
+	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 5);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
-	protected NumPanel patternRepeat = new NumPanel("Repeat#", 2, 1, 4);
+	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 2, 1, 4);
 
-	protected NumPanel transpose = new NumPanel("Transpose", 0, -36, 36, 12);
-	protected NumPanel delay = new NumPanel("Delay", 0, -500, 500);
+	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
+	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
 
-	protected NumPanel velocityMin = new NumPanel("MinVel", 70, 0, 126);
-	protected NumPanel velocityMax = new NumPanel("MaxVel", 90, 1, 127);
+	protected KnobPanel velocityMin = new KnobPanel("MinVel", 70, 0, 126);
+	protected KnobPanel velocityMax = new KnobPanel("MaxVel", 90, 1, 127);
 
-	protected NumPanel swingPercent = new NumPanel("Swing%", 50);
+	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
 
 	protected JLabel panelOrder = new JLabel("1");
 
 	protected JTextField patternSeed = new JTextField("0", 8);
 	protected JComboBox<String> pattern = new JComboBox<String>();
-	protected NumPanel patternShift = new NumPanel("Shift", 0, 0, 8);
+	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
 	protected JCheckBox muteInst = new JCheckBox("Excl.", false);

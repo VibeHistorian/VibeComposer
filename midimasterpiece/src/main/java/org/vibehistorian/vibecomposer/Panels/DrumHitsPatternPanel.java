@@ -23,9 +23,9 @@ public class DrumHitsPatternPanel extends JPanel {
 
 	private static final long serialVersionUID = 6963518339035392918L;
 
-	private NumPanel hitsPanel = null;
+	private KnobPanel hitsPanel = null;
 	private JComboBox<String> patternType = null;
-	private NumPanel shiftPanel = null;
+	private KnobPanel shiftPanel = null;
 	private int lastHits = 0;
 
 	private List<Integer> truePattern = new ArrayList<>();
@@ -33,8 +33,8 @@ public class DrumHitsPatternPanel extends JPanel {
 
 	private JPanel parentPanel = null;
 
-	public DrumHitsPatternPanel(NumPanel hitsPanel, JComboBox<String> patternType,
-			NumPanel shiftPanel, JPanel parentPanel) {
+	public DrumHitsPatternPanel(KnobPanel hitsPanel, JComboBox<String> patternType,
+			KnobPanel shiftPanel, JPanel parentPanel) {
 		super();
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
 		layout.setVgap(0);

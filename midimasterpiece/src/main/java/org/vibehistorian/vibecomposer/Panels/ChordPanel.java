@@ -19,10 +19,10 @@ public class ChordPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 
-	private NumPanel transitionChance = new NumPanel("Split%", 0);
-	private NumPanel transitionSplit = new NumPanel("Split(ms)", 625, 0, 1000);
+	private KnobPanel transitionChance = new KnobPanel("Split%", 0);
+	private KnobPanel transitionSplit = new KnobPanel("Split(ms)", 625, 0, 1000);
 
-	private NumPanel strum = new NumPanel("Strum(ms)", 0, 0, 1000);
+	private KnobPanel strum = new KnobPanel("Strum(ms)", 0, 0, 1000);
 
 	private JComboBox<String> instPoolPicker = new JComboBox<String>();
 

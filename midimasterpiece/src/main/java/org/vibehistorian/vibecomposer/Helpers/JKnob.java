@@ -17,6 +17,8 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
+
 /**
  * JKnob.java -
  * A knob component. The knob can be rotated by dragging
@@ -207,6 +209,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public void setValue(int val) {
 		curr = val;
 		setAngle();
+		repaint();
 	}
 
 	/**
@@ -304,7 +307,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			curr = defaultValue;
 			setAngle();
 			repaint();
+		} else if (SwingUtilities.isMiddleMouseButton(e)) {
+			KnobValuePopup valuePopup = new KnobValuePopup(this);
 		}
+
 	}
 
 	/**
@@ -376,4 +382,30 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		int distanceFromMin = curr - min;
 		return distanceFromMin / ((double) diff);
 	}
+
+	public int getMin() {
+		return min;
+	}
+
+	public void setMin(int min) {
+		this.min = min;
+	}
+
+	public int getMax() {
+		return max;
+	}
+
+	public void setMax(int max) {
+		this.max = max;
+	}
+
+	public int getCurr() {
+		return curr;
+	}
+
+	public void setCurr(int curr) {
+		this.curr = curr;
+	}
+
+
 }

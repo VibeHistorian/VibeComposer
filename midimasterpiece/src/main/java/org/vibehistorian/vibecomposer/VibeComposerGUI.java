@@ -132,7 +132,7 @@ import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
-import org.vibehistorian.vibecomposer.Panels.NumPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
@@ -219,8 +219,8 @@ public class VibeComposerGUI extends JFrame
 	// arrangement
 	public static Arrangement arrangement;
 	public static Arrangement actualArrangement;
-	NumPanel arrangementVariationChance;
-	NumPanel arrangementPartVariationChance;
+	KnobPanel arrangementVariationChance;
+	KnobPanel arrangementPartVariationChance;
 	JCheckBox arrangementManualOverride;
 	JTextField pieceLength;
 	JTextField arrangementSeed;
@@ -268,12 +268,12 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	JCheckBox globalSwingOverride;
-	NumPanel globalSwingOverrideValue;
+	KnobPanel globalSwingOverrideValue;
 
 
 	// chord variety settings
-	NumPanel spiceChance;
-	NumPanel chordSlashChance;
+	KnobPanel spiceChance;
+	KnobPanel chordSlashChance;
 	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
@@ -291,17 +291,17 @@ public class VibeComposerGUI extends JFrame
 
 	// melody gen settings
 	JCheckBox arpCopyMelodyInst;
-	NumPanel maxJump;
-	NumPanel maxExceptions;
-	NumPanel melodyAlternateRhythmChance;
-	NumPanel melodySameRhythmChance;
-	NumPanel melodyUseOldAlgoChance;
+	KnobPanel maxJump;
+	KnobPanel maxExceptions;
+	KnobPanel melodyAlternateRhythmChance;
+	KnobPanel melodySameRhythmChance;
+	KnobPanel melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox melodyFirstNoteFromChord;
 	JCheckBox randomChordNote;
-	NumPanel melodySplitChance;
-	NumPanel melodyExceptionChance;
-	NumPanel melodyQuickness;
+	KnobPanel melodySplitChance;
+	KnobPanel melodyExceptionChance;
+	KnobPanel melodyQuickness;
 	JCheckBox melodyBasicChordsOnly;
 
 	// bass gen settings
@@ -316,15 +316,15 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordTranspose;
 	JCheckBox randomChordPattern;
 	JCheckBox randomChordSustainUseShortening;
-	NumPanel randomChordSustainChance;
-	NumPanel randomChordShiftChance;
-	NumPanel randomChordVoicingChance;
-	NumPanel randomChordMaxSplitChance;
+	KnobPanel randomChordSustainChance;
+	KnobPanel randomChordShiftChance;
+	KnobPanel randomChordVoicingChance;
+	KnobPanel randomChordMaxSplitChance;
 	JCheckBox randomChordUseChordFill;
 	JComboBox<String> randomChordStretchType;
 	JComboBox<String> randomChordStretchPicker;
-	NumPanel randomChordMinVel;
-	NumPanel randomChordMaxVel;
+	KnobPanel randomChordMinVel;
+	KnobPanel randomChordMaxVel;
 
 	// arp gen settings
 	JTextField randomArpsToGenerate;
@@ -334,16 +334,16 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomArpHitsPerPattern;
 	JCheckBox randomArpAllSameInst;
 	JCheckBox randomArpAllSameHits;
-	NumPanel arpShiftChance;
+	KnobPanel arpShiftChance;
 	JComboBox<String> randomArpHitsPicker;
 	JCheckBox randomArpUseChordFill;
 	JComboBox<String> randomArpStretchType;
 	JComboBox<String> randomArpStretchPicker;
 	JCheckBox randomArpUseOctaveAdjustments;
-	NumPanel randomArpMaxSwing;
-	NumPanel randomArpMaxRepeat;
-	NumPanel randomArpMinVel;
-	NumPanel randomArpMaxVel;
+	KnobPanel randomArpMaxSwing;
+	KnobPanel randomArpMaxRepeat;
+	KnobPanel randomArpMinVel;
+	KnobPanel randomArpMaxVel;
 
 	// drum gen settings
 	JTextField randomDrumsToGenerate;
@@ -351,8 +351,8 @@ public class VibeComposerGUI extends JFrame
 	JTextField randomDrumMaxSwingAdjust;
 	JCheckBox randomDrumSlide;
 	JCheckBox randomDrumPattern;
-	NumPanel randomDrumVelocityPatternChance;
-	NumPanel randomDrumShiftChance;
+	KnobPanel randomDrumVelocityPatternChance;
+	KnobPanel randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
 	JCheckBox arrangementAffectsDrumVelocity;
 	JButton changeMidiMapping;
@@ -375,7 +375,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeChordStrumsOnCompose;
 	JCheckBox arpAffectsBpm;
 	JTextField mainBpm;
-	NumPanel transposeScore;
+	KnobPanel transposeScore;
 	JButton switchOnComposeRandom;
 
 	// seed / midi
@@ -700,7 +700,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(allowChordRepeats);
 
 		globalSwingOverride = new JCheckBox("Global Swing override:", false);
-		globalSwingOverrideValue = new NumPanel("", 50);
+		globalSwingOverrideValue = new KnobPanel("", 50);
 		macroParams.add(globalSwingOverride);
 		macroParams.add(globalSwingOverrideValue);
 
@@ -741,19 +741,19 @@ public class VibeComposerGUI extends JFrame
 		//csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsPanel.add(csExtra);
 		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		melodyQuickness = new NumPanel("Quickness", 100);
+		melodyQuickness = new KnobPanel("Quickness", 100);
 		melodySettingsPanel.add(melodyQuickness);
 
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 
 
-		maxJump = new NumPanel("Max Note Jump", 1, 1, 4);
-		maxExceptions = new NumPanel("Max Exceptions", 2, 0, 4);
-		melodyAlternateRhythmChance = new NumPanel("Alternating Rhythm", 50);
-		melodySameRhythmChance = new NumPanel("Doubled rhythm", 50);
-		melodyUseOldAlgoChance = new NumPanel("Legacy algo", 0);
-		melodySplitChance = new NumPanel("Split%", 50);
-		melodyExceptionChance = new NumPanel("Exception%", 50);
+		maxJump = new KnobPanel("Max Note Jump", 1, 1, 4);
+		maxExceptions = new KnobPanel("Max Exceptions", 2, 0, 4);
+		melodyAlternateRhythmChance = new KnobPanel("Alternating Rhythm", 50);
+		melodySameRhythmChance = new KnobPanel("Doubled rhythm", 50);
+		melodyUseOldAlgoChance = new KnobPanel("Legacy algo", 0);
+		melodySplitChance = new KnobPanel("Split%", 50);
+		melodyExceptionChance = new KnobPanel("Exception%", 50);
 
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(maxExceptions);
@@ -857,16 +857,16 @@ public class VibeComposerGUI extends JFrame
 		randomChordStrum = new JCheckBox("Strum", true);
 		randomChordSplit = new JCheckBox("Random Split Pos.", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
-		randomChordSustainChance = new NumPanel("Chord%", 25);
+		randomChordSustainChance = new KnobPanel("Chord%", 25);
 		randomChordSustainUseShortening = new JCheckBox("Shorten Plucks", true);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
-		randomChordMaxSplitChance = new NumPanel("Max Split%", 25);
-		chordSlashChance = new NumPanel("Ch#1 Slash%", 25);
+		randomChordMaxSplitChance = new KnobPanel("Max Split%", 25);
+		chordSlashChance = new KnobPanel("Ch#1 Slash%", 25);
 		randomChordPattern = new JCheckBox("Patterns", false);
-		randomChordShiftChance = new NumPanel("Shift%", 25);
-		randomChordVoicingChance = new NumPanel("Flatten Voicing%", 100);
-		randomChordMinVel = new NumPanel("MinVel", 65, 0, 126);
-		randomChordMaxVel = new NumPanel("MaxVel", 90, 1, 127);
+		randomChordShiftChance = new KnobPanel("Shift%", 25);
+		randomChordVoicingChance = new KnobPanel("Flatten Voicing%", 100);
+		randomChordMinVel = new KnobPanel("MinVel", 65, 0, 126);
+		randomChordMaxVel = new KnobPanel("MaxVel", 90, 1, 127);
 
 		chordSettingsPanel.add(randomChordTranspose);
 		chordSettingsPanel.add(randomChordStrum);
@@ -982,12 +982,12 @@ public class VibeComposerGUI extends JFrame
 		randomArpAllSameInst = new JCheckBox("One Inst.", false);
 		randomArpAllSameHits = new JCheckBox("One #", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
-		arpShiftChance = new NumPanel("Shift%", 25);
+		arpShiftChance = new KnobPanel("Shift%", 25);
 		randomArpUseOctaveAdjustments = new JCheckBox("Rand. Oct.", false);
-		randomArpMaxSwing = new NumPanel("Swing%", 50);
-		randomArpMaxRepeat = new NumPanel("MaxRep", 2, 1, 4);
-		randomArpMinVel = new NumPanel("MinVel", 65, 0, 126);
-		randomArpMaxVel = new NumPanel("MaxVel", 90, 1, 127);
+		randomArpMaxSwing = new KnobPanel("Swing%", 50);
+		randomArpMaxRepeat = new KnobPanel("MaxRep", 2, 1, 4);
+		randomArpMinVel = new KnobPanel("MinVel", 65, 0, 126);
+		randomArpMaxVel = new KnobPanel("MaxVel", 90, 1, 127);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -1119,8 +1119,8 @@ public class VibeComposerGUI extends JFrame
 		randomDrumSlide = new JCheckBox("Random Delay", false);
 		randomDrumUseChordFill = new JCheckBox("Fills", true);
 		randomDrumPattern = new JCheckBox("Patterns", true);
-		randomDrumVelocityPatternChance = new NumPanel("Dynamic%", 50);
-		randomDrumShiftChance = new NumPanel("Shift%", 50);
+		randomDrumVelocityPatternChance = new KnobPanel("Dynamic%", 50);
+		randomDrumShiftChance = new KnobPanel("Shift%", 50);
 
 		drumsPanel.add(new JLabel("Max swing%+-"));
 		drumsPanel.add(randomDrumMaxSwingAdjust);
@@ -1322,9 +1322,9 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(pieceLength);
 		arrangementSettings.add(randomizeArrangementOnCompose);
 
-		arrangementVariationChance = new NumPanel("Risky variations", 30);
+		arrangementVariationChance = new KnobPanel("Risky variations", 30);
 		arrangementSettings.add(arrangementVariationChance);
-		arrangementPartVariationChance = new NumPanel("Safe variations", 30);
+		arrangementPartVariationChance = new KnobPanel("Safe variations", 30);
 		arrangementSettings.add(arrangementPartVariationChance);
 
 		arrangementSettings.add(addLastSectionBtn);
@@ -1628,7 +1628,7 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(chordProgressionSettingsPanel);
 
 
-		spiceChance = new NumPanel("Spice", 8);
+		spiceChance = new KnobPanel("Spice", 8);
 		chordProgressionSettingsPanel.add(spiceChance);
 
 		spiceAllowDimAug = new JCheckBox("Dim/Aug");
@@ -1934,7 +1934,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel controlPanel = new JPanel();
 		controlPanel.setOpaque(false);
 
-		transposeScore = new NumPanel("Global Transpose", 0, -24, 24);
+		transposeScore = new KnobPanel("Global Transpose", 0, -24, 24);
 		controlPanel.add(transposeScore);
 
 		Random bpmRand = new Random();
