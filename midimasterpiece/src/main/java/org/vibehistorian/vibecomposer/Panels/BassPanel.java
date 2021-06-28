@@ -40,8 +40,9 @@ public class BassPanel extends InstPanel {
 		this.add(useRhythm);
 		this.add(alternatingRhythm);
 
-		/*this.add(new JLabel("Transpose"));
-		this.add(transpose);*/
+		//this.add(new JLabel("Transpose"));
+		this.add(transpose);
+		//this.add(new JKnob());
 
 		this.add(velocityMin);
 		this.add(velocityMax);
