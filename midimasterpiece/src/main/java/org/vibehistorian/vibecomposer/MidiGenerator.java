@@ -211,7 +211,7 @@ public class MidiGenerator implements JMC {
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
-		Random variationGenerator = new Random(seed + 5);
+		Random variationGenerator = new Random(seed + notesSeedOffset);
 		int numberOfVars = 2;
 
 		double[] melodySkeletonDurations = { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
@@ -262,7 +262,9 @@ public class MidiGenerator implements JMC {
 						if (variations == null) {
 							variations = new ArrayList<>();
 						}
-						variations.add(variationInt);
+						if (!variations.contains(variationInt)) {
+							variations.add(variationInt);
+						}
 					}
 				}
 
@@ -947,7 +949,7 @@ public class MidiGenerator implements JMC {
 			if (sec.getType().equals("CLIMAX")) {
 				// increase variations in follow-up CLIMAX sections, reset when climax ends
 				gc.setArrangementPartVariationChance(
-						gc.getArrangementPartVariationChance() + originalPartVariationChance);
+						gc.getArrangementPartVariationChance() + originalPartVariationChance / 2);
 			} else {
 				gc.setArrangementPartVariationChance(originalPartVariationChance);
 			}
@@ -1428,7 +1430,7 @@ public class MidiGenerator implements JMC {
 		minVel = (minVel < 0) ? 0 : minVel;
 		int maxVel = gc.getBassPart().getVelocityMax() + (5 * sec.getBassChance()) / 10 - 50;
 		maxVel = (maxVel < 1) ? 1 : maxVel;
-		Random variationGenerator = new Random(gc.getRandomSeed() + 1);
+		Random variationGenerator = new Random(gc.getRandomSeed() + sec.getTypeSeedOffset());
 		int numberOfVars = 1;
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = 0;
@@ -1443,7 +1445,9 @@ public class MidiGenerator implements JMC {
 						if (variations == null) {
 							variations = new ArrayList<>();
 						}
-						variations.add(variationInt);
+						if (!variations.contains(variationInt)) {
+							variations.add(variationInt);
+						}
 					}
 				}
 
@@ -1483,7 +1487,7 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
-		Mod.transpose(cphraseBassRoot, -24);
+		Mod.transpose(cphraseBassRoot, -24 + gc.getBassPart().getTranspose());
 		cphraseBassRoot.setStartTime(START_TIME_DELAY);
 		if (genVars && variations != null) {
 			sec.setVariation(4, 0, variations);
@@ -1498,7 +1502,8 @@ public class MidiGenerator implements JMC {
 
 		int mainGeneratorSeed = (int) cp.getPatternSeed() + cp.getOrder();
 		CPhrase cpr = new CPhrase();
-		Random variationGenerator = new Random(mainGeneratorSeed + 100);
+		Random variationGenerator = new Random(
+				cp.getPatternSeed() + cp.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = 3;
 		int stretch = cp.getChordNotesStretch();
 		for (int i = 0; i < measures; i++) {
@@ -1518,7 +1523,9 @@ public class MidiGenerator implements JMC {
 						if (variations == null) {
 							variations = new ArrayList<>();
 						}
-						variations.add(variationInt);
+						if (!variations.contains(variationInt)) {
+							variations.add(variationInt);
+						}
 					}
 				}
 
@@ -1671,7 +1678,8 @@ public class MidiGenerator implements JMC {
 
 		double longestChord = progressionDurations.stream().max((e1, e2) -> Double.compare(e1, e2))
 				.get();
-		Random variationGenerator = new Random(ap.getPatternSeed() + ap.getOrder());
+		Random variationGenerator = new Random(
+				ap.getPatternSeed() + ap.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = 3;
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
@@ -1690,7 +1698,9 @@ public class MidiGenerator implements JMC {
 						if (variations == null) {
 							variations = new ArrayList<>();
 						}
-						variations.add(variationInt);
+						if (!variations.contains(variationInt)) {
+							variations.add(variationInt);
+						}
 					}
 				}
 
@@ -1816,7 +1826,8 @@ public class MidiGenerator implements JMC {
 
 		List<Integer> drumPattern = generateDrumPatternFromPart(dp);
 		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(dp);
-		Random variationGenerator = new Random(dp.getPatternSeed() + dp.getOrder());
+		Random variationGenerator = new Random(
+				dp.getPatternSeed() + dp.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = 2;
 		// bar iter
 		for (int o = 0; o < measures; o++) {
@@ -1839,7 +1850,9 @@ public class MidiGenerator implements JMC {
 						if (variations == null) {
 							variations = new ArrayList<>();
 						}
-						variations.add(variationInt);
+						if (!variations.contains(variationInt)) {
+							variations.add(variationInt);
+						}
 					}
 				}
 

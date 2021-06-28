@@ -2352,7 +2352,13 @@ public class VibeComposerGUI extends JFrame
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
+		} else {
+			arrangement.resortByIndexes(scrollableArrangementTable);
+			if (actualArrangement.getSections().size() > 1) {
+				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+			}
 		}
+
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
 				&& arrangementManualOverride.isSelected()) {
 			arrangement.setOverridden(true);
