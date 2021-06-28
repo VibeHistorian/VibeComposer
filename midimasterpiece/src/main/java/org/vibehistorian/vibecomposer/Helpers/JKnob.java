@@ -37,6 +37,9 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private static final int radius = 20;
 	private static final int spotRadius = 3;
+	private static final int arcCut = 20;
+	private static final double cutOff = (Math.PI * (double) arcCut / 180.0);
+	private static final double cutOffDouble = ((double) arcCut / 180.0);
 
 	private double theta;
 	private Color knobColor;
@@ -134,6 +137,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.setColor(knobColor);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
+
 			// Find the center of the spot.
 			Point pt = getSpotCenter();
 			int xc = (int) pt.getX();
@@ -146,6 +150,9 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.setColor(spotColor);
 			//g2d.drawOval(0, 0, 2 * radius, 2 * radius);
 			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
+
+			// Draw arc.
+			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - arcCut, arcCut * 2);
 
 			// Draw value.
 			Point cnt = getCenter();
@@ -189,10 +196,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setAngle() {
 		theta = toTheta(calculateDouble());
-	}
-
-	public double getDouble() {
-		return 0.5 + ((theta) / (2 * Math.PI));
 	}
 
 	public int getValue() {
@@ -370,17 +373,22 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			// Math.atan2(...) computes the angle at which
 			// x,y lies from the positive y axis with cw rotations
 			// being positive and ccw being negative.
-			theta = Math.atan2(mxp, myp);
+			double thetaCalc = Math.atan2(mxp, myp);
+			if (Math.PI - Math.abs(thetaCalc) > cutOff) {
+				theta = thetaCalc;
+			}
 
 			repaint();
 		}
 	}
 
 	public static double toDouble(double thetaValue) {
+		thetaValue = thetaValue / (1 - cutOffDouble);
 		return 0.5 + ((thetaValue) / (2 * Math.PI));
 	}
 
 	public static double toTheta(double doubleValue) {
+		doubleValue = cutOffDouble / 2 + doubleValue * (1 - cutOffDouble);
 		return (doubleValue - 0.5) * 2 * Math.PI;
 	}
 
