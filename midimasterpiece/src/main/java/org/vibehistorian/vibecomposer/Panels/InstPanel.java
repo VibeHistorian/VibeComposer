@@ -58,12 +58,12 @@ public abstract class InstPanel extends JPanel {
 	protected NumPanel chordNotesStretch = new NumPanel("", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
-	protected NumPanel pauseChance = new NumPanel("Pause%", 20);
+	protected NumPanel pauseChance = new NumPanel("Pause%", 0);
 	protected NumPanel exceptionChance = new NumPanel("Exc.%", 5);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
 	protected NumPanel patternRepeat = new NumPanel("Repeat#", 2, 1, 4);
 
-	protected NumPanel transpose = new NumPanel("Transpose", 0, -36, 36);
+	protected NumPanel transpose = new NumPanel("Transpose", 0, -36, 36, 12);
 	protected NumPanel delay = new NumPanel("Delay", 0, -500, 500);
 
 	protected NumPanel velocityMin = new NumPanel("MinVel", 70, 0, 126);

@@ -19,10 +19,14 @@ public class NumPanel extends JPanel {
 	}
 
 	public NumPanel(String name, int value, int minimum, int maximum) {
+		this(name, value, minimum, maximum, 0);
+	}
+
+	public NumPanel(String name, int value, int minimum, int maximum, int tickSpacing) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setOpaque(false);
 		label = new JLabel(name + " ");
-		knob = new JKnob(minimum, maximum, value);
+		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		add(label);
 		add(knob);
 	}

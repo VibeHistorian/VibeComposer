@@ -8,14 +8,14 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 /**
  * JKnob.java -
@@ -48,7 +48,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private int defaultValue = 50;
 	private int curr = 50;
 
-	private Timer timer;
+	private int tickSpacing = 0;
+	private List<Integer> tickThresholds = null;
 
 	/**
 	 * No-Arg constructor that initializes the position
@@ -69,6 +70,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	}
 
 	public JKnob(int min, int max, int curr) {
+		this(min, max, curr, 0);
+	}
+
+	public JKnob(int min, int max, int curr, int tickSpacing) {
 		this(0, Color.gray, Color.black);
 		this.min = min;
 		this.max = max;
@@ -76,6 +81,15 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		this.defaultValue = curr;
 		this.curr = curr;
 		setAngle();
+		if (tickSpacing > 0) {
+			this.tickSpacing = tickSpacing;
+			tickThresholds = new ArrayList<>();
+			int counter = min;
+			while (counter <= max) {
+				tickThresholds.add(counter);
+				counter += tickSpacing;
+			}
+		}
 	}
 
 	/**
@@ -121,13 +135,18 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			int xc = (int) pt.getX();
 			int yc = (int) pt.getY();
 
+			// Draw outer circle
+
+
 			// Draw the spot.
 			g2d.setColor(spotColor);
+			//g2d.drawOval(0, 0, 2 * radius, 2 * radius);
 			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
+
+			// Draw value.
 			Point cnt = getCenter();
-
-
-			g2d.drawString(getValue() + "", cnt.x - 7, cnt.y + 4);
+			String valueString = String.valueOf(getValue());
+			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 		}
 	}
 
@@ -174,7 +193,15 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public int getValue() {
 		double val = toDouble(theta);
-		return min + (int) (val * diff);
+		int intVal = min + (int) Math.round(val * diff);
+		if (tickSpacing > 0) {
+			for (Integer i : tickThresholds) {
+				if (Math.abs(intVal - i) <= tickSpacing / 2) {
+					return i;
+				}
+			}
+		}
+		return intVal;
 	}
 
 	public void setValue(int val) {
@@ -235,28 +262,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (e.getButton() == MouseEvent.BUTTON1) {
-			if (timer == null) {
-				timer = new Timer();
-				timer.schedule(new TimerTask() {
 
-					@Override
-					public void run() { // timer expired before another click received, therefore = single click
-						this.cancel();
-						timer = null;
-						/* single-click actions in here */
-					}
-
-				}, (Integer) Toolkit.getDefaultToolkit()
-						.getDesktopProperty("awt.multiClickInterval"));
-			} else { // received another click before previous click (timer) expired, therefore = double click
-				timer.cancel();
-				timer = null;
-				/* double-click actions in here */
-				curr = defaultValue;
-				setAngle();
-			}
-		}
 	}
 
 	/**
@@ -291,9 +297,14 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void mousePressed(MouseEvent e) {
-
-		Point mouseLoc = e.getPoint();
-		pressedOnSpot = isOnCenter(mouseLoc);
+		if (e.getButton() == MouseEvent.BUTTON1) {
+			Point mouseLoc = e.getPoint();
+			pressedOnSpot = isOnCenter(mouseLoc);
+		} else if (SwingUtilities.isRightMouseButton(e)) {
+			curr = defaultValue;
+			setAngle();
+			repaint();
+		}
 	}
 
 	/**
@@ -306,7 +317,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
-		System.out.println("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
+		//System.out.println("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
 	}
 
 	// Methods from the MouseMotionListener interface.
