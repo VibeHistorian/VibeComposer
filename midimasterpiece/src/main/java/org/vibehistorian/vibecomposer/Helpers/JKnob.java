@@ -53,6 +53,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private int tickSpacing = 0;
 	private List<Integer> tickThresholds = null;
 
+	public static KnobValuePopup singlePopup = null;
+
 	/**
 	 * No-Arg constructor that initializes the position
 	 * of the knob to 0 radians (Up).
@@ -203,6 +205,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 				}
 			}
 		}
+		curr = intVal;
 		return intVal;
 	}
 
@@ -308,7 +311,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			setAngle();
 			repaint();
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
-			KnobValuePopup valuePopup = new KnobValuePopup(this);
+			if (singlePopup != null) {
+				singlePopup.applyAndClose();
+			}
+			singlePopup = new KnobValuePopup(this);
 		}
 
 	}

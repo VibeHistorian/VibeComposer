@@ -218,7 +218,7 @@ public class NumPanel extends JPanel {
 	}
 
 	public int getInt() {
-		return Integer.valueOf(text.getText());
+		return slider.getValue();
 	}
 
 	public void setInt(int val) {
@@ -227,5 +227,9 @@ public class NumPanel extends JPanel {
 
 	public JSlider getSlider() {
 		return slider;
+	}
+
+	public JTextField getTextfield() {
+		return text;
 	}
 }
