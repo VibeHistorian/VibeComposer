@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,8 +16,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 
@@ -98,10 +98,23 @@ public class DrumHitsPatternPanel extends JPanel {
 
 		});
 
-		hitsPanel.getSlider().addChangeListener(new ChangeListener() {
+		hitsPanel.getKnob().addMouseListener(new MouseListener() {
+
 
 			@Override
-			public void stateChanged(ChangeEvent e) {
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
 				SwingUtilities.invokeLater(new Runnable() {
 
 					@Override
@@ -132,15 +145,52 @@ public class DrumHitsPatternPanel extends JPanel {
 				});
 
 			}
-		});
-		shiftPanel.getSlider().addChangeListener(new ChangeListener() {
 
 			@Override
-			public void stateChanged(ChangeEvent e) {
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		shiftPanel.getKnob().addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
 				for (int i = 0; i < 32; i++) {
 					int shI = (i + shiftPanel.getInt()) % 32;
 					hitChecks[shI].setSelected(truePattern.get(i) != 0);
 				}
+
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+
 			}
 		});
 	}

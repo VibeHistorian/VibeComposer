@@ -7,9 +7,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JComponent;
 
@@ -38,6 +42,14 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private boolean pressedOnSpot;
 
+	private int min = 0;
+	private int max = 100;
+	private int diff = 100;
+	private int defaultValue = 50;
+	private int curr = 50;
+
+	private Timer timer;
+
 	/**
 	 * No-Arg constructor that initializes the position
 	 * of the knob to 0 radians (Up).
@@ -54,6 +66,16 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	public JKnob(double initTheta) {
 		this(initTheta, Color.gray, Color.black);
+	}
+
+	public JKnob(int min, int max, int curr) {
+		this(0, Color.gray, Color.black);
+		this.min = min;
+		this.max = max;
+		this.diff = max - min;
+		this.defaultValue = curr;
+		this.curr = curr;
+		setAngle();
 	}
 
 	/**
@@ -86,23 +108,26 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
-
-		// Draw the knob.
-		g.setColor(knobColor);
-		g.fillOval(0, 0, 2 * radius, 2 * radius);
-
-		// Find the center of the spot.
-		Point pt = getSpotCenter();
-		int xc = (int) pt.getX();
-		int yc = (int) pt.getY();
-
-		// Draw the spot.
-		g.setColor(spotColor);
-		g.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
-		Point cnt = getCenter();
 		if (g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g;
-			g2d.drawString(getDouble() + "", cnt.x - 7, cnt.y + 4);
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+					RenderingHints.VALUE_ANTIALIAS_ON);
+			// Draw the knob.
+			g2d.setColor(knobColor);
+			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
+
+			// Find the center of the spot.
+			Point pt = getSpotCenter();
+			int xc = (int) pt.getX();
+			int yc = (int) pt.getY();
+
+			// Draw the spot.
+			g2d.setColor(spotColor);
+			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
+			Point cnt = getCenter();
+
+
+			g2d.drawString(getValue() + "", cnt.x - 7, cnt.y + 4);
 		}
 	}
 
@@ -133,12 +158,28 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 *
 	 * @return the current anglular position of the knob.
 	 */
+
+
 	public double getAngle() {
 		return theta;
 	}
 
+	public void setAngle() {
+		theta = toTheta(calculateDouble());
+	}
+
 	public double getDouble() {
 		return 0.5 + ((theta) / (2 * Math.PI));
+	}
+
+	public int getValue() {
+		double val = toDouble(theta);
+		return min + (int) (val * diff);
+	}
+
+	public void setValue(int val) {
+		curr = val;
+		setAngle();
 	}
 
 	/**
@@ -194,6 +235,28 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON1) {
+			if (timer == null) {
+				timer = new Timer();
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() { // timer expired before another click received, therefore = single click
+						this.cancel();
+						timer = null;
+						/* single-click actions in here */
+					}
+
+				}, (Integer) Toolkit.getDefaultToolkit()
+						.getDesktopProperty("awt.multiClickInterval"));
+			} else { // received another click before previous click (timer) expired, therefore = double click
+				timer.cancel();
+				timer = null;
+				/* double-click actions in here */
+				curr = defaultValue;
+				setAngle();
+			}
+		}
 	}
 
 	/**
@@ -288,5 +351,18 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 			repaint();
 		}
+	}
+
+	public static double toDouble(double thetaValue) {
+		return 0.5 + ((thetaValue) / (2 * Math.PI));
+	}
+
+	public static double toTheta(double doubleValue) {
+		return (doubleValue - 0.5) * 2 * Math.PI;
+	}
+
+	public double calculateDouble() {
+		int distanceFromMin = curr - min;
+		return distanceFromMin / ((double) diff);
 	}
 }

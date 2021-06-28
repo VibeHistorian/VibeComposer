@@ -112,8 +112,8 @@ public abstract class InstPanel extends JPanel {
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
-		transpose.getSlider().setMajorTickSpacing(12);
-		transpose.getSlider().setSnapToTicks(true);
+		//transpose.getSlider().setMajorTickSpacing(12);
+		//transpose.getSlider().setSnapToTicks(true);
 
 		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
