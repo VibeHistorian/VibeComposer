@@ -17,6 +17,7 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 
 /**
@@ -44,6 +45,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private double theta;
 	private Color knobColor;
 	private Color spotColor;
+	private static final Color lightModeKnob = new Color(200, 200, 200);
 
 	private boolean pressedOnSpot;
 
@@ -134,7 +136,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
 			// Draw the knob.
-			g2d.setColor(knobColor);
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? knobColor : lightModeKnob);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
 
@@ -155,6 +157,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - arcCut, arcCut * 2);
 
 			// Draw value.
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? Color.CYAN : Color.BLUE);
 			Point cnt = getCenter();
 			String valueString = String.valueOf(getValue());
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
@@ -204,6 +207,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (tickSpacing > 0) {
 			for (Integer i : tickThresholds) {
 				if (Math.abs(intVal - i) <= tickSpacing / 2) {
+					curr = i;
 					return i;
 				}
 			}
@@ -376,6 +380,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			double thetaCalc = Math.atan2(mxp, myp);
 			if (Math.PI - Math.abs(thetaCalc) > cutOff) {
 				theta = thetaCalc;
+			} else {
+				if (thetaCalc > 0) {
+					theta = Math.PI - cutOff;
+				} else {
+					theta = -Math.PI + cutOff;
+				}
 			}
 
 			repaint();

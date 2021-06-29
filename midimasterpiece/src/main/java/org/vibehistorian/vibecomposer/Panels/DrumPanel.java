@@ -122,4 +122,8 @@ public class DrumPanel extends InstPanel {
 		instrument.changeInstPoolMapping(pool);
 	}
 
+	public DrumHitsPatternPanel getComboPanel() {
+		return comboPanel;
+	}
+
 }

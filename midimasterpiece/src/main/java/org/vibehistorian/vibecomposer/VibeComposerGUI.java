@@ -131,8 +131,8 @@ import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
@@ -172,7 +172,7 @@ public class VibeComposerGUI extends JFrame
 
 
 	private static Color panelColorHigh, panelColorLow;
-	private static boolean isDarkMode = true;
+	public static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
@@ -4112,6 +4112,7 @@ public class VibeComposerGUI extends JFrame
 					&& patternOrder > 0) {
 				dp.setPatternShift(
 						drumPanelGenerator.nextInt(dp.getPattern().pattern.length - 1) + 1);
+				dp.getComboPanel().reapplyShift();
 			}
 
 		}
