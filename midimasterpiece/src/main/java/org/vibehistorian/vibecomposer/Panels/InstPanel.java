@@ -73,6 +73,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JLabel panelOrder = new JLabel("1");
 
+	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected JTextField patternSeed = new JTextField("0", 8);
 	protected JComboBox<String> pattern = new JComboBox<String>();
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
@@ -122,6 +123,8 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(velocityMin);
 		toggleableComponents.add(velocityMax);
 		toggleableComponents.add(patternShift);
+		toggleableComponents.add(patternSeed);
+		toggleableComponents.add(patternSeedLabel);
 	}
 
 	public void setFromInstPart(InstPart part) {

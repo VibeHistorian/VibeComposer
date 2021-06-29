@@ -64,7 +64,7 @@ public class ChordPanel extends InstPanel {
 		this.add(velocityMin);
 		this.add(velocityMax);
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);

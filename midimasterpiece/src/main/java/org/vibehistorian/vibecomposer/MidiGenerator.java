@@ -225,7 +225,10 @@ public class MidiGenerator implements JMC {
 		List<int[]> usedChords = null;
 		if (gc.isMelodyBasicChordsOnly()) {
 			List<int[]> basicChordsUnsquished = MidiUtils.getBasicChordsFromRoots(roots);
-
+			for (int i = 0; i < chords.size(); i++) {
+				basicChordsUnsquished.set(i, MidiUtils.convertChordToLength(
+						basicChordsUnsquished.get(i), chords.get(i).length, true));
+			}
 			usedChords = MidiUtils.squishChordProgression(basicChordsUnsquished,
 					gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
 					gc.getChordGenSettings().getFlattenVoicingChance());

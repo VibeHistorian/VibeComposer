@@ -62,7 +62,7 @@ public class ArpPanel extends InstPanel {
 		this.add(exceptionChance);
 
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);

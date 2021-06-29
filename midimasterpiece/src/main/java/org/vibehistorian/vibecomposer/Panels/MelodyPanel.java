@@ -43,7 +43,7 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(swingPercent);
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
 		this.add(new JLabel("Midi ch.: 1"));

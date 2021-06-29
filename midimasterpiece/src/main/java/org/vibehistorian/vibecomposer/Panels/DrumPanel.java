@@ -67,13 +67,13 @@ public class DrumPanel extends InstPanel {
 		this.add(delay);
 
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
 
 		this.add(new JLabel("Midi ch. 10"));
 
-
+		toggleableComponents.remove(patternShift);
 	}
 
 	public DrumPanel(ActionListener l) {
