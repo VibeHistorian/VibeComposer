@@ -3678,8 +3678,6 @@ public class VibeComposerGUI extends JFrame
 		// seed
 		//GUIConfig gc = new GUIConfig();
 
-		System.out.println("Sections in actual BEFORE: " + actualArrangement.getSections().size());
-
 		guiConfig.setRandomSeed(lastRandomSeed);
 
 		// arrangement
@@ -3704,7 +3702,7 @@ public class VibeComposerGUI extends JFrame
 		actualArrangement.setSeed((Integer.valueOf(arrangementSeed.getText()) != 0)
 				? Integer.valueOf(arrangementSeed.getText())
 				: lastRandomSeed);
-		System.out.println("Sections in actual AFTER: " + actualArrangement.getSections().size());
+
 		guiConfig.setArrangement(arrangement);
 		guiConfig.setActualArrangement(actualArrangement);
 		guiConfig.setArrangementVariationChance(
