@@ -700,7 +700,7 @@ public class MidiGenerator implements JMC {
 		int[] prevChord = null;
 		boolean canRepeatChord = true;
 		Long lastUnspicedChord = 0L;
-		Random chordRepeatGenerator = new Random(gc.getRandomSeed());
+		Random chordRepeatGenerator = new Random(mainGeneratorSeed);
 		while ((currentDuration <= maxDuration - Durations.EIGHTH_NOTE)
 				&& currentLength < maxLength) {
 			double durationLeft = maxDuration - Durations.EIGHTH_NOTE - currentDuration;
