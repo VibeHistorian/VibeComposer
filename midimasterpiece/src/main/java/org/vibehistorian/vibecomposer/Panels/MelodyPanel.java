@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 public class MelodyPanel extends InstPanel {
@@ -63,17 +64,14 @@ public class MelodyPanel extends InstPanel {
 		return part;
 	}
 
-	public void setFromMelodyPart(MelodyPart part) {
-		setFromInstPart(part);
+	public void setFromInstPart(InstPart p) {
+		MelodyPart part = (MelodyPart) p;
+		setDefaultsFromInstPart(part);
 		setPanelOrder(part.getOrder());
 	}
 
-
-	public int getPanelOrder() {
-		return Integer.valueOf(panelOrder.getText());
-	}
-
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
+	@Override
+	public InstPart toInstPart(int lastRandomSeed) {
+		return toMelodyPart(lastRandomSeed);
 	}
 }

@@ -1087,7 +1087,7 @@ public class MidiGenerator implements JMC {
 				List<CPhrase> copiedCPhrases = new ArrayList<>();
 				Set<Integer> presences = sec.getPresence(2);
 				for (int i = 0; i < gc.getChordParts().size(); i++) {
-					ChordPart cp = gc.getChordParts().get(i);
+					ChordPart cp = (ChordPart) gc.getChordParts().get(i);
 					rand.setSeed(arrSeed + 100 + cp.getOrder());
 					variationGen.setSeed(arrSeed + 100 + cp.getOrder());
 					boolean added = (overridden && presences.contains(cp.getOrder()))
@@ -1120,7 +1120,7 @@ public class MidiGenerator implements JMC {
 				List<CPhrase> copiedCPhrases = new ArrayList<>();
 				Set<Integer> presences = sec.getPresence(3);
 				for (int i = 0; i < gc.getArpParts().size(); i++) {
-					ArpPart ap = gc.getArpParts().get(i);
+					ArpPart ap = (ArpPart) gc.getArpParts().get(i);
 					rand.setSeed(arrSeed + 200 + ap.getOrder());
 					variationGen.setSeed(arrSeed + 200 + ap.getOrder());
 					// if arp1 supports melody with same instrument, always introduce it in second half
@@ -1153,7 +1153,7 @@ public class MidiGenerator implements JMC {
 				List<Phrase> copiedPhrases = new ArrayList<>();
 				Set<Integer> presences = sec.getPresence(4);
 				for (int i = 0; i < gc.getDrumParts().size(); i++) {
-					DrumPart dp = gc.getDrumParts().get(i);
+					DrumPart dp = (DrumPart) gc.getDrumParts().get(i);
 					rand.setSeed(arrSeed + 300 + dp.getOrder());
 					variationGen.setSeed(arrSeed + 300 + dp.getOrder());
 					boolean added = (overridden && presences.contains(dp.getOrder()))

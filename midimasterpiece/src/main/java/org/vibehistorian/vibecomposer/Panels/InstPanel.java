@@ -127,7 +127,7 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(patternSeedLabel);
 	}
 
-	public void setFromInstPart(InstPart part) {
+	public void setDefaultsFromInstPart(InstPart part) {
 		setInstrument(part.getInstrument());
 
 		setHitsPerPattern(part.getHitsPerPattern());
@@ -161,6 +161,8 @@ public abstract class InstPanel extends JPanel {
 
 		setMuteInst(part.isMuted());
 	}
+
+	public abstract void setFromInstPart(InstPart part);
 
 	public int getHitsPerPattern() {
 		return Integer.valueOf(hitsPerPattern.getInt());
@@ -363,6 +365,12 @@ public abstract class InstPanel extends JPanel {
 		return Integer.valueOf(panelOrder.getText());
 	}
 
+	public void setPanelOrder(int panelOrder) {
+		this.panelOrder.setText("" + panelOrder);
+		String removeActionString = removeButton.getActionCommand().split(",")[0];
+		removeButton.setActionCommand(removeActionString + "," + panelOrder);
+	}
+
 	public Set<Component> getToggleableComponents() {
 		return toggleableComponents;
 	}
@@ -400,5 +408,6 @@ public abstract class InstPanel extends JPanel {
 		this.sequenceTrack = sequenceTrack;
 	}
 
+	public abstract InstPart toInstPart(int lastRandomSeed);
 
 }

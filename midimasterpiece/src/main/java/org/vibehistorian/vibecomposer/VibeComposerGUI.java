@@ -216,6 +216,25 @@ public class VibeComposerGUI extends JFrame
 		return null;
 	}
 
+	public static JScrollPane getInstPane(int order) {
+		if (order < 0 || order > 4) {
+			throw new IllegalArgumentException("Inst list order wrong.");
+		}
+		switch (order) {
+		case 0:
+			return melodyScrollPane;
+		case 1:
+			return bassScrollPane;
+		case 2:
+			return chordScrollPane;
+		case 3:
+			return arpScrollPane;
+		case 4:
+			return drumScrollPane;
+		}
+		return null;
+	}
+
 	// arrangement
 	public static Arrangement arrangement;
 	public static Arrangement actualArrangement;
@@ -230,11 +249,11 @@ public class VibeComposerGUI extends JFrame
 	Dimension scrollPaneDimension = new Dimension(1600, 400);
 	Dimension scrollPaneDimensionToggled = new Dimension(1000, 400);
 
-	JScrollPane melodyScrollPane;
-	JScrollPane bassScrollPane;
-	JScrollPane chordScrollPane;
-	JScrollPane arpScrollPane;
-	JScrollPane drumScrollPane;
+	public static JScrollPane melodyScrollPane;
+	public static JScrollPane bassScrollPane;
+	public static JScrollPane chordScrollPane;
+	public static JScrollPane arpScrollPane;
+	public static JScrollPane drumScrollPane;
 	JScrollPane arrangementScrollPane;
 	JScrollPane arrangementActualScrollPane;
 	public static JTable scrollableArrangementTable;
@@ -3129,7 +3148,7 @@ public class VibeComposerGUI extends JFrame
 		if (ae.getActionCommand().startsWith("RemoveDrum,")) {
 			String drumNumber = ae.getActionCommand().split(",")[1];
 
-			removeDrumPanel(Integer.valueOf(drumNumber), true);
+			removeInstPanel(4, Integer.valueOf(drumNumber), true);
 			randomDrumsToGenerate.setText("" + drumPanels.size());
 		}
 
@@ -3165,7 +3184,7 @@ public class VibeComposerGUI extends JFrame
 		if (ae.getActionCommand().startsWith("RemoveChord,")) {
 			String chordNumber = ae.getActionCommand().split(",")[1];
 
-			removeChordPanel(Integer.valueOf(chordNumber), true);
+			removeInstPanel(2, Integer.valueOf(chordNumber), true);
 			randomChordsToGenerate.setText("" + chordPanels.size());
 		}
 
@@ -3181,7 +3200,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand().startsWith("RemoveArp,")) {
 			String arpNumber = ae.getActionCommand().split(",")[1];
-			removeArpPanel(Integer.valueOf(arpNumber), true);
+			removeInstPanel(3, Integer.valueOf(arpNumber), true);
 			randomArpsToGenerate.setText("" + arpPanels.size());
 		}
 
@@ -3230,27 +3249,22 @@ public class VibeComposerGUI extends JFrame
 			JButton source = (JButton) ae.getSource();
 			InstPanel sourcePanel = (InstPanel) source.getParent();
 			InstPart part = null;
-			if (sourcePanel instanceof ChordPanel) {
-				part = ((ChordPanel) sourcePanel).toChordPart(lastRandomSeed);
-				ChordPanel newPanel = addChordPanelToLayout();
-				int order = newPanel.getPanelOrder();
-				newPanel.setFromChordPart((ChordPart) part);
-				newPanel.setPanelOrder(order);
 
-				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
-			} else if (sourcePanel instanceof ArpPanel) {
-				part = ((ArpPanel) sourcePanel).toArpPart(lastRandomSeed);
-				ArpPanel newPanel = addArpPanelToLayout();
-				int order = newPanel.getPanelOrder();
-				newPanel.setFromArpPart((ArpPart) part);
-				newPanel.setPanelOrder(order);
+			part = sourcePanel.toInstPart(lastRandomSeed);
+			InstPanel newPanel = addInstPanelToLayout(instrumentTabPane.getSelectedIndex());
+			int order = newPanel.getPanelOrder();
+			newPanel.setFromInstPart(part);
+			newPanel.setPanelOrder(order);
+
+			switch (instrumentTabPane.getSelectedIndex()) {
+			case 2:
 				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
-			} else if (sourcePanel instanceof DrumPanel) {
-				part = ((DrumPanel) sourcePanel).toDrumPart(lastRandomSeed);
-				DrumPanel newPanel = addDrumPanelToLayout();
-				int order = newPanel.getPanelOrder();
-				newPanel.setFromDrumPart((DrumPart) part);
-				newPanel.setPanelOrder(order);
+				break;
+			case 3:
+				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+				break;
+			default:
+				break;
 			}
 
 			System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
@@ -3631,7 +3645,7 @@ public class VibeComposerGUI extends JFrame
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
-		wrapper.setDrumParts(getDrumPartsFromDrumPanels(false));
+		wrapper.setDrumParts(getInstPartsFromInstPanels(4, false));
 		wrapper.setUseSemitonalMapping(!changeMidiMapping.getActionCommand().contains("Semi"));
 		mar.marshal(wrapper, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
 	}
@@ -3645,7 +3659,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			remapDrums("Normal");
 		}
-		recreateDrumPanelsFromDrumParts(wrapper.getDrumParts());
+		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
 	}
 
 	public void unmarshallDrumsFromResource(InputStream f) throws JAXBException, IOException {
@@ -3656,7 +3670,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			remapDrums("Normal");
 		}
-		recreateDrumPanelsFromDrumParts(wrapper.getDrumParts());
+		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
 	}
 
 	public void marshal(String path) throws JAXBException, IOException {
@@ -3737,9 +3751,10 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setChordsEnable(addChords.isSelected());
 		guiConfig.setArpsEnable(addArps.isSelected());
 		guiConfig.setDrumsEnable(addDrums.isSelected());
-		guiConfig.setDrumParts(getDrumPartsFromDrumPanels(false));
-		guiConfig.setChordParts(getChordPartsFromChordPanels(false));
-		guiConfig.setArpParts(getArpPartsFromArpPanels(false));
+
+		guiConfig.setChordParts((List<ChordPart>) (List<?>) getInstPartsFromInstPanels(2, false));
+		guiConfig.setArpParts((List<ArpPart>) (List<?>) getInstPartsFromInstPanels(3, false));
+		guiConfig.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
 
 		guiConfig.setChordGenSettings(getChordSettingsFromUI());
 
@@ -3816,8 +3831,8 @@ public class VibeComposerGUI extends JFrame
 		allowChordRepeats.setSelected(guiConfig.isAllowChordRepeats());
 
 		// parts
-		melodyPanel.setFromMelodyPart(guiConfig.getMelodyPart());
-		bassPanel.setFromBassPart(guiConfig.getBassPart());
+		melodyPanel.setFromInstPart(guiConfig.getMelodyPart());
+		bassPanel.setFromInstPart(guiConfig.getBassPart());
 
 		addChords.setSelected(guiConfig.isChordsEnable());
 		addArps.setSelected(guiConfig.isArpsEnable());
@@ -3829,9 +3844,9 @@ public class VibeComposerGUI extends JFrame
 			remapDrums("Normal");
 		}
 
-		recreateChordPanelsFromChordParts(guiConfig.getChordParts());
-		recreateArpPanelsFromArpParts(guiConfig.getArpParts());
-		recreateDrumPanelsFromDrumParts(guiConfig.getDrumParts());
+		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());
+		recreateInstPanelsFromInstParts(3, guiConfig.getArpParts());
+		recreateInstPanelsFromInstParts(4, guiConfig.getDrumParts());
 		randomChordsToGenerate.setText(chordPanels.size() + "");
 		randomArpsToGenerate.setText(arpPanels.size() + "");
 		randomDrumsToGenerate.setText(drumPanels.size() + "");
@@ -3921,52 +3936,76 @@ public class VibeComposerGUI extends JFrame
 		separators.add(x);
 	}
 
-	public DrumPanel addDrumPanelToLayout() {
-		int panelOrder = (drumPanels.size() > 0) ? getValidPanelNumber(drumPanels) : 1;
+	// -------------- GENERIC INST PANEL METHODS ----------------------------
 
-		DrumPanel dp = new DrumPanel(this);
-		dp.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		dp.setPanelOrder(panelOrder);
-		drumPanels.add(dp);
-		dp.getSoloMuter().setVisible(!collapseDrumTracks.isSelected());
-		((JPanel) drumScrollPane.getViewport().getView()).add(dp, panelOrder + 1);
-		return dp;
+	public InstPanel addInstPanelToLayout(int inst) {
+		List<InstPanel> panels = (List<InstPanel>) getInstList(inst);
+		int panelOrder = (panels.size() > 0) ? getValidPanelNumber(panels) : 1;
+
+		InstPanel ip = null;
+		switch (inst) {
+		case 0:
+			ip = new MelodyPanel(this);
+			break;
+		case 1:
+			ip = new BassPanel(this);
+			break;
+		case 2:
+			ip = new ChordPanel(this);
+			break;
+		case 3:
+			ip = new ArpPanel(this);
+			break;
+		case 4:
+			ip = new DrumPanel(this);
+			break;
+		}
+		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
+		ip.setPanelOrder(panelOrder);
+
+		if (inst == 4) {
+			ip.getSoloMuter().setVisible(!collapseDrumTracks.isSelected());
+		}
+		panels.add(ip);
+		((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
+		return ip;
 	}
 
-	private void removeDrumPanel(int order, boolean singleRemove) {
-		InstPanel panel = getPanelByOrder(order, drumPanels);
-		((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+	private void removeInstPanel(int inst, int order, boolean singleRemove) {
+		List<? extends InstPanel> panels = getInstList(inst);
+		InstPanel panel = getPanelByOrder(order, panels);
+		((JPanel) getInstPane(inst).getViewport().getView()).remove(panel);
 
-		drumPanels.remove(panel);
+		panels.remove(panel);
 
 		if (singleRemove) {
-			//reorderDrumPanels();
-			//sizeRespectingPack();
 			repaint();
 		}
 	}
 
-	private List<DrumPart> getDrumPartsFromDrumPanels(boolean removeMuted) {
-		List<DrumPart> parts = new ArrayList<>();
-		for (DrumPanel p : drumPanels) {
+	private List<InstPart> getInstPartsFromInstPanels(int inst, boolean removeMuted) {
+		List<? extends InstPanel> panels = getInstList(inst);
+		List<InstPart> parts = new ArrayList<>();
+		for (InstPanel p : panels) {
 			if (!removeMuted || !p.getMuteInst()) {
-				parts.add(p.toDrumPart(lastRandomSeed));
+				parts.add(p.toInstPart(lastRandomSeed));
 			}
 		}
 		return parts;
 	}
 
-	private void recreateDrumPanelsFromDrumParts(List<DrumPart> parts) {
-		for (DrumPanel panel : drumPanels) {
-			((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+	private void recreateInstPanelsFromInstParts(int inst, List<? extends InstPart> parts) {
+		List<? extends InstPanel> panels = getInstList(inst);
+		JScrollPane pane = getInstPane(inst);
+		for (InstPanel panel : panels) {
+			((JPanel) pane.getViewport().getView()).remove(panel);
 		}
-		drumPanels.clear();
-		for (DrumPart part : parts) {
-			DrumPanel panel = addDrumPanelToLayout();
-			panel.setFromDrumPart(part);
+		panels.clear();
+		for (InstPart part : parts) {
+			InstPanel panel = addInstPanelToLayout(inst);
+			panel.setFromInstPart(part);
 		}
 
-		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4024,7 +4063,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		for (int i = 0; i < panelCount; i++) {
-			DrumPanel dp = addDrumPanelToLayout();
+			DrumPanel dp = (DrumPanel) addInstPanelToLayout(4);
 			dp.setInstrument(pitches.get(i));
 			//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 
@@ -4099,54 +4138,6 @@ public class VibeComposerGUI extends JFrame
 
 		}
 
-		//sizeRespectingPack();
-		repaint();
-	}
-
-	public ChordPanel addChordPanelToLayout() {
-		int panelOrder = (chordPanels.size() > 0) ? getValidPanelNumber(chordPanels) : 1;
-
-		ChordPanel cp = new ChordPanel(this);
-		cp.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		cp.setPanelOrder(panelOrder);
-		chordPanels.add(cp);
-		((JPanel) chordScrollPane.getViewport().getView()).add(cp, panelOrder + 1);
-		return cp;
-	}
-
-	private void removeChordPanel(int order, boolean singleRemove) {
-		InstPanel panel = getPanelByOrder(order, chordPanels);
-		((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
-		chordPanels.remove(panel);
-
-		if (singleRemove) {
-			//reorderChordPanels();
-			//sizeRespectingPack();
-			repaint();
-		}
-	}
-
-	private List<ChordPart> getChordPartsFromChordPanels(boolean removeMuted) {
-		List<ChordPart> parts = new ArrayList<>();
-		for (ChordPanel p : chordPanels) {
-			if (!removeMuted || !p.getMuteInst()) {
-				parts.add(p.toChordPart(lastRandomSeed));
-			}
-		}
-		return parts;
-	}
-
-	private void recreateChordPanelsFromChordParts(List<ChordPart> parts) {
-		for (ChordPanel panel : chordPanels) {
-			((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
-		}
-		chordPanels.clear();
-		for (ChordPart part : parts) {
-			ChordPanel panel = addChordPanelToLayout();
-			panel.setFromChordPart(part);
-		}
-
-		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4170,7 +4161,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		for (int i = 0; i < panelCount; i++) {
-			ChordPanel cp = addChordPanelToLayout();
+			ChordPanel cp = (ChordPanel) addInstPanelToLayout(2);
 			MidiUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
 					.valueOf(randomChordSustainChance.getInt())) ? POOL.CHORD : POOL.PLUCK;
 
@@ -4228,54 +4219,6 @@ public class VibeComposerGUI extends JFrame
 
 		}
 
-		//sizeRespectingPack();
-		repaint();
-	}
-
-	public ArpPanel addArpPanelToLayout() {
-		int panelOrder = (arpPanels.size() > 0) ? getValidPanelNumber(arpPanels) : 1;
-
-		ArpPanel ap = new ArpPanel(this);
-		ap.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		ap.setPanelOrder(panelOrder);
-		arpPanels.add(ap);
-		((JPanel) arpScrollPane.getViewport().getView()).add(ap, panelOrder + 1);
-		return ap;
-	}
-
-	private void removeArpPanel(int order, boolean singleRemove) {
-		InstPanel panel = getPanelByOrder(order, arpPanels);
-		((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
-		arpPanels.remove(panel);
-
-		if (singleRemove) {
-			//reorderArpPanels();
-			//sizeRespectingPack();
-			repaint();
-		}
-	}
-
-	private List<ArpPart> getArpPartsFromArpPanels(boolean removeMuted) {
-		List<ArpPart> parts = new ArrayList<>();
-		for (ArpPanel p : arpPanels) {
-			if (!removeMuted || !p.getMuteInst()) {
-				parts.add(p.toArpPart(lastRandomSeed));
-			}
-		}
-		return parts;
-	}
-
-	private void recreateArpPanelsFromArpParts(List<ArpPart> parts) {
-		for (ArpPanel panel : arpPanels) {
-			((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
-		}
-		arpPanels.clear();
-		for (ArpPart part : parts) {
-			ArpPanel panel = addArpPanelToLayout();
-			panel.setFromArpPart(part);
-		}
-
-		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4332,7 +4275,7 @@ public class VibeComposerGUI extends JFrame
 				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
 			}
 
-			ArpPanel ap = addArpPanelToLayout();
+			ArpPanel ap = (ArpPanel) addInstPanelToLayout(3);
 
 
 			if (randomArpHitsPerPattern.isSelected()) {

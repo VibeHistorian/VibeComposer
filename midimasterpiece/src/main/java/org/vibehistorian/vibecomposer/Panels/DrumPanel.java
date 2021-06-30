@@ -9,18 +9,13 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public class DrumPanel extends InstPanel {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6219184197272490684L;
-
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
-		removeButton.setActionCommand("RemoveDrum," + panelOrder);
-	}
-
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 	private DrumHitsPatternPanel comboPanel = null;
@@ -98,9 +93,10 @@ public class DrumPanel extends InstPanel {
 		return part;
 	}
 
-	public void setFromDrumPart(DrumPart part) {
+	public void setFromInstPart(InstPart p) {
+		DrumPart part = (DrumPart) p;
 
-		setFromInstPart(part);
+		setDefaultsFromInstPart(part);
 		comboPanel.setTruePattern(part.getCustomPattern());
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
@@ -126,4 +122,8 @@ public class DrumPanel extends InstPanel {
 		return comboPanel;
 	}
 
+	@Override
+	public InstPart toInstPart(int lastRandomSeed) {
+		return toDrumPart(lastRandomSeed);
+	}
 }

@@ -11,6 +11,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public class ChordPanel extends InstPanel {
 
@@ -108,11 +109,6 @@ public class ChordPanel extends InstPanel {
 		removeButton.setActionCommand("RemoveChord," + panelOrder);
 	}
 
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
-		removeButton.setActionCommand("RemoveChord," + panelOrder);
-	}
-
 	public int getTransitionChance() {
 		return Integer.valueOf(transitionChance.getInt());
 	}
@@ -150,10 +146,11 @@ public class ChordPanel extends InstPanel {
 		return part;
 	}
 
-	public void setFromChordPart(ChordPart part) {
+	public void setFromInstPart(InstPart p) {
+		ChordPart part = (ChordPart) p;
 		instrument.initInstPool(part.getInstPool());
 		setInstPool(part.getInstPool());
-		setFromInstPart(part);
+		setDefaultsFromInstPart(part);
 
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
@@ -172,5 +169,8 @@ public class ChordPanel extends InstPanel {
 		instPoolPicker.setSelectedItem(pool.name());
 	}
 
-
+	@Override
+	public InstPart toInstPart(int lastRandomSeed) {
+		return toChordPart(lastRandomSeed);
+	}
 }
