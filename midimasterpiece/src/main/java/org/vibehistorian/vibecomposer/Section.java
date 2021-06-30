@@ -67,7 +67,7 @@ public class Section {
 	private int drumChance = 50;
 
 	// data (transient)
-	private Phrase melody;
+	private List<Phrase> melodies;
 	private CPhrase bass;
 	private List<CPhrase> chords;
 	private List<CPhrase> arps;
@@ -164,13 +164,13 @@ public class Section {
 		this.drumChance = drumChance;
 	}
 
-	public Phrase getMelody() {
-		return melody;
+	public List<Phrase> getMelodies() {
+		return melodies;
 	}
 
 	@XmlTransient
-	public void setMelody(Phrase melody) {
-		this.melody = melody;
+	public void setMelodies(List<Phrase> melodies) {
+		this.melodies = melodies;
 	}
 
 	public CPhrase getBass() {

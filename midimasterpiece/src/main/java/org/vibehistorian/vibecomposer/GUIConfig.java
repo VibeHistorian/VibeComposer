@@ -94,10 +94,11 @@ public class GUIConfig {
 	private boolean useSemitonalMapping = false;
 
 	// individual parts
-	private MelodyPart melodyPart = new MelodyPart();
+
 	private BassPart bassPart = new BassPart();
 
 	// tabbed parts
+	private List<MelodyPart> melodyPart = new ArrayList<>();
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
@@ -343,11 +344,11 @@ public class GUIConfig {
 		this.arpGenSettings = arpGenSettings;
 	}
 
-	public MelodyPart getMelodyPart() {
+	public List<MelodyPart> getMelodyParts() {
 		return melodyPart;
 	}
 
-	public void setMelodyPart(MelodyPart melodyPart) {
+	public void setMelodyParts(List<MelodyPart> melodyPart) {
 		this.melodyPart = melodyPart;
 	}
 
