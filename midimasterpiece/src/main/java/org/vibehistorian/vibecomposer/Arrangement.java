@@ -161,7 +161,8 @@ public class Arrangement {
 
 	public void resetArrangement() {
 		sections.clear();
-		sections.add(new Section("PREVIEW", 1, 100, 100, 100, 100, 100));
+		Section preview = new Section("PREVIEW", 1, 100, 100, 100, 100, 100);
+		sections.add(preview);
 	}
 
 	public void generateDefaultArrangement() {

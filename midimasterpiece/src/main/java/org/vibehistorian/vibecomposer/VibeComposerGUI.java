@@ -1404,7 +1404,7 @@ public class VibeComposerGUI extends JFrame
 		arrangement = new Arrangement();
 		actualArrangement = new Arrangement();
 		arrangement.generateDefaultArrangement();
-		actualArrangement.generateDefaultArrangement();
+		//actualArrangement.generateDefaultArrangement();
 		if (useArrangement.isSelected()) {
 			arrangement.setPreviewChorus(false);
 			actualArrangement.setPreviewChorus(false);
@@ -2389,8 +2389,6 @@ public class VibeComposerGUI extends JFrame
 		reapplySolosMutes();
 
 		currentMidi = null;
-
-		// TODO: from real parts - set after generation!
 
 		setActualModel(MidiGenerator.gc.getActualArrangement().convertToActualTableModel());
 
