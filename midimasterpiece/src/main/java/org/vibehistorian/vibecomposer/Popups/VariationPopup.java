@@ -114,7 +114,7 @@ public class VariationPopup {
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 
 		int heightLimit = 800;
-		frame.setPreferredSize(new Dimension(400,
+		frame.setPreferredSize(new Dimension(500,
 				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
 		int newLocX = parentLoc.x - 190;
 		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);

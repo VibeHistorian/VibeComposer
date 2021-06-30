@@ -2245,7 +2245,7 @@ public class VibeComposerGUI extends JFrame
 
 		//switchFullMode(isDarkMode);
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		setVisible(true);
 		repaint();
 	}
@@ -2278,8 +2278,10 @@ public class VibeComposerGUI extends JFrame
 
 		/*instrumentTabPane
 				.setPreferredSize(isFullMode ? scrollPaneDimension : scrollPaneDimensionToggled);*/
-		if (isFullMode)
+		if (isFullMode) {
 			pack();
+		}
+
 	}
 
 	private void composeMidi(boolean regenerate) {
@@ -2451,7 +2453,8 @@ public class VibeComposerGUI extends JFrame
 			// Create sequence, the File must contain MIDI file data.
 			currentMidi = new File(relPath);
 			generatedMidi.setListData(new File[] { currentMidi });
-			sizeRespectingPack();
+			//sizeRespectingPack();
+			repaint();
 			Sequence sequence = MidiSystem.getSequence(currentMidi);
 			sequencer.setSequence(sequence); // load it into sequencer
 
@@ -2890,7 +2893,7 @@ public class VibeComposerGUI extends JFrame
 					List<String> prettyChords = MidiGenerator.chordInts.stream()
 							.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList());
 					currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
-					sizeRespectingPack();
+					//sizeRespectingPack();
 					repaint();
 				}
 			};
@@ -3017,7 +3020,7 @@ public class VibeComposerGUI extends JFrame
 				return;
 			}
 			switchMidiButtons(false);
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
@@ -3138,7 +3141,7 @@ public class VibeComposerGUI extends JFrame
 			//addDrumPanelToLayout();
 			createRandomDrumPanels(drumPanels.size() + 1, true);
 			randomDrumsToGenerate.setText("" + drumPanels.size());
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 		}
 
@@ -3174,7 +3177,7 @@ public class VibeComposerGUI extends JFrame
 			createRandomChordPanels(chordPanels.size() + 1, true);
 			randomChordsToGenerate.setText("" + chordPanels.size());
 
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 		}
 
@@ -3191,7 +3194,7 @@ public class VibeComposerGUI extends JFrame
 			//addArpPanelToLayout();
 			createRandomArpPanels(arpPanels.size() + 1, true);
 			randomArpsToGenerate.setText("" + arpPanels.size());
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 		}
 
@@ -3959,7 +3962,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (singleRemove) {
 			//reorderDrumPanels();
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 		}
 	}
@@ -3984,7 +3987,7 @@ public class VibeComposerGUI extends JFrame
 			panel.setFromDrumPart(part);
 		}
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4117,7 +4120,7 @@ public class VibeComposerGUI extends JFrame
 
 		}
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4139,7 +4142,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (singleRemove) {
 			//reorderChordPanels();
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 		}
 	}
@@ -4164,7 +4167,7 @@ public class VibeComposerGUI extends JFrame
 			panel.setFromChordPart(part);
 		}
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4246,7 +4249,7 @@ public class VibeComposerGUI extends JFrame
 
 		}
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4268,7 +4271,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (singleRemove) {
 			//reorderArpPanels();
-			sizeRespectingPack();
+			//sizeRespectingPack();
 			repaint();
 		}
 	}
@@ -4293,7 +4296,7 @@ public class VibeComposerGUI extends JFrame
 			panel.setFromArpPart(part);
 		}
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		repaint();
 	}
 
@@ -4468,7 +4471,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		sizeRespectingPack();
+		//sizeRespectingPack();
 		repaint();
 	}
 
