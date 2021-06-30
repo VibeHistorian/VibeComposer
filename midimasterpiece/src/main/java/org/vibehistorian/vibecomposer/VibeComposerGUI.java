@@ -1411,6 +1411,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			arrangement.setPreviewChorus(true);
 			actualArrangement.setPreviewChorus(true);
+			actualArrangement.resetArrangement();
 		}
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		scrollableArrangementTable.setRowSelectionAllowed(false);
@@ -1504,7 +1505,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		variationButtonsPanel = new JPanel();
-		refreshVariationPopupButtons(11);
+		refreshVariationPopupButtons(1);
 
 
 		actualArrangementCombinedPanel.add(variationButtonsPanel);
@@ -2260,20 +2261,6 @@ public class VibeComposerGUI extends JFrame
 				.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
 		arpPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
 		drumPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
-		/*melodySameRhythmChance.setVisible(aFlag);
-		melodyUseOldAlgoChance.setVisible(aFlag);
-		melodyFirstNoteFromChord.setVisible(aFlag);
-		randomChordNote.setVisible(aFlag);
-		
-		randomArpStretchPicker.setVisible(aFlag);
-		randomArpStretchType.setVisible(aFlag);
-		randomChordStretchPicker.setVisible(aFlag);
-		randomChordStretchType.setVisible(aFlag);
-		
-		randomChordStrum.setVisible(aFlag);
-		randomChordSplit.setVisible(aFlag);
-		randomChordMaxSplitChance.setVisible(aFlag);
-		randomChordStretchType.setVisible(aFlag);*/
 
 
 		/*instrumentTabPane
@@ -2404,12 +2391,8 @@ public class VibeComposerGUI extends JFrame
 		currentMidi = null;
 
 		// TODO: from real parts - set after generation!
-		if (MidiGenerator.gc.getArrangement().isOverridden()) {
-			System.out.println("WRITING FROM ACTUAL!");
-			setActualModel(MidiGenerator.gc.getActualArrangement().convertToActualTableModel());
-		} else {
-			setActualModel(MidiGenerator.gc.getArrangement().convertToActualTableModel());
-		}
+
+		setActualModel(MidiGenerator.gc.getActualArrangement().convertToActualTableModel());
 
 		actualArrangement = new Arrangement();
 		actualArrangement.setPreviewChorus(false);
