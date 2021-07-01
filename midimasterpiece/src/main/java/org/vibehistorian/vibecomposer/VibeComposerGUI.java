@@ -821,6 +821,11 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
 		scrollableMelodyPanels.add(melodySettingsPanel);
+		JPanel melodySettingsExtraPanel = new JPanel();
+		melodySettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
+		melodySettingsExtraPanel.setVisible(false);
+		scrollableMelodyPanels.add(melodySettingsExtraPanel);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 	}
 
@@ -831,7 +836,7 @@ public class VibeComposerGUI extends JFrame
 			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
-			melodyPanel.setMidiChannel(i + 1);
+			//melodyPanel.setMidiChannel(i + 1);
 		}
 
 
@@ -1490,8 +1495,8 @@ public class VibeComposerGUI extends JFrame
 				if (row >= 2) {
 
 					// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
-					int[] maxCounts = new int[] { 0, 0, 1, 1, chordPanels.size(), arpPanels.size(),
-							drumPanels.size() };
+					int[] maxCounts = new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
+							arpPanels.size(), drumPanels.size() };
 					if (value.equalsIgnoreCase("")) {
 						comp.setBackground(new Color(70, 70, 70));
 					} else {

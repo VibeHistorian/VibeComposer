@@ -121,6 +121,8 @@ public class MidiGenerator implements JMC {
 	public static int showScoreMode = 0;
 
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
+	public static boolean COLLAPSE_MELODY_TRACKS = true;
+
 
 	// for internal use only
 	private double[] MELODY_DUR_ARRAY = { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
@@ -395,7 +397,7 @@ public class MidiGenerator implements JMC {
 			makeMelodyPitchFrequencyMap();
 		}
 		if (genVars && variations != null) {
-			sec.setVariation(0, 0, variations);
+			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
 		}
 		return noteList;
 	}
@@ -1050,12 +1052,12 @@ public class MidiGenerator implements JMC {
 							usedRoots = melodyBasedRootProgression;
 							System.out.println("Risky Variation: Melody Swap!");
 						}
-						List<Integer> variations = (overridden) ? sec.getVariation(0, 0) : null;
+						List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 						Phrase m = fillMelody(mp, usedMelodyProg, usedRoots, usedMeasures,
 								notesSeedOffset, sec, variations);
 						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part
 						if (notesSeedOffset == 0
-								&& sec.getVariation(0, 0).contains(Integer.valueOf(0))) {
+								&& sec.getVariation(0, i).contains(Integer.valueOf(0))) {
 							Phrase m2 = m.copy();
 							Mod.transpose(m2, -12);
 							Part melPart = new Part();
@@ -1066,7 +1068,7 @@ public class MidiGenerator implements JMC {
 						}
 						copiedPhrases.add(m);
 						if (!overridden)
-							sec.setPresence(0, 0);
+							sec.setPresence(0, i);
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
 					}
@@ -1254,6 +1256,9 @@ public class MidiGenerator implements JMC {
 						gc.getMelodyParts().get(i).getOrder(), VibeComposerGUI.melodyPanels);
 				ip.setSequenceTrack(trackCounter++);
 				//if (VibeComposerGUI.apSm)
+			}
+			if (COLLAPSE_MELODY_TRACKS) {
+				break;
 			}
 		}
 
