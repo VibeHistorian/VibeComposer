@@ -12,13 +12,13 @@ public class DrumPartsWrapper {
 
 	private boolean useSemitonalMapping = false;
 
-	List<InstPart> drumParts = new ArrayList<>();
+	List<DrumPart> drumParts = new ArrayList<>();
 
-	public List<InstPart> getDrumParts() {
+	public List<DrumPart> getDrumParts() {
 		return drumParts;
 	}
 
-	public void setDrumParts(List<InstPart> drumParts) {
+	public void setDrumParts(List<DrumPart> drumParts) {
 		this.drumParts = drumParts;
 	}
 

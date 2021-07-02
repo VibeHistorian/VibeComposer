@@ -3603,7 +3603,7 @@ public class VibeComposerGUI extends JFrame
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
-		wrapper.setDrumParts(getInstPartsFromInstPanels(4, false));
+		wrapper.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
 		wrapper.setUseSemitonalMapping(!changeMidiMapping.getActionCommand().contains("Semi"));
 		mar.marshal(wrapper, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
 	}

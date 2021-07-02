@@ -205,6 +205,9 @@ public class DrumHitsPatternPanel extends JPanel {
 	}
 
 	public void reapplyShift() {
+		if (truePattern == null || truePattern.isEmpty()) {
+			return;
+		}
 		for (int i = 0; i < 32; i++) {
 			int shI = (i + shiftPanel.getInt()) % 32;
 			hitChecks[shI].setSelected(truePattern.get(i) != 0);
