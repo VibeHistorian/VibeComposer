@@ -3064,11 +3064,11 @@ public class VibeComposerGUI extends JFrame
 
 			Random rand = new Random();
 			int melodySeed = rand.nextInt();
-			melodyPanels.get(0).setPatternSeed(melodySeed);
+			melodyPanels.forEach(e -> e.setPatternSeed(melodySeed));
 		}
 
 		if (ae.getActionCommand() == "ClearMelody") {
-			melodyPanels.get(0).setPatternSeed(0);
+			melodyPanels.forEach(e -> e.setPatternSeed(0));
 		}
 
 		if (ae.getActionCommand() == "CopySeed") {
