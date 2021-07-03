@@ -1684,7 +1684,7 @@ public class VibeComposerGUI extends JFrame
 
 		spiceAllow9th13th = new JCheckBox("9th/13th");
 		spiceAllow9th13th.setSelected(false);
-		chordProgressionSettingsPanel.add(spiceAllow9th13th);
+		//chordProgressionSettingsPanel.add(spiceAllow9th13th);
 
 		spiceFlattenBigChords = new JCheckBox("Spicy voicing", false);
 		chordProgressionSettingsPanel.add(spiceFlattenBigChords);
