@@ -145,6 +145,7 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
+import org.vibehistorian.vibecomposer.Popups.NicheSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -393,7 +394,9 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeTransposeOnCompose;
 	JCheckBox randomizeChordStrumsOnCompose;
 	JCheckBox arpAffectsBpm;
-	JTextField mainBpm;
+	public static KnobPanel mainBpm;
+	public static KnobPanel bpmLow;
+	public static KnobPanel bpmHigh;
 	KnobPanel transposeScore;
 	JButton switchOnComposeRandom;
 
@@ -446,6 +449,8 @@ public class VibeComposerGUI extends JFrame
 	public static VibeComposerGUI vibeComposerGUI = null;
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
+
+	public static JPanel nicheSettingsPanel;
 
 
 	public static void main(String args[]) {
@@ -678,6 +683,10 @@ public class VibeComposerGUI extends JFrame
 		mainButtonsPanel.add(makeButton("User Manual (opens browser)", "ShowHelpPopup"));
 
 		mainButtonsPanel.add(makeButton("Debug", "ShowDebugPopup"));
+
+		nicheSettingsPanel = new JPanel();
+
+		mainButtonsPanel.add(makeButton("Niche Settings", "ShowNichePopup"));
 
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}
@@ -1967,10 +1976,13 @@ public class VibeComposerGUI extends JFrame
 		controlPanel.add(transposeScore);
 
 		Random bpmRand = new Random();
-		mainBpm = new JTextField(String.valueOf(bpmRand.nextInt(30) + 50), 3);
+		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(30) + 50, 25, 80);
 
+		bpmLow = new KnobPanel("Min BPM.", 25, 10, 179);
+		bpmHigh = new KnobPanel("Max BPM.", 80, 11, 180);
+		nicheSettingsPanel.add(bpmLow);
+		nicheSettingsPanel.add(bpmHigh);
 
-		controlPanel.add(new JLabel("BPM:"));
 		controlPanel.add(mainBpm);
 		scaleMode = new JComboBox<String>();
 		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
@@ -2602,11 +2614,15 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void openHelpPopup() {
-		HelpPopup helpPopup = new HelpPopup();
+		HelpPopup popup = new HelpPopup();
 	}
 
 	private void openAboutPopup() {
-		AboutPopup aboutPopup = new AboutPopup();
+		AboutPopup popup = new AboutPopup();
+	}
+
+	private void openNichePopup() {
+		NicheSettingsPopup popup = new NicheSettingsPopup();
 	}
 
 	private void openDebugConsole() {
@@ -2798,12 +2814,12 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		realBpm = Double.valueOf(mainBpm.getText());
+		realBpm = Double.valueOf(mainBpm.getInt());
 		if (ae.getActionCommand() == "RandomizeBpm"
 				|| (ae.getActionCommand() == "Compose" && randomizeBpmOnCompose.isSelected())) {
 			Random instGen = new Random();
 
-			int bpm = instGen.nextInt(30) + 50;
+			int bpm = instGen.nextInt(1 + bpmHigh.getInt() - bpmLow.getInt()) + bpmLow.getInt();
 			if (arpAffectsBpm.isSelected() && !arpPanels.isEmpty()) {
 				double highestArpPattern = arpPanels.stream()
 						.map(e -> (e.getPatternRepeat() * e.getHitsPerPattern())
@@ -2814,7 +2830,7 @@ public class VibeComposerGUI extends JFrame
 					bpm *= 1 / (0.5 + highestArpPattern * 0.5);
 				}
 			}
-			mainBpm.setText("" + bpm);
+			mainBpm.setInt(bpm);
 			realBpm = bpm;
 		}
 
@@ -3200,6 +3216,10 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "ShowDebugPopup") {
 			openDebugConsole();
+		}
+
+		if (ae.getActionCommand() == "ShowNichePopup") {
+			openNichePopup();
 		}
 
 		if (ae.getActionCommand() == "CopyPart") {
@@ -3697,7 +3717,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		guiConfig.setTranspose(transposeScore.getInt());
-		guiConfig.setBpm(Double.valueOf(mainBpm.getText()));
+		guiConfig.setBpm(Double.valueOf(mainBpm.getInt()));
 		guiConfig.setArpAffectsBpm(arpAffectsBpm.isSelected());
 		guiConfig.setDoubledDurations(useDoubledDurations.isSelected());
 		guiConfig.setAllowChordRepeats(allowChordRepeats.isSelected());
@@ -3783,7 +3803,7 @@ public class VibeComposerGUI extends JFrame
 			fixedLengthChords.setSelectedItem("" + guiConfig.getFixedDuration());
 		}
 		transposeScore.setInt(guiConfig.getTranspose());
-		mainBpm.setText(String.valueOf(guiConfig.getBpm()));
+		mainBpm.setInt((int) Math.round(guiConfig.getBpm()));
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
 		useDoubledDurations.setSelected(guiConfig.isDoubledDurations());
 		allowChordRepeats.setSelected(guiConfig.isAllowChordRepeats());

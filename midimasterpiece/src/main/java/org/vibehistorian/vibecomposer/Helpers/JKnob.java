@@ -413,6 +413,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setMin(int min) {
 		this.min = min;
+		diff = max - min;
 	}
 
 	public int getMax() {
@@ -421,6 +422,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setMax(int max) {
 		this.max = max;
+		diff = max - min;
 	}
 
 	public int getCurr() {
