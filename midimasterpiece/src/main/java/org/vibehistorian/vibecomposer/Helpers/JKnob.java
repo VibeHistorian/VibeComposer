@@ -58,6 +58,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private int tickSpacing = 0;
 	private List<Integer> tickThresholds = null;
 
+
+	private boolean stretchAfterCustomInput = false;
+
+
 	public static KnobValuePopup singlePopup = null;
 
 	/**
@@ -321,7 +325,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			if (singlePopup != null) {
 				singlePopup.applyAndClose();
 			}
-			singlePopup = new KnobValuePopup(this);
+			singlePopup = new KnobValuePopup(this, stretchAfterCustomInput);
 		}
 
 	}
@@ -433,5 +437,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		this.curr = curr;
 	}
 
+
+	public boolean isStretchAfterCustomInput() {
+		return stretchAfterCustomInput;
+	}
+
+	public void setStretchAfterCustomInput(boolean stretchAfterCustomInput) {
+		this.stretchAfterCustomInput = stretchAfterCustomInput;
+	}
 
 }

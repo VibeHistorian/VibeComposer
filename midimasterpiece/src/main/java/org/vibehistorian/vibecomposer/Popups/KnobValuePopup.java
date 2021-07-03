@@ -16,9 +16,12 @@ public class KnobValuePopup {
 	final JFrame frame = new JFrame();
 	private JKnob knob = null;
 	private NumPanel numPanel = null;
+	private boolean stretchAfterCustomInput = false;
+	private Integer customInput = null;
 
-	public KnobValuePopup(JKnob knob) {
+	public KnobValuePopup(JKnob knob, boolean stretch) {
 		this.knob = knob;
+		stretchAfterCustomInput = stretch;
 		numPanel = new NumPanel("Knob", knob.getValue(), knob.getMin(), knob.getMax());
 		frame.add(numPanel);
 		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
@@ -53,6 +56,12 @@ public class KnobValuePopup {
 	}
 
 	public void applyAndClose() {
+		try {
+			customInput = Integer.valueOf(numPanel.getTextfield().getText());
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid value: " + numPanel.getTextfield().getText());
+		}
+
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
 				.postEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
 
@@ -69,7 +78,18 @@ public class KnobValuePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				knob.setValue(numPanel.getInt());
+				if (customInput != null) {
+					int val = customInput;
+					if (stretchAfterCustomInput) {
+						if (val > knob.getMax()) {
+							knob.setMax(val);
+						} else if (val < knob.getMin()) {
+							knob.setMin(val);
+						}
+					}
+					knob.setValue(val);
+				}
+
 				JKnob.singlePopup = null;
 
 			}

@@ -193,7 +193,7 @@ public class NumPanel extends JPanel {
 				updateTextLater(true);
 			} else if (tryValue < slider.getMinimum()) {
 				slider.setValue(slider.getMinimum());
-				updateTextLater(false);
+				//updateTextLater(false);
 			} else {
 				slider.setValue(tryValue);
 			}

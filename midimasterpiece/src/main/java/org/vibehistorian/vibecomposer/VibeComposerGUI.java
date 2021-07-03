@@ -1977,8 +1977,9 @@ public class VibeComposerGUI extends JFrame
 
 		Random bpmRand = new Random();
 		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(30) + 50, 25, 80);
+		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
-		bpmLow = new KnobPanel("Min BPM.", 25, 10, 179);
+		bpmLow = new KnobPanel("Min BPM.", 50, 10, 179);
 		bpmHigh = new KnobPanel("Max BPM.", 80, 11, 180);
 		nicheSettingsPanel.add(bpmLow);
 		nicheSettingsPanel.add(bpmHigh);
