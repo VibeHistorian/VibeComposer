@@ -164,10 +164,10 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 
-	private static final double[] MILISECOND_ARRAY_STRUM = { 15, 1000, 750, 500, 333, 250, 166, 125,
-			62, 62, 31 };
-	private static final double[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
-	private static final double[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
+	public static final int[] MILISECOND_ARRAY_STRUM = { 15, 31, 62, 62, 125, 166, 250, 333, 500,
+			750, 1000 };
+	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
+	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 
 	public static VariationPopup varPopup = null;
@@ -445,6 +445,7 @@ public class VibeComposerGUI extends JFrame
 	public static Map<Integer, SoloMuter> apSm = null;
 	public static Map<Integer, SoloMuter> dpSm = null;
 
+	public static JFrame currentPopup = null;
 	public static DebugConsole dconsole = null;
 	public static VibeComposerGUI vibeComposerGUI = null;
 
@@ -840,12 +841,20 @@ public class VibeComposerGUI extends JFrame
 
 	private void initMelody(int startY, int anchorSide) {
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = new MelodyPanel(this);
 			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			//melodyPanel.setMidiChannel(i + 1);
+			if (i > 0) {
+				melodyPanel.setPauseChance(70);
+				if (i % 2 == 1) {
+					melodyPanel.setTranspose(12);
+				} else {
+					melodyPanel.setTranspose(-12);
+				}
+			}
 		}
 
 
@@ -2615,15 +2624,27 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void openHelpPopup() {
+		if (currentPopup != null) {
+			currentPopup.setVisible(false);
+		}
 		HelpPopup popup = new HelpPopup();
+		currentPopup = popup.getFrame();
 	}
 
 	private void openAboutPopup() {
+		if (currentPopup != null) {
+			currentPopup.setVisible(false);
+		}
 		AboutPopup popup = new AboutPopup();
+		currentPopup = popup.getFrame();
 	}
 
 	private void openNichePopup() {
+		if (currentPopup != null) {
+			currentPopup.setVisible(false);
+		}
 		NicheSettingsPopup popup = new NicheSettingsPopup();
+		currentPopup = popup.getFrame();
 	}
 
 	private void openDebugConsole() {
@@ -2698,7 +2719,7 @@ public class VibeComposerGUI extends JFrame
 				& randomizeChordStrumsOnCompose.isSelected())) {
 			Random strumsGen = new Random();
 			for (ChordPanel p : chordPanels) {
-				p.setStrum((int) getRandomFromArray(strumsGen, MILISECOND_ARRAY_STRUM));
+				p.setStrum(getRandomFromArray(strumsGen, MILISECOND_ARRAY_STRUM));
 				if (p.getStretchEnabled() && p.getChordNotesStretch() > 4 && p.getStrum() > 499) {
 					p.setStrum(p.getStrum() / 2);
 				}
@@ -2729,12 +2750,15 @@ public class VibeComposerGUI extends JFrame
 							.setInstrument(ap.getInstrumentBox().getRandomInstrument());
 				}
 			}
-			for (MelodyPanel mp : melodyPanels) {
-				if (!mp.getLockInst()) {
-					mp.getInstrumentBox()
-							.setInstrument(mp.getInstrumentBox().getRandomInstrument());
+			if (!melodyPanels.isEmpty()) {
+				int inst = melodyPanels.get(0).getInstrumentBox().getRandomInstrument();
+				for (MelodyPanel mp : melodyPanels) {
+					if (!mp.getLockInst()) {
+						mp.getInstrumentBox().setInstrument(inst);
+					}
 				}
 			}
+
 
 			if (!bassPanel.getLockInst()) {
 
@@ -4151,11 +4175,11 @@ public class VibeComposerGUI extends JFrame
 			cp.setTransitionChance(chordPanelGenerator
 					.nextInt(Integer.valueOf(randomChordMaxSplitChance.getInt() + 1)));
 			cp.setTransitionSplit(
-					(int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
+					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
 
-			cp.setStrum(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_STRUM))));
-			cp.setDelay(((int) (getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY))));
+			cp.setStrum((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_STRUM)));
+			cp.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY)));
 
 			if (randomChordUseChordFill.isSelected()) {
 				cp.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
@@ -4409,7 +4433,7 @@ public class VibeComposerGUI extends JFrame
 		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 
-	private static double getRandomFromArray(Random generator, double[] array) {
+	private static int getRandomFromArray(Random generator, int[] array) {
 		return array[generator.nextInt(array.length)];
 	}
 

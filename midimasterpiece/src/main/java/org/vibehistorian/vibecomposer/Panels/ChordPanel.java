@@ -3,12 +3,15 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -55,6 +58,10 @@ public class ChordPanel extends InstPanel {
 		this.add(chordSpanFill);
 		this.add(strum);
 		this.add(transpose);
+
+		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
+				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
+		strum.getKnob().setTickSpacing(50);
 
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);

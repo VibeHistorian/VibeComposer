@@ -208,13 +208,21 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public int getValue() {
 		double val = toDouble(theta);
 		int intVal = min + (int) Math.round(val * diff);
+		int smallestDiff = Integer.MAX_VALUE;
+		int smallestInt = 0;
 		if (tickSpacing > 0) {
 			for (Integer i : tickThresholds) {
-				if (Math.abs(intVal - i) <= tickSpacing / 2) {
-					curr = i;
-					return i;
+				int currentDiff = Math.abs(intVal - i);
+				if (smallestDiff > currentDiff) {
+					smallestDiff = currentDiff;
+					smallestInt = i;
+				} else if (smallestDiff != Integer.MAX_VALUE && smallestDiff < currentDiff) {
+					curr = smallestInt;
+					return smallestInt;
 				}
 			}
+			curr = smallestInt;
+			return smallestInt;
 		}
 		curr = intVal;
 		return intVal;
@@ -437,6 +445,21 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		this.curr = curr;
 	}
 
+	public List<Integer> getTickThresholds() {
+		return tickThresholds;
+	}
+
+	public void setTickThresholds(List<Integer> tickThresholds) {
+		this.tickThresholds = tickThresholds;
+	}
+
+	public int getTickSpacing() {
+		return tickSpacing;
+	}
+
+	public void setTickSpacing(int tickSpacing) {
+		this.tickSpacing = tickSpacing;
+	}
 
 	public boolean isStretchAfterCustomInput() {
 		return stretchAfterCustomInput;

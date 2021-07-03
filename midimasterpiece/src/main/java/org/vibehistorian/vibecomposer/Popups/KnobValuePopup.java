@@ -86,8 +86,13 @@ public class KnobValuePopup {
 						} else if (val < knob.getMin()) {
 							knob.setMin(val);
 						}
+						knob.setValue(val);
+					} else {
+						if (knob.getMin() <= val && knob.getMax() >= val) {
+							knob.setValue(val);
+						}
 					}
-					knob.setValue(val);
+
 				}
 
 				JKnob.singlePopup = null;

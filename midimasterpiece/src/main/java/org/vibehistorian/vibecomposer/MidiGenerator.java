@@ -444,10 +444,11 @@ public class MidiGenerator implements JMC {
 	}
 
 	private Vector<Note> convertMelodySkeletonToFullMelody(MelodyPart mp, Vector<Note> skeleton) {
-		Random splitGenerator = new Random(mp.getPatternSeed() + 4);
-		Random pauseGenerator = new Random(mp.getPatternSeed() + 5);
-		Random pauseGenerator2 = new Random(mp.getPatternSeed() + 7);
-		Random variationGenerator = new Random(mp.getPatternSeed() + 6);
+		int seed = mp.getPatternSeed() + mp.getOrder();
+		Random splitGenerator = new Random(seed + 4);
+		Random pauseGenerator = new Random(seed + 5);
+		Random pauseGenerator2 = new Random(seed + 7);
+		Random variationGenerator = new Random(seed + 6);
 		int splitChance = gc.getMelodySplitChance() * gc.getMelodyQuickness() / 100;
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
@@ -465,8 +466,8 @@ public class MidiGenerator implements JMC {
 				}
 				durCounter = 0.0;
 				currentChordDur = progressionDurations.get(chordCounter);
-				splitGenerator.setSeed(mp.getPatternSeed() + 4);
-				pauseGenerator.setSeed(mp.getPatternSeed() + 5);
+				splitGenerator.setSeed(seed + 4);
+				pauseGenerator.setSeed(seed + 5);
 			}
 			Note emptyNote = new Note(Integer.MIN_VALUE, adjDur);
 			Note emptyNoteHalf = new Note(Integer.MIN_VALUE, adjDur / 2.0);
