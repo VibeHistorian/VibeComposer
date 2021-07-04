@@ -72,7 +72,7 @@ public class Section {
 	private List<CPhrase> chords;
 	private List<CPhrase> arps;
 	private List<Phrase> drums;
-	private Phrase chordSlash;
+	private CPhrase chordSlash;
 
 	// map integer(what), map integer(part order), list integer(section variation)
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
@@ -209,12 +209,12 @@ public class Section {
 		this.drums = drums;
 	}
 
-	public Phrase getChordSlash() {
+	public CPhrase getChordSlash() {
 		return chordSlash;
 	}
 
 	@XmlTransient
-	public void setChordSlash(Phrase chordSlash) {
+	public void setChordSlash(CPhrase chordSlash) {
 		this.chordSlash = chordSlash;
 	}
 

@@ -1052,8 +1052,8 @@ public class MidiGenerator implements JMC {
 						List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 						Phrase m = fillMelody(mp, usedMelodyProg, usedRoots, usedMeasures,
 								notesSeedOffset, sec, variations);
-						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part
-						if (notesSeedOffset == 0
+						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
+						if (notesSeedOffset == 0 && i == 0
 								&& sec.getVariation(0, i).contains(Integer.valueOf(0))) {
 							Phrase m2 = m.copy();
 							Mod.transpose(m2, -12);
@@ -1097,6 +1097,7 @@ public class MidiGenerator implements JMC {
 			if (!gc.getChordParts().isEmpty()) {
 				List<CPhrase> copiedCPhrases = new ArrayList<>();
 				Set<Integer> presences = sec.getPresence(2);
+				boolean useChordSlash = false;
 				for (int i = 0; i < gc.getChordParts().size(); i++) {
 					ChordPart cp = (ChordPart) gc.getChordParts().get(i);
 					rand.setSeed(arrSeed + 100 + cp.getOrder());
@@ -1104,6 +1105,9 @@ public class MidiGenerator implements JMC {
 					boolean added = (overridden && presences.contains(cp.getOrder()))
 							|| (!overridden && rand.nextInt(100) < sec.getChordChance());
 					if (added && !cp.isMuted()) {
+						if (i == 0) {
+							useChordSlash = true;
+						}
 						List<Integer> variations = (overridden) ? sec.getVariation(2, i) : null;
 						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures, sec,
 								variations);
@@ -1118,11 +1122,10 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				sec.setChords(copiedCPhrases);
-				if (!gc.getChordParts().get(0).isMuted()
-						&& presences.contains(gc.getChordParts().get(0).getOrder())) {
+				if (useChordSlash) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
-					sec.setChordSlash(emptyPhrase.copy());
+					sec.setChordSlash(emptyCPhrase.copy());
 				}
 
 			}
@@ -1236,10 +1239,10 @@ public class MidiGenerator implements JMC {
 
 			}
 			if (gc.getChordParts().size() > 0) {
-				Phrase cscp = sec.getChordSlash();
+				CPhrase cscp = sec.getChordSlash();
 				cscp.setStartTime(cscp.getStartTime() + sec.getStartTime());
 				cscp.setAppend(false);
-				chordParts.get(0).addPhrase(cscp);
+				chordParts.get(0).addCPhrase(cscp);
 			}
 
 		}
@@ -1723,6 +1726,7 @@ public class MidiGenerator implements JMC {
 					cpr.flam(SECOND_ARRAY_STRUM[index]);
 				} else {
 					cpr.flam(((double) cp.getStrum()) / 1000.0);
+					System.out.println("Chord strum CUSTOM! " + cp.getStrum());
 				}
 
 			} else {
@@ -1911,6 +1915,10 @@ public class MidiGenerator implements JMC {
 				dp.getPatternSeed() + dp.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = 2;
 		// bar iter
+		int hits = dp.getHitsPerPattern();
+		int swingPercentAmount = (hits == 2 || hits == 4 || hits % 8 == 0) ? dp.getSwingPercent()
+				: 50;
+
 		for (int o = 0; o < measures; o++) {
 			// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
 			Random exceptionGenerator = new Random(dp.getPatternSeed() + dp.getOrder());
@@ -1963,9 +1971,9 @@ public class MidiGenerator implements JMC {
 							: 0.0;
 				}
 
-				double drumDuration = patternDurationTotal / dp.getHitsPerPattern();
+				double drumDuration = patternDurationTotal / hits;
 
-				int swingPercentAmount = dp.getSwingPercent();
+
 				boolean swung = false;
 				double swingDuration = 0;
 				for (int k = 0; k < drumPattern.size(); k++) {
@@ -2032,8 +2040,8 @@ public class MidiGenerator implements JMC {
 		throw new IllegalArgumentException("Absolute order not found!");
 	}
 
-	protected Phrase fillChordSlash(List<int[]> actualProgression, int measures) {
-		Phrase chordSlashCPhrase = new Phrase();
+	protected CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
+		CPhrase chordSlashCPhrase = new CPhrase();
 		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
 		for (int i = 0; i < measures; i++) {
 			// fill slash chord slashes
