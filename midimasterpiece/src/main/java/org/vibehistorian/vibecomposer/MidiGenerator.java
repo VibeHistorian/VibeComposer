@@ -82,6 +82,9 @@ import jm.util.Write;
 
 public class MidiGenerator implements JMC {
 
+	public static final double[] SECOND_ARRAY_STRUM = { 0.015625, 0.03125, 0.0625, 0.0625, 0.125,
+			0.16666667, 0.250, 0.333333, 0.50000, 0.750, 1.000 };
+
 	private static final boolean debugEnabled = true;
 	private static final PrintStream originalStream = System.out;
 
@@ -1057,7 +1060,7 @@ public class MidiGenerator implements JMC {
 							Part melPart = new Part();
 							melPart.add(m2);
 							melPart.add(m);
-							Mod.consolidate(melPart);
+							JMusicUtilsCustom.consolidate(melPart);
 							m = melPart.getPhrase(0);
 						}
 						copiedPhrases.add(m);
@@ -1632,7 +1635,7 @@ public class MidiGenerator implements JMC {
 				int[] transChordNotes = actualProgression.get(transChord);
 				if (skipSecondNote) {
 					int[] newMainChordNotes = new int[mainChordNotes.length - 1];
-					int[] newTransChordNotes = new int[mainChordNotes.length - 1];
+					int[] newTransChordNotes = new int[transChordNotes.length - 1];
 					for (int m = 0; m < mainChordNotes.length; m++) {
 						if (m == 1)
 							continue;
@@ -1709,7 +1712,19 @@ public class MidiGenerator implements JMC {
 		// chord strum
 		if (gc.getChordGenSettings().isUseStrum()) {
 			if (cp.getPattern() == RhythmPattern.FULL) {
-				cpr.flam(cp.getStrum() / 1000.0);
+				int index = -1;
+				for (int i = 0; i < VibeComposerGUI.MILISECOND_ARRAY_STRUM.length; i++) {
+					if (cp.getStrum() == VibeComposerGUI.MILISECOND_ARRAY_STRUM[i]) {
+						index = i;
+						break;
+					}
+				}
+				if (index != -1) {
+					cpr.flam(SECOND_ARRAY_STRUM[index]);
+				} else {
+					cpr.flam(((double) cp.getStrum()) / 1000.0);
+				}
+
 			} else {
 				//cpr.flam(10 / 1000.0);
 			}
@@ -1884,6 +1899,13 @@ public class MidiGenerator implements JMC {
 		int chordsCount = actualProgression.size();
 
 		List<Integer> drumPattern = generateDrumPatternFromPart(dp);
+
+		if (!dp.isVelocityPattern() && drumPattern.indexOf(dp.getInstrument()) == -1) {
+			//drumPhrase.addNote(new Note(Integer.MIN_VALUE, patternDurationTotal, 100));
+			drumPhrase.setStartTime(START_TIME_DELAY + (dp.getDelay() / 1000.0));
+			return drumPhrase;
+		}
+
 		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(dp);
 		Random variationGenerator = new Random(
 				dp.getPatternSeed() + dp.getOrder() + sec.getTypeSeedOffset());
@@ -1942,10 +1964,10 @@ public class MidiGenerator implements JMC {
 				}
 
 				double drumDuration = patternDurationTotal / dp.getHitsPerPattern();
-				if (!dp.isVelocityPattern() && drumPattern.indexOf(dp.getInstrument()) == -1) {
-					continue;
-				}
+
 				int swingPercentAmount = dp.getSwingPercent();
+				boolean swung = false;
+				double swingDuration = 0;
 				for (int k = 0; k < drumPattern.size(); k++) {
 					int drum = drumPattern.get(k);
 					int velocity = drumVelocityPattern.get(k);
@@ -1966,9 +1988,17 @@ public class MidiGenerator implements JMC {
 						}
 					}
 
-
-					double swingDuration = drumDuration * (swingPercentAmount / ((double) 50.0));
-					swingPercentAmount = 100 - swingPercentAmount;
+					if (!swung) {
+						if (swingPercentAmount == 50) {
+							swingDuration = drumDuration;
+						} else {
+							swingDuration = drumDuration * (swingPercentAmount / ((double) 50.0));
+						}
+						swung = true;
+					} else {
+						swingDuration = 2 * drumDuration - swingDuration;
+						swung = false;
+					}
 
 					boolean exception = exceptionGenerator
 							.nextInt(100) < (dp.getExceptionChance() + extraExceptionChance);
