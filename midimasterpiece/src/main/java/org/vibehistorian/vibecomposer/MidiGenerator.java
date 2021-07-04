@@ -82,7 +82,7 @@ import jm.util.Write;
 
 public class MidiGenerator implements JMC {
 
-	public static final double[] SECOND_ARRAY_STRUM = { 0.015625, 0.03125, 0.0625, 0.0625, 0.125,
+	public static final double[] SECOND_ARRAY_STRUM = { 0.016666, 0.03125, 0.0625, 0.0625, 0.125,
 			0.16666667, 0.250, 0.333333, 0.50000, 0.750, 1.000 };
 
 	private static final boolean debugEnabled = true;
@@ -720,7 +720,7 @@ public class MidiGenerator implements JMC {
 			boolean isLastChord = durationLeft - dur < 0.01;
 			Long chordInt = (isLastChord && FIRST_CHORD != 0) ? FIRST_CHORD : next.get(nextInt);
 			if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
-					&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 15) {
+					&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 10) {
 				chordInt = Long.valueOf(lastUnspicedChord);
 				canRepeatChord = false;
 			}
@@ -1919,6 +1919,9 @@ public class MidiGenerator implements JMC {
 		int swingPercentAmount = (hits == 2 || hits == 4 || hits % 8 == 0) ? dp.getSwingPercent()
 				: 50;
 
+		String swangPercentAmount = (swingPercentAmount < 100) ? "0." + swingPercentAmount : "1.0";
+		double swungPercentAmount = Double.valueOf(swangPercentAmount);
+
 		for (int o = 0; o < measures; o++) {
 			// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
 			Random exceptionGenerator = new Random(dp.getPatternSeed() + dp.getOrder());
@@ -1973,6 +1976,9 @@ public class MidiGenerator implements JMC {
 
 				double drumDuration = patternDurationTotal / hits;
 
+				double doubleDrum = drumDuration * 2;
+				double swing1 = doubleDrum * swungPercentAmount;
+				double swing2 = doubleDrum - swing1;
 
 				boolean swung = false;
 				double swingDuration = 0;
@@ -1997,14 +2003,10 @@ public class MidiGenerator implements JMC {
 					}
 
 					if (!swung) {
-						if (swingPercentAmount == 50) {
-							swingDuration = drumDuration;
-						} else {
-							swingDuration = drumDuration * (swingPercentAmount / ((double) 50.0));
-						}
+						swingDuration = swing1;
 						swung = true;
 					} else {
-						swingDuration = 2 * drumDuration - swingDuration;
+						swingDuration = swing2;
 						swung = false;
 					}
 
@@ -2012,10 +2014,16 @@ public class MidiGenerator implements JMC {
 							.nextInt(100) < (dp.getExceptionChance() + extraExceptionChance);
 					if (exception) {
 						int secondVelocity = (velocity * 8) / 10;
-						drumPhrase.addNote(new Note(pitch, swingDuration / 2, velocity));
-						drumPhrase.addNote(new Note(pitch, swingDuration / 2, secondVelocity));
+						Note n1 = new Note(pitch, swingDuration / 2, velocity);
+						Note n2 = new Note(pitch, swingDuration / 2, secondVelocity);
+						n1.setDuration(0.5 * n1.getRhythmValue());
+						n2.setDuration(0.5 * n2.getRhythmValue());
+						drumPhrase.addNote(n1);
+						drumPhrase.addNote(n2);
 					} else {
-						drumPhrase.addNote(new Note(pitch, swingDuration, velocity));
+						Note n1 = new Note(pitch, swingDuration, velocity);
+						n1.setDuration(0.5 * n1.getRhythmValue());
+						drumPhrase.addNote(n1);
 					}
 
 				}

@@ -164,7 +164,7 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 
-	public static final int[] MILISECOND_ARRAY_STRUM = { 15, 31, 62, 62, 125, 166, 250, 333, 500,
+	public static final int[] MILISECOND_ARRAY_STRUM = { 16, 31, 62, 62, 125, 166, 250, 333, 500,
 			750, 1000 };
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
@@ -4179,6 +4179,9 @@ public class VibeComposerGUI extends JFrame
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
 
 			cp.setStrum((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_STRUM)));
+			if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4 && cp.getStrum() > 499) {
+				cp.setStrum(cp.getStrum() / 2);
+			}
 			cp.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY)));
 
 			if (randomChordUseChordFill.isSelected()) {
