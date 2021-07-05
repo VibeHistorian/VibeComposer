@@ -22,6 +22,7 @@
         <transpose>0</transpose>
         <velocityMax>90</velocityMax>
         <velocityMin>83</velocityMin>
+        <customPattern>1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="2">
@@ -46,6 +47,7 @@
         <transpose>0</transpose>
         <velocityMax>95</velocityMax>
         <velocityMin>76</velocityMin>
+        <customPattern>1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="3">
@@ -70,6 +72,7 @@
         <transpose>0</transpose>
         <velocityMax>83</velocityMax>
         <velocityMin>76</velocityMin>
+        <customPattern>1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="4">
@@ -82,7 +85,7 @@
         <instrument>44</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>RANDOM</pattern>
+        <pattern>FULL</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
@@ -94,6 +97,7 @@
         <transpose>0</transpose>
         <velocityMax>73</velocityMax>
         <velocityMin>70</velocityMin>
+        <customPattern>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="5">
@@ -118,6 +122,7 @@
         <transpose>0</transpose>
         <velocityMax>83</velocityMax>
         <velocityMin>74</velocityMin>
+        <customPattern>1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="6">
@@ -130,7 +135,7 @@
         <instrument>82</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>RANDOM</pattern>
+        <pattern>FULL</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
@@ -142,6 +147,7 @@
         <transpose>0</transpose>
         <velocityMax>69</velocityMax>
         <velocityMin>51</velocityMin>
+        <customPattern>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="7">
@@ -166,6 +172,7 @@
         <transpose>0</transpose>
         <velocityMax>76</velocityMax>
         <velocityMin>67</velocityMin>
+        <customPattern>1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="8">
@@ -190,6 +197,7 @@
         <transpose>0</transpose>
         <velocityMax>76</velocityMax>
         <velocityMin>63</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="9">
@@ -214,6 +222,7 @@
         <transpose>0</transpose>
         <velocityMax>80</velocityMax>
         <velocityMin>60</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="10">
@@ -238,6 +247,7 @@
         <transpose>0</transpose>
         <velocityMax>72</velocityMax>
         <velocityMin>63</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <useSemitonalMapping>false</useSemitonalMapping>

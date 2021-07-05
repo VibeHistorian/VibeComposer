@@ -3,14 +3,18 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public class ChordPanel extends InstPanel {
 
@@ -19,10 +23,10 @@ public class ChordPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 
-	private NumPanel transitionChance = new NumPanel("Split%", 0);
-	private NumPanel transitionSplit = new NumPanel("Split(ms)", 625, 0, 1000);
+	private KnobPanel transitionChance = new KnobPanel("Split%", 0);
+	private KnobPanel transitionSplit = new KnobPanel("Split(ms)", 625, 0, 1000);
 
-	private NumPanel strum = new NumPanel("Strum(ms)", 0, 0, 1000);
+	private KnobPanel strum = new KnobPanel("Strum(ms)", 0, 0, 1000);
 
 	private JComboBox<String> instPoolPicker = new JComboBox<String>();
 
@@ -42,7 +46,7 @@ public class ChordPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(instPoolPicker);
@@ -55,6 +59,10 @@ public class ChordPanel extends InstPanel {
 		this.add(strum);
 		this.add(transpose);
 
+		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
+				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
+		strum.getKnob().setTickSpacing(50);
+
 		this.add(stretchEnabled);
 		this.add(chordNotesStretch);
 		this.add(transitionChance);
@@ -64,7 +72,7 @@ public class ChordPanel extends InstPanel {
 		this.add(velocityMin);
 		this.add(velocityMax);
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
@@ -83,7 +91,10 @@ public class ChordPanel extends InstPanel {
 		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			if (d != RhythmPattern.CUSTOM) {
+				pattern.addItem(d.toString());
+			}
+
 		}
 		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {
 			instPoolPicker.addItem(p.toString());
@@ -102,11 +113,6 @@ public class ChordPanel extends InstPanel {
 		});
 
 		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveChord," + panelOrder);
-	}
-
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
 		removeButton.setActionCommand("RemoveChord," + panelOrder);
 	}
 
@@ -147,10 +153,11 @@ public class ChordPanel extends InstPanel {
 		return part;
 	}
 
-	public void setFromChordPart(ChordPart part) {
+	public void setFromInstPart(InstPart p) {
+		ChordPart part = (ChordPart) p;
 		instrument.initInstPool(part.getInstPool());
 		setInstPool(part.getInstPool());
-		setFromInstPart(part);
+		setDefaultsFromInstPart(part);
 
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
@@ -169,5 +176,8 @@ public class ChordPanel extends InstPanel {
 		instPoolPicker.setSelectedItem(pool.name());
 	}
 
-
+	@Override
+	public InstPart toInstPart(int lastRandomSeed) {
+		return toChordPart(lastRandomSeed);
+	}
 }

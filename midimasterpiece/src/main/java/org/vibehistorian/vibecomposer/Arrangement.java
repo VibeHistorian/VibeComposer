@@ -41,7 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 public class Arrangement {
 	private static final List<String> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
-					"CHORUS3", "CLIMAX", "OUTRO" }));
+					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
 
 	private static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
@@ -55,7 +55,7 @@ public class Arrangement {
 		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 40, 50, 50));
 		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
 		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
-		defaultSections.put("CLIMAX", new Section("CLIMAX", 2, 100, 100, 100, 100, 100));
+		defaultSections.put("CLIMAX", new Section("CLIMAX", 1, 100, 100, 100, 100, 100));
 		defaultSections.put("OUTRO", new Section("OUTRO", 1, 50, 70, 60, 40, 10));
 	}
 
@@ -121,9 +121,10 @@ public class Arrangement {
 
 		sections.clear();
 		for (String s : fullArrangement) {
+			//System.out.println("DeepCopy for " + s);
 			Section sec = defaultSections.get(s).deepCopy();
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
-				// climax gets shortened, others get lengthened
+
 				if (sec.getMeasures() > 1) {
 					sec.setMeasures(1);
 				} else {
@@ -160,7 +161,8 @@ public class Arrangement {
 
 	public void resetArrangement() {
 		sections.clear();
-		sections.add(new Section("PREVIEW", 1, 100, 100, 100, 100, 100));
+		Section preview = new Section("PREVIEW", 1, 100, 100, 100, 100, 100);
+		sections.add(preview);
 	}
 
 	public void generateDefaultArrangement() {
@@ -190,27 +192,31 @@ public class Arrangement {
 	}
 
 	public TableModel convertToActualTableModel() {
-		TableModel model = new DefaultTableModel(7, getSections().size());
+		TableModel model = new DefaultTableModel(7, getSections().size()) {
+
+			private static final long serialVersionUID = 2770352745917910024L;
+
+			@Override
+			public boolean isCellEditable(int row, int col) {
+				return (row == 0);
+			}
+
+		};
 		for (int i = 0; i < getSections().size(); i++) {
 			Section s = getSections().get(i);
 			model.setValueAt(s.getType(), 0, i);
 			model.setValueAt(String.valueOf(s.getMeasures()), 1, i);
-			String mp = StringUtils.join(s.getMelodyPresence());
-			String bp = StringUtils.join(s.getBassPresence());
-			String cp = StringUtils.join(s.getChordPresence());
-			String ap = StringUtils.join(s.getArpPresence());
-			String dp = StringUtils.join(s.getDrumPresence());
-			mp = mp.replaceAll("\\[", "").replaceAll("\\]", "");
-			bp = bp.replaceAll("\\[", "").replaceAll("\\]", "");
-			cp = cp.replaceAll("\\[", "").replaceAll("\\]", "");
-			ap = ap.replaceAll("\\[", "").replaceAll("\\]", "");
-			dp = dp.replaceAll("\\[", "").replaceAll("\\]", "");
-			model.setValueAt(mp, 2, i);
-			model.setValueAt(bp, 3, i);
-			model.setValueAt(cp, 4, i);
-			model.setValueAt(ap, 5, i);
-			model.setValueAt(dp, 6, i);
+			for (int j = 0; j < 5; j++) {
+				String pres = StringUtils.join(s.getPresence(j));
+				pres = pres.replaceAll("\\[", "").replaceAll("\\]", "");
+				model.setValueAt(pres, j + 2, i);
+			}
 		}
+		/*model.addTableModelListener(new TableModelListener() {
+			public void tableChanged(TableModelEvent evt) {
+				// here goes your code "on cell update"
+			}
+		});*/
 		return model;
 	}
 
@@ -249,12 +255,6 @@ public class Arrangement {
 	}
 
 	public void resortByIndexes(JTable scrollableArrangementTable) {
-		// TODO: arrangement.resortByIndexes
-		// convertColumnIndexToModel
-		// adv chorus at index 0 -> model says 7
-		// tempsections[0] = sections().get(7)
-		// arrays as list
-
 		TableModel m = scrollableArrangementTable.getModel();
 		int[] indexes = new int[m.getColumnCount()];
 		Section[] tempSections = new Section[m.getColumnCount()];
@@ -265,28 +265,20 @@ public class Arrangement {
 
 	}
 
-	public void addSectionLast(JTable scrollableArrangementTable) {
-		resortByIndexes(scrollableArrangementTable);
-		Section lastSection = sections.get(sections.size() - 1);
-		sections.add(new Section(lastSection));
+	public boolean setFromActualTable(JTable t, boolean forceColumns) {
 
-	}
-
-	public void removeSectionLast(JTable scrollableArrangementTable) {
-		resortByIndexes(scrollableArrangementTable);
-		sections.remove(sections.size() - 1);
-
-	}
-
-	public boolean setFromActualTable(JTable t) {
-		if (!overridden)
-			return false;
 		// TODO: possiblity to catch errors and return false
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		//sections.clear();
-		if (m.getColumnCount() != sections.size()) {
-			overridden = false;
+		if (forceColumns) {
+			sections.clear();
+			for (int i = 0; i < m.getColumnCount(); i++) {
+				sections.add(new Section());
+			}
+		}
+
+		if (sections.size() != m.getColumnCount()) {
 			return false;
 		}
 
@@ -295,24 +287,11 @@ public class Arrangement {
 			Section s = sections.get(i);
 			s.setType((String) m.getValueAt(0, k));
 			Object k1 = m.getValueAt(1, k);
-			List<Integer> k2 = integerListFromCell(m.getValueAt(2, k));
-			List<Integer> k3 = integerListFromCell(m.getValueAt(3, k));
-			List<Integer> k4 = integerListFromCell(m.getValueAt(4, k));
-			List<Integer> k5 = integerListFromCell(m.getValueAt(5, k));
-			List<Integer> k6 = integerListFromCell(m.getValueAt(6, k));
-			if (k2.isEmpty() && k3.isEmpty() && k4.isEmpty() && k5.isEmpty() && k6.isEmpty()) {
-				overridden = false;
-				return false;
-			}
 			s.setMeasures(k1 instanceof Integer ? (Integer) k1 : Integer.valueOf((String) k1));
-			s.setMelodyPresence(k2);
-			s.setBassPresence(k3);
-			s.setChordPresence(k4);
-			s.setArpPresence(k5);
-			s.setDrumPresence(k6);
 			//sections.add(s);
 
 		}
+		System.out.println("setFromActualTable SUCCESS!");
 		return true;
 	}
 
@@ -326,21 +305,41 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
-	public void duplicateSection(JTable tbl) {
-		resortByIndexes(tbl);
+	public void duplicateSection(JTable tbl, boolean isActual) {
+
+
 		int column = tbl.getSelectedColumn();
 		if (column == -1)
 			return;
+		/*if (isActual) {
+			overridden = true;
+			setFromActualTable(tbl, true);
+		} else {
+			overridden = false;
+			setFromModel(tbl);
+		}*/
+		if (column != tbl.convertColumnIndexToModel(column)) {
+			resortByIndexes(tbl);
+		}
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
 
-	public void removeSection(JTable tbl) {
-		resortByIndexes(tbl);
+	public void removeSection(JTable tbl, boolean isActual) {
+
+
 		int[] columns = tbl.getSelectedColumns();
 		if (columns.length == 0) {
 			return;
 		}
+		/*if (isActual) {
+			overridden = true;
+			setFromActualTable(tbl, true);
+		} else {
+			overridden = false;
+			setFromModel(tbl);
+		}*/
+		resortByIndexes(tbl);
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));

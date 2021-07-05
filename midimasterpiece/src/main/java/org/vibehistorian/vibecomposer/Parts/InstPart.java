@@ -52,7 +52,7 @@ public abstract class InstPart {
 	protected int order = 1;
 
 	protected int patternSeed = 0;
-	protected RhythmPattern pattern = RhythmPattern.RANDOM;
+	protected RhythmPattern pattern = RhythmPattern.FULL;
 	protected int patternShift = 0;
 
 	protected int sliderVolume = 100;

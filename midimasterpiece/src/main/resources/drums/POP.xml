@@ -22,6 +22,7 @@
         <transpose>0</transpose>
         <velocityMax>88</velocityMax>
         <velocityMin>74</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="2">
@@ -46,6 +47,7 @@
         <transpose>0</transpose>
         <velocityMax>92</velocityMax>
         <velocityMin>67</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="3">
@@ -70,6 +72,7 @@
         <transpose>0</transpose>
         <velocityMax>83</velocityMax>
         <velocityMin>76</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="4">
@@ -94,6 +97,7 @@
         <transpose>0</transpose>
         <velocityMax>64</velocityMax>
         <velocityMin>50</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="5">
@@ -118,6 +122,7 @@
         <transpose>0</transpose>
         <velocityMax>64</velocityMax>
         <velocityMin>44</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="6">
@@ -142,6 +147,7 @@
         <transpose>0</transpose>
         <velocityMax>67</velocityMax>
         <velocityMin>58</velocityMin>
+        <customPattern>1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0</customPattern>
         <velocityPattern>false</velocityPattern>
     </drumParts>
     <drumParts order="7">
@@ -166,6 +172,7 @@
         <transpose>0</transpose>
         <velocityMax>68</velocityMax>
         <velocityMin>59</velocityMin>
+        <customPattern>1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0</customPattern>
         <velocityPattern>true</velocityPattern>
     </drumParts>
     <drumParts order="8">
@@ -190,6 +197,7 @@
         <transpose>0</transpose>
         <velocityMax>74</velocityMax>
         <velocityMin>69</velocityMin>
+        <customPattern>1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0</customPattern>
         <velocityPattern>true</velocityPattern>
     </drumParts>
     <useSemitonalMapping>false</useSemitonalMapping>

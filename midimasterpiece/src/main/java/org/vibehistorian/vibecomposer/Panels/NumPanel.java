@@ -190,7 +190,10 @@ public class NumPanel extends JPanel {
 			tryValue = Integer.valueOf(text.getText());
 			if (tryValue > slider.getMaximum()) {
 				slider.setValue(slider.getMaximum());
-				updateTextLater();
+				updateTextLater(true);
+			} else if (tryValue < slider.getMinimum()) {
+				slider.setValue(slider.getMinimum());
+				//updateTextLater(false);
 			} else {
 				slider.setValue(tryValue);
 			}
@@ -200,11 +203,11 @@ public class NumPanel extends JPanel {
 		}
 	}
 
-	private void updateTextLater() {
+	private void updateTextLater(boolean isMaximum) {
 		Runnable doAssist = new Runnable() {
 			@Override
 			public void run() {
-				text.setText(slider.getMaximum() + "");
+				text.setText(((isMaximum) ? slider.getMaximum() : slider.getMinimum()) + "");
 			}
 		};
 		SwingUtilities.invokeLater(doAssist);
@@ -215,7 +218,7 @@ public class NumPanel extends JPanel {
 	}
 
 	public int getInt() {
-		return Integer.valueOf(text.getText());
+		return slider.getValue();
 	}
 
 	public void setInt(int val) {
@@ -224,5 +227,9 @@ public class NumPanel extends JPanel {
 
 	public JSlider getSlider() {
 		return slider;
+	}
+
+	public JTextField getTextfield() {
+		return text;
 	}
 }

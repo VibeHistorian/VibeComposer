@@ -10,6 +10,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public class ArpPanel extends InstPanel {
 	/**
@@ -33,7 +34,7 @@ public class ArpPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(3, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 		this.add(removeButton);
@@ -62,7 +63,7 @@ public class ArpPanel extends InstPanel {
 		this.add(exceptionChance);
 
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
@@ -84,7 +85,9 @@ public class ArpPanel extends InstPanel {
 		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			if (d != RhythmPattern.CUSTOM) {
+				pattern.addItem(d.toString());
+			}
 		}
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d.toString());
@@ -103,16 +106,11 @@ public class ArpPanel extends InstPanel {
 		return part;
 	}
 
-	public void setFromArpPart(ArpPart part) {
+	public void setFromInstPart(InstPart p) {
+		ArpPart part = (ArpPart) p;
 		setArpPattern(part.getArpPattern());
-		setFromInstPart(part);
+		setDefaultsFromInstPart(part);
 		setPanelOrder(part.getOrder());
-	}
-
-
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
-		removeButton.setActionCommand("RemoveArp," + panelOrder);
 	}
 
 	public ArpPattern getArpPattern() {
@@ -124,5 +122,9 @@ public class ArpPanel extends InstPanel {
 
 	public void setArpPattern(ArpPattern pattern) {
 		this.arpPattern.setSelectedItem((String.valueOf(pattern.toString())));
+	}
+
+	public ArpPart toInstPart(int lastRandomSeed) {
+		return toArpPart(lastRandomSeed);
 	}
 }

@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public class BassPanel extends InstPanel {
 
@@ -33,20 +34,21 @@ public class BassPanel extends InstPanel {
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
-		//this.add(muteInst);
+		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
 
 		this.add(useRhythm);
 		this.add(alternatingRhythm);
 
-		/*this.add(new JLabel("Transpose"));
-		this.add(transpose);*/
+		//this.add(new JLabel("Transpose"));
+		this.add(transpose);
+		//this.add(new JKnob());
 
 		this.add(velocityMin);
 		this.add(velocityMax);
 
-		this.add(new JLabel("Seed"));
+		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
 		this.add(new JLabel("Midi ch.: 9"));
@@ -68,20 +70,12 @@ public class BassPanel extends InstPanel {
 		return part;
 	}
 
-	public void setFromBassPart(BassPart part) {
-		setFromInstPart(part);
+	public void setFromInstPart(InstPart p) {
+		BassPart part = (BassPart) p;
+		setDefaultsFromInstPart(part);
 		setPanelOrder(part.getOrder());
 		setUseRhythm(part.isUseRhythm());
 		setAlternatingRhythm(part.isAlternatingRhythm());
-	}
-
-
-	public int getPanelOrder() {
-		return Integer.valueOf(panelOrder.getText());
-	}
-
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
 	}
 
 	public boolean getUseRhythm() {
@@ -98,5 +92,10 @@ public class BassPanel extends InstPanel {
 
 	public void setAlternatingRhythm(boolean alternatingRhythm) {
 		this.alternatingRhythm.setSelected(alternatingRhythm);
+	}
+
+	@Override
+	public InstPart toInstPart(int lastRandomSeed) {
+		return toBassPart(lastRandomSeed);
 	}
 }

@@ -42,6 +42,7 @@ public class GUIConfig {
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
+	private Arrangement actualArrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
 	private int arrangementPartVariationChance = 30;
 	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
@@ -77,6 +78,7 @@ public class GUIConfig {
 	private boolean dimAugEnabled = false;
 	private boolean enable9th13th = true;
 	private int spiceChance = 8;
+	private boolean spiceFlattenBigChords = false;
 	private int chordSlashChance = 0;
 	private String firstChord = "R";
 	private String lastChord = "R";
@@ -92,10 +94,11 @@ public class GUIConfig {
 	private boolean useSemitonalMapping = false;
 
 	// individual parts
-	private MelodyPart melodyPart = new MelodyPart();
+
 	private BassPart bassPart = new BassPart();
 
 	// tabbed parts
+	private List<MelodyPart> melodyPart = new ArrayList<>();
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
@@ -341,11 +344,11 @@ public class GUIConfig {
 		this.arpGenSettings = arpGenSettings;
 	}
 
-	public MelodyPart getMelodyPart() {
+	public List<MelodyPart> getMelodyParts() {
 		return melodyPart;
 	}
 
-	public void setMelodyPart(MelodyPart melodyPart) {
+	public void setMelodyParts(List<MelodyPart> melodyPart) {
 		this.melodyPart = melodyPart;
 	}
 
@@ -361,8 +364,16 @@ public class GUIConfig {
 		return arrangement;
 	}
 
+	public Arrangement getActualArrangement() {
+		return actualArrangement;
+	}
+
 	public void setArrangement(Arrangement arrangement) {
 		this.arrangement = arrangement;
+	}
+
+	public void setActualArrangement(Arrangement arrangement) {
+		this.actualArrangement = arrangement;
 	}
 
 	public ScaleMode getScaleMode() {
@@ -516,6 +527,14 @@ public class GUIConfig {
 
 	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
 		this.useSemitonalMapping = useSemitonalMapping;
+	}
+
+	public boolean isSpiceFlattenBigChords() {
+		return spiceFlattenBigChords;
+	}
+
+	public void setSpiceFlattenBigChords(boolean spiceFlattenBigChords) {
+		this.spiceFlattenBigChords = spiceFlattenBigChords;
 	}
 
 }

@@ -52,30 +52,31 @@ public abstract class InstPanel extends JPanel {
 	protected POOL instPool = POOL.PLUCK;
 	protected JComboBox<String> chordSpanFill = new JComboBox<String>();
 
-	protected NumPanel hitsPerPattern = new NumPanel("Hits#", 8, 1, 32);
-	protected NumPanel chordSpan = new NumPanel("Chords#", 1, 1, 4);
+	protected KnobPanel hitsPerPattern = new KnobPanel("Hits#", 8, 1, 32);
+	protected KnobPanel chordSpan = new KnobPanel("Chords#", 1, 1, 4);
 
-	protected NumPanel chordNotesStretch = new NumPanel("", 3, 2, 6);
+	protected KnobPanel chordNotesStretch = new KnobPanel("", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
-	protected NumPanel pauseChance = new NumPanel("Pause%", 20);
-	protected NumPanel exceptionChance = new NumPanel("Exc.%", 5);
+	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
+	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 5);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
-	protected NumPanel patternRepeat = new NumPanel("Repeat#", 2, 1, 4);
+	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 2, 1, 4);
 
-	protected NumPanel transpose = new NumPanel("Transpose", 0, -36, 36);
-	protected NumPanel delay = new NumPanel("Delay", 0, -500, 500);
+	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
+	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
 
-	protected NumPanel velocityMin = new NumPanel("MinVel", 70, 0, 126);
-	protected NumPanel velocityMax = new NumPanel("MaxVel", 90, 1, 127);
+	protected KnobPanel velocityMin = new KnobPanel("MinVel", 70, 0, 126);
+	protected KnobPanel velocityMax = new KnobPanel("MaxVel", 90, 1, 127);
 
-	protected NumPanel swingPercent = new NumPanel("Swing%", 50);
+	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
 
 	protected JLabel panelOrder = new JLabel("1");
 
+	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected JTextField patternSeed = new JTextField("0", 8);
 	protected JComboBox<String> pattern = new JComboBox<String>();
-	protected NumPanel patternShift = new NumPanel("Shift", 0, 0, 8);
+	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
 	protected JCheckBox muteInst = new JCheckBox("Excl.", false);
@@ -112,8 +113,8 @@ public abstract class InstPanel extends JPanel {
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
-		transpose.getSlider().setMajorTickSpacing(12);
-		transpose.getSlider().setSnapToTicks(true);
+		//transpose.getSlider().setMajorTickSpacing(12);
+		//transpose.getSlider().setSnapToTicks(true);
 
 		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
@@ -122,9 +123,11 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(velocityMin);
 		toggleableComponents.add(velocityMax);
 		toggleableComponents.add(patternShift);
+		toggleableComponents.add(patternSeed);
+		toggleableComponents.add(patternSeedLabel);
 	}
 
-	public void setFromInstPart(InstPart part) {
+	public void setDefaultsFromInstPart(InstPart part) {
 		setInstrument(part.getInstrument());
 
 		setHitsPerPattern(part.getHitsPerPattern());
@@ -158,6 +161,8 @@ public abstract class InstPanel extends JPanel {
 
 		setMuteInst(part.isMuted());
 	}
+
+	public abstract void setFromInstPart(InstPart part);
 
 	public int getHitsPerPattern() {
 		return Integer.valueOf(hitsPerPattern.getInt());
@@ -209,7 +214,7 @@ public abstract class InstPanel extends JPanel {
 
 	public RhythmPattern getPattern() {
 		if (StringUtils.isEmpty((String) pattern.getSelectedItem())) {
-			return RhythmPattern.RANDOM;
+			return RhythmPattern.FULL;
 		}
 		return RhythmPattern.valueOf((String) pattern.getSelectedItem());
 	}
@@ -360,6 +365,12 @@ public abstract class InstPanel extends JPanel {
 		return Integer.valueOf(panelOrder.getText());
 	}
 
+	public void setPanelOrder(int panelOrder) {
+		this.panelOrder.setText("" + panelOrder);
+		String removeActionString = removeButton.getActionCommand().split(",")[0];
+		removeButton.setActionCommand(removeActionString + "," + panelOrder);
+	}
+
 	public Set<Component> getToggleableComponents() {
 		return toggleableComponents;
 	}
@@ -397,5 +408,6 @@ public abstract class InstPanel extends JPanel {
 		this.sequenceTrack = sequenceTrack;
 	}
 
+	public abstract InstPart toInstPart(int lastRandomSeed);
 
 }
