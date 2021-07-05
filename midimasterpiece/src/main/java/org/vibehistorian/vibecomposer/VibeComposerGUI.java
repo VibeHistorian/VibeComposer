@@ -3464,6 +3464,11 @@ public class VibeComposerGUI extends JFrame
 							if (!userChordsRandom) {
 								if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
 									userChordsParsed.add(userChordsSplit[i]);
+								} else {
+									int[] interval = MidiUtils.getInterval(userChordsSplit[i]);
+									if (interval != null) {
+										userChordsParsed.add(userChordsSplit[i]);
+									}
 								}
 							}
 							userChordsDurationsParsed

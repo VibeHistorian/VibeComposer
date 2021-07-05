@@ -124,14 +124,17 @@ public class MidiUtils {
 	static {
 		SPICE_CHORDS_LIST.add(cMaj4);
 		SPICE_CHORDS_LIST.add(cMin4);
+
 		SPICE_CHORDS_LIST.add(cAug4);
 		SPICE_CHORDS_LIST.add(cDim4);
+
 		SPICE_CHORDS_LIST.add(cMaj7th4);
 		SPICE_CHORDS_LIST.add(cMin7th4);
 		SPICE_CHORDS_LIST.add(cMaj9th4);
 		SPICE_CHORDS_LIST.add(cMin9th4);
 		SPICE_CHORDS_LIST.add(cMaj13th4);
 		SPICE_CHORDS_LIST.add(cMin13th4);
+
 		SPICE_CHORDS_LIST.add(cSus4th4);
 		SPICE_CHORDS_LIST.add(cSus2nd4);
 		SPICE_CHORDS_LIST.add(cSus7th4);
@@ -140,7 +143,7 @@ public class MidiUtils {
 	public static final List<String> BANNED_DIM_AUG_LIST = Arrays
 			.asList(new String[] { "dim", "aug" });
 	public static final List<String> BANNED_9_13_LIST = Arrays
-			.asList(new String[] { "maj9", "maj13", "m9", "m13" });
+			.asList(new String[] { "maj9", "m9", "maj13", "m13" });
 
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays.asList(new String[] { "", "m", "aug",
@@ -347,6 +350,9 @@ public class MidiUtils {
 
 	public static int[] mappedChord(String chordString) {
 		int[] mappedChord = chordsMap.get(chordString);
+		if (mappedChord == null) {
+			mappedChord = getInterval(chordString);
+		}
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 
@@ -639,5 +645,31 @@ public class MidiUtils {
 		}
 	}
 
+	public static int[] getInterval(String chordString) {
+		List<Character> validChars = Arrays
+				.asList(new Character[] { '#', 'C', 'D', 'E', 'F', 'G', 'A', 'B' });
+		boolean expectOnlyLetter = true;
+		List<Integer> intervalInts = new ArrayList<>();
+		int current = -1;
+		for (int i = 0; i < chordString.length(); i++) {
+			Character chr = chordString.charAt(i);
+			int index = validChars.indexOf(chr);
+			if (index > 0) {
+				current++;
+				intervalInts.add(60 + diaTransMap.get(index));
+				expectOnlyLetter = false;
+			} else if (index == 0) {
+				if (expectOnlyLetter) {
+					return null;
+				} else {
+					intervalInts.set(current, intervalInts.get(current) + 1);
+					expectOnlyLetter = true;
+				}
+			} else {
+				return null;
+			}
+		}
+		return intervalInts.stream().mapToInt(i -> i).toArray();
+	}
 
 }
