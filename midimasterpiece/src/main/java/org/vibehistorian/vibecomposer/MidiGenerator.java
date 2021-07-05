@@ -19,7 +19,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer;
 
-import static org.vibehistorian.vibecomposer.MidiUtils.SPICE_SELECT;
 import static org.vibehistorian.vibecomposer.MidiUtils.addShortenedChord;
 import static org.vibehistorian.vibecomposer.MidiUtils.applyChordFreqMap;
 import static org.vibehistorian.vibecomposer.MidiUtils.cIonianScale4;
@@ -113,12 +112,12 @@ public class MidiGenerator implements JMC {
 	public static DrumGenSettings DRUM_SETTINGS = new DrumGenSettings();
 	public static ArpGenSettings ARP_SETTINGS = new ArpGenSettings();
 
-	public static List<Long> userChords = new ArrayList<>();
+	public static List<String> userChords = new ArrayList<>();
 	public static List<Double> userChordsDurations = new ArrayList<>();
-	public static List<Long> chordInts = new ArrayList<>();
+	public static List<String> chordInts = new ArrayList<>();
 
-	public static long FIRST_CHORD = 0;
-	public static long LAST_CHORD = 0;
+	public static String FIRST_CHORD = null;
+	public static String LAST_CHORD = null;
 
 	public static boolean DISPLAY_SCORE = false;
 	public static int showScoreMode = 0;
@@ -575,9 +574,9 @@ public class MidiGenerator implements JMC {
 							(e1, e2) -> e1, LinkedHashMap::new));
 
 			//top3.entrySet().stream().forEach(System.out::println);
-			Long chordLong = applyChordFreqMap(top3.keySet());
-			System.out.println("Alternate chord #" + i + ": " + chordLong);
-			int[] chordLongMapped = chordsMap.get(chordLong);
+			String chordString = applyChordFreqMap(top3.keySet());
+			System.out.println("Alternate chord #" + i + ": " + chordString);
+			int[] chordLongMapped = chordsMap.get(chordString);
 			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, 1));
 			alternateChordProg.add(chordLongMapped);
 		}
@@ -666,8 +665,8 @@ public class MidiGenerator implements JMC {
 			List<int[]> userProgression = new ArrayList<>();
 			chordInts.clear();
 			chordInts.addAll(userChords);
-			for (Long chordInt : userChords) {
-				userProgression.add(mappedChord(chordInt));
+			for (String chordString : userChords) {
+				userProgression.add(mappedChord(chordString));
 			}
 			System.out.println(
 					"Using user's custom progression: " + StringUtils.join(userChords, ","));
@@ -680,7 +679,7 @@ public class MidiGenerator implements JMC {
 		Random durationGenerator = new Random();
 		durationGenerator.setSeed(mainGeneratorSeed);
 
-		Map<Long, List<Long>> r = cpRulesMap;
+		Map<String, List<String>> r = cpRulesMap;
 		chordInts.clear();
 
 		int maxLength = (fixedLength > 0) ? fixedLength : 8;
@@ -690,17 +689,30 @@ public class MidiGenerator implements JMC {
 		double fixedDuration = maxDuration / maxLength;
 		int currentLength = 0;
 		double currentDuration = 0.0;
-		List<Long> next = r.get(0L);
-		if (LAST_CHORD != 0) {
-			next = new ArrayList<Long>();
-			next.add(Long.valueOf(LAST_CHORD));
+		List<String> next = r.get("S");
+		if (LAST_CHORD != null) {
+			next = new ArrayList<String>();
+			next.add(String.valueOf(LAST_CHORD));
 		}
 		List<String> debugMsg = new ArrayList<>();
+
+		List<String> allowedSpiceChords = new ArrayList<>();
+		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
+			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
+			if (!gc.isDimAugEnabled() && MidiUtils.BANNED_DIM_AUG_LIST.contains(chordString)) {
+				continue;
+			}
+			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
+				continue;
+			}
+			allowedSpiceChords.add(chordString);
+		}
+
 
 		List<int[]> cpr = new ArrayList<>();
 		int[] prevChord = null;
 		boolean canRepeatChord = true;
-		Long lastUnspicedChord = 0L;
+		String lastUnspicedChord = null;
 		Random chordRepeatGenerator = new Random(mainGeneratorSeed);
 		while ((currentDuration <= maxDuration - Durations.EIGHTH_NOTE)
 				&& currentLength < maxLength) {
@@ -718,76 +730,52 @@ public class MidiGenerator implements JMC {
 
 			// if last and not empty first chord
 			boolean isLastChord = durationLeft - dur < 0.01;
-			Long chordInt = (isLastChord && FIRST_CHORD != 0) ? FIRST_CHORD : next.get(nextInt);
+			String chordString = (isLastChord && FIRST_CHORD != null) ? FIRST_CHORD
+					: next.get(nextInt);
 			if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
 					&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 10) {
-				chordInt = Long.valueOf(lastUnspicedChord);
+				chordString = String.valueOf(lastUnspicedChord);
 				canRepeatChord = false;
 			}
 
-			long spiceResult = 1;
-			int spiceSelectPow = generator.nextInt(SPICE_SELECT.length) + 1;
+			String firstLetter = chordString.substring(0, 1);
+			String spicyChordString = firstLetter
+					+ allowedSpiceChords.get(generator.nextInt(allowedSpiceChords.size()));
 			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
 			// 
 			if (generator.nextInt(100) < gc.getSpiceChance()
-					&& (chordInts.size() < 7 || FIRST_CHORD == 0)) {
-
-				// 60 -> 600/6000 block 
-				if (!gc.isDimAugEnabled() && spiceSelectPow <= 2) {
-					// move to maj/min 7th
-					spiceSelectPow += 2;
-				}
-
-				// 60 -> 6000000/60000000 block
-				if (!gc.isEnable9th13th() && spiceSelectPow >= 5 && spiceSelectPow < 7) {
-					// move to maj/min 7th
-					spiceSelectPow -= 2;
-				}
-
-				// TODO: checkbox for sus chords
-
-				// use 7th with correct maj/min chord
-				if (chordInt < 10 && spiceSelectPow == 4) {
-					spiceSelectPow--;
-				} else if (chordInt >= 10 && spiceSelectPow == 3) {
-					spiceSelectPow++;
-				}
-
-				spiceResult = (long) Math.pow(10, spiceSelectPow);
-				if (chordInt < 10) {
-					spiceResult *= 10;
-				}
-				chordInt *= spiceResult;
+					&& (chordInts.size() < 7 || FIRST_CHORD == null)) {
+			} else {
+				spicyChordString = chordString;
 			}
 
-			chordInts.add(chordInt);
+			chordInts.add(spicyChordString);
 
 			//System.out.println("Fetching chord: " + chordInt);
-			int[] mappedChord = mappedChord(chordInt);
+			int[] mappedChord = mappedChord(spicyChordString);
 			/*mappedChord = transposeChord(mappedChord, Mod.MAJOR_SCALE,
 					gc.getScaleMode().noteAdjustScale);*/
 
 
-			debugMsg.add("Generated int: " + nextInt + ", for chord: " + chordInt + ", dur: " + dur
-					+ ", C[" + Arrays.toString(mappedChord) + "]");
+			debugMsg.add("Generated int: " + nextInt + ", for chord: " + spicyChordString
+					+ ", dur: " + dur + ", C[" + Arrays.toString(mappedChord) + "]");
 			cpr.add(mappedChord);
 			progressionDurations.add(dur);
-			chordInt /= spiceResult;
 
 			prevChord = mappedChord;
-			next = r.get(chordInt);
+			next = r.get(chordString);
 
 			if (fixedLength == 8 && chordInts.size() == 4) {
-				FIRST_CHORD = chordInt;
+				FIRST_CHORD = chordString;
 			}
 
 			// if last and empty first chord
-			if (durationLeft - dur < 0 && FIRST_CHORD == 0) {
-				FIRST_CHORD = chordInt;
+			if (durationLeft - dur < 0 && FIRST_CHORD != null) {
+				FIRST_CHORD = chordString;
 			}
 			currentLength += 1;
 			currentDuration += dur;
-			lastUnspicedChord = chordInt;
+			lastUnspicedChord = chordString;
 
 		}
 		System.out.println("CHORD PROG LENGTH: " + cpr.size());
@@ -2056,7 +2044,7 @@ public class MidiGenerator implements JMC {
 			for (int j = 0; j < actualProgression.size(); j++) {
 				// pick random chord, take first/root pitch
 				boolean isChordSlash = chordSlashGenerator.nextInt(100) < gc.getChordSlashChance();
-				long slashChord = chordSlashGenerator.nextInt(6) + 1;
+				String slashChord = MidiUtils.MAJOR_CHORDS.get(chordSlashGenerator.nextInt(6));
 				int[] mappedChord = mappedChord(slashChord);
 				if (isChordSlash) {
 					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },

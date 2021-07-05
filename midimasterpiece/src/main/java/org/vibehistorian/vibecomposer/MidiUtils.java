@@ -116,43 +116,59 @@ public class MidiUtils {
 	public static final int[] cSus2nd4 = { Pitches.C4, Pitches.D4, Pitches.G4 };
 	public static final int[] cSus7th4 = { Pitches.C4, Pitches.F4, Pitches.G4, Pitches.BF4 };
 
-	public static final Long[] SPICE_SELECT = { 10L, 100L, 1000L, 10000L, 100000L, 1000000L,
-			10000000L, 100000000L, 1000000000L };
+	public static final List<int[]> SPICE_CHORDS_LIST = new ArrayList<>();
+	static {
+		SPICE_CHORDS_LIST.add(cMaj4);
+		SPICE_CHORDS_LIST.add(cMin4);
+		SPICE_CHORDS_LIST.add(cAug4);
+		SPICE_CHORDS_LIST.add(cDim4);
+		SPICE_CHORDS_LIST.add(cMaj7th4);
+		SPICE_CHORDS_LIST.add(cMin7th4);
+		SPICE_CHORDS_LIST.add(c9th4);
+		SPICE_CHORDS_LIST.add(c13th4);
+		SPICE_CHORDS_LIST.add(cSus4th4);
+		SPICE_CHORDS_LIST.add(cSus2nd4);
+		SPICE_CHORDS_LIST.add(cSus7th4);
+	}
 
-	public static final List<Long> SPICE_SELECT_LIST = Arrays.asList(SPICE_SELECT);
+	public static final List<String> BANNED_DIM_AUG_LIST = Arrays
+			.asList(new String[] { "dim", "aug" });
+	public static final List<String> BANNED_9_13_LIST = Arrays
+			.asList(new String[] { "9", "13", "m9", "m13" });
 
-	public static final List<String> SPICE_SELECT_PRETTY = Arrays
-			.asList(new String[] { "aug", "dim", "maj7", "m7", "9", "13", "sus4", "sus2", "sus7" });
+
+	public static final List<String> SPICE_NAMES_LIST = Arrays.asList(new String[] { "", "m", "aug",
+			"dim", "maj7", "m7", "9", "13", "sus4", "sus2", "sus7" });
 	// index 0 unused
-	public static final List<String> NUM_TO_LETTER = Arrays
+	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
-	public static final List<Long> MAJOR_CHORDS = Arrays
-			.asList(new Long[] { 1L, 20L, 30L, 4L, 5L, 60L, 7000L });
+	public static final List<String> MAJOR_CHORDS = Arrays
+			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
 
-	public static final Map<Long, List<Long>> cpRulesMap = createChordProgressionRulesMap();
+	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
-	public static final Map<Long, int[]> chordsMap = createChordMap();
+	public static final Map<String, int[]> chordsMap = createChordMap();
 
 
-	private static Map<Long, List<Long>> createChordProgressionRulesMap() {
-		Map<Long, List<Long>> cpMap = new HashMap<>();
-		//0 is an imaginary last element which can grow into the correct last elements
-		cpMap.put(0L, new ArrayList<>(Arrays.asList(1L, 4L, 5L, 60L)));
-		cpMap.put(1L, new ArrayList<>(Arrays.asList(4L, 5L)));
-		cpMap.put(20L, new ArrayList<>(Arrays.asList(4L, 60L)));
-		cpMap.put(30L, new ArrayList<>(Arrays.asList(60L)));
-		cpMap.put(4L, new ArrayList<>(Arrays.asList(1L, 20L, 30L, 5L, 60L)));
-		cpMap.put(5L, new ArrayList<>(Arrays.asList(1L, 20L, 4L, 60L)));
-		cpMap.put(60L, new ArrayList<>(Arrays.asList(1L, 20L, 30L, 5L)));
-		cpMap.put(70L, new ArrayList<>(Arrays.asList(1L, 30L, 4L)));
-
-		cpMap.put(10L, new ArrayList<>());
-		cpMap.put(2L, new ArrayList<>());
-		cpMap.put(3L, new ArrayList<>());
-		cpMap.put(40L, new ArrayList<>());
-		cpMap.put(50L, new ArrayList<>());
-		cpMap.put(6L, new ArrayList<>(Arrays.asList(1L, 4L)));
-		cpMap.put(7L, new ArrayList<>(Arrays.asList(1L, 30L, 4L)));
+	private static Map<String, List<String>> createChordProgressionRulesMap() {
+		Map<String, List<String>> cpMap = new HashMap<>();
+		//"S" is an imaginary last element which can grow into the correct last elements
+		cpMap.put("S", new ArrayList<>(Arrays.asList("C", "F", "G", "Am")));
+		cpMap.put("C", new ArrayList<>(Arrays.asList("F", "G")));
+		cpMap.put("Dm", new ArrayList<>(Arrays.asList("F", "Am")));
+		cpMap.put("Em", new ArrayList<>(Arrays.asList("Am")));
+		cpMap.put("F", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G", "Am")));
+		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Dm", "F", "Am")));
+		cpMap.put("Am", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G")));
+		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "Em", "F")));
+		/*
+		cpMap.put("Cm", new ArrayList<>());
+		cpMap.put("D", new ArrayList<>());
+		cpMap.put("E", new ArrayList<>());
+		cpMap.put("Fm", new ArrayList<>());
+		cpMap.put("Gm", new ArrayList<>());
+		cpMap.put("A", new ArrayList<>(Arrays.asList("C", "F")));
+		cpMap.put("B", new ArrayList<>(Arrays.asList("C", "Em", "F")));*/
 		return cpMap;
 
 	}
@@ -171,20 +187,14 @@ public class MidiUtils {
 
 	}
 
-	private static Map<Long, int[]> createChordMap() {
-		Map<Long, int[]> chordMap = new HashMap<>();
+	private static Map<String, int[]> createChordMap() {
+		Map<String, int[]> chordMap = new HashMap<>();
+
 		for (int i = 1; i <= 7; i++) {
-			chordMap.put(Long.valueOf(i), transposeChord(cMaj4, diaTransMap.get(i)));
-			chordMap.put(10L * i, transposeChord(cMin4, diaTransMap.get(i)));
-			chordMap.put(100L * i, transposeChord(cAug4, diaTransMap.get(i)));
-			chordMap.put(1000L * i, transposeChord(cDim4, diaTransMap.get(i)));
-			chordMap.put(10000L * i, transposeChord(cMaj7th4, diaTransMap.get(i)));
-			chordMap.put(100000L * i, transposeChord(cMin7th4, diaTransMap.get(i)));
-			chordMap.put(1000000L * i, transposeChord(c9th4, diaTransMap.get(i)));
-			chordMap.put(10000000L * i, transposeChord(c13th4, diaTransMap.get(i)));
-			chordMap.put(100000000L * i, transposeChord(cSus4th4, diaTransMap.get(i)));
-			chordMap.put(1000000000L * i, transposeChord(cSus2nd4, diaTransMap.get(i)));
-			chordMap.put(10000000000L * i, transposeChord(cSus7th4, diaTransMap.get(i)));
+			for (int j = 0; j < SPICE_CHORDS_LIST.size(); j++) {
+				chordMap.put(CHORD_FIRST_LETTERS.get(i) + SPICE_NAMES_LIST.get(j),
+						transposeChord(SPICE_CHORDS_LIST.get(j), diaTransMap.get(i)));
+			}
 		}
 		return chordMap;
 
@@ -192,11 +202,11 @@ public class MidiUtils {
 
 	// order freq map by which chord contains most of the passed in notes
 	// -> create map 
-	public static Long applyChordFreqMap(Set<Integer> frequentNotes) {
-		Map<Long, Set<Integer>> freqMap = createChordFreqMap();
-		Map<Long, Long> chordMatchesMap = new LinkedHashMap<>();
+	public static String applyChordFreqMap(Set<Integer> frequentNotes) {
+		Map<String, Set<Integer>> freqMap = createChordFreqMap();
+		Map<String, Long> chordMatchesMap = new LinkedHashMap<>();
 
-		for (Long l : freqMap.keySet()) {
+		for (String l : freqMap.keySet()) {
 			int counter = 0;
 			for (Integer i : frequentNotes) {
 				if (freqMap.get(l).contains(i)) {
@@ -206,7 +216,7 @@ public class MidiUtils {
 			chordMatchesMap.put(l, Long.valueOf(counter));
 		}
 
-		Map<Long, Long> top3 = chordMatchesMap.entrySet().stream()
+		Map<String, Long> top3 = chordMatchesMap.entrySet().stream()
 				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(2)
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
 						LinkedHashMap::new));
@@ -214,17 +224,17 @@ public class MidiUtils {
 		//top3.entrySet().stream().forEach(System.out::println);
 		// return second most matching chord 
 		if (top3.keySet().size() > 1) {
-			return (Long) top3.keySet().toArray()[1];
+			return (String) top3.keySet().toArray()[1];
 		}
 		System.out.println("Only one chord matches? Huh..");
-		return (Long) top3.keySet().toArray()[0];
+		return (String) top3.keySet().toArray()[0];
 	}
 
-	private static Map<Long, Set<Integer>> createChordFreqMap() {
-		Map<Long, Set<Integer>> freqMap = new HashMap<>();
+	private static Map<String, Set<Integer>> createChordFreqMap() {
+		Map<String, Set<Integer>> freqMap = new HashMap<>();
 
-		for (Long l : MAJOR_CHORDS) {
-			freqMap.put(l, intArrToList(chordsMap.get(l)).stream().map(e -> e % 12)
+		for (String ch : MAJOR_CHORDS) {
+			freqMap.put(ch, intArrToList(chordsMap.get(ch)).stream().map(e -> e % 12)
 					.collect(Collectors.toSet()));
 		}
 		return freqMap;
@@ -237,38 +247,38 @@ public class MidiUtils {
 		}
 		return intList;
 	}
-
-	public static String prettyChord(long chordNum) {
-		String chordString = String.valueOf(chordNum);
-		int firstNum = Character.digit(chordString.charAt(0), 10);
-		String chordLetter = NUM_TO_LETTER.get(firstNum);
-		String chordQualifier = "";
-		//Long normalizedNum = Long.valueOf(chordNum / firstNum);
-		//System.out.println("Normalized: " + normalizedNum);
-		if (chordNum < 10) {
-			return chordLetter;
-		} else if (chordNum < 100) {
-			return chordLetter + "m";
-		} else {
-			int numIndex = SPICE_SELECT_LIST.indexOf(Long.valueOf((chordNum / firstNum) / 10L));
-			chordQualifier = SPICE_SELECT_PRETTY.get(numIndex);
-			return chordLetter + chordQualifier;
+	/*
+		public static String prettyChord(long chordNum) {
+			String chordString = String.valueOf(chordNum);
+			int firstNum = Character.digit(chordString.charAt(0), 10);
+			String chordLetter = NUM_TO_LETTER.get(firstNum);
+			String chordQualifier = "";
+			//Long normalizedNum = Long.valueOf(chordNum / firstNum);
+			//System.out.println("Normalized: " + normalizedNum);
+			if (chordNum < 10) {
+				return chordLetter;
+			} else if (chordNum < 100) {
+				return chordLetter + "m";
+			} else {
+				int numIndex = SPICE_SELECT_LIST.indexOf(Long.valueOf((chordNum / firstNum) / 10L));
+				chordQualifier = SPICE_SELECT_PRETTY.get(numIndex);
+				return chordLetter + chordQualifier;
+			}
 		}
-	}
-
-	public static long unprettyChord(String chord) {
-		int firstNum = NUM_TO_LETTER.indexOf(String.valueOf(chord.charAt(0)));
-		if (chord.length() == 1) {
-			return firstNum;
-		}
-		if (chord.length() == 2 && chord.charAt(1) == 'm') {
-			return firstNum * 10;
-		}
-		int chordQualifierIndex = SPICE_SELECT_PRETTY.indexOf(chord.substring(1));
-		long chordLong = SPICE_SELECT_LIST.get(chordQualifierIndex) * 10;
-		return chordLong * firstNum;
-
-	}
+	
+		public static long unprettyChord(String chord) {
+			int firstNum = NUM_TO_LETTER.indexOf(String.valueOf(chord.charAt(0)));
+			if (chord.length() == 1) {
+				return firstNum;
+			}
+			if (chord.length() == 2 && chord.charAt(1) == 'm') {
+				return firstNum * 10;
+			}
+			int chordQualifierIndex = SPICE_SELECT_PRETTY.indexOf(chord.substring(1));
+			long chordLong = SPICE_SELECT_LIST.get(chordQualifierIndex) * 10;
+			return chordLong * firstNum;
+	
+		}*/
 
 	public static void addShortenedChord(CPhrase cpr, int[] chord, double rhythmValue, int dynamic,
 			double shortenedTo) {
@@ -329,8 +339,8 @@ public class MidiUtils {
 		return value;
 	}
 
-	public static int[] mappedChord(Long chordInt) {
-		int[] mappedChord = chordsMap.get(chordInt);
+	public static int[] mappedChord(String chordString) {
+		int[] mappedChord = chordsMap.get(chordString);
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 
@@ -428,7 +438,7 @@ public class MidiUtils {
 		List<int[]> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
-			Long chordLong = MAJOR_CHORDS.get(index);
+			String chordLong = MAJOR_CHORDS.get(index);
 			basicChords.add(mappedChord(chordLong));
 		}
 		return basicChords;

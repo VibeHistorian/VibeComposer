@@ -907,7 +907,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordSustainUseShortening = new JCheckBox("Shorten Plucks", true);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new KnobPanel("Max Split%", 25);
-		chordSlashChance = new KnobPanel("Ch#1 Slash%", 25);
+		chordSlashChance = new KnobPanel("Ch#1 Slash%", 0);
 		randomChordPattern = new JCheckBox("Patterns", false);
 		randomChordShiftChance = new KnobPanel("Shift%", 25);
 		randomChordVoicingChance = new KnobPanel("Flatten Voicing%", 100);
@@ -2612,14 +2612,13 @@ public class VibeComposerGUI extends JFrame
 
 	private void randomizeUserChords() {
 		MidiGenerator mg = new MidiGenerator(copyGUItoConfig());
-		MidiGenerator.FIRST_CHORD = 0;
-		MidiGenerator.LAST_CHORD = 0;
+		MidiGenerator.FIRST_CHORD = null;
+		MidiGenerator.LAST_CHORD = null;
 		MidiGenerator.userChords.clear();
 		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(), MidiGenerator.gc.getFixedDuration(),
 				4 * Durations.HALF_NOTE);
-		List<String> prettyChords = MidiGenerator.chordInts.stream()
-				.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList());
+		List<String> prettyChords = MidiGenerator.chordInts;
 		userChords.setText(StringUtils.join(prettyChords, ","));
 	}
 
@@ -2889,8 +2888,7 @@ public class VibeComposerGUI extends JFrame
 				@Override
 				protected void done() {
 					switchMidiButtons(true);
-					List<String> prettyChords = MidiGenerator.chordInts.stream()
-							.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList());
+					List<String> prettyChords = MidiGenerator.chordInts;
 					currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
 					//sizeRespectingPack();
 					repaint();
@@ -3082,8 +3080,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "CopyChords") {
-			String str = StringUtils.join(MidiGenerator.chordInts.stream()
-					.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList()), ",");
+			String str = StringUtils.join(MidiGenerator.chordInts, ",");
 			userChords.setText(str);
 			System.out.println("Copied chords: " + str);
 		}
@@ -3461,15 +3458,12 @@ public class VibeComposerGUI extends JFrame
 					if (userChordsRandom
 							|| (userChordsSplit.length == userChordsDurationsSplit.length)) {
 						System.out.println("Trying to solve user chords!");
-						List<Long> userChordsParsed = new ArrayList<>();
+						List<String> userChordsParsed = new ArrayList<>();
 						List<Double> userChordsDurationsParsed = new ArrayList<>();
 						for (int i = 0; i < userChordsDurationsSplit.length; i++) {
 							if (!userChordsRandom) {
-								if (userChordsSplit[i].matches("[0-9]+")) {
-									userChordsParsed.add(Long.valueOf(userChordsSplit[i]));
-								} else {
-									userChordsParsed
-											.add(MidiUtils.unprettyChord(userChordsSplit[i]));
+								if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
+									userChordsParsed.add(userChordsSplit[i]);
 								}
 							}
 							userChordsDurationsParsed
@@ -3536,20 +3530,20 @@ public class VibeComposerGUI extends JFrame
 		randomChordSustainUseShortening.setSelected(settings.isUseShortening());
 	}
 
-	public int chordSelect(String s) {
-		int chord = 0;
+	public String chordSelect(String s) {
+		String chord = null;
 		if (s == "R") {
-			chord = 0;
+			chord = null;
 		} else if (s == "I") {
-			chord = 1;
+			chord = "C";
 		} else if (s == "IV") {
-			chord = 4;
+			chord = "F";
 		} else if (s == "V") {
-			chord = 5;
+			chord = "G";
 		} else if (s == "vi") {
-			chord = 60;
+			chord = "Am";
 		} else {
-			chord = 0;
+			chord = null;
 		}
 		return chord;
 	}
@@ -3780,8 +3774,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
 		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
 		guiConfig.setCustomChordsEnabled(userChordsEnabled.isSelected());
-		guiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts.stream()
-				.map(e -> MidiUtils.prettyChord(e)).collect(Collectors.toList()), ","));
+		guiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
 		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getInt()));
 		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
