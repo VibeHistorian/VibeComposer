@@ -1643,9 +1643,9 @@ public class VibeComposerGUI extends JFrame
 		/*tipLabel = new JLabel(
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), "
 						+ "100000 = i7(minor), 1000000 = 9th, 10000000 = 13th, 100000000 = Sus4, 1000000000 = Sus2, 10000000000 = Sus7");*/
-		tipLabel = new JLabel(
-				"[Allowed chords: C/D/E/F/G/A/B + m / aug / dim / maj7 / m7 / 9 / 13 / sus4 / sus2 / sus7]");
-		chordToolTip.add(tipLabel);
+		String tooltip = "[Allowed chords: C/D/E/F/G/A/B + m / aug / dim / maj7 / m7 / maj9 / m9 / maj13 / m13 / sus4 / sus2 / sus7]";
+		tipLabel = new JLabel();
+		//chordToolTip.add(tipLabel);
 
 		userChordsEnabled = new JCheckBox();
 		userChordsEnabled.setSelected(false);
@@ -1656,6 +1656,7 @@ public class VibeComposerGUI extends JFrame
 
 		userChords = new JTextField("R", 20);
 		chordToolTip.add(new JLabel("Chords:"));
+		userChords.setToolTipText(tooltip);
 		chordToolTip.add(userChords);
 		userChordsDurations = new JTextField("2,2,2,2", 6);
 		chordToolTip.add(new JLabel("Chord durations (max. 8):"));
