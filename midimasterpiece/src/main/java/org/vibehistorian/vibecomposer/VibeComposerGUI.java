@@ -1611,7 +1611,7 @@ public class VibeComposerGUI extends JFrame
 		randomButtonsPanel.add(randomizeBpm);
 		randomButtonsPanel.add(randomizeBpmOnCompose);
 
-		arpAffectsBpm = new JCheckBox("Slowed by ARP", true);
+		arpAffectsBpm = new JCheckBox("Slowed by ARP", false);
 		randomButtonsPanel.add(arpAffectsBpm);
 		randomButtonsPanel.add(randomizeTranspose);
 		randomButtonsPanel.add(randomizeTransposeOnCompose);
@@ -1988,11 +1988,11 @@ public class VibeComposerGUI extends JFrame
 		controlPanel.add(transposeScore);
 
 		Random bpmRand = new Random();
-		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(30) + 50, 25, 80);
+		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(25) + 35, 35, 60);
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
-		bpmLow = new KnobPanel("Min BPM.", 50, 10, 179);
-		bpmHigh = new KnobPanel("Max BPM.", 80, 11, 180);
+		bpmLow = new KnobPanel("Min BPM.", 35, 10, 179);
+		bpmHigh = new KnobPanel("Max BPM.", 60, 11, 180);
 		nicheSettingsPanel.add(bpmLow);
 		nicheSettingsPanel.add(bpmHigh);
 
