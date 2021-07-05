@@ -353,6 +353,9 @@ public class MidiUtils {
 		if (mappedChord == null) {
 			mappedChord = getInterval(chordString);
 		}
+		if (mappedChord == null) {
+			throw new IllegalArgumentException("Unmappable string: " + chordString);
+		}
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 

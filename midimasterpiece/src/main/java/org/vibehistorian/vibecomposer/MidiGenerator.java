@@ -741,6 +741,13 @@ public class MidiGenerator implements JMC {
 			String firstLetter = chordString.substring(0, 1);
 			String spicyChordString = firstLetter
 					+ allowedSpiceChords.get(generator.nextInt(allowedSpiceChords.size()));
+			if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
+				spicyChordString = spicyChordString.replace("maj", "m");
+			} else if (chordString.length() == 1 && spicyChordString.contains("m")
+					&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")) {
+				spicyChordString = spicyChordString.replace("m", "maj");
+			}
+
 			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
 			// 
 			if (generator.nextInt(100) < gc.getSpiceChance()
