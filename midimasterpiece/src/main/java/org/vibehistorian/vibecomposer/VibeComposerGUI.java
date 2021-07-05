@@ -1465,7 +1465,7 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		scrollableArrangementTable.setRowSelectionAllowed(false);
 		scrollableArrangementTable.setColumnSelectionAllowed(true);
-		scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(2000, 30));
+		scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(1480, 30));
 		/*scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
 		
@@ -1542,23 +1542,7 @@ public class VibeComposerGUI extends JFrame
 				return scrollPaneDimension;
 			}
 		};
-		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
-		scrollableArrangementActualTable.setRowSelectionAllowed(false);
-		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		actualArrangementCombinedPanel = new JPanel();
-		actualArrangementCombinedPanel
-				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
-		scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(2000, 30));
-		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
-		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
 
-
-		variationButtonsPanel = new JPanel();
-		refreshVariationPopupButtons(1);
-
-
-		actualArrangementCombinedPanel.add(variationButtonsPanel);
-		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 		JList<String> actualList = new JList<>();
 		actualList.setListData(
 				new String[] { "", "Section", "Bars", "Melody", "Bass", "Chord", "Arp", "Drum" });
@@ -1569,6 +1553,23 @@ public class VibeComposerGUI extends JFrame
 				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
+
+		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+		scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		actualArrangementCombinedPanel = new JPanel();
+		actualArrangementCombinedPanel
+				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
+		scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(1480, 30));
+		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
+		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
+
+
+		variationButtonsPanel = new JPanel();
+		refreshVariationPopupButtons(1);
+		actualArrangementCombinedPanel.add(variationButtonsPanel);
+
+		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
