@@ -119,27 +119,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 					@Override
 					public void run() {
-						int nowHits = hitsPanel.getInt();
-						if (nowHits > 32)
-							nowHits = 32;
-						if (nowHits > lastHits) {
-							for (int i = lastHits; i < nowHits; i++) {
-								hitChecks[i].setVisible(true);
-							}
-
-						} else if (nowHits < lastHits) {
-							for (int i = nowHits; i < lastHits; i++) {
-								hitChecks[i].setVisible(false);
-							}
-						}
-						lastHits = nowHits;
-						if (lastHits > 16) {
-							DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 80));
-							parentPanel.setMaximumSize(new Dimension(3000, 90));
-						} else {
-							DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 40));
-							parentPanel.setMaximumSize(new Dimension(3000, 50));
-						}
+						reapplyHits();
 					}
 
 				});
@@ -208,11 +188,35 @@ public class DrumHitsPatternPanel extends JPanel {
 		if (truePattern == null || truePattern.isEmpty()) {
 			return;
 		}
+
 		for (int i = 0; i < 32; i++) {
 			int shI = (i + shiftPanel.getInt()) % 32;
 			hitChecks[shI].setSelected(truePattern.get(i) != 0);
 		}
 	}
 
+	public void reapplyHits() {
+		int nowHits = hitsPanel.getInt();
+		if (nowHits > 32)
+			nowHits = 32;
+		if (nowHits > lastHits) {
+			for (int i = lastHits; i < nowHits; i++) {
+				hitChecks[i].setVisible(true);
+			}
+
+		} else if (nowHits < lastHits) {
+			for (int i = nowHits; i < lastHits; i++) {
+				hitChecks[i].setVisible(false);
+			}
+		}
+		lastHits = nowHits;
+		if (lastHits > 16) {
+			DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 80));
+			parentPanel.setMaximumSize(new Dimension(3000, 90));
+		} else {
+			DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 40));
+			parentPanel.setMaximumSize(new Dimension(3000, 50));
+		}
+	}
 
 }

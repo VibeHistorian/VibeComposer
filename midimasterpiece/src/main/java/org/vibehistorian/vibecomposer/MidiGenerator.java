@@ -1200,8 +1200,11 @@ public class MidiGenerator implements JMC {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				p.setAppend(false);
-				melodyParts.get(0).addPhrase(p);
-
+				if (gc.getMelodyParts().get(0).isMuted()) {
+					melodyParts.get(i).addPhrase(p);
+				} else {
+					melodyParts.get(0).addPhrase(p);
+				}
 			}
 
 			if (!gc.getBassPart().isMuted()) {
@@ -1251,6 +1254,10 @@ public class MidiGenerator implements JMC {
 						gc.getMelodyParts().get(i).getOrder(), VibeComposerGUI.melodyPanels);
 				ip.setSequenceTrack(trackCounter++);
 				//if (VibeComposerGUI.apSm)
+			} else {
+				if (i == 0) {
+					COLLAPSE_MELODY_TRACKS = false;
+				}
 			}
 			if (COLLAPSE_MELODY_TRACKS) {
 				break;
@@ -1389,6 +1396,11 @@ public class MidiGenerator implements JMC {
 			altChordProgression.addAll(chordProgression);
 			altRootProgression.addAll(rootProgression);
 		}
+
+		if (progressionDurations.size() < 3) {
+			return;
+		}
+
 		double duration = progressionDurations.get(progressionDurations.size() - 1)
 				+ progressionDurations.get(progressionDurations.size() - 2);
 		altProgressionDurations.set(progressionDurations.size() - 2, duration);

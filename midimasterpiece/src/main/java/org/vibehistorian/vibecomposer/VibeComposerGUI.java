@@ -65,6 +65,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
@@ -851,8 +852,10 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setPauseChance(70);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(12);
+					melodyPanel.getVolSlider().setVisible(false);
 				} else {
 					melodyPanel.setTranspose(-12);
+					melodyPanel.getVolSlider().setVisible(false);
 				}
 			}
 		}
@@ -2148,6 +2151,10 @@ public class VibeComposerGUI extends JFrame
 							for (int j = 0; j < 4; j++) {
 								List<? extends InstPanel> panels = getInstList(j);
 								for (int i = 0; i < panels.size(); i++) {
+									if (j == 0 && i > 0) {
+										// melody panels under first
+										continue;
+									}
 									double vol = panels.get(i).getVolSlider().getValue() / 100.0;
 									ShortMessage volumeMessage = new ShortMessage();
 									volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
@@ -3437,45 +3444,47 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
-			if (userChordsEnabled.isSelected()) {
-
+			if (userChordsEnabled.isSelected() && !userChords.getText().contains("R")) {
+				System.out.println("Trying to solve user chords!");
 				String text = userChords.getText().replaceAll(" ", "");
 				userChords.setText(text);
 				String[] userChordsSplit = text.split(",");
 				System.out.println(StringUtils.join(userChordsSplit, ";"));
+
 				String[] userChordsDurationsSplit = userChordsDurations.getText().split(",");
-				if (((String) fixedLengthChords.getSelectedItem()).equals("8")
-						&& userChordsSplit.length == 8 && userChordsDurationsSplit.length != 8) {
-					userChordsDurations.setText("2,2,2,2,2,2,2,2");
+				if (userChordsSplit.length != userChordsDurationsSplit.length) {
+					List<Integer> durations = IntStream.iterate(2, n -> n)
+							.limit(userChordsSplit.length).boxed().collect(Collectors.toList());
+					userChordsDurations.setText(StringUtils.join(durations, ","));
 					userChordsDurationsSplit = userChordsDurations.getText().split(",");
 				}
 				try {
-					boolean userChordsRandom = false;
-					if (userChords.getText().contains("R")
-							&& !((String) fixedLengthChords.getSelectedItem()).equals("NOT")) {
-						userChordsRandom = true;
-					}
-					if (userChordsRandom
-							|| (userChordsSplit.length == userChordsDurationsSplit.length)) {
-						System.out.println("Trying to solve user chords!");
+
+					if (userChordsSplit.length == userChordsDurationsSplit.length) {
+
 						List<String> userChordsParsed = new ArrayList<>();
 						List<Double> userChordsDurationsParsed = new ArrayList<>();
 						for (int i = 0; i < userChordsDurationsSplit.length; i++) {
-							if (!userChordsRandom) {
-								if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
+							if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
+								userChordsParsed.add(userChordsSplit[i]);
+							} else {
+								int[] interval = MidiUtils.getInterval(userChordsSplit[i]);
+								if (interval != null) {
 									userChordsParsed.add(userChordsSplit[i]);
-								} else {
-									int[] interval = MidiUtils.getInterval(userChordsSplit[i]);
-									if (interval != null) {
-										userChordsParsed.add(userChordsSplit[i]);
-									}
 								}
 							}
+
 							userChordsDurationsParsed
 									.add(Double.valueOf(userChordsDurationsSplit[i]));
 						}
-						MidiGenerator.userChords = userChordsParsed;
-						MidiGenerator.userChordsDurations = userChordsDurationsParsed;
+						if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
+							MidiGenerator.userChords = userChordsParsed;
+							MidiGenerator.userChordsDurations = userChordsDurationsParsed;
+						} else {
+							MidiGenerator.userChords.clear();
+							MidiGenerator.userChordsDurations.clear();
+						}
+
 						System.out.println(userChordsDurationsParsed.toString());
 					} else {
 						MidiGenerator.userChords.clear();
@@ -4136,6 +4145,8 @@ public class VibeComposerGUI extends JFrame
 						drumPanelGenerator.nextInt(dp.getPattern().pattern.length - 1) + 1);
 				dp.getComboPanel().reapplyShift();
 			}
+
+			dp.getComboPanel().reapplyHits();
 
 		}
 
