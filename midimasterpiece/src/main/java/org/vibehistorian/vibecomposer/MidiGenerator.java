@@ -1624,24 +1624,31 @@ public class MidiGenerator implements JMC {
 
 				int[] mainChordNotes = actualProgression.get(j);
 				int[] transChordNotes = actualProgression.get(transChord);
-				if (skipSecondNote) {
-					int[] newMainChordNotes = new int[mainChordNotes.length - 1];
-					int[] newTransChordNotes = new int[transChordNotes.length - 1];
-					for (int m = 0; m < mainChordNotes.length; m++) {
-						if (m == 1)
-							continue;
-						int index = (m > 1) ? m - 1 : m;
-						newMainChordNotes[index] = mainChordNotes[m];
 
+				//only skip if not already an interval (2 notes)
+				if (skipSecondNote) {
+					if (mainChordNotes.length > 2) {
+						int[] newMainChordNotes = new int[mainChordNotes.length - 1];
+						for (int m = 0; m < mainChordNotes.length; m++) {
+							if (m == 1)
+								continue;
+							int index = (m > 1) ? m - 1 : m;
+							newMainChordNotes[index] = mainChordNotes[m];
+
+						}
+						mainChordNotes = newMainChordNotes;
 					}
-					for (int m = 0; m < transChordNotes.length; m++) {
-						if (m == 1)
-							continue;
-						int index = (m > 1) ? m - 1 : m;
-						newTransChordNotes[index] = transChordNotes[m];
+					if (transChordNotes.length > 2) {
+						int[] newTransChordNotes = new int[transChordNotes.length - 1];
+						for (int m = 0; m < transChordNotes.length; m++) {
+							if (m == 1)
+								continue;
+							int index = (m > 1) ? m - 1 : m;
+							newTransChordNotes[index] = transChordNotes[m];
+						}
+
+						transChordNotes = newTransChordNotes;
 					}
-					mainChordNotes = newMainChordNotes;
-					transChordNotes = newTransChordNotes;
 				}
 
 				if (cp.getPattern() == RhythmPattern.FULL) {

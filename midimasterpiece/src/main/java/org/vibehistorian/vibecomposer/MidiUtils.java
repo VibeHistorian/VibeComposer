@@ -108,9 +108,13 @@ public class MidiUtils {
 	public static final int[] cDim4 = { Pitches.C4, Pitches.EF4, Pitches.GF4 };
 	public static final int[] cMaj7th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4 };
 	public static final int[] cMin7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4 };
-	public static final int[] c9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4,
+	public static final int[] cMaj9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
 			Pitches.D5 };
-	public static final int[] c13th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4,
+	public static final int[] cMin9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
+			Pitches.D5 };
+	public static final int[] cMaj13th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
+			Pitches.D5, Pitches.A5 };
+	public static final int[] cMin13th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4,
 			Pitches.D5, Pitches.A5 };
 	public static final int[] cSus4th4 = { Pitches.C4, Pitches.F4, Pitches.G4 };
 	public static final int[] cSus2nd4 = { Pitches.C4, Pitches.D4, Pitches.G4 };
@@ -124,8 +128,10 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cDim4);
 		SPICE_CHORDS_LIST.add(cMaj7th4);
 		SPICE_CHORDS_LIST.add(cMin7th4);
-		SPICE_CHORDS_LIST.add(c9th4);
-		SPICE_CHORDS_LIST.add(c13th4);
+		SPICE_CHORDS_LIST.add(cMaj9th4);
+		SPICE_CHORDS_LIST.add(cMin9th4);
+		SPICE_CHORDS_LIST.add(cMaj13th4);
+		SPICE_CHORDS_LIST.add(cMin13th4);
 		SPICE_CHORDS_LIST.add(cSus4th4);
 		SPICE_CHORDS_LIST.add(cSus2nd4);
 		SPICE_CHORDS_LIST.add(cSus7th4);
@@ -134,11 +140,11 @@ public class MidiUtils {
 	public static final List<String> BANNED_DIM_AUG_LIST = Arrays
 			.asList(new String[] { "dim", "aug" });
 	public static final List<String> BANNED_9_13_LIST = Arrays
-			.asList(new String[] { "9", "13", "m9", "m13" });
+			.asList(new String[] { "maj9", "maj13", "m9", "m13" });
 
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays.asList(new String[] { "", "m", "aug",
-			"dim", "maj7", "m7", "9", "13", "sus4", "sus2", "sus7" });
+			"dim", "maj7", "m7", "maj9", "m9", "maj13", "m13", "sus4", "sus2", "sus7" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
