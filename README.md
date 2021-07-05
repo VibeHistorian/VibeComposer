@@ -6,9 +6,9 @@
 #### How to use it:
 1. Click 'Compose' to hear a preview of a track.
 
-    1a. (optional) Make adjustments to the instruments or other settings, and click 'Regenerate' to hear the new changes.
+    1a. (optional) Make any adjustments you want, then click 'Regenerate' to hear the new changes.
 
-    1b. (optional) If you like what you hear, enable Arrangement and listen to the full arranged track.
+    1b. (optional) If you like what you hear, enable 'Arrangement' and listen to the full arranged track.
 
 2. Drag'n'Drop into your DAW, or just save it for later use.
 
@@ -19,17 +19,17 @@
 (Note: Linux/Mac users might be able to run it using the .jar instead of the .exe file)
 
 
-#### Note: 
-if no sound is coming out but the playback slider is moving, try unchecking 'MIDI transmitted mode" and clicking 'Regenerate'.
-#### Note2: 
-if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
+**Note:** if no sound is coming out but the playback slider is moving, try unchecking 'MIDI transmitted mode" and clicking 'Regenerate'.
+
+**Note2:** if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu.
     
     
-For everything else, refer to the old VibeComposer V1.2 user manual: https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf
+For everything else, refer to the old VibeComposer v1.2 user manual: https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf
 
 
+#### Example arrangement used in a track: https://soundcloud.com/vibehistorian/discovery
 
-UI preview:
+#### UI preview:
 
 ![VibeComposer Simple UI](https://i.imgur.com/5PXLYvn.png)
