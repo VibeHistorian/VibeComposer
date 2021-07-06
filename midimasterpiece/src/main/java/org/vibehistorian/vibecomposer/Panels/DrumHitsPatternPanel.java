@@ -39,8 +39,8 @@ public class DrumHitsPatternPanel extends JPanel {
 			KnobPanel shiftPanel, JPanel parentPanel) {
 		super();
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
-		layout.setVgap(0);
-		layout.setHgap(0);
+		//layout.setVgap(0);
+		//layout.setHgap(0);
 		setLayout(layout);
 		setPreferredSize(new Dimension(170, 40));
 		//setBorder(new BevelBorder(BevelBorder.LOWERED));
