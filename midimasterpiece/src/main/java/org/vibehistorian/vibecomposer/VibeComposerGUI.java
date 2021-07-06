@@ -249,6 +249,7 @@ public class VibeComposerGUI extends JFrame
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
 	Dimension scrollPaneDimension = new Dimension(1600, 400);
+	int arrangementRowHeaderWidth = 120;
 	Dimension scrollPaneDimensionToggled = new Dimension(1000, 400);
 
 	public static JScrollPane melodyScrollPane;
@@ -877,7 +878,7 @@ public class VibeComposerGUI extends JFrame
 		chordScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(1300, 150);
+				return scrollPaneDimension;
 			}
 		};
 		chordScrollPane.setViewportView(scrollableChordPanels);
@@ -997,7 +998,7 @@ public class VibeComposerGUI extends JFrame
 		arpScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(1300, 150);
+				return scrollPaneDimension;
 			}
 		};
 		arpScrollPane.setViewportView(scrollableArpPanels);
@@ -1465,7 +1466,8 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		scrollableArrangementTable.setRowSelectionAllowed(false);
 		scrollableArrangementTable.setColumnSelectionAllowed(true);
-		scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(1480, 30));
+		scrollableArrangementTable.getTableHeader().setPreferredSize(
+				new Dimension(scrollPaneDimension.width - arrangementRowHeaderWidth, 30));
 		/*scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
 		
@@ -1560,7 +1562,8 @@ public class VibeComposerGUI extends JFrame
 		actualArrangementCombinedPanel = new JPanel();
 		actualArrangementCombinedPanel
 				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
-		scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(1480, 30));
+		scrollableArrangementActualTable.getTableHeader().setPreferredSize(
+				new Dimension(scrollPaneDimension.width - arrangementRowHeaderWidth, 30));
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
 
@@ -2864,6 +2867,8 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 			mainBpm.setInt(bpm);
+			mainBpm.getKnob().setMin(bpmLow.getInt());
+			mainBpm.getKnob().setMax(bpmHigh.getInt());
 			realBpm = bpm;
 		}
 
@@ -3838,6 +3843,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		transposeScore.setInt(guiConfig.getTranspose());
 		mainBpm.setInt((int) Math.round(guiConfig.getBpm()));
+
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
 		useDoubledDurations.setSelected(guiConfig.isDoubledDurations());
 		allowChordRepeats.setSelected(guiConfig.isAllowChordRepeats());
