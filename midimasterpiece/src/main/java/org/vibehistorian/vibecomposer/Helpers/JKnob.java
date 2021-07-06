@@ -325,6 +325,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
+			recalc(e);
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			curr = defaultValue;
 			setAngle();
@@ -376,32 +377,36 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public void mouseDragged(MouseEvent e) {
 		if (pressedOnSpot) {
 
-			int mx = e.getX();
-			int my = e.getY();
-
-			// Compute the x, y position of the mouse RELATIVE
-			// to the center of the knob.
-			int mxp = mx - radius;
-			int myp = radius - my;
-
-			// Compute the new angle of the knob from the
-			// new x and y position of the mouse.  
-			// Math.atan2(...) computes the angle at which
-			// x,y lies from the positive y axis with cw rotations
-			// being positive and ccw being negative.
-			double thetaCalc = Math.atan2(mxp, myp);
-			if (Math.PI - Math.abs(thetaCalc) > cutOff) {
-				theta = thetaCalc;
-			} else {
-				if (thetaCalc > 0) {
-					theta = Math.PI - cutOff;
-				} else {
-					theta = -Math.PI + cutOff;
-				}
-			}
-
-			repaint();
+			recalc(e);
 		}
+	}
+
+	private void recalc(MouseEvent e) {
+		int mx = e.getX();
+		int my = e.getY();
+
+		// Compute the x, y position of the mouse RELATIVE
+		// to the center of the knob.
+		int mxp = mx - radius;
+		int myp = radius - my;
+
+		// Compute the new angle of the knob from the
+		// new x and y position of the mouse.  
+		// Math.atan2(...) computes the angle at which
+		// x,y lies from the positive y axis with cw rotations
+		// being positive and ccw being negative.
+		double thetaCalc = Math.atan2(mxp, myp);
+		if (Math.PI - Math.abs(thetaCalc) > cutOff) {
+			theta = thetaCalc;
+		} else {
+			if (thetaCalc > 0) {
+				theta = Math.PI - cutOff;
+			} else {
+				theta = -Math.PI + cutOff;
+			}
+		}
+
+		repaint();
 	}
 
 	public static double toDouble(double thetaValue) {
