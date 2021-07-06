@@ -23,6 +23,8 @@ public class KnobValuePopup {
 		this.knob = knob;
 		stretchAfterCustomInput = stretch;
 		numPanel = new NumPanel("Knob", knob.getValue(), knob.getMin(), knob.getMax());
+		numPanel.getSlider().setVisible(false);
+		numPanel.setAllowValuesOutsideRange(stretchAfterCustomInput);
 		frame.add(numPanel);
 		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
 		addFrameWindowOperation();

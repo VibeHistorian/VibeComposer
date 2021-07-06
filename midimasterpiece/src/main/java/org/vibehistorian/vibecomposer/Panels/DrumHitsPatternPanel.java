@@ -16,6 +16,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 
@@ -115,14 +117,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						reapplyHits();
-					}
-
-				});
+				reapplyHits();
 
 			}
 
@@ -138,6 +133,30 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			}
 		});
+
+		hitsPanel.getKnob().getTextValue().getDocument()
+				.addDocumentListener(new DocumentListener() {
+
+					@Override
+					public void insertUpdate(DocumentEvent e) {
+						reapplyHits();
+
+					}
+
+					@Override
+					public void removeUpdate(DocumentEvent e) {
+						reapplyHits();
+
+					}
+
+					@Override
+					public void changedUpdate(DocumentEvent e) {
+						reapplyHits();
+
+					}
+
+				});
+
 		shiftPanel.getKnob().addMouseListener(new MouseListener() {
 
 			@Override
@@ -154,10 +173,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				for (int i = 0; i < 32; i++) {
-					int shI = (i + shiftPanel.getInt()) % 32;
-					hitChecks[shI].setSelected(truePattern.get(i) != 0);
-				}
+				reapplyShift();
 
 			}
 
@@ -173,6 +189,29 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			}
 		});
+
+		shiftPanel.getKnob().getTextValue().getDocument()
+				.addDocumentListener(new DocumentListener() {
+
+					@Override
+					public void insertUpdate(DocumentEvent e) {
+						reapplyShift();
+
+					}
+
+					@Override
+					public void removeUpdate(DocumentEvent e) {
+						reapplyShift();
+
+					}
+
+					@Override
+					public void changedUpdate(DocumentEvent e) {
+						reapplyShift();
+
+					}
+
+				});
 	}
 
 	public List<Integer> getTruePattern() {
@@ -188,35 +227,53 @@ public class DrumHitsPatternPanel extends JPanel {
 		if (truePattern == null || truePattern.isEmpty()) {
 			return;
 		}
+		SwingUtilities.invokeLater(new Runnable() {
 
-		for (int i = 0; i < 32; i++) {
-			int shI = (i + shiftPanel.getInt()) % 32;
-			hitChecks[shI].setSelected(truePattern.get(i) != 0);
-		}
+			@Override
+			public void run() {
+				DrumHitsPatternPanel.this.setVisible(false);
+				for (int i = 0; i < 32; i++) {
+					int shI = (i + shiftPanel.getInt()) % 32;
+					hitChecks[shI].setSelected(truePattern.get(i) != 0);
+				}
+				DrumHitsPatternPanel.this.setVisible(true);
+			}
+		});
+
 	}
 
 	public void reapplyHits() {
-		int nowHits = hitsPanel.getInt();
-		if (nowHits > 32)
-			nowHits = 32;
-		if (nowHits > lastHits) {
-			for (int i = lastHits; i < nowHits; i++) {
-				hitChecks[i].setVisible(true);
+		SwingUtilities.invokeLater(new Runnable() {
+
+			@Override
+			public void run() {
+				DrumHitsPatternPanel.this.setVisible(false);
+				int nowHits = hitsPanel.getInt();
+				if (nowHits > 32)
+					nowHits = 32;
+				if (nowHits > lastHits) {
+					for (int i = lastHits; i < nowHits; i++) {
+						hitChecks[i].setVisible(true);
+					}
+
+				} else if (nowHits < lastHits) {
+					for (int i = nowHits; i < lastHits; i++) {
+						hitChecks[i].setVisible(false);
+					}
+				}
+				lastHits = nowHits;
+				if (lastHits > 16) {
+					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 80));
+					parentPanel.setMaximumSize(new Dimension(3000, 90));
+				} else {
+					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 40));
+					parentPanel.setMaximumSize(new Dimension(3000, 50));
+				}
+				DrumHitsPatternPanel.this.setVisible(true);
 			}
 
-		} else if (nowHits < lastHits) {
-			for (int i = nowHits; i < lastHits; i++) {
-				hitChecks[i].setVisible(false);
-			}
-		}
-		lastHits = nowHits;
-		if (lastHits > 16) {
-			DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 80));
-			parentPanel.setMaximumSize(new Dimension(3000, 90));
-		} else {
-			DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 40));
-			parentPanel.setMaximumSize(new Dimension(3000, 50));
-		}
+		});
+
 	}
 
 }

@@ -30,6 +30,7 @@ public class NumPanel extends JPanel {
 	private int naturalMin = 0;
 	private int buttonPresses = 0;
 	private int defaultValue = 50;
+	private boolean allowValuesOutsideRange = false;
 
 	public NumPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -188,12 +189,15 @@ public class NumPanel extends JPanel {
 		int tryValue = 0;
 		try {
 			tryValue = Integer.valueOf(text.getText());
+			if (allowValuesOutsideRange) {
+				return;
+			}
 			if (tryValue > slider.getMaximum()) {
 				slider.setValue(slider.getMaximum());
 				updateTextLater(true);
 			} else if (tryValue < slider.getMinimum()) {
 				slider.setValue(slider.getMinimum());
-				//updateTextLater(false);
+				updateTextLater(false);
 			} else {
 				slider.setValue(tryValue);
 			}
@@ -231,5 +235,13 @@ public class NumPanel extends JPanel {
 
 	public JTextField getTextfield() {
 		return text;
+	}
+
+	public boolean isAllowValuesOutsideRange() {
+		return allowValuesOutsideRange;
+	}
+
+	public void setAllowValuesOutsideRange(boolean allowValuesOutsideRange) {
+		this.allowValuesOutsideRange = allowValuesOutsideRange;
 	}
 }

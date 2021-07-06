@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -57,7 +58,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private int tickSpacing = 0;
 	private List<Integer> tickThresholds = null;
-
+	private JTextField textValue = new JTextField("" + curr);
 
 	private boolean stretchAfterCustomInput = false;
 
@@ -120,7 +121,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		pressedOnSpot = false;
 		knobColor = initKnobColor;
 		spotColor = initSpotColor;
-
+		textValue.setVisible(false);
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
 	}
@@ -164,6 +165,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.setColor((VibeComposerGUI.isDarkMode) ? Color.CYAN : Color.BLUE);
 			Point cnt = getCenter();
 			String valueString = String.valueOf(getValue());
+			if (!valueString.equals(textValue.getText())) {
+				textValue.setText(valueString);
+			}
+
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 		}
 	}
@@ -474,4 +479,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		this.stretchAfterCustomInput = stretchAfterCustomInput;
 	}
 
+	public JTextField getTextValue() {
+		return textValue;
+	}
+
+	public void setTextValue(JTextField textValue) {
+		this.textValue = textValue;
+	}
 }
