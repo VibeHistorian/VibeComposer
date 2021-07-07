@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
+import java.util.Vector;
+
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
@@ -53,9 +55,29 @@ public class JMusicUtilsCustom {
 			tphr.removeNote(0);
 
 			prevsst = sst;
+
 		}
 		p.empty();
 		p.addPhrase(nphr);
+	}
+
+	public static void addRestsToRhythmValues(Phrase phr) {
+		Vector<Note> noteList = phr.getNoteList();
+		Vector<Note> newNoteList = new Vector<>();
+
+		Note prev = null;
+		for (Note n : noteList) {
+			if (n.isRest()) {
+				if (prev != null) {
+					prev.setRhythmValue(prev.getRhythmValue() + n.getDuration());
+				}
+			} else {
+				prev = n;
+				newNoteList.add(n);
+			}
+		}
+		phr.setNoteList(newNoteList);
+
 	}
 
 }

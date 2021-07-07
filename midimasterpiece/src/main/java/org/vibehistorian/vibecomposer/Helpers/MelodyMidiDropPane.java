@@ -25,12 +25,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
-import jm.music.tools.Mod;
 import jm.util.Read;
 
 public class MelodyMidiDropPane extends JPanel {
@@ -131,13 +131,13 @@ public class MelodyMidiDropPane extends JPanel {
 							Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
 							System.out.println(phr.toString());
 							phr.setAppend(false);
-							//TODO: how to do it without filling rests
-							Mod.fillRests(phr);
 							//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
+							JMusicUtilsCustom.addRestsToRhythmValues(phr);
 							part.add(phr);
 						}
 
-						Mod.consolidate(part);
+						JMusicUtilsCustom.consolidate(part);
+						//Mod.consolidate(part);
 						userMelody = part.getPhrase(0);
 
 						System.out.println(userMelody.toString());
