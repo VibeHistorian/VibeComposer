@@ -59,6 +59,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -140,6 +141,7 @@ public class MidiGenerator implements JMC {
 	private List<int[]> chordProgression = new ArrayList<>();
 	private List<int[]> rootProgression = new ArrayList<>();
 
+	public static Map<Integer, List<Note>> userMelodyMap = new HashMap<>();
 	private Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
 	private List<int[]> melodyBasedRootProgression = new ArrayList<>();
@@ -1047,6 +1049,9 @@ public class MidiGenerator implements JMC {
 						List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 						Phrase m = fillMelody(mp, usedMelodyProg, usedRoots, usedMeasures,
 								notesSeedOffset, sec, variations);
+						if (MelodyMidiDropPane.userMelody != null) {
+							m = MelodyMidiDropPane.userMelody.copy();
+						}
 						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
 						if (notesSeedOffset == 0 && i == 0
 								&& sec.getVariation(0, i).contains(Integer.valueOf(0))) {

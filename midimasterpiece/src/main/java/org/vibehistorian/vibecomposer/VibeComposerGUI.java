@@ -126,6 +126,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
@@ -320,6 +321,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodySameRhythmChance;
 	KnobPanel melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
+	JCheckBox randomMelodySameSeed;
 	JCheckBox melodyFirstNoteFromChord;
 	JCheckBox randomChordNote;
 	KnobPanel melodySplitChance;
@@ -742,16 +744,13 @@ public class VibeComposerGUI extends JFrame
 		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
+
 		JPanel melodySettingsPanel = new JPanel();
-		JLabel csExtra = new JLabel("MELODY  ");
-		//csExtra.setPreferredSize(new Dimension(120, 40));
-		//csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsPanel.add(csExtra);
+		JLabel melodyLabel = new JLabel("MELODY  ");
+		melodySettingsPanel.add(melodyLabel);
 		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		melodyQuickness = new KnobPanel("Quickness", 100);
 		melodySettingsPanel.add(melodyQuickness);
-
-		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 
 
 		maxJump = new KnobPanel("Max Note Jump", 1, 1, 4);
@@ -769,10 +768,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.add(melodySplitChance);
 		melodySettingsPanel.add(melodyExceptionChance);
 
-		melodySettingsPanel.add(arpCopyMelodyInst);
 
-
-		//melodySettingsPanel.add(new JLabel("Legacy algorithm%:"));
 		//melodySettingsPanel.add(melodyUseOldAlgoChance);
 
 		randomChordNote = new JCheckBox();
@@ -786,33 +782,46 @@ public class VibeComposerGUI extends JFrame
 		//melodySettingsPanel.add(new JLabel("But Randomized:"));
 		//melodySettingsPanel.add(randomChordNote);
 
+		// ---- EXTRA -----
+
+		JPanel melodySettingsExtraPanel = new JPanel();
+		melodySettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
+
+		JLabel melodyExtraLabel = new JLabel("MELODY SETTINGS+");
+		melodyExtraLabel.setPreferredSize(new Dimension(120, 30));
+		melodyExtraLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		melodySettingsExtraPanel.add(melodyExtraLabel);
+
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", "GenMelody");
 		JButton clearUserMelodySeed = makeButton("Clear Seed", "ClearMelody");
+		randomMelodySameSeed = new JCheckBox("Same#", false);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
-		melodySettingsPanel.add(generateUserMelodySeed);
-		melodySettingsPanel.add(randomMelodyOnRegenerate);
-		melodySettingsPanel.add(clearUserMelodySeed);
+		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		melodySettingsPanel.add(melodyBasicChordsOnly);
+		JLabel melodyDragAndDrop = new JLabel("Melody file drop:");
+		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
+		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+
+		melodySettingsExtraPanel.add(arpCopyMelodyInst);
+		melodySettingsExtraPanel.add(generateUserMelodySeed);
+		melodySettingsExtraPanel.add(randomMelodySameSeed);
+		melodySettingsExtraPanel.add(randomMelodyOnRegenerate);
+		melodySettingsExtraPanel.add(clearUserMelodySeed);
+		melodySettingsExtraPanel.add(melodyBasicChordsOnly);
+		melodySettingsExtraPanel.add(melodyDragAndDrop);
+		melodySettingsExtraPanel.add(dropPane);
 
 
 		toggleableComponents.add(melodyAlternateRhythmChance);
 		toggleableComponents.add(melodySameRhythmChance);
 		toggleableComponents.add(melodySplitChance);
 		toggleableComponents.add(melodyExceptionChance);
-		toggleableComponents.add(arpCopyMelodyInst);
-		toggleableComponents.add(generateUserMelodySeed);
-		toggleableComponents.add(randomMelodyOnRegenerate);
-		toggleableComponents.add(clearUserMelodySeed);
-		toggleableComponents.add(melodyBasicChordsOnly);
+		toggleableComponents.add(melodySettingsExtraPanel);
 
 		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
 		scrollableMelodyPanels.add(melodySettingsPanel);
-		JPanel melodySettingsExtraPanel = new JPanel();
-		melodySettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
-		melodySettingsExtraPanel.setVisible(false);
 		scrollableMelodyPanels.add(melodySettingsExtraPanel);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 	}
@@ -2401,9 +2410,7 @@ public class VibeComposerGUI extends JFrame
 				masterpieceSeed = parsedSeed;
 			}
 			if (randomMelodyOnRegenerate.isSelected()) {
-				Random rand = new Random();
-				int melodySeed = rand.nextInt();
-				melodyPanels.forEach(e -> e.setPatternSeed(melodySeed));
+				randomizeMelodySeeds();
 			}
 		}
 
@@ -2600,6 +2607,21 @@ public class VibeComposerGUI extends JFrame
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private void randomizeMelodySeeds() {
+		Random rand = new Random();
+		int melodySeed = rand.nextInt();
+		melodyPanels.forEach(e -> e.setVisible(false));
+		if (!randomMelodySameSeed.isSelected()) {
+			melodyPanels.forEach(e -> {
+				int seed = rand.nextInt();
+				e.setPatternSeed(seed);
+			});
+		} else {
+			melodyPanels.forEach(e -> e.setPatternSeed(melodySeed));
+		}
+		melodyPanels.forEach(e -> e.setVisible(true));
 	}
 
 	private void unapplySolosMutes() {
@@ -3141,10 +3163,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "GenMelody") {
-
-			Random rand = new Random();
-			int melodySeed = rand.nextInt();
-			melodyPanels.forEach(e -> e.setPatternSeed(melodySeed));
+			randomizeMelodySeeds();
 		}
 
 		if (ae.getActionCommand() == "ClearMelody") {
