@@ -103,7 +103,7 @@ public class MidiGenerator implements JMC {
 	private static final double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
 	private static final int OPENHAT_CHANCE = 15;
 	private static final int maxAllowedScaleNotes = 7;
-	private static final double START_TIME_DELAY = 0.5;
+	public static final double START_TIME_DELAY = 0.5;
 	private static final double DEFAULT_CHORD_SPLIT = 625;
 	private static final String ARP_PATTERN_KEY = "ARP_PATTERN";
 	private static final String ARP_OCTAVE_KEY = "ARP_OCTAVE";
@@ -1050,7 +1050,11 @@ public class MidiGenerator implements JMC {
 						Phrase m = fillMelody(mp, usedMelodyProg, usedRoots, usedMeasures,
 								notesSeedOffset, sec, variations);
 						if (MelodyMidiDropPane.userMelody != null) {
-							m = MelodyMidiDropPane.userMelody.copy();
+							if (i > 0) {
+								m = emptyPhrase.copy();
+							} else {
+								m = MelodyMidiDropPane.userMelody.copy();
+							}
 						}
 						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
 						if (notesSeedOffset == 0 && i == 0

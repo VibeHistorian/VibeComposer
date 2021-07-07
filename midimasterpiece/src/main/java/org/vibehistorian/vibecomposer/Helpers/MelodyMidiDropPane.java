@@ -25,6 +25,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
@@ -120,10 +123,25 @@ public class MelodyMidiDropPane extends JPanel {
 					File file = (File) files.get(0);
 					if (file.getName().endsWith("mid") || file.getName().endsWith("midi")) {
 						message.setText("MIDI File: " + file.getName());
-						Score scr = Read.midiOrJmWithNoMessaging(file);
-						Mod.consolidate(scr.getPart(0));
-						userMelody = scr.getPart(0).getPhrase(0);
+						Score scr = Read.midiOrJmWithSwingMessaging(file,
+								VibeComposerGUI.vibeComposerGUI);
+						System.out.println("Score parts: " + scr.getPartList().size());
+						Part part = new Part();
+						for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
+							Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
+							System.out.println(phr.toString());
+							phr.setAppend(false);
+							//TODO: how to do it without filling rests
+							Mod.fillRests(phr);
+							//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
+							part.add(phr);
+						}
+
+						Mod.consolidate(part);
+						userMelody = part.getPhrase(0);
+
 						System.out.println(userMelody.toString());
+						System.out.println("Tempo: " + scr.getTempo());
 					} else {
 						message.setText("Not MIDI! - " + file.getName());
 					}
