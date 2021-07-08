@@ -351,7 +351,7 @@ public class MidiUtils {
 	public static int[] mappedChord(String chordString) {
 		int[] mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
-			mappedChord = getInterval(chordString);
+			mappedChord = getSpelledChord(chordString);
 		}
 		if (mappedChord == null) {
 			throw new IllegalArgumentException("Unmappable string: " + chordString);
@@ -648,24 +648,36 @@ public class MidiUtils {
 		}
 	}
 
-	public static int[] getInterval(String chordString) {
+	public static int[] getSpelledChord(String chordString) {
 		List<Character> validChars = Arrays
 				.asList(new Character[] { '#', 'C', 'D', 'E', 'F', 'G', 'A', 'B' });
 		boolean expectOnlyLetter = true;
 		List<Integer> intervalInts = new ArrayList<>();
+		int currentOctaveAdjust = 0;
+		int lastValue = 0;
 		int current = -1;
 		for (int i = 0; i < chordString.length(); i++) {
 			Character chr = chordString.charAt(i);
 			int index = validChars.indexOf(chr);
 			if (index > 0) {
 				current++;
-				intervalInts.add(60 + diaTransMap.get(index));
+				int newValue = 60 + diaTransMap.get(index) + currentOctaveAdjust;
+				// smaller than last, or equal but next char isn't #
+				if (newValue < lastValue
+						|| ((newValue == lastValue) && (i == chordString.length() - 1
+								|| validChars.indexOf(chordString.charAt(i + 1)) != 0))) {
+					currentOctaveAdjust += 12;
+					newValue += 12;
+				}
+				intervalInts.add(newValue);
+				lastValue = newValue;
 				expectOnlyLetter = false;
 			} else if (index == 0) {
 				if (expectOnlyLetter) {
 					return null;
 				} else {
-					intervalInts.set(current, intervalInts.get(current) + 1);
+					lastValue = intervalInts.get(current) + 1;
+					intervalInts.set(current, lastValue);
 					expectOnlyLetter = true;
 				}
 			} else {

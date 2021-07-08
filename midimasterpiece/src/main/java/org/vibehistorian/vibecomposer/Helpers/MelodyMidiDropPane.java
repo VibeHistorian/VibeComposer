@@ -1,5 +1,10 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+/*
+ * Code adapted from URL: https://stackoverflow.com/a/13597635
+ * Original author: MadProgrammer
+ */
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;

@@ -126,8 +126,8 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
+import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -1774,6 +1774,9 @@ public class VibeComposerGUI extends JFrame
 		tipLabel = new JLabel();
 		//chordToolTip.add(tipLabel);
 
+		JButton randomizeCustomChords = makeButton("Randomize user chords", "RandomizeUserChords");
+		chordToolTip.add(randomizeCustomChords);
+
 		userChordsEnabled = new JCheckBox("Custom Chords", false);
 		chordToolTip.add(userChordsEnabled);
 
@@ -1784,8 +1787,6 @@ public class VibeComposerGUI extends JFrame
 		chordToolTip.add(new JLabel("Chord durations:"));
 		chordToolTip.add(userChordsDurations);
 
-		JButton randomizeCustomChords = makeButton("Randomize user chords", "RandomizeUserChords");
-		chordToolTip.add(randomizeCustomChords);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -3562,7 +3563,7 @@ public class VibeComposerGUI extends JFrame
 							if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
 								userChordsParsed.add(userChordsSplit[i]);
 							} else {
-								int[] interval = MidiUtils.getInterval(userChordsSplit[i]);
+								int[] interval = MidiUtils.getSpelledChord(userChordsSplit[i]);
 								if (interval != null) {
 									userChordsParsed.add(userChordsSplit[i]);
 								}
