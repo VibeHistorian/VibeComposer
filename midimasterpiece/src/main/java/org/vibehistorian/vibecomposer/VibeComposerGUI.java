@@ -402,7 +402,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel mainBpm;
 	public static KnobPanel bpmLow;
 	public static KnobPanel bpmHigh;
-	KnobPanel transposeScore;
+	public static KnobPanel transposeScore;
 	JButton switchOnComposeRandom;
 
 	// seed / midi

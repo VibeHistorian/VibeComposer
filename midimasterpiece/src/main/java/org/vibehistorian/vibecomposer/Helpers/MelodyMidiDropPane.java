@@ -31,11 +31,14 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
+import jm.constants.Scales;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
+import jm.music.tools.Mod;
 import jm.util.Read;
 
 public class MelodyMidiDropPane extends JPanel {
@@ -128,8 +131,7 @@ public class MelodyMidiDropPane extends JPanel {
 					File file = (File) files.get(0);
 					if (file.getName().endsWith("mid") || file.getName().endsWith("midi")) {
 						message.setText("MIDI File: " + file.getName());
-						Score scr = Read.midiOrJmWithSwingMessaging(file,
-								VibeComposerGUI.vibeComposerGUI);
+						Score scr = Read.midiOrJmWithNoMessaging(file);
 						System.out.println("Score parts: " + scr.getPartList().size());
 						Part part = new Part();
 						for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
@@ -144,6 +146,10 @@ public class MelodyMidiDropPane extends JPanel {
 						JMusicUtilsCustom.consolidate(part);
 						//Mod.consolidate(part);
 						userMelody = part.getPhrase(0);
+						int transpose = MidiUtils.detectKey(userMelody, Scales.MAJOR_SCALE);
+						Mod.transpose(userMelody, transpose);
+
+						VibeComposerGUI.transposeScore.setInt(transpose * -1);
 
 						System.out.println(userMelody.toString());
 						System.out.println("Tempo: " + scr.getTempo());

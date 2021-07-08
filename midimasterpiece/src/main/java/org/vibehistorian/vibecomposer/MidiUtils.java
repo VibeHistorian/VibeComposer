@@ -30,9 +30,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
 import javax.swing.JComboBox;
+
+import org.apache.commons.lang3.StringUtils;
 
 import jm.constants.Durations;
 import jm.constants.Pitches;
@@ -259,6 +262,44 @@ public class MidiUtils {
 		}
 		return intList;
 	}
+
+	public static int detectKey(Phrase phr, int[] scale) {
+		Set<Integer> pitches = new HashSet<>();
+		Vector<Note> noteList = phr.getNoteList();
+		for (Note n : noteList) {
+			pitches.add(n.getPitch() % 12);
+		}
+		System.out.println(StringUtils.join(pitches, ", "));
+		System.out.println("Pitches: " + pitches.size());
+
+		Set<Integer> desiredPitches = new HashSet<>();
+		for (int i = 0; i < scale.length; i++) {
+			desiredPitches.add(scale[i]);
+		}
+
+		int bestNotContained = pitches.size();
+		int transposeUpBy = 0;
+		for (int i = -6; i <= 6; i++) {
+			int notContained = pitches.size();
+			for (Integer p : pitches) {
+				Integer transposedPitch = (p + i + 12) % 12;
+				if (desiredPitches.contains(transposedPitch)) {
+					notContained--;
+				}
+			}
+			if (notContained < bestNotContained) {
+				bestNotContained = notContained;
+				transposeUpBy = i;
+			}
+			if (notContained == 0) {
+				System.out.println("Found best transpose match: " + i);
+				break;
+			}
+		}
+		System.out.println("Detected Transposition: " + transposeUpBy);
+		return transposeUpBy;
+	}
+
 	/*
 		public static String prettyChord(long chordNum) {
 			String chordString = String.valueOf(chordNum);
