@@ -211,7 +211,10 @@ public class MidiUtils {
 
 	// order freq map by which chord contains most of the passed in notes
 	// -> create map 
-	public static String applyChordFreqMap(Set<Integer> frequentNotes) {
+	public static String applyChordFreqMap(Set<Integer> frequentNotes, int orderOfMatch) {
+		if (orderOfMatch == 0) {
+			orderOfMatch++;
+		}
 		Map<String, Set<Integer>> freqMap = createChordFreqMap();
 		Map<String, Long> chordMatchesMap = new LinkedHashMap<>();
 
@@ -231,9 +234,9 @@ public class MidiUtils {
 						LinkedHashMap::new));
 
 		//top3.entrySet().stream().forEach(System.out::println);
-		// return second most matching chord 
-		if (top3.keySet().size() > 1) {
-			return (String) top3.keySet().toArray()[1];
+		// return n-th most matching chord 
+		if (top3.keySet().size() > orderOfMatch - 1) {
+			return (String) top3.keySet().toArray()[orderOfMatch - 1];
 		}
 		System.out.println("Only one chord matches? Huh..");
 		return (String) top3.keySet().toArray()[0];

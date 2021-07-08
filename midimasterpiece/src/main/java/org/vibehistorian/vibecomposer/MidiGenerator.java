@@ -398,7 +398,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		if (fillChordMelodyMap) {
-			makeMelodyPitchFrequencyMap();
+			makeMelodyPitchFrequencyMap(1, chordMelodyMap1.keySet().size() - 1, 2);
 		}
 		if (genVars && variations != null) {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
@@ -549,13 +549,17 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	private void makeMelodyPitchFrequencyMap() {
+	private List<String> makeMelodyPitchFrequencyMap(int start, int end, int orderOfMatch) {
 		// only affect middle 2 chords 
 		List<int[]> alternateChordProg = new ArrayList<>();
-		alternateChordProg
-				.add(Arrays.copyOf(chordProgression.get(0), chordProgression.get(0).length));
-		melodyBasedRootProgression.add(Arrays.copyOf(rootProgression.get(0), 1));
-		for (int i = 1; i < chordMelodyMap1.keySet().size() - 1; i++) {
+		List<String> chordStrings = new ArrayList<>();
+		if (start > 0) {
+			alternateChordProg
+					.add(Arrays.copyOf(chordProgression.get(0), chordProgression.get(0).length));
+			melodyBasedRootProgression.add(Arrays.copyOf(rootProgression.get(0), 1));
+		}
+
+		for (int i = start; i < end; i++) {
 
 			List<Integer> chordFreqs = new ArrayList<>();
 			for (Note n : chordMelodyMap1.get(i)) {
@@ -576,20 +580,25 @@ public class MidiGenerator implements JMC {
 							(e1, e2) -> e1, LinkedHashMap::new));
 
 			//top3.entrySet().stream().forEach(System.out::println);
-			String chordString = applyChordFreqMap(top3.keySet());
+			String chordString = applyChordFreqMap(top3.keySet(), orderOfMatch);
 			System.out.println("Alternate chord #" + i + ": " + chordString);
 			int[] chordLongMapped = chordsMap.get(chordString);
 			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, 1));
 			alternateChordProg.add(chordLongMapped);
+			chordStrings.add(chordString);
 		}
-		alternateChordProg
-				.add(Arrays.copyOf(chordProgression.get(chordMelodyMap1.keySet().size() - 1),
-						chordProgression.get(chordMelodyMap1.keySet().size() - 1).length));
-		melodyBasedRootProgression
-				.add(Arrays.copyOf(rootProgression.get(rootProgression.size() - 1), 1));
+		if (end < chordMelodyMap1.keySet().size() - 1) {
+			alternateChordProg
+					.add(Arrays.copyOf(chordProgression.get(chordMelodyMap1.keySet().size() - 1),
+							chordProgression.get(chordMelodyMap1.keySet().size() - 1).length));
+			melodyBasedRootProgression
+					.add(Arrays.copyOf(rootProgression.get(rootProgression.size() - 1), 1));
+		}
+
 		melodyBasedChordProgression = squishChordProgression(alternateChordProg,
 				gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
 				gc.getChordGenSettings().getFlattenVoicingChance());
+		return chordStrings;
 	}
 
 	private Note generateNote(MelodyPart mp, int[] chord, boolean isAscDirection,
@@ -922,8 +931,14 @@ public class MidiGenerator implements JMC {
 		fillAlternates(altProgressionDurations, altChordProgression, altRootProgression);
 
 		// run one empty pass through melody generation
-		generateMelodySkeletonFromChords(gc.getMelodyParts().get(0), actualProgression,
-				generatedRootProgression, 1, 0, new Section(), null);
+		if (MelodyMidiDropPane.userMelody != null) {
+			processUserMelody(MelodyMidiDropPane.userMelody);
+			actualProgression = chordProgression;
+			generatedRootProgression = rootProgression;
+		} else {
+			generateMelodySkeletonFromChords(gc.getMelodyParts().get(0), actualProgression,
+					generatedRootProgression, 1, 0, new Section(), null);
+		}
 
 		Arrangement arr = null;
 		boolean overridden = false;
@@ -1049,13 +1064,7 @@ public class MidiGenerator implements JMC {
 						List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 						Phrase m = fillMelody(mp, usedMelodyProg, usedRoots, usedMeasures,
 								notesSeedOffset, sec, variations);
-						if (MelodyMidiDropPane.userMelody != null) {
-							if (i > 0) {
-								m = emptyPhrase.copy();
-							} else {
-								m = MelodyMidiDropPane.userMelody.copy();
-							}
-						}
+
 						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
 						if (notesSeedOffset == 0 && i == 0
 								&& sec.getVariation(0, i).contains(Integer.valueOf(0))) {
@@ -1421,6 +1430,43 @@ public class MidiGenerator implements JMC {
 
 	}
 
+	private void processUserMelody(Phrase userMelody) {
+		if (!chordMelodyMap1.isEmpty()) {
+			return;
+		}
+
+		int chordCounter = 0;
+		double chordSeparator = Durations.HALF_NOTE;
+		Vector<Note> noteList = userMelody.getNoteList();
+		if (!chordMelodyMap1.containsKey(Integer.valueOf(0))) {
+			chordMelodyMap1.put(Integer.valueOf(0), new ArrayList<>());
+		}
+		double rhythmCounter = 0;
+
+		for (Note n : noteList) {
+			System.out.println("Rhythm counter: " + rhythmCounter);
+			if (rhythmCounter >= chordSeparator - 0.001) {
+				System.out.println("NEXT CHORD!");
+				chordSeparator += Durations.HALF_NOTE;
+				chordCounter++;
+				if (!chordMelodyMap1.containsKey(Integer.valueOf(chordCounter))) {
+					chordMelodyMap1.put(Integer.valueOf(chordCounter), new ArrayList<>());
+				}
+			}
+			chordMelodyMap1.get(Integer.valueOf(chordCounter)).add(n);
+			rhythmCounter += n.getRhythmValue();
+		}
+		System.out.println("Processed melody, chords: " + chordCounter + 1);
+		List<String> chordStrings = makeMelodyPitchFrequencyMap(0, chordMelodyMap1.keySet().size(),
+				1);
+
+		System.out.println(StringUtils.join(chordStrings, ","));
+		chordInts = chordStrings;
+
+		chordProgression = melodyBasedChordProgression;
+		rootProgression = melodyBasedRootProgression;
+	}
+
 	protected Phrase fillMelody(MelodyPart mp, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int measures, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
@@ -1429,6 +1475,15 @@ public class MidiGenerator implements JMC {
 				generatedRootProgression, true);
 		Random algoGenerator = new Random(gc.getRandomSeed());
 		Note previousChordsNote = null;
+
+		if (MelodyMidiDropPane.userMelody != null) {
+			//processUserMelody(MelodyMidiDropPane.userMelody);
+			melodyPhrase = MelodyMidiDropPane.userMelody.copy();
+			Mod.transpose(melodyPhrase, mp.getTranspose());
+			melodyPhrase.setStartTime(START_TIME_DELAY);
+			return melodyPhrase;
+		}
+
 		if (algoGenerator.nextInt(100) < gc.getMelodyUseOldAlgoChance()) {
 			Note[] pair024 = null;
 			Note[] pair15 = null;
@@ -1475,6 +1530,8 @@ public class MidiGenerator implements JMC {
 			swingMelody(mp, fullMelody);
 			melodyPhrase.addNoteList(fullMelody, true);
 		}
+
+
 		Mod.transpose(melodyPhrase, mp.getTranspose());
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;

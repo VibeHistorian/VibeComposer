@@ -69,7 +69,7 @@ public class JMusicUtilsCustom {
 		for (Note n : noteList) {
 			if (n.isRest()) {
 				if (prev != null) {
-					prev.setRhythmValue(prev.getRhythmValue() + n.getDuration());
+					prev.setRhythmValue(prev.getRhythmValue() + n.getRhythmValue());
 				}
 			} else {
 				prev = n;

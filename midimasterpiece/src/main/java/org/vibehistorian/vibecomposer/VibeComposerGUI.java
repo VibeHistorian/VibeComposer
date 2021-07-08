@@ -631,7 +631,7 @@ public class VibeComposerGUI extends JFrame
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
 
-		switchFullMode();
+		//switchFullMode();
 		instrumentTabPane.setSelectedIndex(0);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
@@ -2484,6 +2484,10 @@ public class VibeComposerGUI extends JFrame
 		unapplySolosMutes();
 
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+
+		if (MelodyMidiDropPane.userMelody != null) {
+			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
+		}
 
 		// reapply
 		reapplySolosMutes();
