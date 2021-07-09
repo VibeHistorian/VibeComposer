@@ -20,6 +20,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 
 public class DrumHitsPatternPanel extends JPanel {
 
@@ -35,6 +36,9 @@ public class DrumHitsPatternPanel extends JPanel {
 
 	private JPanel parentPanel = null;
 
+	public static int width = 8 * CheckBoxIcon.width;
+	public static int height = 2 * CheckBoxIcon.width;
+
 	public DrumHitsPatternPanel(KnobPanel hitsPanel, JComboBox<String> patternType,
 			KnobPanel shiftPanel, JPanel parentPanel) {
 		super();
@@ -42,7 +46,7 @@ public class DrumHitsPatternPanel extends JPanel {
 		//layout.setVgap(0);
 		//layout.setHgap(0);
 		setLayout(layout);
-		setPreferredSize(new Dimension(170, 40));
+		setPreferredSize(new Dimension(width, height));
 		//setBorder(new BevelBorder(BevelBorder.LOWERED));
 		this.hitsPanel = hitsPanel;
 		this.patternType = patternType;
@@ -52,7 +56,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 		for (int i = 0; i < 32; i++) {
 			truePattern.add(0);
-			hitChecks[i] = new JCheckBox("", false);
+			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
 			hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
 			if (i >= hitsPanel.getInt()) {
 				hitChecks[i].setVisible(false);
@@ -263,10 +267,10 @@ public class DrumHitsPatternPanel extends JPanel {
 				}
 				lastHits = nowHits;
 				if (lastHits > 16) {
-					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 80));
+					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(width, height * 2));
 					parentPanel.setMaximumSize(new Dimension(3000, 90));
 				} else {
-					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(170, 40));
+					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(width, height));
 					parentPanel.setMaximumSize(new Dimension(3000, 50));
 				}
 				DrumHitsPatternPanel.this.setVisible(true);

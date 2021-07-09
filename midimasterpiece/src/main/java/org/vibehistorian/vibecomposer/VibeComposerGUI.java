@@ -176,7 +176,7 @@ public class VibeComposerGUI extends JFrame
 	public static VariationPopup varPopup = null;
 
 
-	private static Color panelColorHigh, panelColorLow;
+	public static Color panelColorHigh, panelColorLow;
 	public static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
 
