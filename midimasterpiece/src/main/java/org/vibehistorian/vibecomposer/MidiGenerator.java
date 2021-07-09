@@ -229,6 +229,12 @@ public class MidiGenerator implements JMC {
 		int seed = mp.getPatternSeed();
 
 		Vector<Note> noteList = new Vector<>();
+
+		Random algoGenerator = new Random(gc.getRandomSeed());
+		if (algoGenerator.nextInt(100) < gc.getMelodyUseOldAlgoChance()) {
+			return oldAlgoGenerateMelodySkeletonFromChords(mp, measures, roots);
+		}
+
 		Random generator = new Random(seed + notesSeedOffset);
 		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
@@ -404,6 +410,52 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
 		}
 		return noteList;
+	}
+
+	private Vector<Note> oldAlgoGenerateMelodySkeletonFromChords(MelodyPart mp, int measures,
+			List<int[]> genRootProg) {
+		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
+				genRootProg, true);
+
+		Note previousChordsNote = null;
+
+		Note[] pair024 = null;
+		Note[] pair15 = null;
+		Random melodyGenerator = new Random();
+		if (!mp.isMuted() && mp.getPatternSeed() != 0) {
+			melodyGenerator.setSeed(mp.getPatternSeed());
+		} else {
+			melodyGenerator.setSeed(gc.getRandomSeed());
+		}
+		System.out.println("LEGACY ALGORITHM!");
+		Vector<Note> fullMelody = new Vector<>();
+		for (int i = 0; i < measures; i++) {
+			for (int j = 0; j < genRootProg.size(); j++) {
+				Note[] generatedMelody = null;
+
+				if ((i > 0 || j > 0) && (j == 0 || j == 2)) {
+					generatedMelody = deepCopyNotes(mp, pair024, genRootProg.get(j),
+							melodyGenerator);
+				} else if (i > 0 && j == 1) {
+					generatedMelody = deepCopyNotes(mp, pair15, null, null);
+				} else {
+					generatedMelody = generateMelodyForChord(mp, genRootProg.get(j),
+							progressionDurations.get(j), melodyGenerator, previousChordsNote,
+							directionProgression.get(j));
+				}
+
+				previousChordsNote = generatedMelody[generatedMelody.length - 1];
+
+				if (i == 0 && j == 0) {
+					pair024 = deepCopyNotes(mp, generatedMelody, null, null);
+				}
+				if (i == 0 && j == 1) {
+					pair15 = deepCopyNotes(mp, generatedMelody, null, null);
+				}
+				fullMelody.addAll(Arrays.asList(generatedMelody));
+			}
+		}
+		return fullMelody;
 	}
 
 	private boolean isMultiple(double first, double second) {
@@ -1471,65 +1523,17 @@ public class MidiGenerator implements JMC {
 			List<int[]> generatedRootProgression, int measures, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
 		Phrase melodyPhrase = new Phrase();
-		List<Boolean> directionProgression = generateMelodyDirectionsFromChordProgression(
-				generatedRootProgression, true);
-		Random algoGenerator = new Random(gc.getRandomSeed());
-		Note previousChordsNote = null;
-
+		Vector<Note> skeletonNotes = null;
 		if (userMelody != null) {
-			//processUserMelody(MelodyMidiDropPane.userMelody);
-			melodyPhrase = userMelody.copy();
-			Mod.transpose(melodyPhrase, mp.getTranspose());
-			melodyPhrase.setStartTime(START_TIME_DELAY);
-			return melodyPhrase;
-		}
-
-		if (algoGenerator.nextInt(100) < gc.getMelodyUseOldAlgoChance()) {
-			Note[] pair024 = null;
-			Note[] pair15 = null;
-			Random melodyGenerator = new Random();
-			if (!mp.isMuted() && mp.getPatternSeed() != 0) {
-				melodyGenerator.setSeed(mp.getPatternSeed());
-			} else {
-				melodyGenerator.setSeed(gc.getRandomSeed());
-			}
-			System.out.println("LEGACY ALGORITHM!");
-			Vector<Note> fullMelody = new Vector<>();
-			for (int i = 0; i < measures; i++) {
-				for (int j = 0; j < generatedRootProgression.size(); j++) {
-					Note[] generatedMelody = null;
-
-					if ((i > 0 || j > 0) && (j == 0 || j == 2)) {
-						generatedMelody = deepCopyNotes(mp, pair024,
-								generatedRootProgression.get(j), melodyGenerator);
-					} else if (i > 0 && j == 1) {
-						generatedMelody = deepCopyNotes(mp, pair15, null, null);
-					} else {
-						generatedMelody = generateMelodyForChord(mp,
-								generatedRootProgression.get(j), progressionDurations.get(j),
-								melodyGenerator, previousChordsNote, directionProgression.get(j));
-					}
-
-					previousChordsNote = generatedMelody[generatedMelody.length - 1];
-
-					if (i == 0 && j == 0) {
-						pair024 = deepCopyNotes(mp, generatedMelody, null, null);
-					}
-					if (i == 0 && j == 1) {
-						pair15 = deepCopyNotes(mp, generatedMelody, null, null);
-					}
-					fullMelody.addAll(Arrays.asList(generatedMelody));
-				}
-			}
-			melodyPhrase.addNoteList(fullMelody, true);
-
+			skeletonNotes = userMelody.copy().getNoteList();
 		} else {
-			Vector<Note> skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
+			skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
-			Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(mp, skeletonNotes);
-			swingMelody(mp, fullMelody);
-			melodyPhrase.addNoteList(fullMelody, true);
 		}
+
+		Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(mp, skeletonNotes);
+		swingMelody(mp, fullMelody);
+		melodyPhrase.addNoteList(fullMelody, true);
 
 
 		Mod.transpose(melodyPhrase, mp.getTranspose());
