@@ -1672,7 +1672,7 @@ public class VibeComposerGUI extends JFrame
 		fixedLengthChords = new JComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "4", "8", "RANDOM" }, fixedLengthChords);
 		fixedLengthChords.setSelectedItem(0);
-		JLabel chordDurationFixedLabel = new JLabel("Chord Progression (Bars)");
+		JLabel chordDurationFixedLabel = new JLabel("# of Chords");
 		JPanel chordProgPanel = new JPanel();
 		chordProgPanel.add(chordDurationFixedLabel);
 		chordProgPanel.add(fixedLengthChords);
@@ -1693,7 +1693,7 @@ public class VibeComposerGUI extends JFrame
 		globalSwingPanel.setOpaque(false);
 		macroParams.add(globalSwingPanel);
 
-		useDoubledDurations = new JCheckBox("Doubled Bar Durations", false);
+		useDoubledDurations = new JCheckBox("Doubled Beat Duration", false);
 		JPanel useDoubledPanel = new JPanel();
 		useDoubledPanel.add(useDoubledDurations);
 		useDoubledPanel.setOpaque(false);
@@ -1777,13 +1777,13 @@ public class VibeComposerGUI extends JFrame
 		tipLabel = new JLabel();
 		//chordToolTip.add(tipLabel);
 
-		JButton randomizeCustomChords = makeButton("Randomize user chords", "RandomizeUserChords");
+		JButton randomizeCustomChords = makeButton("Randomize Chords", "RandomizeUserChords");
 		chordToolTip.add(randomizeCustomChords);
 
 		userChordsEnabled = new JCheckBox("Custom Chords", false);
 		chordToolTip.add(userChordsEnabled);
 
-		userChords = new JTextField("R", 40);
+		userChords = new JTextField("R", 35);
 		userChords.setToolTipText(tooltip);
 		chordToolTip.add(userChords);
 		userChordsDurations = new JTextField("2,2,2,2", 14);
