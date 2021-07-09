@@ -285,7 +285,7 @@ public class VibeComposerGUI extends JFrame
 	// macro params
 	JTextField soundbankFilename;
 
-	JComboBox<String> scaleMode;
+	public static JComboBox<String> scaleMode;
 	JComboBox<String> fixedLengthChords;
 	JCheckBox useDoubledDurations;
 	JCheckBox allowChordRepeats;
@@ -328,6 +328,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyExceptionChance;
 	KnobPanel melodyQuickness;
 	JCheckBox melodyBasicChordsOnly;
+	JCheckBox useUserMelody;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -799,9 +800,9 @@ public class VibeComposerGUI extends JFrame
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		JLabel melodyDragAndDrop = new JLabel("Melody file drop:");
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
 
 		melodySettingsExtraPanel.add(arpCopyMelodyInst);
 		melodySettingsExtraPanel.add(generateUserMelodySeed);
@@ -809,7 +810,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanel.add(randomMelodyOnRegenerate);
 		melodySettingsExtraPanel.add(clearUserMelodySeed);
 		melodySettingsExtraPanel.add(melodyBasicChordsOnly);
-		melodySettingsExtraPanel.add(melodyDragAndDrop);
+		melodySettingsExtraPanel.add(useUserMelody);
 		melodySettingsExtraPanel.add(dropPane);
 
 
@@ -3596,6 +3597,12 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				MidiGenerator.userChords.clear();
 				MidiGenerator.userChordsDurations.clear();
+			}
+
+			if (MelodyMidiDropPane.userMelody != null && useUserMelody.isSelected()) {
+				MidiGenerator.userMelody = MelodyMidiDropPane.userMelody;
+			} else {
+				MidiGenerator.userMelody = null;
 			}
 
 			// to include it in the XML when saving, but not when generating

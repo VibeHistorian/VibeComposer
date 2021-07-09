@@ -59,7 +59,6 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -115,6 +114,7 @@ public class MidiGenerator implements JMC {
 
 	public static List<String> userChords = new ArrayList<>();
 	public static List<Double> userChordsDurations = new ArrayList<>();
+	public static Phrase userMelody = null;
 	public static List<String> chordInts = new ArrayList<>();
 
 	public static String FIRST_CHORD = null;
@@ -931,8 +931,8 @@ public class MidiGenerator implements JMC {
 		fillAlternates(altProgressionDurations, altChordProgression, altRootProgression);
 
 		// run one empty pass through melody generation
-		if (MelodyMidiDropPane.userMelody != null) {
-			processUserMelody(MelodyMidiDropPane.userMelody);
+		if (userMelody != null) {
+			processUserMelody(userMelody);
 			actualProgression = chordProgression;
 			generatedRootProgression = rootProgression;
 		} else {
@@ -1476,9 +1476,9 @@ public class MidiGenerator implements JMC {
 		Random algoGenerator = new Random(gc.getRandomSeed());
 		Note previousChordsNote = null;
 
-		if (MelodyMidiDropPane.userMelody != null) {
+		if (userMelody != null) {
 			//processUserMelody(MelodyMidiDropPane.userMelody);
-			melodyPhrase = MelodyMidiDropPane.userMelody.copy();
+			melodyPhrase = userMelody.copy();
 			Mod.transpose(melodyPhrase, mp.getTranspose());
 			melodyPhrase.setStartTime(START_TIME_DELAY);
 			return melodyPhrase;

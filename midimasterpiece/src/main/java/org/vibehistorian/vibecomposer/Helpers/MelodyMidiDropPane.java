@@ -30,11 +30,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
-import jm.constants.Scales;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
@@ -64,7 +65,7 @@ public class MelodyMidiDropPane extends JPanel {
 		}*/
 
 		setLayout(new GridBagLayout());
-		message = new JLabel();
+		message = new JLabel("* * Drag'n'Drop MIDI Here * *");
 		message.setFont(message.getFont().deriveFont(Font.BOLD, 12));
 		add(message);
 
@@ -125,18 +126,19 @@ public class MelodyMidiDropPane extends JPanel {
 		Runnable run = new Runnable() {
 			@Override
 			public void run() {
+				userMelody = null;
 				if (files == null || files.isEmpty()) {
 					message.setText("No file!");
 				} else {
 					File file = (File) files.get(0);
 					if (file.getName().endsWith("mid") || file.getName().endsWith("midi")) {
-						message.setText("MIDI File: " + file.getName());
+						message.setText(file.getName());
 						Score scr = Read.midiOrJmWithNoMessaging(file);
 						System.out.println("Score parts: " + scr.getPartList().size());
 						Part part = new Part();
 						for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
 							Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
-							System.out.println(phr.toString());
+							//System.out.println(phr.toString());
 							phr.setAppend(false);
 							//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
 							JMusicUtilsCustom.addRestsToRhythmValues(phr);
@@ -146,12 +148,18 @@ public class MelodyMidiDropPane extends JPanel {
 						JMusicUtilsCustom.consolidate(part);
 						//Mod.consolidate(part);
 						userMelody = part.getPhrase(0);
-						int transpose = MidiUtils.detectKey(userMelody, Scales.MAJOR_SCALE);
-						Mod.transpose(userMelody, transpose);
+						Pair<ScaleMode, Integer> detectionResult = MidiUtils
+								.detectKeyAndMode(userMelody);
+						int transposeUpBy = detectionResult.getValue();
+						Mod.transpose(userMelody, transposeUpBy);
+						MidiUtils.transposePhrase(userMelody,
+								detectionResult.getKey().noteAdjustScale,
+								ScaleMode.IONIAN.noteAdjustScale);
+						VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
+						VibeComposerGUI.scaleMode
+								.setSelectedItem(detectionResult.getKey().toString());
 
-						VibeComposerGUI.transposeScore.setInt(transpose * -1);
-
-						System.out.println(userMelody.toString());
+						//System.out.println(userMelody.toString());
 						System.out.println("Tempo: " + scr.getTempo());
 					} else {
 						message.setText("Not MIDI! - " + file.getName());

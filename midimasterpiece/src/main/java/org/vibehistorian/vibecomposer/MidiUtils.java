@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComboBox;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import jm.constants.Durations;
 import jm.constants.Pitches;
@@ -60,9 +61,8 @@ public class MidiUtils {
 				AEOLIAN_SCALE = { 0, 2, 3, 5, 7, 8, 10 }, DORIAN_SCALE = { 0, 2, 3, 5, 7, 9, 10 },
 				PHRYGIAN_SCALE = { 0, 1, 3, 5, 7, 8, 10 }, LYDIAN_SCALE = { 0, 2, 4, 6, 7, 9, 11 },
 				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
-				BLUES_SCALE = { 0, 2, 3, 4, 5, 7, 9, 10, 11 },
-				TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 }, INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 },
-				LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 };
+				BLUES_SCALE = { 0, 2, 3, 4, 7, 9, 12 }, TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 },
+				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 };
 
 	}
 
@@ -83,9 +83,8 @@ public class MidiUtils {
 	public static final List<Integer> cLocrianScale4 = new ArrayList<>(
 			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
 					Pitches.AF4, Pitches.BF4, Pitches.C5));
-	public static final List<Integer> cBluesScale4 = new ArrayList<>(
-			Arrays.asList(Pitches.C4, Pitches.EF4, Pitches.F4, Pitches.GF4, Pitches.G4, Pitches.BF4,
-					Pitches.BF4, Pitches.C5));
+	public static final List<Integer> cBluesScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));
 
 	public enum ScaleMode {
 		IONIAN(Scales.MAJOR_SCALE, cIonianScale4), DORIAN(Scales.DORIAN_SCALE, cDorianScale4),
@@ -263,14 +262,50 @@ public class MidiUtils {
 		return intList;
 	}
 
-	public static int detectKey(Phrase phr, int[] scale) {
+	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr) {
+		int bestNotContained = Integer.MAX_VALUE;
+		ScaleMode bestMode = null;
+		int transposeUpBy = 0;
+
+		// 12 pitches
+		int[] pitchCounts = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		Set<Integer> pitches = new HashSet<>();
 		Vector<Note> noteList = phr.getNoteList();
+		int mostFrequents = 0;
+		int mostFrequentPitch = -1;
 		for (Note n : noteList) {
-			pitches.add(n.getPitch() % 12);
+			int normalized = n.getPitch() % 12;
+			pitches.add(normalized);
+			pitchCounts[normalized]++;
+			if (pitchCounts[normalized] > mostFrequents) {
+				mostFrequents = pitchCounts[normalized];
+				mostFrequentPitch = normalized;
+			}
 		}
-		System.out.println(StringUtils.join(pitches, ", "));
-		System.out.println("Pitches: " + pitches.size());
+		System.out.println("Examining pitches: " + StringUtils.join(pitches, ", "));
+		System.out.println("# of pitches: " + pitches.size());
+		System.out.println("Pitch array: " + Arrays.toString(pitchCounts));
+
+		for (ScaleMode mode : ScaleMode.values()) {
+			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale);
+			System.out.println("Result: " + detectionResult.toString());
+			if (detectionResult.getKey() <= bestNotContained) {
+				bestNotContained = detectionResult.getKey();
+				bestMode = mode;
+				transposeUpBy = detectionResult.getValue();
+			}
+			if (detectionResult.getKey() == 0
+					&& (((mostFrequentPitch + ((12 + transposeUpBy) % 12)) % 12) == 0)) {
+				System.out.println("Best for sure: " + detectionResult.toString());
+				break;
+			}
+		}
+		System.out.println("Returning: " + bestMode.toString() + ", " + transposeUpBy);
+		return Pair.of(bestMode, transposeUpBy);
+	}
+
+	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale) {
+
 
 		Set<Integer> desiredPitches = new HashSet<>();
 		for (int i = 0; i < scale.length; i++) {
@@ -296,8 +331,7 @@ public class MidiUtils {
 				break;
 			}
 		}
-		System.out.println("Detected Transposition: " + transposeUpBy);
-		return transposeUpBy;
+		return Pair.of(bestNotContained, transposeUpBy);
 	}
 
 	/*
@@ -557,6 +591,33 @@ public class MidiUtils {
 			}
 		}
 		return transposedChord;
+	}
+
+	public static void transposePhrase(Phrase phr, final Integer[] mode, final Integer[] modeTo) {
+		List<Integer> modeList = new ArrayList<>();
+		for (int num : mode) {
+			modeList.add(num);
+		}
+
+
+		for (int j = 0; j < phr.getNoteList().size(); j++) {
+			Note n = (Note) phr.getNoteList().get(j);
+			int pitch = n.getPitch();
+			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
+
+			if (originalIndex == -1) {
+				n.setPitch(pitch - 1);
+				continue;
+			}
+
+
+			int originalMovement = mode[originalIndex];
+			int newMovement = modeTo[originalIndex];
+
+			if (pitch != Note.REST) {
+				n.setPitch(pitch - originalMovement + newMovement);
+			}
+		}
 	}
 
 	public static final String[] INSTRUMENTS_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
