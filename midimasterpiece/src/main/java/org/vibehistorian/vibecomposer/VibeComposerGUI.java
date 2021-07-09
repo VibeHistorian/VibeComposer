@@ -1647,8 +1647,10 @@ public class VibeComposerGUI extends JFrame
 		randomizeChordStrumsOnCompose.setSelected(false);
 		//randomButtonsPanel.add(randomizeChordStrumsOnCompose);
 
-		switchOnComposeRandom = makeButton("Uncheck All 'on Compose'", "UncheckComposeRandom");
+		switchOnComposeRandom = makeButton("Untick all 'on Compose'", "UncheckComposeRandom");
+		switchOnComposeRandom.setPreferredSize(new Dimension(170, 20));
 		switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
+		switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));
 		randomButtonsPanel.add(switchOnComposeRandom);
 		//randomButtonsPanel.add(randomBottomPanel);
 
@@ -3109,13 +3111,13 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "UncheckComposeRandom") {
 			switchAllOnComposeCheckboxes(false);
-			switchOnComposeRandom.setText("Check all 'on Compose'");
+			switchOnComposeRandom.setText("  Tick all 'on Compose'   ");
 			switchOnComposeRandom.setActionCommand("CheckComposeRandom");
 		}
 
 		if (ae.getActionCommand() == "CheckComposeRandom") {
 			switchAllOnComposeCheckboxes(true);
-			switchOnComposeRandom.setText("Uncheck all 'on Compose'");
+			switchOnComposeRandom.setText("Untick all 'on Compose'");
 			switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
 		}
 
