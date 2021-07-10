@@ -149,8 +149,8 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
+import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
-import org.vibehistorian.vibecomposer.Popups.NicheSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -462,12 +462,13 @@ public class VibeComposerGUI extends JFrame
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
-	public static JPanel nicheSettingsPanel;
+	public static JPanel extraSettingsPanel;
 
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
 		UIManager.put("CheckBox.icon", new CheckBoxIcon());
+
 		isDarkMode = true;
 		vibeComposerGUI = new VibeComposerGUI("VibeComposer (BETA)");
 		vibeComposerGUI.init();
@@ -630,6 +631,8 @@ public class VibeComposerGUI extends JFrame
 		requestFocus();
 		requestFocusInWindow();
 
+		initHelperPopups();
+
 		isDarkMode = !isDarkMode;
 		switchDarkMode();
 
@@ -664,6 +667,8 @@ public class VibeComposerGUI extends JFrame
 						return false;
 					}
 				});*/
+
+
 	}
 
 
@@ -701,16 +706,11 @@ public class VibeComposerGUI extends JFrame
 
 		mainButtonsPanel.add(makeButton("Toggle Adv. Features", "ToggleAdv"));
 
-		mainButtonsPanel.add(makeButton("About", "ShowAboutPopup"));
 
-		mainButtonsPanel.add(makeButton("User Manual (opens browser)", "ShowHelpPopup"));
+		extraSettingsPanel = new JPanel();
+		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
 
-		mainButtonsPanel.add(makeButton("Debug", "ShowDebugPopup"));
-
-		nicheSettingsPanel = new JPanel();
-		nicheSettingsPanel.setLayout(new BoxLayout(nicheSettingsPanel, BoxLayout.Y_AXIS));
-
-		mainButtonsPanel.add(makeButton("Niche Settings", "ShowNichePopup"));
+		mainButtonsPanel.add(makeButton("Extra", "ShowExtraPopup"));
 
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}
@@ -1721,7 +1721,7 @@ public class VibeComposerGUI extends JFrame
 		allInstsPanel.add(bannedInsts);
 		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
 		allInstsPanel.add(reinitInstPools);
-		nicheSettingsPanel.add(allInstsPanel);
+		extraSettingsPanel.add(allInstsPanel);
 
 		toggleableComponents.add(globalSwingPanel);
 		toggleableComponents.add(useDoubledPanel);
@@ -1790,7 +1790,7 @@ public class VibeComposerGUI extends JFrame
 		lastChordPanel.add(firstChordSelection);
 		lastChordPanel.add(new JLabel("Last Chord:"));
 		lastChordPanel.add(lastChordSelection);
-		nicheSettingsPanel.add(lastChordPanel);
+		extraSettingsPanel.add(lastChordPanel);
 
 
 		constraints.gridy = startY;
@@ -1809,7 +1809,8 @@ public class VibeComposerGUI extends JFrame
 		tipLabel = new JLabel();
 		//chordToolTip.add(tipLabel);
 
-		JButton randomizeCustomChords = makeButton("Randomize Chords", "RandomizeUserChords");
+		JButton randomizeCustomChords = makeButton("    Randomize Chords    ",
+				"RandomizeUserChords");
 		chordToolTip.add(randomizeCustomChords);
 
 		userChordsEnabled = new JCheckBox("Custom Chords", false);
@@ -2110,7 +2111,7 @@ public class VibeComposerGUI extends JFrame
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
 		bpmLowHighPanel.add(arpAffectsBpm);
-		nicheSettingsPanel.add(bpmLowHighPanel);
+		extraSettingsPanel.add(bpmLowHighPanel);
 
 		controlSettingsPanel.add(mainBpm);
 		scaleMode = new JComboBox<String>();
@@ -2234,7 +2235,7 @@ public class VibeComposerGUI extends JFrame
 		JLabel soundbankLabel = new JLabel("Soundbank name:");
 		soundbankPanel.add(soundbankLabel);
 		soundbankPanel.add(soundbankFilename);
-		nicheSettingsPanel.add(soundbankPanel);
+		extraSettingsPanel.add(soundbankPanel);
 
 		playSettingsPanel.add(showScore);
 		playSettingsPanel.add(showScorePicker);
@@ -2250,6 +2251,14 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY + 5;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(playSavePanel, constraints);
+	}
+
+	private void initHelperPopups() {
+		JPanel helperPopupsPanel = new JPanel();
+		helperPopupsPanel.add(makeButton("User Manual (opens browser)", "ShowHelpPopup"));
+		helperPopupsPanel.add(makeButton("Debug Console", "ShowDebugPopup"));
+		helperPopupsPanel.add(makeButton("About VibeComposer", "ShowAboutPopup"));
+		extraSettingsPanel.add(helperPopupsPanel);
 	}
 
 	private void startVolumeSliderThread() {
@@ -2359,7 +2368,7 @@ public class VibeComposerGUI extends JFrame
 		if (!isDarkMode) {
 			r = new ColorUIResource(new Color(215, 215, 222));
 		} else {
-			r = new ColorUIResource(new Color(73, 70, 70));
+			r = new ColorUIResource(new Color(72, 70, 70));
 		}
 		UIManager.put("Button.background", r);
 		UIManager.put("Panel.background", r);
@@ -2802,11 +2811,11 @@ public class VibeComposerGUI extends JFrame
 		currentPopup = popup.getFrame();
 	}
 
-	private void openNichePopup() {
+	private void openExtraSettingsPopup() {
 		if (currentPopup != null) {
 			currentPopup.setVisible(false);
 		}
-		NicheSettingsPopup popup = new NicheSettingsPopup();
+		ExtraSettingsPopup popup = new ExtraSettingsPopup();
 		currentPopup = popup.getFrame();
 	}
 
@@ -3403,8 +3412,8 @@ public class VibeComposerGUI extends JFrame
 			openDebugConsole();
 		}
 
-		if (ae.getActionCommand() == "ShowNichePopup") {
-			openNichePopup();
+		if (ae.getActionCommand() == "ShowExtraPopup") {
+			openExtraSettingsPopup();
 		}
 
 		if (ae.getActionCommand() == "CopyPart") {

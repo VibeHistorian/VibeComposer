@@ -1099,11 +1099,11 @@ public class MidiGenerator implements JMC {
 				Set<Integer> presences = sec.getPresence(0);
 				for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 					MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
-					boolean added = (overridden && presences.contains(mp.getOrder()))
-							|| (!overridden && rand.nextInt(100) < sec.getMelodyChance());
+					boolean added = !mp.isMuted()
+							&& ((overridden && presences.contains(mp.getOrder()))
+									|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()));
+
 					if (added) {
-
-
 						List<int[]> usedMelodyProg = chordProgression;
 						List<int[]> usedRoots = rootProgression;
 
