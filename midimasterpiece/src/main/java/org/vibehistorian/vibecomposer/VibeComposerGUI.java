@@ -634,7 +634,7 @@ public class VibeComposerGUI extends JFrame
 		initHelperPopups();
 
 		isDarkMode = !isDarkMode;
-		switchDarkMode();
+
 
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
@@ -643,7 +643,7 @@ public class VibeComposerGUI extends JFrame
 		instrumentTabPane.setSelectedIndex(0);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
-
+		switchDarkMode();
 		pack();
 		setVisible(true);
 		repaint();
