@@ -24,7 +24,6 @@ import javax.swing.table.JTableHeader;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.BooleanRenderer;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
 
 public class VariationPopup {
@@ -79,7 +78,7 @@ public class VariationPopup {
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 			table.getColumnModel().getColumn(0).setMaxWidth(27);
-			table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
+			//table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
 
 			/*JList<String> list = new JList<>();
 			String[] listData = new String[rowCount];
