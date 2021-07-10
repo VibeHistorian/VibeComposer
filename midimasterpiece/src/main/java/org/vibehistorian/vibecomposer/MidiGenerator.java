@@ -987,6 +987,7 @@ public class MidiGenerator implements JMC {
 			processUserMelody(userMelody);
 			actualProgression = chordProgression;
 			generatedRootProgression = rootProgression;
+			actualDurations = progressionDurations;
 		} else {
 			generateMelodySkeletonFromChords(gc.getMelodyParts().get(0), actualProgression,
 					generatedRootProgression, 1, 0, new Section(), null);
@@ -1499,19 +1500,23 @@ public class MidiGenerator implements JMC {
 		}
 
 		int chordCounter = 0;
-		double chordSeparator = Durations.HALF_NOTE;
+		double separatorValue = (gc.isDoubledDurations()) ? Durations.WHOLE_NOTE
+				: Durations.HALF_NOTE;
+		double chordSeparator = separatorValue;
 		Vector<Note> noteList = userMelody.getNoteList();
 		if (!chordMelodyMap1.containsKey(Integer.valueOf(0))) {
 			chordMelodyMap1.put(Integer.valueOf(0), new ArrayList<>());
 		}
 		double rhythmCounter = 0;
-
+		List<Double> progDurations = new ArrayList<>();
+		progDurations.add(separatorValue);
 		for (Note n : noteList) {
 			System.out.println("Rhythm counter: " + rhythmCounter);
 			if (rhythmCounter >= chordSeparator - 0.001) {
 				System.out.println("NEXT CHORD!");
-				chordSeparator += Durations.HALF_NOTE;
+				chordSeparator += separatorValue;
 				chordCounter++;
+				progDurations.add(separatorValue);
 				if (!chordMelodyMap1.containsKey(Integer.valueOf(chordCounter))) {
 					chordMelodyMap1.put(Integer.valueOf(chordCounter), new ArrayList<>());
 				}
@@ -1519,7 +1524,7 @@ public class MidiGenerator implements JMC {
 			chordMelodyMap1.get(Integer.valueOf(chordCounter)).add(n);
 			rhythmCounter += n.getRhythmValue();
 		}
-		System.out.println("Processed melody, chords: " + chordCounter + 1);
+		System.out.println("Processed melody, chords: " + (chordCounter + 1));
 		List<String> chordStrings = makeMelodyPitchFrequencyMap(0, chordMelodyMap1.keySet().size(),
 				1);
 
@@ -1528,6 +1533,7 @@ public class MidiGenerator implements JMC {
 
 		chordProgression = melodyBasedChordProgression;
 		rootProgression = melodyBasedRootProgression;
+		progressionDurations = progDurations;
 	}
 
 	protected Phrase fillMelody(MelodyPart mp, List<int[]> actualProgression,

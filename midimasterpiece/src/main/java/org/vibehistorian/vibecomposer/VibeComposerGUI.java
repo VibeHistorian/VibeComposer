@@ -2581,6 +2581,17 @@ public class VibeComposerGUI extends JFrame
 
 		if (MelodyMidiDropPane.userMelody != null) {
 			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
+			switch (MidiGenerator.chordInts.size()) {
+			case 4:
+				fixedLengthChords.setSelectedItem("4");
+				break;
+			case 8:
+				fixedLengthChords.setSelectedItem("8");
+				break;
+			default:
+				fixedLengthChords.setSelectedItem("RANDOM");
+				break;
+			}
 		}
 
 		// reapply
