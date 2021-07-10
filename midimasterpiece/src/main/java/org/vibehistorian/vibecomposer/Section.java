@@ -317,6 +317,34 @@ public class Section {
 		}
 	}
 
+	public void initPartMapFromOldData() {
+		if (partPresenceVariationMap == null) {
+			initPartMap();
+			return;
+		}
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+					data[j][k] = getBooleanFromOldData(partPresenceVariationMap.get(i), j, k);
+				}
+			}
+			partPresenceVariationMap.put(i, data);
+		}
+	}
+
+	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
+		if (oldData.length <= j || oldData[j].length <= k) {
+			return Boolean.FALSE;
+		} else {
+			return (Boolean) oldData[j][k];
+		}
+	}
+
 	public void initPartMap() {
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()

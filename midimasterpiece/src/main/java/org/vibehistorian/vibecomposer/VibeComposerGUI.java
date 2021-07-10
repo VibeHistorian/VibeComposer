@@ -1326,6 +1326,7 @@ public class VibeComposerGUI extends JFrame
 			if (varPopup != null) {
 				varPopup.getFrame().dispose();
 			}
+			recalculateActualArrangementSection(secOrder - 1);
 			varPopup = new VariationPopup(secOrder,
 					actualArrangement.getSections().get(secOrder - 1),
 					new Point(MouseInfo.getPointerInfo().getLocation().x,
@@ -1341,6 +1342,29 @@ public class VibeComposerGUI extends JFrame
 			setActualModel(actualArrangement.convertToActualTableModel());
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
+	}
+
+	private void recalculateActualArrangementSection(Integer secOrder) {
+		if (actualArrangement == null || actualArrangement.getSections() == null
+				|| actualArrangement.getSections().size() <= secOrder) {
+			return;
+		}
+
+		Section sec = actualArrangement.getSections().get(secOrder);
+		boolean needsArrayCopy = false;
+		for (int i = 0; i < 5; i++) {
+			int actualInstCount = getInstList(i).size();
+			int secInstCount = sec.getPartPresenceVariationMap().get(i).length;
+			if (secInstCount != actualInstCount) {
+				needsArrayCopy = true;
+				break;
+			}
+		}
+		if (needsArrayCopy) {
+			sec.initPartMapFromOldData();
+		}
+
+
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
@@ -1513,6 +1537,10 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
+				if (getModel().getColumnCount() <= col) {
+					return comp;
+				}
+
 				String value = (String) getModel().getValueAt(row,
 						scrollableArrangementActualTable.convertColumnIndexToModel(col));
 				if (value == null)
