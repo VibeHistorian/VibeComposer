@@ -21,8 +21,9 @@ public class CheckBoxIcon implements Icon {
 		ButtonModel buttonModel = abstractButton.getModel();
 
 		Color color = buttonModel.isSelected()
-				? ((VibeComposerGUI.isDarkMode) ? Color.CYAN.darker() : Color.BLUE.darker())
-				: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
+				? ((VibeComposerGUI.isDarkMode) ? Color.CYAN.darker()
+						: VibeComposerGUI.myBlueDarkMode)
+				: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow.brighter()
 						: VibeComposerGUI.panelColorHigh);
 		g.setColor(color);
 

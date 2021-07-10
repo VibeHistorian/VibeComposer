@@ -126,6 +126,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
@@ -171,7 +172,6 @@ public class VibeComposerGUI extends JFrame
 			750, 1000 };
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
-	private static final double[] MILISECOND_MULTIPLIER_ARRAY = { 1, 1.5, 2, 3, 4 };
 
 	public static VariationPopup varPopup = null;
 
@@ -179,6 +179,9 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
+	public static Color myCyanDarkMode = Color.CYAN;
+	public static Color myBlueDarkMode = new Color(0, 90, 255);
+
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
 
@@ -463,7 +466,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
-
+		UIManager.put("CheckBox.icon", new CheckBoxIcon());
 		isDarkMode = true;
 		vibeComposerGUI = new VibeComposerGUI("VibeComposer (BETA)");
 		vibeComposerGUI.init();
@@ -569,7 +572,7 @@ public class VibeComposerGUI extends JFrame
 			initArrangementSettings(325, GridBagConstraints.CENTER);
 		}
 
-		createHorizontalSeparator(327, this);
+		//createHorizontalSeparator(327, this);
 
 		// ---- OTHER SETTINGS ----
 		{
@@ -592,7 +595,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		createHorizontalSeparator(400, this);
+		//createHorizontalSeparator(400, this);
 
 		// ---- CONTROL PANEL -----
 		initControlPanel(410, GridBagConstraints.CENTER);
@@ -664,10 +667,13 @@ public class VibeComposerGUI extends JFrame
 
 
 	private void initTitles(int startY, int anchorSide) {
-		mainTitle = new JLabel("VibeComposer (BETA)");
+		mainTitle = new JLabel("Vibe Composer v1.5 (BETA)");
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		subTitle = new JLabel("by Vibe Historian");
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+
+		mainTitle.setFont(new Font("Arial", Font.BOLD, 15));
+		//subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));
 		constraints.weightx = 100;
 		constraints.weighty = 100;
 		constraints.gridx = 0;
@@ -677,7 +683,7 @@ public class VibeComposerGUI extends JFrame
 		constraints.anchor = anchorSide;
 		everythingPanel.add(mainTitle, constraints);
 		constraints.gridy = 1;
-		everythingPanel.add(subTitle, constraints);
+		//everythingPanel.add(subTitle, constraints);
 
 		JPanel mainButtonsPanel = new JPanel();
 		mainButtonsPanel.setOpaque(false);
@@ -2321,33 +2327,35 @@ public class VibeComposerGUI extends JFrame
 			FlatDarculaLaf.install();
 		}
 		//UIManager.put("TabbedPane.contentOpaque", false);
+
 		isDarkMode = !isDarkMode;
 		SwingUtilities.updateComponentTreeUI(this);
-		mainTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		subTitle.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		messageLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		tipLabel.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		currentTime.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		totalTime.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomChordsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomArpsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomDrumsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		switchOnComposeRandom.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		compose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		regenerate.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomArpHitsPerPattern.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomizeInstOnComposeOrGen.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomizeBpmOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomizeTransposeOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		//randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
-		randomizeArrangementOnCompose.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+
+
+		mainTitle.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		subTitle.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		messageLabel.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		tipLabel.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		currentTime.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		totalTime.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomChordsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomArpsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomDrumsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		switchOnComposeRandom.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		compose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		regenerate.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomArpHitsPerPattern.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomizeInstOnComposeOrGen.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomizeBpmOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomizeTransposeOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		//randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		randomizeArrangementOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
 		for (JSeparator x : separators) {
-			x.setForeground((isDarkMode) ? Color.CYAN : Color.BLUE);
+			x.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
 		}
 
 		panelColorHigh = UIManager.getColor("Panel.background").darker();
 		panelColorLow = UIManager.getColor("Panel.background").brighter();
-
 		//switchFullMode(isDarkMode);
 
 		//sizeRespectingPack();

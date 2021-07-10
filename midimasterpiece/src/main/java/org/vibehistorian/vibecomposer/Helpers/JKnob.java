@@ -4,6 +4,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 // Imports for the GUI classes.
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -136,6 +137,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
+		g.setFont(new Font("Arial", Font.BOLD, 12));
 		if (g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -162,7 +164,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - arcCut, arcCut * 2);
 
 			// Draw value.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? Color.CYAN : Color.BLUE);
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? Color.CYAN
+					: VibeComposerGUI.myBlueDarkMode.darker());
 			Point cnt = getCenter();
 			String valueString = String.valueOf(getValue());
 			if (!valueString.equals(textValue.getText())) {
