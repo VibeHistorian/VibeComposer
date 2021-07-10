@@ -1709,6 +1709,10 @@ public class VibeComposerGUI extends JFrame
 		useDoubledPanel.setOpaque(false);
 		macroParams.add(useDoubledPanel);
 
+		chordProgPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		allowRepPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
 		JPanel allInstsPanel = new JPanel();
 		useAllInsts = new JCheckBox("Use All Inst., Except:", false);
@@ -1720,6 +1724,7 @@ public class VibeComposerGUI extends JFrame
 		nicheSettingsPanel.add(allInstsPanel);
 
 		toggleableComponents.add(globalSwingPanel);
+		toggleableComponents.add(useDoubledPanel);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -1741,10 +1746,27 @@ public class VibeComposerGUI extends JFrame
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 
-		chordProgressionSettingsPanel.add(spiceChance);
-		chordProgressionSettingsPanel.add(spiceAllowDimAug);
-		chordProgressionSettingsPanel.add(spiceAllow9th13th);
-		chordProgressionSettingsPanel.add(spiceFlattenBigChords);
+
+		JPanel spiceChancePanel = new JPanel();
+		spiceChancePanel.add(spiceChance);
+		spiceChancePanel.setOpaque(false);
+
+		JPanel spiceAllowDimAugPanel = new JPanel();
+		spiceAllowDimAugPanel.add(spiceAllowDimAug);
+		spiceAllowDimAugPanel.setOpaque(false);
+
+		JPanel spiceAllow9th13thPanel = new JPanel();
+		spiceAllow9th13thPanel.add(spiceAllow9th13th);
+		spiceAllow9th13thPanel.setOpaque(false);
+
+		JPanel spiceFlattenBigChordsPanel = new JPanel();
+		spiceFlattenBigChordsPanel.add(spiceFlattenBigChords);
+		spiceFlattenBigChordsPanel.setOpaque(false);
+
+		chordProgressionSettingsPanel.add(spiceChancePanel);
+		chordProgressionSettingsPanel.add(spiceAllowDimAugPanel);
+		chordProgressionSettingsPanel.add(spiceAllow9th13thPanel);
+		chordProgressionSettingsPanel.add(spiceFlattenBigChordsPanel);
 
 		// CHORD SETTINGS 2 - chord progression
 		firstChordSelection = new JComboBox<String>();
