@@ -47,7 +47,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private double theta;
 	private Color knobColor;
 	private Color spotColor;
-	private static final Color lightModeKnob = new Color(200, 200, 200);
+	private static final Color darkModeKnob = Color.GRAY;
+	private static final Color lightModeKnob = new Color(180, 180, 180);
 
 	private boolean pressedOnSpot;
 
@@ -143,7 +144,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
 			// Draw the knob.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? knobColor : lightModeKnob);
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
 
@@ -164,8 +165,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - arcCut, arcCut * 2);
 
 			// Draw value.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? Color.CYAN
-					: VibeComposerGUI.myBlueDarkMode.darker());
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
+					: VibeComposerGUI.lightModeUIColor.darker());
 			Point cnt = getCenter();
 			String valueString = String.valueOf(getValue());
 			if (!valueString.equals(textValue.getText())) {

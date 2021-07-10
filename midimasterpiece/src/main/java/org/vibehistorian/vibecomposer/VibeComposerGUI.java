@@ -111,6 +111,7 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -179,8 +180,8 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
-	public static Color myCyanDarkMode = Color.CYAN;
-	public static Color myBlueDarkMode = new Color(0, 90, 255);
+	public static Color darkModeUIColor = Color.CYAN;
+	public static Color lightModeUIColor = new Color(0, 90, 255);
 
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
@@ -667,12 +668,12 @@ public class VibeComposerGUI extends JFrame
 
 
 	private void initTitles(int startY, int anchorSide) {
-		mainTitle = new JLabel("Vibe Composer v1.5 (BETA)");
+		mainTitle = new JLabel("Vibe Composer");
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		subTitle = new JLabel("by Vibe Historian");
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		mainTitle.setFont(new Font("Arial", Font.BOLD, 15));
+		mainTitle.setFont(new Font("Courier", Font.BOLD, 25));
 		//subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));
 		constraints.weightx = 100;
 		constraints.weighty = 100;
@@ -1345,7 +1346,7 @@ public class VibeComposerGUI extends JFrame
 	private void initArrangementSettings(int startY, int anchorSide) {
 		JPanel arrangementSettings = new JPanel();
 		arrangementSettings.setOpaque(false);
-		//arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		arrangementSettings.add(new JLabel("ARRANGEMENT"));
 
 		useArrangement = new JCheckBox("Enable", false);
@@ -1363,9 +1364,9 @@ public class VibeComposerGUI extends JFrame
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
 
-		JButton addLastSectionBtn = makeButton("Copy Selected Section", "ArrangementAddLast");
+		JButton copySelectedBtn = makeButton("Copy Selected Section", "ArrangementAddLast");
 
-		JButton removeLastSectionBtn = makeButton("Remove All Selected", "ArrangementRemoveLast");
+		JButton removeSelectedBtn = makeButton("Remove All Selected", "ArrangementRemoveLast");
 
 		arrangementSettings.add(randomizeArrangementBtn);
 		arrangementSettings.add(pieceLength);
@@ -1376,8 +1377,11 @@ public class VibeComposerGUI extends JFrame
 		arrangementPartVariationChance = new KnobPanel("Safe Variations", 30);
 		arrangementSettings.add(arrangementPartVariationChance);
 
-		arrangementSettings.add(addLastSectionBtn);
-		arrangementSettings.add(removeLastSectionBtn);
+		arrangementSettings
+				.add(new JLabel("                                                          "));
+
+		arrangementSettings.add(copySelectedBtn);
+		arrangementSettings.add(removeSelectedBtn);
 		arrangementSettings.add(resetArrangementBtn);
 
 		arrangementSettings.add(new JLabel("Seed"));
@@ -2329,33 +2333,53 @@ public class VibeComposerGUI extends JFrame
 		//UIManager.put("TabbedPane.contentOpaque", false);
 
 		isDarkMode = !isDarkMode;
+		ColorUIResource r = null;
+		if (!isDarkMode) {
+			r = new ColorUIResource(new Color(215, 215, 222));
+		} else {
+			r = new ColorUIResource(new Color(73, 70, 70));
+		}
+		UIManager.put("Button.background", r);
+		UIManager.put("Panel.background", r);
+		UIManager.put("ComboBox.background", r);
+		UIManager.put("TextField.background", r);
 		SwingUtilities.updateComponentTreeUI(this);
 
 
-		mainTitle.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		subTitle.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		messageLabel.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		tipLabel.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		currentTime.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		totalTime.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomChordsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomArpsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomDrumsGenerateOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		switchOnComposeRandom.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		compose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		regenerate.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomArpHitsPerPattern.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomizeInstOnComposeOrGen.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomizeBpmOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomizeTransposeOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		//randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
-		randomizeArrangementOnCompose.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+		mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
+		subTitle.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		messageLabel.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		tipLabel.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		currentTime.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		totalTime.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomChordsGenerateOnCompose
+				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomArpsGenerateOnCompose
+				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomDrumsGenerateOnCompose
+				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		switchOnComposeRandom.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		compose.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		regenerate.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomArpHitsPerPattern.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomizeInstOnComposeOrGen
+				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomizeBpmOnCompose.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		randomizeTransposeOnCompose
+				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		//randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? myCyanDarkMode : myBlueDarkMode);
+		randomizeArrangementOnCompose
+				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
 		for (JSeparator x : separators) {
-			x.setForeground((isDarkMode) ? Color.CYAN : myBlueDarkMode);
+			x.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
 		}
 
 		panelColorHigh = UIManager.getColor("Panel.background").darker();
 		panelColorLow = UIManager.getColor("Panel.background").brighter();
+		if (!isDarkMode) {
+			panelColorHigh.brighter();
+			panelColorLow.brighter();
+		}
 		//switchFullMode(isDarkMode);
 
 		//sizeRespectingPack();
