@@ -53,6 +53,9 @@ public class Section {
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "ForceRandOct" },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 
+	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
+			"Swap Melody", "Melody Pause Squish" };
+
 	public static final int VARIATION_CHANCE = 30;
 
 	private String type;
@@ -78,7 +81,6 @@ public class Section {
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
 	private List<Boolean> riskyVariations = null;
-	public static final int RISKY_VARIATION_COUNT = 3;
 
 	public Section() {
 
@@ -348,6 +350,11 @@ public class Section {
 	}
 
 	public List<Boolean> getRiskyVariations() {
+		if (riskyVariations != null) {
+			while (riskyVariations.size() < riskyVariationNames.length) {
+				riskyVariations.add(Boolean.FALSE);
+			}
+		}
 		return riskyVariations;
 	}
 
@@ -358,7 +365,7 @@ public class Section {
 	public void setRiskyVariation(int order, Boolean value) {
 		if (riskyVariations == null) {
 			List<Boolean> riskyVars = new ArrayList<>();
-			for (int i = 0; i < Section.RISKY_VARIATION_COUNT; i++) {
+			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 				riskyVars.add(Boolean.FALSE);
 			}
 			setRiskyVariations(riskyVars);

@@ -1046,7 +1046,7 @@ public class MidiGenerator implements JMC {
 			List<Boolean> riskyVariations = sec.getRiskyVariations();
 			if (riskyVariations == null) {
 				riskyVariations = new ArrayList<>();
-				for (int i = 0; i < Section.RISKY_VARIATION_COUNT; i++) {
+				for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 					boolean isVariation = variationGen.nextInt(100) < gc
 							.getArrangementVariationChance();
 					// generate "chord swap/melody swap" only for non-critical sections
@@ -1118,14 +1118,25 @@ public class MidiGenerator implements JMC {
 								notesSeedOffset, sec, variations);
 
 						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
-						if (notesSeedOffset == 0 && i == 0
-								&& sec.getVariation(0, i).contains(Integer.valueOf(0))) {
+						// risky variation - wacky melody transpose
+						boolean laxCheck = notesSeedOffset == 0
+								&& sec.getVariation(0, i).contains(Integer.valueOf(0));
+						if (!riskyVariations.get(3)) {
+							laxCheck &= (i == 0);
+						}
+
+						if (laxCheck) {
 							Phrase m2 = m.copy();
 							Mod.transpose(m2, -12);
 							Part melPart = new Part();
 							melPart.add(m2);
 							melPart.add(m);
-							JMusicUtilsCustom.consolidate(melPart);
+							if (riskyVariations.get(3)) {
+								Mod.consolidate(melPart);
+							} else {
+								JMusicUtilsCustom.consolidate(melPart);
+							}
+
 							m = melPart.getPhrase(0);
 						}
 						copiedPhrases.add(m);

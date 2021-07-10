@@ -127,43 +127,22 @@ public class VariationPopup {
 	}
 
 	private void addRiskyVariations(Section sec) {
-		JCheckBox chordTrick = new JCheckBox("Skip N-1 chord", false);
-		JCheckBox chordSwap = new JCheckBox("Swap Chords", false);
-		JCheckBox melodySwap = new JCheckBox("Swap Melody", false);
+		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
+			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
+			if (sec.getRiskyVariations() != null) {
+				riskyVar.setSelected(sec.getRiskyVariations().get(i));
+			}
+			final int index = i;
+			riskyVar.addItemListener(new ItemListener() {
 
-		if (sec.getRiskyVariations() != null) {
-			chordTrick.setSelected(sec.getRiskyVariations().get(0));
-			chordSwap.setSelected(sec.getRiskyVariations().get(1));
-			melodySwap.setSelected(sec.getRiskyVariations().get(2));
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					sec.setRiskyVariation(index, riskyVar.isSelected());
+				}
+
+			});
+			tablesPanel.add(riskyVar);
 		}
-
-		chordTrick.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setRiskyVariation(0, chordTrick.isSelected());
-			}
-
-		});
-		chordSwap.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setRiskyVariation(1, chordSwap.isSelected());
-			}
-
-		});
-		melodySwap.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setRiskyVariation(2, melodySwap.isSelected());
-			}
-
-		});
-		tablesPanel.add(chordTrick);
-		tablesPanel.add(chordSwap);
-		tablesPanel.add(melodySwap);
 	}
 
 	private void addFrameWindowOperation() {
