@@ -219,7 +219,7 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
-		System.out.println(StringUtils.join(pattern, ", "));
+		//System.out.println(StringUtils.join(pattern, ", "));
 		return pattern;
 	}
 
@@ -672,16 +672,18 @@ public class MidiGenerator implements JMC {
 	}
 
 	private List<String> makeMelodyPitchFrequencyMap(int start, int end, int orderOfMatch) {
-		// only affect middle 2 chords 
+		// only affect chords between start and end <start;end)
 		List<int[]> alternateChordProg = new ArrayList<>();
 		List<String> chordStrings = new ArrayList<>();
+		String prevChordString = null;
 		if (start > 0) {
 			alternateChordProg
 					.add(Arrays.copyOf(chordProgression.get(0), chordProgression.get(0).length));
 			melodyBasedRootProgression.add(Arrays.copyOf(rootProgression.get(0), 1));
+			prevChordString = chordInts.get(start - 1);
 		}
 
-		String prevChordString = null;
+
 		for (int i = start; i < end; i++) {
 
 			List<Integer> chordFreqs = new ArrayList<>();
@@ -2388,6 +2390,7 @@ public class MidiGenerator implements JMC {
 			dp.setHitsPerPattern(melodyNotePattern.size());
 			premadePattern = melodyNotePattern;
 			dp.setPatternShift(0);
+			dp.setVelocityPattern(false);
 			dp.setChordSpan(chordInts.size());
 		}
 		List<Integer> drumPattern = new ArrayList<>();
