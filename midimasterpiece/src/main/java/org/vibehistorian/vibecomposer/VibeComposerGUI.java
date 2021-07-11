@@ -374,6 +374,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxVel;
 
 	// drum gen settings
+	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 40 });
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
 	JTextField randomDrumMaxSwingAdjust;
@@ -2555,7 +2556,7 @@ public class VibeComposerGUI extends JFrame
 			melodyPanels.forEach(e -> e.setSwingPercent(swing));
 			randomArpMaxSwing.setInt(swing);
 			drumPanels.forEach(e -> {
-				if (e.getInstrument() > 40) {
+				if (!PUNCHY_DRUMS.contains(e.getInstrument())) {
 					e.setSwingPercent(swing);
 				}
 			});
@@ -4321,10 +4322,6 @@ public class VibeComposerGUI extends JFrame
 
 			int adjustVelocity = -1 * dp.getHitsPerPattern() / dp.getChordSpan();
 
-			if (dp.getInstrument() == 35 || dp.getInstrument() == 36 || dp.getInstrument() == 38
-					|| dp.getInstrument() == 40) {
-				adjustVelocity += 15;
-			}
 
 			dp.setPattern(RhythmPattern.values()[patternOrder]);
 			int velocityMin = drumPanelGenerator.nextInt(30) + 50 + adjustVelocity;
@@ -4337,15 +4334,15 @@ public class VibeComposerGUI extends JFrame
 				dp.setPauseChance(drumPanelGenerator.nextInt(40) + 40);
 			}
 
-
-			if (dp.getInstrument() > 40) {
+			// punchy drums - kicks, snares
+			if (PUNCHY_DRUMS.contains(dp.getInstrument())) {
+				adjustVelocity += 15;
+				dp.setExceptionChance(drumPanelGenerator.nextInt(3));
+				dp.setUseMelodyNotePattern(drumPanelGenerator.nextInt(100) < 75);
+			} else {
 				dp.setDelay(slide);
-			}
-			if (dp.getInstrument() > 40) {
 				dp.setSwingPercent(swingPercent);
 				dp.setExceptionChance(drumPanelGenerator.nextInt(10));
-			} else {
-				dp.setExceptionChance(drumPanelGenerator.nextInt(3));
 			}
 
 			if (randomChordUseChordFill.isSelected()) {
