@@ -38,7 +38,6 @@ import javax.swing.JComboBox;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import jm.constants.Durations;
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
 import jm.music.data.Note;
@@ -472,7 +471,7 @@ public class MidiUtils {
 		CPhrase phr = new CPhrase();
 		for (int i = 0; i < cpr.size(); i++) {
 			int[] chord = cpr.get(i);
-			phr.addChord(chord, Durations.Q);
+			phr.addChord(chord, MidiGenerator.Durations.EIGHTH_NOTE);
 		}
 		return phr;
 	}

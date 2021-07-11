@@ -6,8 +6,8 @@ import java.util.Random;
 
 public class Rhythm {
 
-	private double[] durationPool = new double[] { 0.125, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2 };
-	private int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
+	private double[] durationPool = null;
+	private int[] durationWeights = null;
 	private int randomSeed = 0;
 	private double durationLimit = 2.0;
 
@@ -40,7 +40,7 @@ public class Rhythm {
 		durations = new ArrayList<>();
 		double durationSum = 0;
 		while (durationSum < durationLimit) {
-			double dur = 0.125;
+			double dur = 0.125 * MidiGenerator.noteMultiplier;
 			int chance = generator.nextInt(100);
 			for (int i = 0; i < durationPool.length; i++) {
 				if (i < (durationPool.length - 1)

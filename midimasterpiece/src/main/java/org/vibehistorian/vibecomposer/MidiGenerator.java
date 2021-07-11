@@ -70,7 +70,6 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import jm.JMC;
-import jm.constants.Durations;
 import jm.gui.show.ShowScore;
 import jm.music.data.CPhrase;
 import jm.music.data.Note;
@@ -81,6 +80,41 @@ import jm.music.tools.Mod;
 import jm.util.Write;
 
 public class MidiGenerator implements JMC {
+
+	public static double noteMultiplier = 2.0;
+
+	public static class Durations {
+
+		public static double SIXTEENTH_NOTE = 0.25 * noteMultiplier;
+		public static double DOTTED_SIXTEENTH_NOTE = 0.375 * noteMultiplier;
+		public static double EIGHTH_NOTE = 0.5 * noteMultiplier;
+		public static double DOTTED_EIGHTH_NOTE = 0.75 * noteMultiplier;
+		public static double QUARTER_NOTE = 1.0 * noteMultiplier;
+		public static double DOTTED_QUARTER_NOTE = 1.5 * noteMultiplier;
+		public static double HALF_NOTE = 2.0 * noteMultiplier;
+		public static double DOTTED_HALF_NOTE = 3.0 * noteMultiplier;
+		public static double WHOLE_NOTE = 4.0 * noteMultiplier;
+
+	}
+
+	public static void recalculateDurations() {
+		Durations.SIXTEENTH_NOTE = 0.25 * noteMultiplier;
+		Durations.DOTTED_SIXTEENTH_NOTE = 0.375 * noteMultiplier;
+		Durations.EIGHTH_NOTE = 0.5 * noteMultiplier;
+		Durations.DOTTED_EIGHTH_NOTE = 0.75 * noteMultiplier;
+		Durations.QUARTER_NOTE = 1.0 * noteMultiplier;
+		Durations.DOTTED_QUARTER_NOTE = 1.5 * noteMultiplier;
+		Durations.HALF_NOTE = 2.0 * noteMultiplier;
+		Durations.DOTTED_HALF_NOTE = 3.0 * noteMultiplier;
+		Durations.WHOLE_NOTE = 4.0 * noteMultiplier;
+
+		START_TIME_DELAY = Durations.EIGHTH_NOTE;
+		swingUnitOfTime = Durations.SIXTEENTH_NOTE;
+		MELODY_DUR_ARRAY = new double[] { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
+				Durations.EIGHTH_NOTE, Durations.SIXTEENTH_NOTE };
+		CHORD_DUR_ARRAY = new double[] { Durations.WHOLE_NOTE, Durations.DOTTED_HALF_NOTE,
+				Durations.HALF_NOTE, Durations.QUARTER_NOTE };
+	}
 
 	public static final double[] SECOND_ARRAY_STRUM = { 0.016666, 0.03125, 0.0625, 0.0625, 0.125,
 			0.16666667, 0.250, 0.333333, 0.50000, 0.750, 1.000 };
@@ -100,10 +134,10 @@ public class MidiGenerator implements JMC {
 
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
-	private static final double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
+	private static double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
 	private static final int OPENHAT_CHANCE = 15;
 	private static final int maxAllowedScaleNotes = 7;
-	public static final double START_TIME_DELAY = 0.5;
+	public static double START_TIME_DELAY = Durations.EIGHTH_NOTE;
 	private static final double DEFAULT_CHORD_SPLIT = 625;
 	private static final String ARP_PATTERN_KEY = "ARP_PATTERN";
 	private static final String ARP_OCTAVE_KEY = "ARP_OCTAVE";
@@ -129,11 +163,11 @@ public class MidiGenerator implements JMC {
 
 
 	// for internal use only
-	private double[] MELODY_DUR_ARRAY = { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
-			Durations.EIGHTH_NOTE, Durations.SIXTEENTH_NOTE };
+	private static double[] MELODY_DUR_ARRAY = { Durations.QUARTER_NOTE,
+			Durations.DOTTED_EIGHTH_NOTE, Durations.EIGHTH_NOTE, Durations.SIXTEENTH_NOTE };
 	private double[] MELODY_DUR_CHANCE = { 0.3, 0.6, 1.0, 1.0 };
 
-	private double[] CHORD_DUR_ARRAY = { Durations.WHOLE_NOTE, Durations.DOTTED_HALF_NOTE,
+	private static double[] CHORD_DUR_ARRAY = { Durations.WHOLE_NOTE, Durations.DOTTED_HALF_NOTE,
 			Durations.HALF_NOTE, Durations.QUARTER_NOTE };
 	private double[] CHORD_DUR_CHANCE = { 0.0, 0.20, 0.80, 1.0 };
 
@@ -159,9 +193,6 @@ public class MidiGenerator implements JMC {
 	private List<Integer> patternFromNotes(Collection<Note> notes) {
 		// strategy: use 64 hits in pattern, then simplify if needed
 		int hits = 64;
-		// (0) 0.25 0.5 0 0.125 0.5 0.25
-		// 0   0.25  0.75 0.75 0.875 1.375 1.625
-		//   1 1 1 0 1 0 1 
 
 		int chordsTotal = chordInts.size();
 		double measureTotal = chordsTotal
@@ -177,8 +208,8 @@ public class MidiGenerator implements JMC {
 		double currentDuration = 0;
 		int explored = 0;
 		for (Note n : notes) {
-			System.out.println(
-					"Current dur: " + currentDuration + ", + rhythm: " + n.getRhythmValue());
+			/*System.out.println(
+					"Current dur: " + currentDuration + ", + rhythm: " + n.getRhythmValue());*/
 			currentDuration += n.getRhythmValue();
 			for (int i = explored; i < hits; i++) {
 				if (currentDuration < durationBuckets.get(i)) {
@@ -1606,6 +1637,13 @@ public class MidiGenerator implements JMC {
 			List<Integer> variations) {
 		boolean genVars = variations == null;
 
+		double[] durationPool = new double[] { Durations.SIXTEENTH_NOTE / 2.0,
+				Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE,
+				Durations.QUARTER_NOTE, Durations.SIXTEENTH_NOTE + Durations.QUARTER_NOTE,
+				Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
+
+		int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
+
 		CPhrase cphraseBassRoot = new CPhrase();
 		int minVel = gc.getBassPart().getVelocityMin() + (5 * sec.getBassChance()) / 10 - 50;
 		minVel = (minVel < 0) ? 0 : minVel;
@@ -1657,7 +1695,8 @@ public class MidiGenerator implements JMC {
 					if (gc.getBassPart().isAlternatingRhythm()) {
 						seed += (j % 2);
 					}
-					Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j));
+					Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j), durationPool,
+							durationWeights);
 					for (Double dur : bassRhythm.regenerateDurations()) {
 						cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
 								dur, bassDynamics.nextInt(velSpace) + minVel);
@@ -1852,7 +1891,7 @@ public class MidiGenerator implements JMC {
 		// delay
 		double additionalDelay = 0;
 		if (gc.getChordGenSettings().isUseDelay()) {
-			additionalDelay = (cp.getDelay() / 1000.0);
+			additionalDelay = ((noteMultiplier * cp.getDelay()) / 1000.0);
 		}
 		cpr.setStartTime(START_TIME_DELAY + additionalDelay);
 
@@ -1867,9 +1906,9 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				if (index != -1) {
-					cpr.flam(SECOND_ARRAY_STRUM[index]);
+					cpr.flam(SECOND_ARRAY_STRUM[index] * noteMultiplier);
 				} else {
-					cpr.flam(((double) cp.getStrum()) / 1000.0);
+					cpr.flam((noteMultiplier * (double) cp.getStrum()) / 1000.0);
 					System.out.println("Chord strum CUSTOM! " + cp.getStrum());
 				}
 
@@ -2050,7 +2089,7 @@ public class MidiGenerator implements JMC {
 
 		if (!dp.isVelocityPattern() && drumPattern.indexOf(dp.getInstrument()) == -1) {
 			//drumPhrase.addNote(new Note(Integer.MIN_VALUE, patternDurationTotal, 100));
-			drumPhrase.setStartTime(START_TIME_DELAY + (dp.getDelay() / 1000.0));
+			drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 			return drumPhrase;
 		}
 
@@ -2177,7 +2216,7 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
 		}
 
-		drumPhrase.setStartTime(START_TIME_DELAY + (dp.getDelay() / 1000.0));
+		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 		return drumPhrase;
 
 	}

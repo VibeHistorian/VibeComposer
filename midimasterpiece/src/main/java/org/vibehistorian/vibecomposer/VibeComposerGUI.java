@@ -157,8 +157,6 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.sun.media.sound.AudioSynthesizer;
 
-import jm.constants.Durations;
-
 // main class
 
 public class VibeComposerGUI extends JFrame
@@ -407,6 +405,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel mainBpm;
 	public static KnobPanel bpmLow;
 	public static KnobPanel bpmHigh;
+	public static KnobPanel elongateMidi;
 	public static KnobPanel transposeScore;
 	JButton switchOnComposeRandom;
 
@@ -2128,17 +2127,20 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(transposeScore);
 
 		Random bpmRand = new Random();
-		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(25) + 35, 35, 60);
+		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(50) + 60, 60, 110);
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
 		JPanel bpmLowHighPanel = new JPanel();
 
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
-		bpmLow = new KnobPanel("Min BPM.", 35, 10, 179);
-		bpmHigh = new KnobPanel("Max BPM.", 60, 11, 180);
+		bpmLow = new KnobPanel("Min BPM.", 60, 20, 249);
+		bpmHigh = new KnobPanel("Max BPM.", 110, 21, 250);
+		elongateMidi = new KnobPanel("Elongate MIDI by:", 2, 1, 4);
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
 		bpmLowHighPanel.add(arpAffectsBpm);
+		bpmLowHighPanel.add(elongateMidi);
+
 		extraSettingsPanel.add(bpmLowHighPanel);
 
 		controlSettingsPanel.add(mainBpm);
@@ -2834,7 +2836,7 @@ public class VibeComposerGUI extends JFrame
 		MidiGenerator.userChords.clear();
 		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(), MidiGenerator.gc.getFixedDuration(),
-				4 * Durations.HALF_NOTE);
+				4 * MidiGenerator.Durations.HALF_NOTE);
 		List<String> prettyChords = MidiGenerator.chordInts;
 		userChords.setText(StringUtils.join(prettyChords, ","));
 	}
@@ -3649,7 +3651,8 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
 			MidiGenerator.showScoreMode = showScorePicker.getSelectedIndex();
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = collapseDrumTracks.isSelected();
-
+			MidiGenerator.noteMultiplier = elongateMidi.getInt();
+			MidiGenerator.recalculateDurations();
 			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
