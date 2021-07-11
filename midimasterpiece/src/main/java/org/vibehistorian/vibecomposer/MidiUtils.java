@@ -247,13 +247,19 @@ public class MidiUtils {
 			long bestMatchCount = orderedBestMatches.values().stream()
 					.filter(e -> finalBestMatch == e).count();
 			if (bestMatchCount > 1) {
-				System.out.println("There are " + bestMatchCount
-						+ " chords which match this section's " + bestMatch + " notes.");
+				System.out.println(bestMatchCount + " best chords for:  " + bestMatch + " notes.");
+
+				if (bestMatchCount >= orderOfMatch) {
+					orderedBestMatches.values().removeIf(e -> e != finalBestMatch);
+				}
+
 				String expectedNextChordString = progressionCircle
 						.get((circleIndex) + 1 % progressionCircle.size());
 				if (orderedBestMatches.containsKey(expectedNextChordString)) {
-					System.out.println("Returning chord from circle: " + expectedNextChordString);
+					System.out.println("Circle: " + expectedNextChordString);
 					return expectedNextChordString;
+				} else {
+					System.out.println("Circle chord not a best match: " + expectedNextChordString);
 				}
 			}
 		}
