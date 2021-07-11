@@ -1566,13 +1566,14 @@ public class MidiGenerator implements JMC {
 		System.out.println("Processed melody, chords: " + (chordCounter + 1));
 		List<String> chordStrings = makeMelodyPitchFrequencyMap(0, chordMelodyMap1.keySet().size(),
 				1);
+		if (userChords == null || userChords.isEmpty()) {
+			System.out.println(StringUtils.join(chordStrings, ","));
+			chordInts = chordStrings;
 
-		System.out.println(StringUtils.join(chordStrings, ","));
-		chordInts = chordStrings;
-
-		chordProgression = melodyBasedChordProgression;
-		rootProgression = melodyBasedRootProgression;
-		progressionDurations = progDurations;
+			chordProgression = melodyBasedChordProgression;
+			rootProgression = melodyBasedRootProgression;
+			progressionDurations = progDurations;
+		}
 	}
 
 	protected Phrase fillMelody(MelodyPart mp, List<int[]> actualProgression,
