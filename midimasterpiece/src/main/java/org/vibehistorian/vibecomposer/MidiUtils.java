@@ -155,10 +155,13 @@ public class MidiUtils {
 	public static final List<String> MAJOR_CHORDS = Arrays
 			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
 
+	public static final List<String> progressionCircle = Arrays
+			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
+
+
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
 	public static final Map<String, int[]> chordsMap = createChordMap();
-
 
 	private static Map<String, List<String>> createChordProgressionRulesMap() {
 		Map<String, List<String>> cpMap = new HashMap<>();
@@ -212,35 +215,56 @@ public class MidiUtils {
 
 	// order freq map by which chord contains most of the passed in notes
 	// -> create map 
-	public static String applyChordFreqMap(Set<Integer> frequentNotes, int orderOfMatch) {
+	public static String applyChordFreqMap(Map<Integer, Long> frequentNotes, int orderOfMatch,
+			String prevChordString) {
 		if (orderOfMatch == 0) {
 			orderOfMatch++;
 		}
 		Map<String, Set<Integer>> freqMap = createChordFreqMap();
 		Map<String, Long> chordMatchesMap = new LinkedHashMap<>();
-
+		long bestMatch = 0;
 		for (String l : freqMap.keySet()) {
 			int counter = 0;
-			for (Integer i : frequentNotes) {
+			for (Integer i : frequentNotes.keySet()) {
 				if (freqMap.get(l).contains(i)) {
-					counter++;
+					counter += frequentNotes.get(i);
 				}
 			}
 			chordMatchesMap.put(l, Long.valueOf(counter));
+			if (counter > bestMatch) {
+				bestMatch = counter;
+			}
 		}
 
-		Map<String, Long> top3 = chordMatchesMap.entrySet().stream()
-				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(2)
+		Map<String, Long> orderedBestMatches = chordMatchesMap.entrySet().stream()
+				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(5)
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
 						LinkedHashMap::new));
 
+		int circleIndex = progressionCircle.indexOf(prevChordString);
+		if (circleIndex != -1) {
+			final long finalBestMatch = bestMatch;
+			long bestMatchCount = orderedBestMatches.values().stream()
+					.filter(e -> finalBestMatch == e).count();
+			if (bestMatchCount > 1) {
+				System.out.println("There are " + bestMatchCount
+						+ " chords which match this section's " + bestMatch + " notes.");
+				String expectedNextChordString = progressionCircle
+						.get((circleIndex) + 1 % progressionCircle.size());
+				if (orderedBestMatches.containsKey(expectedNextChordString)) {
+					System.out.println("Returning chord from circle: " + expectedNextChordString);
+					return expectedNextChordString;
+				}
+			}
+		}
+
 		//top3.entrySet().stream().forEach(System.out::println);
 		// return n-th most matching chord 
-		if (top3.keySet().size() > orderOfMatch - 1) {
-			return (String) top3.keySet().toArray()[orderOfMatch - 1];
+		if (orderedBestMatches.keySet().size() > orderOfMatch - 1) {
+			return (String) orderedBestMatches.keySet().toArray()[orderOfMatch - 1];
 		}
 		System.out.println("Only one chord matches? Huh..");
-		return (String) top3.keySet().toArray()[0];
+		return (String) orderedBestMatches.keySet().toArray()[0];
 	}
 
 	private static Map<String, Set<Integer>> createChordFreqMap() {

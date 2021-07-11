@@ -681,6 +681,7 @@ public class MidiGenerator implements JMC {
 			melodyBasedRootProgression.add(Arrays.copyOf(rootProgression.get(0), 1));
 		}
 
+		String prevChordString = null;
 		for (int i = start; i < end; i++) {
 
 			List<Integer> chordFreqs = new ArrayList<>();
@@ -697,17 +698,18 @@ public class MidiGenerator implements JMC {
 					.collect(Collectors.groupingBy(e -> e, Collectors.counting()));
 
 			Map<Integer, Long> top3 = freqCounts.entrySet().stream()
-					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(3)
+					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(10)
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
 							(e1, e2) -> e1, LinkedHashMap::new));
 
 			//top3.entrySet().stream().forEach(System.out::println);
-			String chordString = applyChordFreqMap(top3.keySet(), orderOfMatch);
+			String chordString = applyChordFreqMap(top3, orderOfMatch, prevChordString);
 			System.out.println("Alternate chord #" + i + ": " + chordString);
 			int[] chordLongMapped = chordsMap.get(chordString);
 			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, 1));
 			alternateChordProg.add(chordLongMapped);
 			chordStrings.add(chordString);
+			prevChordString = chordString;
 		}
 		if (end < chordMelodyMap1.keySet().size() - 1) {
 			alternateChordProg
