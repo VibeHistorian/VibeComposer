@@ -844,12 +844,12 @@ public class VibeComposerGUI extends JFrame
 			//melodyPanel.setMidiChannel(i + 1);
 			if (i > 0) {
 				melodyPanel.setPauseChance(70);
+				melodyPanel.getVolSlider().setVisible(false);
+				melodyPanel.getSoloMuter().setVisible(false);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(12);
-					melodyPanel.getVolSlider().setVisible(false);
 				} else {
 					melodyPanel.setTranspose(-12);
-					melodyPanel.getVolSlider().setVisible(false);
 				}
 			}
 		}
@@ -1709,7 +1709,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		fixedLengthChords = new JComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "4", "8", "RANDOM" }, fixedLengthChords);
-		fixedLengthChords.setSelectedItem(0);
+		setFixedLengthChords(4);
 		JLabel chordDurationFixedLabel = new JLabel("# of Chords");
 		JPanel chordProgPanel = new JPanel();
 		chordProgPanel.add(chordDurationFixedLabel);
@@ -2581,17 +2581,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (MelodyMidiDropPane.userMelody != null) {
 			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
-			switch (MidiGenerator.chordInts.size()) {
-			case 4:
-				fixedLengthChords.setSelectedItem("4");
-				break;
-			case 8:
-				fixedLengthChords.setSelectedItem("8");
-				break;
-			default:
-				fixedLengthChords.setSelectedItem("RANDOM");
-				break;
-			}
+			setFixedLengthChords(MidiGenerator.chordInts.size());
 		}
 
 		// reapply
@@ -2717,6 +2707,21 @@ public class VibeComposerGUI extends JFrame
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private void setFixedLengthChords(int size) {
+		switch (size) {
+		case 4:
+			fixedLengthChords.setSelectedItem("4");
+			break;
+		case 8:
+			fixedLengthChords.setSelectedItem("8");
+			break;
+		default:
+			fixedLengthChords.setSelectedItem("RANDOM");
+			break;
+		}
+
 	}
 
 	private void randomizeMelodySeeds() {
@@ -4039,11 +4044,8 @@ public class VibeComposerGUI extends JFrame
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
 		soundbankFilename.setText(guiConfig.getSoundbankName());
 		pieceLength.setText(String.valueOf(guiConfig.getPieceLength()));
-		if (guiConfig.getFixedDuration() == 0) {
-			fixedLengthChords.setSelectedItem("RANDOM");
-		} else {
-			fixedLengthChords.setSelectedItem("" + guiConfig.getFixedDuration());
-		}
+		setFixedLengthChords(guiConfig.getFixedDuration());
+
 		transposeScore.setInt(guiConfig.getTranspose());
 		mainBpm.setInt((int) Math.round(guiConfig.getBpm()));
 
