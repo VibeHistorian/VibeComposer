@@ -9,7 +9,7 @@ public class Rhythm {
 	private double[] durationPool = null;
 	private int[] durationWeights = null;
 	private int randomSeed = 0;
-	private double durationLimit = 2.0;
+	private double durationLimit = MidiGenerator.Durations.HALF_NOTE;
 
 	private List<Double> durations;
 
@@ -40,7 +40,7 @@ public class Rhythm {
 		durations = new ArrayList<>();
 		double durationSum = 0;
 		while (durationSum < durationLimit) {
-			double dur = 0.125 * MidiGenerator.noteMultiplier;
+			double dur = MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0;
 			int chance = generator.nextInt(100);
 			for (int i = 0; i < durationPool.length; i++) {
 				if (i < (durationPool.length - 1)

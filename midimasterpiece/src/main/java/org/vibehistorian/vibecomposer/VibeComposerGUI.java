@@ -3687,7 +3687,8 @@ public class VibeComposerGUI extends JFrame
 							}
 
 							userChordsDurationsParsed
-									.add(Double.valueOf(userChordsDurationsSplit[i]));
+									.add(Double.valueOf(userChordsDurationsSplit[i])
+											* elongateMidi.getInt());
 						}
 						if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
 							MidiGenerator.userChords = userChordsParsed;
