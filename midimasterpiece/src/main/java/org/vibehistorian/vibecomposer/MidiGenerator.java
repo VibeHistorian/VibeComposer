@@ -39,6 +39,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -146,11 +147,49 @@ public class MidiGenerator implements JMC {
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
 	private List<int[]> melodyBasedRootProgression = new ArrayList<>();
 
+	private List<Integer> melodyNotePattern = null;
+
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
 
 	public MidiGenerator(GUIConfig gc) {
 		MidiGenerator.gc = gc;
+	}
+
+	private List<Integer> patternFromNotes(Collection<Note> notes) {
+		// strategy: use 64 hits in pattern, then simplify if needed
+		int hits = 64;
+		// (0) 0.25 0.5 0 0.125 0.5 0.25
+		// 0   0.25  0.75 0.75 0.875 1.375 1.625
+		//   1 1 1 0 1 0 1 
+
+		int chordsTotal = chordInts.size();
+		double measureTotal = chordsTotal
+				* ((gc.isDoubledDurations()) ? Durations.WHOLE_NOTE : Durations.HALF_NOTE);
+		double timeForHit = measureTotal / hits;
+		List<Integer> pattern = new ArrayList<>();
+		List<Double> durationBuckets = new ArrayList<>();
+		for (int i = 1; i <= hits; i++) {
+			durationBuckets.add(timeForHit * i - 0.01);
+			pattern.add(0);
+		}
+		pattern.set(0, 1);
+		double currentDuration = 0;
+		int explored = 0;
+		for (Note n : notes) {
+			System.out.println(
+					"Current dur: " + currentDuration + ", + rhythm: " + n.getRhythmValue());
+			currentDuration += n.getRhythmValue();
+			for (int i = explored; i < hits; i++) {
+				if (currentDuration < durationBuckets.get(i)) {
+					pattern.set(i, 1);
+					explored = i;
+					break;
+				}
+			}
+		}
+		System.out.println(StringUtils.join(pattern, ", "));
+		return pattern;
 	}
 
 	private int selectClosestIndexFromChord(int[] chord, int previousNotePitch,
@@ -1547,8 +1586,11 @@ public class MidiGenerator implements JMC {
 			skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
-
 		Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(mp, skeletonNotes);
+		if (mp.getOrder() == 1) {
+			melodyNotePattern = patternFromNotes(fullMelody);
+		}
+
 		swingMelody(mp, fullMelody);
 		melodyPhrase.addNoteList(fullMelody, true);
 
@@ -2299,6 +2341,13 @@ public class MidiGenerator implements JMC {
 		List<Integer> premadePattern = (dp.getPattern() != RhythmPattern.CUSTOM)
 				? dp.getPattern().getPatternByLength(dp.getHitsPerPattern())
 				: dp.getCustomPattern();
+		if (melodyNotePattern != null && dp.isUseMelodyNotePattern()) {
+			System.out.println("Setting note pattern!");
+			dp.setHitsPerPattern(melodyNotePattern.size());
+			premadePattern = melodyNotePattern;
+			dp.setPatternShift(0);
+			dp.setChordSpan(chordInts.size());
+		}
 		List<Integer> drumPattern = new ArrayList<>();
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
 			// if random pause or not present in pattern: pause
@@ -2324,7 +2373,6 @@ public class MidiGenerator implements JMC {
 	private List<Integer> generateDrumVelocityPatternFromPart(DrumPart dp) {
 		Random uiGenerator1drumVelocityPattern = new Random(dp.getPatternSeed() + dp.getOrder());
 		List<Integer> drumVelocityPattern = new ArrayList<>();
-
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
 			int velocityRange = dp.getVelocityMax() - dp.getVelocityMin();
 

@@ -19,6 +19,7 @@ public class DrumPanel extends InstPanel {
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
 	private DrumHitsPatternPanel comboPanel = null;
+	private JCheckBox useMelodyNotePattern = new JCheckBox("Melody Pattern", false);
 
 	public void initComponents(ActionListener l) {
 
@@ -53,6 +54,9 @@ public class DrumPanel extends InstPanel {
 		this.add(new JLabel("Fill"));
 		this.add(chordSpanFill);
 
+		this.add(useMelodyNotePattern);
+
+
 		this.add(exceptionChance);
 
 		this.add(velocityMin);
@@ -65,9 +69,9 @@ public class DrumPanel extends InstPanel {
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
-
 		this.add(new JLabel("Midi ch. 10"));
 
+		toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
 	}
 
@@ -88,6 +92,7 @@ public class DrumPanel extends InstPanel {
 		part.setVelocityPattern(getIsVelocityPattern());
 		part.setSwingPercent(getSwingPercent());
 		part.setCustomPattern(comboPanel.getTruePattern());
+		part.setUseMelodyNotePattern(getUseMelodyNotePattern());
 
 		part.setOrder(getPanelOrder());
 		return part;
@@ -100,6 +105,7 @@ public class DrumPanel extends InstPanel {
 		comboPanel.setTruePattern(part.getCustomPattern());
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
+		setUseMelodyNotePattern(part.isUseMelodyNotePattern());
 
 		setPanelOrder(part.getOrder());
 
@@ -111,6 +117,14 @@ public class DrumPanel extends InstPanel {
 
 	public void setIsVelocityPattern(boolean isVelocityPattern) {
 		this.isVelocityPattern.setSelected(isVelocityPattern);
+	}
+
+	public boolean getUseMelodyNotePattern() {
+		return useMelodyNotePattern.isSelected();
+	}
+
+	public void setUseMelodyNotePattern(boolean useMelodyNotePattern) {
+		this.useMelodyNotePattern.setSelected(useMelodyNotePattern);
 	}
 
 
