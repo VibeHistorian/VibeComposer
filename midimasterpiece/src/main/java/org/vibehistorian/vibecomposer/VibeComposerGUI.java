@@ -2126,8 +2126,7 @@ public class VibeComposerGUI extends JFrame
 		transposeScore = new KnobPanel("Global Transpose (Key)", 0, -24, 24);
 		controlSettingsPanel.add(transposeScore);
 
-		Random bpmRand = new Random();
-		mainBpm = new KnobPanel("BPM", bpmRand.nextInt(50) + 60, 60, 110);
+		mainBpm = new KnobPanel("BPM", 80, 60, 110);
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
 		JPanel bpmLowHighPanel = new JPanel();
