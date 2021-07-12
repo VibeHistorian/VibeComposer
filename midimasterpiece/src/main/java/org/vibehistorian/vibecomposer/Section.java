@@ -266,6 +266,11 @@ public class Section {
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.TRUE;
 	}
 
+	public void resetPresence(int part, int partOrder) {
+		initPartMapIfNull();
+		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.FALSE;
+	}
+
 	public List<Integer> getVariation(int part, int partOrder) {
 		initPartMapIfNull();
 		List<Integer> variations = new ArrayList<>();

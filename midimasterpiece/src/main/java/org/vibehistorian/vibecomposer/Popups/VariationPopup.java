@@ -87,20 +87,46 @@ public class VariationPopup {
 			}
 			list.setListData(listData);
 			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
-
+			int fI = i;
 			tables[i] = table;
-			JButton namedTableToggle = new JButton(tableNames[i] + " (+)");
-			namedTableToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
-			namedTableToggle.addActionListener(new ActionListener() {
+			JPanel categoryButtons = new JPanel();
+			JLabel categoryName = new JLabel(tableNames[i].toUpperCase());
+			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
+			categoryButtons.add(categoryName);
+			JButton addAllCategory = new JButton("Include All");
+			addAllCategory.setAlignmentX(Component.LEFT_ALIGNMENT);
+			addAllCategory.addActionListener(new ActionListener() {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					table.setVisible(!table.isVisible());
+					for (int j = 0; j < VibeComposerGUI.getInstList(fI).size(); j++) {
+						table.getModel().setValueAt(Boolean.TRUE, j, 1);
+						//sec.resetPresence(fI, j);
+						table.repaint();
+					}
 
 				}
 
 			});
-			tablesPanel.add(namedTableToggle);
+			JButton removeAllCategory = new JButton("Remove All");
+			removeAllCategory.setAlignmentX(Component.LEFT_ALIGNMENT);
+			removeAllCategory.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					for (int j = 0; j < VibeComposerGUI.getInstList(fI).size(); j++) {
+						table.getModel().setValueAt(Boolean.FALSE, j, 1);
+						//sec.setPresence(fI, j);
+						table.repaint();
+					}
+
+				}
+
+			});
+			categoryButtons.add(addAllCategory);
+			categoryButtons.add(removeAllCategory);
+			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
+			tablesPanel.add(categoryButtons);
 			JTableHeader header = tables[i].getTableHeader();
 			header.setAlignmentX(Component.LEFT_ALIGNMENT);
 			tablesPanel.add(header);
