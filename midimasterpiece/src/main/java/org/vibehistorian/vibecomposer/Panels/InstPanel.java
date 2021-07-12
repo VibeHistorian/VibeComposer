@@ -60,14 +60,14 @@ public abstract class InstPanel extends JPanel {
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
 	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 5);
-	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
+	protected JCheckBox repeatableNotes = new JCheckBox("Note<br>Repeat", true);
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 2, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
 	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
 
-	protected KnobPanel velocityMin = new KnobPanel("MinVel", 70, 0, 126);
-	protected KnobPanel velocityMax = new KnobPanel("MaxVel", 90, 1, 127);
+	protected KnobPanel velocityMin = new KnobPanel("Min<br>Vel", 70, 0, 126);
+	protected KnobPanel velocityMax = new KnobPanel("Max<br>Vel", 90, 1, 127);
 
 	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
 

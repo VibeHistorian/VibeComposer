@@ -1128,13 +1128,13 @@ public class MidiGenerator implements JMC {
 				for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 					boolean isVariation = variationGen.nextInt(100) < gc
 							.getArrangementVariationChance();
-					// generate "chord swap/melody swap" only for non-critical sections
+					// generate n-1 skip only if next section is same type
 					if (i == 0) {
 						// if not last, and next section has the same Type
 						isVariation &= (secOrder < arr.getSections().size() - 1 && arr.getSections()
 								.get(secOrder + 1).getType().equals(sec.getType()));
 					}
-
+					// generate "chord swap/melody swap" only for non-critical sections
 					if (i == 1 || i == 2) {
 						isVariation &= notesSeedOffset > 0;
 					}
