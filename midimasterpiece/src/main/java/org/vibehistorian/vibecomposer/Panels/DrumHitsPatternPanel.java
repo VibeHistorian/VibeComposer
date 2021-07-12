@@ -16,6 +16,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -59,35 +61,35 @@ public class DrumHitsPatternPanel extends JPanel {
 			final int fI = i;
 			truePattern.add(0);
 			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
-			/*hitChecks[i].addChangeListener(new ChangeListener() {
+			hitChecks[i].addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
-					if (mouseButton == 1) {
+					if (mouseButton == 2) {
 						hitChecks[fI].setSelected(true);
-					} else if (mouseButton == 2) {
+					} else if (mouseButton == 3) {
 						hitChecks[fI].setSelected(false);
 					}
+					int shI = (fI - shiftPanel.getInt() + 32) % 32;
+					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
 				}
-			
+
 			});
 			hitChecks[i].addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent e) {
 					int mouseButt = e.getButton();
 					if (mouseButt == 1) {
-						mouseButton = 1;
+						mouseButton = -1;
 					} else if (mouseButt > 1) {
-						mouseButton = 2;
+						mouseButton = mouseButt;
 					}
-					System.out.println("Mouse butt: " + mouseButt);
 				}
-			
+
 				@Override
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
-					System.out.println();
 				}
-			});*/
+			});
 			hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
 			if (i >= hitsPanel.getInt()) {
 				hitChecks[i].setVisible(false);
@@ -103,6 +105,7 @@ public class DrumHitsPatternPanel extends JPanel {
 							(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
 						patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
 					}
+					System.out.println("ACTION!");
 				}
 
 			});
