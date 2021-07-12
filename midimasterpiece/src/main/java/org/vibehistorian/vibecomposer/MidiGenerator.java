@@ -306,7 +306,6 @@ public class MidiGenerator implements JMC {
 		}
 
 		Random generator = new Random(seed + notesSeedOffset);
-		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
@@ -333,11 +332,6 @@ public class MidiGenerator implements JMC {
 		} else {
 			usedChords = chords;
 		}
-
-		int minVel = mp.getVelocityMin() + (5 * sec.getMelodyChance()) / 10 - 50;
-		minVel = (minVel < 0) ? 0 : minVel;
-		int maxVel = mp.getVelocityMax() + (5 * sec.getMelodyChance()) / 10 - 50;
-		maxVel = (maxVel < 1) ? 1 : maxVel;
 
 		List<int[]> stretchedChords = usedChords.stream().map(e -> convertChordToLength(e, 4, true))
 				.collect(Collectors.toList());
@@ -454,8 +448,7 @@ public class MidiGenerator implements JMC {
 						pitch = 60;
 					}*/
 					double swingDuration = durations.get(j);
-					Note n = new Note(pitch + extraTranspose, swingDuration,
-							velocityGenerator.nextInt(1 + maxVel - minVel) + minVel);
+					Note n = new Note(pitch + extraTranspose, swingDuration, 100);
 					//TODO: make sound good
 					if (previousNotePitch == pitch) {
 						direction = !direction;
@@ -569,17 +562,25 @@ public class MidiGenerator implements JMC {
 		return 40;
 	}
 
-	private Vector<Note> convertMelodySkeletonToFullMelody(MelodyPart mp, Vector<Note> skeleton) {
+	private Vector<Note> convertMelodySkeletonToFullMelody(MelodyPart mp, Section sec,
+			Vector<Note> skeleton, int notesSeedOffset) {
 		int seed = mp.getPatternSeed() + mp.getOrder();
 		Random splitGenerator = new Random(seed + 4);
 		Random pauseGenerator = new Random(seed + 5);
 		Random pauseGenerator2 = new Random(seed + 7);
 		Random variationGenerator = new Random(seed + 6);
+		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
 		int splitChance = gc.getMelodySplitChance() * gc.getMelodyQuickness() / 100;
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
 		double durCounter = 0.0;
 		double currentChordDur = progressionDurations.get(0);
+
+		int minVel = mp.getVelocityMin() + (5 * sec.getMelodyChance()) / 10 - 50;
+		minVel = (minVel < 0) ? 0 : minVel;
+		int maxVel = mp.getVelocityMax() + (5 * sec.getMelodyChance()) / 10 - 50;
+		maxVel = (maxVel < 1) ? 1 : maxVel;
+
 		for (int i = 0; i < skeleton.size(); i++) {
 			double adjDur = skeleton.get(i).getRhythmValue();
 			if (durCounter + adjDur > currentChordDur) {
@@ -603,6 +604,9 @@ public class MidiGenerator implements JMC {
 			boolean pause1 = p < mp.getPauseChance();
 			boolean pause2 = p2 < (mp.getPauseChance());
 
+			int velocity = velocityGenerator.nextInt(1 + maxVel - minVel) + minVel;
+
+			skeleton.get(i).setDynamic(velocity);
 
 			if (adjDur > Durations.SIXTEENTH_NOTE * 1.4
 					&& splitGenerator.nextInt(100) < splitChance) {
@@ -713,7 +717,7 @@ public class MidiGenerator implements JMC {
 			chordStrings.add(chordString);
 			prevChordString = chordString;
 		}
-		if (end < chordMelodyMap1.keySet().size() - 1) {
+		if (end < chordMelodyMap1.keySet().size()) {
 			alternateChordProg
 					.add(Arrays.copyOf(chordProgression.get(chordMelodyMap1.keySet().size() - 1),
 							chordProgression.get(chordMelodyMap1.keySet().size() - 1).length));
@@ -1622,7 +1626,8 @@ public class MidiGenerator implements JMC {
 			skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
-		Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(mp, skeletonNotes);
+		Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(mp, sec, skeletonNotes,
+				notesSeedOffset);
 		if (mp.getOrder() == 1) {
 			melodyNotePattern = patternFromNotes(fullMelody);
 		}

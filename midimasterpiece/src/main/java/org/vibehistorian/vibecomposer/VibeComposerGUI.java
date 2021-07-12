@@ -374,7 +374,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxVel;
 
 	// drum gen settings
-	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 40 });
+	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 37, 38, 40 });
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
 	JTextField randomDrumMaxSwingAdjust;
