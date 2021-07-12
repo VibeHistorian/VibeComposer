@@ -71,7 +71,7 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch. 10"));
 
-		toggleableComponents.add(useMelodyNotePattern);
+		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
 	}
 

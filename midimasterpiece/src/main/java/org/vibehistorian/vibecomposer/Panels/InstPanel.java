@@ -220,6 +220,8 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setPattern(RhythmPattern pattern) {
+		if (pattern == null)
+			return;
 		this.pattern.setSelectedItem((String.valueOf(pattern.toString())));
 	}
 

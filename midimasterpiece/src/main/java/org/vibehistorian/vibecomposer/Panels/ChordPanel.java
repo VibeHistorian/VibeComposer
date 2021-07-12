@@ -59,6 +59,9 @@ public class ChordPanel extends InstPanel {
 		this.add(strum);
 		this.add(transpose);
 
+		this.add(new JLabel("Pattern"));
+		this.add(pattern);
+
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
 		strum.getKnob().setTickSpacing(50);
@@ -74,8 +77,7 @@ public class ChordPanel extends InstPanel {
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
-		this.add(new JLabel("Pattern"));
-		this.add(pattern);
+
 		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch.:"));

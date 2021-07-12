@@ -11,7 +11,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "rhythmPattern")
 @XmlEnum
 public enum RhythmPattern {
-	FULL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }), ALTERNATE2(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }),
+	FULL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }), ALT(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }),
 	ONEPER4(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }), TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 }),
 	SINGLE(new int[] { 1, 0, 0, 0, 0, 0, 0, 0 }), ONEFIVE(new int[] { 1, 0, 0, 0, 0, 1, 0, 0 }),
 	CUSTOM(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 });

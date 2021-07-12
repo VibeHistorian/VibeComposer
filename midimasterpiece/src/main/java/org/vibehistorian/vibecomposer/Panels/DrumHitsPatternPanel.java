@@ -7,8 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +39,8 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static int width = 8 * CheckBoxIcon.width;
 	public static int height = 2 * CheckBoxIcon.width;
 
+	public static int mouseButton = 0;
+
 	public DrumHitsPatternPanel(KnobPanel hitsPanel, JComboBox<String> patternType,
 			KnobPanel shiftPanel, JPanel parentPanel) {
 		super();
@@ -53,22 +55,54 @@ public class DrumHitsPatternPanel extends JPanel {
 		this.shiftPanel = shiftPanel;
 		this.parentPanel = parentPanel;
 		lastHits = hitsPanel.getInt();
-
 		for (int i = 0; i < 32; i++) {
+			final int fI = i;
 			truePattern.add(0);
 			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
+			/*hitChecks[i].addChangeListener(new ChangeListener() {
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					if (mouseButton == 1) {
+						hitChecks[fI].setSelected(true);
+					} else if (mouseButton == 2) {
+						hitChecks[fI].setSelected(false);
+					}
+				}
+			
+			});
+			hitChecks[i].addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent e) {
+					int mouseButt = e.getButton();
+					if (mouseButt == 1) {
+						mouseButton = 1;
+					} else if (mouseButt > 1) {
+						mouseButton = 2;
+					}
+					System.out.println("Mouse butt: " + mouseButt);
+				}
+			
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					mouseButton = -1;
+					System.out.println();
+				}
+			});*/
 			hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
 			if (i >= hitsPanel.getInt()) {
 				hitChecks[i].setVisible(false);
 			}
-			final int fI = i;
+
 			hitChecks[i].addActionListener(new ActionListener() {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					int shI = (fI - shiftPanel.getInt() + 32) % 32;
 					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-
+					if (RhythmPattern.valueOf(
+							(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
+						patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+					}
 				}
 
 			});
@@ -83,15 +117,8 @@ public class DrumHitsPatternPanel extends JPanel {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					RhythmPattern d = RhythmPattern.valueOf((String) patternType.getSelectedItem());
 					if (d != RhythmPattern.CUSTOM) {
-						for (int i = 0; i < 32; i++) {
-							hitChecks[i].setEnabled(false);
-						}
-					} else {
-						for (int i = 0; i < 32; i++) {
-							hitChecks[i].setEnabled(true);
-						}
+						truePattern = d.getPatternByLength(32);
 					}
-					truePattern = d.getPatternByLength(32);
 
 					for (int i = 0; i < 32; i++) {
 						int shI = (i + shiftPanel.getInt()) % 32;
@@ -104,36 +131,11 @@ public class DrumHitsPatternPanel extends JPanel {
 
 		});
 
-		hitsPanel.getKnob().addMouseListener(new MouseListener() {
-
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
+		hitsPanel.getKnob().addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				reapplyHits();
-
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
 
 			}
 		});
@@ -161,35 +163,11 @@ public class DrumHitsPatternPanel extends JPanel {
 
 				});
 
-		shiftPanel.getKnob().addMouseListener(new MouseListener() {
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
+		shiftPanel.getKnob().addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				reapplyShift();
-
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
 
 			}
 		});
