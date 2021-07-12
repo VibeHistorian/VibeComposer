@@ -27,6 +27,9 @@ public class KnobPanel extends JPanel {
 	public KnobPanel(String name, int value, int minimum, int maximum, int tickSpacing) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setOpaque(false);
+		if (name.contains("<br>")) {
+			name = name.replaceAll("<br>", "&nbsp;<br>");
+		}
 		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		setMaximumSize(new Dimension(200, 50));
