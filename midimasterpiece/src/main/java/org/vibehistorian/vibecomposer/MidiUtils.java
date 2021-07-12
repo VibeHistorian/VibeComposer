@@ -33,10 +33,9 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-import javax.swing.JComboBox;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
@@ -776,7 +775,7 @@ public class MidiUtils {
 		return instPoolNumbers.get(index % instPoolNumbers.size());
 	}
 
-	public static void addAllToJComboBox(String[] choices, JComboBox<String> choice) {
+	public static void addAllToJComboBox(String[] choices, ScrollComboBox<String> choice) {
 		for (String c : choices) {
 			choice.addItem(c);
 		}

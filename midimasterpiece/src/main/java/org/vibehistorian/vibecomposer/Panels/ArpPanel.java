@@ -2,13 +2,13 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.event.ActionListener;
 
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -18,7 +18,7 @@ public class ArpPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6648220153568966988L;
 
-	private JComboBox<String> arpPattern = new JComboBox<>();
+	private ScrollComboBox<String> arpPattern = new ScrollComboBox<>();
 
 	public void initComponents(ActionListener l) {
 

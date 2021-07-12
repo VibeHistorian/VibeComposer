@@ -13,7 +13,6 @@ import java.awt.event.WindowListener;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -25,6 +24,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 public class VariationPopup {
 
@@ -41,7 +41,7 @@ public class VariationPopup {
 		addFrameWindowOperation();
 		JPanel measuresPanel = new JPanel();
 		measuresPanel.add(new JLabel("Measures "));
-		JComboBox<String> measureCombo = new JComboBox<>();
+		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" }, measureCombo);
 		measureCombo.setSelectedItem(String.valueOf(sec.getMeasures()));
 

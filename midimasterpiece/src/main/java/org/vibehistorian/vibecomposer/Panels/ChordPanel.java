@@ -6,13 +6,13 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -28,7 +28,7 @@ public class ChordPanel extends InstPanel {
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
-	private JComboBox<String> instPoolPicker = new JComboBox<String>();
+	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
 
 	public void initComponents(ActionListener l) {
 

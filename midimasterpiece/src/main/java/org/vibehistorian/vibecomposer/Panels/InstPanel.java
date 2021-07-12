@@ -28,7 +28,6 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -41,6 +40,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -50,7 +50,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected POOL instPool = POOL.PLUCK;
-	protected JComboBox<String> chordSpanFill = new JComboBox<String>();
+	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits#", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords#", 1, 1, 4);
@@ -75,7 +75,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected RandomValueButton patternSeed = new RandomValueButton(0);
-	protected JComboBox<String> pattern = new JComboBox<String>();
+	protected ScrollComboBox<String> pattern = new ScrollComboBox<String>();
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
@@ -83,7 +83,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JSlider volSlider = new JSlider();
 
-	protected JComboBox<String> midiChannel = new JComboBox<>();
+	protected ScrollComboBox<String> midiChannel = new ScrollComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
 	protected SoloMuter soloMuter;

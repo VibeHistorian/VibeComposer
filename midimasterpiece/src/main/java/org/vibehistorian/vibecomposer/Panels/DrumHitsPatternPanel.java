@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -23,13 +22,14 @@ import javax.swing.event.DocumentListener;
 
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 public class DrumHitsPatternPanel extends JPanel {
 
 	private static final long serialVersionUID = 6963518339035392918L;
 
 	private KnobPanel hitsPanel = null;
-	private JComboBox<String> patternType = null;
+	private ScrollComboBox<String> patternType = null;
 	private KnobPanel shiftPanel = null;
 	private int lastHits = 0;
 
@@ -43,7 +43,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 	public static int mouseButton = 0;
 
-	public DrumHitsPatternPanel(KnobPanel hitsPanel, JComboBox<String> patternType,
+	public DrumHitsPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
 			KnobPanel shiftPanel, JPanel parentPanel) {
 		super();
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
@@ -118,6 +118,7 @@ public class DrumHitsPatternPanel extends JPanel {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
+					DrumHitsPatternPanel.this.setVisible(false);
 					RhythmPattern d = RhythmPattern.valueOf((String) patternType.getSelectedItem());
 					if (d != RhythmPattern.CUSTOM) {
 						truePattern = d.getPatternByLength(32);
@@ -127,8 +128,8 @@ public class DrumHitsPatternPanel extends JPanel {
 						int shI = (i + shiftPanel.getInt()) % 32;
 						hitChecks[shI].setSelected(truePattern.get(i) != 0);
 					}
+					DrumHitsPatternPanel.this.setVisible(true);
 				}
-
 
 			}
 

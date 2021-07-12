@@ -90,7 +90,6 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -131,6 +130,7 @@ import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -288,8 +288,8 @@ public class VibeComposerGUI extends JFrame
 	// macro params
 	JTextField soundbankFilename;
 
-	public static JComboBox<String> scaleMode;
-	JComboBox<String> fixedLengthChords;
+	public static ScrollComboBox<String> scaleMode;
+	ScrollComboBox<String> fixedLengthChords;
 	JCheckBox useDoubledDurations;
 	JCheckBox allowChordRepeats;
 	JCheckBox useArrangement;
@@ -350,8 +350,8 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomChordVoicingChance;
 	KnobPanel randomChordMaxSplitChance;
 	JCheckBox randomChordUseChordFill;
-	JComboBox<String> randomChordStretchType;
-	JComboBox<String> randomChordStretchPicker;
+	ScrollComboBox<String> randomChordStretchType;
+	ScrollComboBox<String> randomChordStretchPicker;
 	KnobPanel randomChordMinVel;
 	KnobPanel randomChordMaxVel;
 
@@ -364,10 +364,10 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomArpAllSameInst;
 	JCheckBox randomArpAllSameHits;
 	KnobPanel arpShiftChance;
-	JComboBox<String> randomArpHitsPicker;
+	ScrollComboBox<String> randomArpHitsPicker;
 	JCheckBox randomArpUseChordFill;
-	JComboBox<String> randomArpStretchType;
-	JComboBox<String> randomArpStretchPicker;
+	ScrollComboBox<String> randomArpStretchType;
+	ScrollComboBox<String> randomArpStretchPicker;
 	JCheckBox randomArpUseOctaveAdjustments;
 	KnobPanel randomArpMaxSwing;
 	KnobPanel randomArpMaxRepeat;
@@ -386,12 +386,12 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomDrumUseChordFill;
 	JCheckBox arrangementAffectsDrumVelocity;
 	JButton changeMidiMapping;
-	JComboBox<String> randomDrumHitsMultiplier;
+	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 2;
 
 	// chord settings - progression
-	JComboBox<String> firstChordSelection;
-	JComboBox<String> lastChordSelection;
+	ScrollComboBox<String> firstChordSelection;
+	ScrollComboBox<String> lastChordSelection;
 	int firstChord = 0;
 	int lastChord = 0;
 	JCheckBox userChordsEnabled;
@@ -422,9 +422,9 @@ public class VibeComposerGUI extends JFrame
 	MidiDevice device = null;
 
 	JCheckBox showScore;
-	JComboBox<String> showScorePicker;
+	ScrollComboBox<String> showScorePicker;
 	JCheckBox midiMode;
-	JComboBox<String> midiModeDevices;
+	ScrollComboBox<String> midiModeDevices;
 	JCheckBox collapseDrumTracks;
 
 	JButton compose;
@@ -923,14 +923,14 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsPanel.add(randomChordSplit);
 		//chordSettingsPanel.finishMinimalInit();
 
-		randomChordStretchType = new JComboBox<>();
+		randomChordStretchType = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "AT_MOST" },
 				randomChordStretchType);
 		randomChordStretchType.setSelectedItem("NONE");
 		JLabel stretchLabel = new JLabel("StretCh.");
 		chordSettingsPanel.add(stretchLabel);
 		chordSettingsPanel.add(randomChordStretchType);
-		randomChordStretchPicker = new JComboBox<>();
+		randomChordStretchPicker = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "3", "4", "5", "6" }, randomChordStretchPicker);
 		randomChordStretchPicker.setSelectedItem("4");
 		chordSettingsPanel.add(randomChordStretchPicker);
@@ -1021,7 +1021,7 @@ public class VibeComposerGUI extends JFrame
 
 		randomArpTranspose = new JCheckBox("Transpose", true);
 		randomArpPattern = new JCheckBox("Patterns", false);
-		randomArpHitsPicker = new JComboBox<String>();
+		randomArpHitsPicker = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
 				randomArpHitsPicker);
 		randomArpHitsPicker.setSelectedItem("4");
@@ -1044,14 +1044,14 @@ public class VibeComposerGUI extends JFrame
 
 		arpsSettingsPanel.add(randomArpTranspose);
 
-		randomArpStretchType = new JComboBox<>();
+		randomArpStretchType = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "AT_MOST" },
 				randomArpStretchType);
 		randomArpStretchType.setSelectedItem("AT_MOST");
 		JLabel stretchLabel = new JLabel("StretCh.");
 		arpsSettingsPanel.add(stretchLabel);
 		arpsSettingsPanel.add(randomArpStretchType);
-		randomArpStretchPicker = new JComboBox<>();
+		randomArpStretchPicker = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "3", "4", "5", "6" }, randomArpStretchPicker);
 		randomArpStretchPicker.setSelectedItem("4");
 		arpsSettingsPanel.add(randomArpStretchPicker);
@@ -1180,7 +1180,7 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumMaxSwingAdjust);
 		drumsPanel.add(randomDrumUseChordFill);
 
-		randomDrumHitsMultiplier = new JComboBox<>();
+		randomDrumHitsMultiplier = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" },
 				randomDrumHitsMultiplier);
 		randomDrumHitsMultiplier.setSelectedItem("2");
@@ -1210,7 +1210,7 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(new JLabel("Hits Multiplier:"));
 		drumsPanel.add(randomDrumHitsMultiplier);
 		drumsPanel.add(randomDrumSlide);
-		JComboBox<String> drumPartPresetBox = new JComboBox<>();
+		ScrollComboBox<String> drumPartPresetBox = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "---", "POP", "DNB" }, drumPartPresetBox);
 		drumPartPresetBox.addItemListener(new ItemListener() {
 
@@ -1711,7 +1711,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.setLayout(new GridLayout(0, 2, 0, 0));
 		macroParams.setOpaque(false);
 		macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		fixedLengthChords = new JComboBox<>();
+		fixedLengthChords = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "4", "8", "RANDOM" }, fixedLengthChords);
 		setFixedLengthChords(4);
 		JLabel chordDurationFixedLabel = new JLabel("# of Chords");
@@ -1801,14 +1801,14 @@ public class VibeComposerGUI extends JFrame
 		chordProgressionSettingsPanel.add(spiceFlattenBigChordsPanel);
 
 		// CHORD SETTINGS 2 - chord progression
-		firstChordSelection = new JComboBox<String>();
+		firstChordSelection = new ScrollComboBox<String>();
 		firstChordSelection.addItem("R");
 		firstChordSelection.addItem("I");
 		firstChordSelection.addItem("V");
 		firstChordSelection.addItem("vi");
 		firstChordSelection.addItemListener(this);
 
-		lastChordSelection = new JComboBox<String>();
+		lastChordSelection = new ScrollComboBox<String>();
 		lastChordSelection.addItem("R");
 		lastChordSelection.addItem("I");
 		lastChordSelection.addItem("IV");
@@ -2148,7 +2148,7 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(bpmLowHighPanel);
 
 		controlSettingsPanel.add(mainBpm);
-		scaleMode = new JComboBox<String>();
+		scaleMode = new ScrollComboBox<String>();
 		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
 		for (int i = 0; i < MidiUtils.ScaleMode.values().length; i++) {
 			scaleModes[i] = MidiUtils.ScaleMode.values()[i].toString();
@@ -2204,7 +2204,7 @@ public class VibeComposerGUI extends JFrame
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
 		showScore = new JCheckBox("Show Score", true);
-		showScorePicker = new JComboBox<String>();
+		showScorePicker = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "w/o DRUMS", "DRUMS ONLY", "ALL" },
 				showScorePicker);
 
@@ -2212,7 +2212,7 @@ public class VibeComposerGUI extends JFrame
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
-		midiModeDevices = new JComboBox<String>();
+		midiModeDevices = new ScrollComboBox<String>();
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
 		for (int i = 0; i < infos.length; i++) {
@@ -2907,7 +2907,7 @@ public class VibeComposerGUI extends JFrame
 	public void windowOpened(WindowEvent we) {
 	};
 
-	// Deal with item events (generated by the JComboBox<String>boxs)
+	// Deal with item events (generated by the ScrollComboBox<String>boxs)
 	public void itemStateChanged(ItemEvent ie) {
 	}
 

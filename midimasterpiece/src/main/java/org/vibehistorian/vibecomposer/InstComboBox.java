@@ -4,11 +4,10 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import javax.swing.JComboBox;
-
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
-public class InstComboBox extends JComboBox<String> {
+public class InstComboBox extends ScrollComboBox<String> {
 
 	private static final long serialVersionUID = -2820153952228324714L;
 
