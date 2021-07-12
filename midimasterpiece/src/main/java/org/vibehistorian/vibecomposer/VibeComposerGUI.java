@@ -847,6 +847,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setPauseChance(60);
 				melodyPanel.getVolSlider().setVisible(false);
 				melodyPanel.getSoloMuter().setVisible(false);
+				melodyPanel.getInstrumentBox().setVisible(false);
 				melodyPanel.setVelocityMin(63);
 				melodyPanel.setVelocityMax(80);
 				if (i % 2 == 1) {
@@ -1727,8 +1728,8 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(allowRepPanel);
 
 		JPanel globalSwingPanel = new JPanel();
-		globalSwingOverride = new JCheckBox("Global Swing<br>Override", false);
-		globalSwingOverrideValue = new KnobPanel("", 50);
+		globalSwingOverride = new JCheckBox("", false);
+		globalSwingOverrideValue = new KnobPanel("Global Swing<br>Override", 50);
 		globalSwingPanel.add(globalSwingOverride);
 		globalSwingPanel.add(globalSwingOverrideValue);
 		globalSwingPanel.setOpaque(false);
@@ -1850,7 +1851,7 @@ public class VibeComposerGUI extends JFrame
 		userChords = new JTextField("R", 35);
 		userChords.setToolTipText(tooltip);
 		chordToolTip.add(userChords);
-		userChordsDurations = new JTextField("2,2,2,2", 14);
+		userChordsDurations = new JTextField("2,2,2,2", 9);
 		chordToolTip.add(new JLabel("Chord durations:"));
 		chordToolTip.add(userChordsDurations);
 
@@ -2209,7 +2210,8 @@ public class VibeComposerGUI extends JFrame
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
 
-		midiMode = new JCheckBox("MIDI Transmitter Mode (select midi port -> Regenerate)", true);
+		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
+		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
 		midiModeDevices = new JComboBox<String>();
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
