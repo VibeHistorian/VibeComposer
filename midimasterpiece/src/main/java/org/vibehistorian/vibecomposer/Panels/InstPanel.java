@@ -32,7 +32,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +40,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -74,7 +74,7 @@ public abstract class InstPanel extends JPanel {
 	protected JLabel panelOrder = new JLabel("1");
 
 	protected JLabel patternSeedLabel = new JLabel("Seed");
-	protected JTextField patternSeed = new JTextField("0", 8);
+	protected RandomValueButton patternSeed = new RandomValueButton(0);
 	protected JComboBox<String> pattern = new JComboBox<String>();
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 

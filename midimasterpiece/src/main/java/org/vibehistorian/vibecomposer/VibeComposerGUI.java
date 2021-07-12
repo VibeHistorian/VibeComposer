@@ -130,6 +130,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
+import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -248,7 +249,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel arrangementPartVariationChance;
 	JCheckBox arrangementManualOverride;
 	JTextField pieceLength;
-	JTextField arrangementSeed;
+	RandomValueButton arrangementSeed;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -411,7 +412,7 @@ public class VibeComposerGUI extends JFrame
 	JButton switchOnComposeRandom;
 
 	// seed / midi
-	JTextField randomSeed;
+	RandomValueButton randomSeed;
 	int lastRandomSeed = 0;
 	double realBpm = 60;
 
@@ -843,9 +844,11 @@ public class VibeComposerGUI extends JFrame
 			melodyPanel.setPanelOrder(i + 1);
 			//melodyPanel.setMidiChannel(i + 1);
 			if (i > 0) {
-				melodyPanel.setPauseChance(70);
+				melodyPanel.setPauseChance(60);
 				melodyPanel.getVolSlider().setVisible(false);
 				melodyPanel.getSoloMuter().setVisible(false);
+				melodyPanel.setVelocityMin(63);
+				melodyPanel.setVelocityMax(80);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(12);
 				} else {
@@ -1409,7 +1412,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(resetArrangementBtn);
 
 		arrangementSettings.add(new JLabel("Seed"));
-		arrangementSeed = new JTextField("0", 8);
+		arrangementSeed = new RandomValueButton(0);
 		arrangementSettings.add(arrangementSeed);
 
 		arrangementManualOverride = new JCheckBox("Allow Manual Change", false);
@@ -2155,7 +2158,7 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(scaleMode);
 
 
-		randomSeed = new JTextField("0", 8);
+		randomSeed = new RandomValueButton(0);
 		compose = makeButton("COMPOSE", "Compose");
 		compose.setBackground(new Color(180, 150, 90));
 		compose.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -2908,6 +2911,9 @@ public class VibeComposerGUI extends JFrame
 
 	// Deal with Action events (button pushes)
 	public void actionPerformed(ActionEvent ae) {
+		boolean tabPanePossibleChange = false;
+		boolean soloMuterPossibleChange = false;
+
 		System.out.println("Processing.. ::" + ae.getActionCommand() + "::");
 
 		InstComboBox.BANNED_INSTS.clear();
@@ -2989,7 +2995,8 @@ public class VibeComposerGUI extends JFrame
 		apSm = new HashMap<>();
 		dpSm = new HashMap<>();
 		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
-				|| ae.getActionCommand().startsWith("Rand")) {
+				|| (ae.getActionCommand().startsWith("Rand")
+						&& ae.getActionCommand().charAt(4) != 'o')) {
 			for (InstPanel ip : chordPanels) {
 				cpSm.put(ip.getPanelOrder(), ip.getSoloMuter());
 			}
@@ -2999,6 +3006,7 @@ public class VibeComposerGUI extends JFrame
 			for (InstPanel ip : drumPanels) {
 				dpSm.put(ip.getPanelOrder(), ip.getSoloMuter());
 			}
+			soloMuterPossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
@@ -3014,7 +3022,7 @@ public class VibeComposerGUI extends JFrame
 					chordPanels.get(i).setInstrument(chordInsts.get(i).getInstrument());
 				}
 			}
-
+			tabPanePossibleChange = true;
 		}
 		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
 				&& addArps.isSelected() && randomArpsGenerateOnCompose.isSelected())) {
@@ -3026,6 +3034,7 @@ public class VibeComposerGUI extends JFrame
 					arpPanels.get(i).setInstrument(arpInsts.get(i));
 				}
 			}
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "RandDrums" || (ae.getActionCommand() == "Compose"
@@ -3036,10 +3045,13 @@ public class VibeComposerGUI extends JFrame
 			/*for (int i = 0; i < drumInsts.size() && i < drumPanels.size(); i++) {
 				drumPanels.get(i).setPitch(drumInsts.get(i));
 			}*/
+
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
-				|| ae.getActionCommand().startsWith("Rand")) {
+				|| (ae.getActionCommand().startsWith("Rand")
+						&& ae.getActionCommand().charAt(4) != 'o')) {
 			for (InstPanel ip : chordPanels) {
 				if (cpSm.containsKey(ip.getPanelOrder())) {
 					ip.setSoloMuter(cpSm.get(ip.getPanelOrder()));
@@ -3115,7 +3127,8 @@ public class VibeComposerGUI extends JFrame
 					repaint();
 				}
 			};
-
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 			worker.execute();
 
 		}
@@ -3215,7 +3228,8 @@ public class VibeComposerGUI extends JFrame
 					e.printStackTrace();
 				}
 			}
-
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "UncheckComposeRandom") {
@@ -3337,7 +3351,8 @@ public class VibeComposerGUI extends JFrame
 					e.printStackTrace();
 				}
 			}
-
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "ClearPatterns") {
@@ -3357,6 +3372,8 @@ public class VibeComposerGUI extends JFrame
 			randomDrumsToGenerate.setText("" + drumPanels.size());
 			//sizeRespectingPack();
 			repaint();
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand().startsWith("RemoveDrum,")) {
@@ -3364,6 +3381,8 @@ public class VibeComposerGUI extends JFrame
 
 			removeInstPanel(4, Integer.valueOf(drumNumber), true);
 			randomDrumsToGenerate.setText("" + drumPanels.size());
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand().startsWith("RemapDrumMIDI,"))
@@ -3393,6 +3412,8 @@ public class VibeComposerGUI extends JFrame
 
 			//sizeRespectingPack();
 			repaint();
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand().startsWith("RemoveChord,")) {
@@ -3400,6 +3421,8 @@ public class VibeComposerGUI extends JFrame
 
 			removeInstPanel(2, Integer.valueOf(chordNumber), true);
 			randomChordsToGenerate.setText("" + chordPanels.size());
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "AddArp")
@@ -3410,12 +3433,16 @@ public class VibeComposerGUI extends JFrame
 			randomArpsToGenerate.setText("" + arpPanels.size());
 			//sizeRespectingPack();
 			repaint();
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand().startsWith("RemoveArp,")) {
 			String arpNumber = ae.getActionCommand().split(",")[1];
 			removeInstPanel(3, Integer.valueOf(arpNumber), true);
 			randomArpsToGenerate.setText("" + arpPanels.size());
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "ClearArpPatterns") {
@@ -3435,6 +3462,7 @@ public class VibeComposerGUI extends JFrame
 			Random arrGen = new Random();
 			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
 					Integer.valueOf(pieceLength.getText()));
+			tabPanePossibleChange = true;
 		}
 
 
@@ -3484,16 +3512,22 @@ public class VibeComposerGUI extends JFrame
 			default:
 				break;
 			}
-
+			soloMuterPossibleChange = true;
+			tabPanePossibleChange = true;
 			System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
 		}
 		// recalcs 
-		recalculateTabPaneCounts();
-		for (int i = 0; i < 5; i++) {
-			recalcGroupSolo(i);
-			recalcGroupMute(i);
+		if (tabPanePossibleChange) {
+			recalculateTabPaneCounts();
 		}
-		recalcGlobals();
+		if (soloMuterPossibleChange) {
+			for (int i = 0; i < 5; i++) {
+				recalcGroupSolo(i);
+				recalcGroupMute(i);
+			}
+			recalcGlobals();
+		}
+
 		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
 	}
