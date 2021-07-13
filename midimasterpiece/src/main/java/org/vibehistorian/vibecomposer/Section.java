@@ -50,7 +50,7 @@ public class Section {
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" },
 			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "MakeInterval" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "MakeInterval", "MaxStrum" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "ForceRandOct" },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 

@@ -4799,11 +4799,11 @@ public class VibeComposerGUI extends JFrame
 			totalWeight += realWeights[i];
 		}
 		double targetWeight = totalWeight * weightGen.nextDouble();
-		System.out.println("Total: " + totalWeight + ", Target: " + targetWeight);
+		//System.out.println("Total: " + totalWeight + ", Target: " + targetWeight);
 		// -> strength of reduction depends on how far from ends
 		totalWeight = 0;
 
-		System.out.println("New array: " + Arrays.toString(realWeights));
+		//System.out.println("New array: " + Arrays.toString(realWeights));
 		for (int i = 0; i < array.length; i++) {
 			totalWeight += realWeights[i];
 			if (totalWeight >= targetWeight) {
