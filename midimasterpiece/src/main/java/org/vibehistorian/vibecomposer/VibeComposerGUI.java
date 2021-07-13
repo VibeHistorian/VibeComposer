@@ -1403,9 +1403,9 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(pieceLength);
 		arrangementSettings.add(randomizeArrangementOnCompose);
 
-		arrangementVariationChance = new KnobPanel("Risky<br>Variations", 30);
+		arrangementVariationChance = new KnobPanel("Section<br>Variations", 30);
 		arrangementSettings.add(arrangementVariationChance);
-		arrangementPartVariationChance = new KnobPanel("Safe<br>Variations", 30);
+		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 30);
 		arrangementSettings.add(arrangementPartVariationChance);
 
 		arrangementSettings

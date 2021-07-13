@@ -139,7 +139,7 @@ public class VariationPopup {
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 
-		int heightLimit = 800;
+		int heightLimit = 850;
 		frame.setPreferredSize(new Dimension(500,
 				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
 		int newLocX = parentLoc.x - 190;

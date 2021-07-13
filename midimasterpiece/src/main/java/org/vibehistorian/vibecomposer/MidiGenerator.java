@@ -1123,11 +1123,14 @@ public class MidiGenerator implements JMC {
 				if (rand.nextInt(100) < gc.getArrangementVariationChance()) {
 					List<Integer> exceptionChanceList = new ArrayList<>();
 					exceptionChanceList.add(1);
-					for (int i = 0; i < sec.getPartPresenceVariationMap().get(4).length; i++) {
+					if (sec.getPartPresenceVariationMap().get(4) != null) {
+						for (int i = 0; i < sec.getPartPresenceVariationMap().get(4).length; i++) {
+							if (rand.nextInt(100) < 66) {
+								sec.setVariation(4, i, exceptionChanceList);
+							}
 
-						sec.setVariation(4, i, exceptionChanceList);
+						}
 					}
-
 				}
 			}
 
