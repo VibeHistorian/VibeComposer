@@ -168,7 +168,7 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 
-	public static final int[] MILISECOND_ARRAY_STRUM = { 16, 31, 62, 62, 125, 166, 250, 333, 500,
+	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 16, 31, 62, 62, 125, 166, 250, 333, 500,
 			750, 1000 };
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
@@ -341,6 +341,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordsGenerateOnCompose;
 	JCheckBox randomChordDelay;
 	JCheckBox randomChordStrum;
+	KnobPanel randomChordStruminess;
 	JCheckBox randomChordSplit;
 	JCheckBox randomChordTranspose;
 	JCheckBox randomChordPattern;
@@ -901,7 +902,8 @@ public class VibeComposerGUI extends JFrame
 
 
 		randomChordDelay = new JCheckBox("Delay", false);
-		randomChordStrum = new JCheckBox("Strum", true);
+		randomChordStrum = new JCheckBox("", true);
+		randomChordStruminess = new KnobPanel("Struminess", 50);
 		randomChordSplit = new JCheckBox("Random Split Pos.", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
 		randomChordSustainChance = new KnobPanel("Chord%", 25);
@@ -909,7 +911,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new KnobPanel("Max<br>Split%", 25);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 0);
-		randomChordPattern = new JCheckBox("Patterns", false);
+		randomChordPattern = new JCheckBox("Patterns", true);
 		randomChordShiftChance = new KnobPanel("Shift%", 25);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		randomChordMinVel = new KnobPanel("Min<br>Vel", 65, 0, 126);
@@ -917,6 +919,7 @@ public class VibeComposerGUI extends JFrame
 
 		chordSettingsPanel.add(randomChordTranspose);
 		chordSettingsPanel.add(randomChordStrum);
+		chordSettingsPanel.add(randomChordStruminess);
 		chordSettingsPanel.add(randomChordUseChordFill);
 
 		chordSettingsPanel.add(randomChordDelay);
@@ -2943,9 +2946,8 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
 				& randomizeChordStrumsOnCompose.isSelected())) {
-			Random strumsGen = new Random();
 			for (ChordPanel p : chordPanels) {
-				p.setStrum(getRandomFromArray(strumsGen, MILISECOND_ARRAY_STRUM));
+				p.setStrum(selectRandomStrumByStruminess());
 				if (p.getStretchEnabled() && p.getChordNotesStretch() > 4 && p.getStrum() > 499) {
 					p.setStrum(p.getStrum() / 2);
 				}
@@ -4433,23 +4435,26 @@ public class VibeComposerGUI extends JFrame
 			cp.setTransitionChance(chordPanelGenerator
 					.nextInt(Integer.valueOf(randomChordMaxSplitChance.getInt() + 1)));
 			cp.setTransitionSplit(
-					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT)));
+					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
 
-			cp.setStrum((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_STRUM)));
+			cp.setStrum(selectRandomStrumByStruminess());
 			if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4 && cp.getStrum() > 499) {
 				cp.setStrum(cp.getStrum() / 2);
 			}
-			cp.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY)));
+			cp.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY, 0)));
 
 			if (randomChordUseChordFill.isSelected()) {
 				cp.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
 			}
 			int patternOrder = 0;
-			// use pattern in half the cases if checkbox selected
-			if (chordPanelGenerator.nextBoolean() == true) {
+			// use pattern in 20% of the cases if checkbox selected
+			if (chordPanelGenerator.nextInt(100) < 20) {
 				if (randomChordPattern.isSelected()) {
 					patternOrder = chordPanelGenerator.nextInt(RhythmPattern.values().length);
+					if (cp.getStrum() > 251) {
+						cp.setStrum(cp.getStrum() / 2);
+					}
 				}
 			}
 			if (!randomChordStretchType.getSelectedItem().equals("NONE")) {
@@ -4694,8 +4699,14 @@ public class VibeComposerGUI extends JFrame
 		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 
-	private static int getRandomFromArray(Random generator, int[] array) {
-		return array[generator.nextInt(array.length)];
+	private static int getRandomFromArray(Random generator, int[] array, int from) {
+		return getRandomFromToArray(generator, array, from, array.length);
+	}
+
+	private static int getRandomFromToArray(Random generator, int[] array, int from, int to) {
+		from = Math.max(from, 0);
+		to = Math.min(to, array.length);
+		return array[generator.nextInt(to - from) + from];
 	}
 
 
@@ -4754,5 +4765,52 @@ public class VibeComposerGUI extends JFrame
 				//midiPauseProgMs = 0;
 			}
 		}
+	}
+
+	public int selectRandomStrumByStruminess() {
+		return singleWeightedSelectFromArray(MILISECOND_ARRAY_STRUM, randomChordStruminess.getInt(),
+				1);
+	}
+
+	public int singleWeightedSelectFromArray(int[] oldArray, int weight, int from) {
+		int[] array = Arrays.copyOfRange(oldArray, from, oldArray.length);
+		//System.out.println("New array: " + Arrays.toString(array));
+		Random weightGen = new Random();
+		double[] realWeights = new double[array.length];
+		int mid = array.length / 2;
+		for (int i = 0; i < array.length; i++) {
+			realWeights[i] = 1.0 / Double.valueOf(array.length);
+		}
+		double lowMultiplier = 1.0;
+		double highMultiplier = 1.0;
+		// 100 max, 0 min
+		// weight 80 -> multiply high by 
+		if (weight > 50) {
+			highMultiplier = 1 + Math.abs(weight - 50) / 100.0;
+			lowMultiplier = 1.0 / highMultiplier;
+		} else {
+			lowMultiplier = 1 + Math.abs(50 - weight) / 100.0;
+			highMultiplier = 1.0 / lowMultiplier;
+		}
+		double totalWeight = 0;
+		for (int i = 0; i < array.length; i++) {
+			double multiplier = ((i < mid) ? lowMultiplier : highMultiplier);
+			realWeights[i] *= Math.pow(multiplier, Math.abs(i - mid));
+			totalWeight += realWeights[i];
+		}
+		double targetWeight = totalWeight * weightGen.nextDouble();
+		System.out.println("Total: " + totalWeight + ", Target: " + targetWeight);
+		// -> strength of reduction depends on how far from ends
+		totalWeight = 0;
+
+		System.out.println("New array: " + Arrays.toString(realWeights));
+		for (int i = 0; i < array.length; i++) {
+			totalWeight += realWeights[i];
+			if (totalWeight >= targetWeight) {
+				return array[i];
+			}
+		}
+		return array[array.length - 1];
+
 	}
 }

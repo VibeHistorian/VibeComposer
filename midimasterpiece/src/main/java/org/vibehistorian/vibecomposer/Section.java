@@ -48,7 +48,8 @@ public class Section {
 	}
 
 	public static final String[][] variationDescriptions = {
-			{ "#", "Incl.", "Transpose", "MaxJump" }, { "#", "Incl.", "OffsetSeed" },
+			{ "#", "Incl.", "Transpose", "MaxJump" },
+			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "MakeInterval" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "ForceRandOct" },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
@@ -287,6 +288,15 @@ public class Section {
 		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i + 2] = vars
 					.contains(Integer.valueOf(i));
+		}
+	}
+
+	public void addVariation(int part, int partOrder, List<Integer> vars) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i
+					+ 2] = ((Boolean) partPresenceVariationMap.get(part)[partOrder][i + 2])
+							|| vars.contains(Integer.valueOf(i));
 		}
 	}
 

@@ -59,7 +59,7 @@ public abstract class InstPanel extends JPanel {
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
-	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 5);
+	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 0);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note<br>Repeat", true);
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 2, 1, 4);
 
