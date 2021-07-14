@@ -47,8 +47,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private double theta;
 	private Color knobColor;
 	private Color spotColor;
-	private static final Color darkModeKnob = Color.GRAY;
-	private static final Color lightModeKnob = new Color(180, 180, 180);
+	public static final Color darkModeKnob = Color.GRAY;
+	public static final Color lightModeKnob = new Color(180, 180, 180);
 
 	private boolean pressedOnSpot;
 
