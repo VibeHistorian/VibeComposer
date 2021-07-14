@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -14,6 +15,7 @@ import java.awt.geom.Ellipse2D;
 import javax.swing.JComponent;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
@@ -173,14 +175,18 @@ class RangeSliderUI extends BasicSliderUI {
 		Point center = new Point((int) (clipRect.getCenterX()), (int) clipRect.getCenterY());
 		int leftMid = ((int) (clipRect.getMinX() + center.x) / 2);
 		int rightMid = ((int) (clipRect.getMaxX() + center.x) / 2);
-		String valueString = "Velocity Range";
+
 		if (g instanceof Graphics2D) {
+			g.setFont(new Font("Arial", Font.PLAIN, 12));
 			Color col = VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
 					: VibeComposerGUI.lightModeUIColor;
-			g.setColor(col);
+			g.setColor(UIManager.getColor("Label.foreground"));
 			Graphics2D g2d = (Graphics2D) g;
+			String valueString = "Velocity Range";
 			g2d.drawString(valueString, center.x - 1 - valueString.length() * 3, center.y - 6);
 
+			g.setColor(col);
+			g.setFont(new Font("Arial", Font.BOLD, 12));
 			RangeSlider actualSlider = (RangeSlider) slider;
 			valueString = actualSlider.getValue() + "";
 			g2d.drawString(valueString, leftMid - 1 - valueString.length() * 3, center.y + 15);
