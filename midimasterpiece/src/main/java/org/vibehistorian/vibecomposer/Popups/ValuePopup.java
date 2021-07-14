@@ -42,7 +42,7 @@ public class ValuePopup {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					applyAndClose();
+					close();
 				}
 
 			}
@@ -54,13 +54,7 @@ public class ValuePopup {
 
 	}
 
-	public void applyAndClose() {
-		try {
-			customInput = Integer.valueOf(numPanel.getTextfield().getText());
-		} catch (NumberFormatException ex) {
-			System.out.println("Invalid value: " + numPanel.getTextfield().getText());
-		}
-
+	public void close() {
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
 				.postEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
 
@@ -77,6 +71,11 @@ public class ValuePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
+				try {
+					customInput = Integer.valueOf(numPanel.getTextfield().getText());
+				} catch (NumberFormatException ex) {
+					System.out.println("Invalid value: " + numPanel.getTextfield().getText());
+				}
 				if (customInput != null) {
 					butt.setValue(customInput);
 				}

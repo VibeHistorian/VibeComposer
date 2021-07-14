@@ -28,7 +28,7 @@ public class RandomValueButton extends JButton {
 					setText("0");
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
 					if (singlePopup != null) {
-						singlePopup.applyAndClose();
+						singlePopup.close();
 					}
 					singlePopup = new ValuePopup(RandomValueButton.this);
 				}
