@@ -691,12 +691,14 @@ public class MidiGenerator implements JMC {
 		for (int i = start; i < end; i++) {
 
 			List<Integer> chordFreqs = new ArrayList<>();
+			double totalDuration = 0;
 			for (Note n : chordMelodyMap1.get(i)) {
 				double dur = n.getRhythmValue();
 				double durCounter = 0.0;
-				while (durCounter < dur) {
+				while (durCounter < dur && totalDuration < progressionDurations.get(i)) {
 					chordFreqs.add(n.getPitch() % 12);
 					durCounter += Durations.SIXTEENTH_NOTE;
+					totalDuration += Durations.SIXTEENTH_NOTE;
 				}
 			}
 
@@ -1618,6 +1620,18 @@ public class MidiGenerator implements JMC {
 			chordMelodyMap1.get(Integer.valueOf(chordCounter)).add(n);
 			rhythmCounter += n.getRhythmValue();
 		}
+		System.out.println("Rhythm counter end: " + rhythmCounter);
+		while (rhythmCounter >= chordSeparator + 0.001) {
+			System.out.println("NEXT CHORD!");
+			chordSeparator += separatorValue;
+			chordCounter++;
+			progDurations.add(separatorValue);
+			if (!chordMelodyMap1.containsKey(Integer.valueOf(chordCounter))) {
+				chordMelodyMap1.put(Integer.valueOf(chordCounter), new ArrayList<>());
+			}
+			chordMelodyMap1.get(Integer.valueOf(chordCounter))
+					.add(noteList.get(noteList.size() - 1));
+		}
 		System.out.println("Processed melody, chords: " + (chordCounter + 1));
 		List<String> chordStrings = makeMelodyPitchFrequencyMap(0, chordMelodyMap1.keySet().size(),
 				1);
@@ -1988,6 +2002,7 @@ public class MidiGenerator implements JMC {
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
 			boolean forceRandomOct = false;
+			boolean fillLastBeat = false;
 
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
@@ -2021,6 +2036,9 @@ public class MidiGenerator implements JMC {
 							break;
 						case 2:
 							forceRandomOct = true;
+							break;
+						case 3:
+							fillLastBeat = true;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -2065,18 +2083,21 @@ public class MidiGenerator implements JMC {
 					}
 
 					pitch += extraTranspose;
-					if (partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
-							.get(p) == 0) {
-						pitch = Integer.MIN_VALUE;
-					}
-					if (!ignoreChordSpanFill && (ap.getChordSpanFill() != ChordSpanFill.ALL)) {
-						if ((ap.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
+					if (!fillLastBeat || j < actualProgression.size() - 1) {
+						if (partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
+								.get(p) == 0) {
 							pitch = Integer.MIN_VALUE;
 						}
-						if ((ap.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
-							pitch = Integer.MIN_VALUE;
+						if (!ignoreChordSpanFill && (ap.getChordSpanFill() != ChordSpanFill.ALL)) {
+							if ((ap.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
+								pitch = Integer.MIN_VALUE;
+							}
+							if ((ap.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
+								pitch = Integer.MIN_VALUE;
+							}
 						}
 					}
+
 
 					double swingDuration = chordDurationArp
 							* (swingPercentAmount / ((double) 50.0));
