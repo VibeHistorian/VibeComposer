@@ -1,13 +1,20 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -31,13 +38,19 @@ public class NumPanel extends JPanel {
 	private int buttonPresses = 0;
 	private int defaultValue = 50;
 	private boolean allowValuesOutsideRange = false;
+	private JButton[] numButtons = null;
+	private JButton clearButton = new JButton("X");
+	private JButton enterButton = new JButton("OK");
+	private JButton minusButton = new JButton("-");
+
+	private JPanel buttonPanel = new JPanel();
 
 	public NumPanel(String name, int value) {
 		this(name, value, 0, 100);
 	}
 
 	public NumPanel(String name, int value, int minimum, int maximum) {
-		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setOpaque(false);
 		defaultValue = value;
 		label = new JLabel(name);
@@ -50,6 +63,82 @@ public class NumPanel extends JPanel {
 		add(slider);
 		naturalMax = maximum;
 		naturalMin = minimum;
+		buttonPanel.setLayout(new GridLayout(5, 3, 0, 0));
+		numButtons = new JButton[10];
+		for (int i = 0; i < 10; i++) {
+			int numI = i + 1;
+			if (i < 9) {
+				numButtons[i] = new JButton(numI + "");
+				numButtons[i].addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						removeSelectedAndWrite("" + numI, false);
+					}
+
+				});
+			} else {
+				numButtons[i] = new JButton("0");
+				numButtons[i].addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						removeSelectedAndWrite("0", false);
+					}
+
+				});
+			}
+
+			numButtons[i].setPreferredSize(new Dimension(15, 15));
+			buttonPanel.add(numButtons[i]);
+		}
+		clearButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				removeSelectedAndWrite("", true);
+			}
+
+		});
+		enterButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				closeParentFrame();
+			}
+
+		});
+		minusButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!text.getText().contains("-")) {
+					removeSelectedAndWrite("-", true);
+				}
+
+			}
+
+		});
+		buttonPanel.add(minusButton);
+		buttonPanel.add(clearButton);
+		buttonPanel.add(enterButton);
+		for (Component c : buttonPanel.getComponents()) {
+			c.setFocusable(false);
+		}
+		add(buttonPanel);
+
+	}
+
+	public void removeSelectedAndWrite(String s, boolean set) {
+		if (text.getSelectedText() != null || set) {
+			text.setText("");
+		}
+		text.setText(text.getText() + s);
+	}
+
+	public void closeParentFrame() {
+		JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(NumPanel.this);
+		Toolkit.getDefaultToolkit().getSystemEventQueue()
+				.postEvent(new WindowEvent(parent, WindowEvent.WINDOW_CLOSING));
+
 	}
 
 	private void initSlider(int minimum, int maximum, int value) {

@@ -341,7 +341,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			repaint();
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
 			if (singlePopup != null) {
-				singlePopup.applyAndClose();
+				singlePopup.close();
 			}
 			singlePopup = new KnobValuePopup(this, stretchAfterCustomInput);
 		}

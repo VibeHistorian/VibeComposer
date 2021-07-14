@@ -45,7 +45,7 @@ public class KnobValuePopup {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					applyAndClose();
+					close();
 				}
 
 			}
@@ -57,12 +57,7 @@ public class KnobValuePopup {
 
 	}
 
-	public void applyAndClose() {
-		try {
-			customInput = Integer.valueOf(numPanel.getTextfield().getText());
-		} catch (NumberFormatException ex) {
-			System.out.println("Invalid value: " + numPanel.getTextfield().getText());
-		}
+	public void close() {
 
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
 				.postEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
@@ -80,6 +75,11 @@ public class KnobValuePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
+				try {
+					customInput = Integer.valueOf(numPanel.getTextfield().getText());
+				} catch (NumberFormatException ex) {
+					System.out.println("Invalid value: " + numPanel.getTextfield().getText());
+				}
 				if (customInput != null) {
 					int val = customInput;
 					if (stretchAfterCustomInput) {
