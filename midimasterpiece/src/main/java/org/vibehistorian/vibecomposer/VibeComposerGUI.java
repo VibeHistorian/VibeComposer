@@ -436,6 +436,7 @@ public class VibeComposerGUI extends JFrame
 
 	Thread cycle;
 	JCheckBox useVolumeSliders;
+	JCheckBox loopBeat;
 	JSlider slider;
 	JLabel currentTime;
 	JLabel totalTime;
@@ -2103,6 +2104,20 @@ public class VibeComposerGUI extends JFrame
 									}
 								}
 							}
+							if (loopBeat.isSelected()) {
+								if (showScore.isSelected()) {
+									showScore.setSelected(false);
+
+								}
+								MidiGenerator.START_TIME_DELAY = 0.05;
+								if (slider.getValue() > slider.getMaximum() / 4) {
+									stopMidi();
+									if (sequencer != null)
+										composeMidi(true);
+								}
+							} else {
+								MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+							}
 
 
 						}
@@ -2214,6 +2229,7 @@ public class VibeComposerGUI extends JFrame
 				showScorePicker);
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
+		loopBeat = new JCheckBox("Loop Beat", true);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -2280,6 +2296,7 @@ public class VibeComposerGUI extends JFrame
 		playSettingsPanel.add(showScore);
 		playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(useVolumeSliders);
+		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(midiMode);
 		playSettingsPanel.add(midiModeDevices);
 
