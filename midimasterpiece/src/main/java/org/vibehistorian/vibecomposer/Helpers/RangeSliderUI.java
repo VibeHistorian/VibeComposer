@@ -183,7 +183,7 @@ class RangeSliderUI extends BasicSliderUI {
 					: VibeComposerGUI.lightModeUIColor;
 			g.setColor(UIManager.getColor("Label.foreground"));
 			Graphics2D g2d = (Graphics2D) g;
-			String valueString = "Velocity Range";
+			String valueString = slider.getName();
 			g2d.drawString(valueString, center.x - 1 - valueString.length() * 3, center.y - 6);
 
 			g.setColor(col);

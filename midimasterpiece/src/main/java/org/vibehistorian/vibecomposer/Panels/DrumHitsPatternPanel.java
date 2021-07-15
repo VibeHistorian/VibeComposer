@@ -82,6 +82,10 @@ public class DrumHitsPatternPanel extends JPanel {
 						mouseButton = -1;
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
+						if (RhythmPattern.valueOf(
+								(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
+							patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+						}
 					}
 				}
 
@@ -105,7 +109,6 @@ public class DrumHitsPatternPanel extends JPanel {
 							(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
 						patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
 					}
-					System.out.println("ACTION!");
 				}
 
 			});

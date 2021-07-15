@@ -41,7 +41,7 @@ public class RangeSlider extends JSlider {
 	 */
 	private void initSlider() {
 		setOpaque(false);
-		setPreferredSize(new Dimension(100, 48));
+		setPreferredSize(new Dimension(100, 35));
 		setOrientation(HORIZONTAL);
 	}
 
