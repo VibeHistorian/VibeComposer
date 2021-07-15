@@ -2,11 +2,12 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -18,6 +19,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -65,6 +68,7 @@ public class VariationPopup {
 		measuresPanel.add(measureCombo);
 		measuresPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		tablesPanel.add(measuresPanel);
+		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
 
 			JTable table = new JTable();
@@ -89,44 +93,53 @@ public class VariationPopup {
 			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
 			int fI = i;
 			tables[i] = table;
+			JPanel categoryPanel = new JPanel();
+			categoryPanel.setLayout(new BoxLayout(categoryPanel, BoxLayout.Y_AXIS));
+			categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
 			JPanel categoryButtons = new JPanel();
 			JLabel categoryName = new JLabel(tableNames[i].toUpperCase());
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
-			categoryButtons.add(categoryName);
-			JButton addAllCategory = new JButton("Include All");
-			addAllCategory.setAlignmentX(Component.LEFT_ALIGNMENT);
-			addAllCategory.addActionListener(new ActionListener() {
+			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
+			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
+			categoryPanel.add(categoryName);
 
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					for (int j = 0; j < VibeComposerGUI.getInstList(fI).size(); j++) {
-						table.getModel().setValueAt(Boolean.TRUE, j, 1);
-						//sec.resetPresence(fI, j);
-						table.repaint();
+			for (int j = 1; j < Section.variationDescriptions[i].length; j++) {
+				int fJ = j;
+				JButton butt = new JButton(Section.variationDescriptions[i][j]);
+				//butt.setPreferredSize(new Dimension(80, 25));
+				butt.setAlignmentX(Component.LEFT_ALIGNMENT);
+				butt.addMouseListener(new MouseAdapter() {
+
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						if (SwingUtilities.isLeftMouseButton(e)) {
+							for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+								if (fJ > 1) {
+									table.getModel().setValueAt(Boolean.TRUE, k, 1);
+								}
+								table.getModel().setValueAt(Boolean.TRUE, k, fJ);
+								//sec.resetPresence(fI, j);
+								table.repaint();
+							}
+						} else {
+							for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+								table.getModel().setValueAt(Boolean.FALSE, k, fJ);
+								//sec.resetPresence(fI, j);
+								table.repaint();
+							}
+						}
+
+
 					}
 
-				}
+				});
+				categoryButtons.add(butt);
+			}
 
-			});
-			JButton removeAllCategory = new JButton("Remove All");
-			removeAllCategory.setAlignmentX(Component.LEFT_ALIGNMENT);
-			removeAllCategory.addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					for (int j = 0; j < VibeComposerGUI.getInstList(fI).size(); j++) {
-						table.getModel().setValueAt(Boolean.FALSE, j, 1);
-						//sec.setPresence(fI, j);
-						table.repaint();
-					}
-
-				}
-
-			});
-			categoryButtons.add(addAllCategory);
-			categoryButtons.add(removeAllCategory);
 			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
-			tablesPanel.add(categoryButtons);
+			categoryPanel.add(categoryButtons);
+			tablesPanel.add(categoryPanel);
 			JTableHeader header = tables[i].getTableHeader();
 			header.setAlignmentX(Component.LEFT_ALIGNMENT);
 			tablesPanel.add(header);
@@ -138,9 +151,9 @@ public class VariationPopup {
 		scroll = new JScrollPane(tablesPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
-
-		int heightLimit = 850;
-		frame.setPreferredSize(new Dimension(500,
+		scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+		int heightLimit = 950;
+		frame.setPreferredSize(new Dimension(650,
 				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
 		int newLocX = parentLoc.x - 190;
 		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);
