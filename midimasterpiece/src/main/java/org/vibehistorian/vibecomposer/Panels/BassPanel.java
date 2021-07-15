@@ -19,6 +19,7 @@ public class BassPanel extends InstPanel {
 
 	private JCheckBox useRhythm = new JCheckBox("Use rhythm", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
+	private JCheckBox doubleOct = new JCheckBox("Double oct.", false);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
@@ -46,6 +47,8 @@ public class BassPanel extends InstPanel {
 		this.add(transpose);
 		//this.add(new JKnob());
 
+		this.add(doubleOct);
+
 		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
@@ -67,6 +70,7 @@ public class BassPanel extends InstPanel {
 		part.setOrder(getPanelOrder());
 		part.setUseRhythm(getUseRhythm());
 		part.setAlternatingRhythm(getAlternatingRhythm());
+		part.setDoubleOct(getDoubleOct());
 		return part;
 	}
 
@@ -76,6 +80,7 @@ public class BassPanel extends InstPanel {
 		setPanelOrder(part.getOrder());
 		setUseRhythm(part.isUseRhythm());
 		setAlternatingRhythm(part.isAlternatingRhythm());
+		setDoubleOct(part.isDoubleOct());
 	}
 
 	public boolean getUseRhythm() {
@@ -92,6 +97,14 @@ public class BassPanel extends InstPanel {
 
 	public void setAlternatingRhythm(boolean alternatingRhythm) {
 		this.alternatingRhythm.setSelected(alternatingRhythm);
+	}
+
+	public boolean getDoubleOct() {
+		return doubleOct.isSelected();
+	}
+
+	public void setDoubleOct(boolean doubleOct) {
+		this.doubleOct.setSelected(doubleOct);
 	}
 
 	@Override

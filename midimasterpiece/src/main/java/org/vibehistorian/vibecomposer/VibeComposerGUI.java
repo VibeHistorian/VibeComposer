@@ -852,8 +852,9 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.getVolSlider().setVisible(false);
 				melodyPanel.getSoloMuter().setVisible(false);
 				melodyPanel.getInstrumentBox().setVisible(false);
-				melodyPanel.setVelocityMin(63);
 				melodyPanel.setVelocityMax(80);
+				melodyPanel.setVelocityMin(63);
+
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(12);
 				} else {
@@ -1567,6 +1568,7 @@ public class VibeComposerGUI extends JFrame
 					} else {
 						int count = StringUtils.countMatches(value, ",") + 1;
 						int color = 120 + (70 * count) / maxCounts[row];
+						color = Math.min(color, 200);
 						comp.setBackground(new Color(color, color, color));
 					}
 				} else {
@@ -4397,8 +4399,9 @@ public class VibeComposerGUI extends JFrame
 
 			dp.setPattern(RhythmPattern.values()[patternOrder]);
 			int velocityMin = drumPanelGenerator.nextInt(30) + 50 + adjustVelocity;
-			dp.setVelocityMin(velocityMin);
+
 			dp.setVelocityMax(1 + velocityMin + drumPanelGenerator.nextInt(25));
+			dp.setVelocityMin(velocityMin);
 
 			if (patternOrder > 0) {
 				dp.setPauseChance(drumPanelGenerator.nextInt(5) + 0);
@@ -4509,8 +4512,10 @@ public class VibeComposerGUI extends JFrame
 
 			cp.setPattern(RhythmPattern.values()[patternOrder]);
 
-			cp.setVelocityMin(randomChordMinVel.getInt());
+
 			cp.setVelocityMax(randomChordMaxVel.getInt());
+			cp.setVelocityMin(randomChordMinVel.getInt());
+
 
 			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(randomChordShiftChance.getInt())
 					&& patternOrder > 0) {
@@ -4673,9 +4678,9 @@ public class VibeComposerGUI extends JFrame
 				ap.setChordSpanFill(ChordSpanFill.getWeighted(arpPanelGenerator.nextInt(100)));
 			}
 
-			ap.setVelocityMin(randomArpMinVel.getInt());
-			ap.setVelocityMax(randomArpMaxVel.getInt());
 
+			ap.setVelocityMax(randomArpMaxVel.getInt());
+			ap.setVelocityMin(randomArpMinVel.getInt());
 
 			if (arpPanelGenerator.nextInt(100) < Integer.valueOf(arpShiftChance.getInt())
 					&& patternOrder > 0) {

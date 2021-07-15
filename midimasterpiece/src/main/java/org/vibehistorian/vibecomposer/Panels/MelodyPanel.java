@@ -17,9 +17,9 @@ public class MelodyPanel extends InstPanel {
 		midiChannel.setSelectedItem("1");
 		instrument.initInstPool(instPool);
 		setInstrument(8);
+		initDefaults();
 		setVelocityMin(80);
 		setVelocityMax(105);
-		initDefaults();
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/

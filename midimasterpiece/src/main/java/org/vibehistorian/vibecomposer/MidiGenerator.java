@@ -1258,6 +1258,21 @@ public class MidiGenerator implements JMC {
 					if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// TODO
 					}
+
+					if (gc.getBassPart().isDoubleOct()) {
+						CPhrase b2 = b.copy();
+						Mod.transpose(b2, 12);
+						Mod.increaseDynamic((Phrase) b2.getPhraseList().get(0), -15);
+						Part bassPart = new Part();
+						bassPart.addCPhrase(b2);
+						bassPart.addCPhrase(b);
+						JMusicUtilsCustom.consolidate(bassPart);
+
+						b = new CPhrase();
+						b.setStartTime(START_TIME_DELAY);
+						b.addPhrase(bassPart.getPhrase(0));
+					}
+
 					sec.setBass(b);
 					if (!overridden)
 						sec.setPresence(1, 0);
@@ -1989,6 +2004,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> arpOctavePattern = arpMap.get(ARP_OCTAVE_KEY);
 		List<Integer> arpPausesPattern = arpMap.get(ARP_PAUSES_KEY);
 
+		List<Boolean> directions = null;
 
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
 
@@ -2040,6 +2056,12 @@ public class MidiGenerator implements JMC {
 						case 3:
 							fillLastBeat = true;
 							break;
+						case 4:
+							if (directions == null) {
+								directions = generateMelodyDirectionsFromChordProgression(
+										actualProgression, true);
+							}
+							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
 						}
@@ -2049,10 +2071,17 @@ public class MidiGenerator implements JMC {
 				double chordDurationArp = longestChord / ((double) repeatedArpsPerChord);
 				int[] chord = convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
-				if (ap.getArpPattern() != ArpPattern.RANDOM) {
-					arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
-							chord.length, ap.getPatternRepeat());
+				if (directions != null) {
+					ArpPattern pat = (directions.get(j)) ? ArpPattern.UP : ArpPattern.DOWN;
+					arpPattern = pat.getPatternByLength(ap.getHitsPerPattern(), chord.length,
+							ap.getPatternRepeat());
 					arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
+				} else {
+					if (ap.getArpPattern() != ArpPattern.RANDOM) {
+						arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
+								chord.length, ap.getPatternRepeat());
+						arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
+					}
 				}
 
 				double durationNow = 0;

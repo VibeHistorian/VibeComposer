@@ -111,6 +111,8 @@ public abstract class InstPanel extends JPanel {
 		volSlider.setPaintTicks(true);
 
 		minMaxVelSlider.setName("Velocity range");
+		setVelocityMax(90);
+		setVelocityMin(63);
 
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));

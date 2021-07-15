@@ -9,6 +9,7 @@ public class BassPart extends InstPart {
 
 	private boolean useRhythm = true;
 	private boolean alternatingRhythm = true;
+	private boolean doubleOct = false;
 
 	public BassPart() {
 
@@ -28,5 +29,13 @@ public class BassPart extends InstPart {
 
 	public void setAlternatingRhythm(boolean alternatingRhythm) {
 		this.alternatingRhythm = alternatingRhythm;
+	}
+
+	public boolean isDoubleOct() {
+		return doubleOct;
+	}
+
+	public void setDoubleOct(boolean doubleOct) {
+		this.doubleOct = doubleOct;
 	}
 }
