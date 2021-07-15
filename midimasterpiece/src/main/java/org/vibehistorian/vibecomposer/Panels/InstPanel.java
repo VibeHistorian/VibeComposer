@@ -69,8 +69,6 @@ public abstract class InstPanel extends JPanel {
 
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
-	protected KnobPanel velocityMin = new KnobPanel("Min<br>Vel", 70, 0, 126);
-	protected KnobPanel velocityMax = new KnobPanel("Max<br>Vel", 90, 1, 127);
 
 	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
 

@@ -171,11 +171,12 @@ class RangeSliderUI extends BasicSliderUI {
 			if (clipRect.intersects(thumbRect)) {
 				paintLowerThumb(g);
 			}
-		}
-		Point center = new Point((int) (clipRect.getCenterX()), (int) clipRect.getCenterY());
-		int leftMid = ((int) (clipRect.getMinX() + center.x) / 2);
-		int rightMid = ((int) (clipRect.getMaxX() + center.x) / 2);
 
+		}
+		Dimension dims = slider.getPreferredSize();
+		Point center = new Point(dims.width / 2, dims.height / 2);
+		int leftMid = center.x - 25;
+		int rightMid = center.x + 25;
 		if (g instanceof Graphics2D) {
 			g.setFont(new Font("Arial", Font.PLAIN, 12));
 			Color col = VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
