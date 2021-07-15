@@ -420,12 +420,34 @@ class RangeSliderUI extends BasicSliderUI {
 					upperPressed = true;
 				} else if (thumbRect.contains(currentMouseX, currentMouseY)) {
 					lowerPressed = true;
+				} else {
+					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
+							/ 2);
+					offset = 5;
+					if (currentMouseX < middleX) {
+						lowerPressed = true;
+						moveLowerThumb();
+					} else {
+						upperPressed = true;
+						moveUpperThumb();
+					}
 				}
 			} else {
 				if (thumbRect.contains(currentMouseX, currentMouseY)) {
 					lowerPressed = true;
 				} else if (upperThumbRect.contains(currentMouseX, currentMouseY)) {
 					upperPressed = true;
+				} else {
+					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
+							/ 2);
+					offset = 5;
+					if (currentMouseX < middleX) {
+						lowerPressed = true;
+						moveLowerThumb();
+					} else {
+						upperPressed = true;
+						moveUpperThumb();
+					}
 				}
 			}
 
