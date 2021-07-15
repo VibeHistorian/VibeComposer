@@ -296,6 +296,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeArrangementOnCompose;
 	JCheckBox globalSwingOverride;
 	KnobPanel globalSwingOverrideValue;
+	KnobPanel loopBeatCount;
 
 
 	// chord variety settings
@@ -1761,6 +1762,9 @@ public class VibeComposerGUI extends JFrame
 		allInstsPanel.add(reinitInstPools);
 		extraSettingsPanel.add(allInstsPanel);
 
+		loopBeatCount = new KnobPanel("Loop # Beats", 1, 1, 4);
+		extraSettingsPanel.add(loopBeatCount);
+
 		toggleableComponents.add(globalSwingPanel);
 		toggleableComponents.add(useDoubledPanel);
 
@@ -2109,8 +2113,8 @@ public class VibeComposerGUI extends JFrame
 									showScore.setSelected(false);
 
 								}
-								MidiGenerator.START_TIME_DELAY = 0.05;
-								if (slider.getValue() > slider.getMaximum() / 4) {
+								MidiGenerator.START_TIME_DELAY = 0.0001;
+								if (slider.getValue() > loopBeatCount.getInt() * beatFromBpm()) {
 									stopMidi();
 									if (sequencer != null)
 										composeMidi(true);
@@ -2141,6 +2145,17 @@ public class VibeComposerGUI extends JFrame
 			}
 		};
 		cycle.start();
+	}
+
+	private static int delayed() {
+		return (int) (MidiGenerator.START_TIME_DELAY * 2450 * 60 * elongateMidi.getInt()
+				/ mainBpm.getInt());
+	}
+
+	private static int beatFromBpm() {
+		int finalVal = delayed() + (2450 * 60 * elongateMidi.getInt() / mainBpm.getInt());
+		//System.out.println(finalVal + "");
+		return finalVal;
 	}
 
 	private void initControlPanel(int startY, int anchorSide) {
@@ -2229,7 +2244,7 @@ public class VibeComposerGUI extends JFrame
 				showScorePicker);
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
-		loopBeat = new JCheckBox("Loop Beat", true);
+		loopBeat = new JCheckBox("Loop Beat", false);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
