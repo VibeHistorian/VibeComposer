@@ -46,8 +46,7 @@ public class BassPanel extends InstPanel {
 		this.add(transpose);
 		//this.add(new JKnob());
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);

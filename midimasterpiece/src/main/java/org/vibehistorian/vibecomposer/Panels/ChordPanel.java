@@ -72,8 +72,7 @@ public class ChordPanel extends InstPanel {
 		this.add(transitionSplit);
 		this.add(delay);
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);

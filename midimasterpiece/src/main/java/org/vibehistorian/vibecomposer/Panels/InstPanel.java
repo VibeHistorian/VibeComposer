@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -66,6 +67,8 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
 	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
 
+
+	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
 	protected KnobPanel velocityMin = new KnobPanel("Min<br>Vel", 70, 0, 126);
 	protected KnobPanel velocityMax = new KnobPanel("Max<br>Vel", 90, 1, 127);
 
@@ -120,8 +123,7 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(chordNotesStretch);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
-		toggleableComponents.add(velocityMin);
-		toggleableComponents.add(velocityMax);
+		toggleableComponents.add(minMaxVelSlider);
 		toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
@@ -331,19 +333,19 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getVelocityMin() {
-		return Integer.valueOf(velocityMin.getInt());
+		return Integer.valueOf(minMaxVelSlider.getValue());
 	}
 
 	public void setVelocityMin(int velocityMin) {
-		this.velocityMin.setInt(velocityMin);
+		this.minMaxVelSlider.setValue(velocityMin);
 	}
 
 	public int getVelocityMax() {
-		return Integer.valueOf(velocityMax.getInt());
+		return Integer.valueOf(minMaxVelSlider.getUpperValue());
 	}
 
 	public void setVelocityMax(int velocityMax) {
-		this.velocityMax.setInt(velocityMax);
+		this.minMaxVelSlider.setUpperValue(velocityMax);
 	}
 
 	public JSlider getVolSlider() {

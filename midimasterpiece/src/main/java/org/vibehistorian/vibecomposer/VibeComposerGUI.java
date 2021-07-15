@@ -364,6 +364,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomArpHitsPerPattern;
 	JCheckBox randomArpAllSameInst;
 	JCheckBox randomArpAllSameHits;
+	JCheckBox randomArpLimitPowerOfTwo;
 	KnobPanel arpShiftChance;
 	ScrollComboBox<String> randomArpHitsPicker;
 	JCheckBox randomArpUseChordFill;
@@ -1031,6 +1032,7 @@ public class VibeComposerGUI extends JFrame
 		randomArpHitsPerPattern = new JCheckBox("Random#", true);
 		randomArpAllSameInst = new JCheckBox("One Inst.", false);
 		randomArpAllSameHits = new JCheckBox("One #", true);
+		randomArpLimitPowerOfTwo = new JCheckBox("<html>Limit 2<sup>n</sup>", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
 		arpShiftChance = new KnobPanel("Shift%", 25);
 		randomArpUseOctaveAdjustments = new JCheckBox("Rand. Oct.", false);
@@ -4503,16 +4505,22 @@ public class VibeComposerGUI extends JFrame
 		int fixedHitsGenerated = -1;
 		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
 			Random instGen = new Random();
-			fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-
-			if (fixedHitsGenerated == 5) {
-				// reduced chance of 5
+			if (randomArpLimitPowerOfTwo.isSelected()) {
+				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 8 }, 0);
+			} else {
 				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
+
+				if (fixedHitsGenerated == 5) {
+					// reduced chance of 5
+					fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
+							+ 2;
+				}
+				if (fixedHitsGenerated == 7) {
+					// eliminate 7
+					fixedHitsGenerated++;
+				}
 			}
-			if (fixedHitsGenerated == 7) {
-				// eliminate 7
-				fixedHitsGenerated++;
-			}
+
 			randomArpHitsPicker.setSelectedItem("" + fixedHitsGenerated);
 		}
 
@@ -4555,15 +4563,21 @@ public class VibeComposerGUI extends JFrame
 						ap.setHitsPerPattern(fixedHitsGenerated);
 					} else {
 						Random instGen = new Random();
-						int value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-
-						if (value == 5) {
-							// reduced chance of 5
+						int value = -1;
+						if (randomArpLimitPowerOfTwo.isSelected()) {
+							value = getRandomFromArray(instGen, new int[] { 2, 4, 8 }, 0);
+						} else {
 							value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-						}
-						if (value == 7) {
-							// eliminate 7
-							value++;
+
+							if (value == 5) {
+								// reduced chance of 5
+								value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
+										+ 2;
+							}
+							if (value == 7) {
+								// eliminate 7
+								value++;
+							}
 						}
 						ap.setHitsPerPattern(value);
 					}

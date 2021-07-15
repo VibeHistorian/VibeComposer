@@ -59,8 +59,7 @@ public class DrumPanel extends InstPanel {
 
 		this.add(exceptionChance);
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(minMaxVelSlider);
 
 
 		this.add(delay);

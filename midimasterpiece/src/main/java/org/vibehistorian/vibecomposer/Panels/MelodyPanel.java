@@ -5,15 +5,12 @@ import java.awt.event.ActionListener;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 public class MelodyPanel extends InstPanel {
 
 	private static final long serialVersionUID = -7861296600641561431L;
-
-	private RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
@@ -34,16 +31,11 @@ public class MelodyPanel extends InstPanel {
 		this.add(lockInst);
 		this.add(instrument);
 
-		minMaxVelSlider.setMajorTickSpacing(1);
-		minMaxVelSlider.setValue(0);
-		minMaxVelSlider.setUpperValue(127);
-
 		this.add(minMaxVelSlider);
 
 		this.add(transpose);
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(minMaxVelSlider);
 
 		pauseChance.setInt(0);
 		this.add(pauseChance);
