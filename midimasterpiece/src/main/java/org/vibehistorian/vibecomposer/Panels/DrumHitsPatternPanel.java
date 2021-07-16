@@ -64,6 +64,7 @@ public class DrumHitsPatternPanel extends JPanel {
 			hitChecks[i].addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
+					//System.out.println("True pattern size: " + truePattern.size());
 					if (mouseButton == 2) {
 						hitChecks[fI].setSelected(true);
 					} else if (mouseButton == 3) {

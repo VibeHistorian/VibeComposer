@@ -771,7 +771,11 @@ public class MidiUtils {
 	}
 
 	public static Integer getInstByIndex(int index, POOL instPool) {
-		List<Integer> instPoolNumbers = getInstNumbers(INST_POOLS.get(instPool));
+		return getInstByIndex(index, INST_POOLS.get(instPool));
+	}
+
+	public static Integer getInstByIndex(int index, String[] instArray) {
+		List<Integer> instPoolNumbers = getInstNumbers(instArray);
 		return instPoolNumbers.get(index % instPoolNumbers.size());
 	}
 

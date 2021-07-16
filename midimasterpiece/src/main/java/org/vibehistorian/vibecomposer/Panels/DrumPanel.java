@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -101,7 +102,14 @@ public class DrumPanel extends InstPanel {
 		DrumPart part = (DrumPart) p;
 
 		setDefaultsFromInstPart(part);
-		comboPanel.setTruePattern(part.getCustomPattern());
+		if (part.getCustomPattern() != null && part.getCustomPattern().size() > 16) {
+			comboPanel.setTruePattern(part.getCustomPattern());
+		} else {
+			List<Integer> custPattern = part.getPattern().getPatternByLength(32);
+			comboPanel.setTruePattern(custPattern);
+			System.out.println("Set from non custom!");
+		}
+
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
 		setUseMelodyNotePattern(part.isUseMelodyNotePattern());

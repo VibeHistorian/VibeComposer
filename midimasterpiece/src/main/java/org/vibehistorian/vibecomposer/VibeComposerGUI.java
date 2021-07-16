@@ -148,6 +148,7 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPartsWrapper;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -1347,6 +1348,7 @@ public class VibeComposerGUI extends JFrame
 			refreshActual = true;
 			//variationJD.getFrame().setTitle(action);
 		}
+		createBlueprintedDrums(drumPanels.size());
 
 		if (!refreshActual) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
@@ -3711,6 +3713,14 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
+	private void remapDrumsSoft(String remapType) {
+		if (remapType.equalsIgnoreCase("Semi")) {
+			drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES_SEMI));
+		} else {
+			drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES));
+		}
+	}
+
 	private void recalculateTabPaneCounts() {
 		instrumentTabPane.setTitleAt(0, "Melody (" + melodyPanels.size() + ")");
 		instrumentTabPane.setTitleAt(1, " Bass  (1)");
@@ -4316,6 +4326,41 @@ public class VibeComposerGUI extends JFrame
 			panel.setFromInstPart(part);
 		}
 
+		repaint();
+	}
+
+	private void createBlueprintedDrums(int panelCount) {
+		for (Iterator<DrumPanel> panelI = drumPanels.iterator(); panelI.hasNext();) {
+			DrumPanel panel = panelI.next();
+			((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+			panelI.remove();
+
+		}
+		drumPanels.clear();
+		for (int i = 0; i < panelCount; i++) {
+			int order = i % DrumDefaults.drums.length;
+			DrumPart dp = DrumDefaults.getDrum(order);
+			DrumDefaults.drumSettings[order].applyToDrumPart(dp);
+
+			DrumPanel dpp = (DrumPanel) addInstPanelToLayout(4);
+
+			if (changeMidiMapping.getText().contains("General")) {
+				System.out.println("Dp instrument: " + dp.getInstrument());
+				int formerIndex = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES)
+						.indexOf(dp.getInstrument());
+
+				dp.setInstrument(
+						MidiUtils.getInstByIndex(formerIndex, MidiUtils.DRUM_INST_NAMES_SEMI));
+			}
+
+			dp.setOrder(dpp.getPanelOrder());
+			dpp.setFromInstPart(dp);
+
+			dpp.getComboPanel().reapplyHits();
+			dpp.getComboPanel().reapplyShift();
+
+
+		}
 		repaint();
 	}
 
