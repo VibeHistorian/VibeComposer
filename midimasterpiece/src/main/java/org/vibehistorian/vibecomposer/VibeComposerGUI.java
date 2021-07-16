@@ -2115,14 +2115,17 @@ public class VibeComposerGUI extends JFrame
 									showScore.setSelected(false);
 
 								}
-								MidiGenerator.START_TIME_DELAY = 0.0001;
+								/*int del = delayed();
+								if (slider.getValue() < del) {
+									slider.setValue(del);
+								}*/
+
+
 								if (slider.getValue() > loopBeatCount.getInt() * beatFromBpm()) {
 									stopMidi();
 									if (sequencer != null)
 										composeMidi(true);
 								}
-							} else {
-								MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 							}
 
 
@@ -2150,12 +2153,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private static int delayed() {
-		return (int) (MidiGenerator.START_TIME_DELAY * 2450 * 60 * elongateMidi.getInt()
-				/ mainBpm.getInt());
+		return (int) (MidiGenerator.START_TIME_DELAY * 2000 * 60 / mainBpm.getInt());
 	}
 
 	private static int beatFromBpm() {
-		int finalVal = delayed() + (2450 * 60 * elongateMidi.getInt() / mainBpm.getInt());
+		int finalVal = delayed() + (1980 * 60 * elongateMidi.getInt() / mainBpm.getInt());
 		//System.out.println(finalVal + "");
 		return finalVal;
 	}
@@ -3727,6 +3729,13 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = collapseDrumTracks.isSelected();
 			MidiGenerator.noteMultiplier = elongateMidi.getInt();
 			MidiGenerator.recalculateDurations();
+
+			if (loopBeat.isSelected()) {
+				MidiGenerator.START_TIME_DELAY = 0.001;
+			} else {
+				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+			}
+
 			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
