@@ -1776,7 +1776,7 @@ public class MidiGenerator implements JMC {
 		Mod.transpose(cphraseBassRoot, -24 + gc.getBassPart().getTranspose());
 		cphraseBassRoot.setStartTime(START_TIME_DELAY);
 		if (genVars && variations != null) {
-			sec.setVariation(4, 0, variations);
+			sec.setVariation(1, 0, variations);
 		}
 		return cphraseBassRoot;
 
