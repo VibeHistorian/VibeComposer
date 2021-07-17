@@ -4128,8 +4128,8 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setMaxArpSwing(Integer.valueOf(randomArpMaxSwing.getInt()));
 
 		// drums
-		boolean isCustomMidiDevice = (device != null)
-				&& !device.getDeviceInfo().getName().contains("ervill");
+		boolean isCustomMidiDevice = midiMode.isSelected()
+				&& !((String) midiModeDevices.getSelectedItem()).contains("ervill");
 		guiConfig.setDrumCustomMapping(drumCustomMapping.isSelected() && isCustomMidiDevice);
 		guiConfig.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
 
@@ -4392,7 +4392,7 @@ public class VibeComposerGUI extends JFrame
 			pitches.set(1, 36);
 			pitches.set(2, 38);
 		}
-
+		Collections.sort(pitches);
 		for (int i = 0; i < panelCount; i++) {
 			DrumPart dpart = DrumDefaults.getDrumFromInstrument(pitches.get(i));
 			int order = DrumDefaults.getOrder(dpart.getInstrument());
@@ -4479,7 +4479,7 @@ public class VibeComposerGUI extends JFrame
 			pitches.set(2, 38);
 
 		}
-
+		Collections.sort(pitches);
 		for (int i = 0; i < panelCount; i++) {
 			DrumPanel dp = (DrumPanel) addInstPanelToLayout(4);
 			dp.setInstrument(pitches.get(i));
