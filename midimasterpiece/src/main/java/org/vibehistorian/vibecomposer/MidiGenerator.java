@@ -327,8 +327,14 @@ public class MidiGenerator implements JMC {
 				basicChordsUnsquished.set(i, convertChordToLength(basicChordsUnsquished.get(i),
 						chords.get(i).length, true));
 			}
-			usedChords = squishChordProgression(basicChordsUnsquished, gc.isSpiceFlattenBigChords(),
+
+			/* 
+			 * if...
+			 * usedChords = squishChordProgression(basicChordsUnsquished, gc.isSpiceFlattenBigChords(),
 					gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance());
+			 * */
+			usedChords = basicChordsUnsquished;
+
 		} else {
 			usedChords = chords;
 		}
