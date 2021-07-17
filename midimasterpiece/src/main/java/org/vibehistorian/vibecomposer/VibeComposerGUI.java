@@ -4306,9 +4306,9 @@ public class VibeComposerGUI extends JFrame
 		}
 		drumPanels.clear();
 		for (int i = 0; i < panelCount; i++) {
-			int order = i % DrumDefaults.drums.length;
-			DrumPart dp = DrumDefaults.getDrum(order);
-			DrumDefaults.drumSettings[order].applyToDrumPart(dp);
+			DrumPart dp = DrumDefaults.getRandomDrum();
+			int order = DrumDefaults.getOrder(dp.getInstrument());
+			DrumDefaults.drumSettings[order].applyToDrumPart(dp, lastRandomSeed);
 
 			DrumPanel dpp = (DrumPanel) addInstPanelToLayout(4);
 

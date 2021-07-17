@@ -830,4 +830,15 @@ public class MidiUtils {
 		return intervalInts.stream().mapToInt(i -> i).toArray();
 	}
 
+
+	public static <T> T getRandom(Random generator, T[] array) {
+		return getRandom(generator, array, 0, array.length);
+	}
+
+	public static <T> T getRandom(Random generator, T[] array, int from, int to) {
+		from = Math.max(from, 0);
+		to = Math.min(to, array.length);
+		return array[generator.nextInt(to - from) + from];
+	}
+
 }

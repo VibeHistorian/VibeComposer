@@ -2,14 +2,32 @@ package org.vibehistorian.vibecomposer.Parts.Defaults;
 
 import java.util.Random;
 
+import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 
 public class DrumSettings {
+
+	public static int MAX_SWING = 20;
+
 	RhythmPattern[] patterns;
 	Integer[] hits;
 	Integer[] chords;
 	Integer[] shift;
+	boolean variableShift = false;
+	int maxPause = 0;
+	int maxExc = 10;
+	boolean dynamicable = false;
+	boolean swingable = false;
+	boolean fillable = false;
+
+	public boolean isVariableShift() {
+		return variableShift;
+	}
+
+	public void setVariableShift(boolean variableShift) {
+		this.variableShift = variableShift;
+	}
 
 	public Integer[] getShift() {
 		return shift;
@@ -43,7 +61,7 @@ public class DrumSettings {
 		this.chords = chords;
 	}
 
-	public void applyToDrumPart(DrumPart dp) {
+	public void applyToDrumPart(DrumPart dp, int seed) {
 		if (patterns == null) {
 			throw new IllegalArgumentException("Not initialized DrumSettings!");
 		}
@@ -53,20 +71,27 @@ public class DrumSettings {
 		dp.setPattern(patterns[varOrder]);
 		dp.setHitsPerPattern(hits[varOrder]);
 		dp.setChordSpan(chords[varOrder]);
-		dp.setPatternShift(rand.nextInt(shift[varOrder] + 1));
+		if (variableShift) {
+			dp.setPatternShift(rand.nextInt(shift[varOrder] + 1));
+		} else {
+			dp.setPatternShift(shift[varOrder]);
+		}
+
 
 		if (dp.getPattern() == RhythmPattern.FULL) {
-			dp.setPauseChance(15);
+			dp.setPauseChance(rand.nextInt(maxPause + 1));
 		}
-	}
+		dp.setExceptionChance(rand.nextInt(maxExc + 1));
+		dp.setVelocityPattern(dynamicable ? rand.nextBoolean() : false);
+		if (fillable) {
+			dp.setChordSpanFill(ChordSpanFill.getWeighted(rand.nextInt(100)));
+		}
+		if (swingable) {
+			rand.setSeed(seed);
+			int swingPercent = 50 + rand.nextInt(MAX_SWING * 2 + 1) - MAX_SWING;
+			dp.setSwingPercent(swingPercent);
+		}
 
-	private static <T> T getRandom(Random generator, T[] array) {
-		return getRandom(generator, array, 0, array.length);
-	}
 
-	private static <T> T getRandom(Random generator, T[] array, int from, int to) {
-		from = Math.max(from, 0);
-		to = Math.min(to, array.length);
-		return array[generator.nextInt(to - from) + from];
 	}
 }

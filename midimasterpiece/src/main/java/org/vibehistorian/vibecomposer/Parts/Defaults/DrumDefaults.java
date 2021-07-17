@@ -5,6 +5,9 @@ import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONEFIVE;
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONEPER4;
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.TRESILLO;
 
+import java.util.Random;
+
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
@@ -39,6 +42,7 @@ public class DrumDefaults {
 		snareSettings.setHits(new Integer[] { 8, 8, 8, 8, 8 });
 		snareSettings.setChords(new Integer[] { 1, 1, 1, 2, 1 });
 		snareSettings.setShift(new Integer[] { 2, 1, 1, 1, 6 });
+		snareSettings.maxExc = 0;
 
 		hatSettings = new DrumSettings();
 		hatSettings.setPatterns(
@@ -46,12 +50,19 @@ public class DrumDefaults {
 		hatSettings.setHits(new Integer[] { 16, 16, 8, 8, 8 });
 		hatSettings.setChords(new Integer[] { 1, 1, 1, 2, 2 });
 		hatSettings.setShift(new Integer[] { 2, 2, 2, 1, 0 });
+		hatSettings.setVariableShift(true);
+		hatSettings.dynamicable = true;
+		hatSettings.fillable = true;
+		hatSettings.maxPause = 20;
+		hatSettings.swingable = true;
 
 		rideSettings = new DrumSettings();
 		rideSettings.setPatterns(new RhythmPattern[] { ONEPER4, RhythmPattern.SINGLE });
 		rideSettings.setHits(new Integer[] { 8, 8 });
 		rideSettings.setChords(new Integer[] { 1, 1 });
 		rideSettings.setShift(new Integer[] { 2, 6 });
+		rideSettings.setVariableShift(true);
+		rideSettings.dynamicable = true;
 
 		percsSettings = new DrumSettings();
 		percsSettings.setPatterns(
@@ -59,6 +70,11 @@ public class DrumDefaults {
 		percsSettings.setHits(new Integer[] { 16, 16, 8, 8, 8 });
 		percsSettings.setChords(new Integer[] { 1, 1, 1, 2, 2 });
 		percsSettings.setShift(new Integer[] { 3, 3, 5, 1, 0 });
+		percsSettings.setVariableShift(true);
+		percsSettings.dynamicable = true;
+		percsSettings.fillable = true;
+		percsSettings.maxPause = 20;
+		percsSettings.swingable = true;
 
 		drumSettings = new DrumSettings[] { kickSettings, snareSettings, hatSettings, rideSettings,
 				percsSettings };
@@ -85,6 +101,30 @@ public class DrumDefaults {
 		dp.setVelocityPattern(false);
 
 		return dp;
+	}
+
+	public static DrumPart getRandomDrum() {
+		Integer instrument = MidiUtils.getRandom(new Random(), MidiUtils.DRUM_INST_NUMBERS);
+		return getDrumFromInstrument(instrument);
+	}
+
+	public static int getOrder(Integer instrument) {
+		int order = 1;
+		while (instrument > instrumentThresholds[order - 1]
+				&& order < instrumentThresholds.length) {
+			order++;
+		}
+		order--;
+		return order;
+	}
+
+	public static DrumPart getDrumFromInstrument(Integer instrument) {
+		int order = getOrder(instrument);
+		DrumPanel dpp = new DrumPanel(null);
+		dpp.setFromInstPart(drums[order]);
+		DrumPart dpCopy = dpp.toDrumPart(0);
+		dpCopy.setInstrument(instrument);
+		return dpCopy;
 	}
 
 	public static DrumPart getDrum(int order) {
