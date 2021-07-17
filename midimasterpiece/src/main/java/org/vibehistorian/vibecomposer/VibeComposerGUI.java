@@ -456,6 +456,7 @@ public class VibeComposerGUI extends JFrame
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
 	public static boolean needToRecalculateSoloMuters = false;
+	public static boolean needToRecalculateSoloMutersAfterSequenceGenerated = false;
 
 	JPanel everythingPanel;
 	JPanel controlPanel;
@@ -2567,6 +2568,8 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
+
+		needToRecalculateSoloMutersAfterSequenceGenerated = true;
 	}
 
 	private void composeMidi(boolean regenerate) {
@@ -2804,6 +2807,10 @@ public class VibeComposerGUI extends JFrame
 
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
+			if (needToRecalculateSoloMutersAfterSequenceGenerated) {
+				needToRecalculateSoloMuters = true;
+				needToRecalculateSoloMutersAfterSequenceGenerated = false;
+			}
 
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
