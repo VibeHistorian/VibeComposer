@@ -2267,6 +2267,16 @@ public class VibeComposerGUI extends JFrame
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
+
+		midiMode.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				closeMidiDevice();
+			}
+
+		});
+
 		midiModeDevices = new ScrollComboBox<String>();
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
@@ -2289,17 +2299,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				stopMidi();
-				if (sequencer != null) {
-					sequencer.close();
-					sequencer = null;
-				}
-
-				if (device != null) {
-					device.close();
-				}
-				device = null;
-
+				closeMidiDevice();
 			}
 
 		});
@@ -2530,6 +2530,35 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
+	private void closeMidiDevice() {
+		stopMidi();
+		if (sequencer != null) {
+			sequencer.close();
+			sequencer = null;
+		}
+
+		System.out.println("Closed sequencer!");
+
+		SwingUtilities.invokeLater(new Runnable() {
+
+			@Override
+			public void run() {
+
+				MidiDevice oldDevice = device;
+				device = null;
+
+
+				if (oldDevice != null) {
+					oldDevice.close();
+				}
+
+				System.out.println("Closed oldDevice!");
+				oldDevice = null;
+			}
+
+		});
+	}
+
 	private void composeMidi(boolean regenerate) {
 		if (sequencer != null) {
 			sequencer.stop();
@@ -2543,7 +2572,6 @@ public class VibeComposerGUI extends JFrame
 					synth = null;
 				}
 				if (sequencer != null) {
-					sequencer.stop();
 					sequencer.close();
 					sequencer = null;
 					System.out.println("CLOSED SEQUENCER!");
