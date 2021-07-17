@@ -2284,6 +2284,10 @@ public class MidiGenerator implements JMC {
 						swung = false;
 					}
 
+					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
+						pitch = mapDrumPitchByCustomMapping(pitch);
+					}
+
 					boolean exception = exceptionGenerator
 							.nextInt(100) < (dp.getExceptionChance() + extraExceptionChance);
 					if (exception) {
@@ -2310,6 +2314,20 @@ public class MidiGenerator implements JMC {
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 		return drumPhrase;
 
+	}
+
+	private int mapDrumPitchByCustomMapping(int pitch) {
+		String customMapping = gc.getDrumCustomMappingNumbers();
+		String[] customMappingNumberStrings = customMapping.split(",");
+		List<Integer> defaultMappingNumbers = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES);
+		List<Integer> customMappingNumbers = Arrays.asList(customMappingNumberStrings).stream()
+				.map(e -> Integer.valueOf(e.trim())).collect(Collectors.toList());
+		int defaultIndex = defaultMappingNumbers.indexOf(pitch);
+		if (defaultIndex < 0 || (defaultMappingNumbers.size() != customMappingNumbers.size())) {
+			return pitch;
+		}
+
+		return customMappingNumbers.get(defaultIndex);
 	}
 
 	private int getAbsoluteOrder(int partNum, InstPart part) {

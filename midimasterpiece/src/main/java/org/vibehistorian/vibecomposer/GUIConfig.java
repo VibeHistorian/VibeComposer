@@ -91,7 +91,8 @@ public class GUIConfig {
 	private int maxArpSwing = 50;
 
 	// drum gen
-	private boolean useSemitonalMapping = false;
+	private boolean drumCustomMapping = false;
+	private String drumCustomMappingNumbers = "";
 
 	// individual parts
 
@@ -521,12 +522,12 @@ public class GUIConfig {
 		this.arrangementEnabled = arrangementEnabled;
 	}
 
-	public boolean isUseSemitonalMapping() {
-		return useSemitonalMapping;
+	public boolean isDrumCustomMapping() {
+		return drumCustomMapping;
 	}
 
-	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
-		this.useSemitonalMapping = useSemitonalMapping;
+	public void setDrumCustomMapping(boolean drumCustomMapping) {
+		this.drumCustomMapping = drumCustomMapping;
 	}
 
 	public boolean isSpiceFlattenBigChords() {
@@ -535,6 +536,14 @@ public class GUIConfig {
 
 	public void setSpiceFlattenBigChords(boolean spiceFlattenBigChords) {
 		this.spiceFlattenBigChords = spiceFlattenBigChords;
+	}
+
+	public String getDrumCustomMappingNumbers() {
+		return drumCustomMappingNumbers;
+	}
+
+	public void setDrumCustomMappingNumbers(String drumCustomMappingNumbers) {
+		this.drumCustomMappingNumbers = drumCustomMappingNumbers;
 	}
 
 }

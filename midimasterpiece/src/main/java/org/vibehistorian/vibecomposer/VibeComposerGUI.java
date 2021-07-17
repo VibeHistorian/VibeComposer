@@ -389,9 +389,10 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
 	JCheckBox arrangementAffectsDrumVelocity;
-	JButton changeMidiMapping;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 2;
+	public static JCheckBox drumCustomMapping;
+	public static JTextField drumCustomMappingNumbers;
 
 	// chord settings - progression
 	ScrollComboBox<String> firstChordSelection;
@@ -1267,10 +1268,6 @@ public class VibeComposerGUI extends JFrame
 		drumMidiSettings.add(makeButton("Save Drums As", "DrumSave"));
 		drumMidiSettings.add(makeButton("Load Drums", "DrumLoad"));
 
-
-		changeMidiMapping = makeButton("Map MIDI to semitones", "RemapDrumMIDI,Semi");
-		drumMidiSettings.add(changeMidiMapping);
-
 		drumMidiSettings.add(randomDrumPattern);
 		drumMidiSettings.add(randomDrumVelocityPatternChance);
 		arrangementAffectsDrumVelocity = new JCheckBox("Adj. Vel. in Arr.", true);
@@ -1767,7 +1764,20 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(allInstsPanel);
 
 		loopBeatCount = new KnobPanel("Loop # Beats", 1, 1, 4);
+
+		JPanel customDrumMappingPanel = new JPanel();
+
+		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
+		drumCustomMappingNumbers = new JTextField(
+				StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
+
+		customDrumMappingPanel.add(drumCustomMapping);
+		customDrumMappingPanel.add(drumCustomMappingNumbers);
+		drumCustomMapping.setToolTipText(
+				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
+
 		extraSettingsPanel.add(loopBeatCount);
+		extraSettingsPanel.add(customDrumMappingPanel);
 
 		toggleableComponents.add(globalSwingPanel);
 		toggleableComponents.add(useDoubledPanel);
@@ -3429,15 +3439,6 @@ public class VibeComposerGUI extends JFrame
 			tabPanePossibleChange = true;
 		}
 
-		if (ae.getActionCommand().startsWith("RemapDrumMIDI,"))
-
-		{
-
-			String remapType = ae.getActionCommand().split(",")[1];
-			remapDrums(remapType);
-
-		}
-
 
 		if (ae.getActionCommand() == "ClearChordPatterns")
 
@@ -3698,29 +3699,6 @@ public class VibeComposerGUI extends JFrame
 		return VibeComposerGUI.sequencer != null && VibeComposerGUI.sequencer.isOpen();
 	}
 
-	private void remapDrums(String remapType) {
-		if (remapType.equalsIgnoreCase("Semi")) {
-			drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES_SEMI));
-			changeMidiMapping.setActionCommand("RemapDrumMIDI,Normal");
-			changeMidiMapping.setText("Map to General MIDI");
-			MidiUtils.INST_POOLS.put(POOL.DRUM, MidiUtils.DRUM_INST_NAMES_SEMI);
-		} else {
-			drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES));
-			changeMidiMapping.setActionCommand("RemapDrumMIDI,Semi");
-			changeMidiMapping.setText("Map MIDI to semitones");
-			MidiUtils.INST_POOLS.put(POOL.DRUM, MidiUtils.DRUM_INST_NAMES);
-		}
-
-	}
-
-	private void remapDrumsSoft(String remapType) {
-		if (remapType.equalsIgnoreCase("Semi")) {
-			drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES_SEMI));
-		} else {
-			drumPanels.forEach(e -> e.transitionToPool(MidiUtils.DRUM_INST_NAMES));
-		}
-	}
-
 	private void recalculateTabPaneCounts() {
 		instrumentTabPane.setTitleAt(0, "Melody (" + melodyPanels.size() + ")");
 		instrumentTabPane.setTitleAt(1, " Bass  (1)");
@@ -3969,7 +3947,6 @@ public class VibeComposerGUI extends JFrame
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
 		wrapper.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
-		wrapper.setUseSemitonalMapping(!changeMidiMapping.getActionCommand().contains("Semi"));
 		mar.marshal(wrapper, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
 	}
 
@@ -3977,22 +3954,12 @@ public class VibeComposerGUI extends JFrame
 		JAXBContext context = JAXBContext.newInstance(DrumPartsWrapper.class);
 		DrumPartsWrapper wrapper = (DrumPartsWrapper) context.createUnmarshaller()
 				.unmarshal(new FileReader(f));
-		if (wrapper.isUseSemitonalMapping()) {
-			remapDrums("Semi");
-		} else {
-			remapDrums("Normal");
-		}
 		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
 	}
 
 	public void unmarshallDrumsFromResource(InputStream f) throws JAXBException, IOException {
 		JAXBContext context = JAXBContext.newInstance(DrumPartsWrapper.class);
 		DrumPartsWrapper wrapper = (DrumPartsWrapper) context.createUnmarshaller().unmarshal(f);
-		if (wrapper.isUseSemitonalMapping()) {
-			remapDrums("Semi");
-		} else {
-			remapDrums("Normal");
-		}
 		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
 	}
 
@@ -4113,7 +4080,10 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setMaxArpSwing(Integer.valueOf(randomArpMaxSwing.getInt()));
 
 		// drums
-		guiConfig.setUseSemitonalMapping(!changeMidiMapping.getActionCommand().contains("Semi"));
+		boolean isCustomMidiDevice = (device != null)
+				&& !device.getDeviceInfo().getName().contains("ervill");
+		guiConfig.setDrumCustomMapping(drumCustomMapping.isSelected() && isCustomMidiDevice);
+		guiConfig.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
 
 		return guiConfig;
 	}
@@ -4158,11 +4128,9 @@ public class VibeComposerGUI extends JFrame
 		addArps.setSelected(guiConfig.isArpsEnable());
 		addDrums.setSelected(guiConfig.isDrumsEnable());
 
-		if (guiConfig.isUseSemitonalMapping()) {
-			remapDrums("Semi");
-		} else {
-			remapDrums("Normal");
-		}
+		drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
+		drumCustomMappingNumbers.setText(guiConfig.getDrumCustomMappingNumbers());
+
 		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
 		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());
 		recreateInstPanelsFromInstParts(3, guiConfig.getArpParts());
@@ -4344,15 +4312,6 @@ public class VibeComposerGUI extends JFrame
 
 			DrumPanel dpp = (DrumPanel) addInstPanelToLayout(4);
 
-			if (changeMidiMapping.getText().contains("General")) {
-				System.out.println("Dp instrument: " + dp.getInstrument());
-				int formerIndex = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES)
-						.indexOf(dp.getInstrument());
-
-				dp.setInstrument(
-						MidiUtils.getInstByIndex(formerIndex, MidiUtils.DRUM_INST_NAMES_SEMI));
-			}
-
 			dp.setOrder(dpp.getPanelOrder());
 			dpp.setFromInstPart(dp);
 
@@ -4407,13 +4366,8 @@ public class VibeComposerGUI extends JFrame
 		}
 		Collections.sort(pitches);
 		if (!onlyAdd && pitches.size() > 2) {
-			if (changeMidiMapping.getActionCommand().contains("Normal")) {
-				pitches.set(0, 36);
-				pitches.set(1, 37);
-			} else {
-				pitches.set(0, 35);
-				pitches.set(1, 36);
-			}
+			pitches.set(0, 35);
+			pitches.set(1, 36);
 
 		}
 
