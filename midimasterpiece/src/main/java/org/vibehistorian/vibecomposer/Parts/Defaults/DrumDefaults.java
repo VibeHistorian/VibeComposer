@@ -55,6 +55,7 @@ public class DrumDefaults {
 		hatSettings.fillable = true;
 		hatSettings.maxPause = 20;
 		hatSettings.swingable = true;
+		hatSettings.melodyable = true;
 
 		rideSettings = new DrumSettings();
 		rideSettings.setPatterns(new RhythmPattern[] { ONEPER4, RhythmPattern.SINGLE });
@@ -63,6 +64,7 @@ public class DrumDefaults {
 		rideSettings.setShift(new Integer[] { 2, 6 });
 		rideSettings.setVariableShift(true);
 		rideSettings.dynamicable = true;
+		rideSettings.melodyable = true;
 
 		percsSettings = new DrumSettings();
 		percsSettings.setPatterns(
@@ -75,6 +77,7 @@ public class DrumDefaults {
 		percsSettings.fillable = true;
 		percsSettings.maxPause = 20;
 		percsSettings.swingable = true;
+		percsSettings.melodyable = true;
 
 		drumSettings = new DrumSettings[] { kickSettings, snareSettings, hatSettings, rideSettings,
 				percsSettings };

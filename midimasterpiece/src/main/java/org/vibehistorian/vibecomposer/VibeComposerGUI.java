@@ -149,6 +149,7 @@ import org.vibehistorian.vibecomposer.Parts.DrumPartsWrapper;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
+import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -382,6 +383,7 @@ public class VibeComposerGUI extends JFrame
 	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 37, 38, 40 });
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
+	JCheckBox randomDrumsOverrandomize;
 	JTextField randomDrumMaxSwingAdjust;
 	JCheckBox randomDrumSlide;
 	JCheckBox randomDrumPattern;
@@ -390,7 +392,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomDrumUseChordFill;
 	JCheckBox arrangementAffectsDrumVelocity;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
-	int randomDrumHitsMultiplierLastState = 2;
+	int randomDrumHitsMultiplierLastState = 1;
 	public static JCheckBox drumCustomMapping;
 	public static JTextField drumCustomMappingNumbers;
 
@@ -1193,7 +1195,7 @@ public class VibeComposerGUI extends JFrame
 		randomDrumHitsMultiplier = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" },
 				randomDrumHitsMultiplier);
-		randomDrumHitsMultiplier.setSelectedItem("2");
+		randomDrumHitsMultiplier.setSelectedItem("1");
 		randomDrumHitsMultiplier.addItemListener(new ItemListener() {
 
 			@Override
@@ -1246,11 +1248,11 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(drumPartPresetBox);
 
 
-		JPanel drumMidiSettings = new JPanel();
+		JPanel drumExtraSettings = new JPanel();
 		JLabel csExtra = new JLabel("DRUM SETTINGS+");
 		csExtra.setPreferredSize(new Dimension(120, 30));
 		csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		drumMidiSettings.add(csExtra);
+		drumExtraSettings.add(csExtra);
 
 
 		collapseDrumTracks = new JCheckBox("Combine Drum MIDI Tracks", true);
@@ -1263,35 +1265,37 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		drumMidiSettings.add(collapseDrumTracks);
+		drumExtraSettings.add(collapseDrumTracks);
 
-		drumMidiSettings.add(makeButton("Save Drums As", "DrumSave"));
-		drumMidiSettings.add(makeButton("Load Drums", "DrumLoad"));
+		drumExtraSettings.add(makeButton("Save Drums As", "DrumSave"));
+		drumExtraSettings.add(makeButton("Load Drums", "DrumLoad"));
 
-		drumMidiSettings.add(randomDrumPattern);
-		drumMidiSettings.add(randomDrumVelocityPatternChance);
+		drumExtraSettings.add(randomDrumPattern);
+		drumExtraSettings.add(randomDrumVelocityPatternChance);
 		arrangementAffectsDrumVelocity = new JCheckBox("Adj. Vel. in Arr.", true);
-		drumMidiSettings.add(arrangementAffectsDrumVelocity);
-		drumMidiSettings.add(randomDrumShiftChance);
-		drumMidiSettings.add(clearPatternSeeds);
+		drumExtraSettings.add(arrangementAffectsDrumVelocity);
+		drumExtraSettings.add(randomDrumShiftChance);
+		drumExtraSettings.add(clearPatternSeeds);
 
+		randomDrumsOverrandomize = new JCheckBox("Overrandomize", false);
+		drumExtraSettings.add(randomDrumsOverrandomize);
 
-		toggleableComponents.add(drumMidiSettings);
+		toggleableComponents.add(drumExtraSettings);
 
 		drumsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		drumsPanel.setMaximumSize(new Dimension(1800, 50));
 		scrollableDrumPanels.add(drumsPanel);
-		drumMidiSettings.setAlignmentX(Component.LEFT_ALIGNMENT);
-		drumMidiSettings.setMaximumSize(new Dimension(1800, 50));
+		drumExtraSettings.setAlignmentX(Component.LEFT_ALIGNMENT);
+		drumExtraSettings.setMaximumSize(new Dimension(1800, 50));
 		//constraints.gridy = startY + 1;
-		scrollableDrumPanels.add(drumMidiSettings);
+		scrollableDrumPanels.add(drumExtraSettings);
 		//addHorizontalSeparatorToPanel(scrollableDrumPanels);
 	}
 
 	private void initDrums(int startY, int anchorSide) {
 
 
-		createRandomDrumPanels((Integer.valueOf(randomDrumsToGenerate.getText())), false);
+		createBlueprintedDrumPanels((Integer.valueOf(randomDrumsToGenerate.getText())), false);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -1345,7 +1349,6 @@ public class VibeComposerGUI extends JFrame
 			refreshActual = true;
 			//variationJD.getFrame().setTitle(action);
 		}
-		createBlueprintedDrums(drumPanels.size());
 
 		if (!refreshActual) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
@@ -3095,7 +3098,14 @@ public class VibeComposerGUI extends JFrame
 				&& addDrums.isSelected() && randomDrumsGenerateOnCompose.isSelected())) {
 			/*List<Integer> drumInsts = drumPanels.stream().map(e -> e.getPitch())
 					.collect(Collectors.toList());*/
-			createRandomDrumPanels(Integer.valueOf(randomDrumsToGenerate.getText()), false);
+
+			if (randomDrumsOverrandomize.isSelected()) {
+				createRandomDrumPanels(Integer.valueOf(randomDrumsToGenerate.getText()), false);
+			} else {
+				createBlueprintedDrumPanels(Integer.valueOf(randomDrumsToGenerate.getText()),
+						false);
+			}
+
 			/*for (int i = 0; i < drumInsts.size() && i < drumPanels.size(); i++) {
 				drumPanels.get(i).setPitch(drumInsts.get(i));
 			}*/
@@ -3422,7 +3432,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "AddDrum") {
 			//addDrumPanelToLayout();
-			createRandomDrumPanels(drumPanels.size() + 1, true);
+			createBlueprintedDrumPanels(drumPanels.size() + 1, true);
 			randomDrumsToGenerate.setText("" + drumPanels.size());
 			//sizeRespectingPack();
 			repaint();
@@ -4297,29 +4307,89 @@ public class VibeComposerGUI extends JFrame
 		repaint();
 	}
 
-	private void createBlueprintedDrums(int panelCount) {
+	private void createBlueprintedDrumPanels(int panelCount, boolean onlyAdd) {
+		Random drumPanelGenerator = new Random();
 		for (Iterator<DrumPanel> panelI = drumPanels.iterator(); panelI.hasNext();) {
 			DrumPanel panel = panelI.next();
-			((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
-			panelI.remove();
+			if (!onlyAdd) {
+				((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+				panelI.remove();
+			}
 
 		}
-		drumPanels.clear();
+
+		panelCount -= drumPanels.size();
+
+		int slide = 0;
+
+		if (randomDrumSlide.isSelected()) {
+			slide = drumPanelGenerator.nextInt(100) - 50;
+		}
+
+		int swingPercent = 50;
+		if (onlyAdd && drumPanels.size() > 0) {
+			Optional<Integer> existingSwing = drumPanels.stream()
+					.filter(e -> (e.getSwingPercent() != 50)).map(e -> e.getSwingPercent())
+					.findFirst();
+			if (existingSwing.isPresent()) {
+				swingPercent = existingSwing.get();
+			}
+		}
+		// nothing's changed.. still the same..
+		if (swingPercent == 50) {
+			swingPercent = 50
+					+ drumPanelGenerator
+							.nextInt(Integer.valueOf(randomDrumMaxSwingAdjust.getText()) * 2 + 1)
+					- Integer.valueOf(randomDrumMaxSwingAdjust.getText());
+		}
+
+
+		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
-			DrumPart dp = DrumDefaults.getRandomDrum();
-			int order = DrumDefaults.getOrder(dp.getInstrument());
-			DrumDefaults.drumSettings[order].applyToDrumPart(dp, lastRandomSeed);
-
-			DrumPanel dpp = (DrumPanel) addInstPanelToLayout(4);
-
-			dp.setOrder(dpp.getPanelOrder());
-			dpp.setFromInstPart(dp);
-
-			dpp.getComboPanel().reapplyHits();
-			dpp.getComboPanel().reapplyShift();
-
+			pitches.add(MidiUtils.getInstByIndex(drumPanelGenerator.nextInt(127), POOL.DRUM));
+		}
+		Collections.sort(pitches);
+		if (!onlyAdd && pitches.size() > 2) {
+			pitches.set(0, 35);
+			pitches.set(1, 36);
 
 		}
+
+		for (int i = 0; i < panelCount; i++) {
+			DrumPart dpart = DrumDefaults.getDrumFromInstrument(pitches.get(i));
+			int order = DrumDefaults.getOrder(dpart.getInstrument());
+			DrumSettings settings = DrumDefaults.drumSettings[order];
+			settings.applyToDrumPart(dpart, lastRandomSeed);
+			dpart.setCustomPattern(null);
+			DrumPanel dp = (DrumPanel) addInstPanelToLayout(4);
+
+			dpart.setOrder(dp.getPanelOrder());
+			dp.setFromInstPart(dpart);
+
+			dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
+
+			if (settings.isSwingable()) {
+				dp.setDelay(slide);
+				dp.setSwingPercent(swingPercent);
+			}
+
+			if (randomChordUseChordFill.isSelected() && settings.isFillable()) {
+				dp.setChordSpanFill(ChordSpanFill.getWeighted(drumPanelGenerator.nextInt(100)));
+			}
+
+			if (settings.isDynamicable()) {
+				dp.setIsVelocityPattern(drumPanelGenerator.nextInt(100) < Integer
+						.valueOf(randomDrumVelocityPatternChance.getInt()));
+			}
+
+			if (dp.getPatternShift() > 0) {
+				dp.getComboPanel().reapplyShift();
+			}
+
+			dp.getComboPanel().reapplyHits();
+
+		}
+
 		repaint();
 	}
 

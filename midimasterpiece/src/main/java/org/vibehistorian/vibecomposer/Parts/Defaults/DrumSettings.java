@@ -20,6 +20,7 @@ public class DrumSettings {
 	boolean dynamicable = false;
 	boolean swingable = false;
 	boolean fillable = false;
+	boolean melodyable = false;
 
 	public boolean isVariableShift() {
 		return variableShift;
@@ -61,6 +62,38 @@ public class DrumSettings {
 		this.chords = chords;
 	}
 
+	public boolean isSwingable() {
+		return swingable;
+	}
+
+	public void setSwingable(boolean swingable) {
+		this.swingable = swingable;
+	}
+
+	public boolean isFillable() {
+		return fillable;
+	}
+
+	public void setFillable(boolean fillable) {
+		this.fillable = fillable;
+	}
+
+	public boolean isDynamicable() {
+		return dynamicable;
+	}
+
+	public void setDynamicable(boolean dynamicable) {
+		this.dynamicable = dynamicable;
+	}
+
+	public boolean isMelodyable() {
+		return melodyable;
+	}
+
+	public void setMelodyable(boolean melodyable) {
+		this.melodyable = melodyable;
+	}
+
 	public void applyToDrumPart(DrumPart dp, int seed) {
 		if (patterns == null) {
 			throw new IllegalArgumentException("Not initialized DrumSettings!");
@@ -86,6 +119,11 @@ public class DrumSettings {
 		if (fillable) {
 			dp.setChordSpanFill(ChordSpanFill.getWeighted(rand.nextInt(100)));
 		}
+
+		if (melodyable) {
+			dp.setUseMelodyNotePattern(rand.nextBoolean());
+		}
+
 		if (swingable) {
 			rand.setSeed(seed);
 			int swingPercent = 50 + rand.nextInt(MAX_SWING * 2 + 1) - MAX_SWING;
