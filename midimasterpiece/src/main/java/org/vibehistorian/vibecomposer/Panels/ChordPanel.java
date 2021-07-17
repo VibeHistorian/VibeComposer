@@ -98,7 +98,9 @@ public class ChordPanel extends InstPanel {
 
 		}
 		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {
-			instPoolPicker.addItem(p.toString());
+			if (p != POOL.DRUM) {
+				instPoolPicker.addItem(p.toString());
+			}
 		}
 
 		instPoolPicker.addItemListener(new ItemListener() {
