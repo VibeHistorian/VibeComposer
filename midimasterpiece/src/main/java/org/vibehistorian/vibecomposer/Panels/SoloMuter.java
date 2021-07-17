@@ -23,6 +23,9 @@ public class SoloMuter extends JPanel {
 		OFF, HALF, FULL;
 	}
 
+	public static final Color OFF_DARK = Color.white.darker();
+	public static final Color OFF_LIGHT = Color.black.brighter();
+
 	public static final Color FULL_SOLO = new Color(60, 180, 60);
 	public static final Color HALF_SOLO = new Color(120, 180, 120);
 	public static final Color EMPTY = null;
@@ -81,11 +84,13 @@ public class SoloMuter extends JPanel {
 	public void halfSolo() {
 		soloState = State.HALF;
 		soloer.setBackground(HALF_SOLO);
+		soloer.setForeground(Color.black);
 	}
 
 	public void halfMute() {
 		muteState = State.HALF;
 		muter.setBackground(HALF_MUTE);
+		muter.setForeground(Color.black);
 	}
 
 	public void toggleSolo(boolean recalc) {
@@ -124,12 +129,14 @@ public class SoloMuter extends JPanel {
 	public void solo() {
 		soloState = State.FULL;
 		soloer.setBackground(FULL_SOLO);
+		soloer.setForeground(Color.black);
 		unmute();
 	}
 
 	public void unsolo() {
 		soloState = State.OFF;
 		soloer.setBackground(EMPTY);
+		soloer.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
 	}
 
 	public void toggleMute(boolean recalc) {
@@ -168,11 +175,27 @@ public class SoloMuter extends JPanel {
 	public void mute() {
 		muteState = State.FULL;
 		muter.setBackground(FULL_MUTE);
+		muter.setForeground(Color.black);
 		unsolo();
 	}
 
 	public void unmute() {
 		muteState = State.OFF;
 		muter.setBackground(EMPTY);
+		muter.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+	}
+
+	public void reapplyTextColor() {
+		if (muteState == State.OFF) {
+			muter.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+		} else {
+			muter.setForeground(Color.black);
+		}
+
+		if (soloState == State.OFF) {
+			soloer.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+		} else {
+			soloer.setForeground(Color.black);
+		}
 	}
 }

@@ -2502,6 +2502,16 @@ public class VibeComposerGUI extends JFrame
 			panelColorHigh.brighter();
 			panelColorLow.brighter();
 		}
+
+		globalSoloMuter.reapplyTextColor();
+		for (SoloMuter sm : groupSoloMuters) {
+			sm.reapplyTextColor();
+		}
+
+		for (int i = 0; i < 5; i++) {
+			getInstList(i).forEach(e -> e.getSoloMuter().reapplyTextColor());
+		}
+
 		//switchFullMode(isDarkMode);
 
 		//sizeRespectingPack();
@@ -4380,7 +4390,7 @@ public class VibeComposerGUI extends JFrame
 		if (!onlyAdd && pitches.size() > 2) {
 			pitches.set(0, 35);
 			pitches.set(1, 36);
-
+			pitches.set(2, 38);
 		}
 
 		for (int i = 0; i < panelCount; i++) {
@@ -4463,9 +4473,10 @@ public class VibeComposerGUI extends JFrame
 			pitches.add(MidiUtils.getInstByIndex(drumPanelGenerator.nextInt(127), POOL.DRUM));
 		}
 		Collections.sort(pitches);
-		if (!onlyAdd && pitches.size() > 2) {
+		if (!onlyAdd && pitches.size() > 3) {
 			pitches.set(0, 35);
 			pitches.set(1, 36);
+			pitches.set(2, 38);
 
 		}
 
