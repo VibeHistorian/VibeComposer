@@ -37,11 +37,11 @@ public class DrumDefaults {
 		kickSettings.setShift(new Integer[] { 0, 0, 0, 0 });
 
 		snareSettings = new DrumSettings();
-		snareSettings.setPatterns(
-				new RhythmPattern[] { ONEPER4, ONEFIVE, TRESILLO, ALT, RhythmPattern.SINGLE });
-		snareSettings.setHits(new Integer[] { 8, 8, 8, 8, 8 });
-		snareSettings.setChords(new Integer[] { 1, 1, 1, 2, 1 });
-		snareSettings.setShift(new Integer[] { 2, 1, 1, 1, 6 });
+		snareSettings
+				.setPatterns(new RhythmPattern[] { ONEPER4, ONEFIVE, ALT, RhythmPattern.SINGLE });
+		snareSettings.setHits(new Integer[] { 8, 8, 8, 8 });
+		snareSettings.setChords(new Integer[] { 1, 1, 2, 1 });
+		snareSettings.setShift(new Integer[] { 2, 1, 1, 6 });
 		snareSettings.maxExc = 0;
 
 		hatSettings = new DrumSettings();

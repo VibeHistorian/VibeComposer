@@ -9,8 +9,6 @@ import java.util.stream.IntStream;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 
-import org.apache.commons.lang3.StringUtils;
-
 @XmlType(name = "arpPattern")
 @XmlEnum
 public enum ArpPattern {
@@ -69,7 +67,7 @@ public enum ArpPattern {
 		while (result.size() < hits) {
 			result.addAll(Arrays.stream(patternArray).boxed().collect(Collectors.toList()));
 		}
-		System.out.println(StringUtils.join(result, ","));
+		//System.out.println(StringUtils.join(result, ","));
 		result = result.subList(0, hits);
 		List<Integer> repResult = new ArrayList<>();
 		for (int i = 0; i < patternRepeat; i++) {
