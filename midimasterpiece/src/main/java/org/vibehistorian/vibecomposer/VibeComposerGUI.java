@@ -4392,6 +4392,14 @@ public class VibeComposerGUI extends JFrame
 			pitches.set(1, 36);
 			pitches.set(2, 38);
 		}
+		if (pitches.stream().filter(e -> e == 38 || e == 39 || e == 40).count() > 1) {
+			for (int i = 3; i < pitches.size(); i++) {
+				int e = pitches.get(i);
+				if (e == 38 || e == 39 || e == 40) {
+					pitches.set(i, i % 2 == 0 ? 42 : 44);
+				}
+			}
+		}
 		Collections.sort(pitches);
 		for (int i = 0; i < panelCount; i++) {
 			DrumPart dpart = DrumDefaults.getDrumFromInstrument(pitches.get(i));
