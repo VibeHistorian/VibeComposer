@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -40,6 +41,11 @@ public class DrumPanel extends InstPanel {
 
 		// pattern business
 		this.add(hitsPerPattern);
+
+		hitsPerPattern.getKnob()
+				.setTickThresholds(Arrays.asList(new Integer[] { 3, 4, 5, 6, 8, 12, 16, 24, 32 }));
+		hitsPerPattern.getKnob().setTickSpacing(50);
+
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
 		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, this);
