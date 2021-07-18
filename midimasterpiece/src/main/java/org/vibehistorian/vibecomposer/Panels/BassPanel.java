@@ -17,9 +17,10 @@ public class BassPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = -1472358707275766819L;
 
-	private JCheckBox useRhythm = new JCheckBox("Use rhythm", true);
+	private JCheckBox useRhythm = new JCheckBox("Use Rhythm", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
-	private JCheckBox doubleOct = new JCheckBox("Double oct.", false);
+	private JCheckBox doubleOct = new JCheckBox("Double Oct.", false);
+	private JCheckBox noteVariation = new JCheckBox("Note Variation", false);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
@@ -49,6 +50,8 @@ public class BassPanel extends InstPanel {
 
 		this.add(doubleOct);
 
+		this.add(noteVariation);
+
 		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
@@ -71,6 +74,7 @@ public class BassPanel extends InstPanel {
 		part.setUseRhythm(getUseRhythm());
 		part.setAlternatingRhythm(getAlternatingRhythm());
 		part.setDoubleOct(getDoubleOct());
+		part.setNoteVariation(getNoteVariation());
 		return part;
 	}
 
@@ -81,6 +85,7 @@ public class BassPanel extends InstPanel {
 		setUseRhythm(part.isUseRhythm());
 		setAlternatingRhythm(part.isAlternatingRhythm());
 		setDoubleOct(part.isDoubleOct());
+		setNoteVariation(part.isNoteVariation());
 	}
 
 	public boolean getUseRhythm() {
@@ -110,5 +115,13 @@ public class BassPanel extends InstPanel {
 	@Override
 	public InstPart toInstPart(int lastRandomSeed) {
 		return toBassPart(lastRandomSeed);
+	}
+
+	public boolean getNoteVariation() {
+		return noteVariation.isSelected();
+	}
+
+	public void setNoteVariation(boolean noteVariation) {
+		this.noteVariation.setSelected(noteVariation);
 	}
 }

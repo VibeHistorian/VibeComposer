@@ -1704,13 +1704,16 @@ public class MidiGenerator implements JMC {
 
 		int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
 
+		int seed = gc.getBassPart().getPatternSeed();
+
 		CPhrase cphraseBassRoot = new CPhrase();
 		int minVel = gc.getBassPart().getVelocityMin() + (5 * sec.getBassChance()) / 10 - 50;
 		minVel = (minVel < 0) ? 0 : minVel;
 		int maxVel = gc.getBassPart().getVelocityMax() + (5 * sec.getBassChance()) / 10 - 50;
 		maxVel = (maxVel < 1) ? 1 : maxVel;
-		Random variationGenerator = new Random(gc.getRandomSeed() + sec.getTypeSeedOffset());
-		Random rhythmPauseGenerator = new Random(gc.getRandomSeed() + sec.getTypeSeedOffset());
+		Random variationGenerator = new Random(seed + sec.getTypeSeedOffset());
+		Random rhythmPauseGenerator = new Random(seed + sec.getTypeSeedOffset());
+		Random noteVariationGenerator = new Random(seed + sec.getTypeSeedOffset() + 2);
 		boolean rhythmPauses = false;
 		int numberOfVars = Section.variationDescriptions[1].length - 2;
 		for (int i = 0; i < measures; i++) {
@@ -1754,24 +1757,34 @@ public class MidiGenerator implements JMC {
 				Random bassDynamics = new Random(gc.getRandomSeed());
 				int velSpace = maxVel - minVel;
 				if (gc.getBassPart().isUseRhythm()) {
-					int seed = (int) gc.getRandomSeed();
-					seed += extraSeed;
+					int seedCopy = seed;
+					seedCopy += extraSeed;
 					if (gc.getBassPart().isAlternatingRhythm()) {
-						seed += (j % 2);
+						seedCopy += (j % 2);
 					}
-					Rhythm bassRhythm = new Rhythm(seed, progressionDurations.get(j), durationPool,
-							durationWeights);
+					Rhythm bassRhythm = new Rhythm(seedCopy, progressionDurations.get(j),
+							durationPool, durationWeights);
+					int counter = 0;
 					for (Double dur : bassRhythm.regenerateDurations()) {
-						if (rhythmPauses && dur < Durations.EIGHTH_NOTE
-								&& rhythmPauseGenerator.nextInt(100) < 33) {
-							cphraseBassRoot.addChord(new int[] { Integer.MIN_VALUE }, dur,
-									bassDynamics.nextInt(velSpace) + minVel);
-						} else {
-							cphraseBassRoot.addChord(
-									new int[] { generatedRootProgression.get(j)[0] }, dur,
-									bassDynamics.nextInt(velSpace) + minVel);
+
+						int randomNote = 0;
+						// note variation for short notes, low chance, only after first
+						if (counter > 0 && gc.getBassPart().isNoteVariation()
+								&& dur < Durations.EIGHTH_NOTE
+								&& noteVariationGenerator.nextInt(100) < 50
+								&& generatedRootProgression.get(j).length > 1) {
+							randomNote = noteVariationGenerator
+									.nextInt(generatedRootProgression.get(j).length - 1) + 1;
 						}
 
+						int pitch = (rhythmPauses && dur < Durations.EIGHTH_NOTE
+								&& rhythmPauseGenerator.nextInt(100) < 33) ? Integer.MIN_VALUE
+										: generatedRootProgression.get(j)[randomNote];
+
+
+						cphraseBassRoot.addChord(new int[] { pitch }, dur,
+								bassDynamics.nextInt(velSpace) + minVel);
+						counter++;
 					}
 				} else {
 					cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
