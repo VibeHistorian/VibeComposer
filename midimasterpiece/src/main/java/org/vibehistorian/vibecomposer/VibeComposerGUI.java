@@ -1607,7 +1607,15 @@ public class VibeComposerGUI extends JFrame
 					color = Math.max(color, 130);
 				}
 
-				comp.setBackground(new Color(color, color, color));
+				int extraRed = 0;
+				if (actual) {
+					double remaining = 255 - color - 1;
+					extraRed += actualArrangement.getSections().get(col)
+							.countVariationsForPartType(row - 2) * remaining;
+					extraRed = Math.min(255 - color - 1, extraRed);
+				}
+
+				comp.setBackground(new Color(color + extraRed, color, color));
 			}
 		} else {
 			comp.setBackground(new Color(100, 150, 150));

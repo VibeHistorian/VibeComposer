@@ -415,4 +415,22 @@ public class Section {
 		}
 		riskyVariations.set(order, value);
 	}
+
+	public double countVariationsForPartType(int part) {
+		if (partPresenceVariationMap == null) {
+			return 0;
+		}
+		double count = 0;
+		double total = 0;
+		Object[][] data = partPresenceVariationMap.get(part);
+		for (int i = 0; i < data.length; i++) {
+			for (int j = 2; j < data[i].length; j++) {
+				if (data[i][j] == Boolean.TRUE) {
+					count++;
+				}
+				total++;
+			}
+		}
+		return count / total;
+	}
 }
