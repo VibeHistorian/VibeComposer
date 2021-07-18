@@ -10,7 +10,7 @@ public class BassPart extends InstPart {
 	private boolean useRhythm = true;
 	private boolean alternatingRhythm = true;
 	private boolean doubleOct = false;
-	private boolean noteVariation = false;
+	private int noteVariation = 20;
 
 	public BassPart() {
 
@@ -40,11 +40,11 @@ public class BassPart extends InstPart {
 		this.doubleOct = doubleOct;
 	}
 
-	public boolean isNoteVariation() {
+	public int getNoteVariation() {
 		return noteVariation;
 	}
 
-	public void setNoteVariation(boolean noteVariation) {
+	public void setNoteVariation(int noteVariation) {
 		this.noteVariation = noteVariation;
 	}
 }

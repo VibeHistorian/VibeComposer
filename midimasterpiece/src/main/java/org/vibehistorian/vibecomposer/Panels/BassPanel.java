@@ -20,7 +20,7 @@ public class BassPanel extends InstPanel {
 	private JCheckBox useRhythm = new JCheckBox("Use Rhythm", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
 	private JCheckBox doubleOct = new JCheckBox("Double Oct.", false);
-	private JCheckBox noteVariation = new JCheckBox("Note Variation", true);
+	private KnobPanel noteVariation = new KnobPanel("Note Variation", 20);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
@@ -85,7 +85,7 @@ public class BassPanel extends InstPanel {
 		setUseRhythm(part.isUseRhythm());
 		setAlternatingRhythm(part.isAlternatingRhythm());
 		setDoubleOct(part.isDoubleOct());
-		setNoteVariation(part.isNoteVariation());
+		setNoteVariation(part.getNoteVariation());
 	}
 
 	public boolean getUseRhythm() {
@@ -117,11 +117,11 @@ public class BassPanel extends InstPanel {
 		return toBassPart(lastRandomSeed);
 	}
 
-	public boolean getNoteVariation() {
-		return noteVariation.isSelected();
+	public int getNoteVariation() {
+		return noteVariation.getInt();
 	}
 
-	public void setNoteVariation(boolean noteVariation) {
-		this.noteVariation.setSelected(noteVariation);
+	public void setNoteVariation(int noteVariation) {
+		this.noteVariation.setInt(noteVariation);
 	}
 }
