@@ -2137,7 +2137,8 @@ public class VibeComposerGUI extends JFrame
 								}*/
 
 
-								if (slider.getValue() > loopBeatCount.getInt() * beatFromBpm()) {
+								if (slider.getValue() > loopBeatCount.getInt() * beatFromBpm()
+										+ delayed()) {
 									stopMidi();
 									if (sequencer != null)
 										composeMidi(true);
@@ -2173,7 +2174,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private static int beatFromBpm() {
-		int finalVal = delayed() + (1980 * 60 * elongateMidi.getInt() / mainBpm.getInt());
+		int finalVal = (1985 * 60 * elongateMidi.getInt() / mainBpm.getInt());
 		//System.out.println(finalVal + "");
 		return finalVal;
 	}

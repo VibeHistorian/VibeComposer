@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -91,8 +92,9 @@ public class GUIConfig {
 	private int maxArpSwing = 50;
 
 	// drum gen
-	private boolean drumCustomMapping = false;
-	private String drumCustomMappingNumbers = "";
+	private boolean drumCustomMapping = true;
+	private String drumCustomMappingNumbers = StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI,
+			",");
 
 	// individual parts
 
