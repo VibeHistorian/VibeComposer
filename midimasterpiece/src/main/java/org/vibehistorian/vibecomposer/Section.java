@@ -50,9 +50,8 @@ public class Section {
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" },
 			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "MakeInterval", "MaxStrum" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill", "ForceRandOct", "FillLastBeat",
-					"Directional" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "No2nd", "MaxStrum" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "Directional" },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",

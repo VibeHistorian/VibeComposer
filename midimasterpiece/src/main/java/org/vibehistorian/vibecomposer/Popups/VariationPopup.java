@@ -10,9 +10,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -70,18 +71,26 @@ public class VariationPopup {
 		tablesPanel.add(measuresPanel);
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
+			int fI = i;
 
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (sec.getPartPresenceVariationMap().get(i) == null) {
 				sec.initPartMap();
 			}
+
+			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> ((String) e.getInstrumentBox().getSelectedItem()).split(" = ")[0])
+					.collect(Collectors.toList());
+
 			table.setModel(new BooleanTableModel(sec.getPartPresenceVariationMap().get(i),
-					Section.variationDescriptions[i]));
+					Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-			table.getColumnModel().getColumn(0).setMaxWidth(27);
+			if (i < 4) {
+				//table.getColumnModel().getColumn(0).setMaxWidth(27);
+			}
 			//table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
 
 			/*JList<String> list = new JList<>();
@@ -91,12 +100,13 @@ public class VariationPopup {
 			}
 			list.setListData(listData);
 			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
-			int fI = i;
+
 			tables[i] = table;
 			JPanel categoryPanel = new JPanel();
-			categoryPanel.setLayout(new BoxLayout(categoryPanel, BoxLayout.Y_AXIS));
+			categoryPanel.setLayout(new BoxLayout(categoryPanel, BoxLayout.X_AXIS));
 			categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+			categoryPanel.setMaximumSize(new Dimension(2000, 40));
+			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
 			JPanel categoryButtons = new JPanel();
 			JLabel categoryName = new JLabel(tableNames[i].toUpperCase());
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -104,43 +114,37 @@ public class VariationPopup {
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
 			categoryPanel.add(categoryName);
 
-			for (int j = 1; j < Section.variationDescriptions[i].length; j++) {
-				int fJ = j;
-				JButton butt = new JButton(Section.variationDescriptions[i][j]);
-				//butt.setPreferredSize(new Dimension(80, 25));
-				butt.setAlignmentX(Component.LEFT_ALIGNMENT);
-				butt.addMouseListener(new MouseAdapter() {
-
-					@Override
-					public void mouseClicked(MouseEvent e) {
-						if (SwingUtilities.isLeftMouseButton(e)) {
-							for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
-								if (fJ > 1) {
-									table.getModel().setValueAt(Boolean.TRUE, k, 1);
-								}
-								table.getModel().setValueAt(Boolean.TRUE, k, fJ);
-								//sec.resetPresence(fI, j);
-								table.repaint();
-							}
-						} else {
-							for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
-								table.getModel().setValueAt(Boolean.FALSE, k, fJ);
-								//sec.resetPresence(fI, j);
-								table.repaint();
-							}
-						}
-
-
-					}
-
-				});
-				categoryButtons.add(butt);
-			}
-
 			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.add(categoryButtons);
 			tablesPanel.add(categoryPanel);
 			JTableHeader header = tables[i].getTableHeader();
+			header.setReorderingAllowed(false);
+			header.setResizingAllowed(false);
+			header.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent e) {
+					int col = table.columnAtPoint(e.getPoint());
+					if (col == 0)
+						return;
+
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+							if (col > 1) {
+								table.getModel().setValueAt(Boolean.TRUE, k, 1);
+							}
+							table.getModel().setValueAt(Boolean.TRUE, k, col);
+							//sec.resetPresence(fI, j);
+							table.repaint();
+						}
+					} else {
+						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+							table.getModel().setValueAt(Boolean.FALSE, k, col);
+							//sec.resetPresence(fI, j);
+							table.repaint();
+						}
+					}
+				}
+			});
 			header.setAlignmentX(Component.LEFT_ALIGNMENT);
 			tablesPanel.add(header);
 			tablesPanel.add(tables[i]);
@@ -152,7 +156,7 @@ public class VariationPopup {
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-		int heightLimit = 950;
+		int heightLimit = 775;
 		frame.setPreferredSize(new Dimension(650,
 				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
 		int newLocX = parentLoc.x - 190;
