@@ -4425,8 +4425,14 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (settings.isDynamicable()) {
-				dp.setIsVelocityPattern(drumPanelGenerator.nextInt(100) < Integer
-						.valueOf(randomDrumVelocityPatternChance.getInt()));
+				dp.setIsVelocityPattern(
+						drumPanelGenerator.nextInt(100) < randomDrumVelocityPatternChance.getInt());
+			}
+
+			if (settings.isVariableShift()
+					&& drumPanelGenerator.nextInt(100) < randomDrumShiftChance.getInt()) {
+				// settings set the maximum shift, this sets 0 - max randomly
+				dp.setPatternShift(drumPanelGenerator.nextInt(dp.getPatternShift() + 1));
 			}
 
 			if (dp.getPatternShift() > 0) {

@@ -104,11 +104,7 @@ public class DrumSettings {
 		dp.setPattern(patterns[varOrder]);
 		dp.setHitsPerPattern(hits[varOrder]);
 		dp.setChordSpan(chords[varOrder]);
-		if (variableShift) {
-			dp.setPatternShift(rand.nextInt(shift[varOrder] + 1));
-		} else {
-			dp.setPatternShift(shift[varOrder]);
-		}
+		dp.setPatternShift(shift[varOrder]);
 
 
 		if (dp.getPattern() == RhythmPattern.FULL) {

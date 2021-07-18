@@ -20,7 +20,7 @@ public class BassPanel extends InstPanel {
 	private JCheckBox useRhythm = new JCheckBox("Use Rhythm", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
 	private JCheckBox doubleOct = new JCheckBox("Double Oct.", false);
-	private JCheckBox noteVariation = new JCheckBox("Note Variation", false);
+	private JCheckBox noteVariation = new JCheckBox("Note Variation", true);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
