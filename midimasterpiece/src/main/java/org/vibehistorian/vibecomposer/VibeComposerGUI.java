@@ -177,13 +177,20 @@ public class VibeComposerGUI extends JFrame
 
 	public static VariationPopup varPopup = null;
 
-
+	// COLORS
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
+	public static Color toggledUIColor = Color.cyan;
 
+	Color messageColorDarkMode = new Color(200, 200, 200);
+	Color messageColorLightMode = new Color(120, 120, 200);
+	Color arrangementLightModeText = new Color(220, 220, 220);
+	int arrangementDarkModeLowestColor = 100;
+	Color arrangementDarkModeText = new Color(50, 50, 50);
+	int arrangementLightModeHighestColor = 180;
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
 
@@ -282,10 +289,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel mainTitle;
 	JLabel subTitle;
 	JButton switchDarkMode;
-	Color messageColorDarkMode = new Color(200, 200, 200);
-	Color messageColorLightMode = new Color(120, 120, 200);
-	Color actualArrangementDarkMode = new Color(50, 50, 50);
-	Color actualArrangementLightMode = new Color(120, 120, 200);
+
 
 	// macro params
 	JTextField soundbankFilename;
@@ -1442,7 +1446,10 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
-				comp.setForeground(actualArrangementDarkMode);
+				comp.setForeground(isDarkMode ? arrangementDarkModeText : arrangementLightModeText);
+				if (getModel().getColumnCount() <= col) {
+					return comp;
+				}
 				if (row >= 2) {
 					Object objValue = getModel().getValueAt(row,
 							scrollableArrangementTable.convertColumnIndexToModel(col));
@@ -1456,23 +1463,16 @@ public class VibeComposerGUI extends JFrame
 						value = 0;
 						getModel().setValueAt(value, row, col);
 					}
-					// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
-					int[] maxCounts = new int[] { 0, 0, 100, 100, 100, 100, 100 };
-					if (value == 0) {
-						comp.setBackground(new Color(70, 70, 70));
-					} else {
-						int color = 120 + (70 * value) / maxCounts[row];
-						comp.setBackground(new Color(color, color, color));
-					}
+					arrangementTableProcessComponent(comp, row, col, String.valueOf(value),
+							new int[] { 0, 0, 100, 100, 100, 100, 100 }, false);
 				} else {
-					comp.setBackground(new Color(100, 100, 150));
+					comp.setBackground(new Color(100, 150, 150));
 				}
 
 				return comp;
 			}
 		};
 		TableModel model = new DefaultTableModel(7, 11);
-
 
 		scrollableArrangementTable.setModel(model);
 		arrangementScrollPane = new JScrollPane() {
@@ -1513,38 +1513,12 @@ public class VibeComposerGUI extends JFrame
 				new Dimension(scrollPaneDimension.width - arrangementRowHeaderWidth, 30));
 		/*scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
-		
-					@Override
-					public void columnAdded(TableColumnModelEvent e) {
-						// 
-		
-					}
-		
-					@Override
-					public void columnRemoved(TableColumnModelEvent e) {
-						//
-		
-					}
-		
 					@Override
 					public void columnMoved(TableColumnModelEvent e) {
 						MidiGenerator.ARRANGEMENT.resortByIndexes(scrollableArrangementTable);
 		
 					}
 		
-					@Override
-					public void columnMarginChanged(ChangeEvent e) {
-						// 
-		
-					}
-		
-					@Override
-					public void columnSelectionChanged(ListSelectionEvent e) {
-						// 
-		
-					}
-					//etc.
-				});
 		*/
 
 		scrollableArrangementActualTable = new JTable(5, 5) {
@@ -1553,32 +1527,19 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
+				String value = (String) getModel().getValueAt(row,
+						scrollableArrangementActualTable.convertColumnIndexToModel(col));
+				comp.setForeground(isDarkMode ? arrangementDarkModeText : arrangementLightModeText);
+				if (value == null)
+					return comp;
 				if (getModel().getColumnCount() <= col) {
 					return comp;
 				}
 
-				String value = (String) getModel().getValueAt(row,
-						scrollableArrangementActualTable.convertColumnIndexToModel(col));
-				if (value == null)
-					return comp;
-				comp.setForeground(actualArrangementDarkMode);
-				if (row >= 2) {
-
-					// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
-					int[] maxCounts = new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
-							arpPanels.size(), drumPanels.size() };
-					if (value.equalsIgnoreCase("")) {
-						comp.setBackground(new Color(70, 70, 70));
-					} else {
-						int count = StringUtils.countMatches(value, ",") + 1;
-						int color = 120 + (70 * count) / maxCounts[row];
-						color = Math.min(color, 200);
-						comp.setBackground(new Color(color, color, color));
-					}
-				} else {
-					comp.setBackground(new Color(100, 100, 150));
-				}
-
+				arrangementTableProcessComponent(comp, row, col, value,
+						new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
+								arpPanels.size(), drumPanels.size() },
+						true);
 				return comp;
 			}
 		};
@@ -1624,6 +1585,33 @@ public class VibeComposerGUI extends JFrame
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
+	}
+
+	private void arrangementTableProcessComponent(Component comp, int row, int col, String value,
+			int[] maxCounts, boolean actual) {
+		if (row >= 2) {
+
+			// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
+
+			if (value.equalsIgnoreCase("")) {
+				comp.setBackground(panelColorLow.darker());
+			} else {
+				int count = (actual) ? (StringUtils.countMatches(value, ",") + 1)
+						: Integer.valueOf(value);
+				int color = 0;
+				if (isDarkMode) {
+					color = arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];
+					color = Math.min(color, 170);
+				} else {
+					color = arrangementLightModeHighestColor - (70 * count) / maxCounts[row];
+					color = Math.max(color, 130);
+				}
+
+				comp.setBackground(new Color(color, color, color));
+			}
+		} else {
+			comp.setBackground(new Color(100, 150, 150));
+		}
 	}
 
 	private void refreshVariationPopupButtons(int count) {
@@ -2470,33 +2458,28 @@ public class VibeComposerGUI extends JFrame
 		UIManager.put("TextField.background", r);
 		SwingUtilities.updateComponentTreeUI(this);
 
+		toggledUIColor = (isDarkMode) ? darkModeUIColor : lightModeUIColor;
 
 		mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
-		subTitle.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		messageLabel.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		tipLabel.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		currentTime.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		totalTime.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomChordsGenerateOnCompose
-				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomArpsGenerateOnCompose
-				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomDrumsGenerateOnCompose
-				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		switchOnComposeRandom.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		compose.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		regenerate.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomArpHitsPerPattern.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomizeInstOnComposeOrGen
-				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomizeBpmOnCompose.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		randomizeTransposeOnCompose
-				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
-		//randomizeChordStrumsOnCompose.setForeground((isDarkMode) ? myCyanDarkMode : myBlueDarkMode);
-		randomizeArrangementOnCompose
-				.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+		subTitle.setForeground(toggledUIColor);
+		messageLabel.setForeground(toggledUIColor);
+		tipLabel.setForeground(toggledUIColor);
+		currentTime.setForeground(toggledUIColor);
+		totalTime.setForeground(toggledUIColor);
+		randomChordsGenerateOnCompose.setForeground(toggledUIColor);
+		randomArpsGenerateOnCompose.setForeground(toggledUIColor);
+		randomDrumsGenerateOnCompose.setForeground(toggledUIColor);
+		switchOnComposeRandom.setForeground(toggledUIColor);
+		compose.setForeground(toggledUIColor);
+		regenerate.setForeground(toggledUIColor);
+		randomArpHitsPerPattern.setForeground(toggledUIColor);
+		randomizeInstOnComposeOrGen.setForeground(toggledUIColor);
+		randomizeBpmOnCompose.setForeground(toggledUIColor);
+		randomizeTransposeOnCompose.setForeground(toggledUIColor);
+		//randomizeChordStrumsOnCompose.setForeground(toggledUIColor);
+		randomizeArrangementOnCompose.setForeground(toggledUIColor);
 		for (JSeparator x : separators) {
-			x.setForeground((isDarkMode) ? darkModeUIColor : lightModeUIColor);
+			x.setForeground(toggledUIColor);
 		}
 
 		panelColorHigh = UIManager.getColor("Panel.background").darker();
@@ -4675,7 +4658,7 @@ public class VibeComposerGUI extends JFrame
 		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
 			Random instGen = new Random();
 			if (randomArpLimitPowerOfTwo.isSelected()) {
-				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 8 }, 0);
+				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8 }, 0);
 			} else {
 				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 
@@ -4734,7 +4717,7 @@ public class VibeComposerGUI extends JFrame
 						Random instGen = new Random();
 						int value = -1;
 						if (randomArpLimitPowerOfTwo.isSelected()) {
-							value = getRandomFromArray(instGen, new int[] { 2, 4, 8 }, 0);
+							value = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8 }, 0);
 						} else {
 							value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 

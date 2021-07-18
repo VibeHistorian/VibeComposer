@@ -179,8 +179,7 @@ class RangeSliderUI extends BasicSliderUI {
 		int rightMid = center.x + 25;
 		if (g instanceof Graphics2D) {
 			g.setFont(new Font("Arial", Font.PLAIN, 12));
-			Color col = VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
-					: VibeComposerGUI.lightModeUIColor;
+			Color col = VibeComposerGUI.toggledUIColor;
 			g.setColor(UIManager.getColor("Label.foreground"));
 			Graphics2D g2d = (Graphics2D) g;
 			String valueString = slider.getName();
@@ -278,8 +277,7 @@ class RangeSliderUI extends BasicSliderUI {
 		int w = knobBounds.width;
 		int h = knobBounds.height;
 
-		Color col = VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
-				: VibeComposerGUI.lightModeUIColor;
+		Color col = VibeComposerGUI.toggledUIColor;
 
 		if (g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g.create();
