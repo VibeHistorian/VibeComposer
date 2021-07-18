@@ -128,6 +128,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		this.addMouseMotionListener(this);
 	}
 
+
 	/**
 	 * Paint the JKnob on the graphics context given. The knob
 	 * is a filled circle with a small filled circle offset
@@ -174,7 +175,51 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			}
 
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
+
+
+			/*String textBase = this.getName();
+			
+			String text = textBase.substring(textBase.length() / 2) + textBase
+					+ textBase.substring(0, textBase.length() / 2);
+			
+			int fakeTextStart = textBase.length() / 2;
+			int fakeTextEnd = fakeTextStart + textBase.length();
+			
+			text = text.toUpperCase();
+			
+			int FONT_SIZE = 8;
+			
+			Font font = new Font("Arial", Font.PLAIN, FONT_SIZE);
+			FontRenderContext frc = g2d.getFontRenderContext();
+			g2d.translate(10, 0); // Starting position of the text
+			
+			GlyphVector gv = font.createGlyphVector(frc, text);
+			int length = gv.getNumGlyphs(); // Same as text.length()
+			final double toRad = Math.PI / 180;
+			for (int i = 0; i < length; i++) {
+				if (i >= fakeTextStart && i < fakeTextEnd)
+					continue;
+				int r = 10;
+				int[] coords = this.getPointXY(r, -360.0 / length * i * toRad + Math.PI / 2);
+				gv.setGlyphPosition(i, new Point(0, 0));
+				AffineTransform at = AffineTransform.getTranslateInstance(coords[0], coords[1]);
+				at.rotate(2 * Math.PI * i / length);
+				at.translate(r * Math.cos(Math.PI / 2 - 2 * Math.PI * i / length),
+						r * Math.sin(Math.PI / 2 - 2 * Math.PI * i / length));
+				at.translate(-FONT_SIZE / 2, 0);
+				Shape glyph = gv.getGlyphOutline(i);
+				Shape transformedGlyph = at.createTransformedShape(glyph);
+				g2d.fill(transformedGlyph);
+			}
+			*/
 		}
+	}
+
+	private int[] getPointXY(int dist, double rad) {
+		int[] coord = new int[2];
+		coord[0] = (int) (dist * Math.cos(rad) + dist);
+		coord[1] = (int) (-dist * Math.sin(rad) + dist);
+		return coord;
 	}
 
 	/**

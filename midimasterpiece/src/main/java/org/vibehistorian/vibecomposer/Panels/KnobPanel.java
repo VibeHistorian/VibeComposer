@@ -32,6 +32,7 @@ public class KnobPanel extends JPanel {
 		}
 		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
+		knob.setName(name);
 		setMaximumSize(new Dimension(200, 50));
 		add(label);
 		add(knob);
