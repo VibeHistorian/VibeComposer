@@ -10,7 +10,10 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
@@ -42,6 +45,22 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static int height = 2 * CheckBoxIcon.width;
 
 	public static int mouseButton = 0;
+
+	public static List<Integer> sextuplets = Arrays.asList(new Integer[] { 6, 12, 24 });
+	public static List<Integer> quintuplets = Arrays.asList(new Integer[] { 5 });
+	public static List<Integer> triplets = Arrays.asList(new Integer[] { 3 });
+
+	public static Map<Integer, Insets> nonOctaInsetMap = new HashMap<>();
+	static {
+		nonOctaInsetMap.put(3, new Insets(0, 0, 0, CheckBoxIcon.width * 5 / 3));
+		nonOctaInsetMap.put(4, new Insets(0, 0, 0, CheckBoxIcon.width * 4 / 4));
+		nonOctaInsetMap.put(5, new Insets(0, 0, 0, CheckBoxIcon.width * 3 / 5));
+		nonOctaInsetMap.put(6, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		nonOctaInsetMap.put(12, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		nonOctaInsetMap.put(18, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		nonOctaInsetMap.put(24, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+	}
+
 
 	public DrumHitsPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
 			KnobPanel shiftPanel, JPanel parentPanel) {
@@ -252,6 +271,15 @@ public class DrumHitsPatternPanel extends JPanel {
 					}
 				}
 				lastHits = nowHits;
+				if (nonOctaInsetMap.containsKey(lastHits)) {
+					for (int i = 0; i < lastHits; i++) {
+						hitChecks[i].setMargin(nonOctaInsetMap.get(lastHits));
+					}
+				} else {
+					for (int i = 0; i < lastHits; i++) {
+						hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+					}
+				}
 				if (lastHits > 16) {
 					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(width, height * 2));
 					parentPanel.setMaximumSize(new Dimension(3000, 90));

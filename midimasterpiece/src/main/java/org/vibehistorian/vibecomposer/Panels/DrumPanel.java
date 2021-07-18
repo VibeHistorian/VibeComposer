@@ -42,8 +42,8 @@ public class DrumPanel extends InstPanel {
 		// pattern business
 		this.add(hitsPerPattern);
 
-		hitsPerPattern.getKnob()
-				.setTickThresholds(Arrays.asList(new Integer[] { 3, 4, 5, 6, 8, 12, 16, 24, 32 }));
+		hitsPerPattern.getKnob().setTickThresholds(
+				Arrays.asList(new Integer[] { 3, 4, 5, 6, 8, 12, 16, 18, 24, 32 }));
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
 		this.add(new JLabel("Pattern"));
