@@ -2528,6 +2528,7 @@ public class MidiGenerator implements JMC {
 			System.out.println(StringUtils.join(premadePattern, ","));
 			List<Integer> premadeCopy = new ArrayList<>(premadePattern);
 			Collections.rotate(premadeCopy, dp.getPatternShift());
+			premadePattern = premadeCopy;
 		}
 
 		List<Integer> drumPattern = new ArrayList<>();
