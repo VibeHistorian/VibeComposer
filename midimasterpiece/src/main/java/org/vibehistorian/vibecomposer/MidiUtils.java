@@ -167,10 +167,10 @@ public class MidiUtils {
 		//"S" is an imaginary last element which can grow into the correct last elements
 		cpMap.put("S", new ArrayList<>(Arrays.asList("C", "F", "G", "Am")));
 		cpMap.put("C", new ArrayList<>(Arrays.asList("F", "G")));
-		cpMap.put("Dm", new ArrayList<>(Arrays.asList("F", "Am")));
+		cpMap.put("Dm", new ArrayList<>(Arrays.asList("Am")));
 		cpMap.put("Em", new ArrayList<>(Arrays.asList("Am")));
-		cpMap.put("F", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G", "Am")));
-		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Dm", "F", "Am")));
+		cpMap.put("F", new ArrayList<>(Arrays.asList("C", "Dm", "G", "Am")));
+		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "F", "Am")));
 		cpMap.put("Am", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G")));
 		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "Em", "F")));
 		/*

@@ -2509,6 +2509,7 @@ public class VibeComposerGUI extends JFrame
 			panelColorLow.brighter();
 		}
 
+
 		globalSoloMuter.reapplyTextColor();
 		for (SoloMuter sm : groupSoloMuters) {
 			sm.reapplyTextColor();

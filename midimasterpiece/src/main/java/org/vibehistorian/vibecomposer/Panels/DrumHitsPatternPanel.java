@@ -97,7 +97,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	public DrumHitsPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
 			KnobPanel shiftPanel, KnobPanel chordSpanPanel, JPanel parentPanel) {
 		super();
-		//setBackground(new Color(200, 40, 40));
+		//setBackground(new Color(50, 50, 50));
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
 		//layout.setVgap(0);
 		//layout.setHgap(0);
