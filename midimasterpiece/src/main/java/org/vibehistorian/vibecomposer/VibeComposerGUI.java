@@ -179,6 +179,7 @@ public class VibeComposerGUI extends JFrame
 
 	// COLORS
 	public static Color panelColorHigh, panelColorLow;
+	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
 	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
@@ -721,6 +722,7 @@ public class VibeComposerGUI extends JFrame
 
 		mainButtonsPanel.add(makeButton("Toggle Adv. Features", "ToggleAdv"));
 
+		mainButtonsPanel.add(makeButton("B I G/small", "SwitchBigMode"));
 
 		extraSettingsPanel = new JPanel();
 		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
@@ -1012,6 +1014,7 @@ public class VibeComposerGUI extends JFrame
 		arpScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
+				//System.out.println("Size: " + scrollPaneDimension.toString());
 				return scrollPaneDimension;
 			}
 		};
@@ -1618,7 +1621,8 @@ public class VibeComposerGUI extends JFrame
 		variationButtonsPanel.removeAll();
 		for (int i = 0; i < count; i++) {
 			JButton butt = makeButton("Edit " + (i + 1), "ArrangementOpenVariation," + (i + 1));
-			butt.setPreferredSize(new Dimension(1480 / count, 50));
+			butt.setPreferredSize(new Dimension(
+					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count, 50));
 			variationButtonsPanel.add(butt);
 		}
 	}
@@ -2433,6 +2437,19 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
+	private void switchBigMonitorMode() {
+		Dimension newPrefSize = null;
+		if (!isBigMonitorMode) {
+			newPrefSize = new Dimension(1900, 600);
+		} else {
+			newPrefSize = new Dimension(1600, 400);
+		}
+		instrumentTabPane.setPreferredSize(newPrefSize);
+		instrumentTabPane.setSize(newPrefSize);
+		isBigMonitorMode = !isBigMonitorMode;
+		pack();
+	}
+
 	private void switchDarkMode() {
 		System.out.println("Switching dark mode!");
 		if (isDarkMode) {
@@ -2495,7 +2512,9 @@ public class VibeComposerGUI extends JFrame
 			getInstList(i).forEach(e -> e.getSoloMuter().reapplyTextColor());
 		}
 
+
 		//switchFullMode(isDarkMode);
+
 
 		//sizeRespectingPack();
 		setVisible(true);
@@ -3547,6 +3566,9 @@ public class VibeComposerGUI extends JFrame
 			tabPanePossibleChange = true;
 		}
 
+		if (ae.getActionCommand() == "SwitchBigMode") {
+			switchBigMonitorMode();
+		}
 
 		if (ae.getActionCommand() == "SwitchDarkMode") {
 			switchDarkMode();
