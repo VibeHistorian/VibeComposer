@@ -1,10 +1,12 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
@@ -43,13 +45,18 @@ public class DrumPanel extends InstPanel {
 		this.add(hitsPerPattern);
 
 		hitsPerPattern.getKnob()
-				.setTickThresholds(Arrays.asList(new Integer[] { 3, 4, 5, 6, 8, 12, 16, 24, 32 }));
+				.setTickThresholds(Arrays.asList(new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32 }));
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
-		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, this);
-		this.add(comboPanel);
+		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
+				this);
+		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		JPanel comboPanelWrapper = new JPanel();
+		comboPanelWrapper.add(comboPanel);
+
+		this.add(comboPanelWrapper);
 		this.add(patternShift);
 		this.add(isVelocityPattern);
 
