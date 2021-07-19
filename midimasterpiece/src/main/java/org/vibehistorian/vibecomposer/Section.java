@@ -433,4 +433,20 @@ public class Section {
 		}
 		return count / total;
 	}
+
+	public void recalculatePartVariationMapBoundsIfNeeded() {
+		boolean needsArrayCopy = false;
+		for (int i = 0; i < 5; i++) {
+			int actualInstCount = VibeComposerGUI.getInstList(i).size();
+			int secInstCount = getPartPresenceVariationMap().get(i).length;
+			if (secInstCount != actualInstCount) {
+				needsArrayCopy = true;
+				break;
+			}
+		}
+		if (needsArrayCopy) {
+			initPartMapFromOldData();
+		}
+
+	}
 }

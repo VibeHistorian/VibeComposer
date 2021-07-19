@@ -38,7 +38,7 @@ public abstract class InstPart {
 	protected int pauseChance = 20;
 	protected int exceptionChance = 5;
 	protected boolean repeatableNotes = true;
-	protected int patternRepeat = 2;
+	protected int patternRepeat = 1;
 
 	protected int delay = 0;
 	protected int transpose = 0;

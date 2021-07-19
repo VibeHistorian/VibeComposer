@@ -1371,20 +1371,9 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		Section sec = actualArrangement.getSections().get(secOrder);
-		boolean needsArrayCopy = false;
-		for (int i = 0; i < 5; i++) {
-			int actualInstCount = getInstList(i).size();
-			int secInstCount = sec.getPartPresenceVariationMap().get(i).length;
-			if (secInstCount != actualInstCount) {
-				needsArrayCopy = true;
-				break;
-			}
+		if (sec != null) {
+			sec.recalculatePartVariationMapBoundsIfNeeded();
 		}
-		if (needsArrayCopy) {
-			sec.initPartMapFromOldData();
-		}
-
-
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {

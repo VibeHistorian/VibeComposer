@@ -693,7 +693,6 @@ public class MidiGenerator implements JMC {
 			prevChordString = chordInts.get(start - 1);
 		}
 
-
 		for (int i = start; i < end; i++) {
 
 			List<Integer> chordFreqs = new ArrayList<>();
@@ -701,7 +700,11 @@ public class MidiGenerator implements JMC {
 			for (Note n : chordMelodyMap1.get(i)) {
 				double dur = n.getRhythmValue();
 				double durCounter = 0.0;
-				while (durCounter < dur && totalDuration < progressionDurations.get(i)) {
+				int index = i;
+				if (index >= progressionDurations.size()) {
+					index = progressionDurations.size() - 1;
+				}
+				while (durCounter < dur && totalDuration < progressionDurations.get(index)) {
 					chordFreqs.add(n.getPitch() % 12);
 					durCounter += Durations.SIXTEENTH_NOTE;
 					totalDuration += Durations.SIXTEENTH_NOTE;
@@ -1113,6 +1116,9 @@ public class MidiGenerator implements JMC {
 		int originalPartVariationChance = gc.getArrangementPartVariationChance();
 		int secOrder = -1;
 		for (Section sec : arr.getSections()) {
+			if (overridden) {
+				sec.recalculatePartVariationMapBoundsIfNeeded();
+			}
 			secOrder++;
 			System.out.println("Processing section.. " + sec.getType());
 			sec.setStartTime(measureLength * counter);

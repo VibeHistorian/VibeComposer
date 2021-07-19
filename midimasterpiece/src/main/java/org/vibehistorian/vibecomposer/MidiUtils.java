@@ -328,6 +328,10 @@ public class MidiUtils {
 				break;
 			}
 		}
+		if (bestNotContained > 0) {
+			return null;
+		}
+
 		System.out.println("Returning: " + bestMode.toString() + ", " + transposeUpBy);
 		return Pair.of(bestMode, transposeUpBy);
 	}

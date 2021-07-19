@@ -138,7 +138,7 @@ public class MelodyMidiDropPane extends JPanel {
 						Part part = new Part();
 						for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
 							Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
-							//System.out.println(phr.toString());
+							System.out.println(phr.toString());
 							phr.setAppend(false);
 							//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
 							JMusicUtilsCustom.addRestsToRhythmValues(phr);
@@ -147,9 +147,16 @@ public class MelodyMidiDropPane extends JPanel {
 
 						JMusicUtilsCustom.consolidate(part);
 						//Mod.consolidate(part);
-						userMelody = part.getPhrase(0);
+						Phrase userMelodyCandidate = part.getPhrase(0);
 						Pair<ScaleMode, Integer> detectionResult = MidiUtils
-								.detectKeyAndMode(userMelody);
+								.detectKeyAndMode(userMelodyCandidate);
+
+						if (detectionResult == null) {
+							message.setText("Unknown key, skipped!");
+							System.out.println("Melody uses unknown key, skipped!");
+							return;
+						}
+						userMelody = userMelodyCandidate;
 						int transposeUpBy = detectionResult.getValue();
 						Mod.transpose(userMelody, transposeUpBy);
 						MidiUtils.transposePhrase(userMelody,
