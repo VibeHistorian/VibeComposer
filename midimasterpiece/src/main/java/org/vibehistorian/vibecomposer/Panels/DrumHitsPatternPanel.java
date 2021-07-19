@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -23,6 +24,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
@@ -38,6 +40,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 	private List<Integer> truePattern = new ArrayList<>();
 	private JCheckBox[] hitChecks = new JCheckBox[32];
+	private JLabel[] separators = new JLabel[3];
 
 	private JPanel parentPanel = null;
 
@@ -50,15 +53,42 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static List<Integer> quintuplets = Arrays.asList(new Integer[] { 5 });
 	public static List<Integer> triplets = Arrays.asList(new Integer[] { 3 });
 
-	public static Map<Integer, Insets> nonOctaInsetMap = new HashMap<>();
+
+	public static Map<Integer, Insets> smallModeInsetMap = new HashMap<>();
 	static {
-		nonOctaInsetMap.put(3, new Insets(0, 0, 0, CheckBoxIcon.width * 5 / 3));
-		nonOctaInsetMap.put(4, new Insets(0, 0, 0, CheckBoxIcon.width * 4 / 4));
-		nonOctaInsetMap.put(5, new Insets(0, 0, 0, CheckBoxIcon.width * 3 / 5));
-		nonOctaInsetMap.put(6, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
-		nonOctaInsetMap.put(12, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
-		nonOctaInsetMap.put(18, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
-		nonOctaInsetMap.put(24, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		smallModeInsetMap.put(3, new Insets(0, 0, 0, CheckBoxIcon.width * 5 / 3));
+		smallModeInsetMap.put(4, new Insets(0, 0, 0, CheckBoxIcon.width * 4 / 4));
+		smallModeInsetMap.put(5, new Insets(0, 0, 0, CheckBoxIcon.width * 3 / 5));
+		smallModeInsetMap.put(6, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		smallModeInsetMap.put(12, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		//smallModeInsetMap.put(18, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+		smallModeInsetMap.put(24, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
+	}
+
+	public static Map<Integer, Insets> bigModeInsetMap = new HashMap<>();
+	static {
+
+		for (int i = 3; i < 32; i++) {
+			bigModeInsetMap.put(i, new Insets(0, 0, 0, CheckBoxIcon.width * (32 - i) / i));
+		}
+	}
+
+	public static Map<Integer, Insets> bigModeDoubleChordGeneralInsetMap = new HashMap<>();
+	static {
+
+		for (int i = 3; i < 32; i++) {
+			bigModeDoubleChordGeneralInsetMap.put(i,
+					new Insets(0, 0, 0, CheckBoxIcon.width * (32 - i) / i));
+		}
+	}
+
+	public static Map<Integer, Insets> bigModeDoubleChordTransitionInsetMap = new HashMap<>();
+	static {
+
+		for (int i = 3; i < 32; i++) {
+			bigModeDoubleChordGeneralInsetMap.put(i,
+					new Insets(0, 0, 0, CheckBoxIcon.width * (32 - i) / (i * 2)));
+		}
 	}
 
 
@@ -76,10 +106,12 @@ public class DrumHitsPatternPanel extends JPanel {
 		this.shiftPanel = shiftPanel;
 		this.parentPanel = parentPanel;
 		lastHits = hitsPanel.getInt();
+		int sepCounter = 0;
 		for (int i = 0; i < 32; i++) {
 			final int fI = i;
 			truePattern.add(0);
 			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
+			//hitChecks[i].setBackground(new Color(128, 128, 128));
 			hitChecks[i].addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
@@ -132,8 +164,13 @@ public class DrumHitsPatternPanel extends JPanel {
 				}
 
 			});
-			;
 			add(hitChecks[i]);
+			if (i > 0 && i < 31 && ((i + 1) % 8) == 0) {
+				JLabel sep = new JLabel("|");
+				sep.setVisible(false);
+				separators[sepCounter++] = sep;
+				add(sep);
+			}
 		}
 
 		patternType.addItemListener(new ItemListener() {
@@ -271,20 +308,58 @@ public class DrumHitsPatternPanel extends JPanel {
 					}
 				}
 				lastHits = nowHits;
-				if (nonOctaInsetMap.containsKey(lastHits)) {
-					for (int i = 0; i < lastHits; i++) {
-						hitChecks[i].setMargin(nonOctaInsetMap.get(lastHits));
+
+
+				if (VibeComposerGUI.isBigMonitorMode) {
+					width = 32 * CheckBoxIcon.width;
+					height = 1 * CheckBoxIcon.width;
+					if (bigModeInsetMap.containsKey(lastHits)) {
+						for (int i = 0; i < lastHits; i++) {
+							hitChecks[i].setMargin(bigModeInsetMap.get(lastHits));
+						}
+					} else {
+						for (int i = 0; i < lastHits; i++) {
+							hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+						}
 					}
+					if (lastHits == 32) {
+						for (JLabel lab : separators) {
+							lab.setVisible(true);
+						}
+					} else if (lastHits == 16) {
+						separators[0].setVisible(true);
+					} else {
+						for (JLabel lab : separators) {
+							lab.setVisible(false);
+						}
+					}
+
 				} else {
-					for (int i = 0; i < lastHits; i++) {
-						hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+					width = 8 * CheckBoxIcon.width;
+					height = 2 * CheckBoxIcon.width;
+					if (smallModeInsetMap.containsKey(lastHits)) {
+						for (int i = 0; i < lastHits; i++) {
+							hitChecks[i].setMargin(smallModeInsetMap.get(lastHits));
+						}
+					} else {
+						for (int i = 0; i < lastHits; i++) {
+							hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+						}
+					}
+					for (JLabel lab : separators) {
+						lab.setVisible(false);
 					}
 				}
+				int bigModeWidthOffset = (VibeComposerGUI.isBigMonitorMode) ? 20 : 0;
 				if (lastHits > 16) {
-					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(width, height * 2));
-					parentPanel.setMaximumSize(new Dimension(3000, 90));
+					DrumHitsPatternPanel.this.setPreferredSize(
+							new Dimension(width + bigModeWidthOffset, height * 2));
+					if (!VibeComposerGUI.isBigMonitorMode) {
+						parentPanel.setMaximumSize(new Dimension(3000, 90));
+					}
 				} else {
-					DrumHitsPatternPanel.this.setPreferredSize(new Dimension(width, height));
+					DrumHitsPatternPanel.this
+							.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
 					parentPanel.setMaximumSize(new Dimension(3000, 50));
 				}
 				DrumHitsPatternPanel.this.setVisible(true);

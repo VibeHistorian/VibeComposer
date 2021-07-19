@@ -2444,9 +2444,15 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			newPrefSize = new Dimension(1600, 400);
 		}
+		scrollPaneDimension = newPrefSize;
 		instrumentTabPane.setPreferredSize(newPrefSize);
 		instrumentTabPane.setSize(newPrefSize);
 		isBigMonitorMode = !isBigMonitorMode;
+
+		for (DrumPanel dp : drumPanels) {
+			dp.getComboPanel().reapplyHits();
+		}
+
 		pack();
 	}
 
