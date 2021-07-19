@@ -2523,6 +2523,11 @@ public class MidiGenerator implements JMC {
 			dp.setVelocityPattern(false);
 			dp.setChordSpan(chordInts.size());
 		}
+
+		if (dp.getPattern() == RhythmPattern.CUSTOM) {
+			Collections.rotate(premadePattern, dp.getPatternShift());
+		}
+
 		List<Integer> drumPattern = new ArrayList<>();
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
 			// if random pause or not present in pattern: pause
@@ -2539,7 +2544,10 @@ public class MidiGenerator implements JMC {
 
 			}
 		}
-		Collections.rotate(drumPattern, dp.getPatternShift());
+		if (dp.getPattern() != RhythmPattern.CUSTOM) {
+			Collections.rotate(drumPattern, dp.getPatternShift());
+		}
+
 		/*System.out
 				.println("Drum pattern for " + dp.getInstrument() + " : " + drumPattern.toString());*/
 		return drumPattern;

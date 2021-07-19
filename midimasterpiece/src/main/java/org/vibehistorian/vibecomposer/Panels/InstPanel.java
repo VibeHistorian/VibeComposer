@@ -22,6 +22,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -120,6 +121,9 @@ public abstract class InstPanel extends JPanel {
 
 		//transpose.getSlider().setMajorTickSpacing(12);
 		//transpose.getSlider().setSnapToTicks(true);
+
+		chordSpan.getKnob().setTickSpacing(50);
+		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
 
 		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);

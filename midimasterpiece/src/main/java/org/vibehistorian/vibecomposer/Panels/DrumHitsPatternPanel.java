@@ -350,7 +350,7 @@ public class DrumHitsPatternPanel extends JPanel {
 				if (VibeComposerGUI.isBigMonitorMode) {
 					width = 32 * CheckBoxIcon.width;
 					height = 1 * CheckBoxIcon.width;
-					if (chords == 2) {
+					if (chords == 1) {
 						if (bigModeInsetMap.containsKey(lastHits)) {
 							for (int i = 0; i < lastHits; i++) {
 								hitChecks[i].setMargin(bigModeInsetMap.get(lastHits));
