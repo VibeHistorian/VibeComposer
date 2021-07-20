@@ -1623,8 +1623,32 @@ public class VibeComposerGUI extends JFrame
 			JButton butt = makeButton("Edit " + (i + 1), "ArrangementOpenVariation," + (i + 1));
 			butt.setPreferredSize(new Dimension(
 					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count, 50));
+			recolorVariationPopupButton(butt, actualArrangement.getSections().get(i));
 			variationButtonsPanel.add(butt);
 		}
+	}
+
+	private void recolorVariationPopupButton(JButton butt, Section sec) {
+		int count = (sec.getRiskyVariations() != null)
+				? (int) sec.getRiskyVariations().stream().filter(e -> e.booleanValue()).count()
+				: 0;
+		int color = 0;
+		if (isDarkMode) {
+			color = arrangementDarkModeLowestColor
+					+ (70 * count) / Section.riskyVariationNames.length;
+			color = Math.min(color, 170);
+		} else {
+			color = arrangementLightModeHighestColor
+					- (70 * count) / Section.riskyVariationNames.length;
+			color = Math.max(color, 130);
+		}
+
+		int extraRed = 0;
+		double remaining = 255 - color - 1;
+		extraRed += (count * remaining) / (double) Section.riskyVariationNames.length;
+		extraRed = Math.min(255 - color - 1, extraRed);
+
+		butt.setBackground(new Color(color + extraRed, color, color));
 	}
 
 	private void initRandomButtons(int startY, int anchorSide) {
@@ -2518,7 +2542,7 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < 5; i++) {
 			getInstList(i).forEach(e -> e.getSoloMuter().reapplyTextColor());
 		}
-
+		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
 		//switchFullMode(isDarkMode);
 
