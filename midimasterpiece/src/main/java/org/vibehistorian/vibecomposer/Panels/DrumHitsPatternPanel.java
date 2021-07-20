@@ -223,7 +223,7 @@ public class DrumHitsPatternPanel extends JPanel {
 				Collections.rotate(halfPattern, shiftPanel.getInt());
 				truePattern = MidiUtils.intersperse(0, 1, halfPattern);
 				//Collections.rotate(halfPattern, -1 * shiftPanel.getInt());
-
+				patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
 				if (shiftPanel.getInt() > 0) {
 					shiftPanel.setInt(0);
 				}
