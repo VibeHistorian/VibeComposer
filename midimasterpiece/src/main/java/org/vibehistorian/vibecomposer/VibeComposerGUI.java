@@ -1615,9 +1615,9 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void refreshVariationPopupButtons(int count) {
-		if (count == variationButtonsPanel.getComponents().length) {
+		/*if (count == variationButtonsPanel.getComponents().length) {
 			return;
-		}
+		}*/
 		variationButtonsPanel.removeAll();
 		for (int i = 0; i < count; i++) {
 			JButton butt = makeButton("Edit " + (i + 1), "ArrangementOpenVariation," + (i + 1));
@@ -2452,7 +2452,7 @@ public class VibeComposerGUI extends JFrame
 		for (DrumPanel dp : drumPanels) {
 			dp.getComboPanel().reapplyHits();
 		}
-
+		refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
 		pack();
 	}
 
