@@ -1202,28 +1202,41 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumUseChordFill);
 
 		randomDrumHitsMultiplier = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" },
+		MidiUtils.addAllToJComboBox(new String[] { "---", "0.5x", "1.5x", "2x" },
 				randomDrumHitsMultiplier);
-		randomDrumHitsMultiplier.setSelectedItem("1");
+		randomDrumHitsMultiplier.setSelectedItem("---");
 		randomDrumHitsMultiplier.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(ItemEvent event) {
 				if (event.getStateChange() == ItemEvent.SELECTED) {
-					String item = (String) event.getItem();
-					if ("---".equals(item)) {
+					switch (randomDrumHitsMultiplier.getSelectedIndex()) {
+					case 0:
 						return;
-					}
-					int newState = Integer.valueOf(item);
-					if (newState != randomDrumHitsMultiplierLastState) {
+					case 1:
 						for (int i = 0; i < drumPanels.size(); i++) {
-							int newHits = drumPanels.get(i).getHitsPerPattern() * newState
-									/ randomDrumHitsMultiplierLastState;
+							int newHits = drumPanels.get(i).getHitsPerPattern() / 2;
 							drumPanels.get(i).setHitsPerPattern(newHits);
 						}
-						randomDrumHitsMultiplierLastState = newState;
+						break;
+					case 2:
+						for (int i = 0; i < drumPanels.size(); i++) {
+							int newHits = drumPanels.get(i).getHitsPerPattern() * 3 / 2;
+							drumPanels.get(i).setHitsPerPattern(newHits);
+						}
+						break;
+					case 3:
+						for (int i = 0; i < drumPanels.size(); i++) {
+							int newHits = drumPanels.get(i).getHitsPerPattern() * 2;
+							drumPanels.get(i).setHitsPerPattern(newHits);
+						}
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Only 3 hits multiplier states allowed!");
 					}
 
+					randomDrumHitsMultiplier.setSelectedItem("---");
 				}
 			}
 		});
@@ -4454,7 +4467,7 @@ public class VibeComposerGUI extends JFrame
 			dpart.setOrder(dp.getPanelOrder());
 			dp.setFromInstPart(dpart);
 
-			dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
+			//dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
 
 			if (settings.isSwingable()) {
 				dp.setDelay(slide);
@@ -4565,7 +4578,7 @@ public class VibeComposerGUI extends JFrame
 				hits /= 2;
 			}
 
-			dp.setHitsPerPattern(hits * randomDrumHitsMultiplierLastState);
+			dp.setHitsPerPattern(hits * 2);
 
 			int adjustVelocity = -1 * dp.getHitsPerPattern() / dp.getChordSpan();
 
