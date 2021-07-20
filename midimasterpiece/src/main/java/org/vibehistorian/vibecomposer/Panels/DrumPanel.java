@@ -1,9 +1,12 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -50,10 +53,15 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Pattern"));
 		this.add(pattern);
+		JButton doublerButt = new JButton("Dd");
+		doublerButt.setPreferredSize(new Dimension(25, 30));
+		doublerButt.setMargin(new Insets(0, 0, 0, 0));
 		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
-				this);
+				doublerButt, this);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
+
+		comboPanelWrapper.add(doublerButt);
 		comboPanelWrapper.add(comboPanel);
 
 		this.add(comboPanelWrapper);

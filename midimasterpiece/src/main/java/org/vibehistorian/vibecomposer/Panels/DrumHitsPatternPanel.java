@@ -11,10 +11,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -25,6 +27,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
@@ -38,6 +41,8 @@ public class DrumHitsPatternPanel extends JPanel {
 	private ScrollComboBox<String> patternType = null;
 	private KnobPanel shiftPanel = null;
 	private KnobPanel chordSpanPanel = null;
+	private JButton doublerButton = null;
+
 	private int lastHits = 0;
 
 	private List<Integer> truePattern = new ArrayList<>();
@@ -95,7 +100,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 
 	public DrumHitsPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
-			KnobPanel shiftPanel, KnobPanel chordSpanPanel, JPanel parentPanel) {
+			KnobPanel shiftPanel, KnobPanel chordSpanPanel, JButton doubler, JPanel parentPanel) {
 		super();
 		//setBackground(new Color(50, 50, 50));
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
@@ -109,6 +114,7 @@ public class DrumHitsPatternPanel extends JPanel {
 		this.shiftPanel = shiftPanel;
 		this.parentPanel = parentPanel;
 		this.chordSpanPanel = chordSpanPanel;
+		doublerButton = doubler;
 		lastHits = hitsPanel.getInt();
 		int sepCounter = 0;
 		for (int i = 0; i < 32; i++) {
@@ -205,6 +211,27 @@ public class DrumHitsPatternPanel extends JPanel {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				reapplyHits();
+
+			}
+		});
+
+		doubler.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				List<Integer> halfPattern = truePattern.subList(0, 16);
+				Collections.rotate(halfPattern, shiftPanel.getInt());
+				truePattern = MidiUtils.intersperse(0, 1, halfPattern);
+				//Collections.rotate(halfPattern, -1 * shiftPanel.getInt());
+
+				if (shiftPanel.getInt() > 0) {
+					shiftPanel.setInt(0);
+				}
+				reapplyShift();
+				if (lastHits != 24 && lastHits != 10) {
+					hitsPanel.getKnob().setValue(2 * lastHits);
+				}
+
 
 			}
 		});

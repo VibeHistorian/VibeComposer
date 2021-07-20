@@ -844,4 +844,15 @@ public class MidiUtils {
 		return array[generator.nextInt(to - from) + from];
 	}
 
+	public static List<Integer> intersperse(int number, int times, List<Integer> list) {
+		List<Integer> interspersed = new ArrayList<>();
+		for (Integer i : list) {
+			interspersed.add(i);
+			for (int j = 0; j < times; j++) {
+				interspersed.add(number);
+			}
+		}
+		return interspersed;
+	}
+
 }

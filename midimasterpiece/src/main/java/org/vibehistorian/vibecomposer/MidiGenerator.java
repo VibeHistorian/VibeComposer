@@ -2105,12 +2105,12 @@ public class MidiGenerator implements JMC {
 					ArpPattern pat = (directions.get(j)) ? ArpPattern.UP : ArpPattern.DOWN;
 					arpPattern = pat.getPatternByLength(ap.getHitsPerPattern(), chord.length,
 							ap.getPatternRepeat());
-					arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
+					arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 				} else {
 					if (ap.getArpPattern() != ArpPattern.RANDOM) {
 						arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
 								chord.length, ap.getPatternRepeat());
-						arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
+						arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 					}
 				}
 
@@ -2407,17 +2407,6 @@ public class MidiGenerator implements JMC {
 		return returnList;
 	}
 
-	private List<Integer> intersperse(int number, int times, List<Integer> list) {
-		List<Integer> interspersed = new ArrayList<>();
-		for (Integer i : list) {
-			interspersed.add(i);
-			for (int j = 0; j < times; j++) {
-				interspersed.add(number);
-			}
-		}
-		return interspersed;
-	}
-
 	private void applyRuleToMelody(Note[] melody, Consumer<Note[]> melodyRule) {
 		melodyRule.accept(melody);
 	}
@@ -2489,9 +2478,9 @@ public class MidiGenerator implements JMC {
 		//System.out.println("Arp pauses : " + arpPausesPattern.toString());
 
 		if (ap.getChordSpan() > 1) {
-			arpPattern = intersperse(0, ap.getChordSpan() - 1, arpPattern);
-			arpOctavePattern = intersperse(0, ap.getChordSpan() - 1, arpOctavePattern);
-			arpPausesPattern = intersperse(0, ap.getChordSpan() - 1, arpPausesPattern);
+			arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
+			arpOctavePattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpOctavePattern);
+			arpPausesPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPausesPattern);
 		}
 
 		// pattern repeat
