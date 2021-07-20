@@ -165,8 +165,8 @@ public class MidiUtils {
 		cpMap.put("S", new ArrayList<>(Arrays.asList("C", "F", "G", "Am")));
 		cpMap.put("C", new ArrayList<>(Arrays.asList("F", "G")));
 		cpMap.put("Dm", new ArrayList<>(Arrays.asList("Am")));
-		cpMap.put("Em", new ArrayList<>(Arrays.asList("Am")));
-		cpMap.put("F", new ArrayList<>(Arrays.asList("C", "Dm", "G", "Am")));
+		cpMap.put("Em", new ArrayList<>(Arrays.asList("Am", "G")));
+		cpMap.put("F", new ArrayList<>(Arrays.asList("C", "Dm", "Am")));
 		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "F", "Am")));
 		cpMap.put("Am", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G")));
 		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "Em", "F")));
