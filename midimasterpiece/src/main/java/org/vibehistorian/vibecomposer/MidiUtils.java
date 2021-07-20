@@ -85,19 +85,16 @@ public class MidiUtils {
 			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));
 
 	public enum ScaleMode {
-		IONIAN(Scales.MAJOR_SCALE, cIonianScale4), DORIAN(Scales.DORIAN_SCALE, cDorianScale4),
-		PHRYGIAN(Scales.PHRYGIAN_SCALE, cPhrygianScale4),
-		LYDIAN(Scales.LYDIAN_SCALE, cLydianScale4),
-		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, cMixolydianScale4),
-		AEOLIAN(Scales.AEOLIAN_SCALE, cAeolianScale4),
-		LOCRIAN(Scales.LOCRIAN_SCALE, cLocrianScale4), BLUES(Scales.BLUES_SCALE, cBluesScale4);
+		IONIAN(Scales.MAJOR_SCALE), DORIAN(Scales.DORIAN_SCALE), PHRYGIAN(Scales.PHRYGIAN_SCALE),
+		LYDIAN(Scales.LYDIAN_SCALE), MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE),
+		AEOLIAN(Scales.AEOLIAN_SCALE), LOCRIAN(Scales.LOCRIAN_SCALE), BLUES(Scales.BLUES_SCALE),
+		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE), TURKISH(Scales.TURKISH_SCALE),
+		INDIAN(Scales.INDIAN_SCALE);
 
 		public Integer[] noteAdjustScale;
-		public List<Integer> absoluteNotesC;
 
-		private ScaleMode(Integer[] adjust, List<Integer> absolute) {
+		private ScaleMode(Integer[] adjust) {
 			this.noteAdjustScale = adjust;
-			this.absoluteNotesC = absolute;
 		}
 	}
 
@@ -635,10 +632,14 @@ public class MidiUtils {
 		for (int j = 0; j < phr.getNoteList().size(); j++) {
 			Note n = (Note) phr.getNoteList().get(j);
 			int pitch = n.getPitch();
+			if (pitch == Note.REST) {
+				continue;
+			}
 			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
 
 			if (originalIndex == -1) {
 				n.setPitch(pitch - 1);
+				System.out.println("Not indexed pitch: " + pitch);
 				continue;
 			}
 
@@ -646,9 +647,7 @@ public class MidiUtils {
 			int originalMovement = mode[originalIndex];
 			int newMovement = modeTo[originalIndex];
 
-			if (pitch != Note.REST) {
-				n.setPitch(pitch - originalMovement + newMovement);
-			}
+			n.setPitch(pitch - originalMovement + newMovement);
 		}
 	}
 

@@ -2225,7 +2225,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		MidiUtils.addAllToJComboBox(scaleModes, scaleMode);
 
-		controlSettingsPanel.add(new JLabel("Mode:"));
+		controlSettingsPanel.add(new JLabel("Scale"));
 		controlSettingsPanel.add(scaleMode);
 
 

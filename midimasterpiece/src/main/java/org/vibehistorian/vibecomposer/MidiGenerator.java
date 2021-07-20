@@ -57,6 +57,7 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -1494,10 +1495,14 @@ public class MidiGenerator implements JMC {
 
 		}
 
-
-		Mod.transpose(score, gc.getScaleMode().ordinal(), Mod.MAJOR_SCALE, 0);
-		int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11, 12 };
-		Mod.transpose(score, gc.getTranspose() - backTranspose[gc.getScaleMode().ordinal()]);
+		for (Part p : score.getPartArray()) {
+			for (Phrase phr : p.getPhraseArray()) {
+				MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
+						gc.getScaleMode().noteAdjustScale);
+			}
+		}
+		//int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11, 12 };
+		Mod.transpose(score, gc.getTranspose());
 
 		// add drums after transposing transposable parts
 
