@@ -71,7 +71,8 @@ public class DrumLoopPopup {
 				while (true) {
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
-							slider.setValue(VibeComposerGUI.slider.getValue());
+							slider.setValue(
+									VibeComposerGUI.slider.getValue() % slider.getMaximum());
 						}
 
 						try {
@@ -104,7 +105,7 @@ public class DrumLoopPopup {
 
 
 		slider = new JSlider();
-		slider.setMaximum(VibeComposerGUI.slider.getMaximum());
+		slider.setMaximum(VibeComposerGUI.slider.getMaximum() / 4);
 		slider.setToolTipText("Test");
 
 		sliderPanel.add(slider);
