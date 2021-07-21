@@ -1375,8 +1375,7 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
 					if (added && !dp.isMuted()) {
 						int sectionChanceModifier = 75 + (sec.getDrumChance() / 4);
-						boolean sectionForcedDynamics = (sec.getType().contains("CLIMAX")
-								|| sec.getType().contains("CHORUS"))
+						boolean sectionForcedDynamics = (sec.getType().contains("CLIMAX"))
 								&& variationGen.nextInt(100) < gc
 										.getArrangementPartVariationChance();
 						List<Integer> variations = (overridden) ? sec.getVariation(4, i) : null;
@@ -1494,11 +1493,12 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
-
-		for (Part p : score.getPartArray()) {
-			for (Phrase phr : p.getPhraseArray()) {
-				MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
-						gc.getScaleMode().noteAdjustScale);
+		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+			for (Part p : score.getPartArray()) {
+				for (Phrase phr : p.getPhraseArray()) {
+					MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
+							gc.getScaleMode().noteAdjustScale);
+				}
 			}
 		}
 		//int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11, 12 };
@@ -1722,9 +1722,9 @@ public class MidiGenerator implements JMC {
 		minVel = (minVel < 0) ? 0 : minVel;
 		int maxVel = gc.getBassPart().getVelocityMax() + (5 * sec.getBassChance()) / 10 - 50;
 		maxVel = (maxVel < 1) ? 1 : maxVel;
-		Random variationGenerator = new Random(seed + sec.getTypeSeedOffset());
-		Random rhythmPauseGenerator = new Random(seed + sec.getTypeSeedOffset());
-		Random noteVariationGenerator = new Random(seed + sec.getTypeSeedOffset() + 2);
+		Random variationGenerator = new Random(seed + sec.getTypeMelodyOffset());
+		Random rhythmPauseGenerator = new Random(seed + sec.getTypeMelodyOffset());
+		Random noteVariationGenerator = new Random(seed + sec.getTypeMelodyOffset() + 2);
 		boolean rhythmPauses = false;
 		int numberOfVars = Section.variationDescriptions[1].length - 2;
 		for (int i = 0; i < measures; i++) {
@@ -1738,6 +1738,9 @@ public class MidiGenerator implements JMC {
 
 						if (variations == null) {
 							variations = new ArrayList<>();
+						}
+						if (sec.getTypeMelodyOffset() == 0) {
+							break;
 						}
 						if (!variations.contains(variationInt)) {
 							variations.add(variationInt);
@@ -2263,7 +2266,7 @@ public class MidiGenerator implements JMC {
 							ignoreChordSpanFill = true;
 							break;
 						case 1:
-							extraExceptionChance += 10;
+							extraExceptionChance = dp.getExceptionChance() + 10;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");

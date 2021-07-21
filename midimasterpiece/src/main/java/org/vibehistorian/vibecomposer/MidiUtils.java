@@ -628,6 +628,11 @@ public class MidiUtils {
 			modeList.add(num);
 		}
 
+		List<Integer> modeToList = new ArrayList<>();
+		for (int num : modeTo) {
+			modeToList.add(num);
+		}
+
 
 		for (int j = 0; j < phr.getNoteList().size(); j++) {
 			Note n = (Note) phr.getNoteList().get(j);
@@ -635,11 +640,16 @@ public class MidiUtils {
 			if (pitch == Note.REST) {
 				continue;
 			}
-			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
+			int searchPitch = Integer.valueOf(pitch % 12);
+			int originalIndex = modeList.indexOf(searchPitch);
 
 			if (originalIndex == -1) {
-				n.setPitch(pitch - 1);
-				System.out.println("Not indexed pitch: " + pitch);
+				if (modeToList.contains(searchPitch)) {
+					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+				} else {
+					n.setPitch(pitch - 1);
+					System.out.println("Not indexed pitch, lowered by -1: " + pitch);
+				}
 				continue;
 			}
 
