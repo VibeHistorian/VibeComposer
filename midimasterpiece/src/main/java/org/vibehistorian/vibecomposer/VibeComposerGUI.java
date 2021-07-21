@@ -129,6 +129,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
+import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
@@ -438,6 +439,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> showScorePicker;
 	JCheckBox midiMode;
 	ScrollComboBox<String> midiModeDevices;
+	MidiHandler mh = new MidiHandler();
 	JCheckBox collapseDrumTracks;
 
 	JButton compose;
