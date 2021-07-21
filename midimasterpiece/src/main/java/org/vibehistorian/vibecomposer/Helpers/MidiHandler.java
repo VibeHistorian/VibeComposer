@@ -10,10 +10,12 @@ import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Transmitter;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
 public class MidiHandler {
 
 	public MidiHandler() {
-		MidiDevice device;
+		MidiDevice device = null;
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		for (int i = 0; i < infos.length; i++) {
 			try {
@@ -44,6 +46,7 @@ public class MidiHandler {
 
 
 			} catch (MidiUnavailableException e) {
+				System.out.println(device.getDeviceInfo() + " CAN'T be opened!");
 			}
 		}
 
@@ -64,7 +67,13 @@ public class MidiHandler {
 				//int status = shortMessage.getStatus();
 				System.out.printf("Keyboard: %d, %d, %d\n", shortMessage.getChannel(),
 						shortMessage.getData1(), shortMessage.getData2());
-				//VibeComposerGUI.mainBpm.setInt((int) shortMessage.getData2());
+				if (shortMessage.getChannel() == 15 && shortMessage.getData2() > 0) {
+
+					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
+				}
+
+			} else {
+				System.out.println("Bad msg");
 			}
 		}
 

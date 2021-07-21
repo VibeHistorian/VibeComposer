@@ -60,6 +60,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static List<Integer> quintuplets = Arrays.asList(new Integer[] { 5 });
 	public static List<Integer> triplets = Arrays.asList(new Integer[] { 3 });
 
+	private boolean viewOnly = false;
 
 	public static Map<Integer, Insets> smallModeInsetMap = new HashMap<>();
 	static {
@@ -357,6 +358,7 @@ public class DrumHitsPatternPanel extends JPanel {
 			@Override
 			public void run() {
 				DrumHitsPatternPanel.this.setVisible(false);
+				boolean showBIG = VibeComposerGUI.isBigMonitorMode || viewOnly;
 				int nowHits = hitsPanel.getInt();
 				if (nowHits > 32)
 					nowHits = 32;
@@ -374,7 +376,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 				int chords = chordSpanPanel.getInt();
 
-				if (VibeComposerGUI.isBigMonitorMode) {
+				if (showBIG) {
 					width = 32 * CheckBoxIcon.width;
 					height = 1 * CheckBoxIcon.width;
 					if (chords == 1) {
@@ -404,19 +406,24 @@ public class DrumHitsPatternPanel extends JPanel {
 
 						}
 					}
-
-					if (lastHits == 32 && chords == 1) {
-						for (JLabel lab : separators) {
-							lab.setVisible(true);
+					if (!viewOnly) {
+						if (lastHits == 32 && chords == 1) {
+							for (JLabel lab : separators) {
+								lab.setVisible(true);
+							}
+						} else if (lastHits == 32 && chords == 2) {
+							separators[0].setVisible(true);
+							separators[1].setVisible(false);
+							separators[2].setVisible(true);
+						} else if (lastHits == 16 && chords == 1) {
+							separators[0].setVisible(true);
+							separators[1].setVisible(false);
+							separators[2].setVisible(false);
+						} else {
+							for (JLabel lab : separators) {
+								lab.setVisible(false);
+							}
 						}
-					} else if (lastHits == 32 && chords == 2) {
-						separators[0].setVisible(true);
-						separators[1].setVisible(false);
-						separators[2].setVisible(true);
-					} else if (lastHits == 16 && chords == 1) {
-						separators[0].setVisible(true);
-						separators[1].setVisible(false);
-						separators[2].setVisible(false);
 					} else {
 						for (JLabel lab : separators) {
 							lab.setVisible(false);
@@ -439,11 +446,11 @@ public class DrumHitsPatternPanel extends JPanel {
 						lab.setVisible(false);
 					}
 				}
-				int bigModeWidthOffset = (VibeComposerGUI.isBigMonitorMode) ? 10 : 0;
-				if (lastHits > 16 || (chords == 2 && VibeComposerGUI.isBigMonitorMode)) {
+				int bigModeWidthOffset = (showBIG) ? 10 : 0;
+				if (lastHits > 16 || (chords == 2 && showBIG)) {
 					DrumHitsPatternPanel.this.setPreferredSize(
 							new Dimension(width + bigModeWidthOffset, height * 2));
-					if (!VibeComposerGUI.isBigMonitorMode) {
+					if (!showBIG) {
 						parentPanel.setMaximumSize(new Dimension(3000, 90));
 					}
 				} else {
@@ -456,6 +463,14 @@ public class DrumHitsPatternPanel extends JPanel {
 
 		});
 
+	}
+
+	public boolean isViewOnly() {
+		return viewOnly;
+	}
+
+	public void setViewOnly(boolean viewOnly) {
+		this.viewOnly = viewOnly;
 	}
 
 }

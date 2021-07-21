@@ -56,8 +56,7 @@ public class DrumPanel extends InstPanel {
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
 		doublerButt.setMargin(new Insets(0, 0, 0, 0));
-		comboPanel = new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
-				doublerButt, this);
+		comboPanel = makeDrumHitsPanel(doublerButt);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
 
@@ -93,6 +92,11 @@ public class DrumPanel extends InstPanel {
 
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
+	}
+
+	public DrumHitsPatternPanel makeDrumHitsPanel(JButton doubler) {
+		return new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, doubler,
+				this);
 	}
 
 	public DrumPanel(ActionListener l) {

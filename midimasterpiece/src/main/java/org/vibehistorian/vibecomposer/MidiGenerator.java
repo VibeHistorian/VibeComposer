@@ -136,7 +136,7 @@ public class MidiGenerator implements JMC {
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	private static double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
-	private static final int OPENHAT_CHANCE = 15;
+	public static final int OPENHAT_CHANCE = 15;
 	private static final int maxAllowedScaleNotes = 7;
 	public static double START_TIME_DELAY = Durations.EIGHTH_NOTE;
 	private static final double DEFAULT_CHORD_SPLIT = 625;
@@ -182,7 +182,7 @@ public class MidiGenerator implements JMC {
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
 	private List<int[]> melodyBasedRootProgression = new ArrayList<>();
 
-	private List<Integer> melodyNotePattern = null;
+	public static List<Integer> melodyNotePattern = null;
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
@@ -1079,8 +1079,8 @@ public class MidiGenerator implements JMC {
 			generatedRootProgression = rootProgression;
 			actualDurations = progressionDurations;
 		} else {
-			generateMelodySkeletonFromChords(gc.getMelodyParts().get(0), actualProgression,
-					generatedRootProgression, 1, 0, new Section(), null);
+			fillMelody(gc.getMelodyParts().get(0), actualProgression, generatedRootProgression, 1,
+					0, new Section(), null);
 		}
 
 		Arrangement arr = null;
@@ -2504,7 +2504,7 @@ public class MidiGenerator implements JMC {
 		return arpMap;
 	}
 
-	private List<Integer> generateDrumPatternFromPart(DrumPart dp) {
+	public static List<Integer> generateDrumPatternFromPart(DrumPart dp) {
 		Random uiGenerator1drumPattern = new Random(dp.getPatternSeed() + dp.getOrder() - 1);
 		List<Integer> premadePattern = (dp.getPattern() != RhythmPattern.CUSTOM)
 				? dp.getPattern().getPatternByLength(dp.getHitsPerPattern())
