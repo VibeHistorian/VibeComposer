@@ -2207,6 +2207,8 @@ public class MidiGenerator implements JMC {
 		boolean genVars = variations == null;
 		Phrase drumPhrase = new Phrase();
 
+		sectionForcedDynamics &= (dp.getInstrument() < 38 && dp.getInstrument() > 40);
+
 		int chordsCount = actualProgression.size();
 
 		List<Integer> drumPattern = generateDrumPatternFromPart(dp);
@@ -2266,7 +2268,9 @@ public class MidiGenerator implements JMC {
 							ignoreChordSpanFill = true;
 							break;
 						case 1:
-							extraExceptionChance = dp.getExceptionChance() + 10;
+							extraExceptionChance = (dp.getInstrument() < 38
+									&& dp.getInstrument() > 40) ? dp.getExceptionChance() + 10
+											: dp.getExceptionChance();
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
