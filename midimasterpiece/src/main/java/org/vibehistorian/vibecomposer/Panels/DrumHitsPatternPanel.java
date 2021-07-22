@@ -32,6 +32,7 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 
 public class DrumHitsPatternPanel extends JPanel {
 
@@ -61,6 +62,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static List<Integer> triplets = Arrays.asList(new Integer[] { 3 });
 
 	private boolean viewOnly = false;
+	private boolean needShift = false;
 
 	public static Map<Integer, Insets> smallModeInsetMap = new HashMap<>();
 	static {
@@ -127,13 +129,24 @@ public class DrumHitsPatternPanel extends JPanel {
 				@Override
 				public void stateChanged(ChangeEvent e) {
 					//System.out.println("True pattern size: " + truePattern.size());
+					boolean change = false;
 					if (mouseButton == 2) {
 						hitChecks[fI].setSelected(true);
+						change = true;
 					} else if (mouseButton == 3) {
 						hitChecks[fI].setSelected(false);
+						change = true;
 					}
-					int shI = (fI - shiftPanel.getInt() + 32) % 32;
-					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
+					if (change) {
+						needShift = true;
+						int shI = (fI - shiftPanel.getInt() + 32) % 32;
+						truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
+						if (RhythmPattern.valueOf(
+								(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
+							patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+						}
+					}
+
 				}
 
 			});
@@ -155,6 +168,13 @@ public class DrumHitsPatternPanel extends JPanel {
 				@Override
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
+					for (DrumPanel dp : VibeComposerGUI.drumPanels) {
+						if (dp.getComboPanel().needShift) {
+							dp.getComboPanel().reapplyShift();
+							dp.getComboPanel().needShift = false;
+							DrumLoopPopup.dhpps.get(dp).reapplyShift();
+						}
+					}
 				}
 			});
 			hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
@@ -177,12 +197,12 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			});
 			add(hitChecks[i]);
-			if (i > 0 && i < 31 && ((i + 1) % 8) == 0) {
+			/*if (i > 0 && i < 31 && ((i + 1) % 8) == 0) {
 				JLabel sep = new JLabel("|");
 				sep.setVisible(false);
 				separators[sepCounter++] = sep;
 				add(sep);
-			}
+			}*/
 		}
 
 		patternType.addItemListener(new ItemListener() {
@@ -406,7 +426,7 @@ public class DrumHitsPatternPanel extends JPanel {
 
 						}
 					}
-					if (!viewOnly) {
+					/*if (!viewOnly) {
 						if (lastHits == 32 && chords == 1) {
 							for (JLabel lab : separators) {
 								lab.setVisible(true);
@@ -428,7 +448,7 @@ public class DrumHitsPatternPanel extends JPanel {
 						for (JLabel lab : separators) {
 							lab.setVisible(false);
 						}
-					}
+					}*/
 
 				} else {
 					width = 8 * CheckBoxIcon.width;
@@ -442,9 +462,9 @@ public class DrumHitsPatternPanel extends JPanel {
 							hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
 						}
 					}
-					for (JLabel lab : separators) {
+					/*for (JLabel lab : separators) {
 						lab.setVisible(false);
-					}
+					}*/
 				}
 				int bigModeWidthOffset = (showBIG) ? 10 : 0;
 				if (lastHits > 16 || (chords == 2 && showBIG)) {

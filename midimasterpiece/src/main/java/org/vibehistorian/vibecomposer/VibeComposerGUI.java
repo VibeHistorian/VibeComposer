@@ -726,6 +726,9 @@ public class VibeComposerGUI extends JFrame
 
 		mainButtonsPanel.add(makeButton("B I G/small", "SwitchBigMode"));
 
+		//mainButtonsPanel.add(makeButton("DrumView", "ShowDrumViewPopup"));
+
+
 		extraSettingsPanel = new JPanel();
 		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
 
@@ -3015,8 +3018,14 @@ public class VibeComposerGUI extends JFrame
 		}
 		AboutPopup popup = new AboutPopup();
 		currentPopup = popup.getFrame();
+	}
 
-		DrumLoopPopup popup2 = new DrumLoopPopup();
+	private void openDrumViewPopup() {
+		if (currentPopup != null) {
+			currentPopup.setVisible(false);
+		}
+		DrumLoopPopup popup = new DrumLoopPopup();
+		currentPopup = popup.getFrame();
 	}
 
 	private void openExtraSettingsPopup() {
@@ -3635,6 +3644,10 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "ShowAboutPopup") {
 			openAboutPopup();
+		}
+
+		if (ae.getActionCommand() == "ShowDrumViewPopup") {
+			openDrumViewPopup();
 		}
 
 		if (ae.getActionCommand() == "ShowHelpPopup") {
