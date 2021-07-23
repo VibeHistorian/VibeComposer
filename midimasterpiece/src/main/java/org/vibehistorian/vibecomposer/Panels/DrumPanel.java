@@ -126,7 +126,8 @@ public class DrumPanel extends InstPanel {
 		DrumPart part = (DrumPart) p;
 
 		setDefaultsFromInstPart(part);
-		if (part.getCustomPattern() != null && part.getCustomPattern().size() == 32) {
+		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
+				&& part.getCustomPattern().size() == 32) {
 			comboPanel.setTruePattern(part.getCustomPattern());
 		}
 

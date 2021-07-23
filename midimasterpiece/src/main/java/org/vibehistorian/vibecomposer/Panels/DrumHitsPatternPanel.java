@@ -32,7 +32,6 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 
 public class DrumHitsPatternPanel extends JPanel {
 
@@ -168,13 +167,13 @@ public class DrumHitsPatternPanel extends JPanel {
 				@Override
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
-					for (DrumPanel dp : VibeComposerGUI.drumPanels) {
+					/*for (DrumPanel dp : VibeComposerGUI.drumPanels) {
 						if (dp.getComboPanel().needShift) {
 							dp.getComboPanel().reapplyShift();
 							dp.getComboPanel().needShift = false;
 							DrumLoopPopup.dhpps.get(dp).reapplyShift();
 						}
-					}
+					}*/
 				}
 			});
 			hitChecks[i].setMargin(new Insets(0, 0, 0, 0));

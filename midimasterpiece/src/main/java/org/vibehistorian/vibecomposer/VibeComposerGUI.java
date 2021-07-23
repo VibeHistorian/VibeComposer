@@ -4495,7 +4495,6 @@ public class VibeComposerGUI extends JFrame
 			int order = DrumDefaults.getOrder(dpart.getInstrument());
 			DrumSettings settings = DrumDefaults.drumSettings[order];
 			settings.applyToDrumPart(dpart, lastRandomSeed);
-			dpart.setCustomPattern(null);
 			DrumPanel dp = (DrumPanel) addInstPanelToLayout(4);
 
 			dpart.setOrder(dp.getPanelOrder());

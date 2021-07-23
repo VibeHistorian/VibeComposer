@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Parts.Defaults;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
@@ -7,6 +10,19 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 
 public class DrumSettings {
+
+	public static List<List<Integer>> COOL_16_PATTERNS = new ArrayList<>();
+
+	static {
+		COOL_16_PATTERNS.add(
+				Arrays.asList(new Integer[] { 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }));
+		COOL_16_PATTERNS.add(
+				Arrays.asList(new Integer[] { 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0 }));
+		COOL_16_PATTERNS.add(
+				Arrays.asList(new Integer[] { 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0 }));
+		COOL_16_PATTERNS.add(
+				Arrays.asList(new Integer[] { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0 }));
+	}
 
 	public static int MAX_SWING = 20;
 
@@ -109,6 +125,11 @@ public class DrumSettings {
 
 		if (dp.getPattern() == RhythmPattern.FULL) {
 			dp.setPauseChance(rand.nextInt(maxPause + 1));
+		} else if (dp.getPattern() == RhythmPattern.CUSTOM) {
+			List<Integer> cool32Pattern = new ArrayList<>(
+					COOL_16_PATTERNS.get(rand.nextInt(COOL_16_PATTERNS.size())));
+			cool32Pattern.addAll(cool32Pattern);
+			dp.setCustomPattern(cool32Pattern);
 		}
 		dp.setExceptionChance(rand.nextInt(maxExc + 1));
 		dp.setVelocityPattern(dynamicable ? rand.nextBoolean() : false);
