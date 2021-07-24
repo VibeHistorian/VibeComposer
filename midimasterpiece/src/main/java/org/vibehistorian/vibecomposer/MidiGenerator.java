@@ -70,6 +70,7 @@ import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import jm.JMC;
 import jm.gui.show.ShowScore;
@@ -358,19 +359,8 @@ public class MidiGenerator implements JMC {
 				// either after first measure, or after first half of combined chord prog
 
 				if (genVars && (i == 0)) {
-					while (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
-							&& (variations == null || variations.size() < numberOfVars)) {
-						// pick one variation
-
-						int variationInt = variationGenerator.nextInt(numberOfVars);
-
-						if (variations == null) {
-							variations = new ArrayList<>();
-						}
-						if (!variations.contains(variationInt)) {
-							variations.add(variationInt);
-						}
-					}
+					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
+							0);
 				}
 
 				if ((variations != null) && (i == 0)) {
@@ -1761,22 +1751,9 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = 0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
-				if (genVars && (j == 0)) {
-					while (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
-							&& (variations == null || variations.size() < numberOfVars)) {
-						// pick one variation
-						int variationInt = variationGenerator.nextInt(numberOfVars);
-
-						if (variations == null) {
-							variations = new ArrayList<>();
-						}
-						if (sec.getTypeMelodyOffset() == 0) {
-							break;
-						}
-						if (!variations.contains(variationInt)) {
-							variations.add(variationInt);
-						}
-					}
+				if (genVars && (j == 0) && sec.getTypeMelodyOffset() > 0) {
+					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
+							1);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -1867,19 +1844,8 @@ public class MidiGenerator implements JMC {
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 				if (genVars && (j == 0)) {
-					while (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
-							&& (variations == null || variations.size() < numberOfVars)) {
-						// pick one variation
-
-						int variationInt = variationGenerator.nextInt(numberOfVars);
-
-						if (variations == null) {
-							variations = new ArrayList<>();
-						}
-						if (!variations.contains(variationInt)) {
-							variations.add(variationInt);
-						}
-					}
+					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
+							2);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -2088,17 +2054,8 @@ public class MidiGenerator implements JMC {
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
 				if (genVars && (j == 0)) {
-					while (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
-							&& (variations == null || variations.size() < numberOfVars)) {
-						// pick one variation
-						int variationInt = variationGenerator.nextInt(numberOfVars);
-						if (variations == null) {
-							variations = new ArrayList<>();
-						}
-						if (!variations.contains(variationInt)) {
-							variations.add(variationInt);
-						}
-					}
+					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
+							3);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -2274,18 +2231,8 @@ public class MidiGenerator implements JMC {
 			for (int j = 0; j < chordsCount; j += chordSpan) {
 
 				if (genVars && ((j == 0) || (j == chordInts.size()))) {
-					while (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
-							&& (variations == null || variations.size() < numberOfVars)) {
-						// pick one variation
-
-						int variationInt = variationGenerator.nextInt(numberOfVars);
-						if (variations == null) {
-							variations = new ArrayList<>();
-						}
-						if (!variations.contains(variationInt)) {
-							variations.add(variationInt);
-						}
-					}
+					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
+							4);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -2382,6 +2329,35 @@ public class MidiGenerator implements JMC {
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 		return drumPhrase;
 
+	}
+
+	private List<Integer> fillVariations(Section sec, Random varGenerator, List<Integer> variations,
+			int numVars, int part) {
+		int failsafeCounter = 0;
+
+		while (varGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
+				&& (variations == null || variations.size() < numVars)) {
+			// pick one variation
+			int variationInt = varGenerator.nextInt(numVars);
+			while (VariationPopup.bannedInstVariations.get(part).contains(variationInt + 2)) {
+				failsafeCounter++;
+				if (failsafeCounter > numVars) {
+					break;
+				}
+				variationInt = varGenerator.nextInt(numVars);
+			}
+			if (failsafeCounter > numVars) {
+				break;
+			}
+			if (variations == null) {
+				variations = new ArrayList<>();
+			}
+
+			if (!variations.contains(variationInt)) {
+				variations.add(variationInt);
+			}
+		}
+		return variations;
 	}
 
 	private int mapDrumPitchByCustomMapping(int pitch) {

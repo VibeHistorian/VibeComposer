@@ -10,7 +10,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
@@ -34,6 +38,12 @@ public class VariationPopup {
 
 	public static final String[] tableNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
 
+	public static Map<Integer, Set<Integer>> bannedInstVariations = new HashMap<>();
+	static {
+		for (int i = 0; i < 5; i++) {
+			bannedInstVariations.put(i, new HashSet<>());
+		}
+	}
 
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
@@ -83,7 +93,7 @@ public class VariationPopup {
 					.map(e -> ((String) e.getInstrumentBox().getSelectedItem()).split(" = ")[0])
 					.collect(Collectors.toList());
 
-			table.setModel(new BooleanTableModel(sec.getPartPresenceVariationMap().get(i),
+			table.setModel(new BooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
 					Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
@@ -134,15 +144,23 @@ public class VariationPopup {
 							}
 							table.getModel().setValueAt(Boolean.TRUE, k, col);
 							//sec.resetPresence(fI, j);
-							table.repaint();
 						}
-					} else {
+					} else if (SwingUtilities.isRightMouseButton(e)) {
 						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
-							table.repaint();
+						}
+					} else if (SwingUtilities.isMiddleMouseButton(e) && col > 1) {
+						if (bannedInstVariations.get(fI).contains(col)) {
+							bannedInstVariations.get(fI).remove(col);
+						} else {
+							bannedInstVariations.get(fI).add(col);
+							for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+								sec.removeVariationForAllParts(fI, col);
+							}
 						}
 					}
+					table.repaint();
 				}
 			});
 			header.setAlignmentX(Component.LEFT_ALIGNMENT);

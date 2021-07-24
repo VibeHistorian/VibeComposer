@@ -449,4 +449,12 @@ public class Section {
 		}
 
 	}
+
+	public void removeVariationForAllParts(int part, int variationNum) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
+			Object[] partData = partPresenceVariationMap.get(part)[i];
+			partData[variationNum] = Boolean.FALSE;
+		}
+	}
 }
