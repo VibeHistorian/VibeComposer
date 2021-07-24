@@ -693,7 +693,8 @@ public class MidiGenerator implements JMC {
 		if (start > 0) {
 			alternateChordProg
 					.add(Arrays.copyOf(chordProgression.get(0), chordProgression.get(0).length));
-			melodyBasedRootProgression.add(Arrays.copyOf(rootProgression.get(0), 1));
+			melodyBasedRootProgression
+					.add(Arrays.copyOf(rootProgression.get(0), rootProgression.get(0).length));
 			prevChordString = chordInts.get(start - 1);
 		}
 
@@ -727,7 +728,7 @@ public class MidiGenerator implements JMC {
 			String chordString = applyChordFreqMap(top3, orderOfMatch, prevChordString);
 			System.out.println("Alternate chord #" + i + ": " + chordString);
 			int[] chordLongMapped = chordsMap.get(chordString);
-			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, 1));
+			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, chordLongMapped.length));
 			alternateChordProg.add(chordLongMapped);
 			chordStrings.add(chordString);
 			prevChordString = chordString;
@@ -737,7 +738,8 @@ public class MidiGenerator implements JMC {
 					.add(Arrays.copyOf(chordProgression.get(chordMelodyMap1.keySet().size() - 1),
 							chordProgression.get(chordMelodyMap1.keySet().size() - 1).length));
 			melodyBasedRootProgression
-					.add(Arrays.copyOf(rootProgression.get(rootProgression.size() - 1), 1));
+					.add(Arrays.copyOf(rootProgression.get(rootProgression.size() - 1),
+							rootProgression.get(rootProgression.size() - 1).length));
 		}
 
 		melodyBasedChordProgression = squishChordProgression(alternateChordProg,
