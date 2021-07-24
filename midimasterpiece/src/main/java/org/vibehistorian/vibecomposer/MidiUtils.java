@@ -151,6 +151,9 @@ public class MidiUtils {
 	public static final List<String> MAJOR_CHORDS = Arrays
 			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
 
+	public static final List<Integer> majorChordsModRating = Arrays
+			.asList(new Integer[] { 3, 2, 1, 3, 3, 1, -10 });
+
 	public static final List<String> progressionCircle = Arrays
 			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
 
@@ -158,6 +161,8 @@ public class MidiUtils {
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
 	public static final Map<String, int[]> chordsMap = createChordMap();
+
+	public static final Map<Integer, List<Pair<String, String>>> modulationMap = createKeyModulationMap();
 
 	private static Map<String, List<String>> createChordProgressionRulesMap() {
 		Map<String, List<String>> cpMap = new HashMap<>();
@@ -207,6 +212,57 @@ public class MidiUtils {
 		}
 		return chordMap;
 
+	}
+
+	private static Map<Integer, List<Pair<String, String>>> createKeyModulationMap() {
+		Map<Integer, List<Pair<String, String>>> modMap = new HashMap<>();
+
+		Map<String, Set<Integer>> freqMap = createChordFreqMap();
+		for (int i = -5; i <= 6; i++) {
+			if (i == 0) {
+				continue;
+			} else {
+				List<Pair<String, String>> pair = getKeyModPairs(i, freqMap);
+				if (pair != null) {
+					modMap.put(i, pair);
+					System.out.println(
+							"Trans: " + i + ", pair: " + (pair == null ? "NULL" : pair.toString()));
+				}
+
+			}
+		}
+
+		return modMap;
+
+	}
+
+	private static List<Pair<String, String>> getKeyModPairs(int toKey,
+			Map<String, Set<Integer>> freqMap) {
+		List<Pair<String, String>> pairs = new ArrayList<>();
+		for (int i = 0; i < 7; i++) {
+			// for each chord of major scale, check if this chord transposed up by toKey is also a chord of the major scale
+			String chordString = MAJOR_CHORDS.get(i);
+			Set<Integer> baseFreqs = freqMap.get(chordString);
+			Set<Integer> transFreqs = new HashSet<>();
+			baseFreqs.forEach(e -> transFreqs.add((e + toKey + 12) % 12));
+			for (String s : freqMap.keySet()) {
+				Set<Integer> comparedFreqs = freqMap.get(s);
+				if (comparedFreqs.containsAll(transFreqs)) {
+					Pair<String, String> goodPair = Pair.of(chordString, s);
+					/*System.out.println("Good pair: " + goodPair.toString() + ", rating: "
+							+ ratePairForModulation(goodPair));*/
+					pairs.add(goodPair);
+				}
+			}
+		}
+		return pairs.isEmpty() ? null : pairs;
+	}
+
+
+	public static int ratePairForModulation(Pair<String, String> pair) {
+		int val1 = majorChordsModRating.get(MAJOR_CHORDS.indexOf(pair.getLeft()));
+		int val2 = majorChordsModRating.get(MAJOR_CHORDS.indexOf(pair.getRight()));
+		return val1 + val2;
 	}
 
 	// order freq map by which chord contains most of the passed in notes
@@ -562,6 +618,17 @@ public class MidiUtils {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
 			String chordLong = MAJOR_CHORDS.get(index);
 			basicChords.add(mappedChord(chordLong));
+		}
+		return basicChords;
+	}
+
+	public static List<String> getBasicChordStringsFromRoots(List<int[]> roots) {
+		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<String> basicChords = new ArrayList<>();
+		for (int[] r : roots) {
+			int index = majorScaleNormalized.indexOf(r[0] % 12);
+			String chordLong = MAJOR_CHORDS.get(index);
+			basicChords.add(chordLong);
 		}
 		return basicChords;
 	}

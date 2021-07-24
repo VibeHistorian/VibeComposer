@@ -56,6 +56,7 @@ import java.util.stream.IntStream;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -186,6 +187,8 @@ public class MidiGenerator implements JMC {
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
+
+	private int modTrans = 0;
 
 	public MidiGenerator(GUIConfig gc) {
 		MidiGenerator.gc = gc;
@@ -1116,6 +1119,9 @@ public class MidiGenerator implements JMC {
 
 		int originalPartVariationChance = gc.getArrangementPartVariationChance();
 		int secOrder = -1;
+
+		int transToSet = 0;
+
 		for (Section sec : arr.getSections()) {
 			if (overridden) {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
@@ -1125,6 +1131,10 @@ public class MidiGenerator implements JMC {
 			sec.setStartTime(measureLength * counter);
 
 			Random rand = new Random();
+
+			if (transToSet != 0) {
+				modTrans = transToSet;
+			}
 
 			if (sec.getType().equals("CLIMAX")) {
 				// increase variations in follow-up CLIMAX sections, reset when climax ends
@@ -1177,6 +1187,25 @@ public class MidiGenerator implements JMC {
 
 			if (riskyVariations.get(0)) {
 				System.out.println("Risky Variation: Skip N-1 Chord!");
+
+				if (sec.getType().equals("CLIMAX") && modTrans == 0) {
+					List<String> allCurrentChordsAsBasic = MidiUtils
+							.getBasicChordStringsFromRoots(generatedRootProgression);
+					String baseChordLast = allCurrentChordsAsBasic
+							.get(allCurrentChordsAsBasic.size() - 1);
+					String baseChordFirst = allCurrentChordsAsBasic.get(0);
+					transToSet = 0;
+					Pair<String, String> test = Pair.of(baseChordFirst, baseChordLast);
+					for (Integer trans : MidiUtils.modulationMap.keySet()) {
+						boolean hasValue = MidiUtils.modulationMap.get(trans).contains(test);
+						if (hasValue) {
+							//transToSet = (trans < -4) ? (trans + 12) : trans;
+							//System.out.println("Trans up by: " + transToSet);
+							break;
+						}
+					}
+				}
+
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
 				chordProgression = altChordProgression;
@@ -1698,7 +1727,7 @@ public class MidiGenerator implements JMC {
 		melodyPhrase.addNoteList(fullMelody, true);
 
 
-		Mod.transpose(melodyPhrase, mp.getTranspose());
+		Mod.transpose(melodyPhrase, mp.getTranspose() + modTrans);
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;
 	}
@@ -1806,7 +1835,7 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
-		Mod.transpose(cphraseBassRoot, -24 + gc.getBassPart().getTranspose());
+		Mod.transpose(cphraseBassRoot, -24 + gc.getBassPart().getTranspose() + modTrans);
 		cphraseBassRoot.setStartTime(START_TIME_DELAY);
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
@@ -1989,7 +2018,7 @@ public class MidiGenerator implements JMC {
 
 		// transpose
 		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? cp.getTranspose() : 0;
-		Mod.transpose(cpr, -12 + extraTranspose);
+		Mod.transpose(cpr, -12 + extraTranspose + modTrans);
 
 		// delay
 		double additionalDelay = 0;
@@ -2187,7 +2216,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ap.getTranspose() : 0;
-		Mod.transpose(arpCPhrase, -24 + extraTranspose);
+		Mod.transpose(arpCPhrase, -24 + extraTranspose + modTrans);
 
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {
