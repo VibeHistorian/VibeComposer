@@ -726,6 +726,8 @@ public class VibeComposerGUI extends JFrame
 
 		mainButtonsPanel.add(makeButton("B I G/small", "SwitchBigMode"));
 
+		mainButtonsPanel.add(makeButton("Exclude Not Solo'd", "ToggleSoloExcl"));
+
 		//mainButtonsPanel.add(makeButton("DrumView", "ShowDrumViewPopup"));
 
 
@@ -2943,6 +2945,27 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
+	private void toggleExclude() {
+		if (globalSoloMuter.soloState != State.OFF) {
+			for (int i = 0; i < 5; i++) {
+				List<? extends InstPanel> panels = getInstList(i);
+				panels.forEach(e -> {
+					if (e.getSoloMuter().soloState == State.OFF) {
+						e.setMuteInst(true);
+					} else {
+						e.getSoloMuter().unsolo();
+						e.setMuteInst(false);
+					}
+				});
+			}
+		} else {
+			for (int i = 0; i < 5; i++) {
+				List<? extends InstPanel> panels = getInstList(i);
+				panels.forEach(e -> e.setMuteInst(false));
+			}
+		}
+	}
+
 	private Synthesizer loadSynth() {
 		Synthesizer synthesizer = null;
 		try {
@@ -3635,6 +3658,10 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "SwitchBigMode") {
 			switchBigMonitorMode();
+		}
+
+		if (ae.getActionCommand() == "ToggleSoloExcl") {
+			toggleExclude();
 		}
 
 		if (ae.getActionCommand() == "SwitchDarkMode") {
@@ -4537,9 +4564,9 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		}
-		for (int i = 0; i < chords * maxPatternPerChord; i++) {
+		/*for (int i = 0; i < chords * maxPatternPerChord; i++) {
 			System.out.print(drumHitGrid[i] + ", ");
-		}
+		}*/
 
 
 		repaint();
@@ -4551,7 +4578,7 @@ public class VibeComposerGUI extends JFrame
 		patternGenerated = MidiUtils.intersperse(0, dp.getChordSpan() - 1, patternGenerated);
 		patternGenerated = MidiUtils.intersperse(0,
 				(maxPatternPerChord / dp.getHitsPerPattern()) - 1, patternGenerated);
-		System.out.println(StringUtils.join(patternGenerated, ","));
+		//System.out.println(StringUtils.join(patternGenerated, ","));
 		int size = patternGenerated.size();
 		//System.out.println("Size: " + size);
 		int patternValue = (dp.getInstrument() <= 40 || dp.getInstrument() == 53) ? 3 : 1;
