@@ -886,6 +886,16 @@ public class MidiGenerator implements JMC {
 				canRepeatChord = false;
 			}
 
+			if (!gc.isDimAugEnabled()) {
+				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
+					int scaleOrder = gc.getScaleMode().ordinal();
+					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
+						chordString = "Bdim";
+					}
+				}
+			}
+
+
 			String firstLetter = chordString.substring(0, 1);
 			String spicyChordString = firstLetter
 					+ allowedSpiceChords.get(generator.nextInt(allowedSpiceChords.size()));
