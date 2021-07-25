@@ -1096,6 +1096,7 @@ public class VibeComposerGUI extends JFrame
 		arpSettingsExtraPanel.add(csExtra);
 
 		arpSettingsExtraPanel.add(randomArpAllSameInst);
+		arpSettingsExtraPanel.add(randomArpLimitPowerOfTwo);
 		arpSettingsExtraPanel.add(randomArpUseOctaveAdjustments);
 		arpSettingsExtraPanel.add(randomArpMaxSwing);
 		arpSettingsExtraPanel.add(randomArpMaxRepeat);
