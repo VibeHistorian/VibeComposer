@@ -844,16 +844,26 @@ public class MidiGenerator implements JMC {
 		}
 		List<String> debugMsg = new ArrayList<>();
 
-		List<String> allowedSpiceChords = new ArrayList<>();
+		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugEnabled() && MidiUtils.BANNED_DIM_AUG_LIST.contains(chordString)) {
+			if (!gc.isDimAugDom7thEnabled()
+					&& MidiUtils.BANNED_DIM_AUG_7_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
 				continue;
 			}
-			allowedSpiceChords.add(chordString);
+			allowedSpiceChordsMiddle.add(chordString);
+		}
+
+		List<String> allowedSpiceChords = new ArrayList<>();
+		for (String s : allowedSpiceChordsMiddle) {
+			if (MidiUtils.BANNED_DIM_AUG_7_LIST.contains(s)
+					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
+				continue;
+			}
+			allowedSpiceChords.add(s);
 		}
 
 
@@ -888,8 +898,11 @@ public class MidiGenerator implements JMC {
 
 
 			String firstLetter = chordString.substring(0, 1);
+			List<String> spicyChordList = (!isLastChord && prevChord != null)
+					? allowedSpiceChordsMiddle
+					: allowedSpiceChords;
 			String spicyChordString = firstLetter
-					+ allowedSpiceChords.get(generator.nextInt(allowedSpiceChords.size()));
+					+ spicyChordList.get(generator.nextInt(spicyChordList.size()));
 			if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
 				spicyChordString = spicyChordString.replace("maj", "m");
 			} else if (chordString.length() == 1 && spicyChordString.contains("m")
@@ -905,7 +918,7 @@ public class MidiGenerator implements JMC {
 				spicyChordString = chordString;
 			}
 
-			if (!gc.isDimAugEnabled()) {
+			if (!gc.isDimAugDom7thEnabled()) {
 				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
 					int scaleOrder = gc.getScaleMode().ordinal();
 					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {

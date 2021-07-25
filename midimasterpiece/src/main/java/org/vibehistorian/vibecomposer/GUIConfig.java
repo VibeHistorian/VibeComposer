@@ -76,7 +76,7 @@ public class GUIConfig {
 	private boolean melodyBasicChordsOnly = true;
 
 	// chord gen
-	private boolean dimAugEnabled = false;
+	private boolean dimAugDom7thEnabled = false;
 	private boolean enable9th13th = true;
 	private int spiceChance = 8;
 	private boolean spiceFlattenBigChords = false;
@@ -216,12 +216,12 @@ public class GUIConfig {
 		this.firstNoteRandomized = firstNoteRandomized;
 	}
 
-	public boolean isDimAugEnabled() {
-		return dimAugEnabled;
+	public boolean isDimAugDom7thEnabled() {
+		return dimAugDom7thEnabled;
 	}
 
-	public void setDimAugEnabled(boolean dimAugEnabled) {
-		this.dimAugEnabled = dimAugEnabled;
+	public void setDimAugDom7thEnabled(boolean dimAugDom7thEnabled) {
+		this.dimAugDom7thEnabled = dimAugDom7thEnabled;
 	}
 
 	public String getFirstChord() {

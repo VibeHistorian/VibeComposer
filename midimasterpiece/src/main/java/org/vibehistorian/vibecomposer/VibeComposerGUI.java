@@ -310,7 +310,7 @@ public class VibeComposerGUI extends JFrame
 	// chord variety settings
 	KnobPanel spiceChance;
 	KnobPanel chordSlashChance;
-	JCheckBox spiceAllowDimAug;
+	JCheckBox spiceAllowDimAugDom7th;
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
 
@@ -1836,7 +1836,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		spiceChance = new KnobPanel("Spice", 8);
-		spiceAllowDimAug = new JCheckBox("Dim/Aug", false);
+		spiceAllowDimAugDom7th = new JCheckBox("Dim/Aug/Dom7", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 
@@ -1846,7 +1846,7 @@ public class VibeComposerGUI extends JFrame
 		spiceChancePanel.setOpaque(false);
 
 		JPanel spiceAllowDimAugPanel = new JPanel();
-		spiceAllowDimAugPanel.add(spiceAllowDimAug);
+		spiceAllowDimAugPanel.add(spiceAllowDimAugDom7th);
 		spiceAllowDimAugPanel.setOpaque(false);
 
 		JPanel spiceAllow9th13thPanel = new JPanel();
@@ -4200,7 +4200,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
 		guiConfig.setSpiceChance(Integer.valueOf(spiceChance.getInt()));
-		guiConfig.setDimAugEnabled(spiceAllowDimAug.isSelected());
+		guiConfig.setDimAugDom7thEnabled(spiceAllowDimAugDom7th.isSelected());
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
 		guiConfig.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
 		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getInt()));
@@ -4286,7 +4286,7 @@ public class VibeComposerGUI extends JFrame
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());
-		spiceAllowDimAug.setSelected(guiConfig.isDimAugEnabled());
+		spiceAllowDimAugDom7th.setSelected(guiConfig.isDimAugDom7thEnabled());
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
