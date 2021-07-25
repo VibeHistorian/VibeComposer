@@ -39,13 +39,13 @@ public class Rhythm {
 		Random generator = new Random(randomSeed);
 		durations = new ArrayList<>();
 		double durationSum = 0;
-		while (durationSum < durationLimit) {
+		while (durationSum < durationLimit - 0.01) {
 			double dur = MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0;
 			int chance = generator.nextInt(100);
 			for (int i = 0; i < durationPool.length; i++) {
 				if (i < (durationPool.length - 1)
 						&& (durationPool[i + 1] > durationLimit - durationSum)) {
-					dur = durationPool[i];
+					dur = durationLimit - durationSum;
 					break;
 				}
 				if (chance < durationWeights[i]) {
@@ -56,6 +56,8 @@ public class Rhythm {
 			durationSum += dur;
 			durations.add(dur);
 		}
+		System.out.println("Duration lim: " + durationLimit + ", sum: "
+				+ durations.stream().mapToDouble(e -> e).sum());
 		return durations;
 	}
 

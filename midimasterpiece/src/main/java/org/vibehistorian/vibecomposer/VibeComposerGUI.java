@@ -781,7 +781,7 @@ public class VibeComposerGUI extends JFrame
 		JLabel melodyLabel = new JLabel("MELODY  ");
 		melodySettingsPanel.add(melodyLabel);
 		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		melodyQuickness = new KnobPanel("Quickness", 100);
+		melodyQuickness = new KnobPanel("Quickness", 50);
 		melodySettingsPanel.add(melodyQuickness);
 
 

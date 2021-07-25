@@ -72,7 +72,7 @@ public class GUIConfig {
 	private int maxMelodySwing = 50;
 	private int melodySplitChance = 20;
 	private int melodyExceptionChance = 33;
-	private int melodyQuickness = 100;
+	private int melodyQuickness = 50;
 	private boolean melodyBasicChordsOnly = true;
 
 	// chord gen

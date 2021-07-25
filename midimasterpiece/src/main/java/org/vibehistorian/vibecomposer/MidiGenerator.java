@@ -88,6 +88,8 @@ public class MidiGenerator implements JMC {
 
 	public static class Durations {
 
+		public static double NOTE_32ND = 0.125 * noteMultiplier;
+		public static double NOTE_DOTTED_32ND = 0.1875 * noteMultiplier;
 		public static double SIXTEENTH_NOTE = 0.25 * noteMultiplier;
 		public static double DOTTED_SIXTEENTH_NOTE = 0.375 * noteMultiplier;
 		public static double EIGHTH_NOTE = 0.5 * noteMultiplier;
@@ -101,6 +103,8 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static void recalculateDurations() {
+		Durations.NOTE_32ND = 0.125 * noteMultiplier;
+		Durations.NOTE_DOTTED_32ND = 0.1875 * noteMultiplier;
 		Durations.SIXTEENTH_NOTE = 0.25 * noteMultiplier;
 		Durations.DOTTED_SIXTEENTH_NOTE = 0.375 * noteMultiplier;
 		Durations.EIGHTH_NOTE = 0.5 * noteMultiplier;
@@ -317,13 +321,18 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(seed + notesSeedOffset);
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
-		double[] melodySkeletonDurations = { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
-				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
+		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
+				Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
 
-		int weightIncreaser = gc.getMelodyQuickness() / 4;
-		int weightReducer = 25 - weightIncreaser / 2;
-		int[] melodySkeletonDurationWeights = { 0 + weightIncreaser, 50 - weightReducer,
-				85 - weightReducer, 100 };
+		int weight3rd = gc.getMelodyQuickness() / 3;
+		// 0% ->
+		// 0, 0, 0, 40, 80, 100
+		// 50% ->
+		// 5 11 16 51 85 100
+		// 100% ->
+		// 11 22 33 72 91 100
+		int[] melodySkeletonDurationWeights = { 0 + weight3rd / 3, 0 + weight3rd,
+				40 + weight3rd * 2 / 3, 80 + weight3rd / 3, 100 };
 
 		List<int[]> usedChords = null;
 		if (gc.isMelodyBasicChordsOnly()) {
@@ -570,7 +579,7 @@ public class MidiGenerator implements JMC {
 		Random pauseGenerator2 = new Random(seed + 7);
 		Random variationGenerator = new Random(seed + 6);
 		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
-		int splitChance = gc.getMelodySplitChance() * gc.getMelodyQuickness() / 100;
+		int splitChance = gc.getMelodySplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
 		double durCounter = 0.0;
@@ -1752,10 +1761,10 @@ public class MidiGenerator implements JMC {
 			List<Integer> variations) {
 		boolean genVars = variations == null;
 
-		double[] durationPool = new double[] { Durations.SIXTEENTH_NOTE / 2.0,
-				Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE,
-				Durations.QUARTER_NOTE, Durations.SIXTEENTH_NOTE + Durations.QUARTER_NOTE,
-				Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
+		double[] durationPool = new double[] { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
+				Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE,
+				Durations.SIXTEENTH_NOTE + Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE,
+				Durations.HALF_NOTE };
 
 		int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
 
