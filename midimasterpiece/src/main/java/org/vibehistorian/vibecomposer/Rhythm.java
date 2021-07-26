@@ -74,8 +74,8 @@ public class Rhythm {
 				sameDurCounter = 0;
 			}
 
-			if (sameDurCounter < maxSameDurAllowed || durations.size() > maxSameDurAllowed
-					|| chosenIndex == 0 || retryCounter == maxRetry) {
+			if (sameDurCounter < maxSameDurAllowed || chosenIndex == 0
+					|| retryCounter == maxRetry) {
 				durationSum += dur;
 				durations.add(dur);
 				if (retryCounter == maxRetry) {
