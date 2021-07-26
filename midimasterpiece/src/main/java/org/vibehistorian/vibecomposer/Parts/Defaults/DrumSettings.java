@@ -138,7 +138,11 @@ public class DrumSettings {
 		}
 
 		if (melodyable) {
-			dp.setUseMelodyNotePattern(rand.nextBoolean());
+			if (rand.nextBoolean()) {
+				dp.setUseMelodyNotePattern(true);
+				dp.setPauseChance(2 * dp.getPauseChance());
+			}
+
 		}
 
 		if (swingable) {

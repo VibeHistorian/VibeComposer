@@ -396,7 +396,14 @@ public class MidiGenerator implements JMC {
 						chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
 					}
 				}
-
+				if (i % 2 == 0) {
+					previousNotePitch = 0;
+					generator.setSeed(seed + notesSeedOffset);
+					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
+					if (alternateRhythm) {
+						sameRhythmGenerator.setSeed(seed + 3);
+					}
+				}
 
 				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 
@@ -405,11 +412,7 @@ public class MidiGenerator implements JMC {
 				int rhythmSeed = (alternateRhythm && i % 2 == 1) ? seed + 1 : seed;
 				Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
 						melodySkeletonDurationWeights);
-				if (i % 2 == 0) {
-					previousNotePitch = 0;
-					generator.setSeed(seed + notesSeedOffset);
-					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
-				}
+
 				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2);
 				if (sameRhythmTwice) {
 					durations.addAll(durations);
