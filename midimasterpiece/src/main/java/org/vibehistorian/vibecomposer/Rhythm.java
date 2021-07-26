@@ -56,8 +56,8 @@ public class Rhythm {
 			durationSum += dur;
 			durations.add(dur);
 		}
-		System.out.println("Duration lim: " + durationLimit + ", sum: "
-				+ durations.stream().mapToDouble(e -> e).sum());
+		/*System.out.println("Duration lim: " + durationLimit + ", sum: "
+				+ durations.stream().mapToDouble(e -> e).sum());*/
 		return durations;
 	}
 

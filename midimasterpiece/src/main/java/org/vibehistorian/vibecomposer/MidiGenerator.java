@@ -655,33 +655,107 @@ public class MidiGenerator implements JMC {
 		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
 				- swingUnitOfTime;
 		double durCounter = 0.0;
-		for (Note n : fullMelody) {
-			double adjDur = n.getRhythmValue();
-			double adjComparison = 0;
-			if (!isMultiple(durCounter + adjDur, 2 * swingUnitOfTime)) {
-				adjComparison = swingAdjust;
-			}
-			if (durCounter + adjDur + adjComparison - 0.001 > currentChordDur) {
+
+		List<Double> durationBuckets = new ArrayList<>();
+		List<Integer> chordSeparators = new ArrayList<>();
+		for (int i = 0; i < fullMelody.size(); i++) {
+			durCounter += fullMelody.get(i).getRhythmValue();
+			durationBuckets.add(durCounter);
+			if (durCounter + 0.001 > currentChordDur) {
+				chordSeparators.add(i);
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
 				currentChordDur = progressionDurations.get(chordCounter);
 				durCounter = 0.0;
+			}
+			//System.out.println("Dur: " + durCounter + ", chord counter: " + chordCounter);
+		}
+		int chordSepIndex = 0;
+		Note swungNote = null;
+		Note latestSuitableNote = null;
+		durCounter = 0.0;
+		for (int i = 0; i < fullMelody.size(); i++) {
+			Note n = fullMelody.get(i);
+			double adjDur = n.getRhythmValue();
+			if (i > chordSeparators.get(chordSepIndex)) {
+				chordSepIndex++;
 				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
 						- swingUnitOfTime;
+				durCounter = 0.0;
 			}
-			if (isMultiple(durCounter + adjDur, 2 * swingUnitOfTime)) {
-				// do nothing, it ends on the main grid
-			} else {
-				// needs swing
-				/*System.out.println("Swinging at: " + durCounter + ", ends at: "
-						+ (durCounter + adjDur) + ", added: " + swingAdjust);*/
-				adjDur += swingAdjust;
-				n.setDuration(adjDur * Note.DEFAULT_DURATION_MULTIPLIER);
-				n.setRhythmValue(adjDur);
-				swingAdjust *= -1;
+			durCounter += adjDur;
+			boolean processed = false;
+
+			// try to find latest note which can be added/subtracted with swingAdjust
+			if (swungNote == null) {
+				if (adjDur - Math.abs(swingAdjust) > 0.01) {
+					latestSuitableNote = n;
+					processed = true;
+				}
 			}
 
-			durCounter += adjDur;
+			// apply swing to best note from previous section when landing on "exact" hits
+			if (isMultiple(durCounter, 2 * swingUnitOfTime)) {
+				// nothing was caught in first half, SKIP swinging for this 4-unit bit of time
+				if (swungNote == null && isMultiple(durCounter, 4 * swingUnitOfTime)) {
+					swungNote = null;
+					latestSuitableNote = null;
+				} else {
+					if (latestSuitableNote != null) {
+						double suitableDur = latestSuitableNote.getRhythmValue();
+						if (swungNote == null) {
+							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
+							latestSuitableNote.setDuration(
+									(suitableDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+							swingAdjust *= -1;
+							swungNote = latestSuitableNote;
+							latestSuitableNote = null;
+						} else {
+							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
+							latestSuitableNote.setDuration(
+									(suitableDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+							swingAdjust *= -1;
+							swungNote = null;
+							latestSuitableNote = null;
+						}
+					} else {
+						if (swungNote != null) {
+							double swungDur = swungNote.getRhythmValue();
+							swungNote.setRhythmValue(swungDur + swingAdjust);
+							swungNote.setDuration(
+									(swungDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+						}
+					}
+				}
+
+			}
+
+			// 
+			if (!processed && !isMultiple(durCounter, 4 * swingUnitOfTime)) {
+				if (swungNote == null) {
+					if (adjDur - Math.abs(swingAdjust) > 0.01) {
+						latestSuitableNote = n;
+					}
+				} else {
+					if ((adjDur - Math.abs(swingAdjust) > 0.01) && latestSuitableNote == null) {
+						latestSuitableNote = n;
+					}
+				}
+			}
 		}
+
+		/*System.out.println("AFTER:");
+		durCounter = 0.0;
+		chordCounter = 0;
+		durationBuckets = new ArrayList<>();
+		for (int i = 0; i < fullMelody.size(); i++) {
+			durCounter += fullMelody.get(i).getRhythmValue();
+			if (durCounter + 0.001 > currentChordDur) {
+				chordCounter = (chordCounter + 1) % progressionDurations.size();
+				currentChordDur = progressionDurations.get(chordCounter);
+				durCounter = 0.0;
+			}
+			System.out.println("Dur: " + durCounter + ", chord counter: " + chordCounter);
+		}*/
 	}
 
 	private List<String> makeMelodyPitchFrequencyMap(int start, int end, int orderOfMatch) {
