@@ -410,7 +410,7 @@ public class MidiGenerator implements JMC {
 					generator.setSeed(seed + notesSeedOffset);
 					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
 				}
-				List<Double> durations = rhythm.regenerateDurations();
+				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2);
 				if (sameRhythmTwice) {
 					durations.addAll(durations);
 				}
@@ -540,7 +540,7 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	private boolean roughlyEqual(double first, double second) {
+	public static boolean roughlyEqual(double first, double second) {
 		return Math.abs(first - second) < 0.001;
 	}
 
@@ -1899,7 +1899,7 @@ public class MidiGenerator implements JMC {
 					Rhythm bassRhythm = new Rhythm(seedCopy, progressionDurations.get(j),
 							durationPool, durationWeights);
 					int counter = 0;
-					for (Double dur : bassRhythm.regenerateDurations()) {
+					for (Double dur : bassRhythm.regenerateDurations(4)) {
 
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
