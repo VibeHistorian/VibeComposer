@@ -2421,7 +2421,7 @@ public class VibeComposerGUI extends JFrame
 									double vol = panels.get(i).getVolSlider().getValue() / 100.0;
 									ShortMessage volumeMessage = new ShortMessage();
 									volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
-											panels.get(i).getMidiChannel() - 1, 91,
+											panels.get(i).getMidiChannel() - 1, 7,
 											(int) (vol * 127));
 									if (synth != null && synth.isOpen()) {
 										synth.getReceiver().send(volumeMessage, -1);
@@ -2429,6 +2429,14 @@ public class VibeComposerGUI extends JFrame
 									}
 									if (midiMode.isSelected() && device != null) {
 										device.getReceiver().send(volumeMessage, -1);
+										if (device.getDeviceInfo() != null && device.getDeviceInfo()
+												.getName().contains("Gervill")) {
+											volumeMessage = new ShortMessage();
+											volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
+													panels.get(i).getMidiChannel() - 1, 91,
+													(int) (vol * 127));
+											device.getReceiver().send(volumeMessage, -1);
+										}
 									}
 								}
 							}
@@ -2444,6 +2452,13 @@ public class VibeComposerGUI extends JFrame
 								}
 								if (midiMode.isSelected() && device != null) {
 									device.getReceiver().send(volumeMessage, -1);
+									if (device.getDeviceInfo() != null && device.getDeviceInfo()
+											.getName().contains("Gervill")) {
+										volumeMessage = new ShortMessage();
+										volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 91,
+												0);
+										device.getReceiver().send(volumeMessage, -1);
+									}
 								}
 							}
 						}
@@ -2521,9 +2536,9 @@ public class VibeComposerGUI extends JFrame
 		isDarkMode = !isDarkMode;
 		ColorUIResource r = null;
 		if (!isDarkMode) {
-			r = new ColorUIResource(new Color(215, 215, 222));
+			r = new ColorUIResource(new Color(195, 200, 200));
 		} else {
-			r = new ColorUIResource(new Color(72, 70, 70));
+			r = new ColorUIResource(new Color(69, 70, 70));
 		}
 		UIManager.put("Button.background", r);
 		UIManager.put("Panel.background", r);
