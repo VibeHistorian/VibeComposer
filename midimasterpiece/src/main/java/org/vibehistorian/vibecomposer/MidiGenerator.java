@@ -116,7 +116,7 @@ public class MidiGenerator implements JMC {
 		Durations.WHOLE_NOTE = 4.0 * noteMultiplier;
 
 		START_TIME_DELAY = Durations.EIGHTH_NOTE;
-		swingUnitOfTime = Durations.SIXTEENTH_NOTE;
+		swingUnitOfTime = Durations.EIGHTH_NOTE;
 		MELODY_DUR_ARRAY = new double[] { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
 				Durations.EIGHTH_NOTE, Durations.SIXTEENTH_NOTE };
 		CHORD_DUR_ARRAY = new double[] { Durations.WHOLE_NOTE, Durations.DOTTED_HALF_NOTE,
@@ -647,11 +647,12 @@ public class MidiGenerator implements JMC {
 		return fullMelody;
 	}
 
-	private void swingMelody(MelodyPart mp, Vector<Note> fullMelody) {
+	private void swingPhrase(Phrase phr, int swingPercent) {
+		Vector<Note> fullMelody = phr.getNoteList();
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
 
-		int swingPercentAmount = mp.getSwingPercent();
+		int swingPercentAmount = swingPercent;
 		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
 				- swingUnitOfTime;
 		double durCounter = 0.0;
@@ -695,10 +696,13 @@ public class MidiGenerator implements JMC {
 
 			// apply swing to best note from previous section when landing on "exact" hits
 			if (isMultiple(durCounter, 2 * swingUnitOfTime)) {
+
+				//System.out.println(durCounter + " is Multiple of 2");
 				// nothing was caught in first half, SKIP swinging for this 4-unit bit of time
 				if (swungNote == null && isMultiple(durCounter, 4 * swingUnitOfTime)) {
 					swungNote = null;
 					latestSuitableNote = null;
+					//System.out.println("Can't swing this!");
 				} else {
 					if (latestSuitableNote != null) {
 						double suitableDur = latestSuitableNote.getRhythmValue();
@@ -709,6 +713,7 @@ public class MidiGenerator implements JMC {
 							swingAdjust *= -1;
 							swungNote = latestSuitableNote;
 							latestSuitableNote = null;
+							//System.out.println("Processed 1st swing!");
 						} else {
 							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
 							latestSuitableNote.setDuration(
@@ -716,6 +721,7 @@ public class MidiGenerator implements JMC {
 							swingAdjust *= -1;
 							swungNote = null;
 							latestSuitableNote = null;
+							//System.out.println("Processed 2nd swing!");
 						}
 					} else {
 						if (swungNote != null) {
@@ -723,6 +729,10 @@ public class MidiGenerator implements JMC {
 							swungNote.setRhythmValue(swungDur + swingAdjust);
 							swungNote.setDuration(
 									(swungDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+							swingAdjust *= -1;
+							swungNote = null;
+							latestSuitableNote = null;
+							//System.out.println("Unswung swung note!");
 						}
 					}
 				}
@@ -731,11 +741,7 @@ public class MidiGenerator implements JMC {
 
 			// 
 			if (!processed && !isMultiple(durCounter, 4 * swingUnitOfTime)) {
-				if (swungNote == null) {
-					if (adjDur - Math.abs(swingAdjust) > 0.01) {
-						latestSuitableNote = n;
-					}
-				} else {
+				if (swungNote != null) {
 					if ((adjDur - Math.abs(swingAdjust) > 0.01) && latestSuitableNote == null) {
 						latestSuitableNote = n;
 					}
@@ -1821,9 +1827,9 @@ public class MidiGenerator implements JMC {
 			melodyNotePattern = patternFromNotes(fullMelody);
 		}
 
-		swingMelody(mp, fullMelody);
-		melodyPhrase.addNoteList(fullMelody, true);
 
+		melodyPhrase.addNoteList(fullMelody, true);
+		swingPhrase(melodyPhrase, mp.getSwingPercent());
 
 		Mod.transpose(melodyPhrase, mp.getTranspose() + modTrans);
 		melodyPhrase.setStartTime(START_TIME_DELAY);
