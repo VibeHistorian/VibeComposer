@@ -2538,7 +2538,7 @@ public class VibeComposerGUI extends JFrame
 		if (!isDarkMode) {
 			r = new ColorUIResource(new Color(195, 200, 200));
 		} else {
-			r = new ColorUIResource(new Color(69, 70, 70));
+			r = new ColorUIResource(new Color(63, 67, 67));
 		}
 		UIManager.put("Button.background", r);
 		UIManager.put("Panel.background", r);
