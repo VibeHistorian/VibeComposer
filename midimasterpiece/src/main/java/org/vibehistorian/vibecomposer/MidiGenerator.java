@@ -140,7 +140,7 @@ public class MidiGenerator implements JMC {
 
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
-	public static final int OPENHAT_CHANCE = 15;
+	public static final int OPENHAT_CHANCE = 0;
 	private static final int maxAllowedScaleNotes = 7;
 	public static double START_TIME_DELAY = Durations.EIGHTH_NOTE;
 	private static final double DEFAULT_CHORD_SPLIT = 625;
@@ -718,6 +718,9 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void swingPhrase(Phrase phr, int swingPercent, double swingUnitOfTime) {
+		if (swingPercent == 50) {
+			return;
+		}
 		Vector<Note> fullMelody = phr.getNoteList();
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
@@ -763,17 +766,22 @@ public class MidiGenerator implements JMC {
 			if (swungNote == null) {
 				if (adjDur - Math.abs(swingAdjust) > 0.01) {
 					latestSuitableNote = n;
+				}
+				processed = true;
+			} else {
+				if ((adjDur - Math.abs(swingAdjust) > 0.01) && latestSuitableNote == null) {
+					latestSuitableNote = n;
 					processed = true;
 				}
 			}
 
 			// apply swing to best note from previous section when landing on "exact" hits
-			if (isMultiple(durCounter, 2 * swingUnitOfTime)) {
+			if (isMultiple(durCounter, swingUnitOfTime)) {
 
 				if (logSwing)
-					System.out.println(durCounter + " is Multiple of 2");
-				// nothing was caught in first half, SKIP swinging for this 4-unit bit of time
-				if (swungNote == null && isMultiple(durCounter, 4 * swingUnitOfTime)) {
+					System.out.println(durCounter + " is Multiple of Unit");
+				// nothing was caught in first half, SKIP swinging for this 2-unit bit of time
+				if (swungNote == null && isMultiple(durCounter, 2 * swingUnitOfTime)) {
 					swungNote = null;
 					latestSuitableNote = null;
 					if (logSwing)
@@ -818,7 +826,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			// 
-			if (!processed && !isMultiple(durCounter, 4 * swingUnitOfTime)) {
+			if (!processed && !isMultiple(durCounter, 2 * swingUnitOfTime)) {
 				if (swungNote != null) {
 					if ((adjDur - Math.abs(swingAdjust) > 0.01) && latestSuitableNote == null) {
 						latestSuitableNote = n;
@@ -1909,7 +1917,7 @@ public class MidiGenerator implements JMC {
 
 
 		melodyPhrase.addNoteList(fullMelody, true);
-		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.SIXTEENTH_NOTE);
+		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.EIGHTH_NOTE);
 
 		Mod.transpose(melodyPhrase, mp.getTranspose() + modTrans);
 		melodyPhrase.setStartTime(START_TIME_DELAY);
@@ -2499,7 +2507,7 @@ public class MidiGenerator implements JMC {
 		if (genVars && variations != null) {
 			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
 		}
-		swingPhrase(drumPhrase, swingPercentAmount, Durations.NOTE_32ND);
+		swingPhrase(drumPhrase, swingPercentAmount, Durations.EIGHTH_NOTE);
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 		return drumPhrase;
 
@@ -2534,7 +2542,7 @@ public class MidiGenerator implements JMC {
 		return variations;
 	}
 
-	private int mapDrumPitchByCustomMapping(int pitch) {
+	private static int mapDrumPitchByCustomMapping(int pitch) {
 		String customMapping = gc.getDrumCustomMappingNumbers();
 		String[] customMappingNumberStrings = customMapping.split(",");
 		List<Integer> defaultMappingNumbers = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES);
@@ -2722,7 +2730,7 @@ public class MidiGenerator implements JMC {
 			} else {
 				if (dp.getInstrument() == 42
 						&& uiGenerator1drumPattern.nextInt(100) < OPENHAT_CHANCE) {
-					drumPattern.add(46);
+					drumPattern.add(mapDrumPitchByCustomMapping(46));
 				} else {
 					drumPattern.add(dp.getInstrument());
 				}

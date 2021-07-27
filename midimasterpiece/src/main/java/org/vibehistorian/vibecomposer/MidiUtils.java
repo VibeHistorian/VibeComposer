@@ -791,23 +791,26 @@ public class MidiUtils {
 			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
 			"SWEEP_PAD = 95 " };
 
-	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 42, 44, 53, 54, 60,
-			82 };
+	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 42, 44, 46, 53, 54,
+			60, 82 };
 	public static final Integer[] DRUM_INST_NUMBERS_SEMI = { 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-			46, 47 };
+			46, 47, 48 };
 
 
 	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
 			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "CLOSED_HH = 42 ",
-			"PEDAL_HH = 44", "RIDE = 53 ", "TAMBOURINE = 54", "HI BONGO = 60 ", "SHAKER = 82" };
+			"PEDAL_HH = 44", "OPEN_HH = 46", "RIDE = 53 ", "TAMBOURINE = 54", "HI BONGO = 60 ",
+			"SHAKER = 82" };
 
 	public static final String[] DRUM_INST_NAMES_SEMI = { "BASSKICK = 36 ", "KICK = 37 ",
 			"SIDE STICK = 38", "SNARE = 39 ", "CLAP = 40", "EL. SNARE = 41 ", "CLOSED_HH = 42 ",
-			"PEDAL_HH = 43", "RIDE = 44 ", "TAMBOURINE = 45", "HI BONGO = 46 ", "SHAKER = 47" };
+			"PEDAL_HH = 43", "OPEN_HH = 44", "RIDE = 45 ", "TAMBOURINE = 46", "HI BONGO = 47 ",
+			"SHAKER = 48" };
 
 	public static final String[] DRUM_INST_NAMES_WHOLE = { "BASSKICK = 36 ", "KICK = 38 ",
 			"SIDE STICK = 40", "SNARE = 41 ", "CLAP = 43", "EL. SNARE = 45 ", "CLOSED_HH = 47 ",
-			"PEDAL_HH = 48", "RIDE = 50 ", "TAMBOURINE = 52", "HI BONGO = 53 ", "SHAKER = 55" };
+			"PEDAL_HH = 48", "OPEN_HH = 50", "RIDE = 52 ", "TAMBOURINE = 53", "HI BONGO = 55 ",
+			"SHAKER = 57" };
 
 	public static List<Integer> getInstNumbers(String[] instArray) {
 		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
