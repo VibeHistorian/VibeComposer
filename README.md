@@ -1,7 +1,7 @@
 # VibeComposer
 ## Free music generator with MIDI Drag'n'Drop support
 
-#### Quick showcase (first 20 seconds) + adjustments/export into DAW: https://youtu.be/aDGb5QGIvcQ
+#### Video showcase with timestamps: https://www.youtube.com/watch?v=g_Zn9riU5FI
 
 #### How to use it:
 1. Click 'Compose' to hear a preview of a track.
