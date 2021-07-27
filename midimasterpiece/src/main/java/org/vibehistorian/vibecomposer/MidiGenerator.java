@@ -116,7 +116,6 @@ public class MidiGenerator implements JMC {
 		Durations.WHOLE_NOTE = 4.0 * noteMultiplier;
 
 		START_TIME_DELAY = Durations.EIGHTH_NOTE;
-		swingUnitOfTime = Durations.EIGHTH_NOTE;
 		MELODY_DUR_ARRAY = new double[] { Durations.QUARTER_NOTE, Durations.DOTTED_EIGHTH_NOTE,
 				Durations.EIGHTH_NOTE, Durations.SIXTEENTH_NOTE };
 		CHORD_DUR_ARRAY = new double[] { Durations.WHOLE_NOTE, Durations.DOTTED_HALF_NOTE,
@@ -141,7 +140,6 @@ public class MidiGenerator implements JMC {
 
 	// constants
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
-	private static double swingUnitOfTime = Durations.SIXTEENTH_NOTE;
 	public static final int OPENHAT_CHANCE = 15;
 	private static final int maxAllowedScaleNotes = 7;
 	public static double START_TIME_DELAY = Durations.EIGHTH_NOTE;
@@ -319,6 +317,7 @@ public class MidiGenerator implements JMC {
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
 		Random variationGenerator = new Random(seed + notesSeedOffset);
+		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
 		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
@@ -461,6 +460,8 @@ public class MidiGenerator implements JMC {
 					}*/
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch + extraTranspose, swingDuration, 100);
+					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
+							* Note.DEFAULT_DURATION_MULTIPLIER);
 					//TODO: make sound good
 					if (previousNotePitch == pitch) {
 						direction = !direction;
@@ -547,7 +548,9 @@ public class MidiGenerator implements JMC {
 		return Math.abs(first - second) < 0.001;
 	}
 
-	private int getAllowedPitchFromRange(int min, int max) {
+	private int getAllowedPitchFromRange(int min, int max, double posInChord, Random splitNoteGen) {
+
+		boolean allowBs = posInChord > 0.66;
 
 		List<Integer> allowedPitches = MELODY_SCALE;
 		int adjustment = 0;
@@ -561,17 +564,63 @@ public class MidiGenerator implements JMC {
 			max -= 12;
 			adjustment += 12;
 		}
-		for (Integer i : allowedPitches) {
-			if (i > min && i < max) {
-				return i + adjustment;
+		for (int i = 0; i < allowedPitches.size(); i++) {
+			int pitch = allowedPitches.get(i);
+
+			// skip Bs if possible
+			if (pitch == 11 && !allowBs && fits(12, min, max, false)) {
+				continue;
+			}
+			// accept if: fits and (either nothing else fits or also accept with 50% chance)
+			if (fits(pitch, min, max, false)
+					&& ((splitNoteGen.nextBoolean()) || i == allowedPitches.size() - 1
+							|| !fits(allowedPitches.get(i + 1), min, max, false))) {
+				return pitch + adjustment;
 			}
 		}
-		for (Integer i : allowedPitches) {
-			if (i >= min && i <= max) {
-				return i + adjustment;
+
+		for (int i = 0; i < allowedPitches.size(); i++) {
+			int pitch = allowedPitches.get(i);
+			// skip Bs if possible
+			if (pitch == 11 && !allowBs && fits(12, min, max, false)) {
+				continue;
+			}
+
+			// accept if: fits and (either nothing else fits or also accept with 50% chance)
+			if (fits(pitch, min, max, true)
+					&& ((splitNoteGen.nextBoolean()) || i == allowedPitches.size() - 1
+							|| !fits(allowedPitches.get(i + 1), min, max, true))) {
+				return pitch + adjustment;
 			}
 		}
+		/*
+				for (Integer i : allowedPitches) {
+					if (i > min && i < max) {
+						return i + adjustment;
+					}
+				}
+				for (Integer i : allowedPitches) {
+					if (i >= min && i <= max) {
+						return i + adjustment;
+					}
+				}*/
 		return 40;
+	}
+
+	private boolean fits(int pitch, int min, int max, boolean isInclusive) {
+		if (isInclusive) {
+			if (pitch >= min && pitch <= max) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			if (pitch > min && pitch < max) {
+				return true;
+			} else {
+				return false;
+			}
+		}
 	}
 
 	private Vector<Note> convertMelodySkeletonToFullMelody(MelodyPart mp, Section sec,
@@ -582,6 +631,7 @@ public class MidiGenerator implements JMC {
 		Random pauseGenerator2 = new Random(seed + 7);
 		Random variationGenerator = new Random(seed + 6);
 		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
+		Random splitNoteGenerator = new Random(seed + 8);
 		int splitChance = gc.getMelodySplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
@@ -619,6 +669,7 @@ public class MidiGenerator implements JMC {
 			int velocity = velocityGenerator.nextInt(1 + maxVel - minVel) + minVel;
 
 			skeleton.get(i).setDynamic(velocity);
+			double positionInChord = durCounter / progressionDurations.get(chordCounter);
 
 			if (adjDur > Durations.SIXTEENTH_NOTE * 1.4
 					&& splitGenerator.nextInt(100) < splitChance) {
@@ -626,9 +677,11 @@ public class MidiGenerator implements JMC {
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
 				int pitch = 0;
 				if (n1.getPitch() >= n2.getPitch()) {
-					pitch = getAllowedPitchFromRange(n2.getPitch(), n1.getPitch());
+					pitch = getAllowedPitchFromRange(n2.getPitch(), n1.getPitch(), positionInChord,
+							splitNoteGenerator);
 				} else {
-					pitch = getAllowedPitchFromRange(n1.getPitch(), n2.getPitch());
+					pitch = getAllowedPitchFromRange(n1.getPitch(), n2.getPitch(), positionInChord,
+							splitNoteGenerator);
 				}
 
 
@@ -650,12 +703,12 @@ public class MidiGenerator implements JMC {
 		return fullMelody;
 	}
 
-	private void swingPhrase(Phrase phr, int swingPercent) {
+	private void swingPhrase(Phrase phr, int swingPercent, double swingUnitOfTime) {
 		Vector<Note> fullMelody = phr.getNoteList();
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
 
-		boolean logSwing = false;
+		boolean logSwing = true;
 
 		int swingPercentAmount = swingPercent;
 		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
@@ -1842,7 +1895,7 @@ public class MidiGenerator implements JMC {
 
 
 		melodyPhrase.addNoteList(fullMelody, true);
-		swingPhrase(melodyPhrase, mp.getSwingPercent());
+		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.SIXTEENTH_NOTE);
 
 		Mod.transpose(melodyPhrase, mp.getTranspose() + modTrans);
 		melodyPhrase.setStartTime(START_TIME_DELAY);
@@ -2338,11 +2391,7 @@ public class MidiGenerator implements JMC {
 		int numberOfVars = Section.variationDescriptions[4].length - 2;
 		// bar iter
 		int hits = dp.getHitsPerPattern();
-		int swingPercentAmount = (hits == 2 || hits == 4 || hits % 8 == 0) ? dp.getSwingPercent()
-				: 50;
-
-		String swangPercentAmount = (swingPercentAmount < 100) ? "0." + swingPercentAmount : "1.0";
-		double swungPercentAmount = Double.valueOf(swangPercentAmount);
+		int swingPercentAmount = (hits % 2 == 0) ? dp.getSwingPercent() : 50;
 
 		for (int o = 0; o < measures; o++) {
 			// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
@@ -2390,12 +2439,6 @@ public class MidiGenerator implements JMC {
 
 				double drumDuration = patternDurationTotal / hits;
 
-				double doubleDrum = drumDuration * 2;
-				double swing1 = doubleDrum * swungPercentAmount;
-				double swing2 = doubleDrum - swing1;
-
-				boolean swung = false;
-				double swingDuration = 0;
 				for (int k = 0; k < drumPattern.size(); k++) {
 					int drum = drumPattern.get(k);
 					int velocity = drumVelocityPattern.get(k);
@@ -2416,14 +2459,6 @@ public class MidiGenerator implements JMC {
 						}
 					}
 
-					if (!swung) {
-						swingDuration = swing1;
-						swung = true;
-					} else {
-						swingDuration = swing2;
-						swung = false;
-					}
-
 					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
 						pitch = mapDrumPitchByCustomMapping(pitch);
 					}
@@ -2432,14 +2467,14 @@ public class MidiGenerator implements JMC {
 							.nextInt(100) < (dp.getExceptionChance() + extraExceptionChance);
 					if (exception) {
 						int secondVelocity = (velocity * 8) / 10;
-						Note n1 = new Note(pitch, swingDuration / 2, velocity);
-						Note n2 = new Note(pitch, swingDuration / 2, secondVelocity);
+						Note n1 = new Note(pitch, drumDuration / 2, velocity);
+						Note n2 = new Note(pitch, drumDuration / 2, secondVelocity);
 						n1.setDuration(0.5 * n1.getRhythmValue());
 						n2.setDuration(0.5 * n2.getRhythmValue());
 						drumPhrase.addNote(n1);
 						drumPhrase.addNote(n2);
 					} else {
-						Note n1 = new Note(pitch, swingDuration, velocity);
+						Note n1 = new Note(pitch, drumDuration, velocity);
 						n1.setDuration(0.5 * n1.getRhythmValue());
 						drumPhrase.addNote(n1);
 					}
@@ -2450,7 +2485,7 @@ public class MidiGenerator implements JMC {
 		if (genVars && variations != null) {
 			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
 		}
-
+		swingPhrase(drumPhrase, swingPercentAmount, Durations.NOTE_32ND);
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 		return drumPhrase;
 
