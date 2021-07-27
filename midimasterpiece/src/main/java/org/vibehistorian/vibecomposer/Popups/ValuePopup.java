@@ -6,25 +6,26 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
-import org.vibehistorian.vibecomposer.Helpers.JKnob;
+import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 
-public class KnobValuePopup {
+public class ValuePopup {
 	final JFrame frame = new JFrame();
-	private JKnob knob = null;
+	private RandomValueButton butt = null;
 	private NumPanel numPanel = null;
-	private boolean stretchAfterCustomInput = false;
 	private Integer customInput = null;
+	public int randomNum = Integer.MIN_VALUE;
 
-	public KnobValuePopup(JKnob knob, boolean stretch) {
-		this.knob = knob;
-		stretchAfterCustomInput = stretch;
-		numPanel = new NumPanel("Knob", knob.getValue(), knob.getMin(), knob.getMax());
+	public ValuePopup(RandomValueButton butt) {
+		this.butt = butt;
+		numPanel = new NumPanel("Button", butt.getValue(), Integer.MIN_VALUE, Integer.MAX_VALUE);
 		numPanel.getSlider().setVisible(false);
-		numPanel.setAllowValuesOutsideRange(stretchAfterCustomInput);
+		Random rand = new Random();
+		randomNum = rand.nextInt();
 		frame.add(numPanel);
 		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
 		addFrameWindowOperation();
@@ -51,14 +52,13 @@ public class KnobValuePopup {
 			}
 
 		});
-		frame.setTitle("Knob Value Setting");
+		frame.setTitle("Button Value Setting");
 		frame.pack();
 		frame.setVisible(true);
 
 	}
 
 	public void close() {
-
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
 				.postEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
 
@@ -81,23 +81,14 @@ public class KnobValuePopup {
 					System.out.println("Invalid value: " + numPanel.getTextfield().getText());
 				}
 				if (customInput != null) {
-					int val = customInput;
-					if (stretchAfterCustomInput) {
-						if (val > knob.getMax()) {
-							knob.setMax(val);
-						} else if (val < knob.getMin()) {
-							knob.setMin(val);
-						}
-						knob.setValue(val);
-					} else {
-						if (knob.getMin() <= val && knob.getMax() >= val) {
-							knob.setValue(val);
-						}
-					}
-
+					butt.setValue(customInput);
 				}
 
-				JKnob.singlePopup = null;
+				if (RandomValueButton.singlePopup != null) {
+					if (RandomValueButton.singlePopup.randomNum == randomNum) {
+						RandomValueButton.singlePopup = null;
+					}
+				}
 
 			}
 

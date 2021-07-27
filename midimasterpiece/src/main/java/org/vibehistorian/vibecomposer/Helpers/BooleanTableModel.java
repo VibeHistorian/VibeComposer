@@ -1,14 +1,22 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import java.util.List;
+
 import javax.swing.table.AbstractTableModel;
+
+import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 public class BooleanTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 8472479776056588708L;
 
+	int part = 0;
+
 	Object tableData[][];
 
 	String columnNames[];
+
+	List<String> partNames;
 
 	@Override
 	public int getColumnCount() {
@@ -27,8 +35,15 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int row, int column) {
+		if (VariationPopup.bannedInstVariations.get(part).contains(column)) {
+			return "X";
+		}
 		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
 			return Boolean.FALSE;
+		} else if (column == 0 && partNames != null && row < partNames.size()) {
+			String data = String.valueOf(tableData[row][column]);
+			data += (". " + partNames.get(row));
+			return data;
 		} else {
 			return tableData[row][column];
 		}
@@ -41,8 +56,18 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int column) {
-		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
+		if (VariationPopup.bannedInstVariations.get(part).contains(column)) {
 			tableData[row][column] = Boolean.FALSE;
+			fireTableDataChanged();
+			return;
+		}
+
+		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
+			if (value == Boolean.TRUE) {
+				tableData[row][1] = Boolean.TRUE;
+				tableData[row][column] = Boolean.TRUE;
+				fireTableDataChanged();
+			}
 		} else {
 			tableData[row][column] = value;
 			if (column == 1 && tableData[row][column] == Boolean.FALSE) {
@@ -61,8 +86,10 @@ public class BooleanTableModel extends AbstractTableModel {
 		return column > 0;
 	}
 
-	public BooleanTableModel(Object[][] data, String[] colNames) {
+	public BooleanTableModel(int part, Object[][] data, String[] colNames, List<String> partNames) {
+		this.part = part;
 		tableData = data;
 		columnNames = colNames;
+		this.partNames = partNames;
 	}
 }

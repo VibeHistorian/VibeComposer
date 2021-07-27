@@ -6,13 +6,13 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -24,11 +24,11 @@ public class ChordPanel extends InstPanel {
 	private static final long serialVersionUID = 7721347698114633901L;
 
 	private KnobPanel transitionChance = new KnobPanel("Split%", 0);
-	private KnobPanel transitionSplit = new KnobPanel("Split(ms)", 625, 0, 1000);
+	private KnobPanel transitionSplit = new KnobPanel("Split<br>(ms)", 625, 0, 1000);
 
-	private KnobPanel strum = new KnobPanel("Strum(ms)", 0, 0, 1000);
+	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
-	private JComboBox<String> instPoolPicker = new JComboBox<String>();
+	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
 
 	public void initComponents(ActionListener l) {
 
@@ -59,6 +59,9 @@ public class ChordPanel extends InstPanel {
 		this.add(strum);
 		this.add(transpose);
 
+		this.add(new JLabel("Pattern"));
+		this.add(pattern);
+
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
 		strum.getKnob().setTickSpacing(50);
@@ -69,13 +72,11 @@ public class ChordPanel extends InstPanel {
 		this.add(transitionSplit);
 		this.add(delay);
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
-		this.add(new JLabel("Pattern"));
-		this.add(pattern);
+
 		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch.:"));
@@ -97,7 +98,9 @@ public class ChordPanel extends InstPanel {
 
 		}
 		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {
-			instPoolPicker.addItem(p.toString());
+			if (p != POOL.DRUM) {
+				instPoolPicker.addItem(p.toString());
+			}
 		}
 
 		instPoolPicker.addItemListener(new ItemListener() {

@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -71,11 +72,11 @@ public class GUIConfig {
 	private int maxMelodySwing = 50;
 	private int melodySplitChance = 20;
 	private int melodyExceptionChance = 33;
-	private int melodyQuickness = 100;
+	private int melodyQuickness = 50;
 	private boolean melodyBasicChordsOnly = true;
 
 	// chord gen
-	private boolean dimAugEnabled = false;
+	private boolean dimAugDom7thEnabled = false;
 	private boolean enable9th13th = true;
 	private int spiceChance = 8;
 	private boolean spiceFlattenBigChords = false;
@@ -91,7 +92,9 @@ public class GUIConfig {
 	private int maxArpSwing = 50;
 
 	// drum gen
-	private boolean useSemitonalMapping = false;
+	private boolean drumCustomMapping = true;
+	private String drumCustomMappingNumbers = StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI,
+			",");
 
 	// individual parts
 
@@ -213,12 +216,12 @@ public class GUIConfig {
 		this.firstNoteRandomized = firstNoteRandomized;
 	}
 
-	public boolean isDimAugEnabled() {
-		return dimAugEnabled;
+	public boolean isDimAugDom7thEnabled() {
+		return dimAugDom7thEnabled;
 	}
 
-	public void setDimAugEnabled(boolean dimAugEnabled) {
-		this.dimAugEnabled = dimAugEnabled;
+	public void setDimAugDom7thEnabled(boolean dimAugDom7thEnabled) {
+		this.dimAugDom7thEnabled = dimAugDom7thEnabled;
 	}
 
 	public String getFirstChord() {
@@ -521,12 +524,12 @@ public class GUIConfig {
 		this.arrangementEnabled = arrangementEnabled;
 	}
 
-	public boolean isUseSemitonalMapping() {
-		return useSemitonalMapping;
+	public boolean isDrumCustomMapping() {
+		return drumCustomMapping;
 	}
 
-	public void setUseSemitonalMapping(boolean useSemitonalMapping) {
-		this.useSemitonalMapping = useSemitonalMapping;
+	public void setDrumCustomMapping(boolean drumCustomMapping) {
+		this.drumCustomMapping = drumCustomMapping;
 	}
 
 	public boolean isSpiceFlattenBigChords() {
@@ -535,6 +538,14 @@ public class GUIConfig {
 
 	public void setSpiceFlattenBigChords(boolean spiceFlattenBigChords) {
 		this.spiceFlattenBigChords = spiceFlattenBigChords;
+	}
+
+	public String getDrumCustomMappingNumbers() {
+		return drumCustomMappingNumbers;
+	}
+
+	public void setDrumCustomMappingNumbers(String drumCustomMappingNumbers) {
+		this.drumCustomMappingNumbers = drumCustomMappingNumbers;
 	}
 
 }

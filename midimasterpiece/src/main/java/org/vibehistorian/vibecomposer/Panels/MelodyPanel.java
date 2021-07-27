@@ -10,9 +10,6 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 public class MelodyPanel extends InstPanel {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7861296600641561431L;
 
 	public void initComponents(ActionListener l) {
@@ -20,9 +17,10 @@ public class MelodyPanel extends InstPanel {
 		midiChannel.setSelectedItem("1");
 		instrument.initInstPool(instPool);
 		setInstrument(8);
+		initDefaults();
+		volSlider.setValue(80);
 		setVelocityMin(80);
 		setVelocityMax(105);
-		initDefaults();
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
@@ -34,10 +32,11 @@ public class MelodyPanel extends InstPanel {
 		this.add(lockInst);
 		this.add(instrument);
 
+		this.add(minMaxVelSlider);
+
 		this.add(transpose);
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(minMaxVelSlider);
 
 		pauseChance.setInt(0);
 		this.add(pauseChance);

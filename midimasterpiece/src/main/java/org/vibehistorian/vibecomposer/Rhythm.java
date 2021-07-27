@@ -6,10 +6,10 @@ import java.util.Random;
 
 public class Rhythm {
 
-	private double[] durationPool = new double[] { 0.125, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2 };
-	private int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
+	private double[] durationPool = null;
+	private int[] durationWeights = null;
 	private int randomSeed = 0;
-	private double durationLimit = 2.0;
+	private double durationLimit = MidiGenerator.Durations.HALF_NOTE;
 
 	private List<Double> durations;
 
@@ -35,27 +35,60 @@ public class Rhythm {
 		this.durationLimit = durationLimit;
 	}
 
-	public List<Double> regenerateDurations() {
+	public List<Double> regenerateDurations(int maxSameDurAllowed) {
 		Random generator = new Random(randomSeed);
 		durations = new ArrayList<>();
 		double durationSum = 0;
-		while (durationSum < durationLimit) {
-			double dur = 0.125;
+		int sameDurCounter = 0;
+		int lastDurIndex = Integer.MIN_VALUE;
+		int retryCounter = 0;
+		int maxRetry = 2;
+		while (durationSum < durationLimit - 0.01) {
+			double dur = MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0;
 			int chance = generator.nextInt(100);
+			int chosenIndex = 0;
+			boolean lastNote = false;
 			for (int i = 0; i < durationPool.length; i++) {
 				if (i < (durationPool.length - 1)
 						&& (durationPool[i + 1] > durationLimit - durationSum)) {
-					dur = durationPool[i];
+					dur = durationLimit - durationSum;
+					lastNote = true;
 					break;
 				}
 				if (chance < durationWeights[i]) {
 					dur = durationPool[i];
+					chosenIndex = i;
 					break;
 				}
 			}
-			durationSum += dur;
-			durations.add(dur);
+			if (lastNote) {
+				durationSum += dur;
+				durations.add(dur);
+				break;
+			}
+
+			if (lastDurIndex == chosenIndex) {
+				sameDurCounter++;
+			} else {
+				lastDurIndex = chosenIndex;
+				sameDurCounter = 0;
+			}
+
+			if (sameDurCounter < maxSameDurAllowed || chosenIndex == 0
+					|| retryCounter == maxRetry) {
+				durationSum += dur;
+				durations.add(dur);
+				if (retryCounter == maxRetry) {
+					System.out.println("P A N I K");
+					retryCounter = 0;
+				}
+			} else {
+				retryCounter++;
+			}
+
 		}
+		/*System.out.println("Duration lim: " + durationLimit + ", sum: "
+				+ durations.stream().mapToDouble(e -> e).sum());*/
 		return durations;
 	}
 

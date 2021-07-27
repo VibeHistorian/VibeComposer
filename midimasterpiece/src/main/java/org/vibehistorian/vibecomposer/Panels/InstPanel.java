@@ -22,17 +22,16 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +40,9 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -50,7 +52,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected POOL instPool = POOL.PLUCK;
-	protected JComboBox<String> chordSpanFill = new JComboBox<String>();
+	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits#", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords#", 1, 1, 4);
@@ -59,23 +61,23 @@ public abstract class InstPanel extends JPanel {
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
-	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 5);
-	protected JCheckBox repeatableNotes = new JCheckBox("Note repeat", true);
-	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 2, 1, 4);
+	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 0);
+	protected JCheckBox repeatableNotes = new JCheckBox("Note<br>Repeat", true);
+	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
 	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
 
-	protected KnobPanel velocityMin = new KnobPanel("MinVel", 70, 0, 126);
-	protected KnobPanel velocityMax = new KnobPanel("MaxVel", 90, 1, 127);
+
+	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
 
 	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
 
 	protected JLabel panelOrder = new JLabel("1");
 
 	protected JLabel patternSeedLabel = new JLabel("Seed");
-	protected JTextField patternSeed = new JTextField("0", 8);
-	protected JComboBox<String> pattern = new JComboBox<String>();
+	protected RandomValueButton patternSeed = new RandomValueButton(0);
+	protected ScrollComboBox<String> pattern = new ScrollComboBox<String>();
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
@@ -83,7 +85,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JSlider volSlider = new JSlider();
 
-	protected JComboBox<String> midiChannel = new JComboBox<>();
+	protected ScrollComboBox<String> midiChannel = new ScrollComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
 	protected SoloMuter soloMuter;
@@ -109,6 +111,10 @@ public abstract class InstPanel extends JPanel {
 		volSlider.setPreferredSize(new Dimension(30, 40));
 		volSlider.setPaintTicks(true);
 
+		minMaxVelSlider.setName("Velocity range");
+		setVelocityMax(90);
+		setVelocityMin(63);
+
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
@@ -116,12 +122,14 @@ public abstract class InstPanel extends JPanel {
 		//transpose.getSlider().setMajorTickSpacing(12);
 		//transpose.getSlider().setSnapToTicks(true);
 
+		chordSpan.getKnob().setTickSpacing(50);
+		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
+
 		toggleableComponents.add(stretchEnabled);
 		toggleableComponents.add(chordNotesStretch);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
-		toggleableComponents.add(velocityMin);
-		toggleableComponents.add(velocityMax);
+		toggleableComponents.add(minMaxVelSlider);
 		toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
@@ -220,6 +228,8 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setPattern(RhythmPattern pattern) {
+		if (pattern == null)
+			return;
 		this.pattern.setSelectedItem((String.valueOf(pattern.toString())));
 	}
 
@@ -329,19 +339,19 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getVelocityMin() {
-		return Integer.valueOf(velocityMin.getInt());
+		return Integer.valueOf(minMaxVelSlider.getValue());
 	}
 
 	public void setVelocityMin(int velocityMin) {
-		this.velocityMin.setInt(velocityMin);
+		this.minMaxVelSlider.setValue(velocityMin);
 	}
 
 	public int getVelocityMax() {
-		return Integer.valueOf(velocityMax.getInt());
+		return Integer.valueOf(minMaxVelSlider.getUpperValue());
 	}
 
 	public void setVelocityMax(int velocityMax) {
-		this.velocityMax.setInt(velocityMax);
+		this.minMaxVelSlider.setUpperValue(velocityMax);
 	}
 
 	public JSlider getVolSlider() {

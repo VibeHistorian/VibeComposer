@@ -4,6 +4,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 // Imports for the GUI classes.
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -45,7 +47,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private double theta;
 	private Color knobColor;
 	private Color spotColor;
-	private static final Color lightModeKnob = new Color(200, 200, 200);
+	public static final Color darkModeKnob = Color.GRAY;
+	public static final Color lightModeKnob = new Color(180, 180, 180);
 
 	private boolean pressedOnSpot;
 
@@ -57,7 +60,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private int tickSpacing = 0;
 	private List<Integer> tickThresholds = null;
-
+	private JTextField textValue = new JTextField("" + curr);
 
 	private boolean stretchAfterCustomInput = false;
 
@@ -120,10 +123,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		pressedOnSpot = false;
 		knobColor = initKnobColor;
 		spotColor = initSpotColor;
-
+		textValue.setVisible(false);
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
 	}
+
 
 	/**
 	 * Paint the JKnob on the graphics context given. The knob
@@ -135,12 +139,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
+		g.setFont(new Font("Arial", Font.BOLD, 12));
 		if (g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
 			// Draw the knob.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? knobColor : lightModeKnob);
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
 
@@ -161,11 +166,60 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - arcCut, arcCut * 2);
 
 			// Draw value.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? Color.CYAN : Color.BLUE);
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
+					: VibeComposerGUI.lightModeUIColor.darker());
 			Point cnt = getCenter();
 			String valueString = String.valueOf(getValue());
+			if (!valueString.equals(textValue.getText())) {
+				textValue.setText(valueString);
+			}
+
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
+
+
+			/*String textBase = this.getName();
+			
+			String text = textBase.substring(textBase.length() / 2) + textBase
+					+ textBase.substring(0, textBase.length() / 2);
+			
+			int fakeTextStart = textBase.length() / 2;
+			int fakeTextEnd = fakeTextStart + textBase.length();
+			
+			text = text.toUpperCase();
+			
+			int FONT_SIZE = 8;
+			
+			Font font = new Font("Arial", Font.PLAIN, FONT_SIZE);
+			FontRenderContext frc = g2d.getFontRenderContext();
+			g2d.translate(10, 0); // Starting position of the text
+			
+			GlyphVector gv = font.createGlyphVector(frc, text);
+			int length = gv.getNumGlyphs(); // Same as text.length()
+			final double toRad = Math.PI / 180;
+			for (int i = 0; i < length; i++) {
+				if (i >= fakeTextStart && i < fakeTextEnd)
+					continue;
+				int r = 10;
+				int[] coords = this.getPointXY(r, -360.0 / length * i * toRad + Math.PI / 2);
+				gv.setGlyphPosition(i, new Point(0, 0));
+				AffineTransform at = AffineTransform.getTranslateInstance(coords[0], coords[1]);
+				at.rotate(2 * Math.PI * i / length);
+				at.translate(r * Math.cos(Math.PI / 2 - 2 * Math.PI * i / length),
+						r * Math.sin(Math.PI / 2 - 2 * Math.PI * i / length));
+				at.translate(-FONT_SIZE / 2, 0);
+				Shape glyph = gv.getGlyphOutline(i);
+				Shape transformedGlyph = at.createTransformedShape(glyph);
+				g2d.fill(transformedGlyph);
+			}
+			*/
 		}
+	}
+
+	private int[] getPointXY(int dist, double rad) {
+		int[] coord = new int[2];
+		coord[0] = (int) (dist * Math.cos(rad) + dist);
+		coord[1] = (int) (-dist * Math.sin(rad) + dist);
+		return coord;
 	}
 
 	/**
@@ -325,13 +379,14 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
+			recalc(e);
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			curr = defaultValue;
 			setAngle();
 			repaint();
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
 			if (singlePopup != null) {
-				singlePopup.applyAndClose();
+				singlePopup.close();
 			}
 			singlePopup = new KnobValuePopup(this, stretchAfterCustomInput);
 		}
@@ -376,32 +431,36 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public void mouseDragged(MouseEvent e) {
 		if (pressedOnSpot) {
 
-			int mx = e.getX();
-			int my = e.getY();
-
-			// Compute the x, y position of the mouse RELATIVE
-			// to the center of the knob.
-			int mxp = mx - radius;
-			int myp = radius - my;
-
-			// Compute the new angle of the knob from the
-			// new x and y position of the mouse.  
-			// Math.atan2(...) computes the angle at which
-			// x,y lies from the positive y axis with cw rotations
-			// being positive and ccw being negative.
-			double thetaCalc = Math.atan2(mxp, myp);
-			if (Math.PI - Math.abs(thetaCalc) > cutOff) {
-				theta = thetaCalc;
-			} else {
-				if (thetaCalc > 0) {
-					theta = Math.PI - cutOff;
-				} else {
-					theta = -Math.PI + cutOff;
-				}
-			}
-
-			repaint();
+			recalc(e);
 		}
+	}
+
+	private void recalc(MouseEvent e) {
+		int mx = e.getX();
+		int my = e.getY();
+
+		// Compute the x, y position of the mouse RELATIVE
+		// to the center of the knob.
+		int mxp = mx - radius;
+		int myp = radius - my;
+
+		// Compute the new angle of the knob from the
+		// new x and y position of the mouse.  
+		// Math.atan2(...) computes the angle at which
+		// x,y lies from the positive y axis with cw rotations
+		// being positive and ccw being negative.
+		double thetaCalc = Math.atan2(mxp, myp);
+		if (Math.PI - Math.abs(thetaCalc) > cutOff) {
+			theta = thetaCalc;
+		} else {
+			if (thetaCalc > 0) {
+				theta = Math.PI - cutOff;
+			} else {
+				theta = -Math.PI + cutOff;
+			}
+		}
+
+		repaint();
 	}
 
 	public static double toDouble(double thetaValue) {
@@ -469,4 +528,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		this.stretchAfterCustomInput = stretchAfterCustomInput;
 	}
 
+	public JTextField getTextValue() {
+		return textValue;
+	}
+
+	public void setTextValue(JTextField textValue) {
+		this.textValue = textValue;
+	}
 }

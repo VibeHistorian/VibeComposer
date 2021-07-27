@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import java.awt.MouseInfo;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -8,21 +9,23 @@ import javax.swing.JScrollPane;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
-public class NicheSettingsPopup {
+public class ExtraSettingsPopup {
 	final JFrame frame = new JFrame();
 	JScrollPane scroll;
 
-	public NicheSettingsPopup() {
-		scroll = new JScrollPane(VibeComposerGUI.nicheSettingsPanel,
+	public ExtraSettingsPopup() {
+		scroll = new JScrollPane(VibeComposerGUI.extraSettingsPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 
+		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
 		frame.add(scroll);
+		frame.setTitle("Extra");
 		frame.pack();
 		frame.setVisible(true);
 		addFrameWindowOperation();
 
-		System.out.println("Opened Help page!");
+		System.out.println("Opened Extra Settings page!");
 	}
 
 	public JFrame getFrame() {

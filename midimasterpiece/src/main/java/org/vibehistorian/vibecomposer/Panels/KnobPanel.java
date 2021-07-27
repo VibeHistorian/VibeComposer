@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Dimension;
+
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -25,8 +27,13 @@ public class KnobPanel extends JPanel {
 	public KnobPanel(String name, int value, int minimum, int maximum, int tickSpacing) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setOpaque(false);
-		label = new JLabel(name + " ");
+		if (name.contains("<br>")) {
+			name = name.replaceAll("<br>", "&nbsp;<br>");
+		}
+		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
+		knob.setName(name);
+		setMaximumSize(new Dimension(200, 50));
 		add(label);
 		add(knob);
 	}

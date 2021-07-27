@@ -17,8 +17,10 @@ public class BassPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = -1472358707275766819L;
 
-	private JCheckBox useRhythm = new JCheckBox("Use rhythm", true);
+	private JCheckBox useRhythm = new JCheckBox("Use Rhythm", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
+	private JCheckBox doubleOct = new JCheckBox("Double Oct.", false);
+	private KnobPanel noteVariation = new KnobPanel("Note Variation", 20);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
@@ -27,6 +29,7 @@ public class BassPanel extends InstPanel {
 		instrument.initInstPool(instPool);
 		setInstrument(74);
 		initDefaults();
+		volSlider.setValue(70);
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
@@ -45,8 +48,11 @@ public class BassPanel extends InstPanel {
 		this.add(transpose);
 		//this.add(new JKnob());
 
-		this.add(velocityMin);
-		this.add(velocityMax);
+		this.add(doubleOct);
+
+		this.add(noteVariation);
+
+		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -67,6 +73,8 @@ public class BassPanel extends InstPanel {
 		part.setOrder(getPanelOrder());
 		part.setUseRhythm(getUseRhythm());
 		part.setAlternatingRhythm(getAlternatingRhythm());
+		part.setDoubleOct(getDoubleOct());
+		part.setNoteVariation(getNoteVariation());
 		return part;
 	}
 
@@ -76,6 +84,8 @@ public class BassPanel extends InstPanel {
 		setPanelOrder(part.getOrder());
 		setUseRhythm(part.isUseRhythm());
 		setAlternatingRhythm(part.isAlternatingRhythm());
+		setDoubleOct(part.isDoubleOct());
+		setNoteVariation(part.getNoteVariation());
 	}
 
 	public boolean getUseRhythm() {
@@ -94,8 +104,24 @@ public class BassPanel extends InstPanel {
 		this.alternatingRhythm.setSelected(alternatingRhythm);
 	}
 
+	public boolean getDoubleOct() {
+		return doubleOct.isSelected();
+	}
+
+	public void setDoubleOct(boolean doubleOct) {
+		this.doubleOct.setSelected(doubleOct);
+	}
+
 	@Override
 	public InstPart toInstPart(int lastRandomSeed) {
 		return toBassPart(lastRandomSeed);
+	}
+
+	public int getNoteVariation() {
+		return noteVariation.getInt();
+	}
+
+	public void setNoteVariation(int noteVariation) {
+		this.noteVariation.setInt(noteVariation);
 	}
 }

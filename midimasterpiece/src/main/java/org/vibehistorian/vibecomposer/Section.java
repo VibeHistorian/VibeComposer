@@ -48,10 +48,14 @@ public class Section {
 	}
 
 	public static final String[][] variationDescriptions = {
-			{ "#", "Incl.", "Transpose", "MaxJump" }, { "#", "Incl.", "OffsetSeed" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "MakeInterval" },
-			{ "#", "Incl.", "Transpose", "IgnoreFill", "ForceRandOct" },
+			{ "#", "Incl.", "Transpose", "MaxJump" },
+			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "No2nd", "MaxStrum" },
+			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "ChordDir." },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
+
+	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
+			"Swap Melody", "Melody Pause Squish" };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -78,7 +82,6 @@ public class Section {
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
 	private List<Boolean> riskyVariations = null;
-	public static final int RISKY_VARIATION_COUNT = 3;
 
 	public Section() {
 
@@ -264,6 +267,11 @@ public class Section {
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.TRUE;
 	}
 
+	public void resetPresence(int part, int partOrder) {
+		initPartMapIfNull();
+		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.FALSE;
+	}
+
 	public List<Integer> getVariation(int part, int partOrder) {
 		initPartMapIfNull();
 		List<Integer> variations = new ArrayList<>();
@@ -280,6 +288,15 @@ public class Section {
 		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i + 2] = vars
 					.contains(Integer.valueOf(i));
+		}
+	}
+
+	public void addVariation(int part, int partOrder, List<Integer> vars) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i
+					+ 2] = ((Boolean) partPresenceVariationMap.get(part)[partOrder][i + 2])
+							|| vars.contains(Integer.valueOf(i));
 		}
 	}
 
@@ -312,6 +329,34 @@ public class Section {
 			} else {
 				return 0;
 			}
+		}
+	}
+
+	public void initPartMapFromOldData() {
+		if (partPresenceVariationMap == null) {
+			initPartMap();
+			return;
+		}
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+					data[j][k] = getBooleanFromOldData(partPresenceVariationMap.get(i), j, k);
+				}
+			}
+			partPresenceVariationMap.put(i, data);
+		}
+	}
+
+	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
+		if (oldData.length <= j || oldData[j].length <= k) {
+			return Boolean.FALSE;
+		} else {
+			return (Boolean) oldData[j][k];
 		}
 	}
 
@@ -348,6 +393,11 @@ public class Section {
 	}
 
 	public List<Boolean> getRiskyVariations() {
+		if (riskyVariations != null) {
+			while (riskyVariations.size() < riskyVariationNames.length) {
+				riskyVariations.add(Boolean.FALSE);
+			}
+		}
 		return riskyVariations;
 	}
 
@@ -358,11 +408,53 @@ public class Section {
 	public void setRiskyVariation(int order, Boolean value) {
 		if (riskyVariations == null) {
 			List<Boolean> riskyVars = new ArrayList<>();
-			for (int i = 0; i < Section.RISKY_VARIATION_COUNT; i++) {
+			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 				riskyVars.add(Boolean.FALSE);
 			}
 			setRiskyVariations(riskyVars);
 		}
 		riskyVariations.set(order, value);
+	}
+
+	public double countVariationsForPartType(int part) {
+		if (partPresenceVariationMap == null) {
+			return 0;
+		}
+		double count = 0;
+		double total = 0;
+		Object[][] data = partPresenceVariationMap.get(part);
+		for (int i = 0; i < data.length; i++) {
+			for (int j = 2; j < data[i].length; j++) {
+				if (data[i][j] == Boolean.TRUE) {
+					count++;
+				}
+				total++;
+			}
+		}
+		return count / total;
+	}
+
+	public void recalculatePartVariationMapBoundsIfNeeded() {
+		boolean needsArrayCopy = false;
+		for (int i = 0; i < 5; i++) {
+			int actualInstCount = VibeComposerGUI.getInstList(i).size();
+			int secInstCount = getPartPresenceVariationMap().get(i).length;
+			if (secInstCount != actualInstCount) {
+				needsArrayCopy = true;
+				break;
+			}
+		}
+		if (needsArrayCopy) {
+			initPartMapFromOldData();
+		}
+
+	}
+
+	public void removeVariationForAllParts(int part, int variationNum) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
+			Object[] partData = partPresenceVariationMap.get(part)[i];
+			partData[variationNum] = Boolean.FALSE;
+		}
 	}
 }

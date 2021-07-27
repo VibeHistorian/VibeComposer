@@ -2,34 +2,48 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 public class VariationPopup {
 
 	public static final String[] tableNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
 
+	public static Map<Integer, Set<Integer>> bannedInstVariations = new HashMap<>();
+	static {
+		for (int i = 0; i < 5; i++) {
+			bannedInstVariations.put(i, new HashSet<>());
+		}
+	}
 
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
@@ -41,7 +55,7 @@ public class VariationPopup {
 		addFrameWindowOperation();
 		JPanel measuresPanel = new JPanel();
 		measuresPanel.add(new JLabel("Measures "));
-		JComboBox<String> measureCombo = new JComboBox<>();
+		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" }, measureCombo);
 		measureCombo.setSelectedItem(String.valueOf(sec.getMeasures()));
 
@@ -65,19 +79,28 @@ public class VariationPopup {
 		measuresPanel.add(measureCombo);
 		measuresPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		tablesPanel.add(measuresPanel);
+		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
+			int fI = i;
 
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (sec.getPartPresenceVariationMap().get(i) == null) {
 				sec.initPartMap();
 			}
-			table.setModel(new BooleanTableModel(sec.getPartPresenceVariationMap().get(i),
-					Section.variationDescriptions[i]));
+
+			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> ((String) e.getInstrumentBox().getSelectedItem()).split(" = ")[0])
+					.collect(Collectors.toList());
+
+			table.setModel(new BooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
+					Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-			table.getColumnModel().getColumn(0).setMaxWidth(27);
+			if (i < 4) {
+				//table.getColumnModel().getColumn(0).setMaxWidth(27);
+			}
 			//table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
 
 			/*JList<String> list = new JList<>();
@@ -89,19 +112,57 @@ public class VariationPopup {
 			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
 
 			tables[i] = table;
-			JButton namedTableToggle = new JButton(tableNames[i] + " (+)");
-			namedTableToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
-			namedTableToggle.addActionListener(new ActionListener() {
+			JPanel categoryPanel = new JPanel();
+			categoryPanel.setLayout(new BoxLayout(categoryPanel, BoxLayout.X_AXIS));
+			categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			categoryPanel.setMaximumSize(new Dimension(2000, 40));
+			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
+			JPanel categoryButtons = new JPanel();
+			JLabel categoryName = new JLabel(tableNames[i].toUpperCase());
+			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
+			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
+			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
+			categoryPanel.add(categoryName);
 
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					table.setVisible(!table.isVisible());
-
-				}
-
-			});
-			tablesPanel.add(namedTableToggle);
+			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
+			categoryPanel.add(categoryButtons);
+			tablesPanel.add(categoryPanel);
 			JTableHeader header = tables[i].getTableHeader();
+			header.setReorderingAllowed(false);
+			header.setResizingAllowed(false);
+			header.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent e) {
+					int col = table.columnAtPoint(e.getPoint());
+					if (col == 0)
+						return;
+
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+							if (col > 1) {
+								table.getModel().setValueAt(Boolean.TRUE, k, 1);
+							}
+							table.getModel().setValueAt(Boolean.TRUE, k, col);
+							//sec.resetPresence(fI, j);
+						}
+					} else if (SwingUtilities.isRightMouseButton(e)) {
+						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+							table.getModel().setValueAt(Boolean.FALSE, k, col);
+							//sec.resetPresence(fI, j);
+						}
+					} else if (SwingUtilities.isMiddleMouseButton(e) && col > 1) {
+						if (bannedInstVariations.get(fI).contains(col)) {
+							bannedInstVariations.get(fI).remove(col);
+						} else {
+							bannedInstVariations.get(fI).add(col);
+							for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+								sec.removeVariationForAllParts(fI, col);
+							}
+						}
+					}
+					table.repaint();
+				}
+			});
 			header.setAlignmentX(Component.LEFT_ALIGNMENT);
 			tablesPanel.add(header);
 			tablesPanel.add(tables[i]);
@@ -112,9 +173,9 @@ public class VariationPopup {
 		scroll = new JScrollPane(tablesPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
-
-		int heightLimit = 800;
-		frame.setPreferredSize(new Dimension(500,
+		scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+		int heightLimit = 775;
+		frame.setPreferredSize(new Dimension(650,
 				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
 		int newLocX = parentLoc.x - 190;
 		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);
@@ -127,43 +188,22 @@ public class VariationPopup {
 	}
 
 	private void addRiskyVariations(Section sec) {
-		JCheckBox chordTrick = new JCheckBox("Skip N-1 chord", false);
-		JCheckBox chordSwap = new JCheckBox("Swap Chords", false);
-		JCheckBox melodySwap = new JCheckBox("Swap Melody", false);
+		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
+			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
+			if (sec.getRiskyVariations() != null) {
+				riskyVar.setSelected(sec.getRiskyVariations().get(i));
+			}
+			final int index = i;
+			riskyVar.addItemListener(new ItemListener() {
 
-		if (sec.getRiskyVariations() != null) {
-			chordTrick.setSelected(sec.getRiskyVariations().get(0));
-			chordSwap.setSelected(sec.getRiskyVariations().get(1));
-			melodySwap.setSelected(sec.getRiskyVariations().get(2));
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					sec.setRiskyVariation(index, riskyVar.isSelected());
+				}
+
+			});
+			tablesPanel.add(riskyVar);
 		}
-
-		chordTrick.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setRiskyVariation(0, chordTrick.isSelected());
-			}
-
-		});
-		chordSwap.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setRiskyVariation(1, chordSwap.isSelected());
-			}
-
-		});
-		melodySwap.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setRiskyVariation(2, melodySwap.isSelected());
-			}
-
-		});
-		tablesPanel.add(chordTrick);
-		tablesPanel.add(chordSwap);
-		tablesPanel.add(melodySwap);
 	}
 
 	private void addFrameWindowOperation() {
