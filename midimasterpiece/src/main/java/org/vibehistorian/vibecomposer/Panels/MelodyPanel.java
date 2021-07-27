@@ -18,6 +18,7 @@ public class MelodyPanel extends InstPanel {
 		instrument.initInstPool(instPool);
 		setInstrument(8);
 		initDefaults();
+		volSlider.setValue(80);
 		setVelocityMin(80);
 		setVelocityMax(105);
 		this.add(volSlider);

@@ -1837,7 +1837,7 @@ public class VibeComposerGUI extends JFrame
 		//toggleableComponents.add(chordProgressionSettingsPanel);
 
 
-		spiceChance = new KnobPanel("Spice", 8);
+		spiceChance = new KnobPanel("Spice", 15);
 		spiceAllowDimAugDom7th = new JCheckBox("Dim/Aug/Dom7", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);

@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
@@ -17,11 +18,14 @@ public class ValuePopup {
 	private RandomValueButton butt = null;
 	private NumPanel numPanel = null;
 	private Integer customInput = null;
+	public int randomNum = Integer.MIN_VALUE;
 
 	public ValuePopup(RandomValueButton butt) {
 		this.butt = butt;
 		numPanel = new NumPanel("Button", butt.getValue(), Integer.MIN_VALUE, Integer.MAX_VALUE);
 		numPanel.getSlider().setVisible(false);
+		Random rand = new Random();
+		randomNum = rand.nextInt();
 		frame.add(numPanel);
 		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
 		addFrameWindowOperation();
@@ -80,7 +84,11 @@ public class ValuePopup {
 					butt.setValue(customInput);
 				}
 
-				RandomValueButton.singlePopup = null;
+				if (RandomValueButton.singlePopup != null) {
+					if (RandomValueButton.singlePopup.randomNum == randomNum) {
+						RandomValueButton.singlePopup = null;
+					}
+				}
 
 			}
 
