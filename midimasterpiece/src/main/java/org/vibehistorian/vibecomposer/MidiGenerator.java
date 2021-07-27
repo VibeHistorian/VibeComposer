@@ -625,6 +625,9 @@ public class MidiGenerator implements JMC {
 
 	private Vector<Note> convertMelodySkeletonToFullMelody(MelodyPart mp, Section sec,
 			Vector<Note> skeleton, int notesSeedOffset) {
+
+		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
+
 		int seed = mp.getPatternSeed() + mp.getOrder();
 		Random splitGenerator = new Random(seed + 4);
 		Random pauseGenerator = new Random(seed + 5);
@@ -632,6 +635,7 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(seed + 6);
 		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
 		Random splitNoteGenerator = new Random(seed + 8);
+		Random splitNoteExceptionGenerator = new Random(seed + 9);
 		int splitChance = gc.getMelodySplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
@@ -657,6 +661,8 @@ public class MidiGenerator implements JMC {
 				currentChordDur = progressionDurations.get(chordCounter);
 				splitGenerator.setSeed(seed + 4);
 				pauseGenerator.setSeed(seed + 5);
+				splitNoteGenerator.setSeed(seed + 8);
+				splitNoteExceptionGenerator.setSeed(seed + 9);
 			}
 			Note emptyNote = new Note(Integer.MIN_VALUE, adjDur);
 			Note emptyNoteHalf = new Note(Integer.MIN_VALUE, adjDur / 2.0);
@@ -677,10 +683,18 @@ public class MidiGenerator implements JMC {
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
 				int pitch = 0;
 				if (n1.getPitch() >= n2.getPitch()) {
-					pitch = getAllowedPitchFromRange(n2.getPitch(), n1.getPitch(), positionInChord,
+					int higherNote = n1.getPitch();
+					if (splitNoteExceptionGenerator.nextInt(100) < 33) {
+						higherNote += RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
+					}
+					pitch = getAllowedPitchFromRange(n2.getPitch(), higherNote, positionInChord,
 							splitNoteGenerator);
 				} else {
-					pitch = getAllowedPitchFromRange(n1.getPitch(), n2.getPitch(), positionInChord,
+					int lowerNote = n1.getPitch();
+					if (splitNoteExceptionGenerator.nextInt(100) < 33) {
+						lowerNote -= RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
+					}
+					pitch = getAllowedPitchFromRange(lowerNote, n2.getPitch(), positionInChord,
 							splitNoteGenerator);
 				}
 
