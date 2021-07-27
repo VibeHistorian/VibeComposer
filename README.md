@@ -2,6 +2,7 @@
 ## Free music generator with MIDI Drag'n'Drop support
 
 #### Video showcase with timestamps: https://www.youtube.com/watch?v=g_Zn9riU5FI
+#### Composing with a custom melody: https://www.youtube.com/watch?v=9_w0ReNI4VA
 
 #### How to use it:
 1. Click 'Compose' to hear a preview of a track.
