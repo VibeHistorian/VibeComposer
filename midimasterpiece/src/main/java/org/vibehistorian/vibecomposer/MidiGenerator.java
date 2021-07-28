@@ -199,9 +199,10 @@ public class MidiGenerator implements JMC {
 
 	private List<Integer> patternFromNotes(Collection<Note> notes) {
 		// strategy: use 64 hits in pattern, then simplify if needed
-		int hits = 64;
+
 
 		int chordsTotal = chordInts.size();
+		int hits = chordsTotal * 16;
 		double measureTotal = chordsTotal
 				* ((gc.isDoubledDurations()) ? Durations.WHOLE_NOTE : Durations.HALF_NOTE);
 		double timeForHit = measureTotal / hits;
