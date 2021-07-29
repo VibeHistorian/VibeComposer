@@ -465,6 +465,7 @@ public class VibeComposerGUI extends JFrame
 	public static List<SoloMuter> groupSoloMuters;
 	public static boolean needToRecalculateSoloMuters = false;
 	public static boolean needToRecalculateSoloMutersAfterSequenceGenerated = false;
+	public static boolean deviceCloseRequested = false;
 
 	JPanel everythingPanel;
 	JPanel controlPanel;
@@ -2187,7 +2188,10 @@ public class VibeComposerGUI extends JFrame
 											(float) (mainBpm.getInt() / guiConfig.getBpm()));
 								}
 							}
-
+							if (deviceCloseRequested) {
+								closeMidiDevice();
+								deviceCloseRequested = false;
+							}
 
 						}
 
@@ -2317,7 +2321,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				closeMidiDevice();
+				deviceCloseRequested = true;
 			}
 
 		});
@@ -2344,7 +2348,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				closeMidiDevice();
+				deviceCloseRequested = true;
 			}
 
 		});
@@ -2625,12 +2629,10 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		System.out.println("Closed sequencer!");
-
-		SwingUtilities.invokeLater(new Runnable() {
+		SwingWorker<Void, Void> sw = new SwingWorker<Void, Void>() {
 
 			@Override
-			public void run() {
-
+			protected Void doInBackground() throws Exception {
 				MidiDevice oldDevice = device;
 				device = null;
 
@@ -2641,10 +2643,10 @@ public class VibeComposerGUI extends JFrame
 
 				System.out.println("Closed oldDevice!");
 				oldDevice = null;
+				return null;
 			}
-
-		});
-
+		};
+		sw.run();
 		needToRecalculateSoloMutersAfterSequenceGenerated = true;
 	}
 
