@@ -791,7 +791,7 @@ public class VibeComposerGUI extends JFrame
 		melodyAlternateRhythmChance = new KnobPanel("Alternating<br>Rhythm", 50);
 		melodySameRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
-		melodySplitChance = new KnobPanel("Split%", 50);
+		melodySplitChance = new KnobPanel("Split%", 20);
 		melodyExceptionChance = new KnobPanel("Exception%", 50);
 
 		melodySettingsPanel.add(maxJump);
@@ -934,7 +934,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordSustainChance = new KnobPanel("Chord%", 25);
 		randomChordSustainUseShortening = new JCheckBox("Shorten Plucks", true);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
-		randomChordMaxSplitChance = new KnobPanel("Max<br>Split%", 25);
+		randomChordMaxSplitChance = new KnobPanel("Max<br>Split%", 10);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 0);
 		randomChordPattern = new JCheckBox("Patterns", true);
 		randomChordShiftChance = new KnobPanel("Shift%", 25);
@@ -2321,7 +2321,9 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				deviceCloseRequested = true;
+				if (device != null) {
+					deviceCloseRequested = true;
+				}
 			}
 
 		});
@@ -2348,7 +2350,9 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				deviceCloseRequested = true;
+				if (device != null) {
+					deviceCloseRequested = true;
+				}
 			}
 
 		});

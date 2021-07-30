@@ -252,12 +252,22 @@ public class MidiGenerator implements JMC {
 	}
 
 	private int pickRandomBetweenIndexesInclusive(int[] chord, int startIndex, int endIndex,
-			Random generator) {
+			Random generator, double posInChord) {
 		//clamp
 		if (startIndex < 0)
 			startIndex = 0;
 		if (endIndex > chord.length - 1) {
 			endIndex = chord.length - 1;
+		}
+		if (((chord[startIndex] % 12 == 11) && (chord[endIndex] % 12 == 11)) || posInChord > 0.66) {
+			// do nothing
+			//System.out.println("The forced B case, " + posInChord);
+		} else if (chord[startIndex] % 12 == 11) {
+			startIndex++;
+			//System.out.println("B start avoided");
+		} else if (chord[endIndex] % 12 == 11) {
+			endIndex--;
+			//System.out.println("B end avoided");
 		}
 		int index = generator.nextInt(endIndex - startIndex + 1) + startIndex;
 		return chord[index];
@@ -422,6 +432,7 @@ public class MidiGenerator implements JMC {
 				int exceptionCounter = gc.getMaxExceptions();
 				boolean direction = directions.get(i);
 				boolean allowException = true;
+				double durCounter = 0.0;
 				for (int j = 0; j < durations.size(); j++) {
 
 					if (allowException && j > 0 && exceptionCounter > 0
@@ -432,23 +443,25 @@ public class MidiGenerator implements JMC {
 					int pitch = 0;
 					int startIndex = 0;
 					int endIndex = chord.length - 1;
+
 					if (previousNotePitch != 0) {
 						// up, or down
 						if (direction) {
 							startIndex = selectClosestIndexFromChord(chord, previousNotePitch,
 									true);
-							while (endIndex - startIndex >= MAX_JUMP_SKELETON_CHORD) {
+							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
 								endIndex--;
 							}
 						} else {
 							endIndex = selectClosestIndexFromChord(chord, previousNotePitch, false);
-							while (endIndex - startIndex >= MAX_JUMP_SKELETON_CHORD) {
+							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
 								startIndex++;
 							}
 						}
 					}
+					double positionInChord = durCounter / progressionDurations.get(i);
 					pitch = pickRandomBetweenIndexesInclusive(chord, startIndex, endIndex,
-							generator);
+							generator, positionInChord);
 
 					/*// override for first note
 					if ((i % 2 == 0) && (j == 0)) {
@@ -475,6 +488,7 @@ public class MidiGenerator implements JMC {
 					if (fillChordMelodyMap && o == 0) {
 						chordMelodyMap1.get(Integer.valueOf(i)).add(n);
 					}
+					durCounter += swingDuration;
 				}
 
 			}
@@ -1276,7 +1290,7 @@ public class MidiGenerator implements JMC {
 			actualDurations = progressionDurations;
 		} else {
 			fillMelody(gc.getMelodyParts().get(0), actualProgression, generatedRootProgression, 1,
-					0, new Section(), null);
+					0, new Section(), new ArrayList<>());
 		}
 
 		Arrangement arr = null;
