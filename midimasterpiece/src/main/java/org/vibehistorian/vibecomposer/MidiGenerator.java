@@ -393,7 +393,7 @@ public class MidiGenerator implements JMC {
 							extraTranspose = 12;
 							break;
 						case 1:
-							MAX_JUMP_SKELETON_CHORD = ((MAX_JUMP_SKELETON_CHORD + 1) % 4) + 1;
+							MAX_JUMP_SKELETON_CHORD = Math.min(4, MAX_JUMP_SKELETON_CHORD + 1);
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -963,7 +963,7 @@ public class MidiGenerator implements JMC {
 			return new Note(chosenPitch, dur, velMin + generator.nextInt(velSpace));
 		}
 
-		int change = generator.nextInt(gc.getMaxNoteJump());
+		int change = generator.nextInt(gc.getMaxNoteJump() + 1);
 		// weighted against same note
 		if (change == 0) {
 			change = generator.nextInt((gc.getMaxNoteJump() + 1) / 2);
