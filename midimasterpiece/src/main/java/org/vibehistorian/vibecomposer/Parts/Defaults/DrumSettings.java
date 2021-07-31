@@ -139,7 +139,7 @@ public class DrumSettings {
 
 		if (melodyable) {
 			if (rand.nextBoolean()) {
-				dp.setUseMelodyNotePattern(true);
+				dp.setPattern(RhythmPattern.MELODY1);
 				dp.setPauseChance(2 * dp.getPauseChance());
 			}
 

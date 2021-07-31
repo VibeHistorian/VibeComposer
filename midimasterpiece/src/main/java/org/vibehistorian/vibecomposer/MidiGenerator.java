@@ -2262,6 +2262,9 @@ public class MidiGenerator implements JMC {
 				ap.getPatternSeed() + ap.getOrder() + sec.getTypeSeedOffset());
 
 		boolean melodic = (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null);
+		/*if (melodic) {
+			repeatedArpsPerChord /= ap.getChordSpan();
+		}*/
 
 		int numberOfVars = Section.variationDescriptions[3].length - 2;
 		for (int i = 0; i < measures; i++) {
@@ -2335,16 +2338,21 @@ public class MidiGenerator implements JMC {
 				if (j % 2 == 0) {
 					exceptionGenerator.setSeed(ap.getPatternSeed() + 1);
 				}
+				List<Integer> pitchPatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
+						arpPattern);
+				List<Integer> octavePatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
+						arpOctavePattern);
+				List<Integer> pausePatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
+						arpPausesPattern);
+
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 
 					int velocity = velocityGenerator.nextInt(
 							ap.getVelocityMax() - ap.getVelocityMin()) + ap.getVelocityMin();
 
-					Integer patternNum = (melodic) ? arpPattern.get(p)
-							: partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
+					Integer patternNum = pitchPatternSpanned.get(p);
 
-					int octaveAdjustGenerated = (melodic) ? arpPattern.get(p)
-							: partOfList(chordSpanPart, ap.getChordSpan(), arpOctavePattern).get(p);
+					int octaveAdjustGenerated = octavePatternSpanned.get(p);
 					int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
 							: ((patternNum < 6) ? 0 : 12);
 
@@ -2355,9 +2363,7 @@ public class MidiGenerator implements JMC {
 
 					pitch += extraTranspose;
 					if (!fillLastBeat || j < actualProgression.size() - 1) {
-						if (((melodic) ? arpPattern.get(p)
-								: partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
-										.get(p)) == 0) {
+						if (pausePatternSpanned.get(p) == 0) {
 							pitch = Integer.MIN_VALUE;
 						}
 						if (!ignoreChordSpanFill && (ap.getChordSpanFill() != ChordSpanFill.ALL)) {
@@ -2663,11 +2669,11 @@ public class MidiGenerator implements JMC {
 			Collections.rotate(arpPausesPattern, ap.getPatternShift());
 		} else if (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
 			//System.out.println("Setting note pattern!");
-			ap.setHitsPerPattern(melodyNotePattern.size());
 			arpPausesPattern = melodyNotePattern;
 			ap.setPatternShift(0);
 			//dp.setVelocityPattern(false);
 			ap.setChordSpan(chordInts.size());
+			ap.setHitsPerPattern(melodyNotePattern.size() / chordInts.size());
 			ap.setPatternRepeat(1);
 		} else {
 			arpPausesPattern = ap.getFinalPatternCopy();
@@ -2695,22 +2701,26 @@ public class MidiGenerator implements JMC {
 		//}
 		// always generate ap.getHitsPerPattern(), 
 		// cut off however many are needed (support for seed randoms)
+		if (!(ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null)) {
+			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
+		}
 		arpPattern = arpPattern.subList(0, ap.getHitsPerPattern());
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
-		arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 
 		if (needToReport) {
-			//System.out.println("Arp count: " + ap.getHitsPerPattern());
+			System.out.println("Arp count: " + ap.getHitsPerPattern());
 			System.out.println("Arp pattern: " + arpPattern.toString());
-			//System.out.println("Arp octaves: " + arpOctavePattern.toString());
+			System.out.println("Arp octaves: " + arpOctavePattern.toString());
 		}
 		System.out.println("Arp pauses : " + arpPausesPattern.toString());
 
-		if (ap.getChordSpan() > 1
-				&& !(ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null)) {
+		if (ap.getChordSpan() > 1) {
+			if (!(ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null)) {
+				arpPausesPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1,
+						arpPausesPattern);
+			}
 			arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 			arpOctavePattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpOctavePattern);
-			arpPausesPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPausesPattern);
 		}
 
 		// pattern repeat
