@@ -2708,11 +2708,11 @@ public class MidiGenerator implements JMC {
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 
 		if (needToReport) {
-			System.out.println("Arp count: " + ap.getHitsPerPattern());
-			System.out.println("Arp pattern: " + arpPattern.toString());
-			System.out.println("Arp octaves: " + arpOctavePattern.toString());
+			//System.out.println("Arp count: " + ap.getHitsPerPattern());
+			//System.out.println("Arp pattern: " + arpPattern.toString());
+			//System.out.println("Arp octaves: " + arpOctavePattern.toString());
 		}
-		System.out.println("Arp pauses : " + arpPausesPattern.toString());
+		//System.out.println("Arp pauses : " + arpPausesPattern.toString());
 
 		if (ap.getChordSpan() > 1) {
 			if (!(ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null)) {

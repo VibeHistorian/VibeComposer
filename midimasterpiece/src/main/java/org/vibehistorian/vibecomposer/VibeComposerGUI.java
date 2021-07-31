@@ -4724,11 +4724,13 @@ public class VibeComposerGUI extends JFrame
 			if (PUNCHY_DRUMS.contains(dp.getInstrument())) {
 				adjustVelocity += 15;
 				dp.setExceptionChance(drumPanelGenerator.nextInt(3));
-				dp.setUseMelodyNotePattern(drumPanelGenerator.nextInt(100) < 75);
 			} else {
 				dp.setDelay(slide);
 				dp.setSwingPercent(swingPercent);
 				dp.setExceptionChance(drumPanelGenerator.nextInt(10));
+				if (drumPanelGenerator.nextInt(100) < 75) {
+					dp.setPattern(RhythmPattern.MELODY1);
+				}
 			}
 
 			if (randomChordUseChordFill.isSelected()) {
