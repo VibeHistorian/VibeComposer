@@ -446,6 +446,7 @@ public class VibeComposerGUI extends JFrame
 	JButton regenerate;
 	JButton startMidi;
 	JButton stopMidi;
+	JButton pauseMidi;
 
 	Thread cycle;
 	JCheckBox useVolumeSliders;
@@ -456,7 +457,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel sectionText;
 	boolean isKeySeeking = false;
 	boolean isDragging = false;
-	long pauseMs;
+	private static long pausedSliderPosition;
 
 	JLabel tipLabel;
 	JLabel currentChords = new JLabel("Chords:[]");
@@ -1952,8 +1953,9 @@ public class VibeComposerGUI extends JFrame
 			public void mouseReleased(MouseEvent e) {
 
 				if (isDragging) {
+					pausedSliderPosition = slider.getValue();
 					if (sequencer != null)
-						midiNavigate(((long) slider.getValue()) * 1000);
+						midiNavigate(pausedSliderPosition * 1000);
 					isDragging = false;
 				}
 			}
@@ -2299,6 +2301,7 @@ public class VibeComposerGUI extends JFrame
 		playSavePanel.setOpaque(false);
 		stopMidi = makeButton("STOP", "StopMidi");
 		startMidi = makeButton("PLAY", "StartMidi");
+		pauseMidi = makeButton("PAUSE", "PauseMidi");
 
 		JButton save3Star = makeButton("Save 3*", "Save 3*");
 		JButton save4Star = makeButton("Save 4*", "Save 4*");
@@ -2362,6 +2365,7 @@ public class VibeComposerGUI extends JFrame
 		generatedMidi.setDragEnabled(true);
 
 		playSavePanel.add(startMidi);
+		playSavePanel.add(pauseMidi);
 		playSavePanel.add(stopMidi);
 		playSavePanel.add(save3Star);
 		playSavePanel.add(save4Star);
@@ -2431,10 +2435,6 @@ public class VibeComposerGUI extends JFrame
 									volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
 											panels.get(i).getMidiChannel() - 1, 7,
 											(int) (vol * 127));
-									if (synth != null && synth.isOpen()) {
-										synth.getReceiver().send(volumeMessage, -1);
-
-									}
 									if (midiMode.isSelected() && device != null) {
 										device.getReceiver().send(volumeMessage, -1);
 										if (device.getDeviceInfo() != null && device.getDeviceInfo()
@@ -2445,6 +2445,12 @@ public class VibeComposerGUI extends JFrame
 													(int) (vol * 127));
 											device.getReceiver().send(volumeMessage, -1);
 										}
+									} else if (synth != null && synth.isOpen()) {
+										synth.getReceiver().send(volumeMessage, -1);
+										volumeMessage = new ShortMessage();
+										volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 91,
+												0);
+										synth.getReceiver().send(volumeMessage, -1);
 									}
 								}
 							}
@@ -2454,10 +2460,7 @@ public class VibeComposerGUI extends JFrame
 								ShortMessage volumeMessage = new ShortMessage();
 								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
 										(int) (vol * 127));
-								if (synth != null && synth.isOpen()) {
-									synth.getReceiver().send(volumeMessage, -1);
 
-								}
 								if (midiMode.isSelected() && device != null) {
 									device.getReceiver().send(volumeMessage, -1);
 									if (device.getDeviceInfo() != null && device.getDeviceInfo()
@@ -2467,6 +2470,12 @@ public class VibeComposerGUI extends JFrame
 												0);
 										device.getReceiver().send(volumeMessage, -1);
 									}
+								} else if (synth != null && synth.isOpen()) {
+									synth.getReceiver().send(volumeMessage, -1);
+									volumeMessage = new ShortMessage();
+									volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 91, 0);
+									synth.getReceiver().send(volumeMessage, -1);
+
 								}
 							}
 						}
@@ -2804,9 +2813,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 
-			if (sequencer != null) {
-				// do nothing
-			} else {
+			if (sequencer == null) {
 				sequencer = MidiSystem.getSequencer(synthesizer == null); // Get the default Sequencer
 				if (sequencer == null) {
 					System.err.println("Sequencer device not supported");
@@ -3362,6 +3369,10 @@ public class VibeComposerGUI extends JFrame
 			startMidi();
 		}
 
+		if (ae.getActionCommand() == "PauseMidi") {
+			pauseMidi();
+		}
+
 		/*if (ae.getActionCommand() == "PauseMidi") {
 			if (sequencer != null) {
 				System.out.println("Pausing Midi..");
@@ -3760,7 +3771,12 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			System.out.println("Starting Midi..");
 			sequencer.stop();
-			sequencer.setTickPosition(0);
+			if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum()) {
+				midiNavigate((pausedSliderPosition) * 1000);
+			} else {
+				sequencer.setTickPosition(0);
+			}
+
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
@@ -3781,7 +3797,19 @@ public class VibeComposerGUI extends JFrame
 			sequencer.stop();
 			slider.setValue(0);
 			sequencer.setTickPosition(0);
+			pausedSliderPosition = 0;
 			System.out.println("Stopped Midi!");
+		} else {
+			System.out.println("Sequencer is NULL!");
+		}
+	}
+
+	private void pauseMidi() {
+		if (sequencer != null) {
+			System.out.println("Pausing Midi..");
+			sequencer.stop();
+			pausedSliderPosition = slider.getValue();
+			System.out.println("Paused Midi!");
 		} else {
 			System.out.println("Sequencer is NULL!");
 		}
