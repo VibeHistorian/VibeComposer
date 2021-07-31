@@ -17,7 +17,7 @@ import javax.swing.JTextField;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Panels.DrumHitsPatternPanel;
+import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 
 public class DrumLoopPopup {
@@ -33,7 +33,7 @@ public class DrumLoopPopup {
 	boolean isKeySeeking = false;
 	boolean isDragging = false;
 	long pauseMs;
-	public static Map<DrumPanel, DrumHitsPatternPanel> dhpps = new HashMap<>();
+	public static Map<DrumPanel, VisualPatternPanel> dhpps = new HashMap<>();
 
 	public DrumLoopPopup() {
 		dhpps.clear();
@@ -47,7 +47,7 @@ public class DrumLoopPopup {
 			drumNum.setFocusable(false);
 			drumNum.setEditable(false);
 			textHitsPanel.add(drumNum);
-			DrumHitsPatternPanel dhpp = dp.makeDrumHitsPanel(new JButton("Dd"));
+			VisualPatternPanel dhpp = dp.makeVisualPatternPanel(new JButton("Dd"));
 			dhpp.setTruePattern(dp.getComboPanel().getTruePattern());
 			dhpp.setViewOnly(true);
 
@@ -83,7 +83,7 @@ public class DrumLoopPopup {
 			drumNum.setFocusable(false);
 			drumNum.setEditable(false);
 			textHitsPanel.add(drumNum);
-			DrumHitsPatternPanel dhpp = dp.makeDrumHitsPanel(new JButton("Dd"));
+			VisualPatternPanel dhpp = dp.makeVisualPatternPanel(new JButton("Dd"));
 			dhpp.setTruePattern(dp.getComboPanel().getTruePattern());
 			dhpp.setViewOnly(true);
 

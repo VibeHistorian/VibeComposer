@@ -59,8 +59,10 @@ public class ChordPanel extends InstPanel {
 		this.add(strum);
 		this.add(transpose);
 
-		this.add(new JLabel("Pattern"));
 		this.add(pattern);
+		comboPanel = makeVisualPatternPanel();
+		comboPanel.setBigModeAllowed(false);
+		this.add(comboPanel);
 
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
@@ -92,9 +94,7 @@ public class ChordPanel extends InstPanel {
 		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			if (d != RhythmPattern.CUSTOM) {
-				pattern.addItem(d.toString());
-			}
+			pattern.addItem(d.toString());
 
 		}
 		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {

@@ -2179,10 +2179,11 @@ public class MidiGenerator implements JMC {
 					}
 
 				} else {
-					double duration = progressionDurations.get(j) / MAXIMUM_PATTERN_LENGTH;
-					List<Integer> pattern = cp.getPattern()
-							.getPatternByLength(MAXIMUM_PATTERN_LENGTH);
-					Collections.rotate(pattern, cp.getPatternShift());
+
+					List<Integer> pattern = cp.getFinalPatternCopy();
+					pattern = pattern.subList(0, MAXIMUM_PATTERN_LENGTH);
+					double duration = progressionDurations.get(j) / pattern.size();
+
 					for (int p = 0; p < pattern.size(); p++) {
 						if (pattern.get(p) > 0) {
 							addShortenedChord(cpr,
@@ -2251,12 +2252,17 @@ public class MidiGenerator implements JMC {
 
 		List<Boolean> directions = null;
 
+
+		// TODO: divide
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
 
 		double longestChord = progressionDurations.stream().max((e1, e2) -> Double.compare(e1, e2))
 				.get();
 		Random variationGenerator = new Random(
 				ap.getPatternSeed() + ap.getOrder() + sec.getTypeSeedOffset());
+
+		boolean melodic = (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null);
+
 		int numberOfVars = Section.variationDescriptions[3].length - 2;
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
@@ -2334,11 +2340,11 @@ public class MidiGenerator implements JMC {
 					int velocity = velocityGenerator.nextInt(
 							ap.getVelocityMax() - ap.getVelocityMin()) + ap.getVelocityMin();
 
-					Integer patternNum = partOfList(chordSpanPart, ap.getChordSpan(), arpPattern)
-							.get(p);
+					Integer patternNum = (melodic) ? arpPattern.get(p)
+							: partOfList(chordSpanPart, ap.getChordSpan(), arpPattern).get(p);
 
-					int octaveAdjustGenerated = partOfList(chordSpanPart, ap.getChordSpan(),
-							arpOctavePattern).get(p);
+					int octaveAdjustGenerated = (melodic) ? arpPattern.get(p)
+							: partOfList(chordSpanPart, ap.getChordSpan(), arpOctavePattern).get(p);
 					int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
 							: ((patternNum < 6) ? 0 : 12);
 
@@ -2349,8 +2355,9 @@ public class MidiGenerator implements JMC {
 
 					pitch += extraTranspose;
 					if (!fillLastBeat || j < actualProgression.size() - 1) {
-						if (partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
-								.get(p) == 0) {
+						if (((melodic) ? arpPattern.get(p)
+								: partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern)
+										.get(p)) == 0) {
 							pitch = Integer.MIN_VALUE;
 						}
 						if (!ignoreChordSpanFill && (ap.getChordSpanFill() != ChordSpanFill.ALL)) {
@@ -2644,16 +2651,7 @@ public class MidiGenerator implements JMC {
 		Random uiGenerator3arpOctave = new Random(mainGeneratorSeed + 2);
 		Random uiGenerator4arpPauses = new Random(mainGeneratorSeed + 3);
 
-		int[] arpPatternArray = IntStream.range(0, ap.getHitsPerPattern()).toArray();
-		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24)
-				.limit(ap.getHitsPerPattern() * 2).toArray();
-		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
-				.collect(Collectors.toList());
-		if (ap.isRepeatableNotes()) {
-			arpPattern.addAll(arpPattern);
-		}
 		List<Integer> arpPausesPattern = new ArrayList<>();
-
 		if (ap.getPattern() == RhythmPattern.FULL) {
 			for (int i = 0; i < ap.getHitsPerPattern(); i++) {
 				if (uiGenerator4arpPauses.nextInt(100) < ap.getPauseChance()) {
@@ -2662,11 +2660,31 @@ public class MidiGenerator implements JMC {
 					arpPausesPattern.add(1);
 				}
 			}
+			Collections.rotate(arpPausesPattern, ap.getPatternShift());
+		} else if (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
+			//System.out.println("Setting note pattern!");
+			ap.setHitsPerPattern(melodyNotePattern.size());
+			arpPausesPattern = melodyNotePattern;
+			ap.setPatternShift(0);
+			//dp.setVelocityPattern(false);
+			ap.setChordSpan(chordInts.size());
+			ap.setPatternRepeat(1);
 		} else {
-			arpPausesPattern.addAll(ap.getPattern().getPatternByLength(ap.getHitsPerPattern()));
-
+			arpPausesPattern = ap.getFinalPatternCopy();
+			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		}
-		Collections.rotate(arpPausesPattern, ap.getPatternShift());
+
+		int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MAXIMUM_PATTERN_LENGTH)
+				.limit(ap.getHitsPerPattern() * 2).toArray();
+		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24)
+				.limit(ap.getHitsPerPattern() * 2).toArray();
+		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
+				.collect(Collectors.toList());
+		if (ap.isRepeatableNotes()) {
+			arpPattern.addAll(arpPattern);
+		}
+
+
 		List<Integer> arpOctavePattern = Arrays.stream(arpOctaveArray).boxed()
 				.collect(Collectors.toList());
 
@@ -2683,12 +2701,13 @@ public class MidiGenerator implements JMC {
 
 		if (needToReport) {
 			//System.out.println("Arp count: " + ap.getHitsPerPattern());
-			//System.out.println("Arp pattern: " + arpPattern.toString());
+			System.out.println("Arp pattern: " + arpPattern.toString());
 			//System.out.println("Arp octaves: " + arpOctavePattern.toString());
 		}
-		//System.out.println("Arp pauses : " + arpPausesPattern.toString());
+		System.out.println("Arp pauses : " + arpPausesPattern.toString());
 
-		if (ap.getChordSpan() > 1) {
+		if (ap.getChordSpan() > 1
+				&& !(ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null)) {
 			arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 			arpOctavePattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpOctavePattern);
 			arpPausesPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPausesPattern);
@@ -2717,23 +2736,16 @@ public class MidiGenerator implements JMC {
 
 	public static List<Integer> generateDrumPatternFromPart(DrumPart dp) {
 		Random uiGenerator1drumPattern = new Random(dp.getPatternSeed() + dp.getOrder() - 1);
-		List<Integer> premadePattern = (dp.getPattern() != RhythmPattern.CUSTOM)
-				? dp.getPattern().getPatternByLength(dp.getHitsPerPattern())
-				: dp.getCustomPattern();
-		if (melodyNotePattern != null && dp.isUseMelodyNotePattern()) {
+		List<Integer> premadePattern = null;
+		if (melodyNotePattern != null && dp.getPattern() == RhythmPattern.MELODY1) {
 			//System.out.println("Setting note pattern!");
 			dp.setHitsPerPattern(melodyNotePattern.size());
 			premadePattern = melodyNotePattern;
 			dp.setPatternShift(0);
-			dp.setVelocityPattern(false);
+			//dp.setVelocityPattern(false);
 			dp.setChordSpan(chordInts.size());
-		}
-
-		if (dp.getPattern() == RhythmPattern.CUSTOM) {
-			//System.out.println(StringUtils.join(premadePattern, ","));
-			List<Integer> premadeCopy = new ArrayList<>(premadePattern);
-			Collections.rotate(premadeCopy, dp.getPatternShift());
-			premadePattern = premadeCopy;
+		} else {
+			premadePattern = dp.getFinalPatternCopy();
 		}
 
 		List<Integer> drumPattern = new ArrayList<>();

@@ -24,7 +24,6 @@ public class DrumPanel extends InstPanel {
 	private static final long serialVersionUID = 6219184197272490684L;
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
-	private DrumHitsPatternPanel comboPanel = null;
 	private JCheckBox useMelodyNotePattern = new JCheckBox("Melody Pattern", false);
 
 	public void initComponents(ActionListener l) {
@@ -51,12 +50,12 @@ public class DrumPanel extends InstPanel {
 				.setTickThresholds(Arrays.asList(new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32 }));
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
-		this.add(new JLabel("Pattern"));
 		this.add(pattern);
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
 		doublerButt.setMargin(new Insets(0, 0, 0, 0));
-		comboPanel = makeDrumHitsPanel(doublerButt);
+		comboPanel = makeVisualPatternPanel(doublerButt);
+		comboPanel.setBigModeAllowed(true);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
 
@@ -94,11 +93,6 @@ public class DrumPanel extends InstPanel {
 		toggleableComponents.remove(patternShift);
 	}
 
-	public DrumHitsPatternPanel makeDrumHitsPanel(JButton doubler) {
-		return new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, doubler,
-				this);
-	}
-
 	public DrumPanel(ActionListener l) {
 		setPartClass(DrumPart.class);
 		initComponents(l);
@@ -115,7 +109,6 @@ public class DrumPanel extends InstPanel {
 
 		part.setVelocityPattern(getIsVelocityPattern());
 		part.setSwingPercent(getSwingPercent());
-		part.setCustomPattern(comboPanel.getTruePattern());
 		part.setUseMelodyNotePattern(getUseMelodyNotePattern());
 
 		part.setOrder(getPanelOrder());
@@ -126,10 +119,6 @@ public class DrumPanel extends InstPanel {
 		DrumPart part = (DrumPart) p;
 
 		setDefaultsFromInstPart(part);
-		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
-				&& part.getCustomPattern().size() == 32) {
-			comboPanel.setTruePattern(part.getCustomPattern());
-		}
 
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
@@ -158,10 +147,6 @@ public class DrumPanel extends InstPanel {
 
 	public void transitionToPool(String[] pool) {
 		instrument.changeInstPoolMapping(pool);
-	}
-
-	public DrumHitsPatternPanel getComboPanel() {
-		return comboPanel;
 	}
 
 	@Override

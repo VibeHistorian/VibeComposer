@@ -3,7 +3,6 @@ package org.vibehistorian.vibecomposer.Parts;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -28,17 +27,6 @@ public class DrumPart extends InstPart {
 	public void setVelocityPattern(boolean isVelocityPattern) {
 		this.isVelocityPattern = isVelocityPattern;
 	}
-
-	@XmlList
-	public List<Integer> getCustomPattern() {
-		return customPattern;
-	}
-
-
-	public void setCustomPattern(List<Integer> customPattern) {
-		this.customPattern = customPattern;
-	}
-
 
 	public boolean isUseMelodyNotePattern() {
 		return useMelodyNotePattern;

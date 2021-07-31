@@ -42,6 +42,10 @@ public class ArpPanel extends InstPanel {
 		this.add(copyButton);
 
 		this.add(hitsPerPattern);
+		this.add(pattern);
+		comboPanel = makeVisualPatternPanel();
+		comboPanel.setBigModeAllowed(false);
+		this.add(comboPanel);
 		this.add(chordSpan);
 
 		this.add(new JLabel("Fill"));
@@ -64,8 +68,6 @@ public class ArpPanel extends InstPanel {
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
-		this.add(new JLabel("Pattern"));
-		this.add(pattern);
 		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch.:"));
@@ -84,9 +86,7 @@ public class ArpPanel extends InstPanel {
 		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {
-			if (d != RhythmPattern.CUSTOM) {
-				pattern.addItem(d.toString());
-			}
+			pattern.addItem(d.toString());
 		}
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d.toString());

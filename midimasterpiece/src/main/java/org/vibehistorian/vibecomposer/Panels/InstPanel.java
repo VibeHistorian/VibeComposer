@@ -78,6 +78,8 @@ public abstract class InstPanel extends JPanel {
 	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected RandomValueButton patternSeed = new RandomValueButton(0);
 	protected ScrollComboBox<String> pattern = new ScrollComboBox<String>();
+
+	protected VisualPatternPanel comboPanel = null;
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
 	protected JCheckBox lockInst = new JCheckBox("Lock", false);
@@ -161,6 +163,11 @@ public abstract class InstPanel extends JPanel {
 
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
+
+		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
+				&& part.getCustomPattern().size() == 32 && comboPanel != null) {
+			comboPanel.setTruePattern(part.getCustomPattern());
+		}
 		setPatternShift(part.getPatternShift());
 
 		setMidiChannel(part.getMidiChannel());
@@ -420,4 +427,16 @@ public abstract class InstPanel extends JPanel {
 
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
+	public VisualPatternPanel makeVisualPatternPanel() {
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, null, this);
+	}
+
+	public VisualPatternPanel makeVisualPatternPanel(JButton doubler) {
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, doubler,
+				this);
+	}
+
+	public VisualPatternPanel getComboPanel() {
+		return comboPanel;
+	}
 }

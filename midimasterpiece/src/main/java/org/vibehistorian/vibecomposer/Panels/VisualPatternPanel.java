@@ -10,7 +10,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +32,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
-public class DrumHitsPatternPanel extends JPanel {
+public class VisualPatternPanel extends JPanel {
 
 	private static final long serialVersionUID = 6963518339035392918L;
 
@@ -56,16 +55,24 @@ public class DrumHitsPatternPanel extends JPanel {
 
 	public static int mouseButton = 0;
 
-	public static List<Integer> sextuplets = Arrays.asList(new Integer[] { 6, 12, 24 });
+	/*public static List<Integer> sextuplets = Arrays.asList(new Integer[] { 6, 12, 24 });
 	public static List<Integer> quintuplets = Arrays.asList(new Integer[] { 5 });
-	public static List<Integer> triplets = Arrays.asList(new Integer[] { 3 });
+	public static List<Integer> triplets = Arrays.asList(new Integer[] { 3 });*/
 
 	private boolean viewOnly = false;
 	private boolean needShift = false;
+	private boolean bigModeAllowed = true;
+
+	public void setBigModeAllowed(boolean bigModeAllowed) {
+		this.bigModeAllowed = bigModeAllowed;
+	}
 
 	public static Map<Integer, Insets> smallModeInsetMap = new HashMap<>();
 	static {
+		smallModeInsetMap.put(2, new Insets(0, 0, 0, CheckBoxIcon.width * 6 / 2));
+		smallModeInsetMap.put(3, new Insets(0, 0, 0, CheckBoxIcon.width * 5 / 3));
 		smallModeInsetMap.put(4, new Insets(0, 0, 0, CheckBoxIcon.width * 4 / 4));
+		smallModeInsetMap.put(5, new Insets(0, 0, 0, CheckBoxIcon.width * 3 / 5));
 		smallModeInsetMap.put(6, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
 		smallModeInsetMap.put(10, new Insets(0, 0, 0, CheckBoxIcon.width * 3 / 5));
 		smallModeInsetMap.put(12, new Insets(0, 0, 0, CheckBoxIcon.width * 2 / 6));
@@ -76,7 +83,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static Map<Integer, Insets> bigModeInsetMap = new HashMap<>();
 	static {
 
-		for (int i = 4; i < 32; i++) {
+		for (int i = 2; i < 32; i++) {
 			bigModeInsetMap.put(i, new Insets(0, 0, 0, CheckBoxIcon.width * (32 - i) / i));
 		}
 	}
@@ -84,7 +91,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static Map<Integer, Insets> bigModeDoubleChordGeneralInsetMap = new HashMap<>();
 	static {
 
-		for (int i = 4; i <= 32; i++) {
+		for (int i = 2; i <= 32; i++) {
 			bigModeDoubleChordGeneralInsetMap.put(i,
 					new Insets(0, 0, 0, 2 * CheckBoxIcon.width * (32 - i / 2) / i));
 		}
@@ -93,7 +100,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	public static Map<Integer, Insets> bigModeDoubleChordTransitionInsetMap = new HashMap<>();
 	static {
 
-		for (int i = 4; i <= 32; i++) {
+		for (int i = 2; i <= 32; i++) {
 			bigModeDoubleChordTransitionInsetMap.put(i,
 					new Insets(0, CheckBoxIcon.width * (32 - i / 2) / i, 0,
 							CheckBoxIcon.width * (32 - i / 2) / i));
@@ -101,7 +108,7 @@ public class DrumHitsPatternPanel extends JPanel {
 	}
 
 
-	public DrumHitsPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
+	public VisualPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
 			KnobPanel shiftPanel, KnobPanel chordSpanPanel, JButton doubler, JPanel parentPanel) {
 		super();
 		//setBackground(new Color(50, 50, 50));
@@ -209,7 +216,7 @@ public class DrumHitsPatternPanel extends JPanel {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
-					DrumHitsPatternPanel.this.setVisible(false);
+					VisualPatternPanel.this.setVisible(false);
 					RhythmPattern d = RhythmPattern.valueOf((String) patternType.getSelectedItem());
 					if (d != RhythmPattern.CUSTOM) {
 						truePattern = d.getPatternByLength(32);
@@ -219,7 +226,7 @@ public class DrumHitsPatternPanel extends JPanel {
 						int shI = (i + shiftPanel.getInt()) % 32;
 						hitChecks[shI].setSelected(truePattern.get(i) != 0);
 					}
-					DrumHitsPatternPanel.this.setVisible(true);
+					VisualPatternPanel.this.setVisible(true);
 				}
 
 			}
@@ -235,26 +242,28 @@ public class DrumHitsPatternPanel extends JPanel {
 			}
 		});
 
-		doubler.addMouseListener(new MouseAdapter() {
+		if (doubler != null) {
+			doubler.addMouseListener(new MouseAdapter() {
 
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				List<Integer> halfPattern = truePattern.subList(0, 16);
-				Collections.rotate(halfPattern, shiftPanel.getInt());
-				truePattern = MidiUtils.intersperse(0, 1, halfPattern);
-				//Collections.rotate(halfPattern, -1 * shiftPanel.getInt());
-				patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
-				if (shiftPanel.getInt() > 0) {
-					shiftPanel.setInt(0);
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					List<Integer> halfPattern = truePattern.subList(0, 16);
+					Collections.rotate(halfPattern, shiftPanel.getInt());
+					truePattern = MidiUtils.intersperse(0, 1, halfPattern);
+					//Collections.rotate(halfPattern, -1 * shiftPanel.getInt());
+					patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+					if (shiftPanel.getInt() > 0) {
+						shiftPanel.setInt(0);
+					}
+					reapplyShift();
+					if (lastHits != 24 && lastHits != 10) {
+						hitsPanel.getKnob().setValue(2 * lastHits);
+					}
+
+
 				}
-				reapplyShift();
-				if (lastHits != 24 && lastHits != 10) {
-					hitsPanel.getKnob().setValue(2 * lastHits);
-				}
-
-
-			}
-		});
+			});
+		}
 
 		hitsPanel.getKnob().getTextValue().getDocument()
 				.addDocumentListener(new DocumentListener() {
@@ -361,12 +370,12 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			@Override
 			public void run() {
-				DrumHitsPatternPanel.this.setVisible(false);
+				VisualPatternPanel.this.setVisible(false);
 				for (int i = 0; i < 32; i++) {
 					int shI = (i + shiftPanel.getInt()) % 32;
 					hitChecks[shI].setSelected(truePattern.get(i) != 0);
 				}
-				DrumHitsPatternPanel.this.setVisible(true);
+				VisualPatternPanel.this.setVisible(true);
 			}
 		});
 	}
@@ -376,8 +385,8 @@ public class DrumHitsPatternPanel extends JPanel {
 
 			@Override
 			public void run() {
-				DrumHitsPatternPanel.this.setVisible(false);
-				boolean showBIG = VibeComposerGUI.isBigMonitorMode || viewOnly;
+				VisualPatternPanel.this.setVisible(false);
+				boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
 				int nowHits = hitsPanel.getInt();
 				if (nowHits > 32)
 					nowHits = 32;
@@ -467,17 +476,17 @@ public class DrumHitsPatternPanel extends JPanel {
 				}
 				int bigModeWidthOffset = (showBIG) ? 10 : 0;
 				if (lastHits > 16 || (chords == 2 && showBIG)) {
-					DrumHitsPatternPanel.this.setPreferredSize(
+					VisualPatternPanel.this.setPreferredSize(
 							new Dimension(width + bigModeWidthOffset, height * 2));
 					if (!showBIG) {
 						parentPanel.setMaximumSize(new Dimension(3000, 90));
 					}
 				} else {
-					DrumHitsPatternPanel.this
+					VisualPatternPanel.this
 							.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
 					parentPanel.setMaximumSize(new Dimension(3000, 50));
 				}
-				DrumHitsPatternPanel.this.setVisible(true);
+				VisualPatternPanel.this.setVisible(true);
 			}
 
 		});

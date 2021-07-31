@@ -19,7 +19,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Parts;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlList;
 
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -53,6 +58,8 @@ public abstract class InstPart {
 
 	protected int patternSeed = 0;
 	protected RhythmPattern pattern = RhythmPattern.FULL;
+	protected List<Integer> customPattern = null;
+
 	protected int patternShift = 0;
 
 	protected int sliderVolume = 100;
@@ -87,6 +94,9 @@ public abstract class InstPart {
 		}
 
 		setSwingPercent(panel.getSwingPercent());
+
+		setCustomPattern(
+				panel.getComboPanel() != null ? panel.getComboPanel().getTruePattern() : null);
 
 		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
@@ -276,6 +286,29 @@ public abstract class InstPart {
 
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+
+	@XmlList
+	public List<Integer> getCustomPattern() {
+		return customPattern;
+	}
+
+	public List<Integer> getFinalPatternCopy() {
+		List<Integer> premadePattern = null;
+		if (getPattern() != RhythmPattern.CUSTOM) {
+			premadePattern = getPattern().getPatternByLength(getHitsPerPattern());
+		} else {
+			List<Integer> premadeCopy = new ArrayList<>(getCustomPattern());
+			Collections.rotate(premadeCopy, getPatternShift());
+			premadePattern = premadeCopy;
+		}
+		return premadePattern;
+	}
+
+
+	public void setCustomPattern(List<Integer> customPattern) {
+		this.customPattern = customPattern;
 	}
 
 }

@@ -1049,7 +1049,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		randomArpTranspose = new JCheckBox("Transpose", true);
-		randomArpPattern = new JCheckBox("Patterns", false);
+		randomArpPattern = new JCheckBox("Patterns", true);
 		randomArpHitsPicker = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8" },
 				randomArpHitsPicker);
@@ -4798,7 +4798,7 @@ public class VibeComposerGUI extends JFrame
 			// use pattern in 20% of the cases if checkbox selected
 			if (chordPanelGenerator.nextInt(100) < 20) {
 				if (randomChordPattern.isSelected()) {
-					patternOrder = chordPanelGenerator.nextInt(RhythmPattern.values().length);
+					patternOrder = chordPanelGenerator.nextInt(RhythmPattern.values().length - 2);
 					if (cp.getStrum() > 251) {
 						cp.setStrum(cp.getStrum() / 2);
 					}
@@ -4978,9 +4978,9 @@ public class VibeComposerGUI extends JFrame
 
 			int patternOrder = 0;
 			// use pattern in half the cases if checkbox selected
-			if (arpPanelGenerator.nextBoolean() == true) {
+			if (arpPanelGenerator.nextInt(100) < 66) {
 				if (randomArpPattern.isSelected()) {
-					patternOrder = arpPanelGenerator.nextInt(RhythmPattern.values().length);
+					patternOrder = arpPanelGenerator.nextInt(RhythmPattern.values().length - 2);
 				}
 			}
 			ap.setPattern(RhythmPattern.values()[patternOrder]);
