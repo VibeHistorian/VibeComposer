@@ -94,8 +94,9 @@ public class ChordPanel extends InstPanel {
 		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
-
+			if (d != RhythmPattern.MELODY1) {
+				pattern.addItem(d.toString());
+			}
 		}
 		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {
 			if (p != POOL.DRUM) {

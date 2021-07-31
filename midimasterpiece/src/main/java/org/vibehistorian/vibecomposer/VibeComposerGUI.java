@@ -3724,13 +3724,14 @@ public class VibeComposerGUI extends JFrame
 			int order = newPanel.getPanelOrder();
 			newPanel.setFromInstPart(part);
 			newPanel.setPanelOrder(order);
+			newPanel.setPatternSeed(sourcePanel.getPatternSeed());
 
 			switch (instrumentTabPane.getSelectedIndex()) {
 			case 2:
-				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
+				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
 				break;
 			case 3:
-				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
 				break;
 			default:
 				break;
