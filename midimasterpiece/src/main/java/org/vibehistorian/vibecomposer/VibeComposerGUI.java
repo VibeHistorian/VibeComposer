@@ -2232,7 +2232,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static int delayed() {
-		return (int) (MidiGenerator.START_TIME_DELAY * 2000 * 60 / guiConfig.getBpm());
+		return (int) (MidiGenerator.START_TIME_DELAY * 1000 * 60 / guiConfig.getBpm());
 	}
 
 	public static int beatFromBpm() {
@@ -3971,7 +3971,8 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.recalculateDurations();
 
 			if (loopBeat.isSelected()) {
-				MidiGenerator.START_TIME_DELAY = 0.001;
+				//MidiGenerator.START_TIME_DELAY = 0.001;
+				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 			} else {
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 			}
