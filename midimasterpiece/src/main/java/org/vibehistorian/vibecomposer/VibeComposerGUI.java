@@ -305,6 +305,9 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox globalSwingOverride;
 	KnobPanel globalSwingOverrideValue;
 	public static KnobPanel loopBeatCount;
+	public static JLabel pauseBehaviorLabel;
+	public static ScrollComboBox<String> pauseBehaviorCombobox;
+	public static JCheckBox pauseBehaviorBarCheckbox;
 
 
 	// chord variety settings
@@ -457,7 +460,8 @@ public class VibeComposerGUI extends JFrame
 	JLabel sectionText;
 	boolean isKeySeeking = false;
 	boolean isDragging = false;
-	private static long pausedSliderPosition;
+	private static long pausedSliderPosition = 0;
+	private static int pausedMeasureCounter = 0;
 
 	JLabel tipLabel;
 	JLabel currentChords = new JLabel("Chords:[]");
@@ -1807,8 +1811,18 @@ public class VibeComposerGUI extends JFrame
 
 		loopBeatCount = new KnobPanel("Loop # Beats", 1, 1, 4);
 
-		JPanel customDrumMappingPanel = new JPanel();
+		JPanel pauseBehaviorPanel = new JPanel();
+		pauseBehaviorLabel = new JLabel("Start from pause:");
+		pauseBehaviorCombobox = new ScrollComboBox<>();
+		pauseBehaviorBarCheckbox = new JCheckBox("Start from bar?", true);
+		MidiUtils.addAllToJComboBox(
+				new String[] { "On regenerate", "On compose/regenerate", "Never" },
+				pauseBehaviorCombobox);
+		pauseBehaviorPanel.add(pauseBehaviorLabel);
+		pauseBehaviorPanel.add(pauseBehaviorCombobox);
+		pauseBehaviorPanel.add(pauseBehaviorBarCheckbox);
 
+		JPanel customDrumMappingPanel = new JPanel();
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
 		drumCustomMappingNumbers = new JTextField(
 				StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
@@ -1819,6 +1833,7 @@ public class VibeComposerGUI extends JFrame
 				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
 
 		extraSettingsPanel.add(loopBeatCount);
+		extraSettingsPanel.add(pauseBehaviorPanel);
 		extraSettingsPanel.add(customDrumMappingPanel);
 
 		toggleableComponents.add(globalSwingPanel);
@@ -1953,9 +1968,9 @@ public class VibeComposerGUI extends JFrame
 			public void mouseReleased(MouseEvent e) {
 
 				if (isDragging) {
-					pausedSliderPosition = slider.getValue();
+					savePauseInfo();
 					if (sequencer != null)
-						midiNavigate(pausedSliderPosition * 1000);
+						midiNavigate(slider.getValue() * 1000);
 					isDragging = false;
 				}
 			}
@@ -2894,6 +2909,19 @@ public class VibeComposerGUI extends JFrame
 			slider.setMajorTickSpacing(slider.getMaximum() / actualArrangement.getSections()
 					.stream().mapToInt(e -> e.getMeasures()).sum());
 
+			String pauseBehavior = (String) pauseBehaviorCombobox.getSelectedItem();
+			if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
+				boolean unpause = regenerate || pauseBehavior.contains("compose");
+				if (unpause) {
+					long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected())
+							? (pausedMeasureCounter * beatFromBpm()
+									* MidiGenerator.chordInts.size()) + delayed()
+							: pausedSliderPosition;
+					midiNavigate(unpauseSliderVal * 1000);
+				} else {
+					resetPauseInfo();
+				}
+			}
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
 			sequencer.setTempoFactor(1);
@@ -3797,7 +3825,7 @@ public class VibeComposerGUI extends JFrame
 			sequencer.stop();
 			slider.setValue(0);
 			sequencer.setTickPosition(0);
-			pausedSliderPosition = 0;
+			resetPauseInfo();
 			System.out.println("Stopped Midi!");
 		} else {
 			System.out.println("Sequencer is NULL!");
@@ -3808,11 +3836,27 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			System.out.println("Pausing Midi..");
 			sequencer.stop();
-			pausedSliderPosition = slider.getValue();
-			System.out.println("Paused Midi!");
+			savePauseInfo();
+			System.out.println(
+					"Paused Midi: " + pausedSliderPosition + ", measure: " + pausedMeasureCounter);
 		} else {
 			System.out.println("Sequencer is NULL!");
 		}
+	}
+
+	private void savePauseInfo() {
+		pausedSliderPosition = slider.getValue();
+		if (MidiGenerator.chordInts.size() > 0) {
+			pausedMeasureCounter = (int) (pausedSliderPosition - delayed())
+					/ (beatFromBpm() * MidiGenerator.chordInts.size());
+		} else {
+			pausedMeasureCounter = 0;
+		}
+	}
+
+	private void resetPauseInfo() {
+		pausedSliderPosition = 0;
+		pausedMeasureCounter = 0;
 	}
 
 	public static void unsoloAllTracks(boolean resetButtons) {

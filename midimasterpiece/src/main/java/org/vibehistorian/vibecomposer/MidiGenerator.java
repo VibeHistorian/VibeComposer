@@ -740,7 +740,7 @@ public class MidiGenerator implements JMC {
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
 
-		boolean logSwing = false;
+		boolean logSwing = true;
 
 		int swingPercentAmount = swingPercent;
 		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
@@ -760,6 +760,13 @@ public class MidiGenerator implements JMC {
 			}
 			if (logSwing)
 				System.out.println("Dur: " + durCounter + ", chord counter: " + chordCounter);
+		}
+		// fix short notes at the end not going to next chord
+		if (durCounter > currentChordDur / 2) {
+			chordCounter++;
+			chordSeparators.add(fullMelody.size() - 1);
+			durCounter = 0.0;
+			currentChordDur = progressionDurations.get(chordCounter);
 		}
 		int chordSepIndex = 0;
 		Note swungNote = null;
@@ -995,7 +1002,8 @@ public class MidiGenerator implements JMC {
 
 	public void generatePrettyUserChords(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
-		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration(), 4 * Durations.HALF_NOTE);
+		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration(),
+				2 * Durations.WHOLE_NOTE);
 	}
 
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
@@ -1211,7 +1219,7 @@ public class MidiGenerator implements JMC {
 
 		Score score = new Score("MainScore", 120);
 		Part bassRoots = new Part("BassRoots",
-				(!gc.getBassPart().isMuted()) ? gc.getBassPart().getInstrument() : 74, 8);
+				(!gc.getBassPart().isMuted()) ? gc.getBassPart().getInstrument() : 0, 8);
 
 		List<Part> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
@@ -1240,7 +1248,7 @@ public class MidiGenerator implements JMC {
 
 
 		List<int[]> generatedRootProgression = generateChordProgression(mainGeneratorSeed,
-				gc.getFixedDuration(), 4 * Durations.HALF_NOTE);
+				gc.getFixedDuration(), 2 * Durations.WHOLE_NOTE);
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
