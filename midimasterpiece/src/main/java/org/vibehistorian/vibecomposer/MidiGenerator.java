@@ -1588,9 +1588,11 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getArpChance() && i > 0
 									&& !ap.isMuted());
 					added |= (!overridden && i == 0
-							&& ap.getInstrument() == gc.getMelodyParts().get(0).getInstrument()
 							&& ((isPreview || counter > ((arr.getSections().size() - 1) / 2))
 									&& !ap.isMuted()));
+					/* 
+							&& ap.getInstrument() == gc.getMelodyParts().get(0).getInstrument()*/
+
 
 					if (added) {
 						CPhrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec,

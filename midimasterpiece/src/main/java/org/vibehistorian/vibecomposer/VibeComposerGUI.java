@@ -2134,7 +2134,7 @@ public class VibeComposerGUI extends JFrame
 
 			public void run() {
 
-
+				int sliderVal = 0;
 				while (true) {
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
@@ -2182,23 +2182,20 @@ public class VibeComposerGUI extends JFrame
 									}
 								}
 							}
-							if (loopBeat.isSelected()) {
+							if (loopBeat.isSelected() && !isDragging) {
 								if (showScore.isSelected()) {
 									showScore.setSelected(false);
 
 								}
-								/*int del = delayed();
-								if (slider.getValue() < del) {
-									slider.setValue(del);
-								}*/
-
-
-								if (slider.getValue() > loopBeatCount.getInt() * beatFromBpm()
-										+ delayed()) {
+								int newSliderVal = slider.getValue();
+								boolean notMovedEnd = (sliderVal == newSliderVal) && sliderVal > 0;
+								if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm()
+										+ delayed() || notMovedEnd) {
 									stopMidi();
 									if (sequencer != null)
 										composeMidi(true);
 								}
+								sliderVal = newSliderVal;
 							}
 							if (sequencer != null) {
 								if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
@@ -2237,13 +2234,15 @@ public class VibeComposerGUI extends JFrame
 		cycle.start();
 	}
 
-	public static int delayed() {
+	public int delayed() {
 		return (int) (MidiGenerator.START_TIME_DELAY * 1000 * 60 / guiConfig.getBpm());
 	}
 
-	public static int beatFromBpm() {
-		int finalVal = (int) (1985 * 60 * elongateMidi.getInt() / guiConfig.getBpm());
-		//System.out.println(finalVal + "");
+	public int beatFromBpm() {
+		int finalVal = (int) (1983 * 60 * elongateMidi.getInt() / guiConfig.getBpm());
+		if (useDoubledDurations.isSelected()) {
+			finalVal *= 2;
+		}
 		return finalVal;
 	}
 
@@ -2917,20 +2916,29 @@ public class VibeComposerGUI extends JFrame
 			List<String> prettyChords = MidiGenerator.chordInts;
 			currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
 
-			String pauseBehavior = (String) pauseBehaviorCombobox.getSelectedItem();
-			if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
-				boolean unpause = regenerate || pauseBehavior.contains("compose");
-				if (unpause) {
-					long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected()
-							|| loopBeat.isSelected())
-									? (pausedMeasureCounter * beatFromBpm()
-											* MidiGenerator.chordInts.size()) + delayed()
-									: pausedSliderPosition;
-					midiNavigate(unpauseSliderVal * 1000);
-				} else {
-					resetPauseInfo();
+			if (loopBeat.isSelected()) {
+				resetPauseInfo();
+				midiNavigate(delayed() * 1000);
+			} else {
+				String pauseBehavior = (String) pauseBehaviorCombobox.getSelectedItem();
+				if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
+					boolean unpause = regenerate || pauseBehavior.contains("compose");
+					unpause &= (pausedSliderPosition > 0
+							&& pausedSliderPosition < slider.getMaximum() - 100);
+
+					if (unpause) {
+						long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected())
+								? (pausedMeasureCounter * beatFromBpm()
+										* MidiGenerator.chordInts.size()) + delayed()
+								: pausedSliderPosition;
+						midiNavigate(unpauseSliderVal * 1000);
+					} else {
+						resetPauseInfo();
+					}
 				}
 			}
+
+
 			loopBeatCount.getKnob().setMax(MidiGenerator.chordInts.size());
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
