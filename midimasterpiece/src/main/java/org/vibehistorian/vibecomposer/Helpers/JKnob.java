@@ -494,6 +494,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public void setMax(int max) {
 		this.max = max;
 		diff = max - min;
+		if (curr > max) {
+			curr = max;
+		}
+		setValue(curr);
 	}
 
 	public int getCurr() {

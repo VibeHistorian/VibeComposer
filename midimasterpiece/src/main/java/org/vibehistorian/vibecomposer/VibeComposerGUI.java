@@ -1809,7 +1809,6 @@ public class VibeComposerGUI extends JFrame
 		allInstsPanel.add(reinitInstPools);
 		extraSettingsPanel.add(allInstsPanel);
 
-		loopBeatCount = new KnobPanel("Loop # Beats", 1, 1, 4);
 
 		JPanel pauseBehaviorPanel = new JPanel();
 		pauseBehaviorLabel = new JLabel("Start from pause:");
@@ -1832,7 +1831,6 @@ public class VibeComposerGUI extends JFrame
 		drumCustomMapping.setToolTipText(
 				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
 
-		extraSettingsPanel.add(loopBeatCount);
 		extraSettingsPanel.add(pauseBehaviorPanel);
 		extraSettingsPanel.add(customDrumMappingPanel);
 
@@ -2330,7 +2328,8 @@ public class VibeComposerGUI extends JFrame
 				showScorePicker);
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
-		loopBeat = new JCheckBox("Loop Beat", false);
+		loopBeat = new JCheckBox("Loop Beats", false);
+		loopBeatCount = new KnobPanel("", 1, 1, 4);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -2403,6 +2402,7 @@ public class VibeComposerGUI extends JFrame
 		playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(useVolumeSliders);
 		playSettingsPanel.add(loopBeat);
+		playSettingsPanel.add(loopBeatCount);
 		playSettingsPanel.add(midiMode);
 		playSettingsPanel.add(midiModeDevices);
 
@@ -2922,6 +2922,7 @@ public class VibeComposerGUI extends JFrame
 					resetPauseInfo();
 				}
 			}
+			loopBeatCount.getKnob().setMax(MidiGenerator.chordInts.size());
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
 			sequencer.setTempoFactor(1);
