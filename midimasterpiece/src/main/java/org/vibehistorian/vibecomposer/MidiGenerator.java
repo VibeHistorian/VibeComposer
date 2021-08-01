@@ -740,7 +740,7 @@ public class MidiGenerator implements JMC {
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
 
-		boolean logSwing = true;
+		boolean logSwing = false;
 
 		int swingPercentAmount = swingPercent;
 		double swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))

@@ -308,6 +308,7 @@ public class VibeComposerGUI extends JFrame
 	public static JLabel pauseBehaviorLabel;
 	public static ScrollComboBox<String> pauseBehaviorCombobox;
 	public static JCheckBox pauseBehaviorBarCheckbox;
+	public static JCheckBox pauseBehaviorPlayheadCheckbox;
 
 
 	// chord variety settings
@@ -1814,12 +1815,14 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorLabel = new JLabel("Start from pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>();
 		pauseBehaviorBarCheckbox = new JCheckBox("Start from bar?", true);
+		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember last pos?", true);
 		MidiUtils.addAllToJComboBox(
 				new String[] { "On regenerate", "On compose/regenerate", "Never" },
 				pauseBehaviorCombobox);
 		pauseBehaviorPanel.add(pauseBehaviorLabel);
 		pauseBehaviorPanel.add(pauseBehaviorCombobox);
 		pauseBehaviorPanel.add(pauseBehaviorBarCheckbox);
+		pauseBehaviorPanel.add(pauseBehaviorPlayheadCheckbox);
 
 		JPanel customDrumMappingPanel = new JPanel();
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
@@ -2201,6 +2204,9 @@ public class VibeComposerGUI extends JFrame
 								if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
 									sequencer.setTempoFactor(
 											(float) (mainBpm.getInt() / guiConfig.getBpm()));
+								}
+								if (pauseBehaviorPlayheadCheckbox.isSelected()) {
+									savePauseInfo();
 								}
 							}
 							if (deviceCloseRequested) {
@@ -2913,10 +2919,11 @@ public class VibeComposerGUI extends JFrame
 			if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
 				boolean unpause = regenerate || pauseBehavior.contains("compose");
 				if (unpause) {
-					long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected())
-							? (pausedMeasureCounter * beatFromBpm()
-									* MidiGenerator.chordInts.size()) + delayed()
-							: pausedSliderPosition;
+					long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected()
+							|| loopBeat.isSelected())
+									? (pausedMeasureCounter * beatFromBpm()
+											* MidiGenerator.chordInts.size()) + delayed()
+									: pausedSliderPosition;
 					midiNavigate(unpauseSliderVal * 1000);
 				} else {
 					resetPauseInfo();
