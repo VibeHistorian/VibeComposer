@@ -151,6 +151,7 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
+import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -481,7 +482,7 @@ public class VibeComposerGUI extends JFrame
 	public static Map<Integer, SoloMuter> apSm = null;
 	public static Map<Integer, SoloMuter> dpSm = null;
 
-	public static JFrame currentPopup = null;
+	public static CloseablePopup currentPopup = null;
 	public static DebugConsole dconsole = null;
 	public static VibeComposerGUI vibeComposerGUI = null;
 
@@ -3105,35 +3106,19 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void openHelpPopup() {
-		if (currentPopup != null) {
-			currentPopup.setVisible(false);
-		}
 		HelpPopup popup = new HelpPopup();
-		currentPopup = popup.getFrame();
 	}
 
 	private void openAboutPopup() {
-		if (currentPopup != null) {
-			currentPopup.setVisible(false);
-		}
 		AboutPopup popup = new AboutPopup();
-		currentPopup = popup.getFrame();
 	}
 
 	private void openDrumViewPopup() {
-		if (currentPopup != null) {
-			currentPopup.setVisible(false);
-		}
 		DrumLoopPopup popup = new DrumLoopPopup();
-		currentPopup = popup.getFrame();
 	}
 
 	private void openExtraSettingsPopup() {
-		if (currentPopup != null) {
-			currentPopup.setVisible(false);
-		}
 		ExtraSettingsPopup popup = new ExtraSettingsPopup();
-		currentPopup = popup.getFrame();
 	}
 
 	private void openDebugConsole() {

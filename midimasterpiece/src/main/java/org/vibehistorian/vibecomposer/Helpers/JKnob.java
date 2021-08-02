@@ -20,6 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 
 /**
@@ -64,8 +65,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private boolean stretchAfterCustomInput = false;
 
-
-	public static KnobValuePopup singlePopup = null;
 
 	/**
 	 * No-Arg constructor that initializes the position
@@ -385,10 +384,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			setAngle();
 			repaint();
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
-			if (singlePopup != null) {
-				singlePopup.close();
-			}
-			singlePopup = new KnobValuePopup(this, stretchAfterCustomInput);
+			CloseablePopup popup = new KnobValuePopup(this, stretchAfterCustomInput);
 		}
 
 	}

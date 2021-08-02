@@ -7,12 +7,12 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-public class AboutPopup {
-	final JFrame frame = new JFrame();
+public class AboutPopup extends CloseablePopup {
 	JTextArea textArea;
 	JScrollPane scroll;
 
 	public AboutPopup() {
+		super("About");
 		textArea = new JTextArea(24, 80);
 		textArea.setBackground(Color.BLACK);
 		textArea.setForeground(Color.LIGHT_GRAY);
@@ -35,12 +35,18 @@ public class AboutPopup {
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		frame.add(scroll);
 		frame.pack();
-		frame.setVisible(true);
+		//frame.setVisible(true);
 
 		System.out.println("Opened About page!");
 	}
 
 	public JFrame getFrame() {
 		return frame;
+	}
+
+	@Override
+	protected void addFrameWindowOperation() {
+		// do nothing
+
 	}
 }
