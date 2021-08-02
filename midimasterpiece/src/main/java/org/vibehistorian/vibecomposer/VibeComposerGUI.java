@@ -1816,7 +1816,7 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorLabel = new JLabel("Start from pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>();
 		pauseBehaviorBarCheckbox = new JCheckBox("Start from bar?", true);
-		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember last pos?", true);
+		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember last pos?", false);
 		MidiUtils.addAllToJComboBox(
 				new String[] { "On regenerate", "On compose/regenerate", "Never" },
 				pauseBehaviorCombobox);
@@ -2935,6 +2935,7 @@ public class VibeComposerGUI extends JFrame
 						midiNavigate(unpauseSliderVal * 1000);
 					} else {
 						resetPauseInfo();
+						midiNavigate(delayed() * 1000);
 					}
 				}
 			}
@@ -5056,8 +5057,8 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			int patternOrder = 0;
-			// use pattern in half the cases if checkbox selected
-			if (arpPanelGenerator.nextInt(100) < 66) {
+			// use pattern if checkbox selected and %chance 
+			if (arpPanelGenerator.nextInt(100) < 40) {
 				if (randomArpPattern.isSelected()) {
 					patternOrder = arpPanelGenerator.nextInt(RhythmPattern.values().length - 2);
 				}

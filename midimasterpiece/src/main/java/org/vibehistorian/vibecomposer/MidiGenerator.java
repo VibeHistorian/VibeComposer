@@ -1297,8 +1297,8 @@ public class MidiGenerator implements JMC {
 			generatedRootProgression = rootProgression;
 			actualDurations = progressionDurations;
 		} else {
-			fillMelody(gc.getMelodyParts().get(0), actualProgression, generatedRootProgression, 1,
-					0, new Section(), new ArrayList<>());
+			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
+					generatedRootProgression, 1, 0, new Section(), new ArrayList<>());
 		}
 
 		Arrangement arr = null;
@@ -1468,7 +1468,7 @@ public class MidiGenerator implements JMC {
 							System.out.println("Risky Variation: Melody Swap!");
 						}
 						List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
-						Phrase m = fillMelody(mp, usedMelodyProg, usedRoots, usedMeasures,
+						Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, usedMeasures,
 								notesSeedOffset, sec, variations);
 
 						// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
@@ -1511,30 +1511,29 @@ public class MidiGenerator implements JMC {
 						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
 				if (added) {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
-					CPhrase b = fillBassRoots(rootProgression, usedMeasures, sec, variations);
+					Phrase b = fillBassFromPart(rootProgression, usedMeasures, sec, variations);
 					if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// TODO
 					}
 
 					if (gc.getBassPart().isDoubleOct()) {
-						CPhrase b2 = b.copy();
+						Phrase b2 = b.copy();
 						Mod.transpose(b2, 12);
-						Mod.increaseDynamic((Phrase) b2.getPhraseList().get(0), -15);
+						Mod.increaseDynamic(b2, -15);
 						Part bassPart = new Part();
-						bassPart.addCPhrase(b2);
-						bassPart.addCPhrase(b);
+						bassPart.addPhrase(b2);
+						bassPart.addPhrase(b);
 						JMusicUtilsCustom.consolidate(bassPart);
 
-						b = new CPhrase();
+						b = bassPart.getPhrase(0);
 						b.setStartTime(START_TIME_DELAY);
-						b.addPhrase(bassPart.getPhrase(0));
 					}
 
 					sec.setBass(b);
 					if (!overridden)
 						sec.setPresence(1, 0);
 				} else {
-					sec.setBass(emptyCPhrase.copy());
+					sec.setBass(emptyPhrase.copy());
 				}
 
 			}
@@ -1576,7 +1575,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			if (!gc.getArpParts().isEmpty()) {
-				List<CPhrase> copiedCPhrases = new ArrayList<>();
+				List<Phrase> copiedPhrases = new ArrayList<>();
 				Set<Integer> presences = sec.getPresence(3);
 				for (int i = 0; i < gc.getArpParts().size(); i++) {
 					ArpPart ap = (ArpPart) gc.getArpParts().get(i);
@@ -1595,19 +1594,19 @@ public class MidiGenerator implements JMC {
 
 
 					if (added) {
-						CPhrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec,
+						Phrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec,
 								variations);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.transpose(a, 12);
 						}
-						copiedCPhrases.add(a);
+						copiedPhrases.add(a);
 						if (!overridden)
 							sec.setPresence(3, i);
 					} else {
-						copiedCPhrases.add(emptyCPhrase.copy());
+						copiedPhrases.add(emptyPhrase.copy());
 					}
 				}
-				sec.setArps(copiedCPhrases);
+				sec.setArps(copiedPhrases);
 			}
 
 			if (!gc.getDrumParts().isEmpty()) {
@@ -1668,9 +1667,9 @@ public class MidiGenerator implements JMC {
 			}
 
 			if (!gc.getBassPart().isMuted()) {
-				CPhrase bp = sec.getBass();
+				Phrase bp = sec.getBass();
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
-				bassRoots.addCPhrase(bp);
+				bassRoots.addPhrase(bp);
 			}
 
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
@@ -1680,9 +1679,9 @@ public class MidiGenerator implements JMC {
 			}
 
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
-				CPhrase cp = sec.getArps().get(i);
+				Phrase cp = sec.getArps().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
-				arpParts.get(i).addCPhrase(cp);
+				arpParts.get(i).addPhrase(cp);
 			}
 
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
@@ -1932,7 +1931,7 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	protected Phrase fillMelody(MelodyPart mp, List<int[]> actualProgression,
+	protected Phrase fillMelodyFromPart(MelodyPart mp, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int measures, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
 		Phrase melodyPhrase = new Phrase();
@@ -1959,8 +1958,8 @@ public class MidiGenerator implements JMC {
 	}
 
 
-	protected CPhrase fillBassRoots(List<int[]> generatedRootProgression, int measures, Section sec,
-			List<Integer> variations) {
+	protected Phrase fillBassFromPart(List<int[]> generatedRootProgression, int measures,
+			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
 		double[] durationPool = new double[] { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
@@ -1972,7 +1971,7 @@ public class MidiGenerator implements JMC {
 
 		int seed = gc.getBassPart().getPatternSeed();
 
-		CPhrase cphraseBassRoot = new CPhrase();
+		Phrase bassPhrase = new Phrase();
 		int minVel = gc.getBassPart().getVelocityMin() + (5 * sec.getBassChance()) / 10 - 50;
 		minVel = (minVel < 0) ? 0 : minVel;
 		int maxVel = gc.getBassPart().getVelocityMax() + (5 * sec.getBassChance()) / 10 - 50;
@@ -2038,22 +2037,22 @@ public class MidiGenerator implements JMC {
 										: generatedRootProgression.get(j)[randomNote];
 
 
-						cphraseBassRoot.addChord(new int[] { pitch }, dur,
-								bassDynamics.nextInt(velSpace) + minVel);
+						bassPhrase.addNote(
+								new Note(pitch, dur, bassDynamics.nextInt(velSpace) + minVel));
 						counter++;
 					}
 				} else {
-					cphraseBassRoot.addChord(new int[] { generatedRootProgression.get(j)[0] },
-							progressionDurations.get(j), bassDynamics.nextInt(velSpace) + minVel);
+					bassPhrase.addNote(new Note(generatedRootProgression.get(j)[0],
+							progressionDurations.get(j), bassDynamics.nextInt(velSpace) + minVel));
 				}
 			}
 		}
-		Mod.transpose(cphraseBassRoot, -24 + gc.getBassPart().getTranspose() + modTrans);
-		cphraseBassRoot.setStartTime(START_TIME_DELAY);
+		Mod.transpose(bassPhrase, -24 + gc.getBassPart().getTranspose() + modTrans);
+		bassPhrase.setStartTime(START_TIME_DELAY);
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
 		}
-		return cphraseBassRoot;
+		return bassPhrase;
 
 	}
 
@@ -2257,10 +2256,10 @@ public class MidiGenerator implements JMC {
 		return cpr;
 	}
 
-	protected CPhrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures,
+	protected Phrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures,
 			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
-		CPhrase arpCPhrase = new CPhrase();
+		Phrase arpPhrase = new Phrase();
 
 		Map<String, List<Integer>> arpMap = generateArpMap(ap.getPatternSeed(),
 				ap.equals(gc.getArpParts().get(0)), ap);
@@ -2285,13 +2284,14 @@ public class MidiGenerator implements JMC {
 			repeatedArpsPerChord /= ap.getChordSpan();
 		}*/
 
+		boolean fillLastBeat = false;
+
 		int numberOfVars = Section.variationDescriptions[3].length - 2;
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
 			boolean forceRandomOct = false;
-			boolean fillLastBeat = false;
 
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
@@ -2401,16 +2401,16 @@ public class MidiGenerator implements JMC {
 					swingPercentAmount = 100 - swingPercentAmount;
 
 					if (durationNow + swingDuration > progressionDurations.get(j)) {
-						arpCPhrase.addChord(new int[] { pitch },
-								progressionDurations.get(j) - durationNow, velocity);
+						arpPhrase.addNote(new Note(pitch, progressionDurations.get(j) - durationNow,
+								velocity));
 						break;
 					} else {
 						if (exceptionGenerator.nextInt(100) < ap.getExceptionChance()) {
 							double splitDuration = swingDuration / 2;
-							arpCPhrase.addChord(new int[] { pitch }, splitDuration, velocity);
-							arpCPhrase.addChord(new int[] { pitch }, splitDuration, velocity - 15);
+							arpPhrase.addNote(new Note(pitch, splitDuration, velocity));
+							arpPhrase.addNote(new Note(pitch, splitDuration, velocity - 15));
 						} else {
-							arpCPhrase.addChord(new int[] { pitch }, swingDuration, velocity);
+							arpPhrase.addNote(new Note(pitch, swingDuration, velocity));
 						}
 					}
 					durationNow += swingDuration;
@@ -2422,17 +2422,22 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ap.getTranspose() : 0;
-		Mod.transpose(arpCPhrase, -24 + extraTranspose + modTrans);
+		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
 
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {
 			additionalDelay = (gc.getArpParts().get(i).getDelay() / 1000.0);
 		}*/
-		arpCPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
 		if (genVars && variations != null) {
 			sec.setVariation(3, getAbsoluteOrder(3, ap), variations);
 		}
-		return arpCPhrase;
+		if (fillLastBeat) {
+			Mod.crescendo(arpPhrase, arpPhrase.getEndTime() * 3 / 4, arpPhrase.getEndTime(), 55,
+					110);
+		}
+
+		arpPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
+		return arpPhrase;
 	}
 
 
