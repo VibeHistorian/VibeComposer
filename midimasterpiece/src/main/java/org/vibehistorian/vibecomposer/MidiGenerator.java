@@ -1617,8 +1617,17 @@ public class MidiGenerator implements JMC {
 					DrumPart dp = (DrumPart) gc.getDrumParts().get(i);
 					rand.setSeed(arrSeed + 300 + dp.getOrder());
 					variationGen.setSeed(arrSeed + 300 + dp.getOrder());
+
+					// multiply drum chance using section note type + what drum it is
+					int drumChanceMultiplier = 1;
+					if (sec.getTypeMelodyOffset() == 0
+							&& VibeComposerGUI.PUNCHY_DRUMS.contains(dp.getInstrument())) {
+						drumChanceMultiplier = 2;
+					}
+
 					boolean added = (overridden && presences.contains(dp.getOrder()))
-							|| (!overridden && rand.nextInt(100) < sec.getDrumChance());
+							|| (!overridden && rand.nextInt(100) < sec.getDrumChance()
+									* drumChanceMultiplier);
 					if (added && !dp.isMuted()) {
 						int sectionChanceModifier = 75 + (sec.getDrumChance() / 4);
 						boolean sectionForcedDynamics = (sec.getType().contains("CLIMAX"))
