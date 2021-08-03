@@ -674,7 +674,7 @@ public class MidiGenerator implements JMC {
 				}
 				durCounter = 0.0;
 				currentChordDur = progressionDurations.get(chordCounter);
-				splitGenerator.setSeed(seed + 4);
+				//splitGenerator.setSeed(seed + 4);
 				pauseGenerator.setSeed(seed + 5);
 				splitNoteGenerator.setSeed(seed + 8);
 				splitNoteExceptionGenerator.setSeed(seed + 9);
@@ -1223,7 +1223,7 @@ public class MidiGenerator implements JMC {
 
 		List<Part> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-			Part p = new Part("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
+			Part p = new Part("Melodies" + i, gc.getMelodyParts().get(0).getInstrument(),
 					gc.getMelodyParts().get(i).getMidiChannel() - 1);
 			melodyParts.add(p);
 		}
