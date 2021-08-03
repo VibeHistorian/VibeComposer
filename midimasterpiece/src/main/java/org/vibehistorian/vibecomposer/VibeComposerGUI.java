@@ -445,7 +445,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	//MidiHandler mh = new MidiHandler();
-	JCheckBox collapseDrumTracks;
+	JCheckBox combineDrumTracks;
 
 	JButton compose;
 	JButton regenerate;
@@ -1294,17 +1294,17 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(csExtra);
 
 
-		collapseDrumTracks = new JCheckBox("Combine Drum MIDI Tracks", true);
-		collapseDrumTracks.addChangeListener(new ChangeListener() {
+		combineDrumTracks = new JCheckBox("Combine Drum MIDI Tracks", true);
+		combineDrumTracks.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				drumPanels.forEach(
-						f -> f.getSoloMuter().setVisible(!collapseDrumTracks.isSelected()));
+				drumPanels
+						.forEach(f -> f.getSoloMuter().setVisible(!combineDrumTracks.isSelected()));
 			}
 
 		});
-		drumExtraSettings.add(collapseDrumTracks);
+		drumExtraSettings.add(combineDrumTracks);
 
 		drumExtraSettings.add(makeButton("Save Drums As", "DrumSave"));
 		drumExtraSettings.add(makeButton("Load Drums", "DrumLoad"));
@@ -2989,7 +2989,11 @@ public class VibeComposerGUI extends JFrame
 		if (!sequenceReady()) {
 			return;
 		}
-		for (int i = 0; i < sequencer.getSequence().getTracks().length; i++) {
+
+		int countReducer = combineDrumTracks.isSelected() ? drumPanels.size() - 1 : 0;
+
+		for (int i = countAllPanels() - countReducer; i < sequencer.getSequence()
+				.getTracks().length; i++) {
 			sequencer.setTrackSolo(i, false);
 			sequencer.setTrackMute(i, false);
 		}
@@ -3009,12 +3013,12 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		// drum specific
-		if (collapseDrumTracks.isSelected() && drumPanels.size() > 0) {
+		if (combineDrumTracks.isSelected() && drumPanels.size() > 0) {
 			sequencer.setTrackSolo(drumPanels.get(0).getSequenceTrack(),
 					groupSoloMuters.get(4).soloState != State.OFF);
 		}
 
-		if (collapseDrumTracks.isSelected() && drumPanels.size() > 0) {
+		if (combineDrumTracks.isSelected() && drumPanels.size() > 0) {
 			sequencer.setTrackMute(drumPanels.get(0).getSequenceTrack(),
 					groupSoloMuters.get(4).muteState != State.OFF);
 		}
@@ -3969,7 +3973,7 @@ public class VibeComposerGUI extends JFrame
 		try {
 			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
 			MidiGenerator.showScoreMode = showScorePicker.getSelectedIndex();
-			MidiGenerator.COLLAPSE_DRUM_TRACKS = collapseDrumTracks.isSelected();
+			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
 			MidiGenerator.noteMultiplier = elongateMidi.getInt();
 			MidiGenerator.recalculateDurations();
 
@@ -4508,7 +4512,7 @@ public class VibeComposerGUI extends JFrame
 		ip.setPanelOrder(panelOrder);
 
 		if (inst == 4) {
-			ip.getSoloMuter().setVisible(!collapseDrumTracks.isSelected());
+			ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
 		}
 		panels.add(ip);
 		((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
