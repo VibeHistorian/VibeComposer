@@ -140,9 +140,13 @@ public class VariationPopup {
 					if (SwingUtilities.isLeftMouseButton(e)) {
 						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
 							if (col > 1) {
-								table.getModel().setValueAt(Boolean.TRUE, k, 1);
+								if (table.getModel().getValueAt(k, 1) == Boolean.TRUE) {
+									table.getModel().setValueAt(Boolean.TRUE, k, col);
+								}
+							} else {
+								table.getModel().setValueAt(Boolean.TRUE, k, col);
 							}
-							table.getModel().setValueAt(Boolean.TRUE, k, col);
+
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isRightMouseButton(e)) {

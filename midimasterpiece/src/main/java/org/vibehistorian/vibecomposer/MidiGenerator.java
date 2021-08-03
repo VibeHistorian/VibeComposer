@@ -1453,9 +1453,11 @@ public class MidiGenerator implements JMC {
 				Set<Integer> presences = sec.getPresence(0);
 				for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 					MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
+					int melodyChanceMultiplier = (sec.getTypeMelodyOffset() == 0 && i == 0) ? 2 : 1;
 					boolean added = !mp.isMuted()
 							&& ((overridden && presences.contains(mp.getOrder()))
-									|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()));
+									|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()
+											* melodyChanceMultiplier));
 
 					if (added) {
 						List<int[]> usedMelodyProg = chordProgression;
