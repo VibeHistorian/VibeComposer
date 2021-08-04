@@ -938,4 +938,11 @@ public class MidiUtils {
 		return interspersed;
 	}
 
+	public static void addChordsToPhrase(Phrase phr, List<Chord> chords, double flam) {
+		for (Chord c : chords) {
+			c.setFlam(flam);
+			phr.addNoteList(c.getNotesBackwards().toArray(new Note[] {}));
+		}
+	}
+
 }

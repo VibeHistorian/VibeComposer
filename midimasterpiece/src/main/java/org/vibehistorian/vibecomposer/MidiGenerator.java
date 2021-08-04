@@ -19,7 +19,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer;
 
-import static org.vibehistorian.vibecomposer.MidiUtils.addShortenedChord;
 import static org.vibehistorian.vibecomposer.MidiUtils.applyChordFreqMap;
 import static org.vibehistorian.vibecomposer.MidiUtils.cIonianScale4;
 import static org.vibehistorian.vibecomposer.MidiUtils.chordsMap;
@@ -30,7 +29,6 @@ import static org.vibehistorian.vibecomposer.MidiUtils.maX;
 import static org.vibehistorian.vibecomposer.MidiUtils.mappedChord;
 import static org.vibehistorian.vibecomposer.MidiUtils.pickDurationWeightedRandom;
 import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
-import static org.vibehistorian.vibecomposer.MidiUtils.transposeChord;
 import static org.vibehistorian.vibecomposer.MidiUtils.transposeScale;
 
 import java.io.IOException;
@@ -1414,8 +1412,8 @@ public class MidiGenerator implements JMC {
 					for (Integer trans : MidiUtils.modulationMap.keySet()) {
 						boolean hasValue = MidiUtils.modulationMap.get(trans).contains(test);
 						if (hasValue) {
-							//transToSet = (trans < -4) ? (trans + 12) : trans;
-							//System.out.println("Trans up by: " + transToSet);
+							transToSet = (trans < -4) ? (trans + 12) : trans;
+							System.out.println("Trans up by: " + transToSet);
 							break;
 						}
 					}
@@ -1541,7 +1539,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			if (!gc.getChordParts().isEmpty()) {
-				List<CPhrase> copiedCPhrases = new ArrayList<>();
+				List<Phrase> copiedPhrases = new ArrayList<>();
 				Set<Integer> presences = sec.getPresence(2);
 				boolean useChordSlash = false;
 				for (int i = 0; i < gc.getChordParts().size(); i++) {
@@ -1555,19 +1553,19 @@ public class MidiGenerator implements JMC {
 							useChordSlash = true;
 						}
 						List<Integer> variations = (overridden) ? sec.getVariation(2, i) : null;
-						CPhrase c = fillChordsFromPart(cp, chordProgression, usedMeasures, sec,
+						Phrase c = fillChordsFromPart(cp, chordProgression, usedMeasures, sec,
 								variations);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.transpose(c, 12);
 						}
-						copiedCPhrases.add(c);
+						copiedPhrases.add(c);
 						if (!overridden)
 							sec.setPresence(2, i);
 					} else {
-						copiedCPhrases.add(emptyCPhrase.copy());
+						copiedPhrases.add(emptyPhrase.copy());
 					}
 				}
-				sec.setChords(copiedCPhrases);
+				sec.setChords(copiedPhrases);
 				if (useChordSlash) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
@@ -1675,9 +1673,9 @@ public class MidiGenerator implements JMC {
 			}
 
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
-				CPhrase cp = sec.getChords().get(i);
+				Phrase cp = sec.getChords().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
-				chordParts.get(i).addCPhrase(cp);
+				chordParts.get(i).addPhrase(cp);
 			}
 
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
@@ -1749,14 +1747,14 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
-		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+		/*if (gc.getScaleMode() != ScaleMode.IONIAN) {
 			for (Part p : score.getPartArray()) {
 				for (Phrase phr : p.getPhraseArray()) {
 					MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
 							gc.getScaleMode().noteAdjustScale);
 				}
 			}
-		}
+		}*/
 		//int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11, 12 };
 		Mod.transpose(score, gc.getTranspose());
 
@@ -1954,6 +1952,10 @@ public class MidiGenerator implements JMC {
 		melodyPhrase.addNoteList(fullMelody, true);
 		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.EIGHTH_NOTE);
 
+		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
+					gc.getScaleMode().noteAdjustScale);
+		}
 		Mod.transpose(melodyPhrase, mp.getTranspose() + modTrans);
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;
@@ -2049,6 +2051,10 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
+		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+			MidiUtils.transposePhrase(bassPhrase, ScaleMode.IONIAN.noteAdjustScale,
+					gc.getScaleMode().noteAdjustScale);
+		}
 		Mod.transpose(bassPhrase, -24 + gc.getBassPart().getTranspose() + modTrans);
 		bassPhrase.setStartTime(START_TIME_DELAY);
 		if (genVars && variations != null) {
@@ -2058,12 +2064,13 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	protected CPhrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression, int measures,
+	protected Phrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression, int measures,
 			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
 		int mainGeneratorSeed = (int) cp.getPatternSeed() + cp.getOrder();
-		CPhrase cpr = new CPhrase();
+		Phrase phr = new Phrase();
+		List<Chord> chords = new ArrayList<>();
 		Random variationGenerator = new Random(
 				cp.getPatternSeed() + cp.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = Section.variationDescriptions[2].length - 2;
@@ -2114,36 +2121,30 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
+				Chord c = Chord.EMPTY(progressionDurations.get(j));
+
 				Random velocityGenerator = new Random(mainGeneratorSeed + j);
-				int velocity = velocityGenerator.nextInt(cp.getVelocityMax() - cp.getVelocityMin())
-						+ cp.getVelocityMin();
+				c.setVelocity(velocityGenerator.nextInt(cp.getVelocityMax() - cp.getVelocityMin())
+						+ cp.getVelocityMin());
 
 				boolean transition = transitionGenerator.nextInt(100) < cp.getTransitionChance();
 				int transChord = (transitionGenerator.nextInt(100) < cp.getTransitionChance())
 						? (j + 1) % actualProgression.size()
 						: j;
 
-				// random = use generated split with potential to transition to 2nd chord early
-				// otherwise = use pattern within single chord
-
-				boolean silent = false;
-
 				if (!ignoreChordSpanFill && (cp.getChordSpanFill() != ChordSpanFill.ALL)) {
 					if ((cp.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
-						silent = true;
+						chords.add(c);
+						continue;
 					}
 					if ((cp.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
-						silent = true;
+						chords.add(c);
+						continue;
 					}
 				}
 
-				if (silent) {
-					cpr.addChord(new int[] { Integer.MIN_VALUE }, progressionDurations.get(j));
-					continue;
-				}
-
-				double shortenedTo = (gc.getChordGenSettings().isUseShortening()
-						&& cp.getInstPool() == POOL.PLUCK) ? 0.2 : 1.0;
+				c.setDurationRatio((gc.getChordGenSettings().isUseShortening()
+						&& cp.getInstPool() == POOL.PLUCK) ? 0.2 : 1.0);
 
 				int[] mainChordNotes = actualProgression.get(j);
 				int[] transChordNotes = actualProgression.get(transChord);
@@ -2173,68 +2174,57 @@ public class MidiGenerator implements JMC {
 						transChordNotes = newTransChordNotes;
 					}
 				}
+				mainChordNotes = convertChordToLength(mainChordNotes, cp.getChordNotesStretch(),
+						cp.isStretchEnabled());
+				transChordNotes = convertChordToLength(mainChordNotes, cp.getChordNotesStretch(),
+						cp.isStretchEnabled());
 
+				c.setTranspose(extraTranspose);
+				c.setNotes(mainChordNotes);
+
+				// random = use generated split with potential to transition to 2nd chord early
+				// otherwise = use pattern within single chord
 				if (cp.getPattern() == RhythmPattern.FULL) {
-					double splitTime = gc.getChordGenSettings().isUseSplit()
-							? cp.getTransitionSplit()
-							: DEFAULT_CHORD_SPLIT;
-
-					double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
-					double duration2 = progressionDurations.get(j) - duration1;
 					if (transition) {
-						addShortenedChord(cpr,
-								convertChordToLength(transposeChord(mainChordNotes, extraTranspose),
-										cp.getChordNotesStretch(), cp.isStretchEnabled()),
-								duration1, velocity, shortenedTo);
-						addShortenedChord(cpr,
-								convertChordToLength(
-										transposeChord(transChordNotes, extraTranspose),
-										cp.getChordNotesStretch(), cp.isStretchEnabled()),
-								duration2, velocity, shortenedTo);
+						double splitTime = gc.getChordGenSettings().isUseSplit()
+								? cp.getTransitionSplit()
+								: DEFAULT_CHORD_SPLIT;
+
+						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
+						double duration2 = progressionDurations.get(j) - duration1;
+						Chord c2 = Chord.copy(c);
+						c.setRhythmValue(duration1);
+						c2.setRhythmValue(duration2);
+						c2.setNotes(transChordNotes);
+						chords.add(c);
+						chords.add(c2);
 					} else {
-						addShortenedChord(cpr,
-								convertChordToLength(transposeChord(mainChordNotes, extraTranspose),
-										cp.getChordNotesStretch(), cp.isStretchEnabled()),
-								progressionDurations.get(j), velocity, shortenedTo);
+						chords.add(c);
 					}
-
 				} else {
-
 					List<Integer> pattern = cp.getFinalPatternCopy();
 					pattern = pattern.subList(0, MAXIMUM_PATTERN_LENGTH);
 					double duration = progressionDurations.get(j) / pattern.size();
 
 					for (int p = 0; p < pattern.size(); p++) {
-						if (pattern.get(p) > 0) {
-							addShortenedChord(cpr,
-									convertChordToLength(
-											transposeChord(mainChordNotes, extraTranspose),
-											cp.getChordNotesStretch(), cp.isStretchEnabled()),
-									duration, velocity, shortenedTo);
-						} else {
-							cpr.addChord(new int[] { Integer.MIN_VALUE }, duration, velocity);
+						Chord cC = Chord.copy(c);
+						cC.setRhythmValue(duration);
+						// less plucky
+						cC.setDurationRatio(
+								cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
+						if (pattern.get(p) < 1) {
+							cC.setNotes(new int[] { Integer.MIN_VALUE });
 						}
+						chords.add(cC);
 					}
 
 				}
 			}
-		}
-
-		// transpose
-		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? cp.getTranspose() : 0;
-		Mod.transpose(cpr, -12 + extraTranspose + modTrans);
-
-		// delay
-		double additionalDelay = 0;
-		if (gc.getChordGenSettings().isUseDelay()) {
-			additionalDelay = ((noteMultiplier * cp.getDelay()) / 1000.0);
-		}
-		cpr.setStartTime(START_TIME_DELAY + additionalDelay);
-
-		// chord strum
+		}// chord strum
+		double flamming = 0.0;
 		if (gc.getChordGenSettings().isUseStrum()) {
 			if (maxStrum) {
-				cpr.flam(SECOND_ARRAY_STRUM[SECOND_ARRAY_STRUM.length - 1]);
+				flamming = SECOND_ARRAY_STRUM[SECOND_ARRAY_STRUM.length - 1];
 			} else {
 				int index = -1;
 				for (int i = 0; i < VibeComposerGUI.MILISECOND_ARRAY_STRUM.length; i++) {
@@ -2244,18 +2234,35 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				if (index != -1) {
-					cpr.flam(SECOND_ARRAY_STRUM[index] * noteMultiplier);
+					flamming = SECOND_ARRAY_STRUM[index] * noteMultiplier;
 				} else {
-					cpr.flam((noteMultiplier * (double) cp.getStrum()) / 1000.0);
+					flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
 					System.out.println("Chord strum CUSTOM! " + cp.getStrum());
 				}
 			}
 
 		}
+		MidiUtils.addChordsToPhrase(phr, chords, flamming);
+		// transpose
+		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? cp.getTranspose() : 0;
+		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
+					gc.getScaleMode().noteAdjustScale);
+		}
+		Mod.transpose(phr, -12 + extraTranspose + modTrans);
+
+		// delay
+		double additionalDelay = 0;
+		if (gc.getChordGenSettings().isUseDelay()) {
+			additionalDelay = ((noteMultiplier * cp.getDelay()) / 1000.0);
+		}
+		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+
+
 		if (genVars && variations != null) {
 			sec.setVariation(2, getAbsoluteOrder(2, cp), variations);
 		}
-		return cpr;
+		return phr;
 	}
 
 	protected Phrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures,
@@ -2424,6 +2431,10 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ap.getTranspose() : 0;
+		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+			MidiUtils.transposePhrase(arpPhrase, ScaleMode.IONIAN.noteAdjustScale,
+					gc.getScaleMode().noteAdjustScale);
+		}
 		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
 
 		double additionalDelay = 0;

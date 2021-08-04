@@ -73,7 +73,7 @@ public class Section {
 	// data (transient)
 	private List<Phrase> melodies;
 	private Phrase bass;
-	private List<CPhrase> chords;
+	private List<Phrase> chords;
 	private List<Phrase> arps;
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
@@ -185,12 +185,12 @@ public class Section {
 		this.bass = bass;
 	}
 
-	public List<CPhrase> getChords() {
+	public List<Phrase> getChords() {
 		return chords;
 	}
 
 	@XmlTransient
-	public void setChords(List<CPhrase> chords) {
+	public void setChords(List<Phrase> chords) {
 		this.chords = chords;
 	}
 
