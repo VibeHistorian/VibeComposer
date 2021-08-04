@@ -89,7 +89,10 @@ public class Chord {
 	public List<Note> getNotesBackwards() {
 		List<Note> noteList = new ArrayList<>();
 		for (int i = notes.length - 1; i >= 0; i--) {
-			int pitch = notes[i] + transpose;
+			int pitch = notes[i];
+			if (pitch > 0) {
+				pitch += transpose;
+			}
 			double rhythm = (i > 0) ? 0.0 : rhythmValue;
 			double duration = getDuration();
 			Note n = new Note(pitch, rhythm, velocity);

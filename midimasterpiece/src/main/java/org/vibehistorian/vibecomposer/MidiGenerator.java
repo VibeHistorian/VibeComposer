@@ -2174,9 +2174,9 @@ public class MidiGenerator implements JMC {
 						transChordNotes = newTransChordNotes;
 					}
 				}
-				mainChordNotes = convertChordToLength(mainChordNotes, cp.getChordNotesStretch(),
+				mainChordNotes = convertChordToLength(mainChordNotes, stretch,
 						cp.isStretchEnabled());
-				transChordNotes = convertChordToLength(mainChordNotes, cp.getChordNotesStretch(),
+				transChordNotes = convertChordToLength(mainChordNotes, stretch,
 						cp.isStretchEnabled());
 
 				c.setTranspose(extraTranspose);
