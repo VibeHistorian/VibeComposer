@@ -1387,8 +1387,8 @@ public class MidiGenerator implements JMC {
 				for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 					boolean isVariation = variationGen.nextInt(100) < gc
 							.getArrangementVariationChance();
-					// generate n-1 skip only if next section is same type
-					if (i == 0) {
+					// generate n-1 skip and KeyChange only if next section is same type
+					if (i == 0 || i == 4) {
 						// if not last, and next section has the same Type
 						isVariation &= (secOrder < arr.getSections().size() - 1 && arr.getSections()
 								.get(secOrder + 1).getType().equals(sec.getType()));
@@ -1423,7 +1423,7 @@ public class MidiGenerator implements JMC {
 
 			if (riskyVariations.get(4)) {
 				System.out.println("Risky Variation: Key Change (on next chord)!");
-				transToSet = generateKeyChange(generatedRootProgression);
+				transToSet = generateKeyChange(generatedRootProgression, arrSeed);
 			}
 
 			// copied into empty sections
@@ -1838,13 +1838,16 @@ public class MidiGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	private int generateKeyChange(List<int[]> chords) {
+	private int generateKeyChange(List<int[]> chords, int arrSeed) {
 		int transToSet = 0;
 		if (modTrans == 0) {
 			KeyChangeType chg = gc.getKeyChangeType();
 			switch (chg) {
 			case PIVOT:
 				transToSet = pivotKeyChange(chords);
+				break;
+			case DIRECT:
+				transToSet = directKeyChange(arrSeed);
 				break;
 			default:
 				break;
@@ -1873,6 +1876,13 @@ public class MidiGenerator implements JMC {
 			System.out.println("Pivot chord not found between last and first chord!");
 		}
 		return transToSet;
+	}
+
+	private int directKeyChange(int arrSeed) {
+		Random rand = new Random(arrSeed);
+		int[] pool = new int[] { -4, -3, 3, 4 };
+		return pool[rand.nextInt(pool.length)];
+
 	}
 
 	public static void pianoRoll(Score s) {

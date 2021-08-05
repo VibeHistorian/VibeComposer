@@ -796,6 +796,9 @@ public class MidiUtils {
 	public static final Integer[] DRUM_INST_NUMBERS_SEMI = { 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
 			46, 47, 48 };
 
+	public static final String[] WEAK_DRUM_INST_NAMES = { "SIDE STICK = 37", "CLAP = 39",
+			"CLOSED_HH = 42 ", "PEDAL_HH = 44", "OPEN_HH = 46", "RIDE = 53 ", "TAMBOURINE = 54",
+			"HI BONGO = 60 ", "SHAKER = 82" };
 
 	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
 			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "CLOSED_HH = 42 ",

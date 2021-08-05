@@ -392,8 +392,9 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxVel;
 
 	// drum gen settings
-	public static List<Integer> PUNCHY_DRUMS = Arrays
-			.asList(new Integer[] { 35, 36, 37, 38, 39, 40 });
+	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 39, 40 });
+	public static List<Integer> KICK_DRUMS = Arrays.asList(new Integer[] { 35, 36 });
+	public static List<Integer> SNARE_DRUMS = Arrays.asList(new Integer[] { 38, 39, 40 });
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
 	JCheckBox randomDrumsOverrandomize;
@@ -4410,7 +4411,7 @@ public class VibeComposerGUI extends JFrame
 		addArps.setSelected(guiConfig.isArpsEnable());
 		addDrums.setSelected(guiConfig.isDrumsEnable());
 
-		drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
+		//drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
 		drumCustomMappingNumbers.setText(guiConfig.getDrumCustomMappingNumbers());
 
 		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
@@ -4584,7 +4585,7 @@ public class VibeComposerGUI extends JFrame
 		Random drumPanelGenerator = new Random();
 		for (Iterator<DrumPanel> panelI = drumPanels.iterator(); panelI.hasNext();) {
 			DrumPanel panel = panelI.next();
-			if (!onlyAdd) {
+			if (!onlyAdd && !panel.getLockInst()) {
 				((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
 				panelI.remove();
 			}
@@ -4622,18 +4623,39 @@ public class VibeComposerGUI extends JFrame
 			pitches.add(MidiUtils.getInstByIndex(drumPanelGenerator.nextInt(127), POOL.DRUM));
 		}
 		Collections.sort(pitches);
-
-		int guaranteedParts = 3;
-
+		int index = 0;
 		if (!onlyAdd && pitches.size() >= 3) {
-			pitches.set(0, 35);
-			pitches.set(1, 36);
-			pitches.set(2, 38);
+			long kickCount = drumPanels.stream().filter(e -> KICK_DRUMS.contains(e.getInstrument()))
+					.count();
+			long snareCount = drumPanels.stream()
+					.filter(e -> SNARE_DRUMS.contains(e.getInstrument())).count();
+			System.out.println("Kick,snare: " + kickCount + ", " + snareCount);
+			if (kickCount == 0) {
+				pitches.set(index++, 35);
+				pitches.set(index++, 36);
+			} else if (kickCount == 1) {
+				pitches.set(index++, 36);
+			}
+
+
+			if (snareCount == 0) {
+				pitches.set(index++, 38);
+			}
 		}
-		if (pitches.stream().filter(e -> e == 38 || e == 39 || e == 40).count() > 1) {
-			for (int i = 3; i < pitches.size(); i++) {
+
+		if (pitches.stream().filter(e -> KICK_DRUMS.contains(e)).count() > 1) {
+			for (int i = index; i < pitches.size(); i++) {
 				int e = pitches.get(i);
-				if (e == 38 || e == 39 || e == 40) {
+				if (KICK_DRUMS.contains(e)) {
+					pitches.set(i, i % 2 == 0 ? 46 : 60);
+				}
+			}
+		}
+
+		if (pitches.stream().filter(e -> SNARE_DRUMS.contains(e)).count() > 1) {
+			for (int i = index; i < pitches.size(); i++) {
+				int e = pitches.get(i);
+				if (SNARE_DRUMS.contains(e)) {
 					pitches.set(i, i % 2 == 0 ? 42 : 44);
 				}
 			}
