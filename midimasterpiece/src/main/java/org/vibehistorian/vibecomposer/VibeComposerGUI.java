@@ -125,6 +125,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
+import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
@@ -411,6 +412,7 @@ public class VibeComposerGUI extends JFrame
 	// chord settings - progression
 	ScrollComboBox<String> firstChordSelection;
 	ScrollComboBox<String> lastChordSelection;
+	ScrollComboBox<String> keyChangeTypeSelection;
 	int firstChord = 0;
 	int lastChord = 0;
 	JCheckBox userChordsEnabled;
@@ -1885,26 +1887,26 @@ public class VibeComposerGUI extends JFrame
 
 		// CHORD SETTINGS 2 - chord progression
 		firstChordSelection = new ScrollComboBox<String>();
-		firstChordSelection.addItem("R");
-		firstChordSelection.addItem("I");
-		firstChordSelection.addItem("V");
-		firstChordSelection.addItem("vi");
+		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "V", "vi" }, firstChordSelection);
 		firstChordSelection.addItemListener(this);
 
 		lastChordSelection = new ScrollComboBox<String>();
-		lastChordSelection.addItem("R");
-		lastChordSelection.addItem("I");
-		lastChordSelection.addItem("IV");
-		lastChordSelection.addItem("V");
-		lastChordSelection.addItem("vi");
+		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "IV", "V", "vi" }, lastChordSelection);
 		lastChordSelection.addItemListener(this);
-		lastChordSelection.setSelectedIndex(0);
+
+		keyChangeTypeSelection = new ScrollComboBox<String>();
+		MidiUtils.addAllToJComboBox(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
+				keyChangeTypeSelection);
+		keyChangeTypeSelection.addItemListener(this);
+
 		JPanel lastChordPanel = new JPanel();
 
 		lastChordPanel.add(new JLabel("First Chord:"));
 		lastChordPanel.add(firstChordSelection);
 		lastChordPanel.add(new JLabel("Last Chord:"));
 		lastChordPanel.add(lastChordSelection);
+		lastChordPanel.add(new JLabel("Key change type:"));
+		lastChordPanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(lastChordPanel);
 
 
@@ -3118,8 +3120,8 @@ public class VibeComposerGUI extends JFrame
 
 	private void randomizeUserChords() {
 		MidiGenerator mg = new MidiGenerator(copyGUItoConfig());
-		MidiGenerator.FIRST_CHORD = null;
-		MidiGenerator.LAST_CHORD = null;
+		MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
+		MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 		MidiGenerator.userChords.clear();
 		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(), MidiGenerator.gc.getFixedDuration(),
@@ -4344,6 +4346,8 @@ public class VibeComposerGUI extends JFrame
 		// chords
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
 		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
+		guiConfig.setKeyChangeType(
+				KeyChangeType.valueOf((String) keyChangeTypeSelection.getSelectedItem()));
 		guiConfig.setCustomChordsEnabled(userChordsEnabled.isSelected());
 		guiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
@@ -4440,6 +4444,7 @@ public class VibeComposerGUI extends JFrame
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
 		lastChordSelection.setSelectedItem(guiConfig.getLastChord());
+		keyChangeTypeSelection.setSelectedItem(guiConfig.getKeyChangeType().toString());
 		userChordsEnabled.setSelected(guiConfig.isCustomChordsEnabled());
 		userChords.setText(guiConfig.getCustomChords());
 		userChordsDurations.setText(guiConfig.getCustomChordDurations());

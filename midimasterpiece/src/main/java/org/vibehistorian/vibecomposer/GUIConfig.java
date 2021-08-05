@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -48,6 +49,7 @@ public class GUIConfig {
 	private int arrangementPartVariationChance = 30;
 	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
 	private boolean arrangementEnabled = false;
+	private KeyChangeType keyChangeType = KeyChangeType.PIVOT;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -546,6 +548,14 @@ public class GUIConfig {
 
 	public void setDrumCustomMappingNumbers(String drumCustomMappingNumbers) {
 		this.drumCustomMappingNumbers = drumCustomMappingNumbers;
+	}
+
+	public KeyChangeType getKeyChangeType() {
+		return keyChangeType;
+	}
+
+	public void setKeyChangeType(KeyChangeType keyChangeType) {
+		this.keyChangeType = keyChangeType;
 	}
 
 }

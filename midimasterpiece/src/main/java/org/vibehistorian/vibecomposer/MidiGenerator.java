@@ -59,6 +59,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
+import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -1086,12 +1087,17 @@ public class MidiGenerator implements JMC {
 
 			// if last and not empty first chord
 			boolean isLastChord = durationLeft - dur < 0.01;
-			String chordString = (isLastChord && FIRST_CHORD != null) ? FIRST_CHORD
-					: next.get(nextInt);
-			if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
-					&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 10) {
-				chordString = String.valueOf(lastUnspicedChord);
-				canRepeatChord = false;
+			String chordString = null;
+			if (isLastChord && FIRST_CHORD != null) {
+				chordString = FIRST_CHORD;
+			} else {
+				if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
+						&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 10) {
+					chordString = String.valueOf(lastUnspicedChord);
+					canRepeatChord = false;
+				} else {
+					chordString = next.get(nextInt);
+				}
 			}
 
 
@@ -1345,9 +1351,8 @@ public class MidiGenerator implements JMC {
 
 			Random rand = new Random();
 
-			if (transToSet != 0) {
-				modTrans = transToSet;
-			}
+			modTrans = transToSet;
+			System.out.println("Key extra transpose: " + modTrans);
 
 			if (sec.getType().equals("CLIMAX")) {
 				// increase variations in follow-up CLIMAX sections, reset when climax ends
@@ -1401,24 +1406,6 @@ public class MidiGenerator implements JMC {
 			if (riskyVariations.get(0)) {
 				System.out.println("Risky Variation: Skip N-1 Chord!");
 
-				if (sec.getType().equals("CLIMAX") && modTrans == 0) {
-					List<String> allCurrentChordsAsBasic = MidiUtils
-							.getBasicChordStringsFromRoots(generatedRootProgression);
-					String baseChordLast = allCurrentChordsAsBasic
-							.get(allCurrentChordsAsBasic.size() - 1);
-					String baseChordFirst = allCurrentChordsAsBasic.get(0);
-					transToSet = 0;
-					Pair<String, String> test = Pair.of(baseChordFirst, baseChordLast);
-					for (Integer trans : MidiUtils.modulationMap.keySet()) {
-						boolean hasValue = MidiUtils.modulationMap.get(trans).contains(test);
-						if (hasValue) {
-							transToSet = (trans < -4) ? (trans + 12) : trans;
-							System.out.println("Trans up by: " + transToSet);
-							break;
-						}
-					}
-				}
-
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
 				chordProgression = altChordProgression;
@@ -1432,6 +1419,11 @@ public class MidiGenerator implements JMC {
 					chordProgression = actualProgression;
 				}
 				progressionDurations = actualDurations;
+			}
+
+			if (riskyVariations.get(4)) {
+				System.out.println("Risky Variation: Key Change (on next chord)!");
+				transToSet = generateKeyChange(generatedRootProgression);
 			}
 
 			// copied into empty sections
@@ -1844,6 +1836,43 @@ public class MidiGenerator implements JMC {
 
 		gc.setActualArrangement(arr);
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
+	}
+
+	private int generateKeyChange(List<int[]> chords) {
+		int transToSet = 0;
+		if (modTrans == 0) {
+			KeyChangeType chg = gc.getKeyChangeType();
+			switch (chg) {
+			case PIVOT:
+				transToSet = pivotKeyChange(chords);
+				break;
+			default:
+				break;
+			}
+		}
+
+		return transToSet;
+	}
+
+	private int pivotKeyChange(List<int[]> chords) {
+		int transToSet = 0;
+		List<String> allCurrentChordsAsBasic = MidiUtils.getBasicChordStringsFromRoots(chords);
+		String baseChordLast = allCurrentChordsAsBasic.get(allCurrentChordsAsBasic.size() - 1);
+		String baseChordFirst = allCurrentChordsAsBasic.get(0);
+		transToSet = 0;
+		Pair<String, String> test = Pair.of(baseChordFirst, baseChordLast);
+		for (Integer trans : MidiUtils.modulationMap.keySet()) {
+			boolean hasValue = MidiUtils.modulationMap.get(trans).contains(test);
+			if (hasValue) {
+				transToSet = (trans < -4) ? (trans + 12) : trans;
+				System.out.println("Trans up by: " + transToSet);
+				break;
+			}
+		}
+		if (transToSet == 0) {
+			System.out.println("Pivot chord not found between last and first chord!");
+		}
+		return transToSet;
 	}
 
 	public static void pianoRoll(Score s) {
