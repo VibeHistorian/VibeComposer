@@ -97,7 +97,6 @@ public class SoloMuter extends JPanel {
 		if (!VibeComposerGUI.sequenceReady()) {
 			return;
 		}
-
 		if (soloState != State.OFF) {
 			unsolo();
 			if (type == Type.SINGLE) {

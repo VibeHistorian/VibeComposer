@@ -2016,7 +2016,7 @@ public class VibeComposerGUI extends JFrame
 						// recalc sequencer tracks from button colorings
 						if (needToRecalculateSoloMuters) {
 							needToRecalculateSoloMuters = false;
-							unapplySolosMutes();
+							unapplySolosMutes(true);
 
 							reapplySolosMutes();
 							recolorButtons();
@@ -2124,6 +2124,15 @@ public class VibeComposerGUI extends JFrame
 		int count = 0;
 		for (int i = 0; i < 5; i++) {
 			count += getInstList(i).size();
+		}
+		return count;
+	}
+
+	private static int countAllIncludedPanels() {
+		int count = 0;
+		for (int i = 0; i < 5; i++) {
+			List<? extends InstPanel> panels = getInstList(i);
+			count += panels.stream().filter(e -> !e.getMuteInst()).count();
 		}
 		return count;
 	}
@@ -2791,7 +2800,7 @@ public class VibeComposerGUI extends JFrame
 		String relPath = MIDIS_FOLDER + "/" + fileName + ".mid";
 
 		// unapply all tracks first
-		unapplySolosMutes();
+		unapplySolosMutes(true);
 
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
 
@@ -2985,14 +2994,23 @@ public class VibeComposerGUI extends JFrame
 		melodyPanels.forEach(e -> e.setVisible(true));
 	}
 
-	private void unapplySolosMutes() {
+	private void unapplySolosMutes(boolean onlyIncluded) {
 		if (!sequenceReady()) {
 			return;
 		}
 
-		int countReducer = combineDrumTracks.isSelected() ? drumPanels.size() - 1 : 0;
+		int countReducer = 0;
+		if (combineDrumTracks.isSelected()) {
+			countReducer = (int) ((onlyIncluded)
+					? drumPanels.stream().filter(e -> !e.getMuteInst()).count()
+					: drumPanels.size());
+			countReducer = Math.max(countReducer - 1, 0);
+		}
+		int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
 
-		for (int i = countAllPanels() - countReducer; i < sequencer.getSequence()
+		sequencer.setTrackSolo(0, false);
+		sequencer.setTrackMute(0, false);
+		for (int i = 1 + baseCount - countReducer; i < sequencer.getSequence()
 				.getTracks().length; i++) {
 			sequencer.setTrackSolo(i, false);
 			sequencer.setTrackMute(i, false);
@@ -3908,6 +3926,7 @@ public class VibeComposerGUI extends JFrame
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().solo();
 			sequencer.setTrackSolo(ip.getSequenceTrack(), true);
+			System.out.println("Set solo for: " + ip.getSequenceTrack());
 		}
 	}
 

@@ -1707,13 +1707,14 @@ public class MidiGenerator implements JMC {
 		int trackCounter = 1;
 
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
+			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(i).getOrder(),
+					VibeComposerGUI.melodyPanels);
 			if (!gc.getMelodyParts().get(i).isMuted()) {
 				score.add(melodyParts.get(i));
-				InstPanel ip = VibeComposerGUI.getPanelByOrder(
-						gc.getMelodyParts().get(i).getOrder(), VibeComposerGUI.melodyPanels);
 				ip.setSequenceTrack(trackCounter++);
 				//if (VibeComposerGUI.apSm)
 			} else {
+				ip.setSequenceTrack(-1);
 				if (i == 0) {
 					COLLAPSE_MELODY_TRACKS = false;
 				}
@@ -1724,26 +1725,34 @@ public class MidiGenerator implements JMC {
 		}
 
 		for (int i = 0; i < gc.getArpParts().size(); i++) {
+
+			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
+					VibeComposerGUI.arpPanels);
 			if (!gc.getArpParts().get(i).isMuted()) {
 				score.add(arpParts.get(i));
-				InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
-						VibeComposerGUI.arpPanels);
 				ip.setSequenceTrack(trackCounter++);
 				//if (VibeComposerGUI.apSm)
+			} else {
+				ip.setSequenceTrack(-1);
 			}
 		}
 
 		if (!gc.getBassPart().isMuted()) {
 			score.add(bassRoots);
 			VibeComposerGUI.bassPanel.setSequenceTrack(trackCounter++);
+		} else {
+			VibeComposerGUI.bassPanel.setSequenceTrack(-1);
 		}
 
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
+
+			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getChordParts().get(i).getOrder(),
+					VibeComposerGUI.chordPanels);
 			if (!gc.getChordParts().get(i).isMuted()) {
 				score.add(chordParts.get(i));
-				InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getChordParts().get(i).getOrder(),
-						VibeComposerGUI.chordPanels);
 				ip.setSequenceTrack(trackCounter++);
+			} else {
+				ip.setSequenceTrack(-1);
 			}
 
 		}
@@ -1764,7 +1773,11 @@ public class MidiGenerator implements JMC {
 			score.add(drumParts.get(i));
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
 					VibeComposerGUI.drumPanels);
-			ip.setSequenceTrack(trackCounter++);
+			if (gc.getDrumParts().get(i).isMuted()) {
+				ip.setSequenceTrack(-1);
+			} else {
+				ip.setSequenceTrack(trackCounter++);
+			}
 			if (COLLAPSE_DRUM_TRACKS) {
 				break;
 			}
