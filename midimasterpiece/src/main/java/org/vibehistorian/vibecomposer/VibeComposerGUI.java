@@ -3926,7 +3926,6 @@ public class VibeComposerGUI extends JFrame
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().solo();
 			sequencer.setTrackSolo(ip.getSequenceTrack(), true);
-			System.out.println("Set solo for: " + ip.getSequenceTrack());
 		}
 	}
 

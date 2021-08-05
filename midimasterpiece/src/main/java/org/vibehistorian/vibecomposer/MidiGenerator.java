@@ -1775,6 +1775,7 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.drumPanels);
 			if (gc.getDrumParts().get(i).isMuted()) {
 				ip.setSequenceTrack(-1);
+				trackCounter++;
 			} else {
 				ip.setSequenceTrack(trackCounter++);
 			}
