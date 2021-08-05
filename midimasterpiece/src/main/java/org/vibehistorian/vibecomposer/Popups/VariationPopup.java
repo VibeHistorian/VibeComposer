@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -48,11 +49,14 @@ public class VariationPopup {
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
 	JTable[] tables = new JTable[5];
-
+	int sectionOrder = 0;
+	Section sectionObject = null;
 	JScrollPane scroll;
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
+		sectionOrder = section;
+		sectionObject = sec;
 		JPanel measuresPanel = new JPanel();
 		measuresPanel.add(new JLabel("Measures "));
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
@@ -224,7 +228,15 @@ public class VariationPopup {
 				VibeComposerGUI.varPopup = null;
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel());
-
+				for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
+					if (c instanceof JButton) {
+						JButton cbutt = (JButton) c;
+						if (cbutt.getText().equals("Edit " + sectionOrder)) {
+							VibeComposerGUI.recolorVariationPopupButton(cbutt, sectionObject);
+							break;
+						}
+					}
+				}
 			}
 
 			@Override

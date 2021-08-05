@@ -55,7 +55,7 @@ public class Section {
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Pause Squish" };
+			"Swap Melody", "Melody Pause Squish", "Key Change" };
 
 	public static final int VARIATION_CHANCE = 30;
 

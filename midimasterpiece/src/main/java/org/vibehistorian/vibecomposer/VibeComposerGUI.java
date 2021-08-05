@@ -191,9 +191,9 @@ public class VibeComposerGUI extends JFrame
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
 	Color arrangementLightModeText = new Color(220, 220, 220);
-	int arrangementDarkModeLowestColor = 100;
+	public static int arrangementDarkModeLowestColor = 100;
 	Color arrangementDarkModeText = new Color(50, 50, 50);
-	int arrangementLightModeHighestColor = 180;
+	public static int arrangementLightModeHighestColor = 180;
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
 
@@ -281,7 +281,7 @@ public class VibeComposerGUI extends JFrame
 
 	JPanel actualArrangementCombinedPanel;
 	JPanel arrangementCombinedPanel;
-	JPanel variationButtonsPanel;
+	public static JPanel variationButtonsPanel;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -1658,7 +1658,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void recolorVariationPopupButton(JButton butt, Section sec) {
+	public static void recolorVariationPopupButton(JButton butt, Section sec) {
 		int count = (sec.getRiskyVariations() != null)
 				? (int) sec.getRiskyVariations().stream().filter(e -> e.booleanValue()).count()
 				: 0;
