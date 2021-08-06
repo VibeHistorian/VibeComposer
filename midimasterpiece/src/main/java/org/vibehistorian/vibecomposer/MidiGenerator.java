@@ -1335,7 +1335,7 @@ public class MidiGenerator implements JMC {
 		int secOrder = -1;
 
 		int transToSet = 0;
-
+		boolean twoFiveOneChanged = false;
 		for (Section sec : arr.getSections()) {
 			if (overridden) {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
@@ -1398,7 +1398,7 @@ public class MidiGenerator implements JMC {
 
 			int usedMeasures = sec.getMeasures();
 
-
+			// reset back to normal?
 			if (riskyVariations.get(1)) {
 				System.out.println("Risky Variation: Chord Swap!");
 				rootProgression = melodyBasedRootProgression;
@@ -1409,22 +1409,19 @@ public class MidiGenerator implements JMC {
 			}
 			progressionDurations = actualDurations;
 
-			if (riskyVariations.get(0)) {
-				System.out.println("Risky Variation: Skip N-1 Chord!");
-				List<Double> altProgressionDurations = new ArrayList<>();
-				List<int[]> altChordProgression = new ArrayList<>();
-				List<int[]> altRootProgression = new ArrayList<>();
-
-				fillProgressionsForSkippedChord(altProgressionDurations, altChordProgression, altRootProgression);
-				progressionDurations = altProgressionDurations;
-				rootProgression = altRootProgression;
-				chordProgression = altChordProgression;
-			}
-
 			if (riskyVariations.get(4)) {
 				System.out.println("Risky Variation: Key Change (on next chord)!");
 				transToSet = generateKeyChange(generatedRootProgression, arrSeed);
 			}
+
+			boolean twoFiveOneChords = gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE
+					&& riskyVariations.get(4);
+			if (riskyVariations.get(0) && !twoFiveOneChords) {
+				System.out.println("Risky Variation: Skip N-1 Chord!");
+
+				skipN1Chord();
+			}
+
 
 			// copied into empty sections
 			Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
@@ -1495,6 +1492,19 @@ public class MidiGenerator implements JMC {
 				sec.setMelodies(copiedPhrases);
 
 			}
+
+
+			if (twoFiveOneChanged) {
+				twoFiveOneChanged = false;
+				System.out.println("Replaced FIRST");
+				replaceFirstChordForTwoFiveOne();
+			}
+
+			if (twoFiveOneChords && chordInts.size() > 2) {
+				twoFiveOneChanged = replaceLastChordsForTwoFiveOne(transToSet);
+			}
+
+
 			rand.setSeed(arrSeed + 10);
 			variationGen.setSeed(arrSeed + 10);
 			if (!gc.getBassPart().isMuted()) {
@@ -1838,6 +1848,43 @@ public class MidiGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
+	private void replaceFirstChordForTwoFiveOne() {
+		List<int[]> altChordProgression = new ArrayList<>();
+		List<int[]> altRootProgression = new ArrayList<>();
+		altChordProgression.addAll(chordProgression);
+		altRootProgression.addAll(rootProgression);
+
+		int[] c = MidiUtils.mappedChord("GCE");
+		altChordProgression.set(0, c);
+		altRootProgression.set(0, Arrays.copyOfRange(c, 0, 1));
+
+		chordProgression = altChordProgression;
+		rootProgression = altRootProgression;
+	}
+
+	private boolean replaceLastChordsForTwoFiveOne(int transToSet) {
+		int size = chordProgression.size();
+		if (size < 3) {
+			return false;
+		}
+		List<int[]> altChordProgression = new ArrayList<>();
+		List<int[]> altRootProgression = new ArrayList<>();
+		altChordProgression.addAll(chordProgression);
+		altRootProgression.addAll(rootProgression);
+		int[] dm = MidiUtils.transposeChord(MidiUtils.mappedChord("Dm"), transToSet);
+		int[] g7 = MidiUtils.transposeChord(MidiUtils.mappedChord("G"), transToSet);
+		altChordProgression.set(size - 2, dm);
+		altRootProgression.set(size - 2, Arrays.copyOf(dm, 1));
+		altChordProgression.set(size - 1, g7);
+		altRootProgression.set(size - 1, Arrays.copyOf(g7, 1));
+		chordProgression = altChordProgression;
+		rootProgression = altRootProgression;
+
+		System.out.println("Replaced LAST");
+		return true;
+
+	}
+
 	private int generateKeyChange(List<int[]> chords, int arrSeed) {
 		int transToSet = 0;
 		if (modTrans == 0) {
@@ -1849,12 +1896,22 @@ public class MidiGenerator implements JMC {
 			case DIRECT:
 				transToSet = directKeyChange(arrSeed);
 				break;
+			case TWOFIVEONE:
+				transToSet = twoFiveOneKeyChange(arrSeed);
+				break;
 			default:
 				break;
 			}
 		}
 
 		return transToSet;
+	}
+
+	private int twoFiveOneKeyChange(int arrSeed) {
+		// Dm -> Em, Am, or Am octave below
+		int[] transChoices = { 5, 5, 5, -2, -2 };
+		Random rand = new Random(arrSeed);
+		return transChoices[rand.nextInt(transChoices.length)];
 	}
 
 	private int pivotKeyChange(List<int[]> chords) {
@@ -1902,29 +1959,33 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	private void fillProgressionsForSkippedChord(List<Double> altProgressionDurations,
-			List<int[]> altChordProgression, List<int[]> altRootProgression) {
-		// TODO: other variations on how to generate alternates?
+	private void skipN1Chord() {
+		List<Double> altProgressionDurations = new ArrayList<>();
+		List<int[]> altChordProgression = new ArrayList<>();
+		List<int[]> altRootProgression = new ArrayList<>();
 
+		// TODO: other variations on how to generate alternates?
 		// 1: chord trick, max two measures
 		// 60 30 4 1 -> 60 30 1 - , 60 30 4 1
 		altProgressionDurations.addAll(progressionDurations);
 		altChordProgression.addAll(chordProgression);
 		altRootProgression.addAll(rootProgression);
 
-		if (progressionDurations.size() < 3) {
+		int size = progressionDurations.size();
+		if (size < 3) {
 			return;
 		}
 
-		double duration = progressionDurations.get(progressionDurations.size() - 1)
-				+ progressionDurations.get(progressionDurations.size() - 2);
-		altProgressionDurations.set(progressionDurations.size() - 2, duration);
-		altProgressionDurations.remove(progressionDurations.size() - 1);
+		double duration = progressionDurations.get(size - 1) + progressionDurations.get(size - 2);
+		altProgressionDurations.set(size - 2, duration);
+		altProgressionDurations.remove(size - 1);
 
-		altChordProgression.remove(progressionDurations.size() - 2);
-		altRootProgression.remove(progressionDurations.size() - 2);
+		altChordProgression.remove(size - 2);
+		altRootProgression.remove(size - 2);
 
-
+		progressionDurations = altProgressionDurations;
+		chordProgression = altChordProgression;
+		rootProgression = altRootProgression;
 	}
 
 	private void processUserMelody(Phrase userMelody) {
