@@ -1288,11 +1288,6 @@ public class MidiGenerator implements JMC {
 		// prepare progressions
 		chordProgression = actualProgression;
 		rootProgression = generatedRootProgression;
-		List<Double> altProgressionDurations = new ArrayList<>();
-		List<int[]> altChordProgression = new ArrayList<>();
-		List<int[]> altRootProgression = new ArrayList<>();
-
-		fillAlternates(altProgressionDurations, altChordProgression, altRootProgression);
 
 		// run one empty pass through melody generation
 		if (userMelody != null) {
@@ -1403,22 +1398,27 @@ public class MidiGenerator implements JMC {
 
 			int usedMeasures = sec.getMeasures();
 
+
+			if (riskyVariations.get(1)) {
+				System.out.println("Risky Variation: Chord Swap!");
+				rootProgression = melodyBasedRootProgression;
+				chordProgression = melodyBasedChordProgression;
+			} else {
+				rootProgression = generatedRootProgression;
+				chordProgression = actualProgression;
+			}
+			progressionDurations = actualDurations;
+
 			if (riskyVariations.get(0)) {
 				System.out.println("Risky Variation: Skip N-1 Chord!");
+				List<Double> altProgressionDurations = new ArrayList<>();
+				List<int[]> altChordProgression = new ArrayList<>();
+				List<int[]> altRootProgression = new ArrayList<>();
 
+				fillProgressionsForSkippedChord(altProgressionDurations, altChordProgression, altRootProgression);
 				progressionDurations = altProgressionDurations;
 				rootProgression = altRootProgression;
 				chordProgression = altChordProgression;
-			} else {
-				if (riskyVariations.get(1)) {
-					System.out.println("Risky Variation: Chord Swap!");
-					rootProgression = melodyBasedRootProgression;
-					chordProgression = melodyBasedChordProgression;
-				} else {
-					rootProgression = generatedRootProgression;
-					chordProgression = actualProgression;
-				}
-				progressionDurations = actualDurations;
 			}
 
 			if (riskyVariations.get(4)) {
@@ -1902,17 +1902,15 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	private void fillAlternates(List<Double> altProgressionDurations,
+	private void fillProgressionsForSkippedChord(List<Double> altProgressionDurations,
 			List<int[]> altChordProgression, List<int[]> altRootProgression) {
 		// TODO: other variations on how to generate alternates?
 
 		// 1: chord trick, max two measures
 		// 60 30 4 1 -> 60 30 1 - , 60 30 4 1
-		for (int i = 0; i < 1; i++) {
-			altProgressionDurations.addAll(progressionDurations);
-			altChordProgression.addAll(chordProgression);
-			altRootProgression.addAll(rootProgression);
-		}
+		altProgressionDurations.addAll(progressionDurations);
+		altChordProgression.addAll(chordProgression);
+		altRootProgression.addAll(rootProgression);
 
 		if (progressionDurations.size() < 3) {
 			return;
