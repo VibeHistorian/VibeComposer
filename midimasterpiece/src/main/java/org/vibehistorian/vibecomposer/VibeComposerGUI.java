@@ -1475,24 +1475,30 @@ public class VibeComposerGUI extends JFrame
 				if (getModel().getColumnCount() <= col) {
 					return comp;
 				}
-				if (row >= 2) {
-					Object objValue = getModel().getValueAt(row,
-							scrollableArrangementTable.convertColumnIndexToModel(col));
-					Integer value = (objValue instanceof String)
-							? Integer.valueOf((String) objValue)
-							: (Integer) objValue;
-					if (value > 100) {
-						value = 100;
-						getModel().setValueAt(value, row, col);
-					} else if (value < 0) {
-						value = 0;
-						getModel().setValueAt(value, row, col);
-					}
-					arrangementTableProcessComponent(comp, row, col, String.valueOf(value),
-							new int[] { 0, 0, 100, 100, 100, 100, 100 }, false);
-				} else {
-					comp.setBackground(new Color(100, 150, 150));
+				if (row == 0) {
+					arrangementTableProcessSectionType(comp,
+							(String) getModel().getValueAt(row, col));
+					return comp;
 				}
+
+				if (row == 1) {
+					comp.setBackground(new Color(100, 150, 150));
+					return comp;
+				}
+
+				Object objValue = getModel().getValueAt(row,
+						scrollableArrangementTable.convertColumnIndexToModel(col));
+				Integer value = (objValue instanceof String) ? Integer.valueOf((String) objValue)
+						: (Integer) objValue;
+				if (value > 100) {
+					value = 100;
+					getModel().setValueAt(value, row, col);
+				} else if (value < 0) {
+					value = 0;
+					getModel().setValueAt(value, row, col);
+				}
+				arrangementTableProcessComponent(comp, row, col, String.valueOf(value),
+						new int[] { 0, 0, 100, 100, 100, 100, 100 }, false);
 
 				return comp;
 			}
@@ -1560,7 +1566,16 @@ public class VibeComposerGUI extends JFrame
 				if (getModel().getColumnCount() <= col) {
 					return comp;
 				}
+				if (row == 0) {
+					arrangementTableProcessSectionType(comp,
+							(String) getModel().getValueAt(row, col));
+					return comp;
+				}
 
+				if (row == 1) {
+					comp.setBackground(new Color(100, 150, 150));
+					return comp;
+				}
 				arrangementTableProcessComponent(comp, row, col, value,
 						new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
 								arpPanels.size(), drumPanels.size() },
@@ -1610,6 +1625,11 @@ public class VibeComposerGUI extends JFrame
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
+	}
+
+	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
+		int typeOffset = Section.getTypeMelodyOffset(valueAt);
+		comp.setBackground(new Color(100 + 15 * typeOffset, 150, 150));
 	}
 
 	private void arrangementTableProcessComponent(Component comp, int row, int col, String value,
@@ -2340,7 +2360,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
-		showScore = new JCheckBox("Show Score", true);
+		showScore = new JCheckBox("Show Score", false);
 		showScorePicker = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "w/o DRUMS", "DRUMS ONLY", "ALL" },
 				showScorePicker);

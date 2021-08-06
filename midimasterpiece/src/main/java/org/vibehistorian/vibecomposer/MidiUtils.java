@@ -373,16 +373,22 @@ public class MidiUtils {
 		for (ScaleMode mode : ScaleMode.values()) {
 			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale);
 			System.out.println("Result: " + detectionResult.toString());
-			if (detectionResult.getKey() <= bestNotContained) {
+			boolean bestForSure = false;
+			if (detectionResult.getKey() == 0
+					&& (((mostFrequentPitch + ((12 + detectionResult.getValue()) % 12))
+							% 12) == 0)) {
+				System.out.println("Best for sure: " + detectionResult.toString());
+				bestForSure = true;
+			}
+			if (detectionResult.getKey() < bestNotContained || bestForSure) {
 				bestNotContained = detectionResult.getKey();
 				bestMode = mode;
 				transposeUpBy = detectionResult.getValue();
 			}
-			if (detectionResult.getKey() == 0
-					&& (((mostFrequentPitch + ((12 + transposeUpBy) % 12)) % 12) == 0)) {
-				System.out.println("Best for sure: " + detectionResult.toString());
+			if (bestForSure) {
 				break;
 			}
+
 		}
 		if (bestNotContained > 0) {
 			return null;

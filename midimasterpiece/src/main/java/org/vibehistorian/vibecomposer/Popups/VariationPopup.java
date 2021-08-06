@@ -57,12 +57,38 @@ public class VariationPopup {
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
-		JPanel measuresPanel = new JPanel();
-		measuresPanel.add(new JLabel("Measures "));
+		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
+
+		JPanel typeAndMeasuresPanel = new JPanel();
+		typeAndMeasuresPanel.add(new JLabel("Section type"));
+
+		ScrollComboBox<String> typeCombo = new ScrollComboBox<>();
+		for (Section.SectionType type : Section.SectionType.values()) {
+			typeCombo.addItem(type.toString());
+		}
+
+		typeCombo.addItem("---");
+		typeCombo.setSelectedItem("---");
+		typeCombo.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				if (event.getStateChange() == ItemEvent.SELECTED) {
+					String item = (String) event.getItem();
+					if ("---".equals(item)) {
+						return;
+					}
+					sec.setType(String.valueOf(item));
+
+				}
+			}
+		});
+		typeAndMeasuresPanel.add(typeCombo);
+
+		typeAndMeasuresPanel.add(new JLabel("Measures"));
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" }, measureCombo);
 		measureCombo.setSelectedItem(String.valueOf(sec.getMeasures()));
-
 		measureCombo.addItemListener(new ItemListener() {
 
 			@Override
@@ -78,11 +104,9 @@ public class VariationPopup {
 			}
 		});
 
-
-		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
-		measuresPanel.add(measureCombo);
-		measuresPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		tablesPanel.add(measuresPanel);
+		typeAndMeasuresPanel.add(measureCombo);
+		typeAndMeasuresPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		tablesPanel.add(typeAndMeasuresPanel);
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
 			int fI = i;

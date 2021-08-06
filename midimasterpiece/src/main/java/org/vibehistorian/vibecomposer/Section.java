@@ -43,7 +43,7 @@ import jm.music.data.Phrase;
 @XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
-		INTRO, VERSE1, VERSE2, CHORUS1, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS2, ADVANCED_CHORUS,
+		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS3, CLIMAX,
 		OUTRO;
 	}
 
@@ -313,6 +313,10 @@ public class Section {
 	}
 
 	public int getTypeMelodyOffset() {
+		return getTypeMelodyOffset(type);
+	}
+
+	public static int getTypeMelodyOffset(String type) {
 		if (StringUtils.isEmpty(type)) {
 			return 0;
 		} else {
