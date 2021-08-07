@@ -451,6 +451,8 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> midiModeDevices;
 	//MidiHandler mh = new MidiHandler();
 	JCheckBox combineDrumTracks;
+	JCheckBox combineMelodyTracks;
+
 
 	JButton compose;
 	JButton regenerate;
@@ -847,8 +849,11 @@ public class VibeComposerGUI extends JFrame
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
+		combineMelodyTracks = new JCheckBox("Combine MIDI Tracks", true);
+
 
 		melodySettingsExtraPanel.add(arpCopyMelodyInst);
+		melodySettingsExtraPanel.add(combineMelodyTracks);
 		melodySettingsExtraPanel.add(generateUserMelodySeed);
 		melodySettingsExtraPanel.add(randomMelodySameSeed);
 		melodySettingsExtraPanel.add(randomMelodyOnRegenerate);
@@ -1299,7 +1304,7 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(csExtra);
 
 
-		combineDrumTracks = new JCheckBox("Combine Drum MIDI Tracks", true);
+		combineDrumTracks = new JCheckBox("Combine MIDI Tracks", true);
 		combineDrumTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -4066,6 +4071,7 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
 			MidiGenerator.showScoreMode = showScorePicker.getSelectedIndex();
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
+			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
 			MidiGenerator.noteMultiplier = elongateMidi.getInt();
 			MidiGenerator.recalculateDurations();
 
