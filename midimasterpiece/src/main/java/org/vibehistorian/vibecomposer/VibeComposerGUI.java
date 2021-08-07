@@ -4409,6 +4409,7 @@ public class VibeComposerGUI extends JFrame
 				.setSelected(guiConfig.isArrangementReduceDrumVelocityFromSectionChance());
 		arrangementSeed.setText("" + arrangement.getSeed());
 		useArrangement.setSelected(guiConfig.isArrangementEnabled());
+		arrangementManualOverride.setSelected(true);
 
 		// macro
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());

@@ -1341,7 +1341,8 @@ public class MidiGenerator implements JMC {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
 			}
 			secOrder++;
-			System.out.println("Processing section.. " + sec.getType());
+			System.out.println(
+					"============== Processing section.. " + sec.getType() + " ================");
 			sec.setStartTime(measureLength * counter);
 
 			Random rand = new Random();
@@ -1496,14 +1497,17 @@ public class MidiGenerator implements JMC {
 
 			if (twoFiveOneChanged) {
 				twoFiveOneChanged = false;
-				System.out.println("Replaced FIRST");
-				replaceFirstChordForTwoFiveOne();
+				replaceFirstChordForTwoFiveOne(transToSet);
 			}
 
 			if (twoFiveOneChords && chordInts.size() > 2) {
 				twoFiveOneChanged = replaceLastChordsForTwoFiveOne(transToSet);
 			}
-
+			if (gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE) {
+				if (transToSet == -1 * modTrans && transToSet != 0) {
+					transToSet = 0;
+				}
+			}
 
 			rand.setSeed(arrSeed + 10);
 			variationGen.setSeed(arrSeed + 10);
@@ -1848,18 +1852,24 @@ public class MidiGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	private void replaceFirstChordForTwoFiveOne() {
+	private void replaceFirstChordForTwoFiveOne(int transToSet) {
+		if (chordInts.get(0).startsWith("C")) {
+			return;
+		}
+
 		List<int[]> altChordProgression = new ArrayList<>();
 		List<int[]> altRootProgression = new ArrayList<>();
 		altChordProgression.addAll(chordProgression);
 		altRootProgression.addAll(rootProgression);
 
-		int[] c = MidiUtils.mappedChord("GCE");
+		int[] c = MidiUtils.mappedChord("CGCE");
 		altChordProgression.set(0, c);
 		altRootProgression.set(0, Arrays.copyOfRange(c, 0, 1));
 
 		chordProgression = altChordProgression;
 		rootProgression = altRootProgression;
+
+		System.out.println("Replaced FIRST");
 	}
 
 	private boolean replaceLastChordsForTwoFiveOne(int transToSet) {
@@ -1872,9 +1882,12 @@ public class MidiGenerator implements JMC {
 		altChordProgression.addAll(chordProgression);
 		altRootProgression.addAll(rootProgression);
 		int[] dm = MidiUtils.transposeChord(MidiUtils.mappedChord("Dm"), transToSet);
-		int[] g7 = MidiUtils.transposeChord(MidiUtils.mappedChord("G"), transToSet);
+		int[] g7 = MidiUtils.transposeChord(MidiUtils.mappedChord("G7"), transToSet);
+		//if (transToSet != -2) {
 		altChordProgression.set(size - 2, dm);
 		altRootProgression.set(size - 2, Arrays.copyOf(dm, 1));
+		//}
+
 		altChordProgression.set(size - 1, g7);
 		altRootProgression.set(size - 1, Arrays.copyOf(g7, 1));
 		chordProgression = altChordProgression;
@@ -1902,6 +1915,10 @@ public class MidiGenerator implements JMC {
 			default:
 				break;
 			}
+		} else {
+			if (gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE) {
+				transToSet = -1 * modTrans;
+			}
 		}
 
 		return transToSet;
@@ -1909,7 +1926,7 @@ public class MidiGenerator implements JMC {
 
 	private int twoFiveOneKeyChange(int arrSeed) {
 		// Dm -> Em, Am, or Am octave below
-		int[] transChoices = { 5, 5, 5, -2, -2 };
+		int[] transChoices = { 5, 2 };
 		Random rand = new Random(arrSeed);
 		return transChoices[rand.nextInt(transChoices.length)];
 	}
