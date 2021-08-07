@@ -1985,7 +1985,7 @@ public class VibeComposerGUI extends JFrame
 
 		slider = new RangeSlider();
 		slider.setMaximum(0);
-		slider.setToolTipText("Test");
+		//slider.setToolTipText("Test");
 		slider.setDisplayValues(false);
 
 		//slider.setMinimumSize(new Dimension(1000, 3));
