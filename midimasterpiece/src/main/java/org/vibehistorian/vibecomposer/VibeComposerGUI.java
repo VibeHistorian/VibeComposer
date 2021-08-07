@@ -2253,7 +2253,7 @@ public class VibeComposerGUI extends JFrame
 
 							}
 							int newSliderVal = slider.getUpperValue();
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(10)
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(12)
 									+ delayed()) {
 								stopMidi();
 								if (sequencer != null)
@@ -2981,6 +2981,7 @@ public class VibeComposerGUI extends JFrame
 
 			int current = delayed();
 			int sectIndex = 0;
+			Section prevSec = null;
 			while (current < slider.getMaximum()) {
 				String sectionText = "END";
 				Section sec = null;
@@ -2994,10 +2995,14 @@ public class VibeComposerGUI extends JFrame
 					sizeCounter += arrSec.getMeasures();
 				}
 				sectionText = (sec != null) ? sec.getType().toString() : "END";
-
-				table.put(Integer.valueOf(current), new JLabel(sectionText));
+				if (sec != null && sec == prevSec && sec.getMeasures() > 1) {
+					// do not put into labels for followup measures
+				} else {
+					table.put(Integer.valueOf(current), new JLabel(sectionText));
+				}
 				current += measureWidth;
 				sectIndex++;
+				prevSec = sec;
 			}
 
 			// Force the slider to use the new labels
