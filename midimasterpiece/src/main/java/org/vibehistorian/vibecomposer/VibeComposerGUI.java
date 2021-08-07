@@ -57,8 +57,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +100,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -131,6 +132,7 @@ import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
@@ -459,7 +461,7 @@ public class VibeComposerGUI extends JFrame
 	Thread cycle;
 	JCheckBox useVolumeSliders;
 	JCheckBox loopBeat;
-	public static JSlider slider;
+	public static RangeSlider slider;
 	JLabel currentTime;
 	JLabel totalTime;
 	JLabel sectionText;
@@ -1973,12 +1975,13 @@ public class VibeComposerGUI extends JFrame
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setOpaque(false);
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
-		sliderPanel.setPreferredSize(new Dimension(1200, 20));
+		sliderPanel.setPreferredSize(new Dimension(1200, 40));
 
 
-		slider = new JSlider();
+		slider = new RangeSlider();
 		slider.setMaximum(0);
 		slider.setToolTipText("Test");
+		slider.setDisplayValues(false);
 
 		//slider.setMinimumSize(new Dimension(1000, 3));
 		slider.addMouseListener(new MouseAdapter() {
@@ -1995,7 +1998,7 @@ public class VibeComposerGUI extends JFrame
 				if (isDragging) {
 					savePauseInfo();
 					if (sequencer != null)
-						midiNavigate(slider.getValue() * 1000);
+						midiNavigate(slider.getUpperValue() * 1000);
 					isDragging = false;
 				}
 			}
@@ -2166,93 +2169,108 @@ public class VibeComposerGUI extends JFrame
 		Thread cycle = new Thread() {
 
 			public void run() {
-
+				int allowedActionsOnZero = 0;
 				int sliderVal = 0;
 				while (true) {
 					try {
-						if (sequencer != null && sequencer.isRunning()) {
-							if (!isDragging && !isKeySeeking)
-								slider.setValue((int) (sequencer.getMicrosecondPosition() / 1000));
-							if (!isDragging && !isKeySeeking)
-								currentTime.setText(microsecondsToTimeString(
-										sequencer.getMicrosecondPosition()));
-							else
-								currentTime.setText(millisecondsToTimeString(slider.getValue()));
-						} else {
-							//if (!isDragging && !isKeySeeking) {
-							//slider.setValue((int) (pauseMs / 1000));
-							//}
-							//if (!isDragging && !isKeySeeking)
-							//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
-							//else
-							//currentTime.setText(millisecondsToTimeString(slider.getValue()));
-						}
-						if (actualArrangement != null && slider.getMaximum() > 0) {
-							int val = slider.getValue();
-							int arrangementSize = actualArrangement.getSections().stream()
-									.mapToInt(e -> e.getMeasures()).sum();
-							if (arrangementSize > 0) {
-								int divisor = slider.getMaximum() / arrangementSize;
-								int sectIndex = (val - 1) / divisor;
-								if (sectIndex >= arrangementSize) {
-									sectionText.setText("End");
-								} else {
-									if (useArrangement.isSelected()) {
-										Section sec = null;
-										int sizeCounter = 0;
-										for (Section arrSec : actualArrangement.getSections()) {
-											if (sizeCounter == sectIndex || (sectIndex < sizeCounter
-													+ arrSec.getMeasures())) {
-												sec = arrSec;
-												break;
-											}
-											sizeCounter += arrSec.getMeasures();
-										}
-										String sectionName = sec.getType().toString();
-										sectionText.setText(sectionName);
+						if (allowedActionsOnZero == 0) {
+							if (sequencer != null && sequencer.isRunning()) {
+								if (!isDragging && !isKeySeeking)
+									slider.setUpperValue(
+											(int) (sequencer.getMicrosecondPosition() / 1000));
+								if (!isDragging && !isKeySeeking)
+									currentTime.setText(microsecondsToTimeString(
+											sequencer.getMicrosecondPosition()));
+								else
+									currentTime.setText(
+											millisecondsToTimeString(slider.getUpperValue()));
+							} else {
+								//if (!isDragging && !isKeySeeking) {
+								//slider.setValue((int) (pauseMs / 1000));
+								//}
+								//if (!isDragging && !isKeySeeking)
+								//currentTime.setText(microsecondsToTimeString(core.midiPauseProgMs));
+								//else
+								//currentTime.setText(millisecondsToTimeString(slider.getValue()));
+							}
+							if (actualArrangement != null && slider.getMaximum() > 0) {
+								int val = slider.getUpperValue();
+								int arrangementSize = actualArrangement.getSections().stream()
+										.mapToInt(e -> e.getMeasures()).sum();
+								if (arrangementSize > 0) {
+									int divisor = slider.getMaximum() / arrangementSize;
+									int sectIndex = (val - 1) / divisor;
+									if (sectIndex >= arrangementSize) {
+										sectionText.setText("End");
 									} else {
-										sectionText.setText("ALL INST");
+										if (useArrangement.isSelected()) {
+											Section sec = null;
+											int sizeCounter = 0;
+											for (Section arrSec : actualArrangement.getSections()) {
+												if (sizeCounter == sectIndex
+														|| (sectIndex < sizeCounter
+																+ arrSec.getMeasures())) {
+													sec = arrSec;
+													break;
+												}
+												sizeCounter += arrSec.getMeasures();
+											}
+											String sectionName = (sec != null)
+													? sec.getType().toString()
+													: "END";
+											sectionText.setText(sectionName);
+										} else {
+											sectionText.setText("ALL INST");
+										}
 									}
 								}
-							}
-							if (loopBeat.isSelected() && !isDragging) {
-								if (showScore.isSelected()) {
-									showScore.setSelected(false);
 
+								if (sequencer != null) {
+									if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
+										sequencer.setTempoFactor(
+												(float) (mainBpm.getInt() / guiConfig.getBpm()));
+									}
+									if (pauseBehaviorPlayheadCheckbox.isSelected()) {
+										savePauseInfo();
+									}
 								}
-								int newSliderVal = slider.getValue();
-								boolean notMovedEnd = (sliderVal == newSliderVal) && sliderVal > 0;
-								if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm()
-										+ delayed() || notMovedEnd) {
-									stopMidi();
-									if (sequencer != null)
-										composeMidi(true);
+								if (deviceCloseRequested) {
+									closeMidiDevice();
+									deviceCloseRequested = false;
 								}
-								sliderVal = newSliderVal;
-							}
-							if (sequencer != null) {
-								if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
-									sequencer.setTempoFactor(
-											(float) (mainBpm.getInt() / guiConfig.getBpm()));
-								}
-								if (pauseBehaviorPlayheadCheckbox.isSelected()) {
-									savePauseInfo();
-								}
-							}
-							if (deviceCloseRequested) {
-								closeMidiDevice();
-								deviceCloseRequested = false;
-							}
 
+							}
+						}
+
+						if (loopBeat.isSelected() && !isDragging) {
+							if (showScore.isSelected()) {
+								showScore.setSelected(false);
+
+							}
+							int newSliderVal = slider.getUpperValue();
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(10)
+									+ delayed()) {
+								stopMidi();
+								if (sequencer != null)
+									composeMidi(true);
+							}
+							sliderVal = newSliderVal;
 						}
 
 						try {
-							sleep(25);
-						} catch (InterruptedException e) {
+							if (loopBeat.isSelected()) {
+								sleep(5);
+								allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
+							} else {
+								allowedActionsOnZero = 0;
+								sleep(25);
+							}
 
+						} catch (InterruptedException e) {
+							System.err.println("THREAD INTERRUPTED!");
 						}
 					} catch (Exception e) {
-						System.out.println("Exception in SEQUENCE SLIDER:");
+						System.err.println("Exception in SEQUENCE SLIDER:");
 						e.printStackTrace();
 						try {
 							sleep(200);
@@ -2271,12 +2289,17 @@ public class VibeComposerGUI extends JFrame
 		return (int) (MidiGenerator.START_TIME_DELAY * 1000 * 60 / guiConfig.getBpm());
 	}
 
-	public int beatFromBpm() {
-		int finalVal = (int) (1983 * 60 * elongateMidi.getInt() / guiConfig.getBpm());
+	public int beatFromBpm(int speedAdjustment) {
+		int finalVal = (int) ((2000 - speedAdjustment) * 60 * elongateMidi.getInt()
+				/ guiConfig.getBpm());
 		if (useDoubledDurations.isSelected()) {
 			finalVal *= 2;
 		}
 		return finalVal;
+	}
+
+	public int sliderMeasureWidth() {
+		return beatFromBpm(0) * MidiGenerator.chordInts.size();
 	}
 
 	private void initControlPanel(int startY, int anchorSide) {
@@ -2569,6 +2592,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void switchMidiButtons(boolean state) {
 		startMidi.setEnabled(state);
+		pauseMidi.setEnabled(state);
 		stopMidi.setEnabled(state);
 		compose.setEnabled(state);
 		regenerate.setEnabled(state);
@@ -2944,8 +2968,37 @@ public class VibeComposerGUI extends JFrame
 			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
-			slider.setMajorTickSpacing(slider.getMaximum() / actualArrangement.getSections()
-					.stream().mapToInt(e -> e.getMeasures()).sum());
+			int measureWidth = sliderMeasureWidth();
+			slider.setMajorTickSpacing(measureWidth);
+			slider.setTickStart(delayed());
+			Dictionary<Integer, JLabel> table = new Hashtable<>();
+
+
+			int current = delayed();
+			int sectIndex = 0;
+			while (current < slider.getMaximum()) {
+				String sectionText = "END";
+				Section sec = null;
+				int sizeCounter = 0;
+				for (Section arrSec : actualArrangement.getSections()) {
+					if (sizeCounter == sectIndex
+							|| (sectIndex < sizeCounter + arrSec.getMeasures())) {
+						sec = arrSec;
+						break;
+					}
+					sizeCounter += arrSec.getMeasures();
+				}
+				sectionText = (sec != null) ? sec.getType().toString() : "END";
+
+				table.put(Integer.valueOf(current), new JLabel(sectionText));
+				current += measureWidth;
+				sectIndex++;
+			}
+
+			// Force the slider to use the new labels
+			slider.setLabelTable(table);
+			slider.setPaintLabels(true);
+
 			List<String> prettyChords = MidiGenerator.chordInts;
 			currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
 
@@ -2961,8 +3014,7 @@ public class VibeComposerGUI extends JFrame
 
 					if (unpause) {
 						long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected())
-								? (pausedMeasureCounter * beatFromBpm()
-										* MidiGenerator.chordInts.size()) + delayed()
+								? (pausedMeasureCounter * measureWidth) + delayed()
 								: pausedSliderPosition;
 						midiNavigate(unpauseSliderVal * 1000);
 					} else {
@@ -3872,7 +3924,7 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			System.out.println("Stopping Midi..");
 			sequencer.stop();
-			slider.setValue(0);
+			slider.setUpperValue(0);
 			sequencer.setTickPosition(0);
 			resetPauseInfo();
 			System.out.println("Stopped Midi!");
@@ -3894,10 +3946,9 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void savePauseInfo() {
-		pausedSliderPosition = slider.getValue();
+		pausedSliderPosition = slider.getUpperValue();
 		if (MidiGenerator.chordInts.size() > 0) {
-			pausedMeasureCounter = (int) (pausedSliderPosition - delayed())
-					/ (beatFromBpm() * MidiGenerator.chordInts.size());
+			pausedMeasureCounter = (int) (pausedSliderPosition - delayed()) / sliderMeasureWidth();
 		} else {
 			pausedMeasureCounter = 0;
 		}

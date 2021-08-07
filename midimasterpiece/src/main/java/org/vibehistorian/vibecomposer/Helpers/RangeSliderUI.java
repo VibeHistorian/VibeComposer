@@ -22,6 +22,8 @@ import javax.swing.plaf.basic.BasicSliderUI;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
+import sun.swing.DefaultLookup;
+
 /**
  * UI delegate for the RangeSlider component. RangeSliderUI paints two thumbs,
  * one for the lower value and one for the upper value.
@@ -145,6 +147,88 @@ class RangeSliderUI extends BasicSliderUI {
 		return new Dimension(12, 12);
 	}
 
+	@Override
+	public void paintTicks(Graphics g) {
+		Rectangle tickBounds = tickRect;
+		RangeSlider actualSlider = (RangeSlider) slider;
+		g.setColor(DefaultLookup.getColor(slider, this, "Slider.tickColor", Color.black));
+
+		if (slider.getOrientation() == JSlider.HORIZONTAL) {
+			g.translate(0, tickBounds.y);
+
+			if (slider.getMinorTickSpacing() > 0) {
+				int value = slider.getMinimum();
+
+				while (value <= slider.getMaximum()) {
+					int xPos = xPositionForValue(value);
+					paintMinorTickForHorizSlider(g, tickBounds, xPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMinorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMinorTickSpacing();
+				}
+			}
+
+			if (slider.getMajorTickSpacing() > 0) {
+				int value = slider.getMinimum() + actualSlider.getTickStart();
+
+				while (value <= slider.getMaximum()) {
+					int xPos = xPositionForValue(value);
+					paintMajorTickForHorizSlider(g, tickBounds, xPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMajorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMajorTickSpacing();
+				}
+			}
+
+			g.translate(0, -tickBounds.y);
+		} else {
+			g.translate(tickBounds.x, 0);
+
+			if (slider.getMinorTickSpacing() > 0) {
+
+				int value = slider.getMinimum();
+
+				while (value <= slider.getMaximum()) {
+					int yPos = yPositionForValue(value);
+					paintMinorTickForVertSlider(g, tickBounds, yPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMinorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMinorTickSpacing();
+				}
+			}
+
+			if (slider.getMajorTickSpacing() > 0) {
+
+				int value = slider.getMinimum();
+
+				while (value <= slider.getMaximum()) {
+					int yPos = yPositionForValue(value);
+					paintMajorTickForVertSlider(g, tickBounds, yPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMajorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMajorTickSpacing();
+				}
+			}
+			g.translate(-tickBounds.x, 0);
+		}
+	}
+
 	/**
 	 * Paints the slider. The selected thumb is always painted on top of the
 	 * other thumb.
@@ -183,15 +267,20 @@ class RangeSliderUI extends BasicSliderUI {
 			g.setColor(UIManager.getColor("Label.foreground"));
 			Graphics2D g2d = (Graphics2D) g;
 			String valueString = slider.getName();
-			g2d.drawString(valueString, center.x - 1 - valueString.length() * 3, center.y - 6);
+			if (valueString != null) {
+				g2d.drawString(valueString, center.x - 1 - valueString.length() * 3, center.y - 6);
+			}
 
 			g.setColor(col);
 			g.setFont(new Font("Arial", Font.BOLD, 12));
 			RangeSlider actualSlider = (RangeSlider) slider;
-			valueString = actualSlider.getValue() + "";
-			g2d.drawString(valueString, leftMid - 1 - valueString.length() * 3, center.y + 15);
-			valueString = actualSlider.getUpperValue() + "";
-			g2d.drawString(valueString, rightMid - 1 - valueString.length() * 3, center.y + 15);
+			if (actualSlider.isDisplayValues()) {
+				valueString = actualSlider.getValue() + "";
+				g2d.drawString(valueString, leftMid - 1 - valueString.length() * 3, center.y + 15);
+				valueString = actualSlider.getUpperValue() + "";
+				g2d.drawString(valueString, rightMid - 1 - valueString.length() * 3, center.y + 15);
+			}
+
 		}
 	}
 

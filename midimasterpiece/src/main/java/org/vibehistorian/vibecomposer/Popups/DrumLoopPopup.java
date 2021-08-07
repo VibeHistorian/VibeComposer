@@ -17,8 +17,8 @@ import javax.swing.JTextField;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
+import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 
 public class DrumLoopPopup {
 	final JFrame frame = new JFrame();
@@ -112,7 +112,7 @@ public class DrumLoopPopup {
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
 							slider.setValue(
-									VibeComposerGUI.slider.getValue() % slider.getMaximum());
+									VibeComposerGUI.slider.getUpperValue() % slider.getMaximum());
 						}
 
 						try {

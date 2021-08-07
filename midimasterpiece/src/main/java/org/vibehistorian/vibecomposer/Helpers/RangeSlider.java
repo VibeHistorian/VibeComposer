@@ -18,6 +18,8 @@ import javax.swing.JSlider;
 public class RangeSlider extends JSlider {
 
 	private static final long serialVersionUID = -5548772458719043736L;
+	private int tickStart = 0;
+	private boolean displayValues = true;
 
 	/**
 	 * Constructs a RangeSlider with default minimum and maximum values of 0
@@ -102,5 +104,21 @@ public class RangeSlider extends JSlider {
 
 		// Set extent to set upper value.
 		setExtent(newExtent);
+	}
+
+	public int getTickStart() {
+		return tickStart;
+	}
+
+	public void setTickStart(int setTickStart) {
+		this.tickStart = setTickStart;
+	}
+
+	public boolean isDisplayValues() {
+		return displayValues;
+	}
+
+	public void setDisplayValues(boolean displayValues) {
+		this.displayValues = displayValues;
 	}
 }
