@@ -468,7 +468,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel totalTime;
 	JLabel sectionText;
 	boolean isKeySeeking = false;
-	boolean isDragging = false;
+	public static boolean isDragging = false;
 	private static long pausedSliderPosition = 0;
 	private static int pausedMeasureCounter = 0;
 
@@ -1992,18 +1992,12 @@ public class VibeComposerGUI extends JFrame
 		slider.addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void mousePressed(MouseEvent e) {
-
-				isDragging = true;
-			}
-
-			@Override
 			public void mouseReleased(MouseEvent e) {
 
 				if (isDragging) {
 					savePauseInfo();
 					if (sequencer != null)
-						midiNavigate(slider.getUpperValue() * 1000);
+						midiNavigate(slider.getUpperValue());
 					isDragging = false;
 				}
 			}
@@ -2967,8 +2961,8 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
+			resetSequencerTickPosition();
 
-			sequencer.setTickPosition(0);
 			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));
 			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
@@ -3014,7 +3008,11 @@ public class VibeComposerGUI extends JFrame
 
 			if (loopBeat.isSelected()) {
 				resetPauseInfo();
-				midiNavigate(delayed() * 1000);
+				int startPos = delayed();
+				if (startPos < slider.getValue()) {
+					startPos = slider.getValue();
+				}
+				midiNavigate(startPos);
 			} else {
 				String pauseBehavior = (String) pauseBehaviorCombobox.getSelectedItem();
 				if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
@@ -3023,13 +3021,20 @@ public class VibeComposerGUI extends JFrame
 							&& pausedSliderPosition < slider.getMaximum() - 100);
 
 					if (unpause) {
-						long unpauseSliderVal = (pauseBehaviorBarCheckbox.isSelected())
+						long startPos = (pauseBehaviorBarCheckbox.isSelected())
 								? (pausedMeasureCounter * measureWidth) + delayed()
 								: pausedSliderPosition;
-						midiNavigate(unpauseSliderVal * 1000);
+						if (startPos < slider.getValue()) {
+							startPos = slider.getValue();
+						}
+						midiNavigate(startPos);
 					} else {
 						resetPauseInfo();
-						midiNavigate(delayed() * 1000);
+						int startPos = delayed() / 2;
+						if (startPos < slider.getValue()) {
+							startPos = slider.getValue();
+						}
+						midiNavigate(startPos);
 					}
 				}
 			}
@@ -3047,6 +3052,18 @@ public class VibeComposerGUI extends JFrame
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private void resetSequencerTickPosition() {
+
+		if (slider.getValue() < slider.getMaximum()) {
+			midiNavigate(slider.getValue());
+		} else {
+			slider.setValue(0);
+			midiNavigate(0);
+		}
+
+
 	}
 
 	private void setFixedLengthChords(int size) {
@@ -3910,9 +3927,9 @@ public class VibeComposerGUI extends JFrame
 			System.out.println("Starting Midi..");
 			sequencer.stop();
 			if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
-				midiNavigate((pausedSliderPosition) * 1000);
+				midiNavigate(pausedSliderPosition);
 			} else {
-				sequencer.setTickPosition(0);
+				resetSequencerTickPosition();
 			}
 
 			try {
@@ -3934,8 +3951,8 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			System.out.println("Stopping Midi..");
 			sequencer.stop();
-			slider.setUpperValue(0);
-			sequencer.setTickPosition(0);
+			resetSequencerTickPosition();
+			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
 			System.out.println("Stopped Midi!");
 		} else {
@@ -5324,7 +5341,8 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public void midiNavigate(long time) {
+	public void midiNavigate(long sliderValue) {
+		long time = sliderValue * 1000;
 		long timeTicks = msToTicks(time);
 		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
 			if (time >= 0) {

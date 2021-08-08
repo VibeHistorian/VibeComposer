@@ -762,7 +762,7 @@ public class MidiGenerator implements JMC {
 		}
 		// fix short notes at the end not going to next chord
 		if (durCounter > currentChordDur / 2) {
-			chordCounter++;
+			chordCounter = (chordCounter + 1) % progressionDurations.size();
 			chordSeparators.add(fullMelody.size() - 1);
 			durCounter = 0.0;
 			currentChordDur = progressionDurations.get(chordCounter);

@@ -496,7 +496,7 @@ class RangeSliderUI extends BasicSliderUI {
 			if (slider.isRequestFocusEnabled()) {
 				slider.requestFocus();
 			}
-
+			RangeSlider actualSlider = (RangeSlider) slider;
 			// Determine which thumb is pressed.  If the upper thumb is 
 			// selected (last one dragged), then check its position first;
 			// otherwise check the position of the lower thumb first.
@@ -550,10 +550,11 @@ class RangeSliderUI extends BasicSliderUI {
 				}
 				upperThumbSelected = false;
 				lowerDragging = true;
+				actualSlider.setLowerDragging(lowerDragging);
 				return;
 			}
 			lowerDragging = false;
-
+			actualSlider.setLowerDragging(lowerDragging);
 			// Handle upper thumb pressed.
 			if (upperPressed) {
 				switch (slider.getOrientation()) {
@@ -566,15 +567,20 @@ class RangeSliderUI extends BasicSliderUI {
 				}
 				upperThumbSelected = true;
 				upperDragging = true;
+				actualSlider.setUpperDragging(upperDragging);
 				return;
 			}
 			upperDragging = false;
+			actualSlider.setUpperDragging(upperDragging);
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
 			lowerDragging = false;
 			upperDragging = false;
+			RangeSlider actualSlider = (RangeSlider) slider;
+			actualSlider.setLowerDragging(lowerDragging);
+			actualSlider.setUpperDragging(upperDragging);
 			slider.setValueIsAdjusting(false);
 			super.mouseReleased(e);
 		}
