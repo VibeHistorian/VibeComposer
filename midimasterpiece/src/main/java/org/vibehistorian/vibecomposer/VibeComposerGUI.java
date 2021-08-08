@@ -3990,8 +3990,6 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void unsoloAllTracks(boolean resetButtons) {
-		if (!sequenceReady())
-			return;
 
 		if (resetButtons) {
 			for (SoloMuter sm : groupSoloMuters) {
@@ -4012,30 +4010,33 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void unsoloGroup(SoloMuter groupSm, boolean resetButtons) {
-		if (!sequenceReady())
-			return;
 		groupSm.unsolo();
 		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().unsolo();
+		}
+		if (!VibeComposerGUI.sequenceReady()) {
+			return;
+		}
+		for (InstPanel ip : groupList) {
 			sequencer.setTrackSolo(ip.getSequenceTrack(), false);
 		}
 	}
 
 	public static void soloGroup(SoloMuter groupSm) {
-		if (!sequenceReady())
-			return;
 		groupSm.solo();
 		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().solo();
+		}
+		if (!sequenceReady())
+			return;
+		for (InstPanel ip : groupList) {
 			sequencer.setTrackSolo(ip.getSequenceTrack(), true);
 		}
 	}
 
 	public static void unmuteAllTracks(boolean resetButtons) {
-		if (!sequenceReady())
-			return;
 
 		if (resetButtons) {
 			for (SoloMuter sm : groupSoloMuters) {
@@ -4055,23 +4056,29 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void unmuteGroup(SoloMuter groupSm, boolean resetButtons) {
-		if (!sequenceReady())
-			return;
+
 		groupSm.unmute();
 		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().unmute();
+		}
+		if (!sequenceReady())
+			return;
+		for (InstPanel ip : groupList) {
 			sequencer.setTrackMute(ip.getSequenceTrack(), false);
 		}
 	}
 
 	public static void muteGroup(SoloMuter groupSm) {
-		if (!sequenceReady())
-			return;
+
 		groupSm.mute();
 		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().mute();
+		}
+		if (!sequenceReady())
+			return;
+		for (InstPanel ip : groupList) {
 			sequencer.setTrackMute(ip.getSequenceTrack(), true);
 		}
 	}
