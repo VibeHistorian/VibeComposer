@@ -2246,9 +2246,12 @@ public class VibeComposerGUI extends JFrame
 								showScore.setSelected(false);
 
 							}
-							int newSliderVal = slider.getUpperValue();
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(12)
-									+ delayed()) {
+							int startPos = delayed();
+							if (slider.getValue() > startPos) {
+								startPos = slider.getValue();
+							}
+							int newSliderVal = slider.getUpperValue() - startPos;
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(12)) {
 								stopMidi();
 								if (sequencer != null)
 									composeMidi(true);
