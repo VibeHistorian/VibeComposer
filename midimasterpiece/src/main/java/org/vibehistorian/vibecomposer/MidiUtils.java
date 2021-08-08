@@ -723,8 +723,11 @@ public class MidiUtils {
 				if (modeToList.contains(searchPitch)) {
 					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
-					n.setPitch(pitch - 1);
-					System.out.println("Not indexed pitch, lowered by -1: " + pitch);
+					int closestPitch = getClosestFromList(modeToList, searchPitch);
+					int difference = searchPitch - closestPitch;
+					n.setPitch(pitch - difference);
+					System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
 				}
 				continue;
 			}
@@ -735,6 +738,22 @@ public class MidiUtils {
 
 			n.setPitch(pitch - originalMovement + newMovement);
 		}
+	}
+
+	public static int getClosestFromList(List<Integer> list, int valToFind) {
+		if (list == null || list.isEmpty()) {
+			return Integer.MIN_VALUE;
+		}
+		int closest = list.get(0);
+		int closestDistance = Math.abs(valToFind - closest);
+		for (int i = 1; i < list.size(); i++) {
+			int distance = Math.abs(valToFind - list.get(i));
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				closest = list.get(i);
+			}
+		}
+		return closest;
 	}
 
 	public static final String[] INSTRUMENTS_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",

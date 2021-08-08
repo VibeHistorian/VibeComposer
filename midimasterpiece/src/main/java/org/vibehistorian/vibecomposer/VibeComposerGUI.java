@@ -5033,7 +5033,8 @@ public class VibeComposerGUI extends JFrame
 			if (randomChordUseChordFill.isSelected()) {
 				cp.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
 			}
-			int patternOrder = 0;
+			// default SINGLE = 4
+			int patternOrder = 4;
 			// use pattern in 20% of the cases if checkbox selected
 			if (chordPanelGenerator.nextInt(100) < 20) {
 				if (randomChordPattern.isSelected()) {
@@ -5092,7 +5093,8 @@ public class VibeComposerGUI extends JFrame
 		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
 			Random instGen = new Random();
 			if (randomArpLimitPowerOfTwo.isSelected()) {
-				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8 }, 0);
+				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
+						0);
 			} else {
 				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 
@@ -5151,7 +5153,8 @@ public class VibeComposerGUI extends JFrame
 						Random instGen = new Random();
 						int value = -1;
 						if (randomArpLimitPowerOfTwo.isSelected()) {
-							value = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8 }, 0);
+							value = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
+									0);
 						} else {
 							value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 

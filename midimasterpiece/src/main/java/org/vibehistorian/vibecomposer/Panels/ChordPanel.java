@@ -59,6 +59,7 @@ public class ChordPanel extends InstPanel {
 		this.add(strum);
 		this.add(transpose);
 
+		this.add(hitsPerPattern);
 		this.add(pattern);
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);

@@ -2310,42 +2310,37 @@ public class MidiGenerator implements JMC {
 				c.setTranspose(extraTranspose);
 				c.setNotes(mainChordNotes);
 
-				// random = use generated split with potential to transition to 2nd chord early
-				// otherwise = use pattern within single chord
-				if (cp.getPattern() == RhythmPattern.FULL) {
-					if (transition) {
-						double splitTime = gc.getChordGenSettings().isUseSplit()
-								? cp.getTransitionSplit()
-								: DEFAULT_CHORD_SPLIT;
+				// for transition:
+				double splitTime = gc.getChordGenSettings().isUseSplit() ? cp.getTransitionSplit()
+						: DEFAULT_CHORD_SPLIT;
 
-						double duration1 = progressionDurations.get(j) * splitTime / 1000.0;
-						double duration2 = progressionDurations.get(j) - duration1;
-						Chord c2 = Chord.copy(c);
-						c.setRhythmValue(duration1);
-						c2.setRhythmValue(duration2);
-						c2.setNotes(transChordNotes);
-						chords.add(c);
-						chords.add(c2);
-					} else {
-						chords.add(c);
+				List<Integer> pattern = cp.getFinalPatternCopy();
+				pattern = pattern.subList(0, cp.getHitsPerPattern());
+				double duration = progressionDurations.get(j) / pattern.size();
+				double durationCounter = 0;
+				for (int p = 0; p < pattern.size(); p++) {
+					Chord cC = Chord.copy(c);
+					cC.setRhythmValue(duration);
+					// less plucky
+					cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
+					if (pattern.get(p) < 1) {
+						cC.setNotes(new int[] { Integer.MIN_VALUE });
+					} else if (transition && durationCounter >= splitTime) {
+						cC.setNotes(transChordNotes);
 					}
-				} else {
-					List<Integer> pattern = cp.getFinalPatternCopy();
-					pattern = pattern.subList(0, MAXIMUM_PATTERN_LENGTH);
-					double duration = progressionDurations.get(j) / pattern.size();
-
-					for (int p = 0; p < pattern.size(); p++) {
-						Chord cC = Chord.copy(c);
-						cC.setRhythmValue(duration);
-						// less plucky
-						cC.setDurationRatio(
-								cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
-						if (pattern.get(p) < 1) {
-							cC.setNotes(new int[] { Integer.MIN_VALUE });
+					int nextP = p + 1;
+					int durMultiplier = 1;
+					while (nextP < pattern.size()) {
+						if (pattern.get(nextP) < 1) {
+							durMultiplier++;
+						} else {
+							break;
 						}
-						chords.add(cC);
+						nextP++;
 					}
-
+					cC.setDurationRatio(cC.getDurationRatio() * durMultiplier);
+					chords.add(cC);
+					durationCounter += duration;
 				}
 			}
 		}// chord strum
