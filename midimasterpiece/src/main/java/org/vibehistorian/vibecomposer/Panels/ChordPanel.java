@@ -108,12 +108,12 @@ public class ChordPanel extends InstPanel {
 		instPoolPicker.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent event) {
-				if (instPoolPicker.hasFocus()) {
-					if (event.getStateChange() == ItemEvent.SELECTED) {
-						instrument.initInstPool(getInstPool());
-						setInstPool(getInstPool());
-					}
+				//if (instPoolPicker.hasFocus()) {
+				if (event.getStateChange() == ItemEvent.SELECTED) {
+					instrument.initInstPool(getInstPool());
+					setInstPool(getInstPool());
 				}
+				//}
 			}
 		});
 

@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import java.awt.event.ItemEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
@@ -16,7 +17,9 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
 						% getItemCount());
-
+				ItemEvent evnt = new ItemEvent(ScrollComboBox.this, ItemEvent.ITEM_STATE_CHANGED,
+						getSelectedItem(), ItemEvent.SELECTED);
+				fireItemStateChanged(evnt);
 			}
 
 		});
