@@ -4,8 +4,6 @@ import java.awt.Dimension;
 
 import javax.swing.JSlider;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-
 /**
  * An extension of JSlider to select a range of values using two thumb controls.
  * The thumb controls are used to select the lower and upper value of a range
@@ -139,7 +137,6 @@ public class RangeSlider extends JSlider {
 	}
 
 	public void setUpperDragging(boolean upperDragging) {
-		VibeComposerGUI.isDragging = upperDragging;
 		this.upperDragging = upperDragging;
 	}
 }

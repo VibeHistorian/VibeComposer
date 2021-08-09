@@ -131,8 +131,8 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
+import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
-import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
@@ -463,7 +463,7 @@ public class VibeComposerGUI extends JFrame
 	Thread cycle;
 	JCheckBox useVolumeSliders;
 	JCheckBox loopBeat;
-	public static RangeSlider slider;
+	public static PlayheadRangeSlider slider;
 	JLabel currentTime;
 	JLabel totalTime;
 	JLabel sectionText;
@@ -1985,7 +1985,7 @@ public class VibeComposerGUI extends JFrame
 		sliderPanel.setPreferredSize(new Dimension(1200, 40));
 
 
-		slider = new RangeSlider();
+		slider = new PlayheadRangeSlider();
 		slider.setMaximum(0);
 		//slider.setToolTipText("Test");
 		slider.setDisplayValues(false);

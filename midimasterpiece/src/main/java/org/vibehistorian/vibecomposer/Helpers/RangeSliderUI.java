@@ -472,7 +472,7 @@ class RangeSliderUI extends BasicSliderUI {
 	 */
 	public class ChangeHandler implements ChangeListener {
 		public void stateChanged(ChangeEvent arg0) {
-			if (!lowerDragging && !upperDragging) {
+			if (!upperDragging) {
 				calculateThumbLocation();
 				slider.repaint();
 			}
@@ -597,7 +597,6 @@ class RangeSliderUI extends BasicSliderUI {
 			if (lowerDragging) {
 				slider.setValueIsAdjusting(true);
 				moveLowerThumb();
-
 			} else if (upperDragging) {
 				slider.setValueIsAdjusting(true);
 				moveUpperThumb();
