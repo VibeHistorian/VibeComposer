@@ -9,9 +9,13 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +33,8 @@ import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
  * a spot on the knob around in a circle.
  * The knob will report its position in radians when asked.
  *
+ * Author of the base version of this component:
+ * 
  * @author Grant William Braught
  * @author Dickinson College
  * @version 12/4/2000
@@ -64,6 +70,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private JTextField textValue = new JTextField("" + curr);
 
 	private boolean stretchAfterCustomInput = false;
+	private boolean showTextInKnob = false;
+	private String shownText = "";
 
 
 	/**
@@ -175,42 +183,45 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 
+			if (showTextInKnob) {
+				g2d.setColor(
+						(VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.brighter()
+								: VibeComposerGUI.lightModeUIColor.darker().darker());
+				String textBase = shownText;
 
-			/*String textBase = this.getName();
-			
-			String text = textBase.substring(textBase.length() / 2) + textBase
-					+ textBase.substring(0, textBase.length() / 2);
-			
-			int fakeTextStart = textBase.length() / 2;
-			int fakeTextEnd = fakeTextStart + textBase.length();
-			
-			text = text.toUpperCase();
-			
-			int FONT_SIZE = 8;
-			
-			Font font = new Font("Arial", Font.PLAIN, FONT_SIZE);
-			FontRenderContext frc = g2d.getFontRenderContext();
-			g2d.translate(10, 0); // Starting position of the text
-			
-			GlyphVector gv = font.createGlyphVector(frc, text);
-			int length = gv.getNumGlyphs(); // Same as text.length()
-			final double toRad = Math.PI / 180;
-			for (int i = 0; i < length; i++) {
-				if (i >= fakeTextStart && i < fakeTextEnd)
-					continue;
-				int r = 10;
-				int[] coords = this.getPointXY(r, -360.0 / length * i * toRad + Math.PI / 2);
-				gv.setGlyphPosition(i, new Point(0, 0));
-				AffineTransform at = AffineTransform.getTranslateInstance(coords[0], coords[1]);
-				at.rotate(2 * Math.PI * i / length);
-				at.translate(r * Math.cos(Math.PI / 2 - 2 * Math.PI * i / length),
-						r * Math.sin(Math.PI / 2 - 2 * Math.PI * i / length));
-				at.translate(-FONT_SIZE / 2, 0);
-				Shape glyph = gv.getGlyphOutline(i);
-				Shape transformedGlyph = at.createTransformedShape(glyph);
-				g2d.fill(transformedGlyph);
+				String text = textBase.substring(textBase.length() / 2) + textBase
+						+ textBase.substring(0, textBase.length() / 2);
+
+				int fakeTextStart = (textBase.length() + 1) / 2;
+				int fakeTextEnd = (fakeTextStart * 2 + textBase.length() * 2 + 1) / 2;
+
+				int FONT_SIZE = 9;
+
+				Font font = new Font("Arial", Font.PLAIN, FONT_SIZE);
+				FontRenderContext frc = g2d.getFontRenderContext();
+				g2d.translate(8, -7); // Starting position of the text
+
+				GlyphVector gv = font.createGlyphVector(frc, text);
+				int length = gv.getNumGlyphs(); // Same as text.length()
+				final double toRad = Math.PI / 180;
+				for (int i = 0; i < length; i++) {
+					if (i >= fakeTextStart && i < fakeTextEnd)
+						continue;
+					int r = 13;
+					int[] coords = this.getPointXY(r, -360.0 / length * i * toRad + Math.PI / 2);
+					gv.setGlyphPosition(i, new Point(0, 0));
+					AffineTransform at = AffineTransform.getTranslateInstance(coords[0], coords[1]);
+					at.rotate(2 * Math.PI * i / length);
+					at.translate(r * Math.cos(Math.PI / 2 - 2 * Math.PI * i / length),
+							r * Math.sin(Math.PI / 2 - 2 * Math.PI * i / length));
+					at.translate(-FONT_SIZE / 2, 0);
+					Shape glyph = gv.getGlyphOutline(i);
+					Shape transformedGlyph = at.createTransformedShape(glyph);
+					g2d.fill(transformedGlyph);
+				}
 			}
-			*/
+
+
 		}
 	}
 
@@ -534,5 +545,26 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setTextValue(JTextField textValue) {
 		this.textValue = textValue;
+	}
+
+	public boolean isShowTextInKnob() {
+		return showTextInKnob;
+	}
+
+	public void setShowTextInKnob(boolean showTextInKnob) {
+		this.showTextInKnob = showTextInKnob;
+		shownText = getName();
+		if (shownText.length() >= 6) {
+			shownText = shownText.substring(0, 6);
+		} else {
+			boolean prefix = true;
+			// altenately append space around text, starting with prefix
+			while (shownText.length() < 6) {
+				shownText = ((prefix) ? " " : "") + shownText + ((!prefix) ? " " : "");
+				prefix = !prefix;
+			}
+		}
+		shownText = " " + shownText;
+		shownText = shownText.toUpperCase();
 	}
 }

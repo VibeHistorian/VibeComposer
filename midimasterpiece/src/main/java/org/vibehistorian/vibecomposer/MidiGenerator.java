@@ -138,6 +138,7 @@ public class MidiGenerator implements JMC {
 	public static List<InstPart> trackList = new ArrayList<>();
 
 	// constants
+	public static final boolean MAXIMIZE_CHORUS_MAIN_MELODY = false;
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	public static final int OPENHAT_CHANCE = 0;
 	private static final int maxAllowedScaleNotes = 7;
@@ -659,9 +660,14 @@ public class MidiGenerator implements JMC {
 		double durCounter = 0.0;
 		double currentChordDur = progressionDurations.get(0);
 
-		int minVel = mp.getVelocityMin() + (5 * sec.getMelodyChance()) / 10 - 50;
+		int velAdjustment = 0;
+		if (gc.isScaleMidiVelocityInArrangement()) {
+			velAdjustment = (3 * sec.getMelodyChance()) / 10 - 30;
+		}
+
+		int minVel = mp.getVelocityMin() + velAdjustment;
 		minVel = (minVel < 0) ? 0 : minVel;
-		int maxVel = mp.getVelocityMax() + (5 * sec.getMelodyChance()) / 10 - 50;
+		int maxVel = mp.getVelocityMax() + velAdjustment;
 		maxVel = (maxVel < 1) ? 1 : maxVel;
 
 		for (int i = 0; i < skeleton.size(); i++) {
@@ -1449,11 +1455,15 @@ public class MidiGenerator implements JMC {
 				for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 					MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
 					int melodyChanceMultiplier = (sec.getTypeMelodyOffset() == 0 && i == 0) ? 2 : 1;
+					// temporary increase for chance of main (#1) melody
+					int oldChance = sec.getMelodyChance();
+					sec.setMelodyChance(Math.min(100, oldChance * melodyChanceMultiplier));
 					boolean added = !mp.isMuted()
 							&& ((overridden && presences.contains(mp.getOrder()))
-									|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()
-											* melodyChanceMultiplier));
-
+									|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()));
+					if (!MAXIMIZE_CHORUS_MAIN_MELODY && melodyChanceMultiplier > 1) {
+						sec.setMelodyChance(oldChance);
+					}
 					if (added) {
 						List<int[]> usedMelodyProg = chordProgression;
 						List<int[]> usedRoots = rootProgression;
@@ -1496,6 +1506,7 @@ public class MidiGenerator implements JMC {
 					} else {
 						copiedPhrases.add(emptyPhrase.copy());
 					}
+					sec.setMelodyChance(oldChance);
 				}
 				sec.setMelodies(copiedPhrases);
 
@@ -2312,21 +2323,25 @@ public class MidiGenerator implements JMC {
 				}
 				mainChordNotes = convertChordToLength(mainChordNotes, stretch,
 						cp.isStretchEnabled());
-				transChordNotes = convertChordToLength(mainChordNotes, stretch,
+				transChordNotes = convertChordToLength(transChordNotes, stretch,
 						cp.isStretchEnabled());
 
 				c.setTranspose(extraTranspose);
 				c.setNotes(mainChordNotes);
 
 				// for transition:
-				double splitTime = gc.getChordGenSettings().isUseSplit() ? cp.getTransitionSplit()
-						: DEFAULT_CHORD_SPLIT;
+				double splitTime = progressionDurations.get(j)
+						* (gc.getChordGenSettings().isUseSplit() ? cp.getTransitionSplit()
+								: DEFAULT_CHORD_SPLIT)
+						/ 1000.0;
+				//System.out.println("Split time: " + splitTime);
 
 				List<Integer> pattern = cp.getFinalPatternCopy();
 				pattern = pattern.subList(0, cp.getHitsPerPattern());
 				double duration = progressionDurations.get(j) / pattern.size();
 				double durationCounter = 0;
 				for (int p = 0; p < pattern.size(); p++) {
+					//System.out.println("Duration counter: " + durationCounter);
 					Chord cC = Chord.copy(c);
 					cC.setRhythmValue(duration);
 					// less plucky
@@ -2665,8 +2680,10 @@ public class MidiGenerator implements JMC {
 						velocity = (velocity * 5) / 10;
 						pitch = dp.getInstrument();
 					}
+					if (gc.isScaleMidiVelocityInArrangement()) {
+						velocity = (velocity * sectionChanceModifier / 100);
+					}
 
-					velocity = (velocity * sectionChanceModifier / 100);
 					boolean isEven = ((j + (k / oneChordPatternSize)) % 2 == 0);
 					if (!ignoreChordSpanFill && (dp.getChordSpanFill() != ChordSpanFill.ALL)) {
 						if ((dp.getChordSpanFill() == ChordSpanFill.EVEN) && !isEven) {
@@ -2819,6 +2836,15 @@ public class MidiGenerator implements JMC {
 		return copied;
 	}
 
+	private void processPausePattern(ArpPart ap, List<Integer> arpPausesPattern,
+			Random pauseGenerator) {
+		for (int i = 0; i < ap.getHitsPerPattern(); i++) {
+			if (pauseGenerator.nextInt(100) < ap.getPauseChance()) {
+				arpPausesPattern.set(i, 0);
+			}
+		}
+	}
+
 	private Map<String, List<Integer>> generateArpMap(int mainGeneratorSeed, boolean needToReport,
 			ArpPart ap) {
 		Random uiGenerator2arpPattern = new Random(mainGeneratorSeed + 1);
@@ -2828,11 +2854,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> arpPausesPattern = new ArrayList<>();
 		if (ap.getPattern() == RhythmPattern.FULL) {
 			for (int i = 0; i < ap.getHitsPerPattern(); i++) {
-				if (uiGenerator4arpPauses.nextInt(100) < ap.getPauseChance()) {
-					arpPausesPattern.add(0);
-				} else {
-					arpPausesPattern.add(1);
-				}
+				arpPausesPattern.add(1);
 			}
 			Collections.rotate(arpPausesPattern, ap.getPatternShift());
 		} else if (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
@@ -2847,6 +2869,8 @@ public class MidiGenerator implements JMC {
 			arpPausesPattern = ap.getFinalPatternCopy();
 			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		}
+
+		processPausePattern(ap, arpPausesPattern, uiGenerator4arpPauses);
 
 		int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MAXIMUM_PATTERN_LENGTH)
 				.limit(ap.getHitsPerPattern() * 2).toArray();

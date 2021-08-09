@@ -38,6 +38,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
@@ -54,8 +55,8 @@ public abstract class InstPanel extends JPanel {
 	protected POOL instPool = POOL.PLUCK;
 	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
 
-	protected KnobPanel hitsPerPattern = new KnobPanel("Hits#", 8, 1, 32);
-	protected KnobPanel chordSpan = new KnobPanel("Chords#", 1, 1, 4);
+	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
+	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
@@ -135,6 +136,22 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
+
+		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
+	}
+
+	public void toggleComponentTexts(boolean b) {
+		// knob texts shown in knobpanels
+
+		hitsPerPattern.setShowTextInKnob(b);
+		chordSpan.setShowTextInKnob(b);
+		pauseChance.setShowTextInKnob(b);
+		exceptionChance.setShowTextInKnob(b);
+		patternRepeat.setShowTextInKnob(b);
+		delay.setShowTextInKnob(b);
+		swingPercent.setShowTextInKnob(b);
+		patternShift.setShowTextInKnob(b);
+
 	}
 
 	public void setDefaultsFromInstPart(InstPart part) {

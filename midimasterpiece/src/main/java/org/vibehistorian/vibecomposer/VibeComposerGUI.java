@@ -406,7 +406,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomDrumVelocityPatternChance;
 	KnobPanel randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
-	JCheckBox arrangementAffectsDrumVelocity;
+	JCheckBox scaleMidiVelocityInArrangement;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 1;
 	public static JCheckBox drumCustomMapping;
@@ -496,6 +496,8 @@ public class VibeComposerGUI extends JFrame
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static JPanel extraSettingsPanel;
+
+	public static boolean isShowingTextInKnobs = true;
 
 
 	public static void main(String args[]) {
@@ -946,7 +948,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordDelay = new JCheckBox("Delay", false);
 		randomChordStrum = new JCheckBox("", true);
 		randomChordStruminess = new KnobPanel("Struminess", 50);
-		randomChordSplit = new JCheckBox("Random Split Pos.", false);
+		randomChordSplit = new JCheckBox("Use Split (ms)", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
 		randomChordSustainChance = new KnobPanel("Chord%", 25);
 		randomChordSustainUseShortening = new JCheckBox("Shorten Plucks", true);
@@ -1321,8 +1323,8 @@ public class VibeComposerGUI extends JFrame
 
 		drumExtraSettings.add(randomDrumPattern);
 		drumExtraSettings.add(randomDrumVelocityPatternChance);
-		arrangementAffectsDrumVelocity = new JCheckBox("Adj. Vel. in Arr.", true);
-		drumExtraSettings.add(arrangementAffectsDrumVelocity);
+		scaleMidiVelocityInArrangement = new JCheckBox("Scale Midi Velocity in Arrangement", true);
+		extraSettingsPanel.add(scaleMidiVelocityInArrangement);
 		drumExtraSettings.add(randomDrumShiftChance);
 		drumExtraSettings.add(clearPatternSeeds);
 
@@ -2461,6 +2463,21 @@ public class VibeComposerGUI extends JFrame
 		soundbankPanel.add(soundbankFilename);
 		extraSettingsPanel.add(soundbankPanel);
 
+		JButton butt = new JButton("Toggle Knob Texts");
+		butt.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				isShowingTextInKnobs = !isShowingTextInKnobs;
+				for (int i = 0; i < 5; i++) {
+					List<? extends InstPanel> panels = getInstList(i);
+					panels.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
+				}
+			}
+
+		});
+		extraSettingsPanel.add(butt);
+
 		playSettingsPanel.add(showScore);
 		playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(useVolumeSliders);
@@ -2632,9 +2649,9 @@ public class VibeComposerGUI extends JFrame
 		isDarkMode = !isDarkMode;
 		ColorUIResource r = null;
 		if (!isDarkMode) {
-			r = new ColorUIResource(new Color(195, 200, 200));
+			r = new ColorUIResource(new Color(193, 203, 208));
 		} else {
-			r = new ColorUIResource(new Color(63, 67, 67));
+			r = new ColorUIResource(new Color(68, 66, 67));
 		}
 		UIManager.put("Button.background", r);
 		UIManager.put("Panel.background", r);
@@ -4403,8 +4420,7 @@ public class VibeComposerGUI extends JFrame
 				Integer.valueOf(arrangementVariationChance.getInt()));
 		guiConfig.setArrangementPartVariationChance(
 				Integer.valueOf(arrangementPartVariationChance.getInt()));
-		guiConfig.setArrangementReduceDrumVelocityFromSectionChance(
-				arrangementAffectsDrumVelocity.isSelected());
+		guiConfig.setScaleMidiVelocityInArrangement(scaleMidiVelocityInArrangement.isSelected());
 		guiConfig.setArrangementEnabled(useArrangement.isSelected());
 
 		// macro
@@ -4494,8 +4510,7 @@ public class VibeComposerGUI extends JFrame
 
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(guiConfig.getArrangementPartVariationChance());
-		arrangementAffectsDrumVelocity
-				.setSelected(guiConfig.isArrangementReduceDrumVelocityFromSectionChance());
+		scaleMidiVelocityInArrangement.setSelected(guiConfig.isScaleMidiVelocityInArrangement());
 		arrangementSeed.setText("" + arrangement.getSeed());
 		useArrangement.setSelected(guiConfig.isArrangementEnabled());
 		arrangementManualOverride.setSelected(true);
@@ -5193,7 +5208,6 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				ap.setTranspose((arpPanelGenerator.nextInt(3) - 1) * 12);
 			}
-			ap.setPauseChance(arpPanelGenerator.nextInt(50));
 			if (ap.getChordSpan() == 1) {
 				ap.setPatternRepeat(arpPanelGenerator.nextInt(randomArpMaxRepeat.getInt()) + 1);
 			} else {
@@ -5239,6 +5253,9 @@ public class VibeComposerGUI extends JFrame
 				ap.setPatternShift(
 						arpPanelGenerator.nextInt(ap.getPattern().pattern.length - 1) + 1);
 			}
+
+			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
+			ap.setPauseChance(arpPanelGenerator.nextInt(pauseMax));
 
 			if (arpPanelGenerator.nextBoolean()) {
 				int arpPatternOrder = 0;

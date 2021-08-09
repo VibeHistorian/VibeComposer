@@ -15,6 +15,8 @@ public class KnobPanel extends JPanel {
 	private JLabel label = null;
 	private JKnob knob = null;
 	boolean needToReset = false;
+	boolean showTextInKnob = false;
+	String name = "";
 
 	public KnobPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -30,6 +32,7 @@ public class KnobPanel extends JPanel {
 		if (name.contains("<br>")) {
 			name = name.replaceAll("<br>", "&nbsp;<br>");
 		}
+		this.name = name;
 		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		knob.setName(name);
@@ -54,4 +57,19 @@ public class KnobPanel extends JPanel {
 	public JKnob getKnob() {
 		return knob;
 	}
+
+	public boolean isShowTextInKnob() {
+		return showTextInKnob;
+	}
+
+	public void setShowTextInKnob(boolean showTextInKnob) {
+		this.showTextInKnob = showTextInKnob;
+		knob.setShowTextInKnob(showTextInKnob);
+		if (showTextInKnob) {
+			label.setVisible(false);
+		} else {
+			label.setVisible(true);
+		}
+	}
+
 }

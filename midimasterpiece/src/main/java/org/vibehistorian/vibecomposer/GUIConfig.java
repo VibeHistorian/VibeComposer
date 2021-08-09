@@ -47,7 +47,7 @@ public class GUIConfig {
 	private Arrangement actualArrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
 	private int arrangementPartVariationChance = 30;
-	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
+	private boolean scaleMidiVelocityInArrangement = true;
 	private boolean arrangementEnabled = false;
 	private KeyChangeType keyChangeType = KeyChangeType.PIVOT;
 
@@ -493,13 +493,12 @@ public class GUIConfig {
 		this.arrangementPartVariationChance = arrangementPartVariationChance;
 	}
 
-	public boolean isArrangementReduceDrumVelocityFromSectionChance() {
-		return arrangementReduceDrumVelocityFromSectionChance;
+	public boolean isScaleMidiVelocityInArrangement() {
+		return scaleMidiVelocityInArrangement;
 	}
 
-	public void setArrangementReduceDrumVelocityFromSectionChance(
-			boolean arrangementReduceDrumVelocityFromSectionChance) {
-		this.arrangementReduceDrumVelocityFromSectionChance = arrangementReduceDrumVelocityFromSectionChance;
+	public void setScaleMidiVelocityInArrangement(boolean scaleMidiVelocityInArrangement) {
+		this.scaleMidiVelocityInArrangement = scaleMidiVelocityInArrangement;
 	}
 
 	public boolean isMelodyBasicChordsOnly() {

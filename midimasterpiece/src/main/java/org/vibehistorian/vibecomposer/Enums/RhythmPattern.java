@@ -31,4 +31,12 @@ public enum RhythmPattern {
 		result = result.subList(0, length);
 		return result;
 	}
+
+	public double getNoteFrequency() {
+		double counter = 0;
+		for (int i = 0; i < pattern.length; i++) {
+			counter += pattern[i];
+		}
+		return counter / pattern.length;
+	}
 }
