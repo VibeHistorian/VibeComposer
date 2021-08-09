@@ -371,7 +371,6 @@ public class MidiGenerator implements JMC {
 
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
-			int extraTranspose = 0;
 
 			for (int i = 0; i < stretchedChords.size(); i++) {
 				// either after first measure, or after first half of combined chord prog
@@ -389,7 +388,7 @@ public class MidiGenerator implements JMC {
 
 						switch (var) {
 						case 0:
-							extraTranspose = 12;
+							// only add, processed later
 							break;
 						case 1:
 							MAX_JUMP_SKELETON_CHORD = Math.min(4, MAX_JUMP_SKELETON_CHORD + 1);
@@ -472,7 +471,7 @@ public class MidiGenerator implements JMC {
 						pitch = 60;
 					}*/
 					double swingDuration = durations.get(j);
-					Note n = new Note(pitch + extraTranspose, swingDuration, 100);
+					Note n = new Note(pitch, swingDuration, 100);
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 							* Note.DEFAULT_DURATION_MULTIPLIER);
 					//TODO: make sound good
@@ -642,6 +641,10 @@ public class MidiGenerator implements JMC {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
+		List<Integer> melodyVars = sec.getVariation(0, getAbsoluteOrder(0, mp));
+		int extraTranspose = (melodyVars != null && !melodyVars.isEmpty()
+				&& melodyVars.contains(Integer.valueOf(0))) ? 12 : 0;
+
 		int seed = mp.getPatternSeed() + mp.getOrder();
 		Random splitGenerator = new Random(seed + 4);
 		Random pauseGenerator = new Random(seed + 5);
@@ -690,10 +693,9 @@ public class MidiGenerator implements JMC {
 
 			skeleton.get(i).setDynamic(velocity);
 			double positionInChord = durCounter / progressionDurations.get(chordCounter);
-
+			Note n1 = skeleton.get(i);
 			if (adjDur > Durations.SIXTEENTH_NOTE * 1.4
 					&& splitGenerator.nextInt(100) < splitChance) {
-				Note n1 = skeleton.get(i);
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
 				int pitch = 0;
 				if (n1.getPitch() >= n2.getPitch()) {
@@ -715,15 +717,21 @@ public class MidiGenerator implements JMC {
 
 				double swingDuration1 = adjDur * 0.5;
 				double swingDuration2 = adjDur - swingDuration1;
-
-				Note n1split1 = new Note(n1.getPitch(), swingDuration1, n1.getDynamic());
-				Note n1split2 = new Note(pitch, swingDuration2, n1.getDynamic() - 10);
+				int pitchOriginal = n1.getPitch();
+				Note n1split1 = new Note(pitchOriginal + extraTranspose, swingDuration1,
+						n1.getDynamic());
+				Note n1split2 = new Note(pitch + extraTranspose, swingDuration2,
+						n1.getDynamic() - 10);
 
 				fullMelody.add(pause1 ? emptyNoteHalf : n1split1);
 				fullMelody.add(pause2 ? emptyNoteHalf2 : n1split2);
 
 			} else {
-				fullMelody.add(pause1 ? emptyNote : skeleton.get(i));
+				int pitch = n1.getPitch();
+				if (pitch >= 0) {
+					n1.setPitch(pitch + extraTranspose);
+				}
+				fullMelody.add(pause1 ? emptyNote : n1);
 
 			}
 			durCounter += adjDur;
