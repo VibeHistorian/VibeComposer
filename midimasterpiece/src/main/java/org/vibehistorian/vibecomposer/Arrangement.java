@@ -43,7 +43,7 @@ public class Arrangement {
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
 					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
 
-	private static final Map<String, Section> defaultSections = new LinkedHashMap<>();
+	public static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
 		defaultSections.put("INTRO", new Section("INTRO", 1, 20, 10, 40, 25, 20));
 		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 30, 25, 40));

@@ -1362,6 +1362,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void handleArrangementAction(String action, int seed, int maxLength) {
 		boolean refreshActual = false;
+
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
@@ -1369,6 +1370,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSection(scrollableArrangementTable, false);
 			} else {
+				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.duplicateSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
 			}
@@ -1379,6 +1381,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSection(scrollableArrangementTable, false);
 			} else {
+				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.removeSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
 			}
@@ -1387,6 +1390,7 @@ public class VibeComposerGUI extends JFrame
 			// on compose -> this must happen before compose part
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
+			actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
 			if (varPopup != null) {
 				varPopup.getFrame().dispose();

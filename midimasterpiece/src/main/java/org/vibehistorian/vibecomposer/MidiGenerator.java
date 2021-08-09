@@ -662,7 +662,10 @@ public class MidiGenerator implements JMC {
 
 		int velAdjustment = 0;
 		if (gc.isScaleMidiVelocityInArrangement()) {
-			velAdjustment = (3 * sec.getMelodyChance()) / 10 - 30;
+			Section defaultSection = Arrangement.defaultSections.get(sec.getType());
+			if (defaultSection != null) {
+				velAdjustment = (3 * defaultSection.getMelodyChance()) / 10 - 30;
+			}
 		}
 
 		int minVel = mp.getVelocityMin() + velAdjustment;
@@ -1652,7 +1655,14 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance()
 									* drumChanceMultiplier);
 					if (added && !dp.isMuted()) {
-						int sectionChanceModifier = 75 + (sec.getDrumChance() / 4);
+						int sectionChanceModifier = 100;
+						if (gc.isScaleMidiVelocityInArrangement()) {
+							Section defaultSection = Arrangement.defaultSections.get(sec.getType());
+							if (defaultSection != null) {
+								sectionChanceModifier = 75 + (defaultSection.getDrumChance() / 4);
+							}
+
+						}
 						boolean sectionForcedDynamics = (sec.getType().contains("CLIMAX"))
 								&& variationGen.nextInt(100) < gc
 										.getArrangementPartVariationChance();
