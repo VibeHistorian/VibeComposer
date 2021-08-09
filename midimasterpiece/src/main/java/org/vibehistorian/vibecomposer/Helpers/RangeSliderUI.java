@@ -511,7 +511,7 @@ class RangeSliderUI extends BasicSliderUI {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
-					if (currentMouseX < middleX) {
+					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
 						lowerPressed = true;
 						moveLowerThumb();
 					} else {
@@ -528,7 +528,7 @@ class RangeSliderUI extends BasicSliderUI {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
-					if (currentMouseX < middleX) {
+					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
 						lowerPressed = true;
 						moveLowerThumb();
 					} else {
