@@ -53,6 +53,8 @@ public class ChordPanel extends InstPanel {
 		this.add(removeButton);
 		copyButton.addActionListener(l);
 		this.add(copyButton);
+		randomizeButton.addActionListener(l);
+		this.add(randomizeButton);
 
 		this.add(new JLabel("    Fill"));
 		this.add(chordSpanFill);

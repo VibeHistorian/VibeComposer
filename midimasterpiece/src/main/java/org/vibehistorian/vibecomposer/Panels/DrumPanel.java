@@ -42,6 +42,8 @@ public class DrumPanel extends InstPanel {
 		this.add(removeButton);
 		copyButton.addActionListener(l);
 		this.add(copyButton);
+		randomizeButton.addActionListener(l);
+		this.add(randomizeButton);
 
 		// pattern business
 		this.add(hitsPerPattern);

@@ -93,6 +93,7 @@ public abstract class InstPanel extends JPanel {
 	protected JButton removeButton = new JButton("X");
 	protected SoloMuter soloMuter;
 	protected JButton copyButton = new JButton("Cc");
+	protected JButton randomizeButton = new JButton("?");
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
@@ -121,6 +122,10 @@ public abstract class InstPanel extends JPanel {
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
+
+		randomizeButton.setActionCommand("RandomizePart");
+		randomizeButton.setPreferredSize(new Dimension(15, 30));
+		randomizeButton.setMargin(new Insets(0, 0, 0, 0));
 
 		//transpose.getSlider().setMajorTickSpacing(12);
 		//transpose.getSlider().setSnapToTicks(true);

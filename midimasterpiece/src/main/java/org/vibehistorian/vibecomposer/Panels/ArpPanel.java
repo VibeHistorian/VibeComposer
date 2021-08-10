@@ -40,6 +40,8 @@ public class ArpPanel extends InstPanel {
 		this.add(removeButton);
 		copyButton.addActionListener(l);
 		this.add(copyButton);
+		randomizeButton.addActionListener(l);
+		this.add(randomizeButton);
 
 		this.add(hitsPerPattern);
 		this.add(pattern);
