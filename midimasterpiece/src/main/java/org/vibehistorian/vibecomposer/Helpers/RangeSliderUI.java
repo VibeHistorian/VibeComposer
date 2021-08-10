@@ -95,10 +95,54 @@ class RangeSliderUI extends BasicSliderUI {
 	@Override
 	protected void calculateThumbLocation() {
 		// Call superclass method for lower thumb location.
-		super.calculateThumbLocation();
+		//super.calculateThumbLocation();
+
+		if (slider.getSnapToTicks()) {
+			int realMinimum = slider.getMinimum();
+			if (slider instanceof PlayheadRangeSlider) {
+				realMinimum += ((RangeSlider) slider).getTickStart();
+			}
+			int sliderValue = slider.getValue();
+			int snappedValue = sliderValue;
+			int majorTickSpacing = slider.getMajorTickSpacing();
+			int minorTickSpacing = slider.getMinorTickSpacing();
+			int tickSpacing = 0;
+
+			if (minorTickSpacing > 0) {
+				tickSpacing = minorTickSpacing;
+			} else if (majorTickSpacing > 0) {
+				tickSpacing = majorTickSpacing;
+			}
+
+			if (tickSpacing != 0) {
+				// If it's not on a tick, change the value
+				if ((sliderValue - realMinimum) % tickSpacing != 0) {
+					float temp = (float) (sliderValue - realMinimum) / (float) tickSpacing;
+					int whichTick = Math.round(temp);
+
+					snappedValue = realMinimum + (whichTick * tickSpacing);
+				}
+
+				if (snappedValue != sliderValue) {
+					slider.setValue(snappedValue);
+				}
+			}
+		}
+
+		if (slider.getOrientation() == JSlider.HORIZONTAL) {
+			int valuePosition = xPositionForValue(slider.getValue());
+
+			thumbRect.x = valuePosition - (thumbRect.width / 2);
+			thumbRect.y = trackRect.y;
+		} else {
+			int valuePosition = yPositionForValue(slider.getValue());
+
+			thumbRect.x = trackRect.x;
+			thumbRect.y = valuePosition - (thumbRect.height / 2);
+		}
 
 		// Adjust upper value to snap to ticks if necessary.
-		if (slider.getSnapToTicks()) {
+		if (slider.getSnapToTicks() && !(slider instanceof PlayheadRangeSlider)) {
 			int upperValue = slider.getValue() + slider.getExtent();
 			int snappedValue = upperValue;
 			int majorTickSpacing = slider.getMajorTickSpacing();
@@ -157,7 +201,7 @@ class RangeSliderUI extends BasicSliderUI {
 			g.translate(0, tickBounds.y);
 
 			if (slider.getMinorTickSpacing() > 0) {
-				int value = slider.getMinimum();
+				int value = slider.getMinimum() + actualSlider.getTickStart();
 
 				while (value <= slider.getMaximum()) {
 					int xPos = xPositionForValue(value);

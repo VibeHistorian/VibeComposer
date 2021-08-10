@@ -22,6 +22,8 @@ public class RangeSlider extends JSlider {
 	private boolean displayValues = true;
 	private boolean lowerDragging = false;
 	private boolean upperDragging = false;
+	private int lowerDraggingSnapToTicks = 0;
+	private int upperDraggingSnapToTicks = 0;
 
 	/**
 	 * Constructs a RangeSlider with default minimum and maximum values of 0
@@ -138,5 +140,21 @@ public class RangeSlider extends JSlider {
 
 	public void setUpperDragging(boolean upperDragging) {
 		this.upperDragging = upperDragging;
+	}
+
+	public int getLowerDraggingSnapToTicks() {
+		return lowerDraggingSnapToTicks;
+	}
+
+	public void setLowerDraggingSnapToTicks(int lowerDraggingSnapToTicks) {
+		this.lowerDraggingSnapToTicks = lowerDraggingSnapToTicks;
+	}
+
+	public int getUpperDraggingSnapToTicks() {
+		return upperDraggingSnapToTicks;
+	}
+
+	public void setUpperDraggingSnapToTicks(int upperDraggingSnapToTicks) {
+		this.upperDraggingSnapToTicks = upperDraggingSnapToTicks;
 	}
 }

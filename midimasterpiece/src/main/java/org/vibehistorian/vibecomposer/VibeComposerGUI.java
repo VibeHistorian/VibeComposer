@@ -313,6 +313,7 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<String> pauseBehaviorCombobox;
 	public static JCheckBox pauseBehaviorBarCheckbox;
 	public static JCheckBox pauseBehaviorPlayheadCheckbox;
+	public static JCheckBox playheadSnapToBeatsCheckBox;
 
 
 	// chord variety settings
@@ -471,6 +472,8 @@ public class VibeComposerGUI extends JFrame
 	public static boolean isDragging = false;
 	private static long pausedSliderPosition = 0;
 	private static int pausedMeasureCounter = 0;
+	private static long startSliderPosition = 0;
+	private static int startBeatCounter = 0;
 
 	JLabel tipLabel;
 	JLabel currentChords = new JLabel("Chords:[]");
@@ -1849,10 +1852,21 @@ public class VibeComposerGUI extends JFrame
 
 
 		JPanel pauseBehaviorPanel = new JPanel();
-		pauseBehaviorLabel = new JLabel("Start from pause:");
+		pauseBehaviorLabel = new JLabel("Start From Pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>();
-		pauseBehaviorBarCheckbox = new JCheckBox("Start from bar?", true);
-		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember last pos?", false);
+		pauseBehaviorBarCheckbox = new JCheckBox("Start From Bar", true);
+		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", false);
+		playheadSnapToBeatsCheckBox = new JCheckBox("Snap Start To Beat", true);
+		playheadSnapToBeatsCheckBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (slider.getSnapToTicks() != playheadSnapToBeatsCheckBox.isSelected()) {
+					slider.setSnapToTicks(playheadSnapToBeatsCheckBox.isSelected());
+				}
+			}
+
+		});
 		MidiUtils.addAllToJComboBox(
 				new String[] { "On regenerate", "On compose/regenerate", "Never" },
 				pauseBehaviorCombobox);
@@ -1860,6 +1874,7 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorPanel.add(pauseBehaviorCombobox);
 		pauseBehaviorPanel.add(pauseBehaviorBarCheckbox);
 		pauseBehaviorPanel.add(pauseBehaviorPlayheadCheckbox);
+		pauseBehaviorPanel.add(playheadSnapToBeatsCheckBox);
 
 		JPanel customDrumMappingPanel = new JPanel();
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
@@ -1993,7 +2008,7 @@ public class VibeComposerGUI extends JFrame
 		slider.setMaximum(0);
 		//slider.setToolTipText("Test");
 		slider.setDisplayValues(false);
-
+		slider.setSnapToTicks(playheadSnapToBeatsCheckBox.isSelected());
 		//slider.setMinimumSize(new Dimension(1000, 3));
 		slider.addMouseListener(new MouseAdapter() {
 
@@ -2767,6 +2782,7 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			sequencer.stop();
 		}
+		saveStartInfo();
 		if (midiMode.isSelected()) {
 			synth = null;
 		} else {
@@ -2993,6 +3009,11 @@ public class VibeComposerGUI extends JFrame
 			slider.setPaintTicks(true);
 			int measureWidth = sliderMeasureWidth();
 			slider.setMajorTickSpacing(measureWidth);
+			slider.setMinorTickSpacing(beatFromBpm(0));
+			if (pauseBehaviorBarCheckbox.isSelected()) {
+				int snapAdjustment = 50;
+				slider.setValue(delayed() + beatFromBpm(0) * startBeatCounter + snapAdjustment);
+			}
 			slider.setTickStart(delayed());
 			Dictionary<Integer, JLabel> table = new Hashtable<>();
 
@@ -4002,6 +4023,15 @@ public class VibeComposerGUI extends JFrame
 			pausedMeasureCounter = (int) (pausedSliderPosition - delayed()) / sliderMeasureWidth();
 		} else {
 			pausedMeasureCounter = 0;
+		}
+	}
+
+	private void saveStartInfo() {
+		startSliderPosition = slider.getValue();
+		if (MidiGenerator.chordInts.size() > 0) {
+			startBeatCounter = (int) ((startSliderPosition - delayed() + 20) / beatFromBpm(0));
+		} else {
+			startBeatCounter = 0;
 		}
 	}
 
