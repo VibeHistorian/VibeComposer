@@ -805,7 +805,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.add(melodyQuickness);
 
 
-		maxJump = new KnobPanel("Max Note<br>Jump", 1, 0, 4);
+		maxJump = new KnobPanel("Max Note<br>Jump", 0, 0, 4);
 		maxExceptions = new KnobPanel("Max<br>Exceptions", 2, 0, 4);
 		melodyAlternateRhythmChance = new KnobPanel("Alternating<br>Rhythm", 50);
 		melodySameRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
