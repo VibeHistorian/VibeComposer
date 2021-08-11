@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Popups;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -110,6 +111,9 @@ public class VariationPopup {
 		typeAndMeasuresPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		tablesPanel.add(typeAndMeasuresPanel);
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		addRiskyVariations(sec);
+
 		for (int i = 0; i < 5; i++) {
 			int fI = i;
 
@@ -202,8 +206,6 @@ public class VariationPopup {
 			tablesPanel.add(tables[i]);
 		}
 
-		addRiskyVariations(sec);
-
 		scroll = new JScrollPane(tablesPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
@@ -222,6 +224,9 @@ public class VariationPopup {
 	}
 
 	private void addRiskyVariations(Section sec) {
+		JPanel riskyVarPanel = new JPanel();
+		riskyVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		riskyVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
 			if (sec.getRiskyVariations() != null) {
@@ -236,8 +241,9 @@ public class VariationPopup {
 				}
 
 			});
-			tablesPanel.add(riskyVar);
+			riskyVarPanel.add(riskyVar);
 		}
+		tablesPanel.add(riskyVarPanel);
 	}
 
 	private void addFrameWindowOperation() {

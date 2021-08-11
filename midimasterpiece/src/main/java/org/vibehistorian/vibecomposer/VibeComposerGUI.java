@@ -111,6 +111,9 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -286,6 +289,8 @@ public class VibeComposerGUI extends JFrame
 	JScrollPane arrangementActualScrollPane;
 	public static JTable scrollableArrangementTable;
 	public static JTable scrollableArrangementActualTable;
+	public static boolean arrangementTableColumnDragging = false;
+	public static boolean actualArrangementTableColumnDragging = false;
 
 	JPanel actualArrangementCombinedPanel;
 	JPanel arrangementCombinedPanel;
@@ -1378,7 +1383,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSection(scrollableArrangementTable, false);
 			} else {
-				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.duplicateSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
 			}
@@ -1389,7 +1394,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSection(scrollableArrangementTable, false);
 			} else {
-				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.removeSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
 			}
@@ -1398,7 +1403,7 @@ public class VibeComposerGUI extends JFrame
 			// on compose -> this must happen before compose part
 			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
-			actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+			//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
 			if (varPopup != null) {
 				varPopup.getFrame().dispose();
@@ -1488,49 +1493,87 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
-				if (OMNI.EMPTYCOMBO.equals(selItem) || selItem == null || (arrSection.getItemCount()
-						- 1 != actualArrangement.getSections().size())) {
+				if (selItem == null || (arrSection.getItemCount() - 1 != actualArrangement
+						.getSections().size())) {
 					return;
 				}
-				System.out.println("Switching panels!");
-				int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
-				Section sec = actualArrangement.getSections().get(sectionOrder);
-				for (int i = 0; i < 5; i++) {
-					JScrollPane pane = getInstPane(i);
-					List<InstPanel> sectionPanels = new ArrayList<>();
-					if (sec.getInstPartList(i) != null) {
-						System.out.println("Found existing! " + i);
-						List<? extends InstPart> ip = sec.getInstPartList(i);
-						for (Component c : ((JPanel) pane.getViewport().getView())
-								.getComponents()) {
-							if (c instanceof InstPanel) {
-								int order = ((InstPanel) c).getPanelOrder();
-								((JPanel) pane.getViewport().getView()).remove(c);
-								InstPanel pCopy = InstPanel.makeInstPanel(i, this);
-								pCopy.setFromInstPart(ip.get(order - 1));
-								sectionPanels.add(pCopy);
-							}
-						}
-					} else {
-						System.out.println("Making copies! " + i);
+				List<InstPanel> addedPanels = new ArrayList<>();
+				if (OMNI.EMPTYCOMBO.equals(selItem)) {
+					System.out.println("Resetting to normal panels!");
+					for (int i = 0; i < 5; i++) {
+						JScrollPane pane = getInstPane(i);
 						List<? extends InstPanel> panels = getInstList(i);
 						for (Component c : ((JPanel) pane.getViewport().getView())
 								.getComponents()) {
 							if (c instanceof InstPanel) {
 								InstPanel ip = (InstPanel) c;
-								System.out.println("Switching panel!");
-								int order = ip.getPanelOrder();
+								//System.out.println("Switching panel!");
 								((JPanel) pane.getViewport().getView()).remove(ip);
-								InstPanel p = panels.get(order - 1);
-								InstPanel pCopy = InstPanel.makeInstPanel(i, this);
-								pCopy.setFromInstPart(p.toInstPart(0));
-								sectionPanels.add(pCopy);
 							}
-
+							panels.forEach(p -> {
+								((JPanel) pane.getViewport().getView()).add(p);
+								p.setVisible(false);
+							});
+							addedPanels.addAll(panels);
 						}
 					}
+				} else {
+					System.out.println("Switching panels!");
+					int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
+					Section sec = actualArrangement.getSections().get(sectionOrder);
+					for (int i = 0; i < 5; i++) {
+						JScrollPane pane = getInstPane(i);
+						List<InstPanel> sectionPanels = new ArrayList<>();
+						if (sec.getInstPartList(i) != null) {
+							System.out.println("Creating panels from section parts! " + i);
+							List<? extends InstPart> ip = sec.getInstPartList(i);
+							for (Component c : ((JPanel) pane.getViewport().getView())
+									.getComponents()) {
+								if (c instanceof InstPanel) {
+									int order = ((InstPanel) c).getPanelOrder();
+									((JPanel) pane.getViewport().getView()).remove(c);
+									InstPanel pCopy = InstPanel.makeInstPanel(i, this);
+									if (i == 4) {
+										pCopy.getSoloMuter()
+												.setVisible(!combineDrumTracks.isSelected());
+									}
+									pCopy.setFromInstPart(ip.get(order - 1));
+									sectionPanels.add(pCopy);
+								}
+							}
+						} else {
+							System.out.println("Making copies of normal panels! " + i);
+							List<? extends InstPanel> panels = getInstList(i);
+							for (Component c : ((JPanel) pane.getViewport().getView())
+									.getComponents()) {
+								if (c instanceof InstPanel) {
+									InstPanel ip = (InstPanel) c;
+									//System.out.println("Switching panel!");
+									int order = ip.getPanelOrder();
+									((JPanel) pane.getViewport().getView()).remove(ip);
+									InstPanel p = panels.get(order - 1);
+									InstPanel pCopy = InstPanel.makeInstPanel(i, this);
+									if (i == 4) {
+										pCopy.getSoloMuter()
+												.setVisible(!combineDrumTracks.isSelected());
+									}
+									pCopy.setFromInstPart(p.toInstPart(0));
+									sectionPanels.add(pCopy);
+								}
 
-					sectionPanels.forEach(p -> ((JPanel) pane.getViewport().getView()).add(p));
+							}
+						}
+
+						sectionPanels.forEach(p -> {
+							((JPanel) pane.getViewport().getView()).add(p);
+							p.setVisible(false);
+						});
+						addedPanels.addAll(sectionPanels);
+					}
+				}
+				addedPanels.forEach(p -> p.setVisible(true));
+				for (int i = 0; i < 5; i++) {
+					JScrollPane pane = getInstPane(i);
 					pane.repaint();
 				}
 			}
@@ -1551,8 +1594,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 30);
 		arrangementSettings.add(arrangementPartVariationChance);
 
-		arrangementSettings
-				.add(new JLabel("                                                          "));
+		arrangementSettings.add(new JLabel("                                      "));
 
 
 		arrangementManualOverride = new JCheckBox("Custom", false);
@@ -1649,15 +1691,46 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementTable.setColumnSelectionAllowed(true);
 		scrollableArrangementTable.getTableHeader().setPreferredSize(
 				new Dimension(scrollPaneDimension.width - arrangementRowHeaderWidth, 30));
-		/*scrollableArrangementTable.getColumnModel()
+		scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
 					@Override
 					public void columnMoved(TableColumnModelEvent e) {
-						MidiGenerator.ARRANGEMENT.resortByIndexes(scrollableArrangementTable);
-		
+						arrangementTableColumnDragging = true;
 					}
-		
-		*/
+
+					@Override
+					public void columnAdded(TableColumnModelEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void columnRemoved(TableColumnModelEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void columnMarginChanged(ChangeEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void columnSelectionChanged(ListSelectionEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+				});
+		scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				System.out.println("MOVED");
+				arrangement.resortByIndexes(scrollableArrangementTable);
+				arrangementTableColumnDragging = false;
+			}
+		});
 
 		scrollableArrangementActualTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 1L;
@@ -1714,7 +1787,50 @@ public class VibeComposerGUI extends JFrame
 
 		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
 		scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		scrollableArrangementActualTable.getColumnModel()
+				.addColumnModelListener(new TableColumnModelListener() {
+					@Override
+					public void columnMoved(TableColumnModelEvent e) {
+						actualArrangementTableColumnDragging = true;
+
+					}
+
+					@Override
+					public void columnAdded(TableColumnModelEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void columnRemoved(TableColumnModelEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void columnMarginChanged(ChangeEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void columnSelectionChanged(ListSelectionEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+				});
+		scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				System.out.println("MOVED");
+				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+				actualArrangementTableColumnDragging = false;
+			}
+		});
 		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+
 		actualArrangementCombinedPanel = new JPanel();
 		actualArrangementCombinedPanel
 				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
@@ -2938,10 +3054,10 @@ public class VibeComposerGUI extends JFrame
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
 		} else {
-			arrangement.resortByIndexes(scrollableArrangementTable);
+			/*arrangement.resortByIndexes(scrollableArrangementTable);
 			if (actualArrangement.getSections().size() > 1) {
 				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-			}
+			}*/
 		}
 
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)

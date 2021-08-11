@@ -262,6 +262,7 @@ public class Arrangement {
 			tempSections[i] = sections.get(scrollableArrangementTable.convertColumnIndexToModel(i));
 		}
 		sections = new ArrayList<>(Arrays.asList(tempSections));
+		scrollableArrangementTable.repaint();
 
 	}
 
