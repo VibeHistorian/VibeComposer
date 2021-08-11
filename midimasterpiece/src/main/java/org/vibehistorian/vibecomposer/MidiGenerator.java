@@ -65,6 +65,7 @@ import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -185,6 +186,32 @@ public class MidiGenerator implements JMC {
 	private Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
 	private List<int[]> melodyBasedRootProgression = new ArrayList<>();
+
+	// global parts
+	private List<BassPart> bassParts = null;
+	private List<MelodyPart> melodyParts = null;
+	private List<ChordPart> chordParts = null;
+	private List<DrumPart> drumParts = null;
+	private List<ArpPart> arpParts = null;
+
+	public List<? extends InstPart> getInstPartList(int order) {
+		if (order < 0 || order > 4) {
+			throw new IllegalArgumentException("Inst part list order wrong.");
+		}
+		switch (order) {
+		case 0:
+			return melodyParts;
+		case 1:
+			return bassParts;
+		case 2:
+			return chordParts;
+		case 3:
+			return arpParts;
+		case 4:
+			return drumParts;
+		}
+		return null;
+	}
 
 	public static List<Integer> melodyNotePattern = null;
 
@@ -1351,12 +1378,15 @@ public class MidiGenerator implements JMC {
 		int originalPartVariationChance = gc.getArrangementPartVariationChance();
 		int secOrder = -1;
 
+		storeGlobalParts();
+
 		int transToSet = 0;
 		boolean twoFiveOneChanged = false;
 		for (Section sec : arr.getSections()) {
 			if (overridden) {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
 			}
+			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);
 			secOrder++;
 			System.out.println(
 					"============== Processing section.. " + sec.getType() + " ================");
@@ -1684,6 +1714,9 @@ public class MidiGenerator implements JMC {
 			if (sec.getRiskyVariations() == null) {
 				sec.setRiskyVariations(riskyVariations);
 			}
+			if (gcPartsReplaced) {
+				restoreGlobalPartsToGuiConfig();
+			}
 			counter += sec.getMeasures();
 		}
 		System.out.println("Added phrases/cphrases to sections..");
@@ -1878,6 +1911,48 @@ public class MidiGenerator implements JMC {
 
 		gc.setActualArrangement(arr);
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
+	}
+
+	private void storeGlobalParts() {
+		melodyParts = gc.getMelodyParts();
+		bassParts = Collections.singletonList(gc.getBassPart());
+		chordParts = gc.getChordParts();
+		arpParts = gc.getArpParts();
+		drumParts = gc.getDrumParts();
+
+	}
+
+	private void restoreGlobalPartsToGuiConfig() {
+		gc.setMelodyParts(melodyParts);
+		gc.setBassPart(bassParts.get(0));
+		gc.setChordParts(chordParts);
+		gc.setArpParts(arpParts);
+		gc.setDrumParts(drumParts);
+	}
+
+	private boolean replaceGuiConfigInstParts(Section sec) {
+		boolean needsReplace = false;
+		if (sec.getMelodyParts() != null) {
+			gc.setMelodyParts(sec.getMelodyParts());
+			needsReplace = true;
+		}
+		if (sec.getBassParts() != null) {
+			gc.setBassPart(sec.getBassParts().get(0));
+			needsReplace = true;
+		}
+		if (sec.getChordParts() != null) {
+			gc.setChordParts(sec.getChordParts());
+			needsReplace = true;
+		}
+		if (sec.getArpParts() != null) {
+			gc.setArpParts(sec.getArpParts());
+			needsReplace = true;
+		}
+		if (sec.getDrumParts() != null) {
+			gc.setDrumParts(sec.getDrumParts());
+			needsReplace = true;
+		}
+		return needsReplace;
 	}
 
 	private void replaceFirstChordForTwoFiveOne(int transToSet) {

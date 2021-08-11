@@ -84,11 +84,8 @@ public class Section {
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
 
-	// individual parts
-
+	// customized parts
 	private List<BassPart> bassParts = null;
-
-	// tabbed parts
 	private List<MelodyPart> melodyParts = null;
 	private List<ChordPart> chordParts = null;
 	private List<DrumPart> drumParts = null;
