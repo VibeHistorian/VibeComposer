@@ -278,7 +278,35 @@ public class Section {
 		if (riskyVariations != null) {
 			sec.riskyVariations = new Vector<>(riskyVariations);
 		}
+		if (getMelodyParts() != null) {
+			sec.setMelodyParts(getMelodyParts());
+		}
+		if (getBassParts() != null) {
+			sec.setBassParts(getBassParts());
+		}
+		if (getChordParts() != null) {
+			sec.setChordParts(getChordParts());
+		}
+		if (getArpParts() != null) {
+			sec.setArpParts(getArpParts());
+		}
+		if (getDrumParts() != null) {
+			sec.setDrumParts(getDrumParts());
+		}
 		return sec;
+	}
+
+	public boolean hasPresence() {
+		for (int i = 0; i < 5; i++) {
+			if (countPresence(i) > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public int countPresence(int part) {
+		return getPresence(part).size();
 	}
 
 	public Set<Integer> getPresence(int part) {

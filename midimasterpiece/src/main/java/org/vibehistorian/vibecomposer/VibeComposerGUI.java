@@ -267,7 +267,7 @@ public class VibeComposerGUI extends JFrame
 	public static Arrangement actualArrangement;
 	KnobPanel arrangementVariationChance;
 	KnobPanel arrangementPartVariationChance;
-	JCheckBox arrangementManualOverride;
+	JCheckBox arrangementCustom;
 	JTextField pieceLength;
 	RandomValueButton arrangementSeed;
 	JCheckBox useArrangement;
@@ -1597,8 +1597,8 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(new JLabel("                                      "));
 
 
-		arrangementManualOverride = new JCheckBox("Custom", false);
-		arrangementSettings.add(arrangementManualOverride);
+		arrangementCustom = new JCheckBox("Custom", false);
+		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
 		arrangementSettings.add(copySelectedBtn);
@@ -2989,6 +2989,12 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			sequencer.stop();
 		}
+
+		if (arrangementCustom.isSelected()
+				&& !actualArrangement.getSections().get(0).hasPresence()) {
+			return;
+		}
+
 		saveStartInfo();
 		if (midiMode.isSelected()) {
 			synth = null;
@@ -3061,7 +3067,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
-				&& arrangementManualOverride.isSelected()) {
+				&& arrangementCustom.isSelected()) {
 			arrangement.setOverridden(true);
 		} else {
 			arrangement.setOverridden(false);
@@ -4647,7 +4653,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		arrangement.setFromModel(scrollableArrangementTable);
 		boolean overrideSuccessful = actualArrangement.setFromActualTable(
-				scrollableArrangementActualTable, false) && arrangementManualOverride.isSelected();
+				scrollableArrangementActualTable, false) && arrangementCustom.isSelected();
 		System.out.println("OVERRIDE OK?: " + overrideSuccessful);
 		if (overrideSuccessful) {
 			arrangement.setOverridden(true);
@@ -4761,7 +4767,7 @@ public class VibeComposerGUI extends JFrame
 		scaleMidiVelocityInArrangement.setSelected(guiConfig.isScaleMidiVelocityInArrangement());
 		arrangementSeed.setText("" + arrangement.getSeed());
 		useArrangement.setSelected(guiConfig.isArrangementEnabled());
-		arrangementManualOverride.setSelected(true);
+		arrangementCustom.setSelected(true);
 
 		// macro
 		scaleMode.setSelectedItem(guiConfig.getScaleMode().toString());
