@@ -22,6 +22,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -90,6 +91,8 @@ public abstract class InstPanel extends JPanel {
 
 	protected ScrollComboBox<String> midiChannel = new ScrollComboBox<>();
 
+	protected JButton arrSectionCommit = new JButton("Commit");
+
 	protected JButton removeButton = new JButton("X");
 	protected SoloMuter soloMuter;
 	protected JButton copyButton = new JButton("Cc");
@@ -104,10 +107,12 @@ public abstract class InstPanel extends JPanel {
 
 	}
 
-	public void initDefaults() {
+	public void initDefaults(ActionListener l) {
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
+
+
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		volSlider.setMaximum(100);
 		volSlider.setValue(100);
@@ -118,6 +123,9 @@ public abstract class InstPanel extends JPanel {
 		minMaxVelSlider.setName("Velocity range");
 		setVelocityMax(90);
 		setVelocityMin(63);
+
+		copyButton.addActionListener(l);
+		randomizeButton.addActionListener(l);
 
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
@@ -141,8 +149,22 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
+		toggleableComponents.add(arrSectionCommit);
 
 		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
+	}
+
+	public void addDefaultInstrumentControls() {
+		this.add(soloMuter);
+		this.add(muteInst);
+		this.add(lockInst);
+		this.add(instrument);
+	}
+
+	public void addDefaultPanelButtons() {
+		this.add(removeButton);
+		this.add(copyButton);
+		this.add(randomizeButton);
 	}
 
 	public void toggleComponentTexts(boolean b) {
@@ -460,5 +482,29 @@ public abstract class InstPanel extends JPanel {
 
 	public VisualPatternPanel getComboPanel() {
 		return comboPanel;
+	}
+
+
+	public static InstPanel makeInstPanel(int inst, ActionListener l) {
+
+		InstPanel ip = null;
+		switch (inst) {
+		case 0:
+			ip = new MelodyPanel(l);
+			break;
+		case 1:
+			ip = new BassPanel(l);
+			break;
+		case 2:
+			ip = new ChordPanel(l);
+			break;
+		case 3:
+			ip = new ArpPanel(l);
+			break;
+		case 4:
+			ip = new DrumPanel(l);
+			break;
+		}
+		return ip;
 	}
 }

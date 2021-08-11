@@ -35,6 +35,12 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
+import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import jm.music.data.CPhrase;
 import jm.music.data.Phrase;
@@ -77,6 +83,35 @@ public class Section {
 	private List<Phrase> arps;
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
+
+	// individual parts
+
+	private List<BassPart> bassParts = null;
+
+	// tabbed parts
+	private List<MelodyPart> melodyParts = null;
+	private List<ChordPart> chordParts = null;
+	private List<DrumPart> drumParts = null;
+	private List<ArpPart> arpParts = null;
+
+	public List<? extends InstPart> getInstPartList(int order) {
+		if (order < 0 || order > 4) {
+			throw new IllegalArgumentException("Inst part list order wrong.");
+		}
+		switch (order) {
+		case 0:
+			return melodyParts;
+		case 1:
+			return bassParts;
+		case 2:
+			return chordParts;
+		case 3:
+			return arpParts;
+		case 4:
+			return drumParts;
+		}
+		return null;
+	}
 
 	// map integer(what), map integer(part order), list integer(section variation)
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
@@ -461,4 +496,46 @@ public class Section {
 			partData[variationNum] = Boolean.FALSE;
 		}
 	}
+
+	public List<BassPart> getBassParts() {
+		return bassParts;
+	}
+
+	public void setBassParts(List<BassPart> bassParts) {
+		this.bassParts = bassParts;
+	}
+
+	public List<MelodyPart> getMelodyParts() {
+		return melodyParts;
+	}
+
+	public void setMelodyParts(List<MelodyPart> melodyParts) {
+		this.melodyParts = melodyParts;
+	}
+
+	public List<ChordPart> getChordParts() {
+		return chordParts;
+	}
+
+	public void setChordParts(List<ChordPart> chordParts) {
+		this.chordParts = chordParts;
+	}
+
+	public List<DrumPart> getDrumParts() {
+		return drumParts;
+	}
+
+	public void setDrumParts(List<DrumPart> drumParts) {
+		this.drumParts = drumParts;
+	}
+
+	public List<ArpPart> getArpParts() {
+		return arpParts;
+	}
+
+	public void setArpParts(List<ArpPart> arpParts) {
+		this.arpParts = arpParts;
+	}
+
+
 }

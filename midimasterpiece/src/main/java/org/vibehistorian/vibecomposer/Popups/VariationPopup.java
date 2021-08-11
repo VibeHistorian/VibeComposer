@@ -33,6 +33,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 public class VariationPopup {
@@ -67,15 +68,15 @@ public class VariationPopup {
 			typeCombo.addItem(type.toString());
 		}
 
-		typeCombo.addItem("---");
-		typeCombo.setSelectedItem("---");
+		typeCombo.addItem(OMNI.EMPTYCOMBO);
+		typeCombo.setSelectedItem(OMNI.EMPTYCOMBO);
 		typeCombo.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(ItemEvent event) {
 				if (event.getStateChange() == ItemEvent.SELECTED) {
 					String item = (String) event.getItem();
-					if ("---".equals(item)) {
+					if (OMNI.EMPTYCOMBO.equals(item)) {
 						return;
 					}
 					sec.setType(String.valueOf(item));
@@ -87,7 +88,8 @@ public class VariationPopup {
 
 		typeAndMeasuresPanel.add(new JLabel("Measures"));
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "---" }, measureCombo);
+		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO },
+				measureCombo);
 		measureCombo.setSelectedItem(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {
 
@@ -95,7 +97,7 @@ public class VariationPopup {
 			public void itemStateChanged(ItemEvent event) {
 				if (event.getStateChange() == ItemEvent.SELECTED) {
 					String item = (String) event.getItem();
-					if ("---".equals(item)) {
+					if (OMNI.EMPTYCOMBO.equals(item)) {
 						return;
 					}
 					sec.setMeasures(Integer.valueOf(item));

@@ -131,6 +131,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
@@ -146,6 +147,7 @@ import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPartsWrapper;
@@ -265,6 +267,9 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox arrangementManualOverride;
 	JTextField pieceLength;
 	RandomValueButton arrangementSeed;
+	JCheckBox useArrangement;
+	JCheckBox randomizeArrangementOnCompose;
+	ScrollComboBox<String> arrSection;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -304,8 +309,6 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> fixedLengthChords;
 	JCheckBox useDoubledDurations;
 	JCheckBox allowChordRepeats;
-	JCheckBox useArrangement;
-	JCheckBox randomizeArrangementOnCompose;
 	JCheckBox globalSwingOverride;
 	KnobPanel globalSwingOverrideValue;
 	public static KnobPanel loopBeatCount;
@@ -1234,9 +1237,9 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumUseChordFill);
 
 		randomDrumHitsMultiplier = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "---", "0.5x", "1.5x", "2x" },
+		MidiUtils.addAllToJComboBox(new String[] { OMNI.EMPTYCOMBO, "0.5x", "1.5x", "2x" },
 				randomDrumHitsMultiplier);
-		randomDrumHitsMultiplier.setSelectedItem("---");
+		randomDrumHitsMultiplier.setSelectedItem(OMNI.EMPTYCOMBO);
 		randomDrumHitsMultiplier.addItemListener(new ItemListener() {
 
 			@Override
@@ -1268,7 +1271,7 @@ public class VibeComposerGUI extends JFrame
 								"Only 3 hits multiplier states allowed!");
 					}
 
-					randomDrumHitsMultiplier.setSelectedItem("---");
+					randomDrumHitsMultiplier.setSelectedItem(OMNI.EMPTYCOMBO);
 				}
 			}
 		});
@@ -1277,14 +1280,15 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumHitsMultiplier);
 		drumsPanel.add(randomDrumSlide);
 		ScrollComboBox<String> drumPartPresetBox = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "---", "POP", "DNB" }, drumPartPresetBox);
+		MidiUtils.addAllToJComboBox(new String[] { OMNI.EMPTYCOMBO, "POP", "DNB" },
+				drumPartPresetBox);
 		drumPartPresetBox.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(ItemEvent event) {
 				if (event.getStateChange() == ItemEvent.SELECTED) {
 					String item = (String) event.getItem();
-					if ("---".equals(item)) {
+					if (OMNI.EMPTYCOMBO.equals(item)) {
 						return;
 					}
 					InputStream is = VibeComposerGUI.class
@@ -1407,6 +1411,23 @@ public class VibeComposerGUI extends JFrame
 					vibeComposerGUI.getSize());
 			refreshActual = true;
 			//variationJD.getFrame().setTitle(action);
+		} else if (action.startsWith("ArrangementCommitPanels")) {
+			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
+			if (!OMNI.EMPTYCOMBO.equals(selItem)) {
+				Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
+				Section sec = actualArrangement.getSections().get(secOrder - 1);
+				// parts
+				sec.setMelodyParts(
+						(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(0));
+				sec.setBassParts(
+						(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
+				sec.setChordParts(
+						(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
+				sec.setArpParts(
+						(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
+				sec.setDrumParts(
+						(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
+			}
 		}
 
 		if (!refreshActual) {
@@ -1414,6 +1435,17 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			setActualModel(actualArrangement.convertToActualTableModel());
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
+			List<Section> actualSections = actualArrangement.getSections();
+			if (actualSections != null) {
+				List<String> sectionNamesNumbers = new ArrayList<>();
+				for (int i = 0; i < actualSections.size(); i++) {
+					sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType());
+				}
+				arrSection.removeAllItems();
+				arrSection.addItem(OMNI.EMPTYCOMBO);
+				MidiUtils.addAllToJComboBox(sectionNamesNumbers.toArray(new String[] {}),
+						arrSection);
+			}
 		}
 	}
 
@@ -1449,8 +1481,64 @@ public class VibeComposerGUI extends JFrame
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
+		arrSection = new ScrollComboBox<>();
+		arrSection.addItem(OMNI.EMPTYCOMBO);
+		arrSection.addActionListener(new ActionListener() {
 
-		JButton copySelectedBtn = makeButton("Copy Selected Section", "ArrangementAddLast");
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
+				if (OMNI.EMPTYCOMBO.equals(selItem) || selItem == null || (arrSection.getItemCount()
+						- 1 != actualArrangement.getSections().size())) {
+					return;
+				}
+				System.out.println("Switching panels!");
+				int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
+				Section sec = actualArrangement.getSections().get(sectionOrder);
+				for (int i = 0; i < 5; i++) {
+					JScrollPane pane = getInstPane(i);
+					List<InstPanel> sectionPanels = new ArrayList<>();
+					if (sec.getInstPartList(i) != null) {
+						System.out.println("Found existing! " + i);
+						List<? extends InstPart> ip = sec.getInstPartList(i);
+						for (Component c : ((JPanel) pane.getViewport().getView())
+								.getComponents()) {
+							if (c instanceof InstPanel) {
+								int order = ((InstPanel) c).getPanelOrder();
+								((JPanel) pane.getViewport().getView()).remove(c);
+								InstPanel pCopy = InstPanel.makeInstPanel(i, this);
+								pCopy.setFromInstPart(ip.get(order - 1));
+								sectionPanels.add(pCopy);
+							}
+						}
+					} else {
+						System.out.println("Making copies! " + i);
+						List<? extends InstPanel> panels = getInstList(i);
+						for (Component c : ((JPanel) pane.getViewport().getView())
+								.getComponents()) {
+							if (c instanceof InstPanel) {
+								InstPanel ip = (InstPanel) c;
+								System.out.println("Switching panel!");
+								int order = ip.getPanelOrder();
+								((JPanel) pane.getViewport().getView()).remove(ip);
+								InstPanel p = panels.get(order - 1);
+								InstPanel pCopy = InstPanel.makeInstPanel(i, this);
+								pCopy.setFromInstPart(p.toInstPart(0));
+								sectionPanels.add(pCopy);
+							}
+
+						}
+					}
+
+					sectionPanels.forEach(p -> ((JPanel) pane.getViewport().getView()).add(p));
+					pane.repaint();
+				}
+			}
+
+		});
+
+		JButton commitPanelBtn = makeButton("Commit Inst.", "ArrangementCommitPanels");
+		JButton copySelectedBtn = makeButton("Copy Selected", "ArrangementAddLast");
 
 		JButton removeSelectedBtn = makeButton("Remove All Selected", "ArrangementRemoveLast");
 
@@ -1466,6 +1554,11 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings
 				.add(new JLabel("                                                          "));
 
+
+		arrangementManualOverride = new JCheckBox("Custom", false);
+		arrangementSettings.add(arrangementManualOverride);
+		arrangementSettings.add(arrSection);
+		arrangementSettings.add(commitPanelBtn);
 		arrangementSettings.add(copySelectedBtn);
 		arrangementSettings.add(removeSelectedBtn);
 		arrangementSettings.add(resetArrangementBtn);
@@ -1473,9 +1566,6 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(new JLabel("Seed"));
 		arrangementSeed = new RandomValueButton(0);
 		arrangementSettings.add(arrangementSeed);
-
-		arrangementManualOverride = new JCheckBox("Allow Manual Change", false);
-		arrangementSettings.add(arrangementManualOverride);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -4678,7 +4768,7 @@ public class VibeComposerGUI extends JFrame
 	// -------------- GENERIC INST PANEL METHODS ----------------------------
 
 	public InstPanel addInstPanelToLayout(int inst) {
-		InstPanel ip = makeInstPanel(inst);
+		InstPanel ip = InstPanel.makeInstPanel(inst, this);
 		List<InstPanel> panels = (List<InstPanel>) getInstList(inst);
 		int panelOrder = (panels.size() > 0) ? getValidPanelNumber(panels) : 1;
 
@@ -4690,29 +4780,6 @@ public class VibeComposerGUI extends JFrame
 		}
 		panels.add(ip);
 		((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
-		return ip;
-	}
-
-	private InstPanel makeInstPanel(int inst) {
-
-		InstPanel ip = null;
-		switch (inst) {
-		case 0:
-			ip = new MelodyPanel(this);
-			break;
-		case 1:
-			ip = new BassPanel(this);
-			break;
-		case 2:
-			ip = new ChordPanel(this);
-			break;
-		case 3:
-			ip = new ArpPanel(this);
-			break;
-		case 4:
-			ip = new DrumPanel(this);
-			break;
-		}
 		return ip;
 	}
 
@@ -4734,6 +4801,17 @@ public class VibeComposerGUI extends JFrame
 		for (InstPanel p : panels) {
 			if (!removeMuted || !p.getMuteInst()) {
 				parts.add(p.toInstPart(lastRandomSeed));
+			}
+		}
+		return parts;
+	}
+
+	private List<InstPart> getInstPartsFromCustomSectionInstPanels(int inst) {
+		JPanel panePanel = ((JPanel) getInstPane(inst).getViewport().getView());
+		List<InstPart> parts = new ArrayList<>();
+		for (Component c : panePanel.getComponents()) {
+			if (c instanceof InstPanel) {
+				parts.add(((InstPanel) c).toInstPart(0));
 			}
 		}
 		return parts;

@@ -31,19 +31,12 @@ public class DrumPanel extends InstPanel {
 		instrument.setInstrument(36);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
 
-		initDefaults();
+		initDefaults(l);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(lockInst);
-		this.add(instrument);
-		this.add(removeButton);
-		copyButton.addActionListener(l);
-		this.add(copyButton);
-		randomizeButton.addActionListener(l);
-		this.add(randomizeButton);
+		addDefaultInstrumentControls();
+		addDefaultPanelButtons();
 
 		// pattern business
 		this.add(hitsPerPattern);
@@ -88,7 +81,7 @@ public class DrumPanel extends InstPanel {
 		this.add(patternSeed);
 
 		this.add(new JLabel("Midi ch. 10"));
-
+		
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
 	}

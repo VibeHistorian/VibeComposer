@@ -17,7 +17,7 @@ public class MelodyPanel extends InstPanel {
 		midiChannel.setSelectedItem("1");
 		instrument.initInstPool(instPool);
 		setInstrument(8);
-		initDefaults();
+		initDefaults(l);
 		volSlider.setValue(80);
 		setVelocityMin(80);
 		setVelocityMax(105);
@@ -27,10 +27,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(lockInst);
-		this.add(instrument);
+		addDefaultInstrumentControls();
 
 		this.add(minMaxVelSlider);
 
@@ -48,6 +45,7 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 1"));
 		setPanelOrder(1);
+		
 	}
 
 	public MelodyPanel(ActionListener l) {

@@ -39,22 +39,15 @@ public class ChordPanel extends InstPanel {
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("11");
 
-		initDefaults();
+		initDefaults(l);
 		volSlider.setValue(60);
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(lockInst);
-		this.add(instrument);
+		addDefaultInstrumentControls();
 		this.add(instPoolPicker);
-		this.add(removeButton);
-		copyButton.addActionListener(l);
-		this.add(copyButton);
-		randomizeButton.addActionListener(l);
-		this.add(randomizeButton);
+		addDefaultPanelButtons();
 
 		this.add(new JLabel("    Fill"));
 		this.add(chordSpanFill);
@@ -66,6 +59,7 @@ public class ChordPanel extends InstPanel {
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);
 		this.add(comboPanel);
+		this.add(patternShift);
 
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
@@ -82,11 +76,10 @@ public class ChordPanel extends InstPanel {
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
-		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
-
+		
 
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);

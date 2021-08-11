@@ -28,7 +28,7 @@ public class BassPanel extends InstPanel {
 		instPool = POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
-		initDefaults();
+		initDefaults(l);
 		volSlider.setValue(70);
 		this.add(volSlider);
 		/*this.add(new JLabel("#"));
@@ -36,10 +36,7 @@ public class BassPanel extends InstPanel {
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(lockInst);
-		this.add(instrument);
+		addDefaultInstrumentControls();
 
 		this.add(useRhythm);
 		this.add(alternatingRhythm);
@@ -59,6 +56,7 @@ public class BassPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 9"));
 		setPanelOrder(1);
+		
 	}
 
 	public BassPanel(ActionListener l) {
