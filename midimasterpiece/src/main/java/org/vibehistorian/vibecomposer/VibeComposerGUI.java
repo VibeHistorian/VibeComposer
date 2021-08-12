@@ -366,6 +366,8 @@ public class VibeComposerGUI extends JFrame
 	// - there's nothing here - 
 
 	// chord gen settings
+	JButton chordAddJButton;
+	JButton randomizeChords;
 	JTextField randomChordsToGenerate;
 	JCheckBox randomChordsGenerateOnCompose;
 	JCheckBox randomChordDelay;
@@ -386,6 +388,8 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomChordMaxVel;
 
 	// arp gen settings
+	JButton arpAddJButton;
+	JButton randomizeArps;
 	JTextField randomArpsToGenerate;
 	JCheckBox randomArpsGenerateOnCompose;
 	JCheckBox randomArpTranspose;
@@ -409,6 +413,8 @@ public class VibeComposerGUI extends JFrame
 	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 39, 40 });
 	public static List<Integer> KICK_DRUMS = Arrays.asList(new Integer[] { 35, 36 });
 	public static List<Integer> SNARE_DRUMS = Arrays.asList(new Integer[] { 38, 39, 40 });
+	JButton drumAddJButton;
+	JButton randomizeDrums;
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
 	JCheckBox randomDrumsOverrandomize;
@@ -948,11 +954,11 @@ public class VibeComposerGUI extends JFrame
 		addChords = new JCheckBox("Enable", true);
 		chordSettingsPanel.add(addChords);
 
-		JButton chordAddJButton = makeButton("+Chord", "AddChord");
+		chordAddJButton = makeButton("+Chord", "AddChord");
 		chordSettingsPanel.add(chordAddJButton);
 
 		randomChordsToGenerate = new JTextField("2", 2);
-		JButton randomizeChords = makeButton("Generate Chords:", "RandChords");
+		randomizeChords = makeButton("Generate Chords:", "RandChords");
 		randomChordsGenerateOnCompose = new JCheckBox("on Compose", true);
 		chordSettingsPanel.add(randomizeChords);
 		chordSettingsPanel.add(randomChordsToGenerate);
@@ -1070,11 +1076,11 @@ public class VibeComposerGUI extends JFrame
 		addArps = new JCheckBox("Enable", true);
 		arpsSettingsPanel.add(addArps);
 
-		JButton arpAddJButton = makeButton("  +Arp ", "AddArp");
+		arpAddJButton = makeButton("  +Arp ", "AddArp");
 		arpsSettingsPanel.add(arpAddJButton);
 
 		randomArpsToGenerate = new JTextField("3", 2);
-		JButton randomizeArps = makeButton("Generate Arps:    ", "RandArps");
+		randomizeArps = makeButton("Generate Arps:    ", "RandArps");
 		randomArpsGenerateOnCompose = new JCheckBox("on Compose", true);
 		arpsSettingsPanel.add(randomizeArps);
 		arpsSettingsPanel.add(randomArpsToGenerate);
@@ -1221,11 +1227,11 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(addDrums);
 		//drumsPanel.add(drumInst);
 
-		JButton drumAddJButton = makeButton(" +Drum ", "AddDrum");
+		drumAddJButton = makeButton(" +Drum ", "AddDrum");
 		drumsPanel.add(drumAddJButton);
 
 		randomDrumsToGenerate = new JTextField("8", 2);
-		JButton randomizeDrums = makeButton("Generate Drums: ", "RandDrums");
+		randomizeDrums = makeButton("Generate Drums: ", "RandDrums");
 		randomDrumsGenerateOnCompose = new JCheckBox("on Compose", true);
 		drumsPanel.add(randomizeDrums);
 		drumsPanel.add(randomDrumsToGenerate);
@@ -1493,6 +1499,9 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				/*if (!e.getActionCommand().equalsIgnoreCase("comboBoxChanged")) {
+					return;
+				}*/
 				String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
 				if (selItem == null || (arrSection.getItemCount() - 1 != actualArrangement
 						.getSections().size())) {
@@ -1538,7 +1547,8 @@ public class VibeComposerGUI extends JFrame
 								if (c instanceof InstPanel) {
 									int order = ((InstPanel) c).getPanelOrder();
 									((JPanel) pane.getViewport().getView()).remove(c);
-									InstPanel pCopy = InstPanel.makeInstPanel(i, this);
+									InstPanel pCopy = InstPanel.makeInstPanel(i,
+											VibeComposerGUI.this);
 									if (i == 4) {
 										pCopy.getSoloMuter()
 												.setVisible(!combineDrumTracks.isSelected());
@@ -1558,7 +1568,8 @@ public class VibeComposerGUI extends JFrame
 									int order = ip.getPanelOrder();
 									((JPanel) pane.getViewport().getView()).remove(ip);
 									InstPanel p = panels.get(order - 1);
-									InstPanel pCopy = InstPanel.makeInstPanel(i, this);
+									InstPanel pCopy = InstPanel.makeInstPanel(i,
+											VibeComposerGUI.this);
 									if (i == 4) {
 										pCopy.getSoloMuter()
 												.setVisible(!combineDrumTracks.isSelected());
@@ -1571,6 +1582,7 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						sectionPanels.forEach(p -> {
+							p.toggleVisibilityCopyRemove(false);
 							p.setVisible(false);
 							((JPanel) pane.getViewport().getView()).add(p);
 						});
@@ -1579,6 +1591,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				arrangementMiddleColoredPanel.repaint();
 				addedPanels.forEach(p -> p.setVisible(true));
+				toggleButtonVisibilityForPanels();
 				for (int i = 0; i < 5; i++) {
 					JScrollPane pane = getInstPane(i);
 					pane.repaint();
@@ -2989,6 +3002,19 @@ public class VibeComposerGUI extends JFrame
 			pack();
 		}*/
 
+	}
+
+	private void toggleButtonVisibilityForPanels() {
+		toggleButtonVisibilityForPanels(OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem()));
+	}
+
+	private void toggleButtonVisibilityForPanels(boolean isOriginal) {
+		chordAddJButton.setVisible(isOriginal);
+		arpAddJButton.setVisible(isOriginal);
+		drumAddJButton.setVisible(isOriginal);
+		randomizeChords.setVisible(isOriginal);
+		randomizeArps.setVisible(isOriginal);
+		randomizeDrums.setVisible(isOriginal);
 	}
 
 	private void closeMidiDevice() {
