@@ -264,6 +264,7 @@ public class Arrangement {
 		sections = new ArrayList<>(Arrays.asList(tempSections));
 		scrollableArrangementTable
 				.setModel(isActual ? convertToActualTableModel() : convertToTableModel());
+		VibeComposerGUI.recolorAllVariationButtons();
 		scrollableArrangementTable.repaint();
 
 	}

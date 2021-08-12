@@ -1904,6 +1904,17 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
+	public static void recolorAllVariationButtons() {
+		for (Component c : variationButtonsPanel.getComponents()) {
+			if (c instanceof JButton) {
+				JButton butt = (JButton) c;
+				int secOrder = Integer.valueOf(butt.getText().split(" ")[1]);
+				Section sec = actualArrangement.getSections().get(secOrder - 1);
+				recolorVariationPopupButton(butt, sec);
+			}
+		}
+	}
+
 	public static void recolorVariationPopupButton(JButton butt, Section sec) {
 		int count = (sec.getRiskyVariations() != null)
 				? (int) sec.getRiskyVariations().stream().filter(e -> e.booleanValue()).count()
