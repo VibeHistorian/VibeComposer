@@ -172,6 +172,7 @@ public abstract class InstPanel extends JPanel {
 
 		hitsPerPattern.setShowTextInKnob(b);
 		chordSpan.setShowTextInKnob(b);
+		transpose.setShowTextInKnob(b);
 		pauseChance.setShowTextInKnob(b);
 		exceptionChance.setShowTextInKnob(b);
 		patternRepeat.setShowTextInKnob(b);

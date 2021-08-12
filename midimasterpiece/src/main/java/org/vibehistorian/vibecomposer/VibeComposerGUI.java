@@ -265,6 +265,8 @@ public class VibeComposerGUI extends JFrame
 	// arrangement
 	public static Arrangement arrangement;
 	public static Arrangement actualArrangement;
+
+	JPanel arrangementSettings;
 	KnobPanel arrangementVariationChance;
 	KnobPanel arrangementPartVariationChance;
 	JCheckBox arrangementCustom;
@@ -272,7 +274,8 @@ public class VibeComposerGUI extends JFrame
 	RandomValueButton arrangementSeed;
 	JCheckBox useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
-	ScrollComboBox<String> arrSection;
+	public static ScrollComboBox<String> arrSection;
+	JPanel arrangementMiddleColoredPanel;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -1371,6 +1374,17 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementActualTable.setModel(model);
 		scrollableArrangementActualTable.setRowSelectionAllowed(false);
 		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+		List<Section> actualSections = actualArrangement.getSections();
+		if (actualSections != null) {
+			List<String> sectionNamesNumbers = new ArrayList<>();
+			for (int i = 0; i < actualSections.size(); i++) {
+				sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType());
+			}
+			arrSection.removeAllItems();
+			arrSection.addItem(OMNI.EMPTYCOMBO);
+			MidiUtils.addAllToJComboBox(sectionNamesNumbers.toArray(new String[] {}), arrSection);
+			arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
+		}
 	}
 
 	private void handleArrangementAction(String action, int seed, int maxLength) {
@@ -1440,17 +1454,6 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			setActualModel(actualArrangement.convertToActualTableModel());
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
-			List<Section> actualSections = actualArrangement.getSections();
-			if (actualSections != null) {
-				List<String> sectionNamesNumbers = new ArrayList<>();
-				for (int i = 0; i < actualSections.size(); i++) {
-					sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType());
-				}
-				arrSection.removeAllItems();
-				arrSection.addItem(OMNI.EMPTYCOMBO);
-				MidiUtils.addAllToJComboBox(sectionNamesNumbers.toArray(new String[] {}),
-						arrSection);
-			}
 		}
 	}
 
@@ -1467,13 +1470,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
-		JPanel arrangementSettings = new JPanel();
+		arrangementSettings = new JPanel();
 		arrangementSettings.setOpaque(false);
 		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		arrangementSettings.add(new JLabel("ARRANGEMENT"));
 
-		useArrangement = new JCheckBox("Enable", false);
-		arrangementSettings.add(useArrangement);
 
 		pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
@@ -1500,6 +1501,7 @@ public class VibeComposerGUI extends JFrame
 				List<InstPanel> addedPanels = new ArrayList<>();
 				if (OMNI.EMPTYCOMBO.equals(selItem)) {
 					System.out.println("Resetting to normal panels!");
+					arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 					for (int i = 0; i < 5; i++) {
 						JScrollPane pane = getInstPane(i);
 						List<? extends InstPanel> panels = getInstList(i);
@@ -1510,15 +1512,19 @@ public class VibeComposerGUI extends JFrame
 								//System.out.println("Switching panel!");
 								((JPanel) pane.getViewport().getView()).remove(ip);
 							}
-							panels.forEach(p -> {
-								((JPanel) pane.getViewport().getView()).add(p);
-								p.setVisible(false);
-							});
-							addedPanels.addAll(panels);
 						}
+						panels.forEach(p -> {
+							((JPanel) pane.getViewport().getView()).add(p);
+							p.setVisible(false);
+							//p.setBackground(panelColorLow.darker());
+						});
+						addedPanels.addAll(panels);
 					}
 				} else {
 					System.out.println("Switching panels!");
+					arrangementMiddleColoredPanel
+							.setBackground(isDarkMode ? darkModeUIColor.darker().darker()
+									: lightModeUIColor.darker().darker());
 					int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
 					Section sec = actualArrangement.getSections().get(sectionOrder);
 					for (int i = 0; i < 5; i++) {
@@ -1565,12 +1571,13 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						sectionPanels.forEach(p -> {
-							((JPanel) pane.getViewport().getView()).add(p);
 							p.setVisible(false);
+							((JPanel) pane.getViewport().getView()).add(p);
 						});
 						addedPanels.addAll(sectionPanels);
 					}
 				}
+				arrangementMiddleColoredPanel.repaint();
 				addedPanels.forEach(p -> p.setVisible(true));
 				for (int i = 0; i < 5; i++) {
 					JScrollPane pane = getInstPane(i);
@@ -1594,7 +1601,12 @@ public class VibeComposerGUI extends JFrame
 		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 30);
 		arrangementSettings.add(arrangementPartVariationChance);
 
-		arrangementSettings.add(new JLabel("                                      "));
+		useArrangement = new JCheckBox("Enable", false);
+		arrangementSettings.add(useArrangement);
+
+		arrangementMiddleColoredPanel = new JPanel();
+		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
+		arrangementSettings.add(arrangementMiddleColoredPanel);
 
 
 		arrangementCustom = new JCheckBox("Custom", false);
@@ -2874,16 +2886,7 @@ public class VibeComposerGUI extends JFrame
 		pack();
 	}
 
-	private void switchDarkMode() {
-		System.out.println("Switching dark mode!");
-		if (isDarkMode) {
-			FlatIntelliJLaf.install();
-		} else {
-			FlatDarculaLaf.install();
-		}
-		//UIManager.put("TabbedPane.contentOpaque", false);
-
-		isDarkMode = !isDarkMode;
+	private void updateGlobalUI() {
 		ColorUIResource r = null;
 		if (!isDarkMode) {
 			r = new ColorUIResource(new Color(193, 203, 208));
@@ -2895,6 +2898,22 @@ public class VibeComposerGUI extends JFrame
 		UIManager.put("ComboBox.background", r);
 		UIManager.put("TextField.background", r);
 		SwingUtilities.updateComponentTreeUI(this);
+	}
+
+	private void switchDarkMode() {
+
+		arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
+
+		System.out.println("Switching dark mode!");
+		if (isDarkMode) {
+			FlatIntelliJLaf.install();
+		} else {
+			FlatDarculaLaf.install();
+		}
+		//UIManager.put("TabbedPane.contentOpaque", false);
+
+		isDarkMode = !isDarkMode;
+		updateGlobalUI();
 
 		toggledUIColor = (isDarkMode) ? darkModeUIColor : lightModeUIColor;
 
@@ -2922,9 +2941,14 @@ public class VibeComposerGUI extends JFrame
 
 		panelColorHigh = UIManager.getColor("Panel.background").darker();
 		panelColorLow = UIManager.getColor("Panel.background").brighter();
-		if (!isDarkMode) {
-			panelColorHigh.brighter();
-			panelColorLow.brighter();
+		/*if (!isDarkMode) {
+			panelColorHigh = panelColorHigh.brighter();
+			panelColorLow = panelColorLow.brighter();
+		}*/
+		if (OMNI.EMPTYCOMBO.equals(arrSection.getItemAt(arrSection.getSelectedIndex()))) {
+			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
+		} else {
+			arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
 		}
 
 
@@ -3124,8 +3148,6 @@ public class VibeComposerGUI extends JFrame
 
 		currentMidi = null;
 
-		setActualModel(MidiGenerator.gc.getActualArrangement().convertToActualTableModel());
-
 		actualArrangement = new Arrangement();
 		actualArrangement.setPreviewChorus(false);
 		actualArrangement.getSections().clear();
@@ -3133,6 +3155,8 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.getSections().add(sec.deepCopy());
 		}
 
+
+		setActualModel(actualArrangement.convertToActualTableModel());
 		refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
