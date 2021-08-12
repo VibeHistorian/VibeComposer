@@ -254,7 +254,7 @@ public class Arrangement {
 		this.previewChorus = previewChorus;
 	}
 
-	public void resortByIndexes(JTable scrollableArrangementTable) {
+	public void resortByIndexes(JTable scrollableArrangementTable, boolean isActual) {
 		TableModel m = scrollableArrangementTable.getModel();
 		int[] indexes = new int[m.getColumnCount()];
 		Section[] tempSections = new Section[m.getColumnCount()];
@@ -262,6 +262,8 @@ public class Arrangement {
 			tempSections[i] = sections.get(scrollableArrangementTable.convertColumnIndexToModel(i));
 		}
 		sections = new ArrayList<>(Arrays.asList(tempSections));
+		scrollableArrangementTable
+				.setModel(isActual ? convertToActualTableModel() : convertToTableModel());
 		scrollableArrangementTable.repaint();
 
 	}
@@ -319,9 +321,9 @@ public class Arrangement {
 			overridden = false;
 			setFromModel(tbl);
 		}*/
-		if (column != tbl.convertColumnIndexToModel(column)) {
-			resortByIndexes(tbl);
-		}
+		/*if (column != tbl.convertColumnIndexToModel(column)) {
+			resortByIndexes(tbl, isActual);
+		}*/
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
@@ -340,7 +342,7 @@ public class Arrangement {
 			overridden = false;
 			setFromModel(tbl);
 		}*/
-		resortByIndexes(tbl);
+		//resortByIndexes(tbl, isActual);
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));

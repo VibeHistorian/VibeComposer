@@ -1727,7 +1727,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				System.out.println("MOVED");
-				arrangement.resortByIndexes(scrollableArrangementTable);
+				arrangement.resortByIndexes(scrollableArrangementTable, false);
 				arrangementTableColumnDragging = false;
 			}
 		});
@@ -1824,7 +1824,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				System.out.println("MOVED");
-				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true);
 				actualArrangementTableColumnDragging = false;
 			}
 		});
