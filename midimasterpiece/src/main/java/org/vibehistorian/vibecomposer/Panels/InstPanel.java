@@ -182,9 +182,9 @@ public abstract class InstPanel extends JPanel {
 
 	}
 
-	public void toggleVisibilityCopyRemove(boolean isOriginal) {
-		removeButton.setVisible(isOriginal);
-		copyButton.setVisible(isOriginal);
+	public void toggleEnabledCopyRemove(boolean isOriginal) {
+		removeButton.setEnabled(isOriginal);
+		copyButton.setEnabled(isOriginal);
 	}
 
 	public void setDefaultsFromInstPart(InstPart part) {

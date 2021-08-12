@@ -30,7 +30,7 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
-public abstract class InstPart {
+public abstract class InstPart implements Cloneable {
 	protected int instrument = 46;
 
 	protected int hitsPerPattern = 8;
@@ -309,6 +309,16 @@ public abstract class InstPart {
 
 	public void setCustomPattern(List<Integer> customPattern) {
 		this.customPattern = customPattern;
+	}
+
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }

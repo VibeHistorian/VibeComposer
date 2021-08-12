@@ -948,10 +948,9 @@ public class VibeComposerGUI extends JFrame
 		chordScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		JPanel chordSettingsPanel = new JPanel();
-		chordSettingsPanel.add(new JLabel("CHORDS"));
 		chordSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		addChords = new JCheckBox("Enable", true);
+		addChords = new JCheckBox("CHORDS", true);
 		chordSettingsPanel.add(addChords);
 
 		chordAddJButton = makeButton("+Chord", "AddChord");
@@ -1071,9 +1070,8 @@ public class VibeComposerGUI extends JFrame
 		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		JPanel arpsSettingsPanel = new JPanel();
-		arpsSettingsPanel.add(new JLabel("ARPS      "));
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addArps = new JCheckBox("Enable", true);
+		addArps = new JCheckBox("ARPS", true);
 		arpsSettingsPanel.add(addArps);
 
 		arpAddJButton = makeButton("  +Arp ", "AddArp");
@@ -1221,9 +1219,8 @@ public class VibeComposerGUI extends JFrame
 		drumScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		JPanel drumsPanel = new JPanel();
-		drumsPanel.add(new JLabel("DRUMS "));
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addDrums = new JCheckBox("Enable", true);
+		addDrums = new JCheckBox("DRUMS", true);
 		drumsPanel.add(addDrums);
 		//drumsPanel.add(drumInst);
 
@@ -1453,6 +1450,18 @@ public class VibeComposerGUI extends JFrame
 				sec.setDrumParts(
 						(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
 			}
+		} else if (action.startsWith("ArrangementClearPanels")) {
+			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
+			if (!OMNI.EMPTYCOMBO.equals(selItem)) {
+				Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
+				Section sec = actualArrangement.getSections().get(secOrder - 1);
+				// parts
+				sec.setMelodyParts(null);
+				sec.setBassParts(null);
+				sec.setChordParts(null);
+				sec.setArpParts(null);
+				sec.setDrumParts(null);
+			}
 		}
 
 		if (!refreshActual) {
@@ -1479,7 +1488,10 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings = new JPanel();
 		arrangementSettings.setOpaque(false);
 		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		arrangementSettings.add(new JLabel("ARRANGEMENT"));
+
+
+		useArrangement = new JCheckBox("ARRANGEMENT", false);
+		arrangementSettings.add(useArrangement);
 
 
 		pieceLength = new JTextField("12", 2);
@@ -1540,7 +1552,7 @@ public class VibeComposerGUI extends JFrame
 						JScrollPane pane = getInstPane(i);
 						List<InstPanel> sectionPanels = new ArrayList<>();
 						if (sec.getInstPartList(i) != null) {
-							System.out.println("Creating panels from section parts! " + i);
+							//System.out.println("Creating panels from section parts! " + i);
 							List<? extends InstPart> ip = sec.getInstPartList(i);
 							for (Component c : ((JPanel) pane.getViewport().getView())
 									.getComponents()) {
@@ -1558,7 +1570,7 @@ public class VibeComposerGUI extends JFrame
 								}
 							}
 						} else {
-							System.out.println("Making copies of normal panels! " + i);
+							//System.out.println("Making copies of normal panels! " + i);
 							List<? extends InstPanel> panels = getInstList(i);
 							for (Component c : ((JPanel) pane.getViewport().getView())
 									.getComponents()) {
@@ -1582,7 +1594,7 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						sectionPanels.forEach(p -> {
-							p.toggleVisibilityCopyRemove(false);
+							p.toggleEnabledCopyRemove(false);
 							p.setVisible(false);
 							((JPanel) pane.getViewport().getView()).add(p);
 						});
@@ -1591,7 +1603,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				arrangementMiddleColoredPanel.repaint();
 				addedPanels.forEach(p -> p.setVisible(true));
-				toggleButtonVisibilityForPanels();
+				toggleButtonEnabledForPanels();
 				for (int i = 0; i < 5; i++) {
 					JScrollPane pane = getInstPane(i);
 					pane.repaint();
@@ -1613,9 +1625,6 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementVariationChance);
 		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 30);
 		arrangementSettings.add(arrangementPartVariationChance);
-
-		useArrangement = new JCheckBox("Enable", false);
-		arrangementSettings.add(useArrangement);
 
 		arrangementMiddleColoredPanel = new JPanel();
 		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
@@ -3004,17 +3013,17 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void toggleButtonVisibilityForPanels() {
-		toggleButtonVisibilityForPanels(OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem()));
+	private void toggleButtonEnabledForPanels() {
+		toggleButtonEnabledForPanels(OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem()));
 	}
 
-	private void toggleButtonVisibilityForPanels(boolean isOriginal) {
-		chordAddJButton.setVisible(isOriginal);
-		arpAddJButton.setVisible(isOriginal);
-		drumAddJButton.setVisible(isOriginal);
-		randomizeChords.setVisible(isOriginal);
-		randomizeArps.setVisible(isOriginal);
-		randomizeDrums.setVisible(isOriginal);
+	private void toggleButtonEnabledForPanels(boolean isOriginal) {
+		chordAddJButton.setEnabled(isOriginal);
+		arpAddJButton.setEnabled(isOriginal);
+		drumAddJButton.setEnabled(isOriginal);
+		randomizeChords.setEnabled(isOriginal);
+		randomizeArps.setEnabled(isOriginal);
+		randomizeDrums.setEnabled(isOriginal);
 	}
 
 	private void closeMidiDevice() {

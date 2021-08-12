@@ -2501,6 +2501,8 @@ public class MidiGenerator implements JMC {
 		boolean genVars = variations == null;
 		Phrase arpPhrase = new Phrase();
 
+		ArpPart apClone = (ArpPart) ap.clone();
+
 		Map<String, List<Integer>> arpMap = generateArpMap(ap.getPatternSeed(),
 				ap.equals(gc.getArpParts().get(0)), ap);
 
@@ -2679,7 +2681,11 @@ public class MidiGenerator implements JMC {
 			Mod.crescendo(arpPhrase, arpPhrase.getEndTime() * 3 / 4, arpPhrase.getEndTime(), 55,
 					110);
 		}
-
+		ap.setPatternShift(apClone.getPatternShift());
+		//dp.setVelocityPattern(false);
+		ap.setChordSpan(apClone.getChordSpan());
+		ap.setHitsPerPattern(apClone.getHitsPerPattern());
+		ap.setPatternRepeat(apClone.getPatternRepeat());
 		arpPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
 		return arpPhrase;
 	}
@@ -2690,6 +2696,8 @@ public class MidiGenerator implements JMC {
 			List<Integer> variations) {
 		boolean genVars = variations == null;
 		Phrase drumPhrase = new Phrase();
+
+		DrumPart dpClone = (DrumPart) dp.clone();
 
 		sectionForcedDynamics &= (dp.getInstrument() < 38 && dp.getInstrument() > 40);
 
