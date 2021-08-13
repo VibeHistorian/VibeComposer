@@ -2422,6 +2422,7 @@ public class MidiGenerator implements JMC {
 				//System.out.println("Split time: " + splitTime);
 
 				List<Integer> pattern = cp.getFinalPatternCopy();
+				Collections.rotate(pattern, cp.getPatternShift());
 				pattern = pattern.subList(0, cp.getHitsPerPattern());
 				double duration = progressionDurations.get(j) / pattern.size();
 				double durationCounter = 0;
@@ -2960,6 +2961,7 @@ public class MidiGenerator implements JMC {
 			ap.setPatternRepeat(1);
 		} else {
 			arpPausesPattern = ap.getFinalPatternCopy();
+			Collections.rotate(arpPausesPattern, ap.getPatternShift());
 			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		}
 

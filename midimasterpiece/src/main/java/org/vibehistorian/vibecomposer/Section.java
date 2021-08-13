@@ -296,6 +296,14 @@ public class Section {
 		return sec;
 	}
 
+	public void resetCustomizedParts() {
+		setMelodyParts(null);
+		setBassParts(null);
+		setChordParts(null);
+		setArpParts(null);
+		setDrumParts(null);
+	}
+
 	public boolean hasPresence() {
 		for (int i = 0; i < 5; i++) {
 			if (countPresence(i) > 0) {
