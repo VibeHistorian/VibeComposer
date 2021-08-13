@@ -1624,8 +1624,11 @@ public class VibeComposerGUI extends JFrame
 										pCopy.getSoloMuter()
 												.setVisible(!combineDrumTracks.isSelected());
 									} else {
-										p.getInstrumentBox().setEnabled(false);
+										pCopy.getSoloMuter().setVisible(false);
+										pCopy.getInstrumentBox().setEnabled(false);
 									}
+									pCopy.getToggleableComponents()
+											.forEach(g -> g.setVisible(isFullMode));
 									pCopy.setFromInstPart(p.toInstPart(0));
 									sectionPanels.add(pCopy);
 								}
@@ -3765,27 +3768,29 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
 				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
-			List<InstComboBox> chordInsts = chordPanels.stream().map(e -> e.getInstrumentBox())
-					.collect(Collectors.toList());
+			List<InstPanel> affectedChordPanels = getAffectedPanels(2);
+			List<InstComboBox> chordInsts = affectedChordPanels.stream()
+					.map(e -> e.getInstrumentBox()).collect(Collectors.toList());
 			createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false, null);
 			if (!randomizeInstOnComposeOrGen.isSelected()) {
-				for (int i = 0; i < chordInsts.size() && i < chordPanels.size(); i++) {
-					chordPanels.get(i).getInstrumentBox()
+				for (int i = 0; i < chordInsts.size() && i < affectedChordPanels.size(); i++) {
+					affectedChordPanels.get(i).getInstrumentBox()
 							.initInstPool(chordInsts.get(i).getInstPool());
-					chordPanels.get(i).setInstPool(chordInsts.get(i).getInstPool());
-					chordPanels.get(i).setInstrument(chordInsts.get(i).getInstrument());
+					affectedChordPanels.get(i).setInstPool(chordInsts.get(i).getInstPool());
+					affectedChordPanels.get(i).setInstrument(chordInsts.get(i).getInstrument());
 				}
 			}
 			tabPanePossibleChange = true;
 		}
 		if (ae.getActionCommand() == "RandArps" || (ae.getActionCommand() == "Compose"
 				&& addArps.isSelected() && randomArpsGenerateOnCompose.isSelected())) {
-			List<Integer> arpInsts = arpPanels.stream().map(e -> e.getInstrument())
+			List<InstPanel> affectedArpPanels = getAffectedPanels(3);
+			List<Integer> arpInsts = affectedArpPanels.stream().map(e -> e.getInstrument())
 					.collect(Collectors.toList());
 			createRandomArpPanels(Integer.valueOf(randomArpsToGenerate.getText()), false, null);
 			if (!randomizeInstOnComposeOrGen.isSelected()) {
-				for (int i = 0; i < arpInsts.size() && i < arpPanels.size(); i++) {
-					arpPanels.get(i).setInstrument(arpInsts.get(i));
+				for (int i = 0; i < arpInsts.size() && i < affectedArpPanels.size(); i++) {
+					affectedArpPanels.get(i).setInstrument(arpInsts.get(i));
 				}
 			}
 			tabPanePossibleChange = true;
