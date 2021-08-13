@@ -4057,7 +4057,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "ClearMelody") {
-			melodyPanels.forEach(e -> e.setPatternSeed(0));
+			getAffectedPanels(0).forEach(e -> e.setPatternSeed(0));
 		}
 
 		if (ae.getActionCommand() == "CopySeed") {
@@ -4148,7 +4148,7 @@ public class VibeComposerGUI extends JFrame
 		if (ae.getActionCommand() == "ClearChordPatterns")
 
 		{
-			for (ChordPanel cp : chordPanels) {
+			for (InstPanel cp : getAffectedPanels(3)) {
 				cp.setPatternSeed(0);
 				cp.setPattern(RhythmPattern.FULL);
 
@@ -4196,7 +4196,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "ClearArpPatterns") {
-			for (ArpPanel ap : arpPanels) {
+			for (InstPanel ap : getAffectedPanels(3)) {
 				ap.setPatternSeed(0);
 				ap.setPattern(RhythmPattern.FULL);
 
