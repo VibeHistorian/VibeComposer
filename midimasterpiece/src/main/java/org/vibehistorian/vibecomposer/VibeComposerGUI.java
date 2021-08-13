@@ -1623,6 +1623,8 @@ public class VibeComposerGUI extends JFrame
 									if (i == 4) {
 										pCopy.getSoloMuter()
 												.setVisible(!combineDrumTracks.isSelected());
+									} else {
+										p.getInstrumentBox().setEnabled(false);
 									}
 									pCopy.setFromInstPart(p.toInstPart(0));
 									sectionPanels.add(pCopy);
@@ -1633,6 +1635,7 @@ public class VibeComposerGUI extends JFrame
 
 						sectionPanels.forEach(p -> {
 							p.toggleEnabledCopyRemove(false);
+
 							p.setVisible(false);
 							((JPanel) pane.getViewport().getView()).add(p);
 						});
@@ -3691,10 +3694,12 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
 				& randomizeChordStrumsOnCompose.isSelected())) {
-			for (ChordPanel p : chordPanels) {
-				p.setStrum(selectRandomStrumByStruminess());
-				if (p.getStretchEnabled() && p.getChordNotesStretch() > 4 && p.getStrum() > 499) {
-					p.setStrum(p.getStrum() / 2);
+			for (InstPanel p : getAffectedPanels(3)) {
+				ChordPanel cp = (ChordPanel) p;
+				cp.setStrum(selectRandomStrumByStruminess());
+				if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
+						&& cp.getStrum() > 499) {
+					cp.setStrum(cp.getStrum() / 2);
 				}
 			}
 
