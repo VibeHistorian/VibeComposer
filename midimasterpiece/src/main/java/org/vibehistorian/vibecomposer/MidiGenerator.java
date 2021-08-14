@@ -1447,17 +1447,18 @@ public class MidiGenerator implements JMC {
 			int usedMeasures = sec.getMeasures();
 
 			// reset back to normal?
+			boolean sectionChordsReplaced = false;
 			if (riskyVariations.get(1)) {
 				System.out.println("Risky Variation: Chord Swap!");
 				rootProgression = melodyBasedRootProgression;
 				chordProgression = melodyBasedChordProgression;
 				progressionDurations = actualDurations;
 			} else {
-				boolean replaced = false;
+
 				if (sec.isCustomChordsDurationsEnabled()) {
-					replaced = replaceWithSectionCustomChordDurations(sec);
+					sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
 				}
-				if (!replaced) {
+				if (!sectionChordsReplaced) {
 					rootProgression = generatedRootProgression;
 					chordProgression = actualProgression;
 					progressionDurations = actualDurations;
@@ -1510,7 +1511,8 @@ public class MidiGenerator implements JMC {
 						List<int[]> usedRoots = rootProgression;
 
 						// if n-1, do not also swap melody
-						if (riskyVariations.get(2) && !riskyVariations.get(0)) {
+						if (riskyVariations.get(2) && !riskyVariations.get(0)
+								&& !sectionChordsReplaced) {
 							usedMelodyProg = melodyBasedChordProgression;
 							usedRoots = melodyBasedRootProgression;
 							System.out.println("Risky Variation: Melody Swap!");

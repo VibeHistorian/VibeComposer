@@ -459,8 +459,8 @@ public class VibeComposerGUI extends JFrame
 	int firstChord = 0;
 	int lastChord = 0;
 	JCheckBox userChordsEnabled;
-	JTextField userChords;
-	JTextField userChordsDurations;
+	public static JTextField userChords;
+	public static JTextField userChordsDurations;
 
 	// randomization button settings
 	JCheckBox randomizeInstOnComposeOrGen;

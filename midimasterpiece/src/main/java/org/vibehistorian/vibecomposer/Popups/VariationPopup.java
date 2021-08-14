@@ -134,10 +134,14 @@ public class VariationPopup {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
-		userChords = new JTextField(sec.getCustomChords(), 23);
+		userChords = new JTextField(sec.isCustomChordsDurationsEnabled() ? sec.getCustomChords()
+				: VibeComposerGUI.userChords.getText(), 23);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
-		userChordsDurations = new JTextField(sec.getCustomDurations(), 9);
+		userChordsDurations = new JTextField(
+				sec.isCustomChordsDurationsEnabled() ? sec.getCustomDurations()
+						: VibeComposerGUI.userChordsDurations.getText(),
+				9);
 		customChordsDurationsPanel.add(new JLabel("Chord durations:"));
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

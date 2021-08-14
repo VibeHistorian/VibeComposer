@@ -45,6 +45,7 @@ public class DrumPanel extends InstPanel {
 				.setTickThresholds(Arrays.asList(new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32 }));
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
+		pattern.setScrollEnabled(false);
 		this.add(pattern);
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
@@ -66,6 +67,7 @@ public class DrumPanel extends InstPanel {
 
 		this.add(swingPercent);
 		this.add(new JLabel("Fill"));
+		chordSpanFill.setScrollEnabled(false);
 		this.add(chordSpanFill);
 
 
@@ -81,7 +83,7 @@ public class DrumPanel extends InstPanel {
 		this.add(patternSeed);
 
 		this.add(new JLabel("Midi ch. 10"));
-		
+
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
 	}
