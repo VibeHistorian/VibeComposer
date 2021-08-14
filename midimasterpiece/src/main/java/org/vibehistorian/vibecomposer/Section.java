@@ -304,6 +304,11 @@ public class Section {
 		setDrumParts(null);
 	}
 
+	public boolean hasCustomizedParts() {
+		return melodyParts != null || bassParts != null || chordParts != null || arpParts != null
+				|| drumParts != null;
+	}
+
 	public boolean hasPresence() {
 		for (int i = 0; i < 5; i++) {
 			if (countPresence(i) > 0) {

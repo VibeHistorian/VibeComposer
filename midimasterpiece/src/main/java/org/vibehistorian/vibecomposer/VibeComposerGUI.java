@@ -1049,9 +1049,9 @@ public class VibeComposerGUI extends JFrame
 			if (i > 0) {
 				melodyPanel.setPauseChance(60);
 				melodyPanel.setMuteInst(true);
-				melodyPanel.getVolSlider().setVisible(false);
-				melodyPanel.getSoloMuter().setVisible(false);
-				melodyPanel.getInstrumentBox().setVisible(false);
+				melodyPanel.getVolSlider().setEnabled(false);
+				melodyPanel.getSoloMuter().setEnabled(false);
+				melodyPanel.getInstrumentBox().setEnabled(false);
 				melodyPanel.setVelocityMax(80);
 				melodyPanel.setVelocityMin(63);
 
@@ -1511,16 +1511,25 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementActualTable.setModel(model);
 		scrollableArrangementActualTable.setRowSelectionAllowed(false);
 		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+		resetArrSection();
+		arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
+	}
+
+	public static void resetArrSection() {
 		List<Section> actualSections = actualArrangement.getSections();
 		if (actualSections != null) {
 			List<String> sectionNamesNumbers = new ArrayList<>();
 			for (int i = 0; i < actualSections.size(); i++) {
-				sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType());
+				Section sec = actualSections.get(i);
+				String suffix = "";
+				if (sec.hasCustomizedParts()) {
+					suffix = "*";
+				}
+				sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType() + suffix);
 			}
 			arrSection.removeAllItems();
 			arrSection.addItem(OMNI.EMPTYCOMBO);
 			MidiUtils.addAllToJComboBox(sectionNamesNumbers.toArray(new String[] {}), arrSection);
-			arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
 		}
 	}
 
@@ -1598,6 +1607,10 @@ public class VibeComposerGUI extends JFrame
 				default:
 					break;
 				}
+				if (instrumentTabPane.getSelectedIndex() < 5) {
+					resetArrSection();
+					arrSection.setSelectedIndex(secOrder);
+				}
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
@@ -1669,6 +1682,7 @@ public class VibeComposerGUI extends JFrame
 					return;
 				}
 				List<InstPanel> addedPanels = new ArrayList<>();
+
 				if (OMNI.EMPTYCOMBO.equals(selItem)) {
 					System.out.println("Resetting to normal panels!");
 					arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
@@ -1710,10 +1724,6 @@ public class VibeComposerGUI extends JFrame
 									((JPanel) pane.getViewport().getView()).remove(c);
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
-									if (i == 4) {
-										pCopy.getSoloMuter()
-												.setVisible(!combineDrumTracks.isSelected());
-									}
 									pCopy.setFromInstPart(ip.get(order - 1));
 									sectionPanels.add(pCopy);
 								}
@@ -1731,10 +1741,6 @@ public class VibeComposerGUI extends JFrame
 									InstPanel p = panels.get(order - 1);
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
-									pCopy.getSoloMuter().setVisible(false);
-									pCopy.getInstrumentBox().setEnabled(false);
-									pCopy.getToggleableComponents()
-											.forEach(g -> g.setVisible(isFullMode));
 									pCopy.setFromInstPart(p.toInstPart(0));
 									sectionPanels.add(pCopy);
 								}
@@ -1744,7 +1750,9 @@ public class VibeComposerGUI extends JFrame
 
 						sectionPanels.forEach(p -> {
 							p.toggleEnabledCopyRemove(false);
-
+							p.getSoloMuter().setVisible(false);
+							p.getInstrumentBox().setEnabled(false);
+							p.getToggleableComponents().forEach(g -> g.setVisible(isFullMode));
 							p.setVisible(false);
 							((JPanel) pane.getViewport().getView()).add(p);
 						});
