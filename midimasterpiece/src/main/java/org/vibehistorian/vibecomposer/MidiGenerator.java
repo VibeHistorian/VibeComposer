@@ -1262,6 +1262,7 @@ public class MidiGenerator implements JMC {
 
 	public void generateMasterpiece(int mainGeneratorSeed, String fileName) {
 		System.out.println("--- GENERATING MASTERPIECE.. ---");
+		long systemTime = System.currentTimeMillis();
 		trackList.clear();
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
@@ -1910,6 +1911,8 @@ public class MidiGenerator implements JMC {
 		}
 
 		gc.setActualArrangement(arr);
+		System.out.println(
+				"MidiGenerator total (miliseconds): " + (System.currentTimeMillis() - systemTime));
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 

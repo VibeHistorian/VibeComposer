@@ -259,7 +259,7 @@ public class VariationPopup {
 			public void windowClosing(WindowEvent e) {
 				VibeComposerGUI.varPopup = null;
 				VibeComposerGUI.setActualModel(
-						VibeComposerGUI.actualArrangement.convertToActualTableModel());
+						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
 					if (c instanceof JButton) {
 						JButton cbutt = (JButton) c;

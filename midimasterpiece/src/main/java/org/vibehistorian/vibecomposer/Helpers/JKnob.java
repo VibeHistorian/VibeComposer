@@ -184,9 +184,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 
 			if (showTextInKnob) {
-				g2d.setColor(
+				g2d.setColor(OMNI.alphen(
 						(VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.brighter()
-								: VibeComposerGUI.lightModeUIColor.darker().darker());
+								: VibeComposerGUI.lightModeUIColor.darker().darker(),
+						170));
 				String textBase = shownText;
 
 				String text = textBase.substring(textBase.length() / 2) + textBase
@@ -215,6 +216,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 					at.translate(r * Math.cos(Math.PI / 2 - 2 * Math.PI * i / length),
 							r * Math.sin(Math.PI / 2 - 2 * Math.PI * i / length));
 					at.translate(-FONT_SIZE / 2, 0);
+					//at.rotate(Math.PI);
 					Shape glyph = gv.getGlyphOutline(i);
 					Shape transformedGlyph = at.createTransformedShape(glyph);
 					g2d.fill(transformedGlyph);

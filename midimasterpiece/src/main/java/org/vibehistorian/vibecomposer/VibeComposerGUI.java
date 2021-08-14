@@ -1508,11 +1508,17 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void setActualModel(TableModel model) {
+		setActualModel(model, true);
+	}
+
+	public static void setActualModel(TableModel model, boolean reset) {
 		scrollableArrangementActualTable.setModel(model);
 		scrollableArrangementActualTable.setRowSelectionAllowed(false);
 		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
-		resetArrSection();
-		arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
+		if (reset) {
+			resetArrSection();
+		}
+
 	}
 
 	public static void resetArrSection() {
@@ -1535,7 +1541,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void handleArrangementAction(String action, int seed, int maxLength) {
 		boolean refreshActual = false;
-
+		boolean resetArrSectionSelection = true;
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
@@ -1575,6 +1581,7 @@ public class VibeComposerGUI extends JFrame
 							vibeComposerGUI.getLocation().y),
 					vibeComposerGUI.getSize());
 			refreshActual = true;
+			resetArrSectionSelection = false;
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementCommitPanels")) {
 			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
@@ -1610,6 +1617,7 @@ public class VibeComposerGUI extends JFrame
 				if (instrumentTabPane.getSelectedIndex() < 5) {
 					resetArrSection();
 					arrSection.setSelectedIndex(secOrder);
+					resetArrSectionSelection = false;
 				}
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
@@ -1630,6 +1638,9 @@ public class VibeComposerGUI extends JFrame
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		} else {
 			setActualModel(actualArrangement.convertToActualTableModel());
+			if (resetArrSectionSelection) {
+				arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
+			}
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
 	}
@@ -2610,7 +2621,7 @@ public class VibeComposerGUI extends JFrame
 								startPos = slider.getValue();
 							}
 							int newSliderVal = slider.getUpperValue() - startPos;
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(12)) {
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(10)) {
 								stopMidi();
 								if (sequencer != null)
 									composeMidi(true);
@@ -3108,6 +3119,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void composeMidi(boolean regenerate) {
+		long systemTime = System.currentTimeMillis();
 		if (sequencer != null) {
 			sequencer.stop();
 		}
@@ -3246,10 +3258,6 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.getSections().add(sec.deepCopy());
 		}
 
-
-		setActualModel(actualArrangement.convertToActualTableModel());
-		refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
-
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw)) {
@@ -3258,6 +3266,30 @@ public class VibeComposerGUI extends JFrame
 			System.out.println("Failed to write into Random Seed History..");
 		}
 
+		handleMidiStuff(regenerate, relPath, systemTime);
+
+
+		resetArrSectionInBackground();
+	}
+
+	private void resetArrSectionInBackground() {
+		SwingUtilities.invokeLater(new Runnable() {
+
+			@Override
+			public void run() {
+				int arrSectionIndex = arrSection.getSelectedIndex();
+				setActualModel(actualArrangement.convertToActualTableModel());
+				if (arrSectionIndex != 0) {
+					arrSection.setSelectedItem(arrSection.getItemAt(arrSectionIndex));
+				}
+				refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
+			}
+
+		});
+
+	}
+
+	private void handleMidiStuff(boolean regenerate, String relPath, long systemTime) {
 		try {
 			if (sequencer != null) {
 				sequencer.stop();
@@ -3344,7 +3376,7 @@ public class VibeComposerGUI extends JFrame
 
 			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));
 			sequencer.start();  // start the playback
-			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
+			slider.setMaximum(100 + (int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
 			int measureWidth = sliderMeasureWidth();
 			slider.setMajorTickSpacing(measureWidth);
@@ -3432,7 +3464,8 @@ public class VibeComposerGUI extends JFrame
 				needToRecalculateSoloMuters = true;
 				needToRecalculateSoloMutersAfterSequenceGenerated = false;
 			}
-
+			System.out.println("VibeComposerGUI::composeMidi total (miliseconds): "
+					+ (System.currentTimeMillis() - systemTime));
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
 		}
@@ -4891,6 +4924,7 @@ public class VibeComposerGUI extends JFrame
 		actualArrangement = guiConfig.getActualArrangement();
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		setActualModel(actualArrangement.convertToActualTableModel());
+		arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
