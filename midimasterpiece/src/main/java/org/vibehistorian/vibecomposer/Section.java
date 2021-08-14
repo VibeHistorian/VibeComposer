@@ -298,6 +298,10 @@ public class Section {
 		if (getDrumParts() != null) {
 			sec.setDrumParts(getDrumParts());
 		}
+
+		sec.setCustomChords(getCustomChords());
+		sec.setCustomDurations(getCustomDurations());
+		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		return sec;
 	}
 
