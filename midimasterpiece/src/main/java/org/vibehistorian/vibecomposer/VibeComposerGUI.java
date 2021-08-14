@@ -2079,7 +2079,7 @@ public class VibeComposerGUI extends JFrame
 				}
 
 				int extraRed = 0;
-				if (actual) {
+				if (actual && actualArrangement.getSections().size() > col) {
 					double remaining = 255 - color - 1;
 					extraRed += actualArrangement.getSections().get(col)
 							.countVariationsForPartType(row - 2) * remaining;
@@ -3394,6 +3394,7 @@ public class VibeComposerGUI extends JFrame
 			int sectIndex = 0;
 			int realIndex = 1;
 			Section prevSec = null;
+			int sectionMaxText = Math.max(20 - actualArrangement.getSections().size(), 3);
 			while (current < slider.getMaximum()) {
 				String sectionText = "END";
 				Section sec = null;
@@ -3406,11 +3407,17 @@ public class VibeComposerGUI extends JFrame
 					}
 					sizeCounter += arrSec.getMeasures();
 				}
-				sectionText = (sec != null)
-						? (realIndex + ":"
-								+ sec.getType().substring(0, Math.min(7, sec.getType().length()))
-								+ (sec.hasCustomizedParts() ? "*" : ""))
-						: "END";
+				if (sec != null) {
+					int originalLength = sec.getType().length();
+					int showMax = Math.min(sectionMaxText - 1, originalLength);
+					String showLast = (showMax < originalLength)
+							? (sec.getType().charAt(originalLength - 1) + "")
+							: "";
+					sectionText = realIndex + ":" + sec.getType().substring(0, showMax) + showLast
+							+ (sec.hasCustomizedParts() ? "*" : "");
+				} else {
+					sectionText = "END";
+				}
 				if (sec != null && sec == prevSec && sec.getMeasures() > 1) {
 					// do not put into labels for followup measures
 				} else {
@@ -5268,11 +5275,11 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			dp.getComboPanel().reapplyHits();
-			DrumPart panelPart = dp.toDrumPart(lastRandomSeed);
+			/*DrumPart panelPart = dp.toDrumPart(lastRandomSeed);
 			int[] drumPartArray = displayDrumPart(panelPart, chords, maxPatternPerChord);
 			for (int j = 0; j < drumPartArray.length; j++) {
 				drumHitGrid[j] += drumPartArray[j];
-			}
+			}*/
 
 		}
 		/*for (int i = 0; i < chords * maxPatternPerChord; i++) {

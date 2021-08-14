@@ -2822,6 +2822,9 @@ public class MidiGenerator implements JMC {
 		}
 		swingPhrase(drumPhrase, swingPercentAmount, Durations.EIGHTH_NOTE);
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
+		dp.setHitsPerPattern(dpClone.getHitsPerPattern());
+		dp.setPatternShift(dpClone.getPatternShift());
+		dp.setChordSpan(dpClone.getChordSpan());
 		return drumPhrase;
 
 	}
