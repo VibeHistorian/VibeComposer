@@ -53,6 +53,10 @@ public class VariationPopup {
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
 	JTable[] tables = new JTable[5];
+
+	JTextField userChords;
+	JTextField userChordsDurations;
+
 	int sectionOrder = 0;
 	Section sectionObject = null;
 	JScrollPane scroll;
@@ -130,10 +134,10 @@ public class VariationPopup {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
-		JTextField userChords = new JTextField(sec.getCustomChords(), 23);
+		userChords = new JTextField(sec.getCustomChords(), 23);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
-		JTextField userChordsDurations = new JTextField(sec.getCustomDurations(), 9);
+		userChordsDurations = new JTextField(sec.getCustomDurations(), 9);
 		customChordsDurationsPanel.add(new JLabel("Chord durations:"));
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -284,6 +288,8 @@ public class VariationPopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				VibeComposerGUI.varPopup = null;
+				sectionObject.setCustomChords(userChords.getText());
+				sectionObject.setCustomDurations(userChordsDurations.getText());
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
