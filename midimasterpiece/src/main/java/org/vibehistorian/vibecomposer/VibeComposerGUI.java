@@ -3392,6 +3392,7 @@ public class VibeComposerGUI extends JFrame
 
 			int current = delayed();
 			int sectIndex = 0;
+			int realIndex = 1;
 			Section prevSec = null;
 			while (current < slider.getMaximum()) {
 				String sectionText = "END";
@@ -3405,11 +3406,16 @@ public class VibeComposerGUI extends JFrame
 					}
 					sizeCounter += arrSec.getMeasures();
 				}
-				sectionText = (sec != null) ? sec.getType().toString() : "END";
+				sectionText = (sec != null)
+						? (realIndex + ":"
+								+ sec.getType().substring(0, Math.min(7, sec.getType().length()))
+								+ (sec.hasCustomizedParts() ? "*" : ""))
+						: "END";
 				if (sec != null && sec == prevSec && sec.getMeasures() > 1) {
 					// do not put into labels for followup measures
 				} else {
 					table.put(Integer.valueOf(current), new JLabel(sectionText));
+					realIndex++;
 				}
 				current += measureWidth;
 				sectIndex++;

@@ -2647,8 +2647,11 @@ public class MidiGenerator implements JMC {
 					swingPercentAmount = 100 - swingPercentAmount;
 
 					if (durationNow + swingDuration > progressionDurations.get(j)) {
-						arpPhrase.addNote(new Note(pitch, progressionDurations.get(j) - durationNow,
-								velocity));
+						double fillerDuration = progressionDurations.get(j) - durationNow;
+						Note fillerNote = new Note(
+								fillerDuration < 0.05 ? Integer.MIN_VALUE : pitch, fillerDuration,
+								velocity);
+						arpPhrase.addNote(fillerNote);
 						break;
 					} else {
 						if (exceptionGenerator.nextInt(100) < ap.getExceptionChance()) {
