@@ -125,6 +125,7 @@ import javax.xml.bind.Marshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -4556,66 +4557,28 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.noteMultiplier = elongateMidi.getInt();
 			MidiGenerator.recalculateDurations();
 
-			if (loopBeat.isSelected()) {
+			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+
+			/*if (loopBeat.isSelected()) {
 				//MidiGenerator.START_TIME_DELAY = 0.001;
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 			} else {
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
-			}
+			}*/
 
 			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
+			// solve user chords
 			if (userChordsEnabled.isSelected() && !userChords.getText().contains("R")) {
-				System.out.println("Trying to solve user chords!");
-				String text = userChords.getText().replaceAll(" ", "");
-				userChords.setText(text);
-				String[] userChordsSplit = text.split(",");
-				System.out.println(StringUtils.join(userChordsSplit, ";"));
-
-				String[] userChordsDurationsSplit = userChordsDurations.getText().split(",");
-				if (userChordsSplit.length != userChordsDurationsSplit.length) {
-					List<Integer> durations = IntStream.iterate(2, n -> n)
-							.limit(userChordsSplit.length).boxed().collect(Collectors.toList());
-					userChordsDurations.setText(StringUtils.join(durations, ","));
-					userChordsDurationsSplit = userChordsDurations.getText().split(",");
-				}
-				try {
-
-					if (userChordsSplit.length == userChordsDurationsSplit.length) {
-
-						List<String> userChordsParsed = new ArrayList<>();
-						List<Double> userChordsDurationsParsed = new ArrayList<>();
-						for (int i = 0; i < userChordsDurationsSplit.length; i++) {
-							if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
-								userChordsParsed.add(userChordsSplit[i]);
-							} else {
-								int[] interval = MidiUtils.getSpelledChord(userChordsSplit[i]);
-								if (interval != null) {
-									userChordsParsed.add(userChordsSplit[i]);
-								}
-							}
-
-							userChordsDurationsParsed
-									.add(Double.valueOf(userChordsDurationsSplit[i])
-											* elongateMidi.getInt());
-						}
-						if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
-							MidiGenerator.userChords = userChordsParsed;
-							MidiGenerator.userChordsDurations = userChordsDurationsParsed;
-						} else {
-							MidiGenerator.userChords.clear();
-							MidiGenerator.userChordsDurations.clear();
-						}
-
-						System.out.println(userChordsDurationsParsed.toString());
-					} else {
-						MidiGenerator.userChords.clear();
-						MidiGenerator.userChordsDurations.clear();
-					}
-				} catch (Exception e) {
-					System.out.println("Bad user input in custom chords/durations!\n");
-					e.printStackTrace();
+				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(userChords,
+						userChordsDurations);
+				if (solvedChordsDurations != null) {
+					MidiGenerator.userChords = solvedChordsDurations.getLeft();
+					MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
+				} else {
+					MidiGenerator.userChords.clear();
+					MidiGenerator.userChordsDurations.clear();
 				}
 			} else {
 				MidiGenerator.userChords.clear();
@@ -4644,6 +4607,64 @@ public class VibeComposerGUI extends JFrame
 			e.printStackTrace();
 		}
 
+	}
+
+	public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
+			JTextField customChordsDurations) {
+		System.out.println("Solving custom chords..");
+		List<String> solvedChords = new ArrayList<>();
+		List<Double> solvedDurations = new ArrayList<>();
+
+		String text = customChords.getText().replaceAll(" ", "");
+		customChords.setText(text);
+		String[] userChordsSplit = text.split(",");
+		//System.out.println(StringUtils.join(userChordsSplit, ";"));
+
+		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
+		if (userChordsSplit.length != userChordsDurationsSplit.length) {
+			List<Integer> durations = IntStream.iterate(2, n -> n).limit(userChordsSplit.length)
+					.boxed().collect(Collectors.toList());
+			customChordsDurations.setText(StringUtils.join(durations, ","));
+			userChordsDurationsSplit = customChordsDurations.getText().split(",");
+		}
+		try {
+
+			if (userChordsSplit.length == userChordsDurationsSplit.length) {
+
+				List<String> userChordsParsed = new ArrayList<>();
+				List<Double> userChordsDurationsParsed = new ArrayList<>();
+				for (int i = 0; i < userChordsDurationsSplit.length; i++) {
+					if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
+						userChordsParsed.add(userChordsSplit[i]);
+					} else {
+						int[] interval = MidiUtils.getSpelledChord(userChordsSplit[i]);
+						if (interval != null) {
+							userChordsParsed.add(userChordsSplit[i]);
+						}
+					}
+
+					userChordsDurationsParsed.add(
+							Double.valueOf(userChordsDurationsSplit[i]) * elongateMidi.getInt());
+				}
+				if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
+					solvedChords = userChordsParsed;
+					solvedDurations = userChordsDurationsParsed;
+				}
+			} else {
+				MidiGenerator.userChords.clear();
+				MidiGenerator.userChordsDurations.clear();
+			}
+		} catch (Exception e) {
+			System.out.println("Bad user input in custom chords/durations!\n");
+			e.printStackTrace();
+		}
+		if (!solvedChords.isEmpty() && !solvedDurations.isEmpty()) {
+			System.out.println(solvedChords.toString());
+			System.out.println(solvedDurations.toString());
+			return Pair.of(solvedChords, solvedDurations);
+		} else {
+			return null;
+		}
 	}
 
 	private ChordGenSettings getChordSettingsFromUI() {

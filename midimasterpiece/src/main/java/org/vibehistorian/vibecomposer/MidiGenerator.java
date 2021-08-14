@@ -1361,13 +1361,9 @@ public class MidiGenerator implements JMC {
 		}
 
 
-		boolean never = false;
-		if (never) {
+		if (false) {
 			InputStream is = new InputStream() {
-
-				@Override
 				public int read() throws IOException {
-					// TODO Auto-generated method stub
 					return 0;
 				}
 			};
