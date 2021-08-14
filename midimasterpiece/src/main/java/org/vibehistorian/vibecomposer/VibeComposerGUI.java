@@ -3269,8 +3269,8 @@ public class VibeComposerGUI extends JFrame
 		handleMidiStuff(regenerate, relPath, systemTime);
 		resetArrSectionInBackground();
 
-		System.out.println("VibeComposerGUI::composeMidi total (miliseconds): "
-				+ (System.currentTimeMillis() - systemTime));
+		System.out.println("VibeComposerGUI::composeMidi time: "
+				+ (System.currentTimeMillis() - systemTime) + " ms");
 	}
 
 	private void resetArrSectionInBackground() {
@@ -3722,7 +3722,7 @@ public class VibeComposerGUI extends JFrame
 		boolean tabPanePossibleChange = false;
 		boolean soloMuterPossibleChange = false;
 
-		System.out.println("Processing.. ::" + ae.getActionCommand() + "::");
+		System.out.println("Processing '" + ae.getActionCommand() + "'..");
 		long actionSystemTime = System.currentTimeMillis();
 
 		InstComboBox.BANNED_INSTS.clear();
@@ -4360,8 +4360,8 @@ public class VibeComposerGUI extends JFrame
 			recalcGlobals();
 		}
 
-		System.out.println("Finished ::" + ae.getActionCommand() + ":: in (miliseconds): "
-				+ (System.currentTimeMillis() - actionSystemTime));
+		System.out.println("Finished '" + ae.getActionCommand() + "' in: "
+				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
 	}
 

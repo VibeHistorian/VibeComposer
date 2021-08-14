@@ -26,10 +26,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -111,6 +113,31 @@ public class VariationPopup {
 		typeAndMeasuresPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		tablesPanel.add(typeAndMeasuresPanel);
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		JPanel customChordsDurationsPanel = new JPanel();
+		JCheckBox userChordsEnabled = new JCheckBox("Custom Chords",
+				sec.isCustomChordsDurationsEnabled());
+		customChordsDurationsPanel.add(userChordsEnabled);
+		userChordsEnabled.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setCustomChordsDurationsEnabled(userChordsEnabled.isSelected());
+			}
+
+		});
+
+		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
+				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
+
+		JTextField userChords = new JTextField(sec.getCustomChords(), 23);
+		userChords.setToolTipText(tooltip);
+		customChordsDurationsPanel.add(userChords);
+		JTextField userChordsDurations = new JTextField(sec.getCustomDurations(), 9);
+		customChordsDurationsPanel.add(new JLabel("Chord durations:"));
+		customChordsDurationsPanel.add(userChordsDurations);
+		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		tablesPanel.add(customChordsDurationsPanel);
 
 		addRiskyVariations(sec);
 
@@ -210,9 +237,8 @@ public class VariationPopup {
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-		int heightLimit = 775;
-		frame.setPreferredSize(new Dimension(650,
-				(parentDim.height < heightLimit) ? parentDim.height : heightLimit));
+		int heightLimit = 850;
+		frame.setPreferredSize(new Dimension(650, Math.min(parentDim.height, heightLimit)));
 		int newLocX = parentLoc.x - 190;
 		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);
 		frame.add(scroll);

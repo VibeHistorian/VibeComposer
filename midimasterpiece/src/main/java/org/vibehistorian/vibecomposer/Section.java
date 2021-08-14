@@ -84,6 +84,11 @@ public class Section {
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
 
+	// customized chords/durations
+	private boolean customChordsDurationsEnabled = false;
+	private String customChords = "R";
+	private String customDurations = "2,2,2,2";
+
 	// customized parts
 	private List<BassPart> bassParts = null;
 	private List<MelodyPart> melodyParts = null;
@@ -575,5 +580,27 @@ public class Section {
 		this.arpParts = arpParts;
 	}
 
+	public String getCustomChords() {
+		return customChords;
+	}
 
+	public void setCustomChords(String customChords) {
+		this.customChords = customChords;
+	}
+
+	public String getCustomDurations() {
+		return customDurations;
+	}
+
+	public void setCustomDurations(String customDurations) {
+		this.customDurations = customDurations;
+	}
+
+	public boolean isCustomChordsDurationsEnabled() {
+		return customChordsDurationsEnabled;
+	}
+
+	public void setCustomChordsDurationsEnabled(boolean customChordsDurationsEnabled) {
+		this.customChordsDurationsEnabled = customChordsDurationsEnabled;
+	}
 }

@@ -1912,7 +1912,7 @@ public class MidiGenerator implements JMC {
 
 		gc.setActualArrangement(arr);
 		System.out.println(
-				"MidiGenerator total (miliseconds): " + (System.currentTimeMillis() - systemTime));
+				"MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
