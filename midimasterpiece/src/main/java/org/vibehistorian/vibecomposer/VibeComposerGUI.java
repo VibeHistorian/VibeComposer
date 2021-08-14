@@ -3267,9 +3267,10 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		handleMidiStuff(regenerate, relPath, systemTime);
-
-
 		resetArrSectionInBackground();
+
+		System.out.println("VibeComposerGUI::composeMidi total (miliseconds): "
+				+ (System.currentTimeMillis() - systemTime));
 	}
 
 	private void resetArrSectionInBackground() {
@@ -3464,8 +3465,6 @@ public class VibeComposerGUI extends JFrame
 				needToRecalculateSoloMuters = true;
 				needToRecalculateSoloMutersAfterSequenceGenerated = false;
 			}
-			System.out.println("VibeComposerGUI::composeMidi total (miliseconds): "
-					+ (System.currentTimeMillis() - systemTime));
 		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
 			ex.printStackTrace();
 		}
@@ -3711,6 +3710,7 @@ public class VibeComposerGUI extends JFrame
 		boolean soloMuterPossibleChange = false;
 
 		System.out.println("Processing.. ::" + ae.getActionCommand() + "::");
+		long actionSystemTime = System.currentTimeMillis();
 
 		InstComboBox.BANNED_INSTS.clear();
 		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(bannedInsts.getText().split(",")));
@@ -4326,7 +4326,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
-			System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
+			//System.out.println("Set sequencer solo: " + sourcePanel.getMidiChannel());
 		}
 
 		if (ae.getActionCommand() == "RandomizePart") {
@@ -4347,7 +4347,8 @@ public class VibeComposerGUI extends JFrame
 			recalcGlobals();
 		}
 
-		System.out.println("Finished.. ::" + ae.getActionCommand() + "::");
+		System.out.println("Finished ::" + ae.getActionCommand() + ":: in (miliseconds): "
+				+ (System.currentTimeMillis() - actionSystemTime));
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
 	}
 

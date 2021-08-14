@@ -111,7 +111,7 @@ public abstract class InstPanel extends JPanel {
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
 		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
-
+		panelOrder.setPreferredSize(new Dimension(20, 30));
 
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		volSlider.setMaximum(100);
