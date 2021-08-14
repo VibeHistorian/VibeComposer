@@ -598,6 +598,8 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
 		initTitles(0, GridBagConstraints.CENTER);
 
+		initExtraSettings();
+
 		//createHorizontalSeparator(15, this);
 
 		initSoloMuters(20, GridBagConstraints.WEST);
@@ -707,8 +709,6 @@ public class VibeComposerGUI extends JFrame
 		requestFocus();
 		requestFocusInWindow();
 
-		initHelperPopups();
-
 		isDarkMode = !isDarkMode;
 
 
@@ -797,6 +797,125 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}
 
+	private void initExtraSettings() {
+		JPanel arrangementExtraSettingsPanel = new JPanel();
+
+		arrangementScaleMidiVelocity = new JCheckBox("Scale Midi Velocity in Arrangement", true);
+		arrangementResetCustomPanelsOnCompose = new JCheckBox("Reset customized panels On Compose",
+				true);
+		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
+		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
+		extraSettingsPanel.add(arrangementExtraSettingsPanel);
+
+		JPanel allInstsPanel = new JPanel();
+		useAllInsts = new JCheckBox("Use All Inst., Except:", false);
+		allInstsPanel.add(useAllInsts);
+		bannedInsts = new JTextField("", 8);
+		allInstsPanel.add(bannedInsts);
+		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
+		allInstsPanel.add(reinitInstPools);
+		extraSettingsPanel.add(allInstsPanel);
+
+
+		JPanel pauseBehaviorPanel = new JPanel();
+		pauseBehaviorLabel = new JLabel("Start From Pause:");
+		pauseBehaviorCombobox = new ScrollComboBox<>();
+		pauseBehaviorBarCheckbox = new JCheckBox("Start From Bar", true);
+		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", false);
+		playheadSnapToBeatsCheckBox = new JCheckBox("Snap Start To Beat", true);
+		playheadSnapToBeatsCheckBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (slider.getSnapToTicks() != playheadSnapToBeatsCheckBox.isSelected()) {
+					slider.setSnapToTicks(playheadSnapToBeatsCheckBox.isSelected());
+				}
+			}
+
+		});
+		MidiUtils.addAllToJComboBox(
+				new String[] { "On regenerate", "On compose/regenerate", "Never" },
+				pauseBehaviorCombobox);
+		pauseBehaviorPanel.add(pauseBehaviorLabel);
+		pauseBehaviorPanel.add(pauseBehaviorCombobox);
+		pauseBehaviorPanel.add(pauseBehaviorBarCheckbox);
+		pauseBehaviorPanel.add(pauseBehaviorPlayheadCheckbox);
+		pauseBehaviorPanel.add(playheadSnapToBeatsCheckBox);
+
+		JPanel customDrumMappingPanel = new JPanel();
+		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
+		drumCustomMappingNumbers = new JTextField(
+				StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
+
+		customDrumMappingPanel.add(drumCustomMapping);
+		customDrumMappingPanel.add(drumCustomMappingNumbers);
+		drumCustomMapping.setToolTipText(
+				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
+
+		extraSettingsPanel.add(pauseBehaviorPanel);
+		extraSettingsPanel.add(customDrumMappingPanel);
+
+		// CHORD SETTINGS 2 - chord progression
+		firstChordSelection = new ScrollComboBox<String>();
+		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "V", "vi" }, firstChordSelection);
+		firstChordSelection.addItemListener(this);
+
+		lastChordSelection = new ScrollComboBox<String>();
+		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "IV", "V", "vi" }, lastChordSelection);
+		lastChordSelection.addItemListener(this);
+
+		keyChangeTypeSelection = new ScrollComboBox<String>();
+		MidiUtils.addAllToJComboBox(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
+				keyChangeTypeSelection);
+		keyChangeTypeSelection.addItemListener(this);
+
+		JPanel chordChoicePanel = new JPanel();
+
+		chordChoicePanel.add(new JLabel("First Chord:"));
+		chordChoicePanel.add(firstChordSelection);
+		chordChoicePanel.add(new JLabel("Last Chord:"));
+		chordChoicePanel.add(lastChordSelection);
+		chordChoicePanel.add(new JLabel("Key change type:"));
+		chordChoicePanel.add(keyChangeTypeSelection);
+		extraSettingsPanel.add(chordChoicePanel);
+
+		JPanel bpmLowHighPanel = new JPanel();
+
+		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
+		bpmLow = new KnobPanel("Min<br>BPM.", 60, 20, 249);
+		bpmHigh = new KnobPanel("Max<br>BPM.", 110, 21, 250);
+		elongateMidi = new KnobPanel("Elongate MIDI by:", 2, 1, 4);
+		bpmLowHighPanel.add(bpmLow);
+		bpmLowHighPanel.add(bpmHigh);
+		bpmLowHighPanel.add(arpAffectsBpm);
+		bpmLowHighPanel.add(elongateMidi);
+
+		extraSettingsPanel.add(bpmLowHighPanel);
+
+		soundbankFilename = new JTextField(SOUNDBANK_DEFAULT, 18);
+		JPanel soundbankPanel = new JPanel();
+		JLabel soundbankLabel = new JLabel("Soundbank name:");
+		soundbankPanel.add(soundbankLabel);
+		soundbankPanel.add(soundbankFilename);
+		extraSettingsPanel.add(soundbankPanel);
+
+		JButton butt = new JButton("Toggle Knob Texts");
+		butt.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				isShowingTextInKnobs = !isShowingTextInKnobs;
+				for (int i = 0; i < 5; i++) {
+					List<? extends InstPanel> panels = getInstList(i);
+					panels.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
+				}
+			}
+
+		});
+		extraSettingsPanel.add(butt);
+
+		initHelperPopups();
+	}
 
 	private void initSoloMuters(int startY, int anchorSide) {
 		JPanel soloMuterPanel = new JPanel();
@@ -1358,14 +1477,6 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(randomDrumPattern);
 		drumExtraSettings.add(randomDrumVelocityPatternChance);
 
-		JPanel arrangementExtraSettingsPanel = new JPanel();
-
-		arrangementScaleMidiVelocity = new JCheckBox("Scale Midi Velocity in Arrangement", true);
-		arrangementResetCustomPanelsOnCompose = new JCheckBox("Reset customized panels On Compose",
-				true);
-		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
-		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
-		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 		drumExtraSettings.add(randomDrumShiftChance);
 		drumExtraSettings.add(clearPatternSeeds);
 
@@ -1620,13 +1731,8 @@ public class VibeComposerGUI extends JFrame
 									InstPanel p = panels.get(order - 1);
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
-									if (i == 4) {
-										pCopy.getSoloMuter()
-												.setVisible(!combineDrumTracks.isSelected());
-									} else {
-										pCopy.getSoloMuter().setVisible(false);
-										pCopy.getInstrumentBox().setEnabled(false);
-									}
+									pCopy.getSoloMuter().setVisible(false);
+									pCopy.getInstrumentBox().setEnabled(false);
 									pCopy.getToggleableComponents()
 											.forEach(g -> g.setVisible(isFullMode));
 									pCopy.setFromInstPart(p.toInstPart(0));
@@ -2137,54 +2243,6 @@ public class VibeComposerGUI extends JFrame
 		globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		JPanel allInstsPanel = new JPanel();
-		useAllInsts = new JCheckBox("Use All Inst., Except:", false);
-		allInstsPanel.add(useAllInsts);
-		bannedInsts = new JTextField("", 8);
-		allInstsPanel.add(bannedInsts);
-		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
-		allInstsPanel.add(reinitInstPools);
-		extraSettingsPanel.add(allInstsPanel);
-
-
-		JPanel pauseBehaviorPanel = new JPanel();
-		pauseBehaviorLabel = new JLabel("Start From Pause:");
-		pauseBehaviorCombobox = new ScrollComboBox<>();
-		pauseBehaviorBarCheckbox = new JCheckBox("Start From Bar", true);
-		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", false);
-		playheadSnapToBeatsCheckBox = new JCheckBox("Snap Start To Beat", true);
-		playheadSnapToBeatsCheckBox.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (slider.getSnapToTicks() != playheadSnapToBeatsCheckBox.isSelected()) {
-					slider.setSnapToTicks(playheadSnapToBeatsCheckBox.isSelected());
-				}
-			}
-
-		});
-		MidiUtils.addAllToJComboBox(
-				new String[] { "On regenerate", "On compose/regenerate", "Never" },
-				pauseBehaviorCombobox);
-		pauseBehaviorPanel.add(pauseBehaviorLabel);
-		pauseBehaviorPanel.add(pauseBehaviorCombobox);
-		pauseBehaviorPanel.add(pauseBehaviorBarCheckbox);
-		pauseBehaviorPanel.add(pauseBehaviorPlayheadCheckbox);
-		pauseBehaviorPanel.add(playheadSnapToBeatsCheckBox);
-
-		JPanel customDrumMappingPanel = new JPanel();
-		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
-		drumCustomMappingNumbers = new JTextField(
-				StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
-
-		customDrumMappingPanel.add(drumCustomMapping);
-		customDrumMappingPanel.add(drumCustomMappingNumbers);
-		drumCustomMapping.setToolTipText(
-				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
-
-		extraSettingsPanel.add(pauseBehaviorPanel);
-		extraSettingsPanel.add(customDrumMappingPanel);
-
 		toggleableComponents.add(globalSwingPanel);
 		toggleableComponents.add(useDoubledPanel);
 
@@ -2229,30 +2287,6 @@ public class VibeComposerGUI extends JFrame
 		chordProgressionSettingsPanel.add(spiceAllowDimAugPanel);
 		chordProgressionSettingsPanel.add(spiceAllow9th13thPanel);
 		chordProgressionSettingsPanel.add(spiceFlattenBigChordsPanel);
-
-		// CHORD SETTINGS 2 - chord progression
-		firstChordSelection = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "V", "vi" }, firstChordSelection);
-		firstChordSelection.addItemListener(this);
-
-		lastChordSelection = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "IV", "V", "vi" }, lastChordSelection);
-		lastChordSelection.addItemListener(this);
-
-		keyChangeTypeSelection = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
-				keyChangeTypeSelection);
-		keyChangeTypeSelection.addItemListener(this);
-
-		JPanel lastChordPanel = new JPanel();
-
-		lastChordPanel.add(new JLabel("First Chord:"));
-		lastChordPanel.add(firstChordSelection);
-		lastChordPanel.add(new JLabel("Last Chord:"));
-		lastChordPanel.add(lastChordSelection);
-		lastChordPanel.add(new JLabel("Key change type:"));
-		lastChordPanel.add(keyChangeTypeSelection);
-		extraSettingsPanel.add(lastChordPanel);
 
 
 		constraints.gridy = startY;
@@ -2632,19 +2666,6 @@ public class VibeComposerGUI extends JFrame
 		mainBpm = new KnobPanel("BPM", 80, 60, 110);
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
-		JPanel bpmLowHighPanel = new JPanel();
-
-		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
-		bpmLow = new KnobPanel("Min<br>BPM.", 60, 20, 249);
-		bpmHigh = new KnobPanel("Max<br>BPM.", 110, 21, 250);
-		elongateMidi = new KnobPanel("Elongate MIDI by:", 2, 1, 4);
-		bpmLowHighPanel.add(bpmLow);
-		bpmLowHighPanel.add(bpmHigh);
-		bpmLowHighPanel.add(arpAffectsBpm);
-		bpmLowHighPanel.add(elongateMidi);
-
-		extraSettingsPanel.add(bpmLowHighPanel);
-
 		controlSettingsPanel.add(mainBpm);
 		scaleMode = new ScrollComboBox<String>();
 		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
@@ -2770,28 +2791,6 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel playSettingsPanel = new JPanel();
 		playSettingsPanel.setOpaque(false);
-
-		soundbankFilename = new JTextField(SOUNDBANK_DEFAULT, 18);
-		JPanel soundbankPanel = new JPanel();
-		JLabel soundbankLabel = new JLabel("Soundbank name:");
-		soundbankPanel.add(soundbankLabel);
-		soundbankPanel.add(soundbankFilename);
-		extraSettingsPanel.add(soundbankPanel);
-
-		JButton butt = new JButton("Toggle Knob Texts");
-		butt.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				isShowingTextInKnobs = !isShowingTextInKnobs;
-				for (int i = 0; i < 5; i++) {
-					List<? extends InstPanel> panels = getInstList(i);
-					panels.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
-				}
-			}
-
-		});
-		extraSettingsPanel.add(butt);
 
 		playSettingsPanel.add(showScore);
 		playSettingsPanel.add(showScorePicker);
@@ -3697,7 +3696,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
 				& randomizeChordStrumsOnCompose.isSelected())) {
-			for (InstPanel p : getAffectedPanels(3)) {
+			for (InstPanel p : getAffectedPanels(2)) {
 				ChordPanel cp = (ChordPanel) p;
 				cp.setStrum(selectRandomStrumByStruminess());
 				if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
@@ -5019,11 +5018,15 @@ public class VibeComposerGUI extends JFrame
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
 		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		ip.setPanelOrder(panelOrder);
-
-		if (inst == 4) {
+		if (arrSection != null && !OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem())) {
+			ip.getSoloMuter().setVisible(false);
+			ip.getInstrumentBox().setEnabled(false);
+		} else if (inst == 4) {
 			ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
 		}
+
+		ip.setPanelOrder(panelOrder);
+
 		affectedPanels.add(ip);
 		((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
 		return ip;
@@ -5226,7 +5229,6 @@ public class VibeComposerGUI extends JFrame
 		/*for (int i = 0; i < chords * maxPatternPerChord; i++) {
 			System.out.print(drumHitGrid[i] + ", ");
 		}*/
-
 
 		repaint();
 	}
