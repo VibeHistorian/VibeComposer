@@ -69,6 +69,7 @@ public class Section {
 	private int measures;
 
 	private double startTime;
+	private double sectionDuration = -1;
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -302,6 +303,7 @@ public class Section {
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
+		sec.setSectionDuration(sectionDuration);
 		return sec;
 	}
 
@@ -606,5 +608,13 @@ public class Section {
 
 	public void setCustomChordsDurationsEnabled(boolean customChordsDurationsEnabled) {
 		this.customChordsDurationsEnabled = customChordsDurationsEnabled;
+	}
+
+	public double getSectionDuration() {
+		return sectionDuration;
+	}
+
+	public void setSectionDuration(double sectionDuration) {
+		this.sectionDuration = sectionDuration;
 	}
 }

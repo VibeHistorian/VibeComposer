@@ -157,6 +157,7 @@ public class MidiGenerator implements JMC {
 	public static List<Double> userChordsDurations = new ArrayList<>();
 	public static Phrase userMelody = null;
 	public static List<String> chordInts = new ArrayList<>();
+	public static double GENERATED_MEASURE_LENGTH = 0;
 
 	public static String FIRST_CHORD = null;
 	public static String LAST_CHORD = null;
@@ -1328,6 +1329,7 @@ public class MidiGenerator implements JMC {
 		for (Double d : progressionDurations) {
 			measureLength += d;
 		}
+		GENERATED_MEASURE_LENGTH = measureLength;
 		int counter = 0;
 
 		// prepare progressions
@@ -1379,16 +1381,17 @@ public class MidiGenerator implements JMC {
 
 		int transToSet = 0;
 		boolean twoFiveOneChanged = false;
+		double sectionStartTimer = 0;
 		for (Section sec : arr.getSections()) {
 			if (overridden) {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
 			}
-
+			sec.setSectionDuration(-1);
 			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);
 			secOrder++;
 			System.out.println(
 					"============== Processing section.. " + sec.getType() + " ================");
-			sec.setStartTime(measureLength * counter);
+			sec.setStartTime(sectionStartTimer);
 
 			Random rand = new Random();
 
@@ -1723,6 +1726,8 @@ public class MidiGenerator implements JMC {
 				restoreGlobalPartsToGuiConfig();
 			}
 			counter += sec.getMeasures();
+			sectionStartTimer += (sec.getSectionDuration() > 0) ? sec.getSectionDuration()
+					: measureLength;
 		}
 		System.out.println("Added phrases/cphrases to sections..");
 
@@ -1939,6 +1944,7 @@ public class MidiGenerator implements JMC {
 		chordProgression = mappedChords;
 		rootProgression = mappedRootChords;
 		progressionDurations = chordsDurations.getRight();
+		sec.setSectionDuration(progressionDurations.stream().mapToDouble(e -> e).sum());
 		System.out.println("Using SECTION custom progression: "
 				+ StringUtils.join(chordsDurations.getLeft(), ","));
 

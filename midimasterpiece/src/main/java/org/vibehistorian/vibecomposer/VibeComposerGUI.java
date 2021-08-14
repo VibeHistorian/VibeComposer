@@ -3390,6 +3390,7 @@ public class VibeComposerGUI extends JFrame
 			slider.setTickStart(delayed());
 			Dictionary<Integer, JLabel> table = new Hashtable<>();
 
+			double fullMeasureNoteDuration = MidiGenerator.GENERATED_MEASURE_LENGTH;
 
 			int current = delayed();
 			int sectIndex = 0;
@@ -3400,6 +3401,7 @@ public class VibeComposerGUI extends JFrame
 				String sectionText = "END";
 				Section sec = null;
 				int sizeCounter = 0;
+				// TODO: speed up with indexes
 				for (Section arrSec : actualArrangement.getSections()) {
 					if (sizeCounter == sectIndex
 							|| (sectIndex < sizeCounter + arrSec.getMeasures())) {
@@ -3425,7 +3427,9 @@ public class VibeComposerGUI extends JFrame
 					table.put(Integer.valueOf(current), new JLabel(sectionText));
 					realIndex++;
 				}
-				current += measureWidth;
+				current += ((sec != null) && sec.getSectionDuration() > 0)
+						? measureWidth * (sec.getSectionDuration() / fullMeasureNoteDuration)
+						: measureWidth;
 				sectIndex++;
 				prevSec = sec;
 			}
