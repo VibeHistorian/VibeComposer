@@ -4609,24 +4609,12 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
-			JTextField customChordsDurations) {
+	public static Pair<List<String>, List<Double>> solveUserChords(String[] userChordsSplit,
+			String[] userChordsDurationsSplit) {
 		System.out.println("Solving custom chords..");
 		List<String> solvedChords = new ArrayList<>();
 		List<Double> solvedDurations = new ArrayList<>();
 
-		String text = customChords.getText().replaceAll(" ", "");
-		customChords.setText(text);
-		String[] userChordsSplit = text.split(",");
-		//System.out.println(StringUtils.join(userChordsSplit, ";"));
-
-		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
-		if (userChordsSplit.length != userChordsDurationsSplit.length) {
-			List<Integer> durations = IntStream.iterate(2, n -> n).limit(userChordsSplit.length)
-					.boxed().collect(Collectors.toList());
-			customChordsDurations.setText(StringUtils.join(durations, ","));
-			userChordsDurationsSplit = customChordsDurations.getText().split(",");
-		}
 		try {
 
 			if (userChordsSplit.length == userChordsDurationsSplit.length) {
@@ -4665,6 +4653,40 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			return null;
 		}
+	}
+
+	public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
+			JTextField customChordsDurations) {
+
+		String text = customChords.getText().replaceAll(" ", "");
+		customChords.setText(text);
+		String[] userChordsSplit = text.split(",");
+		//System.out.println(StringUtils.join(userChordsSplit, ";"));
+
+		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
+		if (userChordsSplit.length != userChordsDurationsSplit.length) {
+			List<Integer> durations = IntStream.iterate(2, n -> n).limit(userChordsSplit.length)
+					.boxed().collect(Collectors.toList());
+			customChordsDurations.setText(StringUtils.join(durations, ","));
+			userChordsDurationsSplit = customChordsDurations.getText().split(",");
+		}
+		return solveUserChords(userChordsSplit, userChordsDurationsSplit);
+	}
+
+	public static Pair<List<String>, List<Double>> solveUserChords(String customChords,
+			String customChordsDurations) {
+
+		String text = customChords.replaceAll(" ", "");
+		String[] userChordsSplit = text.split(",");
+		//System.out.println(StringUtils.join(userChordsSplit, ";"));
+
+		String[] userChordsDurationsSplit = customChordsDurations.split(",");
+		if (userChordsSplit.length != userChordsDurationsSplit.length) {
+			List<Integer> durations = IntStream.iterate(2, n -> n).limit(userChordsSplit.length)
+					.boxed().collect(Collectors.toList());
+			userChordsDurationsSplit = StringUtils.join(durations, ",").split(",");
+		}
+		return solveUserChords(userChordsSplit, userChordsDurationsSplit);
 	}
 
 	private ChordGenSettings getChordSettingsFromUI() {

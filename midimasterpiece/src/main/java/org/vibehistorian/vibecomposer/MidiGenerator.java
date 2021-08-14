@@ -1383,6 +1383,7 @@ public class MidiGenerator implements JMC {
 			if (overridden) {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
 			}
+
 			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);
 			secOrder++;
 			System.out.println(
@@ -1447,11 +1448,18 @@ public class MidiGenerator implements JMC {
 				System.out.println("Risky Variation: Chord Swap!");
 				rootProgression = melodyBasedRootProgression;
 				chordProgression = melodyBasedChordProgression;
+				progressionDurations = actualDurations;
 			} else {
-				rootProgression = generatedRootProgression;
-				chordProgression = actualProgression;
+				boolean replaced = false;
+				if (sec.isCustomChordsDurationsEnabled()) {
+					replaced = replaceWithSectionCustomChordDurations(sec);
+				}
+				if (!replaced) {
+					rootProgression = generatedRootProgression;
+					chordProgression = actualProgression;
+					progressionDurations = actualDurations;
+				}
 			}
-			progressionDurations = actualDurations;
 
 			if (riskyVariations.get(4)) {
 				System.out.println("Risky Variation: Key Change (on next chord)!");
@@ -1910,6 +1918,31 @@ public class MidiGenerator implements JMC {
 		System.out.println(
 				"MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
+	}
+
+	private boolean replaceWithSectionCustomChordDurations(Section sec) {
+		Pair<List<String>, List<Double>> chordsDurations = VibeComposerGUI
+				.solveUserChords(sec.getCustomChords(), sec.getCustomDurations());
+		if (chordsDurations == null) {
+			return false;
+		}
+
+		List<int[]> mappedChords = new ArrayList<>();
+		List<int[]> mappedRootChords = new ArrayList<>();
+		/*chordInts.clear();
+		chordInts.addAll(userChords);*/
+		for (String chordString : chordsDurations.getLeft()) {
+			int[] mapped = mappedChord(chordString);
+			mappedChords.add(mapped);
+			mappedRootChords.add(new int[] { mapped[0] });
+		}
+		chordProgression = mappedChords;
+		rootProgression = mappedRootChords;
+		progressionDurations = chordsDurations.getRight();
+		System.out.println("Using SECTION custom progression: "
+				+ StringUtils.join(chordsDurations.getLeft(), ","));
+
+		return true;
 	}
 
 	private void storeGlobalParts() {
