@@ -5354,8 +5354,8 @@ public class VibeComposerGUI extends JFrame
 		int chords = 2;
 		int maxPatternPerChord = 32;
 
-		int[] drumHitGrid = IntStream.iterate(0, e -> e).limit(chords * maxPatternPerChord)
-				.toArray();
+		/*int[] drumHitGrid = IntStream.iterate(0, e -> e).limit(chords * maxPatternPerChord)
+				.toArray();*/
 
 		for (int i = 0; i < panelCount; i++) {
 			DrumPart dpart = DrumDefaults.getDrumFromInstrument(pitches.get(i));
@@ -5379,7 +5379,7 @@ public class VibeComposerGUI extends JFrame
 				dp.setChordSpanFill(ChordSpanFill.getWeighted(drumPanelGenerator.nextInt(100)));
 			}
 
-			if (settings.isDynamicable()) {
+			if (settings.isDynamicable() && (dp.getPattern() != RhythmPattern.MELODY1)) {
 				dp.setIsVelocityPattern(
 						drumPanelGenerator.nextInt(100) < randomDrumVelocityPatternChance.getInt());
 			}

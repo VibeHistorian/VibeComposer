@@ -200,4 +200,10 @@ public class SoloMuter extends JPanel {
 			soloer.setForeground(Color.black);
 		}
 	}
+
+	@Override
+	public void setEnabled(boolean state) {
+		soloer.setEnabled(state);
+		muter.setEnabled(state);
+	}
 }
