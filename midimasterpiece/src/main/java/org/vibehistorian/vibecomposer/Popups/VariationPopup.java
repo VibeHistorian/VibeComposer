@@ -32,6 +32,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -134,8 +135,11 @@ public class VariationPopup {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
-		userChords = new JTextField(sec.isCustomChordsDurationsEnabled() ? sec.getCustomChords()
-				: VibeComposerGUI.userChords.getText(), 23);
+		String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
+				? VibeComposerGUI.userChords.getText()
+				: StringUtils.join(MidiGenerator.chordInts, ","));
+		userChords = new JTextField(
+				sec.isCustomChordsDurationsEnabled() ? sec.getCustomChords() : guiUserChords, 23);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
 		userChordsDurations = new JTextField(

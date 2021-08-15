@@ -70,6 +70,7 @@ public class Section {
 
 	private double startTime;
 	private double sectionDuration = -1;
+	private List<Double> sectionBeatDurations = null;
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -304,6 +305,7 @@ public class Section {
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
+		sec.setSectionBeatDurations(sectionBeatDurations);
 		return sec;
 	}
 
@@ -616,5 +618,13 @@ public class Section {
 
 	public void setSectionDuration(double sectionDuration) {
 		this.sectionDuration = sectionDuration;
+	}
+
+	public List<Double> getSectionBeatDurations() {
+		return sectionBeatDurations;
+	}
+
+	public void setSectionBeatDurations(List<Double> sectionBeatDurations) {
+		this.sectionBeatDurations = sectionBeatDurations;
 	}
 }

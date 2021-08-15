@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Dimension;
+import java.util.List;
 
 import javax.swing.JSlider;
 
@@ -24,6 +25,9 @@ public class RangeSlider extends JSlider {
 	private boolean upperDragging = false;
 	private int lowerDraggingSnapToTicks = 0;
 	private int upperDraggingSnapToTicks = 0;
+	private List<Integer> customMajorTicks = null;
+	private List<Integer> customMinorTicks = null;
+
 
 	/**
 	 * Constructs a RangeSlider with default minimum and maximum values of 0
@@ -156,5 +160,21 @@ public class RangeSlider extends JSlider {
 
 	public void setUpperDraggingSnapToTicks(int upperDraggingSnapToTicks) {
 		this.upperDraggingSnapToTicks = upperDraggingSnapToTicks;
+	}
+
+	public List<Integer> getCustomMajorTicks() {
+		return customMajorTicks;
+	}
+
+	public void setCustomMajorTicks(List<Integer> customMajorTicks) {
+		this.customMajorTicks = customMajorTicks;
+	}
+
+	public List<Integer> getCustomMinorTicks() {
+		return customMinorTicks;
+	}
+
+	public void setCustomMinorTicks(List<Integer> customMinorTicks) {
+		this.customMinorTicks = customMinorTicks;
 	}
 }

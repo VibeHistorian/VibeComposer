@@ -458,7 +458,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> keyChangeTypeSelection;
 	int firstChord = 0;
 	int lastChord = 0;
-	JCheckBox userChordsEnabled;
+	public static JCheckBox userChordsEnabled;
 	public static JTextField userChords;
 	public static JTextField userChordsDurations;
 
@@ -504,6 +504,9 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox useVolumeSliders;
 	JCheckBox loopBeat;
 	public static PlayheadRangeSlider slider;
+	private List<Integer> sliderMeasureStartTimes = null;
+	private List<Integer> sliderBeatStartTimes = null;
+
 	JLabel currentTime;
 	JLabel totalTime;
 	JLabel sectionText;
@@ -515,7 +518,7 @@ public class VibeComposerGUI extends JFrame
 	private static int startBeatCounter = 0;
 
 	JLabel tipLabel;
-	JLabel currentChords = new JLabel("Chords:[]");
+	public static JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
@@ -3383,14 +3386,12 @@ public class VibeComposerGUI extends JFrame
 			int measureWidth = sliderMeasureWidth();
 			slider.setMajorTickSpacing(measureWidth);
 			slider.setMinorTickSpacing(beatFromBpm(0));
-			if (pauseBehaviorBarCheckbox.isSelected()) {
-				int snapAdjustment = 50;
-				slider.setValue(delayed() + beatFromBpm(0) * startBeatCounter + snapAdjustment);
-			}
 			slider.setTickStart(delayed());
 			Dictionary<Integer, JLabel> table = new Hashtable<>();
 
 			double fullMeasureNoteDuration = MidiGenerator.GENERATED_MEASURE_LENGTH;
+			sliderMeasureStartTimes = new ArrayList<>();
+			sliderBeatStartTimes = new ArrayList<>();
 
 			int current = delayed();
 			int sectIndex = 0;
@@ -3400,6 +3401,7 @@ public class VibeComposerGUI extends JFrame
 			while (current < slider.getMaximum()) {
 				String sectionText = "END";
 				Section sec = null;
+
 				int sizeCounter = 0;
 				// TODO: speed up with indexes
 				for (Section arrSec : actualArrangement.getSections()) {
@@ -3410,9 +3412,32 @@ public class VibeComposerGUI extends JFrame
 					}
 					sizeCounter += arrSec.getMeasures();
 				}
+				sliderMeasureStartTimes.add(current);
+				sliderBeatStartTimes.add(current);
 				if (sec != null) {
+					if (sec.getSectionBeatDurations() != null) {
+						double adjustment = (measureWidth * sec.getSectionBeatDurations().get(0)
+								/ fullMeasureNoteDuration);
+						for (int i = 1; i < sec.getSectionBeatDurations().size(); i++) {
+							sliderBeatStartTimes.add((int) (current + adjustment));
+							adjustment += (measureWidth * sec.getSectionBeatDurations().get(i)
+									/ fullMeasureNoteDuration);
+						}
+					} else {
+						for (int i = 1; i < MidiGenerator.chordInts.size(); i++) {
+							sliderBeatStartTimes.add(
+									current + (i * measureWidth) / MidiGenerator.chordInts.size());
+						}
+					}
+
+				}
+
+				if (sec != null) {
+					boolean shorterSection = (sec.getSectionDuration() > 0)
+							&& (sec.getSectionDuration() < fullMeasureNoteDuration - 0.05);
 					int originalLength = sec.getType().length();
-					int showMax = Math.min(sectionMaxText - 1, originalLength);
+					int realMax = (shorterSection) ? 3 : sectionMaxText - 1;
+					int showMax = Math.min(realMax, originalLength);
 					String showLast = (showMax < originalLength)
 							? (sec.getType().charAt(originalLength - 1) + "")
 							: "";
@@ -3433,7 +3458,20 @@ public class VibeComposerGUI extends JFrame
 				sectIndex++;
 				prevSec = sec;
 			}
+			//sliderMeasureStartTimes.add(slider.getMaximum());
+			//sliderBeatStartTimes.add(slider.getMaximum());
+			//sliderBeatStartTimes.add(slider.getMaximum());
 
+			slider.setCustomMajorTicks(sliderMeasureStartTimes);
+			slider.setCustomMinorTicks(sliderBeatStartTimes);
+			System.out.println("Size measures: " + sliderMeasureStartTimes.size());
+			System.out.println("Size beats: " + sliderBeatStartTimes.size());
+			System.out.println("What beats: " + sliderBeatStartTimes.toString());
+
+			if (pauseBehaviorBarCheckbox.isSelected()) {
+				int snapAdjustment = 50;
+				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
+			}
 			// Force the slider to use the new labels
 			slider.setLabelTable(table);
 			slider.setPaintLabels(true);
@@ -3457,7 +3495,7 @@ public class VibeComposerGUI extends JFrame
 
 					if (unpause) {
 						long startPos = (pauseBehaviorBarCheckbox.isSelected())
-								? (pausedMeasureCounter * measureWidth) + delayed()
+								? sliderMeasureStartTimes.get(pausedMeasureCounter)
 								: pausedSliderPosition;
 						if (startPos < slider.getValue()) {
 							startPos = slider.getValue();

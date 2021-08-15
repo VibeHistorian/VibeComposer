@@ -1387,6 +1387,7 @@ public class MidiGenerator implements JMC {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
 			}
 			sec.setSectionDuration(-1);
+			sec.setSectionBeatDurations(null);
 			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);
 			secOrder++;
 			System.out.println(
@@ -1728,8 +1729,8 @@ public class MidiGenerator implements JMC {
 				restoreGlobalPartsToGuiConfig();
 			}
 			counter += sec.getMeasures();
-			sectionStartTimer += (sec.getSectionDuration() > 0) ? sec.getSectionDuration()
-					: measureLength;
+			sectionStartTimer += ((sec.getSectionDuration() > 0) ? sec.getSectionDuration()
+					: measureLength) * sec.getMeasures();
 		}
 		System.out.println("Added phrases/cphrases to sections..");
 
@@ -1946,6 +1947,7 @@ public class MidiGenerator implements JMC {
 		chordProgression = mappedChords;
 		rootProgression = mappedRootChords;
 		progressionDurations = chordsDurations.getRight();
+		sec.setSectionBeatDurations(progressionDurations);
 		sec.setSectionDuration(progressionDurations.stream().mapToDouble(e -> e).sum());
 		System.out.println("Using SECTION custom progression: "
 				+ StringUtils.join(chordsDurations.getLeft(), ","));

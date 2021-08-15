@@ -98,33 +98,71 @@ class RangeSliderUI extends BasicSliderUI {
 		//super.calculateThumbLocation();
 
 		if (slider.getSnapToTicks()) {
+			RangeSlider actualSlider = (RangeSlider) slider;
 			int realMinimum = slider.getMinimum();
 			if (slider instanceof PlayheadRangeSlider) {
-				realMinimum += ((RangeSlider) slider).getTickStart();
+				realMinimum += actualSlider.getTickStart();
 			}
 			int sliderValue = slider.getValue();
 			int snappedValue = sliderValue;
-			int majorTickSpacing = slider.getMajorTickSpacing();
-			int minorTickSpacing = slider.getMinorTickSpacing();
-			int tickSpacing = 0;
 
-			if (minorTickSpacing > 0) {
-				tickSpacing = minorTickSpacing;
-			} else if (majorTickSpacing > 0) {
-				tickSpacing = majorTickSpacing;
-			}
+			if (actualSlider.getCustomMinorTicks() != null) {
+				// find closest minor tick
+				int smallestDifference = Integer.MAX_VALUE;
+				int bestValue = 0;
+				for (int i = 0; i < actualSlider.getCustomMinorTicks().size() - 1; i++) {
+					int value = actualSlider.getCustomMinorTicks().get(i);
+					int diff = Math.abs(sliderValue - value);
+					if (diff <= smallestDifference) {
+						smallestDifference = diff;
+						bestValue = value;
+					} else {
+						// found snap point
+						if (bestValue != sliderValue) {
+							slider.setValue(bestValue);
+						}
+					}
+				}
+			} else if (actualSlider.getCustomMajorTicks() != null) {
+				// find closest major tick
+				int smallestDifference = Integer.MAX_VALUE;
+				int bestValue = 0;
+				for (int i = 0; i < actualSlider.getCustomMajorTicks().size() - 1; i++) {
+					int value = actualSlider.getCustomMajorTicks().get(i);
+					int diff = Math.abs(sliderValue - value);
+					if (diff <= smallestDifference) {
+						smallestDifference = diff;
+						bestValue = value;
+					} else {
+						// found snap point
+						if (bestValue != sliderValue) {
+							slider.setValue(bestValue);
+						}
+					}
+				}
+			} else {
+				int majorTickSpacing = slider.getMajorTickSpacing();
+				int minorTickSpacing = slider.getMinorTickSpacing();
+				int tickSpacing = 0;
 
-			if (tickSpacing != 0) {
-				// If it's not on a tick, change the value
-				if ((sliderValue - realMinimum) % tickSpacing != 0) {
-					float temp = (float) (sliderValue - realMinimum) / (float) tickSpacing;
-					int whichTick = Math.round(temp);
-
-					snappedValue = realMinimum + (whichTick * tickSpacing);
+				if (minorTickSpacing > 0) {
+					tickSpacing = minorTickSpacing;
+				} else if (majorTickSpacing > 0) {
+					tickSpacing = majorTickSpacing;
 				}
 
-				if (snappedValue != sliderValue) {
-					slider.setValue(snappedValue);
+				if (tickSpacing != 0) {
+					// If it's not on a tick, change the value
+					if ((sliderValue - realMinimum) % tickSpacing != 0) {
+						float temp = (float) (sliderValue - realMinimum) / (float) tickSpacing;
+						int whichTick = Math.round(temp);
+
+						snappedValue = realMinimum + (whichTick * tickSpacing);
+					}
+
+					if (snappedValue != sliderValue) {
+						slider.setValue(snappedValue);
+					}
 				}
 			}
 		}
@@ -200,7 +238,12 @@ class RangeSliderUI extends BasicSliderUI {
 		if (slider.getOrientation() == JSlider.HORIZONTAL) {
 			g.translate(0, tickBounds.y);
 
-			if (slider.getMinorTickSpacing() > 0) {
+			if (actualSlider.getCustomMinorTicks() != null) {
+				for (Integer minorTickPos : actualSlider.getCustomMinorTicks()) {
+					int xPos = xPositionForValue(minorTickPos);
+					paintMinorTickForHorizSlider(g, tickBounds, xPos);
+				}
+			} else if (actualSlider.getMinorTickSpacing() > 0) {
 				int value = slider.getMinimum() + actualSlider.getTickStart();
 
 				while (value <= slider.getMaximum()) {
@@ -216,7 +259,12 @@ class RangeSliderUI extends BasicSliderUI {
 				}
 			}
 
-			if (slider.getMajorTickSpacing() > 0) {
+			if (actualSlider.getCustomMajorTicks() != null) {
+				for (Integer majorTickPos : actualSlider.getCustomMajorTicks()) {
+					int xPos = xPositionForValue(majorTickPos);
+					paintMajorTickForHorizSlider(g, tickBounds, xPos);
+				}
+			} else if (actualSlider.getMajorTickSpacing() > 0) {
 				int value = slider.getMinimum() + actualSlider.getTickStart();
 
 				while (value <= slider.getMaximum()) {
@@ -236,7 +284,7 @@ class RangeSliderUI extends BasicSliderUI {
 		} else {
 			g.translate(tickBounds.x, 0);
 
-			if (slider.getMinorTickSpacing() > 0) {
+			if (actualSlider.getMinorTickSpacing() > 0) {
 
 				int value = slider.getMinimum();
 
@@ -253,7 +301,7 @@ class RangeSliderUI extends BasicSliderUI {
 				}
 			}
 
-			if (slider.getMajorTickSpacing() > 0) {
+			if (actualSlider.getMajorTickSpacing() > 0) {
 
 				int value = slider.getMinimum();
 
