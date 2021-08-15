@@ -2481,14 +2481,17 @@ public class MidiGenerator implements JMC {
 					}
 					int nextP = p + 1;
 					int durMultiplier = 1;
-					while (nextP < pattern.size()) {
-						if (pattern.get(nextP) < 1) {
-							durMultiplier++;
-						} else {
-							break;
+					if (cp.isDurationStretch()) {
+						while (nextP < pattern.size()) {
+							if (pattern.get(nextP) < 1) {
+								durMultiplier++;
+							} else {
+								break;
+							}
+							nextP++;
 						}
-						nextP++;
 					}
+
 					cC.setDurationRatio(cC.getDurationRatio() * durMultiplier);
 					chords.add(cC);
 					durationCounter += duration;

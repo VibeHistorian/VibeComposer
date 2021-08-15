@@ -6,6 +6,7 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -27,6 +28,8 @@ public class ChordPanel extends InstPanel {
 	private KnobPanel transitionSplit = new KnobPanel("Split<br>(ms)", 625, 0, 1000);
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
+
+	private JCheckBox durationStretch = new JCheckBox("Expand", true);
 
 	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
 
@@ -72,6 +75,7 @@ public class ChordPanel extends InstPanel {
 		this.add(delay);
 
 		this.add(minMaxVelSlider);
+		this.add(durationStretch);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -79,10 +83,11 @@ public class ChordPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
-		
+
 
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
+		toggleableComponents.add(durationStretch);
 
 	}
 
@@ -146,9 +151,9 @@ public class ChordPanel extends InstPanel {
 		part.setTransitionChance(getTransitionChance());
 		part.setTransitionSplit(getTransitionSplit());
 		part.setStrum(getStrum());
+		part.setDurationStretch(getDurationStretch());
 
 		part.setInstPool(getInstPool());
-
 		part.setOrder(getPanelOrder());
 		return part;
 	}
@@ -161,8 +166,8 @@ public class ChordPanel extends InstPanel {
 
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
-
 		setStrum(part.getStrum());
+		setDurationStretch(part.isDurationStretch());
 
 		setPanelOrder(part.getOrder());
 
@@ -179,5 +184,13 @@ public class ChordPanel extends InstPanel {
 	@Override
 	public InstPart toInstPart(int lastRandomSeed) {
 		return toChordPart(lastRandomSeed);
+	}
+
+	public boolean getDurationStretch() {
+		return durationStretch.isSelected();
+	}
+
+	public void setDurationStretch(boolean durationStretch) {
+		this.durationStretch.setSelected(durationStretch);
 	}
 }

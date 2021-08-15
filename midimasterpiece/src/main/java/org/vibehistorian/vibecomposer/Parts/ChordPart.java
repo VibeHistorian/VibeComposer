@@ -13,6 +13,7 @@ public class ChordPart extends InstPart {
 
 	private int strum = 0;
 
+	private boolean durationStretch = true;
 
 	private POOL instPool = POOL.PLUCK;
 
@@ -52,6 +53,16 @@ public class ChordPart extends InstPart {
 
 	public void setInstPool(POOL instPool) {
 		this.instPool = instPool;
+	}
+
+
+	public boolean isDurationStretch() {
+		return durationStretch;
+	}
+
+
+	public void setDurationStretch(boolean durationStretch) {
+		this.durationStretch = durationStretch;
 	}
 
 }
