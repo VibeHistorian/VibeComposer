@@ -30,6 +30,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.RenderingHints;
@@ -128,6 +129,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
@@ -297,6 +299,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeArrangementOnCompose;
 	public static ScrollComboBox<String> arrSection;
 	JPanel arrangementMiddleColoredPanel;
+	ScrollComboBox<String> newSectionBox;
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
@@ -1589,40 +1592,41 @@ public class VibeComposerGUI extends JFrame
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementCommitPanels")) {
 			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
-			if (!OMNI.EMPTYCOMBO.equals(selItem)) {
-				Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
-				Section sec = actualArrangement.getSections().get(secOrder - 1);
-				// parts
-				switch (instrumentTabPane.getSelectedIndex()) {
-				case 0:
-					sec.setMelodyParts(
-							(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(
-									0));
-					break;
-				case 1:
-					sec.setBassParts(
-							(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
-					break;
-				case 2:
-					sec.setChordParts(
-							(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
-					break;
-				case 3:
-					sec.setArpParts(
-							(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
-					break;
-				case 4:
-					sec.setDrumParts(
-							(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
-					break;
-				default:
-					break;
-				}
-				if (instrumentTabPane.getSelectedIndex() < 5) {
-					resetArrSection();
-					arrSection.setSelectedIndex(secOrder);
-					resetArrSectionSelection = false;
-				}
+			if (OMNI.EMPTYCOMBO.equals(selItem)) {
+				return;
+			}
+
+			Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
+			Section sec = actualArrangement.getSections().get(secOrder - 1);
+			// parts
+			switch (instrumentTabPane.getSelectedIndex()) {
+			case 0:
+				sec.setMelodyParts(
+						(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(0));
+				break;
+			case 1:
+				sec.setBassParts(
+						(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
+				break;
+			case 2:
+				sec.setChordParts(
+						(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
+				break;
+			case 3:
+				sec.setArpParts(
+						(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
+				break;
+			case 4:
+				sec.setDrumParts(
+						(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
+				break;
+			default:
+				break;
+			}
+			if (instrumentTabPane.getSelectedIndex() < 5) {
+				resetArrSection();
+				arrSection.setSelectedIndex(secOrder);
+				resetArrSectionSelection = false;
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
@@ -1636,6 +1640,26 @@ public class VibeComposerGUI extends JFrame
 				sec.setArpParts(null);
 				sec.setDrumParts(null);
 			}
+		} else if (action.startsWith("ArrangementAddNewSection")) {
+			String selItem = (String) newSectionBox.getSelectedItem();
+			if (OMNI.EMPTYCOMBO.equals(selItem)) {
+				return;
+			}
+			if (instrumentTabPane.getSelectedIndex() != 5) {
+				Section addedSec = actualArrangement
+						.addDefaultSection(scrollableArrangementActualTable, selItem);
+				addedSec.generatePresences(
+						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
+								: new Random());
+				refreshActual = true;
+			} else {
+				arrangement.addDefaultSection(scrollableArrangementTable, selItem);
+				if (arrangement.getSections().size() > maxLength) {
+					pieceLength.setText("" + ++maxLength);
+				}
+			}
+			newSectionBox.setSelectedIndex(0);
+
 		}
 
 		if (!refreshActual) {
@@ -1786,9 +1810,17 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		JButton commitPanelBtn = makeButton("Commit Inst.", "ArrangementCommitPanels");
-		JButton copySelectedBtn = makeButton("Copy Selected", "ArrangementAddLast");
+		JButton copySelectedBtn = makeButton("Cc", "ArrangementAddLast");
+		copySelectedBtn.setPreferredSize(new Dimension(25, 30));
+		copySelectedBtn.setMargin(new Insets(0, 0, 0, 0));
+		JButton removeSelectedBtn = makeButton("X", "ArrangementRemoveLast");
+		newSectionBox = new ScrollComboBox<>();
+		newSectionBox.addItem(OMNI.EMPTYCOMBO);
+		for (SectionType type : Section.SectionType.values()) {
+			newSectionBox.addItem(type.toString());
+		}
 
-		JButton removeSelectedBtn = makeButton("Remove All Selected", "ArrangementRemoveLast");
+		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection");
 
 		arrangementSettings.add(randomizeArrangementBtn);
 		arrangementSettings.add(pieceLength);
@@ -1811,6 +1843,9 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(copySelectedBtn);
 		arrangementSettings.add(removeSelectedBtn);
 		arrangementSettings.add(resetArrangementBtn);
+		arrangementSettings.add(newSectionBox);
+		arrangementSettings.add(addNewSectionBtn);
+
 
 		arrangementSettings.add(new JLabel("Seed"));
 		arrangementSeed = new RandomValueButton(0);
@@ -3464,9 +3499,9 @@ public class VibeComposerGUI extends JFrame
 
 			slider.setCustomMajorTicks(sliderMeasureStartTimes);
 			slider.setCustomMinorTicks(sliderBeatStartTimes);
-			System.out.println("Size measures: " + sliderMeasureStartTimes.size());
+			/*System.out.println("Size measures: " + sliderMeasureStartTimes.size());
 			System.out.println("Size beats: " + sliderBeatStartTimes.size());
-			System.out.println("What beats: " + sliderBeatStartTimes.toString());
+			System.out.println("What beats: " + sliderBeatStartTimes.toString());*/
 
 			if (pauseBehaviorBarCheckbox.isSelected()) {
 				int snapAdjustment = 50;

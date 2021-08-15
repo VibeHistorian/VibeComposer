@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
@@ -49,8 +51,8 @@ import jm.music.data.Phrase;
 @XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
-		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS3, CLIMAX,
-		OUTRO;
+		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP, CHORUS3,
+		CLIMAX, OUTRO;
 	}
 
 	public static final String[][] variationDescriptions = {
@@ -383,6 +385,37 @@ public class Section {
 			partPresenceVariationMap.get(part)[partOrder][i
 					+ 2] = ((Boolean) partPresenceVariationMap.get(part)[partOrder][i + 2])
 							|| vars.contains(Integer.valueOf(i));
+		}
+	}
+
+	public void generatePresences(Random presRand) {
+		initPartMapIfNull();
+		for (int i = 0; i < 5; i++) {
+			int chance = getChanceForInst(i);
+			List<? extends InstPanel> panels = VibeComposerGUI.getInstList(i);
+			for (int j = 0; j < panels.size(); j++) {
+				if (presRand.nextInt(100) < chance) {
+					setPresence(i, j);
+				}
+			}
+		}
+
+	}
+
+	private int getChanceForInst(int i) {
+		switch (i) {
+		case 0:
+			return melodyChance;
+		case 1:
+			return bassChance;
+		case 2:
+			return chordChance;
+		case 3:
+			return arpChance;
+		case 4:
+			return drumChance;
+		default:
+			throw new IllegalArgumentException("Too high inst. order");
 		}
 	}
 

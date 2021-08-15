@@ -309,22 +309,26 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
+	public Section addDefaultSection(JTable tbl, String defaultType) {
+		int column = tbl.getSelectedColumn();
+		if (column < 0) {
+			// add at end
+			column = tbl.getColumnCount();
+		} else {
+			// add after section
+			column++;
+		}
+		Section sec = defaultSections.get(defaultType).deepCopy();
+		sections.add(column, sec);
+		return sec;
+	}
+
 	public void duplicateSection(JTable tbl, boolean isActual) {
 
 
 		int column = tbl.getSelectedColumn();
 		if (column == -1)
 			return;
-		/*if (isActual) {
-			overridden = true;
-			setFromActualTable(tbl, true);
-		} else {
-			overridden = false;
-			setFromModel(tbl);
-		}*/
-		/*if (column != tbl.convertColumnIndexToModel(column)) {
-			resortByIndexes(tbl, isActual);
-		}*/
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
@@ -336,14 +340,6 @@ public class Arrangement {
 		if (columns.length == 0) {
 			return;
 		}
-		/*if (isActual) {
-			overridden = true;
-			setFromActualTable(tbl, true);
-		} else {
-			overridden = false;
-			setFromModel(tbl);
-		}*/
-		//resortByIndexes(tbl, isActual);
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));
