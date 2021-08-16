@@ -1452,8 +1452,7 @@ public class MidiGenerator implements JMC {
 			if (sec.isCustomChordsDurationsEnabled()) {
 				sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
 			}
-			if (!sectionChordsReplaced
-					|| rootProgression.size() == generatedRootProgression.size()) {
+			if (!sectionChordsReplaced) {
 				if (riskyVariations.get(1)) {
 					System.out.println("Risky Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
@@ -1464,6 +1463,13 @@ public class MidiGenerator implements JMC {
 					chordProgression = actualProgression;
 					progressionDurations = actualDurations;
 
+				}
+			} else if (rootProgression.size() == generatedRootProgression.size()) {
+				if (riskyVariations.get(1)) {
+					System.out.println("Risky Variation: Chord Swap!");
+					rootProgression = melodyBasedRootProgression;
+					chordProgression = melodyBasedChordProgression;
+					progressionDurations = actualDurations;
 				}
 			}
 
