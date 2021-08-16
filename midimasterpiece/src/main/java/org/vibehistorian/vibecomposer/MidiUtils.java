@@ -524,11 +524,15 @@ public class MidiUtils {
 		int[] mappedChord = null;
 
 		// allow sharps as chords
-		if (chordString.length() > 2 && "#".equals(chordString.substring(1, 2))) {
+		if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
 			String testChordString = chordString;
 			testChordString = testChordString.replaceFirst("#", "");
 			mappedChord = chordsMap.get(testChordString);
 			if (mappedChord != null) {
+				mappedChord = Arrays.copyOf(mappedChord, mappedChord.length);
+				for (int i = 0; i < mappedChord.length; i++) {
+					mappedChord[i] = mappedChord[i] + 1;
+				}
 				return mappedChord;
 			}
 		}
@@ -988,4 +992,28 @@ public class MidiUtils {
 		}
 	}
 
+	public static List<Chord> convertChordStringsToChords(List<String> chordStrings) {
+		List<Chord> chords = new ArrayList<>();
+		for (String s : chordStrings) {
+			Chord c = Chord.EMPTY(MidiGenerator.Durations.HALF_NOTE);
+			int[] mapped = mappedChord(s);
+			if (mapped == null)
+				return null;
+
+			c.setNotes(mapped);
+			chords.add(c);
+		}
+		return chords;
+	}
+
+	public static void processRawChords(String rawChords) {
+		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
+		List<Chord> chords = convertChordStringsToChords(rawChordsList);
+		Phrase phr = new Phrase();
+		addChordsToPhrase(phr, chords, 0.125);
+
+		Pair<ScaleMode, Integer> detectionResult = MidiUtils.detectKeyAndMode(phr);
+
+
+	}
 }

@@ -4646,6 +4646,8 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
+			//MidiUtils.processRawChords(userChords.getText());
+
 			// solve user chords
 			if (userChordsEnabled.isSelected() && !userChords.getText().contains("R")) {
 				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(userChords,
@@ -4714,9 +4716,6 @@ public class VibeComposerGUI extends JFrame
 					System.out.println("Lengths don't match, solved only these: "
 							+ userChordsParsed.toString() + " !");
 				}
-			} else {
-				MidiGenerator.userChords.clear();
-				MidiGenerator.userChordsDurations.clear();
 			}
 		} catch (Exception e) {
 			System.out.println("Bad user input in custom chords/durations!\n");
