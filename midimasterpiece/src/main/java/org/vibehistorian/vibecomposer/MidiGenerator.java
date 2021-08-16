@@ -21,7 +21,6 @@ package org.vibehistorian.vibecomposer;
 
 import static org.vibehistorian.vibecomposer.MidiUtils.applyChordFreqMap;
 import static org.vibehistorian.vibecomposer.MidiUtils.cIonianScale4;
-import static org.vibehistorian.vibecomposer.MidiUtils.chordsMap;
 import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
 import static org.vibehistorian.vibecomposer.MidiUtils.cpRulesMap;
 import static org.vibehistorian.vibecomposer.MidiUtils.getBasicChordsFromRoots;
@@ -58,7 +57,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
-import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
@@ -960,7 +958,7 @@ public class MidiGenerator implements JMC {
 			//top3.entrySet().stream().forEach(System.out::println);
 			String chordString = applyChordFreqMap(top3, orderOfMatch, prevChordString);
 			System.out.println("Alternate chord #" + i + ": " + chordString);
-			int[] chordLongMapped = chordsMap.get(chordString);
+			int[] chordLongMapped = mappedChord(chordString);
 			melodyBasedRootProgression.add(Arrays.copyOf(chordLongMapped, chordLongMapped.length));
 			alternateChordProg.add(chordLongMapped);
 			chordStrings.add(chordString);
@@ -2357,7 +2355,8 @@ public class MidiGenerator implements JMC {
 		int numberOfVars = Section.variationDescriptions[2].length - 2;
 		int stretch = cp.getChordNotesStretch();
 		boolean maxStrum = false;
-
+		List<Integer> fillPattern = cp.getChordSpanFill()
+				.getPatternByLength(actualProgression.size());
 		for (int i = 0; i < measures; i++) {
 			Random transitionGenerator = new Random(mainGeneratorSeed);
 			int extraTranspose = 0;
@@ -2413,12 +2412,8 @@ public class MidiGenerator implements JMC {
 						? (j + 1) % actualProgression.size()
 						: j;
 
-				if (!ignoreChordSpanFill && (cp.getChordSpanFill() != ChordSpanFill.ALL)) {
-					if ((cp.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
-						chords.add(c);
-						continue;
-					}
-					if ((cp.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
+				if (!ignoreChordSpanFill) {
+					if (fillPattern.get(j) < 1) {
 						chords.add(c);
 						continue;
 					}
@@ -2580,7 +2575,8 @@ public class MidiGenerator implements JMC {
 		}*/
 
 		boolean fillLastBeat = false;
-
+		List<Integer> fillPattern = ap.getChordSpanFill()
+				.getPatternByLength(actualProgression.size());
 		int numberOfVars = Section.variationDescriptions[3].length - 2;
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
@@ -2680,11 +2676,8 @@ public class MidiGenerator implements JMC {
 						if (pausePatternSpanned.get(p) == 0) {
 							pitch = Integer.MIN_VALUE;
 						}
-						if (!ignoreChordSpanFill && (ap.getChordSpanFill() != ChordSpanFill.ALL)) {
-							if ((ap.getChordSpanFill() == ChordSpanFill.EVEN) && (j % 2 != 0)) {
-								pitch = Integer.MIN_VALUE;
-							}
-							if ((ap.getChordSpanFill() == ChordSpanFill.ODD) && (j % 2 == 0)) {
+						if (!ignoreChordSpanFill) {
+							if (fillPattern.get(j) < 1) {
 								pitch = Integer.MIN_VALUE;
 							}
 						}
@@ -2774,6 +2767,8 @@ public class MidiGenerator implements JMC {
 		// bar iter
 		int hits = dp.getHitsPerPattern();
 		int swingPercentAmount = (hits % 2 == 0) ? dp.getSwingPercent() : 50;
+		List<Integer> fillPattern = dp.getChordSpanFill()
+				.getPatternByLength(actualProgression.size());
 
 		for (int o = 0; o < measures; o++) {
 			// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
@@ -2833,12 +2828,9 @@ public class MidiGenerator implements JMC {
 						velocity = (velocity * sectionChanceModifier / 100);
 					}
 
-					boolean isEven = ((j + (k / oneChordPatternSize)) % 2 == 0);
-					if (!ignoreChordSpanFill && (dp.getChordSpanFill() != ChordSpanFill.ALL)) {
-						if ((dp.getChordSpanFill() == ChordSpanFill.EVEN) && !isEven) {
-							pitch = Integer.MIN_VALUE;
-						}
-						if ((dp.getChordSpanFill() == ChordSpanFill.ODD) && isEven) {
+					int chordNum = j + (k / oneChordPatternSize);
+					if (!ignoreChordSpanFill) {
+						if (fillPattern.get(chordNum % actualProgression.size()) < 1) {
 							pitch = Integer.MIN_VALUE;
 						}
 					}

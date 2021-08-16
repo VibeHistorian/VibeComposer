@@ -4699,13 +4699,9 @@ public class VibeComposerGUI extends JFrame
 				List<String> userChordsParsed = new ArrayList<>();
 				List<Double> userChordsDurationsParsed = new ArrayList<>();
 				for (int i = 0; i < userChordsDurationsSplit.length; i++) {
-					if (MidiUtils.chordsMap.containsKey(userChordsSplit[i])) {
+					int[] mappedChordAttempt = MidiUtils.mappedChord(userChordsSplit[i]);
+					if (mappedChordAttempt != null) {
 						userChordsParsed.add(userChordsSplit[i]);
-					} else {
-						int[] interval = MidiUtils.getSpelledChord(userChordsSplit[i]);
-						if (interval != null) {
-							userChordsParsed.add(userChordsSplit[i]);
-						}
 					}
 
 					userChordsDurationsParsed.add(
@@ -4714,6 +4710,9 @@ public class VibeComposerGUI extends JFrame
 				if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
 					solvedChords = userChordsParsed;
 					solvedDurations = userChordsDurationsParsed;
+				} else {
+					System.out.println("Lengths don't match, solved only these: "
+							+ userChordsParsed.toString() + " !");
 				}
 			} else {
 				MidiGenerator.userChords.clear();

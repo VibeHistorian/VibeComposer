@@ -37,7 +37,6 @@ import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
@@ -110,7 +109,9 @@ public abstract class InstPanel extends JPanel {
 	public void initDefaults(ActionListener l) {
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
-		MidiUtils.addAllToJComboBox(new String[] { "ALL", "ODD", "EVEN" }, chordSpanFill);
+		for (ChordSpanFill fill : ChordSpanFill.values()) {
+			chordSpanFill.addItem(fill.toString());
+		}
 		panelOrder.setPreferredSize(new Dimension(20, 30));
 
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));

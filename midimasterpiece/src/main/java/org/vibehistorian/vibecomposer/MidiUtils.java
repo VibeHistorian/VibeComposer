@@ -521,7 +521,19 @@ public class MidiUtils {
 	}
 
 	public static int[] mappedChord(String chordString) {
-		int[] mappedChord = chordsMap.get(chordString);
+		int[] mappedChord = null;
+
+		// allow sharps as chords
+		if (chordString.length() > 2 && "#".equals(chordString.substring(1, 2))) {
+			String testChordString = chordString;
+			testChordString = testChordString.replaceFirst("#", "");
+			mappedChord = chordsMap.get(testChordString);
+			if (mappedChord != null) {
+				return mappedChord;
+			}
+		}
+
+		mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
 			mappedChord = getSpelledChord(chordString);
 		}
@@ -625,6 +637,9 @@ public class MidiUtils {
 		List<int[]> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
+			if (index == -1) {
+				index = majorScaleNormalized.indexOf((r[0] + 11) % 12);
+			}
 			String chordLong = MAJOR_CHORDS.get(index);
 			basicChords.add(mappedChord(chordLong));
 		}
