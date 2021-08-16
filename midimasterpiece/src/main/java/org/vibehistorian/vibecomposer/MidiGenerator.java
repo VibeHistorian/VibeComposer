@@ -1449,20 +1449,21 @@ public class MidiGenerator implements JMC {
 
 			// reset back to normal?
 			boolean sectionChordsReplaced = false;
-			if (riskyVariations.get(1)) {
-				System.out.println("Risky Variation: Chord Swap!");
-				rootProgression = melodyBasedRootProgression;
-				chordProgression = melodyBasedChordProgression;
-				progressionDurations = actualDurations;
-			} else {
-
-				if (sec.isCustomChordsDurationsEnabled()) {
-					sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
-				}
-				if (!sectionChordsReplaced) {
+			if (sec.isCustomChordsDurationsEnabled()) {
+				sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
+			}
+			if (!sectionChordsReplaced
+					|| rootProgression.size() == generatedRootProgression.size()) {
+				if (riskyVariations.get(1)) {
+					System.out.println("Risky Variation: Chord Swap!");
+					rootProgression = melodyBasedRootProgression;
+					chordProgression = melodyBasedChordProgression;
+					progressionDurations = actualDurations;
+				} else {
 					rootProgression = generatedRootProgression;
 					chordProgression = actualProgression;
 					progressionDurations = actualDurations;
+
 				}
 			}
 
