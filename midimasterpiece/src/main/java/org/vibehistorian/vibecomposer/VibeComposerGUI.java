@@ -2353,9 +2353,9 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initCustomChords(int startY, int anchorSide) {
-		JPanel chordToolTip = new JPanel();
-		chordToolTip.setOpaque(false);
-		chordToolTip.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		JPanel customChordsPanel = new JPanel();
+		customChordsPanel.setOpaque(false);
+		customChordsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		/*tipLabel = new JLabel(
 				"Chord meaning: 1 = I(major), 10 = i(minor), 100 = I(aug), 1000 = I(dim), 10000 = I7(major), "
 						+ "100000 = i7(minor), 1000000 = 9th, 10000000 = 13th, 100000000 = Sus4, 1000000000 = Sus2, 10000000000 = Sus7");*/
@@ -2366,22 +2366,36 @@ public class VibeComposerGUI extends JFrame
 
 		JButton randomizeCustomChords = makeButton("    Randomize Chords    ",
 				"RandomizeUserChords");
-		chordToolTip.add(randomizeCustomChords);
+		customChordsPanel.add(randomizeCustomChords);
 
 		userChordsEnabled = new JCheckBox("Custom Chords", false);
-		chordToolTip.add(userChordsEnabled);
+		customChordsPanel.add(userChordsEnabled);
 
 		userChords = new JTextField("R", 35);
 		userChords.setToolTipText(tooltip);
-		chordToolTip.add(userChords);
+		customChordsPanel.add(userChords);
+
+		JButton normalizeChordsButton = new JButton("N");
+		normalizeChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<String> normalizedChords = MidiUtils.processRawChords(userChords.getText(),
+						ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
+				if (normalizedChords != null) {
+					userChords.setText(StringUtils.join(normalizedChords, ","));
+				}
+			}
+		});
+		customChordsPanel.add(normalizeChordsButton);
 		userChordsDurations = new JTextField("2,2,2,2", 9);
-		chordToolTip.add(new JLabel("Chord durations:"));
-		chordToolTip.add(userChordsDurations);
+		customChordsPanel.add(new JLabel("Chord durations:"));
+		customChordsPanel.add(userChordsDurations);
 
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(chordToolTip, constraints);
+		everythingPanel.add(customChordsPanel, constraints);
 
 	}
 
@@ -4645,8 +4659,6 @@ public class VibeComposerGUI extends JFrame
 
 			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
-
-			//MidiUtils.processRawChords(userChords.getText());
 
 			// solve user chords
 			if (userChordsEnabled.isSelected() && !userChords.getText().contains("R")) {

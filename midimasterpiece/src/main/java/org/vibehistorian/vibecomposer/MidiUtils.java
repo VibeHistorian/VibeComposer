@@ -346,7 +346,7 @@ public class MidiUtils {
 		return intList;
 	}
 
-	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr) {
+	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr, ScaleMode targetMode) {
 		int bestNotContained = Integer.MAX_VALUE;
 		ScaleMode bestMode = null;
 		int transposeUpBy = 0;
@@ -380,6 +380,12 @@ public class MidiUtils {
 				System.out.println("Best for sure: " + detectionResult.toString());
 				bestForSure = true;
 			}
+
+			if (detectionResult.getKey() == 0 && (targetMode != null) && (targetMode == mode)) {
+				bestForSure = true;
+				System.out.println("Found target mode: " + targetMode.toString());
+			}
+
 			if (detectionResult.getKey() < bestNotContained || bestForSure) {
 				bestNotContained = detectionResult.getKey();
 				bestMode = mode;
@@ -688,21 +694,33 @@ public class MidiUtils {
 		return squishedChords;
 	}
 
-	public static int[] transposeChord(int[] chord, final int[] mode, final int[] modeTo) {
+	public static int[] transposeChord(int[] chord, final Integer[] mode, final Integer[] modeTo) {
 		int[] transposedChord = new int[chord.length];
 
 		List<Integer> modeList = new ArrayList<>();
 		for (int num : mode) {
 			modeList.add(num);
 		}
-
+		List<Integer> modeToList = new ArrayList<>();
+		for (int num : modeTo) {
+			modeToList.add(num);
+		}
 
 		for (int j = 0; j < chord.length; j++) {
 			int pitch = chord[j];
-			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
+			int searchPitch = Integer.valueOf(pitch % 12);
+			int originalIndex = modeList.indexOf(searchPitch);
 
 			if (originalIndex == -1) {
-				transposedChord[j] = pitch - 1;
+				if (modeToList.contains(searchPitch)) {
+					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+				} else {
+					int closestPitch = getClosestFromList(modeToList, searchPitch);
+					int difference = searchPitch - closestPitch;
+					transposedChord[j] = pitch - difference;
+					System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+				}
 				continue;
 			}
 
@@ -1006,14 +1024,74 @@ public class MidiUtils {
 		return chords;
 	}
 
-	public static void processRawChords(String rawChords) {
+	public static List<String> processRawChords(String rawChords, ScaleMode targetMode) {
 		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
 		List<Chord> chords = convertChordStringsToChords(rawChordsList);
 		Phrase phr = new Phrase();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		Pair<ScaleMode, Integer> detectionResult = MidiUtils.detectKeyAndMode(phr);
+		Pair<ScaleMode, Integer> detectionResult = MidiUtils.detectKeyAndMode(phr, targetMode);
+		if (detectionResult == null) {
+			return null;
+		}
 
+		int transposeUpBy = detectionResult.getValue();
+		if (transposeUpBy != 0) {
+			for (Chord c : chords) {
+				c.setNotes(transposeChord(c.getNotes(), transposeUpBy));
+			}
+		}
+		if (detectionResult.getKey() != targetMode) {
+			return null;
+			/*for (Chord c : chords) {
+				c.setNotes(MidiUtils.transposeChord(c.getNotes(),
+						detectionResult.getKey().noteAdjustScale,
+						ScaleMode.IONIAN.noteAdjustScale));
+			}*/
+		}
+		for (Chord c : chords) {
+			c.setNotes(MidiUtils.transposeChord(c.getNotes(),
+					detectionResult.getKey().noteAdjustScale, ScaleMode.IONIAN.noteAdjustScale));
+		}
+
+		List<String> solvedChords = new ArrayList<>();
+		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		for (Chord c : chords) {
+			int[] notes = c.getNotes();
+			int firstPitch = notes[0] % 12;
+			int index = majorScaleNormalized.indexOf(firstPitch);
+			if (index < 0) {
+				return null;
+			}
+			String firstLetter = CHORD_FIRST_LETTERS.get(index + 1);
+			for (String spice : SPICE_NAMES_LIST) {
+				String combinedChord = firstLetter + spice;
+				int[] mapped = mappedChord(combinedChord);
+				if (Arrays.equals(normalizeChord(mapped), normalizeChord(notes))) {
+					solvedChords.add(combinedChord);
+					break;
+				}
+			}
+		}
+
+
+		System.out.println(solvedChords.toString());
+		if (solvedChords.size() == chords.size()) {
+
+			VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
+			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
+			return solvedChords;
+		} else {
+			return null;
+		}
 
 	}
+
+	public static int[] normalizeChord(int[] chord) {
+		for (int i = 0; i < chord.length; i++) {
+			chord[i] = chord[i] % 12;
+		}
+		return chord;
+	}
+
 }

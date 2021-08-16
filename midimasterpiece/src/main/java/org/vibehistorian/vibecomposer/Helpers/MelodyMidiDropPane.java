@@ -149,7 +149,7 @@ public class MelodyMidiDropPane extends JPanel {
 						//Mod.consolidate(part);
 						Phrase userMelodyCandidate = part.getPhrase(0);
 						Pair<ScaleMode, Integer> detectionResult = MidiUtils
-								.detectKeyAndMode(userMelodyCandidate);
+								.detectKeyAndMode(userMelodyCandidate, null);
 
 						if (detectionResult == null) {
 							message.setText("Unknown key, skipped!");
