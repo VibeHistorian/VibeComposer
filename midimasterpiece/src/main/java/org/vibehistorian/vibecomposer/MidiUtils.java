@@ -1094,4 +1094,21 @@ public class MidiUtils {
 		return chord;
 	}
 
+	public static String getNoteForPitch(int pitch) {
+		if (pitch < 0) {
+			return "";
+		}
+		int pitchNormalized = pitch % 12;
+		List<Integer> majorLetterPitches = Arrays.asList(Scales.MAJOR_SCALE);
+		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
+		if (chordLetter < 0) {
+			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);
+			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1) + "#";
+			return realLetter + pitch / 12;
+		} else {
+			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1);
+			return realLetter + pitch / 12;
+		}
+	}
+
 }

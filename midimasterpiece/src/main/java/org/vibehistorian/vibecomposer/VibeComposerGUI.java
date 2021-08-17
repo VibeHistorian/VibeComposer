@@ -5434,15 +5434,10 @@ public class VibeComposerGUI extends JFrame
 		int size = patternGenerated.size();
 		//System.out.println("Size: " + size);
 		int patternValue = (dp.getInstrument() <= 40 || dp.getInstrument() == 53) ? 3 : 1;
+		List<Integer> fillPattern = dp.getChordSpanFill().getPatternByLength(chords);
 		for (int c = 0; c < chords; c++) {
-			boolean isEven = (c % 2 == 0);
-			if ((dp.getChordSpanFill() != ChordSpanFill.ALL)) {
-				if ((dp.getChordSpanFill() == ChordSpanFill.EVEN) && !isEven) {
-					continue;
-				}
-				if ((dp.getChordSpanFill() == ChordSpanFill.ODD) && isEven) {
-					continue;
-				}
+			if (fillPattern.get(c) < 1) {
+				continue;
 			}
 			for (int j = 0; j < maxPatternPerChord; j++) {
 				int index = c * maxPatternPerChord + j;

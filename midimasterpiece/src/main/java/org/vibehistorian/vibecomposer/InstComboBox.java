@@ -19,6 +19,20 @@ public class InstComboBox extends ScrollComboBox<String> {
 		return instPool;
 	}
 
+	@Override
+	public String getToolTipText() {
+		if (super.getToolTipText() == null) {
+			return null;
+		}
+		if (instPool == POOL.DRUM) {
+			int pitch = MidiGenerator.mapDrumPitchByCustomMapping(getInstrument(), false);
+			putClientProperty(TOOL_TIP_TEXT_KEY,
+					(pitch + " / " + MidiUtils.getNoteForPitch(pitch)));
+		}
+
+		return super.getToolTipText();
+	}
+
 	public void setInstPool(MidiUtils.POOL instPool) {
 		this.instPool = instPool;
 	}

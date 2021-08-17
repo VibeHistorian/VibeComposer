@@ -2838,7 +2838,7 @@ public class MidiGenerator implements JMC {
 					}
 
 					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
-						pitch = mapDrumPitchByCustomMapping(pitch);
+						pitch = mapDrumPitchByCustomMapping(pitch, true);
 					}
 
 					boolean exception = exceptionGenerator
@@ -2901,8 +2901,8 @@ public class MidiGenerator implements JMC {
 		return variations;
 	}
 
-	private static int mapDrumPitchByCustomMapping(int pitch) {
-		if (customDrumMappingNumbers != null) {
+	public static int mapDrumPitchByCustomMapping(int pitch, boolean cached) {
+		if (cached && customDrumMappingNumbers != null) {
 			int mapped = customDrumMappingNumbers.get(pitch);
 			if (mapped == -1) {
 				throw new IllegalArgumentException(
@@ -2910,20 +2910,29 @@ public class MidiGenerator implements JMC {
 			}
 			return customDrumMappingNumbers.get(pitch);
 		}
-		String customMapping = gc.getDrumCustomMappingNumbers();
-		String[] customMappingNumberStrings = customMapping.split(",");
+		List<Integer> customMappingNumbers = null;
+		if (gc != null) {
+			String customMapping = gc.getDrumCustomMappingNumbers();
+			String[] customMappingNumberStrings = customMapping.split(",");
+			customMappingNumbers = Arrays.asList(customMappingNumberStrings).stream()
+					.map(e -> Integer.valueOf(e.trim())).collect(Collectors.toList());
+		} else {
+			customMappingNumbers = Arrays.asList(MidiUtils.DRUM_INST_NUMBERS_SEMI);
+		}
+
 		List<Integer> defaultMappingNumbers = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES);
-		List<Integer> customMappingNumbers = Arrays.asList(customMappingNumberStrings).stream()
-				.map(e -> Integer.valueOf(e.trim())).collect(Collectors.toList());
-		customDrumMappingNumbers = new HashMap<>();
 		int defaultIndex = defaultMappingNumbers.indexOf(pitch);
 		if (defaultIndex < 0) {
 			throw new IllegalArgumentException("Pitch not found in default drum mapping: " + pitch);
 		} else if (defaultMappingNumbers.size() != customMappingNumbers.size()) {
 			throw new IllegalArgumentException("Custom mapping has incorrect number of elements!");
 		}
-		for (int i = 0; i < defaultMappingNumbers.size(); i++) {
-			customDrumMappingNumbers.put(defaultMappingNumbers.get(i), customMappingNumbers.get(i));
+		if (cached) {
+			customDrumMappingNumbers = new HashMap<>();
+			for (int i = 0; i < defaultMappingNumbers.size(); i++) {
+				customDrumMappingNumbers.put(defaultMappingNumbers.get(i),
+						customMappingNumbers.get(i));
+			}
 		}
 
 		return customMappingNumbers.get(defaultIndex);
@@ -3120,7 +3129,7 @@ public class MidiGenerator implements JMC {
 			} else {
 				if (dp.getInstrument() == 42
 						&& uiGenerator1drumPattern.nextInt(100) < OPENHAT_CHANCE) {
-					drumPattern.add(mapDrumPitchByCustomMapping(46));
+					drumPattern.add(mapDrumPitchByCustomMapping(46, true));
 				} else {
 					drumPattern.add(dp.getInstrument());
 				}
