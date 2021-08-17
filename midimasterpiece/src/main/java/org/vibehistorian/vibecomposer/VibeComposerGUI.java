@@ -2674,7 +2674,7 @@ public class VibeComposerGUI extends JFrame
 								startPos = slider.getValue();
 							}
 							int newSliderVal = slider.getUpperValue() - startPos;
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(10)) {
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(20)) {
 								stopMidi();
 								if (sequencer != null)
 									composeMidi(true);
@@ -5965,7 +5965,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void midiNavigate(long sliderValue) {
-		long time = sliderValue * 1000;
+		long time = (sliderValue - 10) * 1000;
 		long timeTicks = msToTicks(time);
 		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
 			if (time >= 0) {
