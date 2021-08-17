@@ -5101,6 +5101,11 @@ public class VibeComposerGUI extends JFrame
 
 		//drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
 		drumCustomMappingNumbers.setText(guiConfig.getDrumCustomMappingNumbers());
+		if (StringUtils.countMatches(drumCustomMappingNumbers.getText(),
+				",") != MidiUtils.DRUM_INST_NUMBERS_SEMI.length - 1) {
+			drumCustomMappingNumbers
+					.setText(StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
+		}
 
 		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
 		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());

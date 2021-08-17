@@ -358,9 +358,14 @@ public class MidiUtils {
 		int mostFrequents = 0;
 		int mostFrequentPitch = -1;
 		for (Note n : noteList) {
+			if (n.getPitch() <= 0) {
+				continue;
+			}
+
 			int normalized = n.getPitch() % 12;
 			pitches.add(normalized);
-			pitchCounts[normalized]++;
+			pitchCounts[normalized] += (int) (n.getDuration()
+					/ (MidiGenerator.Durations.NOTE_32ND / 2.0));
 			if (pitchCounts[normalized] > mostFrequents) {
 				mostFrequents = pitchCounts[normalized];
 				mostFrequentPitch = normalized;
@@ -853,29 +858,20 @@ public class MidiUtils {
 			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
 			"SWEEP_PAD = 95 " };
 
-	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 42, 44, 46, 53, 54,
-			60, 82 };
+	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 41, 42, 44, 46, 53,
+			54, 60, 82 };
 	public static final Integer[] DRUM_INST_NUMBERS_SEMI = { 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-			46, 47, 48 };
+			46, 47, 48, 49 };
 
-	public static final String[] WEAK_DRUM_INST_NAMES = { "SIDE STICK = 37", "CLAP = 39",
+	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
+			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "FLOOR TOM = 41 ",
 			"CLOSED_HH = 42 ", "PEDAL_HH = 44", "OPEN_HH = 46", "RIDE = 53 ", "TAMBOURINE = 54",
 			"HI BONGO = 60 ", "SHAKER = 82" };
 
-	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
-			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "CLOSED_HH = 42 ",
-			"PEDAL_HH = 44", "OPEN_HH = 46", "RIDE = 53 ", "TAMBOURINE = 54", "HI BONGO = 60 ",
-			"SHAKER = 82" };
-
 	public static final String[] DRUM_INST_NAMES_SEMI = { "BASSKICK = 36 ", "KICK = 37 ",
-			"SIDE STICK = 38", "SNARE = 39 ", "CLAP = 40", "EL. SNARE = 41 ", "CLOSED_HH = 42 ",
-			"PEDAL_HH = 43", "OPEN_HH = 44", "RIDE = 45 ", "TAMBOURINE = 46", "HI BONGO = 47 ",
-			"SHAKER = 48" };
-
-	public static final String[] DRUM_INST_NAMES_WHOLE = { "BASSKICK = 36 ", "KICK = 38 ",
-			"SIDE STICK = 40", "SNARE = 41 ", "CLAP = 43", "EL. SNARE = 45 ", "CLOSED_HH = 47 ",
-			"PEDAL_HH = 48", "OPEN_HH = 50", "RIDE = 52 ", "TAMBOURINE = 53", "HI BONGO = 55 ",
-			"SHAKER = 57" };
+			"SIDE STICK = 38", "SNARE = 39 ", "CLAP = 40", "EL. SNARE = 41 ", "FLOOR TOM = 42 ",
+			"CLOSED_HH = 43 ", "PEDAL_HH = 44", "OPEN_HH = 45", "RIDE = 46 ", "TAMBOURINE = 47",
+			"HI BONGO = 48 ", "SHAKER = 49" };
 
 	public static List<Integer> getInstNumbers(String[] instArray) {
 		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
@@ -1006,6 +1002,9 @@ public class MidiUtils {
 	public static void addChordsToPhrase(Phrase phr, List<Chord> chords, double flam) {
 		for (Chord c : chords) {
 			c.setFlam(flam);
+			Note[] notes = c.getNotesBackwards().toArray(new Note[] {});
+			Note lastNote = notes[notes.length - 1];
+			lastNote.setDuration(lastNote.getDuration() * 3);
 			phr.addNoteList(c.getNotesBackwards().toArray(new Note[] {}));
 		}
 	}
@@ -1078,7 +1077,8 @@ public class MidiUtils {
 		System.out.println(solvedChords.toString());
 		if (solvedChords.size() == chords.size()) {
 
-			VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
+			VibeComposerGUI.transposeScore
+					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
 			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
 			return solvedChords;
 		} else {

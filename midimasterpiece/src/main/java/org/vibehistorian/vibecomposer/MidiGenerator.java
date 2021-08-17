@@ -175,6 +175,7 @@ public class MidiGenerator implements JMC {
 	private static double[] CHORD_DUR_ARRAY = { Durations.WHOLE_NOTE, Durations.DOTTED_HALF_NOTE,
 			Durations.HALF_NOTE, Durations.QUARTER_NOTE };
 	private double[] CHORD_DUR_CHANCE = { 0.0, 0.20, 0.80, 1.0 };
+	private static Map<Integer, Integer> customDrumMappingNumbers = null;
 
 	private List<Integer> MELODY_SCALE = cIonianScale4;
 	private List<Double> progressionDurations = new ArrayList<>();
@@ -1262,6 +1263,7 @@ public class MidiGenerator implements JMC {
 	public void generateMasterpiece(int mainGeneratorSeed, String fileName) {
 		System.out.println("--- GENERATING MASTERPIECE.. ---");
 		long systemTime = System.currentTimeMillis();
+		customDrumMappingNumbers = null;
 		trackList.clear();
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
@@ -2900,14 +2902,28 @@ public class MidiGenerator implements JMC {
 	}
 
 	private static int mapDrumPitchByCustomMapping(int pitch) {
+		if (customDrumMappingNumbers != null) {
+			int mapped = customDrumMappingNumbers.get(pitch);
+			if (mapped == -1) {
+				throw new IllegalArgumentException(
+						"Pitch not found in custom drum mapping: " + pitch);
+			}
+			return customDrumMappingNumbers.get(pitch);
+		}
 		String customMapping = gc.getDrumCustomMappingNumbers();
 		String[] customMappingNumberStrings = customMapping.split(",");
 		List<Integer> defaultMappingNumbers = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES);
 		List<Integer> customMappingNumbers = Arrays.asList(customMappingNumberStrings).stream()
 				.map(e -> Integer.valueOf(e.trim())).collect(Collectors.toList());
+		customDrumMappingNumbers = new HashMap<>();
 		int defaultIndex = defaultMappingNumbers.indexOf(pitch);
-		if (defaultIndex < 0 || (defaultMappingNumbers.size() != customMappingNumbers.size())) {
-			return pitch;
+		if (defaultIndex < 0) {
+			throw new IllegalArgumentException("Pitch not found in default drum mapping: " + pitch);
+		} else if (defaultMappingNumbers.size() != customMappingNumbers.size()) {
+			throw new IllegalArgumentException("Custom mapping has incorrect number of elements!");
+		}
+		for (int i = 0; i < defaultMappingNumbers.size(); i++) {
+			customDrumMappingNumbers.put(defaultMappingNumbers.get(i), customMappingNumbers.get(i));
 		}
 
 		return customMappingNumbers.get(defaultIndex);
