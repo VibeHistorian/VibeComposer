@@ -1221,11 +1221,12 @@ public class MidiGenerator implements JMC {
 				spicyChordString = spicyChordString.replace("m", "maj");
 			}
 
-			//SPICE CHANCE - multiply by 100/10000 to get aug,dim/maj,min 7th
-			// 
+			// SPICE CHANCE
 			if (generator.nextInt(100) < gc.getSpiceChance()
 					&& (chordInts.size() < 7 || FIRST_CHORD == null)) {
+				// keep spiciness
 			} else {
+				// remove spiciness
 				spicyChordString = chordString;
 			}
 
@@ -1254,12 +1255,12 @@ public class MidiGenerator implements JMC {
 			prevChord = mappedChord;
 			next = r.get(chordString);
 
-			if (fixedLength == 8 && chordInts.size() == 4) {
+			if (fixedLength == 8 && chordInts.size() == 4 && FIRST_CHORD == null) {
 				FIRST_CHORD = chordString;
 			}
 
 			// if last and empty first chord
-			if (durationLeft - dur < 0 && FIRST_CHORD != null) {
+			if (durationLeft - dur < 0 && FIRST_CHORD == null) {
 				FIRST_CHORD = chordString;
 			}
 			currentLength += 1;
