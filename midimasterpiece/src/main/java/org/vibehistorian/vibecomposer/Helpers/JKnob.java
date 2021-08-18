@@ -184,10 +184,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 
 			if (showTextInKnob) {
-				g2d.setColor(OMNI.alphen(
-						(VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.brighter()
-								: VibeComposerGUI.lightModeUIColor.darker(),
-						170));
+				if (VibeComposerGUI.isDarkMode) {
+					g2d.setColor(OMNI.alphen(VibeComposerGUI.darkModeUIColor.brighter(), 170));
+				} else {
+					g2d.setColor(OMNI.alphen(VibeComposerGUI.lightModeUIColor.darker(), 210));
+				}
 				String textBase = shownText;
 
 				String text = textBase.substring(textBase.length() / 2) + textBase
