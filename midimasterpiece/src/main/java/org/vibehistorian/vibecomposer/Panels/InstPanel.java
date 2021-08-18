@@ -22,6 +22,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
@@ -62,6 +63,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("Expand", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("", false);
+	protected TransparentablePanel stretchPanel = new TransparentablePanel();
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
 	protected KnobPanel exceptionChance = new KnobPanel("Split%", 0);
@@ -127,6 +129,11 @@ public abstract class InstPanel extends JPanel {
 		setVelocityMax(90);
 		setVelocityMin(63);
 
+		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		stretchPanel.setMaximumSize(new Dimension(3000, 50));
+		stretchPanel.add(stretchEnabled);
+		stretchPanel.add(chordNotesStretch);
+
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);
 
@@ -144,8 +151,7 @@ public abstract class InstPanel extends JPanel {
 		chordSpan.getKnob().setTickSpacing(50);
 		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
 
-		toggleableComponents.add(stretchEnabled);
-		toggleableComponents.add(chordNotesStretch);
+		toggleableComponents.add(stretchPanel);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(minMaxVelSlider);
@@ -172,6 +178,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void addBackgroundsForKnobs() {
+
 		hitsPerPattern.addBackgroundWithBorder(OMNI.alphen(Color.red, 50));
 		pauseChance.addBackgroundWithBorder(OMNI.alphen(Color.blue, 50));
 		exceptionChance.addBackgroundWithBorder(OMNI.alphen(Color.magenta, 50));
@@ -181,6 +188,7 @@ public abstract class InstPanel extends JPanel {
 		transpose.addBackgroundWithBorder(OMNI.alphen(Color.white, 50));
 		delay.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
 		chordNotesStretch.addBackgroundWithBorder(OMNI.alphen(Color.PINK, 30));
+		stretchPanel.addBackground(OMNI.alphen(Color.PINK, 30));
 	}
 
 	public void toggleComponentTexts(boolean b) {

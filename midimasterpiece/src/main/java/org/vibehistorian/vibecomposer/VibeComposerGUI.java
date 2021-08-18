@@ -1141,7 +1141,7 @@ public class VibeComposerGUI extends JFrame
 		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "AT_MOST" },
 				randomChordStretchType);
 		randomChordStretchType.setSelectedItem("NONE");
-		JLabel stretchLabel = new JLabel("StretCh.");
+		JLabel stretchLabel = new JLabel("EXPAND");
 		chordSettingsPanel.add(stretchLabel);
 		chordSettingsPanel.add(randomChordStretchType);
 		randomChordStretchPicker = new ScrollComboBox<>();
@@ -1263,7 +1263,7 @@ public class VibeComposerGUI extends JFrame
 		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "AT_MOST" },
 				randomArpStretchType);
 		randomArpStretchType.setSelectedItem("AT_MOST");
-		JLabel stretchLabel = new JLabel("StretCh.");
+		JLabel stretchLabel = new JLabel("EXPAND");
 		arpsSettingsPanel.add(stretchLabel);
 		arpsSettingsPanel.add(randomArpStretchType);
 		randomArpStretchPicker = new ScrollComboBox<>();

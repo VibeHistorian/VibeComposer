@@ -1,17 +1,13 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
 
-public class KnobPanel extends JPanel {
+public class KnobPanel extends TransparentablePanel {
 
 	private static final long serialVersionUID = -2145278227995141172L;
 
@@ -19,7 +15,6 @@ public class KnobPanel extends JPanel {
 	private JKnob knob = null;
 	boolean needToReset = false;
 	boolean showTextInKnob = false;
-	boolean transparentBackground = false;
 	String name = "";
 
 	public KnobPanel(String name, int value) {
@@ -75,25 +70,6 @@ public class KnobPanel extends JPanel {
 		} else {
 			label.setVisible(true);
 		}
-	}
-
-	@Override
-	protected void paintComponent(Graphics g) {
-		if (transparentBackground) {
-			g.setColor(getBackground());
-			g.fillRect(0, 0, getWidth(), getHeight());
-		}
-		super.paintComponent(g);
-	}
-
-	public void addBackgroundWithBorder(Color c) {
-		addBackgroundWithBorder(c, BevelBorder.RAISED);
-	}
-
-	public void addBackgroundWithBorder(Color c, int borderType) {
-		transparentBackground = true;
-		setBackground(c);
-		this.setBorder(new BevelBorder(borderType));
 	}
 
 }

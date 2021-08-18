@@ -68,8 +68,8 @@ public class ChordPanel extends InstPanel {
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
 		strum.getKnob().setTickSpacing(50);
 
-		this.add(stretchEnabled);
-		this.add(chordNotesStretch);
+		this.add(stretchPanel);
+		//this.add(chordNotesStretch);
 		this.add(transitionChance);
 		this.add(transitionSplit);
 		this.add(delay);
