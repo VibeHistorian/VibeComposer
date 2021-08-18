@@ -324,6 +324,16 @@ public class MidiGenerator implements JMC {
 		return ascDirectionList;
 	}
 
+	private static List<Double> generateMelodyDirectionChordDividers(int chords, Random dirGen) {
+		List<Double> map = new ArrayList<>();
+		for (int i = 0; i < chords; i++) {
+			double divider = dirGen.nextDouble() * 0.80 + 0.20;
+			map.add(divider);
+
+		}
+		return map;
+	}
+
 	private Vector<Note> generateMelodySkeletonFromChords(MelodyPart mp, List<int[]> chords,
 			List<int[]> roots, int measures, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
@@ -356,6 +366,7 @@ public class MidiGenerator implements JMC {
 		Random alternateRhythmGenerator = new Random(seed + 4);
 		Random variationGenerator = new Random(seed + notesSeedOffset);
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
+		Random directionGenerator = new Random(seed + 10);
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
 		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
@@ -392,8 +403,13 @@ public class MidiGenerator implements JMC {
 
 		List<int[]> stretchedChords = usedChords.stream().map(e -> convertChordToLength(e, 4, true))
 				.collect(Collectors.toList());
-		List<Boolean> directions = generateMelodyDirectionsFromChordProgression(stretchedChords,
-				true);
+		List<Double> directionChordDividers = generateMelodyDirectionChordDividers(
+				stretchedChords.size(), directionGenerator);
+		directionGenerator.setSeed(seed + 10);
+		boolean melodyDirection = directionGenerator.nextBoolean();
+		System.out.println("Direction dividers: " + directionChordDividers.toString()
+				+ ", start at: " + melodyDirection);
+
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
 
@@ -456,14 +472,17 @@ public class MidiGenerator implements JMC {
 
 				int[] chord = stretchedChords.get(i);
 				int exceptionCounter = gc.getMaxExceptions();
-				boolean direction = directions.get(i);
 				boolean allowException = true;
 				double durCounter = 0.0;
+				boolean changedDirectionByDivider = false;
 				for (int j = 0; j < durations.size(); j++) {
-
+					boolean tempChangedDir = false;
+					int tempSaveMaxJump = MAX_JUMP_SKELETON_CHORD;
 					if (allowException && j > 0 && exceptionCounter > 0
 							&& exceptionGenerator.nextInt(100) < EXCEPTION_CHANCE) {
-						direction = !direction;
+						melodyDirection = !melodyDirection;
+						tempChangedDir = true;
+						MAX_JUMP_SKELETON_CHORD = Math.max(0, MAX_JUMP_SKELETON_CHORD - 1);
 						exceptionCounter--;
 					}
 					int pitch = 0;
@@ -472,7 +491,7 @@ public class MidiGenerator implements JMC {
 
 					if (previousNotePitch != 0) {
 						// up, or down
-						if (direction) {
+						if (melodyDirection) {
 							startIndex = selectClosestIndexFromChord(chord, previousNotePitch,
 									true);
 							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
@@ -503,18 +522,29 @@ public class MidiGenerator implements JMC {
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 							* Note.DEFAULT_DURATION_MULTIPLIER);
 					//TODO: make sound good
-					if (previousNotePitch == pitch) {
+					if (tempChangedDir) {
+						melodyDirection = !melodyDirection;
+						MAX_JUMP_SKELETON_CHORD = tempSaveMaxJump;
+					}
+					/*if (previousNotePitch == pitch) {
 						direction = !direction;
 						allowException = false;
 					} else {
 						allowException = true;
-					}
+					}*/
 					previousNotePitch = pitch;
 					noteList.add(n);
 					if (fillChordMelodyMap && o == 0) {
 						chordMelodyMap1.get(Integer.valueOf(i)).add(n);
 					}
 					durCounter += swingDuration;
+					if (!changedDirectionByDivider && durCounter > directionChordDividers.get(i)) {
+						changedDirectionByDivider = true;
+						melodyDirection = !melodyDirection;
+					}
+				}
+				if (!changedDirectionByDivider) {
+					melodyDirection = !melodyDirection;
 				}
 
 			}
