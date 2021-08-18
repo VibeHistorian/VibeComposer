@@ -695,34 +695,14 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+		int firstPitch = skeleton.get(0).getPitch();
+
 		int minVel = mp.getVelocityMin() + velAdjustment;
 		minVel = (minVel < 0) ? 0 : minVel;
 		int maxVel = mp.getVelocityMax() + velAdjustment;
 		maxVel = (maxVel < 1) ? 1 : maxVel;
 
-
-		Note fillPauseNote = null;
-		int startOffset = 0;
-
-		if (mp.isFillPauses()) {
-			startOffset = 1;
-			int velocity = velocityGenerator.nextInt(1 + maxVel - minVel) + minVel;
-			Note n1 = skeleton.get(0);
-			n1.setDynamic(velocity);
-			int pitch = n1.getPitch();
-			if (pitch >= 0) {
-				n1.setPitch(pitch + extraTranspose);
-			}
-			fullMelody.add(n1);
-			durCounter += n1.getRhythmValue();
-			fillPauseNote = n1;
-			pauseGenerator.nextInt(100);
-			pauseGenerator2.nextInt(100);
-			splitGenerator.nextInt(100);
-		}
-
-
-		for (int i = startOffset; i < skeleton.size(); i++) {
+		for (int i = 0; i < skeleton.size(); i++) {
 			double adjDur = skeleton.get(i).getRhythmValue();
 			if (durCounter + adjDur > currentChordDur) {
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
@@ -740,15 +720,18 @@ public class MidiGenerator implements JMC {
 				splitNoteGenerator.setSeed(seed + 8);
 				splitNoteExceptionGenerator.setSeed(seed + 9);
 			}
-			Note emptyNote = new Note(Integer.MIN_VALUE, adjDur);
-			Note emptyNoteHalf = new Note(Integer.MIN_VALUE, adjDur / 2.0);
-			Note emptyNoteHalf2 = new Note(Integer.MIN_VALUE, adjDur / 2.0);
+
+			int velocity = velocityGenerator.nextInt(1 + maxVel - minVel) + minVel;
+
+			Note emptyNote = new Note(Integer.MIN_VALUE, adjDur, velocity);
+			Note emptyNoteHalf = new Note(Integer.MIN_VALUE, adjDur / 2.0, velocity);
+			Note emptyNoteHalf2 = new Note(Integer.MIN_VALUE, adjDur / 2.0, velocity - 10);
+
 			int p = pauseGenerator.nextInt(100);
 			int p2 = pauseGenerator2.nextInt(100);
 			boolean pause1 = p < mp.getPauseChance();
 			boolean pause2 = p2 < (mp.getPauseChance());
 
-			int velocity = velocityGenerator.nextInt(1 + maxVel - minVel) + minVel;
 
 			skeleton.get(i).setDynamic(velocity);
 			double positionInChord = durCounter / progressionDurations.get(chordCounter);
@@ -780,42 +763,43 @@ public class MidiGenerator implements JMC {
 				double swingDuration1 = adjDur * 0.5;
 				double swingDuration2 = adjDur - swingDuration1;
 				int pitchOriginal = n1.getPitch();
-				Note n1split1 = new Note(pitchOriginal + extraTranspose, swingDuration1,
-						n1.getDynamic());
-				Note n1split2 = new Note(pitch + extraTranspose, swingDuration2,
-						n1.getDynamic() - 10);
+				Note n1split1 = new Note(pitchOriginal + extraTranspose, swingDuration1, velocity);
+				Note n1split2 = new Note(pitch + extraTranspose, swingDuration2, velocity - 10);
 
 				fullMelody.add(pause1 ? emptyNoteHalf : n1split1);
 				fullMelody.add(pause2 ? emptyNoteHalf2 : n1split2);
-				if (mp.isFillPauses()) {
-					if (pause1) {
-						fillPauseNote.setDuration(fillPauseNote.getDuration() + swingDuration1);
-					} else {
-						fillPauseNote = n1split1;
-
-					}
-					if (pause2) {
-						fillPauseNote.setDuration(fillPauseNote.getDuration() + swingDuration2);
-					} else {
-						fillPauseNote = n1split2;
-					}
-				}
 
 			} else {
 				int pitch = n1.getPitch();
 				if (pitch >= 0) {
 					n1.setPitch(pitch + extraTranspose);
 				}
-				if (mp.isFillPauses()) {
-					if (pause1) {
-						fillPauseNote.setDuration(fillPauseNote.getDuration() + n1.getDuration());
-					} else {
-						fillPauseNote = n1;
-					}
-				}
 				fullMelody.add(pause1 ? emptyNote : n1);
 
 			}
+		}
+		if (mp.isFillPauses()) {
+			if (fullMelody.get(0).getPitch() < 0) {
+				fullMelody.get(0).setPitch(firstPitch + extraTranspose);
+			}
+
+			Note fillPauseNote = fullMelody.get(0);
+			double addedDuration = 0;
+			for (int i = 1; i < fullMelody.size(); i++) {
+				Note n = fullMelody.get(i);
+				if (n.getPitch() < 0) {
+					addedDuration += n.getRhythmValue();
+				} else {
+					fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
+					addedDuration = 0;
+					fillPauseNote = n;
+				}
+			}
+			if (addedDuration > 0.01) {
+				fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
+			}
+
+
 		}
 		return fullMelody;
 	}
