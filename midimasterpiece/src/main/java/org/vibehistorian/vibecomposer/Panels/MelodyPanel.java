@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.event.ActionListener;
 
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -11,6 +12,8 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 public class MelodyPanel extends InstPanel {
 
 	private static final long serialVersionUID = -7861296600641561431L;
+
+	private JCheckBox fillPauses = new JCheckBox("Fill Pauses", false);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
@@ -37,6 +40,7 @@ public class MelodyPanel extends InstPanel {
 
 		pauseChance.setInt(0);
 		this.add(pauseChance);
+		this.add(fillPauses);
 
 		this.add(swingPercent);
 
@@ -45,7 +49,7 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 1"));
 		setPanelOrder(1);
-		
+
 	}
 
 	public MelodyPanel(ActionListener l) {
@@ -58,6 +62,8 @@ public class MelodyPanel extends InstPanel {
 		MelodyPart part = new MelodyPart();
 		part.setFromPanel(this, lastRandomSeed);
 		part.setOrder(getPanelOrder());
+
+		part.setFillPauses(getFillPauses());
 		return part;
 	}
 
@@ -65,10 +71,20 @@ public class MelodyPanel extends InstPanel {
 		MelodyPart part = (MelodyPart) p;
 		setDefaultsFromInstPart(part);
 		setPanelOrder(part.getOrder());
+
+		setFillPauses(part.isFillPauses());
 	}
 
 	@Override
 	public InstPart toInstPart(int lastRandomSeed) {
 		return toMelodyPart(lastRandomSeed);
+	}
+
+	public boolean getFillPauses() {
+		return fillPauses.isSelected();
+	}
+
+	public void setFillPauses(boolean fillPauses) {
+		this.fillPauses.setSelected(fillPauses);
 	}
 }

@@ -1061,6 +1061,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.getInstrumentBox().setEnabled(false);
 				melodyPanel.setVelocityMax(80);
 				melodyPanel.setVelocityMin(63);
+				melodyPanel.setFillPauses(true);
 
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(12);
