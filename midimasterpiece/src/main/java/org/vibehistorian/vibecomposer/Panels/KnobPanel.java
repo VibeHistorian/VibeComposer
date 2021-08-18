@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -70,6 +71,13 @@ public class KnobPanel extends JPanel {
 		} else {
 			label.setVisible(true);
 		}
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		g.setColor(getBackground());
+		g.fillRect(0, 0, getWidth(), getHeight());
+		super.paintComponent(g);
 	}
 
 }

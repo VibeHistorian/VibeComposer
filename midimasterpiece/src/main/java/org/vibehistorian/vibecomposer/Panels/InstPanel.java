@@ -19,6 +19,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -41,6 +42,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
@@ -151,6 +153,13 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
 		toggleableComponents.add(arrSectionCommit);
+		hitsPerPattern.setBackground(OMNI.alphen(Color.red, 50));
+		pauseChance.setBackground(OMNI.alphen(Color.blue, 50));
+		exceptionChance.setBackground(OMNI.alphen(Color.magenta, 50));
+		chordSpan.setBackground(OMNI.alphen(Color.green, 50));
+		swingPercent.setBackground(OMNI.alphen(Color.yellow.brighter(), 50));
+		patternShift.setBackground(OMNI.alphen(Color.red.darker().darker(), 50));
+		transpose.setBackground(OMNI.alphen(Color.white, 50));
 
 		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
 	}
