@@ -3021,7 +3021,7 @@ public class MidiGenerator implements JMC {
 				boolean isChordSlash = chordSlashGenerator.nextInt(100) < gc.getChordSlashChance();
 				String slashChord = MidiUtils.MAJOR_CHORDS.get(chordSlashGenerator.nextInt(6));
 				int[] mappedChord = mappedChord(slashChord);
-				if (isChordSlash) {
+				if (isChordSlash && mappedChord != null) {
 					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },
 							progressionDurations.get(j));
 				} else {

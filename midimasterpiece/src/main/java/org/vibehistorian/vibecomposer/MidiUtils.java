@@ -553,7 +553,8 @@ public class MidiUtils {
 			mappedChord = getSpelledChord(chordString);
 		}
 		if (mappedChord == null) {
-			throw new IllegalArgumentException("Unmappable string: " + chordString);
+			return null;
+			//throw new IllegalArgumentException("Unmappable string: " + chordString);
 		}
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
