@@ -415,6 +415,7 @@ public class MidiGenerator implements JMC {
 
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
+			int firstPitchInTwoChords = 0;
 
 			for (int i = 0; i < stretchedChords.size(); i++) {
 				// either after first measure, or after first half of combined chord prog
@@ -449,7 +450,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				if (i % 2 == 0) {
-					previousNotePitch = 0;
+					previousNotePitch = firstPitchInTwoChords;
 					generator.setSeed(seed + notesSeedOffset);
 					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
 					if (alternateRhythm) {
@@ -532,6 +533,9 @@ public class MidiGenerator implements JMC {
 					} else {
 						allowException = true;
 					}*/
+					if (i % 2 == 0 && j == 0) {
+						firstPitchInTwoChords = pitch;
+					}
 					previousNotePitch = pitch;
 					noteList.add(n);
 					if (fillChordMelodyMap && o == 0) {
