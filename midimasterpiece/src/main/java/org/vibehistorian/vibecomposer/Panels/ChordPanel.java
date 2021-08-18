@@ -29,7 +29,7 @@ public class ChordPanel extends InstPanel {
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
-	private JCheckBox durationStretch = new JCheckBox("Expand", true);
+	private JCheckBox durationStretch = new JCheckBox("Lengthen", true);
 
 	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
 

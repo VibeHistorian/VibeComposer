@@ -60,11 +60,11 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 
-	protected KnobPanel chordNotesStretch = new KnobPanel("", 3, 2, 6);
-	protected JCheckBox stretchEnabled = new JCheckBox("StretCh.", false);
+	protected KnobPanel chordNotesStretch = new KnobPanel("Expand", 3, 2, 6);
+	protected JCheckBox stretchEnabled = new JCheckBox("", false);
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
-	protected KnobPanel exceptionChance = new KnobPanel("Exc.%", 0);
+	protected KnobPanel exceptionChance = new KnobPanel("Split%", 0);
 	protected JCheckBox repeatableNotes = new JCheckBox("Note<br>Repeat", true);
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
@@ -153,14 +153,8 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
 		toggleableComponents.add(arrSectionCommit);
-		hitsPerPattern.setBackground(OMNI.alphen(Color.red, 50));
-		pauseChance.setBackground(OMNI.alphen(Color.blue, 50));
-		exceptionChance.setBackground(OMNI.alphen(Color.magenta, 50));
-		chordSpan.setBackground(OMNI.alphen(Color.green, 50));
-		swingPercent.setBackground(OMNI.alphen(Color.yellow.brighter(), 50));
-		patternShift.setBackground(OMNI.alphen(Color.red.darker().darker(), 50));
-		transpose.setBackground(OMNI.alphen(Color.white, 50));
 
+		addBackgroundsForKnobs();
 		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
 	}
 
@@ -177,6 +171,18 @@ public abstract class InstPanel extends JPanel {
 		this.add(randomizeButton);
 	}
 
+	public void addBackgroundsForKnobs() {
+		hitsPerPattern.addBackgroundWithBorder(OMNI.alphen(Color.red, 50));
+		pauseChance.addBackgroundWithBorder(OMNI.alphen(Color.blue, 50));
+		exceptionChance.addBackgroundWithBorder(OMNI.alphen(Color.magenta, 50));
+		chordSpan.addBackgroundWithBorder(OMNI.alphen(Color.green, 50));
+		swingPercent.addBackgroundWithBorder(OMNI.alphen(Color.yellow.brighter(), 50));
+		patternShift.addBackgroundWithBorder(OMNI.alphen(Color.red.darker().darker(), 50));
+		transpose.addBackgroundWithBorder(OMNI.alphen(Color.white, 50));
+		delay.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
+		chordNotesStretch.addBackgroundWithBorder(OMNI.alphen(Color.PINK, 30));
+	}
+
 	public void toggleComponentTexts(boolean b) {
 		// knob texts shown in knobpanels
 
@@ -189,6 +195,7 @@ public abstract class InstPanel extends JPanel {
 		delay.setShowTextInKnob(b);
 		swingPercent.setShowTextInKnob(b);
 		patternShift.setShowTextInKnob(b);
+		chordNotesStretch.setShowTextInKnob(b);
 
 	}
 
