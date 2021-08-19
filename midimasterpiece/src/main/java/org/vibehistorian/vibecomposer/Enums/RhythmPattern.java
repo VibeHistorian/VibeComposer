@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Enums;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,12 +23,13 @@ public enum RhythmPattern {
 		this.pattern = pattern;
 	}
 
-	public List<Integer> getPatternByLength(int length) {
+	public List<Integer> getPatternByLength(int length, int patternShift) {
 		List<Integer> result = new ArrayList<>();
 
 		while (result.size() < length) {
 			result.addAll(Arrays.stream(pattern).boxed().collect(Collectors.toList()));
 		}
+		Collections.rotate(result, patternShift);
 		result = result.subList(0, length);
 		return result;
 	}

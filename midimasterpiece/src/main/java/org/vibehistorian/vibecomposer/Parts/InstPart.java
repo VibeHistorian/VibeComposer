@@ -297,7 +297,8 @@ public abstract class InstPart implements Cloneable {
 	public List<Integer> getFinalPatternCopy() {
 		List<Integer> premadePattern = null;
 		if (getPattern() != RhythmPattern.CUSTOM) {
-			premadePattern = getPattern().getPatternByLength(getHitsPerPattern());
+			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
+					getPatternShift());
 		} else {
 			List<Integer> premadeCopy = new ArrayList<>(getCustomPattern());
 			Collections.rotate(premadeCopy, getPatternShift());

@@ -219,7 +219,7 @@ public class VisualPatternPanel extends JPanel {
 					VisualPatternPanel.this.setVisible(false);
 					RhythmPattern d = RhythmPattern.valueOf((String) patternType.getSelectedItem());
 					if (d != RhythmPattern.CUSTOM) {
-						truePattern = d.getPatternByLength(32);
+						truePattern = d.getPatternByLength(32, 0);
 					}
 
 					for (int i = 0; i < 32; i++) {
