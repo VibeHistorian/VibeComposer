@@ -2801,7 +2801,7 @@ public class VibeComposerGUI extends JFrame
 
 		showScore = new JCheckBox("Show Score", false);
 		showScorePicker = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "w/o DRUMS", "DRUMS ONLY", "ALL" },
+		MidiUtils.addAllToJComboBox(new String[] { "NO Drums/Chords", "Drums Only", "ALL" },
 				showScorePicker);
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);

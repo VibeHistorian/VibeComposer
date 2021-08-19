@@ -2117,7 +2117,8 @@ public class MidiGenerator implements JMC {
 			List<Part> partsToRemove = new ArrayList<>();
 			for (Object p : score.getPartList()) {
 				Part part = (Part) p;
-				if (part.getTitle().equalsIgnoreCase("MainDrums") && showScoreMode < 1) {
+				if ((part.getTitle().equalsIgnoreCase("MainDrums")
+						|| part.getTitle().startsWith("Chords")) && showScoreMode == 0) {
 					partsToRemove.add(part);
 					continue;
 				} else if (!part.getTitle().equalsIgnoreCase("MainDrums") && showScoreMode == 1) {
