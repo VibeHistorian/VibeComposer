@@ -488,13 +488,10 @@ public class MidiGenerator implements JMC {
 					System.out.println("Single pattern - surprise!");
 					List<Double> arpedDurations = new ArrayList<>(durations);
 					int duoIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
-					double sumFourths = arpedDurations.subList(duoIndex, duoIndex + 2).stream()
-							.mapToDouble(e -> e).sum() / 4.0;
+					double sumDivided = arpedDurations.subList(duoIndex, duoIndex + 2).stream()
+							.mapToDouble(e -> e).sum() / 2.0;
 					for (int duo = duoIndex; duo < duoIndex + 2; duo++) {
-						arpedDurations.set(duo, sumFourths);
-					}
-					for (int duo = duoIndex + 2; duo < duoIndex + 4; duo++) {
-						arpedDurations.add(duo, sumFourths);
+						arpedDurations.set(duo, sumDivided);
 					}
 					durations = arpedDurations;
 				}
