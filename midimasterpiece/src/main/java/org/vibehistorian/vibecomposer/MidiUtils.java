@@ -346,7 +346,8 @@ public class MidiUtils {
 		return intList;
 	}
 
-	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr, ScaleMode targetMode) {
+	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
+			boolean forceDifferentTranspose) {
 		int bestNotContained = Integer.MAX_VALUE;
 		ScaleMode bestMode = null;
 		int transposeUpBy = 0;
@@ -374,42 +375,55 @@ public class MidiUtils {
 		System.out.println("Examining pitches: " + StringUtils.join(pitches, ", "));
 		System.out.println("# of pitches: " + pitches.size());
 		System.out.println("Pitch array: " + Arrays.toString(pitchCounts));
-
+		Pair<ScaleMode, Integer> returnPair = null;
 		for (ScaleMode mode : ScaleMode.values()) {
-			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale);
-			System.out.println("Result: " + detectionResult.toString());
+			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale,
+					forceDifferentTranspose);
+			System.out.println("Result for " + mode.toString() + ": " + detectionResult.toString());
 			boolean bestForSure = false;
-			if (detectionResult.getKey() == 0
-					&& (((mostFrequentPitch + ((12 + detectionResult.getValue()) % 12))
-							% 12) == 0)) {
-				System.out.println("Best for sure: " + detectionResult.toString());
-				bestForSure = true;
-			}
 
 			if (detectionResult.getKey() == 0 && (targetMode != null) && (targetMode == mode)) {
 				bestForSure = true;
-				System.out.println("Found target mode: " + targetMode.toString());
-			}
-
-			if (detectionResult.getKey() < bestNotContained || bestForSure) {
 				bestNotContained = detectionResult.getKey();
 				bestMode = mode;
 				transposeUpBy = detectionResult.getValue();
+				System.out.println("Found target mode: " + targetMode.toString());
 			}
+
+			if (returnPair == null) {
+				if (detectionResult.getKey() == 0
+						&& (((mostFrequentPitch + ((12 + detectionResult.getValue()) % 12))
+								% 12) == 0)) {
+					System.out.println("Best for sure: " + detectionResult.toString());
+					bestForSure = true;
+				}
+				if (detectionResult.getKey() < bestNotContained || bestForSure) {
+					bestNotContained = detectionResult.getKey();
+					bestMode = mode;
+					transposeUpBy = detectionResult.getValue();
+				}
+			}
+
+
 			if (bestForSure) {
-				break;
+				returnPair = Pair.of(bestMode, transposeUpBy);
 			}
 
 		}
 		if (bestNotContained > 0) {
 			return null;
 		}
+		if (returnPair != null) {
+			System.out.println("Returning best: " + returnPair.toString());
+			return returnPair;
+		}
 
 		System.out.println("Returning: " + bestMode.toString() + ", " + transposeUpBy);
 		return Pair.of(bestMode, transposeUpBy);
 	}
 
-	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale) {
+	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale,
+			boolean forceDifferentTranspose) {
 
 
 		Set<Integer> desiredPitches = new HashSet<>();
@@ -427,12 +441,13 @@ public class MidiUtils {
 					notContained--;
 				}
 			}
-			if (notContained < bestNotContained) {
+			if (notContained < bestNotContained
+					|| (notContained == bestNotContained && forceDifferentTranspose)) {
 				bestNotContained = notContained;
 				transposeUpBy = i;
 			}
-			if (notContained == 0) {
-				System.out.println("Found best transpose match: " + i);
+			if (notContained == 0 && (!forceDifferentTranspose || (i != 0))) {
+				//System.out.println("Found best transpose match: " + i);
 				break;
 			}
 		}
@@ -1030,7 +1045,8 @@ public class MidiUtils {
 		Phrase phr = new Phrase();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		Pair<ScaleMode, Integer> detectionResult = MidiUtils.detectKeyAndMode(phr, targetMode);
+		Pair<ScaleMode, Integer> detectionResult = MidiUtils.detectKeyAndMode(phr, targetMode,
+				true);
 		if (detectionResult == null) {
 			return null;
 		}
