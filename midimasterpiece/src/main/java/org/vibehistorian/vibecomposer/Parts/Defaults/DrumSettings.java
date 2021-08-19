@@ -132,7 +132,6 @@ public class DrumSettings {
 			dp.setCustomPattern(cool32Pattern);
 		}
 		dp.setExceptionChance(rand.nextInt(maxExc + 1));
-		dp.setVelocityPattern(dynamicable ? rand.nextBoolean() : false);
 		if (fillable) {
 			dp.setChordSpanFill(ChordSpanFill.getWeighted(rand.nextInt(100)));
 		}
@@ -140,7 +139,7 @@ public class DrumSettings {
 		if (melodyable) {
 			if (rand.nextInt(100) < 35) {
 				dp.setPattern(RhythmPattern.MELODY1);
-				dp.setPauseChance(20 + dp.getPauseChance());
+				dp.setPauseChance(20 + rand.nextInt(maxPause + 1));
 			}
 
 		}
