@@ -54,8 +54,8 @@ public class ArpPanel extends InstPanel {
 		this.add(notePresetLabel);
 		this.add(arpPattern);
 
-		this.add(stretchEnabled);
-		this.add(chordNotesStretch);
+		this.add(stretchPanel);
+
 		this.add(minMaxVelSlider);
 
 
@@ -67,7 +67,7 @@ public class ArpPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
-		
+
 
 		//toggleableComponents.add(arpPattern);
 		//toggleableComponents.add(notePresetLabel);

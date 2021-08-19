@@ -24,7 +24,7 @@ public class ChordPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 
-	private KnobPanel transitionChance = new KnobPanel("Split%", 0);
+	private KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
 	private KnobPanel transitionSplit = new KnobPanel("Split<br>(ms)", 625, 0, 1000);
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
@@ -69,7 +69,7 @@ public class ChordPanel extends InstPanel {
 		strum.getKnob().setTickSpacing(50);
 
 		this.add(stretchPanel);
-		//this.add(chordNotesStretch);
+
 		this.add(transitionChance);
 		this.add(transitionSplit);
 		this.add(delay);
