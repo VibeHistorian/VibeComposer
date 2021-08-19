@@ -76,6 +76,7 @@ public class GUIConfig {
 	private int melodyExceptionChance = 33;
 	private int melodyQuickness = 50;
 	private boolean melodyBasicChordsOnly = true;
+	private boolean melodyTonicize = true;
 
 	// chord gen
 	private boolean dimAugDom7thEnabled = false;
@@ -555,6 +556,14 @@ public class GUIConfig {
 
 	public void setKeyChangeType(KeyChangeType keyChangeType) {
 		this.keyChangeType = keyChangeType;
+	}
+
+	public boolean isMelodyTonicize() {
+		return melodyTonicize;
+	}
+
+	public void setMelodyTonicize(boolean melodyTonicize) {
+		this.melodyTonicize = melodyTonicize;
 	}
 
 }

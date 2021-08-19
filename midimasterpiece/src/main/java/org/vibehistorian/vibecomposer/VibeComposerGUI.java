@@ -384,6 +384,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyExceptionChance;
 	KnobPanel melodyQuickness;
 	JCheckBox melodyBasicChordsOnly;
+	JCheckBox melodyTonicize;
 	JCheckBox useUserMelody;
 
 	// bass gen settings
@@ -1015,6 +1016,7 @@ public class VibeComposerGUI extends JFrame
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
+		melodyTonicize = new JCheckBox("Tonicize", true);
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
@@ -1028,6 +1030,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanel.add(randomMelodyOnRegenerate);
 		melodySettingsExtraPanel.add(clearUserMelodySeed);
 		melodySettingsExtraPanel.add(melodyBasicChordsOnly);
+		melodySettingsExtraPanel.add(melodyTonicize);
 		melodySettingsExtraPanel.add(useUserMelody);
 		melodySettingsExtraPanel.add(dropPane);
 
@@ -1837,7 +1840,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementMiddleColoredPanel);
 
 
-		arrangementCustom = new JCheckBox("Custom", false);
+		arrangementCustom = new JCheckBox("MANUAL", false);
 		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
@@ -5030,6 +5033,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 		guiConfig.setMelodyQuickness(melodyQuickness.getInt());
 		guiConfig.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
+		guiConfig.setMelodyTonicize(melodyTonicize.isSelected());
 
 
 		// chords
@@ -5130,6 +5134,7 @@ public class VibeComposerGUI extends JFrame
 		melodyExceptionChance.setInt(guiConfig.getMelodyExceptionChance());
 		melodyQuickness.setInt(guiConfig.getMelodyQuickness());
 		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
+		melodyTonicize.setSelected(guiConfig.isMelodyTonicize());
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());
