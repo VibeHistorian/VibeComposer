@@ -737,7 +737,8 @@ public class MidiGenerator implements JMC {
 		maxVel = (maxVel < 1) ? 1 : maxVel;
 
 		for (int i = 0; i < skeleton.size(); i++) {
-			double adjDur = skeleton.get(i).getRhythmValue();
+			Note n1 = skeleton.get(i);
+			double adjDur = n1.getRhythmValue();
 			if (durCounter + adjDur > currentChordDur) {
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
 				if (chordCounter == 0) {
@@ -767,26 +768,30 @@ public class MidiGenerator implements JMC {
 			boolean pause2 = p2 < (mp.getPauseChance());
 
 
-			skeleton.get(i).setDynamic(velocity);
+			n1.setDynamic(velocity);
 			double positionInChord = durCounter / progressionDurations.get(chordCounter);
 
 			durCounter += adjDur;
 
-			Note n1 = skeleton.get(i);
-			if (adjDur > Durations.SIXTEENTH_NOTE * 1.4
-					&& splitGenerator.nextInt(100) < splitChance) {
+			boolean splitLastNoteInChord = (adjDur > Durations.NOTE_DOTTED_32ND * 1.1)
+					&& (i < skeleton.size() - 1)
+					&& ((durCounter + skeleton.get(i + 1).getRhythmValue()) > currentChordDur);
+
+
+			if ((adjDur > Durations.SIXTEENTH_NOTE * 1.4
+					&& splitGenerator.nextInt(100) < splitChance) || splitLastNoteInChord) {
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
 				int pitch = 0;
 				if (n1.getPitch() >= n2.getPitch()) {
 					int higherNote = n1.getPitch();
-					if (splitNoteExceptionGenerator.nextInt(100) < 33) {
+					if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
 						higherNote += RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
 					}
 					pitch = getAllowedPitchFromRange(n2.getPitch(), higherNote, positionInChord,
 							splitNoteGenerator);
 				} else {
 					int lowerNote = n1.getPitch();
-					if (splitNoteExceptionGenerator.nextInt(100) < 33) {
+					if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
 						lowerNote -= RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
 					}
 					pitch = getAllowedPitchFromRange(lowerNote, n2.getPitch(), positionInChord,
