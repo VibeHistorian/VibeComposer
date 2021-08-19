@@ -589,9 +589,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static boolean isDottedNote(double note) {
-		return isMultiple(Durations.WHOLE_NOTE * 1.5, note);
-
-		/*if (roughlyEqual(Durations.DOTTED_EIGHTH_NOTE, note))
+		if (roughlyEqual(Durations.DOTTED_EIGHTH_NOTE, note))
 			return true;
 		if (roughlyEqual(Durations.DOTTED_HALF_NOTE, note))
 			return true;
@@ -601,7 +599,7 @@ public class MidiGenerator implements JMC {
 			return true;
 		if (roughlyEqual(Durations.NOTE_DOTTED_32ND, note))
 			return true;
-		return false;*/
+		return false;
 	}
 
 	public static boolean isMultiple(double first, double second) {
