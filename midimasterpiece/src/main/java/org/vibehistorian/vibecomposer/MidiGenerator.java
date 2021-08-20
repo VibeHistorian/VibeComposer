@@ -711,21 +711,14 @@ public class MidiGenerator implements JMC {
 		int chordCounter = 0;
 		double durCounter = 0.0;
 		double currentChordDur = durations.get(0);
-
-		int velAdjustment = 0;
 		if (gc.isScaleMidiVelocityInArrangement()) {
-			Section defaultSection = Arrangement.defaultSections.get(sec.getType());
-			if (defaultSection != null) {
-				velAdjustment = (3 * defaultSection.getMelodyChance()) / 10 - 30;
-			}
 		}
 
 		int firstPitch = skeleton.get(0).getPitch();
 
-		int minVel = mp.getVelocityMin() + velAdjustment;
-		minVel = (minVel < 0) ? 0 : minVel;
-		int maxVel = mp.getVelocityMax() + velAdjustment;
-		maxVel = (maxVel < 1) ? 1 : maxVel;
+		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(0) : 100;
+		int minVel = multiplyVelocity(mp.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(mp.getVelocityMax(), volMultiplier, 1, 0);
 
 		int[] pitches = new int[12];
 		int[] chordSeparators = new int[durations.size() * measures + 1];
@@ -753,7 +746,7 @@ public class MidiGenerator implements JMC {
 				chordSeparators[chordSepIndex++] = fullMelody.size() + 1;
 			}
 
-			int velocity = velocityGenerator.nextInt(1 + maxVel - minVel) + minVel;
+			int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
 
 			int p = pauseGenerator.nextInt(100);
 			int p2 = pauseGenerator2.nextInt(100);
@@ -1155,6 +1148,17 @@ public class MidiGenerator implements JMC {
 			double maxDuration) {
 		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration(),
 				2 * Durations.WHOLE_NOTE);
+	}
+
+	public int multiplyVelocity(int velocity, int multiplierPercentage, int maxAdjust,
+			int minAdjust) {
+		if (multiplierPercentage == 100) {
+			return velocity;
+		} else if (multiplierPercentage > 100) {
+			return Math.min(127 - maxAdjust, velocity * multiplierPercentage / 100);
+		} else {
+			return Math.max(0 + minAdjust, velocity * multiplierPercentage / 100);
+		}
 	}
 
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
@@ -1805,12 +1809,13 @@ public class MidiGenerator implements JMC {
 						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
 				if (added) {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
-					Phrase b = fillBassFromPart(rootProgression, usedMeasures, sec, variations);
+					BassPart bp = gc.getBassPart();
+					Phrase b = fillBassFromPart(bp, rootProgression, usedMeasures, sec, variations);
 					if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						// TODO
 					}
 
-					if (gc.getBassPart().isDoubleOct()) {
+					if (bp.isDoubleOct()) {
 						Phrase b2 = b.copy();
 						Mod.transpose(b2, 12);
 						Mod.increaseDynamic(b2, -15);
@@ -1922,20 +1927,12 @@ public class MidiGenerator implements JMC {
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance()
 									* drumChanceMultiplier);
 					if (added && !dp.isMuted()) {
-						int sectionChanceModifier = 100;
-						if (gc.isScaleMidiVelocityInArrangement()) {
-							Section defaultSection = Arrangement.defaultSections.get(sec.getType());
-							if (defaultSection != null) {
-								sectionChanceModifier = 75 + (defaultSection.getDrumChance() / 4);
-							}
-
-						}
 						boolean sectionForcedDynamics = (sec.getType().contains("CLIMAX"))
 								&& variationGen.nextInt(100) < gc
 										.getArrangementPartVariationChance();
 						List<Integer> variations = (overridden) ? sec.getVariation(4, i) : null;
 						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures,
-								sectionChanceModifier, sectionForcedDynamics, sec, variations);
+								sectionForcedDynamics, sec, variations);
 						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
 							// TODO Mod.accent(d, 0.25);
 						}
@@ -2462,8 +2459,8 @@ public class MidiGenerator implements JMC {
 	}
 
 
-	protected Phrase fillBassFromPart(List<int[]> generatedRootProgression, int measures,
-			Section sec, List<Integer> variations) {
+	protected Phrase fillBassFromPart(BassPart bp, List<int[]> generatedRootProgression,
+			int measures, Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
 		double[] durationPool = new double[] { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
@@ -2473,13 +2470,12 @@ public class MidiGenerator implements JMC {
 
 		int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
 
-		int seed = gc.getBassPart().getPatternSeed();
+		int seed = bp.getPatternSeed();
 
 		Phrase bassPhrase = new Phrase();
-		int minVel = gc.getBassPart().getVelocityMin() + (5 * sec.getBassChance()) / 10 - 50;
-		minVel = (minVel < 0) ? 0 : minVel;
-		int maxVel = gc.getBassPart().getVelocityMax() + (5 * sec.getBassChance()) / 10 - 50;
-		maxVel = (maxVel < 1) ? 1 : maxVel;
+		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(1) : 100;
+		int minVel = multiplyVelocity(bp.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(bp.getVelocityMax(), volMultiplier, 1, 0);
 		Random variationGenerator = new Random(seed + sec.getTypeMelodyOffset());
 		Random rhythmPauseGenerator = new Random(seed + sec.getTypeMelodyOffset());
 		Random noteVariationGenerator = new Random(seed + sec.getTypeMelodyOffset() + 2);
@@ -2515,10 +2511,10 @@ public class MidiGenerator implements JMC {
 
 				Random bassDynamics = new Random(gc.getRandomSeed());
 				int velSpace = maxVel - minVel;
-				if (gc.getBassPart().isUseRhythm()) {
+				if (bp.isUseRhythm()) {
 					int seedCopy = seed;
 					seedCopy += extraSeed;
-					if (gc.getBassPart().isAlternatingRhythm()) {
+					if (bp.isAlternatingRhythm()) {
 						seedCopy += (j % 2);
 					}
 					Rhythm bassRhythm = new Rhythm(seedCopy, progressionDurations.get(j),
@@ -2529,8 +2525,7 @@ public class MidiGenerator implements JMC {
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
 						if (counter > 0 && dur < Durations.EIGHTH_NOTE
-								&& noteVariationGenerator.nextInt(100) < gc.getBassPart()
-										.getNoteVariation()
+								&& noteVariationGenerator.nextInt(100) < bp.getNoteVariation()
 								&& generatedRootProgression.get(j).length > 1) {
 							randomNote = noteVariationGenerator
 									.nextInt(generatedRootProgression.get(j).length - 1) + 1;
@@ -2555,7 +2550,7 @@ public class MidiGenerator implements JMC {
 			MidiUtils.transposePhrase(bassPhrase, ScaleMode.IONIAN.noteAdjustScale,
 					gc.getScaleMode().noteAdjustScale);
 		}
-		Mod.transpose(bassPhrase, -24 + gc.getBassPart().getTranspose() + modTrans);
+		Mod.transpose(bassPhrase, -24 + bp.getTranspose() + modTrans);
 		bassPhrase.setStartTime(START_TIME_DELAY);
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
@@ -2578,6 +2573,12 @@ public class MidiGenerator implements JMC {
 		boolean maxStrum = false;
 		List<Integer> fillPattern = cp.getChordSpanFill()
 				.getPatternByLength(actualProgression.size());
+
+		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(2) : 100;
+		int minVel = multiplyVelocity(cp.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(cp.getVelocityMax(), volMultiplier, 1, 0);
+
+
 		for (int i = 0; i < measures; i++) {
 			Random transitionGenerator = new Random(mainGeneratorSeed);
 			int extraTranspose = 0;
@@ -2625,8 +2626,7 @@ public class MidiGenerator implements JMC {
 				Chord c = Chord.EMPTY(progressionDurations.get(j));
 
 				Random velocityGenerator = new Random(mainGeneratorSeed + j);
-				c.setVelocity(velocityGenerator.nextInt(cp.getVelocityMax() - cp.getVelocityMin())
-						+ cp.getVelocityMin());
+				c.setVelocity(velocityGenerator.nextInt(maxVel - minVel) + minVel);
 
 				boolean transition = transitionGenerator.nextInt(100) < cp.getTransitionChance();
 				int transChord = (transitionGenerator.nextInt(100) < cp.getTransitionChance())
@@ -2794,6 +2794,10 @@ public class MidiGenerator implements JMC {
 			repeatedArpsPerChord /= ap.getChordSpan();
 		}*/
 
+		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(3) : 100;
+		int minVel = multiplyVelocity(ap.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(ap.getVelocityMax(), volMultiplier, 1, 0);
+
 		boolean fillLastBeat = false;
 		List<Integer> fillPattern = ap.getChordSpanFill()
 				.getPatternByLength(actualProgression.size());
@@ -2877,8 +2881,7 @@ public class MidiGenerator implements JMC {
 
 				for (int p = 0; p < repeatedArpsPerChord; p++) {
 
-					int velocity = velocityGenerator.nextInt(
-							ap.getVelocityMax() - ap.getVelocityMin()) + ap.getVelocityMin();
+					int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
 
 					Integer patternNum = pitchPatternSpanned.get(p);
 
@@ -2947,8 +2950,8 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(3, getAbsoluteOrder(3, ap), variations);
 		}
 		if (fillLastBeat) {
-			Mod.crescendo(arpPhrase, arpPhrase.getEndTime() * 3 / 4, arpPhrase.getEndTime(), 55,
-					110);
+			Mod.crescendo(arpPhrase, arpPhrase.getEndTime() * 3 / 4, arpPhrase.getEndTime(),
+					Math.max(minVel, 55), Math.max(maxVel, 110));
 		}
 		ap.setPatternShift(apClone.getPatternShift());
 		//dp.setVelocityPattern(false);
@@ -2961,14 +2964,13 @@ public class MidiGenerator implements JMC {
 
 
 	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures,
-			int sectionChanceModifier, boolean sectionForcedDynamics, Section sec,
-			List<Integer> variations) {
+			boolean sectionForcedDynamics, Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 		Phrase drumPhrase = new Phrase();
 
 		DrumPart dpClone = (DrumPart) dp.clone();
 
-		sectionForcedDynamics &= (dp.getInstrument() < 38 && dp.getInstrument() > 40);
+		sectionForcedDynamics &= (dp.getInstrument() < 38 || dp.getInstrument() > 40);
 
 		int chordsCount = actualProgression.size();
 
@@ -2980,7 +2982,7 @@ public class MidiGenerator implements JMC {
 			return drumPhrase;
 		}
 
-		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(dp);
+		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(sec, dp);
 		Random variationGenerator = new Random(
 				dp.getPatternSeed() + dp.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = Section.variationDescriptions[4].length - 2;
@@ -3043,9 +3045,6 @@ public class MidiGenerator implements JMC {
 					if (drum < 0 && (dp.isVelocityPattern() || (o > 0 && sectionForcedDynamics))) {
 						velocity = (velocity * 5) / 10;
 						pitch = dp.getInstrument();
-					}
-					if (gc.isScaleMidiVelocityInArrangement()) {
-						velocity = (velocity * sectionChanceModifier / 100);
 					}
 
 					int chordNum = j + (k / oneChordPatternSize);
@@ -3359,15 +3358,15 @@ public class MidiGenerator implements JMC {
 		return drumPattern;
 	}
 
-	private List<Integer> generateDrumVelocityPatternFromPart(DrumPart dp) {
+	private List<Integer> generateDrumVelocityPatternFromPart(Section sec, DrumPart dp) {
 		Random uiGenerator1drumVelocityPattern = new Random(dp.getPatternSeed() + dp.getOrder());
 		List<Integer> drumVelocityPattern = new ArrayList<>();
+		int multiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(4) : 100;
+		int minVel = multiplyVelocity(dp.getVelocityMin(), multiplier, 0, 1);
+		int maxVel = multiplyVelocity(dp.getVelocityMax(), multiplier, 1, 0);
+		int velocityRange = maxVel - minVel;
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
-			int velocityRange = dp.getVelocityMax() - dp.getVelocityMin();
-
-			int velocity = uiGenerator1drumVelocityPattern.nextInt(velocityRange)
-					+ dp.getVelocityMin();
-
+			int velocity = uiGenerator1drumVelocityPattern.nextInt(velocityRange) + minVel;
 			drumVelocityPattern.add(velocity);
 		}
 		/*System.out.println("Drum velocity pattern for " + dp.getInstrument() + " : "

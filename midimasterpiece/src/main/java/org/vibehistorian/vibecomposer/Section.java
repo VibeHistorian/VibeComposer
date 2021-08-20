@@ -142,17 +142,6 @@ public class Section {
 		this.drumChance = drumChance;
 	}
 
-	public Section(Section orig) {
-		this();
-		this.type = orig.type;
-		this.measures = orig.measures;
-		this.melodyChance = orig.melodyChance;
-		this.bassChance = orig.bassChance;
-		this.chordChance = orig.chordChance;
-		this.arpChance = orig.arpChance;
-		this.drumChance = orig.drumChance;
-	}
-
 	@XmlAttribute
 	public String getType() {
 		return type;
@@ -404,7 +393,7 @@ public class Section {
 
 	}
 
-	private int getChanceForInst(int i) {
+	public int getChanceForInst(int i) {
 		switch (i) {
 		case 0:
 			return melodyChance;
@@ -669,5 +658,12 @@ public class Section {
 
 	public void setInstVelocityMultiplier(List<Integer> instVelocityMultiplier) {
 		this.instVelocityMultiplier = instVelocityMultiplier;
+	}
+
+	public Integer getVol(int inst) {
+		if (instVelocityMultiplier == null || instVelocityMultiplier.size() <= inst) {
+			return (50 + getChanceForInst(inst) / 2);
+		}
+		return instVelocityMultiplier.get(inst);
 	}
 }

@@ -11,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +62,7 @@ public class VariationPopup {
 	int sectionOrder = 0;
 	Section sectionObject = null;
 	JScrollPane scroll;
+	List<KnobPanel> knobs = new ArrayList<>();
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
@@ -276,8 +278,10 @@ public class VariationPopup {
 		JPanel instVolumesPanel = new JPanel();
 		instVolumesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
-			KnobPanel panel = new KnobPanel(VibeComposerGUI.instNames[i], 100, 20, 150);
+			int val = sec.getVol(i);
+			KnobPanel panel = new KnobPanel(VibeComposerGUI.instNames[i], val, 20, 150);
 			panel.addBackgroundWithBorder(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
+			knobs.add(panel);
 			instVolumesPanel.add(panel);
 		}
 		tablesPanel.add(instVolumesPanel);
@@ -320,6 +324,12 @@ public class VariationPopup {
 				VibeComposerGUI.varPopup = null;
 				sectionObject.setCustomChords(userChords.getText());
 				sectionObject.setCustomDurations(userChordsDurations.getText());
+				List<Integer> instVolumes = new ArrayList<>();
+				for (KnobPanel kp : knobs) {
+					instVolumes.add(kp.getInt());
+				}
+				sectionObject.setInstVelocityMultiplier(instVolumes);
+
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
