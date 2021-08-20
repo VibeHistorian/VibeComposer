@@ -128,6 +128,8 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void solo() {
+		if (!checkEnabled(soloer))
+			return;
 		soloState = State.FULL;
 		soloer.setBackground(FULL_SOLO);
 		soloer.setForeground(Color.black);
@@ -135,6 +137,8 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void unsolo() {
+		if (!checkEnabled(soloer))
+			return;
 		soloState = State.OFF;
 		soloer.setBackground(EMPTY);
 		soloer.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
@@ -175,6 +179,8 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void mute() {
+		if (!checkEnabled(muter))
+			return;
 		muteState = State.FULL;
 		muter.setBackground(FULL_MUTE);
 		muter.setForeground(Color.black);
@@ -182,6 +188,8 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void unmute() {
+		if (!checkEnabled(muter))
+			return;
 		muteState = State.OFF;
 		muter.setBackground(EMPTY);
 		muter.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
@@ -205,5 +213,9 @@ public class SoloMuter extends JPanel {
 	public void setEnabled(boolean state) {
 		soloer.setEnabled(state);
 		muter.setEnabled(state);
+	}
+
+	private boolean checkEnabled(JButton butt) {
+		return butt.isEnabled();
 	}
 }

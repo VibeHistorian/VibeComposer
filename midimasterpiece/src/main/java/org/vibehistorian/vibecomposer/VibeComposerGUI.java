@@ -2296,8 +2296,8 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(allowRepPanel);
 
 		JPanel globalSwingPanel = new JPanel();
-		globalSwingOverride = new JCheckBox("", false);
-		globalSwingOverrideValue = new KnobPanel("Global Swing<br>Override", 50);
+		globalSwingOverride = new JCheckBox("<html>Global Swing<br>Override</html>", false);
+		globalSwingOverrideValue = new KnobPanel("", 50);
 		globalSwingPanel.add(globalSwingOverride);
 		globalSwingPanel.add(globalSwingOverrideValue);
 		globalSwingPanel.setOpaque(false);
