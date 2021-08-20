@@ -80,6 +80,8 @@ public class Section {
 	private int arpChance = 50;
 	private int drumChance = 50;
 
+	private List<Integer> instVelocityMultiplier = new ArrayList<>();
+
 	// data (transient)
 	private List<Phrase> melodies;
 	private Phrase bass;
@@ -659,5 +661,13 @@ public class Section {
 
 	public void setSectionBeatDurations(List<Double> sectionBeatDurations) {
 		this.sectionBeatDurations = sectionBeatDurations;
+	}
+
+	public List<Integer> getInstVelocityMultiplier() {
+		return instVelocityMultiplier;
+	}
+
+	public void setInstVelocityMultiplier(List<Integer> instVelocityMultiplier) {
+		this.instVelocityMultiplier = instVelocityMultiplier;
 	}
 }

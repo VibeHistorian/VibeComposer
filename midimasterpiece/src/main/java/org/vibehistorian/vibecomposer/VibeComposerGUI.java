@@ -217,6 +217,10 @@ public class VibeComposerGUI extends JFrame
 
 	private static GUIConfig guiConfig = new GUIConfig();
 
+	public static Color[] instColors = { Color.green, Color.black, Color.blue, Color.magenta,
+			Color.red };
+	public static String[] instNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
+
 	// instrument individual panels
 	public static BassPanel bassPanel;
 
@@ -655,6 +659,11 @@ public class VibeComposerGUI extends JFrame
 
 			constraints.gridy = 320;
 			everythingPanel.add(instrumentTabPane, constraints);
+			instrumentTabPane.setBackgroundAt(0, OMNI.alphen(Color.green, 40));
+			instrumentTabPane.setBackgroundAt(1, OMNI.alphen(Color.black, 40));
+			instrumentTabPane.setBackgroundAt(2, OMNI.alphen(Color.blue, 40));
+			instrumentTabPane.setBackgroundAt(3, OMNI.alphen(Color.magenta, 40));
+			instrumentTabPane.setBackgroundAt(4, OMNI.alphen(Color.red, 40));
 
 			// arrangement
 			initArrangementSettings(325, GridBagConstraints.CENTER);
