@@ -392,6 +392,11 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyLeadChords;
 	JCheckBox useUserMelody;
 
+	JCheckBox melodyArpySurprises;
+	JCheckBox melodySingleNoteExceptions;
+	JCheckBox melodyAvoidChordJumps;
+	JCheckBox melodyUseDirectionsFromProgression;
+
 	// bass gen settings
 	// - there's nothing here - 
 
@@ -987,6 +992,7 @@ public class VibeComposerGUI extends JFrame
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
 		melodySplitChance = new KnobPanel("Split%", 20);
 		melodyExceptionChance = new KnobPanel("Exception%", 50);
+		melodyLeadChords = new KnobPanel("Lead Chords", 50);
 
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(maxExceptions);
@@ -994,7 +1000,10 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsPanel.add(melodySameRhythmChance);
 		melodySettingsPanel.add(melodySplitChance);
 		melodySettingsPanel.add(melodyExceptionChance);
+		melodySettingsPanel.add(melodyLeadChords);
 
+		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
 
 		//melodySettingsPanel.add(melodyUseOldAlgoChance);
 
@@ -1010,7 +1019,10 @@ public class VibeComposerGUI extends JFrame
 		//melodySettingsPanel.add(randomChordNote);
 
 		// ---- EXTRA -----
-
+		JPanel melodySettingsExtraPanelsHolder = new JPanel();
+		melodySettingsExtraPanelsHolder.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanelsHolder.setLayout(new GridLayout(0, 1, 0, 0));
+		melodySettingsExtraPanelsHolder.setMaximumSize(new Dimension(1800, 100));
 		JPanel melodySettingsExtraPanel = new JPanel();
 		melodySettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
@@ -1027,12 +1039,11 @@ public class VibeComposerGUI extends JFrame
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
 		melodyTonicize = new JCheckBox("Tonicize", true);
-		melodyLeadChords = new KnobPanel("Lead Chords", 50);
+
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
 		combineMelodyTracks = new JCheckBox("Combine MIDI Tracks", true);
-
 
 		melodySettingsExtraPanel.add(arpCopyMelodyInst);
 		melodySettingsExtraPanel.add(combineMelodyTracks);
@@ -1042,22 +1053,41 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanel.add(clearUserMelodySeed);
 		melodySettingsExtraPanel.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanel.add(melodyTonicize);
-		melodySettingsExtraPanel.add(melodyLeadChords);
 		melodySettingsExtraPanel.add(useUserMelody);
 		melodySettingsExtraPanel.add(dropPane);
 
+
+		JPanel melodySettingsExtraPanel2 = new JPanel();
+		melodySettingsExtraPanel2.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanel2.setMaximumSize(new Dimension(1800, 50));
+		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS++");
+		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
+		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		melodySettingsExtraPanel2.add(melodyExtraLabel2);
+
+		melodyArpySurprises = new JCheckBox("Insert Arps", true);
+		melodySingleNoteExceptions = new JCheckBox("Single Note Exceptions", true);
+		melodyAvoidChordJumps = new JCheckBox("Avoid Chord Jumps", true);
+		melodyUseDirectionsFromProgression = new JCheckBox("Use Chord Directions", false);
+
+		melodySettingsExtraPanel2.add(melodyArpySurprises);
+		melodySettingsExtraPanel2.add(melodySingleNoteExceptions);
+		melodySettingsExtraPanel2.add(melodyAvoidChordJumps);
+		melodySettingsExtraPanel2.add(melodyUseDirectionsFromProgression);
+
+		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanel);
+		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanel2);
+
+
+		scrollableMelodyPanels.add(melodySettingsPanel);
+		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
+		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
 		toggleableComponents.add(melodyAlternateRhythmChance);
 		toggleableComponents.add(melodySameRhythmChance);
 		toggleableComponents.add(melodySplitChance);
 		toggleableComponents.add(melodyExceptionChance);
-		toggleableComponents.add(melodySettingsExtraPanel);
-
-		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
-		scrollableMelodyPanels.add(melodySettingsPanel);
-		scrollableMelodyPanels.add(melodySettingsExtraPanel);
-		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
+		toggleableComponents.add(melodySettingsExtraPanelsHolder);
 	}
 
 	private void initMelody(int startY, int anchorSide) {
@@ -5063,6 +5093,12 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setMelodyTonicize(melodyTonicize.isSelected());
 		guiConfig.setMelodyLeadChords(melodyLeadChords.getInt());
 
+		guiConfig.setMelodyArpySurprises(melodyArpySurprises.isSelected());
+		guiConfig.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
+		guiConfig.setMelodyUseDirectionsFromProgression(
+				melodyUseDirectionsFromProgression.isSelected());
+		guiConfig.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
+
 
 		// chords
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
@@ -5164,6 +5200,12 @@ public class VibeComposerGUI extends JFrame
 		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
 		melodyTonicize.setSelected(guiConfig.isMelodyTonicize());
 		melodyLeadChords.setInt(guiConfig.getMelodyLeadChords());
+
+		melodyArpySurprises.setSelected(guiConfig.isMelodyArpySurprises());
+		melodySingleNoteExceptions.setSelected(guiConfig.isMelodySingleNoteExceptions());
+		melodyAvoidChordJumps.setSelected(guiConfig.isMelodyAvoidChordJumps());
+		melodyUseDirectionsFromProgression
+				.setSelected(guiConfig.isMelodyUseDirectionsFromProgression());
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());

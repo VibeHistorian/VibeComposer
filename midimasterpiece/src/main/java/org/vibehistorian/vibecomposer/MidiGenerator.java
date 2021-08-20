@@ -404,12 +404,19 @@ public class MidiGenerator implements JMC {
 
 		List<int[]> stretchedChords = usedChords.stream().map(e -> convertChordToLength(e, 4, true))
 				.collect(Collectors.toList());
-		List<Double> directionChordDividers = generateMelodyDirectionChordDividers(
-				stretchedChords.size(), directionGenerator);
+		List<Double> directionChordDividers = (!gc.isMelodyUseDirectionsFromProgression())
+				? generateMelodyDirectionChordDividers(stretchedChords.size(), directionGenerator)
+				: null;
 		directionGenerator.setSeed(seed + 10);
-		boolean melodyDirection = directionGenerator.nextBoolean();
-		System.out.println("Direction dividers: " + directionChordDividers.toString()
-				+ ", start at: " + melodyDirection);
+		boolean currentDirection = directionGenerator.nextBoolean();
+		if (!gc.isMelodyUseDirectionsFromProgression()) {
+			System.out.println("Direction dividers: " + directionChordDividers.toString()
+					+ ", start at: " + currentDirection);
+		}
+
+		List<Boolean> directionsFromChords = (gc.isMelodyUseDirectionsFromProgression())
+				? generateMelodyDirectionsFromChordProgression(usedChords, true)
+				: null;
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
@@ -468,48 +475,62 @@ public class MidiGenerator implements JMC {
 						melodySkeletonDurationWeights);
 
 				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2);
-				if (sameRhythmTwice) {
-					if ((i % 2 == 0) || (durations.size() < 3)) {
-						durations.addAll(durations);
-					} else {
-						// create surprise at random position with a 3-note arp in 'A A | A A*' pattern
-						System.out.println("Double pattern - surprise!");
-						List<Double> arpedDurations = new ArrayList<>(durations);
-						int trioIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
-						double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3).stream()
-								.mapToDouble(e -> e).sum() / 3.0;
-						for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
-							arpedDurations.set(trio, sumThirds);
+				if (gc.isMelodyArpySurprises()) {
+					if (sameRhythmTwice) {
+						if ((i % 2 == 0) || (durations.size() < 3)) {
+							durations.addAll(durations);
+						} else {
+							// create surprise at random position with a 3-note arp in 'A A | A A*' pattern
+							System.out.println("Double pattern - surprise!");
+							List<Double> arpedDurations = new ArrayList<>(durations);
+							int trioIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
+							double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3)
+									.stream().mapToDouble(e -> e).sum() / 3.0;
+							for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
+								arpedDurations.set(trio, sumThirds);
+							}
+							durations.addAll(arpedDurations);
 						}
-						durations.addAll(arpedDurations);
+					} else if (i % 2 == 1 && durations.size() >= 4) {
+						// create surprise at random position with a 3-note arp in 'A B | A* B*' pattern
+						System.out.println("Single pattern - surprise!");
+						List<Double> arpedDurations = new ArrayList<>(durations);
+						int duoIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
+						double sumDivided = arpedDurations.subList(duoIndex, duoIndex + 2).stream()
+								.mapToDouble(e -> e).sum() / 2.0;
+						for (int duo = duoIndex; duo < duoIndex + 2; duo++) {
+							arpedDurations.set(duo, sumDivided);
+						}
+						durations = arpedDurations;
 					}
-				} else if (i % 2 == 1 && durations.size() >= 4) {
-					// create surprise at random position with a 3-note arp in 'A B | A* B*' pattern
-					System.out.println("Single pattern - surprise!");
-					List<Double> arpedDurations = new ArrayList<>(durations);
-					int duoIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
-					double sumDivided = arpedDurations.subList(duoIndex, duoIndex + 2).stream()
-							.mapToDouble(e -> e).sum() / 2.0;
-					for (int duo = duoIndex; duo < duoIndex + 2; duo++) {
-						arpedDurations.set(duo, sumDivided);
+				} else {
+					if (sameRhythmTwice) {
+						durations.addAll(durations);
 					}
-					durations = arpedDurations;
 				}
+
 
 				int[] chord = stretchedChords.get(i);
 				int exceptionCounter = gc.getMaxExceptions();
 				boolean allowException = true;
 				double durCounter = 0.0;
 				boolean changedDirectionByDivider = false;
+				if (gc.isMelodyUseDirectionsFromProgression()) {
+					currentDirection = directionsFromChords.get(i);
+				}
 				for (int j = 0; j < durations.size(); j++) {
 					boolean tempChangedDir = false;
 					int tempSaveMaxJump = MAX_JUMP_SKELETON_CHORD;
 					if (allowException && j > 0 && exceptionCounter > 0
 							&& exceptionGenerator.nextInt(100) < EXCEPTION_CHANCE) {
-						melodyDirection = !melodyDirection;
-						tempChangedDir = true;
-						MAX_JUMP_SKELETON_CHORD = Math.max(0, MAX_JUMP_SKELETON_CHORD - 1);
+						currentDirection = !currentDirection;
+						if (gc.isMelodySingleNoteExceptions()) {
+							tempChangedDir = true;
+							MAX_JUMP_SKELETON_CHORD = Math.max(0, MAX_JUMP_SKELETON_CHORD - 1);
+						}
+
 						exceptionCounter--;
+						allowException = false;
 					}
 					int pitch = 0;
 					int startIndex = 0;
@@ -517,7 +538,7 @@ public class MidiGenerator implements JMC {
 
 					if (previousNotePitch != 0) {
 						// up, or down
-						if (melodyDirection) {
+						if (currentDirection) {
 							startIndex = selectClosestIndexFromChord(chord, previousNotePitch,
 									true);
 							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
@@ -548,8 +569,8 @@ public class MidiGenerator implements JMC {
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 							* Note.DEFAULT_DURATION_MULTIPLIER);
 					//TODO: make sound good
-					if (tempChangedDir) {
-						melodyDirection = !melodyDirection;
+					if (tempChangedDir && gc.isMelodySingleNoteExceptions()) {
+						currentDirection = !currentDirection;
 						MAX_JUMP_SKELETON_CHORD = tempSaveMaxJump;
 					}
 					/*if (previousNotePitch == pitch) {
@@ -558,7 +579,7 @@ public class MidiGenerator implements JMC {
 					} else {
 						allowException = true;
 					}*/
-					if (i % 2 == 0 && j == 0) {
+					if (i % 2 == 0 && j == 0 && gc.isMelodyAvoidChordJumps()) {
 						firstPitchInTwoChords = pitch;
 					}
 					previousNotePitch = pitch;
@@ -567,13 +588,14 @@ public class MidiGenerator implements JMC {
 						chordMelodyMap1.get(Integer.valueOf(i)).add(n);
 					}
 					durCounter += swingDuration;
-					if (!changedDirectionByDivider && durCounter > directionChordDividers.get(i)) {
+					if (!gc.isMelodyUseDirectionsFromProgression() && !changedDirectionByDivider
+							&& durCounter > directionChordDividers.get(i)) {
 						changedDirectionByDivider = true;
-						melodyDirection = !melodyDirection;
+						currentDirection = !currentDirection;
 					}
 				}
-				if (!changedDirectionByDivider) {
-					melodyDirection = !melodyDirection;
+				if (!gc.isMelodyUseDirectionsFromProgression() && !changedDirectionByDivider) {
+					currentDirection = !currentDirection;
 				}
 
 			}

@@ -79,6 +79,11 @@ public class GUIConfig {
 	private boolean melodyTonicize = true;
 	private int melodyLeadChords = 50;
 
+	private boolean melodyArpySurprises = true;
+	private boolean melodySingleNoteExceptions = true;
+	private boolean melodyAvoidChordJumps = true;
+	private boolean melodyUseDirectionsFromProgression = false;
+
 	// chord gen
 	private boolean dimAugDom7thEnabled = false;
 	private boolean enable9th13th = true;
@@ -105,7 +110,7 @@ public class GUIConfig {
 	private BassPart bassPart = new BassPart();
 
 	// tabbed parts
-	private List<MelodyPart> melodyPart = new ArrayList<>();
+	private List<MelodyPart> melodyParts = new ArrayList<>();
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
@@ -352,11 +357,11 @@ public class GUIConfig {
 	}
 
 	public List<MelodyPart> getMelodyParts() {
-		return melodyPart;
+		return melodyParts;
 	}
 
 	public void setMelodyParts(List<MelodyPart> melodyPart) {
-		this.melodyPart = melodyPart;
+		this.melodyParts = melodyPart;
 	}
 
 	public BassPart getBassPart() {
@@ -574,5 +579,38 @@ public class GUIConfig {
 	public void setMelodyLeadChords(int melodyLeadChords) {
 		this.melodyLeadChords = melodyLeadChords;
 	}
+
+	public boolean isMelodyArpySurprises() {
+		return melodyArpySurprises;
+	}
+
+	public void setMelodyArpySurprises(boolean melodyArpySurprises) {
+		this.melodyArpySurprises = melodyArpySurprises;
+	}
+
+	public boolean isMelodySingleNoteExceptions() {
+		return melodySingleNoteExceptions;
+	}
+
+	public void setMelodySingleNoteExceptions(boolean melodySingleNoteExceptions) {
+		this.melodySingleNoteExceptions = melodySingleNoteExceptions;
+	}
+
+	public boolean isMelodyAvoidChordJumps() {
+		return melodyAvoidChordJumps;
+	}
+
+	public void setMelodyAvoidChordJumps(boolean melodyAvoidChordJumps) {
+		this.melodyAvoidChordJumps = melodyAvoidChordJumps;
+	}
+
+	public boolean isMelodyUseDirectionsFromProgression() {
+		return melodyUseDirectionsFromProgression;
+	}
+
+	public void setMelodyUseDirectionsFromProgression(boolean melodyUseDirectionsFromProgression) {
+		this.melodyUseDirectionsFromProgression = melodyUseDirectionsFromProgression;
+	}
+
 
 }
