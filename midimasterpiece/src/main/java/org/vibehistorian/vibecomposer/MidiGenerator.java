@@ -530,7 +530,6 @@ public class MidiGenerator implements JMC {
 						}
 
 						exceptionCounter--;
-						allowException = false;
 					}
 					int pitch = 0;
 					int startIndex = 0;
@@ -555,30 +554,24 @@ public class MidiGenerator implements JMC {
 					pitch = pickRandomBetweenIndexesInclusive(chord, startIndex, endIndex,
 							generator, positionInChord);
 
-					/*// override for first note
-					if ((i % 2 == 0) && (j == 0)) {
-						pitch = 60;
-					}
-					
-					// override for last note
-					if ((i % 2 == 1) && (j == durations.size() - 1)) {
-						pitch = 60;
-					}*/
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch, swingDuration, 100);
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 							* Note.DEFAULT_DURATION_MULTIPLIER);
-					//TODO: make sound good
+
 					if (tempChangedDir && gc.isMelodySingleNoteExceptions()) {
 						currentDirection = !currentDirection;
 						MAX_JUMP_SKELETON_CHORD = tempSaveMaxJump;
 					}
-					/*if (previousNotePitch == pitch) {
-						direction = !direction;
-						allowException = false;
-					} else {
-						allowException = true;
-					}*/
+					if (!gc.isMelodySingleNoteExceptions()) {
+						if (previousNotePitch == pitch) {
+							currentDirection = !currentDirection;
+							allowException = false;
+						} else {
+							allowException = true;
+						}
+					}
+
 					if (i % 2 == 0 && j == 0 && gc.isMelodyAvoidChordJumps()) {
 						firstPitchInTwoChords = pitch;
 					}
