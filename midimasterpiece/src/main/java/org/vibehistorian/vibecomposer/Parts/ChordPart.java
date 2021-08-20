@@ -14,6 +14,7 @@ public class ChordPart extends InstPart {
 	private int strum = 0;
 
 	private boolean durationStretch = true;
+	private int noteLengthMultiplier = 100;
 
 	private POOL instPool = POOL.PLUCK;
 
@@ -63,6 +64,16 @@ public class ChordPart extends InstPart {
 
 	public void setDurationStretch(boolean durationStretch) {
 		this.durationStretch = durationStretch;
+	}
+
+
+	public int getNoteLengthMultiplier() {
+		return noteLengthMultiplier;
+	}
+
+
+	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
+		this.noteLengthMultiplier = noteLengthMultiplier;
 	}
 
 }

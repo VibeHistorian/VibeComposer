@@ -54,7 +54,6 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
@@ -2659,8 +2658,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				c.setDurationRatio((gc.getChordGenSettings().isUseShortening()
-						&& cp.getInstPool() == POOL.PLUCK) ? 0.2 : 1.0);
+				c.setDurationRatio(cp.getNoteLengthMultiplier() / 100.0);
 
 				int[] mainChordNotes = actualProgression.get(j);
 				int[] transChordNotes = actualProgression.get(transChord);

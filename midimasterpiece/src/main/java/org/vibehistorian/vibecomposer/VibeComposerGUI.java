@@ -1186,7 +1186,7 @@ public class VibeComposerGUI extends JFrame
 		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "AT_MOST" },
 				randomChordStretchType);
 		randomChordStretchType.setSelectedItem("NONE");
-		JLabel stretchLabel = new JLabel("EXPAND");
+		JLabel stretchLabel = new JLabel("VOICES");
 		chordSettingsPanel.add(stretchLabel);
 		chordSettingsPanel.add(randomChordStretchType);
 		randomChordStretchPicker = new ScrollComboBox<>();
@@ -1308,7 +1308,7 @@ public class VibeComposerGUI extends JFrame
 		MidiUtils.addAllToJComboBox(new String[] { "NONE", "FIXED", "AT_MOST" },
 				randomArpStretchType);
 		randomArpStretchType.setSelectedItem("AT_MOST");
-		JLabel stretchLabel = new JLabel("EXPAND");
+		JLabel stretchLabel = new JLabel("VOICES");
 		arpsSettingsPanel.add(stretchLabel);
 		arpsSettingsPanel.add(randomArpStretchType);
 		randomArpStretchPicker = new ScrollComboBox<>();
@@ -4848,7 +4848,6 @@ public class VibeComposerGUI extends JFrame
 		chordSettings.setShiftChance(Integer.valueOf(randomChordShiftChance.getInt()));
 		chordSettings.setSustainChance(Integer.valueOf(randomChordSustainChance.getInt()));
 		chordSettings.setFlattenVoicingChance(Integer.valueOf(randomChordVoicingChance.getInt()));
-		chordSettings.setUseShortening(randomChordSustainUseShortening.isSelected());
 		return chordSettings;
 	}
 
@@ -4861,7 +4860,6 @@ public class VibeComposerGUI extends JFrame
 		randomChordShiftChance.setInt(settings.getShiftChance());
 		randomChordSustainChance.setInt(settings.getSustainChance());
 		randomChordVoicingChance.setInt(settings.getFlattenVoicingChance());
-		randomChordSustainUseShortening.setSelected(settings.isUseShortening());
 	}
 
 	public String chordSelect(String s) {
@@ -5740,6 +5738,9 @@ public class VibeComposerGUI extends JFrame
 			cp.setVelocityMax(randomChordMaxVel.getInt());
 			cp.setVelocityMin(randomChordMinVel.getInt());
 
+			if (randomChordSustainUseShortening.isSelected() && (pool == POOL.PLUCK)) {
+				cp.setNoteLengthMultiplier(25);
+			}
 
 			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(randomChordShiftChance.getInt())
 					&& patternOrder > 0) {

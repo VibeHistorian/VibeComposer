@@ -61,7 +61,7 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 
-	protected KnobPanel chordNotesStretch = new KnobPanel("Expand", 3, 2, 6);
+	protected KnobPanel chordNotesStretch = new KnobPanel("Voices", 3, 2, 6);
 	protected JCheckBox stretchEnabled = new JCheckBox("", false);
 	protected TransparentablePanel stretchPanel = new TransparentablePanel();
 
