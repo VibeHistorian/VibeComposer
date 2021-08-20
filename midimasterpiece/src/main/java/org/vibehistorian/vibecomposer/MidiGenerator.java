@@ -1543,12 +1543,7 @@ public class MidiGenerator implements JMC {
 
 		// Arrangement process..
 		System.out.println("Starting arrangement..");
-		double measureLength = 0;
-		for (Double d : progressionDurations) {
-			measureLength += d;
-		}
-		GENERATED_MEASURE_LENGTH = measureLength;
-		int counter = 0;
+
 
 		// prepare progressions
 		chordProgression = actualProgression;
@@ -1564,6 +1559,12 @@ public class MidiGenerator implements JMC {
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
 					generatedRootProgression, 1, 0, new Section(), new ArrayList<>());
 		}
+		double measureLength = 0;
+		for (Double d : progressionDurations) {
+			measureLength += d;
+		}
+		GENERATED_MEASURE_LENGTH = measureLength;
+		int counter = 0;
 
 		Arrangement arr = null;
 		boolean overridden = false;
