@@ -253,6 +253,7 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
+
 		//System.out.println(StringUtils.join(pattern, ", "));
 		return pattern;
 	}
@@ -479,28 +480,21 @@ public class MidiGenerator implements JMC {
 						if ((i % 2 == 0) || (durations.size() < 3)) {
 							durations.addAll(durations);
 						} else {
-							// create surprise at random position with a 3-note arp in 'A A | A A*' pattern
-							System.out.println("Double pattern - surprise!");
-							List<Double> arpedDurations = new ArrayList<>(durations);
-							int trioIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
-							double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3)
-									.stream().mapToDouble(e -> e).sum() / 3.0;
-							for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
-								arpedDurations.set(trio, sumThirds);
+							List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
+							if (arpedDurations != null) {
+								System.out.println("Double pattern - surprise!");
+								durations.addAll(arpedDurations);
+							} else {
+								durations.addAll(durations);
 							}
-							durations.addAll(arpedDurations);
 						}
 					} else if (i % 2 == 1 && durations.size() >= 4) {
-						// create surprise at random position with a 3-note arp in 'A B | A* B*' pattern
-						System.out.println("Single pattern - surprise!");
-						List<Double> arpedDurations = new ArrayList<>(durations);
-						int duoIndex = surpriseGenerator.nextInt(arpedDurations.size() - 2);
-						double sumDivided = arpedDurations.subList(duoIndex, duoIndex + 2).stream()
-								.mapToDouble(e -> e).sum() / 2.0;
-						for (int duo = duoIndex; duo < duoIndex + 2; duo++) {
-							arpedDurations.set(duo, sumDivided);
+
+						List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
+						if (arpedDurations != null) {
+							System.out.println("Single pattern - surprise!");
+							durations = arpedDurations;
 						}
-						durations = arpedDurations;
 					}
 				} else {
 					if (sameRhythmTwice) {
@@ -600,6 +594,44 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
 		}
 		return noteList;
+	}
+
+	private List<Double> makeSurpriseTrioArpedDurations(List<Double> durations) {
+
+		List<Double> arpedDurations = new ArrayList<>(durations);
+		for (int trioIndex = 0; trioIndex < arpedDurations.size() - 2; trioIndex++) {
+			double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3).stream()
+					.mapToDouble(e -> e).sum();
+			boolean valid = false;
+			if (isDottedNote(sumThirds)) {
+				sumThirds /= 3.0;
+				for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
+					arpedDurations.set(trio, sumThirds);
+				}
+				valid = true;
+			} else if (isMultiple(sumThirds, Durations.QUARTER_NOTE)) {
+				if (sumThirds > Durations.DOTTED_QUARTER_NOTE) {
+					sumThirds /= 4.0;
+					for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
+						arpedDurations.set(trio, sumThirds);
+					}
+					arpedDurations.add(trioIndex, sumThirds);
+				} else {
+					sumThirds /= 2.0;
+					for (int trio = trioIndex + 1; trio < trioIndex + 3; trio++) {
+						arpedDurations.set(trio, sumThirds);
+					}
+					arpedDurations.remove(trioIndex);
+				}
+				valid = true;
+			}
+
+			if (valid) {
+				return arpedDurations;
+			}
+
+		}
+		return null;
 	}
 
 	public static boolean isDottedNote(double note) {
