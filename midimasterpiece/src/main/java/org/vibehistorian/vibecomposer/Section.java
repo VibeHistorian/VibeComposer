@@ -27,10 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
@@ -79,6 +79,7 @@ public class Section {
 	private int chordChance = 50;
 	private int arpChance = 50;
 	private int drumChance = 50;
+
 
 	private List<Integer> instVelocityMultiplier = new ArrayList<>();
 
@@ -253,6 +254,7 @@ public class Section {
 		this.chordSlash = chordSlash;
 	}
 
+	@XmlTransient
 	public double getStartTime() {
 		return startTime;
 	}
@@ -276,8 +278,12 @@ public class Section {
 		}
 		sec.partPresenceVariationMap = dataCopy;
 		if (riskyVariations != null) {
-			sec.riskyVariations = new Vector<>(riskyVariations);
+			sec.riskyVariations = new ArrayList<>(riskyVariations);
 		}
+		if (instVelocityMultiplier != null) {
+			sec.instVelocityMultiplier = new ArrayList<>(instVelocityMultiplier);
+		}
+
 		if (getMelodyParts() != null) {
 			sec.setMelodyParts(getMelodyParts());
 		}
@@ -298,7 +304,10 @@ public class Section {
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
-		sec.setSectionBeatDurations(sectionBeatDurations);
+		if (sectionBeatDurations != null) {
+			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
+		}
+
 		return sec;
 	}
 
@@ -506,6 +515,7 @@ public class Section {
 		this.partPresenceVariationMap = partPresenceVariationMap;
 	}
 
+	@XmlList
 	public List<Boolean> getRiskyVariations() {
 		if (riskyVariations != null) {
 			while (riskyVariations.size() < riskyVariationNames.length) {
@@ -636,6 +646,7 @@ public class Section {
 		this.customChordsDurationsEnabled = customChordsDurationsEnabled;
 	}
 
+	@XmlTransient
 	public double getSectionDuration() {
 		return sectionDuration;
 	}
@@ -644,6 +655,7 @@ public class Section {
 		this.sectionDuration = sectionDuration;
 	}
 
+	@XmlTransient
 	public List<Double> getSectionBeatDurations() {
 		return sectionBeatDurations;
 	}
@@ -652,6 +664,7 @@ public class Section {
 		this.sectionBeatDurations = sectionBeatDurations;
 	}
 
+	@XmlList
 	public List<Integer> getInstVelocityMultiplier() {
 		return instVelocityMultiplier;
 	}
