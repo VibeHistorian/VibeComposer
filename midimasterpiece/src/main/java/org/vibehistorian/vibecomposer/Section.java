@@ -675,7 +675,7 @@ public class Section {
 
 	public Integer getVol(int inst) {
 		if (instVelocityMultiplier == null || instVelocityMultiplier.size() <= inst) {
-			return (50 + getChanceForInst(inst) / 2);
+			return (67 + getChanceForInst(inst) / 3);
 		}
 		return instVelocityMultiplier.get(inst);
 	}
