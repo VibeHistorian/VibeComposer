@@ -2401,6 +2401,21 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		customChordsPanel.add(normalizeChordsButton);
+
+		JButton respiceChordsButton = new JButton("S");
+		respiceChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<String> normalizedChords = MidiUtils.respiceChords(userChords.getText(),
+						copyGUItoConfig());
+				if (normalizedChords != null) {
+					userChords.setText(StringUtils.join(normalizedChords, ","));
+				}
+			}
+		});
+		customChordsPanel.add(respiceChordsButton);
+
 		userChordsDurations = new JTextField("2,2,2,2", 9);
 		customChordsPanel.add(new JLabel("Chord durations:"));
 		customChordsPanel.add(userChordsDurations);

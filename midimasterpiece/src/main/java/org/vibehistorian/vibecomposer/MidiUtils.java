@@ -547,9 +547,20 @@ public class MidiUtils {
 	}
 
 	public static int[] mappedChord(String chordString) {
-		int[] mappedChord = null;
+		int[] mappedChord = getNormalMappedChord(chordString);
 
-		// allow sharps as chords
+		if (mappedChord == null) {
+			mappedChord = getSpelledChord(chordString);
+		}
+		if (mappedChord == null) {
+			return null;
+			//throw new IllegalArgumentException("Unmappable string: " + chordString);
+		}
+		return Arrays.copyOf(mappedChord, mappedChord.length);
+	}
+
+	public static int[] getNormalMappedChord(String chordString) {
+		int[] mappedChord = null;
 		if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
 			String testChordString = chordString;
 			testChordString = testChordString.replaceFirst("#", "");
@@ -565,11 +576,7 @@ public class MidiUtils {
 
 		mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
-			mappedChord = getSpelledChord(chordString);
-		}
-		if (mappedChord == null) {
 			return null;
-			//throw new IllegalArgumentException("Unmappable string: " + chordString);
 		}
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
@@ -1126,6 +1133,81 @@ public class MidiUtils {
 			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1);
 			return realLetter + pitch / 12;
 		}
+	}
+
+	public static List<String> respiceChords(String chordsString, GUIConfig gc) {
+		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
+		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
+			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
+			if (!gc.isDimAugDom7thEnabled()
+					&& MidiUtils.BANNED_DIM_AUG_7_LIST.contains(chordString)) {
+				continue;
+			}
+			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
+				continue;
+			}
+			allowedSpiceChordsMiddle.add(chordString);
+		}
+
+		List<String> allowedSpiceChords = new ArrayList<>();
+		for (String s : allowedSpiceChordsMiddle) {
+			if (MidiUtils.BANNED_DIM_AUG_7_LIST.contains(s)
+					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
+				continue;
+			}
+			allowedSpiceChords.add(s);
+		}
+
+		Random rand = new Random();
+
+		List<String> chordsList = Arrays.asList(chordsString.replaceAll(" ", "").split(","));
+		List<String> respicedChordsList = new ArrayList<>();
+		for (int i = 0; i < chordsList.size(); i++) {
+			String chord = chordsList.get(i);
+			boolean mapped = getNormalMappedChord(chord) != null;
+			if (mapped) {
+				//System.out.println("Mapped!");
+				String firstLetter = chord.substring(0, 1);
+
+				int firstIndex = CHORD_FIRST_LETTERS.indexOf(firstLetter);
+				String baseChord = MAJOR_CHORDS.get(firstIndex - 1);
+				List<String> spicyChordList = (i > 0 && i < chordsList.size() - 1)
+						? allowedSpiceChordsMiddle
+						: allowedSpiceChords;
+
+				if (rand.nextInt(100) >= gc.getSpiceChance()) {
+					respicedChordsList.add(baseChord);
+				} else {
+					String spicyChordString = firstLetter
+							+ spicyChordList.get(rand.nextInt(spicyChordList.size()));
+					if (baseChord.endsWith("m") && spicyChordString.contains("maj")) {
+						spicyChordString = spicyChordString.replace("maj", "m");
+					} else if (baseChord.length() == 1 && spicyChordString.contains("m")
+							&& !spicyChordString.contains("dim")
+							&& !spicyChordString.contains("maj")) {
+						spicyChordString = spicyChordString.replace("m", "maj");
+					}
+
+
+					if (chord.length() > 1 && chord.substring(1, 2).equals("#")) {
+						// insert at index 1
+						if (spicyChordString.length() > 2) {
+							spicyChordString = spicyChordString.substring(0, 1) + "#"
+									+ spicyChordString.substring(1, spicyChordString.length());
+						} else {
+							spicyChordString = spicyChordString.substring(0, 1) + "#";
+						}
+
+					}
+					respicedChordsList.add(spicyChordString);
+				}
+			} else {
+				//System.out.println("Not mapped!");
+				respicedChordsList.add(chord);
+			}
+		}
+		System.out.println("Returning respiced chords: " + respicedChordsList.toString());
+		return respicedChordsList;
 	}
 
 }
