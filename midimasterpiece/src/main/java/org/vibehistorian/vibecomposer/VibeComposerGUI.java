@@ -389,6 +389,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyQuickness;
 	JCheckBox melodyBasicChordsOnly;
 	JCheckBox melodyTonicize;
+	KnobPanel melodyLeadChords;
 	JCheckBox useUserMelody;
 
 	// bass gen settings
@@ -1026,6 +1027,7 @@ public class VibeComposerGUI extends JFrame
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
 		melodyTonicize = new JCheckBox("Tonicize", true);
+		melodyLeadChords = new KnobPanel("Lead Chords", 50);
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
@@ -1040,6 +1042,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanel.add(clearUserMelodySeed);
 		melodySettingsExtraPanel.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanel.add(melodyTonicize);
+		melodySettingsExtraPanel.add(melodyLeadChords);
 		melodySettingsExtraPanel.add(useUserMelody);
 		melodySettingsExtraPanel.add(dropPane);
 
@@ -5058,6 +5061,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setMelodyQuickness(melodyQuickness.getInt());
 		guiConfig.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
 		guiConfig.setMelodyTonicize(melodyTonicize.isSelected());
+		guiConfig.setMelodyLeadChords(melodyLeadChords.getInt());
 
 
 		// chords
@@ -5159,6 +5163,7 @@ public class VibeComposerGUI extends JFrame
 		melodyQuickness.setInt(guiConfig.getMelodyQuickness());
 		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
 		melodyTonicize.setSelected(guiConfig.isMelodyTonicize());
+		melodyLeadChords.setInt(guiConfig.getMelodyLeadChords());
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());

@@ -77,6 +77,7 @@ public class GUIConfig {
 	private int melodyQuickness = 50;
 	private boolean melodyBasicChordsOnly = true;
 	private boolean melodyTonicize = true;
+	private int melodyLeadChords = 50;
 
 	// chord gen
 	private boolean dimAugDom7thEnabled = false;
@@ -564,6 +565,14 @@ public class GUIConfig {
 
 	public void setMelodyTonicize(boolean melodyTonicize) {
 		this.melodyTonicize = melodyTonicize;
+	}
+
+	public int getMelodyLeadChords() {
+		return melodyLeadChords;
+	}
+
+	public void setMelodyLeadChords(int melodyLeadChords) {
+		this.melodyLeadChords = melodyLeadChords;
 	}
 
 }

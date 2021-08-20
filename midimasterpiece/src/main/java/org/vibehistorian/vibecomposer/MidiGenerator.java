@@ -706,6 +706,9 @@ public class MidiGenerator implements JMC {
 		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
 		Random splitNoteGenerator = new Random(seed + 8);
 		Random splitNoteExceptionGenerator = new Random(seed + 9);
+		Random chordLeadingGenerator = new Random(seed + notesSeedOffset + 15);
+
+
 		int splitChance = gc.getMelodySplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		int chordCounter = 0;
@@ -759,7 +762,8 @@ public class MidiGenerator implements JMC {
 
 			durCounter += adjDur;
 
-			boolean splitLastNoteInChord = (adjDur > Durations.NOTE_DOTTED_32ND * 1.1)
+			boolean splitLastNoteInChord = (chordLeadingGenerator.nextInt(100) < gc
+					.getMelodyLeadChords()) && (adjDur > Durations.NOTE_DOTTED_32ND * 1.1)
 					&& (i < skeleton.size() - 1)
 					&& ((durCounter + skeleton.get(i + 1).getRhythmValue()) > currentChordDur);
 
