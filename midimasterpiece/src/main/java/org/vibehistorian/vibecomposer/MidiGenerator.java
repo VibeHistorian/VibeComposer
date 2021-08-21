@@ -253,7 +253,11 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
-
+		if (gc.isMelodyPatternFlip()) {
+			for (int i = 0; i < pattern.size(); i++) {
+				pattern.set(i, 1 - pattern.get(i));
+			}
+		}
 		//System.out.println(StringUtils.join(pattern, ", "));
 		return pattern;
 	}

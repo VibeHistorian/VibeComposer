@@ -396,6 +396,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodySingleNoteExceptions;
 	JCheckBox melodyAvoidChordJumps;
 	JCheckBox melodyUseDirectionsFromProgression;
+	JCheckBox melodyPatternFlip;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -412,6 +413,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordTranspose;
 	JCheckBox randomChordPattern;
 	JCheckBox randomChordSustainUseShortening;
+	KnobPanel randomChordExpandChance;
 	KnobPanel randomChordSustainChance;
 	KnobPanel randomChordShiftChance;
 	KnobPanel randomChordVoicingChance;
@@ -869,9 +871,11 @@ public class VibeComposerGUI extends JFrame
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
 		drumCustomMappingNumbers = new JTextField(
 				StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
+		melodyPatternFlip = new JCheckBox("Inverse Melody1 Pattern", false);
 
 		customDrumMappingPanel.add(drumCustomMapping);
 		customDrumMappingPanel.add(drumCustomMappingNumbers);
+		customDrumMappingPanel.add(melodyPatternFlip);
 		drumCustomMapping.setToolTipText(
 				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
 
@@ -1163,7 +1167,8 @@ public class VibeComposerGUI extends JFrame
 		randomChordSplit = new JCheckBox("Use Split (ms)", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
 		randomChordSustainChance = new KnobPanel("Chord%", 25);
-		randomChordSustainUseShortening = new JCheckBox("Shorten Plucks", true);
+		randomChordSustainUseShortening = new JCheckBox("Vary Length", true);
+		randomChordExpandChance = new KnobPanel("Expand%", 50);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new KnobPanel("Max<br>Split%", 10);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 0);
@@ -1204,6 +1209,7 @@ public class VibeComposerGUI extends JFrame
 
 		chordSettingsExtraPanel.add(randomChordSustainChance);
 		chordSettingsExtraPanel.add(randomChordSustainUseShortening);
+		chordSettingsExtraPanel.add(randomChordExpandChance);
 		chordSettingsExtraPanel.add(randomChordMaxSplitChance);
 		chordSettingsExtraPanel.add(chordSlashChance);
 		chordSettingsExtraPanel.add(randomChordVoicingChance);
@@ -5121,6 +5127,7 @@ public class VibeComposerGUI extends JFrame
 				&& !((String) midiModeDevices.getSelectedItem()).contains("ervill");
 		guiConfig.setDrumCustomMapping(drumCustomMapping.isSelected() && isCustomMidiDevice);
 		guiConfig.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
+		guiConfig.setMelodyPatternFlip(melodyPatternFlip.isSelected());
 
 		return guiConfig;
 	}
@@ -5173,6 +5180,7 @@ public class VibeComposerGUI extends JFrame
 			drumCustomMappingNumbers
 					.setText(StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
 		}
+		melodyPatternFlip.setSelected(guiConfig.isMelodyPatternFlip());
 
 		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
 		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());
@@ -5734,12 +5742,19 @@ public class VibeComposerGUI extends JFrame
 
 			cp.setPattern(RhythmPattern.values()[patternOrder]);
 
+			cp.setDurationStretch(
+					chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt());
 
 			cp.setVelocityMax(randomChordMaxVel.getInt());
 			cp.setVelocityMin(randomChordMinVel.getInt());
 
-			if (randomChordSustainUseShortening.isSelected() && (pool == POOL.PLUCK)) {
-				cp.setNoteLengthMultiplier(25);
+			if (randomChordSustainUseShortening.isSelected()) {
+				if (pool == POOL.PLUCK) {
+					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 25);
+				} else {
+					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 75);
+				}
+
 			}
 
 			if (chordPanelGenerator.nextInt(100) < Integer.valueOf(randomChordShiftChance.getInt())

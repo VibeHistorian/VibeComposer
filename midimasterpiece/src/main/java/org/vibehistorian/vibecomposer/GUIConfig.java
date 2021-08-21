@@ -83,6 +83,7 @@ public class GUIConfig {
 	private boolean melodySingleNoteExceptions = true;
 	private boolean melodyAvoidChordJumps = true;
 	private boolean melodyUseDirectionsFromProgression = false;
+	private boolean melodyPatternFlip = false;
 
 	// chord gen
 	private boolean dimAugDom7thEnabled = false;
@@ -610,6 +611,14 @@ public class GUIConfig {
 
 	public void setMelodyUseDirectionsFromProgression(boolean melodyUseDirectionsFromProgression) {
 		this.melodyUseDirectionsFromProgression = melodyUseDirectionsFromProgression;
+	}
+
+	public boolean isMelodyPatternFlip() {
+		return melodyPatternFlip;
+	}
+
+	public void setMelodyPatternFlip(boolean melodyPatternFlip) {
+		this.melodyPatternFlip = melodyPatternFlip;
 	}
 
 
