@@ -896,6 +896,7 @@ public class VibeComposerGUI extends JFrame
 		keyChangeTypeSelection = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
 				keyChangeTypeSelection);
+		keyChangeTypeSelection.setSelectedItem("TWOFIVEONE");
 		keyChangeTypeSelection.addItemListener(this);
 
 		JPanel chordChoicePanel = new JPanel();
@@ -1763,8 +1764,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
 
-		JButton randomizeArrangementBtn = makeButton("Randomize Sections (Max):",
-				"ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize Arr. ~#", "ArrangementRandomize");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
@@ -1870,8 +1870,10 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		JButton commitPanelBtn = makeButton("Commit Inst.", "ArrangementCommitPanels");
+		JButton commitPanelBtn = makeButton("Commit", "ArrangementCommitPanels");
 		JButton undoPanelBtn = new JButton("X*");
+		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
+		undoPanelBtn.setMargin(new Insets(0, 0, 0, 0));
 		undoPanelBtn.addActionListener(new ActionListener() {
 
 			@Override
@@ -1886,6 +1888,8 @@ public class VibeComposerGUI extends JFrame
 
 		});
 		JButton undoAllPanelsBtn = new JButton("CLR*");
+		undoAllPanelsBtn.setPreferredSize(new Dimension(35, 25));
+		undoAllPanelsBtn.setMargin(new Insets(0, 0, 0, 0));
 		undoAllPanelsBtn.addActionListener(new ActionListener() {
 
 			@Override
@@ -1928,12 +1932,11 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(undoPanelBtn);
 		arrangementSettings.add(undoAllPanelsBtn);
 
-		arrangementSettings.add(copySelectedBtn);
-		arrangementSettings.add(removeSelectedBtn);
 		arrangementSettings.add(resetArrangementBtn);
 		arrangementSettings.add(newSectionBox);
 		arrangementSettings.add(addNewSectionBtn);
-
+		arrangementSettings.add(copySelectedBtn);
+		arrangementSettings.add(removeSelectedBtn);
 
 		arrangementSettings.add(new JLabel("Seed"));
 		arrangementSeed = new RandomValueButton(0);
