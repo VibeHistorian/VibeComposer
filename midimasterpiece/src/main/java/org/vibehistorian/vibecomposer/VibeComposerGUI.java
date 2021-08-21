@@ -101,6 +101,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -370,6 +371,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox addChords;
 	JCheckBox addArps;
 	JCheckBox addDrums;
+	JSlider drumVolumeSlider;
 
 	JButton soloAllDrums;
 
@@ -1422,6 +1424,14 @@ public class VibeComposerGUI extends JFrame
 		addDrums = new JCheckBox("DRUMS", true);
 		drumsPanel.add(addDrums);
 		//drumsPanel.add(drumInst);
+
+		drumVolumeSlider = new JSlider();
+		drumVolumeSlider.setMaximum(100);
+		drumVolumeSlider.setValue(100);
+		drumVolumeSlider.setOrientation(JSlider.VERTICAL);
+		drumVolumeSlider.setPreferredSize(new Dimension(30, 40));
+		drumVolumeSlider.setPaintTicks(true);
+		drumsPanel.add(drumVolumeSlider);
 
 		drumAddJButton = makeButton(" +Drum ", "AddDrum");
 		drumsPanel.add(drumAddJButton);
@@ -2968,72 +2978,25 @@ public class VibeComposerGUI extends JFrame
 
 				while (sequencer != null && sequencer.isRunning()) {
 
-					try {
-						if (useVolumeSliders.isSelected()) {
-							for (int j = 0; j < 4; j++) {
-								List<? extends InstPanel> panels = getInstList(j);
-								for (int i = 0; i < panels.size(); i++) {
-									if (j == 0 && i > 0) {
-										// melody panels under first
-										continue;
-									}
-									double vol = panels.get(i).getVolSlider().getValue() / 100.0;
-									ShortMessage volumeMessage = new ShortMessage();
-									volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
-											panels.get(i).getMidiChannel() - 1, 7,
-											(int) (vol * 127));
-									if (midiMode.isSelected() && device != null) {
-										device.getReceiver().send(volumeMessage, -1);
-										if (device.getDeviceInfo() != null && device.getDeviceInfo()
-												.getName().contains("Gervill")) {
-											volumeMessage = new ShortMessage();
-											volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE,
-													panels.get(i).getMidiChannel() - 1, 91,
-													(int) (vol * 127));
-											device.getReceiver().send(volumeMessage, -1);
-										}
-									} else if (synth != null && synth.isOpen()) {
-										synth.getReceiver().send(volumeMessage, -1);
-										volumeMessage = new ShortMessage();
-										volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 91,
-												0);
-										synth.getReceiver().send(volumeMessage, -1);
-									}
+					if (useVolumeSliders.isSelected()) {
+						for (int j = 0; j < 4; j++) {
+							List<? extends InstPanel> panels = getInstList(j);
+							for (int i = 0; i < panels.size(); i++) {
+								if (j == 0 && i > 0) {
+									// melody panels under first
+									continue;
 								}
-							}
-						} else {
-							for (int i = 0; i < 16; i++) {
-								double vol = 1.0;
-								ShortMessage volumeMessage = new ShortMessage();
-								volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 7,
-										(int) (vol * 127));
-
-								if (midiMode.isSelected() && device != null) {
-									device.getReceiver().send(volumeMessage, -1);
-									if (device.getDeviceInfo() != null && device.getDeviceInfo()
-											.getName().contains("Gervill")) {
-										volumeMessage = new ShortMessage();
-										volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 91,
-												0);
-										device.getReceiver().send(volumeMessage, -1);
-									}
-								} else if (synth != null && synth.isOpen()) {
-									synth.getReceiver().send(volumeMessage, -1);
-									volumeMessage = new ShortMessage();
-									volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, i, 91, 0);
-									synth.getReceiver().send(volumeMessage, -1);
-
-								}
+								double vol = panels.get(i).getVolSlider().getValue() / 100.0;
+								int channel = panels.get(i).getMidiChannel() - 1;
+								sendVolumeAndReverbMessage(vol, channel);
 							}
 						}
-					} catch (InvalidMidiDataException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return;
-					} catch (MidiUnavailableException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return;
+						sendVolumeAndReverbMessage(drumVolumeSlider.getValue() / 100.0, 9);
+					} else {
+						for (int i = 0; i < 16; i++) {
+							double vol = 1.0;
+							sendVolumeAndReverbMessage(vol, i);
+						}
 					}
 					try {
 						sleep(25);
@@ -3046,6 +3009,33 @@ public class VibeComposerGUI extends JFrame
 			}
 		};
 		cycle.start();
+	}
+
+	protected void sendVolumeAndReverbMessage(double vol, int channel) {
+		try {
+			ShortMessage volumeMessage = new ShortMessage();
+
+			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 7, (int) (vol * 127));
+
+			if (midiMode.isSelected() && device != null) {
+				device.getReceiver().send(volumeMessage, -1);
+				if (device.getDeviceInfo() != null
+						&& device.getDeviceInfo().getName().contains("Gervill")) {
+					volumeMessage = new ShortMessage();
+					volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91,
+							(int) (vol * 127));
+					device.getReceiver().send(volumeMessage, -1);
+				}
+			} else if (synth != null && synth.isOpen()) {
+				synth.getReceiver().send(volumeMessage, -1);
+				volumeMessage = new ShortMessage();
+				volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91, 0);
+				synth.getReceiver().send(volumeMessage, -1);
+			}
+		} catch (InvalidMidiDataException | MidiUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
