@@ -3022,8 +3022,9 @@ public class MidiGenerator implements JMC {
 		Phrase drumPhrase = new Phrase();
 
 		DrumPart dpClone = (DrumPart) dp.clone();
-
-		sectionForcedDynamics &= (dp.getInstrument() < 38 || dp.getInstrument() > 40);
+		boolean kicky = dp.getInstrument() < 38;
+		boolean aboveSnarey = dp.getInstrument() > 40;
+		sectionForcedDynamics &= (kicky || aboveSnarey);
 
 		int chordsCount = actualProgression.size();
 
@@ -3052,6 +3053,7 @@ public class MidiGenerator implements JMC {
 			int oneChordPatternSize = drumPattern.size() / chordSpan;
 			boolean ignoreChordSpanFill = false;
 			int extraExceptionChance = 0;
+			boolean drumFill = false;
 
 			// chord iter
 			for (int j = 0; j < chordsCount; j += chordSpan) {
@@ -3075,6 +3077,9 @@ public class MidiGenerator implements JMC {
 							extraExceptionChance = (dp.getInstrument() < 38
 									&& dp.getInstrument() > 40) ? dp.getExceptionChance() + 10
 											: dp.getExceptionChance();
+							break;
+						case 2:
+							drumFill = true;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -3101,7 +3106,9 @@ public class MidiGenerator implements JMC {
 					}
 
 					int chordNum = j + (k / oneChordPatternSize);
-					if (!ignoreChordSpanFill) {
+					boolean forceLastFilled = drumFill
+							&& (chordNum == actualProgression.size() - 1);
+					if (!ignoreChordSpanFill && !forceLastFilled) {
 						if (fillPattern.get(chordNum % actualProgression.size()) < 1) {
 							pitch = Integer.MIN_VALUE;
 						}
@@ -3110,19 +3117,27 @@ public class MidiGenerator implements JMC {
 					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
 						pitch = mapDrumPitchByCustomMapping(pitch, true);
 					}
+					int drumFillExceptionChance = 0;
+					double usedDrumDuration = drumDuration;
+					if (forceLastFilled) {
+						k++;
+						usedDrumDuration *= 2;
+						drumFillExceptionChance = 60;
 
-					boolean exception = exceptionGenerator
-							.nextInt(100) < (dp.getExceptionChance() + extraExceptionChance);
+					}
+
+					boolean exception = exceptionGenerator.nextInt(100) < (dp.getExceptionChance()
+							+ extraExceptionChance + drumFillExceptionChance);
 					if (exception) {
 						int secondVelocity = (velocity * 8) / 10;
-						Note n1 = new Note(pitch, drumDuration / 2, velocity);
-						Note n2 = new Note(pitch, drumDuration / 2, secondVelocity);
+						Note n1 = new Note(pitch, usedDrumDuration / 2, velocity);
+						Note n2 = new Note(pitch, usedDrumDuration / 2, secondVelocity);
 						n1.setDuration(0.5 * n1.getRhythmValue());
 						n2.setDuration(0.5 * n2.getRhythmValue());
 						drumPhrase.addNote(n1);
 						drumPhrase.addNote(n2);
 					} else {
-						Note n1 = new Note(pitch, drumDuration, velocity);
+						Note n1 = new Note(pitch, usedDrumDuration, velocity);
 						n1.setDuration(0.5 * n1.getRhythmValue());
 						drumPhrase.addNote(n1);
 					}
