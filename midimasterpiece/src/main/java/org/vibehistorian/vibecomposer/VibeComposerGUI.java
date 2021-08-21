@@ -1871,6 +1871,30 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		JButton commitPanelBtn = makeButton("Commit Inst.", "ArrangementCommitPanels");
+		JButton undoPanelBtn = new JButton("X*");
+		undoPanelBtn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem())) {
+					Section sec = actualArrangement.getSections()
+							.get(arrSection.getSelectedIndex() - 1);
+					sec.resetCustomizedParts();
+					resetArrSectionInBackground();
+				}
+			}
+
+		});
+		JButton undoAllPanelsBtn = new JButton("CLR*");
+		undoAllPanelsBtn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
+				resetArrSectionInBackground();
+			}
+
+		});
 		JButton copySelectedBtn = makeButton("Cc", "ArrangementAddLast");
 		copySelectedBtn.setPreferredSize(new Dimension(25, 30));
 		copySelectedBtn.setMargin(new Insets(0, 0, 0, 0));
@@ -1901,6 +1925,9 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
+		arrangementSettings.add(undoPanelBtn);
+		arrangementSettings.add(undoAllPanelsBtn);
+
 		arrangementSettings.add(copySelectedBtn);
 		arrangementSettings.add(removeSelectedBtn);
 		arrangementSettings.add(resetArrangementBtn);
