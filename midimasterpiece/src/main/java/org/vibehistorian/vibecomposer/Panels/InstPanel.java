@@ -538,4 +538,10 @@ public abstract class InstPanel extends JPanel {
 		}
 		return ip;
 	}
+
+	public void toggleGlobalElements(boolean b) {
+		getInstrumentBox().setEnabled(b);
+		getSoloMuter().setEnabled(b);
+		muteInst.setEnabled(b);
+	}
 }

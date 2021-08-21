@@ -269,6 +269,10 @@ public class Section {
 				drumChance);
 		Map<Integer, Object[][]> dataCopy = new HashMap<>();
 		for (int i = 0; i < 5; i++) {
+			if (partPresenceVariationMap.get(i).length == 0) {
+				dataCopy.put(i, new Object[0][0]);
+				continue;
+			}
 			Object[][] data = new Object[partPresenceVariationMap
 					.get(i).length][partPresenceVariationMap.get(i)[0].length];
 			for (int k = 0; k < data.length; k++) {

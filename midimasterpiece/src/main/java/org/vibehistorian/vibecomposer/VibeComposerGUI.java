@@ -1841,8 +1841,7 @@ public class VibeComposerGUI extends JFrame
 
 						sectionPanels.forEach(p -> {
 							p.toggleEnabledCopyRemove(false);
-							p.getSoloMuter().setVisible(false);
-							p.getInstrumentBox().setEnabled(false);
+							p.toggleGlobalElements(false);
 							p.getToggleableComponents().forEach(g -> g.setVisible(isFullMode));
 							p.setVisible(false);
 							((JPanel) pane.getViewport().getView()).add(p);
@@ -3312,6 +3311,18 @@ public class VibeComposerGUI extends JFrame
 
 		if (!regenerate && arrangementResetCustomPanelsOnCompose.isSelected()) {
 			actualArrangement.getSections().forEach(e -> e.resetCustomizedParts());
+		} else {
+			// check each section number of customized panels to see if it matches current counts
+			for (int i = 0; i < actualArrangement.getSections().size(); i++) {
+				Section sec = actualArrangement.getSections().get(i);
+				for (int j = 0; j < 5; j++) {
+					List<?> partList = sec.getInstPartList(j);
+					if (partList != null && partList.size() > getInstList(j).size()) {
+						sec.resetCustomizedParts();
+						break;
+					}
+				}
+			}
 		}
 
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
@@ -5293,8 +5304,8 @@ public class VibeComposerGUI extends JFrame
 
 		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
 		if (arrSection != null && !OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem())) {
-			ip.getSoloMuter().setVisible(false);
-			ip.getInstrumentBox().setEnabled(false);
+			ip.toggleGlobalElements(false);
+			ip.toggleEnabledCopyRemove(false);
 		} else if (inst == 4) {
 			ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
 		}
