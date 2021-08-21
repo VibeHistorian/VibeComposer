@@ -280,6 +280,7 @@ public class VariationPopup {
 		for (int i = 0; i < 5; i++) {
 			int val = sec.getVol(i);
 			KnobPanel panel = new KnobPanel(VibeComposerGUI.instNames[i], val, 20, 150);
+			panel.setShowTextInKnob(VibeComposerGUI.isShowingTextInKnobs);
 			panel.addBackgroundWithBorder(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
 			knobs.add(panel);
 			instVolumesPanel.add(panel);
