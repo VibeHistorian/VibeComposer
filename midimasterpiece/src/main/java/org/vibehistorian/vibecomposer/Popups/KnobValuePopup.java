@@ -14,14 +14,14 @@ public class KnobValuePopup extends CloseablePopup {
 	private boolean stretchAfterCustomInput = false;
 	private Integer customInput = null;
 
-	public KnobValuePopup(JKnob knob, boolean stretch) {
+	public KnobValuePopup(JKnob knob, boolean stretch, boolean allowValuesOutsideRange) {
 		super("Knob Value Setting");
 		this.knob = knob;
 		stretchAfterCustomInput = stretch;
 
 		numPanel = new NumPanel("Knob", knob.getValue(), knob.getMin(), knob.getMax());
 		numPanel.getSlider().setVisible(false);
-		numPanel.setAllowValuesOutsideRange(stretchAfterCustomInput);
+		numPanel.setAllowValuesOutsideRange(allowValuesOutsideRange);
 		numPanel.getTextfield().addKeyListener(new KeyListener() {
 
 			@Override
@@ -80,6 +80,8 @@ public class KnobValuePopup extends CloseablePopup {
 					} else {
 						if (knob.getMin() <= val && knob.getMax() >= val) {
 							knob.setValue(val);
+						} else {
+							knob.setValue(Math.min(knob.getMax(), Math.max(knob.getMin(), val)));
 						}
 					}
 

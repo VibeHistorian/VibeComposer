@@ -70,6 +70,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private JTextField textValue = new JTextField("" + curr);
 
 	private boolean stretchAfterCustomInput = false;
+	private boolean allowValuesOutsideRange = false;
+
 	private boolean showTextInKnob = false;
 	private String shownText = "";
 
@@ -403,7 +405,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			setAngle();
 			repaint();
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
-			CloseablePopup popup = new KnobValuePopup(this, stretchAfterCustomInput);
+			CloseablePopup popup = new KnobValuePopup(this, stretchAfterCustomInput, true);
 		}
 
 	}
@@ -574,5 +576,9 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 		shownText = " " + shownText;
 		shownText = shownText.toUpperCase();
+	}
+
+	public void setAllowValuesOutsideRange(boolean b) {
+		allowValuesOutsideRange = true;
 	}
 }

@@ -36,6 +36,11 @@ public class KnobPanel extends TransparentablePanel {
 		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		knob.setName(name);
+
+
+		if (minimum != 0) {
+			knob.setAllowValuesOutsideRange(true);
+		}
 		setMaximumSize(new Dimension(200, 50));
 		add(label);
 		add(knob);
