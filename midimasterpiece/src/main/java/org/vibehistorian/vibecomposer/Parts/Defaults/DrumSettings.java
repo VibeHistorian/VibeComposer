@@ -137,7 +137,7 @@ public class DrumSettings {
 		}
 
 		if (melodyable) {
-			if (rand.nextInt(100) < 35) {
+			if (rand.nextInt(100) < 30) {
 				dp.setPattern(RhythmPattern.MELODY1);
 				dp.setPauseChance(20 + rand.nextInt(maxPause + 1));
 			}
