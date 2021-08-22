@@ -21,6 +21,7 @@ public class BassPanel extends InstPanel {
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
 	private JCheckBox doubleOct = new JCheckBox("Double Oct.", false);
 	private KnobPanel noteVariation = new KnobPanel("Note Variation", 20);
+	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
@@ -31,8 +32,6 @@ public class BassPanel extends InstPanel {
 		initDefaults(l);
 		volSlider.setValue(70);
 		this.add(volSlider);
-		/*this.add(new JLabel("#"));
-		this.add(panelOrder);*/
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
@@ -49,6 +48,8 @@ public class BassPanel extends InstPanel {
 
 		this.add(noteVariation);
 
+		//this.add(melodyPattern);
+
 		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
@@ -56,7 +57,7 @@ public class BassPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 9"));
 		setPanelOrder(1);
-		
+
 	}
 
 	public BassPanel(ActionListener l) {
@@ -73,6 +74,7 @@ public class BassPanel extends InstPanel {
 		part.setAlternatingRhythm(getAlternatingRhythm());
 		part.setDoubleOct(getDoubleOct());
 		part.setNoteVariation(getNoteVariation());
+		part.setMelodyPattern(getMelodyPattern());
 		return part;
 	}
 
@@ -84,6 +86,7 @@ public class BassPanel extends InstPanel {
 		setAlternatingRhythm(part.isAlternatingRhythm());
 		setDoubleOct(part.isDoubleOct());
 		setNoteVariation(part.getNoteVariation());
+		setMelodyPattern(part.isMelodyPattern());
 	}
 
 	public boolean getUseRhythm() {
@@ -121,5 +124,13 @@ public class BassPanel extends InstPanel {
 
 	public void setNoteVariation(int noteVariation) {
 		this.noteVariation.setInt(noteVariation);
+	}
+
+	public boolean getMelodyPattern() {
+		return melodyPattern.isSelected();
+	}
+
+	public void setMelodyPattern(boolean melodyPattern) {
+		this.melodyPattern.setSelected(melodyPattern);
 	}
 }

@@ -543,5 +543,6 @@ public abstract class InstPanel extends JPanel {
 		getInstrumentBox().setEnabled(b);
 		getSoloMuter().setEnabled(b);
 		muteInst.setEnabled(b);
+		volSlider.setEnabled(b);
 	}
 }

@@ -1215,6 +1215,27 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
+	public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern, double start,
+			double end, double maxDur) {
+		List<Double> durations = new ArrayList<>();
+		double addDur = maxDur / pattern.size();
+		double dur = addDur;
+		double total = dur;
+		for (int i = 0; i < pattern.size(); i++) {
+			if (pattern.get(i) < 1) {
+				dur += addDur;
+			} else {
+				if (total > start - 0.01 && total < end + 0.01) {
+					durations.add(dur);
+				} else if (total > end)
+					dur = addDur;
+			}
+		}
+		durations.add(dur);
+
+		return durations;
+	}
+
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
 
@@ -1296,7 +1317,10 @@ public class MidiGenerator implements JMC {
 				cpr.add(prevChord);
 				break;
 			}
-			int nextInt = generator.nextInt(next.size());
+			int bSkipper = (!gc.isDimAugDom7thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
+					? 1
+					: 0;
+			int nextInt = generator.nextInt(next.size() - bSkipper);
 
 			// if last and not empty first chord
 			boolean isLastChord = durationLeft - dur < 0.01;
@@ -2546,8 +2570,10 @@ public class MidiGenerator implements JMC {
 		Random noteVariationGenerator = new Random(seed + sec.getTypeMelodyOffset() + 2);
 		boolean rhythmPauses = false;
 		int numberOfVars = Section.variationDescriptions[1].length - 2;
+		double maxDur = progressionDurations.stream().mapToDouble(e -> e).sum();
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = 0;
+			double totalDur = 0.0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
 				if (genVars && (j == 0) && sec.getTypeMelodyOffset() > 0) {
 					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
@@ -2585,7 +2611,11 @@ public class MidiGenerator implements JMC {
 					Rhythm bassRhythm = new Rhythm(seedCopy, progressionDurations.get(j),
 							durationPool, durationWeights);
 					int counter = 0;
-					for (Double dur : bassRhythm.regenerateDurations(4)) {
+					List<Double> durations = (bp.isMelodyPattern() && (melodyNotePattern != null))
+							? getSustainedDurationsFromPattern(melodyNotePattern, totalDur,
+									totalDur + progressionDurations.get(j), maxDur)
+							: bassRhythm.regenerateDurations(4);
+					for (Double dur : durations) {
 
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
