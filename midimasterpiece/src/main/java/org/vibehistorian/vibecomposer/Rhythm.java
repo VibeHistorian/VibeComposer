@@ -92,4 +92,20 @@ public class Rhythm {
 		return durations;
 	}
 
+	public static int[] normalizedCumulativeWeights(int[] weights) {
+		int[] finalWeights = new int[weights.length];
+		double total = 0;
+		for (int w : weights) {
+			total += w;
+		}
+		for (int i = 0; i < weights.length; i++) {
+			double normalizedWeight = weights[i] * 100.0 / total;
+			finalWeights[i] = (int) Math.round(normalizedWeight);
+			if (i > 0) {
+				finalWeights[i] += finalWeights[i - 1];
+			}
+		}
+		finalWeights[weights.length - 1] = 100;
+		return finalWeights;
+	}
 }
