@@ -1236,8 +1236,11 @@ public class MidiGenerator implements JMC {
 		Random durationGenerator = new Random();
 		durationGenerator.setSeed(mainGeneratorSeed);
 
-		Map<String, List<String>> r = cpRulesMap;
+		boolean isBackwards = !gc.isUseChordFormula();
+		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
 		chordInts.clear();
+		String lastChord = (isBackwards) ? FIRST_CHORD : LAST_CHORD;
+		String firstChord = (isBackwards) ? LAST_CHORD : FIRST_CHORD;
 
 		int maxLength = (fixedLength > 0) ? fixedLength : 8;
 		if (fixedLength == 8) {
@@ -1247,9 +1250,9 @@ public class MidiGenerator implements JMC {
 		int currentLength = 0;
 		double currentDuration = 0.0;
 		List<String> next = r.get("S");
-		if (LAST_CHORD != null) {
+		if (firstChord != null) {
 			next = new ArrayList<String>();
-			next.add(String.valueOf(LAST_CHORD));
+			next.add(String.valueOf(firstChord));
 		}
 		List<String> debugMsg = new ArrayList<>();
 
@@ -1298,8 +1301,8 @@ public class MidiGenerator implements JMC {
 			// if last and not empty first chord
 			boolean isLastChord = durationLeft - dur < 0.01;
 			String chordString = null;
-			if (isLastChord && FIRST_CHORD != null) {
-				chordString = FIRST_CHORD;
+			if (isLastChord && lastChord != null) {
+				chordString = lastChord;
 			} else {
 				if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
 						&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 10) {
@@ -1326,7 +1329,7 @@ public class MidiGenerator implements JMC {
 
 			// SPICE CHANCE
 			if (generator.nextInt(100) < gc.getSpiceChance()
-					&& (chordInts.size() < 7 || FIRST_CHORD == null)) {
+					&& (chordInts.size() < 7 || lastChord == null)) {
 				// keep spiciness
 			} else {
 				// remove spiciness
@@ -1356,15 +1359,16 @@ public class MidiGenerator implements JMC {
 			progressionDurations.add(dur);
 
 			prevChord = mappedChord;
+			System.out.println("Getting next for chord: " + chordString);
 			next = r.get(chordString);
 
-			if (fixedLength == 8 && chordInts.size() == 4 && FIRST_CHORD == null) {
-				FIRST_CHORD = chordString;
+			if (fixedLength == 8 && chordInts.size() == 4 && lastChord == null) {
+				lastChord = chordString;
 			}
 
 			// if last and empty first chord
-			if (durationLeft - dur < 0 && FIRST_CHORD == null) {
-				FIRST_CHORD = chordString;
+			if (durationLeft - dur < 0 && lastChord == null) {
+				lastChord = chordString;
 			}
 			currentLength += 1;
 			currentDuration += dur;
@@ -1372,10 +1376,17 @@ public class MidiGenerator implements JMC {
 
 		}
 		System.out.println("CHORD PROG LENGTH: " + cpr.size());
-		Collections.reverse(progressionDurations);
-		Collections.reverse(cpr);
-		Collections.reverse(debugMsg);
-		Collections.reverse(chordInts);
+		if (isBackwards) {
+			Collections.reverse(progressionDurations);
+			Collections.reverse(cpr);
+			Collections.reverse(debugMsg);
+			Collections.reverse(chordInts);
+			FIRST_CHORD = lastChord;
+			LAST_CHORD = firstChord;
+		} else {
+			FIRST_CHORD = firstChord;
+			LAST_CHORD = lastChord;
+		}
 
 		for (String s : debugMsg) {
 			System.out.println(s);

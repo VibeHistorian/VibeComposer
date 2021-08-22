@@ -162,6 +162,8 @@ public class MidiUtils {
 
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
+	public static final Map<String, List<String>> cpRulesForwardMap = createChordProgressionForwardRulesMap();
+	//public static final Map<String, List<String>> cpRulesForwardMinorMap = createChordProgressionForwardRulesMinorMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
 	public static final Map<String, int[]> chordsMap = createChordMap();
 
@@ -178,16 +180,36 @@ public class MidiUtils {
 		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "F", "Am")));
 		cpMap.put("Am", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G")));
 		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "Em", "F")));
-		/*
-		cpMap.put("Cm", new ArrayList<>());
-		cpMap.put("D", new ArrayList<>());
-		cpMap.put("E", new ArrayList<>());
-		cpMap.put("Fm", new ArrayList<>());
-		cpMap.put("Gm", new ArrayList<>());
-		cpMap.put("A", new ArrayList<>(Arrays.asList("C", "F")));
-		cpMap.put("B", new ArrayList<>(Arrays.asList("C", "Em", "F")));*/
 		return cpMap;
 
+	}
+
+	private static Map<String, List<String>> createChordProgressionForwardRulesMap() {
+		Map<String, List<String>> cpMap = new HashMap<>();
+		cpMap.put("S", new ArrayList<>(MAJOR_CHORDS));
+		cpMap.put("C", new ArrayList<>(Arrays.asList("Dm", "Em", "F", "G", "Am")));
+		cpMap.put("Dm", new ArrayList<>(Arrays.asList("G", "Bdim")));
+		cpMap.put("Em", new ArrayList<>(Arrays.asList("Am", "F", "Dm")));
+		cpMap.put("F", new ArrayList<>(Arrays.asList("Dm", "G", "Am", "Bdim")));
+		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Am", "Bdim")));
+		cpMap.put("Am", new ArrayList<>(Arrays.asList("Dm", "F")));
+		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "G", "Am")));
+		return cpMap;
+	}
+
+	private static Map<String, List<String>> createChordProgressionForwardRulesMinorMap() {
+		Map<String, List<String>> cpMap = new HashMap<>();
+		cpMap.put("S",
+				new ArrayList<>(Arrays.asList("Cm", "Ddim", "E", "Fm", "G", "A", "A#", "Bdim")));
+		cpMap.put("Cm", new ArrayList<>(Arrays.asList("Ddim", "E", "Fm", "G", "A", "A#", "Bdim")));
+		cpMap.put("Ddim", new ArrayList<>(Arrays.asList("G", "Bdim")));
+		cpMap.put("E", new ArrayList<>(Arrays.asList("Ddim", "Fm", "A")));
+		cpMap.put("Fm", new ArrayList<>(Arrays.asList("Ddim", "G", "Bdim")));
+		cpMap.put("G", new ArrayList<>(Arrays.asList("Cm", "A", "Bdim")));
+		cpMap.put("A", new ArrayList<>(Arrays.asList("Ddim", "Fm")));
+		cpMap.put("A#", new ArrayList<>(Arrays.asList("Ddim", "E", "Fm")));
+		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("Cm", "G", "A")));
+		return cpMap;
 	}
 
 	// diaTransMap.get(i) == MAJOR_SCALE.get(i) ? 

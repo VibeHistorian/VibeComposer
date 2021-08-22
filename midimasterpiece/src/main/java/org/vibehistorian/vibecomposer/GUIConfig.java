@@ -58,17 +58,17 @@ public class GUIConfig {
 	private int fixedDuration = 4;
 	private int transpose = 0;
 	private double bpm = 80;
-	private boolean arpAffectsBpm = true;
+	private boolean arpAffectsBpm = false;
 	private boolean doubledDurations = false;
-	private boolean allowChordRepeats = false;
+	private boolean allowChordRepeats = true;
 
 
 	// melody gen
 	private int maxNoteJump = 2;
 	private int maxExceptions = 2;
 	private int melodyAlternateRhythmChance = 50;
-	private int melodySameRhythmChance = 20;
-	private int melodyUseOldAlgoChance = 20;
+	private int melodySameRhythmChance = 50;
+	private int melodyUseOldAlgoChance = 0;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 	private int maxMelodySwing = 50;
@@ -76,21 +76,23 @@ public class GUIConfig {
 	private int melodyExceptionChance = 33;
 	private int melodyQuickness = 50;
 	private boolean melodyBasicChordsOnly = true;
-	private boolean melodyTonicize = true;
-	private int melodyLeadChords = 50;
+	private boolean melodyTonicize = false;
+	private int melodyLeadChords = 0;
 
-	private boolean melodyArpySurprises = true;
-	private boolean melodySingleNoteExceptions = true;
-	private boolean melodyAvoidChordJumps = true;
-	private boolean melodyUseDirectionsFromProgression = false;
+	private boolean melodyArpySurprises = false;
+	private boolean melodySingleNoteExceptions = false;
+	private boolean melodyAvoidChordJumps = false;
+	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
 
 	// chord gen
 	private boolean dimAugDom7thEnabled = false;
-	private boolean enable9th13th = true;
-	private int spiceChance = 8;
+	private boolean enable9th13th = false;
+	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
 	private int chordSlashChance = 0;
+
+	private boolean useChordFormula = false;
 	private String firstChord = "R";
 	private String lastChord = "R";
 	private boolean customChordsEnabled = true;
@@ -98,7 +100,7 @@ public class GUIConfig {
 	private String customChordDurations = "2,2,2,2";
 
 	// arp gen
-	private boolean useOctaveAdjustments = true;
+	private boolean useOctaveAdjustments = false;
 	private int maxArpSwing = 50;
 
 	// drum gen
@@ -621,5 +623,12 @@ public class GUIConfig {
 		this.melodyPatternFlip = melodyPatternFlip;
 	}
 
+	public boolean isUseChordFormula() {
+		return useChordFormula;
+	}
+
+	public void setUseChordFormula(boolean useChordFormula) {
+		this.useChordFormula = useChordFormula;
+	}
 
 }

@@ -19,7 +19,7 @@ public class DrumDefaults {
 	public static final DrumPart ride = makeSimpleDrum(53, 8, 1, RhythmPattern.SINGLE, 50, 85);
 	public static final DrumPart percs = makeSimpleDrum(60, 8, 1, RhythmPattern.TRESILLO, 40, 75);
 
-	public static final int[] instrumentThresholds = new int[] { 37, 40, 46, 53, 60 };
+	public static final int[] instrumentThresholds = new int[] { 37, 41, 45, 53, 60 };
 	public static final DrumPart[] drums = new DrumPart[] { kick, snare, hat, ride, percs };
 	public static DrumSettings[] drumSettings;
 
@@ -64,7 +64,6 @@ public class DrumDefaults {
 		rideSettings.setChords(new Integer[] { 1, 1 });
 		rideSettings.setShift(new Integer[] { 2, 6 });
 		rideSettings.setVariableShift(true);
-		rideSettings.dynamicable = true;
 		rideSettings.melodyable = true;
 
 		percsSettings = new DrumSettings();

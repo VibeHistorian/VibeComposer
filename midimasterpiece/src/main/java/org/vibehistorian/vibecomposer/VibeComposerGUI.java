@@ -471,6 +471,7 @@ public class VibeComposerGUI extends JFrame
 	public static JTextField drumCustomMappingNumbers;
 
 	// chord settings - progression
+	JCheckBox extraUseChordFormula;
 	ScrollComboBox<String> firstChordSelection;
 	ScrollComboBox<String> lastChordSelection;
 	ScrollComboBox<String> keyChangeTypeSelection;
@@ -885,8 +886,11 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(customDrumMappingPanel);
 
 		// CHORD SETTINGS 2 - chord progression
+		extraUseChordFormula = new JCheckBox("Chord Formula", true);
+
 		firstChordSelection = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "V", "vi" }, firstChordSelection);
+		firstChordSelection.setSelectedItem("I");
 		firstChordSelection.addItemListener(this);
 
 		lastChordSelection = new ScrollComboBox<String>();
@@ -901,10 +905,13 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel chordChoicePanel = new JPanel();
 
+
 		chordChoicePanel.add(new JLabel("First Chord:"));
 		chordChoicePanel.add(firstChordSelection);
 		chordChoicePanel.add(new JLabel("Last Chord:"));
 		chordChoicePanel.add(lastChordSelection);
+		chordChoicePanel.add(extraUseChordFormula);
+
 		chordChoicePanel.add(new JLabel("Key change type:"));
 		chordChoicePanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(chordChoicePanel);
@@ -1764,7 +1771,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
 
-		JButton randomizeArrangementBtn = makeButton("Randomize Arr. ~#", "ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize:", "ArrangementRandomize");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
@@ -1852,6 +1859,9 @@ public class VibeComposerGUI extends JFrame
 						sectionPanels.forEach(p -> {
 							p.toggleEnabledCopyRemove(false);
 							p.toggleGlobalElements(false);
+							if (p.getPartClass() == DrumPart.class) {
+								p.getInstrumentBox().setEnabled(true);
+							}
 							p.getToggleableComponents().forEach(g -> g.setVisible(isFullMode));
 							p.setVisible(false);
 							((JPanel) pane.getViewport().getView()).add(p);
@@ -1871,6 +1881,19 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		JButton commitPanelBtn = makeButton("Commit", "ArrangementCommitPanels");
+		JButton revertPanelBtn = new JButton("<-*");
+		revertPanelBtn.setPreferredSize(new Dimension(25, 25));
+		revertPanelBtn.setMargin(new Insets(0, 0, 0, 0));
+		revertPanelBtn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				arrSection.setSelectedItem(arrSection.getItemAt(arrSection.getSelectedIndex()));
+				//resetArrSectionInBackground();
+			}
+
+		});
+
 		JButton undoPanelBtn = new JButton("X*");
 		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
 		undoPanelBtn.setMargin(new Insets(0, 0, 0, 0));
@@ -1929,6 +1952,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
+		arrangementSettings.add(revertPanelBtn);
 		arrangementSettings.add(undoPanelBtn);
 		arrangementSettings.add(undoAllPanelsBtn);
 
@@ -2354,7 +2378,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initMacroParams(int startY, int anchorSide) {
 		JPanel macroParams = new JPanel();
-		macroParams.setLayout(new GridLayout(0, 2, 0, 0));
+		macroParams.setLayout(new GridLayout(2, 0, 0, 0));
 		macroParams.setOpaque(false);
 		macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		fixedLengthChords = new ScrollComboBox<>();
@@ -3018,14 +3042,15 @@ public class VibeComposerGUI extends JFrame
 								}
 								double vol = panels.get(i).getVolSlider().getValue() / 100.0;
 								int channel = panels.get(i).getMidiChannel() - 1;
-								sendVolumeAndReverbMessage(vol, channel);
+								sendVolumeAndReverbMessage(vol, vol, channel);
 							}
 						}
-						sendVolumeAndReverbMessage(drumVolumeSlider.getValue() / 100.0, 9);
+						double drumVol = drumVolumeSlider.getValue() / 100.0;
+						sendVolumeAndReverbMessage(drumVol, drumVol / 2, 9);
 					} else {
 						for (int i = 0; i < 16; i++) {
 							double vol = 1.0;
-							sendVolumeAndReverbMessage(vol, i);
+							sendVolumeAndReverbMessage(vol, vol / 2, i);
 						}
 					}
 					try {
@@ -3041,7 +3066,7 @@ public class VibeComposerGUI extends JFrame
 		cycle.start();
 	}
 
-	protected void sendVolumeAndReverbMessage(double vol, int channel) {
+	protected void sendVolumeAndReverbMessage(double vol, double reverb, int channel) {
 		try {
 			ShortMessage volumeMessage = new ShortMessage();
 
@@ -3053,13 +3078,14 @@ public class VibeComposerGUI extends JFrame
 						&& device.getDeviceInfo().getName().contains("Gervill")) {
 					volumeMessage = new ShortMessage();
 					volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91,
-							(int) (vol * 127));
+							(int) (reverb * 127));
 					device.getReceiver().send(volumeMessage, -1);
 				}
 			} else if (synth != null && synth.isOpen()) {
 				synth.getReceiver().send(volumeMessage, -1);
 				volumeMessage = new ShortMessage();
-				volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91, 0);
+				volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91,
+						(int) (reverb * 127));
 				synth.getReceiver().send(volumeMessage, -1);
 			}
 		} catch (InvalidMidiDataException | MidiUnavailableException e) {
@@ -5136,6 +5162,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		// chords
+		guiConfig.setUseChordFormula(extraUseChordFormula.isSelected());
 		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
 		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
 		guiConfig.setKeyChangeType(
@@ -5250,6 +5277,9 @@ public class VibeComposerGUI extends JFrame
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
+
+
+		extraUseChordFormula.setSelected(guiConfig.isUseChordFormula());
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
 		lastChordSelection.setSelectedItem(guiConfig.getLastChord());
 		keyChangeTypeSelection.setSelectedItem(guiConfig.getKeyChangeType().toString());
@@ -5326,6 +5356,9 @@ public class VibeComposerGUI extends JFrame
 		if (arrSection != null && !OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem())) {
 			ip.toggleGlobalElements(false);
 			ip.toggleEnabledCopyRemove(false);
+			if (inst == 4) {
+				ip.getInstrumentBox().setEnabled(true);
+			}
 		} else if (inst == 4) {
 			ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
 		}
@@ -5772,6 +5805,9 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			cp.setPattern(RhythmPattern.values()[patternOrder]);
+			if (patternOrder == 0) {
+				cp.setStrum(cp.getStrum() / 4);
+			}
 
 			cp.setDurationStretch(
 					chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt());
