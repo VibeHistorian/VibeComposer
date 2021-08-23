@@ -3576,16 +3576,21 @@ public class VibeComposerGUI extends JFrame
 			int realIndex = 1;
 			Section prevSec = null;
 			int sectionMaxText = Math.max(20 - actualArrangement.getSections().size(), 3);
+			int explored = 0;
+			int exploredSize = 0;
 			while (current < slider.getMaximum()) {
 				String sectionText = "END";
 				Section sec = null;
 
-				int sizeCounter = 0;
-				// TODO: speed up with indexes
-				for (Section arrSec : actualArrangement.getSections()) {
+				int sizeCounter = exploredSize;
+
+				for (int i = explored; i < actualArrangement.getSections().size(); i++) {
+					Section arrSec = actualArrangement.getSections().get(i);
 					if (sizeCounter == sectIndex
 							|| (sectIndex < sizeCounter + arrSec.getMeasures())) {
 						sec = arrSec;
+						explored = i;
+						exploredSize = sizeCounter;
 						break;
 					}
 					sizeCounter += arrSec.getMeasures();
