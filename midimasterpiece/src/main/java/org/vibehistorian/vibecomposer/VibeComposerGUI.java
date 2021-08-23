@@ -218,7 +218,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static GUIConfig guiConfig = new GUIConfig();
 
-	public static Color[] instColors = { Color.green, Color.black, Color.blue, Color.magenta,
+	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
 			Color.red };
 	public static String[] instNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
 
@@ -670,11 +670,9 @@ public class VibeComposerGUI extends JFrame
 
 			constraints.gridy = 320;
 			everythingPanel.add(instrumentTabPane, constraints);
-			instrumentTabPane.setBackgroundAt(0, OMNI.alphen(Color.green, 40));
-			instrumentTabPane.setBackgroundAt(1, OMNI.alphen(Color.black, 40));
-			instrumentTabPane.setBackgroundAt(2, OMNI.alphen(Color.blue, 40));
-			instrumentTabPane.setBackgroundAt(3, OMNI.alphen(Color.magenta, 40));
-			instrumentTabPane.setBackgroundAt(4, OMNI.alphen(Color.red, 40));
+			for (int i = 0; i < 5; i++) {
+				instrumentTabPane.setBackgroundAt(i, OMNI.alphen(instColors[i], 40));
+			}
 
 			// arrangement
 			initArrangementSettings(325, GridBagConstraints.CENTER);
@@ -1180,7 +1178,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordSustainUseShortening = new JCheckBox("Vary Length", true);
 		randomChordExpandChance = new KnobPanel("Expand%", 50);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
-		randomChordMaxSplitChance = new KnobPanel("Max<br>Split%", 10);
+		randomChordMaxSplitChance = new KnobPanel("Max Tran-<br>sition%", 25);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 0);
 		randomChordPattern = new JCheckBox("Patterns", true);
 		randomChordShiftChance = new KnobPanel("Shift%", 25);
@@ -2205,6 +2203,13 @@ public class VibeComposerGUI extends JFrame
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
+
+
+		toggleableComponents.add(arrSection);
+		toggleableComponents.add(commitPanelBtn);
+		toggleableComponents.add(revertPanelBtn);
+		toggleableComponents.add(undoPanelBtn);
+		toggleableComponents.add(undoAllPanelsBtn);
 	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
