@@ -59,6 +59,7 @@ public class DrumPanel extends InstPanel {
 		comboPanelWrapper.add(comboPanel);
 
 		this.add(comboPanelWrapper);
+		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(isVelocityPattern);
 
@@ -69,7 +70,7 @@ public class DrumPanel extends InstPanel {
 		this.add(new JLabel("Fill"));
 		chordSpanFill.setScrollEnabled(false);
 		this.add(chordSpanFill);
-
+		this.add(fillFlip);
 
 		this.add(exceptionChance);
 

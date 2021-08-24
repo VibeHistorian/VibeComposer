@@ -41,11 +41,15 @@ public class ArpPanel extends InstPanel {
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);
 		this.add(comboPanel);
+		this.add(patternFlip);
+
 		this.add(patternShift);
 		this.add(chordSpan);
 
 		this.add(new JLabel("Fill"));
 		this.add(chordSpanFill);
+		this.add(fillFlip);
+
 		this.add(patternRepeat);
 		//this.add(repeatableNotes);
 		this.add(transpose);

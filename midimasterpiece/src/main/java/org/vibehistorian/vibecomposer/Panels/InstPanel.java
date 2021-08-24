@@ -56,10 +56,11 @@ public abstract class InstPanel extends JPanel {
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected POOL instPool = POOL.PLUCK;
-	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
+	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
+	protected CheckButton fillFlip = new CheckButton("~F", false);
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("Voices", 3, 2, 6);
 	protected CheckButton stretchEnabled = new CheckButton("", false);
@@ -83,6 +84,7 @@ public abstract class InstPanel extends JPanel {
 	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected RandomValueButton patternSeed = new RandomValueButton(0);
 	protected ScrollComboBox<String> pattern = new ScrollComboBox<String>();
+	protected CheckButton patternFlip = new CheckButton("~P", false);
 
 	protected VisualPatternPanel comboPanel = null;
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
@@ -159,6 +161,9 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
 		toggleableComponents.add(arrSectionCommit);
+		toggleableComponents.add(fillFlip);
+		toggleableComponents.add(patternFlip);
+
 
 		addBackgroundsForKnobs();
 		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
@@ -218,6 +223,7 @@ public abstract class InstPanel extends JPanel {
 		setHitsPerPattern(part.getHitsPerPattern());
 		setChordSpan(part.getChordSpan());
 		setChordSpanFill(part.getChordSpanFill());
+		setFillFlip(part.isFillFlip());
 
 		setChordNotesStretch(part.getChordNotesStretch());
 		setStretchEnabled(part.isStretchEnabled());
@@ -238,6 +244,7 @@ public abstract class InstPanel extends JPanel {
 
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
+		setPatternFlip(part.isPatternFlip());
 
 		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
 				&& part.getCustomPattern().size() == 32 && comboPanel != null) {
@@ -461,6 +468,22 @@ public abstract class InstPanel extends JPanel {
 		this.panelOrder.setText("" + panelOrder);
 		String removeActionString = removeButton.getActionCommand().split(",")[0];
 		removeButton.setActionCommand(removeActionString + "," + panelOrder);
+	}
+
+	public boolean getFillFlip() {
+		return fillFlip.isSelected();
+	}
+
+	public void setFillFlip(boolean fillFlip) {
+		this.fillFlip.setSelected(fillFlip);
+	}
+
+	public boolean getPatternFlip() {
+		return patternFlip.isSelected();
+	}
+
+	public void setPatternFlip(boolean patternFlip) {
+		this.patternFlip.setSelected(patternFlip);
 	}
 
 	public Set<Component> getToggleableComponents() {

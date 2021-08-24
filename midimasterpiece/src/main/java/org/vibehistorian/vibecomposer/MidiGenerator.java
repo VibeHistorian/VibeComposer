@@ -2718,7 +2718,7 @@ public class MidiGenerator implements JMC {
 		int stretch = cp.getChordNotesStretch();
 		boolean maxStrum = false;
 		List<Integer> fillPattern = cp.getChordSpanFill()
-				.getPatternByLength(actualProgression.size());
+				.getPatternByLength(actualProgression.size(), cp.isFillFlip());
 
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(2) : 100;
 		int minVel = multiplyVelocity(cp.getVelocityMin(), volMultiplier, 0, 1);
@@ -2833,6 +2833,9 @@ public class MidiGenerator implements JMC {
 
 				List<Integer> pattern = cp.getFinalPatternCopy();
 				pattern = pattern.subList(0, cp.getHitsPerPattern());
+				if (cp.isPatternFlip()) {
+					pattern.set(i, 1 - pattern.get(i));
+				}
 				double duration = progressionDurations.get(j) / pattern.size();
 				double durationCounter = 0;
 				for (int p = 0; p < pattern.size(); p++) {
@@ -2933,8 +2936,6 @@ public class MidiGenerator implements JMC {
 				.get();
 		Random variationGenerator = new Random(
 				ap.getPatternSeed() + ap.getOrder() + sec.getTypeSeedOffset());
-
-		boolean melodic = (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null);
 		/*if (melodic) {
 			repeatedArpsPerChord /= ap.getChordSpan();
 		}*/
@@ -2945,7 +2946,7 @@ public class MidiGenerator implements JMC {
 
 		boolean fillLastBeat = false;
 		List<Integer> fillPattern = ap.getChordSpanFill()
-				.getPatternByLength(actualProgression.size());
+				.getPatternByLength(actualProgression.size(), ap.isFillFlip());
 		int numberOfVars = Section.variationDescriptions[3].length - 2;
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
@@ -3139,7 +3140,7 @@ public class MidiGenerator implements JMC {
 		int hits = dp.getHitsPerPattern();
 		int swingPercentAmount = (hits % 2 == 0) ? dp.getSwingPercent() : 50;
 		List<Integer> fillPattern = dp.getChordSpanFill()
-				.getPatternByLength(actualProgression.size());
+				.getPatternByLength(actualProgression.size(), dp.isFillFlip());
 
 		for (int o = 0; o < measures; o++) {
 			// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
@@ -3399,6 +3400,9 @@ public class MidiGenerator implements JMC {
 			if (pauseGenerator.nextInt(100) < ap.getPauseChance()) {
 				arpPausesPattern.set(i, 0);
 			}
+			if (ap.isPatternFlip()) {
+				arpPausesPattern.set(i, 1 - arpPausesPattern.get(i));
+			}
 		}
 	}
 
@@ -3510,8 +3514,12 @@ public class MidiGenerator implements JMC {
 		List<Integer> drumPattern = new ArrayList<>();
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
 			// if random pause or not present in pattern: pause
-			if (uiGenerator1drumPattern.nextInt(100) < dp.getPauseChance()
-					|| !premadePattern.get(j).equals(1)) {
+			boolean blankDrum = uiGenerator1drumPattern.nextInt(100) < dp.getPauseChance()
+					|| !premadePattern.get(j).equals(1);
+			if (dp.isPatternFlip()) {
+				blankDrum = !blankDrum;
+			}
+			if (blankDrum) {
 				drumPattern.add(-1);
 			} else {
 				if (dp.getInstrument() == 42

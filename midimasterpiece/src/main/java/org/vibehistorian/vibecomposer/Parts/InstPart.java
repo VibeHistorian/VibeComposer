@@ -36,6 +36,7 @@ public abstract class InstPart implements Cloneable {
 	protected int hitsPerPattern = 8;
 	protected int chordSpan = 1;
 	protected ChordSpanFill chordSpanFill = ChordSpanFill.ALL;
+	protected boolean fillFlip = false;
 
 	protected int chordNotesStretch = 3;
 	protected boolean stretchEnabled = false;
@@ -59,6 +60,7 @@ public abstract class InstPart implements Cloneable {
 	protected int patternSeed = 0;
 	protected RhythmPattern pattern = RhythmPattern.FULL;
 	protected List<Integer> customPattern = null;
+	protected boolean patternFlip = false;
 
 	protected int patternShift = 0;
 
@@ -74,6 +76,7 @@ public abstract class InstPart implements Cloneable {
 		setHitsPerPattern(panel.getHitsPerPattern());
 		setChordSpan(panel.getChordSpan());
 		setChordSpanFill(panel.getChordSpanFill());
+		setFillFlip(panel.getFillFlip());
 
 		setChordNotesStretch(panel.getChordNotesStretch());
 		setStretchEnabled(panel.getStretchEnabled());
@@ -100,6 +103,7 @@ public abstract class InstPart implements Cloneable {
 
 		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
+		setPatternFlip(panel.getPatternFlip());
 		setPatternShift(panel.getPatternShift());
 
 		setMuted(panel.getMuteInst());
@@ -277,6 +281,22 @@ public abstract class InstPart implements Cloneable {
 
 	public void setSwingPercent(int swingPercent) {
 		this.swingPercent = swingPercent;
+	}
+
+	public boolean isFillFlip() {
+		return fillFlip;
+	}
+
+	public void setFillFlip(boolean fillFlip) {
+		this.fillFlip = fillFlip;
+	}
+
+	public boolean isPatternFlip() {
+		return patternFlip;
+	}
+
+	public void setPatternFlip(boolean patternFlip) {
+		this.patternFlip = patternFlip;
 	}
 
 	@XmlAttribute

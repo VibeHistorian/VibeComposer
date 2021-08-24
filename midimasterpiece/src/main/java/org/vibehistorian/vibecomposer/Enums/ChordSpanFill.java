@@ -42,6 +42,16 @@ public enum ChordSpanFill {
 		return result;
 	}
 
+	public List<Integer> getPatternByLength(int length, boolean flipped) {
+		List<Integer> result = getPatternByLength(length);
+		if (flipped) {
+			for (int i = 0; i < result.size(); i++) {
+				result.set(i, 1 - result.get(i));
+			}
+		}
+		return result;
+	}
+
 	public int[] getChordPattern() {
 		return chordPattern;
 	}
