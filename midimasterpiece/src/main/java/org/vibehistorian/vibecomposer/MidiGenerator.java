@@ -3170,7 +3170,7 @@ public class MidiGenerator implements JMC {
 									: dp.getExceptionChance();
 							break;
 						case 2:
-							drumFill = true;
+							drumFill = (kicky || aboveSnarey);
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
