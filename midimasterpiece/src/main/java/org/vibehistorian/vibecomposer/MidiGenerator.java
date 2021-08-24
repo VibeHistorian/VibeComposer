@@ -3129,6 +3129,9 @@ public class MidiGenerator implements JMC {
 		}
 
 		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(sec, dp);
+
+		Random drumFillGenerator = new Random(
+				dp.getPatternSeed() + dp.getOrder() + sec.getTypeMelodyOffset());
 		Random variationGenerator = new Random(
 				dp.getPatternSeed() + dp.getOrder() + sec.getTypeSeedOffset());
 		int numberOfVars = Section.variationDescriptions[4].length - 2;
@@ -3218,6 +3221,11 @@ public class MidiGenerator implements JMC {
 						k++;
 						usedDrumDuration *= 2;
 						drumFillExceptionChance = 60;
+
+						int drumFillUnpauseChance = dp.getInstrument() < 46 ? 20 : 10;
+						if (pitch < 0 && drumFillGenerator.nextInt(100) < drumFillUnpauseChance) {
+							pitch = dp.getInstrument();
+						}
 
 					}
 
