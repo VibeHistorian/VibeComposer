@@ -3791,14 +3791,17 @@ public class VibeComposerGUI extends JFrame
 					e.getSoloMuter().muteState == State.FULL));
 		}
 
+		Optional<DrumPanel> notExcludedDrum = drumPanels.stream()
+				.filter(e -> e.getSequenceTrack() >= 0).findFirst();
+
 		// drum specific
-		if (combineDrumTracks.isSelected() && drumPanels.size() > 0) {
-			sequencer.setTrackSolo(drumPanels.get(0).getSequenceTrack(),
+		if (combineDrumTracks.isSelected() && notExcludedDrum.isPresent()) {
+			sequencer.setTrackSolo(notExcludedDrum.get().getSequenceTrack(),
 					groupSoloMuters.get(4).soloState != State.OFF);
 		}
 
-		if (combineDrumTracks.isSelected() && drumPanels.size() > 0) {
-			sequencer.setTrackMute(drumPanels.get(0).getSequenceTrack(),
+		if (combineDrumTracks.isSelected() && notExcludedDrum.isPresent()) {
+			sequencer.setTrackMute(notExcludedDrum.get().getSequenceTrack(),
 					groupSoloMuters.get(4).muteState != State.OFF);
 		}
 

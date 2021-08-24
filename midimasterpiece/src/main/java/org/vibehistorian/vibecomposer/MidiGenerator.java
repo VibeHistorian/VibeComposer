@@ -2211,12 +2211,12 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.drumPanels);
 			if (gc.getDrumParts().get(i).isMuted()) {
 				ip.setSequenceTrack(-1);
-				trackCounter++;
+				//trackCounter++;
 			} else {
-				ip.setSequenceTrack(trackCounter++);
-			}
-			if (COLLAPSE_DRUM_TRACKS) {
-				break;
+				ip.setSequenceTrack(trackCounter);
+				if (COLLAPSE_DRUM_TRACKS) {
+					break;
+				}
 			}
 		}
 
