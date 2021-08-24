@@ -228,7 +228,7 @@ public class MidiGenerator implements JMC {
 		for (Integer chKey : fullMelodyMap.keySet()) {
 			patterns.put(chKey,
 					patternFromNotes(fullMelodyMap.get(chKey), 1, progressionDurations.get(chKey)));
-			System.out.println(StringUtils.join(patterns.get(chKey), ","));
+			//System.out.println(StringUtils.join(patterns.get(chKey), ","));
 		}
 		//System.out.println(StringUtils.join(pattern, ", "));
 		return patterns;
@@ -2580,7 +2580,7 @@ public class MidiGenerator implements JMC {
 			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
 			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
 			melodyNotePattern = notePattern;
-			System.out.println(StringUtils.join(melodyNotePattern, ","));
+			//System.out.println(StringUtils.join(melodyNotePattern, ","));
 		}
 		Vector<Note> noteList = new Vector<>();
 		fullMelodyMap.keySet().forEach(e -> noteList.addAll(fullMelodyMap.get(e)));

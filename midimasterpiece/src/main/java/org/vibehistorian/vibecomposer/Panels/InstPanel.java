@@ -31,7 +31,6 @@ import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -43,6 +42,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.CheckButton;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
@@ -62,12 +62,12 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("Voices", 3, 2, 6);
-	protected JCheckBox stretchEnabled = new JCheckBox("", false);
+	protected CheckButton stretchEnabled = new CheckButton("", false);
 	protected TransparentablePanel stretchPanel = new TransparentablePanel();
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
 	protected KnobPanel exceptionChance = new KnobPanel("Split%", 0);
-	protected JCheckBox repeatableNotes = new JCheckBox("Note<br>Repeat", true);
+	protected CheckButton repeatableNotes = new CheckButton("Note<br>Repeat", true);
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
@@ -87,8 +87,8 @@ public abstract class InstPanel extends JPanel {
 	protected VisualPatternPanel comboPanel = null;
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
-	protected JCheckBox lockInst = new JCheckBox("Lock", false);
-	protected JCheckBox muteInst = new JCheckBox("Excl.", false);
+	protected CheckButton lockInst = new CheckButton("Lock", false);
+	protected CheckButton muteInst = new CheckButton("Excl.", false);
 
 	protected JSlider volSlider = new JSlider();
 

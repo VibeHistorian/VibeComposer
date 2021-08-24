@@ -60,7 +60,7 @@ public class Section {
 			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "No2nd", "MaxStrum" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "ChordDir." },
-			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "FillLast" } };
+			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
 			"Swap Melody", "Melody Pause Squish", "Key Change" };
