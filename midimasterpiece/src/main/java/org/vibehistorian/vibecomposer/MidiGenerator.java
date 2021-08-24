@@ -36,7 +36,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -235,8 +234,7 @@ public class MidiGenerator implements JMC {
 		return patterns;
 	}
 
-	private List<Integer> patternFromNotes(Collection<Note> notes, int chordsTotal,
-			Double measureTotal) {
+	private List<Integer> patternFromNotes(List<Note> notes, int chordsTotal, Double measureTotal) {
 		// strategy: use 64 hits in pattern, then simplify if needed
 
 		int hits = chordsTotal * MELODY_PATTERN_RESOLUTION;
@@ -251,7 +249,7 @@ public class MidiGenerator implements JMC {
 			durationBuckets.add(timeForHit * i - 0.01);
 			pattern.add(0);
 		}
-		pattern.set(0, 1);
+		pattern.set(0, (notes.get(0).getPitch() < 0) ? 0 : 1);
 		double currentDuration = 0;
 		int explored = 0;
 		for (Note n : notes) {
@@ -1239,7 +1237,29 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern, double start,
+	public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern, int start,
+			int end, double addDur) {
+		List<Double> durations = new ArrayList<>();
+		double dur = addDur;
+		for (int i = start; i < end; i++) {
+			if (pattern.get(i) < 1) {
+				dur += addDur;
+				if (i < end - 1 && pattern.get(i + 1) == 1) {
+					durations.add(dur);
+				}
+			} else {
+				dur = addDur;
+				if (i < end - 1 && pattern.get(i + 1) == 1) {
+					durations.add(dur);
+				}
+			}
+		}
+		durations.add(dur);
+
+		return durations;
+	}
+
+	/*public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern, double start,
 			double end, double maxDur) {
 		List<Double> durations = new ArrayList<>();
 		double addDur = maxDur / pattern.size();
@@ -1256,9 +1276,9 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		durations.add(dur);
-
+	
 		return durations;
-	}
+	}*/
 
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
@@ -2641,14 +2661,16 @@ public class MidiGenerator implements JMC {
 							durationPool, durationWeights);
 					int counter = 0;
 					List<Double> durations = (bp.isMelodyPattern() && (melodyNotePattern != null))
-							? getSustainedDurationsFromPattern(melodyNotePattern, totalDur,
-									totalDur + progressionDurations.get(j), maxDur)
+							? getSustainedDurationsFromPattern(melodyNotePattern,
+									j * MELODY_PATTERN_RESOLUTION,
+									(j + 1) * MELODY_PATTERN_RESOLUTION,
+									progressionDurations.get(j) / MELODY_PATTERN_RESOLUTION)
 							: bassRhythm.regenerateDurations(4);
 					for (Double dur : durations) {
 
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
-						if (counter > 0 && dur < Durations.EIGHTH_NOTE
+						if (counter > 0 && dur < (Durations.EIGHTH_NOTE + 0.01)
 								&& noteVariationGenerator.nextInt(100) < bp.getNoteVariation()
 								&& generatedRootProgression.get(j).length > 1) {
 							randomNote = noteVariationGenerator
