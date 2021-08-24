@@ -2859,7 +2859,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public int sliderMeasureWidth() {
-		return beatFromBpm(0) * MidiGenerator.chordInts.size();
+		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH / 4);
 	}
 
 	private void initControlPanel(int startY, int anchorSide) {
@@ -3598,12 +3598,15 @@ public class VibeComposerGUI extends JFrame
 				sliderMeasureStartTimes.add(current);
 				sliderBeatStartTimes.add(current);
 				if (sec != null) {
-					if (sec.getSectionBeatDurations() != null) {
-						double adjustment = (measureWidth * sec.getSectionBeatDurations().get(0)
+					List<Double> customDurations = (sec.getSectionBeatDurations() != null)
+							? sec.getSectionBeatDurations()
+							: MidiGenerator.userChordsDurations;
+					if (!customDurations.isEmpty()) {
+						double adjustment = (measureWidth * customDurations.get(0)
 								/ fullMeasureNoteDuration);
-						for (int i = 1; i < sec.getSectionBeatDurations().size(); i++) {
+						for (int i = 1; i < customDurations.size(); i++) {
 							sliderBeatStartTimes.add((int) (current + adjustment));
-							adjustment += (measureWidth * sec.getSectionBeatDurations().get(i)
+							adjustment += (measureWidth * customDurations.get(i)
 									/ fullMeasureNoteDuration);
 						}
 					} else {

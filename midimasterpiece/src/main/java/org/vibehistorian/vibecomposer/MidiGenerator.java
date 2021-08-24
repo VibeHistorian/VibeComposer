@@ -137,6 +137,7 @@ public class MidiGenerator implements JMC {
 
 	// constants
 	public static final boolean MAXIMIZE_CHORUS_MAIN_MELODY = false;
+	public static final int MELODY_PATTERN_RESOLUTION = 16;
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	public static final int OPENHAT_CHANCE = 0;
 	private static final int maxAllowedScaleNotes = 7;
@@ -223,14 +224,26 @@ public class MidiGenerator implements JMC {
 		MidiGenerator.gc = gc;
 	}
 
-	private List<Integer> patternFromNotes(Collection<Note> notes) {
+	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {
+		Map<Integer, List<Integer>> patterns = new HashMap<>();
+		for (Integer chKey : fullMelodyMap.keySet()) {
+			patterns.put(chKey,
+					patternFromNotes(fullMelodyMap.get(chKey), 1, progressionDurations.get(chKey)));
+			System.out.println(StringUtils.join(patterns.get(chKey), ","));
+		}
+		//System.out.println(StringUtils.join(pattern, ", "));
+		return patterns;
+	}
+
+	private List<Integer> patternFromNotes(Collection<Note> notes, int chordsTotal,
+			Double measureTotal) {
 		// strategy: use 64 hits in pattern, then simplify if needed
 
-
-		int chordsTotal = chordInts.size();
-		int hits = chordsTotal * 16;
-		double measureTotal = chordsTotal
-				* ((gc.isDoubledDurations()) ? Durations.WHOLE_NOTE : Durations.HALF_NOTE);
+		int hits = chordsTotal * MELODY_PATTERN_RESOLUTION;
+		measureTotal = (measureTotal == null)
+				? (chordsTotal
+						* ((gc.isDoubledDurations()) ? Durations.WHOLE_NOTE : Durations.HALF_NOTE))
+				: measureTotal;
 		double timeForHit = measureTotal / hits;
 		List<Integer> pattern = new ArrayList<>();
 		List<Double> durationBuckets = new ArrayList<>();
@@ -741,8 +754,9 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	private Vector<Note> convertMelodySkeletonToFullMelody(MelodyPart mp, List<Double> durations,
-			int measures, Section sec, Vector<Note> skeleton, int notesSeedOffset) {
+	private Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
+			List<Double> durations, int measures, Section sec, Vector<Note> skeleton,
+			int notesSeedOffset) {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
@@ -761,11 +775,13 @@ public class MidiGenerator implements JMC {
 
 		int splitChance = gc.getMelodySplitChance();
 		Vector<Note> fullMelody = new Vector<>();
+		Map<Integer, List<Note>> fullMelodyMap = new HashMap<>();
+		for (int i = 0; i < durations.size(); i++) {
+			fullMelodyMap.put(i, new Vector<>());
+		}
 		int chordCounter = 0;
 		double durCounter = 0.0;
 		double currentChordDur = durations.get(0);
-		if (gc.isScaleMidiVelocityInArrangement()) {
-		}
 
 		int firstPitch = skeleton.get(0).getPitch();
 
@@ -849,11 +865,15 @@ public class MidiGenerator implements JMC {
 				Note n1split1 = new Note(pitch1, swingDuration1, velocity);
 				Note n1split2 = new Note(pitch2, swingDuration2, velocity - 10);
 
+				Note added1 = pause1 ? new Note(Integer.MIN_VALUE, swingDuration1, velocity)
+						: n1split1;
+				fullMelody.add(added1);
+				fullMelodyMap.get(chordCounter).add(added1);
 
-				fullMelody.add(
-						pause1 ? new Note(Integer.MIN_VALUE, swingDuration1, velocity) : n1split1);
-				fullMelody.add(
-						pause2 ? new Note(Integer.MIN_VALUE, swingDuration2, velocity) : n1split2);
+				Note added2 = pause2 ? new Note(Integer.MIN_VALUE, swingDuration2, velocity)
+						: n1split2;
+				fullMelody.add(added2);
+				fullMelodyMap.get(chordCounter).add(added2);
 
 
 				if (!pause1) {
@@ -866,11 +886,13 @@ public class MidiGenerator implements JMC {
 				if (multiplier < 0.4) {
 					int pitch3 = (splitGenerator.nextBoolean()) ? pitch1 : pitch2;
 					boolean pause3 = (splitGenerator.nextBoolean()) ? pause1 : pause2;
-					;
+
 					double swingDuration3 = swingDuration1;
 					Note n1split3 = new Note(pitch3, swingDuration3, velocity - 20);
-					fullMelody.add(pause3 ? new Note(Integer.MIN_VALUE, swingDuration3, velocity)
-							: n1split3);
+					Note added3 = pause3 ? new Note(Integer.MIN_VALUE, swingDuration3, velocity)
+							: n1split3;
+					fullMelody.add(added3);
+					fullMelodyMap.get(chordCounter).add(added3);
 					if (!pause3) {
 						pitches[pitch3 % 12]++;
 					}
@@ -878,7 +900,9 @@ public class MidiGenerator implements JMC {
 
 			} else {
 				int pitch = n1.getPitch();
-				fullMelody.add(pause1 ? new Note(Integer.MIN_VALUE, adjDur, velocity) : n1);
+				Note added = pause1 ? new Note(Integer.MIN_VALUE, adjDur, velocity) : n1;
+				fullMelody.add(added);
+				fullMelodyMap.get(chordCounter).add(added);
 				if (!pause1) {
 					pitches[pitch % 12]++;
 				}
@@ -990,7 +1014,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		return fullMelody;
+		return fullMelodyMap;
 	}
 
 	private void swingPhrase(Phrase phr, int swingPercent, double swingUnitOfTime) {
@@ -1023,7 +1047,7 @@ public class MidiGenerator implements JMC {
 				System.out.println("Dur: " + durCounter + ", chord counter: " + chordCounter);
 		}
 		// fix short notes at the end not going to next chord
-		if (durCounter > currentChordDur / 2) {
+		if (durCounter > 0.01) {
 			chordCounter = (chordCounter + 1) % progressionDurations.size();
 			chordSeparators.add(fullMelody.size() - 1);
 			durCounter = 0.0;
@@ -2529,13 +2553,18 @@ public class MidiGenerator implements JMC {
 			skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
-		Vector<Note> fullMelody = convertMelodySkeletonToFullMelody(mp, progressionDurations,
-				measures, sec, skeletonNotes, notesSeedOffset);
+		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
+				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset);
 		if (mp.getOrder() == 1) {
-			melodyNotePattern = patternFromNotes(fullMelody);
+			List<Integer> notePattern = new ArrayList<>();
+			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
+			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
+			melodyNotePattern = notePattern;
+			System.out.println(StringUtils.join(melodyNotePattern, ","));
 		}
-
-		melodyPhrase.addNoteList(fullMelody, true);
+		Vector<Note> noteList = new Vector<>();
+		fullMelodyMap.keySet().forEach(e -> noteList.addAll(fullMelodyMap.get(e)));
+		melodyPhrase.addNoteList(noteList, true);
 		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.EIGHTH_NOTE);
 
 		if (gc.getScaleMode() != ScaleMode.IONIAN) {
@@ -3095,7 +3124,6 @@ public class MidiGenerator implements JMC {
 			boolean ignoreChordSpanFill = false;
 			int extraExceptionChance = 0;
 			boolean drumFill = false;
-
 			// chord iter
 			for (int j = 0; j < chordsCount; j += chordSpan) {
 
@@ -3115,9 +3143,9 @@ public class MidiGenerator implements JMC {
 							ignoreChordSpanFill = true;
 							break;
 						case 1:
-							extraExceptionChance = (dp.getInstrument() < 38
-									&& dp.getInstrument() > 40) ? dp.getExceptionChance() + 10
-											: dp.getExceptionChance();
+							extraExceptionChance = (kicky || aboveSnarey)
+									? dp.getExceptionChance() + 10
+									: dp.getExceptionChance();
 							break;
 						case 2:
 							drumFill = true;
@@ -3147,6 +3175,10 @@ public class MidiGenerator implements JMC {
 					}
 
 					int chordNum = j + (k / oneChordPatternSize);
+					if (dp.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
+						drumDuration = progressionDurations.get(chordNum)
+								/ MELODY_PATTERN_RESOLUTION;
+					}
 					boolean forceLastFilled = drumFill
 							&& (chordNum == actualProgression.size() - 1);
 					if (!ignoreChordSpanFill && !forceLastFilled) {
