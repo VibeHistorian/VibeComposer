@@ -760,15 +760,16 @@ public class MidiGenerator implements JMC {
 
 		List<Integer> melodyVars = sec.getVariation(0, getAbsoluteOrder(0, mp));
 
-		int seed = mp.getPatternSeed() + mp.getOrder();
-		Random splitGenerator = new Random(seed + 4);
-		Random pauseGenerator = new Random(seed + 5);
-		Random pauseGenerator2 = new Random(seed + 7);
-		Random variationGenerator = new Random(seed + 6);
-		Random velocityGenerator = new Random(seed + 1 + notesSeedOffset);
+		int orderSeed = mp.getPatternSeed() + mp.getOrder();
+		int seed = mp.getPatternSeed();
+		Random splitGenerator = new Random(orderSeed + 4);
+		Random pauseGenerator = new Random(orderSeed + 5);
+		Random pauseGenerator2 = new Random(orderSeed + 7);
+		Random variationGenerator = new Random(orderSeed + 6);
+		Random velocityGenerator = new Random(orderSeed + 1 + notesSeedOffset);
 		Random splitNoteGenerator = new Random(seed + 8);
 		Random splitNoteExceptionGenerator = new Random(seed + 9);
-		Random chordLeadingGenerator = new Random(seed + notesSeedOffset + 15);
+		Random chordLeadingGenerator = new Random(orderSeed + notesSeedOffset + 15);
 
 
 		int splitChance = gc.getMelodySplitChance();
@@ -806,19 +807,14 @@ public class MidiGenerator implements JMC {
 				durCounter = 0.0;
 				currentChordDur = durations.get(chordCounter);
 				//splitGenerator.setSeed(seed + 4);
-				pauseGenerator.setSeed(seed + 5);
+				//pauseGenerator.setSeed(seed + 5);
 				//pauseGenerator2.setSeed(seed + 7);
-				splitNoteGenerator.setSeed(seed + 8);
-				splitNoteExceptionGenerator.setSeed(seed + 9);
+				splitNoteGenerator.setSeed(orderSeed + 8);
+				splitNoteExceptionGenerator.setSeed(orderSeed + 9);
 				chordSeparators[chordSepIndex++] = fullMelody.size() + 1;
 			}
 
 			int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
-
-			int p = pauseGenerator.nextInt(100);
-			int p2 = pauseGenerator2.nextInt(100);
-			boolean pause1 = p < mp.getPauseChance();
-			boolean pause2 = p2 < (mp.getPauseChance());
 
 
 			n1.setDynamic(velocity);
@@ -835,17 +831,18 @@ public class MidiGenerator implements JMC {
 			if ((adjDur > Durations.SIXTEENTH_NOTE * 1.4
 					&& splitGenerator.nextInt(100) < splitChance) || splitLastNoteInChord) {
 
+				int pitch1 = n1.getPitch();
 				Note n2 = skeleton.get((i + 1) % skeleton.size());
 				int pitch2 = 0;
-				if (n1.getPitch() >= n2.getPitch()) {
-					int higherNote = n1.getPitch();
+				if (pitch1 >= n2.getPitch()) {
+					int higherNote = pitch1;
 					if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
 						higherNote += RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
 					}
 					pitch2 = getAllowedPitchFromRange(n2.getPitch(), higherNote, positionInChord,
 							splitNoteGenerator);
 				} else {
-					int lowerNote = n1.getPitch();
+					int lowerNote = pitch1;
 					if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
 						lowerNote -= RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
 					}
@@ -859,54 +856,46 @@ public class MidiGenerator implements JMC {
 
 				double swingDuration1 = adjDur * multiplier;
 				double swingDuration2 = swingDuration1;
-				int pitch1 = n1.getPitch();
+
 				Note n1split1 = new Note(pitch1, swingDuration1, velocity);
 				Note n1split2 = new Note(pitch2, swingDuration2, velocity - 10);
+				fullMelody.add(n1split1);
+				fullMelodyMap.get(chordCounter).add(n1split1);
 
-				Note added1 = pause1 ? new Note(Integer.MIN_VALUE, swingDuration1, velocity)
-						: n1split1;
-				fullMelody.add(added1);
-				fullMelodyMap.get(chordCounter).add(added1);
-
-				Note added2 = pause2 ? new Note(Integer.MIN_VALUE, swingDuration2, velocity)
-						: n1split2;
-				fullMelody.add(added2);
-				fullMelodyMap.get(chordCounter).add(added2);
-
-
-				if (!pause1) {
-					pitches[pitch1 % 12]++;
-				}
-				if (!pause2) {
-					pitches[pitch2 % 12]++;
-				}
+				fullMelody.add(n1split2);
+				fullMelodyMap.get(chordCounter).add(n1split2);
 
 				if (multiplier < 0.4) {
 					int pitch3 = (splitGenerator.nextBoolean()) ? pitch1 : pitch2;
-					boolean pause3 = (splitGenerator.nextBoolean()) ? pause1 : pause2;
-
 					double swingDuration3 = swingDuration1;
 					Note n1split3 = new Note(pitch3, swingDuration3, velocity - 20);
-					Note added3 = pause3 ? new Note(Integer.MIN_VALUE, swingDuration3, velocity)
-							: n1split3;
-					fullMelody.add(added3);
-					fullMelodyMap.get(chordCounter).add(added3);
-					if (!pause3) {
-						pitches[pitch3 % 12]++;
-					}
+					fullMelody.add(n1split3);
+					fullMelodyMap.get(chordCounter).add(n1split3);
 				}
 
 			} else {
-				int pitch = n1.getPitch();
-				Note added = pause1 ? new Note(Integer.MIN_VALUE, adjDur, velocity) : n1;
-				fullMelody.add(added);
-				fullMelodyMap.get(chordCounter).add(added);
-				if (!pause1) {
-					pitches[pitch % 12]++;
-				}
+				fullMelody.add(n1);
+				fullMelodyMap.get(chordCounter).add(n1);
 			}
 		}
 		chordSeparators[chordSepIndex] = fullMelody.size();
+
+		// pause by %, sort not-paused into pitches
+		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
+			List<Note> notes = fullMelodyMap.get(i);
+			pauseGenerator.setSeed(orderSeed + 5);
+			for (int j = 0; j < notes.size(); j++) {
+				Note n = notes.get(j);
+				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_SIXTEENTH_NOTE + 0.01)
+						? pauseGenerator2
+						: pauseGenerator;
+				if (pauseGen.nextInt(100) < mp.getPauseChance()) {
+					n.setPitch(Integer.MIN_VALUE);
+				} else {
+					pitches[n.getPitch() % 12]++;
+				}
+			}
+		}
 
 
 		// fill pauses toggle
