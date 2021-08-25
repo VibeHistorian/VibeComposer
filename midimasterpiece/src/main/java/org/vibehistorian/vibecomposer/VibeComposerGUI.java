@@ -134,6 +134,7 @@ import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
@@ -5830,8 +5831,10 @@ public class VibeComposerGUI extends JFrame
 				cp.setStrum(cp.getStrum() / 4);
 			}
 
-			cp.setDurationStretch(
-					chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt());
+			if (chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
+				cp.setPatternJoinMode(PatternJoinMode.EXPAND);
+			}
+
 
 			cp.setVelocityMax(randomChordMaxVel.getInt());
 			cp.setVelocityMin(randomChordMinVel.getInt());

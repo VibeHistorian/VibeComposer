@@ -6,12 +6,12 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
@@ -29,7 +29,7 @@ public class ChordPanel extends InstPanel {
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
-	private JCheckBox durationStretch = new JCheckBox("Expand", true);
+	private ScrollComboBox<String> patternJoinMode = new ScrollComboBox<>();
 	private KnobPanel noteLengthMultiplier = new KnobPanel("Length", 100, 25, 200);
 
 	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
@@ -80,7 +80,7 @@ public class ChordPanel extends InstPanel {
 		this.add(minMaxVelSlider);
 
 
-		this.add(durationStretch);
+		this.add(patternJoinMode);
 		this.add(noteLengthMultiplier);
 
 		this.add(patternSeedLabel);
@@ -93,7 +93,7 @@ public class ChordPanel extends InstPanel {
 
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
-		toggleableComponents.add(durationStretch);
+		toggleableComponents.add(patternJoinMode);
 		toggleableComponents.add(noteLengthMultiplier);
 
 	}
@@ -110,6 +110,9 @@ public class ChordPanel extends InstPanel {
 			if (p != POOL.DRUM) {
 				instPoolPicker.addItem(p.toString());
 			}
+		}
+		for (PatternJoinMode pjm : PatternJoinMode.values()) {
+			patternJoinMode.addItem(pjm.toString());
 		}
 
 		instPoolPicker.addItemListener(new ItemListener() {
@@ -158,7 +161,7 @@ public class ChordPanel extends InstPanel {
 		part.setTransitionChance(getTransitionChance());
 		part.setTransitionSplit(getTransitionSplit());
 		part.setStrum(getStrum());
-		part.setDurationStretch(getDurationStretch());
+		part.setPatternJoinMode(getPatternJoinMode());
 		part.setNoteLengthMultiplier(getNoteLengthMultiplier());
 
 		part.setInstPool(getInstPool());
@@ -175,7 +178,7 @@ public class ChordPanel extends InstPanel {
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
 		setStrum(part.getStrum());
-		setDurationStretch(part.isDurationStretch());
+		setPatternJoinMode(part.getPatternJoinMode());
 		setNoteLengthMultiplier(part.getNoteLengthMultiplier());
 
 		setPanelOrder(part.getOrder());
@@ -195,12 +198,12 @@ public class ChordPanel extends InstPanel {
 		return toChordPart(lastRandomSeed);
 	}
 
-	public boolean getDurationStretch() {
-		return durationStretch.isSelected();
+	public PatternJoinMode getPatternJoinMode() {
+		return PatternJoinMode.valueOf((String) patternJoinMode.getSelectedItem());
 	}
 
-	public void setDurationStretch(boolean durationStretch) {
-		this.durationStretch.setSelected(durationStretch);
+	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
+		this.patternJoinMode.setSelectedItem(patternJoinMode.toString());
 	}
 
 	public int getNoteLengthMultiplier() {

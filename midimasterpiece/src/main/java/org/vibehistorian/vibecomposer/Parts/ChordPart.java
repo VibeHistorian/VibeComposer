@@ -4,6 +4,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})
@@ -13,7 +14,7 @@ public class ChordPart extends InstPart {
 
 	private int strum = 0;
 
-	private boolean durationStretch = true;
+	private PatternJoinMode patternJoinMode = PatternJoinMode.NOJOIN;
 	private int noteLengthMultiplier = 100;
 
 	private POOL instPool = POOL.PLUCK;
@@ -57,13 +58,13 @@ public class ChordPart extends InstPart {
 	}
 
 
-	public boolean isDurationStretch() {
-		return durationStretch;
+	public PatternJoinMode getPatternJoinMode() {
+		return patternJoinMode;
 	}
 
 
-	public void setDurationStretch(boolean durationStretch) {
-		this.durationStretch = durationStretch;
+	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
+		this.patternJoinMode = patternJoinMode;
 	}
 
 

@@ -56,6 +56,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -2841,22 +2842,28 @@ public class MidiGenerator implements JMC {
 				}
 				double duration = progressionDurations.get(j) / pattern.size();
 				double durationCounter = 0;
+				int nextP = -1;
+				PatternJoinMode joinMode = cp.getPatternJoinMode();
+				int stretchBy = (joinMode == PatternJoinMode.EXPAND) ? 0 : 1;
 				for (int p = 0; p < pattern.size(); p++) {
+
 					//System.out.println("Duration counter: " + durationCounter);
 					Chord cC = Chord.copy(c);
 					cC.setRhythmValue(duration);
 					// less plucky
 					cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
-					if (pattern.get(p) < 1) {
+					if (pattern.get(p) < 1 || (p <= nextP && stretchBy == 1)) {
 						cC.setNotes(new int[] { Integer.MIN_VALUE });
 					} else if (transition && durationCounter >= splitTime) {
 						cC.setNotes(transChordNotes);
 					}
-					int nextP = p + 1;
 					int durMultiplier = 1;
-					if (cp.isDurationStretch()) {
+					boolean joinApplicable = (pattern.get(p) == 1)
+							&& (joinMode != PatternJoinMode.NOJOIN) && (p >= nextP);
+					if (joinApplicable) {
+						nextP = p + 1;
 						while (nextP < pattern.size()) {
-							if (pattern.get(nextP) < 1) {
+							if (pattern.get(nextP) == stretchBy) {
 								durMultiplier++;
 							} else {
 								break;
