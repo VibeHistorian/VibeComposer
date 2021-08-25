@@ -595,6 +595,9 @@ public class MidiGenerator implements JMC {
 						firstPitchInTwoChords = pitch;
 					}
 					previousNotePitch = pitch;
+					if (hasSingleNoteException && tempChangedDir) {
+						previousNotePitch += (currentDirection) ? 2 : -2;
+					}
 					noteList.add(n);
 					if (fillChordMelodyMap && o == 0) {
 						chordMelodyMap1.get(Integer.valueOf(i)).add(n);
