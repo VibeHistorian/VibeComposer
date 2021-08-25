@@ -383,6 +383,7 @@ public class MidiGenerator implements JMC {
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
 		Random directionGenerator = new Random(seed + 10);
 		Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
+		Random exceptionTypeGenerator = new Random(seed + 20 + notesSeedOffset);
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
 		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
@@ -529,12 +530,20 @@ public class MidiGenerator implements JMC {
 				for (int j = 0; j < durations.size(); j++) {
 					boolean tempChangedDir = false;
 					int tempSaveMaxJump = MAX_JUMP_SKELETON_CHORD;
+					boolean hasSingleNoteException = false;
 					if (allowException && j > 0 && exceptionCounter > 0
 							&& exceptionGenerator.nextInt(100) < EXCEPTION_CHANCE) {
-						currentDirection = !currentDirection;
 						if (gc.isMelodySingleNoteExceptions()) {
-							tempChangedDir = true;
-							MAX_JUMP_SKELETON_CHORD = Math.max(0, MAX_JUMP_SKELETON_CHORD - 1);
+							hasSingleNoteException = true;
+							if (exceptionTypeGenerator.nextBoolean()) {
+								MAX_JUMP_SKELETON_CHORD = Math.max(0, MAX_JUMP_SKELETON_CHORD - 1);
+								tempChangedDir = true;
+								currentDirection = !currentDirection;
+							} else {
+								MAX_JUMP_SKELETON_CHORD = Math.min(6, MAX_JUMP_SKELETON_CHORD + 2);
+							}
+						} else {
+							currentDirection = !currentDirection;
 						}
 
 						exceptionCounter--;
@@ -567,8 +576,10 @@ public class MidiGenerator implements JMC {
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 							* Note.DEFAULT_DURATION_MULTIPLIER);
 
-					if (tempChangedDir && gc.isMelodySingleNoteExceptions()) {
-						currentDirection = !currentDirection;
+					if (hasSingleNoteException && gc.isMelodySingleNoteExceptions()) {
+						if (tempChangedDir) {
+							currentDirection = !currentDirection;
+						}
 						MAX_JUMP_SKELETON_CHORD = tempSaveMaxJump;
 					}
 					if (!gc.isMelodySingleNoteExceptions()) {
@@ -580,7 +591,7 @@ public class MidiGenerator implements JMC {
 						}
 					}
 
-					if (i % 2 == 0 && j == 0 && gc.isMelodyAvoidChordJumps()) {
+					if (i % 2 == 0 && j == 0 && !gc.isMelodyAvoidChordJumps()) {
 						firstPitchInTwoChords = pitch;
 					}
 					previousNotePitch = pitch;
