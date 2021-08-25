@@ -60,7 +60,7 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
-	protected CheckButton fillFlip = new CheckButton("~F", false);
+	protected CheckButton fillFlip = new CheckButton("~", false);
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("Voices", 3, 2, 6);
 	protected CheckButton stretchEnabled = new CheckButton("", false);
@@ -84,7 +84,7 @@ public abstract class InstPanel extends JPanel {
 	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected RandomValueButton patternSeed = new RandomValueButton(0);
 	protected ScrollComboBox<String> pattern = new ScrollComboBox<String>();
-	protected CheckButton patternFlip = new CheckButton("~P", false);
+	protected CheckButton patternFlip = new CheckButton("~", false);
 
 	protected VisualPatternPanel comboPanel = null;
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
