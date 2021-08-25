@@ -2524,6 +2524,49 @@ public class VibeComposerGUI extends JFrame
 		});
 		customChordsPanel.add(respiceChordsButton);
 
+		JButton twoExChordsButton = new JButton("2x");
+		twoExChordsButton.setPreferredSize(new Dimension(25, 25));
+		twoExChordsButton.setMargin(new Insets(0, 0, 0, 0));
+		twoExChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(userChords,
+						userChordsDurations);
+				if (normalizedChords != null) {
+					List<String> chords = normalizedChords.getLeft();
+					List<String> chords2x = new ArrayList<>(chords);
+					chords.forEach(ch -> {
+						chords2x.add(ch);
+					});
+					userChords.setText(StringUtils.join(chords2x, ","));
+				}
+			}
+		});
+		customChordsPanel.add(twoExChordsButton);
+
+		JButton ddChordsButton = new JButton("Dd");
+		ddChordsButton.setPreferredSize(new Dimension(25, 25));
+		ddChordsButton.setMargin(new Insets(0, 0, 0, 0));
+		ddChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(userChords,
+						userChordsDurations);
+				if (normalizedChords != null) {
+					List<String> chords = normalizedChords.getLeft();
+					List<String> chordsDd = new ArrayList<>();
+					chords.forEach(ch -> {
+						chordsDd.add(ch);
+						chordsDd.add(ch);
+					});
+					userChords.setText(StringUtils.join(chordsDd, ","));
+				}
+			}
+		});
+		customChordsPanel.add(ddChordsButton);
+
 		userChordsDurations = new JTextField("2,2,2,2", 9);
 		customChordsPanel.add(new JLabel("Chord durations:"));
 		customChordsPanel.add(userChordsDurations);
@@ -2853,9 +2896,9 @@ public class VibeComposerGUI extends JFrame
 	public int beatFromBpm(int speedAdjustment) {
 		int finalVal = (int) ((2000 - speedAdjustment) * 60 * elongateMidi.getInt()
 				/ guiConfig.getBpm());
-		if (useDoubledDurations.isSelected()) {
+		/*if (useDoubledDurations.isSelected()) {
 			finalVal *= 2;
-		}
+		}*/
 		return finalVal;
 	}
 
@@ -5501,7 +5544,7 @@ public class VibeComposerGUI extends JFrame
 					.filter(e -> KICK_DRUMS.contains(e.getInstrument())).count();
 			long snareCount = affectedDrums.stream()
 					.filter(e -> SNARE_DRUMS.contains(e.getInstrument())).count();
-			System.out.println("Kick,snare: " + kickCount + ", " + snareCount);
+			//System.out.println("Kick,snare: " + kickCount + ", " + snareCount);
 			if (kickCount == 0) {
 				pitches.set(index++, 35);
 				pitches.set(index++, 36);
