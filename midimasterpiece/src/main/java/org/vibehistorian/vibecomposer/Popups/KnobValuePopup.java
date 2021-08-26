@@ -15,7 +15,7 @@ public class KnobValuePopup extends CloseablePopup {
 	private Integer customInput = null;
 
 	public KnobValuePopup(JKnob knob, boolean stretch, boolean allowValuesOutsideRange) {
-		super("Knob Value Setting");
+		super("Knob Value Setting", 0);
 		this.knob = knob;
 		stretchAfterCustomInput = stretch;
 

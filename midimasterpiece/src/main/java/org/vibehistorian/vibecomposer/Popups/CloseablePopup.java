@@ -4,15 +4,18 @@ import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFrame;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-
 public abstract class CloseablePopup {
 	final JFrame frame = new JFrame();
+	public static Map<Integer, CloseablePopup> currentPopupMap = new HashMap<>();
+	private Integer popupType = 0;
 
-	public CloseablePopup(String windowTitle) {
+	public CloseablePopup(String windowTitle, Integer popupType) {
+		this.setPopupType(popupType);
 		Point loc = MouseInfo.getPointerInfo().getLocation();
 		loc.translate(12, 12);
 		frame.setLocation(loc);
@@ -20,11 +23,11 @@ public abstract class CloseablePopup {
 		frame.setTitle(windowTitle);
 		frame.pack();
 
-		if (VibeComposerGUI.currentPopup != null) {
-			VibeComposerGUI.currentPopup.close();
-			VibeComposerGUI.currentPopup = this;
+		if (currentPopupMap.get(popupType) != null) {
+			currentPopupMap.get(popupType).close();
+			currentPopupMap.put(popupType, this);
 		} else {
-			VibeComposerGUI.currentPopup = this;
+			currentPopupMap.put(popupType, this);
 		}
 
 		frame.setVisible(true);
@@ -42,6 +45,14 @@ public abstract class CloseablePopup {
 
 	public JFrame getFrame() {
 		return frame;
+	}
+
+	public Integer getPopupType() {
+		return popupType;
+	}
+
+	public void setPopupType(Integer popupType) {
+		this.popupType = popupType;
 	}
 }
 

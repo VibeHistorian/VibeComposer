@@ -12,7 +12,7 @@ public class AboutPopup extends CloseablePopup {
 	JScrollPane scroll;
 
 	public AboutPopup() {
-		super("About");
+		super("About", 1);
 		textArea = new JTextArea(24, 80);
 		textArea.setBackground(Color.BLACK);
 		textArea.setForeground(Color.LIGHT_GRAY);

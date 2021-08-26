@@ -1,6 +1,5 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.MouseInfo;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -9,21 +8,18 @@ import javax.swing.JScrollPane;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
-public class ExtraSettingsPopup {
-	final JFrame frame = new JFrame();
+public class ExtraSettingsPopup extends CloseablePopup {
 	JScrollPane scroll;
 
 	public ExtraSettingsPopup() {
+		super("Extra settings", 2);
 		scroll = new JScrollPane(VibeComposerGUI.extraSettingsPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 
-		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
 		frame.add(scroll);
-		frame.setTitle("Extra");
 		frame.pack();
 		frame.setVisible(true);
-		addFrameWindowOperation();
 
 		System.out.println("Opened Extra Settings page!");
 	}
@@ -32,7 +28,7 @@ public class ExtraSettingsPopup {
 		return frame;
 	}
 
-	private void addFrameWindowOperation() {
+	protected void addFrameWindowOperation() {
 		frame.addWindowListener(new WindowListener() {
 
 			@Override

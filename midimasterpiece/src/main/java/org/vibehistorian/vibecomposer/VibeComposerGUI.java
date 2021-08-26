@@ -164,7 +164,6 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
-import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -554,7 +553,6 @@ public class VibeComposerGUI extends JFrame
 	public static Map<Integer, SoloMuter> apSm = null;
 	public static Map<Integer, SoloMuter> dpSm = null;
 
-	public static CloseablePopup currentPopup = null;
 	public static DebugConsole dconsole = null;
 	public static VibeComposerGUI vibeComposerGUI = null;
 

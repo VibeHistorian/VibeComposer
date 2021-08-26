@@ -16,7 +16,7 @@ public class ButtonValuePopup extends CloseablePopup {
 	public int randomNum = Integer.MIN_VALUE;
 
 	public ButtonValuePopup(RandomValueButton butt) {
-		super("Button Value Setting");
+		super("Button Value Setting", 0);
 		this.butt = butt;
 		Random rand = new Random();
 		randomNum = rand.nextInt();
