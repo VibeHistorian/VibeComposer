@@ -1312,6 +1312,9 @@ public class MidiGenerator implements JMC {
 		Random durationGenerator = new Random();
 		durationGenerator.setSeed(mainGeneratorSeed);
 
+		Random spiceGenerator = new Random();
+		spiceGenerator.setSeed(mainGeneratorSeed);
+
 		boolean isBackwards = !gc.isUseChordFormula();
 		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
 		chordInts.clear();
@@ -1393,26 +1396,17 @@ public class MidiGenerator implements JMC {
 			}
 
 
-			String firstLetter = chordString.substring(0, 1);
 			List<String> spicyChordList = (!isLastChord && prevChord != null)
 					? allowedSpiceChordsMiddle
 					: allowedSpiceChords;
-			String spicyChordString = firstLetter
-					+ spicyChordList.get(generator.nextInt(spicyChordList.size()));
-			if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
-				spicyChordString = spicyChordString.replace("maj", "m");
-			} else if (chordString.length() == 1 && spicyChordString.contains("m")
-					&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")) {
-				spicyChordString = spicyChordString.replace("m", "maj");
-			}
 
-			// SPICE CHANCE
+			String spicyChordString = chordString;
+
+			// Generate with SPICE CHANCE
 			if (generator.nextInt(100) < gc.getSpiceChance()
 					&& (chordInts.size() < 7 || lastChord == null)) {
-				// keep spiciness
-			} else {
-				// remove spiciness
-				spicyChordString = chordString;
+				spicyChordString = generateSpicyChordString(spiceGenerator, chordString,
+						spicyChordList);
 			}
 
 			if (!gc.isDimAugDom7thEnabled()) {
@@ -1438,7 +1432,7 @@ public class MidiGenerator implements JMC {
 			progressionDurations.add(dur);
 
 			prevChord = mappedChord;
-			System.out.println("Getting next for chord: " + chordString);
+			//System.out.println("Getting next for chord: " + chordString);
 			next = r.get(chordString);
 
 			if (fixedLength == 8 && chordInts.size() == 4 && lastChord == null) {
@@ -1480,6 +1474,41 @@ public class MidiGenerator implements JMC {
 		}
 
 		return cpr;
+	}
+
+	private String generateSpicyChordString(Random spiceGenerator, String chordString,
+			List<String> spicyChordList) {
+		List<String> spicyChordListCopy = new ArrayList<>(spicyChordList);
+		String firstLetter = chordString.substring(0, 1);
+		List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
+		int transposeByLetter = targetScale
+				.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1);
+		spicyChordListCopy.removeIf(e -> !isSpiceValid(transposeByLetter, e, targetScale));
+		//System.out.println(StringUtils.join(spicyChordListCopy, ", "));
+
+		if (spicyChordListCopy.isEmpty()) {
+			return chordString;
+		}
+		String spicyChordString = firstLetter
+				+ spicyChordListCopy.get(spiceGenerator.nextInt(spicyChordListCopy.size()));
+		if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
+			spicyChordString = spicyChordString.replace("maj", "m");
+		} else if (chordString.length() == 1 && spicyChordString.contains("m")
+				&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")) {
+			spicyChordString = spicyChordString.replace("m", "maj");
+		}
+		return spicyChordString;
+	}
+
+	private static boolean isSpiceValid(int transposeByLetter, String spice,
+			List<Integer> targetScale) {
+		int[] chord = MidiUtils.SPICE_CHORDS_LIST.get(MidiUtils.SPICE_NAMES_LIST.indexOf(spice));
+		for (int i = 0; i < chord.length; i++) {
+			if (!targetScale.contains((chord[i] + transposeByLetter) % 12)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private Note oldAlgoGenerateNote(MelodyPart mp, int[] chord, boolean isAscDirection,
