@@ -3213,7 +3213,8 @@ public class MidiGenerator implements JMC {
 
 					int chordNum = j + (k / oneChordPatternSize);
 					if (dp.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
-						drumDuration = progressionDurations.get(chordNum)
+						drumDuration = progressionDurations
+								.get(Math.min(chordNum, progressionDurations.size() - 1))
 								/ MELODY_PATTERN_RESOLUTION;
 					}
 					boolean forceLastFilled = drumFill
