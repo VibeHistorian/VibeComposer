@@ -93,7 +93,7 @@ public class Section {
 
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
-	private String customChords = "R";
+	private String customChords = "?";
 	private String customDurations = "2,2,2,2";
 
 	// customized parts

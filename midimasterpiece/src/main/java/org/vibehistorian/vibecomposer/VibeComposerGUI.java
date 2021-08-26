@@ -886,12 +886,16 @@ public class VibeComposerGUI extends JFrame
 		extraUseChordFormula = new JCheckBox("Chord Formula", true);
 
 		firstChordSelection = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "V", "vi" }, firstChordSelection);
-		firstChordSelection.setSelectedItem("I");
+		firstChordSelection.addItem("?");
+		MidiUtils.addAllToJComboBox(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
+				firstChordSelection);
+		firstChordSelection.setSelectedItem("C");
 		firstChordSelection.addItemListener(this);
 
 		lastChordSelection = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "R", "I", "IV", "V", "vi" }, lastChordSelection);
+		lastChordSelection.addItem("?");
+		MidiUtils.addAllToJComboBox(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
+				lastChordSelection);
 		lastChordSelection.addItemListener(this);
 
 		keyChangeTypeSelection = new ScrollComboBox<String>();
@@ -2490,7 +2494,7 @@ public class VibeComposerGUI extends JFrame
 		userChordsEnabled = new JCheckBox("Custom Chords", false);
 		customChordsPanel.add(userChordsEnabled);
 
-		userChords = new JTextField("R", 35);
+		userChords = new JTextField("?", 35);
 		userChords.setToolTipText(tooltip);
 		customChordsPanel.add(userChords);
 
@@ -4842,7 +4846,7 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
 
 			// solve user chords
-			if (userChordsEnabled.isSelected() && !userChords.getText().contains("R")) {
+			if (userChordsEnabled.isSelected() && !userChords.getText().contains("?")) {
 				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(userChords,
 						userChordsDurations);
 				if (solvedChordsDurations != null) {
@@ -4983,21 +4987,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public String chordSelect(String s) {
-		String chord = null;
-		if (s == "R") {
-			chord = null;
-		} else if (s == "I") {
-			chord = "C";
-		} else if (s == "IV") {
-			chord = "F";
-		} else if (s == "V") {
-			chord = "G";
-		} else if (s == "vi") {
-			chord = "Am";
+		if (!MidiUtils.MAJOR_CHORDS.contains(s)) {
+			return null;
 		} else {
-			chord = null;
+			return s;
 		}
-		return chord;
 	}
 
 	@SuppressWarnings("restriction")

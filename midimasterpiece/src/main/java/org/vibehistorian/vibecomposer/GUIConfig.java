@@ -93,10 +93,10 @@ public class GUIConfig {
 	private int chordSlashChance = 0;
 
 	private boolean useChordFormula = false;
-	private String firstChord = "R";
-	private String lastChord = "R";
+	private String firstChord = "?";
+	private String lastChord = "?";
 	private boolean customChordsEnabled = true;
-	private String customChords = "R";
+	private String customChords = "?";
 	private String customChordDurations = "2,2,2,2";
 
 	// arp gen

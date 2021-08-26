@@ -377,7 +377,14 @@ public class MidiGenerator implements JMC {
 			return oldAlgoGenerateMelodySkeletonFromChords(mp, measures, roots);
 		}
 
-		Random generator = new Random(seed + notesSeedOffset);
+		// if notes seed offset > 0, add it only to one of: rhythms, pitches
+		Random nonMainMelodyGenerator = new Random(seed + 30);
+		int pitchPickerOffset = (notesSeedOffset > 0)
+				? (nonMainMelodyGenerator.nextBoolean() ? notesSeedOffset : 0)
+				: 0;
+		int rhythmOffset = (notesSeedOffset > 0 && pitchPickerOffset == 0) ? notesSeedOffset : 0;
+
+		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset);
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
@@ -477,7 +484,7 @@ public class MidiGenerator implements JMC {
 				}
 				if (i % 2 == 0) {
 					previousNotePitch = firstPitchInTwoChords;
-					generator.setSeed(seed + notesSeedOffset);
+					pitchPickerGenerator.setSeed(seed + pitchPickerOffset);
 					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
 					if (alternateRhythm) {
 						sameRhythmGenerator.setSeed(seed + 3);
@@ -489,6 +496,7 @@ public class MidiGenerator implements JMC {
 				double rhythmDuration = sameRhythmTwice ? progressionDurations.get(i) / 2.0
 						: progressionDurations.get(i);
 				int rhythmSeed = (alternateRhythm && i % 2 == 1) ? seed + 1 : seed;
+				rhythmSeed += rhythmOffset;
 				Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
 						melodySkeletonDurationWeights);
 
@@ -571,7 +579,7 @@ public class MidiGenerator implements JMC {
 					}
 					double positionInChord = durCounter / progressionDurations.get(i);
 					pitch = pickRandomBetweenIndexesInclusive(chord, startIndex, endIndex,
-							generator, positionInChord);
+							pitchPickerGenerator, positionInChord);
 
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch, swingDuration, 100);
