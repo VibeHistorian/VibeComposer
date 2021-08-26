@@ -378,11 +378,9 @@ public class MidiGenerator implements JMC {
 		}
 
 		// if notes seed offset > 0, add it only to one of: rhythms, pitches
-		Random nonMainMelodyGenerator = new Random(seed + 30);
-		int pitchPickerOffset = (notesSeedOffset > 0)
-				? (nonMainMelodyGenerator.nextBoolean() ? notesSeedOffset : 0)
-				: 0;
-		int rhythmOffset = (notesSeedOffset > 0 && pitchPickerOffset == 0) ? notesSeedOffset : 0;
+		//Random nonMainMelodyGenerator = new Random(seed + 30);
+		int pitchPickerOffset = notesSeedOffset;
+		int rhythmOffset = notesSeedOffset;
 
 		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset);
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
@@ -391,7 +389,7 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(seed + notesSeedOffset);
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
 		Random directionGenerator = new Random(seed + 10);
-		Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
+		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
 		Random exceptionTypeGenerator = new Random(seed + 20 + notesSeedOffset);
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 

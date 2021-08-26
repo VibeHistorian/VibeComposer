@@ -1719,6 +1719,7 @@ public class VibeComposerGUI extends JFrame
 			if (instrumentTabPane.getSelectedIndex() != 5) {
 				Section addedSec = actualArrangement
 						.addDefaultSection(scrollableArrangementActualTable, selItem);
+				addedSec.recalculatePartVariationMapBoundsIfNeeded();
 				addedSec.generatePresences(
 						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
 								: new Random());
