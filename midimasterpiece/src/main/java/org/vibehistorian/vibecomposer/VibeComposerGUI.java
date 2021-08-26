@@ -3007,7 +3007,10 @@ public class VibeComposerGUI extends JFrame
 				dev = MidiSystem.getMidiDevice(infos[i]);
 				if (dev.getMaxReceivers() != 0 && dev.getMaxTransmitters() == 0) {
 					midiModeDevices.addItem(infos[i].toString());
-					if (infos[i].toString().startsWith("loopMIDI")) {
+					/*if (infos[i].toString().startsWith("loopMIDI")) {
+						midiModeDevices.setSelectedItem(infos[i].toString());
+					}*/
+					if (infos[i].toString().startsWith("Gervill")) {
 						midiModeDevices.setSelectedItem(infos[i].toString());
 					}
 					System.out.println("Added device: " + infos[i].toString());
@@ -4048,7 +4051,8 @@ public class VibeComposerGUI extends JFrame
 				if (!cp.getLockInst()) {
 
 					InstUtils.POOL pool = (instGen.nextInt(100) < Integer
-							.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD : InstUtils.POOL.PLUCK;
+							.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
+									: InstUtils.POOL.PLUCK;
 
 					cp.getInstrumentBox().initInstPool(pool);
 					cp.setInstPool(pool);
@@ -5526,7 +5530,8 @@ public class VibeComposerGUI extends JFrame
 
 		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
-			pitches.add(InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
+			pitches.add(
+					InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
 		}
 		Collections.sort(pitches);
 		int index = 0;
@@ -5694,7 +5699,8 @@ public class VibeComposerGUI extends JFrame
 
 		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
-			pitches.add(InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
+			pitches.add(
+					InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
 		}
 		Collections.sort(pitches);
 		if (!onlyAdd && pitches.size() > 3) {
@@ -5810,7 +5816,8 @@ public class VibeComposerGUI extends JFrame
 			ChordPanel cp = (randomizedPanel != null) ? randomizedPanel
 					: (ChordPanel) addInstPanelToLayout(2);
 			InstUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
-					.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD : InstUtils.POOL.PLUCK;
+					.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
+							: InstUtils.POOL.PLUCK;
 
 			cp.getInstrumentBox().initInstPool(pool);
 			cp.setInstPool(pool);
