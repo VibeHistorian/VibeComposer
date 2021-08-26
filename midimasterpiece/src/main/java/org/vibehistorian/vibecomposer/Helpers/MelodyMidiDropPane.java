@@ -122,7 +122,7 @@ public class MelodyMidiDropPane extends JPanel {
 		}
 	}
 
-	protected void importFiles(final List files) {
+	protected void importFiles(final List<File> files) {
 		Runnable run = new Runnable() {
 			@Override
 			public void run() {
@@ -223,7 +223,7 @@ public class MelodyMidiDropPane extends JPanel {
 				dtde.acceptDrop(dtde.getDropAction());
 				try {
 
-					List transferData = (List) transferable
+					List<File> transferData = (List<File>) transferable
 							.getTransferData(DataFlavor.javaFileListFlavor);
 					if (transferData != null && transferData.size() > 0) {
 						importFiles(transferData);

@@ -7,6 +7,7 @@ import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.TRESILLO;
 
 import java.util.Random;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
@@ -107,7 +108,7 @@ public class DrumDefaults {
 	}
 
 	public static DrumPart getRandomDrum() {
-		Integer instrument = MidiUtils.getRandom(new Random(), MidiUtils.DRUM_INST_NUMBERS);
+		Integer instrument = MidiUtils.getRandom(new Random(), InstUtils.DRUM_INST_NUMBERS);
 		return getDrumFromInstrument(instrument);
 	}
 

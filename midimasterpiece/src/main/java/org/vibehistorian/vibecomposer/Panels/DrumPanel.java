@@ -11,8 +11,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -27,7 +27,7 @@ public class DrumPanel extends InstPanel {
 
 	public void initComponents(ActionListener l) {
 
-		instrument.initInstPool(POOL.DRUM);
+		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
 

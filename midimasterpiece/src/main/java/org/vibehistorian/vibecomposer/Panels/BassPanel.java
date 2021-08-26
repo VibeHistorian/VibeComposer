@@ -5,8 +5,8 @@ import java.awt.event.ActionListener;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -26,7 +26,7 @@ public class BassPanel extends InstPanel {
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
 		midiChannel.setSelectedItem("9");
-		instPool = POOL.BASS;
+		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
 		initDefaults(l);

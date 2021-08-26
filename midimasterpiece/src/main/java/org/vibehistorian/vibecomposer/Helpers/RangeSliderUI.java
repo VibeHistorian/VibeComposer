@@ -22,8 +22,6 @@ import javax.swing.plaf.basic.BasicSliderUI;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
-import sun.swing.DefaultLookup;
-
 /**
  * UI delegate for the RangeSlider component. RangeSliderUI paints two thumbs,
  * one for the lower value and one for the upper value.
@@ -233,7 +231,7 @@ class RangeSliderUI extends BasicSliderUI {
 	public void paintTicks(Graphics g) {
 		Rectangle tickBounds = tickRect;
 		RangeSlider actualSlider = (RangeSlider) slider;
-		g.setColor(DefaultLookup.getColor(slider, this, "Slider.tickColor", Color.black));
+		g.setColor(UIManager.getColor("Slider.tickColor"));
 
 		if (slider.getOrientation() == JSlider.HORIZONTAL) {
 			g.translate(0, tickBounds.y);

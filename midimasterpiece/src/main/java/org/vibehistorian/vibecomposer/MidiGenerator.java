@@ -3324,10 +3324,10 @@ public class MidiGenerator implements JMC {
 			customMappingNumbers = Arrays.asList(customMappingNumberStrings).stream()
 					.map(e -> Integer.valueOf(e.trim())).collect(Collectors.toList());
 		} else {
-			customMappingNumbers = Arrays.asList(MidiUtils.DRUM_INST_NUMBERS_SEMI);
+			customMappingNumbers = Arrays.asList(InstUtils.DRUM_INST_NUMBERS_SEMI);
 		}
 
-		List<Integer> defaultMappingNumbers = MidiUtils.getInstNumbers(MidiUtils.DRUM_INST_NAMES);
+		List<Integer> defaultMappingNumbers = InstUtils.getInstNumbers(InstUtils.DRUM_INST_NAMES);
 		int defaultIndex = defaultMappingNumbers.indexOf(pitch);
 		if (defaultIndex < 0) {
 			throw new IllegalArgumentException("Pitch not found in default drum mapping: " + pitch);

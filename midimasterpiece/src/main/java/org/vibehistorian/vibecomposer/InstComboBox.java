@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 public class InstComboBox extends ScrollComboBox<String> {
@@ -13,9 +12,9 @@ public class InstComboBox extends ScrollComboBox<String> {
 
 	public static Set<String> BANNED_INSTS = new HashSet<>();
 
-	private MidiUtils.POOL instPool = POOL.ALL;
+	private InstUtils.POOL instPool = InstUtils.POOL.ALL;
 
-	public MidiUtils.POOL getInstPool() {
+	public InstUtils.POOL getInstPool() {
 		return instPool;
 	}
 
@@ -24,7 +23,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 		if (super.getToolTipText() == null) {
 			return null;
 		}
-		if (instPool == POOL.DRUM) {
+		if (instPool == InstUtils.POOL.DRUM) {
 			int pitch = MidiGenerator.mapDrumPitchByCustomMapping(getInstrument(), false);
 			putClientProperty(TOOL_TIP_TEXT_KEY,
 					(pitch + " / " + MidiUtils.getNoteForPitch(pitch)));
@@ -33,14 +32,14 @@ public class InstComboBox extends ScrollComboBox<String> {
 		return super.getToolTipText();
 	}
 
-	public void setInstPool(MidiUtils.POOL instPool) {
+	public void setInstPool(InstUtils.POOL instPool) {
 		this.instPool = instPool;
 	}
 
-	public void initInstPool(MidiUtils.POOL instPool) {
+	public void initInstPool(InstUtils.POOL instPool) {
 		this.instPool = instPool;
 		this.removeAllItems();
-		String[] choices = MidiUtils.INST_POOLS.get(instPool);
+		String[] choices = InstUtils.INST_POOLS.get(instPool);
 		for (String c : choices) {
 			if (!isBanned(c)) {
 				this.addItem(c);
@@ -59,9 +58,9 @@ public class InstComboBox extends ScrollComboBox<String> {
 		setSelectedIndex(index);
 	}
 
-	public POOL setInstrument(int instrument) {
+	public InstUtils.POOL setInstrument(int instrument) {
 		if (!instSet(instrument)) {
-			initInstPool(POOL.ALL);
+			initInstPool(InstUtils.POOL.ALL);
 			System.out.println("Switching to POOL.ALL!");
 			if (!instSet(instrument)) {
 				throw new IllegalArgumentException(

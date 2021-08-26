@@ -21,9 +21,9 @@ public class SettingsPanel extends JPanel {
 	private JCheckBox enabled = new JCheckBox("Enable", true);
 
 	private JButton expandCollapseButton = new JButton("-");
-	private Class instClass = null;
+	private Class<?> instClass = null;
 
-	public SettingsPanel(String title, Class clazz) {
+	public SettingsPanel(String title, Class<?> clazz) {
 		super();
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		instClass = clazz;

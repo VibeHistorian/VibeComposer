@@ -105,7 +105,7 @@ public class GUIConfig {
 
 	// drum gen
 	private boolean drumCustomMapping = true;
-	private String drumCustomMappingNumbers = StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI,
+	private String drumCustomMappingNumbers = StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI,
 			",");
 
 	// individual parts

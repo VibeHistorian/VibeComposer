@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -37,7 +37,7 @@ public class ChordPanel extends InstPanel {
 	public void initComponents(ActionListener l) {
 
 
-		instrument.initInstPool(POOL.PLUCK);
+		instrument.initInstPool(InstUtils.POOL.PLUCK);
 		instPoolPicker.setSelectedItem("PLUCK");
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
 				"11", "12", "13", "14", "15" }, midiChannel);
@@ -106,8 +106,8 @@ public class ChordPanel extends InstPanel {
 				pattern.addItem(d.toString());
 			}
 		}
-		for (MidiUtils.POOL p : MidiUtils.POOL.values()) {
-			if (p != POOL.DRUM) {
+		for (InstUtils.POOL p : InstUtils.POOL.values()) {
+			if (p != InstUtils.POOL.DRUM) {
 				instPoolPicker.addItem(p.toString());
 			}
 		}
@@ -185,11 +185,11 @@ public class ChordPanel extends InstPanel {
 
 	}
 
-	public MidiUtils.POOL getInstPool() {
-		return MidiUtils.POOL.valueOf((String) instPoolPicker.getSelectedItem());
+	public InstUtils.POOL getInstPool() {
+		return InstUtils.POOL.valueOf((String) instPoolPicker.getSelectedItem());
 	}
 
-	public void setInstPool(MidiUtils.POOL pool) {
+	public void setInstPool(InstUtils.POOL pool) {
 		instPoolPicker.setSelectedItem(pool.name());
 	}
 

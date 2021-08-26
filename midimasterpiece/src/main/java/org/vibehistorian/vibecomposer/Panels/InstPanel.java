@@ -38,7 +38,7 @@ import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -55,7 +55,7 @@ public abstract class InstPanel extends JPanel {
 	private static final long serialVersionUID = 4381939543337887617L;
 
 	protected InstComboBox instrument = new InstComboBox();
-	protected POOL instPool = POOL.PLUCK;
+	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
@@ -387,11 +387,11 @@ public abstract class InstPanel extends JPanel {
 
 	}
 
-	public POOL getInstPool() {
+	public InstUtils.POOL getInstPool() {
 		return instPool;
 	}
 
-	public void setInstPool(POOL instPool) {
+	public void setInstPool(InstUtils.POOL instPool) {
 		this.instPool = instPool;
 	}
 

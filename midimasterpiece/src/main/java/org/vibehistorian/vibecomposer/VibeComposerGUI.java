@@ -128,7 +128,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -870,14 +869,14 @@ public class VibeComposerGUI extends JFrame
 		JPanel customDrumMappingPanel = new JPanel();
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
 		drumCustomMappingNumbers = new JTextField(
-				StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
+				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
 		melodyPatternFlip = new JCheckBox("Inverse Melody1 Pattern", false);
 
 		customDrumMappingPanel.add(drumCustomMapping);
 		customDrumMappingPanel.add(drumCustomMappingNumbers);
 		customDrumMappingPanel.add(melodyPatternFlip);
 		drumCustomMapping.setToolTipText(
-				"<html>" + StringUtils.join(MidiUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
+				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
 
 		extraSettingsPanel.add(pauseBehaviorPanel);
 		extraSettingsPanel.add(customDrumMappingPanel);
@@ -4019,12 +4018,12 @@ public class VibeComposerGUI extends JFrame
 
 		if (ae.getActionCommand() == "InitAllInsts") {
 			if (useAllInsts.isSelected()) {
-				MidiUtils.initAllInsts();
+				InstUtils.initAllInsts();
 			} else {
-				MidiUtils.initNormalInsts();
+				InstUtils.initNormalInsts();
 			}
-			melodyPanels.forEach(e -> e.getInstrumentBox().initInstPool(POOL.PLUCK));
-			bassPanel.getInstrumentBox().initInstPool(POOL.BASS);
+			melodyPanels.forEach(e -> e.getInstrumentBox().initInstPool(InstUtils.POOL.PLUCK));
+			bassPanel.getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
 		}
 
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
@@ -4048,8 +4047,8 @@ public class VibeComposerGUI extends JFrame
 			for (ChordPanel cp : chordPanels) {
 				if (!cp.getLockInst()) {
 
-					MidiUtils.POOL pool = (instGen.nextInt(100) < Integer
-							.valueOf(randomChordSustainChance.getInt())) ? POOL.CHORD : POOL.PLUCK;
+					InstUtils.POOL pool = (instGen.nextInt(100) < Integer
+							.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD : InstUtils.POOL.PLUCK;
 
 					cp.getInstrumentBox().initInstPool(pool);
 					cp.setInstPool(pool);
@@ -5286,9 +5285,9 @@ public class VibeComposerGUI extends JFrame
 		//drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
 		drumCustomMappingNumbers.setText(guiConfig.getDrumCustomMappingNumbers());
 		if (StringUtils.countMatches(drumCustomMappingNumbers.getText(),
-				",") != MidiUtils.DRUM_INST_NUMBERS_SEMI.length - 1) {
+				",") != InstUtils.DRUM_INST_NUMBERS_SEMI.length - 1) {
 			drumCustomMappingNumbers
-					.setText(StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI, ","));
+					.setText(StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
 		}
 		melodyPatternFlip.setSelected(guiConfig.isMelodyPatternFlip());
 
@@ -5527,7 +5526,7 @@ public class VibeComposerGUI extends JFrame
 
 		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
-			pitches.add(MidiUtils.getInstByIndex(drumPanelGenerator.nextInt(127), POOL.DRUM));
+			pitches.add(InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
 		}
 		Collections.sort(pitches);
 		int index = 0;
@@ -5695,7 +5694,7 @@ public class VibeComposerGUI extends JFrame
 
 		List<Integer> pitches = new ArrayList<>();
 		for (int i = 0; i < panelCount; i++) {
-			pitches.add(MidiUtils.getInstByIndex(drumPanelGenerator.nextInt(127), POOL.DRUM));
+			pitches.add(InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
 		}
 		Collections.sort(pitches);
 		if (!onlyAdd && pitches.size() > 3) {
@@ -5810,8 +5809,8 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < panelCount; i++) {
 			ChordPanel cp = (randomizedPanel != null) ? randomizedPanel
 					: (ChordPanel) addInstPanelToLayout(2);
-			MidiUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
-					.valueOf(randomChordSustainChance.getInt())) ? POOL.CHORD : POOL.PLUCK;
+			InstUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
+					.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD : InstUtils.POOL.PLUCK;
 
 			cp.getInstrumentBox().initInstPool(pool);
 			cp.setInstPool(pool);
@@ -5835,7 +5834,7 @@ public class VibeComposerGUI extends JFrame
 			// default SINGLE = 4
 			int patternOrder = 4;
 			// use pattern in 20% of the cases if checkbox selected
-			int patternChance = pool == POOL.PLUCK ? 50 : 20;
+			int patternChance = pool == InstUtils.POOL.PLUCK ? 50 : 20;
 
 			if (chordPanelGenerator.nextInt(100) < patternChance) {
 				if (randomChordPattern.isSelected()) {
@@ -5875,7 +5874,7 @@ public class VibeComposerGUI extends JFrame
 			cp.setVelocityMin(randomChordMinVel.getInt());
 
 			if (randomChordSustainUseShortening.isSelected()) {
-				if (pool == POOL.PLUCK) {
+				if (pool == InstUtils.POOL.PLUCK) {
 					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 25);
 				} else {
 					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 75);
