@@ -4829,8 +4829,7 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.showScoreMode = showScorePicker.getSelectedIndex();
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
 			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
-			MidiGenerator.noteMultiplier = elongateMidi.getInt();
-			MidiGenerator.recalculateDurations();
+			MidiGenerator.recalculateDurations(elongateMidi.getInt());
 
 			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 

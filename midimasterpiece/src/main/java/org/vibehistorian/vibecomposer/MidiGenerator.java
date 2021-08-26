@@ -99,7 +99,8 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	public static void recalculateDurations() {
+	public static void recalculateDurations(int multiplier) {
+		noteMultiplier = multiplier;
 		Durations.NOTE_32ND = 0.125 * noteMultiplier;
 		Durations.NOTE_DOTTED_32ND = 0.1875 * noteMultiplier;
 		Durations.SIXTEENTH_NOTE = 0.25 * noteMultiplier;
