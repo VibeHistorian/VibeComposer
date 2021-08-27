@@ -194,7 +194,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
+	private static boolean isFullMode = false;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -739,7 +739,7 @@ public class VibeComposerGUI extends JFrame
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
 
-		//switchFullMode();
+		setFullMode(isFullMode);
 		instrumentTabPane.setSelectedIndex(0);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
@@ -3304,15 +3304,16 @@ public class VibeComposerGUI extends JFrame
 
 	private void switchFullMode() {
 		isFullMode = !isFullMode;
+		setFullMode(isFullMode);
+	}
 
-		toggleableComponents.forEach(e -> e.setVisible(isFullMode));
-		melodyPanels
-				.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
-		bassPanel.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		chordPanels
-				.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
-		arpPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
-		drumPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(isFullMode)));
+	private void setFullMode(boolean mode) {
+		toggleableComponents.forEach(e -> e.setVisible(mode));
+		melodyPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
+		bassPanel.getToggleableComponents().forEach(e -> e.setVisible(mode));
+		chordPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
+		arpPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
+		drumPanels.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
 
 
 		/*instrumentTabPane
