@@ -2506,7 +2506,26 @@ public class VibeComposerGUI extends JFrame
 		userChords.setToolTipText(tooltip);
 		customChordsPanel.add(userChords);
 
-		JButton normalizeChordsButton = new JButton("N");
+		JButton normalizeChordsButton = new JButton("N") {
+			private static final long serialVersionUID = 4142323272860314396L;
+			String checkedChords = userChords.getText();
+
+			@Override
+			public String getToolTipText() {
+				if (super.getToolTipText() == null) {
+					return null;
+				}
+				if (!userChords.getText().equalsIgnoreCase(checkedChords)) {
+					putClientProperty(TOOL_TIP_TEXT_KEY,
+							(StringUtils.join(MidiUtils.getKeyModesForChordsAndTarget(
+									userChords.getText(),
+									ScaleMode.valueOf((String) scaleMode.getSelectedItem())))));
+					checkedChords = userChords.getText();
+				}
+
+				return super.getToolTipText();
+			}
+		};
 		normalizeChordsButton.addActionListener(new ActionListener() {
 
 			@Override
@@ -2518,6 +2537,7 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 		});
+		normalizeChordsButton.setToolTipText("N");
 		customChordsPanel.add(normalizeChordsButton);
 
 		JButton respiceChordsButton = new JButton("S");

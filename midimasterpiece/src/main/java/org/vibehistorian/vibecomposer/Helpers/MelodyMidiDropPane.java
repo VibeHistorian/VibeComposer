@@ -148,23 +148,23 @@ public class MelodyMidiDropPane extends JPanel {
 						JMusicUtilsCustom.consolidate(part);
 						//Mod.consolidate(part);
 						Phrase userMelodyCandidate = part.getPhrase(0);
-						Pair<ScaleMode, Integer> detectionResult = MidiUtils
+						List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils
 								.detectKeyAndMode(userMelodyCandidate, null, false);
 
-						if (detectionResult == null) {
+						if (detectionResults == null) {
 							message.setText("Unknown key, skipped!");
 							System.out.println("Melody uses unknown key, skipped!");
 							return;
 						}
 						userMelody = userMelodyCandidate;
-						int transposeUpBy = detectionResult.getValue();
+						Pair<ScaleMode, Integer> result = detectionResults
+								.get(detectionResults.size() - 1);
+						int transposeUpBy = result.getValue();
 						Mod.transpose(userMelody, transposeUpBy);
-						MidiUtils.transposePhrase(userMelody,
-								detectionResult.getKey().noteAdjustScale,
+						MidiUtils.transposePhrase(userMelody, result.getKey().noteAdjustScale,
 								ScaleMode.IONIAN.noteAdjustScale);
 						VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
-						VibeComposerGUI.scaleMode
-								.setSelectedItem(detectionResult.getKey().toString());
+						VibeComposerGUI.scaleMode.setSelectedItem(result.getKey().toString());
 
 						//System.out.println(userMelody.toString());
 						System.out.println("Tempo: " + scr.getTempo());

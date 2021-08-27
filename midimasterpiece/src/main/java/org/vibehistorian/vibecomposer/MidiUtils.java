@@ -367,7 +367,7 @@ public class MidiUtils {
 		return intList;
 	}
 
-	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
+	public static List<Pair<ScaleMode, Integer>> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
 			boolean forceDifferentTranspose) {
 		int bestNotContained = Integer.MAX_VALUE;
 		ScaleMode bestMode = null;
@@ -396,12 +396,14 @@ public class MidiUtils {
 		System.out.println("Examining pitches: " + StringUtils.join(pitches, ", "));
 		System.out.println("# of pitches: " + pitches.size());
 		System.out.println("Pitch array: " + Arrays.toString(pitchCounts));
+		List<Pair<ScaleMode, Integer>> validResults = new ArrayList<>();
 		Pair<ScaleMode, Integer> returnPair = null;
 		for (ScaleMode mode : ScaleMode.values()) {
 			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale,
 					forceDifferentTranspose);
-			System.out.println("Result for " + mode.toString() + ": " + detectionResult.toString());
+			//System.out.println("Result for " + mode.toString() + ": " + detectionResult.toString());
 			boolean bestForSure = false;
+
 
 			if (detectionResult.getKey() == 0 && (targetMode != null) && (targetMode == mode)) {
 				bestForSure = true;
@@ -415,7 +417,7 @@ public class MidiUtils {
 				if (detectionResult.getKey() == 0
 						&& (((mostFrequentPitch + ((12 + detectionResult.getValue()) % 12))
 								% 12) == 0)) {
-					System.out.println("Best for sure: " + detectionResult.toString());
+					//System.out.println("Best for sure: " + detectionResult.toString());
 					bestForSure = true;
 				}
 				if (detectionResult.getKey() < bestNotContained || bestForSure) {
@@ -428,6 +430,10 @@ public class MidiUtils {
 
 			if (bestForSure) {
 				returnPair = Pair.of(bestMode, transposeUpBy);
+			} else {
+				if (detectionResult.getKey() == 0) {
+					validResults.add(Pair.of(mode, detectionResult.getValue()));
+				}
 			}
 
 		}
@@ -436,11 +442,12 @@ public class MidiUtils {
 		}
 		if (returnPair != null) {
 			System.out.println("Returning best: " + returnPair.toString());
-			return returnPair;
+			validResults.add(returnPair);
+			return validResults;
 		}
 
 		System.out.println("Returning: " + bestMode.toString() + ", " + transposeUpBy);
-		return Pair.of(bestMode, transposeUpBy);
+		return validResults;
 	}
 
 	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale,
@@ -933,17 +940,35 @@ public class MidiUtils {
 		return chords;
 	}
 
-	public static List<String> processRawChords(String rawChords, ScaleMode targetMode) {
+	public static List<Pair<ScaleMode, Integer>> getKeyModesForChordsAndTarget(String rawChords,
+			ScaleMode targetMode) {
 		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
 		List<Chord> chords = convertChordStringsToChords(rawChordsList);
+		if (chords == null) {
+			return null;
+		}
 		Phrase phr = new Phrase();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		Pair<ScaleMode, Integer> detectionResult = MidiUtils.detectKeyAndMode(phr, targetMode,
-				true);
-		if (detectionResult == null) {
+		List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils.detectKeyAndMode(phr,
+				targetMode, true);
+		return detectionResults;
+	}
+
+	public static List<String> processRawChords(String rawChords, ScaleMode targetMode) {
+		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
+		List<Chord> chords = convertChordStringsToChords(rawChordsList);
+		if (chords == null) {
 			return null;
 		}
+		List<Pair<ScaleMode, Integer>> detectionResults = getKeyModesForChordsAndTarget(rawChords,
+				targetMode);
+		if (detectionResults == null) {
+			return null;
+		}
+
+		Pair<ScaleMode, Integer> detectionResult = detectionResults
+				.get(detectionResults.size() - 1);
 
 		int transposeUpBy = detectionResult.getValue();
 		if (transposeUpBy != 0) {
@@ -988,8 +1013,8 @@ public class MidiUtils {
 		System.out.println(solvedChords.toString());
 		if (solvedChords.size() == chords.size()) {
 
-			VibeComposerGUI.transposeScore
-					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
+			/*VibeComposerGUI.transposeScore
+					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));*/
 			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
 			return solvedChords;
 		} else {
