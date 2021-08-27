@@ -15,7 +15,7 @@
 
 #### How to run it (on Windows):
 1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
-2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v1.5-beta
+2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v1.6-beta
 3. Run the executable
 (Note: Linux/Mac users might be able to run it using the .jar instead of the .exe file)
 
@@ -29,8 +29,8 @@
 For everything else, refer to the old VibeComposer v1.2 user manual: https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf
 
 
-#### Example arrangement used in a track: https://soundcloud.com/vibehistorian/discovery
+#### Arrangement examples made with VibeComposer: https://soundcloud.com/vibehistorian/discovery , https://soundcloud.com/vibehistorian/overcome-instrumental
 
 #### UI preview:
 
-![VibeComposer Simple UI](https://i.imgur.com/Q8G1ZqE.png)
+![VibeComposer Simple UI](https://i.imgur.com/aZReP6j.png)
