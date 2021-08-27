@@ -1378,7 +1378,7 @@ public class MidiGenerator implements JMC {
 			int bSkipper = (!gc.isDimAugDom7thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
 					? 1
 					: 0;
-			int nextInt = generator.nextInt(next.size() - bSkipper);
+			int nextInt = generator.nextInt(Math.max(next.size() - bSkipper, 1));
 
 			// if last and not empty first chord
 			boolean isLastChord = durationLeft - dur < 0.01;
@@ -1483,7 +1483,10 @@ public class MidiGenerator implements JMC {
 		List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
 		int transposeByLetter = targetScale
 				.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1);
-		spicyChordListCopy.removeIf(e -> !isSpiceValid(transposeByLetter, e, targetScale));
+		if (gc.isSpiceForceScale()) {
+			spicyChordListCopy.removeIf(e -> !isSpiceValid(transposeByLetter, e, targetScale));
+		}
+
 		//System.out.println(StringUtils.join(spicyChordListCopy, ", "));
 
 		if (spicyChordListCopy.isEmpty()) {

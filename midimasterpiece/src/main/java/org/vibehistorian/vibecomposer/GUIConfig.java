@@ -86,15 +86,17 @@ public class GUIConfig {
 	private boolean melodyPatternFlip = false;
 
 	// chord gen
+	private int chordSlashChance = 0;
 	private boolean dimAugDom7thEnabled = false;
 	private boolean enable9th13th = false;
 	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
-	private int chordSlashChance = 0;
 
-	private boolean useChordFormula = false;
+	private boolean spiceForceScale = true;
 	private String firstChord = "?";
 	private String lastChord = "?";
+
+	private boolean useChordFormula = false;
 	private boolean customChordsEnabled = true;
 	private String customChords = "?";
 	private String customChordDurations = "2,2,2,2";
@@ -629,6 +631,14 @@ public class GUIConfig {
 
 	public void setUseChordFormula(boolean useChordFormula) {
 		this.useChordFormula = useChordFormula;
+	}
+
+	public boolean isSpiceForceScale() {
+		return spiceForceScale;
+	}
+
+	public void setSpiceForceScale(boolean spiceForceScale) {
+		this.spiceForceScale = spiceForceScale;
 	}
 
 }

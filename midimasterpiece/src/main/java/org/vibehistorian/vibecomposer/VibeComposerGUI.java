@@ -355,14 +355,6 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox playheadSnapToBeatsCheckBox;
 
 
-	// chord variety settings
-	KnobPanel spiceChance;
-	KnobPanel chordSlashChance;
-	JCheckBox spiceAllowDimAugDom7th;
-	JCheckBox spiceAllow9th13th;
-	JCheckBox spiceFlattenBigChords;
-
-
 	// add/skip instruments
 	SettingsPanel chordSettingsPanel;
 	SettingsPanel arpSettingsPanel;
@@ -469,13 +461,21 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox drumCustomMapping;
 	public static JTextField drumCustomMappingNumbers;
 
-	// chord settings - progression
-	JCheckBox extraUseChordFormula;
+
+	// chord variety settings
+	KnobPanel spiceChance;
+	KnobPanel chordSlashChance;
+	JCheckBox spiceAllowDimAugDom7th;
+	JCheckBox spiceAllow9th13th;
+	JCheckBox spiceFlattenBigChords;
+
+	JCheckBox spiceForceScale;
 	ScrollComboBox<String> firstChordSelection;
 	ScrollComboBox<String> lastChordSelection;
+
+	// chord settings - progression
+	JCheckBox extraUseChordFormula;
 	ScrollComboBox<String> keyChangeTypeSelection;
-	int firstChord = 0;
-	int lastChord = 0;
 	public static JCheckBox userChordsEnabled;
 	public static JTextField userChords;
 	public static JTextField userChordsDurations;
@@ -884,18 +884,6 @@ public class VibeComposerGUI extends JFrame
 		// CHORD SETTINGS 2 - chord progression
 		extraUseChordFormula = new JCheckBox("Chord Formula", true);
 
-		firstChordSelection = new ScrollComboBox<String>();
-		firstChordSelection.addItem("?");
-		MidiUtils.addAllToJComboBox(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
-				firstChordSelection);
-		firstChordSelection.setSelectedItem("C");
-		firstChordSelection.addItemListener(this);
-
-		lastChordSelection = new ScrollComboBox<String>();
-		lastChordSelection.addItem("?");
-		MidiUtils.addAllToJComboBox(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
-				lastChordSelection);
-		lastChordSelection.addItemListener(this);
 
 		keyChangeTypeSelection = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
@@ -906,10 +894,6 @@ public class VibeComposerGUI extends JFrame
 		JPanel chordChoicePanel = new JPanel();
 
 
-		chordChoicePanel.add(new JLabel("First Chord:"));
-		chordChoicePanel.add(firstChordSelection);
-		chordChoicePanel.add(new JLabel("Last Chord:"));
-		chordChoicePanel.add(lastChordSelection);
 		chordChoicePanel.add(extraUseChordFormula);
 
 		chordChoicePanel.add(new JLabel("Key change type:"));
@@ -2435,7 +2419,7 @@ public class VibeComposerGUI extends JFrame
 	private void initChordProgressionSettings(int startY, int anchorSide) {
 		// CHORD SETTINGS 1 - chord variety 
 		JPanel chordProgressionSettingsPanel = new JPanel();
-		chordProgressionSettingsPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		chordProgressionSettingsPanel.setLayout(new GridLayout(2, 0, 0, 0));
 		chordProgressionSettingsPanel.setOpaque(false);
 		chordProgressionSettingsPanel
 				.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -2447,6 +2431,19 @@ public class VibeComposerGUI extends JFrame
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 
+		spiceForceScale = new JCheckBox("Force Scale", true);
+		firstChordSelection = new ScrollComboBox<String>();
+		firstChordSelection.addItem("?");
+		MidiUtils.addAllToJComboBox(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
+				firstChordSelection);
+		firstChordSelection.setSelectedItem("C");
+		firstChordSelection.addItemListener(this);
+
+		lastChordSelection = new ScrollComboBox<String>();
+		lastChordSelection.addItem("?");
+		MidiUtils.addAllToJComboBox(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
+				lastChordSelection);
+		lastChordSelection.addItemListener(this);
 
 		JPanel spiceChancePanel = new JPanel();
 		spiceChancePanel.add(spiceChance);
@@ -2464,11 +2461,28 @@ public class VibeComposerGUI extends JFrame
 		spiceFlattenBigChordsPanel.add(spiceFlattenBigChords);
 		spiceFlattenBigChordsPanel.setOpaque(false);
 
+		JPanel spiceForceScalePanel = new JPanel();
+		spiceForceScalePanel.add(spiceForceScale);
+		spiceForceScalePanel.setOpaque(false);
+
+		JPanel firstChordsPanel = new JPanel();
+		firstChordsPanel.setOpaque(false);
+		JPanel lastChordsPanel = new JPanel();
+		lastChordsPanel.setOpaque(false);
+
+		firstChordsPanel.add(new JLabel("First:"));
+		firstChordsPanel.add(firstChordSelection);
+		lastChordsPanel.add(new JLabel("Last:"));
+		lastChordsPanel.add(lastChordSelection);
+
 		chordProgressionSettingsPanel.add(spiceChancePanel);
 		chordProgressionSettingsPanel.add(spiceAllowDimAugPanel);
 		chordProgressionSettingsPanel.add(spiceAllow9th13thPanel);
 		chordProgressionSettingsPanel.add(spiceFlattenBigChordsPanel);
 
+		chordProgressionSettingsPanel.add(spiceForceScalePanel);
+		chordProgressionSettingsPanel.add(firstChordsPanel);
+		chordProgressionSettingsPanel.add(lastChordsPanel);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -5230,6 +5244,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
 		guiConfig.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
 		guiConfig.setChordSlashChance(Integer.valueOf(chordSlashChance.getInt()));
+		guiConfig.setSpiceForceScale(spiceForceScale.isSelected());
 
 		// arps
 		guiConfig.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
@@ -5329,7 +5344,7 @@ public class VibeComposerGUI extends JFrame
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
-
+		spiceForceScale.setSelected(guiConfig.isSpiceForceScale());
 
 		extraUseChordFormula.setSelected(guiConfig.isUseChordFormula());
 		firstChordSelection.setSelectedItem(guiConfig.getFirstChord());
