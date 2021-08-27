@@ -43,18 +43,18 @@ public class Arrangement {
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
 					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
 
-	private static final Map<String, Section> defaultSections = new LinkedHashMap<>();
+	public static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
 		defaultSections.put("INTRO", new Section("INTRO", 1, 20, 10, 40, 25, 20));
 		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 30, 25, 40));
-		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 100, 90, 50, 35, 50));
-		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 100, 100, 60, 50, 50));
+		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 50, 90, 50, 35, 50));
+		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 65, 100, 60, 50, 50));
 		defaultSections.put("HALF_CHORUS", new Section("HALF_CHORUS", 1, 0, 100, 60, 50, 80));
 		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 60, 60, 25, 40));
 		defaultSections.put("CHILL", new Section("CHILL", 1, 10, 30, 70, 70, 10));
 		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 40, 50, 50));
 		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
-		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 100, 100, 80, 80, 85));
+		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 80, 100, 80, 80, 85));
 		defaultSections.put("CLIMAX", new Section("CLIMAX", 1, 100, 100, 100, 100, 100));
 		defaultSections.put("OUTRO", new Section("OUTRO", 1, 50, 70, 60, 40, 10));
 	}
@@ -254,7 +254,7 @@ public class Arrangement {
 		this.previewChorus = previewChorus;
 	}
 
-	public void resortByIndexes(JTable scrollableArrangementTable) {
+	public void resortByIndexes(JTable scrollableArrangementTable, boolean isActual) {
 		TableModel m = scrollableArrangementTable.getModel();
 		int[] indexes = new int[m.getColumnCount()];
 		Section[] tempSections = new Section[m.getColumnCount()];
@@ -262,6 +262,10 @@ public class Arrangement {
 			tempSections[i] = sections.get(scrollableArrangementTable.convertColumnIndexToModel(i));
 		}
 		sections = new ArrayList<>(Arrays.asList(tempSections));
+		scrollableArrangementTable
+				.setModel(isActual ? convertToActualTableModel() : convertToTableModel());
+		VibeComposerGUI.recolorAllVariationButtons();
+		scrollableArrangementTable.repaint();
 
 	}
 
@@ -305,22 +309,26 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
+	public Section addDefaultSection(JTable tbl, String defaultType) {
+		int column = tbl.getSelectedColumn();
+		if (column < 0) {
+			// add at end
+			column = tbl.getColumnCount();
+		} else {
+			// add after section
+			column++;
+		}
+		Section sec = defaultSections.get(defaultType).deepCopy();
+		sections.add(column, sec);
+		return sec;
+	}
+
 	public void duplicateSection(JTable tbl, boolean isActual) {
 
 
 		int column = tbl.getSelectedColumn();
 		if (column == -1)
 			return;
-		/*if (isActual) {
-			overridden = true;
-			setFromActualTable(tbl, true);
-		} else {
-			overridden = false;
-			setFromModel(tbl);
-		}*/
-		if (column != tbl.convertColumnIndexToModel(column)) {
-			resortByIndexes(tbl);
-		}
 		Section sec = sections.get(column);
 		sections.add(column, sec.deepCopy());
 	}
@@ -332,14 +340,6 @@ public class Arrangement {
 		if (columns.length == 0) {
 			return;
 		}
-		/*if (isActual) {
-			overridden = true;
-			setFromActualTable(tbl, true);
-		} else {
-			overridden = false;
-			setFromModel(tbl);
-		}*/
-		resortByIndexes(tbl);
 		List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));

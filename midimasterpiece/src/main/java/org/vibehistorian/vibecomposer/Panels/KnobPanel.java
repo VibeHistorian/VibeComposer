@@ -4,17 +4,18 @@ import java.awt.Dimension;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
 
-public class KnobPanel extends JPanel {
+public class KnobPanel extends TransparentablePanel {
 
 	private static final long serialVersionUID = -2145278227995141172L;
 
 	private JLabel label = null;
 	private JKnob knob = null;
 	boolean needToReset = false;
+	boolean showTextInKnob = false;
+	String name = "";
 
 	public KnobPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -26,13 +27,20 @@ public class KnobPanel extends JPanel {
 
 	public KnobPanel(String name, int value, int minimum, int maximum, int tickSpacing) {
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+
 		setOpaque(false);
 		if (name.contains("<br>")) {
 			name = name.replaceAll("<br>", "&nbsp;<br>");
 		}
+		this.name = name;
 		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		knob.setName(name);
+
+
+		if (minimum != 0) {
+			knob.setAllowValuesOutsideRange(true);
+		}
 		setMaximumSize(new Dimension(200, 50));
 		add(label);
 		add(knob);
@@ -54,4 +62,19 @@ public class KnobPanel extends JPanel {
 	public JKnob getKnob() {
 		return knob;
 	}
+
+	public boolean isShowTextInKnob() {
+		return showTextInKnob;
+	}
+
+	public void setShowTextInKnob(boolean showTextInKnob) {
+		this.showTextInKnob = showTextInKnob;
+		knob.setShowTextInKnob(showTextInKnob);
+		if (showTextInKnob) {
+			label.setVisible(false);
+		} else {
+			label.setVisible(true);
+		}
+	}
+
 }

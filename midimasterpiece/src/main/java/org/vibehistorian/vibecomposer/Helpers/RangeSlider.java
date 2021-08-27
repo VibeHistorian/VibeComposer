@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Dimension;
+import java.util.List;
 
 import javax.swing.JSlider;
 
@@ -18,6 +19,15 @@ import javax.swing.JSlider;
 public class RangeSlider extends JSlider {
 
 	private static final long serialVersionUID = -5548772458719043736L;
+	private int tickStart = 0;
+	private boolean displayValues = true;
+	private boolean lowerDragging = false;
+	private boolean upperDragging = false;
+	private int lowerDraggingSnapToTicks = 0;
+	private int upperDraggingSnapToTicks = 0;
+	private List<Integer> customMajorTicks = null;
+	private List<Integer> customMinorTicks = null;
+
 
 	/**
 	 * Constructs a RangeSlider with default minimum and maximum values of 0
@@ -102,5 +112,69 @@ public class RangeSlider extends JSlider {
 
 		// Set extent to set upper value.
 		setExtent(newExtent);
+	}
+
+	public int getTickStart() {
+		return tickStart;
+	}
+
+	public void setTickStart(int setTickStart) {
+		this.tickStart = setTickStart;
+	}
+
+	public boolean isDisplayValues() {
+		return displayValues;
+	}
+
+	public void setDisplayValues(boolean displayValues) {
+		this.displayValues = displayValues;
+	}
+
+	public boolean isLowerDragging() {
+		return lowerDragging;
+	}
+
+	public void setLowerDragging(boolean lowerDragging) {
+		this.lowerDragging = lowerDragging;
+	}
+
+	public boolean isUpperDragging() {
+		return upperDragging;
+	}
+
+	public void setUpperDragging(boolean upperDragging) {
+		this.upperDragging = upperDragging;
+	}
+
+	public int getLowerDraggingSnapToTicks() {
+		return lowerDraggingSnapToTicks;
+	}
+
+	public void setLowerDraggingSnapToTicks(int lowerDraggingSnapToTicks) {
+		this.lowerDraggingSnapToTicks = lowerDraggingSnapToTicks;
+	}
+
+	public int getUpperDraggingSnapToTicks() {
+		return upperDraggingSnapToTicks;
+	}
+
+	public void setUpperDraggingSnapToTicks(int upperDraggingSnapToTicks) {
+		this.upperDraggingSnapToTicks = upperDraggingSnapToTicks;
+	}
+
+	public List<Integer> getCustomMajorTicks() {
+		return customMajorTicks;
+	}
+
+	public void setCustomMajorTicks(List<Integer> customMajorTicks) {
+		this.customMajorTicks = customMajorTicks;
+	}
+
+	public List<Integer> getCustomMinorTicks() {
+		return customMinorTicks;
+	}
+
+	public void setCustomMinorTicks(List<Integer> customMinorTicks) {
+		this.customMinorTicks = customMinorTicks;
 	}
 }

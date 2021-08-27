@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -46,8 +47,9 @@ public class GUIConfig {
 	private Arrangement actualArrangement = new Arrangement();
 	private int arrangementVariationChance = 30;
 	private int arrangementPartVariationChance = 30;
-	private boolean arrangementReduceDrumVelocityFromSectionChance = true;
+	private boolean scaleMidiVelocityInArrangement = true;
 	private boolean arrangementEnabled = false;
+	private KeyChangeType keyChangeType = KeyChangeType.PIVOT;
 
 	// macro params
 	private ScaleMode scaleMode = ScaleMode.IONIAN;
@@ -56,17 +58,17 @@ public class GUIConfig {
 	private int fixedDuration = 4;
 	private int transpose = 0;
 	private double bpm = 80;
-	private boolean arpAffectsBpm = true;
+	private boolean arpAffectsBpm = false;
 	private boolean doubledDurations = false;
-	private boolean allowChordRepeats = false;
+	private boolean allowChordRepeats = true;
 
 
 	// melody gen
 	private int maxNoteJump = 2;
 	private int maxExceptions = 2;
 	private int melodyAlternateRhythmChance = 50;
-	private int melodySameRhythmChance = 20;
-	private int melodyUseOldAlgoChance = 20;
+	private int melodySameRhythmChance = 50;
+	private int melodyUseOldAlgoChance = 0;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 	private int maxMelodySwing = 50;
@@ -74,26 +76,38 @@ public class GUIConfig {
 	private int melodyExceptionChance = 33;
 	private int melodyQuickness = 50;
 	private boolean melodyBasicChordsOnly = true;
+	private boolean melodyTonicize = false;
+	private int melodyLeadChords = 0;
+
+	private boolean melodyArpySurprises = false;
+	private boolean melodySingleNoteExceptions = false;
+	private boolean melodyAvoidChordJumps = false;
+	private boolean melodyUseDirectionsFromProgression = true;
+	private boolean melodyPatternFlip = false;
 
 	// chord gen
-	private boolean dimAugDom7thEnabled = false;
-	private boolean enable9th13th = true;
-	private int spiceChance = 8;
-	private boolean spiceFlattenBigChords = false;
 	private int chordSlashChance = 0;
-	private String firstChord = "R";
-	private String lastChord = "R";
+	private boolean dimAugDom7thEnabled = false;
+	private boolean enable9th13th = false;
+	private int spiceChance = 15;
+	private boolean spiceFlattenBigChords = false;
+
+	private boolean spiceForceScale = true;
+	private String firstChord = "?";
+	private String lastChord = "?";
+
+	private boolean useChordFormula = false;
 	private boolean customChordsEnabled = true;
-	private String customChords = "R";
+	private String customChords = "?";
 	private String customChordDurations = "2,2,2,2";
 
 	// arp gen
-	private boolean useOctaveAdjustments = true;
+	private boolean useOctaveAdjustments = false;
 	private int maxArpSwing = 50;
 
 	// drum gen
 	private boolean drumCustomMapping = true;
-	private String drumCustomMappingNumbers = StringUtils.join(MidiUtils.DRUM_INST_NUMBERS_SEMI,
+	private String drumCustomMappingNumbers = StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI,
 			",");
 
 	// individual parts
@@ -101,7 +115,7 @@ public class GUIConfig {
 	private BassPart bassPart = new BassPart();
 
 	// tabbed parts
-	private List<MelodyPart> melodyPart = new ArrayList<>();
+	private List<MelodyPart> melodyParts = new ArrayList<>();
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
@@ -348,11 +362,11 @@ public class GUIConfig {
 	}
 
 	public List<MelodyPart> getMelodyParts() {
-		return melodyPart;
+		return melodyParts;
 	}
 
 	public void setMelodyParts(List<MelodyPart> melodyPart) {
-		this.melodyPart = melodyPart;
+		this.melodyParts = melodyPart;
 	}
 
 	public BassPart getBassPart() {
@@ -491,13 +505,12 @@ public class GUIConfig {
 		this.arrangementPartVariationChance = arrangementPartVariationChance;
 	}
 
-	public boolean isArrangementReduceDrumVelocityFromSectionChance() {
-		return arrangementReduceDrumVelocityFromSectionChance;
+	public boolean isScaleMidiVelocityInArrangement() {
+		return scaleMidiVelocityInArrangement;
 	}
 
-	public void setArrangementReduceDrumVelocityFromSectionChance(
-			boolean arrangementReduceDrumVelocityFromSectionChance) {
-		this.arrangementReduceDrumVelocityFromSectionChance = arrangementReduceDrumVelocityFromSectionChance;
+	public void setScaleMidiVelocityInArrangement(boolean scaleMidiVelocityInArrangement) {
+		this.scaleMidiVelocityInArrangement = scaleMidiVelocityInArrangement;
 	}
 
 	public boolean isMelodyBasicChordsOnly() {
@@ -546,6 +559,86 @@ public class GUIConfig {
 
 	public void setDrumCustomMappingNumbers(String drumCustomMappingNumbers) {
 		this.drumCustomMappingNumbers = drumCustomMappingNumbers;
+	}
+
+	public KeyChangeType getKeyChangeType() {
+		return keyChangeType;
+	}
+
+	public void setKeyChangeType(KeyChangeType keyChangeType) {
+		this.keyChangeType = keyChangeType;
+	}
+
+	public boolean isMelodyTonicize() {
+		return melodyTonicize;
+	}
+
+	public void setMelodyTonicize(boolean melodyTonicize) {
+		this.melodyTonicize = melodyTonicize;
+	}
+
+	public int getMelodyLeadChords() {
+		return melodyLeadChords;
+	}
+
+	public void setMelodyLeadChords(int melodyLeadChords) {
+		this.melodyLeadChords = melodyLeadChords;
+	}
+
+	public boolean isMelodyArpySurprises() {
+		return melodyArpySurprises;
+	}
+
+	public void setMelodyArpySurprises(boolean melodyArpySurprises) {
+		this.melodyArpySurprises = melodyArpySurprises;
+	}
+
+	public boolean isMelodySingleNoteExceptions() {
+		return melodySingleNoteExceptions;
+	}
+
+	public void setMelodySingleNoteExceptions(boolean melodySingleNoteExceptions) {
+		this.melodySingleNoteExceptions = melodySingleNoteExceptions;
+	}
+
+	public boolean isMelodyAvoidChordJumps() {
+		return melodyAvoidChordJumps;
+	}
+
+	public void setMelodyAvoidChordJumps(boolean melodyAvoidChordJumps) {
+		this.melodyAvoidChordJumps = melodyAvoidChordJumps;
+	}
+
+	public boolean isMelodyUseDirectionsFromProgression() {
+		return melodyUseDirectionsFromProgression;
+	}
+
+	public void setMelodyUseDirectionsFromProgression(boolean melodyUseDirectionsFromProgression) {
+		this.melodyUseDirectionsFromProgression = melodyUseDirectionsFromProgression;
+	}
+
+	public boolean isMelodyPatternFlip() {
+		return melodyPatternFlip;
+	}
+
+	public void setMelodyPatternFlip(boolean melodyPatternFlip) {
+		this.melodyPatternFlip = melodyPatternFlip;
+	}
+
+	public boolean isUseChordFormula() {
+		return useChordFormula;
+	}
+
+	public void setUseChordFormula(boolean useChordFormula) {
+		this.useChordFormula = useChordFormula;
+	}
+
+	public boolean isSpiceForceScale() {
+		return spiceForceScale;
+	}
+
+	public void setSpiceForceScale(boolean spiceForceScale) {
+		this.spiceForceScale = spiceForceScale;
 	}
 
 }

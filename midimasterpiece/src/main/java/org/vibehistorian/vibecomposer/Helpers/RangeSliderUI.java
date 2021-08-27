@@ -93,10 +93,92 @@ class RangeSliderUI extends BasicSliderUI {
 	@Override
 	protected void calculateThumbLocation() {
 		// Call superclass method for lower thumb location.
-		super.calculateThumbLocation();
+		//super.calculateThumbLocation();
+
+		if (slider.getSnapToTicks()) {
+			RangeSlider actualSlider = (RangeSlider) slider;
+			int realMinimum = slider.getMinimum();
+			if (slider instanceof PlayheadRangeSlider) {
+				realMinimum += actualSlider.getTickStart();
+			}
+			int sliderValue = slider.getValue();
+			int snappedValue = sliderValue;
+
+			if (actualSlider.getCustomMinorTicks() != null) {
+				// find closest minor tick
+				int smallestDifference = Integer.MAX_VALUE;
+				int bestValue = 0;
+				for (int i = 0; i < actualSlider.getCustomMinorTicks().size() - 1; i++) {
+					int value = actualSlider.getCustomMinorTicks().get(i);
+					int diff = Math.abs(sliderValue - value);
+					if (diff <= smallestDifference) {
+						smallestDifference = diff;
+						bestValue = value;
+					} else {
+						// found snap point
+						if (bestValue != sliderValue) {
+							slider.setValue(bestValue);
+						}
+					}
+				}
+			} else if (actualSlider.getCustomMajorTicks() != null) {
+				// find closest major tick
+				int smallestDifference = Integer.MAX_VALUE;
+				int bestValue = 0;
+				for (int i = 0; i < actualSlider.getCustomMajorTicks().size() - 1; i++) {
+					int value = actualSlider.getCustomMajorTicks().get(i);
+					int diff = Math.abs(sliderValue - value);
+					if (diff <= smallestDifference) {
+						smallestDifference = diff;
+						bestValue = value;
+					} else {
+						// found snap point
+						if (bestValue != sliderValue) {
+							slider.setValue(bestValue);
+						}
+					}
+				}
+			} else {
+				int majorTickSpacing = slider.getMajorTickSpacing();
+				int minorTickSpacing = slider.getMinorTickSpacing();
+				int tickSpacing = 0;
+
+				if (minorTickSpacing > 0) {
+					tickSpacing = minorTickSpacing;
+				} else if (majorTickSpacing > 0) {
+					tickSpacing = majorTickSpacing;
+				}
+
+				if (tickSpacing != 0) {
+					// If it's not on a tick, change the value
+					if ((sliderValue - realMinimum) % tickSpacing != 0) {
+						float temp = (float) (sliderValue - realMinimum) / (float) tickSpacing;
+						int whichTick = Math.round(temp);
+
+						snappedValue = realMinimum + (whichTick * tickSpacing);
+					}
+
+					if (snappedValue != sliderValue) {
+						slider.setValue(snappedValue);
+					}
+				}
+			}
+		}
+
+		if (slider.getOrientation() == JSlider.HORIZONTAL) {
+			int valuePosition = xPositionForValue(slider.getValue());
+
+			thumbRect.x = valuePosition - (thumbRect.width / 2);
+			thumbRect.y = trackRect.y;
+		} else {
+			int valuePosition = yPositionForValue(slider.getValue());
+
+			thumbRect.x = trackRect.x;
+			thumbRect.y = valuePosition - (thumbRect.height / 2);
+		}
 
 		// Adjust upper value to snap to ticks if necessary.
-		if (slider.getSnapToTicks()) {
+		if (slider.getSnapToTicks() && !(slider instanceof PlayheadRangeSlider)) {
 			int upperValue = slider.getValue() + slider.getExtent();
 			int snappedValue = upperValue;
 			int majorTickSpacing = slider.getMajorTickSpacing();
@@ -145,6 +227,98 @@ class RangeSliderUI extends BasicSliderUI {
 		return new Dimension(12, 12);
 	}
 
+	@Override
+	public void paintTicks(Graphics g) {
+		Rectangle tickBounds = tickRect;
+		RangeSlider actualSlider = (RangeSlider) slider;
+		g.setColor(UIManager.getColor("Slider.tickColor"));
+
+		if (slider.getOrientation() == JSlider.HORIZONTAL) {
+			g.translate(0, tickBounds.y);
+
+			if (actualSlider.getCustomMinorTicks() != null) {
+				for (Integer minorTickPos : actualSlider.getCustomMinorTicks()) {
+					int xPos = xPositionForValue(minorTickPos);
+					paintMinorTickForHorizSlider(g, tickBounds, xPos);
+				}
+			} else if (actualSlider.getMinorTickSpacing() > 0) {
+				int value = slider.getMinimum() + actualSlider.getTickStart();
+
+				while (value <= slider.getMaximum()) {
+					int xPos = xPositionForValue(value);
+					paintMinorTickForHorizSlider(g, tickBounds, xPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMinorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMinorTickSpacing();
+				}
+			}
+
+			if (actualSlider.getCustomMajorTicks() != null) {
+				for (Integer majorTickPos : actualSlider.getCustomMajorTicks()) {
+					int xPos = xPositionForValue(majorTickPos);
+					paintMajorTickForHorizSlider(g, tickBounds, xPos);
+				}
+			} else if (actualSlider.getMajorTickSpacing() > 0) {
+				int value = slider.getMinimum() + actualSlider.getTickStart();
+
+				while (value <= slider.getMaximum()) {
+					int xPos = xPositionForValue(value);
+					paintMajorTickForHorizSlider(g, tickBounds, xPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMajorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMajorTickSpacing();
+				}
+			}
+
+			g.translate(0, -tickBounds.y);
+		} else {
+			g.translate(tickBounds.x, 0);
+
+			if (actualSlider.getMinorTickSpacing() > 0) {
+
+				int value = slider.getMinimum();
+
+				while (value <= slider.getMaximum()) {
+					int yPos = yPositionForValue(value);
+					paintMinorTickForVertSlider(g, tickBounds, yPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMinorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMinorTickSpacing();
+				}
+			}
+
+			if (actualSlider.getMajorTickSpacing() > 0) {
+
+				int value = slider.getMinimum();
+
+				while (value <= slider.getMaximum()) {
+					int yPos = yPositionForValue(value);
+					paintMajorTickForVertSlider(g, tickBounds, yPos);
+
+					// Overflow checking
+					if (Integer.MAX_VALUE - slider.getMajorTickSpacing() < value) {
+						break;
+					}
+
+					value += slider.getMajorTickSpacing();
+				}
+			}
+			g.translate(-tickBounds.x, 0);
+		}
+	}
+
 	/**
 	 * Paints the slider. The selected thumb is always painted on top of the
 	 * other thumb.
@@ -183,15 +357,20 @@ class RangeSliderUI extends BasicSliderUI {
 			g.setColor(UIManager.getColor("Label.foreground"));
 			Graphics2D g2d = (Graphics2D) g;
 			String valueString = slider.getName();
-			g2d.drawString(valueString, center.x - 1 - valueString.length() * 3, center.y - 6);
+			if (valueString != null) {
+				g2d.drawString(valueString, center.x - 1 - valueString.length() * 3, center.y - 6);
+			}
 
 			g.setColor(col);
 			g.setFont(new Font("Arial", Font.BOLD, 12));
 			RangeSlider actualSlider = (RangeSlider) slider;
-			valueString = actualSlider.getValue() + "";
-			g2d.drawString(valueString, leftMid - 1 - valueString.length() * 3, center.y + 15);
-			valueString = actualSlider.getUpperValue() + "";
-			g2d.drawString(valueString, rightMid - 1 - valueString.length() * 3, center.y + 15);
+			if (actualSlider.isDisplayValues()) {
+				valueString = actualSlider.getValue() + "";
+				g2d.drawString(valueString, leftMid - 1 - valueString.length() * 3, center.y + 15);
+				valueString = actualSlider.getUpperValue() + "";
+				g2d.drawString(valueString, rightMid - 1 - valueString.length() * 3, center.y + 15);
+			}
+
 		}
 	}
 
@@ -383,7 +562,7 @@ class RangeSliderUI extends BasicSliderUI {
 	 */
 	public class ChangeHandler implements ChangeListener {
 		public void stateChanged(ChangeEvent arg0) {
-			if (!lowerDragging && !upperDragging) {
+			if (!upperDragging) {
 				calculateThumbLocation();
 				slider.repaint();
 			}
@@ -407,7 +586,7 @@ class RangeSliderUI extends BasicSliderUI {
 			if (slider.isRequestFocusEnabled()) {
 				slider.requestFocus();
 			}
-
+			RangeSlider actualSlider = (RangeSlider) slider;
 			// Determine which thumb is pressed.  If the upper thumb is 
 			// selected (last one dragged), then check its position first;
 			// otherwise check the position of the lower thumb first.
@@ -422,7 +601,7 @@ class RangeSliderUI extends BasicSliderUI {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
-					if (currentMouseX < middleX) {
+					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
 						lowerPressed = true;
 						moveLowerThumb();
 					} else {
@@ -439,7 +618,7 @@ class RangeSliderUI extends BasicSliderUI {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
-					if (currentMouseX < middleX) {
+					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
 						lowerPressed = true;
 						moveLowerThumb();
 					} else {
@@ -461,10 +640,11 @@ class RangeSliderUI extends BasicSliderUI {
 				}
 				upperThumbSelected = false;
 				lowerDragging = true;
+				actualSlider.setLowerDragging(lowerDragging);
 				return;
 			}
 			lowerDragging = false;
-
+			actualSlider.setLowerDragging(lowerDragging);
 			// Handle upper thumb pressed.
 			if (upperPressed) {
 				switch (slider.getOrientation()) {
@@ -477,15 +657,20 @@ class RangeSliderUI extends BasicSliderUI {
 				}
 				upperThumbSelected = true;
 				upperDragging = true;
+				actualSlider.setUpperDragging(upperDragging);
 				return;
 			}
 			upperDragging = false;
+			actualSlider.setUpperDragging(upperDragging);
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
 			lowerDragging = false;
 			upperDragging = false;
+			RangeSlider actualSlider = (RangeSlider) slider;
+			actualSlider.setLowerDragging(lowerDragging);
+			actualSlider.setUpperDragging(upperDragging);
 			slider.setValueIsAdjusting(false);
 			super.mouseReleased(e);
 		}
@@ -502,7 +687,6 @@ class RangeSliderUI extends BasicSliderUI {
 			if (lowerDragging) {
 				slider.setValueIsAdjusting(true);
 				moveLowerThumb();
-
 			} else if (upperDragging) {
 				slider.setValueIsAdjusting(true);
 				moveUpperThumb();

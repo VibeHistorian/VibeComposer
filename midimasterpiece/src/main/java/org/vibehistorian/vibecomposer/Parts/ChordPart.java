@@ -3,7 +3,8 @@ package org.vibehistorian.vibecomposer.Parts;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
+import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})
@@ -13,8 +14,10 @@ public class ChordPart extends InstPart {
 
 	private int strum = 0;
 
+	private PatternJoinMode patternJoinMode = PatternJoinMode.NOJOIN;
+	private int noteLengthMultiplier = 100;
 
-	private POOL instPool = POOL.PLUCK;
+	private InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
 	public ChordPart() {
 
@@ -46,12 +49,32 @@ public class ChordPart extends InstPart {
 	}
 
 
-	public POOL getInstPool() {
+	public InstUtils.POOL getInstPool() {
 		return instPool;
 	}
 
-	public void setInstPool(POOL instPool) {
+	public void setInstPool(InstUtils.POOL instPool) {
 		this.instPool = instPool;
+	}
+
+
+	public PatternJoinMode getPatternJoinMode() {
+		return patternJoinMode;
+	}
+
+
+	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
+		this.patternJoinMode = patternJoinMode;
+	}
+
+
+	public int getNoteLengthMultiplier() {
+		return noteLengthMultiplier;
+	}
+
+
+	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
+		this.noteLengthMultiplier = noteLengthMultiplier;
 	}
 
 }

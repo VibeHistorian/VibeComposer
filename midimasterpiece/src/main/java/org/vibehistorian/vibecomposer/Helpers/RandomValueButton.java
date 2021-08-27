@@ -8,13 +8,12 @@ import java.util.Random;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
-import org.vibehistorian.vibecomposer.Popups.ValuePopup;
+import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
+import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 
 public class RandomValueButton extends JButton {
 
 	private static final long serialVersionUID = -2737936353529731016L;
-	public static ValuePopup singlePopup = null;
-
 
 	public RandomValueButton(int value) {
 		this.setPreferredSize(new Dimension(100, 30));
@@ -27,11 +26,7 @@ public class RandomValueButton extends JButton {
 				} else if (SwingUtilities.isRightMouseButton(e)) {
 					setText("0");
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
-					if (singlePopup != null) {
-						singlePopup.close();
-						singlePopup = null;
-					}
-					singlePopup = new ValuePopup(RandomValueButton.this);
+					CloseablePopup popup = new ButtonValuePopup(RandomValueButton.this);
 				}
 			}
 		});

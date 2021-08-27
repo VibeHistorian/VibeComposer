@@ -94,10 +94,6 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void toggleSolo(boolean recalc) {
-		if (!VibeComposerGUI.sequenceReady()) {
-			return;
-		}
-
 		if (soloState != State.OFF) {
 			unsolo();
 			if (type == Type.SINGLE) {
@@ -121,12 +117,19 @@ public class SoloMuter extends JPanel {
 				// do nothing
 			}
 		}
+
 		if (recalc) {
-			VibeComposerGUI.needToRecalculateSoloMuters = true;
+			if (VibeComposerGUI.sequenceReady()) {
+				VibeComposerGUI.needToRecalculateSoloMuters = true;
+			} else {
+				VibeComposerGUI.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+			}
 		}
 	}
 
 	public void solo() {
+		if (!checkEnabled(soloer))
+			return;
 		soloState = State.FULL;
 		soloer.setBackground(FULL_SOLO);
 		soloer.setForeground(Color.black);
@@ -134,15 +137,14 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void unsolo() {
+		if (!checkEnabled(soloer))
+			return;
 		soloState = State.OFF;
 		soloer.setBackground(EMPTY);
 		soloer.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
 	}
 
 	public void toggleMute(boolean recalc) {
-		if (!VibeComposerGUI.sequenceReady()) {
-			return;
-		}
 		if (muteState != State.OFF) {
 			unmute();
 			if (type == Type.SINGLE) {
@@ -168,11 +170,17 @@ public class SoloMuter extends JPanel {
 			}
 		}
 		if (recalc) {
-			VibeComposerGUI.needToRecalculateSoloMuters = true;
+			if (VibeComposerGUI.sequenceReady()) {
+				VibeComposerGUI.needToRecalculateSoloMuters = true;
+			} else {
+				VibeComposerGUI.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+			}
 		}
 	}
 
 	public void mute() {
+		if (!checkEnabled(muter))
+			return;
 		muteState = State.FULL;
 		muter.setBackground(FULL_MUTE);
 		muter.setForeground(Color.black);
@@ -180,6 +188,8 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void unmute() {
+		if (!checkEnabled(muter))
+			return;
 		muteState = State.OFF;
 		muter.setBackground(EMPTY);
 		muter.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
@@ -197,5 +207,15 @@ public class SoloMuter extends JPanel {
 		} else {
 			soloer.setForeground(Color.black);
 		}
+	}
+
+	@Override
+	public void setEnabled(boolean state) {
+		soloer.setEnabled(state);
+		muter.setEnabled(state);
+	}
+
+	private boolean checkEnabled(JButton butt) {
+		return butt.isEnabled();
 	}
 }

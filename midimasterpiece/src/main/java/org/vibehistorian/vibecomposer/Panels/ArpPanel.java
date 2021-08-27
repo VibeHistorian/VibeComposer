@@ -27,35 +27,39 @@ public class ArpPanel extends InstPanel {
 				"11", "12", "13", "14", "15" }, midiChannel);
 		midiChannel.setSelectedItem("2");
 
-		initDefaults();
+		initDefaults(l);
 		volSlider.setValue(70);
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(3, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(lockInst);
-		this.add(instrument);
-		this.add(removeButton);
-		copyButton.addActionListener(l);
-		this.add(copyButton);
+		addDefaultInstrumentControls();
+		addDefaultPanelButtons();
 
 		this.add(hitsPerPattern);
+		this.add(pattern);
+		comboPanel = makeVisualPatternPanel();
+		comboPanel.setBigModeAllowed(false);
+		this.add(comboPanel);
+		this.add(patternFlip);
+
+		this.add(patternShift);
 		this.add(chordSpan);
 
 		this.add(new JLabel("Fill"));
 		this.add(chordSpanFill);
+		this.add(fillFlip);
+
 		this.add(patternRepeat);
 		//this.add(repeatableNotes);
 		this.add(transpose);
 		this.add(pauseChance);
-		JLabel notePresetLabel = new JLabel("Note Direction");
+		JLabel notePresetLabel = new JLabel("Dir:");
 		this.add(notePresetLabel);
 		this.add(arpPattern);
 
-		this.add(stretchEnabled);
-		this.add(chordNotesStretch);
+		this.add(stretchPanel);
+
 		this.add(minMaxVelSlider);
 
 
@@ -64,9 +68,6 @@ public class ArpPanel extends InstPanel {
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
-		this.add(new JLabel("Pattern"));
-		this.add(pattern);
-		this.add(patternShift);
 
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
@@ -84,9 +85,7 @@ public class ArpPanel extends InstPanel {
 		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {
-			if (d != RhythmPattern.CUSTOM) {
-				pattern.addItem(d.toString());
-			}
+			pattern.addItem(d.toString());
 		}
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d.toString());

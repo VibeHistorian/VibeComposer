@@ -50,7 +50,7 @@ public class BooleanTableModel extends AbstractTableModel {
 	}
 
 	@Override
-	public Class getColumnClass(int column) {
+	public Class<?> getColumnClass(int column) {
 		return (getValueAt(0, column).getClass());
 	}
 

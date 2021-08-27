@@ -5,8 +5,8 @@ import java.awt.event.ActionListener;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -21,25 +21,21 @@ public class BassPanel extends InstPanel {
 	private JCheckBox alternatingRhythm = new JCheckBox("Alternating", true);
 	private JCheckBox doubleOct = new JCheckBox("Double Oct.", false);
 	private KnobPanel noteVariation = new KnobPanel("Note Variation", 20);
+	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
 		midiChannel.setSelectedItem("9");
-		instPool = POOL.BASS;
+		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
-		initDefaults();
+		initDefaults(l);
 		volSlider.setValue(70);
 		this.add(volSlider);
-		/*this.add(new JLabel("#"));
-		this.add(panelOrder);*/
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(lockInst);
-		this.add(instrument);
+		addDefaultInstrumentControls();
 
 		this.add(useRhythm);
 		this.add(alternatingRhythm);
@@ -52,6 +48,8 @@ public class BassPanel extends InstPanel {
 
 		this.add(noteVariation);
 
+		this.add(melodyPattern);
+
 		this.add(minMaxVelSlider);
 
 		this.add(patternSeedLabel);
@@ -59,6 +57,7 @@ public class BassPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 9"));
 		setPanelOrder(1);
+
 	}
 
 	public BassPanel(ActionListener l) {
@@ -75,6 +74,7 @@ public class BassPanel extends InstPanel {
 		part.setAlternatingRhythm(getAlternatingRhythm());
 		part.setDoubleOct(getDoubleOct());
 		part.setNoteVariation(getNoteVariation());
+		part.setMelodyPattern(getMelodyPattern());
 		return part;
 	}
 
@@ -86,6 +86,7 @@ public class BassPanel extends InstPanel {
 		setAlternatingRhythm(part.isAlternatingRhythm());
 		setDoubleOct(part.isDoubleOct());
 		setNoteVariation(part.getNoteVariation());
+		setMelodyPattern(part.isMelodyPattern());
 	}
 
 	public boolean getUseRhythm() {
@@ -123,5 +124,13 @@ public class BassPanel extends InstPanel {
 
 	public void setNoteVariation(int noteVariation) {
 		this.noteVariation.setInt(noteVariation);
+	}
+
+	public boolean getMelodyPattern() {
+		return melodyPattern.isSelected();
+	}
+
+	public void setMelodyPattern(boolean melodyPattern) {
+		this.melodyPattern.setSelected(melodyPattern);
 	}
 }

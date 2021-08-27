@@ -7,6 +7,7 @@ import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.TRESILLO;
 
 import java.util.Random;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
@@ -19,7 +20,7 @@ public class DrumDefaults {
 	public static final DrumPart ride = makeSimpleDrum(53, 8, 1, RhythmPattern.SINGLE, 50, 85);
 	public static final DrumPart percs = makeSimpleDrum(60, 8, 1, RhythmPattern.TRESILLO, 40, 75);
 
-	public static final int[] instrumentThresholds = new int[] { 37, 40, 46, 53, 60 };
+	public static final int[] instrumentThresholds = new int[] { 37, 41, 45, 53, 60 };
 	public static final DrumPart[] drums = new DrumPart[] { kick, snare, hat, ride, percs };
 	public static DrumSettings[] drumSettings;
 
@@ -64,7 +65,6 @@ public class DrumDefaults {
 		rideSettings.setChords(new Integer[] { 1, 1 });
 		rideSettings.setShift(new Integer[] { 2, 6 });
 		rideSettings.setVariableShift(true);
-		rideSettings.dynamicable = true;
 		rideSettings.melodyable = true;
 
 		percsSettings = new DrumSettings();
@@ -108,7 +108,7 @@ public class DrumDefaults {
 	}
 
 	public static DrumPart getRandomDrum() {
-		Integer instrument = MidiUtils.getRandom(new Random(), MidiUtils.DRUM_INST_NUMBERS);
+		Integer instrument = MidiUtils.getRandom(new Random(), InstUtils.DRUM_INST_NUMBERS);
 		return getDrumFromInstrument(instrument);
 	}
 

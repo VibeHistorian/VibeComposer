@@ -11,8 +11,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.POOL;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -24,25 +24,19 @@ public class DrumPanel extends InstPanel {
 	private static final long serialVersionUID = 6219184197272490684L;
 
 	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
-	private DrumHitsPatternPanel comboPanel = null;
-	private JCheckBox useMelodyNotePattern = new JCheckBox("Melody Pattern", false);
 
 	public void initComponents(ActionListener l) {
 
-		instrument.initInstPool(POOL.DRUM);
+		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
 		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
 
-		initDefaults();
+		initDefaults(l);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
-		this.add(soloMuter);
-		this.add(muteInst);
-		this.add(instrument);
-		this.add(removeButton);
-		copyButton.addActionListener(l);
-		this.add(copyButton);
+		addDefaultInstrumentControls();
+		addDefaultPanelButtons();
 
 		// pattern business
 		this.add(hitsPerPattern);
@@ -51,12 +45,13 @@ public class DrumPanel extends InstPanel {
 				.setTickThresholds(Arrays.asList(new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32 }));
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
-		this.add(new JLabel("Pattern"));
+		pattern.setScrollEnabled(false);
 		this.add(pattern);
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
 		doublerButt.setMargin(new Insets(0, 0, 0, 0));
-		comboPanel = makeDrumHitsPanel(doublerButt);
+		comboPanel = makeVisualPatternPanel(doublerButt);
+		comboPanel.setBigModeAllowed(true);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
 
@@ -64,6 +59,7 @@ public class DrumPanel extends InstPanel {
 		comboPanelWrapper.add(comboPanel);
 
 		this.add(comboPanelWrapper);
+		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(isVelocityPattern);
 
@@ -72,10 +68,9 @@ public class DrumPanel extends InstPanel {
 
 		this.add(swingPercent);
 		this.add(new JLabel("Fill"));
+		chordSpanFill.setScrollEnabled(false);
 		this.add(chordSpanFill);
-
-		this.add(useMelodyNotePattern);
-
+		this.add(fillFlip);
 
 		this.add(exceptionChance);
 
@@ -90,13 +85,9 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch. 10"));
 
+		getInstrumentBox().setToolTipText("test");
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
-	}
-
-	public DrumHitsPatternPanel makeDrumHitsPanel(JButton doubler) {
-		return new DrumHitsPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, doubler,
-				this);
 	}
 
 	public DrumPanel(ActionListener l) {
@@ -115,8 +106,6 @@ public class DrumPanel extends InstPanel {
 
 		part.setVelocityPattern(getIsVelocityPattern());
 		part.setSwingPercent(getSwingPercent());
-		part.setCustomPattern(comboPanel.getTruePattern());
-		part.setUseMelodyNotePattern(getUseMelodyNotePattern());
 
 		part.setOrder(getPanelOrder());
 		return part;
@@ -126,14 +115,9 @@ public class DrumPanel extends InstPanel {
 		DrumPart part = (DrumPart) p;
 
 		setDefaultsFromInstPart(part);
-		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
-				&& part.getCustomPattern().size() == 32) {
-			comboPanel.setTruePattern(part.getCustomPattern());
-		}
 
 		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
-		setUseMelodyNotePattern(part.isUseMelodyNotePattern());
 
 		setPanelOrder(part.getOrder());
 
@@ -147,21 +131,9 @@ public class DrumPanel extends InstPanel {
 		this.isVelocityPattern.setSelected(isVelocityPattern);
 	}
 
-	public boolean getUseMelodyNotePattern() {
-		return useMelodyNotePattern.isSelected();
-	}
-
-	public void setUseMelodyNotePattern(boolean useMelodyNotePattern) {
-		this.useMelodyNotePattern.setSelected(useMelodyNotePattern);
-	}
-
 
 	public void transitionToPool(String[] pool) {
 		instrument.changeInstPoolMapping(pool);
-	}
-
-	public DrumHitsPatternPanel getComboPanel() {
-		return comboPanel;
 	}
 
 	@Override

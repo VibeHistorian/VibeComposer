@@ -21,7 +21,6 @@ package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +116,8 @@ public class MidiUtils {
 	public static final int[] cSus4th4 = { Pitches.C4, Pitches.F4, Pitches.G4 };
 	public static final int[] cSus2nd4 = { Pitches.C4, Pitches.D4, Pitches.G4 };
 	public static final int[] cSus7th4 = { Pitches.C4, Pitches.F4, Pitches.G4, Pitches.BF4 };
+	public static final int[] cMaj6th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.A4 };
+	public static final int[] cMin6th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.A4 };
 
 	public static final List<int[]> SPICE_CHORDS_LIST = new ArrayList<>();
 	static {
@@ -137,6 +138,9 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cSus4th4);
 		SPICE_CHORDS_LIST.add(cSus2nd4);
 		SPICE_CHORDS_LIST.add(cSus7th4);
+
+		SPICE_CHORDS_LIST.add(cMaj6th4);
+		SPICE_CHORDS_LIST.add(cMin6th4);
 	}
 
 	public static final List<String> BANNED_DIM_AUG_7_LIST = Arrays
@@ -146,8 +150,9 @@ public class MidiUtils {
 	public static final List<String> BANNED_SUSSY_LIST = Arrays
 			.asList(new String[] { "sus4", "sus2", "sus7" });
 
-	public static final List<String> SPICE_NAMES_LIST = Arrays.asList(new String[] { "", "m", "aug",
-			"dim", "7", "maj7", "m7", "maj9", "m9", "maj13", "m13", "sus4", "sus2", "sus7" });
+	public static final List<String> SPICE_NAMES_LIST = Arrays
+			.asList(new String[] { "", "m", "aug", "dim", "7", "maj7", "m7", "maj9", "m9", "maj13",
+					"m13", "sus4", "sus2", "sus7", "maj6", "m6" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
@@ -162,6 +167,8 @@ public class MidiUtils {
 
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
+	public static final Map<String, List<String>> cpRulesForwardMap = createChordProgressionForwardRulesMap();
+	//public static final Map<String, List<String>> cpRulesForwardMinorMap = createChordProgressionForwardRulesMinorMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
 	public static final Map<String, int[]> chordsMap = createChordMap();
 
@@ -178,16 +185,36 @@ public class MidiUtils {
 		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "F", "Am")));
 		cpMap.put("Am", new ArrayList<>(Arrays.asList("C", "Dm", "Em", "G")));
 		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "Em", "F")));
-		/*
-		cpMap.put("Cm", new ArrayList<>());
-		cpMap.put("D", new ArrayList<>());
-		cpMap.put("E", new ArrayList<>());
-		cpMap.put("Fm", new ArrayList<>());
-		cpMap.put("Gm", new ArrayList<>());
-		cpMap.put("A", new ArrayList<>(Arrays.asList("C", "F")));
-		cpMap.put("B", new ArrayList<>(Arrays.asList("C", "Em", "F")));*/
 		return cpMap;
 
+	}
+
+	private static Map<String, List<String>> createChordProgressionForwardRulesMap() {
+		Map<String, List<String>> cpMap = new HashMap<>();
+		cpMap.put("S", new ArrayList<>(MAJOR_CHORDS));
+		cpMap.put("C", new ArrayList<>(Arrays.asList("Dm", "Em", "F", "G", "Am")));
+		cpMap.put("Dm", new ArrayList<>(Arrays.asList("G", "Bdim")));
+		cpMap.put("Em", new ArrayList<>(Arrays.asList("Am", "F", "Dm")));
+		cpMap.put("F", new ArrayList<>(Arrays.asList("Dm", "G", "Am", "Bdim")));
+		cpMap.put("G", new ArrayList<>(Arrays.asList("C", "Am", "Bdim")));
+		cpMap.put("Am", new ArrayList<>(Arrays.asList("Dm", "F")));
+		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("C", "G", "Am")));
+		return cpMap;
+	}
+
+	private static Map<String, List<String>> createChordProgressionForwardRulesMinorMap() {
+		Map<String, List<String>> cpMap = new HashMap<>();
+		cpMap.put("S",
+				new ArrayList<>(Arrays.asList("Cm", "Ddim", "E", "Fm", "G", "A", "A#", "Bdim")));
+		cpMap.put("Cm", new ArrayList<>(Arrays.asList("Ddim", "E", "Fm", "G", "A", "A#", "Bdim")));
+		cpMap.put("Ddim", new ArrayList<>(Arrays.asList("G", "Bdim")));
+		cpMap.put("E", new ArrayList<>(Arrays.asList("Ddim", "Fm", "A")));
+		cpMap.put("Fm", new ArrayList<>(Arrays.asList("Ddim", "G", "Bdim")));
+		cpMap.put("G", new ArrayList<>(Arrays.asList("Cm", "A", "Bdim")));
+		cpMap.put("A", new ArrayList<>(Arrays.asList("Ddim", "Fm")));
+		cpMap.put("A#", new ArrayList<>(Arrays.asList("Ddim", "E", "Fm")));
+		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("Cm", "G", "A")));
+		return cpMap;
 	}
 
 	// diaTransMap.get(i) == MAJOR_SCALE.get(i) ? 
@@ -346,7 +373,8 @@ public class MidiUtils {
 		return intList;
 	}
 
-	public static Pair<ScaleMode, Integer> detectKeyAndMode(Phrase phr) {
+	public static List<Pair<ScaleMode, Integer>> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
+			boolean forceDifferentTranspose) {
 		int bestNotContained = Integer.MAX_VALUE;
 		ScaleMode bestMode = null;
 		int transposeUpBy = 0;
@@ -358,9 +386,14 @@ public class MidiUtils {
 		int mostFrequents = 0;
 		int mostFrequentPitch = -1;
 		for (Note n : noteList) {
+			if (n.getPitch() <= 0) {
+				continue;
+			}
+
 			int normalized = n.getPitch() % 12;
 			pitches.add(normalized);
-			pitchCounts[normalized]++;
+			pitchCounts[normalized] += (int) (n.getDuration()
+					/ (MidiGenerator.Durations.NOTE_32ND / 2.0));
 			if (pitchCounts[normalized] > mostFrequents) {
 				mostFrequents = pitchCounts[normalized];
 				mostFrequentPitch = normalized;
@@ -369,30 +402,62 @@ public class MidiUtils {
 		System.out.println("Examining pitches: " + StringUtils.join(pitches, ", "));
 		System.out.println("# of pitches: " + pitches.size());
 		System.out.println("Pitch array: " + Arrays.toString(pitchCounts));
-
+		List<Pair<ScaleMode, Integer>> validResults = new ArrayList<>();
+		Pair<ScaleMode, Integer> returnPair = null;
 		for (ScaleMode mode : ScaleMode.values()) {
-			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale);
-			System.out.println("Result: " + detectionResult.toString());
-			if (detectionResult.getKey() <= bestNotContained) {
+			Pair<Integer, Integer> detectionResult = detectKey(pitches, mode.noteAdjustScale,
+					forceDifferentTranspose);
+			//System.out.println("Result for " + mode.toString() + ": " + detectionResult.toString());
+			boolean bestForSure = false;
+
+
+			if (detectionResult.getKey() == 0 && (targetMode != null) && (targetMode == mode)) {
+				bestForSure = true;
 				bestNotContained = detectionResult.getKey();
 				bestMode = mode;
 				transposeUpBy = detectionResult.getValue();
+				System.out.println("Found target mode: " + targetMode.toString());
 			}
-			if (detectionResult.getKey() == 0
-					&& (((mostFrequentPitch + ((12 + transposeUpBy) % 12)) % 12) == 0)) {
-				System.out.println("Best for sure: " + detectionResult.toString());
-				break;
+
+			if (returnPair == null) {
+				if (detectionResult.getKey() == 0
+						&& (((mostFrequentPitch + ((12 + detectionResult.getValue()) % 12))
+								% 12) == 0)) {
+					//System.out.println("Best for sure: " + detectionResult.toString());
+					bestForSure = true;
+				}
+				if (detectionResult.getKey() < bestNotContained || bestForSure) {
+					bestNotContained = detectionResult.getKey();
+					bestMode = mode;
+					transposeUpBy = detectionResult.getValue();
+				}
 			}
+
+
+			if (bestForSure) {
+				returnPair = Pair.of(bestMode, transposeUpBy);
+			} else {
+				if (detectionResult.getKey() == 0) {
+					validResults.add(Pair.of(mode, detectionResult.getValue()));
+				}
+			}
+
 		}
 		if (bestNotContained > 0) {
 			return null;
 		}
+		if (returnPair != null) {
+			System.out.println("Returning best: " + returnPair.toString());
+			validResults.add(returnPair);
+			return validResults;
+		}
 
 		System.out.println("Returning: " + bestMode.toString() + ", " + transposeUpBy);
-		return Pair.of(bestMode, transposeUpBy);
+		return validResults;
 	}
 
-	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale) {
+	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale,
+			boolean forceDifferentTranspose) {
 
 
 		Set<Integer> desiredPitches = new HashSet<>();
@@ -410,12 +475,13 @@ public class MidiUtils {
 					notContained--;
 				}
 			}
-			if (notContained < bestNotContained) {
+			if (notContained < bestNotContained
+					|| (notContained == bestNotContained && forceDifferentTranspose)) {
 				bestNotContained = notContained;
 				transposeUpBy = i;
 			}
-			if (notContained == 0) {
-				System.out.println("Found best transpose match: " + i);
+			if (notContained == 0 && (!forceDifferentTranspose || (i != 0))) {
+				//System.out.println("Found best transpose match: " + i);
 				break;
 			}
 		}
@@ -515,12 +581,36 @@ public class MidiUtils {
 	}
 
 	public static int[] mappedChord(String chordString) {
-		int[] mappedChord = chordsMap.get(chordString);
+		int[] mappedChord = getNormalMappedChord(chordString);
+
 		if (mappedChord == null) {
 			mappedChord = getSpelledChord(chordString);
 		}
 		if (mappedChord == null) {
-			throw new IllegalArgumentException("Unmappable string: " + chordString);
+			return null;
+			//throw new IllegalArgumentException("Unmappable string: " + chordString);
+		}
+		return Arrays.copyOf(mappedChord, mappedChord.length);
+	}
+
+	public static int[] getNormalMappedChord(String chordString) {
+		int[] mappedChord = null;
+		if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
+			String testChordString = chordString;
+			testChordString = testChordString.replaceFirst("#", "");
+			mappedChord = chordsMap.get(testChordString);
+			if (mappedChord != null) {
+				mappedChord = Arrays.copyOf(mappedChord, mappedChord.length);
+				for (int i = 0; i < mappedChord.length; i++) {
+					mappedChord[i] = mappedChord[i] + 1;
+				}
+				return mappedChord;
+			}
+		}
+
+		mappedChord = chordsMap.get(chordString);
+		if (mappedChord == null) {
+			return null;
 		}
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
@@ -619,6 +709,9 @@ public class MidiUtils {
 		List<int[]> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
+			if (index == -1) {
+				index = majorScaleNormalized.indexOf((r[0] + 11) % 12);
+			}
 			String chordLong = MAJOR_CHORDS.get(index);
 			basicChords.add(mappedChord(chordLong));
 		}
@@ -663,21 +756,33 @@ public class MidiUtils {
 		return squishedChords;
 	}
 
-	public static int[] transposeChord(int[] chord, final int[] mode, final int[] modeTo) {
+	public static int[] transposeChord(int[] chord, final Integer[] mode, final Integer[] modeTo) {
 		int[] transposedChord = new int[chord.length];
 
 		List<Integer> modeList = new ArrayList<>();
 		for (int num : mode) {
 			modeList.add(num);
 		}
-
+		List<Integer> modeToList = new ArrayList<>();
+		for (int num : modeTo) {
+			modeToList.add(num);
+		}
 
 		for (int j = 0; j < chord.length; j++) {
 			int pitch = chord[j];
-			int originalIndex = modeList.indexOf(Integer.valueOf(pitch % 12));
+			int searchPitch = Integer.valueOf(pitch % 12);
+			int originalIndex = modeList.indexOf(searchPitch);
 
 			if (originalIndex == -1) {
-				transposedChord[j] = pitch - 1;
+				if (modeToList.contains(searchPitch)) {
+					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+				} else {
+					int closestPitch = getClosestFromList(modeToList, searchPitch);
+					int difference = searchPitch - closestPitch;
+					transposedChord[j] = pitch - difference;
+					System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+				}
 				continue;
 			}
 
@@ -717,8 +822,11 @@ public class MidiUtils {
 				if (modeToList.contains(searchPitch)) {
 					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
-					n.setPitch(pitch - 1);
-					System.out.println("Not indexed pitch, lowered by -1: " + pitch);
+					int closestPitch = getClosestFromList(modeToList, searchPitch);
+					int difference = searchPitch - closestPitch;
+					n.setPitch(pitch - difference);
+					System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
 				}
 				continue;
 			}
@@ -731,144 +839,20 @@ public class MidiUtils {
 		}
 	}
 
-	public static final String[] INSTRUMENTS_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
-			"ELECTRIC_GRAND = 2 ", "HONKYTONK = 3 ", "EPIANO = 4 ", "EPIANO2 = 5 ",
-			"HARPSICHORD = 6 ", "CLAV = 7 ", "CELESTE = 8 ", "GLOCKENSPIEL = 9 ", "MUSIC_BOX = 10 ",
-			"VIBRAPHONE = 11 ", "MARIMBA = 12 ", "XYLOPHONE = 13 ", "TUBULAR_BELL = 14 ",
-			"NOTHING = 15 ", "ORGAN = 16 ", "ORGAN2 = 17 ", "ORGAN3 = 18 ", "CHURCH_ORGAN = 19 ",
-			"REED_ORGAN = 20 ", "ACCORDION = 21 ", "HARMONICA = 22 ", "BANDNEON = 23 ",
-			"NYLON_GUITAR = 24 ", "STEEL_GUITAR = 25 ", "JAZZ_GUITAR = 26 ", "CLEAN_GUITAR = 27 ",
-			"MUTED_GUITAR = 28 ", "OVERDRIVE_GUITAR = 29 ", "DISTORTED_GUITAR = 30 ",
-			"GUITAR_HARMONICS = 31 ", "ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ",
-			"PICKED_BASS = 34 ", "FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "SLAP_BASS_2 = 37 ",
-			"SYNTH_BASS = 38 ", "SYNTH_BASS_2 = 39 ", "VIOLIN = 40 ", "VIOLA = 41 ", "CELLO = 42 ",
-			"CONTRABASS = 43 ", "TREMOLO_STRINGS = 44 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
-			"TIMPANI = 47 ", "STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ", "SYNTH_STRINGS = 50 ",
-			"SLOW_STRINGS = 51 ", "AAH = 52 ", "OOH = 53 ", "SYNVOX = 54 ", "ORCHESTRA_HIT = 55 ",
-			"TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ", "MUTED_TRUMPET = 59 ",
-			"FRENCH_HORN = 60 ", "BRASS = 61 ", "SYNTH_BRASS = 62 ", "SYNTH_BRASS_2 = 63 ",
-			"SOPRANO_SAX = 64 ", "ALTO_SAX = 65 ", "SAXOPHONE = 66 ", "BARITONE_SAX = 67 ",
-			"OBOE = 68 ", "ENGLISH_HORN = 69 ", "BASSOON = 70 ", "CLARINET = 71 ", "PICCOLO = 72 ",
-			"FLUTE = 73 ", "RECORDER = 74 ", "PAN_FLUTE = 75 ", "BOTTLE_BLOW = 76 ",
-			"SHAKUHACHI = 77 ", "WHISTLE = 78 ", "OCARINA = 79 ", "GMSQUARE_WAVE = 80 ",
-			"GMSAW_WAVE = 81 ", "SYNTH_CALLIOPE = 82 ", "CHIFFER_LEAD = 83 ", "CHARANG = 84 ",
-			"SOLO_VOX = 85 ", "WHOKNOWS1 = 86 ", "WHOKNOWS2 = 87 ", "FANTASIA = 88 ",
-			"WARM_PAD = 89 ", "POLYSYNTH = 90 ", "SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ",
-			"METAL_PAD = 93 ", "HALO_PAD = 94 ", "SWEEP_PAD = 95 ", "ICE_RAIN = 96 ",
-			"SOUNDTRACK = 97 ", "CRYSTAL = 98 ", "ATMOSPHERE = 99 ", "BRIGHTNESS = 100 ",
-			"GOBLIN = 101 ", "ECHO_DROPS = 102 ", "STAR_THEME = 103 ", "SITAR = 104 ",
-			"BANJO = 105 ", "SHAMISEN = 106 ", "KOTO = 107 ", "KALIMBA = 108 ", "BAGPIPES = 109 ",
-			"FIDDLE = 110 ", "SHANNAI = 111 ", "TINKLE_BELL = 112 ", "AGOGO = 113 ",
-			"STEEL_DRUMS = 114 ", "WOODBLOCK = 115 ", "TAIKO = 116 ", "TOM = 117 ",
-			"SYNTH_DRUM = 118 ", "REVERSE_CYMBAL = 119 ", "FRETNOISE = 120 ", "BREATHNOISE = 121 ",
-			"NATURE = 122 ", "BIRD = 123 ", "TELEPHONE = 124 ", "HELICOPTER = 125 ",
-			"APPLAUSE = 126 ", "GUNSHOT = 127 " };
-
-	public static final String[] BASS_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
-			"EPIANO = 4 ", "OOH = 53 ", "SYNVOX = 54 ", "FLUTE = 73 ", "RECORDER = 74 ",
-			"PAN_FLUTE = 75 ", "SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SPACE_VOICE = 91 ",
-			"ECHO_DROPS = 102 " };
-
-	public static final String[] CHORD_INST_NAMES = { "EPIANO = 4 ", "ORGAN = 16 ", "ORGAN2 = 17 ",
-			"ACOUSTIC_BASS = 32 ", "TREMOLO_STRINGS = 44 ", "STRINGS = 48 ",
-			"STRING_ENSEMBLE_2 = 49 ", "AAH = 52 ", "BASSOON = 70 " };
-
-	public static final String[] PLUCK_INST_NAMES = { "BRIGHT_ACOUSTIC = 1 ", "HONKYTONK = 3 ",
-			"EPIANO2 = 5 ", "CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
-			"XYLOPHONE = 13 ", "NOTHING = 15 ", "STEEL_GUITAR = 25 ", "CLEAN_GUITAR = 27 ",
-			"ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ", "PICKED_BASS = 34 ",
-			"FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
-			"FANTASIA = 88 " };
-
-	public static final String[] LONG_INST_NAMES = { "ORGAN = 16 ", "ORGAN2 = 17 ",
-			"REED_ORGAN = 20 ", "ACCORDION = 21 ", "HARMONICA = 22 ", "BANDNEON = 23 ",
-			"VIOLIN = 40 ", "VIOLA = 41 ", "CELLO = 42 ", "CONTRABASS = 43 ",
-			"TREMOLO_STRINGS = 44 ", "STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ",
-			"SLOW_STRINGS = 51 ", "TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ",
-			"FRENCH_HORN = 60 ", "BRASS = 61 ", "SOPRANO_SAX = 64 ", "ALTO_SAX = 65 ",
-			"BARITONE_SAX = 67 ", "OBOE = 68 ", "ENGLISH_HORN = 69 ", "BASSOON = 70 ",
-			"CLARINET = 71 ", "PICCOLO = 72 ", "RECORDER = 74 ", "BOTTLE_BLOW = 76 ",
-			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
-			"SWEEP_PAD = 95 " };
-
-	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 42, 44, 46, 53, 54,
-			60, 82 };
-	public static final Integer[] DRUM_INST_NUMBERS_SEMI = { 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-			46, 47, 48 };
-
-
-	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
-			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "CLOSED_HH = 42 ",
-			"PEDAL_HH = 44", "OPEN_HH = 46", "RIDE = 53 ", "TAMBOURINE = 54", "HI BONGO = 60 ",
-			"SHAKER = 82" };
-
-	public static final String[] DRUM_INST_NAMES_SEMI = { "BASSKICK = 36 ", "KICK = 37 ",
-			"SIDE STICK = 38", "SNARE = 39 ", "CLAP = 40", "EL. SNARE = 41 ", "CLOSED_HH = 42 ",
-			"PEDAL_HH = 43", "OPEN_HH = 44", "RIDE = 45 ", "TAMBOURINE = 46", "HI BONGO = 47 ",
-			"SHAKER = 48" };
-
-	public static final String[] DRUM_INST_NAMES_WHOLE = { "BASSKICK = 36 ", "KICK = 38 ",
-			"SIDE STICK = 40", "SNARE = 41 ", "CLAP = 43", "EL. SNARE = 45 ", "CLOSED_HH = 47 ",
-			"PEDAL_HH = 48", "OPEN_HH = 50", "RIDE = 52 ", "TAMBOURINE = 53", "HI BONGO = 55 ",
-			"SHAKER = 57" };
-
-	public static List<Integer> getInstNumbers(String[] instArray) {
-		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
-				.collect(Collectors.toList());
-	}
-
-	public static String[] combineInstrumentPools(String[]... instPools) {
-		Set<String> allInstruments = new HashSet<>();
-		for (String[] pool : instPools) {
-			allInstruments.addAll(Arrays.asList(pool));
+	public static int getClosestFromList(List<Integer> list, int valToFind) {
+		if (list == null || list.isEmpty()) {
+			return Integer.MIN_VALUE;
 		}
-		List<String> allInstrumentsSorted = new ArrayList<>(allInstruments);
-		Collections.sort(allInstrumentsSorted,
-				(o1, o2) -> Integer.valueOf(o1.split(" = ")[1].trim())
-						.compareTo(Integer.valueOf(o2.split(" = ")[1].trim())));
-		return allInstrumentsSorted.toArray(new String[] {});
-	}
-
-	public static final String[] DRUM_KITS = { "DRUMKIT0 = 0", "DRUMKIT1 = 1", "DRUMKIT2 = 2",
-			"DRUMKIT3 = 3" };
-
-	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.asList(DRUM_KITS).stream()
-			.map(e -> Integer.valueOf(e.split(" = ")[1].trim())).collect(Collectors.toList());
-
-	public enum POOL {
-		PLUCK, LONG, CHORD, BASS, DRUM, ALL;
-	}
-
-	public static Map<POOL, String[]> INST_POOLS = new HashMap<>();
-	static {
-		initNormalInsts();
-	}
-
-	public static void initNormalInsts() {
-		INST_POOLS.put(POOL.PLUCK, PLUCK_INST_NAMES);
-		INST_POOLS.put(POOL.LONG, LONG_INST_NAMES);
-		INST_POOLS.put(POOL.CHORD, LONG_INST_NAMES);
-		INST_POOLS.put(POOL.BASS, BASS_INST_NAMES);
-		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
-		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
-	}
-
-	public static void initAllInsts() {
-		INST_POOLS.put(POOL.PLUCK, INSTRUMENTS_NAMES);
-		INST_POOLS.put(POOL.LONG, INSTRUMENTS_NAMES);
-		INST_POOLS.put(POOL.CHORD, INSTRUMENTS_NAMES);
-		INST_POOLS.put(POOL.BASS, INSTRUMENTS_NAMES);
-		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
-		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
-	}
-
-	public static Integer getInstByIndex(int index, POOL instPool) {
-		return getInstByIndex(index, INST_POOLS.get(instPool));
-	}
-
-	public static Integer getInstByIndex(int index, String[] instArray) {
-		List<Integer> instPoolNumbers = getInstNumbers(instArray);
-		return instPoolNumbers.get(index % instPoolNumbers.size());
+		int closest = list.get(0);
+		int closestDistance = Math.abs(valToFind - closest);
+		for (int i = 1; i < list.size(); i++) {
+			int distance = Math.abs(valToFind - list.get(i));
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				closest = list.get(i);
+			}
+		}
+		return closest;
 	}
 
 	public static void addAllToJComboBox(String[] choices, ScrollComboBox<String> choice) {
@@ -936,6 +920,239 @@ public class MidiUtils {
 			}
 		}
 		return interspersed;
+	}
+
+	public static void addChordsToPhrase(Phrase phr, List<Chord> chords, double flam) {
+		for (Chord c : chords) {
+			c.setFlam(flam);
+			Note[] notes = c.getNotesBackwards().toArray(new Note[] {});
+			Note lastNote = notes[notes.length - 1];
+			lastNote.setDuration(lastNote.getDuration() * 3);
+			phr.addNoteList(c.getNotesBackwards().toArray(new Note[] {}));
+		}
+	}
+
+	public static List<Chord> convertChordStringsToChords(List<String> chordStrings) {
+		List<Chord> chords = new ArrayList<>();
+		for (String s : chordStrings) {
+			Chord c = Chord.EMPTY(MidiGenerator.Durations.HALF_NOTE);
+			int[] mapped = mappedChord(s);
+			if (mapped == null)
+				return null;
+
+			c.setNotes(mapped);
+			chords.add(c);
+		}
+		return chords;
+	}
+
+	public static List<Pair<ScaleMode, Integer>> getKeyModesForChordsAndTarget(String rawChords,
+			ScaleMode targetMode) {
+		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
+		List<Chord> chords = convertChordStringsToChords(rawChordsList);
+		if (chords == null) {
+			return null;
+		}
+		Phrase phr = new Phrase();
+		addChordsToPhrase(phr, chords, 0.125);
+
+		List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils.detectKeyAndMode(phr,
+				targetMode, true);
+		return detectionResults;
+	}
+
+	public static List<String> processRawChords(String rawChords, ScaleMode targetMode) {
+		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
+		List<Chord> chords = convertChordStringsToChords(rawChordsList);
+		if (chords == null) {
+			return null;
+		}
+		List<Pair<ScaleMode, Integer>> detectionResults = getKeyModesForChordsAndTarget(rawChords,
+				targetMode);
+		if (detectionResults == null) {
+			return null;
+		}
+
+		Pair<ScaleMode, Integer> detectionResult = detectionResults
+				.get(detectionResults.size() - 1);
+
+		int transposeUpBy = detectionResult.getValue();
+		if (transposeUpBy != 0) {
+			for (Chord c : chords) {
+				c.setNotes(transposeChord(c.getNotes(), transposeUpBy));
+			}
+		}
+		if (detectionResult.getKey() != targetMode) {
+			return null;
+			/*for (Chord c : chords) {
+				c.setNotes(MidiUtils.transposeChord(c.getNotes(),
+						detectionResult.getKey().noteAdjustScale,
+						ScaleMode.IONIAN.noteAdjustScale));
+			}*/
+		}
+		for (Chord c : chords) {
+			c.setNotes(MidiUtils.transposeChord(c.getNotes(),
+					detectionResult.getKey().noteAdjustScale, ScaleMode.IONIAN.noteAdjustScale));
+		}
+
+
+		List<String> solvedChords = new ArrayList<>();
+		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		String firstLetterFirstChord = rawChords.substring(0, 1);
+		int firstPitchFirstChord = majorScaleNormalized
+				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord) - 1);
+		if (rawChords.length() > 1 && "#".equals(rawChords.substring(1, 2))) {
+			firstPitchFirstChord++;
+		}
+
+		for (Chord c : chords) {
+			int[] notes = c.getNotes();
+
+			// C,Fsus2,G,Am
+			System.out.println("Pitches: " + StringUtils.join(notes, ','));
+			boolean solved = false;
+			for (int i = 0; i < notes.length; i++) {
+				int firstPitch = notes[i] % 12;
+				int index = majorScaleNormalized.indexOf(firstPitch);
+				if (index < 0) {
+					return null;
+				}
+
+				String firstLetter = CHORD_FIRST_LETTERS.get(index + 1);
+				for (String spice : SPICE_NAMES_LIST) {
+					String combinedChord = firstLetter + spice;
+					int[] mapped = mappedChord(combinedChord);
+					if (Arrays.equals(normalizeChord(mapped), normalizeChord(notes))) {
+						solvedChords.add(combinedChord);
+						solved = true;
+						break;
+					}
+				}
+				if (solved)
+					break;
+			}
+		}
+
+
+		System.out.println(solvedChords.toString());
+		if (solvedChords.size() == chords.size()) {
+			String firstletterFirstSolvedChord = solvedChords.get(0).substring(0, 1);
+			int firstPitchFirstSolvedChord = majorScaleNormalized
+					.get(CHORD_FIRST_LETTERS.indexOf(firstletterFirstSolvedChord) - 1);
+			if (firstPitchFirstChord > firstPitchFirstSolvedChord && transposeUpBy > 0) {
+				//transposeUpBy -= 12;
+			} else if (firstPitchFirstChord < firstPitchFirstSolvedChord && transposeUpBy < 0) {
+				//transposeUpBy += 12;
+			}
+			VibeComposerGUI.transposeScore
+					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
+			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
+			return solvedChords;
+		} else {
+			return null;
+		}
+
+	}
+
+	public static int[] normalizeChord(int[] chord) {
+		int[] returnChord = Arrays.copyOf(chord, chord.length);
+		for (int i = 0; i < returnChord.length; i++) {
+			returnChord[i] = returnChord[i] % 12;
+		}
+		Arrays.sort(returnChord);
+		return returnChord;
+	}
+
+	public static String getNoteForPitch(int pitch) {
+		if (pitch < 0) {
+			return "";
+		}
+		int pitchNormalized = pitch % 12;
+		List<Integer> majorLetterPitches = Arrays.asList(Scales.MAJOR_SCALE);
+		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
+		if (chordLetter < 0) {
+			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);
+			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1) + "#";
+			return realLetter + pitch / 12;
+		} else {
+			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1);
+			return realLetter + pitch / 12;
+		}
+	}
+
+	public static List<String> respiceChords(String chordsString, GUIConfig gc) {
+		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
+		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
+			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
+			if (!gc.isDimAugDom7thEnabled()
+					&& MidiUtils.BANNED_DIM_AUG_7_LIST.contains(chordString)) {
+				continue;
+			}
+			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
+				continue;
+			}
+			allowedSpiceChordsMiddle.add(chordString);
+		}
+
+		List<String> allowedSpiceChords = new ArrayList<>();
+		for (String s : allowedSpiceChordsMiddle) {
+			if (MidiUtils.BANNED_DIM_AUG_7_LIST.contains(s)
+					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
+				continue;
+			}
+			allowedSpiceChords.add(s);
+		}
+
+		Random rand = new Random();
+
+		List<String> chordsList = Arrays.asList(chordsString.replaceAll(" ", "").split(","));
+		List<String> respicedChordsList = new ArrayList<>();
+		for (int i = 0; i < chordsList.size(); i++) {
+			String chord = chordsList.get(i);
+			boolean mapped = getNormalMappedChord(chord) != null;
+			if (mapped) {
+				//System.out.println("Mapped!");
+				String firstLetter = chord.substring(0, 1);
+
+				int firstIndex = CHORD_FIRST_LETTERS.indexOf(firstLetter);
+				String baseChord = MAJOR_CHORDS.get(firstIndex - 1);
+				List<String> spicyChordList = (i > 0 && i < chordsList.size() - 1)
+						? allowedSpiceChordsMiddle
+						: allowedSpiceChords;
+
+				if (rand.nextInt(100) >= gc.getSpiceChance()) {
+					respicedChordsList.add(baseChord);
+				} else {
+					String spicyChordString = firstLetter
+							+ spicyChordList.get(rand.nextInt(spicyChordList.size()));
+					if (baseChord.endsWith("m") && spicyChordString.contains("maj")) {
+						spicyChordString = spicyChordString.replace("maj", "m");
+					} else if (baseChord.length() == 1 && spicyChordString.contains("m")
+							&& !spicyChordString.contains("dim")
+							&& !spicyChordString.contains("maj")) {
+						spicyChordString = spicyChordString.replace("m", "maj");
+					}
+
+
+					if (chord.length() > 1 && chord.substring(1, 2).equals("#")) {
+						// insert at index 1
+						if (spicyChordString.length() > 2) {
+							spicyChordString = spicyChordString.substring(0, 1) + "#"
+									+ spicyChordString.substring(1, spicyChordString.length());
+						} else {
+							spicyChordString = spicyChordString.substring(0, 1) + "#";
+						}
+
+					}
+					respicedChordsList.add(spicyChordString);
+				}
+			} else {
+				//System.out.println("Not mapped!");
+				respicedChordsList.add(chord);
+			}
+		}
+		System.out.println("Returning respiced chords: " + respicedChordsList.toString());
+		return respicedChordsList;
 	}
 
 }

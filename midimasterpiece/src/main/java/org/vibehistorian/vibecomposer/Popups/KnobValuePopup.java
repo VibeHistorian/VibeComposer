@@ -1,33 +1,27 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.MouseInfo;
-import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
-import javax.swing.JFrame;
-
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 
-public class KnobValuePopup {
-	final JFrame frame = new JFrame();
+public class KnobValuePopup extends CloseablePopup {
 	private JKnob knob = null;
 	private NumPanel numPanel = null;
 	private boolean stretchAfterCustomInput = false;
 	private Integer customInput = null;
 
-	public KnobValuePopup(JKnob knob, boolean stretch) {
+	public KnobValuePopup(JKnob knob, boolean stretch, boolean allowValuesOutsideRange) {
+		super("Knob Value Setting", 0);
 		this.knob = knob;
 		stretchAfterCustomInput = stretch;
+
 		numPanel = new NumPanel("Knob", knob.getValue(), knob.getMin(), knob.getMax());
 		numPanel.getSlider().setVisible(false);
-		numPanel.setAllowValuesOutsideRange(stretchAfterCustomInput);
-		frame.add(numPanel);
-		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
-		addFrameWindowOperation();
+		numPanel.setAllowValuesOutsideRange(allowValuesOutsideRange);
 		numPanel.getTextfield().addKeyListener(new KeyListener() {
 
 			@Override
@@ -51,20 +45,14 @@ public class KnobValuePopup {
 			}
 
 		});
-		frame.setTitle("Knob Value Setting");
+
+		frame.add(numPanel);
 		frame.pack();
-		frame.setVisible(true);
+		//frame.setVisible(true);
 
 	}
 
-	public void close() {
-
-		Toolkit.getDefaultToolkit().getSystemEventQueue()
-				.postEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-
-	}
-
-	private void addFrameWindowOperation() {
+	protected void addFrameWindowOperation() {
 		frame.addWindowListener(new WindowListener() {
 
 			@Override
@@ -92,12 +80,12 @@ public class KnobValuePopup {
 					} else {
 						if (knob.getMin() <= val && knob.getMax() >= val) {
 							knob.setValue(val);
+						} else {
+							knob.setValue(Math.min(knob.getMax(), Math.max(knob.getMin(), val)));
 						}
 					}
 
 				}
-
-				JKnob.singlePopup = null;
 
 			}
 

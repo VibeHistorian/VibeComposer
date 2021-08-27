@@ -25,16 +25,24 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
+import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import jm.music.data.CPhrase;
 import jm.music.data.Phrase;
@@ -43,8 +51,8 @@ import jm.music.data.Phrase;
 @XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
-		INTRO, VERSE1, VERSE2, CHORUS1, BREAKDOWN, CHILL, VERSE3, BUILDUP, CHORUS2, ADVANCED_CHORUS,
-		OUTRO;
+		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP, CHORUS3,
+		CLIMAX, OUTRO;
 	}
 
 	public static final String[][] variationDescriptions = {
@@ -52,10 +60,10 @@ public class Section {
 			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "No2nd", "MaxStrum" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "ChordDir." },
-			{ "#", "Incl.", "IgnoreFill", "MoreExceptions" } };
+			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Pause Squish" };
+			"Swap Melody", "Melody Pause Squish", "Key Change" };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -63,6 +71,8 @@ public class Section {
 	private int measures;
 
 	private double startTime;
+	private double sectionDuration = -1;
+	private List<Double> sectionBeatDurations = null;
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -70,13 +80,47 @@ public class Section {
 	private int arpChance = 50;
 	private int drumChance = 50;
 
+
+	private List<Integer> instVelocityMultiplier = new ArrayList<>();
+
 	// data (transient)
 	private List<Phrase> melodies;
-	private CPhrase bass;
-	private List<CPhrase> chords;
-	private List<CPhrase> arps;
+	private Phrase bass;
+	private List<Phrase> chords;
+	private List<Phrase> arps;
 	private List<Phrase> drums;
 	private CPhrase chordSlash;
+
+	// customized chords/durations
+	private boolean customChordsDurationsEnabled = false;
+	private String customChords = "?";
+	private String customDurations = "2,2,2,2";
+
+	// customized parts
+	private List<BassPart> bassParts = null;
+	private List<MelodyPart> melodyParts = null;
+	private List<ChordPart> chordParts = null;
+	private List<DrumPart> drumParts = null;
+	private List<ArpPart> arpParts = null;
+
+	public List<? extends InstPart> getInstPartList(int order) {
+		if (order < 0 || order > 4) {
+			throw new IllegalArgumentException("Inst part list order wrong.");
+		}
+		switch (order) {
+		case 0:
+			return melodyParts;
+		case 1:
+			return bassParts;
+		case 2:
+			return chordParts;
+		case 3:
+			return arpParts;
+		case 4:
+			return drumParts;
+		}
+		return null;
+	}
 
 	// map integer(what), map integer(part order), list integer(section variation)
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
@@ -97,17 +141,6 @@ public class Section {
 		this.chordChance = chordChance;
 		this.arpChance = arpChance;
 		this.drumChance = drumChance;
-	}
-
-	public Section(Section orig) {
-		this();
-		this.type = orig.type;
-		this.measures = orig.measures;
-		this.melodyChance = orig.melodyChance;
-		this.bassChance = orig.bassChance;
-		this.chordChance = orig.chordChance;
-		this.arpChance = orig.arpChance;
-		this.drumChance = orig.drumChance;
 	}
 
 	@XmlAttribute
@@ -176,30 +209,30 @@ public class Section {
 		this.melodies = melodies;
 	}
 
-	public CPhrase getBass() {
+	public Phrase getBass() {
 		return bass;
 	}
 
 	@XmlTransient
-	public void setBass(CPhrase bass) {
+	public void setBass(Phrase bass) {
 		this.bass = bass;
 	}
 
-	public List<CPhrase> getChords() {
+	public List<Phrase> getChords() {
 		return chords;
 	}
 
 	@XmlTransient
-	public void setChords(List<CPhrase> chords) {
+	public void setChords(List<Phrase> chords) {
 		this.chords = chords;
 	}
 
-	public List<CPhrase> getArps() {
+	public List<Phrase> getArps() {
 		return arps;
 	}
 
 	@XmlTransient
-	public void setArps(List<CPhrase> arps) {
+	public void setArps(List<Phrase> arps) {
 		this.arps = arps;
 	}
 
@@ -221,6 +254,7 @@ public class Section {
 		this.chordSlash = chordSlash;
 	}
 
+	@XmlTransient
 	public double getStartTime() {
 		return startTime;
 	}
@@ -235,6 +269,10 @@ public class Section {
 				drumChance);
 		Map<Integer, Object[][]> dataCopy = new HashMap<>();
 		for (int i = 0; i < 5; i++) {
+			if (partPresenceVariationMap.get(i).length == 0) {
+				dataCopy.put(i, new Object[0][0]);
+				continue;
+			}
 			Object[][] data = new Object[partPresenceVariationMap
 					.get(i).length][partPresenceVariationMap.get(i)[0].length];
 			for (int k = 0; k < data.length; k++) {
@@ -244,9 +282,63 @@ public class Section {
 		}
 		sec.partPresenceVariationMap = dataCopy;
 		if (riskyVariations != null) {
-			sec.riskyVariations = new Vector<>(riskyVariations);
+			sec.riskyVariations = new ArrayList<>(riskyVariations);
 		}
+		if (instVelocityMultiplier != null) {
+			sec.instVelocityMultiplier = new ArrayList<>(instVelocityMultiplier);
+		}
+
+		if (getMelodyParts() != null) {
+			sec.setMelodyParts(getMelodyParts());
+		}
+		if (getBassParts() != null) {
+			sec.setBassParts(getBassParts());
+		}
+		if (getChordParts() != null) {
+			sec.setChordParts(getChordParts());
+		}
+		if (getArpParts() != null) {
+			sec.setArpParts(getArpParts());
+		}
+		if (getDrumParts() != null) {
+			sec.setDrumParts(getDrumParts());
+		}
+
+		sec.setCustomChords(getCustomChords());
+		sec.setCustomDurations(getCustomDurations());
+		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
+		sec.setSectionDuration(sectionDuration);
+		if (sectionBeatDurations != null) {
+			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
+		}
+
 		return sec;
+	}
+
+	public void resetCustomizedParts() {
+		setMelodyParts(null);
+		setBassParts(null);
+		setChordParts(null);
+		setArpParts(null);
+		setDrumParts(null);
+	}
+
+	public boolean hasCustomizedParts() {
+		return melodyParts != null || bassParts != null || chordParts != null || arpParts != null
+				|| drumParts != null;
+	}
+
+	public boolean hasPresence() {
+		for (int i = 0; i < 5; i++) {
+			if (countPresence(i) > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public int countPresence(int part) {
+		return getPresence(part).size();
 	}
 
 	public Set<Integer> getPresence(int part) {
@@ -300,6 +392,37 @@ public class Section {
 		}
 	}
 
+	public void generatePresences(Random presRand) {
+		initPartMapIfNull();
+		for (int i = 0; i < 5; i++) {
+			int chance = getChanceForInst(i);
+			List<? extends InstPanel> panels = VibeComposerGUI.getInstList(i);
+			for (int j = 0; j < panels.size(); j++) {
+				if (presRand.nextInt(100) < chance) {
+					setPresence(i, j);
+				}
+			}
+		}
+
+	}
+
+	public int getChanceForInst(int i) {
+		switch (i) {
+		case 0:
+			return melodyChance;
+		case 1:
+			return bassChance;
+		case 2:
+			return chordChance;
+		case 3:
+			return arpChance;
+		case 4:
+			return drumChance;
+		default:
+			throw new IllegalArgumentException("Too high inst. order");
+		}
+	}
+
 	public int getTypeSeedOffset() {
 		if (StringUtils.isEmpty(type)) {
 			return 0;
@@ -313,6 +436,10 @@ public class Section {
 	}
 
 	public int getTypeMelodyOffset() {
+		return getTypeMelodyOffset(type);
+	}
+
+	public static int getTypeMelodyOffset(String type) {
 		if (StringUtils.isEmpty(type)) {
 			return 0;
 		} else {
@@ -392,6 +519,7 @@ public class Section {
 		this.partPresenceVariationMap = partPresenceVariationMap;
 	}
 
+	@XmlList
 	public List<Boolean> getRiskyVariations() {
 		if (riskyVariations != null) {
 			while (riskyVariations.size() < riskyVariationNames.length) {
@@ -456,5 +584,103 @@ public class Section {
 			Object[] partData = partPresenceVariationMap.get(part)[i];
 			partData[variationNum] = Boolean.FALSE;
 		}
+	}
+
+	public List<BassPart> getBassParts() {
+		return bassParts;
+	}
+
+	public void setBassParts(List<BassPart> bassParts) {
+		this.bassParts = bassParts;
+	}
+
+	public List<MelodyPart> getMelodyParts() {
+		return melodyParts;
+	}
+
+	public void setMelodyParts(List<MelodyPart> melodyParts) {
+		this.melodyParts = melodyParts;
+	}
+
+	public List<ChordPart> getChordParts() {
+		return chordParts;
+	}
+
+	public void setChordParts(List<ChordPart> chordParts) {
+		this.chordParts = chordParts;
+	}
+
+	public List<DrumPart> getDrumParts() {
+		return drumParts;
+	}
+
+	public void setDrumParts(List<DrumPart> drumParts) {
+		this.drumParts = drumParts;
+	}
+
+	public List<ArpPart> getArpParts() {
+		return arpParts;
+	}
+
+	public void setArpParts(List<ArpPart> arpParts) {
+		this.arpParts = arpParts;
+	}
+
+	public String getCustomChords() {
+		return customChords;
+	}
+
+	public void setCustomChords(String customChords) {
+		this.customChords = customChords;
+	}
+
+	public String getCustomDurations() {
+		return customDurations;
+	}
+
+	public void setCustomDurations(String customDurations) {
+		this.customDurations = customDurations;
+	}
+
+	public boolean isCustomChordsDurationsEnabled() {
+		return customChordsDurationsEnabled;
+	}
+
+	public void setCustomChordsDurationsEnabled(boolean customChordsDurationsEnabled) {
+		this.customChordsDurationsEnabled = customChordsDurationsEnabled;
+	}
+
+	@XmlTransient
+	public double getSectionDuration() {
+		return sectionDuration;
+	}
+
+	public void setSectionDuration(double sectionDuration) {
+		this.sectionDuration = sectionDuration;
+	}
+
+	@XmlTransient
+	public List<Double> getSectionBeatDurations() {
+		return sectionBeatDurations;
+	}
+
+	public void setSectionBeatDurations(List<Double> sectionBeatDurations) {
+		this.sectionBeatDurations = sectionBeatDurations;
+	}
+
+	@XmlList
+	public List<Integer> getInstVelocityMultiplier() {
+		return instVelocityMultiplier;
+	}
+
+	public void setInstVelocityMultiplier(List<Integer> instVelocityMultiplier) {
+		this.instVelocityMultiplier = instVelocityMultiplier;
+	}
+
+	public Integer getVol(int inst) {
+		if (instVelocityMultiplier == null || instVelocityMultiplier.size() <= inst) {
+			return (67 + getChanceForInst(inst) / 3);
+		}
+		return instVelocityMultiplier.get(inst);
 	}
 }

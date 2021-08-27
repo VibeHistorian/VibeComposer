@@ -122,7 +122,7 @@ public class MelodyMidiDropPane extends JPanel {
 		}
 	}
 
-	protected void importFiles(final List files) {
+	protected void importFiles(final List<File> files) {
 		Runnable run = new Runnable() {
 			@Override
 			public void run() {
@@ -148,23 +148,23 @@ public class MelodyMidiDropPane extends JPanel {
 						JMusicUtilsCustom.consolidate(part);
 						//Mod.consolidate(part);
 						Phrase userMelodyCandidate = part.getPhrase(0);
-						Pair<ScaleMode, Integer> detectionResult = MidiUtils
-								.detectKeyAndMode(userMelodyCandidate);
+						List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils
+								.detectKeyAndMode(userMelodyCandidate, null, false);
 
-						if (detectionResult == null) {
+						if (detectionResults == null) {
 							message.setText("Unknown key, skipped!");
 							System.out.println("Melody uses unknown key, skipped!");
 							return;
 						}
 						userMelody = userMelodyCandidate;
-						int transposeUpBy = detectionResult.getValue();
+						Pair<ScaleMode, Integer> result = detectionResults
+								.get(detectionResults.size() - 1);
+						int transposeUpBy = result.getValue();
 						Mod.transpose(userMelody, transposeUpBy);
-						MidiUtils.transposePhrase(userMelody,
-								detectionResult.getKey().noteAdjustScale,
+						MidiUtils.transposePhrase(userMelody, result.getKey().noteAdjustScale,
 								ScaleMode.IONIAN.noteAdjustScale);
 						VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
-						VibeComposerGUI.scaleMode
-								.setSelectedItem(detectionResult.getKey().toString());
+						VibeComposerGUI.scaleMode.setSelectedItem(result.getKey().toString());
 
 						//System.out.println(userMelody.toString());
 						System.out.println("Tempo: " + scr.getTempo());
@@ -223,7 +223,7 @@ public class MelodyMidiDropPane extends JPanel {
 				dtde.acceptDrop(dtde.getDropAction());
 				try {
 
-					List transferData = (List) transferable
+					List<File> transferData = (List<File>) transferable
 							.getTransferData(DataFlavor.javaFileListFlavor);
 					if (transferData != null && transferData.size() > 0) {
 						importFiles(transferData);

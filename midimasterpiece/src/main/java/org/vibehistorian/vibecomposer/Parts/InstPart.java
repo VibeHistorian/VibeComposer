@@ -19,18 +19,24 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Parts;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlList;
 
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
-public abstract class InstPart {
+public abstract class InstPart implements Cloneable {
 	protected int instrument = 46;
 
 	protected int hitsPerPattern = 8;
 	protected int chordSpan = 1;
 	protected ChordSpanFill chordSpanFill = ChordSpanFill.ALL;
+	protected boolean fillFlip = false;
 
 	protected int chordNotesStretch = 3;
 	protected boolean stretchEnabled = false;
@@ -53,6 +59,9 @@ public abstract class InstPart {
 
 	protected int patternSeed = 0;
 	protected RhythmPattern pattern = RhythmPattern.FULL;
+	protected List<Integer> customPattern = null;
+	protected boolean patternFlip = false;
+
 	protected int patternShift = 0;
 
 	protected int sliderVolume = 100;
@@ -67,6 +76,7 @@ public abstract class InstPart {
 		setHitsPerPattern(panel.getHitsPerPattern());
 		setChordSpan(panel.getChordSpan());
 		setChordSpanFill(panel.getChordSpanFill());
+		setFillFlip(panel.getFillFlip());
 
 		setChordNotesStretch(panel.getChordNotesStretch());
 		setStretchEnabled(panel.getStretchEnabled());
@@ -88,8 +98,12 @@ public abstract class InstPart {
 
 		setSwingPercent(panel.getSwingPercent());
 
+		setCustomPattern(
+				panel.getComboPanel() != null ? panel.getComboPanel().getTruePattern() : null);
+
 		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
+		setPatternFlip(panel.getPatternFlip());
 		setPatternShift(panel.getPatternShift());
 
 		setMuted(panel.getMuteInst());
@@ -269,6 +283,22 @@ public abstract class InstPart {
 		this.swingPercent = swingPercent;
 	}
 
+	public boolean isFillFlip() {
+		return fillFlip;
+	}
+
+	public void setFillFlip(boolean fillFlip) {
+		this.fillFlip = fillFlip;
+	}
+
+	public boolean isPatternFlip() {
+		return patternFlip;
+	}
+
+	public void setPatternFlip(boolean patternFlip) {
+		this.patternFlip = patternFlip;
+	}
+
 	@XmlAttribute
 	public int getOrder() {
 		return order;
@@ -276,6 +306,40 @@ public abstract class InstPart {
 
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+
+	@XmlList
+	public List<Integer> getCustomPattern() {
+		return customPattern;
+	}
+
+	public List<Integer> getFinalPatternCopy() {
+		List<Integer> premadePattern = null;
+		if (getPattern() != RhythmPattern.CUSTOM) {
+			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
+					getPatternShift());
+		} else {
+			List<Integer> premadeCopy = new ArrayList<>(getCustomPattern());
+			Collections.rotate(premadeCopy, getPatternShift());
+			premadePattern = premadeCopy;
+		}
+		return premadePattern;
+	}
+
+
+	public void setCustomPattern(List<Integer> customPattern) {
+		this.customPattern = customPattern;
+	}
+
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }
