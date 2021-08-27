@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -12,7 +13,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 	JScrollPane scroll;
 
 	public ExtraSettingsPopup() {
-		super("Extra settings", 2);
+		super("Extra settings", 2, new Point(-300, 50));
 		scroll = new JScrollPane(VibeComposerGUI.extraSettingsPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);

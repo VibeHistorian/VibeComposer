@@ -15,9 +15,14 @@ public abstract class CloseablePopup {
 	private Integer popupType = 0;
 
 	public CloseablePopup(String windowTitle, Integer popupType) {
+		this(windowTitle, popupType, new Point(0, 0));
+	}
+
+	public CloseablePopup(String windowTitle, Integer popupType, Point locOffset) {
 		this.setPopupType(popupType);
 		Point loc = MouseInfo.getPointerInfo().getLocation();
 		loc.translate(12, 12);
+		loc.translate(locOffset.x, locOffset.y);
 		frame.setLocation(loc);
 		addFrameWindowOperation();
 		frame.setTitle(windowTitle);

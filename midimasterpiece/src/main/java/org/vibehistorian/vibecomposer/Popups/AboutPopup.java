@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Point;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -12,7 +13,7 @@ public class AboutPopup extends CloseablePopup {
 	JScrollPane scroll;
 
 	public AboutPopup() {
-		super("About", 1);
+		super("About", 1, new Point(-400, 30));
 		textArea = new JTextArea(24, 80);
 		textArea.setBackground(Color.BLACK);
 		textArea.setForeground(Color.LIGHT_GRAY);

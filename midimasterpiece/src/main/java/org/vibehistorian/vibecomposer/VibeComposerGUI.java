@@ -881,10 +881,8 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(pauseBehaviorPanel);
 		extraSettingsPanel.add(customDrumMappingPanel);
 
-		// CHORD SETTINGS 2 - chord progression
-		extraUseChordFormula = new JCheckBox("Chord Formula", true);
 
-
+		// CHORD SETTINGS 2
 		keyChangeTypeSelection = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
 				keyChangeTypeSelection);
@@ -892,10 +890,11 @@ public class VibeComposerGUI extends JFrame
 		keyChangeTypeSelection.addItemListener(this);
 
 		JPanel chordChoicePanel = new JPanel();
-
+		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
+		extraUseChordFormula = new JCheckBox("Chord Formula", true);
 
 		chordChoicePanel.add(extraUseChordFormula);
-
+		chordChoicePanel.add(spiceFlattenBigChords);
 		chordChoicePanel.add(new JLabel("Key change type:"));
 		chordChoicePanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(chordChoicePanel);
@@ -2429,7 +2428,6 @@ public class VibeComposerGUI extends JFrame
 		spiceChance = new KnobPanel("Spice", 15);
 		spiceAllowDimAugDom7th = new JCheckBox("Dim/Aug/Dom7", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
-		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 
 		spiceForceScale = new JCheckBox("Force Scale", true);
 		firstChordSelection = new ScrollComboBox<String>();
@@ -2457,9 +2455,6 @@ public class VibeComposerGUI extends JFrame
 		spiceAllow9th13thPanel.add(spiceAllow9th13th);
 		spiceAllow9th13thPanel.setOpaque(false);
 
-		JPanel spiceFlattenBigChordsPanel = new JPanel();
-		spiceFlattenBigChordsPanel.add(spiceFlattenBigChords);
-		spiceFlattenBigChordsPanel.setOpaque(false);
 
 		JPanel spiceForceScalePanel = new JPanel();
 		spiceForceScalePanel.add(spiceForceScale);
@@ -2478,7 +2473,6 @@ public class VibeComposerGUI extends JFrame
 		chordProgressionSettingsPanel.add(spiceChancePanel);
 		chordProgressionSettingsPanel.add(spiceAllowDimAugPanel);
 		chordProgressionSettingsPanel.add(spiceAllow9th13thPanel);
-		chordProgressionSettingsPanel.add(spiceFlattenBigChordsPanel);
 
 		chordProgressionSettingsPanel.add(spiceForceScalePanel);
 		chordProgressionSettingsPanel.add(firstChordsPanel);
