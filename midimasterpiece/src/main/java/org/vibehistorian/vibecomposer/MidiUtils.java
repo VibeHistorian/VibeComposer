@@ -116,6 +116,8 @@ public class MidiUtils {
 	public static final int[] cSus4th4 = { Pitches.C4, Pitches.F4, Pitches.G4 };
 	public static final int[] cSus2nd4 = { Pitches.C4, Pitches.D4, Pitches.G4 };
 	public static final int[] cSus7th4 = { Pitches.C4, Pitches.F4, Pitches.G4, Pitches.BF4 };
+	public static final int[] cMaj6th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.A4 };
+	public static final int[] cMin6th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.A4 };
 
 	public static final List<int[]> SPICE_CHORDS_LIST = new ArrayList<>();
 	static {
@@ -136,6 +138,9 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cSus4th4);
 		SPICE_CHORDS_LIST.add(cSus2nd4);
 		SPICE_CHORDS_LIST.add(cSus7th4);
+
+		SPICE_CHORDS_LIST.add(cMaj6th4);
+		SPICE_CHORDS_LIST.add(cMin6th4);
 	}
 
 	public static final List<String> BANNED_DIM_AUG_7_LIST = Arrays
@@ -145,8 +150,9 @@ public class MidiUtils {
 	public static final List<String> BANNED_SUSSY_LIST = Arrays
 			.asList(new String[] { "sus4", "sus2", "sus7" });
 
-	public static final List<String> SPICE_NAMES_LIST = Arrays.asList(new String[] { "", "m", "aug",
-			"dim", "7", "maj7", "m7", "maj9", "m9", "maj13", "m13", "sus4", "sus2", "sus7" });
+	public static final List<String> SPICE_NAMES_LIST = Arrays
+			.asList(new String[] { "", "m", "aug", "dim", "7", "maj7", "m7", "maj9", "m9", "maj13",
+					"m13", "sus4", "sus2", "sus7", "maj6", "m6" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
@@ -989,32 +995,57 @@ public class MidiUtils {
 					detectionResult.getKey().noteAdjustScale, ScaleMode.IONIAN.noteAdjustScale));
 		}
 
+
 		List<String> solvedChords = new ArrayList<>();
 		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		String firstLetterFirstChord = rawChords.substring(0, 1);
+		int firstPitchFirstChord = majorScaleNormalized
+				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord) - 1);
+		if (rawChords.length() > 1 && "#".equals(rawChords.substring(1, 2))) {
+			firstPitchFirstChord++;
+		}
+
 		for (Chord c : chords) {
 			int[] notes = c.getNotes();
-			int firstPitch = notes[0] % 12;
-			int index = majorScaleNormalized.indexOf(firstPitch);
-			if (index < 0) {
-				return null;
-			}
-			String firstLetter = CHORD_FIRST_LETTERS.get(index + 1);
-			for (String spice : SPICE_NAMES_LIST) {
-				String combinedChord = firstLetter + spice;
-				int[] mapped = mappedChord(combinedChord);
-				if (Arrays.equals(normalizeChord(mapped), normalizeChord(notes))) {
-					solvedChords.add(combinedChord);
-					break;
+
+			// C,Fsus2,G,Am
+			System.out.println("Pitches: " + StringUtils.join(notes, ','));
+			boolean solved = false;
+			for (int i = 0; i < notes.length; i++) {
+				int firstPitch = notes[i] % 12;
+				int index = majorScaleNormalized.indexOf(firstPitch);
+				if (index < 0) {
+					return null;
 				}
+
+				String firstLetter = CHORD_FIRST_LETTERS.get(index + 1);
+				for (String spice : SPICE_NAMES_LIST) {
+					String combinedChord = firstLetter + spice;
+					int[] mapped = mappedChord(combinedChord);
+					if (Arrays.equals(normalizeChord(mapped), normalizeChord(notes))) {
+						solvedChords.add(combinedChord);
+						solved = true;
+						break;
+					}
+				}
+				if (solved)
+					break;
 			}
 		}
 
 
 		System.out.println(solvedChords.toString());
 		if (solvedChords.size() == chords.size()) {
-
-			/*VibeComposerGUI.transposeScore
-					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));*/
+			String firstletterFirstSolvedChord = solvedChords.get(0).substring(0, 1);
+			int firstPitchFirstSolvedChord = majorScaleNormalized
+					.get(CHORD_FIRST_LETTERS.indexOf(firstletterFirstSolvedChord) - 1);
+			if (firstPitchFirstChord > firstPitchFirstSolvedChord && transposeUpBy > 0) {
+				//transposeUpBy -= 12;
+			} else if (firstPitchFirstChord < firstPitchFirstSolvedChord && transposeUpBy < 0) {
+				//transposeUpBy += 12;
+			}
+			VibeComposerGUI.transposeScore
+					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
 			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
 			return solvedChords;
 		} else {
@@ -1024,10 +1055,12 @@ public class MidiUtils {
 	}
 
 	public static int[] normalizeChord(int[] chord) {
-		for (int i = 0; i < chord.length; i++) {
-			chord[i] = chord[i] % 12;
+		int[] returnChord = Arrays.copyOf(chord, chord.length);
+		for (int i = 0; i < returnChord.length; i++) {
+			returnChord[i] = returnChord[i] % 12;
 		}
-		return chord;
+		Arrays.sort(returnChord);
+		return returnChord;
 	}
 
 	public static String getNoteForPitch(int pitch) {
