@@ -2884,8 +2884,14 @@ public class MidiGenerator implements JMC {
 						/ 1000.0;
 				//System.out.println("Split time: " + splitTime);
 
-				List<Integer> pattern = cp.getFinalPatternCopy();
-				pattern = pattern.subList(0, cp.getHitsPerPattern());
+				List<Integer> pattern = null;
+				if (cp.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
+					pattern = new ArrayList<>(melodyNotePattern.subList(
+							j * MELODY_PATTERN_RESOLUTION, (j + 1) * MELODY_PATTERN_RESOLUTION));
+				} else {
+					pattern = cp.getFinalPatternCopy();
+					pattern = pattern.subList(0, cp.getHitsPerPattern());
+				}
 				if (cp.isPatternFlip()) {
 					pattern.set(i, 1 - pattern.get(i));
 				}
