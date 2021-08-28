@@ -128,6 +128,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.MidiGenerator.ShowScoreMode;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -1167,7 +1168,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordExpandChance = new KnobPanel("Expand%", 50);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new KnobPanel("Max Tran-<br>sition%", 25);
-		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 0);
+		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 30);
 		randomChordPattern = new JCheckBox("Patterns", true);
 		randomChordShiftChance = new KnobPanel("Shift%", 25);
 		randomChordMinVel = new KnobPanel("Min<br>Vel", 65, 0, 126);
@@ -3007,7 +3008,8 @@ public class VibeComposerGUI extends JFrame
 
 		showScore = new JCheckBox("Show Score", false);
 		showScorePicker = new ScrollComboBox<String>();
-		MidiUtils.addAllToJComboBox(new String[] { "NO Drums/Chords", "Drums Only", "ALL" },
+		MidiUtils.addAllToJComboBox(
+				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },
 				showScorePicker);
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
@@ -4862,7 +4864,8 @@ public class VibeComposerGUI extends JFrame
 	public void fillUserParameters() {
 		try {
 			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
-			MidiGenerator.showScoreMode = showScorePicker.getSelectedIndex();
+			MidiGenerator.showScoreMode = ShowScoreMode.values()[showScorePicker
+					.getSelectedIndex()];
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
 			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
 			MidiGenerator.recalculateDurations(elongateMidi.getInt());

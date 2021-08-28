@@ -81,6 +81,10 @@ import jm.util.Write;
 
 public class MidiGenerator implements JMC {
 
+	public enum ShowScoreMode {
+		NODRUMSCHORDS, DRUMSONLY, CHORDSONLY, ALL;
+	}
+
 	public static double noteMultiplier = 2.0;
 
 	public static class Durations {
@@ -162,7 +166,7 @@ public class MidiGenerator implements JMC {
 	public static String LAST_CHORD = null;
 
 	public static boolean DISPLAY_SCORE = false;
-	public static int showScoreMode = 0;
+	public static ShowScoreMode showScoreMode = ShowScoreMode.NODRUMSCHORDS;
 
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
 	public static boolean COLLAPSE_MELODY_TRACKS = true;
@@ -2044,7 +2048,7 @@ public class MidiGenerator implements JMC {
 				if (useChordSlash) {
 					sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
 				} else {
-					sec.setChordSlash(emptyCPhrase.copy());
+					sec.setChordSlash(emptyPhrase.copy());
 				}
 
 			}
@@ -2175,10 +2179,10 @@ public class MidiGenerator implements JMC {
 
 			}
 			if (gc.getChordParts().size() > 0) {
-				CPhrase cscp = sec.getChordSlash();
-				cscp.setStartTime(cscp.getStartTime() + sec.getStartTime());
-				cscp.setAppend(false);
-				chordParts.get(0).addCPhrase(cscp);
+				Phrase csp = sec.getChordSlash();
+				csp.setStartTime(csp.getStartTime() + sec.getStartTime());
+				csp.setAppend(false);
+				chordParts.get(0).addPhrase(csp);
 			}
 
 		}
@@ -2292,10 +2296,16 @@ public class MidiGenerator implements JMC {
 			for (Object p : score.getPartList()) {
 				Part part = (Part) p;
 				if ((part.getTitle().equalsIgnoreCase("MainDrums")
-						|| part.getTitle().startsWith("Chords")) && showScoreMode == 0) {
+						|| part.getTitle().startsWith("Chords"))
+						&& showScoreMode == ShowScoreMode.NODRUMSCHORDS) {
 					partsToRemove.add(part);
 					continue;
-				} else if (!part.getTitle().equalsIgnoreCase("MainDrums") && showScoreMode == 1) {
+				} else if (!part.getTitle().equalsIgnoreCase("MainDrums")
+						&& showScoreMode == ShowScoreMode.DRUMSONLY) {
+					partsToRemove.add(part);
+					continue;
+				} else if (!part.getTitle().startsWith("Chords")
+						&& showScoreMode == ShowScoreMode.CHORDSONLY) {
 					partsToRemove.add(part);
 					continue;
 				}
@@ -3387,28 +3397,42 @@ public class MidiGenerator implements JMC {
 		throw new IllegalArgumentException("Absolute order not found!");
 	}
 
-	protected CPhrase fillChordSlash(List<int[]> actualProgression, int measures) {
-		CPhrase chordSlashCPhrase = new CPhrase();
+	protected Phrase fillChordSlash(List<int[]> actualProgression, int measures) {
+		Phrase chordSlashPhrase = new Phrase();
 		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
 		for (int i = 0; i < measures; i++) {
 			// fill slash chord slashes
 			for (int j = 0; j < actualProgression.size(); j++) {
-				// pick random chord, take first/root pitch
 				boolean isChordSlash = chordSlashGenerator.nextInt(100) < gc.getChordSlashChance();
-				String slashChord = MidiUtils.MAJOR_CHORDS.get(chordSlashGenerator.nextInt(6));
-				int[] mappedChord = mappedChord(slashChord);
-				if (isChordSlash && mappedChord != null) {
-					chordSlashCPhrase.addChord(new int[] { mappedChord[0] },
+
+				if (isChordSlash) {
+					int[] actualChord = actualProgression.get(j);
+					int semitone = actualChord[chordSlashGenerator.nextInt(actualChord.length)];
+					int lowestSemitone = actualChord[0];
+					int targetOctave = (lowestSemitone / 12) - 1;
+					int targetSemitone = targetOctave * 12 + semitone % 12;
+					chordSlashPhrase.addChord(new int[] { targetSemitone },
 							progressionDurations.get(j));
 				} else {
-					chordSlashCPhrase.addChord(new int[] { Integer.MIN_VALUE },
+					chordSlashPhrase.addChord(new int[] { Integer.MIN_VALUE },
 							progressionDurations.get(j));
 				}
 			}
 		}
-		Mod.transpose(chordSlashCPhrase, -24);
-		chordSlashCPhrase.setStartTime(START_TIME_DELAY);
-		return chordSlashCPhrase;
+		int extraTranspose = 0;
+		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+			MidiUtils.transposePhrase(chordSlashPhrase, ScaleMode.IONIAN.noteAdjustScale,
+					gc.getScaleMode().noteAdjustScale);
+		}
+		Mod.transpose(chordSlashPhrase, -12 + extraTranspose + modTrans);
+
+		// delay
+		double additionalDelay = 0;
+		/*if (gc.getChordGenSettings().isUseDelay()) {
+			additionalDelay = ((noteMultiplier * cp.getDelay()) / 1000.0);
+		}*/
+		chordSlashPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
+		return chordSlashPhrase;
 
 
 	}

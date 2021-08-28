@@ -44,7 +44,6 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
-import jm.music.data.CPhrase;
 import jm.music.data.Phrase;
 
 @XmlRootElement(name = "section")
@@ -89,7 +88,7 @@ public class Section {
 	private List<Phrase> chords;
 	private List<Phrase> arps;
 	private List<Phrase> drums;
-	private CPhrase chordSlash;
+	private Phrase chordSlash;
 
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
@@ -245,12 +244,12 @@ public class Section {
 		this.drums = drums;
 	}
 
-	public CPhrase getChordSlash() {
+	public Phrase getChordSlash() {
 		return chordSlash;
 	}
 
 	@XmlTransient
-	public void setChordSlash(CPhrase chordSlash) {
+	public void setChordSlash(Phrase chordSlash) {
 		this.chordSlash = chordSlash;
 	}
 
