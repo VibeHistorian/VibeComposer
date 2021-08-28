@@ -405,8 +405,8 @@ public class Section {
 
 	}
 
-	public int getChanceForInst(int i) {
-		switch (i) {
+	public int getChanceForInst(int inst) {
+		switch (inst) {
 		case 0:
 			return melodyChance;
 		case 1:
@@ -417,6 +417,28 @@ public class Section {
 			return arpChance;
 		case 4:
 			return drumChance;
+		default:
+			throw new IllegalArgumentException("Too high inst. order");
+		}
+	}
+
+	public void addChanceForInst(int inst, int chance) {
+		switch (inst) {
+		case 0:
+			melodyChance = Math.min(100, Math.max(0, melodyChance + chance));
+			break;
+		case 1:
+			bassChance = Math.min(100, Math.max(0, bassChance + chance));
+			break;
+		case 2:
+			chordChance = Math.min(100, Math.max(0, chordChance + chance));
+			break;
+		case 3:
+			arpChance = Math.min(100, Math.max(0, arpChance + chance));
+			break;
+		case 4:
+			drumChance = Math.min(100, Math.max(0, drumChance + chance));
+			break;
 		default:
 			throw new IllegalArgumentException("Too high inst. order");
 		}

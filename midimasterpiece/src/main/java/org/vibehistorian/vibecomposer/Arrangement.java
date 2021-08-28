@@ -120,18 +120,25 @@ public class Arrangement {
 		}
 
 		sections.clear();
+		Section lastSec = null;
 		for (String s : fullArrangement) {
+			// skip same section with no changes in it
+			if (lastSec != null && s.equals(lastSec.getType()) && !s.equals("CLIMAX")) {
+				continue;
+			}
 			//System.out.println("DeepCopy for " + s);
 			Section sec = defaultSections.get(s).deepCopy();
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
-
-				if (sec.getMeasures() > 1) {
-					sec.setMeasures(1);
-				} else {
-					sec.setMeasures(2);
+				sections.add(sec);
+				Section doubleSec = sec.deepCopy();
+				for (int i = 0; i < 5; i++) {
+					doubleSec.addChanceForInst(i, 10);
 				}
+				sections.add(doubleSec);
+			} else {
+				sections.add(sec);
 			}
-			sections.add(sec);
+			lastSec = sec;
 		}
 	}
 
