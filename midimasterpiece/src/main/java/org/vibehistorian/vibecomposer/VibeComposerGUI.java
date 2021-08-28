@@ -194,7 +194,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = false;
+	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -892,8 +892,11 @@ public class VibeComposerGUI extends JFrame
 		JPanel chordChoicePanel = new JPanel();
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 		extraUseChordFormula = new JCheckBox("Chord Formula", true);
+		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
+
 
 		chordChoicePanel.add(extraUseChordFormula);
+		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
 		chordChoicePanel.add(new JLabel("Key change type:"));
 		chordChoicePanel.add(keyChangeTypeSelection);
@@ -1167,7 +1170,6 @@ public class VibeComposerGUI extends JFrame
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 0);
 		randomChordPattern = new JCheckBox("Patterns", true);
 		randomChordShiftChance = new KnobPanel("Shift%", 25);
-		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		randomChordMinVel = new KnobPanel("Min<br>Vel", 65, 0, 126);
 		randomChordMaxVel = new KnobPanel("Max<br>Vel", 90, 1, 127);
 
@@ -1205,7 +1207,6 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsExtraPanel.add(randomChordExpandChance);
 		chordSettingsExtraPanel.add(randomChordMaxSplitChance);
 		chordSettingsExtraPanel.add(chordSlashChance);
-		chordSettingsExtraPanel.add(randomChordVoicingChance);
 		chordSettingsExtraPanel.add(randomChordMinVel);
 		chordSettingsExtraPanel.add(randomChordMaxVel);
 		chordSettingsExtraPanel.add(randomChordPattern);
