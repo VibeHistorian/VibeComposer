@@ -1,7 +1,7 @@
 package org.vibehistorian.vibecomposer.Parts.Defaults;
 
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ALT;
-import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONEFIVE;
+import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONESIX;
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONEPER4;
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.TRESILLO;
 
@@ -33,14 +33,14 @@ public class DrumDefaults {
 	static {
 		kickSettings = new DrumSettings();
 		kickSettings.setPatterns(
-				new RhythmPattern[] { ONEPER4, ONEFIVE, TRESILLO, ALT, RhythmPattern.CUSTOM });
+				new RhythmPattern[] { ONEPER4, ONESIX, TRESILLO, ALT, RhythmPattern.CUSTOM });
 		kickSettings.setHits(new Integer[] { 8, 8, 8, 8, 16 });
 		kickSettings.setChords(new Integer[] { 1, 1, 1, 2, 1 });
 		kickSettings.setShift(new Integer[] { 0, 0, 0, 0, 0 });
 
 		snareSettings = new DrumSettings();
 		snareSettings.setPatterns(
-				new RhythmPattern[] { ONEPER4, ONEFIVE, ALT, RhythmPattern.SINGLE, ONEPER4 });
+				new RhythmPattern[] { ONEPER4, ONESIX, ALT, RhythmPattern.SINGLE, ONEPER4 });
 		snareSettings.setHits(new Integer[] { 8, 8, 8, 8, 8 });
 		snareSettings.setChords(new Integer[] { 1, 1, 2, 1, 1 });
 		snareSettings.setShift(new Integer[] { 2, 2, 1, 6, 3 });
@@ -48,7 +48,7 @@ public class DrumDefaults {
 
 		hatSettings = new DrumSettings();
 		hatSettings.setPatterns(
-				new RhythmPattern[] { ONEPER4, ONEFIVE, TRESILLO, ALT, RhythmPattern.FULL });
+				new RhythmPattern[] { ONEPER4, ONESIX, TRESILLO, ALT, RhythmPattern.FULL });
 		hatSettings.setHits(new Integer[] { 16, 16, 8, 8, 8 });
 		hatSettings.setChords(new Integer[] { 1, 1, 1, 2, 2 });
 		hatSettings.setShift(new Integer[] { 2, 2, 2, 1, 0 });
@@ -69,7 +69,7 @@ public class DrumDefaults {
 
 		percsSettings = new DrumSettings();
 		percsSettings.setPatterns(
-				new RhythmPattern[] { ONEPER4, ONEFIVE, TRESILLO, ALT, RhythmPattern.FULL });
+				new RhythmPattern[] { ONEPER4, ONESIX, TRESILLO, ALT, RhythmPattern.FULL });
 		percsSettings.setHits(new Integer[] { 16, 16, 8, 8, 8 });
 		percsSettings.setChords(new Integer[] { 1, 1, 1, 2, 2 });
 		percsSettings.setShift(new Integer[] { 3, 3, 5, 1, 0 });
