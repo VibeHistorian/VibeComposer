@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MelodyUtils {
+
+
 	public static List<Integer[]> SCALEY = new ArrayList<>();
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
 	public static List<Integer[]> ARPY = new ArrayList<>();

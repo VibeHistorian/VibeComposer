@@ -229,6 +229,229 @@ public class MidiGenerator implements JMC {
 		MidiGenerator.gc = gc;
 	}
 
+	public static class MelodyBlock {
+		public MelodyBlock(List<Integer> notes, List<Double> durations, boolean inverse) {
+			super();
+			this.notes = notes;
+			this.durations = durations;
+			this.inverse = inverse;
+		}
+
+		public List<Integer> notes;
+		public List<Double> durations;
+		public boolean inverse;
+
+	}
+
+	private Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
+			List<int[]> roots, int measures, int notesSeedOffset, Section sec,
+			List<Integer> variations) {
+
+		boolean genVars = variations == null;
+
+		boolean fillChordMelodyMap = false;
+		if (chordMelodyMap1.isEmpty() && notesSeedOffset == 0
+				&& (roots.size() == chordInts.size())) {
+			fillChordMelodyMap = true;
+		}
+
+		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
+		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
+		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
+		int EXCEPTION_CHANCE = gc.getMelodyExceptionChance();
+
+		int seed = mp.getPatternSeed();
+
+		Vector<Note> noteList = new Vector<>();
+
+		// if notes seed offset > 0, add it only to one of: rhythms, pitches
+		//Random nonMainMelodyGenerator = new Random(seed + 30);
+		int pitchPickerOffset = notesSeedOffset;
+		int rhythmOffset = notesSeedOffset;
+
+		Random melodyBlockGenerator = new Random(seed + notesSeedOffset);
+
+		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset);
+		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
+		Random sameRhythmGenerator = new Random(seed + 3);
+		Random alternateRhythmGenerator = new Random(seed + 4);
+		Random variationGenerator = new Random(seed + notesSeedOffset);
+		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
+		Random directionGenerator = new Random(seed + 10);
+		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
+		Random exceptionTypeGenerator = new Random(seed + 20 + notesSeedOffset);
+		int numberOfVars = Section.variationDescriptions[0].length - 2;
+
+		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE,
+				Durations.QUARTER_NOTE };
+
+		// TODO: quickness
+		int[] melodySkeletonDurationWeights = Rhythm
+				.normalizedCumulativeWeights(new int[] { 40, 20, 40 });
+
+		List<int[]> usedChords = null;
+		if (gc.isMelodyBasicChordsOnly()) {
+			List<int[]> basicChordsUnsquished = getBasicChordsFromRoots(roots);
+			for (int i = 0; i < chords.size(); i++) {
+				basicChordsUnsquished.set(i, convertChordToLength(basicChordsUnsquished.get(i),
+						chords.get(i).length, true));
+			}
+			usedChords = basicChordsUnsquished;
+		} else {
+			usedChords = chords;
+		}
+
+		List<int[]> stretchedChords = usedChords.stream().map(e -> convertChordToLength(e, 4, true))
+				.collect(Collectors.toList());
+		List<Double> directionChordDividers = (!gc.isMelodyUseDirectionsFromProgression())
+				? generateMelodyDirectionChordDividers(stretchedChords.size(), directionGenerator)
+				: null;
+		directionGenerator.setSeed(seed + 10);
+		boolean currentDirection = directionGenerator.nextBoolean();
+		if (!gc.isMelodyUseDirectionsFromProgression()) {
+			System.out.println("Direction dividers: " + directionChordDividers.toString()
+					+ ", start at: " + currentDirection);
+		}
+
+		List<Boolean> directionsFromChords = (gc.isMelodyUseDirectionsFromProgression())
+				? generateMelodyDirectionsFromChordProgression(usedChords, true)
+				: null;
+
+		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
+		//System.out.println("Alt: " + alternateRhythm);
+
+		for (int o = 0; o < measures; o++) {
+			int previousNotePitch = 0;
+			int firstPitchInTwoChords = 0;
+
+			for (int i = 0; i < stretchedChords.size(); i++) {
+				// either after first measure, or after first half of combined chord prog
+
+				if (genVars && (i == 0)) {
+					variations = fillVariations(sec, variationGenerator, variations, numberOfVars,
+							0);
+				}
+
+				if ((variations != null) && (i == 0)) {
+					for (Integer var : variations) {
+						if (o == measures - 1) {
+							System.out.println("Melody variation: " + var);
+						}
+
+						switch (var) {
+						case 0:
+							// only add, processed later
+							break;
+						case 1:
+							MAX_JUMP_SKELETON_CHORD = Math.min(4, MAX_JUMP_SKELETON_CHORD + 1);
+							break;
+						default:
+							throw new IllegalArgumentException("Too much variation!");
+						}
+					}
+				}
+
+				if (fillChordMelodyMap && o == 0) {
+					if (!chordMelodyMap1.containsKey(Integer.valueOf(i))) {
+						chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
+					}
+				}
+				if (i % 2 == 0) {
+					previousNotePitch = firstPitchInTwoChords;
+					pitchPickerGenerator.setSeed(seed + pitchPickerOffset);
+					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
+					if (alternateRhythm) {
+						sameRhythmGenerator.setSeed(seed + 3);
+					}
+				}
+
+				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
+
+				double rhythmDuration = sameRhythmTwice ? progressionDurations.get(i) / 2.0
+						: progressionDurations.get(i);
+				int rhythmSeed = (alternateRhythm && i % 2 == 1) ? seed + 1 : seed;
+				rhythmSeed += rhythmOffset;
+				Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
+						melodySkeletonDurationWeights);
+
+				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2);
+				/*if (gc.isMelodyArpySurprises()) {
+					if (sameRhythmTwice) {
+						if ((i % 2 == 0) || (durations.size() < 3)) {
+							durations.addAll(durations);
+						} else {
+							List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
+							if (arpedDurations != null) {
+								System.out.println("Double pattern - surprise!");
+								durations.addAll(arpedDurations);
+							} else {
+								durations.addAll(durations);
+							}
+						}
+					} else if (i % 2 == 1 && durations.size() >= 4) {
+				
+						List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
+						if (arpedDurations != null) {
+							System.out.println("Single pattern - surprise!");
+							durations = arpedDurations;
+						}
+					}
+				} else {*/
+				if (sameRhythmTwice) {
+					durations.addAll(durations);
+				}
+				//}
+				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(durations,
+						melodyBlockGenerator, chords, i);
+
+				// TODO: use directions of chords
+
+				int[] chord = stretchedChords.get(i);
+				double durCounter = 0.0;
+				for (int j = 0; j < melodyBlocks.size(); j++) {
+					MelodyBlock mb = melodyBlocks.get(j);
+					for (int k = 0; k < mb.durations.size(); k++) {
+						int pitch = mb.notes.get(k);
+
+						// TODO: take chord's pitch, determine which note in the scale it is, apply a normal or inversed pattern to it
+
+						// TODO: user or program generates sequence of U,U,D,D, then notes from chords are picked to create a direction
+						// then MelodyBlocks are randomly picked which fulfill the next direction - either by being normal and going that way, or by inversion
+
+						double swingDuration = durations.get(j);
+						Note n = new Note(pitch, swingDuration, 100);
+						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
+								* Note.DEFAULT_DURATION_MULTIPLIER);
+
+
+						noteList.add(n);
+						if (fillChordMelodyMap && o == 0) {
+							chordMelodyMap1.get(Integer.valueOf(i)).add(n);
+						}
+						durCounter += swingDuration;
+					}
+
+
+				}
+
+			}
+		}
+
+		if (fillChordMelodyMap) {
+			makeMelodyPitchFrequencyMap(1, chordMelodyMap1.keySet().size() - 1, 2);
+		}
+		if (genVars && variations != null) {
+			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
+		}
+		return noteList;
+	}
+
+	private List<MelodyBlock> generateMelodyBlocksForDurations(List<Double> durations,
+			Random melodyBlockGenerator, List<int[]> chords, int chordNum) {
+		// TODO: generate some common-sense durations, pick randomly from melody phrases, refinement later
+		return null;
+	}
+
 	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {
 		Map<Integer, List<Integer>> patterns = new HashMap<>();
 		for (Integer chKey : fullMelodyMap.keySet()) {
