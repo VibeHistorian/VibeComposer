@@ -165,6 +165,8 @@ public class MidiUtils {
 	public static final List<String> progressionCircle = Arrays
 			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
 
+	public static final List<Integer> MAJ_SCALE = Arrays.asList(MidiUtils.Scales.MAJOR_SCALE);
+
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<String, List<String>> cpRulesForwardMap = createChordProgressionForwardRulesMap();
@@ -705,7 +707,7 @@ public class MidiUtils {
 	}
 
 	public static List<int[]> getBasicChordsFromRoots(List<int[]> roots) {
-		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		List<int[]> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
@@ -719,7 +721,7 @@ public class MidiUtils {
 	}
 
 	public static List<String> getBasicChordStringsFromRoots(List<int[]> roots) {
-		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		List<String> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
@@ -997,7 +999,7 @@ public class MidiUtils {
 
 
 		List<String> solvedChords = new ArrayList<>();
-		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		String firstLetterFirstChord = rawChords.substring(0, 1);
 		int firstPitchFirstChord = majorScaleNormalized
 				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord) - 1);
@@ -1068,7 +1070,7 @@ public class MidiUtils {
 			return "";
 		}
 		int pitchNormalized = pitch % 12;
-		List<Integer> majorLetterPitches = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorLetterPitches = MAJ_SCALE;
 		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
 		if (chordLetter < 0) {
 			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);

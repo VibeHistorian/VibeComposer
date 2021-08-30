@@ -401,7 +401,7 @@ public class MidiGenerator implements JMC {
 					durations.addAll(durations);
 				}
 				//}
-				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(durations,
+				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
 						melodyBlockGenerator, chords, i);
 
 				// TODO: use directions of chords
@@ -410,15 +410,30 @@ public class MidiGenerator implements JMC {
 				double durCounter = 0.0;
 				for (int j = 0; j < melodyBlocks.size(); j++) {
 					MelodyBlock mb = melodyBlocks.get(j);
+
+					int startingPitch = chord[pitchPickerGenerator.nextInt(chord.length)];
+					List<Integer> majorScale = MidiUtils.MAJ_SCALE;
+					int startingNote = majorScale.indexOf(startingPitch % 12);
+					int startingOct = startingPitch / 12;
 					for (int k = 0; k < mb.durations.size(); k++) {
-						int pitch = mb.notes.get(k);
+						int note = mb.notes.get(k);
+						int pitch = startingOct * 12;
+						int combinedNote = startingNote + note;
+						if (combinedNote >= 7) {
+							pitch += 12;
+							combinedNote -= 7;
+						} else if (combinedNote < 0) {
+							pitch -= 12;
+							combinedNote += 7;
+						}
+						pitch += majorScale.indexOf(combinedNote);
 
 						// TODO: take chord's pitch, determine which note in the scale it is, apply a normal or inversed pattern to it
 
 						// TODO: user or program generates sequence of U,U,D,D, then notes from chords are picked to create a direction
 						// then MelodyBlocks are randomly picked which fulfill the next direction - either by being normal and going that way, or by inversion
 
-						double swingDuration = durations.get(j);
+						double swingDuration = mb.durations.get(k);
 						Note n = new Note(pitch, swingDuration, 100);
 						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 								* Note.DEFAULT_DURATION_MULTIPLIER);
@@ -446,10 +461,30 @@ public class MidiGenerator implements JMC {
 		return noteList;
 	}
 
-	private List<MelodyBlock> generateMelodyBlocksForDurations(List<Double> durations,
-			Random melodyBlockGenerator, List<int[]> chords, int chordNum) {
+	private List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp,
+			List<Double> durations, Random melodyBlockGenerator, List<int[]> chords, int chordNum) {
+
+		List<MelodyBlock> mbs = new ArrayList<>();
+
 		// TODO: generate some common-sense durations, pick randomly from melody phrases, refinement later
-		return null;
+		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
+				Durations.DOTTED_SIXTEENTH_NOTE, Durations.EIGHTH_NOTE };
+
+		// TODO: quickness
+		int[] melodySkeletonDurationWeights = Rhythm
+				.normalizedCumulativeWeights(new int[] { 10, 40, 10, 40 });
+
+		for (int i = 0; i < durations.size(); i++) {
+			Rhythm blockRhythm = new Rhythm(mp.getPatternSeed(), durations.get(i),
+					melodySkeletonDurations, melodySkeletonDurationWeights);
+			List<Double> blockDurations = blockRhythm.regenerateDurations(2);
+			System.out.println("Block Durations size: " + blockDurations.size());
+			List<Integer> blockNotes = Arrays.asList(
+					MelodyUtils.getRandomForLength(melodyBlockGenerator, blockDurations.size()));
+			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
+			mbs.add(mb);
+		}
+		return mbs;
 	}
 
 	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {
@@ -2846,7 +2881,7 @@ public class MidiGenerator implements JMC {
 		if (userMelody != null) {
 			skeletonNotes = userMelody.copy().getNoteList();
 		} else {
-			skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
+			skeletonNotes = generateMelodyBlockSkeletonFromChords(mp, actualProgression,
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
 		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
