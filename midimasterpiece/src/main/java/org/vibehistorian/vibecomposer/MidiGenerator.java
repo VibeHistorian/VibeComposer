@@ -3502,9 +3502,6 @@ public class MidiGenerator implements JMC {
 						}
 					}
 
-					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
-						pitch = mapDrumPitchByCustomMapping(pitch, true);
-					}
 					int drumFillExceptionChance = 0;
 					double usedDrumDuration = drumDuration;
 					if (forceLastFilled) {
@@ -3518,7 +3515,9 @@ public class MidiGenerator implements JMC {
 						}
 
 					}
-
+					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
+						pitch = mapDrumPitchByCustomMapping(pitch, true);
+					}
 					boolean exception = exceptionGenerator.nextInt(100) < (dp.getExceptionChance()
 							+ extraExceptionChance + drumFillExceptionChance);
 					if (exception) {
