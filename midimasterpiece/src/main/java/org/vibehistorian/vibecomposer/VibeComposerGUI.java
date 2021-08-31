@@ -991,9 +991,9 @@ public class VibeComposerGUI extends JFrame
 		melodyAlternateRhythmChance = new KnobPanel("Alternating<br>Rhythm", 50);
 		melodySameRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
-		melodySplitChance = new KnobPanel("Split%", 20);
-		melodyExceptionChance = new KnobPanel("Exception%", 50);
-		melodyLeadChords = new KnobPanel("Lead Chords", 50);
+		melodySplitChance = new KnobPanel("Split%", 0);
+		melodyExceptionChance = new KnobPanel("Exception%", 0);
+		melodyLeadChords = new KnobPanel("Lead Chords", 0);
 
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(maxExceptions);
@@ -1504,7 +1504,7 @@ public class VibeComposerGUI extends JFrame
 					try {
 						unmarshallDrumsFromResource(is);
 					} catch (JAXBException | IOException e) {
-						// TODO Auto-generated catch block
+						// Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -2043,25 +2043,25 @@ public class VibeComposerGUI extends JFrame
 
 					@Override
 					public void columnAdded(TableColumnModelEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
 					@Override
 					public void columnRemoved(TableColumnModelEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
 					@Override
 					public void columnMarginChanged(ChangeEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
 					@Override
 					public void columnSelectionChanged(ListSelectionEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
@@ -2140,25 +2140,25 @@ public class VibeComposerGUI extends JFrame
 
 					@Override
 					public void columnAdded(TableColumnModelEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
 					@Override
 					public void columnRemoved(TableColumnModelEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
 					@Override
 					public void columnMarginChanged(ChangeEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
 					@Override
 					public void columnSelectionChanged(ListSelectionEvent e) {
-						// TODO Auto-generated method stub
+						// Auto-generated method stub
 
 					}
 
@@ -3047,7 +3047,7 @@ public class VibeComposerGUI extends JFrame
 					System.out.println("Added device: " + infos[i].toString());
 				}
 			} catch (MidiUnavailableException e) {
-				// TODO Auto-generated catch block
+				// Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -3174,7 +3174,7 @@ public class VibeComposerGUI extends JFrame
 				synth.getReceiver().send(volumeMessage, -1);
 			}
 		} catch (InvalidMidiDataException | MidiUnavailableException e) {
-			// TODO Auto-generated catch block
+			// Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -3993,7 +3993,7 @@ public class VibeComposerGUI extends JFrame
 		try {
 			dconsole = new DebugConsole();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			// Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -4319,7 +4319,7 @@ public class VibeComposerGUI extends JFrame
 					copyGUItoConfig();
 					marshal(finalFilePath);
 				} catch (IOException | JAXBException e) {
-					// TODO Auto-generated catch block
+					// Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else {
@@ -4360,7 +4360,7 @@ public class VibeComposerGUI extends JFrame
 				} catch (JAXBException |
 
 						IOException e) {
-					// TODO Auto-generated catch block
+					// Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -4483,7 +4483,7 @@ public class VibeComposerGUI extends JFrame
 				} catch (JAXBException |
 
 						IOException e) {
-					// TODO Auto-generated catch block
+					// Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -4686,7 +4686,7 @@ public class VibeComposerGUI extends JFrame
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+				// Auto-generated catch block
 				e.printStackTrace();
 			}
 			sequencer.start();

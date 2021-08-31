@@ -25,6 +25,9 @@ public class Rhythm {
 	public Rhythm(int randomSeed, double durationLimit, double[] durationPool,
 			int[] durationWeights) {
 		this(randomSeed, durationLimit);
+		if (durationPool.length != durationWeights.length) {
+			throw new IllegalArgumentException("Mismatching duration setting lengths!");
+		}
 		this.durationPool = durationPool;
 		this.durationWeights = durationWeights;
 
@@ -35,6 +38,63 @@ public class Rhythm {
 		this.durationLimit = durationLimit;
 	}
 
+	public List<Double> makeDurations(int durCount) {
+
+		Random generator = new Random(randomSeed);
+		durations = new ArrayList<>();
+		double durationSum = 0;
+		int maximum = durationPool.length - 1;
+		int remainingNotes = durCount;
+		while (remainingNotes > 0) {
+			double dur = MidiGenerator.Durations.NOTE_32ND;
+			int chance = generator.nextInt(100);
+			double remainingDuration = durationLimit - durationSum;
+			double minimumRemainingDuration = remainingNotes * dur;
+			double maximumAllowedNoteDuration = remainingDuration - minimumRemainingDuration + dur
+					+ 0.01;
+			for (int i = durationPool.length - 1; i >= 0; i--) {
+				if (durationPool[i] > maximumAllowedNoteDuration) {
+					maximum = i;
+				} else {
+					break;
+				}
+			}
+			boolean lastNote = false;
+			for (int i = 0; i < maximum; i++) {
+				if ((i < maximum - 1) && (durationPool[i + 1] > durationLimit - durationSum)) {
+					dur = durationLimit - durationSum;
+					lastNote = true;
+					break;
+				}
+				if (chance < durationWeights[i]) {
+					dur = durationPool[i];
+					break;
+				}
+			}
+			if (lastNote) {
+				durationSum += dur;
+				durations.add(dur);
+				remainingNotes--;
+				break;
+			}
+			durationSum += dur;
+			//System.out.println("Added dur: " + dur + ", was remaining: " + (remainingDuration));
+			durations.add(dur);
+			remainingNotes--;
+
+		}
+		if (!MidiGenerator.roughlyEqual(durationSum, durationLimit)) {
+			durations.set(durations.size() - 1,
+					(durations.get(durations.size() - 1))
+							+ ((durationLimit > durationSum) ? (durationLimit - durationSum)
+									: (durationSum - durationLimit)));
+		}
+		/*System.out.println("Duration lim: " + durationLimit + ", sum: "
+				+ durations.stream().mapToDouble(e -> e).sum());
+		System.out.println("Duration sum sum: " + durationSum);*/
+		return durations;
+	}
+
 	public List<Double> regenerateDurations(int maxSameDurAllowed) {
 		Random generator = new Random(randomSeed);
 		durations = new ArrayList<>();
@@ -43,6 +103,9 @@ public class Rhythm {
 		int lastDurIndex = Integer.MIN_VALUE;
 		int retryCounter = 0;
 		int maxRetry = 2;
+		//System.out.println("Max same: " + maxSameDurAllowed);
+		//System.out.println("Weights: " + Arrays.toString(durationWeights));
+		//System.out.println("Dur pool: " + Arrays.toString(durationPool));
 		while (durationSum < durationLimit - 0.01) {
 			double dur = MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0;
 			int chance = generator.nextInt(100);
@@ -50,13 +113,15 @@ public class Rhythm {
 			boolean lastNote = false;
 			for (int i = 0; i < durationPool.length; i++) {
 				if (i < (durationPool.length - 1)
-						&& (durationPool[i + 1] > durationLimit - durationSum)) {
+						&& (durationPool[i + 1] > (durationLimit - durationSum + 0.01))) {
 					dur = durationLimit - durationSum;
 					lastNote = true;
 					break;
 				}
 				if (chance < durationWeights[i]) {
 					dur = durationPool[i];
+
+					//System.out.println("Adding by chance: " + dur);
 					chosenIndex = i;
 					break;
 				}

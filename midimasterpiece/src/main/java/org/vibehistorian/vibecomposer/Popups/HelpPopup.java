@@ -31,7 +31,7 @@ public class HelpPopup {
 			Desktop.getDesktop().browse(new URI(
 					"https://github.com/VibeHistorian/VibeComposer/blob/development_master/midimasterpiece/VibeComposer_UserManual.pdf"));
 		} catch (IOException | URISyntaxException e) {
-			// TODO Auto-generated catch block
+			// Auto-generated catch block
 			e.printStackTrace();
 		}
 

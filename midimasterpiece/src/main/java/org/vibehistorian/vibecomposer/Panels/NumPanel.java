@@ -229,7 +229,7 @@ public class NumPanel extends JPanel {
 							try {
 								sleep(25);
 							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
+								// Auto-generated catch block
 								e.printStackTrace();
 							}
 						}

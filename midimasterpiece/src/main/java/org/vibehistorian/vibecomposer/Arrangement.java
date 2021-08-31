@@ -278,7 +278,6 @@ public class Arrangement {
 
 	public boolean setFromActualTable(JTable t, boolean forceColumns) {
 
-		// TODO: possiblity to catch errors and return false
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		//sections.clear();

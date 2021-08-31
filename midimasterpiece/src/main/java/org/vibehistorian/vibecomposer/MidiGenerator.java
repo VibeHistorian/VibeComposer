@@ -282,7 +282,7 @@ public class MidiGenerator implements JMC {
 		Random exceptionTypeGenerator = new Random(seed + 20 + notesSeedOffset);
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
-		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE,
+		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.QUARTER_NOTE,
 				Durations.QUARTER_NOTE };
 
 		// TODO: quickness
@@ -374,7 +374,7 @@ public class MidiGenerator implements JMC {
 				Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
 						melodySkeletonDurationWeights);
 
-				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2);
+				List<Double> durations = rhythm.regenerateDurations(10);
 				/*if (gc.isMelodyArpySurprises()) {
 					if (sameRhythmTwice) {
 						if ((i % 2 == 0) || (durations.size() < 3)) {
@@ -397,6 +397,7 @@ public class MidiGenerator implements JMC {
 						}
 					}
 				} else {*/
+				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
 				if (sameRhythmTwice) {
 					durations.addAll(durations);
 				}
@@ -414,6 +415,9 @@ public class MidiGenerator implements JMC {
 					int startingPitch = chord[pitchPickerGenerator.nextInt(chord.length)];
 					List<Integer> majorScale = MidiUtils.MAJ_SCALE;
 					int startingNote = majorScale.indexOf(startingPitch % 12);
+					if (startingNote < 0) {
+						throw new IllegalArgumentException("BAD STARTING NOTE!");
+					}
 					int startingOct = startingPitch / 12;
 					for (int k = 0; k < mb.durations.size(); k++) {
 						int note = mb.notes.get(k);
@@ -426,8 +430,7 @@ public class MidiGenerator implements JMC {
 							pitch -= 12;
 							combinedNote += 7;
 						}
-						pitch += majorScale.indexOf(combinedNote);
-
+						pitch += majorScale.get(combinedNote);
 						// TODO: take chord's pitch, determine which note in the scale it is, apply a normal or inversed pattern to it
 
 						// TODO: user or program generates sequence of U,U,D,D, then notes from chords are picked to create a direction
@@ -477,7 +480,8 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < durations.size(); i++) {
 			Rhythm blockRhythm = new Rhythm(mp.getPatternSeed(), durations.get(i),
 					melodySkeletonDurations, melodySkeletonDurationWeights);
-			List<Double> blockDurations = blockRhythm.regenerateDurations(2);
+			List<Double> blockDurations = blockRhythm
+					.makeDurations(3 + melodyBlockGenerator.nextInt(2));
 			System.out.println("Block Durations size: " + blockDurations.size());
 			List<Integer> blockNotes = Arrays.asList(
 					MelodyUtils.getRandomForLength(melodyBlockGenerator, blockDurations.size()));
@@ -490,6 +494,7 @@ public class MidiGenerator implements JMC {
 	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {
 		Map<Integer, List<Integer>> patterns = new HashMap<>();
 		for (Integer chKey : fullMelodyMap.keySet()) {
+			System.out.println("chkey: " + chKey);
 			patterns.put(chKey,
 					patternFromNotes(fullMelodyMap.get(chKey), 1, progressionDurations.get(chKey)));
 			//System.out.println(StringUtils.join(patterns.get(chKey), ","));
@@ -2249,9 +2254,6 @@ public class MidiGenerator implements JMC {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
 					BassPart bp = gc.getBassPart();
 					Phrase b = fillBassFromPart(bp, rootProgression, usedMeasures, sec, variations);
-					if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
-						// TODO
-					}
 
 					if (bp.isDoubleOct()) {
 						Phrase b2 = b.copy();
@@ -2292,9 +2294,7 @@ public class MidiGenerator implements JMC {
 						List<Integer> variations = (overridden) ? sec.getVariation(2, i) : null;
 						Phrase c = fillChordsFromPart(cp, chordProgression, usedMeasures, sec,
 								variations);
-						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
-							// TODO Mod.transpose(c, 12);
-						}
+
 						copiedPhrases.add(c);
 						if (!overridden)
 							sec.setPresence(2, i);
@@ -2333,9 +2333,7 @@ public class MidiGenerator implements JMC {
 					if (added) {
 						Phrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec,
 								variations);
-						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
-							// TODO Mod.transpose(a, 12);
-						}
+
 						copiedPhrases.add(a);
 						if (!overridden)
 							sec.setPresence(3, i);
@@ -2371,9 +2369,7 @@ public class MidiGenerator implements JMC {
 						List<Integer> variations = (overridden) ? sec.getVariation(4, i) : null;
 						Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures,
 								sectionForcedDynamics, sec, variations);
-						if (variationGen.nextInt(100) < gc.getArrangementPartVariationChance()) {
-							// TODO Mod.accent(d, 0.25);
-						}
+
 						copiedPhrases.add(d);
 						if (!overridden)
 							sec.setPresence(4, i);
