@@ -995,6 +995,18 @@ public class VibeComposerGUI extends JFrame
 		melodyExceptionChance = new KnobPanel("Exception%", 0);
 		melodyLeadChords = new KnobPanel("Lead Chords", 0);
 
+		/*MelodyUtils.blockSequence(65, 67, 0, 4);
+		MelodyUtils.blockSequence(65, 67, 1, 4);
+		MelodyUtils.blockSequence(65, 67, 2, 4);
+		
+		MelodyUtils.blockSequence(65, 77, 0, 4);
+		MelodyUtils.blockSequence(65, 77, 1, 4);
+		MelodyUtils.blockSequence(65, 77, 2, 4);
+		
+		MelodyUtils.blockSequence(77, 65, 0, 4);
+		MelodyUtils.blockSequence(77, 65, 1, 4);
+		MelodyUtils.blockSequence(77, 65, 2, 4);*/
+
 		melodySettingsPanel.add(maxJump);
 		melodySettingsPanel.add(maxExceptions);
 		melodySettingsPanel.add(melodyAlternateRhythmChance);

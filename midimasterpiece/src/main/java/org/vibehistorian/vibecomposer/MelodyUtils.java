@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,5 +109,44 @@ public class MelodyUtils {
 
 	public static Integer blockDistance(Integer[] block) {
 		return Math.abs(block[0] - block[block.length - 1]);
+	}
+
+	public static List<Integer> blockSequence(int chord1, int chord2, int randSeed, int numBlocks) {
+		Random rand = new Random(randSeed);
+		List<Integer> distList = new ArrayList<>();
+
+		int distance = chord1 - chord2;
+		List<Integer> reducableIndices = new ArrayList<>();
+		for (int i = 0; i < numBlocks; i++) {
+			int dist = rand.nextInt(15) - 7;
+			distList.add(dist);
+			distance += dist;
+			reducableIndices.add(i);
+		}
+		//System.out.println("Initial: " + StringUtils.join(distList, ","));
+		if (distance > 0) {
+			reducableIndices.removeIf(e -> distList.get(e) == -7);
+		} else if (distance < 0) {
+			reducableIndices.removeIf(e -> distList.get(e) == 7);
+		}
+
+		rand.setSeed(randSeed);
+		int increment = (distance > 0) ? -1 : 1;
+		for (int i = 0; i < Math.abs(distance); i++) {
+			int redI = rand.nextInt(reducableIndices.size());
+			int redIndex = reducableIndices.get(redI);
+			int newValue = distList.get(redIndex) + increment;
+			distList.set(redIndex, newValue);
+			if (Math.abs(newValue) == 7) {
+				Integer removed = reducableIndices.remove(redI);
+			}
+		}
+		rand.setSeed(randSeed);
+
+		//System.out.println("Decr: " + StringUtils.join(distList, ","));
+		Collections.shuffle(distList, rand);
+
+		//System.out.println("Shuffled: " + StringUtils.join(distList, ","));
+		return distList;
 	}
 }
