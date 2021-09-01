@@ -1039,7 +1039,7 @@ public class VibeComposerGUI extends JFrame
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		melodyTonicize = new JCheckBox("Tonicize", true);
+		melodyTonicize = new JCheckBox("Tonicize", false);
 
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -3006,7 +3006,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
-		showScore = new JCheckBox("Show Score", false);
+		showScore = new JCheckBox("Show Score", true);
 		showScorePicker = new ScrollComboBox<String>();
 		MidiUtils.addAllToJComboBox(
 				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },

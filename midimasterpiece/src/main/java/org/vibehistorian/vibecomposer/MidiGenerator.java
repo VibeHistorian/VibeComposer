@@ -283,11 +283,11 @@ public class MidiGenerator implements JMC {
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
 		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.QUARTER_NOTE,
-				Durations.QUARTER_NOTE };
+				Durations.HALF_NOTE };
 
 		// TODO: quickness
 		int[] melodySkeletonDurationWeights = Rhythm
-				.normalizedCumulativeWeights(new int[] { 40, 20, 40 });
+				.normalizedCumulativeWeights(new int[] { 30, 50, 20 });
 
 		List<int[]> usedChords = null;
 		if (gc.isMelodyBasicChordsOnly()) {
@@ -412,6 +412,7 @@ public class MidiGenerator implements JMC {
 				for (int j = 0; j < melodyBlocks.size(); j++) {
 					MelodyBlock mb = melodyBlocks.get(j);
 
+					// TODO: pick chord pitch close to previous pitch?
 					int startingPitch = chord[pitchPickerGenerator.nextInt(chord.length)];
 					List<Integer> majorScale = MidiUtils.MAJ_SCALE;
 					int startingNote = majorScale.indexOf(startingPitch % 12);
@@ -478,11 +479,11 @@ public class MidiGenerator implements JMC {
 				.normalizedCumulativeWeights(new int[] { 10, 40, 10, 40 });
 
 		for (int i = 0; i < durations.size(); i++) {
-			Rhythm blockRhythm = new Rhythm(mp.getPatternSeed(), durations.get(i),
+			Rhythm blockRhythm = new Rhythm(mp.getPatternSeed() + (i % 2), durations.get(i),
 					melodySkeletonDurations, melodySkeletonDurationWeights);
 			List<Double> blockDurations = blockRhythm
 					.makeDurations(3 + melodyBlockGenerator.nextInt(2));
-			System.out.println("Block Durations size: " + blockDurations.size());
+			//System.out.println("Block Durations size: " + blockDurations.size());
 			List<Integer> blockNotes = Arrays.asList(
 					MelodyUtils.getRandomForLength(melodyBlockGenerator, blockDurations.size()));
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);

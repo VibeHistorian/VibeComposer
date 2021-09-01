@@ -43,10 +43,11 @@ public class Rhythm {
 		Random generator = new Random(randomSeed);
 		durations = new ArrayList<>();
 		double durationSum = 0;
-		int maximum = durationPool.length - 1;
+		int maximum = durationPool.length;
 		int remainingNotes = durCount;
+		//System.out.println("Weights: " + StringUtils.join(durationWeights, ','));
 		while (remainingNotes > 0) {
-			double dur = MidiGenerator.Durations.NOTE_32ND;
+			double dur = durationPool[0];
 			int chance = generator.nextInt(100);
 			double remainingDuration = durationLimit - durationSum;
 			double minimumRemainingDuration = remainingNotes * dur;
@@ -66,14 +67,19 @@ public class Rhythm {
 					lastNote = true;
 					break;
 				}
+				//System.out.println("Chance: " + chance);
 				if (chance < durationWeights[i]) {
 					dur = durationPool[i];
+
+					/*System.out.println(
+							"Remaining: " + remainingNotes + ", Added from chance: " + dur);*/
 					break;
 				}
 			}
 			if (lastNote) {
 				durationSum += dur;
 				durations.add(dur);
+				//System.out.println("Remaining: " + remainingNotes + ", Added from last: " + dur);
 				remainingNotes--;
 				break;
 			}
@@ -84,6 +90,8 @@ public class Rhythm {
 
 		}
 		if (!MidiGenerator.roughlyEqual(durationSum, durationLimit)) {
+			System.out.println("Last note needs duration fix, sum: " + durationSum + ", needed: "
+					+ durationLimit);
 			durations.set(durations.size() - 1,
 					(durations.get(durations.size() - 1))
 							+ ((durationLimit > durationSum) ? (durationLimit - durationSum)
