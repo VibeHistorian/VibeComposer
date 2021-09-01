@@ -989,7 +989,7 @@ public class VibeComposerGUI extends JFrame
 		maxJump = new KnobPanel("Max Note<br>Jump", 0, 0, 4);
 		maxExceptions = new KnobPanel("Max<br>Exceptions", 2, 0, 4);
 		melodyAlternateRhythmChance = new KnobPanel("Alternating<br>Rhythm", 50);
-		melodySameRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
+		melodySameRhythmChance = new KnobPanel("Doubled<br>Rhythm", 0);
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
 		melodySplitChance = new KnobPanel("Split%", 0);
 		melodyExceptionChance = new KnobPanel("Exception%", 0);

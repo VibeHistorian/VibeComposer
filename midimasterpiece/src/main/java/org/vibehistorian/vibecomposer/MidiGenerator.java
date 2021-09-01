@@ -229,20 +229,6 @@ public class MidiGenerator implements JMC {
 		MidiGenerator.gc = gc;
 	}
 
-	public static class MelodyBlock {
-		public MelodyBlock(List<Integer> notes, List<Double> durations, boolean inverse) {
-			super();
-			this.notes = notes;
-			this.durations = durations;
-			this.inverse = inverse;
-		}
-
-		public List<Integer> notes;
-		public List<Double> durations;
-		public boolean inverse;
-
-	}
-
 	private Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
 			List<int[]> roots, int measures, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
@@ -255,10 +241,18 @@ public class MidiGenerator implements JMC {
 			fillChordMelodyMap = true;
 		}
 
+		// A B A C pattern
+		List<Integer> blockSeedOffsets = Arrays.asList(new Integer[] { 0, 1, 0, 2 });
+
+		// Chord note choices
+		List<Integer> blockChordNoteChoices = new ArrayList<>(
+				Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
 		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
 		int EXCEPTION_CHANCE = gc.getMelodyExceptionChance();
+		int CHORD_STRETCH = 4;
 
 		int seed = mp.getPatternSeed();
 
@@ -269,7 +263,7 @@ public class MidiGenerator implements JMC {
 		int pitchPickerOffset = notesSeedOffset;
 		int rhythmOffset = notesSeedOffset;
 
-		Random melodyBlockGenerator = new Random(seed + notesSeedOffset);
+		int melodyBlockGeneratorSeed = seed + notesSeedOffset;
 
 		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset);
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
@@ -301,7 +295,8 @@ public class MidiGenerator implements JMC {
 			usedChords = chords;
 		}
 
-		List<int[]> stretchedChords = usedChords.stream().map(e -> convertChordToLength(e, 4, true))
+		List<int[]> stretchedChords = usedChords.stream()
+				.map(e -> convertChordToLength(e, CHORD_STRETCH, true))
 				.collect(Collectors.toList());
 		List<Double> directionChordDividers = (!gc.isMelodyUseDirectionsFromProgression())
 				? generateMelodyDirectionChordDividers(stretchedChords.size(), directionGenerator)
@@ -319,6 +314,13 @@ public class MidiGenerator implements JMC {
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
+
+
+		for (int i = 0; i < stretchedChords.size(); i++) {
+			int choice = blockChordNoteChoices.get(i);
+			choice = Math.min(choice, CHORD_STRETCH);
+			blockChordNoteChoices.set(i, choice);
+		}
 
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
@@ -402,24 +404,27 @@ public class MidiGenerator implements JMC {
 					durations.addAll(durations);
 				}
 				//}
+				int blockOffset = blockSeedOffsets.get(i % 4);
 				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
-						melodyBlockGenerator, chords, i);
+						melodyBlockGeneratorSeed + blockOffset, chords, i);
 
 				// TODO: use directions of chords
 
 				int[] chord = stretchedChords.get(i);
 				double durCounter = 0.0;
+
+				// TODO: pick chord pitch close to previous pitch?
+				int startingPitch = chord[blockChordNoteChoices.get(i)];
+				List<Integer> majorScale = MidiUtils.MAJ_SCALE;
+				int startingNote = majorScale.indexOf(startingPitch % 12);
+				if (startingNote < 0) {
+					throw new IllegalArgumentException("BAD STARTING NOTE!");
+				}
+
+				int startingOct = startingPitch / 12;
+				System.out.println("Starting note: " + startingNote);
 				for (int j = 0; j < melodyBlocks.size(); j++) {
 					MelodyBlock mb = melodyBlocks.get(j);
-
-					// TODO: pick chord pitch close to previous pitch?
-					int startingPitch = chord[pitchPickerGenerator.nextInt(chord.length)];
-					List<Integer> majorScale = MidiUtils.MAJ_SCALE;
-					int startingNote = majorScale.indexOf(startingPitch % 12);
-					if (startingNote < 0) {
-						throw new IllegalArgumentException("BAD STARTING NOTE!");
-					}
-					int startingOct = startingPitch / 12;
 					for (int k = 0; k < mb.durations.size(); k++) {
 						int note = mb.notes.get(k);
 						int pitch = startingOct * 12;
@@ -466,26 +471,32 @@ public class MidiGenerator implements JMC {
 	}
 
 	private List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp,
-			List<Double> durations, Random melodyBlockGenerator, List<int[]> chords, int chordNum) {
+			List<Double> durations, int melodyBlockGeneratorSeed, List<int[]> chords,
+			int chordNum) {
 
 		List<MelodyBlock> mbs = new ArrayList<>();
 
 		// TODO: generate some common-sense durations, pick randomly from melody phrases, refinement later
 		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
-				Durations.DOTTED_SIXTEENTH_NOTE, Durations.EIGHTH_NOTE };
+				Durations.DOTTED_SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
+				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
 
 		// TODO: quickness
 		int[] melodySkeletonDurationWeights = Rhythm
-				.normalizedCumulativeWeights(new int[] { 10, 40, 10, 40 });
+				.normalizedCumulativeWeights(new int[] { 10, 30, 10, 30, 10, 10 });
+
+		Random blockNotesGenerator = new Random();
 
 		for (int i = 0; i < durations.size(); i++) {
-			Rhythm blockRhythm = new Rhythm(mp.getPatternSeed() + (i % 2), durations.get(i),
+			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + (i % 2), durations.get(i),
 					melodySkeletonDurations, melodySkeletonDurationWeights);
+			blockNotesGenerator.setSeed(melodyBlockGeneratorSeed + (i % 2));
 			List<Double> blockDurations = blockRhythm
-					.makeDurations(3 + melodyBlockGenerator.nextInt(2));
+					.makeDurations(3 + blockNotesGenerator.nextInt(2));
 			//System.out.println("Block Durations size: " + blockDurations.size());
-			List<Integer> blockNotes = Arrays.asList(
-					MelodyUtils.getRandomForLength(melodyBlockGenerator, blockDurations.size()));
+			blockNotesGenerator.setSeed(melodyBlockGeneratorSeed + (i % 2));
+			List<Integer> blockNotes = Arrays.asList(MelodyUtils.getRandomForTypeAndLength(null,
+					blockNotesGenerator, blockDurations.size()));
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
 			mbs.add(mb);
 		}
