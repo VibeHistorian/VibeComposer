@@ -94,8 +94,8 @@ public class Rhythm {
 
 		}
 		if (!MidiGenerator.roughlyEqual(durationSum, durationLimit)) {
-			System.out.println("Last note needs duration fix, sum: " + durationSum + ", needed: "
-					+ durationLimit);
+			/*System.out.println("Last note needs duration fix, sum: " + durationSum + ", needed: "
+					+ durationLimit);*/
 			durations.set(durations.size() - 1,
 					(durations.get(durations.size() - 1))
 							+ ((durationLimit > durationSum) ? (durationLimit - durationSum)

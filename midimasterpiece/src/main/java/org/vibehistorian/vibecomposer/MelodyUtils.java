@@ -15,7 +15,7 @@ public class MelodyUtils {
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
 	public static List<Integer[]> ARPY = new ArrayList<>();
 
-	public static Map<Integer, List<Integer[]>> DISTANCE_BLOCKS = new HashMap<>();
+	public static Map<Integer, List<Integer[]>> BLOCK_CHANGE_MAP = new HashMap<>();
 
 	public static final int NUM_LISTS = 3;
 
@@ -54,7 +54,7 @@ public class MelodyUtils {
 		allBlocks.addAll(NEIGHBORY);
 		allBlocks.addAll(ARPY);
 
-		DISTANCE_BLOCKS = allBlocks.stream().collect(Collectors.groupingBy(e -> blockDistance(e)));
+		BLOCK_CHANGE_MAP = allBlocks.stream().collect(Collectors.groupingBy(e -> blockChange(e)));
 	}
 
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
@@ -74,16 +74,37 @@ public class MelodyUtils {
 		return filteredList.get(rand2);
 	}
 
-	public static Integer[] getRandomForTypeAndDistanceAndLength(Integer type, int distance,
+	public static Integer[] getRandomForTypeAndDistanceAndLength(Integer type, int blockChange,
 			int length, Random melodyBlockGenerator, int approx) {
 		List<Integer[]> usedList = getBlocksForType(
 				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
-		// length fits, note distance from First to Last less than distance+approx 
-		List<Integer[]> filteredList = usedList.stream()
-				.filter(e -> (e.length == length) && (blockDistance(e) < (distance + approx)))
+		// length fits, note distance and distance roughly equal (diff < approx)
+		List<Integer[]> filteredList = usedList.stream().filter(
+				e -> (e.length == length) && (Math.abs(blockChange(e) - blockChange) <= approx))
 				.collect(Collectors.toList());
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
 		return filteredList.get(rand2);
+	}
+
+	public static Integer[] getRandomByApproxBlockChange(int blockChange, int approx,
+			Random melodyBlockGenerator) {
+		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
+		chosenChange = Math.min(7, Math.max(-7, chosenChange));
+		//System.out.println("Chosen change: " + chosenChange);
+		List<Integer[]> viableBlocks = new ArrayList<>();
+		if (BLOCK_CHANGE_MAP.containsKey(chosenChange)) {
+			viableBlocks.addAll(BLOCK_CHANGE_MAP.get(chosenChange));
+		}
+		if (BLOCK_CHANGE_MAP.containsKey(chosenChange * -1)) {
+			List<Integer[]> invertedBlocks = new ArrayList<>();
+			for (Integer[] block : BLOCK_CHANGE_MAP.get(chosenChange * -1)) {
+				invertedBlocks.add(inverse(block));
+			}
+			viableBlocks.addAll(invertedBlocks);
+		}
+		//viableBlocks.forEach(e -> System.out.println(StringUtils.join(e, ',')));
+		return viableBlocks.get(melodyBlockGenerator.nextInt(viableBlocks.size()));
+
 	}
 
 	public static List<Integer[]> getBlocksForType(int type) {
@@ -107,46 +128,48 @@ public class MelodyUtils {
 		return newBlock;
 	}
 
-	public static Integer blockDistance(Integer[] block) {
-		return Math.abs(block[0] - block[block.length - 1]);
+	public static Integer blockChange(Integer[] block) {
+		return block[block.length - 1] - block[0];
 	}
 
-	public static List<Integer> blockSequence(int chord1, int chord2, int randSeed, int numBlocks) {
+	public static List<Integer> blockChangeSequence(int chord1, int chord2, int randSeed,
+			int numBlocks) {
 		Random rand = new Random(randSeed);
-		List<Integer> distList = new ArrayList<>();
+		List<Integer> changeList = new ArrayList<>();
 
-		int distance = chord1 - chord2;
+		int change = chord1 - chord2;
+		//System.out.println("Change: " + change);
 		List<Integer> reducableIndices = new ArrayList<>();
 		for (int i = 0; i < numBlocks; i++) {
-			int dist = rand.nextInt(15) - 7;
-			distList.add(dist);
-			distance += dist;
+			int chg = rand.nextInt(15) - 7;
+			changeList.add(chg);
+			change += chg;
 			reducableIndices.add(i);
 		}
-		//System.out.println("Initial: " + StringUtils.join(distList, ","));
-		if (distance > 0) {
-			reducableIndices.removeIf(e -> distList.get(e) == -7);
-		} else if (distance < 0) {
-			reducableIndices.removeIf(e -> distList.get(e) == 7);
+		//System.out.println("Initial: " + StringUtils.join(changeList, ","));
+		if (change > 0) {
+			reducableIndices.removeIf(e -> changeList.get(e) == -7);
+		} else if (change < 0) {
+			reducableIndices.removeIf(e -> changeList.get(e) == 7);
 		}
 
 		rand.setSeed(randSeed);
-		int increment = (distance > 0) ? -1 : 1;
-		for (int i = 0; i < Math.abs(distance); i++) {
+		int increment = (change > 0) ? -1 : 1;
+		for (int i = 0; i < Math.abs(change); i++) {
 			int redI = rand.nextInt(reducableIndices.size());
 			int redIndex = reducableIndices.get(redI);
-			int newValue = distList.get(redIndex) + increment;
-			distList.set(redIndex, newValue);
+			int newValue = changeList.get(redIndex) + increment;
+			changeList.set(redIndex, newValue);
 			if (Math.abs(newValue) == 7) {
 				Integer removed = reducableIndices.remove(redI);
 			}
 		}
 		rand.setSeed(randSeed);
 
-		//System.out.println("Decr: " + StringUtils.join(distList, ","));
-		Collections.shuffle(distList, rand);
+		//System.out.println("Decr: " + StringUtils.join(changeList, ","));
+		Collections.shuffle(changeList, rand);
 
-		//System.out.println("Shuffled: " + StringUtils.join(distList, ","));
-		return distList;
+		//System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
+		return changeList;
 	}
 }
