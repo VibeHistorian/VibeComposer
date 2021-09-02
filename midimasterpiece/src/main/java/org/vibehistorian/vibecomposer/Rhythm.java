@@ -46,6 +46,7 @@ public class Rhythm {
 		int maximum = durationPool.length;
 		int remainingNotes = durCount;
 		//System.out.println("Weights: " + StringUtils.join(durationWeights, ','));
+		int weightAdjust = 0;
 		while (remainingNotes > 0) {
 			double dur = durationPool[0];
 			int chance = generator.nextInt(100);
@@ -56,6 +57,9 @@ public class Rhythm {
 			for (int i = durationPool.length - 1; i >= 0; i--) {
 				if (durationPool[i] > maximumAllowedNoteDuration) {
 					maximum = i;
+					if (i > 1) {
+						weightAdjust += durationWeights[i] / (i - 1);
+					}
 				} else {
 					break;
 				}
@@ -68,7 +72,7 @@ public class Rhythm {
 					break;
 				}
 				//System.out.println("Chance: " + chance);
-				if (chance < durationWeights[i]) {
+				if (chance < durationWeights[i] + weightAdjust) {
 					dur = durationPool[i];
 
 					/*System.out.println(
