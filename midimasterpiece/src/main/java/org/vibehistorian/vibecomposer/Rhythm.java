@@ -54,12 +54,13 @@ public class Rhythm {
 			double minimumRemainingDuration = remainingNotes * dur;
 			double maximumAllowedNoteDuration = remainingDuration - minimumRemainingDuration + dur
 					+ 0.01;
-			for (int i = durationPool.length - 1; i >= 0; i--) {
+			for (int i = maximum - 1; i >= 0; i--) {
 				if (durationPool[i] > maximumAllowedNoteDuration) {
 					maximum = i;
 					if (i > 1) {
-						weightAdjust += durationWeights[i] / (i - 1);
+						weightAdjust += (durationWeights[i] - durationWeights[i - 1]) / (i - 1);
 					}
+					System.out.print(" Max: " + i);
 				} else {
 					break;
 				}
@@ -71,31 +72,30 @@ public class Rhythm {
 					lastNote = true;
 					break;
 				}
-				//System.out.println("Chance: " + chance);
 				if (chance < durationWeights[i] + weightAdjust) {
 					dur = durationPool[i];
 
-					/*System.out.println(
-							"Remaining: " + remainingNotes + ", Added from chance: " + dur);*/
+					System.out.println("Remaining: " + remainingNotes + ", Added from chance: "
+							+ dur + ", chance: " + chance);
 					break;
 				}
 			}
 			if (lastNote) {
 				durationSum += dur;
 				durations.add(dur);
-				//System.out.println("Remaining: " + remainingNotes + ", Added from last: " + dur);
+				System.out.println("Remaining: " + remainingNotes + ", Added from last: " + dur);
 				remainingNotes--;
 				break;
 			}
 			durationSum += dur;
-			//System.out.println("Added dur: " + dur + ", was remaining: " + (remainingDuration));
+			System.out.println("Added dur: " + dur + ", was remaining: " + (remainingDuration));
 			durations.add(dur);
 			remainingNotes--;
 
 		}
 		if (!MidiGenerator.roughlyEqual(durationSum, durationLimit)) {
-			/*System.out.println("Last note needs duration fix, sum: " + durationSum + ", needed: "
-					+ durationLimit);*/
+			System.out.println("Last note needs duration fix, sum: " + durationSum + ", needed: "
+					+ durationLimit);
 			durations.set(durations.size() - 1,
 					(durations.get(durations.size() - 1))
 							+ ((durationLimit > durationSum) ? (durationLimit - durationSum)

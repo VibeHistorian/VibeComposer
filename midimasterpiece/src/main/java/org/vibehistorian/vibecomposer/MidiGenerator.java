@@ -247,6 +247,9 @@ public class MidiGenerator implements JMC {
 		// Chord note choices
 		List<Integer> blockChordNoteChoices = new ArrayList<>(
 				Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+		while (chords.size() > blockChordNoteChoices.size()) {
+			blockChordNoteChoices.addAll(blockChordNoteChoices);
+		}
 
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
@@ -317,7 +320,7 @@ public class MidiGenerator implements JMC {
 
 
 		for (int i = 0; i < stretchedChords.size(); i++) {
-			int choice = blockChordNoteChoices.get(i);
+			int choice = blockChordNoteChoices.get(i % blockChordNoteChoices.size());
 			choice = Math.min(choice, CHORD_STRETCH);
 			blockChordNoteChoices.set(i, choice);
 		}
@@ -510,10 +513,15 @@ public class MidiGenerator implements JMC {
 				Durations.DOTTED_SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
 
+		int addQuick = (gc.getMelodyQuickness() - 50) * 2;
+		int addSlow = addQuick * -1;
+
+
 		// TODO: quickness
 		int[] melodySkeletonDurationWeights = Rhythm
-				.normalizedCumulativeWeights(new int[] { 10, 30, 10, 30, 10, 10 });
-
+				.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
+						100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
+		System.out.println(StringUtils.join(melodySkeletonDurationWeights, ','));
 		Random blockNotesGenerator = new Random();
 
 		for (int i = 0; i < durations.size(); i++) {

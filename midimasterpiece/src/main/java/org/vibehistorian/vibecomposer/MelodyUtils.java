@@ -137,6 +137,7 @@ public class MelodyUtils {
 		Random rand = new Random(randSeed);
 		List<Integer> changeList = new ArrayList<>();
 
+		// how many notes need to be corrected | change = 5 -> sum of block change sequence must be -5
 		int change = chord1 - chord2;
 		//System.out.println("Change: " + change);
 		List<Integer> reducableIndices = new ArrayList<>();
