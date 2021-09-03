@@ -48,6 +48,10 @@ public class MelodyUtils {
 		ARPY.add(new Integer[] { 0, 3, 1, 2 });
 		ARPY.add(new Integer[] { 0, 1, 4, 5 });
 		ARPY.add(new Integer[] { 0, 1, 7, 6 });
+		/*ARPY.add(new Integer[] { 0, 3, 5 });
+		ARPY.add(new Integer[] { 0, 4, 6 });
+		ARPY.add(new Integer[] { 0, 4, 7 });*/
+
 
 		List<Integer[]> allBlocks = new ArrayList<>();
 		allBlocks.addAll(SCALEY);
@@ -86,19 +90,26 @@ public class MelodyUtils {
 		return filteredList.get(rand2);
 	}
 
-	public static Integer[] getRandomByApproxBlockChange(int blockChange, int approx,
-			Random melodyBlockGenerator) {
+	public static Integer[] getRandomByApproxBlockChangeAndLength(int blockChange, int approx,
+			Random melodyBlockGenerator, Integer length) {
 		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
 		chosenChange = Math.min(7, Math.max(-7, chosenChange));
 		//System.out.println("Chosen change: " + chosenChange);
 		List<Integer[]> viableBlocks = new ArrayList<>();
 		if (BLOCK_CHANGE_MAP.containsKey(chosenChange)) {
-			viableBlocks.addAll(BLOCK_CHANGE_MAP.get(chosenChange));
+			for (Integer[] block : BLOCK_CHANGE_MAP.get(chosenChange)) {
+				if (length == null || block.length == length) {
+					viableBlocks.add(block);
+				}
+			}
+
 		}
 		if (BLOCK_CHANGE_MAP.containsKey(chosenChange * -1)) {
 			List<Integer[]> invertedBlocks = new ArrayList<>();
 			for (Integer[] block : BLOCK_CHANGE_MAP.get(chosenChange * -1)) {
-				invertedBlocks.add(inverse(block));
+				if (length == null || block.length == length) {
+					invertedBlocks.add(inverse(block));
+				}
 			}
 			viableBlocks.addAll(invertedBlocks);
 		}
