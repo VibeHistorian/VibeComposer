@@ -246,7 +246,7 @@ public class MidiGenerator implements JMC {
 
 		// Chord note choices
 		List<Integer> blockChordNoteChoices = new ArrayList<>(
-				Arrays.asList(new Integer[] { 0, 0, 0, 0 }));
+				Arrays.asList(new Integer[] { 0, 1, 1, 2 }));
 		while (chords.size() > blockChordNoteChoices.size()) {
 			blockChordNoteChoices.addAll(blockChordNoteChoices);
 		}
@@ -1737,12 +1737,13 @@ public class MidiGenerator implements JMC {
 					: allowedSpiceChords;
 
 			String spicyChordString = chordString;
+			String tempSpicyChordString = generateSpicyChordString(spiceGenerator, chordString,
+					spicyChordList);
 
 			// Generate with SPICE CHANCE
 			if (generator.nextInt(100) < gc.getSpiceChance()
 					&& (chordInts.size() < 7 || lastChord == null)) {
-				spicyChordString = generateSpicyChordString(spiceGenerator, chordString,
-						spicyChordList);
+				spicyChordString = tempSpicyChordString;
 			}
 
 			if (!gc.isDimAugDom7thEnabled()) {
