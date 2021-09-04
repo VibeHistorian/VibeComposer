@@ -628,13 +628,13 @@ public class MidiUtils {
 			// repeat from start with +12 transpose
 
 			// adjustment -> C4 E G B D5 -> convert to 6 length -> last note must be C6 not C5
-			int adjustment = 0;
+			int octaveAdjustment = 1;
+			if (Math.abs(chordCopy[chord.length - 1] - chordCopy[0]) >= 12) {
+				octaveAdjustment += Math.abs(chordCopy[chord.length - 1] - chordCopy[0]) / 12;
+			}
 			for (int i = 0; i < length; i++) {
 				int pitch = chordCopy[(i % chord.length)];
-				if (Math.abs(pitch - chordCopy[0]) >= 12) {
-					adjustment = 12;
-				}
-				converted[i] = pitch + adjustment + 12 * (i / chord.length);
+				converted[i] = pitch + 12 * (i / chord.length) * octaveAdjustment;
 			}
 		} else {
 			// alternate from beginning and end
@@ -653,6 +653,24 @@ public class MidiUtils {
 			}
 		}
 		return converted;
+	}
+
+	public static Integer getXthChordNote(int x, int[] chord) {
+		System.out.println(StringUtils.join(chord, ','));
+		int octaveMultiplier = 1;
+		int pitch = chord[((x + 10 * chord.length) % chord.length)];
+		int octaveAdjust = 0;
+		if (x >= chord.length) {
+			octaveAdjust = 12 * (x / chord.length);
+		} else if (x < 0) {
+			octaveAdjust = -12 + 12 * (x / chord.length);
+		}
+		if (Math.abs(chord[chord.length - 1] - chord[0]) >= 12) {
+			octaveMultiplier += Math.abs(chord[chord.length - 1] - chord[0]) / 12;
+		}
+		Integer note = pitch + octaveAdjust * octaveMultiplier;
+		System.out.println("Note: " + note);
+		return (note <= 0 || note >= 127) ? null : note;
 	}
 
 	public static CPhrase chordProgressionToPhrase(List<int[]> cpr) {

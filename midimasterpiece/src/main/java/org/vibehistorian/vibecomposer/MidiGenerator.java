@@ -246,6 +246,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> blockSeedOffsets = (mp.getMelodyPatternOffsets() != null)
 				? mp.getMelodyPatternOffsets()
 				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+
 		while (blockSeedOffsets.size() < chords.size()) {
 			blockSeedOffsets.addAll(blockSeedOffsets);
 		}
@@ -257,6 +258,8 @@ public class MidiGenerator implements JMC {
 		while (chords.size() > blockChordNoteChoices.size()) {
 			blockChordNoteChoices.addAll(blockChordNoteChoices);
 		}
+
+		System.out.println("Choices: " + blockChordNoteChoices);
 
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
@@ -329,11 +332,11 @@ public class MidiGenerator implements JMC {
 		//System.out.println("Alt: " + alternateRhythm);
 
 
-		for (int i = 0; i < stretchedChords.size(); i++) {
+		/*for (int i = 0; i < stretchedChords.size(); i++) {
 			int choice = blockChordNoteChoices.get(i % blockChordNoteChoices.size());
 			choice = Math.min(choice, CHORD_STRETCH);
 			blockChordNoteChoices.set(i, choice);
-		}
+		}*/
 
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
@@ -423,7 +426,7 @@ public class MidiGenerator implements JMC {
 				int[] chord = stretchedChords.get(i);
 
 				// TODO: pick chord pitch close to previous pitch?
-				int startingPitch = chord[blockChordNoteChoices.get(i)];
+				int startingPitch = MidiUtils.getXthChordNote(blockChordNoteChoices.get(i), chord);
 				int startingOct = startingPitch / 12;
 				List<Integer> majorScale = MidiUtils.MAJ_SCALE;
 				int startingNote = majorScale.indexOf(startingPitch % 12);
@@ -433,8 +436,7 @@ public class MidiGenerator implements JMC {
 
 				int blockOffset = blockSeedOffsets.get(i % 4);
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i);
-				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices,
-						(i + 1) % stretchedChords.size());
+				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, i + 1);
 				List<Integer> blockChanges = MelodyUtils.blockChangeSequence(chord1, chord2,
 						melodyBlockGeneratorSeed, durations.size());
 				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
@@ -554,9 +556,13 @@ public class MidiGenerator implements JMC {
 
 	private int getStartingNote(List<int[]> stretchedChords, List<Integer> chordNoteChoices,
 			int chordNum) {
-		int[] chord = stretchedChords.get(chordNum);
 
-		int startingPitch = chord[chordNoteChoices.get(chordNum)];
+		int chordNumIndex = chordNum % stretchedChords.size();
+		int chordNoteChoiceIndex = chordNum % chordNoteChoices.size();
+		int[] chord = stretchedChords.get(chordNumIndex);
+
+		int startingPitch = MidiUtils.getXthChordNote(chordNoteChoices.get(chordNoteChoiceIndex),
+				chord);
 		int startingOct = startingPitch / 12;
 		List<Integer> majorScale = MidiUtils.MAJ_SCALE;
 		int startingNote = majorScale.indexOf(startingPitch % 12);

@@ -168,6 +168,8 @@ public class MelodyUtils {
 		rand.setSeed(randSeed);
 		int increment = (change > 0) ? -1 : 1;
 		for (int i = 0; i < Math.abs(change); i++) {
+			if (reducableIndices.size() == 0)
+				break;
 			int redI = rand.nextInt(reducableIndices.size());
 			int redIndex = reducableIndices.get(redI);
 			int newValue = changeList.get(redIndex) + increment;

@@ -23,4 +23,20 @@ public class OMNI {
 		}
 		return intsList;
 	}
+
+	public static void clampIntList(List<Integer> list, int min, int max) {
+		for (int i = 0; i < list.size(); i++) {
+			list.set(i, clamp(list.get(i), min, max));
+		}
+	}
+
+	public static void clampIntArray(Integer[] array, int min, int max) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = clamp(array[i], min, max);
+		}
+	}
+
+	public static int clamp(int num, int min, int max) {
+		return Math.min(max, (Math.max(min, num)));
+	}
 }
