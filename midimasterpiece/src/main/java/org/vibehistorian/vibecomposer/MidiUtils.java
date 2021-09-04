@@ -626,8 +626,15 @@ public class MidiUtils {
 		int[] converted = new int[length];
 		if (chord.length < length) {
 			// repeat from start with +12 transpose
+
+			// adjustment -> C4 E G B D5 -> convert to 6 length -> last note must be C6 not C5
+			int adjustment = 0;
 			for (int i = 0; i < length; i++) {
-				converted[i] = chordCopy[(i % chord.length)] + 12 * (i / chord.length);
+				int pitch = chordCopy[(i % chord.length)];
+				if (Math.abs(pitch - chordCopy[0]) >= 12) {
+					adjustment = 12;
+				}
+				converted[i] = pitch + adjustment + 12 * (i / chord.length);
 			}
 		} else {
 			// alternate from beginning and end

@@ -1,11 +1,15 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -14,6 +18,8 @@ public class MelodyPanel extends InstPanel {
 	private static final long serialVersionUID = -7861296600641561431L;
 
 	private JCheckBox fillPauses = new JCheckBox("Fill Pauses", false);
+	private JTextField chordNoteChoices = new JTextField("0,1,1,2");
+	private JTextField melodyPatternOffsets = new JTextField("0,1,0,2");
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
@@ -36,12 +42,17 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(transpose);
 
-		this.add(minMaxVelSlider);
-
 		pauseChance.setInt(0);
 		this.add(pauseChance);
 		this.add(fillPauses);
 
+		this.add(new JLabel("Chord Note"));
+		this.add(chordNoteChoices);
+		this.add(new JLabel("Pattern"));
+		this.add(melodyPatternOffsets);
+
+
+		this.add(minMaxVelSlider);
 		this.add(swingPercent);
 
 		this.add(patternSeedLabel);
@@ -64,6 +75,8 @@ public class MelodyPanel extends InstPanel {
 		part.setOrder(getPanelOrder());
 
 		part.setFillPauses(getFillPauses());
+		part.setChordNoteChoices(getChordNoteChoices());
+		part.setMelodyPatternOffsets(getMelodyPatternOffsets());
 		return part;
 	}
 
@@ -73,6 +86,8 @@ public class MelodyPanel extends InstPanel {
 		setPanelOrder(part.getOrder());
 
 		setFillPauses(part.isFillPauses());
+		setChordNoteChoices(part.getChordNoteChoices());
+		setMelodyPatternOffsets(part.getMelodyPatternOffsets());
 	}
 
 	@Override
@@ -86,5 +101,21 @@ public class MelodyPanel extends InstPanel {
 
 	public void setFillPauses(boolean fillPauses) {
 		this.fillPauses.setSelected(fillPauses);
+	}
+
+	public List<Integer> getChordNoteChoices() {
+		return OMNI.parseIntsString(chordNoteChoices.getText());
+	}
+
+	public void setChordNoteChoices(List<Integer> chordNoteChoices) {
+		this.chordNoteChoices.setText(StringUtils.join(chordNoteChoices, ","));
+	}
+
+	public List<Integer> getMelodyPatternOffsets() {
+		return OMNI.parseIntsString(melodyPatternOffsets.getText());
+	}
+
+	public void setMelodyPatternOffsets(List<Integer> melodyPatternOffsets) {
+		this.melodyPatternOffsets.setText(StringUtils.join(melodyPatternOffsets, ","));
 	}
 }

@@ -1040,7 +1040,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
 
-		JLabel melodyExtraLabel = new JLabel("MELODY SETTINGS+");
+		JLabel melodyExtraLabel = new JLabel("MELODY SETTINGS++");
 		melodyExtraLabel.setPreferredSize(new Dimension(120, 30));
 		melodyExtraLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanel.add(melodyExtraLabel);
@@ -1050,8 +1050,6 @@ public class VibeComposerGUI extends JFrame
 		randomMelodySameSeed = new JCheckBox("Same#", false);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
-		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		melodyTonicize = new JCheckBox("Tonicize", false);
 
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -1064,8 +1062,6 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanel.add(randomMelodySameSeed);
 		melodySettingsExtraPanel.add(randomMelodyOnRegenerate);
 		melodySettingsExtraPanel.add(clearUserMelodySeed);
-		melodySettingsExtraPanel.add(melodyBasicChordsOnly);
-		melodySettingsExtraPanel.add(melodyTonicize);
 		melodySettingsExtraPanel.add(useUserMelody);
 		melodySettingsExtraPanel.add(dropPane);
 
@@ -1073,23 +1069,27 @@ public class VibeComposerGUI extends JFrame
 		JPanel melodySettingsExtraPanel2 = new JPanel();
 		melodySettingsExtraPanel2.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanel2.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS++");
+		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS+");
 		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
 		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanel2.add(melodyExtraLabel2);
 
+		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
+		melodyTonicize = new JCheckBox("Tonicize", false);
 		melodyArpySurprises = new JCheckBox("Insert Arps", true);
 		melodySingleNoteExceptions = new JCheckBox("Single Note Exceptions", true);
 		melodyAvoidChordJumps = new JCheckBox("Avoid Chord Jumps", true);
 		melodyUseDirectionsFromProgression = new JCheckBox("Use Chord Directions", false);
 
+		melodySettingsExtraPanel2.add(melodyBasicChordsOnly);
+		melodySettingsExtraPanel2.add(melodyTonicize);
 		melodySettingsExtraPanel2.add(melodyArpySurprises);
 		melodySettingsExtraPanel2.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanel2.add(melodyAvoidChordJumps);
 		melodySettingsExtraPanel2.add(melodyUseDirectionsFromProgression);
 
-		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanel);
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanel2);
+		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanel);
 
 
 		scrollableMelodyPanels.add(melodySettingsPanel);

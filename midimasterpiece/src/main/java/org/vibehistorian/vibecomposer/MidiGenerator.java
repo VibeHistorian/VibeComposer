@@ -58,6 +58,7 @@ import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -242,11 +243,17 @@ public class MidiGenerator implements JMC {
 		}
 
 		// A B A C pattern
-		List<Integer> blockSeedOffsets = Arrays.asList(new Integer[] { 0, 1, 0, 2 });
+		List<Integer> blockSeedOffsets = (mp.getMelodyPatternOffsets() != null)
+				? mp.getMelodyPatternOffsets()
+				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+		while (blockSeedOffsets.size() < chords.size()) {
+			blockSeedOffsets.addAll(blockSeedOffsets);
+		}
 
 		// Chord note choices
-		List<Integer> blockChordNoteChoices = new ArrayList<>(
-				Arrays.asList(new Integer[] { 0, 1, 1, 2 }));
+		List<Integer> blockChordNoteChoices = (mp.getChordNoteChoices() != null)
+				? mp.getChordNoteChoices()
+				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 1, 2 }));
 		while (chords.size() > blockChordNoteChoices.size()) {
 			blockChordNoteChoices.addAll(blockChordNoteChoices);
 		}
@@ -473,7 +480,6 @@ public class MidiGenerator implements JMC {
 
 						pitch += majorScale.get(combinedNote);
 						//System.out.println("Combined note: " + combinedNote + ", pitch: " + pitch);
-						// TODO: take chord's pitch, determine which note in the scale it is, apply a normal or inversed pattern to it
 
 						// TODO: user or program generates sequence of U,U,D,D, then notes from chords are picked to create a direction
 						// then MelodyBlocks are randomly picked which fulfill the next direction - either by being normal and going that way, or by inversion
@@ -3691,9 +3697,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> customMappingNumbers = null;
 		if (gc != null) {
 			String customMapping = gc.getDrumCustomMappingNumbers();
-			String[] customMappingNumberStrings = customMapping.split(",");
-			customMappingNumbers = Arrays.asList(customMappingNumberStrings).stream()
-					.map(e -> Integer.valueOf(e.trim())).collect(Collectors.toList());
+			customMappingNumbers = OMNI.parseIntsString(customMapping);
 		} else {
 			customMappingNumbers = Arrays.asList(InstUtils.DRUM_INST_NUMBERS_SEMI);
 		}
