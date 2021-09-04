@@ -18,7 +18,7 @@ public class MelodyPanel extends InstPanel {
 	private static final long serialVersionUID = -7861296600641561431L;
 
 	private JCheckBox fillPauses = new JCheckBox("Fill Pauses", false);
-	private JTextField chordNoteChoices = new JTextField("0,1,1,2");
+	private JTextField chordNoteChoices = new JTextField("0,2,2,4");
 	private JTextField melodyPatternOffsets = new JTextField("0,1,0,2");
 
 	public void initComponents(ActionListener l) {
@@ -46,7 +46,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(pauseChance);
 		this.add(fillPauses);
 
-		this.add(new JLabel("Chord Note"));
+		this.add(new JLabel("Chord Target+-"));
 		this.add(chordNoteChoices);
 		this.add(new JLabel("Pattern"));
 		this.add(melodyPatternOffsets);
@@ -117,5 +117,10 @@ public class MelodyPanel extends InstPanel {
 
 	public void setMelodyPatternOffsets(List<Integer> melodyPatternOffsets) {
 		this.melodyPatternOffsets.setText(StringUtils.join(melodyPatternOffsets, ","));
+	}
+
+	public void overridePatterns(MelodyPanel mp1) {
+		chordNoteChoices.setText(mp1.chordNoteChoices.getText());
+		melodyPatternOffsets.setText(mp1.melodyPatternOffsets.getText());
 	}
 }

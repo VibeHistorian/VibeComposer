@@ -386,6 +386,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyLeadChords;
 	JCheckBox useUserMelody;
 
+	JCheckBox melody1ForcePatterns;
 	JCheckBox melodyArpySurprises;
 	JCheckBox melodySingleNoteExceptions;
 	JCheckBox melodyAvoidChordJumps;
@@ -1049,7 +1050,8 @@ public class VibeComposerGUI extends JFrame
 		JButton clearUserMelodySeed = makeButton("Clear Seed", "ClearMelody");
 		randomMelodySameSeed = new JCheckBox("Same#", false);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
-		arpCopyMelodyInst = new JCheckBox("Force copy Arp#1 inst.", true);
+		arpCopyMelodyInst = new JCheckBox("Force Arp#1 Inst.", true);
+		melody1ForcePatterns = new JCheckBox("Force Melody#1 Target/Pattern", true);
 
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -3414,7 +3416,62 @@ public class VibeComposerGUI extends JFrame
 
 		needToRecalculateSoloMuters = true;
 
-		Integer masterpieceSeed = 0;
+		Integer masterpieceSeed = prepareMainSeed(regenerate);
+
+		prepareUI(regenerate);
+		MidiGenerator melodyGen = new MidiGenerator(copyGUItoConfig());
+		fillUserParameters();
+
+		File makeDir = new File(MIDIS_FOLDER);
+		makeDir.mkdir();
+
+		String seedData = "" + masterpieceSeed;
+		if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
+			seedData += "_" + melodyPanels.get(0).getPatternSeed();
+		}
+
+		String fileName = "seed" + seedData;
+		String relPath = MIDIS_FOLDER + "/" + fileName + ".mid";
+
+		// unapply S/M, generate, reapply S/M with new track numbering
+		unapplySolosMutes(true);
+		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+		reapplySolosMutes();
+
+		cleanUpUIAfterCompose();
+
+
+		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(new Date().toString() + ", Seed: " + seedData);
+		} catch (IOException e) {
+			System.out.println("Failed to write into Random Seed History..");
+		}
+
+		handleGeneratedMidi(regenerate, relPath);
+		resetArrSectionInBackground();
+
+		System.out.println("VibeComposerGUI::composeMidi time: "
+				+ (System.currentTimeMillis() - systemTime) + " ms");
+	}
+
+	private void cleanUpUIAfterCompose() {
+		if (MelodyMidiDropPane.userMelody != null) {
+			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
+			setFixedLengthChords(MidiGenerator.chordInts.size());
+		}
+
+		actualArrangement = new Arrangement();
+		actualArrangement.setPreviewChorus(false);
+		actualArrangement.getSections().clear();
+		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
+			actualArrangement.getSections().add(sec.deepCopy());
+		}
+	}
+
+	private Integer prepareMainSeed(boolean regenerate) {
+		int masterpieceSeed = 0;
 
 		Integer parsedSeed = (NumberUtils.isCreatable(randomSeed.getText()))
 				? Integer.valueOf(randomSeed.getText())
@@ -3444,8 +3501,17 @@ public class VibeComposerGUI extends JFrame
 
 		System.out.println("Melody seed: " + masterpieceSeed);
 		lastRandomSeed = masterpieceSeed;
+		return masterpieceSeed;
+	}
 
-		// TODO: refactor into "pre config phase" method?
+	private void prepareUI(boolean regenerate) {
+
+		if (melody1ForcePatterns.isSelected()) {
+			MelodyPanel mp1 = melodyPanels.get(0);
+			for (int i = 1; i < melodyPanels.size(); i++) {
+				melodyPanels.get(i).overridePatterns(mp1);
+			}
+		}
 
 		if (arpCopyMelodyInst.isSelected() && !melodyPanels.get(0).getMuteInst()) {
 			if (arpPanels.size() > 0) {
@@ -3497,55 +3563,6 @@ public class VibeComposerGUI extends JFrame
 			});
 		}
 
-		MidiGenerator melodyGen = new MidiGenerator(copyGUItoConfig());
-		fillUserParameters();
-
-		File makeDir = new File(MIDIS_FOLDER);
-		makeDir.mkdir();
-
-		String seedData = "" + masterpieceSeed;
-		if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
-			seedData += "_" + melodyPanels.get(0).getPatternSeed();
-		}
-
-		String fileName = "seed" + seedData;
-		String relPath = MIDIS_FOLDER + "/" + fileName + ".mid";
-
-		// unapply all tracks first
-		unapplySolosMutes(true);
-
-		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
-
-		if (MelodyMidiDropPane.userMelody != null) {
-			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
-			setFixedLengthChords(MidiGenerator.chordInts.size());
-		}
-
-		// reapply
-		reapplySolosMutes();
-
-		currentMidi = null;
-
-		actualArrangement = new Arrangement();
-		actualArrangement.setPreviewChorus(false);
-		actualArrangement.getSections().clear();
-		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
-			actualArrangement.getSections().add(sec.deepCopy());
-		}
-
-		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)) {
-			out.println(new Date().toString() + ", Seed: " + seedData);
-		} catch (IOException e) {
-			System.out.println("Failed to write into Random Seed History..");
-		}
-
-		handleMidiStuff(regenerate, relPath, systemTime);
-		resetArrSectionInBackground();
-
-		System.out.println("VibeComposerGUI::composeMidi time: "
-				+ (System.currentTimeMillis() - systemTime) + " ms");
 	}
 
 	private void resetArrSectionInBackground() {
@@ -3565,7 +3582,9 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void handleMidiStuff(boolean regenerate, String relPath, long systemTime) {
+	private void handleGeneratedMidi(boolean regenerate, String relPath) {
+
+		currentMidi = null;
 		try {
 			if (sequencer != null) {
 				sequencer.stop();

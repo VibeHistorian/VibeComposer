@@ -426,13 +426,17 @@ public class MidiGenerator implements JMC {
 				int[] chord = stretchedChords.get(i);
 
 				// TODO: pick chord pitch close to previous pitch?
-				int startingPitch = MidiUtils.getXthChordNote(blockChordNoteChoices.get(i), chord);
-				int startingOct = startingPitch / 12;
+				int startingPitch = chord[0];
 				List<Integer> majorScale = MidiUtils.MAJ_SCALE;
 				int startingNote = majorScale.indexOf(startingPitch % 12);
 				if (startingNote < 0) {
 					throw new IllegalArgumentException("BAD STARTING NOTE!");
 				}
+				startingNote += blockChordNoteChoices.get(i);
+				Pair<Integer, Integer> notePitch = normalizeNotePitch(startingNote, startingPitch);
+				startingNote = notePitch.getLeft();
+				startingPitch = notePitch.getRight();
+				int startingOct = startingPitch / 12;
 
 				int blockOffset = blockSeedOffsets.get(i % 4);
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i);
@@ -458,26 +462,14 @@ public class MidiGenerator implements JMC {
 						int pitch = startingOct * 12;
 						int combinedNote = startingNote + note;
 						//System.out.println("1st combined: " + combinedNote);
-						if (combinedNote >= 7) {
-							int divided = combinedNote / 7;
-							pitch += (12 * divided);
-							combinedNote -= (7 * divided);
-						} else if (combinedNote < 0) {
-							int divided = 1 + ((-1 * (combinedNote + 1)) / 7);
-							pitch -= (12 * divided);
-							combinedNote += (7 * divided);
-						}
+						notePitch = normalizeNotePitch(combinedNote, pitch);
+						combinedNote = notePitch.getLeft();
+						pitch = notePitch.getRight();
 						if (adjustment != 0) {
 							combinedNote = combinedNote + adjustment;
-							if (combinedNote >= 7) {
-								int divided = combinedNote / 7;
-								pitch += (12 * divided);
-								combinedNote -= (7 * divided);
-							} else if (combinedNote < 0) {
-								int divided = 1 + ((-1 * (combinedNote + 1)) / 7);
-								pitch -= (12 * divided);
-								combinedNote += (7 * divided);
-							}
+							notePitch = normalizeNotePitch(combinedNote, pitch);
+							combinedNote = notePitch.getLeft();
+							pitch = notePitch.getRight();
 						}
 
 						pitch += majorScale.get(combinedNote);
@@ -511,6 +503,19 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
 		}
 		return noteList;
+	}
+
+	private Pair<Integer, Integer> normalizeNotePitch(int startingNote, int startingPitch) {
+		if (startingNote >= 7) {
+			int divided = startingNote / 7;
+			startingPitch += (12 * divided);
+			startingNote -= (7 * divided);
+		} else if (startingNote < 0) {
+			int divided = 1 + ((-1 * (startingNote + 1)) / 7);
+			startingPitch -= (12 * divided);
+			startingNote += (7 * divided);
+		}
+		return Pair.of(startingNote, startingPitch);
 	}
 
 	private List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp,
@@ -561,15 +566,14 @@ public class MidiGenerator implements JMC {
 		int chordNoteChoiceIndex = chordNum % chordNoteChoices.size();
 		int[] chord = stretchedChords.get(chordNumIndex);
 
-		int startingPitch = MidiUtils.getXthChordNote(chordNoteChoices.get(chordNoteChoiceIndex),
-				chord);
+		int startingPitch = chord[0];
 		int startingOct = startingPitch / 12;
 		List<Integer> majorScale = MidiUtils.MAJ_SCALE;
 		int startingNote = majorScale.indexOf(startingPitch % 12);
 		if (startingNote < 0) {
 			throw new IllegalArgumentException("BAD STARTING NOTE!");
 		}
-		return startingNote + startingOct * 7;
+		return startingNote + startingOct * 7 + chordNoteChoices.get(chordNoteChoiceIndex);
 	}
 
 	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {
