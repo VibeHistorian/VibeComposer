@@ -47,7 +47,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(pauseChance);
 		this.add(fillPauses);
 
-		this.add(new JLabel("Chord Target+-"));
+		this.add(new JLabel("Note Targets"));
 		this.add(chordNoteChoices);
 
 		this.add(maxBlockChange);

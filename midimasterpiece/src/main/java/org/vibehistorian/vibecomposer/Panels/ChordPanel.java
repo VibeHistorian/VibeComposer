@@ -102,7 +102,7 @@ public class ChordPanel extends InstPanel {
 		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-				pattern.addItem(d.toString());
+			pattern.addItem(d.toString());
 		}
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
@@ -130,7 +130,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getTransitionChance() {
-		return Integer.valueOf(transitionChance.getInt());
+		return transitionChance.getInt();
 	}
 
 	public void setTransitionChance(int transitionChance) {
@@ -138,7 +138,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getTransitionSplit() {
-		return Integer.valueOf(transitionSplit.getInt());
+		return transitionSplit.getInt();
 	}
 
 	public void setTransitionSplit(int transitionSplit) {
@@ -146,7 +146,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getStrum() {
-		return Integer.valueOf(strum.getInt());
+		return strum.getInt();
 	}
 
 	public void setStrum(int strum) {

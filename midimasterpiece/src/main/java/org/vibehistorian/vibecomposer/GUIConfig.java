@@ -84,6 +84,7 @@ public class GUIConfig {
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
+	private int melodyBlockTargetMode = 2;
 
 	// chord gen
 	private int chordSlashChance = 0;
@@ -639,6 +640,14 @@ public class GUIConfig {
 
 	public void setSpiceForceScale(boolean spiceForceScale) {
 		this.spiceForceScale = spiceForceScale;
+	}
+
+	public int getMelodyBlockTargetMode() {
+		return melodyBlockTargetMode;
+	}
+
+	public void setMelodyBlockTargetMode(int melodyBlockTargetMode) {
+		this.melodyBlockTargetMode = melodyBlockTargetMode;
 	}
 
 }

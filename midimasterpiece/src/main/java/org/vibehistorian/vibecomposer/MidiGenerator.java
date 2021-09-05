@@ -254,7 +254,7 @@ public class MidiGenerator implements JMC {
 		// Chord note choices
 		List<Integer> blockChordNoteChoices = (mp.getChordNoteChoices() != null)
 				? mp.getChordNoteChoices()
-				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 1, 2 }));
+				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 2, 2, 4 }));
 		while (chords.size() > blockChordNoteChoices.size()) {
 			blockChordNoteChoices.addAll(blockChordNoteChoices);
 		}
@@ -266,6 +266,7 @@ public class MidiGenerator implements JMC {
 		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
 		int EXCEPTION_CHANCE = gc.getMelodyExceptionChance();
 		int CHORD_STRETCH = 4;
+		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
 
 		int seed = mp.getPatternSeed();
 
@@ -361,7 +362,7 @@ public class MidiGenerator implements JMC {
 							// only add, processed later
 							break;
 						case 1:
-							MAX_JUMP_SKELETON_CHORD = Math.min(4, MAX_JUMP_SKELETON_CHORD + 1);
+							MAX_JUMP_SKELETON_CHORD++;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -393,54 +394,19 @@ public class MidiGenerator implements JMC {
 						melodySkeletonDurationWeights);
 
 				List<Double> durations = rhythm.regenerateDurations(10);
-				/*if (gc.isMelodyArpySurprises()) {
-					if (sameRhythmTwice) {
-						if ((i % 2 == 0) || (durations.size() < 3)) {
-							durations.addAll(durations);
-						} else {
-							List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
-							if (arpedDurations != null) {
-								System.out.println("Double pattern - surprise!");
-								durations.addAll(arpedDurations);
-							} else {
-								durations.addAll(durations);
-							}
-						}
-					} else if (i % 2 == 1 && durations.size() >= 4) {
-				
-						List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
-						if (arpedDurations != null) {
-							System.out.println("Single pattern - surprise!");
-							durations = arpedDurations;
-						}
-					}
-				} else {*/
 				if (sameRhythmTwice) {
 					durations.addAll(durations);
 				}
-				//}
-
-				// TODO: use directions of chords
 
 				//System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
-				int[] chord = stretchedChords.get(i);
-
 				// TODO: pick chord pitch close to previous pitch?
-				int startingPitch = chord[0];
-				List<Integer> majorScale = MidiUtils.MAJ_SCALE;
-				int startingNote = majorScale.indexOf(startingPitch % 12);
-				if (startingNote < 0) {
-					throw new IllegalArgumentException("BAD STARTING NOTE!");
-				}
-				startingNote += blockChordNoteChoices.get(i);
-				Pair<Integer, Integer> notePitch = normalizeNotePitch(startingNote, startingPitch);
-				startingNote = notePitch.getLeft();
-				startingPitch = notePitch.getRight();
-				int startingOct = startingPitch / 12;
 
 				int blockOffset = blockSeedOffsets.get(i % 4);
-				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i);
-				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, i + 1);
+				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i,
+						BLOCK_TARGET_MODE);
+				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, i + 1,
+						BLOCK_TARGET_MODE);
+				int startingOct = chord1 / 7;
 				List<Integer> blockChanges = MelodyUtils.blockChangeSequence(chord1, chord2,
 						melodyBlockGeneratorSeed, durations.size(), mp.getMaxBlockChange());
 				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
@@ -448,6 +414,7 @@ public class MidiGenerator implements JMC {
 						MAX_JUMP_SKELETON_CHORD);
 
 				System.out.println("Block changes: " + blockChanges);
+				int startingNote = chord1 % 7;
 				//System.out.println("Starting note: " + startingNote);
 
 				int adjustment = 0;
@@ -462,7 +429,7 @@ public class MidiGenerator implements JMC {
 						int pitch = startingOct * 12;
 						int combinedNote = startingNote + note;
 						//System.out.println("1st combined: " + combinedNote);
-						notePitch = normalizeNotePitch(combinedNote, pitch);
+						Pair<Integer, Integer> notePitch = normalizeNotePitch(combinedNote, pitch);
 						combinedNote = notePitch.getLeft();
 						pitch = notePitch.getRight();
 						if (adjustment != 0) {
@@ -472,7 +439,7 @@ public class MidiGenerator implements JMC {
 							pitch = notePitch.getRight();
 						}
 
-						pitch += majorScale.get(combinedNote);
+						pitch += MidiUtils.MAJ_SCALE.get(combinedNote);
 						//System.out.println("Combined note: " + combinedNote + ", pitch: " + pitch);
 
 						// TODO: user or program generates sequence of U,U,D,D, then notes from chords are picked to create a direction
@@ -559,21 +526,23 @@ public class MidiGenerator implements JMC {
 		return mbs;
 	}
 
-	private int getStartingNote(List<int[]> stretchedChords, List<Integer> chordNoteChoices,
-			int chordNum) {
+	private int getStartingNote(List<int[]> stretchedChords, List<Integer> blockChordNoteChoices,
+			int chordNum, int BLOCK_TARGET_MODE) {
 
 		int chordNumIndex = chordNum % stretchedChords.size();
-		int chordNoteChoiceIndex = chordNum % chordNoteChoices.size();
+		int chordNoteChoiceIndex = chordNum % blockChordNoteChoices.size();
 		int[] chord = stretchedChords.get(chordNumIndex);
 
-		int startingPitch = chord[0];
+		int startingPitch = (BLOCK_TARGET_MODE == 0)
+				? MidiUtils.getXthChordNote(blockChordNoteChoices.get(chordNoteChoiceIndex), chord)
+				: ((BLOCK_TARGET_MODE == 1) ? chord[0] : (5 * 12));
 		int startingOct = startingPitch / 12;
-		List<Integer> majorScale = MidiUtils.MAJ_SCALE;
-		int startingNote = majorScale.indexOf(startingPitch % 12);
+		int startingNote = MidiUtils.MAJ_SCALE.indexOf(startingPitch % 12);
 		if (startingNote < 0) {
 			throw new IllegalArgumentException("BAD STARTING NOTE!");
 		}
-		return startingNote + startingOct * 7 + chordNoteChoices.get(chordNoteChoiceIndex);
+		return startingNote + startingOct * 7
+				+ ((BLOCK_TARGET_MODE > 0) ? blockChordNoteChoices.get(chordNoteChoiceIndex) : 0);
 	}
 
 	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {

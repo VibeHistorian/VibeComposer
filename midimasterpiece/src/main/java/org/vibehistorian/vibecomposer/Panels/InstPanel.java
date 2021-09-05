@@ -262,7 +262,7 @@ public abstract class InstPanel extends JPanel {
 	public abstract void setFromInstPart(InstPart part);
 
 	public int getHitsPerPattern() {
-		return Integer.valueOf(hitsPerPattern.getInt());
+		return hitsPerPattern.getInt();
 	}
 
 	public void setHitsPerPattern(int hitsPerPattern) {
@@ -270,7 +270,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getChordSpan() {
-		return Integer.valueOf(chordSpan.getInt());
+		return chordSpan.getInt();
 	}
 
 	public void setChordSpan(int chordSpan) {
@@ -278,7 +278,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPauseChance() {
-		return Integer.valueOf(pauseChance.getInt());
+		return pauseChance.getInt();
 	}
 
 	public void setPauseChance(int pauseChance) {
@@ -286,7 +286,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getExceptionChance() {
-		return Integer.valueOf(exceptionChance.getInt());
+		return exceptionChance.getInt();
 	}
 
 	public void setExceptionChance(int exceptionChance) {
@@ -294,7 +294,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getTranspose() {
-		return Integer.valueOf(transpose.getInt());
+		return transpose.getInt();
 	}
 
 	public void setTranspose(int transpose) {
@@ -323,7 +323,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPatternShift() {
-		return Integer.valueOf(patternShift.getInt());
+		return patternShift.getInt();
 	}
 
 	public void setPatternShift(int shift) {
@@ -363,7 +363,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPatternRepeat() {
-		return Integer.valueOf(patternRepeat.getInt());
+		return patternRepeat.getInt();
 	}
 
 	public void setPatternRepeat(int patternRepeat) {
@@ -404,7 +404,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getDelay() {
-		return Integer.valueOf(delay.getInt());
+		return delay.getInt();
 	}
 
 	public void setDelay(int delay) {
@@ -412,7 +412,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getChordNotesStretch() {
-		return Integer.valueOf(chordNotesStretch.getInt());
+		return chordNotesStretch.getInt();
 	}
 
 	public void setChordNotesStretch(int chordStretch) {
@@ -428,7 +428,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getVelocityMin() {
-		return Integer.valueOf(minMaxVelSlider.getValue());
+		return minMaxVelSlider.getValue();
 	}
 
 	public void setVelocityMin(int velocityMin) {
@@ -436,7 +436,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getVelocityMax() {
-		return Integer.valueOf(minMaxVelSlider.getUpperValue());
+		return minMaxVelSlider.getUpperValue();
 	}
 
 	public void setVelocityMax(int velocityMax) {
@@ -453,7 +453,7 @@ public abstract class InstPanel extends JPanel {
 
 
 	public int getSwingPercent() {
-		return Integer.valueOf(swingPercent.getInt());
+		return swingPercent.getInt();
 	}
 
 	public void setSwingPercent(int swingPercent) {
