@@ -252,6 +252,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		// Chord note choices
+
 		List<Integer> blockChordNoteChoices = (mp.getChordNoteChoices() != null)
 				? mp.getChordNoteChoices()
 				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 2, 2, 4 }));
@@ -261,6 +262,7 @@ public class MidiGenerator implements JMC {
 
 		System.out.println("Choices: " + blockChordNoteChoices);
 
+
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
 		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
@@ -269,6 +271,9 @@ public class MidiGenerator implements JMC {
 		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
 
 		int seed = mp.getPatternSeed();
+
+		List<Integer> generatedChoics = generateOffsets(roots, seed, gc.getMelodyBlockTargetMode());
+		System.out.println("Choices2: " + generatedChoics);
 
 		Vector<Note> noteList = new Vector<>();
 
@@ -291,14 +296,14 @@ public class MidiGenerator implements JMC {
 		int numberOfVars = Section.variationDescriptions[0].length - 2;
 
 		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.QUARTER_NOTE,
-				Durations.DOTTED_QUARTER_NOTE };
+				Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
 
 		// TODO: quickness
 		int addQuick = (gc.getMelodyQuickness() - 50) * 4;
 		int addSlow = addQuick * -1;
 
-		int[] melodySkeletonDurationWeights = Rhythm
-				.normalizedCumulativeWeights(new int[] { 300 + addQuick, 500, 200 + addSlow });
+		int[] melodySkeletonDurationWeights = Rhythm.normalizedCumulativeWeights(
+				new int[] { 300 + addQuick, 500, 200 + addSlow, 200 + addSlow });
 
 		List<int[]> usedChords = null;
 		if (gc.isMelodyBasicChordsOnly()) {
@@ -470,6 +475,82 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
 		}
 		return noteList;
+	}
+
+	private static List<Integer> randomizedChordDirections(int chords, int randomSeed) {
+		Random rand = new Random(randomSeed);
+		List<Integer> dirs = new ArrayList<>();
+		dirs.add(1);
+		for (int i = 1; i < chords; i++) {
+			dirs.add(rand.nextInt(3) - 1);
+		}
+		return dirs;
+	}
+
+	private static List<Integer> convertRootsToOffsets(List<Integer> roots) {
+		List<Integer> offsets = new ArrayList<>();
+		for (int i = 0; i < roots.size(); i++) {
+			offsets.add(-1 * roots.get(i));
+		}
+		return offsets;
+	}
+
+	private static List<Integer> multipliedDirections(List<Integer> directions, int randomSeed) {
+		// wiggle random
+		int MAX_MULTI = 2;
+		Random rand = new Random(randomSeed);
+		List<Integer> multiDirs = new ArrayList<>();
+		for (Integer o : directions) {
+			int multiplied = (rand.nextInt(MAX_MULTI) + 1) * o;
+			if (o < 0) {
+				// small correction for too low dips
+				multiplied++;
+			}
+			multiDirs.add(multiplied);
+		}
+		return multiDirs;
+	}
+
+	private static List<Integer> getRootIndexes(List<int[]> chords) {
+		List<Integer> rootIndexes = new ArrayList<>();
+		for (int i = 0; i < chords.size(); i++) {
+			int root = chords.get(i)[0];
+			int rootIndex = MidiUtils.MAJ_SCALE.indexOf(root % 12);
+			if (rootIndex < 0) {
+				int closestPitch = MidiUtils.getClosestFromList(cIonianScale4, root % 12);
+				rootIndex = MidiUtils.MAJ_SCALE.indexOf(closestPitch % 12);
+			}
+			rootIndexes.add(rootIndex);
+		}
+		return rootIndexes;
+	}
+
+	private static List<Integer> generateOffsets(List<int[]> chords, int randomSeed,
+			int targetMode) {
+		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords));
+		List<Integer> multipliedDirections = multipliedDirections(
+				randomizedChordDirections(chords.size(), randomSeed), randomSeed + 1);
+		List<Integer> offsets = new ArrayList<>();
+		for (int i = 0; i < chordOffsets.size(); i++) {
+			System.out.println("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
+					+ multipliedDirections.get(i));
+			if (targetMode == 1) {
+				offsets.add(chordOffsets.get(i) + multipliedDirections.get(i));
+			} else {
+				offsets.add(multipliedDirections.get(i));
+			}
+
+		}
+		return offsets;
+	}
+
+	public static List<Integer> generateOffsets(List<String> chordStrings, int randomSeed,
+			int targetMode, Boolean isPublic) {
+		List<int[]> chords = new ArrayList<>();
+		for (int i = 0; i < chordStrings.size(); i++) {
+			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
+		}
+		return generateOffsets(chords, randomSeed, targetMode);
 	}
 
 	private Pair<Integer, Integer> normalizeNotePitch(int startingNote, int startingPitch) {

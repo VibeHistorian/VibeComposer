@@ -984,7 +984,7 @@ public class VibeComposerGUI extends JFrame
 		JLabel melodyLabel = new JLabel("MELODY  ");
 		melodySettingsPanel.add(melodyLabel);
 		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		melodyQuickness = new KnobPanel("Speed", 50);
+		melodyQuickness = new KnobPanel("Speed", 0);
 		melodySettingsPanel.add(melodyQuickness);
 
 
@@ -1131,10 +1131,12 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setFillPauses(true);
 
 				if (i % 2 == 1) {
-					melodyPanel.setTranspose(12);
+					melodyPanel.setTranspose(0);
 				} else {
 					melodyPanel.setTranspose(-12);
 				}
+			} else {
+				melodyPanel.setTranspose(12);
 			}
 		}
 

@@ -352,6 +352,7 @@ public abstract class InstPanel extends JPanel {
 
 	public void setMuteInst(boolean selected) {
 		this.muteInst.setSelected(selected);
+		muteInst.repaint();
 	}
 
 	public boolean getRepeatableNotes() {
