@@ -368,7 +368,6 @@ public class VibeComposerGUI extends JFrame
 	JButton soloAllDrums;
 
 	// melody gen settings
-	JCheckBox arpCopyMelodyInst;
 	KnobPanel maxJump;
 	KnobPanel maxExceptions;
 	KnobPanel melodyAlternateRhythmChance;
@@ -440,6 +439,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxRepeat;
 	KnobPanel randomArpMinVel;
 	KnobPanel randomArpMaxVel;
+	JCheckBox arpCopyMelodyInst;
 
 	// drum gen settings
 	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 39, 40 });
@@ -1050,15 +1050,14 @@ public class VibeComposerGUI extends JFrame
 		JButton clearUserMelodySeed = makeButton("Clear Seed", "ClearMelody");
 		randomMelodySameSeed = new JCheckBox("Same#", false);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
-		arpCopyMelodyInst = new JCheckBox("Force Arp#1 Inst.", true);
-		melody1ForcePatterns = new JCheckBox("Force Melody#1 Target/Pattern", true);
+		melody1ForcePatterns = new JCheckBox("Force Melody#1 Outline", true);
 
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
 		combineMelodyTracks = new JCheckBox("Combine MIDI Tracks", true);
 
-		melodySettingsExtraPanel.add(arpCopyMelodyInst);
+		melodySettingsExtraPanel.add(melody1ForcePatterns);
 		melodySettingsExtraPanel.add(combineMelodyTracks);
 		melodySettingsExtraPanel.add(generateUserMelodySeed);
 		melodySettingsExtraPanel.add(randomMelodySameSeed);
@@ -1343,6 +1342,9 @@ public class VibeComposerGUI extends JFrame
 		csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		arpSettingsExtraPanel.add(csExtra);
 
+		arpCopyMelodyInst = new JCheckBox("Arp#1 Copy Melody Inst.", true);
+
+		arpSettingsExtraPanel.add(arpCopyMelodyInst);
 		arpSettingsExtraPanel.add(randomArpAllSameInst);
 		arpSettingsExtraPanel.add(randomArpLimitPowerOfTwo);
 		arpSettingsExtraPanel.add(randomArpUseOctaveAdjustments);

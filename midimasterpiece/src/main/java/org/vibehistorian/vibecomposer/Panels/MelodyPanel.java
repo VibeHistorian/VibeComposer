@@ -20,6 +20,7 @@ public class MelodyPanel extends InstPanel {
 	private JCheckBox fillPauses = new JCheckBox("Fill Pauses", false);
 	private JTextField chordNoteChoices = new JTextField("0,2,2,4");
 	private JTextField melodyPatternOffsets = new JTextField("0,1,0,2");
+	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 7, 0, 7);
 
 	public void initComponents(ActionListener l) {
 		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
@@ -48,6 +49,9 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(new JLabel("Chord Target+-"));
 		this.add(chordNoteChoices);
+
+		this.add(maxBlockChange);
+
 		this.add(new JLabel("Pattern"));
 		this.add(melodyPatternOffsets);
 
@@ -77,6 +81,8 @@ public class MelodyPanel extends InstPanel {
 		part.setFillPauses(getFillPauses());
 		part.setChordNoteChoices(getChordNoteChoices());
 		part.setMelodyPatternOffsets(getMelodyPatternOffsets());
+		part.setMaxBlockChange(getMaxBlockChange());
+
 		return part;
 	}
 
@@ -88,6 +94,7 @@ public class MelodyPanel extends InstPanel {
 		setFillPauses(part.isFillPauses());
 		setChordNoteChoices(part.getChordNoteChoices());
 		setMelodyPatternOffsets(part.getMelodyPatternOffsets());
+		setMaxBlockChange(part.getMaxBlockChange());
 	}
 
 	@Override
@@ -122,5 +129,14 @@ public class MelodyPanel extends InstPanel {
 	public void overridePatterns(MelodyPanel mp1) {
 		chordNoteChoices.setText(mp1.chordNoteChoices.getText());
 		melodyPatternOffsets.setText(mp1.melodyPatternOffsets.getText());
+		maxBlockChange.setInt(mp1.maxBlockChange.getInt());
+	}
+
+	public int getMaxBlockChange() {
+		return maxBlockChange.getInt();
+	}
+
+	public void setMaxBlockChange(int maxBlockChange) {
+		this.maxBlockChange.setInt(maxBlockChange);
 	}
 }

@@ -144,7 +144,7 @@ public class MelodyUtils {
 	}
 
 	public static List<Integer> blockChangeSequence(int chord1, int chord2, int randSeed,
-			int numBlocks) {
+			int numBlocks, int maxBlockChange) {
 		Random rand = new Random(randSeed);
 		List<Integer> changeList = new ArrayList<>();
 
@@ -153,16 +153,16 @@ public class MelodyUtils {
 		//System.out.println("Change: " + change);
 		List<Integer> reducableIndices = new ArrayList<>();
 		for (int i = 0; i < numBlocks; i++) {
-			int chg = rand.nextInt(15) - 7;
+			int chg = rand.nextInt(maxBlockChange * 2 + 1) - maxBlockChange;
 			changeList.add(chg);
 			change += chg;
 			reducableIndices.add(i);
 		}
 		//System.out.println("Initial: " + StringUtils.join(changeList, ","));
 		if (change > 0) {
-			reducableIndices.removeIf(e -> changeList.get(e) == -7);
+			reducableIndices.removeIf(e -> changeList.get(e) == -1 * maxBlockChange);
 		} else if (change < 0) {
-			reducableIndices.removeIf(e -> changeList.get(e) == 7);
+			reducableIndices.removeIf(e -> changeList.get(e) == maxBlockChange);
 		}
 
 		rand.setSeed(randSeed);
@@ -174,7 +174,7 @@ public class MelodyUtils {
 			int redIndex = reducableIndices.get(redI);
 			int newValue = changeList.get(redIndex) + increment;
 			changeList.set(redIndex, newValue);
-			if (Math.abs(newValue) == 7) {
+			if (Math.abs(newValue) == maxBlockChange) {
 				Integer removed = reducableIndices.remove(redI);
 			}
 		}

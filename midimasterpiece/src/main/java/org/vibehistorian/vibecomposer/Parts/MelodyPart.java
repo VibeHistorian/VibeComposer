@@ -12,6 +12,7 @@ public class MelodyPart extends InstPart {
 	private boolean fillPauses = false;
 	private List<Integer> chordNoteChoices = null;
 	private List<Integer> melodyPatternOffsets = null;
+	private int maxBlockChange = 7;
 
 	public MelodyPart() {
 
@@ -39,5 +40,13 @@ public class MelodyPart extends InstPart {
 
 	public void setMelodyPatternOffsets(List<Integer> melodyPatternOffsets) {
 		this.melodyPatternOffsets = melodyPatternOffsets;
+	}
+
+	public int getMaxBlockChange() {
+		return maxBlockChange;
+	}
+
+	public void setMaxBlockChange(int maxBlockChange) {
+		this.maxBlockChange = maxBlockChange;
 	}
 }

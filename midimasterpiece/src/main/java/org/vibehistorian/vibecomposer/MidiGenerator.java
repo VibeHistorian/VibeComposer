@@ -442,7 +442,7 @@ public class MidiGenerator implements JMC {
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i);
 				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, i + 1);
 				List<Integer> blockChanges = MelodyUtils.blockChangeSequence(chord1, chord2,
-						melodyBlockGeneratorSeed, durations.size());
+						melodyBlockGeneratorSeed, durations.size(), mp.getMaxBlockChange());
 				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
 						melodyBlockGeneratorSeed + blockOffset, blockChanges,
 						MAX_JUMP_SKELETON_CHORD);
