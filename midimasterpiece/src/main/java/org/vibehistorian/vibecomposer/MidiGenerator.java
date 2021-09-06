@@ -3708,7 +3708,7 @@ public class MidiGenerator implements JMC {
 			int part) {
 		int failsafeCounter = 0;
 
-		int numVars = Section.variationDescriptions[3].length - 2;
+		int numVars = Section.variationDescriptions[part].length - 2;
 		while (varGenerator.nextInt(100) < gc.getArrangementPartVariationChance()
 				&& (variations == null || variations.size() < numVars)) {
 			// pick one variation

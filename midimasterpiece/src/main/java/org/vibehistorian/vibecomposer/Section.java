@@ -406,14 +406,36 @@ public class Section {
 	public void generatePresences(Random presRand) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			int chance = getChanceForInst(i);
-			List<? extends InstPanel> panels = VibeComposerGUI.getInstList(i);
-			for (int j = 0; j < panels.size(); j++) {
+			generatePresences(presRand, i);
+		}
+
+	}
+
+	public void generatePresences(Random presRand, int part) {
+		initPartMapIfNull();
+		int chance = getChanceForInst(part);
+		System.out.println("Chance: " + chance);
+		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(part);
+		for (int j = 0; j < panels.size(); j++) {
+			if (presRand.nextInt(100) < chance) {
+				setPresence(part, j);
+			}
+		}
+
+	}
+
+	public void generateVariations(Random presRand, int part) {
+		initPartMapIfNull();
+		Set<Integer> presence = getPresence(part);
+		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		for (Integer i : presence) {
+			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 				if (presRand.nextInt(100) < chance) {
-					setPresence(i, j);
+					addVariation(part, i - 1, Collections.singletonList(j - 2));
 				}
 			}
 		}
+
 
 	}
 

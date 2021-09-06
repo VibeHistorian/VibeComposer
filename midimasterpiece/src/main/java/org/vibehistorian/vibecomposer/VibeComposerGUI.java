@@ -296,7 +296,7 @@ public class VibeComposerGUI extends JFrame
 
 	JPanel arrangementSettings;
 	KnobPanel arrangementVariationChance;
-	KnobPanel arrangementPartVariationChance;
+	public static KnobPanel arrangementPartVariationChance;
 	JCheckBox arrangementCustom;
 	JTextField pieceLength;
 	RandomValueButton arrangementSeed;
@@ -2155,7 +2155,7 @@ public class VibeComposerGUI extends JFrame
 									sec.removeVariationForAllParts(part, i);
 								}
 							} else if (hasPresence) {
-								// TODO: generate random variations for cell
+								sec.generateVariations(new Random(), part);
 							}
 						} else {
 							if (hasPresence) {
@@ -2163,10 +2163,7 @@ public class VibeComposerGUI extends JFrame
 									sec.resetPresence(part, i);
 								}
 							} else {
-								// TODO: generate presence for cell
-								for (int i = 0; i < getInstList(part).size(); i++) {
-
-								}
+								sec.generatePresences(new Random(), part);
 							}
 						}
 
