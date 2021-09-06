@@ -5574,7 +5574,8 @@ public class VibeComposerGUI extends JFrame
 		List<InstPart> parts = new ArrayList<>();
 		for (Component c : panePanel.getComponents()) {
 			if (c instanceof InstPanel) {
-				parts.add(((InstPanel) c).toInstPart(0));
+				parts.add(((InstPanel) c).toInstPart(
+						(lastRandomSeed == 0) ? randomSeed.getValue() : lastRandomSeed));
 			}
 		}
 		return parts;

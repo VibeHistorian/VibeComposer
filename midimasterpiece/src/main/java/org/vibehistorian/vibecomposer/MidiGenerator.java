@@ -271,6 +271,7 @@ public class MidiGenerator implements JMC {
 		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
 
 		int seed = mp.getPatternSeed();
+		System.out.println("Seed: " + seed);
 
 		List<Integer> generatedChoics = generateOffsets(roots, seed, gc.getMelodyBlockTargetMode());
 		System.out.println("Choices2: " + generatedChoics);
@@ -324,10 +325,10 @@ public class MidiGenerator implements JMC {
 				: null;
 		directionGenerator.setSeed(seed + 10);
 		boolean currentDirection = directionGenerator.nextBoolean();
-		if (!gc.isMelodyUseDirectionsFromProgression()) {
+		/*if (!gc.isMelodyUseDirectionsFromProgression()) {
 			System.out.println("Direction dividers: " + directionChordDividers.toString()
 					+ ", start at: " + currentDirection);
-		}
+		}*/
 
 		List<Boolean> directionsFromChords = (gc.isMelodyUseDirectionsFromProgression())
 				? generateMelodyDirectionsFromChordProgression(usedChords, true)
@@ -401,7 +402,7 @@ public class MidiGenerator implements JMC {
 					durations.addAll(durations);
 				}
 
-				//System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
+				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
 				// TODO: pick chord pitch close to previous pitch?
 
 				int blockOffset = blockSeedOffsets.get(i % 4);
@@ -530,8 +531,8 @@ public class MidiGenerator implements JMC {
 				randomizedChordDirections(chords.size(), randomSeed), randomSeed + 1);
 		List<Integer> offsets = new ArrayList<>();
 		for (int i = 0; i < chordOffsets.size(); i++) {
-			System.out.println("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
-					+ multipliedDirections.get(i));
+			/*System.out.println("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
+					+ multipliedDirections.get(i));*/
 			if (targetMode == 1) {
 				offsets.add(chordOffsets.get(i) + multipliedDirections.get(i));
 			} else {
@@ -583,7 +584,7 @@ public class MidiGenerator implements JMC {
 		int[] melodySkeletonDurationWeights = Rhythm
 				.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
 						100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
-		System.out.println(StringUtils.join(melodySkeletonDurationWeights, ','));
+		//System.out.println(StringUtils.join(melodySkeletonDurationWeights, ','));
 		Random blockNotesGenerator = new Random();
 		blockNotesGenerator.setSeed(melodyBlockGeneratorSeed);
 
@@ -3069,7 +3070,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							System.out.println("Bass #1 variation: " + var);
+							//System.out.println("Bass #1 variation: " + var);
 						}
 
 						switch (var) {
@@ -3176,7 +3177,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							System.out.println("Chord #" + cp.getOrder() + " variation: " + var);
+							//System.out.println("Chord #" + cp.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -3410,7 +3411,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							System.out.println("Arp #" + ap.getOrder() + " variation: " + var);
+							//System.out.println("Arp #" + ap.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -3604,7 +3605,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (o == measures - 1) {
-							System.out.println("Drum #" + dp.getOrder() + " variation: " + var);
+							//System.out.println("Drum #" + dp.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
