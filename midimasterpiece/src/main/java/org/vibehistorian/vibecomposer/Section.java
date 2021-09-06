@@ -361,6 +361,18 @@ public class Section {
 	public void resetPresence(int part, int partOrder) {
 		initPartMapIfNull();
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.FALSE;
+		/*for (int i = 2; i < variationDescriptions[part].length; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i] = Boolean.FALSE;
+		}*/
+	}
+
+	public boolean hasVariation(int part) {
+		for (int i = 0; i < VibeComposerGUI.getInstList(part).size(); i++) {
+			if (!getVariation(part, i).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public List<Integer> getVariation(int part, int partOrder) {
@@ -600,10 +612,12 @@ public class Section {
 	}
 
 	public void removeVariationForAllParts(int part, int variationNum) {
+		if (variationNum < 2) {
+			return;
+		}
 		initPartMapIfNull();
 		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
-			Object[] partData = partPresenceVariationMap.get(part)[i];
-			partData[variationNum] = Boolean.FALSE;
+			partPresenceVariationMap.get(part)[i][variationNum] = Boolean.FALSE;
 		}
 	}
 

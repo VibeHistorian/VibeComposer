@@ -1079,7 +1079,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", "GenMelody");
 		JButton clearUserMelodySeed = makeButton("Clear Seed", "ClearMelody");
-		randomMelodySameSeed = new JCheckBox("Same#", false);
+		randomMelodySameSeed = new JCheckBox("Same#", true);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		melody1ForcePatterns = new JCheckBox("Force Melody#1 Outline", true);
 
@@ -2132,6 +2132,52 @@ public class VibeComposerGUI extends JFrame
 				return comp;
 			}
 		};
+		scrollableArrangementActualTable.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mousePressed(java.awt.event.MouseEvent evt) {
+				int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
+				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
+
+				System.out.println("Clicked! " + row + ", " + secOrder);
+				if (row >= 2 && secOrder >= 0) {
+					int part = row - 2;
+					boolean rClick = SwingUtilities.isRightMouseButton(evt);
+					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
+					if (rClick || mClick) {
+						System.out.println("Clickable! rClick: " + rClick);
+						Section sec = actualArrangement.getSections().get(secOrder);
+						boolean hasPresence = !sec.getPresence(part).isEmpty();
+						boolean hasVariation = hasPresence && sec.hasVariation(part);
+
+						if (mClick) {
+							if (hasVariation) {
+								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+									sec.removeVariationForAllParts(part, i);
+								}
+							} else if (hasPresence) {
+								// TODO: generate random variations for cell
+							}
+						} else {
+							if (hasPresence) {
+								for (int i = 0; i < getInstList(part).size(); i++) {
+									sec.resetPresence(part, i);
+								}
+							} else {
+								// TODO: generate presence for cell
+								for (int i = 0; i < getInstList(part).size(); i++) {
+
+								}
+							}
+						}
+
+						setActualModel(actualArrangement.convertToActualTableModel(), false);
+						refreshVariationPopupButtons(actualArrangement.getSections().size());
+						scrollableArrangementActualTable.repaint();
+					}
+
+				}
+			}
+		});
 
 		scrollableArrangementActualTable.setRowHeight(35);
 		scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
