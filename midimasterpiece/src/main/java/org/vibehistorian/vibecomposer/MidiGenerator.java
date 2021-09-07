@@ -171,6 +171,9 @@ public class MidiGenerator implements JMC {
 
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
 	public static boolean COLLAPSE_MELODY_TRACKS = true;
+	public static boolean RANDOMIZE_TARGET_NOTES = false;
+
+	public static List<Integer> TARGET_NOTES = null;
 
 
 	// for internal use only
@@ -242,26 +245,6 @@ public class MidiGenerator implements JMC {
 			fillChordMelodyMap = true;
 		}
 
-		// A B A C pattern
-		List<Integer> blockSeedOffsets = (mp.getMelodyPatternOffsets() != null)
-				? mp.getMelodyPatternOffsets()
-				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
-
-		while (blockSeedOffsets.size() < chords.size()) {
-			blockSeedOffsets.addAll(blockSeedOffsets);
-		}
-
-		// Chord note choices
-
-		List<Integer> blockChordNoteChoices = (mp.getChordNoteChoices() != null)
-				? mp.getChordNoteChoices()
-				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 2, 2, 4 }));
-		while (chords.size() > blockChordNoteChoices.size()) {
-			blockChordNoteChoices.addAll(blockChordNoteChoices);
-		}
-
-		System.out.println("Choices: " + blockChordNoteChoices);
-
 
 		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
 		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
@@ -273,8 +256,31 @@ public class MidiGenerator implements JMC {
 		int seed = mp.getPatternSeed();
 		System.out.println("Seed: " + seed);
 
-		List<Integer> generatedChoics = generateOffsets(roots, seed, gc.getMelodyBlockTargetMode());
-		System.out.println("Choices2: " + generatedChoics);
+
+		// A B A C pattern
+		List<Integer> blockSeedOffsets = (mp.getMelodyPatternOffsets() != null)
+				? mp.getMelodyPatternOffsets()
+				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+
+		while (blockSeedOffsets.size() < chords.size()) {
+			blockSeedOffsets.addAll(blockSeedOffsets);
+		}
+		// Chord note choices
+		List<Integer> blockChordNoteChoices = (mp.getChordNoteChoices() != null)
+				? mp.getChordNoteChoices()
+				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 2, 2, 4 }));
+		while (chords.size() > blockChordNoteChoices.size()) {
+			blockChordNoteChoices.addAll(blockChordNoteChoices);
+		}
+		if (RANDOMIZE_TARGET_NOTES) {
+			if (TARGET_NOTES == null) {
+				TARGET_NOTES = new ArrayList<>(
+						generateOffsets(roots, seed, gc.getMelodyBlockTargetMode()));
+			}
+			blockChordNoteChoices = TARGET_NOTES;
+
+		}
+		System.out.println("Choices: " + blockChordNoteChoices);
 
 		Vector<Note> noteList = new Vector<>();
 
@@ -405,7 +411,7 @@ public class MidiGenerator implements JMC {
 				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
 				// TODO: pick chord pitch close to previous pitch?
 
-				int blockOffset = blockSeedOffsets.get(i % 4);
+				int blockOffset = blockSeedOffsets.get(i % blockSeedOffsets.size());
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i,
 						BLOCK_TARGET_MODE);
 				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, i + 1,
@@ -486,10 +492,14 @@ public class MidiGenerator implements JMC {
 		return dirs;
 	}
 
-	private static List<Integer> convertRootsToOffsets(List<Integer> roots) {
+	private static List<Integer> convertRootsToOffsets(List<Integer> roots, int targetMode) {
 		List<Integer> offsets = new ArrayList<>();
 		for (int i = 0; i < roots.size(); i++) {
-			offsets.add(-1 * roots.get(i));
+			int value = -1 * roots.get(i);
+			if (targetMode == 0) {
+				value /= 2;
+			}
+			offsets.add(value);
 		}
 		return offsets;
 	}
@@ -526,7 +536,7 @@ public class MidiGenerator implements JMC {
 
 	private static List<Integer> generateOffsets(List<int[]> chords, int randomSeed,
 			int targetMode) {
-		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords));
+		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
 				randomizedChordDirections(chords.size(), randomSeed), randomSeed + 1);
 		List<Integer> offsets = new ArrayList<>();
@@ -540,6 +550,7 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
+		System.out.println("RANDOMIZED OFFSETS");
 		return offsets;
 	}
 

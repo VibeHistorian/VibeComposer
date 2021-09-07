@@ -392,6 +392,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyUseDirectionsFromProgression;
 	JCheckBox melodyPatternFlip;
 	ScrollComboBox<String> melodyBlockTargetMode;
+	JCheckBox melodyTargetNotesRandomizeOnCompose;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -1058,6 +1059,7 @@ public class VibeComposerGUI extends JFrame
 				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
 				melodyBlockTargetMode);
 		melodyBlockTargetMode.setSelectedIndex(2);
+		melodyTargetNotesRandomizeOnCompose = new JCheckBox("Randomize Targets on Compose", true);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyTonicize);
@@ -1067,6 +1069,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyUseDirectionsFromProgression);
 		melodySettingsExtraPanelShape.add(new JLabel("Target Mode"));
 		melodySettingsExtraPanelShape.add(melodyBlockTargetMode);
+		melodySettingsExtraPanelShape.add(melodyTargetNotesRandomizeOnCompose);
 
 		JPanel melodySettingsExtraPanelOrg = new JPanel();
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -3475,7 +3478,7 @@ public class VibeComposerGUI extends JFrame
 
 		prepareUI(regenerate);
 		MidiGenerator melodyGen = new MidiGenerator(copyGUItoConfig());
-		fillUserParameters();
+		fillUserParameters(regenerate);
 
 		File makeDir = new File(MIDIS_FOLDER);
 		makeDir.mkdir();
@@ -3511,10 +3514,78 @@ public class VibeComposerGUI extends JFrame
 				+ (System.currentTimeMillis() - systemTime) + " ms");
 	}
 
+	public void fillUserParameters(boolean regenerate) {
+		try {
+			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
+			MidiGenerator.showScoreMode = ShowScoreMode.values()[showScorePicker
+					.getSelectedIndex()];
+			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
+			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
+			MidiGenerator.recalculateDurations(elongateMidi.getInt());
+			MidiGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
+					&& melodyTargetNotesRandomizeOnCompose.isSelected();
+			MidiGenerator.TARGET_NOTES = null;
+
+			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+
+			/*if (loopBeat.isSelected()) {
+				//MidiGenerator.START_TIME_DELAY = 0.001;
+				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+			} else {
+				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+			}*/
+
+			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
+			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
+
+			// solve user chords
+			if (userChordsEnabled.isSelected() && !userChords.getText().contains("?")) {
+				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(userChords,
+						userChordsDurations);
+				if (solvedChordsDurations != null) {
+					MidiGenerator.userChords = solvedChordsDurations.getLeft();
+					MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
+				} else {
+					MidiGenerator.userChords.clear();
+					MidiGenerator.userChordsDurations.clear();
+				}
+			} else {
+				MidiGenerator.userChords.clear();
+				MidiGenerator.userChordsDurations.clear();
+			}
+
+			if (MelodyMidiDropPane.userMelody != null && useUserMelody.isSelected()) {
+				MidiGenerator.userMelody = MelodyMidiDropPane.userMelody;
+			} else {
+				MidiGenerator.userMelody = null;
+			}
+
+			// to include it in the XML when saving, but not when generating
+			if (!addChords.isSelected()) {
+				MidiGenerator.gc.setChordParts(new ArrayList<>());
+			}
+			if (!addArps.isSelected()) {
+				MidiGenerator.gc.setArpParts(new ArrayList<>());
+			}
+			if (!addDrums.isSelected()) {
+				MidiGenerator.gc.setDrumParts(new ArrayList<>());
+			}
+
+		} catch (Exception e) {
+			System.out.println("User screwed up his inputs!");
+			e.printStackTrace();
+		}
+
+	}
+
 	private void cleanUpUIAfterCompose() {
 		if (MelodyMidiDropPane.userMelody != null) {
 			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
 			setFixedLengthChords(MidiGenerator.chordInts.size());
+		}
+
+		if (MidiGenerator.TARGET_NOTES != null) {
+			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
 		}
 
 		actualArrangement = new Arrangement();
@@ -4945,67 +5016,6 @@ public class VibeComposerGUI extends JFrame
 		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangement.getSections().size() + ")");
 		instrumentTabPane.setTitleAt(6,
 				"Generated Arrangement (" + actualArrangement.getSections().size() + ")");
-	}
-
-	public void fillUserParameters() {
-		try {
-			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
-			MidiGenerator.showScoreMode = ShowScoreMode.values()[showScorePicker
-					.getSelectedIndex()];
-			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
-			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
-			MidiGenerator.recalculateDurations(elongateMidi.getInt());
-
-			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
-
-			/*if (loopBeat.isSelected()) {
-				//MidiGenerator.START_TIME_DELAY = 0.001;
-				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
-			} else {
-				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
-			}*/
-
-			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
-			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
-
-			// solve user chords
-			if (userChordsEnabled.isSelected() && !userChords.getText().contains("?")) {
-				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(userChords,
-						userChordsDurations);
-				if (solvedChordsDurations != null) {
-					MidiGenerator.userChords = solvedChordsDurations.getLeft();
-					MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
-				} else {
-					MidiGenerator.userChords.clear();
-					MidiGenerator.userChordsDurations.clear();
-				}
-			} else {
-				MidiGenerator.userChords.clear();
-				MidiGenerator.userChordsDurations.clear();
-			}
-
-			if (MelodyMidiDropPane.userMelody != null && useUserMelody.isSelected()) {
-				MidiGenerator.userMelody = MelodyMidiDropPane.userMelody;
-			} else {
-				MidiGenerator.userMelody = null;
-			}
-
-			// to include it in the XML when saving, but not when generating
-			if (!addChords.isSelected()) {
-				MidiGenerator.gc.setChordParts(new ArrayList<>());
-			}
-			if (!addArps.isSelected()) {
-				MidiGenerator.gc.setArpParts(new ArrayList<>());
-			}
-			if (!addDrums.isSelected()) {
-				MidiGenerator.gc.setDrumParts(new ArrayList<>());
-			}
-
-		} catch (Exception e) {
-			System.out.println("User screwed up his inputs!");
-			e.printStackTrace();
-		}
-
 	}
 
 	public static Pair<List<String>, List<Double>> solveUserChords(String[] userChordsSplit,
