@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.util.List;
 
@@ -17,22 +18,22 @@ public class MelodyPanel extends InstPanel {
 
 	private static final long serialVersionUID = -7861296600641561431L;
 
-	private JCheckBox fillPauses = new JCheckBox("Fill Pauses", false);
+	private JCheckBox fillPauses = new JCheckBox("<html>Fill<br>Pauses</html>", false);
 	private JTextField noteTargets = new JTextField("0,2,2,4");
 	private JTextField patternStructure = new JTextField("0,1,0,2");
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 7, 0, 7);
-	private KnobPanel blockJump = new KnobPanel("Block<br>+-", 0, 0, 4);
-	private KnobPanel maxNoteExceptions = new KnobPanel("Max<br>Note Exc.", 2, 0, 4);
-	private KnobPanel alternatingRhythmChance = new KnobPanel("Alternating<br>Rhythm", 50);
+	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 0, 0, 4);
+	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 2, 0, 4);
+	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Rhythm", 50);
 	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
 	private KnobPanel splitChance = new KnobPanel("Split%", 0);
-	private KnobPanel noteExceptionChance = new KnobPanel("Note Exc.%", 0);
+	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 0);
 	private KnobPanel speed = new KnobPanel("Speed", 0);
-	private KnobPanel leadChordsChance = new KnobPanel("Lead Chords", 0);
+	private KnobPanel leadChordsChance = new KnobPanel("Lead<br>Chords%", 0);
 
 	public void initComponents(ActionListener l) {
 
-		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
+		MidiUtils.addAllToJComboBox(new String[] { "1", "7", "8", "15" }, midiChannel);
 		midiChannel.setSelectedItem("1");
 		instrument.initInstPool(instPool);
 		setInstrument(8);
@@ -55,7 +56,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(pauseChance);
 		this.add(fillPauses);
 
-		this.add(new JLabel("Note Targets"));
+		this.add(new JLabel("<html>Note<br>Targets</html>"));
 		this.add(noteTargets);
 
 		this.add(maxBlockChange);
@@ -65,33 +66,43 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(blockJump);
 		this.add(maxNoteExceptions);
+
+		this.add(minMaxVelSlider);
+		this.add(swingPercent);
+
+
 		this.add(alternatingRhythmChance);
 		this.add(doubledRhythmChance);
 		this.add(splitChance);
 		this.add(noteExceptionChance);
 		this.add(leadChordsChance);
 
-		this.add(minMaxVelSlider);
-		this.add(swingPercent);
-
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
-		toggleableComponents.add(blockJump);
-		toggleableComponents.add(maxNoteExceptions);
+		//toggleableComponents.add(maxNoteExceptions);
 		toggleableComponents.add(alternatingRhythmChance);
 		toggleableComponents.add(doubledRhythmChance);
 		toggleableComponents.add(splitChance);
 		toggleableComponents.add(noteExceptionChance);
 		toggleableComponents.add(leadChordsChance);
 
-		toggleableComponents.add(noteTargets);
-		toggleableComponents.add(maxBlockChange);
-		toggleableComponents.add(patternStructure);
-
-		this.add(new JLabel("Midi ch.: 1"));
+		this.add(new JLabel("Midi ch."));
+		this.add(midiChannel);
 		setPanelOrder(1);
 
+	}
+
+	@Override
+	public void addBackgroundsForKnobs() {
+		super.addBackgroundsForKnobs();
+		speed.addBackgroundWithBorder(OMNI.alphen(Color.red, 50));
+	}
+
+	@Override
+	public void toggleComponentTexts(boolean b) {
+		super.toggleComponentTexts(b);
+		speed.setShowTextInKnob(b);
 	}
 
 	public MelodyPanel(ActionListener l) {
