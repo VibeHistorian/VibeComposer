@@ -265,40 +265,40 @@ public abstract class InstPanel extends JPanel {
 		return hitsPerPattern.getInt();
 	}
 
-	public void setHitsPerPattern(int hitsPerPattern) {
-		this.hitsPerPattern.setInt(hitsPerPattern);
+	public void setHitsPerPattern(int val) {
+		this.hitsPerPattern.setInt(val);
 	}
 
 	public int getChordSpan() {
 		return chordSpan.getInt();
 	}
 
-	public void setChordSpan(int chordSpan) {
-		this.chordSpan.setInt(chordSpan);
+	public void setChordSpan(int val) {
+		this.chordSpan.setInt(val);
 	}
 
 	public int getPauseChance() {
 		return pauseChance.getInt();
 	}
 
-	public void setPauseChance(int pauseChance) {
-		this.pauseChance.setInt(pauseChance);
+	public void setPauseChance(int val) {
+		this.pauseChance.setInt(val);
 	}
 
 	public int getExceptionChance() {
 		return exceptionChance.getInt();
 	}
 
-	public void setExceptionChance(int exceptionChance) {
-		this.exceptionChance.setInt(exceptionChance);
+	public void setExceptionChance(int val) {
+		this.exceptionChance.setInt(val);
 	}
 
 	public int getTranspose() {
 		return transpose.getInt();
 	}
 
-	public void setTranspose(int transpose) {
-		this.transpose.setInt(transpose);
+	public void setTranspose(int val) {
+		this.transpose.setInt(val);
 	}
 
 	public int getPatternSeed() {
@@ -326,32 +326,32 @@ public abstract class InstPanel extends JPanel {
 		return patternShift.getInt();
 	}
 
-	public void setPatternShift(int shift) {
-		patternShift.setInt(shift);
+	public void setPatternShift(int val) {
+		patternShift.setInt(val);
 	}
 
 	public int getInstrument() {
 		return this.instrument.getInstrument();
 	}
 
-	public void setInstrument(int instrument) {
-		this.instrument.setInstrument(instrument);
+	public void setInstrument(int val) {
+		this.instrument.setInstrument(val);
 	}
 
 	public boolean getLockInst() {
 		return lockInst.isSelected();
 	}
 
-	public void setLockInst(boolean selected) {
-		this.lockInst.setSelected(selected);
+	public void setLockInst(boolean val) {
+		this.lockInst.setSelected(val);
 	}
 
 	public boolean getMuteInst() {
 		return muteInst.isSelected();
 	}
 
-	public void setMuteInst(boolean selected) {
-		this.muteInst.setSelected(selected);
+	public void setMuteInst(boolean val) {
+		this.muteInst.setSelected(val);
 		muteInst.repaint();
 	}
 
@@ -359,24 +359,24 @@ public abstract class InstPanel extends JPanel {
 		return repeatableNotes.isSelected();
 	}
 
-	public void setRepeatableNotes(boolean repeatableNotes) {
-		this.repeatableNotes.setSelected(repeatableNotes);
+	public void setRepeatableNotes(boolean val) {
+		this.repeatableNotes.setSelected(val);
 	}
 
 	public int getPatternRepeat() {
 		return patternRepeat.getInt();
 	}
 
-	public void setPatternRepeat(int patternRepeat) {
-		this.patternRepeat.setInt(patternRepeat);
+	public void setPatternRepeat(int val) {
+		this.patternRepeat.setInt(val);
 	}
 
 	public int getMidiChannel() {
 		return Integer.valueOf((String) midiChannel.getSelectedItem());
 	}
 
-	public void setMidiChannel(int midiChannel) {
-		this.midiChannel.setSelectedItem("" + midiChannel);
+	public void setMidiChannel(int val) {
+		this.midiChannel.setSelectedItem("" + val);
 	}
 
 	public InstComboBox getInstrumentBox() {
@@ -392,56 +392,56 @@ public abstract class InstPanel extends JPanel {
 		return instPool;
 	}
 
-	public void setInstPool(InstUtils.POOL instPool) {
-		this.instPool = instPool;
+	public void setInstPool(InstUtils.POOL val) {
+		this.instPool = val;
 	}
 
 	public ChordSpanFill getChordSpanFill() {
 		return ChordSpanFill.valueOf((String) chordSpanFill.getSelectedItem());
 	}
 
-	public void setChordSpanFill(ChordSpanFill chordSpanFill) {
-		this.chordSpanFill.setSelectedItem(chordSpanFill.toString());
+	public void setChordSpanFill(ChordSpanFill val) {
+		this.chordSpanFill.setSelectedItem(val.toString());
 	}
 
 	public int getDelay() {
 		return delay.getInt();
 	}
 
-	public void setDelay(int delay) {
-		this.delay.setInt(delay);
+	public void setDelay(int val) {
+		this.delay.setInt(val);
 	}
 
 	public int getChordNotesStretch() {
 		return chordNotesStretch.getInt();
 	}
 
-	public void setChordNotesStretch(int chordStretch) {
-		this.chordNotesStretch.setInt(chordStretch);
+	public void setChordNotesStretch(int val) {
+		this.chordNotesStretch.setInt(val);
 	}
 
 	public boolean getStretchEnabled() {
 		return stretchEnabled.isSelected();
 	}
 
-	public void setStretchEnabled(boolean stretchEnabled) {
-		this.stretchEnabled.setSelected(stretchEnabled);
+	public void setStretchEnabled(boolean val) {
+		this.stretchEnabled.setSelected(val);
 	}
 
 	public int getVelocityMin() {
 		return minMaxVelSlider.getValue();
 	}
 
-	public void setVelocityMin(int velocityMin) {
-		this.minMaxVelSlider.setValue(velocityMin);
+	public void setVelocityMin(int val) {
+		this.minMaxVelSlider.setValue(val);
 	}
 
 	public int getVelocityMax() {
 		return minMaxVelSlider.getUpperValue();
 	}
 
-	public void setVelocityMax(int velocityMax) {
-		this.minMaxVelSlider.setUpperValue(velocityMax);
+	public void setVelocityMax(int val) {
+		this.minMaxVelSlider.setUpperValue(val);
 	}
 
 	public JSlider getVolSlider() {
@@ -457,34 +457,34 @@ public abstract class InstPanel extends JPanel {
 		return swingPercent.getInt();
 	}
 
-	public void setSwingPercent(int swingPercent) {
-		this.swingPercent.setInt(swingPercent);
+	public void setSwingPercent(int val) {
+		this.swingPercent.setInt(val);
 	}
 
 	public int getPanelOrder() {
 		return Integer.valueOf(panelOrder.getText());
 	}
 
-	public void setPanelOrder(int panelOrder) {
-		this.panelOrder.setText("" + panelOrder);
+	public void setPanelOrder(int val) {
+		this.panelOrder.setText("" + val);
 		String removeActionString = removeButton.getActionCommand().split(",")[0];
-		removeButton.setActionCommand(removeActionString + "," + panelOrder);
+		removeButton.setActionCommand(removeActionString + "," + val);
 	}
 
 	public boolean getFillFlip() {
 		return fillFlip.isSelected();
 	}
 
-	public void setFillFlip(boolean fillFlip) {
-		this.fillFlip.setSelected(fillFlip);
+	public void setFillFlip(boolean val) {
+		this.fillFlip.setSelected(val);
 	}
 
 	public boolean getPatternFlip() {
 		return patternFlip.isSelected();
 	}
 
-	public void setPatternFlip(boolean patternFlip) {
-		this.patternFlip.setSelected(patternFlip);
+	public void setPatternFlip(boolean val) {
+		this.patternFlip.setSelected(val);
 	}
 
 	public Set<Component> getToggleableComponents() {
@@ -520,8 +520,8 @@ public abstract class InstPanel extends JPanel {
 		return sequenceTrack;
 	}
 
-	public void setSequenceTrack(Integer sequenceTrack) {
-		this.sequenceTrack = sequenceTrack;
+	public void setSequenceTrack(Integer val) {
+		this.sequenceTrack = val;
 	}
 
 	public abstract InstPart toInstPart(int lastRandomSeed);

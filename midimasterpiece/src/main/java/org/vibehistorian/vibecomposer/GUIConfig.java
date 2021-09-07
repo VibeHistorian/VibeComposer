@@ -64,20 +64,13 @@ public class GUIConfig {
 
 
 	// melody gen
-	private int maxNoteJump = 2;
-	private int maxExceptions = 2;
-	private int melodyAlternateRhythmChance = 50;
-	private int melodySameRhythmChance = 50;
 	private int melodyUseOldAlgoChance = 0;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 	private int maxMelodySwing = 50;
-	private int melodySplitChance = 20;
-	private int melodyExceptionChance = 33;
-	private int melodyQuickness = 50;
+
 	private boolean melodyBasicChordsOnly = true;
 	private boolean melodyTonicize = false;
-	private int melodyLeadChords = 0;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
@@ -199,14 +192,6 @@ public class GUIConfig {
 		this.bpm = bpm;
 	}
 
-	public int getMaxNoteJump() {
-		return maxNoteJump;
-	}
-
-	public void setMaxNoteJump(int maxNoteJump) {
-		this.maxNoteJump = maxNoteJump;
-	}
-
 	public int getSpiceChance() {
 		return spiceChance;
 	}
@@ -296,14 +281,6 @@ public class GUIConfig {
 
 	public void setArpAffectsBpm(boolean arpAffectBpm) {
 		this.arpAffectsBpm = arpAffectBpm;
-	}
-
-	public int getMaxExceptions() {
-		return maxExceptions;
-	}
-
-	public void setMaxExceptions(int maxExceptions) {
-		this.maxExceptions = maxExceptions;
 	}
 
 	public List<DrumPart> getDrumParts() {
@@ -410,22 +387,6 @@ public class GUIConfig {
 		this.enable9th13th = enable9th13th;
 	}
 
-	public int getMelodyAlternateRhythmChance() {
-		return melodyAlternateRhythmChance;
-	}
-
-	public void setMelodyAlternateRhythmChance(int melodyAlternateRhythmChance) {
-		this.melodyAlternateRhythmChance = melodyAlternateRhythmChance;
-	}
-
-	public int getMelodySameRhythmChance() {
-		return melodySameRhythmChance;
-	}
-
-	public void setMelodySameRhythmChance(int melodySameRhythmChance) {
-		this.melodySameRhythmChance = melodySameRhythmChance;
-	}
-
 	public int getMelodyUseOldAlgoChance() {
 		return melodyUseOldAlgoChance;
 	}
@@ -464,30 +425,6 @@ public class GUIConfig {
 
 	public void setMaxMelodySwing(int maxMelodySwing) {
 		this.maxMelodySwing = maxMelodySwing;
-	}
-
-	public int getMelodySplitChance() {
-		return melodySplitChance;
-	}
-
-	public void setMelodySplitChance(int melodySplitChance) {
-		this.melodySplitChance = melodySplitChance;
-	}
-
-	public int getMelodyExceptionChance() {
-		return melodyExceptionChance;
-	}
-
-	public void setMelodyExceptionChance(int melodyExceptionChance) {
-		this.melodyExceptionChance = melodyExceptionChance;
-	}
-
-	public int getMelodyQuickness() {
-		return melodyQuickness;
-	}
-
-	public void setMelodyQuickness(int melodyQuickness) {
-		this.melodyQuickness = melodyQuickness;
 	}
 
 	public boolean isDoubledDurations() {
@@ -576,14 +513,6 @@ public class GUIConfig {
 
 	public void setMelodyTonicize(boolean melodyTonicize) {
 		this.melodyTonicize = melodyTonicize;
-	}
-
-	public int getMelodyLeadChords() {
-		return melodyLeadChords;
-	}
-
-	public void setMelodyLeadChords(int melodyLeadChords) {
-		this.melodyLeadChords = melodyLeadChords;
 	}
 
 	public boolean isMelodyArpySurprises() {

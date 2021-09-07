@@ -127,8 +127,8 @@ public class DrumPanel extends InstPanel {
 		return isVelocityPattern.isSelected();
 	}
 
-	public void setIsVelocityPattern(boolean isVelocityPattern) {
-		this.isVelocityPattern.setSelected(isVelocityPattern);
+	public void setIsVelocityPattern(boolean val) {
+		this.isVelocityPattern.setSelected(val);
 	}
 
 

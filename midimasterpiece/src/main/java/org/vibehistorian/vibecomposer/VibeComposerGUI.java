@@ -368,21 +368,15 @@ public class VibeComposerGUI extends JFrame
 	JButton soloAllDrums;
 
 	// melody gen settings
-	KnobPanel maxJump;
-	KnobPanel maxExceptions;
-	KnobPanel melodyAlternateRhythmChance;
-	KnobPanel melodySameRhythmChance;
 	KnobPanel melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox randomMelodySameSeed;
 	JCheckBox melodyFirstNoteFromChord;
 	JCheckBox randomChordNote;
-	KnobPanel melodySplitChance;
-	KnobPanel melodyExceptionChance;
-	KnobPanel melodyQuickness;
+
 	JCheckBox melodyBasicChordsOnly;
 	JCheckBox melodyTonicize;
-	KnobPanel melodyLeadChords;
+
 	JCheckBox useUserMelody;
 
 	JCheckBox melody1ForcePatterns;
@@ -985,38 +979,8 @@ public class VibeComposerGUI extends JFrame
 		JLabel melodyLabel = new JLabel("MELODY  ");
 		melodySettingsPanel.add(melodyLabel);
 		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		melodyQuickness = new KnobPanel("Speed", 0);
-		melodySettingsPanel.add(melodyQuickness);
-
-
-		maxJump = new KnobPanel("Max Note<br>Jump", 0, 0, 4);
-		maxExceptions = new KnobPanel("Max<br>Exceptions", 2, 0, 4);
-		melodyAlternateRhythmChance = new KnobPanel("Alternating<br>Rhythm", 50);
-		melodySameRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
-		melodySplitChance = new KnobPanel("Split%", 0);
-		melodyExceptionChance = new KnobPanel("Exception%", 0);
-		melodyLeadChords = new KnobPanel("Lead Chords", 0);
 
-		/*MelodyUtils.blockSequence(65, 67, 0, 4);
-		MelodyUtils.blockSequence(65, 67, 1, 4);
-		MelodyUtils.blockSequence(65, 67, 2, 4);
-		
-		MelodyUtils.blockSequence(65, 77, 0, 4);
-		MelodyUtils.blockSequence(65, 77, 1, 4);
-		MelodyUtils.blockSequence(65, 77, 2, 4);
-		
-		MelodyUtils.blockSequence(77, 65, 0, 4);
-		MelodyUtils.blockSequence(77, 65, 1, 4);
-		MelodyUtils.blockSequence(77, 65, 2, 4);*/
-
-		melodySettingsPanel.add(maxJump);
-		melodySettingsPanel.add(maxExceptions);
-		melodySettingsPanel.add(melodyAlternateRhythmChance);
-		melodySettingsPanel.add(melodySameRhythmChance);
-		melodySettingsPanel.add(melodySplitChance);
-		melodySettingsPanel.add(melodyExceptionChance);
-		melodySettingsPanel.add(melodyLeadChords);
 
 		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
@@ -1108,10 +1072,6 @@ public class VibeComposerGUI extends JFrame
 		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
-		toggleableComponents.add(melodyAlternateRhythmChance);
-		toggleableComponents.add(melodySameRhythmChance);
-		toggleableComponents.add(melodySplitChance);
-		toggleableComponents.add(melodyExceptionChance);
 		toggleableComponents.add(melodySettingsExtraPanelsHolder);
 	}
 
@@ -5319,19 +5279,11 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setChordGenSettings(getChordSettingsFromUI());
 
 		// melody
-		guiConfig.setMaxNoteJump(maxJump.getInt());
-		guiConfig.setMaxExceptions(maxExceptions.getInt());
-		guiConfig.setMelodyAlternateRhythmChance(melodyAlternateRhythmChance.getInt());
-		guiConfig.setMelodySameRhythmChance(melodySameRhythmChance.getInt());
 		guiConfig.setMelodyUseOldAlgoChance(melodyUseOldAlgoChance.getInt());
-		guiConfig.setMelodySplitChance(melodySplitChance.getInt());
-		guiConfig.setMelodyExceptionChance(melodyExceptionChance.getInt());
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
-		guiConfig.setMelodyQuickness(melodyQuickness.getInt());
 		guiConfig.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
 		guiConfig.setMelodyTonicize(melodyTonicize.isSelected());
-		guiConfig.setMelodyLeadChords(melodyLeadChords.getInt());
 
 		guiConfig.setMelodyArpySurprises(melodyArpySurprises.isSelected());
 		guiConfig.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
@@ -5431,17 +5383,9 @@ public class VibeComposerGUI extends JFrame
 		// melody
 		melodyFirstNoteFromChord.setSelected(guiConfig.isFirstNoteFromChord());
 		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
-		maxJump.setInt(guiConfig.getMaxNoteJump());
-		maxExceptions.setInt(guiConfig.getMaxExceptions());
-		melodyAlternateRhythmChance.setInt(guiConfig.getMelodyAlternateRhythmChance());
-		melodySameRhythmChance.setInt(guiConfig.getMelodySameRhythmChance());
 		melodyUseOldAlgoChance.setInt(guiConfig.getMelodyUseOldAlgoChance());
-		melodySplitChance.setInt(guiConfig.getMelodySplitChance());
-		melodyExceptionChance.setInt(guiConfig.getMelodyExceptionChance());
-		melodyQuickness.setInt(guiConfig.getMelodyQuickness());
 		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
 		melodyTonicize.setSelected(guiConfig.isMelodyTonicize());
-		melodyLeadChords.setInt(guiConfig.getMelodyLeadChords());
 
 		melodyArpySurprises.setSelected(guiConfig.isMelodyArpySurprises());
 		melodySingleNoteExceptions.setSelected(guiConfig.isMelodySingleNoteExceptions());

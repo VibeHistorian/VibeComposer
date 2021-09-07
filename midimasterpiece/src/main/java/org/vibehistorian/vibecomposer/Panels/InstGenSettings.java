@@ -10,23 +10,23 @@ public class InstGenSettings {
 		return useTranspose;
 	}
 
-	public void setUseTranspose(boolean useTranspose) {
-		this.useTranspose = useTranspose;
+	public void setUseTranspose(boolean val) {
+		this.useTranspose = val;
 	}
 
 	public boolean isIncludePresets() {
 		return includePresets;
 	}
 
-	public void setIncludePresets(boolean includePresets) {
-		this.includePresets = includePresets;
+	public void setIncludePresets(boolean val) {
+		this.includePresets = val;
 	}
 
 	public int getShiftChance() {
 		return shiftChance;
 	}
 
-	public void setShiftChance(int shiftChance) {
-		this.shiftChance = shiftChance;
+	public void setShiftChance(int val) {
+		this.shiftChance = val;
 	}
 }

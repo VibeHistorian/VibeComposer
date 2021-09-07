@@ -15,24 +15,24 @@ public class DrumGenSettings {
 		return useSlide;
 	}
 	
-	public void setUseSlide(boolean useSlide) {
-		this.useSlide = useSlide;
+	public void setUseSlide(boolean val) {
+		this.useSlide = val;
 	}
 	
 	public boolean isIncludePresets() {
 		return includePresets;
 	}
 	
-	public void setIncludePresets(boolean includePresets) {
-		this.includePresets = includePresets;
+	public void setIncludePresets(boolean val) {
+		this.includePresets = val;
 	}
 	
 	public int getVelocityPatternChance() {
 		return velocityPatternChance;
 	}
 	
-	public void setVelocityPatternChance(int velocityPatternChance) {
-		this.velocityPatternChance = velocityPatternChance;
+	public void setVelocityPatternChance(int val) {
+		this.velocityPatternChance = val;
 	}
 	
 	public int getPatternShiftChance() {

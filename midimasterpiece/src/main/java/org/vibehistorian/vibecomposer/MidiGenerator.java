@@ -246,10 +246,10 @@ public class MidiGenerator implements JMC {
 		}
 
 
-		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
-		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
-		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
-		int EXCEPTION_CHANCE = gc.getMelodyExceptionChance();
+		int MAX_JUMP_SKELETON_CHORD = mp.getBlockJump();
+		int SAME_RHYTHM_CHANCE = mp.getDoubledRhythmChance();
+		int ALTERNATE_RHYTHM_CHANCE = mp.getAlternatingRhythmChance();
+		int EXCEPTION_CHANCE = mp.getNoteExceptionChance();
 		int CHORD_STRETCH = 4;
 		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
 
@@ -305,7 +305,7 @@ public class MidiGenerator implements JMC {
 				Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
 
 		// TODO: quickness
-		int addQuick = (gc.getMelodyQuickness() - 50) * 4;
+		int addQuick = (mp.getSpeed() - 50) * 4;
 		int addSlow = addQuick * -1;
 
 		int[] melodySkeletonDurationWeights = Rhythm.normalizedCumulativeWeights(
@@ -587,7 +587,7 @@ public class MidiGenerator implements JMC {
 				Durations.DOTTED_SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
 
-		int addQuick = (gc.getMelodyQuickness() - 50) * 2;
+		int addQuick = (mp.getSpeed() - 50) * 2;
 		int addSlow = addQuick * -1;
 
 
@@ -775,10 +775,11 @@ public class MidiGenerator implements JMC {
 			fillChordMelodyMap = true;
 		}
 
-		int MAX_JUMP_SKELETON_CHORD = gc.getMaxNoteJump();
-		int SAME_RHYTHM_CHANCE = gc.getMelodySameRhythmChance();
-		int ALTERNATE_RHYTHM_CHANCE = gc.getMelodyAlternateRhythmChance();
-		int EXCEPTION_CHANCE = gc.getMelodyExceptionChance();
+		int MAX_JUMP_SKELETON_CHORD = mp.getBlockJump();
+		int SAME_RHYTHM_CHANCE = mp.getDoubledRhythmChance();
+		int ALTERNATE_RHYTHM_CHANCE = mp.getAlternatingRhythmChance();
+		int EXCEPTION_CHANCE = mp.getNoteExceptionChance();
+		int CHORD_STRETCH = 4;
 
 		int seed = mp.getPatternSeed();
 
@@ -807,7 +808,7 @@ public class MidiGenerator implements JMC {
 		double[] melodySkeletonDurations = { Durations.NOTE_32ND, Durations.SIXTEENTH_NOTE,
 				Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
 
-		int weight3rd = gc.getMelodyQuickness() / 3;
+		int weight3rd = mp.getSpeed() / 3;
 		// 0% ->
 		// 0, 0, 0, 40, 80, 100
 		// 50% ->
@@ -836,7 +837,8 @@ public class MidiGenerator implements JMC {
 			usedChords = chords;
 		}
 
-		List<int[]> stretchedChords = usedChords.stream().map(e -> convertChordToLength(e, 4, true))
+		List<int[]> stretchedChords = usedChords.stream()
+				.map(e -> convertChordToLength(e, CHORD_STRETCH, true))
 				.collect(Collectors.toList());
 		List<Double> directionChordDividers = (!gc.isMelodyUseDirectionsFromProgression())
 				? generateMelodyDirectionChordDividers(stretchedChords.size(), directionGenerator)
@@ -938,7 +940,7 @@ public class MidiGenerator implements JMC {
 
 
 				int[] chord = stretchedChords.get(i);
-				int exceptionCounter = gc.getMaxExceptions();
+				int exceptionCounter = mp.getMaxNoteExceptions();
 				boolean allowException = true;
 				double durCounter = 0.0;
 				boolean changedDirectionByDivider = false;
@@ -1204,7 +1206,7 @@ public class MidiGenerator implements JMC {
 		Random chordLeadingGenerator = new Random(orderSeed + notesSeedOffset + 15);
 
 
-		int splitChance = gc.getMelodySplitChance();
+		int splitChance = mp.getSplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		Map<Integer, List<Note>> fullMelodyMap = new HashMap<>();
 		for (int i = 0; i < durations.size(); i++) {
@@ -1254,8 +1256,8 @@ public class MidiGenerator implements JMC {
 
 			durCounter += adjDur;
 
-			boolean splitLastNoteInChord = (chordLeadingGenerator.nextInt(100) < gc
-					.getMelodyLeadChords()) && (adjDur > Durations.NOTE_DOTTED_32ND * 1.1)
+			boolean splitLastNoteInChord = (chordLeadingGenerator.nextInt(100) < mp
+					.getLeadChordsChance()) && (adjDur > Durations.NOTE_DOTTED_32ND * 1.1)
 					&& (i < skeleton.size() - 1)
 					&& ((durCounter + skeleton.get(i + 1).getRhythmValue()) > currentChordDur);
 
@@ -1958,10 +1960,10 @@ public class MidiGenerator implements JMC {
 			return new Note(chosenPitch, dur, velMin + generator.nextInt(velSpace));
 		}
 
-		int change = generator.nextInt(gc.getMaxNoteJump() + 1);
+		int change = generator.nextInt(mp.getBlockJump() + 1);
 		// weighted against same note
 		if (change == 0) {
-			change = generator.nextInt((gc.getMaxNoteJump() + 1) / 2);
+			change = generator.nextInt((mp.getBlockJump() + 1) / 2);
 		}
 
 		int generatedPitch = previousPitch + direction * change;
@@ -1997,7 +1999,7 @@ public class MidiGenerator implements JMC {
 		Note previousNote = (gc.isFirstNoteFromChord()) ? null : previousChordsNote;
 		List<Note> notes = new ArrayList<>();
 
-		int exceptionsLeft = gc.getMaxExceptions();
+		int exceptionsLeft = mp.getMaxNoteExceptions();
 
 		while (currentDuration <= maxDuration - Durations.SIXTEENTH_NOTE) {
 			double durationLeft = maxDuration - Durations.SIXTEENTH_NOTE - currentDuration;
