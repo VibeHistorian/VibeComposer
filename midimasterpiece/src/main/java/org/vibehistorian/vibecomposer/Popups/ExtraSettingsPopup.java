@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class ExtraSettingsPopup extends CloseablePopup {
 	JScrollPane scroll;
@@ -47,7 +48,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 					high = low;
 					VibeComposerGUI.bpmHigh.setInt(high);
 				}
-				bpm = Math.max(low, Math.min(high, bpm));
+				bpm = OMNI.clamp(bpm, low, high);
 				VibeComposerGUI.mainBpm.getKnob().setMin(low);
 				VibeComposerGUI.mainBpm.getKnob().setMax(high);
 				VibeComposerGUI.mainBpm.setInt(bpm);

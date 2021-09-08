@@ -6,6 +6,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 
 public class KnobValuePopup extends CloseablePopup {
@@ -81,7 +82,7 @@ public class KnobValuePopup extends CloseablePopup {
 						if (knob.getMin() <= val && knob.getMax() >= val) {
 							knob.setValue(val);
 						} else {
-							knob.setValue(Math.min(knob.getMax(), Math.max(knob.getMin(), val)));
+							knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
 						}
 					}
 

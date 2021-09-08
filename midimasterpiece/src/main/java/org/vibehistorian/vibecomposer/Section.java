@@ -36,6 +36,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -459,19 +460,19 @@ public class Section {
 	public void addChanceForInst(int inst, int chance) {
 		switch (inst) {
 		case 0:
-			melodyChance = Math.min(100, Math.max(0, melodyChance + chance));
+			melodyChance = OMNI.clampChance(melodyChance + chance);
 			break;
 		case 1:
-			bassChance = Math.min(100, Math.max(0, bassChance + chance));
+			bassChance = OMNI.clampChance(bassChance + chance);
 			break;
 		case 2:
-			chordChance = Math.min(100, Math.max(0, chordChance + chance));
+			chordChance = OMNI.clampChance(chordChance + chance);
 			break;
 		case 3:
-			arpChance = Math.min(100, Math.max(0, arpChance + chance));
+			arpChance = OMNI.clampChance(arpChance + chance);
 			break;
 		case 4:
-			drumChance = Math.min(100, Math.max(0, drumChance + chance));
+			drumChance = OMNI.clampChance(drumChance + chance);
 			break;
 		default:
 			throw new IllegalArgumentException("Too high inst. order");

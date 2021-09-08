@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
+
 public class MelodyUtils {
 
 
@@ -93,7 +95,7 @@ public class MelodyUtils {
 	public static Integer[] getRandomByApproxBlockChangeAndLength(int blockChange, int approx,
 			Random melodyBlockGenerator, Integer length) {
 		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
-		chosenChange = Math.min(7, Math.max(-7, chosenChange));
+		chosenChange = OMNI.clamp(chosenChange, -7, 7);
 		//System.out.println("Chosen change: " + chosenChange);
 		List<Integer[]> viableBlocks = new ArrayList<>();
 		if (BLOCK_CHANGE_MAP.containsKey(chosenChange)) {

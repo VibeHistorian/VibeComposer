@@ -39,4 +39,8 @@ public class OMNI {
 	public static int clamp(int num, int min, int max) {
 		return Math.min(max, (Math.max(min, num)));
 	}
+
+	public static int clampChance(int num) {
+		return Math.min(100, (Math.max(0, num)));
+	}
 }
