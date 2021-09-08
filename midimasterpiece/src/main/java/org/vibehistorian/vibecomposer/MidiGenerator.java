@@ -611,6 +611,27 @@ public class MidiGenerator implements JMC {
 							maxJump, blockNotesGenerator, null));
 
 			List<Double> blockDurations = blockRhythm.makeDurations(blockNotes.size());
+
+
+			if (gc.isMelodyArpySurprises() && (mp.getSpeed() < 20 || mp.getSpeed() > 80)) {
+				double wrongNoteLow = (mp.getSpeed() < 20) ? Durations.NOTE_32ND * 0.99
+						: Durations.DOTTED_EIGHTH_NOTE * 0.99;
+				double wrongNoteHigh = (mp.getSpeed() < 20) ? Durations.NOTE_32ND * 1.01
+						: Durations.HALF_NOTE * 1.01;
+				boolean containsWrongNote = blockDurations.stream()
+						.anyMatch(e -> (e > wrongNoteLow && e < wrongNoteHigh));
+				System.out.println(StringUtils.join(blockDurations, ","));
+				if (containsWrongNote) {
+					double arpyDuration = durations.get(i) / blockNotes.size();
+					for (int j = 0; j < blockDurations.size(); j++) {
+						blockDurations.set(j, arpyDuration);
+					}
+					System.out.println("Arpy surprise for block#: " + blockNotes.size()
+							+ ", duration: " + durations.get(i));
+				}
+
+			}
+
 			//System.out.println("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
 			mbs.add(mb);
