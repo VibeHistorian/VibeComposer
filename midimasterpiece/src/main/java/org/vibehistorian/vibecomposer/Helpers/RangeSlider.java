@@ -87,7 +87,7 @@ public class RangeSlider extends JSlider {
 
 		// Compute new value and extent to maintain upper value.
 		int oldExtent = getExtent();
-		int newValue = Math.min(Math.max(getMinimum(), value), oldValue + oldExtent);
+		int newValue = OMNI.clamp(value, getMinimum(), oldValue + oldExtent);
 		int newExtent = oldExtent + oldValue - newValue;
 
 		// Set new value and extent, and fire a single change event.
@@ -108,7 +108,7 @@ public class RangeSlider extends JSlider {
 	public void setUpperValue(int value) {
 		// Compute new extent.
 		int lowerValue = getValue();
-		int newExtent = Math.min(Math.max(0, value - lowerValue), getMaximum() - lowerValue);
+		int newExtent = OMNI.clamp(value - lowerValue, 0, getMaximum() - lowerValue);
 
 		// Set extent to set upper value.
 		setExtent(newExtent);

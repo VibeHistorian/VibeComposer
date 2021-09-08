@@ -78,6 +78,7 @@ public abstract class InstPanel extends JPanel {
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
 
 	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
+	protected KnobPanel accents = new KnobPanel("Accent", 100);
 
 	protected JLabel panelOrder = new JLabel("1");
 
@@ -194,6 +195,7 @@ public abstract class InstPanel extends JPanel {
 		delay.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
 		chordNotesStretch.addBackgroundWithBorder(OMNI.alphen(Color.PINK, 30));
 		stretchPanel.addBackground(OMNI.alphen(Color.PINK, 30));
+		accents.addBackground(OMNI.alphen(Color.cyan, 40));
 	}
 
 	public void toggleComponentTexts(boolean b) {
@@ -209,6 +211,7 @@ public abstract class InstPanel extends JPanel {
 		swingPercent.setShowTextInKnob(b);
 		patternShift.setShowTextInKnob(b);
 		chordNotesStretch.setShowTextInKnob(b);
+		accents.setShowTextInKnob(b);
 
 	}
 
@@ -241,6 +244,7 @@ public abstract class InstPanel extends JPanel {
 		setVelocityMax(part.getVelocityMax());
 
 		setSwingPercent(part.getSwingPercent());
+		setAccents(part.getAccents());
 
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
@@ -459,6 +463,14 @@ public abstract class InstPanel extends JPanel {
 
 	public void setSwingPercent(int val) {
 		this.swingPercent.setInt(val);
+	}
+
+	public int getAccents() {
+		return accents.getInt();
+	}
+
+	public void setAccents(int val) {
+		accents.setInt(val);
 	}
 
 	public int getPanelOrder() {

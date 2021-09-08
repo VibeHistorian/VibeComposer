@@ -147,6 +147,7 @@ public class MidiGenerator implements JMC {
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	public static final int OPENHAT_CHANCE = 0;
 	private static final int maxAllowedScaleNotes = 7;
+	private static final int BASE_ACCENT = 15;
 	public static double START_TIME_DELAY = Durations.EIGHTH_NOTE;
 	private static final double DEFAULT_CHORD_SPLIT = 625;
 	private static final String ARP_PATTERN_KEY = "ARP_PATTERN";
@@ -1204,6 +1205,7 @@ public class MidiGenerator implements JMC {
 		Random splitNoteGenerator = new Random(seed + 8);
 		Random splitNoteExceptionGenerator = new Random(seed + 9);
 		Random chordLeadingGenerator = new Random(orderSeed + notesSeedOffset + 15);
+		Random accentGenerator = new Random(orderSeed + 20);
 
 
 		int splitChance = mp.getSplitChance();
@@ -1249,10 +1251,13 @@ public class MidiGenerator implements JMC {
 			}
 
 			int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
-
+			double positionInChord = durCounter / durations.get(chordCounter);
+			if (positionInChord < 0.01 && accentGenerator.nextInt(100) < mp.getAccents()) {
+				velocity = addAccent(velocity, accentGenerator, mp.getAccents());
+			}
 
 			n1.setDynamic(velocity);
-			double positionInChord = durCounter / durations.get(chordCounter);
+
 
 			durCounter += adjDur;
 
@@ -1436,6 +1441,11 @@ public class MidiGenerator implements JMC {
 		}
 
 		return fullMelodyMap;
+	}
+
+	private int addAccent(int velocity, Random accentGenerator, int accent) {
+		int newVelocity = velocity + BASE_ACCENT + accentGenerator.nextInt(11) - 5 + accent / 20;
+		return OMNI.clamp(newVelocity, 0, 127);
 	}
 
 	private void swingPhrase(Phrase phr, int swingPercent, double swingUnitOfTime) {

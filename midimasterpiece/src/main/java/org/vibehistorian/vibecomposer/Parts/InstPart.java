@@ -53,7 +53,7 @@ public abstract class InstPart implements Cloneable {
 	protected int velocityMax = 90;
 
 	protected int swingPercent = 50;
-
+	protected int accents = 50;
 
 	protected int order = 1;
 
@@ -97,6 +97,7 @@ public abstract class InstPart implements Cloneable {
 		}
 
 		setSwingPercent(panel.getSwingPercent());
+		setAccents(panel.getAccents());
 
 		setCustomPattern(
 				panel.getComboPanel() != null ? panel.getComboPanel().getTruePattern() : null);
@@ -281,6 +282,14 @@ public abstract class InstPart implements Cloneable {
 
 	public void setSwingPercent(int swingPercent) {
 		this.swingPercent = swingPercent;
+	}
+
+	public int getAccents() {
+		return accents;
+	}
+
+	public void setAccents(int accents) {
+		this.accents = accents;
 	}
 
 	public boolean isFillFlip() {
