@@ -1016,15 +1016,17 @@ public class VibeComposerGUI extends JFrame
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
 		melodyTonicize = new JCheckBox("Tonicize", false);
 		melodyArpySurprises = new JCheckBox("Insert Arps", true);
-		melodySingleNoteExceptions = new JCheckBox("Single Note Exceptions", true);
-		melodyAvoidChordJumps = new JCheckBox("Avoid Chord Jumps", true);
-		melodyUseDirectionsFromProgression = new JCheckBox("Use Chord Directions", false);
+		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
+		melodyAvoidChordJumps = new JCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
+		melodyUseDirectionsFromProgression = new JCheckBox("<html>Use Chord<br>Directions</html>",
+				false);
 		melodyBlockTargetMode = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(
 				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
 				melodyBlockTargetMode);
 		melodyBlockTargetMode.setSelectedIndex(2);
-		melodyTargetNotesRandomizeOnCompose = new JCheckBox("Randomize Targets on Compose", true);
+		melodyTargetNotesRandomizeOnCompose = new JCheckBox(
+				"<html>Randomize Targets<br> on Compose</html>", true);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyTonicize);
@@ -1049,12 +1051,12 @@ public class VibeComposerGUI extends JFrame
 		JButton clearUserMelodySeed = makeButton("Clear Seed", "ClearMelody");
 		randomMelodySameSeed = new JCheckBox("Same#", true);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
-		melody1ForcePatterns = new JCheckBox("Force Melody#1 Outline", true);
+		melody1ForcePatterns = new JCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		useUserMelody = new JCheckBox("Use MIDI Melody File", true);
-		combineMelodyTracks = new JCheckBox("Combine MIDI Tracks", true);
+		useUserMelody = new JCheckBox("<html>Use MIDI<br>Melody File</html>", true);
+		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
 
 		melodySettingsExtraPanelOrg.add(melody1ForcePatterns);
 		melodySettingsExtraPanelOrg.add(combineMelodyTracks);

@@ -613,7 +613,8 @@ public class MidiGenerator implements JMC {
 			List<Double> blockDurations = blockRhythm.makeDurations(blockNotes.size());
 
 
-			if (gc.isMelodyArpySurprises() && (mp.getSpeed() < 20 || mp.getSpeed() > 80)) {
+			if (gc.isMelodyArpySurprises() && (blockNotes.size() == 4)
+					&& (mp.getSpeed() < 20 || mp.getSpeed() > 80)) {
 				double wrongNoteLow = (mp.getSpeed() < 20) ? Durations.NOTE_32ND * 0.99
 						: Durations.DOTTED_EIGHTH_NOTE * 0.99;
 				double wrongNoteHigh = (mp.getSpeed() < 20) ? Durations.NOTE_32ND * 1.01
