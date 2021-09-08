@@ -343,6 +343,7 @@ public class VibeComposerGUI extends JFrame
 	JTextField soundbankFilename;
 
 	public static ScrollComboBox<String> scaleMode;
+	JCheckBox randomizeScaleModeOnCompose;
 	ScrollComboBox<String> fixedLengthChords;
 	JCheckBox useDoubledDurations;
 	JCheckBox allowChordRepeats;
@@ -2992,6 +2993,9 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(new JLabel("Scale"));
 		controlSettingsPanel.add(scaleMode);
 
+		randomizeScaleModeOnCompose = new JCheckBox("on Compose", true);
+		controlSettingsPanel.add(randomizeScaleModeOnCompose);
+
 
 		randomSeed = new RandomValueButton(0);
 		compose = makeButton("COMPOSE", "Compose");
@@ -3008,7 +3012,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
 
-		controlSettingsPanel.add(new JLabel("Random Seed:"));
+		controlSettingsPanel.add(new JLabel("MAIN SEED"));
 		controlSettingsPanel.add(randomSeed);
 		controlSettingsPanel.add(compose);
 		controlSettingsPanel.add(regenerate);
@@ -3222,6 +3226,8 @@ public class VibeComposerGUI extends JFrame
 		randomArpHitsPerPattern.setSelected(state);
 		randomizeArrangementOnCompose.setSelected(state);
 		arrangementResetCustomPanelsOnCompose.setSelected(state);
+		randomizeScaleModeOnCompose.setSelected(state);
+		melodyTargetNotesRandomizeOnCompose.setSelected(state);
 
 	}
 
@@ -3619,6 +3625,10 @@ public class VibeComposerGUI extends JFrame
 					}
 				}
 			}
+		}
+
+		if (!regenerate && randomizeScaleModeOnCompose.isSelected()) {
+			scaleMode.setSelectedIndex(new Random().nextInt(6));
 		}
 
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
