@@ -1385,7 +1385,8 @@ public class MidiGenerator implements JMC {
 		// for main sections: try to adjust notes towards C if there isn't enough C's
 		if (gc.isMelodyTonicize() && notesSeedOffset == 0) {
 			double requiredPercentageCs = 0.25;
-			int needed = (int) Math.floor(fullMelody.size() * requiredPercentageCs);
+			int needed = (int) Math.floor(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
+					* requiredPercentageCs);
 
 			System.out.println("Found C's: " + pitches[0] + ", needed: " + needed);
 			if (pitches[0] < needed) {
