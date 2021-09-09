@@ -551,6 +551,18 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
+		int last = offsets.get(offsets.size() - 1);
+		if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
+			last += (new Random(randomSeed).nextBoolean() ? 1 : -1);
+			offsets.set(offsets.size() - 1, last);
+		}
+		int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
+		if (min == -1) {
+			for (int i = 0; i < offsets.size(); i++) {
+				offsets.set(i, offsets.get(i) + 1);
+			}
+		}
+
 		System.out.println("RANDOMIZED OFFSETS");
 		return offsets;
 	}
