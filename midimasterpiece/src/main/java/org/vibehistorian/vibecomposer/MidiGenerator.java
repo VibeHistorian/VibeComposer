@@ -298,14 +298,11 @@ public class MidiGenerator implements JMC {
 		Random alternateRhythmGenerator = new Random(seed + 4);
 		Random variationGenerator = new Random(seed + notesSeedOffset);
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
-		Random directionGenerator = new Random(seed + 10);
 		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
-		Random exceptionTypeGenerator = new Random(seed + 20 + notesSeedOffset);
 
 		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.QUARTER_NOTE,
 				Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
 
-		// TODO: quickness
 		int addQuick = (mp.getSpeed() - 50) * 4;
 		int addSlow = addQuick * -1;
 
@@ -327,19 +324,6 @@ public class MidiGenerator implements JMC {
 		List<int[]> stretchedChords = usedChords.stream()
 				.map(e -> convertChordToLength(e, CHORD_STRETCH, true))
 				.collect(Collectors.toList());
-		List<Double> directionChordDividers = (!gc.isMelodyUseDirectionsFromProgression())
-				? generateMelodyDirectionChordDividers(stretchedChords.size(), directionGenerator)
-				: null;
-		directionGenerator.setSeed(seed + 10);
-		boolean currentDirection = directionGenerator.nextBoolean();
-		/*if (!gc.isMelodyUseDirectionsFromProgression()) {
-			System.out.println("Direction dividers: " + directionChordDividers.toString()
-					+ ", start at: " + currentDirection);
-		}*/
-
-		List<Boolean> directionsFromChords = (gc.isMelodyUseDirectionsFromProgression())
-				? generateMelodyDirectionsFromChordProgression(usedChords, true)
-				: null;
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
@@ -356,8 +340,6 @@ public class MidiGenerator implements JMC {
 		List<Integer> relevancyOrder = Arrays.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
 
 		for (int o = 0; o < measures; o++) {
-			int previousNotePitch = 0;
-			int firstPitchInTwoChords = 0;
 
 			for (int i = 0; i < stretchedChords.size(); i++) {
 				// either after first measure, or after first half of combined chord prog
@@ -391,7 +373,6 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				if (i % 2 == 0) {
-					previousNotePitch = firstPitchInTwoChords;
 					pitchPickerGenerator.setSeed(seed + pitchPickerOffset);
 					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
 					if (alternateRhythm) {
@@ -433,9 +414,9 @@ public class MidiGenerator implements JMC {
 				//System.out.println("Starting note: " + startingNote);
 
 				int adjustment = 0;
+				int exceptionCounter = mp.getMaxNoteExceptions();
 				for (int j = 0; j < melodyBlocks.size(); j++) {
 					MelodyBlock mb = melodyBlocks.get(j);
-					Map<Integer, Double> pitchesDurations = new HashMap<>();
 					List<Integer> pitches = new ArrayList<>();
 					if (j > 0) {
 						adjustment += blockChanges.get(j - 1);
@@ -487,8 +468,28 @@ public class MidiGenerator implements JMC {
 
 					//System.out.println(StringUtils.join(mb.durations, ","));
 					//System.out.println("After: " + StringUtils.join(sortedDurs, ","));
+
 					for (int k = 0; k < mb.durations.size(); k++) {
 						int pitch = pitches.get(k);
+
+						// single note exc. = last note in chord
+						// other exc. = any note first note in block
+						boolean exceptionIndexValid = (gc.isMelodySingleNoteExceptions())
+								? (k == mb.durations.size() - 1 && j == melodyBlocks.size() - 1)
+								: (k > 0);
+						if (exceptionIndexValid && exceptionCounter > 0
+								&& exceptionGenerator.nextInt(100) < EXCEPTION_CHANCE) {
+							int upDown = exceptionGenerator.nextBoolean() ? 1 : -1;
+							int excPitch = MidiUtils.MAJ_SCALE.get(exceptionGenerator
+									.nextInt(gc.isMelodySingleNoteExceptions() ? 7 : 4));
+							pitch += upDown * excPitch;
+							int closestPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
+									pitch % 12);
+							pitch -= pitch % 12;
+							pitch += closestPitch;
+							exceptionCounter--;
+						}
+
 						double swingDuration = sortedDurs.get(k);
 						Note n = new Note(pitch, swingDuration, 100);
 						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
@@ -558,7 +559,7 @@ public class MidiGenerator implements JMC {
 			int root = chords.get(i)[0];
 			int rootIndex = MidiUtils.MAJ_SCALE.indexOf(root % 12);
 			if (rootIndex < 0) {
-				int closestPitch = MidiUtils.getClosestFromList(cIonianScale4, root % 12);
+				int closestPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, root % 12);
 				rootIndex = MidiUtils.MAJ_SCALE.indexOf(closestPitch % 12);
 			}
 			rootIndexes.add(rootIndex);

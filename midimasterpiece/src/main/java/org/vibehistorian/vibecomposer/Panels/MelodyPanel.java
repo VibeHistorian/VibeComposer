@@ -27,7 +27,7 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Rhythm", 50);
 	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
 	private KnobPanel splitChance = new KnobPanel("Split%", 0);
-	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 0);
+	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
 	private KnobPanel speed = new KnobPanel("Speed", 0);
 	private KnobPanel leadChordsChance = new KnobPanel("Lead<br>Chords%", 0);
 

@@ -656,7 +656,7 @@ public class MidiUtils {
 	}
 
 	public static Integer getXthChordNote(int x, int[] chord) {
-		System.out.println(StringUtils.join(chord, ','));
+		//System.out.println(StringUtils.join(chord, ','));
 		int octaveMultiplier = 1;
 		int pitch = chord[((x + 10 * chord.length) % chord.length)];
 		int octaveAdjust = 0;
@@ -669,7 +669,7 @@ public class MidiUtils {
 			octaveMultiplier += Math.abs(chord[chord.length - 1] - chord[0]) / 12;
 		}
 		Integer note = pitch + octaveAdjust * octaveMultiplier;
-		System.out.println("Note: " + note);
+		//System.out.println("Note: " + note);
 		return (note <= 0 || note >= 127) ? null : note;
 	}
 
