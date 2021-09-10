@@ -1680,6 +1680,7 @@ public class VibeComposerGUI extends JFrame
 				resetArrSection();
 				arrSection.setSelectedIndex(secOrder);
 				resetArrSectionSelection = false;
+				refreshActual = true;
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
@@ -1719,7 +1720,7 @@ public class VibeComposerGUI extends JFrame
 		if (!refreshActual) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		} else {
-			setActualModel(actualArrangement.convertToActualTableModel());
+			setActualModel(actualArrangement.convertToActualTableModel(), resetArrSectionSelection);
 			if (resetArrSectionSelection) {
 				arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
 			}
@@ -1865,10 +1866,10 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		JButton commitPanelBtn = makeButton("Commit", "ArrangementCommitPanels");
-		JButton revertPanelBtn = new JButton("<-*");
-		revertPanelBtn.setPreferredSize(new Dimension(25, 25));
-		revertPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		revertPanelBtn.addActionListener(new ActionListener() {
+		JButton undoPanelBtn = new JButton("<-*");
+		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
+		undoPanelBtn.setMargin(new Insets(0, 0, 0, 0));
+		undoPanelBtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1878,10 +1879,10 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		JButton undoPanelBtn = new JButton("X*");
-		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
-		undoPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		undoPanelBtn.addActionListener(new ActionListener() {
+		JButton clearPanelBtn = new JButton("X*");
+		clearPanelBtn.setPreferredSize(new Dimension(25, 25));
+		clearPanelBtn.setMargin(new Insets(0, 0, 0, 0));
+		clearPanelBtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1894,10 +1895,10 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		JButton undoAllPanelsBtn = new JButton("CLR*");
-		undoAllPanelsBtn.setPreferredSize(new Dimension(35, 25));
-		undoAllPanelsBtn.setMargin(new Insets(0, 0, 0, 0));
-		undoAllPanelsBtn.addActionListener(new ActionListener() {
+		JButton clearAllPanelsBtn = new JButton("CLR*");
+		clearAllPanelsBtn.setPreferredSize(new Dimension(35, 25));
+		clearAllPanelsBtn.setMargin(new Insets(0, 0, 0, 0));
+		clearAllPanelsBtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1936,9 +1937,9 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
-		arrangementSettings.add(revertPanelBtn);
 		arrangementSettings.add(undoPanelBtn);
-		arrangementSettings.add(undoAllPanelsBtn);
+		arrangementSettings.add(clearPanelBtn);
+		arrangementSettings.add(clearAllPanelsBtn);
 
 		arrangementSettings.add(resetArrangementBtn);
 		arrangementSettings.add(newSectionBox);
@@ -2236,9 +2237,9 @@ public class VibeComposerGUI extends JFrame
 
 		toggleableComponents.add(arrSection);
 		toggleableComponents.add(commitPanelBtn);
-		toggleableComponents.add(revertPanelBtn);
 		toggleableComponents.add(undoPanelBtn);
-		toggleableComponents.add(undoAllPanelsBtn);
+		toggleableComponents.add(clearPanelBtn);
+		toggleableComponents.add(clearAllPanelsBtn);
 	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {

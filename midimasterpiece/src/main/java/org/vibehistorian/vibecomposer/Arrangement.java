@@ -216,6 +216,10 @@ public class Arrangement {
 			for (int j = 0; j < 5; j++) {
 				String pres = StringUtils.join(s.getPresence(j));
 				pres = pres.replaceAll("\\[", "").replaceAll("\\]", "");
+				boolean isCustomizedPart = s.getInstPartList(j) != null;
+				if (isCustomizedPart) {
+					pres = "*" + pres;
+				}
 				model.setValueAt(pres, j + 2, i);
 			}
 		}

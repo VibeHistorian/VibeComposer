@@ -114,8 +114,11 @@ public class VariationPopup {
 			categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.setMaximumSize(new Dimension(2000, 40));
 			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
+			boolean commited = sec.getInstPartList(fI) != null;
 			JPanel categoryButtons = new JPanel();
-			JLabel categoryName = new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
+			JLabel categoryName = commited
+					? new JLabel("*" + VibeComposerGUI.instNames[i] + " - Committed")
+					: new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
