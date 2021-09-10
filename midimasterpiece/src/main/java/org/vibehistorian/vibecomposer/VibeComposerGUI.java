@@ -520,6 +520,7 @@ public class VibeComposerGUI extends JFrame
 	Thread cycle;
 	JCheckBox useVolumeSliders;
 	JCheckBox loopBeat;
+	JCheckBox loopBeatCompose;
 	public static PlayheadRangeSlider slider;
 	private List<Integer> sliderMeasureStartTimes = null;
 	private List<Integer> sliderBeatStartTimes = null;
@@ -829,6 +830,11 @@ public class VibeComposerGUI extends JFrame
 		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
 		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
+
+		JPanel loopBeatExtraSettingsPanel = new JPanel();
+		loopBeatCompose = new JCheckBox("Compose when Loop Beat ON", false);
+		loopBeatExtraSettingsPanel.add(loopBeatCompose);
+		extraSettingsPanel.add(loopBeatExtraSettingsPanel);
 
 		JPanel allInstsPanel = new JPanel();
 		useAllInsts = new JCheckBox("Use All Inst., Except:", false);
@@ -2910,7 +2916,7 @@ public class VibeComposerGUI extends JFrame
 							}
 						}
 
-						if (loopBeat.isSelected() && !isDragging) {
+						if (loopBeat.isSelected() && !isDragging && (sequencer != null)) {
 							if (showScore.isSelected()) {
 								showScore.setSelected(false);
 
@@ -2920,10 +2926,18 @@ public class VibeComposerGUI extends JFrame
 								startPos = slider.getValue();
 							}
 							int newSliderVal = slider.getUpperValue() - startPos;
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(20)) {
+							boolean sequencerEnded = slider.getMaximum()
+									- slider.getUpperValue() < 100 && !sequencer.isRunning();
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(13)
+									|| sequencerEnded) {
 								stopMidi();
-								if (sequencer != null)
+								if (!loopBeatCompose.isSelected()) {
 									composeMidi(true);
+								} else {
+									ActionEvent action = new ActionEvent(VibeComposerGUI.this,
+											ActionEvent.ACTION_PERFORMED, "Compose");
+									actionPerformed(action);
+								}
 							}
 							sliderVal = newSliderVal;
 						}
@@ -3769,7 +3783,7 @@ public class VibeComposerGUI extends JFrame
 
 			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));
 			sequencer.start();  // start the playback
-			slider.setMaximum(100 + (int) (sequencer.getMicrosecondLength() / 1000));
+			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
 			int measureWidth = sliderMeasureWidth();
 			slider.setMajorTickSpacing(measureWidth);
@@ -3788,8 +3802,8 @@ public class VibeComposerGUI extends JFrame
 			int sectionMaxText = Math.max(20 - actualArrangement.getSections().size(), 3);
 			int explored = 0;
 			int exploredSize = 0;
+			boolean endDisplayed = false;
 			while (current < slider.getMaximum()) {
-				String sectionText = "END";
 				Section sec = null;
 
 				int sizeCounter = exploredSize;
@@ -3828,6 +3842,7 @@ public class VibeComposerGUI extends JFrame
 
 				}
 
+				String sectionText = "END";
 				if (sec != null) {
 					boolean shorterSection = (sec.getSectionDuration() > 0)
 							&& (sec.getSectionDuration() < fullMeasureNoteDuration - 0.05);
@@ -3840,7 +3855,7 @@ public class VibeComposerGUI extends JFrame
 					sectionText = realIndex + ":" + sec.getType().substring(0, showMax) + showLast
 							+ (sec.hasCustomizedParts() ? "*" : "");
 				} else {
-					sectionText = "END";
+					endDisplayed = true;
 				}
 				if (sec != null && sec == prevSec && sec.getMeasures() > 1) {
 					// do not put into labels for followup measures
@@ -3854,8 +3869,12 @@ public class VibeComposerGUI extends JFrame
 				sectIndex++;
 				prevSec = sec;
 			}
-			//sliderMeasureStartTimes.add(slider.getMaximum());
-			//sliderBeatStartTimes.add(slider.getMaximum());
+			if (!endDisplayed) {
+				table.put(slider.getMaximum(), new JLabel("END"));
+				sliderMeasureStartTimes.add(slider.getMaximum());
+				sliderBeatStartTimes.add(slider.getMaximum());
+			}
+
 			//sliderBeatStartTimes.add(slider.getMaximum());
 
 			slider.setCustomMajorTicks(sliderMeasureStartTimes);
@@ -6265,7 +6284,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public long msToTicks(long ms) {
-		if (ms == 0)
+		if (ms == 0 || sequencer.getSequence() == null)
 			return 0;
 		float fps = sequencer.getSequence().getDivisionType();
 		try {
