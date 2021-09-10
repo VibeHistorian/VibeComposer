@@ -351,6 +351,10 @@ public class MidiGenerator implements JMC {
 			blockChordNoteChoices.set(i, choice);
 		}*/
 
+
+		// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
+		List<Integer> relevancyOrder = Arrays.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
+
 		for (int o = 0; o < measures; o++) {
 			int previousNotePitch = 0;
 			int firstPitchInTwoChords = 0;
@@ -431,6 +435,8 @@ public class MidiGenerator implements JMC {
 				int adjustment = 0;
 				for (int j = 0; j < melodyBlocks.size(); j++) {
 					MelodyBlock mb = melodyBlocks.get(j);
+					Map<Integer, Double> pitchesDurations = new HashMap<>();
+					List<Integer> pitches = new ArrayList<>();
 					if (j > 0) {
 						adjustment += blockChanges.get(j - 1);
 					}
@@ -452,11 +458,38 @@ public class MidiGenerator implements JMC {
 
 						pitch += MidiUtils.MAJ_SCALE.get(combinedNote);
 						//System.out.println("Combined note: " + combinedNote + ", pitch: " + pitch);
+						pitches.add(pitch);
 
-						// TODO: user or program generates sequence of U,U,D,D, then notes from chords are picked to create a direction
-						// then MelodyBlocks are randomly picked which fulfill the next direction - either by being normal and going that way, or by inversion
+					}
 
-						double swingDuration = mb.durations.get(k);
+					List<Double> sortedDurs = new ArrayList<>(mb.durations);
+					if (gc.isMelodyTonicize()) {
+						// re-order durations to make most relevant notes the longest
+						for (int k = 0; k < mb.durations.size(); k++) {
+							for (int l = 0; l < mb.durations.size(); l++) {
+								if (!pitches.get(k).equals(pitches.get(l))) {
+									boolean swap = false;
+									if (relevancyOrder.indexOf(pitches.get(k) % 12) < relevancyOrder
+											.indexOf(pitches.get(l) % 12)) {
+										swap = sortedDurs.get(k) + 0.01 < sortedDurs.get(l);
+									} else {
+										swap = sortedDurs.get(k) - 0.01 > sortedDurs.get(l);
+									}
+									if (swap) {
+										double temp = sortedDurs.get(k);
+										sortedDurs.set(k, sortedDurs.get(l));
+										sortedDurs.set(l, temp);
+									}
+								}
+							}
+						}
+					}
+
+					//System.out.println(StringUtils.join(mb.durations, ","));
+					//System.out.println("After: " + StringUtils.join(sortedDurs, ","));
+					for (int k = 0; k < mb.durations.size(); k++) {
+						int pitch = pitches.get(k);
+						double swingDuration = sortedDurs.get(k);
 						Note n = new Note(pitch, swingDuration, 100);
 						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 								* Note.DEFAULT_DURATION_MULTIPLIER);
@@ -467,8 +500,6 @@ public class MidiGenerator implements JMC {
 							chordMelodyMap1.get(Integer.valueOf(i)).add(n);
 						}
 					}
-
-
 				}
 
 			}
