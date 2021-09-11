@@ -35,6 +35,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Section.SectionType;
 
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
@@ -123,7 +124,8 @@ public class Arrangement {
 		Section lastSec = null;
 		for (String s : fullArrangement) {
 			// skip same section with no changes in it
-			if (lastSec != null && s.equals(lastSec.getType()) && !s.equals("CLIMAX")) {
+			if (lastSec != null && s.equals(lastSec.getType())
+					&& !s.equals(SectionType.CLIMAX.toString())) {
 				continue;
 			}
 			//System.out.println("DeepCopy for " + s);
@@ -176,7 +178,7 @@ public class Arrangement {
 		sections.clear();
 		// type, length, melody%, bass%, chord%, arp%, drum%
 		for (Section s : defaultSections.values()) {
-			if (!s.getType().equals("BUILDUP")) {
+			if (!s.getType().equals(SectionType.BUILDUP.toString())) {
 				sections.add(s.deepCopy());
 			}
 		}

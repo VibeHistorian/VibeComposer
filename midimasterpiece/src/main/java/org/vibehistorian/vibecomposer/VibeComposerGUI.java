@@ -1925,7 +1925,7 @@ public class VibeComposerGUI extends JFrame
 
 		arrangementVariationChance = new KnobPanel("Section<br>Variations", 30);
 		arrangementSettings.add(arrangementVariationChance);
-		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 30);
+		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 25);
 		arrangementSettings.add(arrangementPartVariationChance);
 
 		arrangementMiddleColoredPanel = new JPanel();

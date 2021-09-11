@@ -143,6 +143,10 @@ public class Section {
 		this.drumChance = drumChance;
 	}
 
+	public boolean isClimax() {
+		return SectionType.CLIMAX.toString().equals(type);
+	}
+
 	@XmlAttribute
 	public String getType() {
 		return type;
