@@ -247,6 +247,9 @@ public class MidiGenerator implements JMC {
 			fillChordMelodyMap = true;
 		}
 
+		if (sec.getRiskyVariations() != null && sec.getRiskyVariations().get(2)) {
+			notesSeedOffset += 100;
+		}
 
 		int MAX_JUMP_SKELETON_CHORD = mp.getBlockJump();
 		int SAME_RHYTHM_CHANCE = mp.getDoubledRhythmChance();
