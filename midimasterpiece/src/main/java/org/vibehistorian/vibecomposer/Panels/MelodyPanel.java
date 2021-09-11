@@ -29,7 +29,7 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel splitChance = new KnobPanel("Split%", 0);
 	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
 	private KnobPanel speed = new KnobPanel("Speed", 0);
-	private KnobPanel leadChordsChance = new KnobPanel("Lead<br>Chords%", 0);
+	private KnobPanel leadChordsChance = new KnobPanel("Lead<br>Chords%", 25);
 
 	public void initComponents(ActionListener l) {
 
