@@ -297,8 +297,6 @@ public class MidiGenerator implements JMC {
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
-		Random variationGenerator = new Random(
-				gc.getArrangement().getSeed() + mp.getOrder() + sec.getTypeSeedOffset());
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
 		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
 
@@ -347,7 +345,7 @@ public class MidiGenerator implements JMC {
 				// either after first measure, or after first half of combined chord prog
 
 				if (genVars && (i == 0)) {
-					variations = fillVariations(sec, variationGenerator, variations, 0);
+					variations = fillVariations(sec, mp, variations, 0);
 				}
 
 				if ((variations != null) && (i == 0)) {
@@ -868,7 +866,6 @@ public class MidiGenerator implements JMC {
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset);
 		Random sameRhythmGenerator = new Random(seed + 3);
 		Random alternateRhythmGenerator = new Random(seed + 4);
-		Random variationGenerator = new Random(gc.getArrangement().getSeed() + notesSeedOffset);
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
 		Random directionGenerator = new Random(seed + 10);
 		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
@@ -934,7 +931,7 @@ public class MidiGenerator implements JMC {
 				// either after first measure, or after first half of combined chord prog
 
 				if (genVars && (i == 0)) {
-					variations = fillVariations(sec, variationGenerator, variations, 0);
+					variations = fillVariations(sec, mp, variations, 0);
 				}
 
 				if ((variations != null) && (i == 0)) {
@@ -3145,8 +3142,6 @@ public class MidiGenerator implements JMC {
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(1) : 100;
 		int minVel = multiplyVelocity(bp.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = multiplyVelocity(bp.getVelocityMax(), volMultiplier, 1, 0);
-		Random variationGenerator = new Random(
-				gc.getArrangement().getSeed() + bp.getOrder() + sec.getTypeMelodyOffset());
 		Random rhythmPauseGenerator = new Random(seed + sec.getTypeMelodyOffset());
 		Random noteVariationGenerator = new Random(seed + sec.getTypeMelodyOffset() + 2);
 		boolean rhythmPauses = false;
@@ -3156,7 +3151,7 @@ public class MidiGenerator implements JMC {
 			double totalDur = 0.0;
 			for (int j = 0; j < generatedRootProgression.size(); j++) {
 				if (genVars && (j == 0) && sec.getTypeMelodyOffset() > 0) {
-					variations = fillVariations(sec, variationGenerator, variations, 1);
+					variations = fillVariations(sec, bp, variations, 1);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -3263,7 +3258,7 @@ public class MidiGenerator implements JMC {
 			// fill chords
 			for (int j = 0; j < actualProgression.size(); j++) {
 				if (genVars && (j == 0)) {
-					variations = fillVariations(sec, variationGenerator, variations, 2);
+					variations = fillVariations(sec, cp, variations, 2);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -3474,8 +3469,7 @@ public class MidiGenerator implements JMC {
 
 		double longestChord = progressionDurations.stream().max((e1, e2) -> Double.compare(e1, e2))
 				.get();
-		Random variationGenerator = new Random(
-				gc.getArrangement().getSeed() + ap.getOrder() + sec.getTypeSeedOffset());
+
 		/*if (melodic) {
 			repeatedArpsPerChord /= ap.getChordSpan();
 		}*/
@@ -3497,7 +3491,7 @@ public class MidiGenerator implements JMC {
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
 				if (genVars && (j == 0)) {
-					variations = fillVariations(sec, variationGenerator, variations, 3);
+					variations = fillVariations(sec, ap, variations, 3);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -3671,8 +3665,6 @@ public class MidiGenerator implements JMC {
 
 		Random drumFillGenerator = new Random(
 				dp.getPatternSeed() + dp.getOrder() + sec.getTypeMelodyOffset());
-		Random variationGenerator = new Random(
-				gc.getArrangement().getSeed() + dp.getOrder() + sec.getTypeSeedOffset());
 		// bar iter
 		int hits = dp.getHitsPerPattern();
 		int swingPercentAmount = (hits % 2 == 0) ? dp.getSwingPercent() : 50;
@@ -3691,7 +3683,7 @@ public class MidiGenerator implements JMC {
 			for (int j = 0; j < chordsCount; j += chordSpan) {
 
 				if (genVars && ((j == 0) || (j == chordInts.size()))) {
-					variations = fillVariations(sec, variationGenerator, variations, 4);
+					variations = fillVariations(sec, dp, variations, 4);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -3797,12 +3789,15 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	private List<Integer> fillVariations(Section sec, Random varGenerator, List<Integer> variations,
+	private List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
 			int part) {
 		if (variations != null) {
 			return variations;
-
 		}
+
+		Random varGenerator = new Random(gc.getArrangement().getSeed() + instPart.getOrder()
+				+ sec.getTypeSeedOffset() + part * 1000);
+
 		int numVars = Section.variationDescriptions[part].length - 2;
 		//System.out.println("Chance: " + gc.getArrangementPartVariationChance());
 		int modifiedChance = OMNI.clamp(
