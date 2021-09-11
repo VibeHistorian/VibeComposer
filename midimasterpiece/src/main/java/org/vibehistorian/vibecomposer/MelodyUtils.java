@@ -188,4 +188,13 @@ public class MelodyUtils {
 		//System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
 		return changeList;
 	}
+
+	public boolean blockContainsJump(Integer[] block, int jump) {
+		for (int i = 1; i < block.length; i++) {
+			if (Math.abs(block[i] - block[i - 1]) == jump) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
