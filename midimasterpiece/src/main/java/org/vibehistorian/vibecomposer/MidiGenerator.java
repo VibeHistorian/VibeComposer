@@ -1418,7 +1418,12 @@ public class MidiGenerator implements JMC {
 				fullMelodyMap.get(chordCounter).add(n1);
 			}
 		}
-		chordSeparators[chordSepIndex] = fullMelody.size();
+		if (chordSepIndex >= chordSeparators.length) {
+			System.out.println("CHORD SEPARATORS ALREADY FULL!");
+		} else {
+			chordSeparators[chordSepIndex] = fullMelody.size();
+		}
+
 
 		// pause by %, sort not-paused into pitches
 		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
@@ -3599,12 +3604,11 @@ public class MidiGenerator implements JMC {
 
 					Integer patternNum = pitchPatternSpanned.get(p);
 
-					int octaveAdjustGenerated = octavePatternSpanned.get(p);
-					int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
-							: ((patternNum < 6) ? 0 : 12);
-
 					int pitch = chord[patternNum % chord.length];
 					if (gc.isUseOctaveAdjustments() || forceRandomOct) {
+						int octaveAdjustGenerated = octavePatternSpanned.get(p);
+						int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
+								: ((patternNum < 6) ? 0 : 12);
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
 					}
 

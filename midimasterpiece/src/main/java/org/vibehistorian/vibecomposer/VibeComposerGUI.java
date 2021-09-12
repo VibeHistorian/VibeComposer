@@ -174,6 +174,9 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.sun.media.sound.AudioSynthesizer;
 
+import jm.music.data.Phrase;
+import jm.music.tools.Mod;
+
 // main class
 
 public class VibeComposerGUI extends JFrame
@@ -379,6 +382,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyTonicize;
 
 	JCheckBox useUserMelody;
+	public static ScrollComboBox<String> userMelodyScaleModeSelect;
 
 	JCheckBox melody1ForcePatterns;
 	JCheckBox melodyArpySurprises;
@@ -1062,6 +1066,35 @@ public class VibeComposerGUI extends JFrame
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
 		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		useUserMelody = new JCheckBox("<html>Use MIDI<br>Melody File</html>", true);
+		userMelodyScaleModeSelect = new ScrollComboBox<>();
+		userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
+		userMelodyScaleModeSelect.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {
+					if (userMelodyScaleModeSelect.getSelectedIndex() > 0) {
+						if (MelodyMidiDropPane.userMelodyCandidate != null) {
+							Phrase melody = MelodyMidiDropPane.userMelodyCandidate.copy();
+							String item = userMelodyScaleModeSelect
+									.getItemAt(userMelodyScaleModeSelect.getSelectedIndex());
+							String[] itemSplit = item.split(",");
+							int transposeUpBy = Integer.valueOf(itemSplit[1]);
+							ScaleMode toMode = ScaleMode.valueOf(itemSplit[0]);
+							Mod.transpose(melody, transposeUpBy);
+							MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,
+									ScaleMode.IONIAN.noteAdjustScale);
+							VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
+							VibeComposerGUI.scaleMode.setSelectedItem(toMode.toString());
+							MelodyMidiDropPane.userMelody = melody;
+						}
+						userMelodyScaleModeSelect.setSelectedIndex(0);
+					}
+				}
+			}
+
+		});
+
 		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
 
 		melodySettingsExtraPanelOrg.add(melody1ForcePatterns);
@@ -1072,6 +1105,8 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(clearUserMelodySeed);
 		melodySettingsExtraPanelOrg.add(useUserMelody);
 		melodySettingsExtraPanelOrg.add(dropPane);
+		melodySettingsExtraPanelOrg.add(new JLabel("in Mode:"));
+		melodySettingsExtraPanelOrg.add(userMelodyScaleModeSelect);
 
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelShape);
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelOrg);

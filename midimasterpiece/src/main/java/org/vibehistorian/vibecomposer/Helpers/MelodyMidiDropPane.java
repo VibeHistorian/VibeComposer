@@ -39,7 +39,6 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
-import jm.music.tools.Mod;
 import jm.util.Read;
 
 public class MelodyMidiDropPane extends JPanel {
@@ -54,6 +53,7 @@ public class MelodyMidiDropPane extends JPanel {
 	private BufferedImage target = null;
 
 	public static Phrase userMelody = null;
+	public static Phrase userMelodyCandidate = null;
 
 	private JLabel message;
 
@@ -127,6 +127,7 @@ public class MelodyMidiDropPane extends JPanel {
 			@Override
 			public void run() {
 				userMelody = null;
+				userMelodyCandidate = null;
 				if (files == null || files.isEmpty()) {
 					message.setText("No file!");
 				} else {
@@ -156,18 +157,18 @@ public class MelodyMidiDropPane extends JPanel {
 							System.out.println("Melody uses unknown key, skipped!");
 							return;
 						}
-						userMelody = userMelodyCandidate;
-						Pair<ScaleMode, Integer> result = detectionResults
-								.get(detectionResults.size() - 1);
-						int transposeUpBy = result.getValue();
-						Mod.transpose(userMelody, transposeUpBy);
-						MidiUtils.transposePhrase(userMelody, result.getKey().noteAdjustScale,
-								ScaleMode.IONIAN.noteAdjustScale);
-						VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
-						VibeComposerGUI.scaleMode.setSelectedItem(result.getKey().toString());
 
 						//System.out.println(userMelody.toString());
 						System.out.println("Tempo: " + scr.getTempo());
+
+						MelodyMidiDropPane.userMelodyCandidate = userMelodyCandidate;
+						VibeComposerGUI.userMelodyScaleModeSelect.removeAllItems();
+						VibeComposerGUI.userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
+						for (Pair<ScaleMode, Integer> p : detectionResults) {
+							VibeComposerGUI.userMelodyScaleModeSelect
+									.addItem(p.getLeft().toString() + "," + p.getRight());
+						}
+
 					} else {
 						message.setText("Not MIDI! - " + file.getName());
 					}
