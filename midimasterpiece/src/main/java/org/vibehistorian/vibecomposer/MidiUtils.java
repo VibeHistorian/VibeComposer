@@ -167,6 +167,10 @@ public class MidiUtils {
 
 	public static final List<Integer> MAJ_SCALE = Arrays.asList(MidiUtils.Scales.MAJOR_SCALE);
 
+	// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
+	public static final List<Integer> relevancyOrder = Arrays
+			.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
+
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
 	public static final Map<String, List<String>> cpRulesForwardMap = createChordProgressionForwardRulesMap();

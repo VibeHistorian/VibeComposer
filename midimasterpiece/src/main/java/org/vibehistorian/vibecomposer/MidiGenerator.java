@@ -332,16 +332,6 @@ public class MidiGenerator implements JMC {
 		//System.out.println("Alt: " + alternateRhythm);
 
 
-		/*for (int i = 0; i < stretchedChords.size(); i++) {
-			int choice = blockChordNoteChoices.get(i % blockChordNoteChoices.size());
-			choice = Math.min(choice, CHORD_STRETCH);
-			blockChordNoteChoices.set(i, choice);
-		}*/
-
-
-		// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
-		List<Integer> relevancyOrder = Arrays.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
-
 		for (int o = 0; o < measures; o++) {
 
 			for (int i = 0; i < stretchedChords.size(); i++) {
@@ -398,7 +388,6 @@ public class MidiGenerator implements JMC {
 				}
 
 				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
-				// TODO: pick chord pitch close to previous pitch?
 
 				int blockOffset = blockSeedOffsets.get(i % blockSeedOffsets.size());
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i,
@@ -453,8 +442,9 @@ public class MidiGenerator implements JMC {
 							for (int l = 0; l < mb.durations.size(); l++) {
 								if (!pitches.get(k).equals(pitches.get(l))) {
 									boolean swap = false;
-									if (relevancyOrder.indexOf(pitches.get(k) % 12) < relevancyOrder
-											.indexOf(pitches.get(l) % 12)) {
+									if (MidiUtils.relevancyOrder
+											.indexOf(pitches.get(k) % 12) < MidiUtils.relevancyOrder
+													.indexOf(pitches.get(l) % 12)) {
 										swap = sortedDurs.get(k) + 0.01 < sortedDurs.get(l);
 									} else {
 										swap = sortedDurs.get(k) - 0.01 > sortedDurs.get(l);
@@ -691,6 +681,8 @@ public class MidiGenerator implements JMC {
 					} else {
 						System.out.println("Different type not found in other types!");
 					}
+				} else {
+					System.out.println("Other types don't have this block!");
 				}
 
 
@@ -713,8 +705,8 @@ public class MidiGenerator implements JMC {
 					for (int j = 0; j < blockDurations.size(); j++) {
 						blockDurations.set(j, arpyDuration);
 					}
-					System.out.println("Arpy surprise for block#: " + blockNotes.size()
-							+ ", duration: " + durations.get(i));
+					/*System.out.println("Arpy surprise for block#: " + blockNotes.size()
+							+ ", duration: " + durations.get(i));*/
 				}
 
 			}
@@ -730,7 +722,9 @@ public class MidiGenerator implements JMC {
 			int chordNum, int BLOCK_TARGET_MODE) {
 
 		int chordNumIndex = chordNum % stretchedChords.size();
-		int chordNoteChoiceIndex = chordNum % blockChordNoteChoices.size();
+		int chordNoteChoiceIndex = (BLOCK_TARGET_MODE == 2
+				&& chordNum == blockChordNoteChoices.size()) ? (chordNum - 1)
+						: (chordNum % blockChordNoteChoices.size());
 		int[] chord = stretchedChords.get(chordNumIndex);
 
 		int startingPitch = (BLOCK_TARGET_MODE == 0)
