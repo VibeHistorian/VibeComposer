@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class MelodyUtils {
@@ -17,7 +19,8 @@ public class MelodyUtils {
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
 	public static List<Integer[]> ARPY = new ArrayList<>();
 
-	public static Map<Integer, List<Integer[]>> BLOCK_CHANGE_MAP = new HashMap<>();
+	public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP = new HashMap<>();
+	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 
 	public static final int NUM_LISTS = 3;
 
@@ -55,12 +58,21 @@ public class MelodyUtils {
 		ARPY.add(new Integer[] { 0, 4, 7 });*/
 
 
-		List<Integer[]> allBlocks = new ArrayList<>();
-		allBlocks.addAll(SCALEY);
-		allBlocks.addAll(NEIGHBORY);
-		allBlocks.addAll(ARPY);
+		List<Pair<Integer, Integer[]>> allBlocks = new ArrayList<>();
+		SCALEY.forEach(e -> allBlocks.add(Pair.of(0, e)));
+		NEIGHBORY.forEach(e -> allBlocks.add(Pair.of(1, e)));
+		ARPY.forEach(e -> allBlocks.add(Pair.of(2, e)));
 
-		BLOCK_CHANGE_MAP = allBlocks.stream().collect(Collectors.groupingBy(e -> blockChange(e)));
+		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(0,
+				SCALEY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
+		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(1,
+				NEIGHBORY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
+		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(2,
+				ARPY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
+
+
+		BLOCK_CHANGE_MAP = allBlocks.stream()
+				.collect(Collectors.groupingBy(e -> blockChange(e.getRight())));
 	}
 
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
@@ -76,11 +88,14 @@ public class MelodyUtils {
 				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
 		List<Integer[]> filteredList = usedList.stream().filter(e -> e.length == length)
 				.collect(Collectors.toList());
+		if (filteredList.size() == 0) {
+			return null;
+		}
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
 		return filteredList.get(rand2);
 	}
 
-	public static Integer[] getRandomForTypeAndDistanceAndLength(Integer type, int blockChange,
+	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
 			int length, Random melodyBlockGenerator, int approx) {
 		List<Integer[]> usedList = getBlocksForType(
 				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
@@ -88,29 +103,39 @@ public class MelodyUtils {
 		List<Integer[]> filteredList = usedList.stream().filter(
 				e -> (e.length == length) && (Math.abs(blockChange(e) - blockChange) <= approx))
 				.collect(Collectors.toList());
+		if (filteredList.size() == 0) {
+			return null;
+		}
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
-		return filteredList.get(rand2);
+		Integer[] block = filteredList.get(rand2);
+		if (blockChange(block) == -1 * blockChange) {
+			return inverse(block);
+		} else {
+			return block;
+		}
 	}
 
-	public static Integer[] getRandomByApproxBlockChangeAndLength(int blockChange, int approx,
-			Random melodyBlockGenerator, Integer length) {
+	public static Pair<Integer, Integer[]> getRandomByApproxBlockChangeAndLength(int blockChange,
+			int approx, Random melodyBlockGenerator, Integer length) {
 		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
 		chosenChange = OMNI.clamp(chosenChange, -7, 7);
 		//System.out.println("Chosen change: " + chosenChange);
-		List<Integer[]> viableBlocks = new ArrayList<>();
+		List<Pair<Integer, Integer[]>> viableBlocks = new ArrayList<>();
 		if (BLOCK_CHANGE_MAP.containsKey(chosenChange)) {
-			for (Integer[] block : BLOCK_CHANGE_MAP.get(chosenChange)) {
+			for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(chosenChange)) {
+				Integer[] block = typeBlock.getRight();
 				if (length == null || block.length == length) {
-					viableBlocks.add(block);
+					viableBlocks.add(typeBlock);
 				}
 			}
 
 		}
 		if (BLOCK_CHANGE_MAP.containsKey(chosenChange * -1)) {
-			List<Integer[]> invertedBlocks = new ArrayList<>();
-			for (Integer[] block : BLOCK_CHANGE_MAP.get(chosenChange * -1)) {
+			List<Pair<Integer, Integer[]>> invertedBlocks = new ArrayList<>();
+			for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(chosenChange * -1)) {
+				Integer[] block = typeBlock.getRight();
 				if (length == null || block.length == length) {
-					invertedBlocks.add(inverse(block));
+					invertedBlocks.add(Pair.of(typeBlock.getLeft(), inverse(block)));
 				}
 			}
 			viableBlocks.addAll(invertedBlocks);
@@ -196,5 +221,17 @@ public class MelodyUtils {
 			}
 		}
 		return false;
+	}
+
+	public static int blockOfList(Integer[] block) {
+		Integer[] invertedBlock = inverse(block);
+		if (SCALEY.contains(block) || SCALEY.contains(invertedBlock)) {
+			return 0;
+		} else if (NEIGHBORY.contains(block) || NEIGHBORY.contains(invertedBlock)) {
+			return 1;
+		} else if (ARPY.contains(block) || ARPY.contains(invertedBlock)) {
+			return 2;
+		}
+		throw new IllegalArgumentException("Unknown block!");
 	}
 }

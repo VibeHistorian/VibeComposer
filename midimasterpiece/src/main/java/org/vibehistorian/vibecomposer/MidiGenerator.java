@@ -657,16 +657,45 @@ public class MidiGenerator implements JMC {
 		Random blockNotesGenerator = new Random();
 		blockNotesGenerator.setSeed(melodyBlockGeneratorSeed);
 
+		int prevBlockType = Integer.MIN_VALUE;
+
 		for (int i = 0; i < durations.size(); i++) {
 			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + (i % 2), durations.get(i),
 					melodySkeletonDurations, melodySkeletonDurationWeights);
 			//int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
 			blockNotesGenerator.setSeed(melodyBlockGeneratorSeed + (i % 2));
-			List<Integer> blockNotes = Arrays
-					.asList(MelodyUtils.getRandomByApproxBlockChangeAndLength(blockChanges.get(i),
-							maxJump, blockNotesGenerator, null));
+			Pair<Integer, Integer[]> typeBlock = MelodyUtils.getRandomByApproxBlockChangeAndLength(
+					blockChanges.get(i), maxJump, blockNotesGenerator, null);
+			Integer[] blockNotesArray = typeBlock.getRight();
+			int blockType = typeBlock.getLeft();
 
+			// try to find a different type for this block change
+			if (blockType == prevBlockType) {
+				int length = blockNotesArray.length;
+				List<Integer> typesToChoose = new ArrayList<>();
+				for (int j = 0; j < MelodyUtils.NUM_LISTS; j++) {
+					if (j != blockType && MelodyUtils.AVAILABLE_BLOCK_CHANGES_PER_TYPE.get(j)
+							.contains(Math.abs(blockChanges.get(i)))) {
+						typesToChoose.add(j);
+					}
+				}
+				if (typesToChoose.size() > 0) {
+					int randomType = blockNotesGenerator.nextInt(typesToChoose.size());
+					Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
+							randomType, blockChanges.get(i), length, blockNotesGenerator, maxJump);
+					if (typedBlock != null) {
+						blockNotesArray = typedBlock;
+						blockType = randomType;
+						System.out.println("Found new block!");
+					} else {
+						System.out.println("Different type not found in other types!");
+					}
+				}
+
+
+			}
+			List<Integer> blockNotes = Arrays.asList(blockNotesArray);
 			List<Double> blockDurations = blockRhythm.makeDurations(blockNotes.size());
 
 
@@ -689,7 +718,7 @@ public class MidiGenerator implements JMC {
 				}
 
 			}
-
+			prevBlockType = blockType;
 			//System.out.println("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
 			mbs.add(mb);

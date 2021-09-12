@@ -1020,7 +1020,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
 
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		melodyTonicize = new JCheckBox("Tonicize", false);
+		melodyTonicize = new JCheckBox("Tonicize", true);
 		melodyArpySurprises = new JCheckBox("Insert Arps", true);
 		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
 		melodyAvoidChordJumps = new JCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
