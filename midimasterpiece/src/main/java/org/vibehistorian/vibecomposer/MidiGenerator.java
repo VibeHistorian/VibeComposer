@@ -523,10 +523,26 @@ public class MidiGenerator implements JMC {
 		return noteList;
 	}
 
+	private static List<Integer> generateMelodyOffsetDirectionsFromChordProgression(
+			List<int[]> progression, boolean roots, int randomSeed) {
+		Random rand = new Random(randomSeed);
+		List<Integer> dirs = new ArrayList<>();
+		dirs.add(0);
+		int last = roots ? progression.get(0)[0]
+				: progression.get(0)[rand.nextInt(progression.get(0).length)];
+		for (int i = 1; i < progression.size(); i++) {
+			int next = roots ? progression.get(i)[0]
+					: progression.get(i)[rand.nextInt(progression.get(i).length)];
+			dirs.add(Integer.compare(next, last));
+			last = next;
+		}
+		return dirs;
+	}
+
 	private static List<Integer> randomizedChordDirections(int chords, int randomSeed) {
 		Random rand = new Random(randomSeed);
 		List<Integer> dirs = new ArrayList<>();
-		dirs.add(1);
+		dirs.add(0);
 		for (int i = 1; i < chords; i++) {
 			dirs.add(rand.nextInt(3) - 1);
 		}
@@ -579,7 +595,11 @@ public class MidiGenerator implements JMC {
 			int targetMode) {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
-				randomizedChordDirections(chords.size(), randomSeed), randomSeed + 1);
+				gc.isMelodyUseDirectionsFromProgression()
+						? generateMelodyOffsetDirectionsFromChordProgression(chords, true,
+								randomSeed)
+						: randomizedChordDirections(chords.size(), randomSeed),
+				randomSeed + 1);
 		List<Integer> offsets = new ArrayList<>();
 		for (int i = 0; i < chordOffsets.size(); i++) {
 			/*System.out.println("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
@@ -838,8 +858,8 @@ public class MidiGenerator implements JMC {
 	}
 
 
-	private List<Boolean> generateMelodyDirectionsFromChordProgression(List<int[]> progression,
-			boolean roots) {
+	private static List<Boolean> generateMelodyDirectionsFromChordProgression(
+			List<int[]> progression, boolean roots) {
 
 		List<Boolean> ascDirectionList = new ArrayList<>();
 
