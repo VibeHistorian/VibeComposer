@@ -330,7 +330,7 @@ public class MidiGenerator implements JMC {
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
-
+		int maxBlockChangeAdjustment = 0;
 
 		for (int o = 0; o < measures; o++) {
 
@@ -352,7 +352,7 @@ public class MidiGenerator implements JMC {
 							// only add, processed later
 							break;
 						case 1:
-							MAX_JUMP_SKELETON_CHORD++;
+							maxBlockChangeAdjustment++;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -396,7 +396,8 @@ public class MidiGenerator implements JMC {
 						BLOCK_TARGET_MODE);
 				int startingOct = chord1 / 7;
 				List<Integer> blockChanges = MelodyUtils.blockChangeSequence(chord1, chord2,
-						melodyBlockGeneratorSeed, durations.size(), mp.getMaxBlockChange());
+						melodyBlockGeneratorSeed, durations.size(),
+						OMNI.clamp(mp.getMaxBlockChange() + maxBlockChangeAdjustment, 0, 7));
 				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
 						melodyBlockGeneratorSeed + blockOffset, blockChanges,
 						MAX_JUMP_SKELETON_CHORD);
