@@ -379,7 +379,9 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordNote;
 
 	JCheckBox melodyBasicChordsOnly;
-	JCheckBox melodyTonicize;
+	KnobPanel melodyTonicNoteTarget;
+	JCheckBox melodyEmphasizeKey;
+	KnobPanel melodyModeNoteTarget;
 
 	JCheckBox useUserMelody;
 	public static ScrollComboBox<String> userMelodyScaleModeSelect;
@@ -1024,7 +1026,9 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
 
 		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		melodyTonicize = new JCheckBox("Tonicize", true);
+		melodyTonicNoteTarget = new KnobPanel("Tonic Note Target%", 25);
+		melodyEmphasizeKey = new JCheckBox("Emphasize Key", true);
+		melodyModeNoteTarget = new KnobPanel("Mode Note Target%", 15);
 		melodyArpySurprises = new JCheckBox("Insert Arps", true);
 		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
 		melodyAvoidChordJumps = new JCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
@@ -1039,7 +1043,9 @@ public class VibeComposerGUI extends JFrame
 				"<html>Randomize Targets<br> on Compose</html>", true);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
-		melodySettingsExtraPanelShape.add(melodyTonicize);
+		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
+		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
@@ -5350,7 +5356,9 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 		guiConfig.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
-		guiConfig.setMelodyTonicize(melodyTonicize.isSelected());
+		guiConfig.setMelodyTonicNoteTarget(melodyTonicNoteTarget.getInt());
+		guiConfig.setMelodyModeNoteTarget(melodyModeNoteTarget.getInt());
+		guiConfig.setMelodyEmphasizeKey(melodyEmphasizeKey.isSelected());
 
 		guiConfig.setMelodyArpySurprises(melodyArpySurprises.isSelected());
 		guiConfig.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
@@ -5452,7 +5460,9 @@ public class VibeComposerGUI extends JFrame
 		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
 		melodyUseOldAlgoChance.setInt(guiConfig.getMelodyUseOldAlgoChance());
 		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
-		melodyTonicize.setSelected(guiConfig.isMelodyTonicize());
+		melodyTonicNoteTarget.setInt(guiConfig.getMelodyTonicNoteTarget());
+		melodyModeNoteTarget.setInt(guiConfig.getMelodyModeNoteTarget());
+		melodyEmphasizeKey.setSelected(guiConfig.isMelodyEmphasizeKey());
 
 		melodyArpySurprises.setSelected(guiConfig.isMelodyArpySurprises());
 		melodySingleNoteExceptions.setSelected(guiConfig.isMelodySingleNoteExceptions());

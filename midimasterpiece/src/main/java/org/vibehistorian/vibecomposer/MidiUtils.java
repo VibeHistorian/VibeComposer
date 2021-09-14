@@ -84,16 +84,19 @@ public class MidiUtils {
 			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));
 
 	public enum ScaleMode {
-		IONIAN(Scales.MAJOR_SCALE), DORIAN(Scales.DORIAN_SCALE), PHRYGIAN(Scales.PHRYGIAN_SCALE),
-		LYDIAN(Scales.LYDIAN_SCALE), MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE),
-		AEOLIAN(Scales.AEOLIAN_SCALE), LOCRIAN(Scales.LOCRIAN_SCALE), BLUES(Scales.BLUES_SCALE),
-		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE), TURKISH(Scales.TURKISH_SCALE),
-		INDIAN(Scales.INDIAN_SCALE);
+		IONIAN(Scales.MAJOR_SCALE, 0), DORIAN(Scales.DORIAN_SCALE, 2),
+		PHRYGIAN(Scales.PHRYGIAN_SCALE, 1), LYDIAN(Scales.LYDIAN_SCALE, 3),
+		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, 6), AEOLIAN(Scales.AEOLIAN_SCALE, 5),
+		LOCRIAN(Scales.LOCRIAN_SCALE, 4), BLUES(Scales.BLUES_SCALE, -1),
+		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE, 5), TURKISH(Scales.TURKISH_SCALE, -1),
+		INDIAN(Scales.INDIAN_SCALE, 1);
 
 		public Integer[] noteAdjustScale;
+		public Integer modeTargetNote;
 
-		private ScaleMode(Integer[] adjust) {
+		private ScaleMode(Integer[] adjust, Integer targetNote) {
 			this.noteAdjustScale = adjust;
+			modeTargetNote = targetNote;
 		}
 	}
 

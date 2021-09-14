@@ -70,7 +70,9 @@ public class GUIConfig {
 	private int maxMelodySwing = 50;
 
 	private boolean melodyBasicChordsOnly = true;
-	private boolean melodyTonicize = false;
+	private int melodyTonicNoteTarget = 25;
+	private boolean melodyEmphasizeKey = true;
+	private int melodyModeNoteTarget = 15;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
@@ -507,12 +509,12 @@ public class GUIConfig {
 		this.keyChangeType = keyChangeType;
 	}
 
-	public boolean isMelodyTonicize() {
-		return melodyTonicize;
+	public int getMelodyTonicNoteTarget() {
+		return melodyTonicNoteTarget;
 	}
 
-	public void setMelodyTonicize(boolean melodyTonicize) {
-		this.melodyTonicize = melodyTonicize;
+	public void setMelodyTonicNoteTarget(int melodyTonicNoteTarget) {
+		this.melodyTonicNoteTarget = melodyTonicNoteTarget;
 	}
 
 	public boolean isMelodyArpySurprises() {
@@ -577,6 +579,22 @@ public class GUIConfig {
 
 	public void setMelodyBlockTargetMode(int melodyBlockTargetMode) {
 		this.melodyBlockTargetMode = melodyBlockTargetMode;
+	}
+
+	public boolean isMelodyEmphasizeKey() {
+		return melodyEmphasizeKey;
+	}
+
+	public void setMelodyEmphasizeKey(boolean melodyEmphasizeKey) {
+		this.melodyEmphasizeKey = melodyEmphasizeKey;
+	}
+
+	public int getMelodyModeNoteTarget() {
+		return melodyModeNoteTarget;
+	}
+
+	public void setMelodyModeNoteTarget(int melodyModeNoteTarget) {
+		this.melodyModeNoteTarget = melodyModeNoteTarget;
 	}
 
 }

@@ -283,8 +283,8 @@ public class MidiGenerator implements JMC {
 						generateOffsets(roots, seed, gc.getMelodyBlockTargetMode()));
 			}
 			blockChordNoteChoices = TARGET_NOTES;
-
 		}
+		TARGET_NOTES = blockChordNoteChoices;
 		System.out.println("Choices: " + blockChordNoteChoices);
 
 		Vector<Note> noteList = new Vector<>();
@@ -339,6 +339,10 @@ public class MidiGenerator implements JMC {
 
 				if (genVars && (i == 0)) {
 					variations = fillVariations(sec, mp, variations, 0);
+					// never generate MaxJump for important melodies
+					if ((variations != null) && sec.getTypeMelodyOffset() == 0) {
+						variations.removeIf(e -> e == 1);
+					}
 				}
 
 				if ((variations != null) && (i == 0)) {
@@ -437,7 +441,7 @@ public class MidiGenerator implements JMC {
 					}
 
 					List<Double> sortedDurs = new ArrayList<>(mb.durations);
-					if (gc.isMelodyTonicize()) {
+					if (gc.isMelodyEmphasizeKey()) {
 						// re-order durations to make most relevant notes the longest
 						for (int k = 0; k < mb.durations.size(); k++) {
 							for (int l = 0; l < mb.durations.size(); l++) {
@@ -1468,16 +1472,90 @@ public class MidiGenerator implements JMC {
 		}
 
 
-		// for main sections: try to adjust notes towards C if there isn't enough C's
-		if (gc.isMelodyTonicize() && notesSeedOffset == 0) {
-			double requiredPercentageCs = 0.25;
-			int needed = (int) Math.floor(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
-					* requiredPercentageCs);
+		// --------- NOTE ADJUSTING ----------------
+		double requiredPercentageCs = gc.getMelodyTonicNoteTarget() / 100.0;
+		int needed = (int) Math.floor(
+				fullMelody.stream().filter(e -> e.getPitch() >= 0).count() * requiredPercentageCs);
+		System.out.println("Found C's: " + pitches[0] + ", needed: " + needed);
+		int surplusTonics = pitches[0] - needed;
 
-			System.out.println("Found C's: " + pitches[0] + ", needed: " + needed);
-			if (pitches[0] < needed) {
+		if (gc.getMelodyTonicNoteTarget() > 0 && notesSeedOffset == 0) {
+			// for main sections: try to adjust notes towards C if there isn't enough C's
+			if (surplusTonics < 0) {
+				//System.out.println("Correcting melody!");
+				int investigatedChordIndex = chordSeparators.length - 1;
 
-				int difference = needed - pitches[0];
+
+				// adjust in pairs starting from last
+				while (investigatedChordIndex > 0 && surplusTonics < 0) {
+					int end = chordSeparators[investigatedChordIndex] - 1;
+					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1];
+					for (int i = end; i >= investigatedChordStart; i--) {
+						Note n = fullMelody.get(i);
+						int p = n.getPitch();
+						// D
+						if (p % 12 == 2) {
+							n.setPitch(p - 2);
+							surplusTonics++;
+							break;
+						}
+						// B
+						if (p % 12 == 11) {
+							n.setPitch(p + 1);
+							surplusTonics++;
+							break;
+						}
+					}
+					investigatedChordIndex -= 2;
+				}
+
+				//System.out.println("Remaining difference after last pairs: " + difference);
+
+				// adjust in pairs starting from last-1
+				investigatedChordIndex = chordSeparators.length - 2;
+				while (investigatedChordIndex > 0 && surplusTonics < 0) {
+					int end = chordSeparators[investigatedChordIndex] - 1;
+					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1];
+					for (int i = end; i >= investigatedChordStart; i--) {
+						Note n = fullMelody.get(i);
+						int p = n.getPitch();
+						// D
+						if (p % 12 == 2) {
+							n.setPitch(p - 2);
+							surplusTonics++;
+							break;
+						}
+						// B
+						if (p % 12 == 11) {
+							n.setPitch(p + 1);
+							surplusTonics++;
+							break;
+						}
+					}
+					investigatedChordIndex -= 2;
+				}
+
+				System.out.println("Remaining difference after first pairs: " + surplusTonics);
+
+			}
+
+		}
+
+		if (gc.getMelodyModeNoteTarget() > 0 && gc.getScaleMode().modeTargetNote > 0) {
+			double requiredPercentage = gc.getMelodyModeNoteTarget() / 100.0;
+			needed = (int) Math.ceil(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
+					* requiredPercentage);
+
+			int modeNote = MidiUtils.MAJ_SCALE.get(gc.getScaleMode().modeTargetNote);
+			System.out.println("Found Mode notes: " + pitches[modeNote] + ", needed: " + needed);
+			if (pitches[modeNote] < needed) {
+
+				int difference = needed - pitches[modeNote];
+				int pitchAbove = MidiUtils.MAJ_SCALE
+						.get((gc.getScaleMode().modeTargetNote + 1) % 7);
+				int pitchBelow = MidiUtils.MAJ_SCALE
+						.get((gc.getScaleMode().modeTargetNote + 6) % 7);
+
 				//System.out.println("Correcting melody!");
 				int investigatedChordIndex = chordSeparators.length - 1;
 
@@ -1489,15 +1567,21 @@ public class MidiGenerator implements JMC {
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
-						// D
-						if (p % 12 == 2) {
-							n.setPitch(p - 2);
+						// above
+						if (p % 12 == pitchAbove && (pitchAbove != 0 || surplusTonics > 0)) {
+							n.setPitch(p - pitchAbove + modeNote);
+							if (pitchAbove == 0) {
+								surplusTonics--;
+							}
 							difference--;
 							break;
 						}
-						// B
-						if (p % 12 == 11) {
-							n.setPitch(p + 1);
+						// below
+						if (p % 12 == pitchBelow && (pitchBelow != 0 || surplusTonics > 0)) {
+							n.setPitch(p - pitchBelow + modeNote);
+							if (pitchBelow == 0) {
+								surplusTonics--;
+							}
 							difference--;
 							break;
 						}
@@ -1515,15 +1599,21 @@ public class MidiGenerator implements JMC {
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
-						// D
-						if (p % 12 == 2) {
-							n.setPitch(p - 2);
+						// above
+						if (p % 12 == pitchAbove && (pitchAbove != 0 || surplusTonics > 0)) {
+							n.setPitch(p - pitchAbove + modeNote);
+							if (pitchAbove == 0) {
+								surplusTonics--;
+							}
 							difference--;
 							break;
 						}
-						// B
-						if (p % 12 == 11) {
-							n.setPitch(p + 1);
+						// below
+						if (p % 12 == pitchBelow && (pitchBelow != 0 || surplusTonics > 0)) {
+							n.setPitch(p - pitchBelow + modeNote);
+							if (pitchBelow == 0) {
+								surplusTonics--;
+							}
 							difference--;
 							break;
 						}
@@ -1531,7 +1621,7 @@ public class MidiGenerator implements JMC {
 					investigatedChordIndex -= 2;
 				}
 
-				System.out.println("Remaining difference after first pairs: " + difference);
+				System.out.println("Remaining difference after first pairs: " + (-1 * difference));
 
 			}
 
