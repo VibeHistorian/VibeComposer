@@ -3097,6 +3097,9 @@ public class VibeComposerGUI extends JFrame
 		stopMidi = makeButton("STOP", "StopMidi");
 		startMidi = makeButton("PLAY", "StartMidi");
 		pauseMidi = makeButton("PAUSE", "PauseMidi");
+		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
+		startMidi.setFont(startMidi.getFont().deriveFont(Font.BOLD));
+		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
 
 		JButton save3Star = makeButton("Save 3*", "Save 3*");
 		JButton save4Star = makeButton("Save 4*", "Save 4*");
@@ -3364,6 +3367,9 @@ public class VibeComposerGUI extends JFrame
 		switchOnComposeRandom.setForeground(toggledUIColor);
 		compose.setForeground(toggledUIColor);
 		regenerate.setForeground(toggledUIColor);
+		startMidi.setForeground(toggledUIColor);
+		pauseMidi.setForeground(toggledUIColor);
+		stopMidi.setForeground(toggledUIColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
 		randomizeInstOnComposeOrGen.setForeground(toggledUIColor);
 		randomizeBpmOnCompose.setForeground(toggledUIColor);
