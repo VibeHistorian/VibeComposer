@@ -3544,7 +3544,9 @@ public class MidiGenerator implements JMC {
 					pattern = pattern.subList(0, cp.getHitsPerPattern());
 				}
 				if (cp.isPatternFlip()) {
-					pattern.set(i, 1 - pattern.get(i));
+					for (int p = 0; p < pattern.size(); p++) {
+						pattern.set(p, 1 - pattern.get(p));
+					}
 				}
 				double duration = progressionDurations.get(j) / pattern.size();
 				double durationCounter = 0;
