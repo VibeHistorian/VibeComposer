@@ -1658,7 +1658,19 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+		applyNoteLengthMultiplier(fullMelody, mp.getNoteLengthMultiplier());
+
 		return fullMelodyMap;
+	}
+
+	private void applyNoteLengthMultiplier(List<Note> fullMelody, int noteLengthMultiplier) {
+		if (noteLengthMultiplier == 100) {
+			return;
+		}
+		for (int i = 0; i < fullMelody.size(); i++) {
+			Note n = fullMelody.get(i);
+			n.setDuration(n.getDuration() * noteLengthMultiplier / 100.0);
+		}
 	}
 
 	private int addAccent(int velocity, Random accentGenerator, int accent) {
@@ -3770,6 +3782,8 @@ public class MidiGenerator implements JMC {
 					gc.getScaleMode().noteAdjustScale);
 		}
 		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
+
+		applyNoteLengthMultiplier(arpPhrase.getNoteList(), ap.getNoteLengthMultiplier());
 
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {

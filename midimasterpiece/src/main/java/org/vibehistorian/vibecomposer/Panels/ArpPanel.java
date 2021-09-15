@@ -61,6 +61,7 @@ public class ArpPanel extends InstPanel {
 		this.add(stretchPanel);
 
 		this.add(minMaxVelSlider);
+		this.add(noteLengthMultiplier);
 
 
 		this.add(exceptionChance);

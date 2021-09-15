@@ -51,6 +51,7 @@ public abstract class InstPart implements Cloneable {
 
 	protected int velocityMin = 70;
 	protected int velocityMax = 90;
+	protected int noteLengthMultiplier = 100;
 
 	protected int swingPercent = 50;
 	protected int accents = 50;
@@ -95,6 +96,8 @@ public abstract class InstPart implements Cloneable {
 			velocityMax = velocityMin + 1;
 			panel.setVelocityMax(velocityMax);
 		}
+
+		setNoteLengthMultiplier(panel.getNoteLengthMultiplier());
 
 		setSwingPercent(panel.getSwingPercent());
 		setAccents(panel.getAccents());
@@ -306,6 +309,14 @@ public abstract class InstPart implements Cloneable {
 
 	public void setPatternFlip(boolean patternFlip) {
 		this.patternFlip = patternFlip;
+	}
+
+	public int getNoteLengthMultiplier() {
+		return noteLengthMultiplier;
+	}
+
+	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
+		this.noteLengthMultiplier = noteLengthMultiplier;
 	}
 
 	@XmlAttribute

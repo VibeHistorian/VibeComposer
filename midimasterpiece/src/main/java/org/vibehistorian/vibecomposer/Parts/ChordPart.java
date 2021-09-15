@@ -15,7 +15,6 @@ public class ChordPart extends InstPart {
 	private int strum = 0;
 
 	private PatternJoinMode patternJoinMode = PatternJoinMode.NOJOIN;
-	private int noteLengthMultiplier = 100;
 
 	private InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
@@ -65,16 +64,6 @@ public class ChordPart extends InstPart {
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
 		this.patternJoinMode = patternJoinMode;
-	}
-
-
-	public int getNoteLengthMultiplier() {
-		return noteLengthMultiplier;
-	}
-
-
-	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
-		this.noteLengthMultiplier = noteLengthMultiplier;
 	}
 
 }

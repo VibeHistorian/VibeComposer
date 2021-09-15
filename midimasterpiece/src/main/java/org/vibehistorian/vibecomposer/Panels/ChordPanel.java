@@ -30,7 +30,6 @@ public class ChordPanel extends InstPanel {
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
 	private ScrollComboBox<String> patternJoinMode = new ScrollComboBox<>();
-	private KnobPanel noteLengthMultiplier = new KnobPanel("Length", 100, 25, 200);
 
 	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
 
@@ -78,10 +77,10 @@ public class ChordPanel extends InstPanel {
 		this.add(delay);
 
 		this.add(minMaxVelSlider);
+		this.add(noteLengthMultiplier);
 
 
 		this.add(patternJoinMode);
-		this.add(noteLengthMultiplier);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -94,7 +93,6 @@ public class ChordPanel extends InstPanel {
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);
-		toggleableComponents.add(noteLengthMultiplier);
 
 	}
 
@@ -160,7 +158,6 @@ public class ChordPanel extends InstPanel {
 		part.setTransitionSplit(getTransitionSplit());
 		part.setStrum(getStrum());
 		part.setPatternJoinMode(getPatternJoinMode());
-		part.setNoteLengthMultiplier(getNoteLengthMultiplier());
 
 		part.setInstPool(getInstPool());
 		part.setOrder(getPanelOrder());
@@ -177,7 +174,6 @@ public class ChordPanel extends InstPanel {
 		setTransitionSplit(part.getTransitionSplit());
 		setStrum(part.getStrum());
 		setPatternJoinMode(part.getPatternJoinMode());
-		setNoteLengthMultiplier(part.getNoteLengthMultiplier());
 
 		setPanelOrder(part.getOrder());
 
@@ -202,13 +198,5 @@ public class ChordPanel extends InstPanel {
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
 		this.patternJoinMode.setSelectedItem(patternJoinMode.toString());
-	}
-
-	public int getNoteLengthMultiplier() {
-		return noteLengthMultiplier.getInt();
-	}
-
-	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
-		this.noteLengthMultiplier.setInt(noteLengthMultiplier);
 	}
 }

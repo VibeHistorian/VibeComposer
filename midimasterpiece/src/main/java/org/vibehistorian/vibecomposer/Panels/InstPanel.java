@@ -77,6 +77,8 @@ public abstract class InstPanel extends JPanel {
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
 
+	protected KnobPanel noteLengthMultiplier = new KnobPanel("Length", 100, 25, 200);
+
 	protected KnobPanel swingPercent = new KnobPanel("Swing%", 50);
 	protected KnobPanel accents = new KnobPanel("Accent", 100);
 
@@ -96,8 +98,6 @@ public abstract class InstPanel extends JPanel {
 	protected JSlider volSlider = new JSlider();
 
 	protected ScrollComboBox<String> midiChannel = new ScrollComboBox<>();
-
-	protected JButton arrSectionCommit = new JButton("Commit");
 
 	protected JButton removeButton = new JButton("X");
 	protected SoloMuter soloMuter;
@@ -158,10 +158,10 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(minMaxVelSlider);
+		toggleableComponents.add(noteLengthMultiplier);
 		toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
-		toggleableComponents.add(arrSectionCommit);
 		toggleableComponents.add(fillFlip);
 		toggleableComponents.add(patternFlip);
 
@@ -242,6 +242,7 @@ public abstract class InstPanel extends JPanel {
 
 		setVelocityMin(part.getVelocityMin());
 		setVelocityMax(part.getVelocityMax());
+		setNoteLengthMultiplier(part.getNoteLengthMultiplier());
 
 		setSwingPercent(part.getSwingPercent());
 		setAccents(part.getAccents());
@@ -518,6 +519,14 @@ public abstract class InstPanel extends JPanel {
 		if (sm.muteState == State.FULL) {
 			soloMuter.mute();
 		}
+	}
+
+	public int getNoteLengthMultiplier() {
+		return noteLengthMultiplier.getInt();
+	}
+
+	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
+		this.noteLengthMultiplier.setInt(noteLengthMultiplier);
 	}
 
 	public Class<? extends InstPart> getPartClass() {

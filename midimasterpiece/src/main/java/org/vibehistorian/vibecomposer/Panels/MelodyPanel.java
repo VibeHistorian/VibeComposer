@@ -69,6 +69,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(noteExceptionChance);
 
 		this.add(minMaxVelSlider);
+		this.add(noteLengthMultiplier);
 		this.add(swingPercent);
 		this.add(accents);
 
