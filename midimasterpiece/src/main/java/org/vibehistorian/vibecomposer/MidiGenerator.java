@@ -1660,20 +1660,23 @@ public class MidiGenerator implements JMC {
 			List<Note> notes = fullMelodyMap.get(i);
 			for (int j = 0; j < notes.size(); j++) {
 				Note n = notes.get(j);
-				if (avoidNotes.contains(n.getPitch() % 12)) {
-					int normalizedPitch = n.getPitch() % 12;
-					int pitchIndex = MidiUtils.MAJ_SCALE.indexOf(normalizedPitch);
-					int upOrDown = rand.nextBoolean() ? 1 : -1;
-					int newPitch = n.getPitch() - normalizedPitch;
-					newPitch += MidiUtils.MAJ_SCALE.get((pitchIndex + upOrDown + 7) % 7);
-					if (pitchIndex == 7 && upOrDown == 1) {
-						newPitch += 12;
-					} else if (pitchIndex == 0 && upOrDown == -1) {
-						newPitch -= 12;
+				if (n.getRhythmValue() > Durations.EIGHTH_NOTE - 0.01) {
+					if (avoidNotes.contains(n.getPitch() % 12)) {
+						int normalizedPitch = n.getPitch() % 12;
+						int pitchIndex = MidiUtils.MAJ_SCALE.indexOf(normalizedPitch);
+						int upOrDown = rand.nextBoolean() ? 1 : -1;
+						int newPitch = n.getPitch() - normalizedPitch;
+						newPitch += MidiUtils.MAJ_SCALE.get((pitchIndex + upOrDown + 7) % 7);
+						if (pitchIndex == 7 && upOrDown == 1) {
+							newPitch += 12;
+						} else if (pitchIndex == 0 && upOrDown == -1) {
+							newPitch -= 12;
+						}
+						n.setPitch(newPitch);
+						System.out.println("Avoiding note: " + j + ", in chord: " + i);
 					}
-					n.setPitch(newPitch);
-					System.out.println("Avoiding note: " + j + ", in chord: " + i);
 				}
+
 			}
 		}
 
