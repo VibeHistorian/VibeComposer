@@ -466,19 +466,8 @@ public class MidiGenerator implements JMC {
 
 					//System.out.println(StringUtils.join(mb.durations, ","));
 					//System.out.println("After: " + StringUtils.join(sortedDurs, ","));
-					int previousPitch = -1;
 					for (int k = 0; k < mb.durations.size(); k++) {
 						int pitch = pitches.get(k);
-
-
-						// remove all instances of B-F and F-B (the only interval of 6 within the key)
-						if (previousPitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
-							pitch--;
-						} else if (pitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
-							pitch++;
-						}
-
-						previousPitch = pitch;
 						// single note exc. = last note in chord
 						// other exc. = any note first note in block
 						boolean exceptionIndexValid = (gc.isMelodySingleNoteExceptions())
@@ -1647,6 +1636,8 @@ public class MidiGenerator implements JMC {
 
 		}
 
+		applyBadIntervalRemoval(fullMelody);
+
 		// extraTranspose variation
 		if (melodyVars != null && !melodyVars.isEmpty()
 				&& melodyVars.contains(Integer.valueOf(0))) {
@@ -1659,6 +1650,24 @@ public class MidiGenerator implements JMC {
 		}
 
 		return fullMelodyMap;
+	}
+
+	private void applyBadIntervalRemoval(List<Note> fullMelody) {
+
+		int previousPitch = -1;
+		for (int i = 0; i < fullMelody.size(); i++) {
+			Note n = fullMelody.get(i);
+			int pitch = n.getPitch();
+			// remove all instances of B-F and F-B (the only interval of 6 within the key)
+			if (previousPitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
+				n.setPitch(pitch - 1);
+			} else if (pitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
+				n.setPitch(pitch + 1);
+			}
+			previousPitch = n.getPitch();
+		}
+
+
 	}
 
 	private void applyNoteLengthMultiplier(List<Note> fullMelody, int noteLengthMultiplier) {
