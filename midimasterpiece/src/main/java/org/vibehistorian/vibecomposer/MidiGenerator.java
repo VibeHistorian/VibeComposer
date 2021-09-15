@@ -1658,8 +1658,6 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		applyNoteLengthMultiplier(fullMelody, mp.getNoteLengthMultiplier());
-
 		return fullMelodyMap;
 	}
 
@@ -1667,9 +1665,17 @@ public class MidiGenerator implements JMC {
 		if (noteLengthMultiplier == 100) {
 			return;
 		}
+		boolean avoidSamePitchCollision = true;
 		for (int i = 0; i < fullMelody.size(); i++) {
 			Note n = fullMelody.get(i);
-			n.setDuration(n.getDuration() * noteLengthMultiplier / 100.0);
+			double duration = n.getDuration() * noteLengthMultiplier / 100.0;
+			if (avoidSamePitchCollision) {
+				double limit = (i < fullMelody.size() - 1
+						&& n.getPitch() == fullMelody.get(i + 1).getPitch()) ? n.getRhythmValue()
+								: Double.POSITIVE_INFINITY;
+				duration = Math.min(duration, limit);
+			}
+			n.setDuration(duration);
 		}
 	}
 
@@ -3278,6 +3284,8 @@ public class MidiGenerator implements JMC {
 		fullMelodyMap.keySet().forEach(e -> noteList.addAll(fullMelodyMap.get(e)));
 		melodyPhrase.addNoteList(noteList, true);
 		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.EIGHTH_NOTE);
+
+		applyNoteLengthMultiplier(melodyPhrase.getNoteList(), mp.getNoteLengthMultiplier());
 
 		if (gc.getScaleMode() != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
