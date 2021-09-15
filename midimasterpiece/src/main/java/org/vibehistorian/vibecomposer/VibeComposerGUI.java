@@ -395,6 +395,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyPatternFlip;
 	ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
+	JCheckBox melodyReplaceAvoidNotes;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -1026,11 +1027,11 @@ public class VibeComposerGUI extends JFrame
 		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
 
-		melodyBasicChordsOnly = new JCheckBox("Force Scale", true);
-		melodyTonicNoteTarget = new KnobPanel("Tonic Note Target%", 25);
-		melodyEmphasizeKey = new JCheckBox("Emphasize Key", true);
-		melodyModeNoteTarget = new KnobPanel("Mode Note Target%", 15);
-		melodyArpySurprises = new JCheckBox("Insert Arps", true);
+		melodyBasicChordsOnly = new JCheckBox("<html>Force<br> Scale</html>", true);
+		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 25);
+		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", true);
+		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
+		melodyArpySurprises = new JCheckBox("<html>Insert<br> Arps</html>", true);
 		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
 		melodyAvoidChordJumps = new JCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 		melodyUseDirectionsFromProgression = new JCheckBox("<html>Use Chord<br>Directions</html>",
@@ -1042,11 +1043,13 @@ public class VibeComposerGUI extends JFrame
 		melodyBlockTargetMode.setSelectedIndex(2);
 		melodyTargetNotesRandomizeOnCompose = new JCheckBox(
 				"<html>Randomize Targets<br> on Compose</html>", true);
+		melodyReplaceAvoidNotes = new JCheckBox("<html>Replace<br>Avoid Notes</html>", true);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
 		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
@@ -5376,6 +5379,7 @@ public class VibeComposerGUI extends JFrame
 				melodyUseDirectionsFromProgression.isSelected());
 		guiConfig.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
 		guiConfig.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
+		guiConfig.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.isSelected());
 
 
 		// chords
@@ -5480,6 +5484,7 @@ public class VibeComposerGUI extends JFrame
 		melodyUseDirectionsFromProgression
 				.setSelected(guiConfig.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(guiConfig.getMelodyBlockTargetMode());
+		melodyReplaceAvoidNotes.setSelected(guiConfig.isMelodyReplaceAvoidNotes());
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());

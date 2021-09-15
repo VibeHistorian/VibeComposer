@@ -1189,4 +1189,12 @@ public class MidiUtils {
 		return respicedChordsList;
 	}
 
+	public static Set<Integer> avoidNotesFromChord(int[] chord) {
+		Set<Integer> avoidNotes = new HashSet<>();
+		for (int i = 0; i < chord.length; i++) {
+			avoidNotes.add((chord[i] + 1) % 12);
+		}
+		return avoidNotes;
+	}
+
 }

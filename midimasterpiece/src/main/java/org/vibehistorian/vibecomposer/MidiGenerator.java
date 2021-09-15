@@ -1652,6 +1652,33 @@ public class MidiGenerator implements JMC {
 		return fullMelodyMap;
 	}
 
+	private void replaceAvoidNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
+			int randomSeed) {
+		Random rand = new Random(randomSeed);
+		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
+			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i));
+			List<Note> notes = fullMelodyMap.get(i);
+			for (int j = 0; j < notes.size(); j++) {
+				Note n = notes.get(j);
+				if (avoidNotes.contains(n.getPitch() % 12)) {
+					int normalizedPitch = n.getPitch() % 12;
+					int pitchIndex = MidiUtils.MAJ_SCALE.indexOf(normalizedPitch);
+					int upOrDown = rand.nextBoolean() ? 1 : -1;
+					int newPitch = n.getPitch() - normalizedPitch;
+					newPitch += MidiUtils.MAJ_SCALE.get((pitchIndex + upOrDown + 7) % 7);
+					if (pitchIndex == 7 && upOrDown == 1) {
+						newPitch += 12;
+					} else if (pitchIndex == 0 && upOrDown == -1) {
+						newPitch -= 12;
+					}
+					n.setPitch(newPitch);
+					System.out.println("Avoiding note: " + j + ", in chord: " + i);
+				}
+			}
+		}
+
+	}
+
 	private void applyBadIntervalRemoval(List<Note> fullMelody) {
 
 		int previousPitch = -1;
@@ -3282,6 +3309,11 @@ public class MidiGenerator implements JMC {
 		}
 		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
 				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset);
+
+		if (gc.isMelodyReplaceAvoidNotes()) {
+			replaceAvoidNotes(fullMelodyMap, actualProgression, mp.getPatternSeed());
+		}
+
 		if (mp.getOrder() == 1) {
 			List<Integer> notePattern = new ArrayList<>();
 			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
