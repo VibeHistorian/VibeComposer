@@ -38,7 +38,7 @@ public class Rhythm {
 		this.durationLimit = durationLimit;
 	}
 
-	public List<Double> makeDurations(int durCount) {
+	public List<Double> makeDurations(int durCount, double minDuration) {
 
 		Random generator = new Random(randomSeed);
 		durations = new ArrayList<>();

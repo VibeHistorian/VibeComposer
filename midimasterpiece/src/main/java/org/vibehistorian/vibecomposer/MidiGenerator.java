@@ -306,12 +306,6 @@ public class MidiGenerator implements JMC {
 		double[] melodySkeletonDurations = { Durations.EIGHTH_NOTE, Durations.QUARTER_NOTE,
 				Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
 
-		int addQuick = (mp.getSpeed() - 50) * 4;
-		int addSlow = addQuick * -1;
-
-		int[] melodySkeletonDurationWeights = Rhythm.normalizedCumulativeWeights(
-				new int[] { 300 + addQuick, 500, 200 + addSlow, 200 + addSlow });
-
 		List<int[]> usedChords = null;
 		if (gc.isMelodyBasicChordsOnly()) {
 			List<int[]> basicChordsUnsquished = getBasicChordsFromRoots(roots);
@@ -334,10 +328,10 @@ public class MidiGenerator implements JMC {
 
 		for (int o = 0; o < measures; o++) {
 
-			for (int i = 0; i < stretchedChords.size(); i++) {
+			for (int chordIndex = 0; chordIndex < stretchedChords.size(); chordIndex++) {
 				// either after first measure, or after first half of combined chord prog
 
-				if (genVars && (i == 0)) {
+				if (genVars && (chordIndex == 0)) {
 					variations = fillVariations(sec, mp, variations, 0);
 					// never generate MaxJump for important melodies
 					if ((variations != null) && sec.getTypeMelodyOffset() == 0) {
@@ -345,7 +339,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				if ((variations != null) && (i == 0)) {
+				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (o == measures - 1) {
 							System.out.println("Melody variation: " + var);
@@ -365,11 +359,11 @@ public class MidiGenerator implements JMC {
 				}
 
 				if (fillChordMelodyMap && o == 0) {
-					if (!chordMelodyMap1.containsKey(Integer.valueOf(i))) {
-						chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
+					if (!chordMelodyMap1.containsKey(Integer.valueOf(chordIndex))) {
+						chordMelodyMap1.put(Integer.valueOf(chordIndex), new ArrayList<>());
 					}
 				}
-				if (i % 2 == 0) {
+				if (chordIndex % 2 == 0) {
 					pitchPickerGenerator.setSeed(seed + pitchPickerOffset);
 					exceptionGenerator.setSeed(seed + 2 + notesSeedOffset);
 					if (alternateRhythm) {
@@ -379,10 +373,20 @@ public class MidiGenerator implements JMC {
 
 				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 
-				double rhythmDuration = sameRhythmTwice ? progressionDurations.get(i) / 2.0
-						: progressionDurations.get(i);
-				int rhythmSeed = (alternateRhythm && i % 2 == 1) ? seed + 1 : seed;
+				double rhythmDuration = sameRhythmTwice ? progressionDurations.get(chordIndex) / 2.0
+						: progressionDurations.get(chordIndex);
+				int rhythmSeed = (alternateRhythm && chordIndex % 2 == 1) ? seed + 1 : seed;
 				rhythmSeed += rhythmOffset;
+
+				int speed = adjustChanceParamForTransition(mp.getSpeed(), chordIndex, chords.size(),
+						sec, false);
+				int addQuick = (speed - 50) * 4;
+				int addSlow = addQuick * -1;
+
+				int[] melodySkeletonDurationWeights = Rhythm.normalizedCumulativeWeights(
+						new int[] { 300 + addQuick, 500, 200 + addSlow, 200 + addSlow });
+
+
 				Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
 						melodySkeletonDurationWeights);
 
@@ -393,17 +397,17 @@ public class MidiGenerator implements JMC {
 
 				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
 
-				int blockOffset = blockSeedOffsets.get(i % blockSeedOffsets.size());
-				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, i,
+				int blockOffset = blockSeedOffsets.get(chordIndex % blockSeedOffsets.size());
+				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex,
 						BLOCK_TARGET_MODE);
-				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, i + 1,
+				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex + 1,
 						BLOCK_TARGET_MODE);
 				int startingOct = chord1 / 7;
 				List<Integer> blockChanges = MelodyUtils.blockChangeSequence(chord1, chord2,
 						melodyBlockGeneratorSeed, durations.size(),
 						OMNI.clamp(mp.getMaxBlockChange() + maxBlockChangeAdjustment, 0, 7));
-				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, durations,
-						melodyBlockGeneratorSeed + blockOffset, blockChanges,
+				List<MelodyBlock> melodyBlocks = generateMelodyBlocksForDurations(mp, sec,
+						durations, melodyBlockGeneratorSeed + blockOffset, blockChanges,
 						MAX_JUMP_SKELETON_CHORD);
 
 				System.out.println("Block changes: " + blockChanges);
@@ -494,7 +498,7 @@ public class MidiGenerator implements JMC {
 
 						noteList.add(n);
 						if (fillChordMelodyMap && o == 0) {
-							chordMelodyMap1.get(Integer.valueOf(i)).add(n);
+							chordMelodyMap1.get(Integer.valueOf(chordIndex)).add(n);
 						}
 
 					}
@@ -510,6 +514,28 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
 		}
 		return noteList;
+	}
+
+	public static int adjustChanceParamForTransition(int param, int chordNum, int chordSize,
+			Section sec, boolean reverseEffect) {
+		int multiplier = reverseEffect ? -1 : 1;
+		if (sec.getRiskyVariations() != null) {
+			if (sec.getRiskyVariations().get(5)) {
+				if (chordNum == chordSize - 1) {
+					param += 40 * multiplier;
+				} else if (chordNum == chordSize - 2) {
+					param += 20 * multiplier;
+				}
+			} else if (sec.getRiskyVariations().get(6)) {
+				if (chordNum == chordSize - 1) {
+					param -= 40 * multiplier;
+				} else if (chordNum == chordSize - 2) {
+					param -= 20 * multiplier;
+				}
+			}
+			param = OMNI.clamp(param, 0, 100);
+		}
+		return param;
 	}
 
 	private static List<Integer> generateMelodyOffsetDirectionsFromChordProgression(
@@ -638,7 +664,7 @@ public class MidiGenerator implements JMC {
 		return Pair.of(startingNote, startingPitch);
 	}
 
-	private List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp,
+	private List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp, Section sec,
 			List<Double> durations, int melodyBlockGeneratorSeed, List<Integer> blockChanges,
 			int maxJump) {
 
@@ -649,14 +675,7 @@ public class MidiGenerator implements JMC {
 				Durations.DOTTED_SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE };
 
-		int addQuick = (mp.getSpeed() - 50) * 2;
-		int addSlow = addQuick * -1;
 
-
-		// TODO: quickness
-		int[] melodySkeletonDurationWeights = Rhythm
-				.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
-						100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
 		//System.out.println(StringUtils.join(melodySkeletonDurationWeights, ','));
 		Random blockNotesGenerator = new Random();
 		blockNotesGenerator.setSeed(melodyBlockGeneratorSeed);
@@ -664,6 +683,14 @@ public class MidiGenerator implements JMC {
 		int prevBlockType = Integer.MIN_VALUE;
 
 		for (int i = 0; i < durations.size(); i++) {
+			int speed = adjustChanceParamForTransition(mp.getSpeed(), i, durations.size(), sec,
+					false);
+			int addQuick = (speed - 50) * 2;
+			int addSlow = addQuick * -1;
+			int[] melodySkeletonDurationWeights = Rhythm
+					.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
+							100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
+
 			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + (i % 2), durations.get(i),
 					melodySkeletonDurations, melodySkeletonDurationWeights);
 			//int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
@@ -702,7 +729,8 @@ public class MidiGenerator implements JMC {
 
 			}
 			List<Integer> blockNotes = Arrays.asList(blockNotesArray);
-			List<Double> blockDurations = blockRhythm.makeDurations(blockNotes.size());
+			List<Double> blockDurations = blockRhythm.makeDurations(blockNotes.size(),
+					mp.getSpeed() < 20 ? Durations.EIGHTH_NOTE : Durations.NOTE_32ND);
 
 
 			if (gc.isMelodyArpySurprises() && (blockNotes.size() == 4)
@@ -1448,7 +1476,8 @@ public class MidiGenerator implements JMC {
 				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_SIXTEENTH_NOTE + 0.01)
 						? pauseGenerator2
 						: pauseGenerator;
-				if (pauseGen.nextInt(100) < mp.getPauseChance()) {
+				if (pauseGen.nextInt(100) < adjustChanceParamForTransition(mp.getPauseChance(), i,
+						fullMelodyMap.keySet().size(), sec, true)) {
 					n.setPitch(Integer.MIN_VALUE);
 				} else {
 					pitches[n.getPitch() % 12]++;
@@ -2538,6 +2567,20 @@ public class MidiGenerator implements JMC {
 					if (i == 1 || i == 2 || i == 4) {
 						isVariation &= notesSeedOffset > 0;
 					}
+
+					// transitionUp - from offset > 0 to offset == 0
+					if (i == 5) {
+						isVariation &= (secOrder < arr.getSections().size() - 1
+								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
+								&& notesSeedOffset > 0);
+					}
+					// transitionDown - from offset > 0 to offset == 0
+					if (i == 6) {
+						isVariation &= (secOrder < arr.getSections().size() - 1
+								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() > 0
+								&& notesSeedOffset == 0);
+					}
+
 					riskyVariations.add(isVariation);
 				}
 			}

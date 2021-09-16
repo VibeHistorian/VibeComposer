@@ -1137,6 +1137,7 @@ public class VibeComposerGUI extends JFrame
 			melodyPanel.setInstPool(POOL.ALL);
 			melodyPanel.getInstrumentBox().initInstPool(POOL.ALL);
 			melodyPanel.setInstrument(8);
+			melodyPanel.setFillPauses(true);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			//melodyPanel.setMidiChannel(i + 1);
@@ -1148,7 +1149,6 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.getInstrumentBox().setEnabled(false);
 				melodyPanel.setVelocityMax(80);
 				melodyPanel.setVelocityMin(63);
-				melodyPanel.setFillPauses(true);
 
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
@@ -1522,6 +1522,16 @@ public class VibeComposerGUI extends JFrame
 						default:
 							throw new IllegalArgumentException(
 									"Only 3 hits multiplier states allowed!");
+						}
+						if (randomDrumHitsMultiplier.getSelectedIndex() > 1
+								&& affectedDrums.get(i).getPattern() == RhythmPattern.CUSTOM) {
+							List<Integer> trueSub = affectedDrums.get(i).getComboPanel()
+									.getTruePattern().subList(0, newHits);
+							while (trueSub.size() < 32) {
+								trueSub.addAll(trueSub);
+							}
+							affectedDrums.get(i).getComboPanel()
+									.setTruePattern(trueSub.subList(0, 32));
 						}
 					}
 
