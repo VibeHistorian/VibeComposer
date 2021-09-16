@@ -25,6 +25,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -253,7 +254,7 @@ public abstract class InstPanel extends JPanel {
 
 		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
 				&& part.getCustomPattern().size() == 32 && comboPanel != null) {
-			comboPanel.setTruePattern(part.getCustomPattern());
+			comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
 		}
 		setPatternShift(part.getPatternShift());
 
