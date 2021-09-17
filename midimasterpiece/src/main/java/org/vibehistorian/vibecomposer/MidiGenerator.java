@@ -533,7 +533,7 @@ public class MidiGenerator implements JMC {
 					param -= 20 * multiplier;
 				}
 			}
-			param = OMNI.clamp(param, 0, 100);
+			param = OMNI.clampChance(param);
 		}
 		return param;
 	}
@@ -2556,8 +2556,9 @@ public class MidiGenerator implements JMC {
 			if (riskyVariations == null) {
 				riskyVariations = new ArrayList<>();
 				for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-					boolean isVariation = variationGen.nextInt(100) < gc
-							.getArrangementVariationChance();
+					boolean isVariation = variationGen
+							.nextInt(100) < (gc.getArrangementVariationChance()
+									* Section.riskyVariationChanceMultipliers[i]);
 					// generate only if not last AND next section is same type
 					if (i == 0 || i == 4) {
 						isVariation &= (secOrder < arr.getSections().size() - 1 && arr.getSections()
@@ -3752,7 +3753,10 @@ public class MidiGenerator implements JMC {
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
 			for (int j = 0; j < actualProgression.size(); j++) {
 				if (genVars && (j == 0)) {
-					variations = fillVariations(sec, ap, variations, 3);
+					List<Double> chanceMultipliers = sec.isTransition()
+							? Arrays.asList(new Double[] { 1.0, 1.0, 1.0, 2.0, 1.0 })
+							: null;
+					variations = fillVariations(sec, ap, variations, 3, chanceMultipliers);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -3945,7 +3949,10 @@ public class MidiGenerator implements JMC {
 			for (int j = 0; j < chordsCount; j += chordSpan) {
 
 				if (genVars && ((j == 0) || (j == chordInts.size()))) {
-					variations = fillVariations(sec, dp, variations, 4);
+					List<Double> chanceMultipliers = sec.isTransition()
+							? Arrays.asList(new Double[] { 1.0, 1.0, 2.0 })
+							: null;
+					variations = fillVariations(sec, dp, variations, 4, chanceMultipliers);
 				}
 
 				if ((variations != null) && (j == 0)) {
@@ -4053,23 +4060,33 @@ public class MidiGenerator implements JMC {
 
 	private List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
 			int part) {
+		return fillVariations(sec, instPart, variations, part, new ArrayList<>());
+	}
+
+	private List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
+			int part, List<Double> chanceMultipliers) {
 		if (variations != null) {
 			return variations;
 		}
-
+		if (chanceMultipliers == null) {
+			chanceMultipliers = new ArrayList<>();
+		}
 		Random varGenerator = new Random(gc.getArrangement().getSeed() + instPart.getOrder()
 				+ sec.getTypeSeedOffset() + part * 1000);
 
 		int numVars = Section.variationDescriptions[part].length - 2;
 		//System.out.println("Chance: " + gc.getArrangementPartVariationChance());
-		int modifiedChance = OMNI.clamp(
-				gc.getArrangementPartVariationChance() * sec.getChanceForInst(part) / 50, 0, 100);
+		int modifiedChance = OMNI.clampChance(
+				gc.getArrangementPartVariationChance() * sec.getChanceForInst(part) / 50);
 		modifiedChance += (gc.getArrangementPartVariationChance() - modifiedChance) / 2;
 		/*System.out.println(
 				"Modified: " + modifiedChance + ", for inst: " + sec.getChanceForInst(part));*/
 
 		for (int i = 0; i < numVars; i++) {
-			if (varGenerator.nextInt(100) >= modifiedChance) {
+			int chance = (chanceMultipliers.size() > i)
+					? OMNI.clampChance((int) (modifiedChance * chanceMultipliers.get(i)))
+					: modifiedChance;
+			if (varGenerator.nextInt(100) >= chance) {
 				continue;
 			}
 

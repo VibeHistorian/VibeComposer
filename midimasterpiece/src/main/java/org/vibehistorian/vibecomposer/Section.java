@@ -64,6 +64,8 @@ public class Section {
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
 			"Swap Melody", "Melody Pause Squish", "Key Change", "TransitionUp", "TransitionDown" };
+	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 1.0, 0.7, 1.0, 1.0, 1.5,
+			1.75 };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -587,6 +589,11 @@ public class Section {
 			}
 		}
 		return riskyVariations;
+	}
+
+	public boolean isTransition() {
+		return getRiskyVariations() != null
+				&& (getRiskyVariations().get(5) || getRiskyVariations().get(6));
 	}
 
 	public void setRiskyVariations(List<Boolean> riskyVariations) {

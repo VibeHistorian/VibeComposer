@@ -50,6 +50,7 @@ public class MelodyPanel extends InstPanel {
 		addDefaultInstrumentControls();
 
 		this.add(speed);
+		//transpose.getKnob().setTickSpacing(0);
 		this.add(transpose);
 
 		pauseChance.setInt(0);
