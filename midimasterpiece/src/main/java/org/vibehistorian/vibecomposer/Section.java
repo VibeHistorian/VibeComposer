@@ -596,6 +596,14 @@ public class Section {
 				&& (getRiskyVariations().get(5) || getRiskyVariations().get(6));
 	}
 
+	public int getTransitionType() {
+		if (!isTransition()) {
+			return -1;
+		}
+
+		return getRiskyVariations().get(5) ? 5 : 6;
+	}
+
 	public void setRiskyVariations(List<Boolean> riskyVariations) {
 		this.riskyVariations = riskyVariations;
 	}
