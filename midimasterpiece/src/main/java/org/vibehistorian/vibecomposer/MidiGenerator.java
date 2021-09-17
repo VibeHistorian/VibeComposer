@@ -3455,8 +3455,12 @@ public class MidiGenerator implements JMC {
 
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
+						int noteVaryChance = sec.isTransition()
+								? adjustChanceParamForTransition(bp.getNoteVariation(), j,
+										generatedRootProgression.size(), sec, false)
+								: bp.getNoteVariation();
 						if (counter > 0 && dur < (Durations.EIGHTH_NOTE + 0.01)
-								&& noteVariationGenerator.nextInt(100) < bp.getNoteVariation()
+								&& noteVariationGenerator.nextInt(100) < noteVaryChance
 								&& generatedRootProgression.get(j).length > 1) {
 							randomNote = noteVariationGenerator
 									.nextInt(generatedRootProgression.get(j).length - 1) + 1;
