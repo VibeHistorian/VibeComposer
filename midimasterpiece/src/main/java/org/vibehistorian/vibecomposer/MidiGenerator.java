@@ -2569,13 +2569,13 @@ public class MidiGenerator implements JMC {
 						isVariation &= notesSeedOffset > 0;
 					}
 
-					// transitionUp - from offset > 0 to offset == 0
+					// transitionFast - from offset > 0 to offset == 0
 					if (i == 5) {
 						isVariation &= (secOrder < arr.getSections().size() - 1
 								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
 								&& notesSeedOffset > 0);
 					}
-					// transitionDown - from offset > 0 to offset == 0
+					// transitionSlow - from offset > 0 to offset == 0
 					if (i == 6) {
 						isVariation &= (secOrder < arr.getSections().size() - 1
 								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() > 0
