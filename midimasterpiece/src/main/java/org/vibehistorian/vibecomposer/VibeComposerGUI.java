@@ -1052,7 +1052,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
-		melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
+		//melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
 		melodySettingsExtraPanelShape.add(melodyUseDirectionsFromProgression);
 		melodySettingsExtraPanelShape.add(new JLabel("Target Mode"));
 		melodySettingsExtraPanelShape.add(melodyBlockTargetMode);
@@ -5056,7 +5056,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static boolean sequenceReady() {
-		return VibeComposerGUI.sequencer != null && VibeComposerGUI.sequencer.isOpen();
+		return (sequencer != null) && (sequencer.isOpen()) && (sequencer.getSequence() != null);
 	}
 
 	private void recalculateGenerationCounts() {
