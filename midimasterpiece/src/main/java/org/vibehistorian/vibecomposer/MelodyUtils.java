@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +15,12 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class MelodyUtils {
 
+	public static final List<Integer> chordyNotes = Arrays.asList(new Integer[] { 0, 2, 4, 7 });
 
 	public static List<Integer[]> SCALEY = new ArrayList<>();
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
 	public static List<Integer[]> ARPY = new ArrayList<>();
+	public static List<Integer[]> CHORDY = new ArrayList<>();
 
 	public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP = new HashMap<>();
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
@@ -42,14 +45,16 @@ public class MelodyUtils {
 		NEIGHBORY.add(new Integer[] { 0, -1, 0, 2 });
 		NEIGHBORY.add(new Integer[] { 0, 1, 3, 2 });
 
-		ARPY.add(new Integer[] { 0, 2, 4 });
+
+		CHORDY.add(new Integer[] { 0, 2, 4 });
+		CHORDY.add(new Integer[] { 0, 4, 2 });
+		CHORDY.add(new Integer[] { 0, 4, 2, 7 });
+
 		ARPY.add(new Integer[] { 0, 2, 0, 2 });
 		ARPY.add(new Integer[] { 0, 2, 1 });
 		ARPY.add(new Integer[] { 0, 2, 4, 2 });
-		ARPY.add(new Integer[] { 0, 4, 2 });
 		ARPY.add(new Integer[] { 0, 2, 1, 3 });
 		ARPY.add(new Integer[] { 0, 2, 3 });
-		ARPY.add(new Integer[] { 0, 4, 2, 7 });
 		ARPY.add(new Integer[] { 0, 3, 1, 2 });
 		ARPY.add(new Integer[] { 0, 1, 4, 5 });
 		ARPY.add(new Integer[] { 0, 1, 7, 6 });
@@ -62,6 +67,7 @@ public class MelodyUtils {
 		SCALEY.forEach(e -> allBlocks.add(Pair.of(0, e)));
 		NEIGHBORY.forEach(e -> allBlocks.add(Pair.of(1, e)));
 		ARPY.forEach(e -> allBlocks.add(Pair.of(2, e)));
+		CHORDY.forEach(e -> allBlocks.add(Pair.of(3, e)));
 
 		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(0,
 				SCALEY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
@@ -69,6 +75,8 @@ public class MelodyUtils {
 				NEIGHBORY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
 		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(2,
 				ARPY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
+		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(3,
+				CHORDY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
 
 
 		BLOCK_CHANGE_MAP = allBlocks.stream()
@@ -153,6 +161,8 @@ public class MelodyUtils {
 			return new ArrayList<>(NEIGHBORY);
 		case 2:
 			return new ArrayList<>(ARPY);
+		case 3:
+			return new ArrayList<>(CHORDY);
 		default:
 			throw new IllegalArgumentException("Blocks type too random!");
 		}
@@ -231,6 +241,8 @@ public class MelodyUtils {
 			return 1;
 		} else if (ARPY.contains(block) || ARPY.contains(invertedBlock)) {
 			return 2;
+		} else if (CHORDY.contains(block) || CHORDY.contains(invertedBlock)) {
+			return 3;
 		}
 		throw new IllegalArgumentException("Unknown block!");
 	}
