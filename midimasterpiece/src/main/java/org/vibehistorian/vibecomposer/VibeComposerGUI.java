@@ -1147,8 +1147,8 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.getVolSlider().setEnabled(false);
 				melodyPanel.getSoloMuter().setEnabled(false);
 				melodyPanel.getInstrumentBox().setEnabled(false);
-				melodyPanel.setVelocityMax(80);
-				melodyPanel.setVelocityMin(63);
+				melodyPanel.setVelocityMax(75);
+				melodyPanel.setVelocityMin(50);
 
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
@@ -1157,6 +1157,8 @@ public class VibeComposerGUI extends JFrame
 				}
 			} else {
 				melodyPanel.setTranspose(12);
+				melodyPanel.setVelocityMax(105);
+				melodyPanel.setVelocityMin(65);
 			}
 		}
 

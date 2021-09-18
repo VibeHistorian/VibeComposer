@@ -43,4 +43,8 @@ public class OMNI {
 	public static int clampChance(int num) {
 		return Math.min(100, (Math.max(0, num)));
 	}
+
+	public static int clampVel(double d) {
+		return clamp((int) d, 0, 127);
+	}
 }

@@ -1748,6 +1748,20 @@ public class MidiGenerator implements JMC {
 
 	}
 
+	private void applyCrescendoMultiplier(List<Note> notes, double maxDuration,
+			double crescendoStartPercentage, double maxMultiplierAdd) {
+		double dur = 0.0;
+		double start = maxDuration * crescendoStartPercentage;
+		for (Note n : notes) {
+			if (dur > start) {
+				double multiplier = 1 + maxMultiplierAdd * ((dur - start) / (maxDuration - start));
+				n.setDynamic(OMNI.clampVel(n.getDynamic() * multiplier));
+				//System.out.println("Applied multiplier: " + multiplier);
+			}
+			dur += n.getRhythmValue();
+		}
+	}
+
 	private void applyNoteLengthMultiplier(List<Note> fullMelody, int noteLengthMultiplier) {
 		if (noteLengthMultiplier == 100) {
 			return;
@@ -3393,6 +3407,10 @@ public class MidiGenerator implements JMC {
 		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.EIGHTH_NOTE);
 
 		applyNoteLengthMultiplier(melodyPhrase.getNoteList(), mp.getNoteLengthMultiplier());
+		if (sec.isTransition()) {
+			applyCrescendoMultiplier(melodyPhrase.getNoteList(),
+					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25);
+		}
 
 		if (gc.getScaleMode() != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
@@ -3728,6 +3746,12 @@ public class MidiGenerator implements JMC {
 		}
 		Mod.transpose(phr, -12 + extraTranspose + modTrans);
 
+
+		if (sec.isTransition()) {
+			applyCrescendoMultiplier(phr.getNoteList(),
+					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15);
+		}
+
 		// delay
 		double additionalDelay = 0;
 		if (gc.getChordGenSettings().isUseDelay()) {
@@ -3918,6 +3942,10 @@ public class MidiGenerator implements JMC {
 		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
 
 		applyNoteLengthMultiplier(arpPhrase.getNoteList(), ap.getNoteLengthMultiplier());
+		if (sec.isTransition()) {
+			applyCrescendoMultiplier(arpPhrase.getNoteList(),
+					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15);
+		}
 
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {
@@ -4082,6 +4110,12 @@ public class MidiGenerator implements JMC {
 		if (genVars && variations != null) {
 			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
 		}
+
+		if (sec.isTransition()) {
+			applyCrescendoMultiplier(drumPhrase.getNoteList(),
+					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15);
+		}
+
 		swingPhrase(drumPhrase, swingPercentAmount, Durations.EIGHTH_NOTE);
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
 		dp.setHitsPerPattern(dpClone.getHitsPerPattern());
