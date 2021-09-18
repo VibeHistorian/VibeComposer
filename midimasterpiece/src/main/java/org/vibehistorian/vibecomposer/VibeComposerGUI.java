@@ -1029,9 +1029,9 @@ public class VibeComposerGUI extends JFrame
 
 		melodyBasicChordsOnly = new JCheckBox("<html>Force<br> Scale</html>", true);
 		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 25);
-		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", true);
+		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", false);
 		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
-		melodyArpySurprises = new JCheckBox("<html>Insert<br> Arps</html>", true);
+		melodyArpySurprises = new JCheckBox("<html>Insert<br> Arps</html>", false);
 		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
 		melodyAvoidChordJumps = new JCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 		melodyUseDirectionsFromProgression = new JCheckBox("<html>Use Chord<br>Directions</html>",
@@ -3068,7 +3068,7 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(new JLabel("Scale"));
 		controlSettingsPanel.add(scaleMode);
 
-		randomizeScaleModeOnCompose = new JCheckBox("on Compose", true);
+		randomizeScaleModeOnCompose = new JCheckBox("on Compose", false);
 		controlSettingsPanel.add(randomizeScaleModeOnCompose);
 
 

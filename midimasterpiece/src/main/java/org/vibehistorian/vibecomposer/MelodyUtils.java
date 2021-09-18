@@ -15,7 +15,9 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class MelodyUtils {
 
-	public static final List<Integer> chordyNotes = Arrays.asList(new Integer[] { 0, 2, 4, 7 });
+	//public static final List<Integer> chordyNotes = Arrays.asList(new Integer[] { 0, 2, 4, 7 });
+	public static final List<Integer> cMajorSubstituteNotes = Arrays
+			.asList(new Integer[] { 0, 2, 3, 5 });
 
 	public static List<Integer[]> SCALEY = new ArrayList<>();
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
@@ -28,6 +30,8 @@ public class MelodyUtils {
 	public static final int NUM_LISTS = 3;
 
 	static {
+		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
+
 		SCALEY.add(new Integer[] { 0, 1, 2 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 3 });
 		SCALEY.add(new Integer[] { 0, 1, 4 });
@@ -49,6 +53,7 @@ public class MelodyUtils {
 		CHORDY.add(new Integer[] { 0, 2, 4 });
 		CHORDY.add(new Integer[] { 0, 4, 2 });
 		CHORDY.add(new Integer[] { 0, 4, 2, 7 });
+		CHORDY.add(new Integer[] { 0, 7, 4, 2 });
 
 		ARPY.add(new Integer[] { 0, 2, 0, 2 });
 		ARPY.add(new Integer[] { 0, 2, 1 });
@@ -58,6 +63,7 @@ public class MelodyUtils {
 		ARPY.add(new Integer[] { 0, 3, 1, 2 });
 		ARPY.add(new Integer[] { 0, 1, 4, 5 });
 		ARPY.add(new Integer[] { 0, 1, 7, 6 });
+		ARPY.add(new Integer[] { 0, 1, 6, 7 });
 		/*ARPY.add(new Integer[] { 0, 3, 5 });
 		ARPY.add(new Integer[] { 0, 4, 6 });
 		ARPY.add(new Integer[] { 0, 4, 7 });*/
@@ -108,8 +114,9 @@ public class MelodyUtils {
 		List<Integer[]> usedList = getBlocksForType(
 				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
 		// length fits, note distance and distance roughly equal (diff < approx)
-		List<Integer[]> filteredList = usedList.stream().filter(
-				e -> (e.length == length) && (Math.abs(blockChange(e) - blockChange) <= approx))
+		List<Integer[]> filteredList = usedList.stream()
+				.filter(e -> (e.length == length)
+						&& (Math.abs(blockChange(e) - Math.abs(blockChange)) <= approx))
 				.collect(Collectors.toList());
 		if (filteredList.size() == 0) {
 			return null;
