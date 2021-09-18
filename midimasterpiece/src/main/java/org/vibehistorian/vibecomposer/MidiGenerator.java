@@ -534,10 +534,12 @@ public class MidiGenerator implements JMC {
 		double effect = (chordRange > 0) ? ((chordNum - minAffectedChord) / ((double) chordRange))
 				: 1.0;
 
+		int transitionType = sec.getTransitionType();
+
 		int multiplier = reverseEffect ? -1 : 1;
-		if (sec.getRiskyVariations().get(5)) {
+		if (transitionType == 5) {
 			param += maxEffect * effect * multiplier;
-		} else if (sec.getRiskyVariations().get(6)) {
+		} else {
 			param -= maxEffect * effect * multiplier;
 		}
 		param = OMNI.clampChance(param);
@@ -1757,15 +1759,38 @@ public class MidiGenerator implements JMC {
 
 	}
 
+	private void processSectionTransition(Section sec, List<Note> notes, double maxDuration,
+			double crescendoStartPercentage, double maxMultiplierAdd, double muteStartPercentage) {
+		if (sec.isTransition()) {
+			applyCrescendoMultiplier(notes, maxDuration, crescendoStartPercentage,
+					maxMultiplierAdd);
+			if (sec.getTransitionType() == 7) {
+				applyCrescendoMultiplierMinimum(notes, maxDuration, muteStartPercentage, 0.05,
+						0.05);
+			}
+		}
+	}
+
 	private void applyCrescendoMultiplier(List<Note> notes, double maxDuration,
 			double crescendoStartPercentage, double maxMultiplierAdd) {
+		applyCrescendoMultiplierMinimum(notes, maxDuration, crescendoStartPercentage,
+				maxMultiplierAdd, 1);
+	}
+
+	private void applyCrescendoMultiplierMinimum(List<Note> notes, double maxDuration,
+			double crescendoStartPercentage, double maxMultiplierAdd, double minimum) {
 		double dur = 0.0;
 		double start = maxDuration * crescendoStartPercentage;
 		for (Note n : notes) {
 			if (dur > start) {
-				double multiplier = 1 + maxMultiplierAdd * ((dur - start) / (maxDuration - start));
-				n.setDynamic(OMNI.clampVel(n.getDynamic() * multiplier));
-				//System.out.println("Applied multiplier: " + multiplier);
+				double multiplier = minimum
+						+ maxMultiplierAdd * ((dur - start) / (maxDuration - start));
+				if (multiplier < 0.1) {
+					n.setPitch(Note.REST);
+				} else {
+					n.setDynamic(OMNI.clampVel(n.getDynamic() * multiplier));
+				}
+				System.out.println("Applied multiplier: " + multiplier);
 			}
 			dur += n.getRhythmValue();
 		}
@@ -2623,11 +2648,16 @@ public class MidiGenerator implements JMC {
 								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() > 0
 								&& notesSeedOffset == 0);
 					}
+					// transitionCut - anywhere, but only if 5 and 6 not generated
+					if (i == 7) {
+						isVariation &= (!riskyVariations.get(5) && !riskyVariations.get(6));
+					}
+
 
 					riskyVariations.add(isVariation);
 				}
 			}
-
+			System.out.println("Risky Variations: " + StringUtils.join(riskyVariations, ","));
 			int usedMeasures = sec.getMeasures();
 
 			// reset back to normal?
@@ -2637,7 +2667,7 @@ public class MidiGenerator implements JMC {
 			}
 			if (!sectionChordsReplaced) {
 				if (riskyVariations.get(1)) {
-					System.out.println("Risky Variation: Chord Swap!");
+					//System.out.println("Risky Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
 					progressionDurations = actualDurations;
@@ -2649,7 +2679,7 @@ public class MidiGenerator implements JMC {
 				}
 			} else if (rootProgression.size() == generatedRootProgression.size()) {
 				if (riskyVariations.get(1)) {
-					System.out.println("Risky Variation: Chord Swap!");
+					//System.out.println("Risky Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
 					progressionDurations = actualDurations;
@@ -2657,14 +2687,14 @@ public class MidiGenerator implements JMC {
 			}
 
 			if (riskyVariations.get(4)) {
-				System.out.println("Risky Variation: Key Change (on next chord)!");
+				//System.out.println("Risky Variation: Key Change (on next chord)!");
 				transToSet = generateKeyChange(generatedRootProgression, arrSeed);
 			}
 
 			boolean twoFiveOneChords = gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE
 					&& riskyVariations.get(4);
 			if (riskyVariations.get(0) && !twoFiveOneChords) {
-				System.out.println("Risky Variation: Skip N-1 Chord!");
+				//System.out.println("Risky Variation: Skip N-1 Chord!");
 
 				skipN1Chord();
 			}
@@ -2706,7 +2736,7 @@ public class MidiGenerator implements JMC {
 								&& !sectionChordsReplaced) {
 							usedMelodyProg = melodyBasedChordProgression;
 							usedRoots = melodyBasedRootProgression;
-							System.out.println("Risky Variation: Melody Swap!");
+							//System.out.println("Risky Variation: Melody Swap!");
 						}
 						List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 						Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, usedMeasures,
@@ -3416,10 +3446,8 @@ public class MidiGenerator implements JMC {
 		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.EIGHTH_NOTE);
 
 		applyNoteLengthMultiplier(melodyPhrase.getNoteList(), mp.getNoteLengthMultiplier());
-		if (sec.isTransition()) {
-			applyCrescendoMultiplier(melodyPhrase.getNoteList(),
-					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25);
-		}
+		processSectionTransition(sec, melodyPhrase.getNoteList(),
+				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
 
 		if (gc.getScaleMode() != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
@@ -3757,10 +3785,8 @@ public class MidiGenerator implements JMC {
 		Mod.transpose(phr, -12 + extraTranspose + modTrans);
 
 
-		if (sec.isTransition()) {
-			applyCrescendoMultiplier(phr.getNoteList(),
-					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15);
-		}
+		processSectionTransition(sec, phr.getNoteList(),
+				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
 
 		// delay
 		double additionalDelay = 0;
@@ -3952,10 +3978,8 @@ public class MidiGenerator implements JMC {
 		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
 
 		applyNoteLengthMultiplier(arpPhrase.getNoteList(), ap.getNoteLengthMultiplier());
-		if (sec.isTransition()) {
-			applyCrescendoMultiplier(arpPhrase.getNoteList(),
-					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15);
-		}
+		processSectionTransition(sec, arpPhrase.getNoteList(),
+				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
 
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {
@@ -4121,10 +4145,8 @@ public class MidiGenerator implements JMC {
 			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
 		}
 
-		if (sec.isTransition()) {
-			applyCrescendoMultiplier(drumPhrase.getNoteList(),
-					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15);
-		}
+		processSectionTransition(sec, drumPhrase.getNoteList(),
+				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
 
 		swingPhrase(drumPhrase, swingPercentAmount, Durations.EIGHTH_NOTE);
 		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));

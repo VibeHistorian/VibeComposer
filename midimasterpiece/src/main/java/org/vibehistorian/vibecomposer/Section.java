@@ -63,10 +63,10 @@ public class Section {
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Pause Squish", "Key Change", "TransitionFast",
-			"TransitionSlow" };
+			"Swap Melody", "Melody Pause Squish", "Key Change", "TransitionFast", "TransitionSlow",
+			"TransitionCut" };
 	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 1.0, 0.7, 1.0, 1.0, 1.5,
-			1.75 };
+			1.75, 1.0 };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -593,8 +593,8 @@ public class Section {
 	}
 
 	public boolean isTransition() {
-		return getRiskyVariations() != null
-				&& (getRiskyVariations().get(5) || getRiskyVariations().get(6));
+		return getRiskyVariations() != null && (getRiskyVariations().get(5)
+				|| getRiskyVariations().get(6) || getRiskyVariations().get(7));
 	}
 
 	public int getTransitionType() {
@@ -602,7 +602,7 @@ public class Section {
 			return -1;
 		}
 
-		return getRiskyVariations().get(5) ? 5 : 6;
+		return getRiskyVariations().get(7) ? 7 : (getRiskyVariations().get(6) ? 6 : 5);
 	}
 
 	public void setRiskyVariations(List<Boolean> riskyVariations) {
