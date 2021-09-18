@@ -919,7 +919,7 @@ public class VibeComposerGUI extends JFrame
 
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
 		bpmLow = new KnobPanel("Min<br>BPM.", 60, 20, 249);
-		bpmHigh = new KnobPanel("Max<br>BPM.", 110, 21, 250);
+		bpmHigh = new KnobPanel("Max<br>BPM.", 95, 21, 250);
 		elongateMidi = new KnobPanel("Elongate MIDI by:", 2, 1, 4);
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
@@ -3054,7 +3054,7 @@ public class VibeComposerGUI extends JFrame
 		transposeScore = new KnobPanel("Global Transpose<br>(Key)", 0, -24, 24);
 		controlSettingsPanel.add(transposeScore);
 
-		mainBpm = new KnobPanel("BPM", 80, 60, 110);
+		mainBpm = new KnobPanel("BPM", 80, bpmLow.getInt(), bpmHigh.getInt());
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
 		controlSettingsPanel.add(mainBpm);
@@ -3128,7 +3128,7 @@ public class VibeComposerGUI extends JFrame
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
 		loopBeat = new JCheckBox("Loop Beats", false);
-		loopBeatCount = new KnobPanel("", 1, 1, 4);
+		loopBeatCount = new KnobPanel("", 1, 4, 4);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
