@@ -378,8 +378,8 @@ public class MidiGenerator implements JMC {
 				int rhythmSeed = (alternateRhythm && chordIndex % 2 == 1) ? seed + 1 : seed;
 				rhythmSeed += rhythmOffset;
 
-				int speed = adjustChanceParamForTransition(mp.getSpeed(), chordIndex, chords.size(),
-						sec, false);
+				int speed = adjustChanceParamForTransition(mp.getSpeed(), sec, chordIndex,
+						chords.size(), 40, 0.25, false);
 				int addQuick = (speed - 50) * 4;
 				int addSlow = addQuick * -1;
 
@@ -516,25 +516,32 @@ public class MidiGenerator implements JMC {
 		return noteList;
 	}
 
-	public static int adjustChanceParamForTransition(int param, int chordNum, int chordSize,
-			Section sec, boolean reverseEffect) {
-		int multiplier = reverseEffect ? -1 : 1;
-		if (sec.getRiskyVariations() != null) {
-			if (sec.getRiskyVariations().get(5)) {
-				if (chordNum == chordSize - 1) {
-					param += 40 * multiplier;
-				} else if (chordNum == chordSize - 2) {
-					param += 20 * multiplier;
-				}
-			} else if (sec.getRiskyVariations().get(6)) {
-				if (chordNum == chordSize - 1) {
-					param -= 40 * multiplier;
-				} else if (chordNum == chordSize - 2) {
-					param -= 20 * multiplier;
-				}
-			}
-			param = OMNI.clampChance(param);
+	public static int adjustChanceParamForTransition(int param, Section sec, int chordNum,
+			int chordSize, int maxEffect, double affectedMeasure, boolean reverseEffect) {
+		if (chordSize < 2 || !sec.isTransition()) {
+			return param;
 		}
+
+		int minAffectedChord = OMNI.clamp((int) (affectedMeasure * chordSize) - 1, 1,
+				chordSize - 1);
+		//System.out.println("Min affected: " + minAffectedChord);
+		if (chordNum < minAffectedChord) {
+			return param;
+		}
+		//System.out.println("Old param: " + param);
+
+		int chordRange = chordSize - 1 - minAffectedChord;
+		double effect = (chordRange > 0) ? ((chordNum - minAffectedChord) / ((double) chordRange))
+				: 1.0;
+
+		int multiplier = reverseEffect ? -1 : 1;
+		if (sec.getRiskyVariations().get(5)) {
+			param += maxEffect * effect * multiplier;
+		} else if (sec.getRiskyVariations().get(6)) {
+			param -= maxEffect * effect * multiplier;
+		}
+		param = OMNI.clampChance(param);
+		//System.out.println("New param: " + param);
 		return param;
 	}
 
@@ -682,26 +689,27 @@ public class MidiGenerator implements JMC {
 
 		int prevBlockType = Integer.MIN_VALUE;
 		int adjustment = startingNote;
-		for (int i = 0; i < durations.size(); i++) {
-			if (i > 0) {
-				adjustment += blockChanges.get(i - 1);
+		for (int chordIndex = 0; chordIndex < durations.size(); chordIndex++) {
+			if (chordIndex > 0) {
+				adjustment += blockChanges.get(chordIndex - 1);
 			}
 
-			int speed = adjustChanceParamForTransition(mp.getSpeed(), i, durations.size(), sec,
-					false);
+			int speed = adjustChanceParamForTransition(mp.getSpeed(), sec, chordIndex,
+					durations.size(), 40, 0.25, false);
 			int addQuick = (speed - 50) * 2;
 			int addSlow = addQuick * -1;
 			int[] melodySkeletonDurationWeights = Rhythm
 					.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
 							100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
 
-			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + (i % 2), durations.get(i),
-					melodySkeletonDurations, melodySkeletonDurationWeights);
+			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + (chordIndex % 2),
+					durations.get(chordIndex), melodySkeletonDurations,
+					melodySkeletonDurationWeights);
 			//int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
-			blockNotesGenerator.setSeed(melodyBlockGeneratorSeed + (i % 2));
+			blockNotesGenerator.setSeed(melodyBlockGeneratorSeed + (chordIndex % 2));
 			Pair<Integer, Integer[]> typeBlock = MelodyUtils.getRandomByApproxBlockChangeAndLength(
-					blockChanges.get(i), maxJump, blockNotesGenerator, null);
+					blockChanges.get(chordIndex), maxJump, blockNotesGenerator, null);
 			Integer[] blockNotesArray = typeBlock.getRight();
 			int blockType = typeBlock.getLeft();
 
@@ -721,7 +729,7 @@ public class MidiGenerator implements JMC {
 				List<Integer> typesToChoose = new ArrayList<>();
 				for (int j = 0; j < MelodyUtils.NUM_LISTS; j++) {
 					if (j != blockType && MelodyUtils.AVAILABLE_BLOCK_CHANGES_PER_TYPE.get(j)
-							.contains(Math.abs(blockChanges.get(i)))) {
+							.contains(Math.abs(blockChanges.get(chordIndex)))) {
 						typesToChoose.add(j);
 					}
 				}
@@ -729,7 +737,8 @@ public class MidiGenerator implements JMC {
 					int randomType = typesToChoose
 							.get(blockNotesGenerator.nextInt(typesToChoose.size()));
 					Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
-							randomType, blockChanges.get(i), length, blockNotesGenerator, maxJump);
+							randomType, blockChanges.get(chordIndex), length, blockNotesGenerator,
+							maxJump);
 					if (typedBlock != null) {
 						blockNotesArray = typedBlock;
 						blockType = randomType;
@@ -757,7 +766,7 @@ public class MidiGenerator implements JMC {
 				boolean containsWrongNote = blockDurations.stream()
 						.anyMatch(e -> (e > wrongNoteLow && e < wrongNoteHigh));
 				if (containsWrongNote) {
-					double arpyDuration = durations.get(i) / blockNotes.size();
+					double arpyDuration = durations.get(chordIndex) / blockNotes.size();
 					for (int j = 0; j < blockDurations.size(); j++) {
 						blockDurations.set(j, arpyDuration);
 					}
@@ -1484,16 +1493,16 @@ public class MidiGenerator implements JMC {
 
 
 		// pause by %, sort not-paused into pitches
-		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
-			List<Note> notes = fullMelodyMap.get(i);
+		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
+			List<Note> notes = fullMelodyMap.get(chordIndex);
 			pauseGenerator.setSeed(orderSeed + 5);
 			for (int j = 0; j < notes.size(); j++) {
 				Note n = notes.get(j);
 				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_SIXTEENTH_NOTE + 0.01)
 						? pauseGenerator2
 						: pauseGenerator;
-				if (pauseGen.nextInt(100) < adjustChanceParamForTransition(mp.getPauseChance(), i,
-						fullMelodyMap.keySet().size(), sec, true)) {
+				if (pauseGen.nextInt(100) < adjustChanceParamForTransition(mp.getPauseChance(), sec,
+						chordIndex, durations.size(), 40, 0.25, false)) {
 					n.setPitch(Integer.MIN_VALUE);
 				} else {
 					pitches[n.getPitch() % 12]++;
@@ -3494,8 +3503,9 @@ public class MidiGenerator implements JMC {
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
 						int noteVaryChance = sec.isTransition()
-								? adjustChanceParamForTransition(bp.getNoteVariation(), chordIndex,
-										generatedRootProgression.size(), sec, false)
+								? adjustChanceParamForTransition(bp.getNoteVariation(), sec,
+										chordIndex, generatedRootProgression.size(), 40, 0.25,
+										false)
 								: bp.getNoteVariation();
 						if (counter > 0 && dur < (Durations.EIGHTH_NOTE + 0.01)
 								&& noteVariationGenerator.nextInt(100) < noteVaryChance
