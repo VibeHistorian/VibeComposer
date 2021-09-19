@@ -1662,6 +1662,7 @@ public class VibeComposerGUI extends JFrame
 	private void handleArrangementAction(String action, int seed, int maxLength) {
 		boolean refreshActual = false;
 		boolean resetArrSectionSelection = true;
+		boolean checkManual = false;
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
@@ -1672,6 +1673,7 @@ public class VibeComposerGUI extends JFrame
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.duplicateSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
+				checkManual = true;
 			}
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
@@ -1683,6 +1685,7 @@ public class VibeComposerGUI extends JFrame
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.removeSection(scrollableArrangementActualTable, true);
 				refreshActual = true;
+				checkManual = true;
 			}
 			//pieceLength.setText("" + --maxLength);
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
@@ -1741,6 +1744,7 @@ public class VibeComposerGUI extends JFrame
 				arrSection.setSelectedIndex(secOrder);
 				resetArrSectionSelection = false;
 				refreshActual = true;
+				checkManual = true;
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
@@ -1767,6 +1771,7 @@ public class VibeComposerGUI extends JFrame
 						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
 								: new Random());
 				refreshActual = true;
+				checkManual = true;
 			} else {
 				arrangement.addDefaultSection(scrollableArrangementTable, selItem);
 				if (arrangement.getSections().size() > maxLength) {
@@ -1785,6 +1790,9 @@ public class VibeComposerGUI extends JFrame
 				arrSection.setSelectedItem(OMNI.EMPTYCOMBO);
 			}
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
+		}
+		if (checkManual) {
+			arrangementCustom.setSelected(true);
 		}
 	}
 
