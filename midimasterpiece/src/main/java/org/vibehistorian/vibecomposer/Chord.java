@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.vibehistorian.vibecomposer.Enums.StrumType;
+
 import jm.music.data.Note;
 
 public class Chord {
@@ -13,6 +15,7 @@ public class Chord {
 	private double durationRatio = 1.0;
 	private int transpose = 0;
 	private int velocity = 70;
+	private StrumType strumType = StrumType.UP;
 
 	public Chord(int[] notes) {
 		this.notes = notes;
@@ -101,5 +104,11 @@ public class Chord {
 			noteList.add(n);
 		}
 		return noteList;
+	}
+
+	private double generateNoteOffsets(List<Note> noteList) {
+		// use StrumType
+
+		return 0;
 	}
 }
