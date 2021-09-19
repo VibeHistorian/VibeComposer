@@ -324,8 +324,8 @@ public class Arrangement {
 	public Section addDefaultSection(JTable tbl, String defaultType) {
 		int column = tbl.getSelectedColumn();
 		if (column < 0) {
-			// add at end
-			column = tbl.getColumnCount();
+			// add at start
+			column = 0;
 		} else {
 			// add after section
 			column++;

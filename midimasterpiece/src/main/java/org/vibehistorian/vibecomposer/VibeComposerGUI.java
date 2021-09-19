@@ -3560,8 +3560,9 @@ public class VibeComposerGUI extends JFrame
 			sequencer.stop();
 		}
 
-		if (arrangementCustom.isSelected()
-				&& !actualArrangement.getSections().get(0).hasPresence()) {
+		if (arrangementCustom.isSelected() && (actualArrangement.getSections().isEmpty()
+				|| !actualArrangement.getSections().get(0).hasPresence())) {
+			System.out.println("Nothing to compose! Uncheck MANUAL arrangement!");
 			return;
 		}
 
@@ -4280,6 +4281,7 @@ public class VibeComposerGUI extends JFrame
 	// Deal with the window closebox
 	public void windowClosing(WindowEvent we) {
 		if (sequencer != null) {
+			stopMidi();
 			sequencer.close();
 		}
 		System.exit(0);
