@@ -635,20 +635,56 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
-		int last = offsets.get(offsets.size() - 1);
-		if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
-			last += (new Random(randomSeed).nextBoolean() ? 1 : -1);
-			offsets.set(offsets.size() - 1, last);
-		}
-		int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
-		if (min == -1) {
-			for (int i = 0; i < offsets.size(); i++) {
-				offsets.set(i, offsets.get(i) + 1);
+		if (targetMode == 2) {
+			Map<Integer, List<Integer>> choiceMap = getChordNoteChoicesFromChords(chords);
+			for (int i = 0; i < chordOffsets.size(); i++) {
+				List<Integer> choices = choiceMap.get(i);
+				int offset = offsets.get(i);
+				int chordTargetNote = MidiUtils.getClosestFromList(choices, offset);
+				System.out.println("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
+				offsets.set(i, chordTargetNote);
+			}
+			int last = offsets.get(offsets.size() - 1);
+			if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
+				last += (new Random(randomSeed).nextBoolean() ? 2 : -2);
+				offsets.set(offsets.size() - 1,
+						MidiUtils.getClosestFromList(choiceMap.get(offsets.size() - 1), last));
+				System.out.println("Last offset moved!");
+			}
+		} else {
+			int last = offsets.get(offsets.size() - 1);
+			if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
+				last += (new Random(randomSeed).nextBoolean() ? 1 : -1);
+				offsets.set(offsets.size() - 1, last);
 			}
 		}
 
+		int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
+		/*if (min == -1) {
+			for (int i = 0; i < offsets.size(); i++) {
+				offsets.set(i, offsets.get(i) + 1);
+			}
+		}*/
+
 		System.out.println("RANDOMIZED OFFSETS");
 		return offsets;
+	}
+
+	private static Map<Integer, List<Integer>> getChordNoteChoicesFromChords(List<int[]> chords) {
+		Map<Integer, List<Integer>> choiceMap = new HashMap<>();
+		int counter = 0;
+		for (int[] c : chords) {
+			List<Integer> choices = new ArrayList<>();
+			for (int pitch : c) {
+				int index = MidiUtils.MAJ_SCALE.indexOf(pitch % 12);
+				if (index >= 0) {
+					choices.add(index);
+					choices.add(index - 7);
+				}
+			}
+			choiceMap.put(counter++, choices);
+		}
+		return choiceMap;
 	}
 
 	public static List<Integer> generateOffsets(List<String> chordStrings, int randomSeed,
@@ -744,7 +780,7 @@ public class MidiGenerator implements JMC {
 					if (typedBlock != null) {
 						blockNotesArray = typedBlock;
 						blockType = randomType;
-						System.out.println("Found new block!");
+						//System.out.println("Found new block!");
 					} else {
 						System.out.println("Different block not found in other types!");
 					}
@@ -778,7 +814,7 @@ public class MidiGenerator implements JMC {
 
 			}
 
-			System.out.println(StringUtils.join(blockDurations, ","));
+			//System.out.println(StringUtils.join(blockDurations, ","));
 			prevBlockType = blockType;
 			//System.out.println("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
