@@ -1995,6 +1995,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementVariationChance);
 		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 25);
 		arrangementSettings.add(arrangementPartVariationChance);
+		arrangementSettings.add(resetArrangementBtn);
 
 		arrangementMiddleColoredPanel = new JPanel();
 		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
@@ -2009,7 +2010,6 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(clearPanelBtn);
 		arrangementSettings.add(clearAllPanelsBtn);
 
-		arrangementSettings.add(resetArrangementBtn);
 		arrangementSettings.add(newSectionBox);
 		arrangementSettings.add(addNewSectionBtn);
 		arrangementSettings.add(copySelectedBtn);
