@@ -3141,7 +3141,7 @@ public class VibeComposerGUI extends JFrame
 
 		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
 		loopBeat = new JCheckBox("Loop Beats", false);
-		loopBeatCount = new KnobPanel("", 1, 4, 4);
+		loopBeatCount = new KnobPanel("", 4, 1, 4);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
