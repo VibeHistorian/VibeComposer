@@ -1030,7 +1030,7 @@ public class VibeComposerGUI extends JFrame
 
 		melodyBasicChordsOnly = new JCheckBox("<html>Force<br> Scale</html>", true);
 		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
-		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 25);
+		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 20);
 		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", false);
 		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
 		melodyArpySurprises = new JCheckBox("<html>Insert<br> Arps</html>", false);
