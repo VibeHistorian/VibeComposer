@@ -335,7 +335,7 @@ public class Arrangement {
 		return sec;
 	}
 
-	public void duplicateSection(JTable tbl, boolean isActual) {
+	public void duplicateSection(JTable tbl) {
 
 
 		int column = tbl.getSelectedColumn();
@@ -345,10 +345,29 @@ public class Arrangement {
 		sections.add(column, sec.deepCopy());
 	}
 
-	public void removeSection(JTable tbl, boolean isActual) {
+	public void duplicateSectionExact(JTable tbl, int column) {
+		if (column == -1)
+			return;
+		Section sec = sections.get(column);
+		sections.add(column, sec.deepCopy());
+	}
+
+	public void removeSection(JTable tbl) {
 
 
 		int[] columns = tbl.getSelectedColumns();
+		if (columns.length == 0) {
+			return;
+		}
+		List<Section> secs = new ArrayList<>();
+		for (int i : columns) {
+			secs.add(sections.get(i));
+		}
+		sections.removeAll(secs);
+	}
+
+	public void removeSectionExact(JTable tbl, int col) {
+		int[] columns = new int[] { col };
 		if (columns.length == 0) {
 			return;
 		}

@@ -1671,10 +1671,10 @@ public class VibeComposerGUI extends JFrame
 			pieceLength.setText("12");
 		} else if (action.equalsIgnoreCase("ArrangementAddLast")) {
 			if (instrumentTabPane.getSelectedIndex() == 5) {
-				arrangement.duplicateSection(scrollableArrangementTable, false);
+				arrangement.duplicateSection(scrollableArrangementTable);
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-				actualArrangement.duplicateSection(scrollableArrangementActualTable, true);
+				actualArrangement.duplicateSection(scrollableArrangementActualTable);
 				refreshActual = true;
 				checkManual = true;
 			}
@@ -1683,10 +1683,10 @@ public class VibeComposerGUI extends JFrame
 			}
 		} else if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
 			if (instrumentTabPane.getSelectedIndex() == 5) {
-				arrangement.removeSection(scrollableArrangementTable, false);
+				arrangement.removeSection(scrollableArrangementTable);
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-				actualArrangement.removeSection(scrollableArrangementActualTable, true);
+				actualArrangement.removeSection(scrollableArrangementActualTable);
 				refreshActual = true;
 				checkManual = true;
 			}
@@ -1782,7 +1782,30 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 			newSectionBox.setSelectedIndex(0);
-
+		} else if (action.startsWith("ArrangementRemove,")) {
+			Integer secIndex = Integer.valueOf(action.split(",")[1]);
+			if (instrumentTabPane.getSelectedIndex() == 5) {
+				arrangement.removeSectionExact(scrollableArrangementTable, secIndex);
+			} else {
+				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+				actualArrangement.removeSectionExact(scrollableArrangementActualTable, secIndex);
+				refreshActual = true;
+				checkManual = true;
+			}
+		} else if (action.startsWith("ArrangementAdd,")) {
+			System.out.println("add exact");
+			Integer secIndex = Integer.valueOf(action.split(",")[1]);
+			if (instrumentTabPane.getSelectedIndex() == 5) {
+				arrangement.duplicateSectionExact(scrollableArrangementTable, secIndex);
+			} else {
+				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
+				actualArrangement.duplicateSectionExact(scrollableArrangementActualTable, secIndex);
+				refreshActual = true;
+				checkManual = true;
+			}
+			if (arrangement.getSections().size() > maxLength) {
+				pieceLength.setText("" + ++maxLength);
+			}
 		}
 
 		if (!refreshActual) {
@@ -2144,6 +2167,27 @@ public class VibeComposerGUI extends JFrame
 				arrangementTableColumnDragging = false;
 			}
 		});
+		scrollableArrangementTable.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mousePressed(java.awt.event.MouseEvent evt) {
+				int row = scrollableArrangementTable.rowAtPoint(evt.getPoint());
+				int secOrder = scrollableArrangementTable.columnAtPoint(evt.getPoint());
+
+				System.out.println("Clicked! " + row + ", " + secOrder);
+				if (row == 0 && secOrder >= 0) {
+					boolean rClick = SwingUtilities.isRightMouseButton(evt);
+					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
+					if (rClick) {
+						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
+					} else if (mClick) {
+						//System.out.println("mClick");
+						handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
+					}
+
+				}
+			}
+		});
+
 
 		scrollableArrangementActualTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 1L;
@@ -2183,7 +2227,16 @@ public class VibeComposerGUI extends JFrame
 				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
 				System.out.println("Clicked! " + row + ", " + secOrder);
-				if (row >= 2 && secOrder >= 0) {
+				if (row == 0 && secOrder >= 0) {
+					boolean rClick = SwingUtilities.isRightMouseButton(evt);
+					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
+					if (rClick) {
+						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
+					} else if (mClick) {
+						handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
+					}
+
+				} else if (row >= 2 && secOrder >= 0) {
 					int part = row - 2;
 					boolean rClick = SwingUtilities.isRightMouseButton(evt);
 					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
