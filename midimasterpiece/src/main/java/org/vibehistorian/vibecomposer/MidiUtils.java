@@ -382,6 +382,23 @@ public class MidiUtils {
 		return intList;
 	}
 
+	public static List<Integer> chordToPitches(int[] chord) {
+		List<Integer> intList = new ArrayList<Integer>(chord.length);
+		for (int i : chord) {
+			intList.add(i % 12);
+		}
+		return intList;
+	}
+
+	public static int compareNotesByDistanceFromChordPitches(Note n1, Note n2,
+			List<Integer> pitches) {
+		int dist1 = Math
+				.abs((n1.getPitch() % 12) - getClosestFromList(pitches, n1.getPitch() % 12));
+		int dist2 = Math
+				.abs((n2.getPitch() % 12) - getClosestFromList(pitches, n2.getPitch() % 12));
+		return Integer.compare(dist1, dist2);
+	}
+
 	public static List<Pair<ScaleMode, Integer>> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
 			boolean forceDifferentTranspose) {
 		int bestNotContained = Integer.MAX_VALUE;

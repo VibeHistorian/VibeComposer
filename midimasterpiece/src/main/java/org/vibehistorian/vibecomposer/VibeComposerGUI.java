@@ -380,6 +380,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordNote;
 
 	JCheckBox melodyBasicChordsOnly;
+	KnobPanel melodyChordNoteTarget;
 	KnobPanel melodyTonicNoteTarget;
 	JCheckBox melodyEmphasizeKey;
 	KnobPanel melodyModeNoteTarget;
@@ -1028,6 +1029,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
 
 		melodyBasicChordsOnly = new JCheckBox("<html>Force<br> Scale</html>", true);
+		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
 		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 25);
 		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", false);
 		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
@@ -1046,6 +1048,7 @@ public class VibeComposerGUI extends JFrame
 		melodyReplaceAvoidNotes = new JCheckBox("<html>Replace<br>Avoid Notes</html>", true);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
+		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
 		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
@@ -2986,7 +2989,7 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						if (loopBeat.isSelected() && !isDragging && (sequencer != null)) {
-							if (showScore.isSelected()) {
+							if (showScore.isSelected() && !loopBeatCompose.isSelected()) {
 								showScore.setSelected(false);
 
 							}
@@ -5390,6 +5393,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setFirstNoteRandomized(randomChordNote.isSelected());
 		guiConfig.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
 		guiConfig.setMelodyTonicNoteTarget(melodyTonicNoteTarget.getInt());
+		guiConfig.setMelodyChordNoteTarget(melodyChordNoteTarget.getInt());
 		guiConfig.setMelodyModeNoteTarget(melodyModeNoteTarget.getInt());
 		guiConfig.setMelodyEmphasizeKey(melodyEmphasizeKey.isSelected());
 
@@ -5495,6 +5499,7 @@ public class VibeComposerGUI extends JFrame
 		melodyUseOldAlgoChance.setInt(guiConfig.getMelodyUseOldAlgoChance());
 		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
 		melodyTonicNoteTarget.setInt(guiConfig.getMelodyTonicNoteTarget());
+		melodyChordNoteTarget.setInt(guiConfig.getMelodyChordNoteTarget());
 		melodyModeNoteTarget.setInt(guiConfig.getMelodyModeNoteTarget());
 		melodyEmphasizeKey.setSelected(guiConfig.isMelodyEmphasizeKey());
 

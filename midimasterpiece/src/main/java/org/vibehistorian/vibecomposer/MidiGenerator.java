@@ -1395,7 +1395,7 @@ public class MidiGenerator implements JMC {
 
 	private Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
 			List<Double> durations, int measures, Section sec, Vector<Note> skeleton,
-			int notesSeedOffset) {
+			int notesSeedOffset, List<int[]> chords) {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
@@ -1412,6 +1412,7 @@ public class MidiGenerator implements JMC {
 		Random splitNoteExceptionGenerator = new Random(seed + 9);
 		Random chordLeadingGenerator = new Random(orderSeed + notesSeedOffset + 15);
 		Random accentGenerator = new Random(orderSeed + 20);
+		Random noteTargetGenerator = new Random(orderSeed + 30);
 
 
 		int splitChance = mp.getSplitChance();
@@ -1573,6 +1574,28 @@ public class MidiGenerator implements JMC {
 		}
 
 
+		applyNoteTargets(fullMelody, fullMelodyMap, pitches, chordSeparators, notesSeedOffset,
+				chords, noteTargetGenerator);
+
+		applyBadIntervalRemoval(fullMelody);
+
+		// extraTranspose variation
+		if (melodyVars != null && !melodyVars.isEmpty()
+				&& melodyVars.contains(Integer.valueOf(0))) {
+			for (int i = 0; i < fullMelody.size(); i++) {
+				Note n = fullMelody.get(i);
+				if (n.getPitch() >= 0) {
+					n.setPitch(n.getPitch() + 12);
+				}
+			}
+		}
+
+		return fullMelodyMap;
+	}
+
+	private void applyNoteTargets(List<Note> fullMelody, Map<Integer, List<Note>> fullMelodyMap,
+			int[] pitches, int[] chordSeparators, int notesSeedOffset, List<int[]> chords,
+			Random noteTargetGenerator) {
 		// --------- NOTE ADJUSTING ----------------
 		double requiredPercentageCs = gc.getMelodyTonicNoteTarget() / 100.0;
 		int needed = (int) Math.floor(
@@ -1636,10 +1659,10 @@ public class MidiGenerator implements JMC {
 					investigatedChordIndex -= 2;
 				}
 
-				System.out.println("Remaining difference after first pairs: " + surplusTonics);
+				System.out
+						.println("TONIC: Remaining difference after first pairs: " + surplusTonics);
 
 			}
-
 		}
 
 		if (gc.getMelodyModeNoteTarget() > 0 && gc.getScaleMode().modeTargetNote > 0) {
@@ -1722,26 +1745,67 @@ public class MidiGenerator implements JMC {
 					investigatedChordIndex -= 2;
 				}
 
-				System.out.println("Remaining difference after first pairs: " + (-1 * difference));
-
+				System.out.println(
+						"MODE: Remaining difference after first pairs: " + (-1 * difference));
 			}
 
 		}
+		if (gc.getMelodyChordNoteTarget() > 0) {
+			int chordSize = fullMelodyMap.keySet().size();
+			double requiredPercentage = gc.getMelodyChordNoteTarget() / 100.0;
+			needed = (int) Math.ceil(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
+					* requiredPercentage);
+			// step 1: get count of how many 
 
-		applyBadIntervalRemoval(fullMelody);
+			// step 2: get % of how many of the others need to be turned into chord notes
 
-		// extraTranspose variation
-		if (melodyVars != null && !melodyVars.isEmpty()
-				&& melodyVars.contains(Integer.valueOf(0))) {
-			for (int i = 0; i < fullMelody.size(); i++) {
-				Note n = fullMelody.get(i);
-				if (n.getPitch() >= 0) {
-					n.setPitch(n.getPitch() + 12);
+			// step 3: apply %
+			int found = 0;
+			for (int chordIndex = 0; chordIndex < chordSize; chordIndex++) {
+				List<Note> notes = fullMelodyMap.get(chordIndex);
+				List<Integer> chordNotes = MidiUtils.chordToPitches(chords.get(chordIndex));
+				for (Note n : notes) {
+					if (chordNotes.contains(n.getPitch() % 12)) {
+						found++;
+					}
 				}
 			}
-		}
 
-		return fullMelodyMap;
+			System.out.println("Found Chord notes: " + found + ", needed: " + needed);
+			if (found < needed) {
+				int difference = needed - found;
+				/*int chanceToConvertOthers = 100
+						- ((100 * (fullMelody.size() - difference)) / fullMelody.size());*/
+
+				for (int chordIndex = 0; chordIndex < chordSize; chordIndex++) {
+					if (difference <= 0) {
+						break;
+					}
+					int maxDifferenceForThisChord = Math.max(1, (difference + 4) / (chordSize));
+					List<Note> notes = fullMelodyMap.get(chordIndex);
+					List<Integer> chordNotes = MidiUtils.chordToPitches(chords.get(chordIndex));
+
+					List<Note> sortedNotes = new ArrayList<>(notes);
+					Collections.sort(sortedNotes, (e1, e2) -> MidiUtils
+							.compareNotesByDistanceFromChordPitches(e1, e2, chordNotes));
+
+					for (Note n : notes) {
+						if (!chordNotes.contains(n.getPitch() % 12)) {
+							n.setPitch(n.getPitch() - (n.getPitch() % 12)
+									+ MidiUtils.getClosestFromList(chordNotes, n.getPitch() % 12));
+							difference--;
+							maxDifferenceForThisChord--;
+						}
+						if (difference <= 0 || maxDifferenceForThisChord <= 0) {
+							break;
+						}
+					}
+				}
+
+				System.out.println("CHORD: Remaining difference: " + (-1 * difference));
+			}
+
+		}
 	}
 
 	private void replaceAvoidNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
@@ -3463,7 +3527,8 @@ public class MidiGenerator implements JMC {
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
 		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
-				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset);
+				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset,
+				actualProgression);
 
 		if (gc.isMelodyReplaceAvoidNotes()) {
 			replaceAvoidNotes(fullMelodyMap, actualProgression, mp.getPatternSeed());

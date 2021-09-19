@@ -70,6 +70,7 @@ public class GUIConfig {
 	private int maxMelodySwing = 50;
 
 	private boolean melodyBasicChordsOnly = true;
+	private int melodyChordNoteTarget = 40;
 	private int melodyTonicNoteTarget = 25;
 	private boolean melodyEmphasizeKey = true;
 	private int melodyModeNoteTarget = 15;
@@ -604,6 +605,14 @@ public class GUIConfig {
 
 	public void setMelodyReplaceAvoidNotes(boolean melodyReplaceAvoidNotes) {
 		this.melodyReplaceAvoidNotes = melodyReplaceAvoidNotes;
+	}
+
+	public int getMelodyChordNoteTarget() {
+		return melodyChordNoteTarget;
+	}
+
+	public void setMelodyChordNoteTarget(int melodyChordNoteTarget) {
+		this.melodyChordNoteTarget = melodyChordNoteTarget;
 	}
 
 }
