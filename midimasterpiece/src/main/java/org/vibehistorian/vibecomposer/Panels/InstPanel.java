@@ -59,7 +59,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
-	protected ScrollComboBox<String> chordSpanFill = new ScrollComboBox<String>();
+	protected ScrollComboBox<ChordSpanFill> chordSpanFill = new ScrollComboBox<>();
 	protected CheckButton fillFlip = new CheckButton("~", false);
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("Voices", 3, 2, 6);
@@ -117,7 +117,7 @@ public abstract class InstPanel extends JPanel {
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
 		for (ChordSpanFill fill : ChordSpanFill.values()) {
-			chordSpanFill.addItem(fill.toString());
+			chordSpanFill.addItem(fill);
 		}
 		panelOrder.setPreferredSize(new Dimension(20, 30));
 
@@ -378,7 +378,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setMidiChannel(int val) {
-		this.midiChannel.setSelectedItem("" + val);
+		this.midiChannel.setSelectedItem(val);
 	}
 
 	public InstComboBox getInstrumentBox() {
@@ -399,11 +399,11 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public ChordSpanFill getChordSpanFill() {
-		return ChordSpanFill.valueOf(chordSpanFill.getVal());
+		return chordSpanFill.getVal();
 	}
 
 	public void setChordSpanFill(ChordSpanFill val) {
-		this.chordSpanFill.setSelectedItem(val.toString());
+		this.chordSpanFill.setSelectedItem(val);
 	}
 
 	public int getDelay() {

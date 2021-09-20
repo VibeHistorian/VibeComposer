@@ -29,18 +29,18 @@ public class ChordPanel extends InstPanel {
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
-	private ScrollComboBox<String> patternJoinMode = new ScrollComboBox<>();
+	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
-	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
+	private ScrollComboBox<InstUtils.POOL> instPoolPicker = new ScrollComboBox<>();
 
 	public void initComponents(ActionListener l) {
 
 
 		instrument.initInstPool(InstUtils.POOL.PLUCK);
-		instPoolPicker.setSelectedItem("PLUCK");
+		instPoolPicker.setSelectedItem(InstUtils.POOL.PLUCK);
 		MidiUtils.addAllToJComboBox(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
-		midiChannel.setSelectedItem("11");
+		midiChannel.setSelectedItem(11);
 
 		initDefaults(l);
 		volSlider.setValue(60);
@@ -104,11 +104,11 @@ public class ChordPanel extends InstPanel {
 		}
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
-				instPoolPicker.addItem(p.toString());
+				instPoolPicker.addItem(p);
 			}
 		}
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
-			patternJoinMode.addItem(pjm.toString());
+			patternJoinMode.addItem(pjm);
 		}
 
 		instPoolPicker.addItemListener(new ItemListener() {
@@ -180,11 +180,11 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public InstUtils.POOL getInstPool() {
-		return InstUtils.POOL.valueOf(instPoolPicker.getVal());
+		return instPoolPicker.getVal();
 	}
 
 	public void setInstPool(InstUtils.POOL pool) {
-		instPoolPicker.setSelectedItem(pool.name());
+		instPoolPicker.setSelectedItem(pool);
 	}
 
 	@Override
@@ -193,10 +193,10 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public PatternJoinMode getPatternJoinMode() {
-		return PatternJoinMode.valueOf(patternJoinMode.getVal());
+		return patternJoinMode.getVal();
 	}
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
-		this.patternJoinMode.setSelectedItem(patternJoinMode.toString());
+		this.patternJoinMode.setSelectedItem(patternJoinMode);
 	}
 }

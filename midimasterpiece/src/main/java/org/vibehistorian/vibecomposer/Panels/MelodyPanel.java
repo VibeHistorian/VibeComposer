@@ -34,7 +34,7 @@ public class MelodyPanel extends InstPanel {
 	public void initComponents(ActionListener l) {
 
 		MidiUtils.addAllToJComboBox(new Integer[] { 1, 7, 8, 15 }, midiChannel);
-		midiChannel.setSelectedItem("1");
+		midiChannel.setSelectedItem(1);
 		instrument.initInstPool(instPool);
 		setInstrument(8);
 		initDefaults(l);
