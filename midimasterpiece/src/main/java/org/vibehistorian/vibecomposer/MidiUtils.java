@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
@@ -641,6 +640,10 @@ public class MidiUtils {
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 
+	public static int[] convertChordToLength(int[] chord, int length) {
+		return convertChordToLength(chord, length, true);
+	}
+
 	public static int[] convertChordToLength(int[] chord, int length, boolean conversionNeeded) {
 		int[] chordCopy = Arrays.copyOf(chord, chord.length);
 
@@ -906,12 +909,6 @@ public class MidiUtils {
 		return closest;
 	}
 
-	public static <T> void addAllToJComboBox(T[] choices, ScrollComboBox<T> choice) {
-		for (T c : choices) {
-			choice.addItem(c);
-		}
-	}
-
 	public static int[] getSpelledChord(String chordString) {
 		List<Character> validChars = Arrays
 				.asList(new Character[] { '#', 'C', 'D', 'E', 'F', 'G', 'A', 'B' });
@@ -977,9 +974,9 @@ public class MidiUtils {
 		for (Chord c : chords) {
 			c.setFlam(flam);
 			Note[] notes = c.getNotesBackwards().toArray(new Note[] {});
-			Note lastNote = notes[notes.length - 1];
-			lastNote.setDuration(lastNote.getDuration() * 3);
-			phr.addNoteList(c.getNotesBackwards().toArray(new Note[] {}));
+			//Note lastNote = notes[notes.length - 1];
+			//lastNote.setDuration(lastNote.getDuration() * 3);
+			phr.addNoteList(notes);
 		}
 	}
 

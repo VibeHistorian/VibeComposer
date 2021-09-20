@@ -871,8 +871,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		ScrollComboBox.addAll(
-				new String[] { "On regenerate", "On compose/regenerate", "Never" },
+		ScrollComboBox.addAll(new String[] { "On regenerate", "On compose/regenerate", "Never" },
 				pauseBehaviorCombobox);
 		pauseBehaviorPanel.add(pauseBehaviorLabel);
 		pauseBehaviorPanel.add(pauseBehaviorCombobox);
@@ -1232,8 +1231,7 @@ public class VibeComposerGUI extends JFrame
 		//chordSettingsPanel.finishMinimalInit();
 
 		randomChordStretchType = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "NONE", "FIXED", "AT_MOST" },
-				randomChordStretchType);
+		ScrollComboBox.addAll(new String[] { "NONE", "FIXED", "AT_MOST" }, randomChordStretchType);
 		randomChordStretchType.setVal("NONE");
 		JLabel stretchLabel = new JLabel("VOICES");
 		chordSettingsPanel.add(stretchLabel);
@@ -1353,8 +1351,7 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.add(randomArpTranspose);
 
 		randomArpStretchType = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "NONE", "FIXED", "AT_MOST" },
-				randomArpStretchType);
+		ScrollComboBox.addAll(new String[] { "NONE", "FIXED", "AT_MOST" }, randomArpStretchType);
 		randomArpStretchType.setVal("AT_MOST");
 		JLabel stretchLabel = new JLabel("VOICES");
 		arpsSettingsPanel.add(stretchLabel);
@@ -1548,8 +1545,7 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumHitsMultiplier);
 		drumsPanel.add(randomDrumSlide);
 		ScrollComboBox<String> drumPartPresetBox = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "POP", "DNB" },
-				drumPartPresetBox);
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "POP", "DNB" }, drumPartPresetBox);
 		drumPartPresetBox.addItemListener(new ItemListener() {
 
 			@Override
@@ -2599,15 +2595,13 @@ public class VibeComposerGUI extends JFrame
 		spiceForceScale = new JCheckBox("Force Scale", true);
 		firstChordSelection = new ScrollComboBox<String>();
 		firstChordSelection.addItem("?");
-		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
-				firstChordSelection);
+		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
 		firstChordSelection.setVal("C");
 		firstChordSelection.addItemListener(this);
 
 		lastChordSelection = new ScrollComboBox<String>();
 		lastChordSelection.addItem("?");
-		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}),
-				lastChordSelection);
+		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), lastChordSelection);
 		lastChordSelection.addItemListener(this);
 
 		JPanel spiceChancePanel = new JPanel();

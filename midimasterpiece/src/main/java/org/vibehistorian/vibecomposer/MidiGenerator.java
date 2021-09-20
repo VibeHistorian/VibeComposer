@@ -310,8 +310,8 @@ public class MidiGenerator implements JMC {
 		if (gc.isMelodyBasicChordsOnly()) {
 			List<int[]> basicChordsUnsquished = getBasicChordsFromRoots(roots);
 			for (int i = 0; i < chords.size(); i++) {
-				basicChordsUnsquished.set(i, convertChordToLength(basicChordsUnsquished.get(i),
-						chords.get(i).length, true));
+				basicChordsUnsquished.set(i,
+						convertChordToLength(basicChordsUnsquished.get(i), chords.get(i).length));
 			}
 			usedChords = basicChordsUnsquished;
 		} else {
@@ -319,8 +319,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		List<int[]> stretchedChords = usedChords.stream()
-				.map(e -> convertChordToLength(e, CHORD_STRETCH, true))
-				.collect(Collectors.toList());
+				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
 
 		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
@@ -722,8 +721,7 @@ public class MidiGenerator implements JMC {
 
 
 		//System.out.println(StringUtils.join(melodySkeletonDurationWeights, ','));
-		Random blockNotesGenerator = new Random();
-		blockNotesGenerator.setSeed(melodyBlockGeneratorSeed);
+		Random blockNotesGenerator = new Random(melodyBlockGeneratorSeed);
 
 		int prevBlockType = Integer.MIN_VALUE;
 		int adjustment = startingNote;
@@ -1029,8 +1027,8 @@ public class MidiGenerator implements JMC {
 		if (gc.isMelodyBasicChordsOnly()) {
 			List<int[]> basicChordsUnsquished = getBasicChordsFromRoots(roots);
 			for (int i = 0; i < chords.size(); i++) {
-				basicChordsUnsquished.set(i, convertChordToLength(basicChordsUnsquished.get(i),
-						chords.get(i).length, true));
+				basicChordsUnsquished.set(i,
+						convertChordToLength(basicChordsUnsquished.get(i), chords.get(i).length));
 			}
 
 			/* 
@@ -1045,8 +1043,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		List<int[]> stretchedChords = usedChords.stream()
-				.map(e -> convertChordToLength(e, CHORD_STRETCH, true))
-				.collect(Collectors.toList());
+				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
 		List<Double> directionChordDividers = (!gc.isMelodyUseDirectionsFromProgression())
 				? generateMelodyDirectionChordDividers(stretchedChords.size(), directionGenerator)
 				: null;
@@ -2199,14 +2196,9 @@ public class MidiGenerator implements JMC {
 			return userProgression;
 		}
 
-		Random generator = new Random();
-		generator.setSeed(mainGeneratorSeed);
-
-		Random durationGenerator = new Random();
-		durationGenerator.setSeed(mainGeneratorSeed);
-
-		Random spiceGenerator = new Random();
-		spiceGenerator.setSeed(mainGeneratorSeed);
+		Random generator = new Random(mainGeneratorSeed);
+		Random durationGenerator = new Random(mainGeneratorSeed);
+		Random spiceGenerator = new Random(mainGeneratorSeed);
 
 		boolean isBackwards = !gc.isUseChordFormula();
 		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
@@ -2687,7 +2679,7 @@ public class MidiGenerator implements JMC {
 					"============== Processing section.. " + sec.getType() + " ================");
 			sec.setStartTime(sectionStartTimer);
 
-			Random rand = new Random();
+			Random rand = new Random(arrSeed);
 
 			modTrans = transToSet;
 			System.out.println("Key extra transpose: " + modTrans);
@@ -3676,13 +3668,32 @@ public class MidiGenerator implements JMC {
 			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
-		int mainGeneratorSeed = (int) cp.getPatternSeed() + cp.getOrder();
+		int orderSeed = cp.getPatternSeed() + cp.getOrder();
 		Phrase phr = new Phrase();
 		List<Chord> chords = new ArrayList<>();
 		Random variationGenerator = new Random(
 				gc.getArrangement().getSeed() + cp.getOrder() + sec.getTypeSeedOffset());
+		Random flamGenerator = new Random(orderSeed + 30);
+		// chord strum
+		double flamming = 0.0;
+		if (gc.getChordGenSettings().isUseStrum()) {
+			int index = -1;
+			for (int i = 0; i < VibeComposerGUI.MILISECOND_ARRAY_STRUM.length; i++) {
+				if (cp.getStrum() == VibeComposerGUI.MILISECOND_ARRAY_STRUM[i]) {
+					index = i;
+					break;
+				}
+			}
+			if (index != -1) {
+				flamming = SECOND_ARRAY_STRUM[index] * noteMultiplier;
+			} else {
+				flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
+				System.out.println("Chord strum CUSTOM! " + cp.getStrum());
+			}
+		}
+
+
 		int stretch = cp.getChordNotesStretch();
-		boolean maxStrum = false;
 		List<Integer> fillPattern = cp.getChordSpanFill()
 				.getPatternByLength(actualProgression.size(), cp.isFillFlip());
 
@@ -3692,7 +3703,7 @@ public class MidiGenerator implements JMC {
 
 
 		for (int i = 0; i < measures; i++) {
-			Random transitionGenerator = new Random(mainGeneratorSeed);
+			Random transitionGenerator = new Random(orderSeed);
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
 			boolean skipSecondNote = false;
@@ -3726,7 +3737,7 @@ public class MidiGenerator implements JMC {
 							skipSecondNote = true;
 							break;
 						case 4:
-							maxStrum = true;
+							flamming = SECOND_ARRAY_STRUM[SECOND_ARRAY_STRUM.length - 1];
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -3734,10 +3745,12 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
+				flamGenerator.setSeed(orderSeed + 30 + (chordIndex % 2));
 				Chord c = Chord.EMPTY(progressionDurations.get(chordIndex));
 
-				Random velocityGenerator = new Random(mainGeneratorSeed + chordIndex);
+				Random velocityGenerator = new Random(orderSeed + chordIndex);
 				c.setVelocity(velocityGenerator.nextInt(maxVel - minVel) + minVel);
+				c.setStrumType(cp.getStrumType());
 
 				boolean transition = transitionGenerator.nextInt(100) < cp.getTransitionChance();
 				int transChord = (transitionGenerator.nextInt(100) < cp.getTransitionChance())
@@ -3782,16 +3795,18 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				boolean stretchOverride = (sec.isTransition()
-						&& chordIndex >= actualProgression.size() - 2) ? true
-								: cp.isStretchEnabled();
-				int stretchOverrideAmount = (stretchOverride)
-						? (sec.getTransitionType() == 5 ? 7 : 2)
-						: stretch;
+						&& chordIndex >= actualProgression.size() - 2);
 
-				mainChordNotes = convertChordToLength(mainChordNotes, stretchOverrideAmount,
-						stretchOverride);
-				transChordNotes = convertChordToLength(transChordNotes, stretchOverrideAmount,
-						stretchOverride);
+				if (stretchOverride || cp.isStretchEnabled()) {
+					Integer stretchAmount = (stretchOverride)
+							? (sec.getTransitionType() == 5 ? 7 : 2)
+							: stretch;
+					mainChordNotes = convertChordToLength(mainChordNotes,
+							(stretchAmount != null) ? stretchAmount : mainChordNotes.length);
+					transChordNotes = convertChordToLength(transChordNotes,
+							(stretchAmount != null) ? stretchAmount : transChordNotes.length);
+				}
+
 
 				c.setTranspose(extraTranspose);
 				c.setNotes(mainChordNotes);
@@ -3850,31 +3865,12 @@ public class MidiGenerator implements JMC {
 					}
 
 					cC.setDurationRatio(cC.getDurationRatio() * durMultiplier);
+					cC.setFlam(flamming);
+					cC.makeAndStoreNotesBackwards(flamGenerator);
 					chords.add(cC);
 					durationCounter += duration;
 				}
 			}
-		}// chord strum
-		double flamming = 0.0;
-		if (gc.getChordGenSettings().isUseStrum()) {
-			if (maxStrum) {
-				flamming = SECOND_ARRAY_STRUM[SECOND_ARRAY_STRUM.length - 1];
-			} else {
-				int index = -1;
-				for (int i = 0; i < VibeComposerGUI.MILISECOND_ARRAY_STRUM.length; i++) {
-					if (cp.getStrum() == VibeComposerGUI.MILISECOND_ARRAY_STRUM[i]) {
-						index = i;
-						break;
-					}
-				}
-				if (index != -1) {
-					flamming = SECOND_ARRAY_STRUM[index] * noteMultiplier;
-				} else {
-					flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
-					System.out.println("Chord strum CUSTOM! " + cp.getStrum());
-				}
-			}
-
 		}
 		MidiUtils.addChordsToPhrase(phr, chords, flamming);
 		// transpose
