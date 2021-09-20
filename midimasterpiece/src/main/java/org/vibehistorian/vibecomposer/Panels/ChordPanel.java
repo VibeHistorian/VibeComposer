@@ -59,6 +59,7 @@ public class ChordPanel extends InstPanel {
 		this.add(chordSpanFill);
 		this.add(fillFlip);
 		this.add(strum);
+		this.add(strumType);
 		this.add(transpose);
 
 		this.add(hitsPerPattern);
@@ -166,6 +167,7 @@ public class ChordPanel extends InstPanel {
 		part.setPatternJoinMode(getPatternJoinMode());
 
 		part.setInstPool(getInstPool());
+		part.setStrumType(getStrumType());
 		part.setOrder(getPanelOrder());
 		return part;
 	}
@@ -180,6 +182,7 @@ public class ChordPanel extends InstPanel {
 		setTransitionSplit(part.getTransitionSplit());
 		setStrum(part.getStrum());
 		setPatternJoinMode(part.getPatternJoinMode());
+		setStrumType(part.getStrumType());
 
 		setPanelOrder(part.getOrder());
 

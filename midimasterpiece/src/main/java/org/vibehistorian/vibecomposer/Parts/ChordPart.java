@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
 
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})
@@ -17,6 +18,8 @@ public class ChordPart extends InstPart {
 	private PatternJoinMode patternJoinMode = PatternJoinMode.NOJOIN;
 
 	private InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
+
+	private StrumType strumType = StrumType.UP;
 
 	public ChordPart() {
 
@@ -64,6 +67,16 @@ public class ChordPart extends InstPart {
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
 		this.patternJoinMode = patternJoinMode;
+	}
+
+
+	public StrumType getStrumType() {
+		return strumType;
+	}
+
+
+	public void setStrumType(StrumType strumType) {
+		this.strumType = strumType;
 	}
 
 }
