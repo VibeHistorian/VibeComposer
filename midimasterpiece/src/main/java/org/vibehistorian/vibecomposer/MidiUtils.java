@@ -906,8 +906,8 @@ public class MidiUtils {
 		return closest;
 	}
 
-	public static void addAllToJComboBox(String[] choices, ScrollComboBox<String> choice) {
-		for (String c : choices) {
+	public static <T> void addAllToJComboBox(T[] choices, ScrollComboBox<T> choice) {
+		for (T c : choices) {
 			choice.addItem(c);
 		}
 	}

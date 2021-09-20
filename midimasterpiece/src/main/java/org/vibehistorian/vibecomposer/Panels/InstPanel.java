@@ -98,7 +98,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JSlider volSlider = new JSlider();
 
-	protected ScrollComboBox<String> midiChannel = new ScrollComboBox<>();
+	protected ScrollComboBox<Integer> midiChannel = new ScrollComboBox<>();
 
 	protected JButton removeButton = new JButton("X");
 	protected SoloMuter soloMuter;

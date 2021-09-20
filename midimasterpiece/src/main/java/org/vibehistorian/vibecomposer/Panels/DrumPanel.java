@@ -29,7 +29,7 @@ public class DrumPanel extends InstPanel {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
-		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
+		MidiUtils.addAllToJComboBox(new Integer[] { 10 }, midiChannel);
 
 		initDefaults(l);
 		this.add(new JLabel("#"));

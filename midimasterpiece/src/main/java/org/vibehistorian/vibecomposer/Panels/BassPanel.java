@@ -24,7 +24,7 @@ public class BassPanel extends InstPanel {
 	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
 
 	public void initComponents(ActionListener l) {
-		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
+		MidiUtils.addAllToJComboBox(new Integer[] { 9 }, midiChannel);
 		midiChannel.setSelectedItem("9");
 		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);
