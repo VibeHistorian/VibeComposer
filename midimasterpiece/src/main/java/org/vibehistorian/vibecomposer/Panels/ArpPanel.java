@@ -24,7 +24,7 @@ public class ArpPanel extends InstPanel {
 		instrument.initInstPool(instPool);
 		MidiUtils.addAllToJComboBox(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
-		midiChannel.setSelectedItem(2);
+		midiChannel.setVal(2);
 
 		initDefaults(l);
 		volSlider.setValue(70);
@@ -116,7 +116,7 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public void setArpPattern(ArpPattern pattern) {
-		this.arpPattern.setSelectedItem(pattern);
+		this.arpPattern.setVal(pattern);
 	}
 
 	public ArpPart toInstPart(int lastRandomSeed) {

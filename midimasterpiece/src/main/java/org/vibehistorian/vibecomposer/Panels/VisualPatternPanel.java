@@ -148,7 +148,7 @@ public class VisualPatternPanel extends JPanel {
 						int shI = (fI - shiftPanel.getInt() + 32) % 32;
 						truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
 						if (patternType.getVal() != RhythmPattern.CUSTOM) {
-							patternType.setSelectedItem(RhythmPattern.CUSTOM);
+							patternType.setVal(RhythmPattern.CUSTOM);
 						}
 					}
 
@@ -164,7 +164,7 @@ public class VisualPatternPanel extends JPanel {
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
 						if (patternType.getVal() != RhythmPattern.CUSTOM) {
-							patternType.setSelectedItem(RhythmPattern.CUSTOM);
+							patternType.setVal(RhythmPattern.CUSTOM);
 						}
 					}
 				}
@@ -194,7 +194,7 @@ public class VisualPatternPanel extends JPanel {
 					int shI = (fI - shiftPanel.getInt() + 32) % 32;
 					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
 					if (patternType.getVal() != RhythmPattern.CUSTOM) {
-						patternType.setSelectedItem(RhythmPattern.CUSTOM);
+						patternType.setVal(RhythmPattern.CUSTOM);
 					}
 				}
 
@@ -248,7 +248,7 @@ public class VisualPatternPanel extends JPanel {
 					Collections.rotate(halfPattern, shiftPanel.getInt());
 					truePattern = MidiUtils.intersperse(0, 1, halfPattern);
 					//Collections.rotate(halfPattern, -1 * shiftPanel.getInt());
-					patternType.setSelectedItem(RhythmPattern.CUSTOM);
+					patternType.setVal(RhythmPattern.CUSTOM);
 					if (shiftPanel.getInt() > 0) {
 						shiftPanel.setInt(0);
 					}

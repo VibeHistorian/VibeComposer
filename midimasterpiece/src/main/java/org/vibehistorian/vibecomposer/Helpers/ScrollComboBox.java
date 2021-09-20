@@ -40,4 +40,8 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	public T getVal() {
 		return getItemAt(getSelectedIndex());
 	}
+
+	public void setVal(T item) {
+		setSelectedItem(item);
+	}
 }

@@ -199,7 +199,7 @@ public class VariationPopup {
 		}
 
 		typeCombo.addItem(OMNI.EMPTYCOMBO);
-		typeCombo.setSelectedItem(OMNI.EMPTYCOMBO);
+		typeCombo.setVal(OMNI.EMPTYCOMBO);
 		typeCombo.addItemListener(new ItemListener() {
 
 			@Override
@@ -220,7 +220,7 @@ public class VariationPopup {
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO },
 				measureCombo);
-		measureCombo.setSelectedItem(String.valueOf(sec.getMeasures()));
+		measureCombo.setVal(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {
 
 			@Override

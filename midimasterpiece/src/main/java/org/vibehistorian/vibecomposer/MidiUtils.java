@@ -1097,7 +1097,7 @@ public class MidiUtils {
 			}
 			VibeComposerGUI.transposeScore
 					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
-			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
+			//VibeComposerGUI.scaleMode.setVal(detectionResult.getKey().toString());
 			return solvedChords;
 		} else {
 			return null;

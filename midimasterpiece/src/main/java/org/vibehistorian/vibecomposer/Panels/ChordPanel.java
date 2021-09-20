@@ -13,6 +13,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -33,14 +34,16 @@ public class ChordPanel extends InstPanel {
 
 	private ScrollComboBox<InstUtils.POOL> instPoolPicker = new ScrollComboBox<>();
 
+	private ScrollComboBox<StrumType> strumType = new ScrollComboBox<>();
+
 	public void initComponents(ActionListener l) {
 
 
 		instrument.initInstPool(InstUtils.POOL.PLUCK);
-		instPoolPicker.setSelectedItem(InstUtils.POOL.PLUCK);
+		instPoolPicker.setVal(InstUtils.POOL.PLUCK);
 		MidiUtils.addAllToJComboBox(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
-		midiChannel.setSelectedItem(11);
+		midiChannel.setVal(11);
 
 		initDefaults(l);
 		volSlider.setValue(60);
@@ -109,6 +112,9 @@ public class ChordPanel extends InstPanel {
 		}
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
+		}
+		for (StrumType str : StrumType.values()) {
+			strumType.addItem(str);
 		}
 
 		instPoolPicker.addItemListener(new ItemListener() {
@@ -184,7 +190,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public void setInstPool(InstUtils.POOL pool) {
-		instPoolPicker.setSelectedItem(pool);
+		instPoolPicker.setVal(pool);
 	}
 
 	@Override
@@ -197,6 +203,14 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
-		this.patternJoinMode.setSelectedItem(patternJoinMode);
+		this.patternJoinMode.setVal(patternJoinMode);
+	}
+
+	public StrumType getStrumType() {
+		return strumType.getVal();
+	}
+
+	public void setStrumType(StrumType val) {
+		strumType.setVal(val);
 	}
 }

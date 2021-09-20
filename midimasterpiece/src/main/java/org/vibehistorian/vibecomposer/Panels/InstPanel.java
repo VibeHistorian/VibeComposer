@@ -321,7 +321,7 @@ public abstract class InstPanel extends JPanel {
 	public void setPattern(RhythmPattern pattern) {
 		if (pattern == null)
 			return;
-		this.pattern.setSelectedItem(pattern);
+		this.pattern.setVal(pattern);
 	}
 
 	public int getPatternShift() {
@@ -378,7 +378,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setMidiChannel(int val) {
-		this.midiChannel.setSelectedItem(val);
+		this.midiChannel.setVal(val);
 	}
 
 	public InstComboBox getInstrumentBox() {
@@ -403,7 +403,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setChordSpanFill(ChordSpanFill val) {
-		this.chordSpanFill.setSelectedItem(val);
+		this.chordSpanFill.setVal(val);
 	}
 
 	public int getDelay() {
