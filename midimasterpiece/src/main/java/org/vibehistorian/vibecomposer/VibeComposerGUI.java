@@ -439,7 +439,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<Integer> randomArpHitsPicker;
 	JCheckBox randomArpUseChordFill;
 	ScrollComboBox<String> randomArpStretchType;
-	ScrollComboBox<String> randomArpStretchPicker;
+	ScrollComboBox<Integer> randomArpStretchPicker;
 	JCheckBox randomArpUseOctaveAdjustments;
 	KnobPanel randomArpMaxSwing;
 	KnobPanel randomArpMaxRepeat;
@@ -1240,7 +1240,7 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsPanel.add(randomChordStretchType);
 		randomChordStretchPicker = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new Integer[] { 3, 4, 5, 6 }, randomChordStretchPicker);
-		randomChordStretchPicker.setSelectedItem("4");
+		randomChordStretchPicker.setSelectedItem(4);
 		chordSettingsPanel.add(randomChordStretchPicker);
 
 		JButton clearChordPatternSeeds = makeButton("Clear presets", "ClearChordPatterns");
@@ -1331,7 +1331,7 @@ public class VibeComposerGUI extends JFrame
 		randomArpPattern = new JCheckBox("Patterns", true);
 		randomArpHitsPicker = new ScrollComboBox<>();
 		MidiUtils.addAllToJComboBox(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, randomArpHitsPicker);
-		randomArpHitsPicker.setSelectedItem("4");
+		randomArpHitsPicker.setSelectedItem(4);
 		randomArpHitsPerPattern = new JCheckBox("Random#", true);
 		randomArpAllSameInst = new JCheckBox("One Inst.", false);
 		randomArpAllSameHits = new JCheckBox("One #", true);
@@ -1360,8 +1360,8 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.add(stretchLabel);
 		arpsSettingsPanel.add(randomArpStretchType);
 		randomArpStretchPicker = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "3", "4", "5", "6" }, randomArpStretchPicker);
-		randomArpStretchPicker.setSelectedItem("4");
+		MidiUtils.addAllToJComboBox(new Integer[] { 3, 4, 5, 6 }, randomArpStretchPicker);
+		randomArpStretchPicker.setSelectedItem(4);
 		arpsSettingsPanel.add(randomArpStretchPicker);
 
 
@@ -6175,7 +6175,7 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			randomArpHitsPicker.setSelectedItem("" + fixedHitsGenerated);
+			randomArpHitsPicker.setSelectedItem(fixedHitsGenerated);
 		}
 
 		int fixedInstrument = -1;
