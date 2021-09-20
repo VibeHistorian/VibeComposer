@@ -87,7 +87,7 @@ public class VariationPopup {
 			}
 
 			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> ((String) e.getInstrumentBox().getSelectedItem()).split(" = ")[0])
+					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
 					.collect(Collectors.toList());
 
 			table.setModel(new BooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),

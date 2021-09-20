@@ -1890,7 +1890,7 @@ public class MidiGenerator implements JMC {
 				} else {
 					n.setDynamic(OMNI.clampVel(n.getDynamic() * multiplier));
 				}
-				System.out.println("Applied multiplier: " + multiplier);
+				//System.out.println("Applied multiplier: " + multiplier);
 			}
 			dur += n.getRhythmValue();
 		}

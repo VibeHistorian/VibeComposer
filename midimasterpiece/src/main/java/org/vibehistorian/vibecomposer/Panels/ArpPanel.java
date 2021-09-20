@@ -113,10 +113,10 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public ArpPattern getArpPattern() {
-		if (StringUtils.isEmpty((String) arpPattern.getSelectedItem())) {
+		if (StringUtils.isEmpty(arpPattern.getVal())) {
 			return ArpPattern.RANDOM;
 		}
-		return ArpPattern.valueOf((String) arpPattern.getSelectedItem());
+		return ArpPattern.valueOf(arpPattern.getVal());
 	}
 
 	public void setArpPattern(ArpPattern pattern) {

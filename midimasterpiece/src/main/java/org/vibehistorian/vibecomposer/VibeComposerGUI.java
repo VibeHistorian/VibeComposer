@@ -238,7 +238,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static List<InstPanel> getAffectedPanels(int inst) {
 		List<InstPanel> affectedPanels = (arrSection == null
-				|| OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem()))
+				|| OMNI.EMPTYCOMBO.equals(arrSection.getVal()))
 						? (List<InstPanel>) getInstList(inst)
 						: getSectionPanelList(inst);
 		return affectedPanels;
@@ -1762,7 +1762,7 @@ public class VibeComposerGUI extends JFrame
 				sec.setDrumParts(null);
 			}
 		} else if (action.startsWith("ArrangementAddNewSection")) {
-			String selItem = (String) newSectionBox.getSelectedItem();
+			String selItem = newSectionBox.getVal();
 			if (OMNI.EMPTYCOMBO.equals(selItem)) {
 				return;
 			}
@@ -1980,7 +1980,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (!OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem())) {
+				if (!OMNI.EMPTYCOMBO.equals(arrSection.getVal())) {
 					Section sec = actualArrangement.getSections()
 							.get(arrSection.getSelectedIndex() - 1);
 					sec.resetCustomizedParts();
@@ -2686,8 +2686,7 @@ public class VibeComposerGUI extends JFrame
 				if (!userChords.getText().equalsIgnoreCase(checkedChords)) {
 					putClientProperty(TOOL_TIP_TEXT_KEY,
 							(StringUtils.join(MidiUtils.getKeyModesForChordsAndTarget(
-									userChords.getText(),
-									ScaleMode.valueOf((String) scaleMode.getSelectedItem())))));
+									userChords.getText(), ScaleMode.valueOf(scaleMode.getVal())))));
 					checkedChords = userChords.getText();
 				}
 
@@ -2699,7 +2698,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				List<String> normalizedChords = MidiUtils.processRawChords(userChords.getText(),
-						ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
+						ScaleMode.valueOf(scaleMode.getVal()));
 				if (normalizedChords != null) {
 					userChords.setText(StringUtils.join(normalizedChords, ","));
 				}
@@ -3465,7 +3464,7 @@ public class VibeComposerGUI extends JFrame
 			panelColorHigh = panelColorHigh.brighter();
 			panelColorLow = panelColorLow.brighter();
 		}*/
-		if (OMNI.EMPTYCOMBO.equals(arrSection.getItemAt(arrSection.getSelectedIndex()))) {
+		if (OMNI.EMPTYCOMBO.equals(arrSection.getVal())) {
 			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 		} else {
 			arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
@@ -3513,7 +3512,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void toggleButtonEnabledForPanels() {
-		toggleButtonEnabledForPanels(OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem()));
+		toggleButtonEnabledForPanels(OMNI.EMPTYCOMBO.equals(arrSection.getVal()));
 	}
 
 	private void toggleButtonEnabledForPanels(boolean isOriginal) {
@@ -3649,8 +3648,8 @@ public class VibeComposerGUI extends JFrame
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 			}*/
 
-			MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
-			MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
+			MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
+			MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 
 			// solve user chords
 			if (userChordsEnabled.isSelected() && !userChords.getText().contains("?")) {
@@ -3864,8 +3863,7 @@ public class VibeComposerGUI extends JFrame
 					}
 					MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 					for (int i = 0; i < infos.length; i++) {
-						if (infos[i].toString()
-								.equalsIgnoreCase((String) midiModeDevices.getSelectedItem())) {
+						if (infos[i].toString().equalsIgnoreCase(midiModeDevices.getVal())) {
 							device = MidiSystem.getMidiDevice(infos[i]);
 							System.out.println(
 									infos[i].toString() + "| max recv: " + device.getMaxReceivers()
@@ -4034,7 +4032,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				midiNavigate(startPos);
 			} else {
-				String pauseBehavior = (String) pauseBehaviorCombobox.getSelectedItem();
+				String pauseBehavior = pauseBehaviorCombobox.getVal();
 				if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
 					boolean unpause = regenerate || pauseBehavior.contains("compose");
 					unpause &= (pausedSliderPosition > 0
@@ -4243,8 +4241,8 @@ public class VibeComposerGUI extends JFrame
 
 	private void randomizeUserChords() {
 		MidiGenerator mg = new MidiGenerator(copyGUItoConfig());
-		MidiGenerator.FIRST_CHORD = chordSelect((String) firstChordSelection.getSelectedItem());
-		MidiGenerator.LAST_CHORD = chordSelect((String) lastChordSelection.getSelectedItem());
+		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
+		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 		MidiGenerator.userChords.clear();
 		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(), MidiGenerator.gc.getFixedDuration(),
@@ -5412,12 +5410,11 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setArrangementEnabled(useArrangement.isSelected());
 
 		// macro
-		guiConfig.setScaleMode(ScaleMode.valueOf((String) scaleMode.getSelectedItem()));
+		guiConfig.setScaleMode(ScaleMode.valueOf(scaleMode.getVal()));
 		guiConfig.setSoundbankName(soundbankFilename.getText());
 		guiConfig.setPieceLength(Integer.valueOf(pieceLength.getText()));
 		if (fixedLengthChords.getSelectedIndex() < 2) {
-			guiConfig.setFixedDuration(
-					Integer.valueOf((String) fixedLengthChords.getSelectedItem()));
+			guiConfig.setFixedDuration(Integer.valueOf(fixedLengthChords.getVal()));
 		} else {
 			guiConfig.setFixedDuration(0);
 		}
@@ -5463,10 +5460,9 @@ public class VibeComposerGUI extends JFrame
 
 		// chords
 		guiConfig.setUseChordFormula(extraUseChordFormula.isSelected());
-		guiConfig.setFirstChord((String) firstChordSelection.getSelectedItem());
-		guiConfig.setLastChord((String) lastChordSelection.getSelectedItem());
-		guiConfig.setKeyChangeType(
-				KeyChangeType.valueOf((String) keyChangeTypeSelection.getSelectedItem()));
+		guiConfig.setFirstChord(firstChordSelection.getVal());
+		guiConfig.setLastChord(lastChordSelection.getVal());
+		guiConfig.setKeyChangeType(KeyChangeType.valueOf(keyChangeTypeSelection.getVal()));
 		guiConfig.setCustomChordsEnabled(userChordsEnabled.isSelected());
 		guiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
@@ -5483,7 +5479,7 @@ public class VibeComposerGUI extends JFrame
 
 		// drums
 		boolean isCustomMidiDevice = midiMode.isSelected()
-				&& !((String) midiModeDevices.getSelectedItem()).contains("ervill");
+				&& !(midiModeDevices.getVal()).contains("ervill");
 		guiConfig.setDrumCustomMapping(drumCustomMapping.isSelected() && isCustomMidiDevice);
 		guiConfig.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
 		guiConfig.setMelodyPatternFlip(melodyPatternFlip.isSelected());
@@ -5652,7 +5648,7 @@ public class VibeComposerGUI extends JFrame
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
 		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		if (arrSection != null && !OMNI.EMPTYCOMBO.equals(arrSection.getSelectedItem())) {
+		if (arrSection != null && !OMNI.EMPTYCOMBO.equals(arrSection.getVal())) {
 			ip.toggleGlobalElements(false);
 			ip.toggleEnabledCopyRemove(false);
 			if (inst == 4) {
@@ -6053,9 +6049,8 @@ public class VibeComposerGUI extends JFrame
 		panelCount -= affectedChords.size();
 
 		int fixedChordStretch = -1;
-		if (randomChordStretchType.getSelectedItem().equals("FIXED")) {
-			fixedChordStretch = Integer
-					.valueOf((String) randomChordStretchPicker.getSelectedItem());
+		if (randomChordStretchType.getVal().equals("FIXED")) {
+			fixedChordStretch = Integer.valueOf(randomChordStretchPicker.getVal());
 		}
 
 		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
@@ -6101,11 +6096,10 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			if (!randomChordStretchType.getSelectedItem().equals("NONE")) {
+			if (!randomChordStretchType.getVal().equals("NONE")) {
 				cp.setStretchEnabled(true);
 				if (fixedChordStretch < 0) {
-					int atMost = Integer
-							.valueOf((String) randomChordStretchPicker.getSelectedItem());
+					int atMost = Integer.valueOf((String) randomChordStretchPicker.getVal());
 					cp.setChordNotesStretch(chordPanelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					cp.setChordNotesStretch(fixedChordStretch);
@@ -6197,8 +6191,8 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		int fixedArpStretch = -1;
-		if (randomArpStretchType.getSelectedItem().equals("FIXED")) {
-			fixedArpStretch = Integer.valueOf((String) randomArpStretchPicker.getSelectedItem());
+		if (randomArpStretchType.getVal().equals("FIXED")) {
+			fixedArpStretch = Integer.valueOf(randomArpStretchPicker.getVal());
 		}
 
 
@@ -6290,10 +6284,10 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			if (!randomArpStretchType.getSelectedItem().equals("NONE")) {
+			if (!randomArpStretchType.getVal().equals("NONE")) {
 				ap.setStretchEnabled(true);
 				if (fixedArpStretch < 0) {
-					int atMost = Integer.valueOf((String) randomArpStretchPicker.getSelectedItem());
+					int atMost = Integer.valueOf(randomArpStretchPicker.getVal());
 					ap.setChordNotesStretch(arpPanelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					ap.setChordNotesStretch(fixedArpStretch);

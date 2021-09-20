@@ -147,8 +147,7 @@ public class VisualPatternPanel extends JPanel {
 						needShift = true;
 						int shI = (fI - shiftPanel.getInt() + 32) % 32;
 						truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-						if (RhythmPattern.valueOf(
-								(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
+						if (RhythmPattern.valueOf(patternType.getVal()) != RhythmPattern.CUSTOM) {
 							patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
 						}
 					}
@@ -164,8 +163,7 @@ public class VisualPatternPanel extends JPanel {
 						mouseButton = -1;
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
-						if (RhythmPattern.valueOf(
-								(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
+						if (RhythmPattern.valueOf(patternType.getVal()) != RhythmPattern.CUSTOM) {
 							patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
 						}
 					}
@@ -195,8 +193,7 @@ public class VisualPatternPanel extends JPanel {
 				public void actionPerformed(ActionEvent e) {
 					int shI = (fI - shiftPanel.getInt() + 32) % 32;
 					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-					if (RhythmPattern.valueOf(
-							(String) patternType.getSelectedItem()) != RhythmPattern.CUSTOM) {
+					if (RhythmPattern.valueOf(patternType.getVal()) != RhythmPattern.CUSTOM) {
 						patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
 					}
 				}
@@ -217,7 +214,7 @@ public class VisualPatternPanel extends JPanel {
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					VisualPatternPanel.this.setVisible(false);
-					RhythmPattern d = RhythmPattern.valueOf((String) patternType.getSelectedItem());
+					RhythmPattern d = RhythmPattern.valueOf(patternType.getVal());
 					if (d != RhythmPattern.CUSTOM) {
 						truePattern = d.getPatternByLength(32, 0);
 					}

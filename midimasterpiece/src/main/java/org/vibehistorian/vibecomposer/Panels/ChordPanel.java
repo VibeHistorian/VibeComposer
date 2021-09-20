@@ -180,7 +180,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public InstUtils.POOL getInstPool() {
-		return InstUtils.POOL.valueOf((String) instPoolPicker.getSelectedItem());
+		return InstUtils.POOL.valueOf(instPoolPicker.getVal());
 	}
 
 	public void setInstPool(InstUtils.POOL pool) {
@@ -193,7 +193,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public PatternJoinMode getPatternJoinMode() {
-		return PatternJoinMode.valueOf((String) patternJoinMode.getSelectedItem());
+		return PatternJoinMode.valueOf(patternJoinMode.getVal());
 	}
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {

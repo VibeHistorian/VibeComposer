@@ -316,10 +316,10 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public RhythmPattern getPattern() {
-		if (StringUtils.isEmpty((String) pattern.getSelectedItem())) {
+		if (StringUtils.isEmpty(pattern.getVal())) {
 			return RhythmPattern.FULL;
 		}
-		return RhythmPattern.valueOf((String) pattern.getSelectedItem());
+		return RhythmPattern.valueOf(pattern.getVal());
 	}
 
 	public void setPattern(RhythmPattern pattern) {
@@ -378,7 +378,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getMidiChannel() {
-		return Integer.valueOf((String) midiChannel.getSelectedItem());
+		return Integer.valueOf(midiChannel.getVal());
 	}
 
 	public void setMidiChannel(int val) {
@@ -403,7 +403,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public ChordSpanFill getChordSpanFill() {
-		return ChordSpanFill.valueOf((String) chordSpanFill.getSelectedItem());
+		return ChordSpanFill.valueOf(chordSpanFill.getVal());
 	}
 
 	public void setChordSpanFill(ChordSpanFill val) {
