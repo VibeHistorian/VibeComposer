@@ -1211,6 +1211,7 @@ public class MidiUtils {
 		Set<Integer> safeNotes = new HashSet<>();
 		for (int i = 0; i < chord.length; i++) {
 			avoidNotes.add((chord[i] + 1) % 12);
+			avoidNotes.add((chord[i] + 2) % 12);
 			safeNotes.add(chord[i] % 12);
 		}
 		avoidNotes.removeAll(safeNotes);
