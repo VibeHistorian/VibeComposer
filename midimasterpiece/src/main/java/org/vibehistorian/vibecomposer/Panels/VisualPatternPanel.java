@@ -37,7 +37,7 @@ public class VisualPatternPanel extends JPanel {
 	private static final long serialVersionUID = 6963518339035392918L;
 
 	private KnobPanel hitsPanel = null;
-	private ScrollComboBox<String> patternType = null;
+	private ScrollComboBox<RhythmPattern> patternType = null;
 	private KnobPanel shiftPanel = null;
 	private KnobPanel chordSpanPanel = null;
 	private JButton doublerButton = null;
@@ -108,7 +108,7 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 
-	public VisualPatternPanel(KnobPanel hitsPanel, ScrollComboBox<String> patternType,
+	public VisualPatternPanel(KnobPanel hitsPanel, ScrollComboBox<RhythmPattern> patternType,
 			KnobPanel shiftPanel, KnobPanel chordSpanPanel, JButton doubler, JPanel parentPanel) {
 		super();
 		//setBackground(new Color(50, 50, 50));
@@ -147,8 +147,8 @@ public class VisualPatternPanel extends JPanel {
 						needShift = true;
 						int shI = (fI - shiftPanel.getInt() + 32) % 32;
 						truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-						if (RhythmPattern.valueOf(patternType.getVal()) != RhythmPattern.CUSTOM) {
-							patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+						if (patternType.getVal() != RhythmPattern.CUSTOM) {
+							patternType.setSelectedItem(RhythmPattern.CUSTOM);
 						}
 					}
 
@@ -163,8 +163,8 @@ public class VisualPatternPanel extends JPanel {
 						mouseButton = -1;
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
-						if (RhythmPattern.valueOf(patternType.getVal()) != RhythmPattern.CUSTOM) {
-							patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+						if (patternType.getVal() != RhythmPattern.CUSTOM) {
+							patternType.setSelectedItem(RhythmPattern.CUSTOM);
 						}
 					}
 				}
@@ -193,8 +193,8 @@ public class VisualPatternPanel extends JPanel {
 				public void actionPerformed(ActionEvent e) {
 					int shI = (fI - shiftPanel.getInt() + 32) % 32;
 					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-					if (RhythmPattern.valueOf(patternType.getVal()) != RhythmPattern.CUSTOM) {
-						patternType.setSelectedItem(RhythmPattern.CUSTOM.toString());
+					if (patternType.getVal() != RhythmPattern.CUSTOM) {
+						patternType.setSelectedItem(RhythmPattern.CUSTOM);
 					}
 				}
 
@@ -214,7 +214,7 @@ public class VisualPatternPanel extends JPanel {
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					VisualPatternPanel.this.setVisible(false);
-					RhythmPattern d = RhythmPattern.valueOf(patternType.getVal());
+					RhythmPattern d = patternType.getVal();
 					if (d != RhythmPattern.CUSTOM) {
 						truePattern = d.getPatternByLength(32, 0);
 					}

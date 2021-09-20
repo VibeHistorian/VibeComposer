@@ -37,7 +37,6 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.border.BevelBorder;
 
-import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -87,7 +86,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected JLabel patternSeedLabel = new JLabel("Seed");
 	protected RandomValueButton patternSeed = new RandomValueButton(0);
-	protected ScrollComboBox<String> pattern = new ScrollComboBox<String>();
+	protected ScrollComboBox<RhythmPattern> pattern = new ScrollComboBox<>();
 	protected CheckButton patternFlip = new CheckButton("~", false);
 
 	protected VisualPatternPanel comboPanel = null;
@@ -316,16 +315,13 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public RhythmPattern getPattern() {
-		if (StringUtils.isEmpty(pattern.getVal())) {
-			return RhythmPattern.FULL;
-		}
-		return RhythmPattern.valueOf(pattern.getVal());
+		return pattern.getVal();
 	}
 
 	public void setPattern(RhythmPattern pattern) {
 		if (pattern == null)
 			return;
-		this.pattern.setSelectedItem((String.valueOf(pattern.toString())));
+		this.pattern.setSelectedItem(pattern);
 	}
 
 	public int getPatternShift() {

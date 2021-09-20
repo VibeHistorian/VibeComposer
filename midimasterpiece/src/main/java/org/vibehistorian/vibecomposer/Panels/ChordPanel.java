@@ -100,7 +100,7 @@ public class ChordPanel extends InstPanel {
 		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			pattern.addItem(d);
 		}
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {

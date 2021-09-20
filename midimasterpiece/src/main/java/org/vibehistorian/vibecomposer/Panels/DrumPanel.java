@@ -94,7 +94,7 @@ public class DrumPanel extends InstPanel {
 		setPartClass(DrumPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			pattern.addItem(d);
 		}
 		removeButton.addActionListener(l);
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);
