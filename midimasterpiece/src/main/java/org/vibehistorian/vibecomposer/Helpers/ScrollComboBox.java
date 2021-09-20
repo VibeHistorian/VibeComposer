@@ -44,4 +44,10 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	public void setVal(T item) {
 		setSelectedItem(item);
 	}
+
+	public static <T> void addAll(T[] choices, ScrollComboBox<T> choice) {
+		for (T c : choices) {
+			choice.addItem(c);
+		}
+	}
 }

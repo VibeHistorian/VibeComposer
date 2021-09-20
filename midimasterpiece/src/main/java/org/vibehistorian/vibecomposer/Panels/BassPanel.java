@@ -6,7 +6,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -24,7 +24,7 @@ public class BassPanel extends InstPanel {
 	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
 
 	public void initComponents(ActionListener l) {
-		MidiUtils.addAllToJComboBox(new Integer[] { 9 }, midiChannel);
+		ScrollComboBox.addAll(new Integer[] { 9 }, midiChannel);
 		midiChannel.setVal(9);
 		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);

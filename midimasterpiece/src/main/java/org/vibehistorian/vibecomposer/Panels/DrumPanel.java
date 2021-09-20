@@ -12,8 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -29,7 +29,7 @@ public class DrumPanel extends InstPanel {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
-		MidiUtils.addAllToJComboBox(new Integer[] { 10 }, midiChannel);
+		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
 		initDefaults(l);
 		this.add(new JLabel("#"));

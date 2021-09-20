@@ -218,7 +218,7 @@ public class VariationPopup {
 
 		typeAndMeasuresPanel.add(new JLabel("Measures"));
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO },
+		ScrollComboBox.addAll(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO },
 				measureCombo);
 		measureCombo.setVal(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {

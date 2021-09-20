@@ -9,8 +9,8 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -33,7 +33,7 @@ public class MelodyPanel extends InstPanel {
 
 	public void initComponents(ActionListener l) {
 
-		MidiUtils.addAllToJComboBox(new Integer[] { 1, 7, 8, 15 }, midiChannel);
+		ScrollComboBox.addAll(new Integer[] { 1, 7, 8, 15 }, midiChannel);
 		midiChannel.setVal(1);
 		instrument.initInstPool(instPool);
 		setInstrument(8);
