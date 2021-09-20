@@ -420,7 +420,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomChordMaxSplitChance;
 	JCheckBox randomChordUseChordFill;
 	ScrollComboBox<String> randomChordStretchType;
-	ScrollComboBox<String> randomChordStretchPicker;
+	ScrollComboBox<Integer> randomChordStretchPicker;
 	KnobPanel randomChordMinVel;
 	KnobPanel randomChordMaxVel;
 
@@ -1239,7 +1239,7 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsPanel.add(stretchLabel);
 		chordSettingsPanel.add(randomChordStretchType);
 		randomChordStretchPicker = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "3", "4", "5", "6" }, randomChordStretchPicker);
+		MidiUtils.addAllToJComboBox(new Integer[] { 3, 4, 5, 6 }, randomChordStretchPicker);
 		randomChordStretchPicker.setSelectedItem("4");
 		chordSettingsPanel.add(randomChordStretchPicker);
 
@@ -1709,7 +1709,7 @@ public class VibeComposerGUI extends JFrame
 			resetArrSectionSelection = false;
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementCommitPanels")) {
-			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
+			String selItem = arrSection.getVal();
 			if (OMNI.EMPTYCOMBO.equals(selItem)) {
 				return;
 			}
@@ -1749,7 +1749,7 @@ public class VibeComposerGUI extends JFrame
 				checkManual = true;
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
-			String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
+			String selItem = arrSection.getVal();
 			if (!OMNI.EMPTYCOMBO.equals(selItem)) {
 				Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
 				Section sec = actualArrangement.getSections().get(secOrder - 1);
@@ -1862,7 +1862,7 @@ public class VibeComposerGUI extends JFrame
 				/*if (!e.getActionCommand().equalsIgnoreCase("comboBoxChanged")) {
 					return;
 				}*/
-				String selItem = arrSection.getItemAt(arrSection.getSelectedIndex());
+				String selItem = arrSection.getVal();
 				if (selItem == null || (arrSection.getItemCount() - 1 != actualArrangement
 						.getSections().size())) {
 					return;
@@ -1966,7 +1966,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				arrSection.setSelectedItem(arrSection.getItemAt(arrSection.getSelectedIndex()));
+				arrSection.setSelectedItem(arrSection.getVal());
 				//resetArrSectionInBackground();
 			}
 
@@ -6097,7 +6097,7 @@ public class VibeComposerGUI extends JFrame
 			if (!randomChordStretchType.getVal().equals("NONE")) {
 				cp.setStretchEnabled(true);
 				if (fixedChordStretch < 0) {
-					int atMost = Integer.valueOf((String) randomChordStretchPicker.getVal());
+					int atMost = Integer.valueOf(randomChordStretchPicker.getVal());
 					cp.setChordNotesStretch(chordPanelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					cp.setChordNotesStretch(fixedChordStretch);
