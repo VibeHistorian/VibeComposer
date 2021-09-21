@@ -160,6 +160,8 @@ public class MidiUtils {
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
 	public static final List<String> MAJOR_CHORDS = Arrays
 			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
+	public static final List<String> SEMITONE_LETTERS = Arrays.asList(
+			new String[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
 
 	public static final List<Integer> majorChordsModRating = Arrays
 			.asList(new Integer[] { 3, 2, 1, 3, 3, 1, -10 });
@@ -946,6 +948,14 @@ public class MidiUtils {
 			}
 		}
 		return intervalInts.stream().mapToInt(i -> i).toArray();
+	}
+
+	public static String makeSpelledChord(int[] chord) {
+		String spelledChord = "";
+		for (int i : chord) {
+			spelledChord += SEMITONE_LETTERS.get(i % 12);
+		}
+		return spelledChord;
 	}
 
 
