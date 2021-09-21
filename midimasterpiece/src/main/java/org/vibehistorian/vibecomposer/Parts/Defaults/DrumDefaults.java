@@ -1,8 +1,8 @@
 package org.vibehistorian.vibecomposer.Parts.Defaults;
 
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ALT;
-import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONESIX;
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONEPER4;
+import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.ONESIX;
 import static org.vibehistorian.vibecomposer.Enums.RhythmPattern.TRESILLO;
 
 import java.util.Random;
@@ -65,7 +65,7 @@ public class DrumDefaults {
 		rideSettings.setChords(new Integer[] { 1, 1 });
 		rideSettings.setShift(new Integer[] { 2, 6 });
 		rideSettings.setVariableShift(true);
-		rideSettings.melodyable = true;
+		//rideSettings.melodyable = true;
 
 		percsSettings = new DrumSettings();
 		percsSettings.setPatterns(
