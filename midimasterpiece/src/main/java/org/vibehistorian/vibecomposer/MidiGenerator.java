@@ -774,11 +774,11 @@ public class MidiGenerator implements JMC {
 							.get(blockNotesGenerator.nextInt(typesToChoose.size()));
 					Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
 							randomType, blockChanges.get(chordIndex), length, blockNotesGenerator,
-							maxJump);
+							0);
 					if (typedBlock != null) {
 						blockNotesArray = typedBlock;
 						blockType = randomType;
-						//System.out.println("Found new block!");
+						System.out.println("Found new block!");
 					} else {
 						System.out.println("Different block not found in other types!");
 					}

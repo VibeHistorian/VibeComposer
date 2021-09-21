@@ -2411,6 +2411,17 @@ public class VibeComposerGUI extends JFrame
 			JButton butt = makeButton("Edit " + (i + 1), "ArrangementOpenVariation," + (i + 1));
 			butt.setPreferredSize(new Dimension(
 					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count, 50));
+			int fI = i;
+			butt.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent evt) {
+					if (SwingUtilities.isMiddleMouseButton(evt)) {
+						actualArrangement.getSections().get(fI)
+								.setRiskyVariations(new ArrayList<>());
+						recolorVariationPopupButton(butt, actualArrangement.getSections().get(fI));
+					}
+				}
+			});
 			recolorVariationPopupButton(butt, actualArrangement.getSections().get(i));
 			variationButtonsPanel.add(butt);
 		}

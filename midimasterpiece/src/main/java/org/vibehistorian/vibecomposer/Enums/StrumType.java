@@ -32,7 +32,7 @@ public enum StrumType {
 			.asList(new StrumType[] { HUMAN_U, HUMAN, HUMAN_D });
 
 	public static final int[] STRUMMINESS_WEIGHTS = Rhythm
-			.normalizedCumulativeWeights(new int[] { 25, 10, 65 });
+			.normalizedCumulativeWeights(new int[] { 30, 10, 60 });
 
 	public static List<StrumType> getWeighted(int value) {
 		List<StrumType>[] lists = new List[] { ARPY, RANDY, HUMANY };
