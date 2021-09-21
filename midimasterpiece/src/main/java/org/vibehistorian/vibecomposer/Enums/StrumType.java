@@ -50,10 +50,12 @@ public enum StrumType {
 		List<Integer> noteIndexes = IntStream.iterate(0, e -> e + 1).limit(notes.size())
 				.mapToObj(e -> e).collect(Collectors.toList());
 		//System.out.println("Processing: " + type.toString());
+		boolean sort = false;
+		boolean reverse = false;
 		switch (type) {
 		case ARP_U:
 			noteIndexes.forEach(e -> noteOffsets.add(flam * e));
-			Collections.reverse(noteOffsets);
+			reverse = true;
 			break;
 		case ARP_D:
 			noteIndexes.forEach(e -> noteOffsets.add(flam * e));
@@ -61,8 +63,8 @@ public enum StrumType {
 		case RAND_U:
 			// X times random between 0 and flam*size - UP
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam * notes.size()));
-			Collections.sort(noteOffsets);
-			Collections.reverse(noteOffsets);
+			sort = true;
+			reverse = true;
 			break;
 		case RAND:
 			// RAND1 but unsorted
@@ -71,19 +73,19 @@ public enum StrumType {
 		case RAND_D:
 			// X times random between 0 and flam*size - DOWN
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam * notes.size()));
-			Collections.sort(noteOffsets);
+			sort = true;
 			break;
 		case RAND_W:
 			// X times random within bucket 0-1, 1-2 etc.
 			noteIndexes.forEach(e -> noteOffsets.add(e * flam + gen.nextDouble() * flam));
-			Collections.sort(noteOffsets);
-			Collections.reverse(noteOffsets);
+			sort = true;
+			reverse = true;
 			break;
 		case HUMAN_U:
 			// X times random between 0 and flam - UP
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam));
-			Collections.sort(noteOffsets);
-			Collections.reverse(noteOffsets);
+			sort = true;
+			reverse = true;
 			break;
 		case HUMAN:
 			// X times random between 0 and flam
@@ -92,14 +94,26 @@ public enum StrumType {
 		case HUMAN_D:
 			// X times random between 0 and flam - DOWN
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam));
-			Collections.sort(noteOffsets);
+			sort = true;
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown type");
 		}
 
+		if (sort) {
+			Collections.sort(noteOffsets);
+		}
+		if (reverse) {
+			Collections.reverse(noteOffsets);
+		}
+
 		for (int i = notes.size() - 1; i >= 0; i--) {
 			notes.get(i).setOffset(noteOffsets.get(i));
+		}
+		if (reverse) {
+			notes.get(notes.size() - 1).setOffset(0);
+		} else {
+			notes.get(0).setOffset(0);
 		}
 	}
 }

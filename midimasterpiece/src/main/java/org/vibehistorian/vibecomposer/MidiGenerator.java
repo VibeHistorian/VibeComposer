@@ -3738,7 +3738,37 @@ public class MidiGenerator implements JMC {
 							skipSecondNote = true;
 							break;
 						case 4:
-							flamming = SECOND_ARRAY_STRUM[SECOND_ARRAY_STRUM.length - 1];
+							switch (cp.getStrumType()) {
+							case ARP_D:
+								flamming = 0.5 * noteMultiplier;
+								break;
+							case ARP_U:
+								flamming = 0.5 * noteMultiplier;
+								break;
+							case HUMAN:
+								flamming = 0.062 * noteMultiplier;
+								break;
+							case HUMAN_D:
+								flamming = 0.062 * noteMultiplier;
+								break;
+							case HUMAN_U:
+								flamming = 0.062 * noteMultiplier;
+								break;
+							case RAND:
+								flamming = 0.250 * noteMultiplier;
+								break;
+							case RAND_D:
+								flamming = 0.250 * noteMultiplier;
+								break;
+							case RAND_U:
+								flamming = 0.250 * noteMultiplier;
+								break;
+							case RAND_W:
+								flamming = 0.250 * noteMultiplier;
+								break;
+							default:
+								throw new IllegalArgumentException("Unknown StrumType!");
+							}
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
