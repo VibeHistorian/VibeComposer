@@ -47,4 +47,13 @@ public class OMNI {
 	public static int clampVel(double d) {
 		return clamp((int) d, 0, 127);
 	}
+
+	public static <T> T getWeightedValue(T[] values, int searchedWeight, int[] weights) {
+		for (int i = 0; i < weights.length; i++) {
+			if (searchedWeight < weights[i]) {
+				return values[i];
+			}
+		}
+		throw new IllegalArgumentException("WEIGHTED error: Value higher than 99!");
+	}
 }

@@ -8,18 +8,41 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.vibehistorian.vibecomposer.Rhythm;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
+
 import jm.music.data.Note;
 
 public enum StrumType {
-	UP, DOWN, RAND_U, RAND, RAND_D, RAND_W, X_RAND_U, X_RAND, X_RAND_D;
+	ARP_U(Strums.STRUM_ARP), ARP_D(Strums.STRUM_ARP), RAND_U(Strums.STRUM_MED),
+	RAND(Strums.STRUM_MED), RAND_D(Strums.STRUM_MED), RAND_W(Strums.STRUM_MED),
+	HUMAN_U(Strums.STRUM_HUMAN), HUMAN(Strums.STRUM_HUMAN), HUMAN_D(Strums.STRUM_HUMAN);
 
-	public static final List<StrumType> viableTypes = Arrays
-			.asList(new StrumType[] { UP, DOWN, RAND_U, RAND_D, X_RAND });
+	public List<Integer> CHOICES;
+
+	StrumType(List<Integer> strums) {
+		CHOICES = strums;
+	}
+
+	public static final List<StrumType> ARPY = Arrays
+			.asList(new StrumType[] { ARP_U, ARP_D, RAND_U, RAND_D, HUMAN });
+	public static final List<StrumType> RANDY = Arrays
+			.asList(new StrumType[] { RAND_U, RAND, RAND_D, RAND_W });
+	public static final List<StrumType> HUMANY = Arrays
+			.asList(new StrumType[] { HUMAN_U, HUMAN, HUMAN_D });
+
+	public static final int[] STRUMMINESS_WEIGHTS = Rhythm
+			.normalizedCumulativeWeights(new int[] { 25, 10, 65 });
+
+	public static List<StrumType> getWeighted(int value) {
+		List<StrumType>[] lists = new List[] { ARPY, RANDY, HUMANY };
+		return OMNI.getWeightedValue(lists, value, STRUMMINESS_WEIGHTS);
+	}
 
 	public static void adjustNoteOffsets(StrumType type, List<Note> notes, double flam,
 			Random gen) {
 
-		if (gen == null && (type != UP && type != DOWN)) {
+		if (gen == null && (type != ARP_U && type != ARP_D)) {
 			return;
 		}
 
@@ -28,11 +51,11 @@ public enum StrumType {
 				.mapToObj(e -> e).collect(Collectors.toList());
 		//System.out.println("Processing: " + type.toString());
 		switch (type) {
-		case UP:
+		case ARP_U:
 			noteIndexes.forEach(e -> noteOffsets.add(flam * e));
 			Collections.reverse(noteOffsets);
 			break;
-		case DOWN:
+		case ARP_D:
 			noteIndexes.forEach(e -> noteOffsets.add(flam * e));
 			break;
 		case RAND_U:
@@ -56,17 +79,17 @@ public enum StrumType {
 			Collections.sort(noteOffsets);
 			Collections.reverse(noteOffsets);
 			break;
-		case X_RAND_U:
+		case HUMAN_U:
 			// X times random between 0 and flam - UP
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam));
 			Collections.sort(noteOffsets);
 			Collections.reverse(noteOffsets);
 			break;
-		case X_RAND:
+		case HUMAN:
 			// X times random between 0 and flam
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam));
 			break;
-		case X_RAND_D:
+		case HUMAN_D:
 			// X times random between 0 and flam - DOWN
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam));
 			Collections.sort(noteOffsets);
@@ -79,4 +102,13 @@ public enum StrumType {
 			notes.get(i).setOffset(noteOffsets.get(i));
 		}
 	}
+}
+
+class Strums {
+
+	public static final List<Integer> STRUM_ARP = Arrays
+			.asList(new Integer[] { 125, 166, 250, 333, 500, 750, 1000 });
+	public static final List<Integer> STRUM_MED = Arrays
+			.asList(new Integer[] { 62, 125, 166, 250 });
+	public static final List<Integer> STRUM_HUMAN = Arrays.asList(new Integer[] { 16, 31, 62 });
 }

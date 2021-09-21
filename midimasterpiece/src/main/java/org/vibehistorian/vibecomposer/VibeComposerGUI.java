@@ -137,6 +137,7 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
@@ -4336,7 +4337,9 @@ public class VibeComposerGUI extends JFrame
 				& randomizeChordStrumsOnCompose.isSelected())) {
 			for (InstPanel p : getAffectedPanels(2)) {
 				ChordPanel cp = (ChordPanel) p;
-				cp.setStrum(selectRandomStrumByStruminess());
+				Pair<StrumType, Integer> strumPair = getRandomStrumPair();
+				cp.setStrum(strumPair.getRight());
+				cp.setStrumType(strumPair.getLeft());
 				if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
 						&& cp.getStrum() > 499) {
 					cp.setStrum(cp.getStrum() / 2);
@@ -6065,7 +6068,9 @@ public class VibeComposerGUI extends JFrame
 					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
 			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
 
-			cp.setStrum(selectRandomStrumByStruminess());
+			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
+			cp.setStrum(strumPair.getRight());
+			cp.setStrumType(strumPair.getLeft());
 			if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4 && cp.getStrum() > 499) {
 				cp.setStrum(cp.getStrum() / 2);
 			}
@@ -6447,6 +6452,18 @@ public class VibeComposerGUI extends JFrame
 	public int selectRandomStrumByStruminess() {
 		return singleWeightedSelectFromArray(MILISECOND_ARRAY_STRUM, randomChordStruminess.getInt(),
 				1);
+	}
+
+	public Pair<StrumType, Integer> getRandomStrumPair() {
+		StrumType sType = selectTypeByStrumminess(randomChordStruminess.getInt());
+		Integer strum = MidiUtils.getRandom(new Random(), sType.CHOICES.toArray(new Integer[] {}));
+		return Pair.of(sType, strum);
+	}
+
+	private StrumType selectTypeByStrumminess(int int1) {
+		List<StrumType> types = StrumType.getWeighted(new Random().nextInt(100));
+		StrumType type = types.get(new Random().nextInt(types.size()));
+		return type;
 	}
 
 	public int singleWeightedSelectFromArray(int[] oldArray, int weight, int from) {

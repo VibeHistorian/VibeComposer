@@ -16,7 +16,7 @@ public class Chord {
 	private double durationRatio = 1.0;
 	private int transpose = 0;
 	private int velocity = 70;
-	private StrumType strumType = StrumType.UP;
+	private StrumType strumType = StrumType.ARP_U;
 	private List<Note> storedNotesBackwards = null;
 
 	public Chord(int[] notes) {
@@ -127,7 +127,7 @@ public class Chord {
 			//n.setOffset(flam * i);
 			noteList.add(n);
 		}
-		StrumType defaultType = StrumType.UP;
+		StrumType defaultType = StrumType.ARP_U;
 		StrumType.adjustNoteOffsets(defaultType, noteList, flam, null);
 		return noteList;
 	}

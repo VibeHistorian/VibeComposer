@@ -19,7 +19,7 @@ public class ChordPart extends InstPart {
 
 	private InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
-	private StrumType strumType = StrumType.UP;
+	private StrumType strumType = StrumType.ARP_U;
 
 	public ChordPart() {
 
