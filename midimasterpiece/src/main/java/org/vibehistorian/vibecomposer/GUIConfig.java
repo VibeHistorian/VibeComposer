@@ -74,7 +74,7 @@ public class GUIConfig {
 	private int melodyTonicNoteTarget = 25;
 	private boolean melodyEmphasizeKey = true;
 	private int melodyModeNoteTarget = 15;
-	private boolean melodyReplaceAvoidNotes = true;
+	private int melodyReplaceAvoidNotes = 2;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
@@ -599,11 +599,11 @@ public class GUIConfig {
 		this.melodyModeNoteTarget = melodyModeNoteTarget;
 	}
 
-	public boolean isMelodyReplaceAvoidNotes() {
+	public int getMelodyReplaceAvoidNotes() {
 		return melodyReplaceAvoidNotes;
 	}
 
-	public void setMelodyReplaceAvoidNotes(boolean melodyReplaceAvoidNotes) {
+	public void setMelodyReplaceAvoidNotes(int melodyReplaceAvoidNotes) {
 		this.melodyReplaceAvoidNotes = melodyReplaceAvoidNotes;
 	}
 

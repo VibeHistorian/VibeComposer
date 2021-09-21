@@ -1806,10 +1806,10 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void replaceAvoidNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
-			int randomSeed) {
+			int randomSeed, int notesToAvoid) {
 		Random rand = new Random(randomSeed);
 		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
-			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i));
+			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i), notesToAvoid);
 			//System.out.println(StringUtils.join(avoidNotes, ","));
 			List<Note> notes = fullMelodyMap.get(i);
 			for (int j = 0; j < notes.size(); j++) {
@@ -3522,8 +3522,9 @@ public class MidiGenerator implements JMC {
 				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset,
 				actualProgression);
 
-		if (gc.isMelodyReplaceAvoidNotes()) {
-			replaceAvoidNotes(fullMelodyMap, actualProgression, mp.getPatternSeed());
+		if (gc.getMelodyReplaceAvoidNotes() > 0) {
+			replaceAvoidNotes(fullMelodyMap, actualProgression, mp.getPatternSeed(),
+					gc.getMelodyReplaceAvoidNotes());
 		}
 
 		if (mp.getOrder() == 1) {
