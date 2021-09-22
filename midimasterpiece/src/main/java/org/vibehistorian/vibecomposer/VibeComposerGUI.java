@@ -6362,8 +6362,8 @@ public class VibeComposerGUI extends JFrame
 
 			if (arpPanelGenerator.nextInt(100) < arpShiftChance.getInt()
 					&& pattern != RhythmPattern.FULL) {
-				ap.setPatternShift(
-						arpPanelGenerator.nextInt(ap.getPattern().pattern.length - 1) + 1);
+				int maxShift = Math.min(ap.getPattern().pattern.length - 1, ap.getHitsPerPattern());
+				ap.setPatternShift(arpPanelGenerator.nextInt(maxShift) + 1);
 			}
 
 			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
