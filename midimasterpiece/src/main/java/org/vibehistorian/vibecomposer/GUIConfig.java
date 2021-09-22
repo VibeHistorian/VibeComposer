@@ -61,6 +61,7 @@ public class GUIConfig {
 	private boolean arpAffectsBpm = false;
 	private boolean doubledDurations = false;
 	private boolean allowChordRepeats = true;
+	private Integer globalSwingOverride = null;
 
 
 	// melody gen
@@ -613,6 +614,14 @@ public class GUIConfig {
 
 	public void setMelodyChordNoteTarget(int melodyChordNoteTarget) {
 		this.melodyChordNoteTarget = melodyChordNoteTarget;
+	}
+
+	public Integer getGlobalSwingOverride() {
+		return globalSwingOverride;
+	}
+
+	public void setGlobalSwingOverride(Integer globalSwingOverride) {
+		this.globalSwingOverride = globalSwingOverride;
 	}
 
 }

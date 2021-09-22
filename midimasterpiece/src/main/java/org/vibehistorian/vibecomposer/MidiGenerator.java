@@ -1921,10 +1921,13 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void swingPhrase(Phrase phr, int swingPercent, double swingUnitOfTime) {
+		if (gc.getGlobalSwingOverride() != null) {
+			swingPercent = gc.getGlobalSwingOverride();
+		}
 		if (swingPercent == 50) {
 			return;
 		}
-		Vector<Note> fullMelody = phr.getNoteList();
+		Vector<Note> notes = phr.getNoteList();
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
 
@@ -1937,8 +1940,8 @@ public class MidiGenerator implements JMC {
 
 		List<Double> durationBuckets = new ArrayList<>();
 		List<Integer> chordSeparators = new ArrayList<>();
-		for (int i = 0; i < fullMelody.size(); i++) {
-			durCounter += fullMelody.get(i).getRhythmValue();
+		for (int i = 0; i < notes.size(); i++) {
+			durCounter += notes.get(i).getRhythmValue();
 			durationBuckets.add(durCounter);
 			if (durCounter + 0.001 > currentChordDur) {
 				chordSeparators.add(i);
@@ -1952,7 +1955,7 @@ public class MidiGenerator implements JMC {
 		// fix short notes at the end not going to next chord
 		if (durCounter > 0.01) {
 			chordCounter = (chordCounter + 1) % progressionDurations.size();
-			chordSeparators.add(fullMelody.size() - 1);
+			chordSeparators.add(notes.size() - 1);
 			durCounter = 0.0;
 			currentChordDur = progressionDurations.get(chordCounter);
 		}
@@ -1960,8 +1963,8 @@ public class MidiGenerator implements JMC {
 		Note swungNote = null;
 		Note latestSuitableNote = null;
 		durCounter = 0.0;
-		for (int i = 0; i < fullMelody.size(); i++) {
-			Note n = fullMelody.get(i);
+		for (int i = 0; i < notes.size(); i++) {
+			Note n = notes.get(i);
 			double adjDur = n.getRhythmValue();
 			if (i > chordSeparators.get(chordSepIndex)) {
 				chordSepIndex++;
@@ -2050,8 +2053,8 @@ public class MidiGenerator implements JMC {
 			durCounter = 0.0;
 			chordCounter = 0;
 			durationBuckets = new ArrayList<>();
-			for (int i = 0; i < fullMelody.size(); i++) {
-				durCounter += fullMelody.get(i).getRhythmValue();
+			for (int i = 0; i < notes.size(); i++) {
+				durCounter += notes.get(i).getRhythmValue();
 				if (durCounter + 0.001 > currentChordDur) {
 					chordCounter = (chordCounter + 1) % progressionDurations.size();
 					currentChordDur = progressionDurations.get(chordCounter);
@@ -3953,6 +3956,9 @@ public class MidiGenerator implements JMC {
 
 		// TODO: divide
 		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
+		int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
+				? gc.getMaxArpSwing()
+				: 50;
 
 		double longestChord = progressionDurations.stream().max((e1, e2) -> Double.compare(e1, e2))
 				.get();
@@ -4032,9 +4038,6 @@ public class MidiGenerator implements JMC {
 				}
 
 				double durationNow = 0;
-				int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
-						? gc.getMaxArpSwing()
-						: 50;
 
 				// reset every 2
 				if (j % 2 == 0) {
@@ -4074,9 +4077,7 @@ public class MidiGenerator implements JMC {
 					}
 
 
-					double swingDuration = chordDurationArp
-							* (swingPercentAmount / ((double) 50.0));
-					swingPercentAmount = 100 - swingPercentAmount;
+					double swingDuration = chordDurationArp;
 
 					if (durationNow + swingDuration > progressionDurations.get(j)) {
 						double fillerDuration = progressionDurations.get(j) - durationNow;
@@ -4112,7 +4113,7 @@ public class MidiGenerator implements JMC {
 		applyNoteLengthMultiplier(arpPhrase.getNoteList(), ap.getNoteLengthMultiplier());
 		processSectionTransition(sec, arpPhrase.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
-
+		swingPhrase(arpPhrase, swingPercentAmount, Durations.EIGHTH_NOTE);
 		double additionalDelay = 0;
 		/*if (ARP_SETTINGS.isUseDelay()) {
 			additionalDelay = (gc.getArpParts().get(i).getDelay() / 1000.0);
@@ -4161,6 +4162,7 @@ public class MidiGenerator implements JMC {
 		// bar iter
 		int hits = dp.getHitsPerPattern();
 		int swingPercentAmount = (hits % 2 == 0) ? dp.getSwingPercent() : 50;
+
 		List<Integer> fillPattern = dp.getChordSpanFill()
 				.getPatternByLength(actualProgression.size(), dp.isFillFlip());
 

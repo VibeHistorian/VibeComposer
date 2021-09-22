@@ -354,6 +354,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox allowChordRepeats;
 	JCheckBox globalSwingOverride;
 	KnobPanel globalSwingOverrideValue;
+	JButton globalSwingOverrideApplyButton;
 	public static KnobPanel loopBeatCount;
 	public static JLabel pauseBehaviorLabel;
 	public static ScrollComboBox<String> pauseBehaviorCombobox;
@@ -2566,10 +2567,27 @@ public class VibeComposerGUI extends JFrame
 		JPanel globalSwingPanel = new JPanel();
 		globalSwingOverride = new JCheckBox("<html>Global Swing<br>Override</html>", false);
 		globalSwingOverrideValue = new KnobPanel("", 50);
+		globalSwingOverrideApplyButton = new JButton("A");
+		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				int swing = globalSwingOverrideValue.getInt();
+				melodyPanels.forEach(e -> e.setSwingPercent(swing));
+				randomArpMaxSwing.setInt(swing);
+				drumPanels.forEach(e -> {
+					if (!PUNCHY_DRUMS.contains(e.getInstrument())) {
+						e.setSwingPercent(swing);
+					}
+				});
+			}
+		});
 		globalSwingPanel.add(globalSwingOverride);
 		globalSwingPanel.add(globalSwingOverrideValue);
+		globalSwingPanel.add(globalSwingOverrideApplyButton);
 		globalSwingPanel.setOpaque(false);
 		macroParams.add(globalSwingPanel);
+
 
 		useDoubledDurations = new JCheckBox("Doubled Beat Duration", false);
 		JPanel useDoubledPanel = new JPanel();
@@ -3819,17 +3837,6 @@ public class VibeComposerGUI extends JFrame
 			arrangement.setOverridden(true);
 		} else {
 			arrangement.setOverridden(false);
-		}
-
-		if (globalSwingOverride.isSelected()) {
-			int swing = globalSwingOverrideValue.getInt();
-			melodyPanels.forEach(e -> e.setSwingPercent(swing));
-			randomArpMaxSwing.setInt(swing);
-			drumPanels.forEach(e -> {
-				if (!PUNCHY_DRUMS.contains(e.getInstrument())) {
-					e.setSwingPercent(swing);
-				}
-			});
 		}
 
 	}
@@ -5451,6 +5458,8 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setArpAffectsBpm(arpAffectsBpm.isSelected());
 		guiConfig.setDoubledDurations(useDoubledDurations.isSelected());
 		guiConfig.setAllowChordRepeats(allowChordRepeats.isSelected());
+		guiConfig.setGlobalSwingOverride(
+				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
 
 		// parts
 		guiConfig.setMelodyParts((List<MelodyPart>) (List<?>) getInstPartsFromInstPanels(0, false));
@@ -5546,6 +5555,10 @@ public class VibeComposerGUI extends JFrame
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
 		useDoubledDurations.setSelected(guiConfig.isDoubledDurations());
 		allowChordRepeats.setSelected(guiConfig.isAllowChordRepeats());
+		globalSwingOverride.setSelected(guiConfig.getGlobalSwingOverride() != null);
+		if (guiConfig.getGlobalSwingOverride() != null) {
+			globalSwingOverrideValue.setInt(guiConfig.getGlobalSwingOverride());
+		}
 
 		// parts
 
