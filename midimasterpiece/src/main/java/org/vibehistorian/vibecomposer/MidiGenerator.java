@@ -634,21 +634,25 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
-		if (targetMode == 2) {
+		if (targetMode >= 1) {
 			Map<Integer, List<Integer>> choiceMap = getChordNoteChoicesFromChords(chords);
 			for (int i = 0; i < chordOffsets.size(); i++) {
 				List<Integer> choices = choiceMap.get(i);
-				int offset = offsets.get(i);
+				int offset = (targetMode == 1) ? offsets.get(i) - chordOffsets.get(i)
+						: offsets.get(i);
 				int chordTargetNote = MidiUtils.getClosestFromList(choices, offset);
 				System.out.println("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
-				offsets.set(i, chordTargetNote);
+				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
+						: chordTargetNote);
 			}
-			int last = offsets.get(offsets.size() - 1);
-			if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
-				last += (new Random(randomSeed).nextBoolean() ? 2 : -2);
-				offsets.set(offsets.size() - 1,
-						MidiUtils.getClosestFromList(choiceMap.get(offsets.size() - 1), last));
-				System.out.println("Last offset moved!");
+			if (targetMode == 2) {
+				int last = offsets.get(offsets.size() - 1);
+				if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
+					last += (new Random(randomSeed).nextBoolean() ? 2 : -2);
+					offsets.set(offsets.size() - 1,
+							MidiUtils.getClosestFromList(choiceMap.get(offsets.size() - 1), last));
+					System.out.println("Last offset moved!");
+				}
 			}
 		} else {
 			int last = offsets.get(offsets.size() - 1);
