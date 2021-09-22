@@ -447,6 +447,8 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxRepeat;
 	KnobPanel randomArpMinVel;
 	KnobPanel randomArpMaxVel;
+	KnobPanel randomArpMinLength;
+	KnobPanel randomArpMaxLength;
 	JCheckBox arpCopyMelodyInst;
 
 	// drum gen settings
@@ -1343,6 +1345,8 @@ public class VibeComposerGUI extends JFrame
 		randomArpMaxRepeat = new KnobPanel("Max<br>Repeat", 2, 1, 4);
 		randomArpMinVel = new KnobPanel("Min<br>Vel", 65, 0, 126);
 		randomArpMaxVel = new KnobPanel("Max<br>Vel", 90, 1, 127);
+		randomArpMinLength = new KnobPanel("Min<br>Length", 66, 25, 200);
+		randomArpMaxLength = new KnobPanel("Max<br>Length", 133, 25, 200);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -1368,7 +1372,7 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(randomArpStretchType);
 		toggleableComponents.add(randomArpStretchPicker);
 
-		JButton clearArpPatternSeeds = makeButton("Clear Presets", "ClearArpPatterns");
+		JButton clearArpPatternSeeds = makeButton("Clear Patterns", "ClearArpPatterns");
 		JPanel arpSettingsExtraPanel = new JPanel();
 		JLabel csExtra = new JLabel("ARP SETTINGS+");
 		csExtra.setPreferredSize(new Dimension(120, 30));
@@ -1387,6 +1391,8 @@ public class VibeComposerGUI extends JFrame
 		arpSettingsExtraPanel.add(randomArpMaxVel);
 		arpSettingsExtraPanel.add(randomArpPattern);
 		arpSettingsExtraPanel.add(arpShiftChance);
+		arpSettingsExtraPanel.add(randomArpMinLength);
+		arpSettingsExtraPanel.add(randomArpMaxLength);
 		arpSettingsExtraPanel.add(clearArpPatternSeeds);
 		toggleableComponents.add(arpSettingsExtraPanel);
 
@@ -6362,6 +6368,11 @@ public class VibeComposerGUI extends JFrame
 
 			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
 			ap.setPauseChance(arpPanelGenerator.nextInt(pauseMax));
+
+			int lengthRange = Math.max(1,
+					1 + randomArpMaxLength.getInt() - randomArpMinLength.getInt());
+			ap.setNoteLengthMultiplier(
+					arpPanelGenerator.nextInt(lengthRange) + randomArpMinLength.getInt());
 
 			if (arpPanelGenerator.nextBoolean()) {
 				int arpPatternOrder = 0;
