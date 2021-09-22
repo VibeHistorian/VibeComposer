@@ -90,6 +90,7 @@ public class GUIConfig {
 	private boolean enable9th13th = false;
 	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
+	private int spiceParallelChance = 5;
 
 	private boolean spiceForceScale = true;
 	private String firstChord = "?";
@@ -622,6 +623,14 @@ public class GUIConfig {
 
 	public void setGlobalSwingOverride(Integer globalSwingOverride) {
 		this.globalSwingOverride = globalSwingOverride;
+	}
+
+	public int getSpiceParallelChance() {
+		return spiceParallelChance;
+	}
+
+	public void setSpiceParallelChance(int spiceParallelChance) {
+		this.spiceParallelChance = spiceParallelChance;
 	}
 
 }

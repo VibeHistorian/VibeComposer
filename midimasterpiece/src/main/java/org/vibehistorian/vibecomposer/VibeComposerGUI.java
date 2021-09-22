@@ -480,6 +480,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox spiceAllowDimAugDom7th;
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
+	KnobPanel spiceParallelChance;
 
 	JCheckBox spiceForceScale;
 	ScrollComboBox<String> firstChordSelection;
@@ -2627,8 +2628,9 @@ public class VibeComposerGUI extends JFrame
 		spiceChance = new KnobPanel("Spice", 15);
 		spiceAllowDimAugDom7th = new JCheckBox("Dim/Aug/Dom7", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
-
 		spiceForceScale = new JCheckBox("Force Scale", true);
+		spiceParallelChance = new KnobPanel("Parallel", 5);
+
 		firstChordSelection = new ScrollComboBox<String>();
 		firstChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
@@ -2662,6 +2664,10 @@ public class VibeComposerGUI extends JFrame
 		JPanel lastChordsPanel = new JPanel();
 		lastChordsPanel.setOpaque(false);
 
+		JPanel spiceParallelChancePanel = new JPanel();
+		spiceParallelChancePanel.add(spiceParallelChance);
+		spiceParallelChancePanel.setOpaque(false);
+
 		firstChordsPanel.add(new JLabel("First:"));
 		firstChordsPanel.add(firstChordSelection);
 		lastChordsPanel.add(new JLabel("Last:"));
@@ -2672,6 +2678,7 @@ public class VibeComposerGUI extends JFrame
 		chordProgressionSettingsPanel.add(spiceAllow9th13thPanel);
 
 		chordProgressionSettingsPanel.add(spiceForceScalePanel);
+		chordProgressionSettingsPanel.add(spiceParallelChancePanel);
 		chordProgressionSettingsPanel.add(firstChordsPanel);
 		chordProgressionSettingsPanel.add(lastChordsPanel);
 
@@ -5509,6 +5516,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
 		guiConfig.setSpiceChance(spiceChance.getInt());
+		guiConfig.setSpiceParallelChance(spiceParallelChance.getInt());
 		guiConfig.setDimAugDom7thEnabled(spiceAllowDimAugDom7th.isSelected());
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
 		guiConfig.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
@@ -5610,6 +5618,7 @@ public class VibeComposerGUI extends JFrame
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());
+		spiceParallelChance.setInt(guiConfig.getSpiceParallelChance());
 		spiceAllowDimAugDom7th.setSelected(guiConfig.isDimAugDom7thEnabled());
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
@@ -6160,7 +6169,8 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			cp.setPattern(pattern);
-			if (pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1) {
+			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
+					&& cp.getStrum() > 249) {
 				cp.setStrum(cp.getStrum() / 4);
 			}
 

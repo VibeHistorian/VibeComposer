@@ -160,6 +160,8 @@ public class MidiUtils {
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
 	public static final List<String> MAJOR_CHORDS = Arrays
 			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
+	public static final List<String> MINOR_CHORDS = Arrays
+			.asList(new String[] { "Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#" });
 	public static final List<String> SEMITONE_LETTERS = Arrays.asList(
 			new String[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
 
@@ -170,6 +172,7 @@ public class MidiUtils {
 			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
 
 	public static final List<Integer> MAJ_SCALE = Arrays.asList(MidiUtils.Scales.MAJOR_SCALE);
+	public static final List<Integer> MIN_SCALE = Arrays.asList(MidiUtils.Scales.AEOLIAN_SCALE);
 
 	// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
 	public static final List<Integer> relevancyOrder = Arrays
@@ -854,6 +857,11 @@ public class MidiUtils {
 	}
 
 	public static void transposePhrase(Phrase phr, final Integer[] mode, final Integer[] modeTo) {
+		transposeNotes(phr.getNoteList(), mode, modeTo);
+	}
+
+	public static void transposeNotes(List<Note> notes, final Integer[] mode,
+			final Integer[] modeTo) {
 		List<Integer> modeList = new ArrayList<>();
 		for (int num : mode) {
 			modeList.add(num);
@@ -865,8 +873,8 @@ public class MidiUtils {
 		}
 
 
-		for (int j = 0; j < phr.getNoteList().size(); j++) {
-			Note n = (Note) phr.getNoteList().get(j);
+		for (int j = 0; j < notes.size(); j++) {
+			Note n = notes.get(j);
 			int pitch = n.getPitch();
 			if (pitch == Note.REST) {
 				continue;
@@ -1227,6 +1235,22 @@ public class MidiUtils {
 		}
 		avoidNotes.removeAll(safeNotes);
 		return avoidNotes;
+	}
+
+	public static Integer[] minorizeScale(Integer[] noteAdjustScale, int[] minorChord) {
+		Integer[] minorizedScale = Arrays.copyOf(noteAdjustScale, noteAdjustScale.length);
+		int[] normalizedMinor = normalizeChord(minorChord);
+		for (int i = 0; i < normalizedMinor.length; i++) {
+			boolean changedNote = MAJ_SCALE.indexOf(normalizedMinor[i]) == -1;
+			if (changedNote) {
+				int indexToChange = MIN_SCALE.indexOf(normalizedMinor[i]);
+				minorizedScale[indexToChange] = normalizedMinor[i];
+				System.out.println(
+						"Changed at index: " + indexToChange + ", to: " + normalizedMinor[i]);
+			}
+
+		}
+		return minorizedScale;
 	}
 
 }

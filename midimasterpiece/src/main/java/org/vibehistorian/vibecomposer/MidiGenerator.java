@@ -2206,6 +2206,7 @@ public class MidiGenerator implements JMC {
 		Random generator = new Random(mainGeneratorSeed);
 		Random durationGenerator = new Random(mainGeneratorSeed);
 		Random spiceGenerator = new Random(mainGeneratorSeed);
+		Random parallelGenerator = new Random(mainGeneratorSeed + 100);
 
 		boolean isBackwards = !gc.isUseChordFormula();
 		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
@@ -2226,6 +2227,7 @@ public class MidiGenerator implements JMC {
 			next.add(String.valueOf(firstChord));
 		}
 		List<String> debugMsg = new ArrayList<>();
+
 
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
@@ -2310,8 +2312,15 @@ public class MidiGenerator implements JMC {
 					}
 				}
 			}
+			if (parallelGenerator.nextInt(100) < gc.getSpiceParallelChance()) {
+				int chordIndex = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
+				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordIndex);
+				spicyChordString = parallelChordString;
+				System.out.println("PARALLEL: " + spicyChordString);
+			}
 
 			chordInts.add(spicyChordString);
+
 
 			//System.out.println("Fetching chord: " + chordInt);
 			int[] mappedChord = mappedChord(spicyChordString);
@@ -3532,6 +3541,19 @@ public class MidiGenerator implements JMC {
 		if (gc.getMelodyReplaceAvoidNotes() > 0) {
 			replaceAvoidNotes(fullMelodyMap, actualProgression, mp.getPatternSeed(),
 					gc.getMelodyReplaceAvoidNotes());
+		}
+		for (int i = 0; i < generatedRootProgression.size(); i++) {
+			for (int j = 0; j < MidiUtils.MINOR_CHORDS.size(); j++) {
+				int[] minorChord = MidiUtils.mappedChord(MidiUtils.MINOR_CHORDS.get(j));
+				boolean isMinor = Arrays.equals(MidiUtils.normalizeChord(minorChord),
+						MidiUtils.normalizeChord(generatedRootProgression.get(i)));
+				if (isMinor) {
+					MidiUtils.transposeNotes(fullMelodyMap.get(i), ScaleMode.IONIAN.noteAdjustScale,
+							MidiUtils.minorizeScale(ScaleMode.IONIAN.noteAdjustScale, minorChord));
+					System.out.println("Transposing melody to match minor chord! Chord#: " + i);
+					break;
+				}
+			}
 		}
 
 		if (mp.getOrder() == 1) {
