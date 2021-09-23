@@ -1229,6 +1229,7 @@ public class MidiUtils {
 				avoidNotes.add((chord[i] + 1) % 12);
 			}
 			if (notesToAvoid >= 2) {
+				avoidNotes.add((chord[i] + 11) % 12);
 				avoidNotes.add((chord[i] + 2) % 12);
 			}
 			safeNotes.add(chord[i] % 12);
