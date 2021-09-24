@@ -3571,7 +3571,8 @@ public class MidiGenerator implements JMC {
 						MidiUtils.normalizeChord(generatedRootProgression.get(i)));
 				if (isMinor) {
 					MidiUtils.transposeNotes(fullMelodyMap.get(i), ScaleMode.IONIAN.noteAdjustScale,
-							MidiUtils.minorizeScale(ScaleMode.IONIAN.noteAdjustScale, minorChord));
+							MidiUtils.adjustScaleByChord(ScaleMode.IONIAN.noteAdjustScale,
+									minorChord));
 					System.out.println("Transposing melody to match minor chord! Chord#: " + i);
 					break;
 				}

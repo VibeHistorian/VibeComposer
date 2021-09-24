@@ -99,6 +99,13 @@ public class MidiUtils {
 		}
 	}
 
+	public static final List<ScaleMode> majorishModes = Arrays
+			.asList(new ScaleMode[] { ScaleMode.IONIAN, ScaleMode.LYDIAN, ScaleMode.MIXOLYDIAN,
+					ScaleMode.BLUES, ScaleMode.TURKISH });
+	public static final List<ScaleMode> minorishModes = Arrays
+			.asList(new ScaleMode[] { ScaleMode.DORIAN, ScaleMode.PHRYGIAN, ScaleMode.AEOLIAN,
+					ScaleMode.HARM_MINOR, ScaleMode.LOCRIAN, ScaleMode.INDIAN });
+
 	//chords
 	public static final int[] cMaj4 = { Pitches.C4, Pitches.E4, Pitches.G4 };
 	public static final int[] cMin4 = { Pitches.C4, Pitches.EF4, Pitches.G4 };
@@ -1238,20 +1245,20 @@ public class MidiUtils {
 		return avoidNotes;
 	}
 
-	public static Integer[] minorizeScale(Integer[] noteAdjustScale, int[] minorChord) {
-		Integer[] minorizedScale = Arrays.copyOf(noteAdjustScale, noteAdjustScale.length);
-		int[] normalizedMinor = normalizeChord(minorChord);
-		for (int i = 0; i < normalizedMinor.length; i++) {
-			boolean changedNote = MAJ_SCALE.indexOf(normalizedMinor[i]) == -1;
+	public static Integer[] adjustScaleByChord(Integer[] noteAdjustScale, int[] chord) {
+		Integer[] adjustedScale = Arrays.copyOf(noteAdjustScale, noteAdjustScale.length);
+		int[] normalizedChord = normalizeChord(chord);
+		for (int i = 0; i < normalizedChord.length; i++) {
+			boolean changedNote = MAJ_SCALE.indexOf(normalizedChord[i]) == -1;
 			if (changedNote) {
-				int indexToChange = MIN_SCALE.indexOf(normalizedMinor[i]);
-				minorizedScale[indexToChange] = normalizedMinor[i];
+				int indexToChange = MIN_SCALE.indexOf(normalizedChord[i]);
+				adjustedScale[indexToChange] = normalizedChord[i];
 				System.out.println(
-						"Changed at index: " + indexToChange + ", to: " + normalizedMinor[i]);
+						"Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
 			}
 
 		}
-		return minorizedScale;
+		return adjustedScale;
 	}
 
 }
