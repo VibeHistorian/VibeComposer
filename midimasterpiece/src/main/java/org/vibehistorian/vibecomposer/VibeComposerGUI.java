@@ -1148,8 +1148,8 @@ public class VibeComposerGUI extends JFrame
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			//melodyPanel.setMidiChannel(i + 1);
+			melodyPanel.setPauseChance(60);
 			if (i > 0) {
-				melodyPanel.setPauseChance(60);
 				melodyPanel.setMuteInst(true);
 				melodyPanel.getVolSlider().setEnabled(false);
 				melodyPanel.getSoloMuter().setEnabled(false);

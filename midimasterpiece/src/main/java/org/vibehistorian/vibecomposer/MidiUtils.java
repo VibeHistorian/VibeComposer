@@ -834,13 +834,13 @@ public class MidiUtils {
 
 			if (originalIndex == -1) {
 				if (modeToList.contains(searchPitch)) {
-					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+					//System.out.println("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					transposedChord[j] = pitch - difference;
-					System.out.println(
-							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+					/*System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
 				}
 				continue;
 			}
@@ -876,7 +876,7 @@ public class MidiUtils {
 		for (int j = 0; j < notes.size(); j++) {
 			Note n = notes.get(j);
 			int pitch = n.getPitch();
-			if (pitch == Note.REST) {
+			if (pitch < 0) {
 				continue;
 			}
 			int searchPitch = Integer.valueOf(pitch % 12);
@@ -884,13 +884,13 @@ public class MidiUtils {
 
 			if (originalIndex == -1) {
 				if (modeToList.contains(searchPitch)) {
-					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+					//System.out.println("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					n.setPitch(pitch - difference);
-					System.out.println(
-							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+					/*System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
 				}
 				continue;
 			}

@@ -1536,13 +1536,14 @@ public class MidiGenerator implements JMC {
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
 			List<Note> notes = fullMelodyMap.get(chordIndex);
 			pauseGenerator.setSeed(orderSeed + 5);
+			int actualPauseChance = adjustChanceParamForTransition(mp.getPauseChance(), sec,
+					chordIndex, durations.size(), 40, 0.25, false);
 			for (int j = 0; j < notes.size(); j++) {
 				Note n = notes.get(j);
 				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_SIXTEENTH_NOTE + 0.01)
 						? pauseGenerator2
 						: pauseGenerator;
-				if (pauseGen.nextInt(100) < adjustChanceParamForTransition(mp.getPauseChance(), sec,
-						chordIndex, durations.size(), 40, 0.25, false)) {
+				if (pauseGen.nextInt(100) < actualPauseChance) {
 					n.setPitch(Integer.MIN_VALUE);
 				} else {
 					pitches[n.getPitch() % 12]++;
@@ -1552,7 +1553,7 @@ public class MidiGenerator implements JMC {
 
 
 		// fill pauses toggle
-		if (mp.isFillPauses()) {
+		if (mp.isFillPauses() && mp.getPauseChance() > 0) {
 			if (fullMelody.get(0).getPitch() < 0) {
 				fullMelody.get(0).setPitch(firstPitch);
 			}
@@ -1618,6 +1619,9 @@ public class MidiGenerator implements JMC {
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
+						if (p < 0) {
+							continue;
+						}
 						// D
 						if (p % 12 == 2) {
 							n.setPitch(p - 2);
@@ -1644,6 +1648,9 @@ public class MidiGenerator implements JMC {
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
+						if (p < 0) {
+							continue;
+						}
 						// D
 						if (p % 12 == 2) {
 							n.setPitch(p - 2);
@@ -1692,6 +1699,9 @@ public class MidiGenerator implements JMC {
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
+						if (p < 0) {
+							continue;
+						}
 						// above
 						if (p % 12 == pitchAbove && (pitchAbove != 0 || surplusTonics > 0)) {
 							n.setPitch(p - pitchAbove + modeNote);
@@ -1724,6 +1734,9 @@ public class MidiGenerator implements JMC {
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
+						if (p < 0) {
+							continue;
+						}
 						// above
 						if (p % 12 == pitchAbove && (pitchAbove != 0 || surplusTonics > 0)) {
 							n.setPitch(p - pitchAbove + modeNote);
@@ -1791,6 +1804,9 @@ public class MidiGenerator implements JMC {
 							.compareNotesByDistanceFromChordPitches(e1, e2, chordNotes));
 
 					for (Note n : notes) {
+						if (n.getPitch() < 0) {
+							continue;
+						}
 						if (!chordNotes.contains(n.getPitch() % 12)) {
 							n.setPitch(n.getPitch() - (n.getPitch() % 12)
 									+ MidiUtils.getClosestFromList(chordNotes, n.getPitch() % 12));
@@ -1818,6 +1834,9 @@ public class MidiGenerator implements JMC {
 			List<Note> notes = fullMelodyMap.get(i);
 			for (int j = 0; j < notes.size(); j++) {
 				Note n = notes.get(j);
+				if (n.getPitch() < 0) {
+					continue;
+				}
 				//System.out.println("Note: " + n.getPitch() + ", RV: " + n.getRhythmValue());
 				boolean avoidAllLengths = true;
 				if (avoidAllLengths || (n.getRhythmValue() > Durations.SIXTEENTH_NOTE - 0.01)) {
@@ -1848,6 +1867,9 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < fullMelody.size(); i++) {
 			Note n = fullMelody.get(i);
 			int pitch = n.getPitch();
+			if (pitch < 0) {
+				continue;
+			}
 			// remove all instances of B-F and F-B (the only interval of 6 within the key)
 			if (previousPitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
 				n.setPitch(pitch - 1);
