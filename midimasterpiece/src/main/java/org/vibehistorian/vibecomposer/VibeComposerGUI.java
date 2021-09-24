@@ -2629,7 +2629,7 @@ public class VibeComposerGUI extends JFrame
 		spiceAllowDimAugDom7th = new JCheckBox("Dim/Aug/Dom7", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceForceScale = new JCheckBox("Force Scale", true);
-		spiceParallelChance = new KnobPanel("Parallel", 5);
+		spiceParallelChance = new KnobPanel("Aeolian", 5);
 
 		firstChordSelection = new ScrollComboBox<String>();
 		firstChordSelection.addItem("?");
