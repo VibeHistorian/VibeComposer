@@ -166,6 +166,7 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
+import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -1810,6 +1811,11 @@ public class VibeComposerGUI extends JFrame
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
 			}
+		} else if (action.equalsIgnoreCase("ArrangementOpenPartInclusion")) {
+			ArrangementPartInclusionPopup aePopup = new ArrangementPartInclusionPopup(actualArrangement,
+					new Point(MouseInfo.getPointerInfo().getLocation().x,
+							vibeComposerGUI.getLocation().y),
+					vibeComposerGUI.getSize());
 		}
 
 		if (!refreshActual) {
@@ -1855,6 +1861,8 @@ public class VibeComposerGUI extends JFrame
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
 
 		JButton randomizeArrangementBtn = makeButton("Randomize:", "ArrangementRandomize");
+
+		JButton arrangementPartInclusionBtn = makeButton("Parts", "ArrangementOpenPartInclusion");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
@@ -2026,6 +2034,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 25);
 		arrangementSettings.add(arrangementPartVariationChance);
 		arrangementSettings.add(resetArrangementBtn);
+		arrangementSettings.add(arrangementPartInclusionBtn);
 
 		arrangementMiddleColoredPanel = new JPanel();
 		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
@@ -3001,7 +3010,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private static int countAllPanels() {
+	public static int countAllPanels() {
 		int count = 0;
 		for (int i = 0; i < 5; i++) {
 			count += getInstList(i).size();
@@ -3009,7 +3018,7 @@ public class VibeComposerGUI extends JFrame
 		return count;
 	}
 
-	private static int countAllIncludedPanels() {
+	public static int countAllIncludedPanels() {
 		int count = 0;
 		for (int i = 0; i < 5; i++) {
 			List<? extends InstPanel> panels = getInstList(i);

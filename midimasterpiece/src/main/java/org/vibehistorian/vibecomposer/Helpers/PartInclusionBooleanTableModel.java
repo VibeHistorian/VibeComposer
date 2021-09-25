@@ -4,9 +4,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.vibehistorian.vibecomposer.Popups.VariationPopup;
-
-public class BooleanTableModel extends AbstractTableModel {
+public class PartInclusionBooleanTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 8472479776056588708L;
 
@@ -35,12 +33,7 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int row, int column) {
-		if (VariationPopup.bannedInstVariations.get(part).contains(column)) {
-			return "X";
-		}
-		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
-			return Boolean.FALSE;
-		} else if (column == 0 && partNames != null && row < partNames.size()) {
+		if (column == 0 && partNames != null && row < partNames.size()) {
 			String data = String.valueOf(tableData[row][column]);
 			data += (". " + partNames.get(row));
 			return data;
@@ -56,29 +49,25 @@ public class BooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int column) {
-		if (VariationPopup.bannedInstVariations.get(part).contains(column)) {
-			tableData[row][column] = Boolean.FALSE;
+		tableData[row][column] = value;
+		if (column > 1 && value == Boolean.FALSE) {
+			tableData[row][1] = Boolean.FALSE;
 			fireTableDataChanged();
-			return;
-		}
-
-		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
-			if (value == Boolean.TRUE) {
+		} else if (column > 1 && value == Boolean.TRUE) {
+			boolean allFilled = true;
+			for (int i = 2; i < tableData[row].length; i++) {
+				allFilled &= (Boolean) tableData[row][i];
+			}
+			if (allFilled) {
 				tableData[row][1] = Boolean.TRUE;
-				tableData[row][column] = Boolean.TRUE;
-				fireTableDataChanged();
 			}
-		} else {
-			tableData[row][column] = value;
-			if (column == 1 && tableData[row][column] == Boolean.FALSE) {
-				for (int i = 2; i < tableData[row].length; i++) {
-					tableData[row][i] = Boolean.FALSE;
-				}
-				fireTableDataChanged();
+			fireTableDataChanged();
+		} else if (column == 1 && value == Boolean.TRUE) {
+			for (int i = 2; i < tableData[row].length; i++) {
+				tableData[row][i] = Boolean.TRUE;
 			}
-
+			fireTableDataChanged();
 		}
-
 	}
 
 	@Override
@@ -86,7 +75,8 @@ public class BooleanTableModel extends AbstractTableModel {
 		return column > 0;
 	}
 
-	public BooleanTableModel(int part, Object[][] data, String[] colNames, List<String> partNames) {
+	public PartInclusionBooleanTableModel(int part, Object[][] data, String[] colNames,
+			List<String> partNames) {
 		this.part = part;
 		tableData = data;
 		columnNames = colNames;

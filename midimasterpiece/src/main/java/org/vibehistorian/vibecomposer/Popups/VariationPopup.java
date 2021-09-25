@@ -37,7 +37,7 @@ import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
+import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
@@ -90,7 +90,7 @@ public class VariationPopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
 					.collect(Collectors.toList());
 
-			table.setModel(new BooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
+			table.setModel(new VariationsBooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
 					Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);

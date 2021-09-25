@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -149,6 +150,7 @@ public class Arrangement {
 	private boolean previewChorus = false;
 	private boolean overridden;
 	private int seed = 0;
+	private Map<Integer, Object[][]> partEnergyInclusionMap = new HashMap<>();
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -392,5 +394,30 @@ public class Arrangement {
 
 	public void setSeed(int seed) {
 		this.seed = seed;
+	}
+
+	public Map<Integer, Object[][]> getPartEnergyInclusionMap() {
+		return partEnergyInclusionMap;
+	}
+
+	public void setPartEnergyInclusionMap(Map<Integer, Object[][]> partEnergyInclusionMap) {
+		this.partEnergyInclusionMap = partEnergyInclusionMap;
+	}
+
+	public void initPartEnergyInclusionMap() {
+		int typesCount = 5;
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders.size()][typesCount];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < typesCount; k++) {
+					data[j][k] = Boolean.TRUE;
+				}
+			}
+			partEnergyInclusionMap.put(i, data);
+		}
 	}
 }

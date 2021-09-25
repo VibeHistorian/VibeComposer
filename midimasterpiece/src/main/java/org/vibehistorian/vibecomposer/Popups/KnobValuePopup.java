@@ -49,7 +49,7 @@ public class KnobValuePopup extends CloseablePopup {
 
 		frame.add(numPanel);
 		frame.pack();
-		//frame.setVisible(true);
+		frame.setVisible(true);
 
 	}
 
