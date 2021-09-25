@@ -2854,6 +2854,7 @@ public class MidiGenerator implements JMC {
 					boolean added = !mp.isMuted()
 							&& ((overridden && presences.contains(mp.getOrder()))
 									|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()));
+					added &= gc.getArrangement().getPartInclusion(0, i, notesSeedOffset);
 					if (!MAXIMIZE_CHORUS_MAIN_MELODY && melodyChanceMultiplier > 1) {
 						sec.setMelodyChance(oldChance);
 					}
@@ -2927,6 +2928,7 @@ public class MidiGenerator implements JMC {
 				Set<Integer> presences = sec.getPresence(1);
 				boolean added = (overridden && presences.contains(gc.getBassPart().getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
+				added &= gc.getArrangement().getPartInclusion(1, 0, notesSeedOffset);
 				if (added) {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
 					BassPart bp = gc.getBassPart();
@@ -2964,6 +2966,7 @@ public class MidiGenerator implements JMC {
 					variationGen.setSeed(arrSeed + 100 + cp.getOrder());
 					boolean added = (overridden && presences.contains(cp.getOrder()))
 							|| (!overridden && rand.nextInt(100) < sec.getChordChance());
+					added &= gc.getArrangement().getPartInclusion(2, i, notesSeedOffset);
 					if (added && !cp.isMuted()) {
 						if (i == 0) {
 							useChordSlash = true;
@@ -3006,7 +3009,7 @@ public class MidiGenerator implements JMC {
 					/* 
 							&& ap.getInstrument() == gc.getMelodyParts().get(0).getInstrument()*/
 
-
+					added &= gc.getArrangement().getPartInclusion(3, i, notesSeedOffset);
 					if (added) {
 						Phrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec,
 								variations);
@@ -3039,6 +3042,7 @@ public class MidiGenerator implements JMC {
 					boolean added = (overridden && presences.contains(dp.getOrder()))
 							|| (!overridden && rand.nextInt(100) < sec.getDrumChance()
 									* drumChanceMultiplier);
+					added &= gc.getArrangement().getPartInclusion(4, i, notesSeedOffset);
 					if (added && !dp.isMuted()) {
 						boolean sectionForcedDynamics = (sec.isClimax()) && variationGen
 								.nextInt(100) < gc.getArrangementPartVariationChance();

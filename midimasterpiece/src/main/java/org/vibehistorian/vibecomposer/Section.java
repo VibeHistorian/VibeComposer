@@ -510,11 +510,11 @@ public class Section {
 					|| type.startsWith("PREVIEW")) {
 				return 0;
 			}
-			if (type.startsWith("INTRO") || type.startsWith("OUTRO") || type.startsWith("BUILDUP")
-					|| type.startsWith("BREAKDOWN") || type.startsWith("CHILL")) {
+			if (type.startsWith("VERSE")) {
 				return 1;
 			}
-			if (type.startsWith("VERSE")) {
+			if (type.startsWith("INTRO") || type.startsWith("OUTRO") || type.startsWith("BUILDUP")
+					|| type.startsWith("BREAKDOWN") || type.startsWith("CHILL")) {
 				return 2;
 			} else {
 				return 0;

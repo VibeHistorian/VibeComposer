@@ -420,4 +420,18 @@ public class Arrangement {
 			partEnergyInclusionMap.put(i, data);
 		}
 	}
+
+	public void initPartEnergyInclusionMapIfNull() {
+		if (partEnergyInclusionMap.get(0) == null) {
+			initPartEnergyInclusionMap();
+		}
+	}
+
+	public boolean getPartInclusion(int part, int partOrder, int sectionType) {
+		initPartEnergyInclusionMapIfNull();
+		if (partEnergyInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
+			return true;
+		}
+		return false;
+	}
 }

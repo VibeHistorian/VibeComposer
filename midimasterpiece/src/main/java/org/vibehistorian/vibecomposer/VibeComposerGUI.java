@@ -1812,7 +1812,7 @@ public class VibeComposerGUI extends JFrame
 				pieceLength.setText("" + ++maxLength);
 			}
 		} else if (action.equalsIgnoreCase("ArrangementOpenPartInclusion")) {
-			ArrangementPartInclusionPopup aePopup = new ArrangementPartInclusionPopup(actualArrangement,
+			ArrangementPartInclusionPopup aePopup = new ArrangementPartInclusionPopup(arrangement,
 					new Point(MouseInfo.getPointerInfo().getLocation().x,
 							vibeComposerGUI.getLocation().y),
 					vibeComposerGUI.getSize());
