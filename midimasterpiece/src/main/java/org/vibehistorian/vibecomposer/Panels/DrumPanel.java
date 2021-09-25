@@ -38,6 +38,9 @@ public class DrumPanel extends InstPanel {
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 
+		this.add(chordSpanFillPanel);
+		chordSpanFill.setScrollEnabled(false);
+
 		// pattern business
 		this.add(hitsPerPattern);
 
@@ -67,10 +70,6 @@ public class DrumPanel extends InstPanel {
 		this.add(pauseChance);
 
 		this.add(swingPercent);
-		this.add(new JLabel("Fill"));
-		chordSpanFill.setScrollEnabled(false);
-		this.add(chordSpanFill);
-		this.add(fillFlip);
 
 		this.add(exceptionChance);
 

@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -55,9 +54,8 @@ public class ChordPanel extends InstPanel {
 		this.add(instPoolPicker);
 		addDefaultPanelButtons();
 
-		this.add(new JLabel("    Fill"));
-		this.add(chordSpanFill);
-		this.add(fillFlip);
+		this.add(chordSpanFillPanel);
+
 		this.add(strum);
 		this.add(strumType);
 		this.add(transpose);

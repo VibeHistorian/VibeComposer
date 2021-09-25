@@ -4,7 +4,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
@@ -35,6 +34,8 @@ public class ArpPanel extends InstPanel {
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 
+		this.add(chordSpanFillPanel);
+
 		this.add(hitsPerPattern);
 		this.add(pattern);
 		comboPanel = makeVisualPatternPanel();
@@ -44,10 +45,6 @@ public class ArpPanel extends InstPanel {
 
 		this.add(patternShift);
 		this.add(chordSpan);
-
-		this.add(new JLabel("Fill"));
-		this.add(chordSpanFill);
-		this.add(fillFlip);
 
 		this.add(patternRepeat);
 		//this.add(repeatableNotes);

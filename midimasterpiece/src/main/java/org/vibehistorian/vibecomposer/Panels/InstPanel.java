@@ -61,6 +61,7 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 	protected ScrollComboBox<ChordSpanFill> chordSpanFill = new ScrollComboBox<>();
 	protected CheckButton fillFlip = new CheckButton("~", false);
+	protected TransparentablePanel chordSpanFillPanel = new TransparentablePanel();
 
 	protected KnobPanel chordNotesStretch = new KnobPanel("Voices", 3, 2, 6);
 	protected CheckButton stretchEnabled = new CheckButton("", false);
@@ -137,6 +138,13 @@ public abstract class InstPanel extends JPanel {
 		stretchPanel.add(stretchEnabled);
 		stretchPanel.add(chordNotesStretch);
 
+		chordSpanFillPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		chordSpanFillPanel.setMaximumSize(new Dimension(3000, 50));
+		chordSpanFillPanel.add(new JLabel("Fill"));
+		chordSpanFillPanel.add(chordSpanFill);
+		chordSpanFill.setOpaque(false);
+		chordSpanFillPanel.add(fillFlip);
+
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);
 
@@ -195,6 +203,7 @@ public abstract class InstPanel extends JPanel {
 		delay.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
 		chordNotesStretch.addBackgroundWithBorder(OMNI.alphen(Color.PINK, 30));
 		stretchPanel.addBackground(OMNI.alphen(Color.PINK, 30));
+		chordSpanFillPanel.addBackground(OMNI.alphen(Color.green.brighter(), 40));
 		accents.addBackground(OMNI.alphen(Color.cyan, 40));
 	}
 
