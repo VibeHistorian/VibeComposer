@@ -4,12 +4,16 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,8 +31,9 @@ import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class ArrangementPartInclusionPopup extends CloseablePopup {
 
-	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "MELODIC",
+	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "VERSES",
 			"INSTRUMENTAL" };
+	public static final Integer[] ENERGY_WEIGHTS = new Integer[] { 50, 50, 50, 50 };
 
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
@@ -40,6 +45,9 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		super("Arrangement - Part Inclusion", 10);
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		addPartInclusionButtons(arr);
+
 
 		for (int i = 0; i < 5; i++) {
 			int fI = i;
@@ -118,6 +126,102 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		frame.pack();
 		frame.setVisible(true);
 		System.out.println("Opened arrangement part inclusion page!");
+	}
+
+	private void addPartInclusionButtons(Arrangement arr) {
+		JButton piRandomizer = new JButton("Randomize");
+
+		piRandomizer.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				randomizePartInclusions(arr);
+			}
+
+		});
+
+		JButton piFiller = new JButton("Fill All");
+
+		piFiller.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				emptyPartInclusions();
+				fillEmptyPartInclusions();
+			}
+
+		});
+
+		tablesPanel.add(piRandomizer);
+		tablesPanel.add(piFiller);
+
+		//JTextField weights = new JTextField("50,35,")
+
+	}
+
+	public void randomizePartInclusions(Arrangement arr) {
+		randomizePartInclusions(arr, null);
+	}
+
+	public void randomizePartInclusions(Arrangement arr, Integer seed) {
+		Random piRand = new Random();
+		if (seed != null) {
+			piRand.setSeed(seed);
+		}
+		emptyPartInclusions();
+		for (int i = 0; i < 5; i++) {
+			JTable tbl = tables[i];
+			for (int j = 0; j < tbl.getRowCount(); j++) {
+				for (int k = 0; k < ENERGY_WEIGHTS.length; k++) {
+					if (piRand.nextInt(100) < ENERGY_WEIGHTS[k]) {
+						tbl.getModel().setValueAt(Boolean.TRUE, j, k + 1);
+					}
+				}
+			}
+		}
+		fillEmptyPartInclusions();
+	}
+
+	public void emptyPartInclusions() {
+		for (int i = 0; i < 5; i++) {
+			JTable tbl = tables[i];
+			for (int j = 0; j < tbl.getRowCount(); j++) {
+				for (int k = 0; k < ENERGY_WEIGHTS.length; k++) {
+					tbl.getModel().setValueAt(Boolean.FALSE, j, k + 1);
+				}
+			}
+		}
+	}
+
+	public void fillEmptyPartInclusions() {
+		for (int i = 0; i < 5; i++) {
+			JTable tbl = tables[i];
+			for (int j = 0; j < tbl.getRowCount(); j++) {
+				boolean isEmpty = true;
+				for (int k = 0; k < ENERGY_WEIGHTS.length; k++) {
+					isEmpty &= !((Boolean) tbl.getModel().getValueAt(j, k + 1));
+				}
+				if (isEmpty) {
+					tbl.getModel().setValueAt(Boolean.TRUE, j, 1);
+				}
+			}
+		}
+		JTable melodyTbl = tables[0];
+		for (int j = 0; j < melodyTbl.getRowCount(); j++) {
+			melodyTbl.getModel().setValueAt(Boolean.TRUE, j, 2);
+		}
+
+		JTable bassTbl = tables[1];
+		for (int j = 0; j < bassTbl.getRowCount(); j++) {
+			bassTbl.getModel().setValueAt(Boolean.TRUE, j, 2);
+		}
+
+
+		JTable drumTbl = tables[4];
+		for (int j = 0; j < drumTbl.getRowCount(); j++) {
+			String name = (String) drumTbl.getValueAt(j, 0);
+			if (name.contains("KICK") || name.contains("SNARE")) {
+				drumTbl.getModel().setValueAt(Boolean.TRUE, j, 2);
+			}
+		}
 	}
 
 	@Override

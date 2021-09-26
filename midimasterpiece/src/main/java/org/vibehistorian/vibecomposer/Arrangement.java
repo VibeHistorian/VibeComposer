@@ -37,6 +37,7 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Section.SectionType;
+import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
@@ -405,7 +406,8 @@ public class Arrangement {
 	}
 
 	public void initPartEnergyInclusionMap() {
-		int typesCount = 5;
+		int typesCount = ArrangementPartInclusionPopup.ENERGY_LEVELS.length;
+
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
@@ -429,6 +431,9 @@ public class Arrangement {
 
 	public boolean getPartInclusion(int part, int partOrder, int sectionType) {
 		initPartEnergyInclusionMapIfNull();
+		if (isOverridden()) {
+			return true;
+		}
 		if (partEnergyInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
 			return true;
 		}
