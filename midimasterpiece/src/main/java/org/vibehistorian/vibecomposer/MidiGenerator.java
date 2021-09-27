@@ -2752,7 +2752,6 @@ public class MidiGenerator implements JMC {
 			List<Boolean> riskyVariations = calculateRiskyVariations(arr, secOrder, sec,
 					notesSeedOffset, variationGen);
 			System.out.println("Risky Variations: " + StringUtils.join(riskyVariations, ","));
-			int usedMeasures = sec.getMeasures();
 
 			// reset back to normal?
 			boolean sectionChordsReplaced = false;
@@ -2789,7 +2788,6 @@ public class MidiGenerator implements JMC {
 					&& riskyVariations.get(4);
 			if (riskyVariations.get(0) && !twoFiveOneChords) {
 				//System.out.println("Risky Variation: Skip N-1 Chord!");
-
 				skipN1Chord();
 			}
 
@@ -2801,9 +2799,9 @@ public class MidiGenerator implements JMC {
 					arrSeed, notesSeedOffset, isPreview, counter, arr);
 
 			fillMelodyPartsForSection(measureLength, overridden, sec, notesSeedOffset,
-					riskyVariations, usedMeasures, sectionChordsReplaced);
+					riskyVariations, sectionChordsReplaced);
 
-
+			// possible chord changes handled after melody parts are filled
 			if (twoFiveOneChanged) {
 				twoFiveOneChanged = false;
 				replaceFirstChordForTwoFiveOne(transToSet);
@@ -2818,8 +2816,8 @@ public class MidiGenerator implements JMC {
 				}
 			}
 
-			fillOtherPartsForSection(sec, arr, overridden, usedMeasures, riskyVariations,
-					variationGen, arrSeed, measureLength);
+			fillOtherPartsForSection(sec, arr, overridden, riskyVariations, variationGen, arrSeed,
+					measureLength);
 
 
 			if (sec.getRiskyVariations() == null) {
@@ -3036,8 +3034,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void fillMelodyPartsForSection(double measureLength, boolean overridden, Section sec,
-			int notesSeedOffset, List<Boolean> riskyVariations, int usedMeasures,
-			boolean sectionChordsReplaced) {
+			int notesSeedOffset, List<Boolean> riskyVariations, boolean sectionChordsReplaced) {
 		if (!gc.getMelodyParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(0);
@@ -3056,7 +3053,7 @@ public class MidiGenerator implements JMC {
 						//System.out.println("Risky Variation: Melody Swap!");
 					}
 					List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
-					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, usedMeasures,
+					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, sec.getMeasures(),
 							notesSeedOffset, sec, variations);
 
 					// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
@@ -3138,8 +3135,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void fillOtherPartsForSection(Section sec, Arrangement arr, boolean overridden,
-			int usedMeasures, List<Boolean> riskyVariations, Random variationGen, int arrSeed,
-			double measureLength) {
+			List<Boolean> riskyVariations, Random variationGen, int arrSeed, double measureLength) {
 		// copied into empty sections
 		Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
 		Phrase emptyPhrase = new Phrase();
@@ -3152,7 +3148,8 @@ public class MidiGenerator implements JMC {
 			if (added) {
 				List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
 				BassPart bp = gc.getBassPart();
-				Phrase b = fillBassFromPart(bp, rootProgression, usedMeasures, sec, variations);
+				Phrase b = fillBassFromPart(bp, rootProgression, sec.getMeasures(), sec,
+						variations);
 
 				if (bp.isDoubleOct()) {
 					Phrase b2 = b.copy();
@@ -3185,7 +3182,7 @@ public class MidiGenerator implements JMC {
 						useChordSlash = true;
 					}
 					List<Integer> variations = (overridden) ? sec.getVariation(2, i) : null;
-					Phrase c = fillChordsFromPart(cp, chordProgression, usedMeasures, sec,
+					Phrase c = fillChordsFromPart(cp, chordProgression, sec.getMeasures(), sec,
 							variations);
 
 					copiedPhrases.add(c);
@@ -3195,7 +3192,7 @@ public class MidiGenerator implements JMC {
 			}
 			sec.setChords(copiedPhrases);
 			if (useChordSlash) {
-				sec.setChordSlash(fillChordSlash(chordProgression, usedMeasures));
+				sec.setChordSlash(fillChordSlash(chordProgression, sec.getMeasures()));
 			} else {
 				sec.setChordSlash(emptyPhrase.copy());
 			}
@@ -3211,7 +3208,8 @@ public class MidiGenerator implements JMC {
 				List<Integer> variations = (overridden) ? sec.getVariation(3, i) : null;
 				boolean added = presences.contains(ap.getOrder());
 				if (added) {
-					Phrase a = fillArpFromPart(ap, chordProgression, usedMeasures, sec, variations);
+					Phrase a = fillArpFromPart(ap, chordProgression, sec.getMeasures(), sec,
+							variations);
 
 					copiedPhrases.add(a);
 				} else {
@@ -3233,7 +3231,7 @@ public class MidiGenerator implements JMC {
 					boolean sectionForcedDynamics = (sec.isClimax())
 							&& variationGen.nextInt(100) < gc.getArrangementPartVariationChance();
 					List<Integer> variations = (overridden) ? sec.getVariation(4, i) : null;
-					Phrase d = fillDrumsFromPart(dp, chordProgression, usedMeasures,
+					Phrase d = fillDrumsFromPart(dp, chordProgression, sec.getMeasures(),
 							sectionForcedDynamics, sec, variations);
 
 					copiedPhrases.add(d);
