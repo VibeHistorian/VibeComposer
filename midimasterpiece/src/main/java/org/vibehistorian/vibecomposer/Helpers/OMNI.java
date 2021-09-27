@@ -2,10 +2,12 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
+	public static final List<Integer> PART_INTS = Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 });
 
 	public static Color alphen(Color c, int alphaValue) {
 		Color newC = new Color(c.getRed(), c.getGreen(), c.getBlue(), alphaValue);

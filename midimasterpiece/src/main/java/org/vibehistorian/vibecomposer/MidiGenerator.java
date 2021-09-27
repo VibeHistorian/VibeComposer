@@ -2798,6 +2798,10 @@ public class MidiGenerator implements JMC {
 			calculatePresencesForSection(sec, rand, variationGen, overridden, riskyVariations,
 					arrSeed, notesSeedOffset, isPreview, counter, arr);
 
+			if (!overridden && secOrder > 1) {
+				adjustArrangementPresencesIfNeeded(sec, arr.getSections().get(secOrder - 1));
+			}
+
 			fillMelodyPartsForSection(measureLength, overridden, sec, notesSeedOffset,
 					riskyVariations, sectionChordsReplaced);
 
@@ -3033,6 +3037,63 @@ public class MidiGenerator implements JMC {
 		System.out.println("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
+	private List<Boolean> calculateRiskyVariations(Arrangement arr, int secOrder, Section sec,
+			int notesSeedOffset, Random variationGen) {
+		List<Boolean> riskyVariations = sec.getRiskyVariations();
+		if (riskyVariations == null) {
+			riskyVariations = new ArrayList<>();
+			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
+				boolean isVariation = variationGen
+						.nextInt(100) < (gc.getArrangementVariationChance()
+								* Section.riskyVariationChanceMultipliers[i]);
+				// generate only if not last AND next section is same type
+				if (i == 0 || i == 4) {
+					isVariation &= (secOrder < arr.getSections().size() - 1
+							&& arr.getSections().get(secOrder + 1).getType().equals(sec.getType()));
+				}
+				// generate only for non-critical sections with offset > 0
+				if (i == 1 || i == 2 || i == 4) {
+					isVariation &= notesSeedOffset > 0;
+				}
+	
+				// transitionFast - from offset > 0 to offset == 0
+				if (i == 5) {
+					isVariation &= (secOrder < arr.getSections().size() - 1
+							&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
+							&& notesSeedOffset > 0);
+				}
+				// transitionSlow - from offset > 0 to offset == 0
+				if (i == 6) {
+					isVariation &= (secOrder < arr.getSections().size() - 1
+							&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() > 0
+							&& notesSeedOffset == 0);
+				}
+				// transitionCut - anywhere, but only if 5 and 6 not generated
+				if (i == 7) {
+					isVariation &= (!riskyVariations.get(5) && !riskyVariations.get(6));
+				}
+	
+	
+				riskyVariations.add(isVariation);
+			}
+		}
+		return riskyVariations;
+	}
+
+	private void adjustArrangementPresencesIfNeeded(Section sec, Section prevSec) {
+		int currentSecEnergy = sec.getTypeMelodyOffset();
+		int prevSecEnergy = prevSec.getTypeMelodyOffset();
+		if (currentSecEnergy == prevSecEnergy) {
+			return;
+		}
+	
+		// compare presences and adjust using part inclusions
+		int currentPresCount = OMNI.PART_INTS.stream().map(e -> sec.countPresence(e))
+				.mapToInt(e -> e).sum();
+		int prevPresCount = OMNI.PART_INTS.stream().map(e -> prevSec.countPresence(e))
+				.mapToInt(e -> e).sum();
+	}
+
 	private void fillMelodyPartsForSection(double measureLength, boolean overridden, Section sec,
 			int notesSeedOffset, List<Boolean> riskyVariations, boolean sectionChordsReplaced) {
 		if (!gc.getMelodyParts().isEmpty()) {
@@ -3089,49 +3150,6 @@ public class MidiGenerator implements JMC {
 			}
 			sec.setMelodies(copiedPhrases);
 		}
-	}
-
-	private List<Boolean> calculateRiskyVariations(Arrangement arr, int secOrder, Section sec,
-			int notesSeedOffset, Random variationGen) {
-		List<Boolean> riskyVariations = sec.getRiskyVariations();
-		if (riskyVariations == null) {
-			riskyVariations = new ArrayList<>();
-			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-				boolean isVariation = variationGen
-						.nextInt(100) < (gc.getArrangementVariationChance()
-								* Section.riskyVariationChanceMultipliers[i]);
-				// generate only if not last AND next section is same type
-				if (i == 0 || i == 4) {
-					isVariation &= (secOrder < arr.getSections().size() - 1
-							&& arr.getSections().get(secOrder + 1).getType().equals(sec.getType()));
-				}
-				// generate only for non-critical sections with offset > 0
-				if (i == 1 || i == 2 || i == 4) {
-					isVariation &= notesSeedOffset > 0;
-				}
-
-				// transitionFast - from offset > 0 to offset == 0
-				if (i == 5) {
-					isVariation &= (secOrder < arr.getSections().size() - 1
-							&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
-							&& notesSeedOffset > 0);
-				}
-				// transitionSlow - from offset > 0 to offset == 0
-				if (i == 6) {
-					isVariation &= (secOrder < arr.getSections().size() - 1
-							&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() > 0
-							&& notesSeedOffset == 0);
-				}
-				// transitionCut - anywhere, but only if 5 and 6 not generated
-				if (i == 7) {
-					isVariation &= (!riskyVariations.get(5) && !riskyVariations.get(6));
-				}
-
-
-				riskyVariations.add(isVariation);
-			}
-		}
-		return riskyVariations;
 	}
 
 	private void fillOtherPartsForSection(Section sec, Arrangement arr, boolean overridden,
