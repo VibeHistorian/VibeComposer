@@ -128,7 +128,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiGenerator.ShowScoreMode;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
@@ -1142,8 +1141,8 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = new MelodyPanel(this);
 			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
-			melodyPanel.setInstPool(POOL.ALL);
-			melodyPanel.getInstrumentBox().initInstPool(POOL.ALL);
+			//melodyPanel.setInstPool(POOL.ALL);
+			//melodyPanel.getInstrumentBox().initInstPool(POOL.ALL);
 			melodyPanel.setInstrument(8);
 			melodyPanel.setFillPauses(true);
 			melodyPanels.add(melodyPanel);
@@ -1812,6 +1811,7 @@ public class VibeComposerGUI extends JFrame
 				pieceLength.setText("" + ++maxLength);
 			}
 		} else if (action.equalsIgnoreCase("ArrangementOpenPartInclusion")) {
+			arrangement.recalculatePartInclusionMapBoundsIfNeeded();
 			ArrangementPartInclusionPopup aePopup = new ArrangementPartInclusionPopup(arrangement,
 					new Point(MouseInfo.getPointerInfo().getLocation().x,
 							vibeComposerGUI.getLocation().y),
@@ -1850,7 +1850,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
 
-		useArrangement = new JCheckBox("ARRANGEMENT", false);
+		useArrangement = new JCheckBox("ARRANGE", false);
 		arrangementSettings.add(useArrangement);
 
 

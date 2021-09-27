@@ -54,17 +54,19 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-			if (arr.getPartEnergyInclusionMap().get(i) == null) {
-				arr.initPartEnergyInclusionMap();
+			if (arr.getPartInclusionMap() == null) {
+				arr.initPartInclusionMap();
+			}
+			if (arr.getPartInclusionMap().get(i) == null) {
+				arr.initPartInclusionMap();
 			}
 
 			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
 					.collect(Collectors.toList());
 
-			table.setModel(new PartInclusionBooleanTableModel(fI,
-					arr.getPartEnergyInclusionMap().get(i), ENERGY_LEVELS, partNames));
+			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getPartInclusionMap().get(i),
+					ENERGY_LEVELS, partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

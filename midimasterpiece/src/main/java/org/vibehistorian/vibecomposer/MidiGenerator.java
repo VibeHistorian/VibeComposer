@@ -2709,6 +2709,7 @@ public class MidiGenerator implements JMC {
 			if (overridden) {
 				sec.recalculatePartVariationMapBoundsIfNeeded();
 			}
+			gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
 			sec.setSectionDuration(-1);
 			sec.setSectionBeatDurations(null);
 			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);

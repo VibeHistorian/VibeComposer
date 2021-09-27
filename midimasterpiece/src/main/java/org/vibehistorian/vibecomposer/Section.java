@@ -65,8 +65,8 @@ public class Section {
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
 			"Swap Melody", "Melody Pause Squish", "Key Change", "TransitionFast", "TransitionSlow",
 			"TransitionCut" };
-	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 1.0, 0.7, 1.0, 1.0, 1.5,
-			1.75, 1.0 };
+	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.5, 0.7, 1.0, 1.0, 1.5,
+			1.75, 0.7 };
 
 	public static final int VARIATION_CHANCE = 30;
 

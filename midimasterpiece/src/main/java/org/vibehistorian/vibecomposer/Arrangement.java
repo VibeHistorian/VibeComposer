@@ -151,7 +151,7 @@ public class Arrangement {
 	private boolean previewChorus = false;
 	private boolean overridden;
 	private int seed = 0;
-	private Map<Integer, Object[][]> partEnergyInclusionMap = new HashMap<>();
+	private Map<Integer, Object[][]> partInclusionMap = new HashMap<>();
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -397,15 +397,15 @@ public class Arrangement {
 		this.seed = seed;
 	}
 
-	public Map<Integer, Object[][]> getPartEnergyInclusionMap() {
-		return partEnergyInclusionMap;
+	public Map<Integer, Object[][]> getPartInclusionMap() {
+		return partInclusionMap;
 	}
 
-	public void setPartEnergyInclusionMap(Map<Integer, Object[][]> partEnergyInclusionMap) {
-		this.partEnergyInclusionMap = partEnergyInclusionMap;
+	public void setPartInclusionMap(Map<Integer, Object[][]> partInclusionMap) {
+		this.partInclusionMap = partInclusionMap;
 	}
 
-	public void initPartEnergyInclusionMap() {
+	public void initPartInclusionMap() {
 		int typesCount = ArrangementPartInclusionPopup.ENERGY_LEVELS.length;
 
 		for (int i = 0; i < 5; i++) {
@@ -419,24 +419,76 @@ public class Arrangement {
 					data[j][k] = Boolean.TRUE;
 				}
 			}
-			partEnergyInclusionMap.put(i, data);
+			partInclusionMap.put(i, data);
 		}
 	}
 
-	public void initPartEnergyInclusionMapIfNull() {
-		if (partEnergyInclusionMap.get(0) == null) {
-			initPartEnergyInclusionMap();
+	public void initPartInclusionMapIfNull() {
+		if (partInclusionMap.get(0) == null) {
+			initPartInclusionMap();
 		}
 	}
 
 	public boolean getPartInclusion(int part, int partOrder, int sectionType) {
-		initPartEnergyInclusionMapIfNull();
+		initPartInclusionMapIfNull();
 		if (isOverridden()) {
 			return true;
 		}
-		if (partEnergyInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
+		if (partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
 			return true;
 		}
 		return false;
+	}
+
+	public void recalculatePartInclusionMapBoundsIfNeeded() {
+		if (getPartInclusionMap() == null) {
+			initPartInclusionMap();
+			return;
+		}
+		boolean needsArrayCopy = false;
+		for (int i = 0; i < 5; i++) {
+			int actualInstCount = VibeComposerGUI.getInstList(i).size();
+			if (getPartInclusionMap().get(i) == null) {
+				initPartInclusionMap();
+			}
+			int secInstCount = getPartInclusionMap().get(i).length;
+			if (secInstCount != actualInstCount) {
+				needsArrayCopy = true;
+				break;
+			}
+		}
+		if (needsArrayCopy) {
+			initPartInclusionMapFromOldData();
+		}
+
+	}
+
+	private void initPartInclusionMapFromOldData() {
+		if (getPartInclusionMap() == null) {
+			initPartInclusionMap();
+			return;
+		}
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders
+					.size()][ArrangementPartInclusionPopup.ENERGY_LEVELS.length];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < ArrangementPartInclusionPopup.ENERGY_LEVELS.length; k++) {
+					data[j][k] = getBooleanFromOldData(getPartInclusionMap().get(i), j, k);
+				}
+			}
+			getPartInclusionMap().put(i, data);
+		}
+	}
+
+	private Object getBooleanFromOldData(Object[][] oldData, int j, int k) {
+		if (oldData.length <= j || oldData[j].length <= k) {
+			return Boolean.TRUE;
+		} else {
+			return (Boolean) oldData[j][k];
+		}
 	}
 }
