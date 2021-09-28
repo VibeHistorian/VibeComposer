@@ -889,7 +889,7 @@ public class MidiGenerator implements JMC {
 			durationBuckets.add(timeForHit * i - 0.01);
 			pattern.add(0);
 		}
-		pattern.set(0, (notes.get(0).getPitch() < 0) ? 0 : 1);
+		pattern.set(0, (notes.size() > 0 && notes.get(0).getPitch() < 0) ? 0 : 1);
 		double currentDuration = 0;
 		int explored = 0;
 		for (Note n : notes) {
@@ -1449,9 +1449,7 @@ public class MidiGenerator implements JMC {
 		int maxVel = multiplyVelocity(mp.getVelocityMax(), volMultiplier, 1, 0);
 
 		int[] pitches = new int[12];
-		int[] chordSeparators = new int[durations.size() * measures + 1];
 		int chordSepIndex = 0;
-		chordSeparators[chordSepIndex++] = 0;
 
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
@@ -1471,7 +1469,6 @@ public class MidiGenerator implements JMC {
 				//pauseGenerator2.setSeed(seed + 7);
 				splitNoteGenerator.setSeed(orderSeed + 8);
 				splitNoteExceptionGenerator.setSeed(orderSeed + 9);
-				chordSeparators[chordSepIndex++] = fullMelody.size() + 1;
 			}
 
 			int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
@@ -1541,11 +1538,6 @@ public class MidiGenerator implements JMC {
 				fullMelodyMap.get(chordCounter).add(n1);
 			}
 		}
-		if (chordSepIndex >= chordSeparators.length) {
-			System.out.println("CHORD SEPARATORS ALREADY FULL!");
-		} else {
-			chordSeparators[chordSepIndex] = fullMelody.size();
-		}
 
 
 		// pause by %, sort not-paused into pitches
@@ -1576,24 +1568,30 @@ public class MidiGenerator implements JMC {
 
 			Note fillPauseNote = fullMelody.get(0);
 			double addedDuration = 0;
+			List<Note> notesToRemove = new ArrayList<>();
 			for (int i = 1; i < fullMelody.size(); i++) {
 				Note n = fullMelody.get(i);
 				if (n.getPitch() < 0) {
 					addedDuration += n.getRhythmValue();
+					notesToRemove.add(n);
 				} else {
 					fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
+					fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedDuration);
 					addedDuration = 0;
 					fillPauseNote = n;
 				}
 			}
+			fullMelody.removeAll(notesToRemove);
+			fullMelodyMap.values().forEach(e -> e.removeAll(notesToRemove));
+
 			if (addedDuration > 0.01) {
 				fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
 			}
 		}
 
 
-		applyNoteTargets(fullMelody, fullMelodyMap, pitches, chordSeparators, notesSeedOffset,
-				chords, noteTargetGenerator);
+		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords,
+				noteTargetGenerator);
 
 		applyBadIntervalRemoval(fullMelody);
 
@@ -1612,14 +1610,20 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void applyNoteTargets(List<Note> fullMelody, Map<Integer, List<Note>> fullMelodyMap,
-			int[] pitches, int[] chordSeparators, int notesSeedOffset, List<int[]> chords,
-			Random noteTargetGenerator) {
+			int[] pitches, int notesSeedOffset, List<int[]> chords, Random noteTargetGenerator) {
 		// --------- NOTE ADJUSTING ----------------
 		double requiredPercentageCs = gc.getMelodyTonicNoteTarget() / 100.0;
 		int needed = (int) Math.floor(
 				fullMelody.stream().filter(e -> e.getPitch() >= 0).count() * requiredPercentageCs);
 		System.out.println("Found C's: " + pitches[0] + ", needed: " + needed);
 		int surplusTonics = pitches[0] - needed;
+
+		int[] chordSeparators = new int[fullMelodyMap.keySet().size() + 1];
+		chordSeparators[0] = 0;
+		for (Integer i : fullMelodyMap.keySet()) {
+			int index = i + 1;
+			chordSeparators[index] = fullMelodyMap.get(i).size() + chordSeparators[index - 1];
+		}
 
 		if (gc.getMelodyTonicNoteTarget() > 0 && notesSeedOffset == 0) {
 			// for main sections: try to adjust notes towards C if there isn't enough C's
