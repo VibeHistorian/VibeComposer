@@ -1050,7 +1050,7 @@ public class VibeComposerGUI extends JFrame
 		melodyBlockTargetMode.setSelectedIndex(2);
 		melodyTargetNotesRandomizeOnCompose = new JCheckBox(
 				"<html>Randomize Targets<br> on Compose</html>", true);
-		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
+		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 1, 0, 2);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
