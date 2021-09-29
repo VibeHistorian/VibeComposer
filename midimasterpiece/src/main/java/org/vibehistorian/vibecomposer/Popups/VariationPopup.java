@@ -37,9 +37,9 @@ import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
@@ -72,6 +72,7 @@ public class VariationPopup {
 
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame);
 
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
@@ -90,8 +91,9 @@ public class VariationPopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
 					.collect(Collectors.toList());
 
-			table.setModel(new VariationsBooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
-					Section.variationDescriptions[i], partNames));
+			table.setModel(
+					new VariationsBooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
+							Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -218,8 +220,7 @@ public class VariationPopup {
 
 		typeAndMeasuresPanel.add(new JLabel("Measures"));
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO },
-				measureCombo);
+		ScrollComboBox.addAll(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO }, measureCombo);
 		measureCombo.setVal(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {
 

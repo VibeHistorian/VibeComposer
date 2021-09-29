@@ -45,6 +45,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		super("Arrangement - Part Inclusion", 10);
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame);
 
 		addPartInclusionButtons(arr);
 
