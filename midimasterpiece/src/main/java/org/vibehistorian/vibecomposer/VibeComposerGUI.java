@@ -956,12 +956,13 @@ public class VibeComposerGUI extends JFrame
 
 		});
 		extraSettingsPanel.add(butt);
-		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", true);
+		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
 		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				for (DrumPanel dp : drumPanels) {
+					dp.setVisible(false);
 					((JPanel) getInstPane(4).getViewport().getView()).remove(dp);
 
 				}
@@ -974,9 +975,8 @@ public class VibeComposerGUI extends JFrame
 					} else {
 						((JPanel) getInstPane(4).getViewport().getView()).add(dp, 2);
 					}
+					dp.setVisible(true);
 				}
-
-
 			}
 		});
 		extraSettingsPanel.add(extraSettingsReverseDrumPanels);
