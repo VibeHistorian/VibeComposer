@@ -362,6 +362,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox pauseBehaviorBarCheckbox;
 	public static JCheckBox pauseBehaviorPlayheadCheckbox;
 	public static JCheckBox playheadSnapToBeatsCheckBox;
+	JCheckBox extraSettingsReverseDrumPanels;
 
 
 	// add/skip instruments
@@ -955,6 +956,30 @@ public class VibeComposerGUI extends JFrame
 
 		});
 		extraSettingsPanel.add(butt);
+		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", true);
+		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				for (DrumPanel dp : drumPanels) {
+					((JPanel) getInstPane(4).getViewport().getView()).remove(dp);
+
+				}
+				List<DrumPanel> sortedDps = new ArrayList<>(drumPanels);
+				Collections.sort(sortedDps,
+						(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+				for (DrumPanel dp : sortedDps) {
+					if (!extraSettingsReverseDrumPanels.isSelected()) {
+						((JPanel) getInstPane(4).getViewport().getView()).add(dp);
+					} else {
+						((JPanel) getInstPane(4).getViewport().getView()).add(dp, 2);
+					}
+				}
+
+
+			}
+		});
+		extraSettingsPanel.add(extraSettingsReverseDrumPanels);
 
 		initHelperPopups();
 	}
@@ -5729,7 +5754,14 @@ public class VibeComposerGUI extends JFrame
 		ip.setPanelOrder(panelOrder);
 
 		affectedPanels.add(ip);
-		((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
+
+
+		if (inst < 4 || !extraSettingsReverseDrumPanels.isSelected()) {
+			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
+		} else {
+			((JPanel) getInstPane(inst).getViewport().getView()).add(ip,
+					affectedPanels.size() - panelOrder + 2);
+		}
 		return ip;
 	}
 

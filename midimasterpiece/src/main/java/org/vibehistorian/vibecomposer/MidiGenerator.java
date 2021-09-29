@@ -460,28 +460,32 @@ public class MidiGenerator implements JMC {
 					}
 
 					List<Double> sortedDurs = new ArrayList<>(mb.durations);
-					if (gc.isMelodyEmphasizeKey()) {
-						// re-order durations to make most relevant notes the longest
-						for (int k = 0; k < mb.durations.size(); k++) {
-							for (int l = 0; l < mb.durations.size(); l++) {
-								if (!pitches.get(k).equals(pitches.get(l))) {
-									boolean swap = false;
-									if (MidiUtils.relevancyOrder
-											.indexOf(pitches.get(k) % 12) < MidiUtils.relevancyOrder
-													.indexOf(pitches.get(l) % 12)) {
-										swap = sortedDurs.get(k) + 0.01 < sortedDurs.get(l);
-									} else {
-										swap = sortedDurs.get(k) - 0.01 > sortedDurs.get(l);
-									}
-									if (swap) {
-										double temp = sortedDurs.get(k);
-										sortedDurs.set(k, sortedDurs.get(l));
-										sortedDurs.set(l, temp);
+					if (existingPattern == null) {
+						if (gc.isMelodyEmphasizeKey()) {
+							// re-order durations to make most relevant notes the longest
+							for (int k = 0; k < mb.durations.size(); k++) {
+								for (int l = 0; l < mb.durations.size(); l++) {
+									if (!pitches.get(k).equals(pitches.get(l))) {
+										boolean swap = false;
+										if (MidiUtils.relevancyOrder.indexOf(
+												pitches.get(k) % 12) < MidiUtils.relevancyOrder
+														.indexOf(pitches.get(l) % 12)) {
+											swap = sortedDurs.get(k) + 0.01 < sortedDurs.get(l);
+										} else {
+											swap = sortedDurs.get(k) - 0.01 > sortedDurs.get(l);
+										}
+										if (swap) {
+											double temp = sortedDurs.get(k);
+											sortedDurs.set(k, sortedDurs.get(l));
+											sortedDurs.set(l, temp);
+										}
 									}
 								}
 							}
+							mb.durations = sortedDurs;
 						}
 					}
+
 
 					//System.out.println(StringUtils.join(mb.durations, ","));
 					//System.out.println("After: " + StringUtils.join(sortedDurs, ","));
