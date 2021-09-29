@@ -26,10 +26,21 @@ public class MelodyUtils {
 
 	public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP = new HashMap<>();
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
+	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 
 	public static final int NUM_LISTS = 3;
 
 	static {
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 1, 0 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 0 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 3 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
+
+
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
 
 		SCALEY.add(new Integer[] { 0, 1, 2 });
@@ -90,16 +101,14 @@ public class MelodyUtils {
 	}
 
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
-		List<Integer[]> usedList = getBlocksForType(
-				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
+		List<Integer[]> usedList = getBlocksForType(type);
 		int rand2 = melodyBlockGenerator.nextInt(usedList.size());
 		return usedList.get(rand2);
 	}
 
 	public static Integer[] getRandomForTypeAndLength(Integer type, Random melodyBlockGenerator,
 			int length) {
-		List<Integer[]> usedList = getBlocksForType(
-				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
+		List<Integer[]> usedList = getBlocksForType(type);
 		List<Integer[]> filteredList = usedList.stream().filter(e -> e.length == length)
 				.collect(Collectors.toList());
 		if (filteredList.size() == 0) {
@@ -111,8 +120,7 @@ public class MelodyUtils {
 
 	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
 			int length, Random melodyBlockGenerator, int approx) {
-		List<Integer[]> usedList = getBlocksForType(
-				(type != null) ? type : melodyBlockGenerator.nextInt(NUM_LISTS));
+		List<Integer[]> usedList = getBlocksForType(type);
 		// length fits, note distance and distance roughly equal (diff < approx)
 		List<Integer[]> filteredList = usedList.stream()
 				.filter(e -> (e.length == length)
@@ -156,11 +164,25 @@ public class MelodyUtils {
 			viableBlocks.addAll(invertedBlocks);
 		}
 		//viableBlocks.forEach(e -> System.out.println(StringUtils.join(e, ',')));
+		if (viableBlocks.size() == 0) {
+			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
+					melodyBlockGenerator, 4);
+			return Pair.of(blockOfList(block), block);
+		}
 		return viableBlocks.get(melodyBlockGenerator.nextInt(viableBlocks.size()));
 
 	}
 
-	public static List<Integer[]> getBlocksForType(int type) {
+	public static List<Integer[]> getBlocksForType(Integer type) {
+		if (type == null) {
+			List<Integer[]> blocks = new ArrayList<>();
+			blocks.addAll(SCALEY);
+			blocks.addAll(NEIGHBORY);
+			blocks.addAll(ARPY);
+			blocks.addAll(CHORDY);
+			return blocks;
+		}
+
 		switch (type) {
 		case 0:
 			return new ArrayList<>(SCALEY);
@@ -252,5 +274,9 @@ public class MelodyUtils {
 			return 3;
 		}
 		throw new IllegalArgumentException("Unknown block!");
+	}
+
+	public static List<Integer> getRandomMelodyPattern() {
+		return new ArrayList<>(MELODY_PATTERNS.get(new Random().nextInt(MELODY_PATTERNS.size())));
 	}
 }

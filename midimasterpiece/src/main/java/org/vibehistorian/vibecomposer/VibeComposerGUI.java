@@ -400,6 +400,8 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyPatternFlip;
 	ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
+	ScrollComboBox<String> melodyPatternEffect;
+	JCheckBox melodyPatternRandomizeOnCompose;
 	KnobPanel melodyReplaceAvoidNotes;
 
 	// bass gen settings
@@ -1048,12 +1050,12 @@ public class VibeComposerGUI extends JFrame
 		JPanel melodySettingsExtraPanelsHolder = new JPanel();
 		melodySettingsExtraPanelsHolder.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelsHolder.setLayout(new GridLayout(0, 1, 0, 0));
-		melodySettingsExtraPanelsHolder.setMaximumSize(new Dimension(1800, 100));
+		melodySettingsExtraPanelsHolder.setMaximumSize(new Dimension(1800, 150));
 
 		JPanel melodySettingsExtraPanelShape = new JPanel();
 		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelShape.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS+");
+		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS");
 		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
 		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
@@ -1075,6 +1077,13 @@ public class VibeComposerGUI extends JFrame
 		melodyBlockTargetMode.setSelectedIndex(2);
 		melodyTargetNotesRandomizeOnCompose = new JCheckBox(
 				"<html>Randomize Targets<br> on Compose</html>", true);
+		melodyPatternEffect = new ScrollComboBox<>();
+		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" },
+				melodyPatternEffect);
+		melodyPatternEffect.setSelectedIndex(2);
+		melodyPatternRandomizeOnCompose = new JCheckBox(
+				"<html>Randomize Pattern<br> on Compose</html>", true);
+
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 1, 0, 2);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
@@ -1086,10 +1095,23 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		//melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
-		melodySettingsExtraPanelShape.add(melodyUseDirectionsFromProgression);
-		melodySettingsExtraPanelShape.add(new JLabel("Target Mode"));
-		melodySettingsExtraPanelShape.add(melodyBlockTargetMode);
-		melodySettingsExtraPanelShape.add(melodyTargetNotesRandomizeOnCompose);
+
+		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
+		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
+		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS+");
+		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
+		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
+
+
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Target Mode"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
 
 		JPanel melodySettingsExtraPanelOrg = new JPanel();
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1152,6 +1174,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(userMelodyScaleModeSelect);
 
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelShape);
+		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelBlocksPatternsCompose);
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelOrg);
 
 
@@ -3463,6 +3486,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementResetCustomPanelsOnCompose.setSelected(state);
 		randomizeScaleModeOnCompose.setSelected(state);
 		melodyTargetNotesRandomizeOnCompose.setSelected(state);
+		melodyPatternRandomizeOnCompose.setSelected(state);
 
 	}
 
@@ -3873,11 +3897,11 @@ public class VibeComposerGUI extends JFrame
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
-		} else {
-			/*arrangement.resortByIndexes(scrollableArrangementTable);
-			if (actualArrangement.getSections().size() > 1) {
-				actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-			}*/
+		}
+
+		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
+			List<Integer> melodyPattern = MelodyUtils.getRandomMelodyPattern();
+			melodyPanels.forEach(e -> e.setMelodyPatternOffsets(melodyPattern));
 		}
 
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
@@ -4400,14 +4424,14 @@ public class VibeComposerGUI extends JFrame
 		InstComboBox.BANNED_INSTS.clear();
 		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(bannedInsts.getText().split(",")));
 
-		{
+		/*{
 			int inst = melodyPanels.get(0).getInstrument();
 			melodyPanels.get(0).getInstrumentBox().initInstPool(melodyPanels.get(0).getInstPool());
 			melodyPanels.get(0).getInstrumentBox().setInstrument(inst);
 			inst = bassPanel.getInstrument();
 			bassPanel.getInstrumentBox().initInstPool(bassPanel.getInstPool());
 			bassPanel.getInstrumentBox().setInstrument(inst);
-		}
+		}*/
 
 
 		if (ae.getActionCommand() == "InitAllInsts") {
@@ -4416,8 +4440,14 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				InstUtils.initNormalInsts();
 			}
-			melodyPanels.forEach(e -> e.getInstrumentBox().initInstPool(InstUtils.POOL.PLUCK));
+			//melodyPanels.forEach(e -> e.getInstrumentBox().initInstPool(InstUtils.POOL.PLUCK));
+			//bassPanel.getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
+			int inst = melodyPanels.get(0).getInstrument();
+			melodyPanels.get(0).getInstrumentBox().initInstPool(InstUtils.POOL.PLUCK);
+			melodyPanels.get(0).getInstrumentBox().setInstrument(inst);
+			inst = bassPanel.getInstrument();
 			bassPanel.getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
+			bassPanel.getInstrumentBox().setInstrument(inst);
 		}
 
 		if (ae.getActionCommand() == "RandStrums" || (ae.getActionCommand() == "Compose"
@@ -5539,6 +5569,7 @@ public class VibeComposerGUI extends JFrame
 				melodyUseDirectionsFromProgression.isSelected());
 		guiConfig.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
 		guiConfig.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
+		guiConfig.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
 		guiConfig.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
 
 
@@ -5649,6 +5680,7 @@ public class VibeComposerGUI extends JFrame
 		melodyUseDirectionsFromProgression
 				.setSelected(guiConfig.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(guiConfig.getMelodyBlockTargetMode());
+		melodyPatternEffect.setSelectedIndex(guiConfig.getMelodyPatternEffect());
 		melodyReplaceAvoidNotes.setInt(guiConfig.getMelodyReplaceAvoidNotes());
 
 		// chords

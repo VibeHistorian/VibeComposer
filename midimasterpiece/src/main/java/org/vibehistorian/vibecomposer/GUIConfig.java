@@ -83,6 +83,7 @@ public class GUIConfig {
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
 	private int melodyBlockTargetMode = 2;
+	private int melodyPatternEffect = 2;
 
 	// chord gen
 	private int chordSlashChance = 0;
@@ -631,6 +632,14 @@ public class GUIConfig {
 
 	public void setSpiceParallelChance(int spiceParallelChance) {
 		this.spiceParallelChance = spiceParallelChance;
+	}
+
+	public int getMelodyPatternEffect() {
+		return melodyPatternEffect;
+	}
+
+	public void setMelodyPatternEffect(int melodyPatternEffect) {
+		this.melodyPatternEffect = melodyPatternEffect;
 	}
 
 }
