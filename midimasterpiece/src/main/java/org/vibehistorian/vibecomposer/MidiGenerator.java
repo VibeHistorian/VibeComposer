@@ -2359,7 +2359,7 @@ public class MidiGenerator implements JMC {
 				chordString = lastChord;
 			} else {
 				if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
-						&& chordInts.size() > 0 && chordRepeatGenerator.nextInt(100) < 10) {
+						&& chordInts.size() == 1 && chordRepeatGenerator.nextInt(100) < 10) {
 					chordString = String.valueOf(lastUnspicedChord);
 					canRepeatChord = false;
 				} else {

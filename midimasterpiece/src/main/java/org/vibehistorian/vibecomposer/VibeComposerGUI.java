@@ -1286,13 +1286,13 @@ public class VibeComposerGUI extends JFrame
 
 		randomChordStretchType = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new String[] { "NONE", "FIXED", "AT_MOST" }, randomChordStretchType);
-		randomChordStretchType.setVal("NONE");
+		randomChordStretchType.setVal("AT_MOST");
 		JLabel stretchLabel = new JLabel("VOICES");
 		chordSettingsPanel.add(stretchLabel);
 		chordSettingsPanel.add(randomChordStretchType);
 		randomChordStretchPicker = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new Integer[] { 3, 4, 5, 6 }, randomChordStretchPicker);
-		randomChordStretchPicker.setVal(4);
+		randomChordStretchPicker.setVal(5);
 		chordSettingsPanel.add(randomChordStretchPicker);
 
 		JButton clearChordPatternSeeds = makeButton("Clear presets", "ClearChordPatterns");
