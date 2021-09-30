@@ -33,11 +33,14 @@ public class MelodyUtils {
 	static {
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 0 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 1, 0 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 0 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 3 }));
+		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 0, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 0, 0 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
 
 

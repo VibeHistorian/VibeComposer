@@ -160,7 +160,7 @@
         <instrument>42</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>ALTERNATE2</pattern>
+        <pattern>ALT</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>0</patternShift>
@@ -185,7 +185,7 @@
         <instrument>60</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>ALTERNATE2</pattern>
+        <pattern>ALT</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>0</patternShift>

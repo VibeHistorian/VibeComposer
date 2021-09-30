@@ -2393,8 +2393,10 @@ public class MidiGenerator implements JMC {
 			if (parallelGenerator.nextInt(100) < gc.getSpiceParallelChance()) {
 				int chordIndex = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
 				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordIndex);
-				spicyChordString = parallelChordString;
-				System.out.println("PARALLEL: " + spicyChordString);
+				if (chordIndex != 1 || gc.isDimAugDom7thEnabled()) {
+					spicyChordString = parallelChordString;
+					System.out.println("PARALLEL: " + spicyChordString);
+				}
 			}
 
 			chordInts.add(spicyChordString);

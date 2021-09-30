@@ -1909,7 +1909,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
 
-		JButton randomizeArrangementBtn = makeButton("Randomize:", "ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize", "ArrangementRandomize");
 
 		JButton arrangementPartInclusionBtn = makeButton("Parts", "ArrangementOpenPartInclusion");
 
@@ -2075,7 +2075,7 @@ public class VibeComposerGUI extends JFrame
 		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection");
 
 		arrangementSettings.add(randomizeArrangementBtn);
-		arrangementSettings.add(pieceLength);
+		//arrangementSettings.add(pieceLength);
 		arrangementSettings.add(randomizeArrangementOnCompose);
 
 		arrangementVariationChance = new KnobPanel("Section<br>Variations", 30);
@@ -2289,19 +2289,16 @@ public class VibeComposerGUI extends JFrame
 				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
 				System.out.println("Clicked! " + row + ", " + secOrder);
+				boolean rClick = SwingUtilities.isRightMouseButton(evt);
+				boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 				if (row == 0 && secOrder >= 0) {
-					boolean rClick = SwingUtilities.isRightMouseButton(evt);
-					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 					if (rClick) {
 						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
 					} else if (mClick) {
 						handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
 					}
-
 				} else if (row >= 2 && secOrder >= 0) {
 					int part = row - 2;
-					boolean rClick = SwingUtilities.isRightMouseButton(evt);
-					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 					if (rClick || mClick) {
 						System.out.println("Clickable! rClick: " + rClick);
 						Section sec = actualArrangement.getSections().get(secOrder);
@@ -2328,6 +2325,7 @@ public class VibeComposerGUI extends JFrame
 
 						setActualModel(actualArrangement.convertToActualTableModel(), false);
 						refreshVariationPopupButtons(actualArrangement.getSections().size());
+						arrangementCustom.setSelected(true);
 						scrollableArrangementActualTable.repaint();
 					}
 
@@ -2397,6 +2395,7 @@ public class VibeComposerGUI extends JFrame
 				System.out.println("MOVED");
 				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true);
 				actualArrangementTableColumnDragging = false;
+				arrangementCustom.setSelected(true);
 			}
 		});
 		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -3248,7 +3247,7 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(new JLabel("Scale"));
 		controlSettingsPanel.add(scaleMode);
 
-		randomizeScaleModeOnCompose = new JCheckBox("on Compose", false);
+		randomizeScaleModeOnCompose = new JCheckBox("Rand. on Compose", false);
 		controlSettingsPanel.add(randomizeScaleModeOnCompose);
 
 
