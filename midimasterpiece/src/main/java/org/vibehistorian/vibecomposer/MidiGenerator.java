@@ -373,6 +373,12 @@ public class MidiGenerator implements JMC {
 				List<Double> durations = (gc.getMelodyPatternEffect() != 1)
 						? blockDurationsMap.get(blockOffset)
 						: null;
+				boolean badDuration = false;
+				if (durations != null && !roughlyEqual(durations.stream().mapToDouble(e -> e).sum(),
+						progressionDurations.get(chordIndex))) {
+					durations = null;
+					badDuration = true;
+				}
 				if (durations == null) {
 					boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 
@@ -406,8 +412,9 @@ public class MidiGenerator implements JMC {
 						BLOCK_TARGET_MODE);
 				int startingOct = chord1 / 7;
 
-				Pair<List<Integer>, List<MelodyBlock>> existingPattern = changesAndBlocksMap
-						.get(blockOffset);
+				Pair<List<Integer>, List<MelodyBlock>> existingPattern = (badDuration) ? null
+						: changesAndBlocksMap.get(blockOffset);
+
 
 				List<Integer> blockChanges = (existingPattern != null
 						&& gc.getMelodyPatternEffect() > 0)
