@@ -3899,8 +3899,12 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
-			List<Integer> melodyPattern = MelodyUtils.getRandomMelodyPattern();
-			melodyPanels.forEach(e -> e.setMelodyPatternOffsets(melodyPattern));
+			melodyPanels.forEach(e -> {
+				if (e.getPanelOrder() == 1 || !melody1ForcePatterns.isSelected()) {
+					e.setMelodyPatternOffsets(
+							MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance()));
+				}
+			});
 		}
 
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)

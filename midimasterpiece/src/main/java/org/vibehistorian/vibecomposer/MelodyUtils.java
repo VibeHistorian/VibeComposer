@@ -32,6 +32,7 @@ public class MelodyUtils {
 
 	static {
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 0 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 1 }));
@@ -41,7 +42,6 @@ public class MelodyUtils {
 		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 1 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 0, 1 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 0, 0 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
 
 
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
@@ -279,7 +279,12 @@ public class MelodyUtils {
 		throw new IllegalArgumentException("Unknown block!");
 	}
 
-	public static List<Integer> getRandomMelodyPattern() {
+	public static List<Integer> getRandomMelodyPattern(int altPatternChance) {
+		if (new Random().nextInt(100) < altPatternChance) {
+			List<Integer> altPatternIndices = Arrays.asList(0, 1);
+			return new ArrayList<>(MELODY_PATTERNS
+					.get(altPatternIndices.get(new Random().nextInt(altPatternIndices.size()))));
+		}
 		return new ArrayList<>(MELODY_PATTERNS.get(new Random().nextInt(MELODY_PATTERNS.size())));
 	}
 }

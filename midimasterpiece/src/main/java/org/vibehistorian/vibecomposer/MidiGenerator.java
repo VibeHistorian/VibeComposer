@@ -252,7 +252,6 @@ public class MidiGenerator implements JMC {
 
 		int MAX_JUMP_SKELETON_CHORD = mp.getBlockJump();
 		int SAME_RHYTHM_CHANCE = mp.getDoubledRhythmChance();
-		int ALTERNATE_RHYTHM_CHANCE = mp.getAlternatingRhythmChance();
 		int EXCEPTION_CHANCE = mp.getNoteExceptionChance();
 		int CHORD_STRETCH = 4;
 		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
@@ -325,8 +324,6 @@ public class MidiGenerator implements JMC {
 
 		List<int[]> stretchedChords = usedChords.stream()
 				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
-
-		boolean alternateRhythm = alternateRhythmGenerator.nextInt(100) < ALTERNATE_RHYTHM_CHANCE;
 		//System.out.println("Alt: " + alternateRhythm);
 		int maxBlockChangeAdjustment = 0;
 
@@ -382,8 +379,7 @@ public class MidiGenerator implements JMC {
 					double rhythmDuration = sameRhythmTwice
 							? progressionDurations.get(chordIndex) / 2.0
 							: progressionDurations.get(chordIndex);
-					int rhythmSeed = (alternateRhythm && chordIndex % 2 == 1) ? seed + 1 : seed;
-					rhythmSeed += rhythmOffset;
+					int rhythmSeed = seed + blockOffset + rhythmOffset;
 
 					int speed = adjustChanceParamForTransition(mp.getSpeed(), sec, chordIndex,
 							chords.size(), 40, 0.25, false);
