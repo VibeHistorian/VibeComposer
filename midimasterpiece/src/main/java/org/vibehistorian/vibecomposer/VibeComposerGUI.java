@@ -1197,8 +1197,8 @@ public class VibeComposerGUI extends JFrame
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			//melodyPanel.setMidiChannel(i + 1);
-			melodyPanel.setPauseChance(60);
 			if (i > 0) {
+				melodyPanel.setPauseChance(60);
 				melodyPanel.setMuteInst(true);
 				melodyPanel.getVolSlider().setEnabled(false);
 				melodyPanel.getSoloMuter().setEnabled(false);
@@ -1212,6 +1212,7 @@ public class VibeComposerGUI extends JFrame
 					melodyPanel.setTranspose(-12);
 				}
 			} else {
+				melodyPanel.setPauseChance(50);
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);
@@ -3860,6 +3861,19 @@ public class VibeComposerGUI extends JFrame
 
 	private void prepareUI(boolean regenerate) {
 
+
+		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
+			if (melody1ForcePatterns.isSelected()) {
+				List<Integer> pat = MelodyUtils
+						.getRandomMelodyPattern(melodyPanels.get(0).getAlternatingRhythmChance());
+				melodyPanels.get(0).setMelodyPatternOffsets(pat);
+			} else {
+				melodyPanels.forEach(e -> e.setMelodyPatternOffsets(
+						MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance())));
+			}
+		}
+
+
 		if (melody1ForcePatterns.isSelected()) {
 			MelodyPanel mp1 = melodyPanels.get(0);
 			for (int i = 1; i < melodyPanels.size(); i++) {
@@ -3896,15 +3910,6 @@ public class VibeComposerGUI extends JFrame
 		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
 			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
 					Integer.valueOf(pieceLength.getText()));
-		}
-
-		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
-			melodyPanels.forEach(e -> {
-				if (e.getPanelOrder() == 1 || !melody1ForcePatterns.isSelected()) {
-					e.setMelodyPatternOffsets(
-							MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance()));
-				}
-			});
 		}
 
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)

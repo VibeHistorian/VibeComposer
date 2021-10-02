@@ -97,6 +97,30 @@ public class VariationPopup {
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+			table.addMouseListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mousePressed(java.awt.event.MouseEvent evt) {
+					int row = table.rowAtPoint(evt.getPoint());
+					int col = table.columnAtPoint(evt.getPoint());
+
+					System.out.println("Clicked VariationPopup table cell! " + row + ", " + col);
+					if (col >= 1) {
+						if (SwingUtilities.isMiddleMouseButton(evt)) {
+							Boolean val = (Boolean) tables[fI].getModel().getValueAt(row, col);
+							if (val) {
+								for (Section sec : VibeComposerGUI.actualArrangement
+										.getSections()) {
+									sec.removeVariationForPart(fI, row, col);
+								}
+								table.repaint();
+							}
+						}
+
+					}
+				}
+			});
+
 			if (i < 4) {
 				//table.getColumnModel().getColumn(0).setMaxWidth(27);
 			}

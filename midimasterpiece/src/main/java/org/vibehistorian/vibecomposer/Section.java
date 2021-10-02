@@ -664,6 +664,14 @@ public class Section {
 		}
 	}
 
+	public void removeVariationForPart(int part, int partNum, int variationNum) {
+		if (variationNum < 2) {
+			return;
+		}
+		initPartMapIfNull();
+		partPresenceVariationMap.get(part)[partNum][variationNum] = Boolean.FALSE;
+	}
+
 	public List<BassPart> getBassParts() {
 		return bassParts;
 	}
