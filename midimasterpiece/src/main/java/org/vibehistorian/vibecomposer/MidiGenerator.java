@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
@@ -405,7 +406,8 @@ public class MidiGenerator implements JMC {
 					}
 					blockDurationsMap.put(blockOffset, durations);
 				}
-				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ",") + ", Doubled rhythm: " + sameRhythmTwice);
+				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ",")
+						+ ", Doubled rhythm: " + sameRhythmTwice);
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex,
 						BLOCK_TARGET_MODE);
 				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex + 1,
@@ -1486,7 +1488,6 @@ public class MidiGenerator implements JMC {
 		int maxVel = multiplyVelocity(mp.getVelocityMax(), volMultiplier, 1, 0);
 
 		int[] pitches = new int[12];
-		int chordSepIndex = 0;
 
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
@@ -2001,6 +2002,7 @@ public class MidiGenerator implements JMC {
 		return OMNI.clamp(newVelocity, 0, 127);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void swingPhrase(Phrase phr, int swingPercent, double swingUnitOfTime) {
 		if (gc.getGlobalSwingOverride() != null) {
 			swingPercent = gc.getGlobalSwingOverride();
@@ -2656,7 +2658,7 @@ public class MidiGenerator implements JMC {
 
 		List<Part> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-			Part p = new Part("Melodies" + i, gc.getMelodyParts().get(0).getInstrument(),
+			Part p = new Part("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
 					gc.getMelodyParts().get(i).getMidiChannel() - 1);
 			melodyParts.add(p);
 		}
@@ -2899,15 +2901,21 @@ public class MidiGenerator implements JMC {
 		}
 		System.out.println("Added phrases/cphrases to sections..");
 
+		Optional<MelodyPart> firstPresentPart = gc.getMelodyParts().stream()
+				.filter(e -> !e.isMuted()).findFirst();
+
 		for (Section sec : arr.getSections()) {
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				p.setAppend(false);
-				if (gc.getMelodyParts().get(0).isMuted()) {
+				if (!COLLAPSE_MELODY_TRACKS) {
 					melodyParts.get(i).addPhrase(p);
 				} else {
-					melodyParts.get(0).addPhrase(p);
+					if (firstPresentPart.isPresent()) {
+						melodyParts.get(firstPresentPart.get().getOrder() - 1).addPhrase(p);
+					}
+
 				}
 			}
 
@@ -2957,15 +2965,12 @@ public class MidiGenerator implements JMC {
 			if (!gc.getMelodyParts().get(i).isMuted()) {
 				score.add(melodyParts.get(i));
 				ip.setSequenceTrack(trackCounter++);
+				if (COLLAPSE_MELODY_TRACKS) {
+					break;
+				}
 				//if (VibeComposerGUI.apSm)
 			} else {
 				ip.setSequenceTrack(-1);
-				if (i == 0) {
-					COLLAPSE_MELODY_TRACKS = false;
-				}
-			}
-			if (COLLAPSE_MELODY_TRACKS) {
-				break;
 			}
 		}
 
@@ -3143,19 +3148,19 @@ public class MidiGenerator implements JMC {
 		return riskyVariations;
 	}
 
-	private void adjustArrangementPresencesIfNeeded(Section sec, Section prevSec) {
+	/*private void adjustArrangementPresencesIfNeeded(Section sec, Section prevSec) {
 		int currentSecEnergy = sec.getTypeMelodyOffset();
 		int prevSecEnergy = prevSec.getTypeMelodyOffset();
 		if (currentSecEnergy == prevSecEnergy) {
 			return;
 		}
-
+	
 		// compare presences and adjust using part inclusions
 		int currentPresCount = OMNI.PART_INTS.stream().map(e -> sec.countPresence(e))
 				.mapToInt(e -> e).sum();
 		int prevPresCount = OMNI.PART_INTS.stream().map(e -> prevSec.countPresence(e))
 				.mapToInt(e -> e).sum();
-	}
+	}*/
 
 	private void fillMelodyPartsForSection(double measureLength, boolean overridden, Section sec,
 			int notesSeedOffset, List<Boolean> riskyVariations, boolean sectionChordsReplaced) {

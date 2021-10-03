@@ -108,6 +108,12 @@ public class MelodyPanel extends InstPanel {
 		speed.setShowTextInKnob(b);
 	}
 
+	public void toggleCombinedMelodyDisabledUI(boolean b) {
+		getVolSlider().setEnabled(b);
+		getSoloMuter().setEnabled(b);
+		getInstrumentBox().setEnabled(b);
+	}
+
 	public MelodyPanel(ActionListener l) {
 		setPartClass(MelodyPart.class);
 		initComponents(l);

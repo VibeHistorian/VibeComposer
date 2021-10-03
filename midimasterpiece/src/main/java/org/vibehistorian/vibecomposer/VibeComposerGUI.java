@@ -201,7 +201,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
+	private static boolean isFullMode = false;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -1050,7 +1050,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel melodySettingsExtraPanelsHolder = new JPanel();
 		melodySettingsExtraPanelsHolder.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelsHolder.setLayout(new GridLayout(0, 1, 0, 0));
-		melodySettingsExtraPanelsHolder.setMaximumSize(new Dimension(1800, 150));
+		melodySettingsExtraPanelsHolder.setMaximumSize(new Dimension(1800, 100));
 
 		JPanel melodySettingsExtraPanelShape = new JPanel();
 		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1161,6 +1161,16 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
+		combineMelodyTracks.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				for (int i = 1; i < melodyPanels.size(); i++) {
+					melodyPanels.get(i)
+							.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+				}
+			}
+		});
 
 		melodySettingsExtraPanelOrg.add(melody1ForcePatterns);
 		melodySettingsExtraPanelOrg.add(combineMelodyTracks);
@@ -1175,11 +1185,11 @@ public class VibeComposerGUI extends JFrame
 
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelShape);
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelBlocksPatternsCompose);
-		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelOrg);
 
 
 		scrollableMelodyPanels.add(melodySettingsPanel);
 		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
+		scrollableMelodyPanels.add(melodySettingsExtraPanelOrg);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
 		toggleableComponents.add(melodySettingsExtraPanelsHolder);
@@ -1195,17 +1205,15 @@ public class VibeComposerGUI extends JFrame
 			melodyPanel.setInstrument(8);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
-			//melodyPanel.setMidiChannel(i + 1);
 			if (i > 0) {
 				melodyPanel.setPauseChance(50);
 				melodyPanel.setFillPauses(true);
 				melodyPanel.setMuteInst(true);
-				melodyPanel.getVolSlider().setEnabled(false);
-				melodyPanel.getSoloMuter().setEnabled(false);
-				melodyPanel.getInstrumentBox().setEnabled(false);
+				melodyPanel.toggleCombinedMelodyDisabledUI(
+						combineMelodyTracks != null && !combineMelodyTracks.isSelected());
 				melodyPanel.setVelocityMax(75);
 				melodyPanel.setVelocityMin(50);
-
+				melodyPanel.setMidiChannel(i + 6);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
 				} else {
