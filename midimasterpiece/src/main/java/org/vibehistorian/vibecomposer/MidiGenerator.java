@@ -379,8 +379,11 @@ public class MidiGenerator implements JMC {
 					durations = null;
 					badDuration = true;
 				}
+				boolean sameRhythmTwice = sameRhythmGenerator.nextInt(100) < SAME_RHYTHM_CHANCE;
 				if (durations == null) {
-					double rhythmDuration = progressionDurations.get(chordIndex);
+					double rhythmDuration = sameRhythmTwice
+							? progressionDurations.get(chordIndex) / 2.0
+							: progressionDurations.get(chordIndex);
 					int rhythmSeed = seed + blockOffset + rhythmOffset;
 
 					int speed = adjustChanceParamForTransition(mp.getSpeed(), sec, chordIndex,
@@ -397,9 +400,12 @@ public class MidiGenerator implements JMC {
 							melodySkeletonDurationWeights);
 
 					durations = rhythm.regenerateDurations(10);
+					if (sameRhythmTwice) {
+						durations.addAll(durations);
+					}
 					blockDurationsMap.put(blockOffset, durations);
 				}
-				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ","));
+				System.out.println("Overall Block Durations: " + StringUtils.join(durations, ",") + ", Doubled rhythm: " + sameRhythmTwice);
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex,
 						BLOCK_TARGET_MODE);
 				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex + 1,

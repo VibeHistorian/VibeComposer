@@ -25,11 +25,11 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
 	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
 	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Pattern", 33);
-	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm", 50);
-	private KnobPanel splitChance = new KnobPanel("Split<br>Long", 0);
+	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
+	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
 	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
 	private KnobPanel speed = new KnobPanel("Speed", 0);
-	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords", 25);
+	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 
 	public void initComponents(ActionListener l) {
 
@@ -76,7 +76,7 @@ public class MelodyPanel extends InstPanel {
 
 
 		this.add(alternatingRhythmChance);
-		//this.add(doubledRhythmChance);
+		this.add(doubledRhythmChance);
 		this.add(splitChance);
 		this.add(leadChordsChance);
 
@@ -85,7 +85,7 @@ public class MelodyPanel extends InstPanel {
 
 		//toggleableComponents.add(maxNoteExceptions);
 		toggleableComponents.add(alternatingRhythmChance);
-		//toggleableComponents.add(doubledRhythmChance);
+		toggleableComponents.add(doubledRhythmChance);
 		toggleableComponents.add(splitChance);
 		toggleableComponents.add(noteExceptionChance);
 		toggleableComponents.add(leadChordsChance);
