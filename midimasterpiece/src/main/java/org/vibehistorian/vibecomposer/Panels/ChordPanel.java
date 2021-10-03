@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -29,19 +29,20 @@ public class ChordPanel extends InstPanel {
 
 	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
 
-	private ScrollComboBox<String> patternJoinMode = new ScrollComboBox<>();
-	private KnobPanel noteLengthMultiplier = new KnobPanel("Length", 100, 25, 200);
+	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
-	private ScrollComboBox<String> instPoolPicker = new ScrollComboBox<String>();
+	private ScrollComboBox<InstUtils.POOL> instPoolPicker = new ScrollComboBox<>();
+
+	private ScrollComboBox<StrumType> strumType = new ScrollComboBox<>();
 
 	public void initComponents(ActionListener l) {
 
 
 		instrument.initInstPool(InstUtils.POOL.PLUCK);
-		instPoolPicker.setSelectedItem("PLUCK");
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
-				"11", "12", "13", "14", "15" }, midiChannel);
-		midiChannel.setSelectedItem("11");
+		instPoolPicker.setVal(InstUtils.POOL.PLUCK);
+		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
+				midiChannel);
+		midiChannel.setVal(11);
 
 		initDefaults(l);
 		volSlider.setValue(60);
@@ -53,10 +54,10 @@ public class ChordPanel extends InstPanel {
 		this.add(instPoolPicker);
 		addDefaultPanelButtons();
 
-		this.add(new JLabel("    Fill"));
-		this.add(chordSpanFill);
-		this.add(fillFlip);
+		this.add(chordSpanFillPanel);
+
 		this.add(strum);
+		this.add(strumType);
 		this.add(transpose);
 
 		this.add(hitsPerPattern);
@@ -78,10 +79,10 @@ public class ChordPanel extends InstPanel {
 		this.add(delay);
 
 		this.add(minMaxVelSlider);
+		this.add(noteLengthMultiplier);
 
 
 		this.add(patternJoinMode);
-		this.add(noteLengthMultiplier);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -94,7 +95,6 @@ public class ChordPanel extends InstPanel {
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);
-		toggleableComponents.add(noteLengthMultiplier);
 
 	}
 
@@ -102,17 +102,18 @@ public class ChordPanel extends InstPanel {
 		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			if (d != RhythmPattern.MELODY1) {
-				pattern.addItem(d.toString());
-			}
+			pattern.addItem(d);
 		}
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
-				instPoolPicker.addItem(p.toString());
+				instPoolPicker.addItem(p);
 			}
 		}
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
-			patternJoinMode.addItem(pjm.toString());
+			patternJoinMode.addItem(pjm);
+		}
+		for (StrumType str : StrumType.values()) {
+			strumType.addItem(str);
 		}
 
 		instPoolPicker.addItemListener(new ItemListener() {
@@ -132,7 +133,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getTransitionChance() {
-		return Integer.valueOf(transitionChance.getInt());
+		return transitionChance.getInt();
 	}
 
 	public void setTransitionChance(int transitionChance) {
@@ -140,7 +141,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getTransitionSplit() {
-		return Integer.valueOf(transitionSplit.getInt());
+		return transitionSplit.getInt();
 	}
 
 	public void setTransitionSplit(int transitionSplit) {
@@ -148,7 +149,7 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public int getStrum() {
-		return Integer.valueOf(strum.getInt());
+		return strum.getInt();
 	}
 
 	public void setStrum(int strum) {
@@ -162,9 +163,9 @@ public class ChordPanel extends InstPanel {
 		part.setTransitionSplit(getTransitionSplit());
 		part.setStrum(getStrum());
 		part.setPatternJoinMode(getPatternJoinMode());
-		part.setNoteLengthMultiplier(getNoteLengthMultiplier());
 
 		part.setInstPool(getInstPool());
+		part.setStrumType(getStrumType());
 		part.setOrder(getPanelOrder());
 		return part;
 	}
@@ -179,18 +180,18 @@ public class ChordPanel extends InstPanel {
 		setTransitionSplit(part.getTransitionSplit());
 		setStrum(part.getStrum());
 		setPatternJoinMode(part.getPatternJoinMode());
-		setNoteLengthMultiplier(part.getNoteLengthMultiplier());
+		setStrumType(part.getStrumType());
 
 		setPanelOrder(part.getOrder());
 
 	}
 
 	public InstUtils.POOL getInstPool() {
-		return InstUtils.POOL.valueOf((String) instPoolPicker.getSelectedItem());
+		return instPoolPicker.getVal();
 	}
 
 	public void setInstPool(InstUtils.POOL pool) {
-		instPoolPicker.setSelectedItem(pool.name());
+		instPoolPicker.setVal(pool);
 	}
 
 	@Override
@@ -199,18 +200,18 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public PatternJoinMode getPatternJoinMode() {
-		return PatternJoinMode.valueOf((String) patternJoinMode.getSelectedItem());
+		return patternJoinMode.getVal();
 	}
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
-		this.patternJoinMode.setSelectedItem(patternJoinMode.toString());
+		this.patternJoinMode.setVal(patternJoinMode);
 	}
 
-	public int getNoteLengthMultiplier() {
-		return noteLengthMultiplier.getInt();
+	public StrumType getStrumType() {
+		return strumType.getVal();
 	}
 
-	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
-		this.noteLengthMultiplier.setInt(noteLengthMultiplier);
+	public void setStrumType(StrumType val) {
+		strumType.setVal(val);
 	}
 }

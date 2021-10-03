@@ -79,7 +79,7 @@ public class MidiHandler {
 
 		@Override
 		public void close() {
-			// TODO Auto-generated method stub
+			// Auto-generated method stub
 
 		}
 	}

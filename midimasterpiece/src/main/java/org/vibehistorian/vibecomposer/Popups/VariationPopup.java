@@ -37,9 +37,9 @@ import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.BooleanTableModel;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
@@ -72,6 +72,7 @@ public class VariationPopup {
 
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame);
 
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
@@ -87,14 +88,39 @@ public class VariationPopup {
 			}
 
 			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> ((String) e.getInstrumentBox().getSelectedItem()).split(" = ")[0])
+					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
 					.collect(Collectors.toList());
 
-			table.setModel(new BooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
-					Section.variationDescriptions[i], partNames));
+			table.setModel(
+					new VariationsBooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
+							Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+			table.addMouseListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mousePressed(java.awt.event.MouseEvent evt) {
+					int row = table.rowAtPoint(evt.getPoint());
+					int col = table.columnAtPoint(evt.getPoint());
+
+					System.out.println("Clicked VariationPopup table cell! " + row + ", " + col);
+					if (col >= 1) {
+						if (SwingUtilities.isMiddleMouseButton(evt)) {
+							Boolean val = (Boolean) tables[fI].getModel().getValueAt(row, col);
+							if (val) {
+								for (Section sec : VibeComposerGUI.actualArrangement
+										.getSections()) {
+									sec.removeVariationForPart(fI, row, col);
+								}
+								table.repaint();
+							}
+						}
+
+					}
+				}
+			});
+
 			if (i < 4) {
 				//table.getColumnModel().getColumn(0).setMaxWidth(27);
 			}
@@ -114,8 +140,11 @@ public class VariationPopup {
 			categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.setMaximumSize(new Dimension(2000, 40));
 			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
+			boolean commited = sec.getInstPartList(fI) != null;
 			JPanel categoryButtons = new JPanel();
-			JLabel categoryName = new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
+			JLabel categoryName = commited
+					? new JLabel("*" + VibeComposerGUI.instNames[i] + " - Committed")
+					: new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
@@ -196,7 +225,7 @@ public class VariationPopup {
 		}
 
 		typeCombo.addItem(OMNI.EMPTYCOMBO);
-		typeCombo.setSelectedItem(OMNI.EMPTYCOMBO);
+		typeCombo.setVal(OMNI.EMPTYCOMBO);
 		typeCombo.addItemListener(new ItemListener() {
 
 			@Override
@@ -215,9 +244,8 @@ public class VariationPopup {
 
 		typeAndMeasuresPanel.add(new JLabel("Measures"));
 		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO },
-				measureCombo);
-		measureCombo.setSelectedItem(String.valueOf(sec.getMeasures()));
+		ScrollComboBox.addAll(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO }, measureCombo);
+		measureCombo.setVal(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {
 
 			@Override
@@ -316,7 +344,7 @@ public class VariationPopup {
 
 			@Override
 			public void windowOpened(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
@@ -346,31 +374,31 @@ public class VariationPopup {
 
 			@Override
 			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowIconified(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowDeiconified(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowActivated(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowDeactivated(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 

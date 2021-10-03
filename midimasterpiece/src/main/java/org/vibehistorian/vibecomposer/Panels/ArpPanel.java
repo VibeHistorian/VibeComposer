@@ -4,8 +4,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
@@ -18,14 +16,14 @@ public class ArpPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6648220153568966988L;
 
-	private ScrollComboBox<String> arpPattern = new ScrollComboBox<>();
+	private ScrollComboBox<ArpPattern> arpPattern = new ScrollComboBox<>();
 
 	public void initComponents(ActionListener l) {
 
 		instrument.initInstPool(instPool);
-		MidiUtils.addAllToJComboBox(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
-				"11", "12", "13", "14", "15" }, midiChannel);
-		midiChannel.setSelectedItem("2");
+		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
+				midiChannel);
+		midiChannel.setVal(2);
 
 		initDefaults(l);
 		volSlider.setValue(70);
@@ -36,6 +34,8 @@ public class ArpPanel extends InstPanel {
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 
+		this.add(chordSpanFillPanel);
+
 		this.add(hitsPerPattern);
 		this.add(pattern);
 		comboPanel = makeVisualPatternPanel();
@@ -45,10 +45,6 @@ public class ArpPanel extends InstPanel {
 
 		this.add(patternShift);
 		this.add(chordSpan);
-
-		this.add(new JLabel("Fill"));
-		this.add(chordSpanFill);
-		this.add(fillFlip);
 
 		this.add(patternRepeat);
 		//this.add(repeatableNotes);
@@ -61,6 +57,7 @@ public class ArpPanel extends InstPanel {
 		this.add(stretchPanel);
 
 		this.add(minMaxVelSlider);
+		this.add(noteLengthMultiplier);
 
 
 		this.add(exceptionChance);
@@ -85,10 +82,10 @@ public class ArpPanel extends InstPanel {
 		initComponents(l);
 
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			pattern.addItem(d);
 		}
 		for (ArpPattern d : ArpPattern.values()) {
-			arpPattern.addItem(d.toString());
+			arpPattern.addItem(d);
 		}
 
 		removeButton.addActionListener(l);
@@ -112,14 +109,11 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public ArpPattern getArpPattern() {
-		if (StringUtils.isEmpty((String) arpPattern.getSelectedItem())) {
-			return ArpPattern.RANDOM;
-		}
-		return ArpPattern.valueOf((String) arpPattern.getSelectedItem());
+		return arpPattern.getVal();
 	}
 
 	public void setArpPattern(ArpPattern pattern) {
-		this.arpPattern.setSelectedItem((String.valueOf(pattern.toString())));
+		this.arpPattern.setVal(pattern);
 	}
 
 	public ArpPart toInstPart(int lastRandomSeed) {

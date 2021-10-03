@@ -6,6 +6,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 
 public class KnobValuePopup extends CloseablePopup {
@@ -32,7 +33,7 @@ public class KnobValuePopup extends CloseablePopup {
 
 			@Override
 			public void keyPressed(KeyEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
@@ -48,7 +49,7 @@ public class KnobValuePopup extends CloseablePopup {
 
 		frame.add(numPanel);
 		frame.pack();
-		//frame.setVisible(true);
+		frame.setVisible(true);
 
 	}
 
@@ -57,7 +58,7 @@ public class KnobValuePopup extends CloseablePopup {
 
 			@Override
 			public void windowOpened(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
@@ -81,7 +82,7 @@ public class KnobValuePopup extends CloseablePopup {
 						if (knob.getMin() <= val && knob.getMax() >= val) {
 							knob.setValue(val);
 						} else {
-							knob.setValue(Math.min(knob.getMax(), Math.max(knob.getMin(), val)));
+							knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
 						}
 					}
 
@@ -91,31 +92,31 @@ public class KnobValuePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowIconified(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowDeiconified(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowActivated(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowDeactivated(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 

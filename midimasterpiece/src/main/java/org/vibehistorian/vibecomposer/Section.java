@@ -36,6 +36,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -44,7 +45,6 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
-import jm.music.data.CPhrase;
 import jm.music.data.Phrase;
 
 @XmlRootElement(name = "section")
@@ -63,7 +63,10 @@ public class Section {
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Pause Squish", "Key Change" };
+			"Swap Melody", "Melody Pause Squish", "Key Change", "TransitionFast", "TransitionSlow",
+			"TransitionCut" };
+	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0, 1.5,
+			1.75, 0.7 };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -89,7 +92,7 @@ public class Section {
 	private List<Phrase> chords;
 	private List<Phrase> arps;
 	private List<Phrase> drums;
-	private CPhrase chordSlash;
+	private Phrase chordSlash;
 
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
@@ -141,6 +144,10 @@ public class Section {
 		this.chordChance = chordChance;
 		this.arpChance = arpChance;
 		this.drumChance = drumChance;
+	}
+
+	public boolean isClimax() {
+		return SectionType.CLIMAX.toString().equals(type);
 	}
 
 	@XmlAttribute
@@ -245,12 +252,12 @@ public class Section {
 		this.drums = drums;
 	}
 
-	public CPhrase getChordSlash() {
+	public Phrase getChordSlash() {
 		return chordSlash;
 	}
 
 	@XmlTransient
-	public void setChordSlash(CPhrase chordSlash) {
+	public void setChordSlash(Phrase chordSlash) {
 		this.chordSlash = chordSlash;
 	}
 
@@ -362,6 +369,18 @@ public class Section {
 	public void resetPresence(int part, int partOrder) {
 		initPartMapIfNull();
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.FALSE;
+		/*for (int i = 2; i < variationDescriptions[part].length; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i] = Boolean.FALSE;
+		}*/
+	}
+
+	public boolean hasVariation(int part) {
+		for (int i = 0; i < VibeComposerGUI.getInstList(part).size(); i++) {
+			if (!getVariation(part, i).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public List<Integer> getVariation(int part, int partOrder) {
@@ -395,19 +414,41 @@ public class Section {
 	public void generatePresences(Random presRand) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			int chance = getChanceForInst(i);
-			List<? extends InstPanel> panels = VibeComposerGUI.getInstList(i);
-			for (int j = 0; j < panels.size(); j++) {
-				if (presRand.nextInt(100) < chance) {
-					setPresence(i, j);
-				}
+			generatePresences(presRand, i);
+		}
+
+	}
+
+	public void generatePresences(Random presRand, int part) {
+		initPartMapIfNull();
+		int chance = getChanceForInst(part);
+		System.out.println("Chance: " + chance);
+		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(part);
+		for (int j = 0; j < panels.size(); j++) {
+			if (presRand.nextInt(100) < chance) {
+				setPresence(part, j);
 			}
 		}
 
 	}
 
-	public int getChanceForInst(int i) {
-		switch (i) {
+	public void generateVariations(Random presRand, int part) {
+		initPartMapIfNull();
+		Set<Integer> presence = getPresence(part);
+		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		for (Integer i : presence) {
+			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
+				if (presRand.nextInt(100) < chance) {
+					addVariation(part, i - 1, Collections.singletonList(j - 2));
+				}
+			}
+		}
+
+
+	}
+
+	public int getChanceForInst(int inst) {
+		switch (inst) {
 		case 0:
 			return melodyChance;
 		case 1:
@@ -418,6 +459,28 @@ public class Section {
 			return arpChance;
 		case 4:
 			return drumChance;
+		default:
+			throw new IllegalArgumentException("Too high inst. order");
+		}
+	}
+
+	public void addChanceForInst(int inst, int chance) {
+		switch (inst) {
+		case 0:
+			melodyChance = OMNI.clampChance(melodyChance + chance);
+			break;
+		case 1:
+			bassChance = OMNI.clampChance(bassChance + chance);
+			break;
+		case 2:
+			chordChance = OMNI.clampChance(chordChance + chance);
+			break;
+		case 3:
+			arpChance = OMNI.clampChance(arpChance + chance);
+			break;
+		case 4:
+			drumChance = OMNI.clampChance(drumChance + chance);
+			break;
 		default:
 			throw new IllegalArgumentException("Too high inst. order");
 		}
@@ -447,11 +510,11 @@ public class Section {
 					|| type.startsWith("PREVIEW")) {
 				return 0;
 			}
-			if (type.startsWith("INTRO") || type.startsWith("OUTRO") || type.startsWith("BUILDUP")
-					|| type.startsWith("BREAKDOWN") || type.startsWith("CHILL")) {
+			if (type.startsWith("VERSE")) {
 				return 1;
 			}
-			if (type.startsWith("VERSE")) {
+			if (type.startsWith("INTRO") || type.startsWith("OUTRO") || type.startsWith("BUILDUP")
+					|| type.startsWith("BREAKDOWN") || type.startsWith("CHILL")) {
 				return 2;
 			} else {
 				return 0;
@@ -529,6 +592,19 @@ public class Section {
 		return riskyVariations;
 	}
 
+	public boolean isTransition() {
+		return getRiskyVariations() != null && (getRiskyVariations().get(5)
+				|| getRiskyVariations().get(6) || getRiskyVariations().get(7));
+	}
+
+	public int getTransitionType() {
+		if (!isTransition()) {
+			return -1;
+		}
+
+		return getRiskyVariations().get(7) ? 7 : (getRiskyVariations().get(6) ? 6 : 5);
+	}
+
 	public void setRiskyVariations(List<Boolean> riskyVariations) {
 		this.riskyVariations = riskyVariations;
 	}
@@ -579,11 +655,21 @@ public class Section {
 	}
 
 	public void removeVariationForAllParts(int part, int variationNum) {
+		if (variationNum < 2) {
+			return;
+		}
 		initPartMapIfNull();
 		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
-			Object[] partData = partPresenceVariationMap.get(part)[i];
-			partData[variationNum] = Boolean.FALSE;
+			partPresenceVariationMap.get(part)[i][variationNum] = Boolean.FALSE;
 		}
+	}
+
+	public void removeVariationForPart(int part, int partNum, int variationNum) {
+		if (variationNum < 2) {
+			return;
+		}
+		initPartMapIfNull();
+		partPresenceVariationMap.get(part)[partNum][variationNum] = Boolean.FALSE;
 	}
 
 	public List<BassPart> getBassParts() {

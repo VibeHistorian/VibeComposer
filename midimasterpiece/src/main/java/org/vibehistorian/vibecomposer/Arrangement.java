@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Section.SectionType;
+import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
@@ -120,18 +123,26 @@ public class Arrangement {
 		}
 
 		sections.clear();
+		Section lastSec = null;
 		for (String s : fullArrangement) {
+			// skip same section with no changes in it
+			if (lastSec != null && s.equals(lastSec.getType())
+					&& !s.equals(SectionType.CLIMAX.toString())) {
+				continue;
+			}
 			//System.out.println("DeepCopy for " + s);
 			Section sec = defaultSections.get(s).deepCopy();
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
-
-				if (sec.getMeasures() > 1) {
-					sec.setMeasures(1);
-				} else {
-					sec.setMeasures(2);
+				sections.add(sec);
+				Section doubleSec = sec.deepCopy();
+				for (int i = 0; i < 5; i++) {
+					doubleSec.addChanceForInst(i, 10);
 				}
+				sections.add(doubleSec);
+			} else {
+				sections.add(sec);
 			}
-			sections.add(sec);
+			lastSec = sec;
 		}
 	}
 
@@ -140,6 +151,7 @@ public class Arrangement {
 	private boolean previewChorus = false;
 	private boolean overridden;
 	private int seed = 0;
+	private Map<Integer, Object[][]> partInclusionMap = new HashMap<>();
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -169,7 +181,7 @@ public class Arrangement {
 		sections.clear();
 		// type, length, melody%, bass%, chord%, arp%, drum%
 		for (Section s : defaultSections.values()) {
-			if (!s.getType().equals("BUILDUP")) {
+			if (!s.getType().equals(SectionType.BUILDUP.toString())) {
 				sections.add(s.deepCopy());
 			}
 		}
@@ -209,6 +221,10 @@ public class Arrangement {
 			for (int j = 0; j < 5; j++) {
 				String pres = StringUtils.join(s.getPresence(j));
 				pres = pres.replaceAll("\\[", "").replaceAll("\\]", "");
+				boolean isCustomizedPart = s.getInstPartList(j) != null;
+				if (isCustomizedPart) {
+					pres = "*" + pres;
+				}
 				model.setValueAt(pres, j + 2, i);
 			}
 		}
@@ -271,7 +287,6 @@ public class Arrangement {
 
 	public boolean setFromActualTable(JTable t, boolean forceColumns) {
 
-		// TODO: possiblity to catch errors and return false
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		//sections.clear();
@@ -312,8 +327,8 @@ public class Arrangement {
 	public Section addDefaultSection(JTable tbl, String defaultType) {
 		int column = tbl.getSelectedColumn();
 		if (column < 0) {
-			// add at end
-			column = tbl.getColumnCount();
+			// add at start
+			column = 0;
 		} else {
 			// add after section
 			column++;
@@ -323,7 +338,7 @@ public class Arrangement {
 		return sec;
 	}
 
-	public void duplicateSection(JTable tbl, boolean isActual) {
+	public void duplicateSection(JTable tbl) {
 
 
 		int column = tbl.getSelectedColumn();
@@ -333,10 +348,29 @@ public class Arrangement {
 		sections.add(column, sec.deepCopy());
 	}
 
-	public void removeSection(JTable tbl, boolean isActual) {
+	public void duplicateSectionExact(JTable tbl, int column) {
+		if (column == -1)
+			return;
+		Section sec = sections.get(column);
+		sections.add(column, sec.deepCopy());
+	}
+
+	public void removeSection(JTable tbl) {
 
 
 		int[] columns = tbl.getSelectedColumns();
+		if (columns.length == 0) {
+			return;
+		}
+		List<Section> secs = new ArrayList<>();
+		for (int i : columns) {
+			secs.add(sections.get(i));
+		}
+		sections.removeAll(secs);
+	}
+
+	public void removeSectionExact(JTable tbl, int col) {
+		int[] columns = new int[] { col };
 		if (columns.length == 0) {
 			return;
 		}
@@ -361,5 +395,100 @@ public class Arrangement {
 
 	public void setSeed(int seed) {
 		this.seed = seed;
+	}
+
+	public Map<Integer, Object[][]> getPartInclusionMap() {
+		return partInclusionMap;
+	}
+
+	public void setPartInclusionMap(Map<Integer, Object[][]> partInclusionMap) {
+		this.partInclusionMap = partInclusionMap;
+	}
+
+	public void initPartInclusionMap() {
+		int typesCount = ArrangementPartInclusionPopup.ENERGY_LEVELS.length;
+
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders.size()][typesCount];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < typesCount; k++) {
+					data[j][k] = Boolean.TRUE;
+				}
+			}
+			partInclusionMap.put(i, data);
+		}
+	}
+
+	public void initPartInclusionMapIfNull() {
+		if (partInclusionMap.get(0) == null) {
+			initPartInclusionMap();
+		}
+	}
+
+	public boolean getPartInclusion(int part, int partOrder, int sectionType) {
+		initPartInclusionMapIfNull();
+		if (isOverridden()) {
+			return true;
+		}
+		if (partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
+			return true;
+		}
+		return false;
+	}
+
+	public void recalculatePartInclusionMapBoundsIfNeeded() {
+		if (getPartInclusionMap() == null) {
+			initPartInclusionMap();
+			return;
+		}
+		boolean needsArrayCopy = false;
+		for (int i = 0; i < 5; i++) {
+			int actualInstCount = VibeComposerGUI.getInstList(i).size();
+			if (getPartInclusionMap().get(i) == null) {
+				initPartInclusionMap();
+			}
+			int secInstCount = getPartInclusionMap().get(i).length;
+			if (secInstCount != actualInstCount) {
+				needsArrayCopy = true;
+				break;
+			}
+		}
+		if (needsArrayCopy) {
+			initPartInclusionMapFromOldData();
+		}
+
+	}
+
+	private void initPartInclusionMapFromOldData() {
+		if (getPartInclusionMap() == null) {
+			initPartInclusionMap();
+			return;
+		}
+		for (int i = 0; i < 5; i++) {
+			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			Collections.sort(rowOrders);
+			Object[][] data = new Object[rowOrders
+					.size()][ArrangementPartInclusionPopup.ENERGY_LEVELS.length];
+			for (int j = 0; j < rowOrders.size(); j++) {
+				data[j][0] = rowOrders.get(j);
+				for (int k = 1; k < ArrangementPartInclusionPopup.ENERGY_LEVELS.length; k++) {
+					data[j][k] = getBooleanFromOldData(getPartInclusionMap().get(i), j, k);
+				}
+			}
+			getPartInclusionMap().put(i, data);
+		}
+	}
+
+	private Object getBooleanFromOldData(Object[][] oldData, int j, int k) {
+		if (oldData.length <= j || oldData[j].length <= k) {
+			return Boolean.TRUE;
+		} else {
+			return (Boolean) oldData[j][k];
+		}
 	}
 }

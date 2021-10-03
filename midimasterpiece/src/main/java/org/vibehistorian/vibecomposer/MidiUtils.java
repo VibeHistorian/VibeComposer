@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 import jm.constants.Pitches;
 import jm.music.data.CPhrase;
@@ -84,18 +83,28 @@ public class MidiUtils {
 			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));
 
 	public enum ScaleMode {
-		IONIAN(Scales.MAJOR_SCALE), DORIAN(Scales.DORIAN_SCALE), PHRYGIAN(Scales.PHRYGIAN_SCALE),
-		LYDIAN(Scales.LYDIAN_SCALE), MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE),
-		AEOLIAN(Scales.AEOLIAN_SCALE), LOCRIAN(Scales.LOCRIAN_SCALE), BLUES(Scales.BLUES_SCALE),
-		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE), TURKISH(Scales.TURKISH_SCALE),
-		INDIAN(Scales.INDIAN_SCALE);
+		IONIAN(Scales.MAJOR_SCALE, 0), DORIAN(Scales.DORIAN_SCALE, 2),
+		PHRYGIAN(Scales.PHRYGIAN_SCALE, 1), LYDIAN(Scales.LYDIAN_SCALE, 3),
+		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, 6), AEOLIAN(Scales.AEOLIAN_SCALE, 5),
+		LOCRIAN(Scales.LOCRIAN_SCALE, 4), BLUES(Scales.BLUES_SCALE, -1),
+		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE, 5), TURKISH(Scales.TURKISH_SCALE, -1),
+		INDIAN(Scales.INDIAN_SCALE, 1);
 
 		public Integer[] noteAdjustScale;
+		public Integer modeTargetNote;
 
-		private ScaleMode(Integer[] adjust) {
+		private ScaleMode(Integer[] adjust, Integer targetNote) {
 			this.noteAdjustScale = adjust;
+			modeTargetNote = targetNote;
 		}
 	}
+
+	public static final List<ScaleMode> majorishModes = Arrays
+			.asList(new ScaleMode[] { ScaleMode.IONIAN, ScaleMode.LYDIAN, ScaleMode.MIXOLYDIAN,
+					ScaleMode.BLUES, ScaleMode.TURKISH });
+	public static final List<ScaleMode> minorishModes = Arrays
+			.asList(new ScaleMode[] { ScaleMode.DORIAN, ScaleMode.PHRYGIAN, ScaleMode.AEOLIAN,
+					ScaleMode.HARM_MINOR, ScaleMode.LOCRIAN, ScaleMode.INDIAN });
 
 	//chords
 	public static final int[] cMaj4 = { Pitches.C4, Pitches.E4, Pitches.G4 };
@@ -158,12 +167,23 @@ public class MidiUtils {
 			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
 	public static final List<String> MAJOR_CHORDS = Arrays
 			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
+	public static final List<String> MINOR_CHORDS = Arrays
+			.asList(new String[] { "Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#" });
+	public static final List<String> SEMITONE_LETTERS = Arrays.asList(
+			new String[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
 
 	public static final List<Integer> majorChordsModRating = Arrays
 			.asList(new Integer[] { 3, 2, 1, 3, 3, 1, -10 });
 
 	public static final List<String> progressionCircle = Arrays
 			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
+
+	public static final List<Integer> MAJ_SCALE = Arrays.asList(MidiUtils.Scales.MAJOR_SCALE);
+	public static final List<Integer> MIN_SCALE = Arrays.asList(MidiUtils.Scales.AEOLIAN_SCALE);
+
+	// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
+	public static final List<Integer> relevancyOrder = Arrays
+			.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
 
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
@@ -371,6 +391,23 @@ public class MidiUtils {
 			intList.add(i);
 		}
 		return intList;
+	}
+
+	public static List<Integer> chordToPitches(int[] chord) {
+		List<Integer> intList = new ArrayList<Integer>(chord.length);
+		for (int i : chord) {
+			intList.add(i % 12);
+		}
+		return intList;
+	}
+
+	public static int compareNotesByDistanceFromChordPitches(Note n1, Note n2,
+			List<Integer> pitches) {
+		int dist1 = Math
+				.abs((n1.getPitch() % 12) - getClosestFromList(pitches, n1.getPitch() % 12));
+		int dist2 = Math
+				.abs((n2.getPitch() % 12) - getClosestFromList(pitches, n2.getPitch() % 12));
+		return Integer.compare(dist1, dist2);
 	}
 
 	public static List<Pair<ScaleMode, Integer>> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
@@ -615,6 +652,10 @@ public class MidiUtils {
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 
+	public static int[] convertChordToLength(int[] chord, int length) {
+		return convertChordToLength(chord, length, true);
+	}
+
 	public static int[] convertChordToLength(int[] chord, int length, boolean conversionNeeded) {
 		int[] chordCopy = Arrays.copyOf(chord, chord.length);
 
@@ -624,8 +665,15 @@ public class MidiUtils {
 		int[] converted = new int[length];
 		if (chord.length < length) {
 			// repeat from start with +12 transpose
+
+			// adjustment -> C4 E G B D5 -> convert to 6 length -> last note must be C6 not C5
+			int octaveAdjustment = 1;
+			if (Math.abs(chordCopy[chord.length - 1] - chordCopy[0]) >= 12) {
+				octaveAdjustment += Math.abs(chordCopy[chord.length - 1] - chordCopy[0]) / 12;
+			}
 			for (int i = 0; i < length; i++) {
-				converted[i] = chordCopy[(i % chord.length)] + 12 * (i / chord.length);
+				int pitch = chordCopy[(i % chord.length)];
+				converted[i] = pitch + 12 * (i / chord.length) * octaveAdjustment;
 			}
 		} else {
 			// alternate from beginning and end
@@ -644,6 +692,24 @@ public class MidiUtils {
 			}
 		}
 		return converted;
+	}
+
+	public static Integer getXthChordNote(int x, int[] chord) {
+		//System.out.println(StringUtils.join(chord, ','));
+		int octaveMultiplier = 1;
+		int pitch = chord[((x + 10 * chord.length) % chord.length)];
+		int octaveAdjust = 0;
+		if (x >= chord.length) {
+			octaveAdjust = 12 * (x / chord.length);
+		} else if (x < 0) {
+			octaveAdjust = -12 + 12 * (x / chord.length);
+		}
+		if (Math.abs(chord[chord.length - 1] - chord[0]) >= 12) {
+			octaveMultiplier += Math.abs(chord[chord.length - 1] - chord[0]) / 12;
+		}
+		Integer note = pitch + octaveAdjust * octaveMultiplier;
+		//System.out.println("Note: " + note);
+		return (note <= 0 || note >= 127) ? null : note;
 	}
 
 	public static CPhrase chordProgressionToPhrase(List<int[]> cpr) {
@@ -705,7 +771,7 @@ public class MidiUtils {
 	}
 
 	public static List<int[]> getBasicChordsFromRoots(List<int[]> roots) {
-		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		List<int[]> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
@@ -719,7 +785,7 @@ public class MidiUtils {
 	}
 
 	public static List<String> getBasicChordStringsFromRoots(List<int[]> roots) {
-		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		List<String> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
 			int index = majorScaleNormalized.indexOf(r[0] % 12);
@@ -775,13 +841,13 @@ public class MidiUtils {
 
 			if (originalIndex == -1) {
 				if (modeToList.contains(searchPitch)) {
-					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+					//System.out.println("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					transposedChord[j] = pitch - difference;
-					System.out.println(
-							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+					/*System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
 				}
 				continue;
 			}
@@ -798,6 +864,11 @@ public class MidiUtils {
 	}
 
 	public static void transposePhrase(Phrase phr, final Integer[] mode, final Integer[] modeTo) {
+		transposeNotes(phr.getNoteList(), mode, modeTo);
+	}
+
+	public static void transposeNotes(List<Note> notes, final Integer[] mode,
+			final Integer[] modeTo) {
 		List<Integer> modeList = new ArrayList<>();
 		for (int num : mode) {
 			modeList.add(num);
@@ -809,10 +880,10 @@ public class MidiUtils {
 		}
 
 
-		for (int j = 0; j < phr.getNoteList().size(); j++) {
-			Note n = (Note) phr.getNoteList().get(j);
+		for (int j = 0; j < notes.size(); j++) {
+			Note n = notes.get(j);
 			int pitch = n.getPitch();
-			if (pitch == Note.REST) {
+			if (pitch < 0) {
 				continue;
 			}
 			int searchPitch = Integer.valueOf(pitch % 12);
@@ -820,13 +891,13 @@ public class MidiUtils {
 
 			if (originalIndex == -1) {
 				if (modeToList.contains(searchPitch)) {
-					System.out.println("Pitch found only in modeTo, not changing: " + pitch);
+					//System.out.println("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					n.setPitch(pitch - difference);
-					System.out.println(
-							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+					/*System.out.println(
+							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
 				}
 				continue;
 			}
@@ -853,12 +924,6 @@ public class MidiUtils {
 			}
 		}
 		return closest;
-	}
-
-	public static void addAllToJComboBox(String[] choices, ScrollComboBox<String> choice) {
-		for (String c : choices) {
-			choice.addItem(c);
-		}
 	}
 
 	public static int[] getSpelledChord(String chordString) {
@@ -900,6 +965,14 @@ public class MidiUtils {
 		return intervalInts.stream().mapToInt(i -> i).toArray();
 	}
 
+	public static String makeSpelledChord(int[] chord) {
+		String spelledChord = "";
+		for (int i : chord) {
+			spelledChord += SEMITONE_LETTERS.get(i % 12);
+		}
+		return spelledChord;
+	}
+
 
 	public static <T> T getRandom(Random generator, T[] array) {
 		return getRandom(generator, array, 0, array.length);
@@ -926,9 +999,9 @@ public class MidiUtils {
 		for (Chord c : chords) {
 			c.setFlam(flam);
 			Note[] notes = c.getNotesBackwards().toArray(new Note[] {});
-			Note lastNote = notes[notes.length - 1];
-			lastNote.setDuration(lastNote.getDuration() * 3);
-			phr.addNoteList(c.getNotesBackwards().toArray(new Note[] {}));
+			//Note lastNote = notes[notes.length - 1];
+			//lastNote.setDuration(lastNote.getDuration() * 3);
+			phr.addNoteList(notes);
 		}
 	}
 
@@ -997,7 +1070,7 @@ public class MidiUtils {
 
 
 		List<String> solvedChords = new ArrayList<>();
-		List<Integer> majorScaleNormalized = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		String firstLetterFirstChord = rawChords.substring(0, 1);
 		int firstPitchFirstChord = majorScaleNormalized
 				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord) - 1);
@@ -1046,7 +1119,7 @@ public class MidiUtils {
 			}
 			VibeComposerGUI.transposeScore
 					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
-			//VibeComposerGUI.scaleMode.setSelectedItem(detectionResult.getKey().toString());
+			//VibeComposerGUI.scaleMode.setVal(detectionResult.getKey().toString());
 			return solvedChords;
 		} else {
 			return null;
@@ -1068,7 +1141,7 @@ public class MidiUtils {
 			return "";
 		}
 		int pitchNormalized = pitch % 12;
-		List<Integer> majorLetterPitches = Arrays.asList(Scales.MAJOR_SCALE);
+		List<Integer> majorLetterPitches = MAJ_SCALE;
 		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
 		if (chordLetter < 0) {
 			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);
@@ -1153,6 +1226,39 @@ public class MidiUtils {
 		}
 		System.out.println("Returning respiced chords: " + respicedChordsList.toString());
 		return respicedChordsList;
+	}
+
+	public static Set<Integer> avoidNotesFromChord(int[] chord, int notesToAvoid) {
+		Set<Integer> avoidNotes = new HashSet<>();
+		Set<Integer> safeNotes = new HashSet<>();
+		for (int i = 0; i < chord.length; i++) {
+			if (notesToAvoid >= 1) {
+				avoidNotes.add((chord[i] + 1) % 12);
+			}
+			if (notesToAvoid >= 2) {
+				avoidNotes.add((chord[i] + 11) % 12);
+				avoidNotes.add((chord[i] + 2) % 12);
+			}
+			safeNotes.add(chord[i] % 12);
+		}
+		avoidNotes.removeAll(safeNotes);
+		return avoidNotes;
+	}
+
+	public static Integer[] adjustScaleByChord(Integer[] noteAdjustScale, int[] chord) {
+		Integer[] adjustedScale = Arrays.copyOf(noteAdjustScale, noteAdjustScale.length);
+		int[] normalizedChord = normalizeChord(chord);
+		for (int i = 0; i < normalizedChord.length; i++) {
+			boolean changedNote = MAJ_SCALE.indexOf(normalizedChord[i]) == -1;
+			if (changedNote) {
+				int indexToChange = MIN_SCALE.indexOf(normalizedChord[i]);
+				adjustedScale[indexToChange] = normalizedChord[i];
+				System.out.println(
+						"Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
+			}
+
+		}
+		return adjustedScale;
 	}
 
 }

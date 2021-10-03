@@ -36,4 +36,18 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	public void setScrollEnabled(boolean scrollEnabled) {
 		this.scrollEnabled = scrollEnabled;
 	}
+
+	public T getVal() {
+		return getItemAt(getSelectedIndex());
+	}
+
+	public void setVal(T item) {
+		setSelectedItem(item);
+	}
+
+	public static <T> void addAll(T[] choices, ScrollComboBox<T> choice) {
+		for (T c : choices) {
+			choice.addItem(c);
+		}
+	}
 }

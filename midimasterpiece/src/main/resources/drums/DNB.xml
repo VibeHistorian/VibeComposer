@@ -35,7 +35,7 @@
         <instrument>36</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>ONEFIVE</pattern>
+        <pattern>ONESIX</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
@@ -110,7 +110,7 @@
         <instrument>42</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>ONEFIVE</pattern>
+        <pattern>ONESIX</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>1</patternShift>
@@ -160,7 +160,7 @@
         <instrument>82</instrument>
         <midiChannel>10</midiChannel>
         <muted>false</muted>
-        <pattern>ALTERNATE2</pattern>
+        <pattern>ALT</pattern>
         <patternRepeat>2</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>2</patternShift>

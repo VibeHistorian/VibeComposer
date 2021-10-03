@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
+
 @XmlType(name = "chordSpanFill")
 @XmlEnum
 public enum ChordSpanFill {
@@ -24,12 +26,7 @@ public enum ChordSpanFill {
 	}
 
 	public static ChordSpanFill getWeighted(int value) {
-		for (int i = 0; i < weights.length; i++) {
-			if (value < weights[i]) {
-				return ChordSpanFill.values()[i];
-			}
-		}
-		throw new IllegalArgumentException("ChordSpanFill error: Value higher than 99!");
+		return OMNI.getWeightedValue(ChordSpanFill.values(), value, weights);
 	}
 
 	public List<Integer> getPatternByLength(int length) {

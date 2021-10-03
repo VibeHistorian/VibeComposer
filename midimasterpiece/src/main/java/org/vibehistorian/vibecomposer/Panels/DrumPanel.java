@@ -12,8 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -23,13 +23,13 @@ public class DrumPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6219184197272490684L;
 
-	private JCheckBox isVelocityPattern = new JCheckBox("Dynamic", true);
+	private JCheckBox isVelocityPattern = new JCheckBox("Ghosts", true);
 
 	public void initComponents(ActionListener l) {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
-		MidiUtils.addAllToJComboBox(new String[] { "10" }, midiChannel);
+		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
 		initDefaults(l);
 		this.add(new JLabel("#"));
@@ -37,6 +37,9 @@ public class DrumPanel extends InstPanel {
 		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
+
+		this.add(chordSpanFillPanel);
+		chordSpanFill.setScrollEnabled(false);
 
 		// pattern business
 		this.add(hitsPerPattern);
@@ -67,10 +70,6 @@ public class DrumPanel extends InstPanel {
 		this.add(pauseChance);
 
 		this.add(swingPercent);
-		this.add(new JLabel("Fill"));
-		chordSpanFill.setScrollEnabled(false);
-		this.add(chordSpanFill);
-		this.add(fillFlip);
 
 		this.add(exceptionChance);
 
@@ -94,7 +93,7 @@ public class DrumPanel extends InstPanel {
 		setPartClass(DrumPart.class);
 		initComponents(l);
 		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d.toString());
+			pattern.addItem(d);
 		}
 		removeButton.addActionListener(l);
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);
@@ -127,8 +126,8 @@ public class DrumPanel extends InstPanel {
 		return isVelocityPattern.isSelected();
 	}
 
-	public void setIsVelocityPattern(boolean isVelocityPattern) {
-		this.isVelocityPattern.setSelected(isVelocityPattern);
+	public void setIsVelocityPattern(boolean val) {
+		this.isVelocityPattern.setSelected(val);
 	}
 
 

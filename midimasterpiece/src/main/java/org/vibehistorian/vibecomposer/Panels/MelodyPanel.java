@@ -1,11 +1,16 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 
-import org.vibehistorian.vibecomposer.MidiUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -13,11 +18,23 @@ public class MelodyPanel extends InstPanel {
 
 	private static final long serialVersionUID = -7861296600641561431L;
 
-	private JCheckBox fillPauses = new JCheckBox("Fill Pauses", false);
+	private JCheckBox fillPauses = new JCheckBox("<html>Fill<br>Pauses</html>", false);
+	private JTextField noteTargets = new JTextField("0,2,2,4");
+	private JTextField patternStructure = new JTextField("0,1,0,2");
+	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 5, 0, 7);
+	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
+	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
+	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Pattern", 33);
+	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
+	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
+	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
+	private KnobPanel speed = new KnobPanel("Speed", 0);
+	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 
 	public void initComponents(ActionListener l) {
-		MidiUtils.addAllToJComboBox(new String[] { "1" }, midiChannel);
-		midiChannel.setSelectedItem("1");
+
+		ScrollComboBox.addAll(new Integer[] { 1, 7, 8, 15 }, midiChannel);
+		midiChannel.setVal(1);
 		instrument.initInstPool(instPool);
 		setInstrument(8);
 		initDefaults(l);
@@ -32,24 +49,69 @@ public class MelodyPanel extends InstPanel {
 		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
-		this.add(minMaxVelSlider);
-
+		this.add(speed);
+		//transpose.getKnob().setTickSpacing(0);
 		this.add(transpose);
-
-		this.add(minMaxVelSlider);
 
 		pauseChance.setInt(0);
 		this.add(pauseChance);
 		this.add(fillPauses);
 
+		this.add(new JLabel("<html>Note<br>Targets</html>"));
+		this.add(noteTargets);
+
+		this.add(maxBlockChange);
+
+		this.add(new JLabel("Pattern"));
+		this.add(patternStructure);
+
+		this.add(blockJump);
+		this.add(maxNoteExceptions);
+		this.add(noteExceptionChance);
+
+		this.add(minMaxVelSlider);
+		this.add(noteLengthMultiplier);
 		this.add(swingPercent);
+		this.add(accents);
+
+
+		this.add(alternatingRhythmChance);
+		this.add(doubledRhythmChance);
+		this.add(splitChance);
+		this.add(leadChordsChance);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
 
-		this.add(new JLabel("Midi ch.: 1"));
+		//toggleableComponents.add(maxNoteExceptions);
+		toggleableComponents.add(alternatingRhythmChance);
+		toggleableComponents.add(doubledRhythmChance);
+		toggleableComponents.add(splitChance);
+		toggleableComponents.add(noteExceptionChance);
+		toggleableComponents.add(leadChordsChance);
+
+		this.add(new JLabel("Midi ch."));
+		this.add(midiChannel);
 		setPanelOrder(1);
 
+	}
+
+	@Override
+	public void addBackgroundsForKnobs() {
+		super.addBackgroundsForKnobs();
+		speed.addBackgroundWithBorder(OMNI.alphen(Color.red, 50));
+	}
+
+	@Override
+	public void toggleComponentTexts(boolean b) {
+		super.toggleComponentTexts(b);
+		speed.setShowTextInKnob(b);
+	}
+
+	public void toggleCombinedMelodyDisabledUI(boolean b) {
+		getVolSlider().setEnabled(b);
+		getSoloMuter().setEnabled(b);
+		getInstrumentBox().setEnabled(b);
 	}
 
 	public MelodyPanel(ActionListener l) {
@@ -64,6 +126,18 @@ public class MelodyPanel extends InstPanel {
 		part.setOrder(getPanelOrder());
 
 		part.setFillPauses(getFillPauses());
+		part.setChordNoteChoices(getChordNoteChoices());
+		part.setMelodyPatternOffsets(getMelodyPatternOffsets());
+		part.setMaxBlockChange(getMaxBlockChange());
+		part.setAlternatingRhythmChance(getAlternatingRhythmChance());
+		part.setBlockJump(getBlockJump());
+		part.setDoubledRhythmChance(getDoubledRhythmChance());
+		part.setLeadChordsChance(getLeadChordsChance());
+		part.setMaxNoteExceptions(getMaxNoteExceptions());
+		part.setNoteExceptionChance(getNoteExceptionChance());
+		part.setSpeed(getSpeed());
+		part.setSplitChance(getSplitChance());
+
 		return part;
 	}
 
@@ -73,6 +147,17 @@ public class MelodyPanel extends InstPanel {
 		setPanelOrder(part.getOrder());
 
 		setFillPauses(part.isFillPauses());
+		setChordNoteChoices(part.getChordNoteChoices());
+		setMelodyPatternOffsets(part.getMelodyPatternOffsets());
+		setMaxBlockChange(part.getMaxBlockChange());
+		setAlternatingRhythmChance(part.getAlternatingRhythmChance());
+		setBlockJump(part.getBlockJump());
+		setDoubledRhythmChance(part.getDoubledRhythmChance());
+		setLeadChordsChance(part.getLeadChordsChance());
+		setMaxNoteExceptions(part.getMaxNoteExceptions());
+		setNoteExceptionChance(part.getNoteExceptionChance());
+		setSpeed(part.getSpeed());
+		setSplitChance(part.getSplitChance());
 	}
 
 	@Override
@@ -84,7 +169,112 @@ public class MelodyPanel extends InstPanel {
 		return fillPauses.isSelected();
 	}
 
-	public void setFillPauses(boolean fillPauses) {
-		this.fillPauses.setSelected(fillPauses);
+	public void setFillPauses(boolean val) {
+		this.fillPauses.setSelected(val);
 	}
+
+	public List<Integer> getChordNoteChoices() {
+		return OMNI.parseIntsString(noteTargets.getText());
+	}
+
+	public void setChordNoteChoices(List<Integer> val) {
+		this.noteTargets.setText(StringUtils.join(val, ","));
+	}
+
+	public List<Integer> getMelodyPatternOffsets() {
+		return OMNI.parseIntsString(patternStructure.getText());
+	}
+
+	public void setMelodyPatternOffsets(List<Integer> val) {
+		this.patternStructure.setText(StringUtils.join(val, ","));
+	}
+
+	public void overridePatterns(MelodyPanel mp1) {
+		noteTargets.setText(mp1.noteTargets.getText());
+		patternStructure.setText(mp1.patternStructure.getText());
+		maxBlockChange.setInt(mp1.maxBlockChange.getInt());
+		blockJump.setInt(mp1.blockJump.getInt());
+		maxNoteExceptions.setInt(mp1.maxNoteExceptions.getInt());
+		alternatingRhythmChance.setInt(mp1.alternatingRhythmChance.getInt());
+		doubledRhythmChance.setInt(mp1.doubledRhythmChance.getInt());
+		splitChance.setInt(mp1.splitChance.getInt());
+		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
+		speed.setInt(mp1.speed.getInt());
+		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
+	}
+
+	public int getMaxBlockChange() {
+		return maxBlockChange.getInt();
+	}
+
+	public void setMaxBlockChange(int val) {
+		this.maxBlockChange.setInt(val);
+	}
+
+	public int getBlockJump() {
+		return blockJump.getInt();
+	}
+
+	public void setBlockJump(int val) {
+		this.blockJump.setInt(val);
+	}
+
+	public int getMaxNoteExceptions() {
+		return maxNoteExceptions.getInt();
+	}
+
+	public void setMaxNoteExceptions(int val) {
+		this.maxNoteExceptions.setInt(val);
+	}
+
+	public int getAlternatingRhythmChance() {
+		return alternatingRhythmChance.getInt();
+	}
+
+	public void setAlternatingRhythmChance(int val) {
+		this.alternatingRhythmChance.setInt(val);
+	}
+
+	public int getDoubledRhythmChance() {
+		return doubledRhythmChance.getInt();
+	}
+
+	public void setDoubledRhythmChance(int val) {
+		this.doubledRhythmChance.setInt(val);
+	}
+
+	public int getSplitChance() {
+		return splitChance.getInt();
+	}
+
+	public void setSplitChance(int val) {
+		this.splitChance.setInt(val);
+	}
+
+	public int getNoteExceptionChance() {
+		return noteExceptionChance.getInt();
+	}
+
+	public void setNoteExceptionChance(int val) {
+		this.noteExceptionChance.setInt(val);
+	}
+
+	public int getSpeed() {
+		return speed.getInt();
+	}
+
+	public void setSpeed(int val) {
+		this.speed.setInt(val);
+	}
+
+	public int getLeadChordsChance() {
+		return leadChordsChance.getInt();
+	}
+
+	public void setLeadChordsChance(int val) {
+		this.leadChordsChance.setInt(val);
+	}
+
+
 }
+

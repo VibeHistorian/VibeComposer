@@ -61,29 +61,29 @@ public class GUIConfig {
 	private boolean arpAffectsBpm = false;
 	private boolean doubledDurations = false;
 	private boolean allowChordRepeats = true;
+	private Integer globalSwingOverride = null;
 
 
 	// melody gen
-	private int maxNoteJump = 2;
-	private int maxExceptions = 2;
-	private int melodyAlternateRhythmChance = 50;
-	private int melodySameRhythmChance = 50;
 	private int melodyUseOldAlgoChance = 0;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
 	private int maxMelodySwing = 50;
-	private int melodySplitChance = 20;
-	private int melodyExceptionChance = 33;
-	private int melodyQuickness = 50;
+
 	private boolean melodyBasicChordsOnly = true;
-	private boolean melodyTonicize = false;
-	private int melodyLeadChords = 0;
+	private int melodyChordNoteTarget = 40;
+	private int melodyTonicNoteTarget = 25;
+	private boolean melodyEmphasizeKey = true;
+	private int melodyModeNoteTarget = 15;
+	private int melodyReplaceAvoidNotes = 2;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
+	private int melodyBlockTargetMode = 2;
+	private int melodyPatternEffect = 2;
 
 	// chord gen
 	private int chordSlashChance = 0;
@@ -91,6 +91,7 @@ public class GUIConfig {
 	private boolean enable9th13th = false;
 	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
+	private int spiceParallelChance = 5;
 
 	private boolean spiceForceScale = true;
 	private String firstChord = "?";
@@ -198,14 +199,6 @@ public class GUIConfig {
 		this.bpm = bpm;
 	}
 
-	public int getMaxNoteJump() {
-		return maxNoteJump;
-	}
-
-	public void setMaxNoteJump(int maxNoteJump) {
-		this.maxNoteJump = maxNoteJump;
-	}
-
 	public int getSpiceChance() {
 		return spiceChance;
 	}
@@ -295,14 +288,6 @@ public class GUIConfig {
 
 	public void setArpAffectsBpm(boolean arpAffectBpm) {
 		this.arpAffectsBpm = arpAffectBpm;
-	}
-
-	public int getMaxExceptions() {
-		return maxExceptions;
-	}
-
-	public void setMaxExceptions(int maxExceptions) {
-		this.maxExceptions = maxExceptions;
 	}
 
 	public List<DrumPart> getDrumParts() {
@@ -409,22 +394,6 @@ public class GUIConfig {
 		this.enable9th13th = enable9th13th;
 	}
 
-	public int getMelodyAlternateRhythmChance() {
-		return melodyAlternateRhythmChance;
-	}
-
-	public void setMelodyAlternateRhythmChance(int melodyAlternateRhythmChance) {
-		this.melodyAlternateRhythmChance = melodyAlternateRhythmChance;
-	}
-
-	public int getMelodySameRhythmChance() {
-		return melodySameRhythmChance;
-	}
-
-	public void setMelodySameRhythmChance(int melodySameRhythmChance) {
-		this.melodySameRhythmChance = melodySameRhythmChance;
-	}
-
 	public int getMelodyUseOldAlgoChance() {
 		return melodyUseOldAlgoChance;
 	}
@@ -463,30 +432,6 @@ public class GUIConfig {
 
 	public void setMaxMelodySwing(int maxMelodySwing) {
 		this.maxMelodySwing = maxMelodySwing;
-	}
-
-	public int getMelodySplitChance() {
-		return melodySplitChance;
-	}
-
-	public void setMelodySplitChance(int melodySplitChance) {
-		this.melodySplitChance = melodySplitChance;
-	}
-
-	public int getMelodyExceptionChance() {
-		return melodyExceptionChance;
-	}
-
-	public void setMelodyExceptionChance(int melodyExceptionChance) {
-		this.melodyExceptionChance = melodyExceptionChance;
-	}
-
-	public int getMelodyQuickness() {
-		return melodyQuickness;
-	}
-
-	public void setMelodyQuickness(int melodyQuickness) {
-		this.melodyQuickness = melodyQuickness;
 	}
 
 	public boolean isDoubledDurations() {
@@ -569,20 +514,12 @@ public class GUIConfig {
 		this.keyChangeType = keyChangeType;
 	}
 
-	public boolean isMelodyTonicize() {
-		return melodyTonicize;
+	public int getMelodyTonicNoteTarget() {
+		return melodyTonicNoteTarget;
 	}
 
-	public void setMelodyTonicize(boolean melodyTonicize) {
-		this.melodyTonicize = melodyTonicize;
-	}
-
-	public int getMelodyLeadChords() {
-		return melodyLeadChords;
-	}
-
-	public void setMelodyLeadChords(int melodyLeadChords) {
-		this.melodyLeadChords = melodyLeadChords;
+	public void setMelodyTonicNoteTarget(int melodyTonicNoteTarget) {
+		this.melodyTonicNoteTarget = melodyTonicNoteTarget;
 	}
 
 	public boolean isMelodyArpySurprises() {
@@ -639,6 +576,70 @@ public class GUIConfig {
 
 	public void setSpiceForceScale(boolean spiceForceScale) {
 		this.spiceForceScale = spiceForceScale;
+	}
+
+	public int getMelodyBlockTargetMode() {
+		return melodyBlockTargetMode;
+	}
+
+	public void setMelodyBlockTargetMode(int melodyBlockTargetMode) {
+		this.melodyBlockTargetMode = melodyBlockTargetMode;
+	}
+
+	public boolean isMelodyEmphasizeKey() {
+		return melodyEmphasizeKey;
+	}
+
+	public void setMelodyEmphasizeKey(boolean melodyEmphasizeKey) {
+		this.melodyEmphasizeKey = melodyEmphasizeKey;
+	}
+
+	public int getMelodyModeNoteTarget() {
+		return melodyModeNoteTarget;
+	}
+
+	public void setMelodyModeNoteTarget(int melodyModeNoteTarget) {
+		this.melodyModeNoteTarget = melodyModeNoteTarget;
+	}
+
+	public int getMelodyReplaceAvoidNotes() {
+		return melodyReplaceAvoidNotes;
+	}
+
+	public void setMelodyReplaceAvoidNotes(int melodyReplaceAvoidNotes) {
+		this.melodyReplaceAvoidNotes = melodyReplaceAvoidNotes;
+	}
+
+	public int getMelodyChordNoteTarget() {
+		return melodyChordNoteTarget;
+	}
+
+	public void setMelodyChordNoteTarget(int melodyChordNoteTarget) {
+		this.melodyChordNoteTarget = melodyChordNoteTarget;
+	}
+
+	public Integer getGlobalSwingOverride() {
+		return globalSwingOverride;
+	}
+
+	public void setGlobalSwingOverride(Integer globalSwingOverride) {
+		this.globalSwingOverride = globalSwingOverride;
+	}
+
+	public int getSpiceParallelChance() {
+		return spiceParallelChance;
+	}
+
+	public void setSpiceParallelChance(int spiceParallelChance) {
+		this.spiceParallelChance = spiceParallelChance;
+	}
+
+	public int getMelodyPatternEffect() {
+		return melodyPatternEffect;
+	}
+
+	public void setMelodyPatternEffect(int melodyPatternEffect) {
+		this.melodyPatternEffect = melodyPatternEffect;
 	}
 
 }

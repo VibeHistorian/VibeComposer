@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class ExtraSettingsPopup extends CloseablePopup {
 	JScrollPane scroll;
@@ -34,7 +35,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 
 			@Override
 			public void windowOpened(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
@@ -47,7 +48,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 					high = low;
 					VibeComposerGUI.bpmHigh.setInt(high);
 				}
-				bpm = Math.max(low, Math.min(high, bpm));
+				bpm = OMNI.clamp(bpm, low, high);
 				VibeComposerGUI.mainBpm.getKnob().setMin(low);
 				VibeComposerGUI.mainBpm.getKnob().setMax(high);
 				VibeComposerGUI.mainBpm.setInt(bpm);
@@ -55,31 +56,31 @@ public class ExtraSettingsPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowIconified(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowDeiconified(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowActivated(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 
 			@Override
 			public void windowDeactivated(WindowEvent e) {
-				// TODO Auto-generated method stub
+				// Auto-generated method stub
 
 			}
 

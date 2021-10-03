@@ -1,0 +1,24 @@
+package org.vibehistorian.vibecomposer.Popups;
+
+import java.awt.Toolkit;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+public class PopupUtils {
+	public static void addEmptySpaceCloser(JPanel panel, JFrame parentFrame) {
+		panel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isRightMouseButton(evt)) {
+					Toolkit.getDefaultToolkit().getSystemEventQueue()
+							.postEvent(new WindowEvent(parentFrame, WindowEvent.WINDOW_CLOSING));
+				}
+			}
+		});
+	}
+}

@@ -47,7 +47,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private static final int radius = 20;
 	private static final int spotRadius = 3;
-	private static final int arcCut = 20;
+	private static final int arcCut = 30;
 	private static final double cutOff = (Math.PI * (double) arcCut / 180.0);
 	private static final double cutOffDouble = ((double) arcCut / 180.0);
 
@@ -153,10 +153,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
+
 			// Draw the knob.
 			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
-
 
 			// Find the center of the spot.
 			Point pt = getSpotCenter();
@@ -166,18 +166,20 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			// Draw outer circle
 
 
-			// Draw the spot.
-			if (VibeComposerGUI.isDarkMode) {
-				g2d.setColor(spotColor);
-			} else {
-				g2d.setColor(VibeComposerGUI.lightModeUIColor.darker());
-			}
-			//g2d.setColor(spotColor);
-			//g2d.drawOval(0, 0, 2 * radius, 2 * radius);
-			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
+			// Draw arcs.
 
-			// Draw arc.
-			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - arcCut, arcCut * 2);
+			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - 20, 20 * 2);
+			if (VibeComposerGUI.isDarkMode) {
+				g2d.setColor(OMNI.alphen(VibeComposerGUI.darkModeUIColor, 100));
+			} else {
+				g2d.setColor(OMNI.alphen(Color.white, 180));
+			}
+			g2d.fillArc(0, 0, 2 * radius + 1, 2 * radius + 1, 270 - arcCut,
+					-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
+
+			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
+			g2d.fillArc(3, 3, 2 * radius - 5, 2 * radius - 5, 270 - arcCut,
+					-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
 
 			// Draw value.
 			g2d.setColor((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
@@ -192,7 +194,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 			if (showTextInKnob) {
 				if (VibeComposerGUI.isDarkMode) {
-					g2d.setColor(OMNI.alphen(Color.white, 190));
+					g2d.setColor(OMNI.alphen(Color.white, 230));
 				} else {
 					g2d.setColor(OMNI.alphen(Color.black, 210));
 				}
@@ -229,8 +231,18 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 					Shape transformedGlyph = at.createTransformedShape(glyph);
 					g2d.fill(transformedGlyph);
 				}
+				g2d.translate(-8, 7); // Starting position of the text
 			}
 
+			// Draw the spot.
+			if (VibeComposerGUI.isDarkMode) {
+				g2d.setColor(spotColor);
+			} else {
+				g2d.setColor(Color.white);
+			}
+			//g2d.setColor(spotColor);
+			//g2d.drawOval(0, 0, 2 * radius, 2 * radius);
+			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
 
 		}
 	}

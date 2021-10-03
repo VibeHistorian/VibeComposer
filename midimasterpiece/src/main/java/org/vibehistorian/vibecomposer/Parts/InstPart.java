@@ -51,9 +51,10 @@ public abstract class InstPart implements Cloneable {
 
 	protected int velocityMin = 70;
 	protected int velocityMax = 90;
+	protected int noteLengthMultiplier = 100;
 
 	protected int swingPercent = 50;
-
+	protected int accents = 50;
 
 	protected int order = 1;
 
@@ -96,7 +97,10 @@ public abstract class InstPart implements Cloneable {
 			panel.setVelocityMax(velocityMax);
 		}
 
+		setNoteLengthMultiplier(panel.getNoteLengthMultiplier());
+
 		setSwingPercent(panel.getSwingPercent());
+		setAccents(panel.getAccents());
 
 		setCustomPattern(
 				panel.getComboPanel() != null ? panel.getComboPanel().getTruePattern() : null);
@@ -283,6 +287,14 @@ public abstract class InstPart implements Cloneable {
 		this.swingPercent = swingPercent;
 	}
 
+	public int getAccents() {
+		return accents;
+	}
+
+	public void setAccents(int accents) {
+		this.accents = accents;
+	}
+
 	public boolean isFillFlip() {
 		return fillFlip;
 	}
@@ -297,6 +309,14 @@ public abstract class InstPart implements Cloneable {
 
 	public void setPatternFlip(boolean patternFlip) {
 		this.patternFlip = patternFlip;
+	}
+
+	public int getNoteLengthMultiplier() {
+		return noteLengthMultiplier;
+	}
+
+	public void setNoteLengthMultiplier(int noteLengthMultiplier) {
+		this.noteLengthMultiplier = noteLengthMultiplier;
 	}
 
 	@XmlAttribute
@@ -336,7 +356,7 @@ public abstract class InstPart implements Cloneable {
 		try {
 			return super.clone();
 		} catch (CloneNotSupportedException e) {
-			// TODO Auto-generated catch block
+			// Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;

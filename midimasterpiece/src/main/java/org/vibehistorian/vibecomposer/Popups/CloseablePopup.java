@@ -26,7 +26,6 @@ public abstract class CloseablePopup {
 		frame.setLocation(loc);
 		addFrameWindowOperation();
 		frame.setTitle(windowTitle);
-		frame.pack();
 
 		if (currentPopupMap.get(popupType) != null) {
 			currentPopupMap.get(popupType).close();
@@ -34,10 +33,6 @@ public abstract class CloseablePopup {
 		} else {
 			currentPopupMap.put(popupType, this);
 		}
-
-		frame.setVisible(true);
-
-
 	}
 
 	public void close() {

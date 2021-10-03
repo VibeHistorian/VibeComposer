@@ -6,7 +6,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -24,8 +24,8 @@ public class BassPanel extends InstPanel {
 	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
 
 	public void initComponents(ActionListener l) {
-		MidiUtils.addAllToJComboBox(new String[] { "9" }, midiChannel);
-		midiChannel.setSelectedItem("9");
+		ScrollComboBox.addAll(new Integer[] { 9 }, midiChannel);
+		midiChannel.setVal(9);
 		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
@@ -93,24 +93,24 @@ public class BassPanel extends InstPanel {
 		return useRhythm.isSelected();
 	}
 
-	public void setUseRhythm(boolean useRhythm) {
-		this.useRhythm.setSelected(useRhythm);
+	public void setUseRhythm(boolean val) {
+		this.useRhythm.setSelected(val);
 	}
 
 	public boolean getAlternatingRhythm() {
 		return alternatingRhythm.isSelected();
 	}
 
-	public void setAlternatingRhythm(boolean alternatingRhythm) {
-		this.alternatingRhythm.setSelected(alternatingRhythm);
+	public void setAlternatingRhythm(boolean val) {
+		this.alternatingRhythm.setSelected(val);
 	}
 
 	public boolean getDoubleOct() {
 		return doubleOct.isSelected();
 	}
 
-	public void setDoubleOct(boolean doubleOct) {
-		this.doubleOct.setSelected(doubleOct);
+	public void setDoubleOct(boolean val) {
+		this.doubleOct.setSelected(val);
 	}
 
 	@Override
@@ -122,15 +122,15 @@ public class BassPanel extends InstPanel {
 		return noteVariation.getInt();
 	}
 
-	public void setNoteVariation(int noteVariation) {
-		this.noteVariation.setInt(noteVariation);
+	public void setNoteVariation(int val) {
+		this.noteVariation.setInt(val);
 	}
 
 	public boolean getMelodyPattern() {
 		return melodyPattern.isSelected();
 	}
 
-	public void setMelodyPattern(boolean melodyPattern) {
-		this.melodyPattern.setSelected(melodyPattern);
+	public void setMelodyPattern(boolean val) {
+		this.melodyPattern.setSelected(val);
 	}
 }

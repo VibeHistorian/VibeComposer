@@ -71,7 +71,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 	}
 
 	public int getInstrument() {
-		return Integer.valueOf(getItemAt(getSelectedIndex()).split(" = ")[1].trim());
+		return Integer.valueOf(getVal().split(" = ")[1].trim());
 	}
 
 	public int getRandomInstrument() {

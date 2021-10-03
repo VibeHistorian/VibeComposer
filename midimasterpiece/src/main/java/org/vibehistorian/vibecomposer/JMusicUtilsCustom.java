@@ -40,15 +40,15 @@ public class JMusicUtilsCustom {
 			// of the previous note accordingly
 			n = tphr.getNote(0);
 
-			if (!n.isRest()) {
-				if (nphr.getSize() > 0) { // if it is not the first note
-					nphr.getNote(nphr.getSize() - 1)
-							.setRhythmValue(((int) ((sst - prevsst) * 100000 + 0.5)) / 100000.0);
-				} else {// if it is the first note to go in, set the startime
-					nphr.setStartTime(sst);
-				}
-
+			//if (!n.isRest()) {
+			if (nphr.getSize() > 0) { // if it is not the first note
+				nphr.getNote(nphr.getSize() - 1)
+						.setRhythmValue(((int) ((sst - prevsst) * 100000 + 0.5)) / 100000.0);
+			} else {// if it is the first note to go in, set the startime
+				nphr.setStartTime(sst);
 			}
+
+			//}
 			nphr.addNote(n);
 			// adjust the start time and remove the note
 			tphr.setStartTime(((int) ((sst + n.getRhythmValue()) * 100000 + 0.5)) / 100000.0);
