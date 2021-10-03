@@ -1193,12 +1193,12 @@ public class VibeComposerGUI extends JFrame
 			melodyPanel.setInstPool(POOL.ALL);
 			melodyPanel.getInstrumentBox().initInstPool(POOL.ALL);
 			melodyPanel.setInstrument(8);
-			melodyPanel.setFillPauses(true);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			//melodyPanel.setMidiChannel(i + 1);
 			if (i > 0) {
-				melodyPanel.setPauseChance(60);
+				melodyPanel.setPauseChance(50);
+				melodyPanel.setFillPauses(true);
 				melodyPanel.setMuteInst(true);
 				melodyPanel.getVolSlider().setEnabled(false);
 				melodyPanel.getSoloMuter().setEnabled(false);
@@ -1212,7 +1212,7 @@ public class VibeComposerGUI extends JFrame
 					melodyPanel.setTranspose(-12);
 				}
 			} else {
-				melodyPanel.setPauseChance(50);
+				melodyPanel.setPauseChance(10);
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);
