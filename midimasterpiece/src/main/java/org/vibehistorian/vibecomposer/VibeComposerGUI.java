@@ -398,7 +398,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyAvoidChordJumps;
 	JCheckBox melodyUseDirectionsFromProgression;
 	JCheckBox melodyPatternFlip;
-	ScrollComboBox<String> melodyBlockTargetMode;
+	public static ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
 	ScrollComboBox<String> melodyPatternEffect;
 	JCheckBox melodyPatternRandomizeOnCompose;
@@ -695,6 +695,8 @@ public class VibeComposerGUI extends JFrame
 						switch (indx) {
 						case 2:
 							addChords.setSelected(!addChords.isSelected());
+							/*instrumentTabPane.setEnabledAt(indx,
+									!instrumentTabPane.isEnabledAt(indx));*/
 							break;
 						case 3:
 							addArps.setSelected(!addArps.isSelected());
@@ -868,8 +870,10 @@ public class VibeComposerGUI extends JFrame
 		arrangementScaleMidiVelocity = new JCheckBox("Scale Midi Velocity in Arrangement", true);
 		arrangementResetCustomPanelsOnCompose = new JCheckBox("Reset customized panels On Compose",
 				true);
+		//RandomIntegerListButton bt = new RandomIntegerListButton("0,1,2,3");
 		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
 		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
+		//arrangementExtraSettingsPanel.add(bt);
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 
 		JPanel loopBeatExtraSettingsPanel = new JPanel();

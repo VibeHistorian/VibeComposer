@@ -671,7 +671,7 @@ public class MidiGenerator implements JMC {
 			int targetMode) {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
-				gc.isMelodyUseDirectionsFromProgression()
+				gc != null && gc.isMelodyUseDirectionsFromProgression()
 						? generateMelodyOffsetDirectionsFromChordProgression(chords, true,
 								randomSeed)
 						: randomizedChordDirections(chords.size(), randomSeed),
