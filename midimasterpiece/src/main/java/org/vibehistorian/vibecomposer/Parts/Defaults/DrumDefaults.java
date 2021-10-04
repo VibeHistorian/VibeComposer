@@ -10,18 +10,36 @@ import java.util.Random;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 
 public class DrumDefaults {
-	public static final DrumPart kick = makeSimpleDrum(36, 8, 1);
+	/*public static final DrumPart kick = makeSimpleDrum(36, 8, 1);
 	public static final DrumPart snare = makeSimpleDrum(38, 8, 1);
 	public static final DrumPart hat = makeSimpleDrum(42, 8, 1, RhythmPattern.FULL, 40, 75);
 	public static final DrumPart ride = makeSimpleDrum(53, 8, 1, RhythmPattern.SINGLE, 50, 85);
 	public static final DrumPart percs = makeSimpleDrum(60, 8, 1, RhythmPattern.TRESILLO, 40, 75);
+	public static final DrumPart[] drums = new DrumPart[] { kick, snare, hat, ride, percs };*/
 
 	public static final int[] instrumentThresholds = new int[] { 37, 41, 45, 53, 60 };
-	public static final DrumPart[] drums = new DrumPart[] { kick, snare, hat, ride, percs };
+
+	public static DrumPart getDefaultDrumPart(int drum) {
+		//  0,1,2,3,4 == kick, snare, hat, ride, percs
+		switch (drum) {
+		case 0:
+			return makeSimpleDrum(36, 8, 1);
+		case 1:
+			return makeSimpleDrum(38, 8, 1);
+		case 2:
+			return makeSimpleDrum(42, 8, 1, RhythmPattern.FULL, 40, 75);
+		case 3:
+			return makeSimpleDrum(53, 8, 1, RhythmPattern.SINGLE, 50, 85);
+		case 4:
+			return makeSimpleDrum(60, 8, 1, RhythmPattern.TRESILLO, 40, 75);
+		default:
+			throw new IllegalArgumentException("Drum number too high!");
+		}
+	}
+
 	public static DrumSettings[] drumSettings;
 
 	public static DrumSettings kickSettings;
@@ -124,18 +142,16 @@ public class DrumDefaults {
 
 	public static DrumPart getDrumFromInstrument(Integer instrument) {
 		int order = getOrder(instrument);
-		DrumPanel dpp = new DrumPanel(null);
-		dpp.setFromInstPart(drums[order]);
-		DrumPart dpCopy = dpp.toDrumPart(0);
-		dpCopy.setInstrument(instrument);
-		return dpCopy;
+		DrumPart dp = getDefaultDrumPart(order);
+		dp.setInstrument(instrument);
+		return dp;
 	}
 
-	public static DrumPart getDrum(int order) {
+	/*public static DrumPart getDrum(int order) {
 		DrumPanel dpp = new DrumPanel(null);
-		dpp.setFromInstPart(drums[order]);
+		dpp.setFromInstPart(getDefaultDrumPart(order));
 		DrumPart dpCopy = dpp.toDrumPart(0);
 		return dpCopy;
-	}
+	}*/
 
 }

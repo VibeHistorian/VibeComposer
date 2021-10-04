@@ -5878,16 +5878,26 @@ public class VibeComposerGUI extends JFrame
 		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) getAffectedPanels(4);
 
 		Random drumPanelGenerator = new Random();
+		List<DrumPanel> removedPanels = new ArrayList<>();
+		List<DrumPanel> remainingPanels = new ArrayList<>();
 		for (Iterator<DrumPanel> panelI = affectedDrums.iterator(); panelI.hasNext();) {
 			DrumPanel panel = panelI.next();
 			if (!onlyAdd && !panel.getLockInst()) {
-				((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
-				panelI.remove();
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
 			}
 
 		}
+		Collections.sort(removedPanels,
+				(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
 
-		panelCount -= affectedDrums.size();
+		panelCount -= remainingPanels.size();
 
 		int slide = 0;
 
@@ -5896,8 +5906,8 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		int swingPercent = 50;
-		if (onlyAdd && affectedDrums.size() > 0) {
-			Optional<Integer> existingSwing = affectedDrums.stream()
+		if (onlyAdd && remainingPanels.size() > 0) {
+			Optional<Integer> existingSwing = remainingPanels.stream()
 					.filter(e -> (e.getSwingPercent() != 50)).map(e -> e.getSwingPercent())
 					.findFirst();
 			if (existingSwing.isPresent()) {
@@ -5921,9 +5931,9 @@ public class VibeComposerGUI extends JFrame
 		Collections.sort(pitches);
 		int index = 0;
 		if (!onlyAdd && pitches.size() >= 3) {
-			long kickCount = affectedDrums.stream()
+			long kickCount = remainingPanels.stream()
 					.filter(e -> KICK_DRUMS.contains(e.getInstrument())).count();
-			long snareCount = affectedDrums.stream()
+			long snareCount = remainingPanels.stream()
 					.filter(e -> SNARE_DRUMS.contains(e.getInstrument())).count();
 			//System.out.println("Kick,snare: " + kickCount + ", " + snareCount);
 			if (kickCount == 0) {
@@ -5963,14 +5973,21 @@ public class VibeComposerGUI extends JFrame
 
 		/*int[] drumHitGrid = IntStream.iterate(0, e -> e).limit(chords * maxPatternPerChord)
 				.toArray();*/
-
 		for (int i = 0; i < panelCount; i++) {
 			DrumPart dpart = DrumDefaults.getDrumFromInstrument(pitches.get(i));
 			int order = DrumDefaults.getOrder(dpart.getInstrument());
 			DrumSettings settings = DrumDefaults.drumSettings[order];
 			settings.applyToDrumPart(dpart, lastRandomSeed);
-			DrumPanel dp = (randomizedPanel != null) ? randomizedPanel
-					: (DrumPanel) addInstPanelToLayout(4);
+			DrumPanel dp = null;
+			if (randomizedPanel != null) {
+				dp = randomizedPanel;
+			} else {
+				if (i < removedPanels.size()) {
+					dp = removedPanels.get(i);
+				} else {
+					dp = (DrumPanel) addInstPanelToLayout(4);
+				}
+			}
 
 			dpart.setOrder(dp.getPanelOrder());
 			dp.setFromInstPart(dpart);
@@ -6182,16 +6199,26 @@ public class VibeComposerGUI extends JFrame
 		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) getAffectedPanels(2);
 
 		Random chordPanelGenerator = new Random();
+		List<ChordPanel> removedPanels = new ArrayList<>();
+		List<ChordPanel> remainingPanels = new ArrayList<>();
 		for (Iterator<ChordPanel> panelI = affectedChords.iterator(); panelI.hasNext();) {
 			ChordPanel panel = panelI.next();
-			if (!panel.getLockInst() && !onlyAdd) {
-				((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
-				panelI.remove();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
 			}
-		}
 
-		// create only remaining
-		panelCount -= affectedChords.size();
+		}
+		Collections.sort(removedPanels,
+				(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+
+		panelCount -= remainingPanels.size();
 
 		int fixedChordStretch = -1;
 		if (randomChordStretchType.getVal().equals("FIXED")) {
@@ -6202,8 +6229,16 @@ public class VibeComposerGUI extends JFrame
 		viablePatterns.remove(RhythmPattern.CUSTOM);
 
 		for (int i = 0; i < panelCount; i++) {
-			ChordPanel cp = (randomizedPanel != null) ? randomizedPanel
-					: (ChordPanel) addInstPanelToLayout(2);
+			ChordPanel cp = null;
+			if (randomizedPanel != null) {
+				cp = randomizedPanel;
+			} else {
+				if (i < removedPanels.size()) {
+					cp = removedPanels.get(i);
+				} else {
+					cp = (ChordPanel) addInstPanelToLayout(2);
+				}
+			}
 			InstUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
 					.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
 							: InstUtils.POOL.PLUCK;
@@ -6298,13 +6333,27 @@ public class VibeComposerGUI extends JFrame
 		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) getAffectedPanels(3);
 
 		Random arpPanelGenerator = new Random();
+		List<ArpPanel> removedPanels = new ArrayList<>();
+		List<ArpPanel> remainingPanels = new ArrayList<>();
 		for (Iterator<ArpPanel> panelI = affectedArps.iterator(); panelI.hasNext();) {
 			ArpPanel panel = panelI.next();
-			if (!panel.getLockInst() && !onlyAdd) {
-				((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
-				panelI.remove();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
 			}
+
 		}
+		Collections.sort(removedPanels,
+				(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+
+		panelCount -= remainingPanels.size();
+
 		int fixedHitsGenerated = -1;
 		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
 			Random instGen = new Random();
@@ -6348,26 +6397,31 @@ public class VibeComposerGUI extends JFrame
 		if (randomizedPanel != null) {
 			start = randomizedPanel.getPanelOrder() - 1;
 			panelCount = start + 1;
-		} else {
-			// create only remaining
-			panelCount -= affectedArps.size();
 		}
 
-		ArpPanel first = (affectedArps.isEmpty() || (randomizedPanel != null && start == 0)) ? null
-				: affectedArps.get(0);
+		ArpPanel first = (remainingPanels.isEmpty() || (randomizedPanel != null && start == 0))
+				? null
+				: remainingPanels.get(0);
 		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
 		viablePatterns.remove(RhythmPattern.CUSTOM);
 
 		for (int i = start; i < panelCount; i++) {
 			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {
-				fixedInstrument = affectedArps.get(0).getInstrument();
+				fixedInstrument = first.getInstrument();
 			}
 			if (randomArpAllSameHits.isSelected() && first != null && fixedHits < 0) {
 				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
 			}
-
-			ArpPanel ap = (randomizedPanel != null) ? randomizedPanel
-					: (ArpPanel) addInstPanelToLayout(3);
+			ArpPanel ap = null;
+			if (randomizedPanel != null) {
+				ap = randomizedPanel;
+			} else {
+				if (i < removedPanels.size()) {
+					ap = removedPanels.get(i);
+				} else {
+					ap = (ArpPanel) addInstPanelToLayout(3);
+				}
+			}
 
 
 			if (randomArpHitsPerPattern.isSelected()) {
