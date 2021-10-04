@@ -6229,6 +6229,7 @@ public class VibeComposerGUI extends JFrame
 		viablePatterns.remove(RhythmPattern.CUSTOM);
 
 		for (int i = 0; i < panelCount; i++) {
+			boolean needNewChannel = false;
 			ChordPanel cp = null;
 			if (randomizedPanel != null) {
 				cp = randomizedPanel;
@@ -6237,6 +6238,7 @@ public class VibeComposerGUI extends JFrame
 					cp = removedPanels.get(i);
 				} else {
 					cp = (ChordPanel) addInstPanelToLayout(2);
+					needNewChannel = true;
 				}
 			}
 			InstUtils.POOL pool = (chordPanelGenerator.nextInt(100) < Integer
@@ -6321,9 +6323,9 @@ public class VibeComposerGUI extends JFrame
 				cp.setPatternShift(
 						chordPanelGenerator.nextInt(cp.getPattern().pattern.length - 1) + 1);
 			}
-
-			cp.setMidiChannel(11 + (cp.getPanelOrder() - 1) % 5);
-
+			if (needNewChannel) {
+				cp.setMidiChannel(11 + (cp.getPanelOrder() - 1) % 5);
+			}
 		}
 
 		repaint();
@@ -6399,9 +6401,8 @@ public class VibeComposerGUI extends JFrame
 			panelCount = start + 1;
 		}
 
-		ArpPanel first = (remainingPanels.isEmpty() || (randomizedPanel != null && start == 0))
-				? null
-				: remainingPanels.get(0);
+		ArpPanel first = (affectedArps.isEmpty() || !affectedArps.get(0).getLockInst()
+				|| (randomizedPanel != null && start == 0)) ? null : affectedArps.get(0);
 		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
 		viablePatterns.remove(RhythmPattern.CUSTOM);
 
@@ -6413,12 +6414,14 @@ public class VibeComposerGUI extends JFrame
 				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
 			}
 			ArpPanel ap = null;
+			boolean needNewChannel = false;
 			if (randomizedPanel != null) {
 				ap = randomizedPanel;
 			} else {
 				if (i < removedPanels.size()) {
 					ap = removedPanels.get(i);
 				} else {
+					needNewChannel = true;
 					ap = (ArpPanel) addInstPanelToLayout(3);
 				}
 			}
@@ -6540,8 +6543,9 @@ public class VibeComposerGUI extends JFrame
 				}
 				ap.setArpPattern(ArpPattern.values()[arpPatternOrder]);
 			}
-
-			ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);
+			if (needNewChannel) {
+				ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);
+			}
 		}
 
 		if (!affectedArps.isEmpty()) {
