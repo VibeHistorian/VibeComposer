@@ -685,6 +685,29 @@ public class VibeComposerGUI extends JFrame
 
 
 			constraints.gridy = 320;
+
+			instrumentTabPane.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent e) {
+					if (SwingUtilities.isRightMouseButton(e)) {
+						int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
+						System.out.println("RMB pressed in instrument tab pane: " + indx);
+						switch (indx) {
+						case 2:
+							addChords.setSelected(!addChords.isSelected());
+							break;
+						case 3:
+							addArps.setSelected(!addArps.isSelected());
+							break;
+						case 4:
+							addDrums.setSelected(!addDrums.isSelected());
+							break;
+						default:
+							break;
+						}
+					}
+				}
+			});
 			everythingPanel.add(instrumentTabPane, constraints);
 			for (int i = 0; i < 5; i++) {
 				instrumentTabPane.setBackgroundAt(i, OMNI.alphen(instColors[i], 40));
