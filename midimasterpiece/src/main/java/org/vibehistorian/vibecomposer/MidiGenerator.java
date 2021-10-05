@@ -30,6 +30,7 @@ import static org.vibehistorian.vibecomposer.MidiUtils.pickDurationWeightedRando
 import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
 import static org.vibehistorian.vibecomposer.MidiUtils.transposeScale;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,6 +51,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
@@ -63,6 +65,8 @@ import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
+import org.vibehistorian.vibecomposer.Helpers.ShowScoreBig;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -75,7 +79,6 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import jm.JMC;
-import jm.gui.show.ShowScore;
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
@@ -140,7 +143,7 @@ public class MidiGenerator implements JMC {
 	public static GUIConfig gc;
 
 	// opened windows
-	public static List<ShowScore> showScores = new ArrayList<>();
+	public static List<ShowScoreBig> showScores = new ArrayList<>();
 	public static int windowLoc = 5;
 
 	// track map for Solo
@@ -3609,19 +3612,24 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static void pianoRoll(Score s) {
-		if (showScores.size() > 2) {
-			ShowScore scr = showScores.get(0);
+		/*if (showScores.size() > 2) {
+			ShowScoreBig scr = showScores.get(0);
 			showScores.remove(0);
 			scr.dispose();
-		}
+		}*/
 		int x = (windowLoc % 10 == 0) ? 50 : 0;
 		int y = (windowLoc % 15 == 0) ? 50 : 0;
-		ShowScore nextScr = new ShowScore(s, x, y);
+		((JPanel) VibeComposerGUI.scoreScrollPane.getViewport().getView()).removeAll();
+		((JPanel) VibeComposerGUI.scoreScrollPane.getViewport().getView()).add(
+				new ShowPanelBig(null, s, new Dimension(VibeComposerGUI.scrollPaneDimension.width,
+						VibeComposerGUI.scrollPaneDimension.height - 50)));
+		VibeComposerGUI.scoreScrollPane.repaint();
+		/*//ShowScoreBig nextScr = new ShowScoreBig(s, x, y);
 		windowLoc += 5;
 		if (windowLoc > 15) {
 			windowLoc = 5;
 		}
-		showScores.add(nextScr);
+		showScores.add(nextScr);*/
 
 	}
 

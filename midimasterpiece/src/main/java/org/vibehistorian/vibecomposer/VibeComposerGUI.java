@@ -318,7 +318,8 @@ public class VibeComposerGUI extends JFrame
 
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
-	Dimension scrollPaneDimension = new Dimension(1600, 400);
+	public static JScrollPane scoreScrollPane;
+	public static Dimension scrollPaneDimension = new Dimension(1600, 400);
 	int arrangementRowHeaderWidth = 120;
 	Dimension scrollPaneDimensionToggled = new Dimension(1000, 400);
 
@@ -721,7 +722,11 @@ public class VibeComposerGUI extends JFrame
 
 			// arrangement
 			initArrangementSettings(325, GridBagConstraints.CENTER);
+
+
 		}
+
+		initScoreSettings(330, GridBagConstraints.CENTER);
 
 		//createHorizontalSeparator(327, this);
 
@@ -729,19 +734,19 @@ public class VibeComposerGUI extends JFrame
 		{
 
 			// randomization buttons
-			initRandomButtons(330, GridBagConstraints.CENTER);
+			initRandomButtons(350, GridBagConstraints.CENTER);
 
-			initMacroParams(340, GridBagConstraints.CENTER);
+			initMacroParams(360, GridBagConstraints.CENTER);
 
 			// chord settings - variety/spice
 			// chord settings - progressions
-			initChordProgressionSettings(350, GridBagConstraints.CENTER);
+			initChordProgressionSettings(370, GridBagConstraints.CENTER);
 
 			// chord tool tip
 
 			everythingPanel.add(controlPanel, constraints);
 
-			initCustomChords(360, GridBagConstraints.CENTER);
+			initCustomChords(380, GridBagConstraints.CENTER);
 
 		}
 
@@ -2506,6 +2511,25 @@ public class VibeComposerGUI extends JFrame
 			comp.setBackground(new Color(100, 150, 150));
 		}
 	}
+
+	private void initScoreSettings(int startY, int anchorSide) {
+		JPanel scrollableScorePanel = new JPanel();
+		scrollableScorePanel.setLayout(new BoxLayout(scrollableScorePanel, BoxLayout.Y_AXIS));
+		scrollableScorePanel.setAutoscrolls(true);
+		scoreScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		scoreScrollPane.setViewportView(scrollableScorePanel);
+
+		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+		instrumentTabPane.addTab("Score", scoreScrollPane);
+	}
+
 
 	private void refreshVariationPopupButtons(int count) {
 		/*if (count == variationButtonsPanel.getComponents().length) {
@@ -5297,6 +5321,7 @@ public class VibeComposerGUI extends JFrame
 		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangement.getSections().size() + ")");
 		instrumentTabPane.setTitleAt(6,
 				"Generated Arrangement (" + actualArrangement.getSections().size() + ")");
+		instrumentTabPane.setTitleAt(7, " Score ");
 	}
 
 	public static Pair<List<String>, List<Double>> solveUserChords(String[] userChordsSplit,
