@@ -3778,8 +3778,8 @@ public class VibeComposerGUI extends JFrame
 		handleGeneratedMidi(regenerate, relPath);
 		resetArrSectionInBackground();
 
-		LOGGER.info("VibeComposerGUI::composeMidi time: "
-				+ (System.currentTimeMillis() - systemTime) + " ms");
+		LOGGER.info("================== VibeComposerGUI::composeMidi time: "
+				+ (System.currentTimeMillis() - systemTime) + " ms ==========================");
 	}
 
 	public void fillUserParameters(boolean regenerate) {
@@ -4017,11 +4017,11 @@ public class VibeComposerGUI extends JFrame
 					for (int i = 0; i < infos.length; i++) {
 						if (infos[i].toString().equalsIgnoreCase(midiModeDevices.getVal())) {
 							device = MidiSystem.getMidiDevice(infos[i]);
-							LOGGER.info(
+							LOGGER.debug(
 									infos[i].toString() + "| max recv: " + device.getMaxReceivers()
 											+ ", max trm: " + device.getMaxTransmitters());
 							if (device.getMaxReceivers() != 0) {
-								LOGGER.info(
+								LOGGER.debug(
 										"Found max receivers != 0, opening midi receiver device: "
 												+ infos[i].toString());
 								device.open();

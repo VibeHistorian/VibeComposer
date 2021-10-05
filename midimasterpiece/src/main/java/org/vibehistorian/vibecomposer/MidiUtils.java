@@ -36,7 +36,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import jm.constants.Pitches;
-import jm.music.data.CPhrase;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 
@@ -558,15 +557,6 @@ public class MidiUtils {
 	
 		}*/
 
-	public static void addShortenedChord(CPhrase cpr, int[] chord, double rhythmValue, int dynamic,
-			double shortenedTo) {
-		cpr.addChord(chord, rhythmValue * shortenedTo, dynamic);
-		if (shortenedTo > 0.999) {
-			return;
-		}
-		cpr.addChord(new int[] { Integer.MIN_VALUE }, rhythmValue * (1 - shortenedTo), dynamic);
-	}
-
 	public static void addShortenedNote(Phrase pr, Note n, double shortenedTo) {
 		double rv = n.getRhythmValue();
 		n.setRhythmValue(shortenedTo * rv);
@@ -710,15 +700,6 @@ public class MidiUtils {
 		Integer note = pitch + octaveAdjust * octaveMultiplier;
 		//System.out.println("Note: " + note);
 		return (note <= 0 || note >= 127) ? null : note;
-	}
-
-	public static CPhrase chordProgressionToPhrase(List<int[]> cpr) {
-		CPhrase phr = new CPhrase();
-		for (int i = 0; i < cpr.size(); i++) {
-			int[] chord = cpr.get(i);
-			phr.addChord(chord, MidiGenerator.Durations.EIGHTH_NOTE);
-		}
-		return phr;
 	}
 
 	public static int getStandardizedPitch(int pitch, int scaleTranspose, int tolerance) {

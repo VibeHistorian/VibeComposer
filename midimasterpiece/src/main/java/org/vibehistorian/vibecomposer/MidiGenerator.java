@@ -2780,8 +2780,8 @@ public class MidiGenerator implements JMC {
 			sec.setSectionBeatDurations(null);
 			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);
 			secOrder++;
-			LOGGER.info(
-					"============== Processing section.. " + sec.getType() + " ================");
+			LOGGER.info("*********************************** Processing section.. " + sec.getType()
+					+ "!");
 			sec.setStartTime(sectionStartTimer);
 
 			Random rand = new Random(arrSeed);
@@ -2818,7 +2818,13 @@ public class MidiGenerator implements JMC {
 			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
 			List<Boolean> riskyVariations = calculateRiskyVariations(arr, secOrder, sec,
 					notesSeedOffset, variationGen);
-			LOGGER.info("Risky Variations: " + StringUtils.join(riskyVariations, ","));
+			List<String> includedRiskyVarNames = new ArrayList<>();
+			for (int i = 0; i < riskyVariations.size(); i++) {
+				if (riskyVariations.get(i)) {
+					includedRiskyVarNames.add(Section.riskyVariationNames[i]);
+				}
+			}
+			LOGGER.info("Risky Variations: " + StringUtils.join(includedRiskyVarNames, ","));
 
 			// reset back to normal?
 			boolean sectionChordsReplaced = false;
@@ -2902,7 +2908,7 @@ public class MidiGenerator implements JMC {
 			sectionStartTimer += ((sec.getSectionDuration() > 0) ? sec.getSectionDuration()
 					: measureLength) * sec.getMeasures();
 		}
-		LOGGER.debug("Added phrases/cphrases to sections..");
+		LOGGER.debug("Added phrases to sections..");
 
 		Optional<MelodyPart> firstPresentPart = gc.getMelodyParts().stream()
 				.filter(e -> !e.isMuted()).findFirst();
