@@ -40,6 +40,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 //third class!!
 //--------------
 public class ShowRulerBig extends Canvas {
+	private static final long serialVersionUID = 3220771981990129313L;
 	//attributes
 	private int startX;
 	private int height = 15;
@@ -67,6 +68,7 @@ public class ShowRulerBig extends Canvas {
 	public void paint(Graphics g) {
 		double beatWidth = sp.beatWidth;
 		g.setFont(font);
+		g.setColor(Color.black);
 		for (int i = 0; i < (sp.score.getEndTime()); i++) {
 			int xLoc = (int) Math.round(i * beatWidth);
 			if (i % timeSig == 0) {

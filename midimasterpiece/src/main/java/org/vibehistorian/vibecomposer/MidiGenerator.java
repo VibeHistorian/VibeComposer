@@ -30,7 +30,6 @@ import static org.vibehistorian.vibecomposer.MidiUtils.pickDurationWeightedRando
 import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
 import static org.vibehistorian.vibecomposer.MidiUtils.transposeScale;
 
-import java.awt.Dimension;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,7 +50,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
@@ -65,7 +63,6 @@ import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Helpers.ShowScoreBig;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -3103,7 +3100,7 @@ public class MidiGenerator implements JMC {
 
 				@Override
 				public void run() {
-					pianoRoll(score);
+					VibeComposerGUI.pianoRoll(score);
 
 				}
 
@@ -3608,28 +3605,6 @@ public class MidiGenerator implements JMC {
 		Random rand = new Random(arrSeed);
 		int[] pool = new int[] { -4, -3, 3, 4 };
 		return pool[rand.nextInt(pool.length)];
-
-	}
-
-	public static void pianoRoll(Score s) {
-		/*if (showScores.size() > 2) {
-			ShowScoreBig scr = showScores.get(0);
-			showScores.remove(0);
-			scr.dispose();
-		}*/
-		int x = (windowLoc % 10 == 0) ? 50 : 0;
-		int y = (windowLoc % 15 == 0) ? 50 : 0;
-		((JPanel) VibeComposerGUI.scoreScrollPane.getViewport().getView()).removeAll();
-		((JPanel) VibeComposerGUI.scoreScrollPane.getViewport().getView()).add(
-				new ShowPanelBig(null, s, new Dimension(VibeComposerGUI.scrollPaneDimension.width,
-						VibeComposerGUI.scrollPaneDimension.height - 50)));
-		VibeComposerGUI.scoreScrollPane.repaint();
-		/*//ShowScoreBig nextScr = new ShowScoreBig(s, x, y);
-		windowLoc += 5;
-		if (windowLoc > 15) {
-			windowLoc = 5;
-		}
-		showScores.add(nextScr);*/
 
 	}
 

@@ -147,6 +147,7 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -180,6 +181,7 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.sun.media.sound.AudioSynthesizer;
 
 import jm.music.data.Phrase;
+import jm.music.data.Score;
 import jm.music.tools.Mod;
 
 // main class
@@ -319,6 +321,7 @@ public class VibeComposerGUI extends JFrame
 	// instrument scrollers
 	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
 	public static JScrollPane scoreScrollPane;
+	public static ShowPanelBig scorePanel;
 	public static Dimension scrollPaneDimension = new Dimension(1600, 400);
 	int arrangementRowHeaderWidth = 120;
 	Dimension scrollPaneDimensionToggled = new Dimension(1000, 400);
@@ -347,8 +350,6 @@ public class VibeComposerGUI extends JFrame
 	// main title settings
 	JLabel mainTitle;
 	JLabel subTitle;
-	JButton switchDarkMode;
-
 
 	// macro params
 	JTextField soundbankFilename;
@@ -3662,6 +3663,9 @@ public class VibeComposerGUI extends JFrame
 
 		//switchFullMode(isDarkMode);
 
+		if (scorePanel != null) {
+			scorePanel.update();
+		}
 
 		//sizeRespectingPack();
 		setVisible(true);
@@ -6776,5 +6780,26 @@ public class VibeComposerGUI extends JFrame
 		}
 		return array[array.length - 1];
 
+	}
+
+	public static void pianoRoll(Score s) {
+		/*if (showScores.size() > 2) {
+			ShowScoreBig scr = showScores.get(0);
+			showScores.remove(0);
+			scr.dispose();
+		}*/
+		/*int x = (windowLoc % 10 == 0) ? 50 : 0;
+		int y = (windowLoc % 15 == 0) ? 50 : 0;*/
+		((JPanel) scoreScrollPane.getViewport().getView()).removeAll();
+		scorePanel = new ShowPanelBig(null, s,
+				new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 50));
+		((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
+		scoreScrollPane.repaint();
+		/*//ShowScoreBig nextScr = new ShowScoreBig(s, x, y);
+		windowLoc += 5;
+		if (windowLoc > 15) {
+			windowLoc = 5;
+		}
+		showScores.add(nextScr);*/
 	}
 }

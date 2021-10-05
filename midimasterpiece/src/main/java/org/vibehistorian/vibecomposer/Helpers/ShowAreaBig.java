@@ -35,6 +35,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.util.Enumeration;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
@@ -43,6 +45,7 @@ import jm.music.data.Phrase;
 //second class!!
 //--------------
 public class ShowAreaBig extends Canvas {
+	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
 	private int oldX;
 	private int maxColours = 8;
@@ -60,6 +63,25 @@ public class ShowAreaBig extends Canvas {
 	private double beatWidth;
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
+
+	public static Color getColorForPartName(String partName) {
+		if (partName == null) {
+			return Color.white;
+		}
+		if (partName.contains("Melod")) {
+			return VibeComposerGUI.instColors[0];
+		} else if (partName.contains("Bass")) {
+			return VibeComposerGUI.instColors[1];
+		} else if (partName.contains("Chord")) {
+			return VibeComposerGUI.instColors[2];
+		} else if (partName.contains("Arp")) {
+			return VibeComposerGUI.instColors[3];
+		} else if (partName.contains("Drum")) {
+			return VibeComposerGUI.instColors[4];
+		} else {
+			throw new IllegalArgumentException("Unknown part name: " + partName);
+		}
+	}
 
 	public ShowAreaBig(ShowPanelBig sp) {
 		super();
@@ -134,12 +156,13 @@ public class ShowAreaBig extends Canvas {
 		//offScreenImage.getGraphics();
 		int rectLeft, rectTop, rectRight, rectBot;
 		//clear
-		offScreenGraphics.setColor(new Color(160, 160, 160));
+		offScreenGraphics.setColor(
+				VibeComposerGUI.isDarkMode ? new Color(100, 100, 100) : new Color(180, 180, 180));
 		offScreenGraphics.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		//get current maxWidth
-		offScreenGraphics.setFont(font);
 		//paint staves
 		offScreenGraphics.setColor(Color.black);
+		offScreenGraphics.setFont(font);
 		// e above middle C is at 255
 		//treble
 		beatWidth = sp.beatWidth;
@@ -156,7 +179,7 @@ public class ShowAreaBig extends Canvas {
 		offScreenGraphics.drawLine(0, (e + w * 5), maxWidth, (e + w * 5));
 		offScreenGraphics.drawLine(0, (e + w * 6), maxWidth, (e + w * 6));
 		// upper treble
-		offScreenGraphics.setColor(Color.lightGray);
+		//offScreenGraphics.setColor(Color.lightGray);
 		offScreenGraphics.drawLine(0, (e - w * 7), maxWidth, (e - w * 7));
 		offScreenGraphics.drawLine(0, (e - w * 8), maxWidth, (e - w * 8));
 		offScreenGraphics.drawLine(0, (e - w * 9), maxWidth, (e - w * 9));
@@ -169,6 +192,7 @@ public class ShowAreaBig extends Canvas {
 		offScreenGraphics.drawLine(0, (e + w * 12), maxWidth, (e + w * 12));
 		offScreenGraphics.drawLine(0, (e + w * 13), maxWidth, (e + w * 13));
 		// leger lines
+		offScreenGraphics.setColor(new Color(140, 140, 140));
 		for (int k = 0; k < maxWidth; k += 10) {
 			offScreenGraphics.drawLine(k, (e + w), k + 1, (e + w)); // middle C
 			// above treble
@@ -197,6 +221,7 @@ public class ShowAreaBig extends Canvas {
 		int i = 0;
 		while (enum1.hasMoreElements()) {
 			Part part = (Part) enum1.nextElement();
+			Color noteColor = getColorForPartName(part.getTitle());
 			Enumeration<?> enum2 = part.getPhraseList().elements();
 			while (enum2.hasMoreElements()) {
 				Phrase phrase = (Phrase) enum2.nextElement();
@@ -247,20 +272,20 @@ public class ShowAreaBig extends Canvas {
 						if (y > rectBot)
 							rectBot = y;//update values to phrase rectangle
 						//set the colour change brightness for dynamic
-						offScreenGraphics.setColor(Color.getHSBColor(theColours[i % maxColours][0],
-								theColours[i % maxColours][1],
-								(float) (0.7 - (aNote.getDynamic() * 0.004))));
+						offScreenGraphics.setColor(OMNI.alphen(noteColor, aNote.getDynamic()));
 
 						int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
 						int actualStartingX = oldX + noteOffsetXOffset;
+						int actualEndingX = x + noteOffsetXOffset;
 
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
 							offScreenGraphics.fillRect(actualStartingX, y - noteHeight + thinNote,
-									x, noteHeight * 2 - 2 * thinNote);
+									actualEndingX, noteHeight * 2 - 2 * thinNote);
 						} else { // draw frequency derrived note
 							int heightOffset = 7;
-							for (int j = actualStartingX; j < actualStartingX + x - 4; j += 4) {
+							for (int j = actualStartingX; j < actualStartingX + actualEndingX
+									- 4; j += 4) {
 								offScreenGraphics.drawLine(j, y - noteHeight + heightOffset, j + 2,
 										y - noteHeight + heightOffset - 3);
 								offScreenGraphics.drawLine(j + 2, y - noteHeight + heightOffset - 3,
@@ -269,16 +294,13 @@ public class ShowAreaBig extends Canvas {
 						}
 
 						// draw note ouside
-						offScreenGraphics.setColor(Color.getHSBColor(theColours[i % maxColours][0],
-								theColours[i % maxColours][1], (float) (0.4)));
-						offScreenGraphics.drawRect(actualStartingX, y - noteHeight + thinNote, xRV,
-								noteHeight * 2 - 2 * thinNote);
+						offScreenGraphics.setColor(OMNI.alphen(noteColor, 100));
+						offScreenGraphics.drawRect(actualStartingX, y - noteHeight + thinNote,
+								xRV + noteOffsetXOffset, noteHeight * 2 - 2 * thinNote);
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {
-							offScreenGraphics
-									.setColor(Color.getHSBColor(theColours[i % maxColours][0],
-											theColours[i % maxColours][1], (float) (0.3)));
+							offScreenGraphics.setColor(OMNI.alphen(noteColor, 70));
 							offScreenGraphics.drawString("#", actualStartingX - 7, y + 5);
 						}
 					}
@@ -288,8 +310,8 @@ public class ShowAreaBig extends Canvas {
 				}
 				// draw the phrase rectangle
 				//offScreenGraphics.setColor(Color.lightGray);
-				offScreenGraphics.setColor(Color.getHSBColor(theColours[i % maxColours][0],
-						theColours[i % maxColours][1], (float) (0.9)));
+				/*offScreenGraphics.setColor(Color.getHSBColor(theColours[i % maxColours][0],
+						theColours[i % maxColours][1], (float) (0.9)));*/
 				/*offScreenGraphics.drawRect(rectLeft - 1, rectTop - noteHeight - 1, rectRight + 1,
 						rectBot - rectTop + noteHeight * 2 + 2);*/
 			}

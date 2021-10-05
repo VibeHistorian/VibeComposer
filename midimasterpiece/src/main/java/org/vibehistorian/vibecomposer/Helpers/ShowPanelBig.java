@@ -39,6 +39,7 @@ import javax.swing.JPanel;
 import jm.music.data.Score;
 
 public class ShowPanelBig extends JPanel {
+	private static final long serialVersionUID = 1464206032589622048L;
 	public Score score;
 	protected double beatWidth; //10.0;
 	private ShowAreaBig sa;
