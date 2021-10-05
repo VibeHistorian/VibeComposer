@@ -310,7 +310,6 @@ public class Arrangement {
 			//sections.add(s);
 
 		}
-		System.out.println("setFromActualTable SUCCESS!");
 		return true;
 	}
 

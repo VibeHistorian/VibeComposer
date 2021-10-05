@@ -3195,10 +3195,10 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						if (loopBeat.isSelected() && !isDragging && (sequencer != null)) {
-							if (showScore.isSelected() && !loopBeatCompose.isSelected()) {
+							/*if (showScore.isSelected() && !loopBeatCompose.isSelected()) {
 								showScore.setSelected(false);
-
-							}
+							
+							}*/
 							int startPos = delayed();
 							if (slider.getValue() > startPos) {
 								startPos = slider.getValue();
