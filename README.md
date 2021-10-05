@@ -36,4 +36,4 @@
 
 #### License: GPL3
     
-#### Contact: vibehistorian@gmail.com
+#### Contact: vibehistorian@gmail.com / Discord: VibeHistorian#3955
