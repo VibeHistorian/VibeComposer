@@ -54,7 +54,7 @@ public class ShowAreaBig extends Canvas {
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	private int areaHeight = 70 * noteHeight;
+	private int areaHeight = 72 * noteHeight;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };
@@ -64,20 +64,20 @@ public class ShowAreaBig extends Canvas {
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
 
-	public static Color getColorForPartName(String partName) {
+	public static int getColorIndexForPartName(String partName) {
 		if (partName == null) {
-			return Color.white;
+			return 1;
 		}
 		if (partName.contains("Melod")) {
-			return VibeComposerGUI.instColors[0];
+			return 0;
 		} else if (partName.contains("Bass")) {
-			return VibeComposerGUI.instColors[1];
+			return 1;
 		} else if (partName.contains("Chord")) {
-			return VibeComposerGUI.instColors[2];
+			return 2;
 		} else if (partName.contains("Arp")) {
-			return VibeComposerGUI.instColors[3];
+			return 3;
 		} else if (partName.contains("Drum")) {
-			return VibeComposerGUI.instColors[4];
+			return 4;
 		} else {
 			throw new IllegalArgumentException("Unknown part name: " + partName);
 		}
@@ -102,7 +102,7 @@ public class ShowAreaBig extends Canvas {
 		w = 2 * noteHeight; //width between stave lines
 		ePos = 5 * noteHeight; // position of e in the treble stave
 		e = ePos + noteHeight * 33;
-		areaHeight = 70 * noteHeight;
+		areaHeight = 72 * noteHeight;
 		noteOffset = new int[] { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 				noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 				noteHeight * 6 };
@@ -221,7 +221,8 @@ public class ShowAreaBig extends Canvas {
 		int i = 0;
 		while (enum1.hasMoreElements()) {
 			Part part = (Part) enum1.nextElement();
-			Color noteColor = getColorForPartName(part.getTitle());
+			int noteColorIndex = getColorIndexForPartName(part.getTitle());
+			Color noteColor = VibeComposerGUI.instColors[noteColorIndex];
 			Enumeration<?> enum2 = part.getPhraseList().elements();
 			while (enum2.hasMoreElements()) {
 				Phrase phrase = (Phrase) enum2.nextElement();
@@ -272,7 +273,8 @@ public class ShowAreaBig extends Canvas {
 						if (y > rectBot)
 							rectBot = y;//update values to phrase rectangle
 						//set the colour change brightness for dynamic
-						offScreenGraphics.setColor(OMNI.alphen(noteColor, aNote.getDynamic()));
+						offScreenGraphics
+								.setColor(OMNI.alphen(noteColor, 50 + aNote.getDynamic() / 2));
 
 						int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
 						int actualStartingX = oldX + noteOffsetXOffset;
@@ -294,9 +296,9 @@ public class ShowAreaBig extends Canvas {
 						}
 
 						// draw note ouside
-						offScreenGraphics.setColor(OMNI.alphen(noteColor, 100));
+						/*offScreenGraphics.setColor(OMNI.alphen(noteColor, 100));
 						offScreenGraphics.drawRect(actualStartingX, y - noteHeight + thinNote,
-								xRV + noteOffsetXOffset, noteHeight * 2 - 2 * thinNote);
+								xRV + noteOffsetXOffset, noteHeight * 2 - 2 * thinNote);*/
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {

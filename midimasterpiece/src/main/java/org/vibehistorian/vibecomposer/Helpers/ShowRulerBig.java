@@ -69,12 +69,13 @@ public class ShowRulerBig extends Canvas {
 		double beatWidth = sp.beatWidth;
 		g.setFont(font);
 		g.setColor(Color.black);
-		for (int i = 0; i < (sp.score.getEndTime()); i++) {
+		int startOffset = 1;
+		for (int i = startOffset; i < (sp.score.getEndTime()) + startOffset; i++) {
 			int xLoc = (int) Math.round(i * beatWidth);
-			if (i % timeSig == 0) {
+			if ((i + startOffset) % timeSig == 0) {
 				g.drawLine(xLoc, 0, xLoc, height);
-				if (beatWidth > 15)
-					g.drawString("" + i, xLoc + 2, height - 2);
+				if (beatWidth > 5)
+					g.drawString("" + (i - startOffset), xLoc + 2, height - 2);
 			} else {
 				g.drawLine(xLoc, height / 2, xLoc, height);
 			}
