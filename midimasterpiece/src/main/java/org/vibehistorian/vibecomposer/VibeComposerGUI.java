@@ -3953,12 +3953,16 @@ public class VibeComposerGUI extends JFrame
 
 		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
 			if (melody1ForcePatterns.isSelected()) {
-				List<Integer> pat = MelodyUtils
-						.getRandomMelodyPattern(melodyPanels.get(0).getAlternatingRhythmChance());
+				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
+						melodyPanels.get(0).getAlternatingRhythmChance(),
+						(melodyPanels.get(0).getPatternSeed() != 0)
+								? melodyPanels.get(0).getPatternSeed()
+								: lastRandomSeed);
 				melodyPanels.get(0).setMelodyPatternOffsets(pat);
 			} else {
 				melodyPanels.forEach(e -> e.setMelodyPatternOffsets(
-						MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance())));
+						MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
+								(e.getPatternSeed() != 0) ? e.getPatternSeed() : lastRandomSeed)));
 			}
 		}
 

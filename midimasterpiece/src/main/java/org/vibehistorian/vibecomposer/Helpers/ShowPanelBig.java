@@ -61,6 +61,7 @@ public class ShowPanelBig extends JPanel {
 	private JPanel pan;
 	private JFrame frame;
 	private int panelHeight;
+	private JScrollPane areaScrollPane;
 	public static double maxEndTime = 10.0;
 
 	private static JPanel scorePartPanel;
@@ -123,7 +124,7 @@ public class ShowPanelBig extends JPanel {
 		areaPanel.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, ShowAreaBig.areaHeight));
 		areaPanel.add(sa);
 
-		JScrollPane areaScrollPane = new JScrollPane() {
+		areaScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				return new Dimension(ShowPanelBig.beatWidthBase + 35, 330);
@@ -149,7 +150,7 @@ public class ShowPanelBig extends JPanel {
 		//getHAdjustable().setUnitIncrement(50); //set scroll speed
 		//getHAdjustable().setBlockIncrement(50);
 
-		//setScrollPosition(0, 0);
+
 		repaint();
 	}
 
@@ -208,6 +209,8 @@ public class ShowPanelBig extends JPanel {
 		if (beatWidth > 256.0)
 			beatWidth = 256.0;
 		update();
+		//System.out.println();
+		areaScrollPane.getVerticalScrollBar().setValue(50);
 		repaint();
 	}
 

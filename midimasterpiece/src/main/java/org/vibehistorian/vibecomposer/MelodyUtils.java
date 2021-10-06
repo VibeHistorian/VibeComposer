@@ -279,12 +279,16 @@ public class MelodyUtils {
 		throw new IllegalArgumentException("Unknown block!");
 	}
 
-	public static List<Integer> getRandomMelodyPattern(int altPatternChance) {
-		if (new Random().nextInt(100) < altPatternChance) {
+	public static List<Integer> getRandomMelodyPattern(int altPatternChance, Integer randomSeed) {
+		Random rand = new Random();
+		if (randomSeed != null) {
+			rand.setSeed(randomSeed);
+		}
+		if (rand.nextInt(100) < altPatternChance) {
 			List<Integer> altPatternIndices = Arrays.asList(0, 1);
 			return new ArrayList<>(MELODY_PATTERNS
-					.get(altPatternIndices.get(new Random().nextInt(altPatternIndices.size()))));
+					.get(altPatternIndices.get(rand.nextInt(altPatternIndices.size()))));
 		}
-		return new ArrayList<>(MELODY_PATTERNS.get(new Random().nextInt(MELODY_PATTERNS.size())));
+		return new ArrayList<>(MELODY_PATTERNS.get(rand.nextInt(MELODY_PATTERNS.size())));
 	}
 }

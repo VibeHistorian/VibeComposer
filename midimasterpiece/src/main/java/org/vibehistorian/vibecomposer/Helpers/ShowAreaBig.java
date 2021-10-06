@@ -66,7 +66,7 @@ public class ShowAreaBig extends JComponent {
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
-			return 1;
+			return -1;
 		}
 		if (partName.contains("Melod")) {
 			return 0;
