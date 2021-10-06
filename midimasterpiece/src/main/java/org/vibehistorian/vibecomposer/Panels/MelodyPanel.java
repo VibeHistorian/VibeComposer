@@ -1,15 +1,20 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Color;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
@@ -19,8 +24,8 @@ public class MelodyPanel extends InstPanel {
 	private static final long serialVersionUID = -7861296600641561431L;
 
 	private JCheckBox fillPauses = new JCheckBox("<html>Fill<br>Pauses</html>", false);
-	private JTextField noteTargets = new JTextField("0,2,2,4");
-	private JTextField patternStructure = new JTextField("0,1,0,2");
+	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4");
+	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("0,1,0,2");
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 5, 0, 7);
 	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
 	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
@@ -58,12 +63,25 @@ public class MelodyPanel extends InstPanel {
 		this.add(fillPauses);
 
 		this.add(new JLabel("<html>Note<br>Targets</html>"));
+		noteTargets.setMargin(new Insets(0, 0, 0, 0));
+		noteTargets.setTextGenerator(e -> {
+			Random rand = new Random();
+			return StringUtils.join(MidiGenerator.generateOffsets(MidiGenerator.chordInts,
+					rand.nextInt(), VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(), null),
+					",");
+		});
 		this.add(noteTargets);
 
 		this.add(maxBlockChange);
 
 		this.add(new JLabel("Pattern"));
+		patternStructure.setMargin(new Insets(0, 0, 0, 0));
 		this.add(patternStructure);
+		patternStructure.setTextGenerator(e -> {
+			Random rand = new Random();
+			return StringUtils.join(MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
+					rand.nextInt()), ",");
+		});
 
 		this.add(blockJump);
 		this.add(maxNoteExceptions);

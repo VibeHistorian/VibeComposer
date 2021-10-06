@@ -3,20 +3,19 @@ package org.vibehistorian.vibecomposer.Helpers;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Random;
+import java.util.function.Function;
 
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
-import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Popups.ButtonIntegerListValuePopup;
-import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 
 public class RandomIntegerListButton extends JButton {
 
 	private static final long serialVersionUID = -2737936353529731016L;
+
+	private Function<? super Object, String> textGenerator = null;
 
 	public RandomIntegerListButton(String value) {
 		this.setPreferredSize(new Dimension(100, 30));
@@ -24,19 +23,16 @@ public class RandomIntegerListButton extends JButton {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					if (MidiGenerator.gc == null || MidiGenerator.chordInts.isEmpty()) {
+					if (MidiGenerator.gc == null || MidiGenerator.chordInts.isEmpty()
+							|| textGenerator == null) {
 						return;
 					}
-					Random rand = new Random();
-					setText(StringUtils.join(
-							MidiGenerator.generateOffsets(MidiGenerator.chordInts, rand.nextInt(),
-									VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(), null),
-							", "));
+					setText(textGenerator.apply(new Object()));
+
 				} else if (SwingUtilities.isRightMouseButton(e)) {
-					setText("0,2,2,4");
+					setText(value);
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
-					CloseablePopup popup = new ButtonIntegerListValuePopup(
-							RandomIntegerListButton.this);
+					new ButtonIntegerListValuePopup(RandomIntegerListButton.this);
 				}
 			}
 		});
@@ -49,6 +45,10 @@ public class RandomIntegerListButton extends JButton {
 
 	public void setValue(String value) {
 		setText(value);
+	}
+
+	public void setTextGenerator(Function<? super Object, String> txtGen) {
+		textGenerator = txtGen;
 	}
 
 }
