@@ -169,7 +169,7 @@ public class ShowAreaBig extends JComponent {
 	//}
 	@Override
 	public void paintComponent(Graphics gDef) {
-		System.out.println("Painting area!");
+		//System.out.println("Painting area!");
 		Graphics2D g = (Graphics2D) gDef;
 		//Image offScreenImage = this.createImage(this.getSize().width, this.areaHeight);
 		//Graphics offScreenGraphics = g.create();
@@ -283,7 +283,7 @@ public class ShowAreaBig extends JComponent {
 						int y = (int) (((10 - currNote / 12) * octavePixelheight + (ePos))
 								- noteOffset[currNote % 12]);
 						int x = (int) (Math.round(aNote.getDuration() * beatWidth)); //480 ppq note
-						int xRV = (int) (Math.round(aNote.getRhythmValue() * beatWidth)); //480 ppq note
+						//int xRV = (int) (Math.round(aNote.getRhythmValue() * beatWidth)); //480 ppq note
 						// check if the width of the note is less than 1 so
 						// that it will be displayed
 						if (x < 1)
@@ -297,16 +297,14 @@ public class ShowAreaBig extends JComponent {
 
 						int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
 						int actualStartingX = oldX + noteOffsetXOffset;
-						int actualEndingX = x + noteOffsetXOffset;
 
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
-							g.fillRect(actualStartingX, y - noteHeight + thinNote, actualEndingX,
+							g.fillRect(actualStartingX, y - noteHeight + thinNote, x,
 									noteHeight * 2 - 2 * thinNote);
 						} else { // draw frequency derrived note
 							int heightOffset = 7;
-							for (int j = actualStartingX; j < actualStartingX + actualEndingX
-									- 4; j += 4) {
+							for (int j = actualStartingX; j < actualStartingX + x - 4; j += 4) {
 								g.drawLine(j, y - noteHeight + heightOffset, j + 2,
 										y - noteHeight + heightOffset - 3);
 								g.drawLine(j + 2, y - noteHeight + heightOffset - 3, j + 4,

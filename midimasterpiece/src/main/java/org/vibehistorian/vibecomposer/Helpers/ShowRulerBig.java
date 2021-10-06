@@ -87,7 +87,7 @@ public class ShowRulerBig extends JComponent {
 
 	@Override
 	public void paintComponent(Graphics gDef) {
-		System.out.println("Painting ruler!");
+		//System.out.println("Painting ruler!");
 		Graphics2D g = (Graphics2D) gDef;
 		double beatWidth = sp.beatWidth;
 		g.setColor(new Color(180, 180, 180));
