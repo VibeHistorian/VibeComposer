@@ -524,7 +524,7 @@ public class VibeComposerGUI extends JFrame
 	File currentMidi = null;
 	MidiDevice device = null;
 
-	ScrollComboBox<String> showScorePicker;
+	CheckButton showScore;
 	JCheckBox midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	//MidiHandler mh = new MidiHandler();
@@ -3381,8 +3381,8 @@ public class VibeComposerGUI extends JFrame
 
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
-		/*showScore = new JCheckBox("Show Score", true);
-		showScorePicker = new ScrollComboBox<String>();
+		showScore = new CheckButton("Show Score Tab", false);
+		/*showScorePicker = new ScrollComboBox<String>();
 		ScrollComboBox.addAll(
 				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },
 				showScorePicker);*/
@@ -3453,7 +3453,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel playSettingsPanel = new JPanel();
 		playSettingsPanel.setOpaque(false);
 
-		//playSettingsPanel.add(showScore);
+		playSettingsPanel.add(showScore);
 		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(loopBeatCount);
@@ -3909,6 +3909,9 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.getSections().add(sec.deepCopy());
 		}
 		VibeComposerGUI.pianoRoll();
+		if (showScore.isSelected()) {
+			instrumentTabPane.setSelectedIndex(7);
+		}
 	}
 
 	private Integer prepareMainSeed(boolean regenerate) {
