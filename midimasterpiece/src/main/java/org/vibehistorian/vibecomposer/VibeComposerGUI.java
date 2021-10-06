@@ -180,7 +180,6 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.sun.media.sound.AudioSynthesizer;
 
 import jm.music.data.Phrase;
-import jm.music.data.Score;
 import jm.music.tools.Mod;
 
 // main class
@@ -230,7 +229,7 @@ public class VibeComposerGUI extends JFrame
 	private static GUIConfig guiConfig = new GUIConfig();
 
 	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
-			Color.red };
+			Color.yellow };
 	public static String[] instNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
 
 	// instrument individual panels
@@ -3905,6 +3904,7 @@ public class VibeComposerGUI extends JFrame
 		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
 			actualArrangement.getSections().add(sec.deepCopy());
 		}
+		VibeComposerGUI.pianoRoll();
 	}
 
 	private Integer prepareMainSeed(boolean regenerate) {
@@ -6767,24 +6767,17 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	public static void pianoRoll(Score s) {
-		/*if (showScores.size() > 2) {
-			ShowScoreBig scr = showScores.get(0);
-			showScores.remove(0);
-			scr.dispose();
-		}*/
-		/*int x = (windowLoc % 10 == 0) ? 50 : 0;
-		int y = (windowLoc % 15 == 0) ? 50 : 0;*/
-		((JPanel) scoreScrollPane.getViewport().getView()).removeAll();
-		scorePanel = new ShowPanelBig(null, s,
-				new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 50));
-		((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
-		scoreScrollPane.repaint();
-		/*//ShowScoreBig nextScr = new ShowScoreBig(s, x, y);
-		windowLoc += 5;
-		if (windowLoc > 15) {
-			windowLoc = 5;
+	public static void pianoRoll() {
+		if (MidiGenerator.LAST_SCORES.isEmpty()) {
+			return;
 		}
-		showScores.add(nextScr);*/
+		if (scorePanel == null) {
+			scorePanel = new ShowPanelBig(
+					new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 50));
+			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
+		}
+		ShowPanelBig.scoreBox.setSelectedIndex(0);
+		scorePanel.setScore();
+		scoreScrollPane.repaint();
 	}
 }

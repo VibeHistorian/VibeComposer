@@ -70,7 +70,7 @@ public class ShowRulerBig extends JComponent {
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(3000, 20);
+		return new Dimension(ShowPanelBig.beatWidthBase, 20);
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class ShowRulerBig extends JComponent {
 	 */
 	@Override
 	public Dimension getMinimumSize() {
-		return new Dimension(3000, 20);
+		return new Dimension(ShowPanelBig.beatWidthBase, 20);
 	}
 
 	@Override

@@ -66,7 +66,7 @@ public class ShowAreaBig extends JComponent {
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
 
-	public static int getColorIndexForPartName(String partName) {
+	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
 			return 1;
 		}
@@ -138,7 +138,7 @@ public class ShowAreaBig extends JComponent {
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(3000, 350);
+		return new Dimension(ShowPanelBig.beatWidthBase, 350);
 	}
 
 	/**
@@ -150,7 +150,7 @@ public class ShowAreaBig extends JComponent {
 	 */
 	@Override
 	public Dimension getMinimumSize() {
-		return new Dimension(3000, 350);
+		return new Dimension(ShowPanelBig.beatWidthBase, 350);
 	}
 
 	/**
@@ -238,11 +238,28 @@ public class ShowAreaBig extends JComponent {
 		}
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
-		int i = 0;
+		int prevColorIndex = -1;
+		int samePrevColorCounter = 0;
 		while (enum1.hasMoreElements()) {
 			Part part = (Part) enum1.nextElement();
-			int noteColorIndex = getColorIndexForPartName(part.getTitle());
+			int noteColorIndex = getIndexForPartName(part.getTitle());
+			//System.out.println("Index: " + noteColorIndex);
+			if (prevColorIndex == noteColorIndex) {
+				samePrevColorCounter++;
+			} else {
+				samePrevColorCounter = 0;
+				prevColorIndex = noteColorIndex;
+			}
 			Color noteColor = VibeComposerGUI.instColors[noteColorIndex];
+			if (samePrevColorCounter > 0) {
+				Color nextColor = noteColorIndex < 4
+						? VibeComposerGUI.instColors[noteColorIndex + 1]
+						: Color.red;
+				double percentageMix = (samePrevColorCounter
+						/ (double) VibeComposerGUI.getInstList(noteColorIndex).size()) / 1.5;
+
+				noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
+			}
 			Enumeration<?> enum2 = part.getPhraseList().elements();
 			while (enum2.hasMoreElements()) {
 				Phrase phrase = (Phrase) enum2.nextElement();
@@ -311,11 +328,10 @@ public class ShowAreaBig extends JComponent {
 										y - noteHeight + heightOffset);
 							}
 						}
-
+						g.setColor(OMNI.alphen(Color.black, 50 + aNote.getDynamic() / 2));
 						// draw note ouside
-						/*offScreenGraphics.setColor(OMNI.alphen(noteColor, 100));
-						offScreenGraphics.drawRect(actualStartingX, y - noteHeight + thinNote,
-								xRV + noteOffsetXOffset, noteHeight * 2 - 2 * thinNote);*/
+						g.drawRect(actualStartingX, y - noteHeight + thinNote,
+								x + noteOffsetXOffset, noteHeight * 2 - 2 * thinNote);
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {
@@ -334,7 +350,6 @@ public class ShowAreaBig extends JComponent {
 				/*offScreenGraphics.drawRect(rectLeft - 1, rectTop - noteHeight - 1, rectRight + 1,
 						rectBot - rectTop + noteHeight * 2 + 2);*/
 			}
-			i++; //increment the part index
 		}
 		//g.drawImage(offScreenImage, 0, 0, this);
 		//g.dispose();

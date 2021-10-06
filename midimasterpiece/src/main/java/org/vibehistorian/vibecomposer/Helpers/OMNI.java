@@ -58,4 +58,18 @@ public class OMNI {
 		}
 		throw new IllegalArgumentException("WEIGHTED error: Value higher than 99!");
 	}
+
+	public static Color mixColor(Color c1, Color c2, double percentageMix) {
+		Color newColor = new Color((int) interp(c1.getRed(), c2.getRed(), percentageMix),
+				(int) interp(c1.getGreen(), c2.getGreen(), percentageMix),
+				(int) interp(c1.getBlue(), c2.getBlue(), percentageMix),
+				(int) interp(c1.getAlpha(), c2.getAlpha(), percentageMix));
+		//System.out.println("Color: " + c1.toString());
+		//System.out.println("Mixed: " + newColor.toString());
+		return newColor;
+	}
+
+	public static double interp(double n1, double n2, double normalizedPercentage) {
+		return n1 * (1 - normalizedPercentage) + n2 * normalizedPercentage;
+	}
 }

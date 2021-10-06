@@ -50,8 +50,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.swing.SwingUtilities;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -63,7 +61,6 @@ import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.ShowScoreBig;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -139,9 +136,9 @@ public class MidiGenerator implements JMC {
 	// big G
 	public static GUIConfig gc;
 
-	// opened windows
-	public static List<ShowScoreBig> showScores = new ArrayList<>();
-	public static int windowLoc = 5;
+	// last scores saved
+	public static List<Score> LAST_SCORES = new ArrayList<>();
+	public static final int LAST_SCORES_LIMIT = 5;
 
 	// track map for Solo
 	public static List<InstPart> trackList = new ArrayList<>();
@@ -3067,45 +3064,9 @@ public class MidiGenerator implements JMC {
 
 
 		// view midi
-		if (DISPLAY_SCORE) {
-			List<Part> partsToRemove = new ArrayList<>();
-			for (Object p : score.getPartList()) {
-				Part part = (Part) p;
-				if ((part.getTitle().equalsIgnoreCase("MainDrums")
-						|| part.getTitle().startsWith("Chords"))
-						&& showScoreMode == ShowScoreMode.NODRUMSCHORDS) {
-					partsToRemove.add(part);
-					continue;
-				} else if (!part.getTitle().equalsIgnoreCase("MainDrums")
-						&& showScoreMode == ShowScoreMode.DRUMSONLY) {
-					partsToRemove.add(part);
-					continue;
-				} else if (!part.getTitle().startsWith("Chords")
-						&& showScoreMode == ShowScoreMode.CHORDSONLY) {
-					partsToRemove.add(part);
-					continue;
-				}
-				List<Phrase> phrasesToRemove = new ArrayList<>();
-				for (Object vec : part.getPhraseList()) {
-					Phrase ph = (Phrase) vec;
-					if (ph.getHighestPitch() < 0) {
-						phrasesToRemove.add(ph);
-					}
-
-				}
-				phrasesToRemove.forEach(e -> part.removePhrase(e));
-			}
-			partsToRemove.forEach(e -> score.removePart(e));
-			SwingUtilities.invokeLater(new Runnable() {
-
-				@Override
-				public void run() {
-					VibeComposerGUI.pianoRoll(score);
-
-				}
-
-			});
-
+		LAST_SCORES.add(0, score);
+		if (LAST_SCORES.size() > LAST_SCORES_LIMIT) {
+			LAST_SCORES = LAST_SCORES.subList(0, LAST_SCORES_LIMIT);
 		}
 
 		gc.setActualArrangement(arr);

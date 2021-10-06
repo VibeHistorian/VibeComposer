@@ -31,46 +31,83 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import jm.music.data.Part;
+import jm.music.data.Phrase;
 import jm.music.data.Score;
 
 public class ShowPanelBig extends JPanel {
 	private static final long serialVersionUID = 1464206032589622048L;
 	public Score score;
 	protected double beatWidth; //10.0;
-	public static final int beatWidthBase = 3000;
+	public static final int beatWidthBase = 1550;
 	private ShowAreaBig sa;
 	private ShowRulerBig ruler;
 	private JPanel pan;
 	private JFrame frame;
 	private int panelHeight;
 
-	public ShowPanelBig(JFrame frame, Score score) {
-		this(frame, score, new Dimension(650, 400));
+	private static JPanel scorePartPanel;
+	private static CheckButton[] partsShown;
+	public static ScrollComboBox<Integer> scoreBox;
+
+	public ShowPanelBig() {
+		this(new Dimension(650, 400));
 	}
 
-	public ShowPanelBig(JFrame frame, Score score, Dimension size) {
+	public ShowPanelBig(Dimension size) {
 		super();
-		// set initial wideth to show whole score if possible
-		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + score.getEndTime());
-		if (beatWidth < 1.0)
-			beatWidth = 1.0;
-		if (beatWidth > 256.0)
-			beatWidth = 256.0;
-		this.frame = frame;
-		this.score = score;
 		// Because the ScrollPanel can only take one componenet 
 		// a panel called apn is created to hold all comoponenets
 		// then only pan is added to this classes ScrollPane
+		partsShown = new CheckButton[5];
+		scoreBox = new ScrollComboBox<Integer>();
+		ScrollComboBox.addAll(new Integer[] { 0 }, scoreBox);
+		scoreBox.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				setScore();
+			}
+		});
+		scoreBox.setMaximumSize(new Dimension(40, 20));
+		scorePartPanel = new JPanel();
+		scorePartPanel.setLayout(new BoxLayout(scorePartPanel, BoxLayout.X_AXIS));
+		scorePartPanel.setMaximumSize(new Dimension(1500, 20));
+		scorePartPanel.add(new JLabel("Score History"));
+		scorePartPanel.add(scoreBox);
+		scorePartPanel.add(new JLabel("Included Parts"));
+		for (int i = 0; i < 5; i++) {
+			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], i < 2 || i == 3,
+					OMNI.alphen(VibeComposerGUI.instColors[i], 75));
+			partsShown[i].addRunnable(new Runnable() {
+				@Override
+				public void run() {
+					setScore();
+				}
+			});
+			scorePartPanel.add(partsShown[i]);
+		}
 		pan = new JPanel();
 		setOpaque(false);
 		pan.setOpaque(false);
 		this.setSize(size);
 		pan.setSize(size);
 		pan.setLayout(new BorderLayout());
+
+		pan.add("North", scorePartPanel);
+
 		// add the score
 		sa = new ShowAreaBig(this); //score, maxWidth, maxParts);
 		sa.setVisible(true);
@@ -97,15 +134,62 @@ public class ShowPanelBig extends JPanel {
 		repaint();
 	}
 
-	// this method can be used to update the score continets of an existing ShowScore panel
+	public void setScore() {
+		if (MidiGenerator.LAST_SCORES.isEmpty()) {
+			return;
+		}
+		int selectableScore = OMNI.clamp(scoreBox.getVal(), 0,
+				MidiGenerator.LAST_SCORES.size() - 1);
+		if (scoreBox.getLastVal() < MidiGenerator.LAST_SCORES_LIMIT - 1
+				&& MidiGenerator.LAST_SCORES.size() > scoreBox.getLastVal() + 1) {
+			scoreBox.addItem(scoreBox.getLastVal() + 1);
+		}
+		setScore(MidiGenerator.LAST_SCORES.get(selectableScore));
+	}
+
+
 	public void setScore(Score score) {
-		this.score = score;
-		beatWidth = this.getSize().width / score.getEndTime();
+		List<Integer> includedParts = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			if (partsShown[i].isSelected()) {
+				includedParts.add(i);
+			}
+		}
+		setScore(score, includedParts);
+	}
+
+	// this method can be used to update the score continets of an existing ShowScore panel
+	public void setScore(Score score, List<Integer> includedParts) {
+
+		Score scrCopy = score.copy();
+		List<Part> partsToRemove = new ArrayList<>();
+		for (Object p : scrCopy.getPartList()) {
+			Part part = (Part) p;
+			int partIndex = ShowAreaBig.getIndexForPartName(part.getTitle());
+			if (!includedParts.contains(partIndex)) {
+				partsToRemove.add(part);
+				continue;
+			}
+			List<Phrase> phrasesToRemove = new ArrayList<>();
+			for (Object vec : part.getPhraseList()) {
+				Phrase ph = (Phrase) vec;
+				if (ph.getHighestPitch() < 0) {
+					phrasesToRemove.add(ph);
+				}
+
+			}
+			phrasesToRemove.forEach(e -> part.removePhrase(e));
+		}
+		partsToRemove.forEach(e -> scrCopy.removePart(e));
+
+		this.score = scrCopy;
+		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + scrCopy.getEndTime());
 		if (beatWidth < 1.0)
 			beatWidth = 1.0;
 		if (beatWidth > 256.0)
 			beatWidth = 256.0;
 		update();
+		repaint();
 	}
 
 	/**
@@ -132,7 +216,9 @@ public class ShowPanelBig extends JPanel {
 
 	public void update() {
 		pan.repaint();
-		sa.setSize((int) Math.round(score.getEndTime() * beatWidth), sa.getHeight());
+		sa.setSize(
+				(int) Math.round((ShowAreaBig.noteOffsetXMargin + score.getEndTime()) * beatWidth),
+				sa.getHeight());
 		sa.repaint();
 		ruler.repaint();
 		this.repaint();

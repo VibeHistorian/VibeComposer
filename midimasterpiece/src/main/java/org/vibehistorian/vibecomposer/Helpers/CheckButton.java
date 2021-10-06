@@ -19,17 +19,23 @@ public class CheckButton extends JButton {
 	private boolean selected = false;
 	private boolean transparentBackground = false;
 	private Color bgColor = null;
-
-	public CheckButton(String name, boolean sel, Color opaqueColor) {
-		this(name, sel);
-		bgColor = opaqueColor;
-	}
+	private Runnable runnable = null;
 
 	public CheckButton(String name, boolean sel) {
+		this(name, sel, null);
+	}
+
+	public CheckButton(String name, boolean sel, Color opaqueColor) {
+
 		setText(name);
 		setSelected(sel);
-		setBackground(OMNI.alphen(VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
-				: VibeComposerGUI.lightModeUIColor, selected ? 60 : 0));
+		if (opaqueColor != null) {
+			bgColor = opaqueColor;
+			setBackground(bgColor.darker().darker());
+		} else {
+			setBackground(OMNI.alphen(VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
+					: VibeComposerGUI.lightModeUIColor, selected ? 60 : 0));
+		}
 		if (StringUtils.isEmpty(name)) {
 			setPreferredSize(new Dimension(20, 20));
 		} else {
@@ -54,6 +60,17 @@ public class CheckButton extends JButton {
 	public void setSelected(boolean selected) {
 		this.selected = selected;
 		addBackground();
+		if (runnable != null) {
+			runnable.run();
+		}
+	}
+
+	public void addRunnable(Runnable rn) {
+		runnable = rn;
+	}
+
+	public void removeRunnable() {
+		runnable = null;
 	}
 
 	public void addBackground() {
@@ -66,7 +83,11 @@ public class CheckButton extends JButton {
 	protected void paintComponent(Graphics g) {
 		if (transparentBackground) {
 			if (bgColor != null) {
-				g.setColor(OMNI.alphen(bgColor, 50));
+				if (bgColor.getAlpha() < 255) {
+					g.setColor(selected ? bgColor : OMNI.alphen(bgColor, 0));
+				} else {
+					g.setColor(OMNI.alphen(bgColor, selected ? 60 : 0));
+				}
 			} else {
 				g.setColor(OMNI.alphen(VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
 						: VibeComposerGUI.lightModeUIColor, selected ? 60 : 0));
