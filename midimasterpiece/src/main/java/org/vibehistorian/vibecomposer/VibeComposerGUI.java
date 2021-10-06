@@ -59,7 +59,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -4581,7 +4580,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		cpSm = new HashMap<>();
+		/*cpSm = new HashMap<>();
 		apSm = new HashMap<>();
 		dpSm = new HashMap<>();
 		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
@@ -4597,7 +4596,7 @@ public class VibeComposerGUI extends JFrame
 				dpSm.put(ip.getPanelOrder(), ip.getSoloMuter());
 			}
 			soloMuterPossibleChange = true;
-		}
+		}*/
 
 		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
 				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
@@ -4648,7 +4647,7 @@ public class VibeComposerGUI extends JFrame
 			tabPanePossibleChange = true;
 		}
 
-		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
+		/*if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
 				|| (ae.getActionCommand().startsWith("Rand")
 						&& ae.getActionCommand().charAt(4) != 'o')) {
 			for (InstPanel ip : chordPanels) {
@@ -4666,7 +4665,7 @@ public class VibeComposerGUI extends JFrame
 					ip.setSoloMuter(dpSm.get(ip.getPanelOrder()));
 				}
 			}
-		}
+		}*/
 
 		realBpm = Double.valueOf(mainBpm.getInt());
 		if (ae.getActionCommand() == "RandomizeBpm"
@@ -5132,6 +5131,7 @@ public class VibeComposerGUI extends JFrame
 				recalcGroupMute(i);
 			}
 			recalcGlobals();
+			needToRecalculateSoloMutersAfterSequenceGenerated = true;
 		}
 
 		LOGGER.info("Finished '" + ae.getActionCommand() + "' in: "
