@@ -1,10 +1,13 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
 import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
 
 public class ScrollComboBox<T> extends JComboBox<T> {
 
@@ -26,6 +29,17 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 				fireItemStateChanged(evnt);
 			}
 
+		});
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isRightMouseButton(evt)) {
+					setSelectedIndex(0);
+					ItemEvent evnt = new ItemEvent(ScrollComboBox.this,
+							ItemEvent.ITEM_STATE_CHANGED, getSelectedItem(), ItemEvent.SELECTED);
+					fireItemStateChanged(evnt);
+				}
+			}
 		});
 	}
 

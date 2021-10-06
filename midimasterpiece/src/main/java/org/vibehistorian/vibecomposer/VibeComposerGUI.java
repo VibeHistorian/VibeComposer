@@ -131,7 +131,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
-import org.vibehistorian.vibecomposer.MidiGenerator.ShowScoreMode;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -141,6 +140,7 @@ import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
+import org.vibehistorian.vibecomposer.Helpers.CheckButton;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
@@ -497,7 +497,7 @@ public class VibeComposerGUI extends JFrame
 	// chord settings - progression
 	JCheckBox extraUseChordFormula;
 	ScrollComboBox<String> keyChangeTypeSelection;
-	public static JCheckBox userChordsEnabled;
+	public static CheckButton userChordsEnabled;
 	public static JTextField userChords;
 	public static JTextField userChordsDurations;
 
@@ -524,7 +524,6 @@ public class VibeComposerGUI extends JFrame
 	File currentMidi = null;
 	MidiDevice device = null;
 
-	JCheckBox showScore;
 	ScrollComboBox<String> showScorePicker;
 	JCheckBox midiMode;
 	ScrollComboBox<String> midiModeDevices;
@@ -541,7 +540,7 @@ public class VibeComposerGUI extends JFrame
 
 	Thread cycle;
 	JCheckBox useVolumeSliders;
-	JCheckBox loopBeat;
+	CheckButton loopBeat;
 	JCheckBox loopBeatCompose;
 	public static PlayheadRangeSlider slider;
 	private List<Integer> sliderMeasureStartTimes = null;
@@ -878,8 +877,11 @@ public class VibeComposerGUI extends JFrame
 		arrangementScaleMidiVelocity = new JCheckBox("Scale Midi Velocity in Arrangement", true);
 		arrangementResetCustomPanelsOnCompose = new JCheckBox("Reset customized panels On Compose",
 				true);
+
+		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
 		//RandomIntegerListButton bt = new RandomIntegerListButton("0,1,2,3");
 		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
+		arrangementExtraSettingsPanel.add(useVolumeSliders);
 		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
 		//arrangementExtraSettingsPanel.add(bt);
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
@@ -2840,7 +2842,7 @@ public class VibeComposerGUI extends JFrame
 				"RandomizeUserChords");
 		customChordsPanel.add(randomizeCustomChords);
 
-		userChordsEnabled = new JCheckBox("Custom Chords", false);
+		userChordsEnabled = new CheckButton("Custom Chords", false);
 		customChordsPanel.add(userChordsEnabled);
 
 		userChords = new JTextField("?", 35);
@@ -3379,14 +3381,13 @@ public class VibeComposerGUI extends JFrame
 
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
-		showScore = new JCheckBox("Show Score", true);
+		/*showScore = new JCheckBox("Show Score", true);
 		showScorePicker = new ScrollComboBox<String>();
 		ScrollComboBox.addAll(
 				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },
-				showScorePicker);
+				showScorePicker);*/
 
-		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
-		loopBeat = new JCheckBox("Loop Beats", false);
+		loopBeat = new CheckButton("Loop Beats", false);
 		loopBeatCount = new KnobPanel("", 4, 1, 4);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
@@ -3452,9 +3453,8 @@ public class VibeComposerGUI extends JFrame
 		JPanel playSettingsPanel = new JPanel();
 		playSettingsPanel.setOpaque(false);
 
-		playSettingsPanel.add(showScore);
-		playSettingsPanel.add(showScorePicker);
-		playSettingsPanel.add(useVolumeSliders);
+		//playSettingsPanel.add(showScore);
+		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(loopBeatCount);
 		playSettingsPanel.add(midiMode);
@@ -3833,9 +3833,6 @@ public class VibeComposerGUI extends JFrame
 
 	public void fillUserParameters(boolean regenerate) {
 		try {
-			MidiGenerator.DISPLAY_SCORE = showScore.isSelected();
-			MidiGenerator.showScoreMode = ShowScoreMode.values()[showScorePicker
-					.getSelectedIndex()];
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
 			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
 			MidiGenerator.recalculateDurations(elongateMidi.getInt());

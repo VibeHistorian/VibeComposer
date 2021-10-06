@@ -169,9 +169,6 @@ public class MidiGenerator implements JMC {
 	public static String FIRST_CHORD = null;
 	public static String LAST_CHORD = null;
 
-	public static boolean DISPLAY_SCORE = false;
-	public static ShowScoreMode showScoreMode = ShowScoreMode.NODRUMSCHORDS;
-
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
 	public static boolean COLLAPSE_MELODY_TRACKS = true;
 	public static boolean RANDOMIZE_TARGET_NOTES = false;
