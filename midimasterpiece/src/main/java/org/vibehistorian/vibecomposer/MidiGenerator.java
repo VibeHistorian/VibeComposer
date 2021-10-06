@@ -2891,10 +2891,6 @@ public class MidiGenerator implements JMC {
 			fillOtherPartsForSection(sec, arr, overridden, riskyVariations, variationGen, arrSeed,
 					measureLength);
 
-
-			if (sec.getRiskyVariations() == null) {
-				sec.setRiskyVariations(riskyVariations);
-			}
 			if (gcPartsReplaced) {
 				restoreGlobalPartsToGuiConfig();
 			}
@@ -3110,6 +3106,7 @@ public class MidiGenerator implements JMC {
 
 				riskyVariations.add(isVariation);
 			}
+			sec.setRiskyVariations(riskyVariations);
 		}
 		return riskyVariations;
 	}
