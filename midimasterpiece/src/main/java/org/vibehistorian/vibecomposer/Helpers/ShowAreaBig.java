@@ -50,13 +50,11 @@ public class ShowAreaBig extends JComponent {
 	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
 	private int oldX;
-	private int maxColours = 8;
-	private float[][] theColours = new float[maxColours][3];
 	private int noteHeight = 5;
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	private int areaHeight = 350;
+	public static int areaHeight = 400;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };
@@ -89,7 +87,7 @@ public class ShowAreaBig extends JComponent {
 		super();
 		this.sp = sp;
 		//width and height of score notation area
-		this.setSize(1500, 350);
+		this.setSize(ShowPanelBig.beatWidthBase, areaHeight);
 
 		/*for (int i = 0; i < maxColours; i++) {
 			theColours[i][0] = (float) (Math.random() / maxColours / 2)
@@ -103,7 +101,7 @@ public class ShowAreaBig extends JComponent {
 		w = 2 * noteHeight; //width between stave lines
 		ePos = 5 * noteHeight; // position of e in the treble stave
 		e = ePos + noteHeight * 33;
-		areaHeight = 72 * noteHeight;
+		//areaHeight = 350;
 		noteOffset = new int[] { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 				noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 				noteHeight * 6 };
@@ -138,7 +136,7 @@ public class ShowAreaBig extends JComponent {
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, 350);
+		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
 	}
 
 	/**
@@ -150,7 +148,7 @@ public class ShowAreaBig extends JComponent {
 	 */
 	@Override
 	public Dimension getMinimumSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, 350);
+		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
 	}
 
 	/**
@@ -186,7 +184,7 @@ public class ShowAreaBig extends JComponent {
 		// e above middle C is at 255
 		//treble
 		beatWidth = sp.beatWidth;
-		int maxWidth = (int) Math.round((sp.score.getEndTime() + noteOffsetXMargin) * beatWidth);
+		int maxWidth = (int) Math.round((ShowPanelBig.maxEndTime + noteOffsetXMargin) * beatWidth);
 		g.drawLine(0, (e), maxWidth, (e));
 		g.drawLine(0, (e - w), maxWidth, (e - w));
 		g.drawLine(0, (e - w * 2), maxWidth, (e - w * 2));

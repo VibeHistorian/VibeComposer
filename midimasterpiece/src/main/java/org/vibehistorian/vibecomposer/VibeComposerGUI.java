@@ -323,7 +323,6 @@ public class VibeComposerGUI extends JFrame
 	public static ShowPanelBig scorePanel;
 	public static Dimension scrollPaneDimension = new Dimension(1600, 400);
 	int arrangementRowHeaderWidth = 120;
-	Dimension scrollPaneDimensionToggled = new Dimension(1000, 400);
 
 	public static JScrollPane melodyScrollPane;
 	public static JScrollPane bassScrollPane;
@@ -3581,15 +3580,21 @@ public class VibeComposerGUI extends JFrame
 
 	private void switchBigMonitorMode() {
 		Dimension newPrefSize = null;
-		if (!isBigMonitorMode) {
+		isBigMonitorMode = !isBigMonitorMode;
+		if (isBigMonitorMode) {
 			newPrefSize = new Dimension(1900, 600);
+			//ShowPanelBig.panelMaxHeight = 600;
 		} else {
-			newPrefSize = new Dimension(1600, 400);
+			newPrefSize = new Dimension(1600, 435);
+			//ShowPanelBig.panelMaxHeight = 400;
 		}
+		/*if (scorePanel != null) {
+			scorePanel.updatePanelHeight();
+			scorePanel.update();
+		}*/
 		scrollPaneDimension = newPrefSize;
 		instrumentTabPane.setPreferredSize(newPrefSize);
 		instrumentTabPane.setSize(newPrefSize);
-		isBigMonitorMode = !isBigMonitorMode;
 
 		for (DrumPanel dp : drumPanels) {
 			dp.getComboPanel().reapplyHits();
@@ -4420,13 +4425,6 @@ public class VibeComposerGUI extends JFrame
 			LOGGER.info(("NO SOUNDBANK WITH THAT NAME FOUND!"));
 		}
 		return synthesizer;
-	}
-
-	private JButton makeButton(String name, ActionListener listener, String actionCommand) {
-		JButton butt = new JButton(name);
-		butt.addActionListener(listener);
-		butt.setActionCommand(actionCommand);
-		return butt;
 	}
 
 	private JButton makeButton(String name, String actionCommand) {
@@ -6719,8 +6717,7 @@ public class VibeComposerGUI extends JFrame
 			return;
 		}
 		if (scorePanel == null) {
-			scorePanel = new ShowPanelBig(
-					new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 50));
+			scorePanel = new ShowPanelBig();
 			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
 		}
 		ShowPanelBig.scoreBox.setSelectedIndex(0);

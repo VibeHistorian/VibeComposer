@@ -46,7 +46,7 @@ public class ShowRulerBig extends JComponent {
 	private static final long serialVersionUID = 3220771981990129313L;
 	//attributes
 	private int startX;
-	private int height = 15;
+	public static int maxHeight = 20;
 	private int timeSig = 2;
 	private ShowPanelBig sp;
 	private Font font = new Font("Helvetica", Font.PLAIN, 10);
@@ -54,7 +54,7 @@ public class ShowRulerBig extends JComponent {
 	public ShowRulerBig(ShowPanelBig sp) {
 		super();
 		this.sp = sp;
-		this.setSize(1500, 15);
+		this.setSize(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
 		this.setBackground(Color.lightGray);
 		//this.addMouseListener(this);
 		//this.addMouseMotionListener(this);
@@ -65,12 +65,12 @@ public class ShowRulerBig extends JComponent {
 	 * Report the height of this ruler panel.
 	 */
 	public int getHeight() {
-		return height;
+		return ShowRulerBig.maxHeight;
 	}
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, 20);
+		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class ShowRulerBig extends JComponent {
 	 */
 	@Override
 	public Dimension getMinimumSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, 20);
+		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
 	}
 
 	@Override
@@ -95,17 +95,17 @@ public class ShowRulerBig extends JComponent {
 		g.setFont(font);
 		g.setColor(Color.black);
 		int startOffset = 1;
-		for (int i = startOffset; i < (sp.score.getEndTime()) + startOffset; i++) {
+		for (int i = startOffset; i < (ShowPanelBig.maxEndTime) + startOffset; i++) {
 			int xLoc = (int) Math.round(i * beatWidth);
 			if ((i - startOffset) % timeSig == 0 && beatWidth > 10) {
-				g.drawLine(xLoc, 0, xLoc, height);
-				g.drawString("" + (i - startOffset), xLoc + 2, height - 2);
+				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
+				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
 			} else if ((i - startOffset) % (timeSig * 2) == 0 && beatWidth > 5) {
-				g.drawLine(xLoc, 0, xLoc, height);
-				g.drawString("" + (i - startOffset), xLoc + 2, height - 2);
+				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
+				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
 			} else {
 				if (beatWidth > 10)
-					g.drawLine(xLoc, height / 2, xLoc, height);
+					g.drawLine(xLoc, ShowRulerBig.maxHeight / 2, xLoc, ShowRulerBig.maxHeight);
 			}
 		}
 		//g.dispose();

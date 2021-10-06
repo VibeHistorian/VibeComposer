@@ -74,7 +74,7 @@ public class ShowScoreBig extends JFrame implements WindowListener, ActionListen
 
 		//add a scroll pane
 		ShowPanelBig sp = new ShowPanelBig();
-		this.setSize(ShowPanelBig.beatWidthBase, sp.getHeight() + 25);
+		this.setSize(ShowPanelBig.beatWidthBase, 500);
 
 		View.show(score);
 
