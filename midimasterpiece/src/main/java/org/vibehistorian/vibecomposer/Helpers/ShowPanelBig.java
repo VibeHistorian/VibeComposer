@@ -42,6 +42,7 @@ public class ShowPanelBig extends JPanel {
 	private static final long serialVersionUID = 1464206032589622048L;
 	public Score score;
 	protected double beatWidth; //10.0;
+	public static final int beatWidthBase = 1500;
 	private ShowAreaBig sa;
 	private ShowRulerBig ruler;
 	private Panel pan;
@@ -55,7 +56,7 @@ public class ShowPanelBig extends JPanel {
 	public ShowPanelBig(Frame frame, Score score, Dimension size) {
 		super();
 		// set initial wideth to show whole score if possible
-		beatWidth = 1500 / (ShowAreaBig.noteOffsetXMargin + score.getEndTime());
+		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + score.getEndTime());
 		if (beatWidth < 1.0)
 			beatWidth = 1.0;
 		if (beatWidth > 256.0)

@@ -72,12 +72,15 @@ public class ShowRulerBig extends Canvas {
 		int startOffset = 1;
 		for (int i = startOffset; i < (sp.score.getEndTime()) + startOffset; i++) {
 			int xLoc = (int) Math.round(i * beatWidth);
-			if ((i + startOffset) % timeSig == 0) {
+			if ((i - startOffset) % timeSig == 0 && beatWidth > 10) {
 				g.drawLine(xLoc, 0, xLoc, height);
-				if (beatWidth > 5)
-					g.drawString("" + (i - startOffset), xLoc + 2, height - 2);
+				g.drawString("" + (i - startOffset), xLoc + 2, height - 2);
+			} else if ((i - startOffset) % (timeSig * 2) == 0 && beatWidth > 5) {
+				g.drawLine(xLoc, 0, xLoc, height);
+				g.drawString("" + (i - startOffset), xLoc + 2, height - 2);
 			} else {
-				g.drawLine(xLoc, height / 2, xLoc, height);
+				if (beatWidth > 10)
+					g.drawLine(xLoc, height / 2, xLoc, height);
 			}
 		}
 	}

@@ -2526,6 +2526,22 @@ public class VibeComposerGUI extends JFrame
 
 		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		/*scoreScrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+			@Override
+			public void adjustmentValueChanged(AdjustmentEvent e) {
+				if (scorePanel != null) {
+					LOGGER.info("Updating pos!");
+					SwingUtilities.invokeLater(new Runnable() {
+		
+						@Override
+						public void run() {
+							scorePanel.update();
+						}
+		
+					});
+				}
+			}
+		});*/
 
 		instrumentTabPane.addTab("Score", scoreScrollPane);
 	}
@@ -4580,23 +4596,12 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		/*cpSm = new HashMap<>();
-		apSm = new HashMap<>();
-		dpSm = new HashMap<>();
+
 		if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
 				|| (ae.getActionCommand().startsWith("Rand")
 						&& ae.getActionCommand().charAt(4) != 'o')) {
-			for (InstPanel ip : chordPanels) {
-				cpSm.put(ip.getPanelOrder(), ip.getSoloMuter());
-			}
-			for (InstPanel ip : arpPanels) {
-				apSm.put(ip.getPanelOrder(), ip.getSoloMuter());
-			}
-			for (InstPanel ip : drumPanels) {
-				dpSm.put(ip.getPanelOrder(), ip.getSoloMuter());
-			}
 			soloMuterPossibleChange = true;
-		}*/
+		}
 
 		if (ae.getActionCommand() == "RandChords" || (ae.getActionCommand() == "Compose"
 				&& addChords.isSelected() && randomChordsGenerateOnCompose.isSelected())) {
@@ -4646,26 +4651,6 @@ public class VibeComposerGUI extends JFrame
 
 			tabPanePossibleChange = true;
 		}
-
-		/*if (ae.getActionCommand() == "Compose" || ae.getActionCommand() == "Regenerate"
-				|| (ae.getActionCommand().startsWith("Rand")
-						&& ae.getActionCommand().charAt(4) != 'o')) {
-			for (InstPanel ip : chordPanels) {
-				if (cpSm.containsKey(ip.getPanelOrder())) {
-					ip.setSoloMuter(cpSm.get(ip.getPanelOrder()));
-				}
-			}
-			for (InstPanel ip : arpPanels) {
-				if (apSm.containsKey(ip.getPanelOrder())) {
-					ip.setSoloMuter(apSm.get(ip.getPanelOrder()));
-				}
-			}
-			for (InstPanel ip : drumPanels) {
-				if (dpSm.containsKey(ip.getPanelOrder())) {
-					ip.setSoloMuter(dpSm.get(ip.getPanelOrder()));
-				}
-			}
-		}*/
 
 		realBpm = Double.valueOf(mainBpm.getInt());
 		if (ae.getActionCommand() == "RandomizeBpm"

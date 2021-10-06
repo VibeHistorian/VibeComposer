@@ -91,7 +91,9 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
-
+		toggleableComponents.remove(patternFlip);
+		toggleableComponents.remove(patternShift);
+		toggleableComponents.remove(stretchPanel);
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);
