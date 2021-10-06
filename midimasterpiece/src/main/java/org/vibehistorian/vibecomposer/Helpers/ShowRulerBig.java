@@ -7,12 +7,15 @@
 */
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
+
+import javax.swing.JComponent;
 
 /*
 
@@ -39,7 +42,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 //--------------
 //third class!!
 //--------------
-public class ShowRulerBig extends Canvas {
+public class ShowRulerBig extends JComponent {
 	private static final long serialVersionUID = 3220771981990129313L;
 	//attributes
 	private int startX;
@@ -51,11 +54,11 @@ public class ShowRulerBig extends Canvas {
 	public ShowRulerBig(ShowPanelBig sp) {
 		super();
 		this.sp = sp;
-		this.setSize((int) (sp.score.getEndTime() * sp.beatWidth), height);
+		this.setSize(1500, 15);
 		this.setBackground(Color.lightGray);
 		//this.addMouseListener(this);
 		//this.addMouseMotionListener(this);
-		this.setCursor(new Cursor(13));
+		//this.setCursor(new Cursor(13));
 	}
 
 	/**
@@ -65,8 +68,30 @@ public class ShowRulerBig extends Canvas {
 		return height;
 	}
 
-	public void paint(Graphics g) {
+	@Override
+	public Dimension getPreferredSize() {
+		return new Dimension(3000, 20);
+	}
+
+	/**
+	 * Return the minimum size that the knob would like to be.
+	 * This is the same size as the preferred size so the
+	 * knob will be of a fixed size.
+	 *
+	 * @return the minimum size of the JKnob.
+	 */
+	@Override
+	public Dimension getMinimumSize() {
+		return new Dimension(3000, 20);
+	}
+
+	@Override
+	public void paintComponent(Graphics gDef) {
+		System.out.println("Painting ruler!");
+		Graphics2D g = (Graphics2D) gDef;
 		double beatWidth = sp.beatWidth;
+		g.setColor(new Color(180, 180, 180));
+		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		g.setFont(font);
 		g.setColor(Color.black);
 		int startOffset = 1;
@@ -83,6 +108,7 @@ public class ShowRulerBig extends Canvas {
 					g.drawLine(xLoc, height / 2, xLoc, height);
 			}
 		}
+		//g.dispose();
 	}
 
 	// get the position of inital mouse click

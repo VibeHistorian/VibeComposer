@@ -42,7 +42,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.awt.Frame;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
@@ -53,10 +52,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import javax.swing.JFrame;
+
 import jm.music.data.Score;
 import jm.util.View;
 
-public class ShowScoreBig extends Frame implements WindowListener, ActionListener {
+public class ShowScoreBig extends JFrame implements WindowListener, ActionListener {
 
 	private static final long serialVersionUID = -8303709494026975745L;
 	Score score;

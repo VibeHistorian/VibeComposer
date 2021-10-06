@@ -31,9 +31,8 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Panel;
 
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import jm.music.data.Score;
@@ -42,18 +41,18 @@ public class ShowPanelBig extends JPanel {
 	private static final long serialVersionUID = 1464206032589622048L;
 	public Score score;
 	protected double beatWidth; //10.0;
-	public static final int beatWidthBase = 1500;
+	public static final int beatWidthBase = 3000;
 	private ShowAreaBig sa;
 	private ShowRulerBig ruler;
-	private Panel pan;
-	private Frame frame;
+	private JPanel pan;
+	private JFrame frame;
 	private int panelHeight;
 
-	public ShowPanelBig(Frame frame, Score score) {
+	public ShowPanelBig(JFrame frame, Score score) {
 		this(frame, score, new Dimension(650, 400));
 	}
 
-	public ShowPanelBig(Frame frame, Score score, Dimension size) {
+	public ShowPanelBig(JFrame frame, Score score, Dimension size) {
 		super();
 		// set initial wideth to show whole score if possible
 		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + score.getEndTime());
@@ -66,15 +65,28 @@ public class ShowPanelBig extends JPanel {
 		// Because the ScrollPanel can only take one componenet 
 		// a panel called apn is created to hold all comoponenets
 		// then only pan is added to this classes ScrollPane
-		pan = new Panel();
+		pan = new JPanel();
+		setOpaque(false);
+		pan.setOpaque(false);
+		this.setSize(size);
+		pan.setSize(size);
 		pan.setLayout(new BorderLayout());
 		// add the score
 		sa = new ShowAreaBig(this); //score, maxWidth, maxParts);
-		pan.add("Center", sa);
+		sa.setVisible(true);
+		JPanel areaPanel = new JPanel();
+		areaPanel.setMaximumSize(new Dimension(1500, 350));
+		areaPanel.add(sa);
+		areaPanel.setVisible(true);
+		pan.add("Center", areaPanel);
 		//add a ruler
 		ruler = new ShowRulerBig(this);
-		pan.add("South", ruler);
-		this.setSize(size);
+		ruler.setVisible(true);
+		JPanel rulerPanel = new JPanel();
+		rulerPanel.setMaximumSize(new Dimension(1500, 25));
+		rulerPanel.add(ruler);
+		rulerPanel.setVisible(true);
+		pan.add("South", rulerPanel);
 		updatePanelHeight();
 		this.add(pan);
 
@@ -100,8 +112,8 @@ public class ShowPanelBig extends JPanel {
 	 * Used to adjust the height when the size of display is changed.
 	 */
 	public void updatePanelHeight() {
-		panelHeight = sa.getHeight() + ruler.getHeight() + 25;
-		this.setSize(new Dimension(this.getSize().width, panelHeight));
+		panelHeight = 400;
+		this.setSize(new Dimension(1600, 400));
 	}
 
 	/**

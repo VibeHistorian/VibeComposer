@@ -28,12 +28,14 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.Enumeration;
+
+import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -44,7 +46,7 @@ import jm.music.data.Phrase;
 //--------------
 //second class!!
 //--------------
-public class ShowAreaBig extends Canvas {
+public class ShowAreaBig extends JComponent {
 	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
 	private int oldX;
@@ -54,7 +56,7 @@ public class ShowAreaBig extends Canvas {
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	private int areaHeight = 72 * noteHeight;
+	private int areaHeight = 350;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };
@@ -87,15 +89,14 @@ public class ShowAreaBig extends Canvas {
 		super();
 		this.sp = sp;
 		//width and height of score notation area
-		this.setSize((int) ((sp.score.getEndTime() + noteOffsetXMargin) * sp.beatWidth),
-				areaHeight);
+		this.setSize(1500, 350);
 
-		for (int i = 0; i < maxColours; i++) {
+		/*for (int i = 0; i < maxColours; i++) {
 			theColours[i][0] = (float) (Math.random() / maxColours / 2)
 					+ (float) (1.0 / maxColours * i);
 			theColours[i][1] = (float) (Math.random() / maxColours)
 					+ (float) (1.0 / maxColours * i);
-		}
+		}*/
 	}
 
 	private void reInit() {
@@ -135,6 +136,23 @@ public class ShowAreaBig extends Canvas {
 		return thinNote;
 	}
 
+	@Override
+	public Dimension getPreferredSize() {
+		return new Dimension(3000, 350);
+	}
+
+	/**
+	 * Return the minimum size that the knob would like to be.
+	 * This is the same size as the preferred size so the
+	 * knob will be of a fixed size.
+	 *
+	 * @return the minimum size of the JKnob.
+	 */
+	@Override
+	public Dimension getMinimumSize() {
+		return new Dimension(3000, 350);
+	}
+
 	/**
 	 * Display notes thinner than stave width or not.
 	 *
@@ -149,72 +167,74 @@ public class ShowAreaBig extends Canvas {
 	//public void update(Graphics g) {
 	//	paint(g);
 	//}
-
-	public void paint(Graphics offScreenGraphics) {
+	@Override
+	public void paintComponent(Graphics gDef) {
+		System.out.println("Painting area!");
+		Graphics2D g = (Graphics2D) gDef;
 		//Image offScreenImage = this.createImage(this.getSize().width, this.areaHeight);
 		//Graphics offScreenGraphics = g.create();
 		//offScreenImage.getGraphics();
 		int rectLeft, rectTop, rectRight, rectBot;
 		//clear
-		offScreenGraphics.setColor(
+		g.setColor(
 				VibeComposerGUI.isDarkMode ? new Color(100, 100, 100) : new Color(180, 180, 180));
-		offScreenGraphics.fillRect(0, 0, this.getSize().width, this.getSize().height);
+		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		//get current maxWidth
 		//paint staves
-		offScreenGraphics.setColor(Color.black);
-		offScreenGraphics.setFont(font);
+		g.setColor(Color.black);
+		g.setFont(font);
 		// e above middle C is at 255
 		//treble
 		beatWidth = sp.beatWidth;
 		int maxWidth = (int) Math.round((sp.score.getEndTime() + noteOffsetXMargin) * beatWidth);
-		offScreenGraphics.drawLine(0, (e), maxWidth, (e));
-		offScreenGraphics.drawLine(0, (e - w), maxWidth, (e - w));
-		offScreenGraphics.drawLine(0, (e - w * 2), maxWidth, (e - w * 2));
-		offScreenGraphics.drawLine(0, (e - w * 3), maxWidth, (e - w * 3));
-		offScreenGraphics.drawLine(0, (e - w * 4), maxWidth, (e - w * 4));
+		g.drawLine(0, (e), maxWidth, (e));
+		g.drawLine(0, (e - w), maxWidth, (e - w));
+		g.drawLine(0, (e - w * 2), maxWidth, (e - w * 2));
+		g.drawLine(0, (e - w * 3), maxWidth, (e - w * 3));
+		g.drawLine(0, (e - w * 4), maxWidth, (e - w * 4));
 		//bass
-		offScreenGraphics.drawLine(0, (e + w * 2), maxWidth, (e + w * 2));
-		offScreenGraphics.drawLine(0, (e + w * 3), maxWidth, (e + w * 3));
-		offScreenGraphics.drawLine(0, (e + w * 4), maxWidth, (e + w * 4));
-		offScreenGraphics.drawLine(0, (e + w * 5), maxWidth, (e + w * 5));
-		offScreenGraphics.drawLine(0, (e + w * 6), maxWidth, (e + w * 6));
+		g.drawLine(0, (e + w * 2), maxWidth, (e + w * 2));
+		g.drawLine(0, (e + w * 3), maxWidth, (e + w * 3));
+		g.drawLine(0, (e + w * 4), maxWidth, (e + w * 4));
+		g.drawLine(0, (e + w * 5), maxWidth, (e + w * 5));
+		g.drawLine(0, (e + w * 6), maxWidth, (e + w * 6));
 		// upper treble
 		//offScreenGraphics.setColor(Color.lightGray);
-		offScreenGraphics.drawLine(0, (e - w * 7), maxWidth, (e - w * 7));
-		offScreenGraphics.drawLine(0, (e - w * 8), maxWidth, (e - w * 8));
-		offScreenGraphics.drawLine(0, (e - w * 9), maxWidth, (e - w * 9));
-		offScreenGraphics.drawLine(0, (e - w * 10), maxWidth, (e - w * 10));
-		offScreenGraphics.drawLine(0, (e - w * 11), maxWidth, (e - w * 11));
+		g.drawLine(0, (e - w * 7), maxWidth, (e - w * 7));
+		g.drawLine(0, (e - w * 8), maxWidth, (e - w * 8));
+		g.drawLine(0, (e - w * 9), maxWidth, (e - w * 9));
+		g.drawLine(0, (e - w * 10), maxWidth, (e - w * 10));
+		g.drawLine(0, (e - w * 11), maxWidth, (e - w * 11));
 		//lower bass
-		offScreenGraphics.drawLine(0, (e + w * 9), maxWidth, (e + w * 9));
-		offScreenGraphics.drawLine(0, (e + w * 10), maxWidth, (e + w * 10));
-		offScreenGraphics.drawLine(0, (e + w * 11), maxWidth, (e + w * 11));
-		offScreenGraphics.drawLine(0, (e + w * 12), maxWidth, (e + w * 12));
-		offScreenGraphics.drawLine(0, (e + w * 13), maxWidth, (e + w * 13));
+		g.drawLine(0, (e + w * 9), maxWidth, (e + w * 9));
+		g.drawLine(0, (e + w * 10), maxWidth, (e + w * 10));
+		g.drawLine(0, (e + w * 11), maxWidth, (e + w * 11));
+		g.drawLine(0, (e + w * 12), maxWidth, (e + w * 12));
+		g.drawLine(0, (e + w * 13), maxWidth, (e + w * 13));
 		// leger lines
-		offScreenGraphics.setColor(new Color(140, 140, 140));
+		g.setColor(new Color(140, 140, 140));
 		for (int k = 0; k < maxWidth; k += 10) {
-			offScreenGraphics.drawLine(k, (e + w), k + 1, (e + w)); // middle C
+			g.drawLine(k, (e + w), k + 1, (e + w)); // middle C
 			// above treble
-			offScreenGraphics.drawLine(k, (e - w * 5), k + 1, (e - w * 5));
-			offScreenGraphics.drawLine(k, (e - w * 6), k + 1, (e - w * 6));
+			g.drawLine(k, (e - w * 5), k + 1, (e - w * 5));
+			g.drawLine(k, (e - w * 6), k + 1, (e - w * 6));
 			// above upper treble
-			offScreenGraphics.drawLine(k, (e - w * 12), k + 1, (e - w * 12));
-			offScreenGraphics.drawLine(k, (e - w * 13), k + 1, (e - w * 13));
-			offScreenGraphics.drawLine(k, (e - w * 14), k + 1, (e - w * 14));
-			offScreenGraphics.drawLine(k, (e - w * 15), k + 1, (e - w * 15));
-			offScreenGraphics.drawLine(k, (e - w * 16), k + 1, (e - w * 16));
-			offScreenGraphics.drawLine(k, (e - w * 17), k + 1, (e - w * 17));
-			offScreenGraphics.drawLine(k, (e - w * 18), k + 1, (e - w * 18));
+			g.drawLine(k, (e - w * 12), k + 1, (e - w * 12));
+			g.drawLine(k, (e - w * 13), k + 1, (e - w * 13));
+			g.drawLine(k, (e - w * 14), k + 1, (e - w * 14));
+			g.drawLine(k, (e - w * 15), k + 1, (e - w * 15));
+			g.drawLine(k, (e - w * 16), k + 1, (e - w * 16));
+			g.drawLine(k, (e - w * 17), k + 1, (e - w * 17));
+			g.drawLine(k, (e - w * 18), k + 1, (e - w * 18));
 			// below bass
-			offScreenGraphics.drawLine(k, (e + w * 7), k + 1, (e + w * 7));
-			offScreenGraphics.drawLine(k, (e + w * 8), k + 1, (e + w * 8));
+			g.drawLine(k, (e + w * 7), k + 1, (e + w * 7));
+			g.drawLine(k, (e + w * 8), k + 1, (e + w * 8));
 			// below lower bass
-			offScreenGraphics.drawLine(k, (e + w * 14), k + 1, (e + w * 14));
-			offScreenGraphics.drawLine(k, (e + w * 15), k + 1, (e + w * 15));
-			offScreenGraphics.drawLine(k, (e + w * 16), k + 1, (e + w * 16));
-			offScreenGraphics.drawLine(k, (e + w * 17), k + 1, (e + w * 17));
-			offScreenGraphics.drawLine(k, (e + w * 18), k + 1, (e + w * 18));
+			g.drawLine(k, (e + w * 14), k + 1, (e + w * 14));
+			g.drawLine(k, (e + w * 15), k + 1, (e + w * 15));
+			g.drawLine(k, (e + w * 16), k + 1, (e + w * 16));
+			g.drawLine(k, (e + w * 17), k + 1, (e + w * 17));
+			g.drawLine(k, (e + w * 18), k + 1, (e + w * 18));
 		}
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
@@ -273,8 +293,7 @@ public class ShowAreaBig extends Canvas {
 						if (y > rectBot)
 							rectBot = y;//update values to phrase rectangle
 						//set the colour change brightness for dynamic
-						offScreenGraphics
-								.setColor(OMNI.alphen(noteColor, 50 + aNote.getDynamic() / 2));
+						g.setColor(OMNI.alphen(noteColor, 50 + aNote.getDynamic() / 2));
 
 						int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
 						int actualStartingX = oldX + noteOffsetXOffset;
@@ -282,16 +301,16 @@ public class ShowAreaBig extends Canvas {
 
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
-							offScreenGraphics.fillRect(actualStartingX, y - noteHeight + thinNote,
-									actualEndingX, noteHeight * 2 - 2 * thinNote);
+							g.fillRect(actualStartingX, y - noteHeight + thinNote, actualEndingX,
+									noteHeight * 2 - 2 * thinNote);
 						} else { // draw frequency derrived note
 							int heightOffset = 7;
 							for (int j = actualStartingX; j < actualStartingX + actualEndingX
 									- 4; j += 4) {
-								offScreenGraphics.drawLine(j, y - noteHeight + heightOffset, j + 2,
+								g.drawLine(j, y - noteHeight + heightOffset, j + 2,
 										y - noteHeight + heightOffset - 3);
-								offScreenGraphics.drawLine(j + 2, y - noteHeight + heightOffset - 3,
-										j + 4, y - noteHeight + heightOffset);
+								g.drawLine(j + 2, y - noteHeight + heightOffset - 3, j + 4,
+										y - noteHeight + heightOffset);
 							}
 						}
 
@@ -302,8 +321,8 @@ public class ShowAreaBig extends Canvas {
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {
-							offScreenGraphics.setColor(OMNI.alphen(noteColor, 70));
-							offScreenGraphics.drawString("#", actualStartingX - 7, y + 5);
+							g.setColor(OMNI.alphen(noteColor, 70));
+							g.drawString("#", actualStartingX - 7, y + 5);
 						}
 					}
 					oldXBeat += aNote.getRhythmValue();
@@ -320,6 +339,6 @@ public class ShowAreaBig extends Canvas {
 			i++; //increment the part index
 		}
 		//g.drawImage(offScreenImage, 0, 0, this);
-		//offScreenGraphics.dispose();
+		//g.dispose();
 	}
 }
