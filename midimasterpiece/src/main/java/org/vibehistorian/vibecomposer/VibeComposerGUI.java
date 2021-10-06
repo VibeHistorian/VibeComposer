@@ -1225,7 +1225,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelBlocksPatternsCompose);
 
 
-		scrollableMelodyPanels.add(melodySettingsPanel);
+		//scrollableMelodyPanels.add(melodySettingsPanel);
 		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
 		scrollableMelodyPanels.add(melodySettingsExtraPanelOrg);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);

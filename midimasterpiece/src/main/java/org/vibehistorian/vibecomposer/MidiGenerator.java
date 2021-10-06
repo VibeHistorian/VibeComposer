@@ -4024,26 +4024,25 @@ public class MidiGenerator implements JMC {
 				double durationCounter = 0;
 				int nextP = -1;
 				PatternJoinMode joinMode = cp.getPatternJoinMode();
-				int stretchBy = (joinMode == PatternJoinMode.EXPAND) ? 0 : 1;
+				int stretchedByNote = (joinMode == PatternJoinMode.JOIN) ? 1 : 0;
 				for (int p = 0; p < pattern.size(); p++) {
 
 					//LOGGER.debug("Duration counter: " + durationCounter);
 					Chord cC = Chord.copy(c);
 					cC.setRhythmValue(duration);
 					// less plucky
-					cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
-					if (pattern.get(p) < 1 || (p <= nextP && stretchBy == 1)) {
+					//cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
+					if (pattern.get(p) < 1 || (p <= nextP && stretchedByNote == 1)) {
 						cC.setNotes(new int[] { Integer.MIN_VALUE });
 					} else if (transition && durationCounter >= splitTime) {
 						cC.setNotes(transChordNotes);
 					}
 					int durMultiplier = 1;
-					boolean joinApplicable = (pattern.get(p) == 1)
-							&& (joinMode != PatternJoinMode.NOJOIN) && (p >= nextP);
+					boolean joinApplicable = (pattern.get(p) == 1) && (p >= nextP);
 					if (joinApplicable) {
 						nextP = p + 1;
 						while (nextP < pattern.size()) {
-							if (pattern.get(nextP) == stretchBy) {
+							if (pattern.get(nextP) == stretchedByNote) {
 								durMultiplier++;
 							} else {
 								break;
@@ -4051,8 +4050,10 @@ public class MidiGenerator implements JMC {
 							nextP++;
 						}
 					}
+					joinApplicable &= (joinMode != PatternJoinMode.NOJOIN);
 
-					cC.setDurationRatio(cC.getDurationRatio() * durMultiplier);
+					cC.setDurationRatio(Math.min(durMultiplier,
+							cC.getDurationRatio() * (joinApplicable ? durMultiplier : 1.0)));
 					cC.setFlam(flamming);
 					cC.makeAndStoreNotesBackwards(flamGenerator);
 					chords.add(cC);
