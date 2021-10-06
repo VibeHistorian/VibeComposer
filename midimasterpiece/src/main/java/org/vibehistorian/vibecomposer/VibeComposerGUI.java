@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -853,21 +854,21 @@ public class VibeComposerGUI extends JFrame
 		mainButtonsPanel.add(globalSoloMuter);
 		globalSoloMuter.setBackground(null);
 
-		mainButtonsPanel.add(makeButton("Toggle Dark Mode", "SwitchDarkMode"));
+		mainButtonsPanel.add(makeButton("Toggle Dark Mode", e -> switchDarkMode()));
 
-		mainButtonsPanel.add(makeButton("Toggle Adv. Features", "ToggleAdv"));
+		mainButtonsPanel.add(makeButton("Toggle Adv. Features", e -> switchFullMode()));
 
-		mainButtonsPanel.add(makeButton("B I G/small", "SwitchBigMode"));
+		mainButtonsPanel.add(makeButton("B I G/small", e -> switchBigMonitorMode()));
 
-		mainButtonsPanel.add(makeButton("Exclude Not Solo'd", "ToggleSoloExcl"));
+		mainButtonsPanel.add(makeButton("Exclude Not Solo'd", e -> toggleExclude()));
 
-		//mainButtonsPanel.add(makeButton("DrumView", "ShowDrumViewPopup"));
+		//mainButtonsPanel.add(makeButton("DrumView", e -> openDrumViewPopup()));
 
 
 		extraSettingsPanel = new JPanel();
 		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
 
-		mainButtonsPanel.add(makeButton("Extra", "ShowExtraPopup"));
+		mainButtonsPanel.add(makeButton("Extra", e -> openExtraSettingsPopup()));
 
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}
@@ -1157,8 +1158,9 @@ public class VibeComposerGUI extends JFrame
 		melodyExtraLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelOrg.add(melodyExtraLabel);
 
-		JButton generateUserMelodySeed = makeButton("Randomize Seed", "GenMelody");
-		JButton clearUserMelodySeed = makeButton("Clear Seed", "ClearMelody");
+		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
+		JButton clearUserMelodySeed = makeButton("Clear Seed",
+				e -> getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
 		randomMelodySameSeed = new JCheckBox("Same#", true);
 		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
 		melody1ForcePatterns = new JCheckBox("<html>Force Melody#1<br> Outline</html>", true);
@@ -3365,9 +3367,9 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel playSavePanel = new JPanel();
 		playSavePanel.setOpaque(false);
-		stopMidi = makeButton("STOP", "StopMidi");
-		startMidi = makeButton("PLAY", "StartMidi");
-		pauseMidi = makeButton("PAUSE", "PauseMidi");
+		stopMidi = makeButton("STOP", e -> stopMidi());
+		startMidi = makeButton("PLAY", e -> startMidi());
+		pauseMidi = makeButton("PAUSE", e -> pauseMidi());
 		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
 		startMidi.setFont(startMidi.getFont().deriveFont(Font.BOLD));
 		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
@@ -3471,9 +3473,9 @@ public class VibeComposerGUI extends JFrame
 
 	private void initHelperPopups() {
 		JPanel helperPopupsPanel = new JPanel();
-		helperPopupsPanel.add(makeButton("User Manual (opens browser)", "ShowHelpPopup"));
-		helperPopupsPanel.add(makeButton("Debug Console", "ShowDebugPopup"));
-		helperPopupsPanel.add(makeButton("About VibeComposer", "ShowAboutPopup"));
+		helperPopupsPanel.add(makeButton("User Manual (opens browser)", e -> openHelpPopup()));
+		helperPopupsPanel.add(makeButton("Debug Console", e -> openDebugConsole()));
+		helperPopupsPanel.add(makeButton("About VibeComposer", e -> openAboutPopup()));
 		extraSettingsPanel.add(helperPopupsPanel);
 	}
 
@@ -4434,6 +4436,19 @@ public class VibeComposerGUI extends JFrame
 		return butt;
 	}
 
+	private JButton makeButton(String name, Consumer<? super Object> a) {
+		JButton butt = new JButton(name);
+		butt.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				a.accept(new Object());
+			}
+
+		});
+		return butt;
+	}
+
 	private void randomizeUserChords() {
 		MidiGenerator mg = new MidiGenerator(copyGUItoConfig());
 		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
@@ -4447,19 +4462,19 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void openHelpPopup() {
-		HelpPopup popup = new HelpPopup();
+		new HelpPopup();
 	}
 
 	private void openAboutPopup() {
-		AboutPopup popup = new AboutPopup();
+		new AboutPopup();
 	}
 
 	private void openDrumViewPopup() {
-		DrumLoopPopup popup = new DrumLoopPopup();
+		new DrumLoopPopup();
 	}
 
 	private void openExtraSettingsPopup() {
-		ExtraSettingsPopup popup = new ExtraSettingsPopup();
+		new ExtraSettingsPopup();
 	}
 
 	private void openDebugConsole() {
@@ -4715,30 +4730,6 @@ public class VibeComposerGUI extends JFrame
 
 		}
 
-		if (ae.getActionCommand() == "StopMidi") {
-			stopMidi();
-		}
-
-		if (ae.getActionCommand() == "StartMidi") {
-			startMidi();
-		}
-
-		if (ae.getActionCommand() == "PauseMidi") {
-			pauseMidi();
-		}
-
-		/*if (ae.getActionCommand() == "PauseMidi") {
-			if (sequencer != null) {
-				LOGGER.info(("Pausing Midi.."));
-				sequencer.stop();
-				startMidi.setText("Start");
-				startMidi.setActionCommand("StartMidi");
-				LOGGER.info(("Paused Midi!"));
-			} else {
-				LOGGER.info(("Sequencer is NULL!"));
-			}
-		}*/
-
 		if (ae.getActionCommand().startsWith("Save ")) {
 			if (currentMidi != null) {
 				LOGGER.info(("Saving file: " + currentMidi.getName()));
@@ -4877,14 +4868,6 @@ public class VibeComposerGUI extends JFrame
 			worker.execute(); //here the process thread initiates
 
 
-		}
-
-		if (ae.getActionCommand() == "GenMelody") {
-			randomizeMelodySeeds();
-		}
-
-		if (ae.getActionCommand() == "ClearMelody") {
-			getAffectedPanels(0).forEach(e -> e.setPatternSeed(0));
 		}
 
 		if (ae.getActionCommand() == "CopySeed") {
@@ -5034,42 +5017,6 @@ public class VibeComposerGUI extends JFrame
 			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
 					Integer.valueOf(pieceLength.getText()));
 			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand() == "SwitchBigMode") {
-			switchBigMonitorMode();
-		}
-
-		if (ae.getActionCommand() == "ToggleSoloExcl") {
-			toggleExclude();
-		}
-
-		if (ae.getActionCommand() == "SwitchDarkMode") {
-			switchDarkMode();
-		}
-
-		if (ae.getActionCommand() == "ToggleAdv") {
-			switchFullMode();
-		}
-
-		if (ae.getActionCommand() == "ShowAboutPopup") {
-			openAboutPopup();
-		}
-
-		if (ae.getActionCommand() == "ShowDrumViewPopup") {
-			openDrumViewPopup();
-		}
-
-		if (ae.getActionCommand() == "ShowHelpPopup") {
-			openHelpPopup();
-		}
-
-		if (ae.getActionCommand() == "ShowDebugPopup") {
-			openDebugConsole();
-		}
-
-		if (ae.getActionCommand() == "ShowExtraPopup") {
-			openExtraSettingsPopup();
 		}
 
 		if (ae.getActionCommand() == "CopyPart") {
