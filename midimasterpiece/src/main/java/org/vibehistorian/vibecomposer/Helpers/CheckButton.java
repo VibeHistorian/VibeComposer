@@ -65,6 +65,10 @@ public class CheckButton extends JButton {
 		}
 	}
 
+	public void setSelectedRaw(boolean selected) {
+		this.selected = selected;
+	}
+
 	public void addRunnable(Runnable rn) {
 		runnable = rn;
 	}

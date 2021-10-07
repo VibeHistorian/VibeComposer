@@ -32,12 +32,15 @@ package org.vibehistorian.vibecomposer.Helpers;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -66,6 +69,7 @@ public class ShowPanelBig extends JPanel {
 
 	private static JPanel scorePartPanel;
 	private static CheckButton[] partsShown;
+	private static JButton toggler;
 	public static ScrollComboBox<Integer> scoreBox;
 
 	public ShowPanelBig() {
@@ -106,6 +110,29 @@ public class ShowPanelBig extends JPanel {
 			});
 			partsShown[i].setMargin(new Insets(0, 0, 0, 0));
 			scorePartPanel.add(partsShown[i]);
+		}
+		{
+			toggler = new JButton("All");
+			toggler.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					boolean turnedOn = false;
+					for (CheckButton c : partsShown) {
+						if (!c.isSelected()) {
+							c.setSelectedRaw(true);
+							turnedOn = true;
+						}
+					}
+					if (!turnedOn) {
+						for (CheckButton c : partsShown) {
+							c.setSelectedRaw(false);
+						}
+					}
+					setScore();
+				}
+			});
+			scorePartPanel.add(toggler);
 		}
 		pan = new JPanel();
 		setOpaque(false);
