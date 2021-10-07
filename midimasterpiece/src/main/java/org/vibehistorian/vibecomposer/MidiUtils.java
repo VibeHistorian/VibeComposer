@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,6 +133,7 @@ public class MidiUtils {
 	public static final int[] cMin6th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.A4 };
 
 	public static final List<int[]> SPICE_CHORDS_LIST = new ArrayList<>();
+
 	static {
 		SPICE_CHORDS_LIST.add(cMaj4);
 		SPICE_CHORDS_LIST.add(cMin4);
@@ -194,6 +196,9 @@ public class MidiUtils {
 	//public static final Map<String, List<String>> cpRulesForwardMinorMap = createChordProgressionForwardRulesMinorMap();
 	public static final Map<Integer, Integer> diaTransMap = createDiaTransMap();
 	public static final Map<String, int[]> chordsMap = createChordMap();
+
+	public static final Map<String, Set<Integer>> freqMap = createChordFreqMap(chordsMap.keySet());
+	public static final Map<String, Set<Integer>> baseFreqMap = createChordFreqMap(MAJOR_CHORDS);
 
 	public static final Map<Integer, List<Pair<String, String>>> modulationMap = createKeyModulationMap();
 
@@ -270,7 +275,6 @@ public class MidiUtils {
 	private static Map<Integer, List<Pair<String, String>>> createKeyModulationMap() {
 		Map<Integer, List<Pair<String, String>>> modMap = new HashMap<>();
 
-		Map<String, Set<Integer>> freqMap = createChordFreqMap();
 		for (int i = -5; i <= 6; i++) {
 			if (i == 0) {
 				continue;
@@ -280,8 +284,8 @@ public class MidiUtils {
 					modMap.put(i, pair);
 					/*LOGGER.info(
 							"Trans: " + i + ", pair: " + (pair == null ? "NULL" : pair.toString()));*/
-				}
 
+				}
 			}
 		}
 
@@ -321,11 +325,10 @@ public class MidiUtils {
 	// order freq map by which chord contains most of the passed in notes
 	// -> create map 
 	public static String applyChordFreqMap(Map<Integer, Long> frequentNotes, int orderOfMatch,
-			String prevChordString) {
+			String prevChordString, Map<String, Set<Integer>> freqMap) {
 		if (orderOfMatch == 0) {
 			orderOfMatch++;
 		}
-		Map<String, Set<Integer>> freqMap = createChordFreqMap();
 		Map<String, Long> chordMatchesMap = new LinkedHashMap<>();
 		long bestMatch = 0;
 		for (String l : freqMap.keySet()) {
@@ -378,14 +381,25 @@ public class MidiUtils {
 		return (String) orderedBestMatches.keySet().toArray()[0];
 	}
 
-	private static Map<String, Set<Integer>> createChordFreqMap() {
-		Map<String, Set<Integer>> freqMap = new HashMap<>();
+	private static Map<String, Set<Integer>> createChordFreqMap(Collection<String> chords) {
+		Map<String, Set<Integer>> cfMap = new HashMap<>();
+		List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
 
-		for (String ch : MAJOR_CHORDS) {
-			freqMap.put(ch, intArrToList(chordsMap.get(ch)).stream().map(e -> e % 12)
-					.collect(Collectors.toSet()));
+		for (String ch : chords) {
+			int transposeByLetter = targetScale
+					.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(ch.substring(0, 1)) - 1);
+			if (ch.contains("6")
+					|| !isSpiceValid(transposeByLetter, ch.substring(1), targetScale)) {
+				continue;
+			}
+			int[] chord = chordsMap.get(ch);
+			if (chord.length <= 4) {
+				cfMap.put(ch,
+						intArrToList(chord).stream().map(e -> e % 12).collect(Collectors.toSet()));
+			}
+
 		}
-		return freqMap;
+		return cfMap;
 	}
 
 	public static List<Integer> intArrToList(int[] intArr) {
@@ -402,6 +416,17 @@ public class MidiUtils {
 			intList.add(i % 12);
 		}
 		return intList;
+	}
+
+	public static boolean isSpiceValid(int transposeByLetter, String spice,
+			List<Integer> targetScale) {
+		int[] chord = SPICE_CHORDS_LIST.get(SPICE_NAMES_LIST.indexOf(spice));
+		for (int i = 0; i < chord.length; i++) {
+			if (!targetScale.contains((chord[i] + transposeByLetter) % 12)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static int compareNotesByDistanceFromChordPitches(Note n1, Note n2,
@@ -1238,8 +1263,7 @@ public class MidiUtils {
 			if (changedNote) {
 				int indexToChange = MIN_SCALE.indexOf(normalizedChord[i]);
 				adjustedScale[indexToChange] = normalizedChord[i];
-				LOGGER.info(
-						"Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
+				LOGGER.info("Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
 			}
 
 		}

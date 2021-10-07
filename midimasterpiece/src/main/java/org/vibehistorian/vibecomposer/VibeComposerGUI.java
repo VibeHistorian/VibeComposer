@@ -599,6 +599,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void init() {
+		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
 
 			@Override
@@ -820,7 +821,7 @@ public class VibeComposerGUI extends JFrame
 					}
 				});*/
 
-
+		LOGGER.info("VibeComposer started in: " + (System.currentTimeMillis() - sysTime) + " ms!");
 	}
 
 
