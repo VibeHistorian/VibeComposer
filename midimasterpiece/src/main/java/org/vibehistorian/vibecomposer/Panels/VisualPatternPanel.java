@@ -45,7 +45,8 @@ public class VisualPatternPanel extends JPanel {
 	private int lastHits = 0;
 
 	private List<Integer> truePattern = new ArrayList<>();
-	private JCheckBox[] hitChecks = new JCheckBox[32];
+	public static final int MAX_HITS = 32;
+	private JCheckBox[] hitChecks = new JCheckBox[MAX_HITS];
 	private JLabel[] separators = new JLabel[3];
 
 	private JPanel parentPanel = null;
@@ -83,27 +84,27 @@ public class VisualPatternPanel extends JPanel {
 	public static Map<Integer, Insets> bigModeInsetMap = new HashMap<>();
 	static {
 
-		for (int i = 2; i < 32; i++) {
-			bigModeInsetMap.put(i, new Insets(0, 0, 0, CheckBoxIcon.width * (32 - i) / i));
+		for (int i = 2; i < MAX_HITS; i++) {
+			bigModeInsetMap.put(i, new Insets(0, 0, 0, CheckBoxIcon.width * (MAX_HITS - i) / i));
 		}
 	}
 
 	public static Map<Integer, Insets> bigModeDoubleChordGeneralInsetMap = new HashMap<>();
 	static {
 
-		for (int i = 2; i <= 32; i++) {
+		for (int i = 2; i <= MAX_HITS; i++) {
 			bigModeDoubleChordGeneralInsetMap.put(i,
-					new Insets(0, 0, 0, 2 * CheckBoxIcon.width * (32 - i / 2) / i));
+					new Insets(0, 0, 0, 2 * CheckBoxIcon.width * (MAX_HITS - i / 2) / i));
 		}
 	}
 
 	public static Map<Integer, Insets> bigModeDoubleChordTransitionInsetMap = new HashMap<>();
 	static {
 
-		for (int i = 2; i <= 32; i++) {
+		for (int i = 2; i <= MAX_HITS; i++) {
 			bigModeDoubleChordTransitionInsetMap.put(i,
-					new Insets(0, CheckBoxIcon.width * (32 - i / 2) / i, 0,
-							CheckBoxIcon.width * (32 - i / 2) / i));
+					new Insets(0, CheckBoxIcon.width * (MAX_HITS - i / 2) / i, 0,
+							CheckBoxIcon.width * (MAX_HITS - i / 2) / i));
 		}
 	}
 
@@ -126,7 +127,7 @@ public class VisualPatternPanel extends JPanel {
 		doublerButton = doubler;
 		lastHits = hitsPanel.getInt();
 		int sepCounter = 0;
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < MAX_HITS; i++) {
 			final int fI = i;
 			truePattern.add(0);
 			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
@@ -145,11 +146,7 @@ public class VisualPatternPanel extends JPanel {
 					}
 					if (change) {
 						needShift = true;
-						int shI = (fI - shiftPanel.getInt() + 32) % 32;
-						truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-						if (patternType.getVal() != RhythmPattern.CUSTOM) {
-							patternType.setVal(RhythmPattern.CUSTOM);
-						}
+						checkPattern(fI);
 					}
 
 				}
@@ -191,11 +188,7 @@ public class VisualPatternPanel extends JPanel {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					int shI = (fI - shiftPanel.getInt() + 32) % 32;
-					truePattern.set(shI, hitChecks[fI].isSelected() ? 1 : 0);
-					if (patternType.getVal() != RhythmPattern.CUSTOM) {
-						patternType.setVal(RhythmPattern.CUSTOM);
-					}
+					checkPattern(fI);
 				}
 
 			});
@@ -216,11 +209,11 @@ public class VisualPatternPanel extends JPanel {
 					VisualPatternPanel.this.setVisible(false);
 					RhythmPattern d = patternType.getVal();
 					if (d != RhythmPattern.CUSTOM) {
-						truePattern = d.getPatternByLength(32, 0);
+						truePattern = d.getPatternByLength(MAX_HITS, 0);
 					}
 
-					for (int i = 0; i < 32; i++) {
-						int shI = (i + shiftPanel.getInt()) % 32;
+					for (int i = 0; i < MAX_HITS; i++) {
+						int shI = (i + shiftPanel.getInt()) % MAX_HITS;
 						hitChecks[shI].setSelected(truePattern.get(i) != 0);
 					}
 					VisualPatternPanel.this.setVisible(true);
@@ -350,6 +343,23 @@ public class VisualPatternPanel extends JPanel {
 				});
 	}
 
+	public void checkPattern(int fI) {
+		int shI = (fI - shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
+		int applied = hitChecks[fI].isSelected() ? 1 : 0;
+		truePattern.set(shI, applied);
+		boolean reapplyNeeded = false;
+		while ((shI += lastHits) < MAX_HITS) {
+			truePattern.set(shI, applied);
+			reapplyNeeded = true;
+		}
+		if (patternType.getVal() != RhythmPattern.CUSTOM) {
+			patternType.setVal(RhythmPattern.CUSTOM);
+		}
+		if (reapplyNeeded) {
+			reapplyShift();
+		}
+	}
+
 	public List<Integer> getTruePattern() {
 		return truePattern;
 	}
@@ -368,8 +378,8 @@ public class VisualPatternPanel extends JPanel {
 			@Override
 			public void run() {
 				VisualPatternPanel.this.setVisible(false);
-				for (int i = 0; i < 32; i++) {
-					int shI = (i + shiftPanel.getInt()) % 32;
+				for (int i = 0; i < MAX_HITS; i++) {
+					int shI = (i + shiftPanel.getInt()) % MAX_HITS;
 					hitChecks[shI].setSelected(truePattern.get(i) != 0);
 				}
 				VisualPatternPanel.this.setVisible(true);
@@ -385,8 +395,8 @@ public class VisualPatternPanel extends JPanel {
 				VisualPatternPanel.this.setVisible(false);
 				boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
 				int nowHits = hitsPanel.getInt();
-				if (nowHits > 32)
-					nowHits = 32;
+				if (nowHits > MAX_HITS)
+					nowHits = MAX_HITS;
 				if (nowHits > lastHits) {
 					for (int i = lastHits; i < nowHits; i++) {
 						hitChecks[i].setVisible(true);
@@ -402,7 +412,7 @@ public class VisualPatternPanel extends JPanel {
 				int chords = chordSpanPanel.getInt();
 
 				if (showBIG) {
-					width = 32 * CheckBoxIcon.width;
+					width = MAX_HITS * CheckBoxIcon.width;
 					height = 1 * CheckBoxIcon.width;
 					if (chords == 1) {
 						if (bigModeInsetMap.containsKey(lastHits)) {
@@ -432,11 +442,11 @@ public class VisualPatternPanel extends JPanel {
 						}
 					}
 					/*if (!viewOnly) {
-						if (lastHits == 32 && chords == 1) {
+						if (lastHits == MAX_HITS && chords == 1) {
 							for (JLabel lab : separators) {
 								lab.setVisible(true);
 							}
-						} else if (lastHits == 32 && chords == 2) {
+						} else if (lastHits == MAX_HITS && chords == 2) {
 							separators[0].setVisible(true);
 							separators[1].setVisible(false);
 							separators[2].setVisible(true);

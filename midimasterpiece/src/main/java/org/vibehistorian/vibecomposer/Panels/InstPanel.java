@@ -57,7 +57,7 @@ public abstract class InstPanel extends JPanel {
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
-	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
+	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, VisualPatternPanel.MAX_HITS);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 	protected ScrollComboBox<ChordSpanFill> chordSpanFill = new ScrollComboBox<>();
 	protected CheckButton fillFlip = new CheckButton("~", false);
@@ -261,7 +261,8 @@ public abstract class InstPanel extends JPanel {
 		setPatternFlip(part.isPatternFlip());
 
 		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
-				&& part.getCustomPattern().size() == 32 && comboPanel != null) {
+				&& part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS
+				&& comboPanel != null) {
 			comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
 		}
 		setPatternShift(part.getPatternShift());

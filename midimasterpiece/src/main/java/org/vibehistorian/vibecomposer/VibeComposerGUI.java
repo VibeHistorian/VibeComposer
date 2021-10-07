@@ -159,6 +159,7 @@ import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
+import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
@@ -1636,11 +1637,11 @@ public class VibeComposerGUI extends JFrame
 								&& affectedDrums.get(i).getPattern() == RhythmPattern.CUSTOM) {
 							List<Integer> trueSub = affectedDrums.get(i).getComboPanel()
 									.getTruePattern().subList(0, newHits);
-							while (trueSub.size() < 32) {
+							while (trueSub.size() < VisualPatternPanel.MAX_HITS) {
 								trueSub.addAll(trueSub);
 							}
-							affectedDrums.get(i).getComboPanel()
-									.setTruePattern(trueSub.subList(0, 32));
+							affectedDrums.get(i).getComboPanel().setTruePattern(
+									trueSub.subList(0, VisualPatternPanel.MAX_HITS));
 						}
 					}
 
@@ -5969,7 +5970,7 @@ public class VibeComposerGUI extends JFrame
 		Collections.sort(pitches);
 
 		int chords = 2;
-		int maxPatternPerChord = 32;
+		int maxPatternPerChord = VisualPatternPanel.MAX_HITS;
 
 		/*int[] drumHitGrid = IntStream.iterate(0, e -> e).limit(chords * maxPatternPerChord)
 				.toArray();*/

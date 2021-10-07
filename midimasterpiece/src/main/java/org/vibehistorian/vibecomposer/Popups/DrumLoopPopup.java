@@ -145,7 +145,8 @@ public class DrumLoopPopup {
 		sliderPanel.setOpaque(false);
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
 
-		sliderPanel.setPreferredSize(new Dimension(32 * CheckBoxIcon.width + 130, 20));
+		sliderPanel.setPreferredSize(
+				new Dimension(VisualPatternPanel.MAX_HITS * CheckBoxIcon.width + 130, 20));
 
 
 		slider = new JSlider();
