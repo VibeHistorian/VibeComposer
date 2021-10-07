@@ -399,6 +399,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melody1ForcePatterns;
 	JCheckBox melodyArpySurprises;
 	JCheckBox melodySingleNoteExceptions;
+	JCheckBox melodyFillPausesPerChord;
 	JCheckBox melodyAvoidChordJumps;
 	JCheckBox melodyUseDirectionsFromProgression;
 	JCheckBox melodyPatternFlip;
@@ -1104,6 +1105,7 @@ public class VibeComposerGUI extends JFrame
 		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
 		melodyArpySurprises = new JCheckBox("<html>Insert<br> Arps</html>", false);
 		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
+		melodyFillPausesPerChord = new JCheckBox("<html>Fill Pauses<br>Per Chord</html>", true);
 		melodyAvoidChordJumps = new JCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 		melodyUseDirectionsFromProgression = new JCheckBox("<html>Use Chord<br>Directions</html>",
 				false);
@@ -1131,6 +1133,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
+		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
 		//melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
 
 		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
@@ -5575,6 +5578,7 @@ public class VibeComposerGUI extends JFrame
 
 		guiConfig.setMelodyArpySurprises(melodyArpySurprises.isSelected());
 		guiConfig.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
+		guiConfig.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
 		guiConfig.setMelodyUseDirectionsFromProgression(
 				melodyUseDirectionsFromProgression.isSelected());
 		guiConfig.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
@@ -5686,6 +5690,7 @@ public class VibeComposerGUI extends JFrame
 
 		melodyArpySurprises.setSelected(guiConfig.isMelodyArpySurprises());
 		melodySingleNoteExceptions.setSelected(guiConfig.isMelodySingleNoteExceptions());
+		melodyFillPausesPerChord.setSelected(guiConfig.isMelodyFillPausesPerChord());
 		melodyAvoidChordJumps.setSelected(guiConfig.isMelodyAvoidChordJumps());
 		melodyUseDirectionsFromProgression
 				.setSelected(guiConfig.isMelodyUseDirectionsFromProgression());

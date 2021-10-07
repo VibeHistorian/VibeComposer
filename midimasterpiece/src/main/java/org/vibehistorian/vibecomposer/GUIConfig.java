@@ -79,6 +79,7 @@ public class GUIConfig {
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
+	private boolean melodyFillPausesPerChord = false;
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
@@ -640,6 +641,14 @@ public class GUIConfig {
 
 	public void setMelodyPatternEffect(int melodyPatternEffect) {
 		this.melodyPatternEffect = melodyPatternEffect;
+	}
+
+	public boolean isMelodyFillPausesPerChord() {
+		return melodyFillPausesPerChord;
+	}
+
+	public void setMelodyFillPausesPerChord(boolean melodyFillPausesPerChord) {
+		this.melodyFillPausesPerChord = melodyFillPausesPerChord;
 	}
 
 }

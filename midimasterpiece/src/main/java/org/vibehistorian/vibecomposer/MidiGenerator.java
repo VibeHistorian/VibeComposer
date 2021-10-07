@@ -1479,14 +1479,11 @@ public class MidiGenerator implements JMC {
 		double durCounter = 0.0;
 		double currentChordDur = durations.get(0);
 
-		int firstPitch = skeleton.get(0).getPitch();
-
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(0) : 100;
 		int minVel = multiplyVelocity(mp.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = multiplyVelocity(mp.getVelocityMax(), volMultiplier, 1, 0);
 
 		int[] pitches = new int[12];
-
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
 			double adjDur = n1.getRhythmValue();
@@ -1575,14 +1572,18 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
 			List<Note> notes = fullMelodyMap.get(chordIndex);
 			pauseGenerator.setSeed(orderSeed + 5);
 			int actualPauseChance = adjustChanceParamForTransition(mp.getPauseChance(), sec,
 					chordIndex, durations.size(), 40, 0.25, false);
-			for (int j = 0; j < notes.size(); j++) {
+
+			int startIndex = (mp.isFillPauses())
+					? (gc.isMelodyFillPausesPerChord() ? 1 : ((chordIndex == 0) ? 1 : 0))
+					: 0;
+
+			for (int j = startIndex; j < notes.size(); j++) {
 				Note n = notes.get(j);
 				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_SIXTEENTH_NOTE + 0.01)
 						? pauseGenerator2
@@ -1598,10 +1599,6 @@ public class MidiGenerator implements JMC {
 
 		// fill pauses toggle
 		if (mp.isFillPauses() && mp.getPauseChance() > 0) {
-			if (fullMelody.get(0).getPitch() < 0) {
-				fullMelody.get(0).setPitch(firstPitch);
-			}
-
 			Note fillPauseNote = fullMelody.get(0);
 			double addedDuration = 0;
 			List<Note> notesToRemove = new ArrayList<>();
