@@ -1,9 +1,13 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.JComponent;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
@@ -71,5 +75,18 @@ public class OMNI {
 
 	public static double interp(double n1, double n2, double normalizedPercentage) {
 		return n1 * (1 - normalizedPercentage) + n2 * normalizedPercentage;
+	}
+
+	public static boolean mouseInComp(JComponent c) {
+		Point p = MouseInfo.getPointerInfo().getLocation();
+		try {
+
+			Point cp = c.getLocationOnScreen();
+			return p.x >= cp.x && p.x <= cp.x + c.getWidth() && p.y >= cp.y
+					&& p.y <= cp.y + c.getHeight();
+		} catch (Exception e) {
+			System.out.println("Mouse in comp error!");
+			return false;
+		}
 	}
 }

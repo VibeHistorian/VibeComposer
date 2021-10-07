@@ -33,8 +33,7 @@ public class CheckButton extends JButton {
 			bgColor = opaqueColor;
 			setBackground(bgColor.darker().darker());
 		} else {
-			setBackground(OMNI.alphen(VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
-					: VibeComposerGUI.lightModeUIColor, selected ? 60 : 0));
+			setBackground(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
 		}
 		if (StringUtils.isEmpty(name)) {
 			setPreferredSize(new Dimension(20, 20));
@@ -93,8 +92,7 @@ public class CheckButton extends JButton {
 					g.setColor(OMNI.alphen(bgColor, selected ? 60 : 0));
 				}
 			} else {
-				g.setColor(OMNI.alphen(VibeComposerGUI.isDarkMode ? VibeComposerGUI.darkModeUIColor
-						: VibeComposerGUI.lightModeUIColor, selected ? 60 : 0));
+				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
 			}
 
 			g.fillRect(0, 0, getWidth(), getHeight());

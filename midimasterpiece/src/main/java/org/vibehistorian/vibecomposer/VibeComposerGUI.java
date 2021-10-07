@@ -2007,9 +2007,7 @@ public class VibeComposerGUI extends JFrame
 					}
 				} else {
 					LOGGER.info(("Switching panels!"));
-					arrangementMiddleColoredPanel
-							.setBackground(isDarkMode ? darkModeUIColor.darker().darker()
-									: lightModeUIColor.darker().darker());
+					arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
 					int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
 					Section sec = actualArrangement.getSections().get(sectionOrder);
 					for (int i = 0; i < 5; i++) {
@@ -3623,6 +3621,10 @@ public class VibeComposerGUI extends JFrame
 		SwingUtilities.updateComponentTreeUI(this);
 	}
 
+	public static Color uiColor() {
+		return (isDarkMode) ? darkModeUIColor : lightModeUIColor;
+	}
+
 	private void switchDarkMode() {
 
 		arrSection.setVal(OMNI.EMPTYCOMBO);
@@ -3638,7 +3640,7 @@ public class VibeComposerGUI extends JFrame
 		isDarkMode = !isDarkMode;
 		updateGlobalUI();
 
-		toggledUIColor = (isDarkMode) ? darkModeUIColor : lightModeUIColor;
+		toggledUIColor = uiColor();
 
 		mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
 		subTitle.setForeground(toggledUIColor);

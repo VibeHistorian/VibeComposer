@@ -134,6 +134,10 @@ public class ShowPanelBig extends JPanel {
 			});
 			scorePartPanel.add(toggler);
 		}
+		VeloRect vrTest = new VeloRect(0, 127, 30);
+		VeloRect vrTest2 = new VeloRect(0, 127, 30);
+		scorePartPanel.add(vrTest);
+		scorePartPanel.add(vrTest2);
 		pan = new JPanel();
 		setOpaque(false);
 		pan.setOpaque(false);
