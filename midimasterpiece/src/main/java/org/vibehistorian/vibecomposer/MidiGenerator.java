@@ -1628,6 +1628,18 @@ public class MidiGenerator implements JMC {
 
 		applyBadIntervalRemoval(fullMelody);
 
+		// accent lengths of first notes in chord, if not paused and next note has different pitch
+		fullMelodyMap.values().forEach(e -> {
+			if (e.size() < 2) {
+				return;
+			}
+			Note n = e.get(0);
+			if (n.getPitch() >= 0 && n.getDuration() < Durations.EIGHTH_NOTE * 1.1
+					&& e.get(1).getPitch() != n.getPitch()) {
+				n.setDuration(n.getDuration() * (1 + (mp.getAccents() / 200.0)));
+			}
+		});
+
 		// extraTranspose variation
 		if (melodyVars != null && !melodyVars.isEmpty()
 				&& melodyVars.contains(Integer.valueOf(0))) {
