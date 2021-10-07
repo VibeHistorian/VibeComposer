@@ -423,25 +423,42 @@ public class Section {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
 		System.out.println("Chance: " + chance);
-		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(part);
+		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
+		panels.removeIf(e -> e.getMuteInst());
+		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
 				setPresence(part, j);
+				added++;
 			}
+		}
+		if (added == 0) {
+			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
+			setPresence(part, panel.getPanelOrder() - 1);
 		}
 
 	}
 
 	public void generateVariations(Random presRand, int part) {
 		initPartMapIfNull();
-		Set<Integer> presence = getPresence(part);
+		List<Integer> presence = new ArrayList<>(getPresence(part));
+		if (presence.isEmpty()) {
+			return;
+		}
 		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		int added = 0;
 		for (Integer i : presence) {
 			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 				if (presRand.nextInt(100) < chance) {
 					addVariation(part, i - 1, Collections.singletonList(j - 2));
+					added++;
 				}
 			}
+		}
+		if (added == 0) {
+			int pres = presence.get(presRand.nextInt(presence.size()));
+			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
+			addVariation(part, pres - 1, Collections.singletonList(randVar));
 		}
 
 

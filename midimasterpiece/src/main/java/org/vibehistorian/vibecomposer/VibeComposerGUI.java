@@ -1929,6 +1929,7 @@ public class VibeComposerGUI extends JFrame
 		if (checkManual) {
 			arrangementCustom.setSelected(true);
 		}
+		recalculateTabPaneCounts();
 	}
 
 	private void recalculateActualArrangementSection(Integer secOrder) {
