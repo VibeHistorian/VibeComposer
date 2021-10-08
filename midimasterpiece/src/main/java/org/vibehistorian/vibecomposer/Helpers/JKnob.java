@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -74,6 +75,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private boolean showTextInKnob = false;
 	private String shownText = "";
+	public static boolean fine = true;
+	public static int fineStart = 50;
 
 
 	/**
@@ -412,6 +415,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
 			recalc(e);
+			fine = true;
+			fineStart = curr;
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			curr = defaultValue;
 			setAngle();
@@ -432,6 +437,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
+		fine = false;
 		//System.out.println("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
 	}
 
@@ -464,7 +470,26 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 	}
 
+	public void updateValueFromScreen() {
+		if (!isEnabled()) {
+			return;
+		}
+		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
+		SwingUtilities.convertPointFromScreen(xy, JKnob.this);
+		int newVal = max - (max * xy.y / getHeight());
+		if (fine) {
+			newVal = (fineStart * 9 + newVal) / 10;
+		}
+		setValue(OMNI.clamp(newVal, min, max));
+		repaint();
+	}
+
 	private void recalc(MouseEvent e) {
+		/*if (fine) {
+			updateValueFromScreen();
+			return;
+		}*/
+
 		int mx = e.getX();
 		int my = e.getY();
 
