@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
@@ -29,6 +30,7 @@ public class VeloRect extends JComponent {
 	private int defaultVal = 50;
 	public static boolean fine = false;
 	public static int fineStart = 50;
+	private int marginLeft = 0, marginRight = 0;
 
 	public VeloRect(int min, int max, int currentVal) {
 		super();
@@ -75,6 +77,7 @@ public class VeloRect extends JComponent {
 			}
 
 		});
+		updateSizes(new Dimension(VELO_DIM));
 	}
 
 	public void updateValueFromScreen() {
@@ -87,6 +90,7 @@ public class VeloRect extends JComponent {
 		if (fine) {
 			newVal = (fineStart * 9 + newVal) / 10;
 		}
+
 		setValue(OMNI.clamp(newVal, min, max));
 		repaint();
 	}
@@ -120,41 +124,58 @@ public class VeloRect extends JComponent {
 		this.val = defValue;
 	}
 
-	@Override
+	public void setMargin(Insets in) {
+		marginLeft = in.left;
+		marginRight = in.right;
+		updateSizes(new Dimension(VELO_DIM.width + marginLeft + marginRight, VELO_DIM.height));
+	}
+
+	public void setMarginLeftRight(int left, int right) {
+		marginLeft = left;
+		marginRight = right;
+		updateSizes(new Dimension(VELO_DIM.width + marginLeft + marginRight, VELO_DIM.height));
+	}
+
+	public void updateSizes(Dimension size) {
+		setPreferredSize(size);
+		setMinimumSize(size);
+		setMaximumSize(size);
+		setSize(size);
+	}
+
+	/*@Override
 	public Dimension getPreferredSize() {
 		return new Dimension(VELO_DIM);
 	}
-
-	/**
-	 * Return the minimum size that the knob would like to be.
-	 * This is the same size as the preferred size so the
-	 * knob will be of a fixed size.
-	 *
-	 * @return the minimum size of the JKnob.
-	 */
 	@Override
 	public Dimension getMinimumSize() {
 		return new Dimension(VELO_DIM);
 	}
-
+	
 	@Override
 	public Dimension getMaximumSize() {
 		return new Dimension(VELO_DIM);
-	}
+	}*/
 
 	@Override
 	public void paintComponent(Graphics guh) {
 
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
-
+			int displayedValue = isEnabled() ? val : max / 5;
 			g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
 					: new Color(180, 180, 180));
-			g.fillRect(0, 0, this.getSize().width, this.getSize().height);
+			g.fillRect(marginLeft, 0, this.getSize().width - marginLeft - marginRight,
+					this.getSize().height);
 			Color c = OMNI.alphen(VibeComposerGUI.uiColor(), isEnabled() ? 150 : 70);
 			g.setColor(c);
-			g.fillRect(0, (int) (this.getSize().height * (1 - val / (double) max)),
-					this.getSize().width, this.getSize().height * val / max);
+			g.fillRect(marginLeft,
+					(int) (this.getSize().height * (1 - displayedValue / (double) max)),
+					this.getSize().width - marginLeft - marginRight,
+					this.getSize().height * displayedValue / max);
+			g.setColor(Color.black);
+			g.drawRect(marginLeft, 0, this.getSize().width - marginLeft - marginRight,
+					this.getSize().height);
 		}
 	}
 }

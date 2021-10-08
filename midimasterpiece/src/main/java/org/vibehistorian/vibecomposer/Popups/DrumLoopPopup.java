@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.sound.midi.Sequencer;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,7 +46,7 @@ public class DrumLoopPopup {
 			drumNum.setFocusable(false);
 			drumNum.setEditable(false);
 			textHitsPanel.add(drumNum);
-			VisualPatternPanel dhpp = dp.makeVisualPatternPanel(new JButton("Dd"));
+			VisualPatternPanel dhpp = dp.makeVisualPatternPanel();
 			dhpp.setTruePattern(dp.getComboPanel().getTruePattern());
 			dhpp.setViewOnly(true);
 
@@ -83,7 +82,7 @@ public class DrumLoopPopup {
 			drumNum.setFocusable(false);
 			drumNum.setEditable(false);
 			textHitsPanel.add(drumNum);
-			VisualPatternPanel dhpp = dp.makeVisualPatternPanel(new JButton("Dd"));
+			VisualPatternPanel dhpp = dp.makeVisualPatternPanel();
 			dhpp.setTruePattern(dp.getComboPanel().getTruePattern());
 			dhpp.setViewOnly(true);
 

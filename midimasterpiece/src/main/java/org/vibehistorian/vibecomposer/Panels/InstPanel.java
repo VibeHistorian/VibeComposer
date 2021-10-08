@@ -126,7 +126,7 @@ public abstract class InstPanel extends JPanel {
 		//volSlider.setMaximum(100);
 		//volSlider.setValue(100);
 		//volSlider.setOrientation(JSlider.VERTICAL);
-		volSlider.setPreferredSize(new Dimension(30, 40));
+		volSlider.setPreferredSize(new Dimension(15, 35));
 		//volSlider.setPaintTicks(true);
 
 		minMaxVelSlider.setName("Velocity range");
@@ -555,12 +555,7 @@ public abstract class InstPanel extends JPanel {
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
 	public VisualPatternPanel makeVisualPatternPanel() {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, null, this);
-	}
-
-	public VisualPatternPanel makeVisualPatternPanel(JButton doubler) {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, doubler,
-				this);
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, this);
 	}
 
 	public VisualPatternPanel getComboPanel() {
