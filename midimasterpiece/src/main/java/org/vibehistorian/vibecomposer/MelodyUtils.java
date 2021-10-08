@@ -46,6 +46,7 @@ public class MelodyUtils {
 
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
 
+
 		SCALEY.add(new Integer[] { 0, 1, 2 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 3 });
 		SCALEY.add(new Integer[] { 0, 1, 4 });
@@ -53,6 +54,7 @@ public class MelodyUtils {
 		SCALEY.add(new Integer[] { 0, 4, 2 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 0 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 4 });
+		SCALEY.add(new Integer[] { 0, 0, 0 });
 
 		NEIGHBORY.add(new Integer[] { 0, -1, 0 });
 		NEIGHBORY.add(new Integer[] { 0, 1, 0, 1 });
@@ -62,6 +64,7 @@ public class MelodyUtils {
 		NEIGHBORY.add(new Integer[] { 0, 1, -1, 0 });
 		NEIGHBORY.add(new Integer[] { 0, -1, 0, 2 });
 		NEIGHBORY.add(new Integer[] { 0, 1, 3, 2 });
+		NEIGHBORY.add(new Integer[] { 0, 0, -1, 0 });
 
 
 		CHORDY.add(new Integer[] { 0, 2, 4 });

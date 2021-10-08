@@ -618,8 +618,8 @@ public class MidiGenerator implements JMC {
 	private static List<Integer> randomizedChordDirections(int chords, int randomSeed) {
 		Random rand = new Random(randomSeed);
 		List<Integer> dirs = new ArrayList<>();
-		dirs.add(0);
-		for (int i = 1; i < chords; i++) {
+		//dirs.add(0);
+		for (int i = 0; i < chords; i++) {
 			dirs.add(rand.nextInt(3) - 1);
 		}
 		return dirs;
@@ -715,7 +715,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
+		//int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
 		/*if (min == -1) {
 			for (int i = 0; i < offsets.size(); i++) {
 				offsets.set(i, offsets.get(i) + 1);
@@ -1633,14 +1633,20 @@ public class MidiGenerator implements JMC {
 
 		applyBadIntervalRemoval(fullMelody);
 
+
+		if (gc.getMelodyReplaceAvoidNotes() > 0) {
+			replaceAvoidNotes(fullMelodyMap, chords, mp.getPatternSeed(),
+					gc.getMelodyReplaceAvoidNotes());
+		}
+
 		// accent lengths of first notes in chord, if not paused and next note has different pitch
 		fullMelodyMap.values().forEach(e -> {
-			if (e.size() < 2) {
+			if (e.size() < 3) {
 				return;
 			}
 			Note n = e.get(0);
 			if (n.getPitch() >= 0 && n.getDuration() < Durations.EIGHTH_NOTE * 1.1
-					&& e.get(1).getPitch() != n.getPitch()) {
+					&& e.get(1).getPitch() != n.getPitch() && e.get(2).getPitch() != n.getPitch()) {
 				n.setDuration(n.getDuration() * (1 + (mp.getAccents() / 200.0)));
 			}
 		});
@@ -3678,10 +3684,6 @@ public class MidiGenerator implements JMC {
 				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset,
 				actualProgression);
 
-		if (gc.getMelodyReplaceAvoidNotes() > 0) {
-			replaceAvoidNotes(fullMelodyMap, actualProgression, mp.getPatternSeed(),
-					gc.getMelodyReplaceAvoidNotes());
-		}
 		for (int i = 0; i < generatedRootProgression.size(); i++) {
 			for (int j = 0; j < MidiUtils.MINOR_CHORDS.size(); j++) {
 				int[] minorChord = MidiUtils.mappedChord(MidiUtils.MINOR_CHORDS.get(j));
