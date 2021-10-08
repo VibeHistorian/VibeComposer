@@ -328,8 +328,8 @@ public class ShowAreaBig extends JComponent {
 						}
 						g.setColor(OMNI.alphen(Color.black, 50 + aNote.getDynamic() / 2));
 						// draw note ouside
-						g.drawRect(actualStartingX, y - noteHeight + thinNote,
-								x + noteOffsetXOffset, noteHeight * 2 - 2 * thinNote);
+						g.drawRect(actualStartingX, y - noteHeight + thinNote, x,
+								noteHeight * 2 - 2 * thinNote);
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {

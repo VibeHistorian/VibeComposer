@@ -385,6 +385,7 @@ public class VisualPatternPanel extends JPanel {
 		} else {
 			for (int i = 0; i < MAX_HITS; i++) {
 				hitChecks[i].setVisible(hitVelocities[i].isVisible());
+				hitChecks[i].setSelected(hitVelocities[i].isEnabled());
 				hitVelocities[i].setVisible(false);
 			}
 		}
