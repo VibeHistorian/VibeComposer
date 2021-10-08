@@ -85,17 +85,21 @@ public class CheckButton extends JButton {
 	@Override
 	protected void paintComponent(Graphics g) {
 		if (transparentBackground) {
+			Color c = null;
 			if (bgColor != null) {
 				if (bgColor.getAlpha() < 255) {
-					g.setColor(selected ? bgColor : OMNI.alphen(bgColor, 0));
+					c = bgColor;
 				} else {
-					g.setColor(OMNI.alphen(bgColor, selected ? 60 : 0));
+					c = OMNI.alphen(bgColor, 80);
 				}
 			} else {
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
+				c = OMNI.alphen(VibeComposerGUI.uiColor(), 80);
 			}
-
-			g.fillRect(0, 0, getWidth(), getHeight());
+			g.setColor(c);
+			g.drawRect(0, 0, getWidth(), getHeight());
+			if (selected) {
+				g.fillRect(0, 0, getWidth(), getHeight());
+			}
 		}
 		super.paintComponent(g);
 	}

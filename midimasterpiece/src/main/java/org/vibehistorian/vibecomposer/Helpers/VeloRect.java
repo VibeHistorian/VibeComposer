@@ -38,6 +38,9 @@ public class VeloRect extends JComponent {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
+				if (!isEnabled()) {
+					return;
+				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					updateValueFromScreen();
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
@@ -73,6 +76,9 @@ public class VeloRect extends JComponent {
 	}
 
 	public void updateValueFromScreen() {
+		if (!isEnabled()) {
+			return;
+		}
 		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
 		SwingUtilities.convertPointFromScreen(xy, VeloRect.this);
 		int newVal = max - (max * xy.y / getHeight());
@@ -141,10 +147,12 @@ public class VeloRect extends JComponent {
 
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
+
 			g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
 					: new Color(180, 180, 180));
 			g.fillRect(0, 0, this.getSize().width, this.getSize().height);
-			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 150));
+			Color c = OMNI.alphen(VibeComposerGUI.uiColor(), isEnabled() ? 150 : 70);
+			g.setColor(c);
 			g.fillRect(0, (int) (this.getSize().height * (1 - val / (double) max)),
 					this.getSize().width, this.getSize().height * val / max);
 		}
