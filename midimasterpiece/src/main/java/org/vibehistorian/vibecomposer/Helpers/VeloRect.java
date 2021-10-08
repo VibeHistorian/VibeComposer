@@ -31,6 +31,7 @@ public class VeloRect extends JComponent {
 	public static boolean fine = false;
 	public static int fineStart = 50;
 	private int marginLeft = 0, marginRight = 0;
+	private Dimension defaultSize = VELO_DIM;
 
 	public VeloRect(int min, int max, int currentVal) {
 		super();
@@ -77,7 +78,7 @@ public class VeloRect extends JComponent {
 			}
 
 		});
-		updateSizes(new Dimension(VELO_DIM));
+		updateSizes(defaultSize);
 	}
 
 	public void updateValueFromScreen() {
@@ -127,13 +128,15 @@ public class VeloRect extends JComponent {
 	public void setMargin(Insets in) {
 		marginLeft = in.left;
 		marginRight = in.right;
-		updateSizes(new Dimension(VELO_DIM.width + marginLeft + marginRight, VELO_DIM.height));
+		updateSizes(
+				new Dimension(defaultSize.width + marginLeft + marginRight, defaultSize.height));
 	}
 
 	public void setMarginLeftRight(int left, int right) {
 		marginLeft = left;
 		marginRight = right;
-		updateSizes(new Dimension(VELO_DIM.width + marginLeft + marginRight, VELO_DIM.height));
+		updateSizes(
+				new Dimension(defaultSize.width + marginLeft + marginRight, defaultSize.height));
 	}
 
 	public void updateSizes(Dimension size) {
@@ -141,6 +144,10 @@ public class VeloRect extends JComponent {
 		setMinimumSize(size);
 		setMaximumSize(size);
 		setSize(size);
+	}
+
+	public void setDefaultSize(Dimension size) {
+		defaultSize = size;
 	}
 
 	/*@Override

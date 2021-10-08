@@ -4767,15 +4767,23 @@ public class MidiGenerator implements JMC {
 		Random uiGenerator1drumVelocityPattern = new Random(dp.getPatternSeed() + dp.getOrder());
 		List<Integer> drumVelocityPattern = new ArrayList<>();
 		int multiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(4) : 100;
-		int minVel = multiplyVelocity(dp.getVelocityMin(), multiplier, 0, 1);
-		int maxVel = multiplyVelocity(dp.getVelocityMax(), multiplier, 1, 0);
-		int velocityRange = maxVel - minVel;
-		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
-			int velocity = uiGenerator1drumVelocityPattern.nextInt(velocityRange) + minVel;
-			drumVelocityPattern.add(velocity);
+		if (dp.getCustomVelocities() != null) {
+			for (int i = 0; i < dp.getHitsPerPattern(); i++) {
+				drumVelocityPattern
+						.add(multiplyVelocity(dp.getCustomVelocities().get(i), multiplier, 0, 1));
+			}
+		} else {
+			int minVel = multiplyVelocity(dp.getVelocityMin(), multiplier, 0, 1);
+			int maxVel = multiplyVelocity(dp.getVelocityMax(), multiplier, 1, 0);
+			int velocityRange = maxVel - minVel;
+			for (int j = 0; j < dp.getHitsPerPattern(); j++) {
+				int velocity = uiGenerator1drumVelocityPattern.nextInt(velocityRange) + minVel;
+				drumVelocityPattern.add(velocity);
+			}
 		}
-		/*LOGGER.debug("Drum velocity pattern for " + dp.getInstrument() + " : "
-				+ drumVelocityPattern.toString());*/
+
+		LOGGER.info("Drum velocity pattern for " + dp.getInstrument() + " : "
+				+ drumVelocityPattern.toString());
 		return drumVelocityPattern;
 	}
 }

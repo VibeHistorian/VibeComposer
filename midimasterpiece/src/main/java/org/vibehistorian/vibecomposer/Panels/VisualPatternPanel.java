@@ -42,6 +42,8 @@ public class VisualPatternPanel extends JPanel {
 	private KnobPanel shiftPanel = null;
 	private KnobPanel chordSpanPanel = null;
 
+	private JButton velocityToggler = null;
+
 	private int lastHits = 0;
 
 	private List<Integer> truePattern = new ArrayList<>();
@@ -135,6 +137,7 @@ public class VisualPatternPanel extends JPanel {
 			truePattern.add(0);
 			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
 			hitVelocities[i] = new VeloRect(0, 127, 63);
+			//hitVelocities[i].setDefaultSize(new Dimension(CheckBoxIcon.width, CheckBoxIcon.width));
 			hitVelocities[i].setVisible(false);
 			//hitChecks[i].setBackground(new Color(128, 128, 128));
 			hitChecks[i].addChangeListener(new ChangeListener() {
@@ -362,26 +365,31 @@ public class VisualPatternPanel extends JPanel {
 
 				@Override
 				public void mouseReleased(MouseEvent e) {
-					showingVelocities = !showingVelocities;
-					veloToggler.setText(showingVelocities ? "H" : "V");
-					VisualPatternPanel.this.setVisible(false);
-					if (showingVelocities) {
-						for (int i = 0; i < MAX_HITS; i++) {
-							hitVelocities[i].setVisible(hitChecks[i].isVisible());
-							hitVelocities[i].setEnabled(hitChecks[i].isSelected());
-							hitChecks[i].setVisible(false);
-						}
-					} else {
-						for (int i = 0; i < MAX_HITS; i++) {
-							hitChecks[i].setVisible(hitVelocities[i].isVisible());
-							hitVelocities[i].setVisible(false);
-						}
-					}
-					reapplyHits();
-					VisualPatternPanel.this.setVisible(true);
+					toggleVelocityShow();
 				}
 			});
+			velocityToggler = veloToggler;
 		}
+	}
+
+	public void toggleVelocityShow() {
+		showingVelocities = !showingVelocities;
+		velocityToggler.setText(showingVelocities ? "H" : "V");
+		VisualPatternPanel.this.setVisible(false);
+		if (showingVelocities) {
+			for (int i = 0; i < MAX_HITS; i++) {
+				hitVelocities[i].setVisible(hitChecks[i].isVisible());
+				hitVelocities[i].setEnabled(hitChecks[i].isSelected());
+				hitChecks[i].setVisible(false);
+			}
+		} else {
+			for (int i = 0; i < MAX_HITS; i++) {
+				hitChecks[i].setVisible(hitVelocities[i].isVisible());
+				hitVelocities[i].setVisible(false);
+			}
+		}
+		reapplyHits();
+		VisualPatternPanel.this.setVisible(true);
 	}
 
 	public void checkPattern(int fI) {
@@ -409,6 +417,32 @@ public class VisualPatternPanel extends JPanel {
 		this.truePattern = truePattern;
 		reapplyShift();
 		reapplyHits();
+	}
+
+	public List<Integer> getVelocities() {
+		if (!showingVelocities) {
+			return null;
+		}
+		List<Integer> velocities = new ArrayList<>();
+		for (int i = 0; i < MAX_HITS; i++) {
+			velocities.add(hitVelocities[i].getValue());
+		}
+		return velocities;
+	}
+
+	public void setVelocities(List<Integer> velocities) {
+		if (velocities != null) {
+			for (int i = 0; i < velocities.size() && i < MAX_HITS; i++) {
+				hitVelocities[i].setValue(velocities.get(i));
+			}
+			if (!showingVelocities) {
+				toggleVelocityShow();
+			}
+		} else {
+			if (showingVelocities) {
+				toggleVelocityShow();
+			}
+		}
 	}
 
 	public void reapplyShift() {

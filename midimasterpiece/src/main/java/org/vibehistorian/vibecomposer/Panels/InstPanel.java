@@ -260,11 +260,16 @@ public abstract class InstPanel extends JPanel {
 		setPattern(part.getPattern());
 		setPatternFlip(part.isPatternFlip());
 
-		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
-				&& part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS
-				&& comboPanel != null) {
-			comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
+
+		if (comboPanel != null) {
+			comboPanel.setVelocities(part.getCustomVelocities());
+			if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
+					&& part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS) {
+				comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
+			}
 		}
+
+
 		setPatternShift(part.getPatternShift());
 
 		setMidiChannel(part.getMidiChannel());

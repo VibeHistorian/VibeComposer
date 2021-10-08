@@ -61,6 +61,7 @@ public abstract class InstPart implements Cloneable {
 	protected int patternSeed = 0;
 	protected RhythmPattern pattern = RhythmPattern.FULL;
 	protected List<Integer> customPattern = null;
+	protected List<Integer> customVelocities = null;
 	protected boolean patternFlip = false;
 
 	protected int patternShift = 0;
@@ -104,6 +105,8 @@ public abstract class InstPart implements Cloneable {
 
 		setCustomPattern(
 				panel.getComboPanel() != null ? panel.getComboPanel().getTruePattern() : null);
+		setCustomVelocities(
+				panel.getComboPanel() != null ? panel.getComboPanel().getVelocities() : null);
 
 		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
@@ -334,6 +337,20 @@ public abstract class InstPart implements Cloneable {
 		return customPattern;
 	}
 
+
+	public void setCustomPattern(List<Integer> customPattern) {
+		this.customPattern = customPattern;
+	}
+
+	@XmlList
+	public List<Integer> getCustomVelocities() {
+		return customVelocities;
+	}
+
+	public void setCustomVelocities(List<Integer> customVelocities) {
+		this.customVelocities = customVelocities;
+	}
+
 	public List<Integer> getFinalPatternCopy() {
 		List<Integer> premadePattern = null;
 		if (getPattern() != RhythmPattern.CUSTOM) {
@@ -345,11 +362,6 @@ public abstract class InstPart implements Cloneable {
 			premadePattern = premadeCopy;
 		}
 		return premadePattern;
-	}
-
-
-	public void setCustomPattern(List<Integer> customPattern) {
-		this.customPattern = customPattern;
 	}
 
 	public Object clone() {
