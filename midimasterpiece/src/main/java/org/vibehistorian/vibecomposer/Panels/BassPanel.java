@@ -30,7 +30,7 @@ public class BassPanel extends InstPanel {
 		instrument.initInstPool(instPool);
 		setInstrument(74);
 		initDefaults(l);
-		volSlider.setValue(70);
+		volSlider.setDefaultValue(70);
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);

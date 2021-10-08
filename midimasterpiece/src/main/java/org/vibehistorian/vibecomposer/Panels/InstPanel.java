@@ -34,7 +34,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.InstComboBox;
@@ -47,6 +46,7 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -96,7 +96,7 @@ public abstract class InstPanel extends JPanel {
 	protected CheckButton lockInst = new CheckButton("Lock", false);
 	protected CheckButton muteInst = new CheckButton("Excl.", false);
 
-	protected JSlider volSlider = new JSlider();
+	protected VeloRect volSlider = new VeloRect(0, 100, 100);
 
 	protected ScrollComboBox<Integer> midiChannel = new ScrollComboBox<>();
 
@@ -123,11 +123,11 @@ public abstract class InstPanel extends JPanel {
 		panelOrder.setPreferredSize(new Dimension(20, 30));
 
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		volSlider.setMaximum(100);
-		volSlider.setValue(100);
-		volSlider.setOrientation(JSlider.VERTICAL);
+		//volSlider.setMaximum(100);
+		//volSlider.setValue(100);
+		//volSlider.setOrientation(JSlider.VERTICAL);
 		volSlider.setPreferredSize(new Dimension(30, 40));
-		volSlider.setPaintTicks(true);
+		//volSlider.setPaintTicks(true);
 
 		minMaxVelSlider.setName("Velocity range");
 		setVelocityMax(90);
@@ -456,11 +456,11 @@ public abstract class InstPanel extends JPanel {
 		this.minMaxVelSlider.setUpperValue(val);
 	}
 
-	public JSlider getVolSlider() {
+	public VeloRect getVolSlider() {
 		return volSlider;
 	}
 
-	public void setVolSlider(JSlider volSlider) {
+	public void setVolSlider(VeloRect volSlider) {
 		this.volSlider = volSlider;
 	}
 

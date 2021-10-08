@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
@@ -24,34 +25,63 @@ public class VeloRect extends JComponent {
 
 	private int min = 0;
 	private int max = 100;
-	private int curr = 50;
+	private int val = 50;
+	private int defaultVal = 50;
+	public static boolean fine = false;
 
-	public VeloRect(int min, int max, int curr) {
+	public VeloRect(int min, int max, int currentVal) {
 		super();
 		this.min = min;
 		this.max = max;
-		this.curr = curr;
+		this.val = currentVal;
+		this.defaultVal = 50;
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isLeftMouseButton(evt)) {
+					updateValueFromScreen();
+				} else if (SwingUtilities.isRightMouseButton(evt)) {
+					setValue(defaultVal);
+					repaint();
+				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
+					updateValueFromScreen();
+					fine = true;
+				}
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent evt) {
+				fine = false;
+			}
+		});
+
 		addMouseMotionListener(new MouseMotionListener() {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				updateCurr();
+				updateValueFromScreen();
 			}
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
 				if (e.isControlDown()) {
-					updateCurr();
+					updateValueFromScreen();
 				}
 			}
 
 		});
 	}
 
-	public void updateCurr() {
+	public void updateValueFromScreen() {
 		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
 		SwingUtilities.convertPointFromScreen(xy, VeloRect.this);
-		setCurr(max - (max * xy.y / getHeight()));
+		int newVal = max - (max * xy.y / getHeight());
+		if (fine) {
+			int newValFine = (val * 999 + newVal) / 1000;
+			newVal = (newVal > val) ? OMNI.clamp(newValFine, val + 1, max)
+					: OMNI.clamp(newValFine, min, val - 1);
+		}
+		setValue(OMNI.clamp(newVal, min, max));
 		repaint();
 	}
 
@@ -71,12 +101,17 @@ public class VeloRect extends JComponent {
 		this.max = max;
 	}
 
-	public int getCurr() {
-		return curr;
+	public int getValue() {
+		return val;
 	}
 
-	public void setCurr(int curr) {
-		this.curr = curr;
+	public void setValue(int value) {
+		this.val = value;
+	}
+
+	public void setDefaultValue(int defValue) {
+		this.defaultVal = defValue;
+		this.val = defValue;
 	}
 
 	@Override
@@ -110,8 +145,8 @@ public class VeloRect extends JComponent {
 					: new Color(180, 180, 180));
 			g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 150));
-			g.fillRect(0, (int) (this.getSize().height * (1 - curr / (double) max)),
-					this.getSize().width, this.getSize().height * curr / max);
+			g.fillRect(0, (int) (this.getSize().height * (1 - val / (double) max)),
+					this.getSize().width, this.getSize().height * val / max);
 		}
 	}
 }

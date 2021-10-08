@@ -45,7 +45,7 @@ public class ChordPanel extends InstPanel {
 		midiChannel.setVal(11);
 
 		initDefaults(l);
-		volSlider.setValue(60);
+		volSlider.setDefaultValue(60);
 		this.add(volSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
