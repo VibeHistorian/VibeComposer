@@ -28,6 +28,7 @@ public class VeloRect extends JComponent {
 	private int val = 50;
 	private int defaultVal = 50;
 	public static boolean fine = false;
+	public static int fineStart = 50;
 
 	public VeloRect(int min, int max, int currentVal) {
 		super();
@@ -49,6 +50,7 @@ public class VeloRect extends JComponent {
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					updateValueFromScreen();
 					fine = true;
+					fineStart = val;
 				}
 			}
 
@@ -83,9 +85,7 @@ public class VeloRect extends JComponent {
 		SwingUtilities.convertPointFromScreen(xy, VeloRect.this);
 		int newVal = max - (max * xy.y / getHeight());
 		if (fine) {
-			int newValFine = (val * 999 + newVal) / 1000;
-			newVal = (newVal > val) ? OMNI.clamp(newValFine, val + 1, max)
-					: OMNI.clamp(newValFine, min, val - 1);
+			newVal = (fineStart * 9 + newVal) / 10;
 		}
 		setValue(OMNI.clamp(newVal, min, max));
 		repaint();
