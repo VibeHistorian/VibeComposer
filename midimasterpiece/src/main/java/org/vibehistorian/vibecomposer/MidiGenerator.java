@@ -4767,7 +4767,8 @@ public class MidiGenerator implements JMC {
 		Random uiGenerator1drumVelocityPattern = new Random(dp.getPatternSeed() + dp.getOrder());
 		List<Integer> drumVelocityPattern = new ArrayList<>();
 		int multiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(4) : 100;
-		if (dp.getCustomVelocities() != null) {
+		if (dp.getCustomVelocities() != null
+				&& dp.getCustomVelocities().size() >= dp.getHitsPerPattern()) {
 			for (int i = 0; i < dp.getHitsPerPattern(); i++) {
 				drumVelocityPattern
 						.add(multiplyVelocity(dp.getCustomVelocities().get(i), multiplier, 0, 1));

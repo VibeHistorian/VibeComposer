@@ -162,7 +162,7 @@ public abstract class InstPanel extends JPanel {
 		chordSpan.getKnob().setTickSpacing(50);
 		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
 
-		toggleableComponents.add(stretchPanel);
+		//toggleableComponents.add(stretchPanel);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(minMaxVelSlider);

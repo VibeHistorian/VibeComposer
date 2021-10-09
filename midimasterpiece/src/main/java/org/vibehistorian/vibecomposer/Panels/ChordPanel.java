@@ -93,7 +93,6 @@ public class ChordPanel extends InstPanel {
 
 		toggleableComponents.remove(patternFlip);
 		toggleableComponents.remove(patternShift);
-		toggleableComponents.remove(stretchPanel);
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);

@@ -6537,7 +6537,7 @@ public class VibeComposerGUI extends JFrame
 
 			if (arpPanelGenerator.nextBoolean()) {
 				int arpPatternOrder = 0;
-				int[] patternWeights = { 60, 70, 80, 90, 100 };
+				int[] patternWeights = { 60, 68, 75, 83, 91, 97, 100 };
 				int randomWeight = arpPanelGenerator.nextInt(100);
 				for (int j = 0; j < patternWeights.length; j++) {
 					if (randomWeight < patternWeights[j]) {
