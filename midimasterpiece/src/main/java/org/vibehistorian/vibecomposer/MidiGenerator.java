@@ -4544,10 +4544,14 @@ public class MidiGenerator implements JMC {
 		return customMappingNumbers.get(defaultIndex);
 	}
 
-	private int getAbsoluteOrder(int partNum, InstPart part) {
+	public static int getAbsoluteOrder(int partNum, InstPart part) {
+		return getAbsoluteOrder(partNum, part.getOrder());
+	}
+
+	public static int getAbsoluteOrder(int partNum, int partOrder) {
 		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(partNum);
 		for (int i = 0; i < panels.size(); i++) {
-			if (panels.get(i).getPanelOrder() == part.getOrder()) {
+			if (panels.get(i).getPanelOrder() == partOrder) {
 				return i;
 			}
 		}

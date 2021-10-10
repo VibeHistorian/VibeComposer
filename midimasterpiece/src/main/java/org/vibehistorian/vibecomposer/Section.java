@@ -414,27 +414,43 @@ public class Section {
 	public void generatePresences(Random presRand) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i);
+			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap());
 		}
 
 	}
 
-	public void generatePresences(Random presRand, int part) {
+	public void generatePresences(Random presRand, int part,
+			Map<Integer, Object[][]> inclusionMap) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
 		System.out.println("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
 		panels.removeIf(e -> e.getMuteInst());
+		if (inclusionMap != null) {
+			panels.removeIf(e -> {
+				int absOrder = MidiGenerator.getAbsoluteOrder(part, e.getPanelOrder());
+				//System.out.println("Abs order: " + absOrder);
+				//System.out.println("Offset+2: " + (getTypeMelodyOffset() + 2));
+				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
+						.equals(inclusionMap.get(part)[absOrder][getTypeMelodyOffset() + 2])) {
+					//System.out.println("TRUE");
+					return true;
+				}
+				return false;
+			});
+		}
+		//System.out.println("Panels size: " + panels.size());
 		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
-				setPresence(part, j);
+				setPresence(part,
+						MidiGenerator.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
 				added++;
 			}
 		}
 		if (added == 0) {
 			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
-			setPresence(part, panel.getPanelOrder() - 1);
+			setPresence(part, MidiGenerator.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
 
 	}

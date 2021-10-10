@@ -1879,6 +1879,7 @@ public class VibeComposerGUI extends JFrame
 				Section addedSec = actualArrangement
 						.addDefaultSection(scrollableArrangementActualTable, selItem);
 				addedSec.recalculatePartVariationMapBoundsIfNeeded();
+				arrangement.initPartInclusionMapIfNull();
 				addedSec.generatePresences(
 						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
 								: new Random());
@@ -2027,7 +2028,8 @@ public class VibeComposerGUI extends JFrame
 									((JPanel) pane.getViewport().getView()).remove(c);
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
-									pCopy.setFromInstPart(ip.get(order - 1));
+									pCopy.setFromInstPart(
+											ip.get(MidiGenerator.getAbsoluteOrder(i, order)));
 									sectionPanels.add(pCopy);
 								}
 							}
@@ -2374,7 +2376,9 @@ public class VibeComposerGUI extends JFrame
 									sec.resetPresence(part, i);
 								}
 							} else {
-								sec.generatePresences(new Random(), part);
+								arrangement.initPartInclusionMapIfNull();
+								sec.generatePresences(new Random(), part,
+										arrangement.getPartInclusionMap());
 							}
 						}
 
