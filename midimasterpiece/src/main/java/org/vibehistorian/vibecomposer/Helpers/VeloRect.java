@@ -47,13 +47,13 @@ public class VeloRect extends JComponent {
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					updateValueFromScreen();
+					fine = true;
+					fineStart = val;
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					setValue(defaultVal);
 					repaint();
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					updateValueFromScreen();
-					fine = true;
-					fineStart = val;
 				}
 			}
 

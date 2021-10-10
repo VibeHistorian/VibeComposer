@@ -101,7 +101,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -148,6 +147,7 @@ import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
+import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -377,7 +377,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox addChords;
 	JCheckBox addArps;
 	JCheckBox addDrums;
-	JSlider drumVolumeSlider;
+	VeloRect drumVolumeSlider;
 
 	JButton soloAllDrums;
 
@@ -1579,12 +1579,10 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(addDrums);
 		//drumsPanel.add(drumInst);
 
-		drumVolumeSlider = new JSlider();
-		drumVolumeSlider.setMaximum(100);
-		drumVolumeSlider.setValue(100);
-		drumVolumeSlider.setOrientation(JSlider.VERTICAL);
-		drumVolumeSlider.setPreferredSize(new Dimension(30, 40));
-		drumVolumeSlider.setPaintTicks(true);
+		drumVolumeSlider = new VeloRect(0, 100, 100);
+		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
+		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
+		//drumVolumeSlider.setPaintTicks(true);
 		drumsPanel.add(drumVolumeSlider);
 
 		drumAddJButton = makeButton(" +Drum ", "AddDrum");

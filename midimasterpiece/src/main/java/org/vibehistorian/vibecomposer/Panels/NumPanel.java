@@ -17,13 +17,13 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 
 public class NumPanel extends JPanel {
 
@@ -31,7 +31,7 @@ public class NumPanel extends JPanel {
 
 	private JTextField text = null;
 	private JLabel label = null;
-	private JSlider slider = null;
+	private VeloRect slider = null;
 	boolean needToReset = false;
 	private int naturalMax = 100;
 	private int naturalMin = 0;
@@ -55,7 +55,7 @@ public class NumPanel extends JPanel {
 		defaultValue = value;
 		label = new JLabel(name);
 		text = new JTextField(String.valueOf(value), maximum > 999 ? 3 : 2);
-		slider = new JSlider();
+		slider = new VeloRect(minimum, maximum, value);
 		initSlider(minimum, maximum, value);
 		initText();
 		add(label);
@@ -142,10 +142,8 @@ public class NumPanel extends JPanel {
 	}
 
 	private void initSlider(int minimum, int maximum, int value) {
-		slider.setMinimum(minimum);
-		slider.setMaximum(maximum);
 		slider.setValue(value);
-		slider.setOrientation(JSlider.VERTICAL);
+		//slider.setOrientation(JSlider.VERTICAL);
 		slider.setPreferredSize(new Dimension(20, 40));
 		//slider.setPaintTicks(true);
 
@@ -185,12 +183,12 @@ public class NumPanel extends JPanel {
 				buttonPresses++;
 				if (me.isShiftDown() || buttonPresses == 2) {
 					needToReset = true;
-					int potentialMax = slider.getValue() + slider.getMaximum() / 10;
-					int potentialMin = slider.getValue() - slider.getMaximum() / 10;
-					slider.setMaximum((potentialMax > slider.getMaximum()) ? slider.getMaximum()
-							: potentialMax);
-					slider.setMinimum((potentialMin < slider.getMinimum()) ? slider.getMinimum()
-							: potentialMin);
+					int potentialMax = slider.getValue() + slider.getMax() / 10;
+					int potentialMin = slider.getValue() - slider.getMax() / 10;
+					slider.setMax(
+							(potentialMax > slider.getMax()) ? slider.getMax() : potentialMax);
+					slider.setMin(
+							(potentialMin < slider.getMin()) ? slider.getMin() : potentialMin);
 				}
 				dragging = true;
 				startNumSliderThread(me);
@@ -202,14 +200,14 @@ public class NumPanel extends JPanel {
 			public void mouseReleased(MouseEvent me) {
 				if (needToReset || buttonPresses == 2) {
 					needToReset = false;
-					slider.setMaximum(naturalMax);
-					slider.setMinimum(naturalMin);
+					slider.setMax(naturalMax);
+					slider.setMin(naturalMin);
 				} else if (buttonPresses == 1) {
 					dragging = false;
 					if (needToReset) {
 						needToReset = false;
-						slider.setMaximum(naturalMax);
-						slider.setMinimum(naturalMin);
+						slider.setMax(naturalMax);
+						slider.setMin(naturalMin);
 					}
 				}
 				buttonPresses--;
@@ -281,11 +279,11 @@ public class NumPanel extends JPanel {
 			if (allowValuesOutsideRange) {
 				return;
 			}
-			if (tryValue > slider.getMaximum()) {
-				slider.setValue(slider.getMaximum());
+			if (tryValue > slider.getMax()) {
+				slider.setValue(slider.getMax());
 				updateTextLater(true);
-			} else if (tryValue < slider.getMinimum()) {
-				slider.setValue(slider.getMinimum());
+			} else if (tryValue < slider.getMin()) {
+				slider.setValue(slider.getMin());
 				updateTextLater(false);
 			} else {
 				slider.setValue(tryValue);
@@ -300,7 +298,7 @@ public class NumPanel extends JPanel {
 		Runnable doAssist = new Runnable() {
 			@Override
 			public void run() {
-				text.setText(((isMaximum) ? slider.getMaximum() : slider.getMinimum()) + "");
+				text.setText(((isMaximum) ? slider.getMax() : slider.getMin()) + "");
 			}
 		};
 		SwingUtilities.invokeLater(doAssist);
@@ -318,7 +316,7 @@ public class NumPanel extends JPanel {
 		text.setText(val + "");
 	}
 
-	public JSlider getSlider() {
+	public VeloRect getSlider() {
 		return slider;
 	}
 
