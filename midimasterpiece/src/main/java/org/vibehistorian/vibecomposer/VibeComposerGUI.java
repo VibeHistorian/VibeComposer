@@ -207,7 +207,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = false;
+	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -6325,18 +6325,24 @@ public class VibeComposerGUI extends JFrame
 
 			if (randomChordSustainUseShortening.isSelected()) {
 				if (pool == InstUtils.POOL.PLUCK) {
-					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 25);
+					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 50);
 				} else {
-					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 75);
+					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 85);
 				}
 
 			}
 
 			if (chordPanelGenerator.nextInt(100) < randomChordShiftChance.getInt()
 					&& (pattern != RhythmPattern.FULL) && (pattern != RhythmPattern.MELODY1)) {
-				cp.setPatternShift(
-						chordPanelGenerator.nextInt(cp.getPattern().pattern.length - 1) + 1);
+				int maxShift = Math.min(cp.getPattern().pattern.length - 1, cp.getHitsPerPattern());
+				for (int p = maxShift - 1; p >= 0; p--) {
+					if (cp.getPattern().pattern[p] < 1) {
+						maxShift--;
+					}
+				}
+				cp.setPatternShift(chordPanelGenerator.nextInt(maxShift) + 1);
 			}
+
 			if (needNewChannel) {
 				cp.setMidiChannel(11 + (cp.getPanelOrder() - 1) % 5);
 			}
