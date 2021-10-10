@@ -1254,7 +1254,9 @@ public class VibeComposerGUI extends JFrame
 			if (i > 0) {
 				melodyPanel.setPauseChance(50);
 				melodyPanel.setFillPauses(true);
-				melodyPanel.setMuteInst(true);
+				if (i > 1) {
+					melodyPanel.setMuteInst(true);
+				}
 				melodyPanel.toggleCombinedMelodyDisabledUI(
 						combineMelodyTracks != null && !combineMelodyTracks.isSelected());
 				melodyPanel.setVelocityMax(75);
@@ -1915,7 +1917,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		} else if (action.equalsIgnoreCase("ArrangementOpenPartInclusion")) {
 			arrangement.recalculatePartInclusionMapBoundsIfNeeded();
-			ArrangementPartInclusionPopup aePopup = new ArrangementPartInclusionPopup(arrangement,
+			new ArrangementPartInclusionPopup(arrangement,
 					new Point(MouseInfo.getPointerInfo().getLocation().x,
 							vibeComposerGUI.getLocation().y),
 					vibeComposerGUI.getSize());
@@ -3628,7 +3630,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void switchDarkMode() {
-
+		//setVisible(false);
 		arrSection.setVal(OMNI.EMPTYCOMBO);
 
 		LOGGER.info(("Switching dark mode!"));
@@ -3689,6 +3691,11 @@ public class VibeComposerGUI extends JFrame
 
 		for (int i = 0; i < 5; i++) {
 			getInstList(i).forEach(e -> e.getSoloMuter().reapplyTextColor());
+			getAffectedPanels(i).forEach(e -> {
+				if (e.getComboPanel() != null) {
+					e.getComboPanel().reapplyHits();
+				}
+			});
 		}
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
@@ -3699,7 +3706,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		//sizeRespectingPack();
-		setVisible(true);
+		//setVisible(true);
 		repaint();
 	}
 
