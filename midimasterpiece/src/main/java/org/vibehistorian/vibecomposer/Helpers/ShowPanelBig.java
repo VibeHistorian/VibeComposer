@@ -100,7 +100,7 @@ public class ShowPanelBig extends JPanel {
 		scorePartPanel.add(scoreBox);
 		scorePartPanel.add(new JLabel("Included Parts"));
 		for (int i = 0; i < 5; i++) {
-			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], i < 2 || i == 3,
+			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], i < 4,
 					OMNI.alphen(VibeComposerGUI.instColors[i], 75));
 			partsShown[i].addRunnable(new Runnable() {
 				@Override

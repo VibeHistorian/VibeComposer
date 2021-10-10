@@ -1270,6 +1270,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);
+				melodyPanel.setNoteLengthMultiplier(125);
 			}
 		}
 
@@ -3854,7 +3855,7 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
 
 			/*if (loopBeat.isSelected()) {
-				//MidiGenerator.START_TIME_DELAY = 0.001;
+				//MidiGenerator.START_TIME_DELAY = MidiGenerator.DBL_ERR;
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 			} else {
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
@@ -4576,7 +4577,7 @@ public class VibeComposerGUI extends JFrame
 				cp.setStrum(strumPair.getRight());
 				cp.setStrumType(strumPair.getLeft());
 				if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
-						&& cp.getStrum() > 499) {
+						&& cp.getStrum() > 999) {
 					cp.setStrum(cp.getStrum() / 2);
 				}
 			}
@@ -6265,9 +6266,6 @@ public class VibeComposerGUI extends JFrame
 			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
 			cp.setStrum(strumPair.getRight());
 			cp.setStrumType(strumPair.getLeft());
-			if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4 && cp.getStrum() > 499) {
-				cp.setStrum(cp.getStrum() / 2);
-			}
 			cp.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY, 0)));
 
 			if (randomChordUseChordFill.isSelected()) {
@@ -6281,7 +6279,7 @@ public class VibeComposerGUI extends JFrame
 				if (randomChordPattern.isSelected()) {
 					pattern = viablePatterns
 							.get(chordPanelGenerator.nextInt(viablePatterns.size()));
-					if (cp.getStrum() > 251) {
+					if (cp.getStrum() > 501) {
 						cp.setStrum(cp.getStrum() / 2);
 					}
 				}
@@ -6295,7 +6293,7 @@ public class VibeComposerGUI extends JFrame
 				} else {
 					cp.setChordNotesStretch(fixedChordStretch);
 				}
-				if (cp.getChordNotesStretch() > 4 && cp.getStrum() > 499) {
+				if (cp.getChordNotesStretch() > 3 && cp.getStrum() > 999) {
 					cp.setStrum(cp.getStrum() / 2);
 				}
 			} else {
@@ -6304,7 +6302,7 @@ public class VibeComposerGUI extends JFrame
 
 			cp.setPattern(pattern);
 			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
-					&& cp.getStrum() > 249) {
+					&& cp.getStrum() > 499) {
 				cp.setStrum(cp.getStrum() / 4);
 			}
 
@@ -6527,6 +6525,11 @@ public class VibeComposerGUI extends JFrame
 			if (arpPanelGenerator.nextInt(100) < arpShiftChance.getInt()
 					&& pattern != RhythmPattern.FULL) {
 				int maxShift = Math.min(ap.getPattern().pattern.length - 1, ap.getHitsPerPattern());
+				for (int p = maxShift - 1; p >= 0; p--) {
+					if (ap.getPattern().pattern[p] < 1) {
+						maxShift--;
+					}
+				}
 				ap.setPatternShift(arpPanelGenerator.nextInt(maxShift) + 1);
 			}
 

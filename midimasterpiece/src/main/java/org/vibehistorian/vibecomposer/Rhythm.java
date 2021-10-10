@@ -53,7 +53,7 @@ public class Rhythm {
 			double remainingDuration = durationLimit - durationSum;
 			double minimumRemainingDuration = remainingNotes * dur;
 			double maximumAllowedNoteDuration = remainingDuration - minimumRemainingDuration + dur
-					+ 0.01;
+					+ MidiGenerator.DBL_ERR;
 			for (int i = maximum - 1; i >= 0; i--) {
 				if (durationPool[i] > maximumAllowedNoteDuration) {
 					maximum = i;
@@ -118,14 +118,14 @@ public class Rhythm {
 		//System.out.println("Max same: " + maxSameDurAllowed);
 		//System.out.println("Weights: " + Arrays.toString(durationWeights));
 		//System.out.println("Dur pool: " + Arrays.toString(durationPool));
-		while (durationSum < durationLimit - 0.01) {
+		while (durationSum < durationLimit - MidiGenerator.DBL_ERR) {
 			double dur = MidiGenerator.Durations.EIGHTH_NOTE / 4.0;
 			int chance = generator.nextInt(100);
 			int chosenIndex = 0;
 			boolean lastNote = false;
 			for (int i = 0; i < durationPool.length; i++) {
-				if (i < (durationPool.length - 1)
-						&& (durationPool[i + 1] > (durationLimit - durationSum + 0.01))) {
+				if (i < (durationPool.length - 1) && (durationPool[i + 1] > (durationLimit
+						- durationSum + MidiGenerator.DBL_ERR))) {
 					dur = durationLimit - durationSum;
 					lastNote = true;
 					break;
