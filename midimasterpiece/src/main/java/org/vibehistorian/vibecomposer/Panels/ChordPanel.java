@@ -27,7 +27,7 @@ public class ChordPanel extends InstPanel {
 	private KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
 	private KnobPanel transitionSplit = new KnobPanel("Split<br>(ms)", 625, 0, 1000);
 
-	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
+	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 2000);
 
 	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 

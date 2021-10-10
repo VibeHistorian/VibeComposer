@@ -196,8 +196,8 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 
-	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 16, 31, 62, 62, 125, 166, 250, 333, 500,
-			750, 1000 };
+	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
+			750, 1000, 1500, 2000 };
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 
@@ -969,7 +969,10 @@ public class VibeComposerGUI extends JFrame
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
 		bpmLow = new KnobPanel("Min<br>BPM.", 60, 20, 249);
 		bpmHigh = new KnobPanel("Max<br>BPM.", 95, 21, 250);
-		elongateMidi = new KnobPanel("Elongate MIDI by:", 2, 1, 4);
+		elongateMidi = new KnobPanel("Elongate MIDI%:", 100, 25, 400);
+		elongateMidi.getKnob().setTickSpacing(25);
+		elongateMidi.getKnob().setTickThresholds(
+				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
 		bpmLowHighPanel.add(arpAffectsBpm);
@@ -2964,7 +2967,7 @@ public class VibeComposerGUI extends JFrame
 		});
 		customChordsPanel.add(dotdotChordsButton);
 
-		userChordsDurations = new JTextField("2,2,2,2", 9);
+		userChordsDurations = new JTextField("4,4,4,4", 9);
 		customChordsPanel.add(new JLabel("Chord durations:"));
 		customChordsPanel.add(userChordsDurations);
 
@@ -3252,7 +3255,7 @@ public class VibeComposerGUI extends JFrame
 							int newSliderVal = slider.getUpperValue() - startPos;
 							boolean sequencerEnded = slider.getMaximum()
 									- slider.getUpperValue() < 100 && !sequencer.isRunning();
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(13)
+							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(6)
 									|| sequencerEnded) {
 								stopMidi();
 								if (!loopBeatCompose.isSelected()) {
@@ -3299,7 +3302,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public int beatFromBpm(int speedAdjustment) {
-		int finalVal = (int) ((2000 - speedAdjustment) * 60 * elongateMidi.getInt()
+		int finalVal = (int) (((4000 - speedAdjustment) * 60 * elongateMidi.getInt() / 100.0)
 				/ guiConfig.getBpm());
 		/*if (useDoubledDurations.isSelected()) {
 			finalVal *= 2;
@@ -3848,7 +3851,7 @@ public class VibeComposerGUI extends JFrame
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
 			MidiGenerator.TARGET_NOTES = null;
 
-			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
+			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
 
 			/*if (loopBeat.isSelected()) {
 				//MidiGenerator.START_TIME_DELAY = 0.001;
@@ -4466,7 +4469,7 @@ public class VibeComposerGUI extends JFrame
 		MidiGenerator.userChords.clear();
 		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(), MidiGenerator.gc.getFixedDuration(),
-				4 * MidiGenerator.Durations.HALF_NOTE);
+				4 * MidiGenerator.Durations.WHOLE_NOTE);
 		List<String> prettyChords = MidiGenerator.chordInts;
 		userChords.setText(StringUtils.join(prettyChords, ","));
 	}
@@ -5288,8 +5291,8 @@ public class VibeComposerGUI extends JFrame
 						userChordsParsed.add(userChordsSplit[i]);
 					}
 
-					userChordsDurationsParsed.add(
-							Double.valueOf(userChordsDurationsSplit[i]) * elongateMidi.getInt());
+					userChordsDurationsParsed.add(Double.valueOf(userChordsDurationsSplit[i])
+							* elongateMidi.getInt() / 100.0);
 				}
 				if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
 					solvedChords = userChordsParsed;
@@ -5322,7 +5325,7 @@ public class VibeComposerGUI extends JFrame
 
 		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
 		if (userChordsSplit.length != userChordsDurationsSplit.length) {
-			List<Integer> durations = IntStream.iterate(2, n -> n).limit(userChordsSplit.length)
+			List<Integer> durations = IntStream.iterate(4, n -> n).limit(userChordsSplit.length)
 					.boxed().collect(Collectors.toList());
 			customChordsDurations.setText(StringUtils.join(durations, ","));
 			userChordsDurationsSplit = customChordsDurations.getText().split(",");
@@ -5339,7 +5342,7 @@ public class VibeComposerGUI extends JFrame
 
 		String[] userChordsDurationsSplit = customChordsDurations.split(",");
 		if (userChordsSplit.length != userChordsDurationsSplit.length) {
-			List<Integer> durations = IntStream.iterate(2, n -> n).limit(userChordsSplit.length)
+			List<Integer> durations = IntStream.iterate(4, n -> n).limit(userChordsSplit.length)
 					.boxed().collect(Collectors.toList());
 			userChordsDurationsSplit = StringUtils.join(durations, ",").split(",");
 		}

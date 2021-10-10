@@ -97,7 +97,7 @@ public class Section {
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
 	private String customChords = "?";
-	private String customDurations = "2,2,2,2";
+	private String customDurations = "4,4,4,4";
 
 	// customized parts
 	private List<BassPart> bassParts = null;

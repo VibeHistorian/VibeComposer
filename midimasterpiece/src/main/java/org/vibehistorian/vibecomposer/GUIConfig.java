@@ -101,7 +101,7 @@ public class GUIConfig {
 	private boolean useChordFormula = false;
 	private boolean customChordsEnabled = true;
 	private String customChords = "?";
-	private String customChordDurations = "2,2,2,2";
+	private String customChordDurations = "4,4,4,4";
 
 	// arp gen
 	private boolean useOctaveAdjustments = false;
