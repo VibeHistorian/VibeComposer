@@ -67,7 +67,9 @@ public class VeloRect extends JComponent {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				updateValueFromScreen();
+				if (!SwingUtilities.isRightMouseButton(e)) {
+					updateValueFromScreen();
+				}
 			}
 
 			@Override
@@ -172,17 +174,19 @@ public class VeloRect extends JComponent {
 			int displayedValue = isEnabled() ? val : max / 5;
 			g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
 					: new Color(180, 180, 180));
-			g.fillRect(marginLeft, 0, this.getSize().width - marginLeft - marginRight,
-					this.getSize().height);
+
+			int minX = (ColorCheckBox.HIDE_MARGINS) ? marginLeft : 0;
+			int maxX = (ColorCheckBox.HIDE_MARGINS) ? this.getSize().width - minX - marginRight
+					: this.getSize().width;
+			int height = this.getSize().height;
+
+			g.fillRect(minX, 0, maxX, height);
 			Color c = OMNI.alphen(VibeComposerGUI.uiColor(), isEnabled() ? 150 : 70);
 			g.setColor(c);
-			g.fillRect(marginLeft,
-					(int) (this.getSize().height * (1 - displayedValue / (double) max)),
-					this.getSize().width - marginLeft - marginRight,
-					this.getSize().height * displayedValue / max);
+			g.fillRect(minX, (int) (height * (1 - displayedValue / (double) max)), maxX,
+					height * displayedValue / max);
 			g.setColor(Color.black);
-			g.drawRect(marginLeft, 0, this.getSize().width - marginLeft - marginRight,
-					this.getSize().height);
+			g.drawRect(minX, 0, maxX, height);
 		}
 	}
 }
