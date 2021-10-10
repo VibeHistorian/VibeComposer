@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -30,6 +29,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
+import org.vibehistorian.vibecomposer.Helpers.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 
@@ -48,7 +48,7 @@ public class VisualPatternPanel extends JPanel {
 
 	private List<Integer> truePattern = new ArrayList<>();
 	public static final int MAX_HITS = 32;
-	private JCheckBox[] hitChecks = new JCheckBox[MAX_HITS];
+	private ColorCheckBox[] hitChecks = new ColorCheckBox[MAX_HITS];
 	private VeloRect[] hitVelocities = new VeloRect[MAX_HITS];
 	private boolean showingVelocities = false;
 
@@ -135,7 +135,7 @@ public class VisualPatternPanel extends JPanel {
 		for (int i = 0; i < MAX_HITS; i++) {
 			final int fI = i;
 			truePattern.add(0);
-			hitChecks[i] = new JCheckBox("", new CheckBoxIcon());
+			hitChecks[i] = new ColorCheckBox();
 			hitVelocities[i] = new VeloRect(0, 127, 63);
 			//hitVelocities[i].setDefaultSize(new Dimension(CheckBoxIcon.width, CheckBoxIcon.width));
 			hitVelocities[i].setVisible(false);

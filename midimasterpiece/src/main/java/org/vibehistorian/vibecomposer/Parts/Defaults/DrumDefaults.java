@@ -144,6 +144,11 @@ public class DrumDefaults {
 		int order = getOrder(instrument);
 		DrumPart dp = getDefaultDrumPart(order);
 		dp.setInstrument(instrument);
+		if (instrument == 37) {
+			//side stick adjustment
+			dp.setVelocityMin(50);
+			dp.setVelocityMax(75);
+		}
 		return dp;
 	}
 
