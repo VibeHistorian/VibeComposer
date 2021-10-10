@@ -76,6 +76,7 @@ public class VisualPatternPanel extends JPanel {
 
 	public static Map<Integer, Insets> smallModeInsetMap = new HashMap<>();
 	static {
+		smallModeInsetMap.put(1, new Insets(0, 0, 0, CheckBoxIcon.width * 7));
 		smallModeInsetMap.put(2, new Insets(0, 0, 0, CheckBoxIcon.width * 6 / 2));
 		smallModeInsetMap.put(3, new Insets(0, 0, 0, CheckBoxIcon.width * 5 / 3));
 		smallModeInsetMap.put(4, new Insets(0, 0, 0, CheckBoxIcon.width * 4 / 4));

@@ -2,9 +2,11 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 
 import javax.swing.JCheckBox;
 
@@ -31,20 +33,27 @@ public class ColorCheckBox extends JCheckBox {
 	@Override
 	public void paintComponent(Graphics guh) {
 		Graphics2D g = (Graphics2D) guh;
-
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
 		Color color = isSelected()
 				? ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.darker()
 						: VibeComposerGUI.lightModeUIColor)
 				: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
 						: VibeComposerGUI.panelColorHigh);
-		g.setColor(color);
+		//g.setColor(color);
 		int minX = (HIDE_MARGINS) ? marginLeft : 0;
 		int maxX = (HIDE_MARGINS) ? this.getSize().width - minX - marginRight
 				: this.getSize().width;
-		g.fillRect(minX, 0, maxX, this.getSize().height);
+
+		int height = this.getSize().height;
+		Color color1 = color;
+		Color color2 = OMNI.mixColor(color1, Color.black, 0.1);
+		GradientPaint gp = new GradientPaint(minX, 0, color1, maxX, 0, color2);
+		g.setPaint(gp);
+
+		g.fillRect(minX, 0, maxX, height);
 		g.setColor(Color.black);
-		g.drawRect(minX, 0, maxX, this.getSize().height);
+		g.drawRect(minX, 0, maxX, height);
 
 
 	}

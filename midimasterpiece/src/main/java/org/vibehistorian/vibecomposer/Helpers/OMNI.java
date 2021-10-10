@@ -18,6 +18,12 @@ public class OMNI {
 		return newC;
 	}
 
+	public static Color mult(Color c, double multer) {
+		return new Color(OMNI.clamp((int) (c.getRed() * multer), 0, 255),
+				OMNI.clamp((int) (c.getGreen() * multer), 0, 255),
+				OMNI.clamp((int) (c.getBlue() * multer), 0, 255), c.getAlpha());
+	}
+
 	public static List<Integer> parseIntsString(String ints) {
 		List<Integer> intsList = new ArrayList<>();
 		try {
