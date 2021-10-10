@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -23,6 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 
 public class NumPanel extends JPanel {
@@ -288,9 +290,10 @@ public class NumPanel extends JPanel {
 			} else {
 				slider.setValue(tryValue);
 			}
-
+			text.setBackground(OMNI.alphen(Color.red, 0));
 		} catch (NumberFormatException ex) {
 			System.out.println("Invalid value: " + text.getText());
+			text.setBackground(OMNI.alphen(Color.red, 70));
 		}
 	}
 
