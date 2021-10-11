@@ -19,7 +19,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				if (!scrollEnabled)
+				if (!scrollEnabled || !isEnabled())
 					return;
 
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
@@ -34,10 +34,17 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isRightMouseButton(evt)) {
+					if (!isEnabled()) {
+						return;
+					}
 					setSelectedIndex(0);
 					ItemEvent evnt = new ItemEvent(ScrollComboBox.this,
 							ItemEvent.ITEM_STATE_CHANGED, getSelectedItem(), ItemEvent.SELECTED);
 					fireItemStateChanged(evnt);
+				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
+					if (evt.isControlDown()) {
+						setEnabled(!isEnabled());
+					}
 				}
 			}
 		});
@@ -55,8 +62,15 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		return getItemAt(getSelectedIndex());
 	}
 
+	@Override
+	public void setSelectedIndex(int index) {
+		setVal(getItemAt(index));
+	}
+
 	public void setVal(T item) {
-		setSelectedItem(item);
+		if (isEnabled()) {
+			setSelectedItem(item);
+		}
 	}
 
 	public T getLastVal() {

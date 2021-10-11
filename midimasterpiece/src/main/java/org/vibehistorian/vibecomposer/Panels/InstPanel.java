@@ -25,6 +25,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -34,6 +36,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.InstComboBox;
@@ -144,6 +147,31 @@ public abstract class InstPanel extends JPanel {
 		chordSpanFillPanel.add(chordSpanFill);
 		chordSpanFill.setOpaque(false);
 		chordSpanFillPanel.add(fillFlip);
+
+		lockInst.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isMiddleMouseButton(evt)) {
+					if (evt.isControlDown()) {
+						for (Component c : getComponents()) {
+							if (c instanceof ScrollComboBox) {
+								((ScrollComboBox) c).setEnabled(true);
+							} else if (c instanceof KnobPanel) {
+								((KnobPanel) c).setBlockInput(false);
+							} else if (c instanceof JPanel) {
+								for (Component c2 : ((JPanel) c).getComponents()) {
+									if (c2 instanceof ScrollComboBox) {
+										((ScrollComboBox) c2).setEnabled(true);
+									} else if (c instanceof KnobPanel) {
+										((KnobPanel) c2).setBlockInput(false);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		});
 
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);

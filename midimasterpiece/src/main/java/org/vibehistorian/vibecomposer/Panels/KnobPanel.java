@@ -36,6 +36,7 @@ public class KnobPanel extends TransparentablePanel {
 		label = new JLabel("<html>" + name + "&nbsp;</html>");
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		knob.setName(name);
+		knob.setParentPanel(this);
 
 
 		if (minimum != 0) {
@@ -75,6 +76,10 @@ public class KnobPanel extends TransparentablePanel {
 		} else {
 			label.setVisible(true);
 		}
+	}
+
+	public void setBlockInput(boolean b) {
+		knob.setBlockInput(b);
 	}
 
 }
