@@ -234,6 +234,16 @@ public class ShowAreaBig extends JComponent {
 			g.drawLine(k, (e + w * 17), k + 1, (e + w * 17));
 			g.drawLine(k, (e + w * 18), k + 1, (e + w * 18));
 		}
+
+		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
+
+		double highlightX = (VibeComposerGUI.slider != null
+				&& VibeComposerGUI.sliderMeasureStartTimes != null)
+						? maxX * VibeComposerGUI.slider.getUpperValue()
+								/ (double) VibeComposerGUI.sliderMeasureStartTimes
+										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
+						: -1;
+
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
 		int prevColorIndex = -1;
@@ -308,11 +318,19 @@ public class ShowAreaBig extends JComponent {
 						if (y > rectBot)
 							rectBot = y;//update values to phrase rectangle
 						//set the colour change brightness for dynamic
-						g.setColor(OMNI.alphen(noteColor, 50 + aNote.getDynamic() / 2));
 
 						int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
 						int actualStartingX = oldX + noteOffsetXOffset;
 
+
+						int boostColor = 0;
+						if (actualStartingX <= highlightX && highlightX <= actualStartingX + x) {
+							boostColor = 100;
+							/*System.out.println("Boosted color!" + highlightX + ", act: "
+									+ actualStartingX + ", x: " + x);*/
+						}
+						g.setColor(
+								OMNI.alphen(noteColor, boostColor + 50 + aNote.getDynamic() / 2));
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
 							g.fillRect(actualStartingX, y - noteHeight + thinNote, x,

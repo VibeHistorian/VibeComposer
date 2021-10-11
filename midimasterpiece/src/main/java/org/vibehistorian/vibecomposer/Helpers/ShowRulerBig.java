@@ -17,6 +17,8 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
 /*
 
 <This Java Class is part of the jMusic API>
@@ -94,6 +96,16 @@ public class ShowRulerBig extends JComponent {
 		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		g.setFont(font);
 		g.setColor(Color.black);
+
+		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
+
+		double highlightX = (VibeComposerGUI.slider != null
+				&& VibeComposerGUI.sliderMeasureStartTimes != null)
+						? maxX * VibeComposerGUI.slider.getUpperValue()
+								/ (double) VibeComposerGUI.sliderMeasureStartTimes
+										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
+						: -1;
+
 		int startOffset = 1;
 		for (int i = startOffset; i < (ShowPanelBig.maxEndTime) + startOffset; i++) {
 			int xLoc = (int) Math.round(i * beatWidth);
@@ -108,6 +120,8 @@ public class ShowRulerBig extends JComponent {
 					g.drawLine(xLoc, ShowRulerBig.maxHeight / 2, xLoc, ShowRulerBig.maxHeight);
 			}
 		}
+
+		g.drawLine((int) highlightX, ShowRulerBig.maxHeight / 2, (int) highlightX, 0);
 		//g.dispose();
 	}
 

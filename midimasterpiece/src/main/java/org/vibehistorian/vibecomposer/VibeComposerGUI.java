@@ -545,7 +545,7 @@ public class VibeComposerGUI extends JFrame
 	CheckButton loopBeat;
 	JCheckBox loopBeatCompose;
 	public static PlayheadRangeSlider slider;
-	private List<Integer> sliderMeasureStartTimes = null;
+	public static List<Integer> sliderMeasureStartTimes = null;
 	private List<Integer> sliderBeatStartTimes = null;
 
 	JLabel currentTime;

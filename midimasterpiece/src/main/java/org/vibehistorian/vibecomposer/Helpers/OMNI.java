@@ -14,7 +14,8 @@ public class OMNI {
 	public static final List<Integer> PART_INTS = Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 });
 
 	public static Color alphen(Color c, int alphaValue) {
-		Color newC = new Color(c.getRed(), c.getGreen(), c.getBlue(), alphaValue);
+		Color newC = new Color(c.getRed(), c.getGreen(), c.getBlue(),
+				OMNI.clamp(alphaValue, 0, 255));
 		return newC;
 	}
 
