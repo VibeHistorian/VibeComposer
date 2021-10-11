@@ -34,10 +34,14 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 
 import jm.music.data.Note;
 import jm.music.data.Part;
@@ -244,12 +248,37 @@ public class ShowAreaBig extends JComponent {
 										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
 						: -1;
 
+		Set<Integer> soloMuterHighlightedTracks = new HashSet<>();
+		if (ShowPanelBig.soloMuterHighlight != null
+				&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+			boolean checkMutes = VibeComposerGUI.globalSoloMuter.soloState == State.OFF;
+			for (int i = 0; i < 5; i++) {
+				for (InstPanel ip : VibeComposerGUI.getInstList(i)) {
+					if (checkMutes) {
+						if (ip.getSoloMuter().muteState == State.OFF) {
+							soloMuterHighlightedTracks.add(ip.getSequenceTrack());
+						}
+					} else {
+						if (ip.getSoloMuter().soloState != State.OFF) {
+							soloMuterHighlightedTracks.add(ip.getSequenceTrack());
+						}
+					}
+
+				}
+			}
+		}
+
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
 		int prevColorIndex = -1;
 		int samePrevColorCounter = 0;
+		int partCounter = 1;
 		while (enum1.hasMoreElements()) {
 			Part part = (Part) enum1.nextElement();
+			if (!soloMuterHighlightedTracks.isEmpty()
+					&& !soloMuterHighlightedTracks.contains(partCounter++)) {
+				continue;
+			}
 			int noteColorIndex = getIndexForPartName(part.getTitle());
 			//System.out.println("Index: " + noteColorIndex);
 			if (prevColorIndex == noteColorIndex) {

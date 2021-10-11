@@ -65,6 +65,7 @@ public class ShowPanelBig extends JPanel {
 	private JFrame frame;
 	private int panelHeight;
 	private JScrollPane areaScrollPane;
+	public static CheckButton soloMuterHighlight;
 	public static double maxEndTime = 10.0;
 
 	private static JPanel scorePartPanel;
@@ -91,6 +92,16 @@ public class ShowPanelBig extends JPanel {
 			}
 		});
 		scoreBox.setMaximumSize(new Dimension(40, ShowRulerBig.maxHeight));
+
+
+		pan = new JPanel();
+		setOpaque(false);
+		pan.setOpaque(false);
+		this.setSize(size);
+		pan.setSize(size);
+		pan.setLayout(new BorderLayout());
+
+
 		scorePartPanel = new JPanel();
 		scorePartPanel.setLayout(new BoxLayout(scorePartPanel, BoxLayout.X_AXIS));
 		scorePartPanel
@@ -133,13 +144,31 @@ public class ShowPanelBig extends JPanel {
 				}
 			});
 			scorePartPanel.add(toggler);
+
+			soloMuterHighlight = new CheckButton("Highlight Audible", false);
+			soloMuterHighlight.addRunnable(new Runnable() {
+
+				@Override
+				public void run() {
+					if (soloMuterHighlight.isSelected()) {
+						for (int i = 0; i < 5; i++) {
+							partsShown[i].setSelectedRaw(true);
+							partsShown[i].setEnabled(false);
+						}
+						setScore();
+						toggler.setEnabled(false);
+					} else {
+						for (int i = 0; i < 5; i++) {
+							partsShown[i].setEnabled(true);
+						}
+						toggler.setEnabled(true);
+						setScore();
+					}
+
+				}
+			});
+			scorePartPanel.add(soloMuterHighlight);
 		}
-		pan = new JPanel();
-		setOpaque(false);
-		pan.setOpaque(false);
-		this.setSize(size);
-		pan.setSize(size);
-		pan.setLayout(new BorderLayout());
 
 		pan.add("North", scorePartPanel);
 
@@ -178,6 +207,7 @@ public class ShowPanelBig extends JPanel {
 		//getHAdjustable().setBlockIncrement(50);
 
 
+		soloMuterHighlight.setSelected(true);
 		repaint();
 	}
 
