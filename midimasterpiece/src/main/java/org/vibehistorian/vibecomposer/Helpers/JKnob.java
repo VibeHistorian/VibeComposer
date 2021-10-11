@@ -25,7 +25,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 
 /**
@@ -65,7 +64,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private int diff = 100;
 	private int defaultValue = 50;
 	private int curr = 50;
-	private boolean blockInput = false;
 
 	private int tickSpacing = 0;
 	private List<Integer> tickThresholds = null;
@@ -78,7 +76,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private String shownText = "";
 
 
-	private KnobPanel parentKnobPanel = null;
 	public static boolean fine = true;
 	public static int fineStart = 50;
 
@@ -163,7 +160,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 			// Draw the knob.
 			Color bgColorOval = (VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob;
-			g2d.setColor(isBlockInput() ? bgColorOval.darker() : bgColorOval);
+			g2d.setColor(!isEnabled() ? bgColorOval.darker() : bgColorOval);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
 			// Find the center of the spot.
@@ -323,7 +320,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	}
 
 	public void setValue(int val) {
-		if (isBlockInput()) {
+		if (!isEnabled()) {
 			return;
 		}
 		curr = val;
@@ -429,8 +426,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			setValue(defaultValue);
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
 			if (e.isControlDown()) {
-				setBlockInput(!isBlockInput());
-			} else {
+				setEnabled(!isEnabled());
+			} else if (isEnabled()) {
 				new KnobValuePopup(this, stretchAfterCustomInput, true);
 			}
 		}
@@ -495,7 +492,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	}
 
 	private void recalc(MouseEvent e) {
-		if (isBlockInput()) {
+		if (!isEnabled()) {
 			return;
 		}
 		/*if (fine) {
@@ -630,18 +627,5 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setAllowValuesOutsideRange(boolean b) {
 		allowValuesOutsideRange = true;
-	}
-
-	public void setParentPanel(KnobPanel knobPanel) {
-		parentKnobPanel = knobPanel;
-	}
-
-	public boolean isBlockInput() {
-		return blockInput;
-	}
-
-	public void setBlockInput(boolean blockInput) {
-		this.blockInput = blockInput;
-		repaint();
 	}
 }
