@@ -36,6 +36,34 @@ public class OMNI {
 		return intsList;
 	}
 
+	public static List<Double> parseDoublesString(String dbls) {
+		List<Double> dblsList = new ArrayList<>();
+		try {
+			for (String s : dbls.split(",")) {
+				dblsList.add(Double.valueOf(s.trim()));
+			}
+		} catch (Exception e) {
+			return null;
+		}
+		return dblsList;
+	}
+
+	public static int sumList(List<Integer> nums) {
+		int sum = 0;
+		for (Integer n : nums) {
+			sum += n;
+		}
+		return sum;
+	}
+
+	public static double sumListDouble(List<Double> nums) {
+		double sum = 0;
+		for (Double n : nums) {
+			sum += n;
+		}
+		return sum;
+	}
+
 	public static void clampIntList(List<Integer> list, int min, int max) {
 		for (int i = 0; i < list.size(); i++) {
 			list.set(i, clamp(list.get(i), min, max));

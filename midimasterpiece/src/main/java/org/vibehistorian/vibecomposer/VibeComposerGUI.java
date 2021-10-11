@@ -3260,8 +3260,9 @@ public class VibeComposerGUI extends JFrame
 							int newSliderVal = slider.getUpperValue() - startPos;
 							boolean sequencerEnded = slider.getMaximum()
 									- slider.getUpperValue() < 100 && !sequencer.isRunning();
-							if (newSliderVal >= loopBeatCount.getInt() * beatFromBpm(6)
-									|| sequencerEnded) {
+							int mult = useDoubledDurations.isSelected() ? 2 : 1;
+							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0)
+									/ 4) - 50) || sequencerEnded) {
 								stopMidi();
 								if (!loopBeatCompose.isSelected()) {
 									composeMidi(true);
@@ -3399,8 +3400,8 @@ public class VibeComposerGUI extends JFrame
 				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },
 				showScorePicker);*/
 
-		loopBeat = new CheckButton("Loop Beats", false);
-		loopBeatCount = new KnobPanel("", 4, 1, 4);
+		loopBeat = new CheckButton("Loop Quarter Notes", false);
+		loopBeatCount = new KnobPanel("", 16, 1, 16);
 
 		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -4285,7 +4286,11 @@ public class VibeComposerGUI extends JFrame
 			}
 
 
-			loopBeatCount.getKnob().setMax(MidiGenerator.chordInts.size());
+			loopBeatCount.getKnob()
+					.setMax(userChordsEnabled.isSelected()
+							? (int) Math.ceil(OMNI.sumListDouble(
+									OMNI.parseDoublesString(userChordsDurations.getText())))
+							: MidiGenerator.chordInts.size() * 4);
 			startVolumeSliderThread();
 			recalculateTabPaneCounts();
 			sequencer.setTempoFactor(1);
