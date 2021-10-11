@@ -648,7 +648,7 @@ public class VibeComposerGUI extends JFrame
 		//createHorizontalSeparator(15, this);
 
 		initSoloMuters(20, GridBagConstraints.WEST);
-
+		LOGGER.info("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// ---- INSTRUMENT SETTINGS ----
 		{
 			// melody
@@ -673,7 +673,7 @@ public class VibeComposerGUI extends JFrame
 			//createHorizontalSeparator(240, this);
 
 		}
-
+		LOGGER.info("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		{
 			// ---- INSTRUMENT PANELS ----
 
@@ -688,7 +688,7 @@ public class VibeComposerGUI extends JFrame
 			initChords(311, GridBagConstraints.WEST);
 			initArps(312, GridBagConstraints.WEST);
 			initDrums(313, GridBagConstraints.WEST);
-
+			LOGGER.info("Insts: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
 			constraints.gridy = 320;
 
@@ -726,9 +726,9 @@ public class VibeComposerGUI extends JFrame
 
 
 		}
-
+		LOGGER.info("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		initScoreSettings(330, GridBagConstraints.CENTER);
-
+		LOGGER.info("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		//createHorizontalSeparator(327, this);
 
 		// ---- OTHER SETTINGS ----
@@ -750,7 +750,8 @@ public class VibeComposerGUI extends JFrame
 			initCustomChords(380, GridBagConstraints.CENTER);
 
 		}
-
+		LOGGER.info(
+				"Butts, params, cp, chords: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
 		//createHorizontalSeparator(400, this);
 
@@ -761,7 +762,7 @@ public class VibeComposerGUI extends JFrame
 		// ---- PLAY PANEL ----
 		initPlayPanel(420, GridBagConstraints.CENTER);
 		initSliderPanel(440, GridBagConstraints.CENTER);
-
+		LOGGER.info("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
 		constraints.anchor = GridBagConstraints.CENTER;
@@ -781,13 +782,15 @@ public class VibeComposerGUI extends JFrame
 
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
-
+		LOGGER.info("Add everything: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		setFullMode(isFullMode);
+		LOGGER.info("Full: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		instrumentTabPane.setSelectedIndex(0);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
 		switchDarkMode();
 		pack();
+		LOGGER.info("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		setVisible(true);
 		repaint();
 
