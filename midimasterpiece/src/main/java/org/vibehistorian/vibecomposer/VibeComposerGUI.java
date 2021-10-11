@@ -561,6 +561,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel tipLabel;
 	public static JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
+	VeloRect globalVolSlider;
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
 	public static boolean needToRecalculateSoloMuters = false;
@@ -842,6 +843,12 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY + 3;
 
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
+
+		globalVolSlider = new VeloRect(0, 150, 100);
+		globalVolSlider.setDefaultValue(100);
+
+		mainButtonsPanel.add(new JLabel("Vol."));
+		mainButtonsPanel.add(globalVolSlider);
 
 		globalSoloMuter = new SoloMuter(-1, SoloMuter.Type.GLOBAL);
 
@@ -3539,9 +3546,13 @@ public class VibeComposerGUI extends JFrame
 
 	protected void sendVolumeAndReverbMessage(double vol, double reverb, int channel) {
 		try {
+
+			vol = OMNI.clampVel(vol * globalVolSlider.getValue() * 127 / 100);
+			reverb = OMNI.clampVel(reverb * globalVolSlider.getValue() * 127 / 100);
+
 			ShortMessage volumeMessage = new ShortMessage();
 
-			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 7, (int) (vol * 127));
+			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 7, (int) vol);
 
 			if (midiMode.isSelected() && device != null) {
 				device.getReceiver().send(volumeMessage, -1);
@@ -3549,14 +3560,13 @@ public class VibeComposerGUI extends JFrame
 						&& device.getDeviceInfo().getName().contains("Gervill")) {
 					volumeMessage = new ShortMessage();
 					volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91,
-							(int) (reverb * 127));
+							(int) reverb);
 					device.getReceiver().send(volumeMessage, -1);
 				}
 			} else if (synth != null && synth.isOpen()) {
 				synth.getReceiver().send(volumeMessage, -1);
 				volumeMessage = new ShortMessage();
-				volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91,
-						(int) (reverb * 127));
+				volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91, (int) reverb);
 				synth.getReceiver().send(volumeMessage, -1);
 			}
 		} catch (InvalidMidiDataException | MidiUnavailableException e) {
