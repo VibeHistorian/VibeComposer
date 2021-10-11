@@ -166,8 +166,8 @@ public abstract class InstPanel extends JPanel {
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(minMaxVelSlider);
-		toggleableComponents.add(noteLengthMultiplier);
-		toggleableComponents.add(patternShift);
+		//toggleableComponents.add(noteLengthMultiplier);
+		//toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
 		toggleableComponents.add(fillFlip);
@@ -205,6 +205,7 @@ public abstract class InstPanel extends JPanel {
 		stretchPanel.addBackground(OMNI.alphen(Color.PINK, 30));
 		chordSpanFillPanel.addBackground(OMNI.alphen(Color.green.brighter(), 40));
 		accents.addBackground(OMNI.alphen(Color.cyan, 40));
+		noteLengthMultiplier.addBackground(OMNI.alphen(new Color(100, 170, 240), 50));
 	}
 
 	public void toggleComponentTexts(boolean b) {
@@ -221,6 +222,7 @@ public abstract class InstPanel extends JPanel {
 		patternShift.setShowTextInKnob(b);
 		chordNotesStretch.setShowTextInKnob(b);
 		accents.setShowTextInKnob(b);
+		noteLengthMultiplier.setShowTextInKnob(b);
 
 	}
 

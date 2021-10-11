@@ -766,16 +766,6 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.anchor = GridBagConstraints.CENTER;
 
-		// ---- MESSAGE PANEL ----
-
-		JPanel messagePanel = new JPanel();
-		messagePanel.setOpaque(false);
-		messageLabel = new JLabel("Click something!");
-		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		messagePanel.add(messageLabel);
-		constraints.gridy = 999;
-		everythingPanel.add(messagePanel, constraints);
-
 		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 		int screenHeight = d.height;
 		int screenWidth = d.width;
@@ -870,6 +860,13 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
 
 		mainButtonsPanel.add(makeButton("Extra", e -> openExtraSettingsPopup()));
+
+
+		// ---- MESSAGE PANEL ----
+
+		messageLabel = new JLabel("Click something!");
+		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		mainButtonsPanel.add(messageLabel);
 
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}

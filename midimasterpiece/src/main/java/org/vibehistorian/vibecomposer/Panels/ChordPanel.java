@@ -73,16 +73,15 @@ public class ChordPanel extends InstPanel {
 		strum.getKnob().setTickSpacing(50);
 
 		this.add(stretchPanel);
+		this.add(noteLengthMultiplier);
+		this.add(patternJoinMode);
+
+		this.add(minMaxVelSlider);
 
 		this.add(transitionChance);
 		this.add(transitionSplit);
 		this.add(delay);
 
-		this.add(minMaxVelSlider);
-		this.add(noteLengthMultiplier);
-
-
-		this.add(patternJoinMode);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
