@@ -58,6 +58,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Enums.PartExt;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
@@ -2632,31 +2633,31 @@ public class MidiGenerator implements JMC {
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
 		Score score = new Score("MainScore", 120);
-		Part bassRoots = new Part("BassRoots",
+		PartExt bassRoots = new PartExt("BassRoots",
 				(!gc.getBassPart().isMuted()) ? gc.getBassPart().getInstrument() : 0, 8);
 
 		List<Part> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-			Part p = new Part("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
+			PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
 					gc.getMelodyParts().get(i).getMidiChannel() - 1);
 			melodyParts.add(p);
 		}
 
 		List<Part> chordParts = new ArrayList<>();
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
-			Part p = new Part("Chords" + i, gc.getChordParts().get(i).getInstrument(),
+			PartExt p = new PartExt("Chords" + i, gc.getChordParts().get(i).getInstrument(),
 					gc.getChordParts().get(i).getMidiChannel() - 1);
 			chordParts.add(p);
 		}
 		List<Part> arpParts = new ArrayList<>();
 		for (int i = 0; i < gc.getArpParts().size(); i++) {
-			Part p = new Part("Arps" + i, gc.getArpParts().get(i).getInstrument(),
+			PartExt p = new PartExt("Arps" + i, gc.getArpParts().get(i).getInstrument(),
 					gc.getArpParts().get(i).getMidiChannel() - 1);
 			arpParts.add(p);
 		}
 		List<Part> drumParts = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			Part p = new Part("MainDrums", 0, 9);
+			PartExt p = new PartExt("MainDrums", 0, 9);
 			drumParts.add(p);
 		}
 
@@ -2948,12 +2949,14 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.melodyPanels);
 			if (!gc.getMelodyParts().get(i).isMuted()) {
 				score.add(melodyParts.get(i));
+				((PartExt) melodyParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 				if (COLLAPSE_MELODY_TRACKS) {
 					break;
 				}
 				//if (VibeComposerGUI.apSm)
 			} else {
+				((PartExt) melodyParts.get(i)).setTrackNumber(-1);
 				ip.setSequenceTrack(-1);
 			}
 		}
@@ -2964,17 +2967,21 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.arpPanels);
 			if (!gc.getArpParts().get(i).isMuted()) {
 				score.add(arpParts.get(i));
+				((PartExt) arpParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 				//if (VibeComposerGUI.apSm)
 			} else {
 				ip.setSequenceTrack(-1);
+				((PartExt) arpParts.get(i)).setTrackNumber(-1);
 			}
 		}
 
 		if (!gc.getBassPart().isMuted()) {
 			score.add(bassRoots);
+			((PartExt) bassRoots).setTrackNumber(trackCounter);
 			VibeComposerGUI.bassPanel.setSequenceTrack(trackCounter++);
 		} else {
+			((PartExt) bassRoots).setTrackNumber(-1);
 			VibeComposerGUI.bassPanel.setSequenceTrack(-1);
 		}
 
@@ -2984,9 +2991,11 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.chordPanels);
 			if (!gc.getChordParts().get(i).isMuted()) {
 				score.add(chordParts.get(i));
+				((PartExt) chordParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 			} else {
 				ip.setSequenceTrack(-1);
+				((PartExt) chordParts.get(i)).setTrackNumber(-1);
 			}
 
 		}
@@ -3009,12 +3018,13 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.drumPanels);
 			if (!gc.getDrumParts().get(i).isMuted()) {
 				ip.setSequenceTrack(trackCounter);
+				((PartExt) drumParts.get(i)).setTrackNumber(trackCounter);
 				if (COLLAPSE_DRUM_TRACKS) {
 					break;
 				}
 			} else {
 				ip.setSequenceTrack(-1);
-
+				((PartExt) drumParts.get(i)).setTrackNumber(-1);
 			}
 			trackCounter++;
 		}

@@ -46,6 +46,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -151,17 +152,17 @@ public class ShowPanelBig extends JPanel {
 				@Override
 				public void run() {
 					if (soloMuterHighlight.isSelected()) {
-						for (int i = 0; i < 5; i++) {
+						/*for (int i = 0; i < 5; i++) {
 							partsShown[i].setSelectedRaw(true);
 							partsShown[i].setEnabled(false);
-						}
+						}*/
 						setScore();
-						toggler.setEnabled(false);
+						//toggler.setEnabled(false);
 					} else {
-						for (int i = 0; i < 5; i++) {
+						/*for (int i = 0; i < 5; i++) {
 							partsShown[i].setEnabled(true);
-						}
-						toggler.setEnabled(true);
+						}*/
+						//toggler.setEnabled(true);
 						setScore();
 					}
 
@@ -238,7 +239,8 @@ public class ShowPanelBig extends JPanel {
 	// this method can be used to update the score continets of an existing ShowScore panel
 	public void setScore(Score score, List<Integer> includedParts) {
 
-		Score scrCopy = score.copy();
+		Score scrCopy = JMusicUtilsCustom.scoreCopy(score);
+
 		List<Part> partsToRemove = new ArrayList<>();
 		for (Object p : scrCopy.getPartList()) {
 			Part part = (Part) p;

@@ -40,11 +40,11 @@ import java.util.Set;
 import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Enums.PartExt;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 
 import jm.music.data.Note;
-import jm.music.data.Part;
 import jm.music.data.Phrase;
 
 //--------------
@@ -272,11 +272,10 @@ public class ShowAreaBig extends JComponent {
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
 		int prevColorIndex = -1;
 		int samePrevColorCounter = 0;
-		int partCounter = 1;
 		while (enum1.hasMoreElements()) {
-			Part part = (Part) enum1.nextElement();
+			PartExt part = (PartExt) enum1.nextElement();
 			if (!soloMuterHighlightedTracks.isEmpty()
-					&& !soloMuterHighlightedTracks.contains(partCounter++)) {
+					&& !soloMuterHighlightedTracks.contains(part.getTrackNumber())) {
 				continue;
 			}
 			int noteColorIndex = getIndexForPartName(part.getTitle());

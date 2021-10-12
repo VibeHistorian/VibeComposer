@@ -1,10 +1,14 @@
 package org.vibehistorian.vibecomposer;
 
+import java.util.Enumeration;
 import java.util.Vector;
+
+import org.vibehistorian.vibecomposer.Enums.PartExt;
 
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
+import jm.music.data.Score;
 import jm.music.tools.Mod;
 
 public class JMusicUtilsCustom {
@@ -97,5 +101,17 @@ public class JMusicUtilsCustom {
 
 		phr = phrPart.getPhrase(0);
 		return phr;
+	}
+
+	public static Score scoreCopy(Score score) {
+		Score scrCopy = new Score();
+		Enumeration<?> enum1 = score.getPartList().elements();
+		while (enum1.hasMoreElements()) {
+			PartExt part = (PartExt) enum1.nextElement();
+			scrCopy.addPart(part.copy());
+		}
+
+		return scrCopy;
+
 	}
 }
