@@ -2918,12 +2918,15 @@ public class MidiGenerator implements JMC {
 				arpParts.get(i).addPhrase(cp);
 			}
 
+			Optional<DrumPart> firstPresentDrumPart = gc.getDrumParts().stream()
+					.filter(e -> !e.isMuted()).findFirst();
+
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
-				if (COLLAPSE_DRUM_TRACKS) {
+				if (COLLAPSE_DRUM_TRACKS && firstPresentDrumPart.isPresent()) {
 					p.setAppend(false);
-					drumParts.get(0).addPhrase(p);
+					drumParts.get(firstPresentDrumPart.get().getOrder() - 1).addPhrase(p);
 				} else {
 					drumParts.get(i).addPhrase(p);
 				}
@@ -3004,15 +3007,16 @@ public class MidiGenerator implements JMC {
 			score.add(drumParts.get(i));
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
 					VibeComposerGUI.drumPanels);
-			if (gc.getDrumParts().get(i).isMuted()) {
-				ip.setSequenceTrack(-1);
-				//trackCounter++;
-			} else {
+			if (!gc.getDrumParts().get(i).isMuted()) {
 				ip.setSequenceTrack(trackCounter);
 				if (COLLAPSE_DRUM_TRACKS) {
 					break;
 				}
+			} else {
+				ip.setSequenceTrack(-1);
+
 			}
+			trackCounter++;
 		}
 
 
@@ -3129,7 +3133,7 @@ public class MidiGenerator implements JMC {
 					List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, sec.getMeasures(),
 							notesSeedOffset, sec, variations);
-
+					/*
 					// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
 					// risky variation - wacky melody transpose
 					boolean laxCheck = notesSeedOffset == 0
@@ -3137,21 +3141,10 @@ public class MidiGenerator implements JMC {
 					if (!riskyVariations.get(3)) {
 						laxCheck &= (i == 0);
 					}
-
+					
 					if (laxCheck) {
-						Phrase m2 = m.copy();
-						Mod.transpose(m2, -12);
-						Part melPart = new Part();
-						melPart.add(m2);
-						melPart.add(m);
-						if (riskyVariations.get(3)) {
-							Mod.consolidate(melPart);
-						} else {
-							JMusicUtilsCustom.consolidate(melPart);
-						}
-
-						m = melPart.getPhrase(0);
-					}
+						JMusicUtilsCustom.doublePhrase(m);
+					}*/
 					copiedPhrases.add(m);
 				} else {
 					Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
@@ -3183,15 +3176,7 @@ public class MidiGenerator implements JMC {
 						variations);
 
 				if (bp.isDoubleOct()) {
-					Phrase b2 = b.copy();
-					Mod.transpose(b2, 12);
-					Mod.increaseDynamic(b2, -15);
-					Part bassPart = new Part();
-					bassPart.addPhrase(b2);
-					bassPart.addPhrase(b);
-					JMusicUtilsCustom.consolidate(bassPart);
-
-					b = bassPart.getPhrase(0);
+					b = JMusicUtilsCustom.doublePhrase(b, 12, false, -15);
 					b.setStartTime(START_TIME_DELAY);
 				}
 

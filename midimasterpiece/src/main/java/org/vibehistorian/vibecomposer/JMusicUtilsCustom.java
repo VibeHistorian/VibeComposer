@@ -5,6 +5,7 @@ import java.util.Vector;
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
+import jm.music.tools.Mod;
 
 public class JMusicUtilsCustom {
 	public static void consolidate(Part p) {
@@ -80,4 +81,21 @@ public class JMusicUtilsCustom {
 
 	}
 
+	public static Phrase doublePhrase(Phrase phr, int doubleTranspose, boolean pauseSquish,
+			int dynamicChange) {
+		Phrase phr2 = phr.copy();
+		Mod.transpose(phr2, doubleTranspose);
+		Mod.increaseDynamic(phr2, dynamicChange);
+		Part phrPart = new Part();
+		phrPart.add(phr2);
+		phrPart.add(phr);
+		if (pauseSquish) {
+			Mod.consolidate(phrPart);
+		} else {
+			JMusicUtilsCustom.consolidate(phrPart);
+		}
+
+		phr = phrPart.getPhrase(0);
+		return phr;
+	}
 }
