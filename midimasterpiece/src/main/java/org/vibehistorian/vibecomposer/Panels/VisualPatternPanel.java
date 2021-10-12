@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.ColorCheckBox;
@@ -56,7 +57,7 @@ public class VisualPatternPanel extends JPanel {
 
 	private JLabel[] separators = new JLabel[3];
 
-	private JPanel parentPanel = null;
+	private InstPanel parentPanel = null;
 
 	public static int width = 8 * CheckBoxIcon.width;
 	public static int height = 2 * CheckBoxIcon.width;
@@ -118,7 +119,8 @@ public class VisualPatternPanel extends JPanel {
 
 
 	public VisualPatternPanel(KnobPanel hitsPanel, ScrollComboBox<RhythmPattern> patternType,
-			KnobPanel shiftPanel, KnobPanel chordSpanPanel, JPanel parentPanel) {
+			KnobPanel shiftPanel, KnobPanel chordSpanPanel,
+			ScrollComboBox<ChordSpanFill> chordSpanFill, InstPanel parentPanel) {
 		super();
 		//setBackground(new Color(50, 50, 50));
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
@@ -610,13 +612,24 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void notifyPatternHighlight(double percentage, int chordNum) {
-		if (patternType.getVal() == RhythmPattern.MELODY1) {
+		if (parentPanel == null) {
+			return;
+		}
+		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(chordNum + 1,
+				parentPanel.getFillFlip());
+
+		if (patternType.getVal() == RhythmPattern.MELODY1 || fillPattern.get(chordNum) < 1) {
 			if (lastHighlightedHit >= 0) {
 				hitVelocities[lastHighlightedHit].setHighlighted(false);
 				hitChecks[lastHighlightedHit].setHighlighted(false);
 			}
 			return;
 		}
+
+		if (parentPanel.getPatternRepeat() > 1) {
+			percentage = (percentage > 0.499) ? (percentage * 2 - 1) : percentage * 2;
+		}
+
 		int realChordNum = chordNum % chordSpanPanel.getInt();
 		int highlightedHit = (int) ((realChordNum + percentage) * lastHits
 				/ chordSpanPanel.getInt());

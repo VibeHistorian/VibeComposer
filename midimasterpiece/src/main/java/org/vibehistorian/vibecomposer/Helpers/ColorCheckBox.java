@@ -113,7 +113,7 @@ public class ColorCheckBox extends JCheckBox {
 			return;
 		}
 		this.highlighted = highlighted;
-		repaint();
+		paint(getGraphics());
 		/*if (highlighted) {
 			Timer timer = new Timer(120, new ActionListener() {
 		

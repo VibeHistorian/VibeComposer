@@ -590,7 +590,8 @@ public abstract class InstPanel extends JPanel {
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
 	public VisualPatternPanel makeVisualPatternPanel() {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, this);
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
+				chordSpanFill, this);
 	}
 
 	public VisualPatternPanel getComboPanel() {

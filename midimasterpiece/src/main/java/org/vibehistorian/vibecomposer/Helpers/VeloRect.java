@@ -209,7 +209,7 @@ public class VeloRect extends JComponent {
 			return;
 		}
 		this.highlighted = highlighted;
-		repaint();
+		paint(getGraphics());
 		/*if (highlighted) {
 			Timer timer = new Timer(120, new ActionListener() {
 		
