@@ -53,7 +53,7 @@ public class ShowAreaBig extends JComponent {
 	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
 	private int oldX;
-	private int noteHeight = 5;
+	public static int noteHeight = 5;
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
@@ -104,12 +104,12 @@ public class ShowAreaBig extends JComponent {
 		w = 2 * noteHeight; //width between stave lines
 		ePos = 5 * noteHeight; // position of e in the treble stave
 		e = ePos + noteHeight * 33;
-		//areaHeight = 350;
+		areaHeight = noteHeight * 77;
 		noteOffset = new int[] { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 				noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 				noteHeight * 6 };
-		this.setSize(new Dimension(this.getSize().width, areaHeight));
-		sp.updatePanelHeight();
+		this.setSize(new Dimension(ShowPanelBig.beatWidthBase, areaHeight));
+		//sp.updatePanelHeight();
 	}
 
 	/**
@@ -149,10 +149,10 @@ public class ShowAreaBig extends JComponent {
 	 *
 	 * @return the minimum size of the JKnob.
 	 */
-	@Override
+	/*@Override
 	public Dimension getMinimumSize() {
 		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
-	}
+	}*/
 
 	/**
 	 * Display notes thinner than stave width or not.
@@ -172,6 +172,7 @@ public class ShowAreaBig extends JComponent {
 	public void paintComponent(Graphics gDef) {
 		//System.out.println("Painting area!");
 		Graphics2D g = (Graphics2D) gDef;
+		super.paintComponent(g);
 		//Image offScreenImage = this.createImage(this.getSize().width, this.areaHeight);
 		//Graphics offScreenGraphics = g.create();
 		//offScreenImage.getGraphics();

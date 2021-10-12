@@ -36,6 +36,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,6 +60,7 @@ public class ShowPanelBig extends JPanel {
 	private static final long serialVersionUID = 1464206032589622048L;
 	public Score score;
 	protected double beatWidth; //10.0;
+	public static final int beatWidthBaseDefault = 1500;
 	public static int beatWidthBase = 1500;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;
@@ -184,12 +187,30 @@ public class ShowPanelBig extends JPanel {
 		areaScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(ShowPanelBig.beatWidthBase + 35, 330);
+				return new Dimension(ShowPanelBig.beatWidthBaseDefault + 35, 330);
 			}
 		};
 		areaScrollPane.setViewportView(areaPanel);
 		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		areaScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		areaScrollPane.addMouseWheelListener(new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				if (e.isAltDown()) {
+					sa.setNoteHeight(
+							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
+					setScore();
+					//areaScrollPane.repaint();
+				}
+				if (e.isControlDown()) {
+					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBase * 10
+							/ ((e.getWheelRotation() > 0) ? 12 : 8);
+					setScore();
+					//areaScrollPane.repaint();
+				}
+			}
+		});
 
 		areaPanel.setVisible(true);
 		pan.add("Center", areaScrollPane);
@@ -269,7 +290,7 @@ public class ShowPanelBig extends JPanel {
 			beatWidth = 256.0;
 		update();
 		//System.out.println();
-		areaScrollPane.getVerticalScrollBar().setValue(50);
+		//areaScrollPane.getVerticalScrollBar().setValue(50);
 		repaint();
 	}
 
@@ -278,7 +299,7 @@ public class ShowPanelBig extends JPanel {
 	 */
 	public void updatePanelHeight() {
 		panelHeight = panelMaxHeight;
-		this.setSize(new Dimension(beatWidthBase, panelHeight));
+		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
 	}
 
 	/**
