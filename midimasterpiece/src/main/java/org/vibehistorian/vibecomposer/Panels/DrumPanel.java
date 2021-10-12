@@ -121,7 +121,6 @@ public class DrumPanel extends InstPanel {
 
 		setDefaultsFromInstPart(part);
 
-		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
 
 		setPanelOrder(part.getOrder());

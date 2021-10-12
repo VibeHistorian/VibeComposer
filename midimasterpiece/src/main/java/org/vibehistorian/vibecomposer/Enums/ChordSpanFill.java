@@ -16,9 +16,10 @@ public enum ChordSpanFill {
 	ALL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }), ODD(new int[] { 0, 1, 0, 1, 0, 1, 0, 1 }),
 	EVEN(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }), FST(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }),
 	SCND(new int[] { 0, 1, 0, 0, 0, 1, 0, 0 }), THRD(new int[] { 0, 0, 1, 0, 0, 0, 1, 0 }),
-	FRTH(new int[] { 0, 0, 0, 1, 0, 0, 0, 1 });
+	FRTH(new int[] { 0, 0, 0, 1, 0, 0, 0, 1 }), FIRST2(new int[] { 1, 1, 0, 0, 1, 1, 0, 0 }),
+	LAST2(new int[] { 0, 0, 1, 1, 0, 0, 1, 1 });
 
-	private static final int[] weights = new int[] { 60, 72, 84, 86, 88, 90, 100 };
+	private static final int[] weights = new int[] { 60, 72, 84, 86, 88, 90, 92, 95, 100 };
 	private int[] chordPattern;
 
 	private ChordSpanFill(int[] pattern) {

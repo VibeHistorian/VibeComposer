@@ -487,7 +487,7 @@ public class VibeComposerGUI extends JFrame
 	// chord variety settings
 	KnobPanel spiceChance;
 	KnobPanel chordSlashChance;
-	JCheckBox spiceAllowDimAugDom7th;
+	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
 	KnobPanel spiceParallelChance;
@@ -1698,7 +1698,7 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(csExtra);
 
 
-		combineDrumTracks = new JCheckBox("Combine MIDI Tracks", true);
+		combineDrumTracks = new JCheckBox("Combine MIDI Tracks", false);
 		combineDrumTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -2784,7 +2784,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		spiceChance = new KnobPanel("Spice", 15);
-		spiceAllowDimAugDom7th = new JCheckBox("Dim/Aug/Dom7", false);
+		spiceAllowDimAug = new JCheckBox("Dim/Aug", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceForceScale = new JCheckBox("Force Scale", true);
 		spiceParallelChance = new KnobPanel("Aeolian", 5);
@@ -2805,7 +2805,7 @@ public class VibeComposerGUI extends JFrame
 		spiceChancePanel.setOpaque(false);
 
 		JPanel spiceAllowDimAugPanel = new JPanel();
-		spiceAllowDimAugPanel.add(spiceAllowDimAugDom7th);
+		spiceAllowDimAugPanel.add(spiceAllowDimAug);
 		spiceAllowDimAugPanel.setOpaque(false);
 
 		JPanel spiceAllow9th13thPanel = new JPanel();
@@ -5630,7 +5630,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setCustomChordDurations(userChordsDurations.getText());
 		guiConfig.setSpiceChance(spiceChance.getInt());
 		guiConfig.setSpiceParallelChance(spiceParallelChance.getInt());
-		guiConfig.setDimAugDom7thEnabled(spiceAllowDimAugDom7th.isSelected());
+		guiConfig.setDimAugDom7thEnabled(spiceAllowDimAug.isSelected());
 		guiConfig.setEnable9th13th(spiceAllow9th13th.isSelected());
 		guiConfig.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
 		guiConfig.setChordSlashChance(chordSlashChance.getInt());
@@ -5734,7 +5734,7 @@ public class VibeComposerGUI extends JFrame
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());
 		spiceParallelChance.setInt(guiConfig.getSpiceParallelChance());
-		spiceAllowDimAugDom7th.setSelected(guiConfig.isDimAugDom7thEnabled());
+		spiceAllowDimAug.setSelected(guiConfig.isDimAugDom7thEnabled());
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
@@ -6029,10 +6029,6 @@ public class VibeComposerGUI extends JFrame
 			if (settings.isSwingable()) {
 				dp.setDelay(slide);
 				dp.setSwingPercent(swingPercent);
-			}
-
-			if (randomChordUseChordFill.isSelected() && settings.isFillable()) {
-				dp.setChordSpanFill(ChordSpanFill.getWeighted(drumPanelGenerator.nextInt(100)));
 			}
 
 			if (settings.isDynamicable() && (dp.getPattern() != RhythmPattern.MELODY1)) {
