@@ -9,6 +9,7 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 
 import javax.swing.JCheckBox;
+import javax.swing.RepaintManager;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -29,6 +30,7 @@ public class ColorCheckBox extends JCheckBox {
 
 	public ColorCheckBox() {
 		defaultSize = new Dimension(width, height);
+		setOpaque(true);
 	}
 
 	@Override
@@ -113,7 +115,11 @@ public class ColorCheckBox extends JCheckBox {
 			return;
 		}
 		this.highlighted = highlighted;
-		paint(getGraphics());
+		RepaintManager rm = RepaintManager.currentManager(this);
+		boolean b = rm.isDoubleBufferingEnabled();
+		rm.setDoubleBufferingEnabled(false);
+		paintImmediately(1, 1, this.getSize().width - 1, this.getSize().height - 1);
+		rm.setDoubleBufferingEnabled(b);
 		/*if (highlighted) {
 			Timer timer = new Timer(120, new ActionListener() {
 		

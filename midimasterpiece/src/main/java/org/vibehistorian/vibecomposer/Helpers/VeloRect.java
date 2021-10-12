@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
 import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -83,6 +84,7 @@ public class VeloRect extends JComponent {
 			}
 
 		});
+		setOpaque(true);
 		updateSizes(defaultSize);
 	}
 
@@ -209,7 +211,11 @@ public class VeloRect extends JComponent {
 			return;
 		}
 		this.highlighted = highlighted;
-		paint(getGraphics());
+		RepaintManager rm = RepaintManager.currentManager(this);
+		boolean b = rm.isDoubleBufferingEnabled();
+		rm.setDoubleBufferingEnabled(false);
+		paintImmediately(1, 1, this.getSize().width - 1, this.getSize().height - 1);
+		rm.setDoubleBufferingEnabled(b);
 		/*if (highlighted) {
 			Timer timer = new Timer(120, new ActionListener() {
 		
