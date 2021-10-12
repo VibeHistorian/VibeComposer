@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import org.vibehistorian.vibecomposer.Enums.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
 
 import jm.music.data.Note;
 import jm.music.data.Part;

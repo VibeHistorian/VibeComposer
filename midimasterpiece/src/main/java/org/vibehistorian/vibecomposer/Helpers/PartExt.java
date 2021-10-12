@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Enums;
+package org.vibehistorian.vibecomposer.Helpers;
 
 import java.util.Enumeration;
 

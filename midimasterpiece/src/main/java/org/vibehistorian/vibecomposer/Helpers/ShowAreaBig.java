@@ -40,7 +40,6 @@ import java.util.Set;
 import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Enums.PartExt;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 
