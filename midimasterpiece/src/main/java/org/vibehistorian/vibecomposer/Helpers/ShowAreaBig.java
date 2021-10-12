@@ -149,10 +149,10 @@ public class ShowAreaBig extends JComponent {
 	 *
 	 * @return the minimum size of the JKnob.
 	 */
-	/*@Override
+	@Override
 	public Dimension getMinimumSize() {
 		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
-	}*/
+	}
 
 	/**
 	 * Display notes thinner than stave width or not.

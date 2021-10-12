@@ -39,6 +39,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.BoxLayout;
@@ -62,6 +63,9 @@ public class ShowPanelBig extends JPanel {
 	protected double beatWidth; //10.0;
 	public static final int beatWidthBaseDefault = 1500;
 	public static int beatWidthBase = 1500;
+	public static final List<Integer> beatWidthBases = Arrays
+			.asList(new Integer[] { 1500, 2000, 2500, 3000, 4000, 6000 });
+	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;
 	private ShowRulerBig ruler;
@@ -204,8 +208,10 @@ public class ShowPanelBig extends JPanel {
 					//areaScrollPane.repaint();
 				}
 				if (e.isControlDown()) {
-					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBase * 10
-							/ ((e.getWheelRotation() > 0) ? 12 : 8);
+					beatWidthBaseIndex = OMNI.clamp(
+							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
+							beatWidthBases.size() - 1);
+					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
 					//areaScrollPane.repaint();
 				}
