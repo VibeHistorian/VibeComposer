@@ -34,17 +34,20 @@ public class ColorCheckBox extends JCheckBox {
 	@Override
 	public void paintComponent(Graphics guh) {
 		Graphics2D g = (Graphics2D) guh;
-		super.paintComponent(g);
+		//super.paintComponent(g);
 		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-		Color color = isSelected()
-				? ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.darker()
-						: VibeComposerGUI.lightModeUIColor)
-				: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
-						: VibeComposerGUI.panelColorHigh);
+		Color color = null;
 
 		if (highlighted && isSelected()) {
-			color = OMNI.mixColor(color, Color.white, 0.4);
+			color = VibeComposerGUI.isDarkMode ? VeloRect.highlightColorDark
+					: VeloRect.highlightColorLight;
+		} else {
+			color = isSelected()
+					? ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.darker()
+							: VibeComposerGUI.lightModeUIColor)
+					: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
+							: VibeComposerGUI.panelColorHigh);
 		}
 
 		//g.setColor(color);

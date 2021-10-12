@@ -540,7 +540,7 @@ public class VisualPatternPanel extends JPanel {
 							for (JLabel lab : separators) {
 								lab.setVisible(true);
 							}
-						} else if (lastHits == MAX_HITS && chords == 2) {
+						} else if (lastHits == MAX_HITS && chords > 1) {
 							separators[0].setVisible(true);
 							separators[1].setVisible(false);
 							separators[2].setVisible(true);
@@ -578,7 +578,7 @@ public class VisualPatternPanel extends JPanel {
 					}*/
 				}
 				int bigModeWidthOffset = (showBIG) ? 10 : 0;
-				boolean bigModeTwoRows = (chords == 2 && showBIG);
+				boolean bigModeTwoRows = (chords > 1 && showBIG);
 				if (lastHits > 16 && !showBIG && showingVelocities) {
 					height *= 4;
 				} else if (bigModeTwoRows || (lastHits > 16 && !showingVelocities)

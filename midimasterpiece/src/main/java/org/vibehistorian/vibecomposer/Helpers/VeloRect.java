@@ -33,6 +33,8 @@ public class VeloRect extends JComponent {
 	private int marginLeft = 0, marginRight = 0;
 	private Dimension defaultSize = VELO_DIM;
 	private boolean highlighted = false;
+	public static Color highlightColorDark = OMNI.alphen(new Color(255, 100, 100), 200);
+	public static Color highlightColorLight = OMNI.alphen(new Color(255, 100, 100), 200);
 
 	public VeloRect(int min, int max, int currentVal) {
 		super();
@@ -182,10 +184,12 @@ public class VeloRect extends JComponent {
 			int height = this.getSize().height;
 
 			g.fillRect(minX, 0, maxX, height);
-			Color c = OMNI.alphen(VibeComposerGUI.uiColor(), isEnabled() ? 150 : 70);
+			Color c = null;
 
 			if (highlighted && isEnabled()) {
-				c = OMNI.mixColor(c, Color.red, 0.4);
+				c = VibeComposerGUI.isDarkMode ? highlightColorDark : highlightColorLight;
+			} else {
+				c = OMNI.alphen(VibeComposerGUI.uiColor(), isEnabled() ? 150 : 70);
 			}
 
 			g.setColor(c);

@@ -24,8 +24,7 @@ public enum StrumType {
 		CHOICES = strums;
 	}
 
-	public static final List<StrumType> ARPY = Arrays
-			.asList(new StrumType[] { ARP_U, ARP_D, RAND_U, RAND_D, HUMAN });
+	public static final List<StrumType> ARPY = Arrays.asList(new StrumType[] { ARP_U, ARP_D });
 	public static final List<StrumType> RANDY = Arrays
 			.asList(new StrumType[] { RAND_U, RAND, RAND_D, RAND_W });
 	public static final List<StrumType> HUMANY = Arrays
