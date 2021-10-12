@@ -21,6 +21,7 @@ public class ColorCheckBox extends JCheckBox {
 	private int marginLeft = 0, marginRight = 0;
 	private Dimension defaultSize = new Dimension(width, height);
 	public static boolean HIDE_MARGINS = false;
+	private boolean highlighted = false;
 
 	public ColorCheckBox(Dimension defSize) {
 		defSize = defaultSize;
@@ -33,6 +34,7 @@ public class ColorCheckBox extends JCheckBox {
 	@Override
 	public void paintComponent(Graphics guh) {
 		Graphics2D g = (Graphics2D) guh;
+		super.paintComponent(g);
 		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
 		Color color = isSelected()
@@ -40,6 +42,11 @@ public class ColorCheckBox extends JCheckBox {
 						: VibeComposerGUI.lightModeUIColor)
 				: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
 						: VibeComposerGUI.panelColorHigh);
+
+		if (highlighted && isSelected()) {
+			color = OMNI.mixColor(color, Color.white, 0.4);
+		}
+
 		//g.setColor(color);
 		int minX = (HIDE_MARGINS) ? marginLeft : 0;
 		int maxX = (HIDE_MARGINS) ? this.getSize().width - minX - marginRight
@@ -92,6 +99,30 @@ public class ColorCheckBox extends JCheckBox {
 	@Override
 	public int getHeight() {
 		return height;
+	}
+
+	public boolean isHighlighted() {
+		return highlighted;
+	}
+
+	public void setHighlighted(boolean highlighted) {
+		if (this.highlighted == highlighted) {
+			return;
+		}
+		this.highlighted = highlighted;
+		repaint();
+		/*if (highlighted) {
+			Timer timer = new Timer(120, new ActionListener() {
+		
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					setHighlighted(false);
+					repaint();
+				}
+			});
+			timer.setRepeats(false);
+			timer.start();
+		}*/
 	}
 
 }

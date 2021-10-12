@@ -3213,9 +3213,65 @@ public class VibeComposerGUI extends JFrame
 								if (arrangementSize > 0) {
 									int divisor = slider.getMaximum() / arrangementSize;
 									int sectIndex = (val - 1) / divisor;
+
+
 									if (sectIndex >= arrangementSize) {
 										sectionText.setText("End");
 									} else {
+										SwingUtilities.invokeLater(new Runnable() {
+
+											@Override
+											public void run() {
+												int measureStart = sliderMeasureStartTimes
+														.get(sectIndex);
+												int beatFindingStartIndex = sliderBeatStartTimes
+														.indexOf(measureStart);
+												int beatChordNum = 0;
+												int bfsiEnd = 0;
+												for (int bfsi = beatFindingStartIndex; bfsi < sliderBeatStartTimes
+														.size(); bfsi++) {
+													if (sliderBeatStartTimes.get(bfsi) > val) {
+														bfsiEnd = bfsi;
+														//LOGGER.debug("Beat percentage: " + beatPercentage);
+														break;
+													} else {
+														beatChordNum++;
+													}
+												}
+												double beatPercentage = (bfsiEnd > 0)
+														? (val - sliderBeatStartTimes
+																.get(bfsiEnd - 1))
+																/ (double) ((sliderBeatStartTimes
+																		.get(bfsiEnd)
+																		- sliderBeatStartTimes
+																				.get(bfsiEnd - 1)))
+														: 0.0;
+												int realBeatChordNum = beatChordNum > 0
+														? beatChordNum - 1
+														: 0;
+												double realBeatPercentage = beatPercentage;
+												if (instrumentTabPane.getSelectedIndex() == 2) {
+													chordPanels.forEach(e -> e.getComboPanel()
+															.notifyPatternHighlight(
+																	realBeatPercentage,
+																	realBeatChordNum));
+												} else if (instrumentTabPane
+														.getSelectedIndex() == 3) {
+													arpPanels.forEach(e -> e.getComboPanel()
+															.notifyPatternHighlight(
+																	realBeatPercentage,
+																	realBeatChordNum));
+												} else if (instrumentTabPane
+														.getSelectedIndex() == 4) {
+													drumPanels.forEach(e -> e.getComboPanel()
+															.notifyPatternHighlight(
+																	realBeatPercentage,
+																	realBeatChordNum));
+												}
+											}
+										});
+
+
 										if (useArrangement.isSelected()) {
 											Section sec = null;
 											int sizeCounter = 0;

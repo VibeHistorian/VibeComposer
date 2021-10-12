@@ -51,6 +51,7 @@ public class VisualPatternPanel extends JPanel {
 	private ColorCheckBox[] hitChecks = new ColorCheckBox[MAX_HITS];
 	private VeloRect[] hitVelocities = new VeloRect[MAX_HITS];
 	private boolean showingVelocities = false;
+	private int lastHighlightedHit = -1;
 
 
 	private JLabel[] separators = new JLabel[3];
@@ -606,6 +607,34 @@ public class VisualPatternPanel extends JPanel {
 
 	public void setViewOnly(boolean viewOnly) {
 		this.viewOnly = viewOnly;
+	}
+
+	public void notifyPatternHighlight(double percentage, int chordNum) {
+		if (patternType.getVal() == RhythmPattern.MELODY1) {
+			if (lastHighlightedHit >= 0) {
+				hitVelocities[lastHighlightedHit].setHighlighted(false);
+				hitChecks[lastHighlightedHit].setHighlighted(false);
+			}
+			return;
+		}
+		int realChordNum = chordNum % chordSpanPanel.getInt();
+		int highlightedHit = (int) ((realChordNum + percentage) * lastHits
+				/ chordSpanPanel.getInt());
+		if (highlightedHit == lastHighlightedHit && lastHits > 1) {
+			return;
+		}
+		if (showingVelocities) {
+			hitVelocities[highlightedHit].setHighlighted(true);
+			if (lastHighlightedHit >= 0 && lastHits > 1 && lastHighlightedHit != highlightedHit) {
+				hitVelocities[lastHighlightedHit].setHighlighted(false);
+			}
+		} else {
+			hitChecks[highlightedHit].setHighlighted(true);
+			if (lastHighlightedHit >= 0 && lastHits > 1 && lastHighlightedHit != highlightedHit) {
+				hitChecks[lastHighlightedHit].setHighlighted(false);
+			}
+		}
+		lastHighlightedHit = highlightedHit;
 	}
 
 }
