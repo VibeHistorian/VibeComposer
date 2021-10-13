@@ -532,6 +532,7 @@ public class VibeComposerGUI extends JFrame
 	//MidiHandler mh = new MidiHandler();
 	JCheckBox combineDrumTracks;
 	JCheckBox combineMelodyTracks;
+	public static CheckButton regenerateWhenValuesChange;
 
 
 	JButton compose;
@@ -897,7 +898,7 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 
 		JPanel loopBeatExtraSettingsPanel = new JPanel();
-		loopBeatCompose = new JCheckBox("Compose when Loop Beat ON", false);
+		loopBeatCompose = new JCheckBox("Compose On Loop Repeat", false);
 		loopBeatExtraSettingsPanel.add(loopBeatCompose);
 		extraSettingsPanel.add(loopBeatExtraSettingsPanel);
 
@@ -3452,6 +3453,8 @@ public class VibeComposerGUI extends JFrame
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
 		showScore = new CheckButton("Show Score Tab", false);
+
+		regenerateWhenValuesChange = new CheckButton("Change -> Regenerate", true);
 		/*showScorePicker = new ScrollComboBox<String>();
 		ScrollComboBox.addAll(
 				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },
@@ -3523,6 +3526,8 @@ public class VibeComposerGUI extends JFrame
 		JPanel playSettingsPanel = new JPanel();
 		playSettingsPanel.setOpaque(false);
 
+
+		playSettingsPanel.add(regenerateWhenValuesChange);
 		playSettingsPanel.add(showScore);
 		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
@@ -3839,7 +3844,7 @@ public class VibeComposerGUI extends JFrame
 		needToRecalculateSoloMutersAfterSequenceGenerated = true;
 	}
 
-	private void composeMidi(boolean regenerate) {
+	public void composeMidi(boolean regenerate) {
 		long systemTime = System.currentTimeMillis();
 		if (sequencer != null) {
 			sequencer.stop();

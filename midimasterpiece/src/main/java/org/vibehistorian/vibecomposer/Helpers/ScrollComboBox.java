@@ -9,10 +9,13 @@ import java.awt.event.MouseWheelListener;
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
 public class ScrollComboBox<T> extends JComboBox<T> {
 
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
+	private boolean mousePressed = false;
 
 	public ScrollComboBox() {
 		addMouseWheelListener(new MouseWheelListener() {
@@ -21,7 +24,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (!scrollEnabled || !isEnabled())
 					return;
-
+				mousePressed = true;
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
 						% getItemCount());
 				ItemEvent evnt = new ItemEvent(ScrollComboBox.this, ItemEvent.ITEM_STATE_CHANGED,
@@ -33,6 +36,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
+				mousePressed = true;
 				if (SwingUtilities.isRightMouseButton(evt)) {
 					if (!isEnabled()) {
 						return;
@@ -71,6 +75,11 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		if (isEnabled()) {
 			setSelectedItem(item);
 		}
+		if (isEnabled() && mousePressed
+				&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+		}
+		mousePressed = false;
 	}
 
 	public T getLastVal() {

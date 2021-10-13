@@ -444,6 +444,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
+		if (isEnabled() && !SwingUtilities.isMiddleMouseButton(e)
+				&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+		}
+
 		fine = false;
 		//System.out.println("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
 	}

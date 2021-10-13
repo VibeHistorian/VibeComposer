@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
@@ -84,6 +85,9 @@ public class KnobValuePopup extends CloseablePopup {
 						} else {
 							knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
 						}
+					}
+					if (VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 					}
 
 				}

@@ -170,17 +170,27 @@ public class VisualPatternPanel extends JPanel {
 					int mouseButt = e.getButton();
 					if (mouseButt == 1) {
 						mouseButton = -1;
+						if (isEnabled()
+								&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+							VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+						}
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
-						if (patternType.getVal() != RhythmPattern.CUSTOM) {
+						/*if (patternType.getVal() != RhythmPattern.CUSTOM) {
 							patternType.setVal(RhythmPattern.CUSTOM);
-						}
+						}*/
 					}
 				}
 
 				@Override
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
+
+					if (e.getButton() > 1 && isEnabled()
+							&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+					}
+
 					/*for (DrumPanel dp : VibeComposerGUI.drumPanels) {
 						if (dp.getComboPanel().needShift) {
 							dp.getComboPanel().reapplyShift();
