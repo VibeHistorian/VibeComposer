@@ -1487,6 +1487,7 @@ public class MidiGenerator implements JMC {
 		int[] pitches = new int[12];
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
+			n1.setPitch(n1.getPitch() + mp.getTranspose());
 			double adjDur = n1.getRhythmValue();
 			if ((durCounter + adjDur) > (currentChordDur + DBL_ERR)) {
 				chordCounter = (chordCounter + 1) % durations.size();
@@ -3709,7 +3710,10 @@ public class MidiGenerator implements JMC {
 			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
 					gc.getScaleMode().noteAdjustScale);
 		}
-		Mod.transpose(melodyPhrase, mp.getTranspose() + modTrans);
+		if (modTrans != 0) {
+			Mod.transpose(melodyPhrase, modTrans);
+		}
+
 		melodyPhrase.setStartTime(START_TIME_DELAY);
 		return melodyPhrase;
 	}
