@@ -205,15 +205,18 @@ public class ShowPanelBig extends JPanel {
 					sa.setNoteHeight(
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
+
+					//areaScrollPane.getVerticalScrollBar().setVisible(true);
 					//areaScrollPane.repaint();
-				}
-				if (e.isControlDown()) {
+				} else if (e.isControlDown()) {
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
 					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
 					//areaScrollPane.repaint();
+				} else {
+					// nothing
 				}
 			}
 		});

@@ -51,10 +51,10 @@ public class DrumDefaults {
 	static {
 		kickSettings = new DrumSettings();
 		kickSettings.setPatterns(
-				new RhythmPattern[] { ONEPER4, ONESIX, TRESILLO, ALT, RhythmPattern.CUSTOM });
-		kickSettings.setHits(new Integer[] { 8, 8, 8, 8, 16 });
-		kickSettings.setChords(new Integer[] { 1, 1, 1, 2, 1 });
-		kickSettings.setShift(new Integer[] { 0, 0, 0, 0, 0 });
+				new RhythmPattern[] { ONEPER4, ONESIX, TRESILLO, ALT, ALT, RhythmPattern.CUSTOM });
+		kickSettings.setHits(new Integer[] { 8, 8, 8, 8, 8, 16 });
+		kickSettings.setChords(new Integer[] { 1, 1, 1, 2, 1, 1 });
+		kickSettings.setShift(new Integer[] { 0, 0, 0, 0, 0, 0 });
 
 		snareSettings = new DrumSettings();
 		snareSettings.setPatterns(

@@ -622,6 +622,7 @@ public class VisualPatternPanel extends JPanel {
 			if (lastHighlightedHit >= 0) {
 				hitVelocities[lastHighlightedHit].setHighlighted(false);
 				hitChecks[lastHighlightedHit].setHighlighted(false);
+				lastHighlightedHit = -1;
 			}
 			return;
 		}

@@ -35,6 +35,9 @@ public class ColorCheckBox extends JCheckBox {
 
 	@Override
 	public void paintComponent(Graphics guh) {
+		if (guh == null) {
+			return;
+		}
 		Graphics2D g = (Graphics2D) guh;
 		//super.paintComponent(g);
 		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -67,7 +70,7 @@ public class ColorCheckBox extends JCheckBox {
 		g.setColor(Color.black);
 		g.drawRect(minX, 0, maxX, height);
 
-
+		g.dispose();
 	}
 
 	@Override
@@ -118,7 +121,7 @@ public class ColorCheckBox extends JCheckBox {
 		RepaintManager rm = RepaintManager.currentManager(this);
 		boolean b = rm.isDoubleBufferingEnabled();
 		rm.setDoubleBufferingEnabled(false);
-		paintImmediately(1, 1, this.getSize().width - 1, this.getSize().height - 1);
+		paintComponent(getGraphics());
 		rm.setDoubleBufferingEnabled(b);
 		/*if (highlighted) {
 			Timer timer = new Timer(120, new ActionListener() {
