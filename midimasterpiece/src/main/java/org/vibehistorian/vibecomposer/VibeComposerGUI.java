@@ -152,11 +152,11 @@ import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
-import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
@@ -3229,13 +3229,10 @@ public class VibeComposerGUI extends JFrame
 										sectionText.setText("End");
 									} else {
 										SwingUtilities.invokeLater(new Runnable() {
-
-											@Override
 											public void run() {
 												notifyVisualPatterns(val, sectIndex);
 											}
 										});
-
 
 										if (useArrangement.isSelected()) {
 											Section sec = null;
@@ -3304,7 +3301,8 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						try {
-							if (loopBeat.isSelected()) {
+							int tabIndex = instrumentTabPane.getSelectedIndex();
+							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)) {
 								sleep(5);
 								allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
 							} else {
@@ -3334,9 +3332,6 @@ public class VibeComposerGUI extends JFrame
 
 	private void notifyVisualPatterns(int val, int sectIndex) {
 		int tabIndex = instrumentTabPane.getSelectedIndex();
-		if (tabIndex < 2 || tabIndex > 4) {
-			return;
-		}
 
 		int measureStart = sliderMeasureStartTimes.get(sectIndex);
 		int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
@@ -3910,7 +3905,7 @@ public class VibeComposerGUI extends JFrame
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
 		reapplySolosMutes();
 
-		cleanUpUIAfterCompose();
+		cleanUpUIAfterCompose(regenerate);
 
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
@@ -3989,13 +3984,14 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void cleanUpUIAfterCompose() {
+	private void cleanUpUIAfterCompose(boolean regenerate) {
 		if (MelodyMidiDropPane.userMelody != null) {
 			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
 			setFixedLengthChords(MidiGenerator.chordInts.size());
 		}
 
-		if (MidiGenerator.TARGET_NOTES != null) {
+		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
+				&& MidiGenerator.TARGET_NOTES != null) {
 			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
 		}
 
@@ -4051,15 +4047,12 @@ public class VibeComposerGUI extends JFrame
 		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
 			if (melody1ForcePatterns.isSelected()) {
 				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
-						melodyPanels.get(0).getAlternatingRhythmChance(),
-						(melodyPanels.get(0).getPatternSeed() != 0)
-								? melodyPanels.get(0).getPatternSeed()
-								: lastRandomSeed);
+						melodyPanels.get(0).getAlternatingRhythmChance(), new Random().nextInt());
 				melodyPanels.get(0).setMelodyPatternOffsets(pat);
 			} else {
-				melodyPanels.forEach(e -> e.setMelodyPatternOffsets(
-						MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
-								(e.getPatternSeed() != 0) ? e.getPatternSeed() : lastRandomSeed)));
+				melodyPanels
+						.forEach(e -> e.setMelodyPatternOffsets(MelodyUtils.getRandomMelodyPattern(
+								e.getAlternatingRhythmChance(), new Random().nextInt())));
 			}
 		}
 

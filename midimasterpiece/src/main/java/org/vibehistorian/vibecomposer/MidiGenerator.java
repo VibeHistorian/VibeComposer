@@ -1449,8 +1449,8 @@ public class MidiGenerator implements JMC {
 	}
 
 	private Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
-			List<Double> durations, int measures, Section sec, Vector<Note> skeleton,
-			int notesSeedOffset, List<int[]> chords) {
+			List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
+			List<int[]> chords) {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
@@ -1573,6 +1573,8 @@ public class MidiGenerator implements JMC {
 				fullMelodyMap.get(chordCounter).add(n1);
 			}
 		}
+		List<Integer> firstNotePitches = fullMelodyMap.values().stream()
+				.map(e -> e.get(0).getPitch()).collect(Collectors.toList());
 
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
@@ -1635,7 +1637,15 @@ public class MidiGenerator implements JMC {
 			replaceAvoidNotes(fullMelodyMap, chords, mp.getPatternSeed(),
 					gc.getMelodyReplaceAvoidNotes());
 		}
-
+		// repair target notes
+		for (int i = 0; i < firstNotePitches.size(); i++) {
+			if (fullMelodyMap.get(i).size() > 0) {
+				Note n = fullMelodyMap.get(i).get(0);
+				if (n.getPitch() >= 0) {
+					n.setPitch(firstNotePitches.get(i));
+				}
+			}
+		}
 		// accent lengths of first notes in chord, if not paused and next note has different pitch
 		fullMelodyMap.values().forEach(e -> {
 			if (e.size() < 3) {
@@ -3672,8 +3682,7 @@ public class MidiGenerator implements JMC {
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
 		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
-				progressionDurations, measures, sec, skeletonNotes, notesSeedOffset,
-				actualProgression);
+				progressionDurations, sec, skeletonNotes, notesSeedOffset, actualProgression);
 
 		for (int i = 0; i < generatedRootProgression.size(); i++) {
 			for (int j = 0; j < MidiUtils.MINOR_CHORDS.size(); j++) {
@@ -3751,7 +3760,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							//LOGGER.debug("Bass #1 variation: " + var);
+							LOGGER.debug("Bass #1 variation: " + var);
 						}
 
 						switch (var) {
@@ -3873,7 +3882,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							//LOGGER.debug("Chord #" + cp.getOrder() + " variation: " + var);
+							LOGGER.debug("Chord #" + cp.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -4157,7 +4166,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							//LOGGER.debug("Arp #" + ap.getOrder() + " variation: " + var);
+							LOGGER.debug("Arp #" + ap.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -4347,7 +4356,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (o == measures - 1) {
-							//LOGGER.debug("Drum #" + dp.getOrder() + " variation: " + var);
+							LOGGER.debug("Drum #" + dp.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -4505,6 +4514,8 @@ public class MidiGenerator implements JMC {
 				variations.add(i);
 			}
 		}
+		LOGGER.debug("Generated variations for part: " + part + ", size: "
+				+ (variations != null ? variations.size() : "null"));
 		return variations;
 	}
 
