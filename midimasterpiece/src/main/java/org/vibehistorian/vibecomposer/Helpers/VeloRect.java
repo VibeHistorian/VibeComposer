@@ -214,7 +214,7 @@ public class VeloRect extends JComponent {
 		RepaintManager rm = RepaintManager.currentManager(this);
 		boolean b = rm.isDoubleBufferingEnabled();
 		rm.setDoubleBufferingEnabled(false);
-		paintImmediately(1, 1, this.getSize().width - 1, this.getSize().height - 1);
+		paintImmediately(0, 0, this.getSize().width, this.getSize().height);
 		rm.setDoubleBufferingEnabled(b);
 		/*if (highlighted) {
 			Timer timer = new Timer(120, new ActionListener() {

@@ -309,10 +309,10 @@ public class VibeComposerGUI extends JFrame
 	JPanel arrangementSettings;
 	KnobPanel arrangementVariationChance;
 	public static KnobPanel arrangementPartVariationChance;
-	JCheckBox arrangementCustom;
+	CheckButton arrangementCustom;
 	JTextField pieceLength;
 	RandomValueButton arrangementSeed;
-	JCheckBox useArrangement;
+	CheckButton useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	public static ScrollComboBox<String> arrSection;
 	JPanel arrangementMiddleColoredPanel;
@@ -527,7 +527,7 @@ public class VibeComposerGUI extends JFrame
 	MidiDevice device = null;
 
 	CheckButton showScore;
-	JCheckBox midiMode;
+	CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	//MidiHandler mh = new MidiHandler();
 	JCheckBox combineDrumTracks;
@@ -1965,7 +1965,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
 
-		useArrangement = new JCheckBox("ARRANGE", false);
+		useArrangement = new CheckButton("ARRANGE", false);
 		arrangementSettings.add(useArrangement);
 
 
@@ -2155,7 +2155,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementMiddleColoredPanel);
 
 
-		arrangementCustom = new JCheckBox("MANUAL", false);
+		arrangementCustom = new CheckButton("MANUAL", false);
 		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
@@ -3463,7 +3463,7 @@ public class VibeComposerGUI extends JFrame
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
 		loopBeatCount = new KnobPanel("", 16, 1, 16);
 
-		midiMode = new JCheckBox("MIDI Transmitter Mode", true);
+		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
 
 		midiMode.addActionListener(new ActionListener() {
