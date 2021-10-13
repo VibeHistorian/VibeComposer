@@ -28,7 +28,6 @@ public class CheckButton extends JButton {
 	public CheckButton(String name, boolean sel, Color opaqueColor) {
 
 		setText(name);
-		setSelected(sel);
 		if (opaqueColor != null) {
 			bgColor = opaqueColor;
 			setBackground(bgColor.darker().darker());
@@ -50,6 +49,7 @@ public class CheckButton extends JButton {
 			}
 
 		});
+		setSelected(sel);
 	}
 
 	public boolean isSelected() {

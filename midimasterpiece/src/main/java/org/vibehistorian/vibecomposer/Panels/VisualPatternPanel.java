@@ -20,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -172,7 +173,15 @@ public class VisualPatternPanel extends JPanel {
 						mouseButton = -1;
 						if (isEnabled()
 								&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
-							VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+							Timer tmr = new Timer(100, new ActionListener() {
+
+								@Override
+								public void actionPerformed(ActionEvent e) {
+									VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+								}
+							});
+							tmr.setRepeats(false);
+							tmr.start();
 						}
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
