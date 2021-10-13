@@ -74,7 +74,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private boolean showTextInKnob = false;
 	private String shownText = "";
-
+	private boolean regenerating = true;
 
 	public static boolean fine = true;
 	public static int fineStart = 50;
@@ -444,7 +444,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
-		if (isEnabled() && !SwingUtilities.isMiddleMouseButton(e)
+		if (isEnabled() && regenerating && !SwingUtilities.isMiddleMouseButton(e)
 				&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
@@ -632,5 +632,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setAllowValuesOutsideRange(boolean b) {
 		allowValuesOutsideRange = true;
+	}
+
+	public boolean isRegenerating() {
+		return regenerating;
+	}
+
+	public void setRegenerating(boolean regenerating) {
+		this.regenerating = regenerating;
 	}
 }

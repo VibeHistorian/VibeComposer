@@ -80,4 +80,8 @@ public class KnobPanel extends TransparentablePanel {
 		knob.setEnabled(!b);
 	}
 
+	public void setRegenerating(boolean b) {
+		knob.setRegenerating(b);
+	}
+
 }

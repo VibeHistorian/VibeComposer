@@ -16,6 +16,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
 	private boolean mousePressed = false;
+	private boolean regenerating = true;
 
 	public ScrollComboBox() {
 		addMouseWheelListener(new MouseWheelListener() {
@@ -90,5 +91,13 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		for (T c : choices) {
 			choice.addItem(c);
 		}
+	}
+
+	public boolean isRegenerating() {
+		return regenerating;
+	}
+
+	public void setRegenerating(boolean regenerating) {
+		this.regenerating = regenerating;
 	}
 }

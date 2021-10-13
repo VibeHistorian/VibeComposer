@@ -156,6 +156,7 @@ import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
@@ -915,6 +916,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel pauseBehaviorPanel = new JPanel();
 		pauseBehaviorLabel = new JLabel("Start From Pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>();
+		pauseBehaviorCombobox.setRegenerating(false);
 		pauseBehaviorBarCheckbox = new JCheckBox("Start From Bar", true);
 		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", false);
 		playheadSnapToBeatsCheckBox = new JCheckBox("Snap Start To Beat", true);
@@ -957,6 +959,7 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
 				keyChangeTypeSelection);
 		keyChangeTypeSelection.setVal("TWOFIVEONE");
+		keyChangeTypeSelection.setRegenerating(false);
 		keyChangeTypeSelection.addItemListener(this);
 
 		JPanel chordChoicePanel = new JPanel();
@@ -1187,6 +1190,7 @@ public class VibeComposerGUI extends JFrame
 		useUserMelody = new JCheckBox("<html>Use MIDI<br>Melody File</html>", true);
 		userMelodyScaleModeSelect = new ScrollComboBox<>();
 		userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
+		userMelodyScaleModeSelect.setRegenerating(false);
 		userMelodyScaleModeSelect.addItemListener(new ItemListener() {
 
 			@Override
@@ -1327,19 +1331,19 @@ public class VibeComposerGUI extends JFrame
 
 		randomChordDelay = new JCheckBox("Delay", false);
 		randomChordStrum = new JCheckBox("", true);
-		randomChordStruminess = new KnobPanel("Struminess", 50);
+		randomChordStruminess = new DetachedKnobPanel("Struminess", 50);
 		randomChordSplit = new JCheckBox("Use Split (ms)", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
-		randomChordSustainChance = new KnobPanel("Chord%", 25);
+		randomChordSustainChance = new DetachedKnobPanel("Chord%", 25);
 		randomChordSustainUseShortening = new JCheckBox("Vary Length", true);
-		randomChordExpandChance = new KnobPanel("Expand%", 50);
+		randomChordExpandChance = new DetachedKnobPanel("Expand%", 50);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
-		randomChordMaxSplitChance = new KnobPanel("Max Tran-<br>sition%", 25);
+		randomChordMaxSplitChance = new DetachedKnobPanel("Max Tran-<br>sition%", 25);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 30);
 		randomChordPattern = new JCheckBox("Patterns", true);
-		randomChordShiftChance = new KnobPanel("Shift%", 25);
-		randomChordMinVel = new KnobPanel("Min<br>Vel", 65, 0, 126);
-		randomChordMaxVel = new KnobPanel("Max<br>Vel", 90, 1, 127);
+		randomChordShiftChance = new DetachedKnobPanel("Shift%", 25);
+		randomChordMinVel = new DetachedKnobPanel("Min<br>Vel", 65, 0, 126);
+		randomChordMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
 
 		chordSettingsPanel.add(randomChordTranspose);
 		chordSettingsPanel.add(randomChordStrum);
@@ -1357,6 +1361,7 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsPanel.add(stretchLabel);
 		chordSettingsPanel.add(randomChordStretchType);
 		randomChordStretchPicker = new ScrollComboBox<>();
+		randomChordStretchPicker.setRegenerating(false);
 		ScrollComboBox.addAll(new Integer[] { 3, 4, 5, 6 }, randomChordStretchPicker);
 		randomChordStretchPicker.setVal(5);
 		chordSettingsPanel.add(randomChordStretchPicker);
@@ -1450,19 +1455,20 @@ public class VibeComposerGUI extends JFrame
 		randomArpHitsPicker = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, randomArpHitsPicker);
 		randomArpHitsPicker.setVal(4);
+		randomArpHitsPicker.setRegenerating(false);
 		randomArpHitsPerPattern = new JCheckBox("Random#", true);
 		randomArpAllSameInst = new JCheckBox("One Inst.", false);
 		randomArpAllSameHits = new JCheckBox("One #", true);
 		randomArpLimitPowerOfTwo = new JCheckBox("<html>Limit 2<sup>n</sup>", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
-		arpShiftChance = new KnobPanel("Shift%", 25);
+		arpShiftChance = new DetachedKnobPanel("Shift%", 25);
 		randomArpUseOctaveAdjustments = new JCheckBox("Rand. Oct.", false);
 		randomArpMaxSwing = new KnobPanel("Swing%", 50);
-		randomArpMaxRepeat = new KnobPanel("Max<br>Repeat", 2, 1, 4);
-		randomArpMinVel = new KnobPanel("Min<br>Vel", 65, 0, 126);
-		randomArpMaxVel = new KnobPanel("Max<br>Vel", 90, 1, 127);
-		randomArpMinLength = new KnobPanel("Min<br>Length", 66, 25, 200);
-		randomArpMaxLength = new KnobPanel("Max<br>Length", 133, 25, 200);
+		randomArpMaxRepeat = new DetachedKnobPanel("Max<br>Repeat", 2, 1, 4);
+		randomArpMinVel = new DetachedKnobPanel("Min<br>Vel", 65, 0, 126);
+		randomArpMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
+		randomArpMinLength = new DetachedKnobPanel("Min<br>Length", 66, 25, 200);
+		randomArpMaxLength = new DetachedKnobPanel("Max<br>Length", 133, 25, 200);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -1611,8 +1617,8 @@ public class VibeComposerGUI extends JFrame
 		randomDrumSlide = new JCheckBox("Random Delay", false);
 		randomDrumUseChordFill = new JCheckBox("Fills", true);
 		randomDrumPattern = new JCheckBox("Patterns", true);
-		randomDrumVelocityPatternChance = new KnobPanel("Dynamic%", 50);
-		randomDrumShiftChance = new KnobPanel("Shift%", 50);
+		randomDrumVelocityPatternChance = new DetachedKnobPanel("Dynamic%", 50);
+		randomDrumShiftChance = new DetachedKnobPanel("Shift%", 50);
 
 		drumsPanel.add(new JLabel("Max swing%+-"));
 		drumsPanel.add(randomDrumMaxSwingAdjust);
@@ -1982,6 +1988,7 @@ public class VibeComposerGUI extends JFrame
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
 		arrSection = new ScrollComboBox<>();
+		arrSection.setRegenerating(false);
 		arrSection.addItem(OMNI.EMPTYCOMBO);
 		arrSection.addActionListener(new ActionListener() {
 
@@ -2132,6 +2139,7 @@ public class VibeComposerGUI extends JFrame
 		copySelectedBtn.setMargin(new Insets(0, 0, 0, 0));
 		JButton removeSelectedBtn = makeButton("X", "ArrangementRemoveLast");
 		newSectionBox = new ScrollComboBox<>();
+		newSectionBox.setRegenerating(false);
 		newSectionBox.addItem(OMNI.EMPTYCOMBO);
 		for (SectionType type : Section.SectionType.values()) {
 			newSectionBox.addItem(type.toString());
@@ -2143,9 +2151,9 @@ public class VibeComposerGUI extends JFrame
 		//arrangementSettings.add(pieceLength);
 		arrangementSettings.add(randomizeArrangementOnCompose);
 
-		arrangementVariationChance = new KnobPanel("Section<br>Variations", 30);
+		arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
 		arrangementSettings.add(arrangementVariationChance);
-		arrangementPartVariationChance = new KnobPanel("Part<br>Variations", 25);
+		arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
 		arrangementSettings.add(arrangementPartVariationChance);
 		arrangementSettings.add(resetArrangementBtn);
 		arrangementSettings.add(arrangementPartInclusionBtn);
@@ -2715,6 +2723,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.setOpaque(false);
 		macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		fixedLengthChords = new ScrollComboBox<>();
+		fixedLengthChords.setRegenerating(false);
 		ScrollComboBox.addAll(new String[] { "4", "8", "RANDOM" }, fixedLengthChords);
 		setFixedLengthChords(4);
 		JLabel chordDurationFixedLabel = new JLabel("# of Chords");
@@ -3386,7 +3395,7 @@ public class VibeComposerGUI extends JFrame
 		transposeScore = new KnobPanel("Global Transpose<br>(Key)", 0, -24, 24);
 		controlSettingsPanel.add(transposeScore);
 
-		mainBpm = new KnobPanel("BPM", 80, bpmLow.getInt(), bpmHigh.getInt());
+		mainBpm = new DetachedKnobPanel("BPM", 80, bpmLow.getInt(), bpmHigh.getInt());
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
 
 		controlSettingsPanel.add(mainBpm);
@@ -3461,7 +3470,7 @@ public class VibeComposerGUI extends JFrame
 				showScorePicker);*/
 
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
-		loopBeatCount = new KnobPanel("", 16, 1, 16);
+		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
 
 		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -3478,6 +3487,7 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		midiModeDevices = new ScrollComboBox<String>();
+		midiModeDevices.setRegenerating(false);
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
 		for (int i = 0; i < infos.length; i++) {
