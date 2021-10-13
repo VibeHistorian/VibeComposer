@@ -48,7 +48,7 @@ public class ShowRulerBig extends JComponent {
 	private static final long serialVersionUID = 3220771981990129313L;
 	//attributes
 	private int startX;
-	public static int maxHeight = 20;
+	public static int maxHeight = 17;
 	private int timeSig = 2;
 	private ShowPanelBig sp;
 	private Font font = new Font("Helvetica", Font.PLAIN, 10);

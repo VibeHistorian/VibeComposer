@@ -30,6 +30,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -87,6 +88,9 @@ public class ShowPanelBig extends JPanel {
 
 	public ShowPanelBig(Dimension size) {
 		super();
+
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
 		// Because the ScrollPanel can only take one componenet 
 		// a panel called apn is created to hold all comoponenets
 		// then only pan is added to this classes ScrollPane
@@ -101,13 +105,23 @@ public class ShowPanelBig extends JPanel {
 		});
 		scoreBox.setMaximumSize(new Dimension(40, ShowRulerBig.maxHeight));
 
-
 		pan = new JPanel();
 		setOpaque(false);
 		pan.setOpaque(false);
 		this.setSize(size);
 		pan.setSize(size);
 		pan.setLayout(new BorderLayout());
+
+		JScrollPane horizontalPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(beatWidthBaseDefault, panelMaxHeight - 50);
+			}
+		};
+		horizontalPane.setViewportView(pan);
+		horizontalPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		horizontalPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+		horizontalPane.getHorizontalScrollBar().setUnitIncrement(16);
 
 
 		scorePartPanel = new JPanel();
@@ -178,24 +192,24 @@ public class ShowPanelBig extends JPanel {
 			scorePartPanel.add(soloMuterHighlight);
 		}
 
-		pan.add("North", scorePartPanel);
-
 		// add the score
 		sa = new ShowAreaBig(this); //score, maxWidth, maxParts);
 		sa.setVisible(true);
 
 		JPanel areaPanel = new JPanel();
-		areaPanel.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, ShowAreaBig.areaHeight));
+		areaPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
+				ShowAreaBig.areaHeight));
 		areaPanel.add(sa);
 
 		areaScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(ShowPanelBig.beatWidthBaseDefault + 35, 330);
+				return new Dimension(ShowPanelBig.beatWidthBase, 330);
 			}
 		};
 		areaScrollPane.setViewportView(areaPanel);
 		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		areaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		areaScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		areaScrollPane.addMouseWheelListener(new MouseWheelListener() {
 
@@ -207,14 +221,14 @@ public class ShowPanelBig extends JPanel {
 					setScore();
 
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
-					//areaScrollPane.repaint();
+					areaScrollPane.repaint();
 				} else if (e.isControlDown()) {
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
 					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
-					//areaScrollPane.repaint();
+					areaScrollPane.repaint();
 				} else {
 					// nothing
 				}
@@ -227,12 +241,15 @@ public class ShowPanelBig extends JPanel {
 		ruler = new ShowRulerBig(this);
 		ruler.setVisible(true);
 		JPanel rulerPanel = new JPanel();
-		rulerPanel.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, 25));
+		rulerPanel
+				.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight));
 		rulerPanel.add(ruler);
 		rulerPanel.setVisible(true);
 		pan.add("South", rulerPanel);
 		updatePanelHeight();
-		this.add(pan);
+		scorePartPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		this.add(scorePartPanel);
+		this.add(horizontalPane);
 
 		//getHAdjustable().setUnitIncrement(50); //set scroll speed
 		//getHAdjustable().setBlockIncrement(50);
@@ -327,11 +344,11 @@ public class ShowPanelBig extends JPanel {
 
 	public void update() {
 		pan.repaint();
-		sa.setSize(
-				(int) Math.round(
-						(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth),
-				panelHeight);
+		int sizeX = (int) Math
+				.round((ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
+		sa.setSize(sizeX, panelHeight);
 		sa.repaint();
+		ruler.setSize(sizeX, ShowRulerBig.maxHeight);
 		ruler.repaint();
 		this.repaint();
 		if (frame != null) {
