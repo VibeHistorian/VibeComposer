@@ -356,7 +356,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setPatternSeed(int patternSeed) {
-		this.patternSeed.setText(String.valueOf(patternSeed));
+		this.patternSeed.setValue(patternSeed);
 	}
 
 	public RhythmPattern getPattern() {

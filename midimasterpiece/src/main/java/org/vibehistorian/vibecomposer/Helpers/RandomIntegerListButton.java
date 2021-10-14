@@ -27,12 +27,17 @@ public class RandomIntegerListButton extends JButton {
 							|| textGenerator == null) {
 						return;
 					}
-					setText(textGenerator.apply(new Object()));
+					setValue(textGenerator.apply(new Object()));
 
 				} else if (SwingUtilities.isRightMouseButton(e)) {
-					setText(value);
+					setValue(value);
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
-					new ButtonIntegerListValuePopup(RandomIntegerListButton.this);
+					if (e.isControlDown()) {
+						setEnabled(!isEnabled());
+					} else if (isEnabled()) {
+						new ButtonIntegerListValuePopup(RandomIntegerListButton.this);
+					}
+
 				}
 			}
 		});
@@ -44,6 +49,9 @@ public class RandomIntegerListButton extends JButton {
 	}
 
 	public void setValue(String value) {
+		if (!isEnabled()) {
+			return;
+		}
 		setText(value);
 	}
 

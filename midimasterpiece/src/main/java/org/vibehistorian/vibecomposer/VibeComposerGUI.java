@@ -4984,13 +4984,13 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "ClearSeed") {
-			randomSeed.setText("0");
+			randomSeed.setValue(0);
 			chordPanels.forEach(e -> e.setPatternSeed(0));
 			arpPanels.forEach(e -> e.setPatternSeed(0));
 			drumPanels.forEach(e -> e.setPatternSeed(0));
 			melodyPanels.forEach(e -> e.setPatternSeed(0));
 			bassPanel.setPatternSeed(0);
-			arrangementSeed.setText("0");
+			arrangementSeed.setValue(0);
 		}
 
 
@@ -5725,7 +5725,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(guiConfig.getArrangementPartVariationChance());
 		arrangementScaleMidiVelocity.setSelected(guiConfig.isScaleMidiVelocityInArrangement());
-		arrangementSeed.setText("" + arrangement.getSeed());
+		arrangementSeed.setValue(arrangement.getSeed());
 		useArrangement.setSelected(guiConfig.isArrangementEnabled());
 		arrangementCustom.setSelected(true);
 

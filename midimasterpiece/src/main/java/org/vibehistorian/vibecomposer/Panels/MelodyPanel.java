@@ -199,7 +199,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public void setChordNoteChoices(List<Integer> val) {
-		this.noteTargets.setText(StringUtils.join(val, ","));
+		this.noteTargets.setValue(StringUtils.join(val, ","));
 	}
 
 	public List<Integer> getMelodyPatternOffsets() {
@@ -207,12 +207,12 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public void setMelodyPatternOffsets(List<Integer> val) {
-		this.patternStructure.setText(StringUtils.join(val, ","));
+		this.patternStructure.setValue(StringUtils.join(val, ","));
 	}
 
 	public void overridePatterns(MelodyPanel mp1) {
-		noteTargets.setText(mp1.noteTargets.getText());
-		patternStructure.setText(mp1.patternStructure.getText());
+		noteTargets.setValue(mp1.noteTargets.getText());
+		patternStructure.setValue(mp1.patternStructure.getText());
 		maxBlockChange.setInt(mp1.maxBlockChange.getInt());
 		blockJump.setInt(mp1.blockJump.getInt());
 		maxNoteExceptions.setInt(mp1.maxNoteExceptions.getInt());
