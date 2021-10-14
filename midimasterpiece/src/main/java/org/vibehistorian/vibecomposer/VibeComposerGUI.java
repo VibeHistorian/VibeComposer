@@ -3931,7 +3931,10 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.recalculateDurations(elongateMidi.getInt());
 			MidiGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
-			MidiGenerator.TARGET_NOTES = null;
+			MidiGenerator.TARGET_NOTES = (melody1ForcePatterns.isSelected()
+					&& !melodyPanels.get(0).getNoteTargetsButton().isEnabled())
+							? melodyPanels.get(0).getChordNoteChoices()
+							: null;
 
 			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
 

@@ -195,7 +195,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public List<Integer> getChordNoteChoices() {
-		return OMNI.parseIntsString(noteTargets.getText());
+		return OMNI.parseIntsString(noteTargets.getValue());
 	}
 
 	public void setChordNoteChoices(List<Integer> val) {
@@ -203,7 +203,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public List<Integer> getMelodyPatternOffsets() {
-		return OMNI.parseIntsString(patternStructure.getText());
+		return OMNI.parseIntsString(patternStructure.getValue());
 	}
 
 	public void setMelodyPatternOffsets(List<Integer> val) {
@@ -211,8 +211,8 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public void overridePatterns(MelodyPanel mp1) {
-		noteTargets.setValue(mp1.noteTargets.getText());
-		patternStructure.setValue(mp1.patternStructure.getText());
+		noteTargets.setValue(mp1.noteTargets.getValue());
+		patternStructure.setValue(mp1.patternStructure.getValue());
 		maxBlockChange.setInt(mp1.maxBlockChange.getInt());
 		blockJump.setInt(mp1.blockJump.getInt());
 		maxNoteExceptions.setInt(mp1.maxNoteExceptions.getInt());
@@ -296,6 +296,12 @@ public class MelodyPanel extends InstPanel {
 		this.leadChordsChance.setInt(val);
 	}
 
-
+	public RandomIntegerListButton getNoteTargetsButton() {
+		return noteTargets;
+	}
+	
+	public RandomIntegerListButton getPatternStructureButton() {
+		return patternStructure;
+	}
 }
 
