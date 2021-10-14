@@ -902,8 +902,8 @@ public class MidiGenerator implements JMC {
 		Map<Integer, List<Integer>> patterns = new HashMap<>();
 		for (Integer chKey : fullMelodyMap.keySet()) {
 			//LOGGER.debug("chkey: " + chKey);
-			patterns.put(chKey,
-					patternFromNotes(fullMelodyMap.get(chKey), 1, progressionDurations.get(chKey)));
+			patterns.put(chKey, patternFromNotes(fullMelodyMap.get(chKey), 1,
+					progressionDurations.get(chKey % progressionDurations.size())));
 			//LOGGER.debug(StringUtils.join(patterns.get(chKey), ","));
 		}
 		//LOGGER.debug(StringUtils.join(pattern, ", "));
@@ -1450,7 +1450,7 @@ public class MidiGenerator implements JMC {
 
 	private Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
 			List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
-			List<int[]> chords) {
+			List<int[]> chords, int measures) {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
@@ -1473,10 +1473,11 @@ public class MidiGenerator implements JMC {
 		int splitChance = mp.getSplitChance();
 		Vector<Note> fullMelody = new Vector<>();
 		Map<Integer, List<Note>> fullMelodyMap = new HashMap<>();
-		for (int i = 0; i < durations.size(); i++) {
+		for (int i = 0; i < durations.size() * measures; i++) {
 			fullMelodyMap.put(i, new Vector<>());
 		}
 		int chordCounter = 0;
+		int measureCounter = 0;
 		double durCounter = 0.0;
 		double currentChordDur = durations.get(0);
 
@@ -1492,6 +1493,7 @@ public class MidiGenerator implements JMC {
 			if ((durCounter + adjDur) > (currentChordDur + DBL_ERR)) {
 				chordCounter = (chordCounter + 1) % durations.size();
 				if (chordCounter == 0) {
+					measureCounter++;
 					// when measure resets
 					if (variationGenerator.nextInt(100) < gc.getArrangementPartVariationChance()) {
 						splitChance = (int) (splitChance * 1.2);
@@ -1555,22 +1557,22 @@ public class MidiGenerator implements JMC {
 				Note n1split1 = new Note(pitch1, swingDuration1, velocity);
 				Note n1split2 = new Note(pitch2, swingDuration2, velocity - 10);
 				fullMelody.add(n1split1);
-				fullMelodyMap.get(chordCounter).add(n1split1);
+				fullMelodyMap.get(chordCounter + chords.size() * measureCounter).add(n1split1);
 
 				fullMelody.add(n1split2);
-				fullMelodyMap.get(chordCounter).add(n1split2);
+				fullMelodyMap.get(chordCounter + chords.size() * measureCounter).add(n1split2);
 
 				if (multiplier < 0.4) {
 					int pitch3 = (splitGenerator.nextBoolean()) ? pitch1 : pitch2;
 					double swingDuration3 = swingDuration1;
 					Note n1split3 = new Note(pitch3, swingDuration3, velocity - 20);
 					fullMelody.add(n1split3);
-					fullMelodyMap.get(chordCounter).add(n1split3);
+					fullMelodyMap.get(chordCounter + chords.size() * measureCounter).add(n1split3);
 				}
 
 			} else {
 				fullMelody.add(n1);
-				fullMelodyMap.get(chordCounter).add(n1);
+				fullMelodyMap.get(chordCounter + chords.size() * measureCounter).add(n1);
 			}
 		}
 		List<Integer> firstNotePitches = fullMelodyMap.values().stream()
@@ -1859,7 +1861,8 @@ public class MidiGenerator implements JMC {
 			int found = 0;
 			for (int chordIndex = 0; chordIndex < chordSize; chordIndex++) {
 				List<Note> notes = fullMelodyMap.get(chordIndex);
-				List<Integer> chordNotes = MidiUtils.chordToPitches(chords.get(chordIndex));
+				List<Integer> chordNotes = MidiUtils
+						.chordToPitches(chords.get(chordIndex % chords.size()));
 				for (Note n : notes) {
 					if (chordNotes.contains(n.getPitch() % 12)) {
 						found++;
@@ -1879,7 +1882,8 @@ public class MidiGenerator implements JMC {
 					}
 					int maxDifferenceForThisChord = Math.max(1, (difference + 4) / (chordSize));
 					List<Note> notes = fullMelodyMap.get(chordIndex);
-					List<Integer> chordNotes = MidiUtils.chordToPitches(chords.get(chordIndex));
+					List<Integer> chordNotes = MidiUtils
+							.chordToPitches(chords.get(chordIndex % chords.size()));
 
 					List<Note> sortedNotes = new ArrayList<>(notes);
 					Collections.sort(sortedNotes, (e1, e2) -> MidiUtils
@@ -1911,7 +1915,8 @@ public class MidiGenerator implements JMC {
 			int randomSeed, int notesToAvoid) {
 		Random rand = new Random(randomSeed);
 		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
-			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i), notesToAvoid);
+			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i % chords.size()),
+					notesToAvoid);
 			//LOGGER.debug(StringUtils.join(avoidNotes, ","));
 			List<Note> notes = fullMelodyMap.get(i);
 			for (int j = 0; j < notes.size(); j++) {
@@ -3682,13 +3687,15 @@ public class MidiGenerator implements JMC {
 					generatedRootProgression, measures, notesSeedOffset, sec, variations);
 		}
 		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
-				progressionDurations, sec, skeletonNotes, notesSeedOffset, actualProgression);
+				progressionDurations, sec, skeletonNotes, notesSeedOffset, actualProgression,
+				measures);
 
-		for (int i = 0; i < generatedRootProgression.size(); i++) {
+		for (int i = 0; i < generatedRootProgression.size() * measures; i++) {
 			for (int j = 0; j < MidiUtils.MINOR_CHORDS.size(); j++) {
 				int[] minorChord = MidiUtils.mappedChord(MidiUtils.MINOR_CHORDS.get(j));
 				boolean isMinor = Arrays.equals(MidiUtils.normalizeChord(minorChord),
-						MidiUtils.normalizeChord(generatedRootProgression.get(i)));
+						MidiUtils.normalizeChord(
+								generatedRootProgression.get(i % generatedRootProgression.size())));
 				if (isMinor) {
 					MidiUtils.transposeNotes(fullMelodyMap.get(i), ScaleMode.IONIAN.noteAdjustScale,
 							MidiUtils.adjustScaleByChord(ScaleMode.IONIAN.noteAdjustScale,

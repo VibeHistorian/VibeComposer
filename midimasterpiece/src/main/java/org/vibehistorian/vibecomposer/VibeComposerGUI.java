@@ -1218,7 +1218,7 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
+		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", false);
 		combineMelodyTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -3333,7 +3333,8 @@ public class VibeComposerGUI extends JFrame
 	private void notifyVisualPatterns(int val, int sectIndex) {
 		int tabIndex = instrumentTabPane.getSelectedIndex();
 
-		int measureStart = sliderMeasureStartTimes.get(sectIndex);
+		int measureStart = sliderMeasureStartTimes
+				.get(sectIndex < sliderMeasureStartTimes.size() - 1 ? sectIndex : 0);
 		int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
 		int beatChordNum = 0;
 		int bfsiEnd = 0;

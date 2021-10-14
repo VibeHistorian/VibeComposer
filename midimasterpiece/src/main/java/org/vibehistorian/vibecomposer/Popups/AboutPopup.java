@@ -36,7 +36,7 @@ public class AboutPopup extends CloseablePopup {
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		frame.add(scroll);
 		frame.pack();
-		//frame.setVisible(true);
+		frame.setVisible(true);
 
 		System.out.println("Opened About page!");
 	}
