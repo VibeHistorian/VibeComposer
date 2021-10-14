@@ -320,7 +320,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> newSectionBox;
 
 	// instrument scrollers
-	JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
+	public static JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
 	public static JScrollPane scoreScrollPane;
 	public static ShowPanelBig scorePanel;
 	public static Dimension scrollPaneDimension = new Dimension(1600, 400);
