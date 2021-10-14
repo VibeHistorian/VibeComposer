@@ -563,6 +563,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel tipLabel;
 	public static JLabel currentChords = new JLabel("Chords:[]");
 	JLabel messageLabel;
+	ScrollComboBox<String> presetLoadBox;
 	VeloRect globalVolSlider;
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
@@ -880,7 +881,28 @@ public class VibeComposerGUI extends JFrame
 		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		mainButtonsPanel.add(messageLabel);
 
+		presetLoadBox = new ScrollComboBox<String>();
+		presetLoadBox.setEditable(true);
+		presetLoadBox.addItem(OMNI.EMPTYCOMBO);
+		mainButtonsPanel.add(presetLoadBox);
+		mainButtonsPanel.add(makeButton("Load Preset", e -> loadPreset()));
+		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
+
 		everythingPanel.add(mainButtonsPanel, constraints);
+	}
+
+	private void loadPreset() {
+		String presetName = presetLoadBox.getVal();
+		// check if file exists | special case: --- should load new GUIConfig()
+
+		// if yes, load xml and reset all seeds
+	}
+
+	private void savePreset() {
+		String presetName = presetLoadBox.getVal();
+		// check if file exists
+
+		// if not, save preset into "Presets" folder
 	}
 
 	private void initExtraSettings() {
