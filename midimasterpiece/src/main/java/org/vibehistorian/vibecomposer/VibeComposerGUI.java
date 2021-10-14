@@ -196,6 +196,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
+	private static final String PRESET_FOLDER = "presets";
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
@@ -795,6 +796,12 @@ public class VibeComposerGUI extends JFrame
 		switchDarkMode();
 		pack();
 		LOGGER.info("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
+
+		if (presetLoadBox.getVal().equalsIgnoreCase("default")) {
+			loadPreset();
+		}
+
+
 		setVisible(true);
 		repaint();
 
@@ -884,6 +891,26 @@ public class VibeComposerGUI extends JFrame
 		presetLoadBox = new ScrollComboBox<String>();
 		presetLoadBox.setEditable(true);
 		presetLoadBox.addItem(OMNI.EMPTYCOMBO);
+		File folder = new File(PRESET_FOLDER);
+		if (folder.exists()) {
+			File[] listOfFiles = folder.listFiles();
+			for (File f : listOfFiles) {
+				if (f.isFile()) {
+					String fileName = f.getName();
+					int pos = fileName.lastIndexOf(".");
+					if (pos > 0 && pos < (fileName.length() - 1)) {
+						fileName = fileName.substring(0, pos);
+					}
+
+					presetLoadBox.addItem(fileName);
+					if (fileName.equalsIgnoreCase("default")) {
+						presetLoadBox.setVal(fileName);
+					}
+				}
+			}
+		}
+
+
 		mainButtonsPanel.add(presetLoadBox);
 		mainButtonsPanel.add(makeButton("Load Preset", e -> loadPreset()));
 		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
@@ -892,17 +919,43 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void loadPreset() {
-		String presetName = presetLoadBox.getVal();
-		// check if file exists | special case: --- should load new GUIConfig()
+		String presetName = (String) presetLoadBox.getEditor().getItem();
+		LOGGER.info("Trying to load preset: " + presetName);
 
-		// if yes, load xml and reset all seeds
+		if (OMNI.EMPTYCOMBO.equalsIgnoreCase(presetName)) {
+			return;
+		} else {
+			// check if file exists | special case: --- should load new GUIConfig()
+			File loadedFile = new File(PRESET_FOLDER + "/" + presetName + ".xml");
+			if (loadedFile.exists()) {
+				try {
+					guiConfig = unmarshall(loadedFile);
+					copyConfigToGUI();
+					clearAllSeeds();
+					arrangementCustom.setSelected(false);
+				} catch (JAXBException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return;
+				}
+			}
+		}
+
+		LOGGER.info("Loaded preset: " + presetName);
 	}
 
 	private void savePreset() {
-		String presetName = presetLoadBox.getVal();
-		// check if file exists
+		String presetName = (String) presetLoadBox.getEditor().getItem();
+		LOGGER.info("Trying to save preset: " + presetName);
+		if (!StringUtils.isAlphanumeric(presetName)) {
+			return;
+		}
+		File makeSavedDir = new File(PRESET_FOLDER);
+		makeSavedDir.mkdir();
 
-		// if not, save preset into "Presets" folder
+		String filePath = PRESET_FOLDER + "/" + presetName + ".xml";
+		saveGuiConfigFileByFilePath(filePath, true);
+		presetLoadBox.addItem(presetName);
 	}
 
 	private void initExtraSettings() {
@@ -3442,7 +3495,7 @@ public class VibeComposerGUI extends JFrame
 		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
 		JButton copySeed = makeButton("Copy seed", "CopySeed");
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
-		JButton clearSeed = makeButton("Clear All Seeds", "ClearSeed");
+		JButton clearSeed = makeButton("Clear All Seeds", e -> clearAllSeeds());
 
 		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
 
@@ -4853,41 +4906,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand().startsWith("Save ")) {
-			if (currentMidi != null) {
-				LOGGER.info(("Saving file: " + currentMidi.getName()));
-
-				Date date = new Date();
-				String[] starSplit = ae.getActionCommand().split(" ");
-				if (starSplit.length == 1) {
-					LOGGER.info(("WRONG SAVE COMMAND: " + ae.getActionCommand()));
-					return;
-				}
-				String rating = starSplit[1].substring(0, 1);
-				SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-				f.applyPattern("yyMMdd-HH-mm-ss");
-
-				String ratingDirectory = "/saved_" + rating + "star/";
-
-				File makeSavedDir = new File(MIDIS_FOLDER + ratingDirectory);
-				makeSavedDir.mkdir();
-
-				String soundbankLoadedString = (isSoundbankSynth) ? "SB_" : "";
-
-				String finalFilePath = currentMidi.getParent() + ratingDirectory + f.format(date)
-						+ "_" + soundbankLoadedString + currentMidi.getName();
-
-				File savedMidi = new File(finalFilePath);
-				try {
-					FileUtils.copyFile(currentMidi, savedMidi);
-					copyGUItoConfig();
-					marshal(finalFilePath);
-				} catch (IOException | JAXBException e) {
-					// Auto-generated catch block
-					e.printStackTrace();
-				}
-			} else {
-				LOGGER.info(("currentMidi is NULL!"));
-			}
+			saveGuiConfigFile(ae.getActionCommand());
 		}
 
 		if (ae.getActionCommand() == "DrumSave") {
@@ -5006,16 +5025,6 @@ public class VibeComposerGUI extends JFrame
 			String str = StringUtils.join(MidiGenerator.chordInts, ",");
 			userChords.setText(str);
 			LOGGER.info(("Copied chords: " + str));
-		}
-
-		if (ae.getActionCommand() == "ClearSeed") {
-			randomSeed.setValue(0);
-			chordPanels.forEach(e -> e.setPatternSeed(0));
-			arpPanels.forEach(e -> e.setPatternSeed(0));
-			drumPanels.forEach(e -> e.setPatternSeed(0));
-			melodyPanels.forEach(e -> e.setPatternSeed(0));
-			bassPanel.setPatternSeed(0);
-			arrangementSeed.setValue(0);
 		}
 
 
@@ -5191,6 +5200,64 @@ public class VibeComposerGUI extends JFrame
 		LOGGER.info("Finished '" + ae.getActionCommand() + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
+	}
+
+	private void clearAllSeeds() {
+		randomSeed.setValue(0);
+		chordPanels.forEach(e -> e.setPatternSeed(0));
+		arpPanels.forEach(e -> e.setPatternSeed(0));
+		drumPanels.forEach(e -> e.setPatternSeed(0));
+		melodyPanels.forEach(e -> e.setPatternSeed(0));
+		bassPanel.setPatternSeed(0);
+		arrangementSeed.setValue(0);
+	}
+
+	private void saveGuiConfigFile(String actionCommand) {
+		if (currentMidi != null) {
+			LOGGER.info(("Saving file: " + currentMidi.getName()));
+
+			Date date = new Date();
+			String[] starSplit = actionCommand.split(" ");
+			if (starSplit.length == 1) {
+				LOGGER.info(("WRONG SAVE COMMAND: " + actionCommand));
+				return;
+			}
+			String rating = starSplit[1].substring(0, 1);
+			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+			f.applyPattern("yyMMdd-HH-mm-ss");
+
+			String ratingDirectory = "/saved_" + rating + "star/";
+
+			File makeSavedDir = new File(MIDIS_FOLDER + ratingDirectory);
+			makeSavedDir.mkdir();
+
+			String soundbankLoadedString = (isSoundbankSynth) ? "SB_" : "";
+
+			String finalFilePath = currentMidi.getParent() + ratingDirectory + f.format(date) + "_"
+					+ soundbankLoadedString + currentMidi.getName();
+
+			File savedMidi = new File(finalFilePath);
+			try {
+				FileUtils.copyFile(currentMidi, savedMidi);
+				copyGUItoConfig();
+				marshal(finalFilePath, false);
+			} catch (IOException | JAXBException e) {
+				// Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			LOGGER.info(("currentMidi is NULL!"));
+		}
+	}
+
+	private void saveGuiConfigFileByFilePath(String filePath, boolean isXmlPath) {
+		try {
+			copyGUItoConfig();
+			marshal(filePath, isXmlPath);
+		} catch (IOException | JAXBException e) {
+			// Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void startMidi() {
@@ -5587,6 +5654,7 @@ public class VibeComposerGUI extends JFrame
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
 		wrapper.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
 		mar.marshal(wrapper, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
+		LOGGER.info("File saved: " + path);
 	}
 
 	public void unmarshallDrums(File f) throws JAXBException, IOException {
@@ -5602,14 +5670,16 @@ public class VibeComposerGUI extends JFrame
 		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
 	}
 
-	public void marshal(String path) throws JAXBException, IOException {
+	public void marshal(String path, boolean isXmlPath) throws JAXBException, IOException {
 		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 		f.applyPattern("yyMMdd-hh-mm-ss");
 		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
-		mar.marshal(guiConfig, new File(path.substring(0, path.length() - 4) + "-guiConfig.xml"));
+		mar.marshal(guiConfig, isXmlPath ? new File(path)
+				: new File(path.substring(0, path.length() - 4) + "-guiConfig.xml"));
+		LOGGER.info("File saved: " + path);
 	}
 
 	public GUIConfig unmarshall(File f) throws JAXBException, IOException {
@@ -5632,7 +5702,7 @@ public class VibeComposerGUI extends JFrame
 		arrangement.setFromModel(scrollableArrangementTable);
 		boolean overrideSuccessful = actualArrangement.setFromActualTable(
 				scrollableArrangementActualTable, false) && arrangementCustom.isSelected();
-		LOGGER.info(("OVERRIDE OK?: " + overrideSuccessful));
+		LOGGER.debug(("OVERRIDE OK?: " + overrideSuccessful));
 		if (overrideSuccessful) {
 			arrangement.setOverridden(true);
 		} else {
