@@ -567,6 +567,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel messageLabel;
 	ScrollComboBox<String> presetLoadBox;
 	VeloRect globalVolSlider;
+	VeloRect globalReverbSlider;
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
 	public static boolean needToRecalculateSoloMuters = false;
@@ -856,10 +857,13 @@ public class VibeComposerGUI extends JFrame
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
 
 		globalVolSlider = new VeloRect(0, 150, 100);
-		globalVolSlider.setDefaultValue(100);
+
+		globalReverbSlider = new VeloRect(0, 127, 64);
 
 		mainButtonsPanel.add(new JLabel("Vol."));
 		mainButtonsPanel.add(globalVolSlider);
+		mainButtonsPanel.add(new JLabel("Rv."));
+		mainButtonsPanel.add(globalReverbSlider);
 
 		globalSoloMuter = new SoloMuter(-1, SoloMuter.Type.GLOBAL);
 
@@ -1352,8 +1356,10 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setMidiChannel(i + 6);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
+					melodyPanel.getPanSlider().setValue(75);
 				} else {
 					melodyPanel.setTranspose(-12);
+					melodyPanel.getPanSlider().setValue(25);
 				}
 			} else {
 				melodyPanel.setPauseChance(10);
@@ -3681,15 +3687,21 @@ public class VibeComposerGUI extends JFrame
 								}
 								double vol = panels.get(i).getVolSlider().getValue() / 100.0;
 								int channel = panels.get(i).getMidiChannel() - 1;
-								sendVolumeAndReverbMessage(vol, vol, channel);
+								sendVolumeMessage(vol, channel);
+								sendReverbMessage(1.0, channel);
+								sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
 							}
 						}
 						double drumVol = drumVolumeSlider.getValue() / 100.0;
-						sendVolumeAndReverbMessage(drumVol, drumVol / 2, 9);
+						sendVolumeMessage(drumVol, 9);
+						sendReverbMessage(0.5, 9);
+						sendPanMessage(50, 9);
 					} else {
 						for (int i = 0; i < 16; i++) {
 							double vol = 1.0;
-							sendVolumeAndReverbMessage(vol, vol / 2, i);
+							sendVolumeMessage(vol, i);
+							sendReverbMessage(0.5, i);
+							sendPanMessage(50, i);
 						}
 					}
 					try {
@@ -3705,29 +3717,29 @@ public class VibeComposerGUI extends JFrame
 		cycle.start();
 	}
 
-	protected void sendVolumeAndReverbMessage(double vol, double reverb, int channel) {
+	protected void sendPanMessage(int pan100, int channel) {
+		int pan127 = OMNI.clampVel(pan100 * 127 / 100);
+		sendMidiCcMessage(pan127, channel, 10);
+	}
+
+	protected void sendVolumeMessage(double volMultiplier, int channel) {
+		int vol = OMNI.clampVel(volMultiplier * globalVolSlider.getValue() * 127 / 100.0);
+		sendMidiCcMessage(vol, channel, 7);
+	}
+
+	protected void sendReverbMessage(double reverbMultiplier, int channel) {
+		int reverb = OMNI.clampVel(reverbMultiplier * globalReverbSlider.getValue() * 127 / 100.0);
+		sendMidiCcMessage(reverb, channel, 91);
+	}
+
+	protected void sendMidiCcMessage(int value, int channel, int midiCc) {
 		try {
-
-			vol = OMNI.clampVel(vol * globalVolSlider.getValue() * 127 / 100);
-			reverb = OMNI.clampVel(reverb * globalVolSlider.getValue() * 127 / 100);
-
 			ShortMessage volumeMessage = new ShortMessage();
-
-			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 7, (int) vol);
+			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, midiCc, value);
 
 			if (midiMode.isSelected() && device != null) {
 				device.getReceiver().send(volumeMessage, -1);
-				if (device.getDeviceInfo() != null
-						&& device.getDeviceInfo().getName().contains("Gervill")) {
-					volumeMessage = new ShortMessage();
-					volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91,
-							(int) reverb);
-					device.getReceiver().send(volumeMessage, -1);
-				}
 			} else if (synth != null && synth.isOpen()) {
-				synth.getReceiver().send(volumeMessage, -1);
-				volumeMessage = new ShortMessage();
-				volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, 91, (int) reverb);
 				synth.getReceiver().send(volumeMessage, -1);
 			}
 		} catch (InvalidMidiDataException | MidiUnavailableException e) {
@@ -5190,9 +5202,11 @@ public class VibeComposerGUI extends JFrame
 			switch (instrumentTabPane.getSelectedIndex()) {
 			case 2:
 				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+				newPanel.setPanByOrder(5);
 				break;
 			case 3:
 				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
+				newPanel.setPanByOrder(7);
 				break;
 			case 4:
 				break;
@@ -6537,6 +6551,7 @@ public class VibeComposerGUI extends JFrame
 
 			if (needNewChannel) {
 				cp.setMidiChannel(11 + (cp.getPanelOrder() - 1) % 5);
+				cp.setPanByOrder(5);
 			}
 		}
 
@@ -6762,6 +6777,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			if (needNewChannel) {
 				ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);
+				ap.setPanByOrder(7);
 			}
 		}
 

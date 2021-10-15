@@ -100,6 +100,7 @@ public abstract class InstPanel extends JPanel {
 	protected CheckButton muteInst = new CheckButton("Excl.", false);
 
 	protected VeloRect volSlider = new VeloRect(0, 100, 100);
+	protected VeloRect panSlider = new VeloRect(0, 100, 50);
 
 	protected ScrollComboBox<Integer> midiChannel = new ScrollComboBox<>();
 
@@ -130,11 +131,12 @@ public abstract class InstPanel extends JPanel {
 		//volSlider.setValue(100);
 		//volSlider.setOrientation(JSlider.VERTICAL);
 		volSlider.setPreferredSize(new Dimension(15, 35));
+		panSlider.setPreferredSize(new Dimension(15, 30));
 		//volSlider.setPaintTicks(true);
 
 		minMaxVelSlider.setName("Velocity range");
 		setVelocityMax(90);
-		setVelocityMin(63);
+		setVelocityMin(64);
 
 		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		stretchPanel.setMaximumSize(new Dimension(3000, 50));
@@ -627,5 +629,23 @@ public abstract class InstPanel extends JPanel {
 		getSoloMuter().setEnabled(b);
 		muteInst.setEnabled(b);
 		volSlider.setEnabled(b);
+	}
+
+	public VeloRect getPanSlider() {
+		return panSlider;
+	}
+
+	public void setPanSlider(VeloRect panSlider) {
+		this.panSlider = panSlider;
+	}
+
+	public void setPanByOrder(int panelLimit) {
+		setPanByOrder(getPanelOrder(), panelLimit);
+	}
+
+	public void setPanByOrder(int order, int panelLimit) {
+		order--;
+		getPanSlider().setValue(
+				50 + (order % 2 == 0 ? 1 : -1) * ((order - 1) % panelLimit) * (49 / panelLimit));
 	}
 }

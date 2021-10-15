@@ -944,7 +944,7 @@ public class MidiGenerator implements JMC {
 				pattern.set(i, 1 - pattern.get(i));
 			}
 		}
-		//LOGGER.debug(StringUtils.join(pattern, ", "));
+		LOGGER.debug("Melody note pattern: " + StringUtils.join(pattern, ", "));
 		return pattern;
 	}
 

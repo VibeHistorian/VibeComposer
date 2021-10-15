@@ -28,6 +28,7 @@ public class ArpPanel extends InstPanel {
 		initDefaults(l);
 		volSlider.setDefaultValue(70);
 		this.add(volSlider);
+		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(3, SoloMuter.Type.SINGLE);

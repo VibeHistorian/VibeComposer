@@ -42,7 +42,7 @@ public class VeloRect extends JComponent {
 		this.min = min;
 		this.max = max;
 		this.val = currentVal;
-		this.defaultVal = 50;
+		this.defaultVal = currentVal;
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {

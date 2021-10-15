@@ -48,6 +48,7 @@ public class MelodyPanel extends InstPanel {
 		setVelocityMin(80);
 		setVelocityMax(105);
 		this.add(volSlider);
+		this.add(panSlider);
 		/*this.add(new JLabel("#"));
 		this.add(panelOrder);*/
 		this.add(new JLabel("#"));
@@ -299,7 +300,7 @@ public class MelodyPanel extends InstPanel {
 	public RandomIntegerListButton getNoteTargetsButton() {
 		return noteTargets;
 	}
-	
+
 	public RandomIntegerListButton getPatternStructureButton() {
 		return patternStructure;
 	}

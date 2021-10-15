@@ -142,7 +142,7 @@ public class VisualPatternPanel extends JPanel {
 			final int fI = i;
 			truePattern.add(0);
 			hitChecks[i] = new ColorCheckBox();
-			hitVelocities[i] = new VeloRect(0, 127, 63);
+			hitVelocities[i] = new VeloRect(0, 127, 64);
 			//hitVelocities[i].setDefaultSize(new Dimension(CheckBoxIcon.width, CheckBoxIcon.width));
 			hitVelocities[i].setVisible(false);
 			//hitChecks[i].setBackground(new Color(128, 128, 128));

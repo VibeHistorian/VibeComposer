@@ -47,6 +47,7 @@ public class ChordPanel extends InstPanel {
 		initDefaults(l);
 		volSlider.setDefaultValue(60);
 		this.add(volSlider);
+		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
