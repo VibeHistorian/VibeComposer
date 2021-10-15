@@ -107,7 +107,7 @@ public class Rhythm {
 		return durations;
 	}
 
-	public List<Double> regenerateDurations(int maxSameDurAllowed) {
+	public List<Double> regenerateDurations(int maxSameDurAllowed, double shortestNote) {
 		Random generator = new Random(randomSeed);
 		durations = new ArrayList<>();
 		double durationSum = 0;
@@ -118,8 +118,10 @@ public class Rhythm {
 		//System.out.println("Max same: " + maxSameDurAllowed);
 		//System.out.println("Weights: " + Arrays.toString(durationWeights));
 		//System.out.println("Dur pool: " + Arrays.toString(durationPool));
+		int longestDurIndex = 0;
+		double longestDur = 0.0;
 		while (durationSum < durationLimit - MidiGenerator.DBL_ERR) {
-			double dur = MidiGenerator.Durations.EIGHTH_NOTE / 4.0;
+			double dur = shortestNote;
 			int chance = generator.nextInt(100);
 			int chosenIndex = 0;
 			boolean lastNote = false;
@@ -127,6 +129,12 @@ public class Rhythm {
 				if (i < (durationPool.length - 1) && (durationPool[i + 1] > (durationLimit
 						- durationSum + MidiGenerator.DBL_ERR))) {
 					dur = durationLimit - durationSum;
+					if (dur < shortestNote - MidiGenerator.DBL_ERR && durations.size() > 0) {
+						longestDur = longestDur - shortestNote + dur;
+						System.out.println(longestDurIndex + ", " + longestDur);
+						durations.set(longestDurIndex, longestDur);
+						dur = shortestNote;
+					}
 					lastNote = true;
 					break;
 				}
@@ -155,6 +163,10 @@ public class Rhythm {
 					|| retryCounter == maxRetry) {
 				durationSum += dur;
 				durations.add(dur);
+				if (dur > longestDur) {
+					longestDur = dur;
+					longestDurIndex = durations.size() - 1;
+				}
 				if (retryCounter == maxRetry) {
 					System.out.println("P A N I K");
 					retryCounter = 0;

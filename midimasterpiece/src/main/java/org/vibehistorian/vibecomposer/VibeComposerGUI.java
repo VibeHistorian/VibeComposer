@@ -197,6 +197,7 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 	private static final String PRESET_FOLDER = "presets";
+	private static final String EXPORT_FOLDER = "exports";
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
@@ -4986,7 +4987,9 @@ public class VibeComposerGUI extends JFrame
 					String soundbankOptional = (soundfont != null) ? "SB_" : "";
 					String filename = f.format(date) + "_" + soundbankOptional
 							+ currentMidi.getName();
-					saveWavFile(filename + "-export.wav", defSynth);
+					File exportFolderDir = new File(EXPORT_FOLDER);
+					exportFolderDir.mkdir();
+					saveWavFile(EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
 					defSynth.open();
 					if (soundfont != null) {
 						defSynth.unloadAllInstruments(soundfont);

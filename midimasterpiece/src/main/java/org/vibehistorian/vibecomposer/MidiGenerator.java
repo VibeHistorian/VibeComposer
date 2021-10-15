@@ -395,7 +395,7 @@ public class MidiGenerator implements JMC {
 					Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
 							melodySkeletonDurationWeights);
 
-					durations = rhythm.regenerateDurations(10);
+					durations = rhythm.regenerateDurations(10, melodySkeletonDurations[0]);
 					if (sameRhythmTwice) {
 						durations.addAll(durations);
 					}
@@ -1169,7 +1169,8 @@ public class MidiGenerator implements JMC {
 				Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
 						melodySkeletonDurationWeights);
 
-				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2);
+				List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2,
+						MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0);
 				if (gc.isMelodyArpySurprises()) {
 					if (sameRhythmTwice) {
 						if ((i % 2 == 0) || (durations.size() < 3)) {
@@ -3801,7 +3802,8 @@ public class MidiGenerator implements JMC {
 									(chordIndex + 1) * MELODY_PATTERN_RESOLUTION,
 									progressionDurations.get(chordIndex)
 											/ MELODY_PATTERN_RESOLUTION)
-							: bassRhythm.regenerateDurations(4);
+							: bassRhythm.regenerateDurations(4,
+									MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0);
 					for (Double dur : durations) {
 
 						int randomNote = 0;
