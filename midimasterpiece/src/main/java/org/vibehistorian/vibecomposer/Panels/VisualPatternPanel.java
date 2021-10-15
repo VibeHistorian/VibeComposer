@@ -26,6 +26,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
@@ -630,14 +631,20 @@ public class VisualPatternPanel extends JPanel {
 		this.viewOnly = viewOnly;
 	}
 
-	public void notifyPatternHighlight(double percentage, int chordNum) {
+	public void notifyPatternHighlight(double quarterNotesInMeasure, int chordNumInMeasure,
+			List<Double> beatQuarterNotesInMeasure) {
 		if (parentPanel == null) {
 			return;
 		}
-		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(chordNum + 1,
-				parentPanel.getFillFlip());
+		/*System.out.println(parentPanel.getPanelOrder() + "#");
+		System.out.println("Quarter notes: " + quarterNotesInMeasure);
+		System.out.println(StringUtils.join(beatQuarterNotesInMeasure, ", "));
+		System.out.println("Chord num: " + chordNumInMeasure);*/
+		List<Integer> fillPattern = parentPanel.getChordSpanFill()
+				.getPatternByLength(chordNumInMeasure + 1, parentPanel.getFillFlip());
 
-		if (patternType.getVal() == RhythmPattern.MELODY1 || fillPattern.get(chordNum) < 1) {
+		if (patternType.getVal() == RhythmPattern.MELODY1
+				|| fillPattern.get(chordNumInMeasure) < 1) {
 			if (lastHighlightedHit >= 0) {
 				hitVelocities[lastHighlightedHit].setHighlighted(false);
 				hitChecks[lastHighlightedHit].setHighlighted(false);
@@ -646,13 +653,30 @@ public class VisualPatternPanel extends JPanel {
 			return;
 		}
 
+		// chordspan = 1 --> subtract sum of all beatDurationsInMeasure
+		//        --> remaining duration divided by whole note == percentage
+
+		// chordSpan = 2 --> subtract pairs/triples/quadruples
+		int indexOfSubtractableDurations = chordSpanPanel.getInt()
+				* ((chordNumInMeasure) / chordSpanPanel.getInt());
+		for (int i = 0; i < indexOfSubtractableDurations; i++) {
+			quarterNotesInMeasure -= beatQuarterNotesInMeasure.get(i);
+		}
+
+		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpanPanel.getInt();
+		double percentage = quarterNotesInMeasure / patternTotalDuration;
+		while (percentage > 1) {
+			percentage -= 1;
+		}
+
 		if (parentPanel.getPatternRepeat() > 1) {
 			percentage = (percentage > 0.499) ? (percentage * 2 - 1) : percentage * 2;
 		}
-
-		int realChordNum = chordNum % chordSpanPanel.getInt();
-		int highlightedHit = (int) ((realChordNum + percentage) * lastHits
-				/ chordSpanPanel.getInt());
+		//System.out.println("Percentage: " + percentage);
+		int highlightedHit = (int) (percentage * lastHits);
+		if (highlightedHit < 0) {
+			highlightedHit = 0;
+		}
 		if (highlightedHit == lastHighlightedHit && lastHits > 1) {
 			return;
 		}

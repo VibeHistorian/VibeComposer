@@ -3408,44 +3408,61 @@ public class VibeComposerGUI extends JFrame
 
 	private void notifyVisualPatterns(int val, int sectIndex) {
 		int tabIndex = instrumentTabPane.getSelectedIndex();
+		if (tabIndex >= 2 && tabIndex <= 4) {
+			int measureStart = sliderMeasureStartTimes
+					.get(sectIndex < sliderMeasureStartTimes.size() - 1 ? sectIndex : 0);
+			int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
+			int beatChordNumInMeasure = 0;
+			int bfsiEnd = 0;
+			int lastMeasureStartTimeIndex = 0;
+			double quarterNote = beatFromBpm(0) / 4.0;
+			List<Double> beatQuarterNotesInMeasure = new ArrayList<>();
+			for (int bfsi = beatFindingStartIndex; bfsi < sliderBeatStartTimes.size(); bfsi++) {
+				if (sliderBeatStartTimes.get(bfsi) > val) {
+					bfsiEnd = bfsi;
+					break;
+				} else {
 
-		int measureStart = sliderMeasureStartTimes
-				.get(sectIndex < sliderMeasureStartTimes.size() - 1 ? sectIndex : 0);
-		int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
-		int beatChordNum = 0;
-		int bfsiEnd = 0;
-		for (int bfsi = beatFindingStartIndex; bfsi < sliderBeatStartTimes.size(); bfsi++) {
-			if (sliderBeatStartTimes.get(bfsi) > val) {
-				bfsiEnd = bfsi;
-				//LOGGER.debug("Beat percentage: " + beatPercentage);
-				break;
-			} else {
-				beatChordNum++;
-			}
-		}
-		double beatPercentage = (bfsiEnd > 0)
-				? (val - sliderBeatStartTimes.get(bfsiEnd - 1)) / (double) beatFromBpm(0)
-				: 0.0;
-		int realBeatChordNum = beatChordNum > 0 ? beatChordNum - 1 : 0;
+					int measureIndex = sliderMeasureStartTimes
+							.indexOf(sliderBeatStartTimes.get(bfsi));
+					if (measureIndex != -1) {
+						// reset when exactly on measure
+						beatChordNumInMeasure = 0;
+						lastMeasureStartTimeIndex = measureIndex;
+						beatQuarterNotesInMeasure.clear();
+					} else {
+						beatChordNumInMeasure++;
+					}
 
-		if (beatPercentage > 1 + MidiGenerator.DBL_ERR) {
-			beatPercentage -= 1;
-			beatChordNum = 0;
-			while (beatPercentage > 1 + MidiGenerator.DBL_ERR) {
-				beatPercentage -= 1;
-				beatChordNum++;
+					if (beatChordNumInMeasure > 0) {
+						beatQuarterNotesInMeasure.add((sliderBeatStartTimes.get(bfsi)
+								- sliderBeatStartTimes.get(bfsi - 1)) / quarterNote);
+					}
+				}
 			}
-		}
-		double realBeatPercentage = beatPercentage;
-		if (tabIndex == 2) {
-			chordPanels.forEach(e -> e.getComboPanel().notifyPatternHighlight(realBeatPercentage,
-					realBeatChordNum));
-		} else if (tabIndex == 3) {
-			arpPanels.forEach(e -> e.getComboPanel().notifyPatternHighlight(realBeatPercentage,
-					realBeatChordNum));
-		} else if (tabIndex == 4) {
-			drumPanels.forEach(e -> e.getComboPanel().notifyPatternHighlight(realBeatPercentage,
-					realBeatChordNum));
+			/*if (val < sliderMeasureStartTimes.get(lastMeasureStartTimeIndex)
+					&& lastMeasureStartTimeIndex > 0) {
+				lastMeasureStartTimeIndex--;
+			}*/
+			double quarterNotesInMeasure = (val
+					- sliderMeasureStartTimes.get(lastMeasureStartTimeIndex)) / quarterNote;
+			//LOGGER.debug(quarterNotesInMeasure + " qtn");
+			if (quarterNotesInMeasure < MidiGenerator.DBL_ERR) {
+				return;
+			}
+
+
+			// needed: wholeNotesInMeasure, beatNumInMeasure, beatDurationsInMeasure
+
+
+			List<? extends InstPanel> panels = getInstList(tabIndex);
+			for (InstPanel ip : panels) {
+				if (ip.getMuteInst()) {
+					continue;
+				}
+				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
+						beatChordNumInMeasure, beatQuarterNotesInMeasure);
+			}
 		}
 	}
 
