@@ -1753,8 +1753,7 @@ public class MidiGenerator implements JMC {
 					investigatedChordIndex -= 2;
 				}
 
-				System.out
-						.println("TONIC: Remaining difference after first pairs: " + surplusTonics);
+				LOGGER.debug("TONIC: Remaining difference after first pairs: " + surplusTonics);
 
 			}
 		}
@@ -4353,16 +4352,16 @@ public class MidiGenerator implements JMC {
 			int extraExceptionChance = 0;
 			boolean drumFill = false;
 			// chord iter
-			for (int j = 0; j < chordsCount; j += chordSpan) {
+			for (int chordIndex = 0; chordIndex < chordsCount; chordIndex += chordSpan) {
 
-				if (genVars && ((j == 0) || (j == chordInts.size()))) {
+				if (genVars && ((chordIndex == 0) || (chordIndex == chordInts.size()))) {
 					List<Double> chanceMultipliers = sec.isTransition()
 							? Arrays.asList(new Double[] { 1.0, 1.0, 2.0 })
 							: null;
 					variations = fillVariations(sec, dp, variations, 4, chanceMultipliers);
 				}
 
-				if ((variations != null) && (j == 0)) {
+				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (o == measures - 1) {
 							LOGGER.debug("Drum #" + dp.getOrder() + " variation: " + var);
@@ -4388,8 +4387,8 @@ public class MidiGenerator implements JMC {
 
 				double patternDurationTotal = 0.0;
 				for (int k = 0; k < chordSpan; k++) {
-					patternDurationTotal += (progressionDurations.size() > j + k)
-							? progressionDurations.get(j + k)
+					patternDurationTotal += (progressionDurations.size() > chordIndex + k)
+							? progressionDurations.get(chordIndex + k)
 							: 0.0;
 				}
 
@@ -4404,8 +4403,17 @@ public class MidiGenerator implements JMC {
 						velocity = (velocity * 5) / 10;
 						pitch = dp.getInstrument();
 					}
-
-					int chordNum = j + (k / oneChordPatternSize);
+					int chordNumAdd = 0;
+					double durationNowCheck = durationNow + DBL_ERR
+							- progressionDurations.get(chordIndex);
+					while (durationNowCheck > 0.0) {
+						chordNumAdd++;
+						if (progressionDurations.size() <= (chordNumAdd + chordIndex)) {
+							break;
+						}
+						durationNowCheck -= progressionDurations.get(chordIndex + chordNumAdd);
+					}
+					int chordNum = chordIndex + chordNumAdd;
 					if (dp.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
 						drumDuration = progressionDurations
 								.get(Math.min(chordNum, progressionDurations.size() - 1))
@@ -4811,8 +4819,8 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		LOGGER.debug("Drum velocity pattern for " + dp.getInstrument() + " : "
-				+ drumVelocityPattern.toString());
+		/*LOGGER.debug("Drum velocity pattern for " + dp.getInstrument() + " : "
+				+ drumVelocityPattern.toString());*/
 		return drumVelocityPattern;
 	}
 }

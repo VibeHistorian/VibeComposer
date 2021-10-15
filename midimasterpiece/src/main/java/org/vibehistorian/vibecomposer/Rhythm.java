@@ -131,7 +131,7 @@ public class Rhythm {
 					dur = durationLimit - durationSum;
 					if (dur < shortestNote - MidiGenerator.DBL_ERR && durations.size() > 0) {
 						longestDur = longestDur - shortestNote + dur;
-						System.out.println(longestDurIndex + ", " + longestDur);
+						//System.out.println(longestDurIndex + ", " + longestDur);
 						durations.set(longestDurIndex, longestDur);
 						dur = shortestNote;
 					}
