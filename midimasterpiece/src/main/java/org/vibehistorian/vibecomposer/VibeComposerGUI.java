@@ -3424,11 +3424,18 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 		double beatPercentage = (bfsiEnd > 0)
-				? (val - sliderBeatStartTimes.get(bfsiEnd - 1))
-						/ (double) ((sliderBeatStartTimes.get(bfsiEnd)
-								- sliderBeatStartTimes.get(bfsiEnd - 1)))
+				? (val - sliderBeatStartTimes.get(bfsiEnd - 1)) / (double) beatFromBpm(0)
 				: 0.0;
 		int realBeatChordNum = beatChordNum > 0 ? beatChordNum - 1 : 0;
+
+		if (beatPercentage > 1 + MidiGenerator.DBL_ERR) {
+			beatPercentage -= 1;
+			beatChordNum = 0;
+			while (beatPercentage > 1 + MidiGenerator.DBL_ERR) {
+				beatPercentage -= 1;
+				beatChordNum++;
+			}
+		}
 		double realBeatPercentage = beatPercentage;
 		if (tabIndex == 2) {
 			chordPanels.forEach(e -> e.getComboPanel().notifyPatternHighlight(realBeatPercentage,
