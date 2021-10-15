@@ -3695,7 +3695,7 @@ public class VibeComposerGUI extends JFrame
 						double drumVol = drumVolumeSlider.getValue() / 100.0;
 						sendVolumeMessage(drumVol, 9);
 						sendReverbMessage(0.5, 9);
-						sendPanMessage(50, 9);
+						drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
 					} else {
 						for (int i = 0; i < 16; i++) {
 							double vol = 1.0;
@@ -6206,13 +6206,16 @@ public class VibeComposerGUI extends JFrame
 			DrumSettings settings = DrumDefaults.drumSettings[order];
 			settings.applyToDrumPart(dpart, lastRandomSeed);
 			DrumPanel dp = null;
+			boolean needPanApplied = false;
 			if (randomizedPanel != null) {
 				dp = randomizedPanel;
 			} else {
 				if (i < removedPanels.size()) {
 					dp = removedPanels.get(i);
+					needPanApplied = !PUNCHY_DRUMS.contains(dpart.getInstrument());
 				} else {
 					dp = (DrumPanel) addInstPanelToLayout(4);
+					needPanApplied = !PUNCHY_DRUMS.contains(dpart.getInstrument());
 				}
 			}
 
@@ -6247,6 +6250,9 @@ public class VibeComposerGUI extends JFrame
 			for (int j = 0; j < drumPartArray.length; j++) {
 				drumHitGrid[j] += drumPartArray[j];
 			}*/
+			if (needPanApplied) {
+				dp.getPanSlider().setValue(drumPanelGenerator.nextInt(100));
+			}
 
 		}
 		/*for (int i = 0; i < chords * maxPatternPerChord; i++) {
