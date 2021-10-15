@@ -668,7 +668,7 @@ public class VisualPatternPanel extends JPanel {
 
 
 		if (parentPanel.getPatternRepeat() > 1) {
-			percentage = (percentage > 0.499) ? (percentage * 2 - 1) : percentage * 2;
+			percentage = (percentage * parentPanel.getPatternRepeat()) % 1.0;
 		}
 		//System.out.println("Percentage: " + percentage);
 		int highlightedHit = (int) (percentage * lastHits);
