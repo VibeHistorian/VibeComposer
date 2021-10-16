@@ -307,6 +307,7 @@ public abstract class InstPanel extends JPanel {
 		setMidiChannel(part.getMidiChannel());
 
 		volSlider.setValue(part.getSliderVolume());
+		panSlider.setValue(part.getSliderPan());
 
 		setMuteInst(part.isMuted());
 	}

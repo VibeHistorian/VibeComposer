@@ -67,6 +67,7 @@ public abstract class InstPart implements Cloneable {
 	protected int patternShift = 0;
 
 	protected int sliderVolume = 100;
+	protected int sliderPan = 50;
 
 	protected int midiChannel = 10;
 
@@ -116,6 +117,7 @@ public abstract class InstPart implements Cloneable {
 		setMuted(panel.getMuteInst());
 
 		setSliderVolume(panel.getVolSlider().getValue());
+		setSliderPan(panel.getPanSlider().getValue());
 
 		setMidiChannel(panel.getMidiChannel());
 
@@ -280,6 +282,14 @@ public abstract class InstPart implements Cloneable {
 
 	public void setSliderVolume(int sliderVolume) {
 		this.sliderVolume = sliderVolume;
+	}
+
+	public int getSliderPan() {
+		return sliderPan;
+	}
+
+	public void setSliderPan(int sliderPan) {
+		this.sliderPan = sliderPan;
 	}
 
 	public int getSwingPercent() {
