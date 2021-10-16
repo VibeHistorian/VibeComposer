@@ -32,7 +32,6 @@ public class DrumPanel extends InstPanel {
 		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
 		initDefaults(l);
-		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);

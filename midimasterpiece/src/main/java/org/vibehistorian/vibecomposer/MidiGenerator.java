@@ -3935,7 +3935,7 @@ public class MidiGenerator implements JMC {
 							case RAND_U:
 								flamming = Durations.SIXTEENTH_NOTE;
 								break;
-							case RAND_W:
+							case RAND_WU:
 								flamming = Durations.SIXTEENTH_NOTE;
 								break;
 							default:

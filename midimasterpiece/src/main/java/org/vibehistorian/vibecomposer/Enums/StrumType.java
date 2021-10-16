@@ -15,7 +15,7 @@ import jm.music.data.Note;
 
 public enum StrumType {
 	ARP_U(Strums.STRUM_ARP), ARP_D(Strums.STRUM_ARP), RAND_U(Strums.STRUM_MED),
-	RAND(Strums.STRUM_MED), RAND_D(Strums.STRUM_MED), RAND_W(Strums.STRUM_MED),
+	RAND(Strums.STRUM_MED), RAND_D(Strums.STRUM_MED), RAND_WU(Strums.STRUM_MED),
 	HUMAN_U(Strums.STRUM_HUMAN), HUMAN(Strums.STRUM_HUMAN), HUMAN_D(Strums.STRUM_HUMAN);
 
 	public List<Integer> CHOICES;
@@ -25,13 +25,12 @@ public enum StrumType {
 	}
 
 	public static final List<StrumType> ARPY = Arrays.asList(new StrumType[] { ARP_U, ARP_D });
-	public static final List<StrumType> RANDY = Arrays
-			.asList(new StrumType[] { RAND_U, RAND, RAND_D, RAND_W });
+	public static final List<StrumType> RANDY = Arrays.asList(new StrumType[] { RAND_WU });
 	public static final List<StrumType> HUMANY = Arrays
 			.asList(new StrumType[] { HUMAN_U, HUMAN, HUMAN_D });
 
 	public static final int[] STRUMMINESS_WEIGHTS = Rhythm
-			.normalizedCumulativeWeights(new int[] { 30, 0, 70 });
+			.normalizedCumulativeWeights(new int[] { 27, 3, 70 });
 
 	public static List<StrumType> getWeighted(int value) {
 		List<StrumType>[] lists = new List[] { ARPY, RANDY, HUMANY };
@@ -74,7 +73,7 @@ public enum StrumType {
 			noteIndexes.forEach(e -> noteOffsets.add(gen.nextDouble() * flam * notes.size()));
 			sort = true;
 			break;
-		case RAND_W:
+		case RAND_WU:
 			// X times random within bucket 0-1, 1-2 etc.
 			noteIndexes.forEach(e -> noteOffsets.add(e * flam + gen.nextDouble() * flam));
 			sort = true;
@@ -122,6 +121,6 @@ class Strums {
 	public static final List<Integer> STRUM_ARP = Arrays
 			.asList(new Integer[] { 250, 333, 500, 666, 1000, 1500, 2000 });
 	public static final List<Integer> STRUM_MED = Arrays
-			.asList(new Integer[] { 62, 125, 250, 333, 500 });
+			.asList(new Integer[] { 62, 125, 250, 333 });
 	public static final List<Integer> STRUM_HUMAN = Arrays.asList(new Integer[] { 31, 62, 125 });
 }

@@ -545,7 +545,7 @@ public class VibeComposerGUI extends JFrame
 	JButton pauseMidi;
 
 	Thread cycle;
-	JCheckBox useVolumeSliders;
+	JCheckBox useMidiCC;
 	CheckButton loopBeat;
 	JCheckBox loopBeatCompose;
 	public static PlayheadRangeSlider slider;
@@ -568,6 +568,8 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> presetLoadBox;
 	VeloRect globalVolSlider;
 	VeloRect globalReverbSlider;
+	VeloRect globalChorusSlider;
+	VeloRect[] groupFilterSliders = new VeloRect[5];
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
 	public static boolean needToRecalculateSoloMuters = false;
@@ -857,13 +859,15 @@ public class VibeComposerGUI extends JFrame
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
 
 		globalVolSlider = new VeloRect(0, 150, 100);
-
 		globalReverbSlider = new VeloRect(0, 127, 64);
+		globalChorusSlider = new VeloRect(0, 127, 32);
 
 		mainButtonsPanel.add(new JLabel("Vol."));
 		mainButtonsPanel.add(globalVolSlider);
 		mainButtonsPanel.add(new JLabel("Rv."));
 		mainButtonsPanel.add(globalReverbSlider);
+		mainButtonsPanel.add(new JLabel("Ch."));
+		mainButtonsPanel.add(globalChorusSlider);
 
 		globalSoloMuter = new SoloMuter(-1, SoloMuter.Type.GLOBAL);
 
@@ -970,10 +974,11 @@ public class VibeComposerGUI extends JFrame
 		arrangementResetCustomPanelsOnCompose = new JCheckBox("Reset customized panels On Compose",
 				true);
 
-		useVolumeSliders = new JCheckBox("Use Vol. Sliders", true);
+		useMidiCC = new JCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
+		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
 		//RandomIntegerListButton bt = new RandomIntegerListButton("0,1,2,3");
 		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
-		arrangementExtraSettingsPanel.add(useVolumeSliders);
+		arrangementExtraSettingsPanel.add(useMidiCC);
 		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
 		//arrangementExtraSettingsPanel.add(bt);
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
@@ -1189,7 +1194,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel melodySettingsExtraPanelShape = new JPanel();
 		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelShape.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS");
+		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS+");
 		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
 		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
@@ -1235,7 +1240,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
 		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS+");
+		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS++");
 		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
 		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
@@ -1253,10 +1258,14 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelOrg.setMaximumSize(new Dimension(1800, 50));
 
-		JLabel melodyExtraLabel = new JLabel("MELODY SETTINGS++");
-		melodyExtraLabel.setPreferredSize(new Dimension(120, 30));
+		JLabel melodyExtraLabel = new JLabel("MELODY ");
+		melodyExtraLabel.setPreferredSize(new Dimension(60, 30));
 		melodyExtraLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelOrg.add(melodyExtraLabel);
+		groupFilterSliders[0] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		melodySettingsExtraPanelOrg.add(filterLabel);
+		melodySettingsExtraPanelOrg.add(groupFilterSliders[0]);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
 		JButton clearUserMelodySeed = makeButton("Clear Seed",
@@ -1326,8 +1335,8 @@ public class VibeComposerGUI extends JFrame
 
 
 		//scrollableMelodyPanels.add(melodySettingsPanel);
-		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
 		scrollableMelodyPanels.add(melodySettingsExtraPanelOrg);
+		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
 		toggleableComponents.add(melodySettingsExtraPanelsHolder);
@@ -1399,6 +1408,10 @@ public class VibeComposerGUI extends JFrame
 
 		addChords = new JCheckBox("CHORDS", true);
 		chordSettingsPanel.add(addChords);
+		groupFilterSliders[2] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		chordSettingsPanel.add(filterLabel);
+		chordSettingsPanel.add(groupFilterSliders[2]);
 
 		chordAddJButton = makeButton("+Chord", "AddChord");
 		chordSettingsPanel.add(chordAddJButton);
@@ -1520,6 +1533,10 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		addArps = new JCheckBox("ARPS", true);
 		arpsSettingsPanel.add(addArps);
+		groupFilterSliders[3] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		arpsSettingsPanel.add(filterLabel);
+		arpsSettingsPanel.add(groupFilterSliders[3]);
 
 		arpAddJButton = makeButton("  +Arp ", "AddArp");
 		arpsSettingsPanel.add(arpAddJButton);
@@ -1645,6 +1662,11 @@ public class VibeComposerGUI extends JFrame
 		bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
 
+		groupFilterSliders[1] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		bassSettingsPanel.add(filterLabel);
+		bassSettingsPanel.add(groupFilterSliders[1]);
+
 		scrollableBassPanels.add(bassSettingsPanel);
 		scrollableBassPanels.add(bassPanel);
 
@@ -1675,6 +1697,10 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		addDrums = new JCheckBox("DRUMS", true);
 		drumsPanel.add(addDrums);
+		groupFilterSliders[4] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		drumsPanel.add(filterLabel);
+		drumsPanel.add(groupFilterSliders[4]);
 		//drumsPanel.add(drumInst);
 
 		drumVolumeSlider = new VeloRect(0, 100, 100);
@@ -3310,14 +3336,9 @@ public class VibeComposerGUI extends JFrame
 									if (sectIndex >= arrangementSize) {
 										sectionText.setText("End");
 									} else {
-										SwingUtilities.invokeLater(new Runnable() {
-											public void run() {
-												notifyVisualPatterns(val, sectIndex);
-											}
-										});
-
+										Section sec = null;
 										if (useArrangement.isSelected()) {
-											Section sec = null;
+
 											int sizeCounter = 0;
 											for (Section arrSec : actualArrangement.getSections()) {
 												if (sizeCounter == sectIndex
@@ -3335,6 +3356,13 @@ public class VibeComposerGUI extends JFrame
 										} else {
 											sectionText.setText("ALL INST");
 										}
+										Section actualSec = sec;
+										SwingUtilities.invokeLater(new Runnable() {
+											public void run() {
+												notifyVisualPatterns(val, sectIndex, actualSec);
+											}
+										});
+
 									}
 								}
 
@@ -3412,7 +3440,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 
-	private void notifyVisualPatterns(int val, int sectIndex) {
+	private void notifyVisualPatterns(int val, int sectIndex, Section sec) {
 		int tabIndex = instrumentTabPane.getSelectedIndex();
 		if (tabIndex >= 2 && tabIndex <= 4) {
 			int measureStart = sliderMeasureStartTimes
@@ -3462,8 +3490,10 @@ public class VibeComposerGUI extends JFrame
 
 
 			List<? extends InstPanel> panels = getInstList(tabIndex);
+			Set<Integer> presences = sec != null ? sec.getPresence(tabIndex) : null;
 			for (InstPanel ip : panels) {
-				if (ip.getMuteInst()) {
+				if (ip.getMuteInst()
+						|| (presences != null && !presences.contains(ip.getPanelOrder()))) {
 					continue;
 				}
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
@@ -3676,34 +3706,29 @@ public class VibeComposerGUI extends JFrame
 			public void run() {
 
 				while (sequencer != null && sequencer.isRunning()) {
-
-					if (useVolumeSliders.isSelected()) {
-						for (int j = 0; j < 4; j++) {
-							List<? extends InstPanel> panels = getInstList(j);
-							for (int i = 0; i < panels.size(); i++) {
-								if (j == 0 && i > 0) {
-									// melody panels under first
-									continue;
-								}
-								double vol = panels.get(i).getVolSlider().getValue() / 100.0;
-								int channel = panels.get(i).getMidiChannel() - 1;
-								sendVolumeMessage(vol, channel);
-								sendReverbMessage(1.0, channel);
-								sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
+					for (int j = 0; j < 4; j++) {
+						List<? extends InstPanel> panels = getInstList(j);
+						for (int i = 0; i < panels.size(); i++) {
+							if (combineMelodyTracks.isSelected() && j == 0 && i > 0) {
+								// melody panels under first
+								continue;
 							}
-						}
-						double drumVol = drumVolumeSlider.getValue() / 100.0;
-						sendVolumeMessage(drumVol, 9);
-						sendReverbMessage(0.5, 9);
-						drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
-					} else {
-						for (int i = 0; i < 16; i++) {
-							double vol = 1.0;
-							sendVolumeMessage(vol, i);
-							sendReverbMessage(0.5, i);
-							sendPanMessage(50, i);
+							double vol = panels.get(i).getVolSlider().getValue() / 100.0;
+							int channel = panels.get(i).getMidiChannel() - 1;
+							sendVolumeMessage(vol, channel);
+							sendReverbMessage(1.0, channel);
+							sendChorusMessage(1.0, channel);
+							sendLowPassFilterMessage(1.0, channel, j);
+							sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
 						}
 					}
+					double drumVol = drumVolumeSlider.getValue() / 100.0;
+					sendVolumeMessage(drumVol, 9);
+					sendReverbMessage(0.5, 9);
+					sendChorusMessage(0.5, 9);
+					sendLowPassFilterMessage(1.0, 9, 4);
+					drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
+
 					try {
 						sleep(25);
 					} catch (InterruptedException e) {
@@ -3718,18 +3743,36 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	protected void sendPanMessage(int pan100, int channel) {
-		int pan127 = OMNI.clampVel(pan100 * 127 / 100);
-		sendMidiCcMessage(pan127, channel, 10);
+		int value127 = OMNI.clampVel(pan100 * 127 / 100);
+		sendMidiCcMessage(value127, channel, 10);
 	}
 
 	protected void sendVolumeMessage(double volMultiplier, int channel) {
-		int vol = OMNI.clampVel(volMultiplier * globalVolSlider.getValue() * 127 / 100.0);
-		sendMidiCcMessage(vol, channel, 7);
+		int value127 = useMidiCC.isSelected()
+				? OMNI.clampVel(volMultiplier * globalVolSlider.getValue() * 127 / 100.0)
+				: 100;
+		sendMidiCcMessage(value127, channel, 7);
 	}
 
 	protected void sendReverbMessage(double reverbMultiplier, int channel) {
-		int reverb = OMNI.clampVel(reverbMultiplier * globalReverbSlider.getValue() * 127 / 100.0);
-		sendMidiCcMessage(reverb, channel, 91);
+		int value127 = useMidiCC.isSelected()
+				? OMNI.clampVel(reverbMultiplier * globalReverbSlider.getValue())
+				: 0;
+		sendMidiCcMessage(value127, channel, 91);
+	}
+
+	protected void sendChorusMessage(double chorusMultiplier, int channel) {
+		int value127 = useMidiCC.isSelected()
+				? OMNI.clampVel(chorusMultiplier * globalChorusSlider.getValue())
+				: 0;
+		sendMidiCcMessage(value127, channel, 93);
+	}
+
+	protected void sendLowPassFilterMessage(double filterMultiplier, int channel, int part) {
+		int value127 = useMidiCC.isSelected()
+				? OMNI.clampVel(filterMultiplier * groupFilterSliders[part].getValue())
+				: 127;
+		sendMidiCcMessage(value127, channel, 74);
 	}
 
 	protected void sendMidiCcMessage(int value, int channel, int midiCc) {
@@ -6206,16 +6249,13 @@ public class VibeComposerGUI extends JFrame
 			DrumSettings settings = DrumDefaults.drumSettings[order];
 			settings.applyToDrumPart(dpart, lastRandomSeed);
 			DrumPanel dp = null;
-			boolean needPanApplied = false;
 			if (randomizedPanel != null) {
 				dp = randomizedPanel;
 			} else {
 				if (i < removedPanels.size()) {
 					dp = removedPanels.get(i);
-					needPanApplied = !PUNCHY_DRUMS.contains(dpart.getInstrument());
 				} else {
 					dp = (DrumPanel) addInstPanelToLayout(4);
-					needPanApplied = !PUNCHY_DRUMS.contains(dpart.getInstrument());
 				}
 			}
 
@@ -6250,9 +6290,9 @@ public class VibeComposerGUI extends JFrame
 			for (int j = 0; j < drumPartArray.length; j++) {
 				drumHitGrid[j] += drumPartArray[j];
 			}*/
-			if (needPanApplied) {
+			/*if (needPanApplied) {
 				dp.getPanSlider().setValue(drumPanelGenerator.nextInt(100));
-			}
+			}*/
 
 		}
 		/*for (int i = 0; i < chords * maxPatternPerChord; i++) {
