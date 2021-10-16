@@ -1697,17 +1697,19 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		addDrums = new JCheckBox("DRUMS", true);
 		drumsPanel.add(addDrums);
-		groupFilterSliders[4] = new VeloRect(0, 127, 127);
-		JLabel filterLabel = new JLabel("LP");
-		drumsPanel.add(filterLabel);
-		drumsPanel.add(groupFilterSliders[4]);
-		//drumsPanel.add(drumInst);
 
 		drumVolumeSlider = new VeloRect(0, 100, 100);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
 		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
 		//drumVolumeSlider.setPaintTicks(true);
+		JLabel volSliderLabel = new JLabel("Vol.");
+		drumsPanel.add(volSliderLabel);
 		drumsPanel.add(drumVolumeSlider);
+		groupFilterSliders[4] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		drumsPanel.add(filterLabel);
+		drumsPanel.add(groupFilterSliders[4]);
+		//drumsPanel.add(drumInst);
 
 		drumAddJButton = makeButton(" +Drum ", "AddDrum");
 		drumsPanel.add(drumAddJButton);

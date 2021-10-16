@@ -1579,6 +1579,9 @@ public class MidiGenerator implements JMC {
 		List<Integer> firstNotePitches = fullMelodyMap.values().stream()
 				.map(e -> e.get(0).getPitch()).collect(Collectors.toList());
 
+		List<Integer> fillerPattern = mp.getChordSpanFill()
+				.getPatternByLength(fullMelodyMap.keySet().size(), mp.isFillFlip());
+
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
 			List<Note> notes = fullMelodyMap.get(chordIndex);
@@ -1595,8 +1598,12 @@ public class MidiGenerator implements JMC {
 				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_EIGHTH_NOTE + DBL_ERR)
 						? pauseGenerator2
 						: pauseGenerator;
-				if (pauseGen.nextInt(100) < actualPauseChance) {
+				if (pauseGen.nextInt(100) < actualPauseChance
+						|| fillerPattern.get(chordIndex) < 1) {
 					n.setPitch(Integer.MIN_VALUE);
+					if (fillerPattern.get(chordIndex) < 1) {
+						firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
+					}
 				} else {
 					pitches[n.getPitch() % 12]++;
 				}

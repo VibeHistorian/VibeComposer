@@ -15,7 +15,7 @@ public enum RhythmPattern {
 	FULL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }), ALT(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }),
 	ONEPER4(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }), TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 }),
 	SINGLE(new int[] { 1, 0, 0, 0, 0, 0, 0, 0 }), ONESIX(new int[] { 1, 0, 0, 0, 0, 1, 0, 0 }),
-	CUSTOM(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 }), MELODY1(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 });
+	CUSTOM(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 }), MELODY1(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 });
 
 	public final int[] pattern;
 

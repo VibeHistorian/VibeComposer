@@ -56,6 +56,8 @@ public class MelodyPanel extends InstPanel {
 		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
+		this.add(chordSpanFillPanel);
+
 		this.add(speed);
 		transpose.getKnob().setTickSpacing(10);
 		transpose.getKnob().setTickThresholds(Arrays.asList(new Integer[] { -36, -32, -29, -24, -20,
