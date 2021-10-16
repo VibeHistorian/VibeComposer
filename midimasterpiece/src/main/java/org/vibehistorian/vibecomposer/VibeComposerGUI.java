@@ -898,9 +898,10 @@ public class VibeComposerGUI extends JFrame
 
 		messageLabel = new JLabel("Click something!");
 		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		mainButtonsPanel.add(messageLabel);
+		//mainButtonsPanel.add(messageLabel);
 
 		presetLoadBox = new ScrollComboBox<String>();
+		presetLoadBox.setRegenerating(false);
 		presetLoadBox.setEditable(true);
 		presetLoadBox.addItem(OMNI.EMPTYCOMBO);
 		File folder = new File(PRESET_FOLDER);
@@ -1932,15 +1933,7 @@ public class VibeComposerGUI extends JFrame
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
 			//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
-			if (varPopup != null) {
-				varPopup.getFrame().dispose();
-			}
-			recalculateActualArrangementSection(secOrder - 1);
-			varPopup = new VariationPopup(secOrder,
-					actualArrangement.getSections().get(secOrder - 1),
-					new Point(MouseInfo.getPointerInfo().getLocation().x,
-							vibeComposerGUI.getLocation().y),
-					vibeComposerGUI.getSize());
+			openVariationPopup(secOrder);
 			refreshActual = true;
 			resetArrSectionSelection = false;
 			//variationJD.getFrame().setTitle(action);
@@ -2065,7 +2058,18 @@ public class VibeComposerGUI extends JFrame
 		recalculateTabPaneCounts();
 	}
 
-	private void recalculateActualArrangementSection(Integer secOrder) {
+	public static void openVariationPopup(int secOrder) {
+		if (varPopup != null) {
+			varPopup.getFrame().dispose();
+		}
+		recalculateActualArrangementSection(secOrder - 1);
+		varPopup = new VariationPopup(secOrder, actualArrangement.getSections().get(secOrder - 1),
+				new Point(MouseInfo.getPointerInfo().getLocation().x,
+						vibeComposerGUI.getLocation().y),
+				vibeComposerGUI.getSize());
+	}
+
+	public static void recalculateActualArrangementSection(int secOrder) {
 		if (actualArrangement == null || actualArrangement.getSections() == null
 				|| actualArrangement.getSections().size() <= secOrder) {
 			return;
@@ -2093,7 +2097,7 @@ public class VibeComposerGUI extends JFrame
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
 		List<CheckButton> defaultButtons = new ArrayList<>();
-		defaultButtons.add(new CheckButton(GLOBAL, true));
+		defaultButtons.add(new CheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
 		arrSection = new ButtonSelectorPanel(new ArrayList<>(), defaultButtons);
 		arrSection.addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
 
@@ -2153,13 +2157,18 @@ public class VibeComposerGUI extends JFrame
 						} else {
 							//LOGGER.info(("Making copies of normal panels! " + i));
 							List<? extends InstPanel> panels = getInstList(i);
+							//Set<Integer> presence = sec.getPresence(i);
 							for (Component c : ((JPanel) pane.getViewport().getView())
 									.getComponents()) {
 								if (c instanceof InstPanel) {
 									InstPanel ip = (InstPanel) c;
+
 									//LOGGER.info(("Switching panel!"));
 									int order = ip.getPanelOrder();
 									((JPanel) pane.getViewport().getView()).remove(ip);
+									/*if (!presence.contains(ip.getPanelOrder())) {
+										continue;
+									}*/
 									InstPanel p = panels.get(order - 1);
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
@@ -3484,7 +3493,7 @@ public class VibeComposerGUI extends JFrame
 			// needed: wholeNotesInMeasure, beatNumInMeasure, beatDurationsInMeasure
 
 
-			List<? extends InstPanel> panels = getInstList(tabIndex);
+			List<InstPanel> panels = getAffectedPanels(tabIndex);
 			Set<Integer> presences = sec != null ? sec.getPresence(tabIndex) : null;
 			for (InstPanel ip : panels) {
 				if (ip.getMuteInst()
@@ -3720,9 +3729,9 @@ public class VibeComposerGUI extends JFrame
 					double drumVol = drumVolumeSlider.getValue() / 100.0;
 					sendVolumeMessage(drumVol, 9);
 					sendReverbMessage(0.5, 9);
-					sendChorusMessage(0.5, 9);
+					sendChorusMessage(0.1, 9);
 					sendLowPassFilterMessage(1.0, 9, 4);
-					drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
+					//drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
 
 					try {
 						sleep(25);

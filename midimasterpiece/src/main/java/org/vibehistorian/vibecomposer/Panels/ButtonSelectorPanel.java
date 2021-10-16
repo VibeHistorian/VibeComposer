@@ -1,10 +1,13 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckButton;
@@ -50,6 +53,14 @@ public class ButtonSelectorPanel extends JPanel {
 					}
 				}
 				ButtonSelectorPanel.this.repaint();
+			}
+		});
+		cb.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (buttonIndex > 0 && SwingUtilities.isMiddleMouseButton(evt)) {
+					VibeComposerGUI.openVariationPopup(buttonIndex);
+				}
 			}
 		});
 		//cb.setMargin(new Insets(0, 0, 0, 0));

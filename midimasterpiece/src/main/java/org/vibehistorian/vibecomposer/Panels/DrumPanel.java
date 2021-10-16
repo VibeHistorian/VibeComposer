@@ -110,7 +110,6 @@ public class DrumPanel extends InstPanel {
 		part.setFromPanel(this, lastRandomSeed);
 
 		part.setVelocityPattern(getIsVelocityPattern());
-		part.setSwingPercent(getSwingPercent());
 
 		part.setOrder(getPanelOrder());
 		return part;

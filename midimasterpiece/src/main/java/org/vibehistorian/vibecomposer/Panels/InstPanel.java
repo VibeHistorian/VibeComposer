@@ -293,7 +293,7 @@ public abstract class InstPanel extends JPanel {
 		setPatternFlip(part.isPatternFlip());
 
 
-		if (comboPanel != null) {
+		if (comboPanel != null && pattern.isEnabled()) {
 			comboPanel.setVelocities(part.getCustomVelocities());
 			if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
 					&& part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS) {
