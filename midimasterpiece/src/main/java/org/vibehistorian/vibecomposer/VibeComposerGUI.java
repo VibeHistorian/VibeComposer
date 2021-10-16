@@ -1971,8 +1971,14 @@ public class VibeComposerGUI extends JFrame
 				break;
 			}
 			if (instrumentTabPane.getSelectedIndex() < 5) {
-				resetArrSection();
-				arrSection.setSelectedIndex(secOrder);
+				String suffix = "";
+				if (sec.hasCustomizedParts()) {
+					suffix = "*";
+				}
+				arrSection.getButtons().get(secOrder)
+						.setText(secOrder + ": " + sec.getType() + suffix);
+				//resetArrSection();
+				//arrSection.setSelectedIndex(secOrder);
 				resetArrSectionSelection = false;
 				refreshActual = true;
 				checkManual = true;
@@ -2054,6 +2060,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		if (checkManual) {
 			arrangementCustom.setSelected(true);
+			arrangementCustom.repaint();
 		}
 		recalculateTabPaneCounts();
 	}
