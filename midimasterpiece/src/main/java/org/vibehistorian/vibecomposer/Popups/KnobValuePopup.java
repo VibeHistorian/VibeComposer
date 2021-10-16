@@ -86,7 +86,7 @@ public class KnobValuePopup extends CloseablePopup {
 							knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
 						}
 					}
-					if (VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+					if (VibeComposerGUI.canRegenerateOnChange()) {
 						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 					}
 

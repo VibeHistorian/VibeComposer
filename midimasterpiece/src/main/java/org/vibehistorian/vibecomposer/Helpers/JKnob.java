@@ -445,7 +445,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
 		if (isEnabled() && regenerating && !SwingUtilities.isMiddleMouseButton(e)
-				&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+				&& VibeComposerGUI.canRegenerateOnChange()) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
 

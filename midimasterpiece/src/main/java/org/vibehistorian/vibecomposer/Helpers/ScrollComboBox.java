@@ -77,7 +77,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			setSelectedItem(item);
 		}
 		if (isEnabled() && regenerating && mousePressed
-				&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+				&& VibeComposerGUI.canRegenerateOnChange()) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
 		mousePressed = false;

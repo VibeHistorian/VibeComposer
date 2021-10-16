@@ -172,8 +172,7 @@ public class VisualPatternPanel extends JPanel {
 					int mouseButt = e.getButton();
 					if (mouseButt == 1) {
 						mouseButton = -1;
-						if (isEnabled()
-								&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+						if (isEnabled() && VibeComposerGUI.canRegenerateOnChange()) {
 							Timer tmr = new Timer(100, new ActionListener() {
 
 								@Override
@@ -197,7 +196,7 @@ public class VisualPatternPanel extends JPanel {
 					mouseButton = -1;
 
 					if (e.getButton() > 1 && isEnabled()
-							&& VibeComposerGUI.regenerateWhenValuesChange.isSelected()) {
+							&& VibeComposerGUI.canRegenerateOnChange()) {
 						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 					}
 

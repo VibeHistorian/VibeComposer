@@ -44,6 +44,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -150,6 +152,7 @@ import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
+import org.vibehistorian.vibecomposer.Panels.ButtonSelectorPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
@@ -248,10 +251,9 @@ public class VibeComposerGUI extends JFrame
 	public static List<DrumPanel> drumPanels = new ArrayList<>();
 
 	public static List<InstPanel> getAffectedPanels(int inst) {
-		List<InstPanel> affectedPanels = (arrSection == null
-				|| OMNI.EMPTYCOMBO.equals(arrSection.getVal()))
-						? (List<InstPanel>) getInstList(inst)
-						: getSectionPanelList(inst);
+		List<InstPanel> affectedPanels = (arrSection == null || GLOBAL.equals(arrSection.getVal()))
+				? (List<InstPanel>) getInstList(inst)
+				: getSectionPanelList(inst);
 		return affectedPanels;
 	}
 
@@ -317,7 +319,8 @@ public class VibeComposerGUI extends JFrame
 	RandomValueButton arrangementSeed;
 	CheckButton useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
-	public static ScrollComboBox<String> arrSection;
+	public static final String GLOBAL = "Global";
+	public static ButtonSelectorPanel arrSection;
 	JPanel arrangementMiddleColoredPanel;
 	ScrollComboBox<String> newSectionBox;
 
@@ -1889,9 +1892,8 @@ public class VibeComposerGUI extends JFrame
 				}
 				sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType() + suffix);
 			}
-			arrSection.removeAllItems();
-			arrSection.addItem(OMNI.EMPTYCOMBO);
-			ScrollComboBox.addAll(sectionNamesNumbers.toArray(new String[] {}), arrSection);
+			arrSection.setButtons(new ArrayList<>());
+			arrSection.addAll(sectionNamesNumbers.toArray(new String[] {}));
 		}
 	}
 
@@ -1944,7 +1946,7 @@ public class VibeComposerGUI extends JFrame
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementCommitPanels")) {
 			String selItem = arrSection.getVal();
-			if (OMNI.EMPTYCOMBO.equals(selItem)) {
+			if (GLOBAL.equals(selItem)) {
 				return;
 			}
 
@@ -1984,7 +1986,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getVal();
-			if (!OMNI.EMPTYCOMBO.equals(selItem)) {
+			if (!GLOBAL.equals(selItem)) {
 				Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
 				Section sec = actualArrangement.getSections().get(secOrder - 1);
 				// parts
@@ -2053,7 +2055,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			setActualModel(actualArrangement.convertToActualTableModel(), resetArrSectionSelection);
 			if (resetArrSectionSelection) {
-				arrSection.setVal(OMNI.EMPTYCOMBO);
+				arrSection.setSelectedIndex(0);
 			}
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
@@ -2076,37 +2078,27 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initArrangementSettings(int startY, int anchorSide) {
+
 		arrangementSettings = new JPanel();
 		arrangementSettings.setOpaque(false);
 		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-
-
 		useArrangement = new CheckButton("ARRANGE", false);
 		arrangementSettings.add(useArrangement);
-
-
 		pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
-
-
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
-
 		JButton randomizeArrangementBtn = makeButton("Randomize", "ArrangementRandomize");
-
 		JButton arrangementPartInclusionBtn = makeButton("Parts", "ArrangementOpenPartInclusion");
 
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
-		arrSection = new ScrollComboBox<>();
-		arrSection.setRegenerating(false);
-		arrSection.addItem(OMNI.EMPTYCOMBO);
-		arrSection.addActionListener(new ActionListener() {
+		List<CheckButton> defaultButtons = new ArrayList<>();
+		defaultButtons.add(new CheckButton(GLOBAL, true));
+		arrSection = new ButtonSelectorPanel(new ArrayList<>(), defaultButtons);
+		arrSection.addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				/*if (!e.getActionCommand().equalsIgnoreCase("comboBoxChanged")) {
-					return;
-				}*/
+			public void propertyChange(PropertyChangeEvent evt) {
 				String selItem = arrSection.getVal();
 				if (selItem == null || (arrSection.getItemCount() - 1 != actualArrangement
 						.getSections().size())) {
@@ -2114,7 +2106,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				List<InstPanel> addedPanels = new ArrayList<>();
 
-				if (OMNI.EMPTYCOMBO.equals(selItem)) {
+				if (GLOBAL.equals(selItem)) {
 					LOGGER.info(("Resetting to normal panels!"));
 					arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 					for (int i = 0; i < 5; i++) {
@@ -2199,7 +2191,6 @@ public class VibeComposerGUI extends JFrame
 					pane.repaint();
 				}
 			}
-
 		});
 
 		JButton commitPanelBtn = makeButton("Commit", "ArrangementCommitPanels");
@@ -2210,7 +2201,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				arrSection.setVal(arrSection.getVal());
+				arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true);
 				//resetArrSectionInBackground();
 			}
 
@@ -2223,7 +2214,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (!OMNI.EMPTYCOMBO.equals(arrSection.getVal())) {
+				if (!GLOBAL.equals(arrSection.getVal())) {
 					Section sec = actualArrangement.getSections()
 							.get(arrSection.getSelectedIndex() - 1);
 					sec.resetCustomizedParts();
@@ -2292,6 +2283,8 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
+		everythingPanel.add(arrSection, constraints);
+		constraints.gridy = startY + 1;
 		everythingPanel.add(arrangementSettings, constraints);
 
 		scrollableArrangementTable = new JTable(5, 5) {
@@ -2605,7 +2598,7 @@ public class VibeComposerGUI extends JFrame
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
 
 
-		toggleableComponents.add(arrSection);
+		//toggleableComponents.add(arrSection);
 		toggleableComponents.add(commitPanelBtn);
 		toggleableComponents.add(undoPanelBtn);
 		toggleableComponents.add(clearPanelBtn);
@@ -3864,7 +3857,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void switchDarkMode() {
 		//setVisible(false);
-		arrSection.setVal(OMNI.EMPTYCOMBO);
+		arrSection.setSelectedIndex(0);
 
 		LOGGER.info(("Switching dark mode!"));
 		if (isDarkMode) {
@@ -3910,7 +3903,7 @@ public class VibeComposerGUI extends JFrame
 			panelColorHigh = panelColorHigh.brighter();
 			panelColorLow = panelColorLow.brighter();
 		}*/
-		if (OMNI.EMPTYCOMBO.equals(arrSection.getVal())) {
+		if (GLOBAL.equals(arrSection.getVal())) {
 			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 		} else {
 			arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
@@ -3966,7 +3959,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void toggleButtonEnabledForPanels() {
-		toggleButtonEnabledForPanels(OMNI.EMPTYCOMBO.equals(arrSection.getVal()));
+		toggleButtonEnabledForPanels(GLOBAL.equals(arrSection.getVal()));
 	}
 
 	private void toggleButtonEnabledForPanels(boolean isOriginal) {
@@ -4272,8 +4265,10 @@ public class VibeComposerGUI extends JFrame
 			public void run() {
 				int arrSectionIndex = arrSection.getSelectedIndex();
 				setActualModel(actualArrangement.convertToActualTableModel());
-				if (arrSectionIndex != 0) {
-					arrSection.setVal(arrSection.getItemAt(arrSectionIndex));
+				if (arrSectionIndex != 0 && arrSectionIndex < arrSection.getItemCount()) {
+					arrSection.setSelectedIndex(arrSectionIndex);
+				} else {
+					arrSection.setSelectedIndex(0);
 				}
 				refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
 			}
@@ -5900,7 +5895,7 @@ public class VibeComposerGUI extends JFrame
 		actualArrangement = guiConfig.getActualArrangement();
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		setActualModel(actualArrangement.convertToActualTableModel());
-		arrSection.setVal(OMNI.EMPTYCOMBO);
+		arrSection.setSelectedIndex(0);
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
 		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
@@ -6058,7 +6053,7 @@ public class VibeComposerGUI extends JFrame
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
 		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		if (arrSection != null && !OMNI.EMPTYCOMBO.equals(arrSection.getVal())) {
+		if (arrSection != null && !GLOBAL.equals(arrSection.getVal())) {
 			ip.toggleGlobalElements(false);
 			ip.toggleEnabledCopyRemove(false);
 			if (inst == 4) {
@@ -6800,11 +6795,11 @@ public class VibeComposerGUI extends JFrame
 						maxShift--;
 					}
 				}
-				ap.setPatternShift(arpPanelGenerator.nextInt(maxShift) + 1);
+				ap.setPatternShift(maxShift > 0 ? arpPanelGenerator.nextInt(maxShift) : 0);
 			}
 
 			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
-			ap.setPauseChance(arpPanelGenerator.nextInt(pauseMax));
+			ap.setPauseChance(arpPanelGenerator.nextInt(pauseMax + 1));
 
 			int lengthRange = Math.max(1,
 					1 + randomArpMaxLength.getInt() - randomArpMinLength.getInt());
@@ -7014,5 +7009,10 @@ public class VibeComposerGUI extends JFrame
 		ShowPanelBig.scoreBox.setSelectedIndex(0);
 		scorePanel.setScore();
 		scoreScrollPane.repaint();
+	}
+
+
+	public static boolean canRegenerateOnChange() {
+		return regenerateWhenValuesChange.isSelected() && arrSection.getSelectedIndex() == 0;
 	}
 }
