@@ -3887,7 +3887,7 @@ public class MidiGenerator implements JMC {
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
 			boolean skipSecondNote = false;
-
+			int chordSpanPart = 0;
 			// fill chords
 			for (int chordIndex = 0; chordIndex < actualProgression.size(); chordIndex++) {
 				if (genVars && (chordIndex == 0)) {
@@ -4035,6 +4035,10 @@ public class MidiGenerator implements JMC {
 				} else {
 					pattern = cp.getFinalPatternCopy();
 					pattern = pattern.subList(0, cp.getHitsPerPattern());
+					if (cp.getChordSpan() > 1) {
+						pattern = MidiUtils.intersperse(-1, cp.getChordSpan() - 1, pattern);
+						pattern = partOfListClean(chordSpanPart, cp.getChordSpan(), pattern);
+					}
 				}
 				if (cp.isPatternFlip()) {
 					for (int p = 0; p < pattern.size(); p++) {
@@ -4076,7 +4080,7 @@ public class MidiGenerator implements JMC {
 					if (joinApplicable) {
 						nextP = p + 1;
 						while (nextP < pattern.size()) {
-							if (pattern.get(nextP) == stretchedByNote) {
+							if (pattern.get(nextP) == stretchedByNote || pattern.get(nextP) == -1) {
 								durMultiplier++;
 							} else {
 								break;
@@ -4098,6 +4102,10 @@ public class MidiGenerator implements JMC {
 					chords.add(cC);
 					durationNow += duration;
 					p = (p + 1) % pattern.size();
+				}
+				chordSpanPart++;
+				if (chordSpanPart >= cp.getChordSpan()) {
+					chordSpanPart = 0;
 				}
 			}
 		}
@@ -4630,6 +4638,13 @@ public class MidiGenerator implements JMC {
 		return chordSlashPhrase;
 
 
+	}
+
+	private <T> List<T> partOfListClean(int part, int partCount, List<T> list) {
+		double preciseDivision = list.size() / (double) partCount;
+		int start = (int) Math.round(preciseDivision * part);
+		int end = (int) Math.round(preciseDivision * (part + 1));
+		return list.subList(start >= 0 ? start : 0, end < list.size() ? end : list.size());
 	}
 
 	private <T> List<T> partOfList(int part, int partCount, List<T> list) {
