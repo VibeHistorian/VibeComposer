@@ -11,6 +11,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -41,6 +42,7 @@ public class MelodyPanel extends InstPanel {
 
 		ScrollComboBox.addAll(new Integer[] { 1, 7, 8, 15 }, midiChannel);
 		midiChannel.setVal(1);
+		instPool = POOL.MELODY;
 		instrument.initInstPool(instPool);
 		setInstrument(8);
 		initDefaults(l);

@@ -131,7 +131,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -1351,8 +1350,6 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = new MelodyPanel(this);
 			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
-			melodyPanel.setInstPool(POOL.ALL);
-			melodyPanel.getInstrumentBox().initInstPool(POOL.ALL);
 			melodyPanel.setInstrument(8);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
@@ -1901,6 +1898,7 @@ public class VibeComposerGUI extends JFrame
 	private void handleArrangementAction(String action, int seed, int maxLength) {
 		boolean refreshActual = false;
 		boolean resetArrSectionSelection = true;
+		boolean resetArrSectionPanel = true;
 		boolean checkManual = false;
 		if (action.equalsIgnoreCase("ArrangementReset")) {
 			arrangement.generateDefaultArrangement();
@@ -1936,6 +1934,7 @@ public class VibeComposerGUI extends JFrame
 			openVariationPopup(secOrder);
 			refreshActual = true;
 			resetArrSectionSelection = false;
+			resetArrSectionPanel = false;
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementCommitPanels")) {
 			String selItem = arrSection.getVal();
@@ -1980,6 +1979,7 @@ public class VibeComposerGUI extends JFrame
 				//resetArrSection();
 				//arrSection.setSelectedIndex(secOrder);
 				resetArrSectionSelection = false;
+				resetArrSectionPanel = false;
 				refreshActual = true;
 				checkManual = true;
 			}
@@ -2008,6 +2008,9 @@ public class VibeComposerGUI extends JFrame
 				addedSec.generatePresences(
 						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
 								: new Random());
+				resetArrSectionSelection = actualArrangement.getSections()
+						.indexOf(addedSec) == arrSection.getSelectedIndex() - 2;
+				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			} else {
@@ -2024,6 +2027,8 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.removeSectionExact(scrollableArrangementActualTable, secIndex);
+				resetArrSectionSelection = secIndex < arrSection.getSelectedIndex();
+				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			}
@@ -2035,6 +2040,8 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 				actualArrangement.duplicateSectionExact(scrollableArrangementActualTable, secIndex);
+				resetArrSectionSelection = secIndex < arrSection.getSelectedIndex() - 1;
+				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			}
@@ -2052,9 +2059,12 @@ public class VibeComposerGUI extends JFrame
 		if (!refreshActual) {
 			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		} else {
-			setActualModel(actualArrangement.convertToActualTableModel(), resetArrSectionSelection);
+			int index = arrSection.getSelectedIndex();
+			setActualModel(actualArrangement.convertToActualTableModel(), resetArrSectionPanel);
 			if (resetArrSectionSelection) {
-				arrSection.setSelectedIndex(0);
+				arrSection.setSelectedIndexWithProperty(0, true);
+			} else {
+				arrSection.setSelectedIndexWithProperty(index, true);
 			}
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
@@ -4813,12 +4823,12 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				InstUtils.initNormalInsts();
 			}
-			//melodyPanels.forEach(e -> e.getInstrumentBox().initInstPool(InstUtils.POOL.PLUCK));
-			//bassPanel.getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
-			int inst = melodyPanels.get(0).getInstrument();
-			melodyPanels.get(0).getInstrumentBox().initInstPool(InstUtils.POOL.PLUCK);
-			melodyPanels.get(0).getInstrumentBox().setInstrument(inst);
-			inst = bassPanel.getInstrument();
+			for (int i = 0; i < melodyPanels.size(); i++) {
+				int inst = melodyPanels.get(i).getInstrumentBox().getInstrument();
+				melodyPanels.get(i).getInstrumentBox().initInstPool(InstUtils.POOL.MELODY);
+				melodyPanels.get(i).getInstrumentBox().setInstrument(inst);
+			}
+			int inst = bassPanel.getInstrument();
 			bassPanel.getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
 			bassPanel.getInstrumentBox().setInstrument(inst);
 		}
