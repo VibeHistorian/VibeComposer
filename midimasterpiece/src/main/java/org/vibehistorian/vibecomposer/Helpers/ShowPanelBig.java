@@ -37,6 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
@@ -49,6 +51,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -139,6 +142,18 @@ public class ShowPanelBig extends JPanel {
 				@Override
 				public void run() {
 					setScore();
+				}
+			});
+			int fI = i;
+			partsShown[i].addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent evt) {
+					if (SwingUtilities.isMiddleMouseButton(evt)) {
+						for (int j = 0; j < 5; j++) {
+							partsShown[j].setSelectedRaw(j == fI);
+						}
+						setScore();
+					}
 				}
 			});
 			partsShown[i].setMargin(new Insets(0, 0, 0, 0));
