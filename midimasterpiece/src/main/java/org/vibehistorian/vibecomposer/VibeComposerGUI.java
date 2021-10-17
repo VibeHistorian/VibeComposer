@@ -861,8 +861,8 @@ public class VibeComposerGUI extends JFrame
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
 
 		globalVolSlider = new VeloRect(0, 150, 100);
-		globalReverbSlider = new VeloRect(0, 127, 64);
-		globalChorusSlider = new VeloRect(0, 127, 32);
+		globalReverbSlider = new VeloRect(0, 127, 96);
+		globalChorusSlider = new VeloRect(0, 127, 48);
 
 		mainButtonsPanel.add(new JLabel("Vol."));
 		mainButtonsPanel.add(globalVolSlider);
@@ -2872,6 +2872,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel globalSwingPanel = new JPanel();
 		globalSwingOverride = new JCheckBox("<html>Global Swing<br>Override</html>", false);
 		globalSwingOverrideValue = new KnobPanel("", 50);
+		globalSwingOverrideValue.setRegenerating(false);
 		globalSwingOverrideApplyButton = new JButton("A");
 		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
 
@@ -2924,21 +2925,25 @@ public class VibeComposerGUI extends JFrame
 
 
 		spiceChance = new KnobPanel("Spice", 15);
+		spiceChance.setRegenerating(false);
 		spiceAllowDimAug = new JCheckBox("Dim/Aug", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceForceScale = new JCheckBox("Force Scale", true);
 		spiceParallelChance = new KnobPanel("Aeolian", 5);
+		spiceParallelChance.setRegenerating(false);
 
 		firstChordSelection = new ScrollComboBox<String>();
 		firstChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
-		firstChordSelection.setVal("C");
+		//firstChordSelection.setVal("?");
 		firstChordSelection.addItemListener(this);
+		firstChordSelection.setRegenerating(false);
 
 		lastChordSelection = new ScrollComboBox<String>();
 		lastChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), lastChordSelection);
 		lastChordSelection.addItemListener(this);
+		lastChordSelection.setRegenerating(false);
 
 		JPanel spiceChancePanel = new JPanel();
 		spiceChancePanel.add(spiceChance);
