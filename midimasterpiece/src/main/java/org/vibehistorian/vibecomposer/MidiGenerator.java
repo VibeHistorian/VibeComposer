@@ -3055,6 +3055,11 @@ public class MidiGenerator implements JMC {
 
 		LOGGER.debug("Added parts to score..");
 
+		/*for (Object o : score.getPartList()) {
+			PartExt pe = (PartExt) o;
+		
+			Mod.randomize(pe, 0, pe.getTitle().contains("MainDrum") ? 0.002 : 0.02);
+		}*/
 
 		score.setTempo(gc.getBpm());
 
@@ -3761,12 +3766,33 @@ public class MidiGenerator implements JMC {
 		int maxVel = multiplyVelocity(bp.getVelocityMax(), volMultiplier, 1, 0);
 		Random rhythmPauseGenerator = new Random(seed + sec.getTypeMelodyOffset());
 		Random noteVariationGenerator = new Random(seed + sec.getTypeMelodyOffset() + 2);
+
+		double rootAverage = 0;
+		for (int i = 0; i < generatedRootProgression.size(); i++) {
+			rootAverage += generatedRootProgression.get(i)[0];
+		}
+		rootAverage /= generatedRootProgression.size();
+
+		List<int[]> squishedChords = new ArrayList<>();
+		for (int i = 0; i < generatedRootProgression.size(); i++) {
+			double dist = generatedRootProgression.get(i)[0] - rootAverage;
+			if (Math.abs(dist) < 5 - DBL_ERR) {
+				squishedChords.add(generatedRootProgression.get(i));
+			} else {
+				int adjustment = dist > 0 ? -12 : 12;
+				squishedChords
+						.add(MidiUtils.transposeChord(generatedRootProgression.get(i), adjustment));
+				rootAverage += (adjustment / (double) generatedRootProgression.size());
+
+			}
+		}
+
 		boolean rhythmPauses = false;
 		double maxDur = progressionDurations.stream().mapToDouble(e -> e).sum();
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = 0;
 			double totalDur = 0.0;
-			for (int chordIndex = 0; chordIndex < generatedRootProgression.size(); chordIndex++) {
+			for (int chordIndex = 0; chordIndex < squishedChords.size(); chordIndex++) {
 				if (genVars && (chordIndex == 0) && sec.getTypeMelodyOffset() > 0) {
 					variations = fillVariations(sec, bp, variations, 1);
 				}
@@ -3816,19 +3842,18 @@ public class MidiGenerator implements JMC {
 						// note variation for short notes, low chance, only after first
 						int noteVaryChance = sec.isTransition()
 								? adjustChanceParamForTransition(bp.getNoteVariation(), sec,
-										chordIndex, generatedRootProgression.size(), 40, 0.25,
-										false)
+										chordIndex, squishedChords.size(), 40, 0.25, false)
 								: bp.getNoteVariation();
 						if (counter > 0 && dur < (Durations.QUARTER_NOTE + DBL_ERR)
 								&& noteVariationGenerator.nextInt(100) < noteVaryChance
-								&& generatedRootProgression.get(chordIndex).length > 1) {
-							randomNote = noteVariationGenerator.nextInt(
-									generatedRootProgression.get(chordIndex).length - 1) + 1;
+								&& squishedChords.get(chordIndex).length > 1) {
+							randomNote = noteVariationGenerator
+									.nextInt(squishedChords.get(chordIndex).length - 1) + 1;
 						}
 
 						int pitch = (rhythmPauses && dur < Durations.QUARTER_NOTE
 								&& rhythmPauseGenerator.nextInt(100) < 33) ? Integer.MIN_VALUE
-										: generatedRootProgression.get(chordIndex)[randomNote];
+										: squishedChords.get(chordIndex)[randomNote];
 
 
 						bassPhrase.addNote(
@@ -3836,7 +3861,7 @@ public class MidiGenerator implements JMC {
 						counter++;
 					}
 				} else {
-					bassPhrase.addNote(new Note(generatedRootProgression.get(chordIndex)[0],
+					bassPhrase.addNote(new Note(squishedChords.get(chordIndex)[0],
 							progressionDurations.get(chordIndex),
 							bassDynamics.nextInt(velSpace) + minVel));
 				}
@@ -3898,7 +3923,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							LOGGER.debug("Chord #" + cp.getOrder() + " variation: " + var);
+							//LOGGER.debug("Chord #" + cp.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -4104,7 +4129,7 @@ public class MidiGenerator implements JMC {
 						}
 					}
 					joinApplicable &= (joinMode != PatternJoinMode.NOJOIN);
-					LOGGER.debug("Dur multiplier be4: " + durMultiplier);
+					//LOGGER.debug("Dur multiplier be4: " + durMultiplier);
 					// chord to spill by 15%
 					double durationCapMax = (cp.getStrum() > 750) ? 1.15 : 5.00;
 					double durationCap = durationCapMax
@@ -4114,12 +4139,12 @@ public class MidiGenerator implements JMC {
 					if (nextP >= pattern.size() && cp.getChordSpan() > 1 && nextPattern != null) {
 						skipNotes = countStartingValueInList(stretchedByNote, nextPattern);
 						durMultiplier += skipNotes;
-						LOGGER.debug("Dur multiplier added: " + durMultiplier);
+						//LOGGER.debug("Dur multiplier added: " + durMultiplier);
 					}
 
 					cC.setDurationRatio(Math.min(durationRatioCap, Math.min(durMultiplier,
 							cC.getDurationRatio() * (joinApplicable ? durMultiplier : 1.0))));
-					LOGGER.debug("Dur multiplier after: " + cC.getDurationRatio());
+					//LOGGER.debug("Dur multiplier after: " + cC.getDurationRatio());
 					cC.setFlam(flamming);
 					cC.makeAndStoreNotesBackwards(flamGenerator);
 					chords.add(cC);
@@ -4224,7 +4249,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (j == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
-							LOGGER.debug("Arp #" + ap.getOrder() + " variation: " + var);
+							//LOGGER.debug("Arp #" + ap.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -4414,7 +4439,7 @@ public class MidiGenerator implements JMC {
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (o == measures - 1) {
-							LOGGER.debug("Drum #" + dp.getOrder() + " variation: " + var);
+							//LOGGER.debug("Drum #" + dp.getOrder() + " variation: " + var);
 						}
 
 						switch (var) {
@@ -4581,8 +4606,8 @@ public class MidiGenerator implements JMC {
 				variations.add(i);
 			}
 		}
-		LOGGER.debug("Generated variations for part: " + part + ", size: "
-				+ (variations != null ? variations.size() : "null"));
+		/*LOGGER.debug("Generated variations for part: " + part + ", size: "
+				+ (variations != null ? variations.size() : "null"));*/
 		return variations;
 	}
 
