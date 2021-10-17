@@ -212,7 +212,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
+	private static boolean isFullMode = false;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -796,7 +796,7 @@ public class VibeComposerGUI extends JFrame
 		LOGGER.info("Add everything: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		setFullMode(isFullMode);
 		LOGGER.info("Full: " + (System.currentTimeMillis() - sysTime) + " ms!");
-		instrumentTabPane.setSelectedIndex(0);
+		instrumentTabPane.setSelectedIndex(7);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
 		switchDarkMode();
@@ -1354,7 +1354,7 @@ public class VibeComposerGUI extends JFrame
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			if (i > 0) {
-				melodyPanel.setPauseChance(50);
+				melodyPanel.setPauseChance(80);
 				melodyPanel.setFillPauses(true);
 				if (i > 1) {
 					melodyPanel.setMuteInst(true);
@@ -3125,13 +3125,21 @@ public class VibeComposerGUI extends JFrame
 		customChordsPanel.add(dotdotChordsButton);
 
 		userChordsDurations = new JTextField("4,4,4,4", 9);
-		customChordsPanel.add(new JLabel("Chord durations:"));
+		JLabel userChordsDurationsLabel = new JLabel("Chord durations:");
+		customChordsPanel.add(userChordsDurationsLabel);
 		customChordsPanel.add(userChordsDurations);
 
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(customChordsPanel, constraints);
+
+		toggleableComponents.add(twoExChordsButton);
+		toggleableComponents.add(userChordsDurations);
+		toggleableComponents.add(dotdotChordsButton);
+		toggleableComponents.add(ddChordsButton);
+		toggleableComponents.add(normalizeChordsButton);
+		toggleableComponents.add(userChordsDurationsLabel);
 
 	}
 
