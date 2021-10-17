@@ -3970,6 +3970,8 @@ public class MidiGenerator implements JMC {
 				if (!ignoreChordSpanFill) {
 					if (fillPattern.get(chordIndex) < 1) {
 						chords.add(c);
+						skipNotes = 0;
+						chordSpanPart = (chordSpanPart + 1) % cp.getChordSpan();
 						continue;
 					}
 				}
@@ -4027,6 +4029,8 @@ public class MidiGenerator implements JMC {
 								: DEFAULT_CHORD_SPLIT)
 						/ 1000.0;
 				//LOGGER.debug("Split time: " + splitTime);
+				PatternJoinMode joinMode = cp.getPatternJoinMode();
+				int stretchedByNote = (joinMode == PatternJoinMode.JOIN) ? 1 : 0;
 
 				List<Integer> pattern = null;
 				List<Integer> nextPattern = null;
@@ -4039,7 +4043,7 @@ public class MidiGenerator implements JMC {
 					List<Integer> patternSub = patternCopy.subList(0, cp.getHitsPerPattern());
 					pattern = MidiUtils.intersperse(-1, cp.getChordSpan() - 1, patternSub);
 					pattern = partOfListClean(chordSpanPart, cp.getChordSpan(), pattern);
-					if (cp.getChordSpan() > 1) {
+					if (cp.getChordSpan() > 1 && joinMode != PatternJoinMode.NOJOIN) {
 						if (chordSpanPart < cp.getChordSpan() - 1) {
 							nextPattern = MidiUtils.intersperse(-1, cp.getChordSpan() - 1,
 									patternSub);
@@ -4056,8 +4060,7 @@ public class MidiGenerator implements JMC {
 				double duration = Durations.WHOLE_NOTE / pattern.size();
 				double durationNow = 0;
 				int nextP = -1;
-				PatternJoinMode joinMode = cp.getPatternJoinMode();
-				int stretchedByNote = (joinMode == PatternJoinMode.JOIN) ? 1 : 0;
+
 				int p = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(chordIndex)) {
 

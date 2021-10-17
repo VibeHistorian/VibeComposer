@@ -6628,7 +6628,7 @@ public class VibeComposerGUI extends JFrame
 						maxShift--;
 					}
 				}
-				cp.setPatternShift(chordPanelGenerator.nextInt(maxShift) + 1);
+				cp.setPatternShift(maxShift > 0 ? chordPanelGenerator.nextInt(maxShift) + 1 : 0);
 			}
 
 			if (needNewChannel) {
