@@ -11,7 +11,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ONEPER4</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>4</pauseChance>
@@ -36,7 +36,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ONESIX</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>0</pauseChance>
@@ -61,7 +61,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ONEPER4</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>2</patternShift>
         <pauseChance>0</pauseChance>
@@ -86,7 +86,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>FULL</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>0</pauseChance>
@@ -111,7 +111,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ONESIX</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>1</patternShift>
         <pauseChance>0</pauseChance>
@@ -136,7 +136,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>FULL</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>0</pauseChance>
@@ -161,7 +161,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ALT</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>2</patternShift>
         <pauseChance>0</pauseChance>
@@ -186,7 +186,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>4</patternShift>
         <pauseChance>0</pauseChance>
@@ -211,7 +211,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>7</patternShift>
         <pauseChance>0</pauseChance>
@@ -236,7 +236,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>1999224003</patternSeed>
         <patternShift>6</patternShift>
         <pauseChance>0</pauseChance>

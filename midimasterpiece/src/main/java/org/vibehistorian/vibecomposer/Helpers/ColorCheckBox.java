@@ -9,7 +9,6 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 
 import javax.swing.JCheckBox;
-import javax.swing.RepaintManager;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -114,27 +113,7 @@ public class ColorCheckBox extends JCheckBox {
 	}
 
 	public void setHighlighted(boolean highlighted) {
-		if (this.highlighted == highlighted) {
-			return;
-		}
 		this.highlighted = highlighted;
-		RepaintManager rm = RepaintManager.currentManager(this);
-		boolean b = rm.isDoubleBufferingEnabled();
-		rm.setDoubleBufferingEnabled(false);
-		paintImmediately(0, 0, this.getSize().width, this.getSize().height);
-		rm.setDoubleBufferingEnabled(b);
-		/*if (highlighted) {
-			Timer timer = new Timer(120, new ActionListener() {
-		
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					setHighlighted(false);
-					repaint();
-				}
-			});
-			timer.setRepeats(false);
-			timer.start();
-		}*/
 	}
 
 }

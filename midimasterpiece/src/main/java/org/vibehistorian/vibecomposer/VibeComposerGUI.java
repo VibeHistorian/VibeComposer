@@ -3534,6 +3534,14 @@ public class VibeComposerGUI extends JFrame
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
 						beatChordNumInMeasure, beatQuarterNotesInMeasure);
 			}
+			/*for (InstPanel ip : panels) {
+				if (ip.getMuteInst()
+						|| (presences != null && !presences.contains(ip.getPanelOrder()))) {
+					continue;
+				}
+				ip.getComboPanel().repaint();
+			}*/
+			instrumentTabPane.getSelectedComponent().repaint();
 		}
 	}
 
