@@ -1376,7 +1376,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);
-				melodyPanel.setNoteLengthMultiplier(125);
+				melodyPanel.setNoteLengthMultiplier(115);
 			}
 		}
 
@@ -2066,6 +2066,7 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				arrSection.setSelectedIndexWithProperty(index, true);
 			}
+			arrSection.repaint();
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
 		if (checkManual) {

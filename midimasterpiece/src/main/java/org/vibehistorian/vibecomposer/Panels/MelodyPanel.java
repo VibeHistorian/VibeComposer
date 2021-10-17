@@ -136,6 +136,7 @@ public class MelodyPanel extends InstPanel {
 
 	public void toggleCombinedMelodyDisabledUI(boolean b) {
 		getVolSlider().setEnabled(b);
+		getPanSlider().setEnabled(b);
 		getSoloMuter().setEnabled(b);
 		getInstrumentBox().setEnabled(b);
 	}
