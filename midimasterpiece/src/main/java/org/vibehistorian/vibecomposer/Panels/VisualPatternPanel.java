@@ -631,10 +631,20 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void notifyPatternHighlight(double quarterNotesInMeasure, int chordNumInMeasure,
-			List<Double> beatQuarterNotesInMeasure) {
+			List<Double> beatQuarterNotesInMeasure, boolean turnOff) {
 		if (parentPanel == null) {
 			return;
 		}
+
+		if (turnOff) {
+			if (lastHighlightedHit >= 0) {
+				hitVelocities[lastHighlightedHit].setHighlighted(false);
+				hitChecks[lastHighlightedHit].setHighlighted(false);
+				lastHighlightedHit = -1;
+			}
+			return;
+		}
+
 		/*System.out.println(parentPanel.getPanelOrder() + "#");
 		System.out.println("Quarter notes: " + quarterNotesInMeasure);
 		System.out.println(StringUtils.join(beatQuarterNotesInMeasure, ", "));

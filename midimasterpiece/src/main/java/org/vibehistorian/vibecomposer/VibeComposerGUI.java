@@ -250,7 +250,7 @@ public class VibeComposerGUI extends JFrame
 	public static List<DrumPanel> drumPanels = new ArrayList<>();
 
 	public static List<InstPanel> getAffectedPanels(int inst) {
-		List<InstPanel> affectedPanels = (arrSection == null || GLOBAL.equals(arrSection.getVal()))
+		List<InstPanel> affectedPanels = (arrSection == null || arrSection.getSelectedIndex() == 0)
 				? (List<InstPanel>) getInstList(inst)
 				: getSectionPanelList(inst);
 		return affectedPanels;
@@ -3361,46 +3361,38 @@ public class VibeComposerGUI extends JFrame
 							}
 							if (actualArrangement != null && slider.getMaximum() > 0) {
 								int val = slider.getUpperValue();
-								int arrangementSize = actualArrangement.getSections().stream()
-										.mapToInt(e -> e.getMeasures()).sum();
-								if (arrangementSize > 0) {
-									int divisor = slider.getMaximum() / arrangementSize;
-									int sectIndex = (val - 1) / divisor;
-
-
-									if (sectIndex >= arrangementSize) {
-										sectionText.setText("End");
+								int sectIndex = -1;
+								for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
+									if (val < sliderMeasureStartTimes.get(i)) {
+										sectIndex = i - 1;
+										break;
+									}
+								}
+								Section sec = null;
+								if (sectIndex >= 0
+										&& actualArrangement.getSections().size() > sectIndex) {
+									sec = actualArrangement.getSections().get(sectIndex);
+								}
+								int finalSectIndex = sectIndex;
+								if (sec == null) {
+									sectionText.setText("End");
+								} else {
+									if (useArrangement.isSelected()) {
+										String sectionName = (sec != null)
+												? sec.getType().toString()
+												: "END";
+										sectionText.setText(sectionName);
 									} else {
-										Section sec = null;
-										if (useArrangement.isSelected()) {
-
-											int sizeCounter = 0;
-											for (Section arrSec : actualArrangement.getSections()) {
-												if (sizeCounter == sectIndex
-														|| (sectIndex < sizeCounter
-																+ arrSec.getMeasures())) {
-													sec = arrSec;
-													break;
-												}
-												sizeCounter += arrSec.getMeasures();
-											}
-											String sectionName = (sec != null)
-													? sec.getType().toString()
-													: "END";
-											sectionText.setText(sectionName);
-										} else {
-											sectionText.setText("ALL INST");
-										}
-										Section actualSec = sec;
-										SwingUtilities.invokeLater(new Runnable() {
-											public void run() {
-												notifyVisualPatterns(val, sectIndex, actualSec);
-											}
-										});
-
+										sectionText.setText("ALL INST");
 									}
 								}
 
+								Section actualSec = sec;
+								SwingUtilities.invokeLater(new Runnable() {
+									public void run() {
+										notifyVisualPatterns(val, finalSectIndex, actualSec);
+									}
+								});
 								if (sequencer != null) {
 									if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
 										sequencer.setTempoFactor(
@@ -3478,8 +3470,9 @@ public class VibeComposerGUI extends JFrame
 	private void notifyVisualPatterns(int val, int sectIndex, Section sec) {
 		int tabIndex = instrumentTabPane.getSelectedIndex();
 		if (tabIndex >= 2 && tabIndex <= 4) {
-			int measureStart = sliderMeasureStartTimes
-					.get(sectIndex < sliderMeasureStartTimes.size() - 1 ? sectIndex : 0);
+			int measureStart = sliderMeasureStartTimes.get(
+					sectIndex >= 0 && (sectIndex < sliderMeasureStartTimes.size() - 1) ? sectIndex
+							: 0);
 			int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
 			int beatChordNumInMeasure = 0;
 			int bfsiEnd = 0;
@@ -3527,12 +3520,10 @@ public class VibeComposerGUI extends JFrame
 			List<InstPanel> panels = getAffectedPanels(tabIndex);
 			Set<Integer> presences = sec != null ? sec.getPresence(tabIndex) : null;
 			for (InstPanel ip : panels) {
-				if (ip.getMuteInst()
-						|| (presences != null && !presences.contains(ip.getPanelOrder()))) {
-					continue;
-				}
+				boolean turnOff = ip.getMuteInst() || presences == null
+						|| !presences.contains(ip.getPanelOrder());
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
-						beatChordNumInMeasure, beatQuarterNotesInMeasure);
+						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff);
 			}
 			/*for (InstPanel ip : panels) {
 				if (ip.getMuteInst()
