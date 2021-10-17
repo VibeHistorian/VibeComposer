@@ -594,6 +594,7 @@ public class VibeComposerGUI extends JFrame
 	public static JPanel extraSettingsPanel;
 
 	public static boolean isShowingTextInKnobs = true;
+	public static JCheckBox displayVeloRectValues;
 
 
 	public static void main(String args[]) {
@@ -1086,6 +1087,15 @@ public class VibeComposerGUI extends JFrame
 		soundbankPanel.add(soundbankFilename);
 		extraSettingsPanel.add(soundbankPanel);
 
+		JPanel displayStylePanel = new JPanel();
+		displayVeloRectValues = new JCheckBox("Display Bar Values", true);
+		displayVeloRectValues.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				VibeComposerGUI.this.repaint();
+			}
+		});
+
 		JButton butt = new JButton("Toggle Knob Texts");
 		butt.addActionListener(new ActionListener() {
 
@@ -1099,7 +1109,9 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		extraSettingsPanel.add(butt);
+		displayStylePanel.add(butt);
+		displayStylePanel.add(displayVeloRectValues);
+		extraSettingsPanel.add(displayStylePanel);
 		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
 		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
 

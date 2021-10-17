@@ -180,11 +180,11 @@ public class VeloRect extends JComponent {
 					: new Color(180, 180, 180));
 
 			int minX = (ColorCheckBox.HIDE_MARGINS) ? marginLeft : 0;
-			int maxX = (ColorCheckBox.HIDE_MARGINS) ? this.getSize().width - minX - marginRight
+			int xWidth = (ColorCheckBox.HIDE_MARGINS) ? this.getSize().width - minX - marginRight
 					: this.getSize().width;
 			int height = this.getSize().height;
 
-			g.fillRect(minX, 0, maxX, height);
+			g.fillRect(minX, 0, xWidth, height);
 			Color c = null;
 
 			if (highlighted && isEnabled()) {
@@ -194,10 +194,28 @@ public class VeloRect extends JComponent {
 			}
 
 			g.setColor(c);
-			g.fillRect(minX, (int) (height * (1 - displayedValue / (double) max)), maxX,
+			g.fillRect(minX, (int) (height * (1 - displayedValue / (double) max)), xWidth,
 					height * displayedValue / max);
 			g.setColor(Color.black);
-			g.drawRect(minX, 0, maxX, height);
+			g.drawRect(minX, 0, xWidth, height);
+
+
+			if (isEnabled() && VibeComposerGUI.displayVeloRectValues.isSelected()) {
+				g.setColor(OMNI.alphen(Color.black, 127));
+				String value = String.valueOf(val);
+				if (value.length() == 1) {
+					g.drawString(value, (minX + xWidth / 2) - 2, height / 2);
+				} else {
+					int bottom = height * 12 / 10;
+					int top = height * 35 / 100;
+					int addY = (bottom - top) / value.length();
+					for (int i = 0; i < value.length(); i++) {
+						g.drawString(String.valueOf(value.charAt(i)), (minX + xWidth / 2) - 2,
+								top + addY * i);
+					}
+				}
+			}
+
 		}
 	}
 
