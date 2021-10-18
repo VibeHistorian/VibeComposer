@@ -3620,9 +3620,9 @@ public class VibeComposerGUI extends JFrame
 
 		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
 
-		controlSettingsPanel.add(randomSeed);
-		controlSettingsPanel.add(compose);
 		controlSettingsPanel.add(regenerate);
+		controlSettingsPanel.add(compose);
+		controlSettingsPanel.add(randomSeed);
 		controlSettingsPanel.add(copySeed);
 		controlSettingsPanel.add(currentChords);
 		controlSettingsPanel.add(copyChords);
