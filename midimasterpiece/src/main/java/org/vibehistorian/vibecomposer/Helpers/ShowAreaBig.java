@@ -274,10 +274,7 @@ public class ShowAreaBig extends JComponent {
 		int samePrevColorCounter = 0;
 		while (enum1.hasMoreElements()) {
 			PartExt part = (PartExt) enum1.nextElement();
-			if (!soloMuterHighlightedTracks.isEmpty()
-					&& !soloMuterHighlightedTracks.contains(part.getTrackNumber())) {
-				continue;
-			}
+
 			int noteColorIndex = getIndexForPartName(part.getTitle());
 			//System.out.println("Index: " + noteColorIndex);
 			if (prevColorIndex == noteColorIndex) {
@@ -285,6 +282,10 @@ public class ShowAreaBig extends JComponent {
 			} else {
 				samePrevColorCounter = 0;
 				prevColorIndex = noteColorIndex;
+			}
+			if (!soloMuterHighlightedTracks.isEmpty()
+					&& !soloMuterHighlightedTracks.contains(part.getTrackNumber())) {
+				continue;
 			}
 			Color noteColor = VibeComposerGUI.instColors[noteColorIndex];
 			if (samePrevColorCounter > 0) {

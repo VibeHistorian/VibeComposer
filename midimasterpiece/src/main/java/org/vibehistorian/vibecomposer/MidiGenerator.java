@@ -636,7 +636,7 @@ public class MidiGenerator implements JMC {
 
 	private static List<Integer> multipliedDirections(List<Integer> directions, int randomSeed) {
 		// wiggle random
-		int MAX_MULTI = 3;
+		int MAX_MULTI = 2;
 		Random rand = new Random(randomSeed);
 		List<Integer> multiDirs = new ArrayList<>();
 		for (Integer o : directions) {
@@ -2226,8 +2226,7 @@ public class MidiGenerator implements JMC {
 
 	public void generatePrettyUserChords(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
-		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration(),
-				4 * Durations.WHOLE_NOTE);
+		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration());
 	}
 
 	public int multiplyVelocity(int velocity, int multiplierPercentage, int maxAdjust,
@@ -2284,8 +2283,7 @@ public class MidiGenerator implements JMC {
 		return durations;
 	}*/
 
-	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength,
-			double maxDuration) {
+	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength) {
 
 		if (!userChords.isEmpty()) {
 			List<int[]> userProgression = new ArrayList<>();
@@ -2299,7 +2297,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		Random generator = new Random(mainGeneratorSeed);
-		Random durationGenerator = new Random(mainGeneratorSeed);
+		Random lengthGenerator = new Random(mainGeneratorSeed);
 		Random spiceGenerator = new Random(mainGeneratorSeed);
 		Random parallelGenerator = new Random(mainGeneratorSeed + 100);
 
@@ -2309,10 +2307,13 @@ public class MidiGenerator implements JMC {
 		String lastChord = (isBackwards) ? FIRST_CHORD : LAST_CHORD;
 		String firstChord = (isBackwards) ? LAST_CHORD : FIRST_CHORD;
 
-		int maxLength = (fixedLength > 0) ? fixedLength : 8;
-		if (fixedLength == 8) {
-			maxDuration *= 2;
+
+		if (fixedLength == 0) {
+			List<Integer> progLengths = Arrays.asList(new Integer[] { 4, 6, 8 });
+			fixedLength = progLengths.get(lengthGenerator.nextInt(progLengths.size()));
 		}
+		int maxLength = (fixedLength > 0) ? fixedLength : 8;
+		double maxDuration = fixedLength * Durations.WHOLE_NOTE;
 		double fixedDuration = maxDuration / maxLength;
 		int currentLength = 0;
 		double currentDuration = 0.0;
@@ -2356,9 +2357,7 @@ public class MidiGenerator implements JMC {
 				&& currentLength < maxLength) {
 			double durationLeft = maxDuration - Durations.QUARTER_NOTE - currentDuration;
 
-			double dur = (fixedLength > 0) ? fixedDuration
-					: pickDurationWeightedRandom(durationGenerator, durationLeft, CHORD_DUR_ARRAY,
-							CHORD_DUR_CHANCE, Durations.HALF_NOTE);
+			double dur = fixedDuration;
 
 			if (next.size() == 0 && prevChord != null) {
 				cpr.add(prevChord);
@@ -2686,7 +2685,7 @@ public class MidiGenerator implements JMC {
 
 
 		List<int[]> generatedRootProgression = generateChordProgression(mainGeneratorSeed,
-				gc.getFixedDuration(), 4 * Durations.WHOLE_NOTE);
+				gc.getFixedDuration());
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}

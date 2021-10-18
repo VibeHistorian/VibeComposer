@@ -1365,9 +1365,10 @@ public class VibeComposerGUI extends JFrame
 			melodyPanel.setInstrument(8);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
+			melodyPanel.setFillPauses(true);
 			if (i > 0) {
 				melodyPanel.setPauseChance(80);
-				melodyPanel.setFillPauses(true);
+
 				if (i > 1) {
 					melodyPanel.setMuteInst(true);
 				}
@@ -1948,53 +1949,61 @@ public class VibeComposerGUI extends JFrame
 			resetArrSectionSelection = false;
 			resetArrSectionPanel = false;
 			//variationJD.getFrame().setTitle(action);
-		} else if (action.startsWith("ArrangementCommitPanels")) {
+		} else if (action.startsWith("ArrangementApply")) {
 			String selItem = arrSection.getVal();
 			if (GLOBAL.equals(selItem)) {
 				return;
 			}
 
 			Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
-			Section sec = actualArrangement.getSections().get(secOrder - 1);
-			// parts
-			switch (instrumentTabPane.getSelectedIndex()) {
-			case 0:
-				sec.setMelodyParts(
-						(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(0));
-				break;
-			case 1:
-				sec.setBassParts(
-						(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
-				break;
-			case 2:
-				sec.setChordParts(
-						(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
-				break;
-			case 3:
-				sec.setArpParts(
-						(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
-				break;
-			case 4:
-				sec.setDrumParts(
-						(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
-				break;
-			default:
-				break;
-			}
-			if (instrumentTabPane.getSelectedIndex() < 5) {
-				String suffix = "";
-				if (sec.hasCustomizedParts()) {
-					suffix = "*";
+
+			int lastSecOrder = action.endsWith("+") ? actualArrangement.getSections().size() + 1
+					: secOrder + 1;
+
+			for (int i = secOrder; i < lastSecOrder; i++) {
+				Section sec = actualArrangement.getSections().get(i - 1);
+				// parts
+				switch (instrumentTabPane.getSelectedIndex()) {
+				case 0:
+					sec.setMelodyParts(
+							(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(
+									0));
+					break;
+				case 1:
+					sec.setBassParts(
+							(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
+					break;
+				case 2:
+					sec.setChordParts(
+							(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
+					break;
+				case 3:
+					sec.setArpParts(
+							(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
+					break;
+				case 4:
+					sec.setDrumParts(
+							(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
+					break;
+				default:
+					break;
 				}
-				arrSection.getButtons().get(secOrder)
-						.setText(secOrder + ": " + sec.getType() + suffix);
-				//resetArrSection();
-				//arrSection.setSelectedIndex(secOrder);
-				resetArrSectionSelection = false;
-				resetArrSectionPanel = false;
-				refreshActual = true;
-				checkManual = true;
+				if (instrumentTabPane.getSelectedIndex() < 5) {
+					String suffix = "";
+					if (sec.hasCustomizedParts()) {
+						suffix = "*";
+					}
+					arrSection.getButtons().get(i).setText(i + ": " + sec.getType() + suffix);
+					//resetArrSection();
+					//arrSection.setSelectedIndex(secOrder);
+					resetArrSectionSelection = false;
+					resetArrSectionPanel = false;
+					refreshActual = true;
+					checkManual = true;
+				}
 			}
+
+
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getVal();
 			if (!GLOBAL.equals(selItem)) {
@@ -2232,7 +2241,10 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
-		JButton commitPanelBtn = makeButton("Commit", "ArrangementCommitPanels");
+		JButton commitPanelBtn = makeButton("Apply", "ArrangementApply");
+		commitPanelBtn.setMargin(new Insets(0, 0, 0, 0));
+		JButton commitAllPanelBtn = makeButton("Apply+", "ArrangementApply+");
+		commitAllPanelBtn.setMargin(new Insets(0, 0, 0, 0));
 		JButton undoPanelBtn = new JButton("<-*");
 		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
 		undoPanelBtn.setMargin(new Insets(0, 0, 0, 0));
@@ -2307,6 +2319,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementCustom);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
+		arrangementSettings.add(commitAllPanelBtn);
 		arrangementSettings.add(undoPanelBtn);
 		arrangementSettings.add(clearPanelBtn);
 		arrangementSettings.add(clearAllPanelsBtn);
@@ -2639,6 +2652,7 @@ public class VibeComposerGUI extends JFrame
 
 		//toggleableComponents.add(arrSection);
 		toggleableComponents.add(commitPanelBtn);
+		toggleableComponents.add(commitAllPanelBtn);
 		toggleableComponents.add(undoPanelBtn);
 		toggleableComponents.add(clearPanelBtn);
 		toggleableComponents.add(clearAllPanelsBtn);
@@ -3600,13 +3614,12 @@ public class VibeComposerGUI extends JFrame
 		compose.setFont(compose.getFont().deriveFont(Font.BOLD));
 		regenerate = makeButton("Regenerate", "Regenerate");
 		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
-		JButton copySeed = makeButton("Copy seed", "CopySeed");
+		JButton copySeed = makeButton("Copy Main Seed", "CopySeed");
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
 		JButton clearSeed = makeButton("Clear All Seeds", e -> clearAllSeeds());
 
 		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
 
-		controlSettingsPanel.add(new JLabel("MAIN SEED"));
 		controlSettingsPanel.add(randomSeed);
 		controlSettingsPanel.add(compose);
 		controlSettingsPanel.add(regenerate);
