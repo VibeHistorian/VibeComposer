@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import java.util.Enumeration;
+import java.util.Random;
 import java.util.Vector;
 
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
@@ -114,4 +115,44 @@ public class JMusicUtilsCustom {
 		return scrCopy;
 
 	}
+
+	public static void humanize(Part part, Random generator, double rhythmVariation) {
+		if (part == null) {
+			return;
+		}
+		boolean left = true;
+		Enumeration enum1 = part.getPhraseList().elements();
+		while (enum1.hasMoreElements()) {
+			Phrase phr = (Phrase) enum1.nextElement();
+			humanize(phr, 0, rhythmVariation, 0, generator);
+		}
+	}
+
+	public static void humanize(Phrase phrase, int pitchVariation, double rhythmVariation,
+			int dynamicVariation, Random generator) {
+		if (phrase == null) {
+			return;
+		}
+		Enumeration enum1 = phrase.getNoteList().elements();
+		while (enum1.hasMoreElements()) {
+			Note n = (Note) enum1.nextElement();
+			// create new pitch value
+			if (pitchVariation > 0) {
+				n.setPitch(n.getPitch()
+						+ (int) (generator.nextDouble() * (pitchVariation * 2) - pitchVariation));
+			}
+			// create new rhythm and duration values
+			if (rhythmVariation > 0.0) {
+				double var = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
+				n.setOffset(n.getOffset() + var);
+				n.setDuration(n.getDuration() + var);
+			}
+			// create new dynamic value
+			if (dynamicVariation > 0) {
+				n.setDynamic(n.getDynamic() + (int) (generator.nextDouble() * (dynamicVariation * 2)
+						- dynamicVariation));
+			}
+		}
+	}
+
 }

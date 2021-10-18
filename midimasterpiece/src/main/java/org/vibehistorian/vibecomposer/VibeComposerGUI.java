@@ -482,6 +482,8 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomDrumShiftChance;
 	JCheckBox randomDrumUseChordFill;
 	JCheckBox arrangementScaleMidiVelocity;
+	public static KnobPanel humanizeNotes;
+	public static KnobPanel humanizeDrums;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 1;
@@ -985,7 +987,20 @@ public class VibeComposerGUI extends JFrame
 		arrangementExtraSettingsPanel.add(useMidiCC);
 		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
 		//arrangementExtraSettingsPanel.add(bt);
+
+		JPanel humanizationPanel = new JPanel();
+
+		// / 10000
+		humanizeNotes = new KnobPanel("Humanize<br>Notes", 150, 0, 1000);
+		humanizeNotes.setRegenerating(false);
+		// / 10000
+		humanizeDrums = new KnobPanel("Humanize<br>Drums", 20, 0, 100);
+		humanizeDrums.setRegenerating(false);
+		humanizationPanel.add(humanizeNotes);
+		humanizationPanel.add(humanizeDrums);
+
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
+		extraSettingsPanel.add(humanizationPanel);
 
 		JPanel loopBeatExtraSettingsPanel = new JPanel();
 		loopBeatCompose = new JCheckBox("Compose On Loop Repeat", false);

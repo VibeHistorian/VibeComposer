@@ -3053,12 +3053,22 @@ public class MidiGenerator implements JMC {
 
 
 		LOGGER.debug("Added parts to score..");
-
-		/*for (Object o : score.getPartList()) {
+		Random rand = new Random(mainGeneratorSeed + 999);
+		for (Object o : score.getPartList()) {
 			PartExt pe = (PartExt) o;
-		
-			Mod.randomize(pe, 0, pe.getTitle().contains("MainDrum") ? 0.002 : 0.02);
-		}*/
+
+			boolean isDrum = pe.getTitle().contains("MainDrum");
+			boolean shouldRandomize = (isDrum && VibeComposerGUI.humanizeDrums.getInt() > 0)
+					|| (!isDrum && VibeComposerGUI.humanizeNotes.getInt() > 0);
+
+
+			if (shouldRandomize) {
+
+				JMusicUtilsCustom.humanize(pe, rand,
+						isDrum ? VibeComposerGUI.humanizeDrums.getInt() / 10000.0
+								: VibeComposerGUI.humanizeNotes.getInt() / 10000.0);
+			}
+		}
 
 		score.setTempo(gc.getBpm());
 
@@ -3694,8 +3704,15 @@ public class MidiGenerator implements JMC {
 		if (userMelody != null) {
 			skeletonNotes = userMelody.copy().getNoteList();
 		} else {
-			skeletonNotes = generateMelodyBlockSkeletonFromChords(mp, actualProgression,
-					generatedRootProgression, measures, notesSeedOffset, sec, variations);
+			if (false) {
+				LOGGER.info("OLD MELODY ALGO");
+				skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
+						generatedRootProgression, measures, notesSeedOffset, sec, variations);
+			} else {
+				skeletonNotes = generateMelodyBlockSkeletonFromChords(mp, actualProgression,
+						generatedRootProgression, measures, notesSeedOffset, sec, variations);
+			}
+
 		}
 		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
 				progressionDurations, sec, skeletonNotes, notesSeedOffset, actualProgression,
