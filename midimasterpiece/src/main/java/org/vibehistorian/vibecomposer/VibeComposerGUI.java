@@ -947,6 +947,8 @@ public class VibeComposerGUI extends JFrame
 					guiConfig = unmarshall(loadedFile);
 					copyConfigToGUI();
 					clearAllSeeds();
+					recalculateTabPaneCounts();
+					recalculateGenerationCounts();
 					arrangementCustom.setSelected(false);
 				} catch (JAXBException | IOException e) {
 					// TODO Auto-generated catch block
