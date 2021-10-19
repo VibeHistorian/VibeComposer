@@ -28,9 +28,20 @@ public class MelodyUtils {
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 
+	public static List<List<Integer>> CHORD_DIRECTIONS = new ArrayList<>();
+
 	public static final int NUM_LISTS = 3;
 
 	static {
+
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, -1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, 0, 0, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, 1, -1 }));
+
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 2 }));

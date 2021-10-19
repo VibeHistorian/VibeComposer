@@ -1957,7 +1957,7 @@ public class VibeComposerGUI extends JFrame
 			//pieceLength.setText("" + --maxLength);
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// on compose -> this must happen before compose part
-			arrangement.randomizeFully(maxLength, seed, 30, 30, 2, 4, 15);
+			arrangement.randomizeFully(maxLength, seed, 50, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
 			//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
@@ -5475,7 +5475,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void savePauseInfo() {
+	public void savePauseInfo() {
 		pausedSliderPosition = slider.getUpperValue();
 		if (MidiGenerator.chordInts.size() > 0) {
 			pausedMeasureCounter = (int) (pausedSliderPosition - delayed()) / sliderMeasureWidth();

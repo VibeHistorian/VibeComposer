@@ -185,6 +185,18 @@ public class VisualPatternPanel extends JPanel {
 						}
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
+						boolean change = false;
+						if (mouseButton == 2) {
+							hitChecks[fI].setSelected(true);
+							change = true;
+						} else if (mouseButton == 3) {
+							hitChecks[fI].setSelected(false);
+							change = true;
+						}
+						if (change) {
+							needShift = true;
+							checkPattern(fI);
+						}
 						/*if (patternType.getVal() != RhythmPattern.CUSTOM) {
 							patternType.setVal(RhythmPattern.CUSTOM);
 						}*/

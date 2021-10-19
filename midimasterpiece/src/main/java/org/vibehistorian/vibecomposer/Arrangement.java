@@ -82,6 +82,7 @@ public class Arrangement {
 		afterinsertsMap.put("INTRO", new String[] { "VERSE1", "VERSE2", "BUILDUP" });
 
 		afterinsertsMap.put("CHORUS1", new String[] { "VERSE2" });
+		afterinsertsMap.put("CHORUS2", new String[] { "CHORUS3" });
 
 		//afterinsertsMap.put("BREAKDOWN", new String[] { "INTRO" });
 

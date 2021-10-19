@@ -614,12 +614,21 @@ public class MidiGenerator implements JMC {
 
 	private static List<Integer> randomizedChordDirections(int chords, int randomSeed) {
 		Random rand = new Random(randomSeed);
+
+		List<Integer> chordDirs = new ArrayList<>(MelodyUtils.CHORD_DIRECTIONS
+				.get(rand.nextInt(MelodyUtils.CHORD_DIRECTIONS.size())));
+		while (chordDirs.size() < chords) {
+			chordDirs.addAll(chordDirs);
+		}
+		chordDirs = chordDirs.subList(0, chords);
+		return chordDirs;
+		/*
 		List<Integer> dirs = new ArrayList<>();
 		//dirs.add(0);
 		for (int i = 0; i < chords; i++) {
 			dirs.add(rand.nextInt(3) - 1);
 		}
-		return dirs;
+		return dirs;*/
 	}
 
 	private static List<Integer> convertRootsToOffsets(List<Integer> roots, int targetMode) {

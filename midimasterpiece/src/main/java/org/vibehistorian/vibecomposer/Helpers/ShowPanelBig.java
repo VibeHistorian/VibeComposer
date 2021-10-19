@@ -211,6 +211,24 @@ public class ShowPanelBig extends JPanel {
 		sa = new ShowAreaBig(this); //score, maxWidth, maxParts);
 		sa.setVisible(true);
 
+		/*sa.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isLeftMouseButton(evt)) {
+					Point xy = MouseInfo.getPointerInfo().getLocation();
+					SwingUtilities.convertPointFromScreen(xy, sa);
+					double percentage = xy.getX() / sa.getWidth();
+					VibeComposerGUI.isDragging = true;
+					VibeComposerGUI.slider.setUpperValue(
+							(int) (percentage * VibeComposerGUI.slider.getMaximum()));
+					VibeComposerGUI.vibeComposerGUI.savePauseInfo();
+					VibeComposerGUI.vibeComposerGUI
+							.midiNavigate(VibeComposerGUI.slider.getUpperValue());
+					VibeComposerGUI.isDragging = false;
+				}
+			}
+		});*/
+
 		JPanel areaPanel = new JPanel();
 		areaPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
 				ShowAreaBig.areaHeight));
