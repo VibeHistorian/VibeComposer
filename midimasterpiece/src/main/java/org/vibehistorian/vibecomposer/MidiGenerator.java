@@ -1386,60 +1386,34 @@ public class MidiGenerator implements JMC {
 	private int getAllowedPitchFromRange(int min, int max, double posInChord, Random splitNoteGen) {
 
 		boolean allowBs = posInChord > 0.66;
-
-		List<Integer> allowedPitches = MELODY_SCALE;
-		int adjustment = 0;
-		while (max < allowedPitches.get(0)) {
-			min += 12;
-			max += 12;
-			adjustment -= 12;
-		}
-		while (min > allowedPitches.get(allowedPitches.size() - 1)) {
-			min -= 12;
-			max -= 12;
-			adjustment += 12;
-		}
-		for (int i = 0; i < allowedPitches.size(); i++) {
-			int pitch = allowedPitches.get(i);
-
-			// skip Bs if possible
-			if (pitch == 11 && !allowBs && fits(12, min, max, false)) {
-				continue;
-			}
-			// accept if: fits and (either nothing else fits or also accept with 50% chance)
-			if (fits(pitch, min, max, false)
-					&& ((splitNoteGen.nextBoolean()) || i == allowedPitches.size() - 1
-							|| !fits(allowedPitches.get(i + 1), min, max, false))) {
-				return pitch + adjustment;
-			}
+		//LOGGER.info("Min: " + min + ", max: " + max);
+		int normMin = min % 12;
+		int normMax = max % 12;
+		if (normMax <= normMin) {
+			normMax += 12;
 		}
 
-		for (int i = 0; i < allowedPitches.size(); i++) {
-			int pitch = allowedPitches.get(i);
-			// skip Bs if possible
-			if (pitch == 11 && !allowBs && fits(12, min, max, false)) {
-				continue;
-			}
+		List<Integer> allowedPitches = new ArrayList<>(MidiUtils.MAJ_SCALE);
+		int allowedPitchSize = allowedPitches.size();
+		for (int i = 0; i < allowedPitchSize; i++) {
 
-			// accept if: fits and (either nothing else fits or also accept with 50% chance)
-			if (fits(pitch, min, max, true)
-					&& ((splitNoteGen.nextBoolean()) || i == allowedPitches.size() - 1
-							|| !fits(allowedPitches.get(i + 1), min, max, true))) {
-				return pitch + adjustment;
-			}
+			allowedPitches.add(allowedPitches.get(i) + 12);
 		}
-		/*
-				for (Integer i : allowedPitches) {
-					if (i > min && i < max) {
-						return i + adjustment;
-					}
-				}
-				for (Integer i : allowedPitches) {
-					if (i >= min && i <= max) {
-						return i + adjustment;
-					}
-				}*/
-		return 40;
+		//LOGGER.info("Size: " + allowedPitches.size());
+		final int finalNormMax = normMax;
+		//LOGGER.info("Contents: " + StringUtils.join(allowedPitches, ", "));
+		allowedPitches.removeIf(e -> !(normMin <= e && e <= finalNormMax));
+		if (!allowBs) {
+			allowedPitches.remove(Integer.valueOf(11));
+			allowedPitches.remove(Integer.valueOf(23));
+		}
+		//LOGGER.info("Contents: " + StringUtils.join(allowedPitches, ", "));
+		int normReturnPitch = allowedPitches.get(splitNoteGen.nextInt(allowedPitches.size()));
+		//LOGGER.info("Return n: " + normReturnPitch);
+		while (normReturnPitch < min) {
+			normReturnPitch += 12;
+		}
+		return normReturnPitch;
 	}
 
 	private boolean fits(int pitch, int min, int max, boolean isInclusive) {
@@ -1539,21 +1513,22 @@ public class MidiGenerator implements JMC {
 					|| splitLastNoteInChord) {
 
 				int pitch1 = n1.getPitch();
-				Note n2 = skeleton.get((i + 1) % skeleton.size());
-				int pitch2 = 0;
-				if (pitch1 >= n2.getPitch()) {
+				int indexN2 = (i + 1) % skeleton.size();
+				Note n2 = skeleton.get(indexN2);
+				int pitch2 = n2.getPitch() + (indexN2 > 0 ? mp.getTranspose() : 0);
+				if (pitch1 >= pitch2) {
 					int higherNote = pitch1;
 					if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
 						higherNote += RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
 					}
-					pitch2 = getAllowedPitchFromRange(n2.getPitch(), higherNote, positionInChord,
+					pitch2 = getAllowedPitchFromRange(pitch2, higherNote, positionInChord,
 							splitNoteGenerator);
 				} else {
 					int lowerNote = pitch1;
 					if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
 						lowerNote -= RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
 					}
-					pitch2 = getAllowedPitchFromRange(lowerNote, n2.getPitch(), positionInChord,
+					pitch2 = getAllowedPitchFromRange(lowerNote, pitch2, positionInChord,
 							splitNoteGenerator);
 				}
 
@@ -1620,8 +1595,61 @@ public class MidiGenerator implements JMC {
 		}
 
 
+		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords,
+				noteTargetGenerator);
+
+		applyBadIntervalRemoval(fullMelody);
+
+
+		if (gc.getMelodyReplaceAvoidNotes() > 0) {
+			replaceAvoidNotes(fullMelodyMap, chords, mp.getPatternSeed(),
+					gc.getMelodyReplaceAvoidNotes());
+		}
+
+		if (true) {
+			// restrict number of direction changes in chord
+			final int DIR_CHANGE_LIMIT = 2;
+			for (Integer i : fullMelodyMap.keySet()) {
+				List<Note> notes = fullMelodyMap.get(i);
+				if (notes == null || notes.isEmpty()) {
+					continue;
+				}
+				List<Pair<Integer, Double>> dirChangeIndexDurations = new ArrayList<>();
+				int dirChangeCount = 0;
+				int lastPitch = notes.get(0).getPitch();
+				boolean lastDirUp = true;
+				for (int j = 1; j < notes.size(); j++) {
+					Note n = notes.get(j);
+					int pitch = n.getPitch();
+					if (pitch == lastPitch) {
+						continue;
+					}
+					boolean dirUp = pitch > lastPitch;
+					if (dirUp != lastDirUp) {
+						dirChangeCount++;
+						lastDirUp = dirUp;
+						dirChangeIndexDurations.add(Pair.of(j, n.getRhythmValue()));
+					}
+					lastPitch = pitch;
+				}
+				if (dirChangeCount > DIR_CHANGE_LIMIT) {
+					Collections.sort(dirChangeIndexDurations,
+							(e1, e2) -> (e1.getRight().compareTo(e2.getRight())));
+					for (int j = 0; j < dirChangeIndexDurations.size()
+							&& dirChangeCount > DIR_CHANGE_LIMIT; j++) {
+						int indexToPause = dirChangeIndexDurations.get(j).getLeft();
+						System.out.println("Chord: " + i + ", pausing index: " + indexToPause
+								+ ", duration: " + dirChangeIndexDurations.get(j).getRight());
+						notes.get(indexToPause).setPitch(Integer.MIN_VALUE);
+						dirChangeCount--;
+					}
+				}
+			}
+		}
+
+
 		// fill pauses toggle
-		if (mp.isFillPauses() && mp.getPauseChance() > 0) {
+		if (mp.isFillPauses()) {
 			Note fillPauseNote = fullMelody.get(0);
 			double addedDuration = 0;
 			List<Note> notesToRemove = new ArrayList<>();
@@ -1645,17 +1673,6 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-
-		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords,
-				noteTargetGenerator);
-
-		applyBadIntervalRemoval(fullMelody);
-
-
-		if (gc.getMelodyReplaceAvoidNotes() > 0) {
-			replaceAvoidNotes(fullMelodyMap, chords, mp.getPatternSeed(),
-					gc.getMelodyReplaceAvoidNotes());
-		}
 		// repair target notes
 		for (int i = 0; i < firstNotePitches.size(); i++) {
 			if (fullMelodyMap.get(i).size() > 0) {

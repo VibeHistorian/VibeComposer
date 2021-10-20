@@ -99,6 +99,7 @@ public class ShowPanelBig extends JPanel {
 		// then only pan is added to this classes ScrollPane
 		partsShown = new CheckButton[5];
 		scoreBox = new ScrollComboBox<Integer>();
+		scoreBox.setRegenerating(false);
 		ScrollComboBox.addAll(new Integer[] { 0 }, scoreBox);
 		scoreBox.addItemListener(new ItemListener() {
 			@Override

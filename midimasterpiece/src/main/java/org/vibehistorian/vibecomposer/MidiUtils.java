@@ -1263,7 +1263,7 @@ public class MidiUtils {
 			if (changedNote) {
 				int indexToChange = MIN_SCALE.indexOf(normalizedChord[i]);
 				adjustedScale[indexToChange] = normalizedChord[i];
-				LOGGER.info("Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
+				LOGGER.debug("Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
 			}
 
 		}
