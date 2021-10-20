@@ -3956,7 +3956,7 @@ public class VibeComposerGUI extends JFrame
 			r = new ColorUIResource(new Color(68, 66, 67));
 		}
 		UIManager.put("Button.background", r);
-		//UIManager.put("Panel.background", r);
+		UIManager.put("Panel.background", r);
 		UIManager.put("ComboBox.background", r);
 		UIManager.put("TextField.background", r);
 		SwingUtilities.updateComponentTreeUI(this);

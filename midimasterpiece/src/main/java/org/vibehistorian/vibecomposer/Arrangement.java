@@ -42,9 +42,28 @@ import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
 public class Arrangement {
-	private static final List<String> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
+	private static List<List<String>> DEFAULT_ARRANGEMENTS = new ArrayList<>();
+
+	private static final List<String> POP_ARRANGEMENT = new ArrayList<>(
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
 					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
+	private static final List<String> EDM_ARRANGEMENT = new ArrayList<>(Arrays.asList(new String[] {
+			"INTRO", "BUILDUP", "CHORUS2", "VERSE1", "VERSE2", "CHORUS3", "CLIMAX", "OUTRO" }));
+
+	private static final List<String> EDM_ARRANGEMENT2 = new ArrayList<>(
+			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "VERSE1", "CHORUS3",
+					"BREAKDOWN", "CHILL", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+
+	private static final List<String> POP_ARRANGEMENT2 = new ArrayList<>(
+			Arrays.asList(new String[] { "HALF_CHORUS", "VERSE1", "CHORUS2", "VERSE2", "CHORUS3",
+					"BREAKDOWN", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+
+	static {
+		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT);
+		DEFAULT_ARRANGEMENTS.add(EDM_ARRANGEMENT);
+		DEFAULT_ARRANGEMENTS.add(EDM_ARRANGEMENT2);
+		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT2);
+	}
 
 	public static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
@@ -95,7 +114,8 @@ public class Arrangement {
 	public void randomizeFully(int maxLength, int seed, int replacementChance, int insertChance,
 			int maxInsertsPerSection, int maxInsertsTotal, int variabilityChance) {
 		Random arrGen = new Random(seed);
-		List<String> newArrangementSkeleton = new ArrayList<>(MANDATORY_SECTIONS_ORDER);
+		List<String> newArrangementSkeleton = new ArrayList<>(
+				DEFAULT_ARRANGEMENTS.get(arrGen.nextInt(DEFAULT_ARRANGEMENTS.size())));
 		for (int i = 0; i < newArrangementSkeleton.size(); i++) {
 			String s = newArrangementSkeleton.get(i);
 			if (arrGen.nextInt(100) < replacementChance && replacementMap.containsKey(s)) {
