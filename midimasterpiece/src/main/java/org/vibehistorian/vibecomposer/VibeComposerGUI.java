@@ -3956,7 +3956,7 @@ public class VibeComposerGUI extends JFrame
 			r = new ColorUIResource(new Color(68, 66, 67));
 		}
 		UIManager.put("Button.background", r);
-		UIManager.put("Panel.background", r);
+		//UIManager.put("Panel.background", r);
 		UIManager.put("ComboBox.background", r);
 		UIManager.put("TextField.background", r);
 		SwingUtilities.updateComponentTreeUI(this);
@@ -4033,6 +4033,8 @@ public class VibeComposerGUI extends JFrame
 					e.getComboPanel().reapplyHits();
 				}
 			});
+			int fI = i;
+			getAffectedPanels(i).forEach(e -> e.setBackground(OMNI.alphen(instColors[fI], 60)));
 		}
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 

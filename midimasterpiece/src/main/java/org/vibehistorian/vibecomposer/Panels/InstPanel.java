@@ -119,6 +119,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void initDefaults(ActionListener l) {
+		setOpaque(false);
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
 		for (ChordSpanFill fill : ChordSpanFill.values()) {
