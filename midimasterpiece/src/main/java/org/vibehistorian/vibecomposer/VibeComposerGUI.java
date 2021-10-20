@@ -2550,25 +2550,55 @@ public class VibeComposerGUI extends JFrame
 						boolean hasPresence = !sec.getPresence(part).isEmpty();
 						boolean hasVariation = hasPresence && sec.hasVariation(part);
 
-						if (mClick) {
-							if (hasVariation) {
-								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-									sec.removeVariationForAllParts(part, i);
+						if (evt.isControlDown()) {
+							if (hasPresence) {
+								int secOrder2 = secOrder;
+								if (mClick) {
+									secOrder2++;
+									if (secOrder2 >= actualArrangement.getSections().size()) {
+										return;
+									}
+								} else if (rClick) {
+									secOrder2--;
+									if (secOrder2 < 0) {
+										return;
+									}
 								}
-							} else if (hasPresence) {
-								sec.generateVariations(new Random(), part);
+								Section sec2 = actualArrangement.getSections().get(secOrder2);
+								sec2.resetAllPresence(part);
+								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+									sec2.removeVariationForAllParts(part, i);
+								}
+								for (Integer p : sec.getPresence(part)) {
+									int absOrder = MidiGenerator.getAbsoluteOrder(part, p);
+									sec2.setPresence(part, absOrder);
+									sec2.setVariation(part, absOrder,
+											sec.getVariation(part, absOrder));
+								}
+
 							}
 						} else {
-							if (hasPresence) {
-								for (int i = 0; i < getInstList(part).size(); i++) {
-									sec.resetPresence(part, i);
+							if (mClick) {
+								if (hasVariation) {
+									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+										sec.removeVariationForAllParts(part, i);
+									}
+								} else if (hasPresence) {
+									sec.generateVariations(new Random(), part);
 								}
 							} else {
-								arrangement.initPartInclusionMapIfNull();
-								sec.generatePresences(new Random(), part,
-										arrangement.getPartInclusionMap());
+								if (hasPresence) {
+									for (int i = 0; i < getInstList(part).size(); i++) {
+										sec.resetPresence(part, i);
+									}
+								} else {
+									arrangement.initPartInclusionMapIfNull();
+									sec.generatePresences(new Random(), part,
+											arrangement.getPartInclusionMap());
+								}
 							}
 						}
+
 
 						setActualModel(actualArrangement.convertToActualTableModel(), false);
 						refreshVariationPopupButtons(actualArrangement.getSections().size());

@@ -374,6 +374,17 @@ public class Section {
 		}*/
 	}
 
+	public void resetAllPresence(int part) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
+			partPresenceVariationMap.get(part)[i][1] = Boolean.FALSE;
+		}
+
+		/*for (int i = 2; i < variationDescriptions[part].length; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i] = Boolean.FALSE;
+		}*/
+	}
+
 	public boolean hasVariation(int part) {
 		for (int i = 0; i < VibeComposerGUI.getInstList(part).size(); i++) {
 			if (!getVariation(part, i).isEmpty()) {
