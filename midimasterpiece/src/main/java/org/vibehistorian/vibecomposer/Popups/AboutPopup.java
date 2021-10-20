@@ -31,8 +31,8 @@ public class AboutPopup extends CloseablePopup {
 				+ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\r\n"
 				+ "GNU General Public License for more details.\r\n" + "\r\n"
 				+ "You should have received a copy of the GNU General Public License\r\n"
-				+ "along with this program; if not, write to the Free Software\r\n"
-				+ "Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.");
+				+ "along with this program; if not,\r\n"
+				+ "see <https://www.gnu.org/licenses/>.");
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		frame.add(scroll);
 		frame.pack();
