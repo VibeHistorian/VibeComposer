@@ -26,6 +26,7 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.VeloRect;
+import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 
 public class NumPanel extends JPanel {
 
@@ -46,6 +47,8 @@ public class NumPanel extends JPanel {
 	private JButton minusButton = new JButton("-");
 
 	private JPanel buttonPanel = new JPanel();
+
+	private CloseablePopup parentPopup;
 
 	public NumPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -104,7 +107,12 @@ public class NumPanel extends JPanel {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				closeParentFrame();
+				if (parentPopup != null) {
+					parentPopup.close();
+				} else {
+					closeParentFrame();
+				}
+
 			}
 
 		});
@@ -333,5 +341,9 @@ public class NumPanel extends JPanel {
 
 	public void setAllowValuesOutsideRange(boolean allowValuesOutsideRange) {
 		this.allowValuesOutsideRange = allowValuesOutsideRange;
+	}
+
+	public void setParentPopup(CloseablePopup popup) {
+		this.parentPopup = popup;
 	}
 }

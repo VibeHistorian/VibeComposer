@@ -428,7 +428,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			if (e.isControlDown()) {
 				setEnabled(!isEnabled());
 			} else if (isEnabled()) {
-				new KnobValuePopup(this, stretchAfterCustomInput, true);
+				KnobValuePopup kvp = new KnobValuePopup(this, stretchAfterCustomInput, true);
+				kvp.setRegenerating(regenerating);
 			}
 		}
 
