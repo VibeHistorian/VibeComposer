@@ -1608,7 +1608,7 @@ public class MidiGenerator implements JMC {
 
 		if (true) {
 			// restrict number of direction changes in chord
-			final int DIR_CHANGE_LIMIT = 2;
+			final int DIR_CHANGE_LIMIT = gc.getMelodyMaxDirChanges();
 			for (Integer i : fullMelodyMap.keySet()) {
 				List<Note> notes = fullMelodyMap.get(i);
 				if (notes == null || notes.isEmpty()) {
@@ -1617,7 +1617,7 @@ public class MidiGenerator implements JMC {
 				List<Pair<Integer, Double>> dirChangeIndexDurations = new ArrayList<>();
 				int dirChangeCount = 0;
 				int lastPitch = notes.get(0).getPitch();
-				boolean lastDirUp = true;
+				Boolean lastDirUp = null;
 				for (int j = 1; j < notes.size(); j++) {
 					Note n = notes.get(j);
 					int pitch = n.getPitch();
@@ -1625,7 +1625,9 @@ public class MidiGenerator implements JMC {
 						continue;
 					}
 					boolean dirUp = pitch > lastPitch;
-					if (dirUp != lastDirUp) {
+					if (lastDirUp == null) {
+						lastDirUp = dirUp;
+					} else if (dirUp != lastDirUp) {
 						dirChangeCount++;
 						lastDirUp = dirUp;
 						dirChangeIndexDurations.add(Pair.of(j, n.getRhythmValue()));

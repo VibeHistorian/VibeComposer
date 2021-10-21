@@ -196,7 +196,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(VibeComposerGUI.class);
 
-	private static final String SOUNDBANK_DEFAULT = "MuseScore_General.sf2";
+	private static final String SOUNDBANK_DEFAULT = "chiptune_soundfont_4.0.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 	private static final String PRESET_FOLDER = "presets";
 	private static final String EXPORT_FOLDER = "exports";
@@ -212,7 +212,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = false;
+	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -414,6 +414,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> melodyPatternEffect;
 	JCheckBox melodyPatternRandomizeOnCompose;
 	KnobPanel melodyReplaceAvoidNotes;
+	KnobPanel melodyMaxDirChanges;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -1084,8 +1085,8 @@ public class VibeComposerGUI extends JFrame
 		JPanel bpmLowHighPanel = new JPanel();
 
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
-		bpmLow = new KnobPanel("Min<br>BPM.", 60, 20, 249);
-		bpmHigh = new KnobPanel("Max<br>BPM.", 95, 21, 250);
+		bpmLow = new KnobPanel("Min<br>BPM.", 65, 20, 249);
+		bpmHigh = new KnobPanel("Max<br>BPM.", 130, 21, 250);
 		elongateMidi = new KnobPanel("Elongate MIDI%:", 100, 25, 400);
 		elongateMidi.getKnob().setTickSpacing(25);
 		elongateMidi.getKnob().setTickThresholds(
@@ -1257,6 +1258,7 @@ public class VibeComposerGUI extends JFrame
 				"<html>Randomize Pattern<br> on Compose</html>", true);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 1, 0, 2);
+		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 0, 5);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
@@ -1264,6 +1266,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
 		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
+		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
@@ -5969,6 +5972,7 @@ public class VibeComposerGUI extends JFrame
 		guiConfig.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
 		guiConfig.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
 		guiConfig.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
+		guiConfig.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
 
 
 		// chords
@@ -6081,6 +6085,7 @@ public class VibeComposerGUI extends JFrame
 		melodyBlockTargetMode.setSelectedIndex(guiConfig.getMelodyBlockTargetMode());
 		melodyPatternEffect.setSelectedIndex(guiConfig.getMelodyPatternEffect());
 		melodyReplaceAvoidNotes.setInt(guiConfig.getMelodyReplaceAvoidNotes());
+		melodyMaxDirChanges.setInt(guiConfig.getMelodyMaxDirChanges());
 
 		// chords
 		spiceChance.setInt(guiConfig.getSpiceChance());

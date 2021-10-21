@@ -75,7 +75,8 @@ public class GUIConfig {
 	private int melodyTonicNoteTarget = 25;
 	private boolean melodyEmphasizeKey = true;
 	private int melodyModeNoteTarget = 15;
-	private int melodyReplaceAvoidNotes = 2;
+	private int melodyReplaceAvoidNotes = 1;
+	private int melodyMaxDirChanges = 3;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
@@ -649,6 +650,14 @@ public class GUIConfig {
 
 	public void setMelodyFillPausesPerChord(boolean melodyFillPausesPerChord) {
 		this.melodyFillPausesPerChord = melodyFillPausesPerChord;
+	}
+
+	public int getMelodyMaxDirChanges() {
+		return melodyMaxDirChanges;
+	}
+
+	public void setMelodyMaxDirChanges(int melodyMaxDirChanges) {
+		this.melodyMaxDirChanges = melodyMaxDirChanges;
 	}
 
 }
