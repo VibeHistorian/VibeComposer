@@ -1432,7 +1432,7 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	private Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
+	protected Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
 			List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
 			List<int[]> chords, int measures) {
 
@@ -1615,49 +1615,6 @@ public class MidiGenerator implements JMC {
 		if (gc.getMelodyReplaceAvoidNotes() > 0) {
 			replaceAvoidNotes(fullMelodyMap, chords, mp.getPatternSeed(),
 					gc.getMelodyReplaceAvoidNotes());
-		}
-
-		if (true) {
-			// restrict number of direction changes in chord
-			final int DIR_CHANGE_LIMIT = gc.getMelodyMaxDirChanges();
-			for (Integer i : fullMelodyMap.keySet()) {
-				List<Note> notes = fullMelodyMap.get(i);
-				if (notes == null || notes.isEmpty()) {
-					continue;
-				}
-				List<Pair<Integer, Double>> dirChangeIndexDurations = new ArrayList<>();
-				int dirChangeCount = 0;
-				int lastPitch = notes.get(0).getPitch();
-				Boolean lastDirUp = null;
-				for (int j = 1; j < notes.size(); j++) {
-					Note n = notes.get(j);
-					int pitch = n.getPitch();
-					if (pitch == lastPitch) {
-						continue;
-					}
-					boolean dirUp = pitch > lastPitch;
-					if (lastDirUp == null) {
-						lastDirUp = dirUp;
-					} else if (dirUp != lastDirUp) {
-						dirChangeCount++;
-						lastDirUp = dirUp;
-						dirChangeIndexDurations.add(Pair.of(j, n.getRhythmValue()));
-					}
-					lastPitch = pitch;
-				}
-				if (dirChangeCount > DIR_CHANGE_LIMIT) {
-					Collections.sort(dirChangeIndexDurations,
-							(e1, e2) -> (e1.getRight().compareTo(e2.getRight())));
-					for (int j = 0; j < dirChangeIndexDurations.size()
-							&& dirChangeCount > DIR_CHANGE_LIMIT; j++) {
-						int indexToPause = dirChangeIndexDurations.get(j).getLeft();
-						System.out.println("Chord: " + i + ", pausing index: " + indexToPause
-								+ ", duration: " + dirChangeIndexDurations.get(j).getRight());
-						notes.get(indexToPause).setPitch(Integer.MIN_VALUE);
-						dirChangeCount--;
-					}
-				}
-			}
 		}
 
 

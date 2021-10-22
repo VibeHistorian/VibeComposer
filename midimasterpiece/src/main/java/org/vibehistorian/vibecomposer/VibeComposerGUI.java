@@ -1235,7 +1235,7 @@ public class VibeComposerGUI extends JFrame
 		melodyBasicChordsOnly = new JCheckBox("<html>Force<br> Scale</html>", true);
 		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
 		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 20);
-		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", false);
+		melodyEmphasizeKey = new JCheckBox("<html>Emphasize<br> Key</html>", true);
 		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
 		melodyArpySurprises = new JCheckBox("<html>Insert<br> Arps</html>", false);
 		melodySingleNoteExceptions = new JCheckBox("<html>Single Note<br>Exceptions</html>", true);
@@ -1257,8 +1257,8 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternRandomizeOnCompose = new JCheckBox(
 				"<html>Randomize Pattern<br> on Compose</html>", true);
 
-		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 1, 0, 2);
-		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 0, 5);
+		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
+		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 0, 0, 5);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
@@ -1266,7 +1266,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
 		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
-		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
+		//melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
