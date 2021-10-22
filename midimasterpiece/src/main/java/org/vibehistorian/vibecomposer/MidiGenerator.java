@@ -1568,22 +1568,33 @@ public class MidiGenerator implements JMC {
 
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
-			List<Note> notes = fullMelodyMap.get(chordIndex);
+			List<Note> notes = new ArrayList<>(fullMelodyMap.get(chordIndex));
+			Collections.sort(notes,
+					(e1, e2) -> (Double.compare(e1.getRhythmValue(), e2.getRhythmValue())));
 			pauseGenerator.setSeed(orderSeed + 5);
 			int actualPauseChance = adjustChanceParamForTransition(mp.getPauseChance(), sec,
 					chordIndex, durations.size(), 40, 0.25, false);
-
+			int pausedNotes = (int) Math.round(notes.size() * actualPauseChance / 100.0);
 			int startIndex = (mp.isFillPauses())
 					? (gc.isMelodyFillPausesPerChord() ? 1 : ((chordIndex == 0) ? 1 : 0))
 					: 0;
 
-			for (int j = startIndex; j < notes.size(); j++) {
+			for (int j = 0; j < pausedNotes; j++) {
 				Note n = notes.get(j);
-				Random pauseGen = (n.getRhythmValue() < Durations.DOTTED_EIGHTH_NOTE + DBL_ERR)
-						? pauseGenerator2
-						: pauseGenerator;
-				if (pauseGen.nextInt(100) < actualPauseChance
-						|| fillerPattern.get(chordIndex) < 1) {
+				if (startIndex == 1) {
+					if (n.equals(fullMelodyMap.get(chordIndex).get(0))) {
+						pitches[n.getPitch() % 12]++;
+						continue;
+					}
+				}
+				n.setPitch(Integer.MIN_VALUE);
+				if (fillerPattern.get(chordIndex) < 1) {
+					firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
+				}
+			}
+			for (int j = pausedNotes; j < notes.size(); j++) {
+				Note n = notes.get(j);
+				if (fillerPattern.get(chordIndex) < 1) {
 					n.setPitch(Integer.MIN_VALUE);
 					if (fillerPattern.get(chordIndex) < 1) {
 						firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
