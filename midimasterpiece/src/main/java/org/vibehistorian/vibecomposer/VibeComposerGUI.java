@@ -1405,7 +1405,7 @@ public class VibeComposerGUI extends JFrame
 					melodyPanel.getPanSlider().setValue(25);
 				}
 			} else {
-				melodyPanel.setPauseChance(10);
+				melodyPanel.setPauseChance(50);
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);
@@ -4390,6 +4390,7 @@ public class VibeComposerGUI extends JFrame
 					arrSection.setSelectedIndex(0);
 				}
 				refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
+				arrSection.repaint();
 			}
 
 		});
@@ -6180,8 +6181,12 @@ public class VibeComposerGUI extends JFrame
 			if (inst == 4) {
 				ip.getInstrumentBox().setEnabled(true);
 			}
-		} else if (inst == 4) {
-			ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
+		} else {
+			ip.setBackground(OMNI.alphen(instColors[inst], 60));
+
+			if (inst == 4) {
+				ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
+			}
 		}
 
 		if (initializingPart != null) {

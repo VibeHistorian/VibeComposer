@@ -185,11 +185,16 @@ public class Rhythm {
 		int[] finalWeights = new int[weights.length];
 		double total = 0;
 		for (int w : weights) {
-			total += w;
+			if (w > 0) {
+				total += w;
+			}
 		}
 		for (int i = 0; i < weights.length; i++) {
 			double normalizedWeight = weights[i] * 100.0 / total;
 			finalWeights[i] = (int) Math.round(normalizedWeight);
+			if (finalWeights[i] < 0) {
+				finalWeights[i] = 0;
+			}
 			if (i > 0) {
 				finalWeights[i] += finalWeights[i - 1];
 			}

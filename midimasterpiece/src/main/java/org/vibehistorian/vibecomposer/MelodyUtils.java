@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
@@ -156,7 +157,7 @@ public class MelodyUtils {
 	}
 
 	public static Pair<Integer, Integer[]> getRandomByApproxBlockChangeAndLength(int blockChange,
-			int approx, Random melodyBlockGenerator, Integer length) {
+			int approx, Random melodyBlockGenerator, Integer length, int remainingVariance) {
 		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
 		chosenChange = OMNI.clamp(chosenChange, -7, 7);
 		//System.out.println("Chosen change: " + chosenChange);
@@ -180,6 +181,10 @@ public class MelodyUtils {
 			}
 			viableBlocks.addAll(invertedBlocks);
 		}
+		int sizeBefore = viableBlocks.size();
+		viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
+		System.out.println("Size difference: " + (sizeBefore - viableBlocks.size())
+				+ ", for variance remaining: " + remainingVariance);
 		//viableBlocks.forEach(e -> System.out.println(StringUtils.join(e, ',')));
 		if (viableBlocks.size() == 0) {
 			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
@@ -226,22 +231,69 @@ public class MelodyUtils {
 		return block[block.length - 1] - block[0];
 	}
 
+	public static Integer variance(Integer[] block) {
+		int min = block[0];
+		int max = block[block.length - 1];
+		if (min > max) {
+			min = max;
+			max = block[0];
+		}
+		int biggestOutsider = 0;
+		for (int i = 1; i < block.length - 1; i++) {
+			int diff = 0;
+			if (block[i] < min) {
+				diff = min - block[i];
+			} else if (block[i] > max) {
+				diff = block[i] - max;
+			}
+
+			if (diff > biggestOutsider) {
+				biggestOutsider = diff;
+			}
+		}
+		//System.out.println("Variance: " + biggestOutsider);
+		return biggestOutsider;
+	}
+
 	public static List<Integer> blockChangeSequence(int chord1, int chord2, int randSeed,
-			int numBlocks, int maxBlockChange) {
+			int numBlocks, int maxBlockChange, int maxDirChanges) {
 		Random rand = new Random(randSeed);
 		List<Integer> changeList = new ArrayList<>();
 
 		// how many notes need to be corrected | change = 5 -> sum of block change sequence must be -5
 		int change = chord1 - chord2;
-		//System.out.println("Change: " + change);
+		System.out.println("Change: " + change);
 		List<Integer> reducableIndices = new ArrayList<>();
+		int lastChg = 0;
+		int dirChanges = 0;
 		for (int i = 0; i < numBlocks; i++) {
 			int chg = rand.nextInt(maxBlockChange * 2 + 1) - maxBlockChange;
-			changeList.add(chg);
-			change += chg;
-			reducableIndices.add(i);
+			if (dirChanges == maxDirChanges) {
+				if (lastChg > 0) {
+					chg = rand.nextInt(maxBlockChange + 1);
+					changeList.add(chg);
+					change += chg;
+				} else if (lastChg < 0) {
+					chg = rand.nextInt(maxBlockChange + 1) * -1;
+					changeList.add(chg);
+					change += chg;
+				} else {
+					chg = 0;
+					changeList.add(chg);
+				}
+			} else {
+				/*if (chg > 0 && lastChg < 0 || chg < 0 && lastChg > 0) {
+					dirChanges++;
+				}*/
+				lastChg = chg;
+				changeList.add(chg);
+				change += chg;
+				reducableIndices.add(i);
+			}
+
 		}
-		//System.out.println("Initial: " + StringUtils.join(changeList, ","));
+		System.out.println("Initial: " + StringUtils.join(changeList, ","));
+		//System.out.println("reducableIndices i's: " + StringUtils.join(reducableIndices, ", "));
 		if (change > 0) {
 			reducableIndices.removeIf(e -> changeList.get(e) == -1 * maxBlockChange);
 		} else if (change < 0) {
@@ -263,10 +315,10 @@ public class MelodyUtils {
 		}
 		rand.setSeed(randSeed);
 
-		//System.out.println("Decr: " + StringUtils.join(changeList, ","));
+		System.out.println("Decr: " + StringUtils.join(changeList, ","));
 		Collections.shuffle(changeList, rand);
 
-		//System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
+		System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
 		return changeList;
 	}
 

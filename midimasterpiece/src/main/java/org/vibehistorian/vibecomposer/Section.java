@@ -459,7 +459,7 @@ public class Section {
 				added++;
 			}
 		}
-		if (added == 0) {
+		if (added == 0 && panels.size() > 0) {
 			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
 			setPresence(part, MidiGenerator.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
