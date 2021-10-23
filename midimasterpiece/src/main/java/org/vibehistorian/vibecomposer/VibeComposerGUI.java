@@ -3890,11 +3890,11 @@ public class VibeComposerGUI extends JFrame
 			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, midiCc, value);
 
 			if (midiMode.isSelected() && device != null) {
-				device.getReceiver().send(volumeMessage, -1);
+				device.getReceivers().forEach(e -> e.send(volumeMessage, -1));
 			} else if (synth != null && synth.isOpen()) {
-				synth.getReceiver().send(volumeMessage, -1);
+				synth.getReceivers().forEach(e -> e.send(volumeMessage, -1));
 			}
-		} catch (InvalidMidiDataException | MidiUnavailableException e) {
+		} catch (InvalidMidiDataException e) {
 			// Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -4102,9 +4102,18 @@ public class VibeComposerGUI extends JFrame
 				MidiDevice oldDevice = device;
 				device = null;
 
-
 				if (oldDevice != null) {
-					//oldDevice.getTransmitters();
+					/*List<Transmitter> trs = oldDevice.getTransmitters();
+					LOGGER.info("Closing Transmitters: " + (trs != null ? trs.size() : "0/null"));
+					for (Transmitter t : trs) {
+						//LOGGER.info(("Closing T!"));
+						t.close();
+					}
+					List<Receiver> rs = oldDevice.getReceivers();
+					LOGGER.info("Closing Receivers: " + (rs != null ? rs.size() : "0/null"));
+					for (Receiver r : rs) {
+						r.close();
+					}*/
 					oldDevice.close();
 				}
 
