@@ -1950,8 +1950,8 @@ public class MidiGenerator implements JMC {
 							newPitch -= 12;
 						}
 						n.setPitch(newPitch);
-						LOGGER.debug("Avoiding note: " + j + ", in chord: " + i + ", pitch change: "
-								+ (oldPitch - newPitch));
+						/*LOGGER.debug("Avoiding note: " + j + ", in chord: " + i + ", pitch change: "
+								+ (oldPitch - newPitch));*/
 					}
 				}
 

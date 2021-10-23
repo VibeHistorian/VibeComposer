@@ -10,7 +10,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
@@ -137,11 +136,11 @@ public class MelodyUtils {
 	}
 
 	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
-			int length, Random melodyBlockGenerator, int approx) {
+			Integer length, Random melodyBlockGenerator, int approx) {
 		List<Integer[]> usedList = getBlocksForType(type);
 		// length fits, note distance and distance roughly equal (diff < approx)
 		List<Integer[]> filteredList = usedList.stream()
-				.filter(e -> (e.length == length)
+				.filter(e -> (length == null || e.length == length)
 						&& (Math.abs(blockChange(e) - Math.abs(blockChange)) <= approx))
 				.collect(Collectors.toList());
 		if (filteredList.size() == 0) {
@@ -292,7 +291,7 @@ public class MelodyUtils {
 			}
 
 		}
-		System.out.println("Initial: " + StringUtils.join(changeList, ","));
+		//System.out.println("Initial: " + StringUtils.join(changeList, ","));
 		//System.out.println("reducableIndices i's: " + StringUtils.join(reducableIndices, ", "));
 		if (change > 0) {
 			reducableIndices.removeIf(e -> changeList.get(e) == -1 * maxBlockChange);
@@ -315,11 +314,84 @@ public class MelodyUtils {
 		}
 		rand.setSeed(randSeed);
 
-		System.out.println("Decr: " + StringUtils.join(changeList, ","));
-		Collections.shuffle(changeList, rand);
+		//System.out.println("Decr: " + StringUtils.join(changeList, ","));
+		//Collections.shuffle(changeList, rand);
 
-		System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
+		smartShuffleMaxDirChange(changeList, rand, maxDirChanges);
+
+		//System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
 		return changeList;
+	}
+
+	private static void smartShuffleMaxDirChange(List<Integer> changeList, Random rand,
+			int maxDirChange) {
+		if (changeList == null || changeList.size() <= 1) {
+			return;
+		}
+
+		// maxDirChange: 1,2,3, UNLIMITED
+
+		// only one direction present
+		if (!changeList.stream().anyMatch(e -> e < 0) || !changeList.stream().anyMatch(e -> e > 0)
+				|| changeList.size() < 3) {
+			Collections.shuffle(changeList, rand);
+			return;
+		}
+		// negative and positive values present:
+		// sorting creates 1 dir change: -2, -1, 0, 0, 3, 4
+		Collections.sort(changeList);
+
+		int maxNegIndex = 0;
+		int firstPosIndex = 0;
+		for (int i = 1; i < changeList.size(); i++) {
+			if (changeList.get(i) >= 0 && maxNegIndex == 0) {
+				maxNegIndex = i - 1;
+			}
+			if (changeList.get(i) > 0 && firstPosIndex == 0) {
+				firstPosIndex = i;
+				break;
+			}
+		}
+		int zeroCount = firstPosIndex - maxNegIndex - 1;
+
+		List<Integer> negSub = new ArrayList<>(changeList.subList(0, maxNegIndex + 1));
+		List<Integer> posSub = new ArrayList<>(
+				changeList.subList(firstPosIndex, changeList.size()));
+		Collections.shuffle(negSub, rand);
+		Collections.shuffle(posSub, rand);
+
+		if (rand.nextBoolean() && maxDirChange > 1) {
+
+			int posIndexForSwap = rand.nextInt(posSub.size());
+			if (maxDirChange == 2) {
+				negSub.add(0, posSub.get(posIndexForSwap));
+				posSub.remove(posIndexForSwap);
+			} else {
+				int negIndexForSwap = rand.nextInt(negSub.size());
+				int temp = posSub.get(posIndexForSwap);
+				posSub.set(posIndexForSwap, negSub.get(negIndexForSwap));
+				negSub.set(negIndexForSwap, temp);
+			}
+		}
+
+		List<Integer> finalList = new ArrayList<>();
+		if (rand.nextBoolean()) {
+			finalList.addAll(negSub);
+			finalList.addAll(posSub);
+		} else {
+			finalList.addAll(posSub);
+			finalList.addAll(negSub);
+		}
+
+		if (zeroCount > 0) {
+			for (int i = 0; i < zeroCount; i++) {
+				int randIndex = rand.nextInt(finalList.size());
+				finalList.add(randIndex, 0);
+			}
+		}
+		changeList.clear();
+		changeList.addAll(finalList);
+
 	}
 
 	public boolean blockContainsJump(Integer[] block, int jump) {
