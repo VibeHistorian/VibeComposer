@@ -1258,7 +1258,7 @@ public class VibeComposerGUI extends JFrame
 				"<html>Randomize Pattern<br> on Compose</html>", true);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
-		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 3);
+		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 0, 6);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
