@@ -76,7 +76,7 @@ public class GUIConfig {
 	private boolean melodyEmphasizeKey = true;
 	private int melodyModeNoteTarget = 15;
 	private int melodyReplaceAvoidNotes = 1;
-	private int melodyMaxDirChanges = 3;
+	private int melodyMaxDirChanges = 2;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
