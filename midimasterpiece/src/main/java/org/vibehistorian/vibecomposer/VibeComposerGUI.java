@@ -1258,7 +1258,7 @@ public class VibeComposerGUI extends JFrame
 				"<html>Randomize Pattern<br> on Compose</html>", true);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
-		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 0, 6);
+		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
@@ -1405,7 +1405,7 @@ public class VibeComposerGUI extends JFrame
 					melodyPanel.getPanSlider().setValue(25);
 				}
 			} else {
-				melodyPanel.setPauseChance(50);
+				melodyPanel.setPauseChance(20);
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);

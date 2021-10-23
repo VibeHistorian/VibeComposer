@@ -3917,7 +3917,7 @@ public class MidiGenerator implements JMC {
 		double flamming = 0.0;
 		if (gc.getChordGenSettings().isUseStrum()) {
 			flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
-			LOGGER.debug("Chord strum CUSTOM! " + cp.getStrum() + ", flamming: " + flamming);
+			//LOGGER.debug("Chord strum CUSTOM! " + cp.getStrum() + ", flamming: " + flamming);
 		}
 
 
