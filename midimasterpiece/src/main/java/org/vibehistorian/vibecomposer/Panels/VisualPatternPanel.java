@@ -14,6 +14,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -399,8 +402,25 @@ public class VisualPatternPanel extends JPanel {
 			veloToggler.addMouseListener(new MouseAdapter() {
 
 				@Override
-				public void mouseReleased(MouseEvent e) {
-					toggleVelocityShow();
+				public void mouseReleased(MouseEvent evt) {
+					if (SwingUtilities.isRightMouseButton(evt)) {
+						List<Integer> defaultVelos = IntStream.iterate(64, e -> e).limit(MAX_HITS)
+								.boxed().collect(Collectors.toList());
+						setVelocities(defaultVelos);
+						repaint();
+					} else if (SwingUtilities.isMiddleMouseButton(evt) && parentPanel != null) {
+						Random veloRand = new Random();
+						int minVel = parentPanel.getVelocityMin();
+						int maxVel = parentPanel.getVelocityMax();
+						List<Integer> randomVelos = IntStream
+								.iterate(minVel + veloRand.nextInt(maxVel - minVel + 1),
+										e -> minVel + veloRand.nextInt(maxVel - minVel + 1))
+								.limit(MAX_HITS).boxed().collect(Collectors.toList());
+						setVelocities(randomVelos);
+						repaint();
+					} else {
+						toggleVelocityShow();
+					}
 				}
 			});
 			velocityToggler = veloToggler;
@@ -408,6 +428,10 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void toggleVelocityShow() {
+		toggleVelocityShow(null);
+	}
+
+	public void toggleVelocityShow(Integer mouseButton) {
 		showingVelocities = !showingVelocities;
 		velocityToggler.setText(showingVelocities ? "H" : "V");
 		VisualPatternPanel.this.setVisible(false);
