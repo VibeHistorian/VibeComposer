@@ -130,6 +130,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -4358,7 +4359,9 @@ public class VibeComposerGUI extends JFrame
 
 		if (instrumentTabPane.getSelectedIndex() != 3 && arpCopyMelodyInst.isSelected()
 				&& !melodyPanels.get(0).getMuteInst()) {
-			if (arpPanels.size() > 0) {
+			if (arpPanels.size() > 0 && !arpPanels.get(0).getLockInst()) {
+				arpPanels.get(0).getInstrumentBox().initInstPool(POOL.MELODY);
+				arpPanels.get(0).setInstPool(POOL.MELODY);
 				arpPanels.get(0).setInstrument(melodyPanels.get(0).getInstrument());
 			}
 		}
