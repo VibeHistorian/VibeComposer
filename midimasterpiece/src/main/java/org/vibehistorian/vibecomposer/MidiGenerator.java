@@ -144,6 +144,7 @@ public class MidiGenerator implements JMC {
 	// constants
 	public static final boolean MAXIMIZE_CHORUS_MAIN_MELODY = false;
 	public static final int MELODY_PATTERN_RESOLUTION = 16;
+
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	public static final int OPENHAT_CHANCE = 0;
 	private static final int maxAllowedScaleNotes = 7;
@@ -188,6 +189,11 @@ public class MidiGenerator implements JMC {
 	private List<int[]> chordProgression = new ArrayList<>();
 	private List<int[]> rootProgression = new ArrayList<>();
 
+	private int melodyResForChord(int chordIndex) {
+		return (int) (Math.round(MELODY_PATTERN_RESOLUTION * progressionDurations.get(chordIndex)
+				/ Durations.WHOLE_NOTE));
+	}
+
 	public static Map<Integer, List<Note>> userMelodyMap = new HashMap<>();
 	private Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
@@ -220,6 +226,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static List<Integer> melodyNotePattern = null;
+	public static Map<Integer, List<Integer>> melodyNotePatternMap = null;
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
@@ -933,7 +940,8 @@ public class MidiGenerator implements JMC {
 	private List<Integer> patternFromNotes(List<Note> notes, int chordsTotal, Double measureTotal) {
 		// strategy: use 64 hits in pattern, then simplify if needed
 
-		int hits = chordsTotal * MELODY_PATTERN_RESOLUTION;
+		int hits = (int) Math.round(
+				chordsTotal * MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
 		measureTotal = (measureTotal == null) ? (chordsTotal
 				* ((gc.isDoubledDurations()) ? Durations.WHOLE_NOTE * 2 : Durations.WHOLE_NOTE))
 				: measureTotal;
@@ -947,17 +955,25 @@ public class MidiGenerator implements JMC {
 		pattern.set(0, (notes.size() > 0 && notes.get(0).getPitch() < 0) ? 0 : 1);
 		double currentDuration = 0;
 		int explored = 0;
+
+		// 111 0 11111 000 11111
+
+		// 1 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0
+		int counter = 0;
 		for (Note n : notes) {
 			/*LOGGER.debug(
 					"Current dur: " + currentDuration + ", + rhythm: " + n.getRhythmValue());*/
 			currentDuration += n.getRhythmValue();
 			for (int i = explored; i < hits; i++) {
 				if (currentDuration < durationBuckets.get(i)) {
-					pattern.set(i, 1);
+					int nextPitch = ((notes.size() > counter + 1)
+							&& notes.get(counter + 1).getPitch() > 0) ? 1 : 0;
+					pattern.set(i, nextPitch);
 					explored = i;
 					break;
 				}
 			}
+			counter++;
 		}
 		if (gc.isMelodyPatternFlip()) {
 			for (int i = 0; i < pattern.size(); i++) {
@@ -2247,21 +2263,19 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern, int start,
-			int end, double addDur) {
+	public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern,
+			double addDur) {
 		List<Double> durations = new ArrayList<>();
-		double dur = addDur;
-		for (int i = start; i < end; i++) {
+		double dur = 0;
+		int end = pattern.size();
+		for (int i = 0; i < end; i++) {
 			if (pattern.get(i) < 1) {
 				dur += addDur;
-				if (i < end - 1 && pattern.get(i + 1) == 1) {
-					durations.add(dur);
-				}
 			} else {
 				dur = addDur;
-				if (i < end - 1 && pattern.get(i + 1) == 1) {
-					durations.add(dur);
-				}
+			}
+			if (i < end - 1 && pattern.get(i + 1) == 1) {
+				durations.add(dur);
 			}
 		}
 		durations.add(dur);
@@ -3745,6 +3759,7 @@ public class MidiGenerator implements JMC {
 			List<Integer> notePattern = new ArrayList<>();
 			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
 			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
+			melodyNotePatternMap = notePatternMap;
 			melodyNotePattern = notePattern;
 			//LOGGER.debug(StringUtils.join(melodyNotePattern, ","));
 		}
@@ -3851,12 +3866,11 @@ public class MidiGenerator implements JMC {
 					Rhythm bassRhythm = new Rhythm(seedCopy, progressionDurations.get(chordIndex),
 							durationPool, durationWeights);
 					int counter = 0;
-					List<Double> durations = (bp.isMelodyPattern() && (melodyNotePattern != null))
-							? getSustainedDurationsFromPattern(melodyNotePattern,
-									chordIndex * MELODY_PATTERN_RESOLUTION,
-									(chordIndex + 1) * MELODY_PATTERN_RESOLUTION,
-									progressionDurations.get(chordIndex)
-											/ MELODY_PATTERN_RESOLUTION)
+					List<Integer> pattern = (bp.isMelodyPattern() && (melodyNotePatternMap != null))
+							? new ArrayList<>(melodyNotePatternMap.get(chordIndex))
+							: null;
+					List<Double> durations = (pattern != null)
+							? getSustainedDurationsFromPattern(pattern, Durations.SIXTEENTH_NOTE)
 							: bassRhythm.regenerateDurations(4,
 									MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0);
 					for (Double dur : durations) {
@@ -3877,7 +3891,9 @@ public class MidiGenerator implements JMC {
 						int pitch = (rhythmPauses && dur < Durations.QUARTER_NOTE
 								&& rhythmPauseGenerator.nextInt(100) < 33) ? Integer.MIN_VALUE
 										: squishedChords.get(chordIndex)[randomNote];
-
+						if (pattern != null && counter == 0 && pattern.get(0) < 1) {
+							pitch = Integer.MIN_VALUE;
+						}
 
 						bassPhrase.addNote(
 								new Note(pitch, dur, bassDynamics.nextInt(velSpace) + minVel));
@@ -4082,10 +4098,8 @@ public class MidiGenerator implements JMC {
 
 				List<Integer> pattern = null;
 				List<Integer> nextPattern = null;
-				if (cp.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
-					pattern = new ArrayList<>(
-							melodyNotePattern.subList(chordIndex * MELODY_PATTERN_RESOLUTION,
-									(chordIndex + 1) * MELODY_PATTERN_RESOLUTION));
+				if (cp.getPattern() == RhythmPattern.MELODY1 && melodyNotePatternMap != null) {
+					pattern = new ArrayList<>(melodyNotePatternMap.get(chordIndex));
 				} else {
 					List<Integer> patternCopy = cp.getFinalPatternCopy();
 					List<Integer> patternSub = patternCopy.subList(0, cp.getHitsPerPattern());
@@ -4105,7 +4119,9 @@ public class MidiGenerator implements JMC {
 						pattern.set(p, 1 - pattern.get(p));
 					}
 				}
-				double duration = Durations.WHOLE_NOTE / pattern.size();
+				double duration = (cp.getPattern() == RhythmPattern.MELODY1
+						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
+								: Durations.WHOLE_NOTE / pattern.size();
 				double durationNow = 0;
 				int nextP = -1;
 
@@ -4300,7 +4316,9 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				double chordDurationArp = Durations.WHOLE_NOTE / ((double) repeatedArpsPerChord);
+				double chordDurationArp = (ap.getPattern() == RhythmPattern.MELODY1
+						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
+								: Durations.WHOLE_NOTE / ((double) repeatedArpsPerChord);
 				int[] chord = convertChordToLength(actualProgression.get(j),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
 				if (directions != null) {
@@ -4326,8 +4344,10 @@ public class MidiGenerator implements JMC {
 						arpPattern);
 				List<Integer> octavePatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
 						arpOctavePattern);
-				List<Integer> pausePatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
-						arpPausesPattern);
+				List<Integer> pausePatternSpanned = (ap.getPattern() == RhythmPattern.MELODY1
+						&& melodyNotePatternMap != null)
+								? new ArrayList<>(melodyNotePatternMap.get(j))
+								: partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern);
 
 				int p = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(j)) {
@@ -4343,9 +4363,14 @@ public class MidiGenerator implements JMC {
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
 					}
 
+					boolean isPause = pausePatternSpanned.get(p) == 0;
+					if (ap.isPatternFlip()) {
+						isPause = !isPause;
+					}
+
 					pitch += extraTranspose;
 					if (!fillLastBeat || j < actualProgression.size() - 1) {
-						if (pausePatternSpanned.get(p) == 0) {
+						if (isPause) {
 							pitch = Integer.MIN_VALUE;
 						}
 						if (!ignoreChordSpanFill) {
@@ -4490,7 +4515,9 @@ public class MidiGenerator implements JMC {
 							: 0.0;
 				}
 
-				double drumDuration = Durations.WHOLE_NOTE * chordSpan / hits;
+				double drumDuration = (dp.getPattern() == RhythmPattern.MELODY1
+						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
+								: Durations.WHOLE_NOTE * chordSpan / hits;
 				double durationNow = 0.0;
 				int k = 0;
 				while (durationNow + DBL_ERR < patternDurationTotal) {
@@ -4512,11 +4539,6 @@ public class MidiGenerator implements JMC {
 						durationNowCheck -= progressionDurations.get(chordIndex + chordNumAdd);
 					}
 					int chordNum = chordIndex + chordNumAdd;
-					if (dp.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
-						drumDuration = progressionDurations
-								.get(Math.min(chordNum, progressionDurations.size() - 1))
-								/ MELODY_PATTERN_RESOLUTION;
-					}
 					boolean forceLastFilled = drumFill
 							&& (chordNum == actualProgression.size() - 1);
 					if (!ignoreChordSpanFill && !forceLastFilled) {
@@ -4731,6 +4753,9 @@ public class MidiGenerator implements JMC {
 	}
 
 	private <T> List<T> partOfList(int part, int partCount, List<T> list) {
+		if (partCount == 1) {
+			return list;
+		}
 		double size = Math.ceil(list.size() / ((double) partCount));
 		List<T> returnList = new ArrayList<>();
 		for (int i = 0; i < list.size(); i++) {
@@ -4767,9 +4792,6 @@ public class MidiGenerator implements JMC {
 			if (pauseGenerator.nextInt(100) < ap.getPauseChance()) {
 				arpPausesPattern.set(i, 0);
 			}
-			if (ap.isPatternFlip()) {
-				arpPausesPattern.set(i, 1 - arpPausesPattern.get(i));
-			}
 		}
 	}
 
@@ -4791,7 +4813,7 @@ public class MidiGenerator implements JMC {
 			ap.setPatternShift(0);
 			//dp.setVelocityPattern(false);
 			ap.setChordSpan(chordInts.size());
-			ap.setHitsPerPattern(melodyNotePattern.size() / chordInts.size());
+			ap.setHitsPerPattern(melodyNotePattern.size());
 			ap.setPatternRepeat(1);
 		} else {
 			arpPausesPattern = ap.getFinalPatternCopy();
