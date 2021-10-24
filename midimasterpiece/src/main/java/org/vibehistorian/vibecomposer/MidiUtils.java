@@ -650,6 +650,14 @@ public class MidiUtils {
 	}
 
 	public static int[] getNormalMappedChord(String chordString) {
+		int len = chordString.length();
+		Integer inversion = null;
+		int dotIndex = chordString.indexOf(".");
+		if (len >= 3 && dotIndex >= 0) {
+			inversion = Integer.valueOf(chordString.substring(dotIndex + 1));
+			chordString = chordString.substring(0, dotIndex);
+		}
+
 		int[] mappedChord = null;
 		if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
 			String testChordString = chordString;
@@ -660,6 +668,10 @@ public class MidiUtils {
 				for (int i = 0; i < mappedChord.length; i++) {
 					mappedChord[i] = mappedChord[i] + 1;
 				}
+
+				if (inversion != null) {
+					return chordInversion(mappedChord, inversion);
+				}
 				return mappedChord;
 			}
 		}
@@ -668,7 +680,31 @@ public class MidiUtils {
 		if (mappedChord == null) {
 			return null;
 		}
+		if (inversion != null) {
+			return chordInversion(mappedChord, inversion);
+		}
 		return Arrays.copyOf(mappedChord, mappedChord.length);
+	}
+
+	public static int[] chordInversion(int[] chord, Integer inversion) {
+		if (inversion == null) {
+			return chord;
+		}
+		// % safeguard
+		//inversion = (inversion + chord.length * 100) % chord.length;
+		int[] newChord = new int[chord.length];
+		for (int i = 0; i < chord.length; i++) {
+			int index = (i + inversion + chord.length * 100) % chord.length;
+			newChord[index] = chord[i];
+			if (inversion > 0 && index < i) {
+				newChord[index] += 12;
+			} else if (inversion < 0 && index > i) {
+				newChord[index] -= 12;
+			}
+		}
+		Arrays.sort(newChord);
+		return newChord;
+
 	}
 
 	public static int[] convertChordToLength(int[] chord, int length) {
