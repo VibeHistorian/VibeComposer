@@ -13,6 +13,7 @@ import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
 public class RandomValueButton extends JButton {
 
 	private static final long serialVersionUID = -2737936353529731016L;
+	private int value = 0;
 
 	public RandomValueButton(int value) {
 		this.setPreferredSize(new Dimension(100, 30));
@@ -38,7 +39,7 @@ public class RandomValueButton extends JButton {
 	}
 
 	public int getValue() {
-		return Integer.valueOf(getText());
+		return value;
 	}
 
 	public void setValue(int value) {
@@ -46,6 +47,7 @@ public class RandomValueButton extends JButton {
 			return;
 		}
 		setText("" + value);
+		this.value = value;
 	}
 
 }

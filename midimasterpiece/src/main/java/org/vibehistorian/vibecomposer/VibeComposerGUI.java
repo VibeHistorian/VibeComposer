@@ -4356,7 +4356,8 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		if (arpCopyMelodyInst.isSelected() && !melodyPanels.get(0).getMuteInst()) {
+		if (instrumentTabPane.getSelectedIndex() != 3 && arpCopyMelodyInst.isSelected()
+				&& !melodyPanels.get(0).getMuteInst()) {
 			if (arpPanels.size() > 0) {
 				arpPanels.get(0).setInstrument(melodyPanels.get(0).getInstrument());
 			}
@@ -7224,6 +7225,7 @@ public class VibeComposerGUI extends JFrame
 
 
 	public static boolean canRegenerateOnChange() {
-		return regenerateWhenValuesChange.isSelected() && arrSection.getSelectedIndex() == 0;
+		return sequencer != null && regenerateWhenValuesChange.isSelected()
+				&& arrSection.getSelectedIndex() == 0;
 	}
 }

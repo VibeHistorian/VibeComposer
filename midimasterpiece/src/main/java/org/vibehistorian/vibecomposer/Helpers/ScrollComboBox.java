@@ -15,7 +15,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
-	private boolean mousePressed = false;
+	protected boolean mousePressed = false;
 	private boolean regenerating = true;
 
 	public ScrollComboBox() {
