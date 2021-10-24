@@ -127,7 +127,6 @@ import javax.xml.bind.Marshaller;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -387,6 +386,8 @@ public class VibeComposerGUI extends JFrame
 	JButton soloAllDrums;
 
 	// melody gen settings
+	JButton randomizeMelodies;
+	JCheckBox randomizeMelodiesOnCompose;
 	KnobPanel melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox randomMelodySameSeed;
@@ -1301,6 +1302,12 @@ public class VibeComposerGUI extends JFrame
 		JLabel filterLabel = new JLabel("LP");
 		melodySettingsExtraPanelOrg.add(filterLabel);
 		melodySettingsExtraPanelOrg.add(groupFilterSliders[0]);
+
+		randomizeMelodies = makeButton("Randomize Melodies",
+				e -> createRandomMelodyPanels(new Random().nextInt()));
+		melodySettingsExtraPanelOrg.add(randomizeMelodies);
+		randomizeMelodiesOnCompose = new JCheckBox("On Compose", true);
+		melodySettingsExtraPanelOrg.add(randomizeMelodiesOnCompose);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
 		JButton clearUserMelodySeed = makeButton("Clear Seed",
@@ -3901,6 +3908,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
+		randomizeMelodiesOnCompose.setSelected(state);
 		randomChordsGenerateOnCompose.setSelected(state);
 		randomArpsGenerateOnCompose.setSelected(state);
 		randomDrumsGenerateOnCompose.setSelected(state);
@@ -3992,6 +4000,7 @@ public class VibeComposerGUI extends JFrame
 		tipLabel.setForeground(toggledUIColor);
 		currentTime.setForeground(toggledUIColor);
 		totalTime.setForeground(toggledUIColor);
+		randomizeMelodiesOnCompose.setForeground(toggledUIColor);
 		randomChordsGenerateOnCompose.setForeground(toggledUIColor);
 		randomArpsGenerateOnCompose.setForeground(toggledUIColor);
 		randomDrumsGenerateOnCompose.setForeground(toggledUIColor);
@@ -4290,29 +4299,22 @@ public class VibeComposerGUI extends JFrame
 	private Integer prepareMainSeed(boolean regenerate) {
 		int masterpieceSeed = 0;
 
-		Integer parsedSeed = (NumberUtils.isCreatable(randomSeed.getText()))
-				? Integer.valueOf(randomSeed.getText())
-				: 0;
+		int parsedSeed = randomSeed.getValue();
 
 		if (regenerate) {
 			masterpieceSeed = lastRandomSeed;
 			if (parsedSeed != 0) {
 				masterpieceSeed = parsedSeed;
 			}
-			if (randomMelodyOnRegenerate.isSelected()) {
-				randomizeMelodySeeds();
-			}
 		}
 
-		Random seedGenerator = new Random();
-		int randomVal = seedGenerator.nextInt();
 		if (masterpieceSeed != 0) {
 			LOGGER.info(("Skipping, regenerated seed: " + masterpieceSeed));
-		} else if ((!StringUtils.isEmpty(randomSeed.getText()) && !"0".equals(randomSeed.getText())
-				&& (StringUtils.isNumeric(randomSeed.getText())
-						|| StringUtils.isNumeric(randomSeed.getText().substring(1))))) {
-			masterpieceSeed = Integer.valueOf(randomSeed.getText());
+		} else if (parsedSeed != 0) {
+			masterpieceSeed = parsedSeed;
 		} else {
+			Random seedGenerator = new Random();
+			int randomVal = seedGenerator.nextInt();
 			masterpieceSeed = randomVal;
 		}
 
@@ -4322,7 +4324,15 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void prepareUI(boolean regenerate) {
+		if (!regenerate && randomizeMelodiesOnCompose.isSelected()) {
+			int seed = randomSeed.getValue() != 0 ? randomSeed.getValue() : lastRandomSeed;
+			createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt());
+		}
 
+
+		if (randomMelodyOnRegenerate.isSelected()) {
+			randomizeMelodySeeds();
+		}
 
 		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
 			if (melody1ForcePatterns.isSelected()) {
@@ -6273,6 +6283,50 @@ public class VibeComposerGUI extends JFrame
 		} else if (panel instanceof ChordPanel) {
 			createRandomChordPanels(chordPanels.size() + 1, true, (ChordPanel) panel);
 		}
+	}
+
+	private void createRandomMelodyPanels(int seed) {
+		Random melodyRand = new Random(seed);
+		for (int i = 0; i < 3; i++) {
+			MelodyPanel melodyPanel = melodyPanels.get(i);
+			if (melodyPanel.getLockInst()) {
+				continue;
+			}
+			if (randomizeInstOnComposeOrGen.isSelected()) {
+				melodyPanel.setInstrument(melodyPanel.getInstrumentBox().getRandomInstrument());
+			}
+
+			melodyPanel.setSpeed(melodyRand.nextInt(50));
+			melodyPanel.setMaxBlockChange(3 + melodyRand.nextInt(5));
+			melodyPanel.setSplitChance(melodyRand.nextInt(15));
+			melodyPanel.setNoteExceptionChance(10 + melodyRand.nextInt(15));
+			melodyPanel.setMaxNoteExceptions(melodyRand.nextInt(3));
+			melodyPanel.setLeadChordsChance(melodyRand.nextInt(50));
+			if (i > 0) {
+				melodyPanel.setFillPauses(true);
+				melodyPanel.setPauseChance(50 + melodyRand.nextInt(40));
+				/*melodyPanel.toggleCombinedMelodyDisabledUI(
+						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
+				melodyPanel.setVelocityMax(65 + melodyRand.nextInt(20));
+				melodyPanel.setVelocityMin(40 + melodyRand.nextInt(20));
+				if (i % 2 == 1) {
+					melodyPanel.setTranspose(0);
+					melodyPanel.getPanSlider().setValue(75);
+				} else {
+					melodyPanel.setTranspose(-12);
+					melodyPanel.getPanSlider().setValue(25);
+				}
+				melodyPanel.setNoteLengthMultiplier(70 + melodyRand.nextInt(40));
+			} else {
+				melodyPanel.setFillPauses(melodyRand.nextBoolean());
+				melodyPanel.setPauseChance(melodyRand.nextInt(50));
+				melodyPanel.setTranspose(12);
+				melodyPanel.setVelocityMax(80 + melodyRand.nextInt(30));
+				melodyPanel.setVelocityMin(50 + melodyRand.nextInt(25));
+				melodyPanel.setNoteLengthMultiplier(100 + melodyRand.nextInt(25));
+			}
+		}
+		repaint();
 	}
 
 	private void createBlueprintedDrumPanels(int panelCount, boolean onlyAdd,
