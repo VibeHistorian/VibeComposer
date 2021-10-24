@@ -470,7 +470,7 @@ public class VibeComposerGUI extends JFrame
 	// drum gen settings
 	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 39, 40 });
 	public static List<Integer> KICK_DRUMS = Arrays.asList(new Integer[] { 35, 36 });
-	public static List<Integer> SNARE_DRUMS = Arrays.asList(new Integer[] { 38, 39, 40 });
+	public static List<Integer> SNARE_DRUMS = Arrays.asList(new Integer[] { 38, 40 });
 	JButton drumAddJButton;
 	JButton randomizeDrums;
 	JTextField randomDrumsToGenerate;
@@ -1342,7 +1342,7 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", false);
+		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
 		combineMelodyTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -3804,12 +3804,12 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(helperPopupsPanel);
 	}
 
-	private void startVolumeSliderThread() {
+	private void startMidiCcThread() {
 		if (cycle != null && cycle.isAlive()) {
-			LOGGER.info(("Volume slider thread already exists!"));
+			LOGGER.info(("MidiCcThread already exists!"));
 			return;
 		}
-		LOGGER.info(("Starting new slider thread..!"));
+		LOGGER.info(("Starting new MidiCcThread..!"));
 		cycle = new Thread() {
 
 			public void run() {
@@ -3845,7 +3845,7 @@ public class VibeComposerGUI extends JFrame
 						return;
 					}
 				}
-				LOGGER.info(("ENDED VOLUME SLIDER THREAD!"));
+				LOGGER.info(("ENDED MidiCcThread!"));
 			}
 		};
 		cycle.start();
@@ -4644,7 +4644,7 @@ public class VibeComposerGUI extends JFrame
 							? (int) Math.ceil(OMNI.sumListDouble(
 									OMNI.parseDoublesString(userChordsDurations.getText())))
 							: MidiGenerator.chordInts.size() * 4);
-			startVolumeSliderThread();
+			startMidiCcThread();
 			recalculateTabPaneCounts();
 			sequencer.setTempoFactor(1);
 			if (needToRecalculateSoloMutersAfterSequenceGenerated) {
@@ -5487,7 +5487,7 @@ public class VibeComposerGUI extends JFrame
 				e.printStackTrace();
 			}
 			sequencer.start();
-			startVolumeSliderThread();
+			startMidiCcThread();
 			LOGGER.info("Started Midi: " + pausedSliderPosition + "/" + slider.getMaximum()
 					+ ", measure: " + pausedMeasureCounter);
 		} else {
@@ -6332,11 +6332,11 @@ public class VibeComposerGUI extends JFrame
 		}
 		Collections.sort(pitches);
 		int index = 0;
+		long kickCount = remainingPanels.stream()
+				.filter(e -> KICK_DRUMS.contains(e.getInstrument())).count();
+		long snareCount = remainingPanels.stream()
+				.filter(e -> SNARE_DRUMS.contains(e.getInstrument())).count();
 		if (!onlyAdd && pitches.size() >= 3) {
-			long kickCount = remainingPanels.stream()
-					.filter(e -> KICK_DRUMS.contains(e.getInstrument())).count();
-			long snareCount = remainingPanels.stream()
-					.filter(e -> SNARE_DRUMS.contains(e.getInstrument())).count();
 			//LOGGER.info(("Kick,snare: " + kickCount + ", " + snareCount));
 			if (kickCount == 0) {
 				pitches.set(index++, 35);
@@ -6347,28 +6347,46 @@ public class VibeComposerGUI extends JFrame
 
 
 			if (snareCount == 0) {
-				pitches.set(index++, 38);
+				pitches.set(index++, drumPanelGenerator.nextBoolean() ? 38 : 40);
 			}
+		} else if (onlyAdd) {
+			List<Integer> allowedInsts = new ArrayList<>(
+					Arrays.asList(InstUtils.DRUM_INST_NUMBERS));
+			if (snareCount >= 1) {
+				allowedInsts.remove(3);
+				allowedInsts.remove(4);
+			}
+			if (kickCount >= 2) {
+				allowedInsts.remove(0);
+				allowedInsts.remove(0);
+			} else if (kickCount == 0) {
+				allowedInsts.clear();
+				allowedInsts.add(35);
+				allowedInsts.add(36);
+			}
+			pitches.set(0, allowedInsts.get(drumPanelGenerator.nextInt(allowedInsts.size())));
 		}
-
-		if (pitches.stream().filter(e -> KICK_DRUMS.contains(e)).count() > 1) {
-			for (int i = index; i < pitches.size(); i++) {
-				int e = pitches.get(i);
-				if (KICK_DRUMS.contains(e)) {
-					pitches.set(i, i % 2 == 0 ? 46 : 60);
+		if (!onlyAdd) {
+			if (pitches.stream().filter(e -> KICK_DRUMS.contains(e)).count() > 1) {
+				for (int i = index; i < pitches.size(); i++) {
+					int e = pitches.get(i);
+					if (KICK_DRUMS.contains(e)) {
+						pitches.set(i, i % 2 == 0 ? 46 : 60);
+					}
 				}
 			}
-		}
 
-		if (pitches.stream().filter(e -> SNARE_DRUMS.contains(e)).count() > 1) {
-			for (int i = index; i < pitches.size(); i++) {
-				int e = pitches.get(i);
-				if (SNARE_DRUMS.contains(e)) {
-					pitches.set(i, i % 2 == 0 ? 42 : 44);
+			if (pitches.stream().filter(e -> SNARE_DRUMS.contains(e)).count() > 1) {
+				for (int i = index; i < pitches.size(); i++) {
+					int e = pitches.get(i);
+					if (SNARE_DRUMS.contains(e)) {
+						pitches.set(i, i % 2 == 0 ? 42 : 44);
+					}
 				}
 			}
+			Collections.sort(pitches);
 		}
-		Collections.sort(pitches);
+
 
 		int chords = 2;
 		int maxPatternPerChord = VisualPatternPanel.MAX_HITS;
