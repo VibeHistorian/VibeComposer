@@ -3936,10 +3936,10 @@ public class VibeComposerGUI extends JFrame
 			newPrefSize = new Dimension(1600, 435);
 			//ShowPanelBig.panelMaxHeight = 400;
 		}
-		/*if (scorePanel != null) {
-			scorePanel.updatePanelHeight();
+		if (scorePanel != null) {
+			scorePanel.updatePanelHeight(newPrefSize.height);
 			scorePanel.update();
-		}*/
+		}
 		scrollPaneDimension = newPrefSize;
 		instrumentTabPane.setPreferredSize(newPrefSize);
 		instrumentTabPane.setSize(newPrefSize);

@@ -119,7 +119,7 @@ public class ShowPanelBig extends JPanel {
 		JScrollPane horizontalPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(beatWidthBaseDefault, panelMaxHeight - 50);
+				return new Dimension(beatWidthBaseDefault, getHeight() - 50);
 			}
 		};
 		horizontalPane.setViewportView(pan);
@@ -238,7 +238,7 @@ public class ShowPanelBig extends JPanel {
 		areaScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(ShowPanelBig.beatWidthBase, 330);
+				return new Dimension(ShowPanelBig.beatWidthBase, getHeight() - 70);
 			}
 		};
 		areaScrollPane.setViewportView(areaPanel);
@@ -280,7 +280,8 @@ public class ShowPanelBig extends JPanel {
 		rulerPanel.add(ruler);
 		rulerPanel.setVisible(true);
 		pan.add("South", rulerPanel);
-		updatePanelHeight();
+		panelHeight = panelMaxHeight;
+		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
 		scorePartPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		this.add(scorePartPanel);
 		this.add(horizontalPane);
@@ -357,8 +358,8 @@ public class ShowPanelBig extends JPanel {
 	/**
 	 * Used to adjust the height when the size of display is changed.
 	 */
-	public void updatePanelHeight() {
-		panelHeight = panelMaxHeight;
+	public void updatePanelHeight(int height) {
+		panelHeight = height;
 		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
 	}
 
