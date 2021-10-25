@@ -5910,6 +5910,44 @@ public class VibeComposerGUI extends JFrame
 		return (GUIConfig) context.createUnmarshaller().unmarshal(new FileReader(f));
 	}
 
+	public List<Component> makeSettableComponentList() {
+		List<Component> cs = new ArrayList<>();
+
+
+		return cs;
+	}
+
+	public void setComponent(Component c, Integer num) {
+		if (c instanceof ScrollComboBox) {
+			ScrollComboBox csc = ((ScrollComboBox) c);
+			if (csc.getItemCount() > 0) {
+				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
+			}
+		} else if (c instanceof KnobPanel) {
+			((KnobPanel) c).setInt(num);
+		} else if (c instanceof JCheckBox) {
+			((JCheckBox) c).setSelected(num != null && num > 0);
+		} else if (c instanceof CheckButton) {
+			((CheckButton) c).setSelected(num != null && num > 0);
+		} else {
+			throw new IllegalArgumentException("UNSUPPORTED COMPONENT!" + c.getClass());
+		}
+	}
+
+	public Integer getComponentValue(Component c) {
+		if (c instanceof ScrollComboBox) {
+			return ((ScrollComboBox) c).getSelectedIndex();
+		} else if (c instanceof KnobPanel) {
+			return ((KnobPanel) c).getInt();
+		} else if (c instanceof JCheckBox) {
+			return ((JCheckBox) c).isSelected() ? 1 : 0;
+		} else if (c instanceof CheckButton) {
+			return ((CheckButton) c).isSelected() ? 1 : 0;
+		} else {
+			throw new IllegalArgumentException("UNSUPPORTED COMPONENT!" + c.getClass());
+		}
+	}
+
 	public GUIConfig copyGUItoConfig() {
 		// seed
 		//GUIConfig gc = new GUIConfig();
