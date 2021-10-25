@@ -5234,13 +5234,12 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "CopySeed") {
-			String str = String.valueOf(lastRandomSeed);
 			/*Toolkit toolkit = Toolkit.getDefaultToolkit();
 			Clipboard clipboard = toolkit.getSystemClipboard();
 			StringSelection strSel = new StringSelection(str);
 			clipboard.setContents(strSel, null);*/
-			randomSeed.setText(str);
-			LOGGER.info(("Copied to random seed: " + str));
+			randomSeed.setValue(lastRandomSeed);
+			LOGGER.info(("Copied to random seed: " + lastRandomSeed));
 		}
 
 		if (ae.getActionCommand() == "CopyChords") {

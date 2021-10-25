@@ -228,6 +228,7 @@ public class MelodyPanel extends InstPanel {
 		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
 		speed.setInt(mp1.speed.getInt());
 		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
+		setInstrument(mp1.getInstrument());
 	}
 
 	public int getMaxBlockChange() {
