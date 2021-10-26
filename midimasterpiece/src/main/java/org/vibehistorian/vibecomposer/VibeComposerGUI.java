@@ -3140,7 +3140,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				copyGUItoConfig(guiConfig, false);
+				copyGUItoConfig(guiConfig);
 				List<String> normalizedChords = MidiUtils.respiceChords(userChords.getText(),
 						guiConfig);
 				if (normalizedChords != null) {
@@ -4179,7 +4179,7 @@ public class VibeComposerGUI extends JFrame
 		Integer masterpieceSeed = prepareMainSeed(regenerate);
 
 		prepareUI(regenerate);
-		copyGUItoConfig(guiConfig, false);
+		copyGUItoConfig(guiConfig);
 		MidiGenerator melodyGen = new MidiGenerator(guiConfig);
 		fillUserParameters(regenerate);
 
@@ -4852,7 +4852,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void randomizeUserChords() {
-		copyGUItoConfig(guiConfig, false);
+		copyGUItoConfig(guiConfig);
 		MidiGenerator mg = new MidiGenerator(guiConfig);
 		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
 		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
@@ -5470,7 +5470,7 @@ public class VibeComposerGUI extends JFrame
 			File savedMidi = new File(finalFilePath);
 			try {
 				FileUtils.copyFile(currentMidi, savedMidi);
-				copyGUItoConfig(guiConfig, false);
+				copyGUItoConfig(guiConfig);
 				marshalConfig(finalFilePath, false);
 			} catch (IOException | JAXBException e) {
 				// Auto-generated catch block
@@ -5484,7 +5484,7 @@ public class VibeComposerGUI extends JFrame
 	private void saveGuiPresetFileByFilePath(String filePath, boolean isXmlPath) {
 		try {
 			GUIPreset preset = new GUIPreset();
-			copyGUItoConfig(preset, false);
+			copyGUItoConfig(preset);
 			List<Component> presetComps = makeSettableComponentList();
 			List<Integer> presetCompValues = new ArrayList<>();
 			for (int i = 0; i < presetComps.size(); i++) {
@@ -6071,7 +6071,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public void copyGUItoConfig(GUIConfig gc, boolean isPreset) {
+	public void copyGUItoConfig(GUIConfig gc) {
 		// seed
 		//GUIConfig gc = new GUIConfig();
 
