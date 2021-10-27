@@ -529,7 +529,7 @@ public class VibeComposerGUI extends JFrame
 
 	// seed / midi
 	RandomValueButton randomSeed;
-	int lastRandomSeed = 0;
+	public static int lastRandomSeed = 0;
 	double realBpm = 60;
 
 	JList<File> generatedMidi;

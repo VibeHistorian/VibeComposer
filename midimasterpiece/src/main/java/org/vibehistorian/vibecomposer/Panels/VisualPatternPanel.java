@@ -404,10 +404,17 @@ public class VisualPatternPanel extends JPanel {
 				@Override
 				public void mouseReleased(MouseEvent evt) {
 					if (SwingUtilities.isRightMouseButton(evt)) {
-						List<Integer> defaultVelos = IntStream.iterate(64, e -> e).limit(MAX_HITS)
-								.boxed().collect(Collectors.toList());
-						setVelocities(defaultVelos);
-						repaint();
+						if (showingVelocities) {
+							List<Integer> defaultVelos = IntStream.iterate(64, e -> e)
+									.limit(MAX_HITS).boxed().collect(Collectors.toList());
+							setVelocities(defaultVelos);
+							repaint();
+						} else if (parentPanel != null) {
+							parentPanel.applyPauseChance(new Random(
+									parentPanel.getPatternSeed() != 0 ? parentPanel.getPatternSeed()
+											: VibeComposerGUI.lastRandomSeed));
+						}
+
 					} else if (SwingUtilities.isMiddleMouseButton(evt) && parentPanel != null) {
 						Random veloRand = new Random();
 						int minVel = parentPanel.getVelocityMin();
