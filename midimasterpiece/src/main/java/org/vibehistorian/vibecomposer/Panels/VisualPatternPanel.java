@@ -453,8 +453,22 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void checkPattern(int fI) {
+		checkPattern(fI, null);
+	}
+
+	public int getPattern(int fI) {
 		int shI = (fI - shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
-		int applied = hitChecks[fI].isSelected() ? 1 : 0;
+		return truePattern.get(shI);
+	}
+
+	public void checkPattern(int fI, Integer directSetting) {
+		int shI = (fI - shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
+		if (directSetting != null) {
+			hitChecks[fI].setSelected(directSetting > 0);
+			hitVelocities[fI].setEnabled(directSetting > 0);
+		}
+		int applied = (directSetting != null) ? directSetting
+				: (hitChecks[fI].isSelected() ? 1 : 0);
 		truePattern.set(shI, applied);
 		boolean reapplyNeeded = false;
 		while ((shI += lastHits) < MAX_HITS) {

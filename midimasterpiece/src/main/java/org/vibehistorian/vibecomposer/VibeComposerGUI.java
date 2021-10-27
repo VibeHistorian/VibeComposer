@@ -411,6 +411,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyAvoidChordJumps;
 	JCheckBox melodyUseDirectionsFromProgression;
 	JCheckBox melodyPatternFlip;
+	public static JCheckBox patternApplyPausesWhenGenerating;
 	public static ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
 	ScrollComboBox<String> melodyPatternEffect;
@@ -1057,10 +1058,12 @@ public class VibeComposerGUI extends JFrame
 		drumCustomMappingNumbers = new JTextField(
 				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
 		melodyPatternFlip = new JCheckBox("Inverse Melody1 Pattern", false);
+		patternApplyPausesWhenGenerating = new JCheckBox("Apply Pause% on Generate", true);
 
 		customDrumMappingPanel.add(drumCustomMapping);
 		customDrumMappingPanel.add(drumCustomMappingNumbers);
 		customDrumMappingPanel.add(melodyPatternFlip);
+		customDrumMappingPanel.add(patternApplyPausesWhenGenerating);
 		drumCustomMapping.setToolTipText(
 				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
 
@@ -6649,11 +6652,14 @@ public class VibeComposerGUI extends JFrame
 				dp.setPatternShift(drumPanelGenerator.nextInt(dp.getPatternShift() + 1));
 			}
 
-			if (dp.getPatternShift() > 0) {
-				dp.getComboPanel().reapplyShift();
-			}
+			dp.applyPauseChance(drumPanelGenerator);
+
+			//if (dp.getPatternShift() > 0) {
+			dp.getComboPanel().reapplyShift();
+			//}
 
 			dp.getComboPanel().reapplyHits();
+
 			/*DrumPart panelPart = dp.toDrumPart(lastRandomSeed);
 			int[] drumPartArray = displayDrumPart(panelPart, chords, maxPatternPerChord);
 			for (int j = 0; j < drumPartArray.length; j++) {
@@ -7190,6 +7196,9 @@ public class VibeComposerGUI extends JFrame
 				}
 				ap.setArpPattern(ArpPattern.values()[arpPatternOrder]);
 			}
+
+			ap.applyPauseChance(arpPanelGenerator);
+
 			if (needNewChannel) {
 				ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);
 				ap.setPanByOrder(7);

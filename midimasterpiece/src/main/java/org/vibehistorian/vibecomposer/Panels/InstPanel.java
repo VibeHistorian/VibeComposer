@@ -30,6 +30,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -649,5 +650,18 @@ public abstract class InstPanel extends JPanel {
 		order--;
 		getPanSlider().setValue(
 				50 + (order % 2 == 0 ? 1 : -1) * ((order - 1) % panelLimit) * (49 / panelLimit));
+	}
+
+	public void applyPauseChance(Random randGen) {
+		if (getPauseChance() > 0 && getPattern() != RhythmPattern.MELODY1
+				&& VibeComposerGUI.patternApplyPausesWhenGenerating.isSelected()) {
+			for (int j = 0; j < getHitsPerPattern(); j++) {
+				if (randGen.nextInt(100) < getPauseChance() && getComboPanel().getPattern(j) > 0) {
+					getComboPanel().checkPattern(j, 0);
+					//LOGGER.debug("Pause chance applied");
+				}
+			}
+			setPauseChance(0);
+		}
 	}
 }
