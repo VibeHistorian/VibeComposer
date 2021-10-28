@@ -55,7 +55,7 @@ public class MelodyMidiDropPane extends JPanel {
 	public static Phrase userMelody = null;
 	public static Phrase userMelodyCandidate = null;
 
-	private JLabel message;
+	public static JLabel message;
 
 	public MelodyMidiDropPane() {
 		/*try {

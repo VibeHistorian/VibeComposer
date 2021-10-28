@@ -19,6 +19,13 @@ public class PhraseNotes {
 	private List<Double> rv;
 	private List<Double> durations;
 
+	public PhraseNotes() {
+		pitches = new ArrayList<>();
+		dynamics = new ArrayList<>();
+		rv = new ArrayList<>();
+		durations = new ArrayList<>();
+	}
+
 	public PhraseNotes(Phrase phr) {
 		this(phr.getNoteList());
 	}

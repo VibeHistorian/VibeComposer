@@ -6186,6 +6186,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (guiConfig.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = guiConfig.getMelodyNotes().makePhrase();
+			MelodyMidiDropPane.message.setText("~MELODY LOADED FROM FILE~");
 		}
 
 		// seed
