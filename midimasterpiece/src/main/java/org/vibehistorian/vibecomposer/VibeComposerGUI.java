@@ -144,6 +144,7 @@ import org.vibehistorian.vibecomposer.Helpers.CheckButton;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
@@ -6065,6 +6066,10 @@ public class VibeComposerGUI extends JFrame
 		// seed
 		//GUIConfig gc = new GUIConfig();
 
+		if (MelodyMidiDropPane.userMelody != null) {
+			gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
+		}
+
 		gc.setRandomSeed(lastRandomSeed);
 
 		// arrangement
@@ -6177,6 +6182,12 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void copyConfigToGUI() {
+
+
+		if (guiConfig.getMelodyNotes() != null) {
+			MelodyMidiDropPane.userMelody = guiConfig.getMelodyNotes().makePhrase();
+		}
+
 		// seed
 		randomSeed.setText(String.valueOf(guiConfig.getRandomSeed()));
 		lastRandomSeed = (int) guiConfig.getRandomSeed();

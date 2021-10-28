@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -41,6 +42,8 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 @XmlRootElement(name = "GUIConfig")
 @XmlType(propOrder = {})
 public class GUIConfig {
+
+	private PhraseNotes melodyNotes = null;
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
@@ -658,6 +661,14 @@ public class GUIConfig {
 
 	public void setMelodyMaxDirChanges(int melodyMaxDirChanges) {
 		this.melodyMaxDirChanges = melodyMaxDirChanges;
+	}
+
+	public PhraseNotes getMelodyNotes() {
+		return melodyNotes;
+	}
+
+	public void setMelodyNotes(PhraseNotes melodyNotes) {
+		this.melodyNotes = melodyNotes;
 	}
 
 }
