@@ -249,7 +249,7 @@ public class MidiGenerator implements JMC {
 			fillChordMelodyMap = true;
 		}
 
-		if (sec.getRiskyVariations() != null && sec.getRiskyVariations().get(2)) {
+		if (sec.getRiskyVariations() != null && sec.isRiskyVar(2)) {
 			notesSeedOffset += 100;
 		}
 
@@ -2836,11 +2836,11 @@ public class MidiGenerator implements JMC {
 			LOGGER.info("Section energy type: " + notesSeedOffset);
 
 			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
-			List<Boolean> riskyVariations = calculateRiskyVariations(arr, secOrder, sec,
+			List<Integer> riskyVariations = calculateRiskyVariations(arr, secOrder, sec,
 					notesSeedOffset, variationGen);
 			List<String> includedRiskyVarNames = new ArrayList<>();
 			for (int i = 0; i < riskyVariations.size(); i++) {
-				if (riskyVariations.get(i)) {
+				if (riskyVariations.get(i) > 0) {
 					includedRiskyVarNames.add(Section.riskyVariationNames[i]);
 				}
 			}
@@ -2852,7 +2852,7 @@ public class MidiGenerator implements JMC {
 				sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
 			}
 			if (!sectionChordsReplaced) {
-				if (riskyVariations.get(1)) {
+				if (riskyVariations.get(1) > 0) {
 					//LOGGER.debug("Risky Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
@@ -2864,7 +2864,7 @@ public class MidiGenerator implements JMC {
 
 				}
 			} else if (rootProgression.size() == generatedRootProgression.size()) {
-				if (riskyVariations.get(1)) {
+				if (riskyVariations.get(1) > 0) {
 					//LOGGER.debug("Risky Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
@@ -2872,14 +2872,14 @@ public class MidiGenerator implements JMC {
 				}
 			}
 
-			if (riskyVariations.get(4)) {
+			if (riskyVariations.get(4) > 0) {
 				//LOGGER.debug("Risky Variation: Key Change (on next chord)!");
 				transToSet = generateKeyChange(generatedRootProgression, arrSeed);
 			}
 
 			boolean twoFiveOneChords = gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE
-					&& riskyVariations.get(4);
-			if (riskyVariations.get(0) && !twoFiveOneChords) {
+					&& riskyVariations.get(4) > 0;
+			if (riskyVariations.get(0) > 0 && !twoFiveOneChords) {
 				//LOGGER.debug("Risky Variation: Skip N-1 Chord!");
 				skipN1Chord();
 			}
@@ -3121,9 +3121,9 @@ public class MidiGenerator implements JMC {
 		LOGGER.info("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	private List<Boolean> calculateRiskyVariations(Arrangement arr, int secOrder, Section sec,
+	private List<Integer> calculateRiskyVariations(Arrangement arr, int secOrder, Section sec,
 			int notesSeedOffset, Random variationGen) {
-		List<Boolean> riskyVariations = sec.getRiskyVariations();
+		List<Integer> riskyVariations = sec.getRiskyVariations();
 		if (riskyVariations == null) {
 			riskyVariations = new ArrayList<>();
 			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
@@ -3154,11 +3154,11 @@ public class MidiGenerator implements JMC {
 				}
 				// transitionCut - anywhere, but only if 5 and 6 not generated
 				if (i == 7) {
-					isVariation &= (!riskyVariations.get(5) && !riskyVariations.get(6));
+					isVariation &= (riskyVariations.get(5) == 0 && riskyVariations.get(6) == 0);
 				}
 
 
-				riskyVariations.add(isVariation);
+				riskyVariations.add(isVariation ? 1 : 0);
 			}
 			sec.setRiskyVariations(riskyVariations);
 		}
@@ -3180,7 +3180,7 @@ public class MidiGenerator implements JMC {
 	}*/
 
 	private void fillMelodyPartsForSection(double measureLength, boolean overridden, Section sec,
-			int notesSeedOffset, List<Boolean> riskyVariations, boolean sectionChordsReplaced) {
+			int notesSeedOffset, List<Integer> riskyVariations, boolean sectionChordsReplaced) {
 		if (!gc.getMelodyParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(0);
@@ -3192,7 +3192,7 @@ public class MidiGenerator implements JMC {
 					List<int[]> usedRoots = rootProgression;
 
 					// if n-1, do not also swap melody
-					if (riskyVariations.get(2) && !riskyVariations.get(0)
+					if (riskyVariations.get(2) > 0 && riskyVariations.get(0) == 0
 							&& !sectionChordsReplaced) {
 						usedMelodyProg = melodyBasedChordProgression;
 						usedRoots = melodyBasedRootProgression;
@@ -3227,7 +3227,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void fillOtherPartsForSection(Section sec, Arrangement arr, boolean overridden,
-			List<Boolean> riskyVariations, Random variationGen, int arrSeed, double measureLength) {
+			List<Integer> riskyVariations, Random variationGen, int arrSeed, double measureLength) {
 		// copied into empty sections
 		Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
 		Phrase emptyPhrase = new Phrase();
@@ -3328,7 +3328,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void calculatePresencesForSection(Section sec, Random rand, Random variationGen,
-			boolean overridden, List<Boolean> riskyVariations, int arrSeed, int notesSeedOffset,
+			boolean overridden, List<Integer> riskyVariations, int arrSeed, int notesSeedOffset,
 			boolean isPreview, int counter, Arrangement arr) {
 		if (!gc.getMelodyParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(0);

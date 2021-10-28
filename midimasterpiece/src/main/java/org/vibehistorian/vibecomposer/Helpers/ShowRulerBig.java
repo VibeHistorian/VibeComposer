@@ -115,6 +115,9 @@ public class ShowRulerBig extends JComponent {
 			} else if ((i - startOffset) % (timeSig * 2) == 0 && beatWidth > 5) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
 				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
+			} else if ((i - startOffset) % (timeSig * 4) == 0 && beatWidth > 3) {
+				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
+				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
 			} else {
 				if (beatWidth > 10)
 					g.drawLine(xLoc, ShowRulerBig.maxHeight / 2, xLoc, ShowRulerBig.maxHeight);

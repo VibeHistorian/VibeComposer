@@ -326,14 +326,14 @@ public class VariationPopup {
 		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
 			if (sec.getRiskyVariations() != null) {
-				riskyVar.setSelected(sec.getRiskyVariations().get(i));
+				riskyVar.setSelected(sec.isRiskyVar(i));
 			}
 			final int index = i;
 			riskyVar.addItemListener(new ItemListener() {
 
 				@Override
 				public void itemStateChanged(ItemEvent e) {
-					sec.setRiskyVariation(index, riskyVar.isSelected());
+					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
 				}
 
 			});

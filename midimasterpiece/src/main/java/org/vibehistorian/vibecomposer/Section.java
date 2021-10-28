@@ -128,7 +128,7 @@ public class Section {
 	// map integer(what), map integer(part order), list integer(section variation)
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
-	private List<Boolean> riskyVariations = null;
+	private List<Integer> riskyVariations = null;
 
 	public Section() {
 
@@ -627,18 +627,21 @@ public class Section {
 	}
 
 	@XmlList
-	public List<Boolean> getRiskyVariations() {
+	public List<Integer> getRiskyVariations() {
 		if (riskyVariations != null) {
 			while (riskyVariations.size() < riskyVariationNames.length) {
-				riskyVariations.add(Boolean.FALSE);
+				riskyVariations.add(0);
 			}
 		}
 		return riskyVariations;
 	}
 
+	public boolean isRiskyVar(int num) {
+		return getRiskyVariations().get(num) > 0;
+	}
+
 	public boolean isTransition() {
-		return getRiskyVariations() != null && (getRiskyVariations().get(5)
-				|| getRiskyVariations().get(6) || getRiskyVariations().get(7));
+		return getRiskyVariations() != null && (isRiskyVar(5) || isRiskyVar(6) || isRiskyVar(7));
 	}
 
 	public int getTransitionType() {
@@ -646,18 +649,18 @@ public class Section {
 			return -1;
 		}
 
-		return getRiskyVariations().get(7) ? 7 : (getRiskyVariations().get(6) ? 6 : 5);
+		return isRiskyVar(7) ? 7 : (isRiskyVar(6) ? 6 : 5);
 	}
 
-	public void setRiskyVariations(List<Boolean> riskyVariations) {
+	public void setRiskyVariations(List<Integer> riskyVariations) {
 		this.riskyVariations = riskyVariations;
 	}
 
-	public void setRiskyVariation(int order, Boolean value) {
+	public void setRiskyVariation(int order, Integer value) {
 		if (riskyVariations == null) {
-			List<Boolean> riskyVars = new ArrayList<>();
+			List<Integer> riskyVars = new ArrayList<>();
 			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-				riskyVars.add(Boolean.FALSE);
+				riskyVars.add(0);
 			}
 			setRiskyVariations(riskyVars);
 		}

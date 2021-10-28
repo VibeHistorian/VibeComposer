@@ -2850,7 +2850,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static void recolorVariationPopupButton(JButton butt, Section sec) {
 		int count = (sec.getRiskyVariations() != null)
-				? (int) sec.getRiskyVariations().stream().filter(e -> e.booleanValue()).count()
+				? (int) sec.getRiskyVariations().stream().filter(e -> e > 0).count()
 				: 0;
 		int color = 0;
 		if (isDarkMode) {
