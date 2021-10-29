@@ -17,9 +17,9 @@ public enum ChordSpanFill {
 	EVEN(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }), F1(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }),
 	F2(new int[] { 0, 1, 0, 0, 0, 1, 0, 0 }), F3(new int[] { 0, 0, 1, 0, 0, 0, 1, 0 }),
 	F4(new int[] { 0, 0, 0, 1, 0, 0, 0, 1 }), F12(new int[] { 1, 1, 0, 0, 1, 1, 0, 0 }),
-	F34(new int[] { 0, 0, 1, 1, 0, 0, 1, 1 });
+	F23(new int[] { 0, 1, 1, 0, 0, 1, 1, 0 }), F34(new int[] { 0, 0, 1, 1, 0, 0, 1, 1 });
 
-	private static final int[] weights = new int[] { 60, 72, 84, 86, 88, 90, 92, 95, 100 };
+	private static final int[] weights = new int[] { 60, 72, 84, 86, 88, 90, 92, 95, 95, 100 };
 	private int[] chordPattern;
 
 	private ChordSpanFill(int[] pattern) {
