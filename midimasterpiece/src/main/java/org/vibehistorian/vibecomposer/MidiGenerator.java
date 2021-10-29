@@ -2038,19 +2038,20 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	private void applyNoteLengthMultiplier(List<Note> fullMelody, int noteLengthMultiplier) {
+	private void applyNoteLengthMultiplier(List<Note> notes, int noteLengthMultiplier) {
 		if (noteLengthMultiplier == 100) {
 			return;
 		}
 		boolean avoidSamePitchCollision = true;
-		for (int i = 0; i < fullMelody.size(); i++) {
-			Note n = fullMelody.get(i);
+		for (int i = 0; i < notes.size(); i++) {
+			Note n = notes.get(i);
 			double duration = n.getDuration() * noteLengthMultiplier / 100.0;
-			if (avoidSamePitchCollision) {
-				double limit = (i < fullMelody.size() - 1
-						&& n.getPitch() == fullMelody.get(i + 1).getPitch()) ? n.getRhythmValue()
-								: Double.POSITIVE_INFINITY;
-				duration = Math.min(duration, limit);
+			if (avoidSamePitchCollision && noteLengthMultiplier > 100) {
+				if (i < notes.size() - 1 && n.getPitch() == notes.get(i + 1).getPitch()) {
+					duration = Math.min(duration, n.getRhythmValue());
+				} else if (i < notes.size() - 2 && n.getPitch() == notes.get(i + 2).getPitch()) {
+					duration = Math.min(duration, n.getRhythmValue());
+				}
 			}
 			n.setDuration(duration);
 		}
