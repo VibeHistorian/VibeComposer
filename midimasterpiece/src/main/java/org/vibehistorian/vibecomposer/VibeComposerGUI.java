@@ -5349,6 +5349,7 @@ public class VibeComposerGUI extends JFrame
 				newPanel.setPanByOrder(7);
 				break;
 			case 4:
+				newPanel.getComboPanel().reapplyHits();
 				break;
 			default:
 				break;
