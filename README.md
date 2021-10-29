@@ -3,7 +3,7 @@
 
 ![VibeComposer Simple UI Preview](https://i.imgur.com/pfOFPwj.png)
 
-#### Example: https://soundcloud.com/vibehistorian/vibecomposer-v17-track-1 (made with VibeComposer v1.7 and free instruments/samples)
+#### Example: https://soundcloud.com/vibehistorian/avalanche (made with VibeComposer v1.7 and free instruments/samples)
 
 
 #### How to run it (on Windows):
