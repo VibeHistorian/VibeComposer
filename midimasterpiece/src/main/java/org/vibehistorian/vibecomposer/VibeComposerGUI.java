@@ -197,7 +197,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(VibeComposerGUI.class);
 
-	private static final String SOUNDBANK_DEFAULT = "chiptune_soundfont_4.0.sf2";
+	private static final String SOUNDBANK_DEFAULT = "Touhou.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 	private static final String PRESET_FOLDER = "presets";
 	private static final String EXPORT_FOLDER = "exports";
@@ -6024,6 +6024,11 @@ public class VibeComposerGUI extends JFrame
 
 		// globals
 		cs.add(randomizeScaleModeOnCompose);
+		cs.add(regenerateWhenValuesChange);
+		cs.add(showScore);
+		cs.add(loopBeat);
+		cs.add(loopBeatCount);
+		cs.add(midiMode);
 
 		// extras
 		cs.add(useMidiCC);
@@ -6042,6 +6047,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(elongateMidi);
 		cs.add(displayVeloRectValues);
 		cs.add(extraSettingsReverseDrumPanels);
+		cs.add(patternApplyPausesWhenGenerating);
 
 		return cs;
 	}
