@@ -552,6 +552,7 @@ public class VibeComposerGUI extends JFrame
 	JButton startMidi;
 	JButton stopMidi;
 	JButton pauseMidi;
+	JTextField saveCustomFilename;
 
 	Thread cycle;
 	JCheckBox useMidiCC;
@@ -985,7 +986,7 @@ public class VibeComposerGUI extends JFrame
 		makeSavedDir.mkdir();
 
 		String filePath = PRESET_FOLDER + "/" + presetName + ".xml";
-		saveGuiPresetFileByFilePath(filePath, true);
+		saveGuiPresetFileByFilePath(filePath);
 		presetLoadBox.addItem(presetName);
 	}
 
@@ -3728,7 +3729,8 @@ public class VibeComposerGUI extends JFrame
 		JButton save3Star = makeButton("Save 3*", "Save 3*");
 		JButton save4Star = makeButton("Save 4*", "Save 4*");
 		JButton save5Star = makeButton("Save 5*", "Save 5*");
-
+		JButton saveCustom = makeButton("Save..", "Save Custom");
+		saveCustomFilename = new JTextField("savefilename", 12);
 		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
 
 		showScore = new CheckButton("Show Score Tab", false);
@@ -3799,6 +3801,8 @@ public class VibeComposerGUI extends JFrame
 		playSavePanel.add(save3Star);
 		playSavePanel.add(save4Star);
 		playSavePanel.add(save5Star);
+		playSavePanel.add(saveCustom);
+		playSavePanel.add(saveCustomFilename);
 		playSavePanel.add(saveWavFile);
 		playSavePanel.add(new JLabel("Midi Drag'N'Drop:"));
 		playSavePanel.add(generatedMidi);
@@ -5448,24 +5452,32 @@ public class VibeComposerGUI extends JFrame
 				return;
 			}
 			String rating = starSplit[1].substring(0, 1);
+			String saveDirectory = "/saved_";
+			String name = "";
+			if (!"C".equals(rating)) {
+				saveDirectory += rating + "star/";
+
+				File makeSavedDir = new File(MIDIS_FOLDER + saveDirectory);
+				makeSavedDir.mkdir();
+				name = currentMidi.getName();
+			} else {
+				saveDirectory += "custom/";
+				name = saveCustomFilename.getText() + ".mid";
+			}
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 			f.applyPattern("yyMMdd-HH-mm-ss");
 
-			String ratingDirectory = "/saved_" + rating + "star/";
-
-			File makeSavedDir = new File(MIDIS_FOLDER + ratingDirectory);
-			makeSavedDir.mkdir();
 
 			String soundbankLoadedString = (isSoundbankSynth) ? "SB_" : "";
 
-			String finalFilePath = currentMidi.getParent() + ratingDirectory + f.format(date) + "_"
-					+ soundbankLoadedString + currentMidi.getName();
+			String finalFilePath = currentMidi.getParent() + saveDirectory + f.format(date) + "_"
+					+ soundbankLoadedString + name;
 
 			File savedMidi = new File(finalFilePath);
 			try {
 				FileUtils.copyFile(currentMidi, savedMidi);
 				copyGUItoConfig(guiConfig);
-				marshalConfig(finalFilePath, false);
+				marshalConfig(guiConfig, finalFilePath, true);
 			} catch (IOException | JAXBException e) {
 				// Auto-generated catch block
 				e.printStackTrace();
@@ -5475,7 +5487,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void saveGuiPresetFileByFilePath(String filePath, boolean isXmlPath) {
+	private void saveGuiPresetFileByFilePath(String filePath) {
 		try {
 			GUIPreset preset = new GUIPreset();
 			copyGUItoConfig(preset);
@@ -5485,7 +5497,7 @@ public class VibeComposerGUI extends JFrame
 				presetCompValues.add(getComponentValue(presetComps.get(i)));
 			}
 			preset.setOrderedValuesUI(presetCompValues);
-			marshalPreset(preset, filePath, isXmlPath);
+			marshalPreset(preset, filePath);
 		} catch (IOException | JAXBException e) {
 			// Auto-generated catch block
 			e.printStackTrace();
@@ -5902,28 +5914,28 @@ public class VibeComposerGUI extends JFrame
 		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
 	}
 
-	public void marshalConfig(String path, boolean isXmlPath) throws JAXBException, IOException {
+	public void marshalConfig(GUIConfig config, String path, boolean extensionPath)
+			throws JAXBException, IOException {
 		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 		f.applyPattern("yyMMdd-hh-mm-ss");
 		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
-		mar.marshal(guiConfig, isXmlPath ? new File(path)
-				: new File(path.substring(0, path.length() - 4) + "-guiConfig.xml"));
+		mar.marshal(config,
+				extensionPath ? new File(path.substring(0, path.length() - 4) + "-VCConfig.xml")
+						: new File(path + "-VCConfig.xml"));
 		LOGGER.info("File saved: " + path);
 	}
 
-	public void marshalPreset(GUIPreset preset, String path, boolean isXmlPath)
-			throws JAXBException, IOException {
+	public void marshalPreset(GUIPreset preset, String path) throws JAXBException, IOException {
 		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 		f.applyPattern("yyMMdd-hh-mm-ss");
 		JAXBContext context = JAXBContext.newInstance(GUIPreset.class);
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
-		mar.marshal(preset, isXmlPath ? new File(path)
-				: new File(path.substring(0, path.length() - 4) + "-VCPreset.xml"));
+		mar.marshal(preset, new File(path));
 		LOGGER.info("File saved: " + path);
 	}
 
