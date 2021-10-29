@@ -2048,9 +2048,9 @@ public class MidiGenerator implements JMC {
 			double duration = n.getDuration() * noteLengthMultiplier / 100.0;
 			if (avoidSamePitchCollision && noteLengthMultiplier > 100) {
 				if (i < notes.size() - 1 && n.getPitch() == notes.get(i + 1).getPitch()) {
-					duration = Math.min(duration, n.getRhythmValue());
+					duration = Math.min(duration, n.getRhythmValue() * 0.95);
 				} else if (i < notes.size() - 2 && n.getPitch() == notes.get(i + 2).getPitch()) {
-					duration = Math.min(duration, n.getRhythmValue());
+					duration = Math.min(duration, n.getRhythmValue() * 0.95);
 				}
 			}
 			n.setDuration(duration);
