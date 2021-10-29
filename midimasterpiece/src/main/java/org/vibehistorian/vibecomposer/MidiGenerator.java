@@ -4363,7 +4363,7 @@ public class MidiGenerator implements JMC {
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
 					}
 
-					boolean isPause = pausePatternSpanned.get(p) == 0;
+					boolean isPause = pausePatternSpanned.get(p % pausePatternSpanned.size()) == 0;
 					if (ap.isPatternFlip()) {
 						isPause = !isPause;
 					}

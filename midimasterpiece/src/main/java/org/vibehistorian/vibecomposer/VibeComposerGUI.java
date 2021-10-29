@@ -3619,12 +3619,14 @@ public class VibeComposerGUI extends JFrame
 
 			// needed: wholeNotesInMeasure, beatNumInMeasure, beatDurationsInMeasure
 
-
+			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
 			List<InstPanel> panels = getAffectedPanels(tabIndex);
 			Set<Integer> presences = sec != null ? sec.getPresence(tabIndex) : null;
 			for (InstPanel ip : panels) {
 				boolean turnOff = ip.getMuteInst() || presences == null
-						|| !presences.contains(ip.getPanelOrder());
+						|| !presences.contains(ip.getPanelOrder())
+						|| (soloCondition ? ip.getSoloMuter().soloState == State.OFF
+								: ip.getSoloMuter().muteState != State.OFF);
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
 						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff);
 			}
@@ -6079,8 +6081,8 @@ public class VibeComposerGUI extends JFrame
 			arrangement.setPreviewChorus(false);
 		}
 		arrangement.setFromModel(scrollableArrangementTable);
-		boolean overrideSuccessful = actualArrangement.setFromActualTable(
-				scrollableArrangementActualTable, false) && arrangementCustom.isSelected();
+		boolean overrideSuccessful = arrangementCustom.isSelected()
+				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
 		LOGGER.debug(("OVERRIDE OK?: " + overrideSuccessful));
 		if (overrideSuccessful) {
 			arrangement.setOverridden(true);
