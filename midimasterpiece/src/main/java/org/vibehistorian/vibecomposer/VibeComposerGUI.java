@@ -696,6 +696,8 @@ public class VibeComposerGUI extends JFrame
 
 		}
 		LOGGER.info("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		boolean randomizeInstsTemp = randomizeInstOnComposeOrGen.isSelected();
+		randomizeInstOnComposeOrGen.setSelected(true);
 		{
 			// ---- INSTRUMENT PANELS ----
 
@@ -748,6 +750,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		}
+		randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
 		LOGGER.info("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		initScoreSettings(330, GridBagConstraints.CENTER);
 		LOGGER.info("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -1317,7 +1320,7 @@ public class VibeComposerGUI extends JFrame
 		randomizeMelodies = makeButton("Randomize Melodies",
 				e -> createRandomMelodyPanels(new Random().nextInt()));
 		melodySettingsExtraPanelOrg.add(randomizeMelodies);
-		randomizeMelodiesOnCompose = new JCheckBox("On Compose", true);
+		randomizeMelodiesOnCompose = new JCheckBox("On Compose", false);
 		melodySettingsExtraPanelOrg.add(randomizeMelodiesOnCompose);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
@@ -2898,12 +2901,9 @@ public class VibeComposerGUI extends JFrame
 		randomBottomPanel.setOpaque(false);
 
 
-		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen");
-		randomizeBpmOnCompose = new JCheckBox("on Compose");
-		randomizeTransposeOnCompose = new JCheckBox("on Compose");
-		randomizeInstOnComposeOrGen.setSelected(true);
-		randomizeBpmOnCompose.setSelected(true);
-		randomizeTransposeOnCompose.setSelected(true);
+		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen", false);
+		randomizeBpmOnCompose = new JCheckBox("on Compose", true);
+		randomizeTransposeOnCompose = new JCheckBox("on Compose", true);
 		randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomizeBpmOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomizeTransposeOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -3041,7 +3041,7 @@ public class VibeComposerGUI extends JFrame
 		firstChordSelection = new ScrollComboBox<String>();
 		firstChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
-		//firstChordSelection.setVal("?");
+		firstChordSelection.setVal("C");
 		firstChordSelection.addItemListener(this);
 		firstChordSelection.setRegenerating(false);
 
