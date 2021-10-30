@@ -6936,7 +6936,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			InstUtils.POOL pool = cp.getInstPool();
 
-			if (randomizeInstOnComposeOrGen.isSelected()) {
+			if (randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
 				pool = (chordPanelGenerator.nextInt(100) < Integer
 						.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
 								: InstUtils.POOL.PLUCK;
@@ -7159,7 +7159,7 @@ public class VibeComposerGUI extends JFrame
 				ap.setHitsPerPattern(randomArpHitsPicker.getSelectedIndex() + 1);
 			}
 
-			if (randomizeInstOnComposeOrGen.isSelected()) {
+			if (randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
 				int instrument = ap.getInstrumentBox().getRandomInstrument();
 
 				if (randomArpAllSameInst.isSelected()) {
@@ -7173,7 +7173,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			ap.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
-			if (first == null && i == 0) {
+			if (first == null && i == 0 && !onlyAdd) {
 				ap.setTranspose(12);
 				if (arpCopyMelodyInst.isSelected() && !melodyPanels.get(0).getMuteInst()) {
 					ap.setInstrument(fixedInstrument);

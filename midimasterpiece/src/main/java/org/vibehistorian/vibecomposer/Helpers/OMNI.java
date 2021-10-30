@@ -95,7 +95,7 @@ public class OMNI {
 				return values[i];
 			}
 		}
-		throw new IllegalArgumentException("WEIGHTED error: Value higher than 99!");
+		return values[values.length - 1];
 	}
 
 	public static Color mixColor(Color c1, Color c2, double percentageMix) {
