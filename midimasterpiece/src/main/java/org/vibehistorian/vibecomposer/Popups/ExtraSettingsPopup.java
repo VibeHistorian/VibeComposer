@@ -48,8 +48,8 @@ public class ExtraSettingsPopup extends CloseablePopup {
 					VibeComposerGUI.bpmHigh.setInt(high);
 				}
 				//bpm = OMNI.clamp(bpm, low, high);
-				VibeComposerGUI.mainBpm.getKnob().setMin(low);
-				VibeComposerGUI.mainBpm.getKnob().setMaxRaw(high);
+				//VibeComposerGUI.mainBpm.getKnob().setMin(low);
+				//VibeComposerGUI.mainBpm.getKnob().setMaxRaw(high);
 				//VibeComposerGUI.mainBpm.setInt(bpm);
 			}
 

@@ -5024,15 +5024,18 @@ public class VibeComposerGUI extends JFrame
 					cp.setStrum(cp.getStrum() / 2);
 				}
 			}
-			triggerRegenerate = true;
+			if (!isCompose) {
+				triggerRegenerate = true;
+			}
 		}
 
-		if (ae.getActionCommand() == "RandomizeInst"
-				|| (isCompose && randomizeInstOnComposeOrGen.isSelected())) {
+		if (ae.getActionCommand() == "RandomizeInst") {
 			randomizeInsts();
 			triggerRegenerate = true;
 		}
-
+		if (isCompose && randomizeInstOnComposeOrGen.isSelected()) {
+			randomizeInsts();
+		}
 
 		if (isCompose || isRegenerate) {
 			soloMuterPossibleChange = true;
@@ -5074,11 +5077,15 @@ public class VibeComposerGUI extends JFrame
 			realBpm = bpm;
 		}
 
-		if (ae.getActionCommand() == "RandomizeTranspose"
-				|| (isCompose && randomizeTransposeOnCompose.isSelected())) {
+		if (ae.getActionCommand() == "RandomizeTranspose") {
 			Random instGen = new Random();
 			transposeScore.setInt(instGen.nextInt(12) - 6);
 			triggerRegenerate = true;
+		}
+
+		if (isCompose && randomizeTransposeOnCompose.isSelected()) {
+			Random instGen = new Random();
+			transposeScore.setInt(instGen.nextInt(12) - 6);
 		}
 
 
