@@ -1110,7 +1110,9 @@ public class VibeComposerGUI extends JFrame
 
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
 		bpmLow = new KnobPanel("Min<br>BPM.", 65, 20, 249);
+		bpmLow.setRegenerating(false);
 		bpmHigh = new KnobPanel("Max<br>BPM.", 130, 21, 250);
+		bpmHigh.setRegenerating(false);
 		elongateMidi = new KnobPanel("Elongate MIDI%:", 100, 25, 400);
 		elongateMidi.getKnob().setTickSpacing(25);
 		elongateMidi.getKnob().setTickThresholds(
@@ -4973,6 +4975,7 @@ public class VibeComposerGUI extends JFrame
 	public void actionPerformed(ActionEvent ae) {
 		boolean tabPanePossibleChange = false;
 		boolean soloMuterPossibleChange = false;
+		boolean triggerRegenerate = false;
 
 		LOGGER.info(("Processing '" + ae.getActionCommand() + "'.."));
 		long actionSystemTime = System.currentTimeMillis();
@@ -5021,12 +5024,13 @@ public class VibeComposerGUI extends JFrame
 					cp.setStrum(cp.getStrum() / 2);
 				}
 			}
-
+			triggerRegenerate = true;
 		}
 
 		if (ae.getActionCommand() == "RandomizeInst"
 				|| (isCompose && randomizeInstOnComposeOrGen.isSelected())) {
 			randomizeInsts();
+			triggerRegenerate = true;
 		}
 
 
@@ -5074,6 +5078,7 @@ public class VibeComposerGUI extends JFrame
 				|| (isCompose && randomizeTransposeOnCompose.isSelected())) {
 			Random instGen = new Random();
 			transposeScore.setInt(instGen.nextInt(12) - 6);
+			triggerRegenerate = true;
 		}
 
 
@@ -5391,6 +5396,7 @@ public class VibeComposerGUI extends JFrame
 			JButton source = (JButton) ae.getSource();
 			InstPanel sourcePanel = (InstPanel) source.getParent();
 			randomizePanel(sourcePanel);
+			triggerRegenerate = true;
 		}
 		// recalcs 
 		if (tabPanePossibleChange) {
@@ -5399,6 +5405,10 @@ public class VibeComposerGUI extends JFrame
 		}
 		if (soloMuterPossibleChange) {
 			recalculateSoloMuters();
+		}
+
+		if (triggerRegenerate && canRegenerateOnChange()) {
+			composeMidi(true);
 		}
 
 		LOGGER.info("Finished '" + ae.getActionCommand() + "' in: "
