@@ -1304,6 +1304,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
 
 		JPanel melodySettingsExtraPanelOrg = new JPanel();
+		melodySettingsExtraPanelOrg.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelOrg.setMaximumSize(new Dimension(1800, 50));
 
@@ -1469,8 +1470,17 @@ public class VibeComposerGUI extends JFrame
 		bassSettingsPanel.add(filterLabel);
 		bassSettingsPanel.add(groupFilterSliders[1]);
 
+		JPanel bassSettingsAdvancedPanel = new JPanel();
+		bassSettingsAdvancedPanel.add(new JLabel("BASS SETTINGS+"));
+		//bassSettingsAdvancedPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		bassSettingsAdvancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		bassSettingsAdvancedPanel.setMaximumSize(new Dimension(1800, 50));
+
 		scrollableBassPanels.add(bassSettingsPanel);
+		scrollableBassPanels.add(bassSettingsAdvancedPanel);
 		scrollableBassPanels.add(bassPanel);
+		bassSettingsAdvancedPanel.setVisible(false);
+
 
 		bassPanels.add(bassPanel);
 
@@ -4251,6 +4261,10 @@ public class VibeComposerGUI extends JFrame
 							? melodyPanels.get(0).getChordNoteChoices()
 							: null;
 
+			/*boolean addStartDelay = useArrangement.isSelected() || arrangementCustom.isSelected()
+					|| drumPanels.stream().anyMatch(e -> e.getDelay() < 0)
+					|| (randomChordDelay.isSelected()
+							&& (chordPanels.stream().anyMatch(e -> e.getDelay() < 0)));*/
 			MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
 
 			/*if (loopBeat.isSelected()) {

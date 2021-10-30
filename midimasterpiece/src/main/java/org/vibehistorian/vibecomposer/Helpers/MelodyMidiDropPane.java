@@ -73,7 +73,7 @@ public class MelodyMidiDropPane extends JPanel {
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(200, 50);
+		return new Dimension(200, 35);
 	}
 
 	protected DropTarget getMyDropTarget() {

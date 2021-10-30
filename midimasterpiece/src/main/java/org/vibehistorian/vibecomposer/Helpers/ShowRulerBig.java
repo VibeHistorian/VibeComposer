@@ -17,6 +17,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 /*
@@ -106,7 +107,7 @@ public class ShowRulerBig extends JComponent {
 										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
 						: -1;
 
-		int startOffset = 1;
+		int startOffset = MidiGenerator.START_TIME_DELAY > MidiGenerator.DBL_ERR ? 1 : 0;
 		for (int i = startOffset; i < (ShowPanelBig.maxEndTime) + startOffset; i++) {
 			int xLoc = (int) Math.round(i * beatWidth);
 			if ((i - startOffset) % timeSig == 0 && beatWidth > 10) {
