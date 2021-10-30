@@ -116,18 +116,17 @@ public class GUIConfig {
 	private String drumCustomMappingNumbers = StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI,
 			",");
 
-	// individual parts
-
-	private BassPart bassPart = new BassPart();
-
 	// tabbed parts
 	private List<MelodyPart> melodyParts = new ArrayList<>();
+	private List<BassPart> bassParts = new ArrayList<>();
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
+	private boolean melodyEnable = false;
+	private boolean bassEnable = true;
 	private boolean chordsEnable = false;
 	private boolean arpsEnable = true;
-	private boolean drumsEnable = false;
+	private boolean drumsEnable = true;
 	private ChordGenSettings chordGenSettings = new ChordGenSettings();
 	private DrumGenSettings drumGenSettings = new DrumGenSettings();
 	private ArpGenSettings arpGenSettings = new ArpGenSettings();
@@ -359,12 +358,12 @@ public class GUIConfig {
 		this.melodyParts = melodyPart;
 	}
 
-	public BassPart getBassPart() {
-		return bassPart;
+	public List<BassPart> getBassParts() {
+		return bassParts;
 	}
 
-	public void setBassPart(BassPart bassPart) {
-		this.bassPart = bassPart;
+	public void setBassParts(List<BassPart> bassParts) {
+		this.bassParts = bassParts;
 	}
 
 	public Arrangement getArrangement() {
@@ -669,6 +668,22 @@ public class GUIConfig {
 
 	public void setMelodyNotes(PhraseNotes melodyNotes) {
 		this.melodyNotes = melodyNotes;
+	}
+
+	public boolean isMelodyEnable() {
+		return melodyEnable;
+	}
+
+	public void setMelodyEnable(boolean melodyEnable) {
+		this.melodyEnable = melodyEnable;
+	}
+
+	public boolean isBassEnable() {
+		return bassEnable;
+	}
+
+	public void setBassEnable(boolean bassEnable) {
+		this.bassEnable = bassEnable;
 	}
 
 }

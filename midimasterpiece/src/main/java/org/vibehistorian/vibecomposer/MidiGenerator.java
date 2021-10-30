@@ -2679,7 +2679,10 @@ public class MidiGenerator implements JMC {
 
 		Score score = new Score("MainScore", 120);
 		PartExt bassRoots = new PartExt("BassRoots",
-				(!gc.getBassPart().isMuted()) ? gc.getBassPart().getInstrument() : 0, 8);
+				(!gc.getBassParts().isEmpty() && !gc.getBassParts().get(0).isMuted())
+						? gc.getBassParts().get(0).getInstrument()
+						: 0,
+				8);
 
 		List<Part> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
@@ -2747,7 +2750,7 @@ public class MidiGenerator implements JMC {
 			actualProgression = chordProgression;
 			generatedRootProgression = rootProgression;
 			actualDurations = progressionDurations;
-		} else {
+		} else if (!gc.getMelodyParts().isEmpty()) {
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
 					generatedRootProgression, 1, 0, new Section(), new ArrayList<>());
 		}
@@ -2946,8 +2949,8 @@ public class MidiGenerator implements JMC {
 				}
 			}
 
-			if (!gc.getBassPart().isMuted()) {
-				Phrase bp = sec.getBass();
+			for (int i = 0; i < gc.getBassParts().size(); i++) {
+				Phrase bp = sec.getBasses().get(i);
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
 				bassRoots.addPhrase(bp);
 			}
@@ -3021,7 +3024,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (!gc.getBassPart().isMuted()) {
+		if (!gc.getBassParts().isEmpty() && !gc.getBassParts().get(0).isMuted()) {
 			score.add(bassRoots);
 			((PartExt) bassRoots).setTrackNumber(trackCounter);
 			VibeComposerGUI.bassPanel.setSequenceTrack(trackCounter++);
@@ -3236,12 +3239,13 @@ public class MidiGenerator implements JMC {
 		emptyPhrase.setStartTime(START_TIME_DELAY);
 		emptyPhrase.add(emptyMeasureNote);
 
-		if (!gc.getBassPart().isMuted()) {
+		if (!gc.getBassParts().isEmpty()) {
+			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(1);
-			boolean added = presences.contains(gc.getBassPart().getOrder());
+			boolean added = presences.contains(gc.getBassParts().get(0).getOrder());
 			if (added) {
 				List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
-				BassPart bp = gc.getBassPart();
+				BassPart bp = gc.getBassParts().get(0);
 				Phrase b = fillBassFromPart(bp, rootProgression, sec.getMeasures(), sec,
 						variations);
 
@@ -3250,10 +3254,11 @@ public class MidiGenerator implements JMC {
 					b.setStartTime(START_TIME_DELAY);
 				}
 
-				sec.setBass(b);
+				copiedPhrases.add(b);
 			} else {
-				sec.setBass(emptyPhrase.copy());
+				copiedPhrases.add(emptyPhrase.copy());
 			}
+			sec.setBasses(copiedPhrases);
 		}
 
 		if (!gc.getChordParts().isEmpty()) {
@@ -3352,9 +3357,9 @@ public class MidiGenerator implements JMC {
 
 		rand.setSeed(arrSeed + 10);
 		variationGen.setSeed(arrSeed + 10);
-		if (!gc.getBassPart().isMuted()) {
+		if (!gc.getBassParts().isEmpty() && !gc.getBassParts().get(0).isMuted()) {
 			Set<Integer> presences = sec.getPresence(1);
-			boolean added = (overridden && presences.contains(gc.getBassPart().getOrder()))
+			boolean added = (overridden && presences.contains(gc.getBassParts().get(0).getOrder()))
 					|| (!overridden && rand.nextInt(100) < sec.getBassChance());
 			added &= gc.getArrangement().getPartInclusion(1, 0, notesSeedOffset);
 			if (added) {
@@ -3453,7 +3458,7 @@ public class MidiGenerator implements JMC {
 
 	private void storeGlobalParts() {
 		melodyParts = gc.getMelodyParts();
-		bassParts = Collections.singletonList(gc.getBassPart());
+		bassParts = gc.getBassParts();
 		chordParts = gc.getChordParts();
 		arpParts = gc.getArpParts();
 		drumParts = gc.getDrumParts();
@@ -3462,7 +3467,7 @@ public class MidiGenerator implements JMC {
 
 	private void restoreGlobalPartsToGuiConfig() {
 		gc.setMelodyParts(melodyParts);
-		gc.setBassPart(bassParts.get(0));
+		gc.setBassParts(bassParts);
 		gc.setChordParts(chordParts);
 		gc.setArpParts(arpParts);
 		gc.setDrumParts(drumParts);
@@ -3475,7 +3480,7 @@ public class MidiGenerator implements JMC {
 			needsReplace = true;
 		}
 		if (sec.getBassParts() != null) {
-			gc.setBassPart(sec.getBassParts().get(0));
+			gc.setBassParts(sec.getBassParts());
 			needsReplace = true;
 		}
 		if (sec.getChordParts() != null) {

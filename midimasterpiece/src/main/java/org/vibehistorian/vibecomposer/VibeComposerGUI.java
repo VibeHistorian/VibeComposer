@@ -380,6 +380,8 @@ public class VibeComposerGUI extends JFrame
 	SettingsPanel chordSettingsPanel;
 	SettingsPanel arpSettingsPanel;
 	SettingsPanel drumSettingsPanel;
+	JCheckBox addMelody;
+	JCheckBox addBass;
 	JCheckBox addChords;
 	JCheckBox addArps;
 	JCheckBox addDrums;
@@ -724,6 +726,12 @@ public class VibeComposerGUI extends JFrame
 						int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
 						LOGGER.info(("RMB pressed in instrument tab pane: " + indx));
 						switch (indx) {
+						case 0:
+							addMelody.setSelected(!addMelody.isSelected());
+							break;
+						case 1:
+							addBass.setSelected(!addBass.isSelected());
+							break;
 						case 2:
 							addChords.setSelected(!addChords.isSelected());
 							/*instrumentTabPane.setEnabledAt(indx,
@@ -1210,18 +1218,8 @@ public class VibeComposerGUI extends JFrame
 		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-
-		JPanel melodySettingsPanel = new JPanel();
-		JLabel melodyLabel = new JLabel("MELODY  ");
-		melodySettingsPanel.add(melodyLabel);
-		melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		//melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
-
-
-		melodySettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsPanel.setMaximumSize(new Dimension(1800, 50));
-
-		//melodySettingsPanel.add(melodyUseOldAlgoChance);
 
 		randomChordNote = new JCheckBox();
 		randomChordNote.setSelected(true);
@@ -1309,10 +1307,8 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelOrg.setMaximumSize(new Dimension(1800, 50));
 
-		JLabel melodyExtraLabel = new JLabel("MELODY ");
-		melodyExtraLabel.setPreferredSize(new Dimension(60, 30));
-		melodyExtraLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsExtraPanelOrg.add(melodyExtraLabel);
+		addMelody = new JCheckBox("MELODY", true);
+		melodySettingsExtraPanelOrg.add(addMelody);
 		groupFilterSliders[0] = new VeloRect(0, 127, 127);
 		JLabel filterLabel = new JLabel("LP");
 		melodySettingsExtraPanelOrg.add(filterLabel);
@@ -1443,6 +1439,45 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
+
+	private void initBass(int startY, int anchorSide) {
+		bassPanel = new BassPanel(this);
+
+		JPanel scrollableBassPanels = new JPanel();
+		scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
+		scrollableBassPanels.setAutoscrolls(true);
+
+		bassScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		bassScrollPane.setViewportView(scrollableBassPanels);
+		bassScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		bassScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+		JPanel bassSettingsPanel = new JPanel();
+		addBass = new JCheckBox("BASS", true);
+		bassSettingsPanel.add(addBass);
+		bassSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
+
+		groupFilterSliders[1] = new VeloRect(0, 127, 127);
+		JLabel filterLabel = new JLabel("LP");
+		bassSettingsPanel.add(filterLabel);
+		bassSettingsPanel.add(groupFilterSliders[1]);
+
+		scrollableBassPanels.add(bassSettingsPanel);
+		scrollableBassPanels.add(bassPanel);
+
+		bassPanels.add(bassPanel);
+
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		instrumentTabPane.addTab("Bass", bassScrollPane);
+	}
 
 	private void initChordGenSettings(int startY, int anchorSide) {
 		JPanel scrollableChordPanels = new JPanel();
@@ -1701,44 +1736,6 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		instrumentTabPane.addTab("Arps", arpScrollPane);
-	}
-
-	private void initBass(int startY, int anchorSide) {
-		bassPanel = new BassPanel(this);
-
-		JPanel scrollableBassPanels = new JPanel();
-		scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
-		scrollableBassPanels.setAutoscrolls(true);
-
-		bassScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
-			}
-		};
-		bassScrollPane.setViewportView(scrollableBassPanels);
-		bassScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		bassScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-		JPanel bassSettingsPanel = new JPanel();
-		bassSettingsPanel.add(new JLabel("BASS"));
-		bassSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-
-		groupFilterSliders[1] = new VeloRect(0, 127, 127);
-		JLabel filterLabel = new JLabel("LP");
-		bassSettingsPanel.add(filterLabel);
-		bassSettingsPanel.add(groupFilterSliders[1]);
-
-		scrollableBassPanels.add(bassSettingsPanel);
-		scrollableBassPanels.add(bassPanel);
-
-		bassPanels.add(bassPanel);
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Bass", bassScrollPane);
 	}
 
 	private void initDrumGenSettings(int startY, int anchorSide) {
@@ -4283,6 +4280,12 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			// to include it in the XML when saving, but not when generating
+			if (!addMelody.isSelected()) {
+				MidiGenerator.gc.setMelodyParts(new ArrayList<>());
+			}
+			if (!addBass.isSelected()) {
+				MidiGenerator.gc.setBassParts(new ArrayList<>());
+			}
 			if (!addChords.isSelected()) {
 				MidiGenerator.gc.setChordParts(new ArrayList<>());
 			}
@@ -6140,13 +6143,14 @@ public class VibeComposerGUI extends JFrame
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
 
 		// parts
-		gc.setMelodyParts((List<MelodyPart>) (List<?>) getInstPartsFromInstPanels(0, false));
-		gc.setBassPart(bassPanel.toBassPart(lastRandomSeed));
-
+		gc.setMelodyEnable(addMelody.isSelected());
+		gc.setBassEnable(addBass.isSelected());
 		gc.setChordsEnable(addChords.isSelected());
 		gc.setArpsEnable(addArps.isSelected());
 		gc.setDrumsEnable(addDrums.isSelected());
 
+		gc.setMelodyParts((List<MelodyPart>) (List<?>) getInstPartsFromInstPanels(0, false));
+		gc.setBassParts((List<BassPart>) (List<?>) getInstPartsFromInstPanels(1, false));
 		gc.setChordParts((List<ChordPart>) (List<?>) getInstPartsFromInstPanels(2, false));
 		gc.setArpParts((List<ArpPart>) (List<?>) getInstPartsFromInstPanels(3, false));
 		gc.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
@@ -6248,8 +6252,8 @@ public class VibeComposerGUI extends JFrame
 
 		// parts
 
-		bassPanel.setFromInstPart(guiConfig.getBassPart());
-
+		addMelody.setSelected(guiConfig.isMelodyEnable());
+		addBass.setSelected(guiConfig.isBassEnable());
 		addChords.setSelected(guiConfig.isChordsEnable());
 		addArps.setSelected(guiConfig.isArpsEnable());
 		addDrums.setSelected(guiConfig.isDrumsEnable());
@@ -6264,6 +6268,7 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternFlip.setSelected(guiConfig.isMelodyPatternFlip());
 
 		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
+		recreateInstPanelsFromInstParts(1, guiConfig.getBassParts());
 		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());
 		recreateInstPanelsFromInstParts(3, guiConfig.getArpParts());
 		recreateInstPanelsFromInstParts(4, guiConfig.getDrumParts());
