@@ -85,6 +85,7 @@ public class MidiGenerator implements JMC {
 
 	public static final double DBL_ERR = 0.01;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
+	public static final double DEFAULT_DURATION_MULTIPLIER = 0.95;
 
 	public enum ShowScoreMode {
 		NODRUMSCHORDS, DRUMSONLY, CHORDSONLY, ALL;
@@ -550,7 +551,7 @@ public class MidiGenerator implements JMC {
 						double swingDuration = sortedDurs.get(k);
 						Note n = new Note(pitch, swingDuration, 100);
 						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-								* Note.DEFAULT_DURATION_MULTIPLIER);
+								* DEFAULT_DURATION_MULTIPLIER);
 
 
 						noteList.add(n);
@@ -1290,7 +1291,7 @@ public class MidiGenerator implements JMC {
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch, swingDuration, 100);
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-							* Note.DEFAULT_DURATION_MULTIPLIER);
+							* DEFAULT_DURATION_MULTIPLIER);
 
 					if (hasSingleNoteException && gc.isMelodySingleNoteExceptions()) {
 						if (tempChangedDir) {
@@ -2148,7 +2149,7 @@ public class MidiGenerator implements JMC {
 						if (swungNote == null) {
 							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
 							latestSuitableNote.setDuration(
-									(suitableDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+									(suitableDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
 							swingAdjust *= -1;
 							swungNote = latestSuitableNote;
 							latestSuitableNote = null;
@@ -2157,7 +2158,7 @@ public class MidiGenerator implements JMC {
 						} else {
 							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
 							latestSuitableNote.setDuration(
-									(suitableDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+									(suitableDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
 							swingAdjust *= -1;
 							swungNote = null;
 							latestSuitableNote = null;
@@ -2169,7 +2170,7 @@ public class MidiGenerator implements JMC {
 							double swungDur = swungNote.getRhythmValue();
 							swungNote.setRhythmValue(swungDur + swingAdjust);
 							swungNote.setDuration(
-									(swungDur + swingAdjust) * Note.DEFAULT_DURATION_MULTIPLIER);
+									(swungDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
 							swingAdjust *= -1;
 							swungNote = null;
 							latestSuitableNote = null;
