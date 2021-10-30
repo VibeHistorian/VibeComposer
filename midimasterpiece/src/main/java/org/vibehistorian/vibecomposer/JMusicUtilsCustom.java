@@ -4,6 +4,7 @@ import java.util.Enumeration;
 import java.util.Random;
 import java.util.Vector;
 
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 
 import jm.music.data.Note;
@@ -116,7 +117,8 @@ public class JMusicUtilsCustom {
 
 	}
 
-	public static void humanize(Part part, Random generator, double rhythmVariation) {
+	public static void humanize(Part part, Random generator, double rhythmVariation,
+			boolean isDrum) {
 		if (part == null) {
 			return;
 		}
@@ -124,12 +126,12 @@ public class JMusicUtilsCustom {
 		Enumeration enum1 = part.getPhraseList().elements();
 		while (enum1.hasMoreElements()) {
 			Phrase phr = (Phrase) enum1.nextElement();
-			humanize(phr, 0, rhythmVariation, 0, generator);
+			humanize(phr, 0, rhythmVariation, 0, generator, isDrum);
 		}
 	}
 
 	public static void humanize(Phrase phrase, int pitchVariation, double rhythmVariation,
-			int dynamicVariation, Random generator) {
+			int dynamicVariation, Random generator, boolean isDrum) {
 		if (phrase == null) {
 			return;
 		}
@@ -144,8 +146,15 @@ public class JMusicUtilsCustom {
 			// create new rhythm and duration values
 			if (rhythmVariation > 0.0) {
 				double var = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
-				n.setOffset(n.getOffset() + var);
-				n.setDuration(n.getDuration() + var);
+				double dur = n.getDuration();
+				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + MidiGenerator.DBL_ERR) {
+					n.setOffset(n.getOffset() + var / 5);
+					n.setDuration(n.getDuration() + var / 5);
+				} else {
+					n.setOffset(n.getOffset() + var);
+					n.setDuration(n.getDuration() + var);
+				}
+
 			}
 			// create new dynamic value
 			if (dynamicVariation > 0) {

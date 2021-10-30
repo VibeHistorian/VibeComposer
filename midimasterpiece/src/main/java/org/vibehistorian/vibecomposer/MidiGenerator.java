@@ -3090,9 +3090,10 @@ public class MidiGenerator implements JMC {
 
 			if (shouldRandomize) {
 
-				JMusicUtilsCustom.humanize(pe, rand, isDrum
-						? noteMultiplier * VibeComposerGUI.humanizeDrums.getInt() / 10000.0
-						: noteMultiplier * VibeComposerGUI.humanizeNotes.getInt() / 10000.0);
+				JMusicUtilsCustom.humanize(pe, rand,
+						isDrum ? noteMultiplier * VibeComposerGUI.humanizeDrums.getInt() / 10000.0
+								: noteMultiplier * VibeComposerGUI.humanizeNotes.getInt() / 10000.0,
+						isDrum);
 			}
 		}
 
