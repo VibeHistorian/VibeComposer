@@ -6684,8 +6684,14 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (settings.isDynamicable() && (dp.getPattern() != RhythmPattern.MELODY1)) {
-				dp.setIsVelocityPattern(
-						drumPanelGenerator.nextInt(100) < randomDrumVelocityPatternChance.getInt());
+				double ghostChanceReducer = (drumPanels.size() > 10) ? 0.8 : 1.0;
+				dp.setIsVelocityPattern(drumPanelGenerator.nextInt(
+						100) < randomDrumVelocityPatternChance.getInt() * ghostChanceReducer);
+			}
+
+			if (drumPanels.size() > 10 && dp.getPattern() == RhythmPattern.FULL
+					&& drumPanelGenerator.nextInt() < 30) {
+				dp.setPattern(RhythmPattern.ALT);
 			}
 
 			if (settings.isVariableShift()
@@ -7201,14 +7207,17 @@ public class VibeComposerGUI extends JFrame
 
 			RhythmPattern pattern = RhythmPattern.FULL;
 			// use pattern if checkbox selected and %chance 
-			if (arpPanelGenerator.nextInt(100) < 40) {
+			if (arpPanelGenerator.nextInt(100) < 30 + arpPanels.size() * 5) {
 				if (randomArpPattern.isSelected()) {
 					pattern = viablePatterns.get(arpPanelGenerator.nextInt(viablePatterns.size()));
 				}
 			}
 			ap.setPattern(pattern);
 			if (randomArpUseChordFill.isSelected()) {
-				ap.setChordSpanFill(ChordSpanFill.getWeighted(arpPanelGenerator.nextInt(100)));
+				int exoticFillChanceIncrease = (arpPanels.size() > 3) ? (arpPanels.size() - 3) * 5
+						: 0;
+				ap.setChordSpanFill(ChordSpanFill
+						.getWeighted(arpPanelGenerator.nextInt(100) + exoticFillChanceIncrease));
 			}
 
 
