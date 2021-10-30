@@ -7265,6 +7265,10 @@ public class VibeComposerGUI extends JFrame
 					}
 				}
 				ap.setArpPattern(ArpPattern.values()[arpPatternOrder]);
+				if (arpPatternOrder > 0 && arpPanelGenerator.nextBoolean()) {
+					ap.setArpPatternRotate(
+							arpPanelGenerator.nextInt(Math.min(4, ap.getChordNotesStretch())));
+				}
 			}
 
 			ap.applyPauseChance(arpPanelGenerator);

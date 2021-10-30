@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Enums;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,7 +17,8 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 public enum ArpPattern {
 	RANDOM, UP, DOWN, UPDOWN, DOWNUP, FROG_U, FROG_D;
 
-	public List<Integer> getPatternByLength(int hits, int chordLength, int patternRepeat) {
+	public List<Integer> getPatternByLength(int hits, int chordLength, int patternRepeat,
+			int rotate) {
 		List<Integer> result = new ArrayList<>();
 
 		ArpPattern usedPattern = ArpPattern.this;
@@ -25,7 +27,8 @@ public enum ArpPattern {
 		} else if (usedPattern == FROG_D && chordLength < 3) {
 			usedPattern = DOWN;
 		}
-
+		int originalHits = hits;
+		hits = hits * 2;
 		int[] patternArray = new int[hits];
 		switch (usedPattern) {
 		case RANDOM:
@@ -98,11 +101,12 @@ public enum ArpPattern {
 
 		}
 
-
+		hits = originalHits;
 		while (result.size() < hits) {
 			result.addAll(Arrays.stream(patternArray).boxed().collect(Collectors.toList()));
 		}
 		//System.out.println(StringUtils.join(result, ","));
+		Collections.rotate(result, -1 * rotate);
 		result = result.subList(0, hits);
 		List<Integer> repResult = new ArrayList<>();
 		for (int i = 0; i < patternRepeat; i++) {

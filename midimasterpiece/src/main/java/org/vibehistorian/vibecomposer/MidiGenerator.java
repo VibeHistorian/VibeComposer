@@ -4331,12 +4331,12 @@ public class MidiGenerator implements JMC {
 				if (directions != null) {
 					ArpPattern pat = (directions.get(j)) ? ArpPattern.UP : ArpPattern.DOWN;
 					arpPattern = pat.getPatternByLength(ap.getHitsPerPattern(), chord.length,
-							ap.getPatternRepeat());
+							ap.getPatternRepeat(), ap.getArpPatternRotate());
 					arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 				} else {
 					if (ap.getArpPattern() != ArpPattern.RANDOM) {
 						arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
-								chord.length, ap.getPatternRepeat());
+								chord.length, ap.getPatternRepeat(), ap.getArpPatternRotate());
 						arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 					}
 				}
@@ -4855,6 +4855,8 @@ public class MidiGenerator implements JMC {
 		}
 		arpPattern = arpPattern.subList(0, ap.getHitsPerPattern());
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
+
+		Collections.rotate(arpPattern, -1 * ap.getArpPatternRotate());
 
 		if (needToReport) {
 			//LOGGER.debug("Arp count: " + ap.getHitsPerPattern());
