@@ -23,7 +23,8 @@ public class PlayheadRangeSlider extends RangeSlider {
 	@Override
 	public void setUpperValue(int value) {
 		super.setUpperValue(value);
-		if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
+		if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7
+				&& VibeComposerGUI.highlightScoreNotes.isSelected()) {
 			VibeComposerGUI.scorePanel.update();
 		}
 	}

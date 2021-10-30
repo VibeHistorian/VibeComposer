@@ -605,6 +605,8 @@ public class VibeComposerGUI extends JFrame
 
 	public static boolean isShowingTextInKnobs = true;
 	public static JCheckBox displayVeloRectValues;
+	public static JCheckBox highlightPatterns;
+	public static JCheckBox highlightScoreNotes;
 
 
 	public static void main(String args[]) {
@@ -1133,6 +1135,8 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel displayStylePanel = new JPanel();
 		displayVeloRectValues = new JCheckBox("Display Bar Values", true);
+		highlightPatterns = new JCheckBox("Highlight Sequencer Pattern", true);
+		highlightScoreNotes = new JCheckBox("Highlight Score Notes", true);
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1140,8 +1144,8 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
-		JButton butt = new JButton("Toggle Knob Texts");
-		butt.addActionListener(new ActionListener() {
+		JCheckBox checkbutt = new JCheckBox("Show Knob Texts", isShowingTextInKnobs);
+		checkbutt.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1153,8 +1157,10 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		displayStylePanel.add(butt);
+		displayStylePanel.add(checkbutt);
 		displayStylePanel.add(displayVeloRectValues);
+		displayStylePanel.add(highlightPatterns);
+		displayStylePanel.add(highlightScoreNotes);
 		extraSettingsPanel.add(displayStylePanel);
 		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
 		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
@@ -3506,11 +3512,14 @@ public class VibeComposerGUI extends JFrame
 								}
 
 								Section actualSec = sec;
-								SwingUtilities.invokeLater(new Runnable() {
-									public void run() {
-										notifyVisualPatterns(val, finalSectIndex, actualSec);
-									}
-								});
+								if (highlightPatterns.isSelected()) {
+									SwingUtilities.invokeLater(new Runnable() {
+										public void run() {
+											notifyVisualPatterns(val, finalSectIndex, actualSec);
+										}
+									});
+								}
+
 								if (sequencer != null) {
 									if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
 										sequencer.setTempoFactor(
@@ -3744,9 +3753,9 @@ public class VibeComposerGUI extends JFrame
 		JButton save3Star = makeButton("Save 3*", "Save 3*");
 		JButton save4Star = makeButton("Save 4*", "Save 4*");
 		JButton save5Star = makeButton("Save 5*", "Save 5*");
-		JButton saveCustom = makeButton("Save..", "Save Custom");
+		JButton saveCustom = makeButton("Save ->", "Save Custom");
 		saveCustomFilename = new JTextField("savefilename", 12);
-		JButton saveWavFile = makeButton("Export As .wav", "SaveWavFile");
+		JButton saveWavFile = makeButton("Export .WAV", "SaveWavFile");
 
 		showScore = new CheckButton("Show Score Tab", false);
 
