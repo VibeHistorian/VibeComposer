@@ -16,6 +16,10 @@ public class PlayheadRangeSlider extends RangeSlider {
 
 	}
 
+	public void setUpperValueRaw(int value) {
+		super.setUpperValue(value);
+	}
+
 	@Override
 	public void setUpperValue(int value) {
 		super.setUpperValue(value);

@@ -3446,8 +3446,14 @@ public class VibeComposerGUI extends JFrame
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
 							if (!isDragging && !isKeySeeking) {
-								slider.setUpperValue(
-										(int) (sequencer.getMicrosecondPosition() / 1000));
+								if (allowedActionsOnZero == 0) {
+									slider.setUpperValue(
+											(int) (sequencer.getMicrosecondPosition() / 1000));
+								} else {
+									slider.setUpperValueRaw(
+											(int) (sequencer.getMicrosecondPosition() / 1000));
+								}
+
 								currentTime.setText(microsecondsToTimeString(
 										sequencer.getMicrosecondPosition()));
 								//slider.repaint();
