@@ -6130,6 +6130,8 @@ public class VibeComposerGUI extends JFrame
 		cs.add(displayVeloRectValues);
 		cs.add(extraSettingsReverseDrumPanels);
 		cs.add(patternApplyPausesWhenGenerating);
+		cs.add(highlightPatterns);
+		cs.add(highlightScoreNotes);
 
 		return cs;
 	}
