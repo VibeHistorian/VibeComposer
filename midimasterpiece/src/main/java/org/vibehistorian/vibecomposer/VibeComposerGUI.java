@@ -974,6 +974,16 @@ public class VibeComposerGUI extends JFrame
 						setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i));
 					}
 					clearAllSeeds();
+					if (isFullMode != preset.isFullMode()) {
+						switchFullMode();
+					}
+					if (isDarkMode != preset.isDarkMode()) {
+						switchDarkMode();
+					}
+					if (isBigMonitorMode != preset.isBigMode()) {
+						switchBigMonitorMode();
+					}
+
 					recalculateTabPaneCounts();
 					recalculateGenerationCounts();
 					arrangementCustom.setSelected(false);
@@ -5566,6 +5576,9 @@ public class VibeComposerGUI extends JFrame
 				presetCompValues.add(getComponentValue(presetComps.get(i)));
 			}
 			preset.setOrderedValuesUI(presetCompValues);
+			preset.setDarkMode(isDarkMode);
+			preset.setFullMode(isFullMode);
+			preset.setBigMode(isBigMonitorMode);
 			marshalPreset(preset, filePath);
 		} catch (IOException | JAXBException e) {
 			// Auto-generated catch block
