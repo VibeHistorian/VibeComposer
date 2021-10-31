@@ -49,7 +49,7 @@ public abstract class InstPart implements Cloneable {
 	protected int delay = 0;
 	protected int transpose = 0;
 
-	protected int velocityMin = 70;
+	protected int velocityMin = 69;
 	protected int velocityMax = 90;
 	protected int noteLengthMultiplier = 100;
 

@@ -29,7 +29,7 @@ public class ArpPanel extends InstPanel {
 		midiChannel.setVal(2);
 
 		initDefaults(l);
-		volSlider.setDefaultValue(70);
+		volSlider.setDefaultValue(69);
 		this.add(volSlider);
 		this.add(panSlider);
 		this.add(new JLabel("#"));

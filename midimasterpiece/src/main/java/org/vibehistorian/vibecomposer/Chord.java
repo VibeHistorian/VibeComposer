@@ -15,7 +15,7 @@ public class Chord {
 	private double rhythmValue = 2;
 	private double durationRatio = 1.0;
 	private int transpose = 0;
-	private int velocity = 70;
+	private int velocity = 69;
 	private StrumType strumType = StrumType.ARP_U;
 	private List<Note> storedNotesBackwards = null;
 
