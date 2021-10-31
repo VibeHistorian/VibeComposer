@@ -86,6 +86,10 @@ public class ButtonSelectorPanel extends JPanel {
 		return buttons.get(selectedIndex).getText();
 	}
 
+	public String getVal(int index) {
+		return buttons.get(index).getText();
+	}
+
 	public void addAll(String[] items) {
 		for (String i : items) {
 			addItem(i);

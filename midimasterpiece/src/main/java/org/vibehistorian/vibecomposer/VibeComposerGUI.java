@@ -174,6 +174,7 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
+import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
@@ -1972,7 +1973,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void handleArrangementAction(String action, int seed, int maxLength) {
+	public void handleArrangementAction(String action, int seed, int maxLength) {
 		boolean refreshActual = false;
 		boolean resetArrSectionSelection = true;
 		boolean resetArrSectionPanel = true;
@@ -2021,8 +2022,13 @@ public class VibeComposerGUI extends JFrame
 
 			Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
 
-			int lastSecOrder = action.endsWith("+") ? actualArrangement.getSections().size() + 1
-					: secOrder + 1;
+			int lastSecOrder = secOrder + 1;
+			if (action.endsWith("+")) {
+				lastSecOrder = actualArrangement.getSections().size() + 1;
+			} else if (action.contains(",")) {
+				String lastSecIndexString = action.split(",")[1];
+				lastSecOrder = Integer.valueOf(lastSecIndexString) + 1;
+			}
 
 			for (int i = secOrder; i < lastSecOrder; i++) {
 				Section sec = actualArrangement.getSections().get(i - 1);
@@ -2307,7 +2313,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton commitPanelBtn = makeButton("Apply", "ArrangementApply");
 		commitPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		JButton commitAllPanelBtn = makeButton("Apply+", "ArrangementApply+");
+		JButton commitAllPanelBtn = makeButton("Apply..", e -> openApplyCustomSectionPopup());
 		commitAllPanelBtn.setMargin(new Insets(0, 0, 0, 0));
 		JButton undoPanelBtn = new JButton("<-*");
 		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
@@ -4930,6 +4936,10 @@ public class VibeComposerGUI extends JFrame
 
 	private void openExtraSettingsPopup() {
 		new ExtraSettingsPopup();
+	}
+
+	private void openApplyCustomSectionPopup() {
+		new ApplyCustomSectionPopup();
 	}
 
 	private void openDebugConsole() {
