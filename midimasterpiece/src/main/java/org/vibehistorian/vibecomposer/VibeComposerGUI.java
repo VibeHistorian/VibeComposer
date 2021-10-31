@@ -148,6 +148,7 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.SectionDropDownCheckButton;
 import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
@@ -2087,13 +2088,20 @@ public class VibeComposerGUI extends JFrame
 				sec.setDrumParts(null);
 			}
 		} else if (action.startsWith("ArrangementAddNewSection")) {
-			String selItem = newSectionBox.getVal();
+			String selItem = null;
+			Integer col = null;
+			if (action.contains(",")) {
+				selItem = action.split(",")[1];
+				col = SectionDropDownCheckButton.popupIndex - 1;
+			} else {
+				selItem = newSectionBox.getVal();
+			}
 			if (OMNI.EMPTYCOMBO.equals(selItem)) {
 				return;
 			}
 			if (instrumentTabPane.getSelectedIndex() != 5) {
 				Section addedSec = actualArrangement
-						.addDefaultSection(scrollableArrangementActualTable, selItem);
+						.addDefaultSection(scrollableArrangementActualTable, selItem, col);
 				addedSec.recalculatePartVariationMapBoundsIfNeeded();
 				arrangement.initPartInclusionMapIfNull();
 				addedSec.generatePresences(
@@ -2206,7 +2214,8 @@ public class VibeComposerGUI extends JFrame
 		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
 
 		List<CheckButton> defaultButtons = new ArrayList<>();
-		defaultButtons.add(new CheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
+		defaultButtons
+				.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
 		arrSection = new ButtonSelectorPanel(new ArrayList<>(), defaultButtons);
 		arrSection.addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
 

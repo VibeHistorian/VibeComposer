@@ -344,8 +344,8 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
-	public Section addDefaultSection(JTable tbl, String defaultType) {
-		int column = tbl.getSelectedColumn();
+	public Section addDefaultSection(JTable tbl, String defaultType, Integer col) {
+		int column = col != null ? col : tbl.getSelectedColumn();
 		if (column < 0) {
 			// add at start
 			column = 0;
@@ -356,6 +356,10 @@ public class Arrangement {
 		Section sec = defaultSections.get(defaultType).deepCopy();
 		sections.add(column, sec);
 		return sec;
+	}
+
+	public Section addDefaultSection(JTable tbl, String defaultType) {
+		return addDefaultSection(tbl, defaultType, null);
 	}
 
 	public void duplicateSection(JTable tbl) {

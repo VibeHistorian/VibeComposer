@@ -11,6 +11,7 @@ import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckButton;
+import org.vibehistorian.vibecomposer.Helpers.SectionDropDownCheckButton;
 
 public class ButtonSelectorPanel extends JPanel {
 
@@ -100,7 +101,7 @@ public class ButtonSelectorPanel extends JPanel {
 		if (selectedIndex < 0 || buttons.isEmpty()) {
 			selectedIndex = 0;
 		}
-		CheckButton cb = new CheckButton(item, false);
+		CheckButton cb = new SectionDropDownCheckButton(item, false);
 		addButton(cb, buttons.size());
 	}
 
