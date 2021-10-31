@@ -688,7 +688,7 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void notifyPatternHighlight(double quarterNotesInMeasure, int chordNumInMeasure,
-			List<Double> beatQuarterNotesInMeasure, boolean turnOff) {
+			List<Double> beatQuarterNotesInMeasure, boolean turnOff, boolean ignoreFill) {
 		if (parentPanel == null) {
 			return;
 		}
@@ -710,7 +710,7 @@ public class VisualPatternPanel extends JPanel {
 				.getPatternByLength(chordNumInMeasure + 1, parentPanel.getFillFlip());
 
 		if (patternType.getVal() == RhythmPattern.MELODY1
-				|| fillPattern.get(chordNumInMeasure) < 1) {
+				|| (!ignoreFill && fillPattern.get(chordNumInMeasure) < 1)) {
 			if (lastHighlightedHit >= 0) {
 				hitVelocities[lastHighlightedHit].setHighlighted(false);
 				hitChecks[lastHighlightedHit].setHighlighted(false);

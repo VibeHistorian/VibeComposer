@@ -3660,8 +3660,16 @@ public class VibeComposerGUI extends JFrame
 						|| !presences.contains(ip.getPanelOrder())
 						|| (soloCondition ? ip.getSoloMuter().soloState == State.OFF
 								: ip.getSoloMuter().muteState != State.OFF);
+				boolean isIgnoreFill = false;
+				if (!turnOff && sec != null) {
+					int ignoreFillIndex = tabIndex == 4 ? 1 : 2;
+					isIgnoreFill = sec
+							.getVariation(tabIndex,
+									MidiGenerator.getAbsoluteOrder(tabIndex, ip.getPanelOrder()))
+							.contains(ignoreFillIndex);
+				}
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
-						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff);
+						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff, isIgnoreFill);
 			}
 			/*for (InstPanel ip : panels) {
 				if (ip.getMuteInst()
