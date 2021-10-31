@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -12,7 +13,7 @@ import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 
 public class ApplyCustomSectionPopup extends CloseablePopup {
 
-	JLabel description = new JLabel("Apply current change up to..");
+	JLabel description = new JLabel("Apply Until Section:");
 	ScrollComboBox<String> sectionOptions = new ScrollComboBox<>(false);
 	JButton applier = new JButton("APPLY");
 
@@ -44,6 +45,7 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 			}
 		});
 		panel.add(applier);
+		panel.setPreferredSize(new Dimension(300, 600));
 		frame.add(panel);
 		frame.pack();
 		frame.setVisible(true);

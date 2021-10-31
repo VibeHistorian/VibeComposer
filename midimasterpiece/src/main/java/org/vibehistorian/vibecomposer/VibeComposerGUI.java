@@ -6674,7 +6674,7 @@ public class VibeComposerGUI extends JFrame
 				allowedInsts.add(38);
 				allowedInsts.add(40);
 			}
-			if (kickCount >= 2) {
+			if (kickCount >= 2 && snareCount >= 1) {
 				allowedInsts.remove(0);
 				allowedInsts.remove(0);
 			} else if (kickCount == 0) {
