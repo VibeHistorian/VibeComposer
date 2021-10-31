@@ -19,6 +19,11 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	private boolean regenerating = true;
 
 	public ScrollComboBox() {
+		this(true);
+	}
+
+	public ScrollComboBox(boolean isReg) {
+		regenerating = isReg;
 		addMouseWheelListener(new MouseWheelListener() {
 
 			@Override

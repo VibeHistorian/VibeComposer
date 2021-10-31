@@ -220,8 +220,7 @@ public class VariationPopup {
 		JPanel typeAndMeasuresPanel = new JPanel();
 		typeAndMeasuresPanel.add(new JLabel("Section type"));
 
-		ScrollComboBox<String> typeCombo = new ScrollComboBox<>();
-		typeCombo.setRegenerating(false);
+		ScrollComboBox<String> typeCombo = new ScrollComboBox<>(false);
 		for (Section.SectionType type : Section.SectionType.values()) {
 			typeCombo.addItem(type.toString());
 		}
@@ -245,8 +244,7 @@ public class VariationPopup {
 		typeAndMeasuresPanel.add(typeCombo);
 
 		typeAndMeasuresPanel.add(new JLabel("Measures"));
-		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
-		measureCombo.setRegenerating(false);
+		ScrollComboBox<String> measureCombo = new ScrollComboBox<>(false);
 		ScrollComboBox.addAll(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO }, measureCombo);
 		measureCombo.setVal(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {
