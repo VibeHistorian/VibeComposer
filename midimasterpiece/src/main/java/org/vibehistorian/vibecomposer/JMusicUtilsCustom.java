@@ -136,8 +136,13 @@ public class JMusicUtilsCustom {
 			return;
 		}
 		Enumeration enum1 = phrase.getNoteList().elements();
+		int counter = 0;
 		while (enum1.hasMoreElements()) {
 			Note n = (Note) enum1.nextElement();
+			if (counter == 0) {
+				continue;
+			}
+			counter++;
 			// create new pitch value
 			if (pitchVariation > 0) {
 				n.setPitch(n.getPitch()

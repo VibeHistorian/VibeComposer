@@ -1905,7 +1905,7 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(csExtra);
 
 
-		combineDrumTracks = new JCheckBox("Combine MIDI Tracks", false);
+		combineDrumTracks = new JCheckBox("Combine MIDI Tracks", true);
 		combineDrumTracks.addChangeListener(new ChangeListener() {
 
 			@Override
