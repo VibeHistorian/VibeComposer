@@ -2678,11 +2678,6 @@ public class MidiGenerator implements JMC {
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
 		Score score = new Score("MainScore", 120);
-		PartExt bassRoots = new PartExt("BassRoots",
-				(!gc.getBassParts().isEmpty() && !gc.getBassParts().get(0).isMuted())
-						? gc.getBassParts().get(0).getInstrument()
-						: 0,
-				8);
 
 		List<Part> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
@@ -2703,6 +2698,14 @@ public class MidiGenerator implements JMC {
 					gc.getArpParts().get(i).getMidiChannel() - 1);
 			arpParts.add(p);
 		}
+
+		List<Part> bassParts = new ArrayList<>();
+		for (int i = 0; i < gc.getBassParts().size(); i++) {
+			PartExt p = new PartExt("Bass" + i, gc.getBassParts().get(i).getInstrument(),
+					gc.getBassParts().get(i).getMidiChannel() - 1);
+			bassParts.add(p);
+		}
+
 		List<Part> drumParts = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
 			PartExt p = new PartExt("MainDrums", 0, 9);
@@ -2952,7 +2955,7 @@ public class MidiGenerator implements JMC {
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
-				bassRoots.addPhrase(bp);
+				bassParts.get(i).addPhrase(bp);
 			}
 
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
@@ -3024,13 +3027,18 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (!gc.getBassParts().isEmpty() && !gc.getBassParts().get(0).isMuted()) {
-			score.add(bassRoots);
-			((PartExt) bassRoots).setTrackNumber(trackCounter);
-			VibeComposerGUI.bassPanel.setSequenceTrack(trackCounter++);
-		} else {
-			((PartExt) bassRoots).setTrackNumber(-1);
-			VibeComposerGUI.bassPanel.setSequenceTrack(-1);
+		for (int i = 0; i < gc.getBassParts().size(); i++) {
+			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getBassParts().get(i).getOrder(),
+					VibeComposerGUI.bassPanels);
+			if (!gc.getBassParts().get(i).isMuted()) {
+				score.add(bassParts.get(i));
+				((PartExt) bassParts.get(i)).setTrackNumber(trackCounter);
+				ip.setSequenceTrack(trackCounter++);
+				//if (VibeComposerGUI.apSm)
+			} else {
+				ip.setSequenceTrack(-1);
+				((PartExt) arpParts.get(i)).setTrackNumber(-1);
+			}
 		}
 
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
@@ -3068,6 +3076,12 @@ public class MidiGenerator implements JMC {
 				ip.setSequenceTrack(trackCounter);
 				((PartExt) drumParts.get(i)).setTrackNumber(trackCounter);
 				if (COLLAPSE_DRUM_TRACKS) {
+					for (int j = i + 1; j < gc.getDrumParts().size(); j++) {
+						InstPanel ip2 = VibeComposerGUI.getPanelByOrder(
+								gc.getDrumParts().get(j).getOrder(), VibeComposerGUI.drumPanels);
+						ip2.setSequenceTrack(-1);
+						((PartExt) drumParts.get(j)).setTrackNumber(-1);
+					}
 					break;
 				}
 			} else {
