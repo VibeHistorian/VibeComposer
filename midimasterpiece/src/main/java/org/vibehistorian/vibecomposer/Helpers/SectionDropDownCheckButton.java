@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -64,5 +65,15 @@ public class SectionDropDownCheckButton extends CheckButton {
 
 	public SectionDropDownCheckButton(String name, boolean sel) {
 		this(name, sel, null);
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		g.setColor(Color.black);
+		//g.drawRect(0, 0, getWidth(), getHeight());
+		//g.fillRect(getWidth() - 7, getHeight() - 4, 7, 4);
+		g.fillPolygon(new int[] { getWidth() - 7, getWidth() - 1, getWidth() - 4 },
+				new int[] { getHeight() - 4, getHeight() - 4, getHeight() - 1 }, 3);
 	}
 }
