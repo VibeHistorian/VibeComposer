@@ -3979,6 +3979,17 @@ public class MidiGenerator implements JMC {
 		int minVel = multiplyVelocity(cp.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = multiplyVelocity(cp.getVelocityMax(), volMultiplier, 1, 0);
 
+		List<Integer> chordVelocityPattern = new ArrayList<>();
+		if (cp.getCustomVelocities() != null
+				&& cp.getCustomVelocities().size() >= cp.getHitsPerPattern()) {
+			int multiplier = gc.isScaleMidiVelocityInArrangement() ? sec.getVol(3) : 100;
+			for (int k = 0; k < cp.getHitsPerPattern(); k++) {
+				chordVelocityPattern
+						.add(multiplyVelocity(cp.getCustomVelocities().get(k), multiplier, 0, 1));
+			}
+			chordVelocityPattern = MidiUtils.intersperse(null, cp.getChordSpan() - 1,
+					chordVelocityPattern);
+		}
 
 		for (int i = 0; i < measures; i++) {
 			Random transitionGenerator = new Random(orderSeed);
@@ -4132,6 +4143,7 @@ public class MidiGenerator implements JMC {
 
 				List<Integer> pattern = null;
 				List<Integer> nextPattern = null;
+				List<Integer> velocityPattern = null;
 				if (cp.getPattern() == RhythmPattern.MELODY1 && melodyNotePatternMap != null) {
 					pattern = new ArrayList<>(melodyNotePatternMap.get(chordIndex));
 				} else {
@@ -4147,6 +4159,9 @@ public class MidiGenerator implements JMC {
 									nextPattern);
 						}
 					}
+					velocityPattern = !chordVelocityPattern.isEmpty()
+							? partOfList(chordSpanPart, cp.getChordSpan(), chordVelocityPattern)
+							: null;
 				}
 				if (cp.isPatternFlip()) {
 					for (int p = 0; p < pattern.size(); p++) {
@@ -4165,7 +4180,9 @@ public class MidiGenerator implements JMC {
 					//LOGGER.debug("Duration counter: " + durationCounter);
 					Chord cC = Chord.copy(c);
 
-					cC.setVelocity(velocityGenerator.nextInt(maxVel - minVel) + minVel);
+					cC.setVelocity(velocityPattern != null
+							? velocityPattern.get(p % velocityPattern.size())
+							: (velocityGenerator.nextInt(maxVel - minVel) + minVel));
 					// less plucky
 					//cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
 					if (pattern.get(p) < 1 || (p <= nextP && stretchedByNote == 1)
@@ -4283,6 +4300,18 @@ public class MidiGenerator implements JMC {
 		List<Integer> arpOctavePattern = arpMap.get(ARP_OCTAVE_KEY);
 		List<Integer> arpPausesPattern = arpMap.get(ARP_PAUSES_KEY);
 
+		List<Integer> arpVelocityPattern = new ArrayList<>();
+		if (ap.getCustomVelocities() != null
+				&& ap.getCustomVelocities().size() >= ap.getHitsPerPattern()) {
+			int multiplier = gc.isScaleMidiVelocityInArrangement() ? sec.getVol(3) : 100;
+			for (int k = 0; k < ap.getHitsPerPattern(); k++) {
+				arpVelocityPattern
+						.add(multiplyVelocity(ap.getCustomVelocities().get(k), multiplier, 0, 1));
+			}
+			arpVelocityPattern = MidiUtils.intersperse(null, ap.getChordSpan() - 1,
+					arpVelocityPattern);
+		}
+
 		List<Boolean> directions = null;
 
 
@@ -4382,10 +4411,16 @@ public class MidiGenerator implements JMC {
 						&& melodyNotePatternMap != null)
 								? new ArrayList<>(melodyNotePatternMap.get(j))
 								: partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern);
+				List<Integer> velocityPatternSpanned = !arpVelocityPattern.isEmpty()
+						? partOfList(chordSpanPart, ap.getChordSpan(), arpVelocityPattern)
+						: null;
+
 
 				int p = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(j)) {
-					int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
+					int velocity = velocityPatternSpanned != null
+							? velocityPatternSpanned.get(p % velocityPatternSpanned.size())
+							: (velocityGenerator.nextInt(maxVel - minVel) + minVel);
 
 					Integer patternNum = pitchPatternSpanned.get(p);
 

@@ -1,11 +1,14 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
@@ -63,9 +66,14 @@ public class ChordPanel extends InstPanel {
 
 		this.add(hitsPerPattern);
 		this.add(pattern);
+		JButton veloTogglerButt = new JButton("V");
+		veloTogglerButt.setPreferredSize(new Dimension(25, 30));
+		veloTogglerButt.setMargin(new Insets(0, 0, 0, 0));
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);
+		comboPanel.linkVelocityToggle(veloTogglerButt);
 		this.add(comboPanel);
+		this.add(veloTogglerButt);
 		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(chordSpan);
