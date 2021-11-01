@@ -73,7 +73,9 @@ public class SectionDropDownCheckButton extends CheckButton {
 		g.setColor(Color.black);
 		//g.drawRect(0, 0, getWidth(), getHeight());
 		//g.fillRect(getWidth() - 7, getHeight() - 4, 7, 4);
-		g.fillPolygon(new int[] { getWidth() - 7, getWidth() - 1, getWidth() - 4 },
-				new int[] { getHeight() - 4, getHeight() - 4, getHeight() - 1 }, 3);
+		int width = getWidth();
+		int height = getHeight();
+		g.fillPolygon(new int[] { width - 7, width - 1, width - 4 },
+				new int[] { height - 4, height - 4, height - 1 }, 3);
 	}
 }

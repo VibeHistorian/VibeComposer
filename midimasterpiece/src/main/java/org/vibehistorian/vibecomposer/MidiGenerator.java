@@ -3146,6 +3146,10 @@ public class MidiGenerator implements JMC {
 					isVariation &= notesSeedOffset > 0;
 				}
 
+				if (i == 3) {
+					isVariation = false;
+				}
+
 				// transitionFast - from offset > 0 to offset == 0
 				if (i == 5) {
 					isVariation &= (secOrder < arr.getSections().size() - 1
@@ -3205,8 +3209,16 @@ public class MidiGenerator implements JMC {
 						//LOGGER.debug("Risky Variation: Melody Swap!");
 					}
 					List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
+					int speedSave = mp.getSpeed();
+					// max speed variation
+					if (riskyVariations.get(3) > 0) {
+						mp.setSpeed(100);
+					}
 					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, sec.getMeasures(),
 							notesSeedOffset, sec, variations);
+					if (riskyVariations.get(3) > 0) {
+						mp.setSpeed(speedSave);
+					}
 					/*
 					// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
 					// risky variation - wacky melody transpose
