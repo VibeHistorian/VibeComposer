@@ -3661,6 +3661,9 @@ public class VibeComposerGUI extends JFrame
 			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
 			List<InstPanel> panels = getAffectedPanels(tabIndex);
 			Set<Integer> presences = sec != null ? sec.getPresence(tabIndex) : null;
+			int totalChords = (sec != null && sec.getSectionBeatDurations() != null)
+					? sec.getSectionBeatDurations().size()
+					: MidiGenerator.chordInts.size();
 			for (InstPanel ip : panels) {
 				boolean turnOff = ip.getMuteInst() || presences == null
 						|| !presences.contains(ip.getPanelOrder())
@@ -3675,7 +3678,8 @@ public class VibeComposerGUI extends JFrame
 							.contains(ignoreFillIndex);
 				}
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
-						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff, isIgnoreFill);
+						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff, isIgnoreFill,
+						totalChords);
 			}
 			/*for (InstPanel ip : panels) {
 				if (ip.getMuteInst()

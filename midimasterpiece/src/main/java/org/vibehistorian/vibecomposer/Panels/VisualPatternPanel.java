@@ -688,7 +688,8 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void notifyPatternHighlight(double quarterNotesInMeasure, int chordNumInMeasure,
-			List<Double> beatQuarterNotesInMeasure, boolean turnOff, boolean ignoreFill) {
+			List<Double> beatQuarterNotesInMeasure, boolean turnOff, boolean ignoreFill,
+			int totalChords) {
 		if (parentPanel == null) {
 			return;
 		}
@@ -706,8 +707,8 @@ public class VisualPatternPanel extends JPanel {
 		System.out.println("Quarter notes: " + quarterNotesInMeasure);
 		System.out.println(StringUtils.join(beatQuarterNotesInMeasure, ", "));
 		System.out.println("Chord num: " + chordNumInMeasure);*/
-		List<Integer> fillPattern = parentPanel.getChordSpanFill()
-				.getPatternByLength(chordNumInMeasure + 1, parentPanel.getFillFlip());
+		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(totalChords,
+				parentPanel.getFillFlip());
 
 		if (patternType.getVal() == RhythmPattern.MELODY1
 				|| (!ignoreFill && fillPattern.get(chordNumInMeasure) < 1)) {
