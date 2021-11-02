@@ -181,6 +181,7 @@ import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
+import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -241,9 +242,6 @@ public class VibeComposerGUI extends JFrame
 	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
 			Color.yellow };
 	public static String[] instNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
-
-	// instrument individual panels
-	public static BassPanel bassPanel;
 
 	// instrument panels added into scrollpanes
 	public static List<MelodyPanel> melodyPanels = new ArrayList<>();
@@ -542,7 +540,8 @@ public class VibeComposerGUI extends JFrame
 	File currentMidi = null;
 	MidiDevice device = null;
 
-	CheckButton showScore;
+	public static JButton showScore;
+	public static ShowScorePopup scorePopup;
 	CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	//MidiHandler mh = new MidiHandler();
@@ -1459,7 +1458,7 @@ public class VibeComposerGUI extends JFrame
 
 
 	private void initBass(int startY, int anchorSide) {
-		bassPanel = new BassPanel(this);
+		BassPanel bassPanel = new BassPanel(this);
 
 		JPanel scrollableBassPanels = new JPanel();
 		scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
@@ -3581,8 +3580,7 @@ public class VibeComposerGUI extends JFrame
 
 						try {
 							int tabIndex = instrumentTabPane.getSelectedIndex();
-							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)
-									|| tabIndex == 7) {
+							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)) {
 								sleep(5);
 								allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
 							} else {
@@ -3781,7 +3779,29 @@ public class VibeComposerGUI extends JFrame
 		saveCustomFilename = new JTextField("savefilename", 12);
 		JButton saveWavFile = makeButton("Export .WAV", "SaveWavFile");
 
-		showScore = new CheckButton("Show Score Tab", false);
+		showScore = new JButton("Show Score Tab");
+		showScore.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (scorePanel != null) {
+					if (instrumentTabPane.getComponentCount() == 8) {
+						instrumentTabPane.remove(scoreScrollPane);
+						scorePopup = new ShowScorePopup(scoreScrollPane);
+					} else {
+						if (scorePopup != null) {
+							scorePopup.close();
+							scorePopup = null;
+						}
+						if (instrumentTabPane.getComponentCount() < 8) {
+							instrumentTabPane.add(scoreScrollPane, 7);
+							instrumentTabPane.setTitleAt(7, " Score ");
+						}
+
+					}
+				}
+			}
+		});
 
 		regenerateWhenValuesChange = new CheckButton("Regenerate on Change", true);
 		/*showScorePicker = new ScrollComboBox<String>();
@@ -4389,9 +4409,9 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.getSections().add(sec.deepCopy());
 		}
 		VibeComposerGUI.pianoRoll();
-		if (showScore.isSelected()) {
+		/*if (showScore.isSelected()) {
 			instrumentTabPane.setSelectedIndex(7);
-		}
+		}*/
 	}
 
 	private Integer prepareMainSeed(boolean regenerate) {
@@ -5060,7 +5080,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			for (int i = 0; i < bassPanels.size(); i++) {
 				int inst = bassPanels.get(i).getInstrumentBox().getInstrument();
-				bassPanels.get(i).getInstrumentBox().initInstPool(InstUtils.POOL.MELODY);
+				bassPanels.get(i).getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
 				bassPanels.get(i).getInstrumentBox().setInstrument(inst);
 			}
 		}
@@ -5786,7 +5806,9 @@ public class VibeComposerGUI extends JFrame
 		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangement.getSections().size() + ")");
 		instrumentTabPane.setTitleAt(6,
 				"Generated Arrangement (" + actualArrangement.getSections().size() + ")");
-		instrumentTabPane.setTitleAt(7, " Score ");
+		if (instrumentTabPane.getComponentCount() >= 8) {
+			instrumentTabPane.setTitleAt(7, " Score ");
+		}
 	}
 
 	public static Pair<List<String>, List<Double>> solveUserChords(String[] userChordsSplit,
@@ -6121,7 +6143,6 @@ public class VibeComposerGUI extends JFrame
 		// globals
 		cs.add(randomizeScaleModeOnCompose);
 		cs.add(regenerateWhenValuesChange);
-		cs.add(showScore);
 		cs.add(loopBeat);
 		cs.add(loopBeatCount);
 		cs.add(midiMode);
@@ -6363,7 +6384,10 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternFlip.setSelected(guiConfig.isMelodyPatternFlip());
 
 		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
-		recreateInstPanelsFromInstParts(1, guiConfig.getBassParts());
+		if (guiConfig.getBassParts() != null && !guiConfig.getBassParts().isEmpty()) {
+			recreateInstPanelsFromInstParts(1, guiConfig.getBassParts());
+		}
+
 		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());
 		recreateInstPanelsFromInstParts(3, guiConfig.getArpParts());
 		recreateInstPanelsFromInstParts(4, guiConfig.getDrumParts());

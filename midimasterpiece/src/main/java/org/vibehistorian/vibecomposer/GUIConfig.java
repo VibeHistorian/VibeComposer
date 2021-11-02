@@ -122,9 +122,9 @@ public class GUIConfig {
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
-	private boolean melodyEnable = false;
+	private boolean melodyEnable = true;
 	private boolean bassEnable = true;
-	private boolean chordsEnable = false;
+	private boolean chordsEnable = true;
 	private boolean arpsEnable = true;
 	private boolean drumsEnable = true;
 	private ChordGenSettings chordGenSettings = new ChordGenSettings();
