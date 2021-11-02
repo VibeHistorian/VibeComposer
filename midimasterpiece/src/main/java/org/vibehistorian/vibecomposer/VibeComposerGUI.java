@@ -3580,7 +3580,8 @@ public class VibeComposerGUI extends JFrame
 
 						try {
 							int tabIndex = instrumentTabPane.getSelectedIndex();
-							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)) {
+							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)
+									|| (scorePopup != null || tabIndex == 7)) {
 								sleep(5);
 								allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
 							} else {

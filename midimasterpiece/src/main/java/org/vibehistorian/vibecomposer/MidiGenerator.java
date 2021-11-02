@@ -2332,7 +2332,7 @@ public class MidiGenerator implements JMC {
 
 
 		if (fixedLength == 0) {
-			List<Integer> progLengths = Arrays.asList(new Integer[] { 4, 6, 8 });
+			List<Integer> progLengths = Arrays.asList(new Integer[] { 4, 5, 6, 8 });
 			fixedLength = progLengths.get(lengthGenerator.nextInt(progLengths.size()));
 		}
 		int maxLength = (fixedLength > 0) ? fixedLength : 8;
