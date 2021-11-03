@@ -3689,9 +3689,17 @@ public class VibeComposerGUI extends JFrame
 					: MidiGenerator.chordInts.size();
 			for (InstPanel ip : panels) {
 				boolean turnOff = ip.getMuteInst() || presences == null
-						|| !presences.contains(ip.getPanelOrder())
-						|| (soloCondition ? ip.getSoloMuter().soloState == State.OFF
-								: ip.getSoloMuter().muteState != State.OFF);
+						|| !presences.contains(ip.getPanelOrder());
+				if (!turnOff) {
+					if (tabIndex == 4 && combineDrumTracks.isSelected()) {
+						turnOff |= ((soloCondition ? groupSoloMuters.get(4).soloState == State.OFF
+								: groupSoloMuters.get(4).muteState != State.OFF));
+					} else {
+						turnOff |= ((soloCondition ? ip.getSoloMuter().soloState == State.OFF
+								: ip.getSoloMuter().muteState != State.OFF));
+					}
+				}
+
 				boolean isIgnoreFill = false;
 				if (!turnOff && sec != null) {
 					int ignoreFillIndex = tabIndex == 4 ? 1 : 2;
