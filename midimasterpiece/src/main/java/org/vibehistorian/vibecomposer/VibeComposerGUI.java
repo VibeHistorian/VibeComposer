@@ -3950,28 +3950,30 @@ public class VibeComposerGUI extends JFrame
 			public void run() {
 
 				while (sequencer != null && sequencer.isRunning()) {
-					for (int j = 0; j < 4; j++) {
-						List<? extends InstPanel> panels = getInstList(j);
-						for (int i = 0; i < panels.size(); i++) {
-							if (combineMelodyTracks.isSelected() && j == 0 && i > 0) {
-								// melody panels under first
-								continue;
+					if (useMidiCC.isSelected()) {
+						for (int j = 0; j < 4; j++) {
+							List<? extends InstPanel> panels = getInstList(j);
+							for (int i = 0; i < panels.size(); i++) {
+								if (combineMelodyTracks.isSelected() && j == 0 && i > 0) {
+									// melody panels under first
+									continue;
+								}
+								double vol = panels.get(i).getVolSlider().getValue() / 100.0;
+								int channel = panels.get(i).getMidiChannel() - 1;
+								sendVolumeMessage(vol, channel);
+								sendReverbMessage(1.0, channel);
+								sendChorusMessage(1.0, channel);
+								sendLowPassFilterMessage(1.0, channel, j);
+								sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
 							}
-							double vol = panels.get(i).getVolSlider().getValue() / 100.0;
-							int channel = panels.get(i).getMidiChannel() - 1;
-							sendVolumeMessage(vol, channel);
-							sendReverbMessage(1.0, channel);
-							sendChorusMessage(1.0, channel);
-							sendLowPassFilterMessage(1.0, channel, j);
-							sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
 						}
+						double drumVol = drumVolumeSlider.getValue() / 100.0;
+						sendVolumeMessage(drumVol, 9);
+						sendReverbMessage(0.5, 9);
+						sendChorusMessage(0.1, 9);
+						sendLowPassFilterMessage(1.0, 9, 4);
+						//drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
 					}
-					double drumVol = drumVolumeSlider.getValue() / 100.0;
-					sendVolumeMessage(drumVol, 9);
-					sendReverbMessage(0.5, 9);
-					sendChorusMessage(0.1, 9);
-					sendLowPassFilterMessage(1.0, 9, 4);
-					//drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
 
 					try {
 						sleep(25);
@@ -3987,7 +3989,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	protected void sendPanMessage(int pan100, int channel) {
-		int value127 = OMNI.clampVel(pan100 * 127 / 100);
+		int value127 = useMidiCC.isSelected() ? OMNI.clampVel(pan100 * 127 / 100) : 64;
 		sendMidiCcMessage(value127, channel, 10);
 	}
 
@@ -4020,6 +4022,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	protected void sendMidiCcMessage(int value, int channel, int midiCc) {
+
 		try {
 			ShortMessage volumeMessage = new ShortMessage();
 			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, midiCc, value);
