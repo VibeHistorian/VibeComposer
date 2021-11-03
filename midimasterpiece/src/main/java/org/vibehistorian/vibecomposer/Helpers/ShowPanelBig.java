@@ -254,14 +254,14 @@ public class ShowPanelBig extends JPanel {
 					setScore();
 
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
-					areaScrollPane.repaint();
+					VibeComposerGUI.scoreScrollPane.repaint();
 				} else if (e.isControlDown()) {
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
 					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
-					areaScrollPane.repaint();
+					VibeComposerGUI.scoreScrollPane.repaint();
 				} else {
 					// nothing
 				}
