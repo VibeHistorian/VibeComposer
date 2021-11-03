@@ -200,9 +200,9 @@ public class VibeComposerGUI extends JFrame
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(VibeComposerGUI.class);
 
-	private static final String SOUNDBANK_DEFAULT = "Touhou.sf2";
 	private static final String MIDIS_FOLDER = "midis";
 	private static final String PRESET_FOLDER = "presets";
+	private static final String SOUNDBANK_FOLDER = ".";
 	private static final String EXPORT_FOLDER = "exports";
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
@@ -233,9 +233,9 @@ public class VibeComposerGUI extends JFrame
 	private static List<JSeparator> separators = new ArrayList<>();
 
 	private static Soundbank soundfont = null;
-
 	private Synthesizer synth = null;
 	private boolean isSoundbankSynth = false;
+	private boolean needSoundbankRefresh = false;
 
 	private static GUIConfig guiConfig = new GUIConfig();
 
@@ -357,7 +357,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel subTitle;
 
 	// macro params
-	JTextField soundbankFilename;
+	ScrollComboBox<String> soundbankFilename;
 
 	public static ScrollComboBox<String> scaleMode;
 	JCheckBox randomizeScaleModeOnCompose;
@@ -1135,7 +1135,29 @@ public class VibeComposerGUI extends JFrame
 
 		extraSettingsPanel.add(bpmLowHighPanel);
 
-		soundbankFilename = new JTextField(SOUNDBANK_DEFAULT, 18);
+		soundbankFilename = new ScrollComboBox<String>(false);
+		soundbankFilename.setEditable(true);
+		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
+		File folder = new File(SOUNDBANK_FOLDER);
+		if (folder.exists()) {
+			File[] listOfFiles = folder.listFiles();
+			for (File f : listOfFiles) {
+				if (f.isFile()) {
+					String fileName = f.getName();
+					if (fileName.endsWith(".sf2")) {
+						soundbankFilename.addItem(fileName);
+					}
+				}
+			}
+		}
+		soundbankFilename.setVal(soundbankFilename.getLastVal());
+		soundbankFilename.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				needSoundbankRefresh = true;
+			}
+		});
 		JPanel soundbankPanel = new JPanel();
 		JLabel soundbankLabel = new JLabel("Soundbank name:");
 		soundbankPanel.add(soundbankLabel);
@@ -4918,9 +4940,9 @@ public class VibeComposerGUI extends JFrame
 	private Synthesizer loadSynth() {
 		Synthesizer synthesizer = null;
 		try {
-			File soundbankFile = new File(soundbankFilename.getText());
+			File soundbankFile = new File((String) soundbankFilename.getEditor().getItem());
 			if (soundbankFile.isFile()) {
-				if (synth == null || !isSoundbankSynth) {
+				if (synth == null || !isSoundbankSynth || needSoundbankRefresh) {
 					synth = null;
 					soundfont = MidiSystem.getSoundbank(
 							new BufferedInputStream(new FileInputStream(soundbankFile)));
@@ -4929,8 +4951,10 @@ public class VibeComposerGUI extends JFrame
 					synthesizer.isSoundbankSupported(soundfont);
 					synthesizer.open();
 					synthesizer.loadAllInstruments(soundfont);
+					needSoundbankRefresh = false;
 				}
-				LOGGER.info(("Playing using soundbank: " + soundbankFilename.getText()));
+				LOGGER.info(("Playing using soundbank: "
+						+ (String) soundbankFilename.getEditor().getItem()));
 			} else {
 				if (synth != null && isSoundbankSynth) {
 					synth.unloadAllInstruments(soundfont);
@@ -6247,7 +6271,7 @@ public class VibeComposerGUI extends JFrame
 
 		// macro
 		gc.setScaleMode(ScaleMode.valueOf(scaleMode.getVal()));
-		gc.setSoundbankName(soundbankFilename.getText());
+		gc.setSoundbankName((String) soundbankFilename.getEditor().getItem());
 		gc.setPieceLength(Integer.valueOf(pieceLength.getText()));
 		if (fixedLengthChords.getSelectedIndex() < 2) {
 			gc.setFixedDuration(Integer.valueOf(fixedLengthChords.getVal()));
@@ -6356,7 +6380,7 @@ public class VibeComposerGUI extends JFrame
 
 		// macro
 		scaleMode.setVal(guiConfig.getScaleMode().toString());
-		soundbankFilename.setText(guiConfig.getSoundbankName());
+		soundbankFilename.getEditor().setItem(guiConfig.getSoundbankName());
 		pieceLength.setText(String.valueOf(guiConfig.getPieceLength()));
 		setFixedLengthChords(guiConfig.getFixedDuration());
 
