@@ -2082,6 +2082,10 @@ public class MidiGenerator implements JMC {
 				- swingUnitOfTime;
 		double durCounter = 0.0;
 
+		if (logSwing)
+			LOGGER.debug(
+					"-----------------------------STARTING SWING -----------------------------------");
+
 		List<Double> durationBuckets = new ArrayList<>();
 		List<Integer> chordSeparators = new ArrayList<>();
 		for (int i = 0; i < notes.size(); i++) {
@@ -2115,6 +2119,18 @@ public class MidiGenerator implements JMC {
 				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
 						- swingUnitOfTime;
 				durCounter = 0.0;
+
+				if (swungNote != null) {
+					swingAdjust *= -1;
+					double swungDur = swungNote.getRhythmValue();
+					swungNote.setRhythmValue(swungDur + swingAdjust);
+					swungNote.setDuration((swungDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+					swingAdjust *= -1;
+					swungNote = null;
+					latestSuitableNote = null;
+					if (logSwing)
+						LOGGER.debug("Unswung swung note!");
+				}
 			}
 			durCounter += adjDur;
 			boolean processed = false;
@@ -2192,14 +2208,26 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+		if (swungNote != null) {
+			double swungDur = swungNote.getRhythmValue();
+			swungNote.setRhythmValue(swungDur + swingAdjust);
+			swungNote.setDuration((swungDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+			swingAdjust *= -1;
+			swungNote = null;
+			latestSuitableNote = null;
+			if (logSwing)
+				LOGGER.debug("Unswung swung note!");
+		}
+
 		if (logSwing) {
 			LOGGER.debug("AFTER:");
+			currentChordDur = progressionDurations.get(0);
 			durCounter = 0.0;
 			chordCounter = 0;
 			durationBuckets = new ArrayList<>();
 			for (int i = 0; i < notes.size(); i++) {
 				durCounter += notes.get(i).getRhythmValue();
-				if (durCounter + DBL_ERR > currentChordDur) {
+				if (durCounter - DBL_ERR > currentChordDur) {
 					chordCounter = (chordCounter + 1) % progressionDurations.size();
 					currentChordDur = progressionDurations.get(chordCounter);
 					durCounter = 0.0;
