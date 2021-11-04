@@ -77,6 +77,7 @@ public class ShowPanelBig extends JPanel {
 	private JFrame frame;
 	private int panelHeight;
 	private JScrollPane areaScrollPane;
+	private JScrollPane rulerScrollPane;
 	public static CheckButton soloMuterHighlight;
 	public static double maxEndTime = 10.0;
 
@@ -274,11 +275,24 @@ public class ShowPanelBig extends JPanel {
 		ruler = new ShowRulerBig(this);
 		ruler.setVisible(true);
 		JPanel rulerPanel = new JPanel();
-		rulerPanel
-				.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight));
+		rulerPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
+				ShowRulerBig.maxHeight));
 		rulerPanel.add(ruler);
+
+		rulerScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight + 10);
+			}
+		};
+		rulerScrollPane.setViewportView(rulerPanel);
+		rulerScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		rulerScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		rulerScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+
 		rulerPanel.setVisible(true);
-		pan.add("South", rulerPanel);
+		pan.add("South", rulerScrollPane);
 		panelHeight = panelMaxHeight;
 		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
 		scorePartPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
