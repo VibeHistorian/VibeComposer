@@ -609,6 +609,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox displayVeloRectValues;
 	public static JCheckBox highlightPatterns;
 	public static JCheckBox highlightScoreNotes;
+	public static JCheckBox customFilenameAddTimestamp;
 
 
 	public static void main(String args[]) {
@@ -1168,6 +1169,7 @@ public class VibeComposerGUI extends JFrame
 		displayVeloRectValues = new JCheckBox("Display Bar Values", true);
 		highlightPatterns = new JCheckBox("Highlight Sequencer Pattern", true);
 		highlightScoreNotes = new JCheckBox("Highlight Score Notes", true);
+		customFilenameAddTimestamp = new JCheckBox("Add Timestamp To Custom Filenames", false);
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1192,6 +1194,7 @@ public class VibeComposerGUI extends JFrame
 		displayStylePanel.add(displayVeloRectValues);
 		displayStylePanel.add(highlightPatterns);
 		displayStylePanel.add(highlightScoreNotes);
+		displayStylePanel.add(customFilenameAddTimestamp);
 		extraSettingsPanel.add(displayStylePanel);
 		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
 		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
@@ -5607,24 +5610,29 @@ public class VibeComposerGUI extends JFrame
 			String rating = starSplit[1].substring(0, 1);
 			String saveDirectory = "/saved_";
 			String name = "";
+			String soundbankLoadedString = (isSoundbankSynth) ? "_SB" : "";
+
+			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+			f.applyPattern("yyMMdd-HH-mm-ss");
+			String fdate = "";
+
 			if (!"C".equals(rating)) {
 				saveDirectory += rating + "star/";
 
 				File makeSavedDir = new File(MIDIS_FOLDER + saveDirectory);
 				makeSavedDir.mkdir();
 				name = currentMidi.getName();
+				fdate = f.format(date);
 			} else {
 				saveDirectory += "custom/";
 				name = saveCustomFilename.getText() + ".mid";
+				if (customFilenameAddTimestamp.isSelected()) {
+					fdate = f.format(date);
+				}
 			}
-			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-			f.applyPattern("yyMMdd-HH-mm-ss");
 
-
-			String soundbankLoadedString = (isSoundbankSynth) ? "SB_" : "";
-
-			String finalFilePath = currentMidi.getParent() + saveDirectory + f.format(date) + "_"
-					+ soundbankLoadedString + name;
+			String finalFilePath = currentMidi.getParent() + saveDirectory + fdate + name
+					+ soundbankLoadedString;
 
 			File savedMidi = new File(finalFilePath);
 			try {
