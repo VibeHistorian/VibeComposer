@@ -96,6 +96,7 @@ public class GUIConfig {
 	private boolean enable9th13th = false;
 	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
+	private boolean squishProgressively = false;
 	private int spiceParallelChance = 5;
 
 	private boolean spiceForceScale = true;
@@ -684,6 +685,14 @@ public class GUIConfig {
 
 	public void setBassEnable(boolean bassEnable) {
 		this.bassEnable = bassEnable;
+	}
+
+	public boolean isSquishProgressively() {
+		return squishProgressively;
+	}
+
+	public void setSquishProgressively(boolean squishProgressively) {
+		this.squishProgressively = squishProgressively;
 	}
 
 }

@@ -2754,9 +2754,13 @@ public class MidiGenerator implements JMC {
 
 		List<Double> actualDurations = progressionDurations;
 
-		List<int[]> actualProgression = MidiUtils.squishChordProgressionProgressively(
-				generatedRootProgression, gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
-				gc.getChordGenSettings().getFlattenVoicingChance());
+		List<int[]> actualProgression = (gc.isSquishProgressively())
+				? MidiUtils.squishChordProgressionProgressively(generatedRootProgression,
+						gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
+						gc.getChordGenSettings().getFlattenVoicingChance())
+				: MidiUtils.squishChordProgression(generatedRootProgression,
+						gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
+						gc.getChordGenSettings().getFlattenVoicingChance());
 
 		if (!debugEnabled) {
 			PrintStream dummyStream = new PrintStream(new OutputStream() {

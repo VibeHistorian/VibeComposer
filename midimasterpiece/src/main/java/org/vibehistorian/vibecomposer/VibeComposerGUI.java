@@ -504,6 +504,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
+	JCheckBox extraSquishChordsProgressively;
 	KnobPanel spiceParallelChance;
 
 	JCheckBox spiceForceScale;
@@ -1109,11 +1110,13 @@ public class VibeComposerGUI extends JFrame
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 		extraUseChordFormula = new JCheckBox("Chord Formula", true);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
+		extraSquishChordsProgressively = new JCheckBox("Flatten<br>Progressively", false);
 
 
 		chordChoicePanel.add(extraUseChordFormula);
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
+		chordChoicePanel.add(extraSquishChordsProgressively);
 		chordChoicePanel.add(new JLabel("Key change type:"));
 		chordChoicePanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(chordChoicePanel);
@@ -6355,6 +6358,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setDimAugDom7thEnabled(spiceAllowDimAug.isSelected());
 		gc.setEnable9th13th(spiceAllow9th13th.isSelected());
 		gc.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
+		gc.setSquishProgressively(extraSquishChordsProgressively.isSelected());
 		gc.setChordSlashChance(chordSlashChance.getInt());
 		gc.setSpiceForceScale(spiceForceScale.isSelected());
 
@@ -6469,6 +6473,7 @@ public class VibeComposerGUI extends JFrame
 		spiceAllowDimAug.setSelected(guiConfig.isDimAugDom7thEnabled());
 		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
+		extraSquishChordsProgressively.setSelected(guiConfig.isSquishProgressively());
 		chordSlashChance.setInt(guiConfig.getChordSlashChance());
 		spiceForceScale.setSelected(guiConfig.isSpiceForceScale());
 
