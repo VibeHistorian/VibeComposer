@@ -183,8 +183,8 @@ public class MidiUtils {
 	public static final List<String> progressionCircle = Arrays
 			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
 
-	public static final List<Integer> MAJ_SCALE = Arrays.asList(MidiUtils.Scales.MAJOR_SCALE);
-	public static final List<Integer> MIN_SCALE = Arrays.asList(MidiUtils.Scales.AEOLIAN_SCALE);
+	public static final List<Integer> MAJ_SCALE = Arrays.asList(Scales.MAJOR_SCALE);
+	public static final List<Integer> MIN_SCALE = Arrays.asList(Scales.AEOLIAN_SCALE);
 
 	// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
 	public static final List<Integer> relevancyOrder = Arrays
@@ -387,7 +387,7 @@ public class MidiUtils {
 
 		for (String ch : chords) {
 			int transposeByLetter = targetScale
-					.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(ch.substring(0, 1)) - 1);
+					.get(CHORD_FIRST_LETTERS.indexOf(ch.substring(0, 1)) - 1);
 			if (ch.contains("6")
 					|| !isSpiceValid(transposeByLetter, ch.substring(1), targetScale)) {
 				continue;
@@ -690,16 +690,20 @@ public class MidiUtils {
 		if (inversion == null) {
 			return chord;
 		}
+		int index = (inversion + chord.length * 100) % chord.length;
+		if (index == 0) {
+			return chord;
+		}
 		// % safeguard
 		//inversion = (inversion + chord.length * 100) % chord.length;
 		int[] newChord = new int[chord.length];
+
 		for (int i = 0; i < chord.length; i++) {
-			int index = (i + inversion + chord.length * 100) % chord.length;
-			newChord[index] = chord[i];
-			if (inversion > 0 && index < i) {
-				newChord[index] += 12;
-			} else if (inversion < 0 && index > i) {
-				newChord[index] -= 12;
+			newChord[i] = chord[i];
+			if (inversion > 0 && i < index) {
+				newChord[i] += 12;
+			} else if (inversion < 0 && i >= index) {
+				newChord[i] -= 12;
 			}
 		}
 		Arrays.sort(newChord);
@@ -844,7 +848,7 @@ public class MidiUtils {
 	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords,
 			long seed, int chance) {
 		Random r = new Random(seed);
-		double avg = MidiUtils.calculateAverageNote(chords);
+		double avg = calculateAverageNote(chords);
 		//LOGGER.info("AVG: " + avg);
 
 		List<int[]> squishedChords = new ArrayList<>();
@@ -864,7 +868,36 @@ public class MidiUtils {
 			Arrays.sort(c);
 			squishedChords.add(c);
 		}
-		//LOGGER.info("NEW AVG: " + MidiUtils.calculateAverageNote(squishedChords));
+		//LOGGER.info("NEW AVG: " + calculateAverageNote(squishedChords));
+		return squishedChords;
+	}
+
+	public static List<int[]> squishChordProgressionProgressively(List<int[]> chords,
+			boolean squishBigChords, long seed, int chance) {
+		Random r = new Random(seed);
+		double avg = calculateAverageNote(chords.subList(0, 1));
+		//LOGGER.info("AVG: " + avg);
+
+		List<int[]> squishedChords = new ArrayList<>();
+		for (int i = 0; i < chords.size(); i++) {
+			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
+			Arrays.sort(c);
+			if (r.nextInt(100) < chance && (c.length <= 3 || squishBigChords)) {
+				if (avg - c[0] > 6) {
+					c[0] += 12;
+					//LOGGER.info("SWAP UP: " + i);
+				}
+				if (c[c.length - 1] - avg > 6) {
+					c[c.length - 1] -= 12;
+					//LOGGER.info("SWAP DOWN: " + i);
+				}
+			}
+
+			Arrays.sort(c);
+			squishedChords.add(c);
+			avg = calculateAverageNote(squishedChords);
+		}
+		//LOGGER.info("NEW AVG: " + calculateAverageNote(squishedChords));
 		return squishedChords;
 	}
 
@@ -1075,8 +1108,7 @@ public class MidiUtils {
 		Phrase phr = new Phrase();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils.detectKeyAndMode(phr,
-				targetMode, true);
+		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true);
 		return detectionResults;
 	}
 
@@ -1104,14 +1136,14 @@ public class MidiUtils {
 		if (detectionResult.getKey() != targetMode) {
 			return null;
 			/*for (Chord c : chords) {
-				c.setNotes(MidiUtils.transposeChord(c.getNotes(),
+				c.setNotes(transposeChord(c.getNotes(),
 						detectionResult.getKey().noteAdjustScale,
 						ScaleMode.IONIAN.noteAdjustScale));
 			}*/
 		}
 		for (Chord c : chords) {
-			c.setNotes(MidiUtils.transposeChord(c.getNotes(),
-					detectionResult.getKey().noteAdjustScale, ScaleMode.IONIAN.noteAdjustScale));
+			c.setNotes(transposeChord(c.getNotes(), detectionResult.getKey().noteAdjustScale,
+					ScaleMode.IONIAN.noteAdjustScale));
 		}
 
 
@@ -1201,13 +1233,12 @@ public class MidiUtils {
 
 	public static List<String> respiceChords(String chordsString, GUIConfig gc) {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
-		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
-			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled()
-					&& MidiUtils.BANNED_DIM_AUG_LIST.contains(chordString)) {
+		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
+			String chordString = SPICE_NAMES_LIST.get(i);
+			if (!gc.isDimAugDom7thEnabled() && BANNED_DIM_AUG_LIST.contains(chordString)) {
 				continue;
 			}
-			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
+			if (!gc.isEnable9th13th() && BANNED_9_13_LIST.contains(chordString)) {
 				continue;
 			}
 			allowedSpiceChordsMiddle.add(chordString);
@@ -1215,8 +1246,7 @@ public class MidiUtils {
 
 		List<String> allowedSpiceChords = new ArrayList<>();
 		for (String s : allowedSpiceChordsMiddle) {
-			if (MidiUtils.BANNED_DIM_AUG_LIST.contains(s)
-					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
+			if (BANNED_DIM_AUG_LIST.contains(s) || BANNED_SUSSY_LIST.contains(s)) {
 				continue;
 			}
 			allowedSpiceChords.add(s);
