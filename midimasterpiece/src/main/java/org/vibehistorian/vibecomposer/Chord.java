@@ -100,9 +100,8 @@ public class Chord {
 				pitch += transpose;
 			}
 			double rhythm = (i > 0) ? 0.0 : rhythmValue;
-			double duration = getDuration();
 			Note n = new Note(pitch, rhythm, velocity);
-			n.setDuration(duration * Note.DEFAULT_DURATION_MULTIPLIER);
+			n.setDuration(getDuration() * MidiGenerator.DEFAULT_DURATION_MULTIPLIER);
 			//n.setOffset(flam * i);
 			noteList.add(n);
 		}

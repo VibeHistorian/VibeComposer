@@ -4006,7 +4006,18 @@ public class MidiGenerator implements JMC {
 		// chord strum
 		double flamming = 0.0;
 		if (gc.getChordGenSettings().isUseStrum()) {
-			flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
+
+			if (cp.getStrum() == 666) {
+				flamming = noteMultiplier * 0.6666666666666;
+			} else if (cp.getStrum() == 333) {
+				flamming = noteMultiplier * 0.3333333333333;
+			} else if (cp.getStrum() == 31) {
+				flamming = noteMultiplier * 0.03125;
+			} else if (cp.getStrum() == 62) {
+				flamming = noteMultiplier * 0.0625;
+			} else {
+				flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
+			}
 			//LOGGER.debug("Chord strum CUSTOM! " + cp.getStrum() + ", flamming: " + flamming);
 		}
 
@@ -4235,7 +4246,7 @@ public class MidiGenerator implements JMC {
 						cC.setNotes(transChordNotes);
 					}
 
-					if (durationNow + duration - DBL_ERR > progressionDurations.get(chordIndex)) {
+					if (durationNow + duration > progressionDurations.get(chordIndex) - DBL_ERR) {
 						double fillerDuration = progressionDurations.get(chordIndex) - durationNow;
 						cC.setRhythmValue(fillerDuration);
 						if (fillerDuration < FILLER_NOTE_MIN_DURATION) {
