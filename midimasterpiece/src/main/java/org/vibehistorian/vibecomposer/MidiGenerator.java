@@ -1501,8 +1501,8 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
 			n1.setPitch(n1.getPitch() + mp.getTranspose());
-			double adjDur = n1.getRhythmValue();
-			if ((durCounter + adjDur) > (currentChordDur + DBL_ERR)) {
+			//LOGGER.debug(" durCounter: " + durCounter);
+			if (durCounter > (currentChordDur - DBL_ERR)) {
 				chordCounter = (chordCounter + 1) % durations.size();
 				if (chordCounter == 0) {
 					measureCounter++;
@@ -1511,15 +1511,22 @@ public class MidiGenerator implements JMC {
 						splitChance = (int) (splitChance * 1.2);
 					}
 				}
-				durCounter = 0.0;
+				durCounter -= currentChordDur;
+				if (durCounter < 0) {
+					durCounter = 0.0;
+				}
 				currentChordDur = durations.get(chordCounter);
 				//splitGenerator.setSeed(seed + 4);
 				//pauseGenerator.setSeed(seed + 5);
 				//pauseGenerator2.setSeed(seed + 7);
 				splitNoteGenerator.setSeed(orderSeed + 8);
 				splitNoteExceptionGenerator.setSeed(orderSeed + 9);
+				LOGGER.debug(
+						"Conversion chord#: " + chordCounter + ", duration: " + currentChordDur);
 			}
 
+			double adjDur = n1.getRhythmValue();
+			//LOGGER.debug("Processing dur: " + adjDur + ", durCounter: " + durCounter);
 			int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
 			double positionInChord = durCounter / durations.get(chordCounter);
 			if (positionInChord < DBL_ERR && accentGenerator.nextInt(100) < mp.getAccents()) {
@@ -1589,7 +1596,8 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		List<Integer> firstNotePitches = fullMelodyMap.values().stream()
-				.map(e -> e.get(0).getPitch()).collect(Collectors.toList());
+				.map(e -> e.isEmpty() ? Integer.MIN_VALUE : e.get(0).getPitch())
+				.collect(Collectors.toList());
 
 		List<Integer> fillerPattern = mp.getChordSpanFill()
 				.getPatternByLength(fullMelodyMap.keySet().size(), mp.isFillFlip());
