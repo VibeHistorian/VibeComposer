@@ -6851,6 +6851,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			dpart.setOrder(dp.getPanelOrder());
+			dpart.setMuted(dp.getMuteInst());
 			dp.setFromInstPart(dpart);
 
 			//dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
