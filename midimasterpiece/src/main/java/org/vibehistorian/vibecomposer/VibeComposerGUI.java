@@ -3065,9 +3065,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanels.forEach(e -> e.setSwingPercent(swing));
 				randomArpMaxSwing.setInt(swing);
 				drumPanels.forEach(e -> {
-					if (!PUNCHY_DRUMS.contains(e.getInstrument())) {
-						e.setSwingPercent(swing);
-					}
+					e.setSwingPercent(swing);
 				});
 			}
 		});
@@ -3089,8 +3087,8 @@ public class VibeComposerGUI extends JFrame
 		globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		toggleableComponents.add(globalSwingPanel);
-		toggleableComponents.add(useDoubledPanel);
+		//toggleableComponents.add(globalSwingPanel);
+		//toggleableComponents.add(useDoubledPanel);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -5063,7 +5061,9 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void openApplyCustomSectionPopup() {
-		new ApplyCustomSectionPopup();
+		if (arrSection.getSelectedIndex() > 0) {
+			new ApplyCustomSectionPopup();
+		}
 	}
 
 	private void openDebugConsole() {
@@ -5325,6 +5325,7 @@ public class VibeComposerGUI extends JFrame
 				return;
 			}
 			switchMidiButtons(false);
+			stopMidi();
 			//sizeRespectingPack();
 			repaint();
 			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
