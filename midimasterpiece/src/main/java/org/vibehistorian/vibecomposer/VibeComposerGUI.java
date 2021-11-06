@@ -201,6 +201,7 @@ public class VibeComposerGUI extends JFrame
 	private static final Logger LOGGER = LoggerFactory.getLogger(VibeComposerGUI.class);
 
 	private static final String MIDIS_FOLDER = "midis";
+	private static final String MIDI_HISTORY_FOLDER = MIDIS_FOLDER + "/midi_history";
 	private static final String PRESET_FOLDER = "presets";
 	private static final String SOUNDBANK_FOLDER = ".";
 	private static final String EXPORT_FOLDER = "exports";
@@ -2384,8 +2385,15 @@ public class VibeComposerGUI extends JFrame
 				if (!GLOBAL.equals(arrSection.getVal())) {
 					Section sec = actualArrangement.getSections()
 							.get(arrSection.getSelectedIndex() - 1);
-					sec.resetCustomizedParts();
-					resetArrSectionInBackground();
+					if (sec.hasCustomizedParts()) {
+						sec.resetCustomizedParts();
+						setActualModel(actualArrangement.convertToActualTableModel(), false);
+						CheckButton cb = arrSection.getButtons().get(arrSection.getSelectedIndex());
+						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
+						cb.repaint();
+						arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(),
+								true);
+					}
 				}
 			}
 
@@ -2399,6 +2407,14 @@ public class VibeComposerGUI extends JFrame
 			public void actionPerformed(ActionEvent e) {
 				actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
 				resetArrSectionInBackground();
+				SwingUtilities.invokeLater(new Runnable() {
+
+					@Override
+					public void run() {
+						arrSection.repaint();
+					}
+				});
+
 			}
 
 		});
@@ -2814,7 +2830,7 @@ public class VibeComposerGUI extends JFrame
 
 			// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
 
-			if (value.equalsIgnoreCase("")) {
+			if (value.isEmpty() || value.equalsIgnoreCase("*")) {
 				comp.setBackground(panelColorLow.darker());
 			} else {
 				int count = (actual) ? (StringUtils.countMatches(value, ",") + 1)
@@ -4317,6 +4333,8 @@ public class VibeComposerGUI extends JFrame
 
 		File makeDir = new File(MIDIS_FOLDER);
 		makeDir.mkdir();
+		makeDir = new File(MIDI_HISTORY_FOLDER);
+		makeDir.mkdir();
 
 		String seedData = "" + masterpieceSeed;
 		if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
@@ -4324,7 +4342,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		String fileName = "seed" + seedData;
-		String relPath = MIDIS_FOLDER + "/" + fileName + ".mid";
+		String relPath = MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
 
 		// unapply S/M, generate, reapply S/M with new track numbering
 		unapplySolosMutes(true);
@@ -4680,14 +4698,15 @@ public class VibeComposerGUI extends JFrame
 			int measureWidth = sliderMeasureWidth();
 			slider.setMajorTickSpacing(measureWidth);
 			slider.setMinorTickSpacing(beatFromBpm(0));
-			slider.setTickStart(delayed());
+			int delayed = delayed();
+			slider.setTickStart(delayed);
 			Dictionary<Integer, JLabel> table = new Hashtable<>();
 
 			double fullMeasureNoteDuration = MidiGenerator.GENERATED_MEASURE_LENGTH;
 			sliderMeasureStartTimes = new ArrayList<>();
 			sliderBeatStartTimes = new ArrayList<>();
 
-			int current = delayed();
+			int current = delayed;
 			int sectIndex = 0;
 			int realIndex = 1;
 			Section prevSec = null;
@@ -4788,7 +4807,7 @@ public class VibeComposerGUI extends JFrame
 
 			if (loopBeat.isSelected()) {
 				resetPauseInfo();
-				int startPos = delayed();
+				int startPos = delayed;
 				if (startPos < slider.getValue()) {
 					startPos = slider.getValue();
 				}
@@ -4810,7 +4829,7 @@ public class VibeComposerGUI extends JFrame
 						midiNavigate(startPos);
 					} else {
 						resetPauseInfo();
-						int startPos = delayed() / 2;
+						int startPos = delayed / 2;
 						if (startPos < slider.getValue()) {
 							startPos = slider.getValue();
 						}
@@ -5634,7 +5653,7 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			String finalFilePath = currentMidi.getParent() + saveDirectory + fdate + name
+			String finalFilePath = MIDIS_FOLDER + saveDirectory + fdate + name
 					+ soundbankLoadedString;
 
 			File savedMidi = new File(finalFilePath);
