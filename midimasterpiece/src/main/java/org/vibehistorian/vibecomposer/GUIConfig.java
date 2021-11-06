@@ -13,8 +13,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+along with this program; if not,
+see <https://www.gnu.org/licenses/>.
 */
 
 package org.vibehistorian.vibecomposer;
@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -41,6 +42,8 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 @XmlRootElement(name = "GUIConfig")
 @XmlType(propOrder = {})
 public class GUIConfig {
+
+	private PhraseNotes melodyNotes = null;
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
@@ -75,10 +78,12 @@ public class GUIConfig {
 	private int melodyTonicNoteTarget = 25;
 	private boolean melodyEmphasizeKey = true;
 	private int melodyModeNoteTarget = 15;
-	private int melodyReplaceAvoidNotes = 2;
+	private int melodyReplaceAvoidNotes = 1;
+	private int melodyMaxDirChanges = 2;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
+	private boolean melodyFillPausesPerChord = false;
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
@@ -91,6 +96,7 @@ public class GUIConfig {
 	private boolean enable9th13th = false;
 	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
+	private boolean squishProgressively = false;
 	private int spiceParallelChance = 5;
 
 	private boolean spiceForceScale = true;
@@ -100,7 +106,7 @@ public class GUIConfig {
 	private boolean useChordFormula = false;
 	private boolean customChordsEnabled = true;
 	private String customChords = "?";
-	private String customChordDurations = "2,2,2,2";
+	private String customChordDurations = "4,4,4,4";
 
 	// arp gen
 	private boolean useOctaveAdjustments = false;
@@ -111,18 +117,17 @@ public class GUIConfig {
 	private String drumCustomMappingNumbers = StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI,
 			",");
 
-	// individual parts
-
-	private BassPart bassPart = new BassPart();
-
 	// tabbed parts
 	private List<MelodyPart> melodyParts = new ArrayList<>();
+	private List<BassPart> bassParts = new ArrayList<>();
 	private List<ChordPart> chordParts = new ArrayList<>();
 	private List<DrumPart> drumParts = new ArrayList<>();
 	private List<ArpPart> arpParts = new ArrayList<>();
-	private boolean chordsEnable = false;
+	private boolean melodyEnable = true;
+	private boolean bassEnable = true;
+	private boolean chordsEnable = true;
 	private boolean arpsEnable = true;
-	private boolean drumsEnable = false;
+	private boolean drumsEnable = true;
 	private ChordGenSettings chordGenSettings = new ChordGenSettings();
 	private DrumGenSettings drumGenSettings = new DrumGenSettings();
 	private ArpGenSettings arpGenSettings = new ArpGenSettings();
@@ -354,12 +359,12 @@ public class GUIConfig {
 		this.melodyParts = melodyPart;
 	}
 
-	public BassPart getBassPart() {
-		return bassPart;
+	public List<BassPart> getBassParts() {
+		return bassParts;
 	}
 
-	public void setBassPart(BassPart bassPart) {
-		this.bassPart = bassPart;
+	public void setBassParts(List<BassPart> bassParts) {
+		this.bassParts = bassParts;
 	}
 
 	public Arrangement getArrangement() {
@@ -640,6 +645,54 @@ public class GUIConfig {
 
 	public void setMelodyPatternEffect(int melodyPatternEffect) {
 		this.melodyPatternEffect = melodyPatternEffect;
+	}
+
+	public boolean isMelodyFillPausesPerChord() {
+		return melodyFillPausesPerChord;
+	}
+
+	public void setMelodyFillPausesPerChord(boolean melodyFillPausesPerChord) {
+		this.melodyFillPausesPerChord = melodyFillPausesPerChord;
+	}
+
+	public int getMelodyMaxDirChanges() {
+		return melodyMaxDirChanges;
+	}
+
+	public void setMelodyMaxDirChanges(int melodyMaxDirChanges) {
+		this.melodyMaxDirChanges = melodyMaxDirChanges;
+	}
+
+	public PhraseNotes getMelodyNotes() {
+		return melodyNotes;
+	}
+
+	public void setMelodyNotes(PhraseNotes melodyNotes) {
+		this.melodyNotes = melodyNotes;
+	}
+
+	public boolean isMelodyEnable() {
+		return melodyEnable;
+	}
+
+	public void setMelodyEnable(boolean melodyEnable) {
+		this.melodyEnable = melodyEnable;
+	}
+
+	public boolean isBassEnable() {
+		return bassEnable;
+	}
+
+	public void setBassEnable(boolean bassEnable) {
+		this.bassEnable = bassEnable;
+	}
+
+	public boolean isSquishProgressively() {
+		return squishProgressively;
+	}
+
+	public void setSquishProgressively(boolean squishProgressively) {
+		this.squishProgressively = squishProgressively;
 	}
 
 }

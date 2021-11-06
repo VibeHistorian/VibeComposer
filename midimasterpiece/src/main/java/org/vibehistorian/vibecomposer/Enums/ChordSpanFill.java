@@ -14,11 +14,15 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 @XmlEnum
 public enum ChordSpanFill {
 	ALL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }), ODD(new int[] { 0, 1, 0, 1, 0, 1, 0, 1 }),
-	EVEN(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }), FST(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }),
-	SCND(new int[] { 0, 1, 0, 0, 0, 1, 0, 0 }), THRD(new int[] { 0, 0, 1, 0, 0, 0, 1, 0 }),
-	FRTH(new int[] { 0, 0, 0, 1, 0, 0, 0, 1 });
+	EVEN(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }), F1(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }),
+	F2(new int[] { 0, 1, 0, 0, 0, 1, 0, 0 }), F3(new int[] { 0, 0, 1, 0, 0, 0, 1, 0 }),
+	F4(new int[] { 0, 0, 0, 1, 0, 0, 0, 1 }), F12(new int[] { 1, 1, 0, 0, 1, 1, 0, 0 }),
+	F23(new int[] { 0, 1, 1, 0, 0, 1, 1, 0 }), F34(new int[] { 0, 0, 1, 1, 0, 0, 1, 1 }),
+	HALF1(new int[] { 1, 1, 1, 1, 0, 0, 0, 0 }), HALF2(new int[] { 0, 0, 0, 0, 1, 1, 1, 1 });
 
-	private static final int[] weights = new int[] { 60, 72, 84, 86, 88, 90, 100 };
+	// F23, HALF1 - not generated automatically
+	private static final int[] weights = new int[] { 60, 72, 84, 86, 88, 90, 92, 95, 95, 98, 98,
+			100 };
 	private int[] chordPattern;
 
 	private ChordSpanFill(int[] pattern) {
@@ -32,9 +36,29 @@ public enum ChordSpanFill {
 	public List<Integer> getPatternByLength(int length) {
 		List<Integer> result = new ArrayList<>();
 
-		while (result.size() < length) {
-			result.addAll(Arrays.stream(chordPattern).boxed().collect(Collectors.toList()));
+		if (this == HALF1) {
+			for (int i = 0; i < length / 2; i++) {
+				result.add(1);
+			}
+
+			for (int i = length / 2; i < length; i++) {
+				result.add(0);
+			}
+		} else if (this == HALF2) {
+			for (int i = 0; i < length / 2; i++) {
+				result.add(0);
+			}
+
+			for (int i = length / 2; i < length; i++) {
+				result.add(1);
+			}
+		} else {
+			while (result.size() < length) {
+				result.addAll(Arrays.stream(chordPattern).boxed().collect(Collectors.toList()));
+			}
 		}
+
+
 		result = result.subList(0, length);
 		return result;
 	}
@@ -49,11 +73,11 @@ public enum ChordSpanFill {
 		return result;
 	}
 
-	public int[] getChordPattern() {
+	/*public int[] getChordPattern() {
 		return chordPattern;
 	}
-
+	
 	public void setChordPattern(int[] chordPattern) {
 		this.chordPattern = chordPattern;
-	}
+	}*/
 }

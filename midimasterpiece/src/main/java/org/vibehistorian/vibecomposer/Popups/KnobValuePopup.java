@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.JKnob;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
@@ -14,6 +15,7 @@ public class KnobValuePopup extends CloseablePopup {
 	private NumPanel numPanel = null;
 	private boolean stretchAfterCustomInput = false;
 	private Integer customInput = null;
+	private boolean regenerating = true;
 
 	public KnobValuePopup(JKnob knob, boolean stretch, boolean allowValuesOutsideRange) {
 		super("Knob Value Setting", 0);
@@ -23,6 +25,7 @@ public class KnobValuePopup extends CloseablePopup {
 		numPanel = new NumPanel("Knob", knob.getValue(), knob.getMin(), knob.getMax());
 		numPanel.getSlider().setVisible(false);
 		numPanel.setAllowValuesOutsideRange(allowValuesOutsideRange);
+		numPanel.setParentPopup(this);
 		numPanel.getTextfield().addKeyListener(new KeyListener() {
 
 			@Override
@@ -51,6 +54,14 @@ public class KnobValuePopup extends CloseablePopup {
 		frame.pack();
 		frame.setVisible(true);
 
+	}
+
+	@Override
+	public void close() {
+		if (VibeComposerGUI.canRegenerateOnChange() && regenerating) {
+			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+		}
+		super.close();
 	}
 
 	protected void addFrameWindowOperation() {
@@ -88,6 +99,7 @@ public class KnobValuePopup extends CloseablePopup {
 
 				}
 
+
 			}
 
 			@Override
@@ -122,5 +134,13 @@ public class KnobValuePopup extends CloseablePopup {
 
 		});
 
+	}
+
+	public boolean isRegenerating() {
+		return regenerating;
+	}
+
+	public void setRegenerating(boolean regenerating) {
+		this.regenerating = regenerating;
 	}
 }

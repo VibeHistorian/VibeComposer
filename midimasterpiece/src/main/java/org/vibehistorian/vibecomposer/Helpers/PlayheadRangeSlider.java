@@ -10,5 +10,24 @@ public class PlayheadRangeSlider extends RangeSlider {
 	public void setUpperDragging(boolean upperDragging) {
 		super.setUpperDragging(upperDragging);
 		VibeComposerGUI.isDragging = upperDragging;
+		if (VibeComposerGUI.instrumentTabPane.getTabCount() < 8
+				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
+			VibeComposerGUI.scorePanel.update();
+		}
+
+	}
+
+	public void setUpperValueRaw(int value) {
+		super.setUpperValue(value);
+	}
+
+	@Override
+	public void setUpperValue(int value) {
+		super.setUpperValue(value);
+		if ((VibeComposerGUI.instrumentTabPane.getTabCount() < 8
+				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7)
+				&& VibeComposerGUI.highlightScoreNotes.isSelected()) {
+			VibeComposerGUI.scorePanel.update();
+		}
 	}
 }

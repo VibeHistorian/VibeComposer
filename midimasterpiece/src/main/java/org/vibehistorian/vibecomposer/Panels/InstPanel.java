@@ -13,8 +13,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+along with this program; if not,
+see <https://www.gnu.org/licenses/>.
 */
 
 package org.vibehistorian.vibecomposer.Panels;
@@ -25,16 +25,19 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.InstComboBox;
@@ -47,6 +50,7 @@ import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
 import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -57,7 +61,7 @@ public abstract class InstPanel extends JPanel {
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
-	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, 32);
+	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, VisualPatternPanel.MAX_HITS);
 	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
 	protected ScrollComboBox<ChordSpanFill> chordSpanFill = new ScrollComboBox<>();
 	protected CheckButton fillFlip = new CheckButton("~", false);
@@ -96,7 +100,8 @@ public abstract class InstPanel extends JPanel {
 	protected CheckButton lockInst = new CheckButton("Lock", false);
 	protected CheckButton muteInst = new CheckButton("Excl.", false);
 
-	protected JSlider volSlider = new JSlider();
+	protected VeloRect volSlider = new VeloRect(0, 100, 100);
+	protected VeloRect panSlider = new VeloRect(0, 100, 50);
 
 	protected ScrollComboBox<Integer> midiChannel = new ScrollComboBox<>();
 
@@ -115,6 +120,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void initDefaults(ActionListener l) {
+		setOpaque(false);
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
 		for (ChordSpanFill fill : ChordSpanFill.values()) {
@@ -123,15 +129,16 @@ public abstract class InstPanel extends JPanel {
 		panelOrder.setPreferredSize(new Dimension(20, 30));
 
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		volSlider.setMaximum(100);
-		volSlider.setValue(100);
-		volSlider.setOrientation(JSlider.VERTICAL);
-		volSlider.setPreferredSize(new Dimension(30, 40));
-		volSlider.setPaintTicks(true);
+		//volSlider.setMaximum(100);
+		//volSlider.setValue(100);
+		//volSlider.setOrientation(JSlider.VERTICAL);
+		volSlider.setPreferredSize(new Dimension(15, 35));
+		panSlider.setPreferredSize(new Dimension(15, 30));
+		//volSlider.setPaintTicks(true);
 
 		minMaxVelSlider.setName("Velocity range");
 		setVelocityMax(90);
-		setVelocityMin(63);
+		setVelocityMin(64);
 
 		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		stretchPanel.setMaximumSize(new Dimension(3000, 50));
@@ -144,6 +151,31 @@ public abstract class InstPanel extends JPanel {
 		chordSpanFillPanel.add(chordSpanFill);
 		chordSpanFill.setOpaque(false);
 		chordSpanFillPanel.add(fillFlip);
+
+		lockInst.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isMiddleMouseButton(evt)) {
+					if (evt.isControlDown()) {
+						for (Component c : getComponents()) {
+							if (c instanceof ScrollComboBox) {
+								((ScrollComboBox) c).setEnabled(true);
+							} else if (c instanceof KnobPanel) {
+								((KnobPanel) c).setBlockInput(false);
+							} else if (c instanceof JPanel) {
+								for (Component c2 : ((JPanel) c).getComponents()) {
+									if (c2 instanceof ScrollComboBox) {
+										((ScrollComboBox) c2).setEnabled(true);
+									} else if (c instanceof KnobPanel) {
+										((KnobPanel) c2).setBlockInput(false);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		});
 
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);
@@ -162,12 +194,12 @@ public abstract class InstPanel extends JPanel {
 		chordSpan.getKnob().setTickSpacing(50);
 		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
 
-		toggleableComponents.add(stretchPanel);
+		//toggleableComponents.add(stretchPanel);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
 		toggleableComponents.add(minMaxVelSlider);
-		toggleableComponents.add(noteLengthMultiplier);
-		toggleableComponents.add(patternShift);
+		//toggleableComponents.add(noteLengthMultiplier);
+		//toggleableComponents.add(patternShift);
 		toggleableComponents.add(patternSeed);
 		toggleableComponents.add(patternSeedLabel);
 		toggleableComponents.add(fillFlip);
@@ -205,6 +237,7 @@ public abstract class InstPanel extends JPanel {
 		stretchPanel.addBackground(OMNI.alphen(Color.PINK, 30));
 		chordSpanFillPanel.addBackground(OMNI.alphen(Color.green.brighter(), 40));
 		accents.addBackground(OMNI.alphen(Color.cyan, 40));
+		noteLengthMultiplier.addBackground(OMNI.alphen(new Color(100, 170, 240), 50));
 	}
 
 	public void toggleComponentTexts(boolean b) {
@@ -221,6 +254,7 @@ public abstract class InstPanel extends JPanel {
 		patternShift.setShowTextInKnob(b);
 		chordNotesStretch.setShowTextInKnob(b);
 		accents.setShowTextInKnob(b);
+		noteLengthMultiplier.setShowTextInKnob(b);
 
 	}
 
@@ -260,15 +294,22 @@ public abstract class InstPanel extends JPanel {
 		setPattern(part.getPattern());
 		setPatternFlip(part.isPatternFlip());
 
-		if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
-				&& part.getCustomPattern().size() == 32 && comboPanel != null) {
-			comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
+
+		if (comboPanel != null && pattern.isEnabled()) {
+			comboPanel.setVelocities(part.getCustomVelocities());
+			if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
+					&& part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS) {
+				comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
+			}
 		}
+
+
 		setPatternShift(part.getPatternShift());
 
 		setMidiChannel(part.getMidiChannel());
 
 		volSlider.setValue(part.getSliderVolume());
+		panSlider.setValue(part.getSliderPan());
 
 		setMuteInst(part.isMuted());
 	}
@@ -320,7 +361,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void setPatternSeed(int patternSeed) {
-		this.patternSeed.setText(String.valueOf(patternSeed));
+		this.patternSeed.setValue(patternSeed);
 	}
 
 	public RhythmPattern getPattern() {
@@ -455,11 +496,11 @@ public abstract class InstPanel extends JPanel {
 		this.minMaxVelSlider.setUpperValue(val);
 	}
 
-	public JSlider getVolSlider() {
+	public VeloRect getVolSlider() {
 		return volSlider;
 	}
 
-	public void setVolSlider(JSlider volSlider) {
+	public void setVolSlider(VeloRect volSlider) {
 		this.volSlider = volSlider;
 	}
 
@@ -554,12 +595,8 @@ public abstract class InstPanel extends JPanel {
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
 	public VisualPatternPanel makeVisualPatternPanel() {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, null, this);
-	}
-
-	public VisualPatternPanel makeVisualPatternPanel(JButton doubler) {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, doubler,
-				this);
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
+				chordSpanFill, this);
 	}
 
 	public VisualPatternPanel getComboPanel() {
@@ -595,5 +632,36 @@ public abstract class InstPanel extends JPanel {
 		getSoloMuter().setEnabled(b);
 		muteInst.setEnabled(b);
 		volSlider.setEnabled(b);
+	}
+
+	public VeloRect getPanSlider() {
+		return panSlider;
+	}
+
+	public void setPanSlider(VeloRect panSlider) {
+		this.panSlider = panSlider;
+	}
+
+	public void setPanByOrder(int panelLimit) {
+		setPanByOrder(getPanelOrder(), panelLimit);
+	}
+
+	public void setPanByOrder(int order, int panelLimit) {
+		order--;
+		getPanSlider().setValue(
+				50 + (order % 2 == 0 ? 1 : -1) * ((order - 1) % panelLimit) * (49 / panelLimit));
+	}
+
+	public void applyPauseChance(Random randGen) {
+		if (getPauseChance() > 0 && getPattern() != RhythmPattern.MELODY1
+				&& VibeComposerGUI.patternApplyPausesWhenGenerating.isSelected()) {
+			for (int j = 0; j < getHitsPerPattern(); j++) {
+				if (randGen.nextInt(100) < getPauseChance() && getComboPanel().getPattern(j) > 0) {
+					getComboPanel().checkPattern(j, 0);
+					//LOGGER.debug("Pause chance applied");
+				}
+			}
+			setPauseChance(0);
+		}
 	}
 }

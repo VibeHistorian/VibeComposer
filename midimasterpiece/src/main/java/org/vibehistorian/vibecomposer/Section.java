@@ -13,8 +13,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+along with this program; if not,
+see <https://www.gnu.org/licenses/>.
 */
 
 package org.vibehistorian.vibecomposer;
@@ -63,7 +63,7 @@ public class Section {
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Pause Squish", "Key Change", "TransitionFast", "TransitionSlow",
+			"Swap Melody", "Melody Max Speed", "Key Change", "TransitionFast", "TransitionSlow",
 			"TransitionCut" };
 	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0, 1.5,
 			1.75, 0.7 };
@@ -88,7 +88,7 @@ public class Section {
 
 	// data (transient)
 	private List<Phrase> melodies;
-	private Phrase bass;
+	private List<Phrase> basses;
 	private List<Phrase> chords;
 	private List<Phrase> arps;
 	private List<Phrase> drums;
@@ -97,7 +97,7 @@ public class Section {
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
 	private String customChords = "?";
-	private String customDurations = "2,2,2,2";
+	private String customDurations = "4,4,4,4";
 
 	// customized parts
 	private List<BassPart> bassParts = null;
@@ -128,7 +128,7 @@ public class Section {
 	// map integer(what), map integer(part order), list integer(section variation)
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
-	private List<Boolean> riskyVariations = null;
+	private List<Integer> riskyVariations = null;
 
 	public Section() {
 
@@ -216,13 +216,13 @@ public class Section {
 		this.melodies = melodies;
 	}
 
-	public Phrase getBass() {
-		return bass;
+	public List<Phrase> getBasses() {
+		return basses;
 	}
 
 	@XmlTransient
-	public void setBass(Phrase bass) {
-		this.bass = bass;
+	public void setBasses(List<Phrase> basses) {
+		this.basses = basses;
 	}
 
 	public List<Phrase> getChords() {
@@ -374,6 +374,17 @@ public class Section {
 		}*/
 	}
 
+	public void resetAllPresence(int part) {
+		initPartMapIfNull();
+		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
+			partPresenceVariationMap.get(part)[i][1] = Boolean.FALSE;
+		}
+
+		/*for (int i = 2; i < variationDescriptions[part].length; i++) {
+			partPresenceVariationMap.get(part)[partOrder][i] = Boolean.FALSE;
+		}*/
+	}
+
 	public boolean hasVariation(int part) {
 		for (int i = 0; i < VibeComposerGUI.getInstList(part).size(); i++) {
 			if (!getVariation(part, i).isEmpty()) {
@@ -414,34 +425,67 @@ public class Section {
 	public void generatePresences(Random presRand) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i);
+			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap());
 		}
 
 	}
 
-	public void generatePresences(Random presRand, int part) {
+	public void generatePresences(Random presRand, int part,
+			Map<Integer, Object[][]> inclusionMap) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
 		System.out.println("Chance: " + chance);
-		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(part);
+		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
+		panels.removeIf(e -> e.getMuteInst());
+		if (inclusionMap != null) {
+			panels.removeIf(e -> {
+				int absOrder = MidiGenerator.getAbsoluteOrder(part, e.getPanelOrder());
+				//System.out.println("Abs order: " + absOrder);
+				//System.out.println("Offset+2: " + (getTypeMelodyOffset() + 2));
+				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
+						.equals(inclusionMap.get(part)[absOrder][getTypeMelodyOffset() + 2])) {
+					//System.out.println("TRUE");
+					return true;
+				}
+				return false;
+			});
+		}
+		//System.out.println("Panels size: " + panels.size());
+		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
-				setPresence(part, j);
+				setPresence(part,
+						MidiGenerator.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
+				added++;
 			}
+		}
+		if (added == 0 && panels.size() > 0) {
+			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
+			setPresence(part, MidiGenerator.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
 
 	}
 
 	public void generateVariations(Random presRand, int part) {
 		initPartMapIfNull();
-		Set<Integer> presence = getPresence(part);
+		List<Integer> presence = new ArrayList<>(getPresence(part));
+		if (presence.isEmpty()) {
+			return;
+		}
 		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		int added = 0;
 		for (Integer i : presence) {
 			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 				if (presRand.nextInt(100) < chance) {
 					addVariation(part, i - 1, Collections.singletonList(j - 2));
+					added++;
 				}
 			}
+		}
+		if (added == 0) {
+			int pres = presence.get(presRand.nextInt(presence.size()));
+			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
+			addVariation(part, pres - 1, Collections.singletonList(randVar));
 		}
 
 
@@ -583,18 +627,21 @@ public class Section {
 	}
 
 	@XmlList
-	public List<Boolean> getRiskyVariations() {
+	public List<Integer> getRiskyVariations() {
 		if (riskyVariations != null) {
 			while (riskyVariations.size() < riskyVariationNames.length) {
-				riskyVariations.add(Boolean.FALSE);
+				riskyVariations.add(0);
 			}
 		}
 		return riskyVariations;
 	}
 
+	public boolean isRiskyVar(int num) {
+		return getRiskyVariations().get(num) > 0;
+	}
+
 	public boolean isTransition() {
-		return getRiskyVariations() != null && (getRiskyVariations().get(5)
-				|| getRiskyVariations().get(6) || getRiskyVariations().get(7));
+		return getRiskyVariations() != null && (isRiskyVar(5) || isRiskyVar(6) || isRiskyVar(7));
 	}
 
 	public int getTransitionType() {
@@ -602,18 +649,18 @@ public class Section {
 			return -1;
 		}
 
-		return getRiskyVariations().get(7) ? 7 : (getRiskyVariations().get(6) ? 6 : 5);
+		return isRiskyVar(7) ? 7 : (isRiskyVar(6) ? 6 : 5);
 	}
 
-	public void setRiskyVariations(List<Boolean> riskyVariations) {
+	public void setRiskyVariations(List<Integer> riskyVariations) {
 		this.riskyVariations = riskyVariations;
 	}
 
-	public void setRiskyVariation(int order, Boolean value) {
+	public void setRiskyVariation(int order, Integer value) {
 		if (riskyVariations == null) {
-			List<Boolean> riskyVars = new ArrayList<>();
+			List<Integer> riskyVars = new ArrayList<>();
 			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-				riskyVars.add(Boolean.FALSE);
+				riskyVars.add(0);
 			}
 			setRiskyVariations(riskyVars);
 		}

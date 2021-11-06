@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -24,7 +25,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 
 /**
@@ -74,6 +74,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private boolean showTextInKnob = false;
 	private String shownText = "";
+	private boolean regenerating = true;
+
+	public static boolean fine = true;
+	public static int fineStart = 50;
 
 
 	/**
@@ -155,7 +159,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 					RenderingHints.VALUE_ANTIALIAS_ON);
 
 			// Draw the knob.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
+			Color bgColorOval = (VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob;
+			g2d.setColor(!isEnabled() ? bgColorOval.darker() : bgColorOval);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
 			// Find the center of the spot.
@@ -315,6 +320,9 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	}
 
 	public void setValue(int val) {
+		if (!isEnabled()) {
+			return;
+		}
 		curr = val;
 		setAngle();
 		repaint();
@@ -412,12 +420,17 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
 			recalc(e);
+			fine = true;
+			fineStart = curr;
 		} else if (SwingUtilities.isRightMouseButton(e)) {
-			curr = defaultValue;
-			setAngle();
-			repaint();
+			setValue(defaultValue);
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
-			CloseablePopup popup = new KnobValuePopup(this, stretchAfterCustomInput, true);
+			if (e.isControlDown()) {
+				setEnabled(!isEnabled());
+			} else if (isEnabled()) {
+				KnobValuePopup kvp = new KnobValuePopup(this, stretchAfterCustomInput, true);
+				kvp.setRegenerating(regenerating);
+			}
 		}
 
 	}
@@ -432,6 +445,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
+		if (isEnabled() && regenerating && !SwingUtilities.isMiddleMouseButton(e)
+				&& VibeComposerGUI.canRegenerateOnChange()) {
+			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+		}
+
+		fine = false;
 		//System.out.println("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
 	}
 
@@ -464,7 +483,29 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 	}
 
+	public void updateValueFromScreen() {
+		if (!isEnabled()) {
+			return;
+		}
+		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
+		SwingUtilities.convertPointFromScreen(xy, JKnob.this);
+		int newVal = max - (max * xy.y / getHeight());
+		if (fine) {
+			newVal = (fineStart * 9 + newVal) / 10;
+		}
+		setValue(OMNI.clamp(newVal, min, max));
+		repaint();
+	}
+
 	private void recalc(MouseEvent e) {
+		if (!isEnabled()) {
+			return;
+		}
+		/*if (fine) {
+			updateValueFromScreen();
+			return;
+		}*/
+
 		int mx = e.getX();
 		int my = e.getY();
 
@@ -527,6 +568,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			curr = max;
 		}
 		setValue(curr);
+	}
+
+	public void setMaxRaw(int max) {
+		this.max = max;
+		diff = max - min;
 	}
 
 	public int getCurr() {
@@ -592,5 +638,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setAllowValuesOutsideRange(boolean b) {
 		allowValuesOutsideRange = true;
+	}
+
+	public boolean isRegenerating() {
+		return regenerating;
+	}
+
+	public void setRegenerating(boolean regenerating) {
+		this.regenerating = regenerating;
 	}
 }

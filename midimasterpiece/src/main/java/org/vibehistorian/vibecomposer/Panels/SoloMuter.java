@@ -9,9 +9,11 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
 
 public class SoloMuter extends JPanel {
 
@@ -124,6 +126,16 @@ public class SoloMuter extends JPanel {
 			} else {
 				VibeComposerGUI.needToRecalculateSoloMutersAfterSequenceGenerated = true;
 			}
+			if (ShowPanelBig.soloMuterHighlight != null
+					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+				SwingUtilities.invokeLater(new Runnable() {
+
+					@Override
+					public void run() {
+						VibeComposerGUI.scorePanel.setScore();
+					}
+				});
+			}
 		}
 	}
 
@@ -174,6 +186,17 @@ public class SoloMuter extends JPanel {
 				VibeComposerGUI.needToRecalculateSoloMuters = true;
 			} else {
 				VibeComposerGUI.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+
+			}
+			if (ShowPanelBig.soloMuterHighlight != null
+					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+				SwingUtilities.invokeLater(new Runnable() {
+
+					@Override
+					public void run() {
+						VibeComposerGUI.scorePanel.setScore();
+					}
+				});
 			}
 		}
 	}

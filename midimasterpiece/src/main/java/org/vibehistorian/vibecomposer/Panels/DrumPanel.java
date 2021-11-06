@@ -44,8 +44,8 @@ public class DrumPanel extends InstPanel {
 		// pattern business
 		this.add(hitsPerPattern);
 
-		hitsPerPattern.getKnob()
-				.setTickThresholds(Arrays.asList(new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32 }));
+		hitsPerPattern.getKnob().setTickThresholds(Arrays.asList(
+				new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32, VisualPatternPanel.MAX_HITS }));
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
 		pattern.setScrollEnabled(false);
@@ -53,13 +53,19 @@ public class DrumPanel extends InstPanel {
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
 		doublerButt.setMargin(new Insets(0, 0, 0, 0));
-		comboPanel = makeVisualPatternPanel(doublerButt);
+		JButton veloTogglerButt = new JButton("V");
+		veloTogglerButt.setPreferredSize(new Dimension(25, 30));
+		veloTogglerButt.setMargin(new Insets(0, 0, 0, 0));
+		comboPanel = makeVisualPatternPanel();
+		comboPanel.linkDoubler(doublerButt);
+		comboPanel.linkVelocityToggle(veloTogglerButt);
 		comboPanel.setBigModeAllowed(true);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
 
 		comboPanelWrapper.add(doublerButt);
 		comboPanelWrapper.add(comboPanel);
+		comboPanelWrapper.add(veloTogglerButt);
 
 		this.add(comboPanelWrapper);
 		this.add(patternFlip);
@@ -104,7 +110,6 @@ public class DrumPanel extends InstPanel {
 		part.setFromPanel(this, lastRandomSeed);
 
 		part.setVelocityPattern(getIsVelocityPattern());
-		part.setSwingPercent(getSwingPercent());
 
 		part.setOrder(getPanelOrder());
 		return part;
@@ -115,7 +120,6 @@ public class DrumPanel extends InstPanel {
 
 		setDefaultsFromInstPart(part);
 
-		setSwingPercent(part.getSwingPercent());
 		setIsVelocityPattern(part.isVelocityPattern());
 
 		setPanelOrder(part.getOrder());

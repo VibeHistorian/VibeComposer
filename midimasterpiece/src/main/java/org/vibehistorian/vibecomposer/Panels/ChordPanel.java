@@ -1,11 +1,14 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
@@ -25,9 +28,9 @@ public class ChordPanel extends InstPanel {
 	private static final long serialVersionUID = 7721347698114633901L;
 
 	private KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
-	private KnobPanel transitionSplit = new KnobPanel("Split<br>(ms)", 625, 0, 1000);
+	private KnobPanel transitionSplit = new KnobPanel("Split<br>%%", 625, 0, 1000);
 
-	private KnobPanel strum = new KnobPanel("Strum<br>(ms)", 0, 0, 1000);
+	private KnobPanel strum = new KnobPanel("Strum<br>/1000", 0, 0, 2000);
 
 	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
@@ -45,8 +48,9 @@ public class ChordPanel extends InstPanel {
 		midiChannel.setVal(11);
 
 		initDefaults(l);
-		volSlider.setValue(60);
+		volSlider.setDefaultValue(30);
 		this.add(volSlider);
+		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
@@ -62,27 +66,32 @@ public class ChordPanel extends InstPanel {
 
 		this.add(hitsPerPattern);
 		this.add(pattern);
+		JButton veloTogglerButt = new JButton("V");
+		veloTogglerButt.setPreferredSize(new Dimension(25, 30));
+		veloTogglerButt.setMargin(new Insets(0, 0, 0, 0));
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);
+		comboPanel.linkVelocityToggle(veloTogglerButt);
 		this.add(comboPanel);
+		this.add(veloTogglerButt);
 		this.add(patternFlip);
 		this.add(patternShift);
+		this.add(chordSpan);
 
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
 		strum.getKnob().setTickSpacing(50);
 
 		this.add(stretchPanel);
+		this.add(noteLengthMultiplier);
+		this.add(patternJoinMode);
+
+		this.add(minMaxVelSlider);
 
 		this.add(transitionChance);
 		this.add(transitionSplit);
 		this.add(delay);
 
-		this.add(minMaxVelSlider);
-		this.add(noteLengthMultiplier);
-
-
-		this.add(patternJoinMode);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -91,7 +100,8 @@ public class ChordPanel extends InstPanel {
 		this.add(new JLabel("Midi ch.:"));
 		this.add(midiChannel);
 
-
+		toggleableComponents.remove(patternFlip);
+		toggleableComponents.remove(patternShift);
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);

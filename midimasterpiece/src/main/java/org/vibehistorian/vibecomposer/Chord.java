@@ -15,7 +15,7 @@ public class Chord {
 	private double rhythmValue = 2;
 	private double durationRatio = 1.0;
 	private int transpose = 0;
-	private int velocity = 70;
+	private int velocity = 69;
 	private StrumType strumType = StrumType.ARP_U;
 	private List<Note> storedNotesBackwards = null;
 
@@ -100,9 +100,8 @@ public class Chord {
 				pitch += transpose;
 			}
 			double rhythm = (i > 0) ? 0.0 : rhythmValue;
-			double duration = getDuration();
 			Note n = new Note(pitch, rhythm, velocity);
-			n.setDuration(duration * Note.DEFAULT_DURATION_MULTIPLIER);
+			n.setDuration(getDuration() * MidiGenerator.DEFAULT_DURATION_MULTIPLIER);
 			//n.setOffset(flam * i);
 			noteList.add(n);
 		}

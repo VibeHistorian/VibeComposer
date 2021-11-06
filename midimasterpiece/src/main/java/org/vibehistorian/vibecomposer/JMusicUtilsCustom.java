@@ -1,10 +1,17 @@
 package org.vibehistorian.vibecomposer;
 
+import java.util.Enumeration;
+import java.util.Random;
 import java.util.Vector;
+
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
 
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
+import jm.music.data.Score;
+import jm.music.tools.Mod;
 
 public class JMusicUtilsCustom {
 	public static void consolidate(Part p) {
@@ -78,6 +85,88 @@ public class JMusicUtilsCustom {
 		}
 		phr.setNoteList(newNoteList);
 
+	}
+
+	public static Phrase doublePhrase(Phrase phr, int doubleTranspose, boolean pauseSquish,
+			int dynamicChange) {
+		Phrase phr2 = phr.copy();
+		Mod.transpose(phr2, doubleTranspose);
+		Mod.increaseDynamic(phr2, dynamicChange);
+		Part phrPart = new Part();
+		phrPart.add(phr2);
+		phrPart.add(phr);
+		if (pauseSquish) {
+			Mod.consolidate(phrPart);
+		} else {
+			JMusicUtilsCustom.consolidate(phrPart);
+		}
+
+		phr = phrPart.getPhrase(0);
+		return phr;
+	}
+
+	public static Score scoreCopy(Score score) {
+		Score scrCopy = new Score();
+		Enumeration<?> enum1 = score.getPartList().elements();
+		while (enum1.hasMoreElements()) {
+			PartExt part = (PartExt) enum1.nextElement();
+			scrCopy.addPart(part.copy());
+		}
+
+		return scrCopy;
+
+	}
+
+	public static void humanize(Part part, Random generator, double rhythmVariation,
+			boolean isDrum) {
+		if (part == null) {
+			return;
+		}
+		boolean left = true;
+		Enumeration enum1 = part.getPhraseList().elements();
+		while (enum1.hasMoreElements()) {
+			Phrase phr = (Phrase) enum1.nextElement();
+			humanize(phr, 0, rhythmVariation, 0, generator, isDrum);
+		}
+	}
+
+	public static void humanize(Phrase phrase, int pitchVariation, double rhythmVariation,
+			int dynamicVariation, Random generator, boolean isDrum) {
+		if (phrase == null) {
+			return;
+		}
+		Enumeration enum1 = phrase.getNoteList().elements();
+		int counter = 0;
+		while (enum1.hasMoreElements()) {
+			Note n = (Note) enum1.nextElement();
+			if (counter == 0) {
+				continue;
+			}
+			counter++;
+			// create new pitch value
+			if (pitchVariation > 0) {
+				n.setPitch(n.getPitch()
+						+ (int) (generator.nextDouble() * (pitchVariation * 2) - pitchVariation));
+			}
+			// create new rhythm and duration values
+			if (rhythmVariation > 0.0) {
+				double var = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
+				double dur = n.getDuration();
+				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + MidiGenerator.DBL_ERR) {
+					n.setOffset(n.getOffset() + var / 5);
+					n.setDuration(n.getDuration() + var / 5);
+				} else {
+					n.setOffset(n.getOffset() + var);
+					n.setDuration(n.getDuration() + var);
+				}
+
+			}
+			// create new dynamic value
+			if (dynamicVariation > 0) {
+				n.setDynamic(n.getDynamic() + (int) (generator.nextDouble() * (dynamicVariation * 2)
+						- dynamicVariation));
+			}
+		}
 	}
 
 }

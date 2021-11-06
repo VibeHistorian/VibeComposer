@@ -19,6 +19,7 @@ public class TransparentablePanel extends JPanel {
 			g.fillRect(0, 0, getWidth(), getHeight());
 		}
 		super.paintComponent(g);
+		//g.dispose();
 	}
 
 	public void addBackgroundWithBorder(Color c) {

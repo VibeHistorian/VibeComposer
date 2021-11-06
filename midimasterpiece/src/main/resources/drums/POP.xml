@@ -11,7 +11,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>3</patternShift>
         <pauseChance>0</pauseChance>
@@ -36,7 +36,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>0</pauseChance>
@@ -61,7 +61,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>3</patternShift>
         <pauseChance>0</pauseChance>
@@ -86,7 +86,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>4</patternShift>
         <pauseChance>0</pauseChance>
@@ -111,7 +111,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>5</patternShift>
         <pauseChance>0</pauseChance>
@@ -136,7 +136,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>SINGLE</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>3</patternShift>
         <pauseChance>0</pauseChance>
@@ -161,7 +161,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ALT</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>0</pauseChance>
@@ -186,7 +186,7 @@
         <midiChannel>10</midiChannel>
         <muted>false</muted>
         <pattern>ALT</pattern>
-        <patternRepeat>2</patternRepeat>
+        <patternRepeat>1</patternRepeat>
         <patternSeed>-898125729</patternSeed>
         <patternShift>0</patternShift>
         <pauseChance>4</pauseChance>

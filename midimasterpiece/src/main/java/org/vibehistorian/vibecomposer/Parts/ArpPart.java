@@ -10,6 +10,7 @@ import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 public class ArpPart extends InstPart {
 
 	private ArpPattern arpPattern = ArpPattern.RANDOM;
+	private int arpPatternRotate = 0;
 
 	public ArpPart() {
 
@@ -22,6 +23,16 @@ public class ArpPart extends InstPart {
 
 	public void setArpPattern(ArpPattern arpPattern) {
 		this.arpPattern = arpPattern;
+	}
+
+
+	public int getArpPatternRotate() {
+		return arpPatternRotate;
+	}
+
+
+	public void setArpPatternRotate(int arpPatternRotate) {
+		this.arpPatternRotate = arpPatternRotate;
 	}
 
 }

@@ -13,8 +13,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+along with this program; if not,
+see <https://www.gnu.org/licenses/>.
 */
 
 package org.vibehistorian.vibecomposer;
@@ -42,9 +42,28 @@ import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
 public class Arrangement {
-	private static final List<String> MANDATORY_SECTIONS_ORDER = new ArrayList<>(
+	private static List<List<String>> DEFAULT_ARRANGEMENTS = new ArrayList<>();
+
+	private static final List<String> POP_ARRANGEMENT = new ArrayList<>(
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
 					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
+	private static final List<String> EDM_ARRANGEMENT = new ArrayList<>(Arrays.asList(new String[] {
+			"INTRO", "BUILDUP", "CHORUS2", "VERSE1", "VERSE2", "CHORUS3", "CLIMAX", "OUTRO" }));
+
+	private static final List<String> EDM_ARRANGEMENT2 = new ArrayList<>(
+			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "VERSE1", "CHORUS3",
+					"BREAKDOWN", "CHILL", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+
+	private static final List<String> POP_ARRANGEMENT2 = new ArrayList<>(
+			Arrays.asList(new String[] { "HALF_CHORUS", "VERSE1", "CHORUS2", "VERSE2", "CHORUS3",
+					"BREAKDOWN", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+
+	static {
+		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT);
+		DEFAULT_ARRANGEMENTS.add(EDM_ARRANGEMENT);
+		DEFAULT_ARRANGEMENTS.add(EDM_ARRANGEMENT2);
+		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT2);
+	}
 
 	public static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
@@ -82,6 +101,7 @@ public class Arrangement {
 		afterinsertsMap.put("INTRO", new String[] { "VERSE1", "VERSE2", "BUILDUP" });
 
 		afterinsertsMap.put("CHORUS1", new String[] { "VERSE2" });
+		afterinsertsMap.put("CHORUS2", new String[] { "CHORUS3" });
 
 		//afterinsertsMap.put("BREAKDOWN", new String[] { "INTRO" });
 
@@ -94,7 +114,8 @@ public class Arrangement {
 	public void randomizeFully(int maxLength, int seed, int replacementChance, int insertChance,
 			int maxInsertsPerSection, int maxInsertsTotal, int variabilityChance) {
 		Random arrGen = new Random(seed);
-		List<String> newArrangementSkeleton = new ArrayList<>(MANDATORY_SECTIONS_ORDER);
+		List<String> newArrangementSkeleton = new ArrayList<>(
+				DEFAULT_ARRANGEMENTS.get(arrGen.nextInt(DEFAULT_ARRANGEMENTS.size())));
 		for (int i = 0; i < newArrangementSkeleton.size(); i++) {
 			String s = newArrangementSkeleton.get(i);
 			if (arrGen.nextInt(100) < replacementChance && replacementMap.containsKey(s)) {
@@ -310,7 +331,6 @@ public class Arrangement {
 			//sections.add(s);
 
 		}
-		System.out.println("setFromActualTable SUCCESS!");
 		return true;
 	}
 
@@ -324,8 +344,8 @@ public class Arrangement {
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
-	public Section addDefaultSection(JTable tbl, String defaultType) {
-		int column = tbl.getSelectedColumn();
+	public Section addDefaultSection(JTable tbl, String defaultType, Integer col) {
+		int column = col != null ? col : tbl.getSelectedColumn();
 		if (column < 0) {
 			// add at start
 			column = 0;
@@ -336,6 +356,10 @@ public class Arrangement {
 		Section sec = defaultSections.get(defaultType).deepCopy();
 		sections.add(column, sec);
 		return sec;
+	}
+
+	public Section addDefaultSection(JTable tbl, String defaultType) {
+		return addDefaultSection(tbl, defaultType, null);
 	}
 
 	public void duplicateSection(JTable tbl) {
@@ -421,6 +445,9 @@ public class Arrangement {
 			}
 			partInclusionMap.put(i, data);
 		}
+		partInclusionMap.get(0)[0][1] = Boolean.FALSE;
+		partInclusionMap.get(0)[0][3] = Boolean.FALSE;
+		partInclusionMap.get(0)[0][4] = Boolean.FALSE;
 	}
 
 	public void initPartInclusionMapIfNull() {

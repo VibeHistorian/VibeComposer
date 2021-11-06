@@ -10,9 +10,10 @@
 
 error-screenshots/
 *.txt
-/guiConfig1.xml
+*.xml
 *.sf2
-/consoleLog2.txt
+*.txt
 *.wav
 
 /drums/
+/presets/

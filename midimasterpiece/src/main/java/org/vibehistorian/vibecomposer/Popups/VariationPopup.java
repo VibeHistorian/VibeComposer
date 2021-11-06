@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
@@ -219,7 +220,7 @@ public class VariationPopup {
 		JPanel typeAndMeasuresPanel = new JPanel();
 		typeAndMeasuresPanel.add(new JLabel("Section type"));
 
-		ScrollComboBox<String> typeCombo = new ScrollComboBox<>();
+		ScrollComboBox<String> typeCombo = new ScrollComboBox<>(false);
 		for (Section.SectionType type : Section.SectionType.values()) {
 			typeCombo.addItem(type.toString());
 		}
@@ -243,7 +244,7 @@ public class VariationPopup {
 		typeAndMeasuresPanel.add(typeCombo);
 
 		typeAndMeasuresPanel.add(new JLabel("Measures"));
-		ScrollComboBox<String> measureCombo = new ScrollComboBox<>();
+		ScrollComboBox<String> measureCombo = new ScrollComboBox<>(false);
 		ScrollComboBox.addAll(new String[] { "1", "2", "3", "4", OMNI.EMPTYCOMBO }, measureCombo);
 		measureCombo.setVal(String.valueOf(sec.getMeasures()));
 		measureCombo.addItemListener(new ItemListener() {
@@ -307,7 +308,7 @@ public class VariationPopup {
 		instVolumesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
 			int val = sec.getVol(i);
-			KnobPanel panel = new KnobPanel(VibeComposerGUI.instNames[i], val, 20, 150);
+			KnobPanel panel = new DetachedKnobPanel(VibeComposerGUI.instNames[i], val, 20, 150);
 			panel.setShowTextInKnob(VibeComposerGUI.isShowingTextInKnobs);
 			panel.addBackgroundWithBorder(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
 			knobs.add(panel);
@@ -323,14 +324,14 @@ public class VariationPopup {
 		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
 			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
 			if (sec.getRiskyVariations() != null) {
-				riskyVar.setSelected(sec.getRiskyVariations().get(i));
+				riskyVar.setSelected(sec.isRiskyVar(i));
 			}
 			final int index = i;
 			riskyVar.addItemListener(new ItemListener() {
 
 				@Override
 				public void itemStateChanged(ItemEvent e) {
-					sec.setRiskyVariation(index, riskyVar.isSelected());
+					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
 				}
 
 			});

@@ -1,17 +1,28 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.JComponent;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
 	public static final List<Integer> PART_INTS = Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 });
 
 	public static Color alphen(Color c, int alphaValue) {
-		Color newC = new Color(c.getRed(), c.getGreen(), c.getBlue(), alphaValue);
+		Color newC = new Color(c.getRed(), c.getGreen(), c.getBlue(),
+				OMNI.clamp(alphaValue, 0, 255));
 		return newC;
+	}
+
+	public static Color mult(Color c, double multer) {
+		return new Color(OMNI.clamp((int) (c.getRed() * multer), 0, 255),
+				OMNI.clamp((int) (c.getGreen() * multer), 0, 255),
+				OMNI.clamp((int) (c.getBlue() * multer), 0, 255), c.getAlpha());
 	}
 
 	public static List<Integer> parseIntsString(String ints) {
@@ -24,6 +35,34 @@ public class OMNI {
 			return null;
 		}
 		return intsList;
+	}
+
+	public static List<Double> parseDoublesString(String dbls) {
+		List<Double> dblsList = new ArrayList<>();
+		try {
+			for (String s : dbls.split(",")) {
+				dblsList.add(Double.valueOf(s.trim()));
+			}
+		} catch (Exception e) {
+			return null;
+		}
+		return dblsList;
+	}
+
+	public static int sumList(List<Integer> nums) {
+		int sum = 0;
+		for (Integer n : nums) {
+			sum += n;
+		}
+		return sum;
+	}
+
+	public static double sumListDouble(List<Double> nums) {
+		double sum = 0;
+		for (Double n : nums) {
+			sum += n;
+		}
+		return sum;
 	}
 
 	public static void clampIntList(List<Integer> list, int min, int max) {
@@ -56,6 +95,33 @@ public class OMNI {
 				return values[i];
 			}
 		}
-		throw new IllegalArgumentException("WEIGHTED error: Value higher than 99!");
+		return values[values.length - 1];
+	}
+
+	public static Color mixColor(Color c1, Color c2, double percentageMix) {
+		Color newColor = new Color((int) interp(c1.getRed(), c2.getRed(), percentageMix),
+				(int) interp(c1.getGreen(), c2.getGreen(), percentageMix),
+				(int) interp(c1.getBlue(), c2.getBlue(), percentageMix),
+				(int) interp(c1.getAlpha(), c2.getAlpha(), percentageMix));
+		//System.out.println("Color: " + c1.toString());
+		//System.out.println("Mixed: " + newColor.toString());
+		return newColor;
+	}
+
+	public static double interp(double n1, double n2, double normalizedPercentage) {
+		return n1 * (1 - normalizedPercentage) + n2 * normalizedPercentage;
+	}
+
+	public static boolean mouseInComp(JComponent c) {
+		Point p = MouseInfo.getPointerInfo().getLocation();
+		try {
+
+			Point cp = c.getLocationOnScreen();
+			return p.x >= cp.x && p.x <= cp.x + c.getWidth() && p.y >= cp.y
+					&& p.y <= cp.y + c.getHeight();
+		} catch (Exception e) {
+			System.out.println("Mouse in comp error!");
+			return false;
+		}
 	}
 }

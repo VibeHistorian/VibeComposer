@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
@@ -28,9 +29,20 @@ public class MelodyUtils {
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 
+	public static List<List<Integer>> CHORD_DIRECTIONS = new ArrayList<>();
+
 	public static final int NUM_LISTS = 3;
 
 	static {
+
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, -1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, 0, 0, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, 1, -1 }));
+
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 2 }));
@@ -46,6 +58,7 @@ public class MelodyUtils {
 
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
 
+
 		SCALEY.add(new Integer[] { 0, 1, 2 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 3 });
 		SCALEY.add(new Integer[] { 0, 1, 4 });
@@ -53,6 +66,7 @@ public class MelodyUtils {
 		SCALEY.add(new Integer[] { 0, 4, 2 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 0 });
 		SCALEY.add(new Integer[] { 0, 1, 2, 4 });
+		SCALEY.add(new Integer[] { 0, 0, 0 });
 
 		NEIGHBORY.add(new Integer[] { 0, -1, 0 });
 		NEIGHBORY.add(new Integer[] { 0, 1, 0, 1 });
@@ -62,6 +76,7 @@ public class MelodyUtils {
 		NEIGHBORY.add(new Integer[] { 0, 1, -1, 0 });
 		NEIGHBORY.add(new Integer[] { 0, -1, 0, 2 });
 		NEIGHBORY.add(new Integer[] { 0, 1, 3, 2 });
+		NEIGHBORY.add(new Integer[] { 0, 0, -1, 0 });
 
 
 		CHORDY.add(new Integer[] { 0, 2, 4 });
@@ -122,11 +137,11 @@ public class MelodyUtils {
 	}
 
 	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
-			int length, Random melodyBlockGenerator, int approx) {
+			Integer length, Random melodyBlockGenerator, int approx) {
 		List<Integer[]> usedList = getBlocksForType(type);
 		// length fits, note distance and distance roughly equal (diff < approx)
 		List<Integer[]> filteredList = usedList.stream()
-				.filter(e -> (e.length == length)
+				.filter(e -> (length == null || e.length == length)
 						&& (Math.abs(blockChange(e) - Math.abs(blockChange)) <= approx))
 				.collect(Collectors.toList());
 		if (filteredList.size() == 0) {
@@ -142,7 +157,8 @@ public class MelodyUtils {
 	}
 
 	public static Pair<Integer, Integer[]> getRandomByApproxBlockChangeAndLength(int blockChange,
-			int approx, Random melodyBlockGenerator, Integer length) {
+			int approx, Random melodyBlockGenerator, Integer length, int remainingVariance,
+			int remainingDirChanges) {
 		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
 		chosenChange = OMNI.clamp(chosenChange, -7, 7);
 		//System.out.println("Chosen change: " + chosenChange);
@@ -166,8 +182,17 @@ public class MelodyUtils {
 			}
 			viableBlocks.addAll(invertedBlocks);
 		}
+		//int sizeBefore = viableBlocks.size();
+		viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
+		/*System.out.println("Size difference: " + (sizeBefore - viableBlocks.size())
+				+ ", for variance remaining: " + remainingVariance);*/
+		viableBlocks.removeIf(
+				e -> MelodyUtils.interblockDirectionChange(e.getRight()) > remainingDirChanges);
+		/*System.out.println("Size difference: " + (sizeBefore - viableBlocks.size())
+				+ ", for dir change remaining: " + remainingDirChanges);*/
 		//viableBlocks.forEach(e -> System.out.println(StringUtils.join(e, ',')));
 		if (viableBlocks.size() == 0) {
+			System.out.println("Viable blocks size is 0, getting random block!");
 			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
 					melodyBlockGenerator, 4);
 			return Pair.of(blockOfList(block), block);
@@ -212,8 +237,52 @@ public class MelodyUtils {
 		return block[block.length - 1] - block[0];
 	}
 
-	public static List<Integer> blockChangeSequence(int chord1, int chord2, int randSeed,
-			int numBlocks, int maxBlockChange) {
+	public static int interblockDirectionChange(Integer[] block) {
+		int lastDirection = blockChange(block);
+		int counter = 0;
+		// 0 4 2 7 -> 2 interblock changes
+		// 0 7 4 -> 1 
+		// 0 2 4 -> 0
+		for (int i = 1; i < block.length; i++) {
+			int currentDir = block[i] - block[i - 1];
+			if (lastDirection > 0 && currentDir < 0) {
+				lastDirection = -1;
+				counter++;
+			} else if (lastDirection < 0 && currentDir > 0) {
+				lastDirection = 1;
+				counter++;
+			}
+		}
+		//System.out.println("Interblock change: " + counter);
+		return counter;
+	}
+
+	public static Integer variance(Integer[] block) {
+		int min = block[0];
+		int max = block[block.length - 1];
+		if (min > max) {
+			min = max;
+			max = block[0];
+		}
+		int biggestOutsider = 0;
+		for (int i = 1; i < block.length - 1; i++) {
+			int diff = 0;
+			if (block[i] < min) {
+				diff = min - block[i];
+			} else if (block[i] > max) {
+				diff = block[i] - max;
+			}
+
+			if (diff > biggestOutsider) {
+				biggestOutsider = diff;
+			}
+		}
+		//System.out.println("Variance: " + biggestOutsider);
+		return biggestOutsider;
+	}
+
+	public static Pair<List<Integer>, Integer> blockChangeSequence(int chord1, int chord2,
+			int randSeed, int numBlocks, int maxBlockChange, int maxDirChanges) {
 		Random rand = new Random(randSeed);
 		List<Integer> changeList = new ArrayList<>();
 
@@ -221,13 +290,16 @@ public class MelodyUtils {
 		int change = chord1 - chord2;
 		//System.out.println("Change: " + change);
 		List<Integer> reducableIndices = new ArrayList<>();
+
 		for (int i = 0; i < numBlocks; i++) {
 			int chg = rand.nextInt(maxBlockChange * 2 + 1) - maxBlockChange;
 			changeList.add(chg);
 			change += chg;
 			reducableIndices.add(i);
+
 		}
 		//System.out.println("Initial: " + StringUtils.join(changeList, ","));
+		//System.out.println("reducableIndices i's: " + StringUtils.join(reducableIndices, ", "));
 		if (change > 0) {
 			reducableIndices.removeIf(e -> changeList.get(e) == -1 * maxBlockChange);
 		} else if (change < 0) {
@@ -250,10 +322,91 @@ public class MelodyUtils {
 		rand.setSeed(randSeed);
 
 		//System.out.println("Decr: " + StringUtils.join(changeList, ","));
-		Collections.shuffle(changeList, rand);
+		//Collections.shuffle(changeList, rand);
+
+		smartShuffleMaxDirChange(changeList, rand, maxDirChanges);
+		int remainingDirChange = calculateDirectionChanges(changeList);
 
 		//System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
-		return changeList;
+		return Pair.of(changeList, remainingDirChange);
+	}
+
+	private static int calculateDirectionChanges(List<Integer> changeList) {
+		if (changeList == null || changeList.size() < 2) {
+			return 0;
+		}
+		return interblockDirectionChange(changeList.toArray(new Integer[] {}));
+	}
+
+	private static void smartShuffleMaxDirChange(List<Integer> changeList, Random rand,
+			int maxDirChange) {
+		if (changeList == null || changeList.size() <= 1) {
+			return;
+		}
+
+		// maxDirChange: 1,2,3, UNLIMITED
+
+		// only one direction present
+		if (!changeList.stream().anyMatch(e -> e < 0) || !changeList.stream().anyMatch(e -> e > 0)
+				|| changeList.size() < 3) {
+			Collections.shuffle(changeList, rand);
+			return;
+		}
+		// negative and positive values present:
+		// sorting creates 1 dir change: -2, -1, 0, 0, 3, 4
+		Collections.sort(changeList);
+
+		int maxNegIndex = 0;
+		int firstPosIndex = 0;
+		for (int i = 1; i < changeList.size(); i++) {
+			if (changeList.get(i) >= 0 && maxNegIndex == 0) {
+				maxNegIndex = i - 1;
+			}
+			if (changeList.get(i) > 0 && firstPosIndex == 0) {
+				firstPosIndex = i;
+				break;
+			}
+		}
+		int zeroCount = firstPosIndex - maxNegIndex - 1;
+
+		List<Integer> negSub = new ArrayList<>(changeList.subList(0, maxNegIndex + 1));
+		List<Integer> posSub = new ArrayList<>(
+				changeList.subList(firstPosIndex, changeList.size()));
+		Collections.shuffle(negSub, rand);
+		Collections.shuffle(posSub, rand);
+
+		if (rand.nextBoolean() && maxDirChange > 1) {
+
+			int posIndexForSwap = rand.nextInt(posSub.size());
+			if (maxDirChange == 2) {
+				negSub.add(0, posSub.get(posIndexForSwap));
+				posSub.remove(posIndexForSwap);
+			} else {
+				int negIndexForSwap = rand.nextInt(negSub.size());
+				int temp = posSub.get(posIndexForSwap);
+				posSub.set(posIndexForSwap, negSub.get(negIndexForSwap));
+				negSub.set(negIndexForSwap, temp);
+			}
+		}
+
+		List<Integer> finalList = new ArrayList<>();
+		if (rand.nextBoolean()) {
+			finalList.addAll(negSub);
+			finalList.addAll(posSub);
+		} else {
+			finalList.addAll(posSub);
+			finalList.addAll(negSub);
+		}
+
+		if (zeroCount > 0) {
+			for (int i = 0; i < zeroCount; i++) {
+				int randIndex = rand.nextInt(finalList.size());
+				finalList.add(randIndex, 0);
+			}
+		}
+		changeList.clear();
+		changeList.addAll(finalList);
+
 	}
 
 	public boolean blockContainsJump(Integer[] block, int jump) {
@@ -266,25 +419,54 @@ public class MelodyUtils {
 	}
 
 	public static int blockOfList(Integer[] block) {
+		if (block == null) {
+			throw new IllegalArgumentException("Block is NULL!");
+		}
 		Integer[] invertedBlock = inverse(block);
-		if (SCALEY.contains(block) || SCALEY.contains(invertedBlock)) {
+		if (containsBlock(SCALEY, block, invertedBlock)) {
 			return 0;
-		} else if (NEIGHBORY.contains(block) || NEIGHBORY.contains(invertedBlock)) {
+		} else if (containsBlock(NEIGHBORY, block, invertedBlock)) {
 			return 1;
-		} else if (ARPY.contains(block) || ARPY.contains(invertedBlock)) {
+		} else if (containsBlock(ARPY, block, invertedBlock)) {
 			return 2;
-		} else if (CHORDY.contains(block) || CHORDY.contains(invertedBlock)) {
+		} else if (containsBlock(CHORDY, block, invertedBlock)) {
 			return 3;
 		}
-		throw new IllegalArgumentException("Unknown block!");
+		throw new IllegalArgumentException("Unknown block: " + StringUtils.join(block, ","));
 	}
 
-	public static List<Integer> getRandomMelodyPattern(int altPatternChance) {
-		if (new Random().nextInt(100) < altPatternChance) {
+	private static boolean containsBlock(List<Integer[]> blocks, Integer[] block,
+			Integer[] invertedBlock) {
+		for (int i = 0; i < blocks.size(); i++) {
+			if (block.length != blocks.get(i).length) {
+				continue;
+			}
+			boolean isDirectBlock = true;
+			boolean isInvertedBlock = true;
+			for (int j = 0; j < block.length; j++) {
+				if (!block[j].equals(blocks.get(i)[j])) {
+					isDirectBlock = false;
+				} else if (!invertedBlock[j].equals(blocks.get(i)[j])) {
+					isInvertedBlock = false;
+				}
+			}
+			if (isDirectBlock || isInvertedBlock) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static List<Integer> getRandomMelodyPattern(int altPatternChance, Integer randomSeed) {
+		Random rand = new Random();
+		if (randomSeed != null) {
+			rand.setSeed(randomSeed);
+		}
+		if (rand.nextInt(100) < altPatternChance) {
 			List<Integer> altPatternIndices = Arrays.asList(0, 1);
 			return new ArrayList<>(MELODY_PATTERNS
-					.get(altPatternIndices.get(new Random().nextInt(altPatternIndices.size()))));
+					.get(altPatternIndices.get(rand.nextInt(altPatternIndices.size()))));
 		}
-		return new ArrayList<>(MELODY_PATTERNS.get(new Random().nextInt(MELODY_PATTERNS.size())));
+		return new ArrayList<>(MELODY_PATTERNS.get(rand.nextInt(MELODY_PATTERNS.size())));
 	}
 }

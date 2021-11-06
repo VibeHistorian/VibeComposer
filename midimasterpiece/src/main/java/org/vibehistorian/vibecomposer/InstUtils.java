@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class InstUtils {
 
 	public enum POOL {
-		PLUCK, LONG, CHORD, BASS, DRUM, ALL;
+		PLUCK, LONG, CHORD, BASS, DRUM, MELODY, ALL;
 	}
 
 	public static final String[] INSTRUMENTS_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
@@ -80,6 +80,27 @@ public class InstUtils {
 			"STEEL_DRUMS = 114 ", "WOODBLOCK = 115 ", "TAIKO = 116 ", "TOM = 117 ",
 			"SYNTH_DRUM = 118 ", "REVERSE_CYMBAL = 119 " };
 
+	public static final String[] MELODY_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
+			"HONKYTONK = 3 ", "EPIANO = 4 ", "EPIANO2 = 5 ", "HARPSICHORD = 6 ", "CLAV = 7 ",
+			"CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
+			"TUBULAR_BELL = 14 ", "ORGAN = 16 ", "ORGAN2 = 17 ", "ORGAN3 = 18 ", "REED_ORGAN = 20 ",
+			"ACCORDION = 21 ", "BANDNEON = 23 ", "NYLON_GUITAR = 24 ", "STEEL_GUITAR = 25 ",
+			"JAZZ_GUITAR = 26 ", "MUTED_GUITAR = 28 ", "OVERDRIVE_GUITAR = 29 ",
+			"ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ", "PICKED_BASS = 34 ", "SLAP_BASS = 36 ",
+			"SLAP_BASS_2 = 37 ", "SYNTH_BASS = 38 ", "VIOLA = 41 ", "CELLO = 42 ",
+			"CONTRABASS = 43 ", "TREMOLO_STRINGS = 44 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
+			"STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ", "SYNTH_STRINGS = 50 ", "AAH = 52 ",
+			"OOH = 53 ", "SYNVOX = 54 ", "TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ",
+			"MUTED_TRUMPET = 59 ", "FRENCH_HORN = 60 ", "SYNTH_BRASS_2 = 63 ", "SOPRANO_SAX = 64 ",
+			"ENGLISH_HORN = 69 ", "BASSOON = 70 ", "CLARINET = 71 ", "PICCOLO = 72 ", "FLUTE = 73 ",
+			"RECORDER = 74 ", "PAN_FLUTE = 75 ", "BOTTLE_BLOW = 76 ", "SHAKUHACHI = 77 ",
+			"WHISTLE = 78 ", "OCARINA = 79 ", "GMSQUARE_WAVE = 80 ", "GMSAW_WAVE = 81 ",
+			"SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SYNTH_BASSLEAD = 87 ", "FANTASIA = 88 ",
+			"WARM_PAD = 89 ", "POLYSYNTH = 90 ", "SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ",
+			"METAL_PAD = 93 ", "HALO_PAD = 94 ", "ICE_RAIN = 96 ", "CRYSTAL = 98 ",
+			"ATMOSPHERE = 99 ", "BRIGHTNESS = 100 ", "GOBLIN = 101 ", "STAR_THEME = 103 ",
+			"BANJO = 105 ", "SHAMISEN = 106 ", "KOTO = 107 ", "KALIMBA = 108 " };
+
 	public static final String[] BASS_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
 			"EPIANO = 4 ", "OOH = 53 ", "SYNVOX = 54 ", "FLUTE = 73 ", "RECORDER = 74 ",
 			"PAN_FLUTE = 75 ", "SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SPACE_VOICE = 91 ",
@@ -103,18 +124,18 @@ public class InstUtils {
 			"CLARINET = 71 ", "PICCOLO = 72 ", "RECORDER = 74 ", "BOTTLE_BLOW = 76 ",
 			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
 			"SWEEP_PAD = 95 " };
-	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 41, 42, 44, 46, 53,
-			54, 60, 82 };
+	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 41, 42, 44, 46, 50,
+			53, 54, 60, 61, 82 };
 	public static final Integer[] DRUM_INST_NUMBERS_SEMI = { 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-			46, 47, 48, 49 };
+			46, 47, 48, 49, 50, 51 };
 	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
 			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "FLOOR TOM = 41 ",
-			"CLOSED_HH = 42 ", "PEDAL_HH = 44", "OPEN_HH = 46", "RIDE = 53 ", "TAMBOURINE = 54",
-			"HI BONGO = 60 ", "SHAKER = 82" };
+			"CLOSED_HH = 42 ", "PEDAL_HH = 44", "OPEN_HH = 46", "LO-MID TOM = 47", "RIDE = 53 ",
+			"TAMBOURINE = 54", "HI BONGO = 60 ", "LOW BONGO = 61", "SHAKER = 82" };
 	public static final String[] DRUM_INST_NAMES_SEMI = { "BASSKICK = 36 ", "KICK = 37 ",
 			"SIDE STICK = 38", "SNARE = 39 ", "CLAP = 40", "EL. SNARE = 41 ", "FLOOR TOM = 42 ",
-			"CLOSED_HH = 43 ", "PEDAL_HH = 44", "OPEN_HH = 45", "RIDE = 46 ", "TAMBOURINE = 47",
-			"HI BONGO = 48 ", "SHAKER = 49" };
+			"CLOSED_HH = 43 ", "PEDAL_HH = 44", "OPEN_HH = 45", "LO-MID TOM = 46", "RIDE = 47 ",
+			"TAMBOURINE = 48", "HI BONGO = 49 ", "LOW BONGO = 50", "SHAKER = 51" };
 
 	public static List<Integer> getInstNumbers(String[] instArray) {
 		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
@@ -147,6 +168,7 @@ public class InstUtils {
 		INST_POOLS.put(POOL.CHORD, LONG_INST_NAMES);
 		INST_POOLS.put(POOL.BASS, BASS_INST_NAMES);
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
+		INST_POOLS.put(POOL.MELODY, MELODY_INST_NAMES);
 		INST_POOLS.put(POOL.ALL, ALL_INST_NAMES);
 	}
 
@@ -156,6 +178,7 @@ public class InstUtils {
 		INST_POOLS.put(POOL.CHORD, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.BASS, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
+		INST_POOLS.put(POOL.MELODY, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.ALL, INSTRUMENTS_NAMES);
 	}
 

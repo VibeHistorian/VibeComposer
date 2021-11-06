@@ -16,7 +16,7 @@ public class BooleanRenderer extends JPanel implements TableCellRenderer {
 
 	public BooleanRenderer() {
 		super();
-		checkbox = new JCheckBox();
+		checkbox = new ColorCheckBox();
 		add(checkbox);
 	}
 

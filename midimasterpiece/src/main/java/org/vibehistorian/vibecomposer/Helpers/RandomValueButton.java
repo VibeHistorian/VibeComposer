@@ -9,11 +9,11 @@ import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
-import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 
 public class RandomValueButton extends JButton {
 
 	private static final long serialVersionUID = -2737936353529731016L;
+	private int value = 0;
 
 	public RandomValueButton(int value) {
 		this.setPreferredSize(new Dimension(100, 30));
@@ -22,11 +22,16 @@ public class RandomValueButton extends JButton {
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
 					Random rand = new Random();
-					setText(rand.nextInt() + "");
+					setValue(rand.nextInt());
 				} else if (SwingUtilities.isRightMouseButton(e)) {
-					setText("0");
+					setValue(0);
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
-					CloseablePopup popup = new ButtonValuePopup(RandomValueButton.this);
+					if (e.isControlDown()) {
+						setEnabled(!isEnabled());
+					} else if (isEnabled()) {
+						new ButtonValuePopup(RandomValueButton.this);
+					}
+
 				}
 			}
 		});
@@ -34,11 +39,15 @@ public class RandomValueButton extends JButton {
 	}
 
 	public int getValue() {
-		return Integer.valueOf(getText());
+		return value;
 	}
 
 	public void setValue(int value) {
+		if (!isEnabled()) {
+			return;
+		}
 		setText("" + value);
+		this.value = value;
 	}
 
 }

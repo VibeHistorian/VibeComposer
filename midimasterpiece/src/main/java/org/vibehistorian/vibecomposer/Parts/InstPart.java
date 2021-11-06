@@ -13,8 +13,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+along with this program; if not,
+see <https://www.gnu.org/licenses/>.
 */
 
 package org.vibehistorian.vibecomposer.Parts;
@@ -49,7 +49,7 @@ public abstract class InstPart implements Cloneable {
 	protected int delay = 0;
 	protected int transpose = 0;
 
-	protected int velocityMin = 70;
+	protected int velocityMin = 69;
 	protected int velocityMax = 90;
 	protected int noteLengthMultiplier = 100;
 
@@ -61,11 +61,13 @@ public abstract class InstPart implements Cloneable {
 	protected int patternSeed = 0;
 	protected RhythmPattern pattern = RhythmPattern.FULL;
 	protected List<Integer> customPattern = null;
+	protected List<Integer> customVelocities = null;
 	protected boolean patternFlip = false;
 
 	protected int patternShift = 0;
 
 	protected int sliderVolume = 100;
+	protected int sliderPan = 50;
 
 	protected int midiChannel = 10;
 
@@ -104,6 +106,8 @@ public abstract class InstPart implements Cloneable {
 
 		setCustomPattern(
 				panel.getComboPanel() != null ? panel.getComboPanel().getTruePattern() : null);
+		setCustomVelocities(
+				panel.getComboPanel() != null ? panel.getComboPanel().getVelocities() : null);
 
 		setPatternSeed((panel.getPatternSeed() != 0) ? panel.getPatternSeed() : lastRandomSeed);
 		setPattern(panel.getPattern());
@@ -113,6 +117,7 @@ public abstract class InstPart implements Cloneable {
 		setMuted(panel.getMuteInst());
 
 		setSliderVolume(panel.getVolSlider().getValue());
+		setSliderPan(panel.getPanSlider().getValue());
 
 		setMidiChannel(panel.getMidiChannel());
 
@@ -279,6 +284,14 @@ public abstract class InstPart implements Cloneable {
 		this.sliderVolume = sliderVolume;
 	}
 
+	public int getSliderPan() {
+		return sliderPan;
+	}
+
+	public void setSliderPan(int sliderPan) {
+		this.sliderPan = sliderPan;
+	}
+
 	public int getSwingPercent() {
 		return swingPercent;
 	}
@@ -334,6 +347,20 @@ public abstract class InstPart implements Cloneable {
 		return customPattern;
 	}
 
+
+	public void setCustomPattern(List<Integer> customPattern) {
+		this.customPattern = customPattern;
+	}
+
+	@XmlList
+	public List<Integer> getCustomVelocities() {
+		return customVelocities;
+	}
+
+	public void setCustomVelocities(List<Integer> customVelocities) {
+		this.customVelocities = customVelocities;
+	}
+
 	public List<Integer> getFinalPatternCopy() {
 		List<Integer> premadePattern = null;
 		if (getPattern() != RhythmPattern.CUSTOM) {
@@ -345,11 +372,6 @@ public abstract class InstPart implements Cloneable {
 			premadePattern = premadeCopy;
 		}
 		return premadePattern;
-	}
-
-
-	public void setCustomPattern(List<Integer> customPattern) {
-		this.customPattern = customPattern;
 	}
 
 	public Object clone() {

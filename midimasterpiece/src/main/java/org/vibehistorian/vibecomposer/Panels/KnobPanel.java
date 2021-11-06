@@ -37,7 +37,6 @@ public class KnobPanel extends TransparentablePanel {
 		knob = new JKnob(minimum, maximum, value, tickSpacing);
 		knob.setName(name);
 
-
 		if (minimum != 0) {
 			knob.setAllowValuesOutsideRange(true);
 		}
@@ -75,6 +74,14 @@ public class KnobPanel extends TransparentablePanel {
 		} else {
 			label.setVisible(true);
 		}
+	}
+
+	public void setBlockInput(boolean b) {
+		knob.setEnabled(!b);
+	}
+
+	public void setRegenerating(boolean b) {
+		knob.setRegenerating(b);
 	}
 
 }
