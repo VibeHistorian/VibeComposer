@@ -943,8 +943,13 @@ public class MidiGenerator implements JMC {
 
 		int hits = (int) Math.round(
 				chordsTotal * MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
-		measureTotal = (measureTotal == null) ? (chordsTotal
-				* ((gc.isDoubledDurations()) ? Durations.WHOLE_NOTE * 2 : Durations.WHOLE_NOTE))
+		double mult = 1;
+		if (gc.getBeatDurationMultiplier() == 0) {
+			mult = 0.5;
+		} else if (gc.getBeatDurationMultiplier() == 2) {
+			mult = 2;
+		}
+		measureTotal = (measureTotal == null) ? (chordsTotal * mult * Durations.WHOLE_NOTE)
 				: measureTotal;
 		double timeForHit = measureTotal / hits;
 		List<Integer> pattern = new ArrayList<>();
@@ -2754,7 +2759,11 @@ public class MidiGenerator implements JMC {
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
-		if (gc.isDoubledDurations()) {
+		if (gc.getBeatDurationMultiplier() == 0) {
+			for (int i = 0; i < progressionDurations.size(); i++) {
+				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
+			}
+		} else if (gc.getBeatDurationMultiplier() == 2) {
 			for (int i = 0; i < progressionDurations.size(); i++) {
 				progressionDurations.set(i, progressionDurations.get(i) * 2);
 			}
@@ -3707,8 +3716,14 @@ public class MidiGenerator implements JMC {
 		}
 
 		int chordCounter = 0;
-		double separatorValue = (gc.isDoubledDurations()) ? Durations.WHOLE_NOTE * 2
-				: Durations.WHOLE_NOTE;
+
+		double mult = 1;
+		if (gc.getBeatDurationMultiplier() == 0) {
+			mult = 0.5;
+		} else if (gc.getBeatDurationMultiplier() == 2) {
+			mult = 2;
+		}
+		double separatorValue = Durations.WHOLE_NOTE * mult;
 		double chordSeparator = separatorValue;
 		Vector<Note> noteList = userMelody.getNoteList();
 		if (!chordMelodyMap1.containsKey(Integer.valueOf(0))) {

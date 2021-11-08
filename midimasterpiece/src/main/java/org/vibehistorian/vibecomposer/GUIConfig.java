@@ -62,7 +62,7 @@ public class GUIConfig {
 	private int transpose = 0;
 	private double bpm = 80;
 	private boolean arpAffectsBpm = false;
-	private boolean doubledDurations = false;
+	private Integer beatDurationMultiplier = 1;
 	private boolean allowChordRepeats = true;
 	private Integer globalSwingOverride = null;
 
@@ -439,12 +439,12 @@ public class GUIConfig {
 		this.maxMelodySwing = maxMelodySwing;
 	}
 
-	public boolean isDoubledDurations() {
-		return doubledDurations;
+	public Integer getBeatDurationMultiplier() {
+		return beatDurationMultiplier;
 	}
 
-	public void setDoubledDurations(boolean doubledDurations) {
-		this.doubledDurations = doubledDurations;
+	public void setBeatDurationMultiplier(Integer beatDurationMultiplier) {
+		this.beatDurationMultiplier = beatDurationMultiplier;
 	}
 
 	public int getArrangementPartVariationChance() {

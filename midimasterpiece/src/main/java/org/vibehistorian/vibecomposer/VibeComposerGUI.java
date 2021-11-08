@@ -363,7 +363,7 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<String> scaleMode;
 	JCheckBox randomizeScaleModeOnCompose;
 	ScrollComboBox<String> fixedLengthChords;
-	JCheckBox useDoubledDurations;
+	ScrollComboBox<String> beatDurationMultiplier;
 	JCheckBox allowChordRepeats;
 	JCheckBox globalSwingOverride;
 	KnobPanel globalSwingOverrideValue;
@@ -3076,9 +3076,12 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(globalSwingPanel);
 
 
-		useDoubledDurations = new JCheckBox("Doubled Beat Duration", false);
+		beatDurationMultiplier = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "1/2", "1", "2" }, beatDurationMultiplier);
 		JPanel useDoubledPanel = new JPanel();
-		useDoubledPanel.add(useDoubledDurations);
+		useDoubledPanel.add(new JLabel("Beat Dur. Multiplier"));
+		useDoubledPanel.add(beatDurationMultiplier);
+		beatDurationMultiplier.setSelectedIndex(1);
 		useDoubledPanel.setOpaque(false);
 		macroParams.add(useDoubledPanel);
 
@@ -3606,7 +3609,12 @@ public class VibeComposerGUI extends JFrame
 							int newSliderVal = slider.getUpperValue() - startPos;
 							boolean sequencerEnded = slider.getMaximum()
 									- slider.getUpperValue() < 100 && !sequencer.isRunning();
-							int mult = useDoubledDurations.isSelected() ? 2 : 1;
+							double mult = 1;
+							if (beatDurationMultiplier.getSelectedIndex() == 0) {
+								mult = 0.5;
+							} else if (beatDurationMultiplier.getSelectedIndex() == 2) {
+								mult = 2;
+							}
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0)
 									/ 4) - 50) || sequencerEnded) {
 								stopMidi();
@@ -6324,7 +6332,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setTranspose(transposeScore.getInt());
 		gc.setBpm(Double.valueOf(mainBpm.getInt()));
 		gc.setArpAffectsBpm(arpAffectsBpm.isSelected());
-		gc.setDoubledDurations(useDoubledDurations.isSelected());
+		gc.setBeatDurationMultiplier(beatDurationMultiplier.getSelectedIndex());
 		gc.setAllowChordRepeats(allowChordRepeats.isSelected());
 		gc.setGlobalSwingOverride(
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
@@ -6431,7 +6439,7 @@ public class VibeComposerGUI extends JFrame
 		mainBpm.setInt((int) Math.round(guiConfig.getBpm()));
 
 		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
-		useDoubledDurations.setSelected(guiConfig.isDoubledDurations());
+		beatDurationMultiplier.setSelectedIndex(guiConfig.getBeatDurationMultiplier());
 		allowChordRepeats.setSelected(guiConfig.isAllowChordRepeats());
 		globalSwingOverride.setSelected(guiConfig.getGlobalSwingOverride() != null);
 		if (guiConfig.getGlobalSwingOverride() != null) {
