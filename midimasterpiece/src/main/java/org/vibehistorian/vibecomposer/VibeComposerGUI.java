@@ -217,7 +217,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = false;
+	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -375,6 +375,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox pauseBehaviorPlayheadCheckbox;
 	public static JCheckBox playheadSnapToBeatsCheckBox;
 	JCheckBox extraSettingsReverseDrumPanels;
+	JCheckBox extraSettingsOrderedTransposeGeneration;
 
 
 	// add/skip instruments
@@ -1200,6 +1201,9 @@ public class VibeComposerGUI extends JFrame
 		displayStylePanel.add(highlightScoreNotes);
 		displayStylePanel.add(customFilenameAddTimestamp);
 		extraSettingsPanel.add(displayStylePanel);
+
+
+		JPanel panelGenerationSettingsPanel = new JPanel();
 		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
 		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
 
@@ -1223,7 +1227,14 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 		});
-		extraSettingsPanel.add(extraSettingsReverseDrumPanels);
+
+		extraSettingsOrderedTransposeGeneration = new JCheckBox("Ordered Transpose Generation",
+				true);
+
+
+		panelGenerationSettingsPanel.add(extraSettingsReverseDrumPanels);
+		panelGenerationSettingsPanel.add(extraSettingsOrderedTransposeGeneration);
+		extraSettingsPanel.add(panelGenerationSettingsPanel);
 
 		initHelperPopups();
 	}
@@ -7155,7 +7166,7 @@ public class VibeComposerGUI extends JFrame
 					chordPanelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
 			cp.setTransitionSplit(
 					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
-			if (true) {
+			if (extraSettingsOrderedTransposeGeneration.isSelected()) {
 				cp.setTranspose((((cp.getPanelOrder()) % 3) - 1) * 12);
 			} else {
 				cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
@@ -7386,7 +7397,7 @@ public class VibeComposerGUI extends JFrame
 
 			ap.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
 
-			if (true) {
+			if (extraSettingsOrderedTransposeGeneration.isSelected()) {
 				ap.setTranspose((((ap.getPanelOrder() + 1) % 3) - 1) * 12);
 			} else {
 				if (first == null && i == 0 && !onlyAdd) {
