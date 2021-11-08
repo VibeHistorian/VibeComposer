@@ -6666,7 +6666,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void createRandomMelodyPanels(int seed) {
+	protected void createRandomMelodyPanels(int seed) {
 		Random melodyRand = new Random(seed);
 		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = melodyPanels.get(i);
@@ -6732,7 +6732,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 
-	private void createBlueprintedDrumPanels(int panelCount, boolean onlyAdd,
+	protected void createBlueprintedDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
 		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) getAffectedPanels(4);
 
@@ -7085,7 +7085,7 @@ public class VibeComposerGUI extends JFrame
 		repaint();
 	}
 
-	private void createRandomChordPanels(int panelCount, boolean onlyAdd,
+	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel randomizedPanel) {
 		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) getAffectedPanels(2);
 
@@ -7147,7 +7147,12 @@ public class VibeComposerGUI extends JFrame
 					chordPanelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
 			cp.setTransitionSplit(
 					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
-			cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
+			if (true) {
+				cp.setTranspose((((cp.getPanelOrder()) % 3) - 1) * 12);
+			} else {
+				cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
+			}
+
 
 			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
 			cp.setStrum(strumPair.getRight());
@@ -7229,7 +7234,8 @@ public class VibeComposerGUI extends JFrame
 		repaint();
 	}
 
-	private void createRandomArpPanels(int panelCount, boolean onlyAdd, ArpPanel randomizedPanel) {
+	protected void createRandomArpPanels(int panelCount, boolean onlyAdd,
+			ArpPanel randomizedPanel) {
 		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) getAffectedPanels(3);
 
 		Random arpPanelGenerator = new Random();
@@ -7371,14 +7377,24 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			ap.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
-			if (first == null && i == 0 && !onlyAdd) {
-				ap.setTranspose(12);
-				if (arpCopyMelodyInst.isSelected() && !melodyPanels.get(0).getMuteInst()) {
-					ap.setInstrument(fixedInstrument);
-				}
+
+			if (true) {
+				ap.setTranspose((((ap.getPanelOrder() + 1) % 3) - 1) * 12);
 			} else {
-				ap.setTranspose((arpPanelGenerator.nextInt(3) - 1) * 12);
+				if (first == null && i == 0 && !onlyAdd) {
+					ap.setTranspose(12);
+				} else {
+					ap.setTranspose((arpPanelGenerator.nextInt(3) - 1) * 12);
+				}
 			}
+
+
+			if (first == null && i == 0 && !onlyAdd && arpCopyMelodyInst.isSelected()
+					&& !melodyPanels.get(0).getMuteInst()) {
+				ap.setInstrument(fixedInstrument);
+			}
+
+
 			if (ap.getChordSpan() == 1) {
 				ap.setPatternRepeat(arpPanelGenerator.nextInt(randomArpMaxRepeat.getInt()) + 1);
 			} else {
