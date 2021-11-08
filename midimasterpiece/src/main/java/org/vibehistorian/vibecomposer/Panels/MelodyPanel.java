@@ -105,6 +105,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(doubledRhythmChance);
 		this.add(splitChance);
 		this.add(leadChordsChance);
+		this.add(delay);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);

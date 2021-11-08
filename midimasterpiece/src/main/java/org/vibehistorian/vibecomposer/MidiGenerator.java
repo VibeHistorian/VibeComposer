@@ -3854,7 +3854,11 @@ public class MidiGenerator implements JMC {
 			Mod.transpose(melodyPhrase, modTrans);
 		}
 
-		melodyPhrase.setStartTime(START_TIME_DELAY);
+		double additionalDelay = 0;
+		if (mp.getDelay() != 0) {
+			additionalDelay = (mp.getDelay() / 1000.0);
+		}
+		melodyPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
 		return melodyPhrase;
 	}
 
@@ -3985,7 +3989,11 @@ public class MidiGenerator implements JMC {
 					gc.getScaleMode().noteAdjustScale);
 		}
 		Mod.transpose(bassPhrase, -24 + bp.getTranspose() + modTrans);
-		bassPhrase.setStartTime(START_TIME_DELAY);
+		double additionalDelay = 0;
+		if (bp.getDelay() != 0) {
+			additionalDelay = (bp.getDelay() / 1000.0);
+		}
+		bassPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
 		}
@@ -4534,10 +4542,7 @@ public class MidiGenerator implements JMC {
 		processSectionTransition(sec, arpPhrase.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
 		swingPhrase(arpPhrase, swingPercentAmount, Durations.QUARTER_NOTE);
-		double additionalDelay = 0;
-		/*if (ARP_SETTINGS.isUseDelay()) {
-			additionalDelay = (gc.getArpParts().get(i).getDelay() / 1000.0);
-		}*/
+
 		if (genVars && variations != null) {
 			sec.setVariation(3, getAbsoluteOrder(3, ap), variations);
 		}
@@ -4550,6 +4555,10 @@ public class MidiGenerator implements JMC {
 		ap.setChordSpan(apClone.getChordSpan());
 		ap.setHitsPerPattern(apClone.getHitsPerPattern());
 		ap.setPatternRepeat(apClone.getPatternRepeat());
+		double additionalDelay = 0;
+		if (ap.getDelay() != 0) {
+			additionalDelay = (ap.getDelay() / 1000.0);
+		}
 		arpPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
 		return arpPhrase;
 	}
