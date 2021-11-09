@@ -62,7 +62,7 @@ public abstract class InstPanel extends JPanel {
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, VisualPatternPanel.MAX_HITS);
-	protected KnobPanel chordSpan = new KnobPanel("Chords", 1, 1, 4);
+	protected KnobPanel chordSpan = new KnobPanel("Beats", 1, 1, 4);
 	protected ScrollComboBox<ChordSpanFill> chordSpanFill = new ScrollComboBox<>();
 	protected CheckButton fillFlip = new CheckButton("~", false);
 	protected TransparentablePanel chordSpanFillPanel = new TransparentablePanel();
