@@ -1063,7 +1063,7 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorLabel = new JLabel("Start From Pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>(false);
 		pauseBehaviorBarCheckbox = new JCheckBox("Start From Bar", true);
-		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", false);
+		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", true);
 		playheadSnapToBeatsCheckBox = new JCheckBox("Snap Start To Beat", true);
 		playheadSnapToBeatsCheckBox.addActionListener(new ActionListener() {
 
@@ -5764,6 +5764,9 @@ public class VibeComposerGUI extends JFrame
 		pausedSliderPosition = slider.getUpperValue();
 		if (MidiGenerator.chordInts.size() > 0) {
 			pausedMeasureCounter = (int) (pausedSliderPosition - delayed()) / sliderMeasureWidth();
+			if (pausedMeasureCounter > 0 && sectionText.getText().equalsIgnoreCase("end")) {
+				pausedMeasureCounter--;
+			}
 		} else {
 			pausedMeasureCounter = 0;
 		}
