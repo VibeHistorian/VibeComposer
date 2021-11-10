@@ -53,6 +53,7 @@ public class VisualPatternPanel extends JPanel {
 	private int lastHits = 0;
 
 	private List<Integer> truePattern = new ArrayList<>();
+	private List<Integer> trueVelocities = new ArrayList<>();
 	public static final int MAX_HITS = 32;
 	private ColorCheckBox[] hitChecks = new ColorCheckBox[MAX_HITS];
 	private VeloRect[] hitVelocities = new VeloRect[MAX_HITS];
@@ -144,8 +145,10 @@ public class VisualPatternPanel extends JPanel {
 		for (int i = 0; i < MAX_HITS; i++) {
 			final int fI = i;
 			truePattern.add(0);
+			trueVelocities.add(64);
 			hitChecks[i] = new ColorCheckBox();
 			hitVelocities[i] = new VeloRect(0, 127, 64);
+			hitVelocities[i].linkVisualParent(VisualPatternPanel.this, i);
 			//hitVelocities[i].setDefaultSize(new Dimension(CheckBoxIcon.width, CheckBoxIcon.width));
 			hitVelocities[i].setVisible(false);
 			//hitChecks[i].setBackground(new Color(128, 128, 128));
@@ -251,12 +254,16 @@ public class VisualPatternPanel extends JPanel {
 		patternType.addItemListener(new ItemListener() {
 
 			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
+			public void itemStateChanged(ItemEvent evt) {
+				if (evt.getStateChange() == ItemEvent.SELECTED) {
 					VisualPatternPanel.this.setVisible(false);
 					RhythmPattern d = patternType.getVal();
 					if (d != RhythmPattern.CUSTOM) {
 						truePattern = d.getPatternByLength(MAX_HITS, 0);
+						if (trueVelocities.isEmpty()) {
+							trueVelocities = IntStream.iterate(64, e -> e).boxed()
+									.collect(Collectors.toList());
+						}
 					}
 
 					for (int i = 0; i < MAX_HITS; i++) {
@@ -514,7 +521,9 @@ public class VisualPatternPanel extends JPanel {
 	public void setVelocities(List<Integer> velocities) {
 		if (velocities != null) {
 			for (int i = 0; i < velocities.size() && i < MAX_HITS; i++) {
+				int shI = (i + shiftPanel.getInt()) % MAX_HITS;
 				hitVelocities[i].setValue(velocities.get(i));
+				trueVelocities.set(i, velocities.get(shI));
 			}
 			if (!showingVelocities) {
 				toggleVelocityShow();
@@ -535,14 +544,18 @@ public class VisualPatternPanel extends JPanel {
 			@Override
 			public void run() {
 				VisualPatternPanel.this.setVisible(false);
-				for (int i = 0; i < MAX_HITS; i++) {
-					int shI = (i + shiftPanel.getInt()) % MAX_HITS;
-					if (showingVelocities) {
-						hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
-					} else {
+				int shift = shiftPanel.getInt();
+				if (!showingVelocities) {
+					for (int i = 0; i < lastHits; i++) {
+						int shI = (i + shift) % lastHits;
 						hitChecks[shI].setSelected(truePattern.get(i) != 0);
 					}
-
+				} else {
+					for (int i = 0; i < lastHits; i++) {
+						int shI = (i + shift) % lastHits;
+						hitVelocities[shI].setValueRaw(trueVelocities.get(i));
+						hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
+					}
 				}
 				VisualPatternPanel.this.setVisible(true);
 			}
@@ -757,6 +770,10 @@ public class VisualPatternPanel extends JPanel {
 			}
 		}
 		lastHighlightedHit = highlightedHit;
+	}
+
+	public List<Integer> getTrueVelocities() {
+		return trueVelocities;
 	}
 
 }

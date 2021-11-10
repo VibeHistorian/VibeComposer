@@ -4100,7 +4100,7 @@ public class MidiGenerator implements JMC {
 							durMultiplier += skipNotes;
 
 						}
-						LOGGER.debug("Dur multiplier added: " + durMultiplier);
+						//LOGGER.debug("Dur multiplier added: " + durMultiplier);
 						finalDuration = duration * durMultiplier;
 
 						if (pitch == 0) {

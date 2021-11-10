@@ -15,6 +15,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 
 public class VeloRect extends JComponent {
 
@@ -35,6 +36,8 @@ public class VeloRect extends JComponent {
 	private boolean highlighted = false;
 	public static Color highlightColorDark = OMNI.alphen(new Color(255, 100, 100), 200);
 	public static Color highlightColorLight = OMNI.alphen(new Color(255, 100, 100), 200);
+	private VisualPatternPanel visualParent = null;
+	private int visualParentOrderIndex = -1;
 
 	public VeloRect(int min, int max, int currentVal) {
 		super();
@@ -124,11 +127,23 @@ public class VeloRect extends JComponent {
 
 	public void setValue(int value) {
 		this.val = value;
+		if (visualParent != null) {
+			visualParent.getTrueVelocities().set(visualParentOrderIndex, value);
+		}
+	}
+
+	public void setValueRaw(int value) {
+		this.val = value;
 	}
 
 	public void setDefaultValue(int defValue) {
 		this.defaultVal = defValue;
-		this.val = defValue;
+		setValue(defValue);
+	}
+
+	public void linkVisualParent(VisualPatternPanel visPat, int order) {
+		visualParent = visPat;
+		visualParentOrderIndex = order;
 	}
 
 	public void setMargin(Insets in) {
