@@ -1597,7 +1597,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordMaxSplitChance = new DetachedKnobPanel("Max Tran-<br>sition%", 25);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 30);
 		randomChordPattern = new JCheckBox("Patterns", true);
-		randomChordShiftChance = new DetachedKnobPanel("Shift%", 25);
+		randomChordShiftChance = new DetachedKnobPanel("Shift%", 60);
 		randomChordMinVel = new DetachedKnobPanel("Min<br>Vel", 65, 0, 126);
 		randomChordMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
 
@@ -1723,7 +1723,7 @@ public class VibeComposerGUI extends JFrame
 		randomArpAllSameHits = new JCheckBox("One #", true);
 		randomArpLimitPowerOfTwo = new JCheckBox("<html>Limit 2<sup>n</sup>", true);
 		randomArpUseChordFill = new JCheckBox("Fills", true);
-		randomArpShiftChance = new DetachedKnobPanel("Shift%", 25);
+		randomArpShiftChance = new DetachedKnobPanel("Shift%", 50);
 		randomArpUseOctaveAdjustments = new JCheckBox("Rand. Oct.", false);
 		randomArpMaxSwing = new KnobPanel("Swing%", 50);
 		randomArpMaxRepeat = new DetachedKnobPanel("Max<br>Repeat", 2, 1, 4);
@@ -6902,12 +6902,16 @@ public class VibeComposerGUI extends JFrame
 			if (settings.isSwingable()) {
 				dp.setDelay(slide);
 				dp.setSwingPercent(swingPercent);
+			} else {
+				dp.setSwingPercent(50);
 			}
 
 			if (settings.isDynamicable() && (dp.getPattern() != RhythmPattern.MELODY1)) {
 				double ghostChanceReducer = (drumPanels.size() > 10) ? 0.8 : 1.0;
 				dp.setIsVelocityPattern(drumPanelGenerator.nextInt(
 						100) < randomDrumVelocityPatternChance.getInt() * ghostChanceReducer);
+			} else {
+				dp.setIsVelocityPattern(false);
 			}
 
 			if (drumPanels.size() > 10 && dp.getPattern() == RhythmPattern.FULL
@@ -6919,6 +6923,8 @@ public class VibeComposerGUI extends JFrame
 					&& drumPanelGenerator.nextInt(100) < randomDrumShiftChance.getInt()) {
 				// settings set the maximum shift, this sets 0 - max randomly
 				dp.setPatternShift(drumPanelGenerator.nextInt(dp.getPatternShift() + 1));
+			} else {
+				dp.setPatternShift(0);
 			}
 
 			dp.applyPauseChance(drumPanelGenerator);
@@ -7087,7 +7093,7 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			if (randomChordUseChordFill.isSelected()) {
+			if (randomDrumUseChordFill.isSelected()) {
 				dp.setChordSpanFill(ChordSpanFill.getWeighted(drumPanelGenerator.nextInt(100)));
 			}
 
@@ -7184,6 +7190,8 @@ public class VibeComposerGUI extends JFrame
 
 			if (randomChordUseChordFill.isSelected()) {
 				cp.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
+			} else {
+				cp.setChordSpanFill(ChordSpanFill.ALL);
 			}
 			// default SINGLE = 4
 			RhythmPattern pattern = RhythmPattern.SINGLE;
@@ -7222,6 +7230,8 @@ public class VibeComposerGUI extends JFrame
 
 			if (chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
 				cp.setPatternJoinMode(PatternJoinMode.EXPAND);
+			} else {
+				cp.setPatternJoinMode(PatternJoinMode.NOJOIN);
 			}
 
 
@@ -7243,9 +7253,13 @@ public class VibeComposerGUI extends JFrame
 				for (int p = maxShift - 1; p >= 0; p--) {
 					if (cp.getPattern().pattern[p] < 1) {
 						maxShift--;
+					} else {
+						break;
 					}
 				}
 				cp.setPatternShift(maxShift > 0 ? chordPanelGenerator.nextInt(maxShift) + 1 : 0);
+			} else {
+				cp.setPatternShift(0);
 			}
 
 			if (needNewChannel) {
@@ -7455,6 +7469,8 @@ public class VibeComposerGUI extends JFrame
 						: 0;
 				ap.setChordSpanFill(ChordSpanFill
 						.getWeighted(arpPanelGenerator.nextInt(100) + exoticFillChanceIncrease));
+			} else {
+				ap.setChordSpanFill(ChordSpanFill.ALL);
 			}
 
 
@@ -7470,6 +7486,8 @@ public class VibeComposerGUI extends JFrame
 					}
 				}
 				ap.setPatternShift(maxShift > 0 ? arpPanelGenerator.nextInt(maxShift) : 0);
+			} else {
+				ap.setPatternShift(0);
 			}
 
 			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
@@ -7495,6 +7513,8 @@ public class VibeComposerGUI extends JFrame
 					ap.setArpPatternRotate(
 							arpPanelGenerator.nextInt(Math.min(4, ap.getChordNotesStretch())));
 				}
+			} else {
+				ap.setArpPattern(ArpPattern.RANDOM);
 			}
 
 			ap.applyPauseChance(arpPanelGenerator);
