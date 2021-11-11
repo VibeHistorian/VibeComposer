@@ -1590,9 +1590,9 @@ public class VibeComposerGUI extends JFrame
 		randomChordStruminess = new DetachedKnobPanel("Struminess", 50);
 		randomChordSplit = new JCheckBox("Use Split (ms)", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
-		randomChordSustainChance = new DetachedKnobPanel("Chord%", 25);
+		randomChordSustainChance = new DetachedKnobPanel("Chord%", 50);
 		randomChordSustainUseShortening = new JCheckBox("Vary Length", true);
-		randomChordExpandChance = new DetachedKnobPanel("Expand%", 50);
+		randomChordExpandChance = new DetachedKnobPanel("Expand%", 70);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new DetachedKnobPanel("Max Tran-<br>sition%", 25);
 		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 30);
@@ -4022,6 +4022,7 @@ public class VibeComposerGUI extends JFrame
 					}
 				}
 				LOGGER.info(("ENDED MidiCcThread!"));
+				cycle = null;
 			}
 		};
 		cycle.start();
@@ -5715,11 +5716,13 @@ public class VibeComposerGUI extends JFrame
 			LOGGER.info(("Starting Midi.."));
 			sequencer.stop();
 			if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
+				LOGGER.debug(("Unpausing.."));
 				midiNavigate(pausedSliderPosition);
 			} else {
+				LOGGER.debug(("Resetting.."));
 				resetSequencerTickPosition();
 			}
-
+			LOGGER.debug(("Position set.."));
 			try {
 				Thread.sleep(25);
 			} catch (InterruptedException e) {
@@ -6923,8 +6926,6 @@ public class VibeComposerGUI extends JFrame
 					&& drumPanelGenerator.nextInt(100) < randomDrumShiftChance.getInt()) {
 				// settings set the maximum shift, this sets 0 - max randomly
 				dp.setPatternShift(drumPanelGenerator.nextInt(dp.getPatternShift() + 1));
-			} else {
-				dp.setPatternShift(0);
 			}
 
 			dp.applyPauseChance(drumPanelGenerator);
@@ -7247,17 +7248,9 @@ public class VibeComposerGUI extends JFrame
 
 			}
 
-			if (chordPanelGenerator.nextInt(100) < randomChordShiftChance.getInt()
-					&& (pattern != RhythmPattern.FULL) && (pattern != RhythmPattern.MELODY1)) {
-				int maxShift = Math.min(cp.getPattern().pattern.length - 1, cp.getHitsPerPattern());
-				for (int p = maxShift - 1; p >= 0; p--) {
-					if (cp.getPattern().pattern[p] < 1) {
-						maxShift--;
-					} else {
-						break;
-					}
-				}
-				cp.setPatternShift(maxShift > 0 ? chordPanelGenerator.nextInt(maxShift) + 1 : 0);
+			if (chordPanelGenerator.nextInt(100) < randomChordShiftChance.getInt()) {
+				int maxShift = Math.min(cp.getPattern().maxShift, cp.getHitsPerPattern());
+				cp.setPatternShift(maxShift > 0 ? (chordPanelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
 				cp.setPatternShift(0);
 			}
@@ -7477,21 +7470,17 @@ public class VibeComposerGUI extends JFrame
 			ap.setVelocityMax(randomArpMaxVel.getInt());
 			ap.setVelocityMin(randomArpMinVel.getInt());
 
-			if (arpPanelGenerator.nextInt(100) < randomArpShiftChance.getInt()
-					&& pattern != RhythmPattern.FULL) {
-				int maxShift = Math.min(ap.getPattern().pattern.length - 1, ap.getHitsPerPattern());
-				for (int p = maxShift - 1; p >= 0; p--) {
-					if (ap.getPattern().pattern[p] < 1) {
-						maxShift--;
-					}
-				}
-				ap.setPatternShift(maxShift > 0 ? arpPanelGenerator.nextInt(maxShift) : 0);
+			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
+			ap.setPauseChance(arpPanelGenerator.nextInt(pauseMax + 1));
+			ap.applyPauseChance(arpPanelGenerator);
+
+			if (arpPanelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
+				LOGGER.debug("Arp getPattern: " + ap.getPattern().name());
+				int maxShift = Math.min(ap.getPattern().maxShift, ap.getHitsPerPattern());
+				ap.setPatternShift(maxShift > 0 ? (arpPanelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
 				ap.setPatternShift(0);
 			}
-
-			int pauseMax = (int) (50 * ap.getPattern().getNoteFrequency());
-			ap.setPauseChance(arpPanelGenerator.nextInt(pauseMax + 1));
 
 			int lengthRange = Math.max(1,
 					1 + randomArpMaxLength.getInt() - randomArpMinLength.getInt());
@@ -7516,8 +7505,6 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				ap.setArpPattern(ArpPattern.RANDOM);
 			}
-
-			ap.applyPauseChance(arpPanelGenerator);
 
 			if (needNewChannel) {
 				ap.setMidiChannel(2 + (ap.getPanelOrder() - 1) % 7);

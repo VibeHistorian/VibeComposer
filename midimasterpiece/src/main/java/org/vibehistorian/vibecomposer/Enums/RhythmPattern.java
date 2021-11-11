@@ -12,15 +12,20 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "rhythmPattern")
 @XmlEnum
 public enum RhythmPattern {
-	FULL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }), ALT(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }),
-	ONEPER4(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }), TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 }),
-	SINGLE(new int[] { 1, 0, 0, 0, 0, 0, 0, 0 }), ONESIX(new int[] { 1, 0, 0, 0, 0, 1, 0, 0 }),
-	CUSTOM(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 }), MELODY1(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 });
+	FULL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }, 0), ALT(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }, 1),
+	ONEPER4(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }, 3),
+	TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 }, 7),
+	SINGLE(new int[] { 1, 0, 0, 0, 0, 0, 0, 0 }, 7),
+	ONESIX(new int[] { 1, 0, 0, 0, 0, 1, 0, 0 }, 7),
+	CUSTOM(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 }, 7),
+	MELODY1(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 }, 0);
 
 	public final int[] pattern;
+	public final int maxShift;
 
-	private RhythmPattern(int[] pattern) {
+	private RhythmPattern(int[] pattern, int mShift) {
 		this.pattern = pattern;
+		maxShift = mShift;
 	}
 
 	public List<Integer> getPatternByLength(int length, int patternShift) {
