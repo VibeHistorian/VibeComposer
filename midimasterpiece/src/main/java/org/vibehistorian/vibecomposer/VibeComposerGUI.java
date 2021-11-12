@@ -316,7 +316,7 @@ public class VibeComposerGUI extends JFrame
 	JPanel arrangementSettings;
 	KnobPanel arrangementVariationChance;
 	public static KnobPanel arrangementPartVariationChance;
-	CheckButton arrangementCustom;
+	public static CheckButton manualArrangement;
 	JTextField pieceLength;
 	RandomValueButton arrangementSeed;
 	CheckButton useArrangement;
@@ -558,7 +558,7 @@ public class VibeComposerGUI extends JFrame
 	JButton regenerate;
 	JButton regenerateStopPlay;
 	JButton regeneratePausePlay;
-	JButton startMidi;
+	JButton playMidi;
 	JButton stopMidi;
 	JButton pauseMidi;
 	JTextField saveCustomFilename;
@@ -992,7 +992,7 @@ public class VibeComposerGUI extends JFrame
 
 					recalculateTabPaneCounts();
 					recalculateGenerationCounts();
-					arrangementCustom.setSelected(false);
+					manualArrangement.setSelected(false);
 				} catch (JAXBException | IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -2221,8 +2221,8 @@ public class VibeComposerGUI extends JFrame
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
 		if (checkManual) {
-			arrangementCustom.setSelected(true);
-			arrangementCustom.repaint();
+			manualArrangement.setSelected(true);
+			manualArrangement.repaint();
 		}
 		recalculateTabPaneCounts();
 	}
@@ -2460,8 +2460,8 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings.add(arrangementMiddleColoredPanel);
 
 
-		arrangementCustom = new CheckButton("MANUAL", false);
-		arrangementSettings.add(arrangementCustom);
+		manualArrangement = new CheckButton("MANUAL", false);
+		arrangementSettings.add(manualArrangement);
 		arrangementSettings.add(arrSection);
 		arrangementSettings.add(commitPanelBtn);
 		arrangementSettings.add(commitAllPanelBtn);
@@ -2730,7 +2730,7 @@ public class VibeComposerGUI extends JFrame
 
 						setActualModel(actualArrangement.convertToActualTableModel(), false);
 						refreshVariationPopupButtons(actualArrangement.getSections().size());
-						arrangementCustom.setSelected(true);
+						manualArrangement.setSelected(true);
 						scrollableArrangementActualTable.repaint();
 					}
 
@@ -2800,7 +2800,7 @@ public class VibeComposerGUI extends JFrame
 				LOGGER.info(("MOVED"));
 				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true);
 				actualArrangementTableColumnDragging = false;
-				arrangementCustom.setSelected(true);
+				manualArrangement.setSelected(true);
 			}
 		});
 		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -3862,10 +3862,10 @@ public class VibeComposerGUI extends JFrame
 		JPanel playSavePanel = new JPanel();
 		playSavePanel.setOpaque(false);
 		stopMidi = makeButton("STOP", e -> stopMidi());
-		startMidi = makeButton("PLAY", e -> startMidi());
+		playMidi = makeButton("PLAY", e -> playMidi());
 		pauseMidi = makeButton("PAUSE", e -> pauseMidi());
 		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
-		startMidi.setFont(startMidi.getFont().deriveFont(Font.BOLD));
+		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
 		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
 
 		JButton save3Star = makeButton("Save 3*", "Save 3*");
@@ -3958,7 +3958,7 @@ public class VibeComposerGUI extends JFrame
 		generatedMidi.setTransferHandler(new FileTransferHandler());
 		generatedMidi.setDragEnabled(true);
 
-		playSavePanel.add(startMidi);
+		playSavePanel.add(playMidi);
 		playSavePanel.add(pauseMidi);
 		playSavePanel.add(stopMidi);
 		playSavePanel.add(save3Star);
@@ -4119,7 +4119,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void switchMidiButtons(boolean state) {
-		startMidi.setEnabled(state);
+		playMidi.setEnabled(state);
 		pauseMidi.setEnabled(state);
 		stopMidi.setEnabled(state);
 		compose.setEnabled(state);
@@ -4217,7 +4217,7 @@ public class VibeComposerGUI extends JFrame
 		switchOnComposeRandom.setForeground(toggledUIColor);
 		compose.setForeground(toggledUIColor);
 		regenerate.setForeground(toggledUIColor);
-		startMidi.setForeground(toggledUIColor);
+		playMidi.setForeground(toggledUIColor);
 		pauseMidi.setForeground(toggledUIColor);
 		stopMidi.setForeground(toggledUIColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
@@ -4353,7 +4353,7 @@ public class VibeComposerGUI extends JFrame
 			sequencer.stop();
 		}
 
-		if (arrangementCustom.isSelected() && (actualArrangement.getSections().isEmpty()
+		if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
 				|| !actualArrangement.getSections().get(0).hasPresence())) {
 			LOGGER.info(("Nothing to compose! Uncheck MANUAL arrangement!"));
 			composingInProgress = false;
@@ -4635,7 +4635,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
-				&& arrangementCustom.isSelected()) {
+				&& manualArrangement.isSelected()) {
 			arrangement.setOverridden(true);
 		} else {
 			arrangement.setOverridden(false);
@@ -5752,17 +5752,30 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void startMidi() {
+	private void playMidi() {
 		if (sequencer != null) {
 			LOGGER.info(("Starting Midi.."));
-			sequencer.stop();
-			if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
-				LOGGER.debug(("Unpausing.."));
-				midiNavigate(pausedSliderPosition);
+			if (sequencer.isRunning()) {
+				sequencer.stop();
+				long startPos = (startFromBar.isSelected())
+						? sliderMeasureStartTimes.get(pausedMeasureCounter)
+						: pausedSliderPosition;
+				if (startPos < slider.getValue()) {
+					startPos = slider.getValue();
+				}
+				midiNavigate(startPos);
 			} else {
-				LOGGER.debug(("Resetting.."));
-				resetSequencerTickPosition();
+				sequencer.stop();
+				savePauseInfo();
+				if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
+					LOGGER.debug(("Unpausing.."));
+					midiNavigate(pausedSliderPosition);
+				} else {
+					LOGGER.debug(("Resetting.."));
+					resetSequencerTickPosition();
+				}
 			}
+
 			LOGGER.debug(("Position set.."));
 			try {
 				Thread.sleep(25);
@@ -6357,7 +6370,7 @@ public class VibeComposerGUI extends JFrame
 			arrangement.setPreviewChorus(false);
 		}
 		arrangement.setFromModel(scrollableArrangementTable);
-		boolean overrideSuccessful = arrangementCustom.isSelected()
+		boolean overrideSuccessful = manualArrangement.isSelected()
 				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
 		LOGGER.debug(("OVERRIDE OK?: " + overrideSuccessful));
 		if (overrideSuccessful) {
@@ -6486,7 +6499,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementScaleMidiVelocity.setSelected(guiConfig.isScaleMidiVelocityInArrangement());
 		arrangementSeed.setValue(arrangement.getSeed());
 		useArrangement.setSelected(guiConfig.isArrangementEnabled());
-		arrangementCustom.setSelected(true);
+		manualArrangement.setSelected(true);
 
 		// macro
 		scaleMode.setVal(guiConfig.getScaleMode().toString());
