@@ -1,11 +1,13 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
 
@@ -104,5 +106,15 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	public void setRegenerating(boolean regenerating) {
 		this.regenerating = regenerating;
+	}
+
+	public void removeArrowButton() {
+		for (Component c : getComponents()) {
+			if (c instanceof JButton) {
+				//System.out.println("Rem button");
+				remove(c);
+				break;
+			}
+		}
 	}
 }

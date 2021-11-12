@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
@@ -4149,6 +4150,22 @@ public class VibeComposerGUI extends JFrame
 		return (isDarkMode) ? darkModeUIColor : lightModeUIColor;
 	}
 
+	public void removeComboBoxArrows(Container parent) {
+		for (Component c : parent.getComponents()) {
+			if (c instanceof ScrollComboBox) {
+				ScrollComboBox scb = (ScrollComboBox) c;
+				scb.removeArrowButton();
+				//LOGGER.debug("Unconfigured");
+			}
+
+			if (c instanceof Container) {
+				//LOGGER.debug("Going deep");
+				removeComboBoxArrows((Container) c);
+			}
+
+		}
+	}
+
 	private void switchDarkMode() {
 		//setVisible(false);
 		arrSection.setSelectedIndex(0);
@@ -4228,6 +4245,8 @@ public class VibeComposerGUI extends JFrame
 			scorePanel.update();
 		}
 
+
+		removeComboBoxArrows(everythingPanel);
 		//sizeRespectingPack();
 		//setVisible(true);
 		repaint();
