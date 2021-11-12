@@ -372,9 +372,9 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel loopBeatCount;
 	public static JLabel pauseBehaviorLabel;
 	public static ScrollComboBox<String> pauseBehaviorCombobox;
-	public static JCheckBox pauseBehaviorBarCheckbox;
-	public static JCheckBox pauseBehaviorPlayheadCheckbox;
-	public static JCheckBox playheadSnapToBeatsCheckBox;
+	public static JCheckBox startFromBar;
+	public static JCheckBox rememberLastPos;
+	public static JCheckBox snapStartToBeat;
 	JCheckBox extraSettingsReverseDrumPanels;
 	JCheckBox extraSettingsOrderedTransposeGeneration;
 
@@ -556,6 +556,8 @@ public class VibeComposerGUI extends JFrame
 
 	JButton compose;
 	JButton regenerate;
+	JButton regenerateStopPlay;
+	JButton regeneratePausePlay;
 	JButton startMidi;
 	JButton stopMidi;
 	JButton pauseMidi;
@@ -1063,15 +1065,15 @@ public class VibeComposerGUI extends JFrame
 		JPanel pauseBehaviorPanel = new JPanel();
 		pauseBehaviorLabel = new JLabel("Start From Pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>(false);
-		pauseBehaviorBarCheckbox = new JCheckBox("Start From Bar", true);
-		pauseBehaviorPlayheadCheckbox = new JCheckBox("Remember Last Pos.", true);
-		playheadSnapToBeatsCheckBox = new JCheckBox("Snap Start To Beat", true);
-		playheadSnapToBeatsCheckBox.addActionListener(new ActionListener() {
+		startFromBar = new JCheckBox("Start From Bar", true);
+		rememberLastPos = new JCheckBox("Remember Last Pos.", true);
+		snapStartToBeat = new JCheckBox("Snap Start To Beat", true);
+		snapStartToBeat.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (slider.getSnapToTicks() != playheadSnapToBeatsCheckBox.isSelected()) {
-					slider.setSnapToTicks(playheadSnapToBeatsCheckBox.isSelected());
+				if (slider.getSnapToTicks() != snapStartToBeat.isSelected()) {
+					slider.setSnapToTicks(snapStartToBeat.isSelected());
 				}
 			}
 
@@ -1080,9 +1082,9 @@ public class VibeComposerGUI extends JFrame
 				pauseBehaviorCombobox);
 		pauseBehaviorPanel.add(pauseBehaviorLabel);
 		pauseBehaviorPanel.add(pauseBehaviorCombobox);
-		pauseBehaviorPanel.add(pauseBehaviorBarCheckbox);
-		pauseBehaviorPanel.add(pauseBehaviorPlayheadCheckbox);
-		pauseBehaviorPanel.add(playheadSnapToBeatsCheckBox);
+		pauseBehaviorPanel.add(startFromBar);
+		pauseBehaviorPanel.add(rememberLastPos);
+		pauseBehaviorPanel.add(snapStartToBeat);
 
 		JPanel customDrumMappingPanel = new JPanel();
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
@@ -3349,7 +3351,7 @@ public class VibeComposerGUI extends JFrame
 		slider.setMaximum(0);
 		//slider.setToolTipText("Test");
 		slider.setDisplayValues(false);
-		slider.setSnapToTicks(playheadSnapToBeatsCheckBox.isSelected());
+		slider.setSnapToTicks(snapStartToBeat.isSelected());
 		//slider.setMinimumSize(new Dimension(1000, 3));
 		slider.addMouseListener(new MouseAdapter() {
 
@@ -3596,7 +3598,7 @@ public class VibeComposerGUI extends JFrame
 										sequencer.setTempoFactor(
 												(float) (mainBpm.getInt() / guiConfig.getBpm()));
 									}
-									if (pauseBehaviorPlayheadCheckbox.isSelected()) {
+									if (rememberLastPos.isSelected()) {
 										savePauseInfo();
 									}
 								}
@@ -3814,6 +3816,23 @@ public class VibeComposerGUI extends JFrame
 		compose.setPreferredSize(new Dimension(80, 40));
 		compose.setFont(compose.getFont().deriveFont(Font.BOLD));
 		regenerate = makeButton("Regenerate", "Regenerate");
+		regenerateStopPlay = makeButton("R!", e -> {
+			stopMidi();
+			actionPerformed(new ActionEvent(regenerateStopPlay, ActionEvent.ACTION_PERFORMED,
+					"Regenerate"));
+		});
+		regeneratePausePlay = makeButton("R~", e -> {
+			boolean wasSelected = startFromBar.isSelected();
+			startFromBar.setSelected(false);
+			pauseMidi();
+			actionPerformed(new ActionEvent(regenerateStopPlay, ActionEvent.ACTION_PERFORMED,
+					"Regenerate"));
+			startFromBar.setSelected(wasSelected);
+		});
+		regenerateStopPlay.setMargin(new Insets(0, 0, 0, 0));
+		regeneratePausePlay.setMargin(new Insets(0, 0, 0, 0));
+		regenerateStopPlay.setPreferredSize(new Dimension(25, 30));
+		regeneratePausePlay.setPreferredSize(new Dimension(25, 30));
 		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
 		JButton copySeed = makeButton("Copy Main Seed", "CopySeed");
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
@@ -3822,6 +3841,8 @@ public class VibeComposerGUI extends JFrame
 		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
 
 		controlSettingsPanel.add(regenerate);
+		controlSettingsPanel.add(regenerateStopPlay);
+		controlSettingsPanel.add(regeneratePausePlay);
 		controlSettingsPanel.add(compose);
 		controlSettingsPanel.add(randomSeed);
 		controlSettingsPanel.add(copySeed);
@@ -4831,7 +4852,7 @@ public class VibeComposerGUI extends JFrame
 			LOGGER.info(("Size beats: " + sliderBeatStartTimes.size()));
 			LOGGER.info(("What beats: " + sliderBeatStartTimes.toString()));*/
 
-			if (pauseBehaviorBarCheckbox.isSelected()) {
+			if (startFromBar.isSelected()) {
 				int snapAdjustment = 50;
 				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
 			}
@@ -4857,7 +4878,7 @@ public class VibeComposerGUI extends JFrame
 							&& pausedSliderPosition < slider.getMaximum() - 100);
 
 					if (unpause) {
-						long startPos = (pauseBehaviorBarCheckbox.isSelected())
+						long startPos = (startFromBar.isSelected())
 								? sliderMeasureStartTimes.get(pausedMeasureCounter)
 								: pausedSliderPosition;
 						if (startPos < slider.getValue()) {
@@ -5269,33 +5290,34 @@ public class VibeComposerGUI extends JFrame
 		// midi generation
 		if (isCompose || isRegenerate) {
 			switchMidiButtons(false);
-
-
-			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			composeMidi(isRegenerate);
+			switchMidiButtons(true);
+			repaint();
+			/*SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 				@Override
 				protected Void doInBackground()
 						throws InterruptedException, MidiUnavailableException, IOException {
 					try {
-						composeMidi(isRegenerate);
+						
 					} catch (Throwable ex) {
 						ex.printStackTrace();
 						return null;
 					}
-
+			
 					return null;
 				}
-
+			
 				@Override
 				protected void done() {
-					switchMidiButtons(true);
-
+					
+			
 					//sizeRespectingPack();
-					repaint();
+					
 				}
-			};
+			};*/
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
-			worker.execute();
+			//worker.execute();
 
 		}
 
@@ -6271,9 +6293,9 @@ public class VibeComposerGUI extends JFrame
 		cs.add(useAllInsts);
 		//cs.add(bannedInsts);
 		cs.add(pauseBehaviorCombobox);
-		cs.add(pauseBehaviorBarCheckbox);
-		cs.add(pauseBehaviorPlayheadCheckbox);
-		cs.add(playheadSnapToBeatsCheckBox);
+		cs.add(startFromBar);
+		cs.add(rememberLastPos);
+		cs.add(snapStartToBeat);
 		cs.add(bpmLow);
 		cs.add(bpmHigh);
 		cs.add(elongateMidi);
