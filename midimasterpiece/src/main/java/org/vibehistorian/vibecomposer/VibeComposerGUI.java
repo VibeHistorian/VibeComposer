@@ -6935,10 +6935,6 @@ public class VibeComposerGUI extends JFrame
 		/*int[] drumHitGrid = IntStream.iterate(0, e -> e).limit(chords * maxPatternPerChord)
 				.toArray();*/
 		for (int i = 0; i < panelCount; i++) {
-			DrumPart dpart = DrumDefaults.getDrumFromInstrument(pitches.get(i));
-			int order = DrumDefaults.getOrder(dpart.getInstrument());
-			DrumSettings settings = DrumDefaults.drumSettings[order];
-			settings.applyToDrumPart(dpart, lastRandomSeed);
 			DrumPanel dp = null;
 			if (randomizedPanel != null) {
 				dp = randomizedPanel;
@@ -6949,6 +6945,13 @@ public class VibeComposerGUI extends JFrame
 					dp = (DrumPanel) addInstPanelToLayout(4);
 				}
 			}
+
+			DrumPart dpart = DrumDefaults.getDrumFromInstrument(
+					!dp.getInstrumentBox().isEnabled() ? dp.getInstrument() : pitches.get(i));
+			int order = DrumDefaults.getOrder(dpart.getInstrument());
+			DrumSettings settings = DrumDefaults.drumSettings[order];
+			settings.applyToDrumPart(dpart, lastRandomSeed);
+
 
 			dpart.setOrder(dp.getPanelOrder());
 			dpart.setMuted(dp.getMuteInst());
@@ -7218,7 +7221,8 @@ public class VibeComposerGUI extends JFrame
 			}
 			InstUtils.POOL pool = cp.getInstPool();
 
-			if (randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
+			if ((randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
+					&& cp.getInstrumentBox().isEnabled()) {
 				pool = (chordPanelGenerator.nextInt(100) < Integer
 						.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
 								: InstUtils.POOL.PLUCK;
@@ -7457,7 +7461,9 @@ public class VibeComposerGUI extends JFrame
 						fixedInstrument = instrument;
 					}
 				}
-				ap.setInstrument(instrument);
+				if (ap.getInstrumentBox().isEnabled()) {
+					ap.setInstrument(instrument);
+				}
 			}
 
 			ap.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
