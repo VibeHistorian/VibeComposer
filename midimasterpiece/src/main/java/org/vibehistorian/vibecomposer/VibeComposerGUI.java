@@ -1127,9 +1127,9 @@ public class VibeComposerGUI extends JFrame
 		JPanel bpmLowHighPanel = new JPanel();
 
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
-		bpmLow = new KnobPanel("Min<br>BPM.", 65, 20, 249);
+		bpmLow = new KnobPanel("Min<br>BPM.", 50, 20, 249);
 		bpmLow.setRegenerating(false);
-		bpmHigh = new KnobPanel("Max<br>BPM.", 130, 21, 250);
+		bpmHigh = new KnobPanel("Max<br>BPM.", 110, 21, 250);
 		bpmHigh.setRegenerating(false);
 		elongateMidi = new KnobPanel("Elongate MIDI%:", 100, 25, 400);
 		elongateMidi.getKnob().setTickSpacing(25);

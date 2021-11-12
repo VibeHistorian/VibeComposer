@@ -55,6 +55,7 @@ public class DrumDefaults {
 		kickSettings.setHits(new Integer[] { 8, 8, 8, 8, 8, 16 });
 		kickSettings.setChords(new Integer[] { 1, 1, 1, 2, 1, 1 });
 		kickSettings.setShift(new Integer[] { 0, 0, 0, 0, 0, 0 });
+		kickSettings.maxExc = 5;
 
 		snareSettings = new DrumSettings();
 		snareSettings.setPatterns(
@@ -83,6 +84,7 @@ public class DrumDefaults {
 		rideSettings.setChords(new Integer[] { 1, 1 });
 		rideSettings.setShift(new Integer[] { 2, 6 });
 		rideSettings.setVariableShift(true);
+		rideSettings.maxExc = 0;
 		//rideSettings.melodyable = true;
 
 		percsSettings = new DrumSettings();
