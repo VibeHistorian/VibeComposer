@@ -27,6 +27,7 @@ public class RangeSlider extends JSlider {
 	private int upperDraggingSnapToTicks = 0;
 	private List<Integer> customMajorTicks = null;
 	private List<Integer> customMinorTicks = null;
+	private boolean draggableRange = true;
 
 
 	/**
@@ -177,4 +178,14 @@ public class RangeSlider extends JSlider {
 	public void setCustomMinorTicks(List<Integer> customMinorTicks) {
 		this.customMinorTicks = customMinorTicks;
 	}
+
+	public boolean isDraggableRange() {
+		return draggableRange;
+	}
+
+	public void setDraggableRange(boolean draggableRange) {
+		this.draggableRange = draggableRange;
+	}
+
+
 }

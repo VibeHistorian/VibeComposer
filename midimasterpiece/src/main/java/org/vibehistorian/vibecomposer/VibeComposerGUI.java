@@ -879,7 +879,7 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridwidth = 3;
 		constraints.gridheight = 1;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(mainTitle, constraints);
+		//everythingPanel.add(mainTitle, constraints);
 		constraints.gridy = 1;
 		//everythingPanel.add(subTitle, constraints);
 
