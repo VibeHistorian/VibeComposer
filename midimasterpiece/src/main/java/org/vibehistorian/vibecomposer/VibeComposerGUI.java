@@ -2738,6 +2738,8 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
+		//scrollableArrangementActualTable.setDefaultRenderer(Iterable.class, new ListCellRenderer());
+
 		scrollableArrangementActualTable.setRowHeight(35);
 		scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
 		scrollableArrangementActualTable.setModel(actualArrangement.convertToActualTableModel());
@@ -2843,7 +2845,7 @@ public class VibeComposerGUI extends JFrame
 		if (row >= 2) {
 
 			// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
-
+			//LOGGER.debug("Comp class: " + comp.getClass());
 			if (value.isEmpty() || value.equalsIgnoreCase("*")) {
 				comp.setBackground(panelColorLow.darker());
 			} else {
@@ -6369,7 +6371,7 @@ public class VibeComposerGUI extends JFrame
 		} else {
 			arrangement.setPreviewChorus(false);
 		}
-		arrangement.setFromModel(scrollableArrangementTable);
+		arrangement.setFromTable(scrollableArrangementTable);
 		boolean overrideSuccessful = manualArrangement.isSelected()
 				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
 		LOGGER.debug(("OVERRIDE OK?: " + overrideSuccessful));

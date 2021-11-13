@@ -257,7 +257,7 @@ public class Arrangement {
 		return model;
 	}
 
-	public void setFromModel(JTable t) {
+	public void setFromTable(JTable t) {
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		sections.clear();
