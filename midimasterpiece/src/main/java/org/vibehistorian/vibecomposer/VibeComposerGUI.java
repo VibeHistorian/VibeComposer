@@ -59,6 +59,7 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
@@ -142,6 +143,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.CheckButton;
+import org.vibehistorian.vibecomposer.Helpers.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
@@ -2630,7 +2632,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
-				String value = (String) getModel().getValueAt(row,
+				Object value = getModel().getValueAt(row,
 						scrollableArrangementActualTable.convertColumnIndexToModel(col));
 				comp.setForeground(isDarkMode ? arrangementDarkModeText : arrangementLightModeText);
 				if (value == null)
@@ -2648,11 +2650,20 @@ public class VibeComposerGUI extends JFrame
 					comp.setBackground(new Color(100, 150, 150));
 					return comp;
 				}
-				arrangementTableProcessComponent(comp, row, col, value,
+
+				int height = (int) ((VibeComposerGUI.scrollPaneDimension.getHeight() - 50)
+						/ getModel().getRowCount());
+				int width = (int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 100)
+						/ getModel().getColumnCount());
+				Collection<? extends Object> stringables = value instanceof String
+						? Collections.singleton((String) value)
+						: (Collection<? extends Object>) value;
+
+				/*arrangementTableProcessComponent(comp, row, col, value,
 						new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
 								arpPanels.size(), drumPanels.size() },
-						true);
-				return comp;
+						true);*/
+				return new CollectionCellRenderer(stringables, width, height);
 			}
 		};
 		scrollableArrangementActualTable.addMouseListener(new java.awt.event.MouseAdapter() {
