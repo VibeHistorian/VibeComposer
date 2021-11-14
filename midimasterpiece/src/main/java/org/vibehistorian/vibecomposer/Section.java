@@ -685,6 +685,25 @@ public class Section {
 		return count / total;
 	}
 
+	public double countVariationsForPartAndOrder(int part, int order) {
+		if (partPresenceVariationMap == null) {
+			return 0;
+		}
+		double count = 0;
+		double total = 0;
+		Object[][] data = partPresenceVariationMap.get(part);
+		if (data == null || order >= data.length) {
+			return 0;
+		}
+		for (int j = 2; j < data[order].length; j++) {
+			if (data[order][j] == Boolean.TRUE) {
+				count++;
+			}
+			total++;
+		}
+		return count / total;
+	}
+
 	public void recalculatePartVariationMapBoundsIfNeeded() {
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {

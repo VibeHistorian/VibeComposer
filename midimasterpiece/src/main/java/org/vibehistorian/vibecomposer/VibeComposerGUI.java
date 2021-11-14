@@ -2663,7 +2663,7 @@ public class VibeComposerGUI extends JFrame
 						new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
 								arpPanels.size(), drumPanels.size() },
 						true);*/
-				return new CollectionCellRenderer(stringables, width, height);
+				return new CollectionCellRenderer(stringables, width, height, row - 2, col);
 			}
 		};
 		scrollableArrangementActualTable.addMouseListener(new java.awt.event.MouseAdapter() {
