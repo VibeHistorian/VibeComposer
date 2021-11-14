@@ -34,6 +34,7 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Transferable;
@@ -2599,7 +2600,7 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				LOGGER.info(("MOVED"));
+				LOGGER.debug(("MOVED HEADER"));
 				arrangement.resortByIndexes(scrollableArrangementTable, false);
 				arrangementTableColumnDragging = false;
 			}
@@ -2610,7 +2611,7 @@ public class VibeComposerGUI extends JFrame
 				int row = scrollableArrangementTable.rowAtPoint(evt.getPoint());
 				int secOrder = scrollableArrangementTable.columnAtPoint(evt.getPoint());
 
-				LOGGER.info(("Clicked! " + row + ", " + secOrder));
+				//LOGGER.info(("Clicked! " + row + ", " + secOrder));
 				if (row == 0 && secOrder >= 0) {
 					boolean rClick = SwingUtilities.isRightMouseButton(evt);
 					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
@@ -2651,8 +2652,7 @@ public class VibeComposerGUI extends JFrame
 					return comp;
 				}
 
-				int height = (int) ((VibeComposerGUI.scrollPaneDimension.getHeight() - 50)
-						/ getModel().getRowCount());
+				int height = (int) (350 / getModel().getRowCount());
 				int width = (int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 100)
 						/ getModel().getColumnCount());
 				Collection<? extends Object> stringables = value instanceof String
@@ -2672,7 +2672,21 @@ public class VibeComposerGUI extends JFrame
 				int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
 				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
-				LOGGER.info(("Clicked! " + row + ", " + secOrder));
+				Point point = scrollableArrangementActualTable.getLocation();
+				SwingUtilities.convertPointToScreen(point, scrollableArrangementActualTable);
+
+				Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);
+				point.x -= r.x;
+				point.y += r.y;
+				Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+				point.x -= mousePoint.x;
+				point.y -= mousePoint.y;
+				point.x *= -1;
+				LOGGER.debug(point.toString());
+
+				LOGGER.debug("x is % in cell: " + point.x / (double) r.width);
+
+				LOGGER.debug(("Clicked! " + row + ", " + secOrder));
 				boolean rClick = SwingUtilities.isRightMouseButton(evt);
 				boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 				if (row == 0 && secOrder >= 0) {
@@ -2684,7 +2698,7 @@ public class VibeComposerGUI extends JFrame
 				} else if (row >= 2 && secOrder >= 0) {
 					int part = row - 2;
 					if (rClick || mClick) {
-						LOGGER.info(("Clickable! rClick: " + rClick));
+						//LOGGER.debug(("Clickable! rClick: " + rClick));
 						Section sec = actualArrangement.getSections().get(secOrder);
 						boolean hasPresence = !sec.getPresence(part).isEmpty();
 						boolean hasVariation = hasPresence && sec.hasVariation(part);
@@ -2742,6 +2756,7 @@ public class VibeComposerGUI extends JFrame
 						setActualModel(actualArrangement.convertToActualTableModel(), false);
 						refreshVariationPopupButtons(actualArrangement.getSections().size());
 						manualArrangement.setSelected(true);
+						manualArrangement.repaint();
 						scrollableArrangementActualTable.repaint();
 					}
 

@@ -68,12 +68,13 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			g.setColor(panelC);
 			g.fillRect(0, 0, width, height);
 			Color c = panelC;
-			c = OMNI.mixColor(c, VibeComposerGUI.instColors[part], 0.5);
+			c = OMNI.mixColor(c, VibeComposerGUI.instColors[part], part > 0 ? 0.5 : 0.7);
 
-			int guiPanelsCount = VibeComposerGUI.getInstList(part).size();
+			int guiPanelsCount = (int) VibeComposerGUI.getInstList(part).stream()
+					.filter(e -> !e.getMuteInst()).count();
 			int alphaValue = 0;
 			if (guiPanelsCount > 0) {
-				alphaValue = 240 * stringables.size() / guiPanelsCount;
+				alphaValue = 240;
 			}
 			c = OMNI.alphen(c, alphaValue);
 			g.setColor(c);
@@ -82,7 +83,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 
 			//g.setColor(OMNI.alphen(Color.black, 127));
 			if (stringables.size() > 0) {
-				int widthDivider = Math.max(8, stringables.size());
+				int widthDivider = Math.max(8, guiPanelsCount);
 
 				double x = 0;
 				Color mixC = Color.white;
@@ -90,19 +91,35 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
 					double startX = x;
 					double endX = (x + (width / (double) widthDivider));
+					int counter = 0;
 					for (Object o : stringables) {
+						String num = o.toString();
+						int partOrder = MidiGenerator.getAbsoluteOrder(part, Integer.valueOf(num));
+						if (counter < partOrder) {
+							x += (endX - startX) * (partOrder - counter);
+							counter = partOrder;
+						}
+
 						startX = x;
 						endX = (x + (width / (double) widthDivider));
-						String num = o.toString();
+
 						g.setColor(OMNI.mixColor(c, panelC,
-								(1 - sec.countVariationsForPartAndOrder(part,
-										MidiGenerator.getAbsoluteOrder(part, Integer.valueOf(num))))
-										/ 1.5));
-						g.fillRect((int) startX, 0, (int) (endX - startX), height);
+								(1 - sec.countVariationsForPartAndOrder(part, partOrder)) / 1.5));
+						g.fillRect((int) startX + 1, 0, (int) (endX - startX), height);
+						g.setColor(new Color(230, 230, 230));
+						if (num.length() == 1) {
+							g.drawString(num, (int) ((startX + endX) / 2 - 3), height / 2);
+						} else {
+							g.drawString(num.substring(0, 1), (int) ((startX + endX) / 2 - 3),
+									10 * height / 27);
+							g.drawString(num.substring(1), (int) ((startX + endX) / 2 - 3),
+									10 * height / 16);
+						}
 						g.setColor(Color.black);
-						g.drawString(num, (int) ((startX + endX) / 2 - 5), height / 2);
+						g.drawLine((int) startX, 0, (int) startX, height);
 						g.drawLine((int) endX, 0, (int) endX, height);
 						x = endX;
+						counter++;
 					}
 
 					if (sec.getInstPartList(part) != null) {

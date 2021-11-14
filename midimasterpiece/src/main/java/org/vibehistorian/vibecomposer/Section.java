@@ -434,7 +434,7 @@ public class Section {
 			Map<Integer, Object[][]> inclusionMap) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
-		System.out.println("Chance: " + chance);
+		//System.out.println("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
 		panels.removeIf(e -> e.getMuteInst());
 		if (inclusionMap != null) {
