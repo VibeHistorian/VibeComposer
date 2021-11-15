@@ -2738,23 +2738,25 @@ public class VibeComposerGUI extends JFrame
 								}
 							}
 						} else {
-							Point point = scrollableArrangementActualTable.getLocation();
-							SwingUtilities.convertPointToScreen(point,
+							Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+							Point tablePoint = scrollableArrangementActualTable.getLocation();
+							SwingUtilities.convertPointToScreen(tablePoint,
 									scrollableArrangementActualTable);
-
 							Rectangle r = scrollableArrangementActualTable.getCellRect(row,
 									secOrder, false);
-							point.x -= r.x;
-							point.y += r.y;
-							Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-							point.x -= mousePoint.x;
-							point.y -= mousePoint.y;
-							point.x *= -1;
+							/*LOGGER.debug("Mouse point: " + mousePoint.toString());
+							LOGGER.debug("Table point: " + tablePoint.toString());
+							LOGGER.debug(r.toString());*/
 
-							LOGGER.debug(r.toString());
-							double orderPercentage = point.x / (double) r.width;
-							orderPercentage = OMNI.clamp(orderPercentage - 2 * secOrder, 0.01,
-									0.99);
+							mousePoint.x -= tablePoint.x;
+							mousePoint.y -= tablePoint.y;
+
+							mousePoint.x -= r.x;
+							mousePoint.y -= r.y;
+
+
+							double orderPercentage = OMNI.clamp(mousePoint.x / (double) r.width,
+									0.01, 0.99);
 							LOGGER.debug("x is % in cell: " + orderPercentage);
 
 							int actualSize = getInstList(part).size();
