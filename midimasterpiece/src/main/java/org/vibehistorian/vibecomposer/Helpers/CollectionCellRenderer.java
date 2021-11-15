@@ -80,14 +80,15 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			//g.fillRect(0, 0, width, height);
 
 			//g.setColor(OMNI.alphen(Color.black, 127));
-			int widthDivider = Math.max(8, guiPanelsCount);
+			int widthDivider = Math.max(9, guiPanelsCount + 1);
+			double widthDividerValue = (width / (double) widthDivider);
 
 			double x = 0;
 			Color mixC = Color.white;
 			if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
 				Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
 				double startX = x;
-				double endX = (x + (width / (double) widthDivider));
+				double endX = (x + widthDividerValue);
 				int counter = 0;
 				for (Object o : stringables) {
 					String num = o.toString();
@@ -103,7 +104,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					}
 
 					startX = x;
-					endX = (x + (width / (double) widthDivider));
+					endX = (x + widthDividerValue);
 
 					g.setColor(OMNI.mixColor(c, panelC,
 							(1 - sec.countVariationsForPartAndOrder(part, partOrder)) / 1.5));
@@ -128,11 +129,20 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 				g.setColor(OMNI.alphen(Color.black, 45));
 				for (int i = 0; i < guiPanelsCount; i++) {
 					startX = x;
-					endX = (x + (width / (double) widthDivider));
+					endX = (x + widthDividerValue);
 					g.drawLine((int) startX, 0, (int) startX, height);
 					g.drawLine((int) endX, 0, (int) endX, height);
 					x = endX;
 				}
+				g.setColor(OMNI.alphen(Color.black, 60));
+				startX = width - widthDividerValue;
+				g.drawLine((int) startX, 0, (int) startX, height);
+				endX = width;
+				g.setColor(OMNI.alphen(new Color(230, 230, 230), 15));
+				g.fillRect((int) startX, 0, (int) widthDividerValue, height);
+				g.setColor(OMNI.alphen(Color.black, 100));
+				g.drawString("?", (int) ((startX + endX) / 2 - 3), height / 2);
+
 
 				if (sec.getInstPartList(part) != null) {
 					g.setColor(OMNI.alphen(Color.black, 100));

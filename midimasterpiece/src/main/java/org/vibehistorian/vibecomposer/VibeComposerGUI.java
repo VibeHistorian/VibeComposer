@@ -2690,6 +2690,41 @@ public class VibeComposerGUI extends JFrame
 						boolean hasPresence = !sec.getPresence(part).isEmpty();
 						boolean hasVariation = hasPresence && sec.hasVariation(part);
 
+						Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+						Point tablePoint = scrollableArrangementActualTable.getLocation();
+						SwingUtilities.convertPointToScreen(tablePoint,
+								scrollableArrangementActualTable);
+						Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder,
+								false);
+						/*LOGGER.debug("Mouse point: " + mousePoint.toString());
+						LOGGER.debug("Table point: " + tablePoint.toString());
+						LOGGER.debug(r.toString());*/
+
+						mousePoint.x -= tablePoint.x;
+						mousePoint.y -= tablePoint.y;
+
+						mousePoint.x -= r.x;
+						mousePoint.y -= r.y;
+
+
+						double orderPercentage = OMNI.clamp(mousePoint.x / (double) r.width, 0.01,
+								0.99);
+
+						int actualSize = getInstList(part).size();
+						int visualSize = Math.max(9, actualSize + 1);
+						int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
+
+						LOGGER.debug("Selected subcell: " + (partAbsoluteOrder + 1));
+						boolean shiftOverrideButton = false;
+						if (partAbsoluteOrder == actualSize
+								|| (partAbsoluteOrder > actualSize && partAbsoluteOrder == 8)) {
+							shiftOverrideButton = true;
+						} else if (partAbsoluteOrder > actualSize) {
+							LOGGER.debug("Can't interact: subcell not present in part - "
+									+ (partAbsoluteOrder + 1));
+							return;
+						}
+
 						if (evt.isControlDown()) {
 							if (hasPresence) {
 								int secOrder2 = secOrder;
@@ -2717,7 +2752,7 @@ public class VibeComposerGUI extends JFrame
 								}
 
 							}
-						} else if (evt.isShiftDown()) {
+						} else if (evt.isShiftDown() || shiftOverrideButton) {
 							if (mClick) {
 								if (hasVariation) {
 									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
@@ -2738,36 +2773,6 @@ public class VibeComposerGUI extends JFrame
 								}
 							}
 						} else {
-							Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-							Point tablePoint = scrollableArrangementActualTable.getLocation();
-							SwingUtilities.convertPointToScreen(tablePoint,
-									scrollableArrangementActualTable);
-							Rectangle r = scrollableArrangementActualTable.getCellRect(row,
-									secOrder, false);
-							/*LOGGER.debug("Mouse point: " + mousePoint.toString());
-							LOGGER.debug("Table point: " + tablePoint.toString());
-							LOGGER.debug(r.toString());*/
-
-							mousePoint.x -= tablePoint.x;
-							mousePoint.y -= tablePoint.y;
-
-							mousePoint.x -= r.x;
-							mousePoint.y -= r.y;
-
-
-							double orderPercentage = OMNI.clamp(mousePoint.x / (double) r.width,
-									0.01, 0.99);
-							LOGGER.debug("x is % in cell: " + orderPercentage);
-
-							int actualSize = getInstList(part).size();
-							int visualSize = Math.max(8, actualSize);
-							int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
-							if (partAbsoluteOrder >= actualSize) {
-								LOGGER.debug(
-										"Can't interact: order too high - " + partAbsoluteOrder);
-								return;
-							}
-
 							boolean hasSinglePresence = sec.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
 							boolean hasSingleVariation = hasSinglePresence
