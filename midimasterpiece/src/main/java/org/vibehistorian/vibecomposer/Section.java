@@ -487,8 +487,22 @@ public class Section {
 			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
 			addVariation(part, pres - 1, Collections.singletonList(randVar));
 		}
+	}
 
-
+	public void generateVariationForPartAndOrder(Random presRand, int part, int order) {
+		initPartMapIfNull();
+		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		int added = 0;
+		for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
+			if (presRand.nextInt(100) < chance) {
+				addVariation(part, order, Collections.singletonList(j - 2));
+				added++;
+			}
+		}
+		if (added == 0) {
+			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
+			addVariation(part, order, Collections.singletonList(randVar));
+		}
 	}
 
 	public int getChanceForInst(int inst) {

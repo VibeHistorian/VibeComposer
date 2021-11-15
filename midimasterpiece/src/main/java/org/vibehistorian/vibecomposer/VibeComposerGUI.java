@@ -2672,19 +2672,6 @@ public class VibeComposerGUI extends JFrame
 				int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
 				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
-				Point point = scrollableArrangementActualTable.getLocation();
-				SwingUtilities.convertPointToScreen(point, scrollableArrangementActualTable);
-
-				Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);
-				point.x -= r.x;
-				point.y += r.y;
-				Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-				point.x -= mousePoint.x;
-				point.y -= mousePoint.y;
-				point.x *= -1;
-				LOGGER.debug(point.toString());
-
-				LOGGER.debug("x is % in cell: " + point.x / (double) r.width);
 
 				LOGGER.debug(("Clicked! " + row + ", " + secOrder));
 				boolean rClick = SwingUtilities.isRightMouseButton(evt);
@@ -2730,7 +2717,7 @@ public class VibeComposerGUI extends JFrame
 								}
 
 							}
-						} else {
+						} else if (evt.isShiftDown()) {
 							if (mClick) {
 								if (hasVariation) {
 									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
@@ -2748,6 +2735,54 @@ public class VibeComposerGUI extends JFrame
 									arrangement.initPartInclusionMapIfNull();
 									sec.generatePresences(new Random(), part,
 											arrangement.getPartInclusionMap());
+								}
+							}
+						} else {
+							Point point = scrollableArrangementActualTable.getLocation();
+							SwingUtilities.convertPointToScreen(point,
+									scrollableArrangementActualTable);
+
+							Rectangle r = scrollableArrangementActualTable.getCellRect(row,
+									secOrder, false);
+							point.x -= r.x;
+							point.y += r.y;
+							Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+							point.x -= mousePoint.x;
+							point.y -= mousePoint.y;
+							point.x *= -1;
+
+							LOGGER.debug(r.toString());
+							double orderPercentage = point.x / (double) r.width;
+							orderPercentage = OMNI.clamp(orderPercentage - 2 * secOrder, 0.01,
+									0.99);
+							LOGGER.debug("x is % in cell: " + orderPercentage);
+
+							int actualSize = getInstList(part).size();
+							int visualSize = Math.max(8, actualSize);
+							int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
+							if (partAbsoluteOrder >= actualSize) {
+								return;
+							}
+
+							boolean hasSinglePresence = sec.getPresence(part).contains(
+									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+							boolean hasSingleVariation = !sec.getVariation(part, partAbsoluteOrder)
+									.isEmpty();
+
+							if (mClick) {
+								if (hasSingleVariation) {
+									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+										sec.removeVariationForPart(part, partAbsoluteOrder, i);
+									}
+								} else if (hasSinglePresence) {
+									sec.generateVariationForPartAndOrder(new Random(), part,
+											partAbsoluteOrder);
+								}
+							} else {
+								if (hasSinglePresence) {
+									sec.resetPresence(part, partAbsoluteOrder);
+								} else {
+									sec.setPresence(part, partAbsoluteOrder);
 								}
 							}
 						}

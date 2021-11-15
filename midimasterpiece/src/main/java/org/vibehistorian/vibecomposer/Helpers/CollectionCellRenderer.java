@@ -70,8 +70,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			Color c = panelC;
 			c = OMNI.mixColor(c, VibeComposerGUI.instColors[part], part > 0 ? 0.5 : 0.7);
 
-			int guiPanelsCount = (int) VibeComposerGUI.getInstList(part).stream()
-					.filter(e -> !e.getMuteInst()).count();
+			int guiPanelsCount = VibeComposerGUI.getInstList(part).size();
 			int alphaValue = 0;
 			if (guiPanelsCount > 0) {
 				alphaValue = 240;
