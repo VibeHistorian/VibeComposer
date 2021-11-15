@@ -439,7 +439,7 @@ public class Section {
 		panels.removeIf(e -> e.getMuteInst());
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
-				int absOrder = MidiGenerator.getAbsoluteOrder(part, e.getPanelOrder());
+				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
 				//System.out.println("Abs order: " + absOrder);
 				//System.out.println("Offset+2: " + (getTypeMelodyOffset() + 2));
 				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
@@ -455,13 +455,13 @@ public class Section {
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
 				setPresence(part,
-						MidiGenerator.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
+						VibeComposerGUI.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
 				added++;
 			}
 		}
 		if (added == 0 && panels.size() > 0) {
 			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
-			setPresence(part, MidiGenerator.getAbsoluteOrder(part, panel.getPanelOrder()));
+			setPresence(part, VibeComposerGUI.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
 
 	}

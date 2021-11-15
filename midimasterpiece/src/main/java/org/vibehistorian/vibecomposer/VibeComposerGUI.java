@@ -2323,7 +2323,7 @@ public class VibeComposerGUI extends JFrame
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
 									pCopy.setFromInstPart(
-											ip.get(MidiGenerator.getAbsoluteOrder(i, order)));
+											ip.get(VibeComposerGUI.getAbsoluteOrder(i, order)));
 									sectionPanels.add(pCopy);
 								}
 							}
@@ -2710,7 +2710,7 @@ public class VibeComposerGUI extends JFrame
 									sec2.removeVariationForAllParts(part, i);
 								}
 								for (Integer p : sec.getPresence(part)) {
-									int absOrder = MidiGenerator.getAbsoluteOrder(part, p);
+									int absOrder = VibeComposerGUI.getAbsoluteOrder(part, p);
 									sec2.setPresence(part, absOrder);
 									sec2.setVariation(part, absOrder,
 											sec.getVariation(part, absOrder));
@@ -3812,7 +3812,7 @@ public class VibeComposerGUI extends JFrame
 					int ignoreFillIndex = tabIndex == 4 ? 1 : 2;
 					isIgnoreFill = sec
 							.getVariation(tabIndex,
-									MidiGenerator.getAbsoluteOrder(tabIndex, ip.getPanelOrder()))
+									VibeComposerGUI.getAbsoluteOrder(tabIndex, ip.getPanelOrder()))
 							.contains(ignoreFillIndex);
 				}
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
@@ -7809,6 +7809,16 @@ public class VibeComposerGUI extends JFrame
 		}
 		return array[array.length - 1];
 
+	}
+
+	public static int getAbsoluteOrder(int partNum, int partOrder) {
+		List<? extends InstPanel> panels = getInstList(partNum);
+		for (int i = 0; i < panels.size(); i++) {
+			if (panels.get(i).getPanelOrder() == partOrder) {
+				return i;
+			}
+		}
+		throw new IllegalArgumentException("Absolute order not found!");
 	}
 
 	public static void pianoRoll() {

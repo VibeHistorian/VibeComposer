@@ -4967,17 +4967,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static int getAbsoluteOrder(int partNum, InstPart part) {
-		return getAbsoluteOrder(partNum, part.getOrder());
-	}
-
-	public static int getAbsoluteOrder(int partNum, int partOrder) {
-		List<? extends InstPanel> panels = VibeComposerGUI.getInstList(partNum);
-		for (int i = 0; i < panels.size(); i++) {
-			if (panels.get(i).getPanelOrder() == partOrder) {
-				return i;
-			}
-		}
-		throw new IllegalArgumentException("Absolute order not found!");
+		return VibeComposerGUI.getAbsoluteOrder(partNum, part.getOrder());
 	}
 
 	protected Phrase fillChordSlash(List<int[]> actualProgression, int measures) {

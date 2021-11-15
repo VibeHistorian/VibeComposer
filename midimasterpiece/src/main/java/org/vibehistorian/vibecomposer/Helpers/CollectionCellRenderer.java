@@ -13,7 +13,6 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -81,50 +80,58 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			//g.fillRect(0, 0, width, height);
 
 			//g.setColor(OMNI.alphen(Color.black, 127));
-			if (stringables.size() > 0) {
-				int widthDivider = Math.max(8, guiPanelsCount);
+			int widthDivider = Math.max(8, guiPanelsCount);
 
-				double x = 0;
-				Color mixC = Color.white;
-				if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
-					Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
-					double startX = x;
-					double endX = (x + (width / (double) widthDivider));
-					int counter = 0;
-					for (Object o : stringables) {
-						String num = o.toString();
-						int partOrder = MidiGenerator.getAbsoluteOrder(part, Integer.valueOf(num));
-						if (counter < partOrder) {
-							x += (endX - startX) * (partOrder - counter);
-							counter = partOrder;
-						}
-
-						startX = x;
-						endX = (x + (width / (double) widthDivider));
-
-						g.setColor(OMNI.mixColor(c, panelC,
-								(1 - sec.countVariationsForPartAndOrder(part, partOrder)) / 1.5));
-						g.fillRect((int) startX + 1, 0, (int) (endX - startX), height);
-						g.setColor(new Color(230, 230, 230));
-						if (num.length() == 1) {
-							g.drawString(num, (int) ((startX + endX) / 2 - 3), height / 2);
-						} else {
-							g.drawString(num.substring(0, 1), (int) ((startX + endX) / 2 - 3),
-									10 * height / 27);
-							g.drawString(num.substring(1), (int) ((startX + endX) / 2 - 3),
-									10 * height / 16);
-						}
-						g.setColor(Color.black);
-						g.drawLine((int) startX, 0, (int) startX, height);
-						g.drawLine((int) endX, 0, (int) endX, height);
-						x = endX;
-						counter++;
+			double x = 0;
+			Color mixC = Color.white;
+			if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
+				Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
+				double startX = x;
+				double endX = (x + (width / (double) widthDivider));
+				int counter = 0;
+				for (Object o : stringables) {
+					String num = o.toString();
+					int partOrder = VibeComposerGUI.getAbsoluteOrder(part, Integer.valueOf(num));
+					if (counter < partOrder) {
+						x += (endX - startX) * (partOrder - counter);
+						counter = partOrder;
 					}
 
-					if (sec.getInstPartList(part) != null) {
-						g.setColor(OMNI.alphen(Color.black, 100));
-						g.fillRect(0, 2 + height / 2, (int) endX, height / 5 - 2);
+					startX = x;
+					endX = (x + (width / (double) widthDivider));
+
+					g.setColor(OMNI.mixColor(c, panelC,
+							(1 - sec.countVariationsForPartAndOrder(part, partOrder)) / 1.5));
+					g.fillRect((int) startX + 1, 0, (int) (endX - startX), height);
+					g.setColor(new Color(230, 230, 230));
+					if (num.length() == 1) {
+						g.drawString(num, (int) ((startX + endX) / 2 - 3), height / 2);
+					} else {
+						g.drawString(num.substring(0, 1), (int) ((startX + endX) / 2 - 3),
+								10 * height / 27);
+						g.drawString(num.substring(1), (int) ((startX + endX) / 2 - 3),
+								10 * height / 16);
 					}
+					g.setColor(Color.black);
+					g.drawLine((int) startX, 0, (int) startX, height);
+					g.drawLine((int) endX, 0, (int) endX, height);
+					x = endX;
+					counter++;
+				}
+				x = 0;
+
+				g.setColor(OMNI.alphen(Color.black, 45));
+				for (int i = 0; i < guiPanelsCount; i++) {
+					startX = x;
+					endX = (x + (width / (double) widthDivider));
+					g.drawLine((int) startX, 0, (int) startX, height);
+					g.drawLine((int) endX, 0, (int) endX, height);
+					x = endX;
+				}
+
+				if (sec.getInstPartList(part) != null) {
+					g.setColor(OMNI.alphen(Color.black, 100));
+					g.fillRect(0, 2 + height / 2, (int) endX, height / 5 - 2);
 				}
 			}
 
