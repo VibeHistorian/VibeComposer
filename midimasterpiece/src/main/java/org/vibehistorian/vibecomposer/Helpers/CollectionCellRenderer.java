@@ -25,6 +25,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private Collection<? extends Object> stringables = new ArrayList<>();
 	private int part = 0;
 	private int section = 0;
+	public static final int MIN_CELLS = 8;
 
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
 			int col) {
@@ -80,7 +81,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			//g.fillRect(0, 0, width, height);
 
 			//g.setColor(OMNI.alphen(Color.black, 127));
-			int widthDivider = Math.max(9, guiPanelsCount + 1);
+			int widthDivider = Math.max(CollectionCellRenderer.MIN_CELLS + 1, guiPanelsCount + 1);
 			double widthDividerValue = (width / (double) widthDivider);
 
 			double x = 0;

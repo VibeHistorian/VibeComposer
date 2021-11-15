@@ -736,8 +736,8 @@ public class VibeComposerGUI extends JFrame
 			instrumentTabPane.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent e) {
-					if (SwingUtilities.isRightMouseButton(e)) {
-						int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
+					int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
+					if (SwingUtilities.isRightMouseButton(e) && indx < 5) {
 						LOGGER.info(("RMB pressed in instrument tab pane: " + indx));
 						switch (indx) {
 						case 0:
@@ -760,6 +760,9 @@ public class VibeComposerGUI extends JFrame
 						default:
 							break;
 						}
+					} else if (indx == 6) {
+						actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
+						scrollableArrangementActualTable.repaint();
 					}
 				}
 			});
@@ -2653,8 +2656,8 @@ public class VibeComposerGUI extends JFrame
 				}
 
 				int height = (int) (350 / getModel().getRowCount());
-				int width = (int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 100)
-						/ getModel().getColumnCount());
+				int width = (int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 60)
+						/ getModel().getColumnCount()) - 2;
 				Collection<? extends Object> stringables = value instanceof String
 						? Collections.singleton((String) value)
 						: (Collection<? extends Object>) value;
@@ -2707,19 +2710,23 @@ public class VibeComposerGUI extends JFrame
 						mousePoint.y -= r.y;
 
 
-						double orderPercentage = OMNI.clamp(mousePoint.x / (double) r.width, 0.01,
+						double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01,
 								0.99);
 
 						int actualSize = getInstList(part).size();
-						int visualSize = Math.max(9, actualSize + 1);
+						int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1,
+								actualSize + 1);
 						int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
 
+						LOGGER.debug("Percentage: " + orderPercentage);
 						LOGGER.debug("Selected subcell: " + (partAbsoluteOrder + 1));
 						boolean shiftOverrideButton = false;
-						if (partAbsoluteOrder == actualSize
-								|| (partAbsoluteOrder > actualSize && partAbsoluteOrder == 8)) {
+						if ((actualSize > CollectionCellRenderer.MIN_CELLS
+								&& partAbsoluteOrder == actualSize)
+								|| (actualSize <= CollectionCellRenderer.MIN_CELLS
+										&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
 							shiftOverrideButton = true;
-						} else if (partAbsoluteOrder > actualSize) {
+						} else if (partAbsoluteOrder >= actualSize) {
 							LOGGER.debug("Can't interact: subcell not present in part - "
 									+ (partAbsoluteOrder + 1));
 							return;
@@ -2788,6 +2795,7 @@ public class VibeComposerGUI extends JFrame
 											partAbsoluteOrder);
 								}
 							} else {
+								sec.initPartMapFromOldData();
 								if (hasSinglePresence) {
 									sec.resetPresence(part, partAbsoluteOrder);
 								} else {

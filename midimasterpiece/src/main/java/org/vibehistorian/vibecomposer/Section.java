@@ -376,9 +376,6 @@ public class Section {
 
 	public void setPresence(int part, int partOrder) {
 		initPartMapIfNull();
-		if (partPresenceVariationMap.get(part).length <= partOrder) {
-			initPartMapFromOldData();
-		}
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.TRUE;
 	}
 
@@ -493,7 +490,8 @@ public class Section {
 		for (Integer i : presence) {
 			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 				if (presRand.nextInt(100) < chance) {
-					addVariation(part, i - 1, Collections.singletonList(j - 2));
+					addVariation(part, VibeComposerGUI.getAbsoluteOrder(part, i),
+							Collections.singletonList(j - 2));
 					added++;
 				}
 			}
@@ -501,7 +499,8 @@ public class Section {
 		if (added == 0) {
 			int pres = presence.get(presRand.nextInt(presence.size()));
 			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
-			addVariation(part, pres - 1, Collections.singletonList(randVar));
+			addVariation(part, VibeComposerGUI.getAbsoluteOrder(part, pres),
+					Collections.singletonList(randVar));
 		}
 	}
 
