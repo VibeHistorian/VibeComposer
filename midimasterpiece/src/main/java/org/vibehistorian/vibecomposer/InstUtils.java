@@ -124,12 +124,11 @@ public class InstUtils {
 			"CLARINET = 71 ", "PICCOLO = 72 ", "RECORDER = 74 ", "BOTTLE_BLOW = 76 ",
 			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
 			"SWEEP_PAD = 95 " };
-	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35 ", "KICK = 36 ",
-			"SIDE STICK = 37", "SNARE = 38 ", "CLAP = 39", "EL. SNARE = 40 ", "FLOOR TOM = 41 ",
-			"CLOSED_HH = 42 ", "PEDAL_HH = 44", "OPEN_HH = 46", "LO-MID TOM = 47", "RIDE = 53 ",
-			"TAMBOURINE = 54", "HI BONGO = 60 ", "LOW BONGO = 61", "SHAKER = 82" };
-	public static final Integer[] DRUM_INST_NUMBERS = { 35, 36, 37, 38, 39, 40, 41, 42, 44, 46, 50,
-			53, 54, 60, 61, 82 };
+	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35", "KICK = 36",
+			"SIDE STICK = 37", "SNARE = 38", "CLAP = 39", "EL. SNARE = 40", "FLOOR TOM = 41",
+			"CLOSED_HH = 42", "PEDAL_HH = 44", "OPEN_HH = 46", "LO-MID TOM = 47", "RIDE = 53",
+			"TAMBOURINE = 54", "HI BONGO = 60", "LOW BONGO = 61", "SHAKER = 82" };
+	public static final Integer[] DRUM_INST_NUMBERS = makeDrumInstNumbers();
 	public static final String[] DRUM_INST_NAMES_SEMI = makeDrumInstNamesSemi();
 	public static final Integer[] DRUM_INST_NUMBERS_SEMI = makeDrumInstNumbersSemi();
 
@@ -137,6 +136,15 @@ public class InstUtils {
 	public static List<Integer> getInstNumbers(String[] instArray) {
 		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
 				.collect(Collectors.toList());
+	}
+
+	private static Integer[] makeDrumInstNumbers() {
+		Integer[] drumInstNumbers = new Integer[DRUM_INST_NAMES.length];
+		for (int i = 0; i < drumInstNumbers.length; i++) {
+			String numberPart = DRUM_INST_NAMES[i].split(" = ")[1];
+			drumInstNumbers[i] = Integer.valueOf(numberPart.trim());
+		}
+		return drumInstNumbers;
 	}
 
 	private static Integer[] makeDrumInstNumbersSemi() {
