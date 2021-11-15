@@ -91,7 +91,12 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 				int counter = 0;
 				for (Object o : stringables) {
 					String num = o.toString();
-					int partOrder = VibeComposerGUI.getAbsoluteOrder(part, Integer.valueOf(num));
+					int partOrder = 0;
+					try {
+						partOrder = VibeComposerGUI.getAbsoluteOrder(part, Integer.valueOf(num));
+					} catch (Exception e) {
+						continue;
+					}
 					if (counter < partOrder) {
 						x += (endX - startX) * (partOrder - counter);
 						counter = partOrder;

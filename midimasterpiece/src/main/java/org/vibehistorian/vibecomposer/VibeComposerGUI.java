@@ -1829,7 +1829,7 @@ public class VibeComposerGUI extends JFrame
 		addDrums = new JCheckBox("DRUMS", true);
 		drumsPanel.add(addDrums);
 
-		drumVolumeSlider = new VeloRect(0, 100, 100);
+		drumVolumeSlider = new VeloRect(0, 100, 80);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
 		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
 		//drumVolumeSlider.setPaintTicks(true);
@@ -2763,13 +2763,15 @@ public class VibeComposerGUI extends JFrame
 							int visualSize = Math.max(8, actualSize);
 							int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
 							if (partAbsoluteOrder >= actualSize) {
+								LOGGER.debug(
+										"Can't interact: order too high - " + partAbsoluteOrder);
 								return;
 							}
 
 							boolean hasSinglePresence = sec.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
-							boolean hasSingleVariation = !sec.getVariation(part, partAbsoluteOrder)
-									.isEmpty();
+							boolean hasSingleVariation = hasSinglePresence
+									&& !sec.getVariation(part, partAbsoluteOrder).isEmpty();
 
 							if (mClick) {
 								if (hasSingleVariation) {
@@ -3058,7 +3060,7 @@ public class VibeComposerGUI extends JFrame
 		randomBottomPanel.setOpaque(false);
 
 
-		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen", false);
+		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen", true);
 		randomizeBpmOnCompose = new JCheckBox("on Compose", true);
 		randomizeTransposeOnCompose = new JCheckBox("on Compose", true);
 		randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -4419,7 +4421,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
-				|| !actualArrangement.getSections().get(0).hasPresence())) {
+				|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
 			LOGGER.info(("Nothing to compose! Uncheck MANUAL arrangement!"));
 			composingInProgress = false;
 			return;
@@ -6740,7 +6742,10 @@ public class VibeComposerGUI extends JFrame
 		ip.setPanelOrder(panelOrder);
 
 		affectedPanels.add(ip);
-
+		removeComboBoxArrows(ip);
+		if (actualArrangement != null && actualArrangement.getSections() != null) {
+			actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
+		}
 
 		if (inst < 4 || !extraSettingsReverseDrumPanels.isSelected()) {
 			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
@@ -6752,15 +6757,16 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void removeInstPanel(int inst, int order, boolean singleRemove) {
+
 		List<? extends InstPanel> panels = getInstList(inst);
 		InstPanel panel = getPanelByOrder(order, panels);
 		((JPanel) getInstPane(inst).getViewport().getView()).remove(panel);
 
 		panels.remove(panel);
 
-		if (singleRemove) {
-			repaint();
-		}
+		actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
+
+		repaint();
 	}
 
 	private List<InstPart> getInstPartsFromInstPanels(int inst, boolean removeMuted) {

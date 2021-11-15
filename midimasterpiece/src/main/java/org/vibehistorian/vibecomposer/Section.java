@@ -361,8 +361,24 @@ public class Section {
 		return pres;
 	}
 
+	public Map<Integer, Integer> getPresenceWithIndices(int part) {
+		initPartMapIfNull();
+		Map<Integer, Integer> pres = new HashMap<>();
+
+		Object[][] data = partPresenceVariationMap.get(part);
+		for (int i = 0; i < data.length; i++) {
+			if (data[i][1] == Boolean.TRUE) {
+				pres.put((Integer) data[i][0], i);
+			}
+		}
+		return pres;
+	}
+
 	public void setPresence(int part, int partOrder) {
 		initPartMapIfNull();
+		if (partPresenceVariationMap.get(part).length <= partOrder) {
+			initPartMapFromOldData();
+		}
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.TRUE;
 	}
 
@@ -590,10 +606,25 @@ public class Section {
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
 			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
+			//System.out.println("OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
+				Integer oldIndex = oldPresence.get(rowOrders.get(j));
+				/*if (oldIndex == null) {
+					System.out.println(
+							"Failed searching in j/order: " + j + ", value: " + rowOrders.get(j));
+				} else {
+					System.out.println("Found index for j: " + j + ", index: " + oldIndex);
+				}*/
 				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
-					data[j][k] = getBooleanFromOldData(partPresenceVariationMap.get(i), j, k);
+					if (oldIndex == null) {
+						data[j][k] = Boolean.FALSE;
+					} else {
+						data[j][k] = getBooleanFromOldData(partPresenceVariationMap.get(i),
+								oldIndex, k);
+					}
+
 				}
 			}
 			partPresenceVariationMap.put(i, data);
@@ -602,6 +633,7 @@ public class Section {
 
 	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
 		if (oldData.length <= j || oldData[j].length <= k) {
+			//System.out.println("False for j: " + j + ", k: " + k);
 			return Boolean.FALSE;
 		} else {
 			return (Boolean) oldData[j][k];
@@ -626,6 +658,7 @@ public class Section {
 
 	public void initPartMapIfNull() {
 		if (partPresenceVariationMap.get(0) == null) {
+			System.out.println("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 			initPartMap();
 		}
 	}

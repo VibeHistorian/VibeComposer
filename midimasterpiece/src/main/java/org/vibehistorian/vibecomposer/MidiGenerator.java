@@ -2848,17 +2848,17 @@ public class MidiGenerator implements JMC {
 		int transToSet = 0;
 		boolean twoFiveOneChanged = false;
 		double sectionStartTimer = 0;
+		gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
 		for (Section sec : arr.getSections()) {
+			LOGGER.info("*********************************** Processing section.. " + sec.getType()
+					+ "!");
 			if (overridden) {
-				sec.recalculatePartVariationMapBoundsIfNeeded();
+				sec.initPartMapFromOldData();
 			}
-			gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
 			sec.setSectionDuration(-1);
 			sec.setSectionBeatDurations(null);
 			boolean gcPartsReplaced = replaceGuiConfigInstParts(sec);
 			secOrder++;
-			LOGGER.info("*********************************** Processing section.. " + sec.getType()
-					+ "!");
 			sec.setStartTime(sectionStartTimer);
 
 			Random rand = new Random(arrSeed);
