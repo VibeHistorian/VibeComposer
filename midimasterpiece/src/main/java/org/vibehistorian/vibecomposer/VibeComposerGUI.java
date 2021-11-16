@@ -5768,7 +5768,8 @@ public class VibeComposerGUI extends JFrame
 			String rating = starSplit[1].substring(0, 1);
 			String saveDirectory = "/saved_";
 			String name = "";
-			String soundbankLoadedString = (isSoundbankSynth) ? "_SB" : "";
+			String soundbankLoadedString = (isSoundbankSynth && !midiMode.isSelected()) ? "_SB"
+					: "";
 
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 			f.applyPattern("yyMMdd-HH-mm-ss");
