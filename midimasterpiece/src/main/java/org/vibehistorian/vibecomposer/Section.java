@@ -439,16 +439,17 @@ public class Section {
 		}
 	}
 
-	public void generatePresences(Random presRand) {
+	public void generatePresences(Random presRand, boolean forceAdd) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap());
+			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap(),
+					forceAdd);
 		}
 
 	}
 
-	public void generatePresences(Random presRand, int part,
-			Map<Integer, Object[][]> inclusionMap) {
+	public void generatePresences(Random presRand, int part, Map<Integer, Object[][]> inclusionMap,
+			boolean forceAdd) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
 		//LOGGER.debug("Chance: " + chance);
@@ -476,7 +477,7 @@ public class Section {
 				added++;
 			}
 		}
-		if (added == 0 && panels.size() > 0) {
+		if (forceAdd && added == 0 && panels.size() > 0) {
 			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
 			setPresence(part, VibeComposerGUI.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
@@ -604,7 +605,7 @@ public class Section {
 			initPartMap();
 			return;
 		}
-		LOGGER.debug("INIT PART MAP FROM OLD DATA!");
+		//LOGGER.debug("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());

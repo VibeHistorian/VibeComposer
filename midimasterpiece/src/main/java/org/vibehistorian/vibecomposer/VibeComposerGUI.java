@@ -1041,10 +1041,10 @@ public class VibeComposerGUI extends JFrame
 		JPanel humanizationPanel = new JPanel();
 
 		// / 10000
-		humanizeNotes = new KnobPanel("Humanize<br>Notes", 150, 0, 1000);
+		humanizeNotes = new KnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
 		humanizeNotes.setRegenerating(false);
 		// / 10000
-		humanizeDrums = new KnobPanel("Humanize<br>Drums", 20, 0, 100);
+		humanizeDrums = new KnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
 		humanizeDrums.setRegenerating(false);
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
@@ -2163,7 +2163,8 @@ public class VibeComposerGUI extends JFrame
 				arrangement.initPartInclusionMapIfNull();
 				addedSec.generatePresences(
 						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
-								: new Random());
+								: new Random(),
+						false);
 				resetArrSectionSelection = actualArrangement.getSections()
 						.indexOf(addedSec) == arrSection.getSelectedIndex() - 2;
 				resetArrSectionPanel = true;
@@ -2775,7 +2776,7 @@ public class VibeComposerGUI extends JFrame
 								} else {
 									arrangement.initPartInclusionMapIfNull();
 									sec.generatePresences(new Random(), part,
-											arrangement.getPartInclusionMap());
+											arrangement.getPartInclusionMap(), true);
 								}
 							}
 						} else {
@@ -6565,8 +6566,8 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		// seed
-		randomSeed.setText(String.valueOf(guiConfig.getRandomSeed()));
-		lastRandomSeed = (int) guiConfig.getRandomSeed();
+		randomSeed.setValue((int) guiConfig.getRandomSeed());
+		lastRandomSeed = randomSeed.getValue();
 
 		// arrangement
 		arrangement = guiConfig.getArrangement();
