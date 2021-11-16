@@ -157,8 +157,8 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cMin6th4);
 	}
 
-	public static final List<String> BANNED_DIM_AUG_LIST = Arrays
-			.asList(new String[] { "dim", "aug" });
+	public static final List<String> BANNED_DIM_AUG_6_LIST = Arrays
+			.asList(new String[] { "dim", "aug", "maj6", "m6" });
 	public static final List<String> BANNED_9_13_LIST = Arrays
 			.asList(new String[] { "maj9", "m9", "maj13", "m13" });
 	public static final List<String> BANNED_SUSSY_LIST = Arrays
@@ -1235,7 +1235,7 @@ public class MidiUtils {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
 			String chordString = SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled() && BANNED_DIM_AUG_LIST.contains(chordString)) {
+			if (!gc.isDimAugDom7thEnabled() && BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && BANNED_9_13_LIST.contains(chordString)) {
@@ -1246,7 +1246,7 @@ public class MidiUtils {
 
 		List<String> allowedSpiceChords = new ArrayList<>();
 		for (String s : allowedSpiceChordsMiddle) {
-			if (BANNED_DIM_AUG_LIST.contains(s) || BANNED_SUSSY_LIST.contains(s)) {
+			if (BANNED_DIM_AUG_6_LIST.contains(s) || BANNED_SUSSY_LIST.contains(s)) {
 				continue;
 			}
 			allowedSpiceChords.add(s);

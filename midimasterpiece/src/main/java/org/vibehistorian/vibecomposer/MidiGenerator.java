@@ -2393,7 +2393,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
 			if (!gc.isDimAugDom7thEnabled()
-					&& MidiUtils.BANNED_DIM_AUG_LIST.contains(chordString)) {
+					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
@@ -2404,7 +2404,7 @@ public class MidiGenerator implements JMC {
 
 		List<String> allowedSpiceChords = new ArrayList<>();
 		for (String s : allowedSpiceChordsMiddle) {
-			if (MidiUtils.BANNED_DIM_AUG_LIST.contains(s)
+			if (MidiUtils.BANNED_DIM_AUG_6_LIST.contains(s)
 					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
 				continue;
 			}

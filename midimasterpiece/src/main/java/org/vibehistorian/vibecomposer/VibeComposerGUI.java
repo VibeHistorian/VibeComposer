@@ -3204,7 +3204,7 @@ public class VibeComposerGUI extends JFrame
 
 		spiceChance = new KnobPanel("Spice", 15);
 		spiceChance.setRegenerating(false);
-		spiceAllowDimAug = new JCheckBox("Dim/Aug", false);
+		spiceAllowDimAug = new JCheckBox("Dim/Aug/6th", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceForceScale = new JCheckBox("Force Scale", true);
 		spiceParallelChance = new KnobPanel("Aeolian", 5);
@@ -5513,9 +5513,9 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (ae.getActionCommand() == "CopyChords") {
-			String str = StringUtils.join(MidiGenerator.chordInts, ",");
-			userChords.setText(str);
-			LOGGER.info(("Copied chords: " + str));
+			userChords.setText(
+					currentChords.getText().substring(8, currentChords.getText().length() - 1));
+			LOGGER.info(("Copied chords: " + userChords.getText()));
 		}
 
 
