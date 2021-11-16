@@ -3639,11 +3639,26 @@ public class VibeComposerGUI extends JFrame
 							if (actualArrangement != null && slider.getMaximum() > 0) {
 								int val = slider.getUpperValue();
 								int sectIndex = -1;
-								if (sliderMeasureStartTimes != null) {
+								if (sliderMeasureStartTimes != null
+										&& actualArrangement.getSections().size() > 0) {
+									int sectIndexCounter = 0;
+									List<Integer> secMeasures = actualArrangement.getSections()
+											.stream().map(e -> e.getMeasures())
+											.collect(Collectors.toList());
+									int currentMeasure = secMeasures.get(0);
 									for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
 										if (val < sliderMeasureStartTimes.get(i)) {
-											sectIndex = i - 1;
+											sectIndex = sectIndexCounter;
 											break;
+										} else {
+											currentMeasure--;
+											if (currentMeasure <= 0) {
+												sectIndexCounter++;
+												if (sectIndexCounter >= secMeasures.size()) {
+													break;
+												}
+												currentMeasure = secMeasures.get(sectIndexCounter);
+											}
 										}
 									}
 								}
@@ -3754,8 +3769,8 @@ public class VibeComposerGUI extends JFrame
 
 
 	private void notifyVisualPatterns(int val, int sectIndex, Section sec) {
-		int tabIndex = instrumentTabPane.getSelectedIndex();
-		if (tabIndex >= 2 && tabIndex <= 4) {
+		int part = instrumentTabPane.getSelectedIndex();
+		if (part >= 2 && part <= 4) {
 			int measureStart = sliderMeasureStartTimes.get(
 					sectIndex >= 0 && (sectIndex < sliderMeasureStartTimes.size() - 1) ? sectIndex
 							: 0);
@@ -3803,8 +3818,8 @@ public class VibeComposerGUI extends JFrame
 			// needed: wholeNotesInMeasure, beatNumInMeasure, beatDurationsInMeasure
 
 			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
-			List<InstPanel> panels = getAffectedPanels(tabIndex);
-			Set<Integer> presences = sec != null ? sec.getPresence(tabIndex) : null;
+			List<InstPanel> panels = getAffectedPanels(part);
+			Set<Integer> presences = sec != null ? sec.getPresence(part) : null;
 			int totalChords = (sec != null && sec.getSectionBeatDurations() != null)
 					? sec.getSectionBeatDurations().size()
 					: MidiGenerator.chordInts.size();
@@ -3812,7 +3827,7 @@ public class VibeComposerGUI extends JFrame
 				boolean turnOff = ip.getMuteInst() || presences == null
 						|| !presences.contains(ip.getPanelOrder());
 				if (!turnOff) {
-					if (tabIndex == 4 && combineDrumTracks.isSelected()) {
+					if (part == 4 && combineDrumTracks.isSelected()) {
 						turnOff |= ((soloCondition ? groupSoloMuters.get(4).soloState == State.OFF
 								: groupSoloMuters.get(4).muteState != State.OFF));
 					} else {
@@ -3823,10 +3838,10 @@ public class VibeComposerGUI extends JFrame
 
 				boolean isIgnoreFill = false;
 				if (!turnOff && sec != null) {
-					int ignoreFillIndex = tabIndex == 4 ? 1 : 2;
+					int ignoreFillIndex = part == 4 ? 1 : 2;
 					isIgnoreFill = sec
-							.getVariation(tabIndex,
-									VibeComposerGUI.getAbsoluteOrder(tabIndex, ip.getPanelOrder()))
+							.getVariation(part,
+									VibeComposerGUI.getAbsoluteOrder(part, ip.getPanelOrder()))
 							.contains(ignoreFillIndex);
 				}
 				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
