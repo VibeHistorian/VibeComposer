@@ -3639,12 +3639,15 @@ public class VibeComposerGUI extends JFrame
 							if (actualArrangement != null && slider.getMaximum() > 0) {
 								int val = slider.getUpperValue();
 								int sectIndex = -1;
-								for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
-									if (val < sliderMeasureStartTimes.get(i)) {
-										sectIndex = i - 1;
-										break;
+								if (sliderMeasureStartTimes != null) {
+									for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
+										if (val < sliderMeasureStartTimes.get(i)) {
+											sectIndex = i - 1;
+											break;
+										}
 									}
 								}
+
 								Section sec = null;
 								if (sectIndex >= 0
 										&& actualArrangement.getSections().size() > sectIndex) {
@@ -4091,30 +4094,7 @@ public class VibeComposerGUI extends JFrame
 			public void run() {
 
 				while (sequencer != null && sequencer.isRunning()) {
-					if (useMidiCC.isSelected()) {
-						for (int j = 0; j < 4; j++) {
-							List<? extends InstPanel> panels = getInstList(j);
-							for (int i = 0; i < panels.size(); i++) {
-								if (combineMelodyTracks.isSelected() && j == 0 && i > 0) {
-									// melody panels under first
-									continue;
-								}
-								double vol = panels.get(i).getVolSlider().getValue() / 100.0;
-								int channel = panels.get(i).getMidiChannel() - 1;
-								sendVolumeMessage(vol, channel);
-								sendReverbMessage(1.0, channel);
-								sendChorusMessage(1.0, channel);
-								sendLowPassFilterMessage(1.0, channel, j);
-								sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
-							}
-						}
-						double drumVol = drumVolumeSlider.getValue() / 100.0;
-						sendVolumeMessage(drumVol, 9);
-						sendReverbMessage(0.5, 9);
-						sendChorusMessage(0.1, 9);
-						sendLowPassFilterMessage(1.0, 9, 4);
-						//drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
-					}
+					sendAllMidiCc();
 
 					try {
 						sleep(25);
@@ -4126,8 +4106,37 @@ public class VibeComposerGUI extends JFrame
 				LOGGER.info(("ENDED MidiCcThread!"));
 				cycle = null;
 			}
+
+
 		};
 		cycle.start();
+	}
+
+	protected void sendAllMidiCc() {
+		if (useMidiCC.isSelected()) {
+			for (int j = 0; j < 4; j++) {
+				List<? extends InstPanel> panels = getInstList(j);
+				for (int i = 0; i < panels.size(); i++) {
+					if (combineMelodyTracks.isSelected() && j == 0 && i > 0) {
+						// melody panels under first
+						continue;
+					}
+					double vol = panels.get(i).getVolSlider().getValue() / 100.0;
+					int channel = panels.get(i).getMidiChannel() - 1;
+					sendVolumeMessage(vol, channel);
+					sendReverbMessage(1.0, channel);
+					sendChorusMessage(1.0, channel);
+					sendLowPassFilterMessage(1.0, channel, j);
+					sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
+				}
+			}
+			double drumVol = drumVolumeSlider.getValue() / 100.0;
+			sendVolumeMessage(drumVol, 9);
+			sendReverbMessage(0.5, 9);
+			sendChorusMessage(0.1, 9);
+			sendLowPassFilterMessage(1.0, 9, 4);
+			//drumPanels.forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
+		}
 	}
 
 	protected void sendPanMessage(int pan100, int channel) {
@@ -5655,7 +5664,8 @@ public class VibeComposerGUI extends JFrame
 			InstPart part = null;
 
 			part = sourcePanel.toInstPart(lastRandomSeed);
-			InstPanel newPanel = addInstPanelToLayout(instrumentTabPane.getSelectedIndex(), part);
+			InstPanel newPanel = addInstPanelToLayout(instrumentTabPane.getSelectedIndex(), part,
+					true);
 			newPanel.setPatternSeed(sourcePanel.getPatternSeed());
 
 			switch (instrumentTabPane.getSelectedIndex()) {
@@ -6168,7 +6178,7 @@ public class VibeComposerGUI extends JFrame
 				synth.loadAllInstruments(soundfont);
 			}
 			// Play Sequence into AudioSynthesizer Receiver.
-			double totalLength = this.sendOutputSequenceMidiEvents(synth.getReceiver());
+			double totalLength = sendOutputSequenceMidiEvents(synth.getReceiver());
 
 			// give it an extra 2 seconds, to the reverb to fade out--otherwise it sounds unnatural
 			totalLength += 2;
@@ -6197,7 +6207,7 @@ public class VibeComposerGUI extends JFrame
 		int microsecondsPerQtrNote = (int) (500000 * 120 / guiConfig.getBpm());
 		int seqRes = sequence.getResolution();
 		long totalTime = 0;
-
+		sendAllMidiCc();
 		for (Track track : sequence.getTracks()) {
 			long lastTick = 0;
 			long curTime = 0;
@@ -6726,10 +6736,15 @@ public class VibeComposerGUI extends JFrame
 	// -------------- GENERIC INST PANEL METHODS ----------------------------
 
 	public InstPanel addInstPanelToLayout(int inst) {
-		return addInstPanelToLayout(inst, null);
+		return addInstPanelToLayout(inst, null, true);
 	}
 
-	public InstPanel addInstPanelToLayout(int inst, InstPart initializingPart) {
+	public InstPanel addInstPanelToLayout(int inst, boolean recalc) {
+		return addInstPanelToLayout(inst, null, recalc);
+	}
+
+	public InstPanel addInstPanelToLayout(int inst, InstPart initializingPart,
+			boolean recalcArrangement) {
 		InstPanel ip = InstPanel.makeInstPanel(inst, this);
 		List<InstPanel> affectedPanels = getAffectedPanels(inst);
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
@@ -6756,9 +6771,12 @@ public class VibeComposerGUI extends JFrame
 
 		affectedPanels.add(ip);
 		removeComboBoxArrows(ip);
-		if (actualArrangement != null && actualArrangement.getSections() != null) {
-			actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
+		if (recalcArrangement) {
+			if (actualArrangement != null && actualArrangement.getSections() != null) {
+				actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
+			}
 		}
+
 
 		if (inst < 4 || !extraSettingsReverseDrumPanels.isSelected()) {
 			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
@@ -6813,10 +6831,9 @@ public class VibeComposerGUI extends JFrame
 		}
 		panels.clear();
 		for (InstPart part : parts) {
-			InstPanel panel = addInstPanelToLayout(inst);
+			InstPanel panel = addInstPanelToLayout(inst, false);
 			panel.setFromInstPart(part);
 		}
-
 		repaint();
 	}
 

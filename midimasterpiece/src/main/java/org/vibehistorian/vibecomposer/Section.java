@@ -36,6 +36,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -54,6 +56,8 @@ public class Section {
 		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP, CHORUS3,
 		CLIMAX, OUTRO;
 	}
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(Section.class);
 
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" },
@@ -447,23 +451,23 @@ public class Section {
 			Map<Integer, Object[][]> inclusionMap) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
-		//System.out.println("Chance: " + chance);
+		//LOGGER.debug("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
 		panels.removeIf(e -> e.getMuteInst());
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
 				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
-				//System.out.println("Abs order: " + absOrder);
-				//System.out.println("Offset+2: " + (getTypeMelodyOffset() + 2));
+				//LOGGER.debug("Abs order: " + absOrder);
+				//LOGGER.debug("Offset+2: " + (getTypeMelodyOffset() + 2));
 				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
 						.equals(inclusionMap.get(part)[absOrder][getTypeMelodyOffset() + 2])) {
-					//System.out.println("TRUE");
+					//LOGGER.debug("TRUE");
 					return true;
 				}
 				return false;
 			});
 		}
-		//System.out.println("Panels size: " + panels.size());
+		//LOGGER.debug("Panels size: " + panels.size());
 		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
@@ -600,22 +604,23 @@ public class Section {
 			initPartMap();
 			return;
 		}
+		LOGGER.debug("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
 			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
-			//System.out.println("OldPresence: " + StringUtils.join(oldPresence, ","));
+			//LOGGER.debug(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				Integer oldIndex = oldPresence.get(rowOrders.get(j));
-				/*if (oldIndex == null) {
-					System.out.println(
-							"Failed searching in j/order: " + j + ", value: " + rowOrders.get(j));
+				if (oldIndex == null) {
+					/*LOGGER.debug(
+							"Failed searching in j/order: " + j + ", value: " + rowOrders.get(j));*/
 				} else {
-					System.out.println("Found index for j: " + j + ", index: " + oldIndex);
-				}*/
+					//LOGGER.debug("Found index for j: " + j + ", index: " + oldIndex);
+				}
 				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
 					if (oldIndex == null) {
 						data[j][k] = Boolean.FALSE;
@@ -632,7 +637,7 @@ public class Section {
 
 	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
 		if (oldData.length <= j || oldData[j].length <= k) {
-			//System.out.println("False for j: " + j + ", k: " + k);
+			//LOGGER.debug("False for j: " + j + ", k: " + k);
 			return Boolean.FALSE;
 		} else {
 			return (Boolean) oldData[j][k];
@@ -657,7 +662,7 @@ public class Section {
 
 	public void initPartMapIfNull() {
 		if (partPresenceVariationMap.get(0) == null) {
-			System.out.println("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
+			LOGGER.debug("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 			initPartMap();
 		}
 	}
