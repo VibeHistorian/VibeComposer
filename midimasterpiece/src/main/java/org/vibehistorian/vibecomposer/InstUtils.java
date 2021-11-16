@@ -16,132 +16,118 @@ public class InstUtils {
 		PLUCK, LONG, CHORD, BASS, DRUM, MELODY, ALL;
 	}
 
-	public static final String[] INSTRUMENTS_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
-			"ELECTRIC_GRAND = 2 ", "HONKYTONK = 3 ", "EPIANO = 4 ", "EPIANO2 = 5 ",
-			"HARPSICHORD = 6 ", "CLAV = 7 ", "CELESTE = 8 ", "GLOCKENSPIEL = 9 ", "MUSIC_BOX = 10 ",
-			"VIBRAPHONE = 11 ", "MARIMBA = 12 ", "XYLOPHONE = 13 ", "TUBULAR_BELL = 14 ",
-			"NOTHING = 15 ", "ORGAN = 16 ", "ORGAN2 = 17 ", "ORGAN3 = 18 ", "CHURCH_ORGAN = 19 ",
-			"REED_ORGAN = 20 ", "ACCORDION = 21 ", "HARMONICA = 22 ", "BANDNEON = 23 ",
-			"NYLON_GUITAR = 24 ", "STEEL_GUITAR = 25 ", "JAZZ_GUITAR = 26 ", "CLEAN_GUITAR = 27 ",
-			"MUTED_GUITAR = 28 ", "OVERDRIVE_GUITAR = 29 ", "DISTORTED_GUITAR = 30 ",
-			"GUITAR_HARMONICS = 31 ", "ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ",
-			"PICKED_BASS = 34 ", "FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "SLAP_BASS_2 = 37 ",
-			"SYNTH_BASS = 38 ", "SYNTH_BASS_2 = 39 ", "VIOLIN = 40 ", "VIOLA = 41 ", "CELLO = 42 ",
-			"CONTRABASS = 43 ", "TREMOLO_STRINGS = 44 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
-			"TIMPANI = 47 ", "STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ", "SYNTH_STRINGS = 50 ",
-			"SLOW_STRINGS = 51 ", "AAH = 52 ", "OOH = 53 ", "SYNVOX = 54 ", "ORCHESTRA_HIT = 55 ",
-			"TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ", "MUTED_TRUMPET = 59 ",
-			"FRENCH_HORN = 60 ", "BRASS = 61 ", "SYNTH_BRASS = 62 ", "SYNTH_BRASS_2 = 63 ",
-			"SOPRANO_SAX = 64 ", "ALTO_SAX = 65 ", "SAXOPHONE = 66 ", "BARITONE_SAX = 67 ",
-			"OBOE = 68 ", "ENGLISH_HORN = 69 ", "BASSOON = 70 ", "CLARINET = 71 ", "PICCOLO = 72 ",
-			"FLUTE = 73 ", "RECORDER = 74 ", "PAN_FLUTE = 75 ", "BOTTLE_BLOW = 76 ",
-			"SHAKUHACHI = 77 ", "WHISTLE = 78 ", "OCARINA = 79 ", "GMSQUARE_WAVE = 80 ",
-			"GMSAW_WAVE = 81 ", "SYNTH_CALLIOPE = 82 ", "CHIFFER_LEAD = 83 ", "CHARANG = 84 ",
-			"SOLO_VOX = 85 ", "WHOKNOWS1 = 86 ", "WHOKNOWS2 = 87 ", "FANTASIA = 88 ",
-			"WARM_PAD = 89 ", "POLYSYNTH = 90 ", "SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ",
-			"METAL_PAD = 93 ", "HALO_PAD = 94 ", "SWEEP_PAD = 95 ", "ICE_RAIN = 96 ",
-			"SOUNDTRACK = 97 ", "CRYSTAL = 98 ", "ATMOSPHERE = 99 ", "BRIGHTNESS = 100 ",
-			"GOBLIN = 101 ", "ECHO_DROPS = 102 ", "STAR_THEME = 103 ", "SITAR = 104 ",
-			"BANJO = 105 ", "SHAMISEN = 106 ", "KOTO = 107 ", "KALIMBA = 108 ", "BAGPIPES = 109 ",
-			"FIDDLE = 110 ", "SHANNAI = 111 ", "TINKLE_BELL = 112 ", "AGOGO = 113 ",
-			"STEEL_DRUMS = 114 ", "WOODBLOCK = 115 ", "TAIKO = 116 ", "TOM = 117 ",
-			"SYNTH_DRUM = 118 ", "REVERSE_CYMBAL = 119 ", "FRETNOISE = 120 ", "BREATHNOISE = 121 ",
-			"NATURE = 122 ", "BIRD = 123 ", "TELEPHONE = 124 ", "HELICOPTER = 125 ",
-			"APPLAUSE = 126 ", "GUNSHOT = 127 " };
+	public static final String[] INSTRUMENTS_NAMES = { "0: PIANO", "1: BRIGHT_ACOUSTIC",
+			"2: ELECTRIC_GRAND", "3: HONKYTONK", "4: EPIANO", "5: EPIANO2", "6: HARPSICHORD",
+			"7: CLAV", "8: CELESTE", "9: GLOCKENSPIEL", "10: MUSIC_BOX", "11: VIBRAPHONE",
+			"12: MARIMBA", "13: XYLOPHONE", "14: TUBULAR_BELL", "15: NOTHING", "16: ORGAN",
+			"17: ORGAN2", "18: ORGAN3", "19: CHURCH_ORGAN", "20: REED_ORGAN", "21: ACCORDION",
+			"22: HARMONICA", "23: BANDNEON", "24: NYLON_GUITAR", "25: STEEL_GUITAR",
+			"26: JAZZ_GUITAR", "27: CLEAN_GUITAR", "28: MUTED_GUITAR", "29: OVERDRIVE_GUITAR",
+			"30: DISTORTED_GUITAR", "31: GUITAR_HARMONICS", "32: ACOUSTIC_BASS",
+			"33: FINGERED_BASS", "34: PICKED_BASS", "35: FRETLESS_BASS", "36: SLAP_BASS",
+			"37: SLAP_BASS_2", "38: SYNTH_BASS", "39: SYNTH_BASS_2", "40: VIOLIN", "41: VIOLA",
+			"42: CELLO", "43: CONTRABASS", "44: TREMOLO_STRINGS", "45: PIZZICATO_STRINGS",
+			"46: HARP", "47: TIMPANI", "48: STRINGS", "49: STRING_ENSEMBLE_2", "50: SYNTH_STRINGS",
+			"51: SLOW_STRINGS", "52: AAH", "53: OOH", "54: SYNVOX", "55: ORCHESTRA_HIT",
+			"56: TRUMPET", "57: TROMBONE", "58: TUBA", "59: MUTED_TRUMPET", "60: FRENCH_HORN",
+			"61: BRASS", "62: SYNTH_BRASS", "63: SYNTH_BRASS_2", "64: SOPRANO_SAX", "65: ALTO_SAX",
+			"66: SAXOPHONE", "67: BARITONE_SAX", "68: OBOE", "69: ENGLISH_HORN", "70: BASSOON",
+			"71: CLARINET", "72: PICCOLO", "73: FLUTE", "74: RECORDER", "75: PAN_FLUTE",
+			"76: BOTTLE_BLOW", "77: SHAKUHACHI", "78: WHISTLE", "79: OCARINA", "80: GMSQUARE_WAVE",
+			"81: GMSAW_WAVE", "82: SYNTH_CALLIOPE", "83: CHIFFER_LEAD", "84: CHARANG",
+			"85: SOLO_VOX", "86: WHOKNOWS1", "87: WHOKNOWS2", "88: FANTASIA", "89: WARM_PAD",
+			"90: POLYSYNTH", "91: SPACE_VOICE", "92: BOWED_GLASS", "93: METAL_PAD", "94: HALO_PAD",
+			"95: SWEEP_PAD", "96: ICE_RAIN", "97: SOUNDTRACK", "98: CRYSTAL", "99: ATMOSPHERE",
+			"100: BRIGHTNESS", "101: GOBLIN", "102: ECHO_DROPS", "103: STAR_THEME", "104: SITAR",
+			"105: BANJO", "106: SHAMISEN", "107: KOTO", "108: KALIMBA", "109: BAGPIPES",
+			"110: FIDDLE", "111: SHANNAI", "112: TINKLE_BELL", "113: AGOGO", "114: STEEL_DRUMS",
+			"115: WOODBLOCK", "116: TAIKO", "117: TOM", "118: SYNTH_DRUM", "119: REVERSE_CYMBAL",
+			"120: FRETNOISE", "121: BREATHNOISE", "122: NATURE", "123: BIRD", "124: TELEPHONE",
+			"125: HELICOPTER", "126: APPLAUSE", "127: GUNSHOT" };
 
-	public static final String[] ALL_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
-			"ELECTRIC_GRAND = 2 ", "HONKYTONK = 3 ", "EPIANO = 4 ", "EPIANO2 = 5 ",
-			"HARPSICHORD = 6 ", "CLAV = 7 ", "CELESTE = 8 ", "GLOCKENSPIEL = 9 ", "MUSIC_BOX = 10 ",
-			"VIBRAPHONE = 11 ", "MARIMBA = 12 ", "XYLOPHONE = 13 ", "TUBULAR_BELL = 14 ",
-			"NOTHING = 15 ", "ORGAN = 16 ", "ORGAN2 = 17 ", "ORGAN3 = 18 ", "CHURCH_ORGAN = 19 ",
-			"REED_ORGAN = 20 ", "ACCORDION = 21 ", "HARMONICA = 22 ", "BANDNEON = 23 ",
-			"NYLON_GUITAR = 24 ", "STEEL_GUITAR = 25 ", "JAZZ_GUITAR = 26 ", "CLEAN_GUITAR = 27 ",
-			"MUTED_GUITAR = 28 ", "OVERDRIVE_GUITAR = 29 ", "DISTORTED_GUITAR = 30 ",
-			"GUITAR_HARMONICS = 31 ", "ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ",
-			"PICKED_BASS = 34 ", "FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "SLAP_BASS_2 = 37 ",
-			"SYNTH_BASS = 38 ", "SYNTH_BASS_2 = 39 ", "VIOLIN = 40 ", "VIOLA = 41 ", "CELLO = 42 ",
-			"CONTRABASS = 43 ", "TREMOLO_STRINGS = 44 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
-			"TIMPANI = 47 ", "STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ", "SYNTH_STRINGS = 50 ",
-			"SLOW_STRINGS = 51 ", "AAH = 52 ", "OOH = 53 ", "SYNVOX = 54 ", "ORCHESTRA_HIT = 55 ",
-			"TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ", "MUTED_TRUMPET = 59 ",
-			"FRENCH_HORN = 60 ", "BRASS = 61 ", "SYNTH_BRASS = 62 ", "SYNTH_BRASS_2 = 63 ",
-			"SOPRANO_SAX = 64 ", "ALTO_SAX = 65 ", "SAXOPHONE = 66 ", "BARITONE_SAX = 67 ",
-			"OBOE = 68 ", "ENGLISH_HORN = 69 ", "BASSOON = 70 ", "CLARINET = 71 ", "PICCOLO = 72 ",
-			"FLUTE = 73 ", "RECORDER = 74 ", "PAN_FLUTE = 75 ", "BOTTLE_BLOW = 76 ",
-			"SHAKUHACHI = 77 ", "WHISTLE = 78 ", "OCARINA = 79 ", "GMSQUARE_WAVE = 80 ",
-			"GMSAW_WAVE = 81 ", "SYNTH_CALLIOPE = 82 ", "CHIFFER_LEAD = 83 ", "CHARANG = 84 ",
-			"SOLO_VOX = 85 ", "WHOKNOWS1 = 86 ", "WHOKNOWS2 = 87 ", "FANTASIA = 88 ",
-			"WARM_PAD = 89 ", "POLYSYNTH = 90 ", "SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ",
-			"METAL_PAD = 93 ", "HALO_PAD = 94 ", "SWEEP_PAD = 95 ", "ICE_RAIN = 96 ",
-			"SOUNDTRACK = 97 ", "CRYSTAL = 98 ", "ATMOSPHERE = 99 ", "BRIGHTNESS = 100 ",
-			"GOBLIN = 101 ", "ECHO_DROPS = 102 ", "STAR_THEME = 103 ", "SITAR = 104 ",
-			"BANJO = 105 ", "SHAMISEN = 106 ", "KOTO = 107 ", "KALIMBA = 108 ", "BAGPIPES = 109 ",
-			"FIDDLE = 110 ", "SHANNAI = 111 ", "TINKLE_BELL = 112 ", "AGOGO = 113 ",
-			"STEEL_DRUMS = 114 ", "WOODBLOCK = 115 ", "TAIKO = 116 ", "TOM = 117 ",
-			"SYNTH_DRUM = 118 ", "REVERSE_CYMBAL = 119 " };
+	public static final String[] ALL_INST_NAMES = { "0: PIANO", "1: BRIGHT_ACOUSTIC",
+			"2: ELECTRIC_GRAND", "3: HONKYTONK", "4: EPIANO", "5: EPIANO2", "6: HARPSICHORD",
+			"7: CLAV", "8: CELESTE", "9: GLOCKENSPIEL", "10: MUSIC_BOX", "11: VIBRAPHONE",
+			"12: MARIMBA", "13: XYLOPHONE", "14: TUBULAR_BELL", "15: NOTHING", "16: ORGAN",
+			"17: ORGAN2", "18: ORGAN3", "19: CHURCH_ORGAN", "20: REED_ORGAN", "21: ACCORDION",
+			"22: HARMONICA", "23: BANDNEON", "24: NYLON_GUITAR", "25: STEEL_GUITAR",
+			"26: JAZZ_GUITAR", "27: CLEAN_GUITAR", "28: MUTED_GUITAR", "29: OVERDRIVE_GUITAR",
+			"30: DISTORTED_GUITAR", "31: GUITAR_HARMONICS", "32: ACOUSTIC_BASS",
+			"33: FINGERED_BASS", "34: PICKED_BASS", "35: FRETLESS_BASS", "36: SLAP_BASS",
+			"37: SLAP_BASS_2", "38: SYNTH_BASS", "39: SYNTH_BASS_2", "40: VIOLIN", "41: VIOLA",
+			"42: CELLO", "43: CONTRABASS", "44: TREMOLO_STRINGS", "45: PIZZICATO_STRINGS",
+			"46: HARP", "47: TIMPANI", "48: STRINGS", "49: STRING_ENSEMBLE_2", "50: SYNTH_STRINGS",
+			"51: SLOW_STRINGS", "52: AAH", "53: OOH", "54: SYNVOX", "55: ORCHESTRA_HIT",
+			"56: TRUMPET", "57: TROMBONE", "58: TUBA", "59: MUTED_TRUMPET", "60: FRENCH_HORN",
+			"61: BRASS", "62: SYNTH_BRASS", "63: SYNTH_BRASS_2", "64: SOPRANO_SAX", "65: ALTO_SAX",
+			"66: SAXOPHONE", "67: BARITONE_SAX", "68: OBOE", "69: ENGLISH_HORN", "70: BASSOON",
+			"71: CLARINET", "72: PICCOLO", "73: FLUTE", "74: RECORDER", "75: PAN_FLUTE",
+			"76: BOTTLE_BLOW", "77: SHAKUHACHI", "78: WHISTLE", "79: OCARINA", "80: GMSQUARE_WAVE",
+			"81: GMSAW_WAVE", "82: SYNTH_CALLIOPE", "83: CHIFFER_LEAD", "84: CHARANG",
+			"85: SOLO_VOX", "86: WHOKNOWS1", "87: WHOKNOWS2", "88: FANTASIA", "89: WARM_PAD",
+			"90: POLYSYNTH", "91: SPACE_VOICE", "92: BOWED_GLASS", "93: METAL_PAD", "94: HALO_PAD",
+			"95: SWEEP_PAD", "96: ICE_RAIN", "97: SOUNDTRACK", "98: CRYSTAL", "99: ATMOSPHERE",
+			"100: BRIGHTNESS", "101: GOBLIN", "102: ECHO_DROPS", "103: STAR_THEME", "104: SITAR",
+			"105: BANJO", "106: SHAMISEN", "107: KOTO", "108: KALIMBA", "109: BAGPIPES",
+			"110: FIDDLE", "111: SHANNAI", "112: TINKLE_BELL", "113: AGOGO", "114: STEEL_DRUMS",
+			"115: WOODBLOCK", "116: TAIKO", "117: TOM", "118: SYNTH_DRUM", "119: REVERSE_CYMBAL" };
 
-	public static final String[] MELODY_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
-			"HONKYTONK = 3 ", "EPIANO = 4 ", "EPIANO2 = 5 ", "HARPSICHORD = 6 ", "CLAV = 7 ",
-			"CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
-			"TUBULAR_BELL = 14 ", "ORGAN = 16 ", "ORGAN2 = 17 ", "ORGAN3 = 18 ", "REED_ORGAN = 20 ",
-			"ACCORDION = 21 ", "BANDNEON = 23 ", "NYLON_GUITAR = 24 ", "STEEL_GUITAR = 25 ",
-			"JAZZ_GUITAR = 26 ", "MUTED_GUITAR = 28 ", "OVERDRIVE_GUITAR = 29 ",
-			"ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ", "PICKED_BASS = 34 ", "SLAP_BASS = 36 ",
-			"SLAP_BASS_2 = 37 ", "SYNTH_BASS = 38 ", "VIOLA = 41 ", "CELLO = 42 ",
-			"CONTRABASS = 43 ", "TREMOLO_STRINGS = 44 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
-			"STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ", "SYNTH_STRINGS = 50 ", "AAH = 52 ",
-			"OOH = 53 ", "SYNVOX = 54 ", "TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ",
-			"MUTED_TRUMPET = 59 ", "FRENCH_HORN = 60 ", "SYNTH_BRASS_2 = 63 ", "SOPRANO_SAX = 64 ",
-			"ENGLISH_HORN = 69 ", "BASSOON = 70 ", "CLARINET = 71 ", "PICCOLO = 72 ", "FLUTE = 73 ",
-			"RECORDER = 74 ", "PAN_FLUTE = 75 ", "BOTTLE_BLOW = 76 ", "SHAKUHACHI = 77 ",
-			"WHISTLE = 78 ", "OCARINA = 79 ", "GMSQUARE_WAVE = 80 ", "GMSAW_WAVE = 81 ",
-			"SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SYNTH_BASSLEAD = 87 ", "FANTASIA = 88 ",
-			"WARM_PAD = 89 ", "POLYSYNTH = 90 ", "SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ",
-			"METAL_PAD = 93 ", "HALO_PAD = 94 ", "ICE_RAIN = 96 ", "CRYSTAL = 98 ",
-			"ATMOSPHERE = 99 ", "BRIGHTNESS = 100 ", "GOBLIN = 101 ", "STAR_THEME = 103 ",
-			"BANJO = 105 ", "SHAMISEN = 106 ", "KOTO = 107 ", "KALIMBA = 108 " };
+	public static final String[] MELODY_INST_NAMES = { "0: PIANO", "1: BRIGHT_ACOUSTIC",
+			"3: HONKYTONK", "4: EPIANO", "5: EPIANO2", "6: HARPSICHORD", "7: CLAV", "8: CELESTE",
+			"10: MUSIC_BOX", "11: VIBRAPHONE", "12: MARIMBA", "14: TUBULAR_BELL", "16: ORGAN",
+			"17: ORGAN2", "18: ORGAN3", "20: REED_ORGAN", "21: ACCORDION", "23: BANDNEON",
+			"24: NYLON_GUITAR", "25: STEEL_GUITAR", "26: JAZZ_GUITAR", "28: MUTED_GUITAR",
+			"29: OVERDRIVE_GUITAR", "32: ACOUSTIC_BASS", "33: FINGERED_BASS", "34: PICKED_BASS",
+			"36: SLAP_BASS", "37: SLAP_BASS_2", "38: SYNTH_BASS", "41: VIOLA", "42: CELLO",
+			"43: CONTRABASS", "44: TREMOLO_STRINGS", "45: PIZZICATO_STRINGS", "46: HARP",
+			"48: STRINGS", "49: STRING_ENSEMBLE_2", "50: SYNTH_STRINGS", "52: AAH", "53: OOH",
+			"54: SYNVOX", "56: TRUMPET", "57: TROMBONE", "58: TUBA", "59: MUTED_TRUMPET",
+			"60: FRENCH_HORN", "63: SYNTH_BRASS_2", "64: SOPRANO_SAX", "69: ENGLISH_HORN",
+			"70: BASSOON", "71: CLARINET", "72: PICCOLO", "73: FLUTE", "74: RECORDER",
+			"75: PAN_FLUTE", "76: BOTTLE_BLOW", "77: SHAKUHACHI", "78: WHISTLE", "79: OCARINA",
+			"80: GMSQUARE_WAVE", "81: GMSAW_WAVE", "82: SYNTH_CALLIOPE", "85: SOLO_VOX",
+			"87: SYNTH_BASSLEAD", "88: FANTASIA", "89: WARM_PAD", "90: POLYSYNTH",
+			"91: SPACE_VOICE", "92: BOWED_GLASS", "93: METAL_PAD", "94: HALO_PAD", "96: ICE_RAIN",
+			"98: CRYSTAL", "99: ATMOSPHERE", "100: BRIGHTNESS", "101: GOBLIN", "103: STAR_THEME",
+			"105: BANJO", "106: SHAMISEN", "107: KOTO", "108: KALIMBA" };
 
-	public static final String[] BASS_INST_NAMES = { "PIANO = 0 ", "BRIGHT_ACOUSTIC = 1 ",
-			"EPIANO = 4 ", "OOH = 53 ", "SYNVOX = 54 ", "FLUTE = 73 ", "RECORDER = 74 ",
-			"PAN_FLUTE = 75 ", "SYNTH_CALLIOPE = 82 ", "SOLO_VOX = 85 ", "SPACE_VOICE = 91 ",
-			"ECHO_DROPS = 102 " };
-	public static final String[] CHORD_INST_NAMES = { "EPIANO = 4 ", "ORGAN = 16 ", "ORGAN2 = 17 ",
-			"ACOUSTIC_BASS = 32 ", "TREMOLO_STRINGS = 44 ", "STRINGS = 48 ",
-			"STRING_ENSEMBLE_2 = 49 ", "AAH = 52 ", "BASSOON = 70 " };
-	public static final String[] PLUCK_INST_NAMES = { "BRIGHT_ACOUSTIC = 1 ", "HONKYTONK = 3 ",
-			"EPIANO2 = 5 ", "CELESTE = 8 ", "MUSIC_BOX = 10 ", "VIBRAPHONE = 11 ", "MARIMBA = 12 ",
-			"XYLOPHONE = 13 ", "NOTHING = 15 ", "STEEL_GUITAR = 25 ", "CLEAN_GUITAR = 27 ",
-			"ACOUSTIC_BASS = 32 ", "FINGERED_BASS = 33 ", "PICKED_BASS = 34 ",
-			"FRETLESS_BASS = 35 ", "SLAP_BASS = 36 ", "PIZZICATO_STRINGS = 45 ", "HARP = 46 ",
-			"FANTASIA = 88 " };
-	public static final String[] LONG_INST_NAMES = { "ORGAN = 16 ", "ORGAN2 = 17 ",
-			"REED_ORGAN = 20 ", "ACCORDION = 21 ", "HARMONICA = 22 ", "BANDNEON = 23 ",
-			"VIOLIN = 40 ", "VIOLA = 41 ", "CELLO = 42 ", "CONTRABASS = 43 ",
-			"TREMOLO_STRINGS = 44 ", "STRINGS = 48 ", "STRING_ENSEMBLE_2 = 49 ",
-			"SLOW_STRINGS = 51 ", "TRUMPET = 56 ", "TROMBONE = 57 ", "TUBA = 58 ",
-			"FRENCH_HORN = 60 ", "BRASS = 61 ", "SOPRANO_SAX = 64 ", "ALTO_SAX = 65 ",
-			"BARITONE_SAX = 67 ", "OBOE = 68 ", "ENGLISH_HORN = 69 ", "BASSOON = 70 ",
-			"CLARINET = 71 ", "PICCOLO = 72 ", "RECORDER = 74 ", "BOTTLE_BLOW = 76 ",
-			"SPACE_VOICE = 91 ", "BOWED_GLASS = 92 ", "METAL_PAD = 93 ", "HALO_PAD = 94 ",
-			"SWEEP_PAD = 95 " };
-	public static final String[] DRUM_INST_NAMES = { "BASSKICK = 35", "KICK = 36",
-			"SIDE STICK = 37", "SNARE = 38", "CLAP = 39", "EL. SNARE = 40", "FLOOR TOM = 41",
-			"CLOSED_HH = 42", "PEDAL_HH = 44", "OPEN_HH = 46", "LO-MID TOM = 47", "RIDE = 53",
-			"TAMBOURINE = 54", "HI BONGO = 60", "LOW BONGO = 61", "SHAKER = 82" };
+	public static final String[] BASS_INST_NAMES = { "0: PIANO", "1: BRIGHT_ACOUSTIC", "4: EPIANO",
+			"53: OOH", "54: SYNVOX", "73: FLUTE", "74: RECORDER", "75: PAN_FLUTE",
+			"82: SYNTH_CALLIOPE", "85: SOLO_VOX", "91: SPACE_VOICE", "102: ECHO_DROPS" };
+	public static final String[] CHORD_INST_NAMES = { "4: EPIANO", "16: ORGAN", "17: ORGAN2",
+			"32: ACOUSTIC_BASS", "44: TREMOLO_STRINGS", "48: STRINGS", "49: STRING_ENSEMBLE_2",
+			"52: AAH", "70: BASSOON" };
+	public static final String[] PLUCK_INST_NAMES = { "1: BRIGHT_ACOUSTIC", "3: HONKYTONK",
+			"5: EPIANO2", "8: CELESTE", "10: MUSIC_BOX", "11: VIBRAPHONE", "12: MARIMBA",
+			"13: XYLOPHONE", "15: NOTHING", "25: STEEL_GUITAR", "27: CLEAN_GUITAR",
+			"32: ACOUSTIC_BASS", "33: FINGERED_BASS", "34: PICKED_BASS", "35: FRETLESS_BASS",
+			"36: SLAP_BASS", "45: PIZZICATO_STRINGS", "46: HARP", "88: FANTASIA" };
+	public static final String[] LONG_INST_NAMES = { "16: ORGAN", "17: ORGAN2", "20: REED_ORGAN",
+			"21: ACCORDION", "22: HARMONICA", "23: BANDNEON", "40: VIOLIN", "41: VIOLA",
+			"42: CELLO", "43: CONTRABASS", "44: TREMOLO_STRINGS", "48: STRINGS",
+			"49: STRING_ENSEMBLE_2", "51: SLOW_STRINGS", "56: TRUMPET", "57: TROMBONE", "58: TUBA",
+			"60: FRENCH_HORN", "61: BRASS", "64: SOPRANO_SAX", "65: ALTO_SAX", "67: BARITONE_SAX",
+			"68: OBOE", "69: ENGLISH_HORN", "70: BASSOON", "71: CLARINET", "72: PICCOLO",
+			"74: RECORDER", "76: BOTTLE_BLOW", "91: SPACE_VOICE", "92: BOWED_GLASS",
+			"93: METAL_PAD", "94: HALO_PAD", "95: SWEEP_PAD" };
+	public static final String[] DRUM_INST_NAMES = { "35: BASSKICK", "36: KICK", "37: SIDE_STICK",
+			"38: SNARE", "39: CLAP", "40: EL.SNARE", "41: FLOOR_TOM", "42: CLOSED_HH",
+			"44: PEDAL_HH", "46: OPEN_HH", "47: LO-MID_TOM", "53: RIDE", "54: TAMBOURINE",
+			"60: HI_BONGO", "61: LOW_BONGO", "82: SHAKER" };
 	public static final Integer[] DRUM_INST_NUMBERS = makeDrumInstNumbers();
 	public static final String[] DRUM_INST_NAMES_SEMI = makeDrumInstNamesSemi();
 	public static final Integer[] DRUM_INST_NUMBERS_SEMI = makeDrumInstNumbersSemi();
 
 
 	public static List<Integer> getInstNumbers(String[] instArray) {
-		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(" = ")[1].trim()))
+		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(": ")[0].trim()))
 				.collect(Collectors.toList());
 	}
 
 	private static Integer[] makeDrumInstNumbers() {
 		Integer[] drumInstNumbers = new Integer[DRUM_INST_NAMES.length];
 		for (int i = 0; i < drumInstNumbers.length; i++) {
-			String numberPart = DRUM_INST_NAMES[i].split(" = ")[1];
+			String numberPart = DRUM_INST_NAMES[i].split(": ")[0];
 			drumInstNumbers[i] = Integer.valueOf(numberPart.trim());
 		}
 		return drumInstNumbers;
@@ -158,8 +144,8 @@ public class InstUtils {
 	private static String[] makeDrumInstNamesSemi() {
 		String[] drumInstStrings = new String[DRUM_INST_NAMES.length];
 		for (int i = 0; i < drumInstStrings.length; i++) {
-			String firstPart = DRUM_INST_NAMES[i].split(" = ")[0];
-			drumInstStrings[i] = firstPart + " = " + (i + 36);
+			String namePart = DRUM_INST_NAMES[i].split(": ")[1];
+			drumInstStrings[i] = (i + 36) + ": " + namePart;
 		}
 		return drumInstStrings;
 	}
@@ -170,17 +156,16 @@ public class InstUtils {
 			allInstruments.addAll(Arrays.asList(pool));
 		}
 		List<String> allInstrumentsSorted = new ArrayList<>(allInstruments);
-		Collections.sort(allInstrumentsSorted,
-				(o1, o2) -> Integer.valueOf(o1.split(" = ")[1].trim())
-						.compareTo(Integer.valueOf(o2.split(" = ")[1].trim())));
+		Collections.sort(allInstrumentsSorted, (o1, o2) -> Integer.valueOf(o1.split(": ")[0].trim())
+				.compareTo(Integer.valueOf(o2.split(": ")[0].trim())));
 		return allInstrumentsSorted.toArray(new String[] {});
 	}
 
-	public static final String[] DRUM_KITS = { "DRUMKIT0 = 0", "DRUMKIT1 = 1", "DRUMKIT2 = 2",
-			"DRUMKIT3 = 3" };
+	public static final String[] DRUM_KITS = { "0: DRUMKIT0", "1: DRUMKIT1", "2: DRUMKIT2",
+			"3: DRUMKIT3" };
 
 	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.asList(DRUM_KITS).stream()
-			.map(e -> Integer.valueOf(e.split(" = ")[1].trim())).collect(Collectors.toList());
+			.map(e -> Integer.valueOf(e.split(": ")[0].trim())).collect(Collectors.toList());
 
 	public static Map<POOL, String[]> INST_POOLS = new HashMap<>();
 
