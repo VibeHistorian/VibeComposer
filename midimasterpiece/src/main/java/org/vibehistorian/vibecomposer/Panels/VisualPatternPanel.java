@@ -546,13 +546,13 @@ public class VisualPatternPanel extends JPanel {
 				VisualPatternPanel.this.setVisible(false);
 				int shift = shiftPanel.getInt();
 				if (!showingVelocities) {
-					for (int i = 0; i < lastHits; i++) {
-						int shI = (i + shift) % lastHits;
+					for (int i = 0; i < MAX_HITS; i++) {
+						int shI = (i + shift) % MAX_HITS;
 						hitChecks[shI].setSelected(truePattern.get(i) != 0);
 					}
 				} else {
-					for (int i = 0; i < lastHits; i++) {
-						int shI = (i + shift) % lastHits;
+					for (int i = 0; i < MAX_HITS; i++) {
+						int shI = (i + shift) % MAX_HITS;
 						hitVelocities[shI].setValueRaw(trueVelocities.get(i));
 						hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
 					}
