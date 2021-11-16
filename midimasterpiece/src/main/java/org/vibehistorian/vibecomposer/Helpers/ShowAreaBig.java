@@ -31,6 +31,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.Enumeration;
@@ -358,8 +359,15 @@ public class ShowAreaBig extends JComponent {
 							/*System.out.println("Boosted color!" + highlightX + ", act: "
 									+ actualStartingX + ", x: " + x);*/
 						}
-						g.setColor(
-								OMNI.alphen(noteColor, boostColor + 50 + aNote.getDynamic() / 2));
+						Color aC = OMNI.alphen(noteColor, boostColor + 50 + aNote.getDynamic() / 2);
+						if (noteColorIndex == 2) {
+							GradientPaint gp = new GradientPaint(actualStartingX, 0, aC,
+									actualStartingX + x, 0, OMNI.alphen(aC, 30));
+							g.setPaint(gp);
+						} else {
+							g.setColor(aC);
+						}
+
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
 							g.fillRect(actualStartingX, y - noteHeight + thinNote, x,
