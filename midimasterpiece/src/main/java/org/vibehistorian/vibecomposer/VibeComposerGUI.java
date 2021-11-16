@@ -597,7 +597,6 @@ public class VibeComposerGUI extends JFrame
 	public static List<SoloMuter> groupSoloMuters;
 	public static boolean needToRecalculateSoloMuters = false;
 	public static boolean needToRecalculateSoloMutersAfterSequenceGenerated = false;
-	public static boolean deviceCloseRequested = false;
 
 	JPanel everythingPanel;
 	JPanel controlPanel;
@@ -3685,10 +3684,6 @@ public class VibeComposerGUI extends JFrame
 										savePauseInfo();
 									}
 								}
-								if (deviceCloseRequested) {
-									deviceCloseRequested = false;
-									closeMidiDevice();
-								}
 
 							}
 						}
@@ -3999,7 +3994,9 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (device != null) {
-					deviceCloseRequested = true;
+					closeMidiDevice();
+				} else {
+					softCloseSynth();
 				}
 			}
 
@@ -4031,7 +4028,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (device != null) {
-					deviceCloseRequested = true;
+					closeMidiDevice();
 				}
 			}
 
@@ -4213,6 +4210,8 @@ public class VibeComposerGUI extends JFrame
 		stopMidi.setEnabled(state);
 		compose.setEnabled(state);
 		regenerate.setEnabled(state);
+		midiMode.setEnabled(state);
+		midiModeDevices.setEnabled(state);
 
 	}
 
@@ -4396,6 +4395,11 @@ public class VibeComposerGUI extends JFrame
 		randomDrumsToGenerate.setEnabled(isOriginal);
 	}
 
+	private void softCloseSynth() {
+		closeMidiDevice();
+		synth = null;
+	}
+
 	private void closeMidiDevice() {
 		stopMidi();
 		if (sequencer != null) {
@@ -4404,34 +4408,15 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		LOGGER.info(("Closed sequencer!"));
-		SwingWorker<Void, Void> sw = new SwingWorker<Void, Void>() {
+		MidiDevice oldDevice = device;
+		device = null;
 
-			@Override
-			protected Void doInBackground() throws Exception {
-				MidiDevice oldDevice = device;
-				device = null;
+		if (oldDevice != null) {
+			oldDevice.close();
+		}
 
-				if (oldDevice != null) {
-					/*List<Transmitter> trs = oldDevice.getTransmitters();
-					LOGGER.info("Closing Transmitters: " + (trs != null ? trs.size() : "0/null"));
-					for (Transmitter t : trs) {
-						//LOGGER.info(("Closing T!"));
-						t.close();
-					}
-					List<Receiver> rs = oldDevice.getReceivers();
-					LOGGER.info("Closing Receivers: " + (rs != null ? rs.size() : "0/null"));
-					for (Receiver r : rs) {
-						r.close();
-					}*/
-					oldDevice.close();
-				}
-
-				LOGGER.info(("Closed oldDevice!"));
-				oldDevice = null;
-				return null;
-			}
-		};
-		sw.run();
+		LOGGER.info(("Closed oldDevice!"));
+		oldDevice = null;
 		needToRecalculateSoloMutersAfterSequenceGenerated = true;
 	}
 
@@ -5487,23 +5472,21 @@ public class VibeComposerGUI extends JFrame
 					Synthesizer defSynth;
 					f.applyPattern("yyMMdd-HH-mm-ss");
 					Date date = new Date();
-					defSynth = (isSoundbankSynth && synth != null) ? synth
+					defSynth = (synth != null && !midiMode.isSelected()) ? synth
 							: MidiSystem.getSynthesizer();
+					synth = defSynth;
 					String soundbankOptional = (soundfont != null) ? "SB_" : "";
 					String filename = f.format(date) + "_" + soundbankOptional
 							+ currentMidi.getName();
 					File exportFolderDir = new File(EXPORT_FOLDER);
 					exportFolderDir.mkdir();
+
 					saveWavFile(EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
-					defSynth.open();
-					if (soundfont != null) {
-						defSynth.unloadAllInstruments(soundfont);
-						defSynth.loadAllInstruments(soundfont);
+					synth = null;
+					if (device != null) {
+						device.close();
+						device = null;
 					}
-					for (Transmitter tm : sequencer.getTransmitters()) {
-						tm.close();
-					}
-					sequencer.getTransmitter().setReceiver(defSynth.getReceiver());
 					return null;
 				}
 
@@ -5886,7 +5869,7 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			LOGGER.info(("Stopping Midi.."));
 			sequencer.stop();
-			resetSequencerTickPosition();
+			//resetSequencerTickPosition();
 			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
 			LOGGER.info(("Stopped Midi!"));
@@ -6173,13 +6156,22 @@ public class VibeComposerGUI extends JFrame
 			// Open AudioStream from AudioSynthesizer with default values
 			stream1 = synth.openStream(null, null);
 			synth.open();
-			if (soundfont != null) {
-				synth.unloadAllInstruments(soundfont);
-				synth.loadAllInstruments(soundfont);
+			boolean midiModeSel = midiMode.isSelected();
+			if (midiModeSel) {
+				midiMode.setSelectedRaw(false);
+			} else {
+				if (soundfont != null) {
+					synth.unloadAllInstruments(soundfont);
+					synth.loadAllInstruments(soundfont);
+				}
 			}
+
+
 			// Play Sequence into AudioSynthesizer Receiver.
 			double totalLength = sendOutputSequenceMidiEvents(synth.getReceiver());
-
+			if (midiModeSel) {
+				midiMode.setSelectedRaw(midiModeSel);
+			}
 			// give it an extra 2 seconds, to the reverb to fade out--otherwise it sounds unnatural
 			totalLength += 2;
 			// Calculate how long the WAVE file needs to be.

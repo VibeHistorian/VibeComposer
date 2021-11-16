@@ -662,7 +662,7 @@ public class Section {
 
 	public void initPartMapIfNull() {
 		if (partPresenceVariationMap.get(0) == null) {
-			LOGGER.debug("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
+			//LOGGER.debug("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 			initPartMap();
 		}
 	}
