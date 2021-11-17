@@ -3,7 +3,7 @@
     <groupId>org.vibehistorian.vibecomposer</groupId>
     <artifactId>vibecomposer</artifactId>
     <name>VibeComposer</name>
-    <version>1.0-SNAPSHOT</version>
+    <version>v1.9-beta</version>
     <packaging>jar</packaging>
 
     <repositories>
@@ -121,8 +121,8 @@
                <goals><goal>launch4j</goal></goals>
                <configuration>
                  <headerType>gui</headerType>
-                 <outfile>target/VibeComposer.exe</outfile>
-                 <jar>target/VibeComposer-1.0-SNAPSHOT-jar-with-dependencies.jar</jar>
+                 <outfile>target/${project.name}-${project.version}-executable.exe</outfile>
+                 <jar>target/${project.name}-${project.version}-JAR.jar</jar>
                  <errTitle>enccg</errTitle>
                  <classPath>
                    <mainClass>org.vibehistorian.vibecomposer.VibeComposerGUI</mainClass>
@@ -158,6 +158,8 @@
         <descriptorRefs>
           <descriptorRef>jar-with-dependencies</descriptorRef>
         </descriptorRefs>
+        <finalName>${project.name}-${project.version}-JAR</finalName>
+        <appendAssemblyId>false</appendAssemblyId>
                 <source>1.8</source>
                 <target>1.8</target>
       </configuration>
