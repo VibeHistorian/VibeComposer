@@ -4452,7 +4452,14 @@ public class VibeComposerGUI extends JFrame
 
 		saveStartInfo();
 		if (midiMode.isSelected()) {
-			synth = null;
+			if (synth != null) {
+				if (isSoundbankSynth && soundfont != null) {
+					synth.unloadAllInstruments(soundfont);
+				}
+				synth.close();
+				synth = null;
+				System.gc();
+			}
 		} else {
 			if (device != null) {
 				if (synth != null) {
@@ -5127,7 +5134,14 @@ public class VibeComposerGUI extends JFrame
 			File soundbankFile = new File((String) soundbankFilename.getEditor().getItem());
 			if (soundbankFile.isFile()) {
 				if (synth == null || !isSoundbankSynth || needSoundbankRefresh) {
+					if (synth != null && isSoundbankSynth && soundfont != null) {
+						synth.unloadAllInstruments(soundfont);
+						synth.close();
+						synth = null;
+						System.gc();
+					}
 					synth = null;
+
 					soundfont = MidiSystem.getSoundbank(
 							new BufferedInputStream(new FileInputStream(soundbankFile)));
 					synthesizer = MidiSystem.getSynthesizer();
@@ -5140,9 +5154,11 @@ public class VibeComposerGUI extends JFrame
 				LOGGER.info(("Playing using soundbank: "
 						+ (String) soundbankFilename.getEditor().getItem()));
 			} else {
-				if (synth != null && isSoundbankSynth) {
+				if (synth != null && isSoundbankSynth && soundfont != null) {
 					synth.unloadAllInstruments(soundfont);
 					synth.close();
+					synth = null;
+					System.gc();
 				}
 				synthesizer = null;
 				synth = null;
@@ -5152,6 +5168,12 @@ public class VibeComposerGUI extends JFrame
 
 
 		} catch (InvalidMidiDataException | IOException | MidiUnavailableException ex) {
+			if (synth != null && isSoundbankSynth && soundfont != null) {
+				synth.unloadAllInstruments(soundfont);
+				synth.close();
+				synth = null;
+				System.gc();
+			}
 			synthesizer = null;
 			synth = null;
 			soundfont = null;

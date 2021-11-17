@@ -761,14 +761,13 @@ public class VisualPatternPanel extends JPanel {
 		}
 		if (showingVelocities) {
 			hitVelocities[highlightedHit].setHighlighted(true);
-			if (lastHighlightedHit >= 0 && lastHits > 1 && lastHighlightedHit != highlightedHit) {
-				hitVelocities[lastHighlightedHit].setHighlighted(false);
-			}
 		} else {
 			hitChecks[highlightedHit].setHighlighted(true);
-			if (lastHighlightedHit >= 0 && lastHits > 1 && lastHighlightedHit != highlightedHit) {
-				hitChecks[lastHighlightedHit].setHighlighted(false);
-			}
+		}
+
+		if (lastHighlightedHit >= 0 && lastHits > 1 && lastHighlightedHit != highlightedHit) {
+			hitVelocities[lastHighlightedHit].setHighlighted(false);
+			hitChecks[lastHighlightedHit].setHighlighted(false);
 		}
 		lastHighlightedHit = highlightedHit;
 	}
