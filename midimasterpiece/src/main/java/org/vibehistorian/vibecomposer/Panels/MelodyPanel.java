@@ -35,7 +35,7 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
 	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
 	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
-	private KnobPanel speed = new KnobPanel("Speed", 0);
+	private KnobPanel speed = new KnobPanel("Speed", 50);
 	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 
 	public void initComponents(ActionListener l) {
@@ -229,7 +229,7 @@ public class MelodyPanel extends InstPanel {
 		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
 		speed.setInt(mp1.speed.getInt());
 		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
-		setInstrument(mp1.getInstrument());
+		//setInstrument(mp1.getInstrument());
 	}
 
 	public int getMaxBlockChange() {

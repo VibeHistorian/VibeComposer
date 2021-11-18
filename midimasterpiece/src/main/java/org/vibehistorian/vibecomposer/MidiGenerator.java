@@ -656,7 +656,7 @@ public class MidiGenerator implements JMC {
 
 	private static List<Integer> multipliedDirections(List<Integer> directions, int randomSeed) {
 		// wiggle random
-		int MAX_MULTI = 2;
+		int MAX_MULTI = 4;
 		Random rand = new Random(randomSeed);
 		List<Integer> multiDirs = new ArrayList<>();
 		for (Integer o : directions) {
