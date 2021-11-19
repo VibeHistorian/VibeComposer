@@ -132,7 +132,7 @@ public class GUIConfig {
 	private DrumGenSettings drumGenSettings = new DrumGenSettings();
 	private ArpGenSettings arpGenSettings = new ArpGenSettings();
 
-	// seed
+	private boolean midiMode = true;
 	private long randomSeed = 0;
 
 
@@ -693,6 +693,14 @@ public class GUIConfig {
 
 	public void setSquishProgressively(boolean squishProgressively) {
 		this.squishProgressively = squishProgressively;
+	}
+
+	public boolean isMidiMode() {
+		return midiMode;
+	}
+
+	public void setMidiMode(boolean midiMode) {
+		this.midiMode = midiMode;
 	}
 
 }

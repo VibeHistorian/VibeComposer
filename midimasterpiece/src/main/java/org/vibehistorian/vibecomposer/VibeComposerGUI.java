@@ -3938,8 +3938,6 @@ public class VibeComposerGUI extends JFrame
 		JButton copyChords = makeButton("Copy chords", "CopyChords");
 		JButton clearSeed = makeButton("Clear All Seeds", e -> clearAllSeeds());
 
-		JButton loadConfig = makeButton("Load Config", "LoadGUIConfig");
-
 		controlSettingsPanel.add(regenerate);
 		controlSettingsPanel.add(regenerateStopPlay);
 		controlSettingsPanel.add(regeneratePausePlay);
@@ -3949,7 +3947,6 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(currentChords);
 		controlSettingsPanel.add(copyChords);
 		controlSettingsPanel.add(clearSeed);
-		controlSettingsPanel.add(loadConfig);
 
 
 		constraints.gridy = startY;
@@ -3973,6 +3970,10 @@ public class VibeComposerGUI extends JFrame
 		JButton save5Star = makeButton("Save 5*", "Save 5*");
 		JButton saveCustom = makeButton("Save ->", "Save Custom");
 		saveCustomFilename = new JTextField("savefilename", 12);
+
+
+		JButton loadConfig = makeButton("LOAD..", "LoadGUIConfig");
+
 		JButton saveWavFile = makeButton("Export .WAV", "SaveWavFile");
 
 		showScore = new JButton("Show Score Tab");
@@ -4068,6 +4069,8 @@ public class VibeComposerGUI extends JFrame
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveCustom);
 		playSavePanel.add(saveCustomFilename);
+
+		playSavePanel.add(loadConfig);
 		playSavePanel.add(saveWavFile);
 		playSavePanel.add(new JLabel("Midi Drag'N'Drop:"));
 		playSavePanel.add(generatedMidi);
@@ -6499,6 +6502,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		gc.setRandomSeed(lastRandomSeed);
+		gc.setMidiMode(midiMode.isSelected());
 
 		// arrangement
 		if (!useArrangement.isSelected()) {
@@ -6622,6 +6626,7 @@ public class VibeComposerGUI extends JFrame
 		// seed
 		randomSeed.setValue((int) guiConfig.getRandomSeed());
 		lastRandomSeed = randomSeed.getValue();
+		midiMode.setSelected(guiConfig.isMidiMode());
 
 		// arrangement
 		arrangement = guiConfig.getArrangement();
