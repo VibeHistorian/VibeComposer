@@ -1429,7 +1429,7 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", false);
+		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
 		combineMelodyTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -4514,7 +4514,7 @@ public class VibeComposerGUI extends JFrame
 		// unapply S/M, generate, reapply S/M with new track numbering
 		unapplySolosMutes(true);
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
-		fixCombinedDrumTracks();
+		fixCombinedTracks();
 		reapplySolosMutes();
 
 		cleanUpUIAfterCompose(regenerate);
@@ -4535,9 +4535,17 @@ public class VibeComposerGUI extends JFrame
 				+ (System.currentTimeMillis() - systemTime) + " ms ==========================");
 	}
 
-	private void fixCombinedDrumTracks() {
+	private void fixCombinedTracks() {
 		if (combineDrumTracks.isSelected()) {
 			drumPanels.forEach(e -> {
+				if (e.getSequenceTrack() < 0) {
+					e.getSoloMuter().unsolo();
+					e.getSoloMuter().unmute();
+				}
+			});
+		}
+		if (combineMelodyTracks.isSelected()) {
+			melodyPanels.forEach(e -> {
 				if (e.getSequenceTrack() < 0) {
 					e.getSoloMuter().unsolo();
 					e.getSoloMuter().unmute();
@@ -5078,6 +5086,9 @@ public class VibeComposerGUI extends JFrame
 					? drumPanels.stream().filter(e -> !e.getMuteInst()).count()
 					: drumPanels.size());
 			countReducer = Math.max(countReducer - 1, 0);
+		}
+		if (combineMelodyTracks.isSelected()) {
+			countReducer += 2;
 		}
 		int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
 
