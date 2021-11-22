@@ -379,6 +379,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox startFromBar;
 	public static JCheckBox rememberLastPos;
 	public static JCheckBox snapStartToBeat;
+	public static JCheckBox moveStartToCustomizedSection;
 	JCheckBox extraSettingsReverseDrumPanels;
 	JCheckBox extraSettingsOrderedTransposeGeneration;
 
@@ -578,7 +579,7 @@ public class VibeComposerGUI extends JFrame
 
 	JLabel currentTime;
 	JLabel totalTime;
-	JLabel sectionText;
+	public static JLabel sectionText;
 	boolean isKeySeeking = false;
 	public static boolean isDragging = false;
 	private static long pausedSliderPosition = 0;
@@ -1073,6 +1074,7 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorCombobox = new ScrollComboBox<>(false);
 		startFromBar = new JCheckBox("Start From Bar", true);
 		rememberLastPos = new JCheckBox("Remember Last Pos.", true);
+		moveStartToCustomizedSection = new JCheckBox("Move Start For Customized Section", true);
 		snapStartToBeat = new JCheckBox("Snap Start To Beat", true);
 		snapStartToBeat.addActionListener(new ActionListener() {
 
@@ -1091,6 +1093,7 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorPanel.add(startFromBar);
 		pauseBehaviorPanel.add(rememberLastPos);
 		pauseBehaviorPanel.add(snapStartToBeat);
+		pauseBehaviorPanel.add(moveStartToCustomizedSection);
 
 		JPanel customDrumMappingPanel = new JPanel();
 		drumCustomMapping = new JCheckBox("Custom Drum Mapping", true);
@@ -3865,11 +3868,11 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public int delayed() {
+	public static int delayed() {
 		return (int) (MidiGenerator.START_TIME_DELAY * 1000 * 60 / guiConfig.getBpm());
 	}
 
-	public int beatFromBpm(int speedAdjustment) {
+	public static int beatFromBpm(int speedAdjustment) {
 		int finalVal = (int) (((4000 - speedAdjustment) * 60 * stretchMidi.getInt() / 100.0)
 				/ guiConfig.getBpm());
 		/*if (useDoubledDurations.isSelected()) {
@@ -3878,7 +3881,7 @@ public class VibeComposerGUI extends JFrame
 		return finalVal;
 	}
 
-	public int sliderMeasureWidth() {
+	public static int sliderMeasureWidth() {
 		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH / 4);
 	}
 
@@ -5949,7 +5952,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public void savePauseInfo() {
+	public static void savePauseInfo() {
 		pausedSliderPosition = slider.getUpperValue();
 		if (MidiGenerator.chordInts.size() > 0) {
 			pausedMeasureCounter = (int) (pausedSliderPosition - delayed()) / sliderMeasureWidth();
@@ -7806,7 +7809,7 @@ public class VibeComposerGUI extends JFrame
 		return v;
 	}
 
-	public long msToTicks(long ms) {
+	public static long msToTicks(long ms) {
 		if (ms == 0 || sequencer.getSequence() == null)
 			return 0;
 		float fps = sequencer.getSequence().getDivisionType();
@@ -7823,7 +7826,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public void midiNavigate(long sliderValue) {
+	public static void midiNavigate(long sliderValue) {
 		long time = (sliderValue - 10) * 1000;
 		long timeTicks = msToTicks(time);
 		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
@@ -7926,5 +7929,40 @@ public class VibeComposerGUI extends JFrame
 	public static boolean canRegenerateOnChange() {
 		return sequencer != null && regenerateWhenValuesChange.isSelected()
 				&& arrSection.getSelectedIndex() == 0;
+	}
+
+	public static int calculateSectionMeasureStart(int sectIndex) {
+		if (actualArrangement == null || actualArrangement.getSections() == null
+				|| sliderMeasureStartTimes == null || sliderMeasureStartTimes.isEmpty()
+				|| sectIndex < 0 || sectIndex > actualArrangement.getSections().size()) {
+			return 0;
+		}
+		List<Section> secs = actualArrangement.getSections();
+		int measureCounter = 0;
+		for (int i = 1; i < secs.size() && i < sectIndex; i++) {
+			measureCounter += secs.get(i).getMeasures();
+		}
+		return OMNI.clamp(measureCounter, 0, sliderMeasureStartTimes.size() - 1);
+	}
+
+	public static void setSliderStart(int val) {
+		if (val >= slider.getMaximum()) {
+			return;
+		}
+		if (slider.getUpperValue() < val) {
+			slider.setUpperValue(val);
+			midiNavigate(val);
+		}
+		slider.setValue(val);
+	}
+
+	public static void trySliderStartChange(int sectIndex) {
+		if (moveStartToCustomizedSection == null || !moveStartToCustomizedSection.isSelected()
+				|| sliderMeasureStartTimes == null)
+			return;
+
+		int measure = calculateSectionMeasureStart(sectIndex);
+		int startSliderVal = sliderMeasureStartTimes.get(measure);
+		setSliderStart(startSliderVal);
 	}
 }
