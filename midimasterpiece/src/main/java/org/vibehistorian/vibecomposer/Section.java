@@ -509,7 +509,8 @@ public class Section {
 		}
 	}
 
-	public void generateVariationForPartAndOrder(Random presRand, int part, int order) {
+	public void generateVariationForPartAndOrder(Random presRand, int part, int order,
+			boolean forceAdd) {
 		initPartMapIfNull();
 		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
 		int added = 0;
@@ -519,7 +520,7 @@ public class Section {
 				added++;
 			}
 		}
-		if (added == 0) {
+		if (forceAdd && added == 0) {
 			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
 			addVariation(part, order, Collections.singletonList(randVar));
 		}

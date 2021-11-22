@@ -2768,7 +2768,7 @@ public class VibeComposerGUI extends JFrame
 								}
 
 							}
-						} else if (evt.isShiftDown() || shiftOverrideButton) {
+						} else if (shiftOverrideButton) {
 							if (mClick) {
 								if (hasVariation) {
 									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
@@ -2788,6 +2788,45 @@ public class VibeComposerGUI extends JFrame
 											arrangement.getPartInclusionMap(), true);
 								}
 							}
+						} else if (evt.isShiftDown()) {
+							boolean hasAnyPresence = actualArrangement.getSections().stream()
+									.anyMatch(e -> e.getPresence(part).contains(getInstList(part)
+											.get(partAbsoluteOrder).getPanelOrder()));
+							if (mClick) {
+								boolean hasAnyVariation = hasAnyPresence
+										&& actualArrangement.getSections().stream().anyMatch(e -> !e
+												.getVariation(part, partAbsoluteOrder).isEmpty());
+								for (Section asec : actualArrangement.getSections()) {
+									if (hasAnyVariation) {
+										for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+											asec.removeVariationForPart(part, partAbsoluteOrder, i);
+										}
+									} else if (hasAnyPresence
+											&& asec.getPresence(part).contains(getInstList(part)
+													.get(partAbsoluteOrder).getPanelOrder())) {
+										asec.generateVariationForPartAndOrder(new Random(), part,
+												partAbsoluteOrder, false);
+									}
+								}
+							} else {
+								if (hasAnyPresence) {
+									for (Section asec : actualArrangement.getSections()) {
+										asec.initPartMapFromOldData();
+										for (int i = 0; i < getInstList(part).size(); i++) {
+											asec.resetPresence(part, partAbsoluteOrder);
+										}
+									}
+								} else {
+									arrangement.initPartInclusionMapIfNull();
+									for (Section asec : actualArrangement.getSections()) {
+										asec.initPartMapFromOldData();
+										if (new Random().nextInt(100) < asec
+												.getChanceForInst(part)) {
+											asec.setPresence(part, partAbsoluteOrder);
+										}
+									}
+								}
+							}
 						} else {
 							boolean hasSinglePresence = sec.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
@@ -2801,7 +2840,7 @@ public class VibeComposerGUI extends JFrame
 									}
 								} else if (hasSinglePresence) {
 									sec.generateVariationForPartAndOrder(new Random(), part,
-											partAbsoluteOrder);
+											partAbsoluteOrder, true);
 								}
 							} else {
 								sec.initPartMapFromOldData();
