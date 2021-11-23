@@ -6785,6 +6785,9 @@ public class VibeComposerGUI extends JFrame
 		randomArpMaxSwing.setInt(gc.getMaxArpSwing());
 
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
+		for (int i = 1; i < melodyPanels.size(); i++) {
+			melodyPanels.get(i).toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+		}
 
 	}
 
