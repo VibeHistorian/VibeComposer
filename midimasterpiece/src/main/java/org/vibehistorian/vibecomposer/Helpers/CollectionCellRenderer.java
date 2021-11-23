@@ -85,7 +85,6 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			double widthDividerValue = (width / (double) widthDivider);
 
 			double x = 0;
-			Color mixC = Color.white;
 			if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
 				Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
 				double startX = x;
@@ -106,6 +105,16 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 
 					startX = x;
 					endX = (x + widthDividerValue);
+
+					/*Color noteColor = c;
+					if (counter > 0) {
+						Color nextColor = part < 4 ? VibeComposerGUI.instColors[part + 1]
+								: Color.red;
+						double percentageMix = (counter
+								/ (double) VibeComposerGUI.getInstList(part).size()) / 3;
+					
+						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
+					}*/
 
 					g.setColor(OMNI.mixColor(c, panelC,
 							(1 - sec.countVariationsForPartAndOrder(part, partOrder)) / 1.5));

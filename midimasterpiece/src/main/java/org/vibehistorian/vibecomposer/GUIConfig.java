@@ -68,6 +68,8 @@ public class GUIConfig {
 
 
 	// melody gen
+	private boolean combineMelodyTracks = false;
+
 	private int melodyUseOldAlgoChance = 0;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
@@ -701,6 +703,14 @@ public class GUIConfig {
 
 	public void setMidiMode(boolean midiMode) {
 		this.midiMode = midiMode;
+	}
+
+	public boolean isCombineMelodyTracks() {
+		return combineMelodyTracks;
+	}
+
+	public void setCombineMelodyTracks(boolean combineMelodyTracks) {
+		this.combineMelodyTracks = combineMelodyTracks;
 	}
 
 }

@@ -170,7 +170,6 @@ public class MidiGenerator implements JMC {
 	public static String LAST_CHORD = null;
 
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
-	public static boolean COLLAPSE_MELODY_TRACKS = true;
 	public static boolean RANDOMIZE_TARGET_NOTES = false;
 
 	public static List<Integer> TARGET_NOTES = null;
@@ -2991,7 +2990,7 @@ public class MidiGenerator implements JMC {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				p.setAppend(false);
-				if (!COLLAPSE_MELODY_TRACKS) {
+				if (!gc.isCombineMelodyTracks()) {
 					melodyParts.get(i).addPhrase(p);
 				} else {
 					if (firstPresentPart.isPresent()) {
@@ -3051,7 +3050,7 @@ public class MidiGenerator implements JMC {
 				score.add(melodyParts.get(i));
 				((PartExt) melodyParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
-				if (COLLAPSE_MELODY_TRACKS) {
+				if (gc.isCombineMelodyTracks()) {
 					break;
 				}
 				//if (VibeComposerGUI.apSm)

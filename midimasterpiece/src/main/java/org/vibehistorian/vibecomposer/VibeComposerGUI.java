@@ -981,7 +981,7 @@ public class VibeComposerGUI extends JFrame
 				try {
 					GUIPreset preset = unmarshallPreset(loadedFile);
 					guiConfig = preset;
-					copyConfigToGUI();
+					copyConfigToGUI(guiConfig);
 					List<Component> presetComps = makeSettableComponentList();
 					for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
 						setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i));
@@ -4596,7 +4596,6 @@ public class VibeComposerGUI extends JFrame
 	public void fillUserParameters(boolean regenerate) {
 		try {
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
-			MidiGenerator.COLLAPSE_MELODY_TRACKS = combineMelodyTracks.isSelected();
 			MidiGenerator.recalculateDurations(stretchMidi.getInt());
 			MidiGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
@@ -5634,7 +5633,7 @@ public class VibeComposerGUI extends JFrame
 					guiConfig =
 
 							unmarshallConfig(files[0]);
-					copyConfigToGUI();
+					copyConfigToGUI(guiConfig);
 				} catch (JAXBException |
 
 						IOException e) {
@@ -6666,123 +6665,126 @@ public class VibeComposerGUI extends JFrame
 		gc.setDrumCustomMapping(drumCustomMapping.isSelected() && isCustomMidiDevice);
 		gc.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
 		gc.setMelodyPatternFlip(melodyPatternFlip.isSelected());
+
+		gc.setCombineMelodyTracks(combineMelodyTracks.isSelected());
 	}
 
-	public void copyConfigToGUI() {
+	public void copyConfigToGUI(GUIConfig gc) {
 
 
-		if (guiConfig.getMelodyNotes() != null) {
-			MelodyMidiDropPane.userMelody = guiConfig.getMelodyNotes().makePhrase();
+		if (gc.getMelodyNotes() != null) {
+			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
 			MelodyMidiDropPane.message.setText("~MELODY LOADED FROM FILE~");
 		}
 
 		// seed
-		randomSeed.setValue((int) guiConfig.getRandomSeed());
+		randomSeed.setValue((int) gc.getRandomSeed());
 		lastRandomSeed = randomSeed.getValue();
-		midiMode.setSelected(guiConfig.isMidiMode());
+		midiMode.setSelected(gc.isMidiMode());
 
 		// arrangement
-		arrangement = guiConfig.getArrangement();
-		actualArrangement = guiConfig.getActualArrangement();
+		arrangement = gc.getArrangement();
+		actualArrangement = gc.getActualArrangement();
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		setActualModel(actualArrangement.convertToActualTableModel());
 		arrSection.setSelectedIndex(0);
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
-		arrangementVariationChance.setInt(guiConfig.getArrangementVariationChance());
-		arrangementPartVariationChance.setInt(guiConfig.getArrangementPartVariationChance());
-		arrangementScaleMidiVelocity.setSelected(guiConfig.isScaleMidiVelocityInArrangement());
+		arrangementVariationChance.setInt(gc.getArrangementVariationChance());
+		arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
+		arrangementScaleMidiVelocity.setSelected(gc.isScaleMidiVelocityInArrangement());
 		arrangementSeed.setValue(arrangement.getSeed());
-		useArrangement.setSelected(guiConfig.isArrangementEnabled());
+		useArrangement.setSelected(gc.isArrangementEnabled());
 		manualArrangement.setSelected(true);
 
 		// macro
-		scaleMode.setVal(guiConfig.getScaleMode().toString());
-		soundbankFilename.getEditor().setItem(guiConfig.getSoundbankName());
-		pieceLength.setText(String.valueOf(guiConfig.getPieceLength()));
-		setFixedLengthChords(guiConfig.getFixedDuration());
+		scaleMode.setVal(gc.getScaleMode().toString());
+		soundbankFilename.getEditor().setItem(gc.getSoundbankName());
+		pieceLength.setText(String.valueOf(gc.getPieceLength()));
+		setFixedLengthChords(gc.getFixedDuration());
 
-		transposeScore.setInt(guiConfig.getTranspose());
-		mainBpm.setInt((int) Math.round(guiConfig.getBpm()));
+		transposeScore.setInt(gc.getTranspose());
+		mainBpm.setInt((int) Math.round(gc.getBpm()));
 
-		arpAffectsBpm.setSelected(guiConfig.isArpAffectsBpm());
-		beatDurationMultiplier.setSelectedIndex(guiConfig.getBeatDurationMultiplier());
-		allowChordRepeats.setSelected(guiConfig.isAllowChordRepeats());
-		globalSwingOverride.setSelected(guiConfig.getGlobalSwingOverride() != null);
-		if (guiConfig.getGlobalSwingOverride() != null) {
-			globalSwingOverrideValue.setInt(guiConfig.getGlobalSwingOverride());
+		arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
+		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplier());
+		allowChordRepeats.setSelected(gc.isAllowChordRepeats());
+		globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
+		if (gc.getGlobalSwingOverride() != null) {
+			globalSwingOverrideValue.setInt(gc.getGlobalSwingOverride());
 		}
 
 		// parts
 
-		addMelody.setSelected(guiConfig.isMelodyEnable());
-		addBass.setSelected(guiConfig.isBassEnable());
-		addChords.setSelected(guiConfig.isChordsEnable());
-		addArps.setSelected(guiConfig.isArpsEnable());
-		addDrums.setSelected(guiConfig.isDrumsEnable());
+		addMelody.setSelected(gc.isMelodyEnable());
+		addBass.setSelected(gc.isBassEnable());
+		addChords.setSelected(gc.isChordsEnable());
+		addArps.setSelected(gc.isArpsEnable());
+		addDrums.setSelected(gc.isDrumsEnable());
 
 		//drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
-		drumCustomMappingNumbers.setText(guiConfig.getDrumCustomMappingNumbers());
+		drumCustomMappingNumbers.setText(gc.getDrumCustomMappingNumbers());
 		if (StringUtils.countMatches(drumCustomMappingNumbers.getText(),
 				",") != InstUtils.DRUM_INST_NUMBERS_SEMI.length - 1) {
 			drumCustomMappingNumbers
 					.setText(StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
 		}
-		melodyPatternFlip.setSelected(guiConfig.isMelodyPatternFlip());
+		melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
 
-		recreateInstPanelsFromInstParts(0, guiConfig.getMelodyParts());
-		if (guiConfig.getBassParts() != null && !guiConfig.getBassParts().isEmpty()) {
-			recreateInstPanelsFromInstParts(1, guiConfig.getBassParts());
+		recreateInstPanelsFromInstParts(0, gc.getMelodyParts());
+		if (gc.getBassParts() != null && !gc.getBassParts().isEmpty()) {
+			recreateInstPanelsFromInstParts(1, gc.getBassParts());
 		}
 
-		recreateInstPanelsFromInstParts(2, guiConfig.getChordParts());
-		recreateInstPanelsFromInstParts(3, guiConfig.getArpParts());
-		recreateInstPanelsFromInstParts(4, guiConfig.getDrumParts());
+		recreateInstPanelsFromInstParts(2, gc.getChordParts());
+		recreateInstPanelsFromInstParts(3, gc.getArpParts());
+		recreateInstPanelsFromInstParts(4, gc.getDrumParts());
 
-		setChordSettingsInUI(guiConfig.getChordGenSettings());
+		setChordSettingsInUI(gc.getChordGenSettings());
 
 		// melody
-		melodyFirstNoteFromChord.setSelected(guiConfig.isFirstNoteFromChord());
-		randomChordNote.setSelected(guiConfig.isFirstNoteRandomized());
-		melodyUseOldAlgoChance.setInt(guiConfig.getMelodyUseOldAlgoChance());
-		melodyBasicChordsOnly.setSelected(guiConfig.isMelodyBasicChordsOnly());
-		melodyTonicNoteTarget.setInt(guiConfig.getMelodyTonicNoteTarget());
-		melodyChordNoteTarget.setInt(guiConfig.getMelodyChordNoteTarget());
-		melodyModeNoteTarget.setInt(guiConfig.getMelodyModeNoteTarget());
-		melodyEmphasizeKey.setSelected(guiConfig.isMelodyEmphasizeKey());
+		melodyFirstNoteFromChord.setSelected(gc.isFirstNoteFromChord());
+		randomChordNote.setSelected(gc.isFirstNoteRandomized());
+		melodyUseOldAlgoChance.setInt(gc.getMelodyUseOldAlgoChance());
+		melodyBasicChordsOnly.setSelected(gc.isMelodyBasicChordsOnly());
+		melodyTonicNoteTarget.setInt(gc.getMelodyTonicNoteTarget());
+		melodyChordNoteTarget.setInt(gc.getMelodyChordNoteTarget());
+		melodyModeNoteTarget.setInt(gc.getMelodyModeNoteTarget());
+		melodyEmphasizeKey.setSelected(gc.isMelodyEmphasizeKey());
 
-		melodyArpySurprises.setSelected(guiConfig.isMelodyArpySurprises());
-		melodySingleNoteExceptions.setSelected(guiConfig.isMelodySingleNoteExceptions());
-		melodyFillPausesPerChord.setSelected(guiConfig.isMelodyFillPausesPerChord());
-		melodyAvoidChordJumps.setSelected(guiConfig.isMelodyAvoidChordJumps());
-		melodyUseDirectionsFromProgression
-				.setSelected(guiConfig.isMelodyUseDirectionsFromProgression());
-		melodyBlockTargetMode.setSelectedIndex(guiConfig.getMelodyBlockTargetMode());
-		melodyPatternEffect.setSelectedIndex(guiConfig.getMelodyPatternEffect());
-		melodyReplaceAvoidNotes.setInt(guiConfig.getMelodyReplaceAvoidNotes());
-		melodyMaxDirChanges.setInt(guiConfig.getMelodyMaxDirChanges());
+		melodyArpySurprises.setSelected(gc.isMelodyArpySurprises());
+		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
+		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
+		melodyAvoidChordJumps.setSelected(gc.isMelodyAvoidChordJumps());
+		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
+		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
+		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
+		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
+		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
 
 		// chords
-		spiceChance.setInt(guiConfig.getSpiceChance());
-		spiceParallelChance.setInt(guiConfig.getSpiceParallelChance());
-		spiceAllowDimAug.setSelected(guiConfig.isDimAugDom7thEnabled());
-		spiceAllow9th13th.setSelected(guiConfig.isEnable9th13th());
-		spiceFlattenBigChords.setSelected(guiConfig.isSpiceFlattenBigChords());
-		extraSquishChordsProgressively.setSelected(guiConfig.isSquishProgressively());
-		chordSlashChance.setInt(guiConfig.getChordSlashChance());
-		spiceForceScale.setSelected(guiConfig.isSpiceForceScale());
+		spiceChance.setInt(gc.getSpiceChance());
+		spiceParallelChance.setInt(gc.getSpiceParallelChance());
+		spiceAllowDimAug.setSelected(gc.isDimAugDom7thEnabled());
+		spiceAllow9th13th.setSelected(gc.isEnable9th13th());
+		spiceFlattenBigChords.setSelected(gc.isSpiceFlattenBigChords());
+		extraSquishChordsProgressively.setSelected(gc.isSquishProgressively());
+		chordSlashChance.setInt(gc.getChordSlashChance());
+		spiceForceScale.setSelected(gc.isSpiceForceScale());
 
-		extraUseChordFormula.setSelected(guiConfig.isUseChordFormula());
-		firstChordSelection.setVal(guiConfig.getFirstChord());
-		lastChordSelection.setVal(guiConfig.getLastChord());
-		keyChangeTypeSelection.setVal(guiConfig.getKeyChangeType().toString());
-		userChordsEnabled.setSelected(guiConfig.isCustomChordsEnabled());
-		userChords.setText(guiConfig.getCustomChords());
-		userChordsDurations.setText(guiConfig.getCustomChordDurations());
+		extraUseChordFormula.setSelected(gc.isUseChordFormula());
+		firstChordSelection.setVal(gc.getFirstChord());
+		lastChordSelection.setVal(gc.getLastChord());
+		keyChangeTypeSelection.setVal(gc.getKeyChangeType().toString());
+		userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
+		userChords.setText(gc.getCustomChords());
+		userChordsDurations.setText(gc.getCustomChordDurations());
 
 		// arps
-		randomArpUseOctaveAdjustments.setSelected(guiConfig.isUseOctaveAdjustments());
-		randomArpMaxSwing.setInt(guiConfig.getMaxArpSwing());
+		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
+		randomArpMaxSwing.setInt(gc.getMaxArpSwing());
+
+		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 
 	}
 
