@@ -739,6 +739,19 @@ public class VibeComposerGUI extends JFrame
 				public void mousePressed(MouseEvent e) {
 					int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
 					if (SwingUtilities.isRightMouseButton(e) && indx < 5) {
+						/*Timer tmr = new Timer(100, new ActionListener() {
+						
+							@Override
+							public void actionPerformed(ActionEvent e) {
+						
+								Play.midi(new Note(), false);
+							}
+						});
+						tmr.setRepeats(false);
+						tmr.setDelay(100);
+						tmr.start();*/
+
+
 						LOGGER.info(("RMB pressed in instrument tab pane: " + indx));
 						switch (indx) {
 						case 0:
@@ -2929,6 +2942,7 @@ public class VibeComposerGUI extends JFrame
 				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true);
 				actualArrangementTableColumnDragging = false;
 				manualArrangement.setSelected(true);
+				manualArrangement.repaint();
 			}
 		});
 		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

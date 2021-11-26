@@ -8,6 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -128,6 +129,18 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 						g.drawString(num.substring(1), (int) ((startX + endX) / 2 - 3),
 								10 * height / 16);
 					}
+
+					g.setColor(new Color(230, 230, 230, 200));
+					int numVars = Section.variationDescriptions[part].length - 2;
+					double moveX = (endX - startX) / (numVars);
+					List<Integer> actualVars = sec.getVariation(part, partOrder);
+					for (int i = 0; i < numVars; i++) {
+						int varX = (int) (startX + ((moveX * i) + 1));
+						if (actualVars.contains(i)) {
+							g.drawLine(varX, 0, varX, 3);
+						}
+					}
+
 					g.setColor(Color.black);
 					g.drawLine((int) startX, 0, (int) startX, height);
 					g.drawLine((int) endX, 0, (int) endX, height);
