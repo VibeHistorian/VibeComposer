@@ -327,6 +327,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeArrangementOnCompose;
 	public static final String GLOBAL = "Global";
 	public static ButtonSelectorPanel arrSection;
+	public static boolean switchTabPaneAfterApply;
 	JPanel arrangementMiddleColoredPanel;
 	ScrollComboBox<String> newSectionBox;
 
@@ -2153,6 +2154,12 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
+			if (switchTabPaneAfterApply && instrumentTabPane.getSelectedIndex() < 5) {
+				switchTabPaneAfterApply = false;
+				instrumentTabPane.setSelectedIndex(6);
+				arrSection.setSelectedIndexWithProperty(0, true);
+			}
+
 
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selItem = arrSection.getVal();
@@ -2742,12 +2749,12 @@ public class VibeComposerGUI extends JFrame
 
 						LOGGER.debug("Percentage: " + orderPercentage);
 						LOGGER.debug("Selected subcell: " + (partAbsoluteOrder + 1));
-						boolean shiftOverrideButton = false;
+						boolean randomizerButtonPressed = false;
 						if ((actualSize > CollectionCellRenderer.MIN_CELLS
 								&& partAbsoluteOrder == actualSize)
 								|| (actualSize <= CollectionCellRenderer.MIN_CELLS
 										&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
-							shiftOverrideButton = true;
+							randomizerButtonPressed = true;
 						} else if (partAbsoluteOrder >= actualSize) {
 							LOGGER.debug("Can't interact: subcell not present in part - "
 									+ (partAbsoluteOrder + 1));
@@ -2781,7 +2788,7 @@ public class VibeComposerGUI extends JFrame
 								}
 
 							}
-						} else if (shiftOverrideButton) {
+						} else if (randomizerButtonPressed) {
 							if (mClick) {
 								if (hasVariation) {
 									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
@@ -2839,6 +2846,13 @@ public class VibeComposerGUI extends JFrame
 										}
 									}
 								}
+							}
+						} else if (evt.isAltDown()) {
+							if (secOrder + 1 < arrSection.getItemCount()) {
+								arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
+								arrSection.repaint();
+								instrumentTabPane.setSelectedIndex(part);
+								switchTabPaneAfterApply = true;
 							}
 						} else {
 							boolean hasSinglePresence = sec.getPresence(part).contains(
