@@ -2847,13 +2847,6 @@ public class VibeComposerGUI extends JFrame
 									}
 								}
 							}
-						} else if (evt.isAltDown()) {
-							if (secOrder + 1 < arrSection.getItemCount()) {
-								arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
-								arrSection.repaint();
-								instrumentTabPane.setSelectedIndex(part);
-								switchTabPaneAfterApply = true;
-							}
 						} else {
 							boolean hasSinglePresence = sec.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
@@ -2885,6 +2878,13 @@ public class VibeComposerGUI extends JFrame
 						manualArrangement.setSelected(true);
 						manualArrangement.repaint();
 						scrollableArrangementActualTable.repaint();
+					} else {
+						if (secOrder + 1 < arrSection.getItemCount()) {
+							arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
+							arrSection.repaint();
+							instrumentTabPane.setSelectedIndex(part);
+							switchTabPaneAfterApply = true;
+						}
 					}
 
 				}
