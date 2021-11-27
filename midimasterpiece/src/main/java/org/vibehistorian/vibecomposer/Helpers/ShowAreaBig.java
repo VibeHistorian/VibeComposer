@@ -143,13 +143,6 @@ public class ShowAreaBig extends JComponent {
 		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
 	}
 
-	/**
-	 * Return the minimum size that the knob would like to be.
-	 * This is the same size as the preferred size so the
-	 * knob will be of a fixed size.
-	 *
-	 * @return the minimum size of the JKnob.
-	 */
 	@Override
 	public Dimension getMinimumSize() {
 		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);

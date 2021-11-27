@@ -1,10 +1,3 @@
-/* --------------------
-* A jMusic tool which displays a score as a
-* Common Practice Notation in a window.
-* @author Andrew Brown 
- * @version 1.0,Sun Feb 25 18:43
-* ---------------------
-*/
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
@@ -76,13 +69,6 @@ public class ShowRulerBig extends JComponent {
 		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
 	}
 
-	/**
-	 * Return the minimum size that the knob would like to be.
-	 * This is the same size as the preferred size so the
-	 * knob will be of a fixed size.
-	 *
-	 * @return the minimum size of the JKnob.
-	 */
 	@Override
 	public Dimension getMinimumSize() {
 		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
