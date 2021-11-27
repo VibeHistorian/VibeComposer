@@ -581,6 +581,7 @@ public class VibeComposerGUI extends JFrame
 
 	JLabel currentTime;
 	JLabel totalTime;
+	public static int currentSectionIndex = -1;
 	public static JLabel sectionText;
 	boolean isKeySeeking = false;
 	public static boolean isDragging = false;
@@ -3744,9 +3745,10 @@ public class VibeComposerGUI extends JFrame
 
 								Section sec = null;
 								if (sectIndex >= 0
-										&& actualArrangement.getSections().size() > sectIndex) {
+										&& sectIndex < actualArrangement.getSections().size()) {
 									sec = actualArrangement.getSections().get(sectIndex);
 								}
+								currentSectionIndex = sectIndex;
 								int finalSectIndex = sectIndex;
 								if (sec == null) {
 									sectionText.setText("End");
