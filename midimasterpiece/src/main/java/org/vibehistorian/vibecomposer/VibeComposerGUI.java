@@ -430,6 +430,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyPatternRandomizeOnCompose;
 	KnobPanel melodyReplaceAvoidNotes;
 	KnobPanel melodyMaxDirChanges;
+	public static KnobPanel melodyTargetNoteVariation;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -1356,6 +1357,7 @@ public class VibeComposerGUI extends JFrame
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
+		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
 
 		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
@@ -1364,6 +1366,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
 		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
+		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
@@ -6664,6 +6667,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
 		gc.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
 		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
+		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
 
 
 		// chords
@@ -6789,6 +6793,7 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
 		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
 		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
+		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
 
 		// chords
 		spiceChance.setInt(gc.getSpiceChance());

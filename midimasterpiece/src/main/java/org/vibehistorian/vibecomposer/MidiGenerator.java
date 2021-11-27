@@ -285,8 +285,8 @@ public class MidiGenerator implements JMC {
 		}
 		if (RANDOMIZE_TARGET_NOTES) {
 			if (TARGET_NOTES == null) {
-				TARGET_NOTES = new ArrayList<>(
-						generateOffsets(roots, seed, gc.getMelodyBlockTargetMode()));
+				TARGET_NOTES = new ArrayList<>(generateOffsets(roots, seed,
+						gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation()));
 			}
 			blockChordNoteChoices = TARGET_NOTES;
 		}
@@ -653,13 +653,15 @@ public class MidiGenerator implements JMC {
 		return offsets;
 	}
 
-	private static List<Integer> multipliedDirections(List<Integer> directions, int randomSeed) {
-		// wiggle random
-		int MAX_MULTI = 4;
+	private static List<Integer> multipliedDirections(List<Integer> directions, int randomSeed,
+			int targetNoteVariation) {
+		if (targetNoteVariation < 1) {
+			targetNoteVariation = 1;
+		}
 		Random rand = new Random(randomSeed);
 		List<Integer> multiDirs = new ArrayList<>();
 		for (Integer o : directions) {
-			int multiplied = (rand.nextInt(MAX_MULTI) + 1) * o;
+			int multiplied = (rand.nextInt(targetNoteVariation) + 1) * o;
 			if (o < 0) {
 				// small correction for too low dips
 				multiplied++;
@@ -683,15 +685,15 @@ public class MidiGenerator implements JMC {
 		return rootIndexes;
 	}
 
-	private static List<Integer> generateOffsets(List<int[]> chords, int randomSeed,
-			int targetMode) {
+	private static List<Integer> generateOffsets(List<int[]> chords, int randomSeed, int targetMode,
+			int targetNoteVariation) {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
 				gc != null && gc.isMelodyUseDirectionsFromProgression()
 						? generateMelodyOffsetDirectionsFromChordProgression(chords, true,
 								randomSeed)
 						: randomizedChordDirections(chords.size(), randomSeed),
-				randomSeed + 1);
+				randomSeed + 1, targetNoteVariation);
 		List<Integer> offsets = new ArrayList<>();
 		for (int i = 0; i < chordOffsets.size(); i++) {
 			/*LOGGER.debug("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
@@ -760,12 +762,12 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static List<Integer> generateOffsets(List<String> chordStrings, int randomSeed,
-			int targetMode, Boolean isPublic) {
+			int targetMode, int targetNoteVariation, Boolean isPublic) {
 		List<int[]> chords = new ArrayList<>();
 		for (int i = 0; i < chordStrings.size(); i++) {
 			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
 		}
-		return generateOffsets(chords, randomSeed, targetMode);
+		return generateOffsets(chords, randomSeed, targetMode, targetNoteVariation);
 	}
 
 	private Pair<Integer, Integer> normalizeNotePitch(int startingNote, int startingPitch) {

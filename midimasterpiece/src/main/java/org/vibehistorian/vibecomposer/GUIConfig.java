@@ -82,6 +82,7 @@ public class GUIConfig {
 	private int melodyModeNoteTarget = 15;
 	private int melodyReplaceAvoidNotes = 1;
 	private int melodyMaxDirChanges = 2;
+	private int melodyTargetNoteVariation = 4;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
@@ -711,6 +712,14 @@ public class GUIConfig {
 
 	public void setCombineMelodyTracks(boolean combineMelodyTracks) {
 		this.combineMelodyTracks = combineMelodyTracks;
+	}
+
+	public int getMelodyTargetNoteVariation() {
+		return melodyTargetNoteVariation;
+	}
+
+	public void setMelodyTargetNoteVariation(int melodyTargetNoteVariation) {
+		this.melodyTargetNoteVariation = melodyTargetNoteVariation;
 	}
 
 }
