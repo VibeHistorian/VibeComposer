@@ -223,13 +223,13 @@ public class ShowPanelBig extends JPanel {
 					SwingUtilities.convertPointFromScreen(xy, sa);
 					double usableStart = beatWidth;
 					double usableEnd = (maxEndTime * beatWidth);
-					System.out.println("XY: " + xy.toString() + ", start: " + usableStart
-							+ ", end: " + usableEnd);
+					/*System.out.println("XY: " + xy.toString() + ", start: " + usableStart
+							+ ", end: " + usableEnd);*/
 					if (xy.getX() > usableEnd || xy.getX() < usableStart) {
 						return;
 					}
 					double percentage = (xy.getX() - usableStart) / (usableEnd - usableStart);
-					System.out.println("Percentage: " + percentage);
+					System.out.println("Percentage in MIDI: " + percentage);
 					boolean sequenceRunning = VibeComposerGUI.sequencer.isRunning();
 					if (sequenceRunning) {
 						VibeComposerGUI.sequencer.stop();
@@ -239,7 +239,7 @@ public class ShowPanelBig extends JPanel {
 					int valueToSet = VibeComposerGUI.sliderMeasureStartTimes.get(0)
 							+ (int) (percentage * (lastUsableSliderTime
 									- VibeComposerGUI.sliderMeasureStartTimes.get(0)));
-					System.out.println("Value to set: " + valueToSet);
+					//System.out.println("Value to set: " + valueToSet);
 					VibeComposerGUI.setSliderEnd(valueToSet);
 					VibeComposerGUI.savePauseInfo();
 					if (sequenceRunning) {

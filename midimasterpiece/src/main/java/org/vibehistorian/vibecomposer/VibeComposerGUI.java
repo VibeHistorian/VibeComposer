@@ -31,6 +31,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
@@ -96,6 +97,7 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -210,6 +212,12 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_FOLDER = ".";
 	private static final String EXPORT_FOLDER = "exports";
 	private static final String MID_EXTENSION = ".mid";
+
+	private static List<Image> RISKY_VARIATIONS_ICONS = new ArrayList<>();
+
+	private static final String[] RISKY_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
+			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png",
+			"v5_transUp.png", "v6_transDown.png", "v7_transCut.png" };
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
@@ -657,6 +665,12 @@ public class VibeComposerGUI extends JFrame
 				g2d.fillRect(0, 0, w, h);
 			}
 		};
+		for (int i = 0; i < RISKY_VAR_ICON_NAMES.length; i++) {
+			RISKY_VARIATIONS_ICONS.add(new ImageIcon(new ImageIcon(
+					this.getClass().getResource("/icons/riskyvars/" + RISKY_VAR_ICON_NAMES[i]))
+							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
+									.getImage());
+		}
 
 		controlPanel = new JPanel();
 		controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
@@ -3074,10 +3088,56 @@ public class VibeComposerGUI extends JFrame
 		}*/
 		variationButtonsPanel.removeAll();
 		for (int i = 0; i < count; i++) {
-			JButton butt = makeButton("Edit " + (i + 1), "ArrangementOpenVariation," + (i + 1));
+			int fI = i;
+			JButton butt = new JButton("Edit " + (i + 1)) {
+				private static final long serialVersionUID = -374920351085418730L;
+
+				@Override
+				public void paintComponent(Graphics guh) {
+					super.paintComponent(guh);
+					if (actualArrangement != null) {
+						if (actualArrangement.getSections() != null
+								&& fI < actualArrangement.getSections().size()) {
+							if (guh instanceof Graphics2D) {
+								Graphics2D g = (Graphics2D) guh;
+								Section sec = actualArrangement.getSections().get(fI);
+								List<Integer> riskyVars = sec.getRiskyVariations();
+								if (riskyVars == null) {
+									return;
+								}
+								int xsizeForIcon = Math.max(16,
+										((this.getWidth() / Section.riskyVariationNames.length)
+												- 2));
+								int currentX = 8;
+								for (int j = 0; j < Section.riskyVariationNames.length / 2; j++) {
+									if (riskyVars.get(j) > 0) {
+										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX, 6,
+												this);
+									}
+									currentX += xsizeForIcon + 2;
+								}
+								currentX = 8;
+								for (int j = Section.riskyVariationNames.length
+										/ 2; j < Section.riskyVariationNames.length; j++) {
+									if (riskyVars.get(j) > 0) {
+										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX,
+												this.getHeight() * 3 / 4 - 4, this);
+									}
+									currentX += xsizeForIcon + 2;
+								}
+							}
+						}
+
+					}
+
+				}
+			};
+			butt.addActionListener(this);
+			butt.setActionCommand("ArrangementOpenVariation," + (i + 1));
+			//makeButton(, );
+
 			butt.setPreferredSize(new Dimension(
 					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count, 50));
-			int fI = i;
 			butt.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent evt) {
@@ -3111,20 +3171,20 @@ public class VibeComposerGUI extends JFrame
 		int color = 0;
 		if (isDarkMode) {
 			color = arrangementDarkModeLowestColor
-					+ (70 * count) / Section.riskyVariationNames.length;
-			color = Math.min(color, 170);
+					+ (35 * count) / Section.riskyVariationNames.length;
+			color = Math.min(color, 135);
 		} else {
 			color = arrangementLightModeHighestColor
 					- (70 * count) / Section.riskyVariationNames.length;
 			color = Math.max(color, 130);
 		}
 
-		int extraRed = 0;
+		double extraRed = 0;
 		double remaining = 255 - color - 1;
-		extraRed += (count * remaining) / (double) Section.riskyVariationNames.length;
-		extraRed = Math.min(255 - color - 1, extraRed);
+		extraRed = Math.min(remaining,
+				(count * remaining) / (double) Section.riskyVariationNames.length);
 
-		butt.setBackground(new Color(color + extraRed, color, color));
+		butt.setBackground(new Color(color + (int) (extraRed / 2), color, color));
 	}
 
 	private void initRandomButtons(int startY, int anchorSide) {
