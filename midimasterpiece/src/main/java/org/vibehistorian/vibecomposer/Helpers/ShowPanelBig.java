@@ -33,12 +33,15 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
@@ -212,23 +215,42 @@ public class ShowPanelBig extends JPanel {
 		sa = new ShowAreaBig(this); //score, maxWidth, maxParts);
 		sa.setVisible(true);
 
-		/*sa.addMouseListener(new MouseAdapter() {
+		MouseListener ml = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					Point xy = MouseInfo.getPointerInfo().getLocation();
 					SwingUtilities.convertPointFromScreen(xy, sa);
-					double percentage = xy.getX() / sa.getWidth();
-					VibeComposerGUI.isDragging = true;
-					VibeComposerGUI.slider.setUpperValue(
-							(int) (percentage * VibeComposerGUI.slider.getMaximum()));
-					VibeComposerGUI.vibeComposerGUI.savePauseInfo();
-					VibeComposerGUI.vibeComposerGUI
-							.midiNavigate(VibeComposerGUI.slider.getUpperValue());
-					VibeComposerGUI.isDragging = false;
+					double usableStart = beatWidth;
+					double usableEnd = (maxEndTime * beatWidth);
+					System.out.println("XY: " + xy.toString() + ", start: " + usableStart
+							+ ", end: " + usableEnd);
+					if (xy.getX() > usableEnd || xy.getX() < usableStart) {
+						return;
+					}
+					double percentage = (xy.getX() - usableStart) / (usableEnd - usableStart);
+					System.out.println("Percentage: " + percentage);
+					boolean sequenceRunning = VibeComposerGUI.sequencer.isRunning();
+					if (sequenceRunning) {
+						VibeComposerGUI.sequencer.stop();
+					}
+					int lastUsableSliderTime = VibeComposerGUI.sliderMeasureStartTimes
+							.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1);
+					int valueToSet = VibeComposerGUI.sliderMeasureStartTimes.get(0)
+							+ (int) (percentage * (lastUsableSliderTime
+									- VibeComposerGUI.sliderMeasureStartTimes.get(0)));
+					System.out.println("Value to set: " + valueToSet);
+					VibeComposerGUI.setSliderEnd(valueToSet);
+					VibeComposerGUI.savePauseInfo();
+					if (sequenceRunning) {
+						VibeComposerGUI.sequencer.start();
+					}
+
 				}
 			}
-		});*/
+		};
+
+		sa.addMouseListener(ml);
 
 		JPanel areaPanel = new JPanel();
 		areaPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
@@ -274,6 +296,8 @@ public class ShowPanelBig extends JPanel {
 		//add a ruler
 		ruler = new ShowRulerBig(this);
 		ruler.setVisible(true);
+		ruler.addMouseListener(ml);
+
 		JPanel rulerPanel = new JPanel();
 		rulerPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
 				ShowRulerBig.maxHeight));

@@ -8046,6 +8046,17 @@ public class VibeComposerGUI extends JFrame
 		slider.setValue(val);
 	}
 
+	public static void setSliderEnd(int val) {
+		if (val >= slider.getMaximum()) {
+			return;
+		}
+		if (slider.getValue() > val) {
+			slider.setValue(val);
+		}
+		slider.setUpperValue(val);
+		midiNavigate(val);
+	}
+
 	public static void trySliderStartChange(int sectIndex) {
 		if (moveStartToCustomizedSection == null || !moveStartToCustomizedSection.isSelected()
 				|| sliderMeasureStartTimes == null)

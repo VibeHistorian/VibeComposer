@@ -109,17 +109,17 @@ public class ShowRulerBig extends JComponent {
 						: -1;
 
 
-		for (int i = startOffset; i < (ShowPanelBig.maxEndTime) + startOffset; i++) {
-			int xLoc = (int) Math.round(i * beatWidth);
-			if ((i - startOffset) % timeSig == 0 && beatWidth > 10) {
+		for (int i = 0; i < (ShowPanelBig.maxEndTime); i++) {
+			int xLoc = (int) Math.round((i + startOffset) * beatWidth);
+			if (i % timeSig == 0 && beatWidth > 10) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
-				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
-			} else if ((i - startOffset) % (timeSig * 2) == 0 && beatWidth > 5) {
+				g.drawString("" + i, xLoc + 2, ShowRulerBig.maxHeight - 2);
+			} else if (i % (timeSig * 2) == 0 && beatWidth > 5) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
-				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
-			} else if ((i - startOffset) % (timeSig * 4) == 0 && beatWidth > 3) {
+				g.drawString("" + i, xLoc + 2, ShowRulerBig.maxHeight - 2);
+			} else if (i % (timeSig * 4) == 0 && beatWidth > 3) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
-				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
+				g.drawString("" + i, xLoc + 2, ShowRulerBig.maxHeight - 2);
 			} else {
 				if (beatWidth > 10)
 					g.drawLine(xLoc, ShowRulerBig.maxHeight * 15 / 20, xLoc,
@@ -135,7 +135,7 @@ public class ShowRulerBig extends JComponent {
 				int xLocEnd = (int) Math.round(durCounter * beatWidth);
 				String secText = sec.getType();
 				g.setColor(new Color(30, 30, 30, 150));
-				g.drawString(secText, xLocStart + (xLocEnd - xLocStart) / 2 - secText.length() - 5,
+				g.drawString(secText, xLocStart + (xLocEnd - xLocStart) / 2 - secText.length() * 3,
 						ShowRulerBig.maxHeight / 2);
 				g.drawLine(xLocEnd - 1, 0, xLocEnd - 1, ShowRulerBig.maxHeight);
 				g.drawLine(xLocEnd + 1, 0, xLocEnd + 1, ShowRulerBig.maxHeight);
