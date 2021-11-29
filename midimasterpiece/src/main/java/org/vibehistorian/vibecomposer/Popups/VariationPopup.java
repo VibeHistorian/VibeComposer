@@ -98,9 +98,9 @@ public class VariationPopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
-			table.setModel(
-					new VariationsBooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
-							Section.variationDescriptions[i], partNames));
+			table.setModel(new VariationsBooleanTableModel(fI, sectionOrder - 1,
+					sec.getPartPresenceVariationMap().get(i), Section.variationDescriptions[i],
+					partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

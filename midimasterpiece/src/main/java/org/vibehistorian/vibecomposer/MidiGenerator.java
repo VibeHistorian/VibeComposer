@@ -2926,8 +2926,8 @@ public class MidiGenerator implements JMC {
 						}
 					} else if (i == 2) {
 						if ((secOrder < arr.getSections().size() - 1
-								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
-								&& notesSeedOffset > 0)) {
+
+								&& notesSeedOffset == 0)) {
 							transType = 2;
 							break;
 						}
