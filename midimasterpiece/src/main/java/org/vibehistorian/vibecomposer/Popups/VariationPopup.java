@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -339,7 +338,7 @@ public class VariationPopup {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
-					VibeComposerGUI.variationButtonsPanel.repaint();
+					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 				}
 
 			});
@@ -355,7 +354,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setTransitionType(transitionBox.getSelectedIndex());
-				VibeComposerGUI.variationButtonsPanel.repaint();
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 		});
 		JPanel transitionPanel = new JPanel();
@@ -390,15 +389,7 @@ public class VariationPopup {
 
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
-				for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
-					if (c instanceof JButton) {
-						JButton cbutt = (JButton) c;
-						if (cbutt.getText().equals("Edit " + sectionOrder)) {
-							VibeComposerGUI.recolorVariationPopupButton(cbutt, sectionObject);
-							break;
-						}
-					}
-				}
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 			@Override
