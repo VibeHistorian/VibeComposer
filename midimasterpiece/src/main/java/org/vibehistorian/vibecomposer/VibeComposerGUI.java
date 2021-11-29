@@ -214,10 +214,11 @@ public class VibeComposerGUI extends JFrame
 	private static final String MID_EXTENSION = ".mid";
 
 	private static List<Image> RISKY_VARIATIONS_ICONS = new ArrayList<>();
-
 	private static final String[] RISKY_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
-			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png",
-			"v5_transUp.png", "v6_transDown.png", "v7_transCut.png" };
+			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png", };
+	private static List<Image> SECTION_TRANSITION_ICONS = new ArrayList<>();
+	private static final String[] SECTION_TRANSITION_ICON_NAMES = new String[] { "v5_transUp.png",
+			"v6_transDown.png", "v7_transCut.png" };
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
@@ -668,6 +669,12 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < RISKY_VAR_ICON_NAMES.length; i++) {
 			RISKY_VARIATIONS_ICONS.add(new ImageIcon(new ImageIcon(
 					this.getClass().getResource("/icons/riskyvars/" + RISKY_VAR_ICON_NAMES[i]))
+							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
+									.getImage());
+		}
+		for (int i = 0; i < SECTION_TRANSITION_ICON_NAMES.length; i++) {
+			SECTION_TRANSITION_ICONS.add(new ImageIcon(new ImageIcon(this.getClass()
+					.getResource("/icons/transitions/" + SECTION_TRANSITION_ICON_NAMES[i]))
 							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
 									.getImage());
 		}
@@ -3109,19 +3116,27 @@ public class VibeComposerGUI extends JFrame
 										((this.getWidth() / Section.riskyVariationNames.length)
 												- 2));
 								int currentX = 8;
-								for (int j = 0; j < Section.riskyVariationNames.length / 2; j++) {
+								for (int j = 0; j < (Section.riskyVariationNames.length + 1)
+										/ 2; j++) {
 									if (riskyVars.get(j) > 0) {
 										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX, 6,
 												this);
 									}
 									currentX += xsizeForIcon + 2;
 								}
+								if (sec.getTransitionType() > 0) {
+									g.drawImage(
+											SECTION_TRANSITION_ICONS
+													.get(sec.getTransitionType() - 1),
+											this.getWidth() - 18, 6, this);
+								}
+
 								currentX = 8;
-								for (int j = Section.riskyVariationNames.length
+								for (int j = (Section.riskyVariationNames.length + 1)
 										/ 2; j < Section.riskyVariationNames.length; j++) {
 									if (riskyVars.get(j) > 0) {
 										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX,
-												this.getHeight() * 3 / 4 - 4, this);
+												this.getHeight() * 3 / 4 - 6, this);
 									}
 									currentX += xsizeForIcon + 2;
 								}

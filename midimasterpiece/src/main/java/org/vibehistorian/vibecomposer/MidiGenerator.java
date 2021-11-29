@@ -596,7 +596,7 @@ public class MidiGenerator implements JMC {
 		int transitionType = sec.getTransitionType();
 
 		int multiplier = reverseEffect ? -1 : 1;
-		if (transitionType == 5) {
+		if (transitionType == 1) {
 			param += maxEffect * effect * multiplier;
 		} else {
 			param -= maxEffect * effect * multiplier;
@@ -2021,7 +2021,7 @@ public class MidiGenerator implements JMC {
 		if (sec.isTransition()) {
 			applyCrescendoMultiplier(notes, maxDuration, crescendoStartPercentage,
 					maxMultiplierAdd);
-			if (sec.getTransitionType() == 7) {
+			if (sec.getTransitionType() == 3) {
 				applyCrescendoMultiplierMinimum(notes, maxDuration, muteStartPercentage, 0.05,
 						0.05);
 			}
@@ -2904,6 +2904,43 @@ public class MidiGenerator implements JMC {
 			}
 			LOGGER.info("Risky Variations: " + StringUtils.join(includedRiskyVarNames, ","));
 
+			// generate transition
+			if (!overridden) {
+				int transChance = variationGen.nextInt(100);
+				int[] rawChances = new int[Section.transitionChanceMultipliers.length];
+				for (int i = 0; i < rawChances.length; i++) {
+					rawChances[i] = (int) (gc.getArrangementVariationChance()
+							* Section.transitionChanceMultipliers[i]);
+				}
+				int transType = 0;
+				for (int i = 1; i < Section.transitionChanceMultipliers.length; i++) {
+					if (transChance >= rawChances[i]) {
+						continue;
+					}
+					if (i == 1) {
+						if ((secOrder < arr.getSections().size() - 1
+								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
+								&& notesSeedOffset > 0)) {
+							transType = 1;
+							break;
+						}
+					} else if (i == 2) {
+						if ((secOrder < arr.getSections().size() - 1
+								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
+								&& notesSeedOffset > 0)) {
+							transType = 2;
+							break;
+						}
+					}
+					if (i == 3 && transType == 0) {
+						transType = 3;
+					}
+				}
+				sec.setTransitionType(transType);
+				LOGGER.info("Transition type: " + transType);
+			}
+
+
 			// reset back to normal?
 			boolean sectionChordsReplaced = false;
 			if (sec.isCustomChordsDurationsEnabled()) {
@@ -3213,29 +3250,11 @@ public class MidiGenerator implements JMC {
 				if (i == 3) {
 					isVariation = false;
 				}
-
-				// transitionFast - from offset > 0 to offset == 0
-				if (i == 5) {
-					isVariation &= (secOrder < arr.getSections().size() - 1
-							&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
-							&& notesSeedOffset > 0);
-				}
-				// transitionSlow - from offset > 0 to offset == 0
-				if (i == 6) {
-					isVariation &= (secOrder < arr.getSections().size() - 1
-							&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() > 0
-							&& notesSeedOffset == 0);
-				}
-				// transitionCut - anywhere, but only if 5 and 6 not generated
-				if (i == 7) {
-					isVariation &= (riskyVariations.get(5) == 0 && riskyVariations.get(6) == 0);
-				}
-
-
 				riskyVariations.add(isVariation ? 1 : 0);
 			}
 			sec.setRiskyVariations(riskyVariations);
 		}
+
 		return riskyVariations;
 	}
 
@@ -4327,7 +4346,7 @@ public class MidiGenerator implements JMC {
 
 				if (stretchOverride || cp.isStretchEnabled()) {
 					Integer stretchAmount = (stretchOverride)
-							? (sec.getTransitionType() == 5 ? 7 : 2)
+							? (sec.getTransitionType() == 1 ? 7 : 2)
 							: stretch;
 					mainChordNotes = convertChordToLength(mainChordNotes,
 							(stretchAmount != null) ? stretchAmount : mainChordNotes.length);

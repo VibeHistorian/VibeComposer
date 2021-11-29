@@ -339,12 +339,33 @@ public class VariationPopup {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
+					VibeComposerGUI.variationButtonsPanel.repaint();
 				}
 
 			});
 			riskyVarPanel.add(riskyVar);
 		}
+
+		ScrollComboBox<String> transitionBox = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "No Transition", "Hype Up", "Pipe Down", "Cut End" },
+				transitionBox);
+		transitionBox.setSelectedIndex(sec.getTransitionType());
+		transitionBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setTransitionType(transitionBox.getSelectedIndex());
+				VibeComposerGUI.variationButtonsPanel.repaint();
+			}
+		});
+		JPanel transitionPanel = new JPanel();
+		transitionPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		transitionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		transitionPanel.add(new JLabel("Transition Type"));
+		transitionPanel.add(transitionBox);
 		tablesPanel.add(riskyVarPanel);
+		tablesPanel.add(transitionPanel);
+
 	}
 
 	private void addFrameWindowOperation() {

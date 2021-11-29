@@ -67,10 +67,9 @@ public class Section {
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Max Speed", "Key Change", "TransitionFast", "TransitionSlow",
-			"TransitionCut" };
-	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0, 1.5,
-			1.75, 0.7 };
+			"Swap Melody", "Melody Max Speed", "Key Change" };
+	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
+	public static final Double[] transitionChanceMultipliers = { 1.0, 1.5, 1.75, 0.7 };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -133,6 +132,7 @@ public class Section {
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
 	private List<Integer> riskyVariations = null;
+	private int transitionType = 0;
 
 	public Section() {
 
@@ -295,6 +295,7 @@ public class Section {
 		if (riskyVariations != null) {
 			sec.riskyVariations = new ArrayList<>(riskyVariations);
 		}
+		sec.transitionType = getTransitionType();
 		if (instVelocityMultiplier != null) {
 			sec.instVelocityMultiplier = new ArrayList<>(instVelocityMultiplier);
 		}
@@ -694,15 +695,11 @@ public class Section {
 	}
 
 	public boolean isTransition() {
-		return getRiskyVariations() != null && (isRiskyVar(5) || isRiskyVar(6) || isRiskyVar(7));
+		return transitionType > 0;
 	}
 
 	public int getTransitionType() {
-		if (!isTransition()) {
-			return -1;
-		}
-
-		return isRiskyVar(7) ? 7 : (isRiskyVar(6) ? 6 : 5);
+		return transitionType;
 	}
 
 	public void setRiskyVariations(List<Integer> riskyVariations) {
@@ -887,5 +884,9 @@ public class Section {
 			return (67 + getChanceForInst(inst) / 3);
 		}
 		return instVelocityMultiplier.get(inst);
+	}
+
+	public void setTransitionType(int transitionType) {
+		this.transitionType = transitionType;
 	}
 }
