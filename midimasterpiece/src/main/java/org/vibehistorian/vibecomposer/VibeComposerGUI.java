@@ -3887,7 +3887,14 @@ public class VibeComposerGUI extends JFrame
 								} else {
 									ActionEvent action = new ActionEvent(VibeComposerGUI.this,
 											ActionEvent.ACTION_PERFORMED, "Compose");
-									actionPerformed(action);
+									SwingUtilities.invokeLater(new Runnable() {
+
+										@Override
+										public void run() {
+											actionPerformed(action);
+										}
+									});
+
 								}
 							}
 						}
@@ -4654,8 +4661,11 @@ public class VibeComposerGUI extends JFrame
 		if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
 			seedData += "_" + melodyPanels.get(0).getPatternSeed();
 		}
+		String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
+				.replaceAll("#", "s");
 
-		String fileName = "seed" + seedData;
+		String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
+				+ "_seed" + seedData;
 		String relPath = MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
 
 		// unapply S/M, generate, reapply S/M with new track numbering
@@ -5450,6 +5460,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	// Deal with Action events (button pushes)
+
 	public void actionPerformed(ActionEvent ae) {
 		boolean tabPanePossibleChange = false;
 		boolean soloMuterPossibleChange = false;
@@ -5571,6 +5582,7 @@ public class VibeComposerGUI extends JFrame
 
 		// midi generation
 		if (isCompose || isRegenerate) {
+
 			switchMidiButtons(false);
 			composeMidi(isRegenerate);
 			switchMidiButtons(true);
@@ -5600,7 +5612,6 @@ public class VibeComposerGUI extends JFrame
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
 			//worker.execute();
-
 		}
 
 		if (ae.getActionCommand().startsWith("Save ")) {
@@ -5989,7 +6000,7 @@ public class VibeComposerGUI extends JFrame
 
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 			f.applyPattern("yyMMdd-HH-mm-ss");
-			String fdate = "";
+			String additionalInfo = "";
 
 			if (!"C".equals(rating)) {
 				saveDirectory += rating + "star/";
@@ -5998,18 +6009,19 @@ public class VibeComposerGUI extends JFrame
 				makeSavedDir.mkdir();
 				name = currentMidi.getName();
 				name = name.substring(0, name.length() - 4);
-				fdate = f.format(date);
+
+				additionalInfo = f.format(date);
 			} else {
 				saveDirectory += "custom/";
 				name = saveCustomFilename.getText();
 				if (customFilenameAddTimestamp.isSelected()) {
-					fdate = f.format(date);
+					additionalInfo = f.format(date);
 				}
 			}
 
-			String finalFilePath = MIDIS_FOLDER + saveDirectory + fdate
-					+ (fdate.isEmpty() ? "" : "_") + name + MID_EXTENSION;
-
+			String finalFilePath = MIDIS_FOLDER + saveDirectory + additionalInfo
+					+ (additionalInfo.isEmpty() ? "" : "_") + name + MID_EXTENSION;
+			LOGGER.info("Saving to final path: " + finalFilePath);
 			File savedMidi = new File(finalFilePath);
 			try {
 				FileUtils.copyFile(currentMidi, savedMidi);
