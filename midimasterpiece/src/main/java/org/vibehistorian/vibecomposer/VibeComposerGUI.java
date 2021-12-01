@@ -378,7 +378,7 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<String> scaleMode;
 	JCheckBox randomizeScaleModeOnCompose;
 	ScrollComboBox<String> fixedLengthChords;
-	ScrollComboBox<String> beatDurationMultiplier;
+	ScrollComboBox<Double> beatDurationMultiplier;
 	JCheckBox allowChordRepeats;
 	JCheckBox globalSwingOverride;
 	KnobPanel globalSwingOverrideValue;
@@ -510,6 +510,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox arrangementScaleMidiVelocity;
 	public static KnobPanel humanizeNotes;
 	public static KnobPanel humanizeDrums;
+	public static ScrollComboBox<Double> swingUnitMultiplier;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 1;
@@ -1085,8 +1086,15 @@ public class VibeComposerGUI extends JFrame
 		// / 10000
 		humanizeDrums = new KnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
 		humanizeDrums.setRegenerating(false);
+
+		swingUnitMultiplier = new ScrollComboBox<Double>(false);
+		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
+		swingUnitMultiplier.setSelectedIndex(0);
+
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
+		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
+		humanizationPanel.add(swingUnitMultiplier);
 
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 		extraSettingsPanel.add(humanizationPanel);
@@ -3325,8 +3333,8 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(globalSwingPanel);
 
 
-		beatDurationMultiplier = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new String[] { "1/2", "1", "2" }, beatDurationMultiplier);
+		beatDurationMultiplier = new ScrollComboBox<Double>(false);
+		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, beatDurationMultiplier);
 		JPanel useDoubledPanel = new JPanel();
 		useDoubledPanel.add(new JLabel("Beat Dur. Multiplier"));
 		useDoubledPanel.add(beatDurationMultiplier);
@@ -6717,7 +6725,8 @@ public class VibeComposerGUI extends JFrame
 		gc.setTranspose(transposeScore.getInt());
 		gc.setBpm(Double.valueOf(mainBpm.getInt()));
 		gc.setArpAffectsBpm(arpAffectsBpm.isSelected());
-		gc.setBeatDurationMultiplier(beatDurationMultiplier.getSelectedIndex());
+		gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
+		gc.setSwingUnitMultiplierIndex(swingUnitMultiplier.getSelectedIndex());
 		gc.setAllowChordRepeats(allowChordRepeats.isSelected());
 		gc.setGlobalSwingOverride(
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
@@ -6828,7 +6837,8 @@ public class VibeComposerGUI extends JFrame
 		mainBpm.setInt((int) Math.round(gc.getBpm()));
 
 		arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
-		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplier());
+		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
+		swingUnitMultiplier.setSelectedIndex(gc.getSwingUnitMultiplierIndex());
 		allowChordRepeats.setSelected(gc.isAllowChordRepeats());
 		globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
 		if (gc.getGlobalSwingOverride() != null) {

@@ -945,9 +945,9 @@ public class MidiGenerator implements JMC {
 		int hits = (int) Math.round(
 				chordsTotal * MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
 		double mult = 1;
-		if (gc.getBeatDurationMultiplier() == 0) {
+		if (gc.getBeatDurationMultiplierIndex() == 0) {
 			mult = 0.5;
-		} else if (gc.getBeatDurationMultiplier() == 2) {
+		} else if (gc.getBeatDurationMultiplierIndex() == 2) {
 			mult = 2;
 		}
 		measureTotal = (measureTotal == null) ? (chordsTotal * mult * Durations.WHOLE_NOTE)
@@ -2085,6 +2085,10 @@ public class MidiGenerator implements JMC {
 		if (swingPercent == 50) {
 			return;
 		}
+
+		swingUnitOfTime *= (gc.getSwingUnitMultiplierIndex() == 0) ? 0.5
+				: (double) gc.getSwingUnitMultiplierIndex();
+
 		Vector<Note> notes = phr.getNoteList();
 		double currentChordDur = progressionDurations.get(0);
 		int chordCounter = 0;
@@ -2760,11 +2764,11 @@ public class MidiGenerator implements JMC {
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
-		if (gc.getBeatDurationMultiplier() == 0) {
+		if (gc.getBeatDurationMultiplierIndex() == 0) {
 			for (int i = 0; i < progressionDurations.size(); i++) {
 				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
 			}
-		} else if (gc.getBeatDurationMultiplier() == 2) {
+		} else if (gc.getBeatDurationMultiplierIndex() == 2) {
 			for (int i = 0; i < progressionDurations.size(); i++) {
 				progressionDurations.set(i, progressionDurations.get(i) * 2);
 			}
@@ -3738,9 +3742,9 @@ public class MidiGenerator implements JMC {
 		int chordCounter = 0;
 
 		double mult = 1;
-		if (gc.getBeatDurationMultiplier() == 0) {
+		if (gc.getBeatDurationMultiplierIndex() == 0) {
 			mult = 0.5;
-		} else if (gc.getBeatDurationMultiplier() == 2) {
+		} else if (gc.getBeatDurationMultiplierIndex() == 2) {
 			mult = 2;
 		}
 		double separatorValue = Durations.WHOLE_NOTE * mult;

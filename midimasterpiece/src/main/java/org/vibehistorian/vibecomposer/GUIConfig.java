@@ -62,7 +62,8 @@ public class GUIConfig {
 	private int transpose = 0;
 	private double bpm = 80;
 	private boolean arpAffectsBpm = false;
-	private Integer beatDurationMultiplier = 1;
+	private Integer beatDurationMultiplierIndex = 1;
+	private Integer swingUnitMultiplierIndex = 1;
 	private boolean allowChordRepeats = true;
 	private Integer globalSwingOverride = null;
 
@@ -442,12 +443,12 @@ public class GUIConfig {
 		this.maxMelodySwing = maxMelodySwing;
 	}
 
-	public Integer getBeatDurationMultiplier() {
-		return beatDurationMultiplier;
+	public Integer getBeatDurationMultiplierIndex() {
+		return beatDurationMultiplierIndex;
 	}
 
-	public void setBeatDurationMultiplier(Integer beatDurationMultiplier) {
-		this.beatDurationMultiplier = beatDurationMultiplier;
+	public void setBeatDurationMultiplierIndex(Integer beatDurationMultiplierIndex) {
+		this.beatDurationMultiplierIndex = beatDurationMultiplierIndex;
 	}
 
 	public int getArrangementPartVariationChance() {
@@ -720,6 +721,14 @@ public class GUIConfig {
 
 	public void setMelodyTargetNoteVariation(int melodyTargetNoteVariation) {
 		this.melodyTargetNoteVariation = melodyTargetNoteVariation;
+	}
+
+	public Integer getSwingUnitMultiplierIndex() {
+		return swingUnitMultiplierIndex;
+	}
+
+	public void setSwingUnitMultiplierIndex(Integer swingUnitMultiplierIndex) {
+		this.swingUnitMultiplierIndex = swingUnitMultiplierIndex;
 	}
 
 }

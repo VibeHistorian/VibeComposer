@@ -286,10 +286,11 @@ public class ShowAreaBig extends JComponent {
 				Color nextColor = noteColorIndex < 4
 						? VibeComposerGUI.instColors[noteColorIndex + 1]
 						: Color.red;
-				double percentageMix = (samePrevColorCounter
-						/ (double) VibeComposerGUI.getInstList(noteColorIndex).size()) / 1.5;
+				double percentageMix = samePrevColorCounter
+						/ (double) Math.max(samePrevColorCounter,
+								VibeComposerGUI.getInstList(noteColorIndex).size());
 
-				noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
+				noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix / 1.5);
 			}
 			Enumeration<?> enum2 = part.getPhraseList().elements();
 			while (enum2.hasMoreElements()) {
