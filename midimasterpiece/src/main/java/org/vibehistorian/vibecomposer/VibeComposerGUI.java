@@ -149,6 +149,7 @@ import org.vibehistorian.vibecomposer.Helpers.CheckButton;
 import org.vibehistorian.vibecomposer.Helpers.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
 import org.vibehistorian.vibecomposer.Helpers.MelodyMidiDropPane;
+import org.vibehistorian.vibecomposer.Helpers.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PlayheadRangeSlider;
@@ -4223,6 +4224,7 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		generatedMidi = new JList<File>();
+		generatedMidi.setCellRenderer(new MidiListCellRenderer());
 		generatedMidi.setTransferHandler(new FileTransferHandler());
 		generatedMidi.setDragEnabled(true);
 
