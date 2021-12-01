@@ -384,4 +384,9 @@ public abstract class InstPart implements Cloneable {
 		return null;
 	}
 
+	public static List<? extends InstPart> sortParts(List<? extends InstPart> parts) {
+		Collections.sort(parts, (e1, e2) -> (Integer.compare(e1.getOrder(), e2.getOrder())));
+		return parts;
+	}
+
 }

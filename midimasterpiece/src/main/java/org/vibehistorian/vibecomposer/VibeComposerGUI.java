@@ -7013,7 +7013,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		ip.setPanelOrder(panelOrder);
 
-		affectedPanels.add(ip);
+		affectedPanels.add(panelOrder - 1, ip);
 		removeComboBoxArrows(ip);
 		if (recalcArrangement) {
 			if (actualArrangement != null && actualArrangement.getSections() != null) {
@@ -7074,6 +7074,7 @@ public class VibeComposerGUI extends JFrame
 			((JPanel) pane.getViewport().getView()).remove(panel);
 		}
 		panels.clear();
+		InstPart.sortParts(parts);
 		for (InstPart part : parts) {
 			InstPanel panel = addInstPanelToLayout(inst, false);
 			panel.setFromInstPart(part);
@@ -8180,5 +8181,11 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 		}
+	}
+
+	public static List<? extends InstPanel> sortPanels(List<? extends InstPanel> panels) {
+		Collections.sort(panels,
+				(e1, e2) -> (Integer.compare(e1.getPanelOrder(), e2.getPanelOrder())));
+		return panels;
 	}
 }
