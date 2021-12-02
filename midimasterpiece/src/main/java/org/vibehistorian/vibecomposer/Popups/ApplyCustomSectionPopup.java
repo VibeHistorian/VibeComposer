@@ -41,6 +41,7 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 					VibeComposerGUI.vibeComposerGUI.handleArrangementAction("ArrangementApply", 0,
 							0);
 				}
+				close();
 
 			}
 		});

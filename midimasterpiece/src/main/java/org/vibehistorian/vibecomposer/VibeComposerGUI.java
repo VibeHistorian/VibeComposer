@@ -2486,13 +2486,6 @@ public class VibeComposerGUI extends JFrame
 			public void actionPerformed(ActionEvent e) {
 				actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
 				resetArrSectionInBackground();
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						arrSection.repaint();
-					}
-				});
 
 			}
 
@@ -4933,7 +4926,7 @@ public class VibeComposerGUI extends JFrame
 					arrSection.setSelectedIndex(0);
 				}
 				refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
-				arrSection.repaint();
+				arrSection.getButtons().forEach(e -> e.repaint());
 			}
 
 		});

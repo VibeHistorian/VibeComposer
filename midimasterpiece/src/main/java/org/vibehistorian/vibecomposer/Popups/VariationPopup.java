@@ -63,7 +63,7 @@ public class VariationPopup {
 	Section sectionObject = null;
 	JScrollPane scroll;
 	List<KnobPanel> knobs = new ArrayList<>();
-	KnobPanel keyChangeKnob = new DetachedKnobPanel("Custom Keychange", 5, -12, 12);
+	KnobPanel keyChangeKnob = new DetachedKnobPanel("Custom Keychange", 0, -12, 12);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
