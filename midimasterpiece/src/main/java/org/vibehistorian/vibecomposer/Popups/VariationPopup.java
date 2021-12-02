@@ -63,6 +63,7 @@ public class VariationPopup {
 	Section sectionObject = null;
 	JScrollPane scroll;
 	List<KnobPanel> knobs = new ArrayList<>();
+	KnobPanel keyChangeKnob = new KnobPanel("Custom Keychange", 5, -12, 12);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
@@ -84,6 +85,7 @@ public class VariationPopup {
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
 		addRiskyVariations(sec);
+		addVariationSettings(sec);
 		addInstVolumeKnobs(sec);
 		for (int i = 0; i < 5; i++) {
 			int fI = i;
@@ -294,7 +296,10 @@ public class VariationPopup {
 				? VibeComposerGUI.userChords.getText()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
 		userChords = new JTextField(
-				sec.isCustomChordsDurationsEnabled() ? sec.getCustomChords() : guiUserChords, 23);
+				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())
+						? sec.getCustomChords()
+						: guiUserChords,
+				23);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
 		userChordsDurations = new JTextField(
@@ -323,6 +328,40 @@ public class VariationPopup {
 		tablesPanel.add(instVolumesPanel);
 	}
 
+	private void addVariationSettings(Section sec) {
+		JPanel variationSettingsPanel = new JPanel();
+		variationSettingsPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		variationSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		JPanel transitionPanel = new JPanel();
+		transitionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		transitionPanel.setLayout(new GridLayout(0, 3, 0, 0));
+		ScrollComboBox<String> transitionBox = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "None", "Hype Up", "Pipe Down", "Cut End" },
+				transitionBox);
+		transitionBox.setSelectedIndex(sec.getTransitionType());
+		transitionBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setTransitionType(transitionBox.getSelectedIndex());
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+			}
+		});
+		JPanel keyChangePanel = new JPanel();
+		keyChangePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		keyChangePanel.setLayout(new GridLayout(0, 2, 0, 0));
+		keyChangeKnob.setInt(sec.getCustomKeyChange() == null ? 0 : sec.getCustomKeyChange());
+		keyChangePanel.add(keyChangeKnob);
+
+		transitionPanel.add(new JLabel("Transition Type"));
+		transitionPanel.add(transitionBox);
+		variationSettingsPanel.add(transitionPanel);
+		variationSettingsPanel.add(keyChangePanel);
+
+		tablesPanel.add(variationSettingsPanel);
+	}
+
 	private void addRiskyVariations(Section sec) {
 		JPanel riskyVarPanel = new JPanel();
 		riskyVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
@@ -345,25 +384,8 @@ public class VariationPopup {
 			riskyVarPanel.add(riskyVar);
 		}
 
-		ScrollComboBox<String> transitionBox = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new String[] { "No Transition", "Hype Up", "Pipe Down", "Cut End" },
-				transitionBox);
-		transitionBox.setSelectedIndex(sec.getTransitionType());
-		transitionBox.addItemListener(new ItemListener() {
 
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				sec.setTransitionType(transitionBox.getSelectedIndex());
-				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
-			}
-		});
-		JPanel transitionPanel = new JPanel();
-		transitionPanel.setLayout(new GridLayout(0, 2, 0, 0));
-		transitionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		transitionPanel.add(new JLabel("Transition Type"));
-		transitionPanel.add(transitionBox);
 		tablesPanel.add(riskyVarPanel);
-		tablesPanel.add(transitionPanel);
 
 	}
 

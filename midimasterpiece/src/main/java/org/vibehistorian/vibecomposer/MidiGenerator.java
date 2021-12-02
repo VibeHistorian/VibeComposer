@@ -198,6 +198,7 @@ public class MidiGenerator implements JMC {
 	private Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
 	private List<int[]> melodyBasedRootProgression = new ArrayList<>();
+	private String alternateChords = null;
 
 	// global parts
 	private List<BassPart> bassParts = null;
@@ -567,7 +568,16 @@ public class MidiGenerator implements JMC {
 		if (fillChordMelodyMap) {
 			List<String> chordStrings = getChordsFromMelodyPitches(2, chordMelodyMap1,
 					MidiUtils.baseFreqMap);
-			populateMelodyBasedProgression(chordStrings, 1, chordMelodyMap1.keySet().size() - 1);
+			int start = 1;
+			int end = chordMelodyMap1.keySet().size() - 1;
+			populateMelodyBasedProgression(chordStrings, start, end);
+			for (int i = 0; i < start; i++) {
+				chordStrings.set(i, chordInts.get(i));
+			}
+			for (int i = end; i < chordStrings.size(); i++) {
+				chordStrings.set(i, chordInts.get(i));
+			}
+			alternateChords = StringUtils.join(chordStrings, ",");
 		}
 		if (genVars && variations != null) {
 			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
@@ -2956,6 +2966,8 @@ public class MidiGenerator implements JMC {
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;
 					progressionDurations = actualDurations;
+					sec.setDisplayAlternateChords(true);
+					sec.setCustomChords(alternateChords);
 				} else {
 					rootProgression = generatedRootProgression;
 					chordProgression = actualProgression;
@@ -2973,7 +2985,12 @@ public class MidiGenerator implements JMC {
 
 			if (riskyVariations.get(4) > 0) {
 				//LOGGER.debug("Risky Variation: Key Change (on next chord)!");
-				transToSet = generateKeyChange(generatedRootProgression, arrSeed);
+				if (sec.getCustomKeyChange() == null) {
+					transToSet = generateKeyChange(generatedRootProgression, arrSeed);
+					sec.setCustomKeyChange(transToSet);
+				} else {
+					transToSet = sec.getCustomKeyChange();
+				}
 			}
 
 			boolean twoFiveOneChords = gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE

@@ -79,6 +79,7 @@ public class Section {
 	private double startTime;
 	private double sectionDuration = -1;
 	private List<Double> sectionBeatDurations = null;
+	private Integer customKeyChange = null;
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -99,6 +100,7 @@ public class Section {
 
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
+	private boolean displayAlternateChords = false;
 	private String customChords = "?";
 	private String customDurations = "4,4,4,4";
 
@@ -320,6 +322,8 @@ public class Section {
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
+		sec.setCustomKeyChange(getCustomKeyChange());
+		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
 			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
 		}
@@ -888,5 +892,21 @@ public class Section {
 
 	public void setTransitionType(int transitionType) {
 		this.transitionType = transitionType;
+	}
+
+	public Integer getCustomKeyChange() {
+		return customKeyChange;
+	}
+
+	public void setCustomKeyChange(Integer customKeyChange) {
+		this.customKeyChange = customKeyChange;
+	}
+
+	public boolean isDisplayAlternateChords() {
+		return displayAlternateChords;
+	}
+
+	public void setDisplayAlternateChords(boolean displayAlternateChords) {
+		this.displayAlternateChords = displayAlternateChords;
 	}
 }
