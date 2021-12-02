@@ -2860,7 +2860,7 @@ public class MidiGenerator implements JMC {
 
 		storeGlobalParts();
 
-		int transToSet = 0;
+		Integer transToSet = null;
 		boolean twoFiveOneChanged = false;
 		double sectionStartTimer = 0;
 		gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
@@ -2878,7 +2878,10 @@ public class MidiGenerator implements JMC {
 
 			Random rand = new Random(arrSeed);
 
-			modTrans = transToSet;
+			if (transToSet != null) {
+				modTrans = transToSet;
+			}
+
 			LOGGER.info("Key extra transpose: " + modTrans);
 
 			if (sec.isClimax()) {
@@ -2951,8 +2954,8 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				sec.setTransitionType(transType);
-				LOGGER.info("Transition type: " + transType);
 			}
+			LOGGER.info("Transition type: " + sec.getTransitionType());
 
 
 			// reset back to normal?
@@ -2987,9 +2990,11 @@ public class MidiGenerator implements JMC {
 				//LOGGER.debug("Risky Variation: Key Change (on next chord)!");
 				if (sec.getCustomKeyChange() == null) {
 					transToSet = generateKeyChange(generatedRootProgression, arrSeed);
+					LOGGER.info("Generated key change: " + transToSet);
 					sec.setCustomKeyChange(transToSet);
 				} else {
 					transToSet = sec.getCustomKeyChange();
+					LOGGER.info("Using custom key change: " + transToSet);
 				}
 			}
 
@@ -3018,16 +3023,11 @@ public class MidiGenerator implements JMC {
 			// possible chord changes handled after melody parts are filled
 			if (twoFiveOneChanged) {
 				twoFiveOneChanged = false;
-				replaceFirstChordForTwoFiveOne(transToSet);
+				replaceFirstChordForTwoFiveOne();
 			}
 
-			if (twoFiveOneChords && chordInts.size() > 2) {
+			if (twoFiveOneChords && chordInts.size() > 2 && transToSet != null) {
 				twoFiveOneChanged = replaceLastChordsForTwoFiveOne(transToSet);
-			}
-			if (gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE) {
-				if (transToSet == -1 * modTrans && transToSet != 0) {
-					transToSet = 0;
-				}
 			}
 
 			fillOtherPartsForSection(sec, arr, overridden, riskyVariations, variationGen, arrSeed,
@@ -3615,7 +3615,7 @@ public class MidiGenerator implements JMC {
 		return needsReplace;
 	}
 
-	private void replaceFirstChordForTwoFiveOne(int transToSet) {
+	private void replaceFirstChordForTwoFiveOne() {
 		if (chordInts.get(0).startsWith("C")) {
 			return;
 		}
@@ -3662,7 +3662,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private int generateKeyChange(List<int[]> chords, int arrSeed) {
-		int transToSet = 0;
+		Integer transToSet = null;
 		if (modTrans == 0) {
 			KeyChangeType chg = gc.getKeyChangeType();
 			switch (chg) {
@@ -3676,14 +3676,11 @@ public class MidiGenerator implements JMC {
 				transToSet = twoFiveOneKeyChange(arrSeed);
 				break;
 			default:
-				break;
+				throw new IllegalArgumentException("Unknown keychange!");
 			}
 		} else {
-			if (gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE) {
-				transToSet = -1 * modTrans;
-			}
+			transToSet = 0;
 		}
-
 		return transToSet;
 	}
 

@@ -1082,11 +1082,9 @@ public class VibeComposerGUI extends JFrame
 		JPanel humanizationPanel = new JPanel();
 
 		// / 10000
-		humanizeNotes = new KnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
-		humanizeNotes.setRegenerating(false);
+		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
 		// / 10000
-		humanizeDrums = new KnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
-		humanizeDrums.setRegenerating(false);
+		humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
 
 		swingUnitMultiplier = new ScrollComboBox<Double>(false);
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
@@ -1184,11 +1182,9 @@ public class VibeComposerGUI extends JFrame
 		JPanel bpmLowHighPanel = new JPanel();
 
 		arpAffectsBpm = new JCheckBox("BPM slowed by ARP", false);
-		bpmLow = new KnobPanel("Min<br>BPM.", 50, 20, 249);
-		bpmLow.setRegenerating(false);
-		bpmHigh = new KnobPanel("Max<br>BPM.", 95, 21, 250);
-		bpmHigh.setRegenerating(false);
-		stretchMidi = new KnobPanel("Stretch MIDI%:", 100, 25, 400);
+		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 50, 20, 249);
+		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 95, 21, 250);
+		stretchMidi = new DetachedKnobPanel("Stretch MIDI%:", 100, 25, 400);
 		stretchMidi.getKnob().setTickSpacing(25);
 		stretchMidi.getKnob().setTickThresholds(
 				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
@@ -3312,8 +3308,7 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel globalSwingPanel = new JPanel();
 		globalSwingOverride = new JCheckBox("<html>Global Swing<br>Override</html>", false);
-		globalSwingOverrideValue = new KnobPanel("", 50);
-		globalSwingOverrideValue.setRegenerating(false);
+		globalSwingOverrideValue = new DetachedKnobPanel("", 50);
 		globalSwingOverrideApplyButton = new JButton("A");
 		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
 
@@ -3366,13 +3361,11 @@ public class VibeComposerGUI extends JFrame
 		//toggleableComponents.add(chordProgressionSettingsPanel);
 
 
-		spiceChance = new KnobPanel("Spice", 15);
-		spiceChance.setRegenerating(false);
+		spiceChance = new DetachedKnobPanel("Spice", 15);
 		spiceAllowDimAug = new JCheckBox("Dim/Aug/6th", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceForceScale = new JCheckBox("Force Scale", true);
-		spiceParallelChance = new KnobPanel("Aeolian", 5);
-		spiceParallelChance.setRegenerating(false);
+		spiceParallelChance = new DetachedKnobPanel("Aeolian", 5);
 
 		firstChordSelection = new ScrollComboBox<String>(false);
 		firstChordSelection.addItem("?");

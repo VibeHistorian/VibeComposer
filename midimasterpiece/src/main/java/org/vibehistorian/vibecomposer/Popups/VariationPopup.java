@@ -63,14 +63,13 @@ public class VariationPopup {
 	Section sectionObject = null;
 	JScrollPane scroll;
 	List<KnobPanel> knobs = new ArrayList<>();
-	KnobPanel keyChangeKnob = new KnobPanel("Custom Keychange", 5, -12, 12);
+	KnobPanel keyChangeKnob = new DetachedKnobPanel("Custom Keychange", 5, -12, 12);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
-
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, new Runnable() {
@@ -408,7 +407,7 @@ public class VariationPopup {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-
+				sectionObject.setCustomKeyChange(keyChangeKnob.getInt());
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
