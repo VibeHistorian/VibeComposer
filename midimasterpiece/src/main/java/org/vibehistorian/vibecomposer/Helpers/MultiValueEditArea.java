@@ -4,9 +4,12 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -17,10 +20,16 @@ public class MultiValueEditArea extends JComponent {
 	int max = 10;
 	int numValues = 4;
 	List<Integer> values = null;
+
+	int colStart = 2;
+	int rowStart = 1;
+	int rowHeightCorrection = 3;
+
 	int markWidth = 6;
 	int numHeight = 6;
 	int numWidth = 4;
-	int ovalWidth = 12;
+
+	boolean isDragging = false;
 
 	public MultiValueEditArea(int min, int max, int numValues, List<Integer> values) {
 		super();
@@ -29,6 +38,49 @@ public class MultiValueEditArea extends JComponent {
 		this.numValues = numValues;
 		this.values = values;
 		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (!isEnabled()) {
+					return;
+				}
+				if (SwingUtilities.isLeftMouseButton(evt)) {
+					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
+					values.set(orderVal.x, orderVal.y);
+					isDragging = true;
+					repaint();
+				} else if (SwingUtilities.isRightMouseButton(evt)) {
+					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
+					values.set(orderVal.x, 0);
+					repaint();
+				}
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent evt) {
+				isDragging = false;
+			}
+		});
+
+		addMouseMotionListener(new MouseMotionListener() {
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (isDragging) {
+					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+					values.set(orderVal.x, orderVal.y);
+					repaint();
+				}
+			}
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				if (isDragging) {
+					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+					values.set(orderVal.x, orderVal.y);
+					repaint();
+				}
+			}
+
 		});
 	}
 
@@ -39,11 +91,9 @@ public class MultiValueEditArea extends JComponent {
 			Graphics2D g = (Graphics2D) guh;
 			int w = getWidth();
 			int h = getHeight();
-			int colStart = 2;
 			int colDivisors = numValues + colStart;
 			double colWidth = w / (double) colDivisors;
-			int rowStart = 4;
-			int rowDivisors = max - min + rowStart;
+			int rowDivisors = max - min + rowHeightCorrection + rowStart;
 			double rowHeight = h / (double) rowDivisors;
 			// clear screen
 			g.setColor(VibeComposerGUI.panelColorHigh);
@@ -53,7 +103,7 @@ public class MultiValueEditArea extends JComponent {
 			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 80));
 
 			Point bottomLeft = new Point((int) colWidth * (colStart - 1),
-					(int) rowHeight * (rowDivisors - 1));
+					(int) rowHeight * (rowDivisors - rowStart));
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
 
@@ -106,6 +156,8 @@ public class MultiValueEditArea extends JComponent {
 			}
 
 			// draw actual values
+
+			int ovalWidth = w / 40;
 			for (int i = 0; i < numValues; i++) {
 				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
 				int drawY = bottomLeft.y - (int) (rowHeight * (values.get(i) + 1 - min));
@@ -119,6 +171,8 @@ public class MultiValueEditArea extends JComponent {
 
 				g.setColor(VibeComposerGUI.uiColor());
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
+
+				g.drawString("" + values.get(i), drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 			}
 		}
 	}
@@ -129,6 +183,25 @@ public class MultiValueEditArea extends JComponent {
 	}
 
 	public Point getOrderAndValueFromPosition(Point xy) {
-		return null;
+		int w = getWidth();
+		int h = getHeight();
+		int colDivisors = numValues + colStart;
+		double colWidth = w / (double) colDivisors;
+		int rowDivisors = max - min + rowHeightCorrection + rowStart;
+		double rowHeight = h / (double) rowDivisors;
+
+		Point bottomLeftAdjusted = new Point((int) (colWidth * (colStart - 0.5)),
+				(int) (rowHeight * (rowDivisors - rowStart - 0.5)));
+		int xValue = (int) ((xy.x - bottomLeftAdjusted.x) / colWidth);
+		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min - 1;
+
+		xValue = OMNI.clamp(xValue, 0, values.size() - 1);
+		yValue = OMNI.clamp(yValue, min, max);
+
+		Point orderValue = new Point(xValue, yValue);
+		//System.out.println("Incoming point: " + xy.toString());
+		//System.out.println("Order Value: " + orderValue.toString());
+
+		return orderValue;
 	}
 }
