@@ -3,13 +3,15 @@ package org.vibehistorian.vibecomposer.Helpers;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.Popups.ButtonIntegerListValuePopup;
+import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
 public class RandomIntegerListButton extends JButton {
 
@@ -35,7 +37,15 @@ public class RandomIntegerListButton extends JButton {
 					if (e.isControlDown()) {
 						setEnabled(!isEnabled());
 					} else if (isEnabled()) {
-						new ButtonIntegerListValuePopup(RandomIntegerListButton.this);
+						String[] valueSplit = getValue().split(",");
+						List<Integer> values = new ArrayList<>();
+						for (String s : valueSplit) {
+							values.add(Integer.valueOf(s.trim()));
+
+						}
+						VisualArrayPopup vap = new VisualArrayPopup(-10, 10, values);
+						vap.linkButton(RandomIntegerListButton.this);
+
 					}
 
 				}
