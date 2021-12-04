@@ -6,6 +6,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.function.Function;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -19,6 +21,7 @@ public class VisualArrayPopup extends CloseablePopup {
 
 	MultiValueEditArea mvea = null;
 	RandomIntegerListButton butt = null;
+	Function<? super Object, List<Integer>> randGenerator = null;
 
 
 	public VisualArrayPopup(int min, int max, List<Integer> values) {
@@ -31,7 +34,7 @@ public class VisualArrayPopup extends CloseablePopup {
 		allPanels.setMaximumSize(new Dimension(500, 600));
 
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new GridLayout(0, 6, 0, 0));
+		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(500, 50));
 		buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
 			if (mvea.getValues().size() > 31) {
@@ -79,6 +82,34 @@ public class VisualArrayPopup extends CloseablePopup {
 
 			mvea.repaint();
 		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
+			int size = mvea.getValues().size();
+			boolean successRandGenerator = false;
+			if (randGenerator != null) {
+				List<Integer> randValues = null;
+				try {
+					randValues = randGenerator.apply(new Object());
+				} catch (Exception exc) {
+					System.out.println("Random generator is not ready!");
+				}
+				if (randValues != null && !randValues.isEmpty()) {
+					mvea.getValues().clear();
+					mvea.getValues().addAll(randValues);
+					successRandGenerator = true;
+				}
+
+			}
+			if (!successRandGenerator) {
+				Random rnd = new Random();
+				mvea.getValues().clear();
+				for (int i = 0; i < size; i++) {
+					mvea.getValues().add(rnd.nextInt(max - min + 1) + min);
+				}
+			}
+
+			mvea.repaint();
+		}));
+
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
 
 		JPanel mveaPanel = new JPanel();
@@ -151,6 +182,10 @@ public class VisualArrayPopup extends CloseablePopup {
 			}
 
 		});
+	}
+
+	public void setRandGenerator(Function<? super Object, List<Integer>> rndGen) {
+		randGenerator = rndGen;
 	}
 
 }

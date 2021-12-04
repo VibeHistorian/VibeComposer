@@ -18,6 +18,7 @@ public class RandomIntegerListButton extends JButton {
 	private static final long serialVersionUID = -2737936353529731016L;
 
 	private Function<? super Object, String> textGenerator = null;
+	Function<? super Object, List<Integer>> randGenerator = null;
 
 	public RandomIntegerListButton(String value) {
 		this.setPreferredSize(new Dimension(100, 30));
@@ -45,6 +46,7 @@ public class RandomIntegerListButton extends JButton {
 						}
 						VisualArrayPopup vap = new VisualArrayPopup(-10, 10, values);
 						vap.linkButton(RandomIntegerListButton.this);
+						vap.setRandGenerator(randGenerator);
 
 					}
 
@@ -67,6 +69,10 @@ public class RandomIntegerListButton extends JButton {
 
 	public void setTextGenerator(Function<? super Object, String> txtGen) {
 		textGenerator = txtGen;
+	}
+
+	public void setRandGenerator(Function<? super Object, List<Integer>> rndGen) {
+		randGenerator = rndGen;
 	}
 
 }
