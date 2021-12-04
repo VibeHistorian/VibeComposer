@@ -18,7 +18,6 @@ public class MultiValueEditArea extends JComponent {
 	private static final long serialVersionUID = -2972572935738976623L;
 	int min = -10;
 	int max = 10;
-	int numValues = 4;
 	List<Integer> values = null;
 
 	int colStart = 2;
@@ -31,11 +30,10 @@ public class MultiValueEditArea extends JComponent {
 
 	boolean isDragging = false;
 
-	public MultiValueEditArea(int min, int max, int numValues, List<Integer> values) {
+	public MultiValueEditArea(int min, int max, List<Integer> values) {
 		super();
 		this.min = min;
 		this.max = max;
-		this.numValues = numValues;
 		this.values = values;
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -84,19 +82,20 @@ public class MultiValueEditArea extends JComponent {
 		});
 	}
 
-
 	@Override
 	public void paintComponent(Graphics guh) {
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
 			int w = getWidth();
 			int h = getHeight();
+			int numValues = values.size();
 			int colDivisors = numValues + colStart;
 			double colWidth = w / (double) colDivisors;
 			int rowDivisors = max - min + rowHeightCorrection + rowStart;
 			double rowHeight = h / (double) rowDivisors;
 			// clear screen
-			g.setColor(VibeComposerGUI.panelColorHigh);
+			g.setColor(VibeComposerGUI.isDarkMode ? VibeComposerGUI.panelColorHigh
+					: VibeComposerGUI.panelColorLow.darker());
 			g.fillRect(0, 0, w, h);
 
 			// draw graph lines - first to last value X, min to max value Y
@@ -182,10 +181,11 @@ public class MultiValueEditArea extends JComponent {
 		return values;
 	}
 
+
 	public Point getOrderAndValueFromPosition(Point xy) {
 		int w = getWidth();
 		int h = getHeight();
-		int colDivisors = numValues + colStart;
+		int colDivisors = values.size() + colStart;
 		double colWidth = w / (double) colDivisors;
 		int rowDivisors = max - min + rowHeightCorrection + rowStart;
 		double rowHeight = h / (double) rowDivisors;

@@ -1,11 +1,17 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.MultiValueEditArea;
 import org.vibehistorian.vibecomposer.Helpers.RandomIntegerListButton;
 
@@ -17,11 +23,73 @@ public class VisualArrayPopup extends CloseablePopup {
 
 	public VisualArrayPopup(int min, int max, List<Integer> values) {
 		super("Edit Multiple Values (Graphical)", 13);
-		mvea = new MultiValueEditArea(min, max, values.size(), values);
+		mvea = new MultiValueEditArea(min, max, values);
 		mvea.setPreferredSize(new Dimension(500, 500));
-		frame.add(mvea);
-		frame.setVisible(true);
+
+		JPanel allPanels = new JPanel();
+		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
+		allPanels.setMaximumSize(new Dimension(500, 600));
+
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setLayout(new GridLayout(0, 6, 0, 0));
+		buttonPanel.setPreferredSize(new Dimension(500, 50));
+		buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
+			if (mvea.getValues().size() > 31) {
+				return;
+			}
+			mvea.getValues().add(0);
+			mvea.repaint();
+		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
+			if (mvea.getValues().size() <= 1) {
+				return;
+			}
+			mvea.getValues().remove(mvea.getValues().size() - 1);
+			mvea.repaint();
+		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
+			if (mvea.getValues().size() > 16) {
+				return;
+			}
+			mvea.getValues().addAll(mvea.getValues());
+			mvea.repaint();
+		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("Dd", e -> {
+			if (mvea.getValues().size() > 16) {
+				return;
+			}
+			List<Integer> ddValues = new ArrayList<>();
+			List<Integer> oldValues = mvea.getValues();
+			oldValues.forEach(f -> {
+				ddValues.add(f);
+				ddValues.add(f);
+			});
+			oldValues.clear();
+			oldValues.addAll(ddValues);
+			mvea.repaint();
+		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("1/2", e -> {
+			if (mvea.getValues().size() <= 1) {
+				return;
+			}
+			int toRemain = (mvea.getValues().size() + 1) / 2;
+			for (int i = mvea.getValues().size() - 1; i >= toRemain; i--) {
+				mvea.getValues().remove(i);
+			}
+
+			mvea.repaint();
+		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
+
+		JPanel mveaPanel = new JPanel();
+		mveaPanel.setPreferredSize(new Dimension(500, 500));
+		mveaPanel.setMinimumSize(new Dimension(500, 500));
+		mveaPanel.add(mvea);
+		allPanels.add(buttonPanel);
+		allPanels.add(mveaPanel);
+		frame.add(allPanels);
 		frame.pack();
+		frame.setVisible(true);
 	}
 
 	public void linkButton(RandomIntegerListButton butt) {

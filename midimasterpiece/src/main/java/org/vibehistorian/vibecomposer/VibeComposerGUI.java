@@ -5366,7 +5366,7 @@ public class VibeComposerGUI extends JFrame
 		return butt;
 	}
 
-	private JButton makeButton(String name, Consumer<? super Object> a) {
+	public static JButton makeButton(String name, Consumer<? super Object> a) {
 		JButton butt = new JButton(name);
 		butt.addActionListener(new ActionListener() {
 
