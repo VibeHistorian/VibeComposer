@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.util.List;
 
 import javax.swing.JComponent;
@@ -19,6 +20,7 @@ public class MultiValueEditArea extends JComponent {
 	int markWidth = 6;
 	int numHeight = 6;
 	int numWidth = 4;
+	int ovalWidth = 12;
 
 	public MultiValueEditArea(int min, int max, int numValues, List<Integer> values) {
 		super();
@@ -26,6 +28,8 @@ public class MultiValueEditArea extends JComponent {
 		this.max = max;
 		this.numValues = numValues;
 		this.values = values;
+		addMouseListener(new MouseAdapter() {
+		});
 	}
 
 
@@ -100,11 +104,31 @@ public class MultiValueEditArea extends JComponent {
 					g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
 				}
 			}
+
+			// draw actual values
+			for (int i = 0; i < numValues; i++) {
+				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
+				int drawY = bottomLeft.y - (int) (rowHeight * (values.get(i) + 1 - min));
+
+				if (i < numValues - 1) {
+					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
+					g.drawLine(drawX, drawY, drawX + (int) colWidth,
+							bottomLeft.y - (int) (rowHeight * (values.get(i + 1) + 1 - min)));
+				}
+
+
+				g.setColor(VibeComposerGUI.uiColor());
+				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
+			}
 		}
 	}
 
 
 	public List<Integer> getValues() {
 		return values;
+	}
+
+	public Point getOrderAndValueFromPosition(Point xy) {
+		return null;
 	}
 }
