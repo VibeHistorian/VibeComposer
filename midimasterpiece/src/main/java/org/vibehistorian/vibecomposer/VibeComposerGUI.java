@@ -1168,7 +1168,8 @@ public class VibeComposerGUI extends JFrame
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
 		extraUseChordFormula = new JCheckBox("Chord Formula", true);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
-		extraSquishChordsProgressively = new JCheckBox("Flatten<br>Progressively", false);
+		extraSquishChordsProgressively = new JCheckBox("<html>Flatten<br>Progressively</html>",
+				false);
 
 
 		chordChoicePanel.add(extraUseChordFormula);

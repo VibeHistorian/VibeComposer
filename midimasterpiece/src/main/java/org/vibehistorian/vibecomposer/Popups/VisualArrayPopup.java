@@ -50,6 +50,14 @@ public class VisualArrayPopup extends CloseablePopup {
 			mvea.getValues().remove(mvea.getValues().size() - 1);
 			mvea.repaint();
 		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
+			int size = mvea.getValues().size();
+			mvea.getValues().clear();
+			for (int i = 0; i < size; i++) {
+				mvea.getValues().add(0);
+			}
+			mvea.repaint();
+		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
 			if (mvea.getValues().size() > 16) {
 				return;
