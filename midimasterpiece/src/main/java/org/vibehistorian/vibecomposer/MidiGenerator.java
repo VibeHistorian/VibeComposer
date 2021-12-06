@@ -2379,6 +2379,7 @@ public class MidiGenerator implements JMC {
 		Random lengthGenerator = new Random(mainGeneratorSeed);
 		Random spiceGenerator = new Random(mainGeneratorSeed);
 		Random parallelGenerator = new Random(mainGeneratorSeed + 100);
+		Random similarityGenerator = new Random(mainGeneratorSeed + 102);
 
 		boolean isBackwards = !gc.isUseChordFormula();
 		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
@@ -2531,15 +2532,29 @@ public class MidiGenerator implements JMC {
 			Collections.reverse(cpr);
 			Collections.reverse(debugMsg);
 			Collections.reverse(chordInts);
-			FIRST_CHORD = lastChord;
-			LAST_CHORD = firstChord;
+			//FIRST_CHORD = lastChord;
+			//LAST_CHORD = firstChord;
 		} else {
-			FIRST_CHORD = firstChord;
-			LAST_CHORD = lastChord;
+			//FIRST_CHORD = firstChord;
+			//LAST_CHORD = lastChord;
 		}
 
 		for (String s : debugMsg) {
 			LOGGER.info(s);
+		}
+
+		// similarity generation - replace chords 4-7 with chords from 0-3
+		if (fixedLength == 8) {
+			int[] replacementOrder = new int[] { 4, 7, 5, 6 };
+			for (int i : replacementOrder) {
+				if (similarityGenerator.nextInt() < gc.getLongProgressionSimilarity()) {
+					chordInts.set(i, chordInts.get(i - 4));
+					cpr.set(i, cpr.get(i - 4).clone());
+					LOGGER.info("Replaced " + i + "-th chord!");
+				} else if (i == 5) {
+					break;
+				}
+			}
 		}
 
 		if (progressionDurations.size() > 1

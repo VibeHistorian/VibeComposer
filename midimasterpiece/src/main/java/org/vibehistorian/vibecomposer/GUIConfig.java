@@ -108,6 +108,7 @@ public class GUIConfig {
 	private String lastChord = "?";
 
 	private boolean useChordFormula = false;
+	private int longProgressionSimilarity = 0;
 	private boolean customChordsEnabled = true;
 	private String customChords = "?";
 	private String customChordDurations = "4,4,4,4";
@@ -729,6 +730,14 @@ public class GUIConfig {
 
 	public void setSwingUnitMultiplierIndex(Integer swingUnitMultiplierIndex) {
 		this.swingUnitMultiplierIndex = swingUnitMultiplierIndex;
+	}
+
+	public int getLongProgressionSimilarity() {
+		return longProgressionSimilarity;
+	}
+
+	public void setLongProgressionSimilarity(int longProgressionSimilarity) {
+		this.longProgressionSimilarity = longProgressionSimilarity;
 	}
 
 }

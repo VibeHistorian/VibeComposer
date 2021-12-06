@@ -534,6 +534,7 @@ public class VibeComposerGUI extends JFrame
 
 	// chord settings - progression
 	JCheckBox extraUseChordFormula;
+	public static KnobPanel extraLongProgressionSimilarity;
 	ScrollComboBox<String> keyChangeTypeSelection;
 	public static CheckButton userChordsEnabled;
 	public static JTextField userChords;
@@ -1170,13 +1171,16 @@ public class VibeComposerGUI extends JFrame
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		extraSquishChordsProgressively = new JCheckBox("<html>Flatten<br>Progressively</html>",
 				false);
+		extraLongProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0,
+				100);
 
 
 		chordChoicePanel.add(extraUseChordFormula);
+		chordChoicePanel.add(extraLongProgressionSimilarity);
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
 		chordChoicePanel.add(extraSquishChordsProgressively);
-		chordChoicePanel.add(new JLabel("Key change type:"));
+		chordChoicePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
 		chordChoicePanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(chordChoicePanel);
 
@@ -6759,6 +6763,7 @@ public class VibeComposerGUI extends JFrame
 
 		// chords
 		gc.setUseChordFormula(extraUseChordFormula.isSelected());
+		gc.setLongProgressionSimilarity(extraLongProgressionSimilarity.getInt());
 		gc.setFirstChord(firstChordSelection.getVal());
 		gc.setLastChord(lastChordSelection.getVal());
 		gc.setKeyChangeType(KeyChangeType.valueOf(keyChangeTypeSelection.getVal()));
@@ -6894,6 +6899,7 @@ public class VibeComposerGUI extends JFrame
 		spiceForceScale.setSelected(gc.isSpiceForceScale());
 
 		extraUseChordFormula.setSelected(gc.isUseChordFormula());
+		extraLongProgressionSimilarity.setInt(gc.getLongProgressionSimilarity());
 		firstChordSelection.setVal(gc.getFirstChord());
 		lastChordSelection.setVal(gc.getLastChord());
 		keyChangeTypeSelection.setVal(gc.getKeyChangeType().toString());
