@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -142,12 +143,13 @@ public class VisualPatternPanel extends JPanel {
 		this.chordSpanPanel = chordSpanPanel;
 		lastHits = hitsPanel.getInt();
 		int sepCounter = 0;
+		int defaultVel = (parentPanel.getVelocityMax() + parentPanel.getVelocityMin()) / 2;
 		for (int i = 0; i < MAX_HITS; i++) {
 			final int fI = i;
 			truePattern.add(0);
-			trueVelocities.add(64);
+			trueVelocities.add(defaultVel);
 			hitChecks[i] = new ColorCheckBox();
-			hitVelocities[i] = new VeloRect(0, 127, 64);
+			hitVelocities[i] = new VeloRect(0, 127, defaultVel);
 			hitVelocities[i].linkVisualParent(VisualPatternPanel.this, i);
 			//hitVelocities[i].setDefaultSize(new Dimension(CheckBoxIcon.width, CheckBoxIcon.width));
 			hitVelocities[i].setVisible(false);
@@ -261,7 +263,9 @@ public class VisualPatternPanel extends JPanel {
 					if (d != RhythmPattern.CUSTOM) {
 						truePattern = d.getPatternByLength(MAX_HITS, 0);
 						if (trueVelocities.isEmpty()) {
-							trueVelocities = IntStream.iterate(64, e -> e).boxed()
+							int updatedVel = (parentPanel.getVelocityMax()
+									+ parentPanel.getVelocityMin()) / 2;
+							trueVelocities = IntStream.iterate(updatedVel, e -> e).boxed()
 									.collect(Collectors.toList());
 						}
 					}
@@ -412,7 +416,9 @@ public class VisualPatternPanel extends JPanel {
 				public void mouseReleased(MouseEvent evt) {
 					if (SwingUtilities.isRightMouseButton(evt)) {
 						if (showingVelocities) {
-							List<Integer> defaultVelos = IntStream.iterate(64, e -> e)
+							int updatedVel = (parentPanel.getVelocityMax()
+									+ parentPanel.getVelocityMin()) / 2;
+							List<Integer> defaultVelos = IntStream.iterate(updatedVel, e -> e)
 									.limit(MAX_HITS).boxed().collect(Collectors.toList());
 							setVelocities(defaultVelos);
 							repaint();
@@ -774,6 +780,40 @@ public class VisualPatternPanel extends JPanel {
 
 	public List<Integer> getTrueVelocities() {
 		return trueVelocities;
+	}
+
+	public void linkGhostNoteSwitch(JCheckBox isVelocityPattern) {
+		isVelocityPattern.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (SwingUtilities.isMiddleMouseButton(e)) {
+					if (!showingVelocities) {
+						toggleVelocityShow();
+					}
+					if (isVelocityPattern.isSelected()) {
+						Random randr = new Random();
+						for (int i = 0; i < lastHits; i++) {
+							if (!hitVelocities[i].isEnabled()) {
+								hitVelocities[i].setEnabled(true);
+								int max = parentPanel.getVelocityMax();
+								int min = parentPanel.getVelocityMin();
+								hitVelocities[i].setValue((randr.nextInt(max - min + 1) + min) / 2);
+							}
+						}
+					} else {
+						for (int i = 0; i < lastHits; i++) {
+							if (!hitChecks[i].isSelected()) {
+								hitVelocities[i].setValue(20);
+								hitVelocities[i].setEnabled(false);
+							}
+						}
+					}
+
+
+				}
+			}
+		});
 	}
 
 }
