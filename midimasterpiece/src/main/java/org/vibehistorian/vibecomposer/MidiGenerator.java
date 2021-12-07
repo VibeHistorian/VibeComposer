@@ -2964,9 +2964,11 @@ public class MidiGenerator implements JMC {
 							break;
 						}
 					}
-					if (i == 3 && transType == 0) {
-						transType = 3;
+					if (i > 2) {
+						transType = i;
+						break;
 					}
+
 				}
 				sec.setTransitionType(transType);
 			}
@@ -3971,6 +3973,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+
 		List<Integer> bassVelocityPattern = new ArrayList<>();
 		if (bp.getCustomVelocities() != null
 				&& bp.getCustomVelocities().size() >= bp.getHitsPerPattern()) {
@@ -4001,7 +4004,8 @@ public class MidiGenerator implements JMC {
 				if (genVars && (chordIndex == 0) && sec.getTypeMelodyOffset() > 0) {
 					variations = fillVariations(sec, bp, variations, 1);
 				}
-
+				double halfDurMulti = (chordIndex >= (squishedChords.size() + 1) / 2
+						&& sec.getTransitionType() == 4) ? 2.0 : 1.0;
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
@@ -4038,6 +4042,7 @@ public class MidiGenerator implements JMC {
 							durationPool, durationWeights);
 					List<Double> durations = bassRhythm.regenerateDurations(4,
 							MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0);
+
 					for (Double dur : durations) {
 
 						int randomNote = 0;
@@ -4100,6 +4105,8 @@ public class MidiGenerator implements JMC {
 					double duration = (bp.getPattern() == RhythmPattern.MELODY1
 							&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 									: Durations.WHOLE_NOTE / pattern.size();
+					duration *= halfDurMulti;
+
 					double durationNow = 0;
 					int nextP = -1;
 
@@ -4263,6 +4270,9 @@ public class MidiGenerator implements JMC {
 					variations = fillVariations(sec, cp, variations, 2);
 				}
 
+				double halfDurMulti = (chordIndex >= (actualProgression.size() + 1) / 2
+						&& sec.getTransitionType() == 4) ? 2.0 : 1.0;
+
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
@@ -4344,7 +4354,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				c.setDurationRatio(cp.getNoteLengthMultiplier() / 100.0);
+				c.setDurationRatio((cp.getNoteLengthMultiplier() / 100.0) / halfDurMulti);
 
 				int[] mainChordNotes = actualProgression.get(chordIndex);
 				int[] transChordNotes = actualProgression.get(transChord);
@@ -4379,7 +4389,7 @@ public class MidiGenerator implements JMC {
 
 				if (stretchOverride || cp.isStretchEnabled()) {
 					Integer stretchAmount = (stretchOverride)
-							? (sec.getTransitionType() == 1 ? 7 : 2)
+							? (sec.getTransitionType() == 1 || sec.getTransitionType() == 4 ? 7 : 2)
 							: stretch;
 					mainChordNotes = convertChordToLength(mainChordNotes,
 							(stretchAmount != null) ? stretchAmount : mainChordNotes.length);
@@ -4432,6 +4442,7 @@ public class MidiGenerator implements JMC {
 				double duration = (cp.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 								: Durations.WHOLE_NOTE / pattern.size();
+				duration *= halfDurMulti;
 				double durationNow = 0;
 				int nextP = -1;
 
@@ -4598,15 +4609,18 @@ public class MidiGenerator implements JMC {
 
 			Random velocityGenerator = new Random(ap.getPatternSeed());
 			Random exceptionGenerator = new Random(ap.getPatternSeed() + 1);
-			for (int j = 0; j < actualProgression.size(); j++) {
-				if (genVars && (j == 0)) {
+			for (int chordIndex = 0; chordIndex < actualProgression.size(); chordIndex++) {
+				if (genVars && (chordIndex == 0)) {
 					List<Double> chanceMultipliers = sec.isTransition()
 							? Arrays.asList(new Double[] { 1.0, 1.0, 1.0, 2.0, 1.0 })
 							: null;
 					variations = fillVariations(sec, ap, variations, 3, chanceMultipliers);
 				}
 
-				if ((variations != null) && (j == 0)) {
+				double halfDurMulti = (chordIndex >= (actualProgression.size() + 1) / 2
+						&& sec.getTransitionType() == 4) ? 2.0 : 1.0;
+
+				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (i == measures - 1) {
 							//LOGGER.debug("Arp #" + ap.getOrder() + " variation: " + var);
@@ -4640,10 +4654,10 @@ public class MidiGenerator implements JMC {
 				double chordDurationArp = (ap.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 								: Durations.WHOLE_NOTE / ((double) repeatedArpsPerChord);
-				int[] chord = convertChordToLength(actualProgression.get(j),
+				int[] chord = convertChordToLength(actualProgression.get(chordIndex),
 						ap.getChordNotesStretch(), ap.isStretchEnabled());
 				if (directions != null) {
-					ArpPattern pat = (directions.get(j)) ? ArpPattern.UP : ArpPattern.DOWN;
+					ArpPattern pat = (directions.get(chordIndex)) ? ArpPattern.UP : ArpPattern.DOWN;
 					arpPattern = pat.getPatternByLength(ap.getHitsPerPattern(), chord.length,
 							ap.getPatternRepeat(), ap.getArpPatternRotate());
 					arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
@@ -4654,11 +4668,11 @@ public class MidiGenerator implements JMC {
 						arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
 					}
 				}
-
+				chordDurationArp *= halfDurMulti;
 				double durationNow = 0;
 
 				// reset every 2
-				if (j % 2 == 0) {
+				if (chordIndex % 2 == 0) {
 					exceptionGenerator.setSeed(ap.getPatternSeed() + 1);
 				}
 				List<Integer> pitchPatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
@@ -4667,7 +4681,7 @@ public class MidiGenerator implements JMC {
 						arpOctavePattern);
 				List<Integer> pausePatternSpanned = (ap.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null)
-								? new ArrayList<>(melodyNotePatternMap.get(j))
+								? new ArrayList<>(melodyNotePatternMap.get(chordIndex))
 								: partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern);
 				List<Integer> velocityPatternSpanned = !arpVelocityPattern.isEmpty()
 						? partOfList(chordSpanPart, ap.getChordSpan(), arpVelocityPattern)
@@ -4675,7 +4689,7 @@ public class MidiGenerator implements JMC {
 
 
 				int p = 0;
-				while (durationNow + DBL_ERR < progressionDurations.get(j)) {
+				while (durationNow + DBL_ERR < progressionDurations.get(chordIndex)) {
 					int velocity = velocityPatternSpanned != null
 							? velocityPatternSpanned.get(p % velocityPatternSpanned.size())
 							: (velocityGenerator.nextInt(maxVel - minVel) + minVel);
@@ -4696,19 +4710,20 @@ public class MidiGenerator implements JMC {
 					}
 
 					pitch += extraTranspose;
-					if (!fillLastBeat || j < actualProgression.size() - 1) {
+					if (!fillLastBeat || chordIndex < actualProgression.size() - 1) {
 						if (isPause) {
 							pitch = Integer.MIN_VALUE;
 						}
 						if (!ignoreChordSpanFill) {
-							if (fillPattern.get(j) < 1) {
+							if (fillPattern.get(chordIndex) < 1) {
 								pitch = Integer.MIN_VALUE;
 							}
 						}
 					}
 					double usedDuration = chordDurationArp;
-					if (durationNow + usedDuration - DBL_ERR > progressionDurations.get(j)) {
-						usedDuration = progressionDurations.get(j) - durationNow;
+					if (durationNow + usedDuration - DBL_ERR > progressionDurations
+							.get(chordIndex)) {
+						usedDuration = progressionDurations.get(chordIndex) - durationNow;
 						if (usedDuration < FILLER_NOTE_MIN_DURATION) {
 							pitch = Integer.MIN_VALUE;
 						}
@@ -4812,6 +4827,9 @@ public class MidiGenerator implements JMC {
 					variations = fillVariations(sec, dp, variations, 4, chanceMultipliers);
 				}
 
+				double halfDurMulti = (chordIndex >= (chordsCount + 1) / 2
+						&& sec.getTransitionType() == 4) ? 2.0 : 1.0;
+
 				if ((variations != null) && (chordIndex == 0)) {
 					for (Integer var : variations) {
 						if (o == measures - 1) {
@@ -4846,6 +4864,7 @@ public class MidiGenerator implements JMC {
 				double drumDuration = (dp.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 								: Durations.WHOLE_NOTE * chordSpan / hits;
+				drumDuration *= halfDurMulti;
 				double durationNow = 0.0;
 				int k = 0;
 				while (durationNow + DBL_ERR < patternDurationTotal) {

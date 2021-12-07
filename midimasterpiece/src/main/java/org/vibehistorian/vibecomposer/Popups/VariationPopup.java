@@ -336,8 +336,7 @@ public class VariationPopup {
 		transitionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		transitionPanel.setLayout(new GridLayout(0, 3, 0, 0));
 		ScrollComboBox<String> transitionBox = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new String[] { "None", "Hype Up", "Pipe Down", "Cut End" },
-				transitionBox);
+		ScrollComboBox.addAll(Section.transitionNames, transitionBox);
 		transitionBox.setSelectedIndex(sec.getTransitionType());
 		transitionBox.addItemListener(new ItemListener() {
 

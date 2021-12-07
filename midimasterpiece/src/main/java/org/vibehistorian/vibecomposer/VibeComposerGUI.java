@@ -219,7 +219,7 @@ public class VibeComposerGUI extends JFrame
 			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png", };
 	private static List<Image> SECTION_TRANSITION_ICONS = new ArrayList<>();
 	private static final String[] SECTION_TRANSITION_ICON_NAMES = new String[] { "v5_transUp.png",
-			"v6_transDown.png", "v7_transCut.png" };
+			"v6_transDown.png", "v7_transCut.png", "v8_halvedTempo.png" };
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
