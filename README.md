@@ -1,14 +1,14 @@
 # VibeComposer
-## Free Music Generator with MIDI Drag'n'Drop
+## Customizable Music Generator
 
-![VibeComposer Simple UI Preview](https://i.imgur.com/VqSsiFw.png)
+![VibeComposer Simple UI Preview](https://i.imgur.com/Iasl64U.png)
 
-#### Example: https://soundcloud.com/vibehistorian/neon-lights-vibecomposer-v18-track-1 (made with VibeComposer v1.8 and free instruments/samples)
+#### Arranged Track Examples (v1.9): https://soundcloud.com/vibehistorian/utopia, https://soundcloud.com/vibehistorian/osiris
 
 
 #### How to run it (on Windows):
 1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
-2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v1.8-beta
+2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v1.9-beta
 3. Run/double-click the executable
 
 #### How to run it (on Linux/Mac):
