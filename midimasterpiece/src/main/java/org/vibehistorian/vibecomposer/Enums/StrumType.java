@@ -108,11 +108,17 @@ public enum StrumType {
 		for (int i = notes.size() - 1; i >= 0; i--) {
 			notes.get(i).setOffset(noteOffsets.get(i));
 		}
-		if (reverse) {
-			notes.get(notes.size() - 1).setOffset(0);
+		if (type != RAND) {
+			if (reverse) {
+				notes.get(notes.size() - 1).setOffset(0);
+			} else {
+				notes.get(0).setOffset(0);
+			}
 		} else {
-			notes.get(0).setOffset(0);
+			// zero-out random note
+			notes.get(gen.nextInt(notes.size())).setOffset(0);
 		}
+
 	}
 }
 

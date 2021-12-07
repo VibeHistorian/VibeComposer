@@ -6,14 +6,13 @@
 
 *.iml
 *.mid
-.DS_Store
 
-error-screenshots/
 *.txt
 *.xml
 *.sf2
 *.txt
 *.wav
-
-/drums/
-/presets/
+*.7z
+*.zip
+*.bat
+*.lnk

@@ -1,10 +1,3 @@
-/* --------------------
-* A jMusic tool which displays a score as a
-* Common Practice Notation in a window.
-* @author Andrew Brown 
- * @version 1.0,Sun Feb 25 18:43
-* ---------------------
-*/
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.awt.Color;
@@ -18,6 +11,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 /*
@@ -76,13 +70,6 @@ public class ShowRulerBig extends JComponent {
 		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
 	}
 
-	/**
-	 * Return the minimum size that the knob would like to be.
-	 * This is the same size as the preferred size so the
-	 * knob will be of a fixed size.
-	 *
-	 * @return the minimum size of the JKnob.
-	 */
 	@Override
 	public Dimension getMinimumSize() {
 		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
@@ -96,7 +83,21 @@ public class ShowRulerBig extends JComponent {
 		g.setColor(new Color(180, 180, 180));
 		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		g.setFont(font);
+		int startOffset = MidiGenerator.START_TIME_DELAY > MidiGenerator.DBL_ERR ? 1 : 0;
+		if (VibeComposerGUI.actualArrangement != null) {
+			double durCounter = startOffset;
+			for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150, 200));
+				int xLocStart = (int) Math.round(durCounter * beatWidth);
+				durCounter += sec.getSectionDuration() > 0 ? sec.getSectionDuration()
+						: MidiGenerator.GENERATED_MEASURE_LENGTH;
+				int xLocEnd = (int) Math.round(durCounter * beatWidth);
+				g.fillRect(xLocStart, 0, xLocEnd - xLocStart, ShowRulerBig.maxHeight);
+				//g.drawLine(xLocStart, 0, xLocEnd, ShowRulerBig.maxHeight / 2);
+			}
+		}
 		g.setColor(Color.black);
+
 
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
 
@@ -107,23 +108,40 @@ public class ShowRulerBig extends JComponent {
 										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
 						: -1;
 
-		int startOffset = MidiGenerator.START_TIME_DELAY > MidiGenerator.DBL_ERR ? 1 : 0;
-		for (int i = startOffset; i < (ShowPanelBig.maxEndTime) + startOffset; i++) {
-			int xLoc = (int) Math.round(i * beatWidth);
-			if ((i - startOffset) % timeSig == 0 && beatWidth > 10) {
+
+		for (int i = 0; i < (ShowPanelBig.maxEndTime); i++) {
+			int xLoc = (int) Math.round((i + startOffset) * beatWidth);
+			if (i % timeSig == 0 && beatWidth > 10) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
-				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
-			} else if ((i - startOffset) % (timeSig * 2) == 0 && beatWidth > 5) {
+				g.drawString("" + i, xLoc + 2, ShowRulerBig.maxHeight - 2);
+			} else if (i % (timeSig * 2) == 0 && beatWidth > 5) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
-				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
-			} else if ((i - startOffset) % (timeSig * 4) == 0 && beatWidth > 3) {
+				g.drawString("" + i, xLoc + 2, ShowRulerBig.maxHeight - 2);
+			} else if (i % (timeSig * 4) == 0 && beatWidth > 3) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);
-				g.drawString("" + (i - startOffset), xLoc + 2, ShowRulerBig.maxHeight - 2);
+				g.drawString("" + i, xLoc + 2, ShowRulerBig.maxHeight - 2);
 			} else {
 				if (beatWidth > 10)
-					g.drawLine(xLoc, ShowRulerBig.maxHeight / 2, xLoc, ShowRulerBig.maxHeight);
+					g.drawLine(xLoc, ShowRulerBig.maxHeight * 15 / 20, xLoc,
+							ShowRulerBig.maxHeight);
 			}
 		}
+		if (VibeComposerGUI.actualArrangement != null) {
+			double durCounter = startOffset;
+			for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+				int xLocStart = (int) Math.round(durCounter * beatWidth);
+				durCounter += sec.getSectionDuration() > 0 ? sec.getSectionDuration()
+						: MidiGenerator.GENERATED_MEASURE_LENGTH;
+				int xLocEnd = (int) Math.round(durCounter * beatWidth);
+				String secText = sec.getType();
+				g.setColor(new Color(30, 30, 30, 150));
+				g.drawString(secText, xLocStart + (xLocEnd - xLocStart) / 2 - secText.length() * 3,
+						ShowRulerBig.maxHeight / 2);
+				g.drawLine(xLocEnd - 1, 0, xLocEnd - 1, ShowRulerBig.maxHeight);
+				g.drawLine(xLocEnd + 1, 0, xLocEnd + 1, ShowRulerBig.maxHeight);
+			}
+		}
+
 
 		g.drawLine((int) highlightX, ShowRulerBig.maxHeight / 2, (int) highlightX, 0);
 		//g.dispose();

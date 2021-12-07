@@ -36,6 +36,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -55,6 +57,8 @@ public class Section {
 		CLIMAX, OUTRO;
 	}
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(Section.class);
+
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" },
 			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
@@ -63,10 +67,12 @@ public class Section {
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
 	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
-			"Swap Melody", "Melody Max Speed", "Key Change", "TransitionFast", "TransitionSlow",
-			"TransitionCut" };
-	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0, 1.5,
-			1.75, 0.7 };
+			"Swap Melody", "Melody Max Speed", "Key Change" };
+	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
+
+	public static final String[] transitionNames = { "None", "Hype Up", "Pipe Down", "Cut End",
+			"Half-tempo Half2" };
+	public static final Double[] transitionChanceMultipliers = { 1.0, 1.5, 1.75, 0.7, 0.5 };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -76,6 +82,7 @@ public class Section {
 	private double startTime;
 	private double sectionDuration = -1;
 	private List<Double> sectionBeatDurations = null;
+	private Integer customKeyChange = null;
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -96,6 +103,7 @@ public class Section {
 
 	// customized chords/durations
 	private boolean customChordsDurationsEnabled = false;
+	private boolean displayAlternateChords = false;
 	private String customChords = "?";
 	private String customDurations = "4,4,4,4";
 
@@ -129,6 +137,7 @@ public class Section {
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
 	private List<Integer> riskyVariations = null;
+	private int transitionType = 0;
 
 	public Section() {
 
@@ -291,6 +300,7 @@ public class Section {
 		if (riskyVariations != null) {
 			sec.riskyVariations = new ArrayList<>(riskyVariations);
 		}
+		sec.transitionType = getTransitionType();
 		if (instVelocityMultiplier != null) {
 			sec.instVelocityMultiplier = new ArrayList<>(instVelocityMultiplier);
 		}
@@ -315,6 +325,8 @@ public class Section {
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
+		sec.setCustomKeyChange(getCustomKeyChange());
+		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
 			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
 		}
@@ -356,6 +368,19 @@ public class Section {
 		for (int i = 0; i < data.length; i++) {
 			if (data[i][1] == Boolean.TRUE) {
 				pres.add((Integer) data[i][0]);
+			}
+		}
+		return pres;
+	}
+
+	public Map<Integer, Integer> getPresenceWithIndices(int part) {
+		initPartMapIfNull();
+		Map<Integer, Integer> pres = new HashMap<>();
+
+		Object[][] data = partPresenceVariationMap.get(part);
+		for (int i = 0; i < data.length; i++) {
+			if (data[i][1] == Boolean.TRUE) {
+				pres.put((Integer) data[i][0], i);
 			}
 		}
 		return pres;
@@ -422,46 +447,47 @@ public class Section {
 		}
 	}
 
-	public void generatePresences(Random presRand) {
+	public void generatePresences(Random presRand, boolean forceAdd) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap());
+			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap(),
+					forceAdd);
 		}
 
 	}
 
-	public void generatePresences(Random presRand, int part,
-			Map<Integer, Object[][]> inclusionMap) {
+	public void generatePresences(Random presRand, int part, Map<Integer, Object[][]> inclusionMap,
+			boolean forceAdd) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
-		System.out.println("Chance: " + chance);
+		//LOGGER.debug("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
 		panels.removeIf(e -> e.getMuteInst());
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
-				int absOrder = MidiGenerator.getAbsoluteOrder(part, e.getPanelOrder());
-				//System.out.println("Abs order: " + absOrder);
-				//System.out.println("Offset+2: " + (getTypeMelodyOffset() + 2));
+				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
+				//LOGGER.debug("Abs order: " + absOrder);
+				//LOGGER.debug("Offset+2: " + (getTypeMelodyOffset() + 2));
 				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
 						.equals(inclusionMap.get(part)[absOrder][getTypeMelodyOffset() + 2])) {
-					//System.out.println("TRUE");
+					//LOGGER.debug("TRUE");
 					return true;
 				}
 				return false;
 			});
 		}
-		//System.out.println("Panels size: " + panels.size());
+		//LOGGER.debug("Panels size: " + panels.size());
 		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
 				setPresence(part,
-						MidiGenerator.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
+						VibeComposerGUI.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
 				added++;
 			}
 		}
-		if (added == 0 && panels.size() > 0) {
+		if (forceAdd && added == 0 && panels.size() > 0) {
 			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
-			setPresence(part, MidiGenerator.getAbsoluteOrder(part, panel.getPanelOrder()));
+			setPresence(part, VibeComposerGUI.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
 
 	}
@@ -477,7 +503,8 @@ public class Section {
 		for (Integer i : presence) {
 			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 				if (presRand.nextInt(100) < chance) {
-					addVariation(part, i - 1, Collections.singletonList(j - 2));
+					addVariation(part, VibeComposerGUI.getAbsoluteOrder(part, i),
+							Collections.singletonList(j - 2));
 					added++;
 				}
 			}
@@ -485,10 +512,26 @@ public class Section {
 		if (added == 0) {
 			int pres = presence.get(presRand.nextInt(presence.size()));
 			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
-			addVariation(part, pres - 1, Collections.singletonList(randVar));
+			addVariation(part, VibeComposerGUI.getAbsoluteOrder(part, pres),
+					Collections.singletonList(randVar));
 		}
+	}
 
-
+	public void generateVariationForPartAndOrder(Random presRand, int part, int order,
+			boolean forceAdd) {
+		initPartMapIfNull();
+		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		int added = 0;
+		for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
+			if (presRand.nextInt(100) < chance) {
+				addVariation(part, order, Collections.singletonList(j - 2));
+				added++;
+			}
+		}
+		if (forceAdd && added == 0) {
+			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
+			addVariation(part, order, Collections.singletonList(randVar));
+		}
 	}
 
 	public int getChanceForInst(int inst) {
@@ -571,15 +614,31 @@ public class Section {
 			initPartMap();
 			return;
 		}
+		//LOGGER.debug("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
 			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
+			//LOGGER.debug(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
+				Integer oldIndex = oldPresence.get(rowOrders.get(j));
+				if (oldIndex == null) {
+					/*LOGGER.debug(
+							"Failed searching in j/order: " + j + ", value: " + rowOrders.get(j));*/
+				} else {
+					//LOGGER.debug("Found index for j: " + j + ", index: " + oldIndex);
+				}
 				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
-					data[j][k] = getBooleanFromOldData(partPresenceVariationMap.get(i), j, k);
+					if (oldIndex == null) {
+						data[j][k] = Boolean.FALSE;
+					} else {
+						data[j][k] = getBooleanFromOldData(partPresenceVariationMap.get(i),
+								oldIndex, k);
+					}
+
 				}
 			}
 			partPresenceVariationMap.put(i, data);
@@ -588,6 +647,7 @@ public class Section {
 
 	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
 		if (oldData.length <= j || oldData[j].length <= k) {
+			//LOGGER.debug("False for j: " + j + ", k: " + k);
 			return Boolean.FALSE;
 		} else {
 			return (Boolean) oldData[j][k];
@@ -612,6 +672,7 @@ public class Section {
 
 	public void initPartMapIfNull() {
 		if (partPresenceVariationMap.get(0) == null) {
+			//LOGGER.debug("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 			initPartMap();
 		}
 	}
@@ -641,15 +702,11 @@ public class Section {
 	}
 
 	public boolean isTransition() {
-		return getRiskyVariations() != null && (isRiskyVar(5) || isRiskyVar(6) || isRiskyVar(7));
+		return transitionType > 0;
 	}
 
 	public int getTransitionType() {
-		if (!isTransition()) {
-			return -1;
-		}
-
-		return isRiskyVar(7) ? 7 : (isRiskyVar(6) ? 6 : 5);
+		return transitionType;
 	}
 
 	public void setRiskyVariations(List<Integer> riskyVariations) {
@@ -681,6 +738,25 @@ public class Section {
 				}
 				total++;
 			}
+		}
+		return count / total;
+	}
+
+	public double countVariationsForPartAndOrder(int part, int order) {
+		if (partPresenceVariationMap == null) {
+			return 0;
+		}
+		double count = 0;
+		double total = 0;
+		Object[][] data = partPresenceVariationMap.get(part);
+		if (data == null || order >= data.length) {
+			return 0;
+		}
+		for (int j = 2; j < data[order].length; j++) {
+			if (data[order][j] == Boolean.TRUE) {
+				count++;
+			}
+			total++;
 		}
 		return count / total;
 	}
@@ -815,5 +891,25 @@ public class Section {
 			return (67 + getChanceForInst(inst) / 3);
 		}
 		return instVelocityMultiplier.get(inst);
+	}
+
+	public void setTransitionType(int transitionType) {
+		this.transitionType = transitionType;
+	}
+
+	public Integer getCustomKeyChange() {
+		return customKeyChange;
+	}
+
+	public void setCustomKeyChange(Integer customKeyChange) {
+		this.customKeyChange = customKeyChange;
+	}
+
+	public boolean isDisplayAlternateChords() {
+		return displayAlternateChords;
+	}
+
+	public void setDisplayAlternateChords(boolean displayAlternateChords) {
+		this.displayAlternateChords = displayAlternateChords;
 	}
 }

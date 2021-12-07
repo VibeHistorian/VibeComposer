@@ -11,12 +11,19 @@ import javax.swing.SwingUtilities;
 
 public class PopupUtils {
 	public static void addEmptySpaceCloser(JPanel panel, JFrame parentFrame) {
+		addEmptySpaceCloser(panel, parentFrame, null);
+	}
+
+	public static void addEmptySpaceCloser(JPanel panel, JFrame parentFrame, Runnable rn) {
 		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isRightMouseButton(evt)) {
 					Toolkit.getDefaultToolkit().getSystemEventQueue()
 							.postEvent(new WindowEvent(parentFrame, WindowEvent.WINDOW_CLOSING));
+					if (rn != null) {
+						rn.run();
+					}
 				}
 			}
 		});

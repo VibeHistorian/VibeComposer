@@ -71,6 +71,7 @@ public class DrumPanel extends InstPanel {
 		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(isVelocityPattern);
+		comboPanel.linkGhostNoteSwitch(isVelocityPattern);
 
 		this.add(chordSpan);
 		this.add(pauseChance);

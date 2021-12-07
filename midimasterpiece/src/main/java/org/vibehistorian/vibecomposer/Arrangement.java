@@ -35,7 +35,6 @@ import javax.swing.table.TableModel;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 
@@ -240,13 +239,13 @@ public class Arrangement {
 			model.setValueAt(s.getType(), 0, i);
 			model.setValueAt(String.valueOf(s.getMeasures()), 1, i);
 			for (int j = 0; j < 5; j++) {
-				String pres = StringUtils.join(s.getPresence(j));
+				/*String pres = StringUtils.join(s.getPresence(j));
 				pres = pres.replaceAll("\\[", "").replaceAll("\\]", "");
 				boolean isCustomizedPart = s.getInstPartList(j) != null;
 				if (isCustomizedPart) {
 					pres = "*" + pres;
-				}
-				model.setValueAt(pres, j + 2, i);
+				}*/
+				model.setValueAt(s.getPresence(j), j + 2, i);
 			}
 		}
 		/*model.addTableModelListener(new TableModelListener() {
@@ -257,7 +256,7 @@ public class Arrangement {
 		return model;
 	}
 
-	public void setFromModel(JTable t) {
+	public void setFromTable(JTable t) {
 		TableModel m = t.getModel();
 		List<Section> sections = getSections();
 		sections.clear();

@@ -71,21 +71,21 @@ public class InstComboBox extends ScrollComboBox<String> {
 	}
 
 	public int getInstrument() {
-		return Integer.valueOf(getVal().split(" = ")[1].trim());
+		return Integer.valueOf(getVal().split(": ")[0].trim());
 	}
 
 	public int getRandomInstrument() {
 		Random rand = new Random();
-		return Integer.valueOf(getItemAt(rand.nextInt(getItemCount())).split(" = ")[1].trim());
+		return Integer.valueOf(getItemAt(rand.nextInt(getItemCount())).split(": ")[0].trim());
 	}
 
 	private boolean isBanned(String inst) {
-		return BANNED_INSTS.contains(inst.split(" = ")[1].trim());
+		return BANNED_INSTS.contains(inst.split(": ")[0].trim());
 	}
 
 	private boolean instSet(int instrument) {
 		for (int i = 0; i < this.getItemCount(); i++) {
-			int inst = Integer.valueOf(this.getItemAt(i).split(" = ")[1].trim());
+			int inst = Integer.valueOf(this.getItemAt(i).split(": ")[0].trim());
 			if (inst == instrument) {
 				setSelectedItem(getItemAt(i));
 				mousePressed = false;

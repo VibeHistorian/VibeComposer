@@ -120,6 +120,7 @@ public class ButtonSelectorPanel extends JPanel {
 			buttons.get(selectedIndex).setSelectedRaw(true);
 		}
 		if (needFirePropertyChange) {
+			VibeComposerGUI.trySliderStartChange(selectedIndex);
 			firePropertyChange("selectedIndex", -1, selectedIndex);
 		}
 	}

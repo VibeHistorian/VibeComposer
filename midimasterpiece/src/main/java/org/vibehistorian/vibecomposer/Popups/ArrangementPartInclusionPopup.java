@@ -63,7 +63,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 			}
 
 			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
+					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
 			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getPartInclusionMap().get(i),

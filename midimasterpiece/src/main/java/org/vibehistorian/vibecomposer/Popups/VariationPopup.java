@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -64,6 +63,7 @@ public class VariationPopup {
 	Section sectionObject = null;
 	JScrollPane scroll;
 	List<KnobPanel> knobs = new ArrayList<>();
+	KnobPanel keyChangeKnob = new DetachedKnobPanel("Custom Keychange", 0, -12, 12);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
@@ -71,13 +71,20 @@ public class VariationPopup {
 		sectionObject = sec;
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 
-
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		PopupUtils.addEmptySpaceCloser(tablesPanel, frame);
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, new Runnable() {
+
+			@Override
+			public void run() {
+				VibeComposerGUI.manualArrangement.setSelected(true);
+				VibeComposerGUI.manualArrangement.repaint();
+			}
+		});
 
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
 		addRiskyVariations(sec);
+		addVariationSettings(sec);
 		addInstVolumeKnobs(sec);
 		for (int i = 0; i < 5; i++) {
 			int fI = i;
@@ -89,12 +96,12 @@ public class VariationPopup {
 			}
 
 			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> (e.getInstrumentBox().getVal()).split(" = ")[0])
+					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
-			table.setModel(
-					new VariationsBooleanTableModel(fI, sec.getPartPresenceVariationMap().get(i),
-							Section.variationDescriptions[i], partNames));
+			table.setModel(new VariationsBooleanTableModel(fI, sectionOrder - 1,
+					sec.getPartPresenceVariationMap().get(i), Section.variationDescriptions[i],
+					partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -288,7 +295,10 @@ public class VariationPopup {
 				? VibeComposerGUI.userChords.getText()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
 		userChords = new JTextField(
-				sec.isCustomChordsDurationsEnabled() ? sec.getCustomChords() : guiUserChords, 23);
+				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())
+						? sec.getCustomChords()
+						: guiUserChords,
+				23);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
 		userChordsDurations = new JTextField(
@@ -317,6 +327,39 @@ public class VariationPopup {
 		tablesPanel.add(instVolumesPanel);
 	}
 
+	private void addVariationSettings(Section sec) {
+		JPanel variationSettingsPanel = new JPanel();
+		variationSettingsPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		variationSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		JPanel transitionPanel = new JPanel();
+		transitionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		transitionPanel.setLayout(new BoxLayout(transitionPanel, BoxLayout.X_AXIS));
+		ScrollComboBox<String> transitionBox = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(Section.transitionNames, transitionBox);
+		transitionBox.setSelectedIndex(sec.getTransitionType());
+		transitionBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setTransitionType(transitionBox.getSelectedIndex());
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+			}
+		});
+		JPanel keyChangePanel = new JPanel();
+		keyChangePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		keyChangePanel.setLayout(new GridLayout(0, 2, 0, 0));
+		keyChangeKnob.setInt(sec.getCustomKeyChange() == null ? 0 : sec.getCustomKeyChange());
+		keyChangePanel.add(keyChangeKnob);
+
+		transitionPanel.add(new JLabel("Transition Type"));
+		transitionPanel.add(transitionBox);
+		variationSettingsPanel.add(transitionPanel);
+		variationSettingsPanel.add(keyChangePanel);
+
+		tablesPanel.add(variationSettingsPanel);
+	}
+
 	private void addRiskyVariations(Section sec) {
 		JPanel riskyVarPanel = new JPanel();
 		riskyVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
@@ -332,12 +375,16 @@ public class VariationPopup {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
+					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 				}
 
 			});
 			riskyVarPanel.add(riskyVar);
 		}
+
+
 		tablesPanel.add(riskyVarPanel);
+
 	}
 
 	private void addFrameWindowOperation() {
@@ -359,18 +406,10 @@ public class VariationPopup {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-
+				sectionObject.setCustomKeyChange(keyChangeKnob.getInt());
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
-				for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
-					if (c instanceof JButton) {
-						JButton cbutt = (JButton) c;
-						if (cbutt.getText().equals("Edit " + sectionOrder)) {
-							VibeComposerGUI.recolorVariationPopupButton(cbutt, sectionObject);
-							break;
-						}
-					}
-				}
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 			@Override

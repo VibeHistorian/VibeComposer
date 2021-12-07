@@ -35,7 +35,7 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
 	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
 	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
-	private KnobPanel speed = new KnobPanel("Speed", 0);
+	private KnobPanel speed = new KnobPanel("Speed", 50);
 	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 
 	public void initComponents(ActionListener l) {
@@ -73,10 +73,16 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("<html>Note<br>Targets</html>"));
 		noteTargets.setMargin(new Insets(0, 0, 0, 0));
 		noteTargets.setTextGenerator(e -> {
-			Random rand = new Random();
-			return StringUtils.join(MidiGenerator.generateOffsets(MidiGenerator.chordInts,
-					rand.nextInt(), VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(), null),
+			return StringUtils.join(
+					MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
+							VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
+							VibeComposerGUI.melodyTargetNoteVariation.getInt(), null),
 					",");
+		});
+		noteTargets.setRandGenerator(e -> {
+			return MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
+					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
+					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null);
 		});
 		this.add(noteTargets);
 
@@ -86,9 +92,12 @@ public class MelodyPanel extends InstPanel {
 		patternStructure.setMargin(new Insets(0, 0, 0, 0));
 		this.add(patternStructure);
 		patternStructure.setTextGenerator(e -> {
-			Random rand = new Random();
 			return StringUtils.join(MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
-					rand.nextInt()), ",");
+					new Random().nextInt()), ",");
+		});
+		patternStructure.setRandGenerator(e -> {
+			return MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
+					new Random().nextInt());
 		});
 
 		this.add(blockJump);
@@ -105,6 +114,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(doubledRhythmChance);
 		this.add(splitChance);
 		this.add(leadChordsChance);
+		this.add(delay);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -228,7 +238,7 @@ public class MelodyPanel extends InstPanel {
 		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
 		speed.setInt(mp1.speed.getInt());
 		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
-		setInstrument(mp1.getInstrument());
+		//setInstrument(mp1.getInstrument());
 	}
 
 	public int getMaxBlockChange() {

@@ -3,6 +3,8 @@ package org.vibehistorian.vibecomposer.Parts;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
+
 @XmlRootElement(name = "bassPart")
 @XmlType(propOrder = {})
 public class BassPart extends InstPart {
@@ -12,6 +14,7 @@ public class BassPart extends InstPart {
 	private boolean doubleOct = false;
 	private int noteVariation = 20;
 	private boolean melodyPattern = false;
+	private PatternJoinMode patternJoinMode = PatternJoinMode.EXPAND;
 
 	public BassPart() {
 
@@ -55,5 +58,13 @@ public class BassPart extends InstPart {
 
 	public void setMelodyPattern(boolean melodyPattern) {
 		this.melodyPattern = melodyPattern;
+	}
+
+	public PatternJoinMode getPatternJoinMode() {
+		return patternJoinMode;
+	}
+
+	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
+		this.patternJoinMode = patternJoinMode;
 	}
 }

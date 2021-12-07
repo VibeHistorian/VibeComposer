@@ -124,4 +124,8 @@ public class OMNI {
 			return false;
 		}
 	}
+
+	public static double clamp(double num, double min, double max) {
+		return Math.min(max, (Math.max(min, num)));
+	}
 }

@@ -62,12 +62,15 @@ public class GUIConfig {
 	private int transpose = 0;
 	private double bpm = 80;
 	private boolean arpAffectsBpm = false;
-	private boolean doubledDurations = false;
+	private Integer beatDurationMultiplierIndex = 1;
+	private Integer swingUnitMultiplierIndex = 1;
 	private boolean allowChordRepeats = true;
 	private Integer globalSwingOverride = null;
 
 
 	// melody gen
+	private boolean combineMelodyTracks = false;
+
 	private int melodyUseOldAlgoChance = 0;
 	private boolean firstNoteFromChord = true;
 	private boolean firstNoteRandomized = true;
@@ -80,6 +83,7 @@ public class GUIConfig {
 	private int melodyModeNoteTarget = 15;
 	private int melodyReplaceAvoidNotes = 1;
 	private int melodyMaxDirChanges = 2;
+	private int melodyTargetNoteVariation = 4;
 
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
@@ -104,6 +108,7 @@ public class GUIConfig {
 	private String lastChord = "?";
 
 	private boolean useChordFormula = false;
+	private int longProgressionSimilarity = 0;
 	private boolean customChordsEnabled = true;
 	private String customChords = "?";
 	private String customChordDurations = "4,4,4,4";
@@ -132,7 +137,7 @@ public class GUIConfig {
 	private DrumGenSettings drumGenSettings = new DrumGenSettings();
 	private ArpGenSettings arpGenSettings = new ArpGenSettings();
 
-	// seed
+	private boolean midiMode = true;
 	private long randomSeed = 0;
 
 
@@ -439,12 +444,12 @@ public class GUIConfig {
 		this.maxMelodySwing = maxMelodySwing;
 	}
 
-	public boolean isDoubledDurations() {
-		return doubledDurations;
+	public Integer getBeatDurationMultiplierIndex() {
+		return beatDurationMultiplierIndex;
 	}
 
-	public void setDoubledDurations(boolean doubledDurations) {
-		this.doubledDurations = doubledDurations;
+	public void setBeatDurationMultiplierIndex(Integer beatDurationMultiplierIndex) {
+		this.beatDurationMultiplierIndex = beatDurationMultiplierIndex;
 	}
 
 	public int getArrangementPartVariationChance() {
@@ -693,6 +698,46 @@ public class GUIConfig {
 
 	public void setSquishProgressively(boolean squishProgressively) {
 		this.squishProgressively = squishProgressively;
+	}
+
+	public boolean isMidiMode() {
+		return midiMode;
+	}
+
+	public void setMidiMode(boolean midiMode) {
+		this.midiMode = midiMode;
+	}
+
+	public boolean isCombineMelodyTracks() {
+		return combineMelodyTracks;
+	}
+
+	public void setCombineMelodyTracks(boolean combineMelodyTracks) {
+		this.combineMelodyTracks = combineMelodyTracks;
+	}
+
+	public int getMelodyTargetNoteVariation() {
+		return melodyTargetNoteVariation;
+	}
+
+	public void setMelodyTargetNoteVariation(int melodyTargetNoteVariation) {
+		this.melodyTargetNoteVariation = melodyTargetNoteVariation;
+	}
+
+	public Integer getSwingUnitMultiplierIndex() {
+		return swingUnitMultiplierIndex;
+	}
+
+	public void setSwingUnitMultiplierIndex(Integer swingUnitMultiplierIndex) {
+		this.swingUnitMultiplierIndex = swingUnitMultiplierIndex;
+	}
+
+	public int getLongProgressionSimilarity() {
+		return longProgressionSimilarity;
+	}
+
+	public void setLongProgressionSimilarity(int longProgressionSimilarity) {
+		this.longProgressionSimilarity = longProgressionSimilarity;
 	}
 
 }

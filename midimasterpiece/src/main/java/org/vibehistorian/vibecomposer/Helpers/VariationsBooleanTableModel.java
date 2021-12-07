@@ -1,9 +1,11 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 public class VariationsBooleanTableModel extends AbstractTableModel {
@@ -17,6 +19,8 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 	String columnNames[];
 
 	List<String> partNames;
+
+	int sectionOrder;
 
 	@Override
 	public int getColumnCount() {
@@ -61,7 +65,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 			fireTableDataChanged();
 			return;
 		}
-
+		Boolean oldPresence = (Boolean) tableData[row][1];
 		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
 			if (value == Boolean.TRUE) {
 				tableData[row][1] = Boolean.TRUE;
@@ -78,7 +82,24 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 			}
 
 		}
+		int realTableRow = part + 2;
+		if (oldPresence != null && !oldPresence.equals(tableData[row][1])) {
+			Object vcVal = VibeComposerGUI.scrollableArrangementActualTable.getModel()
+					.getValueAt(realTableRow, sectionOrder);
+			if (vcVal instanceof Set) {
+				Set<Integer> presence = (Set<Integer>) vcVal;
+				Integer realOrder = (Integer) tableData[row][0];
+				if (oldPresence) {
+					presence.remove(realOrder);
+				} else {
+					presence.add(realOrder);
+				}
+				VibeComposerGUI.scrollableArrangementActualTable.getModel().setValueAt(presence,
+						realTableRow, sectionOrder);
+			}
+		}
 
+		VibeComposerGUI.scrollableArrangementActualTable.repaint();
 	}
 
 	@Override
@@ -86,8 +107,10 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 		return column > 0;
 	}
 
-	public VariationsBooleanTableModel(int part, Object[][] data, String[] colNames, List<String> partNames) {
+	public VariationsBooleanTableModel(int part, int sectionOrder, Object[][] data,
+			String[] colNames, List<String> partNames) {
 		this.part = part;
+		this.sectionOrder = sectionOrder;
 		tableData = data;
 		columnNames = colNames;
 		this.partNames = partNames;

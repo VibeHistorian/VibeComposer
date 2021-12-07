@@ -41,6 +41,10 @@ class RangeSliderUI extends BasicSliderUI {
 	/** Indicator that determines whether upper thumb is being dragged. */
 	private transient boolean upperDragging;
 
+	private boolean middleMousePressed = false;
+	private int oldLowerValue = Integer.MIN_VALUE;
+	private int oldUpperValue = Integer.MIN_VALUE;
+
 	/**
 	 * Constructs a RangeSliderUI for the specified slider component.
 	 * 
@@ -580,6 +584,12 @@ class RangeSliderUI extends BasicSliderUI {
 				return;
 			}
 
+			if (SwingUtilities.isMiddleMouseButton(e)) {
+				middleMousePressed = true;
+			} else {
+				middleMousePressed = false;
+			}
+
 			currentMouseX = e.getX();
 			currentMouseY = e.getY();
 
@@ -595,34 +605,42 @@ class RangeSliderUI extends BasicSliderUI {
 			if (upperThumbSelected || slider.getMinimum() == slider.getValue()) {
 				if (upperThumbRect.contains(currentMouseX, currentMouseY)) {
 					upperPressed = true;
+					oldUpperValue = actualSlider.getUpperValue();
 				} else if (thumbRect.contains(currentMouseX, currentMouseY)) {
 					lowerPressed = true;
+					oldLowerValue = actualSlider.getValue();
 				} else {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
 					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
 						lowerPressed = true;
+						oldLowerValue = actualSlider.getValue();
 						moveLowerThumb();
 					} else {
 						upperPressed = true;
+						oldUpperValue = actualSlider.getUpperValue();
 						moveUpperThumb();
 					}
 				}
 			} else {
 				if (thumbRect.contains(currentMouseX, currentMouseY)) {
 					lowerPressed = true;
+					oldLowerValue = actualSlider.getValue();
 				} else if (upperThumbRect.contains(currentMouseX, currentMouseY)) {
 					upperPressed = true;
+					oldUpperValue = actualSlider.getUpperValue();
 				} else {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
 					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
 						lowerPressed = true;
+						oldLowerValue = actualSlider.getValue();
 						moveLowerThumb();
 					} else {
 						upperPressed = true;
+						oldUpperValue = actualSlider.getUpperValue();
 						moveUpperThumb();
 					}
 				}
@@ -668,6 +686,22 @@ class RangeSliderUI extends BasicSliderUI {
 		public void mouseReleased(MouseEvent e) {
 			lowerDragging = false;
 			upperDragging = false;
+			RangeSlider rangeSlider = (RangeSlider) slider;
+			if (middleMousePressed && rangeSlider.isDraggableRange()) {
+
+				if (oldLowerValue > Integer.MIN_VALUE) {
+					int change = slider.getValue() - oldLowerValue;
+					rangeSlider.setUpperValue(OMNI.clamp(rangeSlider.getUpperValue() + change,
+							rangeSlider.getMinimum() + 1, rangeSlider.getMaximum()));
+				} else if (oldUpperValue > Integer.MIN_VALUE) {
+					int change = rangeSlider.getUpperValue() - oldUpperValue;
+					rangeSlider.setValue(OMNI.clamp(rangeSlider.getValue() + change,
+							rangeSlider.getMinimum(), rangeSlider.getMaximum() - 1));
+				}
+			}
+			middleMousePressed = false;
+			oldLowerValue = Integer.MIN_VALUE;
+			oldUpperValue = Integer.MIN_VALUE;
 			RangeSlider actualSlider = (RangeSlider) slider;
 			actualSlider.setLowerDragging(lowerDragging);
 			actualSlider.setUpperDragging(upperDragging);
