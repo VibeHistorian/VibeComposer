@@ -72,6 +72,13 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(new JLabel("<html>Note<br>Targets</html>"));
 		noteTargets.setMargin(new Insets(0, 0, 0, 0));
+		noteTargets.setTextGenerator(e -> {
+			return StringUtils.join(
+					MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
+							VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
+							VibeComposerGUI.melodyTargetNoteVariation.getInt(), null),
+					",");
+		});
 		noteTargets.setRandGenerator(e -> {
 			return MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
 					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
@@ -84,6 +91,10 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("Pattern"));
 		patternStructure.setMargin(new Insets(0, 0, 0, 0));
 		this.add(patternStructure);
+		patternStructure.setTextGenerator(e -> {
+			return StringUtils.join(MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
+					new Random().nextInt()), ",");
+		});
 		patternStructure.setRandGenerator(e -> {
 			return MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
 					new Random().nextInt());
