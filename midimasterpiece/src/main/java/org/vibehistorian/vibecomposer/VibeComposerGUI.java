@@ -232,7 +232,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
+	private static boolean isFullMode = false;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -3010,7 +3010,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		//toggleableComponents.add(arrSection);
-		toggleableComponents.add(commitPanelBtn);
+		//toggleableComponents.add(commitPanelBtn);
 		toggleableComponents.add(commitAllPanelBtn);
 		toggleableComponents.add(undoPanelBtn);
 		toggleableComponents.add(clearPanelBtn);
