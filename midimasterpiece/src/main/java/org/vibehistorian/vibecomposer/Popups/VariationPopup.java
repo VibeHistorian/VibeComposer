@@ -334,7 +334,7 @@ public class VariationPopup {
 
 		JPanel transitionPanel = new JPanel();
 		transitionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		transitionPanel.setLayout(new GridLayout(0, 3, 0, 0));
+		transitionPanel.setLayout(new BoxLayout(transitionPanel, BoxLayout.X_AXIS));
 		ScrollComboBox<String> transitionBox = new ScrollComboBox<>(false);
 		ScrollComboBox.addAll(Section.transitionNames, transitionBox);
 		transitionBox.setSelectedIndex(sec.getTransitionType());
