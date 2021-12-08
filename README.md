@@ -3,7 +3,10 @@
 
 ![VibeComposer Simple UI Preview](https://i.imgur.com/Iasl64U.png)
 
-#### Arranged Track Examples (v1.9): https://soundcloud.com/vibehistorian/utopia, https://soundcloud.com/vibehistorian/osiris, https://soundcloud.com/vibehistorian/anaesthesia-blues
+#### Arranged Track Examples (v1.9): 
+1. https://soundcloud.com/vibehistorian/utopia, 
+2. https://soundcloud.com/vibehistorian/osiris, 
+3. https://soundcloud.com/vibehistorian/anaesthesia-blues
 
 
 #### How to run it (on Windows):
