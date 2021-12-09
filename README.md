@@ -4,9 +4,9 @@
 ![VibeComposer Simple UI Preview](https://i.imgur.com/Iasl64U.png)
 
 #### Arranged Track Examples (v1.9): 
-1. https://soundcloud.com/vibehistorian/utopia, 
-2. https://soundcloud.com/vibehistorian/osiris, 
-3. https://soundcloud.com/vibehistorian/anaesthesia-blues
+- https://soundcloud.com/vibehistorian/anaesthesia-blues
+- https://soundcloud.com/vibehistorian/osiris
+- https://soundcloud.com/vibehistorian/utopia
 
 
 #### How to run it (on Windows):
@@ -16,15 +16,15 @@
 
 #### How to run it (on Linux/Mac):
 1. Same thing as Windows, but use the JAR (.jar) file instead of the executable (.exe) file.
-2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, with this command: "java -jar VibeComposer-v1.8-beta-JAR.jar"
+2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, with this command: "java -jar VibeComposer-v1.9-beta-JAR.jar"
 3. If steps 1 and 2 don't work, ask google.
 
 #### How to use it:
 1. Click 'Compose' to hear a preview of the song (one measure loop).
 
-    1a. Make any adjustments you want, then click 'Regenerate' to hear the new changes. Some knobs/comboboxes react instantly without needing to Regenerate.
+    -  Make any adjustments you want, then click 'Regenerate' to hear the new changes. Some knobs/comboboxes react instantly without needing to Regenerate.
 
-    1b. If you like what you hear, you can enable Arrangement by checking 'ARRANGE' and clicking 'Regenerate' again, 
+    -  If you like what you hear, you can enable Arrangement by checking 'ARRANGE' and clicking 'Regenerate' again, 
      which creates a fully 'arranged' track with varying energy levels and new variations.
 
 2. Drag'n'Drop into your DAW, or just save it for later.
