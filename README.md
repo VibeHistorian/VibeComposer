@@ -17,7 +17,7 @@
 #### How to run it (on Linux/Mac):
 1. Same thing as Windows, but use the JAR (.jar) file instead of the executable (.exe) file.
 2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, with this command: "java -jar VibeComposer-v1.9-beta-JAR.jar"
-3. If steps 1 and 2 don't work, ask google.
+3. In case it still doesn't work, feel free to contact me (email/discord below).
 
 #### How to use it:
 1. Click 'Compose' to hear a preview of the song (one measure loop).
@@ -35,7 +35,10 @@
 **Note2:** if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu.
 
-#### Arrangement examples made with earlier versions of VibeComposer: https://soundcloud.com/vibehistorian/avalanche, https://soundcloud.com/vibehistorian/discovery , https://soundcloud.com/vibehistorian/three-seasons
+#### Arrangement examples made with earlier versions of VibeComposer: 
+- https://soundcloud.com/vibehistorian/avalanche
+- https://soundcloud.com/vibehistorian/three-seasons
+- https://soundcloud.com/vibehistorian/discovery
 
 #### License: GPL3
     
