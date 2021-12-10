@@ -34,6 +34,7 @@ import javax.swing.table.JTableHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
@@ -63,7 +64,8 @@ public class VariationPopup {
 	Section sectionObject = null;
 	JScrollPane scroll;
 	List<KnobPanel> knobs = new ArrayList<>();
-	KnobPanel keyChangeKnob = new DetachedKnobPanel("Custom Keychange", 0, -12, 12);
+	KnobPanel keyChangeKnob = new DetachedKnobPanel("Key Change", 0, -12, 12);
+	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
@@ -346,14 +348,29 @@ public class VariationPopup {
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 		});
+		transitionPanel.add(new JLabel("Transition Type"));
+		transitionPanel.add(transitionBox);
+
 		JPanel keyChangePanel = new JPanel();
 		keyChangePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		keyChangePanel.setLayout(new GridLayout(0, 2, 0, 0));
+		keyChangePanel.setLayout(new BoxLayout(keyChangePanel, BoxLayout.X_AXIS));
 		keyChangeKnob.setInt(sec.getCustomKeyChange() == null ? 0 : sec.getCustomKeyChange());
 		keyChangePanel.add(keyChangeKnob);
 
-		transitionPanel.add(new JLabel("Transition Type"));
-		transitionPanel.add(transitionBox);
+		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
+		for (int i = 0; i < MidiUtils.ScaleMode.values().length; i++) {
+			scaleModes[i] = MidiUtils.ScaleMode.values()[i].toString();
+		}
+		scaleMode.addItem(OMNI.EMPTYCOMBO);
+		ScrollComboBox.addAll(scaleModes, scaleMode);
+		if (sec.getCustomScale() != null) {
+			scaleMode.setSelectedItem(sec.getCustomScale().toString());
+		}
+
+		keyChangePanel.add(new JLabel("Scale"));
+		keyChangePanel.add(scaleMode);
+
+
 		variationSettingsPanel.add(transitionPanel);
 		variationSettingsPanel.add(keyChangePanel);
 
@@ -407,6 +424,9 @@ public class VariationPopup {
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
 				sectionObject.setCustomKeyChange(keyChangeKnob.getInt());
+				sectionObject.setCustomScale(
+						scaleMode.getSelectedIndex() > 0 ? ScaleMode.valueOf(scaleMode.getVal())
+								: null);
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);

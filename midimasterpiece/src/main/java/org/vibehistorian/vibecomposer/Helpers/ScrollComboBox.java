@@ -60,6 +60,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 				}
 			}
 		});
+
 	}
 
 	public boolean isScrollEnabled() {

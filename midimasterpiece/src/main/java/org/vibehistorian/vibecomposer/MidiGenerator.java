@@ -233,6 +233,7 @@ public class MidiGenerator implements JMC {
 	private int previousPitch = 0;
 
 	private int modTrans = 0;
+	private ScaleMode modScale = null;
 
 	public MidiGenerator(GUIConfig gc) {
 		MidiGenerator.gc = gc;
@@ -1812,21 +1813,19 @@ public class MidiGenerator implements JMC {
 
 			}
 		}
-
-		if (gc.getMelodyModeNoteTarget() > 0 && gc.getScaleMode().modeTargetNote > 0) {
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		if (gc.getMelodyModeNoteTarget() > 0 && scale.modeTargetNote > 0) {
 			double requiredPercentage = gc.getMelodyModeNoteTarget() / 100.0;
 			needed = (int) Math.ceil(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
 					* requiredPercentage);
 
-			int modeNote = MidiUtils.MAJ_SCALE.get(gc.getScaleMode().modeTargetNote);
+			int modeNote = MidiUtils.MAJ_SCALE.get(scale.modeTargetNote);
 			LOGGER.info("Found Mode notes: " + pitches[modeNote] + ", needed: " + needed);
 			if (pitches[modeNote] < needed) {
 
 				int difference = needed - pitches[modeNote];
-				int pitchAbove = MidiUtils.MAJ_SCALE
-						.get((gc.getScaleMode().modeTargetNote + 1) % 7);
-				int pitchBelow = MidiUtils.MAJ_SCALE
-						.get((gc.getScaleMode().modeTargetNote + 6) % 7);
+				int pitchAbove = MidiUtils.MAJ_SCALE.get((scale.modeTargetNote + 1) % 7);
+				int pitchBelow = MidiUtils.MAJ_SCALE.get((scale.modeTargetNote + 6) % 7);
 
 				//LOGGER.debug("Correcting melody!");
 				int investigatedChordIndex = chordSeparators.length - 1;
@@ -2876,8 +2875,10 @@ public class MidiGenerator implements JMC {
 		storeGlobalParts();
 
 		Integer transToSet = null;
+		ScaleMode scaleToSet = null;
 		boolean twoFiveOneChanged = false;
 		double sectionStartTimer = 0;
+		modScale = gc.getScaleMode();
 		gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
 		for (Section sec : arr.getSections()) {
 			LOGGER.info("*********************************** Processing section.. " + sec.getType()
@@ -2895,6 +2896,9 @@ public class MidiGenerator implements JMC {
 
 			if (transToSet != null) {
 				modTrans = transToSet;
+			}
+			if (scaleToSet != null) {
+				modScale = scaleToSet;
 			}
 
 			LOGGER.info("Key extra transpose: " + modTrans);
@@ -3011,6 +3015,9 @@ public class MidiGenerator implements JMC {
 					sec.setCustomKeyChange(transToSet);
 				} else {
 					transToSet = sec.getCustomKeyChange();
+					if (sec.getCustomScale() != null) {
+						scaleToSet = sec.getCustomScale();
+					}
 					LOGGER.info("Using custom key change: " + transToSet);
 				}
 			}
@@ -3044,7 +3051,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			if (twoFiveOneChords && chordInts.size() > 2 && transToSet != null) {
-				twoFiveOneChanged = replaceLastChordsForTwoFiveOne(transToSet);
+				twoFiveOneChanged = replaceLastChordsForTwoFiveOne(transToSet, scaleToSet);
 			}
 
 			fillOtherPartsForSection(sec, arr, overridden, riskyVariations, variationGen, arrSeed,
@@ -3652,7 +3659,7 @@ public class MidiGenerator implements JMC {
 		LOGGER.debug("Replaced FIRST");
 	}
 
-	private boolean replaceLastChordsForTwoFiveOne(int transToSet) {
+	private boolean replaceLastChordsForTwoFiveOne(int transToSet, ScaleMode scaleToSet) {
 		int size = chordProgression.size();
 		if (size < 3) {
 			return false;
@@ -3663,6 +3670,11 @@ public class MidiGenerator implements JMC {
 		altRootProgression.addAll(rootProgression);
 		int[] dm = MidiUtils.transposeChord(MidiUtils.mappedChord("Dm"), transToSet);
 		int[] g7 = MidiUtils.transposeChord(MidiUtils.mappedChord("G7"), transToSet);
+		if (scaleToSet != null) {
+			dm = MidiUtils.transposeChord(dm, modScale.noteAdjustScale, scaleToSet.noteAdjustScale);
+			g7 = MidiUtils.transposeChord(g7, modScale.noteAdjustScale, scaleToSet.noteAdjustScale);
+		}
+
 		//if (transToSet != -2) {
 		altChordProgression.set(size - 2, dm);
 		altRootProgression.set(size - 2, Arrays.copyOf(dm, 1));
@@ -3916,9 +3928,10 @@ public class MidiGenerator implements JMC {
 		processSectionTransition(sec, melodyPhrase.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
 
-		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					gc.getScaleMode().noteAdjustScale);
+					scale.noteAdjustScale);
 		}
 		if (modTrans != 0) {
 			Mod.transpose(melodyPhrase, modTrans);
@@ -4191,9 +4204,10 @@ public class MidiGenerator implements JMC {
 				}
 			}
 		}
-		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(bassPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					gc.getScaleMode().noteAdjustScale);
+					scale.noteAdjustScale);
 		}
 		Mod.transpose(bassPhrase, -24 + bp.getTranspose() + modTrans);
 		double additionalDelay = 0;
@@ -4519,9 +4533,9 @@ public class MidiGenerator implements JMC {
 		MidiUtils.addChordsToPhrase(phr, chords, flamming);
 		// transpose
 		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? cp.getTranspose() : 0;
-		if (gc.getScaleMode() != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
-					gc.getScaleMode().noteAdjustScale);
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		if (scale != ScaleMode.IONIAN) {
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
 		Mod.transpose(phr, -12 + extraTranspose + modTrans);
 
@@ -4746,9 +4760,10 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ap.getTranspose() : 0;
-		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(arpPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					gc.getScaleMode().noteAdjustScale);
+					scale.noteAdjustScale);
 		}
 		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
 
@@ -5065,9 +5080,10 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		int extraTranspose = 0;
-		if (gc.getScaleMode() != ScaleMode.IONIAN) {
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(chordSlashPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					gc.getScaleMode().noteAdjustScale);
+					scale.noteAdjustScale);
 		}
 		Mod.transpose(chordSlashPhrase, -12 + extraTranspose + modTrans);
 

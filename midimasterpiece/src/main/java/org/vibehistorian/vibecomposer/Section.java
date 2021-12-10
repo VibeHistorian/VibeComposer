@@ -38,6 +38,7 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -71,8 +72,8 @@ public class Section {
 	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
 
 	public static final String[] transitionNames = { "None", "Hype Up", "Pipe Down", "Cut End",
-			"Half-tempo Half2" };
-	public static final Double[] transitionChanceMultipliers = { 1.0, 1.5, 1.75, 0.7, 0.5 };
+			"Half Tempo" };
+	public static final Double[] transitionChanceMultipliers = { 1.0, 1.5, 1.75, 0.7, 1.0 };
 
 	public static final int VARIATION_CHANCE = 30;
 
@@ -83,6 +84,7 @@ public class Section {
 	private double sectionDuration = -1;
 	private List<Double> sectionBeatDurations = null;
 	private Integer customKeyChange = null;
+	private ScaleMode customScale = null;
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -326,6 +328,7 @@ public class Section {
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
 		sec.setCustomKeyChange(getCustomKeyChange());
+		sec.setCustomScale(getCustomScale());
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
 			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
@@ -911,5 +914,13 @@ public class Section {
 
 	public void setDisplayAlternateChords(boolean displayAlternateChords) {
 		this.displayAlternateChords = displayAlternateChords;
+	}
+
+	public ScaleMode getCustomScale() {
+		return customScale;
+	}
+
+	public void setCustomScale(ScaleMode customScale) {
+		this.customScale = customScale;
 	}
 }
