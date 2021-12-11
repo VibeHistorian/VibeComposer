@@ -13,8 +13,10 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
 public class MultiValueEditArea extends JComponent {
 
@@ -34,6 +36,8 @@ public class MultiValueEditArea extends JComponent {
 
 	boolean isDragging = false;
 
+	VisualArrayPopup pop = null;
+
 	public MultiValueEditArea(int min, int max, List<Integer> values) {
 		super();
 		this.min = min;
@@ -47,12 +51,12 @@ public class MultiValueEditArea extends JComponent {
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					values.set(orderVal.x, orderVal.y);
+					setVal(orderVal.x, orderVal.y);
 					isDragging = true;
 					repaint();
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					values.set(orderVal.x, 0);
+					setVal(orderVal.x, 0);
 					repaint();
 				}
 			}
@@ -69,7 +73,7 @@ public class MultiValueEditArea extends JComponent {
 			public void mouseDragged(MouseEvent e) {
 				if (isDragging) {
 					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-					values.set(orderVal.x, orderVal.y);
+					setVal(orderVal.x, orderVal.y);
 					repaint();
 				}
 			}
@@ -78,12 +82,19 @@ public class MultiValueEditArea extends JComponent {
 			public void mouseMoved(MouseEvent e) {
 				if (isDragging) {
 					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-					values.set(orderVal.x, orderVal.y);
+					setVal(orderVal.x, orderVal.y);
 					repaint();
 				}
 			}
 
 		});
+	}
+
+	void setVal(int pos, int val) {
+		values.set(pos, val);
+		if (pop != null) {
+			pop.getText().setText(StringUtils.join(values, ","));
+		}
 	}
 
 	@Override
@@ -227,4 +238,14 @@ public class MultiValueEditArea extends JComponent {
 	public void setHighlightedGrid(Map<Integer, List<Integer>> highlightedGrid) {
 		this.highlightedGrid = highlightedGrid;
 	}
+
+	public VisualArrayPopup getPop() {
+		return pop;
+	}
+
+	public void setPop(VisualArrayPopup pop) {
+		this.pop = pop;
+	}
+
+
 }
