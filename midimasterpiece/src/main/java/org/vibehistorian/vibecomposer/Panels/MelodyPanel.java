@@ -4,7 +4,9 @@ import java.awt.Color;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JCheckBox;
@@ -14,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
@@ -26,8 +29,8 @@ public class MelodyPanel extends InstPanel {
 	private static final long serialVersionUID = -7861296600641561431L;
 
 	private JCheckBox fillPauses = new JCheckBox("<html>Fill<br>Pauses</html>", false);
-	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4");
-	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("0,1,0,2");
+	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4", this);
+	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("0,1,0,2", this);
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 5, 0, 7);
 	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
 	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
@@ -83,6 +86,20 @@ public class MelodyPanel extends InstPanel {
 			return MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
 					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
 					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null);
+		});
+		noteTargets.setHighlighterGenerator(e -> {
+			if (MidiGenerator.chordInts.isEmpty()) {
+				return null;
+			}
+
+			if (relatedSection == null) {
+				return getHighlightTargetsFromChords(MidiGenerator.chordInts);
+			} else {
+				return getHighlightTargetsFromChords(relatedSection.isCustomChordsDurationsEnabled()
+						? relatedSection.getCustomChordsList()
+						: MidiGenerator.chordInts);
+			}
+
 		});
 		this.add(noteTargets);
 
@@ -319,6 +336,19 @@ public class MelodyPanel extends InstPanel {
 
 	public RandomIntegerListButton getPatternStructureButton() {
 		return patternStructure;
+	}
+
+	public Map<Integer, List<Integer>> getHighlightTargetsFromChords(List<String> chords) {
+		Map<Integer, List<Integer>> map = new HashMap<>();
+		for (int i = 0; i < chords.size(); i++) {
+			List<Integer> mapped = MidiUtils.mappedChordList(chords.get(i), true);
+			mapped.removeIf(e -> !MidiUtils.MAJ_SCALE.contains(e));
+			for (int j = 0; j < mapped.size(); j++) {
+				mapped.set(j, MidiUtils.MAJ_SCALE.indexOf(mapped.get(j)));
+			}
+			map.put(i, mapped);
+		}
+		return map;
 	}
 }
 

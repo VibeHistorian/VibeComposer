@@ -844,6 +844,19 @@ public class Section {
 		return customChords;
 	}
 
+	public List<String> getCustomChordsList() {
+		if (StringUtils.isEmpty(customChords)) {
+			return null;
+		} else {
+			String[] chords = customChords.split(",");
+			List<String> chordList = new ArrayList<>();
+			for (String c : chords) {
+				chordList.add(c.trim());
+			}
+			return chordList;
+		}
+	}
+
 	public void setCustomChords(String customChords) {
 		this.customChords = customChords;
 	}

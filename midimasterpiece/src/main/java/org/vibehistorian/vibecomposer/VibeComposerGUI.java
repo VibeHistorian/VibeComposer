@@ -2411,6 +2411,7 @@ public class VibeComposerGUI extends JFrame
 									InstPanel p = panels.get(order - 1);
 									InstPanel pCopy = InstPanel.makeInstPanel(i,
 											VibeComposerGUI.this);
+									pCopy.setRelatedSection(sec);
 									pCopy.setFromInstPart(p.toInstPart(0));
 									sectionPanels.add(pCopy);
 								}

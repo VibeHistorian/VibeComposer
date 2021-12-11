@@ -7,7 +7,6 @@ import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -21,7 +20,6 @@ public class VisualArrayPopup extends CloseablePopup {
 
 	MultiValueEditArea mvea = null;
 	RandomIntegerListButton butt = null;
-	Function<? super Object, List<Integer>> randGenerator = null;
 
 
 	public VisualArrayPopup(int min, int max, List<Integer> values) {
@@ -93,10 +91,10 @@ public class VisualArrayPopup extends CloseablePopup {
 		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
 			int size = mvea.getValues().size();
 			boolean successRandGenerator = false;
-			if (randGenerator != null) {
+			if (butt != null && butt.getRandGenerator() != null) {
 				List<Integer> randValues = null;
 				try {
-					randValues = randGenerator.apply(new Object());
+					randValues = butt.getRandGenerator().apply(new Object());
 				} catch (Exception exc) {
 					System.out.println("Random generator is not ready!");
 				}
@@ -133,6 +131,9 @@ public class VisualArrayPopup extends CloseablePopup {
 
 	public void linkButton(RandomIntegerListButton butt) {
 		this.butt = butt;
+		if (butt != null && butt.getHighlighterGenerator() != null) {
+			mvea.setHighlightedGrid(butt.getHighlighterGenerator().apply(new Object()));
+		}
 	}
 
 	@Override
@@ -190,10 +191,6 @@ public class VisualArrayPopup extends CloseablePopup {
 			}
 
 		});
-	}
-
-	public void setRandGenerator(Function<? super Object, List<Integer>> rndGen) {
-		randGenerator = rndGen;
 	}
 
 }

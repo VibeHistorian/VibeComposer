@@ -5,12 +5,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
 public class RandomIntegerListButton extends JButton {
@@ -19,8 +21,11 @@ public class RandomIntegerListButton extends JButton {
 
 	private Function<? super Object, String> textGenerator = null;
 	Function<? super Object, List<Integer>> randGenerator = null;
+	Function<? super Object, Map<Integer, List<Integer>>> highlighterGenerator = null;
+	InstPanel parent = null;
 
-	public RandomIntegerListButton(String value) {
+	public RandomIntegerListButton(String value, InstPanel parent) {
+		this.parent = parent;
 		this.setPreferredSize(new Dimension(100, 30));
 		this.addMouseListener(new MouseAdapter() {
 			@Override
@@ -35,7 +40,6 @@ public class RandomIntegerListButton extends JButton {
 						}
 						VisualArrayPopup vap = new VisualArrayPopup(-10, 10, values);
 						vap.linkButton(RandomIntegerListButton.this);
-						vap.setRandGenerator(randGenerator);
 					}
 
 				} else if (SwingUtilities.isRightMouseButton(e)) {
@@ -71,12 +75,30 @@ public class RandomIntegerListButton extends JButton {
 		setText(value);
 	}
 
+	public Function<? super Object, String> getTextGenerator() {
+		return textGenerator;
+	}
+
 	public void setTextGenerator(Function<? super Object, String> txtGen) {
 		textGenerator = txtGen;
+	}
+
+	public Function<? super Object, List<Integer>> getRandGenerator() {
+		return randGenerator;
 	}
 
 	public void setRandGenerator(Function<? super Object, List<Integer>> rndGen) {
 		randGenerator = rndGen;
 	}
+
+	public Function<? super Object, Map<Integer, List<Integer>>> getHighlighterGenerator() {
+		return highlighterGenerator;
+	}
+
+	public void setHighlighterGenerator(
+			Function<? super Object, Map<Integer, List<Integer>>> highlighterGenerator) {
+		this.highlighterGenerator = highlighterGenerator;
+	}
+
 
 }

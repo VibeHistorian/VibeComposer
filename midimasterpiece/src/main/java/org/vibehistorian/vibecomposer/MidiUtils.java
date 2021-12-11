@@ -649,6 +649,22 @@ public class MidiUtils {
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 
+	public static List<Integer> mappedChordList(String chordString, boolean normalized) {
+		int[] chord = mappedChord(chordString);
+		if (chord == null) {
+			return null;
+		} else {
+			if (normalized) {
+				chord = normalizeChord(chord);
+			}
+			List<Integer> chordList = new ArrayList<>();
+			for (int num : chord) {
+				chordList.add(num);
+			}
+			return chordList;
+		}
+	}
+
 	public static int[] getNormalMappedChord(String chordString) {
 		int len = chordString.length();
 		Integer inversion = null;

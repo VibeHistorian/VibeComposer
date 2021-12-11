@@ -43,6 +43,7 @@ import javax.swing.border.BevelBorder;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
@@ -114,6 +115,7 @@ public abstract class InstPanel extends JPanel {
 
 	protected Class<? extends InstPart> partClass = InstPart.class;
 	protected Integer sequenceTrack = -1;
+	protected Section relatedSection = null;
 
 	public InstPanel() {
 
@@ -663,5 +665,17 @@ public abstract class InstPanel extends JPanel {
 			}
 			setPauseChance(0);
 		}
+	}
+
+	public Section getRelatedSection() {
+		return relatedSection;
+	}
+
+	public void setRelatedSection(Section relatedSection) {
+		this.relatedSection = relatedSection;
+	}
+
+	public boolean isMainPanel() {
+		return relatedSection == null;
 	}
 }

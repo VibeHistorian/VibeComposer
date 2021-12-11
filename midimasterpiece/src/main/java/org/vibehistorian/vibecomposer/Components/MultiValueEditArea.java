@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -7,6 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -20,6 +22,7 @@ public class MultiValueEditArea extends JComponent {
 	int min = -10;
 	int max = 10;
 	List<Integer> values = null;
+	Map<Integer, List<Integer>> highlightedGrid = null;
 
 	int colStart = 2;
 	int rowStart = 1;
@@ -144,14 +147,25 @@ public class MultiValueEditArea extends JComponent {
 
 
 			}
-			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 80));
+			Color dotColor = OMNI.alphen(VibeComposerGUI.uiColor(), 80);
+			Color highlightedDotColor = new Color(220, 30, 50);
+			g.setColor(dotColor);
 
 			// draw line helpers/dots
 			for (int i = 0; i < numValues; i++) {
 				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
+				List<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
 				for (int j = 0; j < 1 + max - min; j++) {
+					boolean highlighted = helpers != null && helpers.contains((j + min + 700) % 7);
 					int drawDotY = bottomLeft.y - (int) (rowHeight * (j + 1));
-					g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
+					if (highlighted) {
+						g.setColor(highlightedDotColor);
+						g.drawLine(drawX - 1, drawDotY - 2, drawX + 1, drawDotY + 2);
+						g.drawLine(drawX + 1, drawDotY - 2, drawX - 1, drawDotY + 2);
+					} else {
+						g.setColor(dotColor);
+						g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
+					}
 				}
 			}
 
@@ -204,5 +218,13 @@ public class MultiValueEditArea extends JComponent {
 		//System.out.println("Order Value: " + orderValue.toString());
 
 		return orderValue;
+	}
+
+	public Map<Integer, List<Integer>> getHighlightedGrid() {
+		return highlightedGrid;
+	}
+
+	public void setHighlightedGrid(Map<Integer, List<Integer>> highlightedGrid) {
+		this.highlightedGrid = highlightedGrid;
 	}
 }
