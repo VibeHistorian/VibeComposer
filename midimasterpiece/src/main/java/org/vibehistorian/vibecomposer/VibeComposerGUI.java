@@ -631,6 +631,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static boolean isShowingTextInKnobs = true;
 	public static JCheckBox displayVeloRectValues;
+	public static JCheckBox knobControlByDragging;
 	public static JCheckBox highlightPatterns;
 	public static JCheckBox highlightScoreNotes;
 	public static JCheckBox customFilenameAddTimestamp;
@@ -1230,6 +1231,7 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel displayStylePanel = new JPanel();
 		displayVeloRectValues = new JCheckBox("Display Bar Values", true);
+		knobControlByDragging = new JCheckBox("Knob Up-Down Control", true);
 		highlightPatterns = new JCheckBox("Highlight Sequencer Pattern", true);
 		highlightScoreNotes = new JCheckBox("Highlight Score Notes", true);
 		customFilenameAddTimestamp = new JCheckBox("Add Timestamp To Custom Filenames", false);
@@ -1255,6 +1257,7 @@ public class VibeComposerGUI extends JFrame
 		});
 		displayStylePanel.add(checkbutt);
 		displayStylePanel.add(displayVeloRectValues);
+		displayStylePanel.add(knobControlByDragging);
 		displayStylePanel.add(highlightPatterns);
 		displayStylePanel.add(highlightScoreNotes);
 		displayStylePanel.add(customFilenameAddTimestamp);
@@ -6629,6 +6632,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(bpmHigh);
 		cs.add(stretchMidi);
 		cs.add(displayVeloRectValues);
+		cs.add(knobControlByDragging);
 		cs.add(extraSettingsReverseDrumPanels);
 		cs.add(extraSettingsOrderedTransposeGeneration);
 		cs.add(patternApplyPausesWhenGenerating);

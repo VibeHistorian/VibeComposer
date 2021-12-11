@@ -77,6 +77,9 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private String shownText = "";
 	private boolean regenerating = true;
 
+
+	private Point startPoint = null;
+
 	public static boolean fine = true;
 	public static int fineStart = 50;
 
@@ -420,9 +423,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
-			recalc(e);
-			fine = true;
+
+			fine = VibeComposerGUI.knobControlByDragging.isSelected();
 			fineStart = curr;
+			startPoint = new Point(MouseInfo.getPointerInfo().getLocation());
+			SwingUtilities.convertPointFromScreen(startPoint, JKnob.this);
+			recalc(e);
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			setValue(defaultValue);
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
@@ -452,6 +458,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 
 		fine = false;
+		startPoint = null;
 		//System.out.println("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
 	}
 
@@ -478,7 +485,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		if (pressedOnSpot) {
+		if (pressedOnSpot || fine) {
 
 			recalc(e);
 		}
@@ -490,7 +497,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
 		SwingUtilities.convertPointFromScreen(xy, JKnob.this);
-		int newVal = max - (max * xy.y / getHeight());
+
+		int yChange = startPoint.y - xy.y;
+		int range = max - min;
+		int newVal = fineStart + (range * yChange / getHeight());
 		if (fine) {
 			newVal = (fineStart * 9 + newVal) / 10;
 		}
@@ -502,10 +512,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (!isEnabled()) {
 			return;
 		}
-		/*if (fine) {
+		if (fine) {
 			updateValueFromScreen();
 			return;
-		}*/
+		}
 
 		int mx = e.getX();
 		int my = e.getY();
