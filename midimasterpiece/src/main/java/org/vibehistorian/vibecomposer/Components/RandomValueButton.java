@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;

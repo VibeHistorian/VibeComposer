@@ -8,7 +8,7 @@ import java.util.Random;
 
 import javax.swing.JTextField;
 
-import org.vibehistorian.vibecomposer.Helpers.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 
 public class ButtonIntegerListValuePopup extends CloseablePopup {
 	private RandomIntegerListButton butt = null;

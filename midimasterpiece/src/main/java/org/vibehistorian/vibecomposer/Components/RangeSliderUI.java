@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -21,6 +21,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 /**
  * UI delegate for the RangeSlider component. RangeSliderUI paints two thumbs,

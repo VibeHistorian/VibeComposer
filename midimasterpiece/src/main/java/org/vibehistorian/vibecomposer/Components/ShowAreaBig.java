@@ -26,7 +26,7 @@ see <https://www.gnu.org/licenses/>.
  * Used as part of jMusic ShowScore, and other apps.
  * @author Andrew Brown
  */
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -41,6 +41,8 @@ import java.util.Set;
 import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 

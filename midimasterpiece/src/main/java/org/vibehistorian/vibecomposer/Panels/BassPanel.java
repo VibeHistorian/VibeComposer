@@ -9,9 +9,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 

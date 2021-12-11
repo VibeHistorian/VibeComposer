@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,6 +11,7 @@ import java.awt.RenderingHints;
 import javax.swing.JCheckBox;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class ColorCheckBox extends JCheckBox {
 

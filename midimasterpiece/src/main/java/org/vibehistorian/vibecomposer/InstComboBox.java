@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
 public class InstComboBox extends ScrollComboBox<String> {
 

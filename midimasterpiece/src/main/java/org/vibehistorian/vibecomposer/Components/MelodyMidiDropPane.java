@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 /*
  * Code adapted from URL: https://stackoverflow.com/a/13597635
@@ -35,6 +35,7 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 import jm.music.data.Part;
 import jm.music.data.Phrase;

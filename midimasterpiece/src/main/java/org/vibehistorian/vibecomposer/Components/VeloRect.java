@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -15,6 +15,8 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 
 public class VeloRect extends JComponent {

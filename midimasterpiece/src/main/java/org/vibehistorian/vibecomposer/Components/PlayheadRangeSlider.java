@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 

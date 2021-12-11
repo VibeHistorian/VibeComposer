@@ -40,7 +40,7 @@ see <https://www.gnu.org/licenses/>.
  * which is already positioned in the top left corner of the screen.
  */
 
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Menu;
 import java.awt.MenuBar;

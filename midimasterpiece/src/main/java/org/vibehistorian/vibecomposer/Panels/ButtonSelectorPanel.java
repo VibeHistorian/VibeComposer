@@ -10,8 +10,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.CheckButton;
-import org.vibehistorian.vibecomposer.Helpers.SectionDropDownCheckButton;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
 
 public class ButtonSelectorPanel extends JPanel {
 

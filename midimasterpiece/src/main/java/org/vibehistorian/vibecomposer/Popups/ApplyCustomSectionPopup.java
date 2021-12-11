@@ -9,7 +9,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
 public class ApplyCustomSectionPopup extends CloseablePopup {
 

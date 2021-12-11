@@ -6,7 +6,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Random;
 
-import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 
 public class ButtonValuePopup extends CloseablePopup {

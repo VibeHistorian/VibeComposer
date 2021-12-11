@@ -5,7 +5,7 @@ import java.awt.Dimension;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 
-import org.vibehistorian.vibecomposer.Helpers.JKnob;
+import org.vibehistorian.vibecomposer.Components.JKnob;
 
 public class KnobPanel extends TransparentablePanel {
 

@@ -14,8 +14,8 @@ import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.MultiValueEditArea;
-import org.vibehistorian.vibecomposer.Helpers.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.Components.MultiValueEditArea;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 
 public class VisualArrayPopup extends CloseablePopup {
 

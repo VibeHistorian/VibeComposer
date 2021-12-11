@@ -1,9 +1,11 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Dimension;
 import java.util.List;
 
 import javax.swing.JSlider;
+
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 /**
  * An extension of JSlider to select a range of values using two thumb controls.

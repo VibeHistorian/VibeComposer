@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -12,6 +12,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class MultiValueEditArea extends JComponent {
 

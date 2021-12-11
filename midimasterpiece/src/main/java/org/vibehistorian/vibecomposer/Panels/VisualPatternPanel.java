@@ -33,12 +33,12 @@ import javax.swing.event.DocumentListener;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Helpers.ColorCheckBox;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 
 public class VisualPatternPanel extends JPanel {
 

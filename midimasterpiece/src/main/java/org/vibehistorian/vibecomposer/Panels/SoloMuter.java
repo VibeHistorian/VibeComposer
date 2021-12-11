@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
+import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 
 public class SoloMuter extends JPanel {
 
