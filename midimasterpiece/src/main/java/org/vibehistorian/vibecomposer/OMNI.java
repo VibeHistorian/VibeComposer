@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.Helpers;
+package org.vibehistorian.vibecomposer;
 
 import java.awt.Color;
 import java.awt.MouseInfo;

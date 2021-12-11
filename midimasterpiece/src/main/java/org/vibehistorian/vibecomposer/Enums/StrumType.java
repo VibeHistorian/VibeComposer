@@ -8,8 +8,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Rhythm;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 import jm.music.data.Note;
 

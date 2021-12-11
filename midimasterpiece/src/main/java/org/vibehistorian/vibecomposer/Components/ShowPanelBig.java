@@ -58,8 +58,8 @@ import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 import jm.music.data.Part;
 import jm.music.data.Phrase;

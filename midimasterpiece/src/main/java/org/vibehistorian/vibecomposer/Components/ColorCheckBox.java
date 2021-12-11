@@ -10,8 +10,8 @@ import java.awt.RenderingHints;
 
 import javax.swing.JCheckBox;
 
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class ColorCheckBox extends JCheckBox {
 

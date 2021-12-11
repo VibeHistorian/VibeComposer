@@ -10,8 +10,8 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class CheckButton extends JButton {
 

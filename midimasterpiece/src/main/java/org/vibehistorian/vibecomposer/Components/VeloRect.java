@@ -14,9 +14,9 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 
 public class VeloRect extends JComponent {

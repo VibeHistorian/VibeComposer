@@ -24,8 +24,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 

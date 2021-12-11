@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.OMNI;
 
 @XmlType(name = "chordSpanFill")
 @XmlEnum

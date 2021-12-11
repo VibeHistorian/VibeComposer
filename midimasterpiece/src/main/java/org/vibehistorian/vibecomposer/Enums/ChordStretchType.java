@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer.Enums;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.OMNI;
 
 @XmlType(name = "chordStretchType")
 @XmlEnum

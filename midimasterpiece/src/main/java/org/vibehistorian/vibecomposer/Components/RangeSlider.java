@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.swing.JSlider;
 
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.OMNI;
 
 /**
  * An extension of JSlider to select a range of values using two thumb controls.

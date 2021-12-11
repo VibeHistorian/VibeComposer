@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 public class MelodyUtils {
 

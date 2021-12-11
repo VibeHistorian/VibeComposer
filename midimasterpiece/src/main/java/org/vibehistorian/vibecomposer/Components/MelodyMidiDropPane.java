@@ -33,9 +33,9 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 
 import jm.music.data.Part;
 import jm.music.data.Phrase;
