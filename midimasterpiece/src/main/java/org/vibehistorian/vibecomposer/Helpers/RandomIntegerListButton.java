@@ -26,18 +26,7 @@ public class RandomIntegerListButton extends JButton {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					if (MidiGenerator.gc == null || MidiGenerator.chordInts.isEmpty()
-							|| textGenerator == null) {
-						return;
-					}
-					setValue(textGenerator.apply(new Object()));
-
-				} else if (SwingUtilities.isRightMouseButton(e)) {
-					setValue(value);
-				} else if (SwingUtilities.isMiddleMouseButton(e)) {
-					if (e.isControlDown()) {
-						setEnabled(!isEnabled());
-					} else if (isEnabled()) {
+					if (isEnabled()) {
 						String[] valueSplit = getValue().split(",");
 						List<Integer> values = new ArrayList<>();
 						for (String s : valueSplit) {
@@ -47,7 +36,22 @@ public class RandomIntegerListButton extends JButton {
 						VisualArrayPopup vap = new VisualArrayPopup(-10, 10, values);
 						vap.linkButton(RandomIntegerListButton.this);
 						vap.setRandGenerator(randGenerator);
+					}
 
+				} else if (SwingUtilities.isRightMouseButton(e)) {
+					if (isEnabled()) {
+						setValue(value);
+					}
+
+				} else if (SwingUtilities.isMiddleMouseButton(e)) {
+					if (e.isControlDown()) {
+						setEnabled(!isEnabled());
+					} else if (isEnabled()) {
+						if (MidiGenerator.gc == null || MidiGenerator.chordInts.isEmpty()
+								|| textGenerator == null) {
+							return;
+						}
+						setValue(textGenerator.apply(new Object()));
 					}
 
 				}

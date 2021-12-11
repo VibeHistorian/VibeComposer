@@ -21,17 +21,20 @@ public class RandomValueButton extends JButton {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					Random rand = new Random();
-					setValue(rand.nextInt());
+					if (isEnabled()) {
+						new ButtonValuePopup(RandomValueButton.this);
+					}
 				} else if (SwingUtilities.isRightMouseButton(e)) {
-					setValue(0);
+					if (isEnabled()) {
+						setValue(0);
+					}
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
 					if (e.isControlDown()) {
 						setEnabled(!isEnabled());
 					} else if (isEnabled()) {
-						new ButtonValuePopup(RandomValueButton.this);
+						Random rand = new Random();
+						setValue(rand.nextInt());
 					}
-
 				}
 			}
 		});

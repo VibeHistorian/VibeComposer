@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlList;
@@ -139,6 +140,8 @@ public class Section {
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
 	private List<Integer> riskyVariations = null;
+	public static final List<Integer> EMPTY_RISKY_VARS = IntStream.iterate(0, f -> f)
+			.limit(riskyVariationNames.length).boxed().collect(Collectors.toList());
 	private int transitionType = 0;
 
 	public Section() {

@@ -286,6 +286,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setCustomChordsDurationsEnabled(userChordsEnabled.isSelected());
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 		});

@@ -232,7 +232,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = false;
+	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
@@ -3113,7 +3113,7 @@ public class VibeComposerGUI extends JFrame
 								Section sec = actualArrangement.getSections().get(fI);
 								List<Integer> riskyVars = sec.getRiskyVariations();
 								if (riskyVars == null) {
-									return;
+									riskyVars = Section.EMPTY_RISKY_VARS;
 								}
 								int xsizeForIcon = Math.max(16,
 										((this.getWidth() / Section.riskyVariationNames.length)
@@ -3121,7 +3121,9 @@ public class VibeComposerGUI extends JFrame
 								int currentX = 8;
 								for (int j = 0; j < (Section.riskyVariationNames.length + 1)
 										/ 2; j++) {
-									if (riskyVars.get(j) > 0) {
+									// in case of swap chords, behave same as custom chords
+									if (riskyVars.get(j) > 0
+											|| (j == 1 && sec.isCustomChordsDurationsEnabled())) {
 										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX, 6,
 												this);
 									}
@@ -3187,6 +3189,7 @@ public class VibeComposerGUI extends JFrame
 				? (int) sec.getRiskyVariations().stream().filter(e -> e > 0).count()
 				: 0;
 		count += (sec.isTransition() ? 1 : 0);
+		count += (sec.isCustomChordsDurationsEnabled() ? 1 : 0);
 		int color = 0;
 		int total = Section.riskyVariationNames.length + 1;
 		if (isDarkMode) {
@@ -4900,7 +4903,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (!regenerate && randomizeScaleModeOnCompose.isSelected()) {
-			Integer[] allowedScales = new Integer[] { 0, 1, 3, 4, 5, 8, 9 };
+			Integer[] allowedScales = new Integer[] { 0, 1, 3, 4, 5, 8 };
 			scaleMode.setSelectedIndex(allowedScales[new Random().nextInt(allowedScales.length)]);
 		}
 
