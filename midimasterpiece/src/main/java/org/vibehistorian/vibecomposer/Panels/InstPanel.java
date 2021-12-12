@@ -657,9 +657,13 @@ public abstract class InstPanel extends JPanel {
 	public void applyPauseChance(Random randGen) {
 		if (getPauseChance() > 0 && getPattern() != RhythmPattern.MELODY1
 				&& VibeComposerGUI.patternApplyPausesWhenGenerating.isSelected()) {
+			long totalAvailable = getComboPanel().getTruePattern().stream().filter(e -> e > 0)
+					.count();
 			for (int j = 0; j < getHitsPerPattern(); j++) {
-				if (randGen.nextInt(100) < getPauseChance() && getComboPanel().getPattern(j) > 0) {
+				if (randGen.nextInt(100) < getPauseChance() && getComboPanel().getPattern(j) > 0
+						&& totalAvailable > 0) {
 					getComboPanel().checkPattern(j, 0);
+					totalAvailable--;
 					//LOGGER.debug("Pause chance applied");
 				}
 			}

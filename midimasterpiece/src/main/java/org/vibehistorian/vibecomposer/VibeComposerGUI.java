@@ -1231,7 +1231,7 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel displayStylePanel = new JPanel();
 		displayVeloRectValues = new JCheckBox("Display Bar Values", true);
-		knobControlByDragging = new JCheckBox("Knob Up-Down Control", true);
+		knobControlByDragging = new JCheckBox("Knob Up-Down Control", false);
 		highlightPatterns = new JCheckBox("Highlight Sequencer Pattern", true);
 		highlightScoreNotes = new JCheckBox("Highlight Score Notes", true);
 		customFilenameAddTimestamp = new JCheckBox("Add Timestamp To Custom Filenames", false);
@@ -7654,6 +7654,10 @@ public class VibeComposerGUI extends JFrame
 
 			if (chordPanelGenerator.nextInt(100) < randomChordShiftChance.getInt()) {
 				int maxShift = Math.min(cp.getPattern().maxShift, cp.getHitsPerPattern());
+				// test opposite check for shift distance
+				if (chordPanelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
+					maxShift /= 2;
+				}
 				cp.setPatternShift(maxShift > 0 ? (chordPanelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
 				cp.setPatternShift(0);
