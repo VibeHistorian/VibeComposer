@@ -3134,6 +3134,12 @@ public class MidiGenerator implements JMC {
 				((PartExt) melodyParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 				if (gc.isCombineMelodyTracks()) {
+					for (int j = i + 1; j < gc.getMelodyParts().size(); j++) {
+						ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(j).getOrder(),
+								VibeComposerGUI.melodyPanels);
+						((PartExt) melodyParts.get(j)).setTrackNumber(-1);
+						ip.setSequenceTrack(-1);
+					}
 					break;
 				}
 				//if (VibeComposerGUI.apSm)

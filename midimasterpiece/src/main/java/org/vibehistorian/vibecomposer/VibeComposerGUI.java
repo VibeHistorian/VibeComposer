@@ -1485,9 +1485,21 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				for (int i = 1; i < melodyPanels.size(); i++) {
-					melodyPanels.get(i)
-							.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+				boolean foundValid = false;
+				int start = currentMidi == null ? 1 : 0;
+				for (int i = start; i < melodyPanels.size(); i++) {
+					if (combineMelodyTracks.isSelected()) {
+						boolean isValid = melodyPanels.get(i).getSequenceTrack() >= 0;
+						if (!foundValid && isValid) {
+							foundValid = true;
+						} else {
+							melodyPanels.get(i).toggleCombinedMelodyDisabledUI(
+									!combineMelodyTracks.isSelected());
+						}
+					} else {
+						melodyPanels.get(i)
+								.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+					}
 				}
 			}
 		});
@@ -1513,6 +1525,25 @@ public class VibeComposerGUI extends JFrame
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
 		toggleableComponents.add(melodySettingsExtraPanelsHolder);
+	}
+
+	public void fixCombinedMelodyTracks() {
+		boolean foundValid = false;
+		for (int i = 0; i < melodyPanels.size(); i++) {
+			if (combineMelodyTracks.isSelected()) {
+				boolean isValid = melodyPanels.get(i).getSequenceTrack() >= 0;
+				if (!foundValid && isValid) {
+					foundValid = true;
+					melodyPanels.get(i).toggleCombinedMelodyDisabledUI(true);
+				} else {
+					melodyPanels.get(i)
+							.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+				}
+			} else {
+				melodyPanels.get(i)
+						.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+			}
+		}
 	}
 
 	private void initMelody(int startY, int anchorSide) {
@@ -4802,6 +4833,8 @@ public class VibeComposerGUI extends JFrame
 			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
 		}
 
+		fixCombinedMelodyTracks();
+
 		actualArrangement = new Arrangement();
 		actualArrangement.setPreviewChorus(false);
 		actualArrangement.getSections().clear();
@@ -6919,9 +6952,7 @@ public class VibeComposerGUI extends JFrame
 		randomArpMaxSwing.setInt(gc.getMaxArpSwing());
 
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
-		for (int i = 1; i < melodyPanels.size(); i++) {
-			melodyPanels.get(i).toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
-		}
+		fixCombinedMelodyTracks();
 
 	}
 
