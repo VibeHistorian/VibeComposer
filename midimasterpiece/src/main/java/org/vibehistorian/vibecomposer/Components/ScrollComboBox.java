@@ -12,6 +12,7 @@ import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 
 public class ScrollComboBox<T> extends JComboBox<T> {
 
@@ -19,6 +20,8 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	private boolean scrollEnabled = true;
 	protected boolean mousePressed = false;
 	private boolean regenerating = true;
+	private boolean hasPrototypeSet = false;
+	private boolean requiresSettingPrototype = false;
 
 	public ScrollComboBox() {
 		this(true);
@@ -26,6 +29,10 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	public ScrollComboBox(boolean isReg) {
 		regenerating = isReg;
+
+		BoundsPopupMenuListener listener = new BoundsPopupMenuListener(true, false);
+		addPopupMenuListener(listener);
+
 		addMouseWheelListener(new MouseWheelListener() {
 
 			@Override
@@ -95,6 +102,15 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		return getItemAt(getItemCount() - 1);
 	}
 
+	@Override
+	public void addItem(T val) {
+		super.addItem(val);
+		if (!hasPrototypeSet && requiresSettingPrototype) {
+			setPrototypeDisplayValue(val);
+			hasPrototypeSet = true;
+		}
+	}
+
 	public static <T> void addAll(T[] choices, ScrollComboBox<T> choice) {
 		for (T c : choices) {
 			choice.addItem(c);
@@ -117,5 +133,18 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 				break;
 			}
 		}
+	}
+
+	public void setPrototype(T val) {
+		setPrototypeDisplayValue(val);
+		hasPrototypeSet = true;
+	}
+
+	public boolean isRequiresSettingPrototype() {
+		return requiresSettingPrototype;
+	}
+
+	public void setRequiresSettingPrototype(boolean requiresSettingPrototype) {
+		this.requiresSettingPrototype = requiresSettingPrototype;
 	}
 }

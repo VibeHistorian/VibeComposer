@@ -190,6 +190,8 @@ public abstract class InstPanel extends JPanel {
 		randomizeButton.setPreferredSize(new Dimension(15, 30));
 		randomizeButton.setMargin(new Insets(0, 0, 0, 0));
 
+		instrument.setPrototype("XXXXXXXXXXXX");
+
 		//transpose.getSlider().setMajorTickSpacing(12);
 		//transpose.getSlider().setSnapToTicks(true);
 
