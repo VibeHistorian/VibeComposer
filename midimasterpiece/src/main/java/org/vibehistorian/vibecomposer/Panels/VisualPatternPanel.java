@@ -464,11 +464,15 @@ public class VisualPatternPanel extends JPanel {
 		} else {
 			for (int i = 0; i < MAX_HITS; i++) {
 				hitChecks[i].setVisible(hitVelocities[i].isVisible());
-				hitChecks[i].setSelected(hitVelocities[i].isEnabled());
+				if (parentPanel.getPattern() == RhythmPattern.CUSTOM) {
+					hitChecks[i].setSelected(hitVelocities[i].isEnabled());
+				}
 				hitVelocities[i].setVisible(false);
 			}
 		}
-		reapplyHits();
+		reapplyHitsRaw();
+		reapplyShiftRaw(false);
+
 		VisualPatternPanel.this.setVisible(true);
 	}
 
@@ -545,27 +549,35 @@ public class VisualPatternPanel extends JPanel {
 		if (truePattern == null || truePattern.isEmpty()) {
 			return;
 		}
+
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
 			public void run() {
 				VisualPatternPanel.this.setVisible(false);
-				int shift = shiftPanel.getInt();
-				if (!showingVelocities) {
-					for (int i = 0; i < MAX_HITS; i++) {
-						int shI = (i + shift) % MAX_HITS;
-						hitChecks[shI].setSelected(truePattern.get(i) != 0);
-					}
-				} else {
-					for (int i = 0; i < MAX_HITS; i++) {
-						int shI = (i + shift) % MAX_HITS;
-						hitVelocities[shI].setValueRaw(trueVelocities.get(i));
-						hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
-					}
-				}
+				reapplyShiftRaw(false);
 				VisualPatternPanel.this.setVisible(true);
 			}
 		});
+	}
+
+	public void reapplyShiftRaw(boolean velocityGhost) {
+		if (truePattern == null || truePattern.isEmpty()) {
+			return;
+		}
+
+		int shift = shiftPanel.getInt();
+		for (int i = 0; i < MAX_HITS; i++) {
+			int shI = (i + shift) % MAX_HITS;
+			hitChecks[shI].setSelected(truePattern.get(i) != 0);
+		}
+		for (int i = 0; i < MAX_HITS; i++) {
+			int shI = (i + shift) % MAX_HITS;
+			hitVelocities[shI].setValueRaw(trueVelocities.get(i));
+			if (!velocityGhost) {
+				hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
+			}
+		}
 	}
 
 	public void reapplyHits() {
@@ -574,128 +586,128 @@ public class VisualPatternPanel extends JPanel {
 			@Override
 			public void run() {
 				VisualPatternPanel.this.setVisible(false);
-				boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
-				int nowHits = hitsPanel.getInt();
-				if (nowHits > MAX_HITS)
-					nowHits = MAX_HITS;
-				if (nowHits > lastHits) {
-					for (int i = 0; i < nowHits; i++) {
-						hitChecks[i].setVisible(!showingVelocities);
-						hitVelocities[i].setVisible(showingVelocities);
-					}
-
-				} else if (nowHits < lastHits) {
-					for (int i = nowHits; i < lastHits; i++) {
-						hitChecks[i].setVisible(false);
-						hitVelocities[i].setVisible(false);
-					}
-				}
-				lastHits = nowHits;
-
-				int chords = chordSpanPanel.getInt();
-
-				if (showBIG) {
-					width = MAX_HITS * CheckBoxIcon.width;
-					height = 1 * CheckBoxIcon.width;
-					if (chords == 1) {
-						if (bigModeInsetMap.containsKey(lastHits)) {
-							for (int i = 0; i < lastHits; i++) {
-								hitChecks[i].setMargin(bigModeInsetMap.get(lastHits));
-								hitVelocities[i].setMargin(bigModeInsetMap.get(lastHits));
-							}
-						} else {
-							for (int i = 0; i < lastHits; i++) {
-								hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
-								hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
-							}
-						}
-					} else {
-						for (int i = 0; i < lastHits; i++) {
-							if (lastHits % 2 == 0) {
-								hitChecks[i]
-										.setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
-								hitVelocities[i]
-										.setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
-							} else {
-								if (i == lastHits / 2) {
-									hitChecks[i].setMargin(
-											bigModeDoubleChordTransitionInsetMap.get(lastHits));
-									hitVelocities[i].setMargin(
-											bigModeDoubleChordTransitionInsetMap.get(lastHits));
-								} else {
-									hitChecks[i].setMargin(
-											bigModeDoubleChordGeneralInsetMap.get(lastHits));
-									hitVelocities[i].setMargin(
-											bigModeDoubleChordGeneralInsetMap.get(lastHits));
-								}
-							}
-
-						}
-					}
-					/*if (!viewOnly) {
-						if (lastHits == MAX_HITS && chords == 1) {
-							for (JLabel lab : separators) {
-								lab.setVisible(true);
-							}
-						} else if (lastHits == MAX_HITS && chords > 1) {
-							separators[0].setVisible(true);
-							separators[1].setVisible(false);
-							separators[2].setVisible(true);
-						} else if (lastHits == 16 && chords == 1) {
-							separators[0].setVisible(true);
-							separators[1].setVisible(false);
-							separators[2].setVisible(false);
-						} else {
-							for (JLabel lab : separators) {
-								lab.setVisible(false);
-							}
-						}
-					} else {
-						for (JLabel lab : separators) {
-							lab.setVisible(false);
-						}
-					}*/
-
-				} else {
-					width = 8 * CheckBoxIcon.width;
-					height = 2 * CheckBoxIcon.width;
-					if (smallModeInsetMap.containsKey(lastHits)) {
-						for (int i = 0; i < lastHits; i++) {
-							hitChecks[i].setMargin(smallModeInsetMap.get(lastHits));
-							hitVelocities[i].setMargin(smallModeInsetMap.get(lastHits));
-						}
-					} else {
-						for (int i = 0; i < lastHits; i++) {
-							hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
-							hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
-						}
-					}
-					/*for (JLabel lab : separators) {
-						lab.setVisible(false);
-					}*/
-				}
-				int bigModeWidthOffset = (showBIG) ? 10 : 0;
-				boolean bigModeTwoRows = (chords > 1 && showBIG);
-				if (lastHits > 16 && !showBIG && showingVelocities) {
-					height *= 4;
-				} else if (bigModeTwoRows || (lastHits > 16 && !showingVelocities)
-						|| ((lastHits > 8 || showBIG) && showingVelocities)) {
-					height *= 2;
-					if (showingVelocities && bigModeTwoRows) {
-						height *= 2;
-					}
-				}
-
-				VisualPatternPanel.this
-						.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
-
-				parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 20 : 50));
+				reapplyHitsRaw();
 				VisualPatternPanel.this.setVisible(true);
-				repaint();
 			}
 
 		});
 
+	}
+
+	public void reapplyHitsRaw() {
+		boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
+		int nowHits = hitsPanel.getInt();
+		if (nowHits > MAX_HITS)
+			nowHits = MAX_HITS;
+		if (nowHits > lastHits) {
+			for (int i = 0; i < nowHits; i++) {
+				hitChecks[i].setVisible(!showingVelocities);
+				hitVelocities[i].setVisible(showingVelocities);
+			}
+
+		} else if (nowHits < lastHits) {
+			for (int i = nowHits; i < lastHits; i++) {
+				hitChecks[i].setVisible(false);
+				hitVelocities[i].setVisible(false);
+			}
+		}
+		lastHits = nowHits;
+
+		int chords = chordSpanPanel.getInt();
+
+		if (showBIG) {
+			width = MAX_HITS * CheckBoxIcon.width;
+			height = 1 * CheckBoxIcon.width;
+			if (chords == 1) {
+				if (bigModeInsetMap.containsKey(lastHits)) {
+					for (int i = 0; i < lastHits; i++) {
+						hitChecks[i].setMargin(bigModeInsetMap.get(lastHits));
+						hitVelocities[i].setMargin(bigModeInsetMap.get(lastHits));
+					}
+				} else {
+					for (int i = 0; i < lastHits; i++) {
+						hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+						hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
+					}
+				}
+			} else {
+				for (int i = 0; i < lastHits; i++) {
+					if (lastHits % 2 == 0) {
+						hitChecks[i].setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+						hitVelocities[i].setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+					} else {
+						if (i == lastHits / 2) {
+							hitChecks[i]
+									.setMargin(bigModeDoubleChordTransitionInsetMap.get(lastHits));
+							hitVelocities[i]
+									.setMargin(bigModeDoubleChordTransitionInsetMap.get(lastHits));
+						} else {
+							hitChecks[i].setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+							hitVelocities[i]
+									.setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+						}
+					}
+
+				}
+			}
+			/*if (!viewOnly) {
+				if (lastHits == MAX_HITS && chords == 1) {
+					for (JLabel lab : separators) {
+						lab.setVisible(true);
+					}
+				} else if (lastHits == MAX_HITS && chords > 1) {
+					separators[0].setVisible(true);
+					separators[1].setVisible(false);
+					separators[2].setVisible(true);
+				} else if (lastHits == 16 && chords == 1) {
+					separators[0].setVisible(true);
+					separators[1].setVisible(false);
+					separators[2].setVisible(false);
+				} else {
+					for (JLabel lab : separators) {
+						lab.setVisible(false);
+					}
+				}
+			} else {
+				for (JLabel lab : separators) {
+					lab.setVisible(false);
+				}
+			}*/
+
+		} else {
+			width = 8 * CheckBoxIcon.width;
+			height = 2 * CheckBoxIcon.width;
+			if (smallModeInsetMap.containsKey(lastHits)) {
+				for (int i = 0; i < lastHits; i++) {
+					hitChecks[i].setMargin(smallModeInsetMap.get(lastHits));
+					hitVelocities[i].setMargin(smallModeInsetMap.get(lastHits));
+				}
+			} else {
+				for (int i = 0; i < lastHits; i++) {
+					hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+					hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
+				}
+			}
+			/*for (JLabel lab : separators) {
+				lab.setVisible(false);
+			}*/
+		}
+		int bigModeWidthOffset = (showBIG) ? 10 : 0;
+		boolean bigModeTwoRows = (chords > 1 && showBIG);
+		if (lastHits > 16 && !showBIG && showingVelocities) {
+			height *= 4;
+		} else if (bigModeTwoRows || (lastHits > 16 && !showingVelocities)
+				|| ((lastHits > 8 || showBIG) && showingVelocities)) {
+			height *= 2;
+			if (showingVelocities && bigModeTwoRows) {
+				height *= 2;
+			}
+		}
+
+		VisualPatternPanel.this.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
+
+		parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 20 : 50));
+		repaint();
 	}
 
 	public boolean isViewOnly() {
@@ -793,23 +805,28 @@ public class VisualPatternPanel extends JPanel {
 					}
 					if (isVelocityPattern.isSelected()) {
 						Random randr = new Random();
-						for (int i = 0; i < lastHits; i++) {
-							if (!hitVelocities[i].isEnabled()) {
-								hitVelocities[i].setEnabled(true);
+						patternType.setVal(RhythmPattern.CUSTOM);
+						for (int i = 0; i < MAX_HITS; i++) {
+							int shI = (i + shiftPanel.getInt()) % MAX_HITS;
+							if (!hitVelocities[shI].isEnabled()) {
+								hitVelocities[shI].setEnabled(true);
 								int max = parentPanel.getVelocityMax();
 								int min = parentPanel.getVelocityMin();
-								hitVelocities[i].setValue((randr.nextInt(max - min + 1) + min) / 2);
+								int val = (randr.nextInt(max - min + 1) + min) / 2;
+								hitVelocities[shI].setValueRaw(val);
+								trueVelocities.set(i, val);
 							}
 						}
 					} else {
-						for (int i = 0; i < lastHits; i++) {
+						for (int i = 0; i < MAX_HITS; i++) {
 							if (!hitChecks[i].isSelected()) {
-								hitVelocities[i].setValue(20);
+								//hitVelocities[shI].setValue(20);
 								hitVelocities[i].setEnabled(false);
 							}
 						}
 					}
-
+					reapplyHitsRaw();
+					reapplyShiftRaw(true);
 
 				}
 			}
