@@ -3077,7 +3077,8 @@ public class MidiGenerator implements JMC {
 					melodyParts.get(i).addPhrase(p);
 				} else {
 					if (firstPresentPart.isPresent()) {
-						melodyParts.get(firstPresentPart.get().getOrder() - 1).addPhrase(p);
+						melodyParts.get(VibeComposerGUI.getAbsoluteOrder(0,
+								firstPresentPart.get().getOrder())).addPhrase(p);
 					}
 
 				}
@@ -3109,7 +3110,8 @@ public class MidiGenerator implements JMC {
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				if (COLLAPSE_DRUM_TRACKS && firstPresentDrumPart.isPresent()) {
 					p.setAppend(false);
-					drumParts.get(firstPresentDrumPart.get().getOrder() - 1).addPhrase(p);
+					drumParts.get(VibeComposerGUI.getAbsoluteOrder(4,
+							firstPresentDrumPart.get().getOrder())).addPhrase(p);
 				} else {
 					drumParts.get(i).addPhrase(p);
 				}

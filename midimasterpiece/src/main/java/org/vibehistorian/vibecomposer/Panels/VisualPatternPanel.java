@@ -69,6 +69,9 @@ public class VisualPatternPanel extends JPanel {
 	public static int width = 8 * CheckBoxIcon.width;
 	public static int height = 2 * CheckBoxIcon.width;
 
+	public static final List<Integer> FULL_PATTERN = IntStream.iterate(1, e -> e).limit(MAX_HITS)
+			.boxed().collect(Collectors.toList());
+
 	public static int mouseButton = 0;
 
 	/*public static List<Integer> sextuplets = Arrays.asList(new Integer[] { 6, 12, 24 });
@@ -78,6 +81,8 @@ public class VisualPatternPanel extends JPanel {
 	private boolean viewOnly = false;
 	private boolean needShift = false;
 	private boolean bigModeAllowed = true;
+
+	private boolean isGhostNotes = false;
 
 	public void setBigModeAllowed(boolean bigModeAllowed) {
 		this.bigModeAllowed = bigModeAllowed;
@@ -455,6 +460,7 @@ public class VisualPatternPanel extends JPanel {
 		showingVelocities = !showingVelocities;
 		velocityToggler.setText(showingVelocities ? "H" : "V");
 		VisualPatternPanel.this.setVisible(false);
+		setGhostNotes(false);
 		if (showingVelocities) {
 			for (int i = 0; i < MAX_HITS; i++) {
 				hitVelocities[i].setVisible(hitChecks[i].isVisible());
@@ -508,6 +514,9 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public List<Integer> getTruePattern() {
+		if (isGhostNotes && showingVelocities) {
+			return new ArrayList<>(FULL_PATTERN);
+		}
 		return truePattern;
 	}
 
@@ -804,6 +813,7 @@ public class VisualPatternPanel extends JPanel {
 						toggleVelocityShow();
 					}
 					if (isVelocityPattern.isSelected()) {
+						setGhostNotes(true);
 						Random randr = new Random();
 						patternType.setVal(RhythmPattern.CUSTOM);
 						for (int i = 0; i < MAX_HITS; i++) {
@@ -818,6 +828,7 @@ public class VisualPatternPanel extends JPanel {
 							}
 						}
 					} else {
+						setGhostNotes(false);
 						for (int i = 0; i < MAX_HITS; i++) {
 							if (!hitChecks[i].isSelected()) {
 								//hitVelocities[shI].setValue(20);
@@ -831,6 +842,14 @@ public class VisualPatternPanel extends JPanel {
 				}
 			}
 		});
+	}
+
+	public boolean isGhostNotes() {
+		return isGhostNotes;
+	}
+
+	public void setGhostNotes(boolean isGhostNotes) {
+		this.isGhostNotes = isGhostNotes;
 	}
 
 }
