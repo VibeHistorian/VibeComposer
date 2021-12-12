@@ -73,6 +73,8 @@ public abstract class InstPart implements Cloneable {
 
 	protected boolean muted = false;
 
+	protected int partNum = 0;
+
 	public void setFromPanel(InstPanel panel, int lastRandomSeed) {
 		setInstrument(panel.getInstrument());
 
@@ -197,6 +199,10 @@ public abstract class InstPart implements Cloneable {
 
 	public int getPatternSeed() {
 		return patternSeed;
+	}
+
+	public int getPatternSeedWithPartOffset() {
+		return patternSeed + partNum * 10000;
 	}
 
 	public void setPatternSeed(int patternSeed) {

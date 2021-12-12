@@ -23,7 +23,7 @@ public class MelodyPart extends InstPart {
 	private int speed = 0;
 
 	public MelodyPart() {
-
+		partNum = 0;
 	}
 
 	public boolean isFillPauses() {

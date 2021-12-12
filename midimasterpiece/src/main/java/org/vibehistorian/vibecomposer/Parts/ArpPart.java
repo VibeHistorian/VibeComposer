@@ -13,7 +13,7 @@ public class ArpPart extends InstPart {
 	private int arpPatternRotate = 0;
 
 	public ArpPart() {
-
+		partNum = 3;
 	}
 
 

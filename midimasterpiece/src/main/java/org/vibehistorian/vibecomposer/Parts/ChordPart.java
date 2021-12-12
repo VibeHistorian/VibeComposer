@@ -22,7 +22,7 @@ public class ChordPart extends InstPart {
 	private StrumType strumType = StrumType.ARP_U;
 
 	public ChordPart() {
-
+		partNum = 2;
 	}
 
 
