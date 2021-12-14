@@ -1756,7 +1756,8 @@ public class MidiGenerator implements JMC {
 				// adjust in pairs starting from last
 				while (investigatedChordIndex > 0 && surplusTonics < 0) {
 					int end = chordSeparators[investigatedChordIndex] - 1;
-					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1];
+					// ignore first note in chord - user selectable target note
+					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1] + 1;
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
@@ -1785,7 +1786,7 @@ public class MidiGenerator implements JMC {
 				investigatedChordIndex = chordSeparators.length - 2;
 				while (investigatedChordIndex > 0 && surplusTonics < 0) {
 					int end = chordSeparators[investigatedChordIndex] - 1;
-					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1];
+					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1] + 1;
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
@@ -1833,7 +1834,7 @@ public class MidiGenerator implements JMC {
 				// adjust in pairs starting from last
 				while (investigatedChordIndex > 0 && difference > 0) {
 					int end = chordSeparators[investigatedChordIndex] - 1;
-					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1];
+					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1] + 1;
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
@@ -1868,7 +1869,7 @@ public class MidiGenerator implements JMC {
 				investigatedChordIndex = chordSeparators.length - 2;
 				while (investigatedChordIndex > 0 && difference > 0) {
 					int end = chordSeparators[investigatedChordIndex] - 1;
-					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1];
+					int investigatedChordStart = chordSeparators[investigatedChordIndex - 1] + 1;
 					for (int i = end; i >= investigatedChordStart; i--) {
 						Note n = fullMelody.get(i);
 						int p = n.getPitch();
