@@ -21,6 +21,7 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -171,8 +172,12 @@ public class MelodyPanel extends InstPanel {
 	public void toggleCombinedMelodyDisabledUI(boolean b) {
 		getVolSlider().setEnabled(b);
 		getPanSlider().setEnabled(b);
+		if (!b && soloMuter.soloState != State.OFF) {
+			soloMuter.unsolo();
+		}
 		getSoloMuter().setEnabled(b);
 		getInstrumentBox().setEnabled(b);
+
 	}
 
 	public MelodyPanel(ActionListener l) {

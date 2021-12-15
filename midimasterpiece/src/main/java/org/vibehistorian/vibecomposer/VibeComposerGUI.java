@@ -1485,22 +1485,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				boolean foundValid = false;
-				int start = currentMidi == null ? 1 : 0;
-				for (int i = start; i < melodyPanels.size(); i++) {
-					if (combineMelodyTracks.isSelected()) {
-						boolean isValid = melodyPanels.get(i).getSequenceTrack() >= 0;
-						if (!foundValid && isValid) {
-							foundValid = true;
-						} else {
-							melodyPanels.get(i).toggleCombinedMelodyDisabledUI(
-									!combineMelodyTracks.isSelected());
-						}
-					} else {
-						melodyPanels.get(i)
-								.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
-					}
-				}
+				fixCombinedMelodyTracks();
 			}
 		});
 
@@ -1529,12 +1514,12 @@ public class VibeComposerGUI extends JFrame
 
 	public void fixCombinedMelodyTracks() {
 		boolean foundValid = false;
-		for (int i = 0; i < melodyPanels.size(); i++) {
+		int start = currentMidi == null ? 1 : 0;
+		for (int i = start; i < melodyPanels.size(); i++) {
 			if (combineMelodyTracks.isSelected()) {
 				boolean isValid = melodyPanels.get(i).getSequenceTrack() >= 0;
 				if (!foundValid && isValid) {
 					foundValid = true;
-					melodyPanels.get(i).toggleCombinedMelodyDisabledUI(true);
 				} else {
 					melodyPanels.get(i)
 							.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
