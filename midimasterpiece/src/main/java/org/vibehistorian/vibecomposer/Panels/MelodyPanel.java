@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Color;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +65,15 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(speed);
 		transpose.getKnob().setTickSpacing(10);
-		transpose.getKnob().setTickThresholds(Arrays.asList(new Integer[] { -36, -32, -29, -24, -20,
-				-17, -12, -8, -5, 0, 4, 7, 12, 16, 19, 24, 28, 31, 36 }));
+		Integer[] allowedMelodyTransposes = new Integer[] { 0, 4, 5, 7 };
+		List<Integer> totalMelodyTransposes = new ArrayList<>();
+		for (int i = -36; i <= 24; i += 12) {
+			for (int t : allowedMelodyTransposes) {
+				totalMelodyTransposes.add(i + t);
+			}
+		}
+		totalMelodyTransposes.add(36);
+		transpose.getKnob().setTickThresholds(totalMelodyTransposes);
 		this.add(transpose);
 
 		pauseChance.setInt(0);
