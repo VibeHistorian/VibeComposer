@@ -1099,10 +1099,9 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 		extraSettingsPanel.add(humanizationPanel);
 
-		JPanel loopBeatExtraSettingsPanel = new JPanel();
-		loopBeatCompose = new JCheckBox("Compose On Loop Repeat", false);
-		loopBeatExtraSettingsPanel.add(loopBeatCompose);
-		extraSettingsPanel.add(loopBeatExtraSettingsPanel);
+		//JPanel loopBeatExtraSettingsPanel = new JPanel();
+		//loopBeatExtraSettingsPanel.add(loopBeatCompose);
+		//extraSettingsPanel.add(loopBeatExtraSettingsPanel);
 
 		JPanel allInstsPanel = new JPanel();
 		useAllInsts = new JCheckBox("Use All Inst., Except:", false);
@@ -4187,6 +4186,7 @@ public class VibeComposerGUI extends JFrame
 
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
 		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
+		loopBeatCompose = new JCheckBox("Compose On Loop Repeat", false);
 
 		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -4264,6 +4264,7 @@ public class VibeComposerGUI extends JFrame
 		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(loopBeatCount);
+		playSettingsPanel.add(loopBeatCompose);
 		playSettingsPanel.add(midiMode);
 		playSettingsPanel.add(midiModeDevices);
 
@@ -5049,7 +5050,6 @@ public class VibeComposerGUI extends JFrame
 			resetSequencerTickPosition();
 
 			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));
-			sequencer.start();  // start the playback
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
 			int measureWidth = sliderMeasureWidth();
@@ -5195,6 +5195,7 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
+			sequencer.start();  // start the playback
 
 			loopBeatCount.getKnob()
 					.setMax(userChordsEnabled.isSelected()
@@ -8037,7 +8038,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void midiNavigate(long sliderValue) {
-		long time = (sliderValue - 10) * 1000;
+		long time = (sliderValue - 25) * 1000;
 		long timeTicks = msToTicks(time);
 		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
 			if (time >= 0) {
