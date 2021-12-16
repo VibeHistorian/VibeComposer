@@ -1512,6 +1512,9 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void fixCombinedMelodyTracks() {
+		if (combineMelodyTracks == null) {
+			return;
+		}
 		boolean foundValid = false;
 		int start = currentMidi == null ? 1 : 0;
 		for (int i = start; i < melodyPanels.size(); i++) {
@@ -1519,6 +1522,7 @@ public class VibeComposerGUI extends JFrame
 				boolean isValid = melodyPanels.get(i).getSequenceTrack() >= 0;
 				if (!foundValid && isValid) {
 					foundValid = true;
+					melodyPanels.get(i).toggleCombinedMelodyDisabledUI(true);
 				} else {
 					melodyPanels.get(i)
 							.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
@@ -1527,6 +1531,9 @@ public class VibeComposerGUI extends JFrame
 				melodyPanels.get(i)
 						.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
 			}
+		}
+		if (!foundValid) {
+			melodyPanels.get(0).toggleCombinedMelodyDisabledUI(true);
 		}
 	}
 
@@ -2342,8 +2349,15 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettings = new JPanel();
 		arrangementSettings.setOpaque(false);
 		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+
+		JPanel arrangementSettingsLeft = new JPanel();
+		arrangementSettingsLeft.setOpaque(false);
+		arrangementSettingsLeft.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		JPanel arrangementSettingsRight = new JPanel();
+		arrangementSettingsRight.setOpaque(false);
+		arrangementSettingsRight.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		useArrangement = new CheckButton("ARRANGE", false);
-		arrangementSettings.add(useArrangement);
+		arrangementSettingsLeft.add(useArrangement);
 		pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
@@ -2525,39 +2539,41 @@ public class VibeComposerGUI extends JFrame
 
 		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection");
 
-		arrangementSettings.add(randomizeArrangementBtn);
+		arrangementSettingsLeft.add(randomizeArrangementBtn);
 		//arrangementSettings.add(pieceLength);
-		arrangementSettings.add(randomizeArrangementOnCompose);
+		arrangementSettingsLeft.add(randomizeArrangementOnCompose);
 
 		arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
-		arrangementSettings.add(arrangementVariationChance);
+		arrangementSettingsLeft.add(arrangementVariationChance);
 		arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
-		arrangementSettings.add(arrangementPartVariationChance);
-		arrangementSettings.add(resetArrangementBtn);
-		arrangementSettings.add(arrangementPartInclusionBtn);
+		arrangementSettingsLeft.add(arrangementPartVariationChance);
+		arrangementSettingsLeft.add(resetArrangementBtn);
+		arrangementSettingsLeft.add(arrangementPartInclusionBtn);
 
 		arrangementMiddleColoredPanel = new JPanel();
 		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
+		arrangementSettings.add(arrangementSettingsLeft);
 		arrangementSettings.add(arrangementMiddleColoredPanel);
 
 
 		manualArrangement = new CheckButton("MANUAL", false);
-		arrangementSettings.add(manualArrangement);
-		arrangementSettings.add(arrSection);
-		arrangementSettings.add(commitPanelBtn);
-		arrangementSettings.add(commitAllPanelBtn);
-		arrangementSettings.add(undoPanelBtn);
-		arrangementSettings.add(clearPanelBtn);
-		arrangementSettings.add(clearAllPanelsBtn);
+		arrangementSettingsRight.add(manualArrangement);
+		arrangementSettingsRight.add(arrSection);
+		arrangementSettingsRight.add(commitPanelBtn);
+		arrangementSettingsRight.add(commitAllPanelBtn);
+		arrangementSettingsRight.add(undoPanelBtn);
+		arrangementSettingsRight.add(clearPanelBtn);
+		arrangementSettingsRight.add(clearAllPanelsBtn);
 
-		arrangementSettings.add(newSectionBox);
-		arrangementSettings.add(addNewSectionBtn);
-		arrangementSettings.add(copySelectedBtn);
-		arrangementSettings.add(removeSelectedBtn);
+		arrangementSettingsRight.add(newSectionBox);
+		arrangementSettingsRight.add(addNewSectionBtn);
+		arrangementSettingsRight.add(copySelectedBtn);
+		arrangementSettingsRight.add(removeSelectedBtn);
 
-		arrangementSettings.add(new JLabel("Seed"));
+		arrangementSettingsRight.add(new JLabel("Seed"));
 		arrangementSeed = new RandomValueButton(0);
-		arrangementSettings.add(arrangementSeed);
+		arrangementSettingsRight.add(arrangementSeed);
+		arrangementSettings.add(arrangementSettingsRight);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
