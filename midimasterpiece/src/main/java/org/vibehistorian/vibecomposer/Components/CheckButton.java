@@ -31,7 +31,7 @@ public class CheckButton extends JButton {
 		setText(name);
 		if (opaqueColor != null) {
 			bgColor = opaqueColor;
-			setBackground(bgColor.darker().darker());
+			setBackground(OMNI.alphen(bgColor, selected ? 60 : 0));
 		} else {
 			setBackground(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
 		}

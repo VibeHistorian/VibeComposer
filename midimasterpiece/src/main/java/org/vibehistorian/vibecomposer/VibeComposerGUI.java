@@ -235,6 +235,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static Color toggledUIColor = Color.cyan;
+	public static final Color COMPOSE_COLOR = new Color(180, 150, 90);
 
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
@@ -585,7 +586,7 @@ public class VibeComposerGUI extends JFrame
 	Thread cycle;
 	JCheckBox useMidiCC;
 	CheckButton loopBeat;
-	JCheckBox loopBeatCompose;
+	CheckButton loopBeatCompose;
 	public static PlayheadRangeSlider slider;
 	public static List<Integer> sliderMeasureStartTimes = null;
 	private List<Integer> sliderBeatStartTimes = null;
@@ -4104,7 +4105,7 @@ public class VibeComposerGUI extends JFrame
 
 		randomSeed = new RandomValueButton(0);
 		compose = makeButton("COMPOSE", "Compose");
-		compose.setBackground(new Color(180, 150, 90));
+		compose.setBackground(COMPOSE_COLOR);
 		compose.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		//compose.setBorderPainted(true);
 		compose.setPreferredSize(new Dimension(80, 40));
@@ -4202,7 +4203,8 @@ public class VibeComposerGUI extends JFrame
 
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
 		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
-		loopBeatCompose = new JCheckBox("Compose On Loop Repeat", false);
+		loopBeatCompose = new CheckButton("Compose On Loop Repeat", false,
+				OMNI.alphen(COMPOSE_COLOR, 150));
 
 		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
