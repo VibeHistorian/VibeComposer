@@ -24,6 +24,7 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
 public class MelodyPanel extends InstPanel {
 
@@ -76,6 +77,9 @@ public class MelodyPanel extends InstPanel {
 		totalMelodyTransposes.add(36);
 		transpose.getKnob().setTickThresholds(totalMelodyTransposes);
 		this.add(transpose);
+
+		this.add(VibeComposerGUI.makeButton("Manual MIDI",
+				e -> new VisualArrayPopup(-10, 10, new ArrayList<>())));
 
 		pauseChance.setInt(0);
 		this.add(pauseChance);
