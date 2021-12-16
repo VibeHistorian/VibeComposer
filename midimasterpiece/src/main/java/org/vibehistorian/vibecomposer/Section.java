@@ -40,6 +40,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -135,8 +137,11 @@ public class Section {
 		return null;
 	}
 
-	// map integer(what), map integer(part order), list integer(section variation)
+	// map integer(part type), [part order][presence/section variation]
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
+
+	// map 
+	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>(5);
 
 	private List<Integer> riskyVariations = null;
 	public static final List<Integer> EMPTY_RISKY_VARS = IntStream.iterate(0, f -> f)
@@ -324,6 +329,9 @@ public class Section {
 		if (getDrumParts() != null) {
 			sec.setDrumParts(getDrumParts());
 		}
+
+		// TODO: need real deep copy once elements are changed manually
+		sec.setPartPhraseNotes(getPartPhraseNotes());
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
@@ -937,5 +945,27 @@ public class Section {
 
 	public void setCustomScale(ScaleMode customScale) {
 		this.customScale = customScale;
+	}
+
+
+	public List<PartPhraseNotes> getPartPhraseNotes() {
+		return partPhraseNotes;
+	}
+
+	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
+		this.partPhraseNotes = partPhraseNotes;
+	}
+
+	public void addPhraseNotesList(List<Phrase> phrases, int partNum) {
+		PartPhraseNotes phrNotesList = new PartPhraseNotes();
+
+		for (Phrase phr : phrases) {
+			phrNotesList.add(new PhraseNotes(phr));
+		}
+		if (partNum < getPartPhraseNotes().size()) {
+			getPartPhraseNotes().set(partNum, phrNotesList);
+		} else {
+			getPartPhraseNotes().add(phrNotesList);
+		}
 	}
 }

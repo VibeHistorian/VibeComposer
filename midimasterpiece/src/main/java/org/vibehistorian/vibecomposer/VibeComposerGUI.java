@@ -187,6 +187,7 @@ import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
+import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
@@ -2779,50 +2780,51 @@ public class VibeComposerGUI extends JFrame
 					}
 				} else if (row >= 2 && secOrder >= 0) {
 					int part = row - 2;
+
+					Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+					Point tablePoint = scrollableArrangementActualTable.getLocation();
+					SwingUtilities.convertPointToScreen(tablePoint,
+							scrollableArrangementActualTable);
+					Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder,
+							false);
+					/*LOGGER.debug("Mouse point: " + mousePoint.toString());
+					LOGGER.debug("Table point: " + tablePoint.toString());
+					LOGGER.debug(r.toString());*/
+
+					mousePoint.x -= tablePoint.x;
+					mousePoint.y -= tablePoint.y;
+
+					mousePoint.x -= r.x;
+					mousePoint.y -= r.y;
+
+
+					double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01,
+							0.99);
+
+					int actualSize = getInstList(part).size();
+					int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
+					int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
+
+					LOGGER.debug("Percentage: " + orderPercentage);
+					LOGGER.debug("Selected subcell: " + (partAbsoluteOrder + 1));
+					boolean randomizerButtonPressed = false;
+					if ((actualSize > CollectionCellRenderer.MIN_CELLS
+							&& partAbsoluteOrder == actualSize)
+							|| (actualSize <= CollectionCellRenderer.MIN_CELLS
+									&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
+						randomizerButtonPressed = true;
+					} else if (partAbsoluteOrder >= actualSize) {
+						LOGGER.debug("Can't interact: subcell not present in part - "
+								+ (partAbsoluteOrder + 1));
+						return;
+					}
+
+
 					if (rClick || mClick) {
 						//LOGGER.debug(("Clickable! rClick: " + rClick));
 						Section sec = actualArrangement.getSections().get(secOrder);
 						boolean hasPresence = !sec.getPresence(part).isEmpty();
 						boolean hasVariation = hasPresence && sec.hasVariation(part);
-
-						Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-						Point tablePoint = scrollableArrangementActualTable.getLocation();
-						SwingUtilities.convertPointToScreen(tablePoint,
-								scrollableArrangementActualTable);
-						Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder,
-								false);
-						/*LOGGER.debug("Mouse point: " + mousePoint.toString());
-						LOGGER.debug("Table point: " + tablePoint.toString());
-						LOGGER.debug(r.toString());*/
-
-						mousePoint.x -= tablePoint.x;
-						mousePoint.y -= tablePoint.y;
-
-						mousePoint.x -= r.x;
-						mousePoint.y -= r.y;
-
-
-						double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01,
-								0.99);
-
-						int actualSize = getInstList(part).size();
-						int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1,
-								actualSize + 1);
-						int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
-
-						LOGGER.debug("Percentage: " + orderPercentage);
-						LOGGER.debug("Selected subcell: " + (partAbsoluteOrder + 1));
-						boolean randomizerButtonPressed = false;
-						if ((actualSize > CollectionCellRenderer.MIN_CELLS
-								&& partAbsoluteOrder == actualSize)
-								|| (actualSize <= CollectionCellRenderer.MIN_CELLS
-										&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
-							randomizerButtonPressed = true;
-						} else if (partAbsoluteOrder >= actualSize) {
-							LOGGER.debug("Can't interact: subcell not present in part - "
-									+ (partAbsoluteOrder + 1));
-							return;
-						}
 
 						if (evt.isControlDown()) {
 							if (hasPresence) {
@@ -2942,12 +2944,15 @@ public class VibeComposerGUI extends JFrame
 						manualArrangement.repaint();
 						scrollableArrangementActualTable.repaint();
 					} else {
-						if (secOrder + 1 < arrSection.getItemCount()) {
+						Section sec = actualArrangement.getSections().get(secOrder);
+						new MidiEditPopup(50, 80, sec.getPartPhraseNotes().get(part)
+								.get(partAbsoluteOrder).getPitches());
+						/*if (secOrder + 1 < arrSection.getItemCount()) {
 							arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
 							arrSection.repaint();
 							instrumentTabPane.setSelectedIndex(part);
 							switchTabPaneAfterApply = true;
-						}
+						}*/
 					}
 
 				}

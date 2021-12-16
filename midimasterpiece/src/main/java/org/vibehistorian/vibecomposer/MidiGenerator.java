@@ -3070,6 +3070,7 @@ public class MidiGenerator implements JMC {
 				.filter(e -> !e.isMuted()).findFirst();
 
 		for (Section sec : arr.getSections()) {
+			sec.addPhraseNotesList(sec.getMelodies(), 0);
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
@@ -3084,19 +3085,19 @@ public class MidiGenerator implements JMC {
 
 				}
 			}
-
+			sec.addPhraseNotesList(sec.getBasses(), 1);
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
 				bassParts.get(i).addPhrase(bp);
 			}
-
+			sec.addPhraseNotesList(sec.getChords(), 2);
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
 				Phrase cp = sec.getChords().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
 				chordParts.get(i).addPhrase(cp);
 			}
-
+			sec.addPhraseNotesList(sec.getArps(), 3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
 				Phrase cp = sec.getArps().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
@@ -3105,7 +3106,7 @@ public class MidiGenerator implements JMC {
 
 			Optional<DrumPart> firstPresentDrumPart = gc.getDrumParts().stream()
 					.filter(e -> !e.isMuted()).findFirst();
-
+			sec.addPhraseNotesList(sec.getDrums(), 4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
