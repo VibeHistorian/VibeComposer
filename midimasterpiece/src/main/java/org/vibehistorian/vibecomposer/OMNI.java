@@ -103,8 +103,8 @@ public class OMNI {
 				(int) interp(c1.getGreen(), c2.getGreen(), percentageMix),
 				(int) interp(c1.getBlue(), c2.getBlue(), percentageMix),
 				(int) interp(c1.getAlpha(), c2.getAlpha(), percentageMix));
-		//System.out.println("Color: " + c1.toString());
-		//System.out.println("Mixed: " + newColor.toString());
+		//LG.d("Color: " + c1.toString());
+		//LG.d("Mixed: " + newColor.toString());
 		return newColor;
 	}
 
@@ -120,7 +120,7 @@ public class OMNI {
 			return p.x >= cp.x && p.x <= cp.x + c.getWidth() && p.y >= cp.y
 					&& p.y <= cp.y + c.getHeight();
 		} catch (Exception e) {
-			System.out.println("Mouse in comp error!");
+			LG.d("Mouse in comp error!");
 			return false;
 		}
 	}

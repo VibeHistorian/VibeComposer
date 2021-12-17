@@ -162,7 +162,7 @@ public class VisualPatternPanel extends JPanel {
 			hitChecks[i].addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
-					//System.out.println("True pattern size: " + truePattern.size());
+					//LG.d("True pattern size: " + truePattern.size());
 					boolean change = false;
 					if (mouseButton == 2) {
 						hitChecks[fI].setSelected(true);
@@ -744,10 +744,10 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 
-		/*System.out.println(parentPanel.getPanelOrder() + "#");
-		System.out.println("Quarter notes: " + quarterNotesInMeasure);
-		System.out.println(StringUtils.join(beatQuarterNotesInMeasure, ", "));
-		System.out.println("Chord num: " + chordNumInMeasure);*/
+		/*LG.d(parentPanel.getPanelOrder() + "#");
+		LG.d("Quarter notes: " + quarterNotesInMeasure);
+		LG.d(StringUtils.join(beatQuarterNotesInMeasure, ", "));
+		LG.d("Chord num: " + chordNumInMeasure);*/
 		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(totalChords,
 				parentPanel.getFillFlip());
 
@@ -778,7 +778,7 @@ public class VisualPatternPanel extends JPanel {
 		if (parentPanel.getPatternRepeat() > 1) {
 			percentage = (percentage * parentPanel.getPatternRepeat()) % 1.0;
 		}
-		//System.out.println("Percentage: " + percentage);
+		//LG.d("Percentage: " + percentage);
 		int highlightedHit = (int) (percentage * lastHits);
 		if (highlightedHit < 0) {
 			highlightedHit = 0;

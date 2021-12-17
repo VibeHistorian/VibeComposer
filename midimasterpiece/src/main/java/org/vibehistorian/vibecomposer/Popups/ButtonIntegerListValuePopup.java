@@ -8,6 +8,7 @@ import java.util.Random;
 
 import javax.swing.JTextField;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 
 public class ButtonIntegerListValuePopup extends CloseablePopup {
@@ -63,7 +64,7 @@ public class ButtonIntegerListValuePopup extends CloseablePopup {
 				try {
 					customInput = intListField.getText();
 				} catch (NumberFormatException ex) {
-					System.out.println("Invalid value: " + intListField.getText());
+					LG.d("Invalid value: " + intListField.getText());
 				}
 				if (customInput != null) {
 					butt.setValue(customInput);

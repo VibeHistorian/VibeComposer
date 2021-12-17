@@ -229,8 +229,8 @@ public class MidiEditArea extends JComponent {
 		yValue = OMNI.clamp(yValue, min, max);
 
 		Point orderValue = new Point(xValue, yValue);
-		//System.out.println("Incoming point: " + xy.toString());
-		//System.out.println("Order Value: " + orderValue.toString());
+		//LG.d("Incoming point: " + xy.toString());
+		//LG.d("Order Value: " + orderValue.toString());
 
 		return orderValue;
 	}

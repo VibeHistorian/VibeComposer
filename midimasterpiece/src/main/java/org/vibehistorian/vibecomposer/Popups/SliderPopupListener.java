@@ -13,6 +13,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import org.vibehistorian.vibecomposer.LG;
+
 public class SliderPopupListener extends MouseAdapter {
 	private JDialog toolTip = null;
 	private final JLabel label = new JLabel("", SwingConstants.CENTER);
@@ -67,10 +69,10 @@ public class SliderPopupListener extends MouseAdapter {
 
 	private void startVolumeSliderThread(MouseEvent me) {
 		if (cycle != null && cycle.isAlive()) {
-			System.out.println("Label slider thread already exists!");
+			LG.d("Label slider thread already exists!");
 			return;
 		}
-		System.out.println("Starting new label slider thread..!");
+		LG.d("Starting new label slider thread..!");
 		cycle = new Thread() {
 
 			public void run() {

@@ -24,6 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
@@ -225,10 +226,10 @@ public class NumPanel extends JPanel {
 
 			public void startNumSliderThread(MouseEvent me) {
 				if (numCycle != null && numCycle.isAlive()) {
-					//System.out.println("Label slider thread already exists! " + label.getText());
+					//LG.d("Label slider thread already exists! " + label.getText());
 					return;
 				}
-				//System.out.println("Starting new label slider thread..! " + label.getText());
+				//LG.d("Starting new label slider thread..! " + label.getText());
 				numCycle = new Thread() {
 
 					public void run() {
@@ -300,7 +301,7 @@ public class NumPanel extends JPanel {
 			}
 			text.setBackground(OMNI.alphen(Color.red, 0));
 		} catch (NumberFormatException ex) {
-			System.out.println("Invalid value: " + text.getText());
+			LG.d("Invalid value: " + text.getText());
 			text.setBackground(OMNI.alphen(Color.red, 70));
 		}
 	}

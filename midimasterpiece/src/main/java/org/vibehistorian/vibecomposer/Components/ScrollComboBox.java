@@ -128,7 +128,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	public void removeArrowButton() {
 		for (Component c : getComponents()) {
 			if (c instanceof JButton) {
-				//System.out.println("Rem button");
+				//LG.d("Rem button");
 				remove(c);
 				break;
 			}

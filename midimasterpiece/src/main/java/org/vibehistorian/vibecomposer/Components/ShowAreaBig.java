@@ -166,7 +166,7 @@ public class ShowAreaBig extends JComponent {
 	//}
 	@Override
 	public void paintComponent(Graphics gDef) {
-		//System.out.println("Painting area!");
+		//LG.d("Painting area!");
 		Graphics2D g = (Graphics2D) gDef;
 		super.paintComponent(g);
 		//Image offScreenImage = this.createImage(this.getSize().width, this.areaHeight);
@@ -272,7 +272,7 @@ public class ShowAreaBig extends JComponent {
 			PartExt part = (PartExt) enum1.nextElement();
 
 			int noteColorIndex = getIndexForPartName(part.getTitle());
-			//System.out.println("Index: " + noteColorIndex);
+			//LG.d("Index: " + noteColorIndex);
 			if (prevColorIndex == noteColorIndex) {
 				samePrevColorCounter++;
 			} else {
@@ -320,12 +320,12 @@ public class ShowAreaBig extends JComponent {
 						currNote = Note.freqToMidiPitch(aNote.getFrequency());
 
 					if (currNote < 0) {
-						//System.out.println("(NOT) PRINTING EMPTY NOTE!");
+						//LG.d("(NOT) PRINTING EMPTY NOTE!");
 						oldXBeat += aNote.getRhythmValue();
 						oldX = (int) (Math.round(oldXBeat * beatWidth));
 						continue;
 					}
-					//System.out.println("Note: " + currNote);
+					//LG.d("Note: " + currNote);
 					if ((currNote <= 127) && (currNote >= 0)) {
 						// 10 - numb of octaves, 12 notes in an octave, 21
 						// (octavePixelheight) is the height of
@@ -352,7 +352,7 @@ public class ShowAreaBig extends JComponent {
 						int boostColor = 0;
 						if (actualStartingX <= highlightX && highlightX <= actualStartingX + x) {
 							boostColor = 100;
-							/*System.out.println("Boosted color!" + highlightX + ", act: "
+							/*LG.d("Boosted color!" + highlightX + ", act: "
 									+ actualStartingX + ", x: " + x);*/
 						}
 						Color aC = OMNI.alphen(noteColor, boostColor + 50 + aNote.getDynamic() / 2);

@@ -9,6 +9,8 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import org.vibehistorian.vibecomposer.LG;
+
 public class HelpPopup {
 	final JFrame frame = new JFrame();
 	JTextArea textArea;
@@ -35,7 +37,7 @@ public class HelpPopup {
 			e.printStackTrace();
 		}
 
-		System.out.println("Opened Help page!");
+		LG.d("Opened Help page!");
 	}
 
 	public JFrame getFrame() {

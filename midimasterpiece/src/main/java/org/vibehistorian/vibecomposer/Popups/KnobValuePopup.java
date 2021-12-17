@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.JKnob;
@@ -78,7 +79,7 @@ public class KnobValuePopup extends CloseablePopup {
 				try {
 					customInput = Integer.valueOf(numPanel.getTextfield().getText());
 				} catch (NumberFormatException ex) {
-					System.out.println("Invalid value: " + numPanel.getTextfield().getText());
+					LG.d("Invalid value: " + numPanel.getTextfield().getText());
 				}
 				if (customInput != null) {
 					int val = customInput;

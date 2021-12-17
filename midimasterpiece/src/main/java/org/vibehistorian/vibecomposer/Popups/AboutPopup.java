@@ -8,6 +8,8 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import org.vibehistorian.vibecomposer.LG;
+
 public class AboutPopup extends CloseablePopup {
 	JTextArea textArea;
 	JScrollPane scroll;
@@ -31,14 +33,13 @@ public class AboutPopup extends CloseablePopup {
 				+ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\r\n"
 				+ "GNU General Public License for more details.\r\n" + "\r\n"
 				+ "You should have received a copy of the GNU General Public License\r\n"
-				+ "along with this program; if not,\r\n"
-				+ "see <https://www.gnu.org/licenses/>.");
+				+ "along with this program; if not,\r\n" + "see <https://www.gnu.org/licenses/>.");
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		frame.add(scroll);
 		frame.pack();
 		frame.setVisible(true);
 
-		System.out.println("Opened About page!");
+		LG.d("Opened About page!");
 	}
 
 	public JFrame getFrame() {

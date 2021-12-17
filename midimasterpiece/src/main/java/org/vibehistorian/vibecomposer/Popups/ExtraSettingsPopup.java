@@ -7,6 +7,7 @@ import java.awt.event.WindowListener;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class ExtraSettingsPopup extends CloseablePopup {
@@ -22,7 +23,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 		frame.pack();
 		frame.setVisible(true);
 
-		System.out.println("Opened Extra Settings page!");
+		LG.d("Opened Extra Settings page!");
 	}
 
 	public JFrame getFrame() {

@@ -13,6 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.MultiValueEditArea;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
@@ -99,7 +100,7 @@ public class VisualArrayPopup extends CloseablePopup {
 				try {
 					randValues = butt.getRandGenerator().apply(new Object());
 				} catch (Exception exc) {
-					System.out.println("Random generator is not ready!");
+					LG.d("Random generator is not ready!");
 				}
 				if (randValues != null && !randValues.isEmpty()) {
 					mvea.getValues().clear();
@@ -142,7 +143,7 @@ public class VisualArrayPopup extends CloseablePopup {
 					mvea.getValues().addAll(nums);
 					repaintMvea();
 				} catch (Exception exc) {
-					System.out.println("Incorrect text format, cannot convert to list of numbers.");
+					LG.d("Incorrect text format, cannot convert to list of numbers.");
 				}
 			}
 		}));

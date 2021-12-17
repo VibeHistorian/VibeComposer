@@ -14,6 +14,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class SectionDropDownCheckButton extends CheckButton {
@@ -36,7 +37,7 @@ public class SectionDropDownCheckButton extends CheckButton {
 				public void actionPerformed(ActionEvent evt) {
 					VibeComposerGUI.vibeComposerGUI
 							.handleArrangementAction("ArrangementAddNewSection," + e, 0, 0);
-					System.out.println("popupindex: " + popupIndex);
+					LG.d("popupindex: " + popupIndex);
 				}
 			});
 			popup.add(newE);

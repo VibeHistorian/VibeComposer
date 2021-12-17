@@ -14,6 +14,7 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -37,7 +38,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				System.out.println("YEP");
+				LG.d("YEP");
 
 			}
 		});
@@ -55,7 +56,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 		stringables = value instanceof String ? Collections.singleton((String) value)
 				: (Collection<? extends Object>) value;
 		section = column;*/
-		//System.out.println("ListCellRenderer smth.");
+		//LG.d("ListCellRenderer smth.");
 
 		return this;
 	}
@@ -177,7 +178,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 
 			//String value = StringUtils.join(stringables, ";");
 			//g.drawString(value, 2, height / 2);
-			//System.out.println("ListCellRenderer RENDERED");
+			//LG.d("ListCellRenderer RENDERED");
 			g.setColor(Color.black);
 			g.drawRect(0, 0, width, height);
 			g.dispose();

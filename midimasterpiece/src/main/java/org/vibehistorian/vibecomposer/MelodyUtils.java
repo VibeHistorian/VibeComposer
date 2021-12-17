@@ -160,7 +160,7 @@ public class MelodyUtils {
 			int remainingDirChanges) {
 		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
 		chosenChange = OMNI.clamp(chosenChange, -7, 7);
-		//System.out.println("Chosen change: " + chosenChange);
+		//LG.d("Chosen change: " + chosenChange);
 		List<Pair<Integer, Integer[]>> viableBlocks = new ArrayList<>();
 		if (BLOCK_CHANGE_MAP.containsKey(chosenChange)) {
 			for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(chosenChange)) {
@@ -183,15 +183,15 @@ public class MelodyUtils {
 		}
 		//int sizeBefore = viableBlocks.size();
 		viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
-		/*System.out.println("Size difference: " + (sizeBefore - viableBlocks.size())
+		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
 				+ ", for variance remaining: " + remainingVariance);*/
 		viableBlocks.removeIf(
 				e -> MelodyUtils.interblockDirectionChange(e.getRight()) > remainingDirChanges);
-		/*System.out.println("Size difference: " + (sizeBefore - viableBlocks.size())
+		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
 				+ ", for dir change remaining: " + remainingDirChanges);*/
-		//viableBlocks.forEach(e -> System.out.println(StringUtils.join(e, ',')));
+		//viableBlocks.forEach(e -> LG.d(StringUtils.join(e, ',')));
 		if (viableBlocks.size() == 0) {
-			System.out.println("Viable blocks size is 0, getting random block!");
+			LG.d("Viable blocks size is 0, getting random block!");
 			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
 					melodyBlockGenerator, 4);
 			return Pair.of(blockOfList(block), block);
@@ -252,7 +252,7 @@ public class MelodyUtils {
 				counter++;
 			}
 		}
-		//System.out.println("Interblock change: " + counter);
+		//LG.d("Interblock change: " + counter);
 		return counter;
 	}
 
@@ -276,7 +276,7 @@ public class MelodyUtils {
 				biggestOutsider = diff;
 			}
 		}
-		//System.out.println("Variance: " + biggestOutsider);
+		//LG.d("Variance: " + biggestOutsider);
 		return biggestOutsider;
 	}
 
@@ -287,7 +287,7 @@ public class MelodyUtils {
 
 		// how many notes need to be corrected | change = 5 -> sum of block change sequence must be -5
 		int change = chord1 - chord2;
-		//System.out.println("Change: " + change);
+		//LG.d("Change: " + change);
 		List<Integer> reducableIndices = new ArrayList<>();
 
 		for (int i = 0; i < numBlocks; i++) {
@@ -297,8 +297,8 @@ public class MelodyUtils {
 			reducableIndices.add(i);
 
 		}
-		//System.out.println("Initial: " + StringUtils.join(changeList, ","));
-		//System.out.println("reducableIndices i's: " + StringUtils.join(reducableIndices, ", "));
+		//LG.d("Initial: " + StringUtils.join(changeList, ","));
+		//LG.d("reducableIndices i's: " + StringUtils.join(reducableIndices, ", "));
 		if (change > 0) {
 			reducableIndices.removeIf(e -> changeList.get(e) == -1 * maxBlockChange);
 		} else if (change < 0) {
@@ -320,13 +320,13 @@ public class MelodyUtils {
 		}
 		rand.setSeed(randSeed);
 
-		//System.out.println("Decr: " + StringUtils.join(changeList, ","));
+		//LG.d("Decr: " + StringUtils.join(changeList, ","));
 		//Collections.shuffle(changeList, rand);
 
 		smartShuffleMaxDirChange(changeList, rand, maxDirChanges);
 		int remainingDirChange = calculateDirectionChanges(changeList);
 
-		//System.out.println("Shuffled: " + StringUtils.join(changeList, ","));
+		//LG.d("Shuffled: " + StringUtils.join(changeList, ","));
 		return Pair.of(changeList, remainingDirChange);
 	}
 

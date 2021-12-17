@@ -14,6 +14,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
@@ -67,7 +68,7 @@ public class DrumLoopPopup {
 		frame.pack();
 		frame.setVisible(true);
 
-		System.out.println("Opened Drum Loop popup!");
+		LG.d("Opened Drum Loop popup!");
 	}
 
 	public void initPanels() {
@@ -120,7 +121,7 @@ public class DrumLoopPopup {
 
 						}
 					} catch (Exception e) {
-						System.out.println("Exception in SEQUENCE SLIDER:");
+						LG.d("Exception in SEQUENCE SLIDER:");
 						e.printStackTrace();
 						try {
 							sleep(200);

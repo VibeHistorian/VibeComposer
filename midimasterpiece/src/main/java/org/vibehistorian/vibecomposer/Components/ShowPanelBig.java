@@ -57,6 +57,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -224,13 +225,13 @@ public class ShowPanelBig extends JPanel {
 					SwingUtilities.convertPointFromScreen(xy, sa);
 					double usableStart = beatWidth;
 					double usableEnd = (maxEndTime * beatWidth);
-					/*System.out.println("XY: " + xy.toString() + ", start: " + usableStart
+					/*LG.d("XY: " + xy.toString() + ", start: " + usableStart
 							+ ", end: " + usableEnd);*/
 					if (xy.getX() > usableEnd || xy.getX() < usableStart) {
 						return;
 					}
 					double percentage = (xy.getX() - usableStart) / (usableEnd - usableStart);
-					System.out.println("Percentage in MIDI: " + percentage);
+					LG.d("Percentage in MIDI: " + percentage);
 					boolean sequenceRunning = VibeComposerGUI.sequencer.isRunning();
 					if (sequenceRunning) {
 						VibeComposerGUI.sequencer.stop();
@@ -240,7 +241,7 @@ public class ShowPanelBig extends JPanel {
 					int valueToSet = VibeComposerGUI.sliderMeasureStartTimes.get(0)
 							+ (int) (percentage * (lastUsableSliderTime
 									- VibeComposerGUI.sliderMeasureStartTimes.get(0)));
-					//System.out.println("Value to set: " + valueToSet);
+					//LG.d("Value to set: " + valueToSet);
 					VibeComposerGUI.setSliderEnd(valueToSet);
 					VibeComposerGUI.savePauseInfo();
 					if (sequenceRunning) {
@@ -388,7 +389,7 @@ public class ShowPanelBig extends JPanel {
 		if (beatWidth > 256.0)
 			beatWidth = 256.0;
 		update();
-		//System.out.println();
+		//LG.d();
 		//areaScrollPane.getVerticalScrollBar().setValue(50);
 		repaint();
 	}

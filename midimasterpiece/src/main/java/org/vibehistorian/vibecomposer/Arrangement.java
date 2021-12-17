@@ -150,7 +150,7 @@ public class Arrangement {
 					&& !s.equals(SectionType.CLIMAX.toString())) {
 				continue;
 			}
-			//System.out.println("DeepCopy for " + s);
+			//LG.d("DeepCopy for " + s);
 			Section sec = defaultSections.get(s).deepCopy();
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
 				sections.add(sec);

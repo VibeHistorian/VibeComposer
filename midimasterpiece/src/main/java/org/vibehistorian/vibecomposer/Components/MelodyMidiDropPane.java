@@ -32,9 +32,10 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import jm.music.data.Part;
@@ -136,11 +137,11 @@ public class MelodyMidiDropPane extends JPanel {
 					if (file.getName().endsWith("mid") || file.getName().endsWith("midi")) {
 						message.setText(file.getName());
 						Score scr = Read.midiOrJmWithNoMessaging(file);
-						System.out.println("Score parts: " + scr.getPartList().size());
+						LG.d("Score parts: " + scr.getPartList().size());
 						Part part = new Part();
 						for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
 							Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
-							System.out.println(phr.toString());
+							LG.d(phr.toString());
 							phr.setAppend(false);
 							//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
 							JMusicUtilsCustom.addRestsToRhythmValues(phr);
@@ -155,12 +156,12 @@ public class MelodyMidiDropPane extends JPanel {
 
 						if (detectionResults == null) {
 							message.setText("Unknown key, skipped!");
-							System.out.println("Melody uses unknown key, skipped!");
+							LG.d("Melody uses unknown key, skipped!");
 							return;
 						}
 
-						//System.out.println(userMelody.toString());
-						System.out.println("Tempo: " + scr.getTempo());
+						//LG.d(userMelody.toString());
+						LG.d("Tempo: " + scr.getTempo());
 
 						MelodyMidiDropPane.userMelodyCandidate = userMelodyCandidate;
 						VibeComposerGUI.userMelodyScaleModeSelect.removeAllItems();

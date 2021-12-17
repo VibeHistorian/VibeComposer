@@ -10,6 +10,7 @@ import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Transmitter;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class MidiHandler {
@@ -22,7 +23,7 @@ public class MidiHandler {
 				device = MidiSystem.getMidiDevice(infos[i]);
 				//does the device have any transmitters?
 				//if it does, add it to the device list
-				System.out.println(infos[i]);
+				LG.d(infos[i].toString());
 
 				//get all transmitters
 				List<Transmitter> transmitters = device.getTransmitters();
@@ -42,11 +43,11 @@ public class MidiHandler {
 				device.open();
 				//if code gets this far without throwing an exception
 				//print a success message
-				System.out.println(device.getDeviceInfo() + " Was Opened");
+				LG.d(device.getDeviceInfo() + " Was Opened");
 
 
 			} catch (MidiUnavailableException e) {
-				System.out.println(device.getDeviceInfo() + " CAN'T be opened!");
+				LG.d(device.getDeviceInfo() + " CAN'T be opened!");
 			}
 		}
 
@@ -73,7 +74,7 @@ public class MidiHandler {
 				}
 
 			} else {
-				System.out.println("Bad msg");
+				LG.d("Bad msg");
 			}
 		}
 

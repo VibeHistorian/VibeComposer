@@ -47,7 +47,7 @@ public enum StrumType {
 		List<Double> noteOffsets = new ArrayList<>();
 		List<Integer> noteIndexes = IntStream.iterate(0, e -> e + 1).limit(notes.size())
 				.mapToObj(e -> e).collect(Collectors.toList());
-		//System.out.println("Processing: " + type.toString());
+		//LG.d("Processing: " + type.toString());
 		boolean sort = false;
 		boolean reverse = false;
 		switch (type) {

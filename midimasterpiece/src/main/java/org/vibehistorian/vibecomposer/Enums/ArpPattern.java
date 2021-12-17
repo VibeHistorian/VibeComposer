@@ -105,7 +105,7 @@ public enum ArpPattern {
 		while (result.size() < hits) {
 			result.addAll(Arrays.stream(patternArray).boxed().collect(Collectors.toList()));
 		}
-		//System.out.println(StringUtils.join(result, ","));
+		//LG.d(StringUtils.join(result, ","));
 		Collections.rotate(result, -1 * rotate);
 		result = result.subList(0, hits);
 		List<Integer> repResult = new ArrayList<>();

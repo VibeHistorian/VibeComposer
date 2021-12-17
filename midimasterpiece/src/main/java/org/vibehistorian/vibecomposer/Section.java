@@ -285,7 +285,7 @@ public class Section {
 	}
 
 	public Section deepCopy() {
-		System.out.println("deep copy called");
+		LG.d("deep copy called");
 		initPartMapIfNull();
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);

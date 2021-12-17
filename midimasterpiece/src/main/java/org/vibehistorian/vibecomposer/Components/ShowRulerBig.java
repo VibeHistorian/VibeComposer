@@ -77,7 +77,7 @@ public class ShowRulerBig extends JComponent {
 
 	@Override
 	public void paintComponent(Graphics gDef) {
-		//System.out.println("Painting ruler!");
+		//LG.d("Painting ruler!");
 		Graphics2D g = (Graphics2D) gDef;
 		double beatWidth = sp.beatWidth;
 		g.setColor(new Color(180, 180, 180));
@@ -149,7 +149,7 @@ public class ShowRulerBig extends JComponent {
 
 	// get the position of inital mouse click
 	public void mousePressed(MouseEvent e) {
-		//System.out.println("Pressed");
+		//LG.d("Pressed");
 		this.setCursor(new Cursor(10));
 		startX = e.getX();
 	}
@@ -174,14 +174,14 @@ public class ShowRulerBig extends JComponent {
 	}
 
 	public void mouseDragged(MouseEvent e) {
-		//System.out.println("Dragged");
+		//LG.d("Dragged");
 		double beatWidth = sp.beatWidth;
 		beatWidth += (double) ((double) e.getX() - (double) startX) / 5.0;
 		if (beatWidth < 1.0)
 			beatWidth = 1.0;
 		if (beatWidth > 256.0)
 			beatWidth = 256.0;
-		//System.out.println("beatWidth = "+beatWidth);
+		//LG.d("beatWidth = "+beatWidth);
 		sp.beatWidth = beatWidth;
 		startX = e.getX();
 		//sp.update();

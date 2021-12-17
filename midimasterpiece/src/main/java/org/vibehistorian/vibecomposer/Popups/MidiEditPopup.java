@@ -13,6 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
@@ -113,7 +114,7 @@ public class MidiEditPopup extends CloseablePopup {
 				try {
 					randValues = butt.getRandGenerator().apply(new Object());
 				} catch (Exception exc) {
-					System.out.println("Random generator is not ready!");
+					LG.d("Random generator is not ready!");
 				}
 				if (randValues != null && !randValues.isEmpty()) {
 					mvea.getValues().clear();
@@ -156,7 +157,7 @@ public class MidiEditPopup extends CloseablePopup {
 					nums.forEach(n -> mvea.getValues().add(new PhraseNote(n)));
 					repaintMvea();
 				} catch (Exception exc) {
-					System.out.println("Incorrect text format, cannot convert to list of numbers.");
+					LG.d("Incorrect text format, cannot convert to list of numbers.");
 				}
 			}
 		}));

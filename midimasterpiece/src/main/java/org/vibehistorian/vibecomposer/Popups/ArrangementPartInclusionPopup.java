@@ -24,6 +24,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
@@ -128,7 +129,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		frame.add(scroll);
 		frame.pack();
 		frame.setVisible(true);
-		System.out.println("Opened arrangement part inclusion page!");
+		LG.d("Opened arrangement part inclusion page!");
 	}
 
 	private void addPartInclusionButtons(Arrangement arr) {

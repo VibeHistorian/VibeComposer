@@ -32,10 +32,11 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -114,7 +115,7 @@ public class VariationPopup {
 					int row = table.rowAtPoint(evt.getPoint());
 					int col = table.columnAtPoint(evt.getPoint());
 
-					System.out.println("Clicked VariationPopup table cell! " + row + ", " + col);
+					LG.d("Clicked VariationPopup table cell! " + row + ", " + col);
 					if (col >= 1) {
 						if (SwingUtilities.isMiddleMouseButton(evt)) {
 							Boolean val = (Boolean) tables[fI].getModel().getValueAt(row, col);
@@ -222,7 +223,7 @@ public class VariationPopup {
 		frame.pack();
 		frame.setVisible(true);
 
-		System.out.println("Opened arrangement variation page!");
+		LG.d("Opened arrangement variation page!");
 	}
 
 	private void addTypesMeasures(Section sec) {
