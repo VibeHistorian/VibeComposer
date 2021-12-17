@@ -21,6 +21,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> {
 	private static final long serialVersionUID = 8933379402297939538L;
 
 	private boolean isCustom = false;
+	private int partOrder = -1;
 
 	public PhraseNotes() {
 		super();
@@ -31,7 +32,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> {
 	}
 
 	public PhraseNotes(List<Note> notes) {
-		super();
+		this();
 		addAll(notes.stream().map(e -> new PhraseNote(e)).collect(Collectors.toList()));
 	}
 
@@ -43,6 +44,13 @@ public class PhraseNotes extends ArrayList<PhraseNote> {
 		Phrase phr = new Phrase();
 		makeNotes().forEach(e -> phr.addNote(e));
 		return phr;
+	}
+
+	public PhraseNotes copy() {
+		PhraseNotes pn = new PhraseNotes(makeNotes());
+		pn.setCustom(isCustom);
+		pn.setPartOrder(partOrder);
+		return pn;
 	}
 
 	public String toStringPitches() {
@@ -61,5 +69,13 @@ public class PhraseNotes extends ArrayList<PhraseNote> {
 
 	public void setCustom(boolean isCustom) {
 		this.isCustom = isCustom;
+	}
+
+	public int getPartOrder() {
+		return partOrder;
+	}
+
+	public void setPartOrder(int partOrder) {
+		this.partOrder = partOrder;
 	}
 }

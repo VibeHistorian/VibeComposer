@@ -1001,8 +1001,23 @@ public class VibeComposerGUI extends JFrame
 		mainButtonsPanel.add(presetLoadBox);
 		mainButtonsPanel.add(makeButton("Load Preset", e -> loadPreset()));
 		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
+		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
 
 		everythingPanel.add(mainButtonsPanel, constraints);
+	}
+
+	private void undefaultPreset() {
+		File loadedFile = new File(PRESET_FOLDER + "/default.xml");
+		if (loadedFile.exists()) {
+			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+
+			f.applyPattern("yyMMdd-HH-mm-ss");
+			Date date = new Date();
+			String fdate = f.format(date);
+
+			File renamedFile = new File(PRESET_FOLDER + "/default-" + fdate + ".xml");
+			loadedFile.renameTo(renamedFile);
+		}
 	}
 
 	private void loadPreset() {

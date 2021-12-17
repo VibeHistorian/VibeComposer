@@ -59,6 +59,7 @@ import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -3062,7 +3063,7 @@ public class MidiGenerator implements JMC {
 				.filter(e -> !e.isMuted()).findFirst();
 
 		for (Section sec : arr.getSections()) {
-			sec.addPhraseNotesList(sec.getMelodies(), 0);
+			sec.storePhraseNotesList(new PartPhraseNotes(sec.getMelodies(), 0));
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
@@ -3077,19 +3078,19 @@ public class MidiGenerator implements JMC {
 
 				}
 			}
-			sec.addPhraseNotesList(sec.getBasses(), 1);
+			sec.storePhraseNotesList(new PartPhraseNotes(sec.getBasses(), 1));
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
 				bassParts.get(i).addPhrase(bp);
 			}
-			sec.addPhraseNotesList(sec.getChords(), 2);
+			sec.storePhraseNotesList(new PartPhraseNotes(sec.getChords(), 2));
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
 				Phrase cp = sec.getChords().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
 				chordParts.get(i).addPhrase(cp);
 			}
-			sec.addPhraseNotesList(sec.getArps(), 3);
+			sec.storePhraseNotesList(new PartPhraseNotes(sec.getArps(), 3));
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
 				Phrase cp = sec.getArps().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
@@ -3098,7 +3099,7 @@ public class MidiGenerator implements JMC {
 
 			Optional<DrumPart> firstPresentDrumPart = gc.getDrumParts().stream()
 					.filter(e -> !e.isMuted()).findFirst();
-			sec.addPhraseNotesList(sec.getDrums(), 4);
+			sec.storePhraseNotesList(new PartPhraseNotes(sec.getDrums(), 4));
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
@@ -3930,12 +3931,13 @@ public class MidiGenerator implements JMC {
 			LG.i("Overwritten!");
 		} else {
 			melodyPhrase.addNoteList(noteList, true);
-		}
-		swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.QUARTER_NOTE);
+			swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.QUARTER_NOTE);
 
-		applyNoteLengthMultiplier(melodyPhrase.getNoteList(), mp.getNoteLengthMultiplier());
-		processSectionTransition(sec, melodyPhrase.getNoteList(),
-				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
+			applyNoteLengthMultiplier(melodyPhrase.getNoteList(), mp.getNoteLengthMultiplier());
+			processSectionTransition(sec, melodyPhrase.getNoteList(),
+					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
+		}
+
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {

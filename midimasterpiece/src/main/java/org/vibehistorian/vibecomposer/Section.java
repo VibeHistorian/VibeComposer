@@ -950,24 +950,37 @@ public class Section {
 	}
 
 	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
-		if (partPhraseNotes == null || partPhraseNotes.size() != 5) {
+		if (partPhraseNotes == null) {
 			return;
 		}
-		for (int i = 0; i < 5; i++) {
-			PartPhraseNotes phrn = partPhraseNotes.get(i);
-			addPhraseNotesList(phrn.stream().map(e -> e.makePhrase()).collect(Collectors.toList()),
-					i);
+		for (PartPhraseNotes phrn : partPhraseNotes) {
+			PartPhraseNotes phrnCopy = new PartPhraseNotes(
+					phrn.stream().map(e -> e.copy()).collect(Collectors.toList()), null);
+			phrnCopy.setPart(phrn.getPart());
+			storePhraseNotesList(phrnCopy);
 		}
 	}
 
-	public void addPhraseNotesList(List<Phrase> phrases, int partNum) {
-		PartPhraseNotes phrNotesList = new PartPhraseNotes();
-
-		for (Phrase phr : phrases) {
-			phrNotesList.add(new PhraseNotes(phr));
+	public void storePhraseNotesList(PartPhraseNotes phrNotesList) {
+		if (phrNotesList == null) {
+			phrNotesList = new PartPhraseNotes();
 		}
-		if (partNum < partPhraseNotes.size()) {
-			partPhraseNotes.set(partNum, phrNotesList);
+
+		Set<Integer> customPhraseNotes = null;
+
+		if (phrNotesList.getPart() < partPhraseNotes.size()) {
+			customPhraseNotes = partPhraseNotes.get(phrNotesList.getPart()).stream()
+					.filter(e -> e.isCustom()).map(e -> e.getPartOrder())
+					.collect(Collectors.toSet());
+			for (PhraseNotes pn : phrNotesList) {
+				if (customPhraseNotes.contains(pn.getPartOrder())) {
+					pn.setCustom(true);
+				}
+			}
+		}
+
+		if (phrNotesList.getPart() < partPhraseNotes.size()) {
+			partPhraseNotes.set(phrNotesList.getPart(), phrNotesList);
 		} else {
 			partPhraseNotes.add(phrNotesList);
 		}
