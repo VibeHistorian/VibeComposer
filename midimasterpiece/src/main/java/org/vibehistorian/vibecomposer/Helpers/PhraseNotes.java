@@ -4,26 +4,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.annotation.XmlList;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
+
+import org.apache.commons.lang3.StringUtils;
 
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 
-@XmlRootElement(name = "PhraseNotes")
+@XmlRootElement(name = "phraseNotes")
 @XmlType(propOrder = {})
-public class PhraseNotes {
-	private List<Integer> pitches;
-	private List<Integer> dynamics;
-	private List<Double> rv;
-	private List<Double> durations;
+@XmlSeeAlso({ PhraseNote.class })
+public class PhraseNotes extends ArrayList<PhraseNote> {
+	private static final long serialVersionUID = 8933379402297939538L;
+
+	private boolean isCustom = false;
 
 	public PhraseNotes() {
-		pitches = new ArrayList<>();
-		dynamics = new ArrayList<>();
-		rv = new ArrayList<>();
-		durations = new ArrayList<>();
+		super();
 	}
 
 	public PhraseNotes(Phrase phr) {
@@ -31,75 +31,35 @@ public class PhraseNotes {
 	}
 
 	public PhraseNotes(List<Note> notes) {
-		if (notes != null) {
-			pitches = notes.stream().map(e -> e.getPitch()).mapToInt(e -> e).boxed()
-					.collect(Collectors.toList());
-			dynamics = notes.stream().map(e -> e.getDynamic()).mapToInt(e -> e).boxed()
-					.collect(Collectors.toList());
-			rv = notes.stream().map(e -> e.getRhythmValue()).mapToDouble(e -> e).boxed()
-					.collect(Collectors.toList());
-			durations = notes.stream().map(e -> e.getDuration()).mapToDouble(e -> e).boxed()
-					.collect(Collectors.toList());
-		}
+		super();
+		addAll(notes.stream().map(e -> new PhraseNote(e)).collect(Collectors.toList()));
 	}
 
 	public List<Note> makeNotes() {
-		if (pitches != null) {
-			List<Note> notes = new ArrayList<>();
-			for (int i = 0; i < pitches.size(); i++) {
-				Note n = new Note(pitches.get(i), rv.get(i), dynamics.get(i));
-				n.setDuration(durations.get(i));
-				notes.add(n);
-			}
-			return notes;
-		}
-		return null;
+		return stream().map(e -> e.toNote()).collect(Collectors.toList());
 	}
 
 	public Phrase makePhrase() {
-		if (pitches != null) {
-			Phrase phr = new Phrase();
-			makeNotes().forEach(e -> phr.addNote(e));
-			return phr;
-		}
-		return null;
+		Phrase phr = new Phrase();
+		makeNotes().forEach(e -> phr.addNote(e));
+		return phr;
 	}
 
-	@XmlList
-	public List<Integer> getPitches() {
-		return pitches;
+	public String toStringPitches() {
+		return StringUtils.join(stream().map(e -> e.getPitch() >= 0 ? e.getPitch() : -1)
+				.collect(Collectors.toList()), ",");
 	}
 
-	public void setPitches(List<Integer> pitches) {
-		this.pitches = pitches;
+	@XmlElement(name = "phraseNote")
+	public List<PhraseNote> getPhraseNotes() {
+		return isCustom ? this : null;
 	}
 
-	@XmlList
-	public List<Integer> getDynamics() {
-		return dynamics;
+	public boolean isCustom() {
+		return isCustom;
 	}
 
-	public void setDynamics(List<Integer> dynamics) {
-		this.dynamics = dynamics;
+	public void setCustom(boolean isCustom) {
+		this.isCustom = isCustom;
 	}
-
-	@XmlList
-	public List<Double> getRv() {
-		return rv;
-	}
-
-	public void setRv(List<Double> rv) {
-		this.rv = rv;
-	}
-
-	@XmlList
-	public List<Double> getDurations() {
-		return durations;
-	}
-
-	public void setDurations(List<Double> durations) {
-		this.durations = durations;
-	}
-
-
 }

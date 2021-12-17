@@ -666,7 +666,7 @@ public abstract class InstPanel extends JPanel {
 						&& totalAvailable > 0) {
 					getComboPanel().checkPattern(j, 0);
 					totalAvailable--;
-					//LOGGER.debug("Pause chance applied");
+					//LG.d("Pause chance applied");
 				}
 			}
 			setPauseChance(0);

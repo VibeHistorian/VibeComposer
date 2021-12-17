@@ -15,6 +15,8 @@ import javax.swing.JTextField;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public class MidiEditPopup extends CloseablePopup {
@@ -24,8 +26,20 @@ public class MidiEditPopup extends CloseablePopup {
 	JTextField text = null;
 
 
-	public MidiEditPopup(int min, int max, List<Integer> values) {
+	public MidiEditPopup(PhraseNotes values) {
 		super("Edit MIDI Phrase (Graphical)", 14);
+		values.setCustom(true);
+
+		int vmin = -10;
+		int vmax = 10;
+		if (!values.isEmpty()) {
+			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.min().getAsInt();
+			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.max().getAsInt();
+		}
+		int min = vmin;
+		int max = vmax;
 		mvea = new MidiEditArea(min, max, values);
 		mvea.setPop(this);
 		mvea.setPreferredSize(new Dimension(500, 500));
@@ -41,7 +55,7 @@ public class MidiEditPopup extends CloseablePopup {
 			if (mvea.getValues().size() > 31) {
 				return;
 			}
-			mvea.getValues().add(0);
+			mvea.getValues().add(new PhraseNote(60));
 			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
@@ -55,7 +69,7 @@ public class MidiEditPopup extends CloseablePopup {
 			int size = mvea.getValues().size();
 			mvea.getValues().clear();
 			for (int i = 0; i < size; i++) {
-				mvea.getValues().add(0);
+				mvea.getValues().add(new PhraseNote(60));
 			}
 			repaintMvea();
 		}));
@@ -70,11 +84,11 @@ public class MidiEditPopup extends CloseablePopup {
 			if (mvea.getValues().size() > 16) {
 				return;
 			}
-			List<Integer> ddValues = new ArrayList<>();
-			List<Integer> oldValues = mvea.getValues();
+			PhraseNotes ddValues = new PhraseNotes();
+			PhraseNotes oldValues = mvea.getValues();
 			oldValues.forEach(f -> {
 				ddValues.add(f);
-				ddValues.add(f);
+				ddValues.add(new PhraseNote(f.toNote()));
 			});
 			oldValues.clear();
 			oldValues.addAll(ddValues);
@@ -112,7 +126,7 @@ public class MidiEditPopup extends CloseablePopup {
 				Random rnd = new Random();
 				mvea.getValues().clear();
 				for (int i = 0; i < size; i++) {
-					mvea.getValues().add(rnd.nextInt(max - min + 1) + min);
+					mvea.getValues().add(new PhraseNote(rnd.nextInt(max - min + 1) + min));
 				}
 			}
 
@@ -128,7 +142,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		JPanel textPanel = new JPanel();
 		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
-		text = new JTextField(StringUtils.join(values, ","), 25);
+		text = new JTextField(values.toStringPitches());
 		textPanel.add(text);
 		textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
 			if (StringUtils.isNotEmpty(text.getText())) {
@@ -139,7 +153,7 @@ public class MidiEditPopup extends CloseablePopup {
 						nums.add(Integer.valueOf(s));
 					}
 					mvea.getValues().clear();
-					mvea.getValues().addAll(nums);
+					nums.forEach(n -> mvea.getValues().add(new PhraseNote(n)));
 					repaintMvea();
 				} catch (Exception exc) {
 					System.out.println("Incorrect text format, cannot convert to list of numbers.");
@@ -157,7 +171,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	void repaintMvea() {
 		mvea.repaint();
-		text.setText(StringUtils.join(mvea.getValues(), ","));
+		text.setText(mvea.getValues().toStringPitches());
 	}
 
 	public void linkParent(InstPanel parent) {

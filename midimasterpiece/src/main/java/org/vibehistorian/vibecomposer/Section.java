@@ -37,8 +37,6 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -59,8 +57,6 @@ public class Section {
 		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP, CHORUS3,
 		CLIMAX, OUTRO;
 	}
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(Section.class);
 
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" },
@@ -141,7 +137,7 @@ public class Section {
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
 	// map 
-	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>(5);
+	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>();
 
 	private List<Integer> riskyVariations = null;
 	public static final List<Integer> EMPTY_RISKY_VARS = IntStream.iterate(0, f -> f)
@@ -289,6 +285,7 @@ public class Section {
 	}
 
 	public Section deepCopy() {
+		System.out.println("deep copy called");
 		initPartMapIfNull();
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);
@@ -473,23 +470,23 @@ public class Section {
 			boolean forceAdd) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
-		//LOGGER.debug("Chance: " + chance);
+		//LG.d("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
 		panels.removeIf(e -> e.getMuteInst());
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
 				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
-				//LOGGER.debug("Abs order: " + absOrder);
-				//LOGGER.debug("Offset+2: " + (getTypeMelodyOffset() + 2));
+				//LG.d("Abs order: " + absOrder);
+				//LG.d("Offset+2: " + (getTypeMelodyOffset() + 2));
 				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
 						.equals(inclusionMap.get(part)[absOrder][getTypeMelodyOffset() + 2])) {
-					//LOGGER.debug("TRUE");
+					//LG.d("TRUE");
 					return true;
 				}
 				return false;
 			});
 		}
-		//LOGGER.debug("Panels size: " + panels.size());
+		//LG.d("Panels size: " + panels.size());
 		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
@@ -627,22 +624,22 @@ public class Section {
 			initPartMap();
 			return;
 		}
-		//LOGGER.debug("INIT PART MAP FROM OLD DATA!");
+		//LG.d("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
 			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
-			//LOGGER.debug(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
+			//LG.d(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				Integer oldIndex = oldPresence.get(rowOrders.get(j));
 				if (oldIndex == null) {
-					/*LOGGER.debug(
+					/*LG.d(
 							"Failed searching in j/order: " + j + ", value: " + rowOrders.get(j));*/
 				} else {
-					//LOGGER.debug("Found index for j: " + j + ", index: " + oldIndex);
+					//LG.d("Found index for j: " + j + ", index: " + oldIndex);
 				}
 				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
 					if (oldIndex == null) {
@@ -660,7 +657,7 @@ public class Section {
 
 	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
 		if (oldData.length <= j || oldData[j].length <= k) {
-			//LOGGER.debug("False for j: " + j + ", k: " + k);
+			//LG.d("False for j: " + j + ", k: " + k);
 			return Boolean.FALSE;
 		} else {
 			return (Boolean) oldData[j][k];
@@ -685,7 +682,7 @@ public class Section {
 
 	public void initPartMapIfNull() {
 		if (partPresenceVariationMap.get(0) == null) {
-			//LOGGER.debug("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
+			//LG.d("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 			initPartMap();
 		}
 	}
@@ -953,7 +950,14 @@ public class Section {
 	}
 
 	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
-		this.partPhraseNotes = partPhraseNotes;
+		if (partPhraseNotes == null || partPhraseNotes.size() != 5) {
+			return;
+		}
+		for (int i = 0; i < 5; i++) {
+			PartPhraseNotes phrn = partPhraseNotes.get(i);
+			addPhraseNotesList(phrn.stream().map(e -> e.makePhrase()).collect(Collectors.toList()),
+					i);
+		}
 	}
 
 	public void addPhraseNotesList(List<Phrase> phrases, int partNum) {
@@ -962,10 +966,10 @@ public class Section {
 		for (Phrase phr : phrases) {
 			phrNotesList.add(new PhraseNotes(phr));
 		}
-		if (partNum < getPartPhraseNotes().size()) {
-			getPartPhraseNotes().set(partNum, phrNotesList);
+		if (partNum < partPhraseNotes.size()) {
+			partPhraseNotes.set(partNum, phrNotesList);
 		} else {
-			getPartPhraseNotes().add(phrNotesList);
+			partPhraseNotes.add(phrNotesList);
 		}
 	}
 }

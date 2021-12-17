@@ -13,9 +13,9 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 
 public class MidiEditArea extends JComponent {
@@ -23,7 +23,7 @@ public class MidiEditArea extends JComponent {
 	private static final long serialVersionUID = -2972572935738976623L;
 	int min = -10;
 	int max = 10;
-	List<Integer> values = null;
+	PhraseNotes values = null;
 	Map<Integer, List<Integer>> highlightedGrid = null;
 
 	int colStart = 2;
@@ -38,7 +38,7 @@ public class MidiEditArea extends JComponent {
 
 	MidiEditPopup pop = null;
 
-	public MidiEditArea(int min, int max, List<Integer> values) {
+	public MidiEditArea(int min, int max, PhraseNotes values) {
 		super();
 		this.min = min;
 		this.max = max;
@@ -91,10 +91,7 @@ public class MidiEditArea extends JComponent {
 	}
 
 	void setVal(int pos, int val) {
-		values.set(pos, val);
-		if (pop != null) {
-			pop.getText().setText(StringUtils.join(values, ","));
-		}
+		values.get(pos).setPitch(val);
 	}
 
 	@Override
@@ -184,26 +181,33 @@ public class MidiEditArea extends JComponent {
 
 			int ovalWidth = w / 40;
 			for (int i = 0; i < numValues; i++) {
+				int pitch = values.get(i).getPitch();
+				if (pitch < 0) {
+					continue;
+				}
 				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
-				int drawY = bottomLeft.y - (int) (rowHeight * (values.get(i) + 1 - min));
+				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 
 				if (i < numValues - 1) {
-					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
-					g.drawLine(drawX, drawY, drawX + (int) colWidth,
-							bottomLeft.y - (int) (rowHeight * (values.get(i + 1) + 1 - min)));
+					int nextPitch = values.get(i + 1).getPitch();
+					if (nextPitch >= 0) {
+						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
+						g.drawLine(drawX, drawY, drawX + (int) colWidth, bottomLeft.y
+								- (int) (rowHeight * (values.get(i + 1).getPitch() + 1 - min)));
+					}
 				}
 
 
 				g.setColor(VibeComposerGUI.uiColor());
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
-				g.drawString("" + values.get(i), drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+				g.drawString("" + pitch, drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 			}
 		}
 	}
 
 
-	public List<Integer> getValues() {
+	public PhraseNotes getValues() {
 		return values;
 	}
 

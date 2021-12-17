@@ -133,8 +133,6 @@ import javax.xml.bind.Marshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
@@ -204,8 +202,6 @@ public class VibeComposerGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener {
 
 	private static final long serialVersionUID = -677536546851756969L;
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(VibeComposerGUI.class);
 
 	private static final String MIDIS_FOLDER = "midis";
 	private static final String MIDI_HISTORY_FOLDER = MIDIS_FOLDER + "/midi_history";
@@ -717,7 +713,7 @@ public class VibeComposerGUI extends JFrame
 		//createHorizontalSeparator(15, this);
 
 		initSoloMuters(20, GridBagConstraints.WEST);
-		LOGGER.info("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// ---- INSTRUMENT SETTINGS ----
 		{
 			// melody
@@ -742,7 +738,7 @@ public class VibeComposerGUI extends JFrame
 			//createHorizontalSeparator(240, this);
 
 		}
-		LOGGER.info("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		boolean randomizeInstsTemp = randomizeInstOnComposeOrGen.isSelected();
 		randomizeInstOnComposeOrGen.setSelected(true);
 		{
@@ -759,7 +755,7 @@ public class VibeComposerGUI extends JFrame
 			initChords(311, GridBagConstraints.WEST);
 			initArps(312, GridBagConstraints.WEST);
 			initDrums(313, GridBagConstraints.WEST);
-			LOGGER.info("Insts: " + (System.currentTimeMillis() - sysTime) + " ms!");
+			LG.i("Insts: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
 			constraints.gridy = 320;
 
@@ -781,7 +777,7 @@ public class VibeComposerGUI extends JFrame
 						tmr.start();*/
 
 
-						LOGGER.info(("RMB pressed in instrument tab pane: " + indx));
+						LG.i(("RMB pressed in instrument tab pane: " + indx));
 						switch (indx) {
 						case 0:
 							addMelody.setSelected(!addMelody.isSelected());
@@ -820,9 +816,9 @@ public class VibeComposerGUI extends JFrame
 
 		}
 		randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
-		LOGGER.info("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		initScoreSettings(330, GridBagConstraints.CENTER);
-		LOGGER.info("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		//createHorizontalSeparator(327, this);
 
 		// ---- OTHER SETTINGS ----
@@ -842,8 +838,7 @@ public class VibeComposerGUI extends JFrame
 			initCustomChords(380, GridBagConstraints.CENTER);
 
 		}
-		LOGGER.info(
-				"Butts, params, cp, chords: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Butts, params, cp, chords: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
 		//createHorizontalSeparator(400, this);
 
@@ -854,7 +849,7 @@ public class VibeComposerGUI extends JFrame
 		// ---- PLAY PANEL ----
 		initPlayPanel(420, GridBagConstraints.CENTER);
 		initSliderPanel(440, GridBagConstraints.CENTER);
-		LOGGER.info("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
 		constraints.anchor = GridBagConstraints.CENTER;
@@ -874,15 +869,15 @@ public class VibeComposerGUI extends JFrame
 
 		everythingPane.setViewportView(everythingPanel);
 		add(everythingPane, constraints);
-		LOGGER.info("Add everything: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Add everything: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		setFullMode(isFullMode);
-		LOGGER.info("Full: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Full: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		instrumentTabPane.setSelectedIndex(7);
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
 		switchDarkMode();
 		pack();
-		LOGGER.info("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
 		if (presetLoadBox.getVal().equalsIgnoreCase("default")) {
 			loadPreset();
@@ -912,7 +907,7 @@ public class VibeComposerGUI extends JFrame
 					}
 				});*/
 
-		LOGGER.info("VibeComposer started in: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime) + " ms!");
 	}
 
 
@@ -1012,7 +1007,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void loadPreset() {
 		String presetName = (String) presetLoadBox.getEditor().getItem();
-		LOGGER.info("Trying to load preset: " + presetName);
+		LG.i("Trying to load preset: " + presetName);
 
 		if (OMNI.EMPTYCOMBO.equalsIgnoreCase(presetName)) {
 			return;
@@ -1050,12 +1045,12 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		LOGGER.info("Loaded preset: " + presetName);
+		LG.i("Loaded preset: " + presetName);
 	}
 
 	private void savePreset() {
 		String presetName = (String) presetLoadBox.getEditor().getItem();
-		LOGGER.info("Trying to save preset: " + presetName);
+		LG.i("Trying to save preset: " + presetName);
 		if (!StringUtils.isAlphanumeric(presetName)) {
 			return;
 		}
@@ -1773,7 +1768,7 @@ public class VibeComposerGUI extends JFrame
 		arpScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				//LOGGER.info(("Size: " + scrollPaneDimension.toString()));
+				//LG.i(("Size: " + scrollPaneDimension.toString()));
 				return scrollPaneDimension;
 			}
 		};
@@ -2280,7 +2275,7 @@ public class VibeComposerGUI extends JFrame
 				checkManual = true;
 			}
 		} else if (action.startsWith("ArrangementAdd,")) {
-			LOGGER.info(("add exact"));
+			LG.i(("add exact"));
 			Integer secIndex = Integer.valueOf(action.split(",")[1]);
 			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSectionExact(scrollableArrangementTable, secIndex);
@@ -2384,7 +2379,7 @@ public class VibeComposerGUI extends JFrame
 				List<InstPanel> addedPanels = new ArrayList<>();
 
 				if (GLOBAL.equals(selItem)) {
-					LOGGER.info(("Resetting to normal panels!"));
+					LG.i(("Resetting to normal panels!"));
 					arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 					for (int i = 0; i < 5; i++) {
 						JScrollPane pane = getInstPane(i);
@@ -2393,7 +2388,7 @@ public class VibeComposerGUI extends JFrame
 								.getComponents()) {
 							if (c instanceof InstPanel) {
 								InstPanel ip = (InstPanel) c;
-								//LOGGER.info(("Switching panel!"));
+								//LG.i(("Switching panel!"));
 								((JPanel) pane.getViewport().getView()).remove(ip);
 							}
 						}
@@ -2405,7 +2400,7 @@ public class VibeComposerGUI extends JFrame
 						addedPanels.addAll(panels);
 					}
 				} else {
-					LOGGER.info(("Switching panels!"));
+					LG.i(("Switching panels!"));
 					arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
 					int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
 					Section sec = actualArrangement.getSections().get(sectionOrder);
@@ -2413,7 +2408,7 @@ public class VibeComposerGUI extends JFrame
 						JScrollPane pane = getInstPane(i);
 						List<InstPanel> sectionPanels = new ArrayList<>();
 						if (sec.getInstPartList(i) != null) {
-							//LOGGER.info(("Creating panels from section parts! " + i));
+							//LG.i(("Creating panels from section parts! " + i));
 							List<? extends InstPart> ip = sec.getInstPartList(i);
 							for (Component c : ((JPanel) pane.getViewport().getView())
 									.getComponents()) {
@@ -2428,7 +2423,7 @@ public class VibeComposerGUI extends JFrame
 								}
 							}
 						} else {
-							//LOGGER.info(("Making copies of normal panels! " + i));
+							//LG.i(("Making copies of normal panels! " + i));
 							List<? extends InstPanel> panels = getInstList(i);
 							//Set<Integer> presence = sec.getPresence(i);
 							for (Component c : ((JPanel) pane.getViewport().getView())
@@ -2436,7 +2431,7 @@ public class VibeComposerGUI extends JFrame
 								if (c instanceof InstPanel) {
 									InstPanel ip = (InstPanel) c;
 
-									//LOGGER.info(("Switching panel!"));
+									//LG.i(("Switching panel!"));
 									int order = ip.getPanelOrder();
 									((JPanel) pane.getViewport().getView()).remove(ip);
 									/*if (!presence.contains(ip.getPanelOrder())) {
@@ -2696,7 +2691,7 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				LOGGER.debug(("MOVED HEADER"));
+				LG.d(("MOVED HEADER"));
 				arrangement.resortByIndexes(scrollableArrangementTable, false);
 				arrangementTableColumnDragging = false;
 			}
@@ -2707,14 +2702,14 @@ public class VibeComposerGUI extends JFrame
 				int row = scrollableArrangementTable.rowAtPoint(evt.getPoint());
 				int secOrder = scrollableArrangementTable.columnAtPoint(evt.getPoint());
 
-				//LOGGER.info(("Clicked! " + row + ", " + secOrder));
+				//LG.i(("Clicked! " + row + ", " + secOrder));
 				if (row == 0 && secOrder >= 0) {
 					boolean rClick = SwingUtilities.isRightMouseButton(evt);
 					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 					if (rClick) {
 						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
 					} else if (mClick) {
-						//LOGGER.info(("mClick"));
+						//LG.i(("mClick"));
 						handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
 					}
 
@@ -2769,7 +2764,7 @@ public class VibeComposerGUI extends JFrame
 				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
 
-				LOGGER.debug(("Clicked! " + row + ", " + secOrder));
+				LG.d(("Clicked! " + row + ", " + secOrder));
 				boolean rClick = SwingUtilities.isRightMouseButton(evt);
 				boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 				if (row == 0 && secOrder >= 0) {
@@ -2787,9 +2782,9 @@ public class VibeComposerGUI extends JFrame
 							scrollableArrangementActualTable);
 					Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder,
 							false);
-					/*LOGGER.debug("Mouse point: " + mousePoint.toString());
-					LOGGER.debug("Table point: " + tablePoint.toString());
-					LOGGER.debug(r.toString());*/
+					/*LG.d("Mouse point: " + mousePoint.toString());
+					LG.d("Table point: " + tablePoint.toString());
+					LG.d(r.toString());*/
 
 					mousePoint.x -= tablePoint.x;
 					mousePoint.y -= tablePoint.y;
@@ -2805,8 +2800,8 @@ public class VibeComposerGUI extends JFrame
 					int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
 					int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
 
-					LOGGER.debug("Percentage: " + orderPercentage);
-					LOGGER.debug("Selected subcell: " + (partAbsoluteOrder + 1));
+					LG.d("Percentage: " + orderPercentage);
+					LG.d("Selected subcell: " + (partAbsoluteOrder + 1));
 					boolean randomizerButtonPressed = false;
 					if ((actualSize > CollectionCellRenderer.MIN_CELLS
 							&& partAbsoluteOrder == actualSize)
@@ -2814,14 +2809,14 @@ public class VibeComposerGUI extends JFrame
 									&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
 						randomizerButtonPressed = true;
 					} else if (partAbsoluteOrder >= actualSize) {
-						LOGGER.debug("Can't interact: subcell not present in part - "
+						LG.d("Can't interact: subcell not present in part - "
 								+ (partAbsoluteOrder + 1));
 						return;
 					}
 
 
 					if (rClick || mClick) {
-						//LOGGER.debug(("Clickable! rClick: " + rClick));
+						//LG.d(("Clickable! rClick: " + rClick));
 						Section sec = actualArrangement.getSections().get(secOrder);
 						boolean hasPresence = !sec.getPresence(part).isEmpty();
 						boolean hasVariation = hasPresence && sec.hasVariation(part);
@@ -2945,8 +2940,13 @@ public class VibeComposerGUI extends JFrame
 						scrollableArrangementActualTable.repaint();
 					} else {
 						Section sec = actualArrangement.getSections().get(secOrder);
-						new MidiEditPopup(50, 80, sec.getPartPhraseNotes().get(part)
-								.get(partAbsoluteOrder).getPitches());
+						if (sec.getPartPhraseNotes() != null
+								&& part < sec.getPartPhraseNotes().size()
+								&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
+							new MidiEditPopup(
+									sec.getPartPhraseNotes().get(part).get(partAbsoluteOrder));
+						}
+
 						/*if (secOrder + 1 < arrSection.getItemCount()) {
 							arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
 							arrSection.repaint();
@@ -3020,7 +3020,7 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				LOGGER.info(("MOVED"));
+				LG.i(("MOVED"));
 				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true);
 				actualArrangementTableColumnDragging = false;
 				manualArrangement.setSelected(true);
@@ -3067,7 +3067,7 @@ public class VibeComposerGUI extends JFrame
 		if (row >= 2) {
 
 			// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
-			//LOGGER.debug("Comp class: " + comp.getClass());
+			//LG.d("Comp class: " + comp.getClass());
 			if (value.isEmpty() || value.equalsIgnoreCase("*")) {
 				comp.setBackground(panelColorLow.darker());
 			} else {
@@ -3115,7 +3115,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				if (scorePanel != null) {
-					LOGGER.info("Updating pos!");
+					LG.i("Updating pos!");
 					SwingUtilities.invokeLater(new Runnable() {
 		
 						@Override
@@ -3694,7 +3694,7 @@ public class VibeComposerGUI extends JFrame
 
 						}
 					} catch (Exception e) {
-						LOGGER.info(("Exception in SOLO buttons thread:" + e));
+						LG.i(("Exception in SOLO buttons thread:" + e));
 					}
 				}
 			}
@@ -3954,11 +3954,11 @@ public class VibeComposerGUI extends JFrame
 							}
 
 						} catch (InterruptedException e) {
-							LOGGER.error("THREAD INTERRUPTED!");
+							LG.e("THREAD INTERRUPTED!");
 						}
 					} catch (Exception e) {
-						LOGGER.error("Exception in SEQUENCE SLIDER:");
-						LOGGER.error(e.getMessage());
+						LG.e("Exception in SEQUENCE SLIDER:");
+						LG.e(e.getMessage());
 						e.printStackTrace();
 						try {
 							sleep(200);
@@ -4015,7 +4015,7 @@ public class VibeComposerGUI extends JFrame
 			}*/
 			double quarterNotesInMeasure = (val
 					- sliderMeasureStartTimes.get(lastMeasureStartTimeIndex)) / quarterNote;
-			//LOGGER.debug(quarterNotesInMeasure + " qtn");
+			//LG.d(quarterNotesInMeasure + " qtn");
 			if (quarterNotesInMeasure < MidiGenerator.DBL_ERR) {
 				return;
 			}
@@ -4241,7 +4241,7 @@ public class VibeComposerGUI extends JFrame
 					if (infos[i].toString().startsWith("Gervill")) {
 						midiModeDevices.setVal(infos[i].toString());
 					}
-					LOGGER.info(("Added device: " + infos[i].toString()));
+					LG.i(("Added device: " + infos[i].toString()));
 				}
 			} catch (MidiUnavailableException e) {
 				// Auto-generated catch block
@@ -4311,10 +4311,10 @@ public class VibeComposerGUI extends JFrame
 
 	private void startMidiCcThread() {
 		if (cycle != null && cycle.isAlive()) {
-			LOGGER.info(("MidiCcThread already exists!"));
+			LG.i(("MidiCcThread already exists!"));
 			return;
 		}
-		LOGGER.info(("Starting new MidiCcThread..!"));
+		LG.i(("Starting new MidiCcThread..!"));
 		cycle = new Thread() {
 
 			public void run() {
@@ -4329,7 +4329,7 @@ public class VibeComposerGUI extends JFrame
 						return;
 					}
 				}
-				LOGGER.info(("ENDED MidiCcThread!"));
+				LG.i(("ENDED MidiCcThread!"));
 				cycle = null;
 			}
 
@@ -4493,11 +4493,11 @@ public class VibeComposerGUI extends JFrame
 			if (c instanceof ScrollComboBox) {
 				ScrollComboBox scb = (ScrollComboBox) c;
 				scb.removeArrowButton();
-				//LOGGER.debug("Unconfigured");
+				//LG.d("Unconfigured");
 			}
 
 			if (c instanceof Container) {
-				//LOGGER.debug("Going deep");
+				//LG.d("Going deep");
 				removeComboBoxArrows((Container) c);
 			}
 
@@ -4508,7 +4508,7 @@ public class VibeComposerGUI extends JFrame
 		//setVisible(false);
 		arrSection.setSelectedIndex(0);
 
-		LOGGER.info(("Switching dark mode!"));
+		LG.i(("Switching dark mode!"));
 		if (isDarkMode) {
 			FlatIntelliJLaf.install();
 		} else {
@@ -4636,7 +4636,7 @@ public class VibeComposerGUI extends JFrame
 			sequencer = null;
 		}
 
-		LOGGER.info(("Closed sequencer!"));
+		LG.i(("Closed sequencer!"));
 		MidiDevice oldDevice = device;
 		device = null;
 
@@ -4644,7 +4644,7 @@ public class VibeComposerGUI extends JFrame
 			oldDevice.close();
 		}
 
-		LOGGER.info(("Closed oldDevice!"));
+		LG.i(("Closed oldDevice!"));
 		oldDevice = null;
 		needToRecalculateSoloMutersAfterSequenceGenerated = true;
 	}
@@ -4658,7 +4658,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
 				|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
-			LOGGER.info(("Nothing to compose! Uncheck MANUAL arrangement!"));
+			LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
 			composingInProgress = false;
 			return;
 		}
@@ -4682,11 +4682,11 @@ public class VibeComposerGUI extends JFrame
 				if (sequencer != null) {
 					sequencer.close();
 					sequencer = null;
-					LOGGER.info(("CLOSED SEQUENCER!"));
+					LG.i(("CLOSED SEQUENCER!"));
 				}
 				device.close();
 				device = null;
-				LOGGER.info(("CLOSED DEVICE!"));
+				LG.i(("CLOSED DEVICE!"));
 			}
 		}
 
@@ -4729,13 +4729,13 @@ public class VibeComposerGUI extends JFrame
 				PrintWriter out = new PrintWriter(bw)) {
 			out.println(new Date().toString() + ", Seed: " + seedData);
 		} catch (IOException e) {
-			LOGGER.info(("Failed to write into Random Seed History.."));
+			LG.i(("Failed to write into Random Seed History.."));
 		}
 
 		handleGeneratedMidi(regenerate, relPath);
 		resetArrSectionInBackground();
 		composingInProgress = false;
-		LOGGER.info("================== VibeComposerGUI::composeMidi time: "
+		LG.i("================== VibeComposerGUI::composeMidi time: "
 				+ (System.currentTimeMillis() - systemTime) + " ms ==========================");
 	}
 
@@ -4825,7 +4825,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		} catch (Exception e) {
-			LOGGER.info(("User screwed up his inputs!"));
+			LG.i(("User screwed up his inputs!"));
 			e.printStackTrace();
 		}
 
@@ -4869,7 +4869,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (masterpieceSeed != 0) {
-			LOGGER.info(("Skipping, regenerated seed: " + masterpieceSeed));
+			LG.i(("Skipping, regenerated seed: " + masterpieceSeed));
 		} else if (parsedSeed != 0) {
 			masterpieceSeed = parsedSeed;
 		} else {
@@ -4878,7 +4878,7 @@ public class VibeComposerGUI extends JFrame
 			masterpieceSeed = randomVal;
 		}
 
-		LOGGER.info(("Melody seed: " + masterpieceSeed));
+		LG.i(("Melody seed: " + masterpieceSeed));
 		lastRandomSeed = masterpieceSeed;
 		return masterpieceSeed;
 	}
@@ -5002,7 +5002,7 @@ public class VibeComposerGUI extends JFrame
 			if (sequencer == null) {
 				sequencer = MidiSystem.getSequencer(synthesizer == null); // Get the default Sequencer
 				if (sequencer == null) {
-					LOGGER.error("Sequencer device not supported");
+					LG.e("Sequencer device not supported");
 					return;
 				}
 				sequencer.open(); // Open device
@@ -5026,13 +5026,11 @@ public class VibeComposerGUI extends JFrame
 					for (int i = 0; i < infos.length; i++) {
 						if (infos[i].toString().equalsIgnoreCase(midiModeDevices.getVal())) {
 							device = MidiSystem.getMidiDevice(infos[i]);
-							LOGGER.debug(
-									infos[i].toString() + "| max recv: " + device.getMaxReceivers()
-											+ ", max trm: " + device.getMaxTransmitters());
+							LG.d(infos[i].toString() + "| max recv: " + device.getMaxReceivers()
+									+ ", max trm: " + device.getMaxTransmitters());
 							if (device.getMaxReceivers() != 0) {
-								LOGGER.debug(
-										"Found max receivers != 0, opening midi receiver device: "
-												+ infos[i].toString());
+								LG.d("Found max receivers != 0, opening midi receiver device: "
+										+ infos[i].toString());
 								device.open();
 								break;
 							}
@@ -5170,9 +5168,9 @@ public class VibeComposerGUI extends JFrame
 
 			slider.setCustomMajorTicks(sliderMeasureStartTimes);
 			slider.setCustomMinorTicks(sliderBeatStartTimes);
-			/*LOGGER.info(("Size measures: " + sliderMeasureStartTimes.size()));
-			LOGGER.info(("Size beats: " + sliderBeatStartTimes.size()));
-			LOGGER.info(("What beats: " + sliderBeatStartTimes.toString()));*/
+			/*LG.i(("Size measures: " + sliderMeasureStartTimes.size()));
+			LG.i(("Size beats: " + sliderBeatStartTimes.size()));
+			LG.i(("What beats: " + sliderBeatStartTimes.toString()));*/
 
 			if (startFromBar.isSelected()) {
 				int snapAdjustment = 50;
@@ -5301,7 +5299,7 @@ public class VibeComposerGUI extends JFrame
 		sequencer.setTrackMute(0, false);
 		for (int i = 1 + baseCount - countReducer; i < sequencer.getSequence()
 				.getTracks().length; i++) {
-			LOGGER.debug("Unsoloing: " + i);
+			LG.d("Unsoloing: " + i);
 			sequencer.setTrackSolo(i, false);
 			sequencer.setTrackMute(i, false);
 		}
@@ -5380,7 +5378,7 @@ public class VibeComposerGUI extends JFrame
 					synthesizer.loadAllInstruments(soundfont);
 					needSoundbankRefresh = false;
 				}
-				LOGGER.info(("Playing using soundbank: "
+				LG.i(("Playing using soundbank: "
 						+ (String) soundbankFilename.getEditor().getItem()));
 			} else {
 				if (synth != null && isSoundbankSynth && soundfont != null) {
@@ -5392,7 +5390,7 @@ public class VibeComposerGUI extends JFrame
 				synthesizer = null;
 				synth = null;
 				soundfont = null;
-				LOGGER.info(("NO SOUNDBANK WITH THAT NAME FOUND!"));
+				LG.i(("NO SOUNDBANK WITH THAT NAME FOUND!"));
 			}
 
 
@@ -5407,7 +5405,7 @@ public class VibeComposerGUI extends JFrame
 			synth = null;
 			soundfont = null;
 			ex.printStackTrace();
-			LOGGER.info(("NO SOUNDBANK WITH THAT NAME FOUND!"));
+			LG.i(("NO SOUNDBANK WITH THAT NAME FOUND!"));
 		}
 		return synthesizer;
 	}
@@ -5515,7 +5513,7 @@ public class VibeComposerGUI extends JFrame
 		boolean soloMuterPossibleChange = false;
 		boolean triggerRegenerate = false;
 
-		LOGGER.info(("Processing '" + ae.getActionCommand() + "'.."));
+		LG.i(("Processing '" + ae.getActionCommand() + "'.."));
 		long actionSystemTime = System.currentTimeMillis();
 
 		boolean isCompose = "Compose".equals(ae.getActionCommand());
@@ -5606,7 +5604,7 @@ public class VibeComposerGUI extends JFrame
 						.map(e -> (e.getPatternRepeat() * e.getHitsPerPattern())
 								/ (e.getChordSpan() * 8.0))
 						.max((e1, e2) -> Double.compare(e1, e2)).get();
-				LOGGER.info(("Repeater value: " + highestArpPattern));
+				LG.i(("Repeater value: " + highestArpPattern));
 				if (highestArpPattern > 1) {
 					bpm *= 1 / (0.5 + highestArpPattern * 0.5);
 				}
@@ -5692,9 +5690,9 @@ public class VibeComposerGUI extends JFrame
 			String filename = fd.getFile();
 			File[] files = fd.getFiles();
 			if (filename == null)
-				LOGGER.info(("You cancelled the choice"));
+				LG.i(("You cancelled the choice"));
 			else {
-				LOGGER.info(("You chose " + filename));
+				LG.i(("You chose " + filename));
 				try {
 					unmarshallDrums(files[0]);
 				} catch (JAXBException |
@@ -5776,13 +5774,13 @@ public class VibeComposerGUI extends JFrame
 			StringSelection strSel = new StringSelection(str);
 			clipboard.setContents(strSel, null);*/
 			randomSeed.setValue(lastRandomSeed);
-			LOGGER.info(("Copied to random seed: " + lastRandomSeed));
+			LG.i(("Copied to random seed: " + lastRandomSeed));
 		}
 
 		if (ae.getActionCommand() == "CopyChords") {
 			userChords.setText(
 					currentChords.getText().substring(8, currentChords.getText().length() - 1));
-			LOGGER.info(("Copied chords: " + userChords.getText()));
+			LG.i(("Copied chords: " + userChords.getText()));
 		}
 
 
@@ -5794,9 +5792,9 @@ public class VibeComposerGUI extends JFrame
 			String filename = fd.getFile();
 			File[] files = fd.getFiles();
 			if (filename == null)
-				LOGGER.info(("You cancelled the choice"));
+				LG.i(("You cancelled the choice"));
 			else {
-				LOGGER.info(("You chose " + filename));
+				LG.i(("You chose " + filename));
 				try {
 					guiConfig =
 
@@ -5936,7 +5934,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
-			//LOGGER.info(("Set sequencer solo: " + sourcePanel.getMidiChannel()));
+			//LG.i(("Set sequencer solo: " + sourcePanel.getMidiChannel()));
 		}
 
 		if (ae.getActionCommand() == "RandomizePart") {
@@ -5959,7 +5957,7 @@ public class VibeComposerGUI extends JFrame
 			composeMidi(true);
 		}
 
-		LOGGER.info("Finished '" + ae.getActionCommand() + "' in: "
+		LG.i("Finished '" + ae.getActionCommand() + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
 	}
@@ -6035,12 +6033,12 @@ public class VibeComposerGUI extends JFrame
 
 	private void saveGuiConfigFile(String actionCommand) {
 		if (currentMidi != null) {
-			LOGGER.info(("Saving file: " + currentMidi.getName()));
+			LG.i(("Saving file: " + currentMidi.getName()));
 
 			Date date = new Date();
 			String[] starSplit = actionCommand.split(" ");
 			if (starSplit.length == 1) {
-				LOGGER.info(("WRONG SAVE COMMAND: " + actionCommand));
+				LG.i(("WRONG SAVE COMMAND: " + actionCommand));
 				return;
 			}
 			String rating = starSplit[1].substring(0, 1);
@@ -6070,7 +6068,7 @@ public class VibeComposerGUI extends JFrame
 
 			String finalFilePath = MIDIS_FOLDER + saveDirectory + additionalInfo
 					+ (additionalInfo.isEmpty() ? "" : "_") + name + MID_EXTENSION;
-			LOGGER.info("Saving to final path: " + finalFilePath);
+			LG.i("Saving to final path: " + finalFilePath);
 			File savedMidi = new File(finalFilePath);
 			try {
 				FileUtils.copyFile(currentMidi, savedMidi);
@@ -6081,7 +6079,7 @@ public class VibeComposerGUI extends JFrame
 				e.printStackTrace();
 			}
 		} else {
-			LOGGER.info(("currentMidi is NULL!"));
+			LG.i(("currentMidi is NULL!"));
 		}
 	}
 
@@ -6107,7 +6105,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void playMidi() {
 		if (sequencer != null) {
-			LOGGER.info(("Starting Midi.."));
+			LG.i(("Starting Midi.."));
 			if (sequencer.isRunning()) {
 				sequencer.stop();
 				long startPos = (startFromBar.isSelected())
@@ -6121,15 +6119,15 @@ public class VibeComposerGUI extends JFrame
 				sequencer.stop();
 				savePauseInfo();
 				if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
-					LOGGER.debug(("Unpausing.."));
+					LG.d(("Unpausing.."));
 					midiNavigate(pausedSliderPosition);
 				} else {
-					LOGGER.debug(("Resetting.."));
+					LG.d(("Resetting.."));
 					resetSequencerTickPosition();
 				}
 			}
 
-			LOGGER.debug(("Position set.."));
+			LG.d(("Position set.."));
 			try {
 				Thread.sleep(25);
 			} catch (InterruptedException e) {
@@ -6138,35 +6136,34 @@ public class VibeComposerGUI extends JFrame
 			}
 			sequencer.start();
 			startMidiCcThread();
-			LOGGER.info("Started Midi: " + pausedSliderPosition + "/" + slider.getMaximum()
-					+ ", measure: " + pausedMeasureCounter);
+			LG.i("Started Midi: " + pausedSliderPosition + "/" + slider.getMaximum() + ", measure: "
+					+ pausedMeasureCounter);
 		} else {
-			LOGGER.info(("Sequencer is NULL!"));
+			LG.i(("Sequencer is NULL!"));
 		}
 	}
 
 	private void stopMidi() {
 		if (sequencer != null) {
-			LOGGER.info(("Stopping Midi.."));
+			LG.i(("Stopping Midi.."));
 			sequencer.stop();
 			//resetSequencerTickPosition();
 			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
-			LOGGER.info(("Stopped Midi!"));
+			LG.i(("Stopped Midi!"));
 		} else {
-			LOGGER.info(("Sequencer is NULL!"));
+			LG.i(("Sequencer is NULL!"));
 		}
 	}
 
 	private void pauseMidi() {
 		if (sequencer != null) {
-			LOGGER.info(("Pausing Midi.."));
+			LG.i(("Pausing Midi.."));
 			sequencer.stop();
 			savePauseInfo();
-			LOGGER.info(
-					"Paused Midi: " + pausedSliderPosition + ", measure: " + pausedMeasureCounter);
+			LG.i("Paused Midi: " + pausedSliderPosition + ", measure: " + pausedMeasureCounter);
 		} else {
-			LOGGER.info(("Sequencer is NULL!"));
+			LG.i(("Sequencer is NULL!"));
 		}
 	}
 
@@ -6316,7 +6313,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static Pair<List<String>, List<Double>> solveUserChords(String[] userChordsSplit,
 			String[] userChordsDurationsSplit) {
-		LOGGER.info(("Solving custom chords.."));
+		LG.i(("Solving custom chords.."));
 		List<String> solvedChords = new ArrayList<>();
 		List<Double> solvedDurations = new ArrayList<>();
 
@@ -6339,17 +6336,17 @@ public class VibeComposerGUI extends JFrame
 					solvedChords = userChordsParsed;
 					solvedDurations = userChordsDurationsParsed;
 				} else {
-					LOGGER.info("Lengths don't match, solved only these: "
-							+ userChordsParsed.toString() + " !");
+					LG.i("Lengths don't match, solved only these: " + userChordsParsed.toString()
+							+ " !");
 				}
 			}
 		} catch (Exception e) {
-			LOGGER.info(("Bad user input in custom chords/durations!\n"));
+			LG.i(("Bad user input in custom chords/durations!\n"));
 			e.printStackTrace();
 		}
 		if (!solvedChords.isEmpty() && !solvedDurations.isEmpty()) {
-			LOGGER.info((solvedChords.toString()));
-			LOGGER.info((solvedDurations.toString()));
+			LG.i((solvedChords.toString()));
+			LG.i((solvedDurations.toString()));
 			return Pair.of(solvedChords, solvedDurations);
 		} else {
 			return null;
@@ -6362,7 +6359,7 @@ public class VibeComposerGUI extends JFrame
 		String text = customChords.getText().replaceAll(" ", "");
 		customChords.setText(text);
 		String[] userChordsSplit = text.split(",");
-		//LOGGER.info((StringUtils.join(userChordsSplit, ";")));
+		//LG.i((StringUtils.join(userChordsSplit, ";")));
 
 		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
 		if (userChordsSplit.length != userChordsDurationsSplit.length) {
@@ -6379,7 +6376,7 @@ public class VibeComposerGUI extends JFrame
 
 		String text = customChords.replaceAll(" ", "");
 		String[] userChordsSplit = text.split(",");
-		//LOGGER.info((StringUtils.join(userChordsSplit, ";")));
+		//LG.i((StringUtils.join(userChordsSplit, ";")));
 
 		String[] userChordsDurationsSplit = customChordsDurations.split(",");
 		if (userChordsSplit.length != userChordsDurationsSplit.length) {
@@ -6528,7 +6525,7 @@ public class VibeComposerGUI extends JFrame
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
 		wrapper.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
 		mar.marshal(wrapper, new File(path.substring(0, path.length() - 4) + "-drumParts.xml"));
-		LOGGER.info("File saved: " + path);
+		LG.i("File saved: " + path);
 	}
 
 	public void unmarshallDrums(File f) throws JAXBException, IOException {
@@ -6554,7 +6551,7 @@ public class VibeComposerGUI extends JFrame
 		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
 		String actualPath = path.substring(0, path.length() - cutOff);
 		mar.marshal(config, new File(actualPath + "_VCConfig.xml"));
-		LOGGER.info("File saved: " + path);
+		LG.i("File saved: " + path);
 	}
 
 	public void marshalPreset(GUIPreset preset, String path) throws JAXBException, IOException {
@@ -6565,7 +6562,7 @@ public class VibeComposerGUI extends JFrame
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
 		mar.marshal(preset, new File(path));
-		LOGGER.info("File saved: " + path);
+		LG.i("File saved: " + path);
 	}
 
 	public GUIConfig unmarshallConfig(File f) throws JAXBException, IOException {
@@ -6735,7 +6732,7 @@ public class VibeComposerGUI extends JFrame
 		arrangement.setFromTable(scrollableArrangementTable);
 		boolean overrideSuccessful = manualArrangement.isSelected()
 				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
-		LOGGER.debug(("OVERRIDE OK?: " + overrideSuccessful));
+		LG.d(("OVERRIDE OK?: " + overrideSuccessful));
 		if (overrideSuccessful) {
 			arrangement.setOverridden(true);
 		} else {
@@ -7260,7 +7257,7 @@ public class VibeComposerGUI extends JFrame
 		long snareCount = remainingPanels.stream()
 				.filter(e -> SNARE_DRUMS.contains(e.getInstrument())).count();
 		if (!onlyAdd && pitches.size() >= 3) {
-			//LOGGER.info(("Kick,snare: " + kickCount + ", " + snareCount));
+			//LG.i(("Kick,snare: " + kickCount + ", " + snareCount));
 			if (kickCount == 0) {
 				pitches.set(index++, 35);
 				pitches.set(index++, 36);
@@ -7402,9 +7399,9 @@ public class VibeComposerGUI extends JFrame
 		patternGenerated = MidiUtils.intersperse(0, dp.getChordSpan() - 1, patternGenerated);
 		patternGenerated = MidiUtils.intersperse(0,
 				(maxPatternPerChord / dp.getHitsPerPattern()) - 1, patternGenerated);
-		//LOGGER.info((StringUtils.join(patternGenerated, ",")));
+		//LG.i((StringUtils.join(patternGenerated, ",")));
 		int size = patternGenerated.size();
-		//LOGGER.info(("Size: " + size));
+		//LG.i(("Size: " + size));
 		int patternValue = (dp.getInstrument() <= 40 || dp.getInstrument() == 53) ? 3 : 1;
 		List<Integer> fillPattern = dp.getChordSpanFill().getPatternByLength(chords,
 				dp.isFillFlip());
@@ -7925,7 +7922,7 @@ public class VibeComposerGUI extends JFrame
 			ap.applyPauseChance(arpPanelGenerator);
 
 			if (arpPanelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
-				LOGGER.debug("Arp getPattern: " + ap.getPattern().name());
+				LG.d("Arp getPattern: " + ap.getPattern().name());
 				int maxShift = Math.min(ap.getPattern().maxShift, ap.getHitsPerPattern());
 				ap.setPatternShift(maxShift > 0 ? (arpPanelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
@@ -8096,7 +8093,7 @@ public class VibeComposerGUI extends JFrame
 
 	public int singleWeightedSelectFromArray(int[] oldArray, int weight, int from) {
 		int[] array = Arrays.copyOfRange(oldArray, from, oldArray.length);
-		//LOGGER.info(("New array: " + Arrays.toString(array)));
+		//LG.i(("New array: " + Arrays.toString(array)));
 		Random weightGen = new Random();
 		double[] realWeights = new double[array.length];
 		int mid = array.length / 2;
@@ -8121,11 +8118,11 @@ public class VibeComposerGUI extends JFrame
 			totalWeight += realWeights[i];
 		}
 		double targetWeight = totalWeight * weightGen.nextDouble();
-		//LOGGER.info(("Total: " + totalWeight + ", Target: " + targetWeight));
+		//LG.i(("Total: " + totalWeight + ", Target: " + targetWeight));
 		// -> strength of reduction depends on how far from ends
 		totalWeight = 0;
 
-		//LOGGER.info(("New array: " + Arrays.toString(realWeights)));
+		//LG.i(("New array: " + Arrays.toString(realWeights)));
 		for (int i = 0; i < array.length; i++) {
 			totalWeight += realWeights[i];
 			if (totalWeight >= targetWeight) {
