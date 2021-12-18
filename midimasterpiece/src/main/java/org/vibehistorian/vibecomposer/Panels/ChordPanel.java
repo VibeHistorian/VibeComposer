@@ -224,4 +224,9 @@ public class ChordPanel extends InstPanel {
 	public void setStrumType(StrumType val) {
 		strumType.setVal(val);
 	}
+
+	@Override
+	public int getPartNum() {
+		return 2;
+	}
 }

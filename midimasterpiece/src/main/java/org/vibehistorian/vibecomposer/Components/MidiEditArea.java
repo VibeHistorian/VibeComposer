@@ -118,8 +118,15 @@ public class MidiEditArea extends JComponent {
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
 
+
+			double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
+			int quarterNoteLength = (int) ((w - bottomLeft.x) / sectionLength);
+
 			// draw numbers left of Y line
 			// draw line marks
+
+			int partNum = (pop != null && pop.getParent() != null) ? pop.getParent().getPartNum()
+					: 0;
 
 			for (int i = 0; i < 1 + (max - min); i++) {
 
@@ -202,6 +209,11 @@ public class MidiEditArea extends JComponent {
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
 				g.drawString("" + pitch, drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+				g.setColor(OMNI.alphen(VibeComposerGUI.instColors[partNum], 200));
+				g.fillRect(drawX, drawY - 4,
+						(int) (quarterNoteLength * values.get(i).getDuration()), 8);
+
+
 			}
 		}
 	}

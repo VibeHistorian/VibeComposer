@@ -144,4 +144,9 @@ public class DrumPanel extends InstPanel {
 	public InstPart toInstPart(int lastRandomSeed) {
 		return toDrumPart(lastRandomSeed);
 	}
+
+	@Override
+	public int getPartNum() {
+		return 4;
+	}
 }

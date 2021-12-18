@@ -155,4 +155,9 @@ public class ArpPanel extends InstPanel {
 	public void setArpPatternRotate(int val) {
 		arpPatternRotate.setInt(val);
 	}
+
+	@Override
+	public int getPartNum() {
+		return 3;
+	}
 }

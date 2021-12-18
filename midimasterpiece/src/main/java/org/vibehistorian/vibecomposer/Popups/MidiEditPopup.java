@@ -179,6 +179,10 @@ public class MidiEditPopup extends CloseablePopup {
 		this.parent = parent;
 	}
 
+	public InstPanel getParent() {
+		return parent;
+	}
+
 	@Override
 	protected void addFrameWindowOperation() {
 		frame.addWindowListener(new WindowListener() {

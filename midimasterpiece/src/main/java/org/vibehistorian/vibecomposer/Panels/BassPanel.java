@@ -177,4 +177,9 @@ public class BassPanel extends InstPanel {
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
 		this.patternJoinMode.setVal(patternJoinMode);
 	}
+
+	@Override
+	public int getPartNum() {
+		return 1;
+	}
 }

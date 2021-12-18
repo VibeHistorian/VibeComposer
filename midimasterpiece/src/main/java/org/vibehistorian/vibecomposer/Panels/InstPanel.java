@@ -684,4 +684,6 @@ public abstract class InstPanel extends JPanel {
 	public boolean isMainPanel() {
 		return relatedSection == null;
 	}
+
+	public abstract int getPartNum();
 }

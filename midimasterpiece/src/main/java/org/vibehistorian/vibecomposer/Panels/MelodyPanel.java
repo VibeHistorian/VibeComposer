@@ -366,5 +366,10 @@ public class MelodyPanel extends InstPanel {
 		}
 		return map;
 	}
+
+	@Override
+	public int getPartNum() {
+		return 0;
+	}
 }
 
