@@ -1491,7 +1491,7 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", true);
+		combineMelodyTracks = new JCheckBox("<html>Combine<br>MIDI Tracks</html>", false);
 		combineMelodyTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -2955,7 +2955,9 @@ public class VibeComposerGUI extends JFrame
 						scrollableArrangementActualTable.repaint();
 					} else {
 						Section sec = actualArrangement.getSections().get(secOrder);
-						if (sec.getPartPhraseNotes() != null
+						boolean hasSinglePresence = sec.getPresence(part)
+								.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+						if (hasSinglePresence && sec.getPartPhraseNotes() != null
 								&& part < sec.getPartPhraseNotes().size()
 								&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
 							MidiEditPopup mep = new MidiEditPopup(

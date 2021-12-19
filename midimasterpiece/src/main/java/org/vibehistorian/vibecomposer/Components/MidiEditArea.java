@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -16,8 +17,11 @@ import javax.swing.SwingUtilities;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
+
+import jm.music.data.Note;
 
 public class MidiEditArea extends JComponent {
 
@@ -37,6 +41,11 @@ public class MidiEditArea extends JComponent {
 	int numWidth = 4;
 
 	boolean isDragging = false;
+	PhraseNote draggedNote = null;
+	boolean draggingPosition = false;
+	boolean draggingDuration = false;
+	double startingOffset = 0.0;
+	Integer dragX = null;
 
 	MidiEditPopup pop = null;
 
@@ -58,14 +67,26 @@ public class MidiEditArea extends JComponent {
 					repaint();
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					setVal(orderVal.x, 0);
+					setVal(orderVal.x, Note.REST);
 					repaint();
+				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
+					draggedNote = getDraggedNote(evt.getPoint());
+					if (draggedNote != null) {
+						startingOffset = draggedNote.getOffset();
+						isDragging = true;
+						draggingPosition = true;
+						dragX = evt.getPoint().x;
+					}
 				}
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
 				isDragging = false;
+				draggedNote = null;
+				draggingPosition = false;
+				draggingDuration = false;
+				startingOffset = 0;
 			}
 		});
 
@@ -73,23 +94,31 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if (isDragging) {
-					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-					setVal(orderVal.x, orderVal.y);
-					repaint();
-				}
+				processDragEvent(e);
 			}
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				if (isDragging) {
-					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-					setVal(orderVal.x, orderVal.y);
-					repaint();
-				}
+				processDragEvent(e);
 			}
 
 		});
+	}
+
+	protected void processDragEvent(MouseEvent e) {
+		if (isDragging) {
+			if (draggedNote == null) {
+				Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+				setVal(orderVal.x, orderVal.y);
+				repaint();
+			} else {
+				if (draggingPosition) {
+					double offset = getOffsetFromPosition(e.getPoint());
+					draggedNote.setOffset(offset);
+					repaint();
+				}
+			}
+		}
 	}
 
 	void setVal(int pos, int val) {
@@ -121,7 +150,7 @@ public class MidiEditArea extends JComponent {
 
 			double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 			double quarterNoteLength = (w - bottomLeft.x) / sectionLength;
-			List<Double> starts = values.getNoteStartTimes();
+			values.remakeNoteStartTimes(false);
 
 			// draw numbers left of Y line
 			// draw line marks
@@ -157,7 +186,7 @@ public class MidiEditArea extends JComponent {
 						: drawnValue.length();
 				int drawValueY = numHeight + (bottomLeft.y + h) / 2;
 				int drawMarkY = (bottomLeft.y - markWidth / 2);
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i));
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime());
 
 				g.drawString(drawnValue, drawX - (numWidth * valueLength) / 2, drawValueY);
 				g.drawLine(drawX, drawMarkY, drawX, drawMarkY + markWidth);
@@ -170,7 +199,7 @@ public class MidiEditArea extends JComponent {
 
 			// draw line helpers/dots
 			for (int i = 0; i < numValues; i++) {
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i));
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime());
 				List<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
 				for (int j = 0; j < 1 + max - min; j++) {
 					boolean highlighted = helpers != null && helpers.contains((j + min + 700) % 7);
@@ -194,12 +223,12 @@ public class MidiEditArea extends JComponent {
 				if (pitch < 0) {
 					continue;
 				}
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i)
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime()
 						+ quarterNoteLength * values.get(i).getOffset());
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 
-				// draw straight line connecting values
-				if (i < numValues - 1) {
+				// draw straight line connecting values -- TODO: requires offset checking
+				/*if (i < numValues - 1) {
 					int nextPitch = values.get(i + 1).getPitch();
 					if (nextPitch >= 0) {
 						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
@@ -209,7 +238,7 @@ public class MidiEditArea extends JComponent {
 								bottomLeft.y - (int) (rowHeight
 										* (values.get(i + 1).getPitch() + 1 - min)));
 					}
-				}
+				}*/
 
 
 				g.setColor(VibeComposerGUI.uiColor());
@@ -231,6 +260,53 @@ public class MidiEditArea extends JComponent {
 	}
 
 
+	protected PhraseNote getDraggedNote(Point xy) {
+		// TODO Auto-generated method stub
+		int w = getWidth();
+		int h = getHeight();
+		int usableHeight = h - marginY * 2;
+		int rowDivisors = max - min;
+		double rowHeight = usableHeight / (double) rowDivisors;
+
+		Point bottomLeftAdjusted = new Point(marginX,
+				usableHeight + marginY - (int) (rowHeight / 2));
+		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
+		List<PhraseNote> possibleNotes = values.stream()
+				.filter(e -> Math.abs(yValue - e.getPitch()) == 0).collect(Collectors.toList());
+		if (possibleNotes.isEmpty()) {
+			return null;
+		}
+		values.remakeNoteStartTimes(true);
+		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
+		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
+		double mouseClickTime = (xy.x - marginX) / quarterNoteLength;
+		for (int i = 0; i < possibleNotes.size(); i++) {
+			PhraseNote pn = possibleNotes.get(i);
+			if (mouseClickTime > pn.getStartTime()
+					&& mouseClickTime < pn.getStartTime() + pn.getDuration()) {
+				return possibleNotes.get(i);
+			}
+		}
+
+		return null;
+	}
+
+	private double getOffsetFromPosition(Point xy) {
+		if (draggedNote == null || dragX == null) {
+			return 0;
+		}
+		values.remakeNoteStartTimes(true);
+		int draggedIndex = values.indexOf(draggedNote);
+		double startTime = values.get(draggedIndex).getStartTime();
+		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
+		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
+
+		double offsetTime = (xy.x - marginX) / quarterNoteLength;
+		double mouseCorrectionTime = (dragX - marginX - startTime) / quarterNoteLength;
+
+		return startingOffset + offsetTime - mouseCorrectionTime;
+	}
+
 	public Point getOrderAndValueFromPosition(Point xy) {
 		int w = getWidth();
 		int h = getHeight();
@@ -241,7 +317,7 @@ public class MidiEditArea extends JComponent {
 		Point bottomLeftAdjusted = new Point(marginX,
 				usableHeight + marginY - (int) (rowHeight / 2));
 
-		List<Double> starts = values.getNoteStartTimes();
+		values.remakeNoteStartTimes(true);
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (w - bottomLeftAdjusted.x) / sectionLength;
 
@@ -249,11 +325,11 @@ public class MidiEditArea extends JComponent {
 		int searchX = xy.x - bottomLeftAdjusted.x;
 		//LG.d(searchX);
 		int foundX = 0;
-		for (int i = 0; i < starts.size(); i++) {
-			if (starts.get(i) * quarterNoteLength > searchX) {
+		for (int i = 0; i < values.size(); i++) {
+			if (values.get(i).getStartTime() * quarterNoteLength > searchX) {
 				foundX = i - 1;
 				break;
-			} else if (i == starts.size() - 1) {
+			} else if (i == values.size() - 1) {
 				foundX = i;
 			}
 		}

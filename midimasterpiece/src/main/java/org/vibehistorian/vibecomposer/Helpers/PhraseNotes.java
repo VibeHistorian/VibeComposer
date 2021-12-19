@@ -79,13 +79,11 @@ public class PhraseNotes extends ArrayList<PhraseNote> {
 		this.partOrder = partOrder;
 	}
 
-	public List<Double> getNoteStartTimes() {
-		List<Double> noteStartTimes = new ArrayList<>();
+	public void remakeNoteStartTimes(boolean offsetted) {
 		double current = 0.0;
 		for (PhraseNote pn : this) {
-			noteStartTimes.add(current);
+			pn.setStartTime(current + (offsetted ? pn.getOffset() : 0.0));
 			current += pn.getRv();
 		}
-		return noteStartTimes;
 	}
 }

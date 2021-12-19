@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import jm.music.data.Note;
@@ -13,6 +14,8 @@ public class PhraseNote {
 	private double rv;
 	private double duration;
 	private double offset;
+
+	private double startTime;
 
 	public PhraseNote(Note n) {
 		super();
@@ -87,5 +90,12 @@ public class PhraseNote {
 		this.offset = offset;
 	}
 
+	@XmlTransient
+	public double getStartTime() {
+		return startTime;
+	}
 
+	public void setStartTime(double startTime) {
+		this.startTime = startTime;
+	}
 }
