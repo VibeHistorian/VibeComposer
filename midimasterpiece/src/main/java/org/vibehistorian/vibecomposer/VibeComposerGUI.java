@@ -223,6 +223,8 @@ public class VibeComposerGUI extends JFrame
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 
 	public static VariationPopup varPopup = null;
+	public static MidiEditPopup currentMidiEditorPopup = null;
+	public static int currentMidiEditorSectionIndex = 0;
 
 	// COLORS
 	public static Color panelColorHigh, panelColorLow;
@@ -2960,9 +2962,10 @@ public class VibeComposerGUI extends JFrame
 						if (hasSinglePresence && sec.getPartPhraseNotes() != null
 								&& part < sec.getPartPhraseNotes().size()
 								&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
-							MidiEditPopup mep = new MidiEditPopup(
-									sec.getPartPhraseNotes().get(part).get(partAbsoluteOrder));
+							MidiEditPopup mep = new MidiEditPopup(sec, part, partAbsoluteOrder);
 							mep.setSec(sec);
+							currentMidiEditorPopup = mep;
+							currentMidiEditorSectionIndex = secOrder;
 						}
 
 						/*if (secOrder + 1 < arrSection.getItemCount()) {
@@ -4872,6 +4875,14 @@ public class VibeComposerGUI extends JFrame
 		/*if (showScore.isSelected()) {
 			instrumentTabPane.setSelectedIndex(7);
 		}*/
+
+
+		if (currentMidiEditorPopup != null) {
+			currentMidiEditorPopup
+					.setup(actualArrangement.getSections().get(currentMidiEditorSectionIndex));
+		} else {
+
+		}
 	}
 
 	private Integer prepareMainSeed(boolean regenerate) {

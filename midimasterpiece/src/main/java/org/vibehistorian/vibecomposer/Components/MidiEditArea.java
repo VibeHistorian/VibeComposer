@@ -279,6 +279,10 @@ public class MidiEditArea extends JComponent {
 		return values;
 	}
 
+	public void setValues(PhraseNotes vals) {
+		values = vals;
+	}
+
 
 	protected PhraseNote getDraggedNote(Point xy) {
 		// TODO Auto-generated method stub

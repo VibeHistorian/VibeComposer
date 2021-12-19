@@ -28,9 +28,16 @@ public class MidiEditPopup extends CloseablePopup {
 	JTextField text = null;
 	Section sec = null;
 
+	public int part = 0;
+	public int partOrder = 0;
 
-	public MidiEditPopup(PhraseNotes values) {
+
+	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
+		sec = section;
+		part = secPartNum;
+		partOrder = secPartOrder;
+		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 		values.setCustom(true);
 
 		int vmin = -10;
@@ -181,6 +188,14 @@ public class MidiEditPopup extends CloseablePopup {
 		frame.setVisible(true);
 	}
 
+	public void setup(Section sec) {
+		setSec(sec);
+		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
+		values.setCustom(true);
+		mvea.setValues(values);
+		repaintMvea();
+	}
+
 	void repaintMvea() {
 		mvea.repaint();
 		text.setText(mvea.getValues().toStringPitches());
@@ -209,7 +224,8 @@ public class MidiEditPopup extends CloseablePopup {
 				if (parent != null) {
 					//parent.setPhraseNotes(mvea.getValues());
 				}
-
+				VibeComposerGUI.currentMidiEditorPopup = null;
+				VibeComposerGUI.currentMidiEditorSectionIndex = 0;
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {
 						RandomValueButton.singlePopup = null;
