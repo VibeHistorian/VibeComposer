@@ -47,6 +47,7 @@ public class MidiEditArea extends JComponent {
 	boolean draggingPosition = false;
 	boolean draggingDuration = false;
 	double startingOffset = 0.0;
+	double startingDuration = 0.0;
 	Integer dragX = null;
 
 	MidiEditPopup pop = null;
@@ -76,9 +77,16 @@ public class MidiEditArea extends JComponent {
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					draggedNote = getDraggedNote(evt.getPoint());
 					if (draggedNote != null) {
-						startingOffset = draggedNote.getOffset();
-						isDragging = true;
-						draggingPosition = true;
+						if (evt.isShiftDown()) {
+							startingDuration = draggedNote.getDuration();
+							isDragging = true;
+							draggingDuration = true;
+						} else {
+							startingOffset = draggedNote.getOffset();
+							isDragging = true;
+							draggingPosition = true;
+						}
+
 						dragX = evt.getPoint().x;
 					}
 				}
@@ -122,6 +130,11 @@ public class MidiEditArea extends JComponent {
 				if (draggingPosition) {
 					double offset = getOffsetFromPosition(e.getPoint());
 					draggedNote.setOffset(offset);
+					repaint();
+				} else if (draggingDuration) {
+					double duration = getDurationFromPosition(e.getPoint());
+					duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2, duration);
+					draggedNote.setDuration(duration);
 					repaint();
 				}
 			}
@@ -296,6 +309,22 @@ public class MidiEditArea extends JComponent {
 		}
 
 		return null;
+	}
+
+	private double getDurationFromPosition(Point xy) {
+		if (draggedNote == null || dragX == null) {
+			return 0;
+		}
+		values.remakeNoteStartTimes(true);
+		int draggedIndex = values.indexOf(draggedNote);
+		double startTime = values.get(draggedIndex).getStartTime();
+		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
+		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
+
+		double durationTime = (xy.x - marginX) / quarterNoteLength;
+		double mouseCorrectionTime = (dragX - marginX - startTime) / quarterNoteLength;
+
+		return startingDuration + durationTime - mouseCorrectionTime;
 	}
 
 	private double getOffsetFromPosition(Point xy) {
