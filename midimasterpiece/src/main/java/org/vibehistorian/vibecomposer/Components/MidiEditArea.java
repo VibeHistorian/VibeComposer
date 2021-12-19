@@ -120,7 +120,8 @@ public class MidiEditArea extends JComponent {
 
 
 			double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
-			int quarterNoteLength = (int) ((w - bottomLeft.x) / sectionLength);
+			double quarterNoteLength = (w - bottomLeft.x) / sectionLength;
+			List<Double> starts = values.getNoteStartTimes();
 
 			// draw numbers left of Y line
 			// draw line marks
@@ -155,7 +156,7 @@ public class MidiEditArea extends JComponent {
 						: drawnValue.length();
 				int drawValueY = numHeight + (bottomLeft.y + h) / 2;
 				int drawMarkY = (bottomLeft.y - markWidth / 2);
-				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i));
 
 				g.drawString(drawnValue, drawX - (numWidth * valueLength) / 2, drawValueY);
 				g.drawLine(drawX, drawMarkY, drawX, drawMarkY + markWidth);
@@ -168,7 +169,7 @@ public class MidiEditArea extends JComponent {
 
 			// draw line helpers/dots
 			for (int i = 0; i < numValues; i++) {
-				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i));
 				List<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
 				for (int j = 0; j < 1 + max - min; j++) {
 					boolean highlighted = helpers != null && helpers.contains((j + min + 700) % 7);
@@ -186,21 +187,24 @@ public class MidiEditArea extends JComponent {
 
 			// draw actual values
 
-			int ovalWidth = w / 40;
+			int ovalWidth = h / 40;
 			for (int i = 0; i < numValues; i++) {
 				int pitch = values.get(i).getPitch();
 				if (pitch < 0) {
 					continue;
 				}
-				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i));
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 
+				// draw straight line connecting values
 				if (i < numValues - 1) {
 					int nextPitch = values.get(i + 1).getPitch();
 					if (nextPitch >= 0) {
 						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
-						g.drawLine(drawX, drawY, drawX + (int) colWidth, bottomLeft.y
-								- (int) (rowHeight * (values.get(i + 1).getPitch() + 1 - min)));
+						g.drawLine(drawX, drawY,
+								drawX + (int) (quarterNoteLength * values.get(i).getRv()),
+								bottomLeft.y - (int) (rowHeight
+										* (values.get(i + 1).getPitch() + 1 - min)));
 					}
 				}
 
@@ -209,7 +213,7 @@ public class MidiEditArea extends JComponent {
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
 				g.drawString("" + pitch, drawX + ovalWidth / 2, drawY - ovalWidth / 2);
-				g.setColor(OMNI.alphen(VibeComposerGUI.instColors[partNum], 200));
+				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
 				g.fillRect(drawX, drawY - 4,
 						(int) (quarterNoteLength * values.get(i).getDuration()), 8);
 
@@ -232,9 +236,24 @@ public class MidiEditArea extends JComponent {
 		int rowDivisors = max - min + rowHeightCorrection + rowStart;
 		double rowHeight = h / (double) rowDivisors;
 
-		Point bottomLeftAdjusted = new Point((int) (colWidth * (colStart - 0.5)),
+		Point bottomLeftAdjusted = new Point((int) (colWidth * (colStart)),
 				(int) (rowHeight * (rowDivisors - rowStart - 0.5)));
-		int xValue = (int) ((xy.x - bottomLeftAdjusted.x) / colWidth);
+
+		List<Double> starts = values.getNoteStartTimes();
+		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
+		double quarterNoteLength = (w - bottomLeftAdjusted.x) / sectionLength;
+
+
+		int searchX = xy.x - bottomLeftAdjusted.x;
+		int foundX = 0;
+		for (int i = 0; i < starts.size(); i++) {
+			if (starts.get(i) * quarterNoteLength > searchX) {
+				foundX = i;
+				break;
+			}
+		}
+
+		int xValue = foundX;
 		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min - 1;
 
 		xValue = OMNI.clamp(xValue, 0, values.size() - 1);
@@ -262,6 +281,5 @@ public class MidiEditArea extends JComponent {
 	public void setPop(MidiEditPopup pop) {
 		this.pop = pop;
 	}
-
 
 }

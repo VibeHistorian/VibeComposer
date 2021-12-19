@@ -78,4 +78,14 @@ public class PhraseNotes extends ArrayList<PhraseNote> {
 	public void setPartOrder(int partOrder) {
 		this.partOrder = partOrder;
 	}
+
+	public List<Double> getNoteStartTimes() {
+		List<Double> noteStartTimes = new ArrayList<>();
+		double current = 0.0;
+		for (PhraseNote pn : this) {
+			noteStartTimes.add(current);
+			current += pn.getRv();
+		}
+		return noteStartTimes;
+	}
 }
