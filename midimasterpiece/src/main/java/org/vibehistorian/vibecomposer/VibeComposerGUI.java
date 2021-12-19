@@ -2958,8 +2958,9 @@ public class VibeComposerGUI extends JFrame
 						if (sec.getPartPhraseNotes() != null
 								&& part < sec.getPartPhraseNotes().size()
 								&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
-							new MidiEditPopup(
+							MidiEditPopup mep = new MidiEditPopup(
 									sec.getPartPhraseNotes().get(part).get(partAbsoluteOrder));
+							mep.setSec(sec);
 						}
 
 						/*if (secOrder + 1 < arrSection.getItemCount()) {

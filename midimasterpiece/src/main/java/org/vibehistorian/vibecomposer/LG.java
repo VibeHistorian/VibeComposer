@@ -21,4 +21,12 @@ public class LG {
 	public static void w(String msg) {
 		LOGGER.warn(msg);
 	}
+
+	public static void d(Object msg) {
+		LOGGER.debug(msg == null ? null : msg.toString());
+	}
+
+	public static void i(Object msg) {
+		LOGGER.info(msg == null ? null : msg.toString());
+	}
 }

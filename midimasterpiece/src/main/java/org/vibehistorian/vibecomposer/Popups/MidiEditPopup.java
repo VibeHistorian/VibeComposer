@@ -14,6 +14,7 @@ import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
@@ -25,6 +26,7 @@ public class MidiEditPopup extends CloseablePopup {
 	MidiEditArea mvea = null;
 	InstPanel parent = null;
 	JTextField text = null;
+	Section sec = null;
 
 
 	public MidiEditPopup(PhraseNotes values) {
@@ -125,9 +127,8 @@ public class MidiEditPopup extends CloseablePopup {
 			}*/
 			if (!successRandGenerator) {
 				Random rnd = new Random();
-				mvea.getValues().clear();
 				for (int i = 0; i < size; i++) {
-					mvea.getValues().add(new PhraseNote(rnd.nextInt(max - min + 1) + min));
+					mvea.getValues().get(i).setPitch(rnd.nextInt(max - min + 1) + min);
 				}
 			}
 
@@ -153,8 +154,18 @@ public class MidiEditPopup extends CloseablePopup {
 					for (String s : textSplit) {
 						nums.add(Integer.valueOf(s));
 					}
-					mvea.getValues().clear();
-					nums.forEach(n -> mvea.getValues().add(new PhraseNote(n)));
+					for (int i = 0; i < nums.size() && i < mvea.getValues().size(); i++) {
+						mvea.getValues().get(i).setPitch(nums.get(i));
+					}
+					if (nums.size() > mvea.getValues().size()) {
+						for (int i = mvea.getValues().size(); i < nums.size(); i++) {
+							mvea.getValues().add(new PhraseNote(nums.get(i)));
+						}
+					} else if (mvea.getValues().size() > nums.size()) {
+						for (int i = nums.size(); i < mvea.getValues().size(); i++) {
+							mvea.getValues().remove(i);
+						}
+					}
 					repaintMvea();
 				} catch (Exception exc) {
 					LG.d("Incorrect text format, cannot convert to list of numbers.");
@@ -175,7 +186,7 @@ public class MidiEditPopup extends CloseablePopup {
 		text.setText(mvea.getValues().toStringPitches());
 	}
 
-	public void linkParent(InstPanel parent) {
+	public void setParent(InstPanel parent) {
 		this.parent = parent;
 	}
 
@@ -246,6 +257,14 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void setText(JTextField text) {
 		this.text = text;
+	}
+
+	public Section getSec() {
+		return sec;
+	}
+
+	public void setSec(Section sec) {
+		this.sec = sec;
 	}
 
 }

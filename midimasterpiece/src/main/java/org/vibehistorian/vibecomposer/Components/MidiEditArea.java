@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -26,9 +27,10 @@ public class MidiEditArea extends JComponent {
 	PhraseNotes values = null;
 	Map<Integer, List<Integer>> highlightedGrid = null;
 
-	int colStart = 2;
-	int rowStart = 1;
-	int rowHeightCorrection = 3;
+	int colStart = 0;
+	int rowStart = 0;
+	int marginX = 80;
+	int marginY = 40;
 
 	int markWidth = 6;
 	int numHeight = 6;
@@ -101,10 +103,9 @@ public class MidiEditArea extends JComponent {
 			int w = getWidth();
 			int h = getHeight();
 			int numValues = values.size();
-			int colDivisors = numValues + colStart;
-			double colWidth = w / (double) colDivisors;
-			int rowDivisors = max - min + rowHeightCorrection + rowStart;
-			double rowHeight = h / (double) rowDivisors;
+			int rowDivisors = max - min;
+			int usableHeight = h - marginY * 2;
+			double rowHeight = usableHeight / (double) rowDivisors;
 			// clear screen
 			g.setColor(VibeComposerGUI.isDarkMode ? VibeComposerGUI.panelColorHigh
 					: VibeComposerGUI.panelColorLow.darker());
@@ -113,8 +114,7 @@ public class MidiEditArea extends JComponent {
 			// draw graph lines - first to last value X, min to max value Y
 			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 80));
 
-			Point bottomLeft = new Point((int) colWidth * (colStart - 1),
-					(int) rowHeight * (rowDivisors - rowStart));
+			Point bottomLeft = new Point(marginX, usableHeight + marginY);
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
 
@@ -131,7 +131,8 @@ public class MidiEditArea extends JComponent {
 
 			for (int i = 0; i < 1 + (max - min); i++) {
 
-				String drawnValue = "" + (min + i);
+				String drawnValue = "" + (min + i) + " | "
+						+ MidiUtils.SEMITONE_LETTERS.get((min + i) % 12) + ((min + i) / 12 - 1);
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
 				int drawValueX = bottomLeft.x / 2 - (numWidth * valueLength) / 2;
@@ -187,13 +188,14 @@ public class MidiEditArea extends JComponent {
 
 			// draw actual values
 
-			int ovalWidth = h / 40;
+			int ovalWidth = usableHeight / 40;
 			for (int i = 0; i < numValues; i++) {
 				int pitch = values.get(i).getPitch();
 				if (pitch < 0) {
 					continue;
 				}
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i));
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * starts.get(i)
+						+ quarterNoteLength * values.get(i).getOffset());
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 
 				// draw straight line connecting values
@@ -202,7 +204,8 @@ public class MidiEditArea extends JComponent {
 					if (nextPitch >= 0) {
 						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
 						g.drawLine(drawX, drawY,
-								drawX + (int) (quarterNoteLength * values.get(i).getRv()),
+								drawX + (int) (quarterNoteLength
+										* (values.get(i).getRv() + values.get(i).getOffset())),
 								bottomLeft.y - (int) (rowHeight
 										* (values.get(i + 1).getPitch() + 1 - min)));
 					}
@@ -231,13 +234,12 @@ public class MidiEditArea extends JComponent {
 	public Point getOrderAndValueFromPosition(Point xy) {
 		int w = getWidth();
 		int h = getHeight();
-		int colDivisors = values.size() + colStart;
-		double colWidth = w / (double) colDivisors;
-		int rowDivisors = max - min + rowHeightCorrection + rowStart;
-		double rowHeight = h / (double) rowDivisors;
+		int rowDivisors = max - min;
+		int usableHeight = h - marginY * 2;
+		double rowHeight = usableHeight / (double) rowDivisors;
 
-		Point bottomLeftAdjusted = new Point((int) (colWidth * (colStart)),
-				(int) (rowHeight * (rowDivisors - rowStart - 0.5)));
+		Point bottomLeftAdjusted = new Point(marginX,
+				usableHeight + marginY - (int) (rowHeight / 2));
 
 		List<Double> starts = values.getNoteStartTimes();
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
@@ -245,16 +247,19 @@ public class MidiEditArea extends JComponent {
 
 
 		int searchX = xy.x - bottomLeftAdjusted.x;
+		//LG.d(searchX);
 		int foundX = 0;
 		for (int i = 0; i < starts.size(); i++) {
 			if (starts.get(i) * quarterNoteLength > searchX) {
-				foundX = i;
+				foundX = i - 1;
 				break;
+			} else if (i == starts.size() - 1) {
+				foundX = i;
 			}
 		}
 
 		int xValue = foundX;
-		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min - 1;
+		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
 
 		xValue = OMNI.clamp(xValue, 0, values.size() - 1);
 		yValue = OMNI.clamp(yValue, min, max);
