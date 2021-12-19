@@ -7,6 +7,7 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -62,9 +64,11 @@ public class MidiEditArea extends JComponent {
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					setVal(orderVal.x, orderVal.y);
-					isDragging = true;
-					repaint();
+					if (orderVal != null) {
+						setVal(orderVal.x, orderVal.y);
+						isDragging = true;
+						repaint();
+					}
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 					setVal(orderVal.x, Note.REST);
@@ -109,8 +113,11 @@ public class MidiEditArea extends JComponent {
 		if (isDragging) {
 			if (draggedNote == null) {
 				Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-				setVal(orderVal.x, orderVal.y);
-				repaint();
+				if (orderVal != null) {
+					setVal(orderVal.x, orderVal.y);
+					repaint();
+				}
+
 			} else {
 				if (draggingPosition) {
 					double offset = getOffsetFromPosition(e.getPoint());
@@ -321,21 +328,35 @@ public class MidiEditArea extends JComponent {
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (w - bottomLeftAdjusted.x) / sectionLength;
 
+		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
 
-		int searchX = xy.x - bottomLeftAdjusted.x;
+		double searchX = (xy.x - bottomLeftAdjusted.x) / quarterNoteLength;
 		//LG.d(searchX);
-		int foundX = 0;
-		for (int i = 0; i < values.size(); i++) {
-			if (values.get(i).getStartTime() * quarterNoteLength > searchX) {
-				foundX = i - 1;
-				break;
-			} else if (i == values.size() - 1) {
-				foundX = i;
+		Integer foundX = searchX < MidiGenerator.DBL_ERR ? 0 : null;
+		if (foundX == null) {
+			List<Integer> possibleNotes = new ArrayList<>();
+			for (int i = 0; i < values.size(); i++) {
+				if (searchX + MidiGenerator.DBL_ERR > values.get(i).getStartTime()
+						&& searchX - MidiGenerator.DBL_ERR < values.get(i).getStartTime()
+								+ values.get(i).getDuration()) {
+					possibleNotes.add(i);
+				}
+			}
+
+			if (possibleNotes.isEmpty()) {
+				return null;
+			}
+			int difference = Integer.MAX_VALUE;
+			for (int i = 0; i < possibleNotes.size(); i++) {
+				int newDiff = Math.abs(values.get(possibleNotes.get(i)).getPitch() - yValue);
+				if (newDiff < difference) {
+					difference = newDiff;
+					foundX = possibleNotes.get(i);
+				}
 			}
 		}
 
 		int xValue = foundX;
-		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
 
 		xValue = OMNI.clamp(xValue, 0, values.size() - 1);
 		yValue = OMNI.clamp(yValue, min, max);
