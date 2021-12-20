@@ -190,8 +190,25 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public void setup(Section sec) {
+		if (!sec.containsPhrase(part, partOrder)) {
+			close();
+			VibeComposerGUI.currentMidiEditorPopup = null;
+			return;
+		}
+
 		setSec(sec);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
+
+		int vmin = -10;
+		int vmax = 10;
+		if (!values.isEmpty()) {
+			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.min().getAsInt();
+			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.max().getAsInt();
+		}
+		mvea.min = Math.min(mvea.min, vmin);
+		mvea.max = Math.max(mvea.max, vmax);
 		values.setCustom(true);
 		mvea.setValues(values);
 		repaintMvea();

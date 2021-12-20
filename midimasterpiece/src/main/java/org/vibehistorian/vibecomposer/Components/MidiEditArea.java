@@ -28,8 +28,8 @@ import jm.music.data.Note;
 public class MidiEditArea extends JComponent {
 
 	private static final long serialVersionUID = -2972572935738976623L;
-	int min = -10;
-	int max = 10;
+	public int min = -10;
+	public int max = 10;
 	PhraseNotes values = null;
 	Map<Integer, List<Integer>> highlightedGrid = null;
 
