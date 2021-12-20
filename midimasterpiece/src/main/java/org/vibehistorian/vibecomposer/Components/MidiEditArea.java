@@ -90,6 +90,12 @@ public class MidiEditArea extends JComponent {
 								dragX = evt.getPoint().x;
 								repaint();
 							}
+						} else {
+							draggedNote = getDraggedNote(evt.getPoint());
+							startingDuration = draggedNote.getDuration();
+							isDragging = true;
+							draggingDuration = true;
+							dragX = evt.getPoint().x;
 						}
 					}
 
@@ -100,15 +106,9 @@ public class MidiEditArea extends JComponent {
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					draggedNote = getDraggedNote(evt.getPoint());
 					if (draggedNote != null) {
-						if (evt.isShiftDown()) {
-							startingDuration = draggedNote.getDuration();
-							isDragging = true;
-							draggingDuration = true;
-						} else {
-							startingOffset = draggedNote.getOffset();
-							isDragging = true;
-							draggingPosition = true;
-						}
+						startingOffset = draggedNote.getOffset();
+						isDragging = true;
+						draggingPosition = true;
 
 						dragX = evt.getPoint().x;
 					}
