@@ -17,7 +17,6 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
@@ -135,7 +134,9 @@ public class MidiEditPopup extends CloseablePopup {
 			if (!successRandGenerator) {
 				Random rnd = new Random();
 				for (int i = 0; i < size; i++) {
-					mvea.getValues().get(i).setPitch(rnd.nextInt(max - min + 1) + min);
+					if (mvea.getValues().get(i).getPitch() >= 0) {
+						mvea.getValues().get(i).setPitch(rnd.nextInt(max - min + 1) + min);
+					}
 				}
 			}
 
@@ -164,7 +165,7 @@ public class MidiEditPopup extends CloseablePopup {
 					for (int i = 0; i < nums.size() && i < mvea.getValues().size(); i++) {
 						mvea.getValues().get(i).setPitch(nums.get(i));
 					}
-					if (nums.size() > mvea.getValues().size()) {
+					/*if (nums.size() > mvea.getValues().size()) {
 						for (int i = mvea.getValues().size(); i < nums.size(); i++) {
 							mvea.getValues().add(new PhraseNote(nums.get(i)));
 						}
@@ -172,7 +173,7 @@ public class MidiEditPopup extends CloseablePopup {
 						for (int i = nums.size(); i < mvea.getValues().size(); i++) {
 							mvea.getValues().remove(i);
 						}
-					}
+					}*/
 					repaintMvea();
 				} catch (Exception exc) {
 					LG.d("Incorrect text format, cannot convert to list of numbers.");

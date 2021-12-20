@@ -81,7 +81,7 @@ import jm.util.Write;
 
 public class MidiGenerator implements JMC {
 
-	public static final double DBL_ERR = 0.01;
+	public static final double DBL_ERR = 0.001;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
 	public static final double DEFAULT_DURATION_MULTIPLIER = 0.95;
 

@@ -64,12 +64,35 @@ public class MidiEditArea extends JComponent {
 					return;
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
-					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					if (orderVal != null) {
-						setVal(orderVal.x, orderVal.y);
-						isDragging = true;
-						repaint();
+					if (evt.isShiftDown()) {
+						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
+						if (orderVal != null) {
+							setVal(orderVal.x, orderVal.y);
+							isDragging = true;
+							repaint();
+						}
+					} else {
+						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
+						if (orderVal == null || values.get(orderVal.x).getPitch() != orderVal.y) {
+							// mouse click doesn't overlap with existing note
+							// get order in note rhythm 
+							orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
+							if (orderVal != null) {
+								PhraseNote pn = values.get(orderVal.x);
+								PhraseNote insertedPn = new PhraseNote(orderVal.y);
+								insertedPn.setDuration(pn.getDuration());
+								insertedPn.setRv(0);
+								values.add(orderVal.x, insertedPn);
+								draggedNote = insertedPn;
+								startingDuration = draggedNote.getDuration();
+								isDragging = true;
+								draggingDuration = true;
+								dragX = evt.getPoint().x;
+								repaint();
+							}
+						}
 					}
+
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 					setVal(orderVal.x, Note.REST);
@@ -121,7 +144,7 @@ public class MidiEditArea extends JComponent {
 		if (isDragging) {
 			if (draggedNote == null) {
 				Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-				if (orderVal != null) {
+				if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 					setVal(orderVal.x, orderVal.y);
 					repaint();
 				}
@@ -295,8 +318,8 @@ public class MidiEditArea extends JComponent {
 		Point bottomLeftAdjusted = new Point(marginX,
 				usableHeight + marginY - (int) (rowHeight / 2));
 		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
-		List<PhraseNote> possibleNotes = values.stream()
-				.filter(e -> Math.abs(yValue - e.getPitch()) == 0).collect(Collectors.toList());
+		List<PhraseNote> possibleNotes = values.stream().filter(e -> yValue == e.getPitch())
+				.collect(Collectors.toList());
 		if (possibleNotes.isEmpty()) {
 			return null;
 		}
@@ -348,6 +371,11 @@ public class MidiEditArea extends JComponent {
 	}
 
 	public Point getOrderAndValueFromPosition(Point xy) {
+		return getOrderAndValueFromPosition(xy, true, false);
+	}
+
+	public Point getOrderAndValueFromPosition(Point xy, boolean offsetted,
+			boolean getClosestOriginal) {
 		int w = getWidth();
 		int h = getHeight();
 		int rowDivisors = max - min;
@@ -357,7 +385,7 @@ public class MidiEditArea extends JComponent {
 		Point bottomLeftAdjusted = new Point(marginX,
 				usableHeight + marginY - (int) (rowHeight / 2));
 
-		values.remakeNoteStartTimes(true);
+		values.remakeNoteStartTimes(offsetted);
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (w - bottomLeftAdjusted.x) / sectionLength;
 
@@ -368,17 +396,32 @@ public class MidiEditArea extends JComponent {
 		Integer foundX = searchX < MidiGenerator.DBL_ERR ? 0 : null;
 		if (foundX == null) {
 			List<Integer> possibleNotes = new ArrayList<>();
-			for (int i = 0; i < values.size(); i++) {
-				if (searchX + MidiGenerator.DBL_ERR > values.get(i).getStartTime()
-						&& searchX - MidiGenerator.DBL_ERR < values.get(i).getStartTime()
-								+ values.get(i).getDuration()) {
-					possibleNotes.add(i);
+			if (getClosestOriginal) {
+				for (int i = 0; i < values.size(); i++) {
+					double start = values.get(i).getStartTime();
+					double end = i < values.size() - 1 ? values.get(i + 1).getStartTime()
+							: sectionLength;
+					if (start < searchX && searchX < end) {
+						possibleNotes.add(i);
+						break;
+					}
+				}
+			} else {
+				for (int i = 0; i < values.size(); i++) {
+					if (searchX + MidiGenerator.DBL_ERR > values.get(i).getStartTime()
+							&& searchX - MidiGenerator.DBL_ERR < values.get(i).getStartTime()
+									+ values.get(i).getDuration()) {
+						possibleNotes.add(i);
+					}
 				}
 			}
+
 
 			if (possibleNotes.isEmpty()) {
 				return null;
 			}
+
+
 			int difference = Integer.MAX_VALUE;
 			for (int i = 0; i < possibleNotes.size(); i++) {
 				int newDiff = Math.abs(values.get(possibleNotes.get(i)).getPitch() - yValue);
@@ -387,6 +430,7 @@ public class MidiEditArea extends JComponent {
 					foundX = possibleNotes.get(i);
 				}
 			}
+
 		}
 
 		int xValue = foundX;

@@ -55,7 +55,7 @@ public class PhraseNote {
 	}
 
 	public void setPitch(int pitch) {
-		this.pitch = pitch;
+		this.pitch = pitch >= 0 ? pitch : Note.REST;
 	}
 
 	public int getDynamic() {
