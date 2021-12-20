@@ -61,7 +61,7 @@ public class MidiEditPopup extends CloseablePopup {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(1500, 50));
-		buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
+		/*buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
 			if (mvea.getValues().size() > 31) {
 				return;
 			}
@@ -74,8 +74,8 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 			mvea.getValues().remove(mvea.getValues().size() - 1);
 			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
+		}));*/
+		/*buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
 			int size = mvea.getValues().size();
 			mvea.getValues().clear();
 			for (int i = 0; i < size; i++) {
@@ -112,9 +112,9 @@ public class MidiEditPopup extends CloseablePopup {
 			for (int i = mvea.getValues().size() - 1; i >= toRemain; i--) {
 				mvea.getValues().remove(i);
 			}
-
+		
 			repaintMvea();
-		}));
+		}));*/
 		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
 			int size = mvea.getValues().size();
 			boolean successRandGenerator = false;

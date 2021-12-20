@@ -4880,8 +4880,6 @@ public class VibeComposerGUI extends JFrame
 		if (currentMidiEditorPopup != null) {
 			currentMidiEditorPopup
 					.setup(actualArrangement.getSections().get(currentMidiEditorSectionIndex));
-		} else {
-
 		}
 	}
 
