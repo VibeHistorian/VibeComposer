@@ -2976,6 +2976,8 @@ public class MidiGenerator implements JMC {
 			boolean sectionChordsReplaced = false;
 			if (sec.isCustomChordsDurationsEnabled()) {
 				sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
+			} else {
+				sec.setGeneratedSectionBeatDurations(new ArrayList<>(progressionDurations));
 			}
 			if (!sectionChordsReplaced) {
 				if (riskyVariations.get(1) > 0) {

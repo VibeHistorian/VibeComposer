@@ -81,6 +81,7 @@ public class Section {
 	private double startTime;
 	private double sectionDuration = -1;
 	private List<Double> sectionBeatDurations = null;
+	private List<Double> generatedSectionBeatDurations = null;
 	private Integer customKeyChange = null;
 	private ScaleMode customScale = null;
 
@@ -339,6 +340,9 @@ public class Section {
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
 			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
+		}
+		if (generatedSectionBeatDurations != null) {
+			sec.generatedSectionBeatDurations = new ArrayList<>(generatedSectionBeatDurations);
 		}
 
 		return sec;
@@ -983,6 +987,27 @@ public class Section {
 			partPhraseNotes.set(phrNotesList.getPart(), phrNotesList);
 		} else {
 			partPhraseNotes.add(phrNotesList);
+		}
+	}
+
+	public boolean containsPhrase(int part, int partOrder) {
+		return getPartPhraseNotes() != null && getPartPhraseNotes().size() > part
+				&& getPartPhraseNotes().get(part).size() > partOrder;
+	}
+
+	public List<Double> getGeneratedSectionBeatDurations() {
+		return generatedSectionBeatDurations;
+	}
+
+	public void setGeneratedSectionBeatDurations(List<Double> generatedSectionBeatDurations) {
+		this.generatedSectionBeatDurations = generatedSectionBeatDurations;
+	}
+
+	public List<Double> getGeneratedDurations() {
+		if (sectionBeatDurations != null) {
+			return sectionBeatDurations;
+		} else {
+			return generatedSectionBeatDurations;
 		}
 	}
 }

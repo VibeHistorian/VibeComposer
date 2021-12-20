@@ -118,9 +118,10 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					
 						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
 					}*/
-
-					g.setColor(OMNI.mixColor(c, panelC,
-							(1 - sec.countVariationsForPartAndOrder(part, partOrder)) / 1.5));
+					boolean isCustomMidi = sec.containsPhrase(part, partOrder)
+							&& sec.getPartPhraseNotes().get(part).get(partOrder).isCustom();
+					g.setColor(OMNI.mixColor(c, panelC, isCustomMidi ? 0.66
+							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66));
 					g.fillRect((int) startX + 1, 0, (int) (endX - startX), height);
 					g.setColor(new Color(230, 230, 230));
 					if (num.length() == 1) {
@@ -132,16 +133,24 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 								10 * height / 16);
 					}
 
-					g.setColor(new Color(230, 230, 230, 200));
+
 					int numVars = Section.variationDescriptions[part].length - 2;
 					double moveX = (endX - startX) / (numVars);
-					List<Integer> actualVars = sec.getVariation(part, partOrder);
-					for (int i = 0; i < numVars; i++) {
-						int varX = (int) (startX + ((moveX * i) + 1));
-						if (actualVars.contains(i)) {
-							g.drawLine(varX, 0, varX, 3);
+
+					if (isCustomMidi) {
+						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 150));
+						g.fillRect((int) startX + 2, 0, (int) widthDividerValue - 4, 5);
+					} else {
+						g.setColor(new Color(230, 230, 230, 200));
+						List<Integer> actualVars = sec.getVariation(part, partOrder);
+						for (int i = 0; i < numVars; i++) {
+							int varX = (int) (startX + ((moveX * i) + 1));
+							if (actualVars.contains(i)) {
+								g.drawLine(varX, 0, varX, 3);
+							}
 						}
 					}
+
 
 					g.setColor(Color.black);
 					g.drawLine((int) startX, 0, (int) startX, height);

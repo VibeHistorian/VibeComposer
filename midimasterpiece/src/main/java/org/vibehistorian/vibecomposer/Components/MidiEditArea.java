@@ -198,8 +198,7 @@ public class MidiEditArea extends JComponent {
 			// draw numbers left of Y line
 			// draw line marks
 
-			int partNum = (pop != null && pop.getParent() != null) ? pop.getParent().getPartNum()
-					: 0;
+			int partNum = (pop.getParent() != null) ? pop.getParent().getPartNum() : 0;
 
 			for (int i = 0; i < 1 + (max - min); i++) {
 
@@ -257,6 +256,19 @@ public class MidiEditArea extends JComponent {
 					}
 				}
 			}
+
+			// draw chord spacing
+			List<Double> chordSpacings = pop.getSec().getGeneratedDurations();
+			if (chordSpacings != null) {
+				g.setColor(OMNI.alphen(Color.green, VibeComposerGUI.isDarkMode ? 90 : 150));
+				double line = 0;
+				for (int i = 0; i < chordSpacings.size() - 1; i++) {
+					line += chordSpacings.get(i);
+					int drawX = bottomLeft.x + (int) (quarterNoteLength * line);
+					g.drawLine(drawX, bottomLeft.y, drawX, 0);
+				}
+			}
+
 
 			// draw actual values
 
