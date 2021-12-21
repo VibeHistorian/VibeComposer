@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -24,7 +25,7 @@ public class MultiValueEditArea extends JComponent {
 	int min = -10;
 	int max = 10;
 	List<Integer> values = null;
-	Map<Integer, List<Integer>> highlightedGrid = null;
+	Map<Integer, Set<Integer>> highlightedGrid = null;
 
 	int colStart = 2;
 	int rowStart = 1;
@@ -165,7 +166,7 @@ public class MultiValueEditArea extends JComponent {
 			// draw line helpers/dots
 			for (int i = 0; i < numValues; i++) {
 				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
-				List<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
+				Set<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
 				for (int j = 0; j < 1 + max - min; j++) {
 					boolean highlighted = helpers != null && helpers.contains((j + min + 700) % 7);
 					int drawDotY = bottomLeft.y - (int) (rowHeight * (j + 1));
@@ -231,11 +232,11 @@ public class MultiValueEditArea extends JComponent {
 		return orderValue;
 	}
 
-	public Map<Integer, List<Integer>> getHighlightedGrid() {
+	public Map<Integer, Set<Integer>> getHighlightedGrid() {
 		return highlightedGrid;
 	}
 
-	public void setHighlightedGrid(Map<Integer, List<Integer>> highlightedGrid) {
+	public void setHighlightedGrid(Map<Integer, Set<Integer>> highlightedGrid) {
 		this.highlightedGrid = highlightedGrid;
 	}
 

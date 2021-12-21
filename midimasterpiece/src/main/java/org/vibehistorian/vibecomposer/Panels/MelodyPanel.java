@@ -4,9 +4,7 @@ import java.awt.Color;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JCheckBox;
@@ -104,11 +102,13 @@ public class MelodyPanel extends InstPanel {
 			}
 
 			if (relatedSection == null) {
-				return getHighlightTargetsFromChords(MidiGenerator.chordInts);
+				return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, true);
 			} else {
-				return getHighlightTargetsFromChords(relatedSection.isCustomChordsDurationsEnabled()
-						? relatedSection.getCustomChordsList()
-						: MidiGenerator.chordInts);
+				return MidiUtils.getHighlightTargetsFromChords(
+						relatedSection.isCustomChordsDurationsEnabled()
+								? relatedSection.getCustomChordsList()
+								: MidiGenerator.chordInts,
+						true);
 			}
 
 		});
@@ -351,19 +351,6 @@ public class MelodyPanel extends InstPanel {
 
 	public RandomIntegerListButton getPatternStructureButton() {
 		return patternStructure;
-	}
-
-	public Map<Integer, List<Integer>> getHighlightTargetsFromChords(List<String> chords) {
-		Map<Integer, List<Integer>> map = new HashMap<>();
-		for (int i = 0; i < chords.size(); i++) {
-			List<Integer> mapped = MidiUtils.mappedChordList(chords.get(i), true);
-			mapped.removeIf(e -> !MidiUtils.MAJ_SCALE.contains(e));
-			for (int j = 0; j < mapped.size(); j++) {
-				mapped.set(j, MidiUtils.MAJ_SCALE.indexOf(mapped.get(j)));
-			}
-			map.put(i, mapped);
-		}
-		return map;
 	}
 
 	@Override

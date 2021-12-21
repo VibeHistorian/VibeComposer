@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.swing.JButton;
@@ -21,7 +22,7 @@ public class RandomIntegerListButton extends JButton {
 
 	private Function<? super Object, String> textGenerator = null;
 	Function<? super Object, List<Integer>> randGenerator = null;
-	Function<? super Object, Map<Integer, List<Integer>>> highlighterGenerator = null;
+	Function<? super Object, Map<Integer, Set<Integer>>> highlighterGenerator = null;
 	InstPanel parent = null;
 
 	public RandomIntegerListButton(String value, InstPanel parent) {
@@ -91,12 +92,12 @@ public class RandomIntegerListButton extends JButton {
 		randGenerator = rndGen;
 	}
 
-	public Function<? super Object, Map<Integer, List<Integer>>> getHighlighterGenerator() {
+	public Function<? super Object, Map<Integer, Set<Integer>>> getHighlighterGenerator() {
 		return highlighterGenerator;
 	}
 
 	public void setHighlighterGenerator(
-			Function<? super Object, Map<Integer, List<Integer>>> highlighterGenerator) {
+			Function<? super Object, Map<Integer, Set<Integer>>> highlighterGenerator) {
 		this.highlighterGenerator = highlighterGenerator;
 	}
 

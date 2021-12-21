@@ -645,7 +645,7 @@ public class MidiUtils {
 		return Arrays.copyOf(mappedChord, mappedChord.length);
 	}
 
-	public static List<Integer> mappedChordList(String chordString, boolean normalized) {
+	public static Set<Integer> mappedChordList(String chordString, boolean normalized) {
 		int[] chord = mappedChord(chordString);
 		if (chord == null) {
 			return null;
@@ -653,7 +653,7 @@ public class MidiUtils {
 			if (normalized) {
 				chord = normalizeChord(chord);
 			}
-			List<Integer> chordList = new ArrayList<>();
+			Set<Integer> chordList = new HashSet<>();
 			for (int num : chord) {
 				chordList.add(num);
 			}
@@ -1348,6 +1348,23 @@ public class MidiUtils {
 
 		}
 		return adjustedScale;
+	}
+
+
+	public static Map<Integer, Set<Integer>> getHighlightTargetsFromChords(List<String> chords,
+			boolean scaleOf7) {
+		Map<Integer, Set<Integer>> map = new HashMap<>();
+		for (int i = 0; i < chords.size(); i++) {
+			Set<Integer> mapped = MidiUtils.mappedChordList(chords.get(i), true);
+			mapped.removeIf(e -> !MidiUtils.MAJ_SCALE.contains(e));
+			if (scaleOf7) {
+				mapped = mapped.stream().map(e -> MidiUtils.MAJ_SCALE.indexOf(e))
+						.collect(Collectors.toSet());
+			}
+
+			map.put(i, mapped);
+		}
+		return map;
 	}
 
 }

@@ -10,6 +10,7 @@ import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
@@ -18,6 +19,7 @@ import javax.swing.SwingUtilities;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -31,7 +33,6 @@ public class MidiEditArea extends JComponent {
 	public int min = -10;
 	public int max = 10;
 	PhraseNotes values = null;
-	Map<Integer, List<Integer>> highlightedGrid = null;
 
 	int colStart = 0;
 	int rowStart = 0;
@@ -79,11 +80,18 @@ public class MidiEditArea extends JComponent {
 							orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
 							if (orderVal != null) {
 								PhraseNote pn = values.get(orderVal.x);
-								PhraseNote insertedPn = new PhraseNote(orderVal.y);
-								insertedPn.setDuration(pn.getDuration());
-								insertedPn.setRv(0);
-								values.add(orderVal.x, insertedPn);
-								draggedNote = insertedPn;
+								if (pn.getPitch() == Note.REST
+										&& pn.getRv() > MidiGenerator.DBL_ERR) {
+									pn.setOffset(0);
+									pn.setPitch(orderVal.y);
+									draggedNote = pn;
+								} else {
+									PhraseNote insertedPn = new PhraseNote(orderVal.y);
+									insertedPn.setDuration(0.5);
+									insertedPn.setRv(0);
+									values.add(orderVal.x, insertedPn);
+									draggedNote = insertedPn;
+								}
 								startingDuration = draggedNote.getDuration();
 								isDragging = true;
 								draggingDuration = true;
@@ -165,7 +173,11 @@ public class MidiEditArea extends JComponent {
 	}
 
 	void setVal(int pos, int val) {
-		values.get(pos).setPitch(val);
+		if (val == Note.REST && values.get(pos).getRv() < MidiGenerator.DBL_ERR) {
+			values.remove(pos);
+		} else {
+			values.get(pos).setPitch(val);
+		}
 	}
 
 	@Override
@@ -195,11 +207,33 @@ public class MidiEditArea extends JComponent {
 			double quarterNoteLength = (w - bottomLeft.x) / sectionLength;
 			values.remakeNoteStartTimes(false);
 
-			// draw numbers left of Y line
-			// draw line marks
-
 			int partNum = (pop.getParent() != null) ? pop.getParent().getPartNum() : 0;
 
+
+			// to draw scale/key helpers
+			Color highlightedScaleKeyColor = OMNI.alphen(VibeComposerGUI.uiColor(),
+					VibeComposerGUI.isDarkMode ? 65 : 90);
+			Color highlightedScaleKeyHelperColor = OMNI.alphen(highlightedScaleKeyColor, 40);
+			List<Integer> highlightedScaleKey = calculateHighlightedScaleKey(pop.getSec());
+			Color nonHighlightedColor = VibeComposerGUI.isDarkMode ? new Color(150, 100, 30, 65)
+					: new Color(150, 150, 150, 100);
+			Color nonHighlightedHelperColor = OMNI.alphen(nonHighlightedColor, 50);
+
+
+			List<Double> chordSpacings = pop.getSec().getGeneratedDurations();
+			Color highlightedChordNoteColor = VibeComposerGUI.isDarkMode
+					? new Color(220, 180, 150, 100)
+					: new Color(0, 0, 0, 150);
+			Color highlightedChordNoteHelperColor = OMNI.alphen(highlightedChordNoteColor, 60);
+			Map<Integer, Set<Integer>> chordHighlightedNotes = calculateHighlightedChords(
+					pop.getSec());
+
+			List<Integer> valueChordIndexes = values.stream().map(
+					e -> getChordIndexByStartTime(chordSpacings, e.getStartTime() + e.getOffset()))
+					.collect(Collectors.toList());
+
+			// draw numbers left of Y line
+			// draw line marks
 			for (int i = 0; i < 1 + (max - min); i++) {
 
 				String drawnValue = "" + (min + i) + " | "
@@ -210,7 +244,19 @@ public class MidiEditArea extends JComponent {
 				int drawMarkX = bottomLeft.x - markWidth / 2;
 				int drawY = bottomLeft.y - (int) (rowHeight * (i + 1));
 
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 40));
+				boolean highlighted = false;
+				if (pop.highlightMode.getSelectedIndex() % 2 == 1) {
+					// scalekey highlighting
+					if (highlightedScaleKey != null
+							&& highlightedScaleKey.contains((min + i + 1200) % 12)) {
+						g.setColor(highlightedScaleKeyColor);
+						highlighted = true;
+					}
+				}
+				if (!highlighted) {
+					g.setColor(nonHighlightedColor);
+				}
+
 				g.drawLine(bottomLeft.x, drawY, w, drawY);
 
 				g.setColor(VibeComposerGUI.uiColor());
@@ -235,37 +281,67 @@ public class MidiEditArea extends JComponent {
 
 
 			}
-			Color dotColor = OMNI.alphen(VibeComposerGUI.uiColor(), 80);
-			Color highlightedDotColor = new Color(220, 30, 50);
-			g.setColor(dotColor);
 
 			// draw line helpers/dots
-			for (int i = 0; i < numValues; i++) {
+			for (int i = 0; i < values.size(); i++) {
+				if (values.get(i).getRv() < MidiGenerator.DBL_ERR) {
+					continue;
+				}
 				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime());
-				List<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
 				for (int j = 0; j < 1 + max - min; j++) {
-					boolean highlighted = helpers != null && helpers.contains((j + min + 700) % 7);
 					int drawDotY = bottomLeft.y - (int) (rowHeight * (j + 1));
-					if (highlighted) {
-						g.setColor(highlightedDotColor);
-						g.drawLine(drawX - 1, drawDotY - 2, drawX + 1, drawDotY + 2);
-						g.drawLine(drawX + 1, drawDotY - 2, drawX - 1, drawDotY + 2);
-					} else {
-						g.setColor(dotColor);
-						g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
+					boolean highlighted = false;
+					/*if (pop.highlightMode.getSelectedIndex() % 2 == 1) {
+						// scalekey highlighting
+						if (highlightedScaleKey != null
+								&& highlightedScaleKey.contains((min + i + 1200) % 12)) {
+							g.setColor(highlightedScaleKeyHelperColor);
+							highlighted = true;
+						}
 					}
+					
+					if (pop.highlightMode.getSelectedIndex() >= 2) {
+						// chord highlighting
+						Set<Integer> chordNotes = chordHighlightedNotes
+								.get(valueChordIndexes.get(i));
+						if (chordNotes != null
+								&& chordNotes.contains((values.get(i).getPitch() + 1200) % 12)) {
+							g.setColor(highlightedChordNoteHelperColor);
+							highlighted = true;
+						}
+					}*/
+					g.setColor(highlightedScaleKeyHelperColor);
+					g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
 				}
 			}
 
 			// draw chord spacing
-			List<Double> chordSpacings = pop.getSec().getGeneratedDurations();
 			if (chordSpacings != null) {
-				g.setColor(OMNI.alphen(Color.green, VibeComposerGUI.isDarkMode ? 90 : 150));
+
 				double line = 0;
-				for (int i = 0; i < chordSpacings.size() - 1; i++) {
-					line += chordSpacings.get(i);
+				for (int i = 0; i < chordSpacings.size(); i++) {
+					g.setColor(
+							OMNI.alphen(VibeComposerGUI.isDarkMode ? Color.green : Color.red, 90));
 					int drawX = bottomLeft.x + (int) (quarterNoteLength * line);
-					g.drawLine(drawX, bottomLeft.y, drawX, 0);
+					// vertical separators
+					if (i > 0) {
+						g.drawLine(drawX, bottomLeft.y, drawX, 0);
+					}
+
+					Set<Integer> chordNotes = chordHighlightedNotes.get(i);
+					if (pop.highlightMode.getSelectedIndex() >= 2 && chordNotes != null) {
+						// horizontal helper lines
+						int drawXEnd = drawX + (int) (quarterNoteLength * chordSpacings.get(i));
+						g.setColor(highlightedChordNoteColor);
+						for (int j = 0; j < 1 + (max - min); j++) {
+							if (chordNotes.contains((min + j + 1200) % 12)) {
+								int drawY = bottomLeft.y - (int) (rowHeight * (j + 1));
+								g.drawLine(drawX, drawY, drawXEnd, drawY);
+							}
+						}
+					}
+
+					line += chordSpacings.get(i);
 				}
 			}
 
@@ -309,6 +385,35 @@ public class MidiEditArea extends JComponent {
 		}
 	}
 
+	private int getChordIndexByStartTime(List<Double> chordLengths, double noteStartTime) {
+		double chordLengthSum = 0;
+		for (int i = 0; i < chordLengths.size(); i++) {
+			chordLengthSum += chordLengths.get(i);
+			if (noteStartTime < chordLengthSum) {
+				return i;
+			}
+		}
+		return chordLengths.size() - 1;
+	}
+
+	public static List<Integer> calculateHighlightedScaleKey(Section sec) {
+		return MidiUtils.MAJ_SCALE;
+	}
+
+	public static Map<Integer, Set<Integer>> calculateHighlightedChords(Section sec) {
+		if (MidiGenerator.chordInts.isEmpty()) {
+			return null;
+		}
+
+		if (sec == null) {
+			return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, false);
+		} else {
+			return MidiUtils.getHighlightTargetsFromChords(
+					sec.isCustomChordsDurationsEnabled() ? sec.getCustomChordsList()
+							: MidiGenerator.chordInts,
+					false);
+		}
+	}
 
 	public PhraseNotes getValues() {
 		return values;
@@ -455,14 +560,6 @@ public class MidiEditArea extends JComponent {
 		//LG.d("Order Value: " + orderValue.toString());
 
 		return orderValue;
-	}
-
-	public Map<Integer, List<Integer>> getHighlightedGrid() {
-		return highlightedGrid;
-	}
-
-	public void setHighlightedGrid(Map<Integer, List<Integer>> highlightedGrid) {
-		this.highlightedGrid = highlightedGrid;
 	}
 
 	public MidiEditPopup getPop() {

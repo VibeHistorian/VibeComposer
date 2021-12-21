@@ -2,6 +2,8 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
@@ -16,7 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
@@ -26,9 +30,12 @@ public class MidiEditPopup extends CloseablePopup {
 	InstPanel parent = null;
 	JTextField text = null;
 	Section sec = null;
+	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
+	public CheckButton snapToScaleGrid = new CheckButton("Snap to Highlighted: ", true);
 
 	public int part = 0;
 	public int partOrder = 0;
+	public static int highlightModeChoice = 0;
 
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
@@ -38,6 +45,19 @@ public class MidiEditPopup extends CloseablePopup {
 		partOrder = secPartOrder;
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 		values.setCustom(true);
+
+		ScrollComboBox.addAll(
+				new String[] { "No Highlight", "Scale/Key", "Chords", "Scale/Key and Chords" },
+				highlightMode);
+		highlightMode.setSelectedIndex(highlightModeChoice);
+		highlightMode.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				highlightModeChoice = highlightMode.getSelectedIndex();
+				mvea.repaint();
+			}
+		});
 
 		int vmin = -10;
 		int vmax = 10;
@@ -180,6 +200,9 @@ public class MidiEditPopup extends CloseablePopup {
 				}
 			}
 		}));
+
+		textPanel.add(snapToScaleGrid);
+		textPanel.add(highlightMode);
 
 		allPanels.add(buttonPanel);
 		allPanels.add(textPanel);
