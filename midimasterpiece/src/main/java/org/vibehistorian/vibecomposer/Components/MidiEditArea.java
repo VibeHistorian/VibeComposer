@@ -83,7 +83,7 @@ public class MidiEditArea extends JComponent {
 								if (pn.getPitch() == Note.REST
 										&& pn.getRv() > MidiGenerator.DBL_ERR) {
 									pn.setOffset(0);
-									pn.setPitch(orderVal.y);
+									setVal(orderVal.x, orderVal.y);
 									draggedNote = pn;
 								} else {
 									PhraseNote insertedPn = new PhraseNote(orderVal.y);
@@ -172,11 +172,18 @@ public class MidiEditArea extends JComponent {
 		}
 	}
 
-	void setVal(int pos, int val) {
-		if (val == Note.REST && values.get(pos).getRv() < MidiGenerator.DBL_ERR) {
+	void setVal(int pos, int pitch) {
+		if (pitch == Note.REST && values.get(pos).getRv() < MidiGenerator.DBL_ERR) {
 			values.remove(pos);
 		} else {
-			values.get(pos).setPitch(val);
+			if (pop.snapToScaleGrid.isSelected()) {
+				int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
+						pitch % 12);
+
+				values.get(pos).setPitch(12 * (pitch / 12) + closestNormalized);
+			} else {
+				values.get(pos).setPitch(pitch);
+			}
 		}
 	}
 
@@ -460,8 +467,7 @@ public class MidiEditArea extends JComponent {
 			return 0;
 		}
 		values.remakeNoteStartTimes(true);
-		int draggedIndex = values.indexOf(draggedNote);
-		double startTime = values.get(draggedIndex).getStartTime();
+		double startTime = draggedNote.getStartTime();
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 
@@ -476,8 +482,7 @@ public class MidiEditArea extends JComponent {
 			return 0;
 		}
 		values.remakeNoteStartTimes(true);
-		int draggedIndex = values.indexOf(draggedNote);
-		double startTime = values.get(draggedIndex).getStartTime();
+		double startTime = draggedNote.getStartTime();
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 

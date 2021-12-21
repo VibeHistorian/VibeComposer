@@ -11,11 +11,13 @@ import java.util.List;
 import java.util.Random;
 
 import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
@@ -31,7 +33,9 @@ public class MidiEditPopup extends CloseablePopup {
 	JTextField text = null;
 	Section sec = null;
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
-	public CheckButton snapToScaleGrid = new CheckButton("Snap to Highlighted: ", true);
+	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", true);
+
+	public static final int baseMargin = 10;
 
 	public int part = 0;
 	public int partOrder = 0;
@@ -59,8 +63,8 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 		});
 
-		int vmin = -10;
-		int vmax = 10;
+		int vmin = -1 * baseMargin;
+		int vmax = baseMargin;
 		if (!values.isEmpty()) {
 			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.min().getAsInt();
@@ -155,7 +159,16 @@ public class MidiEditPopup extends CloseablePopup {
 				Random rnd = new Random();
 				for (int i = 0; i < size; i++) {
 					if (mvea.getValues().get(i).getPitch() >= 0) {
-						mvea.getValues().get(i).setPitch(rnd.nextInt(max - min + 1) + min);
+						int pitch = rnd.nextInt(max - min + 1 - baseMargin * 2) + min + baseMargin;
+						if (snapToScaleGrid.isSelected()) {
+							int closestNormalized = MidiUtils
+									.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12);
+
+							mvea.getValues().get(i).setPitch(12 * (pitch / 12) + closestNormalized);
+						} else {
+							mvea.getValues().get(i).setPitch(pitch);
+						}
+
 					}
 				}
 			}
@@ -202,6 +215,7 @@ public class MidiEditPopup extends CloseablePopup {
 		}));
 
 		textPanel.add(snapToScaleGrid);
+		textPanel.add(new JLabel("Highlight Mode:"));
 		textPanel.add(highlightMode);
 
 		allPanels.add(buttonPanel);
@@ -216,14 +230,15 @@ public class MidiEditPopup extends CloseablePopup {
 		if (!sec.containsPhrase(part, partOrder)) {
 			close();
 			VibeComposerGUI.currentMidiEditorPopup = null;
+			LG.i("MidiEditPopup cannot be setup - section doesn't contain the part/partOrder!");
 			return;
 		}
 
 		setSec(sec);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 
-		int vmin = -10;
-		int vmax = 10;
+		int vmin = -1 * baseMargin;
+		int vmax = baseMargin;
 		if (!values.isEmpty()) {
 			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.min().getAsInt();
