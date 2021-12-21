@@ -71,11 +71,11 @@ public class MidiEditPopup extends CloseablePopup {
 		int max = vmax;
 		mvea = new MidiEditArea(min, max, values);
 		mvea.setPop(this);
-		mvea.setPreferredSize(new Dimension(1500, 500));
+		mvea.setPreferredSize(new Dimension(1500, 600));
 
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
-		allPanels.setMaximumSize(new Dimension(1500, 600));
+		allPanels.setMaximumSize(new Dimension(1500, 700));
 
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
@@ -166,8 +166,8 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
 
 		JPanel mveaPanel = new JPanel();
-		mveaPanel.setPreferredSize(new Dimension(1500, 500));
-		mveaPanel.setMinimumSize(new Dimension(1500, 500));
+		mveaPanel.setPreferredSize(new Dimension(1500, 600));
+		mveaPanel.setMinimumSize(new Dimension(1500, 600));
 		mveaPanel.add(mvea);
 
 		JPanel textPanel = new JPanel();
