@@ -1356,8 +1356,8 @@ public class MidiUtils {
 		Map<Integer, Set<Integer>> map = new HashMap<>();
 		for (int i = 0; i < chords.size(); i++) {
 			Set<Integer> mapped = MidiUtils.mappedChordList(chords.get(i), true);
-			mapped.removeIf(e -> !MidiUtils.MAJ_SCALE.contains(e));
 			if (scaleOf7) {
+				mapped.removeIf(e -> !MidiUtils.MAJ_SCALE.contains(e));
 				mapped = mapped.stream().map(e -> MidiUtils.MAJ_SCALE.indexOf(e))
 						.collect(Collectors.toSet());
 			}

@@ -341,7 +341,9 @@ public class MidiEditArea extends JComponent {
 						int drawXEnd = drawX + (int) (quarterNoteLength * chordSpacings.get(i));
 						g.setColor(highlightedChordNoteColor);
 						for (int j = 0; j < 1 + (max - min); j++) {
-							if (chordNotes.contains((min + j + 1200) % 12)) {
+							int noteTest = (min + j + 1200) % 12;
+							if (chordNotes.contains(noteTest)) {
+								g.setColor(highlightedChordNoteColor);
 								int drawY = bottomLeft.y - (int) (rowHeight * (j + 1));
 								g.drawLine(drawX, drawY, drawXEnd, drawY);
 							}
@@ -412,13 +414,10 @@ public class MidiEditArea extends JComponent {
 			return null;
 		}
 
-		if (sec == null) {
+		if (sec == null || !sec.isCustomChordsDurationsEnabled()) {
 			return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, false);
 		} else {
-			return MidiUtils.getHighlightTargetsFromChords(
-					sec.isCustomChordsDurationsEnabled() ? sec.getCustomChordsList()
-							: MidiGenerator.chordInts,
-					false);
+			return MidiUtils.getHighlightTargetsFromChords(sec.getCustomChordsList(), false);
 		}
 	}
 
