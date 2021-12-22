@@ -13,7 +13,7 @@ public abstract class CloseablePopup {
 	final JFrame frame = new JFrame();
 	public static Map<Integer, CloseablePopup> currentPopupMap = new HashMap<>();
 	private Integer popupType = 0;
-	// 13 current max
+	// 14 current max
 
 	public CloseablePopup(String windowTitle, Integer popupType) {
 		this(windowTitle, popupType, new Point(0, 0));

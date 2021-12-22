@@ -4877,7 +4877,7 @@ public class VibeComposerGUI extends JFrame
 		}*/
 
 
-		if (currentMidiEditorPopup != null) {
+		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
 			if (actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
 				currentMidiEditorPopup.close();
 				currentMidiEditorPopup = null;
@@ -4885,6 +4885,8 @@ public class VibeComposerGUI extends JFrame
 				currentMidiEditorPopup
 						.setup(actualArrangement.getSections().get(currentMidiEditorSectionIndex));
 			}
+		} else {
+			LG.d("No midi editor is open!");
 		}
 	}
 

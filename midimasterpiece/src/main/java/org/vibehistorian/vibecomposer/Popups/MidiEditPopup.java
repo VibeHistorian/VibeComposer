@@ -229,7 +229,6 @@ public class MidiEditPopup extends CloseablePopup {
 	public void setup(Section sec) {
 		if (!sec.containsPhrase(part, partOrder)) {
 			close();
-			VibeComposerGUI.currentMidiEditorPopup = null;
 			LG.i("MidiEditPopup cannot be setup - section doesn't contain the part/partOrder!");
 			return;
 		}
@@ -280,8 +279,6 @@ public class MidiEditPopup extends CloseablePopup {
 				if (parent != null) {
 					//parent.setPhraseNotes(mvea.getValues());
 				}
-				VibeComposerGUI.currentMidiEditorPopup = null;
-				VibeComposerGUI.currentMidiEditorSectionIndex = 0;
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {
 						RandomValueButton.singlePopup = null;
