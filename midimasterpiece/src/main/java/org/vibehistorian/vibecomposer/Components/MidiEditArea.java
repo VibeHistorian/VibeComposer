@@ -54,11 +54,11 @@ public class MidiEditArea extends JComponent {
 
 	MidiEditPopup pop = null;
 
-	public MidiEditArea(int min, int max, PhraseNotes values) {
+	public MidiEditArea(int min, int max, PhraseNotes vals) {
 		super();
 		this.min = min;
 		this.max = max;
-		this.values = values;
+		values = vals;
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
@@ -81,7 +81,7 @@ public class MidiEditArea extends JComponent {
 							// get order in note rhythm 
 							orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
 							if (orderVal != null) {
-								PhraseNote pn = values.get(orderVal.x);
+								PhraseNote pn = getValues().get(orderVal.x);
 								if (pn.getPitch() == Note.REST
 										&& pn.getRv() > MidiGenerator.DBL_ERR) {
 
@@ -94,7 +94,7 @@ public class MidiEditArea extends JComponent {
 									PhraseNote insertedPn = new PhraseNote(orderVal.y);
 									insertedPn.setDuration(0.5);
 									insertedPn.setRv(0);
-									values.add(orderVal.x, insertedPn);
+									getValues().add(orderVal.x, insertedPn);
 									draggedNote = insertedPn;
 								}
 								startingDuration = draggedNote.getDuration();
@@ -131,11 +131,7 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				isDragging = false;
-				draggedNote = null;
-				draggingPosition = false;
-				draggingDuration = false;
-				startingOffset = 0;
+				reset();
 			}
 		});
 
@@ -152,6 +148,15 @@ public class MidiEditArea extends JComponent {
 			}
 
 		});
+	}
+
+	private void reset() {
+		isDragging = false;
+		draggedNote = null;
+		draggingPosition = false;
+		draggingDuration = false;
+		startingOffset = 0;
+		dragX = null;
 	}
 
 	protected void processDragEvent(MouseEvent e) {

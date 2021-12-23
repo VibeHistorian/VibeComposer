@@ -958,7 +958,9 @@ public class Section {
 			partPhraseNotes.add(new PartPhraseNotes(null, partPhraseNotes.size()));
 		}
 		while (partPhraseNotes.get(part).size() <= partOrder) {
-			partPhraseNotes.get(part).add(null);
+			PhraseNotes pn2 = new PhraseNotes();
+			pn2.setPartOrder(partPhraseNotes.get(part).size());
+			partPhraseNotes.get(part).add(pn2);
 		}
 		partPhraseNotes.get(part).set(partOrder, pn);
 	}
