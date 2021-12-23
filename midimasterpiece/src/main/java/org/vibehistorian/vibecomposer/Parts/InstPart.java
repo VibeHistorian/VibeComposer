@@ -26,6 +26,7 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlList;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -393,6 +394,12 @@ public abstract class InstPart implements Cloneable {
 	public static List<? extends InstPart> sortParts(List<? extends InstPart> parts) {
 		Collections.sort(parts, (e1, e2) -> (Integer.compare(e1.getOrder(), e2.getOrder())));
 		return parts;
+	}
+
+	public abstract int getPartNum();
+
+	public int getAbsoluteOrder() {
+		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getOrder());
 	}
 
 }

@@ -59,7 +59,7 @@ import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
-import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -577,7 +577,7 @@ public class MidiGenerator implements JMC {
 			alternateChords = StringUtils.join(chordStrings, ",");
 		}
 		if (genVars && variations != null) {
-			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
+			sec.setVariation(0, mp.getAbsoluteOrder(), variations);
 		}
 		return noteList;
 	}
@@ -1353,7 +1353,7 @@ public class MidiGenerator implements JMC {
 
 		}
 		if (genVars && variations != null) {
-			sec.setVariation(0, getAbsoluteOrder(0, mp), variations);
+			sec.setVariation(0, mp.getAbsoluteOrder(), variations);
 		}
 		return noteList;
 	}
@@ -1479,7 +1479,7 @@ public class MidiGenerator implements JMC {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
-		List<Integer> melodyVars = sec.getVariation(0, getAbsoluteOrder(0, mp));
+		List<Integer> melodyVars = sec.getVariation(0, mp.getAbsoluteOrder());
 
 		int orderSeed = mp.getPatternSeedWithPartOffset() + mp.getOrder();
 		int seed = mp.getPatternSeedWithPartOffset();
@@ -3065,7 +3065,6 @@ public class MidiGenerator implements JMC {
 				.filter(e -> !e.isMuted()).findFirst();
 
 		for (Section sec : arr.getSections()) {
-			sec.storePhraseNotesList(new PartPhraseNotes(sec.getMelodies(), 0));
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
@@ -3080,19 +3079,16 @@ public class MidiGenerator implements JMC {
 
 				}
 			}
-			sec.storePhraseNotesList(new PartPhraseNotes(sec.getBasses(), 1));
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
 				bassParts.get(i).addPhrase(bp);
 			}
-			sec.storePhraseNotesList(new PartPhraseNotes(sec.getChords(), 2));
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
 				Phrase cp = sec.getChords().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
 				chordParts.get(i).addPhrase(cp);
 			}
-			sec.storePhraseNotesList(new PartPhraseNotes(sec.getArps(), 3));
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
 				Phrase cp = sec.getArps().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
@@ -3101,7 +3097,6 @@ public class MidiGenerator implements JMC {
 
 			Optional<DrumPart> firstPresentDrumPart = gc.getDrumParts().stream()
 					.filter(e -> !e.isMuted()).findFirst();
-			sec.storePhraseNotesList(new PartPhraseNotes(sec.getDrums(), 4));
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
@@ -3877,25 +3872,25 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	protected Phrase fillMelodyFromPart(MelodyPart mp, List<int[]> actualProgression,
+	protected Phrase fillMelodyFromPart(MelodyPart ip, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int measures, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
-		Phrase melodyPhrase = new Phrase();
+		Phrase phr = new Phrase();
 		Vector<Note> skeletonNotes = null;
 		if (userMelody != null) {
 			skeletonNotes = userMelody.copy().getNoteList();
 		} else {
 			if (false) {
 				LG.i("OLD MELODY ALGO");
-				skeletonNotes = generateMelodySkeletonFromChords(mp, actualProgression,
+				skeletonNotes = generateMelodySkeletonFromChords(ip, actualProgression,
 						generatedRootProgression, measures, notesSeedOffset, sec, variations);
 			} else {
-				skeletonNotes = generateMelodyBlockSkeletonFromChords(mp, actualProgression,
+				skeletonNotes = generateMelodyBlockSkeletonFromChords(ip, actualProgression,
 						generatedRootProgression, measures, notesSeedOffset, sec, variations);
 			}
 
 		}
-		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(mp,
+		Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(ip,
 				progressionDurations, sec, skeletonNotes, notesSeedOffset, actualProgression,
 				measures);
 
@@ -3915,7 +3910,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (mp.getOrder() == 1) {
+		if (ip.getOrder() == 1) {
 			List<Integer> notePattern = new ArrayList<>();
 			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
 			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
@@ -3926,40 +3921,34 @@ public class MidiGenerator implements JMC {
 		Vector<Note> noteList = new Vector<>();
 		fullMelodyMap.keySet().forEach(e -> noteList.addAll(fullMelodyMap.get(e)));
 
-		if (sec.getPartPhraseNotes().size() > 1
-				&& sec.getPartPhraseNotes().get(0).get(mp.getOrder() - 1).isCustom()) {
-			melodyPhrase.addNoteList(sec.getPartPhraseNotes().get(0).get(mp.getOrder() - 1)
-					.makePhrase().getNoteList(), true);
-			LG.i("Overwritten!");
-		} else {
-			melodyPhrase.addNoteList(noteList, true);
-			swingPhrase(melodyPhrase, mp.getSwingPercent(), Durations.QUARTER_NOTE);
+		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
+			phr.addNoteList(noteList, true);
+			addPhraseNotesToSection(sec, ip, noteList);
+			swingPhrase(phr, ip.getSwingPercent(), Durations.QUARTER_NOTE);
 
-			applyNoteLengthMultiplier(melodyPhrase.getNoteList(), mp.getNoteLengthMultiplier());
-			processSectionTransition(sec, melodyPhrase.getNoteList(),
+			applyNoteLengthMultiplier(phr.getNoteList(), ip.getNoteLengthMultiplier());
+			processSectionTransition(sec, phr.getNoteList(),
 					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
 		}
 
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(melodyPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
 		if (modTrans != 0) {
-			Mod.transpose(melodyPhrase, modTrans);
+			Mod.transpose(phr, modTrans);
 		}
 
 		double additionalDelay = 0;
-		if (mp.getDelay() != 0) {
-			additionalDelay = (mp.getDelay() / 1000.0);
+		if (ip.getDelay() != 0) {
+			additionalDelay = (ip.getDelay() / 1000.0);
 		}
-		melodyPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
-		return melodyPhrase;
+		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+		return phr;
 	}
 
-
-	protected Phrase fillBassFromPart(BassPart bp, List<int[]> generatedRootProgression,
+	protected Phrase fillBassFromPart(BassPart ip, List<int[]> generatedRootProgression,
 			int measures, Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
@@ -3970,12 +3959,12 @@ public class MidiGenerator implements JMC {
 
 		int[] durationWeights = new int[] { 5, 25, 45, 55, 75, 85, 95, 100 };
 
-		int seed = bp.getPatternSeedWithPartOffset();
+		int seed = ip.getPatternSeedWithPartOffset();
 
-		Phrase bassPhrase = new Phrase();
+		Phrase phr = new Phrase();
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(1) : 100;
-		int minVel = multiplyVelocity(bp.getVelocityMin(), volMultiplier, 0, 1);
-		int maxVel = multiplyVelocity(bp.getVelocityMax(), volMultiplier, 1, 0);
+		int minVel = multiplyVelocity(ip.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(ip.getVelocityMax(), volMultiplier, 1, 0);
 		Random rhythmPauseGenerator = new Random(seed + sec.getTypeMelodyOffset());
 		Random noteVariationGenerator = new Random(seed + sec.getTypeMelodyOffset() + 2);
 
@@ -4001,23 +3990,23 @@ public class MidiGenerator implements JMC {
 
 
 		List<Integer> bassVelocityPattern = new ArrayList<>();
-		if (bp.getCustomVelocities() != null
-				&& bp.getCustomVelocities().size() >= bp.getHitsPerPattern()) {
+		if (ip.getCustomVelocities() != null
+				&& ip.getCustomVelocities().size() >= ip.getHitsPerPattern()) {
 			int multiplier = gc.isScaleMidiVelocityInArrangement() ? sec.getVol(3) : 100;
-			for (int k = 0; k < bp.getHitsPerPattern(); k++) {
+			for (int k = 0; k < ip.getHitsPerPattern(); k++) {
 				bassVelocityPattern
-						.add(multiplyVelocity(bp.getCustomVelocities().get(k), multiplier, 0, 1));
+						.add(multiplyVelocity(ip.getCustomVelocities().get(k), multiplier, 0, 1));
 			}
-			bassVelocityPattern = MidiUtils.intersperse(null, bp.getChordSpan() - 1,
+			bassVelocityPattern = MidiUtils.intersperse(null, ip.getChordSpan() - 1,
 					bassVelocityPattern);
 		}
 
 
-		Random bassDynamics = new Random(bp.getPatternSeedWithPartOffset());
+		Random bassDynamics = new Random(ip.getPatternSeedWithPartOffset());
 		boolean rhythmPauses = false;
 		double maxDur = progressionDurations.stream().mapToDouble(e -> e).sum();
-		List<Integer> fillPattern = bp.getChordSpanFill()
-				.getPatternByLength(progressionDurations.size(), bp.isFillFlip());
+		List<Integer> fillPattern = ip.getChordSpanFill()
+				.getPatternByLength(progressionDurations.size(), ip.isFillFlip());
 		//LG.d("Bass fill pattern:" + StringUtils.join(fillPattern, ", "));
 		for (int i = 0; i < measures; i++) {
 			int extraSeed = 0;
@@ -4025,10 +4014,10 @@ public class MidiGenerator implements JMC {
 			int chordSpanPart = 0;
 			int skipNotes = 0;
 
-			bassDynamics.setSeed(bp.getPatternSeedWithPartOffset());
+			bassDynamics.setSeed(ip.getPatternSeedWithPartOffset());
 			for (int chordIndex = 0; chordIndex < squishedChords.size(); chordIndex++) {
 				if (genVars && (chordIndex == 0) && sec.getTypeMelodyOffset() > 0) {
-					variations = fillVariations(sec, bp, variations, 1);
+					variations = fillVariations(sec, ip, variations, 1);
 				}
 				double halfDurMulti = (chordIndex >= (squishedChords.size() + 1) / 2
 						&& sec.getTransitionType() == 4) ? 2.0 : 1.0;
@@ -4054,14 +4043,13 @@ public class MidiGenerator implements JMC {
 
 				if (fillPattern.get(chordIndex) < 1) {
 					skipNotes = 0;
-					chordSpanPart = (chordSpanPart + 1) % bp.getChordSpan();
-					bassPhrase.addNote(
-							new Note(Integer.MIN_VALUE, progressionDurations.get(chordIndex)));
+					chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
+					phr.addNote(new Note(Integer.MIN_VALUE, progressionDurations.get(chordIndex)));
 					continue;
 				}
 				int velSpace = maxVel - minVel;
 
-				if (bp.isAlternatingRhythm()) {
+				if (ip.isAlternatingRhythm()) {
 					int counter = 0;
 					int seedCopy = seed + extraSeed + (chordIndex % 2);
 					Rhythm bassRhythm = new Rhythm(seedCopy, progressionDurations.get(chordIndex),
@@ -4074,9 +4062,9 @@ public class MidiGenerator implements JMC {
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
 						int noteVaryChance = sec.isTransition()
-								? adjustChanceParamForTransition(bp.getNoteVariation(), sec,
+								? adjustChanceParamForTransition(ip.getNoteVariation(), sec,
 										chordIndex, squishedChords.size(), 40, 0.25, false)
-								: bp.getNoteVariation();
+								: ip.getNoteVariation();
 						if (counter > 0 && dur < (Durations.QUARTER_NOTE + DBL_ERR)
 								&& noteVariationGenerator.nextInt(100) < noteVaryChance
 								&& squishedChords.get(chordIndex).length > 1) {
@@ -4090,37 +4078,37 @@ public class MidiGenerator implements JMC {
 
 						int velocity = bassDynamics.nextInt(velSpace) + minVel;
 
-						bassPhrase.addNote(new Note(pitch, dur, velocity));
+						phr.addNote(new Note(pitch, dur, velocity));
 						counter++;
 					}
 				} else {
 					List<Integer> pattern = null;
 					List<Integer> nextPattern = null;
 					List<Integer> velocityPattern = null;
-					PatternJoinMode joinMode = bp.getPatternJoinMode();
+					PatternJoinMode joinMode = ip.getPatternJoinMode();
 					int stretchedByNote = (joinMode == PatternJoinMode.JOIN) ? 1 : 0;
-					if (bp.getPattern() == RhythmPattern.MELODY1 && melodyNotePatternMap != null) {
+					if (ip.getPattern() == RhythmPattern.MELODY1 && melodyNotePatternMap != null) {
 						pattern = new ArrayList<>(melodyNotePatternMap.get(chordIndex));
 					} else {
-						List<Integer> patternCopy = bp.getFinalPatternCopy();
-						List<Integer> patternSub = patternCopy.subList(0, bp.getHitsPerPattern());
+						List<Integer> patternCopy = ip.getFinalPatternCopy();
+						List<Integer> patternSub = patternCopy.subList(0, ip.getHitsPerPattern());
 
-						pattern = MidiUtils.intersperse(-1, bp.getChordSpan() - 1, patternSub);
-						pattern = partOfListClean(chordSpanPart, bp.getChordSpan(), pattern);
-						if (bp.getChordSpan() > 1 && joinMode != PatternJoinMode.NOJOIN) {
-							if (chordSpanPart < bp.getChordSpan() - 1) {
-								nextPattern = MidiUtils.intersperse(-1, bp.getChordSpan() - 1,
+						pattern = MidiUtils.intersperse(-1, ip.getChordSpan() - 1, patternSub);
+						pattern = partOfListClean(chordSpanPart, ip.getChordSpan(), pattern);
+						if (ip.getChordSpan() > 1 && joinMode != PatternJoinMode.NOJOIN) {
+							if (chordSpanPart < ip.getChordSpan() - 1) {
+								nextPattern = MidiUtils.intersperse(-1, ip.getChordSpan() - 1,
 										patternSub);
-								nextPattern = partOfListClean(chordSpanPart + 1, bp.getChordSpan(),
+								nextPattern = partOfListClean(chordSpanPart + 1, ip.getChordSpan(),
 										nextPattern);
 							}
 						}
 						velocityPattern = !bassVelocityPattern.isEmpty()
-								? partOfList(chordSpanPart, bp.getChordSpan(), bassVelocityPattern)
+								? partOfList(chordSpanPart, ip.getChordSpan(), bassVelocityPattern)
 								: null;
 					}
 
-					if (bp.isPatternFlip()) {
+					if (ip.isPatternFlip()) {
 						for (int p = 0; p < pattern.size(); p++) {
 							if (pattern.get(p) >= 0) {
 								pattern.set(p, 1 - pattern.get(p));
@@ -4128,7 +4116,7 @@ public class MidiGenerator implements JMC {
 						}
 					}
 
-					double duration = (bp.getPattern() == RhythmPattern.MELODY1
+					double duration = (ip.getPattern() == RhythmPattern.MELODY1
 							&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 									: Durations.WHOLE_NOTE / pattern.size();
 					duration *= halfDurMulti;
@@ -4180,7 +4168,7 @@ public class MidiGenerator implements JMC {
 							}
 						}
 
-						if (nextP >= pattern.size() && bp.getChordSpan() > 1
+						if (nextP >= pattern.size() && ip.getChordSpan() > 1
 								&& nextPattern != null) {
 							skipNotes = countStartingValueInList(stretchedByNote, nextPattern);
 							durMultiplier += skipNotes;
@@ -4193,9 +4181,9 @@ public class MidiGenerator implements JMC {
 							int randomNote = 0;
 							// note variation for short notes, low chance, only after first
 							int noteVaryChance = sec.isTransition()
-									? adjustChanceParamForTransition(bp.getNoteVariation(), sec,
+									? adjustChanceParamForTransition(ip.getNoteVariation(), sec,
 											chordIndex, squishedChords.size(), 40, 0.25, false)
-									: bp.getNoteVariation();
+									: ip.getNoteVariation();
 							if (p > 0 && finalDuration < (Durations.QUARTER_NOTE + DBL_ERR)
 									&& noteVariationGenerator.nextInt(100) < noteVaryChance
 									&& squishedChords.get(chordIndex).length > 1) {
@@ -4208,79 +4196,82 @@ public class MidiGenerator implements JMC {
 						}
 						Note n = new Note(pitch, duration, velocity);
 						n.setDuration(finalDuration * DEFAULT_DURATION_MULTIPLIER);
-						bassPhrase.addNote(n);
+						phr.addNote(n);
 
 						durationNow += duration;
 						p = (p + 1) % pattern.size();
 					}
-					chordSpanPart = (chordSpanPart + 1) % bp.getChordSpan();
+					chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
 				}
 			}
 		}
+
+		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
+			addPhraseNotesToSection(sec, ip, phr.getNoteList());
+		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(bassPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		Mod.transpose(bassPhrase, -24 + bp.getTranspose() + modTrans);
+		Mod.transpose(phr, -24 + ip.getTranspose() + modTrans);
 		double additionalDelay = 0;
-		if (bp.getDelay() != 0) {
-			additionalDelay = (bp.getDelay() / 1000.0);
+		if (ip.getDelay() != 0) {
+			additionalDelay = (ip.getDelay() / 1000.0);
 		}
-		bassPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
+		phr.setStartTime(START_TIME_DELAY + additionalDelay);
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
 		}
-		return bassPhrase;
+		return phr;
 
 	}
 
-	protected Phrase fillChordsFromPart(ChordPart cp, List<int[]> actualProgression, int measures,
+	protected Phrase fillChordsFromPart(ChordPart ip, List<int[]> actualProgression, int measures,
 			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
 
-		int orderSeed = cp.getPatternSeedWithPartOffset() + cp.getOrder();
+		int orderSeed = ip.getPatternSeedWithPartOffset() + ip.getOrder();
 		Phrase phr = new Phrase();
 		List<Chord> chords = new ArrayList<>();
 		Random variationGenerator = new Random(
-				gc.getArrangement().getSeed() + cp.getOrder() + sec.getTypeSeedOffset());
+				gc.getArrangement().getSeed() + ip.getOrder() + sec.getTypeSeedOffset());
 		Random flamGenerator = new Random(orderSeed + 30);
 		// chord strum
 		double flamming = 0.0;
 		if (gc.getChordGenSettings().isUseStrum()) {
 
-			if (cp.getStrum() == 666) {
+			if (ip.getStrum() == 666) {
 				flamming = noteMultiplier * 0.6666666666666;
-			} else if (cp.getStrum() == 333) {
+			} else if (ip.getStrum() == 333) {
 				flamming = noteMultiplier * 0.3333333333333;
-			} else if (cp.getStrum() == 31) {
+			} else if (ip.getStrum() == 31) {
 				flamming = noteMultiplier * 0.03125;
-			} else if (cp.getStrum() == 62) {
+			} else if (ip.getStrum() == 62) {
 				flamming = noteMultiplier * 0.0625;
 			} else {
-				flamming = (noteMultiplier * (double) cp.getStrum()) / 1000.0;
+				flamming = (noteMultiplier * (double) ip.getStrum()) / 1000.0;
 			}
 			//LG.d("Chord strum CUSTOM! " + cp.getStrum() + ", flamming: " + flamming);
 		}
 
 
-		int stretch = cp.getChordNotesStretch();
-		List<Integer> fillPattern = cp.getChordSpanFill()
-				.getPatternByLength(actualProgression.size(), cp.isFillFlip());
+		int stretch = ip.getChordNotesStretch();
+		List<Integer> fillPattern = ip.getChordSpanFill()
+				.getPatternByLength(actualProgression.size(), ip.isFillFlip());
 
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(2) : 100;
-		int minVel = multiplyVelocity(cp.getVelocityMin(), volMultiplier, 0, 1);
-		int maxVel = multiplyVelocity(cp.getVelocityMax(), volMultiplier, 1, 0);
+		int minVel = multiplyVelocity(ip.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(ip.getVelocityMax(), volMultiplier, 1, 0);
 
 		List<Integer> chordVelocityPattern = new ArrayList<>();
-		if (cp.getCustomVelocities() != null
-				&& cp.getCustomVelocities().size() >= cp.getHitsPerPattern()) {
+		if (ip.getCustomVelocities() != null
+				&& ip.getCustomVelocities().size() >= ip.getHitsPerPattern()) {
 			int multiplier = gc.isScaleMidiVelocityInArrangement() ? sec.getVol(3) : 100;
-			for (int k = 0; k < cp.getHitsPerPattern(); k++) {
+			for (int k = 0; k < ip.getHitsPerPattern(); k++) {
 				chordVelocityPattern
-						.add(multiplyVelocity(cp.getCustomVelocities().get(k), multiplier, 0, 1));
+						.add(multiplyVelocity(ip.getCustomVelocities().get(k), multiplier, 0, 1));
 			}
-			chordVelocityPattern = MidiUtils.intersperse(null, cp.getChordSpan() - 1,
+			chordVelocityPattern = MidiUtils.intersperse(null, ip.getChordSpan() - 1,
 					chordVelocityPattern);
 		}
 
@@ -4294,7 +4285,7 @@ public class MidiGenerator implements JMC {
 			// fill chords
 			for (int chordIndex = 0; chordIndex < actualProgression.size(); chordIndex++) {
 				if (genVars && (chordIndex == 0)) {
-					variations = fillVariations(sec, cp, variations, 2);
+					variations = fillVariations(sec, ip, variations, 2);
 				}
 
 				double halfDurMulti = (chordIndex >= (actualProgression.size() + 1) / 2
@@ -4323,7 +4314,7 @@ public class MidiGenerator implements JMC {
 							skipSecondNote = true;
 							break;
 						case 4:
-							switch (cp.getStrumType()) {
+							switch (ip.getStrumType()) {
 							case ARP_D:
 								flamming = Durations.EIGHTH_NOTE;
 								break;
@@ -4365,10 +4356,10 @@ public class MidiGenerator implements JMC {
 				Chord c = Chord.EMPTY(progressionDurations.get(chordIndex));
 
 				Random velocityGenerator = new Random(orderSeed + chordIndex);
-				c.setStrumType(cp.getStrumType());
+				c.setStrumType(ip.getStrumType());
 
-				boolean transition = transitionGenerator.nextInt(100) < cp.getTransitionChance();
-				int transChord = (transitionGenerator.nextInt(100) < cp.getTransitionChance())
+				boolean transition = transitionGenerator.nextInt(100) < ip.getTransitionChance();
+				int transChord = (transitionGenerator.nextInt(100) < ip.getTransitionChance())
 						? (chordIndex + 1) % actualProgression.size()
 						: chordIndex;
 
@@ -4376,12 +4367,12 @@ public class MidiGenerator implements JMC {
 					if (fillPattern.get(chordIndex) < 1) {
 						chords.add(c);
 						skipNotes = 0;
-						chordSpanPart = (chordSpanPart + 1) % cp.getChordSpan();
+						chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
 						continue;
 					}
 				}
 
-				c.setDurationRatio((cp.getNoteLengthMultiplier() / 100.0) / halfDurMulti);
+				c.setDurationRatio((ip.getNoteLengthMultiplier() / 100.0) / halfDurMulti);
 
 				int[] mainChordNotes = actualProgression.get(chordIndex);
 				int[] transChordNotes = actualProgression.get(transChord);
@@ -4414,7 +4405,7 @@ public class MidiGenerator implements JMC {
 				boolean stretchOverride = (sec.isTransition()
 						&& chordIndex >= actualProgression.size() - 2);
 
-				if (stretchOverride || cp.isStretchEnabled()) {
+				if (stretchOverride || ip.isStretchEnabled()) {
 					Integer stretchAmount = (stretchOverride)
 							? (sec.getTransitionType() == 1 || sec.getTransitionType() == 4 ? 7 : 2)
 							: stretch;
@@ -4430,43 +4421,43 @@ public class MidiGenerator implements JMC {
 
 				// for transition:
 				double splitTime = progressionDurations.get(chordIndex)
-						* (gc.getChordGenSettings().isUseSplit() ? cp.getTransitionSplit()
+						* (gc.getChordGenSettings().isUseSplit() ? ip.getTransitionSplit()
 								: DEFAULT_CHORD_SPLIT)
 						/ 1000.0;
 				//LG.d("Split time: " + splitTime);
-				PatternJoinMode joinMode = cp.getPatternJoinMode();
+				PatternJoinMode joinMode = ip.getPatternJoinMode();
 				int stretchedByNote = (joinMode == PatternJoinMode.JOIN) ? 1 : 0;
 
 				List<Integer> pattern = null;
 				List<Integer> nextPattern = null;
 				List<Integer> velocityPattern = null;
-				if (cp.getPattern() == RhythmPattern.MELODY1 && melodyNotePatternMap != null) {
+				if (ip.getPattern() == RhythmPattern.MELODY1 && melodyNotePatternMap != null) {
 					pattern = new ArrayList<>(melodyNotePatternMap.get(chordIndex));
 				} else {
-					List<Integer> patternCopy = cp.getFinalPatternCopy();
-					List<Integer> patternSub = patternCopy.subList(0, cp.getHitsPerPattern());
-					pattern = MidiUtils.intersperse(-1, cp.getChordSpan() - 1, patternSub);
-					pattern = partOfListClean(chordSpanPart, cp.getChordSpan(), pattern);
-					if (cp.getChordSpan() > 1 && joinMode != PatternJoinMode.NOJOIN) {
-						if (chordSpanPart < cp.getChordSpan() - 1) {
-							nextPattern = MidiUtils.intersperse(-1, cp.getChordSpan() - 1,
+					List<Integer> patternCopy = ip.getFinalPatternCopy();
+					List<Integer> patternSub = patternCopy.subList(0, ip.getHitsPerPattern());
+					pattern = MidiUtils.intersperse(-1, ip.getChordSpan() - 1, patternSub);
+					pattern = partOfListClean(chordSpanPart, ip.getChordSpan(), pattern);
+					if (ip.getChordSpan() > 1 && joinMode != PatternJoinMode.NOJOIN) {
+						if (chordSpanPart < ip.getChordSpan() - 1) {
+							nextPattern = MidiUtils.intersperse(-1, ip.getChordSpan() - 1,
 									patternSub);
-							nextPattern = partOfListClean(chordSpanPart + 1, cp.getChordSpan(),
+							nextPattern = partOfListClean(chordSpanPart + 1, ip.getChordSpan(),
 									nextPattern);
 						}
 					}
 					velocityPattern = !chordVelocityPattern.isEmpty()
-							? partOfList(chordSpanPart, cp.getChordSpan(), chordVelocityPattern)
+							? partOfList(chordSpanPart, ip.getChordSpan(), chordVelocityPattern)
 							: null;
 				}
-				if (cp.isPatternFlip()) {
+				if (ip.isPatternFlip()) {
 					for (int p = 0; p < pattern.size(); p++) {
 						if (pattern.get(p) >= 0) {
 							pattern.set(p, 1 - pattern.get(p));
 						}
 					}
 				}
-				double duration = (cp.getPattern() == RhythmPattern.MELODY1
+				double duration = (ip.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 								: Durations.WHOLE_NOTE / pattern.size();
 				duration *= halfDurMulti;
@@ -4520,12 +4511,12 @@ public class MidiGenerator implements JMC {
 					joinApplicable &= (joinMode != PatternJoinMode.NOJOIN);
 					//LG.d("Dur multiplier be4: " + durMultiplier);
 					// chord to spill by 15%
-					double durationCapMax = (cp.getStrum() > 750) ? 1.15 : 5.00;
+					double durationCapMax = (ip.getStrum() > 750) ? 1.15 : 5.00;
 					double durationCap = durationCapMax
 							* (progressionDurations.get(chordIndex) - durationNow);
 					double durationRatioCap = durationCap / cC.getRhythmValue();
 
-					if (nextP >= pattern.size() && cp.getChordSpan() > 1 && nextPattern != null) {
+					if (nextP >= pattern.size() && ip.getChordSpan() > 1 && nextPattern != null) {
 						skipNotes = countStartingValueInList(stretchedByNote, nextPattern);
 						durMultiplier += skipNotes;
 						//LG.d("CHORD Dur multiplier added: " + durMultiplier);
@@ -4540,12 +4531,15 @@ public class MidiGenerator implements JMC {
 					durationNow += duration;
 					p = (p + 1) % pattern.size();
 				}
-				chordSpanPart = (chordSpanPart + 1) % cp.getChordSpan();
+				chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
 			}
 		}
-		MidiUtils.addChordsToPhrase(phr, chords, flamming);
+		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
+			MidiUtils.addChordsToPhrase(phr, chords, flamming);
+			addPhraseNotesToSection(sec, ip, phr.getNoteList());
+		}
 		// transpose
-		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? cp.getTranspose() : 0;
+		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? ip.getTranspose() : 0;
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
@@ -4559,13 +4553,13 @@ public class MidiGenerator implements JMC {
 		// delay
 		double additionalDelay = 0;
 		if (gc.getChordGenSettings().isUseDelay()) {
-			additionalDelay = ((noteMultiplier * cp.getDelay()) / 1000.0);
+			additionalDelay = ((noteMultiplier * ip.getDelay()) / 1000.0);
 		}
 		phr.setStartTime(START_TIME_DELAY + additionalDelay);
 
 
 		if (genVars && variations != null) {
-			sec.setVariation(2, getAbsoluteOrder(2, cp), variations);
+			sec.setVariation(2, ip.getAbsoluteOrder(), variations);
 		}
 		return phr;
 	}
@@ -4582,29 +4576,29 @@ public class MidiGenerator implements JMC {
 		return counter;
 	}
 
-	protected Phrase fillArpFromPart(ArpPart ap, List<int[]> actualProgression, int measures,
+	protected Phrase fillArpFromPart(ArpPart ip, List<int[]> actualProgression, int measures,
 			Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
-		Phrase arpPhrase = new Phrase();
+		Phrase phr = new Phrase();
 
-		ArpPart apClone = (ArpPart) ap.clone();
-		int seed = ap.getPatternSeedWithPartOffset();
-		Map<String, List<Integer>> arpMap = generateArpMap(seed, ap.equals(gc.getArpParts().get(0)),
-				ap);
+		ArpPart apClone = (ArpPart) ip.clone();
+		int seed = ip.getPatternSeedWithPartOffset();
+		Map<String, List<Integer>> arpMap = generateArpMap(seed, ip.equals(gc.getArpParts().get(0)),
+				ip);
 
 		List<Integer> arpPattern = arpMap.get(ARP_PATTERN_KEY);
 		List<Integer> arpOctavePattern = arpMap.get(ARP_OCTAVE_KEY);
 		List<Integer> arpPausesPattern = arpMap.get(ARP_PAUSES_KEY);
 
 		List<Integer> arpVelocityPattern = new ArrayList<>();
-		if (ap.getCustomVelocities() != null
-				&& ap.getCustomVelocities().size() >= ap.getHitsPerPattern()) {
+		if (ip.getCustomVelocities() != null
+				&& ip.getCustomVelocities().size() >= ip.getHitsPerPattern()) {
 			int multiplier = gc.isScaleMidiVelocityInArrangement() ? sec.getVol(3) : 100;
-			for (int k = 0; k < ap.getHitsPerPattern(); k++) {
+			for (int k = 0; k < ip.getHitsPerPattern(); k++) {
 				arpVelocityPattern
-						.add(multiplyVelocity(ap.getCustomVelocities().get(k), multiplier, 0, 1));
+						.add(multiplyVelocity(ip.getCustomVelocities().get(k), multiplier, 0, 1));
 			}
-			arpVelocityPattern = MidiUtils.intersperse(null, ap.getChordSpan() - 1,
+			arpVelocityPattern = MidiUtils.intersperse(null, ip.getChordSpan() - 1,
 					arpVelocityPattern);
 		}
 
@@ -4612,7 +4606,7 @@ public class MidiGenerator implements JMC {
 
 
 		// TODO: divide
-		int repeatedArpsPerChord = ap.getHitsPerPattern() * ap.getPatternRepeat();
+		int repeatedArpsPerChord = ip.getHitsPerPattern() * ip.getPatternRepeat();
 		int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
 				? gc.getMaxArpSwing()
 				: 50;
@@ -4622,12 +4616,12 @@ public class MidiGenerator implements JMC {
 		}*/
 
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(3) : 100;
-		int minVel = multiplyVelocity(ap.getVelocityMin(), volMultiplier, 0, 1);
-		int maxVel = multiplyVelocity(ap.getVelocityMax(), volMultiplier, 1, 0);
+		int minVel = multiplyVelocity(ip.getVelocityMin(), volMultiplier, 0, 1);
+		int maxVel = multiplyVelocity(ip.getVelocityMax(), volMultiplier, 1, 0);
 
 		boolean fillLastBeat = false;
-		List<Integer> fillPattern = ap.getChordSpanFill()
-				.getPatternByLength(actualProgression.size(), ap.isFillFlip());
+		List<Integer> fillPattern = ip.getChordSpanFill()
+				.getPatternByLength(actualProgression.size(), ip.isFillFlip());
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
 			int extraTranspose = 0;
@@ -4641,7 +4635,7 @@ public class MidiGenerator implements JMC {
 					List<Double> chanceMultipliers = sec.isTransition()
 							? Arrays.asList(new Double[] { 1.0, 1.0, 1.0, 2.0, 1.0 })
 							: null;
-					variations = fillVariations(sec, ap, variations, 3, chanceMultipliers);
+					variations = fillVariations(sec, ip, variations, 3, chanceMultipliers);
 				}
 
 				double halfDurMulti = (chordIndex >= (actualProgression.size() + 1) / 2
@@ -4678,21 +4672,21 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				double chordDurationArp = (ap.getPattern() == RhythmPattern.MELODY1
+				double chordDurationArp = (ip.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 								: Durations.WHOLE_NOTE / ((double) repeatedArpsPerChord);
 				int[] chord = convertChordToLength(actualProgression.get(chordIndex),
-						ap.getChordNotesStretch(), ap.isStretchEnabled());
+						ip.getChordNotesStretch(), ip.isStretchEnabled());
 				if (directions != null) {
 					ArpPattern pat = (directions.get(chordIndex)) ? ArpPattern.UP : ArpPattern.DOWN;
-					arpPattern = pat.getPatternByLength(ap.getHitsPerPattern(), chord.length,
-							ap.getPatternRepeat(), ap.getArpPatternRotate());
-					arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
+					arpPattern = pat.getPatternByLength(ip.getHitsPerPattern(), chord.length,
+							ip.getPatternRepeat(), ip.getArpPatternRotate());
+					arpPattern = MidiUtils.intersperse(0, ip.getChordSpan() - 1, arpPattern);
 				} else {
-					if (ap.getArpPattern() != ArpPattern.RANDOM) {
-						arpPattern = ap.getArpPattern().getPatternByLength(ap.getHitsPerPattern(),
-								chord.length, ap.getPatternRepeat(), ap.getArpPatternRotate());
-						arpPattern = MidiUtils.intersperse(0, ap.getChordSpan() - 1, arpPattern);
+					if (ip.getArpPattern() != ArpPattern.RANDOM) {
+						arpPattern = ip.getArpPattern().getPatternByLength(ip.getHitsPerPattern(),
+								chord.length, ip.getPatternRepeat(), ip.getArpPatternRotate());
+						arpPattern = MidiUtils.intersperse(0, ip.getChordSpan() - 1, arpPattern);
 					}
 				}
 				chordDurationArp *= halfDurMulti;
@@ -4702,16 +4696,16 @@ public class MidiGenerator implements JMC {
 				if (chordIndex % 2 == 0) {
 					exceptionGenerator.setSeed(seed + 1);
 				}
-				List<Integer> pitchPatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
+				List<Integer> pitchPatternSpanned = partOfList(chordSpanPart, ip.getChordSpan(),
 						arpPattern);
-				List<Integer> octavePatternSpanned = partOfList(chordSpanPart, ap.getChordSpan(),
+				List<Integer> octavePatternSpanned = partOfList(chordSpanPart, ip.getChordSpan(),
 						arpOctavePattern);
-				List<Integer> pausePatternSpanned = (ap.getPattern() == RhythmPattern.MELODY1
+				List<Integer> pausePatternSpanned = (ip.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null)
 								? new ArrayList<>(melodyNotePatternMap.get(chordIndex))
-								: partOfList(chordSpanPart, ap.getChordSpan(), arpPausesPattern);
+								: partOfList(chordSpanPart, ip.getChordSpan(), arpPausesPattern);
 				List<Integer> velocityPatternSpanned = !arpVelocityPattern.isEmpty()
-						? partOfList(chordSpanPart, ap.getChordSpan(), arpVelocityPattern)
+						? partOfList(chordSpanPart, ip.getChordSpan(), arpVelocityPattern)
 						: null;
 
 
@@ -4732,7 +4726,7 @@ public class MidiGenerator implements JMC {
 					}
 
 					boolean isPause = pausePatternSpanned.get(p % pausePatternSpanned.size()) == 0;
-					if (ap.isPatternFlip()) {
+					if (ip.isPatternFlip()) {
 						isPause = !isPause;
 					}
 
@@ -4755,93 +4749,97 @@ public class MidiGenerator implements JMC {
 							pitch = Integer.MIN_VALUE;
 						}
 					}
-					if (exceptionGenerator.nextInt(100) < ap.getExceptionChance()) {
+					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance()) {
 						double splitDuration = usedDuration / 2;
-						arpPhrase.addNote(new Note(pitch, splitDuration, velocity));
-						arpPhrase.addNote(new Note(pitch, splitDuration, velocity - 15));
+						phr.addNote(new Note(pitch, splitDuration, velocity));
+						phr.addNote(new Note(pitch, splitDuration, velocity - 15));
 					} else {
-						arpPhrase.addNote(new Note(pitch, usedDuration, velocity));
+						phr.addNote(new Note(pitch, usedDuration, velocity));
 					}
 					durationNow += usedDuration;
 					p = (p + 1) % repeatedArpsPerChord;
 				}
 
 				chordSpanPart++;
-				if (chordSpanPart >= ap.getChordSpan()) {
+				if (chordSpanPart >= ip.getChordSpan()) {
 					chordSpanPart = 0;
 				}
 			}
 		}
-		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ap.getTranspose() : 0;
+
+		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
+			addPhraseNotesToSection(sec, ip, phr.getNoteList());
+		}
+
+		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ip.getTranspose() : 0;
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(arpPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		Mod.transpose(arpPhrase, -24 + extraTranspose + modTrans);
+		Mod.transpose(phr, -24 + extraTranspose + modTrans);
 
-		applyNoteLengthMultiplier(arpPhrase.getNoteList(), ap.getNoteLengthMultiplier());
-		processSectionTransition(sec, arpPhrase.getNoteList(),
+		applyNoteLengthMultiplier(phr.getNoteList(), ip.getNoteLengthMultiplier());
+		processSectionTransition(sec, phr.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
-		swingPhrase(arpPhrase, swingPercentAmount, Durations.QUARTER_NOTE);
+		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
 
 		if (genVars && variations != null) {
-			sec.setVariation(3, getAbsoluteOrder(3, ap), variations);
+			sec.setVariation(3, ip.getAbsoluteOrder(), variations);
 		}
 		if (fillLastBeat) {
-			Mod.crescendo(arpPhrase, arpPhrase.getEndTime() * 3 / 4, arpPhrase.getEndTime(),
-					Math.max(minVel, 55), Math.max(maxVel, 110));
+			Mod.crescendo(phr, phr.getEndTime() * 3 / 4, phr.getEndTime(), Math.max(minVel, 55),
+					Math.max(maxVel, 110));
 		}
-		ap.setPatternShift(apClone.getPatternShift());
+		ip.setPatternShift(apClone.getPatternShift());
 		//dp.setVelocityPattern(false);
-		ap.setChordSpan(apClone.getChordSpan());
-		ap.setHitsPerPattern(apClone.getHitsPerPattern());
-		ap.setPatternRepeat(apClone.getPatternRepeat());
+		ip.setChordSpan(apClone.getChordSpan());
+		ip.setHitsPerPattern(apClone.getHitsPerPattern());
+		ip.setPatternRepeat(apClone.getPatternRepeat());
 		double additionalDelay = 0;
-		if (ap.getDelay() != 0) {
-			additionalDelay = (ap.getDelay() / 1000.0);
+		if (ip.getDelay() != 0) {
+			additionalDelay = (ip.getDelay() / 1000.0);
 		}
-		arpPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
-		return arpPhrase;
+		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+		return phr;
 	}
 
 
-	protected Phrase fillDrumsFromPart(DrumPart dp, List<int[]> actualProgression, int measures,
+	protected Phrase fillDrumsFromPart(DrumPart ip, List<int[]> actualProgression, int measures,
 			boolean sectionForcedDynamics, Section sec, List<Integer> variations) {
 		boolean genVars = variations == null;
-		Phrase drumPhrase = new Phrase();
+		Phrase phr = new Phrase();
 
-		DrumPart dpClone = (DrumPart) dp.clone();
-		boolean kicky = dp.getInstrument() < 38;
-		boolean aboveSnarey = dp.getInstrument() > 40;
+		DrumPart dpClone = (DrumPart) ip.clone();
+		boolean kicky = ip.getInstrument() < 38;
+		boolean aboveSnarey = ip.getInstrument() > 40;
 		sectionForcedDynamics &= (kicky || aboveSnarey);
 
 		int chordsCount = actualProgression.size();
 
-		List<Integer> drumPattern = generateDrumPatternFromPart(dp);
+		List<Integer> drumPattern = generateDrumPatternFromPart(ip);
 
-		if (!dp.isVelocityPattern() && drumPattern.indexOf(dp.getInstrument()) == -1) {
+		if (!ip.isVelocityPattern() && drumPattern.indexOf(ip.getInstrument()) == -1) {
 			//drumPhrase.addNote(new Note(Integer.MIN_VALUE, patternDurationTotal, 100));
-			drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
-			return drumPhrase;
+			phr.setStartTime(START_TIME_DELAY + ((noteMultiplier * ip.getDelay()) / 1000.0));
+			return phr;
 		}
 
-		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(sec, dp);
+		List<Integer> drumVelocityPattern = generateDrumVelocityPatternFromPart(sec, ip);
 
 		Random drumFillGenerator = new Random(
-				dp.getPatternSeedWithPartOffset() + dp.getOrder() + sec.getTypeMelodyOffset());
+				ip.getPatternSeedWithPartOffset() + ip.getOrder() + sec.getTypeMelodyOffset());
 		// bar iter
-		int hits = dp.getHitsPerPattern();
-		int swingPercentAmount = (hits % 2 == 0) ? dp.getSwingPercent() : 50;
+		int hits = ip.getHitsPerPattern();
+		int swingPercentAmount = (hits % 2 == 0) ? ip.getSwingPercent() : 50;
 
-		List<Integer> fillPattern = dp.getChordSpanFill()
-				.getPatternByLength(actualProgression.size(), dp.isFillFlip());
+		List<Integer> fillPattern = ip.getChordSpanFill()
+				.getPatternByLength(actualProgression.size(), ip.isFillFlip());
 
 		for (int o = 0; o < measures; o++) {
 			// exceptions are generated the same for each bar, but differently for each pattern within bar (if there is more than 1)
 			Random exceptionGenerator = new Random(
-					dp.getPatternSeedWithPartOffset() + dp.getOrder());
-			int chordSpan = dp.getChordSpan();
+					ip.getPatternSeedWithPartOffset() + ip.getOrder());
+			int chordSpan = ip.getChordSpan();
 			int oneChordPatternSize = drumPattern.size() / chordSpan;
 			boolean ignoreChordSpanFill = false;
 			int extraExceptionChance = 0;
@@ -4853,7 +4851,7 @@ public class MidiGenerator implements JMC {
 					List<Double> chanceMultipliers = sec.isTransition()
 							? Arrays.asList(new Double[] { 1.0, 1.0, 2.0 })
 							: null;
-					variations = fillVariations(sec, dp, variations, 4, chanceMultipliers);
+					variations = fillVariations(sec, ip, variations, 4, chanceMultipliers);
 				}
 
 				double halfDurMulti = (chordIndex >= (chordsCount + 1) / 2
@@ -4871,8 +4869,8 @@ public class MidiGenerator implements JMC {
 							break;
 						case 1:
 							extraExceptionChance = (kicky || aboveSnarey)
-									? dp.getExceptionChance() + 10
-									: dp.getExceptionChance();
+									? ip.getExceptionChance() + 10
+									: ip.getExceptionChance();
 							break;
 						case 2:
 							drumFill = (kicky || aboveSnarey);
@@ -4890,7 +4888,7 @@ public class MidiGenerator implements JMC {
 							: 0.0;
 				}
 
-				double drumDuration = (dp.getPattern() == RhythmPattern.MELODY1
+				double drumDuration = (ip.getPattern() == RhythmPattern.MELODY1
 						&& melodyNotePatternMap != null) ? Durations.SIXTEENTH_NOTE
 								: Durations.WHOLE_NOTE * chordSpan / hits;
 				drumDuration *= halfDurMulti;
@@ -4900,9 +4898,9 @@ public class MidiGenerator implements JMC {
 					int drum = drumPattern.get(k);
 					int velocity = drumVelocityPattern.get(k);
 					int pitch = (drum >= 0) ? drum : Integer.MIN_VALUE;
-					if (drum < 0 && (dp.isVelocityPattern() || (o > 0 && sectionForcedDynamics))) {
+					if (drum < 0 && (ip.isVelocityPattern() || (o > 0 && sectionForcedDynamics))) {
 						velocity = (velocity * 5) / 10;
-						pitch = dp.getInstrument();
+						pitch = ip.getInstrument();
 					}
 					int chordNumAdd = 0;
 					double durationNowCheck = durationNow + DBL_ERR
@@ -4930,16 +4928,16 @@ public class MidiGenerator implements JMC {
 						usedDrumDuration *= 2;
 						drumFillExceptionChance = 60;
 
-						int drumFillUnpauseChance = dp.getInstrument() < 46 ? 20 : 10;
+						int drumFillUnpauseChance = ip.getInstrument() < 46 ? 20 : 10;
 						if (pitch < 0 && drumFillGenerator.nextInt(100) < drumFillUnpauseChance) {
-							pitch = dp.getInstrument();
+							pitch = ip.getInstrument();
 						}
 
 					}
 					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
 						pitch = mapDrumPitchByCustomMapping(pitch, true);
 					}
-					boolean exception = exceptionGenerator.nextInt(100) < (dp.getExceptionChance()
+					boolean exception = exceptionGenerator.nextInt(100) < (ip.getExceptionChance()
 							+ extraExceptionChance + drumFillExceptionChance);
 
 					if (durationNow + usedDrumDuration - DBL_ERR > patternDurationTotal) {
@@ -4955,12 +4953,12 @@ public class MidiGenerator implements JMC {
 						Note n2 = new Note(pitch, usedDrumDuration / 2, secondVelocity);
 						n1.setDuration(0.5 * n1.getRhythmValue());
 						n2.setDuration(0.5 * n2.getRhythmValue());
-						drumPhrase.addNote(n1);
-						drumPhrase.addNote(n2);
+						phr.addNote(n1);
+						phr.addNote(n2);
 					} else {
 						Note n1 = new Note(pitch, usedDrumDuration, velocity);
 						n1.setDuration(0.5 * n1.getRhythmValue());
-						drumPhrase.addNote(n1);
+						phr.addNote(n1);
 					}
 					durationNow += usedDrumDuration;
 					k = (k + 1) % drumPattern.size();
@@ -4968,19 +4966,44 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		if (genVars && variations != null) {
-			sec.setVariation(4, getAbsoluteOrder(4, dp), variations);
+			sec.setVariation(4, ip.getAbsoluteOrder(), variations);
 		}
 
-		processSectionTransition(sec, drumPhrase.getNoteList(),
+		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
+			addPhraseNotesToSection(sec, ip, phr.getNoteList());
+		}
+
+		processSectionTransition(sec, phr.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.15, 0.9);
 
-		swingPhrase(drumPhrase, swingPercentAmount, Durations.QUARTER_NOTE);
-		drumPhrase.setStartTime(START_TIME_DELAY + ((noteMultiplier * dp.getDelay()) / 1000.0));
-		dp.setHitsPerPattern(dpClone.getHitsPerPattern());
-		dp.setPatternShift(dpClone.getPatternShift());
-		dp.setChordSpan(dpClone.getChordSpan());
-		return drumPhrase;
+		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
+		phr.setStartTime(START_TIME_DELAY + ((noteMultiplier * ip.getDelay()) / 1000.0));
+		ip.setHitsPerPattern(dpClone.getHitsPerPattern());
+		ip.setPatternShift(dpClone.getPatternShift());
+		ip.setChordSpan(dpClone.getChordSpan());
+		return phr;
 
+	}
+
+	private boolean overwriteWithCustomSectionMidi(Section sec, Phrase phr, InstPart ip) {
+		PhraseNotes pn = sec.getPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder());
+		if (pn != null && pn.isCustom()) {
+			phr.setNoteList(pn.makePhrase().getNoteList());
+
+			LG.i("Overwritten with custom MIDI: " + ip.getPartNum() + ", " + ip.getAbsoluteOrder());
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+	private void addPhraseNotesToSection(Section sec, InstPart ip, List<Note> noteList) {
+		int absOrder = ip.getAbsoluteOrder();
+		PhraseNotes pn = new PhraseNotes(noteList);
+		pn.setPartOrder(absOrder);
+		pn.setCustom(false);
+		sec.addPhraseNotes(ip.getPartNum(), absOrder, pn);
 	}
 
 	private List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
@@ -5065,10 +5088,6 @@ public class MidiGenerator implements JMC {
 		}
 
 		return customMappingNumbers.get(defaultIndex);
-	}
-
-	public static int getAbsoluteOrder(int partNum, InstPart part) {
-		return VibeComposerGUI.getAbsoluteOrder(partNum, part.getOrder());
 	}
 
 	protected Phrase fillChordSlash(List<int[]> actualProgression, int measures) {

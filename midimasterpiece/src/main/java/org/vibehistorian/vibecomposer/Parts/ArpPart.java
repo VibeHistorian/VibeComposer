@@ -35,4 +35,7 @@ public class ArpPart extends InstPart {
 		this.arpPatternRotate = arpPatternRotate;
 	}
 
+	public int getPartNum() {
+		return 3;
+	};
 }

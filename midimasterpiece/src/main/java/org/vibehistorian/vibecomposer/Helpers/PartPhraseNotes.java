@@ -31,11 +31,14 @@ public class PartPhraseNotes extends ArrayList<PhraseNotes> {
 		this();
 
 		int counter = 0;
-		for (Phrase phr : phrases) {
-			PhraseNotes pn = new PhraseNotes(phr);
-			pn.setPartOrder(counter++);
-			add(pn);
+		if (phrases != null) {
+			for (Phrase phr : phrases) {
+				PhraseNotes pn = new PhraseNotes(phr);
+				pn.setPartOrder(counter++);
+				add(pn);
+			}
 		}
+
 	}
 
 	public PartPhraseNotes(List<PhraseNotes> phraseNotes, Boolean foo) {

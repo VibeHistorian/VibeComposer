@@ -236,8 +236,8 @@ public class MidiEditPopup extends CloseablePopup {
 		setSec(sec);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 
-		int vmin = -1 * baseMargin;
-		int vmax = baseMargin;
+		int vmin = 0;
+		int vmax = 0;
 		if (!values.isEmpty()) {
 			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.min().getAsInt();

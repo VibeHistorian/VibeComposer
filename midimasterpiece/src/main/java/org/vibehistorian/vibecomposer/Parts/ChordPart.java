@@ -79,4 +79,8 @@ public class ChordPart extends InstPart {
 		this.strumType = strumType;
 	}
 
+
+	public int getPartNum() {
+		return 2;
+	};
 }

@@ -122,4 +122,7 @@ public class MelodyPart extends InstPart {
 		this.speed = speed;
 	}
 
+	public int getPartNum() {
+		return 0;
+	};
 }

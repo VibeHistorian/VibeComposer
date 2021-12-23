@@ -953,6 +953,16 @@ public class Section {
 		return partPhraseNotes;
 	}
 
+	public void addPhraseNotes(int part, int partOrder, PhraseNotes pn) {
+		while (partPhraseNotes.size() <= part) {
+			partPhraseNotes.add(new PartPhraseNotes(null, partPhraseNotes.size()));
+		}
+		while (partPhraseNotes.get(part).size() <= partOrder) {
+			partPhraseNotes.get(part).add(null);
+		}
+		partPhraseNotes.get(part).set(partOrder, pn);
+	}
+
 	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
 		if (partPhraseNotes == null) {
 			return;
@@ -993,6 +1003,13 @@ public class Section {
 	public boolean containsPhrase(int part, int partOrder) {
 		return getPartPhraseNotes() != null && getPartPhraseNotes().size() > part
 				&& getPartPhraseNotes().get(part).size() > partOrder;
+	}
+
+	public PhraseNotes getPhraseNotes(int part, int partOrder) {
+		if (!containsPhrase(part, partOrder)) {
+			return null;
+		}
+		return partPhraseNotes.get(part).get(partOrder);
 	}
 
 	public List<Double> getGeneratedSectionBeatDurations() {

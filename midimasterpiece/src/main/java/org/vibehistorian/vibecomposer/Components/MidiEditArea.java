@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
@@ -74,7 +75,8 @@ public class MidiEditArea extends JComponent {
 						}
 					} else {
 						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-						if (orderVal == null || values.get(orderVal.x).getPitch() != orderVal.y) {
+						PhraseNote pnDragged = getDraggedNote(evt.getPoint());
+						if (pnDragged == null) {
 							// mouse click doesn't overlap with existing note
 							// get order in note rhythm 
 							orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
@@ -82,10 +84,13 @@ public class MidiEditArea extends JComponent {
 								PhraseNote pn = values.get(orderVal.x);
 								if (pn.getPitch() == Note.REST
 										&& pn.getRv() > MidiGenerator.DBL_ERR) {
+
+									LG.d("UnRESTing existing original note..");
 									pn.setOffset(0);
 									setVal(orderVal.x, orderVal.y);
 									draggedNote = pn;
 								} else {
+									LG.d("Inserting new note..");
 									PhraseNote insertedPn = new PhraseNote(orderVal.y);
 									insertedPn.setDuration(0.5);
 									insertedPn.setRv(0);
@@ -99,7 +104,8 @@ public class MidiEditArea extends JComponent {
 								repaint();
 							}
 						} else {
-							draggedNote = getDraggedNote(evt.getPoint());
+							LG.d("Duration-dragging existing note..");
+							draggedNote = pnDragged;
 							startingDuration = draggedNote.getDuration();
 							isDragging = true;
 							draggingDuration = true;
