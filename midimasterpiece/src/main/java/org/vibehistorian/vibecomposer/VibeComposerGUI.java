@@ -2956,24 +2956,27 @@ public class VibeComposerGUI extends JFrame
 						manualArrangement.repaint();
 						scrollableArrangementActualTable.repaint();
 					} else {
-						Section sec = actualArrangement.getSections().get(secOrder);
-						boolean hasSinglePresence = sec.getPresence(part)
-								.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
-						if (hasSinglePresence && sec.getPartPhraseNotes() != null
-								&& part < sec.getPartPhraseNotes().size()
-								&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
-							MidiEditPopup mep = new MidiEditPopup(sec, part, partAbsoluteOrder);
-							mep.setSec(sec);
-							currentMidiEditorPopup = mep;
-							currentMidiEditorSectionIndex = secOrder;
+						if (evt.isControlDown()) {
+							if (secOrder + 1 < arrSection.getItemCount()) {
+								arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
+								arrSection.repaint();
+								instrumentTabPane.setSelectedIndex(part);
+								switchTabPaneAfterApply = true;
+							}
+						} else {
+							Section sec = actualArrangement.getSections().get(secOrder);
+							boolean hasSinglePresence = sec.getPresence(part).contains(
+									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+							if (hasSinglePresence && sec.getPartPhraseNotes() != null
+									&& part < sec.getPartPhraseNotes().size()
+									&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part)
+											.size()) {
+								MidiEditPopup mep = new MidiEditPopup(sec, part, partAbsoluteOrder);
+								mep.setSec(sec);
+								currentMidiEditorPopup = mep;
+								currentMidiEditorSectionIndex = secOrder;
+							}
 						}
-
-						/*if (secOrder + 1 < arrSection.getItemCount()) {
-							arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
-							arrSection.repaint();
-							instrumentTabPane.setSelectedIndex(part);
-							switchTabPaneAfterApply = true;
-						}*/
 					}
 
 				}
