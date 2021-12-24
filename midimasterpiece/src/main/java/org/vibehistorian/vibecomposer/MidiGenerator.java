@@ -1479,8 +1479,6 @@ public class MidiGenerator implements JMC {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
-		List<Integer> melodyVars = sec.getVariation(0, mp.getAbsoluteOrder());
-
 		int orderSeed = mp.getPatternSeedWithPartOffset() + mp.getOrder();
 		int seed = mp.getPatternSeedWithPartOffset();
 		Random splitGenerator = new Random(orderSeed + 4);
@@ -1711,17 +1709,6 @@ public class MidiGenerator implements JMC {
 				n.setDuration(n.getDuration() * (1 + (mp.getAccents() / 200.0)));
 			}
 		});
-
-		// extraTranspose variation
-		if (melodyVars != null && !melodyVars.isEmpty()
-				&& melodyVars.contains(Integer.valueOf(0))) {
-			for (int i = 0; i < fullMelody.size(); i++) {
-				Note n = fullMelody.get(i);
-				if (n.getPitch() >= 0) {
-					n.setPitch(n.getPitch() + 12);
-				}
-			}
-		}
 
 		return fullMelodyMap;
 	}
@@ -3923,21 +3910,36 @@ public class MidiGenerator implements JMC {
 
 		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			phr.addNoteList(noteList, true);
-			addPhraseNotesToSection(sec, ip, noteList);
+			Phrase phrSaved = phr.copy();
+			MidiUtils.transposePhrase(phrSaved, ScaleMode.IONIAN.noteAdjustScale,
+					ScaleMode.IONIAN.noteAdjustScale);
+			addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
 			swingPhrase(phr, ip.getSwingPercent(), Durations.QUARTER_NOTE);
 
 			applyNoteLengthMultiplier(phr.getNoteList(), ip.getNoteLengthMultiplier());
 			processSectionTransition(sec, phr.getNoteList(),
 					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
+		} else {
+			Mod.transpose(phr, ip.getTranspose());
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
+					ScaleMode.IONIAN.noteAdjustScale);
 		}
 
+
+		List<Integer> melodyVars = sec.getVariation(0, ip.getAbsoluteOrder());
+		// extraTranspose variation
+		int extraTranspose = 0;
+		if (melodyVars != null && !melodyVars.isEmpty()
+				&& melodyVars.contains(Integer.valueOf(0))) {
+			extraTranspose = 12;
+		}
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		if (modTrans != 0) {
-			Mod.transpose(phr, modTrans);
+		if (modTrans != 0 || extraTranspose != 0) {
+			Mod.transpose(phr, modTrans + extraTranspose);
 		}
 
 		double additionalDelay = 0;

@@ -142,7 +142,7 @@ public class ShowRulerBig extends JComponent {
 			}
 		}
 
-
+		g.setColor(Color.green);
 		g.drawLine((int) highlightX, ShowRulerBig.maxHeight / 2, (int) highlightX, 0);
 		//g.dispose();
 	}
