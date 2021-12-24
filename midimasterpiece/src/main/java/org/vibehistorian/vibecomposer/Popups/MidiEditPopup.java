@@ -35,11 +35,14 @@ public class MidiEditPopup extends CloseablePopup {
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", true);
 
-	public static final int baseMargin = 10;
+
+	public static final int baseMargin = 5;
+	public static int trackScope = 1;
+
 
 	public int part = 0;
 	public int partOrder = 0;
-	public static int highlightModeChoice = 0;
+	public static int highlightModeChoice = 3;
 
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
@@ -63,8 +66,8 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 		});
 
-		int vmin = -1 * baseMargin;
-		int vmax = baseMargin;
+		int vmin = -1 * baseMargin * trackScope;
+		int vmax = baseMargin * trackScope;
 		if (!values.isEmpty()) {
 			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.min().getAsInt();
@@ -84,60 +87,7 @@ public class MidiEditPopup extends CloseablePopup {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(1500, 50));
-		/*buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
-			if (mvea.getValues().size() > 31) {
-				return;
-			}
-			mvea.getValues().add(new PhraseNote(60));
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
-			if (mvea.getValues().size() <= 1) {
-				return;
-			}
-			mvea.getValues().remove(mvea.getValues().size() - 1);
-			repaintMvea();
-		}));*/
-		/*buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
-			int size = mvea.getValues().size();
-			mvea.getValues().clear();
-			for (int i = 0; i < size; i++) {
-				mvea.getValues().add(new PhraseNote(60));
-			}
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
-			if (mvea.getValues().size() > 16) {
-				return;
-			}
-			mvea.getValues().addAll(mvea.getValues());
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("Dd", e -> {
-			if (mvea.getValues().size() > 16) {
-				return;
-			}
-			PhraseNotes ddValues = new PhraseNotes();
-			PhraseNotes oldValues = mvea.getValues();
-			oldValues.forEach(f -> {
-				ddValues.add(f);
-				ddValues.add(new PhraseNote(f.toNote()));
-			});
-			oldValues.clear();
-			oldValues.addAll(ddValues);
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("1/2", e -> {
-			if (mvea.getValues().size() <= 1) {
-				return;
-			}
-			int toRemain = (mvea.getValues().size() + 1) / 2;
-			for (int i = mvea.getValues().size() - 1; i >= toRemain; i--) {
-				mvea.getValues().remove(i);
-			}
-		
-			repaintMvea();
-		}));*/
+
 		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
 			int size = mvea.getValues().size();
 			boolean successRandGenerator = false;
@@ -159,7 +109,9 @@ public class MidiEditPopup extends CloseablePopup {
 				Random rnd = new Random();
 				for (int i = 0; i < size; i++) {
 					if (mvea.getValues().get(i).getPitch() >= 0) {
-						int pitch = rnd.nextInt(max - min + 1 - baseMargin * 2) + min + baseMargin;
+						int pitch = rnd
+								.nextInt(mvea.max - mvea.min + 1 - trackScope * baseMargin * 2)
+								+ mvea.min + baseMargin * trackScope;
 						if (snapToScaleGrid.isSelected()) {
 							int closestNormalized = MidiUtils
 									.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12);
@@ -177,6 +129,21 @@ public class MidiEditPopup extends CloseablePopup {
 		}));
 
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
+		buttonPanel.add(VibeComposerGUI.makeButton("+", e -> {
+			mvea.min -= baseMargin;
+			mvea.max += baseMargin;
+			trackScope++;
+			mvea.repaint();
+		}));
+		buttonPanel.add(VibeComposerGUI.makeButton("-", e -> {
+			if (trackScope > 1) {
+				mvea.min += baseMargin;
+				mvea.max -= baseMargin;
+				mvea.repaint();
+				trackScope--;
+			}
+
+		}));
 
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(1500, 600));
@@ -198,15 +165,6 @@ public class MidiEditPopup extends CloseablePopup {
 					for (int i = 0; i < nums.size() && i < mvea.getValues().size(); i++) {
 						mvea.getValues().get(i).setPitch(nums.get(i));
 					}
-					/*if (nums.size() > mvea.getValues().size()) {
-						for (int i = mvea.getValues().size(); i < nums.size(); i++) {
-							mvea.getValues().add(new PhraseNote(nums.get(i)));
-						}
-					} else if (mvea.getValues().size() > nums.size()) {
-						for (int i = nums.size(); i < mvea.getValues().size(); i++) {
-							mvea.getValues().remove(i);
-						}
-					}*/
 					repaintMvea();
 				} catch (Exception exc) {
 					LG.d("Incorrect text format, cannot convert to list of numbers.");

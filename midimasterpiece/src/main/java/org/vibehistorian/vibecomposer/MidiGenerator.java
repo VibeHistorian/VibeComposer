@@ -3911,20 +3911,21 @@ public class MidiGenerator implements JMC {
 		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			phr.addNoteList(noteList, true);
 			Phrase phrSaved = phr.copy();
+			Mod.transpose(phrSaved, ip.getTranspose() * -1);
 			MidiUtils.transposePhrase(phrSaved, ScaleMode.IONIAN.noteAdjustScale,
 					ScaleMode.IONIAN.noteAdjustScale);
 			addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
-			swingPhrase(phr, ip.getSwingPercent(), Durations.QUARTER_NOTE);
-
-			applyNoteLengthMultiplier(phr.getNoteList(), ip.getNoteLengthMultiplier());
-			processSectionTransition(sec, phr.getNoteList(),
-					progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
 		} else {
 			Mod.transpose(phr, ip.getTranspose());
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
 					ScaleMode.IONIAN.noteAdjustScale);
 		}
 
+		swingPhrase(phr, ip.getSwingPercent(), Durations.QUARTER_NOTE);
+
+		applyNoteLengthMultiplier(phr.getNoteList(), ip.getNoteLengthMultiplier());
+		processSectionTransition(sec, phr.getNoteList(),
+				progressionDurations.stream().mapToDouble(e -> e).sum(), 0.25, 0.25, 0.9);
 
 		List<Integer> melodyVars = sec.getVariation(0, ip.getAbsoluteOrder());
 		// extraTranspose variation
