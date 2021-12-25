@@ -255,7 +255,8 @@ public class MidiEditArea extends JComponent {
 			for (int i = 0; i < 1 + (max - min); i++) {
 
 				String drawnValue = "" + (min + i) + " | "
-						+ MidiUtils.SEMITONE_LETTERS.get((min + i) % 12) + ((min + i) / 12 - 1);
+						+ MidiUtils.SEMITONE_LETTERS.get((min + i + 1200) % 12)
+						+ ((min + i) / 12 - 1);
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
 				int drawValueX = bottomLeft.x / 2 - (numWidth * valueLength) / 2;

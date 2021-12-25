@@ -52,6 +52,7 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -116,6 +117,9 @@ public abstract class InstPanel extends JPanel {
 	protected Class<? extends InstPart> partClass = InstPart.class;
 	protected Integer sequenceTrack = -1;
 	protected Section relatedSection = null;
+
+	protected PhraseNotes customMidi = null;
+	protected CheckButton customMidiToggle = new CheckButton("MIDI'd", false);
 
 	public InstPanel() {
 
@@ -182,6 +186,17 @@ public abstract class InstPanel extends JPanel {
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);
 
+		customMidiToggle.setEnabled(false);
+		customMidiToggle.addRunnable(new Runnable() {
+
+			@Override
+			public void run() {
+				customMidi = null;
+				customMidiToggle.setEnabled(false);
+				customMidiToggle.repaint();
+			}
+		});
+
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
@@ -219,6 +234,7 @@ public abstract class InstPanel extends JPanel {
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
+		this.add(customMidiToggle);
 	}
 
 	public void addDefaultPanelButtons() {
@@ -686,4 +702,35 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public abstract int getPartNum();
+
+	public PhraseNotes getCustomMidi() {
+		return customMidi;
+	}
+
+	public void setCustomMidi(PhraseNotes customMidi) {
+		if (customMidi != null) {
+			customMidi.setPartOrder(this.getAbsoluteOrder());
+			customMidi.setCustom(true);
+			customMidiToggle.setSelected(true);
+			customMidiToggle.setEnabled(true);
+			customMidiToggle.repaint();
+		} else {
+			customMidiToggle.setSelected(false);
+			customMidiToggle.setEnabled(false);
+			customMidiToggle.repaint();
+		}
+		this.customMidi = customMidi;
+	}
+
+	public int getAbsoluteOrder() {
+		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getPanelOrder());
+	}
+
+	public boolean getCustomMidiToggle() {
+		return customMidiToggle.isSelected();
+	}
+
+	public void setCustomMidiToggle(boolean val) {
+		this.customMidiToggle.setSelected(val);
+	}
 }

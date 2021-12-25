@@ -51,6 +51,9 @@ public class MidiEditPopup extends CloseablePopup {
 		part = secPartNum;
 		partOrder = secPartOrder;
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
+		if (values == null) {
+			values = VibeComposerGUI.getAffectedPanels(part).get(partOrder).getCustomMidi();
+		}
 		values.setCustom(true);
 
 		ScrollComboBox.addAll(
@@ -129,6 +132,8 @@ public class MidiEditPopup extends CloseablePopup {
 		}));
 
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
+		buttonPanel.add(VibeComposerGUI.makeButton("Apply Globally", e -> VibeComposerGUI
+				.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues())));
 		buttonPanel.add(VibeComposerGUI.makeButton("+", e -> {
 			mvea.min -= baseMargin;
 			mvea.max += baseMargin;
