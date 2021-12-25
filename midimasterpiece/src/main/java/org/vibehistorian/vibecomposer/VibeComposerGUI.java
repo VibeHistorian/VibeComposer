@@ -6878,7 +6878,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void copyConfigToGUI(GUIConfig gc) {
-
+		arrSection.setVisible(false);
+		arrSection.setSelectedIndex(0);
 
 		if (gc.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
@@ -6994,6 +6995,8 @@ public class VibeComposerGUI extends JFrame
 		// arps
 		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
 		randomArpMaxSwing.setInt(gc.getMaxArpSwing());
+
+		arrSection.setVisible(true);
 
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 		fixCombinedMelodyTracks();

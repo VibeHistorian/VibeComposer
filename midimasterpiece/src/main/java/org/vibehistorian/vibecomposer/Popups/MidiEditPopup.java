@@ -85,11 +85,11 @@ public class MidiEditPopup extends CloseablePopup {
 
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
-		allPanels.setMaximumSize(new Dimension(1500, 700));
+		allPanels.setMaximumSize(new Dimension(1500, 750));
 
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
-		buttonPanel.setPreferredSize(new Dimension(1500, 50));
+		buttonPanel.setPreferredSize(new Dimension(1500, 100));
 
 		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
 			int size = mvea.getValues().size();
@@ -132,8 +132,10 @@ public class MidiEditPopup extends CloseablePopup {
 		}));
 
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
-		buttonPanel.add(VibeComposerGUI.makeButton("Apply Globally", e -> VibeComposerGUI
-				.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues())));
+		buttonPanel.add(VibeComposerGUI.makeButton("Override MIDI Generation", e -> {
+			mvea.getValues().setCustom(true);
+			VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
+		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("+", e -> {
 			mvea.min -= baseMargin;
 			mvea.max += baseMargin;

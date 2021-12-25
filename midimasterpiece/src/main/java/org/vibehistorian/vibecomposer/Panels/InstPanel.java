@@ -314,6 +314,7 @@ public abstract class InstPanel extends JPanel {
 		setPattern(part.getPattern());
 		setPatternFlip(part.isPatternFlip());
 
+		setCustomMidi(part.getCustomMidi());
 
 		if (comboPanel != null && pattern.isEnabled()) {
 			comboPanel.setVelocities(part.getCustomVelocities());

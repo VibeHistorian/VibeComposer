@@ -17,7 +17,7 @@ import jm.music.data.Phrase;
 @XmlRootElement(name = "phraseNotes")
 @XmlType(propOrder = {})
 @XmlSeeAlso({ PhraseNote.class })
-public class PhraseNotes extends ArrayList<PhraseNote> {
+public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	private static final long serialVersionUID = 8933379402297939538L;
 
 	private boolean isCustom = false;

@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlList;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public abstract class InstPart implements Cloneable {
@@ -76,6 +77,8 @@ public abstract class InstPart implements Cloneable {
 
 	protected int partNum = 0;
 
+	protected PhraseNotes customMidi = null;
+
 	public void setFromPanel(InstPanel panel, int lastRandomSeed) {
 		setInstrument(panel.getInstrument());
 
@@ -121,6 +124,8 @@ public abstract class InstPart implements Cloneable {
 
 		setSliderVolume(panel.getVolSlider().getValue());
 		setSliderPan(panel.getPanSlider().getValue());
+
+		setCustomMidi(panel.getCustomMidi());
 
 		setMidiChannel(panel.getMidiChannel());
 
@@ -402,4 +407,11 @@ public abstract class InstPart implements Cloneable {
 		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getOrder());
 	}
 
+	public PhraseNotes getCustomMidi() {
+		return customMidi;
+	}
+
+	public void setCustomMidi(PhraseNotes customMidi) {
+		this.customMidi = customMidi;
+	}
 }

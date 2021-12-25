@@ -8,7 +8,7 @@ import jm.music.data.Note;
 
 @XmlRootElement(name = "PhraseNote")
 @XmlType(propOrder = {})
-public class PhraseNote {
+public class PhraseNote implements Cloneable {
 	private int pitch;
 	private int dynamic;
 	private double rv;
