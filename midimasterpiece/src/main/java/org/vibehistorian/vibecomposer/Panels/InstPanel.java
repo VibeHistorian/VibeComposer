@@ -191,19 +191,21 @@ public abstract class InstPanel extends JPanel {
 
 			@Override
 			public void run() {
-				customMidi = null;
-				// turn off customized midi
-				if (relatedSection != null) {
-					if (relatedSection.getInstPartList(getPartNum()) != null) {
-						if (relatedSection.getInstPartList(getPartNum())
-								.get(getAbsoluteOrder()) != null) {
-							relatedSection.getInstPartList(getPartNum()).get(getAbsoluteOrder())
-									.setCustomMidi(null);
+				if (!customMidiToggle.isSelected()) {
+					customMidi = null;
+					// turn off customized midi
+					if (relatedSection != null) {
+						if (relatedSection.getInstPartList(getPartNum()) != null) {
+							if (relatedSection.getInstPartList(getPartNum())
+									.get(getAbsoluteOrder()) != null) {
+								relatedSection.getInstPartList(getPartNum()).get(getAbsoluteOrder())
+										.setCustomMidi(null);
+							}
 						}
 					}
+					customMidiToggle.setEnabled(false);
+					customMidiToggle.repaint();
 				}
-				customMidiToggle.setEnabled(false);
-				customMidiToggle.repaint();
 			}
 		});
 

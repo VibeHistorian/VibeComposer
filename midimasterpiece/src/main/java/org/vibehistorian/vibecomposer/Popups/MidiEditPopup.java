@@ -89,7 +89,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
-		buttonPanel.setPreferredSize(new Dimension(1500, 100));
+		buttonPanel.setPreferredSize(new Dimension(1500, 50));
 
 		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
 			int size = mvea.getValues().size();
@@ -131,26 +131,34 @@ public class MidiEditPopup extends CloseablePopup {
 			repaintMvea();
 		}));
 
-		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
-		buttonPanel.add(VibeComposerGUI.makeButton("Override MIDI Generation", e -> {
+		buttonPanel.add(VibeComposerGUI.makeButton("Apply to Main", e -> {
 			mvea.getValues().setCustom(true);
 			VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
 		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("+", e -> {
+
+		JPanel buttonPanel2 = new JPanel();
+		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
+		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
+
+		buttonPanel2.add(VibeComposerGUI.makeButton("+", e -> {
 			mvea.min -= baseMargin;
 			mvea.max += baseMargin;
 			trackScope++;
 			mvea.repaint();
 		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("-", e -> {
+		buttonPanel2.add(VibeComposerGUI.makeButton("-", e -> {
 			if (trackScope > 1) {
 				mvea.min += baseMargin;
 				mvea.max -= baseMargin;
 				mvea.repaint();
 				trackScope--;
 			}
-
 		}));
+		buttonPanel2.add(VibeComposerGUI.makeButton("> REMOVE <", e -> {
+			mvea.getValues().setCustom(false);
+			close();
+		}));
+		buttonPanel2.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
 
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(1500, 600));
@@ -180,10 +188,11 @@ public class MidiEditPopup extends CloseablePopup {
 		}));
 
 		textPanel.add(snapToScaleGrid);
-		textPanel.add(new JLabel("Highlight Mode:"));
+		textPanel.add(new JLabel("  Highlight Mode:"));
 		textPanel.add(highlightMode);
 
 		allPanels.add(buttonPanel);
+		allPanels.add(buttonPanel2);
 		allPanels.add(textPanel);
 		allPanels.add(mveaPanel);
 		frame.add(allPanels);
@@ -241,14 +250,6 @@ public class MidiEditPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (parent != null) {
-					//parent.setPhraseNotes(mvea.getValues());
-				}
-				/*if (RandomValueButton.singlePopup != null) {
-					if (RandomValueButton.singlePopup.randomNum == randomNum) {
-						RandomValueButton.singlePopup = null;
-					}
-				}*/
 
 			}
 

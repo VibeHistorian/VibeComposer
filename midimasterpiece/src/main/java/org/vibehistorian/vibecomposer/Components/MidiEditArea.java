@@ -66,7 +66,7 @@ public class MidiEditArea extends JComponent {
 					return;
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
-					if (evt.isShiftDown()) {
+					if (!evt.isShiftDown()) {
 						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 						if (orderVal != null) {
 							setVal(orderVal.x, orderVal.y);
