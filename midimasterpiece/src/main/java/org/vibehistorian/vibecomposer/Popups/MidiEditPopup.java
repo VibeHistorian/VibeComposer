@@ -136,29 +136,16 @@ public class MidiEditPopup extends CloseablePopup {
 			VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
 		}));
 
+
 		JPanel buttonPanel2 = new JPanel();
 		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("+", e -> {
-			mvea.min -= baseMargin;
-			mvea.max += baseMargin;
-			trackScope++;
-			mvea.repaint();
-		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("-", e -> {
-			if (trackScope > 1) {
-				mvea.min += baseMargin;
-				mvea.max -= baseMargin;
-				mvea.repaint();
-				trackScope--;
-			}
-		}));
 		buttonPanel2.add(VibeComposerGUI.makeButton("> REMOVE <", e -> {
 			mvea.getValues().setCustom(false);
 			close();
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
+		buttonPanel2.add(VibeComposerGUI.makeButton("> CLOSE <", e -> close()));
 
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(1500, 600));

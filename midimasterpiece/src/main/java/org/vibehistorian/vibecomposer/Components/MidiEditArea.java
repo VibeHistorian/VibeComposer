@@ -7,6 +7,8 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,24 @@ public class MidiEditArea extends JComponent {
 		this.min = min;
 		this.max = max;
 		values = vals;
+
+		addMouseWheelListener(new MouseWheelListener() {
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				int rot = (e.getWheelRotation() > 0) ? -1 : 1;
+				int originalTrackScope = MidiEditPopup.trackScope;
+				if (rot > 0 && (MidiEditArea.this.max > 110 || MidiEditArea.this.min < 10)) {
+					return;
+				}
+				MidiEditPopup.trackScope = Math.max(originalTrackScope + rot, 1);
+				if (originalTrackScope != MidiEditPopup.trackScope) {
+					MidiEditArea.this.min -= MidiEditPopup.baseMargin * rot;
+					MidiEditArea.this.max += MidiEditPopup.baseMargin * rot;
+					repaint();
+				}
+			}
+		});
+
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
