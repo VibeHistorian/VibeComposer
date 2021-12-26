@@ -4991,8 +4991,13 @@ public class MidiGenerator implements JMC {
 	private boolean overwriteWithCustomSectionMidi(Section sec, Phrase phr, InstPart ip) {
 		PhraseNotes pn = sec.getPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder());
 		if (pn == null || !pn.isCustom()) {
-			pn = VibeComposerGUI.getAffectedPanels(ip.getPartNum()).get(ip.getAbsoluteOrder())
-					.getCustomMidi();
+			// if section has a customized part, try to get midi from it
+			// otherwise try to get it from a global inst panel
+			pn = sec.getInstPartList(ip.getPartNum()) != null
+					? sec.getInstPartList(ip.getPartNum()).get(ip.getAbsoluteOrder())
+							.getCustomMidi()
+					: VibeComposerGUI.getInstList(ip.getPartNum()).get(ip.getAbsoluteOrder())
+							.getCustomMidi();
 			if (pn != null && pn.isCustom()) {
 				sec.addPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder(), pn);
 			}

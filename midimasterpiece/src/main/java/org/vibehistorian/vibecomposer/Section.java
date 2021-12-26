@@ -115,11 +115,11 @@ public class Section {
 	private List<DrumPart> drumParts = null;
 	private List<ArpPart> arpParts = null;
 
-	public List<? extends InstPart> getInstPartList(int order) {
-		if (order < 0 || order > 4) {
+	public List<? extends InstPart> getInstPartList(int partNum) {
+		if (partNum < 0 || partNum > 4) {
 			throw new IllegalArgumentException("Inst part list order wrong.");
 		}
-		switch (order) {
+		switch (partNum) {
 		case 0:
 			return melodyParts;
 		case 1:
