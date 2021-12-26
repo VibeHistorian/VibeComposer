@@ -88,11 +88,11 @@ public class MidiEditArea extends JComponent {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					if (!evt.isShiftDown()) {
 						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-						if (orderVal != null) {
+						if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 							setVal(orderVal.x, orderVal.y);
-							isDragging = true;
 							repaint();
 						}
+						isDragging = true;
 					} else {
 						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 						PhraseNote pnDragged = getDraggedNote(evt.getPoint());
