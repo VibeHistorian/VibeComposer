@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Consumer;
 
 import javax.swing.JButton;
 
@@ -21,6 +22,7 @@ public class CheckButton extends JButton {
 	private boolean transparentBackground = false;
 	private Color bgColor = null;
 	private Runnable runnable = null;
+	private Consumer<? super Object> func = null;
 
 	public CheckButton(String name, boolean sel) {
 		this(name, sel, null);
@@ -63,6 +65,9 @@ public class CheckButton extends JButton {
 		if (runnable != null) {
 			runnable.run();
 		}
+		if (func != null) {
+			func.accept(new Object());
+		}
 	}
 
 	public void setSelectedRaw(boolean selected) {
@@ -75,6 +80,14 @@ public class CheckButton extends JButton {
 
 	public void removeRunnable() {
 		runnable = null;
+	}
+
+	public void addFunc(Consumer<? super Object> func) {
+		this.func = func;
+	}
+
+	public void removeFunc() {
+		func = null;
 	}
 
 	public void addBackground() {

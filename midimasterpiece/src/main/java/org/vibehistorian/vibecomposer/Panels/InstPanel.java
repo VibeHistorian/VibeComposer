@@ -203,6 +203,12 @@ public abstract class InstPanel extends JPanel {
 							}
 						}
 					}
+					if (VibeComposerGUI.currentMidiEditorPopup != null
+							&& VibeComposerGUI.currentMidiEditorPopup.part == getPartNum()
+							&& VibeComposerGUI.currentMidiEditorPopup.partOrder == getAbsoluteOrder()) {
+						VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.setSelectedRaw(false);
+						VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.repaint();
+					}
 					customMidiToggle.setEnabled(false);
 					customMidiToggle.repaint();
 				}

@@ -43,7 +43,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public int part = 0;
 	public int partOrder = 0;
 	public static int highlightModeChoice = 3;
-
+	public CheckButton applyToMainBtn;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
@@ -131,11 +131,17 @@ public class MidiEditPopup extends CloseablePopup {
 			repaintMvea();
 		}));
 
-		buttonPanel.add(VibeComposerGUI.makeButton("Apply to Main", e -> {
-			mvea.getValues().setCustom(true);
-			VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
-		}));
-
+		applyToMainBtn = new CheckButton("Apply to Main",
+				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
+		applyToMainBtn.addFunc(e -> {
+			if (applyToMainBtn.isSelected()) {
+				mvea.getValues().setCustom(true);
+				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
+			} else {
+				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(null);
+			}
+		});
+		buttonPanel.add(applyToMainBtn);
 
 		JPanel buttonPanel2 = new JPanel();
 		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
@@ -288,5 +294,6 @@ public class MidiEditPopup extends CloseablePopup {
 	public void setSec(Section sec) {
 		this.sec = sec;
 	}
+
 
 }
