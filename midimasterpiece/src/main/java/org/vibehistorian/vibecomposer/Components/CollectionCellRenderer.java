@@ -70,16 +70,16 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					: VibeComposerGUI.panelColorHigh;
 			g.setColor(panelC);
 			g.fillRect(0, 0, width, height);
-			Color c = panelC;
-			c = OMNI.mixColor(c, VibeComposerGUI.instColors[part], part > 0 ? 0.5 : 0.7);
+			Color icolor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
+					part > 0 ? 0.5 : 0.7);
 
 			int guiPanelsCount = VibeComposerGUI.getInstList(part).size();
 			int alphaValue = 0;
 			if (guiPanelsCount > 0) {
 				alphaValue = 240;
 			}
-			c = OMNI.alphen(c, alphaValue);
-			g.setColor(c);
+			icolor = OMNI.alphen(icolor, alphaValue);
+			g.setColor(icolor);
 
 			//g.fillRect(0, 0, width, height);
 
@@ -120,7 +120,9 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					}*/
 					boolean isCustomMidi = sec.containsPhrase(part, partOrder)
 							&& sec.getPartPhraseNotes().get(part).get(partOrder).isCustom();
-					g.setColor(OMNI.mixColor(c, panelC, isCustomMidi ? 0.66
+					boolean isGlobalCustomMidi = VibeComposerGUI.getInstList(part).get(partOrder)
+							.getCustomMidiToggle();
+					g.setColor(OMNI.mixColor(icolor, panelC, isCustomMidi ? 0.66
 							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66));
 					g.fillRect((int) startX + 1, 0, (int) (endX - startX), height);
 					g.setColor(new Color(230, 230, 230));
@@ -137,17 +139,24 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					int numVars = Section.variationDescriptions[part].length - 2;
 					double moveX = (endX - startX) / (numVars);
 
-					if (isCustomMidi) {
-						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 150));
+					if (isCustomMidi || isGlobalCustomMidi) {
+						g.setColor(OMNI.alphen(isCustomMidi ? Color.red : VibeComposerGUI.uiColor(),
+								150));
 						g.fillRect((int) startX + 2, 0, (int) widthDividerValue - 4, 5);
-					} else {
-						g.setColor(new Color(230, 230, 230, 200));
-						List<Integer> actualVars = sec.getVariation(part, partOrder);
-						for (int i = 0; i < numVars; i++) {
-							int varX = (int) (startX + ((moveX * i) + 1));
-							if (actualVars.contains(i)) {
-								g.drawLine(varX, 0, varX, 3);
+					}
+
+					g.setColor(new Color(230, 230, 230, 200));
+					List<Integer> actualVars = sec.getVariation(part, partOrder);
+					for (int i = 0; i < numVars; i++) {
+						int varX = (int) (startX + ((moveX * i) + 1));
+						if (actualVars.contains(i)) {
+							if (isCustomMidi || isGlobalCustomMidi) {
+								if (!Section.variationDescriptions[part][i + 2]
+										.startsWith("Transpose")) {
+									continue;
+								}
 							}
+							g.drawLine(varX, 0, varX, 3);
 						}
 					}
 
