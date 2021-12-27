@@ -307,13 +307,8 @@ public class NumPanel extends JPanel {
 	}
 
 	private void updateTextLater(boolean isMaximum) {
-		Runnable doAssist = new Runnable() {
-			@Override
-			public void run() {
-				text.setText(((isMaximum) ? slider.getMax() : slider.getMin()) + "");
-			}
-		};
-		SwingUtilities.invokeLater(doAssist);
+		SwingUtilities.invokeLater(
+				() -> text.setText(((isMaximum) ? slider.getMax() : slider.getMin()) + ""));
 	}
 
 	public String getName() {

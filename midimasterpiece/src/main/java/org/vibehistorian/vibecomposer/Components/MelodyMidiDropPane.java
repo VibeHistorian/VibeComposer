@@ -125,56 +125,52 @@ public class MelodyMidiDropPane extends JPanel {
 	}
 
 	protected void importFiles(final List<File> files) {
-		Runnable run = new Runnable() {
-			@Override
-			public void run() {
-				userMelody = null;
-				userMelodyCandidate = null;
-				if (files == null || files.isEmpty()) {
-					message.setText("No file!");
-				} else {
-					File file = (File) files.get(0);
-					if (file.getName().endsWith("mid") || file.getName().endsWith("midi")) {
-						message.setText(file.getName());
-						Score scr = Read.midiOrJmWithNoMessaging(file);
-						LG.d("Score parts: " + scr.getPartList().size());
-						Part part = new Part();
-						for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
-							Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
-							LG.d(phr.toString());
-							phr.setAppend(false);
-							//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
-							JMusicUtilsCustom.addRestsToRhythmValues(phr);
-							part.add(phr);
-						}
-
-						JMusicUtilsCustom.consolidate(part);
-						//Mod.consolidate(part);
-						Phrase userMelodyCandidate = part.getPhrase(0);
-						List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils
-								.detectKeyAndMode(userMelodyCandidate, null, false);
-
-						if (detectionResults == null) {
-							message.setText("Unknown key, skipped!");
-							LG.d("Melody uses unknown key, skipped!");
-							return;
-						}
-
-						//LG.d(userMelody.toString());
-						LG.d("Tempo: " + scr.getTempo());
-
-						MelodyMidiDropPane.userMelodyCandidate = userMelodyCandidate;
-						VibeComposerGUI.userMelodyScaleModeSelect.removeAllItems();
-						VibeComposerGUI.userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
-						for (Pair<ScaleMode, Integer> p : detectionResults) {
-							VibeComposerGUI.userMelodyScaleModeSelect
-									.addItem(p.getLeft().toString() + "," + p.getRight());
-						}
-
-					} else {
-						message.setText("Not MIDI! - " + file.getName());
+		Runnable run = () -> {
+			userMelody = null;
+			userMelodyCandidate = null;
+			if (files == null || files.isEmpty()) {
+				message.setText("No file!");
+			} else {
+				File file = (File) files.get(0);
+				if (file.getName().endsWith("mid") || file.getName().endsWith("midi")) {
+					message.setText(file.getName());
+					Score scr = Read.midiOrJmWithNoMessaging(file);
+					LG.d("Score parts: " + scr.getPartList().size());
+					Part part = new Part();
+					for (int i = 0; i < scr.getPart(0).getPhraseList().size(); i++) {
+						Phrase phr = (Phrase) scr.getPart(0).getPhraseList().get(i);
+						LG.d(phr.toString());
+						phr.setAppend(false);
+						//phr.setStartTime(MidiGenerator.START_TIME_DELAY);
+						JMusicUtilsCustom.addRestsToRhythmValues(phr);
+						part.add(phr);
 					}
 
+					JMusicUtilsCustom.consolidate(part);
+					//Mod.consolidate(part);
+					Phrase userMelodyCandidate = part.getPhrase(0);
+					List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils
+							.detectKeyAndMode(userMelodyCandidate, null, false);
+
+					if (detectionResults == null) {
+						message.setText("Unknown key, skipped!");
+						LG.d("Melody uses unknown key, skipped!");
+						return;
+					}
+
+					//LG.d(userMelody.toString());
+					LG.d("Tempo: " + scr.getTempo());
+
+					MelodyMidiDropPane.userMelodyCandidate = userMelodyCandidate;
+					VibeComposerGUI.userMelodyScaleModeSelect.removeAllItems();
+					VibeComposerGUI.userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
+					for (Pair<ScaleMode, Integer> p : detectionResults) {
+						VibeComposerGUI.userMelodyScaleModeSelect
+								.addItem(p.getLeft().toString() + "," + p.getRight());
+					}
+
+				} else {
+					message.setText("Not MIDI! - " + file.getName());
 				}
 
 			}

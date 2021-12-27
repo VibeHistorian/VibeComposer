@@ -187,31 +187,27 @@ public abstract class InstPanel extends JPanel {
 		randomizeButton.addActionListener(l);
 
 		customMidiToggle.setEnabled(false);
-		customMidiToggle.addRunnable(new Runnable() {
-
-			@Override
-			public void run() {
-				if (!customMidiToggle.isSelected()) {
-					customMidi = null;
-					// turn off customized midi
-					if (relatedSection != null) {
-						if (relatedSection.getInstPartList(getPartNum()) != null) {
-							if (relatedSection.getInstPartList(getPartNum())
-									.get(getAbsoluteOrder()) != null) {
-								relatedSection.getInstPartList(getPartNum()).get(getAbsoluteOrder())
-										.setCustomMidi(null);
-							}
+		customMidiToggle.addRunnable(() -> {
+			if (!customMidiToggle.isSelected()) {
+				customMidi = null;
+				// turn off customized midi
+				if (relatedSection != null) {
+					if (relatedSection.getInstPartList(getPartNum()) != null) {
+						if (relatedSection.getInstPartList(getPartNum())
+								.get(getAbsoluteOrder()) != null) {
+							relatedSection.getInstPartList(getPartNum()).get(getAbsoluteOrder())
+									.setCustomMidi(null);
 						}
 					}
-					if (VibeComposerGUI.currentMidiEditorPopup != null
-							&& VibeComposerGUI.currentMidiEditorPopup.part == getPartNum()
-							&& VibeComposerGUI.currentMidiEditorPopup.partOrder == getAbsoluteOrder()) {
-						VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.setSelectedRaw(false);
-						VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.repaint();
-					}
-					customMidiToggle.setEnabled(false);
-					customMidiToggle.repaint();
 				}
+				if (VibeComposerGUI.currentMidiEditorPopup != null
+						&& VibeComposerGUI.currentMidiEditorPopup.part == getPartNum()
+						&& VibeComposerGUI.currentMidiEditorPopup.partOrder == getAbsoluteOrder()) {
+					VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.setSelectedRaw(false);
+					VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.repaint();
+				}
+				customMidiToggle.setEnabled(false);
+				customMidiToggle.repaint();
 			}
 		});
 

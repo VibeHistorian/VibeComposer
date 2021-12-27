@@ -178,11 +178,7 @@ public class BoundsPopupMenuListener implements PopupMenuListener {
 		final Object child = comboBox.getAccessibleContext().getAccessibleChild(0);
 
 		if (child instanceof BasicComboPopup) {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					customizePopup((BasicComboPopup) child);
-				}
-			});
+			SwingUtilities.invokeLater(() -> customizePopup((BasicComboPopup) child));
 		}
 	}
 

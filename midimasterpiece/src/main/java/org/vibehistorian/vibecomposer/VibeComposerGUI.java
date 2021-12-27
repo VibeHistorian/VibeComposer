@@ -3141,12 +3141,8 @@ public class VibeComposerGUI extends JFrame
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				if (scorePanel != null) {
 					LG.i("Updating pos!");
-					SwingUtilities.invokeLater(new Runnable() {
-		
-						@Override
-						public void run() {
+					SwingUtilities.invokeLater(() -> {
 							scorePanel.update();
-						}
 		
 					});
 				}
@@ -3908,11 +3904,8 @@ public class VibeComposerGUI extends JFrame
 
 								Section actualSec = sec;
 								if (highlightPatterns.isSelected()) {
-									SwingUtilities.invokeLater(new Runnable() {
-										public void run() {
-											notifyVisualPatterns(val, finalSectIndex, actualSec);
-										}
-									});
+									SwingUtilities.invokeLater(() -> notifyVisualPatterns(val,
+											finalSectIndex, actualSec));
 								}
 
 								if (sequencer != null) {
@@ -3955,13 +3948,7 @@ public class VibeComposerGUI extends JFrame
 								} else {
 									ActionEvent action = new ActionEvent(VibeComposerGUI.this,
 											ActionEvent.ACTION_PERFORMED, "Compose");
-									SwingUtilities.invokeLater(new Runnable() {
-
-										@Override
-										public void run() {
-											actionPerformed(action);
-										}
-									});
+									SwingUtilities.invokeLater(() -> actionPerformed(action));
 
 								}
 							}
@@ -5005,21 +4992,16 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void resetArrSectionInBackground() {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				int arrSectionIndex = arrSection.getSelectedIndex();
-				setActualModel(actualArrangement.convertToActualTableModel());
-				if (arrSectionIndex != 0 && arrSectionIndex < arrSection.getItemCount()) {
-					arrSection.setSelectedIndex(arrSectionIndex);
-				} else {
-					arrSection.setSelectedIndex(0);
-				}
-				refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
-				arrSection.getButtons().forEach(e -> e.repaint());
+		SwingUtilities.invokeLater(() -> {
+			int arrSectionIndex = arrSection.getSelectedIndex();
+			setActualModel(actualArrangement.convertToActualTableModel());
+			if (arrSectionIndex != 0 && arrSectionIndex < arrSection.getItemCount()) {
+				arrSection.setSelectedIndex(arrSectionIndex);
+			} else {
+				arrSection.setSelectedIndex(0);
 			}
-
+			refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
+			arrSection.getButtons().forEach(e -> e.repaint());
 		});
 
 	}

@@ -144,12 +144,7 @@ public class ShowPanelBig extends JPanel {
 		for (int i = 0; i < 5; i++) {
 			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], i < 4,
 					OMNI.alphen(VibeComposerGUI.instColors[i], 75));
-			partsShown[i].addRunnable(new Runnable() {
-				@Override
-				public void run() {
-					setScore();
-				}
-			});
+			partsShown[i].addRunnable(() -> setScore());
 			int fI = i;
 			partsShown[i].addMouseListener(new MouseAdapter() {
 				@Override
@@ -189,25 +184,20 @@ public class ShowPanelBig extends JPanel {
 			scorePartPanel.add(toggler);
 
 			soloMuterHighlight = new CheckButton("Highlight Audible", false);
-			soloMuterHighlight.addRunnable(new Runnable() {
-
-				@Override
-				public void run() {
-					if (soloMuterHighlight.isSelected()) {
-						/*for (int i = 0; i < 5; i++) {
-							partsShown[i].setSelectedRaw(true);
-							partsShown[i].setEnabled(false);
-						}*/
-						setScore();
-						//toggler.setEnabled(false);
-					} else {
-						/*for (int i = 0; i < 5; i++) {
-							partsShown[i].setEnabled(true);
-						}*/
-						//toggler.setEnabled(true);
-						setScore();
-					}
-
+			soloMuterHighlight.addRunnable(() -> {
+				if (soloMuterHighlight.isSelected()) {
+					/*for (int i = 0; i < 5; i++) {
+						partsShown[i].setSelectedRaw(true);
+						partsShown[i].setEnabled(false);
+					}*/
+					setScore();
+					//toggler.setEnabled(false);
+				} else {
+					/*for (int i = 0; i < 5; i++) {
+						partsShown[i].setEnabled(true);
+					}*/
+					//toggler.setEnabled(true);
+					setScore();
 				}
 			});
 			scorePartPanel.add(soloMuterHighlight);

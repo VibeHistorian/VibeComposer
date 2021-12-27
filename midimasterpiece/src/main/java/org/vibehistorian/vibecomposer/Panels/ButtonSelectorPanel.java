@@ -39,22 +39,18 @@ public class ButtonSelectorPanel extends JPanel {
 	}
 
 	public void addButton(CheckButton cb, int buttonIndex) {
-		cb.addRunnable(new Runnable() {
-
-			@Override
-			public void run() {
-				if (cb.isSelected()) {
-					buttons.get(selectedIndex).setSelectedRaw(false);
-					setSelectedIndex(buttonIndex);
+		cb.addRunnable(() -> {
+			if (cb.isSelected()) {
+				buttons.get(selectedIndex).setSelectedRaw(false);
+				setSelectedIndex(buttonIndex);
+			} else {
+				if (selectedIndex == buttonIndex) {
+					cb.setSelectedRaw(true);
 				} else {
-					if (selectedIndex == buttonIndex) {
-						cb.setSelectedRaw(true);
-					} else {
-						setSelectedIndex(0);
-					}
+					setSelectedIndex(0);
 				}
-				ButtonSelectorPanel.this.repaint();
 			}
+			ButtonSelectorPanel.this.repaint();
 		});
 		cb.addMouseListener(new MouseAdapter() {
 			@Override

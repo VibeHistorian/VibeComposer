@@ -128,13 +128,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						VibeComposerGUI.scorePanel.setScore();
-					}
-				});
+				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.setScore());
 			}
 		}
 	}
@@ -190,13 +184,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						VibeComposerGUI.scorePanel.setScore();
-					}
-				});
+				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.setScore());
 			}
 		}
 	}

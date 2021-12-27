@@ -75,13 +75,9 @@ public class VariationPopup {
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, new Runnable() {
-
-			@Override
-			public void run() {
-				VibeComposerGUI.manualArrangement.setSelected(true);
-				VibeComposerGUI.manualArrangement.repaint();
-			}
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, () -> {
+			VibeComposerGUI.manualArrangement.setSelected(true);
+			VibeComposerGUI.manualArrangement.repaint();
 		});
 
 		addTypesMeasures(sec);

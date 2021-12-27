@@ -559,14 +559,10 @@ public class VisualPatternPanel extends JPanel {
 			return;
 		}
 
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				VisualPatternPanel.this.setVisible(false);
-				reapplyShiftRaw(false);
-				VisualPatternPanel.this.setVisible(true);
-			}
+		SwingUtilities.invokeLater(() -> {
+			VisualPatternPanel.this.setVisible(false);
+			reapplyShiftRaw(false);
+			VisualPatternPanel.this.setVisible(true);
 		});
 	}
 
@@ -590,14 +586,10 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void reapplyHits() {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				VisualPatternPanel.this.setVisible(false);
-				reapplyHitsRaw();
-				VisualPatternPanel.this.setVisible(true);
-			}
+		SwingUtilities.invokeLater(() -> {
+			VisualPatternPanel.this.setVisible(false);
+			reapplyHitsRaw();
+			VisualPatternPanel.this.setVisible(true);
 
 		});
 
