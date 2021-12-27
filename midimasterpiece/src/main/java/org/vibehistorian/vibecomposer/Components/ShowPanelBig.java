@@ -29,6 +29,7 @@ see <https://www.gnu.org/licenses/>.
 */
 package org.vibehistorian.vibecomposer.Components;
 
+import java.awt.Adjustable;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -60,6 +61,7 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import jm.music.data.Part;
@@ -259,26 +261,47 @@ public class ShowPanelBig extends JPanel {
 		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		areaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		areaScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		areaScrollPane.removeMouseWheelListener(areaScrollPane.getMouseWheelListeners()[0]);
+
 		areaScrollPane.addMouseWheelListener(new MouseWheelListener() {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (e.isAltDown()) {
+
+					double positionPercentage = SwingUtils
+							.getScrolledPosition(VibeComposerGUI.scoreScrollPane, false);
 					sa.setNoteHeight(
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
 
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
+					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
+							positionPercentage);*/
 					VibeComposerGUI.scoreScrollPane.repaint();
 				} else if (e.isControlDown()) {
+					double positionPercentage = SwingUtils
+							.getScrolledPosition(VibeComposerGUI.scoreScrollPane, false);
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
 					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
+					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
+							positionPercentage);*/
 					VibeComposerGUI.scoreScrollPane.repaint();
 				} else {
-					// nothing
+					if (e.isShiftDown()) {
+						// Horizontal scrolling
+						Adjustable adj = horizontalPane.getHorizontalScrollBar();
+						int scroll = e.getUnitsToScroll() * adj.getBlockIncrement() * 3;
+						adj.setValue(adj.getValue() + scroll);
+					} else {
+						// Vertical scrolling
+						Adjustable adj = areaScrollPane.getVerticalScrollBar();
+						int scroll = e.getUnitsToScroll() * adj.getBlockIncrement();
+						adj.setValue(adj.getValue() + scroll);
+					}
 				}
 			}
 		});

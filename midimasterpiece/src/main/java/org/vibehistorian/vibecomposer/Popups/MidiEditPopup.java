@@ -202,6 +202,9 @@ public class MidiEditPopup extends CloseablePopup {
 
 		setSec(sec);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
+		if (applyToMainBtn.isSelected() && (values == null || !values.isCustom())) {
+			return;
+		}
 
 		int vmin = 0;
 		int vmax = 0;

@@ -4999,7 +4999,9 @@ public class MidiGenerator implements JMC {
 					: VibeComposerGUI.getInstList(ip.getPartNum()).get(ip.getAbsoluteOrder())
 							.getCustomMidi();
 			if (pn != null && pn.isCustom()) {
-				sec.addPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder(), pn);
+				PhraseNotes secPn = pn.copy();
+				secPn.setCustom(false);
+				sec.addPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder(), secPn);
 			}
 		}
 
