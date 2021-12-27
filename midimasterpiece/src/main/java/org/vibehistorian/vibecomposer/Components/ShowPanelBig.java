@@ -61,7 +61,6 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import jm.music.data.Part;
@@ -268,25 +267,27 @@ public class ShowPanelBig extends JPanel {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (e.isAltDown()) {
-
-					double positionPercentage = SwingUtils
-							.getScrolledPosition(VibeComposerGUI.scoreScrollPane, false);
+					double originalHeight = ShowAreaBig.noteHeight;
 					sa.setNoteHeight(
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
-
+					double changeY = ShowAreaBig.noteHeight / originalHeight;
+					zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
 					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
 							positionPercentage);*/
 					VibeComposerGUI.scoreScrollPane.repaint();
 				} else if (e.isControlDown()) {
-					double positionPercentage = SwingUtils
-							.getScrolledPosition(VibeComposerGUI.scoreScrollPane, false);
+					double originalWidth = beatWidth;
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
 					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
+					double changeX = beatWidth / originalWidth;
+					Point horPanePoint = SwingUtilities.convertPoint(areaScrollPane, e.getPoint(),
+							horizontalPane);
+					zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
 					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
 							positionPercentage);*/
 					VibeComposerGUI.scoreScrollPane.repaint();
@@ -443,4 +444,13 @@ public class ShowPanelBig extends JPanel {
 		}
 	}
 
+	public void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {
+		Point pos = pane.getViewport().getViewPosition();
+
+		int newX = (int) (point.x * zoomX + (1 + zoomX) * pos.x);
+		int newY = (int) (point.y * zoomY + (1 + zoomY) * pos.y);
+		pane.getViewport().setViewPosition(new Point(newX, newY));
+
+		pane.repaint();
+	}
 }
