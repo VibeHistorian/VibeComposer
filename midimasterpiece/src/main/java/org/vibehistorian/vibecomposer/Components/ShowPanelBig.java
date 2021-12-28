@@ -57,6 +57,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -74,7 +75,7 @@ public class ShowPanelBig extends JPanel {
 	public static final int beatWidthBaseDefault = 1500;
 	public static int beatWidthBase = 1500;
 	public static final List<Integer> beatWidthBases = Arrays
-			.asList(new Integer[] { 1500, 2000, 2500, 3000, 4000, 6000 });
+			.asList(new Integer[] { 1500, 1800, 2200, 2700, 3300, 4000, 4800, 5700, 6800 });
 	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;
@@ -214,24 +215,40 @@ public class ShowPanelBig extends JPanel {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					Point xy = MouseInfo.getPointerInfo().getLocation();
 					SwingUtilities.convertPointFromScreen(xy, sa);
-					double usableStart = beatWidth;
-					double usableEnd = (maxEndTime * beatWidth);
+
+					int lastUsableSliderTime = VibeComposerGUI.sliderMeasureStartTimes
+							.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1);
+
+					double correctionPercentage = 1.0
+							- (VibeComposerGUI.sliderExtended / (double) lastUsableSliderTime);
+
+					double usableEnd = correctionPercentage * (maxEndTime * beatWidth);
 					/*LG.d("XY: " + xy.toString() + ", start: " + usableStart
 							+ ", end: " + usableEnd);*/
-					if (xy.getX() > usableEnd || xy.getX() < usableStart) {
+
+					double percentage = xy.getX() / usableEnd;
+					LG.d("Percentage in MIDI: " + percentage);
+					LG.i("Slider ratio: "
+							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
+									/ VibeComposerGUI.beatFromBpm(0));
+					LG.i("Score ratio: " + usableEnd / beatWidth);
+					LG.i("Delayed: " + VibeComposerGUI.delayed());
+					LG.i("Total div 144: "
+							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
+									/ 144);
+					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
+					LG.i(VibeComposerGUI.sliderExtended);
+
+					if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
 						return;
 					}
-					double percentage = (xy.getX() - usableStart) / (usableEnd - usableStart);
-					LG.d("Percentage in MIDI: " + percentage);
+
 					boolean sequenceRunning = VibeComposerGUI.sequencer.isRunning();
 					if (sequenceRunning) {
 						VibeComposerGUI.sequencer.stop();
 					}
-					int lastUsableSliderTime = VibeComposerGUI.sliderMeasureStartTimes
-							.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1);
-					int valueToSet = VibeComposerGUI.sliderMeasureStartTimes.get(0)
-							+ (int) (percentage * (lastUsableSliderTime
-									- VibeComposerGUI.sliderMeasureStartTimes.get(0)));
+
+					int valueToSet = (int) (percentage * lastUsableSliderTime);
 					//LG.d("Value to set: " + valueToSet);
 					VibeComposerGUI.setSliderEnd(valueToSet);
 					VibeComposerGUI.savePauseInfo();
@@ -267,30 +284,36 @@ public class ShowPanelBig extends JPanel {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (e.isAltDown()) {
+					if (e.getWheelRotation() > 0 && ShowAreaBig.noteHeight <= 4) {
+						return;
+					}
 					double originalHeight = ShowAreaBig.noteHeight;
 					sa.setNoteHeight(
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
 					double changeY = ShowAreaBig.noteHeight / originalHeight;
 					zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
+					VibeComposerGUI.scoreScrollPane.repaint();
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
 					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
 							positionPercentage);*/
-					VibeComposerGUI.scoreScrollPane.repaint();
 				} else if (e.isControlDown()) {
-					double originalWidth = beatWidth;
+					double originalWidth = Math.round(
+							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
-					ShowPanelBig.beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
+					beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
-					double changeX = beatWidth / originalWidth;
+					double changeX = Math.round(
+							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth)
+							/ originalWidth;
 					Point horPanePoint = SwingUtilities.convertPoint(areaScrollPane, e.getPoint(),
 							horizontalPane);
 					zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
+					VibeComposerGUI.scoreScrollPane.repaint();
 					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
 							positionPercentage);*/
-					VibeComposerGUI.scoreScrollPane.repaint();
 				} else {
 					if (e.isShiftDown()) {
 						// Horizontal scrolling
@@ -400,8 +423,6 @@ public class ShowPanelBig extends JPanel {
 		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime);
 		if (beatWidth < 1.0)
 			beatWidth = 1.0;
-		if (beatWidth > 256.0)
-			beatWidth = 256.0;
 		update();
 		//LG.d();
 		//areaScrollPane.getVerticalScrollBar().setValue(50);
@@ -439,17 +460,17 @@ public class ShowPanelBig extends JPanel {
 		ruler.setSize(sizeX, ShowRulerBig.maxHeight);
 		ruler.repaint();
 		this.repaint();
-		if (frame != null) {
-			frame.pack();
-		}
 	}
 
 	public void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {
 		Point pos = pane.getViewport().getViewPosition();
-
+		LG.i("ZoomX: " + zoomX + ", zoomY: " + zoomY);
+		LG.i("PointO: " + point.toString());
 		int newX = (int) (point.x * zoomX + (1 + zoomX) * pos.x);
 		int newY = (int) (point.y * zoomY + (1 + zoomY) * pos.y);
-		pane.getViewport().setViewPosition(new Point(newX, newY));
+		Point newPoint = new Point(newX, newY);
+		LG.i("PointO: " + newPoint.toString());
+		pane.getViewport().setViewPosition(newPoint);
 
 		pane.repaint();
 	}

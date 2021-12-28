@@ -587,8 +587,9 @@ public class VibeComposerGUI extends JFrame
 	CheckButton loopBeat;
 	CheckButton loopBeatCompose;
 	public static PlayheadRangeSlider slider;
+	public static int sliderExtended = 0;
 	public static List<Integer> sliderMeasureStartTimes = null;
-	private List<Integer> sliderBeatStartTimes = null;
+	public static List<Integer> sliderBeatStartTimes = null;
 
 	JLabel currentTime;
 	JLabel totalTime;
@@ -3940,8 +3941,8 @@ public class VibeComposerGUI extends JFrame
 							} else if (beatDurationMultiplier.getSelectedIndex() == 2) {
 								mult = 2;
 							}
-							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0)
-									/ 4) - 50) || sequencerEnded) {
+							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
+									- 50) || sequencerEnded) {
 								stopMidi();
 								if (!loopBeatCompose.isSelected()) {
 									composeMidi(true);
@@ -3996,7 +3997,7 @@ public class VibeComposerGUI extends JFrame
 			int beatChordNumInMeasure = 0;
 			int bfsiEnd = 0;
 			int lastMeasureStartTimeIndex = 0;
-			double quarterNote = beatFromBpm(0) / 4.0;
+			double quarterNote = beatFromBpm(0);
 			List<Double> beatQuarterNotesInMeasure = new ArrayList<>();
 			for (int bfsi = beatFindingStartIndex; bfsi < sliderBeatStartTimes.size(); bfsi++) {
 				if (sliderBeatStartTimes.get(bfsi) > val) {
@@ -4082,7 +4083,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static int beatFromBpm(int speedAdjustment) {
-		int finalVal = (int) (((4000 - speedAdjustment) * 60 * stretchMidi.getInt() / 100.0)
+		int finalVal = (int) (((1000 - speedAdjustment) * 60 * stretchMidi.getInt() / 100.0)
 				/ guiConfig.getBpm());
 		/*if (useDoubledDurations.isSelected()) {
 			finalVal *= 2;
@@ -4091,7 +4092,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static int sliderMeasureWidth() {
-		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH / 4);
+		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH);
 	}
 
 	private void initControlPanel(int startY, int anchorSide) {
@@ -5094,8 +5095,6 @@ public class VibeComposerGUI extends JFrame
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
 			int measureWidth = sliderMeasureWidth();
-			slider.setMajorTickSpacing(measureWidth);
-			slider.setMinorTickSpacing(beatFromBpm(0));
 			int delayed = delayed();
 			slider.setTickStart(delayed);
 			Dictionary<Integer, JLabel> table = new Hashtable<>();
@@ -5178,6 +5177,9 @@ public class VibeComposerGUI extends JFrame
 				sectIndex++;
 				prevSec = sec;
 			}
+
+			sliderExtended = Math.max(0, current - slider.getMaximum());
+
 			if (!endDisplayed) {
 				table.put(slider.getMaximum(), new JLabel("END"));
 				sliderMeasureStartTimes.add(slider.getMaximum());
@@ -6202,7 +6204,8 @@ public class VibeComposerGUI extends JFrame
 	private void saveStartInfo() {
 		startSliderPosition = slider.getValue();
 		if (MidiGenerator.chordInts.size() > 0) {
-			startBeatCounter = (int) ((startSliderPosition - delayed() + 20) / beatFromBpm(0));
+			startBeatCounter = (int) ((startSliderPosition - delayed() + 20)
+					/ (beatFromBpm(0) * 4));
 		} else {
 			startBeatCounter = 0;
 		}
@@ -8081,7 +8084,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void midiNavigate(long sliderValue) {
-		long time = (sliderValue - 25) * 1000;
+		midiNavigate(sliderValue, 25);
+	}
+
+	public static void midiNavigate(long sliderValue, int offset) {
+		long time = (sliderValue - offset) * 1000;
 		long timeTicks = msToTicks(time);
 		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
 			if (time >= 0) {
@@ -8212,13 +8219,13 @@ public class VibeComposerGUI extends JFrame
 
 	public static void setSliderEnd(int val) {
 		if (val >= slider.getMaximum()) {
-			return;
+			val = Math.max(0, slider.getMaximum() - 1);
 		}
 		if (slider.getValue() > val) {
 			slider.setValue(val);
 		}
 		slider.setUpperValue(val);
-		midiNavigate(val);
+		midiNavigate(val, 0);
 	}
 
 	public static void trySliderStartChange(int sectIndex) {

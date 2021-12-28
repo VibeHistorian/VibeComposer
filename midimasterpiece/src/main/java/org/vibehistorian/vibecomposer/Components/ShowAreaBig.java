@@ -238,10 +238,11 @@ public class ShowAreaBig extends JComponent {
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
 
 		double highlightX = (VibeComposerGUI.slider != null
-				&& VibeComposerGUI.sliderMeasureStartTimes != null)
-						? maxX * VibeComposerGUI.slider.getUpperValue()
-								/ (double) VibeComposerGUI.sliderMeasureStartTimes
-										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
+				&& VibeComposerGUI.sliderMeasureStartTimes != null) ? maxX
+						* (VibeComposerGUI.slider.getUpperValue())
+						/ (double) (VibeComposerGUI.sliderExtended
+								+ VibeComposerGUI.sliderMeasureStartTimes
+										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1))
 						: -1;
 
 		Set<Integer> soloMuterHighlightedTracks = new HashSet<>();
@@ -384,7 +385,7 @@ public class ShowAreaBig extends JComponent {
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {
-							g.setColor(OMNI.alphen(noteColor, 70));
+							g.setColor(aC);
 							g.drawString("#", actualStartingX - 7, y + 5);
 						}
 					}

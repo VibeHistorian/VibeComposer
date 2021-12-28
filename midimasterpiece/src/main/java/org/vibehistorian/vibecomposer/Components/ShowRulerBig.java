@@ -1,12 +1,10 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
@@ -42,7 +40,6 @@ see <https://www.gnu.org/licenses/>.
 public class ShowRulerBig extends JComponent {
 	private static final long serialVersionUID = 3220771981990129313L;
 	//attributes
-	private int startX;
 	public static int maxHeight = 17;
 	private int timeSig = 2;
 	private ShowPanelBig sp;
@@ -103,9 +100,10 @@ public class ShowRulerBig extends JComponent {
 
 		double highlightX = (VibeComposerGUI.slider != null
 				&& VibeComposerGUI.sliderMeasureStartTimes != null)
-						? maxX * VibeComposerGUI.slider.getUpperValue()
-								/ (double) VibeComposerGUI.sliderMeasureStartTimes
-										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1)
+						? (maxX * VibeComposerGUI.slider.getUpperValue())
+								/ (double) (VibeComposerGUI.sliderExtended
+										+ VibeComposerGUI.sliderMeasureStartTimes.get(
+												VibeComposerGUI.sliderMeasureStartTimes.size() - 1))
 						: -1;
 
 
@@ -147,44 +145,4 @@ public class ShowRulerBig extends JComponent {
 		//g.dispose();
 	}
 
-	// get the position of inital mouse click
-	public void mousePressed(MouseEvent e) {
-		//LG.d("Pressed");
-		this.setCursor(new Cursor(10));
-		startX = e.getX();
-	}
-
-	//Mouse Listener stubs
-	public void mouseClicked(MouseEvent e) {
-	}
-
-	public void mouseEntered(MouseEvent e) {
-	}
-
-	public void mouseExited(MouseEvent e) {
-	}
-
-	public void mouseReleased(MouseEvent e) {
-		this.setCursor(new Cursor(13));
-		sp.update();
-	}
-
-	//mouseMotionListener stubs
-	public void mouseMoved(MouseEvent e) {
-	}
-
-	public void mouseDragged(MouseEvent e) {
-		//LG.d("Dragged");
-		double beatWidth = sp.beatWidth;
-		beatWidth += (double) ((double) e.getX() - (double) startX) / 5.0;
-		if (beatWidth < 1.0)
-			beatWidth = 1.0;
-		if (beatWidth > 256.0)
-			beatWidth = 256.0;
-		//LG.d("beatWidth = "+beatWidth);
-		sp.beatWidth = beatWidth;
-		startX = e.getX();
-		//sp.update();
-		this.repaint();
-	}
 }
