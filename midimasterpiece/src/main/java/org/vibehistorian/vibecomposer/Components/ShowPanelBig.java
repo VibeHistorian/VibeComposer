@@ -51,13 +51,11 @@ import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
-import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -73,15 +71,14 @@ public class ShowPanelBig extends JPanel {
 	public Score score;
 	protected double beatWidth; //10.0;
 	public static final int beatWidthBaseDefault = 1500;
-	public static int beatWidthBase = 1500;
+	public static int beatWidthBase = 1550;
 	public static final List<Integer> beatWidthBases = Arrays
-			.asList(new Integer[] { 1500, 1800, 2200, 2700, 3300, 4000, 4800, 5700, 6800 });
+			.asList(new Integer[] { 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700, 6800 });
 	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;
 	private ShowRulerBig ruler;
 	private JPanel pan;
-	private JFrame frame;
 	private int panelHeight;
 	private JScrollPane areaScrollPane;
 	private JScrollPane rulerScrollPane;
@@ -227,7 +224,7 @@ public class ShowPanelBig extends JPanel {
 							+ ", end: " + usableEnd);*/
 
 					double percentage = xy.getX() / usableEnd;
-					LG.d("Percentage in MIDI: " + percentage);
+					/*LG.d("Percentage in MIDI: " + percentage);
 					LG.i("Slider ratio: "
 							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
 									/ VibeComposerGUI.beatFromBpm(0));
@@ -237,7 +234,7 @@ public class ShowPanelBig extends JPanel {
 							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
 									/ 144);
 					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
-					LG.i(VibeComposerGUI.sliderExtended);
+					LG.i(VibeComposerGUI.sliderExtended);*/
 
 					if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
 						return;
@@ -292,14 +289,26 @@ public class ShowPanelBig extends JPanel {
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
 					double changeY = ShowAreaBig.noteHeight / originalHeight;
-					zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
 					VibeComposerGUI.scoreScrollPane.repaint();
+
+					if (e.getWheelRotation() > 0) {
+						zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
+					} else {
+						SwingUtilities.invokeLater(() -> {
+							zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
+						});
+					}
+
+
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
 					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
 							positionPercentage);*/
 				} else if (e.isControlDown()) {
 					double originalWidth = Math.round(
 							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
+
+					Point horPanePoint = SwingUtilities.convertPoint(areaScrollPane, e.getPoint(),
+							horizontalPane);
 					beatWidthBaseIndex = OMNI.clamp(
 							beatWidthBaseIndex + ((e.getWheelRotation() > 0) ? -1 : 1), 0,
 							beatWidthBases.size() - 1);
@@ -308,10 +317,17 @@ public class ShowPanelBig extends JPanel {
 					double changeX = Math.round(
 							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth)
 							/ originalWidth;
-					Point horPanePoint = SwingUtilities.convertPoint(areaScrollPane, e.getPoint(),
-							horizontalPane);
-					zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
 					VibeComposerGUI.scoreScrollPane.repaint();
+
+					if (e.getWheelRotation() > 0) {
+						zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
+					} else {
+						SwingUtilities.invokeLater(() -> {
+							zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
+						});
+					}
+
+
 					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
 							positionPercentage);*/
 				} else {
@@ -462,14 +478,14 @@ public class ShowPanelBig extends JPanel {
 		this.repaint();
 	}
 
-	public void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {
+	public static void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {
 		Point pos = pane.getViewport().getViewPosition();
 		LG.i("ZoomX: " + zoomX + ", zoomY: " + zoomY);
 		LG.i("PointO: " + point.toString());
 		int newX = (int) (point.x * zoomX + (1 + zoomX) * pos.x);
 		int newY = (int) (point.y * zoomY + (1 + zoomY) * pos.y);
 		Point newPoint = new Point(newX, newY);
-		LG.i("PointO: " + newPoint.toString());
+		LG.i("PointN: " + newPoint.toString());
 		pane.getViewport().setViewPosition(newPoint);
 
 		pane.repaint();
