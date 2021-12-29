@@ -40,11 +40,12 @@ public class MidiEditPopup extends CloseablePopup {
 
 
 	public static double getTimeGrid() {
-		return TIME_GRID[snapToTimeGridChoice];
+		return TIME_GRID[snapToTimeGridChoice] * 4;
 	}
 
 	public static final int baseMargin = 5;
 	public static int trackScope = 1;
+	public static int trackScopeUpDown = 0;
 
 
 	public int part = 0;
@@ -88,7 +89,7 @@ public class MidiEditPopup extends CloseablePopup {
 				mvea.repaint();
 			}
 		});
-
+		trackScopeUpDown = 0;
 		int vmin = -1 * baseMargin * trackScope;
 		int vmax = baseMargin * trackScope;
 		if (!values.isEmpty()) {
@@ -236,8 +237,8 @@ public class MidiEditPopup extends CloseablePopup {
 			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.max().getAsInt();
 		}
-		mvea.min = Math.min(mvea.min, vmin);
-		mvea.max = Math.max(mvea.max, vmax);
+		mvea.setMin(Math.min(mvea.min, vmin));
+		mvea.setMax(Math.max(mvea.max, vmax));
 		values.setCustom(true);
 		mvea.setValues(values);
 		repaintMvea();

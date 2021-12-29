@@ -2964,7 +2964,7 @@ public class VibeComposerGUI extends JFrame
 								instrumentTabPane.setSelectedIndex(part);
 								switchTabPaneAfterApply = true;
 							}
-						} else {
+						} else if (currentMidi != null) {
 							Section sec = actualArrangement.getSections().get(secOrder);
 							boolean hasSinglePresence = sec.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder());

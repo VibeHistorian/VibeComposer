@@ -1367,4 +1367,8 @@ public class MidiUtils {
 		return map;
 	}
 
+	public static String pitchToString(int pitch) {
+		return MidiUtils.SEMITONE_LETTERS.get((pitch + 1200) % 12) + ((pitch / 12) - 1);
+	}
+
 }

@@ -50,31 +50,51 @@ public class MidiEditArea extends JComponent {
 	PhraseNote draggedNote = null;
 	boolean draggingPosition = false;
 	boolean draggingDuration = false;
+	boolean draggingVelocity = false;
+	boolean lockTimeGrid = false;
 	double startingOffset = 0.0;
 	double startingDuration = 0.0;
+	int startingDynamic = 0;
 	Integer dragX = null;
+	Integer dragY = null;
 
 	MidiEditPopup pop = null;
 
 	public MidiEditArea(int min, int max, PhraseNotes vals) {
 		super();
-		this.min = min;
-		this.max = max;
+		setMin(min);
+		setMax(max);
 		values = vals;
 
 		addMouseWheelListener(new MouseWheelListener() {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				int rot = (e.getWheelRotation() > 0) ? -1 : 1;
-				int originalTrackScope = MidiEditPopup.trackScope;
-				if (rot > 0 && (MidiEditArea.this.max > 110 || MidiEditArea.this.min < 10)) {
-					return;
-				}
-				MidiEditPopup.trackScope = Math.max(originalTrackScope + rot, 1);
-				if (originalTrackScope != MidiEditPopup.trackScope) {
-					MidiEditArea.this.min -= MidiEditPopup.baseMargin * rot;
-					MidiEditArea.this.max += MidiEditPopup.baseMargin * rot;
-					repaint();
+				if (!e.isAltDown()) {
+					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
+					if ((rot > 0 && MidiEditArea.this.max > 110)
+							|| (rot < 0 && MidiEditArea.this.min < 10)) {
+						return;
+					}
+					int originalTrackScopeUpDown = MidiEditPopup.trackScope;
+					MidiEditPopup.trackScopeUpDown = OMNI
+							.clamp(MidiEditPopup.trackScopeUpDown + rot, -4, 4);
+					if (originalTrackScopeUpDown != MidiEditPopup.trackScopeUpDown) {
+						MidiEditArea.this.min += MidiEditPopup.baseMargin * rot;
+						MidiEditArea.this.max += MidiEditPopup.baseMargin * rot;
+						repaint();
+					}
+				} else {
+					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
+					int originalTrackScope = MidiEditPopup.trackScope;
+					if (rot > 0 && (MidiEditArea.this.max > 110 || MidiEditArea.this.min < 10)) {
+						return;
+					}
+					MidiEditPopup.trackScope = Math.max(originalTrackScope + rot, 1);
+					if (originalTrackScope != MidiEditPopup.trackScope) {
+						MidiEditArea.this.min -= MidiEditPopup.baseMargin * rot;
+						MidiEditArea.this.max += MidiEditPopup.baseMargin * rot;
+						repaint();
+					}
 				}
 			}
 		});
@@ -86,65 +106,79 @@ public class MidiEditArea extends JComponent {
 					return;
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
-					if (!evt.isShiftDown()) {
-						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-						if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
-							setVal(orderVal.x, orderVal.y);
-							repaint();
-						}
-						isDragging = true;
-					} else {
-						Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-						PhraseNote pnDragged = getDraggedNote(evt.getPoint());
-						if (pnDragged == null) {
-							// mouse click doesn't overlap with existing note
-							// get order in note rhythm 
-							orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
-							if (orderVal != null) {
-								PhraseNote pn = getValues().get(orderVal.x);
-								if (pn.getPitch() == Note.REST
-										&& pn.getRv() > MidiGenerator.DBL_ERR) {
+					handleLeftPress(evt);
+				} else if (SwingUtilities.isRightMouseButton(evt)) {
+					handleRightPress(evt);
+				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
+					handleMiddlePress(evt);
+				}
+			}
 
-									LG.d("UnRESTing existing original note..");
-									pn.setOffset(0);
-									setVal(orderVal.x, orderVal.y);
-									draggedNote = pn;
-								} else {
-									LG.d("Inserting new note..");
-									PhraseNote insertedPn = new PhraseNote(orderVal.y);
-									insertedPn.setDuration(0.5);
-									insertedPn.setRv(0);
-									getValues().add(orderVal.x, insertedPn);
-									draggedNote = insertedPn;
-								}
-								startingDuration = draggedNote.getDuration();
-								isDragging = true;
-								draggingDuration = true;
-								dragX = evt.getPoint().x;
-								repaint();
-							}
+			private void handleMiddlePress(MouseEvent evt) {
+				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
+				PhraseNote pnDragged = getDraggedNote(evt.getPoint());
+
+				if (pnDragged == null) {
+					// mouse click doesn't overlap with existing note
+					// get order in note rhythm 
+					orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
+					if (orderVal != null) {
+						PhraseNote pn = getValues().get(orderVal.x);
+						if (pn.getPitch() == Note.REST && pn.getRv() > MidiGenerator.DBL_ERR) {
+
+							LG.d("UnRESTing existing original note..");
+							pn.setOffset(0);
+							setVal(orderVal.x, orderVal.y);
+							draggedNote = pn;
 						} else {
-							LG.d("Duration-dragging existing note..");
-							draggedNote = pnDragged;
-							startingDuration = draggedNote.getDuration();
-							isDragging = true;
-							draggingDuration = true;
-							dragX = evt.getPoint().x;
+							LG.d("Inserting new note..");
+							PhraseNote insertedPn = new PhraseNote(orderVal.y);
+							insertedPn.setDuration(0.5);
+							insertedPn.setRv(0);
+							getValues().add(orderVal.x, insertedPn);
+							draggedNote = insertedPn;
 						}
 					}
+				} else {
+					LG.d("Duration-dragging existing note..");
+					draggedNote = pnDragged;
+				}
 
-				} else if (SwingUtilities.isRightMouseButton(evt)) {
+				startingDuration = draggedNote.getDuration();
+				startingDynamic = draggedNote.getDynamic();
+				isDragging = true;
+				draggingDuration = evt.isControlDown() || evt.isShiftDown();
+				draggingVelocity = !draggingDuration;
+				lockTimeGrid = !evt.isControlDown();
+				dragX = evt.getPoint().x;
+				dragY = evt.getPoint().y;
+				repaint();
+
+			}
+
+			private void handleRightPress(MouseEvent evt) {
+				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
+				if (orderVal != null) {
+					setVal(orderVal.x, Note.REST);
+					repaint();
+				}
+			}
+
+			private void handleLeftPress(MouseEvent evt) {
+				if (!evt.isShiftDown() && !evt.isControlDown()) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					if (orderVal != null) {
-						setVal(orderVal.x, Note.REST);
+					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
+						setVal(orderVal.x, orderVal.y);
 						repaint();
 					}
-				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
+					isDragging = true;
+				} else {
 					draggedNote = getDraggedNote(evt.getPoint());
 					if (draggedNote != null) {
 						startingOffset = draggedNote.getOffset();
 						isDragging = true;
 						draggingPosition = true;
+						lockTimeGrid = evt.isShiftDown();
 
 						dragX = evt.getPoint().x;
 					}
@@ -177,8 +211,10 @@ public class MidiEditArea extends JComponent {
 		draggedNote = null;
 		draggingPosition = false;
 		draggingDuration = false;
+		draggingVelocity = false;
 		startingOffset = 0;
 		dragX = null;
+		lockTimeGrid = false;
 	}
 
 	protected void processDragEvent(MouseEvent e) {
@@ -193,7 +229,7 @@ public class MidiEditArea extends JComponent {
 			} else {
 				if (draggingPosition) {
 					double offset = getOffsetFromPosition(e.getPoint());
-					if (e.isShiftDown()) {
+					if (lockTimeGrid) {
 						offset = timeGridValue(offset + draggedNote.getStart(false))
 								- draggedNote.getStart(false);
 					}
@@ -202,11 +238,16 @@ public class MidiEditArea extends JComponent {
 					repaint();
 				} else if (draggingDuration) {
 					double duration = getDurationFromPosition(e.getPoint());
-					if (e.isShiftDown()) {
+					if (lockTimeGrid) {
 						duration = timeGridValue(duration);
 					}
 					duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2, duration);
 					draggedNote.setDuration(duration);
+					repaint();
+				} else if (draggingVelocity) {
+					int velocity = getVelocityFromPosition(e.getPoint());
+					velocity = OMNI.clamp(velocity, 0, 127);
+					draggedNote.setDynamic(velocity);
 					repaint();
 				}
 			}
@@ -290,9 +331,7 @@ public class MidiEditArea extends JComponent {
 			// draw line marks
 			for (int i = 0; i < 1 + (max - min); i++) {
 
-				String drawnValue = "" + (min + i) + " | "
-						+ MidiUtils.SEMITONE_LETTERS.get((min + i + 1200) % 12)
-						+ ((min + i) / 12 - 1);
+				String drawnValue = "" + (min + i) + " | " + MidiUtils.pitchToString(min + i);
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
 				int drawValueX = bottomLeft.x / 2 - (numWidth * valueLength) / 2;
@@ -430,12 +469,16 @@ public class MidiEditArea extends JComponent {
 					}
 				}*/
 
-
-				g.setColor(VibeComposerGUI.uiColor());
+				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
-				g.drawString("" + pitch, drawX + ovalWidth / 2, drawY - ovalWidth / 2);
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
+				g.drawString(
+						pitch + "(" + MidiUtils.pitchToString(pitch) + ") :"
+								+ values.get(i).getDynamic(),
+						drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+
+				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
+						(int) (30 + 140 * (values.get(i).getDynamic() / 127.0))));
 				g.fillRect(drawX, drawY - 4,
 						(int) (quarterNoteLength * values.get(i).getDuration()), 8);
 
@@ -509,6 +552,17 @@ public class MidiEditArea extends JComponent {
 		}
 
 		return null;
+	}
+
+	private int getVelocityFromPosition(Point xy) {
+		if (draggedNote == null) {
+			return 0;
+		} else if (dragY == null) {
+			return startingDynamic;
+		}
+		int yDiff = dragY - xy.y;
+		return startingDynamic + yDiff / 5;
+
 	}
 
 	private double getDurationFromPosition(Point xy) {
@@ -623,5 +677,14 @@ public class MidiEditArea extends JComponent {
 	public void setPop(MidiEditPopup pop) {
 		this.pop = pop;
 	}
+
+	public void setMin(int min) {
+		this.min = min;
+	}
+
+	public void setMax(int max) {
+		this.max = max;
+	}
+
 
 }
