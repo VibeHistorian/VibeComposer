@@ -79,10 +79,11 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 		this.partOrder = partOrder;
 	}
 
-	public void remakeNoteStartTimes(boolean offsetted) {
+	public void remakeNoteStartTimes() {
 		double current = 0.0;
 		for (PhraseNote pn : this) {
-			pn.setStartTime(current + (offsetted ? pn.getOffset() : 0.0));
+			pn.setStartTime(current + pn.getOffset());
+			pn.setAbsoluteStartTime(current);
 			current += pn.getRv();
 		}
 	}

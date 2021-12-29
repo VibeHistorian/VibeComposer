@@ -135,8 +135,10 @@ public class MidiEditArea extends JComponent {
 
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-					setVal(orderVal.x, Note.REST);
-					repaint();
+					if (orderVal != null) {
+						setVal(orderVal.x, Note.REST);
+						repaint();
+					}
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					draggedNote = getDraggedNote(evt.getPoint());
 					if (draggedNote != null) {
@@ -191,16 +193,30 @@ public class MidiEditArea extends JComponent {
 			} else {
 				if (draggingPosition) {
 					double offset = getOffsetFromPosition(e.getPoint());
+					if (e.isShiftDown()) {
+						offset = timeGridValue(offset + draggedNote.getStart(false))
+								- draggedNote.getStart(false);
+					}
+
 					draggedNote.setOffset(offset);
 					repaint();
 				} else if (draggingDuration) {
 					double duration = getDurationFromPosition(e.getPoint());
+					if (e.isShiftDown()) {
+						duration = timeGridValue(duration);
+					}
 					duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2, duration);
 					draggedNote.setDuration(duration);
 					repaint();
 				}
 			}
 		}
+	}
+
+	private double timeGridValue(double val) {
+		double timeGrid = MidiEditPopup.getTimeGrid();
+		double newVal = Math.round(val / timeGrid) * timeGrid;
+		return newVal;
 	}
 
 	void setVal(int pos, int pitch) {
@@ -243,7 +259,7 @@ public class MidiEditArea extends JComponent {
 
 			double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 			double quarterNoteLength = (w - bottomLeft.x) / sectionLength;
-			values.remakeNoteStartTimes(false);
+			values.remakeNoteStartTimes();
 
 			int partNum = (pop.getParent() != null) ? pop.getParent().getPartNum() : 0;
 
@@ -267,7 +283,7 @@ public class MidiEditArea extends JComponent {
 					pop.getSec());
 
 			List<Integer> valueChordIndexes = values.stream().map(
-					e -> getChordIndexByStartTime(chordSpacings, e.getStartTime() + e.getOffset()))
+					e -> getChordIndexByStartTime(chordSpacings, e.getStart(false) + e.getOffset()))
 					.collect(Collectors.toList());
 
 			// draw numbers left of Y line
@@ -313,7 +329,8 @@ public class MidiEditArea extends JComponent {
 						: drawnValue.length();
 				int drawValueY = numHeight + (bottomLeft.y + h) / 2;
 				int drawMarkY = (bottomLeft.y - markWidth / 2);
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime());
+				int drawX = bottomLeft.x
+						+ (int) (quarterNoteLength * values.get(i).getStart(false));
 
 				g.drawString(drawnValue, drawX - (numWidth * valueLength) / 2, drawValueY);
 				g.drawLine(drawX, drawMarkY, drawX, drawMarkY + markWidth);
@@ -326,7 +343,8 @@ public class MidiEditArea extends JComponent {
 				if (values.get(i).getRv() < MidiGenerator.DBL_ERR) {
 					continue;
 				}
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime());
+				int drawX = bottomLeft.x
+						+ (int) (quarterNoteLength * values.get(i).getStart(false));
 				for (int j = 0; j < 1 + max - min; j++) {
 					int drawDotY = bottomLeft.y - (int) (rowHeight * (j + 1));
 					boolean highlighted = false;
@@ -395,7 +413,7 @@ public class MidiEditArea extends JComponent {
 				if (pitch < 0) {
 					continue;
 				}
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStartTime()
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStart(false)
 						+ quarterNoteLength * values.get(i).getOffset());
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 
@@ -478,14 +496,14 @@ public class MidiEditArea extends JComponent {
 		if (possibleNotes.isEmpty()) {
 			return null;
 		}
-		values.remakeNoteStartTimes(true);
+		values.remakeNoteStartTimes();
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 		double mouseClickTime = (xy.x - marginX) / quarterNoteLength;
 		for (int i = 0; i < possibleNotes.size(); i++) {
 			PhraseNote pn = possibleNotes.get(i);
-			if (mouseClickTime > pn.getStartTime()
-					&& mouseClickTime < pn.getStartTime() + pn.getDuration()) {
+			if (mouseClickTime > pn.getStart(true)
+					&& mouseClickTime < pn.getStart(true) + pn.getDuration()) {
 				return possibleNotes.get(i);
 			}
 		}
@@ -497,8 +515,8 @@ public class MidiEditArea extends JComponent {
 		if (draggedNote == null || dragX == null) {
 			return 0;
 		}
-		values.remakeNoteStartTimes(true);
-		double startTime = draggedNote.getStartTime();
+		values.remakeNoteStartTimes();
+		double startTime = draggedNote.getStart(true);
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 
@@ -512,8 +530,8 @@ public class MidiEditArea extends JComponent {
 		if (draggedNote == null || dragX == null) {
 			return 0;
 		}
-		values.remakeNoteStartTimes(true);
-		double startTime = draggedNote.getStartTime();
+		values.remakeNoteStartTimes();
+		double startTime = draggedNote.getStart(true);
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 
@@ -538,7 +556,7 @@ public class MidiEditArea extends JComponent {
 		Point bottomLeftAdjusted = new Point(marginX,
 				usableHeight + marginY - (int) (rowHeight / 2));
 
-		values.remakeNoteStartTimes(offsetted);
+		values.remakeNoteStartTimes();
 		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (w - bottomLeftAdjusted.x) / sectionLength;
 
@@ -551,8 +569,8 @@ public class MidiEditArea extends JComponent {
 			List<Integer> possibleNotes = new ArrayList<>();
 			if (getClosestOriginal) {
 				for (int i = 0; i < values.size(); i++) {
-					double start = values.get(i).getStartTime();
-					double end = i < values.size() - 1 ? values.get(i + 1).getStartTime()
+					double start = values.get(i).getStart(offsetted);
+					double end = i < values.size() - 1 ? values.get(i + 1).getStart(offsetted)
 							: sectionLength;
 					if (start < searchX && searchX < end) {
 						possibleNotes.add(i);
@@ -561,8 +579,8 @@ public class MidiEditArea extends JComponent {
 				}
 			} else {
 				for (int i = 0; i < values.size(); i++) {
-					if (searchX + MidiGenerator.DBL_ERR > values.get(i).getStartTime()
-							&& searchX - MidiGenerator.DBL_ERR < values.get(i).getStartTime()
+					if (searchX + MidiGenerator.DBL_ERR > values.get(i).getStart(offsetted)
+							&& searchX - MidiGenerator.DBL_ERR < values.get(i).getStart(offsetted)
 									+ values.get(i).getDuration()) {
 						possibleNotes.add(i);
 					}

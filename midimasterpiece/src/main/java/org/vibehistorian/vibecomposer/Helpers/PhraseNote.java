@@ -16,6 +16,7 @@ public class PhraseNote implements Cloneable {
 	private double offset;
 
 	private double startTime;
+	private double absoluteStartTime;
 
 	public PhraseNote(Note n) {
 		super();
@@ -91,11 +92,24 @@ public class PhraseNote implements Cloneable {
 	}
 
 	@XmlTransient
+	public double getAbsoluteStartTime() {
+		return absoluteStartTime;
+	}
+
+	public void setAbsoluteStartTime(double absoluteStartTime) {
+		this.absoluteStartTime = absoluteStartTime;
+	}
+
+	@XmlTransient
 	public double getStartTime() {
 		return startTime;
 	}
 
 	public void setStartTime(double startTime) {
 		this.startTime = startTime;
+	}
+
+	public double getStart(boolean offsetted) {
+		return offsetted ? startTime : absoluteStartTime;
 	}
 }

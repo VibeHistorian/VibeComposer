@@ -33,8 +33,15 @@ public class MidiEditPopup extends CloseablePopup {
 	JTextField text = null;
 	Section sec = null;
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
+	public ScrollComboBox<String> snapToTimeGrid = new ScrollComboBox<>(false);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", true);
+	public static final double[] TIME_GRID = new double[] { 0.03125, 1 / 24.0, 0.0625, 1 / 12.0,
+			0.125, 0.1666, 0.25, 0.3333, 0.5, 1.0 };
 
+
+	public static double getTimeGrid() {
+		return TIME_GRID[snapToTimeGridChoice];
+	}
 
 	public static final int baseMargin = 5;
 	public static int trackScope = 1;
@@ -43,6 +50,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public int part = 0;
 	public int partOrder = 0;
 	public static int highlightModeChoice = 3;
+	public static int snapToTimeGridChoice = 2;
 	public CheckButton applyToMainBtn;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
@@ -65,6 +73,18 @@ public class MidiEditPopup extends CloseablePopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				highlightModeChoice = highlightMode.getSelectedIndex();
+				mvea.repaint();
+			}
+		});
+
+		ScrollComboBox.addAll(new String[] { "1/32", "1/24", "1/16", "1/12", "1/8", "1/6", "1/4",
+				"1/3", "1/2", "1" }, snapToTimeGrid);
+		snapToTimeGrid.setSelectedIndex(snapToTimeGridChoice);
+		snapToTimeGrid.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				snapToTimeGridChoice = snapToTimeGrid.getSelectedIndex();
 				mvea.repaint();
 			}
 		});
@@ -183,6 +203,8 @@ public class MidiEditPopup extends CloseablePopup {
 		textPanel.add(snapToScaleGrid);
 		textPanel.add(new JLabel("  Highlight Mode:"));
 		textPanel.add(highlightMode);
+		textPanel.add(new JLabel("  Snap To Time:"));
+		textPanel.add(snapToTimeGrid);
 
 		allPanels.add(buttonPanel);
 		allPanels.add(buttonPanel2);
