@@ -65,6 +65,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -560,6 +561,7 @@ public class VibeComposerGUI extends JFrame
 
 	JList<File> generatedMidi;
 	public static Sequencer sequencer = null;
+	public static Map<Integer, List<MidiEvent>> midiEventsToRemove = new HashMap<>();
 	File currentMidi = null;
 	MidiDevice device = null;
 
@@ -4673,6 +4675,7 @@ public class VibeComposerGUI extends JFrame
 		long systemTime = System.currentTimeMillis();
 		if (sequencer != null) {
 			sequencer.stop();
+			flushMidiEvents();
 		}
 
 		if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
@@ -6175,6 +6178,7 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			LG.i(("Stopping Midi.."));
 			sequencer.stop();
+			flushMidiEvents();
 			//resetSequencerTickPosition();
 			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
@@ -6188,6 +6192,7 @@ public class VibeComposerGUI extends JFrame
 		if (sequencer != null) {
 			LG.i(("Pausing Midi.."));
 			sequencer.stop();
+			flushMidiEvents();
 			savePauseInfo();
 			LG.i("Paused Midi: " + pausedSliderPosition + ", measure: " + pausedMeasureCounter);
 		} else {
@@ -8108,6 +8113,7 @@ public class VibeComposerGUI extends JFrame
 				//midiPauseProgMs = 0;
 			}
 		}
+		flushMidiEvents();
 	}
 
 	public int selectRandomStrumByStruminess() {
@@ -8308,6 +8314,7 @@ public class VibeComposerGUI extends JFrame
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						sequencer.stop();
+						flushMidiEvents();
 						sequencer.setTickPosition(returnPos);
 						sequencer.setTrackSolo(trackNum, prevSoloState);
 					}
@@ -8315,20 +8322,36 @@ public class VibeComposerGUI extends JFrame
 				tmr.setRepeats(false);
 				tmr.start();
 			}
-
-			Timer tmr = new Timer(durationMs + startDelayMicroseconds / 1000 + 500,
-					new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							trk.remove(noteOn);
-							trk.remove(noteOff);
-						}
-					});
-			tmr.setRepeats(false);
-			tmr.start();
+			queueMidiEventForRemoval(trackNum, noteOff);
+			queueMidiEventForRemoval(trackNum, noteOn);
 		} catch (InvalidMidiDataException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public static void queueMidiEventForRemoval(int trackNum, MidiEvent mve) {
+		if (midiEventsToRemove.containsKey(trackNum)) {
+			midiEventsToRemove.get(trackNum).add(mve);
+		} else {
+			List<MidiEvent> mves = new ArrayList<>();
+			mves.add(mve);
+			midiEventsToRemove.put(trackNum, mves);
+		}
+	}
+
+	public static void flushMidiEvents() {
+		if (sequencer == null || !sequencer.isOpen() || midiEventsToRemove.isEmpty()) {
+			return;
+		}
+
+		midiEventsToRemove.entrySet().forEach(mves -> {
+			Track[] trks = sequencer.getSequence().getTracks();
+			if (mves.getKey() < trks.length) {
+				Track trk = trks[mves.getKey()];
+				mves.getValue().forEach(e -> trk.remove(e));
+			}
+		});
+		midiEventsToRemove.clear();
 	}
 }

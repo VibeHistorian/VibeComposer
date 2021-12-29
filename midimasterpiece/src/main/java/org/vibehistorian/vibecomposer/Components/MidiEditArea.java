@@ -51,6 +51,7 @@ public class MidiEditArea extends JComponent {
 	boolean draggingPosition = false;
 	boolean draggingDuration = false;
 	boolean draggingVelocity = false;
+	long lastPlayedNoteTime = 0;
 	boolean lockTimeGrid = false;
 	double startingOffset = 0.0;
 	double startingDuration = 0.0;
@@ -144,8 +145,8 @@ public class MidiEditArea extends JComponent {
 					LG.d("Duration-dragging existing note..");
 					draggedNote = pnDragged;
 				}
-
-				VibeComposerGUI.playNote(draggedNote.getPitch(), 1000, draggedNote.getDynamic(),
+				lastPlayedNoteTime = System.currentTimeMillis();
+				VibeComposerGUI.playNote(draggedNote.getPitch(), 500, draggedNote.getDynamic(),
 						pop.part, pop.partOrder);
 
 				startingDuration = draggedNote.getDuration();
@@ -191,7 +192,7 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				if (draggingVelocity) {
+				if (draggingVelocity && (System.currentTimeMillis() - lastPlayedNoteTime) > 500) {
 					VibeComposerGUI.playNote(draggedNote.getPitch(), 300, draggedNote.getDynamic(),
 							pop.part, pop.partOrder);
 				}
