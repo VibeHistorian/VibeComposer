@@ -2964,7 +2964,8 @@ public class VibeComposerGUI extends JFrame
 								instrumentTabPane.setSelectedIndex(part);
 								switchTabPaneAfterApply = true;
 							}
-						} else if (currentMidi != null) {
+						} else if (currentMidi != null
+								&& partAbsoluteOrder < getInstList(part).size()) {
 							Section sec = actualArrangement.getSections().get(secOrder);
 							boolean hasSinglePresence = sec.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
@@ -3701,23 +3702,27 @@ public class VibeComposerGUI extends JFrame
 
 			public void run() {
 				while (true) {
-					try {
-						// recalc sequencer tracks from button colorings
-						if (needToRecalculateSoloMuters && !composingInProgress) {
-							needToRecalculateSoloMuters = false;
-							unapplySolosMutes(true);
+					recalculateSolosMutes();
+				}
+			}
 
-							reapplySolosMutes();
-							recolorButtons();
-						}
-						try {
-							sleep(100);
-						} catch (InterruptedException e) {
+			private void recalculateSolosMutes() {
+				try {
+					// recalc sequencer tracks from button colorings
+					if (needToRecalculateSoloMuters && !composingInProgress) {
+						needToRecalculateSoloMuters = false;
+						unapplySolosMutes(true);
 
-						}
-					} catch (Exception e) {
-						LG.i(("Exception in SOLO buttons thread:" + e));
+						reapplySolosMutes();
+						recolorButtons();
 					}
+					try {
+						sleep(100);
+					} catch (InterruptedException e) {
+
+					}
+				} catch (Exception e) {
+					LG.i(("Exception in SOLO buttons thread:" + e));
 				}
 			}
 
@@ -8258,5 +8263,41 @@ public class VibeComposerGUI extends JFrame
 		Collections.sort(panels,
 				(e1, e2) -> (Integer.compare(e1.getPanelOrder(), e2.getPanelOrder())));
 		return panels;
+	}
+
+	public void sendMidiMessage(ShortMessage midiMessage) {
+		if (midiMode.isSelected() && device != null) {
+			device.getReceivers().forEach(e -> e.send(midiMessage, -1));
+		} else if (synth != null && synth.isOpen()) {
+			synth.getReceivers().forEach(e -> e.send(midiMessage, -1));
+		}
+	}
+
+	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder) {
+		if (sequencer == null || !sequencer.isOpen()) {
+			return;
+		}
+
+		InstPanel ip = getInstList(part).get(partOrder);
+		Integer trackNum = ip.getSequenceTrack();
+		if (trackNum == null || trackNum < 0) {
+			return;
+		}
+		try {
+			Track trk = sequencer.getSequence().getTracks()[trackNum];
+			ShortMessage noteOnMsg = new ShortMessage();
+			noteOnMsg.setMessage(ShortMessage.NOTE_ON, ip.getMidiChannel() - 1, pitch, velocity);
+			ShortMessage noteOffMsg = new ShortMessage();
+			noteOffMsg.setMessage(ShortMessage.NOTE_OFF, ip.getMidiChannel() - 1, pitch, 0);
+
+			int startDelayMs = 50000;
+			trk.add(new MidiEvent(noteOnMsg,
+					sequencer.getTickPosition() + (msToTicks(startDelayMs))));
+			trk.add(new MidiEvent(noteOffMsg,
+					sequencer.getTickPosition() + (msToTicks(startDelayMs + durationMs * 1000))));
+		} catch (InvalidMidiDataException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

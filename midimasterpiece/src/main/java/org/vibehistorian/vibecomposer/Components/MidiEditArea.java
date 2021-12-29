@@ -138,11 +138,15 @@ public class MidiEditArea extends JComponent {
 							getValues().add(orderVal.x, insertedPn);
 							draggedNote = insertedPn;
 						}
+
 					}
 				} else {
 					LG.d("Duration-dragging existing note..");
 					draggedNote = pnDragged;
 				}
+
+				VibeComposerGUI.playNote(draggedNote.getPitch(), 1000, draggedNote.getDynamic(),
+						pop.part, pop.partOrder);
 
 				startingDuration = draggedNote.getDuration();
 				startingDynamic = draggedNote.getDynamic();
