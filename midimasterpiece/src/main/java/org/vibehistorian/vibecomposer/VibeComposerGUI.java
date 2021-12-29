@@ -114,6 +114,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
@@ -8290,11 +8291,41 @@ public class VibeComposerGUI extends JFrame
 			ShortMessage noteOffMsg = new ShortMessage();
 			noteOffMsg.setMessage(ShortMessage.NOTE_OFF, ip.getMidiChannel() - 1, pitch, 0);
 
-			int startDelayMs = 50000;
-			trk.add(new MidiEvent(noteOnMsg,
-					sequencer.getTickPosition() + (msToTicks(startDelayMs))));
-			trk.add(new MidiEvent(noteOffMsg,
-					sequencer.getTickPosition() + (msToTicks(startDelayMs + durationMs * 1000))));
+			int startDelayMicroseconds = 50000;
+			MidiEvent noteOn = new MidiEvent(noteOnMsg,
+					sequencer.getTickPosition() + (msToTicks(startDelayMicroseconds)));
+			trk.add(noteOn);
+			MidiEvent noteOff = new MidiEvent(noteOffMsg, sequencer.getTickPosition()
+					+ (msToTicks(startDelayMicroseconds + durationMs * 1000)));
+			trk.add(noteOff);
+
+			if (!sequencer.isRunning()) {
+				long returnPos = sequencer.getTickPosition();
+				boolean prevSoloState = sequencer.getTrackSolo(trackNum);
+				sequencer.setTrackSolo(trackNum, true);
+				sequencer.start();
+				Timer tmr = new Timer(durationMs, new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						sequencer.stop();
+						sequencer.setTickPosition(returnPos);
+						sequencer.setTrackSolo(trackNum, prevSoloState);
+					}
+				});
+				tmr.setRepeats(false);
+				tmr.start();
+			}
+
+			Timer tmr = new Timer(durationMs + startDelayMicroseconds / 1000 + 500,
+					new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							trk.remove(noteOn);
+							trk.remove(noteOff);
+						}
+					});
+			tmr.setRepeats(false);
+			tmr.start();
 		} catch (InvalidMidiDataException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

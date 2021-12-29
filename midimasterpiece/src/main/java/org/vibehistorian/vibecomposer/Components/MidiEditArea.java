@@ -191,6 +191,10 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
+				if (draggingVelocity) {
+					VibeComposerGUI.playNote(draggedNote.getPitch(), 300, draggedNote.getDynamic(),
+							pop.part, pop.partOrder);
+				}
 				reset();
 			}
 		});
