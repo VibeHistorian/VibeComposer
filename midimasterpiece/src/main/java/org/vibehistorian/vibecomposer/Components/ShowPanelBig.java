@@ -83,6 +83,7 @@ public class ShowPanelBig extends JPanel {
 	private int panelHeight;
 	private JScrollPane areaScrollPane;
 	private JScrollPane rulerScrollPane;
+	private JScrollPane horizontalPane;
 	public static CheckButton soloMuterHighlight;
 	public static double maxEndTime = 10.0;
 
@@ -121,7 +122,7 @@ public class ShowPanelBig extends JPanel {
 		pan.setSize(size);
 		pan.setLayout(new BorderLayout());
 
-		JScrollPane horizontalPane = new JScrollPane() {
+		horizontalPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				return new Dimension(beatWidthBaseDefault, getHeight() - 50);
@@ -275,7 +276,54 @@ public class ShowPanelBig extends JPanel {
 		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		areaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		areaScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		areaScrollPane.removeMouseWheelListener(areaScrollPane.getMouseWheelListeners()[0]);
+		setupMouseWheelListener();
+
+		areaPanel.setVisible(true);
+		pan.add("Center", areaScrollPane);
+		//add a ruler
+		ruler = new ShowRulerBig(this);
+		ruler.setVisible(true);
+		ruler.addMouseListener(ml);
+
+		JPanel rulerPanel = new JPanel();
+		rulerPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
+				ShowRulerBig.maxHeight));
+		rulerPanel.add(ruler);
+
+		rulerScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight + 10);
+			}
+		};
+		rulerScrollPane.setViewportView(rulerPanel);
+		rulerScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		rulerScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		rulerScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+
+		rulerPanel.setVisible(true);
+		pan.add("South", rulerScrollPane);
+		panelHeight = panelMaxHeight;
+		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
+		scorePartPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		this.add(scorePartPanel);
+		this.add(horizontalPane);
+
+		//getHAdjustable().setUnitIncrement(50); //set scroll speed
+		//getHAdjustable().setBlockIncrement(50);
+
+
+		soloMuterHighlight.setSelected(true);
+		repaint();
+	}
+
+	public void setupMouseWheelListener() {
+		if (areaScrollPane.getMouseListeners() != null) {
+			for (MouseWheelListener mwl : areaScrollPane.getMouseWheelListeners()) {
+				areaScrollPane.removeMouseWheelListener(mwl);
+			}
+		}
 
 		areaScrollPane.addMouseWheelListener(new MouseWheelListener() {
 
@@ -346,45 +394,6 @@ public class ShowPanelBig extends JPanel {
 				}
 			}
 		});
-
-		areaPanel.setVisible(true);
-		pan.add("Center", areaScrollPane);
-		//add a ruler
-		ruler = new ShowRulerBig(this);
-		ruler.setVisible(true);
-		ruler.addMouseListener(ml);
-
-		JPanel rulerPanel = new JPanel();
-		rulerPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
-				ShowRulerBig.maxHeight));
-		rulerPanel.add(ruler);
-
-		rulerScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight + 10);
-			}
-		};
-		rulerScrollPane.setViewportView(rulerPanel);
-		rulerScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		rulerScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		rulerScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-
-		rulerPanel.setVisible(true);
-		pan.add("South", rulerScrollPane);
-		panelHeight = panelMaxHeight;
-		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
-		scorePartPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		this.add(scorePartPanel);
-		this.add(horizontalPane);
-
-		//getHAdjustable().setUnitIncrement(50); //set scroll speed
-		//getHAdjustable().setBlockIncrement(50);
-
-
-		soloMuterHighlight.setSelected(true);
-		repaint();
 	}
 
 	public void setScore() {

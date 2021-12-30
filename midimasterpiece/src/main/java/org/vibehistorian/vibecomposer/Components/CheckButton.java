@@ -31,12 +31,7 @@ public class CheckButton extends JButton {
 	public CheckButton(String name, boolean sel, Color opaqueColor) {
 
 		setText(name);
-		if (opaqueColor != null) {
-			bgColor = opaqueColor;
-			setBackground(OMNI.alphen(bgColor, selected ? 60 : 0));
-		} else {
-			setBackground(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
-		}
+		setOpaqueColor(opaqueColor);
 		if (StringUtils.isEmpty(name)) {
 			setPreferredSize(new Dimension(20, 20));
 		} else {
@@ -53,6 +48,15 @@ public class CheckButton extends JButton {
 
 		});
 		setSelected(sel);
+	}
+
+	public void setOpaqueColor(Color opaqueColor) {
+		if (opaqueColor != null) {
+			bgColor = opaqueColor;
+			setBackground(OMNI.alphen(bgColor, selected ? 60 : 0));
+		} else {
+			setBackground(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
+		}
 	}
 
 	public boolean isSelected() {

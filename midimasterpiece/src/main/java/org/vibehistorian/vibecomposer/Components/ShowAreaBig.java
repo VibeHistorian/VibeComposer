@@ -175,7 +175,7 @@ public class ShowAreaBig extends JComponent {
 		int rectLeft, rectTop, rectRight, rectBot;
 		//clear
 		g.setColor(
-				VibeComposerGUI.isDarkMode ? new Color(100, 100, 100) : new Color(180, 180, 180));
+				VibeComposerGUI.isDarkMode ? new Color(100, 100, 100) : new Color(140, 140, 140));
 		g.fillRect(0, 0, this.getSize().width, areaHeight);
 		//get current maxWidth
 		//paint staves

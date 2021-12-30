@@ -235,8 +235,11 @@ public class VibeComposerGUI extends JFrame
 	private static boolean isFullMode = true;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
-	public static Color toggledUIColor = Color.cyan;
 	public static final Color COMPOSE_COLOR = new Color(180, 150, 90);
+	public static final Color COMPOSE_COLOR_TEXT = new Color(220, 170, 60);
+	public static final Color COMPOSE_COLOR_TEXT_LIGHT = new Color(255, 193, 85);
+	public static Color toggledUIColor = Color.cyan;
+	public static Color toggledComposeColor = COMPOSE_COLOR_TEXT;
 
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
@@ -1087,8 +1090,8 @@ public class VibeComposerGUI extends JFrame
 		JPanel arrangementExtraSettingsPanel = new JPanel();
 
 		arrangementScaleMidiVelocity = new JCheckBox("Scale Midi Velocity in Arrangement", true);
-		arrangementResetCustomPanelsOnCompose = new JCheckBox("Reset customized panels On Compose",
-				true);
+		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset customized panels On Compose",
+				true, true);
 
 		useMidiCC = new JCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
 		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
@@ -1397,14 +1400,14 @@ public class VibeComposerGUI extends JFrame
 				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
 				melodyBlockTargetMode);
 		melodyBlockTargetMode.setSelectedIndex(2);
-		melodyTargetNotesRandomizeOnCompose = new JCheckBox(
-				"<html>Randomize Targets<br> on Compose</html>", true);
+		melodyTargetNotesRandomizeOnCompose = makeCheckBox(
+				"<html>Randomize Targets<br> on Compose</html>", true, true);
 		melodyPatternEffect = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" },
 				melodyPatternEffect);
 		melodyPatternEffect.setSelectedIndex(2);
-		melodyPatternRandomizeOnCompose = new JCheckBox(
-				"<html>Randomize Pattern<br> on Compose</html>", true);
+		melodyPatternRandomizeOnCompose = makeCheckBox(
+				"<html>Randomize Pattern<br> on Compose</html>", true, true);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
@@ -1455,14 +1458,14 @@ public class VibeComposerGUI extends JFrame
 		randomizeMelodies = makeButton("Randomize Melodies",
 				e -> createRandomMelodyPanels(new Random().nextInt()));
 		melodySettingsExtraPanelOrg.add(randomizeMelodies);
-		randomizeMelodiesOnCompose = new JCheckBox("On Compose", false);
+		randomizeMelodiesOnCompose = makeCheckBox("On Compose", false, true);
 		melodySettingsExtraPanelOrg.add(randomizeMelodiesOnCompose);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
 		JButton clearUserMelodySeed = makeButton("Clear Seed",
 				e -> getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
 		randomMelodySameSeed = new JCheckBox("Same#", true);
-		randomMelodyOnRegenerate = new JCheckBox("On regen", false);
+		randomMelodyOnRegenerate = makeCheckBox("on Regen", false, true);
 		melody1ForcePatterns = new JCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
 		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
@@ -1527,6 +1530,16 @@ public class VibeComposerGUI extends JFrame
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
 		toggleableComponents.add(melodySettingsExtraPanelsHolder);
+	}
+
+	public static JCheckBox makeCheckBox(String string, boolean b, boolean thick) {
+		JCheckBox cb = new JCheckBox(string, b);
+		if (thick) {
+			Font fnt = cb.getFont();
+			fnt = fnt.deriveFont(Font.BOLD);
+			cb.setFont(fnt);
+		}
+		return cb;
 	}
 
 	public void fixCombinedMelodyTracks() {
@@ -1687,7 +1700,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
 		});
-		randomChordsGenerateOnCompose = new JCheckBox("on Compose", true);
+		randomChordsGenerateOnCompose = makeCheckBox("On Compose", true, true);
 		chordSettingsPanel.add(randomizeChords);
 		chordSettingsPanel.add(randomChordsToGenerate);
 		chordSettingsPanel.add(randomChordsGenerateOnCompose);
@@ -1815,7 +1828,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
 		});
-		randomArpsGenerateOnCompose = new JCheckBox("on Compose", true);
+		randomArpsGenerateOnCompose = makeCheckBox("on Compose", true, true);
 		arpsSettingsPanel.add(randomizeArps);
 		arpsSettingsPanel.add(randomArpsToGenerate);
 		arpsSettingsPanel.add(randomArpsGenerateOnCompose);
@@ -1953,7 +1966,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
 		});
-		randomDrumsGenerateOnCompose = new JCheckBox("on Compose", true);
+		randomDrumsGenerateOnCompose = makeCheckBox("on Compose", true, true);
 		drumsPanel.add(randomizeDrums);
 		drumsPanel.add(randomDrumsToGenerate);
 		drumsPanel.add(randomDrumsGenerateOnCompose);
@@ -2382,7 +2395,7 @@ public class VibeComposerGUI extends JFrame
 		JButton randomizeArrangementBtn = makeButton("Randomize", "ArrangementRandomize");
 		JButton arrangementPartInclusionBtn = makeButton("Parts", "ArrangementOpenPartInclusion");
 
-		randomizeArrangementOnCompose = new JCheckBox("on Compose", true);
+		randomizeArrangementOnCompose = makeCheckBox("on Compose", true, true);
 
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons
@@ -2781,211 +2794,7 @@ public class VibeComposerGUI extends JFrame
 		scrollableArrangementActualTable.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mousePressed(java.awt.event.MouseEvent evt) {
-				int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
-				int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
-
-
-				LG.d(("Clicked! " + row + ", " + secOrder));
-				boolean rClick = SwingUtilities.isRightMouseButton(evt);
-				boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
-				if (row == 0 && secOrder >= 0) {
-					if (rClick) {
-						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
-					} else if (mClick) {
-						handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
-					}
-				} else if (row >= 2 && secOrder >= 0) {
-					int part = row - 2;
-
-					Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-					Point tablePoint = scrollableArrangementActualTable.getLocation();
-					SwingUtilities.convertPointToScreen(tablePoint,
-							scrollableArrangementActualTable);
-					Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder,
-							false);
-					/*LG.d("Mouse point: " + mousePoint.toString());
-					LG.d("Table point: " + tablePoint.toString());
-					LG.d(r.toString());*/
-
-					mousePoint.x -= tablePoint.x;
-					mousePoint.y -= tablePoint.y;
-
-					mousePoint.x -= r.x;
-					mousePoint.y -= r.y;
-
-
-					double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01,
-							0.99);
-
-					int actualSize = getInstList(part).size();
-					int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
-					int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
-
-					LG.d("Percentage: " + orderPercentage);
-					LG.d("Selected subcell: " + (partAbsoluteOrder + 1));
-					boolean randomizerButtonPressed = false;
-					if ((actualSize > CollectionCellRenderer.MIN_CELLS
-							&& partAbsoluteOrder == actualSize)
-							|| (actualSize <= CollectionCellRenderer.MIN_CELLS
-									&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
-						randomizerButtonPressed = true;
-					} else if (partAbsoluteOrder >= actualSize) {
-						LG.d("Can't interact: subcell not present in part - "
-								+ (partAbsoluteOrder + 1));
-						return;
-					}
-
-
-					if (rClick || mClick) {
-						//LG.d(("Clickable! rClick: " + rClick));
-						Section sec = actualArrangement.getSections().get(secOrder);
-						boolean hasPresence = !sec.getPresence(part).isEmpty();
-						boolean hasVariation = hasPresence && sec.hasVariation(part);
-
-						if (evt.isControlDown()) {
-							if (hasPresence) {
-								int secOrder2 = secOrder;
-								if (mClick) {
-									secOrder2++;
-									if (secOrder2 >= actualArrangement.getSections().size()) {
-										return;
-									}
-								} else if (rClick) {
-									secOrder2--;
-									if (secOrder2 < 0) {
-										return;
-									}
-								}
-								Section sec2 = actualArrangement.getSections().get(secOrder2);
-								sec2.resetAllPresence(part);
-								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-									sec2.removeVariationForAllParts(part, i);
-								}
-								for (Integer p : sec.getPresence(part)) {
-									int absOrder = VibeComposerGUI.getAbsoluteOrder(part, p);
-									sec2.setPresence(part, absOrder);
-									sec2.setVariation(part, absOrder,
-											sec.getVariation(part, absOrder));
-								}
-
-							}
-						} else if (randomizerButtonPressed) {
-							if (mClick) {
-								if (hasVariation) {
-									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-										sec.removeVariationForAllParts(part, i);
-									}
-								} else if (hasPresence) {
-									sec.generateVariations(new Random(), part);
-								}
-							} else {
-								if (hasPresence) {
-									for (int i = 0; i < getInstList(part).size(); i++) {
-										sec.resetPresence(part, i);
-									}
-								} else {
-									arrangement.initPartInclusionMapIfNull();
-									sec.generatePresences(new Random(), part,
-											arrangement.getPartInclusionMap(), true);
-								}
-							}
-						} else if (evt.isShiftDown()) {
-							boolean hasAnyPresence = actualArrangement.getSections().stream()
-									.anyMatch(e -> e.getPresence(part).contains(getInstList(part)
-											.get(partAbsoluteOrder).getPanelOrder()));
-							if (mClick) {
-								boolean hasAnyVariation = hasAnyPresence
-										&& actualArrangement.getSections().stream().anyMatch(e -> !e
-												.getVariation(part, partAbsoluteOrder).isEmpty());
-								for (Section asec : actualArrangement.getSections()) {
-									if (hasAnyVariation) {
-										for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-											asec.removeVariationForPart(part, partAbsoluteOrder, i);
-										}
-									} else if (hasAnyPresence
-											&& asec.getPresence(part).contains(getInstList(part)
-													.get(partAbsoluteOrder).getPanelOrder())) {
-										asec.generateVariationForPartAndOrder(new Random(), part,
-												partAbsoluteOrder, false);
-									}
-								}
-							} else {
-								if (hasAnyPresence) {
-									for (Section asec : actualArrangement.getSections()) {
-										asec.initPartMapFromOldData();
-										for (int i = 0; i < getInstList(part).size(); i++) {
-											asec.resetPresence(part, partAbsoluteOrder);
-										}
-									}
-								} else {
-									arrangement.initPartInclusionMapIfNull();
-									for (Section asec : actualArrangement.getSections()) {
-										asec.initPartMapFromOldData();
-										if (new Random().nextInt(100) < asec
-												.getChanceForInst(part)) {
-											asec.setPresence(part, partAbsoluteOrder);
-										}
-									}
-								}
-							}
-						} else {
-							boolean hasSinglePresence = sec.getPresence(part).contains(
-									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
-							boolean hasSingleVariation = hasSinglePresence
-									&& !sec.getVariation(part, partAbsoluteOrder).isEmpty();
-
-							if (mClick) {
-								if (hasSingleVariation) {
-									for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-										sec.removeVariationForPart(part, partAbsoluteOrder, i);
-									}
-								} else if (hasSinglePresence) {
-									sec.generateVariationForPartAndOrder(new Random(), part,
-											partAbsoluteOrder, true);
-								}
-							} else {
-								sec.initPartMapFromOldData();
-								if (hasSinglePresence) {
-									sec.resetPresence(part, partAbsoluteOrder);
-								} else {
-									sec.setPresence(part, partAbsoluteOrder);
-								}
-							}
-						}
-
-
-						setActualModel(actualArrangement.convertToActualTableModel(), false);
-						refreshVariationPopupButtons(actualArrangement.getSections().size());
-						manualArrangement.setSelected(true);
-						manualArrangement.repaint();
-						scrollableArrangementActualTable.repaint();
-					} else {
-						if (evt.isControlDown()) {
-							if (secOrder + 1 < arrSection.getItemCount()) {
-								arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
-								arrSection.repaint();
-								instrumentTabPane.setSelectedIndex(part);
-								switchTabPaneAfterApply = true;
-							}
-						} else if (currentMidi != null
-								&& partAbsoluteOrder < getInstList(part).size()) {
-							Section sec = actualArrangement.getSections().get(secOrder);
-							boolean hasSinglePresence = sec.getPresence(part).contains(
-									getInstList(part).get(partAbsoluteOrder).getPanelOrder());
-
-							if (hasSinglePresence && sec.getPartPhraseNotes() != null
-									&& part < sec.getPartPhraseNotes().size()
-									&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part)
-											.size()) {
-								MidiEditPopup mep = new MidiEditPopup(sec, part, partAbsoluteOrder);
-								mep.setSec(sec);
-								currentMidiEditorPopup = mep;
-								currentMidiEditorSectionIndex = secOrder;
-							}
-						}
-					}
-
-				}
+				processActualArrangementMouseEvent(evt);
 			}
 		});
 
@@ -3085,6 +2894,204 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(undoPanelBtn);
 		toggleableComponents.add(clearPanelBtn);
 		toggleableComponents.add(clearAllPanelsBtn);
+	}
+
+	private void processActualArrangementMouseEvent(java.awt.event.MouseEvent evt) {
+		int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
+		int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
+
+
+		LG.d(("Clicked! " + row + ", " + secOrder));
+		boolean rClick = SwingUtilities.isRightMouseButton(evt);
+		boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
+		if (row == 0 && secOrder >= 0) {
+			if (rClick) {
+				handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
+			} else if (mClick) {
+				handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
+			}
+		} else if (row >= 2 && secOrder >= 0) {
+			int part = row - 2;
+
+			Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+			Point tablePoint = scrollableArrangementActualTable.getLocation();
+			SwingUtilities.convertPointToScreen(tablePoint, scrollableArrangementActualTable);
+			Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);
+			/*LG.d("Mouse point: " + mousePoint.toString());
+			LG.d("Table point: " + tablePoint.toString());
+			LG.d(r.toString());*/
+
+			mousePoint.x -= tablePoint.x;
+			mousePoint.y -= tablePoint.y;
+
+			mousePoint.x -= r.x;
+			mousePoint.y -= r.y;
+
+
+			double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01, 0.99);
+
+			int actualSize = getInstList(part).size();
+			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
+			int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
+
+			LG.d("Percentage: " + orderPercentage);
+			LG.d("Selected subcell: " + (partAbsoluteOrder + 1));
+			boolean randomizerButtonPressed = false;
+			if ((actualSize > CollectionCellRenderer.MIN_CELLS && partAbsoluteOrder == actualSize)
+					|| (actualSize <= CollectionCellRenderer.MIN_CELLS
+							&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
+				randomizerButtonPressed = true;
+			} else if (partAbsoluteOrder >= actualSize) {
+				LG.d("Can't interact: subcell not present in part - " + (partAbsoluteOrder + 1));
+				return;
+			}
+
+
+			if (rClick || mClick) {
+				//LG.d(("Clickable! rClick: " + rClick));
+				Section sec = actualArrangement.getSections().get(secOrder);
+				boolean hasPresence = !sec.getPresence(part).isEmpty();
+				boolean hasVariation = hasPresence && sec.hasVariation(part);
+
+				if (evt.isControlDown()) {
+					if (hasPresence) {
+						int secOrder2 = secOrder;
+						if (mClick) {
+							secOrder2++;
+							if (secOrder2 >= actualArrangement.getSections().size()) {
+								return;
+							}
+						} else if (rClick) {
+							secOrder2--;
+							if (secOrder2 < 0) {
+								return;
+							}
+						}
+						Section sec2 = actualArrangement.getSections().get(secOrder2);
+						sec2.resetAllPresence(part);
+						for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+							sec2.removeVariationForAllParts(part, i);
+						}
+						for (Integer p : sec.getPresence(part)) {
+							int absOrder = VibeComposerGUI.getAbsoluteOrder(part, p);
+							sec2.setPresence(part, absOrder);
+							sec2.setVariation(part, absOrder, sec.getVariation(part, absOrder));
+						}
+
+					}
+				} else if (randomizerButtonPressed) {
+					if (mClick) {
+						if (hasVariation) {
+							for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+								sec.removeVariationForAllParts(part, i);
+							}
+						} else if (hasPresence) {
+							sec.generateVariations(new Random(), part);
+						}
+					} else {
+						if (hasPresence) {
+							for (int i = 0; i < getInstList(part).size(); i++) {
+								sec.resetPresence(part, i);
+							}
+						} else {
+							arrangement.initPartInclusionMapIfNull();
+							sec.generatePresences(new Random(), part,
+									arrangement.getPartInclusionMap(), true);
+						}
+					}
+				} else if (evt.isShiftDown()) {
+					boolean hasAnyPresence = actualArrangement.getSections().stream()
+							.anyMatch(e -> e.getPresence(part).contains(
+									getInstList(part).get(partAbsoluteOrder).getPanelOrder()));
+					if (mClick) {
+						boolean hasAnyVariation = hasAnyPresence
+								&& actualArrangement.getSections().stream().anyMatch(
+										e -> !e.getVariation(part, partAbsoluteOrder).isEmpty());
+						for (Section asec : actualArrangement.getSections()) {
+							if (hasAnyVariation) {
+								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+									asec.removeVariationForPart(part, partAbsoluteOrder, i);
+								}
+							} else if (hasAnyPresence && asec.getPresence(part).contains(
+									getInstList(part).get(partAbsoluteOrder).getPanelOrder())) {
+								asec.generateVariationForPartAndOrder(new Random(), part,
+										partAbsoluteOrder, false);
+							}
+						}
+					} else {
+						if (hasAnyPresence) {
+							for (Section asec : actualArrangement.getSections()) {
+								asec.initPartMapFromOldData();
+								for (int i = 0; i < getInstList(part).size(); i++) {
+									asec.resetPresence(part, partAbsoluteOrder);
+								}
+							}
+						} else {
+							arrangement.initPartInclusionMapIfNull();
+							for (Section asec : actualArrangement.getSections()) {
+								asec.initPartMapFromOldData();
+								if (new Random().nextInt(100) < asec.getChanceForInst(part)) {
+									asec.setPresence(part, partAbsoluteOrder);
+								}
+							}
+						}
+					}
+				} else {
+					boolean hasSinglePresence = sec.getPresence(part)
+							.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+					boolean hasSingleVariation = hasSinglePresence
+							&& !sec.getVariation(part, partAbsoluteOrder).isEmpty();
+
+					if (mClick) {
+						if (hasSingleVariation) {
+							for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
+								sec.removeVariationForPart(part, partAbsoluteOrder, i);
+							}
+						} else if (hasSinglePresence) {
+							sec.generateVariationForPartAndOrder(new Random(), part,
+									partAbsoluteOrder, true);
+						}
+					} else {
+						sec.initPartMapFromOldData();
+						if (hasSinglePresence) {
+							sec.resetPresence(part, partAbsoluteOrder);
+						} else {
+							sec.setPresence(part, partAbsoluteOrder);
+						}
+					}
+				}
+
+
+				setActualModel(actualArrangement.convertToActualTableModel(), false);
+				refreshVariationPopupButtons(actualArrangement.getSections().size());
+				manualArrangement.setSelected(true);
+				manualArrangement.repaint();
+				scrollableArrangementActualTable.repaint();
+			} else {
+				if (evt.isControlDown()) {
+					if (secOrder + 1 < arrSection.getItemCount()) {
+						arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
+						arrSection.repaint();
+						instrumentTabPane.setSelectedIndex(part);
+						switchTabPaneAfterApply = true;
+					}
+				} else if (currentMidi != null && partAbsoluteOrder < getInstList(part).size()) {
+					Section sec = actualArrangement.getSections().get(secOrder);
+					boolean hasSinglePresence = sec.getPresence(part)
+							.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+
+					if (hasSinglePresence && sec.getPartPhraseNotes() != null
+							&& part < sec.getPartPhraseNotes().size()
+							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
+						MidiEditPopup mep = new MidiEditPopup(sec, part, partAbsoluteOrder);
+						mep.setSec(sec);
+						currentMidiEditorPopup = mep;
+						currentMidiEditorSectionIndex = secOrder;
+					}
+				}
+			}
+
+		}
 	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
@@ -3300,9 +3307,9 @@ public class VibeComposerGUI extends JFrame
 		randomBottomPanel.setOpaque(false);
 
 
-		randomizeInstOnComposeOrGen = new JCheckBox("on Compose/Gen", true);
-		randomizeBpmOnCompose = new JCheckBox("on Compose", true);
-		randomizeTransposeOnCompose = new JCheckBox("on Compose", true);
+		randomizeInstOnComposeOrGen = makeCheckBox("on Compose/Gen", true, true);
+		randomizeBpmOnCompose = makeCheckBox("on Compose", true, true);
+		randomizeTransposeOnCompose = makeCheckBox("on Compose", true, true);
 		randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomizeBpmOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomizeTransposeOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -3331,14 +3338,14 @@ public class VibeComposerGUI extends JFrame
 		randomizeStrums.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomButtonsPanel.add(randomizeStrums);
 
-		randomizeChordStrumsOnCompose = new JCheckBox("on Compose");
-		randomizeChordStrumsOnCompose.setSelected(false);
+		randomizeChordStrumsOnCompose = makeCheckBox("on Compose", false, true);
 		//randomButtonsPanel.add(randomizeChordStrumsOnCompose);
 
 		switchOnComposeRandom = makeButton("Untick all 'on Compose'", "UncheckComposeRandom");
 		switchOnComposeRandom.setPreferredSize(new Dimension(170, 20));
 		switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
 		switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));
+		enthickenText(switchOnComposeRandom);
 		randomButtonsPanel.add(switchOnComposeRandom);
 		//randomButtonsPanel.add(randomBottomPanel);
 
@@ -4125,7 +4132,7 @@ public class VibeComposerGUI extends JFrame
 		controlSettingsPanel.add(new JLabel("Scale"));
 		controlSettingsPanel.add(scaleMode);
 
-		randomizeScaleModeOnCompose = new JCheckBox("Rand. on Compose", true);
+		randomizeScaleModeOnCompose = makeCheckBox("Rand. on Compose", true, true);
 		controlSettingsPanel.add(randomizeScaleModeOnCompose);
 
 
@@ -4229,8 +4236,7 @@ public class VibeComposerGUI extends JFrame
 
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
 		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
-		loopBeatCompose = new CheckButton("Compose On Loop Repeat", false,
-				OMNI.alphen(COMPOSE_COLOR, 150));
+		loopBeatCompose = new CheckButton("Compose On Loop Repeat", false, uiComposeTextColor());
 
 		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -4451,7 +4457,24 @@ public class VibeComposerGUI extends JFrame
 		randomizeScaleModeOnCompose.setSelected(state);
 		melodyTargetNotesRandomizeOnCompose.setSelected(state);
 		melodyPatternRandomizeOnCompose.setSelected(state);
+	}
 
+	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
+		randomizeMelodiesOnCompose.setForeground(fg);
+		randomChordsGenerateOnCompose.setForeground(fg);
+		randomArpsGenerateOnCompose.setForeground(fg);
+		randomDrumsGenerateOnCompose.setForeground(fg);
+		randomizeBpmOnCompose.setForeground(fg);
+		randomizeTransposeOnCompose.setForeground(fg);
+		//randomizeChordStrumsOnCompose.setForeground(fg);
+		randomizeInstOnComposeOrGen.setForeground(fg);
+		randomizeArrangementOnCompose.setForeground(fg);
+		arrangementResetCustomPanelsOnCompose.setForeground(fg);
+		randomizeScaleModeOnCompose.setForeground(fg);
+		melodyTargetNotesRandomizeOnCompose.setForeground(fg);
+		melodyPatternRandomizeOnCompose.setForeground(fg);
+		randomMelodyOnRegenerate.setForeground(fg);
+		switchOnComposeRandom.setForeground(fg);
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -4493,20 +4516,33 @@ public class VibeComposerGUI extends JFrame
 	private void updateGlobalUI() {
 		ColorUIResource r = null;
 		if (!isDarkMode) {
-			r = new ColorUIResource(new Color(193, 203, 208));
+			r = new ColorUIResource(new Color(153, 160, 166));
 		} else {
 			r = new ColorUIResource(new Color(68, 66, 67));
 		}
 		UIManager.put("Button.background", r);
 		UIManager.put("Panel.background", r);
 		UIManager.put("ComboBox.background", r);
+		UIManager.put("ComboBox.buttonBackground", r.brighter());
 		UIManager.put("TextField.background", r);
+		UIManager.put("Table.background", r);
+		UIManager.put("TableHeader.background", r);
+		UIManager.put("TabbedPane.background", r);
+		UIManager.put("ScrollPane.background", r);
+		UIManager.put("ScrollPane.border", r);
+		UIManager.put("List.background", r);
+		UIManager.put("ScrollBar.background", r);
+		//UIManager.put("TiltedBorder.background", r);
 		SwingUtilities.updateComponentTreeUI(this);
 		SwingUtilities.updateComponentTreeUI(extraSettingsPanel);
 	}
 
 	public static Color uiColor() {
 		return (isDarkMode) ? darkModeUIColor : lightModeUIColor;
+	}
+
+	public static Color uiComposeTextColor() {
+		return isDarkMode ? COMPOSE_COLOR_TEXT : COMPOSE_COLOR_TEXT_LIGHT;
 	}
 
 	public void removeComboBoxArrows(Container parent) {
@@ -4541,6 +4577,8 @@ public class VibeComposerGUI extends JFrame
 		updateGlobalUI();
 
 		toggledUIColor = uiColor();
+		toggledComposeColor = uiComposeTextColor();
+
 
 		mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
 		subTitle.setForeground(toggledUIColor);
@@ -4548,32 +4586,29 @@ public class VibeComposerGUI extends JFrame
 		tipLabel.setForeground(toggledUIColor);
 		currentTime.setForeground(toggledUIColor);
 		totalTime.setForeground(toggledUIColor);
-		randomizeMelodiesOnCompose.setForeground(toggledUIColor);
-		randomChordsGenerateOnCompose.setForeground(toggledUIColor);
-		randomArpsGenerateOnCompose.setForeground(toggledUIColor);
-		randomDrumsGenerateOnCompose.setForeground(toggledUIColor);
-		switchOnComposeRandom.setForeground(toggledUIColor);
 		compose.setForeground(toggledUIColor);
+		compose.setBackground(COMPOSE_COLOR);
 		regenerate.setForeground(toggledUIColor);
 		playMidi.setForeground(toggledUIColor);
 		pauseMidi.setForeground(toggledUIColor);
 		stopMidi.setForeground(toggledUIColor);
+		loopBeatCompose.setOpaqueColor(toggledComposeColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
-		randomizeInstOnComposeOrGen.setForeground(toggledUIColor);
-		randomizeBpmOnCompose.setForeground(toggledUIColor);
-		randomizeTransposeOnCompose.setForeground(toggledUIColor);
-		//randomizeChordStrumsOnCompose.setForeground(toggledUIColor);
-		randomizeArrangementOnCompose.setForeground(toggledUIColor);
+		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
+
 		for (JSeparator x : separators) {
 			x.setForeground(toggledUIColor);
 		}
 
-		panelColorHigh = UIManager.getColor("Panel.background").darker();
-		panelColorLow = UIManager.getColor("Panel.background").brighter();
-		/*if (!isDarkMode) {
-			panelColorHigh = panelColorHigh.brighter();
+		panelColorHigh = UIManager.getColor("Panel.background");
+		panelColorLow = UIManager.getColor("Panel.background");
+		if (isDarkMode) {
+			panelColorHigh = panelColorHigh.darker();
 			panelColorLow = panelColorLow.brighter();
-		}*/
+		} else {
+			panelColorHigh = panelColorHigh.darker();
+			//panelColorLow = panelColorLow.darker();
+		}
 		if (GLOBAL.equals(arrSection.getVal())) {
 			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 		} else {
@@ -4609,6 +4644,11 @@ public class VibeComposerGUI extends JFrame
 		//sizeRespectingPack();
 		//setVisible(true);
 		repaint();
+
+		if (scorePanel != null) {
+
+			scorePanel.setupMouseWheelListener();
+		}
 	}
 
 	private void switchFullMode() {
@@ -5994,6 +6034,12 @@ public class VibeComposerGUI extends JFrame
 		LG.i("Finished '" + ae.getActionCommand() + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
+	}
+
+	private void enthickenText(Component comp) {
+		if (comp != null) {
+			comp.setFont(comp.getFont().deriveFont(Font.BOLD));
+		}
 	}
 
 	private void recalculateSoloMuters() {
