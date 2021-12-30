@@ -516,6 +516,8 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel humanizeNotes;
 	public static KnobPanel humanizeDrums;
 	public static ScrollComboBox<Double> swingUnitMultiplier;
+	public static JCheckBox customMidiForceScale;
+	public static JCheckBox randomizeTimingsOnCompose;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 1;
@@ -1112,10 +1114,16 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
 		swingUnitMultiplier.setSelectedIndex(0);
 
+		customMidiForceScale = new JCheckBox("Force Custom Midi Scale", false);
+
+		randomizeTimingsOnCompose = makeCheckBox("on Compose", true, true);
+
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
 		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
 		humanizationPanel.add(swingUnitMultiplier);
+		humanizationPanel.add(customMidiForceScale);
+		humanizationPanel.add(randomizeTimingsOnCompose);
 
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 		extraSettingsPanel.add(humanizationPanel);
@@ -3860,9 +3868,9 @@ public class VibeComposerGUI extends JFrame
 											(int) (sequencer.getMicrosecondPosition() / 1000));
 								}
 
+								slider.repaint();
 								currentTime.setText(microsecondsToTimeString(
 										sequencer.getMicrosecondPosition()));
-								//slider.repaint();
 							} else {
 								currentTime
 										.setText(millisecondsToTimeString(slider.getUpperValue()));
@@ -4457,6 +4465,7 @@ public class VibeComposerGUI extends JFrame
 		randomizeScaleModeOnCompose.setSelected(state);
 		melodyTargetNotesRandomizeOnCompose.setSelected(state);
 		melodyPatternRandomizeOnCompose.setSelected(state);
+		randomizeTimingsOnCompose.setSelected(state);
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
@@ -4475,6 +4484,7 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternRandomizeOnCompose.setForeground(fg);
 		randomMelodyOnRegenerate.setForeground(fg);
 		switchOnComposeRandom.setForeground(fg);
+		randomizeTimingsOnCompose.setForeground(fg);
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -4523,7 +4533,8 @@ public class VibeComposerGUI extends JFrame
 		UIManager.put("Button.background", r);
 		UIManager.put("Panel.background", r);
 		UIManager.put("ComboBox.background", r);
-		UIManager.put("ComboBox.buttonBackground", r.brighter());
+		UIManager.put("ComboBox.buttonBackground",
+				isDarkMode ? new Color(60, 58, 61) : new Color(165, 170, 176));
 		UIManager.put("TextField.background", r);
 		UIManager.put("Table.background", r);
 		UIManager.put("TableHeader.background", r);
@@ -4964,6 +4975,20 @@ public class VibeComposerGUI extends JFrame
 		if (!regenerate && randomizeMelodiesOnCompose.isSelected()) {
 			int seed = randomSeed.getValue() != 0 ? randomSeed.getValue() : lastRandomSeed;
 			createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt());
+		}
+
+		if (!regenerate && randomizeTimingsOnCompose.isSelected()) {
+			if (globalSwingOverride.isSelected()) {
+				globalSwingOverrideValue.setInt(new Random().nextInt(41) + 30);
+			}
+			double randomBeatMultiplier = new Random().nextDouble();
+			if (randomBeatMultiplier < 0.85) {
+				beatDurationMultiplier.setSelectedIndex(1);
+			} else if (randomBeatMultiplier < 0.95) {
+				beatDurationMultiplier.setSelectedIndex(0);
+			} else {
+				beatDurationMultiplier.setSelectedIndex(2);
+			}
 		}
 
 
@@ -5883,6 +5908,7 @@ public class VibeComposerGUI extends JFrame
 			else {
 				LG.i(("You chose " + filename));
 				try {
+					stopMidi();
 					guiConfig =
 
 							unmarshallConfig(files[0]);
@@ -6773,6 +6799,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(patternApplyPausesWhenGenerating);
 		cs.add(highlightPatterns);
 		cs.add(highlightScoreNotes);
+		cs.add(randomizeTimingsOnCompose);
 
 		return cs;
 	}
@@ -6862,6 +6889,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setArpAffectsBpm(arpAffectsBpm.isSelected());
 		gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
 		gc.setSwingUnitMultiplierIndex(swingUnitMultiplier.getSelectedIndex());
+		gc.setCustomMidiForceScale(customMidiForceScale.isSelected());
 		gc.setAllowChordRepeats(allowChordRepeats.isSelected());
 		gc.setGlobalSwingOverride(
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
@@ -6976,6 +7004,7 @@ public class VibeComposerGUI extends JFrame
 		arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
 		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
 		swingUnitMultiplier.setSelectedIndex(gc.getSwingUnitMultiplierIndex());
+		customMidiForceScale.setSelected(gc.isCustomMidiForceScale());
 		allowChordRepeats.setSelected(gc.isAllowChordRepeats());
 		globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
 		if (gc.getGlobalSwingOverride() != null) {

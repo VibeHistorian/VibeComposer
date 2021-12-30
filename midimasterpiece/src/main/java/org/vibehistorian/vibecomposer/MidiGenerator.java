@@ -3917,8 +3917,10 @@ public class MidiGenerator implements JMC {
 			addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
 		} else {
 			Mod.transpose(phr, ip.getTranspose());
-			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
-					ScaleMode.IONIAN.noteAdjustScale);
+			if (gc.isCustomMidiForceScale()) {
+				MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale,
+						ScaleMode.IONIAN.noteAdjustScale);
+			}
 		}
 
 		swingPhrase(phr, ip.getSwingPercent(), Durations.QUARTER_NOTE);
@@ -5007,7 +5009,6 @@ public class MidiGenerator implements JMC {
 
 		if (pn != null && pn.isCustom()) {
 			phr.setNoteList(pn.makePhrase().getNoteList());
-
 			LG.i("Overwritten with custom MIDI: " + ip.getPartNum() + ", " + ip.getAbsoluteOrder());
 			return true;
 		} else {

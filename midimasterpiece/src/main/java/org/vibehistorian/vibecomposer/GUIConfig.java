@@ -66,6 +66,7 @@ public class GUIConfig {
 	private Integer swingUnitMultiplierIndex = 1;
 	private boolean allowChordRepeats = true;
 	private Integer globalSwingOverride = null;
+	private boolean customMidiForceScale = false;
 
 
 	// melody gen
@@ -738,6 +739,14 @@ public class GUIConfig {
 
 	public void setLongProgressionSimilarity(int longProgressionSimilarity) {
 		this.longProgressionSimilarity = longProgressionSimilarity;
+	}
+
+	public boolean isCustomMidiForceScale() {
+		return customMidiForceScale;
+	}
+
+	public void setCustomMidiForceScale(boolean customMidiForceScale) {
+		this.customMidiForceScale = customMidiForceScale;
 	}
 
 }
