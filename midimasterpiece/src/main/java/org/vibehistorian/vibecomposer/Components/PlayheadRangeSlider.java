@@ -12,7 +12,9 @@ public class PlayheadRangeSlider extends RangeSlider {
 		VibeComposerGUI.isDragging = upperDragging;
 		if (VibeComposerGUI.instrumentTabPane.getTabCount() < 8
 				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
-			VibeComposerGUI.scorePanel.update();
+			if (VibeComposerGUI.scorePanel != null) {
+				VibeComposerGUI.scorePanel.update();
+			}
 		}
 
 	}
