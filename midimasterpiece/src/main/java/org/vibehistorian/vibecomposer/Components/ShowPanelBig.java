@@ -478,14 +478,18 @@ public class ShowPanelBig extends JPanel {
 	}
 
 	public void update() {
-		pan.repaint();
 		int sizeX = (int) Math
 				.round((ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
 		sa.setSize(sizeX, panelHeight);
-		sa.repaint();
 		ruler.setSize(sizeX, ShowRulerBig.maxHeight);
-		ruler.repaint();
+		pan.repaint();
+		repaintMinimum();
 		this.repaint();
+	}
+
+	public void repaintMinimum() {
+		sa.repaint();
+		ruler.repaint();
 	}
 
 	public static void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {

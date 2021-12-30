@@ -13,7 +13,7 @@ public class PlayheadRangeSlider extends RangeSlider {
 		if (VibeComposerGUI.instrumentTabPane.getTabCount() < 8
 				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
 			if (VibeComposerGUI.scorePanel != null) {
-				VibeComposerGUI.scorePanel.update();
+				VibeComposerGUI.scorePanel.repaintMinimum();
 			}
 		}
 
@@ -29,7 +29,7 @@ public class PlayheadRangeSlider extends RangeSlider {
 		if ((VibeComposerGUI.instrumentTabPane.getTabCount() < 8
 				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7)
 				&& VibeComposerGUI.highlightScoreNotes.isSelected()) {
-			VibeComposerGUI.scorePanel.update();
+			VibeComposerGUI.scorePanel.repaintMinimum();
 		}
 	}
 }
