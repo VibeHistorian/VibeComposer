@@ -101,7 +101,9 @@ public class ShowRulerBig extends JComponent {
 		double highlightX = (VibeComposerGUI.slider != null
 				&& VibeComposerGUI.sliderMeasureStartTimes != null)
 						? (maxX * VibeComposerGUI.slider.getUpperValue())
-								/ (double) (VibeComposerGUI.sliderExtended
+								/ (double) ((VibeComposerGUI.sliderExtended > 0
+										? VibeComposerGUI.sliderExtended
+										: 0)
 										+ VibeComposerGUI.sliderMeasureStartTimes.get(
 												VibeComposerGUI.sliderMeasureStartTimes.size() - 1))
 						: -1;

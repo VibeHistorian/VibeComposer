@@ -56,6 +56,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -224,7 +225,7 @@ public class ShowPanelBig extends JPanel {
 							+ ", end: " + usableEnd);*/
 
 					double percentage = xy.getX() / usableEnd;
-					/*LG.d("Percentage in MIDI: " + percentage);
+					LG.d("Percentage in MIDI: " + percentage);
 					LG.i("Slider ratio: "
 							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
 									/ VibeComposerGUI.beatFromBpm(0));
@@ -234,7 +235,7 @@ public class ShowPanelBig extends JPanel {
 							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
 									/ 144);
 					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
-					LG.i(VibeComposerGUI.sliderExtended);*/
+					LG.i(VibeComposerGUI.sliderExtended);
 
 					if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
 						return;
@@ -245,7 +246,7 @@ public class ShowPanelBig extends JPanel {
 						VibeComposerGUI.sequencer.stop();
 					}
 
-					int valueToSet = (int) (percentage * lastUsableSliderTime);
+					int valueToSet = (int) (percentage * VibeComposerGUI.slider.getMaximum());
 					//LG.d("Value to set: " + valueToSet);
 					VibeComposerGUI.setSliderEnd(valueToSet);
 					VibeComposerGUI.savePauseInfo();

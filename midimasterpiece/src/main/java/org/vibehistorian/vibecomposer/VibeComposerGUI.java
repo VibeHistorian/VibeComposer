@@ -5188,6 +5188,9 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			sliderExtended = Math.max(0, current - slider.getMaximum());
+			if (endDisplayed) {
+				sliderExtended -= measureWidth;
+			}
 
 			if (!endDisplayed) {
 				table.put(slider.getMaximum(), new JLabel("END"));
