@@ -5412,14 +5412,27 @@ public class VibeComposerGUI extends JFrame
 		if (globalSoloMuter.soloState != State.OFF) {
 			for (int i = 0; i < 5; i++) {
 				List<? extends InstPanel> panels = getInstList(i);
-				panels.forEach(e -> {
-					if (e.getSoloMuter().soloState == State.OFF) {
-						e.setMuteInst(true);
+				if (i < 4 || !combineDrumTracks.isSelected()) {
+					panels.forEach(e -> {
+						if (e.getSoloMuter().soloState == State.OFF) {
+							e.setMuteInst(true);
+						} else {
+							e.getSoloMuter().unsolo();
+							e.setMuteInst(false);
+						}
+					});
+				} else {
+					if (groupSoloMuters.get(4).soloState != State.OFF) {
+						panels.forEach(e -> {
+							e.getSoloMuter().unsolo();
+							e.setMuteInst(false);
+						});
 					} else {
-						e.getSoloMuter().unsolo();
-						e.setMuteInst(false);
+						panels.forEach(e -> {
+							e.setMuteInst(true);
+						});
 					}
-				});
+				}
 			}
 		} else {
 			for (int i = 0; i < 5; i++) {
