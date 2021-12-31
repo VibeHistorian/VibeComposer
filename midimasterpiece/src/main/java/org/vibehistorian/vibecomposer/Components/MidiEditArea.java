@@ -51,6 +51,8 @@ public class MidiEditArea extends JComponent {
 	boolean draggingPosition = false;
 	boolean draggingDuration = false;
 	boolean draggingVelocity = false;
+	boolean draggingPitchShape = false;
+	boolean draggingVelocityShape = false;
 	long lastPlayedNoteTime = 0;
 	boolean lockTimeGrid = false;
 	double startingOffset = 0.0;
@@ -119,42 +121,56 @@ public class MidiEditArea extends JComponent {
 				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 				PhraseNote pnDragged = getDraggedNote(evt.getPoint());
 
-				if (pnDragged == null) {
-					// mouse click doesn't overlap with existing note
-					// get order in note rhythm 
-					orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
-					if (orderVal != null) {
-						PhraseNote pn = getValues().get(orderVal.x);
-						if (pn.getPitch() == Note.REST && pn.getRv() > MidiGenerator.DBL_ERR) {
-
-							LG.d("UnRESTing existing original note..");
-							pn.setOffset(0);
-							setVal(orderVal.x, orderVal.y);
-							draggedNote = pn;
-						} else {
-							LG.d("Inserting new note..");
-							PhraseNote insertedPn = new PhraseNote(orderVal.y);
-							insertedPn.setDuration(0.5);
-							insertedPn.setRv(0);
-							getValues().add(orderVal.x, insertedPn);
-							draggedNote = insertedPn;
+				if (evt.isAltDown()) {
+					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
+						PhraseNote note = values.get(orderVal.x);
+						int velocity = (int) (127 * (orderVal.y - min) / (double) (max - min));
+						if (velocity != note.getDynamic()) {
+							note.setDynamic(velocity);
+							playNote(note);
 						}
-
 					}
+					isDragging = true;
+					draggingVelocityShape = true;
 				} else {
-					LG.d("Duration-dragging existing note..");
-					draggedNote = pnDragged;
-				}
-				lastPlayedNoteTime = System.currentTimeMillis();
-				VibeComposerGUI.playNote(draggedNote.getPitch(), 500, draggedNote.getDynamic(),
-						pop.part, pop.partOrder);
+					if (pnDragged == null) {
+						// mouse click doesn't overlap with existing note
+						// get order in note rhythm 
+						orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
+						if (orderVal != null) {
+							PhraseNote pn = getValues().get(orderVal.x);
+							if (pn.getPitch() == Note.REST && pn.getRv() > MidiGenerator.DBL_ERR) {
 
-				startingDuration = draggedNote.getDuration();
-				startingDynamic = draggedNote.getDynamic();
-				isDragging = true;
-				draggingDuration = evt.isControlDown() || evt.isShiftDown();
-				draggingVelocity = !draggingDuration;
-				lockTimeGrid = !evt.isControlDown();
+								LG.d("UnRESTing existing original note..");
+								pn.setOffset(0);
+								setVal(orderVal.x, orderVal.y);
+								draggedNote = pn;
+							} else {
+								LG.d("Inserting new note..");
+								PhraseNote insertedPn = new PhraseNote(orderVal.y);
+								insertedPn.setDuration(0.5);
+								insertedPn.setRv(0);
+								getValues().add(orderVal.x, insertedPn);
+								draggedNote = insertedPn;
+							}
+
+						}
+					} else {
+						LG.d("Duration-dragging existing note..");
+						draggedNote = pnDragged;
+					}
+					lastPlayedNoteTime = System.currentTimeMillis();
+					playNote(draggedNote);
+
+					startingDuration = draggedNote.getDuration();
+					startingDynamic = draggedNote.getDynamic();
+					isDragging = true;
+					draggingDuration = evt.isControlDown() || evt.isShiftDown();
+					draggingVelocity = !draggingDuration;
+					lockTimeGrid = !evt.isControlDown();
+				}
+
+
 				dragX = evt.getPoint().x;
 				dragY = evt.getPoint().y;
 				repaint();
@@ -177,6 +193,7 @@ public class MidiEditArea extends JComponent {
 						repaint();
 					}
 					isDragging = true;
+					draggingPitchShape = true;
 				} else {
 					draggedNote = getDraggedNote(evt.getPoint());
 					if (draggedNote != null) {
@@ -193,8 +210,7 @@ public class MidiEditArea extends JComponent {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
 				if (draggingVelocity && (System.currentTimeMillis() - lastPlayedNoteTime) > 500) {
-					VibeComposerGUI.playNote(draggedNote.getPitch(), 300, draggedNote.getDynamic(),
-							pop.part, pop.partOrder);
+					playNote(draggedNote, 300);
 				}
 				reset();
 			}
@@ -215,24 +231,54 @@ public class MidiEditArea extends JComponent {
 		});
 	}
 
+	private void playNote(PhraseNote pn) {
+		playNote(pn, 500);
+	}
+
+	private void playNote(PhraseNote pn, int durationMs) {
+		if (pn != null) {
+			VibeComposerGUI.playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
+					pop.partOrder);
+		}
+
+	}
+
 	private void reset() {
 		isDragging = false;
 		draggedNote = null;
 		draggingPosition = false;
 		draggingDuration = false;
 		draggingVelocity = false;
+		draggingPitchShape = false;
+		draggingVelocityShape = false;
 		startingOffset = 0;
 		dragX = null;
 		lockTimeGrid = false;
+		repaint();
 	}
 
 	protected void processDragEvent(MouseEvent e) {
 		if (isDragging) {
 			if (draggedNote == null) {
-				Point orderVal = getOrderAndValueFromPosition(e.getPoint());
-				if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
-					setVal(orderVal.x, orderVal.y);
-					repaint();
+				if (draggingPitchShape) {
+
+					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
+						setVal(orderVal.x, orderVal.y);
+						repaint();
+					}
+				} else if (draggingVelocityShape) {
+					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
+						PhraseNote note = values.get(orderVal.x);
+						int velocity = (int) (127 * (orderVal.y - min) / (double) (max - min));
+						if (velocity != note.getDynamic()) {
+							note.setDynamic(velocity);
+							playNote(note);
+							repaint();
+						}
+
+					}
 				}
 
 			} else {
@@ -457,12 +503,13 @@ public class MidiEditArea extends JComponent {
 
 			int ovalWidth = usableHeight / 40;
 			for (int i = 0; i < numValues; i++) {
-				int pitch = values.get(i).getPitch();
+				PhraseNote pn = values.get(i);
+				int pitch = pn.getPitch();
 				if (pitch < 0) {
 					continue;
 				}
-				int drawX = bottomLeft.x + (int) (quarterNoteLength * values.get(i).getStart(false)
-						+ quarterNoteLength * values.get(i).getOffset());
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * pn.getStart(false)
+						+ quarterNoteLength * pn.getOffset());
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 
 				// draw straight line connecting values -- TODO: requires offset checking
@@ -472,7 +519,7 @@ public class MidiEditArea extends JComponent {
 						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
 						g.drawLine(drawX, drawY,
 								drawX + (int) (quarterNoteLength
-										* (values.get(i).getRv() + values.get(i).getOffset())),
+										* (pn.getRv() + pn.getOffset())),
 								bottomLeft.y - (int) (rowHeight
 										* (values.get(i + 1).getPitch() + 1 - min)));
 					}
@@ -481,15 +528,18 @@ public class MidiEditArea extends JComponent {
 				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
-				g.drawString(
-						pitch + "(" + MidiUtils.pitchToString(pitch) + ") :"
-								+ values.get(i).getDynamic(),
+				g.drawString(pitch + "(" + MidiUtils.pitchToString(pitch) + ") :" + pn.getDynamic(),
 						drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 
 				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
-						(int) (30 + 140 * (values.get(i).getDynamic() / 127.0))));
-				g.fillRect(drawX, drawY - 4,
-						(int) (quarterNoteLength * values.get(i).getDuration()), 8);
+						(int) (30 + 140 * (pn.getDynamic() / 127.0))));
+				int width = (int) (quarterNoteLength * pn.getDuration());
+				g.fillRect(drawX, drawY - 4, width, 8);
+
+				if (draggingVelocityShape) {
+					g.drawLine(drawX + width / 2, drawY, drawX + width / 2,
+							drawY + 63 - pn.getDynamic());
+				}
 
 
 			}

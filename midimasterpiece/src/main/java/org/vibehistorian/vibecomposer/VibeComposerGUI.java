@@ -8388,18 +8388,21 @@ public class VibeComposerGUI extends JFrame
 			ShortMessage noteOffMsg = new ShortMessage();
 			noteOffMsg.setMessage(ShortMessage.NOTE_OFF, ip.getMidiChannel() - 1, pitch, 0);
 
+			long startPos = (sequencer.isRunning()) ? sequencer.getTickPosition() : 0;
+
 			int startDelayMicroseconds = 50000;
 			MidiEvent noteOn = new MidiEvent(noteOnMsg,
-					sequencer.getTickPosition() + (msToTicks(startDelayMicroseconds)));
+					startPos + (msToTicks(startDelayMicroseconds)));
 			trk.add(noteOn);
-			MidiEvent noteOff = new MidiEvent(noteOffMsg, sequencer.getTickPosition()
-					+ (msToTicks(startDelayMicroseconds + durationMs * 1000)));
+			MidiEvent noteOff = new MidiEvent(noteOffMsg,
+					startPos + (msToTicks(startDelayMicroseconds + durationMs * 1000)));
 			trk.add(noteOff);
 
 			if (!sequencer.isRunning()) {
 				long returnPos = sequencer.getTickPosition();
 				boolean prevSoloState = sequencer.getTrackSolo(trackNum);
 				sequencer.setTrackSolo(trackNum, true);
+				sequencer.setTickPosition(0);
 				sequencer.start();
 				Timer tmr = new Timer(durationMs, new ActionListener() {
 					@Override
