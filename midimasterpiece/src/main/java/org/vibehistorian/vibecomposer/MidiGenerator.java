@@ -4470,6 +4470,7 @@ public class MidiGenerator implements JMC {
 				int nextP = -1;
 
 				int p = 0;
+				int patternExtension = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(chordIndex)) {
 
 					//LG.d("Duration counter: " + durationCounter);
@@ -4480,7 +4481,8 @@ public class MidiGenerator implements JMC {
 							: (velocityGenerator.nextInt(maxVel - minVel) + minVel));
 					// less plucky
 					//cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
-					if (pattern.get(p) < 1 || (p <= nextP && stretchedByNote == 1)
+					if (pattern.get(p) < 1
+							|| (p + patternExtension <= nextP && stretchedByNote == 1)
 							|| skipNotes > 0) {
 						if (skipNotes > 0) {
 							skipNotes--;
@@ -4501,7 +4503,8 @@ public class MidiGenerator implements JMC {
 					}
 
 					int durMultiplier = 1;
-					boolean joinApplicable = (pattern.get(p) == 1) && (p >= nextP);
+					boolean joinApplicable = (pattern.get(p) == 1)
+							&& (p + patternExtension >= nextP);
 					if (joinApplicable) {
 						nextP = p + 1;
 						while (nextP < pattern.size()) {
@@ -4512,6 +4515,7 @@ public class MidiGenerator implements JMC {
 								break;
 							}
 						}
+						nextP += patternExtension;
 					}
 					joinApplicable &= (joinMode != PatternJoinMode.NOJOIN);
 					//LG.d("Dur multiplier be4: " + durMultiplier);
@@ -4521,7 +4525,8 @@ public class MidiGenerator implements JMC {
 							* (progressionDurations.get(chordIndex) - durationNow);
 					double durationRatioCap = durationCap / cC.getRhythmValue();
 
-					if (nextP >= pattern.size() && ip.getChordSpan() > 1 && nextPattern != null) {
+					if (nextP - patternExtension >= pattern.size() && ip.getChordSpan() > 1
+							&& nextPattern != null) {
 						skipNotes = countStartingValueInList(stretchedByNote, nextPattern);
 						durMultiplier += skipNotes;
 						//LG.d("CHORD Dur multiplier added: " + durMultiplier);
@@ -4535,6 +4540,9 @@ public class MidiGenerator implements JMC {
 					chords.add(cC);
 					durationNow += duration;
 					p = (p + 1) % pattern.size();
+					if (p == 0) {
+						patternExtension += pattern.size();
+					}
 				}
 				chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
 			}
