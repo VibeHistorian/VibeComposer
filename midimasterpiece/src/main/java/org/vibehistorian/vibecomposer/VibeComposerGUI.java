@@ -460,7 +460,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordSplit;
 	JCheckBox randomChordTranspose;
 	JCheckBox randomChordPattern;
-	JCheckBox randomChordSustainUseShortening;
+	JCheckBox randomChordVaryLength;
 	KnobPanel randomChordExpandChance;
 	KnobPanel randomChordSustainChance;
 	KnobPanel randomChordShiftChance;
@@ -1720,7 +1720,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordSplit = new JCheckBox("Use Split (ms)", false);
 		randomChordTranspose = new JCheckBox("Transpose", true);
 		randomChordSustainChance = new DetachedKnobPanel("Chord%", 50);
-		randomChordSustainUseShortening = new JCheckBox("Vary Length", true);
+		randomChordVaryLength = new JCheckBox("Vary Length", true);
 		randomChordExpandChance = new DetachedKnobPanel("Expand%", 70);
 		randomChordUseChordFill = new JCheckBox("Fills", true);
 		randomChordMaxSplitChance = new DetachedKnobPanel("Max Tran-<br>sition%", 25);
@@ -1759,7 +1759,7 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsExtraPanel.add(csExtra);
 
 		chordSettingsExtraPanel.add(randomChordSustainChance);
-		chordSettingsExtraPanel.add(randomChordSustainUseShortening);
+		chordSettingsExtraPanel.add(randomChordVaryLength);
 		chordSettingsExtraPanel.add(randomChordExpandChance);
 		chordSettingsExtraPanel.add(randomChordMaxSplitChance);
 		chordSettingsExtraPanel.add(chordSlashChance);
@@ -6718,7 +6718,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomChordUseChordFill);
 		cs.add(randomChordStretchType);
 		cs.add(randomChordStretchPicker);
-		cs.add(randomChordSustainUseShortening);
+		cs.add(randomChordVaryLength);
 		cs.add(randomChordExpandChance);
 		cs.add(randomChordSustainChance);
 		cs.add(randomChordMaxSplitChance);
@@ -7742,6 +7742,7 @@ public class VibeComposerGUI extends JFrame
 				cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 
 			}
+
 			cp.setTransitionChance(
 					chordPanelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
 			cp.setTransitionSplit(
@@ -7752,13 +7753,14 @@ public class VibeComposerGUI extends JFrame
 				cp.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
 			}
 
+			boolean pad = cp.getInstPool() == POOL.LONG_PAD;
 
 			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
 			cp.setStrum(strumPair.getRight());
 			cp.setStrumType(strumPair.getLeft());
 			cp.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY, 0)));
 
-			if (randomChordUseChordFill.isSelected()) {
+			if (randomChordUseChordFill.isSelected() && !pad) {
 				cp.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
 			} else {
 				cp.setChordSpanFill(ChordSpanFill.ALL);
@@ -7767,7 +7769,7 @@ public class VibeComposerGUI extends JFrame
 			RhythmPattern pattern = RhythmPattern.SINGLE;
 			// use pattern in 20% of the cases if checkbox selected
 			int patternChance = pool == InstUtils.POOL.PLUCK ? 50 : 20;
-			if (chordPanelGenerator.nextInt(100) < patternChance) {
+			if (!pad && chordPanelGenerator.nextInt(100) < patternChance) {
 				if (randomChordPattern.isSelected()) {
 					pattern = viablePatterns
 							.get(chordPanelGenerator.nextInt(viablePatterns.size()));
@@ -7798,7 +7800,7 @@ public class VibeComposerGUI extends JFrame
 				cp.setStrum(cp.getStrum() / 4);
 			}
 
-			if (chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
+			if (pad || chordPanelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
 				cp.setPatternJoinMode(PatternJoinMode.EXPAND);
 			} else {
 				cp.setPatternJoinMode(PatternJoinMode.NOJOIN);
@@ -7808,7 +7810,7 @@ public class VibeComposerGUI extends JFrame
 			cp.setVelocityMax(randomChordMaxVel.getInt());
 			cp.setVelocityMin(randomChordMinVel.getInt());
 
-			if (randomChordSustainUseShortening.isSelected()) {
+			if (randomChordVaryLength.isSelected()) {
 				if (pool == InstUtils.POOL.PLUCK) {
 					cp.setNoteLengthMultiplier(chordPanelGenerator.nextInt(26) + 50);
 				} else {

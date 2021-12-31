@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class InstUtils {
 
 	public enum POOL {
-		PLUCK, LONG, CHORD, BASS, DRUM, MELODY, ALL;
+		PLUCK, LONG_PAD, CHORD, BASS, DRUM, MELODY, ALL;
 	}
 
 	public static final String[] INSTRUMENTS_NAMES = { "0: PIANO", "1: BRIGHT_ACOUSTIC",
@@ -171,7 +171,7 @@ public class InstUtils {
 
 	public static void initNormalInsts() {
 		INST_POOLS.put(POOL.PLUCK, PLUCK_INST_NAMES);
-		INST_POOLS.put(POOL.LONG, LONG_INST_NAMES);
+		INST_POOLS.put(POOL.LONG_PAD, LONG_INST_NAMES);
 		INST_POOLS.put(POOL.CHORD, LONG_INST_NAMES);
 		INST_POOLS.put(POOL.BASS, BASS_INST_NAMES);
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
@@ -181,7 +181,7 @@ public class InstUtils {
 
 	public static void initAllInsts() {
 		INST_POOLS.put(POOL.PLUCK, INSTRUMENTS_NAMES);
-		INST_POOLS.put(POOL.LONG, INSTRUMENTS_NAMES);
+		INST_POOLS.put(POOL.LONG_PAD, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.CHORD, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.BASS, INSTRUMENTS_NAMES);
 		INST_POOLS.put(POOL.DRUM, DRUM_INST_NAMES);
