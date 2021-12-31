@@ -1116,7 +1116,8 @@ public class VibeComposerGUI extends JFrame
 
 		customMidiForceScale = new JCheckBox("Force Custom Midi Scale", false);
 
-		randomizeTimingsOnCompose = makeCheckBox("on Compose", true, true);
+		randomizeTimingsOnCompose = makeCheckBox(
+				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
 
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
@@ -3389,7 +3390,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(allowRepPanel);
 
 		JPanel globalSwingPanel = new JPanel();
-		globalSwingOverride = new JCheckBox("<html>Global Swing<br>Override</html>", false);
+		globalSwingOverride = new JCheckBox("<html>Global Swing<br>Override</html>", true);
 		globalSwingOverrideValue = new DetachedKnobPanel("", 50);
 		globalSwingOverrideApplyButton = new JButton("A");
 		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
