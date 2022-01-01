@@ -6,6 +6,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Random;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -63,6 +64,8 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					if (evt.isControlDown()) {
 						setEnabled(!isEnabled());
+					} else {
+						setSelectedIndex(new Random().nextInt(getItemCount()));
 					}
 				}
 			}

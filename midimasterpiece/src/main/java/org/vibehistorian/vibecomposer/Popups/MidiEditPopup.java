@@ -34,7 +34,7 @@ public class MidiEditPopup extends CloseablePopup {
 	Section sec = null;
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
 	public ScrollComboBox<String> snapToTimeGrid = new ScrollComboBox<>(false);
-	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", true);
+	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
 	public static final double[] TIME_GRID = new double[] { 0.03125, 1 / 24.0, 0.0625, 1 / 12.0,
 			0.125, 0.1666, 0.25, 0.3333, 0.5, 1.0 };
 
@@ -52,6 +52,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public int partOrder = 0;
 	public static int highlightModeChoice = 3;
 	public static int snapToTimeGridChoice = 2;
+	public static boolean snapToGridChoice = true;
 	public CheckButton applyToMainBtn;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
@@ -200,6 +201,10 @@ public class MidiEditPopup extends CloseablePopup {
 				}
 			}
 		}));
+
+		snapToScaleGrid.addFunc(e -> {
+			snapToGridChoice = snapToScaleGrid.isSelected();
+		});
 
 		textPanel.add(snapToScaleGrid);
 		textPanel.add(new JLabel("  Highlight Mode:"));

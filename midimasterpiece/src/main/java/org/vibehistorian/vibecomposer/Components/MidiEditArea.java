@@ -271,10 +271,11 @@ public class MidiEditArea extends JComponent {
 
 					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
-						if (values.get(orderVal.x).getPitch() != orderVal.y) {
-							setVal(orderVal.x, orderVal.y);
+						int prevPitch = values.get(orderVal.x).getPitch();
+						setVal(orderVal.x, orderVal.y);
+						repaint();
+						if (values.get(orderVal.x).getPitch() != prevPitch) {
 							playNote(values.get(orderVal.x), 300);
-							repaint();
 						}
 					}
 				} else if (draggingVelocityShape) {

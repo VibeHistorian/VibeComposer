@@ -8375,9 +8375,12 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
+	public static long lastPlayedMs = 0;
+
 	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
 			Section sec) {
-		if (sequencer == null || !sequencer.isOpen()) {
+		if (sequencer == null || !sequencer.isOpen()
+				|| (System.currentTimeMillis() - lastPlayedMs < 100)) {
 			return;
 		}
 
@@ -8418,6 +8421,8 @@ public class VibeComposerGUI extends JFrame
 			MidiEvent noteOff = new MidiEvent(noteOffMsg,
 					startPos + (msToTicks(startDelayMicroseconds + durationMs * 1000)));
 			trk.add(noteOff);
+
+			lastPlayedMs = System.currentTimeMillis();
 
 			if (!sequencer.isRunning()) {
 				long returnPos = sequencer.getTickPosition();
