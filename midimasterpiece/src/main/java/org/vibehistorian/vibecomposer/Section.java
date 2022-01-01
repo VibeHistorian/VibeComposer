@@ -712,7 +712,7 @@ public class Section {
 	}
 
 	public boolean isRiskyVar(int num) {
-		return getRiskyVariations().get(num) > 0;
+		return riskyVariations != null && getRiskyVariations().get(num) > 0;
 	}
 
 	public boolean isTransition() {

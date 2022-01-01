@@ -195,6 +195,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.sun.media.sound.AudioSynthesizer;
 
+import jm.music.data.Note;
 import jm.music.data.Phrase;
 import jm.music.tools.Mod;
 
@@ -3453,7 +3454,7 @@ public class VibeComposerGUI extends JFrame
 		firstChordSelection = new ScrollComboBox<String>(false);
 		firstChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
-		firstChordSelection.setVal("C");
+		firstChordSelection.setVal("?");
 		firstChordSelection.addItemListener(this);
 
 		lastChordSelection = new ScrollComboBox<String>(false);
@@ -8374,7 +8375,8 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder) {
+	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
+			Section sec) {
 		if (sequencer == null || !sequencer.isOpen()) {
 			return;
 		}
@@ -8385,6 +8387,22 @@ public class VibeComposerGUI extends JFrame
 			return;
 		}
 		try {
+			// todo checkbox setting?
+			if (true) {
+				Pair<ScaleMode, Integer> scaleKey = keyChangeAt(
+						actualArrangement.getSections().indexOf(sec));
+				List<Note> notes = Collections.singletonList(new Note(pitch, durationMs / 1000.0));
+				int extraTranspose = 0;
+				if (scaleKey != null) {
+					MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
+							scaleKey.getLeft().noteAdjustScale);
+					extraTranspose = scaleKey.getRight();
+				}
+
+				pitch = notes.get(0).getPitch() + transposeScore.getInt() + extraTranspose
+						+ ip.getTranspose();
+			}
+
 			Track trk = sequencer.getSequence().getTracks()[trackNum];
 			ShortMessage noteOnMsg = new ShortMessage();
 			noteOnMsg.setMessage(ShortMessage.NOTE_ON, ip.getMidiChannel() - 1, pitch, velocity);
@@ -8450,5 +8468,24 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		midiEventsToRemove.clear();
+	}
+
+	public static Pair<ScaleMode, Integer> keyChangeAt(int sectionIndex) {
+		if (actualArrangement == null || actualArrangement.getSections() == null || sectionIndex < 0
+				|| sectionIndex >= actualArrangement.getSections().size()) {
+			return null;
+		}
+
+		ScaleMode lastMode = ScaleMode.valueOf(scaleMode.getVal());
+		int lastKeyChange = 0;
+		for (int i = 0; i < sectionIndex; i++) {
+			Section sec = actualArrangement.getSections().get(i);
+			if (sec.isRiskyVar(4)) {
+				lastMode = sec.getCustomScale() != null ? sec.getCustomScale() : lastMode;
+				lastKeyChange = sec.getCustomKeyChange() != null ? sec.getCustomKeyChange()
+						: lastKeyChange;
+			}
+		}
+		return Pair.of(lastMode, lastKeyChange);
 	}
 }

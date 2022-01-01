@@ -63,10 +63,10 @@ public class MidiEditArea extends JComponent {
 
 	MidiEditPopup pop = null;
 
-	public MidiEditArea(int min, int max, PhraseNotes vals) {
+	public MidiEditArea(int minimum, int maximum, PhraseNotes vals) {
 		super();
-		setMin(min);
-		setMax(max);
+		setMin(minimum);
+		setMax(maximum);
 		values = vals;
 
 		addMouseWheelListener(new MouseWheelListener() {
@@ -74,28 +74,27 @@ public class MidiEditArea extends JComponent {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (!e.isAltDown()) {
 					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
-					if ((rot > 0 && MidiEditArea.this.max > 110)
-							|| (rot < 0 && MidiEditArea.this.min < 10)) {
+					if ((rot > 0 && max > 110) || (rot < 0 && min < 10)) {
 						return;
 					}
 					int originalTrackScopeUpDown = MidiEditPopup.trackScope;
 					MidiEditPopup.trackScopeUpDown = OMNI
 							.clamp(MidiEditPopup.trackScopeUpDown + rot, -4, 4);
 					if (originalTrackScopeUpDown != MidiEditPopup.trackScopeUpDown) {
-						MidiEditArea.this.min += MidiEditPopup.baseMargin * rot;
-						MidiEditArea.this.max += MidiEditPopup.baseMargin * rot;
+						min += MidiEditPopup.baseMargin * rot;
+						max += MidiEditPopup.baseMargin * rot;
 						repaint();
 					}
 				} else {
 					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
 					int originalTrackScope = MidiEditPopup.trackScope;
-					if (rot > 0 && (MidiEditArea.this.max > 110 || MidiEditArea.this.min < 10)) {
+					if (rot > 0 && (max > 110 || min < 10)) {
 						return;
 					}
 					MidiEditPopup.trackScope = Math.max(originalTrackScope + rot, 1);
 					if (originalTrackScope != MidiEditPopup.trackScope) {
-						MidiEditArea.this.min -= MidiEditPopup.baseMargin * rot;
-						MidiEditArea.this.max += MidiEditPopup.baseMargin * rot;
+						min -= MidiEditPopup.baseMargin * rot;
+						max += MidiEditPopup.baseMargin * rot;
 						repaint();
 					}
 				}
@@ -124,7 +123,8 @@ public class MidiEditArea extends JComponent {
 				if (evt.isAltDown()) {
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						PhraseNote note = values.get(orderVal.x);
-						int velocity = (int) (127 * (orderVal.y - min) / (double) (max - min));
+						int velocity = OMNI.clamp(
+								(int) (127 * (orderVal.y - min) / (double) (max - min)), 0, 127);
 						if (velocity != note.getDynamic()) {
 							note.setDynamic(velocity);
 							playNote(note);
@@ -195,6 +195,7 @@ public class MidiEditArea extends JComponent {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						setVal(orderVal.x, orderVal.y);
+						playNote(values.get(orderVal.x), 300);
 						repaint();
 					}
 					isDragging = true;
@@ -244,7 +245,7 @@ public class MidiEditArea extends JComponent {
 	private void playNote(PhraseNote pn, int durationMs) {
 		if (pn != null) {
 			VibeComposerGUI.playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
-					pop.partOrder);
+					pop.partOrder, pop.getSec());
 		}
 
 	}
@@ -270,14 +271,18 @@ public class MidiEditArea extends JComponent {
 
 					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
-						setVal(orderVal.x, orderVal.y);
-						repaint();
+						if (values.get(orderVal.x).getPitch() != orderVal.y) {
+							setVal(orderVal.x, orderVal.y);
+							playNote(values.get(orderVal.x), 300);
+							repaint();
+						}
 					}
 				} else if (draggingVelocityShape) {
 					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						PhraseNote note = values.get(orderVal.x);
-						int velocity = (int) (127 * (orderVal.y - min) / (double) (max - min));
+						int velocity = OMNI.clamp(
+								(int) (127 * (orderVal.y - min) / (double) (max - min)), 0, 127);
 						if (velocity != note.getDynamic()) {
 							note.setDynamic(velocity);
 							playNote(note);
