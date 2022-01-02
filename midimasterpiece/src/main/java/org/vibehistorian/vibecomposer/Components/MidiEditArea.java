@@ -159,6 +159,8 @@ public class MidiEditArea extends JComponent {
 								draggedNote = insertedPn;
 							}
 
+							startingOffset = draggedNote.getOffset();
+							draggingPosition = true;
 						}
 					} else {
 						LG.d("Duration-dragging existing note..");
@@ -170,8 +172,12 @@ public class MidiEditArea extends JComponent {
 					startingDuration = draggedNote.getDuration();
 					startingDynamic = draggedNote.getDynamic();
 					isDragging = true;
-					draggingDuration = evt.isControlDown() || evt.isShiftDown();
-					draggingVelocity = !draggingDuration;
+					draggingDuration = !draggingPosition
+							&& (evt.isControlDown() || evt.isShiftDown());
+					if (draggingPosition || !draggingDuration) {
+						draggingVelocity = true;
+					}
+
 					lockTimeGrid = !evt.isControlDown();
 				}
 
@@ -311,7 +317,9 @@ public class MidiEditArea extends JComponent {
 					duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2, duration);
 					draggedNote.setDuration(duration);
 					repaint();
-				} else if (draggingVelocity) {
+				}
+
+				if (draggingVelocity) {
 					int velocity = getVelocityFromPosition(e.getPoint());
 					velocity = OMNI.clamp(velocity, 0, 127);
 					draggedNote.setDynamic(velocity);
