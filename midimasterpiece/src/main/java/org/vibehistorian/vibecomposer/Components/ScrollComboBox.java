@@ -91,11 +91,12 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	}
 
 	public void setVal(T item) {
+		boolean isDifferent = getVal() != item;
 		if (isEnabled()) {
 			setSelectedItem(item);
 		}
-		if (isEnabled() && regenerating && mousePressed
-				&& VibeComposerGUI.canRegenerateOnChange()) {
+		if (isEnabled() && regenerating && mousePressed && VibeComposerGUI.canRegenerateOnChange()
+				&& isDifferent) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
 		mousePressed = false;

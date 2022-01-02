@@ -367,10 +367,12 @@ public class ShowAreaBig extends JComponent {
 							g.setColor(aC);
 						}
 
+						int actualHeight = (noteHeight > 7 ? noteHeight * 7 / 10 : noteHeight)
+								- thinNote;
+
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
-							g.fillRect(actualStartingX, y - noteHeight + thinNote, x,
-									noteHeight * 2 - 2 * thinNote);
+							g.fillRect(actualStartingX, y - actualHeight, x, actualHeight * 2);
 						} else { // draw frequency derrived note
 							int heightOffset = 7;
 							for (int j = actualStartingX; j < actualStartingX + x - 4; j += 4) {
@@ -382,8 +384,7 @@ public class ShowAreaBig extends JComponent {
 						}
 						g.setColor(OMNI.alphen(Color.black, 50 + aNote.getDynamic() / 2));
 						// draw note ouside
-						g.drawRect(actualStartingX, y - noteHeight + thinNote, x,
-								noteHeight * 2 - 2 * thinNote);
+						g.drawRect(actualStartingX, y - actualHeight, x, actualHeight * 2);
 						//add a sharp if required
 						if ((currNote % 12) == 1 || (currNote % 12) == 3 || (currNote % 12) == 6
 								|| (currNote % 12) == 8 || (currNote % 12) == 10) {

@@ -430,6 +430,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			SwingUtilities.convertPointFromScreen(startPoint, JKnob.this);
 			recalc(e);
 		} else if (SwingUtilities.isRightMouseButton(e)) {
+			fineStart = curr;
 			setValue(defaultValue);
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
 			if (e.isControlDown()) {
@@ -453,12 +454,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
 		if (isEnabled() && regenerating && !SwingUtilities.isMiddleMouseButton(e)
-				&& VibeComposerGUI.canRegenerateOnChange()) {
+				&& VibeComposerGUI.canRegenerateOnChange() && (fineStart != curr)) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
 
 		fine = false;
 		startPoint = null;
+		fineStart = curr;
 		//LG.d("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
 	}
 
