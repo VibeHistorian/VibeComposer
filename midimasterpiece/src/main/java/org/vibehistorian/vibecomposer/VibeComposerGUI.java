@@ -6032,20 +6032,25 @@ public class VibeComposerGUI extends JFrame
 					true);
 			newPanel.setPatternSeed(sourcePanel.getPatternSeed());
 
-			switch (instrumentTabPane.getSelectedIndex()) {
-			case 2:
-				newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
-				newPanel.setPanByOrder(5);
-				break;
-			case 3:
-				newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
-				newPanel.setPanByOrder(7);
-				break;
-			case 4:
-				newPanel.getComboPanel().reapplyHits();
-				break;
-			default:
-				break;
+			// todo checkbox set cc'd panel's midichannel?
+			if (true) {
+				newPanel.setMidiChannel(sourcePanel.getMidiChannel());
+			} else {
+				switch (instrumentTabPane.getSelectedIndex()) {
+				case 2:
+					newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+					newPanel.setPanByOrder(5);
+					break;
+				case 3:
+					newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
+					newPanel.setPanByOrder(7);
+					break;
+				case 4:
+					newPanel.getComboPanel().reapplyHits();
+					break;
+				default:
+					break;
+				}
 			}
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
