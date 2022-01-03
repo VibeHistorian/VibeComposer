@@ -726,7 +726,7 @@ public class VibeComposerGUI extends JFrame
 
 		//createHorizontalSeparator(15, this);
 
-		initSoloMuters(20, GridBagConstraints.WEST);
+		initSoloMutersAndTrackControl(20, GridBagConstraints.WEST);
 		LG.i("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// ---- INSTRUMENT SETTINGS ----
 		{
@@ -1334,45 +1334,66 @@ public class VibeComposerGUI extends JFrame
 		initHelperPopups();
 	}
 
-	private void initSoloMuters(int startY, int anchorSide) {
-		JPanel soloMuterPanel = new JPanel();
-		soloMuterPanel.setOpaque(false);
+	private void initSoloMutersAndTrackControl(int startY, int anchorSide) {
+		JPanel soloMuterTrackControlPanel = new JPanel();
+		soloMuterTrackControlPanel.setOpaque(false);
 		JLabel emptySmLabel = new JLabel("");
 		emptySmLabel.setPreferredSize(new Dimension(1, 3));
-		soloMuterPanel.add(emptySmLabel);
+		soloMuterTrackControlPanel.add(emptySmLabel);
 
 		groupSoloMuters = new ArrayList<>();
 		for (int i = 0; i < 5; i++) {
 			SoloMuter sm = new SoloMuter(i, SoloMuter.Type.GROUP);
 			groupSoloMuters.add(sm);
-			soloMuterPanel.add(sm);
+			soloMuterTrackControlPanel.add(sm);
 		}
 
-		soloMuterPanel.add(new JLabel("Track History: "));
-		soloMuterPanel.add(configHistory);
-		soloMuterPanel.add(makeButton("Load", e -> {
+		soloMuterTrackControlPanel.add(new JLabel("Track History: "));
+		soloMuterTrackControlPanel.add(configHistory);
+		soloMuterTrackControlPanel.add(makeButton("Load", e -> {
 			if (configHistory.getItemCount() > 0) {
 				guiConfig = configHistory.getVal();
 				copyConfigToGUI(guiConfig);
 				//clearAllSeeds();
 			}
 		}));
+		JButton loadCustomBtn = makeButton("Replace Section", e -> {
+			if (configHistory.getItemCount() > 0 && arrSection.getSelectedIndex() > 0) {
+				GUIConfig sectionGuiConfig = configHistory.getVal();
+				Section currentSec = actualArrangement.getSections()
+						.get(arrSection.getSelectedIndex() - 1);
+				for (int i = 0; i < 5; i++) {
+					currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
+				}
+
+				switchPanelsForSectionSelection(arrSection.getVal());
+
+				/*if (sectionGuiConfig.getGlobalSwingOverride() != null) {
+					applyGlobalSwing(sectionGuiConfig.getGlobalSwingOverride(), true);
+				}*/
+
+				//copyConfigToGUI(guiConfig);
+				//clearAllSeeds();
+			}
+		});
+		soloMuterTrackControlPanel.add(loadCustomBtn);
 		JTextField bookmarkField = new JTextField("Intro1", 8);
-		soloMuterPanel.add(bookmarkField);
+		soloMuterTrackControlPanel.add(bookmarkField);
 		JButton butt = makeButton("Add Bookmark Text", e -> {
 			guiConfig.setBookmarkText(bookmarkField.getText());
 
 			configHistory.removeItemAt(configHistory.getItemCount() - 1);
 			configHistory.addItem(guiConfig);
 		});
-		soloMuterPanel.add(butt);
+		soloMuterTrackControlPanel.add(butt);
+
 
 		toggleableComponents.add(bookmarkField);
 		toggleableComponents.add(butt);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(soloMuterPanel, constraints);
+		everythingPanel.add(soloMuterTrackControlPanel, constraints);
 	}
 
 
@@ -2456,98 +2477,7 @@ public class VibeComposerGUI extends JFrame
 						.getSections().size())) {
 					return;
 				}
-				List<InstPanel> addedPanels = new ArrayList<>();
-
-				if (GLOBAL.equals(selItem)) {
-					LG.i(("Resetting to normal panels!"));
-					arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
-					for (int i = 0; i < 5; i++) {
-						JScrollPane pane = getInstPane(i);
-						List<? extends InstPanel> panels = getInstList(i);
-						for (Component c : ((JPanel) pane.getViewport().getView())
-								.getComponents()) {
-							if (c instanceof InstPanel) {
-								InstPanel ip = (InstPanel) c;
-								//LG.i(("Switching panel!"));
-								((JPanel) pane.getViewport().getView()).remove(ip);
-							}
-						}
-						panels.forEach(p -> {
-							((JPanel) pane.getViewport().getView()).add(p);
-							p.setVisible(false);
-							//p.setBackground(panelColorLow.darker());
-						});
-						addedPanels.addAll(panels);
-					}
-				} else {
-					LG.i(("Switching panels!"));
-					arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
-					int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
-					Section sec = actualArrangement.getSections().get(sectionOrder);
-					for (int i = 0; i < 5; i++) {
-						JScrollPane pane = getInstPane(i);
-						List<InstPanel> sectionPanels = new ArrayList<>();
-						if (sec.getInstPartList(i) != null) {
-							//LG.i(("Creating panels from section parts! " + i));
-							List<? extends InstPart> ip = sec.getInstPartList(i);
-							for (Component c : ((JPanel) pane.getViewport().getView())
-									.getComponents()) {
-								if (c instanceof InstPanel) {
-									int order = ((InstPanel) c).getPanelOrder();
-									((JPanel) pane.getViewport().getView()).remove(c);
-									InstPanel pCopy = InstPanel.makeInstPanel(i,
-											VibeComposerGUI.this);
-									pCopy.setFromInstPart(
-											ip.get(VibeComposerGUI.getAbsoluteOrder(i, order)));
-									sectionPanels.add(pCopy);
-								}
-							}
-						} else {
-							//LG.i(("Making copies of normal panels! " + i));
-							List<? extends InstPanel> panels = getInstList(i);
-							//Set<Integer> presence = sec.getPresence(i);
-							for (Component c : ((JPanel) pane.getViewport().getView())
-									.getComponents()) {
-								if (c instanceof InstPanel) {
-									InstPanel ip = (InstPanel) c;
-
-									//LG.i(("Switching panel!"));
-									int order = ip.getPanelOrder();
-									((JPanel) pane.getViewport().getView()).remove(ip);
-									/*if (!presence.contains(ip.getPanelOrder())) {
-										continue;
-									}*/
-									InstPanel p = panels.get(order - 1);
-									InstPanel pCopy = InstPanel.makeInstPanel(i,
-											VibeComposerGUI.this);
-									pCopy.setRelatedSection(sec);
-									pCopy.setFromInstPart(p.toInstPart(0));
-									sectionPanels.add(pCopy);
-								}
-
-							}
-						}
-
-						sectionPanels.forEach(p -> {
-							p.toggleEnabledCopyRemove(false);
-							p.toggleGlobalElements(false);
-							if (p.getPartClass() == DrumPart.class) {
-								p.getInstrumentBox().setEnabled(true);
-							}
-							p.getToggleableComponents().forEach(g -> g.setVisible(isFullMode));
-							p.setVisible(false);
-							((JPanel) pane.getViewport().getView()).add(p);
-						});
-						addedPanels.addAll(sectionPanels);
-					}
-				}
-				arrangementMiddleColoredPanel.repaint();
-				addedPanels.forEach(p -> p.setVisible(true));
-				toggleButtonEnabledForPanels();
-				for (int i = 0; i < 5; i++) {
-					JScrollPane pane = getInstPane(i);
-					pane.repaint();
-				}
+				switchPanelsForSectionSelection(selItem);
 			}
 		});
 
@@ -2940,6 +2870,96 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(undoPanelBtn);
 		toggleableComponents.add(clearPanelBtn);
 		toggleableComponents.add(clearAllPanelsBtn);
+	}
+
+	private void switchPanelsForSectionSelection(String selItem) {
+		List<InstPanel> addedPanels = new ArrayList<>();
+
+		if (GLOBAL.equals(selItem)) {
+			LG.i(("Resetting to normal panels!"));
+			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
+			for (int i = 0; i < 5; i++) {
+				JScrollPane pane = getInstPane(i);
+				List<? extends InstPanel> panels = getInstList(i);
+				for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
+					if (c instanceof InstPanel) {
+						InstPanel ip = (InstPanel) c;
+						//LG.i(("Switching panel!"));
+						((JPanel) pane.getViewport().getView()).remove(ip);
+					}
+				}
+				panels.forEach(p -> {
+					((JPanel) pane.getViewport().getView()).add(p);
+					p.setVisible(false);
+					//p.setBackground(panelColorLow.darker());
+				});
+				addedPanels.addAll(panels);
+			}
+		} else {
+			LG.i(("Switching panels!"));
+			arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
+			int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
+			Section sec = actualArrangement.getSections().get(sectionOrder);
+			for (int i = 0; i < 5; i++) {
+				JScrollPane pane = getInstPane(i);
+				List<InstPanel> sectionPanels = new ArrayList<>();
+				if (sec.getInstPartList(i) != null) {
+					//LG.i(("Creating panels from section parts! " + i));
+					List<? extends InstPart> ip = sec.getInstPartList(i);
+					for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
+						if (c instanceof InstPanel) {
+							int order = ((InstPanel) c).getPanelOrder();
+							((JPanel) pane.getViewport().getView()).remove(c);
+							InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
+							pCopy.setFromInstPart(
+									ip.get(VibeComposerGUI.getAbsoluteOrder(i, order)));
+							sectionPanels.add(pCopy);
+						}
+					}
+				} else {
+					//LG.i(("Making copies of normal panels! " + i));
+					List<? extends InstPanel> panels = getInstList(i);
+					//Set<Integer> presence = sec.getPresence(i);
+					for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
+						if (c instanceof InstPanel) {
+							InstPanel ip = (InstPanel) c;
+
+							//LG.i(("Switching panel!"));
+							int order = ip.getPanelOrder();
+							((JPanel) pane.getViewport().getView()).remove(ip);
+							/*if (!presence.contains(ip.getPanelOrder())) {
+								continue;
+							}*/
+							InstPanel p = panels.get(order - 1);
+							InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
+							pCopy.setRelatedSection(sec);
+							pCopy.setFromInstPart(p.toInstPart(0));
+							sectionPanels.add(pCopy);
+						}
+
+					}
+				}
+
+				sectionPanels.forEach(p -> {
+					p.toggleEnabledCopyRemove(false);
+					p.toggleGlobalElements(false);
+					if (p.getPartClass() == DrumPart.class) {
+						p.getInstrumentBox().setEnabled(true);
+					}
+					p.getToggleableComponents().forEach(g -> g.setVisible(isFullMode));
+					p.setVisible(false);
+					((JPanel) pane.getViewport().getView()).add(p);
+				});
+				addedPanels.addAll(sectionPanels);
+			}
+		}
+		arrangementMiddleColoredPanel.repaint();
+		addedPanels.forEach(p -> p.setVisible(true));
+		toggleButtonEnabledForPanels();
+		for (int i = 0; i < 5; i++) {
+			JScrollPane pane = getInstPane(i);
+			pane.repaint();
+		}
 	}
 
 	private void processActualArrangementMouseEvent(java.awt.event.MouseEvent evt) {
@@ -3435,11 +3455,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				int swing = globalSwingOverrideValue.getInt();
-				melodyPanels.forEach(e -> e.setSwingPercent(swing));
-				randomArpMaxSwing.setInt(swing);
-				drumPanels.forEach(e -> {
-					e.setSwingPercent(swing);
-				});
+				applyGlobalSwing(swing, false);
 			}
 		});
 		globalSwingPanel.add(globalSwingOverride);
@@ -3469,6 +3485,20 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		controlPanel.add(macroParams);
+	}
+
+	private void applyGlobalSwing(int swing, boolean customPanels) {
+		if (customPanels) {
+			getAffectedPanels(0).forEach(e -> e.setSwingPercent(swing));
+			getAffectedPanels(4).forEach(e -> e.setSwingPercent(swing));
+		} else {
+			melodyPanels.forEach(e -> e.setSwingPercent(swing));
+			randomArpMaxSwing.setInt(swing);
+			drumPanels.forEach(e -> {
+				e.setSwingPercent(swing);
+			});
+		}
+
 	}
 
 	private void initChordProgressionSettings(int startY, int anchorSide) {

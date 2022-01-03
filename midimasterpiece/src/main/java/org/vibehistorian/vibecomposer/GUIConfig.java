@@ -38,6 +38,7 @@ import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 @XmlRootElement(name = "GUIConfig")
@@ -767,6 +768,22 @@ public class GUIConfig {
 
 	public void setBookmarkText(String bookmarkText) {
 		this.bookmarkText = bookmarkText;
+	}
+
+	public List<? extends InstPart> getInstPartList(int partNum) {
+		switch (partNum) {
+		case 0:
+			return melodyParts;
+		case 1:
+			return bassParts;
+		case 2:
+			return chordParts;
+		case 3:
+			return arpParts;
+		case 4:
+			return drumParts;
+		}
+		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
 	}
 
 }

@@ -116,9 +116,6 @@ public class Section {
 	private List<ArpPart> arpParts = null;
 
 	public List<? extends InstPart> getInstPartList(int partNum) {
-		if (partNum < 0 || partNum > 4) {
-			throw new IllegalArgumentException("Inst part list order wrong.");
-		}
 		switch (partNum) {
 		case 0:
 			return melodyParts;
@@ -131,7 +128,29 @@ public class Section {
 		case 4:
 			return drumParts;
 		}
-		return null;
+		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
+	}
+
+	public void setInstPartList(List<? extends InstPart> parts, int partNum) {
+		switch (partNum) {
+		case 0:
+			setMelodyParts((List<MelodyPart>) (List<?>) parts);
+			break;
+		case 1:
+			setBassParts((List<BassPart>) (List<?>) parts);
+			break;
+		case 2:
+			setChordParts((List<ChordPart>) (List<?>) parts);
+			break;
+		case 3:
+			setArpParts((List<ArpPart>) (List<?>) parts);
+			break;
+		case 4:
+			setDrumParts((List<DrumPart>) (List<?>) parts);
+			break;
+		default:
+			throw new IllegalArgumentException("PartNum incorrect: " + partNum);
+		}
 	}
 
 	// map integer(part type), [part order][presence/section variation]
