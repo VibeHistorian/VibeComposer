@@ -2731,38 +2731,50 @@ public class MidiGenerator implements JMC {
 		Score score = new Score("MainScore", 120);
 
 		List<Part> melodyParts = new ArrayList<>();
-		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-			PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
-					gc.getMelodyParts().get(i).getMidiChannel() - 1);
-			melodyParts.add(p);
+		if (gc.isMelodyEnable()) {
+			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
+				PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
+						gc.getMelodyParts().get(i).getMidiChannel() - 1);
+				melodyParts.add(p);
+			}
 		}
 
 		List<Part> chordParts = new ArrayList<>();
-		for (int i = 0; i < gc.getChordParts().size(); i++) {
-			PartExt p = new PartExt("Chords" + i, gc.getChordParts().get(i).getInstrument(),
-					gc.getChordParts().get(i).getMidiChannel() - 1);
-			chordParts.add(p);
+		if (gc.isChordsEnable()) {
+			for (int i = 0; i < gc.getChordParts().size(); i++) {
+				PartExt p = new PartExt("Chords" + i, gc.getChordParts().get(i).getInstrument(),
+						gc.getChordParts().get(i).getMidiChannel() - 1);
+				chordParts.add(p);
+			}
 		}
+
 		List<Part> arpParts = new ArrayList<>();
-		for (int i = 0; i < gc.getArpParts().size(); i++) {
-			PartExt p = new PartExt("Arps" + i, gc.getArpParts().get(i).getInstrument(),
-					gc.getArpParts().get(i).getMidiChannel() - 1);
-			arpParts.add(p);
+		if (gc.isArpsEnable()) {
+			for (int i = 0; i < gc.getArpParts().size(); i++) {
+				PartExt p = new PartExt("Arps" + i, gc.getArpParts().get(i).getInstrument(),
+						gc.getArpParts().get(i).getMidiChannel() - 1);
+				arpParts.add(p);
+			}
 		}
+
 
 		List<Part> bassParts = new ArrayList<>();
-		for (int i = 0; i < gc.getBassParts().size(); i++) {
-			PartExt p = new PartExt("Bass" + i, gc.getBassParts().get(i).getInstrument(),
-					gc.getBassParts().get(i).getMidiChannel() - 1);
-			bassParts.add(p);
+		if (gc.isBassEnable()) {
+			for (int i = 0; i < gc.getBassParts().size(); i++) {
+				PartExt p = new PartExt("Bass" + i, gc.getBassParts().get(i).getInstrument(),
+						gc.getBassParts().get(i).getMidiChannel() - 1);
+				bassParts.add(p);
+			}
 		}
+
 
 		List<Part> drumParts = new ArrayList<>();
-		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("MainDrums", 0, 9);
-			drumParts.add(p);
+		if (gc.isDrumsEnable()) {
+			for (int i = 0; i < gc.getDrumParts().size(); i++) {
+				PartExt p = new PartExt("MainDrums", 0, 9);
+				drumParts.add(p);
+			}
 		}
-
 
 		List<int[]> generatedRootProgression = generateChordProgression(mainGeneratorSeed,
 				gc.getFixedDuration());
@@ -3305,7 +3317,7 @@ public class MidiGenerator implements JMC {
 
 	private void fillMelodyPartsForSection(double measureLength, boolean overridden, Section sec,
 			int notesSeedOffset, List<Integer> riskyVariations, boolean sectionChordsReplaced) {
-		if (!gc.getMelodyParts().isEmpty()) {
+		if (gc.isMelodyEnable() && !gc.getMelodyParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(0);
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
@@ -3366,7 +3378,7 @@ public class MidiGenerator implements JMC {
 		emptyPhrase.setStartTime(START_TIME_DELAY);
 		emptyPhrase.add(emptyMeasureNote);
 
-		if (!gc.getBassParts().isEmpty()) {
+		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(1);
 			boolean added = presences.contains(gc.getBassParts().get(0).getOrder());
@@ -3388,7 +3400,7 @@ public class MidiGenerator implements JMC {
 			sec.setBasses(copiedPhrases);
 		}
 
-		if (!gc.getChordParts().isEmpty()) {
+		if (gc.isChordsEnable() && !gc.getChordParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(2);
 			boolean useChordSlash = false;
@@ -3417,7 +3429,7 @@ public class MidiGenerator implements JMC {
 
 		}
 
-		if (!gc.getArpParts().isEmpty()) {
+		if (gc.isArpsEnable() && !gc.getArpParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
@@ -3437,7 +3449,7 @@ public class MidiGenerator implements JMC {
 			sec.setArps(copiedPhrases);
 		}
 
-		if (!gc.getDrumParts().isEmpty()) {
+		if (gc.isDrumsEnable() && !gc.getDrumParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
@@ -3464,7 +3476,7 @@ public class MidiGenerator implements JMC {
 	private void calculatePresencesForSection(Section sec, Random rand, Random variationGen,
 			boolean overridden, List<Integer> riskyVariations, int arrSeed, int notesSeedOffset,
 			boolean isPreview, int counter, Arrangement arr) {
-		if (!gc.getMelodyParts().isEmpty()) {
+		if (gc.isMelodyEnable() && !gc.getMelodyParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(0);
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 				MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
@@ -3484,7 +3496,8 @@ public class MidiGenerator implements JMC {
 
 		rand.setSeed(arrSeed + 10);
 		variationGen.setSeed(arrSeed + 10);
-		if (!gc.getBassParts().isEmpty() && !gc.getBassParts().get(0).isMuted()) {
+		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()
+				&& !gc.getBassParts().get(0).isMuted()) {
 			Set<Integer> presences = sec.getPresence(1);
 			boolean added = (overridden && presences.contains(gc.getBassParts().get(0).getOrder()))
 					|| (!overridden && rand.nextInt(100) < sec.getBassChance());
@@ -3495,7 +3508,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (!gc.getChordParts().isEmpty()) {
+		if (gc.isChordsEnable() && !gc.getChordParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(2);
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
 				ChordPart cp = (ChordPart) gc.getChordParts().get(i);
@@ -3511,7 +3524,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (!gc.getArpParts().isEmpty()) {
+		if (gc.isArpsEnable() && !gc.getArpParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
 				ArpPart ap = (ArpPart) gc.getArpParts().get(i);
@@ -3532,7 +3545,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (!gc.getDrumParts().isEmpty()) {
+		if (gc.isDrumsEnable() && !gc.getDrumParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
 				DrumPart dp = (DrumPart) gc.getDrumParts().get(i);

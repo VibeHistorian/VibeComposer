@@ -4770,8 +4770,9 @@ public class VibeComposerGUI extends JFrame
 		Integer masterpieceSeed = prepareMainSeed(regenerate);
 
 		prepareUI(regenerate);
-		copyGUItoConfig(guiConfig);
-		MidiGenerator melodyGen = new MidiGenerator(guiConfig);
+		GUIConfig midiConfig = new GUIConfig();
+		copyGUItoConfig(midiConfig);
+		MidiGenerator melodyGen = new MidiGenerator(midiConfig);
 		fillUserParameters(regenerate);
 
 		File makeDir = new File(MIDIS_FOLDER);
@@ -4793,6 +4794,7 @@ public class VibeComposerGUI extends JFrame
 		// unapply S/M, generate, reapply S/M with new track numbering
 		unapplySolosMutes(true);
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+		guiConfig = midiConfig;
 		fixCombinedTracks();
 		reapplySolosMutes();
 
@@ -4883,7 +4885,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			// to include it in the XML when saving, but not when generating
-			if (!addMelody.isSelected()) {
+			/*if (!addMelody.isSelected()) {
 				MidiGenerator.gc.setMelodyParts(new ArrayList<>());
 			}
 			if (!addBass.isSelected()) {
@@ -4897,7 +4899,7 @@ public class VibeComposerGUI extends JFrame
 			}
 			if (!addDrums.isSelected()) {
 				MidiGenerator.gc.setDrumParts(new ArrayList<>());
-			}
+			}*/
 
 		} catch (Exception e) {
 			LG.i(("User screwed up his inputs!"));
