@@ -1357,7 +1357,18 @@ public class VibeComposerGUI extends JFrame
 				//clearAllSeeds();
 			}
 		}));
+		JTextField bookmarkField = new JTextField("Intro1", 8);
+		soloMuterPanel.add(bookmarkField);
+		JButton butt = makeButton("Add Bookmark Text", e -> {
+			guiConfig.setBookmarkText(bookmarkField.getText());
 
+			configHistory.removeItemAt(configHistory.getItemCount() - 1);
+			configHistory.addItem(guiConfig);
+		});
+		soloMuterPanel.add(butt);
+
+		toggleableComponents.add(bookmarkField);
+		toggleableComponents.add(butt);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;

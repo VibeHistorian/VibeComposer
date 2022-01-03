@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
@@ -140,6 +141,8 @@ public class GUIConfig {
 
 	private boolean midiMode = true;
 	private long randomSeed = 0;
+
+	private String bookmarkText = "";
 
 
 	public GUIConfig() {
@@ -753,7 +756,17 @@ public class GUIConfig {
 	public String toString() {
 		return MidiUtils.SEMITONE_LETTERS.get((transpose + 1200) % 12) + " " + scaleMode.toString()
 				+ " " + (int) bpm + "bpm [" + actualArrangement.getSections().size()
-				+ " section(s)] Seed: " + randomSeed + " Chords: [" + customChords + "]";
+				+ " section(s)] Seed: " + randomSeed + " Chords: [" + customChords + "]"
+				+ (StringUtils.isNotEmpty(bookmarkText) ? (" - " + bookmarkText) : "");
+	}
+
+	@XmlTransient
+	public String getBookmarkText() {
+		return bookmarkText;
+	}
+
+	public void setBookmarkText(String bookmarkText) {
+		this.bookmarkText = bookmarkText;
 	}
 
 }
