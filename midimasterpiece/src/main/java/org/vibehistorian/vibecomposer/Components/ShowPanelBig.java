@@ -81,9 +81,9 @@ public class ShowPanelBig extends JPanel {
 	private ShowRulerBig ruler;
 	private JPanel pan;
 	private int panelHeight;
-	private JScrollPane areaScrollPane;
+	public static JScrollPane areaScrollPane;
 	private JScrollPane rulerScrollPane;
-	private JScrollPane horizontalPane;
+	public static JScrollPane horizontalPane;
 	public static CheckButton soloMuterHighlight;
 	public static double maxEndTime = 10.0;
 

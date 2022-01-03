@@ -34,12 +34,14 @@ import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JComponent;
 
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
@@ -174,13 +176,12 @@ public class ShowAreaBig extends JComponent {
 		//offScreenImage.getGraphics();
 		int rectLeft, rectTop, rectRight, rectBot;
 		//clear
-		g.setColor(
-				VibeComposerGUI.isDarkMode ? new Color(100, 100, 100) : new Color(140, 140, 140));
+		g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
+				: VibeComposerGUI.panelColorLow);
 		g.fillRect(0, 0, this.getSize().width, areaHeight);
 		//get current maxWidth
 		//paint staves
 		g.setColor(Color.black);
-		g.setFont(font);
 		// e above middle C is at 255
 		//treble
 		beatWidth = sp.beatWidth;
@@ -210,7 +211,8 @@ public class ShowAreaBig extends JComponent {
 		g.drawLine(0, (e + w * 12), maxWidth, (e + w * 12));
 		g.drawLine(0, (e + w * 13), maxWidth, (e + w * 13));
 		// leger lines
-		g.setColor(new Color(140, 140, 140));
+		g.setColor(
+				VibeComposerGUI.isDarkMode ? new Color(140, 140, 140) : new Color(200, 200, 200));
 		for (int k = 0; k < maxWidth; k += 10) {
 			g.drawLine(k, (e + w), k + 1, (e + w)); // middle C
 			// above treble
@@ -266,6 +268,10 @@ public class ShowAreaBig extends JComponent {
 				}
 			}
 		}
+
+		g.setFont(font.deriveFont(Float.valueOf(noteHeight * 7 / 10)));
+
+		//g.drawLine(viewPoint.x + 4, 0, viewPoint.x + 4, areaHeight);
 
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
@@ -330,12 +336,7 @@ public class ShowAreaBig extends JComponent {
 					}
 					//LG.d("Note: " + currNote);
 					if ((currNote <= 127) && (currNote >= 0)) {
-						// 10 - numb of octaves, 12 notes in an octave, 21
-						// (octavePixelheight) is the height of
-						// an octave, 156 is offset to put in position
-						int octavePixelheight = noteHeight * 7;
-						int y = (int) (((10 - currNote / 12) * octavePixelheight + (ePos))
-								- noteOffset[currNote % 12]);
+						int y = getNotePosY(currNote);
 						int x = (int) (Math.round(aNote.getDuration() * beatWidth)); //480 ppq note
 						//int xRV = (int) (Math.round(aNote.getRhythmValue() * beatWidth)); //480 ppq note
 						// check if the width of the note is less than 1 so
@@ -406,5 +407,26 @@ public class ShowAreaBig extends JComponent {
 		}
 		//g.drawImage(offScreenImage, 0, 0, this);
 		//g.dispose();
+		float usedFontHeight = Math.min(16, Float.valueOf(noteHeight * 9 / 10));
+		g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
+		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
+		Point viewPoint = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
+
+		for (int i = 15; i < 105; i++) {
+			if (MidiUtils.MAJ_SCALE.contains(i % 12)) {
+				int y = getNotePosY(i) + (int) (usedFontHeight / 4) + 2;
+				String noteString = MidiUtils.getNoteForPitch(i);
+				g.drawString(noteString, viewPoint.x, y);
+			}
+		}
+	}
+
+	private int getNotePosY(int currNote) {
+		// 10 - numb of octaves, 12 notes in an octave, 21
+		// (octavePixelheight) is the height of
+		// an octave, 156 is offset to put in position
+		int octavePixelheight = noteHeight * 7;
+		return (int) (((10 - currNote / 12) * octavePixelheight + (ePos))
+				- noteOffset[currNote % 12]);
 	}
 }
