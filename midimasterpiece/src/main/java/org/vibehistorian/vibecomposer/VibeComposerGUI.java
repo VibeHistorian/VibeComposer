@@ -259,6 +259,7 @@ public class VibeComposerGUI extends JFrame
 	private boolean needSoundbankRefresh = false;
 
 	private static GUIConfig guiConfig = new GUIConfig();
+	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
 	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
 			Color.yellow };
@@ -398,6 +399,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox moveStartToCustomizedSection;
 	JCheckBox extraSettingsReverseDrumPanels;
 	JCheckBox extraSettingsOrderedTransposeGeneration;
+	JCheckBox configHistoryStoreRegeneratedTracks;
 
 
 	// add/skip instruments
@@ -1321,9 +1323,11 @@ public class VibeComposerGUI extends JFrame
 
 		extraSettingsOrderedTransposeGeneration = new JCheckBox("Ordered Transpose Generation",
 				true);
-
+		configHistoryStoreRegeneratedTracks = new JCheckBox(
+				"Track History - Include Regenerated Tracks", false);
 
 		panelGenerationSettingsPanel.add(extraSettingsReverseDrumPanels);
+		panelGenerationSettingsPanel.add(extraSettingsOrderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(extraSettingsOrderedTransposeGeneration);
 		extraSettingsPanel.add(panelGenerationSettingsPanel);
 
@@ -1343,6 +1347,17 @@ public class VibeComposerGUI extends JFrame
 			groupSoloMuters.add(sm);
 			soloMuterPanel.add(sm);
 		}
+
+		soloMuterPanel.add(new JLabel("Track History: "));
+		soloMuterPanel.add(configHistory);
+		soloMuterPanel.add(makeButton("Load", e -> {
+			if (configHistory.getItemCount() > 0) {
+				guiConfig = configHistory.getVal();
+				copyConfigToGUI(guiConfig);
+				//clearAllSeeds();
+			}
+		}));
+
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -1709,6 +1724,9 @@ public class VibeComposerGUI extends JFrame
 			createPanels(2, Integer.valueOf(randomChordsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
+			if (canRegenerateOnChange()) {
+				composeMidi(true);
+			}
 		});
 		randomChordsGenerateOnCompose = makeCheckBox("On Compose", true, true);
 		chordSettingsPanel.add(randomizeChords);
@@ -1837,6 +1855,10 @@ public class VibeComposerGUI extends JFrame
 			createPanels(3, Integer.valueOf(randomArpsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
+
+			if (canRegenerateOnChange()) {
+				composeMidi(true);
+			}
 		});
 		randomArpsGenerateOnCompose = makeCheckBox("on Compose", true, true);
 		arpsSettingsPanel.add(randomizeArps);
@@ -1975,6 +1997,9 @@ public class VibeComposerGUI extends JFrame
 			createPanels(4, Integer.valueOf(randomDrumsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
+			if (canRegenerateOnChange()) {
+				composeMidi(true);
+			}
 		});
 		randomDrumsGenerateOnCompose = makeCheckBox("on Compose", true, true);
 		drumsPanel.add(randomizeDrums);
@@ -4795,6 +4820,15 @@ public class VibeComposerGUI extends JFrame
 		unapplySolosMutes(true);
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
 		guiConfig = midiConfig;
+		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate) {
+			midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+			configHistory.addItem(midiConfig);
+			configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
+			if (configHistory.getItemCount() > 10) {
+				configHistory.removeItemAt(0);
+			}
+		}
+		//LG.i("Adding to config history, reason: " + regenerate);
 		fixCombinedTracks();
 		reapplySolosMutes();
 
@@ -6809,6 +6843,8 @@ public class VibeComposerGUI extends JFrame
 		cs.add(highlightPatterns);
 		cs.add(highlightScoreNotes);
 		cs.add(randomizeTimingsOnCompose);
+		cs.add(customFilenameAddTimestamp);
+		cs.add(configHistoryStoreRegeneratedTracks);
 
 		return cs;
 	}
@@ -7325,9 +7361,6 @@ public class VibeComposerGUI extends JFrame
 			}
 		} else {
 			throw new IllegalArgumentException("Unsupported panel part!");
-		}
-		if (canRegenerateOnChange()) {
-			composeMidi(true);
 		}
 	}
 

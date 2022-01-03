@@ -407,18 +407,22 @@ public class ShowAreaBig extends JComponent {
 		}
 		//g.drawImage(offScreenImage, 0, 0, this);
 		//g.dispose();
-		float usedFontHeight = Math.min(16, Float.valueOf(noteHeight * 9 / 10));
-		g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
-		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
-		Point viewPoint = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
+		if (noteHeight > 7) {
+			float usedFontHeight = Math.min(15, Float.valueOf(noteHeight * 9 / 10));
+			g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
+			g.setColor(
+					OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
+			Point viewPoint = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
 
-		for (int i = 15; i < 105; i++) {
-			if (MidiUtils.MAJ_SCALE.contains(i % 12)) {
-				int y = getNotePosY(i) + (int) (usedFontHeight / 4) + 2;
-				String noteString = MidiUtils.getNoteForPitch(i);
-				g.drawString(noteString, viewPoint.x, y);
+			for (int i = 15; i < 105; i++) {
+				if (MidiUtils.MAJ_SCALE.contains(i % 12)) {
+					int y = getNotePosY(i) + (int) (usedFontHeight / 4) + 2;
+					String noteString = MidiUtils.getNoteForPitch(i);
+					g.drawString(noteString, viewPoint.x, y);
+				}
 			}
 		}
+
 	}
 
 	private int getNotePosY(int currNote) {

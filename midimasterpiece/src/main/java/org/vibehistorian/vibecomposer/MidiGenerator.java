@@ -133,7 +133,7 @@ public class MidiGenerator implements JMC {
 
 	// last scores saved
 	public static List<Score> LAST_SCORES = new ArrayList<>();
-	public static final int LAST_SCORES_LIMIT = 5;
+	public static final int LAST_SCORES_LIMIT = 10;
 
 	// track map for Solo
 	public static List<InstPart> trackList = new ArrayList<>();
