@@ -5121,8 +5121,7 @@ public class VibeComposerGUI extends JFrame
 				for (int j = 0; j < 5; j++) {
 					List<?> partList = sec.getInstPartList(j);
 					if (partList != null && partList.size() > getInstList(j).size()) {
-						sec.resetCustomizedParts();
-						break;
+						sec.resetCustomizedParts(j);
 					}
 				}
 			}

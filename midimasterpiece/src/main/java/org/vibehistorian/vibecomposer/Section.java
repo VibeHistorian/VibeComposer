@@ -367,6 +367,10 @@ public class Section {
 		return sec;
 	}
 
+	public void resetCustomizedParts(int partNum) {
+		setInstPartList(null, partNum);
+	}
+
 	public void resetCustomizedParts() {
 		setMelodyParts(null);
 		setBassParts(null);
