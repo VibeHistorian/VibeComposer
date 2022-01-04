@@ -1390,6 +1390,7 @@ public class VibeComposerGUI extends JFrame
 
 		toggleableComponents.add(bookmarkField);
 		toggleableComponents.add(butt);
+		toggleableComponents.add(loadCustomBtn);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -4861,6 +4862,12 @@ public class VibeComposerGUI extends JFrame
 		unapplySolosMutes(true);
 		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
 		guiConfig = midiConfig;
+		//LG.i("Adding to config history, reason: " + regenerate);
+		fixCombinedTracks();
+		reapplySolosMutes();
+
+		cleanUpUIAfterCompose(regenerate);
+
 		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate) {
 			midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 			configHistory.addItem(midiConfig);
@@ -4869,12 +4876,6 @@ public class VibeComposerGUI extends JFrame
 				configHistory.removeItemAt(0);
 			}
 		}
-		//LG.i("Adding to config history, reason: " + regenerate);
-		fixCombinedTracks();
-		reapplySolosMutes();
-
-		cleanUpUIAfterCompose(regenerate);
-
 
 		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -5002,6 +5003,7 @@ public class VibeComposerGUI extends JFrame
 		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
 			actualArrangement.getSections().add(sec.deepCopy());
 		}
+		guiConfig.setActualArrangement(actualArrangement);
 		VibeComposerGUI.pianoRoll();
 		/*if (showScore.isSelected()) {
 			instrumentTabPane.setSelectedIndex(7);
