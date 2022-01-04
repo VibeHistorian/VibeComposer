@@ -67,6 +67,10 @@ public class ButtonSelectorPanel extends JPanel {
 		add(cb);
 	}
 
+	public CheckButton getCurrentButton() {
+		return buttons.get(selectedIndex < buttons.size() ? selectedIndex : 0);
+	}
+
 	public List<CheckButton> getButtons() {
 		return buttons;
 	}

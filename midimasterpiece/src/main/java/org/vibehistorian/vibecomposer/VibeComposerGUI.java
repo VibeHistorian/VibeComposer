@@ -1376,7 +1376,23 @@ public class VibeComposerGUI extends JFrame
 				//clearAllSeeds();
 			}
 		});
+
+		JButton recomposeSectionBtn = makeButton("Recompose Section", e -> {
+			if (arrSection.getSelectedIndex() == 0) {
+				return;
+			}
+			for (int i = 2; i < 5; i++) {
+				createPanels(i, getInstList(i).size(), false);
+				applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
+			}
+			arrSection.getCurrentButton().repaint();
+			recalculateTabPaneCounts();
+			recalculateSoloMuters();
+
+		});
+
 		soloMuterTrackControlPanel.add(loadCustomBtn);
+		soloMuterTrackControlPanel.add(recomposeSectionBtn);
 		JTextField bookmarkField = new JTextField("Intro1", 8);
 		soloMuterTrackControlPanel.add(bookmarkField);
 		JButton butt = makeButton("Add Bookmark Text", e -> {
@@ -1391,6 +1407,7 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(bookmarkField);
 		toggleableComponents.add(butt);
 		toggleableComponents.add(loadCustomBtn);
+		toggleableComponents.add(recomposeSectionBtn);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -2259,57 +2276,17 @@ public class VibeComposerGUI extends JFrame
 				return;
 			}
 
+			int replacedPartNum = instrumentTabPane.getSelectedIndex();
 			Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
 
-			int lastSecOrder = secOrder + 1;
-			if (action.endsWith("+")) {
-				lastSecOrder = actualArrangement.getSections().size() + 1;
-			} else if (action.contains(",")) {
-				String lastSecIndexString = action.split(",")[1];
-				lastSecOrder = Integer.valueOf(lastSecIndexString) + 1;
-			}
-
-			for (int i = secOrder; i < lastSecOrder; i++) {
-				Section sec = actualArrangement.getSections().get(i - 1);
-				// parts
-				switch (instrumentTabPane.getSelectedIndex()) {
-				case 0:
-					sec.setMelodyParts(
-							(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(
-									0));
-					break;
-				case 1:
-					sec.setBassParts(
-							(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
-					break;
-				case 2:
-					sec.setChordParts(
-							(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
-					break;
-				case 3:
-					sec.setArpParts(
-							(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
-					break;
-				case 4:
-					sec.setDrumParts(
-							(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
-					break;
-				default:
-					break;
-				}
-				if (instrumentTabPane.getSelectedIndex() < 5) {
-					String suffix = "";
-					if (sec.hasCustomizedParts()) {
-						suffix = "*";
-					}
-					arrSection.getButtons().get(i).setText(i + ": " + sec.getType() + suffix);
-					//resetArrSection();
-					//arrSection.setSelectedIndex(secOrder);
-					resetArrSectionSelection = false;
-					resetArrSectionPanel = false;
-					refreshActual = true;
-					checkManual = true;
-				}
+			applyCustomPanelsToSection(action, replacedPartNum, secOrder);
+			if (instrumentTabPane.getSelectedIndex() < 5) {
+				//resetArrSection();
+				//arrSection.setSelectedIndex(secOrder);
+				resetArrSectionSelection = false;
+				resetArrSectionPanel = false;
+				refreshActual = true;
+				checkManual = true;
 			}
 
 			if (switchTabPaneAfterApply && instrumentTabPane.getSelectedIndex() < 5) {
@@ -2420,6 +2397,52 @@ public class VibeComposerGUI extends JFrame
 		recalculateTabPaneCounts();
 	}
 
+	private void applyCustomPanelsToSection(String action, int replacedPartNum, Integer secOrder) {
+		int lastSecOrder = secOrder + 1;
+		if (action.endsWith("+")) {
+			lastSecOrder = actualArrangement.getSections().size() + 1;
+		} else if (action.contains(",")) {
+			String lastSecIndexString = action.split(",")[1];
+			lastSecOrder = Integer.valueOf(lastSecIndexString) + 1;
+		}
+
+		for (int i = secOrder; i < lastSecOrder; i++) {
+			Section sec = actualArrangement.getSections().get(i - 1);
+			// parts
+			switch (replacedPartNum) {
+			case 0:
+				sec.setMelodyParts(
+						(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(0));
+				break;
+			case 1:
+				sec.setBassParts(
+						(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
+				break;
+			case 2:
+				sec.setChordParts(
+						(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
+				break;
+			case 3:
+				sec.setArpParts(
+						(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
+				break;
+			case 4:
+				sec.setDrumParts(
+						(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
+				break;
+			default:
+				break;
+			}
+			if (replacedPartNum < 5) {
+				String suffix = "";
+				if (sec.hasCustomizedParts()) {
+					suffix = "*";
+				}
+				arrSection.getButtons().get(i).setText(i + ": " + sec.getType() + suffix);
+			}
+		}
+	}
+
 	public static void openVariationPopup(int secOrder) {
 		if (varPopup != null) {
 			varPopup.getFrame().dispose();
@@ -2512,7 +2535,7 @@ public class VibeComposerGUI extends JFrame
 					if (sec.hasCustomizedParts()) {
 						sec.resetCustomizedParts();
 						setActualModel(actualArrangement.convertToActualTableModel(), false);
-						CheckButton cb = arrSection.getButtons().get(arrSection.getSelectedIndex());
+						CheckButton cb = arrSection.getCurrentButton();
 						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 						cb.repaint();
 						arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(),

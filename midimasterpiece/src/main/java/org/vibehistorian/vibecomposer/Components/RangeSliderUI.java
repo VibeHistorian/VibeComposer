@@ -603,6 +603,7 @@ class RangeSliderUI extends BasicSliderUI {
 			// otherwise check the position of the lower thumb first.
 			boolean lowerPressed = false;
 			boolean upperPressed = false;
+			boolean playhead = actualSlider instanceof PlayheadRangeSlider;
 			if (upperThumbSelected || slider.getMinimum() == slider.getValue()) {
 				if (upperThumbRect.contains(currentMouseX, currentMouseY)) {
 					upperPressed = true;
@@ -614,7 +615,8 @@ class RangeSliderUI extends BasicSliderUI {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
-					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
+					if (currentMouseX < middleX
+							&& (!playhead || currentMouseX < thumbRect.getCenterX())) {
 						lowerPressed = true;
 						oldLowerValue = actualSlider.getValue();
 						moveLowerThumb();
@@ -635,7 +637,8 @@ class RangeSliderUI extends BasicSliderUI {
 					int middleX = (int) ((upperThumbRect.getCenterX() + thumbRect.getCenterX())
 							/ 2);
 					offset = 5;
-					if (currentMouseX < middleX && !(actualSlider instanceof PlayheadRangeSlider)) {
+					if (currentMouseX < middleX
+							&& (!playhead || currentMouseX < thumbRect.getCenterX())) {
 						lowerPressed = true;
 						oldLowerValue = actualSlider.getValue();
 						moveLowerThumb();
