@@ -135,6 +135,7 @@ public class DrumSettings {
 		if (fillable) {
 			dp.setChordSpanFill(ChordSpanFill.getWeighted(rand.nextInt(100)));
 		}
+		dp.setFillFlip(false);
 
 		if (melodyable) {
 			if (rand.nextInt(100) < 30) {
