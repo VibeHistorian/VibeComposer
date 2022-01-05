@@ -29,4 +29,8 @@ public class LG {
 	public static void i(Object msg) {
 		LOGGER.info(msg == null ? null : msg.toString());
 	}
+
+	public static void e(Object msg) {
+		LOGGER.error(msg == null ? null : msg.toString());
+	}
 }

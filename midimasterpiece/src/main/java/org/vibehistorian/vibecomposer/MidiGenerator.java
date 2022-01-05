@@ -77,7 +77,6 @@ import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
-import jm.util.Write;
 
 public class MidiGenerator implements JMC {
 
@@ -3264,7 +3263,7 @@ public class MidiGenerator implements JMC {
 		});
 		System.setOut(dummyStream);
 
-		Write.midi(score, fileName);
+		JMusicUtilsCustom.midi(score, fileName);
 		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
 			System.setOut(originalStream);
 		} else {
@@ -3357,6 +3356,9 @@ public class MidiGenerator implements JMC {
 					if (riskyVariations.get(3) > 0) {
 						mp.setSpeed(speedSave);
 					}
+					if (melodyParts.get(i).getInstrument() != mp.getInstrument()) {
+						m.setInstrument(mp.getInstrument());
+					}
 					/*
 					// DOUBLE melody with -12 trans, if there was a variation of +12 and it's a major part and it's the first (full) melody
 					// risky variation - wacky melody transpose
@@ -3404,7 +3406,9 @@ public class MidiGenerator implements JMC {
 					b = JMusicUtilsCustom.doublePhrase(b, 12, false, -15);
 					b.setStartTime(START_TIME_DELAY);
 				}
-
+				if (bassParts.get(0).getInstrument() != bp.getInstrument()) {
+					b.setInstrument(bp.getInstrument());
+				}
 				copiedPhrases.add(b);
 			} else {
 				copiedPhrases.add(emptyPhrase.copy());
@@ -3426,7 +3430,9 @@ public class MidiGenerator implements JMC {
 					List<Integer> variations = (overridden) ? sec.getVariation(2, i) : null;
 					Phrase c = fillChordsFromPart(cp, chordProgression, sec.getMeasures(), sec,
 							variations);
-
+					if (chordParts.get(i).getInstrument() != cp.getInstrument()) {
+						c.setInstrument(cp.getInstrument());
+					}
 					copiedPhrases.add(c);
 				} else {
 					copiedPhrases.add(emptyPhrase.copy());
@@ -3452,7 +3458,9 @@ public class MidiGenerator implements JMC {
 				if (added) {
 					Phrase a = fillArpFromPart(ap, chordProgression, sec.getMeasures(), sec,
 							variations);
-
+					if (arpParts.get(i).getInstrument() != ap.getInstrument()) {
+						a.setInstrument(ap.getInstrument());
+					}
 					copiedPhrases.add(a);
 				} else {
 					copiedPhrases.add(emptyPhrase.copy());

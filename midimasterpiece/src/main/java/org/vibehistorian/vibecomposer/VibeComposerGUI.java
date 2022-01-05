@@ -1399,6 +1399,7 @@ public class VibeComposerGUI extends JFrame
 			if (arrSection.getSelectedIndex() == 0) {
 				return;
 			}
+			manualArrangement.setSelected(true);
 			for (int i = 2; i < 5; i++) {
 				createPanels(i, getInstList(i).size(), false);
 				applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
@@ -1406,7 +1407,10 @@ public class VibeComposerGUI extends JFrame
 			arrSection.getCurrentButton().repaint();
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
-
+			if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
+				stopMidi();
+				composeMidi(true);
+			}
 		});
 
 		soloMuterTrackControlPanel.add(loadCustomBtn);

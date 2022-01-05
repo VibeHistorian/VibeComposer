@@ -663,7 +663,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void toggleGlobalElements(boolean b) {
-		getInstrumentBox().setEnabled(b);
+		//getInstrumentBox().setEnabled(b);
 		getSoloMuter().setEnabled(b);
 		muteInst.setEnabled(b);
 		volSlider.setEnabled(b);
