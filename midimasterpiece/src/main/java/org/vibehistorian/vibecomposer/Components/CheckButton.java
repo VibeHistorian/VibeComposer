@@ -78,7 +78,7 @@ public class CheckButton extends JButton {
 		this.selected = selected;
 	}
 
-	public void addRunnable(Runnable rn) {
+	public void setRunnable(Runnable rn) {
 		runnable = rn;
 	}
 
@@ -86,7 +86,7 @@ public class CheckButton extends JButton {
 		runnable = null;
 	}
 
-	public void addFunc(Consumer<? super Object> func) {
+	public void setFunc(Consumer<? super Object> func) {
 		this.func = func;
 	}
 

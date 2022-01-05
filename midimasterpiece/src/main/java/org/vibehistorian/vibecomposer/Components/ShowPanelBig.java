@@ -145,7 +145,7 @@ public class ShowPanelBig extends JPanel {
 		for (int i = 0; i < 5; i++) {
 			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], i < 4,
 					OMNI.alphen(VibeComposerGUI.instColors[i], 75));
-			partsShown[i].addRunnable(() -> setScore());
+			partsShown[i].setRunnable(() -> setScore());
 			int fI = i;
 			partsShown[i].addMouseListener(new MouseAdapter() {
 				@Override
@@ -185,7 +185,7 @@ public class ShowPanelBig extends JPanel {
 			scorePartPanel.add(toggler);
 
 			soloMuterHighlight = new CheckButton("Highlight Audible", false);
-			soloMuterHighlight.addRunnable(() -> {
+			soloMuterHighlight.setRunnable(() -> {
 				if (soloMuterHighlight.isSelected()) {
 					/*for (int i = 0; i < 5; i++) {
 						partsShown[i].setSelectedRaw(true);

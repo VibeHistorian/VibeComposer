@@ -38,6 +38,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
@@ -84,6 +85,7 @@ public class VariationPopup {
 		addCustomChordsDurations(sec);
 		addRiskyVariations(sec);
 		addVariationSettings(sec);
+		//addSectionConfigSettings(sec);
 		addInstVolumeKnobs(sec);
 		for (int i = 0; i < 5; i++) {
 			int fI = i;
@@ -373,6 +375,43 @@ public class VariationPopup {
 		variationSettingsPanel.add(keyChangePanel);
 
 		tablesPanel.add(variationSettingsPanel);
+	}
+
+	private void addSectionConfigSettings(Section sec) {
+		SectionConfig secConfig = sec.getSecConfig();
+
+		JPanel sectionConfigSettingsPanel = new JPanel();
+		sectionConfigSettingsPanel.setLayout(new GridLayout(0, 4, 0, 0));
+		sectionConfigSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		ScrollComboBox<String> beatDurMultiBox = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "0.5", "1.0", "2.0" },
+				beatDurMultiBox);
+		beatDurMultiBox
+				.setSelectedIndex(OMNI.d(secConfig.getBeatDurationMultiplierIndex(), -1) + 1);
+		beatDurMultiBox.setFunc(e -> {
+			secConfig.setBeatDurationMultiplierIndex(
+					beatDurMultiBox.getSelectedIndex() > 0 ? beatDurMultiBox.getSelectedIndex() - 1
+							: null);
+		});
+		KnobPanel swing = new DetachedKnobPanel("Swing Override",
+				OMNI.d(secConfig.getSectionSwingOverride(), 0));
+		swing.getKnob().setFunc(e -> {
+			secConfig.setSectionSwingOverride(swing.getInt() > 0 ? swing.getInt() : null);
+		});
+
+		KnobPanel bpm = new DetachedKnobPanel("BPM Override", OMNI.d(secConfig.getSectionBpm(), 0),
+				0, 200);
+		bpm.getKnob().setFunc(e -> {
+			secConfig.setSectionBpm(bpm.getInt() > 0 ? bpm.getInt() : null);
+		});
+
+		sectionConfigSettingsPanel.add(new JLabel("Beat Dur. Multi.:"));
+		sectionConfigSettingsPanel.add(beatDurMultiBox);
+		sectionConfigSettingsPanel.add(swing);
+		sectionConfigSettingsPanel.add(bpm);
+
+		tablesPanel.add(sectionConfigSettingsPanel);
 	}
 
 	private void addRiskyVariations(Section sec) {

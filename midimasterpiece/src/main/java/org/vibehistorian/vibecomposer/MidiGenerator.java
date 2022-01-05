@@ -195,6 +195,7 @@ public class MidiGenerator implements JMC {
 	private List<int[]> melodyBasedChordProgression = new ArrayList<>();
 	private List<int[]> melodyBasedRootProgression = new ArrayList<>();
 	private String alternateChords = null;
+	private Section currentSection = null;
 
 	// global parts
 	private List<BassPart> bassParts = null;
@@ -952,9 +953,13 @@ public class MidiGenerator implements JMC {
 		int hits = (int) Math.round(
 				chordsTotal * MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
 		double mult = 1;
-		if (gc.getBeatDurationMultiplierIndex() == 0) {
+		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
+		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
+				? sc.getBeatDurationMultiplierIndex()
+				: gc.getBeatDurationMultiplierIndex();
+		if (beatDurMultiIndex == 0) {
 			mult = 0.5;
-		} else if (gc.getBeatDurationMultiplierIndex() == 2) {
+		} else if (beatDurMultiIndex == 2) {
 			mult = 2;
 		}
 		measureTotal = (measureTotal == null) ? (chordsTotal * mult * Durations.WHOLE_NOTE)
@@ -2781,11 +2786,16 @@ public class MidiGenerator implements JMC {
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
-		if (gc.getBeatDurationMultiplierIndex() == 0) {
+
+		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
+		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
+				? sc.getBeatDurationMultiplierIndex()
+				: gc.getBeatDurationMultiplierIndex();
+		if (beatDurMultiIndex == 0) {
 			for (int i = 0; i < progressionDurations.size(); i++) {
 				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
 			}
-		} else if (gc.getBeatDurationMultiplierIndex() == 2) {
+		} else if (beatDurMultiIndex == 2) {
 			for (int i = 0; i < progressionDurations.size(); i++) {
 				progressionDurations.set(i, progressionDurations.get(i) * 2);
 			}
@@ -2867,6 +2877,7 @@ public class MidiGenerator implements JMC {
 
 		storeGlobalParts();
 
+		currentSection = null;
 		Integer transToSet = null;
 		ScaleMode scaleToSet = null;
 		boolean twoFiveOneChanged = false;
@@ -2875,6 +2886,7 @@ public class MidiGenerator implements JMC {
 		gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
 		for (Section sec : arr.getSections()) {
 			LG.i("*********************************** Processing section.. " + sec.getType() + "!");
+			currentSection = sec;
 			if (overridden) {
 				sec.initPartMapFromOldData();
 			}
@@ -3784,9 +3796,13 @@ public class MidiGenerator implements JMC {
 		int chordCounter = 0;
 
 		double mult = 1;
-		if (gc.getBeatDurationMultiplierIndex() == 0) {
+		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
+		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
+				? sc.getBeatDurationMultiplierIndex()
+				: gc.getBeatDurationMultiplierIndex();
+		if (beatDurMultiIndex == 0) {
 			mult = 0.5;
-		} else if (gc.getBeatDurationMultiplierIndex() == 2) {
+		} else if (beatDurMultiIndex == 2) {
 			mult = 2;
 		}
 		double separatorValue = Durations.WHOLE_NOTE * mult;

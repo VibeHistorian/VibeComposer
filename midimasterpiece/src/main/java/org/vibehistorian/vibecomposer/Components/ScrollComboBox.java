@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -23,6 +24,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	private boolean regenerating = true;
 	private boolean hasPrototypeSet = false;
 	private boolean requiresSettingPrototype = false;
+	private Consumer<? super Object> func = null;
 
 	public ScrollComboBox() {
 		this(true);
@@ -95,6 +97,11 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		if (isEnabled()) {
 			setSelectedItem(item);
 		}
+
+		if (func != null) {
+			func.accept(new Object());
+		}
+
 		if (isEnabled() && regenerating && mousePressed && VibeComposerGUI.canRegenerateOnChange()
 				&& isDifferent) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
@@ -150,5 +157,13 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	public void setRequiresSettingPrototype(boolean requiresSettingPrototype) {
 		this.requiresSettingPrototype = requiresSettingPrototype;
+	}
+
+	public void setFunc(Consumer<? super Object> func) {
+		this.func = func;
+	}
+
+	public void removeFunc() {
+		func = null;
 	}
 }

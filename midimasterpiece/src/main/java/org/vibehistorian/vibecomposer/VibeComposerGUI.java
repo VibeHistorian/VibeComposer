@@ -1371,6 +1371,18 @@ public class VibeComposerGUI extends JFrame
 				for (int i = 0; i < 5; i++) {
 					currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
 				}
+				/*SectionConfig secConfig = currentSec.getSecConfig();
+				if (sectionGuiConfig.getBeatDurationMultiplierIndex() != beatDurationMultiplier
+						.getSelectedIndex()) {
+					secConfig.setBeatDurationMultiplierIndex(
+							sectionGuiConfig.getBeatDurationMultiplierIndex());
+				}
+				
+				if ((int) sectionGuiConfig.getBpm() != mainBpm.getInt()) {
+					secConfig.setSectionBpm((int) sectionGuiConfig.getBpm());
+				}
+				
+				secConfig.setSectionSwingOverride(sectionGuiConfig.getGlobalSwingOverride());*/
 
 				switchPanelsForSectionSelection(arrSection.getVal());
 

@@ -85,6 +85,8 @@ public class Section {
 	private Integer customKeyChange = null;
 	private ScaleMode customScale = null;
 
+	private SectionConfig secConfig = new SectionConfig();
+
 	private int melodyChance = 50;
 	private int bassChance = 50;
 	private int chordChance = 50;
@@ -331,21 +333,11 @@ public class Section {
 			sec.instVelocityMultiplier = new ArrayList<>(instVelocityMultiplier);
 		}
 
-		if (getMelodyParts() != null) {
-			sec.setMelodyParts(getMelodyParts());
-		}
-		if (getBassParts() != null) {
-			sec.setBassParts(getBassParts());
-		}
-		if (getChordParts() != null) {
-			sec.setChordParts(getChordParts());
-		}
-		if (getArpParts() != null) {
-			sec.setArpParts(getArpParts());
-		}
-		if (getDrumParts() != null) {
-			sec.setDrumParts(getDrumParts());
-		}
+		sec.setMelodyParts(getMelodyParts());
+		sec.setBassParts(getBassParts());
+		sec.setChordParts(getChordParts());
+		sec.setArpParts(getArpParts());
+		sec.setDrumParts(getDrumParts());
 
 		// TODO: need real deep copy once elements are changed manually
 		sec.setPartPhraseNotes(getPartPhraseNotes());
@@ -363,6 +355,8 @@ public class Section {
 		if (generatedSectionBeatDurations != null) {
 			sec.generatedSectionBeatDurations = new ArrayList<>(generatedSectionBeatDurations);
 		}
+
+		sec.setSecConfig(secConfig.clone());
 
 		return sec;
 	}
@@ -1051,5 +1045,13 @@ public class Section {
 		} else {
 			return generatedSectionBeatDurations;
 		}
+	}
+
+	public SectionConfig getSecConfig() {
+		return secConfig;
+	}
+
+	public void setSecConfig(SectionConfig secConfig) {
+		this.secConfig = secConfig;
 	}
 }

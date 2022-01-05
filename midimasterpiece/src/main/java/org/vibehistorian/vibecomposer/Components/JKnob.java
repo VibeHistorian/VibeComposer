@@ -19,6 +19,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import javax.swing.JComponent;
 import javax.swing.JTextField;
@@ -83,6 +84,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public static boolean fine = true;
 	public static int fineStart = 50;
 
+	private Consumer<? super Object> func = null;
 
 	/**
 	 * No-Arg constructor that initializes the position
@@ -328,7 +330,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			return;
 		}
 		curr = val;
+
 		setAngle();
+
+		if (func != null) {
+			func.accept(new Object());
+		}
 		repaint();
 	}
 
@@ -588,13 +595,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		diff = max - min;
 	}
 
-	public int getCurr() {
+	/*public int getCurr() {
 		return curr;
 	}
-
+	
 	public void setCurr(int curr) {
 		this.curr = curr;
-	}
+	}*/
 
 	public List<Integer> getTickThresholds() {
 		return tickThresholds;
@@ -659,5 +666,13 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setRegenerating(boolean regenerating) {
 		this.regenerating = regenerating;
+	}
+
+	public void setFunc(Consumer<? super Object> func) {
+		this.func = func;
+	}
+
+	public void removeFunc() {
+		func = null;
 	}
 }

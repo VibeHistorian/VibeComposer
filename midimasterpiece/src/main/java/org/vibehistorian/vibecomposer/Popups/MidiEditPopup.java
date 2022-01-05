@@ -155,7 +155,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		applyToMainBtn = new CheckButton("Apply to Main",
 				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
-		applyToMainBtn.addFunc(e -> {
+		applyToMainBtn.setFunc(e -> {
 			if (applyToMainBtn.isSelected()) {
 				mvea.getValues().setCustom(true);
 				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
@@ -202,7 +202,7 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 		}));
 
-		snapToScaleGrid.addFunc(e -> {
+		snapToScaleGrid.setFunc(e -> {
 			snapToGridChoice = snapToScaleGrid.isSelected();
 		});
 

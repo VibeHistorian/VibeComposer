@@ -128,4 +128,8 @@ public class OMNI {
 	public static double clamp(double num, double min, double max) {
 		return Math.min(max, (Math.max(min, num)));
 	}
+
+	public static <T> T d(T val, T defaultVal) {
+		return val != null ? val : defaultVal;
+	}
 }

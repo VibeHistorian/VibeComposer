@@ -187,7 +187,7 @@ public abstract class InstPanel extends JPanel {
 		randomizeButton.addActionListener(l);
 
 		customMidiToggle.setEnabled(false);
-		customMidiToggle.addRunnable(() -> {
+		customMidiToggle.setRunnable(() -> {
 			if (!customMidiToggle.isSelected()) {
 				customMidi = null;
 				// turn off customized midi

@@ -39,7 +39,7 @@ public class ButtonSelectorPanel extends JPanel {
 	}
 
 	public void addButton(CheckButton cb, int buttonIndex) {
-		cb.addRunnable(() -> {
+		cb.setRunnable(() -> {
 			if (cb.isSelected()) {
 				buttons.get(selectedIndex).setSelectedRaw(false);
 				setSelectedIndex(buttonIndex);
