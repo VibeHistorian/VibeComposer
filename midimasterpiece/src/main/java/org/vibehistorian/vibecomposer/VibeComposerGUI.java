@@ -398,8 +398,8 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox rememberLastPos;
 	public static JCheckBox snapStartToBeat;
 	public static JCheckBox moveStartToCustomizedSection;
-	JCheckBox extraSettingsReverseDrumPanels;
-	JCheckBox extraSettingsOrderedTransposeGeneration;
+	JCheckBox bottomUpReverseDrumPanels;
+	JCheckBox orderedTransposeGeneration;
 	JCheckBox configHistoryStoreRegeneratedTracks;
 
 
@@ -535,7 +535,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox spiceAllowDimAug;
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
-	JCheckBox extraSquishChordsProgressively;
+	JCheckBox squishChordsProgressively;
 	KnobPanel spiceParallelChance;
 
 	JCheckBox spiceForceScale;
@@ -543,8 +543,8 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> lastChordSelection;
 
 	// chord settings - progression
-	JCheckBox extraUseChordFormula;
-	public static KnobPanel extraLongProgressionSimilarity;
+	JCheckBox useChordFormula;
+	public static KnobPanel longProgressionSimilarity;
 	ScrollComboBox<String> keyChangeTypeSelection;
 	public static CheckButton userChordsEnabled;
 	public static JTextField userChords;
@@ -1205,19 +1205,17 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel chordChoicePanel = new JPanel();
 		spiceFlattenBigChords = new JCheckBox("Spicy Voicing", false);
-		extraUseChordFormula = new JCheckBox("Chord Formula", true);
+		useChordFormula = new JCheckBox("Chord Formula", true);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
-		extraSquishChordsProgressively = new JCheckBox("<html>Flatten<br>Progressively</html>",
-				false);
-		extraLongProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0,
-				100);
+		squishChordsProgressively = new JCheckBox("<html>Flatten<br>Progressively</html>", false);
+		longProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0, 100);
 
 
-		chordChoicePanel.add(extraUseChordFormula);
-		chordChoicePanel.add(extraLongProgressionSimilarity);
+		chordChoicePanel.add(useChordFormula);
+		chordChoicePanel.add(longProgressionSimilarity);
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
-		chordChoicePanel.add(extraSquishChordsProgressively);
+		chordChoicePanel.add(squishChordsProgressively);
 		chordChoicePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
 		chordChoicePanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(chordChoicePanel);
@@ -1303,8 +1301,8 @@ public class VibeComposerGUI extends JFrame
 
 
 		JPanel panelGenerationSettingsPanel = new JPanel();
-		extraSettingsReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
-		extraSettingsReverseDrumPanels.addChangeListener(new ChangeListener() {
+		bottomUpReverseDrumPanels = new JCheckBox("Bottom-Top Drum Display", false);
+		bottomUpReverseDrumPanels.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
@@ -1317,7 +1315,7 @@ public class VibeComposerGUI extends JFrame
 				Collections.sort(sortedDps,
 						(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
 				for (DrumPanel dp : sortedDps) {
-					if (!extraSettingsReverseDrumPanels.isSelected()) {
+					if (!bottomUpReverseDrumPanels.isSelected()) {
 						((JPanel) getInstPane(4).getViewport().getView()).add(dp);
 					} else {
 						((JPanel) getInstPane(4).getViewport().getView()).add(dp, 2);
@@ -1327,13 +1325,12 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
-		extraSettingsOrderedTransposeGeneration = new JCheckBox("Ordered Transpose Generation",
-				true);
+		orderedTransposeGeneration = new JCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new JCheckBox(
 				"Track History - Include Regenerated Tracks", false);
 
-		panelGenerationSettingsPanel.add(extraSettingsReverseDrumPanels);
-		panelGenerationSettingsPanel.add(extraSettingsOrderedTransposeGeneration);
+		panelGenerationSettingsPanel.add(bottomUpReverseDrumPanels);
+		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
 		extraSettingsPanel.add(panelGenerationSettingsPanel);
 
@@ -1677,7 +1674,7 @@ public class VibeComposerGUI extends JFrame
 
 				melodyPanel.setFillPauses(true);
 				melodyPanel.setSpeed(0);
-				melodyPanel.setPauseChance(80);
+				melodyPanel.setPauseChance(70);
 
 				if (i > 1) {
 					melodyPanel.setMuteInst(true);
@@ -1697,8 +1694,8 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.getVolSlider().setValue(55);
 			} else {
 				melodyPanel.setFillPauses(false);
-				melodyPanel.setSpeed(50);
-				melodyPanel.setPauseChance(20);
+				melodyPanel.setSpeed(25);
+				melodyPanel.setPauseChance(50);
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(65);
@@ -1791,7 +1788,7 @@ public class VibeComposerGUI extends JFrame
 		chordAddJButton = makeButton("+Chord", "AddChord");
 		chordSettingsPanel.add(chordAddJButton);
 
-		randomChordsToGenerate = new JTextField("3", 2);
+		randomChordsToGenerate = new JTextField("2", 2);
 		randomizeChords = makeButton("Generate Chords:", e -> {
 			createPanels(2, Integer.valueOf(randomChordsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
@@ -1922,7 +1919,7 @@ public class VibeComposerGUI extends JFrame
 		arpAddJButton = makeButton("  +Arp ", "AddArp");
 		arpsSettingsPanel.add(arpAddJButton);
 
-		randomArpsToGenerate = new JTextField("4", 2);
+		randomArpsToGenerate = new JTextField("3", 2);
 		randomizeArps = makeButton("Generate Arps:    ", e -> {
 			createPanels(3, Integer.valueOf(randomArpsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
@@ -4907,6 +4904,8 @@ public class VibeComposerGUI extends JFrame
 
 		Integer masterpieceSeed = prepareMainSeed(regenerate);
 
+		int regenerateCount = (regenerate) ? guiConfig.getRegenerateCount() + 1 : 0;
+
 		prepareUI(regenerate);
 		GUIConfig midiConfig = new GUIConfig();
 		copyGUItoConfig(midiConfig);
@@ -4941,6 +4940,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate) {
 			midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+			midiConfig.setRegenerateCount(regenerateCount);
 			configHistory.addItem(midiConfig);
 			configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
 			if (configHistory.getItemCount() > 10) {
@@ -5144,7 +5144,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (randomMelodyOnRegenerate.isSelected()) {
+		if (regenerate && randomMelodyOnRegenerate.isSelected()) {
 			randomizeMelodySeeds();
 		}
 
@@ -6959,8 +6959,8 @@ public class VibeComposerGUI extends JFrame
 		cs.add(stretchMidi);
 		cs.add(displayVeloRectValues);
 		cs.add(knobControlByDragging);
-		cs.add(extraSettingsReverseDrumPanels);
-		cs.add(extraSettingsOrderedTransposeGeneration);
+		cs.add(bottomUpReverseDrumPanels);
+		cs.add(orderedTransposeGeneration);
 		cs.add(patternApplyPausesWhenGenerating);
 		cs.add(highlightPatterns);
 		cs.add(highlightScoreNotes);
@@ -7099,8 +7099,8 @@ public class VibeComposerGUI extends JFrame
 
 
 		// chords
-		gc.setUseChordFormula(extraUseChordFormula.isSelected());
-		gc.setLongProgressionSimilarity(extraLongProgressionSimilarity.getInt());
+		gc.setUseChordFormula(useChordFormula.isSelected());
+		gc.setLongProgressionSimilarity(longProgressionSimilarity.getInt());
 		gc.setFirstChord(firstChordSelection.getVal());
 		gc.setLastChord(lastChordSelection.getVal());
 		gc.setKeyChangeType(KeyChangeType.valueOf(keyChangeTypeSelection.getVal()));
@@ -7112,7 +7112,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setDimAugDom7thEnabled(spiceAllowDimAug.isSelected());
 		gc.setEnable9th13th(spiceAllow9th13th.isSelected());
 		gc.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
-		gc.setSquishProgressively(extraSquishChordsProgressively.isSelected());
+		gc.setSquishProgressively(squishChordsProgressively.isSelected());
 		gc.setChordSlashChance(chordSlashChance.getInt());
 		gc.setSpiceForceScale(spiceForceScale.isSelected());
 
@@ -7233,12 +7233,12 @@ public class VibeComposerGUI extends JFrame
 		spiceAllowDimAug.setSelected(gc.isDimAugDom7thEnabled());
 		spiceAllow9th13th.setSelected(gc.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(gc.isSpiceFlattenBigChords());
-		extraSquishChordsProgressively.setSelected(gc.isSquishProgressively());
+		squishChordsProgressively.setSelected(gc.isSquishProgressively());
 		chordSlashChance.setInt(gc.getChordSlashChance());
 		spiceForceScale.setSelected(gc.isSpiceForceScale());
 
-		extraUseChordFormula.setSelected(gc.isUseChordFormula());
-		extraLongProgressionSimilarity.setInt(gc.getLongProgressionSimilarity());
+		useChordFormula.setSelected(gc.isUseChordFormula());
+		longProgressionSimilarity.setInt(gc.getLongProgressionSimilarity());
 		firstChordSelection.setVal(gc.getFirstChord());
 		lastChordSelection.setVal(gc.getLastChord());
 		keyChangeTypeSelection.setVal(gc.getKeyChangeType().toString());
@@ -7354,7 +7354,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (inst < 4 || !extraSettingsReverseDrumPanels.isSelected()) {
+		if (inst < 4 || !bottomUpReverseDrumPanels.isSelected()) {
 			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
 		} else {
 			((JPanel) getInstPane(inst).getViewport().getView()).add(ip,
@@ -7913,7 +7913,7 @@ public class VibeComposerGUI extends JFrame
 					chordPanelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
 			ip.setTransitionSplit(
 					(getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
-			if (extraSettingsOrderedTransposeGeneration.isSelected()) {
+			if (orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
 			} else {
 				ip.setTranspose((chordPanelGenerator.nextInt(3) - 1) * 12);
@@ -8154,7 +8154,7 @@ public class VibeComposerGUI extends JFrame
 
 			ip.setChordSpan(arpPanelGenerator.nextInt(2) + 1);
 
-			if (extraSettingsOrderedTransposeGeneration.isSelected()) {
+			if (orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder() + 1) % 3) - 1) * 12);
 			} else {
 				if (first == null && i == 0 && !onlyAdd) {

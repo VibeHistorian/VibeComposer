@@ -144,6 +144,7 @@ public class GUIConfig {
 	private long randomSeed = 0;
 
 	private String bookmarkText = "";
+	private int regenerateCount = 0;
 
 
 	public GUIConfig() {
@@ -758,6 +759,7 @@ public class GUIConfig {
 		return MidiUtils.SEMITONE_LETTERS.get((transpose + 1200) % 12) + " " + scaleMode.toString()
 				+ " " + (int) bpm + "bpm [Size: " + actualArrangement.getSections().size()
 				+ "] Seed: " + randomSeed + " Chords: [" + customChords + "]"
+				+ ((regenerateCount > 0) ? ("(" + regenerateCount + ")") : "")
 				+ (StringUtils.isNotEmpty(bookmarkText) ? (" - " + bookmarkText) : "");
 	}
 
@@ -784,6 +786,15 @@ public class GUIConfig {
 			return drumParts;
 		}
 		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
+	}
+
+	@XmlTransient
+	public int getRegenerateCount() {
+		return regenerateCount;
+	}
+
+	public void setRegenerateCount(int regenerateCount) {
+		this.regenerateCount = regenerateCount;
 	}
 
 }
