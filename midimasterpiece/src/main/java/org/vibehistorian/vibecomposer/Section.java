@@ -54,8 +54,8 @@ import jm.music.data.Phrase;
 @XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
-		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP, CHORUS3,
-		CLIMAX, OUTRO;
+		INTRO, VERSE1, VERSE2, VERSE3, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP,
+		CHORUS3, CLIMAX, OUTRO;
 	}
 
 	public static final String[][] variationDescriptions = {

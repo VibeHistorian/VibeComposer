@@ -133,6 +133,7 @@ public class MidiEditArea extends JComponent {
 					isDragging = true;
 					draggingVelocityShape = true;
 				} else {
+					boolean noteAdded = false;
 					if (pnDragged == null) {
 						// mouse click doesn't overlap with existing note
 						// get order in note rhythm 
@@ -158,12 +159,10 @@ public class MidiEditArea extends JComponent {
 								getValues().add(orderVal.x, insertedPn);
 								draggedNote = insertedPn;
 							}
-
-							startingOffset = draggedNote.getOffset();
-							draggingPosition = true;
+							noteAdded = true;
 						}
 					} else {
-						LG.d("Duration-dragging existing note..");
+						LG.d("MMB - Dragging existing note..");
 						draggedNote = pnDragged;
 					}
 					lastPlayedNoteTime = System.currentTimeMillis();
@@ -172,10 +171,12 @@ public class MidiEditArea extends JComponent {
 					startingDuration = draggedNote.getDuration();
 					startingDynamic = draggedNote.getDynamic();
 					isDragging = true;
-					draggingDuration = !draggingPosition
-							&& (evt.isControlDown() || evt.isShiftDown());
-					if (draggingPosition || !draggingDuration) {
+					draggingDuration = !noteAdded && (evt.isControlDown() || evt.isShiftDown());
+					if (noteAdded || !draggingDuration) {
 						draggingVelocity = true;
+						draggingPosition = true;
+
+						startingOffset = draggedNote.getOffset();
 					}
 
 					lockTimeGrid = !evt.isControlDown();
@@ -551,8 +552,15 @@ public class MidiEditArea extends JComponent {
 				g.drawString(pitch + "(" + MidiUtils.pitchToString(pitch) + ") :" + pn.getDynamic(),
 						drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
-						(int) (30 + 140 * (pn.getDynamic() / 127.0))));
+				if (draggedNote != null && pn == draggedNote) {
+					g.setColor(OMNI.alphen(OMNI.mixColor(VibeComposerGUI.uiColor(), Color.red, 0.7),
+							(int) (30 + 140 * (pn.getDynamic() / 127.0))));
+				} else {
+					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
+							(int) (30 + 140 * (pn.getDynamic() / 127.0))));
+				}
+
+
 				int width = (int) (quarterNoteLength * pn.getDuration());
 				g.fillRect(drawX, drawY - 4, width, 8);
 

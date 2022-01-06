@@ -1334,7 +1334,7 @@ public class VibeComposerGUI extends JFrame
 
 		panelGenerationSettingsPanel.add(extraSettingsReverseDrumPanels);
 		panelGenerationSettingsPanel.add(extraSettingsOrderedTransposeGeneration);
-		panelGenerationSettingsPanel.add(extraSettingsOrderedTransposeGeneration);
+		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
 		extraSettingsPanel.add(panelGenerationSettingsPanel);
 
 		initHelperPopups();
@@ -3583,11 +3583,11 @@ public class VibeComposerGUI extends JFrame
 		//toggleableComponents.add(chordProgressionSettingsPanel);
 
 
-		spiceChance = new DetachedKnobPanel("Spice", 15);
+		spiceChance = new DetachedKnobPanel("Spice", 35);
 		spiceAllowDimAug = new JCheckBox("Dim/Aug/6th", false);
 		spiceAllow9th13th = new JCheckBox("9th/13th", false);
 		spiceForceScale = new JCheckBox("Force Scale", true);
-		spiceParallelChance = new DetachedKnobPanel("Aeolian", 5);
+		spiceParallelChance = new DetachedKnobPanel("Aeolian", 10);
 
 		firstChordSelection = new ScrollComboBox<String>(false);
 		firstChordSelection.addItem("?");
@@ -5424,6 +5424,12 @@ public class VibeComposerGUI extends JFrame
 
 			if (startFromBar.isSelected()) {
 				int snapAdjustment = 50;
+				if (startBeatCounter >= sliderBeatStartTimes.size()) {
+					startBeatCounter = 0;
+					pausedSliderPosition = 0;
+					pausedMeasureCounter = 0;
+					arrSection.setSelectedIndex(0);
+				}
 				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
 			}
 			// Force the slider to use the new labels
