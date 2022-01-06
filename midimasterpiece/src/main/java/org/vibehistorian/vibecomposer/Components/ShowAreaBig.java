@@ -182,6 +182,8 @@ public class ShowAreaBig extends JComponent {
 		//get current maxWidth
 		//paint staves
 		g.setColor(Color.black);
+
+		g.setFont(font);
 		// e above middle C is at 255
 		//treble
 		beatWidth = sp.beatWidth;
@@ -268,8 +270,6 @@ public class ShowAreaBig extends JComponent {
 				}
 			}
 		}
-
-		g.setFont(font.deriveFont(Float.valueOf(noteHeight * 7 / 10)));
 
 		//g.drawLine(viewPoint.x + 4, 0, viewPoint.x + 4, areaHeight);
 

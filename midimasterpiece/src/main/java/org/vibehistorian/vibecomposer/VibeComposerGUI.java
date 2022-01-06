@@ -1681,8 +1681,8 @@ public class VibeComposerGUI extends JFrame
 				}
 				melodyPanel.toggleCombinedMelodyDisabledUI(
 						combineMelodyTracks != null && !combineMelodyTracks.isSelected());
-				melodyPanel.setVelocityMax(75);
-				melodyPanel.setVelocityMin(50);
+				melodyPanel.setVelocityMax(70);
+				melodyPanel.setVelocityMin(40);
 				melodyPanel.setMidiChannel(i + 6);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
@@ -1698,7 +1698,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setPauseChance(50);
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
-				melodyPanel.setVelocityMin(65);
+				melodyPanel.setVelocityMin(45);
 				melodyPanel.setNoteLengthMultiplier(115);
 			}
 		}

@@ -2846,6 +2846,10 @@ public class MidiGenerator implements JMC {
 
 		Arrangement arr = null;
 		boolean overridden = false;
+
+		int originalPVC = gc.getArrangementPartVariationChance();
+		int originalVC = gc.getArrangementVariationChance();
+
 		if (gc.getArrangement().isOverridden()) {
 			arr = gc.getActualArrangement();
 			overridden = true;
@@ -2871,7 +2875,7 @@ public class MidiGenerator implements JMC {
 		LG.i("Arrangement - MANUAL? " + overridden);
 		int arrSeed = (arr.getSeed() != 0) ? arr.getSeed() : mainGeneratorSeed;
 
-		int originalPartVariationChance = gc.getArrangementPartVariationChance();
+		int normalPartVariationChance = gc.getArrangementPartVariationChance();
 		int secOrder = -1;
 
 		storeGlobalParts();
@@ -2909,9 +2913,9 @@ public class MidiGenerator implements JMC {
 			if (sec.isClimax()) {
 				// increase variations in follow-up CLIMAX sections, reset when climax ends
 				gc.setArrangementPartVariationChance(
-						gc.getArrangementPartVariationChance() + originalPartVariationChance / 4);
+						gc.getArrangementPartVariationChance() + normalPartVariationChance / 4);
 			} else {
-				gc.setArrangementPartVariationChance(originalPartVariationChance);
+				gc.setArrangementPartVariationChance(normalPartVariationChance);
 			}
 
 			if (!overridden && sec.getType().equals(SectionType.BUILDUP.toString())) {
@@ -3070,6 +3074,10 @@ public class MidiGenerator implements JMC {
 					: measureLength) * sec.getMeasures();
 		}
 		LG.d("Added phrases to sections..");
+
+		gc.setArrangementPartVariationChance(originalPVC);
+		gc.setArrangementVariationChance(originalVC);
+
 
 		Optional<MelodyPart> firstPresentPart = gc.getMelodyParts().stream()
 				.filter(e -> !e.isMuted()).findFirst();
