@@ -86,8 +86,8 @@ public class ShowRulerBig extends JComponent {
 			for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
 				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150, 200));
 				int xLocStart = (int) Math.round(durCounter * beatWidth);
-				durCounter += sec.getSectionDuration() > 0 ? sec.getSectionDuration()
-						: MidiGenerator.GENERATED_MEASURE_LENGTH;
+				durCounter += (sec.getSectionDuration() > 0 ? sec.getSectionDuration()
+						: MidiGenerator.GENERATED_MEASURE_LENGTH) * sec.getMeasures();
 				int xLocEnd = (int) Math.round(durCounter * beatWidth);
 				g.fillRect(xLocStart, 0, xLocEnd - xLocStart, ShowRulerBig.maxHeight);
 				//g.drawLine(xLocStart, 0, xLocEnd, ShowRulerBig.maxHeight / 2);
@@ -130,8 +130,8 @@ public class ShowRulerBig extends JComponent {
 			double durCounter = startOffset;
 			for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
 				int xLocStart = (int) Math.round(durCounter * beatWidth);
-				durCounter += sec.getSectionDuration() > 0 ? sec.getSectionDuration()
-						: MidiGenerator.GENERATED_MEASURE_LENGTH;
+				durCounter += (sec.getSectionDuration() > 0 ? sec.getSectionDuration()
+						: MidiGenerator.GENERATED_MEASURE_LENGTH) * sec.getMeasures();
 				int xLocEnd = (int) Math.round(durCounter * beatWidth);
 				String secText = sec.getType();
 				g.setColor(new Color(30, 30, 30, 150));

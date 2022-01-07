@@ -407,11 +407,11 @@ public class VibeComposerGUI extends JFrame
 	SettingsPanel chordSettingsPanel;
 	SettingsPanel arpSettingsPanel;
 	SettingsPanel drumSettingsPanel;
-	JCheckBox addMelody;
-	JCheckBox addBass;
-	JCheckBox addChords;
-	JCheckBox addArps;
-	JCheckBox addDrums;
+	static JCheckBox addMelody;
+	static JCheckBox addBass;
+	static JCheckBox addChords;
+	static JCheckBox addArps;
+	static JCheckBox addDrums;
 	VeloRect drumVolumeSlider;
 
 	JButton soloAllDrums;
@@ -3969,6 +3969,23 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
+	public static boolean isEnabled(int partNum) {
+		switch (partNum) {
+		case 0:
+			return addMelody.isSelected();
+		case 1:
+			return addBass.isSelected();
+		case 2:
+			return addChords.isSelected();
+		case 3:
+			return addArps.isSelected();
+		case 4:
+			return addDrums.isSelected();
+		default:
+			throw new IllegalArgumentException("PartNum is invalid: " + partNum);
+		}
+	}
+
 	public static int countAllPanels() {
 		int count = 0;
 		for (int i = 0; i < 5; i++) {
@@ -3980,8 +3997,10 @@ public class VibeComposerGUI extends JFrame
 	public static int countAllIncludedPanels() {
 		int count = 0;
 		for (int i = 0; i < 5; i++) {
-			List<? extends InstPanel> panels = getInstList(i);
-			count += panels.stream().filter(e -> !e.getMuteInst()).count();
+			if (isEnabled(i)) {
+				List<? extends InstPanel> panels = getInstList(i);
+				count += panels.stream().filter(e -> !e.getMuteInst()).count();
+			}
 		}
 		return count;
 	}
