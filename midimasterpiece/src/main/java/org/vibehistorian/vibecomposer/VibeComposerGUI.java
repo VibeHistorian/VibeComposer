@@ -510,7 +510,7 @@ public class VibeComposerGUI extends JFrame
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
 	JCheckBox randomDrumsOverrandomize;
-	JTextField randomDrumMaxSwingAdjust;
+	KnobPanel randomDrumMaxSwingAdjust;
 	JCheckBox randomDrumSlide;
 	JCheckBox randomDrumPattern;
 	KnobPanel randomDrumVelocityPatternChance;
@@ -2077,7 +2077,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton clearPatternSeeds = makeButton("Clear Presets", "ClearPatterns");
 
-		randomDrumMaxSwingAdjust = new JTextField("20", 2);
+		randomDrumMaxSwingAdjust = new DetachedKnobPanel("Max Swing+-", 20, 0, 50);
 		randomDrumSlide = new JCheckBox("Random Delay", false);
 		randomDrumUseChordFill = new JCheckBox("Fills", true);
 		randomDrumPattern = new JCheckBox("Patterns", true);
@@ -7531,9 +7531,8 @@ public class VibeComposerGUI extends JFrame
 		// nothing's changed.. still the same..
 		if (swingPercent == 50) {
 			swingPercent = 50
-					+ drumPanelGenerator
-							.nextInt(Integer.valueOf(randomDrumMaxSwingAdjust.getText()) * 2 + 1)
-					- Integer.valueOf(randomDrumMaxSwingAdjust.getText());
+					+ drumPanelGenerator.nextInt(randomDrumMaxSwingAdjust.getInt() * 2 + 1)
+					- randomDrumMaxSwingAdjust.getInt();
 		}
 
 
@@ -7746,9 +7745,8 @@ public class VibeComposerGUI extends JFrame
 		// nothing's changed.. still the same..
 		if (swingPercent == 50) {
 			swingPercent = 50
-					+ drumPanelGenerator
-							.nextInt(Integer.valueOf(randomDrumMaxSwingAdjust.getText()) * 2 + 1)
-					- Integer.valueOf(randomDrumMaxSwingAdjust.getText());
+					+ drumPanelGenerator.nextInt(randomDrumMaxSwingAdjust.getInt() * 2 + 1)
+					- randomDrumMaxSwingAdjust.getInt();
 		}
 
 
@@ -7877,7 +7875,7 @@ public class VibeComposerGUI extends JFrame
 
 		int fixedChordStretch = -1;
 		if (randomChordStretchType.getVal().equals("FIXED")) {
-			fixedChordStretch = Integer.valueOf(randomChordStretchPicker.getVal());
+			fixedChordStretch = randomChordStretchPicker.getVal();
 		}
 
 		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
@@ -7900,9 +7898,9 @@ public class VibeComposerGUI extends JFrame
 
 			if ((randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
 					&& ip.getInstrumentBox().isEnabled()) {
-				pool = (chordPanelGenerator.nextInt(100) < Integer
-						.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
-								: InstUtils.POOL.PLUCK;
+				pool = (chordPanelGenerator.nextInt(100) < randomChordSustainChance.getInt())
+						? InstUtils.POOL.CHORD
+						: InstUtils.POOL.PLUCK;
 				ip.getInstrumentBox().initInstPool(pool);
 				ip.setInstPool(pool);
 				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
@@ -7937,7 +7935,7 @@ public class VibeComposerGUI extends JFrame
 			// default SINGLE = 4
 			RhythmPattern pattern = RhythmPattern.SINGLE;
 			// use pattern in 20% of the cases if checkbox selected
-			int patternChance = pool == InstUtils.POOL.PLUCK ? 50 : 20;
+			int patternChance = pool == InstUtils.POOL.PLUCK ? 25 : 10;
 			if (!pad && chordPanelGenerator.nextInt(100) < patternChance) {
 				if (randomChordPattern.isSelected()) {
 					pattern = viablePatterns
@@ -7951,7 +7949,7 @@ public class VibeComposerGUI extends JFrame
 			if (!randomChordStretchType.getVal().equals("NONE")) {
 				ip.setStretchEnabled(true);
 				if (fixedChordStretch < 0) {
-					int atMost = Integer.valueOf(randomChordStretchPicker.getVal());
+					int atMost = randomChordStretchPicker.getVal();
 					ip.setChordNotesStretch(chordPanelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					ip.setChordNotesStretch(fixedChordStretch);
@@ -8069,7 +8067,7 @@ public class VibeComposerGUI extends JFrame
 
 		int fixedArpStretch = -1;
 		if (randomArpStretchType.getVal().equals("FIXED")) {
-			fixedArpStretch = Integer.valueOf(randomArpStretchPicker.getVal());
+			fixedArpStretch = randomArpStretchPicker.getVal();
 		}
 
 
@@ -8186,7 +8184,7 @@ public class VibeComposerGUI extends JFrame
 			if (!randomArpStretchType.getVal().equals("NONE")) {
 				ip.setStretchEnabled(true);
 				if (fixedArpStretch < 0) {
-					int atMost = Integer.valueOf(randomArpStretchPicker.getVal());
+					int atMost = randomArpStretchPicker.getVal();
 					ip.setChordNotesStretch(arpPanelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					ip.setChordNotesStretch(fixedArpStretch);

@@ -375,8 +375,9 @@ public class MidiGenerator implements JMC {
 						? blockDurationsMap.get(blockOffset)
 						: null;
 				boolean badDuration = false;
-				if (durations != null && !roughlyEqual(durations.stream().mapToDouble(e -> e).sum(),
-						progressionDurations.get(chordIndex))) {
+				if (durations != null
+						&& !MidiUtils.roughlyEqual(durations.stream().mapToDouble(e -> e).sum(),
+								progressionDurations.get(chordIndex))) {
 					durations = null;
 					badDuration = true;
 				}
@@ -1375,7 +1376,7 @@ public class MidiGenerator implements JMC {
 					arpedDurations.set(trio, sumThirds);
 				}
 				valid = true;
-			} else if (isMultiple(sumThirds, Durations.HALF_NOTE)) {
+			} else if (MidiUtils.isMultiple(sumThirds, Durations.HALF_NOTE)) {
 				if (sumThirds > Durations.DOTTED_HALF_NOTE) {
 					sumThirds /= 4.0;
 					for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
@@ -1401,31 +1402,17 @@ public class MidiGenerator implements JMC {
 	}
 
 	public static boolean isDottedNote(double note) {
-		if (roughlyEqual(Durations.DOTTED_QUARTER_NOTE, note))
+		if (MidiUtils.roughlyEqual(Durations.DOTTED_QUARTER_NOTE, note))
 			return true;
-		if (roughlyEqual(Durations.DOTTED_WHOLE_NOTE, note))
+		if (MidiUtils.roughlyEqual(Durations.DOTTED_WHOLE_NOTE, note))
 			return true;
-		if (roughlyEqual(Durations.DOTTED_HALF_NOTE, note))
+		if (MidiUtils.roughlyEqual(Durations.DOTTED_HALF_NOTE, note))
 			return true;
-		if (roughlyEqual(Durations.DOTTED_EIGHTH_NOTE, note))
+		if (MidiUtils.roughlyEqual(Durations.DOTTED_EIGHTH_NOTE, note))
 			return true;
-		if (roughlyEqual(Durations.DOTTED_SIXTEENTH_NOTE, note))
+		if (MidiUtils.roughlyEqual(Durations.DOTTED_SIXTEENTH_NOTE, note))
 			return true;
 		return false;
-	}
-
-	public static boolean isMultiple(double first, double second) {
-		double result = first / second;
-		double rounded = Math.round(result);
-		if (roughlyEqual(result, rounded)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public static boolean roughlyEqual(double first, double second) {
-		return Math.abs(first - second) < DBL_ERR;
 	}
 
 	private int getAllowedPitchFromRange(int min, int max, double posInChord, Random splitNoteGen) {
@@ -1638,20 +1625,18 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				n.setPitch(Integer.MIN_VALUE);
-				if (fillerPattern.get(chordIndex) < 1) {
-					firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
-				}
 			}
 			for (int j = pausedNotes; j < notes.size(); j++) {
 				Note n = notes.get(j);
 				if (fillerPattern.get(chordIndex) < 1) {
 					n.setPitch(Integer.MIN_VALUE);
-					if (fillerPattern.get(chordIndex) < 1) {
-						firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
-					}
 				} else {
 					pitches[n.getPitch() % 12]++;
 				}
+			}
+
+			if (fillerPattern.get(chordIndex) < 1) {
+				firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
 			}
 		}
 
@@ -1681,6 +1666,7 @@ public class MidiGenerator implements JMC {
 				} else {
 					fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
 					fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedDuration);
+					LG.d("Filled note duration: " + fillPauseNote.getRhythmValue());
 					addedDuration = 0;
 					fillPauseNote = n;
 				}
@@ -1690,6 +1676,7 @@ public class MidiGenerator implements JMC {
 
 			if (addedDuration > DBL_ERR) {
 				fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
+				fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedDuration);
 			}
 		}
 
@@ -1905,7 +1892,7 @@ public class MidiGenerator implements JMC {
 				List<Integer> chordNotes = MidiUtils
 						.chordToPitches(chords.get(chordIndex % chords.size()));
 				for (Note n : notes) {
-					if (chordNotes.contains(n.getPitch() % 12)) {
+					if (n.getPitch() >= 0 && chordNotes.contains(n.getPitch() % 12)) {
 						found++;
 					}
 				}
@@ -2162,12 +2149,12 @@ public class MidiGenerator implements JMC {
 			}
 
 			// apply swing to best note from previous section when landing on "exact" hits
-			if (isMultiple(durCounter, swingUnitOfTime)) {
+			if (MidiUtils.isMultiple(durCounter, swingUnitOfTime)) {
 
 				if (logSwing)
 					LG.d(durCounter + " is Multiple of Unit");
 				// nothing was caught in first half, SKIP swinging for this 2-unit bit of time
-				if (swungNote == null && isMultiple(durCounter, 2 * swingUnitOfTime)) {
+				if (swungNote == null && MidiUtils.isMultiple(durCounter, 2 * swingUnitOfTime)) {
 					swungNote = null;
 					latestSuitableNote = null;
 					if (logSwing)
@@ -2212,7 +2199,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			// 
-			if (!processed && !isMultiple(durCounter, 2 * swingUnitOfTime)) {
+			if (!processed && !MidiUtils.isMultiple(durCounter, 2 * swingUnitOfTime)) {
 				if (swungNote != null) {
 					if ((adjDur - Math.abs(swingAdjust) > DBL_ERR) && latestSuitableNote == null) {
 						latestSuitableNote = n;
@@ -3083,7 +3070,7 @@ public class MidiGenerator implements JMC {
 				.filter(e -> !e.isMuted()).findFirst();
 
 		for (Section sec : arr.getSections()) {
-			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
+			for (int i = 0; i < sec.getMelodies().size(); i++) {
 				Phrase p = sec.getMelodies().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				p.setAppend(false);
@@ -3097,17 +3084,17 @@ public class MidiGenerator implements JMC {
 
 				}
 			}
-			for (int i = 0; i < gc.getBassParts().size(); i++) {
+			for (int i = 0; i < sec.getBasses().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
 				bp.setStartTime(bp.getStartTime() + sec.getStartTime());
 				bassParts.get(i).addPhrase(bp);
 			}
-			for (int i = 0; i < gc.getChordParts().size(); i++) {
+			for (int i = 0; i < sec.getChords().size(); i++) {
 				Phrase cp = sec.getChords().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
 				chordParts.get(i).addPhrase(cp);
 			}
-			for (int i = 0; i < gc.getArpParts().size(); i++) {
+			for (int i = 0; i < sec.getArps().size(); i++) {
 				Phrase cp = sec.getArps().get(i);
 				cp.setStartTime(cp.getStartTime() + sec.getStartTime());
 				arpParts.get(i).addPhrase(cp);
@@ -3115,7 +3102,7 @@ public class MidiGenerator implements JMC {
 
 			Optional<DrumPart> firstPresentDrumPart = gc.getDrumParts().stream()
 					.filter(e -> !e.isMuted()).findFirst();
-			for (int i = 0; i < gc.getDrumParts().size(); i++) {
+			for (int i = 0; i < sec.getDrums().size(); i++) {
 				Phrase p = sec.getDrums().get(i);
 				p.setStartTime(p.getStartTime() + sec.getStartTime());
 				if (COLLAPSE_DRUM_TRACKS && firstPresentDrumPart.isPresent()) {
@@ -3127,7 +3114,7 @@ public class MidiGenerator implements JMC {
 				}
 
 			}
-			if (gc.getChordParts().size() > 0) {
+			if (gc.getChordParts().size() > 0 && gc.isChordsEnable()) {
 				Phrase csp = sec.getChordSlash();
 				csp.setStartTime(csp.getStartTime() + sec.getStartTime());
 				csp.setAppend(false);
@@ -3138,7 +3125,7 @@ public class MidiGenerator implements JMC {
 		LG.d("Added sections to parts..");
 		int trackCounter = 1;
 
-		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
+		for (int i = 0; i < melodyParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(i).getOrder(),
 					VibeComposerGUI.melodyPanels);
 			if (!gc.getMelodyParts().get(i).isMuted()) {
@@ -3161,7 +3148,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		for (int i = 0; i < gc.getArpParts().size(); i++) {
+		for (int i = 0; i < arpParts.size(); i++) {
 
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
 					VibeComposerGUI.arpPanels);
@@ -3176,7 +3163,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		for (int i = 0; i < gc.getBassParts().size(); i++) {
+		for (int i = 0; i < bassParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getBassParts().get(i).getOrder(),
 					VibeComposerGUI.bassPanels);
 			if (!gc.getBassParts().get(i).isMuted()) {
@@ -3190,7 +3177,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		for (int i = 0; i < gc.getChordParts().size(); i++) {
+		for (int i = 0; i < chordParts.size(); i++) {
 
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getChordParts().get(i).getOrder(),
 					VibeComposerGUI.chordPanels);
@@ -3217,7 +3204,7 @@ public class MidiGenerator implements JMC {
 
 		// add drums after transposing transposable parts
 
-		for (int i = 0; i < gc.getDrumParts().size(); i++) {
+		for (int i = 0; i < drumParts.size(); i++) {
 			score.add(drumParts.get(i));
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
 					VibeComposerGUI.drumPanels);
@@ -5061,7 +5048,10 @@ public class MidiGenerator implements JMC {
 		}
 
 		if (pn != null && pn.isCustom()) {
-			phr.setNoteList(pn.makePhrase().getNoteList());
+			Phrase customPhr = pn.makePhrase();
+			MidiUtils.scalePhrase(customPhr,
+					progressionDurations.stream().mapToDouble(e -> e).sum());
+			phr.setNoteList(customPhr.getNoteList());
 			LG.i("Overwritten with custom MIDI: " + ip.getPartNum() + ", " + ip.getAbsoluteOrder());
 			return true;
 		} else {

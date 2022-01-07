@@ -39,6 +39,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
+import jm.music.tools.Mod;
 
 public class MidiUtils {
 
@@ -1369,6 +1370,29 @@ public class MidiUtils {
 
 	public static String pitchToString(int pitch) {
 		return MidiUtils.SEMITONE_LETTERS.get((pitch + 1200) % 12) + ((pitch / 12) - 1);
+	}
+
+	public static void scalePhrase(Phrase phr, double newLength) {
+		LG.i("Scale phrase: " + phr.getBeatLength() + ", to: " + newLength);
+		if (roughlyEqual(phr.getBeatLength(), newLength)) {
+			return;
+		}
+
+		Mod.changeLength(phr, newLength);
+	}
+
+	public static boolean roughlyEqual(double first, double second) {
+		return Math.abs(first - second) < MidiGenerator.DBL_ERR;
+	}
+
+	public static boolean isMultiple(double first, double second) {
+		double result = first / second;
+		double rounded = Math.round(result);
+		if (roughlyEqual(result, rounded)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 }

@@ -459,7 +459,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getMidiChannel() {
-		return Integer.valueOf(midiChannel.getVal());
+		return midiChannel.getVal();
 	}
 
 	public void setMidiChannel(int val) {

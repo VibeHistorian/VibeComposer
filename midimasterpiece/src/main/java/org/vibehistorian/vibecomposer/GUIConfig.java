@@ -758,7 +758,7 @@ public class GUIConfig {
 	public String toString() {
 		return MidiUtils.SEMITONE_LETTERS.get((transpose + 1200) % 12) + " " + scaleMode.toString()
 				+ " " + (int) bpm + "bpm [Size: " + actualArrangement.getSections().size()
-				+ "] Seed: " + randomSeed + " Chords: [" + customChords + "]"
+				+ "] Seed: " + randomSeed + " [" + customChords + "]"
 				+ ((regenerateCount > 0) ? ("(" + regenerateCount + ")") : "")
 				+ (StringUtils.isNotEmpty(bookmarkText) ? (" - " + bookmarkText) : "");
 	}

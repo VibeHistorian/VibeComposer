@@ -93,7 +93,7 @@ public class Rhythm {
 			remainingNotes--;
 
 		}
-		if (!MidiGenerator.roughlyEqual(durationSum, durationLimit)) {
+		if (!MidiUtils.roughlyEqual(durationSum, durationLimit)) {
 			/*LG.d("Last note needs duration fix, sum: " + durationSum + ", needed: "
 					+ durationLimit);*/
 			durations.set(durations.size() - 1,

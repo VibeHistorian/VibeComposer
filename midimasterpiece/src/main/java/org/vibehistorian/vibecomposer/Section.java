@@ -244,6 +244,9 @@ public class Section {
 	}
 
 	public List<Phrase> getMelodies() {
+		if (melodies == null) {
+			melodies = new ArrayList<>();
+		}
 		return melodies;
 	}
 
@@ -253,6 +256,9 @@ public class Section {
 	}
 
 	public List<Phrase> getBasses() {
+		if (basses == null) {
+			basses = new ArrayList<>();
+		}
 		return basses;
 	}
 
@@ -262,6 +268,9 @@ public class Section {
 	}
 
 	public List<Phrase> getChords() {
+		if (chords == null) {
+			chords = new ArrayList<>();
+		}
 		return chords;
 	}
 
@@ -271,6 +280,9 @@ public class Section {
 	}
 
 	public List<Phrase> getArps() {
+		if (arps == null) {
+			arps = new ArrayList<>();
+		}
 		return arps;
 	}
 
@@ -280,6 +292,9 @@ public class Section {
 	}
 
 	public List<Phrase> getDrums() {
+		if (drums == null) {
+			drums = new ArrayList<>();
+		}
 		return drums;
 	}
 

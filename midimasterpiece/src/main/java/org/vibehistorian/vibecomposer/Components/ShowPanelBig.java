@@ -56,7 +56,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
-import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -227,7 +226,7 @@ public class ShowPanelBig extends JPanel {
 
 					double percentage = xy.getX() / usableEnd;
 					LG.d("Percentage in MIDI: " + percentage);
-					LG.i("Slider ratio: "
+					/*LG.i("Slider ratio: "
 							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
 									/ VibeComposerGUI.beatFromBpm(0));
 					LG.i("Score ratio: " + usableEnd / beatWidth);
@@ -236,7 +235,7 @@ public class ShowPanelBig extends JPanel {
 							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
 									/ 144);
 					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
-					LG.i(VibeComposerGUI.sliderExtended);
+					LG.i(VibeComposerGUI.sliderExtended);*/
 
 					if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
 						return;
