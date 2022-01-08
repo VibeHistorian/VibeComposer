@@ -33,4 +33,8 @@ public class LG {
 	public static void e(Object msg) {
 		LOGGER.error(msg == null ? null : msg.toString());
 	}
+
+	public static void n(Object msg) {
+		// do nothing
+	}
 }

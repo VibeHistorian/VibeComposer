@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -62,11 +64,19 @@ public class SoloMuter extends JPanel {
 		soloer.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
 		muter.setText("M");
 		muter.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
-		soloer.addActionListener(new ActionListener() {
+		soloer.addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				toggleSolo(true);
+			public void mousePressed(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					toggleSolo(true);
+				} else if (SwingUtilities.isMiddleMouseButton(e) && type != Type.GLOBAL) {
+					if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
+						VibeComposerGUI.globalSoloMuter.toggleSolo(true);
+					}
+					toggleSolo(true);
+				}
+
 			}
 
 		});

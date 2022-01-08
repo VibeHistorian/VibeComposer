@@ -997,8 +997,8 @@ public class MidiGenerator implements JMC {
 				counter++;
 				continue;
 			}
-			LG.d("START TIME: " + startTimes.get(counter) + ", PITCH: " + n.getPitch()
-					+ ", OFFSET: " + n.getOffset());
+			/*LG.d("START TIME: " + startTimes.get(counter) + ", PITCH: " + n.getPitch()
+					+ ", OFFSET: " + n.getOffset());*/
 			for (int i = explored; i < hits; i++) {
 				if (startTimes.get(counter) < durationBuckets.get(i)) {
 					int nextPitch = (n.getPitch() > 0) ? 1 : 0;
