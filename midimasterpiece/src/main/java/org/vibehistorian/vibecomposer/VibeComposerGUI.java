@@ -1285,8 +1285,13 @@ public class VibeComposerGUI extends JFrame
 			public void actionPerformed(ActionEvent e) {
 				isShowingTextInKnobs = !isShowingTextInKnobs;
 				for (int i = 0; i < 5; i++) {
-					List<? extends InstPanel> panels = getInstList(i);
-					panels.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
+					getInstList(i)
+							.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
+					if (arrSection.getSelectedIndex() > 0) {
+						getAffectedPanels(i).forEach(
+								ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
+					}
+
 				}
 			}
 
@@ -3426,7 +3431,7 @@ public class VibeComposerGUI extends JFrame
 		JButton randomizeInstruments = makeButton("Randomize Inst.", "RandomizeInst");
 
 		JButton randomizeBpm = makeButton("Randomize BPM", "RandomizeBpm");
-		JButton randomizeTranspose = makeButton("Randomize Transpose", "RandomizeTranspose");
+		JButton randomizeTranspose = makeButton("Randomize Key", "RandomizeTranspose");
 
 		JPanel randomInstPanel = new JPanel();
 		JPanel randomBpmPanel = new JPanel();
@@ -3481,6 +3486,19 @@ public class VibeComposerGUI extends JFrame
 		switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
 		switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));
 		enthickenText(switchOnComposeRandom);
+
+		randomButtonsPanel.add(makeButton("Randomize Transpose", e -> {
+			Random rand = new Random();
+			for (int i = 0; i < 4; i++) {
+				int range = (i == 1) ? 2 : 3;
+				getAffectedPanels(i).forEach(p -> p.setTranspose(12 * (rand.nextInt(range) - 1)));
+			}
+			if (canRegenerateOnChange()) {
+				composeMidi(true);
+			}
+
+		}));
+
 		randomButtonsPanel.add(switchOnComposeRandom);
 		//randomButtonsPanel.add(randomBottomPanel);
 
