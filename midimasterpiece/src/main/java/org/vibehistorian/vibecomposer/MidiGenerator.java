@@ -1681,7 +1681,7 @@ public class MidiGenerator implements JMC {
 				} else {
 					fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
 					fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedDuration);
-					LG.d("Filled note duration: " + fillPauseNote.getRhythmValue());
+					//LG.d("Filled note duration: " + fillPauseNote.getRhythmValue());
 					addedDuration = 0;
 					fillPauseNote = n;
 				}

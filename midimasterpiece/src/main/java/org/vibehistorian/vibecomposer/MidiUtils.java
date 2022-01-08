@@ -634,6 +634,15 @@ public class MidiUtils {
 	}
 
 	public static int[] mappedChord(String chordString) {
+		if (StringUtils.isEmpty(chordString)) {
+			return null;
+		}
+		if (!Character.isUpperCase(chordString.charAt(0))) {
+			chordString = chordString.length() > 1
+					? chordString.substring(0, 1).toUpperCase() + chordString.substring(1)
+					: chordString.toUpperCase();
+		}
+
 		int[] mappedChord = getNormalMappedChord(chordString);
 
 		if (mappedChord == null) {
@@ -663,6 +672,15 @@ public class MidiUtils {
 	}
 
 	public static int[] getNormalMappedChord(String chordString) {
+		if (StringUtils.isEmpty(chordString)) {
+			return null;
+		}
+		if (!Character.isUpperCase(chordString.charAt(0))) {
+			chordString = chordString.length() > 1
+					? chordString.substring(0, 1).toUpperCase() + chordString.substring(1)
+					: chordString.toUpperCase();
+		}
+
 		int len = chordString.length();
 		Integer inversion = null;
 		int dotIndex = chordString.indexOf(".");
@@ -1162,7 +1180,7 @@ public class MidiUtils {
 
 		List<String> solvedChords = new ArrayList<>();
 		List<Integer> majorScaleNormalized = MAJ_SCALE;
-		String firstLetterFirstChord = rawChords.substring(0, 1);
+		String firstLetterFirstChord = rawChords.substring(0, 1).toUpperCase();
 		int firstPitchFirstChord = majorScaleNormalized
 				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord) - 1);
 		if (rawChords.length() > 1 && "#".equals(rawChords.substring(1, 2))) {
@@ -1274,7 +1292,7 @@ public class MidiUtils {
 			boolean mapped = getNormalMappedChord(chord) != null;
 			if (mapped) {
 				//LG.i("Mapped!");
-				String firstLetter = chord.substring(0, 1);
+				String firstLetter = chord.substring(0, 1).toUpperCase();
 
 				int firstIndex = CHORD_FIRST_LETTERS.indexOf(firstLetter);
 				String baseChord = MAJOR_CHORDS.get(firstIndex - 1);
