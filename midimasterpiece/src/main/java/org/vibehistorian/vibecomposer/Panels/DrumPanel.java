@@ -13,7 +13,6 @@ import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -49,6 +48,7 @@ public class DrumPanel extends InstPanel {
 		hitsPerPattern.getKnob().setTickSpacing(50);
 
 		pattern.setScrollEnabled(false);
+
 		this.add(pattern);
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
@@ -99,9 +99,6 @@ public class DrumPanel extends InstPanel {
 	public DrumPanel(ActionListener l) {
 		setPartClass(DrumPart.class);
 		initComponents(l);
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 		removeButton.addActionListener(l);
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);
 	}

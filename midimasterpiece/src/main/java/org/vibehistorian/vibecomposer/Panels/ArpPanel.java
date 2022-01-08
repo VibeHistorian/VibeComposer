@@ -11,7 +11,6 @@ import javax.swing.JLabel;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -107,9 +106,6 @@ public class ArpPanel extends InstPanel {
 		setPartClass(ArpPart.class);
 		initComponents(l);
 
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d);
 		}

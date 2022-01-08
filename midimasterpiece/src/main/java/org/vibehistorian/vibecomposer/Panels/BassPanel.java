@@ -11,7 +11,6 @@ import javax.swing.JLabel;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -94,9 +93,6 @@ public class BassPanel extends InstPanel {
 			patternJoinMode.addItem(pjm);
 		}
 		patternJoinMode.setSelectedItem(PatternJoinMode.EXPAND);
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 	}
 
 

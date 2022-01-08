@@ -36,7 +36,6 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
-import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 
@@ -130,9 +129,8 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 
-	public VisualPatternPanel(KnobPanel hitsPanel, ScrollComboBox<RhythmPattern> patternType,
-			KnobPanel shiftPanel, KnobPanel chordSpanPanel,
-			ScrollComboBox<ChordSpanFill> chordSpanFill, InstPanel parentPanel) {
+	public VisualPatternPanel(KnobPanel hitsKnob, ScrollComboBox<RhythmPattern> patternBox,
+			KnobPanel shiftKnob, KnobPanel chordSpanKnob, InstPanel parentPanel) {
 		super();
 		//setBackground(new Color(50, 50, 50));
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
@@ -141,11 +139,11 @@ public class VisualPatternPanel extends JPanel {
 		setLayout(layout);
 		setPreferredSize(new Dimension(width, height));
 		//setBorder(new BevelBorder(BevelBorder.LOWERED));
-		this.hitsPanel = hitsPanel;
-		this.patternType = patternType;
-		this.shiftPanel = shiftPanel;
+		this.hitsPanel = hitsKnob;
+		this.patternType = patternBox;
+		this.shiftPanel = shiftKnob;
 		this.parentPanel = parentPanel;
-		this.chordSpanPanel = chordSpanPanel;
+		this.chordSpanPanel = chordSpanKnob;
 		lastHits = hitsPanel.getInt();
 		int sepCounter = 0;
 		int defaultVel = (parentPanel.getVelocityMax() + parentPanel.getVelocityMin()) / 2;
@@ -257,7 +255,21 @@ public class VisualPatternPanel extends JPanel {
 				add(sep);
 			}*/
 		}
+		patternType.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isMiddleMouseButton(evt)) {
+					patternType.setSelectedItem(RhythmPattern.CUSTOM);
+					shiftPanel.setInt(0);
+					Random rand = new Random();
+					for (int i = 0; i < MAX_HITS; i++) {
+						truePattern.set(i, rand.nextInt(2));
+					}
+					reapplyShift();
 
+				}
+			}
+		});
 		patternType.addItemListener(new ItemListener() {
 
 			@Override

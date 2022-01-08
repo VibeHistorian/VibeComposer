@@ -146,6 +146,13 @@ public abstract class InstPanel extends JPanel {
 		setVelocityMax(90);
 		setVelocityMin(64);
 
+
+		if (getPartNum() > 0) {
+			for (RhythmPattern d : RhythmPattern.values()) {
+				pattern.addItem(d);
+			}
+		}
+
 		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		stretchPanel.setMaximumSize(new Dimension(3000, 50));
 		stretchPanel.add(stretchEnabled);
@@ -630,8 +637,7 @@ public abstract class InstPanel extends JPanel {
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
 	public VisualPatternPanel makeVisualPatternPanel() {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
-				chordSpanFill, this);
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, this);
 	}
 
 	public VisualPatternPanel getComboPanel() {

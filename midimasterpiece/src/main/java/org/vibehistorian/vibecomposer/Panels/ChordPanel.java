@@ -15,7 +15,6 @@ import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -111,9 +110,6 @@ public class ChordPanel extends InstPanel {
 	public ChordPanel(ActionListener l) {
 		setPartClass(ChordPart.class);
 		initComponents(l);
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
 				instPoolPicker.addItem(p);
