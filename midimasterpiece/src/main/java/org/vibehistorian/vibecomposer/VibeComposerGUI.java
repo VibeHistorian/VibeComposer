@@ -3490,8 +3490,24 @@ public class VibeComposerGUI extends JFrame
 		randomButtonsPanel.add(makeButton("Randomize Transpose", e -> {
 			Random rand = new Random();
 			for (int i = 0; i < 4; i++) {
-				int range = (i == 1) ? 2 : 3;
-				getAffectedPanels(i).forEach(p -> p.setTranspose(12 * (rand.nextInt(range) - 1)));
+				List<Integer> availableTransposes = new ArrayList<>(
+						(i == 1) ? Arrays.asList(new Integer[] { -12, 0 })
+								: Arrays.asList(new Integer[] { -12, 0, 12 }));
+				List<InstPanel> panels = getAffectedPanels(i);
+				int maxSame = Math.max(2, (int) Math.ceil(panels.size() / 3.0));
+				int[] transposesApplied = { 0, 0, 0 };
+				for (int j = 0; j < panels.size(); j++) {
+					int randed = rand.nextInt(availableTransposes.size());
+					int transpose = availableTransposes.get(randed);
+					panels.get(j).setTranspose(transpose);
+
+
+					int transposeIndex = (transpose / 12) + 1;
+					transposesApplied[transposeIndex]++;
+					if (transposesApplied[transposeIndex] >= maxSame) {
+						availableTransposes.remove(Integer.valueOf(transpose));
+					}
+				}
 			}
 			if (canRegenerateOnChange()) {
 				composeMidi(true);
