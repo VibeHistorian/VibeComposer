@@ -1554,8 +1554,15 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(filterLabel);
 		melodySettingsExtraPanelOrg.add(groupFilterSliders[0]);
 
-		randomizeMelodies = makeButton("Randomize Melodies",
-				e -> createRandomMelodyPanels(new Random().nextInt()));
+		randomizeMelodies = makeButton("Randomize Melodies", e -> {
+			createPanels(0, 3, false);
+			recalculateTabPaneCounts();
+			recalculateSoloMuters();
+
+			if (canRegenerateOnChange()) {
+				composeMidi(true);
+			}
+		});
 		melodySettingsExtraPanelOrg.add(randomizeMelodies);
 		randomizeMelodiesOnCompose = makeCheckBox("On Compose", true, true);
 		melodySettingsExtraPanelOrg.add(randomizeMelodiesOnCompose);

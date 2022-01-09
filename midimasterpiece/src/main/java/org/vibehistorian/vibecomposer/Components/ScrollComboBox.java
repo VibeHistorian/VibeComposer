@@ -6,8 +6,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -63,11 +66,17 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 					ItemEvent evnt = new ItemEvent(ScrollComboBox.this,
 							ItemEvent.ITEM_STATE_CHANGED, getSelectedItem(), ItemEvent.SELECTED);
 					fireItemStateChanged(evnt);
-				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
+				} else if (SwingUtilities.isMiddleMouseButton(evt) && !evt.isShiftDown()) {
 					if (evt.isControlDown()) {
 						setEnabled(!isEnabled());
 					} else {
-						setSelectedIndex(new Random().nextInt(getItemCount()));
+						List<Integer> viableIndices = IntStream.iterate(0, e -> e + 1)
+								.limit(getItemCount()).boxed().collect(Collectors.toList());
+						if (viableIndices.size() > 1) {
+							viableIndices.remove(Integer.valueOf(getSelectedIndex()));
+						}
+						setSelectedIndex(
+								viableIndices.get(new Random().nextInt(viableIndices.size())));
 					}
 				}
 			}

@@ -258,7 +258,8 @@ public class VisualPatternPanel extends JPanel {
 		patternType.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				if (SwingUtilities.isMiddleMouseButton(evt)) {
+				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isShiftDown()
+						&& patternType.isEnabled()) {
 					patternType.setSelectedItem(RhythmPattern.CUSTOM);
 					shiftPanel.setInt(0);
 					Random rand = new Random();
@@ -266,7 +267,9 @@ public class VisualPatternPanel extends JPanel {
 						truePattern.set(i, rand.nextInt(2));
 					}
 					reapplyShift();
-
+					if (VibeComposerGUI.canRegenerateOnChange()) {
+						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+					}
 				}
 			}
 		});

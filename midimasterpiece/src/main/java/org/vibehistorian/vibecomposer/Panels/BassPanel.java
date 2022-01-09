@@ -24,7 +24,7 @@ public class BassPanel extends InstPanel {
 	private JCheckBox useRhythm = new JCheckBox("Use Pattern", true);
 	private JCheckBox alternatingRhythm = new JCheckBox("Random Alt. Rhythm", true);
 	private JCheckBox doubleOct = new JCheckBox("Oct. Interval", false);
-	private KnobPanel noteVariation = new KnobPanel("Note Variance", 20);
+	private KnobPanel noteVariation = new KnobPanel("Note Variance", 50);
 	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
 
 	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
