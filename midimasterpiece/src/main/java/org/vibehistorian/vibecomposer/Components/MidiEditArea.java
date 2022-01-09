@@ -391,18 +391,17 @@ public class MidiEditArea extends JComponent {
 			Color nonHighlightedHelperColor = OMNI.alphen(nonHighlightedColor, 50);
 
 
-			List<Double> chordSpacings = pop.getSec().getGeneratedDurations();
+			List<Double> chordSpacings = new ArrayList<>(pop.getSec().getGeneratedDurations());
+			List<Double> chordSpacingsTemp = new ArrayList<>(chordSpacings);
+			for (int i = 1; i < pop.getSec().getMeasures(); i++) {
+				chordSpacings.addAll(chordSpacingsTemp);
+			}
 			Color highlightedChordNoteColor = VibeComposerGUI.isDarkMode
 					? new Color(220, 180, 150, 100)
 					: new Color(0, 0, 0, 150);
 			Color highlightedChordNoteHelperColor = OMNI.alphen(highlightedChordNoteColor, 60);
 			Map<Integer, Set<Integer>> chordHighlightedNotes = calculateHighlightedChords(
 					pop.getSec());
-
-			List<Integer> valueChordIndexes = values.stream()
-					.map(e -> getChordIndexByStartTime(chordSpacings,
-							e.getAbsoluteStartTime() + e.getOffset()))
-					.collect(Collectors.toList());
 
 			// draw numbers left of Y line
 			// draw line marks
@@ -501,7 +500,8 @@ public class MidiEditArea extends JComponent {
 						g.drawLine(drawX, bottomLeft.y, drawX, 0);
 					}
 
-					Set<Integer> chordNotes = chordHighlightedNotes.get(i);
+					Set<Integer> chordNotes = chordHighlightedNotes
+							.get(i % chordHighlightedNotes.size());
 					if (pop.highlightMode.getSelectedIndex() >= 2 && chordNotes != null) {
 						// horizontal helper lines
 						int drawXEnd = drawX + (int) (quarterNoteLength * chordSpacings.get(i));

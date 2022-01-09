@@ -76,7 +76,7 @@ public class Section {
 	public static final int VARIATION_CHANCE = 30;
 
 	private String type;
-	private int measures;
+	private int measures = 1;
 
 	private double startTime;
 	private double sectionDuration = -1;

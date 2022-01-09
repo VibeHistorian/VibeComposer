@@ -17,6 +17,7 @@ import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -25,6 +26,12 @@ import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
+import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 public class MidiEditPopup extends CloseablePopup {
 
@@ -212,6 +219,40 @@ public class MidiEditPopup extends CloseablePopup {
 		textPanel.add(new JLabel("  Snap To Time:"));
 		textPanel.add(snapToTimeGrid);
 
+		textPanel.add(VibeComposerGUI.makeButton("Recompose Part", e -> {
+			MidiGenerator mg = VibeComposerGUI.melodyGen;
+			mg.progressionDurations = new ArrayList<>(sec.getGeneratedDurations());
+
+			sec.getPhraseNotes(part, partOrder).setCustom(false);
+
+			LG.i("Chord prog: " + mg.chordProgression.size());
+			InstPart ip = MidiGenerator.gc.getInstPartList(part).get(partOrder);
+			List<Integer> variations = sec.getVariation(part, partOrder);
+			switch (part) {
+			case 0:
+				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
+						sec.getTypeMelodyOffset(), sec, variations);
+				break;
+			case 1:
+				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);
+				break;
+			case 2:
+				mg.fillChordsFromPart((ChordPart) ip, mg.chordProgression, sec, variations);
+				break;
+			case 3:
+				mg.fillArpFromPart((ArpPart) ip, mg.chordProgression, sec, variations);
+				break;
+			case 4:
+				mg.fillDrumsFromPart((DrumPart) ip, mg.chordProgression, sec.isClimax(), sec,
+						variations);
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid part: " + part);
+			}
+			setup(sec);
+			//mg.fill
+		}));
+
 		allPanels.add(buttonPanel);
 		allPanels.add(buttonPanel2);
 		allPanels.add(textPanel);
@@ -229,7 +270,7 @@ public class MidiEditPopup extends CloseablePopup {
 		}
 
 		setSec(sec);
-		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
+		PhraseNotes values = sec.getPhraseNotes(part, partOrder);
 		if (applyToMainBtn.isSelected() && (values == null || !values.isCustom())) {
 			return;
 		}
@@ -246,6 +287,7 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea.setMax(Math.max(mvea.max, vmax));
 		values.setCustom(true);
 		mvea.setValues(values);
+		LG.i("Custom MIDI setup successful: " + part + ", " + partOrder);
 		repaintMvea();
 	}
 

@@ -260,6 +260,7 @@ public class VibeComposerGUI extends JFrame
 	private boolean needSoundbankRefresh = false;
 
 	private static GUIConfig guiConfig = new GUIConfig();
+	public static MidiGenerator melodyGen = null;
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
 	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
@@ -4969,7 +4970,7 @@ public class VibeComposerGUI extends JFrame
 		prepareUI(regenerate);
 		GUIConfig midiConfig = new GUIConfig();
 		copyGUItoConfig(midiConfig);
-		MidiGenerator melodyGen = new MidiGenerator(midiConfig);
+		melodyGen = new MidiGenerator(midiConfig);
 		fillUserParameters(regenerate);
 
 		File makeDir = new File(MIDIS_FOLDER);
