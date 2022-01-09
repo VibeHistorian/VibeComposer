@@ -972,6 +972,11 @@ public class MidiGenerator implements JMC {
 			durationBuckets.add(timeForHit * i - DBL_ERR);
 			pattern.add(0);
 		}
+
+		if (notes == null || notes.isEmpty()) {
+			return pattern;
+		}
+
 		double currentDuration = 0;
 		int explored = 0;
 
@@ -1672,17 +1677,33 @@ public class MidiGenerator implements JMC {
 		if (mp.isFillPauses()) {
 			Note fillPauseNote = fullMelody.get(0);
 			double addedDuration = 0;
+			double addedRv = 0;
 			List<Note> notesToRemove = new ArrayList<>();
+
+			int currentChordIndex = 0;
+			int currentChordCount = 1;
+
 			for (int i = 1; i < fullMelody.size(); i++) {
 				Note n = fullMelody.get(i);
+				currentChordCount++;
+				if (currentChordCount > fullMelodyMap.get(currentChordIndex).size()) {
+					currentChordIndex++;
+					currentChordCount = 1;
+				}
+
 				if (n.getPitch() < 0) {
-					addedDuration += n.getRhythmValue();
+					addedRv += n.getRhythmValue();
+					if (fillerPattern.get(currentChordIndex) >= 1) {
+						addedDuration += n.getRhythmValue();
+					}
+
 					notesToRemove.add(n);
 				} else {
 					fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
-					fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedDuration);
+					fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedRv);
 					//LG.d("Filled note duration: " + fillPauseNote.getRhythmValue());
 					addedDuration = 0;
+					addedRv = 0;
 					fillPauseNote = n;
 				}
 			}
@@ -1691,7 +1712,7 @@ public class MidiGenerator implements JMC {
 
 			if (addedDuration > DBL_ERR) {
 				fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
-				fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedDuration);
+				fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedRv);
 			}
 		}
 

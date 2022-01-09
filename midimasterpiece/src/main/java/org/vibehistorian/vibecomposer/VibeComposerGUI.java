@@ -4689,7 +4689,7 @@ public class VibeComposerGUI extends JFrame
 		pauseMidi.setEnabled(state);
 		stopMidi.setEnabled(state);
 		compose.setEnabled(state);
-		regenerate.setEnabled(state);
+		//regenerate.setEnabled(state);
 		midiMode.setEnabled(state);
 		midiModeDevices.setEnabled(state);
 
@@ -8000,6 +8000,9 @@ public class VibeComposerGUI extends JFrame
 				if (randomChordPattern.isSelected()) {
 					pattern = viablePatterns
 							.get(chordPanelGenerator.nextInt(viablePatterns.size()));
+					if (pattern == RhythmPattern.MELODY1) {
+						pattern = RhythmPattern.FULL;
+					}
 					if (ip.getStrum() > 501) {
 						ip.setStrum(ip.getStrum() / 2);
 					}
