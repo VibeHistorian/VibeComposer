@@ -90,6 +90,12 @@ public class CheckButton extends JButton {
 		this.func = func;
 	}
 
+	public void useFunc() {
+		if (func != null) {
+			func.accept(new Object());
+		}
+	}
+
 	public void removeFunc() {
 		func = null;
 	}
