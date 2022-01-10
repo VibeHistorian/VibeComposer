@@ -185,6 +185,10 @@ public class MidiGenerator implements JMC {
 	public List<int[]> chordProgression = new ArrayList<>();
 	public List<int[]> rootProgression = new ArrayList<>();
 
+	public List<Double> progressionDurationsBackup = new ArrayList<>();
+	public List<int[]> chordProgressionBackup = new ArrayList<>();
+	public List<int[]> rootProgressionBackup = new ArrayList<>();
+
 	private int melodyResForChord(int chordIndex) {
 		return (int) (Math.round(MELODY_PATTERN_RESOLUTION * progressionDurations.get(chordIndex)
 				/ Durations.WHOLE_NOTE));
@@ -2850,6 +2854,12 @@ public class MidiGenerator implements JMC {
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
 					generatedRootProgression, 0, new Section(), new ArrayList<>());
 		}
+
+		progressionDurationsBackup = actualDurations;
+		chordProgressionBackup = actualProgression;
+		rootProgressionBackup = generatedRootProgression;
+
+
 		double measureLength = 0;
 		for (Double d : progressionDurations) {
 			measureLength += d;
@@ -3607,7 +3617,7 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
-	private boolean replaceWithSectionCustomChordDurations(Section sec) {
+	public boolean replaceWithSectionCustomChordDurations(Section sec) {
 		Pair<List<String>, List<Double>> chordsDurations = VibeComposerGUI
 				.solveUserChords(sec.getCustomChords(), sec.getCustomDurations());
 		if (chordsDurations == null) {
@@ -3634,7 +3644,13 @@ public class MidiGenerator implements JMC {
 		return true;
 	}
 
-	private void storeGlobalParts() {
+	public void replaceChordsDurationsFromBackup() {
+		chordProgression = chordProgressionBackup;
+		rootProgression = rootProgressionBackup;
+		progressionDurations = progressionDurationsBackup;
+	}
+
+	public void storeGlobalParts() {
 		melodyParts = gc.getMelodyParts();
 		bassParts = gc.getBassParts();
 		chordParts = gc.getChordParts();
@@ -3643,7 +3659,7 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	private void restoreGlobalPartsToGuiConfig() {
+	public void restoreGlobalPartsToGuiConfig() {
 		gc.setMelodyParts(melodyParts);
 		gc.setBassParts(bassParts);
 		gc.setChordParts(chordParts);

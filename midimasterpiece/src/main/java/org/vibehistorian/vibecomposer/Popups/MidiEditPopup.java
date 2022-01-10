@@ -228,6 +228,10 @@ public class MidiEditPopup extends CloseablePopup {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				MidiGenerator mg = VibeComposerGUI.melodyGen;
+
+				mg.storeGlobalParts();
+				mg.replaceWithSectionCustomChordDurations(sec);
+
 				mg.progressionDurations = new ArrayList<>(sec.getGeneratedDurations());
 
 				sec.getPhraseNotes(part, partOrder).setCustom(false);
@@ -239,7 +243,10 @@ public class MidiEditPopup extends CloseablePopup {
 				if (SwingUtilities.isMiddleMouseButton(evt)) {
 					ip.setPatternSeed(new Random().nextInt());
 				}
-				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidi().setCustom(false);
+				if (VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidi() != null) {
+					VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidi()
+							.setCustom(false);
+				}
 				List<Integer> variations = sec.getVariation(part, partOrder);
 				switch (part) {
 				case 0:
@@ -265,6 +272,8 @@ public class MidiEditPopup extends CloseablePopup {
 				ip.setPatternSeed(seed);
 				sec.getPhraseNotes(part, partOrder).setCustom(true);
 
+				mg.replaceChordsDurationsFromBackup();
+				mg.restoreGlobalPartsToGuiConfig();
 				setup(sec);
 				//mg.fill
 			}
