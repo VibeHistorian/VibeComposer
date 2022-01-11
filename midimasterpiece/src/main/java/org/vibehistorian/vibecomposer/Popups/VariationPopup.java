@@ -331,7 +331,7 @@ public class VariationPopup {
 
 	private void addVariationSettings(Section sec) {
 		JPanel variationSettingsPanel = new JPanel();
-		variationSettingsPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		variationSettingsPanel.setLayout(new BoxLayout(variationSettingsPanel, BoxLayout.X_AXIS));
 		variationSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		JPanel transitionPanel = new JPanel();
@@ -351,10 +351,17 @@ public class VariationPopup {
 		transitionPanel.add(new JLabel("Transition Type"));
 		transitionPanel.add(transitionBox);
 
+
+		SectionConfig secC = sectionObject.getSecConfig();
+
+
 		JPanel keyChangePanel = new JPanel();
 		keyChangePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		keyChangePanel.setLayout(new BoxLayout(keyChangePanel, BoxLayout.X_AXIS));
-		keyChangeKnob.setInt(sec.getCustomKeyChange() == null ? 0 : sec.getCustomKeyChange());
+		keyChangeKnob.setInt(secC.getCustomKeyChange() == null ? 0 : secC.getCustomKeyChange());
+		keyChangeKnob.getKnob().setFunc(e -> {
+			secC.setCustomKeyChange(keyChangeKnob.getInt());
+		});
 		keyChangePanel.add(keyChangeKnob);
 
 		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
@@ -363,13 +370,26 @@ public class VariationPopup {
 		}
 		scaleMode.addItem(OMNI.EMPTYCOMBO);
 		ScrollComboBox.addAll(scaleModes, scaleMode);
-		if (sec.getCustomScale() != null) {
-			scaleMode.setSelectedItem(sec.getCustomScale().toString());
+		if (secC.getCustomScale() != null) {
+			scaleMode.setSelectedItem(secC.getCustomScale().toString());
 		}
+		scaleMode.setFunc(e -> {
+			secC.setCustomScale(
+					scaleMode.getSelectedIndex() > 0 ? ScaleMode.valueOf(scaleMode.getVal())
+							: null);
+		});
 
 		keyChangePanel.add(new JLabel("Scale"));
 		keyChangePanel.add(scaleMode);
 
+		ScrollComboBox<String> customKeyChangeType = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "2-5-1", "Direct" },
+				customKeyChangeType);
+		customKeyChangeType.setFunc(e -> {
+			secC.setCustomKeyChangeType(customKeyChangeType.getSelectedIndex());
+		});
+		keyChangePanel.add(new JLabel("Type"));
+		keyChangePanel.add(customKeyChangeType);
 
 		variationSettingsPanel.add(transitionPanel);
 		variationSettingsPanel.add(keyChangePanel);
@@ -460,10 +480,6 @@ public class VariationPopup {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-				sectionObject.setCustomKeyChange(keyChangeKnob.getInt());
-				sectionObject.setCustomScale(
-						scaleMode.getSelectedIndex() > 0 ? ScaleMode.valueOf(scaleMode.getVal())
-								: null);
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);

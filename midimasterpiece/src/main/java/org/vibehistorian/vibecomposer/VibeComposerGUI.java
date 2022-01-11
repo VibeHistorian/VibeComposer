@@ -8722,8 +8722,9 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < sectionIndex; i++) {
 			Section sec = actualArrangement.getSections().get(i);
 			if (sec.isRiskyVar(4)) {
-				lastMode = sec.getCustomScale() != null ? sec.getCustomScale() : lastMode;
-				lastKeyChange = sec.getCustomKeyChange() != null ? sec.getCustomKeyChange()
+				SectionConfig secC = sec.getSecConfig();
+				lastMode = secC.getCustomScale() != null ? secC.getCustomScale() : lastMode;
+				lastKeyChange = secC.getCustomKeyChange() != null ? secC.getCustomKeyChange()
 						: lastKeyChange;
 			}
 		}

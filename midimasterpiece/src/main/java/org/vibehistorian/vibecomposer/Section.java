@@ -37,7 +37,6 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -82,8 +81,6 @@ public class Section {
 	private double sectionDuration = -1;
 	private List<Double> sectionBeatDurations = null;
 	private List<Double> generatedSectionBeatDurations = null;
-	private Integer customKeyChange = null;
-	private ScaleMode customScale = null;
 
 	private SectionConfig secConfig = new SectionConfig();
 
@@ -361,8 +358,6 @@ public class Section {
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
-		sec.setCustomKeyChange(getCustomKeyChange());
-		sec.setCustomScale(getCustomScale());
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
 			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
@@ -956,28 +951,12 @@ public class Section {
 		this.transitionType = transitionType;
 	}
 
-	public Integer getCustomKeyChange() {
-		return customKeyChange;
-	}
-
-	public void setCustomKeyChange(Integer customKeyChange) {
-		this.customKeyChange = customKeyChange;
-	}
-
 	public boolean isDisplayAlternateChords() {
 		return displayAlternateChords;
 	}
 
 	public void setDisplayAlternateChords(boolean displayAlternateChords) {
 		this.displayAlternateChords = displayAlternateChords;
-	}
-
-	public ScaleMode getCustomScale() {
-		return customScale;
-	}
-
-	public void setCustomScale(ScaleMode customScale) {
-		this.customScale = customScale;
 	}
 
 
@@ -1069,4 +1048,5 @@ public class Section {
 	public void setSecConfig(SectionConfig secConfig) {
 		this.secConfig = secConfig;
 	}
+
 }

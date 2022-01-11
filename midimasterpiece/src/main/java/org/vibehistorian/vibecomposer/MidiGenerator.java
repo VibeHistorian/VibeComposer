@@ -2931,7 +2931,7 @@ public class MidiGenerator implements JMC {
 				modScale = scaleToSet;
 			}
 
-			LG.i("Key extra transpose: " + modTrans);
+			LG.i("Key extra transpose: " + modTrans + ", key scale: " + modScale.toString());
 
 			if (sec.isClimax()) {
 				// increase variations in follow-up CLIMAX sections, reset when climax ends
@@ -3039,23 +3039,27 @@ public class MidiGenerator implements JMC {
 				}
 			}
 
+			SectionConfig secC = sec.getSecConfig();
+
 			if (riskyVariations.get(4) > 0) {
 				//LG.d("Risky Variation: Key Change (on next chord)!");
-				if (sec.getCustomKeyChange() == null) {
+				if (secC.getCustomKeyChange() == null && secC.getCustomScale() == null) {
 					transToSet = generateKeyChange(generatedRootProgression, arrSeed);
 					LG.i("Generated key change: " + transToSet);
-					sec.setCustomKeyChange(transToSet);
+					secC.setCustomKeyChange(transToSet);
 				} else {
-					transToSet = sec.getCustomKeyChange();
-					if (sec.getCustomScale() != null) {
-						scaleToSet = sec.getCustomScale();
+					transToSet = secC.getCustomKeyChange() != null ? secC.getCustomKeyChange() : 0;
+					if (secC.getCustomScale() != null) {
+						scaleToSet = secC.getCustomScale();
 					}
-					LG.i("Using custom key change: " + transToSet);
+					LG.i("Using custom key change: " + transToSet + ", with ScaleMode: "
+							+ scaleToSet);
 				}
 			}
 
-			boolean twoFiveOneChords = gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE
-					&& riskyVariations.get(4) > 0;
+			boolean twoFiveOneChords = ((gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE
+					|| secC.getCustomKeyChangeType() == 1) && (secC.getCustomKeyChangeType() != 2))
+					&& (riskyVariations.get(4) > 0);
 			if (riskyVariations.get(0) > 0 && !twoFiveOneChords) {
 				//LG.d("Risky Variation: Skip N-1 Chord!");
 				skipN1Chord();
