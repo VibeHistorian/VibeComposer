@@ -7502,6 +7502,12 @@ public class VibeComposerGUI extends JFrame
 			melodyPanel.setNoteExceptionChance(10 + melodyRand.nextInt(15));
 			melodyPanel.setMaxNoteExceptions(melodyRand.nextInt(2));
 			melodyPanel.setLeadChordsChance(melodyRand.nextInt(50));
+
+			ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL,
+					ChordSpanFill.EVEN, ChordSpanFill.ODD, ChordSpanFill.HALF1,
+					ChordSpanFill.HALF2 };
+			melodyPanel.setChordSpanFill(melodyFills[melodyRand.nextInt(melodyFills.length)]);
+
 			if (i > 0) {
 				melodyPanel.setFillPauses(true);
 				melodyPanel.setPauseChance(50 + melodyRand.nextInt(40));
