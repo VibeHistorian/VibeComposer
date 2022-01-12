@@ -474,6 +474,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomChordUseChordFill;
 	ScrollComboBox<String> randomChordStretchType;
 	ScrollComboBox<Integer> randomChordStretchPicker;
+	KnobPanel randomChordStretchGenerationChance;
 	KnobPanel randomChordMinVel;
 	KnobPanel randomChordMaxVel;
 
@@ -493,6 +494,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomArpUseChordFill;
 	ScrollComboBox<String> randomArpStretchType;
 	ScrollComboBox<Integer> randomArpStretchPicker;
+	KnobPanel randomArpStretchGenerationChance;
 	JCheckBox randomArpUseOctaveAdjustments;
 	KnobPanel randomArpMaxSwing;
 	KnobPanel randomArpMaxRepeat;
@@ -1851,6 +1853,8 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new Integer[] { 3, 4, 5, 6 }, randomChordStretchPicker);
 		randomChordStretchPicker.setVal(5);
 		chordSettingsPanel.add(randomChordStretchPicker);
+		randomChordStretchGenerationChance = new DetachedKnobPanel("Chance", 50);
+		chordSettingsPanel.add(randomChordStretchGenerationChance);
 
 		JButton clearChordPatternSeeds = makeButton("Clear presets", "ClearChordPatterns");
 
@@ -1985,7 +1989,8 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new Integer[] { 3, 4, 5, 6 }, randomArpStretchPicker);
 		randomArpStretchPicker.setVal(4);
 		arpsSettingsPanel.add(randomArpStretchPicker);
-
+		randomArpStretchGenerationChance = new DetachedKnobPanel("Chance", 50);
+		arpsSettingsPanel.add(randomArpStretchGenerationChance);
 
 		toggleableComponents.add(stretchLabel);
 		toggleableComponents.add(randomArpStretchType);
@@ -6948,6 +6953,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomChordUseChordFill);
 		cs.add(randomChordStretchType);
 		cs.add(randomChordStretchPicker);
+		cs.add(randomChordStretchGenerationChance);
 		cs.add(randomChordVaryLength);
 		cs.add(randomChordExpandChance);
 		cs.add(randomChordSustainChance);
@@ -6969,6 +6975,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomArpTranspose);
 		cs.add(randomArpStretchType);
 		cs.add(randomArpStretchPicker);
+		cs.add(randomArpStretchGenerationChance);
 		cs.add(arpCopyMelodyInst);
 		cs.add(randomArpAllSameInst);
 		cs.add(randomArpLimitPowerOfTwo);
@@ -8025,7 +8032,8 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			if (!randomChordStretchType.getVal().equals("NONE")) {
+			if (!randomChordStretchType.getVal().equals("NONE") && chordPanelGenerator
+					.nextInt(100) < randomChordStretchGenerationChance.getInt()) {
 				ip.setStretchEnabled(true);
 				if (fixedChordStretch < 0) {
 					int atMost = randomChordStretchPicker.getVal();
@@ -8260,7 +8268,8 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			if (!randomArpStretchType.getVal().equals("NONE")) {
+			if (!randomArpStretchType.getVal().equals("NONE")
+					&& arpPanelGenerator.nextInt(100) < randomArpStretchGenerationChance.getInt()) {
 				ip.setStretchEnabled(true);
 				if (fixedArpStretch < 0) {
 					int atMost = randomArpStretchPicker.getVal();
