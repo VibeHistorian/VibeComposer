@@ -4062,12 +4062,8 @@ public class MidiGenerator implements JMC {
 		if (modTrans != 0 || extraTranspose != 0) {
 			Mod.transpose(phr, modTrans + extraTranspose);
 		}
-
-		double additionalDelay = 0;
-		if (ip.getDelay() != 0) {
-			additionalDelay = (ip.getDelay() / 1000.0);
-		}
-		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+		phr.setStartTime(START_TIME_DELAY);
+		addOffsetsToPhrase(phr, ip.getDelay());
 		return phr;
 	}
 
@@ -4337,11 +4333,8 @@ public class MidiGenerator implements JMC {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
 		Mod.transpose(phr, -24 + ip.getTranspose() + modTrans);
-		double additionalDelay = 0;
-		if (ip.getDelay() != 0) {
-			additionalDelay = (ip.getDelay() / 1000.0);
-		}
-		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+		phr.setStartTime(START_TIME_DELAY);
+		addOffsetsToPhrase(phr, ip.getDelay());
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
 		}
@@ -4685,17 +4678,24 @@ public class MidiGenerator implements JMC {
 				0.9);
 
 		// delay
-		double additionalDelay = 0;
-		if (ip.getDelay() != 0) {
-			additionalDelay = ((noteMultiplier * ip.getDelay()) / 1000.0);
-		}
-		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+		phr.setStartTime(START_TIME_DELAY);
+		addOffsetsToPhrase(phr, ip.getDelay());
 
 
 		if (genVars && variations != null) {
 			sec.setVariation(2, ip.getAbsoluteOrder(), variations);
 		}
 		return phr;
+	}
+
+	private void addOffsetsToPhrase(Phrase phr, int delay) {
+		if (delay != 0) {
+			double offsetDelay = (noteMultiplier * delay) / 1000.0;
+			for (Object no : phr.getNoteList()) {
+				Note n = (Note) no;
+				n.setOffset(n.getOffset() + offsetDelay);
+			}
+		}
 	}
 
 	private int countStartingValueInList(int stretchedByNote, List<Integer> nextPattern) {
@@ -4933,11 +4933,8 @@ public class MidiGenerator implements JMC {
 		ip.setChordSpan(apClone.getChordSpan());
 		ip.setHitsPerPattern(apClone.getHitsPerPattern());
 		ip.setPatternRepeat(apClone.getPatternRepeat());
-		double additionalDelay = 0;
-		if (ip.getDelay() != 0) {
-			additionalDelay = (ip.getDelay() / 1000.0);
-		}
-		phr.setStartTime(START_TIME_DELAY + additionalDelay);
+		phr.setStartTime(START_TIME_DELAY);
+		addOffsetsToPhrase(phr, ip.getDelay());
 		return phr;
 	}
 
@@ -4961,7 +4958,8 @@ public class MidiGenerator implements JMC {
 
 		if (!ip.isVelocityPattern() && drumPattern.indexOf(ip.getInstrument()) == -1) {
 			//drumPhrase.addNote(new Note(Integer.MIN_VALUE, patternDurationTotal, 100));
-			phr.setStartTime(START_TIME_DELAY + ((noteMultiplier * ip.getDelay()) / 1000.0));
+			phr.setStartTime(START_TIME_DELAY);
+			addOffsetsToPhrase(phr, ip.getDelay());
 			return phr;
 		}
 
@@ -5119,7 +5117,8 @@ public class MidiGenerator implements JMC {
 				0.9);
 
 		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
-		phr.setStartTime(START_TIME_DELAY + ((noteMultiplier * ip.getDelay()) / 1000.0));
+		phr.setStartTime(START_TIME_DELAY);
+		addOffsetsToPhrase(phr, ip.getDelay());
 		ip.setHitsPerPattern(dpClone.getHitsPerPattern());
 		ip.setPatternShift(dpClone.getPatternShift());
 		ip.setChordSpan(dpClone.getChordSpan());
@@ -5281,11 +5280,7 @@ public class MidiGenerator implements JMC {
 		Mod.transpose(chordSlashPhrase, -12 + extraTranspose + modTrans);
 
 		// delay
-		double additionalDelay = 0;
-		/*if (gc.getChordGenSettings().isUseDelay()) {
-			additionalDelay = ((noteMultiplier * cp.getDelay()) / 1000.0);
-		}*/
-		chordSlashPhrase.setStartTime(START_TIME_DELAY + additionalDelay);
+		chordSlashPhrase.setStartTime(START_TIME_DELAY);
 		return chordSlashPhrase;
 
 
