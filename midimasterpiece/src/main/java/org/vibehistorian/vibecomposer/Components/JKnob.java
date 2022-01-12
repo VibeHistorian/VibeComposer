@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 // Imports for the GUI classes.
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -27,6 +28,8 @@ import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 
 /**
@@ -83,6 +86,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public static boolean fine = true;
 	public static int fineStart = 50;
+	public static boolean shiftClick = false;
 
 	private Consumer<? super Object> func = null;
 
@@ -329,6 +333,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (!isEnabled()) {
 			return;
 		}
+
 		curr = val;
 
 		setAngle();
@@ -448,6 +453,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			}
 		}
 
+		if (e.isShiftDown()) {
+			shiftClick = true;
+		}
+
 	}
 
 	/**
@@ -466,6 +475,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 
 		fine = false;
+		shiftClick = false;
 		startPoint = null;
 		fineStart = curr;
 		//LG.d("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
@@ -674,5 +684,23 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void removeFunc() {
 		func = null;
+	}
+
+	public KnobPanel parent() {
+		return (KnobPanel) getParent();
+	}
+
+	public InstPanel instParent() {
+		Container maybeParent = getParent();
+		int depth = 5;
+		while (depth >= 0) {
+			if (maybeParent instanceof InstPanel) {
+				return (InstPanel) maybeParent;
+			} else {
+				maybeParent = maybeParent.getParent();
+				depth--;
+			}
+		}
+		return (maybeParent instanceof InstPanel) ? (InstPanel) maybeParent : null;
 	}
 }
