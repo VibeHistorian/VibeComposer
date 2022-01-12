@@ -4686,7 +4686,7 @@ public class MidiGenerator implements JMC {
 
 		// delay
 		double additionalDelay = 0;
-		if (gc.getChordGenSettings().isUseDelay()) {
+		if (ip.getDelay() != 0) {
 			additionalDelay = ((noteMultiplier * ip.getDelay()) / 1000.0);
 		}
 		phr.setStartTime(START_TIME_DELAY + additionalDelay);

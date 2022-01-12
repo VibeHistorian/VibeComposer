@@ -779,7 +779,7 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpanPanel.getInt();
-		double percentage = (quarterNotesInMeasure / patternTotalDuration) % 1.0;
+		double percentage = (10.0 + (quarterNotesInMeasure / patternTotalDuration)) % 1.0;
 
 
 		if (parentPanel.getPatternRepeat() > 1) {

@@ -79,7 +79,7 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
-	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
+	protected KnobPanel delay = new KnobPanel("Delay", 0, -1000, 1000);
 
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);

@@ -4284,7 +4284,11 @@ public class VibeComposerGUI extends JFrame
 									VibeComposerGUI.getAbsoluteOrder(part, ip.getPanelOrder()))
 							.contains(ignoreFillIndex);
 				}
-				ip.getComboPanel().notifyPatternHighlight(quarterNotesInMeasure,
+
+				double delayedQuarterNotes = quarterNotesInMeasure
+						- MidiGenerator.noteMultiplier * (ip.getDelay() / 1000.0);
+
+				ip.getComboPanel().notifyPatternHighlight(delayedQuarterNotes,
 						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff, isIgnoreFill,
 						totalChords);
 			}
@@ -7989,7 +7993,12 @@ public class VibeComposerGUI extends JFrame
 			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
 			ip.setStrum(strumPair.getRight());
 			ip.setStrumType(strumPair.getLeft());
-			ip.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY, 0)));
+			if (randomChordDelay.isSelected()) {
+				ip.setDelay((getRandomFromArray(chordPanelGenerator, MILISECOND_ARRAY_DELAY, 0)));
+			} else {
+				ip.setDelay(0);
+			}
+
 
 			if (randomChordUseChordFill.isSelected() && !pad) {
 				ip.setChordSpanFill(ChordSpanFill.getWeighted(chordPanelGenerator.nextInt(100)));
