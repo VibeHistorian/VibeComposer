@@ -149,7 +149,7 @@ public class VisualPatternPanel extends JPanel {
 		int defaultVel = (parentPanel.getVelocityMax() + parentPanel.getVelocityMin()) / 2;
 		for (int i = 0; i < MAX_HITS; i++) {
 			final int fI = i;
-			truePattern.add(0);
+			truePattern.add(1);
 			trueVelocities.add(defaultVel);
 			hitChecks[i] = new ColorCheckBox();
 			hitVelocities[i] = new VeloRect(0, 127, defaultVel);

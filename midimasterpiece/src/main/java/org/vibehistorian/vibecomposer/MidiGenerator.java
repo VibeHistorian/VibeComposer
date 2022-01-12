@@ -4354,6 +4354,7 @@ public class MidiGenerator implements JMC {
 		Random variationGenerator = new Random(
 				gc.getArrangement().getSeed() + ip.getOrder() + sec.getTypeSeedOffset());
 		Random flamGenerator = new Random(orderSeed + 30);
+		Random pauseGenerator = new Random(orderSeed + 50);
 		// chord strum
 		double flamming = 0.0;
 		if (gc.getChordGenSettings().isUseStrum()) {
@@ -4603,6 +4604,10 @@ public class MidiGenerator implements JMC {
 						cC.setNotes(new int[] { Integer.MIN_VALUE });
 					} else if (transition && durationNow >= splitTime) {
 						cC.setNotes(transChordNotes);
+					}
+
+					if (pauseGenerator.nextInt(100) < ip.getPauseChance()) {
+						cC.setNotes(new int[] { Integer.MIN_VALUE });
 					}
 
 					if (durationNow + duration > progressionDurations.get(chordIndex) - DBL_ERR) {

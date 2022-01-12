@@ -8074,7 +8074,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (chordPanelGenerator.nextInt(100) < randomChordShiftChance.getInt()) {
-				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern());
+				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
 				// test opposite check for shift distance
 				if (chordPanelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
 					maxShift /= 2;
@@ -8083,6 +8083,10 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				ip.setPatternShift(0);
 			}
+
+			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
+			ip.setPauseChance(chordPanelGenerator.nextInt(pauseMax + 1));
+			ip.applyPauseChance(chordPanelGenerator);
 
 			if (needNewChannel) {
 				ip.setMidiChannel(11 + (ip.getPanelOrder() - 1) % 5);
@@ -8308,8 +8312,8 @@ public class VibeComposerGUI extends JFrame
 			ip.applyPauseChance(arpPanelGenerator);
 
 			if (arpPanelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
-				LG.d("Arp getPattern: " + ip.getPattern().name());
-				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern());
+				//LG.d("Arp getPattern: " + ip.getPattern().name());
+				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
 				ip.setPatternShift(maxShift > 0 ? (arpPanelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
 				ip.setPatternShift(0);

@@ -44,6 +44,6 @@ public enum RhythmPattern {
 		for (int i = 0; i < pattern.length; i++) {
 			counter += pattern[i];
 		}
-		return counter / pattern.length;
+		return counter / (double) pattern.length;
 	}
 }

@@ -40,6 +40,7 @@ public class ArpPanel extends InstPanel {
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 
+		this.add(transpose);
 		this.add(chordSpanFillPanel);
 
 		this.add(hitsPerPattern);
@@ -59,7 +60,6 @@ public class ArpPanel extends InstPanel {
 
 		this.add(patternRepeat);
 		//this.add(repeatableNotes);
-		this.add(transpose);
 		this.add(pauseChance);
 		JLabel notePresetLabel = new JLabel("Dir:");
 		this.add(notePresetLabel);

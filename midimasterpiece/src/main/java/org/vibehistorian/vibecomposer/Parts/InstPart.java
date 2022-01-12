@@ -43,7 +43,7 @@ public abstract class InstPart implements Cloneable {
 	protected int chordNotesStretch = 3;
 	protected boolean stretchEnabled = false;
 
-	protected int pauseChance = 20;
+	protected int pauseChance = 0;
 	protected int exceptionChance = 5;
 	protected boolean repeatableNotes = true;
 	protected int patternRepeat = 1;

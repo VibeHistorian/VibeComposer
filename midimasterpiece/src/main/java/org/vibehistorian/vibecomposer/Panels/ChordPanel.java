@@ -57,11 +57,8 @@ public class ChordPanel extends InstPanel {
 		this.add(instPoolPicker);
 		addDefaultPanelButtons();
 
-		this.add(chordSpanFillPanel);
-
-		this.add(strum);
-		this.add(strumType);
 		this.add(transpose);
+		this.add(chordSpanFillPanel);
 
 		this.add(hitsPerPattern);
 		this.add(pattern);
@@ -76,6 +73,10 @@ public class ChordPanel extends InstPanel {
 		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(chordSpan);
+		this.add(pauseChance);
+
+		this.add(strum);
+		this.add(strumType);
 
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));

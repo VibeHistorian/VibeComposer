@@ -60,9 +60,6 @@ public class MelodyPanel extends InstPanel {
 		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
-		this.add(chordSpanFillPanel);
-
-		this.add(speed);
 		transpose.getKnob().setTickSpacing(10);
 		Integer[] allowedMelodyTransposes = new Integer[] { 0, 4, 5, 7 };
 		List<Integer> totalMelodyTransposes = new ArrayList<>();
@@ -74,6 +71,10 @@ public class MelodyPanel extends InstPanel {
 		totalMelodyTransposes.add(36);
 		transpose.getKnob().setTickThresholds(totalMelodyTransposes);
 		this.add(transpose);
+
+		this.add(chordSpanFillPanel);
+
+		this.add(speed);
 
 		/*this.add(VibeComposerGUI.makeButton("Manual MIDI",
 				e -> new VisualArrayPopup(-10, 10, new ArrayList<>())));*/

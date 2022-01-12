@@ -46,9 +46,9 @@ public class BassPanel extends InstPanel {
 
 		//this.add(useRhythm);
 		this.add(alternatingRhythm);
+		this.add(transpose);
 
 		this.add(chordSpanFillPanel);
-		this.add(transpose);
 
 		this.add(hitsPerPattern);
 		hitsPerPattern.setInt(32);
