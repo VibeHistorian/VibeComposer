@@ -43,7 +43,6 @@ import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -776,12 +775,12 @@ public abstract class InstPanel extends JPanel {
 		if (emptyIndices.isEmpty()) {
 			return;
 		}
-		LG.i("Changing pattern: " + getPattern().toString());
+		//LG.i("Changing pattern: " + getPattern().toString());
 		for (int i = 0; i < maxGrowth; i++) {
 			if (randGen.nextInt(100) < growthChance && !emptyIndices.isEmpty()) {
 				int index = emptyIndices.get(randGen.nextInt(emptyIndices.size()));
 				getComboPanel().checkPattern(getComboPanel().getShifted(index), 1);
-				LG.i(panelInfo() + ", checked: " + index);
+				//LG.i(panelInfo() + ", checked: " + index);
 			}
 		}
 

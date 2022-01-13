@@ -2653,7 +2653,6 @@ public class VibeComposerGUI extends JFrame
 
 		manualArrangement = new CheckButton("MANUAL", false);
 		arrangementSettingsRight.add(manualArrangement);
-		arrangementSettingsRight.add(arrSection);
 		arrangementSettingsRight.add(commitPanelBtn);
 		arrangementSettingsRight.add(commitAllPanelBtn);
 		arrangementSettingsRight.add(undoPanelBtn);
@@ -2672,7 +2671,16 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(arrSection, constraints);
+
+		JScrollPane arrSectionPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(scrollPaneDimension.width, 40);
+			}
+		};
+		arrSectionPane.setViewportView(arrSection);
+		arrSectionPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		everythingPanel.add(arrSectionPane, constraints);
 		constraints.gridy = startY + 1;
 		everythingPanel.add(arrangementSettings, constraints);
 
@@ -7519,6 +7527,7 @@ public class VibeComposerGUI extends JFrame
 					ChordSpanFill.EVEN, ChordSpanFill.ODD, ChordSpanFill.HALF1,
 					ChordSpanFill.HALF2 };
 			melodyPanel.setChordSpanFill(melodyFills[melodyRand.nextInt(melodyFills.length)]);
+			melodyPanel.setFillFlip(false);
 
 			if (i > 0) {
 				melodyPanel.setFillPauses(true);

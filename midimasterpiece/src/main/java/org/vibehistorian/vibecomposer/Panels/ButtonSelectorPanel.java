@@ -22,8 +22,8 @@ public class ButtonSelectorPanel extends JPanel {
 
 	public ButtonSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons) {
 		setOpaque(false);
-		setMaximumSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
-		setPreferredSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
+		//setMaximumSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
+		//setPreferredSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
 		setMinimumSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
 		unremovableButtons = defaultButtons.size();
 		addAllButtons(defaultButtons);
