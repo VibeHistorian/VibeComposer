@@ -59,7 +59,8 @@ public class MidiUtils {
 				PHRYGIAN_SCALE = { 0, 1, 3, 5, 7, 8, 10 }, LYDIAN_SCALE = { 0, 2, 4, 6, 7, 9, 11 },
 				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
 				BLUES_SCALE = { 0, 2, 3, 4, 7, 9, 12 }, TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 },
-				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 };
+				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 },
+				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 };
 
 	}
 
@@ -89,7 +90,7 @@ public class MidiUtils {
 		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, 6), AEOLIAN(Scales.AEOLIAN_SCALE, 5),
 		LOCRIAN(Scales.LOCRIAN_SCALE, 4), BLUES(Scales.BLUES_SCALE, -1),
 		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE, 5), TURKISH(Scales.TURKISH_SCALE, -1),
-		INDIAN(Scales.INDIAN_SCALE, 1);
+		INDIAN(Scales.INDIAN_SCALE, 1), HARM_MAJOR(Scales.HARMONIC_MAJOR_SCALE, 5);
 
 		public Integer[] noteAdjustScale;
 		public Integer modeTargetNote;
