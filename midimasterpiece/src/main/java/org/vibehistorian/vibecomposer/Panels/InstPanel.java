@@ -30,6 +30,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -42,6 +43,7 @@ import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -699,8 +701,9 @@ public abstract class InstPanel extends JPanel {
 			long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
 					.stream().filter(e -> e > 0).count();
 			for (int j = 0; j < getHitsPerPattern() && totalAvailable >= 2; j++) {
-				if (randGen.nextInt(100) < getPauseChance() && getComboPanel().getPattern(j) > 0) {
-					getComboPanel().checkPattern(j, 0);
+				if (randGen.nextInt(100) < getPauseChance()
+						&& getComboPanel().getTruePattern().get(j) > 0) {
+					getComboPanel().checkPattern(getComboPanel().getShifted(j), 0);
 					totalAvailable--;
 					//LG.d("Pause chance applied");
 				}
@@ -752,5 +755,35 @@ public abstract class InstPanel extends JPanel {
 
 	public void setCustomMidiToggle(boolean val) {
 		this.customMidiToggle.setSelected(val);
+	}
+
+	public String panelInfo() {
+		return "Part: " + getPartNum() + ", order: " + getPanelOrder();
+	}
+
+	public void growPattern(Random randGen, int maxGrowth, int growthChance) {
+		if (getPattern() == RhythmPattern.MELODY1 || getPattern() == RhythmPattern.FULL) {
+			return;
+		}
+
+		List<Integer> ptrn = getComboPanel().getTruePattern().subList(0, getHitsPerPattern());
+		List<Integer> emptyIndices = new ArrayList<>();
+		for (int i = 0; i < ptrn.size(); i++) {
+			if (ptrn.get(i) < 1) {
+				emptyIndices.add(i);
+			}
+		}
+		if (emptyIndices.isEmpty()) {
+			return;
+		}
+		LG.i("Changing pattern: " + getPattern().toString());
+		for (int i = 0; i < maxGrowth; i++) {
+			if (randGen.nextInt(100) < growthChance && !emptyIndices.isEmpty()) {
+				int index = emptyIndices.get(randGen.nextInt(emptyIndices.size()));
+				getComboPanel().checkPattern(getComboPanel().getShifted(index), 1);
+				LG.i(panelInfo() + ", checked: " + index);
+			}
+		}
+
 	}
 }

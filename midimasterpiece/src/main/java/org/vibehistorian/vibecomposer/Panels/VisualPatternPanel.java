@@ -506,6 +506,10 @@ public class VisualPatternPanel extends JPanel {
 		return truePattern.get(shI);
 	}
 
+	public int getShifted(int fI) {
+		return (fI + shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
+	}
+
 	public void checkPattern(int fI, Integer directSetting) {
 		int shI = (fI - shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
 		if (directSetting != null) {

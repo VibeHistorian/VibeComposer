@@ -84,7 +84,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private Point startPoint = null;
 
-	public static boolean fine = true;
+	public static boolean fine = false;
 	public static int fineStart = 50;
 	public static boolean shiftClick = false;
 
