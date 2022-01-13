@@ -29,7 +29,8 @@ public class ChordPanel extends InstPanel {
 	private KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
 	private KnobPanel transitionSplit = new KnobPanel("Split<br>%%", 625, 0, 1000);
 
-	private KnobPanel strum = new KnobPanel("Strum<br>/1000", 0, 0, 2000);
+	private KnobPanel strum = new KnobPanel("Strum", 0, 0, 2000);
+	private KnobPanel strumPauseChance = new KnobPanel("Strum<br>Pause", 25);
 
 	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
@@ -77,6 +78,7 @@ public class ChordPanel extends InstPanel {
 
 		this.add(strum);
 		this.add(strumType);
+		this.add(strumPauseChance);
 
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
@@ -105,7 +107,14 @@ public class ChordPanel extends InstPanel {
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);
+		toggleableComponents.add(strumPauseChance);
 
+	}
+
+	@Override
+	public void toggleComponentTexts(boolean b) {
+		super.toggleComponentTexts(b);
+		strum.setShowTextInKnob(b);
 	}
 
 	public ChordPanel(ActionListener l) {
@@ -169,6 +178,7 @@ public class ChordPanel extends InstPanel {
 		part.setTransitionChance(getTransitionChance());
 		part.setTransitionSplit(getTransitionSplit());
 		part.setStrum(getStrum());
+		part.setStrumPauseChance(getStrumPauseChance());
 		part.setPatternJoinMode(getPatternJoinMode());
 
 		part.setInstPool(getInstPool());
@@ -186,6 +196,7 @@ public class ChordPanel extends InstPanel {
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
 		setStrum(part.getStrum());
+		setStrumPauseChance(part.getStrumPauseChance());
 		setPatternJoinMode(part.getPatternJoinMode());
 		setStrumType(part.getStrumType());
 
@@ -225,5 +236,13 @@ public class ChordPanel extends InstPanel {
 	@Override
 	public int getPartNum() {
 		return 2;
+	}
+
+	public int getStrumPauseChance() {
+		return strumPauseChance.getInt();
+	}
+
+	public void setStrumPauseChance(int strumPauseChance) {
+		this.strumPauseChance.setInt(strumPauseChance);
 	}
 }

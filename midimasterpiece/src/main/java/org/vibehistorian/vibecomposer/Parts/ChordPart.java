@@ -14,6 +14,7 @@ public class ChordPart extends InstPart {
 	private int transitionSplit = 625;
 
 	private int strum = 0;
+	private int strumPauseChance = 0;
 
 	private PatternJoinMode patternJoinMode = PatternJoinMode.NOJOIN;
 
@@ -82,5 +83,15 @@ public class ChordPart extends InstPart {
 
 	public int getPartNum() {
 		return 2;
+	}
+
+
+	public int getStrumPauseChance() {
+		return strumPauseChance;
+	}
+
+
+	public void setStrumPauseChance(int strumPauseChance) {
+		this.strumPauseChance = strumPauseChance;
 	};
 }

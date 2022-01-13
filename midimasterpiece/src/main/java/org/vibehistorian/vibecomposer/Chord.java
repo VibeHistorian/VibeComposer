@@ -18,6 +18,7 @@ public class Chord {
 	private int velocity = 69;
 	private StrumType strumType = StrumType.ARP_U;
 	private List<Note> storedNotesBackwards = null;
+	private int strumPauseChance = 0;
 
 	public Chord(int[] notes) {
 		this.notes = notes;
@@ -89,14 +90,19 @@ public class Chord {
 		c2.transpose = c.transpose;
 		c2.velocity = c.velocity;
 		c2.strumType = c.strumType;
+		c2.strumPauseChance = c.strumPauseChance;
 		return c2;
 	}
 
 	public void makeAndStoreNotesBackwards(Random gen) {
 		List<Note> noteList = new ArrayList<>();
 		for (int i = notes.length - 1; i >= 0; i--) {
+			if (gen.nextInt(100) < strumPauseChance) {
+				notes[i] = Note.REST;
+			}
+
 			int pitch = notes[i];
-			if (pitch > 0) {
+			if (pitch >= 0) {
 				pitch += transpose;
 			}
 			double rhythm = (i > 0) ? 0.0 : rhythmValue;
@@ -145,5 +151,13 @@ public class Chord {
 
 	public void setStoredNotesBackwards(List<Note> storedNotesBackwards) {
 		this.storedNotesBackwards = storedNotesBackwards;
+	}
+
+	public int getStrumPauseChance() {
+		return strumPauseChance;
+	}
+
+	public void setStrumPauseChance(int strumPauseChance) {
+		this.strumPauseChance = strumPauseChance;
 	}
 }

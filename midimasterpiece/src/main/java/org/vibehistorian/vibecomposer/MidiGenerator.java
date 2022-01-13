@@ -4473,6 +4473,7 @@ public class MidiGenerator implements JMC {
 
 				flamGenerator.setSeed(orderSeed + 30 + (chordIndex % 2));
 				Chord c = Chord.EMPTY(progressionDurations.get(chordIndex));
+				c.setStrumPauseChance(ip.getStrumPauseChance());
 
 				Random velocityGenerator = new Random(orderSeed + chordIndex);
 				c.setStrumType(ip.getStrumType());

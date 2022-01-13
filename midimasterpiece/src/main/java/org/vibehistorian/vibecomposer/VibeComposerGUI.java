@@ -956,8 +956,8 @@ public class VibeComposerGUI extends JFrame
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
 
 		globalVolSlider = new VeloRect(0, 150, 100);
-		globalReverbSlider = new VeloRect(0, 127, 96);
-		globalChorusSlider = new VeloRect(0, 127, 48);
+		globalReverbSlider = new VeloRect(0, 127, 60);
+		globalChorusSlider = new VeloRect(0, 127, 15);
 
 		mainButtonsPanel.add(new JLabel("Vol."));
 		mainButtonsPanel.add(globalVolSlider);
@@ -1706,7 +1706,7 @@ public class VibeComposerGUI extends JFrame
 					melodyPanel.setTranspose(-12);
 					melodyPanel.getPanSlider().setValue(25);
 				}
-				melodyPanel.getVolSlider().setValue(55);
+				melodyPanel.getVolSlider().setValue(45);
 			} else {
 				melodyPanel.setFillPauses(false);
 				melodyPanel.setSpeed(25);
@@ -1714,6 +1714,7 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(105);
 				melodyPanel.setVelocityMin(45);
+				melodyPanel.getVolSlider().setValue(50);
 				melodyPanel.setNoteLengthMultiplier(115);
 			}
 		}
@@ -7526,13 +7527,13 @@ public class VibeComposerGUI extends JFrame
 						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
 				melodyPanel.setVelocityMax(65 + melodyRand.nextInt(20));
 				melodyPanel.setVelocityMin(40 + melodyRand.nextInt(20));
-				if (i % 2 == 1) {
+				/*if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
 					melodyPanel.getPanSlider().setValue(75);
 				} else {
 					melodyPanel.setTranspose(-12);
 					melodyPanel.getPanSlider().setValue(25);
-				}
+				}*/
 				melodyPanel.setNoteLengthMultiplier(70 + melodyRand.nextInt(40));
 			} else {
 				melodyPanel.setFillPauses(melodyRand.nextBoolean());
