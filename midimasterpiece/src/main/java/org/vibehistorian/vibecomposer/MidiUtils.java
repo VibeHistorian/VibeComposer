@@ -599,7 +599,9 @@ public class MidiUtils {
 			return chord;
 		int[] transposed = Arrays.copyOf(chord, chord.length);
 		for (int i = 0; i < chord.length; i++) {
-			transposed[i] += transposeBy;
+			if (transposed[i] >= 0) {
+				transposed[i] += transposeBy;
+			}
 		}
 		return transposed;
 	}
@@ -931,6 +933,12 @@ public class MidiUtils {
 		}
 		//LG.i("NEW AVG: " + calculateAverageNote(squishedChords));
 		return squishedChords;
+	}
+
+	public static int transposeNote(int pitch, final Integer[] mode, final Integer[] modeTo) {
+		int[] noteChord = { pitch };
+		noteChord = transposeChord(noteChord, mode, modeTo);
+		return noteChord[0];
 	}
 
 	public static int[] transposeChord(int[] chord, final Integer[] mode, final Integer[] modeTo) {

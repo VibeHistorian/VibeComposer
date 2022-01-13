@@ -414,4 +414,9 @@ public abstract class InstPart implements Cloneable {
 	public void setCustomMidi(PhraseNotes customMidi) {
 		this.customMidi = customMidi;
 	}
+
+
+	public String partInfo() {
+		return "Part: " + getPartNum() + ", order: " + getOrder();
+	}
 }

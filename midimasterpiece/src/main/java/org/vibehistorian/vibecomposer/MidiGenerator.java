@@ -3937,6 +3937,7 @@ public class MidiGenerator implements JMC {
 	public Phrase fillMelodyFromPart(MelodyPart ip, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
+		LG.d("Processing: " + ip.partInfo());
 		Phrase phr = new Phrase();
 
 		int measures = sec.getMeasures();
@@ -4069,6 +4070,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillBassFromPart(BassPart ip, List<int[]> generatedRootProgression, Section sec,
 			List<Integer> variations) {
+		LG.d("Processing: " + ip.partInfo());
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();
@@ -4344,6 +4346,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillChordsFromPart(ChordPart ip, List<int[]> actualProgression, Section sec,
 			List<Integer> variations) {
+		LG.d("Processing: " + ip.partInfo());
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();
@@ -4473,16 +4476,6 @@ public class MidiGenerator implements JMC {
 
 				flamGenerator.setSeed(orderSeed + 30 + (chordIndex % 2));
 				Chord c = Chord.EMPTY(progressionDurations.get(chordIndex));
-				c.setStrumPauseChance(ip.getStrumPauseChance());
-
-				Random velocityGenerator = new Random(orderSeed + chordIndex);
-				c.setStrumType(ip.getStrumType());
-
-				boolean transition = transitionGenerator.nextInt(100) < ip.getTransitionChance();
-				int transChord = (transitionGenerator.nextInt(100) < ip.getTransitionChance())
-						? (chordIndex + 1) % actualProgression.size()
-						: chordIndex;
-
 				if (!ignoreChordSpanFill) {
 					if (fillPattern.get(chordIndex) < 1) {
 						chords.add(c);
@@ -4491,7 +4484,15 @@ public class MidiGenerator implements JMC {
 						continue;
 					}
 				}
+				Random velocityGenerator = new Random(orderSeed + chordIndex);
 
+				boolean transition = transitionGenerator.nextInt(100) < ip.getTransitionChance();
+				int transChord = (transitionGenerator.nextInt(100) < ip.getTransitionChance())
+						? (chordIndex + 1) % actualProgression.size()
+						: chordIndex;
+
+				c.setStrumPauseChance(ip.getStrumPauseChance());
+				c.setStrumType(ip.getStrumType());
 				c.setDurationRatio((ip.getNoteLengthMultiplier() / 100.0) / halfDurMulti);
 
 				int[] mainChordNotes = actualProgression.get(chordIndex);
@@ -4526,13 +4527,11 @@ public class MidiGenerator implements JMC {
 						&& chordIndex >= actualProgression.size() - 2);
 
 				if (stretchOverride || ip.isStretchEnabled()) {
-					Integer stretchAmount = (stretchOverride)
+					int stretchAmount = (stretchOverride)
 							? (sec.getTransitionType() == 1 || sec.getTransitionType() == 4 ? 7 : 2)
 							: stretch;
-					mainChordNotes = convertChordToLength(mainChordNotes,
-							(stretchAmount != null) ? stretchAmount : mainChordNotes.length);
-					transChordNotes = convertChordToLength(transChordNotes,
-							(stretchAmount != null) ? stretchAmount : transChordNotes.length);
+					mainChordNotes = convertChordToLength(mainChordNotes, stretchAmount);
+					transChordNotes = convertChordToLength(transChordNotes, stretchAmount);
 				}
 
 
@@ -4718,6 +4717,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillArpFromPart(ArpPart ip, List<int[]> actualProgression, Section sec,
 			List<Integer> variations) {
+		LG.d("Processing: " + ip.partInfo());
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();
@@ -4725,7 +4725,7 @@ public class MidiGenerator implements JMC {
 		Phrase phr = new Phrase();
 
 		ArpPart apClone = (ArpPart) ip.clone();
-		int seed = ip.getPatternSeedWithPartOffset();
+		int seed = ip.getPatternSeedWithPartOffset() + ip.getOrder();
 		Map<String, List<Integer>> arpMap = generateArpMap(seed, ip.equals(gc.getArpParts().get(0)),
 				ip);
 
@@ -4877,8 +4877,7 @@ public class MidiGenerator implements JMC {
 					if (!fillLastBeat || chordIndex < actualProgression.size() - 1) {
 						if (isPause) {
 							pitch = Integer.MIN_VALUE;
-						}
-						if (!ignoreChordSpanFill) {
+						} else if (!ignoreChordSpanFill) {
 							if (fillPattern.get(chordIndex) < 1) {
 								pitch = Integer.MIN_VALUE;
 							}
@@ -4892,10 +4891,20 @@ public class MidiGenerator implements JMC {
 							pitch = Integer.MIN_VALUE;
 						}
 					}
-					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance()) {
+					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance() && pitch >= 0) {
 						double splitDuration = usedDuration / 2;
+						int patternNum2 = pitchPatternSpanned.get((p + 1) % repeatedArpsPerChord);
+						int pitch2 = chord[patternNum2 % chord.length] += extraTranspose;
+						if (pitch2 >= 0) {
+							pitch2 = MidiUtils.transposeNote((pitch + pitch2) / 2,
+									ScaleMode.IONIAN.noteAdjustScale,
+									ScaleMode.IONIAN.noteAdjustScale);
+						} else {
+							pitch2 = pitch;
+						}
+						//LG.d("Splitting arp!");
 						phr.addNote(new Note(pitch, splitDuration, velocity));
-						phr.addNote(new Note(pitch, splitDuration, velocity - 15));
+						phr.addNote(new Note(pitch2, splitDuration, Math.max(0, velocity - 15)));
 					} else {
 						phr.addNote(new Note(pitch, usedDuration, velocity));
 					}
@@ -4947,6 +4956,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillDrumsFromPart(DrumPart ip, List<int[]> actualProgression,
 			boolean sectionForcedDynamics, Section sec, List<Integer> variations) {
+		LG.d("Processing: " + ip.partInfo());
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();

@@ -495,6 +495,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> randomArpStretchType;
 	ScrollComboBox<Integer> randomArpStretchPicker;
 	KnobPanel randomArpStretchGenerationChance;
+	KnobPanel randomArpMaxExceptionChance;
 	JCheckBox randomArpUseOctaveAdjustments;
 	KnobPanel randomArpMaxSwing;
 	KnobPanel randomArpMaxRepeat;
@@ -1992,6 +1993,8 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.add(randomArpStretchPicker);
 		randomArpStretchGenerationChance = new DetachedKnobPanel("Chance", 50);
 		arpsSettingsPanel.add(randomArpStretchGenerationChance);
+		randomArpMaxExceptionChance = new DetachedKnobPanel("Max.<br>Split%", 20);
+		arpsSettingsPanel.add(randomArpMaxExceptionChance);
 
 		toggleableComponents.add(stretchLabel);
 		toggleableComponents.add(randomArpStretchType);
@@ -6985,6 +6988,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomArpStretchType);
 		cs.add(randomArpStretchPicker);
 		cs.add(randomArpStretchGenerationChance);
+		cs.add(randomArpMaxExceptionChance);
 		cs.add(arpCopyMelodyInst);
 		cs.add(randomArpAllSameInst);
 		cs.add(randomArpLimitPowerOfTwo);
@@ -8278,6 +8282,9 @@ public class VibeComposerGUI extends JFrame
 
 				}
 			}
+
+
+			ip.setExceptionChance(panelGenerator.nextInt(randomArpMaxExceptionChance.getInt() + 1));
 
 			if (!randomArpStretchType.getVal().equals("NONE")
 					&& panelGenerator.nextInt(100) < randomArpStretchGenerationChance.getInt()) {

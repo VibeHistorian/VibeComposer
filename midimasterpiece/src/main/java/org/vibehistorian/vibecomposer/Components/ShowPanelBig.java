@@ -444,7 +444,7 @@ public class ShowPanelBig extends JPanel {
 		}
 		partsToRemove.forEach(e -> scrCopy.removePart(e));
 		maxEndTime = score.getEndTime();
-		LG.i("New score set with maxEndTime: " + maxEndTime);
+		//LG.i("New score set with maxEndTime: " + maxEndTime);
 		this.score = scrCopy;
 		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime);
 		if (beatWidth < 1.0)
