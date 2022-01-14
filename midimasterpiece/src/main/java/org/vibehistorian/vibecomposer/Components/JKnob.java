@@ -436,7 +436,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
 
-			fine = VibeComposerGUI.knobControlByDragging.isSelected();
+			fine = VibeComposerGUI.knobControlByDragging.isSelected() || e.isShiftDown();
 			fineStart = curr;
 			startPoint = new Point(MouseInfo.getPointerInfo().getLocation());
 			SwingUtilities.convertPointFromScreen(startPoint, JKnob.this);
@@ -510,7 +510,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 	}
 
-	public void updateValueFromScreen() {
+	public void updateValueFromScreen(MouseEvent e) {
 		if (!isEnabled()) {
 			return;
 		}
@@ -521,7 +521,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		int range = max - min;
 		int newVal = fineStart + (range * yChange / getHeight());
 		if (fine) {
-			newVal = (fineStart * 9 + newVal) / 10;
+			if (e.isShiftDown()) {
+				newVal = (fineStart * 99 + newVal) / 100;
+			} else {
+				newVal = (fineStart * 9 + newVal) / 10;
+			}
+
 		}
 		setValue(OMNI.clamp(newVal, min, max));
 		repaint();
@@ -532,7 +537,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			return;
 		}
 		if (fine) {
-			updateValueFromScreen();
+			updateValueFromScreen(e);
 			return;
 		}
 

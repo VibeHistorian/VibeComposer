@@ -412,8 +412,8 @@ public class MidiGenerator implements JMC {
 					}
 					blockDurationsMap.put(blockOffset, durations);
 				}
-				LG.d("Overall Block Durations: " + StringUtils.join(durations, ",")
-						+ ", Doubled rhythm: " + sameRhythmTwice);
+				/*LG.d("Overall Block Durations: " + StringUtils.join(durations, ",")
+						+ ", Doubled rhythm: " + sameRhythmTwice);*/
 				int chord1 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex,
 						BLOCK_TARGET_MODE);
 				int chord2 = getStartingNote(stretchedChords, blockChordNoteChoices, chordIndex + 1,
@@ -436,7 +436,7 @@ public class MidiGenerator implements JMC {
 										remainingDirChanges);
 				remainingDirChanges -= blockChangesPair.getRight();
 				List<Integer> blockChanges = blockChangesPair.getLeft();
-				LG.d("Block changes: " + blockChanges);
+				LG.n("Block changes: " + blockChanges);
 				int startingNote = chord1 % 7;
 
 				List<Integer> forcedLengths = (existingPattern != null
@@ -455,11 +455,11 @@ public class MidiGenerator implements JMC {
 				//LG.d("Starting note: " + startingNote);
 
 				if (existingPattern == null) {
-					LG.d("Stored pattern: " + blockOffset + ", for chord index:" + chordIndex
+					LG.n("Stored pattern: " + blockOffset + ", for chord index:" + chordIndex
 							+ ", Pattern effect: " + gc.getMelodyPatternEffect());
 					changesAndBlocksMap.put(blockOffset, Pair.of(blockChangesPair, melodyBlocks));
 				} else {
-					LG.d("Loaded pattern: " + blockOffset + ", for chord index:" + chordIndex
+					LG.n("Loaded pattern: " + blockOffset + ", for chord index:" + chordIndex
 							+ ", Pattern effect: " + gc.getMelodyPatternEffect());
 				}
 
@@ -725,7 +725,7 @@ public class MidiGenerator implements JMC {
 				int offset = (targetMode == 1) ? offsets.get(i) - chordOffsets.get(i)
 						: offsets.get(i);
 				int chordTargetNote = MidiUtils.getClosestFromList(choices, offset);
-				LG.d("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
+				LG.n("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
 				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
 						: chordTargetNote);
 			}
@@ -1023,7 +1023,7 @@ public class MidiGenerator implements JMC {
 				pattern.set(i, 1 - pattern.get(i));
 			}
 		}
-		LG.d("Melody note pattern: " + StringUtils.join(pattern, ", "));
+		//LG.d("Melody note pattern: " + StringUtils.join(pattern, ", "));
 		return pattern;
 	}
 
@@ -1547,7 +1547,7 @@ public class MidiGenerator implements JMC {
 				//pauseGenerator2.setSeed(seed + 7);
 				splitNoteGenerator.setSeed(orderSeed + 8);
 				splitNoteExceptionGenerator.setSeed(orderSeed + 9);
-				LG.d("Conversion chord#: " + chordCounter + ", duration: " + currentChordDur);
+				LG.n("Conversion chord#: " + chordCounter + ", duration: " + currentChordDur);
 			}
 
 			double adjDur = n1.getRhythmValue();
@@ -4837,7 +4837,7 @@ public class MidiGenerator implements JMC {
 
 				// reset every 2
 				if (chordIndex % 2 == 0) {
-					exceptionGenerator.setSeed(seed + 1);
+					//exceptionGenerator.setSeed(seed + 1);
 				}
 				List<Integer> pitchPatternSpanned = partOfList(chordSpanPart, ip.getChordSpan(),
 						arpPattern);

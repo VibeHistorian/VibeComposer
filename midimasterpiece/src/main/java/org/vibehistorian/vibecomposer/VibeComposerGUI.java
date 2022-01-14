@@ -2070,7 +2070,7 @@ public class VibeComposerGUI extends JFrame
 		addDrums = new JCheckBox("DRUMS", true);
 		drumsPanel.add(addDrums);
 
-		drumVolumeSlider = new VeloRect(0, 100, 80);
+		drumVolumeSlider = new VeloRect(0, 100, 70);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
 		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
 		//drumVolumeSlider.setPaintTicks(true);
@@ -7555,7 +7555,7 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				melodyPanel.setFillPauses(melodyRand.nextBoolean());
 				melodyPanel.setPauseChance(melodyRand.nextInt(35));
-				melodyPanel.setTranspose(12);
+				//melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(80 + melodyRand.nextInt(30));
 				melodyPanel.setVelocityMin(50 + melodyRand.nextInt(25));
 				melodyPanel.setNoteLengthMultiplier(100 + melodyRand.nextInt(25));
@@ -8290,8 +8290,15 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-
-			ip.setExceptionChance(panelGenerator.nextInt(randomArpMaxExceptionChance.getInt() + 1));
+			boolean fastArp = (ip.getPatternRepeat() * ip.getHitsPerPattern()
+					/ (double) ip.getChordSpan()) >= 16;
+			if (fastArp) {
+				ip.setExceptionChance(
+						panelGenerator.nextInt(1 + (randomArpMaxExceptionChance.getInt() / 3)));
+			} else {
+				ip.setExceptionChance(
+						panelGenerator.nextInt(1 + randomArpMaxExceptionChance.getInt()));
+			}
 
 			if (!randomArpStretchType.getVal().equals("NONE")
 					&& panelGenerator.nextInt(100) < randomArpStretchGenerationChance.getInt()) {
@@ -8372,14 +8379,14 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		if (!affectedArps.isEmpty()) {
+		/*if (!affectedArps.isEmpty()) {
 			ArpPanel lowest = affectedArps.get(0);
 			if (!lowest.getLockInst()) {
 				lowest.setPatternRepeat(1);
 				lowest.setChordSpan(1);
-
+		
 			}
-		}
+		}*/
 
 		//sizeRespectingPack();
 		repaint();
