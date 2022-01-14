@@ -475,6 +475,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> randomChordStretchType;
 	ScrollComboBox<Integer> randomChordStretchPicker;
 	KnobPanel randomChordStretchGenerationChance;
+	KnobPanel randomChordMaxStrumPauseChance;
 	KnobPanel randomChordMinVel;
 	KnobPanel randomChordMaxVel;
 
@@ -1857,6 +1858,8 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsPanel.add(randomChordStretchPicker);
 		randomChordStretchGenerationChance = new DetachedKnobPanel("Chance", 50);
 		chordSettingsPanel.add(randomChordStretchGenerationChance);
+		randomChordMaxStrumPauseChance = new DetachedKnobPanel("Max. Strum<br>Pause %", 35);
+		chordSettingsPanel.add(randomChordMaxStrumPauseChance);
 
 		JButton clearChordPatternSeeds = makeButton("Clear presets", "ClearChordPatterns");
 
@@ -6966,6 +6969,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomChordStretchType);
 		cs.add(randomChordStretchPicker);
 		cs.add(randomChordStretchGenerationChance);
+		cs.add(randomChordMaxStrumPauseChance);
 		cs.add(randomChordVaryLength);
 		cs.add(randomChordExpandChance);
 		cs.add(randomChordSustainChance);
@@ -8057,6 +8061,9 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				ip.setStretchEnabled(false);
 			}
+
+			ip.setStrumPauseChance(
+					panelGenerator.nextInt(randomChordMaxStrumPauseChance.getInt() + 1));
 
 			ip.setPattern(pattern);
 			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
