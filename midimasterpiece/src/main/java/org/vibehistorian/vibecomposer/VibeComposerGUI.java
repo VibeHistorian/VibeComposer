@@ -345,6 +345,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeArrangementOnCompose;
 	public static final String GLOBAL = "Global";
 	public static ButtonSelectorPanel arrSection;
+	public static JScrollPane arrSectionPane;
 	public static boolean switchTabPaneAfterApply;
 	JPanel arrangementMiddleColoredPanel;
 	ScrollComboBox<String> newSectionBox;
@@ -2678,14 +2679,18 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 
-		JScrollPane arrSectionPane = new JScrollPane() {
+		arrSectionPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(scrollPaneDimension.width, 40);
+				return new Dimension(scrollPaneDimension.width, 45);
 			}
 		};
 		arrSectionPane.setViewportView(arrSection);
 		arrSectionPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		arrSectionPane.getHorizontalScrollBar().setUnitIncrement(32);
+		arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		arrSectionPane.setOpaque(true);
+		arrSection.setOpaque(true);
 		everythingPanel.add(arrSectionPane, constraints);
 		constraints.gridy = startY + 1;
 		everythingPanel.add(arrangementSettings, constraints);
@@ -4877,7 +4882,7 @@ public class VibeComposerGUI extends JFrame
 		//sizeRespectingPack();
 		//setVisible(true);
 		repaint();
-
+		arrSectionPane.repaint();
 		if (scorePanel != null) {
 
 			scorePanel.setupMouseWheelListener();
