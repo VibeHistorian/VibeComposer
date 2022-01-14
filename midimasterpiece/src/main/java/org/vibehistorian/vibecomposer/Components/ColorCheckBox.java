@@ -51,8 +51,7 @@ public class ColorCheckBox extends JCheckBox {
 			color = isSelected()
 					? ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.darker()
 							: VibeComposerGUI.lightModeUIColor)
-					: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
-							: VibeComposerGUI.panelColorHigh);
+					: VibeComposerGUI.panelColorLow;
 		}
 
 		//g.setColor(color);
