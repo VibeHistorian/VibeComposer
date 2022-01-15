@@ -4,7 +4,6 @@
 ![VibeComposer Simple UI Preview](https://i.imgur.com/Iasl64U.png)
 
 #### Arranged Track Examples (v1.9): 
-- https://soundcloud.com/vibehistorian/space-journey
 - https://soundcloud.com/vibehistorian/anaesthesia-blues
 - https://soundcloud.com/vibehistorian/osiris
 - https://soundcloud.com/vibehistorian/utopia
