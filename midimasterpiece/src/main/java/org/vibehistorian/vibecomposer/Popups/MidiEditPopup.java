@@ -299,6 +299,9 @@ public class MidiEditPopup extends CloseablePopup {
 		setSec(sec);
 		PhraseNotes values = sec.getPhraseNotes(part, partOrder);
 		if (applyToMainBtn.isSelected() && (values == null || !values.isCustom())) {
+			LG.i("Setup - not applicable, or not custom midi!");
+			applyToMainBtn.useFunc();
+			repaintMvea();
 			return;
 		}
 

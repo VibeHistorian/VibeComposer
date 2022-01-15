@@ -109,7 +109,9 @@ public class Chord {
 				pitch += transpose;
 			}
 			double rhythm = (i > 0) ? 0.0 : rhythmValue;
-			//LG.d("Chord pitch: " + pitch);
+			if (pitch < 0 && pitch > Note.REST) {
+				LG.d("ERROR - Chord pitch: " + pitch);
+			}
 			Note n = new Note(pitch, rhythm, velocity);
 			n.setDuration(getDuration() * MidiGenerator.DEFAULT_DURATION_MULTIPLIER);
 			//n.setOffset(flam * i);

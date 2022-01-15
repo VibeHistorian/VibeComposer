@@ -61,7 +61,6 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -154,7 +153,6 @@ public class MidiGenerator implements JMC {
 
 	// visibles/settables
 	public static DrumGenSettings DRUM_SETTINGS = new DrumGenSettings();
-	public static ArpGenSettings ARP_SETTINGS = new ArpGenSettings();
 
 	public static List<String> userChords = new ArrayList<>();
 	public static List<Double> userChordsDurations = new ArrayList<>();
@@ -4000,7 +3998,7 @@ public class MidiGenerator implements JMC {
 				int chordCounter = 0;
 				int measureCounter = 0;
 				double cumulativeChordDur = progressionDurations.get(0);
-				PhraseNotes pn = sec.getPhraseNotes(0, 0);
+				PhraseNotes pn = new PhraseNotes(phr);
 				pn.remakeNoteStartTimes();
 				List<PhraseNote> pns = new ArrayList<>(pn);
 				Collections.sort(pns,
@@ -4051,8 +4049,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> melodyVars = sec.getVariation(0, ip.getAbsoluteOrder());
 		// extraTranspose variation
 		int extraTranspose = 0;
-		if (melodyVars != null && !melodyVars.isEmpty()
-				&& melodyVars.contains(Integer.valueOf(0))) {
+		if (melodyVars != null && melodyVars.contains(Integer.valueOf(0))) {
 			extraTranspose = 12;
 		}
 
@@ -4421,7 +4418,7 @@ public class MidiGenerator implements JMC {
 
 						switch (var) {
 						case 0:
-							extraTranspose = 12;
+							//extraTranspose = 12;
 							break;
 						case 1:
 							ignoreChordSpanFill = true;
@@ -4671,6 +4668,12 @@ public class MidiGenerator implements JMC {
 		}
 		// transpose
 		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? ip.getTranspose() : 0;
+
+		// extraTranspose variation
+		List<Integer> vars = sec.getVariation(2, ip.getAbsoluteOrder());
+		if (vars != null && vars.contains(Integer.valueOf(0))) {
+			extraTranspose += 12;
+		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
@@ -4792,7 +4795,7 @@ public class MidiGenerator implements JMC {
 
 						switch (var) {
 						case 0:
-							extraTranspose = 12;
+							//extraTranspose = 12;
 							break;
 						case 1:
 							ignoreChordSpanFill = true;
@@ -4923,7 +4926,14 @@ public class MidiGenerator implements JMC {
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
 		}
 
-		int extraTranspose = ARP_SETTINGS.isUseTranspose() ? ip.getTranspose() : 0;
+		int extraTranspose = ip.getTranspose();
+
+		// extraTranspose variation
+		List<Integer> vars = sec.getVariation(3, ip.getAbsoluteOrder());
+		if (vars != null && vars.contains(Integer.valueOf(0))) {
+			extraTranspose += 12;
+		}
+
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
@@ -5147,12 +5157,14 @@ public class MidiGenerator implements JMC {
 		if (pn == null || !pn.isCustom()) {
 			// if section has a customized part, try to get midi from it
 			// otherwise try to get it from a global inst panel
-			pn = sec.getInstPartList(ip.getPartNum()) != null
+			pn = (sec.getInstPartList(ip.getPartNum()) != null)
 					? sec.getInstPartList(ip.getPartNum()).get(ip.getAbsoluteOrder())
 							.getCustomMidi()
 					: VibeComposerGUI.getInstList(ip.getPartNum()).get(ip.getAbsoluteOrder())
 							.getCustomMidi();
 			if (pn != null && pn.isCustom()) {
+				LG.i("Custom midi found in custom panel? : "
+						+ (sec.getInstPartList(ip.getPartNum()) != null));
 				PhraseNotes secPn = pn.copy();
 				secPn.setCustom(false);
 				sec.addPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder(), secPn);

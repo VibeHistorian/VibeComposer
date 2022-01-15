@@ -1460,7 +1460,7 @@ public class VibeComposerGUI extends JFrame
 		melodyScrollPane.setViewportView(scrollableMelodyPanels);
 		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
+		SwingUtils.setupScrollpanePriorityScrolling(melodyScrollPane);
 		//melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
 
@@ -1747,6 +1747,7 @@ public class VibeComposerGUI extends JFrame
 		bassScrollPane.setViewportView(scrollableBassPanels);
 		bassScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		bassScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		SwingUtils.setupScrollpanePriorityScrolling(bassScrollPane);
 
 		JPanel bassSettingsPanel = new JPanel();
 		addBass = new JCheckBox("BASS", true);
@@ -1793,6 +1794,7 @@ public class VibeComposerGUI extends JFrame
 		chordScrollPane.setViewportView(scrollableChordPanels);
 		chordScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		chordScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		SwingUtils.setupScrollpanePriorityScrolling(chordScrollPane);
 
 		JPanel chordSettingsPanel = new JPanel();
 		chordSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -1929,6 +1931,7 @@ public class VibeComposerGUI extends JFrame
 		arpScrollPane.setViewportView(scrollableArpPanels);
 		arpScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		SwingUtils.setupScrollpanePriorityScrolling(arpScrollPane);
 
 		JPanel arpsSettingsPanel = new JPanel();
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -2062,9 +2065,9 @@ public class VibeComposerGUI extends JFrame
 			}
 		};
 		drumScrollPane.setViewportView(scrollableDrumPanels);
-
 		drumScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		drumScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		SwingUtils.setupScrollpanePriorityScrolling(drumScrollPane);
 
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
