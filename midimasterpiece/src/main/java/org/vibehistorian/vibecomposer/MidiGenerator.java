@@ -1685,6 +1685,10 @@ public class MidiGenerator implements JMC {
 			int currentChordIndex = 0;
 			int currentChordCount = 1;
 
+			// 0 1 2 3 | 4 5 6 7 | 8
+			// size of 0: 4 
+			// processing 4:
+
 			for (int i = 1; i < fullMelody.size(); i++) {
 				Note n = fullMelody.get(i);
 				currentChordCount++;
@@ -1693,9 +1697,9 @@ public class MidiGenerator implements JMC {
 					currentChordCount = 1;
 				}
 
-				if (n.getPitch() < 0) {
+				if (n.getPitch() < 0 && currentChordCount != 1) {
 					addedRv += n.getRhythmValue();
-					if (fillerPattern.get(currentChordIndex) >= 1) {
+					if (fillerPattern.get(currentChordIndex) > 0) {
 						addedDuration += n.getRhythmValue();
 					}
 
@@ -1722,7 +1726,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < firstNotePitches.size(); i++) {
 			if (fullMelodyMap.get(i).size() > 0) {
 				Note n = fullMelodyMap.get(i).get(0);
-				if (n.getPitch() >= 0) {
+				if (n.getPitch() >= 0 || gc.isMelodyFillPausesPerChord()) {
 					n.setPitch(firstNotePitches.get(i));
 				}
 			}
@@ -4057,7 +4061,7 @@ public class MidiGenerator implements JMC {
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		if (modTrans != 0 || extraTranspose != 0) {
+		if ((modTrans + extraTranspose) != 0) {
 			Mod.transpose(phr, modTrans + extraTranspose);
 		}
 		phr.setStartTime(START_TIME_DELAY);
