@@ -1697,7 +1697,8 @@ public class MidiGenerator implements JMC {
 					currentChordCount = 1;
 				}
 
-				if (n.getPitch() < 0 && currentChordCount != 1) {
+				if (n.getPitch() < 0
+						&& !(currentChordCount == 1 && gc.isMelodyFillPausesPerChord())) {
 					addedRv += n.getRhythmValue();
 					if (fillerPattern.get(currentChordIndex) > 0) {
 						addedDuration += n.getRhythmValue();
@@ -1716,7 +1717,7 @@ public class MidiGenerator implements JMC {
 			fullMelody.removeAll(notesToRemove);
 			fullMelodyMap.values().forEach(e -> e.removeAll(notesToRemove));
 
-			if (addedDuration > DBL_ERR) {
+			if (addedDuration > DBL_ERR || addedRv > DBL_ERR) {
 				fillPauseNote.setDuration(fillPauseNote.getDuration() + addedDuration);
 				fillPauseNote.setRhythmValue(fillPauseNote.getRhythmValue() + addedRv);
 			}
