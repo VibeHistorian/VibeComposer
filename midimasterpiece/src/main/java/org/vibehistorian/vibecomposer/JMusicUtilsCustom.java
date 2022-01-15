@@ -3,13 +3,16 @@ package org.vibehistorian.vibecomposer;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.Vector;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 
@@ -451,4 +454,14 @@ public class JMusicUtilsCustom implements JMC {
 		return rounded;
 	}
 
+	public static List<Pair<Double, Note>> makeNoteStartTimes(List<Note> notes) {
+		double current = 0.0;
+		List<Pair<Double, Note>> startTimes = new ArrayList<>();
+		for (Note n : notes) {
+			startTimes.add(Pair.of(current + n.getOffset(), n));
+			current += n.getRhythmValue();
+		}
+		Collections.sort(startTimes, Comparator.comparing(e -> e.getKey()));
+		return startTimes;
+	}
 }

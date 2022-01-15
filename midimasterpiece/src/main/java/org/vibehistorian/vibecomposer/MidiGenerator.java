@@ -2084,14 +2084,18 @@ public class MidiGenerator implements JMC {
 			return;
 		}
 		boolean avoidSamePitchCollision = true;
-		for (int i = 0; i < notes.size(); i++) {
-			Note n = notes.get(i);
+		List<Pair<Double, Note>> sn = JMusicUtilsCustom.makeNoteStartTimes(notes);
+		for (int i = 0; i < sn.size(); i++) {
+			Note n = sn.get(i).getRight();
 			double duration = n.getDuration() * noteLengthMultiplier / 100.0;
 			if (avoidSamePitchCollision && noteLengthMultiplier > 100) {
-				if (i < notes.size() - 1 && n.getPitch() == notes.get(i + 1).getPitch()) {
-					duration = Math.min(duration, n.getRhythmValue() * 0.95);
-				} else if (i < notes.size() - 2 && n.getPitch() == notes.get(i + 2).getPitch()) {
-					duration = Math.min(duration, n.getRhythmValue() * 0.95);
+				if (i < sn.size() - 1 && n.getPitch() == sn.get(i + 1).getRight().getPitch()) {
+					double difference = sn.get(i + 1).getLeft() - sn.get(i).getLeft();
+					duration = Math.min(duration, difference);
+				} else if (i < sn.size() - 2
+						&& n.getPitch() == sn.get(i + 2).getRight().getPitch()) {
+					double difference = sn.get(i + 2).getLeft() - sn.get(i).getLeft();
+					duration = Math.min(duration, difference);
 				}
 			}
 			n.setDuration(duration);
