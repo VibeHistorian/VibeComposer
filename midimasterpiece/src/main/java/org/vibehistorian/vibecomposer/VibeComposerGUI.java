@@ -7263,7 +7263,11 @@ public class VibeComposerGUI extends JFrame
 		setFixedLengthChords(gc.getFixedDuration());
 
 		transposeScore.setInt(gc.getTranspose());
-		mainBpm.setInt((int) Math.round(gc.getBpm()));
+		int bpm = (int) Math.round(gc.getBpm());
+		mainBpm.getKnob().setMin(Math.min(VibeComposerGUI.mainBpm.getKnob().getMin(), bpm));
+		mainBpm.getKnob().setMax(Math.max(VibeComposerGUI.mainBpm.getKnob().getMax(), bpm));
+
+		mainBpm.setInt(bpm);
 
 		arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
 		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());

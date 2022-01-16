@@ -4505,6 +4505,8 @@ public class MidiGenerator implements JMC {
 				int[] transChordNotes = actualProgression.get(transChord);
 
 				//only skip if not already an interval (2 notes)
+				boolean copiedMain = false;
+				boolean copiedTrans = false;
 				if (skipSecondNote) {
 					if (mainChordNotes.length > 2) {
 						int[] newMainChordNotes = new int[mainChordNotes.length - 1];
@@ -4516,6 +4518,7 @@ public class MidiGenerator implements JMC {
 
 						}
 						mainChordNotes = newMainChordNotes;
+						copiedMain = true;
 					}
 					if (transChordNotes.length > 2) {
 						int[] newTransChordNotes = new int[transChordNotes.length - 1];
@@ -4527,6 +4530,7 @@ public class MidiGenerator implements JMC {
 						}
 
 						transChordNotes = newTransChordNotes;
+						copiedTrans = true;
 					}
 				}
 				boolean stretchOverride = (sec.isTransition()
@@ -4538,8 +4542,15 @@ public class MidiGenerator implements JMC {
 							: stretch;
 					mainChordNotes = convertChordToLength(mainChordNotes, stretchAmount);
 					transChordNotes = convertChordToLength(transChordNotes, stretchAmount);
+					copiedMain = true;
+					copiedTrans = true;
 				}
-
+				if (!copiedMain) {
+					mainChordNotes = Arrays.copyOf(mainChordNotes, mainChordNotes.length);
+				}
+				if (!copiedTrans) {
+					transChordNotes = Arrays.copyOf(transChordNotes, transChordNotes.length);
+				}
 
 				c.setTranspose(extraTranspose);
 				c.setNotes(mainChordNotes);
