@@ -10,7 +10,9 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,6 +62,7 @@ public class MidiEditArea extends JComponent {
 	int startingDynamic = 0;
 	Integer dragX = null;
 	Integer dragY = null;
+	public static double sectionLength = 16.0;
 
 	MidiEditPopup pop = null;
 
@@ -304,7 +307,7 @@ public class MidiEditArea extends JComponent {
 				if (draggingPosition) {
 					double offset = getOffsetFromPosition(e.getPoint());
 					if (lockTimeGrid) {
-						offset = timeGridValue(offset + draggedNote.getAbsoluteStartTime())
+						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
 								- draggedNote.getAbsoluteStartTime();
 					}
 
@@ -334,6 +337,22 @@ public class MidiEditArea extends JComponent {
 		double timeGrid = MidiEditPopup.getTimeGrid();
 		double newVal = Math.round(val / timeGrid) * timeGrid;
 		return newVal;
+	}
+
+	private double getClosestToTimeGrid(double val) {
+		List<Double> timeGridLocations = new ArrayList<>();
+		double timeGrid = MidiEditPopup.getTimeGrid();
+		double currentTime = 0;
+		while (currentTime < sectionLength) {
+			timeGridLocations.add(currentTime);
+			currentTime += timeGrid;
+		}
+		timeGridLocations
+				.addAll(values.stream().map(e -> e.getStartTime()).collect(Collectors.toSet()));
+		timeGridLocations.stream().distinct().collect(Collectors.toList());
+		Collections.sort(timeGridLocations);
+
+		return MidiUtils.getClosestDoubleFromList(timeGridLocations, val);
 	}
 
 	void setVal(int pos, int pitch) {
@@ -373,8 +392,6 @@ public class MidiEditArea extends JComponent {
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
 
-
-			double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 			double quarterNoteLength = (w - bottomLeft.x) / sectionLength;
 			values.remakeNoteStartTimes();
 
@@ -436,55 +453,61 @@ public class MidiEditArea extends JComponent {
 
 			}
 
+
+			List<Double> timeGridLocations = new ArrayList<>();
+			double timeGrid = MidiEditPopup.getTimeGrid();
+			double currentTime = 0;
+			while (currentTime < sectionLength) {
+				timeGridLocations.add(currentTime);
+				currentTime += timeGrid;
+			}
+			timeGridLocations
+					.addAll(values.stream().map(e -> e.getStartTime()).collect(Collectors.toSet()));
+			timeGridLocations.stream().distinct().collect(Collectors.toList());
+			Collections.sort(timeGridLocations);
+
+
 			// draw numbers below X line
 			// draw line marks
-			for (int i = 0; i < numValues; i++) {
-				String drawnValue = "" + (i + 1);
-				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
-						: drawnValue.length();
-				int drawValueY = numHeight + (bottomLeft.y + h) / 2;
-				int drawMarkY = (bottomLeft.y - markWidth / 2);
-				int drawX = bottomLeft.x
-						+ (int) (quarterNoteLength * values.get(i).getAbsoluteStartTime());
-
-				g.drawString(drawnValue, drawX - (numWidth * valueLength) / 2, drawValueY);
-				g.drawLine(drawX, drawMarkY, drawX, drawMarkY + markWidth);
-
-
-			}
-
-			// draw line helpers/dots
-			for (int i = 0; i < values.size(); i++) {
-				if (values.get(i).getRv() < MidiGenerator.DBL_ERR) {
+			double lineSpacing = (timeGrid < 0.24) ? 0.25 : timeGrid;
+			double prev = -1;
+			for (int i = 0; i < timeGridLocations.size(); i++) {
+				double curr = timeGridLocations.get(i);
+				if (MidiUtils.roughlyEqual(curr, prev)) {
 					continue;
 				}
-				int drawX = bottomLeft.x
-						+ (int) (quarterNoteLength * values.get(i).getAbsoluteStartTime());
+				g.setColor(VibeComposerGUI.uiColor());
+				//String drawnValue = "" + (i + 1);
+				//int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
+				//		: drawnValue.length();
+				int drawValueY = numHeight + (bottomLeft.y + h) / 2;
+				int drawMarkY = (bottomLeft.y - markWidth / 2);
+				int drawX = bottomLeft.x + (int) (quarterNoteLength * curr);
+				double remainderToOne = curr % 1.0;
+				double remainderToFour = curr % 2.0;
+				if (remainderToOne < 0.05 || MidiUtils.isMultiple(remainderToFour, lineSpacing)) {
+					String drawnValue = "";
+					if (remainderToOne < 0.05) {
+						drawnValue = String.format("%.0f", curr);
+					} else {
+						drawnValue = String.format(Locale.GERMAN, "%.2f", remainderToOne);
+						drawnValue = "." + drawnValue.split(",")[1];
+					}
+
+					g.drawString(drawnValue, drawX - (numWidth * drawnValue.length()) / 2,
+							drawValueY);
+				}
+				g.drawLine(drawX, drawMarkY, drawX, drawMarkY + markWidth);
+
+				// draw line helpers/dots
+				g.setColor(highlightedScaleKeyHelperColor);
 				for (int j = 0; j < 1 + max - min; j++) {
 					int drawDotY = bottomLeft.y - (int) (rowHeight * (j + 1));
-					boolean highlighted = false;
-					/*if (pop.highlightMode.getSelectedIndex() % 2 == 1) {
-						// scalekey highlighting
-						if (highlightedScaleKey != null
-								&& highlightedScaleKey.contains((min + i + 1200) % 12)) {
-							g.setColor(highlightedScaleKeyHelperColor);
-							highlighted = true;
-						}
-					}
-					
-					if (pop.highlightMode.getSelectedIndex() >= 2) {
-						// chord highlighting
-						Set<Integer> chordNotes = chordHighlightedNotes
-								.get(valueChordIndexes.get(i));
-						if (chordNotes != null
-								&& chordNotes.contains((values.get(i).getPitch() + 1200) % 12)) {
-							g.setColor(highlightedChordNoteHelperColor);
-							highlighted = true;
-						}
-					}*/
-					g.setColor(highlightedScaleKeyHelperColor);
 					g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
 				}
+
+				prev = curr;
+
 			}
 
 			// draw chord spacing

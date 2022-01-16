@@ -1045,6 +1045,22 @@ public class MidiUtils {
 		return closest;
 	}
 
+	public static double getClosestDoubleFromList(List<Double> list, double valToFind) {
+		if (list == null || list.isEmpty()) {
+			return Double.MIN_VALUE;
+		}
+		double closest = list.get(0);
+		double closestDistance = Math.abs(valToFind - closest);
+		for (int i = 1; i < list.size(); i++) {
+			double distance = Math.abs(valToFind - list.get(i));
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				closest = list.get(i);
+			}
+		}
+		return closest;
+	}
+
 	public static int[] getSpelledChord(String chordString) {
 		List<Character> validChars = Arrays
 				.asList(new Character[] { '#', 'C', 'D', 'E', 'F', 'G', 'A', 'B' });

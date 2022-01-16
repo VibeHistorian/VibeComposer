@@ -80,7 +80,7 @@ import jm.music.tools.Mod;
 
 public class MidiGenerator implements JMC {
 
-	public static final double DBL_ERR = 0.001;
+	public static final double DBL_ERR = 0.01;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
 	public static final double DEFAULT_DURATION_MULTIPLIER = 0.95;
 
@@ -1628,8 +1628,7 @@ public class MidiGenerator implements JMC {
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
 			List<Note> notes = new ArrayList<>(fullMelodyMap.get(chordIndex));
-			Collections.sort(notes,
-					(e1, e2) -> (Double.compare(e1.getRhythmValue(), e2.getRhythmValue())));
+			Collections.sort(notes, Comparator.comparing(e -> e.getRhythmValue()));
 			pauseGenerator.setSeed(orderSeed + 5);
 			int actualPauseChance = adjustChanceParamForTransition(mp.getPauseChance(), sec,
 					chordIndex, durations.size(), 40, 0.25, false);
@@ -4010,8 +4009,7 @@ public class MidiGenerator implements JMC {
 				PhraseNotes pn = new PhraseNotes(phr);
 				pn.remakeNoteStartTimes();
 				List<PhraseNote> pns = new ArrayList<>(pn);
-				Collections.sort(pns,
-						(e1, e2) -> Double.compare(e1.getStartTime(), e2.getStartTime()));
+				Collections.sort(pns, Comparator.comparing(e -> e.getStartTime()));
 				double endTime = pn.get(pn.size() - 1).getAbsoluteStartTime()
 						+ pn.get(pn.size() - 1).getRv();
 				for (int i = 0; i < pns.size() - 1; i++) {

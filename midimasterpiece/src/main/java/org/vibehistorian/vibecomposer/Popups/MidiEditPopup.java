@@ -46,12 +46,12 @@ public class MidiEditPopup extends CloseablePopup {
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
 	public ScrollComboBox<String> snapToTimeGrid = new ScrollComboBox<>(false);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
-	public static final double[] TIME_GRID = new double[] { 0.03125, 1 / 24.0, 0.0625, 1 / 12.0,
-			0.125, 0.1666, 0.25, 0.3333, 0.5, 1.0 };
+	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, 0.25, 1 / 3.0, 0.5,
+			2 / 3.0, 1.0, 4 / 3.0, 2.0, 4.0 };
 
 
 	public static double getTimeGrid() {
-		return TIME_GRID[snapToTimeGridChoice] * 4;
+		return TIME_GRID[snapToTimeGridChoice];
 	}
 
 	public static final int baseMargin = 5;
@@ -115,6 +115,8 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea = new MidiEditArea(min, max, values);
 		mvea.setPop(this);
 		mvea.setPreferredSize(new Dimension(1500, 600));
+
+		mvea.sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
@@ -327,6 +329,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 	void repaintMvea() {
 		mvea.repaint();
+		mvea.sectionLength = mvea.getValues().stream().map(e -> e.getRv()).mapToDouble(e -> e)
+				.sum();
 		text.setText(mvea.getValues().toStringPitches());
 	}
 

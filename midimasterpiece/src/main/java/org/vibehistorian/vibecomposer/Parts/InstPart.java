@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer.Parts;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -397,7 +398,7 @@ public abstract class InstPart implements Cloneable {
 	}
 
 	public static List<? extends InstPart> sortParts(List<? extends InstPart> parts) {
-		Collections.sort(parts, (e1, e2) -> (Integer.compare(e1.getOrder(), e2.getOrder())));
+		Collections.sort(parts, Comparator.comparing(e -> e.getOrder()));
 		return parts;
 	}
 

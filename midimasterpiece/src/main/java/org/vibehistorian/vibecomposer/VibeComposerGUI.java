@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -1323,8 +1324,7 @@ public class VibeComposerGUI extends JFrame
 
 				}
 				List<DrumPanel> sortedDps = new ArrayList<>(drumPanels);
-				Collections.sort(sortedDps,
-						(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+				Collections.sort(sortedDps, Comparator.comparing(e1 -> e1.getPanelOrder()));
 				for (DrumPanel dp : sortedDps) {
 					if (!bottomUpReverseDrumPanels.isSelected()) {
 						((JPanel) getInstPane(4).getViewport().getView()).add(dp);
@@ -7616,8 +7616,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		}
-		Collections.sort(removedPanels,
-				(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
 
 		panelCount -= remainingPanels.size();
 
@@ -7975,8 +7974,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		}
-		Collections.sort(removedPanels,
-				(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
 
 		panelCount -= remainingPanels.size();
 
@@ -8148,8 +8146,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		}
-		Collections.sort(removedPanels,
-				(e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
 
 		panelCount -= remainingPanels.size();
 
@@ -8405,7 +8402,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private static int getValidPanelNumber(List<? extends InstPanel> panels) {
-		panels.sort((e1, e2) -> Integer.compare(e1.getPanelOrder(), e2.getPanelOrder()));
+		panels.sort(Comparator.comparing(e1 -> e1.getPanelOrder()));
 		if (panels.stream().anyMatch(e -> e.getLockInst())) {
 			return getLowestAvailablePanelNumber(panels);
 		} else {
@@ -8662,8 +8659,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static List<? extends InstPanel> sortPanels(List<? extends InstPanel> panels) {
-		Collections.sort(panels,
-				(e1, e2) -> (Integer.compare(e1.getPanelOrder(), e2.getPanelOrder())));
+		Collections.sort(panels, Comparator.comparing(e1 -> e1.getPanelOrder()));
 		return panels;
 	}
 
