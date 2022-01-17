@@ -123,6 +123,9 @@ public class MidiEditArea extends JComponent {
 				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 				PhraseNote pnDragged = getDraggedNote(evt.getPoint());
 
+
+				dragX = evt.getPoint().x;
+				dragY = evt.getPoint().y;
 				if (evt.isAltDown()) {
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						PhraseNote note = values.get(orderVal.x);
@@ -159,9 +162,27 @@ public class MidiEditArea extends JComponent {
 												: orderVal.y);
 								insertedPn.setDuration(0.5);
 								insertedPn.setRv(0);
+								insertedPn.setOffset(values.get(orderVal.x).getOffset());
+								insertedPn.setStartTime(values.get(orderVal.x).getStartTime());
+								insertedPn.setAbsoluteStartTime(
+										values.get(orderVal.x).getAbsoluteStartTime());
 								getValues().add(orderVal.x, insertedPn);
+
 								draggedNote = insertedPn;
 							}
+
+							double quarterNoteLength = (getWidth() - marginX) / sectionLength;
+
+							double offsetTime = (evt.getPoint().x - marginX) / quarterNoteLength;
+							double offset = offsetTime - draggedNote.getAbsoluteStartTime();
+							if (lockTimeGrid) {
+								offset = getClosestToTimeGrid(
+										offset + draggedNote.getAbsoluteStartTime())
+										- draggedNote.getAbsoluteStartTime();
+							}
+
+							draggedNote.setOffset(offset);
+
 							noteAdded = true;
 						}
 					} else {
@@ -184,10 +205,6 @@ public class MidiEditArea extends JComponent {
 
 					lockTimeGrid = !evt.isControlDown();
 				}
-
-
-				dragX = evt.getPoint().x;
-				dragY = evt.getPoint().y;
 				repaint();
 
 			}
@@ -650,7 +667,6 @@ public class MidiEditArea extends JComponent {
 			return null;
 		}
 		values.remakeNoteStartTimes();
-		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 		double mouseClickTime = (xy.x - marginX) / quarterNoteLength;
 		for (int i = 0; i < possibleNotes.size(); i++) {
@@ -681,7 +697,6 @@ public class MidiEditArea extends JComponent {
 		}
 		values.remakeNoteStartTimes();
 		double startTime = draggedNote.getStartTime();
-		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 
 		double durationTime = (xy.x - marginX) / quarterNoteLength;
@@ -696,7 +711,6 @@ public class MidiEditArea extends JComponent {
 		}
 		values.remakeNoteStartTimes();
 		double startTime = draggedNote.getStartTime();
-		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 
 		double offsetTime = (xy.x - marginX) / quarterNoteLength;
@@ -721,7 +735,6 @@ public class MidiEditArea extends JComponent {
 				usableHeight + marginY - (int) (rowHeight / 2));
 
 		values.remakeNoteStartTimes();
-		double sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 		double quarterNoteLength = (w - bottomLeftAdjusted.x) / sectionLength;
 
 		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
