@@ -3013,22 +3013,29 @@ public class VibeComposerGUI extends JFrame
 			for (int i = 0; i < 5; i++) {
 				JScrollPane pane = getInstPane(i);
 				List<InstPanel> sectionPanels = new ArrayList<>();
+				List<Integer> missingPanels = new ArrayList<>();
+				getInstList(i).forEach(e -> missingPanels.add(e.getPanelOrder()));
 				if (sec.getInstPartList(i) != null) {
 					//LG.i(("Creating panels from section parts! " + i));
-					List<? extends InstPart> ip = sec.getInstPartList(i);
+					List<? extends InstPart> ips = sec.getInstPartList(i);
 					for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
 						if (c instanceof InstPanel) {
-							int order = ((InstPanel) c).getPanelOrder();
-							((JPanel) pane.getViewport().getView()).remove(c);
-							InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
-							pCopy.setFromInstPart(
-									ip.get(VibeComposerGUI.getAbsoluteOrder(i, order)));
-							sectionPanels.add(pCopy);
+							int order = ((InstPanel) c).getAbsoluteOrder();
+							if (order < ips.size()) {
+								((JPanel) pane.getViewport().getView()).remove(c);
+								InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
+								pCopy.setFromInstPart(ips.get(order));
+								sectionPanels.add(pCopy);
+								missingPanels.remove(Integer.valueOf(order));
+							}
 						}
 					}
-				} else {
+				}
+				if (!missingPanels.isEmpty()) {
 					//LG.i(("Making copies of normal panels! " + i));
-					List<? extends InstPanel> panels = getInstList(i);
+					List<? extends InstPanel> panels = getInstList(i).stream()
+							.filter(e -> missingPanels.contains(e.getPanelOrder()))
+							.collect(Collectors.toList());
 					//Set<Integer> presence = sec.getPresence(i);
 					for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
 						if (c instanceof InstPanel) {
@@ -3036,20 +3043,23 @@ public class VibeComposerGUI extends JFrame
 
 							//LG.i(("Switching panel!"));
 							int order = ip.getPanelOrder();
-							((JPanel) pane.getViewport().getView()).remove(ip);
-							/*if (!presence.contains(ip.getPanelOrder())) {
-								continue;
-							}*/
-							InstPanel p = panels.get(order - 1);
-							InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
-							pCopy.setRelatedSection(sec);
-							pCopy.setFromInstPart(p.toInstPart(0));
-							sectionPanels.add(pCopy);
+							if (missingPanels.contains(order)) {
+								((JPanel) pane.getViewport().getView()).remove(ip);
+								/*if (!presence.contains(ip.getPanelOrder())) {
+									continue;
+								}*/
+								InstPanel p = panels.stream()
+										.filter(e -> e.getPanelOrder() == order).findFirst().get();
+								InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
+								pCopy.setRelatedSection(sec);
+								pCopy.setFromInstPart(p.toInstPart(0));
+								sectionPanels.add(pCopy);
+							}
 						}
 
 					}
 				}
-
+				sectionPanels.sort(Comparator.comparing(e -> e.getPanelOrder()));
 				sectionPanels.forEach(p -> {
 					p.toggleEnabledCopyRemove(false);
 					p.toggleGlobalElements(false);
@@ -8568,11 +8578,17 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static int getAbsoluteOrder(int partNum, int partOrder) {
-		List<? extends InstPanel> panels = getInstList(partNum);
+		/*List<? extends InstPanel> panels = getInstList(partNum);
 		for (int i = 0; i < panels.size(); i++) {
 			if (panels.get(i).getPanelOrder() == partOrder) {
 				return i;
 			}
+		}*/
+		List<Integer> allPanelOrders = getInstList(partNum).stream().map(e -> e.getPanelOrder())
+				.collect(Collectors.toList());
+		allPanelOrders.sort(Comparator.comparing(e -> e));
+		if (allPanelOrders.contains(partOrder)) {
+			return allPanelOrders.indexOf(partOrder);
 		}
 		throw new IllegalArgumentException("Absolute order not found!");
 	}
