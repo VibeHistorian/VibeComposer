@@ -107,6 +107,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -5238,7 +5239,9 @@ public class VibeComposerGUI extends JFrame
 
 		if (!regenerate && randomizeTimingsOnCompose.isSelected()) {
 			if (globalSwingOverride.isSelected()) {
-				globalSwingOverrideValue.setInt(new Random().nextInt(41) + 30);
+				globalSwingOverrideValue
+						.setInt(50 + new Random().nextInt(randomDrumMaxSwingAdjust.getInt() * 2 + 1)
+								- randomDrumMaxSwingAdjust.getInt());
 			}
 			double randomBeatMultiplier = new Random().nextDouble();
 			if (randomBeatMultiplier < 0.85) {
@@ -5660,8 +5663,7 @@ public class VibeComposerGUI extends JFrame
 
 		sequencer.setTrackSolo(0, false);
 		sequencer.setTrackMute(0, false);
-		for (int i = 1 + baseCount - countReducer; i < sequencer.getSequence()
-				.getTracks().length; i++) {
+		for (int i = 1; i < sequencer.getSequence().getTracks().length; i++) {
 			LG.d("Unsoloing: " + i);
 			sequencer.setTrackSolo(i, false);
 			sequencer.setTrackMute(i, false);
@@ -5852,6 +5854,13 @@ public class VibeComposerGUI extends JFrame
 
 	// Deal with the window closebox
 	public void windowClosing(WindowEvent we) {
+		int confirmed = JOptionPane.showConfirmDialog(null, "Exit VibeComposer?",
+				"Exit Program Message Box", JOptionPane.YES_NO_OPTION);
+
+		if (confirmed == JOptionPane.YES_OPTION) {
+			dispose();
+		}
+
 		if (sequencer != null) {
 			stopMidi();
 			sequencer.close();
