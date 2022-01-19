@@ -5160,13 +5160,17 @@ public class VibeComposerGUI extends JFrame
 
 	private void cleanUpUIAfterCompose(boolean regenerate) {
 		if (MelodyMidiDropPane.userMelody != null) {
-			userChords.setText(StringUtils.join(MidiGenerator.chordInts, ","));
+			String chords = StringUtils.join(MidiGenerator.chordInts, ",");
+			userChords.setText(chords);
 			setFixedLengthChords(MidiGenerator.chordInts.size());
+			guiConfig.setCustomChords(chords);
 		}
 
 		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
 				&& MidiGenerator.TARGET_NOTES != null) {
 			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
+			guiConfig.getMelodyParts()
+					.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
 		}
 
 		fixCombinedMelodyTracks();
