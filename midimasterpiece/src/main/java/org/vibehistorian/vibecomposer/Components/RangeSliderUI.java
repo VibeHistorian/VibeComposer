@@ -711,6 +711,11 @@ class RangeSliderUI extends BasicSliderUI {
 			actualSlider.setUpperDragging(upperDragging);
 			slider.setValueIsAdjusting(false);
 			super.mouseReleased(e);
+
+			if (rangeSlider.isEnabled() && !(rangeSlider instanceof PlayheadRangeSlider)
+					&& VibeComposerGUI.canRegenerateOnChange()) {
+				VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			}
 		}
 
 		@Override
