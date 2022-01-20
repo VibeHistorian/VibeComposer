@@ -2970,6 +2970,8 @@ public class VibeComposerGUI extends JFrame
 		actualArrangementCombinedPanel.add(variationButtonsPanel);
 
 		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
+		SwingUtils.setupScrollpanePriorityScrolling(arrangementActualScrollPane);
+		SwingUtils.setupScrollpanePriorityScrolling(arrangementScrollPane);
 
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);

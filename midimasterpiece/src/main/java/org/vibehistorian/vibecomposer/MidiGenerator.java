@@ -4684,6 +4684,11 @@ public class MidiGenerator implements JMC {
 			MidiUtils.addChordsToPhrase(phr, chords, flamming);
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
 		}
+
+		if (genVars && variations != null) {
+			sec.setVariation(2, ip.getAbsoluteOrder(), variations);
+		}
+
 		// transpose
 		int extraTranspose = gc.getChordGenSettings().isUseTranspose() ? ip.getTranspose() : 0;
 
@@ -4706,11 +4711,6 @@ public class MidiGenerator implements JMC {
 		// delay
 		phr.setStartTime(START_TIME_DELAY);
 		addOffsetsToPhrase(phr, ip.getDelay());
-
-
-		if (genVars && variations != null) {
-			sec.setVariation(2, ip.getAbsoluteOrder(), variations);
-		}
 		return phr;
 	}
 
@@ -4944,6 +4944,10 @@ public class MidiGenerator implements JMC {
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
 		}
 
+		if (genVars && variations != null) {
+			sec.setVariation(3, ip.getAbsoluteOrder(), variations);
+		}
+
 		int extraTranspose = ip.getTranspose();
 
 		// extraTranspose variation
@@ -4963,10 +4967,6 @@ public class MidiGenerator implements JMC {
 				progressionDurations.stream().mapToDouble(e -> e).sum() * measures, 0.25, 0.15,
 				0.9);
 		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
-
-		if (genVars && variations != null) {
-			sec.setVariation(3, ip.getAbsoluteOrder(), variations);
-		}
 		if (fillLastBeat) {
 			Mod.crescendo(phr, phr.getEndTime() * 3 / 4, phr.getEndTime(), Math.max(minVel, 55),
 					Math.max(maxVel, 110));

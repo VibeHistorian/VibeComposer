@@ -312,9 +312,21 @@ public class ShowPanelBig extends JPanel {
 		//getHAdjustable().setUnitIncrement(50); //set scroll speed
 		//getHAdjustable().setBlockIncrement(50);
 
+		//zoomIn(areaScrollPane, new Point(0, 200), 0.0, 1.0);
 
 		soloMuterHighlight.setSelected(true);
 		repaint();
+
+		// set up a more zoomed in first view
+		double originalHeight = ShowAreaBig.noteHeight;
+		sa.setNoteHeight(ShowAreaBig.noteHeight + 2);
+		setScore();
+		double changeY = ShowAreaBig.noteHeight / originalHeight;
+		VibeComposerGUI.scoreScrollPane.repaint();
+
+		SwingUtilities.invokeLater(() -> {
+			zoomIn(areaScrollPane, new Point(0, 300), 0.0, changeY - 1.0);
+		});
 	}
 
 	public void setupMouseWheelListener() {
