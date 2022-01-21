@@ -4009,15 +4009,19 @@ public class MidiGenerator implements JMC {
 				PhraseNotes pn = new PhraseNotes(phr);
 				pn.remakeNoteStartTimes();
 				List<PhraseNote> pns = new ArrayList<>(pn);
-				Collections.sort(pns, Comparator.comparing(e -> e.getStartTime()));
-				double endTime = pn.get(pn.size() - 1).getAbsoluteStartTime()
-						+ pn.get(pn.size() - 1).getRv();
-				for (int i = 0; i < pns.size() - 1; i++) {
-					PhraseNote n = pns.get(i);
-					n.setRv(pns.get(i + 1).getStartTime() - n.getStartTime());
-					n.setOffset(0);
+
+				if (pns.size() >= 2) {
+					Collections.sort(pns, Comparator.comparing(e -> e.getStartTime()));
+					double endTime = pn.get(pn.size() - 1).getAbsoluteStartTime()
+							+ pn.get(pn.size() - 1).getRv();
+					for (int i = 0; i < pns.size() - 1; i++) {
+						PhraseNote n = pns.get(i);
+						n.setRv(pns.get(i + 1).getStartTime() - n.getStartTime());
+						n.setOffset(0);
+					}
+					pns.get(pns.size() - 1).setRv(endTime - pns.get(pns.size() - 2).getStartTime());
 				}
-				pns.get(pns.size() - 1).setRv(endTime - pns.get(pns.size() - 2).getStartTime());
+
 
 				for (int i = 0; i < pns.size(); i++) {
 					PhraseNote n = pns.get(i);
