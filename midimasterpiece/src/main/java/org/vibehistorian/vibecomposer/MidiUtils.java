@@ -637,6 +637,10 @@ public class MidiUtils {
 	}
 
 	public static int[] mappedChord(String chordString) {
+		return mappedChord(chordString, false);
+	}
+
+	public static int[] mappedChord(String chordString, boolean ignoreInversion) {
 		if (StringUtils.isEmpty(chordString)) {
 			return null;
 		}
@@ -646,7 +650,7 @@ public class MidiUtils {
 					: chordString.toUpperCase();
 		}
 
-		int[] mappedChord = getNormalMappedChord(chordString);
+		int[] mappedChord = getNormalMappedChord(chordString, ignoreInversion);
 
 		if (mappedChord == null) {
 			mappedChord = getSpelledChord(chordString);
@@ -674,7 +678,7 @@ public class MidiUtils {
 		}
 	}
 
-	public static int[] getNormalMappedChord(String chordString) {
+	public static int[] getNormalMappedChord(String chordString, boolean ignoreInversion) {
 		if (StringUtils.isEmpty(chordString)) {
 			return null;
 		}
@@ -690,6 +694,10 @@ public class MidiUtils {
 		if (len >= 3 && dotIndex >= 0) {
 			inversion = Integer.valueOf(chordString.substring(dotIndex + 1));
 			chordString = chordString.substring(0, dotIndex);
+		}
+
+		if (ignoreInversion) {
+			inversion = null;
 		}
 
 		int[] mappedChord = null;
@@ -721,25 +729,37 @@ public class MidiUtils {
 	}
 
 	public static int[] chordInversion(int[] chord, Integer inversion) {
-		if (inversion == null) {
+		if (inversion == null || inversion == 0) {
 			return chord;
 		}
-		int index = (inversion + chord.length * 100) % chord.length;
-		if (index == 0) {
-			return chord;
-		}
-		// % safeguard
-		//inversion = (inversion + chord.length * 100) % chord.length;
-		int[] newChord = new int[chord.length];
 
-		for (int i = 0; i < chord.length; i++) {
-			newChord[i] = chord[i];
-			if (inversion > 0 && i < index) {
-				newChord[i] += 12;
-			} else if (inversion < 0 && i >= index) {
-				newChord[i] -= 12;
+		// some notes can be transposed more than others, when inversion is not a multiple of chord length
+		int transposeChange = Math.abs(inversion + chord.length * 100) % chord.length;
+		int minTranspose = 12 * (Math.abs(inversion) / chord.length);
+		int maxTranspose = (transposeChange == 0) ? minTranspose : minTranspose + 12;
+
+
+		int[] newChord = new int[chord.length];
+		if (inversion < 0) {
+			for (int i = 0; i < chord.length; i++) {
+				if (i >= transposeChange) {
+					newChord[i] = chord[i] - maxTranspose;
+				} else {
+					newChord[i] = chord[i] - minTranspose;
+				}
+			}
+		} else {
+			for (int i = 0; i < chord.length; i++) {
+				if (i >= transposeChange) {
+					newChord[i] = chord[i] + minTranspose;
+				} else {
+					newChord[i] = chord[i] + maxTranspose;
+				}
 			}
 		}
+
+		// % safeguard
+		//inversion = (inversion + chord.length * 100) % chord.length;
 		Arrays.sort(newChord);
 		return newChord;
 
@@ -841,13 +861,15 @@ public class MidiUtils {
 		return defaultValue;
 	}
 
-	public static double calculateAverageNote(List<int[]> chords) {
+	public static double calculateAverageNote(List<int[]> chords, List<Integer> ignoredIndexes,
+			List<int[]> roots) {
 		double noteCount = 0.001;
 		double noteSum = 0;
-		for (int[] c : chords) {
+		for (int i = 0; i < chords.size(); i++) {
+			int[] c = (ignoredIndexes.contains(i)) ? roots.get(i) : chords.get(i);
 			noteCount += c.length;
-			for (int i = 0; i < c.length; i++) {
-				noteSum += c[i];
+			for (int j = 0; j < c.length; j++) {
+				noteSum += c[j];
 			}
 		}
 
@@ -880,14 +902,18 @@ public class MidiUtils {
 	}
 
 	public static List<int[]> squishChordProgression(List<int[]> chords, boolean squishBigChords,
-			long seed, int chance) {
+			long seed, int chance, List<Integer> inversionIndexes, List<int[]> roots) {
 		Random r = new Random(seed);
-		double avg = calculateAverageNote(chords);
+		double avg = calculateAverageNote(chords, inversionIndexes, roots);
 		//LG.i("AVG: " + avg);
 
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
+			if (inversionIndexes.contains(i)) {
+				squishedChords.add(c);
+				continue;
+			}
 			if (r.nextInt(100) < chance && (c.length <= 3 || squishBigChords)) {
 				if (avg - c[0] > 6) {
 					c[0] += 12;
@@ -907,14 +933,20 @@ public class MidiUtils {
 	}
 
 	public static List<int[]> squishChordProgressionProgressively(List<int[]> chords,
-			boolean squishBigChords, long seed, int chance) {
+			boolean squishBigChords, long seed, int chance, List<Integer> inversionIndexes,
+			List<int[]> roots) {
 		Random r = new Random(seed);
-		double avg = calculateAverageNote(chords.subList(0, 1));
+		double avg = calculateAverageNote(chords.subList(0, 1), inversionIndexes, roots);
 		//LG.i("AVG: " + avg);
 
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < chords.size(); i++) {
 			int[] c = Arrays.copyOf(chords.get(i), chords.get(i).length);
+			if (inversionIndexes.contains(i)) {
+				squishedChords.add(c);
+				avg = calculateAverageNote(squishedChords, inversionIndexes, roots);
+				continue;
+			}
 			Arrays.sort(c);
 			if (r.nextInt(100) < chance && (c.length <= 3 || squishBigChords)) {
 				if (avg - c[0] > 6) {
@@ -929,7 +961,7 @@ public class MidiUtils {
 
 			Arrays.sort(c);
 			squishedChords.add(c);
-			avg = calculateAverageNote(squishedChords);
+			avg = calculateAverageNote(squishedChords, inversionIndexes, roots);
 		}
 		//LG.i("NEW AVG: " + calculateAverageNote(squishedChords));
 		return squishedChords;
@@ -1314,7 +1346,7 @@ public class MidiUtils {
 		List<String> respicedChordsList = new ArrayList<>();
 		for (int i = 0; i < chordsList.size(); i++) {
 			String chord = chordsList.get(i);
-			boolean mapped = getNormalMappedChord(chord) != null;
+			boolean mapped = getNormalMappedChord(chord, true) != null;
 			if (mapped) {
 				//LG.i("Mapped!");
 				String firstLetter = chord.substring(0, 1).toUpperCase();

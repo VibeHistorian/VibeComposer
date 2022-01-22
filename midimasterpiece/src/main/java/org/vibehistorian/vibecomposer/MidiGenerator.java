@@ -2381,18 +2381,6 @@ public class MidiGenerator implements JMC {
 	}*/
 
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength) {
-
-		if (!userChords.isEmpty()) {
-			List<int[]> userProgression = new ArrayList<>();
-			chordInts.clear();
-			chordInts.addAll(userChords);
-			for (String chordString : userChords) {
-				userProgression.add(mappedChord(chordString));
-			}
-			LG.i("Using user's custom progression: " + StringUtils.join(userChords, ","));
-			return userProgression;
-		}
-
 		Random generator = new Random(mainGeneratorSeed);
 		Random lengthGenerator = new Random(mainGeneratorSeed);
 		Random spiceGenerator = new Random(mainGeneratorSeed);
@@ -2803,8 +2791,29 @@ public class MidiGenerator implements JMC {
 			drumParts.add(p);
 		}
 
-		List<int[]> generatedRootProgression = generateChordProgression(mainGeneratorSeed,
-				gc.getFixedDuration());
+
+		List<int[]> userProgression = null;
+		List<int[]> userRootProgression = null;
+		List<Integer> customInversionIndexList = new ArrayList<>();
+		if (!userChords.isEmpty()) {
+			userProgression = new ArrayList<>();
+			userRootProgression = new ArrayList<>();
+			chordInts.clear();
+			chordInts.addAll(userChords);
+			int chordNum = 0;
+			for (String chordString : userChords) {
+				userProgression.add(mappedChord(chordString));
+				userRootProgression.add(mappedChord(chordString, true));
+				if (chordString.contains(".")) {
+					customInversionIndexList.add(chordNum);
+				}
+				chordNum++;
+			}
+			LG.i("Using user's custom progression: " + StringUtils.join(userChords, ","));
+		}
+
+		List<int[]> generatedRootProgression = (userRootProgression != null) ? userRootProgression
+				: generateChordProgression(mainGeneratorSeed, gc.getFixedDuration());
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}
@@ -2826,12 +2835,16 @@ public class MidiGenerator implements JMC {
 		List<Double> actualDurations = progressionDurations;
 
 		List<int[]> actualProgression = (gc.isSquishProgressively())
-				? MidiUtils.squishChordProgressionProgressively(generatedRootProgression,
+				? MidiUtils.squishChordProgressionProgressively(
+						(userProgression != null ? userProgression : generatedRootProgression),
 						gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
-						gc.getChordGenSettings().getFlattenVoicingChance())
-				: MidiUtils.squishChordProgression(generatedRootProgression,
+						gc.getChordGenSettings().getFlattenVoicingChance(),
+						customInversionIndexList, userRootProgression)
+				: MidiUtils.squishChordProgression(
+						(userProgression != null ? userProgression : generatedRootProgression),
 						gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
-						gc.getChordGenSettings().getFlattenVoicingChance());
+						gc.getChordGenSettings().getFlattenVoicingChance(),
+						customInversionIndexList, userRootProgression);
 
 		if (!debugEnabled) {
 			PrintStream dummyStream = new PrintStream(new OutputStream() {
@@ -3936,7 +3949,7 @@ public class MidiGenerator implements JMC {
 
 		melodyBasedChordProgression = squishChordProgression(altChordProg,
 				gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
-				gc.getChordGenSettings().getFlattenVoicingChance());
+				gc.getChordGenSettings().getFlattenVoicingChance(), new ArrayList<>(), null);
 
 
 		chordProgression = melodyBasedChordProgression;
