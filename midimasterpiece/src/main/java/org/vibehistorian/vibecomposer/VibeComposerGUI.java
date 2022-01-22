@@ -120,6 +120,7 @@ import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -666,6 +667,7 @@ public class VibeComposerGUI extends JFrame
 		isDarkMode = true;
 		vibeComposerGUI = new VibeComposerGUI("VibeComposer (BETA)");
 		vibeComposerGUI.init();
+		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 	}
 
 	public VibeComposerGUI(String title) {
@@ -5665,7 +5667,8 @@ public class VibeComposerGUI extends JFrame
 
 		sequencer.setTrackSolo(0, false);
 		sequencer.setTrackMute(0, false);
-		for (int i = 1; i < sequencer.getSequence().getTracks().length; i++) {
+		for (int i = 1 + baseCount - countReducer; i < sequencer.getSequence()
+				.getTracks().length; i++) {
 			LG.d("Unsoloing: " + i);
 			sequencer.setTrackSolo(i, false);
 			sequencer.setTrackMute(i, false);
@@ -5860,14 +5863,13 @@ public class VibeComposerGUI extends JFrame
 				"Exit Program Message Box", JOptionPane.YES_NO_OPTION);
 
 		if (confirmed == JOptionPane.YES_OPTION) {
-			dispose();
+			if (sequencer != null) {
+				stopMidi();
+				sequencer.close();
+			}
+			System.exit(0);
+			//dispose();
 		}
-
-		if (sequencer != null) {
-			stopMidi();
-			sequencer.close();
-		}
-		System.exit(0);
 	}
 
 	// other WindowListener interface methods
@@ -8617,6 +8619,7 @@ public class VibeComposerGUI extends JFrame
 			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
 		}
 		ShowPanelBig.scoreBox.setSelectedIndex(0);
+
 		scorePanel.setScore();
 		scoreScrollPane.repaint();
 	}

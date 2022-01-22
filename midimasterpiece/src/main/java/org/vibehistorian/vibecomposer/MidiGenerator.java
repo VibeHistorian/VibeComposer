@@ -3251,13 +3251,16 @@ public class MidiGenerator implements JMC {
 		// add drums after transposing transposable parts
 
 		for (int i = 0; i < drumParts.size(); i++) {
-			score.add(drumParts.get(i));
+			if (!COLLAPSE_DRUM_TRACKS) {
+				score.add(drumParts.get(i));
+			}
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
 					VibeComposerGUI.drumPanels);
 			if (!gc.getDrumParts().get(i).isMuted() && gc.isDrumsEnable()) {
 				ip.setSequenceTrack(trackCounter);
 				((PartExt) drumParts.get(i)).setTrackNumber(trackCounter);
 				if (COLLAPSE_DRUM_TRACKS) {
+					score.add(drumParts.get(i));
 					for (int j = i + 1; j < gc.getDrumParts().size(); j++) {
 						InstPanel ip2 = VibeComposerGUI.getPanelByOrder(
 								gc.getDrumParts().get(j).getOrder(), VibeComposerGUI.drumPanels);
@@ -3270,7 +3273,9 @@ public class MidiGenerator implements JMC {
 				ip.setSequenceTrack(-1);
 				((PartExt) drumParts.get(i)).setTrackNumber(-1);
 			}
-			trackCounter++;
+			if (!COLLAPSE_DRUM_TRACKS) {
+				trackCounter++;
+			}
 		}
 
 

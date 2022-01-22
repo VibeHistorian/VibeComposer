@@ -177,7 +177,9 @@ public class MelodyPanel extends InstPanel {
 		if (!b && soloMuter.soloState != State.OFF) {
 			soloMuter.unsolo();
 		}
-		toggleGlobalElements(b);
+		getSoloMuter().setEnabled(b);
+		getPanSlider().setEnabled(b);
+		volSlider.setEnabled(b);
 
 	}
 
