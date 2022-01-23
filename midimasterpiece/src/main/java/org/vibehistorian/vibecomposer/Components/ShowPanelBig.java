@@ -90,6 +90,7 @@ public class ShowPanelBig extends JPanel {
 	private static CheckButton[] partsShown;
 	private static JButton toggler;
 	public static ScrollComboBox<Integer> scoreBox;
+	public static ScrollComboBox<String> trimNoteLengthBox;
 
 	public ShowPanelBig() {
 		this(new Dimension(beatWidthBase, panelMaxHeight));
@@ -202,6 +203,13 @@ public class ShowPanelBig extends JPanel {
 			});
 			scorePartPanel.add(soloMuterHighlight);
 		}
+
+		scorePartPanel.add(new JLabel(" Trim Note Length:"));
+		trimNoteLengthBox = new ScrollComboBox<>(false);
+		trimNoteLengthBox.setMaximumSize(new Dimension(80, ShowRulerBig.maxHeight));
+		trimNoteLengthBox.setFunc(e -> repaintMinimum());
+		ScrollComboBox.addAll(new String[] { "NONE", "1/32", "1/16", "1/8" }, trimNoteLengthBox);
+		scorePartPanel.add(trimNoteLengthBox);
 
 		// add the score
 		sa = new ShowAreaBig(this); //score, maxWidth, maxParts);

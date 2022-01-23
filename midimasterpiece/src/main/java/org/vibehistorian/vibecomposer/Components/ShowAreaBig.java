@@ -41,6 +41,7 @@ import java.util.Set;
 
 import javax.swing.JComponent;
 
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -273,6 +274,8 @@ public class ShowAreaBig extends JComponent {
 
 		//g.drawLine(viewPoint.x + 4, 0, viewPoint.x + 4, areaHeight);
 
+		double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
+				MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
 		int prevColorIndex = -1;
@@ -337,7 +340,16 @@ public class ShowAreaBig extends JComponent {
 					//LG.d("Note: " + currNote);
 					if ((currNote <= 127) && (currNote >= 0)) {
 						int y = getNotePosY(currNote);
-						int x = (int) (Math.round(aNote.getDuration() * beatWidth)); //480 ppq note
+
+						double durationTrimmer = ShowPanelBig.trimNoteLengthBox
+								.getSelectedIndex() > 0
+										? noteTrimValues[ShowPanelBig.trimNoteLengthBox
+												.getSelectedIndex() - 1]
+										: 1000;
+
+
+						int x = (int) (Math
+								.round(Math.min(durationTrimmer, aNote.getDuration()) * beatWidth)); //480 ppq note
 						//int xRV = (int) (Math.round(aNote.getRhythmValue() * beatWidth)); //480 ppq note
 						// check if the width of the note is less than 1 so
 						// that it will be displayed
