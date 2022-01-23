@@ -149,6 +149,7 @@ import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
+import org.vibehistorian.vibecomposer.Components.SectionInfoCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -359,6 +360,7 @@ public class VibeComposerGUI extends JFrame
 	public static ShowPanelBig scorePanel;
 	public static Dimension scrollPaneDimension = new Dimension(1600, 400);
 	int arrangementRowHeaderWidth = 120;
+	public static final int TABLE_COLUMN_MIN_WIDTH = 80;
 
 	public static JScrollPane melodyScrollPane;
 	public static JScrollPane bassScrollPane;
@@ -2861,14 +2863,15 @@ public class VibeComposerGUI extends JFrame
 					return comp;
 				}
 
+				int height = (int) (350 / getModel().getRowCount());
+				int width = Math.max(TABLE_COLUMN_MIN_WIDTH,
+						(int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 60)
+								/ getModel().getColumnCount()) - 2);
+
 				if (row == 1) {
-					comp.setBackground(new Color(100, 150, 150));
-					return comp;
+					return new SectionInfoCellRenderer(width, height, col);
 				}
 
-				int height = (int) (350 / getModel().getRowCount());
-				int width = (int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 60)
-						/ getModel().getColumnCount()) - 2;
 				Collection<? extends Object> stringables = value instanceof String
 						? Collections.singleton((String) value)
 						: (Collection<? extends Object>) value;
@@ -2901,7 +2904,7 @@ public class VibeComposerGUI extends JFrame
 
 		JList<String> actualList = new JList<>();
 		actualList.setListData(
-				new String[] { "", "Section", "Bars", "Melody", "Bass", "Chord", "Arp", "Drum" });
+				new String[] { "", "Section", "Info", "Melody", "Bass", "Chord", "Arp", "Drum" });
 		actualList.setFixedCellHeight(scrollableArrangementActualTable.getRowHeight()
 				+ scrollableArrangementActualTable.getRowMargin());
 		arrangementActualScrollPane.setRowHeaderView(actualList);
@@ -3420,8 +3423,9 @@ public class VibeComposerGUI extends JFrame
 			butt.setActionCommand("ArrangementOpenVariation," + (i + 1));
 			//makeButton(, );
 
-			butt.setPreferredSize(new Dimension(
-					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count, 50));
+			int width = Math.max(TABLE_COLUMN_MIN_WIDTH,
+					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count);
+			butt.setPreferredSize(new Dimension(width, 50));
 			butt.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent evt) {

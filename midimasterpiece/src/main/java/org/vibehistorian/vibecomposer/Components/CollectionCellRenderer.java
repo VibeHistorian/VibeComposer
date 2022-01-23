@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +12,6 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -35,13 +32,6 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 		stringables = itrs;
 		height = h;
 		width = w;
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent evt) {
-				LG.d("YEP");
-
-			}
-		});
 		part = partNum;
 		section = col;
 	}
