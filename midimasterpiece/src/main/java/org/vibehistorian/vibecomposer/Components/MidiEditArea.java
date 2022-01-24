@@ -48,20 +48,21 @@ public class MidiEditArea extends JComponent {
 	int numHeight = 6;
 	int numWidth = 4;
 
-	boolean isDragging = false;
-	PhraseNote draggedNote = null;
-	boolean draggingPosition = false;
-	boolean draggingDuration = false;
-	boolean draggingVelocity = false;
-	boolean draggingPitchShape = false;
-	boolean draggingVelocityShape = false;
-	long lastPlayedNoteTime = 0;
-	boolean lockTimeGrid = false;
-	double startingOffset = 0.0;
-	double startingDuration = 0.0;
-	int startingDynamic = 0;
-	Integer dragX = null;
-	Integer dragY = null;
+	boolean isDragging;
+	PhraseNote draggedNote;
+	boolean draggingPosition;
+	boolean draggingDuration;
+	boolean draggingVelocity;
+	boolean draggingPitchShape;
+	boolean draggingVelocityShape;
+	Integer dragLocation;
+	long lastPlayedNoteTime;
+	boolean lockTimeGrid;
+	double startingOffset;
+	double startingDuration;
+	int startingDynamic;
+	Integer dragX;
+	Integer dragY;
 	public static double sectionLength = 16.0;
 
 	MidiEditPopup pop = null;
@@ -71,6 +72,7 @@ public class MidiEditArea extends JComponent {
 		setMin(minimum);
 		setMax(maximum);
 		values = vals;
+		reset();
 
 		addMouseWheelListener(new MouseWheelListener() {
 			@Override
@@ -110,6 +112,33 @@ public class MidiEditArea extends JComponent {
 				if (!isEnabled()) {
 					return;
 				}
+
+				dragX = evt.getPoint().x;
+				dragY = evt.getPoint().y;
+				PhraseNote pn = getDraggedNote(evt.getPoint());
+				if (pn != null) {
+					double timeDifference = getTimeFromPosition(evt.getPoint()) - pn.getStartTime();
+					double positionInNote = timeDifference / pn.getDuration();
+					LG.i("Time diff:" + timeDifference + ", pos: " + positionInNote);
+
+					if (positionInNote >= 0 && positionInNote <= 1.0) {
+						if (pn.getDuration() > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0) {
+							if (positionInNote < 0.15) {
+								dragLocation = -1;
+							} else if (positionInNote > 0.85) {
+								dragLocation = 1;
+							} else {
+								dragLocation = 0;
+							}
+						} else {
+							dragLocation = 0;
+						}
+					} else {
+						dragLocation = null;
+					}
+					LG.i("Drag Location: " + dragLocation);
+				}
+
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					handleLeftPress(evt);
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
@@ -123,9 +152,6 @@ public class MidiEditArea extends JComponent {
 				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 				PhraseNote pnDragged = getDraggedNote(evt.getPoint());
 
-
-				dragX = evt.getPoint().x;
-				dragY = evt.getPoint().y;
 				if (evt.isAltDown()) {
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						PhraseNote note = values.get(orderVal.x);
@@ -234,8 +260,6 @@ public class MidiEditArea extends JComponent {
 						isDragging = true;
 						draggingPosition = true;
 						lockTimeGrid = evt.isShiftDown();
-
-						dragX = evt.getPoint().x;
 					}
 				}
 			}
@@ -285,9 +309,19 @@ public class MidiEditArea extends JComponent {
 		draggingVelocity = false;
 		draggingPitchShape = false;
 		draggingVelocityShape = false;
-		startingOffset = 0;
-		dragX = null;
+		lastPlayedNoteTime = 0;
 		lockTimeGrid = false;
+
+		startingOffset = 0.0;
+		startingDuration = 0.0;
+		startingDynamic = 0;
+
+		lockTimeGrid = false;
+		dragX = null;
+		dragY = null;
+		dragLocation = null;
+
+
 		repaint();
 	}
 
@@ -322,7 +356,7 @@ public class MidiEditArea extends JComponent {
 
 			} else {
 				if (draggingPosition) {
-					double offset = getOffsetFromPosition(e.getPoint());
+					double offset = getOffsetFromPosition(e.getPoint(), draggedNote);
 					if (lockTimeGrid) {
 						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
 								- draggedNote.getAbsoluteStartTime();
@@ -705,18 +739,23 @@ public class MidiEditArea extends JComponent {
 		return startingDuration + durationTime - mouseCorrectionTime;
 	}
 
-	private double getOffsetFromPosition(Point xy) {
-		if (draggedNote == null || dragX == null) {
+	private double getOffsetFromPosition(Point xy, PhraseNote dragNote) {
+		if (dragNote == null || dragX == null) {
 			return 0;
 		}
 		values.remakeNoteStartTimes();
-		double startTime = draggedNote.getStartTime();
+		double startTime = dragNote.getStartTime();
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 
 		double offsetTime = (xy.x - marginX) / quarterNoteLength;
 		double mouseCorrectionTime = (dragX - marginX - startTime) / quarterNoteLength;
 
 		return startingOffset + offsetTime - mouseCorrectionTime;
+	}
+
+	private double getTimeFromPosition(Point xy) {
+		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
+		return (xy.x - marginX) / quarterNoteLength;
 	}
 
 	public Point getOrderAndValueFromPosition(Point xy) {
