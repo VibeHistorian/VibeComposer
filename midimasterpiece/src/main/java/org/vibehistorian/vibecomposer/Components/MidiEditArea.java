@@ -64,6 +64,13 @@ public class MidiEditArea extends JComponent {
 	Integer dragX;
 	Integer dragY;
 	public static double sectionLength = 16.0;
+	PhraseNote highlightedNote;
+	Integer highlightedDragLocation;
+	Integer prevHighlightedDragLocation;
+
+	double[] dragLocationWidth = { 0.15, 0.7, 0.15 };
+	double[] dragLocationOffset = { 0.0, 0.15, 0.85 };
+
 
 	MidiEditPopup pop = null;
 
@@ -116,28 +123,7 @@ public class MidiEditArea extends JComponent {
 				dragX = evt.getPoint().x;
 				dragY = evt.getPoint().y;
 				PhraseNote pn = getDraggedNote(evt.getPoint());
-				if (pn != null) {
-					double timeDifference = getTimeFromPosition(evt.getPoint()) - pn.getStartTime();
-					double positionInNote = timeDifference / pn.getDuration();
-					LG.i("Time diff:" + timeDifference + ", pos: " + positionInNote);
-
-					if (positionInNote >= 0 && positionInNote <= 1.0) {
-						if (pn.getDuration() > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0) {
-							if (positionInNote < 0.15) {
-								dragLocation = -1;
-							} else if (positionInNote > 0.85) {
-								dragLocation = 1;
-							} else {
-								dragLocation = 0;
-							}
-						} else {
-							dragLocation = 0;
-						}
-					} else {
-						dragLocation = null;
-					}
-					LG.i("Drag Location: " + dragLocation);
-				}
+				dragLocation = getMouseNoteLocation(pn, evt.getPoint());
 
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					handleLeftPress(evt);
@@ -279,14 +265,51 @@ public class MidiEditArea extends JComponent {
 			@Override
 			public void mouseDragged(MouseEvent e) {
 				processDragEvent(e);
+				//LG.d("Mouse dragged");
 			}
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
+				highlightedNote = getDraggedNote(e.getPoint());
+				highlightedDragLocation = getMouseNoteLocation(highlightedNote, e.getPoint());
+				if (prevHighlightedDragLocation != null
+						&& !prevHighlightedDragLocation.equals(highlightedDragLocation)) {
+					prevHighlightedDragLocation = highlightedDragLocation;
+					repaint();
+				} else if (prevHighlightedDragLocation == null && highlightedDragLocation != null) {
+					prevHighlightedDragLocation = highlightedDragLocation;
+					repaint();
+				}
+				//LG.d("Mouse moved");
 				processDragEvent(e);
 			}
 
 		});
+	}
+
+	private Integer getMouseNoteLocation(PhraseNote pn, Point loc) {
+		if (pn != null) {
+			double timeDifference = getTimeFromPosition(loc) - pn.getStartTime();
+			double positionInNote = timeDifference / pn.getDuration();
+
+			if (positionInNote >= 0 && positionInNote <= 1.0) {
+				if (pn.getDuration() > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0) {
+					if (positionInNote < 0.15) {
+						return 0;
+					} else if (positionInNote > 0.85) {
+						return 2;
+					} else {
+						return 1;
+					}
+				} else {
+					return 1;
+				}
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 
 	private void playNote(PhraseNote pn) {
@@ -320,6 +343,9 @@ public class MidiEditArea extends JComponent {
 		dragX = null;
 		dragY = null;
 		dragLocation = null;
+
+		highlightedNote = null;
+		highlightedDragLocation = null;
 
 
 		repaint();
@@ -637,6 +663,15 @@ public class MidiEditArea extends JComponent {
 
 				int width = (int) (quarterNoteLength * pn.getDuration());
 				g.fillRect(drawX, drawY - 4, width, 8);
+
+				if (highlightedNote != null && pn == highlightedNote
+						&& highlightedDragLocation != null) {
+					width = (int) (dragLocationWidth[highlightedDragLocation] * quarterNoteLength
+							* pn.getDuration());
+					int widthOffset = (int) (dragLocationOffset[highlightedDragLocation]
+							* quarterNoteLength * pn.getDuration());
+					g.fillRect(drawX + widthOffset, drawY - 5, width, 10);
+				}
 
 				if (draggingVelocityShape) {
 					g.drawLine(drawX + width / 2, drawY, drawX + width / 2,
