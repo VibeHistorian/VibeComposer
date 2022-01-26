@@ -2,8 +2,11 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -12,11 +15,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +56,10 @@ public class MidiEditPopup extends CloseablePopup {
 	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, 0.25, 1 / 3.0, 0.5,
 			2 / 3.0, 1.0, 4 / 3.0, 2.0, 4.0 };
 
+	public int valuesHistoryUndoIndex = 0;
+
+	public List<PhraseNotes> valuesHistory = new ArrayList<>();
+
 
 	public static double getTimeGrid() {
 		return TIME_GRID[snapToTimeGridChoice];
@@ -65,6 +76,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public static int snapToTimeGridChoice = 2;
 	public static boolean snapToGridChoice = true;
 	public CheckButton applyToMainBtn;
+	public JLabel historyLabel = new JLabel("0");
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
@@ -236,16 +248,30 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 		});
 		textPanel.add(recompButt);
+		textPanel.add(new JLabel(" History count:"));
+		textPanel.add(historyLabel);
 
 		allPanels.add(buttonPanel);
 		allPanels.add(buttonPanel2);
 		allPanels.add(textPanel);
-		allPanels.add(mveaPanel);
 
+		allPanels.add(mveaPanel);
 
 		if (values.isEmpty()) {
 			recomposePart(false);
+		} else {
+			saveToHistory();
 		}
+		Action undoAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				LG.i("Ctrl Z UNDO AREA, index: " + valuesHistoryUndoIndex);
+				loadFromHistory();
+				repaintMvea();
+			}
+		};
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
+		allPanels.getActionMap().put("undo", undoAction);
 
 		frame.add(allPanels);
 		frame.pack();
@@ -282,10 +308,31 @@ public class MidiEditPopup extends CloseablePopup {
 
 
 		mvea.setValues(values);
+		saveToHistory();
 
 		applyToMainBtn.useFunc();
 		LG.i("Custom MIDI setup successful: " + part + ", " + partOrder);
 		repaintMvea();
+	}
+
+	public void saveToHistory() {
+		if (valuesHistoryUndoIndex + 2 < valuesHistory.size() && valuesHistory.size() > 0) {
+			valuesHistory = valuesHistory.subList(0, valuesHistoryUndoIndex + 2);
+		}
+
+		valuesHistory.add(mvea.getValues().copy());
+		valuesHistoryUndoIndex = valuesHistory.size() - 2;
+		historyLabel.setText(valuesHistory.size() + "");
+	}
+
+	public void loadFromHistory() {
+		if (valuesHistory.size() > 0 && valuesHistoryUndoIndex >= 0) {
+			mvea.setValues(valuesHistory.get(valuesHistoryUndoIndex).copy());
+			if (valuesHistoryUndoIndex >= 0) {
+				valuesHistoryUndoIndex--;
+			}
+		}
+		historyLabel.setText(valuesHistory.size() + "");
 	}
 
 	public void recomposePart(boolean isRandom) {

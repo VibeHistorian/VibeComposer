@@ -249,6 +249,8 @@ public class MidiEditArea extends JComponent {
 					}
 				}
 
+				pop.saveToHistory();
+
 				reset();
 			}
 		});
