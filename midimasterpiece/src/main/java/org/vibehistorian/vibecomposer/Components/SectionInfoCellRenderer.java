@@ -64,13 +64,15 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 							? VibeComposerGUI.userChordsDurations.getText()
 							: "4,4,4,4").replaceAll(" ", "");
 
-					if (customChords.isBlank() || guiUserChords.equalsIgnoreCase(customChords)) {
+					if (customChords.trim().isEmpty()
+							|| guiUserChords.equalsIgnoreCase(customChords)) {
 						customChords = "";
 					} else {
 						g.drawString("[" + customChords + "]", 12, height / 4);
 					}
 
-					if (customDurations.isBlank() || customDurations.equals(guiUserDurations)) {
+					if (customDurations.trim().isEmpty()
+							|| customDurations.equals(guiUserDurations)) {
 						customDurations = "";
 					} else {
 						g.drawString("(" + customDurations + ")", 12, height * 3 / 5);

@@ -139,7 +139,8 @@ public class MidiEditArea extends JComponent {
 
 			private void handleMiddlePress(MouseEvent evt) {
 				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-				if (evt.isAltDown()) {
+				int isAlt = evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK;
+				if (isAlt == MouseEvent.ALT_DOWN_MASK) {
 					dragMode = DM.DURATION;
 				} else if (evt.isControlDown()) {
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
@@ -218,6 +219,7 @@ public class MidiEditArea extends JComponent {
 									+ draggedNote.getOffset()));
 
 							dragMode = DM.PITCH_AND_POS;
+							playNote(draggedNote, 300);
 							repaint();
 						}
 					} else {
