@@ -614,7 +614,7 @@ public class VibeComposerGUI extends JFrame
 	public static List<Integer> sliderMeasureStartTimes = null;
 	public static List<Integer> sliderBeatStartTimes = null;
 
-	JLabel currentTime;
+	public static JLabel currentTime;
 	JLabel totalTime;
 	public static int currentSectionIndex = -1;
 	public static JLabel sectionText;
@@ -4114,8 +4114,6 @@ public class VibeComposerGUI extends JFrame
 								}
 
 								slider.repaint();
-								currentTime.setText(microsecondsToTimeString(
-										sequencer.getMicrosecondPosition()));
 							} else {
 								currentTime
 										.setText(millisecondsToTimeString(slider.getUpperValue()));
@@ -8488,7 +8486,7 @@ public class VibeComposerGUI extends JFrame
 		return v;
 	}
 
-	private static String millisecondsToTimeString(int l) {
+	public static String millisecondsToTimeString(int l) {
 		long i = l / 1000;
 		long m = i / 60;
 		long s = i % 60;

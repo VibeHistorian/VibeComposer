@@ -711,10 +711,14 @@ class RangeSliderUI extends BasicSliderUI {
 			actualSlider.setUpperDragging(upperDragging);
 			slider.setValueIsAdjusting(false);
 			super.mouseReleased(e);
-
-			if (rangeSlider.isEnabled() && !(rangeSlider instanceof PlayheadRangeSlider)
-					&& VibeComposerGUI.canRegenerateOnChange()) {
-				VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			if (rangeSlider.isEnabled()) {
+				if (!(rangeSlider instanceof PlayheadRangeSlider)
+						&& VibeComposerGUI.canRegenerateOnChange()) {
+					VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+				} else if (rangeSlider instanceof PlayheadRangeSlider) {
+					VibeComposerGUI.currentTime.setText(
+							VibeComposerGUI.millisecondsToTimeString(rangeSlider.getUpperValue()));
+				}
 			}
 		}
 
