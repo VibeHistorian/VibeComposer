@@ -40,12 +40,12 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
-			g.setColor(new Color(100, 150, 150));
-			g.fillRect(0, 0, width, height);
-
-			g.setColor(new Color(230, 230, 230));
 			if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
 				Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
+				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150));
+				g.fillRect(0, 0, width, height);
+
+				g.setColor(new Color(230, 230, 230));
 				g.drawString("" + sec.getMeasures(), 3, height / 2);
 
 				if (width > 100) {

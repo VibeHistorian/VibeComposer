@@ -4118,7 +4118,8 @@ public class VibeComposerGUI extends JFrame
 								if (allowedActionsOnZero == 0) {
 									slider.setUpperValue(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
-
+									currentTime.setText(
+											millisecondsToTimeString(slider.getUpperValue()));
 									slider.repaint();
 								} else {
 									slider.setUpperValueRaw(
