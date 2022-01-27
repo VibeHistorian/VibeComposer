@@ -4108,12 +4108,12 @@ public class VibeComposerGUI extends JFrame
 								if (allowedActionsOnZero == 0) {
 									slider.setUpperValue(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
+
+									slider.repaint();
 								} else {
 									slider.setUpperValueRaw(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
 								}
-
-								slider.repaint();
 							} else {
 								currentTime
 										.setText(millisecondsToTimeString(slider.getUpperValue()));
@@ -4156,17 +4156,15 @@ public class VibeComposerGUI extends JFrame
 								}
 								currentSectionIndex = sectIndex;
 								int finalSectIndex = sectIndex;
+								String newText = null;
 								if (sec == null) {
-									sectionText.setText("End");
+									newText = "End";
 								} else {
-									if (useArrangement.isSelected()) {
-										String sectionName = (sec != null)
-												? sec.getType().toString()
-												: "END";
-										sectionText.setText(sectionName);
-									} else {
-										sectionText.setText("ALL INST");
-									}
+									newText = sec.getType().toString();
+								}
+
+								if (!sectionText.getText().equalsIgnoreCase(newText)) {
+									sectionText.setText(newText);
 								}
 
 								Section actualSec = sec;
