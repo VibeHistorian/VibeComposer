@@ -294,6 +294,11 @@ public class MidiEditPopup extends CloseablePopup {
 		frame.setVisible(true);
 	}
 
+	public void apply() {
+		sec.addPhraseNotes(part, partOrder, mvea.getValues());
+		applyToMainBtn.useFunc();
+	}
+
 	public void undo() {
 		loadFromHistory(notesHistoryIndex - 1);
 	}
@@ -451,7 +456,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-
+				apply();
 			}
 
 			@Override

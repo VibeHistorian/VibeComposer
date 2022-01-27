@@ -5329,6 +5329,10 @@ public class VibeComposerGUI extends JFrame
 			arrangement.setOverridden(false);
 		}
 
+		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
+			currentMidiEditorPopup.apply();
+		}
+
 	}
 
 	private void resetArrSectionInBackground() {
