@@ -3889,8 +3889,9 @@ public class VibeComposerGUI extends JFrame
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setOpaque(false);
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
-		sliderPanel.setPreferredSize(new Dimension(1200, 40));
+		sliderPanel.setPreferredSize(new Dimension(1250, 40));
 
+		sliderPanel.add(new JLabel("                                 "));
 
 		slider = new PlayheadRangeSlider();
 		slider.setMaximum(0);
@@ -3914,10 +3915,14 @@ public class VibeComposerGUI extends JFrame
 		sliderPanel.add(slider);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(sliderPanel, constraints);
+
 
 		JPanel sliderInfoPanel = new JPanel();
 		sliderInfoPanel.setOpaque(false);
+		sliderInfoPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		sliderInfoPanel.setMaximumSize(new Dimension(200, 30));
+		sliderInfoPanel.setPreferredSize(new Dimension(200, 30));
+		sliderInfoPanel.setMinimumSize(new Dimension(200, 30));
 		currentTime = new JLabel("0:00");
 		currentTime.setMaximumSize(new Dimension(50, 20));
 
@@ -3927,14 +3932,19 @@ public class VibeComposerGUI extends JFrame
 		sectionText = new JLabel("INTRO");
 		sectionText.setMaximumSize(new Dimension(100, 20));
 
+
 		sliderInfoPanel.add(currentTime);
 		sliderInfoPanel.add(new JLabel(" / "));
 		sliderInfoPanel.add(totalTime);
 		sliderInfoPanel.add(new JLabel(" | "));
 		sliderInfoPanel.add(sectionText);
-		constraints.gridy = startY + 1;
+
+		sliderPanel.add(sliderInfoPanel);
+
+		everythingPanel.add(sliderPanel, constraints);
+		/*constraints.gridy = startY + 1;
 		constraints.anchor = anchorSide;
-		everythingPanel.add(sliderInfoPanel, constraints);
+		everythingPanel.add(sliderInfoPanel, constraints);*/
 
 		startOmnipresentThread();
 		startSoloButtonControlThread();

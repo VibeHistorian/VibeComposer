@@ -45,7 +45,7 @@ public class SwingUtils {
 
 				int scrollableVerticalGap = pane.getVerticalScrollBar().getMaximum()
 						- pane.getVerticalScrollBar().getVisibleAmount();
-				LG.i("Scrollable gap: " + scrollableVerticalGap);
+				//LG.i("Scrollable gap: " + scrollableVerticalGap);
 				if (scrollableVerticalGap < 15 || e.isShiftDown()) {
 					// Horizontal scrolling
 					Adjustable adj = pane.getHorizontalScrollBar();
