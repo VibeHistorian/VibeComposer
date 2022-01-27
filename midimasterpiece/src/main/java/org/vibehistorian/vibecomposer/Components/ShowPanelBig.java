@@ -207,7 +207,7 @@ public class ShowPanelBig extends JPanel {
 		scorePartPanel.add(new JLabel(" Trim Note Length:"));
 		trimNoteLengthBox = new ScrollComboBox<>(false);
 		trimNoteLengthBox.setMaximumSize(new Dimension(80, ShowRulerBig.maxHeight));
-		trimNoteLengthBox.setFunc(e -> repaintMinimum());
+		trimNoteLengthBox.setFunc(e -> update());
 		ScrollComboBox.addAll(new String[] { "NONE", "1/32", "1/16", "1/8" }, trimNoteLengthBox);
 		scorePartPanel.add(trimNoteLengthBox);
 
