@@ -143,6 +143,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
+import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
@@ -367,6 +368,13 @@ public class VibeComposerGUI extends JFrame
 	public static JScrollPane chordScrollPane;
 	public static JScrollPane arpScrollPane;
 	public static JScrollPane drumScrollPane;
+
+	public static JPanel melodyParentPanel;
+	public static JPanel bassParentPanel;
+	public static JPanel chordParentPanel;
+	public static JPanel arpParentPanel;
+	public static JPanel drumParentPanel;
+
 	JScrollPane arrangementScrollPane;
 	JScrollPane arrangementActualScrollPane;
 	public static JTable scrollableArrangementTable;
@@ -1335,7 +1343,7 @@ public class VibeComposerGUI extends JFrame
 					if (!bottomUpReverseDrumPanels.isSelected()) {
 						((JPanel) getInstPane(4).getViewport().getView()).add(dp);
 					} else {
-						((JPanel) getInstPane(4).getViewport().getView()).add(dp, 2);
+						((JPanel) getInstPane(4).getViewport().getView()).add(dp, 0);
 					}
 					dp.setVisible(true);
 				}
@@ -1460,7 +1468,7 @@ public class VibeComposerGUI extends JFrame
 		melodyScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
+				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
 			}
 		};
 		melodyScrollPane.setViewportView(scrollableMelodyPanels);
@@ -1482,10 +1490,6 @@ public class VibeComposerGUI extends JFrame
 		//melodySettingsPanel.add(randomChordNote);
 
 		// ---- EXTRA -----
-		JPanel melodySettingsExtraPanelsHolder = new JPanel();
-		melodySettingsExtraPanelsHolder.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelsHolder.setLayout(new GridLayout(0, 1, 0, 0));
-		melodySettingsExtraPanelsHolder.setMaximumSize(new Dimension(1800, 100));
 
 		JPanel melodySettingsExtraPanelShape = new JPanel();
 		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1638,16 +1642,32 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(new JLabel("in Mode:"));
 		melodySettingsExtraPanelOrg.add(userMelodyScaleModeSelect);
 
-		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelShape);
-		melodySettingsExtraPanelsHolder.add(melodySettingsExtraPanelBlocksPatternsCompose);
-
 
 		//scrollableMelodyPanels.add(melodySettingsPanel);
-		scrollableMelodyPanels.add(melodySettingsExtraPanelOrg);
-		scrollableMelodyPanels.add(melodySettingsExtraPanelsHolder);
+		melodyParentPanel = new JPanel() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		melodyParentPanel.setLayout(new BoxLayout(melodyParentPanel, BoxLayout.Y_AXIS));
+		JPanel borderPanel = new JPanel() {
+			@Override
+			public Dimension getMaximumSize() {
+				return new Dimension(scrollPaneDimension.width, 150);
+			}
+		};
+		borderPanel.setLayout(new DynamicGridLayout(0, 1));
+		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		borderPanel.add(melodySettingsExtraPanelOrg);
+		borderPanel.add(melodySettingsExtraPanelShape);
+		borderPanel.add(melodySettingsExtraPanelBlocksPatternsCompose);
+		melodyParentPanel.add(borderPanel);
+		melodyParentPanel.add(melodyScrollPane);
 		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
-		toggleableComponents.add(melodySettingsExtraPanelsHolder);
+		toggleableComponents.add(melodySettingsExtraPanelShape);
+		toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
 	}
 
 	public static JCheckBox makeCheckBox(String string, boolean b, boolean thick) {
@@ -1731,7 +1751,7 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Melody", melodyScrollPane);
+		instrumentTabPane.addTab("Melody", melodyParentPanel);
 
 
 	}
@@ -1747,7 +1767,7 @@ public class VibeComposerGUI extends JFrame
 		bassScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
+				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
 			}
 		};
 		bassScrollPane.setViewportView(scrollableBassPanels);
@@ -1757,10 +1777,10 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel bassSettingsPanel = new JPanel();
 		addBass = new JCheckBox("BASS", true);
-		bassSettingsPanel.add(addBass);
 		bassSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
+		bassSettingsPanel.add(addBass);
 
 		groupFilterSliders[1] = new VeloRect(0, 127, 127);
 		JLabel filterLabel = new JLabel("LP");
@@ -1773,9 +1793,28 @@ public class VibeComposerGUI extends JFrame
 		bassSettingsAdvancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		bassSettingsAdvancedPanel.setMaximumSize(new Dimension(1800, 50));
 
-		scrollableBassPanels.add(bassSettingsPanel);
-		scrollableBassPanels.add(bassSettingsAdvancedPanel);
+		bassParentPanel = new JPanel() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		bassParentPanel.setLayout(new BoxLayout(bassParentPanel, BoxLayout.Y_AXIS));
+		JPanel borderPanel = new JPanel() {
+			@Override
+			public Dimension getMaximumSize() {
+				return new Dimension(scrollPaneDimension.width, 100);
+			}
+		};
+		borderPanel.setLayout(new DynamicGridLayout(0, 1));
+		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		borderPanel.add(bassSettingsPanel);
+		borderPanel.add(bassSettingsPanel);
+		bassParentPanel.add(borderPanel);
+		bassParentPanel.add(bassScrollPane);
+
 		scrollableBassPanels.add(bassPanel);
+
 		bassSettingsAdvancedPanel.setVisible(false);
 
 
@@ -1783,7 +1822,7 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Bass", bassScrollPane);
+		instrumentTabPane.addTab("Bass", bassParentPanel);
 	}
 
 	private void initChordGenSettings(int startY, int anchorSide) {
@@ -1794,7 +1833,7 @@ public class VibeComposerGUI extends JFrame
 		chordScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
+				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
 			}
 		};
 		chordScrollPane.setViewportView(scrollableChordPanels);
@@ -1902,11 +1941,35 @@ public class VibeComposerGUI extends JFrame
 		//constraints.anchor = anchorSide;
 		chordSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		chordSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-		scrollableChordPanels.add(chordSettingsPanel);
+		//scrollableChordPanels.add(chordSettingsPanel);
 		chordSettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		chordSettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
 		//constraints.gridy = startY + 1;
-		scrollableChordPanels.add(chordSettingsExtraPanel);
+
+		//scrollableChordPanels.add(chordSettingsExtraPanel);
+
+
+		chordParentPanel = new JPanel() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		chordParentPanel.setLayout(new BoxLayout(chordParentPanel, BoxLayout.Y_AXIS));
+
+		JPanel borderPanel = new JPanel() {
+			@Override
+			public Dimension getMaximumSize() {
+				return new Dimension(scrollPaneDimension.width, 100);
+			}
+		};
+		borderPanel.setLayout(new DynamicGridLayout(0, 1));
+		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		borderPanel.add(chordSettingsPanel);
+		borderPanel.add(chordSettingsExtraPanel);
+		chordParentPanel.add(borderPanel);
+		chordParentPanel.add(chordScrollPane);
+
 		//addHorizontalSeparatorToPanel(scrollableChordPanels);
 	}
 
@@ -1919,7 +1982,7 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Chords", chordScrollPane);
+		instrumentTabPane.addTab("Chords", chordParentPanel);
 	}
 
 	private void initArpGenSettings(int startY, int anchorSide) {
@@ -1930,8 +1993,7 @@ public class VibeComposerGUI extends JFrame
 		arpScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				//LG.i(("Size: " + scrollPaneDimension.toString()));
-				return scrollPaneDimension;
+				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
 			}
 		};
 		arpScrollPane.setViewportView(scrollableArpPanels);
@@ -2040,11 +2102,34 @@ public class VibeComposerGUI extends JFrame
 
 		arpsSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		arpsSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-		scrollableArpPanels.add(arpsSettingsPanel);
+		//scrollableArpPanels.add(arpsSettingsPanel);
 		arpSettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		arpSettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
 		//constraints.gridy = startY + 1;
-		scrollableArpPanels.add(arpSettingsExtraPanel);
+		//scrollableArpPanels.add(arpSettingsExtraPanel);
+
+		arpParentPanel = new JPanel() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		arpParentPanel.setLayout(new BoxLayout(arpParentPanel, BoxLayout.Y_AXIS));
+
+
+		JPanel borderPanel = new JPanel() {
+			@Override
+			public Dimension getMaximumSize() {
+				return new Dimension(scrollPaneDimension.width, 100);
+			}
+		};
+		borderPanel.setLayout(new DynamicGridLayout(0, 1));
+		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		borderPanel.add(arpsSettingsPanel);
+		borderPanel.add(arpSettingsExtraPanel);
+		arpParentPanel.add(borderPanel);
+		arpParentPanel.add(arpScrollPane);
+
 		//addHorizontalSeparatorToPanel(scrollableArpPanels);
 	}
 
@@ -2056,7 +2141,7 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Arps", arpScrollPane);
+		instrumentTabPane.addTab("Arps", arpParentPanel);
 	}
 
 	private void initDrumGenSettings(int startY, int anchorSide) {
@@ -2067,7 +2152,7 @@ public class VibeComposerGUI extends JFrame
 		drumScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
+				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
 			}
 		};
 		drumScrollPane.setViewportView(scrollableDrumPanels);
@@ -2262,7 +2347,29 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.setAlignmentX(Component.LEFT_ALIGNMENT);
 		drumExtraSettings.setMaximumSize(new Dimension(1800, 50));
 		//constraints.gridy = startY + 1;
-		scrollableDrumPanels.add(drumExtraSettings);
+		//scrollableDrumPanels.add(drumExtraSettings);
+
+		drumParentPanel = new JPanel() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		drumParentPanel.setLayout(new BoxLayout(drumParentPanel, BoxLayout.Y_AXIS));
+
+		JPanel borderPanel = new JPanel() {
+			@Override
+			public Dimension getMaximumSize() {
+				return new Dimension(scrollPaneDimension.width, 100);
+			}
+		};
+		borderPanel.setLayout(new DynamicGridLayout(0, 1));
+		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		borderPanel.add(drumsPanel);
+		borderPanel.add(drumExtraSettings);
+		drumParentPanel.add(borderPanel);
+		drumParentPanel.add(drumScrollPane);
+
 		//addHorizontalSeparatorToPanel(scrollableDrumPanels);
 	}
 
@@ -2274,7 +2381,7 @@ public class VibeComposerGUI extends JFrame
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Drums", drumScrollPane);
+		instrumentTabPane.addTab("Drums", drumParentPanel);
 
 	}
 
@@ -5378,7 +5485,7 @@ public class VibeComposerGUI extends JFrame
 
 
 			if (sequencer == null) {
-				sequencer = MidiSystem.getSequencer(synthesizer == null); // Get the default Sequencer
+				sequencer = MidiSystem.getSequencer(synthesizer == null);  // Get the default Sequencer
 				if (sequencer == null) {
 					LG.e("Sequencer device not supported");
 					return;
@@ -7166,7 +7273,7 @@ public class VibeComposerGUI extends JFrame
 		arrangement.setFromTable(scrollableArrangementTable);
 		boolean overrideSuccessful = manualArrangement.isSelected()
 				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
-		LG.d(("OVERRIDE OK?: " + overrideSuccessful));
+		LG.d(("Is Manual Arrangement: " + overrideSuccessful));
 		if (overrideSuccessful) {
 			arrangement.setOverridden(true);
 		} else {
@@ -7503,10 +7610,10 @@ public class VibeComposerGUI extends JFrame
 
 
 		if (inst < 4 || !bottomUpReverseDrumPanels.isSelected()) {
-			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder + 1);
+			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder - 1);
 		} else {
 			((JPanel) getInstPane(inst).getViewport().getView()).add(ip,
-					affectedPanels.size() - panelOrder + 2);
+					affectedPanels.size() - panelOrder);
 		}
 		return ip;
 	}
