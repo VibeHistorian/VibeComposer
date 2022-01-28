@@ -620,6 +620,7 @@ public class VibeComposerGUI extends JFrame
 	public static JLabel sectionText;
 	boolean isKeySeeking = false;
 	public static boolean isDragging = false;
+	private static boolean pauseInfoResettable = true;
 	private static long pausedSliderPosition = 0;
 	private static int pausedMeasureCounter = 0;
 	private static long startSliderPosition = 0;
@@ -4415,11 +4416,13 @@ public class VibeComposerGUI extends JFrame
 		});
 		regeneratePausePlay = makeButton("R~", e -> {
 			boolean wasSelected = startFromBar.isSelected();
+			pauseInfoResettable = false;
 			startFromBar.setSelected(false);
 			pauseMidi();
-			actionPerformed(new ActionEvent(regenerateStopPlay, ActionEvent.ACTION_PERFORMED,
+			actionPerformed(new ActionEvent(regeneratePausePlay, ActionEvent.ACTION_PERFORMED,
 					"Regenerate"));
 			startFromBar.setSelected(wasSelected);
+			pauseInfoResettable = true;
 		});
 		regenerateStopPlay.setMargin(new Insets(0, 0, 0, 0));
 		regeneratePausePlay.setMargin(new Insets(0, 0, 0, 0));
@@ -5570,7 +5573,7 @@ public class VibeComposerGUI extends JFrame
 
 			if (loopBeat.isSelected()) {
 				resetPauseInfo();
-				int startPos = delayed;
+				long startPos = (startFromBar.isSelected()) ? delayed : pausedSliderPosition;
 				if (startPos < slider.getValue()) {
 					startPos = slider.getValue();
 				}
@@ -6611,8 +6614,10 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void resetPauseInfo() {
-		pausedSliderPosition = 0;
-		pausedMeasureCounter = 0;
+		if (pauseInfoResettable) {
+			pausedSliderPosition = 0;
+			pausedMeasureCounter = 0;
+		}
 	}
 
 	public static void unsoloAllTracks(boolean resetButtons) {
