@@ -653,7 +653,7 @@ public class MidiUtils {
 		int[] mappedChord = getNormalMappedChord(chordString, ignoreInversion);
 
 		if (mappedChord == null) {
-			mappedChord = getSpelledChord(chordString);
+			mappedChord = getSpelledChord(chordString, ignoreInversion);
 		}
 		if (mappedChord == null) {
 			return null;
@@ -1093,7 +1093,7 @@ public class MidiUtils {
 		return closest;
 	}
 
-	public static int[] getSpelledChord(String chordString) {
+	public static int[] getSpelledChord(String chordString, boolean ignoreInversion) {
 		List<Character> validChars = Arrays
 				.asList(new Character[] { '#', 'C', 'D', 'E', 'F', 'G', 'A', 'B' });
 		boolean expectOnlyLetter = true;
@@ -1101,6 +1101,19 @@ public class MidiUtils {
 		int currentOctaveAdjust = 0;
 		int lastValue = 0;
 		int current = -1;
+
+		Integer inversion = null;
+		int dotIndex = chordString.indexOf(".");
+		if (chordString.length() >= 3 && dotIndex >= 0) {
+			inversion = Integer.valueOf(chordString.substring(dotIndex + 1));
+			chordString = chordString.substring(0, dotIndex);
+		}
+
+		if (ignoreInversion) {
+			inversion = null;
+		}
+
+
 		for (int i = 0; i < chordString.length(); i++) {
 			Character chr = chordString.charAt(i);
 			int index = validChars.indexOf(chr);
@@ -1129,7 +1142,12 @@ public class MidiUtils {
 				return null;
 			}
 		}
-		return intervalInts.stream().mapToInt(i -> i).toArray();
+		int[] returnChord = intervalInts.stream().mapToInt(i -> i).toArray();
+		if (inversion != null) {
+			return chordInversion(returnChord, inversion);
+		} else {
+			return returnChord;
+		}
 	}
 
 	public static String makeSpelledChord(int[] chord) {
