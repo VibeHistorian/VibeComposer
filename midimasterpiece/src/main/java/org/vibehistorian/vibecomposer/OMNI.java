@@ -117,12 +117,15 @@ public class OMNI {
 		try {
 
 			Point cp = c.getLocationOnScreen();
-			return p.x >= cp.x && p.x <= cp.x + c.getWidth() && p.y >= cp.y
-					&& p.y <= cp.y + c.getHeight();
+			return pointInRect(p, cp.x, c.getWidth(), cp.y, c.getHeight());
 		} catch (Exception e) {
 			LG.d("Mouse in comp error!");
 			return false;
 		}
+	}
+
+	public static boolean pointInRect(Point p, int xRect, int yRect, int xWidth, int yHeight) {
+		return p.x >= xRect && p.x <= xRect + xWidth && p.y >= yRect && p.y <= yRect + yHeight;
 	}
 
 	public static double clamp(double num, double min, double max) {

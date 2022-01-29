@@ -155,7 +155,7 @@ public class MidiEditArea extends JComponent {
 
 				} else if (evt.isShiftDown()) {
 					dragMode = DM.PITCH;
-				} else {
+				} else if (draggedNote != null) {
 					lastPlayedNoteTime = System.currentTimeMillis();
 					playNote(draggedNote);
 

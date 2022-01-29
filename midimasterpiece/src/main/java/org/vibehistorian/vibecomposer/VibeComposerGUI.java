@@ -3385,9 +3385,8 @@ public class VibeComposerGUI extends JFrame
 					if (hasSinglePresence && sec.getPartPhraseNotes() != null
 							&& part < sec.getPartPhraseNotes().size()
 							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
-						MidiEditPopup mep = new MidiEditPopup(sec, part, partAbsoluteOrder);
-						mep.setSec(sec);
-						currentMidiEditorPopup = mep;
+						currentMidiEditorPopup = new MidiEditPopup(sec, part, partAbsoluteOrder);
+						currentMidiEditorPopup.setSec(sec);
 						currentMidiEditorSectionIndex = secOrder;
 					}
 				}
@@ -8753,7 +8752,7 @@ public class VibeComposerGUI extends JFrame
 
 
 	public static boolean canRegenerateOnChange() {
-		return sequencer != null && regenerateWhenValuesChange.isSelected()
+		return sequencer != null && regenerateWhenValuesChange.isSelected() && !composingInProgress
 				&& arrSection.getSelectedIndex() == 0;
 	}
 

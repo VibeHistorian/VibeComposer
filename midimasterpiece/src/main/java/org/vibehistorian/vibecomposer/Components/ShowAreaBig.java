@@ -59,6 +59,7 @@ public class ShowAreaBig extends JComponent {
 	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
 	private int oldX;
+	private int oldXMouse;
 	public static int noteHeight = 5;
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
@@ -72,6 +73,8 @@ public class ShowAreaBig extends JComponent {
 	private double beatWidth;
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
+	public static double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
+			MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
@@ -104,6 +107,134 @@ public class ShowAreaBig extends JComponent {
 			theColours[i][1] = (float) (Math.random() / maxColours)
 					+ (float) (1.0 / maxColours * i);
 		}*/
+
+		//		addMouseListener(new MouseAdapter() {
+		//			@Override
+		//			public void mouseReleased(MouseEvent evt) {
+		//				LG.d("Checking note overlap for: " + evt.getPoint());
+		//
+		//				Enumeration<?> enum1 = sp.score.getPartList().elements();
+		//				int prevColorIndex = -1;
+		//				int samePrevColorCounter = 0;
+		//
+		//				Set<Integer> soloMuterHighlightedTracks = new HashSet<>();
+		//				if (ShowPanelBig.soloMuterHighlight != null
+		//						&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+		//					boolean checkMutes = VibeComposerGUI.globalSoloMuter.soloState == State.OFF;
+		//					for (int i = 0; i < 5; i++) {
+		//						for (InstPanel ip : VibeComposerGUI.getInstList(i)) {
+		//							if (checkMutes) {
+		//								if (ip.getSoloMuter().muteState == State.OFF) {
+		//									soloMuterHighlightedTracks.add(ip.getSequenceTrack());
+		//								}
+		//							} else {
+		//								if (ip.getSoloMuter().soloState != State.OFF) {
+		//									soloMuterHighlightedTracks.add(ip.getSequenceTrack());
+		//								}
+		//							}
+		//
+		//						}
+		//					}
+		//				}
+		//
+		//				while (enum1.hasMoreElements()) {
+		//					PartExt part = (PartExt) enum1.nextElement();
+		//
+		//					int noteColorIndex = getIndexForPartName(part.getTitle());
+		//					//LG.d("Index: " + noteColorIndex);
+		//					if (prevColorIndex == noteColorIndex) {
+		//						samePrevColorCounter++;
+		//					} else {
+		//						samePrevColorCounter = 0;
+		//						prevColorIndex = noteColorIndex;
+		//					}
+		//					if (!soloMuterHighlightedTracks.isEmpty()
+		//							&& !soloMuterHighlightedTracks.contains(part.getTrackNumber())) {
+		//						continue;
+		//					}
+		//					Color noteColor = VibeComposerGUI.instColors[noteColorIndex];
+		//					if (samePrevColorCounter > 0) {
+		//						Color nextColor = noteColorIndex < 4
+		//								? VibeComposerGUI.instColors[noteColorIndex + 1]
+		//								: Color.red;
+		//						double percentageMix = samePrevColorCounter
+		//								/ (double) Math.max(samePrevColorCounter,
+		//										VibeComposerGUI.getInstList(noteColorIndex).size());
+		//
+		//						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix / 1.5);
+		//					}
+		//					Enumeration<?> enum2 = part.getPhraseList().elements();
+		//					int phraseCounter = -1;
+		//					while (enum2.hasMoreElements()) {
+		//						Phrase phrase = (Phrase) enum2.nextElement();
+		//						phraseCounter++;
+		//						if (phrase.getHighestPitch() < 0) {
+		//							continue;
+		//						}
+		//
+		//						Enumeration<?> enum3 = phrase.getNoteList().elements();
+		//						double oldXBeat = phrase.getStartTime();
+		//						oldXMouse = (int) (Math.round(oldXBeat * beatWidth));
+		//
+		//						while (enum3.hasMoreElements()) {
+		//							Note aNote = (Note) enum3.nextElement();
+		//							int currNote = -1;
+		//							if (aNote.getPitchType() == Note.MIDI_PITCH)
+		//								currNote = aNote.getPitch();
+		//							else
+		//								currNote = Note.freqToMidiPitch(aNote.getFrequency());
+		//
+		//							if (currNote < 0) {
+		//								//LG.d("(NOT) PRINTING EMPTY NOTE!");
+		//								oldXBeat += aNote.getRhythmValue();
+		//								oldXMouse = (int) (Math.round(oldXBeat * beatWidth));
+		//								continue;
+		//							}
+		//							//LG.d("Note: " + currNote);
+		//							if ((currNote <= 127) && (currNote >= 0)) {
+		//								int y = getNotePosY(currNote);
+		//
+		//								double durationTrimmer = ShowPanelBig.trimNoteLengthBox
+		//										.getSelectedIndex() > 0
+		//												? noteTrimValues[ShowPanelBig.trimNoteLengthBox
+		//														.getSelectedIndex() - 1]
+		//												: 1000;
+		//
+		//
+		//								int x = (int) (Math
+		//										.round(Math.min(durationTrimmer, aNote.getDuration())
+		//												* beatWidth));
+		//
+		//								if (x < 1)
+		//									x = 1;
+		//
+		//								int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
+		//								int actualStartingX = oldXMouse + noteOffsetXOffset;
+		//
+		//								int actualHeight = (noteHeight > 7 ? noteHeight * 7 / 10
+		//										: noteHeight) - thinNote;
+		//
+		//								boolean pointInRect = OMNI.pointInRect(evt.getPoint(),
+		//										actualStartingX, y - actualHeight, x, actualHeight * 2);
+		//								if (pointInRect) {
+		//									LG.i("Opening popup for section#: " + phraseCounter);
+		//									VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
+		//											VibeComposerGUI.actualArrangement.getSections()
+		//													.get(phraseCounter),
+		//											noteColorIndex, samePrevColorCounter);
+		//									VibeComposerGUI.currentMidiEditorPopup
+		//											.setSec(VibeComposerGUI.actualArrangement.getSections()
+		//													.get(phraseCounter));
+		//									VibeComposerGUI.currentMidiEditorSectionIndex = phraseCounter;
+		//								}
+		//							}
+		//							oldXBeat += aNote.getRhythmValue();
+		//							oldXMouse = (int) (Math.round(oldXBeat * beatWidth));
+		//						}
+		//					}
+		//				}
+		//			}
+		//		});
 	}
 
 	private void reInit() {
@@ -274,8 +405,6 @@ public class ShowAreaBig extends JComponent {
 
 		//g.drawLine(viewPoint.x + 4, 0, viewPoint.x + 4, areaHeight);
 
-		double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
-				MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
 		//Paint each phrase in turn
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
 		int prevColorIndex = -1;
