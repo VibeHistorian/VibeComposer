@@ -78,18 +78,23 @@ public class MidiEditPopup extends CloseablePopup {
 	public CheckButton applyToMainBtn;
 	public JLabel historyLabel = new JLabel("Edit History:");
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
+	public boolean applyOnClose = true;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
 		sec = section;
 		part = secPartNum;
 		partOrder = secPartOrder;
+		applyOnClose = true;
+		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 		if (values == null) {
 			values = VibeComposerGUI.getAffectedPanels(part).get(partOrder).getCustomMidi();
 		}
 		if (values == null) {
 			values = new PhraseNotes();
+		} else {
+			values = values.copy();
 		}
 		values.setCustom(true);
 
@@ -189,23 +194,20 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
 
-		applyToMainBtn = new CheckButton("Apply to All (!)",
+		applyToMainBtn = new CheckButton("Apply to Global",
 				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
-		applyToMainBtn.setFunc(e -> {
-			if (applyToMainBtn.isSelected()) {
-				mvea.getValues().setCustom(true);
-				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(mvea.getValues());
-			} else {
-				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(null);
-			}
-		});
+		applyToMainBtn.setFunc(e -> apply());
 		buttonPanel2.add(applyToMainBtn);
-		buttonPanel2.add(VibeComposerGUI.makeButton("Discard (!)", e -> {
+		buttonPanel2.add(VibeComposerGUI.makeButton("Discard / Save Global", e -> {
 			mvea.getValues().setCustom(false);
 			close();
 		}));
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Close Window", e -> close()));
+		buttonPanel2.add(VibeComposerGUI.makeButton("Exit / Save Section", e -> close()));
+		buttonPanel2.add(VibeComposerGUI.makeButton("Close without Saving", e -> {
+			applyOnClose = false;
+			close();
+		}));
 
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(1500, 600));
@@ -289,14 +291,30 @@ public class MidiEditPopup extends CloseablePopup {
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "redo");
 		allPanels.getActionMap().put("redo", redoAction);
 
+		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
 	}
 
 	public void apply() {
-		sec.addPhraseNotes(part, partOrder, mvea.getValues());
-		applyToMainBtn.useFunc();
+		if (mvea != null && mvea.getValues() != null) {
+			if (mvea.getValues().isCustom()) {
+				sec.addPhraseNotes(part, partOrder, mvea.getValues().copy());
+			} else if (sec.containsPhrase(part, partOrder)) {
+				sec.getPhraseNotes(part, partOrder).setCustom(false);
+			}
+			if (applyToMainBtn.isSelected()) {
+				if (VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidi() == null
+						|| !mvea.getValues().isCustom()) {
+					PhraseNotes pnCopy = mvea.getValues().copy();
+					pnCopy.setCustom(true);
+					VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(pnCopy);
+				}
+			} else {
+				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(null);
+			}
+		}
 	}
 
 	public void undo() {
@@ -308,6 +326,8 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public void setup(Section sec) {
+		LG.i("Midi Edit Popup Setup, Part: " + part + ", Order: " + partOrder);
+
 		if (!sec.containsPhrase(part, partOrder)) {
 			close();
 			LG.i("MidiEditPopup cannot be setup - section doesn't contain the part/partOrder!");
@@ -318,13 +338,16 @@ public class MidiEditPopup extends CloseablePopup {
 		PhraseNotes values = sec.getPhraseNotes(part, partOrder);
 		if (applyToMainBtn.isSelected() && (values == null || !values.isCustom())) {
 			LG.i("Setup - not applicable, or not custom midi!");
-			applyToMainBtn.useFunc();
+			apply();
 			repaintMvea();
 			return;
 		}
 
 		int vmin = -1 * baseMargin;
 		int vmax = baseMargin;
+
+		values = values.copy();
+
 		if (!values.isEmpty()) {
 			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.min().getAsInt();
@@ -339,7 +362,7 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea.setValues(values);
 		saveToHistory();
 
-		applyToMainBtn.useFunc();
+		apply();
 		LG.i("Custom MIDI setup successful: " + part + ", " + partOrder);
 		repaintMvea();
 	}
@@ -456,7 +479,9 @@ public class MidiEditPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				apply();
+				if (applyOnClose) {
+					apply();
+				}
 			}
 
 			@Override
