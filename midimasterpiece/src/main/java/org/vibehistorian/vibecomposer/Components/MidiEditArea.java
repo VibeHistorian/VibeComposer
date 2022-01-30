@@ -486,7 +486,7 @@ public class MidiEditArea extends JComponent {
 		timeGridLocations.stream().distinct().collect(Collectors.toList());
 		Collections.sort(timeGridLocations);
 
-		return MidiUtils.getClosestDoubleFromList(timeGridLocations, val);
+		return MidiUtils.getClosestDoubleFromList(timeGridLocations, val, false);
 	}
 
 	void setVal(int pos, int pitch) {

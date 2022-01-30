@@ -1077,14 +1077,19 @@ public class MidiUtils {
 		return closest;
 	}
 
-	public static double getClosestDoubleFromList(List<Double> list, double valToFind) {
+	public static double getClosestDoubleFromList(List<Double> list, double valToFind,
+			boolean leanLeft) {
 		if (list == null || list.isEmpty()) {
 			return Double.MIN_VALUE;
 		}
 		double closest = list.get(0);
 		double closestDistance = Math.abs(valToFind - closest);
 		for (int i = 1; i < list.size(); i++) {
-			double distance = Math.abs(valToFind - list.get(i));
+			double distRaw = valToFind - list.get(i);
+			if (leanLeft && distRaw < MidiGenerator.DBL_ERR) {
+				return closest;
+			}
+			double distance = Math.abs(distRaw);
 			if (distance < closestDistance) {
 				closestDistance = distance;
 				closest = list.get(i);

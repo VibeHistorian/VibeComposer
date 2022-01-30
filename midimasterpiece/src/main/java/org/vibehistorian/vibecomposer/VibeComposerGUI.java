@@ -5983,7 +5983,7 @@ public class VibeComposerGUI extends JFrame
 
 	// Deal with the window closebox
 	public void windowClosing(WindowEvent we) {
-		int confirmed = JOptionPane.showConfirmDialog(null, "Exit VibeComposer?",
+		int confirmed = JOptionPane.showConfirmDialog(this, "Exit VibeComposer?",
 				"Exit Program Message Box", JOptionPane.YES_NO_OPTION);
 
 		if (confirmed == JOptionPane.YES_OPTION) {
