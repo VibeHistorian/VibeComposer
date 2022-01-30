@@ -446,6 +446,10 @@ public class MidiEditArea extends JComponent {
 					int velocity = getVelocityFromPosition(e.getPoint());
 					velocity = OMNI.clamp(velocity, 0, 127);
 					draggedNote.setDynamic(velocity);
+					if ((System.currentTimeMillis() - lastPlayedNoteTime) > 500) {
+						playNote(draggedNote, 300);
+						lastPlayedNoteTime = System.currentTimeMillis();
+					}
 				}
 
 				// PITCH
