@@ -3654,16 +3654,47 @@ public class MidiGenerator implements JMC {
 
 		List<int[]> mappedChords = new ArrayList<>();
 		List<int[]> mappedRootChords = new ArrayList<>();
+		List<Integer> customInversionIndexList = new ArrayList<>();
 		/*chordInts.clear();
 		chordInts.addAll(userChords);*/
+		int chordNum = 0;
 		for (String chordString : chordsDurations.getLeft()) {
-			int[] mapped = mappedChord(chordString);
-			mappedChords.add(mapped);
-			mappedRootChords.add(new int[] { mapped[0] });
+			mappedChords.add(mappedChord(chordString));
+			mappedRootChords.add(mappedChord(chordString, true));
+			if (chordString.contains(".")) {
+				customInversionIndexList.add(chordNum);
+			}
+			chordNum++;
 		}
+
+		mappedChords = (gc.isSquishProgressively())
+				? MidiUtils.squishChordProgressionProgressively(mappedChords,
+						gc.isSpiceFlattenBigChords(), gc.getRandomSeed(),
+						gc.getChordGenSettings().getFlattenVoicingChance(),
+						customInversionIndexList, mappedRootChords)
+				: MidiUtils.squishChordProgression(mappedChords, gc.isSpiceFlattenBigChords(),
+						gc.getRandomSeed(), gc.getChordGenSettings().getFlattenVoicingChance(),
+						customInversionIndexList, mappedRootChords);
+
+
 		chordProgression = mappedChords;
 		rootProgression = mappedRootChords;
 		progressionDurations = chordsDurations.getRight();
+
+		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
+		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
+				? sc.getBeatDurationMultiplierIndex()
+				: gc.getBeatDurationMultiplierIndex();
+		if (beatDurMultiIndex == 0) {
+			for (int i = 0; i < progressionDurations.size(); i++) {
+				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
+			}
+		} else if (beatDurMultiIndex == 2) {
+			for (int i = 0; i < progressionDurations.size(); i++) {
+				progressionDurations.set(i, progressionDurations.get(i) * 2);
+			}
+		}
+
 		sec.setSectionBeatDurations(progressionDurations);
 		sec.setSectionDuration(progressionDurations.stream().mapToDouble(e -> e).sum());
 		LG.i("Using SECTION custom progression: "
