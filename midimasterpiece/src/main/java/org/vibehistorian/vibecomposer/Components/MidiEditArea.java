@@ -415,10 +415,10 @@ public class MidiEditArea extends JComponent {
 
 				// POSITION
 				if (draggingAny(DM.POSITION)) {
-					double offset = getOffsetFromPosition(e.getPoint(), draggedNote);
+					double time = getTimeFromPosition(e.getPoint());
+					double offset = time - draggedNote.getAbsoluteStartTime();
 					if (lockTimeGrid) {
-						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
-								- draggedNote.getAbsoluteStartTime();
+						offset = getClosestToTimeGrid(time) - draggedNote.getAbsoluteStartTime();
 					}
 
 					draggedNote.setOffset(offset);
@@ -436,20 +436,15 @@ public class MidiEditArea extends JComponent {
 
 				// NOTE START
 				if (draggingAny(DM.NOTE_START)) {
-					double offset = getOffsetFromPosition(e.getPoint(), draggedNote);
+					double time = getTimeFromPosition(e.getPoint());
+					double offset = time - draggedNote.getAbsoluteStartTime();
 					if (lockTimeGrid) {
-						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
-								- draggedNote.getAbsoluteStartTime();
+						offset = getClosestToTimeGrid(time) - draggedNote.getAbsoluteStartTime();
 					}
-
-					if ((offset - draggedNoteCopy.getOffset()
-							- draggedNoteCopy
-									.getDuration()) < (MidiGenerator.Durations.SIXTEENTH_NOTE
-											/ 2.5)) {
+					double duration = draggedNoteCopy.getDuration() + draggedNoteCopy.getOffset()
+							- offset;
+					if (duration > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.5) {
 						draggedNote.setOffset(offset);
-						double duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2,
-								draggedNoteCopy.getDuration() + draggedNoteCopy.getOffset()
-										- offset);
 						draggedNote.setDuration(duration);
 					}
 				}
@@ -487,7 +482,7 @@ public class MidiEditArea extends JComponent {
 	}
 
 	private double getClosestToTimeGrid(double val) {
-		LG.i("Time val: " + val);
+		//LG.i("Time val: " + val);
 		List<Double> timeGridLocations = new ArrayList<>();
 		double timeGrid = MidiEditPopup.getTimeGrid();
 		double currentTime = 0;
@@ -501,7 +496,7 @@ public class MidiEditArea extends JComponent {
 		Collections.sort(timeGridLocations);
 
 		double closestVal = MidiUtils.getClosestDoubleFromList(timeGridLocations, val, false);
-		LG.i("Time - closest: " + closestVal);
+		//LG.i("Time - closest: " + closestVal);
 		return closestVal;
 	}
 
