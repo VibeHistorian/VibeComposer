@@ -287,9 +287,6 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static List<? extends InstPanel> getInstList(int order) {
-		if (order < 0 || order > 4) {
-			throw new IllegalArgumentException("Inst list order wrong.");
-		}
 		switch (order) {
 		case 0:
 			return melodyPanels;
@@ -302,13 +299,13 @@ public class VibeComposerGUI extends JFrame
 		case 4:
 			return drumPanels;
 		}
+		if (order < 0 || order > 4) {
+			throw new IllegalArgumentException("Inst list order wrong.");
+		}
 		return null;
 	}
 
 	public static JScrollPane getInstPane(int order) {
-		if (order < 0 || order > 4) {
-			throw new IllegalArgumentException("Inst list order wrong.");
-		}
 		switch (order) {
 		case 0:
 			return melodyScrollPane;
@@ -320,6 +317,9 @@ public class VibeComposerGUI extends JFrame
 			return arpScrollPane;
 		case 4:
 			return drumScrollPane;
+		}
+		if (order < 0 || order > 4) {
+			throw new IllegalArgumentException("Inst list order wrong.");
 		}
 		return null;
 	}
@@ -581,6 +581,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel stretchMidi;
 	public static KnobPanel transposeScore;
 	JButton switchOnComposeRandom;
+	JButton fixRhythmOverlaps;
 
 	// seed / midi
 	RandomValueButton randomSeed;
@@ -3615,9 +3616,6 @@ public class VibeComposerGUI extends JFrame
 		randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomizeBpmOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
 		randomizeTransposeOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomizeBpmOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomizeTransposeOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 
 		constraints.anchor = GridBagConstraints.CENTER;
@@ -3678,6 +3676,8 @@ public class VibeComposerGUI extends JFrame
 		}));
 
 		randomButtonsPanel.add(switchOnComposeRandom);
+		fixRhythmOverlaps = makeButton("Fix Rhythm Overlaps", e -> fixRhythmOverlaps());
+		randomButtonsPanel.add(fixRhythmOverlaps);
 		//randomButtonsPanel.add(randomBottomPanel);
 
 		//toggleableComponents.add(randomizeStrums);
@@ -3689,6 +3689,19 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
+
+	public void fixRhythmOverlaps() {
+		// count rhythm weights in a 1/32 grid across 4 chords span
+		int[] rhythmGrid = new int[4 * 32];
+		Random rand = new Random();
+		for (int i = 4; i >= 2; i--) {
+			List<? extends InstPanel> panels = getInstList(i);
+			panels.forEach(e -> e.addToRhythmGrid(rhythmGrid, rand));
+			LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
+		}
+		// 
+
+	}
 
 	private void initMacroParams(int startY, int anchorSide) {
 		JPanel macroParams = new JPanel();

@@ -245,4 +245,9 @@ public class ChordPanel extends InstPanel {
 	public void setStrumPauseChance(int strumPauseChance) {
 		this.strumPauseChance.setInt(strumPauseChance);
 	}
+
+	@Override
+	protected int[] makeRhythmGrid() {
+		return new int[4 * 32];
+	}
 }

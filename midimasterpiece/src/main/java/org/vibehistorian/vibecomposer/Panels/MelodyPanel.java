@@ -357,5 +357,10 @@ public class MelodyPanel extends InstPanel {
 	public int getPartNum() {
 		return 0;
 	}
+
+	@Override
+	protected int[] makeRhythmGrid() {
+		return new int[4 * 32];
+	}
 }
 

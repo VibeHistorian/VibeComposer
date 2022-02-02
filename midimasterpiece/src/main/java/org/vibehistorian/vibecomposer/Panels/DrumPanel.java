@@ -146,4 +146,9 @@ public class DrumPanel extends InstPanel {
 	public int getPartNum() {
 		return 4;
 	}
+
+	@Override
+	protected int[] makeRhythmGrid() {
+		return new int[4 * 32];
+	}
 }
