@@ -242,6 +242,7 @@ public class MidiEditArea extends JComponent {
 							dragMode.add(DM.DURATION);
 							break;
 						}
+						playNote(draggedNote);
 					}
 				}
 			}
@@ -415,10 +416,12 @@ public class MidiEditArea extends JComponent {
 
 				// POSITION
 				if (draggingAny(DM.POSITION)) {
-					double time = getTimeFromPosition(e.getPoint());
-					double offset = time - draggedNote.getAbsoluteStartTime();
+					double offset = getTimeFromPosition(e.getPoint())
+							- getTimeFromPosition(new Point(dragX, dragY))
+							+ draggedNoteCopy.getOffset();
 					if (lockTimeGrid) {
-						offset = getClosestToTimeGrid(time) - draggedNote.getAbsoluteStartTime();
+						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
+								- draggedNote.getAbsoluteStartTime();
 					}
 
 					draggedNote.setOffset(offset);
@@ -467,7 +470,10 @@ public class MidiEditArea extends JComponent {
 						pitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12)
 								+ (12 * (pitch / 12));
 					}
-					draggedNote.setPitch(pitch);
+					if (pitch != draggedNote.getPitch()) {
+						draggedNote.setPitch(pitch);
+						playNote(draggedNote);
+					}
 				}
 
 				repaint();
