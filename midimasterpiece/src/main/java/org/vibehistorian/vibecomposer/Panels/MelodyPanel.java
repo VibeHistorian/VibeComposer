@@ -359,8 +359,8 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	@Override
-	protected int[] makeRhythmGrid() {
-		return new int[4 * 32];
+	protected Integer[] makeRhythmGrid() {
+		return new Integer[4 * 32];
 	}
 }
 

@@ -29,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -792,16 +793,17 @@ public abstract class InstPanel extends JPanel {
 
 	public void addToRhythmGrid(int[] rhythmGrid, Random rand) {
 		// forward calculation
-		int[] panelRhythmGrid = makeRhythmGrid();
+		Integer[] panelRhythmGrid = makeRhythmGrid();
 		LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
 		StringUtils.join(rhythmGrid, ",");
 		for (int i = 0; i < panelRhythmGrid.length; i++) {
-			if (panelRhythmGrid[i] > 0) {
+			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
 				int nextVal = rhythmGrid[i] + panelRhythmGrid[i];
 				if (nextVal >= MAX_RHYTHM_DENSITY) {
 					// remove - backward calculation
 				} else if (nextVal >= TARGET_RHYTHM_DENSITY && rand.nextInt(100) < 50) {
 					// remove
+					rhythmGrid[i] = nextVal;
 				} else {
 					rhythmGrid[i] = nextVal;
 				}
@@ -809,5 +811,18 @@ public abstract class InstPanel extends JPanel {
 		}
 	}
 
-	protected abstract int[] makeRhythmGrid();
+	public List<Integer> getFinalPatternCopy() {
+		List<Integer> premadePattern = null;
+		if (getPattern() != RhythmPattern.CUSTOM) {
+			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
+					getPatternShift());
+		} else {
+			List<Integer> premadeCopy = new ArrayList<>(getComboPanel().getTruePattern());
+			Collections.rotate(premadeCopy, getPatternShift());
+			premadePattern = premadeCopy;
+		}
+		return premadePattern;
+	}
+
+	protected abstract Integer[] makeRhythmGrid();
 }

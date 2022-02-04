@@ -401,7 +401,7 @@ public class MidiUtils {
 	}
 
 	public static List<Integer> intArrToList(int[] intArr) {
-		List<Integer> intList = new ArrayList<Integer>(intArr.length);
+		List<Integer> intList = new ArrayList<>(intArr.length);
 		for (int i : intArr) {
 			intList.add(i);
 		}
@@ -409,7 +409,7 @@ public class MidiUtils {
 	}
 
 	public static List<Integer> chordToPitches(int[] chord) {
-		List<Integer> intList = new ArrayList<Integer>(chord.length);
+		List<Integer> intList = new ArrayList<>(chord.length);
 		for (int i : chord) {
 			intList.add(i % 12);
 		}
