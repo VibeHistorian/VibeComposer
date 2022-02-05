@@ -439,10 +439,12 @@ public class MidiEditArea extends JComponent {
 
 				// NOTE START
 				if (draggingAny(DM.NOTE_START)) {
-					double time = getTimeFromPosition(e.getPoint());
-					double offset = time - draggedNote.getAbsoluteStartTime();
+					double offset = getTimeFromPosition(e.getPoint())
+							- getTimeFromPosition(new Point(dragX, dragY))
+							+ draggedNoteCopy.getOffset();
 					if (lockTimeGrid) {
-						offset = getClosestToTimeGrid(time) - draggedNote.getAbsoluteStartTime();
+						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
+								- draggedNote.getAbsoluteStartTime();
 					}
 					double duration = draggedNoteCopy.getDuration() + draggedNoteCopy.getOffset()
 							- offset;
