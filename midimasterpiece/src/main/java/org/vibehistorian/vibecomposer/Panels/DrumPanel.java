@@ -5,8 +5,6 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -14,12 +12,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 
 public class DrumPanel extends InstPanel {
 	/**
@@ -150,39 +145,5 @@ public class DrumPanel extends InstPanel {
 	@Override
 	public int getPartNum() {
 		return 4;
-	}
-
-	@Override
-	protected Integer[] makeRhythmGrid() {
-
-		// shift
-		List<Integer> rhythmGridBase = getFinalPatternCopy().subList(0, getHitsPerPattern());
-
-		int weightMultiplier = VibeComposerGUI.PUNCHY_DRUMS.contains(getInstrument()) ? 3
-				: (DrumDefaults.getOrder(getInstrument()) != 2 ? 2 : 1);
-
-		// span
-		double rhythmMultiplier = 32 / (double) getHitsPerPattern();
-		int[] rhythmGridStretched = new int[32];
-		for (int i = 0; i < rhythmGridBase.size(); i++) {
-			rhythmGridStretched[Math.min(31,
-					(int) Math.round(i * rhythmMultiplier))] = rhythmGridBase.get(i)
-							* weightMultiplier;
-		}
-		List<Integer> rhythmGridSpanned = MidiUtils.intArrToList(rhythmGridStretched);
-
-		rhythmGridSpanned = MidiUtils.intersperse(0, getChordSpan() - 1, rhythmGridSpanned);
-		//LG.i("Size: " + rhythmGridSpanned.size());
-		while (rhythmGridSpanned.size() < 4 * 32) {
-			List<Integer> toAdd = rhythmGridSpanned.subList(0, 32);
-			rhythmGridSpanned.addAll(toAdd);
-		}
-		// delay
-		int delayShift = getDelay() / 125;
-		if (delayShift != 0) {
-			Collections.rotate(rhythmGridSpanned, delayShift);
-		}
-
-		return rhythmGridSpanned.toArray(new Integer[0]);
 	}
 }

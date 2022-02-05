@@ -46,6 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -794,13 +795,20 @@ public abstract class InstPanel extends JPanel {
 	public void addToRhythmGrid(int[] rhythmGrid, Random rand) {
 		// forward calculation
 		Integer[] panelRhythmGrid = makeRhythmGrid();
+		//StringUtils.join(rhythmGrid, ",");
+		List<Integer> fillPattern = getChordSpanFill().getPatternByLength(4, getFillFlip());
+		for (int i = 0; i < 4 * 32; i++) {
+			if (fillPattern.get(i / 32) < 1) {
+				panelRhythmGrid[i] = 0;
+			}
+		}
 		LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
-		StringUtils.join(rhythmGrid, ",");
 		for (int i = 0; i < panelRhythmGrid.length; i++) {
 			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
 				int nextVal = rhythmGrid[i] + panelRhythmGrid[i];
 				if (nextVal >= MAX_RHYTHM_DENSITY) {
 					// remove - backward calculation
+					rhythmGrid[i] = nextVal;
 				} else if (nextVal >= TARGET_RHYTHM_DENSITY && rand.nextInt(100) < 50) {
 					// remove
 					rhythmGrid[i] = nextVal;
@@ -824,5 +832,36 @@ public abstract class InstPanel extends JPanel {
 		return premadePattern;
 	}
 
-	protected abstract Integer[] makeRhythmGrid();
+	protected Integer[] makeRhythmGrid() {
+
+		// shift
+		List<Integer> rhythmGridBase = getFinalPatternCopy().subList(0, getHitsPerPattern());
+		int realHits = getHitsPerPattern() * getPatternRepeat();
+		for (int i = 0; i < getPatternRepeat() - 1; i++) {
+			rhythmGridBase.addAll(rhythmGridBase.subList(0, getHitsPerPattern()));
+		}
+
+		// span
+		double rhythmMultiplier = 32 / (double) realHits;
+		int[] rhythmGridStretched = new int[32];
+		for (int i = 0; i < rhythmGridBase.size(); i++) {
+			rhythmGridStretched[Math.min(31,
+					(int) Math.round(i * rhythmMultiplier))] = rhythmGridBase.get(i);
+		}
+		List<Integer> rhythmGridSpanned = MidiUtils.intArrToList(rhythmGridStretched);
+
+		rhythmGridSpanned = MidiUtils.intersperse(0, getChordSpan() - 1, rhythmGridSpanned);
+		//LG.i("Size: " + rhythmGridSpanned.size());
+		while (rhythmGridSpanned.size() < 4 * 32) {
+			List<Integer> toAdd = rhythmGridSpanned.subList(0, 32);
+			rhythmGridSpanned.addAll(toAdd);
+		}
+		// delay
+		int delayShift = getDelay() / 125;
+		if (delayShift != 0) {
+			Collections.rotate(rhythmGridSpanned, delayShift);
+		}
+
+		return rhythmGridSpanned.toArray(new Integer[0]);
+	}
 }

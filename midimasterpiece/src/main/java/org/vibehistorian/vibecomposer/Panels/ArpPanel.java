@@ -156,9 +156,4 @@ public class ArpPanel extends InstPanel {
 	public int getPartNum() {
 		return 3;
 	}
-
-	@Override
-	protected Integer[] makeRhythmGrid() {
-		return new Integer[4 * 32];
-	}
 }

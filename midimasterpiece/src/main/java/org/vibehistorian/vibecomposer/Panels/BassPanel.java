@@ -178,9 +178,4 @@ public class BassPanel extends InstPanel {
 	public int getPartNum() {
 		return 1;
 	}
-
-	@Override
-	protected Integer[] makeRhythmGrid() {
-		return new Integer[4 * 32];
-	}
 }
