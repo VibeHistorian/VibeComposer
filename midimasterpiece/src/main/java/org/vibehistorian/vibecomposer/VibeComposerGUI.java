@@ -22,6 +22,7 @@ package org.vibehistorian.vibecomposer;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
@@ -218,6 +219,7 @@ public class VibeComposerGUI extends JFrame
 	private static final String SOUNDBANK_FOLDER = ".";
 	private static final String EXPORT_FOLDER = "exports";
 	private static final String MID_EXTENSION = ".mid";
+	private static final String SAVED_MIDIS_FOLDER_BASE = "/saved_";
 
 	private static List<Image> RISKY_VARIATIONS_ICONS = new ArrayList<>();
 	private static final String[] RISKY_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
@@ -4585,10 +4587,34 @@ public class VibeComposerGUI extends JFrame
 		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
 		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
 
-		JButton save3Star = makeButton("Save 3*", "Save 3*");
-		JButton save4Star = makeButton("Save 4*", "Save 4*");
-		JButton save5Star = makeButton("Save 5*", "Save 5*");
-		JButton saveCustom = makeButton("Save ->", "Save Custom");
+		JButton save3Star = makeButtonMoused("Save 3*", e -> {
+			if (!SwingUtilities.isLeftMouseButton(e)) {
+				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "3star/");
+			} else {
+				saveGuiConfigFile(3);
+			}
+		});
+		JButton save4Star = makeButtonMoused("Save 4*", e -> {
+			if (!SwingUtilities.isLeftMouseButton(e)) {
+				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "4star/");
+			} else {
+				saveGuiConfigFile(4);
+			}
+		});
+		JButton save5Star = makeButtonMoused("Save 5*", e -> {
+			if (!SwingUtilities.isLeftMouseButton(e)) {
+				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "5star/");
+			} else {
+				saveGuiConfigFile(5);
+			}
+		});
+		JButton saveCustom = makeButtonMoused("Save ->", e -> {
+			if (!SwingUtilities.isLeftMouseButton(e)) {
+				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "custom/");
+			} else {
+				saveGuiConfigFile(-1);
+			}
+		});
 		saveCustomFilename = new JTextField("savefilename", 12);
 
 
@@ -4718,6 +4744,16 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY + 5;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(playSavePanel, constraints);
+	}
+
+	private void openFolder(String string) {
+		Desktop desktop = Desktop.getDesktop();
+		try {
+			desktop.open(new File(string));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	private void initHelperPopups() {
@@ -5957,6 +5993,20 @@ public class VibeComposerGUI extends JFrame
 		return butt;
 	}
 
+	public static JButton makeButtonMoused(String name, Consumer<? super MouseEvent> a) {
+		JButton butt = new JButton(name);
+		butt.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				a.accept(e);
+			}
+
+		});
+		return butt;
+	}
+
 	private void randomizeUserChords() {
 		copyGUItoConfig(guiConfig);
 		MidiGenerator mg = new MidiGenerator(guiConfig);
@@ -6192,10 +6242,6 @@ public class VibeComposerGUI extends JFrame
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
 			//worker.execute();
-		}
-
-		if (ae.getActionCommand().startsWith("Save ")) {
-			saveGuiConfigFile(ae.getActionCommand());
 		}
 
 		if (ae.getActionCommand() == "DrumSave") {
@@ -6579,25 +6625,19 @@ public class VibeComposerGUI extends JFrame
 		arrangementSeed.setValue(0);
 	}
 
-	private void saveGuiConfigFile(String actionCommand) {
+	private void saveGuiConfigFile(int rating) {
 		if (currentMidi != null) {
 			LG.i(("Saving file: " + currentMidi.getName()));
 
 			Date date = new Date();
-			String[] starSplit = actionCommand.split(" ");
-			if (starSplit.length == 1) {
-				LG.i(("WRONG SAVE COMMAND: " + actionCommand));
-				return;
-			}
-			String rating = starSplit[1].substring(0, 1);
-			String saveDirectory = "/saved_";
+			String saveDirectory = SAVED_MIDIS_FOLDER_BASE;
 			String name = "";
 
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 			f.applyPattern("yyMMdd-HH-mm-ss");
 			String additionalInfo = "";
 
-			if (!"C".equals(rating)) {
+			if (rating >= 0) {
 				saveDirectory += rating + "star/";
 
 				File makeSavedDir = new File(MIDIS_FOLDER + saveDirectory);
