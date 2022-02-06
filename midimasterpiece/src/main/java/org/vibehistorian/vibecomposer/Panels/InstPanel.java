@@ -45,7 +45,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
@@ -68,8 +67,8 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 public abstract class InstPanel extends JPanel {
 
 	private static final long serialVersionUID = 4381939543337887617L;
-	public static final int TARGET_RHYTHM_DENSITY = 6;
-	public static final int MAX_RHYTHM_DENSITY = 10;
+	public static final int TARGET_RHYTHM_DENSITY = 8;
+	public static final int MAX_RHYTHM_DENSITY = 11;
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
@@ -798,6 +797,8 @@ public abstract class InstPanel extends JPanel {
 
 	public void addToRhythmGrid(int[] rhythmGrid, Random rand) {
 		// forward calculation
+		long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
+				.stream().filter(e -> e > 0).count();
 		Pair<Integer[], Map<Integer, Integer>> mappedGrid = makeMappedRhythmGrid();
 		Integer[] panelRhythmGrid = mappedGrid.getLeft();
 		//StringUtils.join(rhythmGrid, ",");
@@ -807,19 +808,27 @@ public abstract class InstPanel extends JPanel {
 				panelRhythmGrid[i] = 0;
 			}
 		}
-		LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
+		//LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
+
 		for (int i = 0; i < panelRhythmGrid.length; i++) {
 			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
 				int nextVal = rhythmGrid[i] + panelRhythmGrid[i];
-				if (nextVal >= MAX_RHYTHM_DENSITY) {
-					// remove - backward calculation
-					rhythmGrid[i] = nextVal;
-				} else if (nextVal >= TARGET_RHYTHM_DENSITY && rand.nextInt(100) < 50) {
-					// remove
-					rhythmGrid[i] = nextVal;
+				int mapped = mappedGrid.getRight().get(i);
+				if (totalAvailable >= 2 && getComboPanel().getPattern(mapped) > 0) {
+					if (nextVal > MAX_RHYTHM_DENSITY
+							|| (nextVal > TARGET_RHYTHM_DENSITY && rand.nextInt(100) < 50)) {
+						// remove - backward calculation
+						getComboPanel().checkPattern(mapped, 0);
+						totalAvailable--;
+						LG.i(panelInfo() + " Unchecked: " + mapped);
+						//rhythmGrid[i] = nextVal;
+					} else {
+						rhythmGrid[i] = nextVal;
+					}
 				} else {
 					rhythmGrid[i] = nextVal;
 				}
+
 			}
 		}
 	}
