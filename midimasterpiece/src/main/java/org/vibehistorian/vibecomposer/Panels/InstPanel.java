@@ -30,10 +30,13 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -43,6 +46,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
@@ -794,7 +798,8 @@ public abstract class InstPanel extends JPanel {
 
 	public void addToRhythmGrid(int[] rhythmGrid, Random rand) {
 		// forward calculation
-		Integer[] panelRhythmGrid = makeRhythmGrid();
+		Pair<Integer[], Map<Integer, Integer>> mappedGrid = makeMappedRhythmGrid();
+		Integer[] panelRhythmGrid = mappedGrid.getLeft();
 		//StringUtils.join(rhythmGrid, ",");
 		List<Integer> fillPattern = getChordSpanFill().getPatternByLength(4, getFillFlip());
 		for (int i = 0; i < 4 * 32; i++) {
@@ -832,28 +837,38 @@ public abstract class InstPanel extends JPanel {
 		return premadePattern;
 	}
 
-	protected Integer[] makeRhythmGrid() {
+	protected Pair<Integer[], Map<Integer, Integer>> makeMappedRhythmGrid() {
 
 		// shift
 		List<Integer> rhythmGridBase = getFinalPatternCopy().subList(0, getHitsPerPattern());
 		int realHits = getHitsPerPattern() * getPatternRepeat();
+		for (int i = 0; i < getHitsPerPattern(); i++) {
+			if (rhythmGridBase.get(i) > 0) {
+				rhythmGridBase.set(i, i + 1);
+			}
+		}
 		for (int i = 0; i < getPatternRepeat() - 1; i++) {
-			rhythmGridBase.addAll(rhythmGridBase.subList(0, getHitsPerPattern()));
+			List<Integer> toAdd = rhythmGridBase.subList(0, getHitsPerPattern());
+			rhythmGridBase.addAll(toAdd);
 		}
 
 		// span
 		double rhythmMultiplier = 32 / (double) realHits;
 		int[] rhythmGridStretched = new int[32];
 		for (int i = 0; i < rhythmGridBase.size(); i++) {
-			rhythmGridStretched[Math.min(31,
-					(int) Math.round(i * rhythmMultiplier))] = rhythmGridBase.get(i);
+			if (rhythmGridBase.get(i) > 0) {
+				//LG.i("" + i * rhythmMultiplier + " " + (int) Math.round(i * rhythmMultiplier));
+				int placement = Math.min(31, (int) Math.round(i * rhythmMultiplier));
+				rhythmGridStretched[placement] = rhythmGridBase.get(i);
+			}
 		}
 		List<Integer> rhythmGridSpanned = MidiUtils.intArrToList(rhythmGridStretched);
-
+		//LG.i("Temp grid: " + StringUtils.join(rhythmGridSpanned, ";"));
 		rhythmGridSpanned = MidiUtils.intersperse(0, getChordSpan() - 1, rhythmGridSpanned);
 		//LG.i("Size: " + rhythmGridSpanned.size());
+		int sizeSoFar = rhythmGridSpanned.size();
 		while (rhythmGridSpanned.size() < 4 * 32) {
-			List<Integer> toAdd = rhythmGridSpanned.subList(0, 32);
+			List<Integer> toAdd = rhythmGridSpanned.subList(0, sizeSoFar);
 			rhythmGridSpanned.addAll(toAdd);
 		}
 		// delay
@@ -862,6 +877,23 @@ public abstract class InstPanel extends JPanel {
 			Collections.rotate(rhythmGridSpanned, delayShift);
 		}
 
-		return rhythmGridSpanned.toArray(new Integer[0]);
+
+		Map<Integer, Integer> gridMap = new HashMap<>();
+		for (int i = 0; i < getHitsPerPattern(); i++) {
+			for (int j = 0; j < rhythmGridSpanned.size(); j++) {
+				Integer val = rhythmGridSpanned.get(j);
+				if (val != null && val == i + 1) {
+					gridMap.put(j, i);
+				}
+			}
+		}
+		LG.i(gridMap.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue,
+				Collectors.mapping(Map.Entry::getKey, Collectors.toList()))).toString());
+		for (int i = 0; i < rhythmGridSpanned.size(); i++) {
+			if (rhythmGridSpanned.get(i) > 0) {
+				rhythmGridSpanned.set(i, 1);
+			}
+		}
+		return Pair.of(rhythmGridSpanned.toArray(new Integer[0]), gridMap);
 	}
 }

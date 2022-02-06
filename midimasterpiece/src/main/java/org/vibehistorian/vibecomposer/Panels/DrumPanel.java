@@ -5,16 +5,20 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 
 public class DrumPanel extends InstPanel {
 	/**
@@ -145,5 +149,20 @@ public class DrumPanel extends InstPanel {
 	@Override
 	public int getPartNum() {
 		return 4;
+	}
+
+	@Override
+	protected Pair<Integer[], Map<Integer, Integer>> makeMappedRhythmGrid() {
+		int weightMultiplier = VibeComposerGUI.PUNCHY_DRUMS.contains(getInstrument()) ? 3
+				: (DrumDefaults.getOrder(getInstrument()) != 2 ? 2 : 1);
+		Pair<Integer[], Map<Integer, Integer>> mapped = super.makeMappedRhythmGrid();
+		Integer[] baseGrid = mapped.getLeft();
+		for (int i = 0; i < baseGrid.length; i++) {
+			if (baseGrid[i] != null && baseGrid[i] > 0) {
+				baseGrid[i] = weightMultiplier;
+			}
+		}
+
+		return mapped;
 	}
 }
