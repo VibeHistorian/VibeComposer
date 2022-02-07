@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -66,6 +67,7 @@ public class MidiEditArea extends JComponent {
 	PhraseNote highlightedNote;
 	Integer highlightedDragLocation;
 	Integer prevHighlightedDragLocation;
+	Point mousePoint;
 
 	int noteDragMarginX = 5;
 
@@ -137,8 +139,8 @@ public class MidiEditArea extends JComponent {
 				if (dragLocation != null) {
 					highlightedNote = draggedNote;
 					highlightedDragLocation = dragLocation;
-					repaint();
 				}
+				repaint();
 			}
 
 			private void handleMiddlePress(MouseEvent evt) {
@@ -166,7 +168,6 @@ public class MidiEditArea extends JComponent {
 
 					dragMode.add(DM.VELOCITY);
 				}
-				repaint();
 
 			}
 
@@ -174,7 +175,8 @@ public class MidiEditArea extends JComponent {
 				Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 				if (orderVal != null && orderVal.equals(orderValDeletion)) {
 					setVal(orderVal.x, Note.REST);
-					repaint();
+				} else {
+					selectAllNotes(evt);
 				}
 			}
 
@@ -226,7 +228,6 @@ public class MidiEditArea extends JComponent {
 							dragMode.add(DM.POSITION);
 							dragLocation = 1;
 							playNote(draggedNote, 300);
-							repaint();
 						}
 					} else {
 						switch (dragLocation) {
@@ -262,7 +263,8 @@ public class MidiEditArea extends JComponent {
 
 				pop.saveToHistory();
 				reset();
-				if (MidiEditPopup.regenerateInPlaceChoice) {
+				if (SwingUtilities.isLeftMouseButton(evt)
+						&& MidiEditPopup.regenerateInPlaceChoice) {
 					values.setCustom(false);
 					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
 				}
@@ -273,20 +275,33 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
+				if (SwingUtilities.isRightMouseButton(e)) {
+					mousePoint = e.getPoint();
+				}
 				highlightedNote = draggedNote;
 				highlightedDragLocation = dragLocation;
 				processDragEvent(e);
+				repaint();
 				//LG.d("Mouse dragged");
 			}
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
+				if (SwingUtilities.isRightMouseButton(e)) {
+					mousePoint = e.getPoint();
+				}
 				processHighlight(e.getPoint());
 				processDragEvent(e);
+				repaint();
 				//LG.d("Mouse moved");
 			}
 
 		});
+	}
+
+	protected void selectAllNotes(MouseEvent evt) {
+		Rectangle rect = getRectFromPoint(evt.getPoint());
+
 	}
 
 	private void processHighlight(Point xy) {
@@ -295,10 +310,8 @@ public class MidiEditArea extends JComponent {
 		if (prevHighlightedDragLocation != null
 				&& !prevHighlightedDragLocation.equals(highlightedDragLocation)) {
 			prevHighlightedDragLocation = highlightedDragLocation;
-			repaint();
 		} else if (prevHighlightedDragLocation == null && highlightedDragLocation != null) {
 			prevHighlightedDragLocation = highlightedDragLocation;
-			repaint();
 		}
 	}
 
@@ -380,6 +393,7 @@ public class MidiEditArea extends JComponent {
 
 		highlightedNote = null;
 		highlightedDragLocation = null;
+		mousePoint = null;
 
 		orderValDeletion = null;
 
@@ -395,7 +409,6 @@ public class MidiEditArea extends JComponent {
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						int prevPitch = values.get(orderVal.x).getPitch();
 						setVal(orderVal.x, orderVal.y);
-						repaint();
 						if (values.get(orderVal.x).getPitch() != prevPitch) {
 							playNote(values.get(orderVal.x), 300);
 						}
@@ -411,7 +424,6 @@ public class MidiEditArea extends JComponent {
 						if (velocity != note.getDynamic()) {
 							note.setDynamic(velocity);
 							playNote(note);
-							repaint();
 						}
 
 					}
@@ -481,8 +493,6 @@ public class MidiEditArea extends JComponent {
 						playNote(draggedNote);
 					}
 				}
-
-				repaint();
 			}
 		}
 	}
@@ -799,7 +809,17 @@ public class MidiEditArea extends JComponent {
 							drawY + 63 - pn.getDynamic());
 				}
 			}
+
+			if (mousePoint != null && dragX != null) {
+				Rectangle rect = getRectFromPoint(mousePoint);
+				g.drawRect(rect.x, rect.y, rect.width, rect.height);
+			}
 		}
+	}
+
+	private Rectangle getRectFromPoint(Point p) {
+		return new Rectangle(Math.min(p.x, dragX), Math.min(p.y, dragY), Math.abs(p.x - dragX),
+				Math.abs(p.y - dragY));
 	}
 
 	private boolean draggingAny(DM singleValue) {
