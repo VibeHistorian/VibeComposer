@@ -4542,14 +4542,7 @@ public class VibeComposerGUI extends JFrame
 					"Regenerate"));
 		});
 		regeneratePausePlay = makeButton("R~", e -> {
-			boolean wasSelected = startFromBar.isSelected();
-			pauseInfoResettable = false;
-			startFromBar.setSelected(false);
-			pauseMidi();
-			actionPerformed(new ActionEvent(regeneratePausePlay, ActionEvent.ACTION_PERFORMED,
-					"Regenerate"));
-			startFromBar.setSelected(wasSelected);
-			pauseInfoResettable = true;
+			regenerateInPlace();
 		});
 		regenerateStopPlay.setMargin(new Insets(0, 0, 0, 0));
 		regeneratePausePlay.setMargin(new Insets(0, 0, 0, 0));
@@ -4574,6 +4567,17 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(controlSettingsPanel, constraints);
+	}
+
+	public void regenerateInPlace() {
+		boolean wasSelected = startFromBar.isSelected();
+		pauseInfoResettable = false;
+		startFromBar.setSelected(false);
+		pauseMidi();
+		actionPerformed(
+				new ActionEvent(regeneratePausePlay, ActionEvent.ACTION_PERFORMED, "Regenerate"));
+		startFromBar.setSelected(wasSelected);
+		pauseInfoResettable = true;
 	}
 
 	private void initPlayPanel(int startY, int anchorSide) {
@@ -8940,7 +8944,9 @@ public class VibeComposerGUI extends JFrame
 
 			lastPlayedMs = System.currentTimeMillis();
 
-			if (!sequencer.isRunning()) {
+			if (!sequencer.isRunning() && !(currentMidiEditorPopup != null
+					&& currentMidiEditorPopup.getFrame().isVisible()
+					&& MidiEditPopup.regenerateInPlaceChoice)) {
 				long returnPos = sequencer.getTickPosition();
 				boolean prevSoloState = sequencer.getTrackSolo(trackNum);
 				sequencer.setTrackSolo(trackNum, true);

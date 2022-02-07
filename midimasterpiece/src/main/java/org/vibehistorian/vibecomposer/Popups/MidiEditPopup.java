@@ -52,6 +52,8 @@ public class MidiEditPopup extends CloseablePopup {
 	Section sec = null;
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
 	public ScrollComboBox<String> snapToTimeGrid = new ScrollComboBox<>(false);
+	public CheckButton regenerateInPlaceOnChange = new CheckButton("R~ on Change",
+			regenerateInPlaceChoice);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
 	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, 0.25, 1 / 3.0, 0.5,
 			2 / 3.0, 1.0, 4 / 3.0, 2.0, 4.0 };
@@ -75,6 +77,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public static int highlightModeChoice = 3;
 	public static int snapToTimeGridChoice = 2;
 	public static boolean snapToGridChoice = true;
+	public static boolean regenerateInPlaceChoice = false;
 	public CheckButton applyToMainBtn;
 	public JLabel historyLabel = new JLabel("Edit History:");
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
@@ -239,8 +242,10 @@ public class MidiEditPopup extends CloseablePopup {
 		snapToScaleGrid.setFunc(e -> {
 			snapToGridChoice = snapToScaleGrid.isSelected();
 		});
-
-		textPanel.add(snapToScaleGrid);
+		regenerateInPlaceOnChange.setFunc(e -> {
+			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
+		});
+		textPanel.add(regenerateInPlaceOnChange);
 		textPanel.add(new JLabel("  Highlight Mode:"));
 		textPanel.add(highlightMode);
 		textPanel.add(new JLabel("  Snap To Time:"));

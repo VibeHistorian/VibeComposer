@@ -388,6 +388,9 @@ public class VariationPopup {
 		customKeyChangeType.setFunc(e -> {
 			secC.setCustomKeyChangeType(customKeyChangeType.getSelectedIndex());
 		});
+		if (secC.getCustomKeyChangeType() > 0) {
+			customKeyChangeType.setSelectedIndex(secC.getCustomKeyChangeType());
+		}
 		keyChangePanel.add(new JLabel("Type"));
 		keyChangePanel.add(customKeyChangeType);
 

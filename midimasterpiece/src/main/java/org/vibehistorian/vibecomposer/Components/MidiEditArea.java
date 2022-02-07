@@ -254,14 +254,18 @@ public class MidiEditArea extends JComponent {
 				} else {
 					if (draggingAny(DM.VELOCITY)
 							&& draggedNoteCopy.getDynamic() != draggedNote.getDynamic()
-							&& (System.currentTimeMillis() - lastPlayedNoteTime) > 500) {
+							&& (System.currentTimeMillis() - lastPlayedNoteTime) > 500
+							&& !MidiEditPopup.regenerateInPlaceChoice) {
 						playNote(draggedNote, 300);
 					}
 				}
 
 				pop.saveToHistory();
-
 				reset();
+				if (MidiEditPopup.regenerateInPlaceChoice) {
+					values.setCustom(false);
+					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+				}
 			}
 		});
 
