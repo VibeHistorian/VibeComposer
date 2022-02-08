@@ -55,6 +55,7 @@ public class MidiEditArea extends JComponent {
 	int numWidth = 4;
 
 	List<PhraseNote> selectedNotes = new ArrayList<>();
+	List<PhraseNote> selectedNotesCopy = new ArrayList<>();
 	PhraseNote draggedNote;
 	PhraseNote draggedNoteCopy;
 	Point orderValDeletion;
@@ -131,7 +132,9 @@ public class MidiEditArea extends JComponent {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					handleLeftPress(evt);
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
-					orderValDeletion = getOrderAndValueFromPosition(evt.getPoint());
+					if (selectedNotes.size() < 2) {
+						orderValDeletion = getOrderAndValueFromPosition(evt.getPoint());
+					}
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					handleMiddlePress(evt);
 				}
@@ -160,7 +163,12 @@ public class MidiEditArea extends JComponent {
 					}
 
 					if (!draggingAny(DM.MULTIPLE)) {
-						selectedNotes = new ArrayList<>();
+						selectedNotes.clear();
+						selectedNotesCopy.clear();
+					} else {
+						selectedNotesCopy.clear();
+						selectedNotesCopy.addAll(selectedNotes.stream().map(e -> e.clone())
+								.collect(Collectors.toList()));
 					}
 				}
 
@@ -322,6 +330,9 @@ public class MidiEditArea extends JComponent {
 		} else {
 			selectedNotes = newSelection;
 		}
+		selectedNotesCopy.clear();
+		selectedNotesCopy
+				.addAll(selectedNotes.stream().map(e -> e.clone()).collect(Collectors.toList()));
 
 	}
 
@@ -444,12 +455,12 @@ public class MidiEditArea extends JComponent {
 		repaint();
 	}
 
-	protected void processDragEvent(MouseEvent e) {
+	protected void processDragEvent(MouseEvent evt) {
 		if (!dragMode.isEmpty()) {
 			if (draggingAny(DM.PITCH_SHAPE, DM.VELOCITY_SHAPE)) {
 				// PITCH SHAPE
 				if (draggingAny(DM.PITCH_SHAPE)) {
-					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						int prevPitch = values.get(orderVal.x).getPitch();
 						setVal(orderVal.x, orderVal.y);
@@ -460,7 +471,7 @@ public class MidiEditArea extends JComponent {
 				}
 				// VELOCITY SHAPE
 				if (draggingAny(DM.VELOCITY_SHAPE)) {
-					Point orderVal = getOrderAndValueFromPosition(e.getPoint());
+					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						PhraseNote note = values.get(orderVal.x);
 						int velocity = OMNI.clamp(
@@ -476,30 +487,48 @@ public class MidiEditArea extends JComponent {
 
 				// POSITION
 				if (draggingAny(DM.POSITION)) {
-					double offset = getTimeFromPosition(e.getPoint())
+					double offset = getTimeFromPosition(evt.getPoint())
 							- getTimeFromPosition(new Point(dragX, dragY))
 							+ draggedNoteCopy.getOffset();
 					if (lockTimeGrid) {
 						offset = getClosestToTimeGrid(offset + draggedNote.getAbsoluteStartTime())
 								- draggedNote.getAbsoluteStartTime();
 					}
+					if (draggingAny(DM.MULTIPLE)) {
+						double offsetChange = offset - draggedNoteCopy.getOffset();
+						for (int i = 0; i < selectedNotesCopy.size(); i++) {
+							selectedNotes.get(i)
+									.setOffset(selectedNotesCopy.get(i).getOffset() + offsetChange);
+						}
+					} else {
+						draggedNote.setOffset(offset);
+					}
 
-					draggedNote.setOffset(offset);
 				}
 
 				// DURATION
 				if (draggingAny(DM.DURATION)) {
-					double duration = getDurationFromPosition(e.getPoint());
+					double duration = getDurationFromPosition(evt.getPoint());
 					if (lockTimeGrid) {
 						duration = timeGridValue(duration);
 					}
 					duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2, duration);
-					draggedNote.setDuration(duration);
+					if (draggingAny(DM.MULTIPLE)) {
+						double durationChange = duration - draggedNoteCopy.getDuration();
+						for (int i = 0; i < selectedNotesCopy.size(); i++) {
+							selectedNotes.get(i).setDuration(Math.max(
+									MidiGenerator.Durations.SIXTEENTH_NOTE / 2,
+									selectedNotesCopy.get(i).getDuration() + durationChange));
+						}
+					} else {
+						draggedNote.setDuration(duration);
+					}
+
 				}
 
 				// NOTE START
 				if (draggingAny(DM.NOTE_START)) {
-					double offset = getTimeFromPosition(e.getPoint())
+					double offset = getTimeFromPosition(evt.getPoint())
 							- getTimeFromPosition(new Point(dragX, dragY))
 							+ draggedNoteCopy.getOffset();
 					if (lockTimeGrid) {
@@ -509,16 +538,40 @@ public class MidiEditArea extends JComponent {
 					double duration = draggedNoteCopy.getDuration() + draggedNoteCopy.getOffset()
 							- offset;
 					if (duration > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.5) {
-						draggedNote.setOffset(offset);
-						draggedNote.setDuration(duration);
+						if (draggingAny(DM.MULTIPLE)) {
+							double offsetChange = offset - draggedNoteCopy.getOffset();
+							double durationChange = duration - draggedNoteCopy.getDuration();
+							for (int i = 0; i < selectedNotesCopy.size(); i++) {
+								double newDuration = selectedNotesCopy.get(i).getDuration()
+										+ durationChange;
+								if (newDuration > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.5) {
+									selectedNotes.get(i).setOffset(
+											selectedNotesCopy.get(i).getOffset() + offsetChange);
+									selectedNotes.get(i).setDuration(newDuration);
+								}
+
+							}
+						} else {
+							draggedNote.setOffset(offset);
+							draggedNote.setDuration(duration);
+						}
 					}
 				}
 
 				// VELOCITY
 				if (draggingAny(DM.VELOCITY)) {
-					int velocity = getVelocityFromPosition(e.getPoint());
+					int velocity = getVelocityFromPosition(evt.getPoint());
 					velocity = OMNI.clamp(velocity, 0, 127);
-					draggedNote.setDynamic(velocity);
+					if (draggingAny(DM.MULTIPLE)) {
+						int velocityChange = velocity - draggedNoteCopy.getDynamic();
+						for (int i = 0; i < selectedNotesCopy.size(); i++) {
+							selectedNotes.get(i).setDynamic(OMNI.clampVel(
+									selectedNotesCopy.get(i).getDynamic() + velocityChange));
+						}
+					} else {
+						draggedNote.setDynamic(velocity);
+					}
+
 					if ((System.currentTimeMillis() - lastPlayedNoteTime) > 500) {
 						playNote(draggedNote, 300);
 						lastPlayedNoteTime = System.currentTimeMillis();
@@ -527,15 +580,27 @@ public class MidiEditArea extends JComponent {
 
 				// PITCH
 				if (draggingAny(DM.PITCH)) {
-					int pitch = getPitchFromPosition(e.getPoint().y);
+					int pitch = getPitchFromPosition(evt.getPoint().y);
 					if (pop.snapToScaleGrid.isSelected()) {
 						pitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12)
 								+ (12 * (pitch / 12));
 					}
 					if (pitch != draggedNote.getPitch()) {
-						draggedNote.setPitch(pitch);
 						playNote(draggedNote);
 					}
+					if (draggingAny(DM.MULTIPLE)) {
+						int pitchChange = pitch - draggedNoteCopy.getPitch();
+						for (int i = 0; i < selectedNotesCopy.size(); i++) {
+							int newPitchAbsolute = selectedNotesCopy.get(i).getPitch()
+									+ pitchChange;
+							int newPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
+									newPitchAbsolute % 12) + (12 * (newPitchAbsolute / 12));
+							selectedNotes.get(i).setPitch(newPitch);
+						}
+					} else {
+						draggedNote.setPitch(pitch);
+					}
+
 				}
 			}
 		}

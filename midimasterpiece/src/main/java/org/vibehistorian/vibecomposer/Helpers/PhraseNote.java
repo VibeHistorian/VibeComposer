@@ -112,4 +112,15 @@ public class PhraseNote implements Cloneable {
 	public double getStart(boolean offsetted) {
 		return offsetted ? startTime : absoluteStartTime;
 	}
+
+	@Override
+	public PhraseNote clone() {
+		try {
+			return (PhraseNote) super.clone();
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 }
