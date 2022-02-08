@@ -37,7 +37,7 @@ import jm.music.data.Note;
 public class MidiEditArea extends JComponent {
 
 	public static enum DM {
-		POSITION, DURATION, NOTE_START, VELOCITY, PITCH, PITCH_SHAPE, VELOCITY_SHAPE;
+		POSITION, DURATION, NOTE_START, VELOCITY, PITCH, PITCH_SHAPE, VELOCITY_SHAPE, MULTIPLE;
 	}
 
 	private static final long serialVersionUID = -2972572935738976623L;
@@ -54,6 +54,7 @@ public class MidiEditArea extends JComponent {
 	int numHeight = 6;
 	int numWidth = 4;
 
+	List<PhraseNote> selectedNotes = new ArrayList<>();
 	PhraseNote draggedNote;
 	PhraseNote draggedNoteCopy;
 	Point orderValDeletion;
@@ -140,19 +141,26 @@ public class MidiEditArea extends JComponent {
 					highlightedNote = draggedNote;
 					highlightedDragLocation = dragLocation;
 				}
+				if (selectedNotes.contains(draggedNote)) {
+					dragMode.add(DM.MULTIPLE);
+				}
 				repaint();
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
 				if (SwingUtilities.isRightMouseButton(evt)) {
-					handleRightPress(evt);
+					handleRightRelease(evt);
 				} else {
 					if (draggingAny(DM.VELOCITY)
 							&& draggedNoteCopy.getDynamic() != draggedNote.getDynamic()
 							&& (System.currentTimeMillis() - lastPlayedNoteTime) > 500
 							&& !MidiEditPopup.regenerateInPlaceChoice) {
 						playNote(draggedNote, 300);
+					}
+
+					if (!draggingAny(DM.MULTIPLE)) {
+						selectedNotes = new ArrayList<>();
 					}
 				}
 
@@ -223,7 +231,7 @@ public class MidiEditArea extends JComponent {
 
 	}
 
-	private void handleRightPress(MouseEvent evt) {
+	private void handleRightRelease(MouseEvent evt) {
 		Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 		if (orderVal != null && orderVal.equals(orderValDeletion)) {
 			setVal(orderVal.x, Note.REST);
@@ -301,9 +309,19 @@ public class MidiEditArea extends JComponent {
 	protected void selectAllNotes(MouseEvent evt) {
 		Rectangle rect = getRectFromPoint(evt.getPoint());
 		// any part of note within rectangle 
-		List<PhraseNote> selectedNotes = values.stream().filter(e -> noteInRect(e, rect))
+		List<PhraseNote> newSelection = values.stream().filter(e -> noteInRect(e, rect))
 				.collect(Collectors.toList());
-		LG.i(selectedNotes.size());
+		if (evt.isControlDown()) {
+			newSelection.forEach(e -> {
+				if (selectedNotes.contains(e)) {
+					selectedNotes.remove(e);
+				} else {
+					selectedNotes.add(e);
+				}
+			});
+		} else {
+			selectedNotes = newSelection;
+		}
 
 	}
 
@@ -778,7 +796,7 @@ public class MidiEditArea extends JComponent {
 				g.drawString(pitch + "(" + MidiUtils.pitchToString(pitch) + ") :" + pn.getDynamic(),
 						drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 
-				if (draggedNote != null && pn == draggedNote) {
+				if ((draggedNote != null && pn == draggedNote) || selectedNotes.contains(pn)) {
 					g.setColor(OMNI.alphen(OMNI.mixColor(VibeComposerGUI.uiColor(), Color.red, 0.7),
 							(int) (30 + 140 * (pn.getDynamic() / 127.0))));
 				} else {
