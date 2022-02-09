@@ -11,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,12 +22,14 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -34,7 +37,9 @@ import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
+import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -45,6 +50,9 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import jm.music.data.Note;
+import jm.music.data.Part;
+import jm.music.data.Phrase;
+import jm.music.data.Score;
 
 public class MidiEditPopup extends CloseablePopup {
 
@@ -84,6 +92,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public JLabel historyLabel = new JLabel("Edit History:");
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
 	public boolean applyOnClose = true;
+	public JList<File> generatedMidi;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
@@ -194,6 +203,16 @@ public class MidiEditPopup extends CloseablePopup {
 
 		buttonPanel.add(VibeComposerGUI.makeButton("Undo", e -> undo()));
 		buttonPanel.add(VibeComposerGUI.makeButton("Redo", e -> redo()));
+
+		generatedMidi = new JList<File>();
+		generatedMidi.setCellRenderer(new MidiListCellRenderer());
+		generatedMidi.setTransferHandler(new FileTransferHandler(e -> {
+			return buildMidiFileFromNotes();
+		}));
+		generatedMidi.setDragEnabled(true);
+		generatedMidi.setListData(new File[] { new File("tempMidi.mid") });
+
+		buttonPanel.add(generatedMidi);
 
 		JPanel buttonPanel2 = new JPanel();
 		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
@@ -311,6 +330,18 @@ public class MidiEditPopup extends CloseablePopup {
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	private File buildMidiFileFromNotes() {
+		Phrase phr = mvea.getValues().makePhrase();
+		Score scr = new Score();
+		Part prt = new Part();
+		prt.add(phr);
+		scr.add(prt);
+
+		JMusicUtilsCustom.midi(scr, "tempMidi.mid");
+		File f = new File("tempMidi.mid");
+		return f;
 	}
 
 	public void deleteSelected() {

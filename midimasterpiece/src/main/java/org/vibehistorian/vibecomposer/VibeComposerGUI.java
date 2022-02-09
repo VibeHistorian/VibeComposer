@@ -39,7 +39,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -103,7 +102,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -119,7 +117,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
@@ -161,7 +158,7 @@ import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Helpers.FileTransferable;
+import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
@@ -593,7 +590,7 @@ public class VibeComposerGUI extends JFrame
 	JList<File> generatedMidi;
 	public static Sequencer sequencer = null;
 	public static Map<Integer, List<MidiEvent>> midiEventsToRemove = new HashMap<>();
-	File currentMidi = null;
+	public File currentMidi = null;
 	MidiDevice device = null;
 
 	public static JButton showScore;
@@ -4710,7 +4707,9 @@ public class VibeComposerGUI extends JFrame
 
 		generatedMidi = new JList<File>();
 		generatedMidi.setCellRenderer(new MidiListCellRenderer());
-		generatedMidi.setTransferHandler(new FileTransferHandler());
+		generatedMidi.setTransferHandler(new FileTransferHandler(e -> {
+			return currentMidi;
+		}));
 		generatedMidi.setDragEnabled(true);
 
 		playSavePanel.add(playMidi);
@@ -7573,20 +7572,6 @@ public class VibeComposerGUI extends JFrame
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 		fixCombinedMelodyTracks();
 
-	}
-
-	private class FileTransferHandler extends TransferHandler {
-		@Override
-		protected Transferable createTransferable(JComponent c) {
-			List<File> files = new ArrayList<>();
-			files.add(currentMidi);
-			return new FileTransferable(files);
-		}
-
-		@Override
-		public int getSourceActions(JComponent c) {
-			return COPY_OR_MOVE;
-		}
 	}
 
 	private void sizeRespectingPack() {
