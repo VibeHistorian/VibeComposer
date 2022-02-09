@@ -44,6 +44,8 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
+import jm.music.data.Note;
+
 public class MidiEditPopup extends CloseablePopup {
 
 	MidiEditArea mvea = null;
@@ -186,7 +188,7 @@ public class MidiEditPopup extends CloseablePopup {
 					}
 				}
 			}
-
+			saveToHistory();
 			repaintMvea();
 		}));
 
@@ -289,17 +291,42 @@ public class MidiEditPopup extends CloseablePopup {
 				redo();
 			}
 		};
+
+		Action deleteAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				deleteSelected();
+			}
+		};
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
 		allPanels.getActionMap().put("undo", undoAction);
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "redo");
 		allPanels.getActionMap().put("redo", redoAction);
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+		allPanels.getActionMap().put("delete", deleteAction);
 
 		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public void deleteSelected() {
+		if (mvea.selectedNotes.size() > 0) {
+			mvea.selectedNotes.forEach(e -> {
+				if (e.getRv() < MidiGenerator.DBL_ERR) {
+					mvea.getValues().remove(e);
+				} else {
+					e.setPitch(Note.REST);
+				}
+			});
+			mvea.selectedNotes.clear();
+			mvea.selectedNotesCopy.clear();
+			mvea.reset();
+			saveToHistory();
+		}
 	}
 
 	public void apply() {

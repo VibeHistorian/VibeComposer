@@ -54,8 +54,8 @@ public class MidiEditArea extends JComponent {
 	int numHeight = 6;
 	int numWidth = 4;
 
-	List<PhraseNote> selectedNotes = new ArrayList<>();
-	List<PhraseNote> selectedNotesCopy = new ArrayList<>();
+	public List<PhraseNote> selectedNotes = new ArrayList<>();
+	public List<PhraseNote> selectedNotesCopy = new ArrayList<>();
 	PhraseNote draggedNote;
 	PhraseNote draggedNoteCopy;
 	Point orderValDeletion;
@@ -440,7 +440,7 @@ public class MidiEditArea extends JComponent {
 
 	}
 
-	private void reset() {
+	public void reset() {
 		draggedNote = null;
 		dragMode.clear();
 		lastPlayedNoteTime = 0;
@@ -592,9 +592,7 @@ public class MidiEditArea extends JComponent {
 						pitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12)
 								+ (12 * (pitch / 12));
 					}
-					if (pitch != draggedNote.getPitch()) {
-						playNote(draggedNote);
-					}
+					boolean playNote = pitch != draggedNote.getPitch();
 					if (draggingAny(DM.MULTIPLE)) {
 						int pitchChange = pitch - draggedNoteCopy.getPitch();
 						for (int i = 0; i < selectedNotesCopy.size(); i++) {
@@ -608,6 +606,9 @@ public class MidiEditArea extends JComponent {
 						draggedNote.setPitch(pitch);
 					}
 
+					if (playNote) {
+						playNote(draggedNote);
+					}
 				}
 			}
 		}
