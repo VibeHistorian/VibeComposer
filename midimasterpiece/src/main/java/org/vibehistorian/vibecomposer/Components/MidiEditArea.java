@@ -152,8 +152,9 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
+				boolean saveToHistory = true;
 				if (SwingUtilities.isRightMouseButton(evt)) {
-					handleRightRelease(evt);
+					saveToHistory = handleRightRelease(evt);
 				} else {
 					if (draggingAny(DM.VELOCITY)
 							&& draggedNoteCopy.getDynamic() != draggedNote.getDynamic()
@@ -171,8 +172,10 @@ public class MidiEditArea extends JComponent {
 								.collect(Collectors.toList()));
 					}
 				}
+				if (saveToHistory) {
+					pop.saveToHistory();
+				}
 
-				pop.saveToHistory();
 				reset();
 				if (SwingUtilities.isLeftMouseButton(evt)
 						&& MidiEditPopup.regenerateInPlaceChoice) {
@@ -239,13 +242,15 @@ public class MidiEditArea extends JComponent {
 
 	}
 
-	private void handleRightRelease(MouseEvent evt) {
+	private boolean handleRightRelease(MouseEvent evt) {
 		Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 		if (orderVal != null && orderVal.equals(orderValDeletion)) {
 			setVal(orderVal.x, Note.REST);
 		} else {
 			selectAllNotes(evt);
+			return false;
 		}
+		return true;
 	}
 
 	private void handleLeftPress(MouseEvent evt) {
