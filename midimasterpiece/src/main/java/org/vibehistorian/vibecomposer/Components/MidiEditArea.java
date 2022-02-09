@@ -427,8 +427,15 @@ public class MidiEditArea extends JComponent {
 
 	private void playNote(PhraseNote pn, int durationMs) {
 		if (pn != null) {
-			VibeComposerGUI.playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
-					pop.partOrder, pop.getSec());
+			if (selectedNotes.size() > 1 && selectedNotes.contains(pn)) {
+				selectedNotes.stream().map(e -> e.getPitch()).distinct()
+						.forEach(e -> VibeComposerGUI.playNote(e, durationMs, pn.getDynamic(),
+								pop.part, pop.partOrder, pop.getSec(), true));
+			} else {
+				VibeComposerGUI.playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
+						pop.partOrder, pop.getSec(), false);
+			}
+
 		}
 
 	}

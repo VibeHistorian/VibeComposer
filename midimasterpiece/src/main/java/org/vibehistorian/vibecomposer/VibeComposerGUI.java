@@ -8898,9 +8898,9 @@ public class VibeComposerGUI extends JFrame
 	public static long lastPlayedMs = 0;
 
 	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
-			Section sec) {
+			Section sec, boolean overrideLastPlayed) {
 		if (sequencer == null || !sequencer.isOpen()
-				|| (System.currentTimeMillis() - lastPlayedMs < 100)) {
+				|| (!overrideLastPlayed && System.currentTimeMillis() - lastPlayedMs < 100)) {
 			return;
 		}
 
