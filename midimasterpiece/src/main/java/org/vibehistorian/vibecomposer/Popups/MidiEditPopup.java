@@ -26,20 +26,26 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.MidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -204,15 +210,39 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel.add(VibeComposerGUI.makeButton("Undo", e -> undo()));
 		buttonPanel.add(VibeComposerGUI.makeButton("Redo", e -> redo()));
 
+		JPanel midiDragDropPanel = new JPanel();
+		midiDragDropPanel.setLayout(new GridLayout(0, 1));
+
 		generatedMidi = new JList<File>();
-		generatedMidi.setCellRenderer(new MidiListCellRenderer());
+		MidiListCellRenderer dndRenderer = new MidiListCellRenderer();
+		dndRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+		generatedMidi.setCellRenderer(dndRenderer);
+		generatedMidi.setBorder(new BevelBorder(BevelBorder.RAISED));
 		generatedMidi.setTransferHandler(new FileTransferHandler(e -> {
 			return buildMidiFileFromNotes();
 		}));
 		generatedMidi.setDragEnabled(true);
 		generatedMidi.setListData(new File[] { new File("tempMidi.mid") });
 
-		buttonPanel.add(generatedMidi);
+		midiDragDropPanel.add(generatedMidi);
+		midiDragDropPanel.add(new MidiDropPane(e -> {
+			PhraseNotes pn = new PhraseNotes(e);
+			double length = pn.stream().map(f -> f.getRv()).mapToDouble(f -> f).sum();
+			LG.i("Dropped MIDI Length: " + length);
+			if (length > MidiEditArea.sectionLength + MidiGenerator.DBL_ERR) {
+				return null;
+			} else if (length < MidiEditArea.sectionLength - MidiGenerator.DBL_ERR) {
+				PhraseNote lastNote = pn.get(pn.size() - 1);
+				lastNote.setRv(lastNote.getRv() + MidiEditArea.sectionLength - length);
+			}
+			pn.forEach(f -> f.setPitch(f.getPitch() - VibeComposerGUI.transposeScore.getInt()));
+			mvea.setValues(pn.copy());
+			saveToHistory();
+			repaintMvea();
+
+			return pn;
+		}));
+		buttonPanel.add(midiDragDropPanel);
 
 		JPanel buttonPanel2 = new JPanel();
 		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
@@ -271,6 +301,8 @@ public class MidiEditPopup extends CloseablePopup {
 		textPanel.add(highlightMode);
 		textPanel.add(new JLabel("  Snap To Time:"));
 		textPanel.add(snapToTimeGrid);
+		textPanel.add(snapToScaleGrid);
+
 
 		JButton recompButt = new JButton("Recompose Part");
 		recompButt.addMouseListener(new MouseAdapter() {
@@ -333,7 +365,25 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private File buildMidiFileFromNotes() {
+		Pair<ScaleMode, Integer> scaleKey = VibeComposerGUI
+				.keyChangeAt(VibeComposerGUI.actualArrangement.getSections().indexOf(sec));
+
 		Phrase phr = mvea.getValues().makePhrase();
+
+		List<Note> notes = phr.getNoteList();
+		int extraTranspose = 0;
+		InstPanel ip = VibeComposerGUI.getInstList(part).get(partOrder);
+		if (scaleKey != null) {
+			MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
+					scaleKey.getLeft().noteAdjustScale);
+			extraTranspose = scaleKey.getRight();
+		}
+		final int finalExtraTranspose = extraTranspose;
+		notes.forEach(e -> {
+			int pitch = e.getPitch() + VibeComposerGUI.transposeScore.getInt() + finalExtraTranspose
+					+ ip.getTranspose();
+			e.setPitch(pitch);
+		});
 		Score scr = new Score();
 		Part prt = new Part();
 		prt.add(phr);

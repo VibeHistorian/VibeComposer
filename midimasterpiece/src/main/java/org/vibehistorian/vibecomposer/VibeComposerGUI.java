@@ -446,6 +446,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyModeNoteTarget;
 
 	JCheckBox useUserMelody;
+	public MelodyMidiDropPane dropPane;
 	public static ScrollComboBox<String> userMelodyScaleModeSelect;
 
 	JCheckBox melody1ForcePatterns;
@@ -1590,8 +1591,7 @@ public class VibeComposerGUI extends JFrame
 		randomMelodyOnRegenerate = makeCheckBox("on Regen", false, true);
 		melody1ForcePatterns = new JCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
-		MelodyMidiDropPane dropPane = new MelodyMidiDropPane();
-		dropPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		dropPane = new MelodyMidiDropPane();
 		useUserMelody = new JCheckBox("<html>Use MIDI<br>Melody File</html>", true);
 		userMelodyScaleModeSelect = new ScrollComboBox<>(false);
 		userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
@@ -7449,7 +7449,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (gc.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
-			MelodyMidiDropPane.message.setText("~MELODY LOADED FROM FILE~");
+			dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
 		}
 
 		// seed
