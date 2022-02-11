@@ -250,7 +250,12 @@ public class MidiEditPopup extends CloseablePopup {
 
 		applyToMainBtn = new CheckButton("Apply to Global",
 				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
-		applyToMainBtn.setFunc(e -> apply());
+		applyToMainBtn.setFunc(e -> {
+			if (applyToMainBtn.isSelected()) {
+				mvea.getValues().setCustom(false);
+			}
+			apply();
+		});
 		buttonPanel2.add(applyToMainBtn);
 		buttonPanel2.add(VibeComposerGUI.makeButton("Discard / Save Global", e -> {
 			mvea.getValues().setCustom(false);
@@ -427,6 +432,7 @@ public class MidiEditPopup extends CloseablePopup {
 			} else {
 				VibeComposerGUI.getInstList(part).get(partOrder).setCustomMidi(null);
 			}
+			VibeComposerGUI.scrollableArrangementActualTable.repaint();
 		}
 	}
 
@@ -646,5 +652,17 @@ public class MidiEditPopup extends CloseablePopup {
 		this.sec = sec;
 	}
 
+	public boolean isSectionCustom() {
+		PhraseNotes pn = sec.getPartPhraseNotes().get(part).get(partOrder);
+		if (pn != null && pn.isCustom()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public PhraseNotes getValues() {
+		return mvea.getValues();
+	}
 
 }
