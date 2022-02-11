@@ -162,7 +162,7 @@ import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
-import org.vibehistorian.vibecomposer.Panels.ButtonSelectorPanel;
+import org.vibehistorian.vibecomposer.Panels.ArrangementSectionSelectorPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
@@ -348,7 +348,7 @@ public class VibeComposerGUI extends JFrame
 	CheckButton useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	public static final String GLOBAL = "Global";
-	public static ButtonSelectorPanel arrSection;
+	public static ArrangementSectionSelectorPanel arrSection;
 	public static JScrollPane arrSectionPane;
 	public static boolean switchTabPaneAfterApply;
 	JPanel arrangementMiddleColoredPanel;
@@ -2678,7 +2678,7 @@ public class VibeComposerGUI extends JFrame
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons
 				.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
-		arrSection = new ButtonSelectorPanel(new ArrayList<>(), defaultButtons);
+		arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons);
 		arrSection.addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
 
 			@Override

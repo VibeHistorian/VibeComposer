@@ -13,14 +13,14 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
 
-public class ButtonSelectorPanel extends JPanel {
+public class ArrangementSectionSelectorPanel extends JPanel {
 
 	private static final long serialVersionUID = -2425443567987119524L;
 	private static int unremovableButtons = 1;
 	private List<CheckButton> buttons = new ArrayList<>();
 	private int selectedIndex = -1;
 
-	public ButtonSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons) {
+	public ArrangementSectionSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons) {
 		setOpaque(false);
 		//setMaximumSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
 		//setPreferredSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
@@ -50,7 +50,7 @@ public class ButtonSelectorPanel extends JPanel {
 					setSelectedIndex(0);
 				}
 			}
-			ButtonSelectorPanel.this.repaint();
+			ArrangementSectionSelectorPanel.this.repaint();
 		});
 		cb.addMouseListener(new MouseAdapter() {
 			@Override
