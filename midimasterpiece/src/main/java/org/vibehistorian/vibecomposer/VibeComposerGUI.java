@@ -161,10 +161,11 @@ import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
-import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ArrangementSectionSelectorPanel;
+import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -3878,6 +3879,9 @@ public class VibeComposerGUI extends JFrame
 		userChords = new JTextField("?", 35);
 		userChords.setToolTipText(tooltip);
 		customChordsPanel.add(userChords);
+		ChordletPanel chordletPanel = new ChordletPanel("Csus4", "Am", "Em", "Gsus4");
+		customChordsPanel.add(userChords);
+		customChordsPanel.add(chordletPanel);
 
 		JButton normalizeChordsButton = new JButton("N") {
 			private static final long serialVersionUID = 4142323272860314396L;

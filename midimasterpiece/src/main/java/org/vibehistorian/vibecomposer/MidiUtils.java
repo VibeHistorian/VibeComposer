@@ -19,6 +19,7 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -100,6 +101,11 @@ public class MidiUtils {
 			modeTargetNote = targetNote;
 		}
 	}
+
+	// C D E F G A B = Red Orange Yellow Green Cyan Purple GRAY
+	public static final List<Color> CHORD_COLORS = Arrays.asList(new Color[] { new Color(220, 0, 0),
+			new Color(220, 100, 0), new Color(200, 200, 0), new Color(50, 220, 0),
+			new Color(0, 200, 200), new Color(150, 0, 200), new Color(150, 150, 150) });
 
 	public static final List<ScaleMode> majorishModes = Arrays
 			.asList(new ScaleMode[] { ScaleMode.IONIAN, ScaleMode.LYDIAN, ScaleMode.MIXOLYDIAN,
@@ -1491,6 +1497,19 @@ public class MidiUtils {
 		} else {
 			return false;
 		}
+	}
+
+	public static double getChordKeyness(int[] mapped) {
+		if (mapped == null || mapped.length == 0) {
+			throw new IllegalArgumentException("Input chord is null or empty!");
+		}
+		int inKey = 0;
+		for (int i = 0; i < mapped.length; i++) {
+			if (MAJ_SCALE.contains(mapped[i] % 12)) {
+				inKey++;
+			}
+		}
+		return inKey / (double) mapped.length;
 	}
 
 }
