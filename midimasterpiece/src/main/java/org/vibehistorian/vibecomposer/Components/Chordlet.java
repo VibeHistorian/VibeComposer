@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
@@ -26,8 +27,10 @@ public class Chordlet extends JComponent {
 	private boolean sharp = false;
 	private Integer inversion = null;
 	private int width = 30;
-	private int height = 15;
-	private static final Font font = new Font("Tahoma", Font.PLAIN, 12);
+	private int height = 18;
+	private static final Font font = new Font("Tahoma", Font.PLAIN, 14);
+	private Integer dragY = null;
+	private Integer dragFirstLetterIndex = null;
 
 	public Chordlet(String chord) {
 		setupChord(chord);
@@ -37,7 +40,8 @@ public class Chordlet extends JComponent {
 		if (chord == null || chord.length() == 0) {
 			return;
 		}
-		width = SwingUtils.getDrawStringWidth(chord) + 7;
+
+		calculateWidth(chord);
 		firstLetter = chord.substring(0, 1).toUpperCase();
 		sharp = chord.contains("#");
 		inversion = chord.contains(".") ? Integer.valueOf(chord.split(".")[1]) : null;
@@ -46,36 +50,86 @@ public class Chordlet extends JComponent {
 		int spiceEndIndex = inversion != null ? chord.indexOf(".") : chord.length();
 		if (spiceStartIndex < spiceEndIndex) {
 			spice = chord.substring(spiceStartIndex, spiceEndIndex);
+		} else {
+			spice = "";
 		}
 
 		setPreferredSize(new Dimension(width, height));
-		setMinimumSize(new Dimension(width, height));
 
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				// start drag - mouse Y pos
+				dragY = e.getPoint().y;
+				dragFirstLetterIndex = MidiUtils.SEMITONE_LETTERS.indexOf(firstLetter);
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// stop drag - reset
+				reset();
 			}
+		});
+
+		addMouseMotionListener(new MouseMotionListener() {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size 
+				processMouseDrag(e);
 			}
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				if (dragY != null) {
+					//processMouseDrag(e);
+				}
+			}
+
 		});
 
 		addMouseWheelListener(new MouseWheelListener() {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				// TODO cycle first letters - get index in C,C#,D.. list, get index+1 % 12
-
+				// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size 
+				int movement = e.getWheelRotation() > 0 ? 1 : -1;
+				int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);
+				int newSpiceIndex = (dragSpiceIndex + movement
+						+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
+						% MidiUtils.SPICE_NAMES_LIST.size();
+				spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);
+				update();
 			}
 		});
+	}
+
+	private String sharpString() {
+		return sharp ? "#" : "";
+	}
+
+	private void processMouseDrag(MouseEvent evt) {
+		int firstLetterIndex = dragFirstLetterIndex;
+		firstLetterIndex -= ((evt.getPoint().y - dragY) / 5);
+		firstLetter = MidiUtils.SEMITONE_LETTERS
+				.get((firstLetterIndex + MidiUtils.SEMITONE_LETTERS.size() * 50)
+						% MidiUtils.SEMITONE_LETTERS.size());
+		update();
+	}
+
+	private void calculateWidth(String chordText) {
+		width = SwingUtils.getDrawStringWidth(chordText) + 10;
+	}
+
+	public void update() {
+		calculateWidth(getChordText());
+		setPreferredSize(new Dimension(width, height));
+		setSize(new Dimension(width, height));
+		repaint();
+	}
+
+	public void reset() {
+		dragY = null;
+		dragFirstLetterIndex = null;
 	}
 
 	@Override
@@ -95,7 +149,7 @@ public class Chordlet extends JComponent {
 		int height = this.getSize().height;
 
 		String chordText = getChordText();
-		Color color = OMNI.mixColor(getColorForChord(chordText), Color.black, 0.1);
+		Color color = getColorForChord(chordText);
 		Color color2 = OMNI.mixColor(color, Color.black, 0.25);
 		GradientPaint gp = new GradientPaint(minX, 0, color, maxX, 0, color2);
 		g.setPaint(gp);
@@ -103,7 +157,7 @@ public class Chordlet extends JComponent {
 		g.fillRoundRect(minX, 0, maxX, height, 10, 10);
 		//g.fillRect(minX, 0, maxX, height);
 		g.setColor(Color.black);
-		g.drawString(chordText, minX + 4, height - 3);
+		g.drawString(chordText, minX + 3, height - 3);
 		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
 
 		//g.dispose();
@@ -119,29 +173,19 @@ public class Chordlet extends JComponent {
 		int chordIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(chord.substring(0, 1)) - 1;
 		Color chordColor = MidiUtils.CHORD_COLORS.get(chordIndex);
 		if (isSharp) {
-			Color nextChordColor = MidiUtils.CHORD_COLORS.get(chordIndex + 1 % 7);
+			Color nextChordColor = MidiUtils.CHORD_COLORS.get((chordIndex + 1) % 7);
 			chordColor = OMNI.mixColor(chordColor, nextChordColor, 0.5);
 		}
-		chordColor = OMNI.alphen(chordColor, Math.min((int) (chordKeyness * 255), 255));
+		chordColor = OMNI.alphen(chordColor, Math.min((int) (chordKeyness * 180) + 75, 255));
 		return chordColor;
 	}
 
 	public static Color getColorForChord(String chord) {
-		int[] mapped = MidiUtils.mappedChord(chord);
-		double chordKeyness = MidiUtils.getChordKeyness(mapped);
-		int chordIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(chord.substring(0, 1)) - 1;
-		Color chordColor = MidiUtils.CHORD_COLORS.get(chordIndex);
-		if (chord.contains("#")) {
-			Color nextChordColor = MidiUtils.CHORD_COLORS.get(chordIndex + 1 % 7);
-			chordColor = OMNI.mixColor(chordColor, nextChordColor, 0.5);
-		}
-		chordColor = OMNI.alphen(chordColor, Math.min((int) (chordKeyness * 255), 255));
-		return chordColor;
+		return getColorForChord(chord, chord.contains("#"));
 	}
 
 	public String getChordText() {
-		return firstLetter + (sharp ? "#" : "") + spice
-				+ (inversion != null ? ("." + inversion) : "");
+		return firstLetter + sharpString() + spice + (inversion != null ? ("." + inversion) : "");
 	}
 
 }
