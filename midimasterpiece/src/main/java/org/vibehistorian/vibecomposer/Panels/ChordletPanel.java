@@ -27,9 +27,9 @@ public class ChordletPanel extends JPanel {
 	private boolean chordletsDisplayed = true;
 
 	private void setupPanel() {
-		setPreferredSize(new Dimension(200, 40));
-		chordletsPanel.setPreferredSize(new Dimension(200, 40));
-		rawChordsPanel.setPreferredSize(new Dimension(200, 40));
+		setPreferredSize(new Dimension(400, 40));
+		chordletsPanel.setPreferredSize(new Dimension(400, 40));
+		rawChordsPanel.setPreferredSize(new Dimension(400, 40));
 		rawChordsPanel.setVisible(false);
 		rawChords.setText(getChordListString());
 		rawChordsPanel.add(rawChords);
@@ -97,7 +97,7 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public void addChord(String chord) {
-		Chordlet chordlet = new Chordlet(chord.trim());
+		Chordlet chordlet = new Chordlet(chord.trim(), this);
 		chordlets.add(chordlet);
 		chordletsPanel.add(chordlet);
 		repaint();

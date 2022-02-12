@@ -18,6 +18,7 @@ import javax.swing.JComponent;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 
 public class Chordlet extends JComponent {
 
@@ -31,9 +32,11 @@ public class Chordlet extends JComponent {
 	private static final Font font = new Font("Tahoma", Font.PLAIN, 14);
 	private Integer dragY = null;
 	private Integer dragFirstLetterIndex = null;
+	private ChordletPanel parent = null;
 
-	public Chordlet(String chord) {
+	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
+		setParentPanel(chordletPanel);
 	}
 
 	private void setupChord(String chord) {
@@ -44,7 +47,8 @@ public class Chordlet extends JComponent {
 		calculateWidth(chord);
 		firstLetter = chord.substring(0, 1).toUpperCase();
 		sharp = chord.contains("#");
-		inversion = chord.contains(".") ? Integer.valueOf(chord.split(".")[1]) : null;
+		inversion = chord.contains(".") ? Integer.valueOf(chord.substring(chord.indexOf(".") + 1))
+				: null;
 
 		int spiceStartIndex = sharp ? 2 : 1;
 		int spiceEndIndex = inversion != null ? chord.indexOf(".") : chord.length();
@@ -124,7 +128,11 @@ public class Chordlet extends JComponent {
 		calculateWidth(getChordText());
 		setPreferredSize(new Dimension(width, height));
 		setSize(new Dimension(width, height));
-		repaint();
+		if (parent != null) {
+			parent.revalidate();
+			parent.repaint();
+		}
+
 	}
 
 	public void reset() {
@@ -186,6 +194,14 @@ public class Chordlet extends JComponent {
 
 	public String getChordText() {
 		return firstLetter + sharpString() + spice + (inversion != null ? ("." + inversion) : "");
+	}
+
+	public ChordletPanel getParentPanel() {
+		return parent;
+	}
+
+	public void setParentPanel(ChordletPanel parent) {
+		this.parent = parent;
 	}
 
 }
