@@ -12,8 +12,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Random;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
@@ -33,6 +35,8 @@ public class Chordlet extends JComponent {
 	private Integer dragY = null;
 	private Integer dragFirstLetterIndex = null;
 	private ChordletPanel parent = null;
+	private static final Color KEYNESS_COLOR = new Color(210, 210, 210);
+	private static final Color DARK_TEXT_COLOR = new Color(160, 255, 160);
 
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
@@ -64,8 +68,18 @@ public class Chordlet extends JComponent {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				// start drag - mouse Y pos
-				dragY = e.getPoint().y;
-				dragFirstLetterIndex = MidiUtils.SEMITONE_LETTERS.indexOf(firstLetter);
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					dragY = e.getPoint().y;
+					dragFirstLetterIndex = MidiUtils.SEMITONE_LETTERS.indexOf(firstLetter);
+				} else if (SwingUtilities.isRightMouseButton(e)) {
+					spice = "";
+					update();
+				} else if (SwingUtilities.isMiddleMouseButton(e)) {
+					spice = MidiUtils.SPICE_NAMES_LIST
+							.get(new Random().nextInt(MidiUtils.SPICE_NAMES_LIST.size()));
+					update();
+				}
+
 			}
 
 			@Override
@@ -112,8 +126,11 @@ public class Chordlet extends JComponent {
 	}
 
 	private void processMouseDrag(MouseEvent evt) {
+		if (dragY == null) {
+			return;
+		}
 		int firstLetterIndex = dragFirstLetterIndex;
-		firstLetterIndex -= ((evt.getPoint().y - dragY) / 5);
+		firstLetterIndex -= ((evt.getPoint().y - dragY) / 20);
 		firstLetter = MidiUtils.SEMITONE_LETTERS
 				.get((firstLetterIndex + MidiUtils.SEMITONE_LETTERS.size() * 50)
 						% MidiUtils.SEMITONE_LETTERS.size());
@@ -157,6 +174,8 @@ public class Chordlet extends JComponent {
 		int height = this.getSize().height;
 
 		String chordText = getChordText();
+		int[] mapped = MidiUtils.mappedChord(chordText);
+		double chordOutOfKeyness = mapped != null ? 1 - MidiUtils.getChordKeyness(mapped) : 0;
 		Color color = getColorForChord(chordText);
 		Color color2 = OMNI.mixColor(color, Color.black, 0.25);
 		GradientPaint gp = new GradientPaint(minX, 0, color, maxX, 0, color2);
@@ -164,8 +183,14 @@ public class Chordlet extends JComponent {
 
 		g.fillRoundRect(minX, 0, maxX, height, 10, 10);
 		//g.fillRect(minX, 0, maxX, height);
-		g.setColor(Color.black);
+		if (chordOutOfKeyness > 0.05) {
+			g.setColor(KEYNESS_COLOR);
+			g.drawLine(maxX, height - 2, (int) (maxX - maxX * chordOutOfKeyness - 3), height - 2);
+		}
+
+		g.setColor(DARK_TEXT_COLOR);
 		g.drawString(chordText, minX + 3, height - 3);
+		g.setColor(Color.black);
 		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
 
 		//g.dispose();
@@ -177,7 +202,7 @@ public class Chordlet extends JComponent {
 
 	public static Color getColorForChord(String chord, boolean isSharp) {
 		int[] mapped = MidiUtils.mappedChord(chord);
-		double chordKeyness = MidiUtils.getChordKeyness(mapped);
+		double chordKeyness = mapped != null ? MidiUtils.getChordKeyness(mapped) : 1;
 		int chordIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(chord.substring(0, 1)) - 1;
 		Color chordColor = MidiUtils.CHORD_COLORS.get(chordIndex);
 		if (isSharp) {
