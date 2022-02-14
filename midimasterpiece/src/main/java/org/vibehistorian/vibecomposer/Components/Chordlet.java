@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -7,6 +8,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -41,29 +43,10 @@ public class Chordlet extends JComponent {
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
 		setParentPanel(chordletPanel);
+		setupListeners();
 	}
 
-	private void setupChord(String chord) {
-		if (chord == null || chord.length() == 0) {
-			return;
-		}
-
-		calculateWidth(chord);
-		firstLetter = chord.substring(0, 1).toUpperCase();
-		sharp = chord.contains("#");
-		inversion = chord.contains(".") ? Integer.valueOf(chord.substring(chord.indexOf(".") + 1))
-				: null;
-
-		int spiceStartIndex = sharp ? 2 : 1;
-		int spiceEndIndex = inversion != null ? chord.indexOf(".") : chord.length();
-		if (spiceStartIndex < spiceEndIndex) {
-			spice = chord.substring(spiceStartIndex, spiceEndIndex);
-		} else {
-			spice = "";
-		}
-
-		setPreferredSize(new Dimension(width, height));
-
+	private void setupListeners() {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -72,7 +55,12 @@ public class Chordlet extends JComponent {
 					dragY = e.getPoint().y;
 					dragFirstLetterIndex = MidiUtils.SEMITONE_LETTERS.indexOf(firstLetter);
 				} else if (SwingUtilities.isRightMouseButton(e)) {
-					spice = "";
+					int firstLetterIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1;
+					if (firstLetterIndex >= 0) {
+						setupChord(MidiUtils.MAJOR_CHORDS.get(firstLetterIndex));
+					} else {
+						spice = "";
+					}
 					update();
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
 					spice = MidiUtils.SPICE_NAMES_LIST
@@ -121,6 +109,29 @@ public class Chordlet extends JComponent {
 		});
 	}
 
+	private void setupChord(String chord) {
+		if (chord == null || chord.length() == 0) {
+			return;
+		}
+
+		calculateWidth(chord);
+		firstLetter = chord.substring(0, 1).toUpperCase();
+		sharp = chord.contains("#");
+		inversion = chord.contains(".") ? Integer.valueOf(chord.substring(chord.indexOf(".") + 1))
+				: null;
+
+		int spiceStartIndex = sharp ? 2 : 1;
+		int spiceEndIndex = inversion != null ? chord.indexOf(".") : chord.length();
+		if (spiceStartIndex < spiceEndIndex) {
+			spice = chord.substring(spiceStartIndex, spiceEndIndex);
+		} else {
+			spice = "";
+		}
+
+		setPreferredSize(new Dimension(width, height));
+
+	}
+
 	private String sharpString() {
 		return sharp ? "#" : "";
 	}
@@ -155,6 +166,7 @@ public class Chordlet extends JComponent {
 	public void reset() {
 		dragY = null;
 		dragFirstLetterIndex = null;
+		repaint();
 	}
 
 	@Override
@@ -185,12 +197,15 @@ public class Chordlet extends JComponent {
 		//g.fillRect(minX, 0, maxX, height);
 		if (chordOutOfKeyness > 0.05) {
 			g.setColor(KEYNESS_COLOR);
+			Stroke dashed = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0,
+					new float[] { 9 }, 0);
+			g.setStroke(dashed);
 			g.drawLine(maxX, height - 2, (int) (maxX - maxX * chordOutOfKeyness - 3), height - 2);
+			g.setStroke(new BasicStroke());
 		}
-
 		g.setColor(DARK_TEXT_COLOR);
 		g.drawString(chordText, minX + 3, height - 3);
-		g.setColor(Color.black);
+		g.setColor(dragY != null ? Color.white : Color.black);
 		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
 
 		//g.dispose();
