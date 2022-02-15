@@ -30,19 +30,27 @@ public class ChordletPanel extends JPanel {
 	private static final long serialVersionUID = -4372897856098663297L;
 
 	private List<Chordlet> chordlets = new ArrayList<>();
+
 	private JPanel chordletsPanel = new JPanel();
 	private JPanel rawChordsPanel = new JPanel();
+	private JPanel extrasPanel = new JPanel();
+
 	private JTextField rawChords = new JTextField("", 12);
 	private boolean chordletsDisplayed = true;
 
+	private static final int extrasSize = 30;
+	private static final int fullSize = 500;
+	private static final int fullHeight = 40;
+
 	private void setupPanel() {
-		setPreferredSize(new Dimension(400, 40));
-		chordletsPanel.setPreferredSize(new Dimension(400, 40));
-		rawChordsPanel.setPreferredSize(new Dimension(400, 40));
+		setPreferredSize(new Dimension(fullSize, fullHeight));
+		chordletsPanel.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight));
+		rawChordsPanel.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight));
+		extrasPanel.setPreferredSize(new Dimension(extrasSize - 10, fullHeight));
+
 		rawChordsPanel.setVisible(false);
 		rawChords.setText(getChordListString());
 		rawChordsPanel.add(rawChords);
-
 		rawChords.addActionListener(new ActionListener() {
 
 			@Override
@@ -50,9 +58,14 @@ public class ChordletPanel extends JPanel {
 				toggleChordDisplay();
 			}
 		});
+		JButton switchButton = VibeComposerGUI.makeButton("<>", e -> {
+			toggleChordDisplay();
+		});
+		extrasPanel.add(switchButton);
 
 		add(chordletsPanel);
 		add(rawChordsPanel);
+		add(extrasPanel);
 
 		JButton addButton = VibeComposerGUI.makeButton("+", e -> {
 			addChord("C");
