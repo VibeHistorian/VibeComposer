@@ -32,13 +32,15 @@ public class Chordlet extends JComponent {
 	private boolean sharp = false;
 	private Integer inversion = null;
 	private int width = 30;
-	private int height = 18;
+	private int height = 20;
 	private static final Font font = new Font("Tahoma", Font.PLAIN, 14);
 	private Integer dragY = null;
 	private Integer dragFirstLetterIndex = null;
 	private ChordletPanel parent = null;
 	private static final Color KEYNESS_COLOR = new Color(210, 210, 210);
 	private static final Color DARK_TEXT_COLOR = new Color(160, 255, 160);
+	private static final String CLOSE_BTTN_ICON = " x";
+	private static final int CLOSE_BTTN_WIDTH = 13;
 
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
@@ -68,6 +70,13 @@ public class Chordlet extends JComponent {
 					update();
 				}
 
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) && e.getX() > width - CLOSE_BTTN_WIDTH) {
+					parent.removeChordlet(Chordlet.this);
+				}
 			}
 
 			@Override
@@ -149,7 +158,7 @@ public class Chordlet extends JComponent {
 	}
 
 	private void calculateWidth(String chordText) {
-		width = SwingUtils.getDrawStringWidth(chordText) + 10;
+		width = SwingUtils.getDrawStringWidth(chordText) + 10 + CLOSE_BTTN_WIDTH;
 	}
 
 	public void update() {
@@ -204,7 +213,7 @@ public class Chordlet extends JComponent {
 			g.setStroke(new BasicStroke());
 		}
 		g.setColor(DARK_TEXT_COLOR);
-		g.drawString(chordText, minX + 3, height - 3);
+		g.drawString(chordText + CLOSE_BTTN_ICON, minX + 3, height - 4);
 		g.setColor(dragY != null ? Color.white : Color.black);
 		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
 

@@ -100,7 +100,13 @@ public class ChordletPanel extends JPanel {
 		Chordlet chordlet = new Chordlet(chord.trim(), this);
 		chordlets.add(chordlet);
 		chordletsPanel.add(chordlet);
-		repaint();
+		update();
+	}
+
+	public void removeChordlet(Chordlet chordlet) {
+		chordlets.remove(chordlet);
+		chordletsPanel.remove(chordlet);
+		update();
 	}
 
 	public List<String> getChordList() {
@@ -109,5 +115,10 @@ public class ChordletPanel extends JPanel {
 
 	public String getChordListString() {
 		return StringUtils.join(getChordList(), ",");
+	}
+
+	public void update() {
+		revalidate();
+		repaint();
 	}
 }
