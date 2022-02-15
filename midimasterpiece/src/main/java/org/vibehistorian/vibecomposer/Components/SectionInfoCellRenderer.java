@@ -57,7 +57,7 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 									? sec.getCustomChords().replaceAll(" ", "")
 									: "");
 					String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
-							? VibeComposerGUI.userChords.getText()
+							? VibeComposerGUI.userChords.getChordListString()
 							: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
 
 					String guiUserDurations = (VibeComposerGUI.userChordsEnabled.isSelected()

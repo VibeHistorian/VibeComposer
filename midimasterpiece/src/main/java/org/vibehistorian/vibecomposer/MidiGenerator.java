@@ -2325,7 +2325,7 @@ public class MidiGenerator implements JMC {
 
 	public void generatePrettyUserChords(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
-		generateChordProgression(mainGeneratorSeed, gc.getFixedDuration());
+		generateChordProgression(mainGeneratorSeed, fixedLength);
 	}
 
 	public int multiplyVelocity(int velocity, int multiplierPercentage, int maxAdjust,

@@ -294,7 +294,7 @@ public class VariationPopup {
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
 		String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
-				? VibeComposerGUI.userChords.getText()
+				? VibeComposerGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
 		userChords = new JTextField(
 				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())

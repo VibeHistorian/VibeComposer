@@ -57,13 +57,7 @@ public class Chordlet extends JComponent {
 					dragY = e.getPoint().y;
 					dragFirstLetterIndex = MidiUtils.SEMITONE_LETTERS.indexOf(firstLetter);
 				} else if (SwingUtilities.isRightMouseButton(e)) {
-					int firstLetterIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1;
-					if (firstLetterIndex >= 0) {
-						setupChord(MidiUtils.MAJOR_CHORDS.get(firstLetterIndex));
-					} else {
-						spice = "";
-					}
-					update();
+					resetToBaseChord();
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
 					spice = MidiUtils.SPICE_NAMES_LIST
 							.get(new Random().nextInt(MidiUtils.SPICE_NAMES_LIST.size()));
@@ -75,7 +69,7 @@ public class Chordlet extends JComponent {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e) && e.getX() > width - CLOSE_BTTN_WIDTH) {
-					parent.removeChordlet(Chordlet.this);
+					parent.removeChordlet(Chordlet.this, true);
 				}
 			}
 
@@ -116,6 +110,17 @@ public class Chordlet extends JComponent {
 				update();
 			}
 		});
+	}
+
+	public void resetToBaseChord() {
+		int firstLetterIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1;
+		if (firstLetterIndex >= 0) {
+			setupChord(MidiUtils.MAJOR_CHORDS.get(firstLetterIndex));
+		} else {
+			spice = "";
+		}
+
+		update();
 	}
 
 	private void setupChord(String chord) {
