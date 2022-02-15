@@ -125,7 +125,7 @@ public class Chordlet extends JComponent {
 
 		calculateWidth(chord);
 		firstLetter = chord.substring(0, 1).toUpperCase();
-		sharp = chord.contains("#");
+		sharp = isSharp(chord);
 		inversion = chord.contains(".") ? Integer.valueOf(chord.substring(chord.indexOf(".") + 1))
 				: null;
 
@@ -238,7 +238,11 @@ public class Chordlet extends JComponent {
 	}
 
 	public static Color getColorForChord(String chord) {
-		return getColorForChord(chord, chord.contains("#"));
+		return getColorForChord(chord, isSharp(chord));
+	}
+
+	public static boolean isSharp(String chord) {
+		return chord.length() > 1 && chord.substring(1, 2).equals("#");
 	}
 
 	public String getChordText() {
