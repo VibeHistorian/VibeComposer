@@ -85,6 +85,9 @@ public class ChordletPanel extends JPanel {
 		JButton addButton = VibeComposerGUI.makeButton("+", e -> {
 			addChord("C", true);
 		});
+
+		setupAddButton(addButton);
+
 		JButton switchButton = VibeComposerGUI.makeButton("<>", e -> {
 			toggleChordDisplay();
 		});
@@ -106,6 +109,18 @@ public class ChordletPanel extends JPanel {
 				toggleChordDisplay();
 			}
 		});*/
+	}
+
+	private void setupAddButton(JButton addButton) {
+		SwingUtils.addPopupMenu(addButton, (evt, e) -> {
+			addChord(e, true);
+		}, e -> {
+			if (SwingUtilities.isRightMouseButton(e)) {
+				return true;
+			}
+			return false;
+		}, MidiUtils.MAJOR_MINOR_CHORDS, MidiUtils.MAJOR_MINOR_CHORDS.stream()
+				.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
 	}
 
 	public ChordletPanel(int width, List<String> chords) {

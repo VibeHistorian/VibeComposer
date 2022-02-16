@@ -14,7 +14,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -49,19 +49,36 @@ public class Chordlet extends JComponent {
 	}
 
 	private void setupListeners() {
+		// LMB - first letter/sharp change
+		SwingUtils.addPopupMenu(this, (evt, e) -> {
+			firstLetter = e.substring(0, 1);
+			sharp = e.length() > 1;
+			update();
+		}, e -> {
+			if (SwingUtilities.isLeftMouseButton(e)) {
+				return true;
+			}
+			return false;
+		}, MidiUtils.SEMITONE_LETTERS, MidiUtils.SEMITONE_LETTERS.stream()
+				.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
+
+		// MMB - spice change
+		SwingUtils.addPopupMenu(this, (evt, e) -> {
+			spice = e;
+			update();
+		}, e -> {
+			if (SwingUtilities.isMiddleMouseButton(e)) {
+				return true;
+			}
+			return false;
+		}, MidiUtils.SPICE_NAMES_LIST, null);
+
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				// start drag - mouse Y pos
-				if (SwingUtilities.isLeftMouseButton(e)) {
-					dragY = e.getPoint().y;
-					dragFirstLetterIndex = MidiUtils.SEMITONE_LETTERS.indexOf(firstLetter);
-				} else if (SwingUtilities.isRightMouseButton(e)) {
+				if (SwingUtilities.isRightMouseButton(e)) {
 					resetToBaseChord();
-				} else if (SwingUtilities.isMiddleMouseButton(e)) {
-					spice = MidiUtils.SPICE_NAMES_LIST
-							.get(new Random().nextInt(MidiUtils.SPICE_NAMES_LIST.size()));
-					update();
 				}
 
 			}
@@ -71,6 +88,12 @@ public class Chordlet extends JComponent {
 				if (SwingUtilities.isLeftMouseButton(e) && e.getX() > width - CLOSE_BTTN_WIDTH) {
 					parent.removeChordlet(Chordlet.this, true);
 				}
+
+				/*else if (SwingUtilities.isMiddleMouseButton(e)) {
+					spice = MidiUtils.SPICE_NAMES_LIST
+							.get(new Random().nextInt(MidiUtils.SPICE_NAMES_LIST.size()));
+					update();
+				}*/
 			}
 
 			@Override
@@ -102,11 +125,19 @@ public class Chordlet extends JComponent {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size 
 				int movement = e.getWheelRotation() > 0 ? 1 : -1;
-				int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);
+				int firstLetterIndex = MidiUtils.SEMITONE_LETTERS
+						.indexOf(firstLetter + sharpString());
+				String newFirst = MidiUtils.SEMITONE_LETTERS
+						.get((firstLetterIndex + movement + MidiUtils.SEMITONE_LETTERS.size() * 50)
+								% MidiUtils.SEMITONE_LETTERS.size());
+				firstLetter = newFirst.substring(0, 1);
+				sharp = newFirst.length() > 1;
+
+				/*int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);				
 				int newSpiceIndex = (dragSpiceIndex + movement
 						+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
 						% MidiUtils.SPICE_NAMES_LIST.size();
-				spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);
+				spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);*/
 				update();
 			}
 		});
@@ -261,5 +292,6 @@ public class Chordlet extends JComponent {
 	public void setParentPanel(ChordletPanel parent) {
 		this.parent = parent;
 	}
+
 
 }

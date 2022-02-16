@@ -5,16 +5,26 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.swing.JComponent;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.Timer;
 
 public class SwingUtils {
+
+	public static List<JPopupMenu> popupMenus = new ArrayList<>();
 
 	public static double getScrolledPosition(JScrollPane pane, boolean horizontal) {
 		//LG.i("Get scrl pos: " + pane.getHorizontalScrollBar().getVisibleAmount() / 2.0);
@@ -97,5 +107,39 @@ public class SwingUtils {
 			}
 		});
 		timer.start();
+	}
+
+	public static void addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
+			Function<MouseEvent, Boolean> actionOnMousePress, List<String> displayedPopupItems,
+			List<Color> popupItemColors) {
+		final JPopupMenu popup = new JPopupMenu();
+		popupMenus.add(popup);
+		for (int i = 0; i < displayedPopupItems.size(); i++) {
+			String e = displayedPopupItems.get(i);
+			JMenuItem newE = new JMenuItem(e);
+			newE.setOpaque(false);
+			if (popupItemColors != null) {
+				newE.setForeground(popupItemColors.get(i));
+			}
+			newE.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent evt) {
+					actionOnSelect.accept(evt, e);
+				}
+			});
+			popup.add(newE);
+		}
+
+		comp.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				Boolean goodPress = actionOnMousePress.apply(evt);
+				if (goodPress != null && goodPress) {
+					popup.show(evt.getComponent(), evt.getX(), evt.getY());
+				}
+			}
+
+		});
 	}
 }

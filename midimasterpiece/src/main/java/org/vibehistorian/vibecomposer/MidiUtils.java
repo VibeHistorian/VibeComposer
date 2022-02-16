@@ -180,6 +180,8 @@ public class MidiUtils {
 			.asList(new String[] { "Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#" });
 	public static final List<String> SEMITONE_LETTERS = Arrays.asList(
 			new String[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
+	public static final List<String> MAJOR_MINOR_CHORDS = Arrays.asList(new String[] { "C", "Dm",
+			"Em", "F", "G", "Am", "Bdim", "Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#" });
 
 	public static final List<Integer> majorChordsModRating = Arrays
 			.asList(new Integer[] { 3, 2, 1, 3, 3, 1, -10 });
