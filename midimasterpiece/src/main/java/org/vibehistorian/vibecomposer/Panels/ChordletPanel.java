@@ -7,8 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,14 +50,21 @@ public class ChordletPanel extends JPanel {
 		setPreferredSize(new Dimension(fullSize, fullHeight));
 		chordletsPane
 				.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight - heightOffset));
-		chordletsPanel
-				.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight - heightOffset));
+		chordletsPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		chordletsPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		//SwingUtils.setupScrollpanePriorityScrolling(chordletsPane);
+		chordletsPanel.setPreferredSize(new Dimension(fullSize, fullHeight * 2 - heightOffset * 2));
 		rawChordsPanel
 				.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight - heightOffset));
 		extrasPanel.setPreferredSize(new Dimension(extrasSize - 10, fullHeight - heightOffset));
 		extrasPanel.setLayout(new BoxLayout(extrasPanel, BoxLayout.X_AXIS));
 
-		chordletsPanel.setBackground(OMNI.alphen(Color.cyan, 20));
+		chordletsPane.setOpaque(true);
+		chordletsPanel.setOpaque(true);
+		rawChordsPanel.setOpaque(false);
+		extrasPanel.setOpaque(false);
+
+		//chordletsPanel.setBackground(OMNI.alphen(Color.cyan, 20));
 
 		rawChordsPanel.setVisible(false);
 		rawChords.setText(getChordListString());
@@ -94,12 +99,12 @@ public class ChordletPanel extends JPanel {
 		add(rawChordsPanel);
 		add(extrasPanel);
 
-		addMouseListener(new MouseAdapter() {
+		/*addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				toggleChordDisplay();
 			}
-		});
+		});*/
 	}
 
 	public ChordletPanel(List<String> chords) {
