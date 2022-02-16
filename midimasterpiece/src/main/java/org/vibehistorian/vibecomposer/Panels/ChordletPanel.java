@@ -42,7 +42,7 @@ public class ChordletPanel extends JPanel {
 	private boolean chordletsDisplayed = true;
 
 	private static final int extrasSize = 70;
-	private static final int fullSize = 600;
+	private int fullSize = 600;
 	private static final int fullHeight = 35;
 	private static final int heightOffset = 2;
 
@@ -53,7 +53,8 @@ public class ChordletPanel extends JPanel {
 		chordletsPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		chordletsPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		//SwingUtils.setupScrollpanePriorityScrolling(chordletsPane);
-		chordletsPanel.setPreferredSize(new Dimension(fullSize, fullHeight * 2 - heightOffset * 2));
+		chordletsPanel
+				.setPreferredSize(new Dimension(fullSize, fullHeight * 10 / 4 - heightOffset * 2));
 		rawChordsPanel
 				.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight - heightOffset));
 		extrasPanel.setPreferredSize(new Dimension(extrasSize - 10, fullHeight - heightOffset));
@@ -107,17 +108,18 @@ public class ChordletPanel extends JPanel {
 		});*/
 	}
 
-	public ChordletPanel(List<String> chords) {
+	public ChordletPanel(int width, List<String> chords) {
+		fullSize = width;
 		setupChords(chords);
 		setupPanel();
 	}
 
-	public ChordletPanel(String... chords) {
-		this(Arrays.asList(chords));
+	public ChordletPanel(int width, String... chords) {
+		this(width, Arrays.asList(chords));
 	}
 
-	public ChordletPanel(String chords) {
-		this(Arrays.asList(chords.split(",")));
+	public ChordletPanel(int width, String chords) {
+		this(width, Arrays.asList(chords.split(",")));
 	}
 
 	public void toggleChordDisplay() {

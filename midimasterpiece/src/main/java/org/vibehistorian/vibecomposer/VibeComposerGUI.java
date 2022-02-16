@@ -3877,7 +3877,7 @@ public class VibeComposerGUI extends JFrame
 		userChordsEnabled = new CheckButton("Custom Chords", false);
 		customChordsPanel.add(userChordsEnabled);
 
-		userChords = new ChordletPanel("Csus4", "Am", "Em", "Gsus4");
+		userChords = new ChordletPanel(600, "Csus4", "Am", "Em", "Gsus4");
 		customChordsPanel.add(userChords);
 
 		JButton normalizeChordsButton = new JButton("N") {

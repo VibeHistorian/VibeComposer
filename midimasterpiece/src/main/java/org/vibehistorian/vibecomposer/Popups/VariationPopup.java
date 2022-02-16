@@ -42,6 +42,7 @@ import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
@@ -59,7 +60,7 @@ public class VariationPopup {
 	JPanel tablesPanel = new JPanel();
 	JTable[] tables = new JTable[5];
 
-	JTextField userChords;
+	ChordletPanel userChords;
 	JTextField userChordsDurations;
 
 	int sectionOrder = 0;
@@ -296,11 +297,10 @@ public class VariationPopup {
 		String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
 				? VibeComposerGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
-		userChords = new JTextField(
+		userChords = new ChordletPanel(350,
 				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())
 						? sec.getCustomChords()
-						: guiUserChords,
-				23);
+						: guiUserChords);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
 		userChordsDurations = new JTextField(
@@ -476,7 +476,7 @@ public class VariationPopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				VibeComposerGUI.varPopup = null;
-				sectionObject.setCustomChords(userChords.getText());
+				sectionObject.setCustomChords(userChords.getChordListString());
 				sectionObject.setCustomDurations(userChordsDurations.getText());
 				List<Integer> instVolumes = new ArrayList<>();
 				for (KnobPanel kp : knobs) {
