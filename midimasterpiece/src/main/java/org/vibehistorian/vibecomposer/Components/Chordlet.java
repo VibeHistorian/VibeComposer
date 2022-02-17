@@ -41,6 +41,7 @@ public class Chordlet extends JComponent {
 	private static final Color DARK_TEXT_COLOR = new Color(160, 255, 160);
 	private static final String CLOSE_BTTN_ICON = " x";
 	private static final int CLOSE_BTTN_WIDTH = 13;
+	private static final int ROUNDED_ADJUSTMENT_WIDTH = 10;
 
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
@@ -55,7 +56,7 @@ public class Chordlet extends JComponent {
 			sharp = e.length() > 1;
 			update();
 		}, e -> {
-			if (SwingUtilities.isLeftMouseButton(e)) {
+			if (SwingUtilities.isLeftMouseButton(e) && !clickedCloseButton(e)) {
 				return true;
 			}
 			return false;
@@ -85,7 +86,7 @@ public class Chordlet extends JComponent {
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e) && e.getX() > width - CLOSE_BTTN_WIDTH) {
+				if (SwingUtilities.isLeftMouseButton(e) && clickedCloseButton(e)) {
 					parent.removeChordlet(Chordlet.this, true);
 				}
 
@@ -150,8 +151,12 @@ public class Chordlet extends JComponent {
 		});
 	}
 
+	protected boolean clickedCloseButton(MouseEvent e) {
+		return e.getX() > width - CLOSE_BTTN_WIDTH;
+	}
+
 	public void resetToBaseChord() {
-		int firstLetterIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1;
+		int firstLetterIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter);
 		if (firstLetterIndex >= 0) {
 			setupChord(MidiUtils.MAJOR_CHORDS.get(firstLetterIndex));
 		} else {
@@ -201,7 +206,8 @@ public class Chordlet extends JComponent {
 	}
 
 	private void calculateWidth(String chordText) {
-		width = SwingUtils.getDrawStringWidth(chordText) + 10 + CLOSE_BTTN_WIDTH;
+		width = SwingUtils.getDrawStringWidth(chordText) + ROUNDED_ADJUSTMENT_WIDTH
+				+ CLOSE_BTTN_WIDTH;
 	}
 
 	public void update() {
@@ -256,7 +262,10 @@ public class Chordlet extends JComponent {
 			g.setStroke(new BasicStroke());
 		}
 		g.setColor(DARK_TEXT_COLOR);
-		g.drawString(chordText + CLOSE_BTTN_ICON, minX + 3, height - 4);
+		g.drawString(chordText, minX + 3, height - 4);
+		g.setColor(Color.black);
+		g.drawString(CLOSE_BTTN_ICON, 10 + width - CLOSE_BTTN_WIDTH - ROUNDED_ADJUSTMENT_WIDTH,
+				height - 4);
 		g.setColor(dragY != null ? Color.white : Color.black);
 		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
 
@@ -270,7 +279,7 @@ public class Chordlet extends JComponent {
 	public static Color getColorForChord(String chord, boolean isSharp) {
 		int[] mapped = MidiUtils.mappedChord(chord);
 		double chordKeyness = mapped != null ? MidiUtils.getChordKeyness(mapped) : 1;
-		int chordIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(chord.substring(0, 1)) - 1;
+		int chordIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(chord.substring(0, 1));
 		Color chordColor = MidiUtils.CHORD_COLORS.get(chordIndex);
 		if (isSharp) {
 			Color nextChordColor = MidiUtils.CHORD_COLORS.get((chordIndex + 1) % 7);

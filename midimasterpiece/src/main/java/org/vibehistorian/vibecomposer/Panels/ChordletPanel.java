@@ -37,10 +37,10 @@ public class ChordletPanel extends JPanel {
 
 	private JScrollPane chordletsPane = new JScrollPane();
 	private JPanel chordletsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-	private JPanel rawChordsPanel = new JPanel();
+	private JPanel rawChordsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 	private JPanel extrasPanel = new JPanel();
 
-	private JTextField rawChords = new JTextField("", 46);
+	private JTextField rawChords = new JTextField("", 42);
 	private boolean chordletsDisplayed = true;
 
 	private static final int extrasSize = 70;
@@ -74,6 +74,12 @@ public class ChordletPanel extends JPanel {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 		rawChords.setToolTipText(tooltip);
+		JButton okButton = VibeComposerGUI.makeButton("OK", e -> {
+			toggleChordDisplay();
+		});
+		okButton.setPreferredSize(new Dimension(30, 25));
+		okButton.setMargin(new Insets(0, 0, 0, 0));
+		rawChordsPanel.add(okButton);
 		rawChordsPanel.add(rawChords);
 		rawChords.addActionListener(new ActionListener() {
 
@@ -105,7 +111,13 @@ public class ChordletPanel extends JPanel {
 		add(rawChordsPanel);
 		add(extrasPanel);
 
-		addMouseListener(new MouseAdapter() {
+		chordletsPanel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				toggleChordDisplay();
+			}
+		});
+		rawChordsPanel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				toggleChordDisplay();
@@ -123,6 +135,24 @@ public class ChordletPanel extends JPanel {
 			return false;
 		}, MidiUtils.MAJOR_MINOR_CHORDS, MidiUtils.MAJOR_MINOR_CHORDS.stream()
 				.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
+
+		List<String> allChords = new ArrayList<>();
+		MidiUtils.SPICE_NAMES_LIST.forEach(s -> {
+			MidiUtils.CHORD_FIRST_LETTERS.forEach(e -> {
+				allChords.add(e + s);
+			});
+		});
+
+
+		SwingUtils.addPopupMenu(addButton, (evt, e) -> {
+			addChord(e, true);
+		}, e -> {
+			if (SwingUtilities.isMiddleMouseButton(e)) {
+				return true;
+			}
+			return false;
+		}, allChords, allChords.stream().map(e -> Chordlet.getColorForChord(e))
+				.collect(Collectors.toList()), 7);
 	}
 
 	public ChordletPanel(int width, List<String> chords) {

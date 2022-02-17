@@ -2579,8 +2579,7 @@ public class MidiGenerator implements JMC {
 		List<String> spicyChordListCopy = new ArrayList<>(spicyChordList);
 		String firstLetter = chordString.substring(0, 1);
 		List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
-		int transposeByLetter = targetScale
-				.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter) - 1);
+		int transposeByLetter = targetScale.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter));
 		if (gc.isSpiceForceScale()) {
 			spicyChordListCopy
 					.removeIf(e -> !MidiUtils.isSpiceValid(transposeByLetter, e, targetScale));

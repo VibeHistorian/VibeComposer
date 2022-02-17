@@ -175,7 +175,7 @@ public class MidiUtils {
 					"m13", "sus4", "sus2", "sus7", "maj6", "m6" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
-			.asList(new String[] { "X", "C", "D", "E", "F", "G", "A", "B" });
+			.asList(new String[] { "C", "D", "E", "F", "G", "A", "B" });
 	public static final List<String> MAJOR_CHORDS = Arrays
 			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
 	public static final List<String> MINOR_CHORDS = Arrays
@@ -272,7 +272,7 @@ public class MidiUtils {
 
 		for (int i = 1; i <= 7; i++) {
 			for (int j = 0; j < SPICE_CHORDS_LIST.size(); j++) {
-				chordMap.put(CHORD_FIRST_LETTERS.get(i) + SPICE_NAMES_LIST.get(j),
+				chordMap.put(CHORD_FIRST_LETTERS.get(i - 1) + SPICE_NAMES_LIST.get(j),
 						transposeChord(SPICE_CHORDS_LIST.get(j), diaTransMap.get(i)));
 			}
 		}
@@ -395,7 +395,7 @@ public class MidiUtils {
 
 		for (String ch : chords) {
 			int transposeByLetter = targetScale
-					.get(CHORD_FIRST_LETTERS.indexOf(ch.substring(0, 1)) - 1);
+					.get(CHORD_FIRST_LETTERS.indexOf(ch.substring(0, 1)));
 			if (ch.contains("6")
 					|| !isSpiceValid(transposeByLetter, ch.substring(1), targetScale)) {
 				continue;
@@ -1272,7 +1272,7 @@ public class MidiUtils {
 		List<Integer> majorScaleNormalized = MAJ_SCALE;
 		String firstLetterFirstChord = rawChords.substring(0, 1).toUpperCase();
 		int firstPitchFirstChord = majorScaleNormalized
-				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord) - 1);
+				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord));
 		if (rawChords.length() > 1 && "#".equals(rawChords.substring(1, 2))) {
 			firstPitchFirstChord++;
 		}
@@ -1290,7 +1290,7 @@ public class MidiUtils {
 					return null;
 				}
 
-				String firstLetter = CHORD_FIRST_LETTERS.get(index + 1);
+				String firstLetter = CHORD_FIRST_LETTERS.get(index);
 				for (String spice : SPICE_NAMES_LIST) {
 					String combinedChord = firstLetter + spice;
 					int[] mapped = mappedChord(combinedChord);
@@ -1310,7 +1310,7 @@ public class MidiUtils {
 		if (solvedChords.size() == chords.size()) {
 			String firstletterFirstSolvedChord = solvedChords.get(0).substring(0, 1);
 			int firstPitchFirstSolvedChord = majorScaleNormalized
-					.get(CHORD_FIRST_LETTERS.indexOf(firstletterFirstSolvedChord) - 1);
+					.get(CHORD_FIRST_LETTERS.indexOf(firstletterFirstSolvedChord));
 			if (firstPitchFirstChord > firstPitchFirstSolvedChord && transposeUpBy > 0) {
 				//transposeUpBy -= 12;
 			} else if (firstPitchFirstChord < firstPitchFirstSolvedChord && transposeUpBy < 0) {
@@ -1344,10 +1344,10 @@ public class MidiUtils {
 		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
 		if (chordLetter < 0) {
 			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);
-			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1) + "#";
+			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter) + "#";
 			return realLetter + pitch / 12;
 		} else {
-			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter + 1);
+			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter);
 			return realLetter + pitch / 12;
 		}
 	}
@@ -1385,7 +1385,7 @@ public class MidiUtils {
 				String firstLetter = chord.substring(0, 1).toUpperCase();
 
 				int firstIndex = CHORD_FIRST_LETTERS.indexOf(firstLetter);
-				String baseChord = MAJOR_CHORDS.get(firstIndex - 1);
+				String baseChord = MAJOR_CHORDS.get(firstIndex);
 				List<String> spicyChordList = (i > 0 && i < chordsList.size() - 1)
 						? allowedSpiceChordsMiddle
 						: allowedSpiceChords;
