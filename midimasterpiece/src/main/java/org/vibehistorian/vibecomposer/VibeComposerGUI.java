@@ -4486,7 +4486,7 @@ public class VibeComposerGUI extends JFrame
 
 				boolean isIgnoreFill = false;
 				if (!turnOff && sec != null) {
-					int ignoreFillIndex = part == 4 ? 1 : 2;
+					int ignoreFillIndex = part == 4 ? 0 : 1;
 					isIgnoreFill = sec
 							.getVariation(part,
 									VibeComposerGUI.getAbsoluteOrder(part, ip.getPanelOrder()))
