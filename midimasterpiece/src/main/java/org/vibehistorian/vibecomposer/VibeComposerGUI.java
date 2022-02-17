@@ -8928,7 +8928,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
 			Section sec, boolean overrideLastPlayed) {
-		if (sequencer == null || !sequencer.isOpen()
+		if (sequencer == null || !sequencer.isOpen() || pitch < 0
 				|| (!overrideLastPlayed && System.currentTimeMillis() - lastPlayedMs < 100)) {
 			return;
 		}
@@ -8952,7 +8952,8 @@ public class VibeComposerGUI extends JFrame
 				}
 
 				pitch = notes.get(0).getPitch() + transposeScore.getInt() + extraTranspose
-						+ ip.getTranspose();
+						+ sec.getTransposeVariation(part, partOrder)
+						+ MidiGenerator.DEFAULT_INSTRUMENT_TRANSPOSE[part] + ip.getTranspose();
 			}
 
 			Track trk = sequencer.getSequence().getTracks()[trackNum];

@@ -1049,4 +1049,13 @@ public class Section {
 		this.secConfig = secConfig;
 	}
 
+	public int getTransposeVariation(int part, int partOrder) {
+		if (part == 1 || part == 4) {
+			return 0;
+		} else {
+			List<Integer> vars = getVariation(part, partOrder);
+			return (vars != null && vars.contains(0)) ? 12 : 0;
+		}
+	}
+
 }

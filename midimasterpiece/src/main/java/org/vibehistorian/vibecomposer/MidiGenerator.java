@@ -83,6 +83,7 @@ public class MidiGenerator implements JMC {
 	public static final double DBL_ERR = 0.01;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
 	public static final double DEFAULT_DURATION_MULTIPLIER = 0.95;
+	public static final int[] DEFAULT_INSTRUMENT_TRANSPOSE = { 0, -24, -12, -24, 0 };
 
 	public enum ShowScoreMode {
 		NODRUMSCHORDS, DRUMSONLY, CHORDSONLY, ALL;
@@ -4390,7 +4391,7 @@ public class MidiGenerator implements JMC {
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		Mod.transpose(phr, -24 + ip.getTranspose() + modTrans);
+		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[1] + ip.getTranspose() + modTrans);
 		phr.setStartTime(START_TIME_DELAY);
 		addOffsetsToPhrase(phr, ip.getDelay());
 		if (genVars && variations != null) {
@@ -4753,7 +4754,7 @@ public class MidiGenerator implements JMC {
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		Mod.transpose(phr, -12 + extraTranspose + modTrans);
+		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[2] + extraTranspose + modTrans);
 
 
 		processSectionTransition(sec, phr.getNoteList(),
@@ -5012,7 +5013,7 @@ public class MidiGenerator implements JMC {
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
 		}
-		Mod.transpose(phr, -24 + extraTranspose + modTrans);
+		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[3] + extraTranspose + modTrans);
 
 		applyNoteLengthMultiplier(phr.getNoteList(), ip.getNoteLengthMultiplier());
 		processSectionTransition(sec, phr.getNoteList(),

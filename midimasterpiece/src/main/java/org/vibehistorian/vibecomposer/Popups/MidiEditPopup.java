@@ -146,10 +146,20 @@ public class MidiEditPopup extends CloseablePopup {
 		int vmin = -1 * baseMargin * trackScope;
 		int vmax = baseMargin * trackScope;
 		if (values != null && !values.isEmpty()) {
-			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.min().getAsInt();
-			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.max().getAsInt();
+			int[] vals = values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.toArray();
+			if (vals != null && vals.length > 0) {
+				vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+						.min().getAsInt();
+				vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+						.max().getAsInt();
+			}
+			/*else {
+				values.add(new PhraseNote(
+						new Note(60, sec.getSectionDuration() > 0 ? sec.getSectionDuration()
+								: MidiGenerator.GENERATED_MEASURE_LENGTH)));
+				}*/
+
 		}
 		int min = vmin;
 		int max = vmax;
