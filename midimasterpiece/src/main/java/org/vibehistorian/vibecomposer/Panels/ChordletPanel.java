@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -94,7 +95,7 @@ public class ChordletPanel extends JPanel {
 			addChord("C", true);
 		});
 
-		setupAddButton(addButton);
+		setupChordPickers(addButton);
 
 		JButton switchButton = VibeComposerGUI.makeButton("<>", e -> {
 			toggleChordDisplay();
@@ -125,7 +126,7 @@ public class ChordletPanel extends JPanel {
 		});
 	}
 
-	private void setupAddButton(JButton addButton) {
+	public void setupChordPickers(JComponent addButton) {
 		SwingUtils.addPopupMenu(addButton, (evt, e) -> {
 			addChord(e, true);
 		}, e -> {

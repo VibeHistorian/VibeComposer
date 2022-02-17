@@ -2564,7 +2564,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (progressionDurations.size() > 1
+		if (progressionDurations.size() > 2
 				&& (progressionDurations.get(0) != progressionDurations.get(2))) {
 			double middle = (progressionDurations.get(0) + progressionDurations.get(2)) / 2.0;
 			progressionDurations.set(0, middle);

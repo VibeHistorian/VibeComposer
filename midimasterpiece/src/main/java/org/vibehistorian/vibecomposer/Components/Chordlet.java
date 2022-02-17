@@ -11,7 +11,6 @@ import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.stream.Collectors;
@@ -42,6 +41,8 @@ public class Chordlet extends JComponent {
 	private static final String CLOSE_BTTN_ICON = " x";
 	private static final int CLOSE_BTTN_WIDTH = 13;
 	private static final int ROUNDED_ADJUSTMENT_WIDTH = 10;
+	private long lastClickMs = 0;
+	private boolean canRemoveChordlet = false;
 
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
@@ -56,7 +57,7 @@ public class Chordlet extends JComponent {
 			sharp = e.length() > 1;
 			update();
 		}, e -> {
-			if (SwingUtilities.isLeftMouseButton(e) && !clickedCloseButton(e)) {
+			if (SwingUtilities.isRightMouseButton(e)) {
 				return true;
 			}
 			return false;
@@ -77,48 +78,48 @@ public class Chordlet extends JComponent {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-				// start drag - mouse Y pos
-				if (SwingUtilities.isRightMouseButton(e)) {
-					resetToBaseChord();
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					if (!clickedCloseButton(e)) {
+						long currentTimeMs = System.currentTimeMillis();
+						if (currentTimeMs - lastClickMs < 500) {
+							resetToBaseChord();
+							lastClickMs = 0;
+						} else {
+							lastClickMs = currentTimeMs;
+						}
+					} else {
+						canRemoveChordlet = true;
+					}
 				}
-
-			}
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e) && clickedCloseButton(e)) {
-					parent.removeChordlet(Chordlet.this, true);
-				}
-
-				/*else if (SwingUtilities.isMiddleMouseButton(e)) {
-					spice = MidiUtils.SPICE_NAMES_LIST
-							.get(new Random().nextInt(MidiUtils.SPICE_NAMES_LIST.size()));
-					update();
-				}*/
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				// stop drag - reset
+				if (SwingUtilities.isLeftMouseButton(e) && clickedCloseButton(e)
+						&& canRemoveChordlet) {
+					parent.removeChordlet(Chordlet.this, true);
+				} else {
+					canRemoveChordlet = false;
+				}
 				reset();
 			}
 		});
 
-		addMouseMotionListener(new MouseMotionListener() {
-
+		/*addMouseMotionListener(new MouseMotionListener() {
+		
 			@Override
 			public void mouseDragged(MouseEvent e) {
 				processMouseDrag(e);
 			}
-
+		
 			@Override
 			public void mouseMoved(MouseEvent e) {
 				if (dragY != null) {
 					//processMouseDrag(e);
 				}
 			}
-
-		});
+		
+		});*/
 
 		addMouseWheelListener(new MouseWheelListener() {
 
