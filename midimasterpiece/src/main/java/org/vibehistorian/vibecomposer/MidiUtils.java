@@ -61,14 +61,15 @@ public class MidiUtils {
 				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
 				BLUES_SCALE = { 0, 2, 3, 4, 7, 9, 12 }, TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 },
 				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 },
-				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 };
+				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 },
+				WHISKEY_SCALE = { 0, 3, 5, 6, 7, 10, 11 };
 
 	}
 
 	//full scale
 	public static final List<Integer> cIonianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
-	public static final List<Integer> cDorianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
+	/*public static final List<Integer> cDorianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
 	public static final List<Integer> cPhrygianScale4 = new ArrayList<>(
 			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4,
@@ -83,7 +84,7 @@ public class MidiUtils {
 			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
 					Pitches.AF4, Pitches.BF4, Pitches.C5));
 	public static final List<Integer> cBluesScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
-			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));
+			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));*/
 
 	public enum ScaleMode {
 		IONIAN(Scales.MAJOR_SCALE, 0), DORIAN(Scales.DORIAN_SCALE, 2),
@@ -91,7 +92,8 @@ public class MidiUtils {
 		MIXOLYDIAN(Scales.MIXOLYDIAN_SCALE, 6), AEOLIAN(Scales.AEOLIAN_SCALE, 5),
 		LOCRIAN(Scales.LOCRIAN_SCALE, 4), BLUES(Scales.BLUES_SCALE, -1),
 		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE, 5), TURKISH(Scales.TURKISH_SCALE, -1),
-		INDIAN(Scales.INDIAN_SCALE, 1), HARM_MAJOR(Scales.HARMONIC_MAJOR_SCALE, 5);
+		INDIAN(Scales.INDIAN_SCALE, 2), HARM_MAJOR(Scales.HARMONIC_MAJOR_SCALE, 5),
+		WHISKEY(Scales.WHISKEY_SCALE, 1);
 
 		public Integer[] noteAdjustScale;
 		public Integer modeTargetNote;
