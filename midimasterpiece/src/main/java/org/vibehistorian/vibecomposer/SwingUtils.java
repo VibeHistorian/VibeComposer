@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer;
 import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -112,7 +113,15 @@ public class SwingUtils {
 	public static void addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
 			Function<MouseEvent, Boolean> actionOnMousePress, List<String> displayedPopupItems,
 			List<Color> popupItemColors) {
+		addPopupMenu(comp, actionOnSelect, actionOnMousePress, displayedPopupItems, popupItemColors,
+				1);
+	}
+
+	public static void addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
+			Function<MouseEvent, Boolean> actionOnMousePress, List<String> displayedPopupItems,
+			List<Color> popupItemColors, int columns) {
 		final JPopupMenu popup = new JPopupMenu();
+		popup.setLayout(new GridLayout(0, columns));
 		popupMenus.add(popup);
 		for (int i = 0; i < displayedPopupItems.size(); i++) {
 			String e = displayedPopupItems.get(i);
