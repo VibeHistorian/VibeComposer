@@ -302,7 +302,7 @@ public class ChordletPanel extends JPanel {
 	public void handleMouseDrag(Chordlet source, MouseEvent evt) {
 		int overlapIndex = -1;
 		int sourceIndex = -1;
-		LG.i("Checking matches for Chordlet: " + source.getChordText());
+		//LG.i("Checking matches for Chordlet: " + source.getChordText());
 		for (int i = 0; i < chordlets.size(); i++) {
 			if (chordlets.get(i) == source) {
 				sourceIndex = i;

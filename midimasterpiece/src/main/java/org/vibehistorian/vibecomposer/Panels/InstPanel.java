@@ -795,7 +795,7 @@ public abstract class InstPanel extends JPanel {
 
 	}
 
-	public void addToRhythmGrid(int[] rhythmGrid, Random rand) {
+	public int addToRhythmGrid(int[] rhythmGrid, Random rand) {
 		// forward calculation
 		long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
 				.stream().filter(e -> e > 0).count();
@@ -809,7 +809,7 @@ public abstract class InstPanel extends JPanel {
 			}
 		}
 		//LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
-
+		int changed = 0;
 		for (int i = 0; i < panelRhythmGrid.length; i++) {
 			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
 				int nextVal = rhythmGrid[i] + panelRhythmGrid[i];
@@ -820,6 +820,7 @@ public abstract class InstPanel extends JPanel {
 						// remove - backward calculation
 						getComboPanel().checkPattern(mapped, 0);
 						totalAvailable--;
+						changed++;
 						LG.i(panelInfo() + " Unchecked: " + mapped);
 						//rhythmGrid[i] = nextVal;
 					} else {
@@ -831,6 +832,7 @@ public abstract class InstPanel extends JPanel {
 
 			}
 		}
+		return changed;
 	}
 
 	public List<Integer> getFinalPatternCopy() {

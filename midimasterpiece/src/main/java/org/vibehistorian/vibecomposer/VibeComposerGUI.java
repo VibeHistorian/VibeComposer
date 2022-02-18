@@ -193,6 +193,7 @@ import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
+import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -614,7 +615,7 @@ public class VibeComposerGUI extends JFrame
 	JButton pauseMidi;
 	JTextField saveCustomFilename;
 	JLabel savedIndicatorLabel;
-	Color[] savedIndicatorForegroundColors = { Color.green, Color.blue, Color.magenta,
+	Color[] savedIndicatorForegroundColors = { new Color(220, 220, 220), Color.green, Color.magenta,
 			Color.orange };
 	public static boolean composingInProgress = false;
 
@@ -3704,13 +3705,18 @@ public class VibeComposerGUI extends JFrame
 		// count rhythm weights in a 1/32 grid across 4 chords span
 		int[] rhythmGrid = new int[4 * 32];
 		Random rand = new Random();
+		int[] panelChanges = new int[3];
 		for (int i = 4; i >= 2; i--) {
 			List<? extends InstPanel> panels = getInstList(i);
-			panels.forEach(e -> e.addToRhythmGrid(rhythmGrid, rand));
+			int totalChanged = 0;
+			for (int j = 0; j < panels.size(); j++) {
+				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand);
+			}
+			panelChanges[i - 2] = totalChanged;
 			LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
 		}
-		// 
-
+		new TemporaryInfoPopup("Chord/Arp/Drum changes: " + StringUtils.join(panelChanges, '/'),
+				null);
 	}
 
 	private void initMacroParams(int startY, int anchorSide) {
