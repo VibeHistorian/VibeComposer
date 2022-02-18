@@ -682,7 +682,7 @@ public class VibeComposerGUI extends JFrame
 		UIManager.put("CheckBox.icon", new CheckBoxIcon());
 
 		isDarkMode = true;
-		vibeComposerGUI = new VibeComposerGUI("VibeComposer (BETA)");
+		vibeComposerGUI = new VibeComposerGUI("VibeComposer2 (BETA)");
 		vibeComposerGUI.init();
 		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 	}
