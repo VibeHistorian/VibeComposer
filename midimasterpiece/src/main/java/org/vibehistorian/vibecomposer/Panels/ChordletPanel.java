@@ -310,7 +310,9 @@ public class ChordletPanel extends JPanel {
 			}
 			/*LG.i(evt.getLocationOnScreen() + ", comp: " + chordlets.get(i).getLocationOnScreen()
 					+ ", comp size: " + chordlets.get(i).getSize());*/
-			if (overlapIndex < 0 && OMNI.mouseInComp(chordlets.get(i), evt.getLocationOnScreen())) {
+			if (overlapIndex < 0 && OMNI.mouseInComp(chordlets.get(i), evt.getLocationOnScreen())
+					&& !chordlets.get(i).mouseOverCloseButton(evt.getLocationOnScreen().x
+							- chordlets.get(i).getLocationOnScreen().x)) {
 				overlapIndex = i;
 				if (sourceIndex >= 0) {
 					break;

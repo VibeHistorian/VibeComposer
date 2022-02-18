@@ -81,7 +81,7 @@ public class Chordlet extends JComponent {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					if (!clickedCloseButton(e)) {
+					if (!mouseOverCloseButton(e)) {
 						long currentTimeMs = System.currentTimeMillis();
 						if (currentTimeMs - lastClickMs < 500) {
 							resetToBaseChord();
@@ -99,7 +99,7 @@ public class Chordlet extends JComponent {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e) && clickedCloseButton(e)
+				if (SwingUtilities.isLeftMouseButton(e) && mouseOverCloseButton(e)
 						&& canRemoveChordlet) {
 					parent.removeChordlet(Chordlet.this, true);
 				} else {
@@ -156,8 +156,12 @@ public class Chordlet extends JComponent {
 		});
 	}
 
-	protected boolean clickedCloseButton(MouseEvent e) {
-		return e.getX() > width - CLOSE_BTTN_WIDTH;
+	protected boolean mouseOverCloseButton(MouseEvent e) {
+		return mouseOverCloseButton(e.getX());
+	}
+
+	public boolean mouseOverCloseButton(int xPos) {
+		return xPos > width - CLOSE_BTTN_WIDTH;
 	}
 
 	public void resetToBaseChord() {
