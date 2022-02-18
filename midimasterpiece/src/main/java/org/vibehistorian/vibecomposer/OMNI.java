@@ -113,11 +113,14 @@ public class OMNI {
 	}
 
 	public static boolean mouseInComp(JComponent c) {
-		Point p = MouseInfo.getPointerInfo().getLocation();
+		return mouseInComp(c, MouseInfo.getPointerInfo().getLocation());
+	}
+
+	public static boolean mouseInComp(JComponent c, Point p) {
 		try {
 
 			Point cp = c.getLocationOnScreen();
-			return pointInRect(p, cp.x, c.getWidth(), cp.y, c.getHeight());
+			return pointInRect(p, cp.x, cp.y, c.getWidth(), c.getHeight());
 		} catch (Exception e) {
 			LG.d("Mouse in comp error!");
 			return false;

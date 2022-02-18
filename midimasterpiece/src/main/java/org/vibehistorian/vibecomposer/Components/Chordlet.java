@@ -7,10 +7,12 @@ import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.stream.Collectors;
@@ -33,8 +35,7 @@ public class Chordlet extends JComponent {
 	private int width = 30;
 	private int height = 20;
 	private static final Font font = new Font("Tahoma", Font.PLAIN, 14);
-	private Integer dragY = null;
-	private Integer dragFirstLetterIndex = null;
+	private Point dragP = null;
 	private ChordletPanel parent = null;
 	private static final Color KEYNESS_COLOR = new Color(210, 210, 210);
 	private static final Color DARK_TEXT_COLOR = new Color(160, 255, 160);
@@ -42,6 +43,7 @@ public class Chordlet extends JComponent {
 	private static final int CLOSE_BTTN_WIDTH = 13;
 	private static final int ROUNDED_ADJUSTMENT_WIDTH = 10;
 	private long lastClickMs = 0;
+	private long dragLimitMs = 0;
 	private boolean canRemoveChordlet = false;
 
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
@@ -90,6 +92,8 @@ public class Chordlet extends JComponent {
 					} else {
 						canRemoveChordlet = true;
 					}
+					dragP = new Point(e.getPoint());
+					repaint();
 				}
 			}
 
@@ -105,21 +109,21 @@ public class Chordlet extends JComponent {
 			}
 		});
 
-		/*addMouseMotionListener(new MouseMotionListener() {
-		
+		addMouseMotionListener(new MouseMotionListener() {
+
 			@Override
 			public void mouseDragged(MouseEvent e) {
 				processMouseDrag(e);
 			}
-		
+
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				if (dragY != null) {
-					//processMouseDrag(e);
+				if (dragP != null) {
+					processMouseDrag(e);
 				}
 			}
-		
-		});*/
+
+		});
 
 		addMouseWheelListener(new MouseWheelListener() {
 
@@ -195,15 +199,17 @@ public class Chordlet extends JComponent {
 	}
 
 	private void processMouseDrag(MouseEvent evt) {
-		if (dragY == null) {
+		if (System.currentTimeMillis() - dragLimitMs < 50 || dragP == null) {
 			return;
 		}
-		int firstLetterIndex = dragFirstLetterIndex;
-		firstLetterIndex -= ((evt.getPoint().y - dragY) / 20);
-		firstLetter = MidiUtils.SEMITONE_LETTERS
+		dragLimitMs = System.currentTimeMillis();
+		parent.handleMouseDrag(this, evt);
+		/*
+			int firstLetterIndex = dragFirstLetterIndex;
+			firstLetterIndex -= ((evt.getPoint().y - dragY) / 20);
+			firstLetter = MidiUtils.SEMITONE_LETTERS
 				.get((firstLetterIndex + MidiUtils.SEMITONE_LETTERS.size() * 50)
-						% MidiUtils.SEMITONE_LETTERS.size());
-		update();
+						% MidiUtils.SEMITONE_LETTERS.size());*/
 	}
 
 	private void calculateWidth(String chordText) {
@@ -223,8 +229,7 @@ public class Chordlet extends JComponent {
 	}
 
 	public void reset() {
-		dragY = null;
-		dragFirstLetterIndex = null;
+		dragP = null;
 		repaint();
 	}
 
@@ -267,7 +272,7 @@ public class Chordlet extends JComponent {
 		g.setColor(Color.black);
 		g.drawString(CLOSE_BTTN_ICON, 10 + width - CLOSE_BTTN_WIDTH - ROUNDED_ADJUSTMENT_WIDTH,
 				height - 4);
-		g.setColor(dragY != null ? Color.white : Color.black);
+		g.setColor(dragP != null ? Color.white : Color.black);
 		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
 
 		//g.dispose();
@@ -310,5 +315,12 @@ public class Chordlet extends JComponent {
 		this.parent = parent;
 	}
 
+	public int getWidth() {
+		return width;
+	}
+
+	public void prepareDragging(MouseEvent evt) {
+		dragP = new Point(evt.getPoint());
+	}
 
 }

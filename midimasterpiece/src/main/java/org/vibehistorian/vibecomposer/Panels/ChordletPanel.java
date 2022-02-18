@@ -231,12 +231,23 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public void addChord(String chord, boolean singleAdd) {
+		addChord(chord, singleAdd, null);
+	}
+
+	public Chordlet addChord(String chord, boolean singleAdd, Integer index) {
 		Chordlet chordlet = new Chordlet(chord.trim(), this);
-		chordlets.add(chordlet);
-		chordletsPanel.add(chordlet);
+		if (index != null) {
+			chordlets.add(index, chordlet);
+			chordletsPanel.add(chordlet, (int) index);
+		} else {
+			chordlets.add(chordlet);
+			chordletsPanel.add(chordlet);
+		}
+
 		if (singleAdd) {
 			update();
 		}
+		return chordlet;
 	}
 
 	public void removeChordlet(Chordlet chordlet, boolean singleRemove) {
@@ -285,6 +296,54 @@ public class ChordletPanel extends JPanel {
 		for (int i = size - 1; i >= maxChordProgressionLength; i--) {
 			removeChordlet(chordlets.get(i), false);
 		}
+		update();
+	}
+
+	public void handleMouseDrag(Chordlet source, MouseEvent evt) {
+		int overlapIndex = -1;
+		int sourceIndex = -1;
+		LG.i("Checking matches for Chordlet: " + source.getChordText());
+		for (int i = 0; i < chordlets.size(); i++) {
+			if (chordlets.get(i) == source) {
+				sourceIndex = i;
+				continue;
+			}
+			/*LG.i(evt.getLocationOnScreen() + ", comp: " + chordlets.get(i).getLocationOnScreen()
+					+ ", comp size: " + chordlets.get(i).getSize());*/
+			if (overlapIndex < 0 && OMNI.mouseInComp(chordlets.get(i), evt.getLocationOnScreen())) {
+				overlapIndex = i;
+				if (sourceIndex >= 0) {
+					break;
+				}
+			}
+		}
+		if (overlapIndex < 0) {
+			return;
+		}
+		boolean copy = evt.isControlDown();
+		int insertionIndex = overlapIndex;
+		LG.i("Overlap: " + overlapIndex + ", CTRL: " + evt.isControlDown());
+		if (copy) {
+			if (overlapIndex < sourceIndex) {
+				insertionIndex++;
+			}
+			addChord(source.getChordText(), false, insertionIndex);
+			source.reset();
+		} else {
+			if (overlapIndex < sourceIndex) {
+				chordletsPanel.add(source, insertionIndex);
+
+				chordlets.add(insertionIndex, source);
+				chordlets.remove(sourceIndex + 1);
+			} else {
+				chordletsPanel.add(chordlets.get(overlapIndex), sourceIndex);
+
+				chordlets.add(insertionIndex + 1, source);
+				chordlets.remove(sourceIndex);
+			}
+			//removeChordlet(source, false);
+		}
+
 		update();
 	}
 }
