@@ -338,7 +338,12 @@ public class ChordletPanel extends JPanel {
 				chordlets.add(insertionIndex, source);
 				chordlets.remove(sourceIndex + 1);
 			} else {
-				chordletsPanel.add(chordlets.get(overlapIndex), sourceIndex);
+				if (overlapIndex - sourceIndex == 1) {
+					chordletsPanel.add(chordlets.get(overlapIndex), sourceIndex);
+				} else {
+					chordletsPanel.add(source, overlapIndex);
+				}
+
 
 				chordlets.add(insertionIndex + 1, source);
 				chordlets.remove(sourceIndex);

@@ -133,8 +133,6 @@ public class SwingUtils {
 			if (popupItemColors != null) {
 				newE = new JMenuItem(e) {
 					private static final long serialVersionUID = -2776813999053048654L;
-					private final Color bgColor = null;
-					private final Color bgColorSel = null;
 
 					@Override
 					protected void paintComponent(Graphics g) {
