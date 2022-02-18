@@ -613,6 +613,7 @@ public class VibeComposerGUI extends JFrame
 	JButton stopMidi;
 	JButton pauseMidi;
 	JTextField saveCustomFilename;
+	JLabel savedIndicatorLabel;
 	public static boolean composingInProgress = false;
 
 	Thread cycle;
@@ -4646,7 +4647,8 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		saveCustomFilename = new JTextField("savefilename", 12);
-
+		savedIndicatorLabel = new JLabel("[Saved!]");
+		savedIndicatorLabel.setVisible(false);
 
 		JButton loadConfig = makeButton("LOAD..", "LoadGUIConfig");
 
@@ -4749,6 +4751,7 @@ public class VibeComposerGUI extends JFrame
 		playSavePanel.add(save5Star);
 		playSavePanel.add(saveCustom);
 		playSavePanel.add(saveCustomFilename);
+		playSavePanel.add(savedIndicatorLabel);
 
 		playSavePanel.add(loadConfig);
 		playSavePanel.add(saveWavFile);
@@ -5191,6 +5194,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		saveStartInfo();
+		savedIndicatorLabel.setVisible(false);
 		if (midiMode.isSelected()) {
 			if (synth != null) {
 				if (isSoundbankSynth && soundfont != null) {
@@ -6709,6 +6713,7 @@ public class VibeComposerGUI extends JFrame
 				FileUtils.copyFile(currentMidi, savedMidi);
 				copyGUItoConfig(guiConfig);
 				marshalConfig(guiConfig, finalFilePath, MID_EXTENSION.length());
+				savedIndicatorLabel.setVisible(true);
 			} catch (IOException | JAXBException e) {
 				// Auto-generated catch block
 				e.printStackTrace();
