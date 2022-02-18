@@ -254,7 +254,7 @@ public class Chordlet extends JComponent {
 		double chordOutOfKeyness = mapped != null ? 1 - MidiUtils.getChordKeyness(mapped) : 0;
 		Color color = getColorForChord(chordText);
 		Color color2 = OMNI.mixColor(color, Color.black, 0.25);
-		GradientPaint gp = new GradientPaint(minX, 0, color, maxX, 0, color2);
+		GradientPaint gp = new GradientPaint(minX, 0, color2, maxX, 0, color);
 		g.setPaint(gp);
 
 		g.fillRoundRect(minX, 0, maxX, height, 10, 10);

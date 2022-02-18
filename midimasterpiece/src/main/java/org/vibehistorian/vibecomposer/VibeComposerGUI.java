@@ -614,6 +614,8 @@ public class VibeComposerGUI extends JFrame
 	JButton pauseMidi;
 	JTextField saveCustomFilename;
 	JLabel savedIndicatorLabel;
+	Color[] savedIndicatorForegroundColors = { Color.green, Color.blue, Color.magenta,
+			Color.orange };
 	public static boolean composingInProgress = false;
 
 	Thread cycle;
@@ -4625,6 +4627,7 @@ public class VibeComposerGUI extends JFrame
 				saveGuiConfigFile(3);
 			}
 		});
+		save3Star.setForeground(savedIndicatorForegroundColors[0]);
 		JButton save4Star = makeButtonMoused("Save 4*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "4star/");
@@ -4632,6 +4635,7 @@ public class VibeComposerGUI extends JFrame
 				saveGuiConfigFile(4);
 			}
 		});
+		save4Star.setForeground(savedIndicatorForegroundColors[1]);
 		JButton save5Star = makeButtonMoused("Save 5*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "5star/");
@@ -4639,6 +4643,7 @@ public class VibeComposerGUI extends JFrame
 				saveGuiConfigFile(5);
 			}
 		});
+		save5Star.setForeground(savedIndicatorForegroundColors[2]);
 		JButton saveCustom = makeButtonMoused("Save ->", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "custom/");
@@ -4646,6 +4651,7 @@ public class VibeComposerGUI extends JFrame
 				saveGuiConfigFile(-1);
 			}
 		});
+		saveCustom.setForeground(savedIndicatorForegroundColors[3]);
 		saveCustomFilename = new JTextField("savefilename", 12);
 		savedIndicatorLabel = new JLabel("[Saved!]");
 		savedIndicatorLabel.setVisible(false);
@@ -6713,6 +6719,12 @@ public class VibeComposerGUI extends JFrame
 				FileUtils.copyFile(currentMidi, savedMidi);
 				copyGUItoConfig(guiConfig);
 				marshalConfig(guiConfig, finalFilePath, MID_EXTENSION.length());
+				if (rating >= 3) {
+					savedIndicatorLabel.setForeground(savedIndicatorForegroundColors[rating - 3]);
+				} else {
+					savedIndicatorLabel.setForeground(savedIndicatorForegroundColors[3]);
+				}
+
 				savedIndicatorLabel.setVisible(true);
 			} catch (IOException | JAXBException e) {
 				// Auto-generated catch block

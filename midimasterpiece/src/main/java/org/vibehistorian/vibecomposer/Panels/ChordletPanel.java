@@ -56,8 +56,8 @@ public class ChordletPanel extends JPanel {
 		chordletsPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		chordletsPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		//SwingUtils.setupScrollpanePriorityScrolling(chordletsPane);
-		chordletsPanel
-				.setPreferredSize(new Dimension(fullSize, fullHeight * 10 / 4 - heightOffset * 2));
+		chordletsPanel.setPreferredSize(
+				new Dimension(fullSize - extrasSize, fullHeight * 10 / 4 - heightOffset * 2));
 		rawChordsPanel
 				.setPreferredSize(new Dimension(fullSize - extrasSize, fullHeight - heightOffset));
 		extrasPanel.setPreferredSize(new Dimension(extrasSize - 10, fullHeight - heightOffset));
