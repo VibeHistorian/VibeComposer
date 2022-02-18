@@ -33,7 +33,9 @@ public class Chordlet extends JComponent {
 	private boolean sharp = false;
 	private Integer inversion = null;
 	private int width = 30;
-	private int height = 20;
+	private int heightMargin = 2;
+	private int usableHeight = 20;
+	private int height = 24;
 	private static final Font font = new Font("Tahoma", Font.PLAIN, 14);
 	private Point dragP = null;
 	private ChordletPanel parent = null;
@@ -251,7 +253,7 @@ public class Chordlet extends JComponent {
 		//g.setColor(color);
 		int minX = 0;
 		int maxX = this.getSize().width;
-		int height = this.getSize().height;
+		int height = usableHeight;
 
 		String chordText = getChordText();
 		int[] mapped = MidiUtils.mappedChord(chordText);
@@ -261,23 +263,24 @@ public class Chordlet extends JComponent {
 		GradientPaint gp = new GradientPaint(minX, 0, color2, maxX, 0, color);
 		g.setPaint(gp);
 
-		g.fillRoundRect(minX, 0, maxX, height, 10, 10);
+		g.fillRoundRect(minX, heightMargin, maxX, height, 10, 10);
 		//g.fillRect(minX, 0, maxX, height);
 		if (chordOutOfKeyness > 0.05) {
 			g.setColor(KEYNESS_COLOR);
 			Stroke dashed = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0,
 					new float[] { 9 }, 0);
 			g.setStroke(dashed);
-			g.drawLine(maxX, height - 2, (int) (maxX - maxX * chordOutOfKeyness - 3), height - 2);
+			g.drawLine(maxX, heightMargin + 3, (int) (maxX - maxX * chordOutOfKeyness - 3),
+					heightMargin + 3);
 			g.setStroke(new BasicStroke());
 		}
 		g.setColor(DARK_TEXT_COLOR);
-		g.drawString(chordText, minX + 3, height - 4);
+		g.drawString(chordText, minX + 3, height - 2);
 		g.setColor(Color.black);
-		g.drawString(CLOSE_BTTN_ICON, 10 + width - CLOSE_BTTN_WIDTH - ROUNDED_ADJUSTMENT_WIDTH,
-				height - 4);
+		g.drawString(CLOSE_BTTN_ICON, 9 + width - CLOSE_BTTN_WIDTH - ROUNDED_ADJUSTMENT_WIDTH,
+				height - 2);
 		g.setColor(dragP != null ? Color.white : Color.black);
-		g.drawRoundRect(minX, 0, maxX, height, 10, 10);
+		g.drawRoundRect(minX, heightMargin, maxX - 1, height, 10, 10);
 
 		//g.dispose();
 	}
@@ -295,7 +298,14 @@ public class Chordlet extends JComponent {
 			Color nextChordColor = MidiUtils.CHORD_COLORS.get((chordIndex + 1) % 7);
 			chordColor = OMNI.mixColor(chordColor, nextChordColor, 0.5);
 		}
-		chordColor = OMNI.alphen(chordColor, Math.min((int) (chordKeyness * 180) + 75, 255));
+		int range = 140;
+		int minimumIntensity = 60;
+		int chordkeyIntensity = (int) (chordKeyness * range);
+		if (chordkeyIntensity > range - 2) {
+			chordColor = OMNI.alphen(chordColor, 255);
+		} else {
+			chordColor = OMNI.alphen(chordColor, chordkeyIntensity + minimumIntensity);
+		}
 		return chordColor;
 	}
 

@@ -134,12 +134,12 @@ public class ChordletPanel extends JPanel {
 				return true;
 			}
 			return false;
-		}, MidiUtils.MAJOR_MINOR_CHORDS, MidiUtils.MAJOR_MINOR_CHORDS.stream()
+		}, MidiUtils.SEMITONE_LETTERS, MidiUtils.SEMITONE_LETTERS.stream()
 				.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
 
 		List<String> allChords = new ArrayList<>();
 		MidiUtils.SPICE_NAMES_LIST.forEach(s -> {
-			MidiUtils.CHORD_FIRST_LETTERS.forEach(e -> {
+			MidiUtils.SEMITONE_LETTERS.forEach(e -> {
 				allChords.add(e + s);
 			});
 		});
@@ -153,7 +153,7 @@ public class ChordletPanel extends JPanel {
 			}
 			return false;
 		}, allChords, allChords.stream().map(e -> Chordlet.getColorForChord(e))
-				.collect(Collectors.toList()), 7);
+				.collect(Collectors.toList()), 12);
 	}
 
 	public ChordletPanel(int width, List<String> chords) {
@@ -345,7 +345,9 @@ public class ChordletPanel extends JPanel {
 			}
 			//removeChordlet(source, false);
 		}
-
+		if (Math.abs(sourceIndex - overlapIndex) > 1) {
+			source.reset();
+		}
 		update();
 	}
 }

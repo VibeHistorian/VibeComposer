@@ -107,7 +107,7 @@ public class MidiUtils {
 	// C D E F G A B = Red Orange Yellow Green Cyan Purple GRAY
 	public static final List<Color> CHORD_COLORS = Arrays.asList(new Color[] { new Color(220, 0, 0),
 			new Color(220, 100, 0), new Color(160, 160, 0), new Color(50, 190, 0),
-			new Color(0, 160, 160), new Color(150, 0, 200), new Color(130, 130, 130) });
+			new Color(0, 160, 160), new Color(150, 60, 200), new Color(150, 120, 120) });
 
 	public static final List<ScaleMode> majorishModes = Arrays
 			.asList(new ScaleMode[] { ScaleMode.IONIAN, ScaleMode.LYDIAN, ScaleMode.MIXOLYDIAN,

@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer;
 import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -121,14 +122,42 @@ public class SwingUtils {
 			Function<MouseEvent, Boolean> actionOnMousePress, List<String> displayedPopupItems,
 			List<Color> popupItemColors, int columns) {
 		final JPopupMenu popup = new JPopupMenu();
+		popup.setOpaque(true);
 		popup.setLayout(new GridLayout(0, columns));
 		popupMenus.add(popup);
 		for (int i = 0; i < displayedPopupItems.size(); i++) {
 			String e = displayedPopupItems.get(i);
-			JMenuItem newE = new JMenuItem(e);
-			newE.setOpaque(false);
+			final int fI = i;
+
+			JMenuItem newE;
 			if (popupItemColors != null) {
-				newE.setForeground(popupItemColors.get(i));
+				newE = new JMenuItem(e) {
+					private static final long serialVersionUID = -2776813999053048654L;
+					private final Color bgColor = null;
+					private final Color bgColorSel = null;
+
+					@Override
+					protected void paintComponent(Graphics g) {
+						boolean sel = this.isArmed();
+						int w = getWidth();
+						int h = getHeight();
+						g.setColor(new Color(60, 60, 60));
+						g.fillRect(0, 0, w, h);
+						Color newColor = sel
+								? OMNI.mixColor(popupItemColors.get(fI), Color.white, 0.2)
+								: popupItemColors.get(fI);
+						g.setColor(OMNI.alphen(newColor, newColor.getAlpha() * 8 / 10));
+						g.fillRect(0, 0, w, h);
+						g.setColor(new Color(210, 210, 210));
+						g.drawString(getText(), 3, h - 3);
+					}
+				};
+			} else {
+				newE = new JMenuItem(e);
+			}
+			newE.setOpaque(true);
+			if (popupItemColors != null) {
+				newE.setBackground(popupItemColors.get(i));
 			}
 			newE.addActionListener(new ActionListener() {
 				@Override
@@ -145,7 +174,7 @@ public class SwingUtils {
 			public void mousePressed(MouseEvent evt) {
 				Boolean goodPress = actionOnMousePress.apply(evt);
 				if (goodPress != null && goodPress) {
-					popup.show(evt.getComponent(), evt.getX(), evt.getY());
+					popup.show(evt.getComponent(), evt.getX() - popup.getWidth() / 4, evt.getY());
 				}
 			}
 

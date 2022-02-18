@@ -5014,7 +5014,6 @@ public class VibeComposerGUI extends JFrame
 		UIManager.put("ScrollPane.border", r);
 		UIManager.put("List.background", r);
 		UIManager.put("ScrollBar.background", r);
-		UIManager.put("MenuItem.background", r);
 		//UIManager.put("TiltedBorder.background", r);
 		SwingUtilities.updateComponentTreeUI(this);
 		SwingUtilities.updateComponentTreeUI(extraSettingsPanel);
