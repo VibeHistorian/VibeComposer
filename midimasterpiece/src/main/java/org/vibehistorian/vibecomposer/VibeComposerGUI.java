@@ -4787,10 +4787,14 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(playSavePanel, constraints);
 	}
 
-	private void openFolder(String string) {
+	private void openFolder(String folderPath) {
+		File f = new File(folderPath);
+		if (!f.exists()) {
+			f.mkdirs();
+		}
 		Desktop desktop = Desktop.getDesktop();
 		try {
-			desktop.open(new File(string));
+			desktop.open(f);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
