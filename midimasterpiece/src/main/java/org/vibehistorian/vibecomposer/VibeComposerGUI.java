@@ -427,11 +427,7 @@ public class VibeComposerGUI extends JFrame
 	SettingsPanel chordSettingsPanel;
 	SettingsPanel arpSettingsPanel;
 	SettingsPanel drumSettingsPanel;
-	static JCheckBox addMelody;
-	static JCheckBox addBass;
-	static JCheckBox addChords;
-	static JCheckBox addArps;
-	static JCheckBox addDrums;
+	static JCheckBox[] addInst = new JCheckBox[5];
 	VeloRect drumVolumeSlider;
 
 	JButton soloAllDrums;
@@ -810,42 +806,10 @@ public class VibeComposerGUI extends JFrame
 				@Override
 				public void mousePressed(MouseEvent e) {
 					int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
-					if (SwingUtilities.isRightMouseButton(e) && indx < 5) {
-						/*Timer tmr = new Timer(100, new ActionListener() {
-						
-							@Override
-							public void actionPerformed(ActionEvent e) {
-						
-								Play.midi(new Note(), false);
-							}
-						});
-						tmr.setRepeats(false);
-						tmr.setDelay(100);
-						tmr.start();*/
-
-
+					if (SwingUtilities.isRightMouseButton(e) && indx < 5 && indx >= 0) {
 						LG.i(("RMB pressed in instrument tab pane: " + indx));
-						switch (indx) {
-						case 0:
-							addMelody.setSelected(!addMelody.isSelected());
-							break;
-						case 1:
-							addBass.setSelected(!addBass.isSelected());
-							break;
-						case 2:
-							addChords.setSelected(!addChords.isSelected());
-							/*instrumentTabPane.setEnabledAt(indx,
-									!instrumentTabPane.isEnabledAt(indx));*/
-							break;
-						case 3:
-							addArps.setSelected(!addArps.isSelected());
-							break;
-						case 4:
-							addDrums.setSelected(!addDrums.isSelected());
-							break;
-						default:
-							break;
-						}
+
+						setAddInst(indx, !addInst[indx].isSelected());
 					} else if (indx == 6) {
 						actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
 						scrollableArrangementActualTable.repaint();
@@ -938,6 +902,12 @@ public class VibeComposerGUI extends JFrame
 		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime) + " ms!");
 	}
 
+
+	protected void setAddInst(int partNum, boolean b) {
+		addInst[partNum].setSelected(b);
+		instrumentTabPane.setBackgroundAt(partNum,
+				OMNI.alphen(b ? instColors[partNum] : Color.white, 40));
+	}
 
 	private void initKeyboardListener() {
 
@@ -1581,8 +1551,8 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelOrg.setMaximumSize(new Dimension(1800, 50));
 
-		addMelody = new CustomCheckBox("MELODY", true);
-		melodySettingsExtraPanelOrg.add(addMelody);
+		addInst[0] = new CustomCheckBox("MELODY", true);
+		melodySettingsExtraPanelOrg.add(addInst[0]);
 		groupFilterSliders[0] = new VeloRect(0, 127, 127);
 		JLabel filterLabel = new JLabel("LP");
 		melodySettingsExtraPanelOrg.add(filterLabel);
@@ -1793,11 +1763,11 @@ public class VibeComposerGUI extends JFrame
 		SwingUtils.setupScrollpanePriorityScrolling(bassScrollPane);
 
 		JPanel bassSettingsPanel = new JPanel();
-		addBass = new CustomCheckBox("BASS", true);
+		addInst[1] = new CustomCheckBox("BASS", true);
 		bassSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-		bassSettingsPanel.add(addBass);
+		bassSettingsPanel.add(addInst[1]);
 
 		groupFilterSliders[1] = new VeloRect(0, 127, 127);
 		JLabel filterLabel = new JLabel("LP");
@@ -1861,8 +1831,8 @@ public class VibeComposerGUI extends JFrame
 		JPanel chordSettingsPanel = new JPanel();
 		chordSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		addChords = new CustomCheckBox("CHORDS", true);
-		chordSettingsPanel.add(addChords);
+		addInst[2] = new CustomCheckBox("CHORDS", true);
+		chordSettingsPanel.add(addInst[2]);
 		groupFilterSliders[2] = new VeloRect(0, 127, 127);
 		JLabel filterLabel = new JLabel("LP");
 		chordSettingsPanel.add(filterLabel);
@@ -2020,8 +1990,8 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel arpsSettingsPanel = new JPanel();
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addArps = new CustomCheckBox("ARPS", true);
-		arpsSettingsPanel.add(addArps);
+		addInst[3] = new CustomCheckBox("ARPS", true);
+		arpsSettingsPanel.add(addInst[3]);
 		groupFilterSliders[3] = new VeloRect(0, 127, 127);
 		JLabel filterLabel = new JLabel("LP");
 		arpsSettingsPanel.add(filterLabel);
@@ -2179,8 +2149,8 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addDrums = new CustomCheckBox("DRUMS", true);
-		drumsPanel.add(addDrums);
+		addInst[4] = new CustomCheckBox("DRUMS", true);
+		drumsPanel.add(addInst[4]);
 
 		drumVolumeSlider = new VeloRect(0, 100, 70);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
@@ -4245,20 +4215,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static boolean isEnabled(int partNum) {
-		switch (partNum) {
-		case 0:
-			return addMelody.isSelected();
-		case 1:
-			return addBass.isSelected();
-		case 2:
-			return addChords.isSelected();
-		case 3:
-			return addArps.isSelected();
-		case 4:
-			return addDrums.isSelected();
-		default:
-			throw new IllegalArgumentException("PartNum is invalid: " + partNum);
-		}
+		return addInst[partNum].isSelected();
 	}
 
 	public static int countAllPanels() {
@@ -5382,19 +5339,19 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			// to include it in the XML when saving, but not when generating
-			/*if (!addMelody.isSelected()) {
+			/*if (!addInst[0].isSelected()) {
 				MidiGenerator.gc.setMelodyParts(new ArrayList<>());
 			}
-			if (!addBass.isSelected()) {
+			if (!addInst[1].isSelected()) {
 				MidiGenerator.gc.setBassParts(new ArrayList<>());
 			}
-			if (!addChords.isSelected()) {
+			if (!addInst[2].isSelected()) {
 				MidiGenerator.gc.setChordParts(new ArrayList<>());
 			}
-			if (!addArps.isSelected()) {
+			if (!addInst[3].isSelected()) {
 				MidiGenerator.gc.setArpParts(new ArrayList<>());
 			}
-			if (!addDrums.isSelected()) {
+			if (!addInst[4].isSelected()) {
 				MidiGenerator.gc.setDrumParts(new ArrayList<>());
 			}*/
 
@@ -6246,16 +6203,16 @@ public class VibeComposerGUI extends JFrame
 			soloMuterPossibleChange = true;
 		}
 
-		if (isCompose && addChords.isSelected() && randomChordsGenerateOnCompose.isSelected()) {
+		if (isCompose && addInst[2].isSelected() && randomChordsGenerateOnCompose.isSelected()) {
 			createPanels(2, Integer.valueOf(randomChordsToGenerate.getText()), false);
 			tabPanePossibleChange = true;
 		}
-		if (isCompose && addArps.isSelected() && randomArpsGenerateOnCompose.isSelected()) {
+		if (isCompose && addInst[3].isSelected() && randomArpsGenerateOnCompose.isSelected()) {
 			createPanels(3, Integer.valueOf(randomArpsToGenerate.getText()), false);
 			tabPanePossibleChange = true;
 		}
 
-		if (isCompose && addDrums.isSelected() && randomDrumsGenerateOnCompose.isSelected()) {
+		if (isCompose && addInst[4].isSelected() && randomDrumsGenerateOnCompose.isSelected()) {
 			createPanels(4, Integer.valueOf(randomDrumsToGenerate.getText()), false);
 			tabPanePossibleChange = true;
 		}
@@ -7461,11 +7418,11 @@ public class VibeComposerGUI extends JFrame
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
 
 		// parts
-		gc.setMelodyEnable(addMelody.isSelected());
-		gc.setBassEnable(addBass.isSelected());
-		gc.setChordsEnable(addChords.isSelected());
-		gc.setArpsEnable(addArps.isSelected());
-		gc.setDrumsEnable(addDrums.isSelected());
+		gc.setMelodyEnable(addInst[0].isSelected());
+		gc.setBassEnable(addInst[1].isSelected());
+		gc.setChordsEnable(addInst[2].isSelected());
+		gc.setArpsEnable(addInst[3].isSelected());
+		gc.setDrumsEnable(addInst[4].isSelected());
 
 		gc.setMelodyParts((List<MelodyPart>) (List<?>) getInstPartsFromInstPanels(0, false));
 		gc.setBassParts((List<BassPart>) (List<?>) getInstPartsFromInstPanels(1, false));
@@ -7582,12 +7539,11 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		// parts
-
-		addMelody.setSelected(gc.isMelodyEnable());
-		addBass.setSelected(gc.isBassEnable());
-		addChords.setSelected(gc.isChordsEnable());
-		addArps.setSelected(gc.isArpsEnable());
-		addDrums.setSelected(gc.isDrumsEnable());
+		setAddInst(0, gc.isMelodyEnable());
+		setAddInst(1, gc.isBassEnable());
+		setAddInst(2, gc.isChordsEnable());
+		setAddInst(3, gc.isArpsEnable());
+		setAddInst(4, gc.isDrumsEnable());
 
 		//drumCustomMapping.setSelected(guiConfig.isDrumCustomMapping());
 		drumCustomMappingNumbers.setText(gc.getDrumCustomMappingNumbers());
