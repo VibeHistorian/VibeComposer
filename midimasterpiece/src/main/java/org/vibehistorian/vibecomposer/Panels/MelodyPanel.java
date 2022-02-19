@@ -17,6 +17,7 @@ import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
@@ -27,7 +28,7 @@ public class MelodyPanel extends InstPanel {
 
 	private static final long serialVersionUID = -7861296600641561431L;
 
-	private JCheckBox fillPauses = new JCheckBox("<html>Fill<br>Pauses</html>", false);
+	private JCheckBox fillPauses = new CustomCheckBox("<html>Fill<br>Pauses</html>", false);
 	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4", this);
 	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("0,1,0,2", this);
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 5, 0, 7);

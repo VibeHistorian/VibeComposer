@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -26,7 +27,7 @@ public class DrumPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6219184197272490684L;
 
-	private JCheckBox isVelocityPattern = new JCheckBox("Ghosts", true);
+	private JCheckBox isVelocityPattern = new CustomCheckBox("Ghosts", true);
 
 	public void initComponents(ActionListener l) {
 

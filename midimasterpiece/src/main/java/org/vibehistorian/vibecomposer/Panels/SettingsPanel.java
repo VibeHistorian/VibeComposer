@@ -12,13 +12,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+
 public class SettingsPanel extends JPanel {
 
 	private static final long serialVersionUID = -2303731820368636826L;
 
 	private int alwaysVisible = 8;
 	private boolean showAll = true;
-	private JCheckBox enabled = new JCheckBox("Enable", true);
+	private JCheckBox enabled = new CustomCheckBox("Enable", true);
 
 	private JButton expandCollapseButton = new JButton("-");
 	private Class<?> instClass = null;

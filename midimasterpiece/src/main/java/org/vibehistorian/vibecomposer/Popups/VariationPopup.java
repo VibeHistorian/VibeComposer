@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
@@ -278,7 +279,7 @@ public class VariationPopup {
 
 	private void addCustomChordsDurations(Section sec) {
 		JPanel customChordsDurationsPanel = new JPanel();
-		JCheckBox userChordsEnabled = new JCheckBox("Custom Chords",
+		JCheckBox userChordsEnabled = new CustomCheckBox("Custom Chords",
 				sec.isCustomChordsDurationsEnabled());
 		customChordsDurationsPanel.add(userChordsEnabled);
 		userChordsEnabled.addItemListener(new ItemListener() {
@@ -442,7 +443,7 @@ public class VariationPopup {
 		riskyVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
 		riskyVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
+			JCheckBox riskyVar = new CustomCheckBox(Section.riskyVariationNames[i], false);
 			if (sec.getRiskyVariations() != null) {
 				riskyVar.setSelected(sec.isRiskyVar(i));
 			}

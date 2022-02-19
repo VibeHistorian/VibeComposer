@@ -27,6 +27,7 @@ import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UndoManager;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
@@ -439,6 +440,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (e.isControlDown()) {
 			ctrlClick = true;
 		}
+
+		UndoManager.saveToHistory(this.parent(), getValue());
 
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			Point mouseLoc = e.getPoint();
