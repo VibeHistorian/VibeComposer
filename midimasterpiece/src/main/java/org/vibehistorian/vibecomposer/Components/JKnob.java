@@ -81,7 +81,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	private boolean showTextInKnob = false;
 	private String shownText = "";
 	private boolean regenerating = true;
-
+	private static final Font mainFont = new Font("Arial", Font.BOLD, 12);
 
 	private Point startPoint = null;
 
@@ -163,7 +163,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
-		g.setFont(new Font("Arial", Font.BOLD, 12));
+		g.setFont(mainFont);
 		if (g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -201,10 +201,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			g2d.setColor((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
 					: VibeComposerGUI.lightModeUIColor.darker());
 			Point cnt = getCenter();
-			String valueString = String.valueOf(getValue());
-			if (!valueString.equals(textValue.getText())) {
-				textValue.setText(valueString);
-			}
+			String valueString = String.valueOf(curr);
 
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 
@@ -309,9 +306,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public void setTheta(double thetaVal) {
 		theta = thetaVal;
+		updateAndGetValue();
 	}
 
-	public int getValue() {
+	public int updateAndGetValue() {
 		double val = toDouble(theta);
 		int intVal = min + (int) Math.round(val * diff);
 		int smallestDiff = Integer.MAX_VALUE;
@@ -324,14 +322,24 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 					smallestInt = i;
 				} else if (smallestDiff != Integer.MAX_VALUE && smallestDiff < currentDiff) {
 					curr = smallestInt;
+					updateText();
 					return smallestInt;
 				}
 			}
 			curr = smallestInt;
+			updateText();
 			return smallestInt;
 		}
 		curr = intVal;
+		updateText();
 		return intVal;
+	}
+
+	private void updateText() {
+		String valueString = String.valueOf(curr);
+		if (!valueString.equals(textValue.getText())) {
+			textValue.setText(valueString);
+		}
 	}
 
 	public void setValue(int val) {
@@ -441,7 +449,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			ctrlClick = true;
 		}
 
-		UndoManager.saveToHistory(this.parent(), getValue());
+		UndoManager.saveToHistory(this.parent(), updateAndGetValue());
 
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			Point mouseLoc = e.getPoint();
