@@ -133,26 +133,31 @@ public class Chordlet extends JComponent {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size 
 				int movement = e.getWheelRotation() > 0 ? -1 : 1;
-				if (inversion == null) {
-					inversion = movement;
-				} else if (inversion / movement > 0 && Math.abs(inversion + movement) > 5) {
-					inversion = null;
-				} else {
-					inversion += movement;
-				}
-				/*int firstLetterIndex = MidiUtils.SEMITONE_LETTERS
-						.indexOf(firstLetter + sharpString());
-				String newFirst = MidiUtils.SEMITONE_LETTERS
-						.get((firstLetterIndex + movement + MidiUtils.SEMITONE_LETTERS.size() * 50)
-								% MidiUtils.SEMITONE_LETTERS.size());
-				firstLetter = newFirst.substring(0, 1);
-				sharp = newFirst.length() > 1;*/
 
-				/*int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);				
-				int newSpiceIndex = (dragSpiceIndex + movement
-						+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
-						% MidiUtils.SPICE_NAMES_LIST.size();
-				spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);*/
+				if (e.isControlDown()) {
+					if (inversion == null) {
+						inversion = movement;
+					} else if (inversion / movement > 0 && Math.abs(inversion + movement) > 5) {
+						inversion = null;
+					} else {
+						inversion += movement;
+					}
+				} else if (e.isShiftDown()) {
+					int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);
+					int newSpiceIndex = (dragSpiceIndex + movement
+							+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
+							% MidiUtils.SPICE_NAMES_LIST.size();
+					spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);
+				} else {
+					int firstLetterIndex = MidiUtils.SEMITONE_LETTERS
+							.indexOf(firstLetter + sharpString());
+					String newFirst = MidiUtils.SEMITONE_LETTERS.get(
+							(firstLetterIndex + movement + MidiUtils.SEMITONE_LETTERS.size() * 50)
+									% MidiUtils.SEMITONE_LETTERS.size());
+					firstLetter = newFirst.substring(0, 1);
+					sharp = newFirst.length() > 1;
+				}
+
 				update();
 			}
 		});
