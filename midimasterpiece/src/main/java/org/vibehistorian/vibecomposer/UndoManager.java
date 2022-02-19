@@ -39,7 +39,7 @@ public class UndoManager {
 			return;
 		}
 
-		if (historyIndex + 1 < undoList.size() && undoList.size() > 0) {
+		if (historyIndex >= 0 && historyIndex + 1 < undoList.size() && undoList.size() > 0) {
 			undoList = undoList.subList(0, historyIndex + 1);
 		}
 
@@ -49,17 +49,19 @@ public class UndoManager {
 	}
 
 	public static void undo() {
-		loadFromHistory(historyIndex - 1);
+		loadFromHistory(historyIndex);
+		historyIndex = Math.max(0, historyIndex - 1);
 	}
 
 	public static void redo() {
-		loadFromHistory(historyIndex + 1);
+		loadFromHistory(historyIndex);
+		historyIndex = Math.min(undoList.size(), historyIndex + 1);
 	}
 
 	public static void loadFromHistory(int index) {
-		if (historyIndex == index) {
+		/*if (historyIndex == index) {
 			return;
-		}
+		}*/
 		LG.i("Loading undoHistory with index: " + index);
 		if (undoList.size() > 0 && index >= 0 && index < undoList.size()) {
 			Integer currValue = VibeComposerGUI.getComponentValue(undoList.get(index).getLeft());

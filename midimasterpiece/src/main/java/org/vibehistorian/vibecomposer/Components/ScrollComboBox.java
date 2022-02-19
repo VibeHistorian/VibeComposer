@@ -17,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UndoManager;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -25,7 +26,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
-	protected boolean interactive = false;
+	protected boolean userInteracting = false;
 	protected boolean globalInteraction = false;
 	private boolean regenerating = true;
 	private boolean hasPrototypeSet = false;
@@ -94,13 +95,13 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	}
 
 	public void prepareInteraction(boolean ctrlClick) {
-		interactive = true;
+		userInteracting = true;
 		globalInteraction = ctrlClick;
 		lastTouchedBox = this;
 	}
 
 	public void discardInteraction() {
-		interactive = false;
+		userInteracting = false;
 		globalInteraction = false;
 	}
 
@@ -122,18 +123,23 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	}
 
 	public void setVal(T item) {
-		boolean shouldRegenerate = interactive;
+		boolean interacting = userInteracting;
 		boolean isDifferent = getVal() != item;
 
 		if (globalInteraction) {
 			globalInteraction = false;
-			interactive = false;
+			userInteracting = false;
 			InstPanel parentIp = SwingUtils.getInstParent(this);
 			if (parentIp != null) {
 				VibeComposerGUI.getAffectedPanels(parentIp.getPartNum()).forEach(ip -> ip
 						.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> e.setVal(item)));
 			}
 		}
+
+		if (interacting) {
+			UndoManager.saveToHistory(this);
+		}
+
 		if (isEnabled()) {
 			setSelectedItem(item);
 		}
@@ -142,8 +148,8 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			func.accept(new Object());
 		}
 
-		if (isEnabled() && regenerating && shouldRegenerate
-				&& VibeComposerGUI.canRegenerateOnChange() && isDifferent) {
+		if (isEnabled() && regenerating && interacting && VibeComposerGUI.canRegenerateOnChange()
+				&& isDifferent) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
 		discardInteraction();

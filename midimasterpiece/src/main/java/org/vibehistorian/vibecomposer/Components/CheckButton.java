@@ -12,6 +12,7 @@ import javax.swing.JButton;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.UndoManager;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class CheckButton extends JButton {
@@ -43,6 +44,7 @@ public class CheckButton extends JButton {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				UndoManager.saveToHistory(CheckButton.this);
 				setSelected(!selected);
 			}
 
