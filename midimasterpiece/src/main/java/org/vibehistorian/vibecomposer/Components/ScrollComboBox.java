@@ -16,14 +16,17 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public class ScrollComboBox<T> extends JComboBox<T> {
 
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
 	protected boolean interactive = false;
+	protected boolean globalInteraction = false;
 	private boolean regenerating = true;
 	private boolean hasPrototypeSet = false;
 	private boolean requiresSettingPrototype = false;
@@ -45,7 +48,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (!scrollEnabled || !isEnabled())
 					return;
-				prepareInteraction();
+				prepareInteraction(e.isControlDown());
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
 						% getItemCount());
 				ItemEvent evnt = new ItemEvent(ScrollComboBox.this, ItemEvent.ITEM_STATE_CHANGED,
@@ -57,7 +60,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				prepareInteraction();
+				prepareInteraction(evt.isControlDown());
 				if (SwingUtilities.isRightMouseButton(evt)) {
 					if (!isEnabled()) {
 						return;
@@ -84,19 +87,21 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	}
 
-	public static void discardInteractionGlobal() {
+	public static void discardInteractions() {
 		if (lastTouchedBox != null) {
 			lastTouchedBox.discardInteraction();
 		}
 	}
 
-	public void prepareInteraction() {
+	public void prepareInteraction(boolean ctrlClick) {
 		interactive = true;
+		globalInteraction = ctrlClick;
 		lastTouchedBox = this;
 	}
 
 	public void discardInteraction() {
 		interactive = false;
+		globalInteraction = false;
 	}
 
 	public boolean isScrollEnabled() {
@@ -117,7 +122,18 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 	}
 
 	public void setVal(T item) {
+		boolean shouldRegenerate = interactive;
 		boolean isDifferent = getVal() != item;
+
+		if (globalInteraction) {
+			globalInteraction = false;
+			interactive = false;
+			InstPanel parentIp = SwingUtils.getInstParent(this);
+			if (parentIp != null) {
+				VibeComposerGUI.getAffectedPanels(parentIp.getPartNum()).forEach(ip -> ip
+						.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> e.setVal(item)));
+			}
+		}
 		if (isEnabled()) {
 			setSelectedItem(item);
 		}
@@ -126,8 +142,8 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			func.accept(new Object());
 		}
 
-		if (isEnabled() && regenerating && interactive && VibeComposerGUI.canRegenerateOnChange()
-				&& isDifferent) {
+		if (isEnabled() && regenerating && shouldRegenerate
+				&& VibeComposerGUI.canRegenerateOnChange() && isDifferent) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
 		discardInteraction();

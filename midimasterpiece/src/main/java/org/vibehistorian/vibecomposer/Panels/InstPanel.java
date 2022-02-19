@@ -911,6 +911,17 @@ public abstract class InstPanel extends JPanel {
 		return Pair.of(rhythmGridSpanned.toArray(new Integer[0]), gridMap);
 	}
 
+	public List<ScrollComboBox> findScrollComboBoxesByFirstVal(Object firstVal) {
+		List<ScrollComboBox> allBoxes = getChildComponents(ScrollComboBox.class, this, true);
+		if (firstVal == null) {
+			return allBoxes;
+		}
+		List<ScrollComboBox> namedBoxes = allBoxes.stream()
+				.filter(e -> firstVal.equals(e.getItemAt(0))).collect(Collectors.toList());
+		//LG.i("Found boxes: " + namedBoxes.size());
+		return namedBoxes;
+	}
+
 	public List<JKnob> findKnobsByName(String name) {
 		List<JKnob> allKnobs = getChildComponents(JKnob.class, this, true);
 		if (name == null) {
