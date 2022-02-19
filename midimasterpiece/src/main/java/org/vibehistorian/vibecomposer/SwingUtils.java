@@ -2,6 +2,8 @@ package org.vibehistorian.vibecomposer;
 
 import java.awt.Adjustable;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
@@ -23,6 +25,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.Timer;
+
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public class SwingUtils {
 
@@ -177,5 +181,19 @@ public class SwingUtils {
 			}
 
 		});
+	}
+
+	public static InstPanel getInstParent(Component comp) {
+		Container maybeParent = comp.getParent();
+		int depth = 5;
+		while (depth >= 0) {
+			if (maybeParent instanceof InstPanel) {
+				return (InstPanel) maybeParent;
+			} else {
+				maybeParent = maybeParent.getParent();
+				depth--;
+			}
+		}
+		return (maybeParent instanceof InstPanel) ? (InstPanel) maybeParent : null;
 	}
 }

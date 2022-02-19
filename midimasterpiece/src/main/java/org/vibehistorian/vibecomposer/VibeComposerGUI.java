@@ -7798,6 +7798,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	protected void createRandomMelodyPanels(int seed) {
+		ScrollComboBox.discardInteractionGlobal();
 		Random melodyRand = new Random(seed);
 		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = melodyPanels.get(i);
@@ -7869,6 +7870,7 @@ public class VibeComposerGUI extends JFrame
 
 	protected void createBlueprintedDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
+		ScrollComboBox.discardInteractionGlobal();
 		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) getAffectedPanels(4);
 
 		Random panelGenerator = new Random();
@@ -8091,6 +8093,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void createRandomDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
+		ScrollComboBox.discardInteractionGlobal();
 		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) getAffectedPanels(4);
 
 		Random drumPanelGenerator = new Random();
@@ -8227,6 +8230,7 @@ public class VibeComposerGUI extends JFrame
 
 	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel randomizedPanel) {
+		ScrollComboBox.discardInteractionGlobal();
 		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) getAffectedPanels(2);
 
 		Random panelGenerator = new Random();
@@ -8399,6 +8403,7 @@ public class VibeComposerGUI extends JFrame
 
 	protected void createRandomArpPanels(int panelCount, boolean onlyAdd,
 			ArpPanel randomizedPanel) {
+		ScrollComboBox.discardInteractionGlobal();
 		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) getAffectedPanels(3);
 
 		Random panelGenerator = new Random();

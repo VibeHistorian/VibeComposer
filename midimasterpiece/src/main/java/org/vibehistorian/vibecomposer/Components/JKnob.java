@@ -3,7 +3,6 @@ package org.vibehistorian.vibecomposer.Components;
 
 // Imports for the GUI classes.
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -27,6 +26,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
@@ -86,7 +86,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	public static boolean fine = false;
 	public static int fineStart = 50;
-	public static boolean shiftClick = false;
+	public static boolean ctrlClick = false;
 
 	private Consumer<? super Object> func = null;
 
@@ -303,7 +303,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	}
 
 	public void setAngle() {
-		theta = toTheta(calculateDouble());
+		setTheta(toTheta(calculateDouble()));
+	}
+
+	public void setTheta(double thetaVal) {
+		theta = thetaVal;
 	}
 
 	public int getValue() {
@@ -432,6 +436,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void mousePressed(MouseEvent e) {
+		if (e.isControlDown()) {
+			ctrlClick = true;
+		}
+
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
@@ -443,7 +451,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			recalc(e);
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			fineStart = curr;
-			setValue(defaultValue);
+			if (ctrlClick) {
+				setValueGlobal(defaultValue);
+			} else {
+				setValue(defaultValue);
+			}
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
 			if (e.isControlDown()) {
 				setEnabled(!isEnabled());
@@ -451,10 +463,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 				KnobValuePopup kvp = new KnobValuePopup(this, stretchAfterCustomInput, true);
 				kvp.setRegenerating(regenerating);
 			}
-		}
-
-		if (e.isShiftDown()) {
-			shiftClick = true;
 		}
 
 	}
@@ -475,7 +483,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		}
 
 		fine = false;
-		shiftClick = false;
+		ctrlClick = false;
 		startPoint = null;
 		fineStart = curr;
 		//LG.d("Theta: " + (0.5 + (theta) / (2 * Math.PI)));
@@ -528,7 +536,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			}
 
 		}
-		setValue(OMNI.clamp(newVal, min, max));
+		if (ctrlClick) {
+			setValueGlobal(OMNI.clamp(newVal, min, max));
+		} else {
+			setValue(OMNI.clamp(newVal, min, max));
+		}
+
 		repaint();
 	}
 
@@ -555,17 +568,20 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		// x,y lies from the positive y axis with cw rotations
 		// being positive and ccw being negative.
 		double thetaCalc = Math.atan2(mxp, myp);
-		if (Math.PI - Math.abs(thetaCalc) > cutOff) {
-			theta = thetaCalc;
-		} else {
+		if (Math.PI - Math.abs(thetaCalc) <= cutOff) {
 			if (thetaCalc > 0) {
-				theta = Math.PI - cutOff;
+				thetaCalc = Math.PI - cutOff;
 			} else {
-				theta = -Math.PI + cutOff;
+				thetaCalc = -Math.PI + cutOff;
 			}
 		}
 
-		repaint();
+		if (ctrlClick) {
+			setThetaGlobal(thetaCalc);
+		} else {
+			setTheta(thetaCalc);
+			repaint();
+		}
 	}
 
 	public static double toDouble(double thetaValue) {
@@ -695,17 +711,31 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		return (KnobPanel) getParent();
 	}
 
-	public InstPanel instParent() {
-		Container maybeParent = getParent();
-		int depth = 5;
-		while (depth >= 0) {
-			if (maybeParent instanceof InstPanel) {
-				return (InstPanel) maybeParent;
-			} else {
-				maybeParent = maybeParent.getParent();
-				depth--;
-			}
+
+	private void setValueGlobal(int val) {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			setValue(val);
+			return;
 		}
-		return (maybeParent instanceof InstPanel) ? (InstPanel) maybeParent : null;
+		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+			ip.findKnobsByName(getName()).forEach(e -> e.setValue(val));
+		}
+
+	}
+
+	private void setThetaGlobal(double thetaVal) {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			setTheta(thetaVal);
+			repaint();
+			return;
+		}
+		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+			ip.findKnobsByName(getName()).forEach(e -> {
+				e.setTheta(thetaVal);
+				e.repaint();
+			});
+		}
 	}
 }

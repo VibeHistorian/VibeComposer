@@ -88,7 +88,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 			int inst = Integer.valueOf(this.getItemAt(i).split(": ")[0].trim());
 			if (inst == instrument) {
 				setSelectedItem(getItemAt(i));
-				mousePressed = false;
+				discardInteraction();
 				return true;
 			}
 		}

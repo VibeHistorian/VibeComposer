@@ -23,11 +23,12 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
-	protected boolean mousePressed = false;
+	protected boolean interactive = false;
 	private boolean regenerating = true;
 	private boolean hasPrototypeSet = false;
 	private boolean requiresSettingPrototype = false;
 	private Consumer<? super Object> func = null;
+	public static ScrollComboBox<?> lastTouchedBox = null;
 
 	public ScrollComboBox() {
 		this(true);
@@ -35,7 +36,6 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	public ScrollComboBox(boolean isReg) {
 		regenerating = isReg;
-
 		BoundsPopupMenuListener listener = new BoundsPopupMenuListener(true, false);
 		addPopupMenuListener(listener);
 
@@ -45,7 +45,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (!scrollEnabled || !isEnabled())
 					return;
-				mousePressed = true;
+				prepareInteraction();
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
 						% getItemCount());
 				ItemEvent evnt = new ItemEvent(ScrollComboBox.this, ItemEvent.ITEM_STATE_CHANGED,
@@ -57,7 +57,7 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				mousePressed = true;
+				prepareInteraction();
 				if (SwingUtilities.isRightMouseButton(evt)) {
 					if (!isEnabled()) {
 						return;
@@ -82,6 +82,21 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			}
 		});
 
+	}
+
+	public static void discardInteractionGlobal() {
+		if (lastTouchedBox != null) {
+			lastTouchedBox.discardInteraction();
+		}
+	}
+
+	public void prepareInteraction() {
+		interactive = true;
+		lastTouchedBox = this;
+	}
+
+	public void discardInteraction() {
+		interactive = false;
 	}
 
 	public boolean isScrollEnabled() {
@@ -111,11 +126,11 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 			func.accept(new Object());
 		}
 
-		if (isEnabled() && regenerating && mousePressed && VibeComposerGUI.canRegenerateOnChange()
+		if (isEnabled() && regenerating && interactive && VibeComposerGUI.canRegenerateOnChange()
 				&& isDifferent) {
 			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 		}
-		mousePressed = false;
+		discardInteraction();
 	}
 
 	public T getLastVal() {

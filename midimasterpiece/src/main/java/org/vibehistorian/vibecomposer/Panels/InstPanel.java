@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -54,6 +56,7 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.RangeSlider;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -906,5 +909,33 @@ public abstract class InstPanel extends JPanel {
 			}
 		}
 		return Pair.of(rhythmGridSpanned.toArray(new Integer[0]), gridMap);
+	}
+
+	public List<JKnob> findKnobsByName(String name) {
+		List<JKnob> allKnobs = getChildComponents(JKnob.class, this, true);
+		if (name == null) {
+			return allKnobs;
+		}
+		List<JKnob> namedKnobs = allKnobs.stream().filter(e -> name.equals(e.getName()))
+				.collect(Collectors.toList());
+		return namedKnobs;
+	}
+
+	public static <T extends JComponent> List<T> getChildComponents(Class<T> clazz,
+			Container parent, boolean includeNested) {
+
+		List<T> children = new ArrayList<T>();
+
+		for (Component c : parent.getComponents()) {
+			boolean isClazz = clazz.isAssignableFrom(c.getClass());
+			if (isClazz) {
+				children.add(clazz.cast(c));
+			}
+			if (includeNested && c instanceof Container) {
+				children.addAll(getChildComponents(clazz, (Container) c, includeNested));
+			}
+		}
+
+		return children;
 	}
 }

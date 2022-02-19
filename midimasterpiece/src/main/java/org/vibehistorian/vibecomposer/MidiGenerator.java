@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -2747,7 +2748,8 @@ public class MidiGenerator implements JMC {
 	}
 
 	public void generateMasterpiece(int mainGeneratorSeed, String fileName) {
-		LG.i("============================ MIDI GENERATION IN PROGRESS ===========================");
+		LG.i("========================== MIDI GENERATION IN PROGRESS, " + new Date().toString()
+				+ " ===========================");
 		long systemTime = System.currentTimeMillis();
 		customDrumMappingNumbers = null;
 		trackList.clear();
