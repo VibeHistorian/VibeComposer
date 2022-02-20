@@ -53,6 +53,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 	private static final int radius = 20;
 	private static final int spotRadius = 3;
+	private static final int arcWidth = spotRadius;
 	private static final int arcCut = 30;
 	private static final double cutOff = (Math.PI * (double) arcCut / 180.0);
 	private static final double cutOffDouble = ((double) arcCut / 180.0);
@@ -64,6 +65,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	public static final Color lightModeKnob = new Color(180, 180, 180);
 
 	private boolean pressedOnSpot;
+	private long dragLimitMs = 0;
 
 	private int min = 0;
 	private int max = 100;
@@ -163,9 +165,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
-		g.setFont(mainFont);
 		if (g instanceof Graphics2D) {
+			super.paintComponent(g);
 			Graphics2D g2d = (Graphics2D) g;
+			g2d.setFont(mainFont);
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -190,12 +193,12 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			} else {
 				g2d.setColor(OMNI.alphen(Color.white, 180));
 			}
-			g2d.fillArc(0, 0, 2 * radius + 1, 2 * radius + 1, 270 - arcCut,
+			g2d.fillArc(0, 0, 2 * radius, 2 * radius, 270 - arcCut,
 					-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
 
 			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
-			g2d.fillArc(3, 3, 2 * radius - 5, 2 * radius - 5, 270 - arcCut,
-					-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
+			g2d.fillArc(arcWidth, arcWidth, 2 * (radius - arcWidth), 2 * (radius - arcWidth),
+					270 - arcCut, -1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
 
 			// Draw value.
 			g2d.setColor((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
@@ -256,7 +259,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			//g2d.setColor(spotColor);
 			//g2d.drawOval(0, 0, 2 * radius, 2 * radius);
 			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
-
+			g2d.dispose();
 		}
 	}
 
@@ -354,7 +357,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		if (func != null) {
 			func.accept(new Object());
 		}
-		repaint();
 	}
 
 	/**
@@ -523,6 +525,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void mouseDragged(MouseEvent e) {
+		/*if (System.currentTimeMillis() - dragLimitMs < 25) {
+			return;
+		}
+		dragLimitMs = System.currentTimeMillis();*/
 		if (pressedOnSpot || fine) {
 
 			recalc(e);
@@ -730,7 +736,10 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			return;
 		}
 		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
-			ip.findKnobsByName(getName()).forEach(e -> e.setValue(val));
+			ip.findKnobsByName(getName()).forEach(e -> {
+				e.setValue(val);
+				e.paintComponent(e.getGraphics());
+			});
 		}
 
 	}
@@ -745,7 +754,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
 			ip.findKnobsByName(getName()).forEach(e -> {
 				e.setTheta(thetaVal);
-				e.repaint();
+				e.paintComponent(e.getGraphics());
 			});
 		}
 	}
