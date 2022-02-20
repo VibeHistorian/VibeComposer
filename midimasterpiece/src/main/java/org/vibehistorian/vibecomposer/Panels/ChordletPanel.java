@@ -279,6 +279,10 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public void update() {
+		/*if (!VibeComposerGUI.userChordsEnabled.isSelected()) {
+			VibeComposerGUI.userChordsEnabled.setSelected(true);
+			VibeComposerGUI.userChordsEnabled.repaint();
+		}*/
 		if (!chordletsDisplayed) {
 			rawChords.setText(getChordListString());
 		}

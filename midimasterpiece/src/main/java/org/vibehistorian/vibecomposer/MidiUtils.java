@@ -144,23 +144,25 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cMaj4);
 		SPICE_CHORDS_LIST.add(cMin4);
 
-		SPICE_CHORDS_LIST.add(cAug4);
-		SPICE_CHORDS_LIST.add(cDim4);
-
-		SPICE_CHORDS_LIST.add(c7th4);
 		SPICE_CHORDS_LIST.add(cMaj7th4);
 		SPICE_CHORDS_LIST.add(cMin7th4);
-		SPICE_CHORDS_LIST.add(cMaj9th4);
-		SPICE_CHORDS_LIST.add(cMin9th4);
-		SPICE_CHORDS_LIST.add(cMaj13th4);
-		SPICE_CHORDS_LIST.add(cMin13th4);
+		SPICE_CHORDS_LIST.add(c7th4);
 
-		SPICE_CHORDS_LIST.add(cSus4th4);
 		SPICE_CHORDS_LIST.add(cSus2nd4);
+		SPICE_CHORDS_LIST.add(cSus4th4);
 		SPICE_CHORDS_LIST.add(cSus7th4);
 
 		SPICE_CHORDS_LIST.add(cMaj6th4);
 		SPICE_CHORDS_LIST.add(cMin6th4);
+
+		SPICE_CHORDS_LIST.add(cMaj9th4);
+		SPICE_CHORDS_LIST.add(cMin9th4);
+
+		SPICE_CHORDS_LIST.add(cMaj13th4);
+		SPICE_CHORDS_LIST.add(cMin13th4);
+
+		SPICE_CHORDS_LIST.add(cAug4);
+		SPICE_CHORDS_LIST.add(cDim4);
 	}
 
 	public static final List<String> BANNED_DIM_AUG_6_LIST = Arrays
@@ -171,8 +173,8 @@ public class MidiUtils {
 			.asList(new String[] { "sus4", "sus2", "sus7" });
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays
-			.asList(new String[] { "", "m", "aug", "dim", "7", "maj7", "m7", "maj9", "m9", "maj13",
-					"m13", "sus4", "sus2", "sus7", "maj6", "m6" });
+			.asList(new String[] { "", "m", "maj7", "m7", "7", "sus2", "sus4", "sus7", "maj6", "m6",
+					"maj9", "m9", "maj13", "m13", "aug", "dim" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "C", "D", "E", "F", "G", "A", "B" });
