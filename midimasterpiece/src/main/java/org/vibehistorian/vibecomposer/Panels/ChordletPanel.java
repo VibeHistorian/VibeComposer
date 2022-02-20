@@ -139,7 +139,7 @@ public class ChordletPanel extends JPanel {
 
 		List<String> allChords = new ArrayList<>();
 		MidiUtils.SPICE_NAMES_LIST.forEach(s -> {
-			MidiUtils.SEMITONE_LETTERS.forEach(e -> {
+			MidiUtils.SEMITONE_LETTERS_ORDERED.forEach(e -> {
 				allChords.add(e + s);
 			});
 		});
