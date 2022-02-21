@@ -1023,17 +1023,24 @@ public class MidiUtils {
 
 			if (pitch != Note.REST) {
 				transposedChord[j] = pitch - originalMovement + newMovement;
+			} else {
+				transposedChord[j] = pitch;
 			}
 		}
 		return transposedChord;
 	}
 
 	public static void transposePhrase(Phrase phr, final Integer[] mode, final Integer[] modeTo) {
-		transposeNotes(phr.getNoteList(), mode, modeTo);
+		transposeNotes(phr.getNoteList(), mode, modeTo, true);
+	}
+
+	public static void transposePhrase(Phrase phr, final Integer[] mode, final Integer[] modeTo,
+			boolean snapToScale) {
+		transposeNotes(phr.getNoteList(), mode, modeTo, snapToScale);
 	}
 
 	public static void transposeNotes(List<Note> notes, final Integer[] mode,
-			final Integer[] modeTo) {
+			final Integer[] modeTo, boolean snapToScale) {
 		List<Integer> modeList = new ArrayList<>();
 		for (int num : mode) {
 			modeList.add(num);
@@ -1057,7 +1064,7 @@ public class MidiUtils {
 			if (originalIndex == -1) {
 				if (modeToList.contains(searchPitch)) {
 					//LG.i("Pitch found only in modeTo, not changing: " + pitch);
-				} else {
+				} else if (snapToScale) {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					n.setPitch(pitch - difference);

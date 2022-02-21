@@ -4026,7 +4026,8 @@ public class MidiGenerator implements JMC {
 				if (isMinor) {
 					MidiUtils.transposeNotes(fullMelodyMap.get(i), ScaleMode.IONIAN.noteAdjustScale,
 							MidiUtils.adjustScaleByChord(ScaleMode.IONIAN.noteAdjustScale,
-									minorChord));
+									minorChord),
+							gc.isTransposedNotesForceScale());
 					LG.i("Transposing melody to match minor chord! Chord#: " + i);
 					break;
 				}
@@ -4040,8 +4041,11 @@ public class MidiGenerator implements JMC {
 			phr.addNoteList(noteList, true);
 			Phrase phrSaved = phr.copy();
 			Mod.transpose(phrSaved, ip.getTranspose() * -1);
-			MidiUtils.transposePhrase(phrSaved, ScaleMode.IONIAN.noteAdjustScale,
-					ScaleMode.IONIAN.noteAdjustScale);
+			if (gc.isTransposedNotesForceScale()) {
+				MidiUtils.transposePhrase(phrSaved, ScaleMode.IONIAN.noteAdjustScale,
+						ScaleMode.IONIAN.noteAdjustScale);
+			}
+
 			addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
 		} else {
 			Mod.transpose(phr, ip.getTranspose());
@@ -4391,7 +4395,8 @@ public class MidiGenerator implements JMC {
 		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
+					gc.isTransposedNotesForceScale());
 		}
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[1] + ip.getTranspose() + modTrans);
 		phr.setStartTime(START_TIME_DELAY);
@@ -4754,7 +4759,8 @@ public class MidiGenerator implements JMC {
 		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
+					gc.isTransposedNotesForceScale());
 		}
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[2] + extraTranspose + modTrans);
 
@@ -5013,7 +5019,8 @@ public class MidiGenerator implements JMC {
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
+					gc.isTransposedNotesForceScale());
 		}
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[3] + extraTranspose + modTrans);
 
@@ -5376,7 +5383,7 @@ public class MidiGenerator implements JMC {
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
 			MidiUtils.transposePhrase(chordSlashPhrase, ScaleMode.IONIAN.noteAdjustScale,
-					scale.noteAdjustScale);
+					scale.noteAdjustScale, gc.isTransposedNotesForceScale());
 		}
 		Mod.transpose(chordSlashPhrase, -12 + extraTranspose + modTrans);
 

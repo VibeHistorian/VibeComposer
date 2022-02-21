@@ -390,7 +390,8 @@ public class MidiEditPopup extends CloseablePopup {
 		InstPanel ip = VibeComposerGUI.getInstList(part).get(partOrder);
 		if (scaleKey != null) {
 			MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
-					scaleKey.getLeft().noteAdjustScale);
+					scaleKey.getLeft().noteAdjustScale,
+					VibeComposerGUI.transposedNotesForceScale.isSelected());
 			extraTranspose = scaleKey.getRight();
 		}
 		final int finalExtraTranspose = extraTranspose;

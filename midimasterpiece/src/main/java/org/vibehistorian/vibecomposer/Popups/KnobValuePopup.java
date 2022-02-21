@@ -90,12 +90,14 @@ public class KnobValuePopup extends CloseablePopup {
 							knob.setMin(val);
 						}
 						knob.setValue(val);
+						knob.repaint();
 					} else {
 						if (knob.getMin() <= val && knob.getMax() >= val) {
 							knob.setValue(val);
 						} else {
 							knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
 						}
+						knob.repaint();
 					}
 
 				}

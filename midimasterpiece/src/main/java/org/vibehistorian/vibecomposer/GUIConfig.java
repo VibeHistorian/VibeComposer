@@ -69,6 +69,7 @@ public class GUIConfig {
 	private boolean allowChordRepeats = true;
 	private Integer globalSwingOverride = null;
 	private boolean customMidiForceScale = false;
+	private boolean transposedNotesForceScale = false;
 
 
 	// melody gen
@@ -795,6 +796,14 @@ public class GUIConfig {
 
 	public void setRegenerateCount(int regenerateCount) {
 		this.regenerateCount = regenerateCount;
+	}
+
+	public boolean isTransposedNotesForceScale() {
+		return transposedNotesForceScale;
+	}
+
+	public void setTransposedNotesForceScale(boolean transposedNotesForceScale) {
+		this.transposedNotesForceScale = transposedNotesForceScale;
 	}
 
 }

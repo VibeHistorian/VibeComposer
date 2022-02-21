@@ -542,6 +542,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel humanizeDrums;
 	public static ScrollComboBox<Double> swingUnitMultiplier;
 	public static JCheckBox customMidiForceScale;
+	public static JCheckBox transposedNotesForceScale;
 	public static JCheckBox randomizeTimingsOnCompose;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
@@ -1128,7 +1129,8 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
 		swingUnitMultiplier.setSelectedIndex(0);
 
-		customMidiForceScale = new CustomCheckBox("Force Custom Midi Scale", false);
+		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
+		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
 
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
@@ -1137,11 +1139,15 @@ public class VibeComposerGUI extends JFrame
 		humanizationPanel.add(humanizeDrums);
 		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
 		humanizationPanel.add(swingUnitMultiplier);
-		humanizationPanel.add(customMidiForceScale);
 		humanizationPanel.add(randomizeTimingsOnCompose);
+
+		JPanel scalePanel = new JPanel();
+		scalePanel.add(customMidiForceScale);
+		scalePanel.add(transposedNotesForceScale);
 
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 		extraSettingsPanel.add(humanizationPanel);
+		extraSettingsPanel.add(scalePanel);
 
 		//JPanel loopBeatExtraSettingsPanel = new JPanel();
 		//loopBeatExtraSettingsPanel.add(loopBeatCompose);
@@ -1275,8 +1281,8 @@ public class VibeComposerGUI extends JFrame
 		JPanel displayStylePanel = new JPanel();
 		displayVeloRectValues = new CustomCheckBox("Display Bar Values", true);
 		knobControlByDragging = new CustomCheckBox("Knob Up-Down Control", false);
-		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern", true);
-		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes", true);
+		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern (-Perf)", true);
+		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
 		customFilenameAddTimestamp = new CustomCheckBox("Add Timestamp To Custom Filenames", false);
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
@@ -1597,7 +1603,8 @@ public class VibeComposerGUI extends JFrame
 							ScaleMode toMode = ScaleMode.valueOf(itemSplit[0]);
 							Mod.transpose(melody, transposeUpBy);
 							MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,
-									ScaleMode.IONIAN.noteAdjustScale);
+									ScaleMode.IONIAN.noteAdjustScale,
+									transposedNotesForceScale.isSelected());
 							VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
 							VibeComposerGUI.scaleMode.setVal(toMode.toString());
 							MelodyMidiDropPane.userMelody = melody;
@@ -7413,6 +7420,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
 		gc.setSwingUnitMultiplierIndex(swingUnitMultiplier.getSelectedIndex());
 		gc.setCustomMidiForceScale(customMidiForceScale.isSelected());
+		gc.setTransposedNotesForceScale(transposedNotesForceScale.isSelected());
 		gc.setAllowChordRepeats(allowChordRepeats.isSelected());
 		gc.setGlobalSwingOverride(
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
@@ -7532,6 +7540,7 @@ public class VibeComposerGUI extends JFrame
 		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
 		swingUnitMultiplier.setSelectedIndex(gc.getSwingUnitMultiplierIndex());
 		customMidiForceScale.setSelected(gc.isCustomMidiForceScale());
+		transposedNotesForceScale.setSelected(gc.isTransposedNotesForceScale());
 		allowChordRepeats.setSelected(gc.isAllowChordRepeats());
 		globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
 		if (gc.getGlobalSwingOverride() != null) {
@@ -8950,7 +8959,8 @@ public class VibeComposerGUI extends JFrame
 				int extraTranspose = 0;
 				if (scaleKey != null) {
 					MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
-							scaleKey.getLeft().noteAdjustScale);
+							scaleKey.getLeft().noteAdjustScale,
+							VibeComposerGUI.transposedNotesForceScale.isSelected());
 					extraTranspose = scaleKey.getRight();
 				}
 
