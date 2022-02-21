@@ -453,7 +453,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 
 		UndoManager.saveToHistory(this.parent(), updateAndGetValue());
 
-		if (e.getButton() == MouseEvent.BUTTON1) {
+		if (SwingUtilities.isLeftMouseButton(e)) {
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
 
@@ -471,7 +471,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			}
 		} else if (SwingUtilities.isMiddleMouseButton(e)) {
 			if (e.isControlDown()) {
-				setEnabled(!isEnabled());
+				if (e.isShiftDown()) {
+					setEnabledGlobal(!isEnabled());
+				} else {
+					setEnabled(!isEnabled());
+				}
 			} else if (isEnabled()) {
 				KnobValuePopup kvp = new KnobValuePopup(this, stretchAfterCustomInput, true);
 				kvp.setRegenerating(regenerating);
@@ -728,6 +732,18 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		return (KnobPanel) getParent();
 	}
 
+	private void setEnabledGlobal(boolean enabled) {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			setEnabled(enabled);
+			return;
+		}
+		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+			ip.findKnobsByName(getName()).forEach(e -> {
+				e.setEnabled(enabled);
+			});
+		}
+	}
 
 	private void setValueGlobal(int val) {
 		InstPanel instParent = SwingUtils.getInstParent(this);
@@ -741,7 +757,6 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 				e.paintComponent(e.getGraphics());
 			});
 		}
-
 	}
 
 	private void setThetaGlobal(double thetaVal) {

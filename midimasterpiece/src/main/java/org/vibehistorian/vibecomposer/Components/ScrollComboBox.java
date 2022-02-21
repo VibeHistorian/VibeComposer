@@ -70,9 +70,14 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 					ItemEvent evnt = new ItemEvent(ScrollComboBox.this,
 							ItemEvent.ITEM_STATE_CHANGED, getSelectedItem(), ItemEvent.SELECTED);
 					fireItemStateChanged(evnt);
-				} else if (SwingUtilities.isMiddleMouseButton(evt) && !evt.isShiftDown()) {
+				} else if (SwingUtilities.isMiddleMouseButton(evt)
+						&& (!evt.isShiftDown() || evt.isControlDown())) {
 					if (evt.isControlDown()) {
-						setEnabled(!isEnabled());
+						if (evt.isShiftDown()) {
+							setEnabledGlobal(!isEnabled());
+						} else {
+							setEnabled(!isEnabled());
+						}
 					} else {
 						List<Integer> viableIndices = IntStream.iterate(0, e -> e + 1)
 								.limit(getItemCount()).boxed().collect(Collectors.toList());
@@ -211,5 +216,20 @@ public class ScrollComboBox<T> extends JComboBox<T> {
 
 	public void removeFunc() {
 		func = null;
+	}
+
+	private void setEnabledGlobal(boolean enabled) {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			setEnabled(enabled);
+			repaint();
+			return;
+		}
+		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+			ip.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> {
+				e.setEnabled(enabled);
+				e.repaint();
+			});
+		}
 	}
 }

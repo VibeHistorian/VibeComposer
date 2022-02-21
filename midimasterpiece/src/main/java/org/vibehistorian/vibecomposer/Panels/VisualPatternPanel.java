@@ -259,7 +259,7 @@ public class VisualPatternPanel extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isShiftDown()
-						&& patternType.isEnabled()) {
+						&& !evt.isControlDown() && patternType.isEnabled()) {
 					patternType.setSelectedItem(RhythmPattern.CUSTOM);
 					shiftPanel.setInt(0);
 					Random rand = new Random();
