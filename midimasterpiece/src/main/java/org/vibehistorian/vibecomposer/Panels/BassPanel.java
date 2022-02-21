@@ -65,7 +65,6 @@ public class BassPanel extends InstPanel {
 		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(chordSpan);
-
 		//this.add(noteLengthMultiplier);
 		this.add(patternJoinMode);
 
@@ -84,11 +83,10 @@ public class BassPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 9"));
 		setPanelOrder(1);
-
+		initDefaultsPost();
 	}
 
 	public BassPanel(ActionListener l) {
-		setPartClass(BassPart.class);
 		initComponents(l);
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
@@ -178,5 +176,10 @@ public class BassPanel extends InstPanel {
 	@Override
 	public int getPartNum() {
 		return 1;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return BassPart.class;
 	}
 }

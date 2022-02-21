@@ -2302,7 +2302,7 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(csExtra);
 
 
-		combineDrumTracks = new CustomCheckBox("Combine MIDI Tracks", true);
+		combineDrumTracks = new CustomCheckBox("Combine MIDI Tracks", false);
 		combineDrumTracks.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -6735,8 +6735,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void playMidi() {
+		LG.i(("Starting Midi.."));
 		if (sequencer != null) {
-			LG.i(("Starting Midi.."));
 			if (sequencer.isRunning()) {
 				sequencer.stop();
 				long startPos = (startFromBar.isSelected())
@@ -6775,8 +6775,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void stopMidi() {
+		LG.i(("Stopping Midi.."));
 		if (sequencer != null) {
-			LG.i(("Stopping Midi.."));
 			sequencer.stop();
 			flushMidiEvents();
 			//resetSequencerTickPosition();
@@ -6789,8 +6789,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void pauseMidi() {
+		LG.i(("Pausing Midi.."));
 		if (sequencer != null) {
-			LG.i(("Pausing Midi.."));
 			sequencer.stop();
 			flushMidiEvents();
 			savePauseInfo();

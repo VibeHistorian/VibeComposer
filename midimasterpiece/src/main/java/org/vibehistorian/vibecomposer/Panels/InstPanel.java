@@ -127,7 +127,6 @@ public abstract class InstPanel extends JPanel {
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
-	protected Class<? extends InstPart> partClass = InstPart.class;
 	protected Integer sequenceTrack = -1;
 	protected Section relatedSection = null;
 
@@ -136,6 +135,12 @@ public abstract class InstPanel extends JPanel {
 
 	public InstPanel() {
 
+	}
+
+	public void initDefaultsPost() {
+		if (comboPanel != null && pattern.getSelectedIndex() == 0) {
+			comboPanel.reapplyShift();
+		}
 	}
 
 	public void initDefaults(ActionListener l) {
@@ -631,13 +636,7 @@ public abstract class InstPanel extends JPanel {
 		this.noteLengthMultiplier.setInt(noteLengthMultiplier);
 	}
 
-	public Class<? extends InstPart> getPartClass() {
-		return partClass;
-	}
-
-	public void setPartClass(Class<? extends InstPart> partClass) {
-		this.partClass = partClass;
-	}
+	public abstract Class<? extends InstPart> getPartClass();
 
 	public Integer getSequenceTrack() {
 		return sequenceTrack;

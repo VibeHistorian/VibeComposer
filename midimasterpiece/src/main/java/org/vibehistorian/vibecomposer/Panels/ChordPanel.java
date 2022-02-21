@@ -109,6 +109,7 @@ public class ChordPanel extends InstPanel {
 		toggleableComponents.add(patternJoinMode);
 		toggleableComponents.add(strumPauseChance);
 
+		initDefaultsPost();
 	}
 
 	@Override
@@ -118,7 +119,6 @@ public class ChordPanel extends InstPanel {
 	}
 
 	public ChordPanel(ActionListener l) {
-		setPartClass(ChordPart.class);
 		initComponents(l);
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
@@ -244,6 +244,11 @@ public class ChordPanel extends InstPanel {
 
 	public void setStrumPauseChance(int strumPauseChance) {
 		this.strumPauseChance.setInt(strumPauseChance);
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return ChordPart.class;
 	}
 
 	/*@Override

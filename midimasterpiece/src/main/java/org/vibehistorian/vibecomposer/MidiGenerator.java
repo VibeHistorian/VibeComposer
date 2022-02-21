@@ -5317,12 +5317,12 @@ public class MidiGenerator implements JMC {
 
 	public static int mapDrumPitchByCustomMapping(int pitch, boolean cached) {
 		if (cached && customDrumMappingNumbers != null) {
-			int mapped = customDrumMappingNumbers.get(pitch);
-			if (mapped == -1) {
+			Integer mapped = customDrumMappingNumbers.get(pitch);
+			if (mapped == null) {
 				throw new IllegalArgumentException(
 						"Pitch not found in custom drum mapping: " + pitch);
 			}
-			return customDrumMappingNumbers.get(pitch);
+			return mapped;
 		}
 		List<Integer> customMappingNumbers = null;
 		if (gc != null) {

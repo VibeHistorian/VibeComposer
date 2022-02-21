@@ -86,7 +86,7 @@ public class ArpPanel extends InstPanel {
 		//toggleableComponents.add(arpPattern);
 		//toggleableComponents.add(notePresetLabel);
 		//toggleableComponents.add(repeatableNotes);
-
+		initDefaultsPost();
 
 	}
 
@@ -103,7 +103,6 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public ArpPanel(ActionListener l) {
-		setPartClass(ArpPart.class);
 		initComponents(l);
 
 		for (ArpPattern d : ArpPattern.values()) {
@@ -155,5 +154,10 @@ public class ArpPanel extends InstPanel {
 	@Override
 	public int getPartNum() {
 		return 3;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return ArpPart.class;
 	}
 }

@@ -99,10 +99,10 @@ public class DrumPanel extends InstPanel {
 		getInstrumentBox().setToolTipText("test");
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
+		initDefaultsPost();
 	}
 
 	public DrumPanel(ActionListener l) {
-		setPartClass(DrumPart.class);
 		initComponents(l);
 		removeButton.addActionListener(l);
 		removeButton.setActionCommand("RemoveDrum," + panelOrder);
@@ -165,5 +165,10 @@ public class DrumPanel extends InstPanel {
 		}
 
 		return mapped;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return DrumPart.class;
 	}
 }

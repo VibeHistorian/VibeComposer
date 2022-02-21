@@ -31,6 +31,9 @@ public class UndoManager {
 	}
 
 	public static void saveToHistory(Component c) {
+		if (!recordingEvents) {
+			return;
+		}
 		saveToHistory(c, VibeComposerGUI.getComponentValue(c));
 	}
 

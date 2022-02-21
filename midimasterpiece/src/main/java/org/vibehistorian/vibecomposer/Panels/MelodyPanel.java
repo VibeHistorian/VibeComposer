@@ -185,7 +185,6 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public MelodyPanel(ActionListener l) {
-		setPartClass(MelodyPart.class);
 		initComponents(l);
 	}
 
@@ -357,6 +356,11 @@ public class MelodyPanel extends InstPanel {
 	@Override
 	public int getPartNum() {
 		return 0;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return MelodyPart.class;
 	}
 }
 
