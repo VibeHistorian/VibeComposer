@@ -931,6 +931,20 @@ public abstract class InstPanel extends JPanel {
 		return namedKnobs;
 	}
 
+	public <T extends JComponent> int findIndexOfComponent(JComponent c) {
+		List<? extends JComponent> children = getChildComponents(c.getClass(), this, true);
+		for (int i = 0; i < children.size(); i++) {
+			if (children.get(i) == c) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public <T extends JComponent> T getComponentByClassIndex(Class<T> clazz, int index) {
+		return getChildComponents(clazz, this, true).get(index);
+	}
+
 	public static <T extends JComponent> List<T> getChildComponents(Class<T> clazz,
 			Container parent, boolean includeNested) {
 

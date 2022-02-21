@@ -2,14 +2,16 @@ package org.vibehistorian.vibecomposer;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
 public class UndoManager {
-	public static List<Pair<Component, Integer>> undoList = new ArrayList<>();
+	public static List<List<Pair<Component, Integer>>> undoList = new ArrayList<>();
 	public static ScrollComboBox<String> historyBox = new ScrollComboBox<>(false);
 	public static int historyIndex = 0;
 	public static boolean recordingEvents = false;
@@ -25,9 +27,23 @@ public class UndoManager {
 	public static void updateHistoryBox() {
 		historyBox.removeAllItems();
 		for (int i = 0; i < undoList.size(); i++) {
-			historyBox.addItem(i + " (" + undoList.get(i).getLeft().getName() + ")");
+			historyBox.addItem(i + " (" + undoList.get(i).stream().count() + " changes)");
 		}
 		historyBox.setSelectedIndex(historyBox.getItemCount() - 1);
+	}
+
+	public static void saveToHistory(List<Component> cs) {
+		if (!recordingEvents) {
+			return;
+		}
+		if (historyIndex >= 0 && historyIndex + 1 < undoList.size() && undoList.size() > 0) {
+			undoList = undoList.subList(0, historyIndex + 1);
+		}
+
+		undoList.add(cs.stream().map(e -> MutablePair.of(e, VibeComposerGUI.getComponentValue(e)))
+				.collect(Collectors.toList()));
+		historyIndex = undoList.size() - 1;
+		updateHistoryBox();
 	}
 
 	public static void saveToHistory(Component c) {
@@ -46,7 +62,7 @@ public class UndoManager {
 			undoList = undoList.subList(0, historyIndex + 1);
 		}
 
-		undoList.add(MutablePair.of(c, val));
+		undoList.add(Collections.singletonList(MutablePair.of(c, val)));
 		historyIndex = undoList.size() - 1;
 		updateHistoryBox();
 	}
@@ -67,10 +83,12 @@ public class UndoManager {
 		}*/
 		LG.i("Loading undoHistory with index: " + index);
 		if (undoList.size() > 0 && index >= 0 && index < undoList.size()) {
-			Integer currValue = VibeComposerGUI.getComponentValue(undoList.get(index).getLeft());
-			VibeComposerGUI.setComponent(undoList.get(index).getLeft(),
-					undoList.get(index).getRight(), true);
-			undoList.get(index).setValue(currValue);
+			undoList.get(index).forEach(e -> {
+				Integer currValue = VibeComposerGUI.getComponentValue(e.getLeft());
+				VibeComposerGUI.setComponent(e.getLeft(), e.getRight(), true);
+				e.setValue(currValue);
+			});
+
 			historyIndex = index;
 			historyBox.setSelectedIndex(index);
 		}
