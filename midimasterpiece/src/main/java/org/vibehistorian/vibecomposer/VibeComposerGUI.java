@@ -3198,6 +3198,10 @@ public class VibeComposerGUI extends JFrame
 			JScrollPane pane = getInstPane(i);
 			pane.repaint();
 		}
+		if (instrumentTabPane.getSelectedIndex() == 6) {
+			actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
+			scrollableArrangementActualTable.repaint();
+		}
 	}
 
 	private void processActualArrangementMouseEvent(java.awt.event.MouseEvent evt) {
