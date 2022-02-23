@@ -175,6 +175,7 @@ public class Arrangement {
 	private boolean overridden;
 	private int seed = 0;
 	private Map<Integer, Object[][]> partInclusionMap = new HashMap<>();
+	private Map<Integer, Boolean[]> globalVariationMap = new HashMap<>();
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -519,5 +520,31 @@ public class Arrangement {
 		} else {
 			return (Boolean) oldData[j][k];
 		}
+	}
+
+	public void initGlobalVariationMap() {
+		for (int i = 0; i < 5; i++) {
+			int typesCount = Section.variationDescriptions[i].length - 1;
+			Boolean[] data = new Boolean[typesCount];
+			data[0] = Boolean.TRUE;
+			for (int k = 1; k < typesCount; k++) {
+				data[k] = Boolean.TRUE;
+			}
+			globalVariationMap.put(i, data);
+		}
+	}
+
+	public void initGlobalVariationMapIfNull() {
+		if (globalVariationMap.get(0) == null) {
+			initGlobalVariationMap();
+		}
+	}
+
+	public Map<Integer, Boolean[]> getGlobalVariationMap() {
+		return globalVariationMap;
+	}
+
+	public void setGlobalVariationMap(Map<Integer, Boolean[]> globalVariationMap) {
+		this.globalVariationMap = globalVariationMap;
 	}
 }

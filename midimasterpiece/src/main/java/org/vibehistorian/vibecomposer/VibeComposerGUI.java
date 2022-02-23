@@ -190,6 +190,7 @@ import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
+import org.vibehistorian.vibecomposer.Popups.ArrangementGlobalVariationPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
@@ -2550,12 +2551,6 @@ public class VibeComposerGUI extends JFrame
 			if (arrangement.getSections().size() > maxLength) {
 				pieceLength.setText("" + ++maxLength);
 			}
-		} else if (action.equalsIgnoreCase("ArrangementOpenPartInclusion")) {
-			arrangement.recalculatePartInclusionMapBoundsIfNeeded();
-			new ArrangementPartInclusionPopup(arrangement,
-					new Point(MouseInfo.getPointerInfo().getLocation().x,
-							vibeComposerGUI.getLocation().y),
-					vibeComposerGUI.getSize());
 		}
 
 		if (!refreshActual) {
@@ -2576,6 +2571,21 @@ public class VibeComposerGUI extends JFrame
 			manualArrangement.repaint();
 		}
 		recalculateTabPaneCounts();
+	}
+
+	private void openPartInclusionPopup() {
+		arrangement.recalculatePartInclusionMapBoundsIfNeeded();
+		new ArrangementPartInclusionPopup(arrangement,
+				new Point(MouseInfo.getPointerInfo().getLocation().x,
+						vibeComposerGUI.getLocation().y),
+				vibeComposerGUI.getSize());
+	}
+
+	private void openGlobalVariationPopup() {
+		new ArrangementGlobalVariationPopup(arrangement,
+				new Point(MouseInfo.getPointerInfo().getLocation().x,
+						vibeComposerGUI.getLocation().y),
+				vibeComposerGUI.getSize());
 	}
 
 	private void applyCustomPanelsToSection(String action, int replacedPartNum, Integer secOrder) {
@@ -2665,7 +2675,8 @@ public class VibeComposerGUI extends JFrame
 		//arrangementSettings.add(new JLabel("Max Length:"));
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
 		JButton randomizeArrangementBtn = makeButton("Randomize", "ArrangementRandomize");
-		JButton arrangementPartInclusionBtn = makeButton("Parts", "ArrangementOpenPartInclusion");
+		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> openPartInclusionPopup());
+		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> openGlobalVariationPopup());
 
 		randomizeArrangementOnCompose = makeCheckBox("on Compose", true, true);
 
@@ -2767,6 +2778,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettingsLeft.add(arrangementPartVariationChance);
 		arrangementSettingsLeft.add(resetArrangementBtn);
 		arrangementSettingsLeft.add(arrangementPartInclusionBtn);
+		arrangementSettingsLeft.add(arrangementGlobalVariationBtn);
 
 		arrangementMiddleColoredPanel = new JPanel();
 		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
