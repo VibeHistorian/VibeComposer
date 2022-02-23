@@ -6,7 +6,6 @@ import java.util.Set;
 import javax.swing.table.AbstractTableModel;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 public class VariationsBooleanTableModel extends AbstractTableModel {
 
@@ -39,7 +38,8 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int row, int column) {
-		if (VariationPopup.bannedInstVariations.get(part).contains(column)) {
+		if (column >= 2
+				&& !VibeComposerGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
 			return "X";
 		}
 		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
@@ -60,7 +60,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int column) {
-		if (VariationPopup.bannedInstVariations.get(part).contains(column)) {
+		if (!VibeComposerGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
 			tableData[row][column] = Boolean.FALSE;
 			fireTableDataChanged();
 			return;

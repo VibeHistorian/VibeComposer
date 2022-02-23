@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -36,14 +35,13 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 			"INSTRUMENTAL" };
 	public static final Integer[] ENERGY_WEIGHTS = new Integer[] { 50, 50, 50, 50 };
 
-	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
 	JTable[] tables = new JTable[5];
 
 	JScrollPane scroll;
 
 	public ArrangementPartInclusionPopup(Arrangement arr, Point parentLoc, Dimension parentDim) {
-		super("Arrangement - Part Inclusion", 10);
+		super("Arrangement - Part Inclusion", 10, new Point(-500, -600));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		PopupUtils.addEmptySpaceCloser(tablesPanel, frame);
@@ -228,9 +226,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		}
 	}
 
-	@Override
 	protected void addFrameWindowOperation() {
-		// TODO Auto-generated method stub
-
+		frame.addWindowListener(CloseablePopup.EMPTY_WINDOW_LISTENER);
 	}
 }

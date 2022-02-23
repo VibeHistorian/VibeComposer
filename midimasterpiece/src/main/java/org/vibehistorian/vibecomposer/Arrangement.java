@@ -185,6 +185,7 @@ public class Arrangement {
 	public Arrangement() {
 		resetArrangement();
 		setPreviewChorus(true);
+		initGlobalVariationMap();
 	}
 
 	public List<Section> getSections() {

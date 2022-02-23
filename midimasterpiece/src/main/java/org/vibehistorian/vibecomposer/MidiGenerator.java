@@ -70,7 +70,6 @@ import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
-import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import jm.JMC;
 import jm.music.data.Note;
@@ -5305,7 +5304,7 @@ public class MidiGenerator implements JMC {
 				continue;
 			}
 
-			if (VariationPopup.bannedInstVariations.get(part).contains(i + 2)) {
+			if (!gc.getArrangement().getGlobalVariationMap().get(part)[i + 1]) {
 				continue;
 			}
 

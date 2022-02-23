@@ -12,11 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
@@ -49,13 +45,6 @@ import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class VariationPopup {
-
-	public static Map<Integer, Set<Integer>> bannedInstVariations = new HashMap<>();
-	static {
-		for (int i = 0; i < 5; i++) {
-			bannedInstVariations.put(i, new HashSet<>());
-		}
-	}
 
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
@@ -192,11 +181,13 @@ public class VariationPopup {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}
-					} else if (SwingUtilities.isMiddleMouseButton(e) && col > 1) {
-						if (bannedInstVariations.get(fI).contains(col)) {
-							bannedInstVariations.get(fI).remove(col);
+					} else if (SwingUtilities.isMiddleMouseButton(e) && col >= 2) {
+						Boolean[] vars = VibeComposerGUI.arrangement.getGlobalVariationMap()
+								.get(fI);
+						if (vars[col - 1]) {
+							vars[col - 1] = Boolean.FALSE;
 						} else {
-							bannedInstVariations.get(fI).add(col);
+							vars[col - 1] = Boolean.TRUE;
 							for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
 								sec.removeVariationForAllParts(fI, col);
 							}
