@@ -54,10 +54,10 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 					colNames[j] = Section.variationDescriptions[i][j + 1];
 				}
 			} else {
-				colNames = new String[Section.riskyVariationNames.length + 1];
+				colNames = new String[Section.sectionVariationNames.length + 1];
 				colNames[0] = "ALL";
 				for (int j = 1; j < colNames.length; j++) {
-					colNames[j] = Section.riskyVariationNames[j - 1];
+					colNames[j] = Section.sectionVariationNames[j - 1];
 				}
 			}
 

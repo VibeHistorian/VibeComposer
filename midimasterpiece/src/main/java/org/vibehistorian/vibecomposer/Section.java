@@ -64,9 +64,9 @@ public class Section {
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "ChordDir." },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
-	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
+	public static final String[] sectionVariationNames = { "Skip N-1 chord", "Swap Chords",
 			"Swap Melody", "Melody Max Speed", "Key Change" };
-	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
+	public static final Double[] sectionVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
 
 	public static final String[] transitionNames = { "None", "Hype Up", "Pipe Down", "Cut End",
 			"Half Tempo" };
@@ -158,9 +158,9 @@ public class Section {
 	// map 
 	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>();
 
-	private List<Integer> riskyVariations = null;
-	public static final List<Integer> EMPTY_RISKY_VARS = IntStream.iterate(0, f -> f)
-			.limit(riskyVariationNames.length).boxed().collect(Collectors.toList());
+	private List<Integer> sectionVariations = null;
+	public static final List<Integer> EMPTY_SECTION_VARS = IntStream.iterate(0, f -> f)
+			.limit(sectionVariationNames.length).boxed().collect(Collectors.toList());
 	private int transitionType = 0;
 
 	public Section() {
@@ -337,8 +337,8 @@ public class Section {
 			dataCopy.put(i, data);
 		}
 		sec.partPresenceVariationMap = dataCopy;
-		if (riskyVariations != null) {
-			sec.riskyVariations = new ArrayList<>(riskyVariations);
+		if (sectionVariations != null) {
+			sec.sectionVariations = new ArrayList<>(sectionVariations);
 		}
 		sec.transitionType = getTransitionType();
 		if (instVelocityMultiplier != null) {
@@ -729,17 +729,17 @@ public class Section {
 	}
 
 	@XmlList
-	public List<Integer> getRiskyVariations() {
-		if (riskyVariations != null) {
-			while (riskyVariations.size() < riskyVariationNames.length) {
-				riskyVariations.add(0);
+	public List<Integer> getSectionVariations() {
+		if (sectionVariations != null) {
+			while (sectionVariations.size() < sectionVariationNames.length) {
+				sectionVariations.add(0);
 			}
 		}
-		return riskyVariations;
+		return sectionVariations;
 	}
 
-	public boolean isRiskyVar(int num) {
-		return riskyVariations != null && getRiskyVariations().get(num) > 0;
+	public boolean isSectionVar(int num) {
+		return sectionVariations != null && getSectionVariations().get(num) > 0;
 	}
 
 	public boolean isTransition() {
@@ -750,19 +750,19 @@ public class Section {
 		return transitionType;
 	}
 
-	public void setRiskyVariations(List<Integer> riskyVariations) {
-		this.riskyVariations = riskyVariations;
+	public void setSectionVariations(List<Integer> sectionVariations) {
+		this.sectionVariations = sectionVariations;
 	}
 
-	public void setRiskyVariation(int order, Integer value) {
-		if (riskyVariations == null) {
-			List<Integer> riskyVars = new ArrayList<>();
-			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-				riskyVars.add(0);
+	public void setSectionVariation(int order, Integer value) {
+		if (sectionVariations == null) {
+			List<Integer> sectionVars = new ArrayList<>();
+			for (int i = 0; i < Section.sectionVariationNames.length; i++) {
+				sectionVars.add(0);
 			}
-			setRiskyVariations(riskyVars);
+			setSectionVariations(sectionVars);
 		}
-		riskyVariations.set(order, value);
+		sectionVariations.set(order, value);
 	}
 
 	public double countVariationsForPartType(int part) {

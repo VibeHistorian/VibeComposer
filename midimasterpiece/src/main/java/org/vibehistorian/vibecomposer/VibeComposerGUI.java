@@ -225,8 +225,8 @@ public class VibeComposerGUI extends JFrame
 	private static final String MID_EXTENSION = ".mid";
 	private static final String SAVED_MIDIS_FOLDER_BASE = "/saved_";
 
-	private static List<Image> RISKY_VARIATIONS_ICONS = new ArrayList<>();
-	private static final String[] RISKY_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
+	private static List<Image> SECTION_VARIATIONS_ICONS = new ArrayList<>();
+	private static final String[] SECTION_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
 			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png", };
 	private static List<Image> SECTION_TRANSITION_ICONS = new ArrayList<>();
 	private static final String[] SECTION_TRANSITION_ICON_NAMES = new String[] { "v5_transUp.png",
@@ -712,9 +712,9 @@ public class VibeComposerGUI extends JFrame
 				g2d.fillRect(0, 0, w, h);
 			}
 		};
-		for (int i = 0; i < RISKY_VAR_ICON_NAMES.length; i++) {
-			RISKY_VARIATIONS_ICONS.add(new ImageIcon(new ImageIcon(
-					this.getClass().getResource("/icons/riskyvars/" + RISKY_VAR_ICON_NAMES[i]))
+		for (int i = 0; i < SECTION_VAR_ICON_NAMES.length; i++) {
+			SECTION_VARIATIONS_ICONS.add(new ImageIcon(new ImageIcon(
+					this.getClass().getResource("/icons/sectionvars/" + SECTION_VAR_ICON_NAMES[i]))
 							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
 									.getImage());
 		}
@@ -3503,20 +3503,20 @@ public class VibeComposerGUI extends JFrame
 							if (guh instanceof Graphics2D) {
 								Graphics2D g = (Graphics2D) guh;
 								Section sec = actualArrangement.getSections().get(fI);
-								List<Integer> riskyVars = sec.getRiskyVariations();
-								if (riskyVars == null) {
-									riskyVars = Section.EMPTY_RISKY_VARS;
+								List<Integer> sectionVars = sec.getSectionVariations();
+								if (sectionVars == null) {
+									sectionVars = Section.EMPTY_SECTION_VARS;
 								}
 								int xsizeForIcon = Math.max(16,
-										((this.getWidth() / Section.riskyVariationNames.length)
+										((this.getWidth() / Section.sectionVariationNames.length)
 												- 2));
 								int currentX = 8;
-								for (int j = 0; j < (Section.riskyVariationNames.length + 1)
+								for (int j = 0; j < (Section.sectionVariationNames.length + 1)
 										/ 2; j++) {
 									// in case of swap chords, behave same as custom chords
-									if (riskyVars.get(j) > 0
+									if (sectionVars.get(j) > 0
 											|| (j == 1 && sec.isCustomChordsDurationsEnabled())) {
-										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX, 6,
+										g.drawImage(SECTION_VARIATIONS_ICONS.get(j), currentX, 6,
 												this);
 									}
 									currentX += xsizeForIcon + 2;
@@ -3529,10 +3529,10 @@ public class VibeComposerGUI extends JFrame
 								}
 
 								currentX = 8;
-								for (int j = (Section.riskyVariationNames.length + 1)
-										/ 2; j < Section.riskyVariationNames.length; j++) {
-									if (riskyVars.get(j) > 0) {
-										g.drawImage(RISKY_VARIATIONS_ICONS.get(j), currentX,
+								for (int j = (Section.sectionVariationNames.length + 1)
+										/ 2; j < Section.sectionVariationNames.length; j++) {
+									if (sectionVars.get(j) > 0) {
+										g.drawImage(SECTION_VARIATIONS_ICONS.get(j), currentX,
 												this.getHeight() * 3 / 4 - 6, this);
 									}
 									currentX += xsizeForIcon + 2;
@@ -3556,7 +3556,7 @@ public class VibeComposerGUI extends JFrame
 				public void mousePressed(MouseEvent evt) {
 					if (SwingUtilities.isMiddleMouseButton(evt)) {
 						actualArrangement.getSections().get(fI)
-								.setRiskyVariations(new ArrayList<>());
+								.setSectionVariations(new ArrayList<>());
 						recolorVariationPopupButton(butt, actualArrangement.getSections().get(fI));
 					}
 				}
@@ -3578,13 +3578,13 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void recolorVariationPopupButton(JButton butt, Section sec) {
-		int count = (sec.getRiskyVariations() != null)
-				? (int) sec.getRiskyVariations().stream().filter(e -> e > 0).count()
+		int count = (sec.getSectionVariations() != null)
+				? (int) sec.getSectionVariations().stream().filter(e -> e > 0).count()
 				: 0;
 		count += (sec.isTransition() ? 1 : 0);
 		count += (sec.isCustomChordsDurationsEnabled() ? 1 : 0);
 		int color = 0;
-		int total = Section.riskyVariationNames.length + 1;
+		int total = Section.sectionVariationNames.length + 1;
 		if (isDarkMode) {
 			color = arrangementDarkModeLowestColor + (35 * count) / total;
 			color = Math.min(color, 135);
@@ -9066,7 +9066,7 @@ public class VibeComposerGUI extends JFrame
 		int lastKeyChange = 0;
 		for (int i = 0; i < sectionIndex; i++) {
 			Section sec = actualArrangement.getSections().get(i);
-			if (sec.isRiskyVar(4)) {
+			if (sec.isSectionVar(4)) {
 				SectionConfig secC = sec.getSecConfig();
 				lastMode = secC.getCustomScale() != null ? secC.getCustomScale() : lastMode;
 				lastKeyChange = secC.getCustomKeyChange() != null ? secC.getCustomKeyChange()

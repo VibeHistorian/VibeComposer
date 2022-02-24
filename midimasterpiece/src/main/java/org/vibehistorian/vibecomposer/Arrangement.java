@@ -530,7 +530,7 @@ public class Arrangement {
 			}
 			globalVariationMap.put(i, data);
 		}
-		Boolean[] data = new Boolean[Section.riskyVariationNames.length + 1];
+		Boolean[] data = new Boolean[Section.sectionVariationNames.length + 1];
 		for (int k = 0; k < data.length; k++) {
 			data[k] = Boolean.TRUE;
 		}

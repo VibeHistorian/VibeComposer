@@ -74,7 +74,7 @@ public class VariationPopup {
 
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
-		addRiskyVariations(sec);
+		addSectionVariations(sec);
 		addVariationSettings(sec);
 		//addSectionConfigSettings(sec);
 		addInstVolumeKnobs(sec);
@@ -429,30 +429,30 @@ public class VariationPopup {
 		tablesPanel.add(sectionConfigSettingsPanel);
 	}
 
-	private void addRiskyVariations(Section sec) {
-		JPanel riskyVarPanel = new JPanel();
-		riskyVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
-		riskyVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-			JCheckBox riskyVar = new CustomCheckBox(Section.riskyVariationNames[i], false);
-			if (sec.getRiskyVariations() != null) {
-				riskyVar.setSelected(sec.isRiskyVar(i));
+	private void addSectionVariations(Section sec) {
+		JPanel sectionVarPanel = new JPanel();
+		sectionVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		sectionVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		for (int i = 0; i < Section.sectionVariationNames.length; i++) {
+			JCheckBox sectionVar = new CustomCheckBox(Section.sectionVariationNames[i], false);
+			if (sec.getSectionVariations() != null) {
+				sectionVar.setSelected(sec.isSectionVar(i));
 			}
 			final int index = i;
-			riskyVar.addItemListener(new ItemListener() {
+			sectionVar.addItemListener(new ItemListener() {
 
 				@Override
 				public void itemStateChanged(ItemEvent e) {
-					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
+					sec.setSectionVariation(index, sectionVar.isSelected() ? 1 : 0);
 					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 				}
 
 			});
-			riskyVarPanel.add(riskyVar);
+			sectionVarPanel.add(sectionVar);
 		}
 
 
-		tablesPanel.add(riskyVarPanel);
+		tablesPanel.add(sectionVarPanel);
 
 	}
 
