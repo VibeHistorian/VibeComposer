@@ -1,8 +1,11 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import java.awt.AlphaComposite;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -47,7 +50,17 @@ public class LockComponentButton extends JComponent {
 		}
 		boolean isLocked = linkedComponent.isEnabled();
 		int iconIndex = isLocked ? 0 : 1;
-		g.drawImage(VibeComposerGUI.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
+		if (VibeComposerGUI.isDarkMode) {
+			iconIndex += 2;
+		}
+		if (iconIndex >= 2 && g instanceof Graphics2D) {
+			Graphics2D g2d = (Graphics2D) g;
+			Composite c = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, .65f);
+			g2d.setComposite(c);
+			g2d.drawImage(VibeComposerGUI.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
+		} else {
+			g.drawImage(VibeComposerGUI.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
+		}
 		//g.dispose();
 	}
 

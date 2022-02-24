@@ -233,7 +233,7 @@ public class VibeComposerGUI extends JFrame
 			"v6_transDown.png", "v7_transCut.png", "v8_halvedTempo.png" };
 	public static List<Image> LOCK_COMPONENT_ICONS = new ArrayList<>();
 	private static final String[] LOCK_COMPONENT_ICON_NAMES = new String[] { "lock.png",
-			"toggle_lock.png" };
+			"toggle_lock.png", "lock_white.png", "toggle_lock_white.png" };
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
