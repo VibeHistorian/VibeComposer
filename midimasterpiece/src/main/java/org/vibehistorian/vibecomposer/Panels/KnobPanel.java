@@ -4,8 +4,10 @@ import java.awt.Dimension;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
 
 import org.vibehistorian.vibecomposer.Components.JKnob;
+import org.vibehistorian.vibecomposer.Components.LockComponentButton;
 
 public class KnobPanel extends TransparentablePanel {
 
@@ -42,7 +44,17 @@ public class KnobPanel extends TransparentablePanel {
 		}
 		setMaximumSize(new Dimension(200, 50));
 		add(label);
-		add(knob);
+		JLayeredPane knobLockPane = new JLayeredPane();
+		knobLockPane.setPreferredSize(new Dimension(40, 40));
+		knobLockPane.setOpaque(false);
+		knobLockPane.add(knob);
+		LockComponentButton lockButt = new LockComponentButton(knob);
+		knobLockPane.add(lockButt);
+		knobLockPane.setComponentZOrder(knob, Integer.valueOf(1));
+		knobLockPane.setComponentZOrder(lockButt, Integer.valueOf(0));
+		lockButt.setBounds(33, 32, 8, 8);
+		add(knobLockPane);
+		knob.repaint();
 	}
 
 

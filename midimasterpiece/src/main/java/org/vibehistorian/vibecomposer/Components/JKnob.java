@@ -150,6 +150,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		knobColor = initKnobColor;
 		spotColor = initSpotColor;
 		textValue.setVisible(false);
+		setSize(2 * radius, 2 * radius);
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
 	}
@@ -165,8 +166,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
 		if (g instanceof Graphics2D) {
-			super.paintComponent(g);
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setFont(mainFont);
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -259,6 +260,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 			//g2d.setColor(spotColor);
 			//g2d.drawOval(0, 0, 2 * radius, 2 * radius);
 			g2d.fillOval(xc - spotRadius, yc - spotRadius, 2 * spotRadius, 2 * spotRadius);
+
 			g2d.dispose();
 		}
 	}
@@ -269,6 +271,11 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		coord[1] = (int) (-dist * Math.sin(rad) + dist);
 		return coord;
 	}
+
+	/*@Override
+	public Dimension getSize() {
+		return new Dimension(2 * radius, 2 * radius);
+	}*/
 
 	/**
 	 * Return the ideal size that the knob would like to be.
@@ -729,7 +736,7 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 	}
 
 	public KnobPanel parent() {
-		return (KnobPanel) getParent();
+		return (KnobPanel) getParent().getParent();
 	}
 
 	private void setEnabledGlobal(boolean enabled) {

@@ -225,12 +225,15 @@ public class VibeComposerGUI extends JFrame
 	private static final String MID_EXTENSION = ".mid";
 	private static final String SAVED_MIDIS_FOLDER_BASE = "/saved_";
 
-	private static List<Image> SECTION_VARIATIONS_ICONS = new ArrayList<>();
+	public static List<Image> SECTION_VARIATIONS_ICONS = new ArrayList<>();
 	private static final String[] SECTION_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
 			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png", };
-	private static List<Image> SECTION_TRANSITION_ICONS = new ArrayList<>();
+	public static List<Image> SECTION_TRANSITION_ICONS = new ArrayList<>();
 	private static final String[] SECTION_TRANSITION_ICON_NAMES = new String[] { "v5_transUp.png",
 			"v6_transDown.png", "v7_transCut.png", "v8_halvedTempo.png" };
+	public static List<Image> LOCK_COMPONENT_ICONS = new ArrayList<>();
+	private static final String[] LOCK_COMPONENT_ICON_NAMES = new String[] { "lock.png",
+			"toggle_lock.png" };
 
 	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
 			750, 1000, 1500, 2000 };
@@ -722,6 +725,13 @@ public class VibeComposerGUI extends JFrame
 			SECTION_TRANSITION_ICONS.add(new ImageIcon(new ImageIcon(this.getClass()
 					.getResource("/icons/transitions/" + SECTION_TRANSITION_ICON_NAMES[i]))
 							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
+									.getImage());
+		}
+
+		for (int i = 0; i < LOCK_COMPONENT_ICON_NAMES.length; i++) {
+			LOCK_COMPONENT_ICONS.add(new ImageIcon(new ImageIcon(
+					this.getClass().getResource("/icons/" + LOCK_COMPONENT_ICON_NAMES[i]))
+							.getImage().getScaledInstance(8, 8, java.awt.Image.SCALE_SMOOTH))
 									.getImage());
 		}
 
