@@ -6,8 +6,6 @@ public class GlobalVariationBooleanTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 8472479776056588708L;
 
-	int part = 0;
-
 	Object tableData[];
 
 	String columnNames[];
@@ -65,8 +63,7 @@ public class GlobalVariationBooleanTableModel extends AbstractTableModel {
 		return true;
 	}
 
-	public GlobalVariationBooleanTableModel(int part, Object[] data, String[] colNames) {
-		this.part = part;
+	public GlobalVariationBooleanTableModel(Object[] data, String[] colNames) {
 		tableData = data;
 		columnNames = colNames;
 	}

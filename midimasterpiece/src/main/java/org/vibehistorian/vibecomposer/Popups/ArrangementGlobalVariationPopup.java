@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -23,7 +24,7 @@ import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class ArrangementGlobalVariationPopup extends CloseablePopup {
 	JPanel tablesPanel = new JPanel();
-	JTable[] tables = new JTable[5];
+	JTable[] tables = new JTable[6];
 
 	JScrollPane scroll;
 
@@ -36,9 +37,7 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 		//addPartInclusionButtons(arr);
 
 
-		for (int i = 0; i < 5; i++) {
-			int fI = i;
-
+		for (int i = 0; i < 6; i++) {
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (arr.getGlobalVariationMap() == null) {
@@ -47,13 +46,23 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 			if (arr.getGlobalVariationMap().get(i) == null) {
 				arr.initGlobalVariationMap();
 			}
-			String[] colNames = new String[Section.variationDescriptions[i].length - 1];
-			colNames[0] = "ALL";
-			for (int j = 1; j < colNames.length; j++) {
-				colNames[j] = Section.variationDescriptions[i][j + 1];
+			String[] colNames = null;
+			if (i < 5) {
+				colNames = new String[Section.variationDescriptions[i].length - 1];
+				colNames[0] = "ALL";
+				for (int j = 1; j < colNames.length; j++) {
+					colNames[j] = Section.variationDescriptions[i][j + 1];
+				}
+			} else {
+				colNames = new String[Section.riskyVariationNames.length + 1];
+				colNames[0] = "ALL";
+				for (int j = 1; j < colNames.length; j++) {
+					colNames[j] = Section.riskyVariationNames[j - 1];
+				}
 			}
-			table.setModel(new GlobalVariationBooleanTableModel(fI,
-					arr.getGlobalVariationMap().get(i), colNames));
+
+			table.setModel(new GlobalVariationBooleanTableModel(arr.getGlobalVariationMap().get(i),
+					colNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -65,12 +74,15 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 			categoryPanel.setMaximumSize(new Dimension(2000, 40));
 			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
 			JPanel categoryButtons = new JPanel();
-			JLabel categoryName = new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
+			String name = (i < 5) ? VibeComposerGUI.instNames[i].toUpperCase()
+					: "SECTION VARIATIONS";
+			JLabel categoryName = new JLabel(name);
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
 			categoryPanel.add(categoryName);
-			categoryPanel.addBackground(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
+			Color categoryColor = (i < 5) ? VibeComposerGUI.instColors[i] : Color.cyan;
+			categoryPanel.addBackground(OMNI.alphen(categoryColor, 50));
 
 			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.add(categoryButtons);

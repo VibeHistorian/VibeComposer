@@ -3351,6 +3351,8 @@ public class MidiGenerator implements JMC {
 				boolean isVariation = variationGen
 						.nextInt(100) < (gc.getArrangementVariationChance()
 								* Section.riskyVariationChanceMultipliers[i]);
+				isVariation &= gc.getArrangement().isGlobalVariation(5, i);
+
 				// generate only if not last AND next section is same type
 				if (i == 0 || i == 4) {
 					isVariation &= (secOrder < arr.getSections().size() - 1
@@ -3563,7 +3565,7 @@ public class MidiGenerator implements JMC {
 				sec.setMelodyChance(Math.min(100, oldChance * melodyChanceMultiplier));
 				boolean added = !mp.isMuted() && ((overridden && presences.contains(mp.getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getMelodyChance()));
-				added &= gc.getArrangement().getPartInclusion(0, i, notesSeedOffset);
+				added &= gc.getArrangement().isPartInclusion(0, i, notesSeedOffset);
 				if (added && !overridden) {
 					sec.setPresence(0, i);
 				}
@@ -3578,7 +3580,7 @@ public class MidiGenerator implements JMC {
 			Set<Integer> presences = sec.getPresence(1);
 			boolean added = (overridden && presences.contains(gc.getBassParts().get(0).getOrder()))
 					|| (!overridden && rand.nextInt(100) < sec.getBassChance());
-			added &= gc.getArrangement().getPartInclusion(1, 0, notesSeedOffset);
+			added &= gc.getArrangement().isPartInclusion(1, 0, notesSeedOffset);
 			if (added) {
 				if (!overridden)
 					sec.setPresence(1, 0);
@@ -3593,7 +3595,7 @@ public class MidiGenerator implements JMC {
 				variationGen.setSeed(arrSeed + 100 + cp.getOrder());
 				boolean added = (overridden && presences.contains(cp.getOrder()))
 						|| (!overridden && rand.nextInt(100) < sec.getChordChance());
-				added &= gc.getArrangement().getPartInclusion(2, i, notesSeedOffset);
+				added &= gc.getArrangement().isPartInclusion(2, i, notesSeedOffset);
 				if (added && !cp.isMuted()) {
 					if (!overridden)
 						sec.setPresence(2, i);
@@ -3614,7 +3616,7 @@ public class MidiGenerator implements JMC {
 						&& ((isPreview || counter > ((arr.getSections().size() - 1) / 2))
 								&& !ap.isMuted()));
 
-				added &= gc.getArrangement().getPartInclusion(3, i, notesSeedOffset);
+				added &= gc.getArrangement().isPartInclusion(3, i, notesSeedOffset);
 				if (added) {
 					if (!overridden)
 						sec.setPresence(3, i);
@@ -3637,7 +3639,7 @@ public class MidiGenerator implements JMC {
 
 				boolean added = (overridden && presences.contains(dp.getOrder())) || (!overridden
 						&& rand.nextInt(100) < sec.getDrumChance() * drumChanceMultiplier);
-				added &= gc.getArrangement().getPartInclusion(4, i, notesSeedOffset);
+				added &= gc.getArrangement().isPartInclusion(4, i, notesSeedOffset);
 				if (added && !dp.isMuted()) {
 					if (!overridden)
 						sec.setPresence(4, i);
@@ -5304,7 +5306,7 @@ public class MidiGenerator implements JMC {
 				continue;
 			}
 
-			if (!gc.getArrangement().getGlobalVariationMap().get(part)[i + 1]) {
+			if (!gc.getArrangement().isGlobalVariation(part, i)) {
 				continue;
 			}
 

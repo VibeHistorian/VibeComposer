@@ -460,15 +460,12 @@ public class Arrangement {
 		}
 	}
 
-	public boolean getPartInclusion(int part, int partOrder, int sectionType) {
+	public boolean isPartInclusion(int part, int partOrder, int sectionType) {
 		initPartInclusionMapIfNull();
 		if (isOverridden()) {
 			return true;
 		}
-		if (partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
-			return true;
-		}
-		return false;
+		return partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE;
 	}
 
 	public void recalculatePartInclusionMapBoundsIfNeeded() {
@@ -533,6 +530,11 @@ public class Arrangement {
 			}
 			globalVariationMap.put(i, data);
 		}
+		Boolean[] data = new Boolean[Section.riskyVariationNames.length + 1];
+		for (int k = 0; k < data.length; k++) {
+			data[k] = Boolean.TRUE;
+		}
+		globalVariationMap.put(5, data);
 	}
 
 	public void initGlobalVariationMapIfNull() {
@@ -547,5 +549,13 @@ public class Arrangement {
 
 	public void setGlobalVariationMap(Map<Integer, Boolean[]> globalVariationMap) {
 		this.globalVariationMap = globalVariationMap;
+	}
+
+	public boolean isGlobalVariation(int part, int variationOrder) {
+		initGlobalVariationMapIfNull();
+		if (isOverridden()) {
+			return true;
+		}
+		return globalVariationMap.get(part)[variationOrder + 1] == Boolean.TRUE;
 	}
 }
