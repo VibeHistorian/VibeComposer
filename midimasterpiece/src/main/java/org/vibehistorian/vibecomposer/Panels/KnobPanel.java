@@ -54,7 +54,6 @@ public class KnobPanel extends TransparentablePanel {
 		knobLockPane.setComponentZOrder(lockButt, Integer.valueOf(0));
 		lockButt.setBounds(33, 32, 8, 8);
 		add(knobLockPane);
-		knob.repaint();
 	}
 
 

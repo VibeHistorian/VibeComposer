@@ -23,7 +23,12 @@ public class LockComponentButton extends JComponent {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (linkedComponent != null) {
-					linkedComponent.setEnabled(!linkedComponent.isEnabled());
+					if (e.isControlDown() && linkedComponent instanceof GloballyLockable) {
+						((GloballyLockable) linkedComponent)
+								.setEnabledGlobal(!linkedComponent.isEnabled());
+					} else {
+						linkedComponent.setEnabled(!linkedComponent.isEnabled());
+					}
 					repaint();
 				}
 			}

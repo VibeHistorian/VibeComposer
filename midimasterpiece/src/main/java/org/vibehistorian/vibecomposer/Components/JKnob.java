@@ -46,7 +46,8 @@ import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
  * @version 12/4/2000
  */
 
-public class JKnob extends JComponent implements MouseListener, MouseMotionListener {
+public class JKnob extends JComponent
+		implements MouseListener, MouseMotionListener, GloballyLockable {
 
 	private static final long serialVersionUID = -4469347887690128306L;
 
@@ -739,7 +740,8 @@ public class JKnob extends JComponent implements MouseListener, MouseMotionListe
 		return (KnobPanel) getParent().getParent();
 	}
 
-	private void setEnabledGlobal(boolean enabled) {
+	@Override
+	public void setEnabledGlobal(boolean enabled) {
 		InstPanel instParent = SwingUtils.getInstParent(this);
 		if (instParent == null) {
 			setEnabled(enabled);
