@@ -41,7 +41,7 @@ public class ChordletPanel extends JPanel {
 	private JPanel rawChordsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 	private JPanel extrasPanel = new JPanel();
 
-	private JTextField rawChords = new JTextField("", 42);
+	private JTextField rawChords = null;
 	private boolean chordletsDisplayed = true;
 
 	private static final int extrasSize = 70;
@@ -69,7 +69,7 @@ public class ChordletPanel extends JPanel {
 		extrasPanel.setOpaque(false);
 
 		//chordletsPanel.setBackground(OMNI.alphen(Color.cyan, 20));
-
+		rawChords = new JTextField("", fullSize / 20);
 		rawChordsPanel.setVisible(false);
 		rawChords.setText(getChordListString());
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "

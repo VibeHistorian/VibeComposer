@@ -83,6 +83,7 @@ public class BassPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 9"));
 		setPanelOrder(1);
+		comboPanel.reapplyHits();
 		initDefaultsPost();
 	}
 

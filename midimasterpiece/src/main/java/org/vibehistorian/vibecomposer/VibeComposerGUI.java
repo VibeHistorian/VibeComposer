@@ -4135,27 +4135,27 @@ public class VibeComposerGUI extends JFrame
 
 			public void run() {
 				while (true) {
-					recalculateSolosMutes();
+					try {
+						recalculateSolosMutes();
+						try {
+							sleep(100);
+						} catch (InterruptedException e) {
+							LG.e(e.getMessage());
+						}
+					} catch (Exception e) {
+						LG.i(("Exception in SOLO buttons thread:" + e));
+					}
 				}
 			}
 
 			private void recalculateSolosMutes() {
-				try {
-					// recalc sequencer tracks from button colorings
-					if (needToRecalculateSoloMuters && !composingInProgress) {
-						needToRecalculateSoloMuters = false;
-						unapplySolosMutes(true);
+				// recalc sequencer tracks from button colorings
+				if (needToRecalculateSoloMuters && !composingInProgress) {
+					needToRecalculateSoloMuters = false;
+					unapplySolosMutes(true);
 
-						reapplySolosMutes();
-						recolorButtons();
-					}
-					try {
-						sleep(100);
-					} catch (InterruptedException e) {
-
-					}
-				} catch (Exception e) {
-					LG.i(("Exception in SOLO buttons thread:" + e));
+					reapplySolosMutes();
+					recolorButtons();
 				}
 			}
 
@@ -4284,22 +4284,21 @@ public class VibeComposerGUI extends JFrame
 								if (allowedActionsOnZero == 0) {
 									slider.setUpperValue(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
-									currentTime.setText(
-											millisecondsToTimeString(slider.getUpperValue()));
-									slider.repaint();
 								} else {
 									slider.setUpperValueRaw(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
 								}
-							} else {
-								currentTime
-										.setText(millisecondsToTimeString(slider.getUpperValue()));
 							}
+
 						}
 
 
 						if (allowedActionsOnZero == 0) {
 							if (actualArrangement != null && slider.getMaximum() > 0) {
+								String newTime = millisecondsToTimeString(slider.getUpperValue());
+								if (!newTime.equals(currentTime.getText())) {
+									currentTime.setText(newTime);
+								}
 								int val = slider.getUpperValue();
 								int sectIndex = -1;
 								if (sliderMeasureStartTimes != null
@@ -4345,9 +4344,12 @@ public class VibeComposerGUI extends JFrame
 								}
 
 								Section actualSec = sec;
-								if (highlightPatterns.isSelected()) {
-									SwingUtilities.invokeLater(() -> notifyVisualPatterns(val,
-											finalSectIndex, actualSec));
+								int part = instrumentTabPane.getSelectedIndex();
+								if (part >= 2 && part <= 4) {
+									if (highlightPatterns.isSelected()) {
+										SwingUtilities.invokeAndWait(() -> notifyVisualPatterns(val,
+												finalSectIndex, actualSec));
+									}
 								}
 
 								if (sequencer != null) {
@@ -4397,7 +4399,7 @@ public class VibeComposerGUI extends JFrame
 						}
 
 						try {
-							int tabIndex = instrumentTabPane.getSelectedIndex();
+							/*int tabIndex = instrumentTabPane.getSelectedIndex();
 							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)
 									|| (scorePopup != null || tabIndex == 7)) {
 								sleep(5);
@@ -4405,7 +4407,9 @@ public class VibeComposerGUI extends JFrame
 							} else {
 								allowedActionsOnZero = 0;
 								sleep(25);
-							}
+							}*/
+							allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
+							sleep(10);
 
 						} catch (InterruptedException e) {
 							LG.e("THREAD INTERRUPTED!");
@@ -4415,7 +4419,7 @@ public class VibeComposerGUI extends JFrame
 						LG.e(e.getMessage());
 						e.printStackTrace();
 						try {
-							sleep(200);
+							sleep(500);
 						} catch (InterruptedException e2) {
 
 						}
@@ -4775,7 +4779,6 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel playSettingsPanel = new JPanel();
 		playSettingsPanel.setOpaque(false);
-
 
 		playSettingsPanel.add(regenerateWhenValuesChange);
 		playSettingsPanel.add(showScore);

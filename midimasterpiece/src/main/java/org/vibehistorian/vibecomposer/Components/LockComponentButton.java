@@ -37,7 +37,7 @@ public class LockComponentButton extends JComponent {
 			}
 		});
 		setPreferredSize(new Dimension(w, h));
-		setOpaque(false);
+		setOpaque(true);
 		setSize(new Dimension(w, h));
 	}
 
@@ -49,13 +49,13 @@ public class LockComponentButton extends JComponent {
 			return;
 		}
 		boolean isLocked = linkedComponent.isEnabled();
-		int iconIndex = isLocked ? 0 : 1;
+		int iconIndex = isLocked ? 1 : 0;
 		if (VibeComposerGUI.isDarkMode) {
 			iconIndex += 2;
 		}
 		if (iconIndex >= 2 && g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g;
-			Composite c = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, .65f);
+			Composite c = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, .5f);
 			g2d.setComposite(c);
 			g2d.drawImage(VibeComposerGUI.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
 		} else {

@@ -289,7 +289,7 @@ public class VariationPopup {
 		String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
 				? VibeComposerGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
-		userChords = new ChordletPanel(350,
+		userChords = new ChordletPanel(300,
 				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())
 						? sec.getCustomChords()
 						: guiUserChords);
@@ -298,7 +298,7 @@ public class VariationPopup {
 		userChordsDurations = new JTextField(
 				sec.isCustomChordsDurationsEnabled() ? sec.getCustomDurations()
 						: VibeComposerGUI.userChordsDurations.getText(),
-				9);
+				7);
 		customChordsDurationsPanel.add(new JLabel("Chord durations:"));
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
