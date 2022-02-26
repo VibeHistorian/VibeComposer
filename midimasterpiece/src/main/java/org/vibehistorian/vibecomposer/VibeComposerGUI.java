@@ -2692,7 +2692,15 @@ public class VibeComposerGUI extends JFrame
 		pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
 		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
-		JButton randomizeArrangementBtn = makeButton("Randomize", "ArrangementRandomize");
+		JButton randomizeArrangementBtn = makeButton("Randomize", e -> {
+			Random arrGen = new Random();
+			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
+					Integer.valueOf(pieceLength.getText()));
+			recalculateTabPaneCounts();
+			if (canRegenerateOnChange()) {
+				composeMidi(true);
+			}
+		});
 		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> openPartInclusionPopup());
 		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> openGlobalVariationPopup());
 
