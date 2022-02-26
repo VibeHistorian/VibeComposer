@@ -114,7 +114,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		pane.setPreferredSize(new Dimension(w, h));
 		pane.setOpaque(false);
 		pane.add(scb);
-		lockButt = new LockComponentButton(scb);
+		lockButt = new LockComponentButton(this);
 		pane.add(lockButt);
 		pane.setComponentZOrder(scb, Integer.valueOf(1));
 		pane.setComponentZOrder(lockButt, Integer.valueOf(0));
@@ -325,12 +325,10 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 			repaint();
 			return;
 		}
-		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
-			ip.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> {
-				e.setEnabled(enabled);
-				e.repaint();
-			});
-		}
+		instParent.getAllComponentsLike(scb, FireableComboBox.class).forEach(e -> {
+			e.setEnabled(enabled);
+			e.repaint();
+		});
 	}
 
 	public void removeAllItems() {

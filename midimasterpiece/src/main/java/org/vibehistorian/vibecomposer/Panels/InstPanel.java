@@ -60,6 +60,7 @@ import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.RangeSlider;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -910,12 +911,12 @@ public abstract class InstPanel extends JPanel {
 		return Pair.of(rhythmGridSpanned.toArray(new Integer[0]), gridMap);
 	}
 
-	public List<ScrollComboBox> findScrollComboBoxesByFirstVal(Object firstVal) {
-		List<ScrollComboBox> allBoxes = getChildComponents(ScrollComboBox.class, this, true);
+	public List<ScrollComboPanel> findScrollComboBoxesByFirstVal(Object firstVal) {
+		List<ScrollComboPanel> allBoxes = getChildComponents(ScrollComboPanel.class, this, true);
 		if (firstVal == null) {
 			return allBoxes;
 		}
-		List<ScrollComboBox> namedBoxes = allBoxes.stream()
+		List<ScrollComboPanel> namedBoxes = allBoxes.stream()
 				.filter(e -> firstVal.equals(e.getItemAt(0))).collect(Collectors.toList());
 		//LG.i("Found boxes: " + namedBoxes.size());
 		return namedBoxes;
@@ -931,10 +932,23 @@ public abstract class InstPanel extends JPanel {
 		return namedKnobs;
 	}
 
-	public <T extends JComponent> int findIndexOfComponent(JComponent c) {
-		List<? extends JComponent> children = getChildComponents(c.getClass(), this, true);
+	public <T extends JComponent> List<T> getAllComponentsLike(JComponent c, Class<T> clazz) {
+		int indexInPanel = findIndexOfComponent(c, clazz);
+		if (indexInPanel < 0) {
+			return new ArrayList<>();
+		}
+		List<T> components = VibeComposerGUI.getAffectedPanels(getPartNum()).stream()
+				.map(e -> e.getComponentByClassIndex(clazz, indexInPanel))
+				.collect(Collectors.toList());
+		return components;
+	}
+
+	public <T extends JComponent> int findIndexOfComponent(JComponent c, Class<T> clazz) {
+		List<T> children = getChildComponents(clazz, this, true);
+		//LG.i("Found children: " + children.size());
 		for (int i = 0; i < children.size(); i++) {
-			if (children.get(i) == c) {
+			//LG.i("Hash1: " + children.get(i).hashCode() + ", hash2: " + c.hashCode());
+			if (clazz.isInstance(children.get(i)) && children.get(i).equals(c)) {
 				return i;
 			}
 		}

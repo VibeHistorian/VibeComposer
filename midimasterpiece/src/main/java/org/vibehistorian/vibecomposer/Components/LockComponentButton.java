@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -26,7 +27,8 @@ public class LockComponentButton extends JComponent {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (linkedComponent != null) {
-					if (e.isControlDown() && linkedComponent instanceof GloballyLockable) {
+					if ((e.isControlDown() || SwingUtilities.isMiddleMouseButton(e))
+							&& linkedComponent instanceof GloballyLockable) {
 						((GloballyLockable) linkedComponent)
 								.setEnabledGlobal(!linkedComponent.isEnabled());
 					} else {
