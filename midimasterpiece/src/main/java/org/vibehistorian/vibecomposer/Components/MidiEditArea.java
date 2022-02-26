@@ -719,11 +719,13 @@ public class MidiEditArea extends JComponent {
 			Map<Integer, Set<Integer>> chordHighlightedNotes = calculateHighlightedChords(
 					pop.getSec());
 
+			int partNum = pop.part;
+
 			// draw numbers left of Y line
 			// draw line marks
 			for (int i = 0; i < 1 + (max - min); i++) {
-
-				String drawnValue = "" + (min + i) + " | " + MidiUtils.pitchToString(min + i);
+				int drawnInt = min + i + MidiGenerator.DEFAULT_INSTRUMENT_TRANSPOSE[partNum];
+				String drawnValue = "" + (drawnInt) + " | " + MidiUtils.pitchToString(drawnInt);
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
 				int drawValueX = bottomLeft.x / 2 - (numWidth * valueLength) / 2;
@@ -734,7 +736,7 @@ public class MidiEditArea extends JComponent {
 				if (pop.highlightMode.getSelectedIndex() % 2 == 1) {
 					// scalekey highlighting
 					if (highlightedScaleKey != null
-							&& highlightedScaleKey.contains((min + i + 1200) % 12)) {
+							&& highlightedScaleKey.contains((drawnInt + 1200) % 12)) {
 						g.setColor(highlightedScaleKeyColor);
 						highlighted = true;
 					}
@@ -852,6 +854,7 @@ public class MidiEditArea extends JComponent {
 				if (pitch < 0) {
 					continue;
 				}
+				int pitchForText = pitch + MidiGenerator.DEFAULT_INSTRUMENT_TRANSPOSE[partNum];
 				int drawX = bottomLeft.x + (int) (quarterNoteLength * pn.getStartTime());
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 				int width = (int) (quarterNoteLength * pn.getDuration());
@@ -873,8 +876,8 @@ public class MidiEditArea extends JComponent {
 				g.drawLine(drawX, drawY - 5, drawX, drawY + 5);
 				g.drawLine(drawX + width, drawY - 5, drawX + width, drawY + 5);
 
-				g.drawString(pitch + "(" + MidiUtils.pitchToString(pitch) + ") :" + pn.getDynamic(),
-						drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+				g.drawString(pitchForText + "(" + MidiUtils.pitchToString(pitchForText) + ") :"
+						+ pn.getDynamic(), drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 
 				if ((draggedNote != null && pn == draggedNote) || selectedNotes.contains(pn)) {
 					g.setColor(OMNI.alphen(OMNI.mixColor(VibeComposerGUI.uiColor(), Color.red, 0.7),
