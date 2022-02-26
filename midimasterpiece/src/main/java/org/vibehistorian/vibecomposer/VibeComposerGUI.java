@@ -911,7 +911,7 @@ public class VibeComposerGUI extends JFrame
 
 		setVisible(true);
 		repaint();
-		initScrollPaneListeners();
+		//initScrollPaneListeners();
 		UndoManager.recordingEvents = true;
 		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime) + " ms!");
 	}
@@ -1866,7 +1866,7 @@ public class VibeComposerGUI extends JFrame
 		chordAddJButton = makeButton("+Chord", "AddChord");
 		chordSettingsPanel.add(chordAddJButton);
 
-		randomChordsToGenerate = new JTextField("5", 2);
+		randomChordsToGenerate = new JTextField("2", 2);
 		randomizeChords = makeButton("Generate Chords:", e -> {
 			createPanels(2, Integer.valueOf(randomChordsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
@@ -5141,6 +5141,7 @@ public class VibeComposerGUI extends JFrame
 
 			scorePanel.setupMouseWheelListener();
 		}
+		initScrollPaneListeners();
 	}
 
 	private void switchFullMode() {
