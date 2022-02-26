@@ -56,7 +56,7 @@ public class SwingUtils {
 	}
 
 	public static void setupScrollpanePriorityScrolling(JScrollPane pane) {
-		if (pane.getMouseListeners() != null) {
+		if (pane.getMouseWheelListeners() != null) {
 			for (MouseWheelListener mwl : pane.getMouseWheelListeners()) {
 				pane.removeMouseWheelListener(mwl);
 			}
