@@ -127,7 +127,7 @@ public class MidiEditPopup extends CloseablePopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				highlightModeChoice = highlightMode.getSelectedIndex();
-				mvea.repaint();
+				mvea.setAndRepaint();
 			}
 		});
 
@@ -139,7 +139,7 @@ public class MidiEditPopup extends CloseablePopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				snapToTimeGridChoice = snapToTimeGrid.getSelectedIndex();
-				mvea.repaint();
+				mvea.setAndRepaint();
 			}
 		});
 		trackScopeUpDown = 0;
@@ -574,7 +574,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public void repaintMvea() {
-		mvea.repaint();
+		mvea.setAndRepaint();
 		MidiEditArea.sectionLength = mvea.getValues().stream().map(e -> e.getRv())
 				.mapToDouble(e -> e).sum();
 		text.setText(mvea.getValues().toStringPitches());

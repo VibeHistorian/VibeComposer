@@ -151,6 +151,7 @@ import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox2;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionInfoCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
@@ -604,7 +605,7 @@ public class VibeComposerGUI extends JFrame
 	public static JButton showScore;
 	public static ShowScorePopup scorePopup;
 	CheckButton midiMode;
-	ScrollComboBox<String> midiModeDevices;
+	ScrollComboBox2<String> midiModeDevices;
 	//MidiHandler mh = new MidiHandler();
 	JCheckBox combineDrumTracks;
 	JCheckBox combineMelodyTracks;
@@ -4723,7 +4724,7 @@ public class VibeComposerGUI extends JFrame
 
 		});
 
-		midiModeDevices = new ScrollComboBox<String>(false);
+		midiModeDevices = new ScrollComboBox2<String>(false);
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		MidiDevice dev = null;
 		for (int i = 0; i < infos.length; i++) {

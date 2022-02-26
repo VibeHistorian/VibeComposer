@@ -340,7 +340,7 @@ public class VariationPopup {
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 		});
-		transitionPanel.add(new JLabel("Transition Type"));
+		transitionPanel.add(new JLabel("Transition Type "));
 		transitionPanel.add(transitionBox);
 
 
@@ -371,7 +371,7 @@ public class VariationPopup {
 							: null);
 		});
 
-		keyChangePanel.add(new JLabel("Scale"));
+		keyChangePanel.add(new JLabel("Scale "));
 		keyChangePanel.add(scaleMode);
 
 		ScrollComboBox<String> customKeyChangeType = new ScrollComboBox<>(false);
@@ -383,7 +383,7 @@ public class VariationPopup {
 		if (secC.getCustomKeyChangeType() > 0) {
 			customKeyChangeType.setSelectedIndex(secC.getCustomKeyChangeType());
 		}
-		keyChangePanel.add(new JLabel("Type"));
+		keyChangePanel.add(new JLabel("Type "));
 		keyChangePanel.add(customKeyChangeType);
 
 		variationSettingsPanel.add(transitionPanel);

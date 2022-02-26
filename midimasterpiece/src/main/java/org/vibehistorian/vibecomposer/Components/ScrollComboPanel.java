@@ -54,9 +54,9 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 	}
 
 	public ScrollComboPanel(boolean isReg) {
-		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		//this.setBorder(new BevelBorder(BevelBorder.RAISED));
-		this.setAlignmentY(Component.CENTER_ALIGNMENT);
+		setAlignmentY(0.5f);
 		setOpaque(false);
 		scb = new FireableComboBox<T>(ScrollComboPanel.this);
 		regenerating = isReg;
@@ -125,7 +125,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 
 	@Override
 	protected void paintComponent(Graphics g) {
-
+		super.paintComponent(g);
 	}
 
 	public FireableComboBox<T> box() {

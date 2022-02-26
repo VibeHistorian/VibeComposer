@@ -58,7 +58,6 @@ import jm.music.data.Phrase;
 public class ShowAreaBig extends JComponent {
 	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
-	private int oldX;
 	private int oldXMouse;
 	public static int noteHeight = 5;
 	private int w = 2 * noteHeight; //width between stave lines
@@ -70,7 +69,6 @@ public class ShowAreaBig extends JComponent {
 			noteHeight * 6 };
 	private Font font = new Font("Helvetica", Font.PLAIN, 10);
 	private ShowPanelBig sp;
-	private double beatWidth;
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
 	public static double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
@@ -318,7 +316,7 @@ public class ShowAreaBig extends JComponent {
 		g.setFont(font);
 		// e above middle C is at 255
 		//treble
-		beatWidth = sp.beatWidth;
+		double beatWidth = sp.beatWidth;
 		int maxWidth = (int) Math.round((ShowPanelBig.maxEndTime + noteOffsetXMargin) * beatWidth);
 		g.drawLine(0, (e), maxWidth, (e));
 		g.drawLine(0, (e - w), maxWidth, (e - w));
@@ -409,6 +407,7 @@ public class ShowAreaBig extends JComponent {
 		Enumeration<?> enum1 = sp.score.getPartList().elements();
 		int prevColorIndex = -1;
 		int samePrevColorCounter = 0;
+		int oldX = 0;
 		while (enum1.hasMoreElements()) {
 			PartExt part = (PartExt) enum1.nextElement();
 

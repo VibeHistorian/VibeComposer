@@ -96,7 +96,7 @@ public class MidiEditArea extends JComponent {
 					if (originalTrackScopeUpDown != MidiEditPopup.trackScopeUpDown) {
 						min += MidiEditPopup.baseMargin * rot;
 						max += MidiEditPopup.baseMargin * rot;
-						repaint();
+						setAndRepaint();
 					}
 				} else {
 					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
@@ -108,7 +108,7 @@ public class MidiEditArea extends JComponent {
 					if (originalTrackScope != MidiEditPopup.trackScope) {
 						min -= MidiEditPopup.baseMargin * rot;
 						max += MidiEditPopup.baseMargin * rot;
-						repaint();
+						setAndRepaint();
 					}
 				}
 			}
@@ -147,7 +147,7 @@ public class MidiEditArea extends JComponent {
 				if (selectedNotes.contains(draggedNote)) {
 					dragMode.add(DM.MULTIPLE);
 				}
-				repaint();
+				setAndRepaint();
 			}
 
 			@Override
@@ -195,7 +195,7 @@ public class MidiEditArea extends JComponent {
 				highlightedNote = draggedNote;
 				highlightedDragLocation = dragLocation;
 				processDragEvent(e);
-				repaint();
+				setAndRepaint();
 				//LG.d("Mouse dragged");
 			}
 
@@ -206,7 +206,7 @@ public class MidiEditArea extends JComponent {
 				}
 				processHighlight(e.getPoint());
 				processDragEvent(e);
-				repaint();
+				setAndRepaint();
 				//LG.d("Mouse moved");
 			}
 
@@ -464,8 +464,14 @@ public class MidiEditArea extends JComponent {
 
 		orderValDeletion = null;
 
+		setAndRepaint();
+	}
+
+	public void setAndRepaint() {
+		values.remakeNoteStartTimes();
 		repaint();
 	}
+
 
 	protected void processDragEvent(MouseEvent evt) {
 		if (!dragMode.isEmpty()) {
@@ -690,10 +696,6 @@ public class MidiEditArea extends JComponent {
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
 
 			double quarterNoteLength = (w - bottomLeft.x) / sectionLength;
-			values.remakeNoteStartTimes();
-
-			int partNum = (pop.getParent() != null) ? pop.getParent().getPartNum() : 0;
-
 
 			// to draw scale/key helpers
 			Color highlightedScaleKeyColor = OMNI.alphen(VibeComposerGUI.uiColor(),
@@ -702,7 +704,7 @@ public class MidiEditArea extends JComponent {
 			List<Integer> highlightedScaleKey = calculateHighlightedScaleKey(pop.getSec());
 			Color nonHighlightedColor = VibeComposerGUI.isDarkMode ? new Color(150, 100, 30, 65)
 					: new Color(150, 150, 150, 100);
-			Color nonHighlightedHelperColor = OMNI.alphen(nonHighlightedColor, 50);
+			//Color nonHighlightedHelperColor = OMNI.alphen(nonHighlightedColor, 50);
 
 
 			List<Double> chordSpacings = new ArrayList<>(pop.getSec().getGeneratedDurations());
@@ -713,7 +715,7 @@ public class MidiEditArea extends JComponent {
 			Color highlightedChordNoteColor = VibeComposerGUI.isDarkMode
 					? new Color(220, 180, 150, 100)
 					: new Color(0, 0, 0, 150);
-			Color highlightedChordNoteHelperColor = OMNI.alphen(highlightedChordNoteColor, 60);
+			//Color highlightedChordNoteHelperColor = OMNI.alphen(highlightedChordNoteColor, 60);
 			Map<Integer, Set<Integer>> chordHighlightedNotes = calculateHighlightedChords(
 					pop.getSec());
 
