@@ -3478,6 +3478,7 @@ public class VibeComposerGUI extends JFrame
 		scoreScrollPane.setViewportView(scrollableScorePanel);
 
 		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		/*scoreScrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 			@Override
@@ -3704,13 +3705,14 @@ public class VibeComposerGUI extends JFrame
 
 		}));
 
-		randomButtonsPanel.add(switchOnComposeRandom);
 		fixRhythmOverlaps = makeButton("Fix Rhythm Overlaps", e -> fixRhythmOverlaps());
 		randomButtonsPanel.add(fixRhythmOverlaps);
+		randomButtonsPanel.add(switchOnComposeRandom);
 		//randomButtonsPanel.add(randomBottomPanel);
 
-		//toggleableComponents.add(randomizeStrums);
+		toggleableComponents.add(randomizeStrums);
 		//toggleableComponents.add(randomizeChordStrumsOnCompose);
+		toggleableComponents.add(fixRhythmOverlaps);
 		controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;

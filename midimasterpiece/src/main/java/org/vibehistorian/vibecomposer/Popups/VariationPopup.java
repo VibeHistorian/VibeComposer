@@ -115,6 +115,7 @@ public class VariationPopup {
 								}
 								table.repaint();
 							}
+							tables[fI].getModel().setValueAt(Boolean.FALSE, row, col);
 						}
 
 					}
