@@ -110,17 +110,23 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 				}
 			}
 		});
-		pane = new JLayeredPane();
-		pane.setPreferredSize(new Dimension(w, h));
-		pane.setOpaque(false);
-		pane.add(scb);
-		lockButt = new LockComponentButton(this);
-		pane.add(lockButt);
-		pane.setComponentZOrder(scb, Integer.valueOf(1));
-		pane.setComponentZOrder(lockButt, Integer.valueOf(0));
-		lockButt.setBounds(0, h - 8, 8, 8);
-		scb.setBounds(0, 0, 80, h);
-		add(pane);
+
+		if (regenerating) {
+			pane = new JLayeredPane();
+			pane.setPreferredSize(new Dimension(w, h));
+			pane.setOpaque(false);
+			pane.add(scb);
+			lockButt = new LockComponentButton(this);
+			pane.add(lockButt);
+			pane.setComponentZOrder(scb, Integer.valueOf(1));
+			pane.setComponentZOrder(lockButt, Integer.valueOf(0));
+			lockButt.setBounds(0, h - 8, 8, 8);
+
+			scb.setBounds(0, 0, 80, h);
+			add(pane);
+		} else {
+			add(scb);
+		}
 	}
 
 	@Override
@@ -281,13 +287,18 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		super.setMaximumSize(maximumSize);
 		w = maximumSize.width;
 		h = maximumSize.height;
-		pane.setPreferredSize(maximumSize);
-		scb.setBounds(0, 0, w, h);
-		lockButt.setBounds(0, h - 8, 8, 8);
+		if (pane != null) {
+			pane.setPreferredSize(maximumSize);
+			scb.setBounds(0, 0, w, h);
+		}
+
+		if (lockButt != null) {
+			lockButt.setBounds(0, h - 8, 8, 8);
+		}
 	}
 
 	public void setPrototype(T val) {
-		if (w < 120) {
+		if (w < 120 && pane != null) {
 			int textW = SwingUtils.getDrawStringWidth(val.toString());
 			int newW = Math.min(120, (h * 4 / 3) + (textW * 9 / 8));
 			if (w > newW) {

@@ -18,6 +18,7 @@ public class KnobPanel extends TransparentablePanel {
 	boolean needToReset = false;
 	boolean showTextInKnob = false;
 	String name = "";
+	LockComponentButton lockButt = null;
 
 	public KnobPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -48,7 +49,7 @@ public class KnobPanel extends TransparentablePanel {
 		knobLockPane.setPreferredSize(new Dimension(40, 40));
 		knobLockPane.setOpaque(false);
 		knobLockPane.add(knob);
-		LockComponentButton lockButt = new LockComponentButton(knob);
+		lockButt = new LockComponentButton(knob);
 		knobLockPane.add(lockButt);
 		knobLockPane.setComponentZOrder(knob, Integer.valueOf(1));
 		knobLockPane.setComponentZOrder(lockButt, Integer.valueOf(0));
@@ -93,6 +94,7 @@ public class KnobPanel extends TransparentablePanel {
 
 	public void setRegenerating(boolean b) {
 		knob.setRegenerating(b);
+		lockButt.setVisible(false);
 	}
 
 }
