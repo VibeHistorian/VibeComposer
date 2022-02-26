@@ -548,6 +548,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox customMidiForceScale;
 	public static JCheckBox transposedNotesForceScale;
 	public static JCheckBox randomizeTimingsOnCompose;
+	public static JCheckBox fixRhythmOverlapsOnCompose;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 1;
@@ -1154,12 +1155,15 @@ public class VibeComposerGUI extends JFrame
 
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
+		fixRhythmOverlapsOnCompose = makeCheckBox("<html>Fix Rhythm Overlaps<br>on Compose</html>",
+				true, true);
 
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
 		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
 		humanizationPanel.add(swingUnitMultiplier);
 		humanizationPanel.add(randomizeTimingsOnCompose);
+		humanizationPanel.add(fixRhythmOverlapsOnCompose);
 
 		JPanel scalePanel = new JPanel();
 		scalePanel.add(customMidiForceScale);
@@ -3705,7 +3709,7 @@ public class VibeComposerGUI extends JFrame
 
 		}));
 
-		fixRhythmOverlaps = makeButton("Fix Rhythm Overlaps", e -> fixRhythmOverlaps());
+		fixRhythmOverlaps = makeButton("Fix Rhythm Overlaps", e -> fixRhythmOverlaps(true));
 		randomButtonsPanel.add(fixRhythmOverlaps);
 		randomButtonsPanel.add(switchOnComposeRandom);
 		//randomButtonsPanel.add(randomBottomPanel);
@@ -3721,7 +3725,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 
-	public void fixRhythmOverlaps() {
+	public void fixRhythmOverlaps(boolean showPopup) {
 		// count rhythm weights in a 1/32 grid across 4 chords span
 		int[] rhythmGrid = new int[4 * 32];
 		Random rand = new Random();
@@ -3733,10 +3737,13 @@ public class VibeComposerGUI extends JFrame
 				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand);
 			}
 			panelChanges[i - 2] = totalChanged;
-			LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
+			//LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
 		}
-		new TemporaryInfoPopup("Chord/Arp/Drum changes: " + StringUtils.join(panelChanges, '/'),
-				null);
+		String popupMsg = "Chord/Arp/Drum changes: " + StringUtils.join(panelChanges, '/');
+		LG.i(popupMsg);
+		if (showPopup) {
+			new TemporaryInfoPopup(popupMsg, null);
+		}
 	}
 
 	private void initMacroParams(int startY, int anchorSide) {
@@ -4947,6 +4954,7 @@ public class VibeComposerGUI extends JFrame
 		melodyTargetNotesRandomizeOnCompose.setSelected(state);
 		melodyPatternRandomizeOnCompose.setSelected(state);
 		randomizeTimingsOnCompose.setSelected(state);
+		fixRhythmOverlapsOnCompose.setSelected(state);
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
@@ -4966,6 +4974,7 @@ public class VibeComposerGUI extends JFrame
 		randomMelodyOnRegenerate.setForeground(fg);
 		switchOnComposeRandom.setForeground(fg);
 		randomizeTimingsOnCompose.setForeground(fg);
+		fixRhythmOverlapsOnCompose.setForeground(fg);
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -5495,6 +5504,10 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				beatDurationMultiplier.setSelectedIndex(2);
 			}
+		}
+
+		if (!regenerate && fixRhythmOverlapsOnCompose.isSelected()) {
+			fixRhythmOverlaps(false);
 		}
 
 
@@ -7361,6 +7374,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomizeTimingsOnCompose);
 		cs.add(customFilenameAddTimestamp);
 		cs.add(configHistoryStoreRegeneratedTracks);
+		cs.add(fixRhythmOverlapsOnCompose);
 
 		return cs;
 	}

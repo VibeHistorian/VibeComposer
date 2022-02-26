@@ -50,7 +50,6 @@ import javax.swing.border.BevelBorder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
@@ -824,7 +823,7 @@ public abstract class InstPanel extends JPanel {
 						getComboPanel().checkPattern(mapped, 0);
 						totalAvailable--;
 						changed++;
-						LG.i(panelInfo() + " Unchecked: " + mapped);
+						//LG.i(panelInfo() + " Unchecked: " + mapped);
 						//rhythmGrid[i] = nextVal;
 					} else {
 						rhythmGrid[i] = nextVal;
@@ -901,8 +900,8 @@ public abstract class InstPanel extends JPanel {
 				}
 			}
 		}
-		LG.i(gridMap.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue,
-				Collectors.mapping(Map.Entry::getKey, Collectors.toList()))).toString());
+		/*LG.i(gridMap.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue,
+				Collectors.mapping(Map.Entry::getKey, Collectors.toList()))).toString());*/
 		for (int i = 0; i < rhythmGridSpanned.size(); i++) {
 			if (rhythmGridSpanned.get(i) > 0) {
 				rhythmGridSpanned.set(i, 1);
