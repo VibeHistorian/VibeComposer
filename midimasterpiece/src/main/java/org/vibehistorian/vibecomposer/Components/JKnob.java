@@ -365,6 +365,7 @@ public class JKnob extends JComponent
 		if (func != null) {
 			func.accept(new Object());
 		}
+		repaint();
 	}
 
 	/**

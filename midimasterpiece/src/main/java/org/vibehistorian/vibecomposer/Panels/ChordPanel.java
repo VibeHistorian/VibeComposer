@@ -110,6 +110,7 @@ public class ChordPanel extends InstPanel {
 		toggleableComponents.add(strumPauseChance);
 
 		initDefaultsPost();
+		getComboPanel().reapplyHits();
 	}
 
 	@Override
