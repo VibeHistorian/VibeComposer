@@ -824,7 +824,7 @@ public class MidiUtils {
 	public static Integer getXthChordNote(int x, int[] chord) {
 		//LG.i(StringUtils.join(chord, ','));
 		int octaveMultiplier = 1;
-		int pitch = chord[((x + 10 * chord.length) % chord.length)];
+		int pitch = chord[((x + 100 * chord.length) % chord.length)];
 		int octaveAdjust = 0;
 		if (x >= chord.length) {
 			octaveAdjust = 12 * (x / chord.length);

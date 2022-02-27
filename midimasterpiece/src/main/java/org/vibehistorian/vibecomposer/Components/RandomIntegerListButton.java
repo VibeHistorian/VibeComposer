@@ -7,11 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
@@ -23,6 +25,7 @@ public class RandomIntegerListButton extends JButton {
 	private Function<? super Object, String> textGenerator = null;
 	Function<? super Object, List<Integer>> randGenerator = null;
 	Function<? super Object, Map<Integer, Set<Integer>>> highlighterGenerator = null;
+	Consumer<Object> postFunc = null;
 	InstPanel parent = null;
 
 	public RandomIntegerListButton(String value, InstPanel parent) {
@@ -33,12 +36,7 @@ public class RandomIntegerListButton extends JButton {
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
 					if (isEnabled()) {
-						String[] valueSplit = getValue().split(",");
-						List<Integer> values = new ArrayList<>();
-						for (String s : valueSplit) {
-							values.add(Integer.valueOf(s.trim()));
-
-						}
+						List<Integer> values = getValues();
 						VisualArrayPopup vap = new VisualArrayPopup(-10, 10, values);
 						vap.linkButton(RandomIntegerListButton.this);
 					}
@@ -65,8 +63,22 @@ public class RandomIntegerListButton extends JButton {
 		setValue(value);
 	}
 
+	protected List<Integer> getValues() {
+		String[] valueSplit = getValue().split(",");
+		List<Integer> values = new ArrayList<>();
+		for (String s : valueSplit) {
+			values.add(Integer.valueOf(s.trim()));
+
+		}
+		return values;
+	}
+
 	public String getValue() {
 		return getText();
+	}
+
+	public void setValues(List<Integer> values) {
+		setValue(StringUtils.join(values, ","));
 	}
 
 	public void setValue(String value) {
@@ -74,6 +86,14 @@ public class RandomIntegerListButton extends JButton {
 			return;
 		}
 		setText(value);
+
+		if (postFunc != null) {
+			postFunc.accept(new Object());
+		}
+	}
+
+	public void setPostFunc(Consumer<Object> func) {
+		postFunc = func;
 	}
 
 	public Function<? super Object, String> getTextGenerator() {

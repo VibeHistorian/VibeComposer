@@ -2,11 +2,13 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -23,10 +25,10 @@ public class VisualArrayPopup extends CloseablePopup {
 	MultiValueEditArea mvea = null;
 	RandomIntegerListButton butt = null;
 	JTextField text = null;
-
+	Consumer<Object> closeFunc = null;
 
 	public VisualArrayPopup(int min, int max, List<Integer> values) {
-		super("Edit Multiple Values (Graphical)", 13);
+		super("Edit Multiple Values (Graphical)", 13, new Point(-300, 0));
 		mvea = new MultiValueEditArea(min, max, values);
 		mvea.setPop(this);
 		mvea.setPreferredSize(new Dimension(500, 500));
@@ -181,9 +183,13 @@ public class VisualArrayPopup extends CloseablePopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				if (butt != null) {
-					butt.setValue(StringUtils.join(mvea.getValues(), ","));
+					butt.setValues(mvea.getValues());
 				}
 
+				if (closeFunc != null) {
+					closeFunc.accept(new Object());
+				}
+				handleClose();
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {
 						RandomValueButton.singlePopup = null;
@@ -223,6 +229,14 @@ public class VisualArrayPopup extends CloseablePopup {
 			}
 
 		});
+	}
+
+	public List<Integer> getValues() {
+		return mvea.getValues();
+	}
+
+	public void setCloseFunc(Consumer<Object> func) {
+		closeFunc = func;
 	}
 
 	public JTextField getText() {

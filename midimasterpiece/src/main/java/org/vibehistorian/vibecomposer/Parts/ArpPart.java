@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Parts;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -11,6 +13,7 @@ public class ArpPart extends InstPart {
 
 	private ArpPattern arpPattern = ArpPattern.RANDOM;
 	private int arpPatternRotate = 0;
+	private List<Integer> arpPatternCustom = null;
 
 	public ArpPart() {
 		partNum = 3;
@@ -37,5 +40,14 @@ public class ArpPart extends InstPart {
 
 	public int getPartNum() {
 		return 3;
+	}
+
+	public List<Integer> getArpPatternCustom() {
+		return arpPatternCustom;
+	}
+
+
+	public void setArpPatternCustom(List<Integer> arpPatternCustom) {
+		this.arpPatternCustom = arpPatternCustom;
 	};
 }

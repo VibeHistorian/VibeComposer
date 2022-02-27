@@ -4,11 +4,13 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Components.ArpPickerMini;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -20,7 +22,7 @@ public class ArpPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6648220153568966988L;
 
-	private ScrollComboBox<ArpPattern> arpPattern = new ScrollComboBox<>();
+	private ArpPickerMini arpPattern = new ArpPickerMini(this);
 	private KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
 	public void initComponents(ActionListener l) {
@@ -120,6 +122,8 @@ public class ArpPanel extends InstPanel {
 		part.setFromPanel(this, lastRandomSeed);
 		part.setOrder(getPanelOrder());
 		part.setArpPatternRotate(getArpPatternRotate());
+		part.setArpPatternCustom(
+				arpPattern.getVal() == ArpPattern.CUSTOM ? arpPattern.getCustomValues() : null);
 		return part;
 	}
 
@@ -129,6 +133,9 @@ public class ArpPanel extends InstPanel {
 		setDefaultsFromInstPart(part);
 		setPanelOrder(part.getOrder());
 		setArpPatternRotate(part.getArpPatternRotate());
+		if (part.getArpPattern() == ArpPattern.CUSTOM) {
+			arpPattern.setCustomValues(part.getArpPatternCustom());
+		}
 	}
 
 	public ArpPattern getArpPattern() {
@@ -159,5 +166,9 @@ public class ArpPanel extends InstPanel {
 	@Override
 	public Class<? extends InstPart> getPartClass() {
 		return ArpPart.class;
+	}
+
+	public void setArpPatternCustom(List<Integer> arpPatternCustom) {
+		arpPattern.setCustomValues(arpPatternCustom);
 	}
 }

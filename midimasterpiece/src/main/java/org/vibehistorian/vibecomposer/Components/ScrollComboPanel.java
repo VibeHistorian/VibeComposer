@@ -2,7 +2,6 @@ package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -34,32 +33,43 @@ import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 public class ScrollComboPanel<T> extends TransparentablePanel implements GloballyLockable {
 
 	private static final long serialVersionUID = -1471401267249157092L;
-	private boolean scrollEnabled = true;
+	protected boolean scrollEnabled = true;
 	protected boolean userInteracting = false;
 	protected boolean globalInteraction = false;
-	private boolean regenerating = true;
-	private boolean hasPrototypeSet = false;
-	private boolean requiresSettingPrototype = true;
+	protected boolean regenerating = true;
+	protected boolean hasPrototypeSet = false;
+	protected boolean requiresSettingPrototype = true;
 	private Consumer<? super Object> func = null;
 	public static ScrollComboPanel<?> lastTouchedBox = null;
-	private LockComponentButton lockButt = null;
-	private FireableComboBox<T> scb = null;
+	protected LockComponentButton lockButt = null;
+	protected FireableComboBox<T> scb = null;
 	public int w = 80;
 	public int h = 28;
 
-	private JLayeredPane pane = null;
+	protected JLayeredPane pane = null;
 
 	public ScrollComboPanel() {
-		this(true);
+		this(true, true);
 	}
 
 	public ScrollComboPanel(boolean isReg) {
+		this(isReg, true);
+	}
+
+	public ScrollComboPanel(boolean isReg, boolean setup) {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		//this.setBorder(new BevelBorder(BevelBorder.RAISED));
 		setAlignmentY(0.5f);
 		setOpaque(false);
-		scb = new FireableComboBox<T>(ScrollComboPanel.this);
 		regenerating = isReg;
+		if (setup) {
+			setupBox(new FireableComboBox<T>(this));
+		}
+
+	}
+
+	public void setupBox(FireableComboBox<T> box) {
+		scb = box;
 		BoundsPopupMenuListener listener = new BoundsPopupMenuListener(true, false);
 		scb.addPopupMenuListener(listener);
 
@@ -127,11 +137,6 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		} else {
 			add(scb);
 		}
-	}
-
-	@Override
-	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
 	}
 
 	public FireableComboBox<T> box() {

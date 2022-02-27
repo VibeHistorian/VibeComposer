@@ -57,12 +57,22 @@ public abstract class CloseablePopup {
 		frame.setLocation(loc);
 		addFrameWindowOperation();
 		frame.setTitle(windowTitle);
+		handleOpen();
+	}
 
+	public void handleOpen() {
 		if (currentPopupMap.get(popupType) != null) {
 			currentPopupMap.get(popupType).close();
 			currentPopupMap.put(popupType, this);
 		} else {
 			currentPopupMap.put(popupType, this);
+		}
+	}
+
+	public void handleClose() {
+		if (currentPopupMap.get(popupType) != null) {
+			currentPopupMap.get(popupType).close();
+			currentPopupMap.remove(popupType);
 		}
 	}
 

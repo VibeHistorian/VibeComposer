@@ -3447,7 +3447,8 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void fillOtherPartsForSection(Section sec, Arrangement arr, boolean overridden,
-			List<Integer> sectionVariations, Random variationGen, int arrSeed, double measureLength) {
+			List<Integer> sectionVariations, Random variationGen, int arrSeed,
+			double measureLength) {
 		// copied into empty sections
 		Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
 		Phrase emptyPhrase = new Phrase();
@@ -4910,9 +4911,19 @@ public class MidiGenerator implements JMC {
 					arpPattern = MidiUtils.intersperse(0, ip.getChordSpan() - 1, arpPattern);
 				} else {
 					if (ip.getArpPattern() != ArpPattern.RANDOM) {
-						arpPattern = ip.getArpPattern().getPatternByLength(ip.getHitsPerPattern(),
-								chord.length, ip.getPatternRepeat(), ip.getArpPatternRotate());
+						if (ip.getArpPattern() == ArpPattern.CUSTOM) {
+							arpPattern = ip.getArpPattern().getPatternByLength(
+									ip.getHitsPerPattern(), chord.length, ip.getPatternRepeat(),
+									ip.getArpPatternRotate(), ip.getArpPatternCustom());
+						} else {
+							arpPattern = ip.getArpPattern().getPatternByLength(
+									ip.getHitsPerPattern(), chord.length, ip.getPatternRepeat(),
+									ip.getArpPatternRotate());
+						}
+
 						arpPattern = MidiUtils.intersperse(0, ip.getChordSpan() - 1, arpPattern);
+					} else {
+						ip.setArpPatternCustom(arpPattern);
 					}
 				}
 				chordDurationArp *= halfDurMulti;
@@ -4943,7 +4954,7 @@ public class MidiGenerator implements JMC {
 
 					Integer patternNum = pitchPatternSpanned.get(p);
 
-					int pitch = chord[patternNum % chord.length];
+					int pitch = MidiUtils.getXthChordNote(patternNum, chord);
 					if (gc.isUseOctaveAdjustments() || forceRandomOct) {
 						int octaveAdjustGenerated = octavePatternSpanned.get(p);
 						int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
@@ -4977,7 +4988,7 @@ public class MidiGenerator implements JMC {
 					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance() && pitch >= 0) {
 						double splitDuration = usedDuration / 2;
 						int patternNum2 = pitchPatternSpanned.get((p + 1) % repeatedArpsPerChord);
-						int pitch2 = chord[patternNum2 % chord.length] += extraTranspose;
+						int pitch2 = MidiUtils.getXthChordNote(patternNum2, chord) + extraTranspose;
 						if (pitch2 >= 0) {
 							pitch2 = MidiUtils.transposeNote((pitch + pitch2) / 2,
 									ScaleMode.IONIAN.noteAdjustScale,

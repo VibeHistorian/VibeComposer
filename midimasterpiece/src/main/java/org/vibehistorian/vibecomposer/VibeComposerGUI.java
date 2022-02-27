@@ -151,6 +151,7 @@ import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionInfoCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
@@ -5420,49 +5421,6 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void cleanUpUIAfterCompose(boolean regenerate) {
-		if (MelodyMidiDropPane.userMelody != null) {
-			String chords = StringUtils.join(MidiGenerator.chordInts, ",");
-			userChords.setupChords(MidiGenerator.chordInts);
-			setChordProgressionLength(MidiGenerator.chordInts.size());
-			guiConfig.setCustomChords(chords);
-		}
-
-		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
-				&& MidiGenerator.TARGET_NOTES != null) {
-			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
-			guiConfig.getMelodyParts()
-					.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
-		}
-
-		fixCombinedMelodyTracks();
-
-		actualArrangement = new Arrangement();
-		actualArrangement.setPreviewChorus(false);
-		actualArrangement.getSections().clear();
-		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
-			actualArrangement.getSections().add(sec.deepCopy());
-		}
-		guiConfig.setActualArrangement(actualArrangement);
-		VibeComposerGUI.pianoRoll();
-		/*if (showScore.isSelected()) {
-			instrumentTabPane.setSelectedIndex(7);
-		}*/
-
-
-		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
-			if (actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
-				currentMidiEditorPopup.close();
-				currentMidiEditorPopup = null;
-			} else {
-				currentMidiEditorPopup
-						.setup(actualArrangement.getSections().get(currentMidiEditorSectionIndex));
-			}
-		} else {
-			LG.d("No midi editor is open!");
-		}
-	}
-
 	private Integer prepareMainSeed(boolean regenerate) {
 		int masterpieceSeed = 0;
 
@@ -5598,6 +5556,56 @@ public class VibeComposerGUI extends JFrame
 			currentMidiEditorPopup.apply();
 		}
 
+	}
+
+	private void cleanUpUIAfterCompose(boolean regenerate) {
+		if (MelodyMidiDropPane.userMelody != null) {
+			String chords = StringUtils.join(MidiGenerator.chordInts, ",");
+			userChords.setupChords(MidiGenerator.chordInts);
+			setChordProgressionLength(MidiGenerator.chordInts.size());
+			guiConfig.setCustomChords(chords);
+		}
+
+		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
+				&& MidiGenerator.TARGET_NOTES != null) {
+			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
+			guiConfig.getMelodyParts()
+					.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
+		}
+
+		for (int i = 0; i < arpPanels.size(); i++) {
+			ArpPart ap = MidiGenerator.gc.getArpParts().get(i);
+			if (ap.getArpPattern() == ArpPattern.RANDOM) {
+				arpPanels.get(i).setArpPatternCustom(ap.getArpPatternCustom());
+			}
+		}
+
+		fixCombinedMelodyTracks();
+
+		actualArrangement = new Arrangement();
+		actualArrangement.setPreviewChorus(false);
+		actualArrangement.getSections().clear();
+		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
+			actualArrangement.getSections().add(sec.deepCopy());
+		}
+		guiConfig.setActualArrangement(actualArrangement);
+		VibeComposerGUI.pianoRoll();
+		/*if (showScore.isSelected()) {
+			instrumentTabPane.setSelectedIndex(7);
+		}*/
+
+
+		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
+			if (actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
+				currentMidiEditorPopup.close();
+				currentMidiEditorPopup = null;
+			} else {
+				currentMidiEditorPopup
+						.setup(actualArrangement.getSections().get(currentMidiEditorSectionIndex));
+			}
+		} else {
+			LG.d("No midi editor is open!");
+		}
 	}
 
 	private void resetArrSectionInBackground() {
@@ -7388,8 +7396,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static void setComponent(Component c, Integer num, boolean repaint) {
-		if (c instanceof ScrollComboBox) {
-			ScrollComboBox csc = ((ScrollComboBox) c);
+		if (c instanceof ScrollComboPanel) {
+			ScrollComboPanel csc = ((ScrollComboPanel) c);
 			if (csc.getItemCount() > 0) {
 				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
 			}
@@ -7408,8 +7416,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static Integer getComponentValue(Component c) {
-		if (c instanceof ScrollComboBox) {
-			return ((ScrollComboBox) c).getSelectedIndex();
+		if (c instanceof ScrollComboPanel) {
+			return ((ScrollComboPanel) c).getSelectedIndex();
 		} else if (c instanceof KnobPanel) {
 			return ((KnobPanel) c).getInt();
 		} else if (c instanceof CustomCheckBox) {
@@ -8679,6 +8687,7 @@ public class VibeComposerGUI extends JFrame
 
 			if (panelGenerator.nextBoolean()) {
 				int arpPatternOrder = 0;
+				// excludes CUSTOM pattern
 				int[] patternWeights = { 60, 68, 75, 83, 91, 97, 100 };
 				int randomWeight = panelGenerator.nextInt(100);
 				for (int j = 0; j < patternWeights.length; j++) {
