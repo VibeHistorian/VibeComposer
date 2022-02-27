@@ -63,7 +63,7 @@ import jm.music.data.Score;
 public class MidiEditPopup extends CloseablePopup {
 
 	MidiEditArea mvea = null;
-	InstPanel parent = null;
+	InstPanel ip = null;
 	JTextField text = null;
 	Section sec = null;
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
@@ -590,11 +590,11 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public void setParent(InstPanel parent) {
-		this.parent = parent;
+		this.ip = parent;
 	}
 
 	public InstPanel getParent() {
-		return parent;
+		return ip;
 	}
 
 	@Override

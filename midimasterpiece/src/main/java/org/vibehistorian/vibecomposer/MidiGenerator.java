@@ -5483,15 +5483,8 @@ public class MidiGenerator implements JMC {
 
 		processPausePattern(ap, arpPausesPattern, uiGenerator4arpPauses);
 
-		int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MAXIMUM_PATTERN_LENGTH)
-				.limit(ap.getHitsPerPattern() * 2).toArray();
 		int[] arpOctaveArray = IntStream.iterate(0, e -> (e + 12) % 24)
 				.limit(ap.getHitsPerPattern() * 2).toArray();
-		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
-				.collect(Collectors.toList());
-		if (ap.isRepeatableNotes()) {
-			arpPattern.addAll(arpPattern);
-		}
 
 
 		List<Integer> arpOctavePattern = Arrays.stream(arpOctaveArray).boxed()
@@ -5499,7 +5492,6 @@ public class MidiGenerator implements JMC {
 
 		// TODO: note pattern, different from rhythm pattern
 		//if (ap.getPattern() == RhythmPattern.RANDOM) {
-		Collections.shuffle(arpPattern, uiGenerator2arpPattern);
 		Collections.shuffle(arpOctavePattern, uiGenerator3arpOctave);
 		//}
 		// always generate ap.getHitsPerPattern(), 
@@ -5507,7 +5499,9 @@ public class MidiGenerator implements JMC {
 		if (!(ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null)) {
 			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		}
-		arpPattern = arpPattern.subList(0, ap.getHitsPerPattern());
+
+		List<Integer> arpPattern = makeRandomArpPattern(ap.getHitsPerPattern(),
+				ap.isRepeatableNotes(), uiGenerator2arpPattern);
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 
 		Collections.rotate(arpPattern, -1 * ap.getArpPatternRotate());
@@ -5547,6 +5541,20 @@ public class MidiGenerator implements JMC {
 
 
 		return arpMap;
+	}
+
+	public static List<Integer> makeRandomArpPattern(int hits, boolean repeatableNotes,
+			Random uiGenerator2arpPattern) {
+		int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MAXIMUM_PATTERN_LENGTH)
+				.limit(hits * 2).toArray();
+		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
+				.collect(Collectors.toList());
+		if (repeatableNotes) {
+			arpPattern.addAll(arpPattern);
+		}
+		arpPattern = arpPattern.subList(0, hits);
+		Collections.shuffle(arpPattern, uiGenerator2arpPattern);
+		return arpPattern;
 	}
 
 	public static List<Integer> generateDrumPatternFromPart(DrumPart dp) {

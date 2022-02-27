@@ -146,9 +146,9 @@ public class NumPanel extends JPanel {
 	}
 
 	public void closeParentFrame() {
-		JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(NumPanel.this);
+		JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(NumPanel.this);
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
-				.postEvent(new WindowEvent(parent, WindowEvent.WINDOW_CLOSING));
+				.postEvent(new WindowEvent(parentFrame, WindowEvent.WINDOW_CLOSING));
 
 	}
 

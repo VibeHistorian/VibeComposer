@@ -38,7 +38,7 @@ public class Chordlet extends JComponent {
 	private int height = 24;
 	private static final Font font = new Font("Tahoma", Font.PLAIN, 14);
 	private Point dragP = null;
-	private ChordletPanel parent = null;
+	private ChordletPanel cPanel = null;
 	private static final Color KEYNESS_COLOR = new Color(210, 210, 210);
 	private static final Color DARK_TEXT_COLOR = new Color(160, 255, 160);
 	private static final String CLOSE_BTTN_ICON = " x";
@@ -103,7 +103,7 @@ public class Chordlet extends JComponent {
 			public void mouseReleased(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e) && mouseOverCloseButton(e)
 						&& canRemoveChordlet) {
-					parent.removeChordlet(Chordlet.this, true);
+					cPanel.removeChordlet(Chordlet.this, true);
 				} else {
 					canRemoveChordlet = false;
 				}
@@ -215,7 +215,7 @@ public class Chordlet extends JComponent {
 			return;
 		}
 		dragLimitMs = System.currentTimeMillis();
-		parent.handleMouseDrag(this, evt);
+		cPanel.handleMouseDrag(this, evt);
 		/*
 			int firstLetterIndex = dragFirstLetterIndex;
 			firstLetterIndex -= ((evt.getPoint().y - dragY) / 20);
@@ -233,9 +233,9 @@ public class Chordlet extends JComponent {
 		calculateWidth(getChordText());
 		setPreferredSize(new Dimension(width, height));
 		setSize(new Dimension(width, height));
-		if (parent != null) {
-			parent.revalidate();
-			parent.repaint();
+		if (cPanel != null) {
+			cPanel.revalidate();
+			cPanel.repaint();
 		}
 
 	}
@@ -328,11 +328,11 @@ public class Chordlet extends JComponent {
 	}
 
 	public ChordletPanel getParentPanel() {
-		return parent;
+		return cPanel;
 	}
 
 	public void setParentPanel(ChordletPanel parent) {
-		this.parent = parent;
+		this.cPanel = parent;
 	}
 
 	public int getWidth() {

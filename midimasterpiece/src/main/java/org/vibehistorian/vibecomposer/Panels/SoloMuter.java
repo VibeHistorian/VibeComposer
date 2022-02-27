@@ -45,7 +45,7 @@ public class SoloMuter extends JPanel {
 	public Type type = Type.SINGLE;
 	public State soloState = State.OFF;
 	public State muteState = State.OFF;
-	public SoloMuter parent = null;
+	public SoloMuter smParent = null;
 
 	public SoloMuter(Integer inst, Type type) {
 		super();
@@ -53,10 +53,10 @@ public class SoloMuter extends JPanel {
 		this.type = type;
 		if (type == Type.GROUP) {
 			setPreferredSize(new Dimension(70, 35));
-			parent = VibeComposerGUI.globalSoloMuter;
+			smParent = VibeComposerGUI.globalSoloMuter;
 			setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		} else if (type == Type.SINGLE) {
-			parent = VibeComposerGUI.groupSoloMuters.get(inst);
+			smParent = VibeComposerGUI.groupSoloMuters.get(inst);
 		}
 
 		this.inst = inst;
@@ -120,10 +120,10 @@ public class SoloMuter extends JPanel {
 		} else {
 			if (type == Type.SINGLE) {
 				solo();
-				parent.solo();
-				parent.parent.solo();
+				smParent.solo();
+				smParent.smParent.solo();
 			} else if (type == Type.GROUP) {
-				parent.solo();
+				smParent.solo();
 				VibeComposerGUI.soloGroup(this);
 			} else {
 				// do nothing
@@ -176,11 +176,11 @@ public class SoloMuter extends JPanel {
 
 			if (type == Type.SINGLE) {
 				mute();
-				parent.mute();
-				parent.parent.mute();
+				smParent.mute();
+				smParent.smParent.mute();
 			} else if (type == Type.GROUP) {
 				VibeComposerGUI.muteGroup(this);
-				parent.mute();
+				smParent.mute();
 			} else {
 				// do nothing
 			}

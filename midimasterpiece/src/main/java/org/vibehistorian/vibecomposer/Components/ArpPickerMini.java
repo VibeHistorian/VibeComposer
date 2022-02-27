@@ -7,10 +7,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -22,11 +25,11 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 	private static final long serialVersionUID = -7062864195878781225L;
 	VisualArrayPopup pop = null;
 	RandomIntegerListButton valueHolder = null;
-	ArpPanel parent = null;
+	ArpPanel ap = null;
 
 	public ArpPickerMini(ArpPanel ipParent) {
 		super(true, false);
-		parent = ipParent;
+		ap = ipParent;
 		FireableComboBox<ArpPattern> newBox = new FireableComboBox<ArpPattern>(this) {
 			private static final long serialVersionUID = 5167762449773050710L;
 
@@ -43,6 +46,7 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 				if (numValues < 2) {
 					return;
 				}
+				//Collections.rotate(values, -1 * ap.getArpPatternRotate());
 				int max = OMNI.maxOf(values);
 				int min = OMNI.minOf(values);
 				int colDivisors = numValues + 1;
@@ -78,8 +82,8 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 			public void mousePressed(MouseEvent evt) {
 				ArpPattern pat = getVal();
 				if (pat != ArpPattern.CUSTOM && pat != ArpPattern.RANDOM) {
-					valueHolder.setValues(pat.getPatternByLength(parent.getHitsPerPattern(),
-							parent.getChordNotesStretch(), 1, 0));
+					valueHolder.setValues(pat.getPatternByLength(ap.getHitsPerPattern(),
+							ap.getChordNotesStretch(), 1, 0));
 				}
 				List<Integer> originals = new ArrayList<>(valueHolder.getValues());
 				LG.i("Opening with values: " + originals);
@@ -93,18 +97,33 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 				});
 			}
 		});
-		valueHolder = new RandomIntegerListButton("0", parent);
+
+		scb.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isAltDown()) {
+					List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(
+							ap.getHitsPerPattern(), ap.getRepeatableNotes(), new Random());
+					valueHolder.setValues(arpPattern);
+					scb.repaint();
+					setVal(ArpPattern.CUSTOM);
+				}
+			}
+		});
+		valueHolder = new RandomIntegerListButton("0", ap);
 		pane.add(bpo);
 		bpo.setBounds(0, 0, 8, 8);
 		pane.setComponentZOrder(bpo, Integer.valueOf(0));
+		pane.setComponentZOrder(lockButt, Integer.valueOf(1));
+		pane.setComponentZOrder(scb, Integer.valueOf(2));
 	}
 
 	@Override
 	public void setVal(ArpPattern item) {
 		super.setVal(item);
 		if (item != ArpPattern.CUSTOM && item != ArpPattern.RANDOM) {
-			valueHolder.setValues(item.getPatternByLength(parent.getHitsPerPattern(),
-					parent.getChordNotesStretch(), 1, 0));
+			valueHolder.setValues(item.getPatternByLength(ap.getHitsPerPattern(),
+					ap.getChordNotesStretch(), 1, 0));
 			scb.repaint();
 		}
 	}

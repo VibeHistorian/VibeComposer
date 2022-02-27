@@ -70,10 +70,7 @@ public abstract class CloseablePopup {
 	}
 
 	public void handleClose() {
-		if (currentPopupMap.get(popupType) != null) {
-			currentPopupMap.get(popupType).close();
-			currentPopupMap.remove(popupType);
-		}
+		currentPopupMap.remove(popupType);
 	}
 
 	public void close() {
