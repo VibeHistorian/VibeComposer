@@ -151,6 +151,7 @@ import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox2;
 import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionInfoCellRenderer;
@@ -7424,6 +7425,8 @@ public class VibeComposerGUI extends JFrame
 			return ((JCheckBox) c).isSelected() ? 1 : 0;
 		} else if (c instanceof CheckButton) {
 			return ((CheckButton) c).isSelected() ? 1 : 0;
+		} else if (c instanceof ScrollComboBox2) {
+			return ((ScrollComboBox2) c).getSelectedIndex();
 		} else {
 			throw new IllegalArgumentException("UNSUPPORTED COMPONENT!" + c.getClass());
 		}

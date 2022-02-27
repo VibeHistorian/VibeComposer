@@ -14,4 +14,11 @@ public class ScrollComboBox<T> extends ScrollComboPanel<T> {
 	public ScrollComboBox(boolean isRegenerating) {
 		super(isRegenerating);
 	}
+
+
+	public static <T> void addAll(T[] choices, ScrollComboBox2<T> choice) {
+		for (T c : choices) {
+			choice.addItem(c);
+		}
+	}
 }

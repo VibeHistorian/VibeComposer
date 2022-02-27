@@ -89,7 +89,7 @@ public class ShowPanelBig extends JPanel {
 	private static JPanel scorePartPanel;
 	private static CheckButton[] partsShown;
 	private static JButton toggler;
-	public static ScrollComboBox<Integer> scoreBox;
+	public static ScrollComboBox2<Integer> scoreBox;
 	public static ScrollComboBox<String> trimNoteLengthBox;
 
 	public ShowPanelBig() {
@@ -105,7 +105,7 @@ public class ShowPanelBig extends JPanel {
 		// a panel called apn is created to hold all comoponenets
 		// then only pan is added to this classes ScrollPane
 		partsShown = new CheckButton[5];
-		scoreBox = new ScrollComboBox<Integer>(false);
+		scoreBox = new ScrollComboBox2<Integer>(false);
 		ScrollComboBox.addAll(new Integer[] { 0 }, scoreBox);
 		scoreBox.addItemListener(new ItemListener() {
 			@Override

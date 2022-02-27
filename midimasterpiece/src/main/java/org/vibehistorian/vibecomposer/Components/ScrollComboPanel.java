@@ -295,6 +295,8 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		if (pane != null) {
 			pane.setPreferredSize(maximumSize);
 			scb.setBounds(0, 0, w, h);
+		} else {
+			scb.setMaximumSize(maximumSize);
 		}
 
 		if (lockButt != null) {
