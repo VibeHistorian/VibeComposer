@@ -15,9 +15,11 @@ import javax.swing.SwingUtilities;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
 public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
@@ -87,7 +89,10 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 				}
 				List<Integer> originals = new ArrayList<>(valueHolder.getValues());
 				LG.i("Opening with values: " + originals);
-				pop = new VisualArrayPopup(-10, 10, valueHolder.getValues());
+				int max = OMNI.maxOf(originals);
+				int min = OMNI.minOf(originals);
+				pop = new VisualArrayPopup(Math.min(-3, min - 2), Math.max(8, max + 2),
+						valueHolder.getValues());
 				pop.linkButton(valueHolder);
 				pop.setCloseFunc(e -> {
 					if (!originals.equals(pop.getValues())) {
@@ -102,11 +107,13 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isAltDown()) {
-					List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(
-							ap.getHitsPerPattern(), ap.getRepeatableNotes(), new Random());
-					valueHolder.setValues(arpPattern);
-					scb.repaint();
-					setVal(ArpPattern.CUSTOM);
+					setVal(ArpPattern.RANDOM);
+					prepareInteraction(evt.isControlDown());
+					if (evt.isControlDown()) {
+						setRandomCustomValuesGlobal();
+					} else {
+						setRandomCustomValues();
+					}
 				}
 			}
 		});
@@ -116,6 +123,14 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 		pane.setComponentZOrder(bpo, Integer.valueOf(0));
 		pane.setComponentZOrder(lockButt, Integer.valueOf(1));
 		pane.setComponentZOrder(scb, Integer.valueOf(2));
+	}
+
+	protected void setRandomCustomValues() {
+		List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(ap.getHitsPerPattern(),
+				ap.getRepeatableNotes(), new Random());
+		setCustomValues(arpPattern);
+		setVal(ArpPattern.CUSTOM);
+		scb.repaint();
 	}
 
 	@Override
@@ -134,6 +149,17 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 
 	public void setCustomValues(List<Integer> values) {
 		valueHolder.setValues(values);
+	}
+
+	public void setRandomCustomValuesGlobal() {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			setRandomCustomValues();
+			return;
+		}
+		instParent.getAllComponentsLike(this, ArpPickerMini.class).forEach(e -> {
+			e.setRandomCustomValues();
+		});
 	}
 }
 
