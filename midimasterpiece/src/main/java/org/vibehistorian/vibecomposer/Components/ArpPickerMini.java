@@ -11,6 +11,8 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
@@ -31,6 +33,42 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 			@Override
 			protected void paintComponent(Graphics g) {
 				super.paintComponent(g);
+				if (getVal() == ArpPattern.RANDOM) {
+					return;
+				}
+				int w = getWidth();
+				int h = getHeight();
+				List<Integer> values = valueHolder.getValues();
+				int numValues = values.size();
+				if (numValues < 2) {
+					return;
+				}
+				int max = OMNI.maxOf(values);
+				int min = OMNI.minOf(values);
+				int colDivisors = numValues + 1;
+				double colWidth = w / (double) colDivisors;
+				int rowDivisors = max - min + 3;
+				double rowHeight = h / (double) rowDivisors;
+				int ovalWidth = w / 20;
+				int leftX = 5;
+				int bottomY = h - 3;
+				for (int i = 0; i < numValues; i++) {
+					int drawX = leftX + (int) (colWidth * i);
+					int drawY = bottomY - (int) (rowHeight * (values.get(i) - min));
+
+					if (i < numValues - 1) {
+						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
+						g.drawLine(drawX, drawY, drawX + (int) colWidth,
+								bottomY - (int) (rowHeight * (values.get(i + 1) - min)));
+					}
+
+
+					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
+							VibeComposerGUI.isDarkMode ? 150 : 220));
+					g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
+
+					//g.drawString("" + values.get(i), drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+				}
 			}
 		};
 		setupBox(newBox);
@@ -50,6 +88,7 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 				pop.setCloseFunc(e -> {
 					if (!originals.equals(pop.getValues())) {
 						setVal(ArpPattern.CUSTOM);
+						scb.repaint();
 					}
 				});
 			}
@@ -58,6 +97,16 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 		pane.add(bpo);
 		bpo.setBounds(0, 0, 8, 8);
 		pane.setComponentZOrder(bpo, Integer.valueOf(0));
+	}
+
+	@Override
+	public void setVal(ArpPattern item) {
+		super.setVal(item);
+		if (item != ArpPattern.CUSTOM && item != ArpPattern.RANDOM) {
+			valueHolder.setValues(item.getPatternByLength(parent.getHitsPerPattern(),
+					parent.getChordNotesStretch(), 1, 0));
+			scb.repaint();
+		}
 	}
 
 	public List<Integer> getCustomValues() {

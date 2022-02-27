@@ -138,4 +138,14 @@ public class OMNI {
 	public static <T> T d(T val, T defaultVal) {
 		return val != null ? val : defaultVal;
 	}
+
+	public static <T extends Number> T maxOf(List<T> list) {
+		return (T) list.stream().max((e1, e2) -> Double.compare(e1.doubleValue(), e2.doubleValue()))
+				.get();
+	}
+
+	public static <T extends Number> T minOf(List<T> list) {
+		return (T) list.stream().min((e1, e2) -> Double.compare(e1.doubleValue(), e2.doubleValue()))
+				.get();
+	}
 }
