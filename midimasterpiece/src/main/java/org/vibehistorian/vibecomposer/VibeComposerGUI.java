@@ -7408,6 +7408,11 @@ public class VibeComposerGUI extends JFrame
 			((JCheckBox) c).setSelected(num != null && num > 0);
 		} else if (c instanceof CheckButton) {
 			((CheckButton) c).setSelected(num != null && num > 0);
+		} else if (c instanceof ScrollComboBox2) {
+			ScrollComboBox2 csc = ((ScrollComboBox2) c);
+			if (csc.getItemCount() > 0) {
+				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
+			}
 		} else {
 			throw new IllegalArgumentException("UNSUPPORTED COMPONENT!" + c.getClass());
 		}
