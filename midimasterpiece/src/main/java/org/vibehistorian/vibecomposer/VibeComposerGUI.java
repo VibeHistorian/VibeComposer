@@ -402,6 +402,7 @@ public class VibeComposerGUI extends JFrame
 	// arrangement subcells - copy dragging
 	public static boolean copyDragging = false;
 	public static Triple<Integer, Integer, Integer> highlightedTableCell = null;
+	public static Triple<Integer, Integer, Integer> copyDraggingOrigin = null;
 	PhraseNotes copyDraggedNotes = null;
 
 	// instrument global settings
@@ -3480,6 +3481,8 @@ public class VibeComposerGUI extends JFrame
 					if (hasSinglePresence && sec.getPartPhraseNotes() != null
 							&& part < sec.getPartPhraseNotes().size()
 							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
+
+						copyDraggingOrigin = Triple.of(part, partAbsoluteOrder, secOrder);
 						prepareCustomMidiSubcellCopy(part, partAbsoluteOrder, sec);
 
 					}
@@ -3521,23 +3524,28 @@ public class VibeComposerGUI extends JFrame
 
 	protected void processActualArrangementCopyDragging(MouseEvent evt) {
 		Triple<Integer, Integer, Integer> partOrderSection = calculateCurrentTableSubcell(evt);
-
-		Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
-		PhraseNotes newNotes = copyDraggedNotes.copy();
-		newNotes.setCustom(true);
-		sec.addPhraseNotes(partOrderSection.getLeft(), partOrderSection.getMiddle(), newNotes);
-		scrollableArrangementActualTable.repaint();
-
+		if (partOrderSection != null) {
+			Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
+			PhraseNotes newNotes = copyDraggedNotes.copy();
+			newNotes.setCustom(true);
+			sec.addPhraseNotes(partOrderSection.getLeft(), partOrderSection.getMiddle(), newNotes);
+			scrollableArrangementActualTable.repaint();
+		} else {
+			LG.i("Can't copy custom midi - invalid part!");
+		}
 	}
 
 	private void prepareCustomMidiSubcellCopy(int part, int partAbsoluteOrder, Section sec) {
 		copyDragging = true;
 		copyDraggedNotes = sec.getPhraseNotes(part, partAbsoluteOrder);
+		scrollableArrangementActualTable.repaint();
 	}
 
 	public void resetCopyDrag() {
 		copyDragging = false;
 		copyDraggedNotes = null;
+		copyDraggingOrigin = null;
+		scrollableArrangementActualTable.repaint();
 	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
