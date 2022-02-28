@@ -12,6 +12,7 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -64,10 +65,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					part > 0 ? 0.5 : 0.7);
 
 			int guiPanelsCount = VibeComposerGUI.getInstList(part).size();
-			int alphaValue = 0;
-			if (guiPanelsCount > 0) {
-				alphaValue = 240;
-			}
+			int alphaValue = guiPanelsCount > 0 ? 240 : 0;
+
 			icolor = OMNI.alphen(icolor, alphaValue);
 			g.setColor(icolor);
 
@@ -112,8 +111,16 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 							&& sec.getPartPhraseNotes().get(part).get(partOrder).isCustom();
 					boolean isGlobalCustomMidi = VibeComposerGUI.getInstList(part).get(partOrder)
 							.getCustomMidiToggle();
-					g.setColor(OMNI.mixColor(icolor, panelC, isCustomMidi ? 0.66
-							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66));
+					Color subcellColor = OMNI.mixColor(icolor, panelC, isCustomMidi ? 0.66
+							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66);
+					if (VibeComposerGUI.highlightedTableCell != null) {
+						if (VibeComposerGUI.highlightedTableCell
+								.equals(Triple.of(part, partOrder, section))) {
+							subcellColor = OMNI.mixColor(subcellColor, Color.red,
+									VibeComposerGUI.copyDragging ? 0.6 : 0.3);
+						}
+					}
+					g.setColor(subcellColor);
 					g.fillRect((int) startX + 1, 0, (int) (endX - startX), height);
 					g.setColor(new Color(230, 230, 230));
 					if (num.length() == 1) {

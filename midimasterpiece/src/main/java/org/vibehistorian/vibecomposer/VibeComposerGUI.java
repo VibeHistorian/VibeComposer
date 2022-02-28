@@ -48,6 +48,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
@@ -139,6 +140,7 @@ import javax.xml.bind.Marshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
@@ -396,6 +398,11 @@ public class VibeComposerGUI extends JFrame
 	JPanel actualArrangementCombinedPanel;
 	JPanel arrangementCombinedPanel;
 	public static JPanel variationButtonsPanel;
+
+	// arrangement subcells - copy dragging
+	public static boolean copyDragging = false;
+	public static Triple<Integer, Integer, Integer> highlightedTableCell = null;
+	PhraseNotes copyDraggedNotes = null;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -3036,6 +3043,35 @@ public class VibeComposerGUI extends JFrame
 			public void mousePressed(java.awt.event.MouseEvent evt) {
 				processActualArrangementMouseEvent(evt);
 			}
+
+			@Override
+			public void mouseReleased(MouseEvent evt) {
+				if (copyDragging) {
+					processActualArrangementCopyDragging(evt);
+					resetCopyDrag();
+				}
+			};
+		});
+
+		scrollableArrangementActualTable.addMouseMotionListener(new MouseMotionListener() {
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				boolean repaintAnyway = highlightedTableCell != null;
+				highlightedTableCell = calculateCurrentTableSubcell(e);
+				if (highlightedTableCell != null || repaintAnyway) {
+					scrollableArrangementActualTable.repaint();
+				}
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				boolean repaintAnyway = highlightedTableCell != null;
+				highlightedTableCell = calculateCurrentTableSubcell(e);
+				if (highlightedTableCell != null || repaintAnyway) {
+					scrollableArrangementActualTable.repaint();
+				}
+			}
 		});
 
 		//scrollableArrangementActualTable.setDefaultRenderer(Iterable.class, new ListCellRenderer());
@@ -3136,6 +3172,34 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(clearAllPanelsBtn);
 
 		resetArrSection();
+	}
+
+	protected Triple<Integer, Integer, Integer> calculateCurrentTableSubcell(MouseEvent evt) {
+		int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
+		int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
+
+		//LG.d(("Current subcell: " + row + ", " + secOrder));
+		if (row >= 2 && secOrder >= 0) {
+			int part = row - 2;
+			double orderPercentage = calculateMousePointPercentageInTable(row, secOrder);
+
+			int actualSize = getInstList(part).size();
+			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
+			int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
+
+			//LG.d("COPY - Selected subcell: " + (partAbsoluteOrder + 1));
+			if ((actualSize > CollectionCellRenderer.MIN_CELLS && partAbsoluteOrder == actualSize)
+					|| (actualSize <= CollectionCellRenderer.MIN_CELLS
+							&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
+				//LG.d("Can't copy: randomizer cell not a valid target - " + (partAbsoluteOrder + 1));
+				return null;
+			} else if (partAbsoluteOrder >= actualSize) {
+				//LG.d("Can't copy: subcell not present in part - " + (partAbsoluteOrder + 1));
+				return null;
+			}
+			return Triple.of(part, partAbsoluteOrder, secOrder);
+		}
+		return null;
 	}
 
 	private void switchPanelsForSectionSelection(String selItem) {
@@ -3257,25 +3321,9 @@ public class VibeComposerGUI extends JFrame
 				handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
 			}
 		} else if (row >= 2 && secOrder >= 0) {
+			double orderPercentage = calculateMousePointPercentageInTable(row, secOrder);
+
 			int part = row - 2;
-
-			Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-			Point tablePoint = scrollableArrangementActualTable.getLocation();
-			SwingUtilities.convertPointToScreen(tablePoint, scrollableArrangementActualTable);
-			Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);
-			/*LG.d("Mouse point: " + mousePoint.toString());
-			LG.d("Table point: " + tablePoint.toString());
-			LG.d(r.toString());*/
-
-			mousePoint.x -= tablePoint.x;
-			mousePoint.y -= tablePoint.y;
-
-			mousePoint.x -= r.x;
-			mousePoint.y -= r.y;
-
-
-			double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01, 0.99);
-
 			int actualSize = getInstList(part).size();
 			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
 			int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
@@ -3414,12 +3462,26 @@ public class VibeComposerGUI extends JFrame
 				manualArrangement.repaint();
 				scrollableArrangementActualTable.repaint();
 			} else {
-				if (evt.isControlDown()) {
+				if (evt.isAltDown()) {
 					if (secOrder + 1 < arrSection.getItemCount()) {
 						arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
 						arrSection.repaint();
 						instrumentTabPane.setSelectedIndex(part);
 						switchTabPaneAfterApply = true;
+					}
+				} else if (evt.isControlDown()) {
+					// begin copy-dragging
+					if (partAbsoluteOrder < getInstList(part).size()) {
+
+					}
+					Section sec = actualArrangement.getSections().get(secOrder);
+					boolean hasSinglePresence = sec.getPresence(part)
+							.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+					if (hasSinglePresence && sec.getPartPhraseNotes() != null
+							&& part < sec.getPartPhraseNotes().size()
+							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
+						prepareCustomMidiSubcellCopy(part, partAbsoluteOrder, sec);
+
 					}
 				} else if (currentMidi != null && partAbsoluteOrder < getInstList(part).size()) {
 					Section sec = actualArrangement.getSections().get(secOrder);
@@ -3437,6 +3499,45 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		}
+	}
+
+	private double calculateMousePointPercentageInTable(int row, int secOrder) {
+
+		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+		Point tablePoint = scrollableArrangementActualTable.getLocation();
+		SwingUtilities.convertPointToScreen(tablePoint, scrollableArrangementActualTable);
+		Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);
+
+		mousePoint.x -= tablePoint.x;
+		mousePoint.y -= tablePoint.y;
+
+		mousePoint.x -= r.x;
+		mousePoint.y -= r.y;
+
+
+		double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01, 0.99);
+		return orderPercentage;
+	}
+
+	protected void processActualArrangementCopyDragging(MouseEvent evt) {
+		Triple<Integer, Integer, Integer> partOrderSection = calculateCurrentTableSubcell(evt);
+
+		Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
+		PhraseNotes newNotes = copyDraggedNotes.copy();
+		newNotes.setCustom(true);
+		sec.addPhraseNotes(partOrderSection.getLeft(), partOrderSection.getMiddle(), newNotes);
+		scrollableArrangementActualTable.repaint();
+
+	}
+
+	private void prepareCustomMidiSubcellCopy(int part, int partAbsoluteOrder, Section sec) {
+		copyDragging = true;
+		copyDraggedNotes = sec.getPhraseNotes(part, partAbsoluteOrder);
+	}
+
+	public void resetCopyDrag() {
+		copyDragging = false;
+		copyDraggedNotes = null;
 	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
