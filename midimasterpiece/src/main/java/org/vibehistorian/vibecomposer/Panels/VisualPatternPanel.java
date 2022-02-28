@@ -511,7 +511,9 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void checkPattern(int fI, Integer directSetting) {
-		int shI = (fI - shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
+		int shift = shiftPanel.getInt();
+		int initialVal = fI - shift;
+		int shI = (initialVal + MAX_HITS) % MAX_HITS;
 		if (directSetting != null) {
 			hitChecks[fI].setSelected(directSetting > 0);
 			hitVelocities[fI].setEnabled(directSetting > 0);
@@ -520,10 +522,14 @@ public class VisualPatternPanel extends JPanel {
 				: (hitChecks[fI].isSelected() ? 1 : 0);
 		truePattern.set(shI, applied);
 		boolean reapplyNeeded = false;
-		while ((shI += lastHits) < MAX_HITS) {
-			truePattern.set(shI, applied);
-			reapplyNeeded = true;
+
+		while ((initialVal += lastHits) < MAX_HITS) {
+			if (initialVal >= 0 && (shift + initialVal < MAX_HITS)) {
+				truePattern.set(initialVal, applied);
+				reapplyNeeded = true;
+			}
 		}
+
 		if (patternType.getVal() != RhythmPattern.CUSTOM) {
 			patternType.setVal(RhythmPattern.CUSTOM);
 		}
