@@ -268,7 +268,7 @@ public class MidiGenerator implements JMC {
 		// A B A C pattern
 		List<Integer> blockSeedOffsets = (mp.getMelodyPatternOffsets() != null)
 				? mp.getMelodyPatternOffsets()
-				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
+				: new ArrayList<>(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
 
 		while (blockSeedOffsets.size() < chords.size()) {
 			blockSeedOffsets.addAll(blockSeedOffsets);
@@ -304,7 +304,11 @@ public class MidiGenerator implements JMC {
 
 		int melodyBlockGeneratorSeed = seed + notesSeedOffset;
 
-		int firstBlockOffset = blockSeedOffsets.get(0);
+		int firstBlockOffset = Math.abs(blockSeedOffsets.get(0));
+		if (firstBlockOffset > 0) {
+			firstBlockOffset--;
+		}
+
 		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset + firstBlockOffset);
 		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset + firstBlockOffset);
 		Random sameRhythmGenerator = new Random(seed + 3 + firstBlockOffset);
@@ -365,6 +369,12 @@ public class MidiGenerator implements JMC {
 				}
 
 				int blockOffset = blockSeedOffsets.get(chordIndex % blockSeedOffsets.size());
+				int originalBlockOffset = blockOffset;
+				blockOffset = Math.abs(blockOffset);
+
+				if (blockOffset > 0) {
+					blockOffset--;
+				}
 
 				if (fillChordMelodyMap && o == 0) {
 					if (!chordMelodyMap1.containsKey(Integer.valueOf(chordIndex))) {
@@ -466,6 +476,9 @@ public class MidiGenerator implements JMC {
 				int exceptionCounter = mp.getMaxNoteExceptions();
 				for (int blockIndex = 0; blockIndex < melodyBlocks.size(); blockIndex++) {
 					MelodyBlock mb = melodyBlocks.get(blockIndex);
+					if (originalBlockOffset < 0) {
+						mb = new MelodyBlock(MelodyUtils.inverse(mb.notes), mb.durations, true);
+					}
 					List<Integer> pitches = new ArrayList<>();
 					if (blockIndex > 0) {
 						adjustment += blockChanges.get(blockIndex - 1);

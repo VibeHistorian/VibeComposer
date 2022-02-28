@@ -42,17 +42,23 @@ public class MelodyUtils {
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 1 }));
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, 1, -1 }));
 
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 0, 2, 0, 1, 0, 3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 0 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 2, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 1, 1, 0 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 0 }));
-		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 1, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 0, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 0, 0, 0, 0 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3, 1, 2, 1, 4 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 3 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 3 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 2, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 1 }));
+		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 1 }));
+		// inverse patterns
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, -1, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -2, -1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -1, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, -3 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, -1, 1 }));
 
 
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
@@ -228,6 +234,14 @@ public class MelodyUtils {
 		Integer[] newBlock = new Integer[block.length];
 		for (int i = 0; i < block.length; i++) {
 			newBlock[i] = block[i] * -1;
+		}
+		return newBlock;
+	}
+
+	public static List<Integer> inverse(List<Integer> block) {
+		List<Integer> newBlock = new ArrayList<>();
+		for (int i = 0; i < block.size(); i++) {
+			newBlock.add(block.get(i) * -1);
 		}
 		return newBlock;
 	}
