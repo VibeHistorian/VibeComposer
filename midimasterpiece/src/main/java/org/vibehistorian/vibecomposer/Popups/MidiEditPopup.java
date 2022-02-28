@@ -174,10 +174,10 @@ public class MidiEditPopup extends CloseablePopup {
 		allPanels.setMaximumSize(new Dimension(1500, 750));
 
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
+		buttonPanel.setLayout(new GridLayout(0, 5, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(1500, 50));
 
-		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
+		buttonPanel.add(VibeComposerGUI.makeButton("Rand. Pitch", e -> {
 			int size = mvea.getValues().size();
 			boolean successRandGenerator = false;
 			/*if (butt != null && butt.getRandGenerator() != null) {
@@ -213,6 +213,18 @@ public class MidiEditPopup extends CloseablePopup {
 					}
 				}
 			}
+			saveToHistory();
+			repaintMvea();
+		}));
+
+		buttonPanel.add(VibeComposerGUI.makeButton("Rand. Velocity", e -> {
+			Random rand = new Random();
+			InstPanel ip = VibeComposerGUI.getAffectedPanels(part).get(partOrder);
+			int velmin = ip.getVelocityMin();
+			int velmax = ip.getVelocityMax();
+			mvea.getValues().forEach(n -> n.setDynamic(rand.nextInt(velmax - velmin + 1) + velmin));
+
+
 			saveToHistory();
 			repaintMvea();
 		}));
