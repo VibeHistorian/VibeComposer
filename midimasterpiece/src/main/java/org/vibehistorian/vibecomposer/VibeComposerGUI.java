@@ -7230,7 +7230,9 @@ public class VibeComposerGUI extends JFrame
 		Marshaller mar = context.createMarshaller();
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
-		wrapper.setDrumParts((List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false));
+		List<DrumPart> parts = (List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false);
+		InstPart.sortParts(parts);
+		wrapper.setDrumParts(parts);
 		mar.marshal(wrapper, new File(path));
 		LG.i("File saved: " + path);
 	}
@@ -7833,11 +7835,17 @@ public class VibeComposerGUI extends JFrame
 		}
 		panels.clear();
 		InstPart.sortParts(parts);
-		for (InstPart part : parts) {
-			InstPanel panel = addInstPanelToLayout(inst, false);
-			panel.setFromInstPart(part);
+		/*LG.i("Panel " + inst + ", order: " + StringUtils
+				.join(parts.stream().map(e -> e.getOrder()).collect(Collectors.toList()), ","));*/
+		List<InstPanel> newPanels = new ArrayList<>();
+		for (int i = 0; i < parts.size(); i++) {
+			newPanels.add(addInstPanelToLayout(inst, false));
 		}
-		repaint();
+		for (int i = 0; i < newPanels.size(); i++) {
+			newPanels.get(i).setFromInstPart(parts.get(i));
+		}
+		recalculateTabPaneCounts();
+		instrumentTabPane.repaint();
 	}
 
 	private void randomizePanel(InstPanel panel) {
