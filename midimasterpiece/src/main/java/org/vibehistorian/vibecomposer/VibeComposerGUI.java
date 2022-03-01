@@ -558,7 +558,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox customMidiForceScale;
 	public static JCheckBox transposedNotesForceScale;
 	public static JCheckBox randomizeTimingsOnCompose;
-	public static JCheckBox fixRhythmOverlapsOnCompose;
+	public static JCheckBox sidechainPatternsOnCompose;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
 	int randomDrumHitsMultiplierLastState = 1;
@@ -599,7 +599,8 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel stretchMidi;
 	public static KnobPanel transposeScore;
 	JButton switchOnComposeRandom;
-	JButton fixRhythmOverlaps;
+	JButton sidechainPatterns;
+	JButton sidechainPatternsTab;
 
 	// seed / midi
 	RandomValueButton randomSeed;
@@ -1165,7 +1166,7 @@ public class VibeComposerGUI extends JFrame
 
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
-		fixRhythmOverlapsOnCompose = makeCheckBox("<html>Fix Rhythm Overlaps<br>on Compose</html>",
+		sidechainPatternsOnCompose = makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
 				true, true);
 
 		humanizationPanel.add(humanizeNotes);
@@ -1173,7 +1174,7 @@ public class VibeComposerGUI extends JFrame
 		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
 		humanizationPanel.add(swingUnitMultiplier);
 		humanizationPanel.add(randomizeTimingsOnCompose);
-		humanizationPanel.add(fixRhythmOverlapsOnCompose);
+		humanizationPanel.add(sidechainPatternsOnCompose);
 
 		JPanel scalePanel = new JPanel();
 		scalePanel.add(customMidiForceScale);
@@ -3799,43 +3800,45 @@ public class VibeComposerGUI extends JFrame
 		switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
 		switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));
 		enthickenText(switchOnComposeRandom);
-
-		randomButtonsPanel.add(makeButton("Randomize Transpose", e -> {
-			Random rand = new Random();
-			for (int i = 0; i < 4; i++) {
-				List<Integer> availableTransposes = new ArrayList<>(
-						(i == 1) ? Arrays.asList(new Integer[] { -12, 0 })
-								: Arrays.asList(new Integer[] { -12, 0, 12 }));
-				List<InstPanel> panels = getAffectedPanels(i);
-				int maxSame = Math.max(2, (int) Math.ceil(panels.size() / 3.0));
-				int[] transposesApplied = { 0, 0, 0 };
-				for (int j = 0; j < panels.size(); j++) {
-					int randed = rand.nextInt(availableTransposes.size());
-					int transpose = availableTransposes.get(randed);
-					panels.get(j).setTranspose(transpose);
-
-
-					int transposeIndex = (transpose / 12) + 1;
-					transposesApplied[transposeIndex]++;
-					if (transposesApplied[transposeIndex] >= maxSame) {
-						availableTransposes.remove(Integer.valueOf(transpose));
-					}
-				}
-			}
-			if (canRegenerateOnChange()) {
-				composeMidi(true);
-			}
-
-		}));
-
-		fixRhythmOverlaps = makeButton("Fix Rhythm Overlaps", e -> fixRhythmOverlaps(true));
-		randomButtonsPanel.add(fixRhythmOverlaps);
 		randomButtonsPanel.add(switchOnComposeRandom);
+
+
+		JPanel transposePanel = new JPanel();
+		//transposePanel.setBorder(new BevelBorder(BevelBorder.RAISED));
+		//transposePanel.setOpaque(false);
+		transposePanel.setPreferredSize(new Dimension(170, 20));
+		JButton transposeAllBtn = makeButton("All", e -> randomizeTranspose(false));
+		JButton transposeTabBtn = makeButton("Tab", e -> randomizeTranspose(true));
+		transposeAllBtn.setMargin(new Insets(0, 0, 0, 0));
+		transposeTabBtn.setMargin(new Insets(0, 0, 0, 0));
+		transposeAllBtn.setPreferredSize(new Dimension(35, 20));
+		transposeTabBtn.setPreferredSize(new Dimension(35, 20));
+		JLabel transposeLabel = new JLabel("R. Transpose");
+		transposeLabel.setPreferredSize(new Dimension(80, 20));
+		transposePanel.add(transposeLabel);
+		transposePanel.add(transposeAllBtn);
+		transposePanel.add(transposeTabBtn);
+		randomButtonsPanel.add(transposePanel);
+
+		JPanel sidechainPanel = new JPanel();
+		//sidechainPanel.setOpaque(false);
+		sidechainPanel.setPreferredSize(new Dimension(170, 20));
+		sidechainPatterns = makeButton("All", e -> sidechainPatterns(true, false));
+		sidechainPatternsTab = makeButton("Tab", e -> sidechainPatterns(true, true));
+		sidechainPatterns.setMargin(new Insets(0, 0, 0, 0));
+		sidechainPatternsTab.setMargin(new Insets(0, 0, 0, 0));
+		sidechainPatterns.setPreferredSize(new Dimension(35, 20));
+		sidechainPatternsTab.setPreferredSize(new Dimension(35, 20));
+		sidechainPanel.add(new JLabel("Sidechain"));
+		sidechainPanel.add(sidechainPatterns);
+		sidechainPanel.add(sidechainPatternsTab);
+		randomButtonsPanel.add(sidechainPanel);
 		//randomButtonsPanel.add(randomBottomPanel);
 
 		toggleableComponents.add(randomizeStrums);
 		//toggleableComponents.add(randomizeChordStrumsOnCompose);
-		toggleableComponents.add(fixRhythmOverlaps);
+		toggleableComponents.add(sidechainPanel);
+		toggleableComponents.add(transposePanel);
 		controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -3844,16 +3847,58 @@ public class VibeComposerGUI extends JFrame
 	}
 
 
-	public void fixRhythmOverlaps(boolean showPopup) {
+	private void randomizeTranspose(boolean currentTabOnly) {
+		int currentTab = instrumentTabPane.getSelectedIndex();
+		if (currentTabOnly && currentTab >= 4) {
+			new TemporaryInfoPopup("Nothing to transpose in this tab!", null);
+			return;
+		}
+		int start = currentTabOnly ? currentTab : 0;
+		int end = currentTabOnly ? currentTab : 3;
+		Random rand = new Random();
+		for (int i = start; i <= end; i++) {
+			List<Integer> availableTransposes = new ArrayList<>(
+					(i == 1) ? Arrays.asList(new Integer[] { -12, 0 })
+							: Arrays.asList(new Integer[] { -12, 0, 12 }));
+			List<InstPanel> panels = getAffectedPanels(i);
+			int maxSame = Math.max(2, (int) Math.ceil(panels.size() / 3.0));
+			int[] transposesApplied = { 0, 0, 0 };
+			for (int j = 0; j < panels.size(); j++) {
+				int randed = rand.nextInt(availableTransposes.size());
+				int transpose = availableTransposes.get(randed);
+				panels.get(j).setTranspose(transpose);
+
+
+				int transposeIndex = (transpose / 12) + 1;
+				transposesApplied[transposeIndex]++;
+				if (transposesApplied[transposeIndex] >= maxSame) {
+					availableTransposes.remove(Integer.valueOf(transpose));
+				}
+			}
+		}
+		if (canRegenerateOnChange()) {
+			composeMidi(true);
+		}
+	}
+
+	public void sidechainPatterns(boolean showPopup, boolean currentTabOnly) {
+		int currentTab = instrumentTabPane.getSelectedIndex();
+		if (currentTabOnly && (currentTab <= 1 || instrumentTabPane.getSelectedIndex() >= 5)) {
+			new TemporaryInfoPopup("Only chords/arps/drums can be sidechained!", null);
+			return;
+		}
+		int multiplier = currentTabOnly && currentTab < 4 ? 3 : 1;
 		// count rhythm weights in a 1/32 grid across 4 chords span
 		int[] rhythmGrid = new int[4 * 32];
 		Random rand = new Random();
 		int[] panelChanges = new int[3];
-		for (int i = 4; i >= 2; i--) {
+		int start = currentTabOnly ? currentTab : 4;
+		int end = currentTabOnly ? currentTab : 2;
+		for (int i = start; i >= end; i--) {
 			List<? extends InstPanel> panels = getInstList(i);
 			int totalChanged = 0;
 			for (int j = 0; j < panels.size(); j++) {
-				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand);
+				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand, multiplier);
 			}
 			panelChanges[i - 2] = totalChanged;
 			//LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
@@ -5073,7 +5118,7 @@ public class VibeComposerGUI extends JFrame
 		melodyTargetNotesRandomizeOnCompose.setSelected(state);
 		melodyPatternRandomizeOnCompose.setSelected(state);
 		randomizeTimingsOnCompose.setSelected(state);
-		fixRhythmOverlapsOnCompose.setSelected(state);
+		sidechainPatternsOnCompose.setSelected(state);
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
@@ -5093,7 +5138,7 @@ public class VibeComposerGUI extends JFrame
 		randomMelodyOnRegenerate.setForeground(fg);
 		switchOnComposeRandom.setForeground(fg);
 		randomizeTimingsOnCompose.setForeground(fg);
-		fixRhythmOverlapsOnCompose.setForeground(fg);
+		sidechainPatternsOnCompose.setForeground(fg);
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -5582,8 +5627,8 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		if (!regenerate && fixRhythmOverlapsOnCompose.isSelected()) {
-			fixRhythmOverlaps(false);
+		if (!regenerate && sidechainPatternsOnCompose.isSelected()) {
+			sidechainPatterns(false, false);
 		}
 
 
@@ -7502,7 +7547,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(randomizeTimingsOnCompose);
 		cs.add(customFilenameAddTimestamp);
 		cs.add(configHistoryStoreRegeneratedTracks);
-		cs.add(fixRhythmOverlapsOnCompose);
+		cs.add(sidechainPatternsOnCompose);
 
 		return cs;
 	}

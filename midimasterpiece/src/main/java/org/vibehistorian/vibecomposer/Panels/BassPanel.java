@@ -12,6 +12,7 @@ import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -60,6 +61,7 @@ public class BassPanel extends InstPanel {
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);
 		comboPanel.linkVelocityToggle(veloTogglerButt);
+		setPattern(RhythmPattern.MELODY1);
 		this.add(comboPanel);
 		this.add(veloTogglerButt);
 		this.add(patternFlip);

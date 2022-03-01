@@ -797,7 +797,7 @@ public abstract class InstPanel extends JPanel {
 
 	}
 
-	public int addToRhythmGrid(int[] rhythmGrid, Random rand) {
+	public int addToRhythmGrid(int[] rhythmGrid, Random rand, int multiplier) {
 		// forward calculation
 		long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
 				.stream().filter(e -> e > 0).count();
@@ -814,7 +814,7 @@ public abstract class InstPanel extends JPanel {
 		int changed = 0;
 		for (int i = 0; i < panelRhythmGrid.length; i++) {
 			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
-				int nextVal = rhythmGrid[i] + panelRhythmGrid[i];
+				int nextVal = rhythmGrid[i] + panelRhythmGrid[i] * multiplier;
 				int mapped = mappedGrid.getRight().get(i);
 				if (totalAvailable >= 2 && getComboPanel().getPattern(mapped) > 0) {
 					if (nextVal > MAX_RHYTHM_DENSITY
