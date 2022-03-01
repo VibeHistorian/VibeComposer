@@ -1412,55 +1412,9 @@ public class VibeComposerGUI extends JFrame
 				//clearAllSeeds();
 			}
 		}));
-		JButton loadCustomBtn = makeButton("Replace Section", e -> {
-			if (configHistory.getItemCount() > 0 && arrSection.getSelectedIndex() > 0) {
-				GUIConfig sectionGuiConfig = configHistory.getVal();
-				Section currentSec = actualArrangement.getSections()
-						.get(arrSection.getSelectedIndex() - 1);
-				for (int i = 0; i < 5; i++) {
-					currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
-				}
-				/*SectionConfig secConfig = currentSec.getSecConfig();
-				if (sectionGuiConfig.getBeatDurationMultiplierIndex() != beatDurationMultiplier
-						.getSelectedIndex()) {
-					secConfig.setBeatDurationMultiplierIndex(
-							sectionGuiConfig.getBeatDurationMultiplierIndex());
-				}
-				
-				if ((int) sectionGuiConfig.getBpm() != mainBpm.getInt()) {
-					secConfig.setSectionBpm((int) sectionGuiConfig.getBpm());
-				}
-				
-				secConfig.setSectionSwingOverride(sectionGuiConfig.getGlobalSwingOverride());*/
+		JButton loadCustomBtn = makeButton("Replace Section", e -> replaceSection());
 
-				switchPanelsForSectionSelection(arrSection.getVal());
-
-				/*if (sectionGuiConfig.getGlobalSwingOverride() != null) {
-					applyGlobalSwing(sectionGuiConfig.getGlobalSwingOverride(), true);
-				}*/
-
-				//copyConfigToGUI(guiConfig);
-				//clearAllSeeds();
-			}
-		});
-
-		JButton recomposeSectionBtn = makeButton("Recompose Section", e -> {
-			if (arrSection.getSelectedIndex() == 0) {
-				return;
-			}
-			manualArrangement.setSelected(true);
-			for (int i = 2; i < 5; i++) {
-				createPanels(i, getInstList(i).size(), false);
-				applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
-			}
-			arrSection.getCurrentButton().repaint();
-			recalculateTabPaneCounts();
-			recalculateSoloMuters();
-			if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
-				stopMidi();
-				composeMidi(true);
-			}
-		});
+		JButton recomposeSectionBtn = makeButton("Recompose Section", e -> recomposeSection());
 
 		soloMuterTrackControlPanel.add(loadCustomBtn);
 		soloMuterTrackControlPanel.add(recomposeSectionBtn);
@@ -1485,6 +1439,58 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(soloMuterTrackControlPanel, constraints);
 	}
 
+	private void recomposeSection() {
+		if (arrSection.getSelectedIndex() == 0) {
+			return;
+		}
+		manualArrangement.setSelected(true);
+		for (int i = 2; i < 5; i++) {
+			createPanels(i, getInstList(i).size(), false);
+			applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
+		}
+		arrSection.getCurrentButton().repaint();
+		recalculateTabPaneCounts();
+		recalculateSoloMuters();
+		if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
+			stopMidi();
+			composeMidi(true);
+		}
+	}
+
+	private void replaceSection() {
+		if (configHistory.getItemCount() > 0 && arrSection.getSelectedIndex() > 0) {
+			GUIConfig sectionGuiConfig = configHistory.getVal();
+			Section currentSec = actualArrangement.getSections()
+					.get(arrSection.getSelectedIndex() - 1);
+			for (int i = 0; i < 5; i++) {
+				currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
+			}
+			/*SectionConfig secConfig = currentSec.getSecConfig();
+			if (sectionGuiConfig.getBeatDurationMultiplierIndex() != beatDurationMultiplier
+					.getSelectedIndex()) {
+				secConfig.setBeatDurationMultiplierIndex(
+						sectionGuiConfig.getBeatDurationMultiplierIndex());
+			}
+			
+			if ((int) sectionGuiConfig.getBpm() != mainBpm.getInt()) {
+				secConfig.setSectionBpm((int) sectionGuiConfig.getBpm());
+			}
+			
+			secConfig.setSectionSwingOverride(sectionGuiConfig.getGlobalSwingOverride());*/
+			currentSec.setCustomChords(sectionGuiConfig.getCustomChords());
+			currentSec.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
+			currentSec.setCustomChordsDurationsEnabled(true);
+			arrSection.getCurrentButton().repaint();
+			switchPanelsForSectionSelection(arrSection.getVal());
+
+			/*if (sectionGuiConfig.getGlobalSwingOverride() != null) {
+				applyGlobalSwing(sectionGuiConfig.getGlobalSwingOverride(), true);
+			}*/
+
+			//copyConfigToGUI(guiConfig);
+			//clearAllSeeds();
+		}
+	}
 
 	private void initMelodyGenSettings(int startY, int anchorSide) {
 
@@ -5807,7 +5813,15 @@ public class VibeComposerGUI extends JFrame
 			generatedMidi.setListData(new File[] { currentMidi });
 			//sizeRespectingPack();
 			repaint();
-			Sequence sequence = MidiSystem.getSequence(currentMidi);
+			Sequence sequence = null;
+			try {
+				sequence = MidiSystem.getSequence(currentMidi);
+			} catch (Exception e) {
+				new TemporaryInfoPopup(
+						"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
+						null);
+				return;
+			}
 			sequencer.setSequence(sequence); // load it into sequencer
 
 			if (midiMode.isSelected()) {
@@ -6033,7 +6047,7 @@ public class VibeComposerGUI extends JFrame
 				needToRecalculateSoloMuters = true;
 				needToRecalculateSoloMutersAfterSequenceGenerated = false;
 			}
-		} catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
+		} catch (MidiUnavailableException | InvalidMidiDataException ex) {
 			ex.printStackTrace();
 		}
 	}
