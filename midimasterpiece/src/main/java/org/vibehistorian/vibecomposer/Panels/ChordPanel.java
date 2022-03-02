@@ -13,10 +13,9 @@ import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -30,7 +29,8 @@ public class ChordPanel extends InstPanel {
 	private KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
 	private KnobPanel transitionSplit = new KnobPanel("Split<br>%%", 625, 0, 1000);
 
-	private KnobPanel strum = new KnobPanel("Strum<br>/1000", 0, 0, 2000);
+	private KnobPanel strum = new KnobPanel("Strum", 0, 0, 2000);
+	private KnobPanel strumPauseChance = new KnobPanel("Strum<br>Pause", 0);
 
 	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
@@ -48,7 +48,7 @@ public class ChordPanel extends InstPanel {
 		midiChannel.setVal(11);
 
 		initDefaults(l);
-		volSlider.setDefaultValue(30);
+		volSlider.setDefaultValue(40);
 		this.add(volSlider);
 		this.add(panSlider);
 		this.add(new JLabel("#"));
@@ -58,11 +58,8 @@ public class ChordPanel extends InstPanel {
 		this.add(instPoolPicker);
 		addDefaultPanelButtons();
 
-		this.add(chordSpanFillPanel);
-
-		this.add(strum);
-		this.add(strumType);
 		this.add(transpose);
+		this.add(chordSpanFillPanel);
 
 		this.add(hitsPerPattern);
 		this.add(pattern);
@@ -77,6 +74,11 @@ public class ChordPanel extends InstPanel {
 		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(chordSpan);
+		this.add(pauseChance);
+
+		this.add(strum);
+		this.add(strumType);
+		this.add(strumPauseChance);
 
 		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
 				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
@@ -105,15 +107,20 @@ public class ChordPanel extends InstPanel {
 		toggleableComponents.add(transitionChance);
 		toggleableComponents.add(transitionSplit);
 		toggleableComponents.add(patternJoinMode);
+		toggleableComponents.add(strumPauseChance);
 
+		initDefaultsPost();
+		getComboPanel().reapplyHits();
+	}
+
+	@Override
+	public void toggleComponentTexts(boolean b) {
+		super.toggleComponentTexts(b);
+		strum.setShowTextInKnob(b);
 	}
 
 	public ChordPanel(ActionListener l) {
-		setPartClass(ChordPart.class);
 		initComponents(l);
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
 				instPoolPicker.addItem(p);
@@ -172,6 +179,7 @@ public class ChordPanel extends InstPanel {
 		part.setTransitionChance(getTransitionChance());
 		part.setTransitionSplit(getTransitionSplit());
 		part.setStrum(getStrum());
+		part.setStrumPauseChance(getStrumPauseChance());
 		part.setPatternJoinMode(getPatternJoinMode());
 
 		part.setInstPool(getInstPool());
@@ -189,6 +197,7 @@ public class ChordPanel extends InstPanel {
 		setTransitionChance(part.getTransitionChance());
 		setTransitionSplit(part.getTransitionSplit());
 		setStrum(part.getStrum());
+		setStrumPauseChance(part.getStrumPauseChance());
 		setPatternJoinMode(part.getPatternJoinMode());
 		setStrumType(part.getStrumType());
 
@@ -224,4 +233,56 @@ public class ChordPanel extends InstPanel {
 	public void setStrumType(StrumType val) {
 		strumType.setVal(val);
 	}
+
+	@Override
+	public int getPartNum() {
+		return 2;
+	}
+
+	public int getStrumPauseChance() {
+		return strumPauseChance.getInt();
+	}
+
+	public void setStrumPauseChance(int strumPauseChance) {
+		this.strumPauseChance.setInt(strumPauseChance);
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return ChordPart.class;
+	}
+
+	/*@Override
+	protected Pair<Integer[], Map<Integer, Integer>> makeMappedRhythmGrid() {
+	
+		// shift
+		List<Integer> rhythmGridBase = getFinalPatternCopy().subList(0, getHitsPerPattern());
+		int realHits = getHitsPerPattern() * getPatternRepeat();
+		for (int i = 0; i < getPatternRepeat() - 1; i++) {
+			rhythmGridBase.addAll(rhythmGridBase.subList(0, getHitsPerPattern()));
+		}
+	
+		// span
+		double rhythmMultiplier = 32 / (double) realHits;
+		int[] rhythmGridStretched = new int[32];
+		for (int i = 0; i < rhythmGridBase.size(); i++) {
+			rhythmGridStretched[Math.min(31,
+					(int) Math.round(i * rhythmMultiplier))] = rhythmGridBase.get(i);
+		}
+		List<Integer> rhythmGridSpanned = MidiUtils.intArrToList(rhythmGridStretched);
+	
+		rhythmGridSpanned = MidiUtils.intersperse(0, getChordSpan() - 1, rhythmGridSpanned);
+		//LG.i("Size: " + rhythmGridSpanned.size());
+		while (rhythmGridSpanned.size() < 4 * 32) {
+			List<Integer> toAdd = rhythmGridSpanned.subList(0, 32);
+			rhythmGridSpanned.addAll(toAdd);
+		}
+		// delay
+		int delayShift = getDelay() / 125;
+		if (delayShift != 0) {
+			Collections.rotate(rhythmGridSpanned, delayShift);
+		}
+	
+		return rhythmGridSpanned.toArray(new Integer[0]);
+	}*/
 }

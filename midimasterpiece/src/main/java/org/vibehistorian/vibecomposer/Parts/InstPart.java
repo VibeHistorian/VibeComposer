@@ -21,13 +21,16 @@ package org.vibehistorian.vibecomposer.Parts;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlList;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public abstract class InstPart implements Cloneable {
@@ -41,7 +44,7 @@ public abstract class InstPart implements Cloneable {
 	protected int chordNotesStretch = 3;
 	protected boolean stretchEnabled = false;
 
-	protected int pauseChance = 20;
+	protected int pauseChance = 0;
 	protected int exceptionChance = 5;
 	protected boolean repeatableNotes = true;
 	protected int patternRepeat = 1;
@@ -72,6 +75,10 @@ public abstract class InstPart implements Cloneable {
 	protected int midiChannel = 10;
 
 	protected boolean muted = false;
+
+	protected int partNum = 0;
+
+	protected PhraseNotes customMidi = null;
 
 	public void setFromPanel(InstPanel panel, int lastRandomSeed) {
 		setInstrument(panel.getInstrument());
@@ -118,6 +125,8 @@ public abstract class InstPart implements Cloneable {
 
 		setSliderVolume(panel.getVolSlider().getValue());
 		setSliderPan(panel.getPanSlider().getValue());
+
+		setCustomMidi(panel.getCustomMidi());
 
 		setMidiChannel(panel.getMidiChannel());
 
@@ -197,6 +206,10 @@ public abstract class InstPart implements Cloneable {
 
 	public int getPatternSeed() {
 		return patternSeed;
+	}
+
+	public int getPatternSeedWithPartOffset() {
+		return patternSeed + partNum * 10000;
 	}
 
 	public void setPatternSeed(int patternSeed) {
@@ -385,8 +398,26 @@ public abstract class InstPart implements Cloneable {
 	}
 
 	public static List<? extends InstPart> sortParts(List<? extends InstPart> parts) {
-		Collections.sort(parts, (e1, e2) -> (Integer.compare(e1.getOrder(), e2.getOrder())));
+		Collections.sort(parts, Comparator.comparing(e -> e.getOrder()));
 		return parts;
 	}
 
+	public abstract int getPartNum();
+
+	public int getAbsoluteOrder() {
+		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getOrder());
+	}
+
+	public PhraseNotes getCustomMidi() {
+		return customMidi;
+	}
+
+	public void setCustomMidi(PhraseNotes customMidi) {
+		this.customMidi = customMidi;
+	}
+
+
+	public String partInfo() {
+		return "Part: " + getPartNum() + ", order: " + getOrder();
+	}
 }

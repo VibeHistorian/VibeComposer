@@ -10,6 +10,8 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import org.vibehistorian.vibecomposer.LG;
+
 public class DebugConsole {
 	final JFrame frame = new JFrame();
 	JTextArea textArea;
@@ -29,7 +31,7 @@ public class DebugConsole {
 
 		redirectOut();
 
-		System.out.println("Started debug console..");
+		LG.d("Started debug console..");
 	}
 
 	public PrintStream redirectOut() {

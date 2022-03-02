@@ -6,7 +6,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Random;
 
-import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
 
 public class ButtonValuePopup extends CloseablePopup {
@@ -67,7 +68,7 @@ public class ButtonValuePopup extends CloseablePopup {
 				try {
 					customInput = Integer.valueOf(numPanel.getTextfield().getText());
 				} catch (NumberFormatException ex) {
-					System.out.println("Invalid value: " + numPanel.getTextfield().getText());
+					LG.d("Invalid value: " + numPanel.getTextfield().getText());
 				}
 				if (customInput != null) {
 					butt.setValue(customInput);

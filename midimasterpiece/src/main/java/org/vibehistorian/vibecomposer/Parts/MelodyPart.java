@@ -23,7 +23,7 @@ public class MelodyPart extends InstPart {
 	private int speed = 0;
 
 	public MelodyPart() {
-
+		partNum = 0;
 	}
 
 	public boolean isFillPauses() {
@@ -122,4 +122,7 @@ public class MelodyPart extends InstPart {
 		this.speed = speed;
 	}
 
+	public int getPartNum() {
+		return 0;
+	};
 }

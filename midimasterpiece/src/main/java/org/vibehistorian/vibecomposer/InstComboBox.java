@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
 public class InstComboBox extends ScrollComboBox<String> {
 
@@ -61,7 +61,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 	public InstUtils.POOL setInstrument(int instrument) {
 		if (!instSet(instrument)) {
 			initInstPool(InstUtils.POOL.ALL);
-			System.out.println("Switching to POOL.ALL!");
+			LG.d("Switching to POOL.ALL!");
 			if (!instSet(instrument)) {
 				throw new IllegalArgumentException(
 						"Instrument not found in POOL.ALL: " + instrument);
@@ -88,7 +88,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 			int inst = Integer.valueOf(this.getItemAt(i).split(": ")[0].trim());
 			if (inst == instrument) {
 				setSelectedItem(getItemAt(i));
-				mousePressed = false;
+				discardInteraction();
 				return true;
 			}
 		}

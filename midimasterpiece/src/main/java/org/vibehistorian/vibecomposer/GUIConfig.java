@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,7 @@ import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 @XmlRootElement(name = "GUIConfig")
@@ -66,6 +68,8 @@ public class GUIConfig {
 	private Integer swingUnitMultiplierIndex = 1;
 	private boolean allowChordRepeats = true;
 	private Integer globalSwingOverride = null;
+	private boolean customMidiForceScale = false;
+	private boolean transposedNotesForceScale = false;
 
 
 	// melody gen
@@ -139,6 +143,9 @@ public class GUIConfig {
 
 	private boolean midiMode = true;
 	private long randomSeed = 0;
+
+	private String bookmarkText = "";
+	private int regenerateCount = 0;
 
 
 	public GUIConfig() {
@@ -738,6 +745,65 @@ public class GUIConfig {
 
 	public void setLongProgressionSimilarity(int longProgressionSimilarity) {
 		this.longProgressionSimilarity = longProgressionSimilarity;
+	}
+
+	public boolean isCustomMidiForceScale() {
+		return customMidiForceScale;
+	}
+
+	public void setCustomMidiForceScale(boolean customMidiForceScale) {
+		this.customMidiForceScale = customMidiForceScale;
+	}
+
+	@Override
+	public String toString() {
+		return MidiUtils.SEMITONE_LETTERS.get((transpose + 1200) % 12) + " " + scaleMode.toString()
+				+ " " + (int) bpm + "bpm [Size: " + actualArrangement.getSections().size()
+				+ "] Seed: " + randomSeed + " [" + customChords + "]"
+				+ ((regenerateCount > 0) ? ("(" + regenerateCount + ")") : "")
+				+ (StringUtils.isNotEmpty(bookmarkText) ? (" - " + bookmarkText) : "");
+	}
+
+	@XmlTransient
+	public String getBookmarkText() {
+		return bookmarkText;
+	}
+
+	public void setBookmarkText(String bookmarkText) {
+		this.bookmarkText = bookmarkText;
+	}
+
+	public List<? extends InstPart> getInstPartList(int partNum) {
+		switch (partNum) {
+		case 0:
+			return melodyParts;
+		case 1:
+			return bassParts;
+		case 2:
+			return chordParts;
+		case 3:
+			return arpParts;
+		case 4:
+			return drumParts;
+		}
+		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
+	}
+
+	@XmlTransient
+	public int getRegenerateCount() {
+		return regenerateCount;
+	}
+
+	public void setRegenerateCount(int regenerateCount) {
+		this.regenerateCount = regenerateCount;
+	}
+
+	public boolean isTransposedNotesForceScale() {
+		return transposedNotesForceScale;
+	}
+
+	public void setTransposedNotesForceScale(boolean transposedNotesForceScale) {
+		this.transposedNotesForceScale = transposedNotesForceScale;
 	}
 
 }

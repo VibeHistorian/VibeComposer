@@ -17,7 +17,7 @@ public class BassPart extends InstPart {
 	private PatternJoinMode patternJoinMode = PatternJoinMode.EXPAND;
 
 	public BassPart() {
-
+		partNum = 1;
 	}
 
 	public boolean isUseRhythm() {
@@ -67,4 +67,8 @@ public class BassPart extends InstPart {
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
 		this.patternJoinMode = patternJoinMode;
 	}
+
+	public int getPartNum() {
+		return 1;
+	};
 }

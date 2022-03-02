@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -29,34 +30,48 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.JKnob;
+import org.vibehistorian.vibecomposer.Components.RandomValueButton;
+import org.vibehistorian.vibecomposer.Components.RangeSlider;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
+import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.CheckButton;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.RandomValueButton;
-import org.vibehistorian.vibecomposer.Helpers.RangeSlider;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Helpers.VeloRect;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 public abstract class InstPanel extends JPanel {
 
 	private static final long serialVersionUID = 4381939543337887617L;
+	public static final int TARGET_RHYTHM_DENSITY = 8;
+	public static final int MAX_RHYTHM_DENSITY = 11;
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
@@ -77,7 +92,7 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
-	protected KnobPanel delay = new KnobPanel("Delay", 0, -500, 500);
+	protected KnobPanel delay = new KnobPanel("Delay", 0, -1000, 1000);
 
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
@@ -112,11 +127,20 @@ public abstract class InstPanel extends JPanel {
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
-	protected Class<? extends InstPart> partClass = InstPart.class;
 	protected Integer sequenceTrack = -1;
+	protected Section relatedSection = null;
+
+	protected PhraseNotes customMidi = null;
+	protected CheckButton customMidiToggle = new CheckButton("MIDI'd", false);
 
 	public InstPanel() {
 
+	}
+
+	public void initDefaultsPost() {
+		if (comboPanel != null && pattern.getSelectedIndex() == 0) {
+			comboPanel.reapplyShift();
+		}
 	}
 
 	public void initDefaults(ActionListener l) {
@@ -139,6 +163,13 @@ public abstract class InstPanel extends JPanel {
 		minMaxVelSlider.setName("Velocity range");
 		setVelocityMax(90);
 		setVelocityMin(64);
+
+
+		if (getPartNum() > 0) {
+			for (RhythmPattern d : RhythmPattern.values()) {
+				pattern.addItem(d);
+			}
+		}
 
 		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		stretchPanel.setMaximumSize(new Dimension(3000, 50));
@@ -180,6 +211,31 @@ public abstract class InstPanel extends JPanel {
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);
 
+		customMidiToggle.setEnabled(false);
+		customMidiToggle.setRunnable(() -> {
+			if (!customMidiToggle.isSelected()) {
+				customMidi = null;
+				// turn off customized midi
+				if (relatedSection != null) {
+					if (relatedSection.getInstPartList(getPartNum()) != null) {
+						if (relatedSection.getInstPartList(getPartNum())
+								.get(getAbsoluteOrder()) != null) {
+							relatedSection.getInstPartList(getPartNum()).get(getAbsoluteOrder())
+									.setCustomMidi(null);
+						}
+					}
+				}
+				if (VibeComposerGUI.currentMidiEditorPopup != null
+						&& VibeComposerGUI.currentMidiEditorPopup.part == getPartNum()
+						&& VibeComposerGUI.currentMidiEditorPopup.partOrder == getAbsoluteOrder()) {
+					VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.setSelectedRaw(false);
+					VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.repaint();
+				}
+				customMidiToggle.setEnabled(false);
+				customMidiToggle.repaint();
+			}
+		});
+
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
@@ -187,6 +243,8 @@ public abstract class InstPanel extends JPanel {
 		randomizeButton.setActionCommand("RandomizePart");
 		randomizeButton.setPreferredSize(new Dimension(15, 30));
 		randomizeButton.setMargin(new Insets(0, 0, 0, 0));
+
+		instrument.setPrototype("XXXXXXXXXXXX");
 
 		//transpose.getSlider().setMajorTickSpacing(12);
 		//transpose.getSlider().setSnapToTicks(true);
@@ -215,6 +273,7 @@ public abstract class InstPanel extends JPanel {
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
+		this.add(customMidiToggle);
 	}
 
 	public void addDefaultPanelButtons() {
@@ -294,6 +353,7 @@ public abstract class InstPanel extends JPanel {
 		setPattern(part.getPattern());
 		setPatternFlip(part.isPatternFlip());
 
+		setCustomMidi(part.getCustomMidi());
 
 		if (comboPanel != null && pattern.isEnabled()) {
 			comboPanel.setVelocities(part.getCustomVelocities());
@@ -424,7 +484,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getMidiChannel() {
-		return Integer.valueOf(midiChannel.getVal());
+		return midiChannel.getVal();
 	}
 
 	public void setMidiChannel(int val) {
@@ -576,13 +636,7 @@ public abstract class InstPanel extends JPanel {
 		this.noteLengthMultiplier.setInt(noteLengthMultiplier);
 	}
 
-	public Class<? extends InstPart> getPartClass() {
-		return partClass;
-	}
-
-	public void setPartClass(Class<? extends InstPart> partClass) {
-		this.partClass = partClass;
-	}
+	public abstract Class<? extends InstPart> getPartClass();
 
 	public Integer getSequenceTrack() {
 		return sequenceTrack;
@@ -595,8 +649,7 @@ public abstract class InstPanel extends JPanel {
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
 	public VisualPatternPanel makeVisualPatternPanel() {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan,
-				chordSpanFill, this);
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, this);
 	}
 
 	public VisualPatternPanel getComboPanel() {
@@ -628,7 +681,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void toggleGlobalElements(boolean b) {
-		getInstrumentBox().setEnabled(b);
+		//getInstrumentBox().setEnabled(b);
 		getSoloMuter().setEnabled(b);
 		muteInst.setEnabled(b);
 		volSlider.setEnabled(b);
@@ -655,13 +708,271 @@ public abstract class InstPanel extends JPanel {
 	public void applyPauseChance(Random randGen) {
 		if (getPauseChance() > 0 && getPattern() != RhythmPattern.MELODY1
 				&& VibeComposerGUI.patternApplyPausesWhenGenerating.isSelected()) {
-			for (int j = 0; j < getHitsPerPattern(); j++) {
-				if (randGen.nextInt(100) < getPauseChance() && getComboPanel().getPattern(j) > 0) {
-					getComboPanel().checkPattern(j, 0);
-					//LOGGER.debug("Pause chance applied");
+			long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
+					.stream().filter(e -> e > 0).count();
+			for (int j = 0; j < getHitsPerPattern() && totalAvailable >= 2; j++) {
+				if (randGen.nextInt(100) < getPauseChance()
+						&& getComboPanel().getTruePattern().get(j) > 0) {
+					getComboPanel().checkPattern(getComboPanel().getShifted(j), 0);
+					totalAvailable--;
+					//LG.d("Pause chance applied");
 				}
 			}
 			setPauseChance(0);
 		}
+	}
+
+	public Section getRelatedSection() {
+		return relatedSection;
+	}
+
+	public void setRelatedSection(Section relatedSection) {
+		this.relatedSection = relatedSection;
+	}
+
+	public boolean isMainPanel() {
+		return relatedSection == null;
+	}
+
+	public abstract int getPartNum();
+
+	public PhraseNotes getCustomMidi() {
+		return customMidi;
+	}
+
+	public void setCustomMidi(PhraseNotes customMidi) {
+		if (customMidi != null) {
+			customMidi.setPartOrder(this.getAbsoluteOrder());
+			customMidi.setCustom(true);
+			customMidiToggle.setSelected(true);
+			customMidiToggle.setEnabled(true);
+			customMidiToggle.repaint();
+		} else {
+			customMidiToggle.setSelected(false);
+			customMidiToggle.setEnabled(false);
+			customMidiToggle.repaint();
+		}
+		this.customMidi = customMidi;
+	}
+
+	public int getAbsoluteOrder() {
+		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getPanelOrder());
+	}
+
+	public boolean getCustomMidiToggle() {
+		return customMidiToggle.isSelected();
+	}
+
+	public void setCustomMidiToggle(boolean val) {
+		this.customMidiToggle.setSelected(val);
+	}
+
+	public String panelInfo() {
+		return "Part: " + getPartNum() + ", order: " + getPanelOrder();
+	}
+
+	public void growPattern(Random randGen, int maxGrowth, int growthChance) {
+		if (getPattern() == RhythmPattern.MELODY1 || getPattern() == RhythmPattern.FULL) {
+			return;
+		}
+
+		List<Integer> ptrn = getComboPanel().getTruePattern().subList(0, getHitsPerPattern());
+		List<Integer> emptyIndices = new ArrayList<>();
+		for (int i = 0; i < ptrn.size(); i++) {
+			if (ptrn.get(i) < 1) {
+				emptyIndices.add(i);
+			}
+		}
+		if (emptyIndices.isEmpty()) {
+			return;
+		}
+		//LG.i("Changing pattern: " + getPattern().toString());
+		for (int i = 0; i < maxGrowth; i++) {
+			if (randGen.nextInt(100) < growthChance && !emptyIndices.isEmpty()) {
+				int index = emptyIndices.get(randGen.nextInt(emptyIndices.size()));
+				getComboPanel().checkPattern(getComboPanel().getShifted(index), 1);
+				//LG.i(panelInfo() + ", checked: " + index);
+			}
+		}
+
+	}
+
+	public int addToRhythmGrid(int[] rhythmGrid, Random rand, int multiplier) {
+		// forward calculation
+		long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
+				.stream().filter(e -> e > 0).count();
+		Pair<Integer[], Map<Integer, Integer>> mappedGrid = makeMappedRhythmGrid();
+		Integer[] panelRhythmGrid = mappedGrid.getLeft();
+		//StringUtils.join(rhythmGrid, ",");
+		List<Integer> fillPattern = getChordSpanFill().getPatternByLength(4, getFillFlip());
+		for (int i = 0; i < 4 * 32; i++) {
+			if (fillPattern.get(i / 32) < 1) {
+				panelRhythmGrid[i] = 0;
+			}
+		}
+		//LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
+		int changed = 0;
+		for (int i = 0; i < panelRhythmGrid.length; i++) {
+			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
+				int nextVal = rhythmGrid[i] + panelRhythmGrid[i] * multiplier;
+				int mapped = mappedGrid.getRight().get(i);
+				if (totalAvailable >= 2 && getComboPanel().getPattern(mapped) > 0) {
+					if (nextVal > MAX_RHYTHM_DENSITY
+							|| (nextVal > TARGET_RHYTHM_DENSITY && rand.nextInt(100) < 50)) {
+						// remove - backward calculation
+						getComboPanel().checkPattern(mapped, 0);
+						totalAvailable--;
+						changed++;
+						//LG.i(panelInfo() + " Unchecked: " + mapped);
+						//rhythmGrid[i] = nextVal;
+					} else {
+						rhythmGrid[i] = nextVal;
+					}
+				} else {
+					rhythmGrid[i] = nextVal;
+				}
+
+			}
+		}
+		return changed;
+	}
+
+	public List<Integer> getFinalPatternCopy() {
+		List<Integer> premadePattern = null;
+		if (getPattern() != RhythmPattern.CUSTOM) {
+			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
+					getPatternShift());
+		} else {
+			List<Integer> premadeCopy = new ArrayList<>(getComboPanel().getTruePattern());
+			Collections.rotate(premadeCopy, getPatternShift());
+			premadePattern = premadeCopy;
+		}
+		return premadePattern;
+	}
+
+	protected Pair<Integer[], Map<Integer, Integer>> makeMappedRhythmGrid() {
+
+		// shift
+		List<Integer> rhythmGridBase = getFinalPatternCopy().subList(0, getHitsPerPattern());
+		int realHits = getHitsPerPattern() * getPatternRepeat();
+		for (int i = 0; i < getHitsPerPattern(); i++) {
+			if (rhythmGridBase.get(i) > 0) {
+				rhythmGridBase.set(i, i + 1);
+			}
+		}
+		for (int i = 0; i < getPatternRepeat() - 1; i++) {
+			List<Integer> toAdd = rhythmGridBase.subList(0, getHitsPerPattern());
+			rhythmGridBase.addAll(toAdd);
+		}
+
+		// span
+		double rhythmMultiplier = 32 / (double) realHits;
+		int[] rhythmGridStretched = new int[32];
+		for (int i = 0; i < rhythmGridBase.size(); i++) {
+			if (rhythmGridBase.get(i) > 0) {
+				//LG.i("" + i * rhythmMultiplier + " " + (int) Math.round(i * rhythmMultiplier));
+				int placement = Math.min(31, (int) Math.round(i * rhythmMultiplier));
+				rhythmGridStretched[placement] = rhythmGridBase.get(i);
+			}
+		}
+		List<Integer> rhythmGridSpanned = MidiUtils.intArrToList(rhythmGridStretched);
+		//LG.i("Temp grid: " + StringUtils.join(rhythmGridSpanned, ";"));
+		rhythmGridSpanned = MidiUtils.intersperse(0, getChordSpan() - 1, rhythmGridSpanned);
+		//LG.i("Size: " + rhythmGridSpanned.size());
+		int sizeSoFar = rhythmGridSpanned.size();
+		while (rhythmGridSpanned.size() < 4 * 32) {
+			List<Integer> toAdd = rhythmGridSpanned.subList(0, sizeSoFar);
+			rhythmGridSpanned.addAll(toAdd);
+		}
+		// delay
+		int delayShift = getDelay() / 125;
+		if (delayShift != 0) {
+			Collections.rotate(rhythmGridSpanned, delayShift);
+		}
+
+
+		Map<Integer, Integer> gridMap = new HashMap<>();
+		for (int i = 0; i < getHitsPerPattern(); i++) {
+			for (int j = 0; j < rhythmGridSpanned.size(); j++) {
+				Integer val = rhythmGridSpanned.get(j);
+				if (val != null && val == i + 1) {
+					gridMap.put(j, i);
+				}
+			}
+		}
+		/*LG.i(gridMap.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue,
+				Collectors.mapping(Map.Entry::getKey, Collectors.toList()))).toString());*/
+		for (int i = 0; i < rhythmGridSpanned.size(); i++) {
+			if (rhythmGridSpanned.get(i) > 0) {
+				rhythmGridSpanned.set(i, 1);
+			}
+		}
+		return Pair.of(rhythmGridSpanned.toArray(new Integer[0]), gridMap);
+	}
+
+	public List<ScrollComboPanel> findScrollComboBoxesByFirstVal(Object firstVal) {
+		List<ScrollComboPanel> allBoxes = getChildComponents(ScrollComboPanel.class, this, true);
+		if (firstVal == null) {
+			return allBoxes;
+		}
+		List<ScrollComboPanel> namedBoxes = allBoxes.stream()
+				.filter(e -> firstVal.equals(e.getItemAt(0))).collect(Collectors.toList());
+		//LG.i("Found boxes: " + namedBoxes.size());
+		return namedBoxes;
+	}
+
+	public List<JKnob> findKnobsByName(String name) {
+		List<JKnob> allKnobs = getChildComponents(JKnob.class, this, true);
+		if (name == null) {
+			return allKnobs;
+		}
+		List<JKnob> namedKnobs = allKnobs.stream().filter(e -> name.equals(e.getName()))
+				.collect(Collectors.toList());
+		return namedKnobs;
+	}
+
+	public <T extends JComponent> List<T> getAllComponentsLike(JComponent c, Class<T> clazz) {
+		int indexInPanel = findIndexOfComponent(c, clazz);
+		if (indexInPanel < 0) {
+			return new ArrayList<>();
+		}
+		List<T> components = VibeComposerGUI.getAffectedPanels(getPartNum()).stream()
+				.map(e -> e.getComponentByClassIndex(clazz, indexInPanel))
+				.collect(Collectors.toList());
+		return components;
+	}
+
+	public <T extends JComponent> int findIndexOfComponent(JComponent c, Class<T> clazz) {
+		List<T> children = getChildComponents(clazz, this, true);
+		//LG.i("Found children: " + children.size());
+		for (int i = 0; i < children.size(); i++) {
+			//LG.i("Hash1: " + children.get(i).hashCode() + ", hash2: " + c.hashCode());
+			if (clazz.isInstance(children.get(i)) && children.get(i).equals(c)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public <T extends JComponent> T getComponentByClassIndex(Class<T> clazz, int index) {
+		return getChildComponents(clazz, this, true).get(index);
+	}
+
+	public static <T extends JComponent> List<T> getChildComponents(Class<T> clazz,
+			Container parent, boolean includeNested) {
+
+		List<T> children = new ArrayList<T>();
+
+		for (Component c : parent.getComponents()) {
+			boolean isClazz = clazz.isAssignableFrom(c.getClass());
+			if (isClazz) {
+				children.add(clazz.cast(c));
+			}
+			if (includeNested && c instanceof Container) {
+				children.addAll(getChildComponents(clazz, (Container) c, includeNested));
+			}
+		}
+
+		return children;
 	}
 }

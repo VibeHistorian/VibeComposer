@@ -4,8 +4,10 @@ import java.awt.Dimension;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
 
-import org.vibehistorian.vibecomposer.Helpers.JKnob;
+import org.vibehistorian.vibecomposer.Components.JKnob;
+import org.vibehistorian.vibecomposer.Components.LockComponentButton;
 
 public class KnobPanel extends TransparentablePanel {
 
@@ -16,6 +18,7 @@ public class KnobPanel extends TransparentablePanel {
 	boolean needToReset = false;
 	boolean showTextInKnob = false;
 	String name = "";
+	LockComponentButton lockButt = null;
 
 	public KnobPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -42,7 +45,16 @@ public class KnobPanel extends TransparentablePanel {
 		}
 		setMaximumSize(new Dimension(200, 50));
 		add(label);
-		add(knob);
+		JLayeredPane knobLockPane = new JLayeredPane();
+		knobLockPane.setPreferredSize(new Dimension(40, 40));
+		knobLockPane.setOpaque(false);
+		knobLockPane.add(knob);
+		lockButt = new LockComponentButton(knob);
+		knobLockPane.add(lockButt);
+		knobLockPane.setComponentZOrder(knob, Integer.valueOf(1));
+		knobLockPane.setComponentZOrder(lockButt, Integer.valueOf(0));
+		lockButt.setBounds(0, 32, 8, 8);
+		add(knobLockPane);
 	}
 
 
@@ -51,7 +63,7 @@ public class KnobPanel extends TransparentablePanel {
 	}
 
 	public int getInt() {
-		return knob.getValue();
+		return knob.updateAndGetValue();
 	}
 
 	public void setInt(int val) {
@@ -82,6 +94,7 @@ public class KnobPanel extends TransparentablePanel {
 
 	public void setRegenerating(boolean b) {
 		knob.setRegenerating(b);
+		lockButt.setVisible(false);
 	}
 
 }

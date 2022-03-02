@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -24,8 +23,9 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
 import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
@@ -35,14 +35,13 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 			"INSTRUMENTAL" };
 	public static final Integer[] ENERGY_WEIGHTS = new Integer[] { 50, 50, 50, 50 };
 
-	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
 	JTable[] tables = new JTable[5];
 
 	JScrollPane scroll;
 
 	public ArrangementPartInclusionPopup(Arrangement arr, Point parentLoc, Dimension parentDim) {
-		super("Arrangement - Part Inclusion", 10);
+		super("Arrangement - Part Inclusion", 10, new Point(-500, -600));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		PopupUtils.addEmptySpaceCloser(tablesPanel, frame);
@@ -128,7 +127,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		frame.add(scroll);
 		frame.pack();
 		frame.setVisible(true);
-		System.out.println("Opened arrangement part inclusion page!");
+		LG.d("Opened arrangement part inclusion page!");
 	}
 
 	private void addPartInclusionButtons(Arrangement arr) {
@@ -227,9 +226,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		}
 	}
 
-	@Override
 	protected void addFrameWindowOperation() {
-		// TODO Auto-generated method stub
-
+		frame.addWindowListener(CloseablePopup.EMPTY_WINDOW_LISTENER);
 	}
 }

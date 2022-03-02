@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlList;
@@ -36,9 +37,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -53,11 +53,9 @@ import jm.music.data.Phrase;
 @XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
-		INTRO, VERSE1, VERSE2, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP, CHORUS3,
-		CLIMAX, OUTRO;
+		INTRO, VERSE1, VERSE2, VERSE3, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP,
+		CHORUS3, CLIMAX, OUTRO;
 	}
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(Section.class);
 
 	public static final String[][] variationDescriptions = {
 			{ "#", "Incl.", "Transpose", "MaxJump" },
@@ -66,23 +64,25 @@ public class Section {
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "ChordDir." },
 			{ "#", "Incl.", "IgnoreFill", "MoreExceptions", "DrumFill" } };
 
-	public static final String[] riskyVariationNames = { "Skip N-1 chord", "Swap Chords",
+	public static final String[] sectionVariationNames = { "Skip N-1 chord", "Swap Chords",
 			"Swap Melody", "Melody Max Speed", "Key Change" };
-	public static final Double[] riskyVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
+	public static final Double[] sectionVariationChanceMultipliers = { 1.0, 0.3, 0.7, 1.0, 1.0 };
 
 	public static final String[] transitionNames = { "None", "Hype Up", "Pipe Down", "Cut End",
-			"Half-tempo Half2" };
-	public static final Double[] transitionChanceMultipliers = { 1.0, 1.5, 1.75, 0.7, 0.5 };
+			"Half Tempo" };
+	public static final Double[] transitionChanceMultipliers = { 1.0, 1.5, 1.75, 0.7, 1.0 };
 
 	public static final int VARIATION_CHANCE = 30;
 
 	private String type;
-	private int measures;
+	private int measures = 1;
 
 	private double startTime;
 	private double sectionDuration = -1;
 	private List<Double> sectionBeatDurations = null;
-	private Integer customKeyChange = null;
+	private List<Double> generatedSectionBeatDurations = null;
+
+	private SectionConfig secConfig = new SectionConfig();
 
 	private int melodyChance = 50;
 	private int bassChance = 50;
@@ -114,11 +114,8 @@ public class Section {
 	private List<DrumPart> drumParts = null;
 	private List<ArpPart> arpParts = null;
 
-	public List<? extends InstPart> getInstPartList(int order) {
-		if (order < 0 || order > 4) {
-			throw new IllegalArgumentException("Inst part list order wrong.");
-		}
-		switch (order) {
+	public List<? extends InstPart> getInstPartList(int partNum) {
+		switch (partNum) {
 		case 0:
 			return melodyParts;
 		case 1:
@@ -130,13 +127,40 @@ public class Section {
 		case 4:
 			return drumParts;
 		}
-		return null;
+		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
 	}
 
-	// map integer(what), map integer(part order), list integer(section variation)
+	public void setInstPartList(List<? extends InstPart> parts, int partNum) {
+		switch (partNum) {
+		case 0:
+			setMelodyParts((List<MelodyPart>) (List<?>) parts);
+			break;
+		case 1:
+			setBassParts((List<BassPart>) (List<?>) parts);
+			break;
+		case 2:
+			setChordParts((List<ChordPart>) (List<?>) parts);
+			break;
+		case 3:
+			setArpParts((List<ArpPart>) (List<?>) parts);
+			break;
+		case 4:
+			setDrumParts((List<DrumPart>) (List<?>) parts);
+			break;
+		default:
+			throw new IllegalArgumentException("PartNum incorrect: " + partNum);
+		}
+	}
+
+	// map integer(part type), [part order][presence/section variation]
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
-	private List<Integer> riskyVariations = null;
+	// map 
+	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>();
+
+	private List<Integer> sectionVariations = null;
+	public static final List<Integer> EMPTY_SECTION_VARS = IntStream.iterate(0, f -> f)
+			.limit(sectionVariationNames.length).boxed().collect(Collectors.toList());
 	private int transitionType = 0;
 
 	public Section() {
@@ -217,6 +241,9 @@ public class Section {
 	}
 
 	public List<Phrase> getMelodies() {
+		if (melodies == null) {
+			melodies = new ArrayList<>();
+		}
 		return melodies;
 	}
 
@@ -226,6 +253,9 @@ public class Section {
 	}
 
 	public List<Phrase> getBasses() {
+		if (basses == null) {
+			basses = new ArrayList<>();
+		}
 		return basses;
 	}
 
@@ -235,6 +265,9 @@ public class Section {
 	}
 
 	public List<Phrase> getChords() {
+		if (chords == null) {
+			chords = new ArrayList<>();
+		}
 		return chords;
 	}
 
@@ -244,6 +277,9 @@ public class Section {
 	}
 
 	public List<Phrase> getArps() {
+		if (arps == null) {
+			arps = new ArrayList<>();
+		}
 		return arps;
 	}
 
@@ -253,6 +289,9 @@ public class Section {
 	}
 
 	public List<Phrase> getDrums() {
+		if (drums == null) {
+			drums = new ArrayList<>();
+		}
 		return drums;
 	}
 
@@ -280,6 +319,7 @@ public class Section {
 	}
 
 	public Section deepCopy() {
+		//LG.d("deep copy called");
 		initPartMapIfNull();
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);
@@ -297,41 +337,42 @@ public class Section {
 			dataCopy.put(i, data);
 		}
 		sec.partPresenceVariationMap = dataCopy;
-		if (riskyVariations != null) {
-			sec.riskyVariations = new ArrayList<>(riskyVariations);
+		if (sectionVariations != null) {
+			sec.sectionVariations = new ArrayList<>(sectionVariations);
 		}
 		sec.transitionType = getTransitionType();
 		if (instVelocityMultiplier != null) {
 			sec.instVelocityMultiplier = new ArrayList<>(instVelocityMultiplier);
 		}
 
-		if (getMelodyParts() != null) {
-			sec.setMelodyParts(getMelodyParts());
-		}
-		if (getBassParts() != null) {
-			sec.setBassParts(getBassParts());
-		}
-		if (getChordParts() != null) {
-			sec.setChordParts(getChordParts());
-		}
-		if (getArpParts() != null) {
-			sec.setArpParts(getArpParts());
-		}
-		if (getDrumParts() != null) {
-			sec.setDrumParts(getDrumParts());
-		}
+		sec.setMelodyParts(getMelodyParts());
+		sec.setBassParts(getBassParts());
+		sec.setChordParts(getChordParts());
+		sec.setArpParts(getArpParts());
+		sec.setDrumParts(getDrumParts());
+
+		// TODO: need real deep copy once elements are changed manually
+		sec.setPartPhraseNotes(getPartPhraseNotes());
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
-		sec.setCustomKeyChange(getCustomKeyChange());
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
 			sec.sectionBeatDurations = new ArrayList<>(sectionBeatDurations);
 		}
+		if (generatedSectionBeatDurations != null) {
+			sec.generatedSectionBeatDurations = new ArrayList<>(generatedSectionBeatDurations);
+		}
+
+		sec.setSecConfig(secConfig.clone());
 
 		return sec;
+	}
+
+	public void resetCustomizedParts(int partNum) {
+		setInstPartList(null, partNum);
 	}
 
 	public void resetCustomizedParts() {
@@ -460,23 +501,23 @@ public class Section {
 			boolean forceAdd) {
 		initPartMapIfNull();
 		int chance = getChanceForInst(part);
-		//LOGGER.debug("Chance: " + chance);
+		//LG.d("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
 		panels.removeIf(e -> e.getMuteInst());
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
 				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
-				//LOGGER.debug("Abs order: " + absOrder);
-				//LOGGER.debug("Offset+2: " + (getTypeMelodyOffset() + 2));
+				//LG.d("Abs order: " + absOrder);
+				//LG.d("Offset+2: " + (getTypeMelodyOffset() + 2));
 				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
 						.equals(inclusionMap.get(part)[absOrder][getTypeMelodyOffset() + 2])) {
-					//LOGGER.debug("TRUE");
+					//LG.d("TRUE");
 					return true;
 				}
 				return false;
 			});
 		}
-		//LOGGER.debug("Panels size: " + panels.size());
+		//LG.d("Panels size: " + panels.size());
 		int added = 0;
 		for (int j = 0; j < panels.size(); j++) {
 			if (presRand.nextInt(100) < chance) {
@@ -614,22 +655,22 @@ public class Section {
 			initPartMap();
 			return;
 		}
-		//LOGGER.debug("INIT PART MAP FROM OLD DATA!");
+		//LG.d("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
 			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
-			//LOGGER.debug(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
+			//LG.d(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				Integer oldIndex = oldPresence.get(rowOrders.get(j));
 				if (oldIndex == null) {
-					/*LOGGER.debug(
+					/*LG.d(
 							"Failed searching in j/order: " + j + ", value: " + rowOrders.get(j));*/
 				} else {
-					//LOGGER.debug("Found index for j: " + j + ", index: " + oldIndex);
+					//LG.d("Found index for j: " + j + ", index: " + oldIndex);
 				}
 				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
 					if (oldIndex == null) {
@@ -647,7 +688,7 @@ public class Section {
 
 	private Boolean getBooleanFromOldData(Object[][] oldData, int j, int k) {
 		if (oldData.length <= j || oldData[j].length <= k) {
-			//LOGGER.debug("False for j: " + j + ", k: " + k);
+			//LG.d("False for j: " + j + ", k: " + k);
 			return Boolean.FALSE;
 		} else {
 			return (Boolean) oldData[j][k];
@@ -672,7 +713,7 @@ public class Section {
 
 	public void initPartMapIfNull() {
 		if (partPresenceVariationMap.get(0) == null) {
-			//LOGGER.debug("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
+			//LG.d("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 			initPartMap();
 		}
 	}
@@ -688,17 +729,17 @@ public class Section {
 	}
 
 	@XmlList
-	public List<Integer> getRiskyVariations() {
-		if (riskyVariations != null) {
-			while (riskyVariations.size() < riskyVariationNames.length) {
-				riskyVariations.add(0);
+	public List<Integer> getSectionVariations() {
+		if (sectionVariations != null) {
+			while (sectionVariations.size() < sectionVariationNames.length) {
+				sectionVariations.add(0);
 			}
 		}
-		return riskyVariations;
+		return sectionVariations;
 	}
 
-	public boolean isRiskyVar(int num) {
-		return getRiskyVariations().get(num) > 0;
+	public boolean isSectionVar(int num) {
+		return sectionVariations != null && getSectionVariations().get(num) > 0;
 	}
 
 	public boolean isTransition() {
@@ -709,19 +750,19 @@ public class Section {
 		return transitionType;
 	}
 
-	public void setRiskyVariations(List<Integer> riskyVariations) {
-		this.riskyVariations = riskyVariations;
+	public void setSectionVariations(List<Integer> sectionVariations) {
+		this.sectionVariations = sectionVariations;
 	}
 
-	public void setRiskyVariation(int order, Integer value) {
-		if (riskyVariations == null) {
-			List<Integer> riskyVars = new ArrayList<>();
-			for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-				riskyVars.add(0);
+	public void setSectionVariation(int order, Integer value) {
+		if (sectionVariations == null) {
+			List<Integer> sectionVars = new ArrayList<>();
+			for (int i = 0; i < Section.sectionVariationNames.length; i++) {
+				sectionVars.add(0);
 			}
-			setRiskyVariations(riskyVars);
+			setSectionVariations(sectionVars);
 		}
-		riskyVariations.set(order, value);
+		sectionVariations.set(order, value);
 	}
 
 	public double countVariationsForPartType(int part) {
@@ -839,6 +880,19 @@ public class Section {
 		return customChords;
 	}
 
+	public List<String> getCustomChordsList() {
+		if (StringUtils.isEmpty(customChords)) {
+			return null;
+		} else {
+			String[] chords = customChords.split(",");
+			List<String> chordList = new ArrayList<>();
+			for (String c : chords) {
+				chordList.add(c.trim());
+			}
+			return chordList;
+		}
+	}
+
 	public void setCustomChords(String customChords) {
 		this.customChords = customChords;
 	}
@@ -897,14 +951,6 @@ public class Section {
 		this.transitionType = transitionType;
 	}
 
-	public Integer getCustomKeyChange() {
-		return customKeyChange;
-	}
-
-	public void setCustomKeyChange(Integer customKeyChange) {
-		this.customKeyChange = customKeyChange;
-	}
-
 	public boolean isDisplayAlternateChords() {
 		return displayAlternateChords;
 	}
@@ -912,4 +958,104 @@ public class Section {
 	public void setDisplayAlternateChords(boolean displayAlternateChords) {
 		this.displayAlternateChords = displayAlternateChords;
 	}
+
+
+	public List<PartPhraseNotes> getPartPhraseNotes() {
+		return partPhraseNotes;
+	}
+
+	public void addPhraseNotes(int part, int partOrder, PhraseNotes pn) {
+		while (partPhraseNotes.size() <= part) {
+			partPhraseNotes.add(new PartPhraseNotes(null, partPhraseNotes.size()));
+		}
+		while (partPhraseNotes.get(part).size() <= partOrder) {
+			PhraseNotes pn2 = new PhraseNotes();
+			pn2.setPartOrder(partPhraseNotes.get(part).size());
+			partPhraseNotes.get(part).add(pn2);
+		}
+		partPhraseNotes.get(part).set(partOrder, pn);
+	}
+
+	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
+		if (partPhraseNotes == null) {
+			return;
+		}
+		for (PartPhraseNotes phrn : partPhraseNotes) {
+			PartPhraseNotes phrnCopy = new PartPhraseNotes(
+					phrn.stream().map(e -> e.copy()).collect(Collectors.toList()), null);
+			phrnCopy.setPart(phrn.getPart());
+			storePhraseNotesList(phrnCopy);
+		}
+	}
+
+	public void storePhraseNotesList(PartPhraseNotes phrNotesList) {
+		if (phrNotesList == null) {
+			phrNotesList = new PartPhraseNotes();
+		}
+
+		Set<Integer> customPhraseNotes = null;
+
+		if (phrNotesList.getPart() < partPhraseNotes.size()) {
+			customPhraseNotes = partPhraseNotes.get(phrNotesList.getPart()).stream()
+					.filter(e -> e.isCustom()).map(e -> e.getPartOrder())
+					.collect(Collectors.toSet());
+			for (PhraseNotes pn : phrNotesList) {
+				if (customPhraseNotes.contains(pn.getPartOrder())) {
+					pn.setCustom(true);
+				}
+			}
+		}
+
+		if (phrNotesList.getPart() < partPhraseNotes.size()) {
+			partPhraseNotes.set(phrNotesList.getPart(), phrNotesList);
+		} else {
+			partPhraseNotes.add(phrNotesList);
+		}
+	}
+
+	public boolean containsPhrase(int part, int partOrder) {
+		return getPartPhraseNotes() != null && getPartPhraseNotes().size() > part
+				&& getPartPhraseNotes().get(part).size() > partOrder;
+	}
+
+	public PhraseNotes getPhraseNotes(int part, int partOrder) {
+		if (!containsPhrase(part, partOrder)) {
+			return null;
+		}
+		return partPhraseNotes.get(part).get(partOrder);
+	}
+
+	public List<Double> getGeneratedSectionBeatDurations() {
+		return generatedSectionBeatDurations;
+	}
+
+	public void setGeneratedSectionBeatDurations(List<Double> generatedSectionBeatDurations) {
+		this.generatedSectionBeatDurations = generatedSectionBeatDurations;
+	}
+
+	public List<Double> getGeneratedDurations() {
+		if (sectionBeatDurations != null) {
+			return sectionBeatDurations;
+		} else {
+			return generatedSectionBeatDurations;
+		}
+	}
+
+	public SectionConfig getSecConfig() {
+		return secConfig;
+	}
+
+	public void setSecConfig(SectionConfig secConfig) {
+		this.secConfig = secConfig;
+	}
+
+	public int getTransposeVariation(int part, int partOrder) {
+		if (part == 1 || part == 4) {
+			return 0;
+		} else {
+			List<Integer> vars = getVariation(part, partOrder);
+			return (vars != null && vars.contains(0)) ? 12 : 0;
+		}
+	}
+
 }

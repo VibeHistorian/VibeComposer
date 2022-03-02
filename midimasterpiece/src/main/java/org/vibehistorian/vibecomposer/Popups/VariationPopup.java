@@ -12,11 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
@@ -32,38 +28,37 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.JTableHeader;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class VariationPopup {
 
-	public static Map<Integer, Set<Integer>> bannedInstVariations = new HashMap<>();
-	static {
-		for (int i = 0; i < 5; i++) {
-			bannedInstVariations.put(i, new HashSet<>());
-		}
-	}
-
 	final JFrame frame = new JFrame();
 	JPanel tablesPanel = new JPanel();
 	JTable[] tables = new JTable[5];
 
-	JTextField userChords;
+	ChordletPanel userChords;
 	JTextField userChordsDurations;
 
 	int sectionOrder = 0;
 	Section sectionObject = null;
 	JScrollPane scroll;
 	List<KnobPanel> knobs = new ArrayList<>();
-	KnobPanel keyChangeKnob = new DetachedKnobPanel("Custom Keychange", 0, -12, 12);
+	KnobPanel keyChangeKnob = new DetachedKnobPanel("Key Change", 0, -12, 12);
+	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
 		addFrameWindowOperation();
@@ -72,19 +67,16 @@ public class VariationPopup {
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, new Runnable() {
-
-			@Override
-			public void run() {
-				VibeComposerGUI.manualArrangement.setSelected(true);
-				VibeComposerGUI.manualArrangement.repaint();
-			}
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, () -> {
+			VibeComposerGUI.manualArrangement.setSelected(true);
+			VibeComposerGUI.manualArrangement.repaint();
 		});
 
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
-		addRiskyVariations(sec);
+		addSectionVariations(sec);
 		addVariationSettings(sec);
+		//addSectionConfigSettings(sec);
 		addInstVolumeKnobs(sec);
 		for (int i = 0; i < 5; i++) {
 			int fI = i;
@@ -112,7 +104,7 @@ public class VariationPopup {
 					int row = table.rowAtPoint(evt.getPoint());
 					int col = table.columnAtPoint(evt.getPoint());
 
-					System.out.println("Clicked VariationPopup table cell! " + row + ", " + col);
+					LG.d("Clicked VariationPopup table cell! " + row + ", " + col);
 					if (col >= 1) {
 						if (SwingUtilities.isMiddleMouseButton(evt)) {
 							Boolean val = (Boolean) tables[fI].getModel().getValueAt(row, col);
@@ -123,6 +115,7 @@ public class VariationPopup {
 								}
 								table.repaint();
 							}
+							tables[fI].getModel().setValueAt(Boolean.FALSE, row, col);
 						}
 
 					}
@@ -189,11 +182,13 @@ public class VariationPopup {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}
-					} else if (SwingUtilities.isMiddleMouseButton(e) && col > 1) {
-						if (bannedInstVariations.get(fI).contains(col)) {
-							bannedInstVariations.get(fI).remove(col);
+					} else if (SwingUtilities.isMiddleMouseButton(e) && col >= 2) {
+						Boolean[] vars = VibeComposerGUI.arrangement.getGlobalVariationMap()
+								.get(fI);
+						if (vars[col - 1]) {
+							vars[col - 1] = Boolean.FALSE;
 						} else {
-							bannedInstVariations.get(fI).add(col);
+							vars[col - 1] = Boolean.TRUE;
 							for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
 								sec.removeVariationForAllParts(fI, col);
 							}
@@ -220,7 +215,7 @@ public class VariationPopup {
 		frame.pack();
 		frame.setVisible(true);
 
-		System.out.println("Opened arrangement variation page!");
+		LG.d("Opened arrangement variation page!");
 	}
 
 	private void addTypesMeasures(Section sec) {
@@ -276,7 +271,7 @@ public class VariationPopup {
 
 	private void addCustomChordsDurations(Section sec) {
 		JPanel customChordsDurationsPanel = new JPanel();
-		JCheckBox userChordsEnabled = new JCheckBox("Custom Chords",
+		JCheckBox userChordsEnabled = new CustomCheckBox("Custom Chords",
 				sec.isCustomChordsDurationsEnabled());
 		customChordsDurationsPanel.add(userChordsEnabled);
 		userChordsEnabled.addItemListener(new ItemListener() {
@@ -284,6 +279,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setCustomChordsDurationsEnabled(userChordsEnabled.isSelected());
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 		});
@@ -292,19 +288,18 @@ public class VariationPopup {
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
 		String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
-				? VibeComposerGUI.userChords.getText()
+				? VibeComposerGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
-		userChords = new JTextField(
+		userChords = new ChordletPanel(300,
 				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())
 						? sec.getCustomChords()
-						: guiUserChords,
-				23);
+						: guiUserChords);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
 		userChordsDurations = new JTextField(
 				sec.isCustomChordsDurationsEnabled() ? sec.getCustomDurations()
 						: VibeComposerGUI.userChordsDurations.getText(),
-				9);
+				7);
 		customChordsDurationsPanel.add(new JLabel("Chord durations:"));
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -329,7 +324,7 @@ public class VariationPopup {
 
 	private void addVariationSettings(Section sec) {
 		JPanel variationSettingsPanel = new JPanel();
-		variationSettingsPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		variationSettingsPanel.setLayout(new BoxLayout(variationSettingsPanel, BoxLayout.X_AXIS));
 		variationSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		JPanel transitionPanel = new JPanel();
@@ -346,44 +341,119 @@ public class VariationPopup {
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 		});
+		transitionPanel.add(new JLabel("Transition Type "));
+		transitionPanel.add(transitionBox);
+
+
+		SectionConfig secC = sectionObject.getSecConfig();
+
+
 		JPanel keyChangePanel = new JPanel();
 		keyChangePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		keyChangePanel.setLayout(new GridLayout(0, 2, 0, 0));
-		keyChangeKnob.setInt(sec.getCustomKeyChange() == null ? 0 : sec.getCustomKeyChange());
+		keyChangePanel.setLayout(new BoxLayout(keyChangePanel, BoxLayout.X_AXIS));
+		keyChangeKnob.setInt(secC.getCustomKeyChange() == null ? 0 : secC.getCustomKeyChange());
+		keyChangeKnob.getKnob().setFunc(e -> {
+			secC.setCustomKeyChange(keyChangeKnob.getInt());
+		});
 		keyChangePanel.add(keyChangeKnob);
 
-		transitionPanel.add(new JLabel("Transition Type"));
-		transitionPanel.add(transitionBox);
+		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
+		for (int i = 0; i < MidiUtils.ScaleMode.values().length; i++) {
+			scaleModes[i] = MidiUtils.ScaleMode.values()[i].toString();
+		}
+		scaleMode.addItem(OMNI.EMPTYCOMBO);
+		ScrollComboBox.addAll(scaleModes, scaleMode);
+		if (secC.getCustomScale() != null) {
+			scaleMode.setSelectedItem(secC.getCustomScale().toString());
+		}
+		scaleMode.setFunc(e -> {
+			secC.setCustomScale(
+					scaleMode.getSelectedIndex() > 0 ? ScaleMode.valueOf(scaleMode.getVal())
+							: null);
+		});
+
+		keyChangePanel.add(new JLabel("Scale "));
+		keyChangePanel.add(scaleMode);
+
+		ScrollComboBox<String> customKeyChangeType = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "2-5-1", "Direct" },
+				customKeyChangeType);
+		customKeyChangeType.setFunc(e -> {
+			secC.setCustomKeyChangeType(customKeyChangeType.getSelectedIndex());
+		});
+		if (secC.getCustomKeyChangeType() > 0) {
+			customKeyChangeType.setSelectedIndex(secC.getCustomKeyChangeType());
+		}
+		keyChangePanel.add(new JLabel("Type "));
+		keyChangePanel.add(customKeyChangeType);
+
 		variationSettingsPanel.add(transitionPanel);
 		variationSettingsPanel.add(keyChangePanel);
 
 		tablesPanel.add(variationSettingsPanel);
 	}
 
-	private void addRiskyVariations(Section sec) {
-		JPanel riskyVarPanel = new JPanel();
-		riskyVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
-		riskyVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		for (int i = 0; i < Section.riskyVariationNames.length; i++) {
-			JCheckBox riskyVar = new JCheckBox(Section.riskyVariationNames[i], false);
-			if (sec.getRiskyVariations() != null) {
-				riskyVar.setSelected(sec.isRiskyVar(i));
+	private void addSectionConfigSettings(Section sec) {
+		SectionConfig secConfig = sec.getSecConfig();
+
+		JPanel sectionConfigSettingsPanel = new JPanel();
+		sectionConfigSettingsPanel.setLayout(new GridLayout(0, 4, 0, 0));
+		sectionConfigSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		ScrollComboBox<String> beatDurMultiBox = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "0.5", "1.0", "2.0" },
+				beatDurMultiBox);
+		beatDurMultiBox
+				.setSelectedIndex(OMNI.d(secConfig.getBeatDurationMultiplierIndex(), -1) + 1);
+		beatDurMultiBox.setFunc(e -> {
+			secConfig.setBeatDurationMultiplierIndex(
+					beatDurMultiBox.getSelectedIndex() > 0 ? beatDurMultiBox.getSelectedIndex() - 1
+							: null);
+		});
+		KnobPanel swing = new DetachedKnobPanel("Swing Override",
+				OMNI.d(secConfig.getSectionSwingOverride(), 0));
+		swing.getKnob().setFunc(e -> {
+			secConfig.setSectionSwingOverride(swing.getInt() > 0 ? swing.getInt() : null);
+		});
+
+		KnobPanel bpm = new DetachedKnobPanel("BPM Override", OMNI.d(secConfig.getSectionBpm(), 0),
+				0, 200);
+		bpm.getKnob().setFunc(e -> {
+			secConfig.setSectionBpm(bpm.getInt() > 0 ? bpm.getInt() : null);
+		});
+
+		sectionConfigSettingsPanel.add(new JLabel("Beat Dur. Multi.:"));
+		sectionConfigSettingsPanel.add(beatDurMultiBox);
+		sectionConfigSettingsPanel.add(swing);
+		sectionConfigSettingsPanel.add(bpm);
+
+		tablesPanel.add(sectionConfigSettingsPanel);
+	}
+
+	private void addSectionVariations(Section sec) {
+		JPanel sectionVarPanel = new JPanel();
+		sectionVarPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		sectionVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		for (int i = 0; i < Section.sectionVariationNames.length; i++) {
+			JCheckBox sectionVar = new CustomCheckBox(Section.sectionVariationNames[i], false);
+			if (sec.getSectionVariations() != null) {
+				sectionVar.setSelected(sec.isSectionVar(i));
 			}
 			final int index = i;
-			riskyVar.addItemListener(new ItemListener() {
+			sectionVar.addItemListener(new ItemListener() {
 
 				@Override
 				public void itemStateChanged(ItemEvent e) {
-					sec.setRiskyVariation(index, riskyVar.isSelected() ? 1 : 0);
+					sec.setSectionVariation(index, sectionVar.isSelected() ? 1 : 0);
 					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 				}
 
 			});
-			riskyVarPanel.add(riskyVar);
+			sectionVarPanel.add(sectionVar);
 		}
 
 
-		tablesPanel.add(riskyVarPanel);
+		tablesPanel.add(sectionVarPanel);
 
 	}
 
@@ -399,14 +469,13 @@ public class VariationPopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				VibeComposerGUI.varPopup = null;
-				sectionObject.setCustomChords(userChords.getText());
+				sectionObject.setCustomChords(userChords.getChordListString());
 				sectionObject.setCustomDurations(userChordsDurations.getText());
 				List<Integer> instVolumes = new ArrayList<>();
 				for (KnobPanel kp : knobs) {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-				sectionObject.setCustomKeyChange(keyChangeKnob.getInt());
 				VibeComposerGUI.setActualModel(
 						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);

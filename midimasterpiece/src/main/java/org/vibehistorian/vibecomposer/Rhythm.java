@@ -45,7 +45,7 @@ public class Rhythm {
 		double durationSum = 0;
 		int maximum = durationPool.length;
 		int remainingNotes = durCount;
-		//System.out.println("Weights: " + StringUtils.join(durationWeights, ','));
+		//LG.d("Weights: " + StringUtils.join(durationWeights, ','));
 		int weightAdjust = 0;
 		while (remainingNotes > 0) {
 			double dur = durationPool[0];
@@ -75,7 +75,7 @@ public class Rhythm {
 				if (chance < durationWeights[i] + weightAdjust) {
 					dur = durationPool[i];
 
-					/*System.out.println("Remaining: " + remainingNotes + ", Added from chance: "
+					/*LG.d("Remaining: " + remainingNotes + ", Added from chance: "
 							+ dur + ", chance: " + chance);*/
 					break;
 				}
@@ -83,27 +83,27 @@ public class Rhythm {
 			if (lastNote) {
 				durationSum += dur;
 				durations.add(dur);
-				//System.out.println("Remaining: " + remainingNotes + ", Added from last: " + dur);
+				//LG.d("Remaining: " + remainingNotes + ", Added from last: " + dur);
 				remainingNotes--;
 				break;
 			}
 			durationSum += dur;
-			//System.out.println("Added dur: " + dur + ", was remaining: " + (remainingDuration));
+			//LG.d("Added dur: " + dur + ", was remaining: " + (remainingDuration));
 			durations.add(dur);
 			remainingNotes--;
 
 		}
-		if (!MidiGenerator.roughlyEqual(durationSum, durationLimit)) {
-			/*System.out.println("Last note needs duration fix, sum: " + durationSum + ", needed: "
+		if (!MidiUtils.roughlyEqual(durationSum, durationLimit)) {
+			/*LG.d("Last note needs duration fix, sum: " + durationSum + ", needed: "
 					+ durationLimit);*/
 			durations.set(durations.size() - 1,
 					(durations.get(durations.size() - 1))
 							+ ((durationLimit > durationSum) ? (durationLimit - durationSum)
 									: (durationSum - durationLimit)));
 		}
-		/*System.out.println("Duration lim: " + durationLimit + ", sum: "
+		/*LG.d("Duration lim: " + durationLimit + ", sum: "
 				+ durations.stream().mapToDouble(e -> e).sum());
-		System.out.println("Duration sum sum: " + durationSum);*/
+		LG.d("Duration sum sum: " + durationSum);*/
 		return durations;
 	}
 
@@ -115,9 +115,9 @@ public class Rhythm {
 		int lastDurIndex = Integer.MIN_VALUE;
 		int retryCounter = 0;
 		int maxRetry = 2;
-		//System.out.println("Max same: " + maxSameDurAllowed);
-		//System.out.println("Weights: " + Arrays.toString(durationWeights));
-		//System.out.println("Dur pool: " + Arrays.toString(durationPool));
+		//LG.d("Max same: " + maxSameDurAllowed);
+		//LG.d("Weights: " + Arrays.toString(durationWeights));
+		//LG.d("Dur pool: " + Arrays.toString(durationPool));
 		int longestDurIndex = 0;
 		double longestDur = 0.0;
 		while (durationSum < durationLimit - MidiGenerator.DBL_ERR) {
@@ -131,7 +131,7 @@ public class Rhythm {
 					dur = durationLimit - durationSum;
 					if (dur < shortestNote - MidiGenerator.DBL_ERR && durations.size() > 0) {
 						longestDur = longestDur - shortestNote + dur;
-						//System.out.println(longestDurIndex + ", " + longestDur);
+						//LG.d(longestDurIndex + ", " + longestDur);
 						durations.set(longestDurIndex, longestDur);
 						dur = shortestNote;
 					}
@@ -141,7 +141,7 @@ public class Rhythm {
 				if (chance < durationWeights[i]) {
 					dur = durationPool[i];
 
-					//System.out.println("Adding by chance: " + dur);
+					//LG.d("Adding by chance: " + dur);
 					chosenIndex = i;
 					break;
 				}
@@ -168,7 +168,7 @@ public class Rhythm {
 					longestDurIndex = durations.size() - 1;
 				}
 				if (retryCounter == maxRetry) {
-					System.out.println("P A N I K");
+					LG.d("P A N I K");
 					retryCounter = 0;
 				}
 			} else {
@@ -176,7 +176,7 @@ public class Rhythm {
 			}
 
 		}
-		/*System.out.println("Duration lim: " + durationLimit + ", sum: "
+		/*LG.d("Duration lim: " + durationLimit + ", sum: "
 				+ durations.stream().mapToDouble(e -> e).sum());*/
 		return durations;
 	}

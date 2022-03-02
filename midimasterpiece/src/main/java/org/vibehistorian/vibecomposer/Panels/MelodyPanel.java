@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import java.awt.Color;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -14,10 +14,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.RandomIntegerListButton;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -25,9 +28,9 @@ public class MelodyPanel extends InstPanel {
 
 	private static final long serialVersionUID = -7861296600641561431L;
 
-	private JCheckBox fillPauses = new JCheckBox("<html>Fill<br>Pauses</html>", false);
-	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4");
-	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("0,1,0,2");
+	private JCheckBox fillPauses = new CustomCheckBox("<html>Fill<br>Pauses</html>", false);
+	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4", this);
+	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("1,2,1,3", this);
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 5, 0, 7);
 	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
 	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
@@ -58,13 +61,24 @@ public class MelodyPanel extends InstPanel {
 		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
+		transpose.getKnob().setTickSpacing(10);
+		Integer[] allowedMelodyTransposes = new Integer[] { 0, 4, 5, 7 };
+		List<Integer> totalMelodyTransposes = new ArrayList<>();
+		for (int i = -36; i <= 24; i += 12) {
+			for (int t : allowedMelodyTransposes) {
+				totalMelodyTransposes.add(i + t);
+			}
+		}
+		totalMelodyTransposes.add(36);
+		transpose.getKnob().setTickThresholds(totalMelodyTransposes);
+		this.add(transpose);
+
 		this.add(chordSpanFillPanel);
 
 		this.add(speed);
-		transpose.getKnob().setTickSpacing(10);
-		transpose.getKnob().setTickThresholds(Arrays.asList(new Integer[] { -36, -32, -29, -24, -20,
-				-17, -12, -8, -5, 0, 4, 7, 12, 16, 19, 24, 28, 31, 36 }));
-		this.add(transpose);
+
+		/*this.add(VibeComposerGUI.makeButton("Manual MIDI",
+				e -> new VisualArrayPopup(-10, 10, new ArrayList<>())));*/
 
 		pauseChance.setInt(0);
 		this.add(pauseChance);
@@ -83,6 +97,22 @@ public class MelodyPanel extends InstPanel {
 			return MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
 					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
 					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null);
+		});
+		noteTargets.setHighlighterGenerator(e -> {
+			if (MidiGenerator.chordInts.isEmpty()) {
+				return null;
+			}
+
+			if (relatedSection == null) {
+				return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, true);
+			} else {
+				return MidiUtils.getHighlightTargetsFromChords(
+						relatedSection.isCustomChordsDurationsEnabled()
+								? relatedSection.getCustomChordsList()
+								: MidiGenerator.chordInts,
+						true);
+			}
+
 		});
 		this.add(noteTargets);
 
@@ -145,14 +175,16 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public void toggleCombinedMelodyDisabledUI(boolean b) {
-		getVolSlider().setEnabled(b);
-		getPanSlider().setEnabled(b);
+		if (!b && soloMuter.soloState != State.OFF) {
+			soloMuter.unsolo();
+		}
 		getSoloMuter().setEnabled(b);
-		getInstrumentBox().setEnabled(b);
+		getPanSlider().setEnabled(b);
+		volSlider.setEnabled(b);
+
 	}
 
 	public MelodyPanel(ActionListener l) {
-		setPartClass(MelodyPart.class);
 		initComponents(l);
 	}
 
@@ -319,6 +351,16 @@ public class MelodyPanel extends InstPanel {
 
 	public RandomIntegerListButton getPatternStructureButton() {
 		return patternStructure;
+	}
+
+	@Override
+	public int getPartNum() {
+		return 0;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return MelodyPart.class;
 	}
 }
 

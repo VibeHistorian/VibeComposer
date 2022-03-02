@@ -46,16 +46,18 @@ public class Arrangement {
 	private static final List<String> POP_ARRANGEMENT = new ArrayList<>(
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
 					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
-	private static final List<String> EDM_ARRANGEMENT = new ArrayList<>(Arrays.asList(new String[] {
-			"INTRO", "BUILDUP", "CHORUS2", "VERSE1", "VERSE2", "CHORUS3", "CLIMAX", "OUTRO" }));
+	private static final List<String> EDM_ARRANGEMENT = new ArrayList<>(
+			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "CHORUS3", "VERSE1",
+					"VERSE2", "CHORUS3", "CLIMAX", "OUTRO" }));
 
 	private static final List<String> EDM_ARRANGEMENT2 = new ArrayList<>(
-			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "VERSE1", "CHORUS3",
-					"BREAKDOWN", "CHILL", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "CHORUS3", "VERSE1",
+					"BREAKDOWN", "CHILL", "BUILDUP", "CHORUS3", "CLIMAX", "BREAKDOWN", "CHILL",
+					"CLIMAX", "CLIMAX", "HALF_CHORUS", "OUTRO" }));
 
 	private static final List<String> POP_ARRANGEMENT2 = new ArrayList<>(
-			Arrays.asList(new String[] { "HALF_CHORUS", "VERSE1", "CHORUS2", "VERSE2", "CHORUS3",
-					"BREAKDOWN", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+			Arrays.asList(new String[] { "HALF_CHORUS", "HALF_CHORUS", "OUTRO", "VERSE2", "CHORUS2",
+					"VERSE2", "CHORUS3", "BREAKDOWN", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
 
 	static {
 		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT);
@@ -67,13 +69,14 @@ public class Arrangement {
 	public static final Map<String, Section> defaultSections = new LinkedHashMap<>();
 	static {
 		defaultSections.put("INTRO", new Section("INTRO", 1, 20, 10, 40, 25, 20));
-		defaultSections.put("VERSE1", new Section("VERSE1", 1, 65, 60, 30, 25, 40));
+		defaultSections.put("VERSE1", new Section("VERSE1", 1, 40, 60, 30, 25, 40));
 		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 50, 90, 50, 35, 50));
 		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 65, 100, 60, 50, 50));
 		defaultSections.put("HALF_CHORUS", new Section("HALF_CHORUS", 1, 0, 100, 60, 50, 80));
 		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 60, 60, 25, 40));
 		defaultSections.put("CHILL", new Section("CHILL", 1, 10, 30, 70, 70, 10));
-		defaultSections.put("VERSE2", new Section("VERSE2", 1, 65, 60, 40, 50, 50));
+		defaultSections.put("VERSE2", new Section("VERSE2", 1, 40, 60, 40, 50, 50));
+		defaultSections.put("VERSE3", new Section("VERSE3", 1, 50, 80, 40, 70, 60));
 		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
 		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 80, 100, 80, 80, 85));
 		defaultSections.put("CLIMAX", new Section("CLIMAX", 1, 100, 100, 100, 100, 100));
@@ -150,7 +153,7 @@ public class Arrangement {
 					&& !s.equals(SectionType.CLIMAX.toString())) {
 				continue;
 			}
-			//System.out.println("DeepCopy for " + s);
+			//LG.d("DeepCopy for " + s);
 			Section sec = defaultSections.get(s).deepCopy();
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
 				sections.add(sec);
@@ -172,6 +175,7 @@ public class Arrangement {
 	private boolean overridden;
 	private int seed = 0;
 	private Map<Integer, Object[][]> partInclusionMap = new HashMap<>();
+	private Map<Integer, Boolean[]> globalVariationMap = new HashMap<>();
 
 	public Arrangement(List<Section> sections) {
 		super();
@@ -181,6 +185,7 @@ public class Arrangement {
 	public Arrangement() {
 		resetArrangement();
 		setPreviewChorus(true);
+		initGlobalVariationMap();
 	}
 
 	public List<Section> getSections() {
@@ -455,15 +460,12 @@ public class Arrangement {
 		}
 	}
 
-	public boolean getPartInclusion(int part, int partOrder, int sectionType) {
+	public boolean isPartInclusion(int part, int partOrder, int sectionType) {
 		initPartInclusionMapIfNull();
 		if (isOverridden()) {
 			return true;
 		}
-		if (partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE) {
-			return true;
-		}
-		return false;
+		return partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE;
 	}
 
 	public void recalculatePartInclusionMapBoundsIfNeeded() {
@@ -516,5 +518,44 @@ public class Arrangement {
 		} else {
 			return (Boolean) oldData[j][k];
 		}
+	}
+
+	public void initGlobalVariationMap() {
+		for (int i = 0; i < 5; i++) {
+			int typesCount = Section.variationDescriptions[i].length - 1;
+			Boolean[] data = new Boolean[typesCount];
+			data[0] = Boolean.TRUE;
+			for (int k = 1; k < typesCount; k++) {
+				data[k] = Boolean.TRUE;
+			}
+			globalVariationMap.put(i, data);
+		}
+		Boolean[] data = new Boolean[Section.sectionVariationNames.length + 1];
+		for (int k = 0; k < data.length; k++) {
+			data[k] = Boolean.TRUE;
+		}
+		globalVariationMap.put(5, data);
+	}
+
+	public void initGlobalVariationMapIfNull() {
+		if (globalVariationMap.get(0) == null) {
+			initGlobalVariationMap();
+		}
+	}
+
+	public Map<Integer, Boolean[]> getGlobalVariationMap() {
+		return globalVariationMap;
+	}
+
+	public void setGlobalVariationMap(Map<Integer, Boolean[]> globalVariationMap) {
+		this.globalVariationMap = globalVariationMap;
+	}
+
+	public boolean isGlobalVariation(int part, int variationOrder) {
+		initGlobalVariationMapIfNull();
+		if (isOverridden()) {
+			return true;
+		}
+		return globalVariationMap.get(part)[variationOrder + 1] == Boolean.TRUE;
 	}
 }

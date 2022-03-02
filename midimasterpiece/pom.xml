@@ -3,7 +3,7 @@
     <groupId>org.vibehistorian.vibecomposer</groupId>
     <artifactId>vibecomposer</artifactId>
     <name>VibeComposer</name>
-    <version>v1.9-beta</version>
+    <version>v2.0-beta</version>
     <packaging>jar</packaging>
 
     <repositories>

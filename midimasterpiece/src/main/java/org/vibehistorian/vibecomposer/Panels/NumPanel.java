@@ -24,8 +24,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.VeloRect;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Popups.CloseablePopup;
 
 public class NumPanel extends JPanel {
@@ -145,9 +146,9 @@ public class NumPanel extends JPanel {
 	}
 
 	public void closeParentFrame() {
-		JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(NumPanel.this);
+		JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(NumPanel.this);
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
-				.postEvent(new WindowEvent(parent, WindowEvent.WINDOW_CLOSING));
+				.postEvent(new WindowEvent(parentFrame, WindowEvent.WINDOW_CLOSING));
 
 	}
 
@@ -225,10 +226,10 @@ public class NumPanel extends JPanel {
 
 			public void startNumSliderThread(MouseEvent me) {
 				if (numCycle != null && numCycle.isAlive()) {
-					//System.out.println("Label slider thread already exists! " + label.getText());
+					//LG.d("Label slider thread already exists! " + label.getText());
 					return;
 				}
-				//System.out.println("Starting new label slider thread..! " + label.getText());
+				//LG.d("Starting new label slider thread..! " + label.getText());
 				numCycle = new Thread() {
 
 					public void run() {
@@ -300,19 +301,14 @@ public class NumPanel extends JPanel {
 			}
 			text.setBackground(OMNI.alphen(Color.red, 0));
 		} catch (NumberFormatException ex) {
-			System.out.println("Invalid value: " + text.getText());
+			LG.d("Invalid value: " + text.getText());
 			text.setBackground(OMNI.alphen(Color.red, 70));
 		}
 	}
 
 	private void updateTextLater(boolean isMaximum) {
-		Runnable doAssist = new Runnable() {
-			@Override
-			public void run() {
-				text.setText(((isMaximum) ? slider.getMax() : slider.getMin()) + "");
-			}
-		};
-		SwingUtilities.invokeLater(doAssist);
+		SwingUtilities.invokeLater(
+				() -> text.setText(((isMaximum) ? slider.getMax() : slider.getMin()) + ""));
 	}
 
 	public String getName() {

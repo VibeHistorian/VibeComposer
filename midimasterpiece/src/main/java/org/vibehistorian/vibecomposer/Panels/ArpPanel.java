@@ -4,14 +4,15 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Components.ArpPickerMini;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -21,7 +22,7 @@ public class ArpPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6648220153568966988L;
 
-	private ScrollComboBox<ArpPattern> arpPattern = new ScrollComboBox<>();
+	private ArpPickerMini arpPattern = new ArpPickerMini(this);
 	private KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
 	public void initComponents(ActionListener l) {
@@ -32,7 +33,7 @@ public class ArpPanel extends InstPanel {
 		midiChannel.setVal(2);
 
 		initDefaults(l);
-		volSlider.setDefaultValue(69);
+		volSlider.setDefaultValue(50);
 		this.add(volSlider);
 		this.add(panSlider);
 		this.add(new JLabel("#"));
@@ -41,6 +42,7 @@ public class ArpPanel extends InstPanel {
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 
+		this.add(transpose);
 		this.add(chordSpanFillPanel);
 
 		this.add(hitsPerPattern);
@@ -60,7 +62,6 @@ public class ArpPanel extends InstPanel {
 
 		this.add(patternRepeat);
 		//this.add(repeatableNotes);
-		this.add(transpose);
 		this.add(pauseChance);
 		JLabel notePresetLabel = new JLabel("Dir:");
 		this.add(notePresetLabel);
@@ -87,7 +88,7 @@ public class ArpPanel extends InstPanel {
 		//toggleableComponents.add(arpPattern);
 		//toggleableComponents.add(notePresetLabel);
 		//toggleableComponents.add(repeatableNotes);
-
+		initDefaultsPost();
 
 	}
 
@@ -104,12 +105,8 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public ArpPanel(ActionListener l) {
-		setPartClass(ArpPart.class);
 		initComponents(l);
 
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d);
 		}
@@ -125,6 +122,8 @@ public class ArpPanel extends InstPanel {
 		part.setFromPanel(this, lastRandomSeed);
 		part.setOrder(getPanelOrder());
 		part.setArpPatternRotate(getArpPatternRotate());
+		part.setArpPatternCustom(
+				arpPattern.getVal() == ArpPattern.CUSTOM ? arpPattern.getCustomValues() : null);
 		return part;
 	}
 
@@ -134,6 +133,9 @@ public class ArpPanel extends InstPanel {
 		setDefaultsFromInstPart(part);
 		setPanelOrder(part.getOrder());
 		setArpPatternRotate(part.getArpPatternRotate());
+		if (part.getArpPattern() == ArpPattern.CUSTOM) {
+			arpPattern.setCustomValues(part.getArpPatternCustom());
+		}
 	}
 
 	public ArpPattern getArpPattern() {
@@ -154,5 +156,19 @@ public class ArpPanel extends InstPanel {
 
 	public void setArpPatternRotate(int val) {
 		arpPatternRotate.setInt(val);
+	}
+
+	@Override
+	public int getPartNum() {
+		return 3;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return ArpPart.class;
+	}
+
+	public void setArpPatternCustom(List<Integer> arpPatternCustom) {
+		arpPattern.setCustomValues(arpPatternCustom);
 	}
 }

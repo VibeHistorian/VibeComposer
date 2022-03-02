@@ -2,31 +2,35 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.MultiValueEditArea;
-import org.vibehistorian.vibecomposer.Helpers.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.Components.MultiValueEditArea;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 
 public class VisualArrayPopup extends CloseablePopup {
 
 	MultiValueEditArea mvea = null;
 	RandomIntegerListButton butt = null;
-	Function<? super Object, List<Integer>> randGenerator = null;
-
+	JTextField text = null;
+	Consumer<Object> closeFunc = null;
 
 	public VisualArrayPopup(int min, int max, List<Integer> values) {
-		super("Edit Multiple Values (Graphical)", 13);
+		super("Edit Multiple Values (Graphical)", 13, new Point(-300, 0));
 		mvea = new MultiValueEditArea(min, max, values);
+		mvea.setPop(this);
 		mvea.setPreferredSize(new Dimension(500, 500));
 
 		JPanel allPanels = new JPanel();
@@ -41,14 +45,14 @@ public class VisualArrayPopup extends CloseablePopup {
 				return;
 			}
 			mvea.getValues().add(0);
-			mvea.repaint();
+			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
 			if (mvea.getValues().size() <= 1) {
 				return;
 			}
 			mvea.getValues().remove(mvea.getValues().size() - 1);
-			mvea.repaint();
+			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
 			int size = mvea.getValues().size();
@@ -56,14 +60,14 @@ public class VisualArrayPopup extends CloseablePopup {
 			for (int i = 0; i < size; i++) {
 				mvea.getValues().add(0);
 			}
-			mvea.repaint();
+			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
 			if (mvea.getValues().size() > 16) {
 				return;
 			}
 			mvea.getValues().addAll(mvea.getValues());
-			mvea.repaint();
+			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("Dd", e -> {
 			if (mvea.getValues().size() > 16) {
@@ -77,7 +81,7 @@ public class VisualArrayPopup extends CloseablePopup {
 			});
 			oldValues.clear();
 			oldValues.addAll(ddValues);
-			mvea.repaint();
+			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("1/2", e -> {
 			if (mvea.getValues().size() <= 1) {
@@ -88,17 +92,17 @@ public class VisualArrayPopup extends CloseablePopup {
 				mvea.getValues().remove(i);
 			}
 
-			mvea.repaint();
+			repaintMvea();
 		}));
 		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
 			int size = mvea.getValues().size();
 			boolean successRandGenerator = false;
-			if (randGenerator != null) {
+			if (butt != null && butt.getRandGenerator() != null) {
 				List<Integer> randValues = null;
 				try {
-					randValues = randGenerator.apply(new Object());
+					randValues = butt.getRandGenerator().apply(new Object());
 				} catch (Exception exc) {
-					System.out.println("Random generator is not ready!");
+					LG.d("Random generator is not ready!");
 				}
 				if (randValues != null && !randValues.isEmpty()) {
 					mvea.getValues().clear();
@@ -115,7 +119,7 @@ public class VisualArrayPopup extends CloseablePopup {
 				}
 			}
 
-			mvea.repaint();
+			repaintMvea();
 		}));
 
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
@@ -124,15 +128,46 @@ public class VisualArrayPopup extends CloseablePopup {
 		mveaPanel.setPreferredSize(new Dimension(500, 500));
 		mveaPanel.setMinimumSize(new Dimension(500, 500));
 		mveaPanel.add(mvea);
+
+		JPanel textPanel = new JPanel();
+		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
+		text = new JTextField(StringUtils.join(values, ","), 25);
+		textPanel.add(text);
+		textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
+			if (StringUtils.isNotEmpty(text.getText())) {
+				try {
+					String[] textSplit = text.getText().split(",");
+					List<Integer> nums = new ArrayList<>();
+					for (String s : textSplit) {
+						nums.add(Integer.valueOf(s));
+					}
+					mvea.getValues().clear();
+					mvea.getValues().addAll(nums);
+					repaintMvea();
+				} catch (Exception exc) {
+					LG.d("Incorrect text format, cannot convert to list of numbers.");
+				}
+			}
+		}));
+
 		allPanels.add(buttonPanel);
+		allPanels.add(textPanel);
 		allPanels.add(mveaPanel);
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
 	}
 
+	void repaintMvea() {
+		mvea.repaint();
+		text.setText(StringUtils.join(mvea.getValues(), ","));
+	}
+
 	public void linkButton(RandomIntegerListButton butt) {
 		this.butt = butt;
+		if (butt != null && butt.getHighlighterGenerator() != null) {
+			mvea.setHighlightedGrid(butt.getHighlighterGenerator().apply(new Object()));
+		}
 	}
 
 	@Override
@@ -148,9 +183,13 @@ public class VisualArrayPopup extends CloseablePopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				if (butt != null) {
-					butt.setValue(StringUtils.join(mvea.getValues(), ","));
+					butt.setValues(mvea.getValues());
 				}
 
+				if (closeFunc != null) {
+					closeFunc.accept(new Object());
+				}
+				handleClose();
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {
 						RandomValueButton.singlePopup = null;
@@ -192,8 +231,20 @@ public class VisualArrayPopup extends CloseablePopup {
 		});
 	}
 
-	public void setRandGenerator(Function<? super Object, List<Integer>> rndGen) {
-		randGenerator = rndGen;
+	public List<Integer> getValues() {
+		return mvea.getValues();
+	}
+
+	public void setCloseFunc(Consumer<Object> func) {
+		closeFunc = func;
+	}
+
+	public JTextField getText() {
+		return text;
+	}
+
+	public void setText(JTextField text) {
+		this.text = text;
 	}
 
 }

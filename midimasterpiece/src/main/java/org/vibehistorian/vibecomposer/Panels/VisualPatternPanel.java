@@ -33,12 +33,11 @@ import javax.swing.event.DocumentListener;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
+import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Helpers.ColorCheckBox;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Helpers.VeloRect;
 
 public class VisualPatternPanel extends JPanel {
 
@@ -69,6 +68,9 @@ public class VisualPatternPanel extends JPanel {
 	public static int width = 8 * CheckBoxIcon.width;
 	public static int height = 2 * CheckBoxIcon.width;
 
+	public static final List<Integer> FULL_PATTERN = IntStream.iterate(1, e -> e).limit(MAX_HITS)
+			.boxed().collect(Collectors.toList());
+
 	public static int mouseButton = 0;
 
 	/*public static List<Integer> sextuplets = Arrays.asList(new Integer[] { 6, 12, 24 });
@@ -78,6 +80,8 @@ public class VisualPatternPanel extends JPanel {
 	private boolean viewOnly = false;
 	private boolean needShift = false;
 	private boolean bigModeAllowed = true;
+
+	private boolean isGhostNotes = false;
 
 	public void setBigModeAllowed(boolean bigModeAllowed) {
 		this.bigModeAllowed = bigModeAllowed;
@@ -125,9 +129,8 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 
-	public VisualPatternPanel(KnobPanel hitsPanel, ScrollComboBox<RhythmPattern> patternType,
-			KnobPanel shiftPanel, KnobPanel chordSpanPanel,
-			ScrollComboBox<ChordSpanFill> chordSpanFill, InstPanel parentPanel) {
+	public VisualPatternPanel(KnobPanel hitsKnob, ScrollComboBox<RhythmPattern> patternBox,
+			KnobPanel shiftKnob, KnobPanel chordSpanKnob, InstPanel parentPanel) {
 		super();
 		//setBackground(new Color(50, 50, 50));
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
@@ -136,17 +139,17 @@ public class VisualPatternPanel extends JPanel {
 		setLayout(layout);
 		setPreferredSize(new Dimension(width, height));
 		//setBorder(new BevelBorder(BevelBorder.LOWERED));
-		this.hitsPanel = hitsPanel;
-		this.patternType = patternType;
-		this.shiftPanel = shiftPanel;
+		this.hitsPanel = hitsKnob;
+		this.patternType = patternBox;
+		this.shiftPanel = shiftKnob;
 		this.parentPanel = parentPanel;
-		this.chordSpanPanel = chordSpanPanel;
+		this.chordSpanPanel = chordSpanKnob;
 		lastHits = hitsPanel.getInt();
 		int sepCounter = 0;
 		int defaultVel = (parentPanel.getVelocityMax() + parentPanel.getVelocityMin()) / 2;
 		for (int i = 0; i < MAX_HITS; i++) {
 			final int fI = i;
-			truePattern.add(0);
+			truePattern.add(1);
 			trueVelocities.add(defaultVel);
 			hitChecks[i] = new ColorCheckBox();
 			hitVelocities[i] = new VeloRect(0, 127, defaultVel);
@@ -157,7 +160,7 @@ public class VisualPatternPanel extends JPanel {
 			hitChecks[i].addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
-					//System.out.println("True pattern size: " + truePattern.size());
+					//LG.d("True pattern size: " + truePattern.size());
 					boolean change = false;
 					if (mouseButton == 2) {
 						hitChecks[fI].setSelected(true);
@@ -252,7 +255,24 @@ public class VisualPatternPanel extends JPanel {
 				add(sep);
 			}*/
 		}
-
+		patternType.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isShiftDown()
+						&& !evt.isControlDown() && patternType.isEnabled()) {
+					patternType.setSelectedItem(RhythmPattern.CUSTOM);
+					shiftPanel.setInt(0);
+					Random rand = new Random();
+					for (int i = 0; i < MAX_HITS; i++) {
+						truePattern.set(i, rand.nextInt(2));
+					}
+					reapplyShift();
+					if (VibeComposerGUI.canRegenerateOnChange()) {
+						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+					}
+				}
+			}
+		});
 		patternType.addItemListener(new ItemListener() {
 
 			@Override
@@ -455,6 +475,7 @@ public class VisualPatternPanel extends JPanel {
 		showingVelocities = !showingVelocities;
 		velocityToggler.setText(showingVelocities ? "H" : "V");
 		VisualPatternPanel.this.setVisible(false);
+		setGhostNotes(false);
 		if (showingVelocities) {
 			for (int i = 0; i < MAX_HITS; i++) {
 				hitVelocities[i].setVisible(hitChecks[i].isVisible());
@@ -464,11 +485,15 @@ public class VisualPatternPanel extends JPanel {
 		} else {
 			for (int i = 0; i < MAX_HITS; i++) {
 				hitChecks[i].setVisible(hitVelocities[i].isVisible());
-				hitChecks[i].setSelected(hitVelocities[i].isEnabled());
+				if (parentPanel.getPattern() == RhythmPattern.CUSTOM) {
+					hitChecks[i].setSelected(hitVelocities[i].isEnabled());
+				}
 				hitVelocities[i].setVisible(false);
 			}
 		}
-		reapplyHits();
+		reapplyHitsRaw();
+		reapplyShiftRaw(false);
+
 		VisualPatternPanel.this.setVisible(true);
 	}
 
@@ -481,8 +506,14 @@ public class VisualPatternPanel extends JPanel {
 		return truePattern.get(shI);
 	}
 
+	public int getShifted(int fI) {
+		return (fI + shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
+	}
+
 	public void checkPattern(int fI, Integer directSetting) {
-		int shI = (fI - shiftPanel.getInt() + MAX_HITS) % MAX_HITS;
+		int shift = shiftPanel.getInt();
+		int initialVal = fI - shift;
+		int shI = (initialVal + MAX_HITS) % MAX_HITS;
 		if (directSetting != null) {
 			hitChecks[fI].setSelected(directSetting > 0);
 			hitVelocities[fI].setEnabled(directSetting > 0);
@@ -491,10 +522,14 @@ public class VisualPatternPanel extends JPanel {
 				: (hitChecks[fI].isSelected() ? 1 : 0);
 		truePattern.set(shI, applied);
 		boolean reapplyNeeded = false;
-		while ((shI += lastHits) < MAX_HITS) {
-			truePattern.set(shI, applied);
-			reapplyNeeded = true;
+
+		while ((initialVal += lastHits) < MAX_HITS) {
+			if (initialVal >= 0 && (shift + initialVal < MAX_HITS)) {
+				truePattern.set(initialVal, applied);
+				reapplyNeeded = true;
+			}
 		}
+
 		if (patternType.getVal() != RhythmPattern.CUSTOM) {
 			patternType.setVal(RhythmPattern.CUSTOM);
 		}
@@ -504,6 +539,9 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public List<Integer> getTruePattern() {
+		if (isGhostNotes && showingVelocities) {
+			return new ArrayList<>(FULL_PATTERN);
+		}
 		return truePattern;
 	}
 
@@ -545,157 +583,157 @@ public class VisualPatternPanel extends JPanel {
 		if (truePattern == null || truePattern.isEmpty()) {
 			return;
 		}
-		SwingUtilities.invokeLater(new Runnable() {
 
-			@Override
-			public void run() {
-				VisualPatternPanel.this.setVisible(false);
-				int shift = shiftPanel.getInt();
-				if (!showingVelocities) {
-					for (int i = 0; i < MAX_HITS; i++) {
-						int shI = (i + shift) % MAX_HITS;
-						hitChecks[shI].setSelected(truePattern.get(i) != 0);
-					}
-				} else {
-					for (int i = 0; i < MAX_HITS; i++) {
-						int shI = (i + shift) % MAX_HITS;
-						hitVelocities[shI].setValueRaw(trueVelocities.get(i));
-						hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
-					}
-				}
-				VisualPatternPanel.this.setVisible(true);
-			}
+		SwingUtilities.invokeLater(() -> {
+			VisualPatternPanel.this.setVisible(false);
+			reapplyShiftRaw(false);
+			VisualPatternPanel.this.setVisible(true);
 		});
 	}
 
-	public void reapplyHits() {
-		SwingUtilities.invokeLater(new Runnable() {
+	public void reapplyShiftRaw(boolean velocityGhost) {
+		if (truePattern == null || truePattern.isEmpty()) {
+			return;
+		}
 
-			@Override
-			public void run() {
-				VisualPatternPanel.this.setVisible(false);
-				boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
-				int nowHits = hitsPanel.getInt();
-				if (nowHits > MAX_HITS)
-					nowHits = MAX_HITS;
-				if (nowHits > lastHits) {
-					for (int i = 0; i < nowHits; i++) {
-						hitChecks[i].setVisible(!showingVelocities);
-						hitVelocities[i].setVisible(showingVelocities);
-					}
-
-				} else if (nowHits < lastHits) {
-					for (int i = nowHits; i < lastHits; i++) {
-						hitChecks[i].setVisible(false);
-						hitVelocities[i].setVisible(false);
-					}
-				}
-				lastHits = nowHits;
-
-				int chords = chordSpanPanel.getInt();
-
-				if (showBIG) {
-					width = MAX_HITS * CheckBoxIcon.width;
-					height = 1 * CheckBoxIcon.width;
-					if (chords == 1) {
-						if (bigModeInsetMap.containsKey(lastHits)) {
-							for (int i = 0; i < lastHits; i++) {
-								hitChecks[i].setMargin(bigModeInsetMap.get(lastHits));
-								hitVelocities[i].setMargin(bigModeInsetMap.get(lastHits));
-							}
-						} else {
-							for (int i = 0; i < lastHits; i++) {
-								hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
-								hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
-							}
-						}
-					} else {
-						for (int i = 0; i < lastHits; i++) {
-							if (lastHits % 2 == 0) {
-								hitChecks[i]
-										.setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
-								hitVelocities[i]
-										.setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
-							} else {
-								if (i == lastHits / 2) {
-									hitChecks[i].setMargin(
-											bigModeDoubleChordTransitionInsetMap.get(lastHits));
-									hitVelocities[i].setMargin(
-											bigModeDoubleChordTransitionInsetMap.get(lastHits));
-								} else {
-									hitChecks[i].setMargin(
-											bigModeDoubleChordGeneralInsetMap.get(lastHits));
-									hitVelocities[i].setMargin(
-											bigModeDoubleChordGeneralInsetMap.get(lastHits));
-								}
-							}
-
-						}
-					}
-					/*if (!viewOnly) {
-						if (lastHits == MAX_HITS && chords == 1) {
-							for (JLabel lab : separators) {
-								lab.setVisible(true);
-							}
-						} else if (lastHits == MAX_HITS && chords > 1) {
-							separators[0].setVisible(true);
-							separators[1].setVisible(false);
-							separators[2].setVisible(true);
-						} else if (lastHits == 16 && chords == 1) {
-							separators[0].setVisible(true);
-							separators[1].setVisible(false);
-							separators[2].setVisible(false);
-						} else {
-							for (JLabel lab : separators) {
-								lab.setVisible(false);
-							}
-						}
-					} else {
-						for (JLabel lab : separators) {
-							lab.setVisible(false);
-						}
-					}*/
-
-				} else {
-					width = 8 * CheckBoxIcon.width;
-					height = 2 * CheckBoxIcon.width;
-					if (smallModeInsetMap.containsKey(lastHits)) {
-						for (int i = 0; i < lastHits; i++) {
-							hitChecks[i].setMargin(smallModeInsetMap.get(lastHits));
-							hitVelocities[i].setMargin(smallModeInsetMap.get(lastHits));
-						}
-					} else {
-						for (int i = 0; i < lastHits; i++) {
-							hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
-							hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
-						}
-					}
-					/*for (JLabel lab : separators) {
-						lab.setVisible(false);
-					}*/
-				}
-				int bigModeWidthOffset = (showBIG) ? 10 : 0;
-				boolean bigModeTwoRows = (chords > 1 && showBIG);
-				if (lastHits > 16 && !showBIG && showingVelocities) {
-					height *= 4;
-				} else if (bigModeTwoRows || (lastHits > 16 && !showingVelocities)
-						|| ((lastHits > 8 || showBIG) && showingVelocities)) {
-					height *= 2;
-					if (showingVelocities && bigModeTwoRows) {
-						height *= 2;
-					}
-				}
-
-				VisualPatternPanel.this
-						.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
-
-				parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 20 : 50));
-				VisualPatternPanel.this.setVisible(true);
-				repaint();
+		int shift = shiftPanel.getInt();
+		for (int i = 0; i < MAX_HITS; i++) {
+			int shI = (i + shift) % MAX_HITS;
+			hitChecks[shI].setSelected(truePattern.get(i) != 0);
+		}
+		for (int i = 0; i < MAX_HITS; i++) {
+			int shI = (i + shift) % MAX_HITS;
+			hitVelocities[shI].setValueRaw(trueVelocities.get(i));
+			if (!velocityGhost) {
+				hitVelocities[shI].setEnabled(truePattern.get(i) != 0);
 			}
+		}
+	}
+
+	public void reapplyHits() {
+		SwingUtilities.invokeLater(() -> {
+			VisualPatternPanel.this.setVisible(false);
+			reapplyHitsRaw();
+			VisualPatternPanel.this.setVisible(true);
 
 		});
 
+	}
+
+	public void reapplyHitsRaw() {
+		boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
+		int nowHits = hitsPanel.getInt();
+		if (nowHits > MAX_HITS)
+			nowHits = MAX_HITS;
+		if (nowHits > lastHits) {
+			for (int i = 0; i < nowHits; i++) {
+				hitChecks[i].setVisible(!showingVelocities);
+				hitVelocities[i].setVisible(showingVelocities);
+			}
+
+		} else if (nowHits < lastHits) {
+			for (int i = nowHits; i < lastHits; i++) {
+				hitChecks[i].setVisible(false);
+				hitVelocities[i].setVisible(false);
+			}
+		}
+		lastHits = nowHits;
+
+		int chords = chordSpanPanel.getInt();
+
+		if (showBIG) {
+			width = MAX_HITS * CheckBoxIcon.width;
+			height = 1 * CheckBoxIcon.width;
+			if (chords == 1) {
+				if (bigModeInsetMap.containsKey(lastHits)) {
+					for (int i = 0; i < lastHits; i++) {
+						hitChecks[i].setMargin(bigModeInsetMap.get(lastHits));
+						hitVelocities[i].setMargin(bigModeInsetMap.get(lastHits));
+					}
+				} else {
+					for (int i = 0; i < lastHits; i++) {
+						hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+						hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
+					}
+				}
+			} else {
+				for (int i = 0; i < lastHits; i++) {
+					if (lastHits % 2 == 0) {
+						hitChecks[i].setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+						hitVelocities[i].setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+					} else {
+						if (i == lastHits / 2) {
+							hitChecks[i]
+									.setMargin(bigModeDoubleChordTransitionInsetMap.get(lastHits));
+							hitVelocities[i]
+									.setMargin(bigModeDoubleChordTransitionInsetMap.get(lastHits));
+						} else {
+							hitChecks[i].setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+							hitVelocities[i]
+									.setMargin(bigModeDoubleChordGeneralInsetMap.get(lastHits));
+						}
+					}
+
+				}
+			}
+			/*if (!viewOnly) {
+				if (lastHits == MAX_HITS && chords == 1) {
+					for (JLabel lab : separators) {
+						lab.setVisible(true);
+					}
+				} else if (lastHits == MAX_HITS && chords > 1) {
+					separators[0].setVisible(true);
+					separators[1].setVisible(false);
+					separators[2].setVisible(true);
+				} else if (lastHits == 16 && chords == 1) {
+					separators[0].setVisible(true);
+					separators[1].setVisible(false);
+					separators[2].setVisible(false);
+				} else {
+					for (JLabel lab : separators) {
+						lab.setVisible(false);
+					}
+				}
+			} else {
+				for (JLabel lab : separators) {
+					lab.setVisible(false);
+				}
+			}*/
+
+		} else {
+			width = 8 * CheckBoxIcon.width;
+			height = 2 * CheckBoxIcon.width;
+			if (smallModeInsetMap.containsKey(lastHits)) {
+				for (int i = 0; i < lastHits; i++) {
+					hitChecks[i].setMargin(smallModeInsetMap.get(lastHits));
+					hitVelocities[i].setMargin(smallModeInsetMap.get(lastHits));
+				}
+			} else {
+				for (int i = 0; i < lastHits; i++) {
+					hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
+					hitVelocities[i].setMargin(new Insets(0, 0, 0, 0));
+				}
+			}
+			/*for (JLabel lab : separators) {
+				lab.setVisible(false);
+			}*/
+		}
+		int bigModeWidthOffset = (showBIG) ? 10 : 0;
+		boolean bigModeTwoRows = (chords > 1 && showBIG);
+		if (lastHits > 16 && !showBIG && showingVelocities) {
+			height *= 4;
+		} else if (bigModeTwoRows || (lastHits > 16 && !showingVelocities)
+				|| ((lastHits > 8 || showBIG) && showingVelocities)) {
+			height *= 2;
+			if (showingVelocities && bigModeTwoRows) {
+				height *= 2;
+			}
+		}
+
+		VisualPatternPanel.this.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
+
+		parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 20 : 50));
+		repaint();
 	}
 
 	public boolean isViewOnly() {
@@ -723,10 +761,10 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 
-		/*System.out.println(parentPanel.getPanelOrder() + "#");
-		System.out.println("Quarter notes: " + quarterNotesInMeasure);
-		System.out.println(StringUtils.join(beatQuarterNotesInMeasure, ", "));
-		System.out.println("Chord num: " + chordNumInMeasure);*/
+		/*LG.d(parentPanel.getPanelOrder() + "#");
+		LG.d("Quarter notes: " + quarterNotesInMeasure);
+		LG.d(StringUtils.join(beatQuarterNotesInMeasure, ", "));
+		LG.d("Chord num: " + chordNumInMeasure);*/
 		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(totalChords,
 				parentPanel.getFillFlip());
 
@@ -751,13 +789,13 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpanPanel.getInt();
-		double percentage = (quarterNotesInMeasure / patternTotalDuration) % 1.0;
+		double percentage = (10.0 + (quarterNotesInMeasure / patternTotalDuration)) % 1.0;
 
 
 		if (parentPanel.getPatternRepeat() > 1) {
 			percentage = (percentage * parentPanel.getPatternRepeat()) % 1.0;
 		}
-		//System.out.println("Percentage: " + percentage);
+		//LG.d("Percentage: " + percentage);
 		int highlightedHit = (int) (percentage * lastHits);
 		if (highlightedHit < 0) {
 			highlightedHit = 0;
@@ -792,28 +830,43 @@ public class VisualPatternPanel extends JPanel {
 						toggleVelocityShow();
 					}
 					if (isVelocityPattern.isSelected()) {
+						setGhostNotes(true);
 						Random randr = new Random();
-						for (int i = 0; i < lastHits; i++) {
-							if (!hitVelocities[i].isEnabled()) {
-								hitVelocities[i].setEnabled(true);
+						patternType.setVal(RhythmPattern.CUSTOM);
+						for (int i = 0; i < MAX_HITS; i++) {
+							int shI = (i + shiftPanel.getInt()) % MAX_HITS;
+							if (!hitVelocities[shI].isEnabled()) {
+								hitVelocities[shI].setEnabled(true);
 								int max = parentPanel.getVelocityMax();
 								int min = parentPanel.getVelocityMin();
-								hitVelocities[i].setValue((randr.nextInt(max - min + 1) + min) / 2);
+								int val = (randr.nextInt(max - min + 1) + min) / 2;
+								hitVelocities[shI].setValueRaw(val);
+								trueVelocities.set(i, val);
 							}
 						}
 					} else {
-						for (int i = 0; i < lastHits; i++) {
+						setGhostNotes(false);
+						for (int i = 0; i < MAX_HITS; i++) {
 							if (!hitChecks[i].isSelected()) {
-								hitVelocities[i].setValue(20);
+								//hitVelocities[shI].setValue(20);
 								hitVelocities[i].setEnabled(false);
 							}
 						}
 					}
-
+					reapplyHitsRaw();
+					reapplyShiftRaw(true);
 
 				}
 			}
 		});
+	}
+
+	public boolean isGhostNotes() {
+		return isGhostNotes;
+	}
+
+	public void setGhostNotes(boolean isGhostNotes) {
+		this.isGhostNotes = isGhostNotes;
 	}
 
 }

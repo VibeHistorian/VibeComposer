@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -13,7 +15,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.ShowPanelBig;
+import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 
 public class SoloMuter extends JPanel {
 
@@ -43,7 +45,7 @@ public class SoloMuter extends JPanel {
 	public Type type = Type.SINGLE;
 	public State soloState = State.OFF;
 	public State muteState = State.OFF;
-	public SoloMuter parent = null;
+	public SoloMuter smParent = null;
 
 	public SoloMuter(Integer inst, Type type) {
 		super();
@@ -51,10 +53,10 @@ public class SoloMuter extends JPanel {
 		this.type = type;
 		if (type == Type.GROUP) {
 			setPreferredSize(new Dimension(70, 35));
-			parent = VibeComposerGUI.globalSoloMuter;
+			smParent = VibeComposerGUI.globalSoloMuter;
 			setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		} else if (type == Type.SINGLE) {
-			parent = VibeComposerGUI.groupSoloMuters.get(inst);
+			smParent = VibeComposerGUI.groupSoloMuters.get(inst);
 		}
 
 		this.inst = inst;
@@ -62,11 +64,19 @@ public class SoloMuter extends JPanel {
 		soloer.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
 		muter.setText("M");
 		muter.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
-		soloer.addActionListener(new ActionListener() {
+		soloer.addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				toggleSolo(true);
+			public void mousePressed(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					toggleSolo(true);
+				} else if (SwingUtilities.isMiddleMouseButton(e) && type != Type.GLOBAL) {
+					if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
+						VibeComposerGUI.globalSoloMuter.toggleSolo(true);
+					}
+					toggleSolo(true);
+				}
+
 			}
 
 		});
@@ -110,10 +120,10 @@ public class SoloMuter extends JPanel {
 		} else {
 			if (type == Type.SINGLE) {
 				solo();
-				parent.solo();
-				parent.parent.solo();
+				smParent.solo();
+				smParent.smParent.solo();
 			} else if (type == Type.GROUP) {
-				parent.solo();
+				smParent.solo();
 				VibeComposerGUI.soloGroup(this);
 			} else {
 				// do nothing
@@ -128,13 +138,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						VibeComposerGUI.scorePanel.setScore();
-					}
-				});
+				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.setScore());
 			}
 		}
 	}
@@ -172,11 +176,11 @@ public class SoloMuter extends JPanel {
 
 			if (type == Type.SINGLE) {
 				mute();
-				parent.mute();
-				parent.parent.mute();
+				smParent.mute();
+				smParent.smParent.mute();
 			} else if (type == Type.GROUP) {
 				VibeComposerGUI.muteGroup(this);
-				parent.mute();
+				smParent.mute();
 			} else {
 				// do nothing
 			}
@@ -190,13 +194,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						VibeComposerGUI.scorePanel.setScore();
-					}
-				});
+				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.setScore());
 			}
 		}
 	}

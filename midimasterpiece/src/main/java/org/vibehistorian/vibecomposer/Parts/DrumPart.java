@@ -11,7 +11,7 @@ public class DrumPart extends InstPart {
 	private boolean isVelocityPattern = true;
 
 	public DrumPart() {
-
+		partNum = 4;
 	}
 
 
@@ -23,5 +23,7 @@ public class DrumPart extends InstPart {
 		this.isVelocityPattern = isVelocityPattern;
 	}
 
-
+	public int getPartNum() {
+		return 4;
+	};
 }

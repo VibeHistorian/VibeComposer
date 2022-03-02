@@ -9,9 +9,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
@@ -22,11 +23,11 @@ public class BassPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = -1472358707275766819L;
 
-	private JCheckBox useRhythm = new JCheckBox("Use Pattern", true);
-	private JCheckBox alternatingRhythm = new JCheckBox("Random Alt. Rhythm", true);
-	private JCheckBox doubleOct = new JCheckBox("Oct. Interval", false);
-	private KnobPanel noteVariation = new KnobPanel("Note Variance", 20);
-	private JCheckBox melodyPattern = new JCheckBox("Melody1 Pattern", false);
+	private JCheckBox useRhythm = new CustomCheckBox("Use Pattern", true);
+	private JCheckBox alternatingRhythm = new CustomCheckBox("Random Alt. Rhythm", true);
+	private JCheckBox doubleOct = new CustomCheckBox("Oct. Interval", false);
+	private KnobPanel noteVariation = new KnobPanel("Note Variance", 50);
+	private JCheckBox melodyPattern = new CustomCheckBox("Melody1 Pattern", false);
 
 	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
@@ -47,9 +48,9 @@ public class BassPanel extends InstPanel {
 
 		//this.add(useRhythm);
 		this.add(alternatingRhythm);
+		this.add(transpose);
 
 		this.add(chordSpanFillPanel);
-		this.add(transpose);
 
 		this.add(hitsPerPattern);
 		hitsPerPattern.setInt(32);
@@ -60,12 +61,12 @@ public class BassPanel extends InstPanel {
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.setBigModeAllowed(false);
 		comboPanel.linkVelocityToggle(veloTogglerButt);
+		setPattern(RhythmPattern.MELODY1);
 		this.add(comboPanel);
 		this.add(veloTogglerButt);
 		this.add(patternFlip);
 		this.add(patternShift);
 		this.add(chordSpan);
-
 		//this.add(noteLengthMultiplier);
 		this.add(patternJoinMode);
 
@@ -84,19 +85,16 @@ public class BassPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch.: 9"));
 		setPanelOrder(1);
-
+		comboPanel.reapplyHits();
+		initDefaultsPost();
 	}
 
 	public BassPanel(ActionListener l) {
-		setPartClass(BassPart.class);
 		initComponents(l);
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
 		}
 		patternJoinMode.setSelectedItem(PatternJoinMode.EXPAND);
-		for (RhythmPattern d : RhythmPattern.values()) {
-			pattern.addItem(d);
-		}
 	}
 
 
@@ -176,5 +174,15 @@ public class BassPanel extends InstPanel {
 
 	public void setPatternJoinMode(PatternJoinMode patternJoinMode) {
 		this.patternJoinMode.setVal(patternJoinMode);
+	}
+
+	@Override
+	public int getPartNum() {
+		return 1;
+	}
+
+	@Override
+	public Class<? extends InstPart> getPartClass() {
+		return BassPart.class;
 	}
 }

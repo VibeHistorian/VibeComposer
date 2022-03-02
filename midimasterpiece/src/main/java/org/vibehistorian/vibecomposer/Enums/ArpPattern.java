@@ -10,15 +10,20 @@ import java.util.stream.IntStream;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 
-import org.vibehistorian.vibecomposer.Helpers.OMNI;
+import org.vibehistorian.vibecomposer.OMNI;
 
 @XmlType(name = "arpPattern")
 @XmlEnum
 public enum ArpPattern {
-	RANDOM, UP, DOWN, UPDOWN, DOWNUP, FROG_U, FROG_D;
+	RANDOM, UP, DOWN, UPDOWN, DOWNUP, FROG_U, FROG_D, CUSTOM;
 
 	public List<Integer> getPatternByLength(int hits, int chordLength, int patternRepeat,
 			int rotate) {
+		return getPatternByLength(hits, chordLength, patternRepeat, rotate, null);
+	}
+
+	public List<Integer> getPatternByLength(int hits, int chordLength, int patternRepeat,
+			int rotate, List<Integer> customPattern) {
 		List<Integer> result = new ArrayList<>();
 
 		ArpPattern usedPattern = ArpPattern.this;
@@ -96,18 +101,20 @@ public enum ArpPattern {
 				}
 			}
 			break;
+		case CUSTOM:
+			patternArray = customPattern.stream().mapToInt(e -> e).toArray();
+			break;
 		default:
 			throw new IllegalArgumentException("Unsupported ArpPattern!");
 
 		}
 
-		hits = originalHits;
-		while (result.size() < hits) {
+		while (result.size() < originalHits) {
 			result.addAll(Arrays.stream(patternArray).boxed().collect(Collectors.toList()));
 		}
-		//System.out.println(StringUtils.join(result, ","));
+		//LG.d(StringUtils.join(result, ","));
 		Collections.rotate(result, -1 * rotate);
-		result = result.subList(0, hits);
+		result = result.subList(0, originalHits);
 		List<Integer> repResult = new ArrayList<>();
 		for (int i = 0; i < patternRepeat; i++) {
 			repResult.addAll(result);

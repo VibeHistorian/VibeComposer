@@ -7,6 +7,7 @@ import java.awt.event.WindowListener;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class ExtraSettingsPopup extends CloseablePopup {
@@ -22,7 +23,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 		frame.pack();
 		frame.setVisible(true);
 
-		System.out.println("Opened Extra Settings page!");
+		LG.d("Opened Extra Settings page!");
 	}
 
 	public JFrame getFrame() {
@@ -48,7 +49,10 @@ public class ExtraSettingsPopup extends CloseablePopup {
 					VibeComposerGUI.bpmHigh.setInt(high);
 				}
 				//bpm = OMNI.clamp(bpm, low, high);
-				//VibeComposerGUI.mainBpm.getKnob().setMin(low);
+				VibeComposerGUI.mainBpm.getKnob()
+						.setMin(Math.min(VibeComposerGUI.mainBpm.getKnob().getMin(), low));
+				VibeComposerGUI.mainBpm.getKnob()
+						.setMax(Math.max(VibeComposerGUI.mainBpm.getKnob().getMax(), high));
 				//VibeComposerGUI.mainBpm.getKnob().setMaxRaw(high);
 				//VibeComposerGUI.mainBpm.setInt(bpm);
 			}
