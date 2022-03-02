@@ -1,23 +1,22 @@
-# VibeComposer
+# VibeComposer 2
 ## Customizable Music Generator
 
-![VibeComposer Simple UI Preview](https://i.imgur.com/Iasl64U.png)
+![VibeComposer Advanced_UI Preview](https://i.imgur.com/9P4g2i6.png)
 
-#### Arranged Track Examples (v1.9): 
-- https://soundcloud.com/vibehistorian/space-journey
-- https://soundcloud.com/vibehistorian/anaesthesia-blues
-- https://soundcloud.com/vibehistorian/osiris
-- https://soundcloud.com/vibehistorian/utopia
+#### Arranged Track Examples (v2.0): 
+- https://soundcloud.com/vibehistorian/legend
+- https://soundcloud.com/vibehistorian/the-spirit-molecule
+
 
 
 #### How to run it (on Windows):
 1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
-2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v1.9-beta
+2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.0-beta
 3. Run/double-click the executable
 
 #### How to run it (on Linux/Mac):
 1. Same thing as Windows, but use the JAR (.jar) file instead of the executable (.exe) file.
-2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, with this command: "java -jar VibeComposer-v1.9-beta-JAR.jar"
+2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, and use command: "java -jar VibeComposer-v2.0-beta-JAR.jar"
 3. In case it still doesn't work, feel free to contact me (email/discord below).
 
 #### How to use it:
@@ -35,10 +34,17 @@
 
 **Note2:** if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu.
+    
+#### Building requirements:
+1. Apache Maven https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html
+2. JDK 1.8 or later https://jdk.java.net/
+3. Unzip downloaded code, run command "mvn clean compile assembly:single package" in the directory with pom.xml
+	-- this should create 2 jars and 1 exe
 
 #### Arrangement examples made with earlier versions of VibeComposer: 
+- https://soundcloud.com/vibehistorian/space-journey
+- https://soundcloud.com/vibehistorian/anaesthesia-blues
 - https://soundcloud.com/vibehistorian/avalanche
-- https://soundcloud.com/vibehistorian/three-seasons
 - https://soundcloud.com/vibehistorian/discovery
 
 #### License: GPL3
