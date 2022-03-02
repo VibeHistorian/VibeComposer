@@ -3536,6 +3536,14 @@ public class VibeComposerGUI extends JFrame
 			PhraseNotes newNotes = copyDraggedNotes.copy();
 			newNotes.setCustom(true);
 			sec.addPhraseNotes(partOrderSection.getLeft(), partOrderSection.getMiddle(), newNotes);
+			if (!sec.getPresence(partOrderSection.getLeft())
+					.contains(partOrderSection.getMiddle())) {
+				sec.setPresence(partOrderSection.getLeft(), partOrderSection.getMiddle());
+			}
+			setActualModel(actualArrangement.convertToActualTableModel(), false);
+			refreshVariationPopupButtons(actualArrangement.getSections().size());
+			manualArrangement.setSelected(true);
+			manualArrangement.repaint();
 			scrollableArrangementActualTable.repaint();
 		} else {
 			LG.i("Can't copy custom midi - invalid part!");
