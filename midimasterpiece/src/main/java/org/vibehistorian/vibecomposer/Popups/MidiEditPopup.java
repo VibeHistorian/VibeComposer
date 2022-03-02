@@ -109,7 +109,7 @@ public class MidiEditPopup extends CloseablePopup {
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 		if (values == null) {
-			values = VibeComposerGUI.getAffectedPanels(part).get(partOrder).getCustomMidi();
+			values = VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidi();
 		}
 		if (values == null) {
 			values = new PhraseNotes();
