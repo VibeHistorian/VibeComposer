@@ -11,11 +11,14 @@
 
 #### How to run it (on Windows):
 1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
-2. Download the executable from the latest release https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.0-beta
+2. Download the latest release (.jar, or .exe for convenience) https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.0-beta
 3. Run/double-click the executable
+  > Important: some users report getting virus warnings (false positives) when downloading - this is a known issue of Launch4j (used to wrap JAVA .jar as an .exe)<br>
+  > To avoid it, you can instead download and run the .jar version itself with no wrapper. <br>
+  > If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from the release, place it in the same folder as the .jar and run that instead.
 
 #### How to run it (on Linux/Mac):
-1. Same thing as Windows, but use the JAR (.jar) file instead of the executable (.exe) file.
+1. Same thing as Windows, but only the JAR (.jar) file instead of the executable (.exe) file.
 2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, and use command: "java -jar VibeComposer-v2.0-beta-JAR.jar"
 3. In case it still doesn't work, feel free to contact me (email/discord below).
 
@@ -39,7 +42,7 @@
 1. Apache Maven https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html
 2. JDK 1.8 or later https://jdk.java.net/
 3. Unzip downloaded code, run command "mvn clean compile assembly:single package" in the directory with pom.xml
-	-- this should create 2 jars and 1 exe
+	-- this should create 2 jars and 1 wrapped exe
 
 #### Arrangement examples made with earlier versions of VibeComposer: 
 - https://soundcloud.com/vibehistorian/space-journey
