@@ -54,7 +54,6 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
@@ -2974,7 +2973,7 @@ public class MidiGenerator implements JMC {
 				gc.setArrangementPartVariationChance(normalPartVariationChance);
 			}
 
-			if (!overridden && sec.getType().equals(SectionType.BUILDUP.toString())) {
+			if (!overridden && sec.getType().toUpperCase().startsWith("BUILDUP")) {
 				if (rand.nextInt(100) < gc.getArrangementVariationChance()) {
 					List<Integer> exceptionChanceList = new ArrayList<>();
 					exceptionChanceList.add(1);

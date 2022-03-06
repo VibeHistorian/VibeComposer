@@ -47,17 +47,18 @@ public class Arrangement {
 			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
 					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
 	private static final List<String> EDM_ARRANGEMENT = new ArrayList<>(
-			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "CHORUS3", "VERSE1",
+			Arrays.asList(new String[] { "INTRO", "BUILDUP1", "CHORUS2", "CHORUS3", "VERSE1",
 					"VERSE2", "CHORUS3", "CLIMAX", "OUTRO" }));
 
 	private static final List<String> EDM_ARRANGEMENT2 = new ArrayList<>(
-			Arrays.asList(new String[] { "INTRO", "BUILDUP", "CHORUS2", "CHORUS3", "VERSE1",
-					"BREAKDOWN", "CHILL", "BUILDUP", "CHORUS3", "CLIMAX", "BREAKDOWN", "CHILL",
-					"CLIMAX", "CLIMAX", "HALF_CHORUS", "OUTRO" }));
+			Arrays.asList(new String[] { "INTRO", "BUILDUP1", "CHORUS2", "CHORUS3", "VERSE1",
+					"BREAKDOWN", "CHILL", "BUILDUP1", "BUILDUP2", "CHORUS3", "CLIMAX", "BREAKDOWN",
+					"CHILL", "CLIMAX", "CLIMAX", "HALF_CHORUS", "OUTRO" }));
 
 	private static final List<String> POP_ARRANGEMENT2 = new ArrayList<>(
 			Arrays.asList(new String[] { "HALF_CHORUS", "HALF_CHORUS", "OUTRO", "VERSE2", "CHORUS2",
-					"VERSE2", "CHORUS3", "BREAKDOWN", "BUILDUP", "CHORUS3", "CLIMAX", "OUTRO" }));
+					"VERSE2", "CHORUS3", "BREAKDOWN", "BUILDUP1", "BUILDUP2", "CHORUS3", "CLIMAX",
+					"OUTRO" }));
 
 	static {
 		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT);
@@ -70,14 +71,15 @@ public class Arrangement {
 	static {
 		defaultSections.put("INTRO", new Section("INTRO", 1, 20, 10, 40, 25, 20));
 		defaultSections.put("VERSE1", new Section("VERSE1", 1, 40, 60, 30, 25, 40));
-		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 50, 90, 50, 35, 50));
-		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 65, 100, 60, 50, 50));
+		defaultSections.put("VERSE2", new Section("VERSE2", 1, 40, 60, 40, 50, 50));
+		defaultSections.put("CHORUS1", new Section("CHORUS1", 1, 50, 90, 50, 35, 60));
+		defaultSections.put("CHORUS2", new Section("CHORUS2", 1, 65, 100, 60, 50, 70));
 		defaultSections.put("HALF_CHORUS", new Section("HALF_CHORUS", 1, 0, 100, 60, 50, 80));
 		defaultSections.put("BREAKDOWN", new Section("BREAKDOWN", 1, 40, 60, 60, 25, 40));
 		defaultSections.put("CHILL", new Section("CHILL", 1, 10, 30, 70, 70, 10));
-		defaultSections.put("VERSE2", new Section("VERSE2", 1, 40, 60, 40, 50, 50));
 		defaultSections.put("VERSE3", new Section("VERSE3", 1, 50, 80, 40, 70, 60));
-		defaultSections.put("BUILDUP", new Section("BUILDUP", 1, 65, 60, 20, 40, 90));
+		defaultSections.put("BUILDUP1", new Section("BUILDUP1", 1, 40, 40, 10, 20, 70));
+		defaultSections.put("BUILDUP2", new Section("BUILDUP2", 1, 65, 60, 20, 40, 90));
 		defaultSections.put("CHORUS3", new Section("CHORUS3", 1, 80, 100, 80, 80, 85));
 		defaultSections.put("CLIMAX", new Section("CLIMAX", 1, 100, 100, 100, 100, 100));
 		defaultSections.put("OUTRO", new Section("OUTRO", 1, 50, 70, 60, 40, 10));
@@ -100,14 +102,14 @@ public class Arrangement {
 
 	private static final Map<String, String[]> afterinsertsMap = new HashMap<>();
 	static {
-		afterinsertsMap.put("INTRO", new String[] { "VERSE1", "VERSE2", "BUILDUP" });
+		afterinsertsMap.put("INTRO", new String[] { "VERSE1", "VERSE2", "BUILDUP1" });
 
 		afterinsertsMap.put("CHORUS1", new String[] { "VERSE2" });
 		afterinsertsMap.put("CHORUS2", new String[] { "CHORUS3" });
 
 		//afterinsertsMap.put("BREAKDOWN", new String[] { "INTRO" });
 
-		afterinsertsMap.put("CHILL", new String[] { "VERSE2", "BUILDUP" });
+		afterinsertsMap.put("CHILL", new String[] { "VERSE2", "BUILDUP1", "BUILDUP2" });
 	}
 
 	private static final List<String> variableSections = new ArrayList<>(
@@ -206,9 +208,7 @@ public class Arrangement {
 		sections.clear();
 		// type, length, melody%, bass%, chord%, arp%, drum%
 		for (Section s : defaultSections.values()) {
-			if (!s.getType().equals(SectionType.BUILDUP.toString())) {
-				sections.add(s.deepCopy());
-			}
+			sections.add(s.deepCopy());
 		}
 	}
 

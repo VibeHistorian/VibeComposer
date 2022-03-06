@@ -53,8 +53,8 @@ import jm.music.data.Phrase;
 @XmlType(propOrder = {})
 public class Section {
 	public enum SectionType {
-		INTRO, VERSE1, VERSE2, VERSE3, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP,
-		CHORUS3, CLIMAX, OUTRO;
+		INTRO, VERSE1, VERSE2, VERSE3, CHORUS1, CHORUS2, HALF_CHORUS, BREAKDOWN, CHILL, BUILDUP1,
+		BUILDUP2, CHORUS3, CLIMAX, OUTRO;
 	}
 
 	public static final String[][] variationDescriptions = {
@@ -634,6 +634,7 @@ public class Section {
 		if (StringUtils.isEmpty(type)) {
 			return 0;
 		} else {
+			type = type.toUpperCase();
 			if (type.startsWith("CHORUS") || type.startsWith("CLIMAX")
 					|| type.startsWith("PREVIEW")) {
 				return 0;
