@@ -5554,7 +5554,7 @@ public class VibeComposerGUI extends JFrame
 
 			// solve user chords
 			String chords = userChords.getChordListString();
-			if (userChordsEnabled.isSelected() && !chords.contains("?")) {
+			if (userChordsEnabled.isSelected() && userChords.getChordletsRaw().size() > 0) {
 				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(chords,
 						userChordsDurations.getText());
 				if (solvedChordsDurations != null) {
@@ -6053,9 +6053,8 @@ public class VibeComposerGUI extends JFrame
 			sequencer.start();  // start the playback
 
 			loopBeatCount.getKnob()
-					.setMax(userChordsEnabled.isSelected()
-							? (int) Math.ceil(OMNI.sumListDouble(
-									OMNI.parseDoublesString(userChordsDurations.getText())))
+					.setMax(!MidiGenerator.userChordsDurations.isEmpty()
+							? (int) Math.ceil(OMNI.sumListDouble(MidiGenerator.userChordsDurations))
 							: MidiGenerator.chordInts.size() * 4);
 			startMidiCcThread();
 			recalculateTabPaneCounts();
@@ -9269,8 +9268,8 @@ public class VibeComposerGUI extends JFrame
 			return;
 		}
 		try {
-			// todo checkbox setting?
-			if (true) {
+			// todo checkbox setting - "transpose previewed note"
+			if (part < 4) {
 				Pair<ScaleMode, Integer> scaleKey = keyChangeAt(
 						actualArrangement.getSections().indexOf(sec));
 				List<Note> notes = Collections.singletonList(new Note(pitch, durationMs / 1000.0));
