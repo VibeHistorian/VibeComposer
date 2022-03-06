@@ -561,7 +561,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox sidechainPatternsOnCompose;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
 	ScrollComboBox<String> randomDrumHitsMultiplier;
-	int randomDrumHitsMultiplierLastState = 1;
+	ScrollComboBox<String> randomDrumHitsMultiplierOnGenerate;
 	public static JCheckBox drumCustomMapping;
 	public static JTextField drumCustomMappingNumbers;
 
@@ -2239,9 +2239,14 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(randomDrumUseChordFill);
 
 		randomDrumHitsMultiplier = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "0.5x", "1.5x", "2x" },
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "0.5x", "0.75x", "1.5x", "2x" },
 				randomDrumHitsMultiplier);
 		randomDrumHitsMultiplier.setVal(OMNI.EMPTYCOMBO);
+		randomDrumHitsMultiplierOnGenerate = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO, "0.5x", "0.75x", "1.5x", "2x" },
+				randomDrumHitsMultiplierOnGenerate);
+		randomDrumHitsMultiplierOnGenerate.setVal(OMNI.EMPTYCOMBO);
+
 		randomDrumHitsMultiplier.addItemListener(new ItemListener() {
 
 			@Override
@@ -2257,14 +2262,16 @@ public class VibeComposerGUI extends JFrame
 							affectedDrums.get(i).setHitsPerPattern(newHits / 2);
 							break;
 						case 2:
-							affectedDrums.get(i).setHitsPerPattern(newHits * 3 / 2);
+							affectedDrums.get(i).setHitsPerPattern(newHits * 3 / 4);
 							break;
 						case 3:
+							affectedDrums.get(i).setHitsPerPattern(newHits * 3 / 2);
+							break;
+						case 4:
 							affectedDrums.get(i).setHitsPerPattern(newHits * 2);
 							break;
 						default:
-							throw new IllegalArgumentException(
-									"Only 3 hits multiplier states allowed!");
+							throw new IllegalArgumentException("Multiplier too high!");
 						}
 						if (randomDrumHitsMultiplier.getSelectedIndex() > 1
 								&& affectedDrums.get(i).getPattern() == RhythmPattern.CUSTOM) {
@@ -2283,8 +2290,10 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
-		drumsPanel.add(new JLabel("Hits Multiplier:"));
+		drumsPanel.add(new JLabel("Multiply Hits By"));
 		drumsPanel.add(randomDrumHitsMultiplier);
+		drumsPanel.add(new JLabel("On Generate"));
+		drumsPanel.add(randomDrumHitsMultiplierOnGenerate);
 		drumsPanel.add(randomDrumSlide);
 		drumPartPresetBox = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new String[] { OMNI.EMPTYCOMBO }, drumPartPresetBox);
@@ -7472,7 +7481,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(melodyPatternRandomizeOnCompose);
 		cs.add(melodyTargetNotesRandomizeOnCompose);
 
-		// bass panel - nothing
+		// bass panel
 
 		// chord panel
 		cs.add(randomChordsGenerateOnCompose);
@@ -7570,6 +7579,19 @@ public class VibeComposerGUI extends JFrame
 		cs.add(customFilenameAddTimestamp);
 		cs.add(configHistoryStoreRegeneratedTracks);
 		cs.add(sidechainPatternsOnCompose);
+
+		// ---------------- VIBECOMPOSER 2 ------------------------------------
+
+		// melody panel
+
+		// bass panel
+
+		// chords panel
+
+		// arps panel
+
+		// drum panel
+		cs.add(randomDrumHitsMultiplierOnGenerate);
 
 		return cs;
 	}
@@ -8245,6 +8267,24 @@ public class VibeComposerGUI extends JFrame
 
 			dpart.setOrder(ip.getPanelOrder());
 			dpart.setMuted(ip.getMuteInst());
+			switch (randomDrumHitsMultiplierOnGenerate.getSelectedIndex()) {
+			case 0:
+				break;
+			case 1:
+				dpart.setHitsPerPattern(dpart.getHitsPerPattern() / 2);
+				break;
+			case 2:
+				dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 3 / 4);
+				break;
+			case 3:
+				dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 3 / 2);
+				break;
+			case 4:
+				dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 2);
+				break;
+			default:
+				throw new IllegalArgumentException("Multiplier index too high.");
+			}
 			ip.setFromInstPart(dpart);
 
 			//dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
@@ -8412,6 +8452,24 @@ public class VibeComposerGUI extends JFrame
 				hits /= 2;
 			}
 
+			switch (randomDrumHitsMultiplierOnGenerate.getSelectedIndex()) {
+			case 0:
+				break;
+			case 1:
+				hits /= 2;
+				break;
+			case 2:
+				hits = hits * 3 / 4;
+				break;
+			case 3:
+				hits = hits * 3 / 2;
+				break;
+			case 4:
+				hits *= 2;
+				break;
+			default:
+				throw new IllegalArgumentException("Multiplier index too high.");
+			}
 			ip.setHitsPerPattern(hits * 2);
 
 			int adjustVelocity = -1 * ip.getHitsPerPattern() / ip.getChordSpan();
