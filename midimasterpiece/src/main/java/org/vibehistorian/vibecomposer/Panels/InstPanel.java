@@ -50,6 +50,7 @@ import javax.swing.border.BevelBorder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
@@ -934,6 +935,7 @@ public abstract class InstPanel extends JPanel {
 	public <T extends JComponent> List<T> getAllComponentsLike(JComponent c, Class<T> clazz) {
 		int indexInPanel = findIndexOfComponent(c, clazz);
 		if (indexInPanel < 0) {
+			LG.i("Found no component for global setting!");
 			return new ArrayList<>();
 		}
 		List<T> components = VibeComposerGUI.getAffectedPanels(getPartNum()).stream()

@@ -101,21 +101,15 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 							getSelectedItem(), ItemEvent.SELECTED);
 					fireItemStateChanged(evnt);
 				} else if (SwingUtilities.isMiddleMouseButton(evt) && !evt.isAltDown()
-						&& (!evt.isShiftDown() || evt.isControlDown())) {
+						&& !evt.isShiftDown()) {
 					if (evt.isControlDown()) {
-						if (evt.isShiftDown()) {
-							setEnabledGlobal(!isEnabled());
+						if (regenerating) {
+							selectRandomValueGlobal();
 						} else {
 							setEnabled(!isEnabled());
 						}
 					} else {
-						List<Integer> viableIndices = IntStream.iterate(0, e -> e + 1)
-								.limit(getItemCount()).boxed().collect(Collectors.toList());
-						if (viableIndices.size() > 1) {
-							viableIndices.remove(Integer.valueOf(getSelectedIndex()));
-						}
-						setSelectedIndex(
-								viableIndices.get(new Random().nextInt(viableIndices.size())));
+						selectRandomValue();
 					}
 				}
 			}
@@ -137,6 +131,28 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		} else {
 			add(scb);
 		}
+	}
+
+	protected void selectRandomValueGlobal() {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			selectRandomValue();
+			repaint();
+			return;
+		}
+		instParent.getAllComponentsLike(this, ScrollComboPanel.class).forEach(e -> {
+			e.selectRandomValue();
+			e.repaint();
+		});
+	}
+
+	protected void selectRandomValue() {
+		List<Integer> viableIndices = IntStream.iterate(0, e -> e + 1).limit(getItemCount()).boxed()
+				.collect(Collectors.toList());
+		if (viableIndices.size() > 1) {
+			viableIndices.remove(Integer.valueOf(getSelectedIndex()));
+		}
+		setSelectedIndex(viableIndices.get(new Random().nextInt(viableIndices.size())));
 	}
 
 	public FireableComboBox<T> box() {
