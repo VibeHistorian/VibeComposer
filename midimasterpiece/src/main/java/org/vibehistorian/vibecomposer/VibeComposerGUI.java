@@ -8041,6 +8041,9 @@ public class VibeComposerGUI extends JFrame
 		}
 		for (int i = 0; i < newPanels.size(); i++) {
 			newPanels.get(i).setFromInstPart(parts.get(i));
+			if (inst == 4 && newPanels.get(i).getComboPanel() != null) {
+				newPanels.get(i).getComboPanel().reapplyHits();
+			}
 		}
 		recalculateTabPaneCounts();
 		instrumentTabPane.repaint();
