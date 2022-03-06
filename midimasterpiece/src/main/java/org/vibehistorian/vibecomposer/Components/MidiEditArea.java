@@ -201,9 +201,7 @@ public class MidiEditArea extends JComponent {
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				if (SwingUtilities.isRightMouseButton(e)) {
-					mousePoint = e.getPoint();
-				}
+				mousePoint = e.getPoint();
 				processHighlight(e.getPoint());
 				processDragEvent(e);
 				setAndRepaint();
@@ -937,9 +935,22 @@ public class MidiEditArea extends JComponent {
 				}
 			}
 
-			if (mousePoint != null && dragX != null) {
-				Rectangle rect = getRectFromPoint(mousePoint);
-				g.drawRect(rect.x, rect.y, rect.width, rect.height);
+			if (mousePoint != null) {
+				if (dragX != null) {
+					Rectangle rect = getRectFromPoint(mousePoint);
+					g.drawRect(rect.x, rect.y, rect.width, rect.height);
+				}
+				if (highlightedNote != null && highlightedDragLocation != null) {
+					int drawX = bottomLeft.x
+							+ (int) (quarterNoteLength * highlightedNote.getStartTime());
+					int width = (int) (quarterNoteLength * highlightedNote.getDuration());
+					if (highlightedDragLocation == 2) {
+						drawX += width;
+					}
+					g.drawLine(drawX, 0, drawX, h);
+				} else {
+					g.drawLine(mousePoint.x, 0, mousePoint.x, h);
+				}
 			}
 		}
 	}
