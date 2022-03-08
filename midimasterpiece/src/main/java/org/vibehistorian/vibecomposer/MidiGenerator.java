@@ -2173,6 +2173,9 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < notes.size(); i++) {
 			Note n = notes.get(i);
 			double adjDur = n.getRhythmValue();
+			if (adjDur < DBL_ERR) {
+				continue;
+			}
 			if (i > chordSeparators.get(chordSepIndex)) {
 				chordSepIndex++;
 				swingAdjust = swingUnitOfTime * (swingPercentAmount / ((double) 50.0))
@@ -4777,7 +4780,9 @@ public class MidiGenerator implements JMC {
 					gc.isTransposedNotesForceScale());
 		}
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[2] + extraTranspose + modTrans);
-
+		int hits = ip.getHitsPerPattern();
+		int swingPercentAmount = (hits % 2 == 0) ? ip.getSwingPercent() : 50;
+		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
 
 		processSectionTransition(sec, phr.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum() * measures, 0.25, 0.15,
@@ -4846,9 +4851,6 @@ public class MidiGenerator implements JMC {
 
 		// TODO: divide
 		int repeatedArpsPerChord = ip.getHitsPerPattern() * ip.getPatternRepeat();
-		int swingPercentAmount = (repeatedArpsPerChord == 4 || repeatedArpsPerChord == 8)
-				? gc.getMaxArpSwing()
-				: 50;
 
 		/*if (melodic) {
 			repeatedArpsPerChord /= ap.getChordSpan();
@@ -5052,6 +5054,9 @@ public class MidiGenerator implements JMC {
 		processSectionTransition(sec, phr.getNoteList(),
 				progressionDurations.stream().mapToDouble(e -> e).sum() * measures, 0.25, 0.15,
 				0.9);
+
+		int hits = ip.getHitsPerPattern();
+		int swingPercentAmount = (hits % 2 == 0) ? ip.getSwingPercent() : 50;
 		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
 		if (fillLastBeat) {
 			Mod.crescendo(phr, phr.getEndTime() * 3 / 4, phr.getEndTime(), Math.max(minVel, 55),

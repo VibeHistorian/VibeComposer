@@ -92,6 +92,7 @@ public class ChordPanel extends InstPanel {
 
 		this.add(transitionChance);
 		this.add(transitionSplit);
+		this.add(swingPercent);
 		this.add(delay);
 
 

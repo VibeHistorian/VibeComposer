@@ -528,7 +528,6 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpStretchGenerationChance;
 	KnobPanel randomArpMaxExceptionChance;
 	JCheckBox randomArpUseOctaveAdjustments;
-	KnobPanel randomArpMaxSwing;
 	KnobPanel randomArpMaxRepeat;
 	KnobPanel randomArpMinVel;
 	KnobPanel randomArpMaxVel;
@@ -2072,7 +2071,6 @@ public class VibeComposerGUI extends JFrame
 		randomArpUseChordFill = new CustomCheckBox("Fills", true);
 		randomArpShiftChance = new DetachedKnobPanel("Shift%", 50);
 		randomArpUseOctaveAdjustments = new CustomCheckBox("Rand. Oct.", false);
-		randomArpMaxSwing = new KnobPanel("Swing%", 50);
 		randomArpMaxRepeat = new DetachedKnobPanel("Max<br>Repeat", 2, 1, 4);
 		randomArpMinVel = new DetachedKnobPanel("Min<br>Vel", 65, 0, 126);
 		randomArpMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
@@ -2119,7 +2117,6 @@ public class VibeComposerGUI extends JFrame
 		arpSettingsExtraPanel.add(randomArpAllSameInst);
 		arpSettingsExtraPanel.add(randomArpLimitPowerOfTwo);
 		arpSettingsExtraPanel.add(randomArpUseOctaveAdjustments);
-		arpSettingsExtraPanel.add(randomArpMaxSwing);
 		arpSettingsExtraPanel.add(randomArpMaxRepeat);
 		arpSettingsExtraPanel.add(randomArpMinVel);
 		arpSettingsExtraPanel.add(randomArpMaxVel);
@@ -3997,14 +3994,13 @@ public class VibeComposerGUI extends JFrame
 
 	private void applyGlobalSwing(int swing, boolean customPanels) {
 		if (customPanels) {
-			getAffectedPanels(0).forEach(e -> e.setSwingPercent(swing));
-			getAffectedPanels(4).forEach(e -> e.setSwingPercent(swing));
+			for (int i = 0; i < 5; i++) {
+				getAffectedPanels(i).forEach(e -> e.setSwingPercent(swing));
+			}
 		} else {
-			melodyPanels.forEach(e -> e.setSwingPercent(swing));
-			randomArpMaxSwing.setInt(swing);
-			drumPanels.forEach(e -> {
-				e.setSwingPercent(swing);
-			});
+			for (int i = 0; i < 5; i++) {
+				getInstList(i).forEach(e -> e.setSwingPercent(swing));
+			}
 		}
 
 	}
@@ -7753,7 +7749,6 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		gc.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
-		gc.setMaxArpSwing(randomArpMaxSwing.getInt());
 
 		// drums
 		boolean isCustomMidiDevice = midiMode.isSelected()
@@ -7887,7 +7882,6 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
-		randomArpMaxSwing.setInt(gc.getMaxArpSwing());
 
 		arrSection.setVisible(true);
 

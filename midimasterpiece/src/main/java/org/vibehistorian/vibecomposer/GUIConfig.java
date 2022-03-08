@@ -119,7 +119,6 @@ public class GUIConfig {
 
 	// arp gen
 	private boolean useOctaveAdjustments = false;
-	private int maxArpSwing = 50;
 
 	// drum gen
 	private boolean drumCustomMapping = true;
@@ -433,14 +432,6 @@ public class GUIConfig {
 
 	public void setUseOctaveAdjustments(boolean useOctaveAdjustments) {
 		this.useOctaveAdjustments = useOctaveAdjustments;
-	}
-
-	public int getMaxArpSwing() {
-		return maxArpSwing;
-	}
-
-	public void setMaxArpSwing(int maxArpSwing) {
-		this.maxArpSwing = maxArpSwing;
 	}
 
 	public int getMaxMelodySwing() {
