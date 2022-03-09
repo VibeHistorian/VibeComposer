@@ -15,6 +15,7 @@ import java.util.Vector;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 
 import jm.JMC;
 import jm.midi.SMF;
@@ -43,7 +44,8 @@ public class JMusicUtilsCustom implements JMC {
 		if (phr.length < 2)
 			return;
 		// the new phrase has the start time of the earliest one
-		Phrase nphr = new Phrase(phr[0].getStartTime());
+		PhraseExt firstPhrase = (PhraseExt) phr[0];
+		Phrase nphr = new Phrase(firstPhrase.getStartTime());
 
 		Note n;
 		boolean finished = false;

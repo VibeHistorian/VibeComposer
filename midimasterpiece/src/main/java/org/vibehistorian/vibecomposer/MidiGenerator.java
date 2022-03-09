@@ -59,6 +59,7 @@ import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -230,6 +231,7 @@ public class MidiGenerator implements JMC {
 
 	private int samePitchCount = 0;
 	private int previousPitch = 0;
+	private int secOrder = -1;
 
 	private int modTrans = 0;
 	private ScaleMode modScale = null;
@@ -2932,9 +2934,8 @@ public class MidiGenerator implements JMC {
 		boolean isPreview = arr.getSections().size() == 1;
 		LG.i("Arrangement - MANUAL? " + overridden);
 		int arrSeed = (arr.getSeed() != 0) ? arr.getSeed() : mainGeneratorSeed;
-
+		secOrder = -1;
 		int normalPartVariationChance = gc.getArrangementPartVariationChance();
-		int secOrder = -1;
 
 		storeGlobalParts();
 
@@ -3451,7 +3452,7 @@ public class MidiGenerator implements JMC {
 					copiedPhrases.add(m);
 				} else {
 					Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
-					Phrase emptyPhrase = new Phrase();
+					Phrase emptyPhrase = new PhraseExt(0, i, secOrder);
 					emptyPhrase.setStartTime(START_TIME_DELAY);
 					emptyPhrase.add(emptyMeasureNote);
 					copiedPhrases.add(emptyPhrase.copy());
@@ -3466,7 +3467,7 @@ public class MidiGenerator implements JMC {
 			double measureLength) {
 		// copied into empty sections
 		Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
-		Phrase emptyPhrase = new Phrase();
+		Phrase emptyPhrase = new PhraseExt();
 		emptyPhrase.setStartTime(START_TIME_DELAY);
 		emptyPhrase.add(emptyMeasureNote);
 
@@ -4012,7 +4013,7 @@ public class MidiGenerator implements JMC {
 			List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
 		LG.d("Processing: " + ip.partInfo());
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt(0, ip.getAbsoluteOrder(), secOrder);
 
 		int measures = sec.getMeasures();
 
@@ -4164,7 +4165,7 @@ public class MidiGenerator implements JMC {
 
 		int seed = ip.getPatternSeedWithPartOffset();
 
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt(1, ip.getAbsoluteOrder(), secOrder);
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(1) : 100;
 		int minVel = multiplyVelocity(ip.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = multiplyVelocity(ip.getVelocityMax(), volMultiplier, 1, 0);
@@ -4433,7 +4434,7 @@ public class MidiGenerator implements JMC {
 		int measures = sec.getMeasures();
 
 		int orderSeed = ip.getPatternSeedWithPartOffset() + ip.getOrder();
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt(2, ip.getAbsoluteOrder(), secOrder);
 		List<Chord> chords = new ArrayList<>();
 		Random variationGenerator = new Random(
 				gc.getArrangement().getSeed() + ip.getOrder() + sec.getTypeSeedOffset());
@@ -4823,7 +4824,7 @@ public class MidiGenerator implements JMC {
 
 		int measures = sec.getMeasures();
 
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt(3, ip.getAbsoluteOrder(), secOrder);
 
 		ArpPart apClone = (ArpPart) ip.clone();
 		int seed = ip.getPatternSeedWithPartOffset() + ip.getOrder();
@@ -5080,7 +5081,7 @@ public class MidiGenerator implements JMC {
 
 		int measures = sec.getMeasures();
 
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt(4, ip.getAbsoluteOrder(), secOrder);
 
 		DrumPart dpClone = (DrumPart) ip.clone();
 		boolean kicky = ip.getInstrument() < 38;
@@ -5387,7 +5388,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	public Phrase fillChordSlash(List<int[]> actualProgression, int measures) {
-		Phrase chordSlashPhrase = new Phrase();
+		Phrase chordSlashPhrase = new PhraseExt(2, 0, secOrder);
 		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
 		for (int i = 0; i < measures; i++) {
 			// fill slash chord slashes

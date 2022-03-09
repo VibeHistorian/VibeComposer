@@ -41,7 +41,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	}
 
 	public Phrase makePhrase() {
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt();
 		makeNotes().forEach(e -> phr.addNote(e));
 		return phr;
 	}
