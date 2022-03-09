@@ -99,6 +99,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
 	public boolean applyOnClose = true;
 	public JList<File> generatedMidi;
+	public CheckButton displayDrumHelper = new CheckButton("Drum Ghosts", false);
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
@@ -323,7 +324,11 @@ public class MidiEditPopup extends CloseablePopup {
 		regenerateInPlaceOnChange.setFunc(e -> {
 			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
 		});
+		displayDrumHelper.setFunc(e -> {
+			repaintMvea();
+		});
 		textPanel.add(regenerateInPlaceOnChange);
+		textPanel.add(displayDrumHelper);
 		textPanel.add(new JLabel("  Highlight Mode:"));
 		textPanel.add(highlightMode);
 		textPanel.add(new JLabel("  Snap To Time:"));

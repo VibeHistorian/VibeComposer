@@ -940,7 +940,7 @@ public class MidiEditArea extends JComponent {
 					Rectangle rect = getRectFromPoint(mousePoint);
 					g.drawRect(rect.x, rect.y, rect.width, rect.height);
 				}
-				if (highlightedNote != null && highlightedDragLocation != null) {
+				if (dragX != null && highlightedNote != null && highlightedDragLocation != null) {
 					int drawX = bottomLeft.x
 							+ (int) (quarterNoteLength * highlightedNote.getStartTime());
 					int width = (int) (quarterNoteLength * highlightedNote.getDuration());
@@ -949,7 +949,35 @@ public class MidiEditArea extends JComponent {
 					}
 					g.drawLine(drawX, 0, drawX, h);
 				} else {
-					g.drawLine(mousePoint.x, 0, mousePoint.x, h);
+					if (MidiEditPopup.snapToGridChoice) {
+						double time = getTimeFromPosition(mousePoint);
+						time = getClosestToTimeGrid(time);
+						int drawX = bottomLeft.x + (int) (quarterNoteLength * time);
+						g.drawLine(drawX, 0, drawX, h);
+					} else {
+						g.drawLine(mousePoint.x, 0, mousePoint.x, h);
+					}
+
+				}
+			}
+
+			if (pop.displayDrumHelper.isSelected() && pop.getSec() != null
+					&& pop.getSec().getPartPhraseNotes().size() == 5) {
+				g.setColor(OMNI.alphen(nonHighlightedColor, VibeComposerGUI.isDarkMode ? 40 : 80));
+				List<PhraseNotes> noteNotes = pop.getSec().getPartPhraseNotes().get(4);
+				for (int i = 0; i < noteNotes.size(); i++) {
+					noteNotes.get(i).remakeNoteStartTimes();
+					for (int j = 0; j < noteNotes.get(i).size(); j++) {
+						PhraseNote pn = noteNotes.get(i).get(j);
+						int pitch = pn.getPitch();
+						if (pitch < 0) {
+							continue;
+						}
+						int drawX = bottomLeft.x + (int) (quarterNoteLength * pn.getStartTime());
+						int drawY = bottomLeft.y - (int) (rowHeight * (i + 1));
+						int width = (int) (quarterNoteLength * pn.getDuration());
+						g.fillRect(drawX, drawY - 4, width, 8);
+					}
 				}
 			}
 		}
