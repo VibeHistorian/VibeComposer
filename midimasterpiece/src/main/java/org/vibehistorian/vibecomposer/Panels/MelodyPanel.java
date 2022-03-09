@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiGeneratorUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -88,13 +89,13 @@ public class MelodyPanel extends InstPanel {
 		noteTargets.setMargin(new Insets(0, 0, 0, 0));
 		noteTargets.setTextGenerator(e -> {
 			return StringUtils.join(
-					MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
+					MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
 							VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
 							VibeComposerGUI.melodyTargetNoteVariation.getInt(), null),
 					",");
 		});
 		noteTargets.setRandGenerator(e -> {
-			return MidiGenerator.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
+			return MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts, new Random().nextInt(),
 					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
 					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null);
 		});
