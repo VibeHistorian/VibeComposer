@@ -124,6 +124,7 @@ import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.SoftBevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -1018,7 +1019,7 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel = new JPanel();
 		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
 
-		mainButtonsPanel.add(makeButton("Extra", e -> openExtraSettingsPopup()));
+		mainButtonsPanel.add(makeButton("Settings", e -> openExtraSettingsPopup()));
 
 
 		// ---- MESSAGE PANEL ----
@@ -1135,7 +1136,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void initExtraSettings() {
 		JPanel arrangementExtraSettingsPanel = new JPanel();
-
+		arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
 				true);
 		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset customized panels On Compose",
@@ -1150,6 +1151,7 @@ public class VibeComposerGUI extends JFrame
 		//arrangementExtraSettingsPanel.add(bt);
 
 		JPanel humanizationPanel = new JPanel();
+		humanizationPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 
 		// / 10000
 		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
@@ -1176,6 +1178,7 @@ public class VibeComposerGUI extends JFrame
 		humanizationPanel.add(sidechainPatternsOnCompose);
 
 		JPanel scalePanel = new JPanel();
+		scalePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		scalePanel.add(customMidiForceScale);
 		scalePanel.add(transposedNotesForceScale);
 
@@ -1183,11 +1186,12 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(humanizationPanel);
 		extraSettingsPanel.add(scalePanel);
 
-		//JPanel loopBeatExtraSettingsPanel = new JPanel();
+		//JPanel loopBeatExtraSettingsPanel = new JPanel();arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		//loopBeatExtraSettingsPanel.add(loopBeatCompose);
 		//extraSettingsPanel.add(loopBeatExtraSettingsPanel);
 
 		JPanel allInstsPanel = new JPanel();
+		allInstsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		useAllInsts = new CustomCheckBox("Use All Inst., Except:", false);
 		allInstsPanel.add(useAllInsts);
 		bannedInsts = new JTextField("", 8);
@@ -1198,6 +1202,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		JPanel pauseBehaviorPanel = new JPanel();
+		pauseBehaviorPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		pauseBehaviorLabel = new JLabel("Start From Pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>(false);
 		startFromBar = new CustomCheckBox("Start From Bar", true);
@@ -1225,6 +1230,7 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorPanel.add(moveStartToCustomizedSection);
 
 		JPanel customDrumMappingPanel = new JPanel();
+		customDrumMappingPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
 		drumCustomMappingNumbers = new JTextField(
 				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
@@ -1250,6 +1256,7 @@ public class VibeComposerGUI extends JFrame
 		keyChangeTypeSelection.addItemListener(this);
 
 		JPanel chordChoicePanel = new JPanel();
+		chordChoicePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
 		useChordFormula = new CustomCheckBox("Chord Formula", true);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
@@ -1268,6 +1275,7 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(chordChoicePanel);
 
 		JPanel bpmLowHighPanel = new JPanel();
+		bpmLowHighPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 
 		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
 		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 50, 20, 249);
@@ -1307,12 +1315,14 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		JPanel soundbankPanel = new JPanel();
+		soundbankPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		JLabel soundbankLabel = new JLabel("Soundbank name:");
 		soundbankPanel.add(soundbankLabel);
 		soundbankPanel.add(soundbankFilename);
 		extraSettingsPanel.add(soundbankPanel);
 
 		JPanel displayStylePanel = new JPanel();
+		displayStylePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		displayVeloRectValues = new CustomCheckBox("Display Bar Values", true);
 		knobControlByDragging = new CustomCheckBox("Knob Up-Down Control", false);
 		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern (-Perf)", true);
@@ -1353,6 +1363,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		JPanel panelGenerationSettingsPanel = new JPanel();
+		panelGenerationSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		bottomUpReverseDrumPanels = new CustomCheckBox("Bottom-Top Drum Display", false);
 		bottomUpReverseDrumPanels.addChangeListener(new ChangeListener() {
 
