@@ -236,6 +236,16 @@ public class MidiEditArea extends JComponent {
 			playNote(draggedNote);
 
 			dragMode.add(DM.VELOCITY);
+		} else if (pop.displayDrumHelper.isSelected() && pop.getSec() != null
+				&& pop.getSec().getPartPhraseNotes().size() == 5) {
+			int row = getPitchFromPosition(evt.getPoint().y) - min;
+			List<PhraseNotes> noteNotes = pop.getSec().getPartPhraseNotes().get(4);
+			if (row >= 0 && row < noteNotes.size()) {
+				pop.part = 4;
+				pop.partOrder = row;
+				pop.setup(pop.getSec());
+			}
+
 		}
 
 	}
