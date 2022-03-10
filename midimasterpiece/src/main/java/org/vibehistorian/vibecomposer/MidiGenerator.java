@@ -422,8 +422,8 @@ public class MidiGenerator implements JMC {
 					}
 					blockDurationsMap.put(blockOffset, durations);
 				}
-				/*LG.d("Overall Block Durations: " + StringUtils.join(durations, ",")
-						+ ", Doubled rhythm: " + sameRhythmTwice);*/
+				LG.d("Overall Block Durations: " + StringUtils.join(durations, ",")
+						+ ", Doubled rhythm: " + sameRhythmTwice);
 				int chord1 = MidiGeneratorUtils.getStartingNote(stretchedChords,
 						blockChordNoteChoices, chordIndex, BLOCK_TARGET_MODE);
 				int chord2 = MidiGeneratorUtils.getStartingNote(stretchedChords,
@@ -446,7 +446,7 @@ public class MidiGenerator implements JMC {
 										remainingDirChanges);
 				remainingDirChanges -= blockChangesPair.getRight();
 				List<Integer> blockChanges = blockChangesPair.getLeft();
-				LG.n("Block changes: " + blockChanges);
+				LG.d("Block changes: " + blockChanges);
 				int startingNote = chord1 % 7;
 
 				List<Integer> forcedLengths = (existingPattern != null
@@ -710,13 +710,13 @@ public class MidiGenerator implements JMC {
 					for (int j = 0; j < blockDurations.size(); j++) {
 						blockDurations.set(j, arpyDuration);
 					}
-					/*LG.d("Arpy surprise for block#: " + blockNotes.size()
-							+ ", duration: " + durations.get(i));*/
+					LG.d("Arpy surprise for block#: " + blockNotes.size() + ", duration: "
+							+ durations.get(blockIndex));
 				}
 
 			}
 
-			//LG.d(StringUtils.join(blockDurations, ","));
+			LG.d("Block durations" + StringUtils.join(blockDurations, ","));
 			prevBlockType = blockType;
 			//LG.d("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);

@@ -179,7 +179,9 @@ public class MidiEditArea extends JComponent {
 				reset();
 				if (SwingUtilities.isLeftMouseButton(evt)
 						&& MidiEditPopup.regenerateInPlaceChoice) {
-					values.setCustom(false);
+					if (pop.applyToMainBtn.isSelected()) {
+						values.setCustom(false);
+					}
 					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
 				}
 			}
@@ -243,6 +245,8 @@ public class MidiEditArea extends JComponent {
 			if (row >= 0 && row < noteNotes.size()) {
 				pop.part = 4;
 				pop.partOrder = row;
+				pop.applyToMainBtn.setSelectedRaw(
+						VibeComposerGUI.getInstList(4).get(row).getCustomMidiToggle());
 				pop.setup(pop.getSec());
 			}
 
@@ -856,6 +860,7 @@ public class MidiEditArea extends JComponent {
 			// draw actual values
 
 			int ovalWidth = usableHeight / 40;
+			boolean drawDragPosition = draggingAny(DM.NOTE_START, DM.POSITION, DM.DURATION);
 			for (int i = 0; i < numValues; i++) {
 				PhraseNote pn = values.get(i);
 				int pitch = pn.getPitch();
@@ -896,10 +901,9 @@ public class MidiEditArea extends JComponent {
 				}
 
 				g.fillRect(drawX, drawY - 4, width, 8);
-
 				if (highlightedNote != null && pn == highlightedNote
 						&& highlightedDragLocation != null) {
-					boolean drawDragPosition = draggingAny(DM.NOTE_START, DM.POSITION, DM.DURATION);
+
 					switch (highlightedDragLocation) {
 					case 0:
 						g.fillRect(drawX - noteDragMarginX, drawY - 5, noteDragMarginX * 2, 10);
@@ -915,26 +919,21 @@ public class MidiEditArea extends JComponent {
 					}
 
 					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
-
-					switch (highlightedDragLocation) {
-					case 0:
-						if (drawDragPosition) {
+					if (drawDragPosition) {
+						switch (highlightedDragLocation) {
+						case 0:
 							g.drawString(dblDraw3(pn.getStartTime()), drawX - 40, drawY + 15);
-						}
-						break;
-					case 1:
-						if (drawDragPosition) {
+							break;
+						case 1:
 							g.drawString(dblDraw3(pn.getStartTime()), drawX - 20, drawY + 15);
-						}
-						break;
-					case 2:
-						if (drawDragPosition) {
+							break;
+						case 2:
 							g.drawString(dblDraw3(pn.getStartTime() + pn.getDuration()),
 									drawX + width + 20, drawY + 15);
+							break;
 						}
-
-						break;
 					}
+
 				}
 
 				if (draggingAny(DM.VELOCITY_SHAPE)) {
@@ -950,6 +949,7 @@ public class MidiEditArea extends JComponent {
 					Rectangle rect = getRectFromPoint(mousePoint);
 					g.drawRect(rect.x, rect.y, rect.width, rect.height);
 				}
+
 				if (dragX != null && highlightedNote != null && highlightedDragLocation != null) {
 					int drawX = bottomLeft.x
 							+ (int) (quarterNoteLength * highlightedNote.getStartTime());
@@ -959,13 +959,13 @@ public class MidiEditArea extends JComponent {
 					}
 					g.drawLine(drawX, 0, drawX, h);
 				} else {
-					if (MidiEditPopup.snapToGridChoice) {
-						double time = getTimeFromPosition(mousePoint);
-						time = getClosestToTimeGrid(time);
-						int drawX = bottomLeft.x + (int) (quarterNoteLength * time);
-						g.drawLine(drawX, 0, drawX, h);
-					} else {
-						g.drawLine(mousePoint.x, 0, mousePoint.x, h);
+					double time = getTimeFromPosition(mousePoint);
+					time = getClosestToTimeGrid(time);
+					int drawX = bottomLeft.x + (int) (quarterNoteLength * time);
+					g.drawLine(drawX, 0, drawX, h);
+
+					if (!drawDragPosition) {
+						g.drawString(dblDraw3(time), drawX, mousePoint.y);
 					}
 
 				}

@@ -274,9 +274,7 @@ public class MidiEditPopup extends CloseablePopup {
 		applyToMainBtn = new CheckButton("Apply to Global",
 				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
 		applyToMainBtn.setFunc(e -> {
-			if (applyToMainBtn.isSelected()) {
-				mvea.getValues().setCustom(false);
-			}
+			mvea.getValues().setCustom(!applyToMainBtn.isSelected());
 			apply();
 		});
 		buttonPanel2.add(applyToMainBtn);
