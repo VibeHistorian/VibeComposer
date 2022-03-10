@@ -830,10 +830,26 @@ public class VibeComposerGUI extends JFrame
 				@Override
 				public void mousePressed(MouseEvent e) {
 					int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
-					if (SwingUtilities.isRightMouseButton(e) && indx < 5 && indx >= 0) {
-						LG.i(("RMB pressed in instrument tab pane: " + indx));
-
-						setAddInst(indx, !addInst[indx].isSelected());
+					if (indx >= 0 && indx < 5) {
+						if (SwingUtilities.isRightMouseButton(e)) {
+							LG.i(("RMB pressed in instrument tab pane: " + indx));
+							setAddInst(indx, !addInst[indx].isSelected());
+						} else if (SwingUtilities.isMiddleMouseButton(e)) {
+							LG.i(("MMB pressed in instrument tab pane: " + indx));
+							boolean hasAny = false;
+							for (int i = 0; i < 5; i++) {
+								if (i != indx && addInst[i].isSelected()) {
+									hasAny = true;
+									break;
+								}
+							}
+							for (int i = 0; i < 5; i++) {
+								if (i != indx) {
+									setAddInst(i, !hasAny);
+								}
+							}
+							setAddInst(indx, true);
+						}
 					} else if (indx == 6) {
 						actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
 						scrollableArrangementActualTable.repaint();

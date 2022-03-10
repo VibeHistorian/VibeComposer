@@ -183,17 +183,6 @@ public class VisualPatternPanel extends JPanel {
 					int mouseButt = e.getButton();
 					if (mouseButt == 1) {
 						mouseButton = -1;
-						if (isEnabled() && VibeComposerGUI.canRegenerateOnChange()) {
-							Timer tmr = new Timer(100, new ActionListener() {
-
-								@Override
-								public void actionPerformed(ActionEvent e) {
-									VibeComposerGUI.vibeComposerGUI.composeMidi(true);
-								}
-							});
-							tmr.setRepeats(false);
-							tmr.start();
-						}
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
 						boolean change = false;
@@ -218,9 +207,17 @@ public class VisualPatternPanel extends JPanel {
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
 
-					if (e.getButton() > 1 && isEnabled()
+					if (e.getButton() >= 1 && isEnabled()
 							&& VibeComposerGUI.canRegenerateOnChange()) {
-						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+						Timer tmr = new Timer(100, new ActionListener() {
+
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+							}
+						});
+						tmr.setRepeats(false);
+						tmr.start();
 					}
 
 					/*for (DrumPanel dp : VibeComposerGUI.drumPanels) {
