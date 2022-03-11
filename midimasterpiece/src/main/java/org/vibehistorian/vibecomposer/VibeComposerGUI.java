@@ -6074,10 +6074,16 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			sequencer.start();  // start the playback
-
+			double divisor = 1;
+			if (beatDurationMultiplier.getSelectedIndex() == 0) {
+				divisor = 0.5;
+			} else if (beatDurationMultiplier.getSelectedIndex() == 2) {
+				divisor = 2;
+			}
 			loopBeatCount.getKnob()
 					.setMax(!MidiGenerator.userChordsDurations.isEmpty()
-							? (int) Math.ceil(OMNI.sumListDouble(MidiGenerator.userChordsDurations))
+							? (int) Math.ceil(
+									OMNI.sumListDouble(MidiGenerator.userChordsDurations) / divisor)
 							: MidiGenerator.chordInts.size() * 4);
 			startMidiCcThread();
 			recalculateTabPaneCounts();
