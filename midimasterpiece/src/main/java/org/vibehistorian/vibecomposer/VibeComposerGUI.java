@@ -2516,9 +2516,7 @@ public class VibeComposerGUI extends JFrame
 			//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
 			openVariationPopup(secOrder);
-			refreshActual = true;
-			resetArrSectionSelection = false;
-			resetArrSectionPanel = false;
+			return;
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementApply")) {
 			String selItem = arrSection.getVal();
@@ -3728,9 +3726,13 @@ public class VibeComposerGUI extends JFrame
 
 				}
 			};
-			butt.addActionListener(this);
-			butt.setActionCommand("ArrangementOpenVariation," + (i + 1));
-			//makeButton(, );
+			butt.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					openVariationPopup(fI + 1);
+
+				}
+			});
 
 			int width = Math.max(TABLE_COLUMN_MIN_WIDTH,
 					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count);
