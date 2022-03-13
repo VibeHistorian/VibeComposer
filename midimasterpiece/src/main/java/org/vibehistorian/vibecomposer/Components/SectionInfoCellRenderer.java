@@ -73,7 +73,7 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 					customChords = "";
 				} else {
 					float newSize = Float.valueOf(fontSize * Math.min(width, 100)
-							/ SwingUtils.getDrawStringWidth(customChords));
+							/ Math.max(60, SwingUtils.getDrawStringWidth(customChords)));
 					g.setFont(font.deriveFont(newSize < fontSizeMin ? fontSizeMin : newSize));
 					g.drawString("[" + customChords + "]", 12, height / 4);
 				}
@@ -82,7 +82,7 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 					customDurations = "";
 				} else {
 					float newSize = Float.valueOf(fontSize * Math.min(width, 100)
-							/ SwingUtils.getDrawStringWidth(customDurations));
+							/ Math.max(60, SwingUtils.getDrawStringWidth(customDurations)));
 					g.setFont(font.deriveFont(newSize < fontSizeMin ? fontSizeMin : newSize));
 					g.drawString("(" + customDurations + ")", 12, height * 3 / 5);
 				}

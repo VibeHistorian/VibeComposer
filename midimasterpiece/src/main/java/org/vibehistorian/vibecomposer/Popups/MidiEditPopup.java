@@ -103,9 +103,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
+		setupIdentifiers(secPartNum, secPartOrder);
 		sec = section;
-		part = secPartNum;
-		partOrder = secPartOrder;
 		applyOnClose = true;
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
@@ -392,6 +391,13 @@ public class MidiEditPopup extends CloseablePopup {
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public void setupIdentifiers(int secPartNum, int secPartOrder) {
+		part = secPartNum;
+		partOrder = secPartOrder;
+		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + VibeComposerGUI.instNames[part]
+				+ ", Order: " + VibeComposerGUI.getInstList(part).get(partOrder).getPanelOrder());
 	}
 
 	private File buildMidiFileFromNotes() {

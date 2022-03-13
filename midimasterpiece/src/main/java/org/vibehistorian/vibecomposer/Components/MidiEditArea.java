@@ -243,8 +243,7 @@ public class MidiEditArea extends JComponent {
 			int row = getPitchFromPosition(evt.getPoint().y) - min;
 			List<PhraseNotes> noteNotes = pop.getSec().getPartPhraseNotes().get(4);
 			if (row >= 0 && row < noteNotes.size()) {
-				pop.part = 4;
-				pop.partOrder = row;
+				pop.setupIdentifiers(4, row);
 				pop.applyToMainBtn.setSelectedRaw(
 						VibeComposerGUI.getInstList(4).get(row).getCustomMidiToggle());
 				pop.setup(pop.getSec());
