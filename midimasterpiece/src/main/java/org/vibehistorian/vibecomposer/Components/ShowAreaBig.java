@@ -115,9 +115,11 @@ public class ShowAreaBig extends JComponent {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				if (!SwingUtilities.isLeftMouseButton(evt)) {
+				if (!SwingUtilities.isLeftMouseButton(evt)
+						&& !SwingUtilities.isMiddleMouseButton(evt)) {
 					return;
 				}
+				boolean popupOpen = SwingUtilities.isLeftMouseButton(evt);
 				LG.d("Checking note overlap for: " + evt.getPoint());
 
 				Enumeration<?> enum1 = sp.score.getPartList().elements();
@@ -202,16 +204,27 @@ public class ShowAreaBig extends JComponent {
 								boolean pointInRect = OMNI.pointInRect(evt.getPoint(),
 										actualStartingX, y - actualHeight, x, actualHeight * 2);
 								if (pointInRect) {
-									LG.i("Opening popup for section#: " + phrase.secOrder);
-									VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
-											VibeComposerGUI.actualArrangement.getSections()
-													.get(phrase.secOrder),
-											phrase.part, phrase.partOrder);
-									VibeComposerGUI.currentMidiEditorPopup
-											.setSec(VibeComposerGUI.actualArrangement.getSections()
-													.get(phrase.secOrder));
-									VibeComposerGUI.currentMidiEditorSectionIndex = phrase.secOrder;
-									return;
+									if (popupOpen) {
+										LG.i("Opening popup for section#: " + phrase.secOrder);
+										VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
+												VibeComposerGUI.actualArrangement.getSections()
+														.get(phrase.secOrder),
+												phrase.part, phrase.partOrder);
+										VibeComposerGUI.currentMidiEditorPopup
+												.setSec(VibeComposerGUI.actualArrangement
+														.getSections().get(phrase.secOrder));
+										VibeComposerGUI.currentMidiEditorSectionIndex = phrase.secOrder;
+										return;
+									} else {
+										if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
+											VibeComposerGUI.globalSoloMuter.toggleSolo(true);
+										}
+										VibeComposerGUI.getInstList(phrase.part)
+												.get(phrase.partOrder).getSoloMuter()
+												.toggleSolo(true);
+										return;
+									}
+
 								}
 							}
 							oldXBeat += aNote.getRhythmValue();
