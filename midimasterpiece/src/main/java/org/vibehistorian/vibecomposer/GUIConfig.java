@@ -674,6 +674,22 @@ public class GUIConfig {
 		this.melodyNotes = melodyNotes;
 	}
 
+	public boolean isPartEnabled(int partNum) {
+		switch (partNum) {
+		case 0:
+			return melodyEnable;
+		case 1:
+			return bassEnable;
+		case 2:
+			return chordsEnable;
+		case 3:
+			return arpsEnable;
+		case 4:
+			return drumsEnable;
+		}
+		throw new IllegalArgumentException("Invalid partNum");
+	}
+
 	public boolean isMelodyEnable() {
 		return melodyEnable;
 	}

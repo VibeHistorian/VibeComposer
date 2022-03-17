@@ -152,6 +152,7 @@ import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox2;
@@ -557,6 +558,8 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<Double> swingUnitMultiplier;
 	public static JCheckBox customMidiForceScale;
 	public static JCheckBox transposedNotesForceScale;
+	public static JCheckBox padGeneratedMidi;
+	public static RandomIntegerListButton padGeneratedMidiValues;
 	public static JCheckBox randomizeTimingsOnCompose;
 	public static JCheckBox sidechainPatternsOnCompose;
 	JCheckBox arrangementResetCustomPanelsOnCompose;
@@ -1178,9 +1181,6 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
 		swingUnitMultiplier.setSelectedIndex(0);
 
-		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
-		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
-
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
 		sidechainPatternsOnCompose = makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
@@ -1195,12 +1195,26 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel scalePanel = new JPanel();
 		scalePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
+		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
 		scalePanel.add(customMidiForceScale);
 		scalePanel.add(transposedNotesForceScale);
+
+		JPanel scoreMidiPanel = new JPanel();
+		scoreMidiPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		padGeneratedMidi = new CustomCheckBox("Pad Generated .mid File (# of tracks):", true);
+		padGeneratedMidiValues = new RandomIntegerListButton("3,2,5,5,6", null);
+		padGeneratedMidiValues.min = 1;
+		padGeneratedMidiValues.max = 12;
+		padGeneratedMidiValues.editableCount = false;
+
+		scoreMidiPanel.add(padGeneratedMidi);
+		scoreMidiPanel.add(padGeneratedMidiValues);
 
 		extraSettingsPanel.add(arrangementExtraSettingsPanel);
 		extraSettingsPanel.add(humanizationPanel);
 		extraSettingsPanel.add(scalePanel);
+		extraSettingsPanel.add(scoreMidiPanel);
 
 		//JPanel loopBeatExtraSettingsPanel = new JPanel();arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		//loopBeatExtraSettingsPanel.add(loopBeatCompose);
@@ -6169,6 +6183,9 @@ public class VibeComposerGUI extends JFrame
 			countReducer += 2;
 		}
 		int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
+		if (padGeneratedMidi.isSelected()) {
+			baseCount += calculatePaddedPartsCount(onlyIncluded);
+		}
 
 		sequencer.setTrackSolo(0, false);
 		sequencer.setTrackMute(0, false);
@@ -6178,6 +6195,21 @@ public class VibeComposerGUI extends JFrame
 			sequencer.setTrackSolo(i, false);
 			sequencer.setTrackMute(i, false);
 		}
+	}
+
+	private int calculatePaddedPartsCount(boolean onlyIncluded) {
+		int count = 0;
+		List<Integer> paddedValues = padGeneratedMidiValues.getValues();
+		for (int i = 0; i < 5; i++) {
+			if (isEnabled(i)) {
+				List<? extends InstPanel> panels = getInstList(i);
+				long partCount = panels.stream().filter(e -> !e.getMuteInst()).count();
+				if (paddedValues.get(i) > partCount) {
+					count += (paddedValues.get(i) - partCount);
+				}
+			}
+		}
+		return count;
 	}
 
 	private void reapplySolosMutes() {

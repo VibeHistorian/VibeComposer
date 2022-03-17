@@ -146,6 +146,9 @@ public class ShowAreaBig extends JComponent {
 
 				while (enum1.hasMoreElements()) {
 					PartExt part = (PartExt) enum1.nextElement();
+					if (part.isFillerPart()) {
+						continue;
+					}
 					if (!soloMuterHighlightedTracks.isEmpty()
 							&& !soloMuterHighlightedTracks.contains(part.getTrackNumber())) {
 						continue;
@@ -411,6 +414,9 @@ public class ShowAreaBig extends JComponent {
 		int oldX = 0;
 		while (enum1.hasMoreElements()) {
 			PartExt part = (PartExt) enum1.nextElement();
+			if (part.isFillerPart()) {
+				continue;
+			}
 
 			int noteColorIndex = getIndexForPartName(part.getTitle());
 			//LG.d("Index: " + noteColorIndex);

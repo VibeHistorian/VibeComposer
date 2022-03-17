@@ -27,7 +27,7 @@ public class VisualArrayPopup extends CloseablePopup {
 	JTextField text = null;
 	Consumer<Object> closeFunc = null;
 
-	public VisualArrayPopup(int min, int max, List<Integer> values) {
+	public VisualArrayPopup(int min, int max, List<Integer> values, boolean addButtons) {
 		super("Edit Multiple Values (Graphical)", 13, new Point(-300, 0));
 		mvea = new MultiValueEditArea(min, max, values);
 		mvea.setPop(this);
@@ -40,87 +40,90 @@ public class VisualArrayPopup extends CloseablePopup {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(500, 50));
-		buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
-			if (mvea.getValues().size() > 31) {
-				return;
-			}
-			mvea.getValues().add(0);
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
-			if (mvea.getValues().size() <= 1) {
-				return;
-			}
-			mvea.getValues().remove(mvea.getValues().size() - 1);
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
-			int size = mvea.getValues().size();
-			mvea.getValues().clear();
-			for (int i = 0; i < size; i++) {
+		if (addButtons) {
+			buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
+				if (mvea.getValues().size() > 31) {
+					return;
+				}
 				mvea.getValues().add(0);
-			}
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
-			if (mvea.getValues().size() > 16) {
-				return;
-			}
-			mvea.getValues().addAll(mvea.getValues());
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("Dd", e -> {
-			if (mvea.getValues().size() > 16) {
-				return;
-			}
-			List<Integer> ddValues = new ArrayList<>();
-			List<Integer> oldValues = mvea.getValues();
-			oldValues.forEach(f -> {
-				ddValues.add(f);
-				ddValues.add(f);
-			});
-			oldValues.clear();
-			oldValues.addAll(ddValues);
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("1/2", e -> {
-			if (mvea.getValues().size() <= 1) {
-				return;
-			}
-			int toRemain = (mvea.getValues().size() + 1) / 2;
-			for (int i = mvea.getValues().size() - 1; i >= toRemain; i--) {
-				mvea.getValues().remove(i);
-			}
-
-			repaintMvea();
-		}));
-		buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
-			int size = mvea.getValues().size();
-			boolean successRandGenerator = false;
-			if (butt != null && butt.getRandGenerator() != null) {
-				List<Integer> randValues = null;
-				try {
-					randValues = butt.getRandGenerator().apply(new Object());
-				} catch (Exception exc) {
-					LG.d("Random generator is not ready!");
+				repaintMvea();
+			}));
+			buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
+				if (mvea.getValues().size() <= 1) {
+					return;
 				}
-				if (randValues != null && !randValues.isEmpty()) {
-					mvea.getValues().clear();
-					mvea.getValues().addAll(randValues);
-					successRandGenerator = true;
-				}
-
-			}
-			if (!successRandGenerator) {
-				Random rnd = new Random();
+				mvea.getValues().remove(mvea.getValues().size() - 1);
+				repaintMvea();
+			}));
+			buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
+				int size = mvea.getValues().size();
 				mvea.getValues().clear();
 				for (int i = 0; i < size; i++) {
-					mvea.getValues().add(rnd.nextInt(max - min + 1) + min);
+					mvea.getValues().add(0);
 				}
-			}
+				repaintMvea();
+			}));
+			buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
+				if (mvea.getValues().size() > 16) {
+					return;
+				}
+				mvea.getValues().addAll(mvea.getValues());
+				repaintMvea();
+			}));
+			buttonPanel.add(VibeComposerGUI.makeButton("Dd", e -> {
+				if (mvea.getValues().size() > 16) {
+					return;
+				}
+				List<Integer> ddValues = new ArrayList<>();
+				List<Integer> oldValues = mvea.getValues();
+				oldValues.forEach(f -> {
+					ddValues.add(f);
+					ddValues.add(f);
+				});
+				oldValues.clear();
+				oldValues.addAll(ddValues);
+				repaintMvea();
+			}));
+			buttonPanel.add(VibeComposerGUI.makeButton("1/2", e -> {
+				if (mvea.getValues().size() <= 1) {
+					return;
+				}
+				int toRemain = (mvea.getValues().size() + 1) / 2;
+				for (int i = mvea.getValues().size() - 1; i >= toRemain; i--) {
+					mvea.getValues().remove(i);
+				}
 
-			repaintMvea();
-		}));
+				repaintMvea();
+			}));
+			buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
+				int size = mvea.getValues().size();
+				boolean successRandGenerator = false;
+				if (butt != null && butt.getRandGenerator() != null) {
+					List<Integer> randValues = null;
+					try {
+						randValues = butt.getRandGenerator().apply(new Object());
+					} catch (Exception exc) {
+						LG.d("Random generator is not ready!");
+					}
+					if (randValues != null && !randValues.isEmpty()) {
+						mvea.getValues().clear();
+						mvea.getValues().addAll(randValues);
+						successRandGenerator = true;
+					}
+
+				}
+				if (!successRandGenerator) {
+					Random rnd = new Random();
+					mvea.getValues().clear();
+					for (int i = 0; i < size; i++) {
+						mvea.getValues().add(rnd.nextInt(max - min + 1) + min);
+					}
+				}
+
+				repaintMvea();
+			}));
+		}
+
 
 		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
 
@@ -129,29 +132,32 @@ public class VisualArrayPopup extends CloseablePopup {
 		mveaPanel.setMinimumSize(new Dimension(500, 500));
 		mveaPanel.add(mvea);
 
-		JPanel textPanel = new JPanel();
-		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
 		text = new JTextField(StringUtils.join(values, ","), 25);
-		textPanel.add(text);
-		textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
-			if (StringUtils.isNotEmpty(text.getText())) {
-				try {
-					String[] textSplit = text.getText().split(",");
-					List<Integer> nums = new ArrayList<>();
-					for (String s : textSplit) {
-						nums.add(Integer.valueOf(s));
-					}
-					mvea.getValues().clear();
-					mvea.getValues().addAll(nums);
-					repaintMvea();
-				} catch (Exception exc) {
-					LG.d("Incorrect text format, cannot convert to list of numbers.");
-				}
-			}
-		}));
-
 		allPanels.add(buttonPanel);
-		allPanels.add(textPanel);
+
+		if (addButtons) {
+			JPanel textPanel = new JPanel();
+			textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
+			textPanel.add(text);
+			textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
+				if (StringUtils.isNotEmpty(text.getText())) {
+					try {
+						String[] textSplit = text.getText().split(",");
+						List<Integer> nums = new ArrayList<>();
+						for (String s : textSplit) {
+							nums.add(Integer.valueOf(s));
+						}
+						mvea.getValues().clear();
+						mvea.getValues().addAll(nums);
+						repaintMvea();
+					} catch (Exception exc) {
+						LG.d("Incorrect text format, cannot convert to list of numbers.");
+					}
+				}
+			}));
+			allPanels.add(textPanel);
+		}
+
 		allPanels.add(mveaPanel);
 		frame.add(allPanels);
 		frame.pack();

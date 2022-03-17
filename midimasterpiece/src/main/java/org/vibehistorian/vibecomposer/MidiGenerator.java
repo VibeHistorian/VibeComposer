@@ -2652,6 +2652,10 @@ public class MidiGenerator implements JMC {
 		LG.d("Added sections to parts..");
 		int trackCounter = 1;
 
+		List<Integer> partPadding = VibeComposerGUI.padGeneratedMidi.isSelected()
+				? VibeComposerGUI.padGeneratedMidiValues.getValues()
+				: new ArrayList<>();
+		int lastPartTrackCount = 1;
 		for (int i = 0; i < melodyParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(i).getOrder(),
 					VibeComposerGUI.melodyPanels);
@@ -2674,21 +2678,8 @@ public class MidiGenerator implements JMC {
 				ip.setSequenceTrack(-1);
 			}
 		}
-
-		for (int i = 0; i < arpParts.size(); i++) {
-
-			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
-					VibeComposerGUI.arpPanels);
-			if (!gc.getArpParts().get(i).isMuted() && gc.isArpsEnable()) {
-				score.add(arpParts.get(i));
-				((PartExt) arpParts.get(i)).setTrackNumber(trackCounter);
-				ip.setSequenceTrack(trackCounter++);
-				//if (VibeComposerGUI.apSm)
-			} else {
-				ip.setSequenceTrack(-1);
-				((PartExt) arpParts.get(i)).setTrackNumber(-1);
-			}
-		}
+		trackCounter += padScoreParts(score, partPadding, 0, trackCounter - lastPartTrackCount);
+		lastPartTrackCount = trackCounter;
 
 		for (int i = 0; i < bassParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getBassParts().get(i).getOrder(),
@@ -2703,6 +2694,8 @@ public class MidiGenerator implements JMC {
 				((PartExt) arpParts.get(i)).setTrackNumber(-1);
 			}
 		}
+		trackCounter += padScoreParts(score, partPadding, 1, trackCounter - lastPartTrackCount);
+		lastPartTrackCount = trackCounter;
 
 		for (int i = 0; i < chordParts.size(); i++) {
 
@@ -2718,6 +2711,25 @@ public class MidiGenerator implements JMC {
 			}
 
 		}
+		trackCounter += padScoreParts(score, partPadding, 2, trackCounter - lastPartTrackCount);
+		lastPartTrackCount = trackCounter;
+
+		for (int i = 0; i < arpParts.size(); i++) {
+
+			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
+					VibeComposerGUI.arpPanels);
+			if (!gc.getArpParts().get(i).isMuted() && gc.isArpsEnable()) {
+				score.add(arpParts.get(i));
+				((PartExt) arpParts.get(i)).setTrackNumber(trackCounter);
+				ip.setSequenceTrack(trackCounter++);
+				//if (VibeComposerGUI.apSm)
+			} else {
+				ip.setSequenceTrack(-1);
+				((PartExt) arpParts.get(i)).setTrackNumber(-1);
+			}
+		}
+		trackCounter += padScoreParts(score, partPadding, 3, trackCounter - lastPartTrackCount);
+		lastPartTrackCount = trackCounter;
 		/*if (gc.getScaleMode() != ScaleMode.IONIAN) {
 			for (Part p : score.getPartArray()) {
 				for (Phrase phr : p.getPhraseArray()) {
@@ -2757,6 +2769,10 @@ public class MidiGenerator implements JMC {
 			if (!COLLAPSE_DRUM_TRACKS) {
 				trackCounter++;
 			}
+		}
+		if (!COLLAPSE_DRUM_TRACKS) {
+			trackCounter += padScoreParts(score, partPadding, 4, trackCounter - lastPartTrackCount);
+			lastPartTrackCount = trackCounter;
 		}
 
 
@@ -2807,6 +2823,19 @@ public class MidiGenerator implements JMC {
 		gc.setActualArrangement(arr);
 		LG.i("MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
 		LG.i("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
+	}
+
+	private int padScoreParts(Score score, List<Integer> partPadding, int part, int trackCount) {
+		if (gc.isPartEnabled(part) && partPadding.size() > 0
+				&& trackCount < partPadding.get(part)) {
+			int tracksToPad = partPadding.get(part) - trackCount;
+			for (int i = 0; i < tracksToPad; i++) {
+				score.add(PartExt.makeFillerPart());
+				LG.i("Padding: " + part + ", #: " + i);
+			}
+			return tracksToPad;
+		}
+		return 0;
 	}
 
 	private List<Integer> calculateSectionVariations(Arrangement arr, int secOrder, Section sec,

@@ -135,6 +135,9 @@ public class JMusicUtilsCustom implements JMC {
 		Enumeration<?> enum1 = score.getPartList().elements();
 		while (enum1.hasMoreElements()) {
 			PartExt part = (PartExt) enum1.nextElement();
+			if (part.isFillerPart()) {
+				continue;
+			}
 			scrCopy.addPart(part.copy());
 		}
 
@@ -236,7 +239,7 @@ public class JMusicUtilsCustom implements JMC {
 		Enumeration aEnum = score.getPartList().elements();
 		while (aEnum.hasMoreElements()) {
 			Track smfTrack = new Track();
-			Part inst = (Part) aEnum.nextElement();
+			PartExt inst = (PartExt) aEnum.nextElement();
 			System.out.print("    Part " + partCount + " '" + inst.getTitle()
 					+ "' to SMF Track on Ch. " + inst.getChannel() + ": ");
 			partCount++;
