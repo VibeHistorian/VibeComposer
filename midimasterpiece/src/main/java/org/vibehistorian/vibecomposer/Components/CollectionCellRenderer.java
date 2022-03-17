@@ -111,7 +111,18 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 							&& sec.getPartPhraseNotes().get(part).get(partOrder).isCustom();
 					boolean isGlobalCustomMidi = VibeComposerGUI.getInstList(part).get(partOrder)
 							.getCustomMidiToggle();
-					Color subcellColor = OMNI.mixColor(icolor, panelC, isCustomMidi ? 0.66
+					Color instCellColor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
+							part > 0 ? 0.55 : 0.7);
+					if (counter > 0) {
+						Color nextColor = part < 4 ? VibeComposerGUI.instColors[part + 1]
+								: Color.red;
+						double percentageMix = counter / (double) Math.max(counter,
+								VibeComposerGUI.getInstList(part).size());
+
+						instCellColor = OMNI.mixColor(instCellColor, nextColor, percentageMix / 3);
+					}
+
+					Color subcellColor = OMNI.mixColor(instCellColor, panelC, isCustomMidi ? 0.66
 							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66);
 
 					// highlight copier/copiee
