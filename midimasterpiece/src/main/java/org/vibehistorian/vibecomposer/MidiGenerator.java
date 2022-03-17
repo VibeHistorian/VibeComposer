@@ -4665,9 +4665,6 @@ public class MidiGenerator implements JMC {
 						}
 
 					}
-					if (pitch != Integer.MIN_VALUE && gc.isDrumCustomMapping()) {
-						pitch = mapDrumPitchByCustomMapping(pitch, true);
-					}
 					boolean exception = exceptionGenerator.nextInt(100) < (ip.getExceptionChance()
 							+ extraExceptionChance + drumFillExceptionChance);
 
@@ -4702,6 +4699,16 @@ public class MidiGenerator implements JMC {
 
 		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
+		}
+		if (gc.isDrumCustomMapping()) {
+			for (Object o : phr.getNoteList()) {
+				Note n = (Note) o;
+				int pitch = n.getPitch();
+				if (pitch >= 0) {
+					pitch = mapDrumPitchByCustomMapping(n.getPitch(), true);
+					n.setPitch(pitch);
+				}
+			}
 		}
 
 		MidiGeneratorUtils.processSectionTransition(sec, phr.getNoteList(),
@@ -5059,7 +5066,7 @@ public class MidiGenerator implements JMC {
 			} else {
 				if (dp.getInstrument() == 42
 						&& uiGenerator1drumPattern.nextInt(100) < OPENHAT_CHANCE) {
-					drumPattern.add(mapDrumPitchByCustomMapping(46, true));
+					drumPattern.add(46);
 				} else {
 					drumPattern.add(dp.getInstrument());
 				}
