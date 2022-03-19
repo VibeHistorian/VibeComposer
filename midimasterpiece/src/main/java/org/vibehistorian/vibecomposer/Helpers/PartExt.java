@@ -30,8 +30,8 @@ public class PartExt extends Part {
 		i = new PartExt(this.getTitle() + " copy", this.getInstrument(), this.getChannel());
 		Enumeration enum1 = this.getPhraseList().elements();
 		while (enum1.hasMoreElements()) {
-			Phrase oldPhrase = (Phrase) enum1.nextElement();
-			i.addPhrase((Phrase) oldPhrase.copy());
+			PhraseExt oldPhrase = (PhraseExt) enum1.nextElement();
+			i.addPhrase((PhraseExt) oldPhrase.copy());
 		}
 
 		i.setTempo(this.getTempo());

@@ -37,6 +37,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -56,7 +57,6 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 
 import jm.music.data.Note;
-import jm.music.data.Phrase;
 
 //--------------
 //second class!!
@@ -79,6 +79,7 @@ public class ShowAreaBig extends JComponent {
 	public static final int noteOffsetXMargin = 10;
 	public static double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
 			MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
+	public static Point mousePoint = null;
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
@@ -111,6 +112,21 @@ public class ShowAreaBig extends JComponent {
 			theColours[i][1] = (float) (Math.random() / maxColours)
 					+ (float) (1.0 / maxColours * i);
 		}*/
+
+		addMouseMotionListener(new MouseMotionListener() {
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				mousePoint = new Point(e.getPoint());
+				repaint();
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -412,6 +428,8 @@ public class ShowAreaBig extends JComponent {
 		int prevColorIndex = -1;
 		int samePrevColorCounter = 0;
 		int oldX = 0;
+		boolean mouseProcessed = mousePoint == null;
+		String noteDescription = null;
 		while (enum1.hasMoreElements()) {
 			PartExt part = (PartExt) enum1.nextElement();
 			if (part.isFillerPart()) {
@@ -443,7 +461,7 @@ public class ShowAreaBig extends JComponent {
 			}
 			Enumeration<?> enum2 = part.getPhraseList().elements();
 			while (enum2.hasMoreElements()) {
-				Phrase phrase = (Phrase) enum2.nextElement();
+				PhraseExt phrase = (PhraseExt) enum2.nextElement();
 
 				if (phrase.getHighestPitch() < 0) {
 					continue;
@@ -498,10 +516,27 @@ public class ShowAreaBig extends JComponent {
 
 						int noteOffsetXOffset = (int) (aNote.getOffset() * beatWidth);
 						int actualStartingX = oldX + noteOffsetXOffset;
-
+						int actualHeight = (noteHeight > 7 ? noteHeight * 7 / 10 : noteHeight)
+								- thinNote;
+						boolean mouseHighlightedNote = false;
+						if (!mouseProcessed && mousePoint != null) {
+							boolean pointInRect = OMNI.pointInRect(mousePoint, actualStartingX,
+									y - actualHeight, x, actualHeight * 2);
+							if (pointInRect) {
+								noteDescription = VibeComposerGUI.instNames[phrase.part] + "#"
+										+ VibeComposerGUI.getInstList(phrase.part)
+												.get(phrase.partOrder).getPanelOrder()
+										+ "|" + MidiUtils.getNoteForPitch(currNote);
+								mouseProcessed = true;
+								mouseHighlightedNote = true;
+							}
+						}
 
 						int boostColor = 0;
-						if (actualStartingX <= highlightX && highlightX <= actualStartingX + x) {
+						if (mouseHighlightedNote) {
+							boostColor = 120;
+						} else if (actualStartingX <= highlightX
+								&& highlightX <= actualStartingX + x) {
 							boostColor = 100;
 							/*LG.d("Boosted color!" + highlightX + ", act: "
 									+ actualStartingX + ", x: " + x);*/
@@ -514,9 +549,6 @@ public class ShowAreaBig extends JComponent {
 						} else {
 							g.setColor(aC);
 						}
-
-						int actualHeight = (noteHeight > 7 ? noteHeight * 7 / 10 : noteHeight)
-								- thinNote;
 
 						// draw note inside
 						if (aNote.getPitchType() == Note.MIDI_PITCH) {
@@ -568,6 +600,11 @@ public class ShowAreaBig extends JComponent {
 					g.drawString(noteString, viewPoint.x, y);
 				}
 			}
+		}
+
+		if (mouseProcessed && noteDescription != null) {
+			g.setColor(new Color(210, 210, 210));
+			g.drawString(noteDescription, mousePoint.x, mousePoint.y);
 		}
 
 	}

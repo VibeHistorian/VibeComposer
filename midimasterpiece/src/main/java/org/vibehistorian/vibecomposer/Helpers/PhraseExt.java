@@ -23,6 +23,13 @@ public class PhraseExt extends Phrase {
 		this.secOrder = secOrder;
 	}
 
+	public PhraseExt(PhraseExt firstPhrase, double startTime) {
+		part = firstPhrase.part;
+		partOrder = firstPhrase.partOrder;
+		secOrder = firstPhrase.secOrder;
+		setStartTime(startTime);
+	}
+
 	@Override
 	public Phrase copy() {
 		Phrase phr = new PhraseExt(part, partOrder, secOrder);

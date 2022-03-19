@@ -45,7 +45,7 @@ public class JMusicUtilsCustom implements JMC {
 			return;
 		// the new phrase has the start time of the earliest one
 		PhraseExt firstPhrase = (PhraseExt) phr[0];
-		Phrase nphr = new Phrase(firstPhrase.getStartTime());
+		Phrase nphr = new PhraseExt(firstPhrase, firstPhrase.getStartTime());
 
 		Note n;
 		boolean finished = false;
