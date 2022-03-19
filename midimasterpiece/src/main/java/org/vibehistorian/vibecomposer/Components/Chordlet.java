@@ -55,7 +55,7 @@ public class Chordlet extends JComponent {
 	}
 
 	private void setupListeners() {
-		// LMB - first letter/sharp change
+		// RMB - first letter/sharp change
 		SwingUtils.addPopupMenu(this, (evt, e) -> {
 			firstLetter = e.substring(0, 1);
 			sharp = e.length() > 1;

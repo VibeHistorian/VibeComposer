@@ -18,20 +18,6 @@ public class InstComboBox extends ScrollComboBox<String> {
 		return instPool;
 	}
 
-	@Override
-	public String getToolTipText() {
-		if (super.getToolTipText() == null) {
-			return null;
-		}
-		if (instPool == InstUtils.POOL.DRUM) {
-			int pitch = MidiGenerator.mapDrumPitchByCustomMapping(getInstrument(), false);
-			putClientProperty(TOOL_TIP_TEXT_KEY,
-					(pitch + " / " + MidiUtils.getNoteForPitch(pitch)));
-		}
-
-		return super.getToolTipText();
-	}
-
 	public void setInstPool(InstUtils.POOL instPool) {
 		this.instPool = instPool;
 	}
@@ -45,6 +31,18 @@ public class InstComboBox extends ScrollComboBox<String> {
 				this.addItem(c);
 			}
 		}
+		box().setTooltipFunc(e -> {
+			if (box().superToolTipText() == null) {
+				return null;
+			}
+			if (instPool == InstUtils.POOL.DRUM) {
+				int pitch = MidiGenerator.mapDrumPitchByCustomMapping(getInstrument(), false);
+				box().putClientProperty(TOOL_TIP_TEXT_KEY,
+						(pitch + " / " + MidiUtils.pitchToString(pitch)));
+			}
+
+			return box().superToolTipText();
+		});
 	}
 
 	public void changeInstPoolMapping(String[] pool) {

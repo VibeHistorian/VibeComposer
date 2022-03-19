@@ -736,7 +736,8 @@ public class MidiEditArea extends JComponent {
 			// draw line marks
 			for (int i = 0; i < 1 + (max - min); i++) {
 				int drawnInt = min + i + MidiGenerator.DEFAULT_INSTRUMENT_TRANSPOSE[partNum];
-				String drawnValue = "" + (drawnInt) + " | " + MidiUtils.pitchToString(drawnInt);
+				String drawnValue = "" + (drawnInt) + " | "
+						+ MidiUtils.pitchOrDrumToString(drawnInt, pop.part, true);
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
 				int drawValueX = bottomLeft.x / 2 - (numWidth * valueLength) / 2;

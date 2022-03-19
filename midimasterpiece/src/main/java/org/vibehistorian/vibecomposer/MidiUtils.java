@@ -1346,23 +1346,6 @@ public class MidiUtils {
 		return returnChord;
 	}
 
-	public static String getNoteForPitch(int pitch) {
-		if (pitch < 0) {
-			return "";
-		}
-		int pitchNormalized = pitch % 12;
-		List<Integer> majorLetterPitches = MAJ_SCALE;
-		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
-		if (chordLetter < 0) {
-			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);
-			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter) + "#";
-			return realLetter + pitch / 12;
-		} else {
-			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter);
-			return realLetter + pitch / 12;
-		}
-	}
-
 	public static List<String> respiceChords(String chordsString, GUIConfig gc) {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
@@ -1488,7 +1471,30 @@ public class MidiUtils {
 	}
 
 	public static String pitchToString(int pitch) {
+		if (pitch < 0) {
+			return "";
+		}
 		return MidiUtils.SEMITONE_LETTERS.get((pitch + 1200) % 12) + ((pitch / 12) - 1);
+	}
+
+	public static String pitchOrDrumToString(int pitch, int part, boolean forceGmNames) {
+		if (part < 4) {
+			return pitchToString(pitch);
+		} else {
+			if (MidiGenerator.gc.isDrumCustomMapping() && !forceGmNames) {
+				Integer drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS_SEMI);
+				if (drumIndex < 0) {
+					return pitchToString(pitch);
+				}
+				return InstUtils.DRUM_INST_NAMES_SEMI[drumIndex];
+			} else {
+				Integer drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS);
+				if (drumIndex < 0) {
+					return pitchToString(pitch);
+				}
+				return InstUtils.DRUM_INST_NAMES[drumIndex];
+			}
+		}
 	}
 
 	public static void scalePhrase(Phrase phr, double newLength) {

@@ -96,7 +96,7 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch. 10"));
 
-		getInstrumentBox().setToolTipText("test");
+		getInstrumentBox().box().setToolTipText("test");
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
 		initDefaultsPost();

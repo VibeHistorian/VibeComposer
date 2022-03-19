@@ -19,7 +19,6 @@ import java.util.stream.IntStream;
 import javax.swing.BoxLayout;
 import javax.swing.ComboBoxEditor;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 
@@ -392,24 +391,5 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 	@Override
 	public synchronized void addMouseListener(MouseListener l) {
 		scb.addMouseListener(l);
-	}
-}
-
-class FireableComboBox<T> extends JComboBox<T> {
-
-	private static final long serialVersionUID = 3383179107333241378L;
-	ScrollComboPanel<T> parent = null;
-
-	public FireableComboBox(ScrollComboPanel<T> scrollComboBox) {
-		parent = scrollComboBox;
-	}
-
-	public void _fireItemStateChanged(ItemEvent e) {
-		fireItemStateChanged(e);
-	}
-
-	@Override
-	public void setSelectedIndex(int index) {
-		parent.setVal(getItemAt(index));
 	}
 }

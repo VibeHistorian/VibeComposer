@@ -526,7 +526,8 @@ public class ShowAreaBig extends JComponent {
 								noteDescription = VibeComposerGUI.instNames[phrase.part] + "#"
 										+ VibeComposerGUI.getInstList(phrase.part)
 												.get(phrase.partOrder).getPanelOrder()
-										+ "|" + MidiUtils.getNoteForPitch(currNote);
+										+ "|" + MidiUtils.pitchOrDrumToString(currNote, phrase.part,
+												false);
 								mouseProcessed = true;
 								mouseHighlightedNote = true;
 							}
@@ -596,7 +597,7 @@ public class ShowAreaBig extends JComponent {
 			for (int i = 15; i < 105; i++) {
 				if (MidiUtils.MAJ_SCALE.contains(i % 12)) {
 					int y = getNotePosY(i) + (int) (usedFontHeight / 4) + 2;
-					String noteString = MidiUtils.getNoteForPitch(i);
+					String noteString = MidiUtils.pitchToString(i);
 					g.drawString(noteString, viewPoint.x, y);
 				}
 			}
@@ -604,7 +605,7 @@ public class ShowAreaBig extends JComponent {
 
 		if (mouseProcessed && noteDescription != null) {
 			g.setColor(new Color(210, 210, 210));
-			g.drawString(noteDescription, mousePoint.x, mousePoint.y);
+			g.drawString(noteDescription, mousePoint.x + 10, mousePoint.y - 10);
 		}
 
 	}

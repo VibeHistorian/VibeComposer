@@ -295,7 +295,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		JPanel textPanel = new JPanel();
 		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
-		text = new JTextField(values.toStringPitches());
+		text = new JTextField(values.toStringPitches(), 40);
 		textPanel.add(text);
 		textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
 			if (StringUtils.isNotEmpty(text.getText())) {
