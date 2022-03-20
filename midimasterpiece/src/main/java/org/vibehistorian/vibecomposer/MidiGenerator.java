@@ -2515,6 +2515,7 @@ public class MidiGenerator implements JMC {
 					rootProgression = generatedRootProgression;
 					chordProgression = actualProgression;
 					progressionDurations = actualDurations;
+					sec.setDisplayAlternateChords(false);
 
 				}
 			} else if (rootProgression.size() == generatedRootProgression.size()) {

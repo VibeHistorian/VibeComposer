@@ -445,6 +445,9 @@ public class VariationPopup {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					sec.setSectionVariation(index, sectionVar.isSelected() ? 1 : 0);
+					if (index == 1) {
+						sec.setDisplayAlternateChords(sectionVar.isSelected());
+					}
 					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 				}
 
