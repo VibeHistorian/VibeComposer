@@ -82,7 +82,7 @@ public class MidiGenerator implements JMC {
 
 	public static final double DBL_ERR = 0.01;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
-	public static final double DEFAULT_DURATION_MULTIPLIER = 0.95;
+	public static double GLOBAL_DURATION_MULTIPLIER = 0.95;
 	public static final int[] DEFAULT_INSTRUMENT_TRANSPOSE = { 0, -24, -12, -24, 0 };
 
 	public enum ShowScoreMode {
@@ -568,7 +568,7 @@ public class MidiGenerator implements JMC {
 						double swingDuration = sortedDurs.get(k);
 						Note n = new Note(pitch, swingDuration, 100);
 						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-								* DEFAULT_DURATION_MULTIPLIER);
+								* GLOBAL_DURATION_MULTIPLIER);
 
 
 						noteList.add(n);
@@ -1411,7 +1411,7 @@ public class MidiGenerator implements JMC {
 					swingAdjust *= -1;
 					double swungDur = swungNote.getRhythmValue();
 					swungNote.setRhythmValue(swungDur + swingAdjust);
-					swungNote.setDuration((swungDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+					swungNote.setDuration((swungDur + swingAdjust) * GLOBAL_DURATION_MULTIPLIER);
 					swingAdjust *= -1;
 					swungNote = null;
 					latestSuitableNote = null;
@@ -1452,7 +1452,7 @@ public class MidiGenerator implements JMC {
 						if (swungNote == null) {
 							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
 							latestSuitableNote.setDuration(
-									(suitableDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+									(suitableDur + swingAdjust) * GLOBAL_DURATION_MULTIPLIER);
 							swingAdjust *= -1;
 							swungNote = latestSuitableNote;
 							latestSuitableNote = null;
@@ -1461,7 +1461,7 @@ public class MidiGenerator implements JMC {
 						} else {
 							latestSuitableNote.setRhythmValue(suitableDur + swingAdjust);
 							latestSuitableNote.setDuration(
-									(suitableDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+									(suitableDur + swingAdjust) * GLOBAL_DURATION_MULTIPLIER);
 							swingAdjust *= -1;
 							swungNote = null;
 							latestSuitableNote = null;
@@ -1473,7 +1473,7 @@ public class MidiGenerator implements JMC {
 							double swungDur = swungNote.getRhythmValue();
 							swungNote.setRhythmValue(swungDur + swingAdjust);
 							swungNote.setDuration(
-									(swungDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+									(swungDur + swingAdjust) * GLOBAL_DURATION_MULTIPLIER);
 							swingAdjust *= -1;
 							swungNote = null;
 							latestSuitableNote = null;
@@ -1498,7 +1498,7 @@ public class MidiGenerator implements JMC {
 		if (swungNote != null) {
 			double swungDur = swungNote.getRhythmValue();
 			swungNote.setRhythmValue(swungDur + swingAdjust);
-			swungNote.setDuration((swungDur + swingAdjust) * DEFAULT_DURATION_MULTIPLIER);
+			swungNote.setDuration((swungDur + swingAdjust) * GLOBAL_DURATION_MULTIPLIER);
 			swingAdjust *= -1;
 			swungNote = null;
 			latestSuitableNote = null;
@@ -2016,7 +2016,7 @@ public class MidiGenerator implements JMC {
 					double swingDuration = durations.get(j);
 					Note n = new Note(pitch, swingDuration, 100);
 					n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-							* DEFAULT_DURATION_MULTIPLIER);
+							* GLOBAL_DURATION_MULTIPLIER);
 
 					if (hasSingleNoteException && gc.isMelodySingleNoteExceptions()) {
 						if (tempChangedDir) {
@@ -3762,8 +3762,9 @@ public class MidiGenerator implements JMC {
 										: squishedChords.get(chordIndex)[randomNote];
 
 						int velocity = bassDynamics.nextInt(velSpace) + minVel;
-
-						phr.addNote(new Note(pitch, dur, velocity));
+						Note n = new Note(pitch, dur, velocity);
+						n.setDuration(dur * GLOBAL_DURATION_MULTIPLIER);
+						phr.addNote(n);
 						counter++;
 					}
 				} else {
@@ -3881,7 +3882,7 @@ public class MidiGenerator implements JMC {
 											: squishedChords.get(chordIndex)[randomNote];
 						}
 						Note n = new Note(pitch, duration, velocity);
-						n.setDuration(finalDuration * DEFAULT_DURATION_MULTIPLIER);
+						n.setDuration(finalDuration * GLOBAL_DURATION_MULTIPLIER);
 						phr.addNote(n);
 
 						durationNow += duration;
@@ -4496,11 +4497,17 @@ public class MidiGenerator implements JMC {
 						} else {
 							pitch2 = pitch;
 						}
-						//LG.d("Splitting arp!");
-						phr.addNote(new Note(pitch, splitDuration, velocity));
-						phr.addNote(new Note(pitch2, splitDuration, Math.max(0, velocity - 15)));
+						//LG.d("Splitting arp!"); 
+						Note n1 = new Note(pitch, splitDuration, velocity);
+						n1.setDuration(splitDuration * GLOBAL_DURATION_MULTIPLIER);
+						phr.addNote(n1);
+						Note n2 = new Note(pitch2, splitDuration, Math.max(0, velocity - 15));
+						n2.setDuration(splitDuration * GLOBAL_DURATION_MULTIPLIER);
+						phr.addNote(n2);
 					} else {
-						phr.addNote(new Note(pitch, usedDuration, velocity));
+						Note n1 = new Note(pitch, usedDuration, velocity);
+						n1.setDuration(usedDuration * GLOBAL_DURATION_MULTIPLIER);
+						phr.addNote(n1);
 					}
 					durationNow += usedDuration;
 					p = (p + 1) % repeatedArpsPerChord;
@@ -4709,13 +4716,13 @@ public class MidiGenerator implements JMC {
 						int secondVelocity = (velocity * 8) / 10;
 						Note n1 = new Note(pitch, usedDrumDuration / 2, velocity);
 						Note n2 = new Note(pitch, usedDrumDuration / 2, secondVelocity);
-						n1.setDuration(0.5 * n1.getRhythmValue());
-						n2.setDuration(0.5 * n2.getRhythmValue());
+						n1.setDuration(0.5 * n1.getRhythmValue() * GLOBAL_DURATION_MULTIPLIER);
+						n2.setDuration(0.5 * n2.getRhythmValue() * GLOBAL_DURATION_MULTIPLIER);
 						phr.addNote(n1);
 						phr.addNote(n2);
 					} else {
 						Note n1 = new Note(pitch, usedDrumDuration, velocity);
-						n1.setDuration(0.5 * n1.getRhythmValue());
+						n1.setDuration(0.5 * n1.getRhythmValue() * GLOBAL_DURATION_MULTIPLIER);
 						phr.addNote(n1);
 					}
 					durationNow += usedDrumDuration;

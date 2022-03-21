@@ -555,6 +555,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox arrangementScaleMidiVelocity;
 	public static KnobPanel humanizeNotes;
 	public static KnobPanel humanizeDrums;
+	public static KnobPanel globalNoteLengthMultiplier;
 	public static ScrollComboBox<Double> swingUnitMultiplier;
 	public static JCheckBox customMidiForceScale;
 	public static JCheckBox transposedNotesForceScale;
@@ -1177,6 +1178,10 @@ public class VibeComposerGUI extends JFrame
 		// / 10000
 		humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
 
+		// / 1000
+		globalNoteLengthMultiplier = new DetachedKnobPanel("Note Length Multiplier<br>/1000", 950,
+				250, 1000);
+
 		swingUnitMultiplier = new ScrollComboBox<Double>(false);
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
 		swingUnitMultiplier.setSelectedIndex(0);
@@ -1188,6 +1193,7 @@ public class VibeComposerGUI extends JFrame
 
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
+		humanizationPanel.add(globalNoteLengthMultiplier);
 		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
 		humanizationPanel.add(swingUnitMultiplier);
 		humanizationPanel.add(randomizeTimingsOnCompose);
@@ -5568,6 +5574,7 @@ public class VibeComposerGUI extends JFrame
 		try {
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
 			MidiGenerator.recalculateDurations(stretchMidi.getInt());
+			MidiGenerator.GLOBAL_DURATION_MULTIPLIER = globalNoteLengthMultiplier.getInt() / 1000.0;
 			MidiGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
 			MidiGenerator.TARGET_NOTES = (melody1ForcePatterns.isSelected()
@@ -7654,6 +7661,9 @@ public class VibeComposerGUI extends JFrame
 
 		// drum panel
 		cs.add(randomDrumHitsMultiplierOnGenerate);
+
+		// extra settings
+		cs.add(globalNoteLengthMultiplier);
 
 		return cs;
 	}

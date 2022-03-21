@@ -113,7 +113,7 @@ public class Chord {
 				LG.d("ERROR - Chord pitch: " + pitch);
 			}
 			Note n = new Note(pitch, rhythm, velocity);
-			n.setDuration(getDuration() * MidiGenerator.DEFAULT_DURATION_MULTIPLIER);
+			n.setDuration(getDuration() * MidiGenerator.GLOBAL_DURATION_MULTIPLIER);
 			//n.setOffset(flam * i);
 			noteList.add(n);
 		}
