@@ -89,7 +89,6 @@ public abstract class InstPanel extends JPanel {
 
 	protected KnobPanel pauseChance = new KnobPanel("Pause%", 0);
 	protected KnobPanel exceptionChance = new KnobPanel("Split%", 0);
-	protected CheckButton repeatableNotes = new CheckButton("Note<br>Repeat", true);
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
@@ -337,7 +336,6 @@ public abstract class InstPanel extends JPanel {
 		setPauseChance(part.getPauseChance());
 		setExceptionChance(part.getExceptionChance());
 
-		setRepeatableNotes(part.isRepeatableNotes());
 		setPatternRepeat(part.getPatternRepeat());
 
 		setTranspose(part.getTranspose());
@@ -466,14 +464,6 @@ public abstract class InstPanel extends JPanel {
 	public void setMuteInst(boolean val) {
 		this.muteInst.setSelected(val);
 		muteInst.repaint();
-	}
-
-	public boolean getRepeatableNotes() {
-		return repeatableNotes.isSelected();
-	}
-
-	public void setRepeatableNotes(boolean val) {
-		this.repeatableNotes.setSelected(val);
 	}
 
 	public int getPatternRepeat() {

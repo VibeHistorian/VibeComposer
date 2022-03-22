@@ -5018,8 +5018,8 @@ public class MidiGenerator implements JMC {
 			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		}
 
-		List<Integer> arpPattern = makeRandomArpPattern(ap.getHitsPerPattern(),
-				ap.isRepeatableNotes(), uiGenerator2arpPattern);
+		List<Integer> arpPattern = makeRandomArpPattern(ap.getHitsPerPattern(), true,
+				uiGenerator2arpPattern);
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 
 		Collections.rotate(arpPattern, -1 * ap.getArpPatternRotate());

@@ -126,8 +126,8 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 	}
 
 	protected void setRandomCustomValues() {
-		List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(ap.getHitsPerPattern(),
-				ap.getRepeatableNotes(), new Random());
+		List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(ap.getHitsPerPattern(), true,
+				new Random());
 		setCustomValues(arpPattern);
 		setVal(ArpPattern.CUSTOM);
 		scb.repaint();

@@ -46,7 +46,6 @@ public abstract class InstPart implements Cloneable {
 
 	protected int pauseChance = 0;
 	protected int exceptionChance = 5;
-	protected boolean repeatableNotes = true;
 	protected int patternRepeat = 1;
 
 	protected int delay = 0;
@@ -93,7 +92,6 @@ public abstract class InstPart implements Cloneable {
 
 		setPauseChance(panel.getPauseChance());
 		setExceptionChance(panel.getExceptionChance());
-		setRepeatableNotes(panel.getRepeatableNotes());
 		setPatternRepeat(panel.getPatternRepeat());
 
 		setTranspose(panel.getTranspose());
@@ -178,14 +176,6 @@ public abstract class InstPart implements Cloneable {
 
 	public void setExceptionChance(int exceptionChance) {
 		this.exceptionChance = exceptionChance;
-	}
-
-	public boolean isRepeatableNotes() {
-		return repeatableNotes;
-	}
-
-	public void setRepeatableNotes(boolean repeatableNotes) {
-		this.repeatableNotes = repeatableNotes;
 	}
 
 	public int getPatternRepeat() {
