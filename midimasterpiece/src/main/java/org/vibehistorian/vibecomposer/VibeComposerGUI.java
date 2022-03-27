@@ -6211,13 +6211,18 @@ public class VibeComposerGUI extends JFrame
 				&& notExcludedDrum.isPresent()) ? notExcludedDrum.get().getSequenceTrack() : null;
 		for (int i = 0; i < 5; i++) {
 			List<? extends InstPanel> panels = getInstList(i);
+
+			if (!isEnabled(i)) {
+				continue;
+			}
+
 			if (i == 4 && notExcludedCombinedDrumTrack != null) {
 				// combined midi tracks -> unsolo drums
 				continue;
 			}
 			for (int j = 0; j < panels.size(); j++) {
 				Integer seqTrack = panels.get(j).getSequenceTrack();
-				if (seqTrack < 0) {
+				if (seqTrack < 0 || panels.get(j).getMuteInst()) {
 					continue;
 				}
 				if (panels.get(j).getSoloMuter().soloState == State.FULL) {
@@ -6259,10 +6264,18 @@ public class VibeComposerGUI extends JFrame
 		// set by soloState/muteState
 		for (int i = 0; i < 5; i++) {
 			List<? extends InstPanel> panels = getInstList(i);
-			panels.forEach(e -> sequencer.setTrackSolo(e.getSequenceTrack(),
-					e.getSoloMuter().soloState == State.FULL));
-			panels.forEach(e -> sequencer.setTrackMute(e.getSequenceTrack(),
-					e.getSoloMuter().muteState == State.FULL));
+			for (int j = 0; j < panels.size(); j++) {
+				InstPanel ip = panels.get(j);
+				if (ip.getSequenceTrack() < 0) {
+					ip.getSoloMuter().unsolo();
+					ip.getSoloMuter().unmute();
+				} else {
+					sequencer.setTrackSolo(ip.getSequenceTrack(),
+							ip.getSoloMuter().soloState == State.FULL);
+					sequencer.setTrackMute(ip.getSequenceTrack(),
+							ip.getSoloMuter().muteState == State.FULL);
+				}
+			}
 		}
 
 		Optional<DrumPanel> notExcludedDrum = drumPanels.stream()
