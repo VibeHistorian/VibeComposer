@@ -4486,6 +4486,7 @@ public class MidiGenerator implements JMC {
 							pitch = Integer.MIN_VALUE;
 						}
 					}
+					double durMultiplier = GLOBAL_DURATION_MULTIPLIER * ip.getChordSpan();
 					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance() && pitch >= 0) {
 						double splitDuration = usedDuration / 2;
 						int patternNum2 = pitchPatternSpanned.get((p + 1) % repeatedArpsPerChord);
@@ -4499,14 +4500,14 @@ public class MidiGenerator implements JMC {
 						}
 						//LG.d("Splitting arp!"); 
 						Note n1 = new Note(pitch, splitDuration, velocity);
-						n1.setDuration(splitDuration * GLOBAL_DURATION_MULTIPLIER);
+						n1.setDuration(splitDuration * durMultiplier);
 						phr.addNote(n1);
 						Note n2 = new Note(pitch2, splitDuration, Math.max(0, velocity - 15));
-						n2.setDuration(splitDuration * GLOBAL_DURATION_MULTIPLIER);
+						n2.setDuration(splitDuration * durMultiplier);
 						phr.addNote(n2);
 					} else {
 						Note n1 = new Note(pitch, usedDuration, velocity);
-						n1.setDuration(usedDuration * GLOBAL_DURATION_MULTIPLIER);
+						n1.setDuration(usedDuration * durMultiplier);
 						phr.addNote(n1);
 					}
 					durationNow += usedDuration;

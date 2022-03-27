@@ -6178,30 +6178,63 @@ public class VibeComposerGUI extends JFrame
 		if (!sequenceReady()) {
 			return;
 		}
-
-		int countReducer = 0;
-		if (combineDrumTracks.isSelected()) {
-			countReducer = (int) ((onlyIncluded)
-					? drumPanels.stream().filter(e -> !e.getMuteInst()).count()
-					: drumPanels.size());
-			countReducer = Math.max(countReducer - 1, 0);
-		}
-		if (combineMelodyTracks.isSelected()) {
-			countReducer += 2;
-		}
-		int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
-		if (padGeneratedMidi.isSelected()) {
-			baseCount += calculatePaddedPartsCount(onlyIncluded);
-		}
-
+		/*
+				int countReducer = 0;
+				if (combineDrumTracks.isSelected()) {
+					countReducer = (int) ((onlyIncluded)
+							? drumPanels.stream().filter(e -> !e.getMuteInst()).count()
+							: drumPanels.size());
+					countReducer = Math.max(countReducer - 1, 0);
+				}
+				if (combineMelodyTracks.isSelected()) {
+					countReducer += 2;
+				}
+				int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
+				if (padGeneratedMidi.isSelected()) {
+					baseCount += calculatePaddedPartsCount(onlyIncluded);
+				}
+		*/
 		sequencer.setTrackSolo(0, false);
 		sequencer.setTrackMute(0, false);
-		for (int i = 1 + baseCount - countReducer; i < sequencer.getSequence()
-				.getTracks().length; i++) {
-			LG.d("Unsoloing: " + i);
-			sequencer.setTrackSolo(i, false);
-			sequencer.setTrackMute(i, false);
+
+		Set<Integer> tracksToUnsolo = new HashSet<>();
+		Set<Integer> tracksToUnmute = new HashSet<>();
+
+		for (int i = 1; i < sequencer.getSequence().getTracks().length; i++) {
+			tracksToUnsolo.add(i);
+			tracksToUnmute.add(i);
 		}
+
+		Optional<DrumPanel> notExcludedDrum = drumPanels.stream()
+				.filter(e -> e.getSequenceTrack() >= 0).findFirst();
+		Integer notExcludedCombinedDrumTrack = (combineDrumTracks.isSelected()
+				&& notExcludedDrum.isPresent()) ? notExcludedDrum.get().getSequenceTrack() : null;
+		for (int i = 0; i < 5; i++) {
+			List<? extends InstPanel> panels = getInstList(i);
+			if (i == 4 && notExcludedCombinedDrumTrack != null) {
+				// combined midi tracks -> unsolo drums
+				continue;
+			}
+			for (int j = 0; j < panels.size(); j++) {
+				Integer seqTrack = panels.get(j).getSequenceTrack();
+				if (seqTrack < 0) {
+					continue;
+				}
+				if (panels.get(j).getSoloMuter().soloState == State.FULL) {
+					tracksToUnsolo.remove(seqTrack);
+				} else if (panels.get(j).getSoloMuter().muteState == State.FULL) {
+					tracksToUnmute.remove(seqTrack);
+				}
+			}
+		}
+		tracksToUnsolo.forEach(e -> {
+			sequencer.setTrackSolo(e, false);
+			//LG.i("Unsoloed: " + e);
+		});
+		tracksToUnmute.forEach(e -> {
+			sequencer.setTrackMute(e, false);
+			//LG.i("Unmuted: " + e);
+		});
 	}
 
 	private int calculatePaddedPartsCount(boolean onlyIncluded) {
