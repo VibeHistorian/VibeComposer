@@ -146,6 +146,7 @@ public class MidiEditArea extends JComponent {
 				}
 				if (selectedNotes.contains(draggedNote)) {
 					dragMode.add(DM.MULTIPLE);
+					LG.i("Multi-drag!");
 				}
 				setAndRepaint();
 			}
@@ -268,7 +269,33 @@ public class MidiEditArea extends JComponent {
 		if (evt.isAltDown()) {
 			dragMode.add(DM.NOTE_START);
 		} else if (evt.isControlDown()) {
-			dragMode.add(DM.PITCH_SHAPE);
+			if (draggedNote == null || selectedNotes.isEmpty()) {
+				dragMode.add(DM.PITCH_SHAPE);
+			} else {
+				List<PhraseNote> newSelectedNotes = new ArrayList<>();
+				for (int i = 0; i < selectedNotes.size(); i++) {
+					PhraseNote newNote = selectedNotes.get(i).clone();
+					newNote.setRv(0);
+					if (selectedNotes.get(i) == draggedNote) {
+						LG.i("Found draggedNote in selected notes!");
+						draggedNote = newNote;
+					}
+					int insertionIndex = values.indexOf(selectedNotes.get(i));
+					values.add(insertionIndex, newNote);
+					newSelectedNotes.add(newNote);
+				}
+				List<PhraseNote> newSelectedNotesCopy = newSelectedNotes.stream()
+						.map(e -> e.clone()).collect(Collectors.toList());
+				selectedNotes = newSelectedNotes;
+				selectedNotesCopy = newSelectedNotesCopy;
+
+				dragMode.add(DM.POSITION);
+				if (!evt.isShiftDown())
+					dragMode.add(DM.PITCH);
+
+				playNote(draggedNote);
+				setAndRepaint();
+			}
 		} else {
 			if (draggedNote == null) {
 				Point orderVal = getOrderAndValueFromPosition(evt.getPoint(), false, true);
@@ -458,13 +485,11 @@ public class MidiEditArea extends JComponent {
 
 	public void reset() {
 		draggedNote = null;
+		draggedNoteCopy = null;
 		dragMode.clear();
 		lastPlayedNoteTime = 0;
 		lockTimeGrid = false;
 
-		draggedNoteCopy = null;
-
-		lockTimeGrid = false;
 		dragX = null;
 		dragY = null;
 		dragLocation = null;
