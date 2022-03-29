@@ -313,7 +313,8 @@ public class VariationPopup {
 		instVolumesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
 			int val = sec.getVol(i);
-			KnobPanel panel = new DetachedKnobPanel(VibeComposerGUI.instNames[i], val, 20, 150);
+			KnobPanel panel = new DetachedKnobPanel(VibeComposerGUI.instNames[i], 100, 20, 150);
+			panel.setInt(val);
 			panel.setShowTextInKnob(VibeComposerGUI.isShowingTextInKnobs);
 			panel.addBackgroundWithBorder(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
 			knobs.add(panel);
