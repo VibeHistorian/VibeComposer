@@ -72,8 +72,8 @@ public class ShowPanelBig extends JPanel {
 	protected double beatWidth; //10.0;
 	public static final int beatWidthBaseDefault = 1500;
 	public static int beatWidthBase = 1550;
-	public static final List<Integer> beatWidthBases = Arrays
-			.asList(new Integer[] { 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700, 6800 });
+	public static final List<Integer> beatWidthBases = Arrays.asList(new Integer[] { 1550, 1800,
+			2200, 2700, 3300, 4000, 4800, 5700, 6800, 8200, 10000, 12500 });
 	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;

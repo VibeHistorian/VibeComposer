@@ -37,6 +37,7 @@ import jm.music.tools.Mod;
 public class JMusicUtilsCustom implements JMC {
 
 	private static double tickRemainder = 0.0;
+	private static final short DEFAULT_PPQN = 960;
 
 	public static void consolidate(Part p) {
 
@@ -199,7 +200,7 @@ public class JMusicUtilsCustom implements JMC {
 
 	public static void midi(Score scr, String fileName) {
 		//Score s = adjustTempo(scr);
-		SMF smf = new SMF();
+		SMF smf = new SMF((short) 1, DEFAULT_PPQN);
 		try {
 			double time1 = System.currentTimeMillis();
 			LG.d("----------------------------- Writing MIDI File ------------------------------");
@@ -447,9 +448,9 @@ public class JMusicUtilsCustom implements JMC {
 	 * This method wriiten by Bob Lee.
 	 */
 	private static double tickRounder(double timeValue) {
-		final double tick = 1. / 480.;
-		final double halfTick = 1. / 960.;
-		int ticks = (int) (timeValue * 480.);
+		final double tick = 1. / (double) DEFAULT_PPQN;
+		final double halfTick = 1. / (DEFAULT_PPQN * 2.);
+		int ticks = (int) (timeValue * (double) DEFAULT_PPQN);
 		double rounded = ((double) ticks) * tick;
 		tickRemainder += timeValue - rounded;
 		if (tickRemainder > halfTick) {
