@@ -214,7 +214,15 @@ public class Arrangement {
 
 	public TableModel convertToTableModel() {
 
-		TableModel model = new DefaultTableModel(7, getSections().size());
+		TableModel model = new DefaultTableModel(7, getSections().size()) {
+
+			private static final long serialVersionUID = 1471873999987138971L;
+
+			@Override
+			public String getColumnName(int column) {
+				return String.valueOf(column + 1);
+			}
+		};
 		for (int i = 0; i < getSections().size(); i++) {
 			Section s = getSections().get(i);
 			model.setValueAt(s.getType(), 0, i);
@@ -236,6 +244,11 @@ public class Arrangement {
 			@Override
 			public boolean isCellEditable(int row, int col) {
 				return (row == 0);
+			}
+
+			@Override
+			public String getColumnName(int column) {
+				return String.valueOf(column + 1);
 			}
 
 		};

@@ -131,7 +131,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.xml.bind.JAXBContext;
@@ -2956,9 +2955,12 @@ public class VibeComposerGUI extends JFrame
 				return comp;
 			}
 		};
-		TableModel model = new DefaultTableModel(7, 11);
 
-		scrollableArrangementTable.setModel(model);
+		arrangement = new Arrangement();
+		actualArrangement = new Arrangement();
+		arrangement.generateDefaultArrangement();
+
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		arrangementScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
@@ -2977,10 +2979,6 @@ public class VibeComposerGUI extends JFrame
 		arrangementScrollPane.setRowHeaderView(list);
 		arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-		arrangement = new Arrangement();
-		actualArrangement = new Arrangement();
-		arrangement.generateDefaultArrangement();
 		//actualArrangement.generateDefaultArrangement();
 		if (useArrangement.isSelected()) {
 			arrangement.setPreviewChorus(false);
@@ -2990,7 +2988,6 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.setPreviewChorus(true);
 			actualArrangement.resetArrangement();
 		}
-		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		scrollableArrangementTable.setRowSelectionAllowed(false);
 		scrollableArrangementTable.setColumnSelectionAllowed(true);
 		scrollableArrangementTable.getTableHeader().setPreferredSize(
