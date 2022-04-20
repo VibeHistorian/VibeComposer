@@ -33,6 +33,7 @@ public class DrumPanel extends InstPanel {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
+		instrument.setScrollEnabled(false);
 		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
 		initDefaults(l);
