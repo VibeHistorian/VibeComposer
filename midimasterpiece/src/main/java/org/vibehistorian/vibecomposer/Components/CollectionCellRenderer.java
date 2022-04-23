@@ -15,6 +15,7 @@ import javax.swing.table.TableCellRenderer;
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class CollectionCellRenderer extends JComponent implements TableCellRenderer {
@@ -71,6 +72,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			g.setColor(icolor);
 
 			//g.fillRect(0, 0, width, height);
+			String cellDescription = null;
 
 			//g.setColor(OMNI.alphen(Color.black, 127));
 			int widthDivider = Math.max(CollectionCellRenderer.MIN_CELLS + 1, guiPanelsCount + 1);
@@ -135,6 +137,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 									.equals(Triple.of(part, partOrder, section))) {
 						subcellColor = OMNI.mixColor(subcellColor,
 								VibeComposerGUI.copyDragging ? Color.red : Color.white, 0.3);
+						cellDescription = VibeComposerGUI.getInstList(part).get(partOrder)
+								.getInstrumentBox().getVal();
 					}
 
 					g.setColor(subcellColor);
@@ -213,6 +217,14 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			//LG.d("ListCellRenderer RENDERED");
 			g.setColor(Color.black);
 			g.drawRect(0, 0, width, height);
+
+			g.setColor(new Color(210, 210, 210));
+			if (cellDescription != null
+					&& VibeComposerGUI.arrangementActualTableMousePoint != null) {
+				g.drawString(cellDescription,
+						width / 2 - SwingUtils.getDrawStringWidth(cellDescription) / 2, 10);
+			}
+
 			g.dispose();
 		}
 	}

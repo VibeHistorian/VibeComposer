@@ -404,6 +404,7 @@ public class VibeComposerGUI extends JFrame
 	public static boolean copyDragging = false;
 	public static Triple<Integer, Integer, Integer> highlightedTableCell = null;
 	public static Triple<Integer, Integer, Integer> copyDraggingOrigin = null;
+	public static Point arrangementActualTableMousePoint = null;
 	PhraseNotes copyDraggedNotes = null;
 
 	// instrument global settings
@@ -3115,6 +3116,7 @@ public class VibeComposerGUI extends JFrame
 			public void mouseMoved(MouseEvent e) {
 				boolean repaintAnyway = highlightedTableCell != null;
 				highlightedTableCell = calculateCurrentTableSubcell(e);
+				arrangementActualTableMousePoint = new Point(e.getPoint());
 				if (highlightedTableCell != null || repaintAnyway) {
 					scrollableArrangementActualTable.repaint();
 				}
@@ -3124,6 +3126,7 @@ public class VibeComposerGUI extends JFrame
 			public void mouseDragged(MouseEvent e) {
 				boolean repaintAnyway = highlightedTableCell != null;
 				highlightedTableCell = calculateCurrentTableSubcell(e);
+				arrangementActualTableMousePoint = new Point(e.getPoint());
 				if (highlightedTableCell != null || repaintAnyway) {
 					scrollableArrangementActualTable.repaint();
 				}
