@@ -2321,6 +2321,8 @@ public class VibeComposerGUI extends JFrame
 								&& affectedDrums.get(i).getPattern() == RhythmPattern.CUSTOM) {
 							List<Integer> trueSub = affectedDrums.get(i).getComboPanel()
 									.getTruePattern().subList(0, newHits);
+							Collections.rotate(trueSub, affectedDrums.get(i).getPatternShift());
+							affectedDrums.get(i).setPatternShift(0);
 							while (trueSub.size() < VisualPatternPanel.MAX_HITS) {
 								trueSub.addAll(trueSub);
 							}
