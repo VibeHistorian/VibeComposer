@@ -34,13 +34,22 @@ public class MelodyUtils {
 
 	static {
 
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, -1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, -1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { -1, -1, 1, 2 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { -1, 0, 0, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, -1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, 1, 0 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, 0, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, 1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, -1, 0 }));
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, -1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, 0, 0, -1 }));
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 2 }));
+		//CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, 1, -1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, -1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, 2 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 0, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, 1, 2 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, -1, 1 }));
 
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3, 1, 2, 1, 4 }));
@@ -271,6 +280,9 @@ public class MelodyUtils {
 	}
 
 	public static Integer variance(Integer[] block) {
+		// 0 4 7 2 -> variance 7 - 2 = 5
+		// 0 2 7 4 -> variance 7 - 4 = 3
+
 		int min = block[0];
 		int max = block[block.length - 1];
 		if (min > max) {

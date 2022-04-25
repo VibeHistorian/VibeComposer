@@ -21,13 +21,13 @@ public class MidiGeneratorUtils {
 		Random rand = new Random(randomSeed);
 		List<Integer> dirs = new ArrayList<>();
 		dirs.add(0);
-		int last = roots ? progression.get(0)[0]
+		int current = roots ? progression.get(0)[0]
 				: progression.get(0)[rand.nextInt(progression.get(0).length)];
 		for (int i = 1; i < progression.size(); i++) {
 			int next = roots ? progression.get(i)[0]
 					: progression.get(i)[rand.nextInt(progression.get(i).length)];
-			dirs.add(Integer.compare(next, last));
-			last = next;
+			dirs.add(Integer.compare(next, current));
+			current = next;
 		}
 		return dirs;
 	}
