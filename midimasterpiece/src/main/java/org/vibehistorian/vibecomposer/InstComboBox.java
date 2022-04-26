@@ -57,6 +57,9 @@ public class InstComboBox extends ScrollComboBox<String> {
 	}
 
 	public InstUtils.POOL setInstrument(int instrument) {
+		if (!isEnabled()) {
+			return instPool;
+		}
 		if (!instSet(instrument)) {
 			initInstPool(InstUtils.POOL.ALL);
 			LG.d("Switching to POOL.ALL!");

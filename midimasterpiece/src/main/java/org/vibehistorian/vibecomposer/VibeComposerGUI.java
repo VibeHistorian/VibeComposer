@@ -1660,7 +1660,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		melodySettingsExtraPanelOrg.add(randomizeMelodies);
-		randomizeMelodiesOnCompose = makeCheckBox("On Compose", true, true);
+		randomizeMelodiesOnCompose = makeCheckBox("On Compose", false, true);
 		melodySettingsExtraPanelOrg.add(randomizeMelodiesOnCompose);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
@@ -1791,7 +1791,7 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = new MelodyPanel(this);
 			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
-			melodyPanel.setInstrument(8);
+			melodyPanel.setInstrument(73);
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			if (i > 0) {
@@ -1818,13 +1818,13 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.getVolSlider().setValue(45);
 			} else {
 				melodyPanel.setFillPauses(false);
-				melodyPanel.setSpeed(25);
-				melodyPanel.setPauseChance(50);
+				melodyPanel.setSpeed(15);
+				melodyPanel.setPauseChance(15);
 				melodyPanel.setTranspose(12);
-				melodyPanel.setVelocityMax(105);
-				melodyPanel.setVelocityMin(45);
-				melodyPanel.getVolSlider().setValue(50);
-				melodyPanel.setNoteLengthMultiplier(115);
+				melodyPanel.setVelocityMax(100);
+				melodyPanel.setVelocityMin(50);
+				melodyPanel.getVolSlider().setValue(60);
+				melodyPanel.setNoteLengthMultiplier(108);
 			}
 		}
 
@@ -2239,7 +2239,7 @@ public class VibeComposerGUI extends JFrame
 		addInst[4] = new CustomCheckBox("DRUMS", true);
 		drumsPanel.add(addInst[4]);
 
-		drumVolumeSlider = new VeloRect(0, 100, 70);
+		drumVolumeSlider = new VeloRect(0, 100, 65);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
 		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
 		//drumVolumeSlider.setPaintTicks(true);
