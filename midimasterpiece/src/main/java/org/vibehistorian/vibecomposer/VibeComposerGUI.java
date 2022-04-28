@@ -5089,6 +5089,15 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			protected void done() {
+				try {
+					Synthesizer synthesizer = null;
+					if (!midiMode.isSelected()) {
+						synthesizer = loadSynth();
+					}
+					prepareMidiPlayback(synthesizer);
+				} catch (InvalidMidiDataException | MidiUnavailableException e) {
+					e.printStackTrace();
+				}
 				switchMidiButtons(true);
 				messageLabel.setText("PROCESSED WAV!");
 				repaint();
@@ -5931,66 +5940,8 @@ public class VibeComposerGUI extends JFrame
 			generatedMidi.setListData(new File[] { currentMidi });
 			//sizeRespectingPack();
 			repaint();
-			Sequence sequence = null;
-			try {
-				sequence = MidiSystem.getSequence(currentMidi);
-			} catch (Exception e) {
-				new TemporaryInfoPopup(
-						"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
-						null);
+			if (!prepareMidiPlayback(synthesizer)) {
 				return;
-			}
-			sequencer.setSequence(sequence); // load it into sequencer
-
-			if (midiMode.isSelected()) {
-				if (device == null) {
-					for (Transmitter tm : sequencer.getTransmitters()) {
-						tm.close();
-					}
-					MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-					for (int i = 0; i < infos.length; i++) {
-						if (infos[i].toString().equalsIgnoreCase(midiModeDevices.getVal())) {
-							device = MidiSystem.getMidiDevice(infos[i]);
-							LG.d(infos[i].toString() + "| max recv: " + device.getMaxReceivers()
-									+ ", max trm: " + device.getMaxTransmitters());
-							if (device.getMaxReceivers() != 0) {
-								LG.d("Found max receivers != 0, opening midi receiver device: "
-										+ infos[i].toString());
-								device.open();
-								break;
-							}
-
-						}
-					}
-					sequencer.getTransmitter().setReceiver(device.getReceiver());
-				}
-
-
-			} else {
-				if (synthesizer != null) {
-					// open soundbank synth
-					for (Transmitter tm : sequencer.getTransmitters()) {
-						tm.close();
-					}
-
-					sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
-					synth = synthesizer;
-					isSoundbankSynth = true;
-
-				} else if (synth != null) {
-					// do nothing, all set
-				} else {
-					// use default system synth
-					for (Transmitter tm : sequencer.getTransmitters()) {
-						tm.close();
-					}
-					synth = MidiSystem.getSynthesizer();
-					synth.open();
-					sequencer.getTransmitter().setReceiver(synth.getReceiver());
-					isSoundbankSynth = false;
-
-
-				}
 			}
 
 			resetSequencerTickPosition();
@@ -6173,6 +6124,72 @@ public class VibeComposerGUI extends JFrame
 		} catch (MidiUnavailableException | InvalidMidiDataException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private boolean prepareMidiPlayback(Synthesizer synthesizer)
+			throws InvalidMidiDataException, MidiUnavailableException {
+		Sequence sequence = null;
+		try {
+			sequence = MidiSystem.getSequence(currentMidi);
+		} catch (Exception e) {
+			new TemporaryInfoPopup(
+					"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
+					null);
+			return false;
+		}
+		sequencer.setSequence(sequence); // load it into sequencer
+
+		if (midiMode.isSelected()) {
+			if (device == null) {
+				for (Transmitter tm : sequencer.getTransmitters()) {
+					tm.close();
+				}
+				MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+				for (int i = 0; i < infos.length; i++) {
+					if (infos[i].toString().equalsIgnoreCase(midiModeDevices.getVal())) {
+						device = MidiSystem.getMidiDevice(infos[i]);
+						LG.d(infos[i].toString() + "| max recv: " + device.getMaxReceivers()
+								+ ", max trm: " + device.getMaxTransmitters());
+						if (device.getMaxReceivers() != 0) {
+							LG.d("Found max receivers != 0, opening midi receiver device: "
+									+ infos[i].toString());
+							device.open();
+							break;
+						}
+
+					}
+				}
+				sequencer.getTransmitter().setReceiver(device.getReceiver());
+			}
+
+
+		} else {
+			if (synthesizer != null) {
+				// open soundbank synth
+				for (Transmitter tm : sequencer.getTransmitters()) {
+					tm.close();
+				}
+
+				sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
+				synth = synthesizer;
+				isSoundbankSynth = true;
+
+			} else if (synth != null) {
+				// do nothing, all set
+			} else {
+				// use default system synth
+				for (Transmitter tm : sequencer.getTransmitters()) {
+					tm.close();
+				}
+				synth = MidiSystem.getSynthesizer();
+				synth.open();
+				sequencer.getTransmitter().setReceiver(synth.getReceiver());
+				isSoundbankSynth = false;
+
+
+			}
+		}
+		return true;
 	}
 
 	private void resetSequencerTickPosition() {
