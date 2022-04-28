@@ -4916,7 +4916,14 @@ public class VibeComposerGUI extends JFrame
 
 		JButton loadConfig = makeButton("LOAD..", "LoadGUIConfig");
 
-		JButton saveWavFile = makeButton("Export .WAV", "SaveWavFile");
+		JButton saveWavFile = makeButtonMoused("Export .WAV", e -> {
+			if (!SwingUtilities.isLeftMouseButton(e)) {
+				openFolder(EXPORT_FOLDER);
+			} else {
+				saveWavFile();
+			}
+		});
+
 
 		showScore = new JButton("Show Score Tab");
 		showScore.addActionListener(new ActionListener() {
@@ -5042,6 +5049,52 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY + 5;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(playSavePanel, constraints);
+	}
+
+	private void saveWavFile() {
+		if (currentMidi == null) {
+			messageLabel.setText("Need to compose first!");
+			messageLabel.repaint(0);
+			return;
+		}
+		switchMidiButtons(false);
+		stopMidi();
+		//sizeRespectingPack();
+		repaint();
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+			@Override
+			protected Void doInBackground()
+					throws InterruptedException, MidiUnavailableException, IOException {
+				SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
+				Synthesizer defSynth;
+				f.applyPattern("yyMMdd-HH-mm-ss");
+				Date date = new Date();
+				defSynth = (synth != null && !midiMode.isSelected()) ? synth
+						: MidiSystem.getSynthesizer();
+				synth = defSynth;
+				String soundbankOptional = (soundfont != null) ? "SB_" : "";
+				String filename = f.format(date) + "_" + soundbankOptional + currentMidi.getName();
+				File exportFolderDir = new File(EXPORT_FOLDER);
+				exportFolderDir.mkdir();
+
+				saveWavFile(EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
+				synth = null;
+				if (device != null) {
+					device.close();
+					device = null;
+				}
+				return null;
+			}
+
+			@Override
+			protected void done() {
+				switchMidiButtons(true);
+				messageLabel.setText("PROCESSED WAV!");
+				repaint();
+			}
+		};
+		worker.execute(); //here the process thread initiates
 	}
 
 	private void openFolder(String folderPath) {
@@ -6712,56 +6765,6 @@ public class VibeComposerGUI extends JFrame
 			switchAllOnComposeCheckboxes(true);
 			switchOnComposeRandom.setText("Untick all 'on Compose'");
 			switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
-		}
-
-		if (ae.getActionCommand() == "SaveWavFile") {
-
-			if (currentMidi == null) {
-				messageLabel.setText("Need to compose first!");
-				messageLabel.repaint(0);
-				return;
-			}
-			switchMidiButtons(false);
-			stopMidi();
-			//sizeRespectingPack();
-			repaint();
-			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-
-				@Override
-				protected Void doInBackground()
-						throws InterruptedException, MidiUnavailableException, IOException {
-					SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-					Synthesizer defSynth;
-					f.applyPattern("yyMMdd-HH-mm-ss");
-					Date date = new Date();
-					defSynth = (synth != null && !midiMode.isSelected()) ? synth
-							: MidiSystem.getSynthesizer();
-					synth = defSynth;
-					String soundbankOptional = (soundfont != null) ? "SB_" : "";
-					String filename = f.format(date) + "_" + soundbankOptional
-							+ currentMidi.getName();
-					File exportFolderDir = new File(EXPORT_FOLDER);
-					exportFolderDir.mkdir();
-
-					saveWavFile(EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
-					synth = null;
-					if (device != null) {
-						device.close();
-						device = null;
-					}
-					return null;
-				}
-
-				@Override
-				protected void done() {
-					switchMidiButtons(true);
-					messageLabel.setText("PROCESSED WAV!");
-					repaint();
-				}
-			};
-			worker.execute(); //here the process thread initiates
-
-
 		}
 
 		if (ae.getActionCommand() == "CopySeed") {
