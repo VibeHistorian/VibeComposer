@@ -312,7 +312,7 @@ public class MidiEditArea extends JComponent {
 					int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
 							orderVal.y % 12);
 					PhraseNote insertedPn = new PhraseNote(pop.snapToScaleGrid.isSelected()
-							? (12 * (orderVal.y / 12) + closestNormalized)
+							? (MidiUtils.octavePitch(orderVal.y) + closestNormalized)
 							: orderVal.y);
 					insertedPn.setDuration(MidiGenerator.Durations.EIGHTH_NOTE);
 					insertedPn.setRv(0);
@@ -637,7 +637,7 @@ public class MidiEditArea extends JComponent {
 					int pitch = getPitchFromPosition(evt.getPoint().y);
 					if (pop.snapToScaleGrid.isSelected()) {
 						pitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12)
-								+ (12 * (pitch / 12));
+								+ MidiUtils.octavePitch(pitch);
 					}
 					boolean playNote = pitch != draggedNote.getPitch();
 					if (draggingAny(DM.MULTIPLE)) {
@@ -646,7 +646,8 @@ public class MidiEditArea extends JComponent {
 							int newPitchAbsolute = selectedNotesCopy.get(i).getPitch()
 									+ pitchChange;
 							int newPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
-									newPitchAbsolute % 12) + (12 * (newPitchAbsolute / 12));
+									newPitchAbsolute % 12)
+									+ MidiUtils.octavePitch(newPitchAbsolute);
 							selectedNotes.get(i).setPitch(newPitch);
 						}
 					} else {
@@ -694,7 +695,7 @@ public class MidiEditArea extends JComponent {
 				int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
 						pitch % 12);
 
-				values.get(pos).setPitch(12 * (pitch / 12) + closestNormalized);
+				values.get(pos).setPitch(MidiUtils.octavePitch(pitch) + closestNormalized);
 			} else {
 				values.get(pos).setPitch(pitch);
 			}

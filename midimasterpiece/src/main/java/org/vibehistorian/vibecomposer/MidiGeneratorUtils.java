@@ -9,15 +9,14 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 
 import jm.music.data.Note;
 
 public class MidiGeneratorUtils {
 
-	static List<Integer> generateMelodyOffsetDirectionsFromChordProgression(
-			List<int[]> progression, boolean roots, int randomSeed) {
+	static List<Integer> generateMelodyOffsetDirectionsFromChordProgression(List<int[]> progression,
+			boolean roots, int randomSeed) {
 		Random rand = new Random(randomSeed);
 		List<Integer> dirs = new ArrayList<>();
 		dirs.add(0);
@@ -34,7 +33,7 @@ public class MidiGeneratorUtils {
 
 	static List<Integer> randomizedChordDirections(int chords, int randomSeed) {
 		Random rand = new Random(randomSeed);
-	
+
 		List<Integer> chordDirs = new ArrayList<>(MelodyUtils.CHORD_DIRECTIONS
 				.get(rand.nextInt(MelodyUtils.CHORD_DIRECTIONS.size())));
 		while (chordDirs.size() < chords) {
@@ -100,7 +99,7 @@ public class MidiGeneratorUtils {
 		if (chordSize < 2 || !sec.isTransition()) {
 			return param;
 		}
-	
+
 		int minAffectedChord = OMNI.clamp((int) (affectedMeasure * chordSize) - 1, 1,
 				chordSize - 1);
 		//LG.d("Min affected: " + minAffectedChord);
@@ -108,13 +107,13 @@ public class MidiGeneratorUtils {
 			return param;
 		}
 		//LG.d("Old param: " + param);
-	
+
 		int chordRange = chordSize - 1 - minAffectedChord;
 		double effect = (chordRange > 0) ? ((chordNum - minAffectedChord) / ((double) chordRange))
 				: 1.0;
-	
+
 		int transitionType = sec.getTransitionType();
-	
+
 		int multiplier = reverseEffect ? -1 : 1;
 		if (transitionType == 1) {
 			param += maxEffect * effect * multiplier;
@@ -149,7 +148,8 @@ public class MidiGeneratorUtils {
 		for (int i = 0; i < chordStrings.size(); i++) {
 			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
 		}
-		return MidiGeneratorUtils.generateOffsets(chords, randomSeed, targetMode, targetNoteVariation);
+		return MidiGeneratorUtils.generateOffsets(chords, randomSeed, targetMode,
+				targetNoteVariation);
 	}
 
 	static Pair<Integer, Integer> normalizeNotePitch(int startingNote, int startingPitch) {
@@ -170,8 +170,8 @@ public class MidiGeneratorUtils {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
 				MidiGenerator.gc != null && MidiGenerator.gc.isMelodyUseDirectionsFromProgression()
-						? generateMelodyOffsetDirectionsFromChordProgression(
-								chords, true, randomSeed)
+						? generateMelodyOffsetDirectionsFromChordProgression(chords, true,
+								randomSeed)
 						: randomizedChordDirections(chords.size(), randomSeed),
 				randomSeed + 1, targetNoteVariation);
 		List<Integer> offsets = new ArrayList<>();
@@ -183,7 +183,7 @@ public class MidiGeneratorUtils {
 			} else {
 				offsets.add(multipliedDirections.get(i));
 			}
-	
+
 		}
 		if (targetMode >= 1) {
 			Map<Integer, List<Integer>> choiceMap = getChordNoteChoicesFromChords(chords);
@@ -212,23 +212,23 @@ public class MidiGeneratorUtils {
 				offsets.set(offsets.size() - 1, last);
 			}
 		}
-	
+
 		//int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
 		/*if (min == -1) {
 			for (int i = 0; i < offsets.size(); i++) {
 				offsets.set(i, offsets.get(i) + 1);
 			}
 		}*/
-	
+
 		LG.d("RANDOMIZED OFFSETS");
 		return offsets;
 	}
 
-	static List<Boolean> generateMelodyDirectionsFromChordProgression(
-			List<int[]> progression, boolean roots) {
-	
+	static List<Boolean> generateMelodyDirectionsFromChordProgression(List<int[]> progression,
+			boolean roots) {
+
 		List<Boolean> ascDirectionList = new ArrayList<>();
-	
+
 		for (int i = 0; i < progression.size(); i++) {
 			if (roots) {
 				int current = progression.get(i)[0];
@@ -241,9 +241,9 @@ public class MidiGeneratorUtils {
 								- 1];
 				ascDirectionList.add(Boolean.valueOf(current <= next));
 			}
-	
+
 		}
-	
+
 		return ascDirectionList;
 	}
 
@@ -252,7 +252,7 @@ public class MidiGeneratorUtils {
 		for (int i = 0; i < chords; i++) {
 			double divider = dirGen.nextDouble() * 0.80 + 0.20;
 			map.add(divider);
-	
+
 		}
 		return map;
 	}
@@ -273,7 +273,7 @@ public class MidiGeneratorUtils {
 
 	public static int getAllowedPitchFromRange(int min, int max, double posInChord,
 			Random splitNoteGen) {
-	
+
 		boolean allowBs = posInChord > 0.66;
 		//LG.i("Min: " + min + ", max: " + max);
 		int normMin = min % 12;
@@ -281,11 +281,11 @@ public class MidiGeneratorUtils {
 		if (normMax <= normMin) {
 			normMax += 12;
 		}
-	
+
 		List<Integer> allowedPitches = new ArrayList<>(MidiUtils.MAJ_SCALE);
 		int allowedPitchSize = allowedPitches.size();
 		for (int i = 0; i < allowedPitchSize; i++) {
-	
+
 			allowedPitches.add(allowedPitches.get(i) + 12);
 		}
 		//LG.i("Size: " + allowedPitches.size());
@@ -337,7 +337,7 @@ public class MidiGeneratorUtils {
 			}
 		}
 		durations.add(dur);
-	
+
 		return durations;
 	}
 
@@ -352,15 +352,15 @@ public class MidiGeneratorUtils {
 		}
 	}
 
-	static int getStartingNote(List<int[]> stretchedChords,
-			List<Integer> blockChordNoteChoices, int chordNum, int BLOCK_TARGET_MODE) {
-	
+	static int getStartingNote(List<int[]> stretchedChords, List<Integer> blockChordNoteChoices,
+			int chordNum, int BLOCK_TARGET_MODE) {
+
 		int chordNumIndex = chordNum % stretchedChords.size();
 		int chordNoteChoiceIndex = (BLOCK_TARGET_MODE == 2
 				&& chordNum == blockChordNoteChoices.size()) ? (chordNum - 1)
 						: (chordNum % blockChordNoteChoices.size());
 		int[] chord = stretchedChords.get(chordNumIndex);
-	
+
 		int startingPitch = (BLOCK_TARGET_MODE == 0)
 				? MidiUtils.getXthChordNote(blockChordNoteChoices.get(chordNoteChoiceIndex), chord)
 				: ((BLOCK_TARGET_MODE == 1) ? chord[0] : (5 * 12));
@@ -397,7 +397,8 @@ public class MidiGeneratorUtils {
 	}
 
 	static int addAccent(int velocity, Random accentGenerator, int accent) {
-		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5 + accent / 20;
+		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5
+				+ accent / 20;
 		return OMNI.clamp(newVelocity, 0, 127);
 	}
 
@@ -439,7 +440,7 @@ public class MidiGeneratorUtils {
 	}
 
 	static void applyBadIntervalRemoval(List<Note> fullMelody) {
-	
+
 		int previousPitch = -1;
 		for (int i = 0; i < fullMelody.size(); i++) {
 			Note n = fullMelody.get(i);
@@ -452,15 +453,20 @@ public class MidiGeneratorUtils {
 				n.setPitch(pitch - 1);
 			} else if (pitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
 				n.setPitch(pitch + 1);
+			} else if ((i < fullMelody.size() - 1)
+					&& (pitch - fullMelody.get(i + 1).getPitch() >= 12)) {
+				// set G as a step for too wild intervals
+				LG.i("I like ya cut, G");
+				n.setPitch(pitch - (pitch % 12) + 7);
 			}
 			previousPitch = n.getPitch();
 		}
-	
-	
+
+
 	}
 
-	static void replaceAvoidNotes(Map<Integer, List<Note>> fullMelodyMap,
-			List<int[]> chords, int randomSeed, int notesToAvoid) {
+	static void replaceAvoidNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
+			int randomSeed, int notesToAvoid) {
 		Random rand = new Random(randomSeed);
 		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
 			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i % chords.size()),
@@ -475,7 +481,8 @@ public class MidiGeneratorUtils {
 				}
 				//LG.d("Note: " + n.getPitch() + ", RV: " + n.getRhythmValue());
 				boolean avoidAllLengths = true;
-				if (avoidAllLengths || (n.getRhythmValue() > MidiGenerator.Durations.EIGHTH_NOTE - MidiGenerator.DBL_ERR)) {
+				if (avoidAllLengths || (n.getRhythmValue() > MidiGenerator.Durations.EIGHTH_NOTE
+						- MidiGenerator.DBL_ERR)) {
 					if (avoidNotes.contains(oldPitch % 12)) {
 						int normalizedPitch = oldPitch % 12;
 						int pitchIndex = MidiUtils.MAJ_SCALE.indexOf(normalizedPitch);
@@ -492,10 +499,10 @@ public class MidiGeneratorUtils {
 								+ (oldPitch - newPitch));*/
 					}
 				}
-	
+
 			}
 		}
-	
+
 	}
 
 	static int pickRandomBetweenIndexesInclusive(int[] chord, int startIndex, int endIndex,
@@ -537,7 +544,7 @@ public class MidiGeneratorUtils {
 			}
 			return 0;
 		}
-	
+
 	}
 
 	static String generateSpicyChordString(Random spiceGenerator, String chordString,
@@ -550,9 +557,9 @@ public class MidiGeneratorUtils {
 			spicyChordListCopy
 					.removeIf(e -> !MidiUtils.isSpiceValid(transposeByLetter, e, targetScale));
 		}
-	
+
 		//LG.d(StringUtils.join(spicyChordListCopy, ", "));
-	
+
 		if (spicyChordListCopy.isEmpty()) {
 			return chordString;
 		}

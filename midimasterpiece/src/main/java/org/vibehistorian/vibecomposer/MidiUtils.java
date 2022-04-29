@@ -1533,4 +1533,8 @@ public class MidiUtils {
 		return inKey / (double) mapped.length;
 	}
 
+	public static int octavePitch(int pitch) {
+		return pitch - pitch % 12;
+	}
+
 }

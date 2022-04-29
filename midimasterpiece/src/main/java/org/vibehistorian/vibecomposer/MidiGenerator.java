@@ -369,6 +369,12 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
+				if (false) {
+					new Object() {
+
+					};
+				}
+
 				int blockOffset = blockSeedOffsets.get(chordIndex % blockSeedOffsets.size());
 				int originalBlockOffset = blockOffset;
 				blockOffset = Math.abs(blockOffset);

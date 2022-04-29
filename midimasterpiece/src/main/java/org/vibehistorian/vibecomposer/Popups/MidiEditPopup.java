@@ -205,7 +205,8 @@ public class MidiEditPopup extends CloseablePopup {
 							int closestNormalized = MidiUtils
 									.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12);
 
-							mvea.getValues().get(i).setPitch(12 * (pitch / 12) + closestNormalized);
+							mvea.getValues().get(i)
+									.setPitch(MidiUtils.octavePitch(pitch) + closestNormalized);
 						} else {
 							mvea.getValues().get(i).setPitch(pitch);
 						}
