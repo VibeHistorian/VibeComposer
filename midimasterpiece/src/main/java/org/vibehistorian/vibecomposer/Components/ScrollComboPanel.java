@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -76,8 +77,11 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				if (!scrollEnabled || !isEnabled())
+				if (!scrollEnabled || !isEnabled()) {
+					Container cont = ScrollComboPanel.this.getParent();
+					cont.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, cont));
 					return;
+				}
 				prepareInteraction(e.isControlDown());
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
 						% getItemCount());
