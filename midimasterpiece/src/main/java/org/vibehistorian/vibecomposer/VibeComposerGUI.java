@@ -6585,6 +6585,11 @@ public class VibeComposerGUI extends JFrame
 
 		boolean isCompose = "Compose".equals(ae.getActionCommand());
 		boolean isRegenerate = "Regenerate".equals(ae.getActionCommand());
+		if (composingInProgress) {
+			LG.i("Cannot process action '" + ae.getActionCommand() + "', composing in progress!");
+			new TemporaryInfoPopup("Composing in progress..", 500);
+			return;
+		}
 
 		InstComboBox.BANNED_INSTS.clear();
 		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(bannedInsts.getText().split(",")));
