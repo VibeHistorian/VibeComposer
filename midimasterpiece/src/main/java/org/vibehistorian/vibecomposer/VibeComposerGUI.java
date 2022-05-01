@@ -478,6 +478,7 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
 	ScrollComboBox<String> melodyPatternEffect;
+	ScrollComboBox<String> melodyRhythmAccents;
 	JCheckBox melodyPatternRandomizeOnCompose;
 	KnobPanel melodyReplaceAvoidNotes;
 	KnobPanel melodyMaxDirChanges;
@@ -1603,6 +1604,9 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternEffect.setSelectedIndex(2);
 		melodyPatternRandomizeOnCompose = makeCheckBox(
 				"<html>Randomize Pattern<br> on Compose</html>", true, true);
+		melodyRhythmAccents = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
+				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
@@ -1637,6 +1641,9 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
+		melodySettingsExtraPanelBlocksPatternsCompose
+				.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyRhythmAccents);
 
 		JPanel melodySettingsExtraPanelOrg = new JPanel();
 		melodySettingsExtraPanelOrg.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -7874,6 +7881,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
 		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
+		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
 		gc.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
 		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
 		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
@@ -8007,6 +8015,7 @@ public class VibeComposerGUI extends JFrame
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
 		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
+		melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
 		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
 		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
 		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());

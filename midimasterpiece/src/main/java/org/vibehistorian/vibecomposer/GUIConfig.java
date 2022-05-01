@@ -97,6 +97,7 @@ public class GUIConfig {
 	private boolean melodyPatternFlip = false;
 	private int melodyBlockTargetMode = 2;
 	private int melodyPatternEffect = 2;
+	private int melodyRhythmAccents = 0;
 
 	// chord gen
 	private int chordSlashChance = 0;
@@ -811,6 +812,14 @@ public class GUIConfig {
 
 	public void setTransposedNotesForceScale(boolean transposedNotesForceScale) {
 		this.transposedNotesForceScale = transposedNotesForceScale;
+	}
+
+	public int getMelodyRhythmAccents() {
+		return melodyRhythmAccents;
+	}
+
+	public void setMelodyRhythmAccents(int melodyRhythmAccents) {
+		this.melodyRhythmAccents = melodyRhythmAccents;
 	}
 
 }

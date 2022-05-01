@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -2587,6 +2588,8 @@ public class MidiGenerator implements JMC {
 			fillOtherPartsForSection(sec, arr, overridden, sectionVariations, variationGen, arrSeed,
 					measureLength);
 
+			generateMelodyRhythmAccentsFromDrums(sec, arr, measureLength, overridden);
+
 			if (gcPartsReplaced) {
 				restoreGlobalPartsToGuiConfig();
 			}
@@ -2595,6 +2598,11 @@ public class MidiGenerator implements JMC {
 					: measureLength) * sec.getMeasures();
 		}
 		LG.d("Added phrases to sections..");
+		if (false) {
+			new Object() {
+			};
+		}
+
 
 		gc.setArrangementPartVariationChance(originalPVC);
 		gc.setArrangementVariationChance(originalVC);
@@ -2830,6 +2838,87 @@ public class MidiGenerator implements JMC {
 		gc.setActualArrangement(arr);
 		LG.i("MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
 		LG.i("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
+	}
+
+	private void generateMelodyRhythmAccentsFromDrums(Section sec, Arrangement arr,
+			double measureLength, boolean overridden) {
+		// find times when drums are present -> depends on combobox selection
+		if (gc.getMelodyRhythmAccents() == 0 || sec.getDrums().isEmpty()) {
+			//  (NONE -> return)
+			return;
+		}
+
+		List<Double> drumHitTimes = findDrumHitTimes(sec.getDrums(), gc.getMelodyRhythmAccents(),
+				gc.isDrumCustomMapping());
+
+		// for each melody, make a note list sorted by start time
+
+		// for each note list, find where a drum start time intersects with a note's start-end
+
+		// find index of that note in original note list
+
+		// remove/change first note to newly split duration/rv, add the second part of the note
+
+		// optional: second part is accented specially (volume and/or pitch)
+
+		// REMINDER: melody and drums can have separate delays -> in that case, accenting is not a guaranteed to sound good
+	}
+
+	private static List<Double> findDrumHitTimes(List<Phrase> drums, int melodyRhythmAccents,
+			boolean drumCustomMapping) {
+		List<Double> drumHitTimes = new ArrayList<>();
+		Set<Integer> validPitches = new HashSet<>();
+
+		switch (melodyRhythmAccents) {
+		case 1:
+			// snare
+			validPitches.add(38);
+			validPitches.add(40);
+			break;
+		case 2:
+			// kick
+			validPitches.add(35);
+			validPitches.add(36);
+			break;
+		case 3:
+			// open HH/ride
+			validPitches.add(46);
+			validPitches.add(53);
+			break;
+		case 4:
+			// 1 + 2
+			validPitches.add(38);
+			validPitches.add(40);
+			validPitches.add(35);
+			validPitches.add(36);
+			break;
+		case 5:
+			// 1 + 3
+			validPitches.add(38);
+			validPitches.add(40);
+			validPitches.add(46);
+			validPitches.add(53);
+			break;
+		default:
+			throw new IllegalArgumentException("Invalid melody rhythm accent type.");
+		}
+
+		if (drumCustomMapping) {
+			// convert set to semitonal mapping
+			validPitches = validPitches.stream().map(e -> mapDrumPitchByCustomMapping(e, true))
+					.collect(Collectors.toSet());
+		}
+		for (Phrase phr : drums) {
+			List<Note> notes = phr.getNoteList();
+			double currTime = 0;
+			for (Note n : notes) {
+				if (validPitches.contains(n.getPitch())) {
+					drumHitTimes.add(currTime + n.getOffset());
+				}
+				currTime += n.getRhythmValue();
+			}
+		}
+		return drumHitTimes;
 	}
 
 	private int padScoreParts(Score score, List<Integer> partPadding, int part, int trackCount) {
