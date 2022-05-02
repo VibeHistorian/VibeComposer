@@ -2588,7 +2588,7 @@ public class MidiGenerator implements JMC {
 			fillOtherPartsForSection(sec, arr, overridden, sectionVariations, variationGen, arrSeed,
 					measureLength);
 
-			generateMelodyRhythmAccentsFromDrums(sec, arr, measureLength, overridden);
+			postprocessMelodyRhythmAccents(sec, arr, measureLength, overridden);
 
 			if (gcPartsReplaced) {
 				restoreGlobalPartsToGuiConfig();
@@ -2840,10 +2840,11 @@ public class MidiGenerator implements JMC {
 		LG.i("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
-	private void generateMelodyRhythmAccentsFromDrums(Section sec, Arrangement arr,
-			double measureLength, boolean overridden) {
+	private void postprocessMelodyRhythmAccents(Section sec, Arrangement arr, double measureLength,
+			boolean overridden) {
 		// find times when drums are present -> depends on combobox selection
-		if (gc.getMelodyRhythmAccents() == 0 || sec.getDrums().isEmpty()) {
+		if (gc.getMelodyRhythmAccents() == 0 || sec.getDrums().isEmpty()
+				|| sec.getMelodies().isEmpty()) {
 			//  (NONE -> return)
 			return;
 		}
@@ -2852,16 +2853,75 @@ public class MidiGenerator implements JMC {
 				gc.isDrumCustomMapping());
 
 		// for each melody, make a note list sorted by start time
+		int iterations = gc.getMelodyRhythmAccents() > 3 ? 2 : 1;
+		for (int iter = 0; iter < iterations; iter++) {
+			for (Phrase phr : sec.getMelodies()) {
+				List<Note> notes = phr.getNoteList();
+				if (notes.isEmpty()) {
+					continue;
+				}
+				// find where a drum start time intersects with a note's start-end
+				double currentRv = 0;
+				Vector<Note> newNotes = new Vector<>(notes);
+				int addedNotes = 0;
+				for (int i = 0; i < notes.size(); i++) {
+					Note n = notes.get(i);
+					double currTime = currentRv;
+					currentRv += n.getRhythmValue();
+					if (n.getDuration() - DBL_ERR < Durations.SIXTEENTH_NOTE) {
+						continue;
+					}
 
-		// for each note list, find where a drum start time intersects with a note's start-end
+					// small 32nd buffer to prevent cutting notes that would result in too small leftovers
+					double startTime = n.getOffset() + currTime + Durations.SIXTEENTH_NOTE / 2
+							+ DBL_ERR;
+					double endTime = startTime + n.getDuration() - Durations.SIXTEENTH_NOTE / 2
+							- DBL_ERR;
+					if (startTime >= endTime) {
+						continue;
+					}
+					List<Double> intersectingDrumHits = drumHitTimes.stream()
+							.filter(e -> (startTime < e && e < endTime))
+							.collect(Collectors.toList());
+					if (intersectingDrumHits.isEmpty()) {
+						continue;
+					}
+					List<Double> sixteenthAlignedDrumHits = intersectingDrumHits.stream()
+							.filter(e -> MidiUtils.isMultiple(e, Durations.SIXTEENTH_NOTE))
+							.collect(Collectors.toList());
+					double intersection;
+					if (!sixteenthAlignedDrumHits.isEmpty()) {
+						intersection = sixteenthAlignedDrumHits.get(0);
+						LG.i("Found 16th intersections: " + intersection + ", note start: "
+								+ (currTime + n.getOffset()));
+					} else {
+						intersection = intersectingDrumHits.get(0);
+						LG.i("No 16th intersections: " + intersection + ", note start: "
+								+ (currTime + n.getOffset()));
+					}
+					int noteInsertionIndex = i + addedNotes;
 
-		// find index of that note in original note list
+					// |---x----------| -> |---|---------| -> old note's duration is intersection length, new note's offset is moved up by the same amount
+					double intersectionLength = intersection - currTime;
+					Note splitNote = new Note(n.getPitch(), 0,
+							(int) Math.min(126, n.getDynamic() * 1.5));
+					splitNote.setDuration(n.getDuration() - intersectionLength);
+					splitNote.setOffset(n.getOffset() + intersectionLength);
+					n.setDuration(intersectionLength * GLOBAL_DURATION_MULTIPLIER);
+					// optional: second part is accented specially (volume and/or pitch)
 
-		// remove/change first note to newly split duration/rv, add the second part of the note
 
-		// optional: second part is accented specially (volume and/or pitch)
+					newNotes.add(noteInsertionIndex, splitNote);
+					addedNotes++;
 
-		// REMINDER: melody and drums can have separate delays -> in that case, accenting is not a guaranteed to sound good
+				}
+				if (addedNotes > 0) {
+					phr.setNoteList(newNotes);
+				}
+			}
+		}
+
+		// REMINDER: melody and drums can have separate delays -> in that case, accenting is not guaranteed to sound good
 	}
 
 	private static List<Double> findDrumHitTimes(List<Phrase> drums, int melodyRhythmAccents,
@@ -3650,7 +3710,7 @@ public class MidiGenerator implements JMC {
 			if (ip.getOrder() == 1) {
 				fullMelodyMap = new HashMap<>();
 				for (int i = 0; i < progressionDurations.size() * measures; i++) {
-					fullMelodyMap.put(i, new Vector<>());
+					fullMelodyMap.put(i, new ArrayList<>());
 				}
 				int chordCounter = 0;
 				int measureCounter = 0;

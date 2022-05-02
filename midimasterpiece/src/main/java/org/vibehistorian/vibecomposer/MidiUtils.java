@@ -1510,8 +1510,8 @@ public class MidiUtils {
 		return Math.abs(first - second) < MidiGenerator.DBL_ERR;
 	}
 
-	public static boolean isMultiple(double first, double second) {
-		double result = first / second;
+	public static boolean isMultiple(double bigger, double smaller) {
+		double result = bigger / smaller;
 		double rounded = Math.round(result);
 		if (roughlyEqual(result, rounded)) {
 			return true;
