@@ -98,6 +98,8 @@ public class GUIConfig {
 	private int melodyBlockTargetMode = 2;
 	private int melodyPatternEffect = 2;
 	private int melodyRhythmAccents = 0;
+	private int melodyRhythmAccentsMode = 0;
+	private boolean melodyRhythmAccentsPocket = false;
 
 	// chord gen
 	private int chordSlashChance = 0;
@@ -820,6 +822,22 @@ public class GUIConfig {
 
 	public void setMelodyRhythmAccents(int melodyRhythmAccents) {
 		this.melodyRhythmAccents = melodyRhythmAccents;
+	}
+
+	public int getMelodyRhythmAccentsMode() {
+		return melodyRhythmAccentsMode;
+	}
+
+	public void setMelodyRhythmAccentsMode(int melodyRhythmAccentsMode) {
+		this.melodyRhythmAccentsMode = melodyRhythmAccentsMode;
+	}
+
+	public boolean isMelodyRhythmAccentsPocket() {
+		return melodyRhythmAccentsPocket;
+	}
+
+	public void setMelodyRhythmAccentsPocket(boolean melodyRhythmAccentsPocket) {
+		this.melodyRhythmAccentsPocket = melodyRhythmAccentsPocket;
 	}
 
 }

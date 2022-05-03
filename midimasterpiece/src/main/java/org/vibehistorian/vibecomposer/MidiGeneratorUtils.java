@@ -397,6 +397,7 @@ public class MidiGeneratorUtils {
 	}
 
 	static int addAccent(int velocity, Random accentGenerator, int accent) {
+		// 80 + 15 +- 5 + 100/20 -> 95-105 vel.
 		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5
 				+ accent / 20;
 		return OMNI.clamp(newVelocity, 0, 127);

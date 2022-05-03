@@ -2852,6 +2852,19 @@ public class MidiGenerator implements JMC {
 		List<Double> drumHitTimes = findDrumHitTimes(sec.getDrums(), gc.getMelodyRhythmAccents(),
 				gc.isDrumCustomMapping());
 
+		if (gc.isMelodyRhythmAccentsPocket()) {
+			List<Double> fullMeasureHits = new ArrayList<>();
+			for (double i = 0; i < sec.getMeasures()
+					* measureLength; i += Durations.SIXTEENTH_NOTE) {
+				double time = i;
+				if (!(drumHitTimes.stream()
+						.anyMatch(drumTime -> Math.abs(drumTime - time) < DBL_ERR))) {
+					fullMeasureHits.add(i);
+				}
+			}
+			drumHitTimes = fullMeasureHits;
+		}
+
 		// for each melody, make a note list sorted by start time
 		int iterations = gc.getMelodyRhythmAccents() > 3 ? 2 : 1;
 		for (int iter = 0; iter < iterations; iter++) {
@@ -2903,13 +2916,24 @@ public class MidiGenerator implements JMC {
 
 					// |---x----------| -> |---|---------| -> old note's duration is intersection length, new note's offset is moved up by the same amount
 					double intersectionLength = intersection - currTime;
-					Note splitNote = new Note(n.getPitch(), 0,
-							(int) Math.min(126, n.getDynamic() * 1.5));
+					Note splitNote = new Note(n.getPitch(), 0, n.getDynamic());
 					splitNote.setDuration(n.getDuration() - intersectionLength);
 					splitNote.setOffset(n.getOffset() + intersectionLength);
+					switch (gc.getMelodyRhythmAccentsMode()) {
+					case 0:
+						splitNote.setPitch(Note.REST);
+						break;
+					case 1:
+						// chord note?
+						splitNote.setPitch(n.getPitch() + 1);
+						break;
+					case 2:
+						splitNote.setDynamic((int) Math.min(126, n.getDynamic() * 1.5));
+						break;
+					default:
+						break;
+					}
 					n.setDuration(intersectionLength * GLOBAL_DURATION_MULTIPLIER);
-					// optional: second part is accented specially (volume and/or pitch)
-
 
 					newNotes.add(noteInsertionIndex, splitNote);
 					addedNotes++;

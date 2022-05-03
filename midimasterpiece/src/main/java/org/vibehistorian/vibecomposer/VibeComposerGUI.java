@@ -479,6 +479,8 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
 	ScrollComboBox<String> melodyPatternEffect;
 	ScrollComboBox<String> melodyRhythmAccents;
+	ScrollComboBox<String> melodyRhythmAccentsMode;
+	JCheckBox melodyRhythmAccentsPocket;
 	JCheckBox melodyPatternRandomizeOnCompose;
 	KnobPanel melodyReplaceAvoidNotes;
 	KnobPanel melodyMaxDirChanges;
@@ -1604,9 +1606,13 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternEffect.setSelectedIndex(2);
 		melodyPatternRandomizeOnCompose = makeCheckBox(
 				"<html>Randomize Pattern<br> on Compose</html>", true, true);
-		melodyRhythmAccents = new ScrollComboBox<>(false);
+		melodyRhythmAccents = new ScrollComboBox<>(true);
 		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
 				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
+		melodyRhythmAccentsMode = new ScrollComboBox<>(true);
+		ScrollComboBox.addAll(new String[] { "Mute", "Repitch", "Vol+", "---" },
+				melodyRhythmAccentsMode);
+		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
@@ -1635,15 +1641,21 @@ public class VibeComposerGUI extends JFrame
 
 
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Target Mode"));
+		melodySettingsExtraPanelBlocksPatternsCompose
+				.add(new JLabel("<html>Note Target<br>Mode</html>"));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
-		melodySettingsExtraPanelBlocksPatternsCompose
-				.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyRhythmAccents);
+		JPanel postProcessPanel = new JPanel();
+		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		postProcessPanel.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
+		postProcessPanel.add(melodyRhythmAccents);
+		postProcessPanel.add(new JLabel("Mode"));
+		postProcessPanel.add(melodyRhythmAccentsMode);
+		postProcessPanel.add(melodyRhythmAccentsPocket);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(postProcessPanel);
 
 		JPanel melodySettingsExtraPanelOrg = new JPanel();
 		melodySettingsExtraPanelOrg.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -7882,6 +7894,8 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
 		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
 		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
+		gc.setMelodyRhythmAccentsMode(melodyRhythmAccentsMode.getSelectedIndex());
+		gc.setMelodyRhythmAccentsPocket(melodyRhythmAccentsPocket.isSelected());
 		gc.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
 		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
 		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
@@ -8016,6 +8030,8 @@ public class VibeComposerGUI extends JFrame
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
 		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
 		melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
+		melodyRhythmAccentsMode.setSelectedIndex(gc.getMelodyRhythmAccentsMode());
+		melodyRhythmAccentsPocket.setSelected(gc.isMelodyRhythmAccentsPocket());
 		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
 		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
 		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
