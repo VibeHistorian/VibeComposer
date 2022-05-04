@@ -1606,10 +1606,10 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternEffect.setSelectedIndex(2);
 		melodyPatternRandomizeOnCompose = makeCheckBox(
 				"<html>Randomize Pattern<br> on Compose</html>", true, true);
-		melodyRhythmAccents = new ScrollComboBox<>(true);
+		melodyRhythmAccents = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
 				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
-		melodyRhythmAccentsMode = new ScrollComboBox<>(true);
+		melodyRhythmAccentsMode = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new String[] { "Mute", "Repitch", "Vol+", "---" },
 				melodyRhythmAccentsMode);
 		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
@@ -4041,7 +4041,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(globalSwingPanel);
 
 
-		beatDurationMultiplier = new ScrollComboBox<Double>(false);
+		beatDurationMultiplier = new ScrollComboBox<Double>();
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, beatDurationMultiplier);
 		JPanel useDoubledPanel = new JPanel();
 		useDoubledPanel.add(new JLabel("Beat Dur. Multiplier"));
