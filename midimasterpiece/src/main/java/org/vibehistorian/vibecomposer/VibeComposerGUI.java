@@ -1814,7 +1814,7 @@ public class VibeComposerGUI extends JFrame
 			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			if (i > 0) {
-
+				melodyPanel.setAccents(50);
 				melodyPanel.setFillPauses(true);
 				melodyPanel.setSpeed(0);
 				melodyPanel.setPauseChance(70);
@@ -1836,6 +1836,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				melodyPanel.getVolSlider().setValue(45);
 			} else {
+				melodyPanel.setAccents(75);
 				melodyPanel.setFillPauses(false);
 				melodyPanel.setSpeed(15);
 				melodyPanel.setPauseChance(15);
