@@ -2944,15 +2944,35 @@ public class MidiGenerator implements JMC {
 						splitNote.setPitch(Note.REST);
 						break;
 					case 1:
-						// chord notes
-						int newPitchOrder = sortedPitches.indexOf(originalPitch % 12) + 1;
-						int pitchAdd = (newPitchOrder < sortedPitches.size())
-								? sortedPitches.get(newPitchOrder)
+						int newPitchOrderUp = sortedPitches.indexOf(originalPitch % 12) + 1;
+						int pitchAdd = (newPitchOrderUp < sortedPitches.size())
+								? sortedPitches.get(newPitchOrderUp)
 								: (sortedPitches.get(0) + 12);
 						splitNote.setPitch(MidiUtils.octavePitch(originalPitch) + pitchAdd);
 						break;
 					case 2:
-						splitNote.setDynamic((int) Math.min(126, n.getDynamic() * 1.5));
+						int newPitchOrderDown = sortedPitches.indexOf(originalPitch % 12) - 1;
+						int pitchSubtract = (newPitchOrderDown >= 0)
+								? sortedPitches.get(newPitchOrderDown)
+								: (sortedPitches.get(sortedPitches.size() - 1) - 12);
+						splitNote.setPitch(MidiUtils.octavePitch(originalPitch) + pitchSubtract);
+						break;
+					case 3:
+						int newPitchOrder = sortedPitches.indexOf(originalPitch % 12)
+								+ (accentGenerator.nextBoolean() ? 1 : -1);
+						int pitchAdjustment = (newPitchOrder >= 0
+								&& newPitchOrder < sortedPitches.size())
+										? sortedPitches.get(newPitchOrder)
+										: (newPitchOrder < 0
+												? (sortedPitches.get(sortedPitches.size() - 1) - 12)
+												: (sortedPitches.get(0) + 12));
+						splitNote.setPitch(MidiUtils.octavePitch(originalPitch) + pitchAdjustment);
+						break;
+					case 4:
+						splitNote.setDynamic((int) Math.min(126, n.getDynamic() * 1.25));
+						break;
+					case 5:
+						splitNote.setDynamic((int) Math.min(126, n.getDynamic() * 0.75));
 						break;
 					default:
 						break;

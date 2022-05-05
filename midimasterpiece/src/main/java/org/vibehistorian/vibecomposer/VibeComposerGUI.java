@@ -1610,7 +1610,8 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
 				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
 		melodyRhythmAccentsMode = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "Mute", "Repitch", "Vol+", "---" },
+		ScrollComboBox.addAll(
+				new String[] { "Mute", "Pitch+", "Pitch-", "Pitch~", "Vol+", "Vol-", "---" },
 				melodyRhythmAccentsMode);
 		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
 
