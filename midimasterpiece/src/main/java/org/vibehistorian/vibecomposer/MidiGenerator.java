@@ -84,6 +84,7 @@ public class MidiGenerator implements JMC {
 	public static final double DBL_ERR = 0.01;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
 	public static double GLOBAL_DURATION_MULTIPLIER = 0.95;
+	public static double SPLIT_DURATION_MULTIPLIER = 0.97;
 	public static final int[] DEFAULT_INSTRUMENT_TRANSPOSE = { 0, -24, -12, -24, 0 };
 
 	public enum ShowScoreMode {
@@ -2934,7 +2935,7 @@ public class MidiGenerator implements JMC {
 					int noteInsertionIndex = i + addedNotes;
 
 					// |---x----------| -> |---|---------| -> old note's duration is intersection length, new note's offset is moved up by the same amount
-					double intersectionLength = intersection - currTime;
+					double intersectionLength = intersection - currTime - n.getOffset();
 					int originalPitch = n.getPitch();
 					Note splitNote = new Note(originalPitch, 0, n.getDynamic());
 					splitNote.setDuration(n.getDuration() - intersectionLength);
@@ -2977,7 +2978,7 @@ public class MidiGenerator implements JMC {
 					default:
 						break;
 					}
-					n.setDuration(intersectionLength * GLOBAL_DURATION_MULTIPLIER);
+					n.setDuration(intersectionLength * SPLIT_DURATION_MULTIPLIER);
 
 					newNotes.add(noteInsertionIndex, splitNote);
 					addedNotes++;
