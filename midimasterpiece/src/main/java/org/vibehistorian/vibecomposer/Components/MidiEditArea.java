@@ -58,7 +58,7 @@ public class MidiEditArea extends JComponent {
 	public List<PhraseNote> selectedNotesCopy = new ArrayList<>();
 	PhraseNote draggedNote;
 	PhraseNote draggedNoteCopy;
-	Point orderValDeletion;
+	Point orderValPressed;
 	Set<DM> dragMode = new HashSet<>();
 	Integer dragLocation;
 	long lastPlayedNoteTime;
@@ -132,9 +132,7 @@ public class MidiEditArea extends JComponent {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 					handleLeftPress(evt);
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
-					if (selectedNotes.size() < 2) {
-						orderValDeletion = getOrderAndValueFromPosition(evt.getPoint());
-					}
+					orderValPressed = getOrderAndValueFromPosition(evt.getPoint());
 				} else if (SwingUtilities.isMiddleMouseButton(evt)) {
 					handleMiddlePress(evt);
 				}
@@ -217,8 +215,8 @@ public class MidiEditArea extends JComponent {
 
 	private void handleMiddlePress(MouseEvent evt) {
 		Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-		int isAlt = evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK;
-		if (isAlt == MouseEvent.ALT_DOWN_MASK) {
+		boolean isAlt = (evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) > 0;
+		if (isAlt) {
 			dragMode.add(DM.DURATION);
 		} else if (evt.isControlDown()) {
 			if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
@@ -256,14 +254,42 @@ public class MidiEditArea extends JComponent {
 
 	private boolean handleRightRelease(MouseEvent evt) {
 		Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
-		if (orderVal != null && orderVal.equals(orderValDeletion)) {
+		boolean isAlt = (evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) > 0;
+		boolean sameNotePressed = orderVal != null && orderVal.equals(orderValPressed);
+		if (isAlt && sameNotePressed) {
+			splitNotes(orderVal.x, evt.getPoint());
+		} else if (selectedNotes.size() < 2 && sameNotePressed) {
 			setVal(orderVal.x, Note.REST);
 		} else {
 			selectAllNotes(evt);
 			return false;
 		}
+
 		return true;
 	}
+
+	private void splitNotes(int noteIndex, Point point) {
+		values.remakeNoteStartTimes();
+		double time = getTimeFromPosition(point);
+		PhraseNote splitNote = values.get(noteIndex);
+		List<PhraseNote> notesToSplit = selectedNotes.contains(splitNote) ? selectedNotes
+				: Collections.singletonList(splitNote);
+		for (PhraseNote pn : notesToSplit) {
+			double noteEnd = (pn.getStartTime() + pn.getDuration());
+			if (pn.getStartTime() < time && time < noteEnd) {
+				int newNoteIndex = values.indexOf(pn);
+				pn.setDuration(time - pn.getStartTime());
+				PhraseNote newPn = new PhraseNote();
+				newPn.setPitch(pn.getPitch());
+				newPn.setRv(0);
+				newPn.setDynamic(pn.getDynamic());
+				newPn.setDuration(noteEnd - time);
+				newPn.setOffset(pn.getOffset() + pn.getDuration());
+				values.add(newNoteIndex, newPn);
+			}
+		}
+	}
+
 
 	private void handleLeftPress(MouseEvent evt) {
 		if (evt.isAltDown()) {
@@ -498,7 +524,7 @@ public class MidiEditArea extends JComponent {
 		highlightedDragLocation = null;
 		mousePoint = null;
 
-		orderValDeletion = null;
+		orderValPressed = null;
 
 		setAndRepaint();
 	}
