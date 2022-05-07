@@ -580,6 +580,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox spiceAllow9th13th;
 	JCheckBox spiceFlattenBigChords;
 	JCheckBox squishChordsProgressively;
+	JCheckBox copyChordsAfterGenerate;
 	KnobPanel spiceParallelChance;
 
 	JCheckBox spiceForceScale;
@@ -1162,7 +1163,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
 				true);
-		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset customized panels On Compose",
+		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset Customized Panels on Compose",
 				true, true);
 
 		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
@@ -1301,6 +1302,8 @@ public class VibeComposerGUI extends JFrame
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		squishChordsProgressively = new CustomCheckBox("<html>Flatten<br>Progressively</html>",
 				false);
+		copyChordsAfterGenerate = makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
+				true);
 		longProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0, 100);
 
 
@@ -1309,6 +1312,7 @@ public class VibeComposerGUI extends JFrame
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
 		chordChoicePanel.add(squishChordsProgressively);
+		chordChoicePanel.add(copyChordsAfterGenerate);
 		chordChoicePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
 		chordChoicePanel.add(keyChangeTypeSelection);
 		extraSettingsPanel.add(chordChoicePanel);
@@ -4858,7 +4862,7 @@ public class VibeComposerGUI extends JFrame
 		regeneratePausePlay.setPreferredSize(new Dimension(25, 30));
 		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
 		JButton copySeed = makeButton("Copy Main Seed", "CopySeed");
-		JButton copyChords = makeButton("Copy chords", "CopyChords");
+		JButton copyChords = makeButton("Copy chords", e -> copyChords());
 		JButton clearSeed = makeButton("Clear All Seeds", e -> clearAllSeeds());
 
 		controlSettingsPanel.add(regenerate);
@@ -4875,6 +4879,12 @@ public class VibeComposerGUI extends JFrame
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		everythingPanel.add(controlSettingsPanel, constraints);
+	}
+
+	private void copyChords() {
+		userChords.setupChords(
+				currentChords.getText().substring(8, currentChords.getText().length() - 1));
+		LG.i(("Copied chords: " + userChords.getChordListString()));
 	}
 
 	public void regenerateInPlace() {
@@ -5272,6 +5282,7 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternRandomizeOnCompose.setSelected(state);
 		randomizeTimingsOnCompose.setSelected(state);
 		sidechainPatternsOnCompose.setSelected(state);
+		copyChordsAfterGenerate.setSelected(state);
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
@@ -5292,6 +5303,7 @@ public class VibeComposerGUI extends JFrame
 		switchOnComposeRandom.setForeground(fg);
 		randomizeTimingsOnCompose.setForeground(fg);
 		sidechainPatternsOnCompose.setForeground(fg);
+		copyChordsAfterGenerate.setForeground(fg);
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -5868,11 +5880,18 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void cleanUpUIAfterCompose(boolean regenerate) {
+
+
+		List<String> prettyChords = MidiGenerator.chordInts;
+		currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
+
 		if (MelodyMidiDropPane.userMelody != null) {
 			String chords = StringUtils.join(MidiGenerator.chordInts, ",");
 			userChords.setupChords(MidiGenerator.chordInts);
 			setChordProgressionLength(MidiGenerator.chordInts.size());
 			guiConfig.setCustomChords(chords);
+		} else if (!userChordsEnabled.isSelected() && copyChordsAfterGenerate.isSelected()) {
+			userChords.setupChords(MidiGenerator.chordInts);
 		}
 
 		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
@@ -6086,9 +6105,6 @@ public class VibeComposerGUI extends JFrame
 			// Force the slider to use the new labels
 			slider.setLabelTable(table);
 			slider.setPaintLabels(true);
-
-			List<String> prettyChords = MidiGenerator.chordInts;
-			currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
 
 			if (loopBeat.isSelected()) {
 				resetPauseInfo();
@@ -6818,13 +6834,6 @@ public class VibeComposerGUI extends JFrame
 			randomSeed.setValue(lastRandomSeed);
 			LG.i(("Copied to random seed: " + lastRandomSeed));
 		}
-
-		if (ae.getActionCommand() == "CopyChords") {
-			userChords.setupChords(
-					currentChords.getText().substring(8, currentChords.getText().length() - 1));
-			LG.i(("Copied chords: " + userChords.getChordListString()));
-		}
-
 
 		if (ae.getActionCommand() == "LoadGUIConfig") {
 			FileDialog fd = new FileDialog(this, "Choose a file", FileDialog.LOAD);
@@ -7758,6 +7767,7 @@ public class VibeComposerGUI extends JFrame
 
 		// extra settings
 		cs.add(globalNoteLengthMultiplier);
+		cs.add(copyChordsAfterGenerate);
 
 		return cs;
 	}
