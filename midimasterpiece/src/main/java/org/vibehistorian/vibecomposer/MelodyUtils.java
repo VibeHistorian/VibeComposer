@@ -173,29 +173,32 @@ public class MelodyUtils {
 	public static Pair<Integer, Integer[]> getRandomByApproxBlockChangeAndLength(int blockChange,
 			int approx, Random melodyBlockGenerator, Integer length, int remainingVariance,
 			int remainingDirChanges) {
-		int chosenChange = blockChange + melodyBlockGenerator.nextInt(approx * 2 + 1) - approx;
-		chosenChange = OMNI.clamp(chosenChange, -7, 7);
 		//LG.d("Chosen change: " + chosenChange);
 		List<Pair<Integer, Integer[]>> viableBlocks = new ArrayList<>();
-		if (BLOCK_CHANGE_MAP.containsKey(chosenChange)) {
-			for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(chosenChange)) {
-				Integer[] block = typeBlock.getRight();
-				if (length == null || block.length == length) {
-					viableBlocks.add(typeBlock);
+		int start = Math.max(blockChange - approx, -7);
+		int end = Math.min(blockChange + approx, 7);
+		for (int i = start; i <= end; i++) {
+			if (BLOCK_CHANGE_MAP.containsKey(i)) {
+				for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(i)) {
+					Integer[] block = typeBlock.getRight();
+					if (length == null || block.length == length) {
+						viableBlocks.add(typeBlock);
+					}
 				}
-			}
 
-		}
-		if (BLOCK_CHANGE_MAP.containsKey(chosenChange * -1)) {
-			List<Pair<Integer, Integer[]>> invertedBlocks = new ArrayList<>();
-			for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(chosenChange * -1)) {
-				Integer[] block = typeBlock.getRight();
-				if (length == null || block.length == length) {
-					invertedBlocks.add(Pair.of(typeBlock.getLeft(), inverse(block)));
-				}
 			}
-			viableBlocks.addAll(invertedBlocks);
+			if (BLOCK_CHANGE_MAP.containsKey(i * -1)) {
+				List<Pair<Integer, Integer[]>> invertedBlocks = new ArrayList<>();
+				for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(i * -1)) {
+					Integer[] block = typeBlock.getRight();
+					if (length == null || block.length == length) {
+						invertedBlocks.add(Pair.of(typeBlock.getLeft(), inverse(block)));
+					}
+				}
+				viableBlocks.addAll(invertedBlocks);
+			}
 		}
+
 		//int sizeBefore = viableBlocks.size();
 		viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
 		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
