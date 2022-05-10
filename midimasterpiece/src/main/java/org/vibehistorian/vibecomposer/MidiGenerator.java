@@ -729,6 +729,7 @@ public class MidiGenerator implements JMC {
 			//LG.d("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
 			mbs.add(mb);
+			//LG.i("Created block: " + StringUtils.join(blockNotes, ","));
 		}
 		return mbs;
 	}
@@ -4265,7 +4266,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				flamGenerator.setSeed(orderSeed + 30 + (chordIndex % 2));
+				flamGenerator.setSeed(orderSeed + 30 + (chordIndex % 4));
 				Chord c = Chord.EMPTY(progressionDurations.get(chordIndex));
 				if (!ignoreChordSpanFill) {
 					if (fillPattern.get(chordIndex) < 1) {
