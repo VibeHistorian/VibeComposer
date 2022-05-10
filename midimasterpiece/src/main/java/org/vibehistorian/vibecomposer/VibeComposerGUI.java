@@ -5623,7 +5623,8 @@ public class VibeComposerGUI extends JFrame
 
 		cleanUpUIAfterCompose(regenerate);
 
-		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate) {
+		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
+				|| configHistory.getItemCount() == 0) {
 			midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 			midiConfig.setRegenerateCount(regenerateCount);
 			configHistory.addItem(midiConfig);
