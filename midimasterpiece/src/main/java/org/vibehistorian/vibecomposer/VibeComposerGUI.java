@@ -9558,4 +9558,29 @@ public class VibeComposerGUI extends JFrame
 		}
 		return Pair.of(lastMode, lastKeyChange);
 	}
+
+	public static boolean isSingleSolo() {
+		int groupIndex = -1;
+		for (int i = 0; i < groupSoloMuters.size(); i++) {
+			if (groupSoloMuters.get(i).soloState != State.OFF) {
+				if (groupIndex >= 0) {
+					return false;
+				}
+				groupIndex = i;
+			}
+		}
+		if (groupIndex < 0) {
+			return false;
+		}
+		boolean foundSolo = false;
+		for (InstPanel ip : getInstList(groupIndex)) {
+			if (ip.getSoloMuter().soloState != State.OFF) {
+				if (foundSolo) {
+					return false;
+				}
+				foundSolo = true;
+			}
+		}
+		return foundSolo;
+	}
 }

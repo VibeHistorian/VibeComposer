@@ -235,9 +235,17 @@ public class ShowAreaBig extends JComponent {
 										VibeComposerGUI.currentMidiEditorSectionIndex = phrase.secOrder;
 										return;
 									} else {
+										boolean unsoloAll = false;
 										if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
+											unsoloAll = VibeComposerGUI.isSingleSolo()
+													&& (VibeComposerGUI.getInstList(phrase.part)
+															.get(phrase.partOrder)
+															.getSoloMuter().soloState == State.FULL);
+										}
+										if (!unsoloAll) {
 											VibeComposerGUI.globalSoloMuter.toggleSolo(true);
 										}
+
 										VibeComposerGUI.getInstList(phrase.part)
 												.get(phrase.partOrder).getSoloMuter()
 												.toggleSolo(true);
