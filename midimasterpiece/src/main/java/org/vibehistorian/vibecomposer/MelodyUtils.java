@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,9 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+
+import jm.music.data.Note;
 
 public class MelodyUtils {
 
@@ -496,5 +500,33 @@ public class MelodyUtils {
 					.get(altPatternIndices.get(rand.nextInt(altPatternIndices.size()))));
 		}
 		return new ArrayList<>(MELODY_PATTERNS.get(rand.nextInt(MELODY_PATTERNS.size())));
+	}
+
+	public static List<Note> sortNotesByRhythmicImportance(List<Note> notes) {
+		List<Note> sorted = new ArrayList<>();
+		List<Note> main8th = new ArrayList<>();
+		List<Note> main16th = new ArrayList<>();
+		List<Note> others = new ArrayList<>();
+
+		double currTime = 0;
+		for (Note n : notes) {
+			if (MidiUtils.isMultiple(currTime + n.getOffset(), Durations.EIGHTH_NOTE)) {
+				main8th.add(n);
+			} else if (MidiUtils.isMultiple(currTime + n.getOffset(), Durations.SIXTEENTH_NOTE)) {
+				main16th.add(n);
+			} else {
+				others.add(n);
+			}
+			currTime += n.getRhythmValue();
+		}
+		Collections.sort(main8th, Comparator.comparing(e -> e.getRhythmValue()));
+		Collections.sort(main16th, Comparator.comparing(e -> e.getRhythmValue()));
+		Collections.sort(others, Comparator.comparing(e -> e.getRhythmValue()));
+		sorted.addAll(others);
+		sorted.addAll(main16th);
+		sorted.addAll(main8th);
+		LG.i("Others: " + others.size() + ", 16th: " + main16th.size() + ", 8th: "
+				+ main8th.size());
+		return sorted;
 	}
 }

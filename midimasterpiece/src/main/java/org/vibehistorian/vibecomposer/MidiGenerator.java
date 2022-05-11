@@ -874,8 +874,9 @@ public class MidiGenerator implements JMC {
 
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
-			List<Note> notes = new ArrayList<>(fullMelodyMap.get(chordIndex));
-			Collections.sort(notes, Comparator.comparing(e -> e.getRhythmValue()));
+			List<Note> notes = MelodyUtils
+					.sortNotesByRhythmicImportance(fullMelodyMap.get(chordIndex));
+			//Collections.sort(notes, Comparator.comparing(e -> e.getRhythmValue()));
 			pauseGenerator.setSeed(orderSeed + 5);
 			int actualPauseChance = MidiGeneratorUtils.adjustChanceParamForTransition(
 					mp.getPauseChance(), sec, chordIndex, durations.size(), 40, 0.25, false);
@@ -883,7 +884,7 @@ public class MidiGenerator implements JMC {
 			int startIndex = (mp.isFillPauses())
 					? (gc.isMelodyFillPausesPerChord() ? 1 : ((chordIndex == 0) ? 1 : 0))
 					: 0;
-
+			LG.i("Pausing first # sorted notes: " + pausedNotes);
 			for (int j = 0; j < pausedNotes; j++) {
 				Note n = notes.get(j);
 				if (startIndex == 1) {
