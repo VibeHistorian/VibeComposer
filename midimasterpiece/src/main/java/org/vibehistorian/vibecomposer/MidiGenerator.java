@@ -884,7 +884,7 @@ public class MidiGenerator implements JMC {
 			int startIndex = (mp.isFillPauses())
 					? (gc.isMelodyFillPausesPerChord() ? 1 : ((chordIndex == 0) ? 1 : 0))
 					: 0;
-			LG.i("Pausing first # sorted notes: " + pausedNotes);
+			//LG.i("Pausing first # sorted notes: " + pausedNotes);
 			for (int j = 0; j < pausedNotes; j++) {
 				Note n = notes.get(j);
 				if (startIndex == 1) {

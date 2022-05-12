@@ -525,7 +525,7 @@ public class MelodyUtils {
 		sorted.addAll(others);
 		sorted.addAll(main16th);
 		sorted.addAll(main8th);
-		LG.i("Others: " + others.size() + ", 16th: " + main16th.size() + ", 8th: "
+		LG.n("Others: " + others.size() + ", 16th: " + main16th.size() + ", 8th: "
 				+ main8th.size());
 		return sorted;
 	}

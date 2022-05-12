@@ -1133,6 +1133,7 @@ public class VibeComposerGUI extends JFrame
 					recalculateTabPaneCounts();
 					recalculateGenerationCounts();
 					manualArrangement.setSelected(false);
+					midiMode.repaint();
 				} catch (JAXBException | IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -4167,6 +4168,7 @@ public class VibeComposerGUI extends JFrame
 		JButton randomizeCustomChords = makeButton("    Randomize Chords    ", e -> {
 			userChordsEnabled.setSelected(true);
 			randomizeUserChords();
+			userChordsEnabled.repaint();
 		});
 		customChordsPanel.add(randomizeCustomChords);
 
