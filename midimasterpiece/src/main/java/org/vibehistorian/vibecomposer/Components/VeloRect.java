@@ -10,6 +10,8 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -41,10 +43,10 @@ public class VeloRect extends JComponent {
 	private VisualPatternPanel visualParent = null;
 	private int visualParentOrderIndex = -1;
 
-	public VeloRect(int min, int max, int currentVal) {
+	public VeloRect(int minimum, int maximum, int currentVal) {
 		super();
-		this.min = min;
-		this.max = max;
+		this.min = minimum;
+		this.max = maximum;
 		this.val = currentVal;
 		this.defaultVal = currentVal;
 		addMouseListener(new MouseAdapter() {
@@ -87,6 +89,16 @@ public class VeloRect extends JComponent {
 				}
 			}
 
+		});
+
+		addMouseWheelListener(new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				int scrollAmount = Math.max(1, (max - min) / 20);
+				setValue(OMNI.clamp(val - e.getWheelRotation() * scrollAmount, min, max));
+				repaint();
+			}
 		});
 		setOpaque(true);
 		updateSizes(defaultSize);
