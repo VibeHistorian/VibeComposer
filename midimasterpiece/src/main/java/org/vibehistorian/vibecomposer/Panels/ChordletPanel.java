@@ -359,4 +359,29 @@ public class ChordletPanel extends JPanel {
 		}
 		update();
 	}
+
+	public void conformToMelodyPattern(List<Integer> chordNoteChoices) {
+		// goal1: align top notes of chords with melody
+		// goal2: also copy up/down flow of melody
+
+		for (int i = 0; i < chordCount(); i++) {
+			int[] mapped = MidiUtils.mappedChord(chordlets.get(i).getChordText());
+			int melodyChoice = chordNoteChoices.get(i % chordNoteChoices.size());
+			int melodyNote = MidiUtils.MAJ_SCALE.get((melodyChoice + 70) % 7) % 12;
+
+			if (mapped[mapped.length - 1] % 12 == melodyNote) {
+				chordlets.get(i).updateInversion(0);
+				continue;
+			}
+
+			for (int j = 0; j < mapped.length - 1; j++) {
+				if ((mapped[j] % 12) == melodyNote) {
+					int inversion = (melodyChoice >= 0) ? (j + 1) : (-1 * (mapped.length - j + 1));
+					chordlets.get(i).updateInversion(inversion);
+				}
+
+			}
+		}
+
+	}
 }

@@ -343,4 +343,9 @@ public class Chordlet extends JComponent {
 		dragP = new Point(evt.getPoint());
 	}
 
+	public void updateInversion(int inversion) {
+		this.inversion = inversion;
+		update();
+	}
+
 }

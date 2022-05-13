@@ -4317,6 +4317,18 @@ public class VibeComposerGUI extends JFrame
 		});
 		customChordsPanel.add(limitChordsButton);
 
+		JButton melodifyChordsButton = new JButton(".M");
+		melodifyChordsButton.setPreferredSize(new Dimension(25, 25));
+		melodifyChordsButton.setMargin(new Insets(0, 0, 0, 0));
+		melodifyChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				userChords.conformToMelodyPattern(melodyPanels.get(0).getChordNoteChoices());
+			}
+		});
+		customChordsPanel.add(melodifyChordsButton);
+
 		userChordsDurations = new JTextField("4,4,4,4", 9);
 		JLabel userChordsDurationsLabel = new JLabel("Chord durations:");
 		customChordsPanel.add(userChordsDurationsLabel);
