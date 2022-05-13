@@ -4324,7 +4324,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				userChords.conformToMelodyPattern(melodyPanels.get(0).getChordNoteChoices());
+				userChords.alignWithMelodyTargetNotes(melodyPanels.get(0).getChordNoteChoices());
 			}
 		});
 		customChordsPanel.add(melodifyChordsButton);

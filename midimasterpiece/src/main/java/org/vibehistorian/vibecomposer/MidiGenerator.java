@@ -3056,9 +3056,9 @@ public class MidiGenerator implements JMC {
 		if (gc.isPartEnabled(part) && partPadding.size() > 0
 				&& trackCount < partPadding.get(part)) {
 			int tracksToPad = partPadding.get(part) - trackCount;
+			LG.i("Padding: " + part + ", #: " + tracksToPad);
 			for (int i = 0; i < tracksToPad; i++) {
 				score.add(PartExt.makeFillerPart());
-				LG.i("Padding: " + part + ", #: " + i);
 			}
 			return tracksToPad;
 		}
