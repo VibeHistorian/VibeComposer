@@ -365,7 +365,7 @@ public class ChordletPanel extends JPanel {
 		// goal2: also copy up/down flow of melody
 
 		for (int i = 0; i < chordCount(); i++) {
-			int[] mapped = MidiUtils.mappedChord(chordlets.get(i).getChordText());
+			int[] mapped = MidiUtils.mappedChord(chordlets.get(i).getSpicedText());
 			int melodyChoice = melodyTargetNotes.get(i % melodyTargetNotes.size());
 			int melodyNote = MidiUtils.MAJ_SCALE.get((melodyChoice + 70) % 7) % 12;
 

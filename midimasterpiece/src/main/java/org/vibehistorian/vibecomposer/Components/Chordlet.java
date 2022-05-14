@@ -324,7 +324,11 @@ public class Chordlet extends JComponent {
 	}
 
 	public String getChordText() {
-		return firstLetter + sharpString() + spice + (inversion != null ? ("." + inversion) : "");
+		return getSpicedText() + (inversion != null ? ("." + inversion) : "");
+	}
+
+	public String getSpicedText() {
+		return firstLetter + sharpString() + spice;
 	}
 
 	public ChordletPanel getParentPanel() {
