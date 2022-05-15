@@ -221,6 +221,8 @@ public class VibeComposerGUI extends JFrame
 
 	private static final long serialVersionUID = -677536546851756969L;
 
+	private static final String FILENAME_VALID_CHARACTERS = "[a-zA-Z0-9,\\-_']";
+	private static final String FILENAME_VALID_NAME = "^" + FILENAME_VALID_CHARACTERS + "+$";
 	private static final String MIDIS_FOLDER = "midis";
 	private static final String DRUMS_FOLDER = "drums";
 	private static final String MIDI_HISTORY_FOLDER = MIDIS_FOLDER + "/midi_history";
@@ -1148,7 +1150,9 @@ public class VibeComposerGUI extends JFrame
 	private void savePreset() {
 		String presetName = (String) presetLoadBox.getEditor().getItem();
 		LG.i("Trying to save preset: " + presetName);
-		if (!StringUtils.isAlphanumeric(presetName)) {
+		if (!presetName.matches(FILENAME_VALID_NAME)) {
+			new TemporaryInfoPopup("Name contains invalid characters: "
+					+ presetName.replaceAll(FILENAME_VALID_CHARACTERS, ""), 2500);
 			return;
 		}
 		File makeSavedDir = new File(PRESET_FOLDER);
