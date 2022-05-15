@@ -367,60 +367,42 @@ public class ChordletPanel extends JPanel {
 		Integer prevNote = null;
 		for (int i = 0; i < chordCount(); i++) {
 			int[] mapped = MidiUtils.mappedChord(chordlets.get(i).getSpicedText());
+			List<Integer> pitches = MidiUtils.chordToPitches(mapped);
 			int melodyChoice = melodyTargetNotes.get(i % melodyTargetNotes.size());
 			int melodyNote = MidiUtils.MAJ_SCALE.get((melodyChoice + 70) % 7) % 12;
+			// round note to closest from chord
+			int noteInChordIndex = pitches
+					.indexOf(MidiUtils.getClosestFromList(pitches, melodyNote));
 
-			if (mapped[mapped.length - 1] % 12 == melodyNote) {
-				int newNote = MidiUtils.getXthChordNote(mapped.length - 1, mapped);
-				int inversion = 0;
-				if (i > 0) {
-					if (newNote > prevNote && melodyTargetNotes
-							.get((i - 1) % melodyTargetNotes.size()) > melodyChoice) {
-						inversion -= mapped.length;
-					} else if (newNote < prevNote && melodyTargetNotes
-							.get((i - 1) % melodyTargetNotes.size()) < melodyChoice) {
-						inversion += mapped.length;
-					} else if (newNote - 12 >= prevNote) {
-						inversion -= mapped.length;
-					} else if (newNote + 12 <= prevNote) {
-						inversion += mapped.length;
-					}
-				}
-				prevNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
-				chordlets.get(i).updateInversion(inversion);
-				continue;
+			int inversion = 0;
+			if (noteInChordIndex < mapped.length - 1) {
+				inversion = (melodyChoice >= 0) ? (noteInChordIndex + 1)
+						: (-1 * (mapped.length - noteInChordIndex - 1));
 			}
 
-			for (int j = 0; j < mapped.length - 1; j++) {
-				if ((mapped[j] % 12) == melodyNote) {
-					int inversion = (melodyChoice >= 0) ? (j + 1) : (-1 * (mapped.length - j - 1));
-					int newNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
-					if (i > 0) {
-						if (newNote > prevNote && melodyTargetNotes
-								.get((i - 1) % melodyTargetNotes.size()) > melodyChoice) {
-							inversion -= mapped.length;
-						} else if (newNote < prevNote && melodyTargetNotes
-								.get((i - 1) % melodyTargetNotes.size()) < melodyChoice) {
-							inversion += mapped.length;
-						} else if (newNote - 12 >= prevNote) {
-							inversion -= mapped.length;
-						} else if (newNote + 12 <= prevNote) {
-							inversion += mapped.length;
-						}
-					} else {
-						if (inversion > 0 && Math.abs(inversion - mapped.length) < inversion) {
-							inversion -= mapped.length;
-						} else if (inversion < 0
-								&& Math.abs(inversion + mapped.length) < Math.abs(inversion)) {
-							inversion += mapped.length;
-						}
-					}
-					prevNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
-					chordlets.get(i).updateInversion(inversion);
-					break;
+			int newNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
+			if (i > 0) {
+				if (newNote > prevNote && melodyTargetNotes
+						.get((i - 1) % melodyTargetNotes.size()) > melodyChoice) {
+					inversion -= mapped.length;
+				} else if (newNote < prevNote && melodyTargetNotes
+						.get((i - 1) % melodyTargetNotes.size()) < melodyChoice) {
+					inversion += mapped.length;
+				} else if (newNote - 12 >= prevNote) {
+					inversion -= mapped.length;
+				} else if (newNote + 12 <= prevNote) {
+					inversion += mapped.length;
 				}
-
+			} else if (inversion != 0) {
+				if (inversion > 0 && Math.abs(inversion - mapped.length) < inversion) {
+					inversion -= mapped.length;
+				} else if (inversion < 0
+						&& Math.abs(inversion + mapped.length) < Math.abs(inversion)) {
+					inversion += mapped.length;
+				}
 			}
+			prevNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
+			chordlets.get(i).updateInversion(inversion);
 		}
 	}
 }
