@@ -351,6 +351,10 @@ public class JKnob extends JComponent
 		if (!valueString.equals(textValue.getText())) {
 			textValue.setText(valueString);
 		}
+
+		if (func != null) {
+			func.accept(new Object());
+		}
 	}
 
 	public void setValue(int val) {
@@ -361,10 +365,6 @@ public class JKnob extends JComponent
 		curr = val;
 
 		setAngle();
-
-		if (func != null) {
-			func.accept(new Object());
-		}
 		repaint();
 	}
 
@@ -782,5 +782,9 @@ public class JKnob extends JComponent
 				e.paintComponent(e.getGraphics());
 			});
 		}
+	}
+
+	public int getValueRaw() {
+		return curr;
 	}
 }

@@ -354,7 +354,7 @@ public class VariationPopup {
 		keyChangePanel.setLayout(new BoxLayout(keyChangePanel, BoxLayout.X_AXIS));
 		keyChangeKnob.setInt(secC.getCustomKeyChange() == null ? 0 : secC.getCustomKeyChange());
 		keyChangeKnob.getKnob().setFunc(e -> {
-			secC.setCustomKeyChange(keyChangeKnob.getInt());
+			secC.setCustomKeyChange(keyChangeKnob.getValueRaw());
 		});
 		keyChangePanel.add(keyChangeKnob);
 
