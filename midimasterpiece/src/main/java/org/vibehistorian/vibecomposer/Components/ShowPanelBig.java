@@ -151,8 +151,15 @@ public class ShowPanelBig extends JPanel {
 				@Override
 				public void mousePressed(MouseEvent evt) {
 					if (SwingUtilities.isMiddleMouseButton(evt)) {
+						boolean enableAll = true;
 						for (int j = 0; j < 5; j++) {
-							partsShown[j].setSelectedRaw(j == fI);
+							if (j != fI && partsShown[j].isSelected()) {
+								enableAll = false;
+							}
+						}
+
+						for (int j = 0; j < 5; j++) {
+							partsShown[j].setSelectedRaw(j == fI || enableAll);
 						}
 						setScore();
 					}
