@@ -221,6 +221,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static final long serialVersionUID = -677536546851756969L;
 
+	private static final String BUG_HUNT_MESSAGE = "You found a bug! Save your project as a new preset, and send the .xml to my email: vibehistorian@gmail.com!";
 	private static final String FILENAME_VALID_CHARACTERS = "[a-zA-Z0-9,\\-_']";
 	private static final String FILENAME_VALID_NAME = "^" + FILENAME_VALID_CHARACTERS + "+$";
 	private static final String MIDIS_FOLDER = "midis";
@@ -5633,7 +5634,16 @@ public class VibeComposerGUI extends JFrame
 
 		// unapply S/M, generate, reapply S/M with new track numbering
 		unapplySolosMutes(true);
-		melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+		try {
+			melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+		} catch (Exception e) {
+			LG.e("Exception during midi generation! Cause: " + e.getMessage());
+			composingInProgress = false;
+			new TemporaryInfoPopup(BUG_HUNT_MESSAGE, null);
+			reapplySolosMutes();
+			return;
+		}
+
 		guiConfig = midiConfig;
 		//LG.i("Adding to config history, reason: " + regenerate);
 		fixCombinedTracks();
