@@ -457,7 +457,7 @@ public class MidiGeneratorUtils {
 			} else if ((i < fullMelody.size() - 1)
 					&& (pitch - fullMelody.get(i + 1).getPitch() >= 12)) {
 				// set G as a step for too wild intervals
-				LG.i("I like ya cut, G");
+				LG.i("Reducing interval - changing note to 5th");
 				n.setPitch(pitch - (pitch % 12) + 7);
 			}
 			previousPitch = n.getPitch();

@@ -483,14 +483,15 @@ public class MidiGenerator implements JMC {
 
 				int adjustment = 0;
 				int exceptionCounter = mp.getMaxNoteExceptions();
+				boolean invertedPattern = originalBlockOffset < 0;
 				for (int blockIndex = 0; blockIndex < melodyBlocks.size(); blockIndex++) {
 					MelodyBlock mb = melodyBlocks.get(blockIndex);
-					if (originalBlockOffset < 0) {
+					if (invertedPattern) {
 						mb = new MelodyBlock(MelodyUtils.inverse(mb.notes), mb.durations, true);
 					}
 					List<Integer> pitches = new ArrayList<>();
 					if (blockIndex > 0) {
-						adjustment += blockChanges.get(blockIndex - 1);
+						adjustment += blockChanges.get(blockIndex - 1) * (invertedPattern ? -1 : 1);
 					}
 					//LG.d("Adjustment: " + adjustment);
 					for (int k = 0; k < mb.durations.size(); k++) {
@@ -729,7 +730,7 @@ public class MidiGenerator implements JMC {
 			//LG.d("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
 			mbs.add(mb);
-			//LG.i("Created block: " + StringUtils.join(blockNotes, ","));
+			LG.i("Created block: " + StringUtils.join(blockNotes, ","));
 		}
 		return mbs;
 	}
