@@ -64,8 +64,8 @@ public class InstComboBox extends ScrollComboBox<String> {
 			initInstPool(InstUtils.POOL.ALL);
 			LG.d("Switching to POOL.ALL!");
 			if (!instSet(instrument)) {
-				throw new IllegalArgumentException(
-						"Instrument not found in POOL.ALL: " + instrument);
+				LG.e("Instrument not found in POOL.ALL: " + instrument);
+				setInstrument(getRandomInstrument());
 			}
 		}
 		return instPool;
