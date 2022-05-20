@@ -1108,32 +1108,38 @@ public class MidiGenerator implements JMC {
 				int chordSize = fullMelodyMap.keySet().size();
 				int difference = needed - pitches[modeNote];
 
+
+				List<Note> allNotesExceptFirsts = new ArrayList<>();
 				for (int chordIndex = 0; chordIndex < chordSize; chordIndex++) {
+					List<Note> chordNotes = fullMelodyMap.get(chordIndex);
+					if (chordNotes.size() > 1) {
+						allNotesExceptFirsts.addAll(chordNotes.subList(1, chordNotes.size()));
+					}
+				}
+				Collections.sort(allNotesExceptFirsts,
+						(e1, e2) -> MidiUtils.compareNotesByDistanceFromModeNote(e1, e2, modeNote));
+				for (Note n : allNotesExceptFirsts) {
+					int pitch = n.getPitch();
+					if (pitch < 0) {
+						continue;
+					}
+					int semitone = pitch % 12;
+					int jump = modeNote - semitone;
+					if (jump > 6) {
+						n.setPitch(MidiUtils.octavePitch(pitch) + modeNote - 12);
+					} else if (jump < -6) {
+						n.setPitch(MidiUtils.octavePitch(pitch) + modeNote + 12);
+					} else {
+						n.setPitch(MidiUtils.octavePitch(pitch) + modeNote);
+					}
+					LG.i(pitch - n.getPitch());
+					difference--;
 					if (difference <= 0) {
 						break;
 					}
-					int maxDifferenceForThisChord = Math.max(1, (difference + 4) / (chordSize));
-					List<Note> notes = fullMelodyMap.get(chordIndex);
-					if (notes.size() < 2) {
-						continue;
-					}
-					// skip first note (target note) - should not be changed
-					notes = new ArrayList<>(notes.subList(1, notes.size()));
-					Collections.sort(notes, (e1, e2) -> MidiUtils
-							.compareNotesByDistanceFromModeNote(e1, e2, modeNote));
-
-					for (Note n : notes) {
-						if (n.getPitch() < 0) {
-							continue;
-						}
-						n.setPitch(MidiUtils.octavePitch(n.getPitch()) + modeNote);
-						difference--;
-						maxDifferenceForThisChord--;
-						if (difference <= 0 || maxDifferenceForThisChord <= 0) {
-							break;
-						}
-					}
 				}
+
+
 				/*
 				//LG.d("Correcting melody!");
 				int investigatedChordIndex = chordSeparators.length - 1;
