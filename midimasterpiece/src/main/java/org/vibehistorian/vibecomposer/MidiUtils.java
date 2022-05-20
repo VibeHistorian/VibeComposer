@@ -443,10 +443,16 @@ public class MidiUtils {
 
 	public static int compareNotesByDistanceFromChordPitches(Note n1, Note n2,
 			List<Integer> pitches) {
-		int dist1 = Math
-				.abs((n1.getPitch() % 12) - getClosestFromList(pitches, n1.getPitch() % 12));
-		int dist2 = Math
-				.abs((n2.getPitch() % 12) - getClosestFromList(pitches, n2.getPitch() % 12));
+		int dist1 = getSemitonalDistance(n1.getPitch(),
+				getClosestPitchFromList(pitches, n1.getPitch()));
+		int dist2 = getSemitonalDistance(n2.getPitch(),
+				getClosestPitchFromList(pitches, n2.getPitch()));
+		return Integer.compare(dist1, dist2);
+	}
+
+	public static int compareNotesByDistanceFromModeNote(Note n1, Note n2, int modeNote) {
+		int dist1 = getSemitonalDistance(n1.getPitch(), modeNote);
+		int dist2 = getSemitonalDistance(n2.getPitch(), modeNote);
 		return Integer.compare(dist1, dist2);
 	}
 
@@ -1080,6 +1086,51 @@ public class MidiUtils {
 
 			n.setPitch(pitch - originalMovement + newMovement);
 		}
+	}
+
+	public static int getClosestPitchFromList(List<Integer> list, int valToFind) {
+		if (list == null || list.isEmpty()) {
+			return Integer.MIN_VALUE;
+		}
+		valToFind = valToFind % 12;
+
+		int closest = list.get(0);
+		int closestDistance = Math.abs(valToFind - closest);
+		for (int i = 1; i < list.size(); i++) {
+			int distance = Math.abs(valToFind - list.get(i));
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				closest = list.get(i);
+			}
+		}
+		// try with +12 and -12 (octave)
+		int distance = Math.abs(valToFind + 12 - list.get(list.size() - 1));
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closest = list.get(list.size() - 1);
+		}
+		distance = Math.abs(valToFind - 12 - list.get(0));
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closest = list.get(0);
+		}
+		return closest;
+	}
+
+	public static int getSemitonalDistance(int pitch1, int pitch2) {
+		pitch1 %= 12;
+		pitch2 %= 12;
+		int distance = Math.abs(pitch1 - pitch2);
+		int distanceOct = Math.abs(pitch1 + 12 - pitch2);
+		if (distanceOct > distance) {
+			distanceOct = Math.abs(pitch1 - 12 - pitch2);
+			if (distanceOct < distance) {
+				distance = distanceOct;
+			}
+		} else {
+			distance = distanceOct;
+		}
+		return distance;
 	}
 
 	public static int getClosestFromList(List<Integer> list, int valToFind) {
