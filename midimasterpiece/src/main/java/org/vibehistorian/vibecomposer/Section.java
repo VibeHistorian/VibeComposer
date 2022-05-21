@@ -58,7 +58,7 @@ public class Section {
 	}
 
 	public static final String[][] variationDescriptions = {
-			{ "#", "Incl.", "Transpose", "MaxJump" },
+			{ "#", "Incl.", "Transpose", "MaxJump", "Embellish" },
 			{ "#", "Incl.", "OffsetSeed", "RhythmPauses" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "UpStretch", "No2nd", "MaxStrum" },
 			{ "#", "Incl.", "Transpose", "IgnoreFill", "RandOct", "FillLast", "ChordDir." },

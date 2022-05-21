@@ -1988,7 +1988,7 @@ public class VibeComposerGUI extends JFrame
 		randomChordExpandChance = new DetachedKnobPanel("Expand%", 70);
 		randomChordUseChordFill = new CustomCheckBox("Fills", true);
 		randomChordMaxSplitChance = new DetachedKnobPanel("Max Tran-<br>sition%", 25);
-		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 30);
+		chordSlashChance = new KnobPanel("Chord1<br>Slash%", 5);
 		randomChordPattern = new CustomCheckBox("Patterns", true);
 		randomChordShiftChance = new DetachedKnobPanel("Shift%", 60);
 		randomChordMinVel = new DetachedKnobPanel("Min<br>Vel", 65, 0, 126);
@@ -5637,7 +5637,7 @@ public class VibeComposerGUI extends JFrame
 		try {
 			melodyGen.generateMasterpiece(masterpieceSeed, relPath);
 		} catch (Exception e) {
-			LG.e("Exception during midi generation! Cause: " + e.getMessage());
+			LG.e("Exception during midi generation! Cause: " + e.getMessage(), e);
 			composingInProgress = false;
 			new TemporaryInfoPopup(BUG_HUNT_MESSAGE, null);
 			reapplySolosMutes();

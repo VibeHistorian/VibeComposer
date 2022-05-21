@@ -146,6 +146,7 @@ public class MidiGenerator implements JMC {
 
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
 	public static final int OPENHAT_CHANCE = 0;
+	public static final int EMBELLISHMENT_CHANCE = 20;
 	private static final int maxAllowedScaleNotes = 7;
 	static final int BASE_ACCENT = 15;
 	public static double START_TIME_DELAY = Durations.QUARTER_NOTE;
@@ -173,6 +174,10 @@ public class MidiGenerator implements JMC {
 
 
 	// for internal use only
+	private static final double[] MELODY_SKELETON_DURATIONS = { Durations.SIXTEENTH_NOTE,
+			Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE,
+			Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
+
 	private static double[] MELODY_DUR_ARRAY = { Durations.HALF_NOTE, Durations.DOTTED_QUARTER_NOTE,
 			Durations.QUARTER_NOTE, Durations.EIGHTH_NOTE };
 	private double[] MELODY_DUR_CHANCE = { 0.3, 0.6, 1.0, 1.0 };
@@ -317,6 +322,7 @@ public class MidiGenerator implements JMC {
 		Random sameRhythmGenerator = new Random(seed + 3 + firstBlockOffset);
 		Random alternateRhythmGenerator = new Random(seed + 4);
 		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
+		Random embellishmentGenerator = new Random(seed + notesSeedOffset + 10);
 		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
 
 		double[] melodySkeletonDurations = { Durations.QUARTER_NOTE, Durations.HALF_NOTE,
@@ -338,7 +344,7 @@ public class MidiGenerator implements JMC {
 				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
 		//LG.d("Alt: " + alternateRhythm);
 		int maxBlockChangeAdjustment = 0;
-
+		boolean embellish = false;
 		for (int o = 0; o < measures; o++) {
 
 			for (int chordIndex = 0; chordIndex < stretchedChords.size(); chordIndex++) {
@@ -364,6 +370,9 @@ public class MidiGenerator implements JMC {
 							break;
 						case 1:
 							maxBlockChangeAdjustment++;
+							break;
+						case 2:
+							embellish = true;
 							break;
 						default:
 							throw new IllegalArgumentException("Too much variation!");
@@ -575,15 +584,23 @@ public class MidiGenerator implements JMC {
 						}
 
 						double swingDuration = sortedDurs.get(k);
-						Note n = new Note(pitch, swingDuration, 100);
+						Note n = new Note(pitch, swingDuration);
 						n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
 								* GLOBAL_DURATION_MULTIPLIER);
-
-
-						noteList.add(n);
-						if (fillChordMelodyMap && o == 0) {
-							chordMelodyMap1.get(Integer.valueOf(chordIndex)).add(n);
+						if (embellish
+								&& (n.getRhythmValue() > Durations.DOTTED_EIGHTH_NOTE - DBL_ERR)) {
+							List<Note> embNotes = addEmbellishedNotes(n, embellishmentGenerator);
+							noteList.addAll(embNotes);
+							if (fillChordMelodyMap && o == 0) {
+								chordMelodyMap1.get(Integer.valueOf(chordIndex)).addAll(embNotes);
+							}
+						} else {
+							noteList.add(n);
+							if (fillChordMelodyMap && o == 0) {
+								chordMelodyMap1.get(Integer.valueOf(chordIndex)).add(n);
+							}
 						}
+
 
 					}
 				}
@@ -611,6 +628,60 @@ public class MidiGenerator implements JMC {
 		return noteList;
 	}
 
+	private List<Note> addEmbellishedNotes(Note n, Random embellishmentGenerator) {
+		// pick embellishment rhythm - if note RV is multiple of dotted 8th use length 3, otherwise length 4
+		int notesNeeded = MidiUtils.isMultiple(n.getRhythmValue(), Durations.DOTTED_EIGHTH_NOTE) ? 3
+				: 4;
+		Random localEmbGenerator = new Random(embellishmentGenerator.nextInt());
+		if (localEmbGenerator.nextInt(100) >= EMBELLISHMENT_CHANCE) {
+			return Collections.singletonList(n);
+		}
+		int[] melodySkeletonDurationWeights = Rhythm
+				.normalizedCumulativeWeights(new int[] { 100, 300, 100, 300, 100, 100 });
+		Rhythm blockRhythm = new Rhythm(localEmbGenerator.nextInt(), n.getRhythmValue(),
+				MELODY_SKELETON_DURATIONS, melodySkeletonDurationWeights);
+		List<Double> blockDurations = blockRhythm.makeDurations(notesNeeded,
+				Durations.SIXTEENTH_NOTE);
+
+		// split note according to rhythm, apply pitch change to notes
+		// pick embellishment pitch pattern according to rhythm length (3 or 4)
+		List<Integer[]> pitchPatterns = MelodyUtils.NEIGHBORY.stream()
+				.filter(e -> e.length == notesNeeded).collect(Collectors.toList());
+		if (pitchPatterns.isEmpty()) {
+			LG.e("No melody pitch patterns found for: " + notesNeeded);
+			return Collections.singletonList(n);
+		}
+		Integer[] chosenPattern = pitchPatterns
+				.get(localEmbGenerator.nextInt(pitchPatterns.size()));
+		int pitch = n.getPitch();
+		int semis = pitch % 12;
+		int octavePitch = pitch - semis;
+		List<Note> embNotes = new ArrayList<>();
+		for (int i = 0; i < blockDurations.size(); i++) {
+			int pitchIndex = MidiUtils.MAJ_SCALE.indexOf(semis);
+			if (pitchIndex < 0) {
+				LG.e("------------------------------------------------PITCH FROM MAIN MELODY BLOCK WAS NOT IN MAJOR SCALE!");
+			}
+			int newPitchIndex = pitchIndex + chosenPattern[i];
+			int newPitchSemis = MidiUtils.MAJ_SCALE.get((newPitchIndex + 70) % 7);
+			int newPitch = octavePitch + newPitchSemis;
+			if (newPitchIndex >= 7) {
+				newPitch += 12;
+			} else if (newPitchIndex < 0) {
+				newPitch -= 12;
+			}
+			Note embNote = new Note(newPitch, blockDurations.get(i));
+			embNote.setDuration(blockDurations.get(i) * GLOBAL_DURATION_MULTIPLIER);
+
+			// slightly lower volume on following notes
+			embNote.setDynamic(n.getDynamic() - (i * 5));
+
+			// add note
+			embNotes.add(embNote);
+		}
+		return embNotes;
+	}
+
 	protected List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp, Section sec,
 			List<Double> durations, List<int[]> roots, int melodyBlockGeneratorSeed,
 			List<Integer> blockChanges, int maxJump, int startingNote, int chordIndex,
@@ -619,9 +690,6 @@ public class MidiGenerator implements JMC {
 		List<MelodyBlock> mbs = new ArrayList<>();
 
 		// TODO: generate some common-sense durations, pick randomly from melody phrases, refinement later
-		double[] melodySkeletonDurations = { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
-				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE,
-				Durations.HALF_NOTE };
 
 
 		//LG.d(StringUtils.join(melodySkeletonDurationWeights, ','));
@@ -646,7 +714,7 @@ public class MidiGenerator implements JMC {
 							100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
 
 			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + blockIndex,
-					durations.get(blockIndex), melodySkeletonDurations,
+					durations.get(blockIndex), MELODY_SKELETON_DURATIONS,
 					melodySkeletonDurationWeights);
 			//int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
