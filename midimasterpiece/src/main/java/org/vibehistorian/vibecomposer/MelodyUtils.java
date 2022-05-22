@@ -31,6 +31,7 @@ public class MelodyUtils {
 	public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP = new HashMap<>();
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
+	public static List<List<Integer>> SOLO_MELODY_PATTERNS = new ArrayList<>();
 
 	public static List<List<Integer>> CHORD_DIRECTIONS = new ArrayList<>();
 
@@ -67,11 +68,14 @@ public class MelodyUtils {
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 1 }));
 		// inverse patterns
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, -1, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -2, -1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -1, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, -3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, -1, 1 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, -1, 2 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -2, -1 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -1, 2 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, 2, 3 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, 2, 2 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, -1, 1 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, 1, 2 }));
+		MELODY_PATTERNS.addAll(SOLO_MELODY_PATTERNS);
 
 
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
