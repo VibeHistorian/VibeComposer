@@ -14,6 +14,8 @@ import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
@@ -25,6 +27,7 @@ import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UndoManager;
@@ -154,6 +157,33 @@ public class JKnob extends JComponent
 		setSize(2 * radius, 2 * radius);
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
+		addMouseWheelListener(new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				int val = 0;
+				if (tickSpacing > 0) {
+					int index = tickThresholds.indexOf(curr);
+					if (index < 0) {
+						int closest = MidiUtils.getClosestFromList(tickThresholds, curr);
+						index = tickThresholds.indexOf(closest);
+					}
+					val = tickThresholds.get(
+							OMNI.clamp(index - e.getWheelRotation(), 0, tickThresholds.size() - 1));
+				} else {
+					int scrollAmount = e.isShiftDown() ? 1 : Math.max(1, (max - min) / 20);
+					val = OMNI.clamp(curr - e.getWheelRotation() * scrollAmount, min, max);
+				}
+
+				if (e.isControlDown()) {
+					setValueGlobal(val);
+				} else {
+					setValue(val);
+				}
+
+				repaint();
+			}
+		});
 	}
 
 
