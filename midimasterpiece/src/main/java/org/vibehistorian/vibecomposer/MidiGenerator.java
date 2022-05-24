@@ -1072,6 +1072,25 @@ public class MidiGenerator implements JMC {
 			}
 		});
 
+		if (sec.getVariation(0, mp.getAbsoluteOrder()).contains(Integer.valueOf(3))) {
+			double currRv = 0;
+			for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
+				List<Note> notes = fullMelodyMap.get(chordIndex);
+				for (Note n : notes) {
+					double noteStart = currRv + n.getOffset();
+					double noteEnd = noteStart + n.getDuration();
+
+					double closestEndOnGrid = Math.floor(noteEnd / Durations.EIGHTH_NOTE)
+							* Durations.EIGHTH_NOTE;
+					if (closestEndOnGrid > (noteStart + Durations.SIXTEENTH_NOTE / 2)) {
+						n.setDuration(closestEndOnGrid - noteStart);
+					}
+
+
+				}
+			}
+		}
+
 		return fullMelodyMap;
 	}
 

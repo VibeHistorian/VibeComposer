@@ -4035,7 +4035,7 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel globalSwingPanel = new JPanel();
 		globalSwingOverride = new CustomCheckBox("<html>Global Swing<br>Override</html>", true);
-		globalSwingOverrideValue = new DetachedKnobPanel("", 50);
+		globalSwingOverrideValue = new KnobPanel("", 50);
 		globalSwingOverrideApplyButton = new JButton("A");
 		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
 
