@@ -1136,7 +1136,7 @@ public class VibeComposerGUI extends JFrame
 					recalculateTabPaneCounts();
 					recalculateGenerationCounts();
 					manualArrangement.setSelected(false);
-					midiMode.repaint();
+					vibeComposerGUI.repaint();
 				} catch (JAXBException | IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -6882,11 +6882,9 @@ public class VibeComposerGUI extends JFrame
 
 							unmarshallConfig(files[0]);
 					copyConfigToGUI(guiConfig);
-				} catch (JAXBException |
-
-						IOException e) {
-					// Auto-generated catch block
-					e.printStackTrace();
+					vibeComposerGUI.repaint();
+				} catch (JAXBException | IOException e) {
+					LG.e("Can't load config: " + filename, e);
 				}
 			}
 			soloMuterPossibleChange = true;
