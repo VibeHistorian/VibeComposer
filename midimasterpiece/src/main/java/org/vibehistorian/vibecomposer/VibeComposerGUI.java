@@ -4705,6 +4705,7 @@ public class VibeComposerGUI extends JFrame
 						}
 					} catch (Exception e) {
 						LG.e("Exception in SEQUENCE SLIDER:");
+						composingInProgress = false;
 						LG.e(e.getMessage());
 						e.printStackTrace();
 						try {
