@@ -249,8 +249,8 @@ public class VibeComposerGUI extends JFrame
 			.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList());
 
 	public static final int[] MILISECOND_ARRAY_FEEDBACK = { -2000, -1500, -1333, -1000, -750, -666,
-			-500, -375, -333, -250, -125, -62, -31, 0, 31, 62, 125, 250, 333, 375, 500, 666, 750,
-			1000, 1333, 1500, 2000 };
+			-500, -375, -333, -250, -125, -62, -31, 31, 62, 125, 250, 333, 375, 500, 666, 750, 1000,
+			1333, 1500, 2000 };
 	public static final List<Integer> MILISECOND_LIST_FEEDBACK = Arrays
 			.stream(MILISECOND_ARRAY_FEEDBACK).mapToObj(e -> Integer.valueOf(e))
 			.collect(Collectors.toList());
