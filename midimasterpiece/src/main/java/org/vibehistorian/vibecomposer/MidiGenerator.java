@@ -4888,6 +4888,7 @@ public class MidiGenerator implements JMC {
 		ip.setPatternRepeat(apClone.getPatternRepeat());
 		phr.setStartTime(START_TIME_DELAY);
 		addOffsetsToPhrase(phr, ip.getDelay());
+		//MidiGeneratorUtils.multiDelayPhrase(phr, 2, Durations.DOTTED_EIGHTH_NOTE);
 		return phr;
 	}
 

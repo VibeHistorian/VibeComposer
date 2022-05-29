@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 
 import jm.music.data.Note;
+import jm.music.data.Phrase;
 
 public class MidiGeneratorUtils {
 
@@ -573,6 +576,47 @@ public class MidiGeneratorUtils {
 			spicyChordString = spicyChordString.replace("m", "maj");
 		}
 		return spicyChordString;
+	}
+
+	static void multiDelayPhrase(Phrase phr, int delayCount, double delayAmnt) {
+		if (delayCount <= 0) {
+			return;
+		}
+		List<Double> delays = DoubleStream.iterate(delayAmnt, e -> e + delayAmnt).limit(delayCount)
+				.boxed().collect(Collectors.toList());
+		multiDelayPhrase(phr, delays);
+
+	}
+
+	static void multiDelayPhrase(Phrase phr, List<Double> delays) {
+		if (delays.isEmpty()) {
+			return;
+		}
+		List<Double> volMultipliers = DoubleStream.iterate(0.8, e -> e * 0.8).limit(delays.size())
+				.boxed().collect(Collectors.toList());
+		multiDelayPhrase(phr, delays, volMultipliers);
+	}
+
+	static void multiDelayPhrase(Phrase phr, List<Double> delays, List<Double> volMultipliers) {
+		if (delays.isEmpty() || (delays.size() != volMultipliers.size())) {
+			return;
+		}
+
+		List<Note> notes = phr.getNoteList();
+		int size = notes.size();
+		int currIndex = 0;
+		for (int i = 0; i < size; i++) {
+			Note n = notes.get(currIndex);
+			for (int j = 0; j < delays.size(); j++) {
+				Double delay = delays.get(j);
+				Double volMult = volMultipliers.get(j);
+				Note nd = new Note(n.getPitch(), 0, OMNI.clampVel(n.getDynamic() * volMult));
+				nd.setDuration(n.getDuration());
+				nd.setOffset(n.getOffset() + delay);
+				notes.add(currIndex, nd);
+			}
+			currIndex += 1 + delays.size();
+		}
 	}
 
 }
