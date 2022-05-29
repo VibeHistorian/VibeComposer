@@ -76,7 +76,7 @@ public class ArpPanel extends InstPanel {
 
 		this.add(exceptionChance);
 		this.add(swingPercent);
-		this.add(delay);
+		addOffsetAndDelayControls();
 
 
 		this.add(patternSeedLabel);

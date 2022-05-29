@@ -578,13 +578,16 @@ public class MidiGeneratorUtils {
 		return spicyChordString;
 	}
 
-	static void multiDelayPhrase(Phrase phr, int delayCount, double delayAmnt) {
+	static void multiDelayPhrase(Phrase phr, int delayCount, double delayAmnt,
+			double volMultiplier) {
 		if (delayCount <= 0) {
 			return;
 		}
 		List<Double> delays = DoubleStream.iterate(delayAmnt, e -> e + delayAmnt).limit(delayCount)
 				.boxed().collect(Collectors.toList());
-		multiDelayPhrase(phr, delays);
+		List<Double> volMultipliers = DoubleStream.iterate(volMultiplier, e -> e * volMultiplier)
+				.limit(delays.size()).boxed().collect(Collectors.toList());
+		multiDelayPhrase(phr, delays, volMultipliers);
 
 	}
 

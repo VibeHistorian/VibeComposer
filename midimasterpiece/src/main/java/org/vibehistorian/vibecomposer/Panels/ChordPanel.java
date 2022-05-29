@@ -5,8 +5,6 @@ import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -80,8 +78,7 @@ public class ChordPanel extends InstPanel {
 		this.add(strumType);
 		this.add(strumPauseChance);
 
-		strum.getKnob().setTickThresholds(Arrays.stream(VibeComposerGUI.MILISECOND_ARRAY_STRUM)
-				.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList()));
+		strum.getKnob().setTickThresholds(VibeComposerGUI.MILISECOND_LIST_STRUM);
 		strum.getKnob().setTickSpacing(50);
 
 		this.add(stretchPanel);
@@ -93,7 +90,7 @@ public class ChordPanel extends InstPanel {
 		this.add(transitionChance);
 		this.add(transitionSplit);
 		this.add(swingPercent);
-		this.add(delay);
+		addOffsetAndDelayControls();
 
 
 		this.add(patternSeedLabel);

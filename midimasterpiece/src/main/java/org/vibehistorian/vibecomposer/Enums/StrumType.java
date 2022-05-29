@@ -125,8 +125,8 @@ public enum StrumType {
 class Strums {
 
 	public static final List<Integer> STRUM_ARP = Arrays
-			.asList(new Integer[] { 250, 333, 500, 666, 1000, 1500, 2000 });
+			.asList(new Integer[] { 250, 333, 375, 500, 666, 1000, 1500, 2000 });
 	public static final List<Integer> STRUM_MED = Arrays
-			.asList(new Integer[] { 62, 125, 250, 333 });
+			.asList(new Integer[] { 62, 125, 250, 333, 375 });
 	public static final List<Integer> STRUM_HUMAN = Arrays.asList(new Integer[] { 31, 62, 125 });
 }

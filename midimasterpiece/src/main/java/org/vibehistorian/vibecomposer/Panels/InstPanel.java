@@ -92,7 +92,10 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
-	protected KnobPanel delay = new KnobPanel("Delay", 0, -1000, 1000);
+	protected KnobPanel delay = new KnobPanel("Offset", 0, -1000, 1000);
+	protected KnobPanel feedbackCount = new KnobPanel("Delays", 0, 0, 5);
+	protected KnobPanel feedbackDuration = new KnobPanel("FB Dur.", 500, -2000, 2000);
+	protected KnobPanel feedbackVol = new KnobPanel("FB Vol.", 80, 10, 150);
 
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
@@ -252,9 +255,15 @@ public abstract class InstPanel extends JPanel {
 		chordSpan.getKnob().setTickSpacing(50);
 		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
 
+		feedbackDuration.getKnob().setTickThresholds(VibeComposerGUI.MILISECOND_LIST_FEEDBACK);
+		feedbackDuration.getKnob().setTickSpacing(50);
+
 		//toggleableComponents.add(stretchPanel);
 		toggleableComponents.add(exceptionChance);
 		toggleableComponents.add(delay);
+		toggleableComponents.add(feedbackDuration);
+		toggleableComponents.add(feedbackCount);
+		toggleableComponents.add(feedbackVol);
 		toggleableComponents.add(minMaxVelSlider);
 		//toggleableComponents.add(noteLengthMultiplier);
 		//toggleableComponents.add(patternShift);
@@ -276,6 +285,13 @@ public abstract class InstPanel extends JPanel {
 		this.add(customMidiToggle);
 	}
 
+	public void addOffsetAndDelayControls() {
+		this.add(delay);
+		this.add(feedbackCount);
+		this.add(feedbackDuration);
+		this.add(feedbackVol);
+	}
+
 	public void addDefaultPanelButtons() {
 		this.add(removeButton);
 		this.add(copyButton);
@@ -292,6 +308,9 @@ public abstract class InstPanel extends JPanel {
 		patternShift.addBackgroundWithBorder(OMNI.alphen(Color.red.darker().darker(), 50));
 		transpose.addBackgroundWithBorder(OMNI.alphen(Color.white, 50));
 		delay.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
+		feedbackDuration.addBackgroundWithBorder(OMNI.alphen(Color.gray, 50));
+		feedbackCount.addBackgroundWithBorder(OMNI.alphen(Color.gray, 40));
+		feedbackVol.addBackgroundWithBorder(OMNI.alphen(Color.gray, 30));
 		chordNotesStretch.addBackgroundWithBorder(OMNI.alphen(Color.PINK, 30));
 		stretchPanel.addBackground(OMNI.alphen(Color.PINK, 30));
 		chordSpanFillPanel.addBackground(OMNI.alphen(Color.green.brighter(), 40));
@@ -309,6 +328,9 @@ public abstract class InstPanel extends JPanel {
 		exceptionChance.setShowTextInKnob(b);
 		patternRepeat.setShowTextInKnob(b);
 		delay.setShowTextInKnob(b);
+		feedbackDuration.setShowTextInKnob(b);
+		feedbackCount.setShowTextInKnob(b);
+		feedbackVol.setShowTextInKnob(b);
 		swingPercent.setShowTextInKnob(b);
 		patternShift.setShowTextInKnob(b);
 		chordNotesStretch.setShowTextInKnob(b);
@@ -340,6 +362,9 @@ public abstract class InstPanel extends JPanel {
 
 		setTranspose(part.getTranspose());
 		setDelay(part.getDelay());
+		setFeedbackDuration(part.getFeedbackDuration());
+		setFeedbackCount(part.getFeedbackCount());
+		setFeedbackVol(part.getFeedbackVol());
 
 		setVelocityMin(part.getVelocityMin());
 		setVelocityMax(part.getVelocityMax());
@@ -756,6 +781,30 @@ public abstract class InstPanel extends JPanel {
 
 	public void setCustomMidiToggle(boolean val) {
 		this.customMidiToggle.setSelected(val);
+	}
+
+	public int getFeedbackCount() {
+		return feedbackCount.getInt();
+	}
+
+	public void setFeedbackCount(int val) {
+		this.feedbackCount.setInt(val);
+	}
+
+	public int getFeedbackDuration() {
+		return feedbackDuration.getInt();
+	}
+
+	public void setFeedbackDuration(int val) {
+		this.feedbackDuration.setInt(val);
+	}
+
+	public int getFeedbackVol() {
+		return feedbackVol.getInt();
+	}
+
+	public void setFeedbackVol(int val) {
+		this.feedbackVol.setInt(val);
 	}
 
 	public String panelInfo() {

@@ -50,6 +50,9 @@ public abstract class InstPart implements Cloneable {
 
 	protected int delay = 0;
 	protected int transpose = 0;
+	protected int feedbackCount = 0;
+	protected int feedbackDuration = 500;
+	protected int feedbackVol = 80;
 
 	protected int velocityMin = 69;
 	protected int velocityMax = 90;
@@ -96,6 +99,9 @@ public abstract class InstPart implements Cloneable {
 
 		setTranspose(panel.getTranspose());
 		setDelay(panel.getDelay());
+		setFeedbackDuration(panel.getFeedbackDuration());
+		setFeedbackCount(panel.getFeedbackCount());
+		setFeedbackVol(panel.getFeedbackVol());
 
 		setVelocityMin(panel.getVelocityMin());
 		setVelocityMax(panel.getVelocityMax());
@@ -409,5 +415,29 @@ public abstract class InstPart implements Cloneable {
 
 	public String partInfo() {
 		return "Part: " + getPartNum() + ", order: " + getOrder();
+	}
+
+	public int getFeedbackCount() {
+		return feedbackCount;
+	}
+
+	public void setFeedbackCount(int feedbackCount) {
+		this.feedbackCount = feedbackCount;
+	}
+
+	public int getFeedbackDuration() {
+		return feedbackDuration;
+	}
+
+	public void setFeedbackDuration(int feedbackDuration) {
+		this.feedbackDuration = feedbackDuration;
+	}
+
+	public int getFeedbackVol() {
+		return feedbackVol;
+	}
+
+	public void setFeedbackVol(int feedbackVol) {
+		this.feedbackVol = feedbackVol;
 	}
 }

@@ -243,8 +243,18 @@ public class VibeComposerGUI extends JFrame
 	private static final String[] LOCK_COMPONENT_ICON_NAMES = new String[] { "lock.png",
 			"toggle_lock.png", "lock_white.png", "toggle_lock_white.png" };
 
-	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 125, 250, 333, 500, 666,
-			750, 1000, 1500, 2000 };
+	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 250, 333, 375, 500, 666,
+			750, 1000, 1333, 1500, 2000 };
+	public static final List<Integer> MILISECOND_LIST_STRUM = Arrays.stream(MILISECOND_ARRAY_STRUM)
+			.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList());
+
+	public static final int[] MILISECOND_ARRAY_FEEDBACK = { -2000, -1500, -1333, -1000, -750, -666,
+			-500, -375, -333, -250, -125, -62, -31, 0, 31, 62, 125, 250, 333, 375, 500, 666, 750,
+			1000, 1333, 1500, 2000 };
+	public static final List<Integer> MILISECOND_LIST_FEEDBACK = Arrays
+			.stream(MILISECOND_ARRAY_FEEDBACK).mapToObj(e -> Integer.valueOf(e))
+			.collect(Collectors.toList());
+
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 

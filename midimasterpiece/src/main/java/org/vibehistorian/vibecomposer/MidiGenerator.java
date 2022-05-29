@@ -3951,7 +3951,7 @@ public class MidiGenerator implements JMC {
 			Mod.transpose(phr, modTrans + extraTranspose);
 		}
 		phr.setStartTime(START_TIME_DELAY);
-		addOffsetsToPhrase(phr, ip.getDelay());
+		addOffsetsToPhrase(phr, ip);
 		return phr;
 	}
 
@@ -4227,7 +4227,7 @@ public class MidiGenerator implements JMC {
 		}
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[1] + ip.getTranspose() + modTrans);
 		phr.setStartTime(START_TIME_DELAY);
-		addOffsetsToPhrase(phr, ip.getDelay());
+		addOffsetsToPhrase(phr, ip);
 		if (genVars && variations != null) {
 			sec.setVariation(1, 0, variations);
 		}
@@ -4600,17 +4600,21 @@ public class MidiGenerator implements JMC {
 
 		// delay
 		phr.setStartTime(START_TIME_DELAY);
-		addOffsetsToPhrase(phr, ip.getDelay());
+		addOffsetsToPhrase(phr, ip);
 		return phr;
 	}
 
-	private static void addOffsetsToPhrase(Phrase phr, int delay) {
-		if (delay != 0) {
-			double offsetDelay = (noteMultiplier * delay) / 1000.0;
+	private static void addOffsetsToPhrase(Phrase phr, InstPart ip) {
+		if (ip.getDelay() != 0) {
+			double offsetDelay = (noteMultiplier * ip.getDelay()) / 1000.0;
 			for (Object no : phr.getNoteList()) {
 				Note n = (Note) no;
 				n.setOffset(n.getOffset() + offsetDelay);
 			}
+		}
+		if (ip.getFeedbackCount() > 0) {
+			MidiGeneratorUtils.multiDelayPhrase(phr, ip.getFeedbackCount(),
+					ip.getFeedbackDuration() / 1000.0, ip.getFeedbackVol() / 100.0);
 		}
 	}
 
@@ -4887,7 +4891,7 @@ public class MidiGenerator implements JMC {
 		ip.setHitsPerPattern(apClone.getHitsPerPattern());
 		ip.setPatternRepeat(apClone.getPatternRepeat());
 		phr.setStartTime(START_TIME_DELAY);
-		addOffsetsToPhrase(phr, ip.getDelay());
+		addOffsetsToPhrase(phr, ip);
 		//MidiGeneratorUtils.multiDelayPhrase(phr, 2, Durations.DOTTED_EIGHTH_NOTE);
 		return phr;
 	}
@@ -4914,7 +4918,7 @@ public class MidiGenerator implements JMC {
 		if (!ip.isVelocityPattern() && drumPattern.indexOf(ip.getInstrument()) == -1) {
 			//drumPhrase.addNote(new Note(Integer.MIN_VALUE, patternDurationTotal, 100));
 			phr.setStartTime(START_TIME_DELAY);
-			addOffsetsToPhrase(phr, ip.getDelay());
+			addOffsetsToPhrase(phr, ip);
 			return phr;
 		}
 
@@ -5080,7 +5084,7 @@ public class MidiGenerator implements JMC {
 
 		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
 		phr.setStartTime(START_TIME_DELAY);
-		addOffsetsToPhrase(phr, ip.getDelay());
+		addOffsetsToPhrase(phr, ip);
 		ip.setHitsPerPattern(dpClone.getHitsPerPattern());
 		ip.setPatternShift(dpClone.getPatternShift());
 		ip.setChordSpan(dpClone.getChordSpan());

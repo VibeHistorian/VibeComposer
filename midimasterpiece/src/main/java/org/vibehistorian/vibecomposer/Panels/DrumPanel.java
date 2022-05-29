@@ -89,7 +89,7 @@ public class DrumPanel extends InstPanel {
 		this.add(minMaxVelSlider);
 
 
-		this.add(delay);
+		addOffsetAndDelayControls();
 
 
 		this.add(patternSeedLabel);
