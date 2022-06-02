@@ -683,6 +683,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel messageLabel;
 	ScrollComboBox<String> presetLoadBox;
 	ScrollComboBox<String> drumPartPresetBox;
+	JCheckBox drumPartPresetAddCheckbox;
 	VeloRect globalVolSlider;
 	VeloRect globalReverbSlider;
 	VeloRect globalChorusSlider;
@@ -2430,8 +2431,11 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 		});
+
+		drumPartPresetAddCheckbox = new CustomCheckBox("Add", false);
 		drumsPanel.add(new JLabel("Presets(/drums):"));
 		drumsPanel.add(drumPartPresetBox);
+		drumsPanel.add(drumPartPresetAddCheckbox);
 
 
 		JPanel drumExtraSettings = new JPanel();
@@ -7636,7 +7640,8 @@ public class VibeComposerGUI extends JFrame
 		JAXBContext context = JAXBContext.newInstance(DrumPartsWrapper.class);
 		DrumPartsWrapper wrapper = (DrumPartsWrapper) context.createUnmarshaller()
 				.unmarshal(new FileReader(f));
-		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts());
+		recreateInstPanelsFromInstParts(4, wrapper.getDrumParts(),
+				!drumPartPresetAddCheckbox.isSelected());
 	}
 
 	public void unmarshallDrumsFromResource(InputStream f) throws JAXBException, IOException {
@@ -7802,6 +7807,7 @@ public class VibeComposerGUI extends JFrame
 
 		// drum panel
 		cs.add(randomDrumHitsMultiplierOnGenerate);
+		cs.add(drumPartPresetAddCheckbox);
 
 		// extra settings
 		cs.add(globalNoteLengthMultiplier);
@@ -8244,12 +8250,20 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void recreateInstPanelsFromInstParts(int inst, List<? extends InstPart> parts) {
-		List<InstPanel> panels = getAffectedPanels(inst);
-		JScrollPane pane = getInstPane(inst);
-		for (InstPanel panel : panels) {
-			((JPanel) pane.getViewport().getView()).remove(panel);
+		recreateInstPanelsFromInstParts(inst, parts, true);
+	}
+
+	private void recreateInstPanelsFromInstParts(int inst, List<? extends InstPart> parts,
+			boolean clearPreviousPanels) {
+		if (clearPreviousPanels) {
+			List<InstPanel> panels = getAffectedPanels(inst);
+			JScrollPane pane = getInstPane(inst);
+			for (InstPanel panel : panels) {
+				((JPanel) pane.getViewport().getView()).remove(panel);
+			}
+			panels.clear();
 		}
-		panels.clear();
+
 		InstPart.sortParts(parts);
 		/*LG.i("Panel " + inst + ", order: " + StringUtils
 				.join(parts.stream().map(e -> e.getOrder()).collect(Collectors.toList()), ","));*/
@@ -8258,7 +8272,11 @@ public class VibeComposerGUI extends JFrame
 			newPanels.add(addInstPanelToLayout(inst, false));
 		}
 		for (int i = 0; i < newPanels.size(); i++) {
+			int newPanelOrder = newPanels.get(i).getPanelOrder();
 			newPanels.get(i).setFromInstPart(parts.get(i));
+			if (!clearPreviousPanels) {
+				newPanels.get(i).setPanelOrder(newPanelOrder);
+			}
 			if (inst == 4 && newPanels.get(i).getComboPanel() != null) {
 				newPanels.get(i).getComboPanel().reapplyHits();
 			}
