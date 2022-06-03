@@ -463,6 +463,9 @@ public class Section {
 	public List<Integer> getVariation(int part, int partOrder) {
 		initPartMapIfNull();
 		List<Integer> variations = new ArrayList<>();
+		if (partPresenceVariationMap.get(part).length <= partOrder) {
+			return variations;
+		}
 		for (int i = 2; i < partPresenceVariationMap.get(part)[partOrder].length; i++) {
 			if (partPresenceVariationMap.get(part)[partOrder][i] == Boolean.TRUE) {
 				variations.add(i - 2);

@@ -7634,7 +7634,6 @@ public class VibeComposerGUI extends JFrame
 		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		DrumPartsWrapper wrapper = new DrumPartsWrapper();
 		List<DrumPart> parts = (List<DrumPart>) (List<?>) getInstPartsFromInstPanels(4, false);
-		InstPart.sortParts(parts);
 		wrapper.setDrumParts(parts);
 		mar.marshal(wrapper, new File(path));
 		LG.i("File saved: " + path);
@@ -8240,6 +8239,7 @@ public class VibeComposerGUI extends JFrame
 				parts.add(p.toInstPart(lastRandomSeed));
 			}
 		}
+		InstPart.sortParts(parts);
 		return parts;
 	}
 
