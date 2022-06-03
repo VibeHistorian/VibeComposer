@@ -3826,7 +3826,7 @@ public class MidiGenerator implements JMC {
 		if (userMelody != null) {
 			skeletonNotes = userMelody.copy().getNoteList();
 		} else {
-			if (false) {
+			if (gc.isMelodyLegacyMode()) {
 				LG.i("OLD MELODY ALGO");
 				skeletonNotes = algoGen2GenerateMelodySkeletonFromChords(ip, actualProgression,
 						generatedRootProgression, measures, notesSeedOffset, sec, variations);

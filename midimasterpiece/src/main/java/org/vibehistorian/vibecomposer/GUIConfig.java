@@ -92,6 +92,8 @@ public class GUIConfig {
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
 	private boolean melodyFillPausesPerChord = false;
+	private boolean melodyLegacyMode = false;
+
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
@@ -838,6 +840,14 @@ public class GUIConfig {
 
 	public void setMelodyRhythmAccentsPocket(boolean melodyRhythmAccentsPocket) {
 		this.melodyRhythmAccentsPocket = melodyRhythmAccentsPocket;
+	}
+
+	public boolean isMelodyLegacyMode() {
+		return melodyLegacyMode;
+	}
+
+	public void setMelodyLegacyMode(boolean melodyLegacyMode) {
+		this.melodyLegacyMode = melodyLegacyMode;
 	}
 
 }
