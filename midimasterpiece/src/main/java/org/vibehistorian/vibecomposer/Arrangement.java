@@ -550,7 +550,7 @@ public class Arrangement {
 		globalVariationMap.put(5, data);
 	}
 
-	private void initGlobalVariationMapFromOldData() {
+	public void initGlobalVariationMapFromOldData() {
 		if (getGlobalVariationMap() == null) {
 			initGlobalVariationMap();
 			return;
@@ -602,5 +602,27 @@ public class Arrangement {
 			initGlobalVariationMapFromOldData();
 		}
 		return globalVariationMap.get(part)[variationOrder + 1] == Boolean.TRUE;
+	}
+
+	public void verifyGlobalVariations() {
+		if (getGlobalVariationMap() == null) {
+			initGlobalVariationMap();
+		}
+		for (int i = 0; i < 6; i++) {
+			if (getGlobalVariationMap().get(i) == null) {
+				initGlobalVariationMap();
+			}
+			if (i < 5) {
+				if (getGlobalVariationMap().get(i).length <= Section.variationDescriptions[i].length
+						- 1) {
+					initGlobalVariationMapFromOldData();
+				}
+			} else {
+				if (getGlobalVariationMap().get(i).length <= Section.sectionVariationNames.length
+						+ 1) {
+					initGlobalVariationMapFromOldData();
+				}
+			}
+		}
 	}
 }
