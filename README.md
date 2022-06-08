@@ -1,17 +1,19 @@
-# VibeComposer 2
-## Customizable Music Generator
+# VibeComposer 2.1
+## Interactive Music Generator
 
 ![VibeComposer Advanced_UI Preview](https://i.imgur.com/9P4g2i6.png)
 
-#### Arranged Track Examples (v2.0): 
-- https://soundcloud.com/vibehistorian/legend
-- https://soundcloud.com/vibehistorian/the-spirit-molecule
+#### Arranged Track Examples (v2.1): 
+- [Darker](https://soundcloud.com/vibehistorian/darker)
+- [Wolves in Winter](https://soundcloud.com/vibehistorian/wolves-in-winter)
+- [Dew Drop](https://soundcloud.com/vibehistorian/dew-drop)
+- [Astral Ballad](https://soundcloud.com/vibehistorian/astral-ballad)
 
 
 
 #### How to run it (on Windows):
-1. Make sure you have installed the Java Runtime Environment 1.8.0 - https://java.com/en/download/
-2. Download the latest release (.jar, or .exe for convenience) https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.0-beta
+1. [Make sure you have installed the Java Runtime Environment 1.8.0](https://java.com/en/download/)
+2. [Download the latest release (.jar, or .exe for convenience)](https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.1-beta)
 3. Run/double-click the executable
   > Important: some users report getting virus warnings (false positives) when downloading - this is a known issue of Launch4j (used to wrap JAVA .jar as an .exe)<br>
   > To avoid it, you can instead download and run the .jar version itself with no wrapper. <br>
@@ -39,15 +41,16 @@
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu.
     
 #### Building requirements:
-1. Apache Maven https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html
-2. JDK 1.8 or later https://jdk.java.net/
+1. [Apache Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html)
+2. [JDK 1.8 or later](https://jdk.java.net/)
 3. Unzip downloaded code, run command "mvn clean compile assembly:single package" in the directory with pom.xml
 	-- this should create 2 jars and 1 wrapped exe
 
 #### Arrangement examples made with earlier versions of VibeComposer: 
+- https://soundcloud.com/vibehistorian/legend
+- https://soundcloud.com/vibehistorian/the-spirit-molecule
 - https://soundcloud.com/vibehistorian/space-journey
 - https://soundcloud.com/vibehistorian/anaesthesia-blues
-- https://soundcloud.com/vibehistorian/avalanche
 - https://soundcloud.com/vibehistorian/discovery
 
 #### License: GPL3
