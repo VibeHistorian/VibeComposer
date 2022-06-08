@@ -36,24 +36,21 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 
 		//addPartInclusionButtons(arr);
 
+		arr.verifyGlobalVariations();
 
 		for (int i = 0; i < 6; i++) {
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
-			if (arr.getGlobalVariationMap() == null) {
-				arr.initGlobalVariationMap();
-			}
-			if (arr.getGlobalVariationMap().get(i) == null) {
-				arr.initGlobalVariationMap();
-			}
 			String[] colNames = null;
 			if (i < 5) {
+
 				colNames = new String[Section.variationDescriptions[i].length - 1];
 				colNames[0] = "ALL";
 				for (int j = 1; j < colNames.length; j++) {
 					colNames[j] = Section.variationDescriptions[i][j + 1];
 				}
 			} else {
+
 				colNames = new String[Section.sectionVariationNames.length + 1];
 				colNames[0] = "ALL";
 				for (int j = 1; j < colNames.length; j++) {

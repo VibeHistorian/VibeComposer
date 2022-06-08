@@ -99,12 +99,12 @@ public class MidiEditPopup extends CloseablePopup {
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
 	public boolean applyOnClose = true;
 	public JList<File> generatedMidi;
+	public CheckButton displayDrumHelper = new CheckButton("Drum Ghosts", false);
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
+		setupIdentifiers(secPartNum, secPartOrder);
 		sec = section;
-		part = secPartNum;
-		partOrder = secPartOrder;
 		applyOnClose = true;
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
@@ -205,7 +205,8 @@ public class MidiEditPopup extends CloseablePopup {
 							int closestNormalized = MidiUtils
 									.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12);
 
-							mvea.getValues().get(i).setPitch(12 * (pitch / 12) + closestNormalized);
+							mvea.getValues().get(i)
+									.setPitch(MidiUtils.octavePitch(pitch) + closestNormalized);
 						} else {
 							mvea.getValues().get(i).setPitch(pitch);
 						}
@@ -273,9 +274,7 @@ public class MidiEditPopup extends CloseablePopup {
 		applyToMainBtn = new CheckButton("Apply to Global",
 				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
 		applyToMainBtn.setFunc(e -> {
-			if (applyToMainBtn.isSelected()) {
-				mvea.getValues().setCustom(false);
-			}
+			mvea.getValues().setCustom(!applyToMainBtn.isSelected());
 			apply();
 		});
 		buttonPanel2.add(applyToMainBtn);
@@ -297,7 +296,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		JPanel textPanel = new JPanel();
 		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
-		text = new JTextField(values.toStringPitches());
+		text = new JTextField(values.toStringPitches(), 40);
 		textPanel.add(text);
 		textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
 			if (StringUtils.isNotEmpty(text.getText())) {
@@ -323,7 +322,11 @@ public class MidiEditPopup extends CloseablePopup {
 		regenerateInPlaceOnChange.setFunc(e -> {
 			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
 		});
+		displayDrumHelper.setFunc(e -> {
+			repaintMvea();
+		});
 		textPanel.add(regenerateInPlaceOnChange);
+		textPanel.add(displayDrumHelper);
 		textPanel.add(new JLabel("  Highlight Mode:"));
 		textPanel.add(highlightMode);
 		textPanel.add(new JLabel("  Snap To Time:"));
@@ -389,6 +392,13 @@ public class MidiEditPopup extends CloseablePopup {
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public void setupIdentifiers(int secPartNum, int secPartOrder) {
+		part = secPartNum;
+		partOrder = secPartOrder;
+		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + VibeComposerGUI.instNames[part]
+				+ ", Order: " + VibeComposerGUI.getInstList(part).get(partOrder).getPanelOrder());
 	}
 
 	private File buildMidiFileFromNotes() {

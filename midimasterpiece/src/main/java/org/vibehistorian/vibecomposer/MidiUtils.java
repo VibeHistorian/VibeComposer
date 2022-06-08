@@ -62,7 +62,8 @@ public class MidiUtils {
 				BLUES_SCALE = { 0, 2, 3, 4, 7, 9, 12 }, TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 },
 				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 },
 				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 },
-				WHISKEY_SCALE = { 0, 3, 5, 6, 7, 10, 11 };
+				WHISKEY_SCALE = { 0, 3, 5, 6, 7, 10, 11 },
+				DOUBLE_HARM_SCALE = { 0, 1, 4, 5, 7, 8, 11 };
 
 	}
 
@@ -93,7 +94,7 @@ public class MidiUtils {
 		LOCRIAN(Scales.LOCRIAN_SCALE, 4), BLUES(Scales.BLUES_SCALE, -1),
 		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE, 5), TURKISH(Scales.TURKISH_SCALE, -1),
 		INDIAN(Scales.INDIAN_SCALE, 2), HARM_MAJOR(Scales.HARMONIC_MAJOR_SCALE, 5),
-		WHISKEY(Scales.WHISKEY_SCALE, 1);
+		WHISKEY(Scales.WHISKEY_SCALE, 1), DOUBLE_HARM(Scales.DOUBLE_HARM_SCALE, 1);
 
 		public Integer[] noteAdjustScale;
 		public Integer modeTargetNote;
@@ -443,10 +444,16 @@ public class MidiUtils {
 
 	public static int compareNotesByDistanceFromChordPitches(Note n1, Note n2,
 			List<Integer> pitches) {
-		int dist1 = Math
-				.abs((n1.getPitch() % 12) - getClosestFromList(pitches, n1.getPitch() % 12));
-		int dist2 = Math
-				.abs((n2.getPitch() % 12) - getClosestFromList(pitches, n2.getPitch() % 12));
+		int dist1 = getSemitonalDistance(n1.getPitch(),
+				getClosestPitchFromList(pitches, n1.getPitch()));
+		int dist2 = getSemitonalDistance(n2.getPitch(),
+				getClosestPitchFromList(pitches, n2.getPitch()));
+		return Integer.compare(dist1, dist2);
+	}
+
+	public static int compareNotesByDistanceFromModeNote(Note n1, Note n2, int modeNote) {
+		int dist1 = getSemitonalDistance(n1.getPitch(), modeNote);
+		int dist2 = getSemitonalDistance(n2.getPitch(), modeNote);
 		return Integer.compare(dist1, dist2);
 	}
 
@@ -1082,6 +1089,51 @@ public class MidiUtils {
 		}
 	}
 
+	public static int getClosestPitchFromList(List<Integer> list, int valToFind) {
+		if (list == null || list.isEmpty()) {
+			return Integer.MIN_VALUE;
+		}
+		valToFind = valToFind % 12;
+
+		int closest = list.get(0);
+		int closestDistance = Math.abs(valToFind - closest);
+		for (int i = 1; i < list.size(); i++) {
+			int distance = Math.abs(valToFind - list.get(i));
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				closest = list.get(i);
+			}
+		}
+		// try with +12 and -12 (octave)
+		int distance = Math.abs(valToFind + 12 - list.get(list.size() - 1));
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closest = list.get(list.size() - 1);
+		}
+		distance = Math.abs(valToFind - 12 - list.get(0));
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closest = list.get(0);
+		}
+		return closest;
+	}
+
+	public static int getSemitonalDistance(int pitch1, int pitch2) {
+		pitch1 %= 12;
+		pitch2 %= 12;
+		int distance = Math.abs(pitch1 - pitch2);
+		int distanceOct = Math.abs(pitch1 + 12 - pitch2);
+		if (distanceOct > distance) {
+			distanceOct = Math.abs(pitch1 - 12 - pitch2);
+			if (distanceOct < distance) {
+				distance = distanceOct;
+			}
+		} else {
+			distance = distanceOct;
+		}
+		return distance;
+	}
+
 	public static int getClosestFromList(List<Integer> list, int valToFind) {
 		if (list == null || list.isEmpty()) {
 			return Integer.MIN_VALUE;
@@ -1346,23 +1398,6 @@ public class MidiUtils {
 		return returnChord;
 	}
 
-	public static String getNoteForPitch(int pitch) {
-		if (pitch < 0) {
-			return "";
-		}
-		int pitchNormalized = pitch % 12;
-		List<Integer> majorLetterPitches = MAJ_SCALE;
-		int chordLetter = majorLetterPitches.indexOf(pitchNormalized);
-		if (chordLetter < 0) {
-			chordLetter = majorLetterPitches.indexOf(pitchNormalized - 1);
-			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter) + "#";
-			return realLetter + pitch / 12;
-		} else {
-			String realLetter = CHORD_FIRST_LETTERS.get(chordLetter);
-			return realLetter + pitch / 12;
-		}
-	}
-
 	public static List<String> respiceChords(String chordsString, GUIConfig gc) {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
@@ -1488,7 +1523,30 @@ public class MidiUtils {
 	}
 
 	public static String pitchToString(int pitch) {
+		if (pitch < 0) {
+			return "";
+		}
 		return MidiUtils.SEMITONE_LETTERS.get((pitch + 1200) % 12) + ((pitch / 12) - 1);
+	}
+
+	public static String pitchOrDrumToString(int pitch, int part, boolean forceGmNames) {
+		if (part < 4) {
+			return pitchToString(pitch);
+		} else {
+			if (MidiGenerator.gc.isDrumCustomMapping() && !forceGmNames) {
+				Integer drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS_SEMI);
+				if (drumIndex < 0) {
+					return pitchToString(pitch);
+				}
+				return InstUtils.DRUM_INST_NAMES_SEMI[drumIndex];
+			} else {
+				Integer drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS);
+				if (drumIndex < 0) {
+					return pitchToString(pitch);
+				}
+				return InstUtils.DRUM_INST_NAMES[drumIndex];
+			}
+		}
 	}
 
 	public static void scalePhrase(Phrase phr, double newLength) {
@@ -1504,8 +1562,8 @@ public class MidiUtils {
 		return Math.abs(first - second) < MidiGenerator.DBL_ERR;
 	}
 
-	public static boolean isMultiple(double first, double second) {
-		double result = first / second;
+	public static boolean isMultiple(double bigger, double smaller) {
+		double result = bigger / smaller;
 		double rounded = Math.round(result);
 		if (roughlyEqual(result, rounded)) {
 			return true;
@@ -1525,6 +1583,10 @@ public class MidiUtils {
 			}
 		}
 		return inKey / (double) mapped.length;
+	}
+
+	public static int octavePitch(int pitch) {
+		return pitch - pitch % 12;
 	}
 
 }

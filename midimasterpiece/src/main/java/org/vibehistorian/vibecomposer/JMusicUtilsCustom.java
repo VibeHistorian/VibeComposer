@@ -15,6 +15,7 @@ import java.util.Vector;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 
 import jm.JMC;
 import jm.midi.SMF;
@@ -36,6 +37,7 @@ import jm.music.tools.Mod;
 public class JMusicUtilsCustom implements JMC {
 
 	private static double tickRemainder = 0.0;
+	private static final short DEFAULT_PPQN = 960;
 
 	public static void consolidate(Part p) {
 
@@ -43,7 +45,8 @@ public class JMusicUtilsCustom implements JMC {
 		if (phr.length < 2)
 			return;
 		// the new phrase has the start time of the earliest one
-		Phrase nphr = new Phrase(phr[0].getStartTime());
+		PhraseExt firstPhrase = (PhraseExt) phr[0];
+		Phrase nphr = new PhraseExt(firstPhrase, firstPhrase.getStartTime());
 
 		Note n;
 		boolean finished = false;
@@ -133,6 +136,9 @@ public class JMusicUtilsCustom implements JMC {
 		Enumeration<?> enum1 = score.getPartList().elements();
 		while (enum1.hasMoreElements()) {
 			PartExt part = (PartExt) enum1.nextElement();
+			if (part.isFillerPart()) {
+				continue;
+			}
 			scrCopy.addPart(part.copy());
 		}
 
@@ -194,7 +200,7 @@ public class JMusicUtilsCustom implements JMC {
 
 	public static void midi(Score scr, String fileName) {
 		//Score s = adjustTempo(scr);
-		SMF smf = new SMF();
+		SMF smf = new SMF((short) 1, DEFAULT_PPQN);
 		try {
 			double time1 = System.currentTimeMillis();
 			LG.d("----------------------------- Writing MIDI File ------------------------------");
@@ -234,7 +240,7 @@ public class JMusicUtilsCustom implements JMC {
 		Enumeration aEnum = score.getPartList().elements();
 		while (aEnum.hasMoreElements()) {
 			Track smfTrack = new Track();
-			Part inst = (Part) aEnum.nextElement();
+			PartExt inst = (PartExt) aEnum.nextElement();
 			System.out.print("    Part " + partCount + " '" + inst.getTitle()
 					+ "' to SMF Track on Ch. " + inst.getChannel() + ": ");
 			partCount++;
@@ -442,9 +448,9 @@ public class JMusicUtilsCustom implements JMC {
 	 * This method wriiten by Bob Lee.
 	 */
 	private static double tickRounder(double timeValue) {
-		final double tick = 1. / 480.;
-		final double halfTick = 1. / 960.;
-		int ticks = (int) (timeValue * 480.);
+		final double tick = 1. / (double) DEFAULT_PPQN;
+		final double halfTick = 1. / (DEFAULT_PPQN * 2.);
+		int ticks = (int) (timeValue * (double) DEFAULT_PPQN);
 		double rounded = ((double) ticks) * tick;
 		tickRemainder += timeValue - rounded;
 		if (tickRemainder > halfTick) {

@@ -92,11 +92,16 @@ public class GUIConfig {
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
 	private boolean melodyFillPausesPerChord = false;
+	private boolean melodyLegacyMode = false;
+
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
 	private int melodyBlockTargetMode = 2;
 	private int melodyPatternEffect = 2;
+	private int melodyRhythmAccents = 0;
+	private int melodyRhythmAccentsMode = 0;
+	private boolean melodyRhythmAccentsPocket = false;
 
 	// chord gen
 	private int chordSlashChance = 0;
@@ -119,7 +124,6 @@ public class GUIConfig {
 
 	// arp gen
 	private boolean useOctaveAdjustments = false;
-	private int maxArpSwing = 50;
 
 	// drum gen
 	private boolean drumCustomMapping = true;
@@ -435,14 +439,6 @@ public class GUIConfig {
 		this.useOctaveAdjustments = useOctaveAdjustments;
 	}
 
-	public int getMaxArpSwing() {
-		return maxArpSwing;
-	}
-
-	public void setMaxArpSwing(int maxArpSwing) {
-		this.maxArpSwing = maxArpSwing;
-	}
-
 	public int getMaxMelodySwing() {
 		return maxMelodySwing;
 	}
@@ -683,6 +679,22 @@ public class GUIConfig {
 		this.melodyNotes = melodyNotes;
 	}
 
+	public boolean isPartEnabled(int partNum) {
+		switch (partNum) {
+		case 0:
+			return melodyEnable;
+		case 1:
+			return bassEnable;
+		case 2:
+			return chordsEnable;
+		case 3:
+			return arpsEnable;
+		case 4:
+			return drumsEnable;
+		}
+		throw new IllegalArgumentException("Invalid partNum");
+	}
+
 	public boolean isMelodyEnable() {
 		return melodyEnable;
 	}
@@ -804,6 +816,38 @@ public class GUIConfig {
 
 	public void setTransposedNotesForceScale(boolean transposedNotesForceScale) {
 		this.transposedNotesForceScale = transposedNotesForceScale;
+	}
+
+	public int getMelodyRhythmAccents() {
+		return melodyRhythmAccents;
+	}
+
+	public void setMelodyRhythmAccents(int melodyRhythmAccents) {
+		this.melodyRhythmAccents = melodyRhythmAccents;
+	}
+
+	public int getMelodyRhythmAccentsMode() {
+		return melodyRhythmAccentsMode;
+	}
+
+	public void setMelodyRhythmAccentsMode(int melodyRhythmAccentsMode) {
+		this.melodyRhythmAccentsMode = melodyRhythmAccentsMode;
+	}
+
+	public boolean isMelodyRhythmAccentsPocket() {
+		return melodyRhythmAccentsPocket;
+	}
+
+	public void setMelodyRhythmAccentsPocket(boolean melodyRhythmAccentsPocket) {
+		this.melodyRhythmAccentsPocket = melodyRhythmAccentsPocket;
+	}
+
+	public boolean isMelodyLegacyMode() {
+		return melodyLegacyMode;
+	}
+
+	public void setMelodyLegacyMode(boolean melodyLegacyMode) {
+		this.melodyLegacyMode = melodyLegacyMode;
 	}
 
 }

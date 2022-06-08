@@ -359,4 +359,50 @@ public class ChordletPanel extends JPanel {
 		}
 		update();
 	}
+
+	public void alignWithMelodyTargetNotes(List<Integer> melodyTargetNotes) {
+		// goal1: align top notes of chords with melody
+		// goal2: also copy up/down flow of melody
+
+		Integer prevNote = null;
+		for (int i = 0; i < chordCount(); i++) {
+			int[] mapped = MidiUtils.mappedChord(chordlets.get(i).getSpicedText());
+			List<Integer> pitches = MidiUtils.chordToPitches(mapped);
+			int melodyChoice = melodyTargetNotes.get(i % melodyTargetNotes.size());
+			int melodyNote = MidiUtils.MAJ_SCALE.get((melodyChoice + 70) % 7) % 12;
+			// round note to closest from chord
+			int noteInChordIndex = pitches
+					.indexOf(MidiUtils.getClosestFromList(pitches, melodyNote));
+
+			int inversion = 0;
+			if (noteInChordIndex < mapped.length - 1) {
+				inversion = (melodyChoice >= 0) ? (noteInChordIndex + 1)
+						: (-1 * (mapped.length - noteInChordIndex - 1));
+			}
+
+			int newNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
+			if (i > 0) {
+				if (newNote > prevNote && melodyTargetNotes
+						.get((i - 1) % melodyTargetNotes.size()) > melodyChoice) {
+					inversion -= mapped.length;
+				} else if (newNote < prevNote && melodyTargetNotes
+						.get((i - 1) % melodyTargetNotes.size()) < melodyChoice) {
+					inversion += mapped.length;
+				} else if (newNote - 12 >= prevNote) {
+					inversion -= mapped.length;
+				} else if (newNote + 12 <= prevNote) {
+					inversion += mapped.length;
+				}
+			} else if (inversion != 0) {
+				if (inversion > 0 && Math.abs(inversion - mapped.length) < inversion) {
+					inversion -= mapped.length;
+				} else if (inversion < 0
+						&& Math.abs(inversion + mapped.length) < Math.abs(inversion)) {
+					inversion += mapped.length;
+				}
+			}
+			prevNote = MidiUtils.getXthChordNote(mapped.length - 1 + inversion, mapped);
+			chordlets.get(i).updateInversion(inversion);
+		}
+	}
 }

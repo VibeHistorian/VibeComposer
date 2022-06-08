@@ -33,6 +33,7 @@ public class DrumPanel extends InstPanel {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
+		instrument.setScrollEnabled(false);
 		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
 		initDefaults(l);
@@ -88,7 +89,7 @@ public class DrumPanel extends InstPanel {
 		this.add(minMaxVelSlider);
 
 
-		this.add(delay);
+		addOffsetAndDelayControls();
 
 
 		this.add(patternSeedLabel);
@@ -96,7 +97,7 @@ public class DrumPanel extends InstPanel {
 
 		this.add(new JLabel("Midi ch. 10"));
 
-		getInstrumentBox().setToolTipText("test");
+		getInstrumentBox().box().setToolTipText("test");
 		//toggleableComponents.add(useMelodyNotePattern);
 		toggleableComponents.remove(patternShift);
 		initDefaultsPost();

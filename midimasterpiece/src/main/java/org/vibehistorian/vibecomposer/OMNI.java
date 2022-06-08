@@ -148,4 +148,16 @@ public class OMNI {
 		return (T) list.stream().min((e1, e2) -> Double.compare(e1.doubleValue(), e2.doubleValue()))
 				.get();
 	}
+
+	public static <T> int indexOf(T elem, T[] array) {
+		if (array == null) {
+			return -1;
+		}
+		for (int i = 0; i < array.length; i++) {
+			if (array[i].equals(elem)) {
+				return i;
+			}
+		}
+		return -1;
+	}
 }

@@ -72,8 +72,8 @@ public class ShowPanelBig extends JPanel {
 	protected double beatWidth; //10.0;
 	public static final int beatWidthBaseDefault = 1500;
 	public static int beatWidthBase = 1550;
-	public static final List<Integer> beatWidthBases = Arrays
-			.asList(new Integer[] { 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700, 6800 });
+	public static final List<Integer> beatWidthBases = Arrays.asList(new Integer[] { 1550, 1800,
+			2200, 2700, 3300, 4000, 4800, 5700, 6800, 8200, 10000, 12500 });
 	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;
@@ -143,7 +143,7 @@ public class ShowPanelBig extends JPanel {
 		scorePartPanel.add(scoreBox);
 		scorePartPanel.add(new JLabel("Included Parts"));
 		for (int i = 0; i < 5; i++) {
-			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], i < 4,
+			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], true,
 					OMNI.alphen(VibeComposerGUI.instColors[i], 75));
 			partsShown[i].setRunnable(() -> setScore());
 			int fI = i;
@@ -151,8 +151,15 @@ public class ShowPanelBig extends JPanel {
 				@Override
 				public void mousePressed(MouseEvent evt) {
 					if (SwingUtilities.isMiddleMouseButton(evt)) {
+						boolean enableAll = true;
 						for (int j = 0; j < 5; j++) {
-							partsShown[j].setSelectedRaw(j == fI);
+							if (j != fI && partsShown[j].isSelected()) {
+								enableAll = false;
+							}
+						}
+
+						for (int j = 0; j < 5; j++) {
+							partsShown[j].setSelectedRaw(j == fI || enableAll);
 						}
 						setScore();
 					}

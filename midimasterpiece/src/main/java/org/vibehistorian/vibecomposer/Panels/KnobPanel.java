@@ -66,6 +66,10 @@ public class KnobPanel extends TransparentablePanel {
 		return knob.updateAndGetValue();
 	}
 
+	public int getValueRaw() {
+		return knob.getValueRaw();
+	}
+
 	public void setInt(int val) {
 		knob.setValue(val);
 	}

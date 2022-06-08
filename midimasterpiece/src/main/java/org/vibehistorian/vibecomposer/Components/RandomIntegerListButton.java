@@ -27,6 +27,9 @@ public class RandomIntegerListButton extends JButton {
 	Function<? super Object, Map<Integer, Set<Integer>>> highlighterGenerator = null;
 	Consumer<Object> postFunc = null;
 	InstPanel parent = null;
+	public int min = -10;
+	public int max = 10;
+	public boolean editableCount = true;
 
 	public RandomIntegerListButton(String value, InstPanel parent) {
 		this.parent = parent;
@@ -37,7 +40,8 @@ public class RandomIntegerListButton extends JButton {
 				if (SwingUtilities.isLeftMouseButton(e)) {
 					if (isEnabled()) {
 						List<Integer> values = getValues();
-						VisualArrayPopup vap = new VisualArrayPopup(-10, 10, values);
+						VisualArrayPopup vap = new VisualArrayPopup(min, max, values,
+								editableCount);
 						vap.linkButton(RandomIntegerListButton.this);
 					}
 
@@ -63,7 +67,7 @@ public class RandomIntegerListButton extends JButton {
 		setValue(value);
 	}
 
-	protected List<Integer> getValues() {
+	public List<Integer> getValues() {
 		String[] valueSplit = getValue().split(",");
 		List<Integer> values = new ArrayList<>();
 		for (String s : valueSplit) {

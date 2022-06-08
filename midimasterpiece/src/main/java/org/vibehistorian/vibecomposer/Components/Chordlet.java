@@ -55,7 +55,7 @@ public class Chordlet extends JComponent {
 	}
 
 	private void setupListeners() {
-		// LMB - first letter/sharp change
+		// RMB - first letter/sharp change
 		SwingUtils.addPopupMenu(this, (evt, e) -> {
 			firstLetter = e.substring(0, 1);
 			sharp = e.length() > 1;
@@ -324,7 +324,11 @@ public class Chordlet extends JComponent {
 	}
 
 	public String getChordText() {
-		return firstLetter + sharpString() + spice + (inversion != null ? ("." + inversion) : "");
+		return getSpicedText() + (inversion != null ? ("." + inversion) : "");
+	}
+
+	public String getSpicedText() {
+		return firstLetter + sharpString() + spice;
 	}
 
 	public ChordletPanel getParentPanel() {
@@ -341,6 +345,11 @@ public class Chordlet extends JComponent {
 
 	public void prepareDragging(MouseEvent evt) {
 		dragP = new Point(evt.getPoint());
+	}
+
+	public void updateInversion(int inversion) {
+		this.inversion = inversion;
+		update();
 	}
 
 }

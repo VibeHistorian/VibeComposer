@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -19,7 +20,6 @@ import java.util.stream.IntStream;
 import javax.swing.BoxLayout;
 import javax.swing.ComboBoxEditor;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 
@@ -77,9 +77,14 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				if (!scrollEnabled || !isEnabled())
+				if (!scrollEnabled || !isEnabled()) {
+					Container cont = ScrollComboPanel.this.getParent();
+					cont.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, cont));
 					return;
-				prepareInteraction(e.isControlDown());
+				}
+				if (!e.isShiftDown()) {
+					prepareInteraction(e.isControlDown());
+				}
 				setSelectedIndex((getSelectedIndex() + e.getWheelRotation() + getItemCount())
 						% getItemCount());
 				ItemEvent evnt = new ItemEvent(scb, ItemEvent.ITEM_STATE_CHANGED, getSelectedItem(),
@@ -101,21 +106,15 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 							getSelectedItem(), ItemEvent.SELECTED);
 					fireItemStateChanged(evnt);
 				} else if (SwingUtilities.isMiddleMouseButton(evt) && !evt.isAltDown()
-						&& (!evt.isShiftDown() || evt.isControlDown())) {
+						&& !evt.isShiftDown()) {
 					if (evt.isControlDown()) {
-						if (evt.isShiftDown()) {
-							setEnabledGlobal(!isEnabled());
+						if (regenerating) {
+							selectRandomValueGlobal();
 						} else {
 							setEnabled(!isEnabled());
 						}
 					} else {
-						List<Integer> viableIndices = IntStream.iterate(0, e -> e + 1)
-								.limit(getItemCount()).boxed().collect(Collectors.toList());
-						if (viableIndices.size() > 1) {
-							viableIndices.remove(Integer.valueOf(getSelectedIndex()));
-						}
-						setSelectedIndex(
-								viableIndices.get(new Random().nextInt(viableIndices.size())));
+						selectRandomValue();
 					}
 				}
 			}
@@ -137,6 +136,28 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		} else {
 			add(scb);
 		}
+	}
+
+	protected void selectRandomValueGlobal() {
+		InstPanel instParent = SwingUtils.getInstParent(this);
+		if (instParent == null) {
+			selectRandomValue();
+			repaint();
+			return;
+		}
+		instParent.getAllComponentsLike(this, ScrollComboPanel.class).forEach(e -> {
+			e.selectRandomValue();
+			e.repaint();
+		});
+	}
+
+	protected void selectRandomValue() {
+		List<Integer> viableIndices = IntStream.iterate(0, e -> e + 1).limit(getItemCount()).boxed()
+				.collect(Collectors.toList());
+		if (viableIndices.size() > 1) {
+			viableIndices.remove(Integer.valueOf(getSelectedIndex()));
+		}
+		setSelectedIndex(viableIndices.get(new Random().nextInt(viableIndices.size())));
 	}
 
 	public FireableComboBox<T> box() {
@@ -376,24 +397,5 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 	@Override
 	public synchronized void addMouseListener(MouseListener l) {
 		scb.addMouseListener(l);
-	}
-}
-
-class FireableComboBox<T> extends JComboBox<T> {
-
-	private static final long serialVersionUID = 3383179107333241378L;
-	ScrollComboPanel<T> parent = null;
-
-	public FireableComboBox(ScrollComboPanel<T> scrollComboBox) {
-		parent = scrollComboBox;
-	}
-
-	public void _fireItemStateChanged(ItemEvent e) {
-		fireItemStateChanged(e);
-	}
-
-	@Override
-	public void setSelectedIndex(int index) {
-		parent.setVal(getItemAt(index));
 	}
 }

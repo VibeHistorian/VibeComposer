@@ -313,7 +313,8 @@ public class VariationPopup {
 		instVolumesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
 			int val = sec.getVol(i);
-			KnobPanel panel = new DetachedKnobPanel(VibeComposerGUI.instNames[i], val, 20, 150);
+			KnobPanel panel = new DetachedKnobPanel(VibeComposerGUI.instNames[i], 100, 20, 150);
+			panel.setInt(val);
 			panel.setShowTextInKnob(VibeComposerGUI.isShowingTextInKnobs);
 			panel.addBackgroundWithBorder(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
 			knobs.add(panel);
@@ -353,7 +354,7 @@ public class VariationPopup {
 		keyChangePanel.setLayout(new BoxLayout(keyChangePanel, BoxLayout.X_AXIS));
 		keyChangeKnob.setInt(secC.getCustomKeyChange() == null ? 0 : secC.getCustomKeyChange());
 		keyChangeKnob.getKnob().setFunc(e -> {
-			secC.setCustomKeyChange(keyChangeKnob.getInt());
+			secC.setCustomKeyChange(keyChangeKnob.getValueRaw());
 		});
 		keyChangePanel.add(keyChangeKnob);
 
@@ -445,6 +446,9 @@ public class VariationPopup {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					sec.setSectionVariation(index, sectionVar.isSelected() ? 1 : 0);
+					if (index == 1) {
+						sec.setDisplayAlternateChords(sectionVar.isSelected());
+					}
 					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 				}
 

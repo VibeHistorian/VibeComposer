@@ -92,7 +92,7 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 				int max = OMNI.maxOf(originals);
 				int min = OMNI.minOf(originals);
 				pop = new VisualArrayPopup(Math.min(-3, min - 2), Math.max(8, max + 2),
-						valueHolder.getValues());
+						valueHolder.getValues(), true);
 				pop.linkButton(valueHolder);
 				pop.setCloseFunc(e -> {
 					if (!originals.equals(pop.getValues())) {
@@ -126,8 +126,8 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 	}
 
 	protected void setRandomCustomValues() {
-		List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(ap.getHitsPerPattern(),
-				ap.getRepeatableNotes(), new Random());
+		List<Integer> arpPattern = MidiGenerator.makeRandomArpPattern(ap.getHitsPerPattern(), true,
+				new Random());
 		setCustomValues(arpPattern);
 		setVal(ArpPattern.CUSTOM);
 		scb.repaint();

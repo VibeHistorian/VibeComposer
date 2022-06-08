@@ -22,6 +22,22 @@ public class LG {
 		LOGGER.warn(msg);
 	}
 
+	public static void d(String msg, Throwable t) {
+		LOGGER.debug(msg, t);
+	}
+
+	public static void i(String msg, Throwable t) {
+		LOGGER.info(msg, t);
+	}
+
+	public static void e(String msg, Throwable t) {
+		LOGGER.error(msg, t);
+	}
+
+	public static void w(String msg, Throwable t) {
+		LOGGER.warn(msg, t);
+	}
+
 	public static void d(Object msg) {
 		LOGGER.debug(msg == null ? null : msg.toString());
 	}

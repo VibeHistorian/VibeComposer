@@ -183,17 +183,6 @@ public class VisualPatternPanel extends JPanel {
 					int mouseButt = e.getButton();
 					if (mouseButt == 1) {
 						mouseButton = -1;
-						if (isEnabled() && VibeComposerGUI.canRegenerateOnChange()) {
-							Timer tmr = new Timer(100, new ActionListener() {
-
-								@Override
-								public void actionPerformed(ActionEvent e) {
-									VibeComposerGUI.vibeComposerGUI.composeMidi(true);
-								}
-							});
-							tmr.setRepeats(false);
-							tmr.start();
-						}
 					} else if (mouseButt > 1) {
 						mouseButton = mouseButt;
 						boolean change = false;
@@ -218,9 +207,17 @@ public class VisualPatternPanel extends JPanel {
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
 
-					if (e.getButton() > 1 && isEnabled()
+					if (e.getButton() >= 1 && isEnabled()
 							&& VibeComposerGUI.canRegenerateOnChange()) {
-						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+						Timer tmr = new Timer(100, new ActionListener() {
+
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+							}
+						});
+						tmr.setRepeats(false);
+						tmr.start();
 					}
 
 					/*for (DrumPanel dp : VibeComposerGUI.drumPanels) {
@@ -259,14 +256,12 @@ public class VisualPatternPanel extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isShiftDown()
-						&& !evt.isControlDown() && patternType.isEnabled()) {
-					patternType.setSelectedItem(RhythmPattern.CUSTOM);
-					shiftPanel.setInt(0);
-					Random rand = new Random();
-					for (int i = 0; i < MAX_HITS; i++) {
-						truePattern.set(i, rand.nextInt(2));
+						&& patternType.isEnabled()) {
+					if (evt.isControlDown()) {
+						randomizePatternGlobal();
+					} else {
+						randomizePattern();
 					}
-					reapplyShift();
 					if (VibeComposerGUI.canRegenerateOnChange()) {
 						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
 					}
@@ -401,6 +396,33 @@ public class VisualPatternPanel extends JPanel {
 					}
 
 				});
+	}
+
+	protected void randomizePatternGlobal() {
+		InstPanel instParent = parentPanel;
+		if (instParent == null) {
+			randomizePattern();
+			repaint();
+			return;
+		}
+		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
+		allPanels.forEach(e -> {
+			e.getComboPanel().randomizePattern();
+			e.getComboPanel().repaint();
+		});
+	}
+
+	protected void randomizePattern() {
+		//LG.i("Randomize pattern.");
+		if (patternType.isEnabled()) {
+			patternType.setSelectedItem(RhythmPattern.CUSTOM);
+			shiftPanel.setInt(0);
+			Random rand = new Random();
+			for (int i = 0; i < MAX_HITS; i++) {
+				truePattern.set(i, rand.nextInt(2));
+			}
+			reapplyShift();
+		}
 	}
 
 	public void linkDoubler(JButton doubler) {

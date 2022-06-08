@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
@@ -12,6 +13,7 @@ import javax.swing.table.TableCellRenderer;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class SectionInfoCellRenderer extends JComponent implements TableCellRenderer {
@@ -21,6 +23,10 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 	private int height = 10;
 	private int width = 10;
 	private int section = 0;
+
+	private static final int fontSize = 8;
+	private static final float fontSizeMin = 7f;
+	private static final Font font = new Font("Tahoma", Font.PLAIN, fontSize);
 
 	public SectionInfoCellRenderer(int w, int h, int col) {
 		height = h;
@@ -48,36 +54,37 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 				g.setColor(new Color(230, 230, 230));
 				g.drawString("" + sec.getMeasures(), 3, height / 2);
 
-				if (width > 100) {
-					String customDurations = sec.isCustomChordsDurationsEnabled()
-							? sec.getCustomDurations().replaceAll(" ", "")
-							: "";
-					String customChords = ((sec.isCustomChordsDurationsEnabled()
-							|| sec.isDisplayAlternateChords())
-									? sec.getCustomChords().replaceAll(" ", "")
-									: "");
-					String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
-							? VibeComposerGUI.userChords.getChordListString()
-							: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
+				String customDurations = sec.isCustomChordsDurationsEnabled()
+						? sec.getCustomDurations().replaceAll(" ", "")
+						: "";
+				String customChords = ((sec.isCustomChordsDurationsEnabled()
+						|| sec.isDisplayAlternateChords())
+								? sec.getCustomChords().replaceAll(" ", "")
+								: "");
+				String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
+						? VibeComposerGUI.userChords.getChordListString()
+						: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
 
-					String guiUserDurations = (VibeComposerGUI.userChordsEnabled.isSelected()
-							? VibeComposerGUI.userChordsDurations.getText()
-							: "4,4,4,4").replaceAll(" ", "");
+				String guiUserDurations = (VibeComposerGUI.userChordsEnabled.isSelected()
+						? VibeComposerGUI.userChordsDurations.getText()
+						: "4,4,4,4").replaceAll(" ", "");
 
-					if (customChords.trim().isEmpty()
-							|| guiUserChords.equalsIgnoreCase(customChords)) {
-						customChords = "";
-					} else {
-						g.drawString("[" + customChords + "]", 12, height / 4);
-					}
+				if (customChords.trim().isEmpty() || guiUserChords.equalsIgnoreCase(customChords)) {
+					customChords = "";
+				} else {
+					float newSize = Float.valueOf(fontSize * Math.min(width, 100)
+							/ Math.max(60, SwingUtils.getDrawStringWidth(customChords)));
+					g.setFont(font.deriveFont(newSize < fontSizeMin ? fontSizeMin : newSize));
+					g.drawString("[" + customChords + "]", 12, height / 4);
+				}
 
-					if (customDurations.trim().isEmpty()
-							|| customDurations.equals(guiUserDurations)) {
-						customDurations = "";
-					} else {
-						g.drawString("(" + customDurations + ")", 12, height * 3 / 5);
-						customDurations = "(" + customDurations + ")";
-					}
+				if (customDurations.trim().isEmpty() || customDurations.equals(guiUserDurations)) {
+					customDurations = "";
+				} else {
+					float newSize = Float.valueOf(fontSize * Math.min(width, 100)
+							/ Math.max(60, SwingUtils.getDrawStringWidth(customDurations)));
+					g.setFont(font.deriveFont(newSize < fontSizeMin ? fontSizeMin : newSize));
+					g.drawString("(" + customDurations + ")", 12, height * 3 / 5);
 				}
 			}
 
