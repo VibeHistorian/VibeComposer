@@ -1,7 +1,7 @@
 # VibeComposer 2.1
 ## Interactive Music Generator
 
-![VibeComposer Advanced_UI Preview](https://i.imgur.com/9P4g2i6.png)
+![VibeComposer Advanced_UI Preview](https://i.imgur.com/yWwXKnB.png)
 
 #### Arranged Track Examples (v2.1): 
 - [Darker](https://soundcloud.com/vibehistorian/darker)
