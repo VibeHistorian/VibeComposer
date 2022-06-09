@@ -15,12 +15,12 @@
 1. [Make sure you have installed the Java Runtime Environment 1.8.0](https://java.com/en/download/)
 2. [Download the latest release (.jar, or .exe for convenience)](https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.1-beta)
 3. Run/double-click the executable
-  > Important: some users report getting virus warnings (false positives) when downloading - this is a known issue of Launch4j (used to wrap JAVA .jar as an .exe)<br>
-  > To avoid it, you can instead download and run the .jar version itself with no wrapper. <br>
-  > If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from the release, place it in the same folder as the .jar and run that instead.
+  > Note: some users report getting browser warnings like "[xyz] is not commonly downloaded and may be dangerous." when downloading the .exe - this is a known issue of Launch4j (used to wrap JAVA .jar as an .exe)<br>
+  > To avoid it, you can instead download and run the .jar version itself, which is not wrapped. <br>
+  > Note 2: If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from the release, place it in the same folder as the .jar and run that instead.
 
 #### How to run it (on Linux/Mac):
-1. Same thing as Windows, but only the JAR (.jar) file instead of the executable (.exe) file.
+1. Same thing as Windows, but you should only use the JAR (.jar) file instead of the executable (.exe) file.
 2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, and use command: "java -jar VibeComposer-v2.0-beta-JAR.jar"
 3. In case it still doesn't work, feel free to contact me (email/discord below).
 
@@ -37,7 +37,7 @@
 
 **Note:** if no sound is coming out but the playback slider is moving (the song appears to be playing), try unchecking 'MIDI Transmitter Mode" and clicking 'Regenerate', or changing the MIDI device to something else.
 
-**Note2:** if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
+**Note 2:** if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu.
     
 #### Building requirements:
