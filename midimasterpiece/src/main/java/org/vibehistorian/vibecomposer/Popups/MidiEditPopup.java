@@ -106,6 +106,7 @@ public class MidiEditPopup extends CloseablePopup {
 		setupIdentifiers(secPartNum, secPartOrder);
 		sec = section;
 		applyOnClose = true;
+		trackScopeUpDown = 0;
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
 		if (values == null) {
@@ -117,32 +118,6 @@ public class MidiEditPopup extends CloseablePopup {
 			values = values.copy();
 		}
 		values.setCustom(true);
-
-		ScrollComboBox.addAll(
-				new String[] { "No Highlight", "Scale/Key", "Chords", "Scale/Key and Chords" },
-				highlightMode);
-		highlightMode.setSelectedIndex(highlightModeChoice);
-		highlightMode.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				highlightModeChoice = highlightMode.getSelectedIndex();
-				mvea.setAndRepaint();
-			}
-		});
-
-		ScrollComboBox.addAll(new String[] { "1/32", "1/24", "1/16", "1/12", "1/8", "1/6", "1/4",
-				"1/3", "1/2", "1" }, snapToTimeGrid);
-		snapToTimeGrid.setSelectedIndex(snapToTimeGridChoice);
-		snapToTimeGrid.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				snapToTimeGridChoice = snapToTimeGrid.getSelectedIndex();
-				mvea.setAndRepaint();
-			}
-		});
-		trackScopeUpDown = 0;
 		int vmin = -1 * baseMargin * trackScope;
 		int vmax = baseMargin * trackScope;
 		if (values != null && !values.isEmpty()) {
@@ -173,6 +148,69 @@ public class MidiEditPopup extends CloseablePopup {
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
 		allPanels.setMaximumSize(new Dimension(1500, 750));
 
+		JPanel buttonPanel = makeTopButtonPanel();
+
+		JPanel midiDragDropPanel = makeMidiDragDropPanel();
+		buttonPanel.add(midiDragDropPanel);
+
+		JPanel buttonPanel2 = makePatternSavingPanel();
+
+		JPanel mveaPanel = new JPanel();
+		mveaPanel.setPreferredSize(new Dimension(1500, 600));
+		mveaPanel.setMinimumSize(new Dimension(1500, 600));
+		mveaPanel.add(mvea);
+
+		JPanel bottomSettingsPanel = bottomActionsPreferencesPanel(values);
+
+
+		allPanels.add(buttonPanel);
+		allPanels.add(buttonPanel2);
+		allPanels.add(bottomSettingsPanel);
+
+		allPanels.add(mveaPanel);
+
+		if (values.isEmpty()) {
+			recomposePart(false);
+		} else {
+			saveToHistory();
+		}
+		addKeyboardControls(allPanels);
+
+		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
+		frame.add(allPanels);
+		frame.pack();
+		frame.setVisible(true);
+	}
+
+	private void addKeyboardControls(JPanel allPanels) {
+		Action undoAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				undo();
+			}
+		};
+		Action redoAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				redo();
+			}
+		};
+
+		Action deleteAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				deleteSelected();
+			}
+		};
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
+		allPanels.getActionMap().put("undo", undoAction);
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "redo");
+		allPanels.getActionMap().put("redo", redoAction);
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+		allPanels.getActionMap().put("delete", deleteAction);
+	}
+
+	private JPanel makeTopButtonPanel() {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridLayout(0, 5, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(1500, 50));
@@ -232,7 +270,10 @@ public class MidiEditPopup extends CloseablePopup {
 
 		buttonPanel.add(VibeComposerGUI.makeButton("Undo", e -> undo()));
 		buttonPanel.add(VibeComposerGUI.makeButton("Redo", e -> redo()));
+		return buttonPanel;
+	}
 
+	private JPanel makeMidiDragDropPanel() {
 		JPanel midiDragDropPanel = new JPanel();
 		midiDragDropPanel.setLayout(new GridLayout(0, 1));
 
@@ -265,8 +306,96 @@ public class MidiEditPopup extends CloseablePopup {
 
 			return pn;
 		}));
-		buttonPanel.add(midiDragDropPanel);
+		return midiDragDropPanel;
+	}
 
+	private JPanel bottomActionsPreferencesPanel(PhraseNotes values) {
+		JPanel bottomSettingsPanel = new JPanel();
+		bottomSettingsPanel.setLayout(new BoxLayout(bottomSettingsPanel, BoxLayout.X_AXIS));
+		text = new JTextField(values.toStringPitches(), 40);
+		bottomSettingsPanel.add(text);
+		bottomSettingsPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
+			if (StringUtils.isNotEmpty(text.getText())) {
+				try {
+					String[] textSplit = text.getText().split(",");
+					List<Integer> nums = new ArrayList<>();
+					for (String s : textSplit) {
+						nums.add(Integer.valueOf(s));
+					}
+					for (int i = 0; i < nums.size() && i < mvea.getValues().size(); i++) {
+						mvea.getValues().get(i).setPitch(nums.get(i));
+					}
+					repaintMvea();
+				} catch (Exception exc) {
+					LG.d("Incorrect text format, cannot convert to list of numbers.");
+				}
+			}
+		}));
+
+
+		ScrollComboBox.addAll(
+				new String[] { "No Highlight", "Scale/Key", "Chords", "Scale/Key and Chords" },
+				highlightMode);
+		highlightMode.setSelectedIndex(highlightModeChoice);
+		highlightMode.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				highlightModeChoice = highlightMode.getSelectedIndex();
+				mvea.setAndRepaint();
+			}
+		});
+
+		ScrollComboBox.addAll(new String[] { "1/32", "1/24", "1/16", "1/12", "1/8", "1/6", "1/4",
+				"1/3", "1/2", "1" }, snapToTimeGrid);
+		snapToTimeGrid.setSelectedIndex(snapToTimeGridChoice);
+		snapToTimeGrid.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				snapToTimeGridChoice = snapToTimeGrid.getSelectedIndex();
+				mvea.setAndRepaint();
+			}
+		});
+
+		snapToScaleGrid.setFunc(e -> {
+			snapToGridChoice = snapToScaleGrid.isSelected();
+		});
+		regenerateInPlaceOnChange.setFunc(e -> {
+			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
+		});
+		displayDrumHelper.setFunc(e -> {
+			repaintMvea();
+		});
+		bottomSettingsPanel.add(regenerateInPlaceOnChange);
+		bottomSettingsPanel.add(displayDrumHelper);
+		bottomSettingsPanel.add(new JLabel("  Highlight Mode:"));
+		bottomSettingsPanel.add(highlightMode);
+		bottomSettingsPanel.add(new JLabel("  Snap To Time:"));
+		bottomSettingsPanel.add(snapToTimeGrid);
+		bottomSettingsPanel.add(snapToScaleGrid);
+
+		JButton recompButt = new JButton("Recompose Part");
+		recompButt.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				recomposePart(SwingUtilities.isMiddleMouseButton(evt));
+			}
+		});
+		bottomSettingsPanel.add(recompButt);
+
+		editHistoryBox.setFunc(e -> {
+			if (notesHistoryIndex != editHistoryBox.getSelectedIndex()) {
+				loadFromHistory(editHistoryBox.getSelectedIndex());
+			}
+		});
+		bottomSettingsPanel.add(historyLabel);
+		bottomSettingsPanel.add(editHistoryBox);
+
+		return bottomSettingsPanel;
+	}
+
+	private JPanel makePatternSavingPanel() {
 		JPanel buttonPanel2 = new JPanel();
 		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
@@ -288,110 +417,7 @@ public class MidiEditPopup extends CloseablePopup {
 			applyOnClose = false;
 			close();
 		}));
-
-		JPanel mveaPanel = new JPanel();
-		mveaPanel.setPreferredSize(new Dimension(1500, 600));
-		mveaPanel.setMinimumSize(new Dimension(1500, 600));
-		mveaPanel.add(mvea);
-
-		JPanel textPanel = new JPanel();
-		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
-		text = new JTextField(values.toStringPitches(), 40);
-		textPanel.add(text);
-		textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
-			if (StringUtils.isNotEmpty(text.getText())) {
-				try {
-					String[] textSplit = text.getText().split(",");
-					List<Integer> nums = new ArrayList<>();
-					for (String s : textSplit) {
-						nums.add(Integer.valueOf(s));
-					}
-					for (int i = 0; i < nums.size() && i < mvea.getValues().size(); i++) {
-						mvea.getValues().get(i).setPitch(nums.get(i));
-					}
-					repaintMvea();
-				} catch (Exception exc) {
-					LG.d("Incorrect text format, cannot convert to list of numbers.");
-				}
-			}
-		}));
-
-		snapToScaleGrid.setFunc(e -> {
-			snapToGridChoice = snapToScaleGrid.isSelected();
-		});
-		regenerateInPlaceOnChange.setFunc(e -> {
-			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
-		});
-		displayDrumHelper.setFunc(e -> {
-			repaintMvea();
-		});
-		textPanel.add(regenerateInPlaceOnChange);
-		textPanel.add(displayDrumHelper);
-		textPanel.add(new JLabel("  Highlight Mode:"));
-		textPanel.add(highlightMode);
-		textPanel.add(new JLabel("  Snap To Time:"));
-		textPanel.add(snapToTimeGrid);
-		textPanel.add(snapToScaleGrid);
-
-
-		JButton recompButt = new JButton("Recompose Part");
-		recompButt.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent evt) {
-				recomposePart(SwingUtilities.isMiddleMouseButton(evt));
-			}
-		});
-		textPanel.add(recompButt);
-
-		editHistoryBox.setFunc(e -> {
-			if (notesHistoryIndex != editHistoryBox.getSelectedIndex()) {
-				loadFromHistory(editHistoryBox.getSelectedIndex());
-			}
-		});
-		textPanel.add(historyLabel);
-		textPanel.add(editHistoryBox);
-
-		allPanels.add(buttonPanel);
-		allPanels.add(buttonPanel2);
-		allPanels.add(textPanel);
-
-		allPanels.add(mveaPanel);
-
-		if (values.isEmpty()) {
-			recomposePart(false);
-		} else {
-			saveToHistory();
-		}
-		Action undoAction = new AbstractAction() {
-			public void actionPerformed(ActionEvent e) {
-				undo();
-			}
-		};
-		Action redoAction = new AbstractAction() {
-			public void actionPerformed(ActionEvent e) {
-				redo();
-			}
-		};
-
-		Action deleteAction = new AbstractAction() {
-			public void actionPerformed(ActionEvent e) {
-				deleteSelected();
-			}
-		};
-		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
-		allPanels.getActionMap().put("undo", undoAction);
-		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "redo");
-		allPanels.getActionMap().put("redo", redoAction);
-		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-				.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
-		allPanels.getActionMap().put("delete", deleteAction);
-
-		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
-		frame.add(allPanels);
-		frame.pack();
-		frame.setVisible(true);
+		return buttonPanel2;
 	}
 
 	public void setupIdentifiers(int secPartNum, int secPartOrder) {

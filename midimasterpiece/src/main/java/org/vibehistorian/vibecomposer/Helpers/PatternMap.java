@@ -14,9 +14,10 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "PatternMap")
 @XmlType(propOrder = {})
 public class PatternMap {
+
 	// exists for specific inst. - 0 to 4
 	// query for a part, get map of pattern names and their notes
-	Map<Integer, Map<String, PhraseNotes>> partPatternMap = new HashMap<>();
+	Map<Integer, NamedNotesMap> partPatternMap = new HashMap<>();
 
 	public PatternMap() {
 	}
@@ -34,7 +35,7 @@ public class PatternMap {
 			return;
 		}
 		if (!partPatternMap.containsKey(part)) {
-			partPatternMap.put(part, new HashMap<>());
+			partPatternMap.put(part, new NamedNotesMap());
 		}
 		partPatternMap.get(part).put(name, putAsCopy ? notes.copy() : notes);
 	}
@@ -58,11 +59,11 @@ public class PatternMap {
 		return partPatternMap.get(part).keySet();
 	}
 
-	public Map<Integer, Map<String, PhraseNotes>> getPartPatternMap() {
+	public Map<Integer, NamedNotesMap> getPartPatternMap() {
 		return partPatternMap;
 	}
 
-	public void setPartPatternMap(Map<Integer, Map<String, PhraseNotes>> partPatternMap) {
+	public void setPartPatternMap(Map<Integer, NamedNotesMap> partPatternMap) {
 		this.partPatternMap = partPatternMap;
 	}
 
@@ -98,4 +99,12 @@ public class PatternMap {
 		}
 		return map;
 	}
+}
+
+@XmlRootElement(name = "NamedNotesMap")
+@XmlType(propOrder = {})
+class NamedNotesMap extends HashMap<String, PhraseNotes> {
+
+	private static final long serialVersionUID = -5573846527689276057L;
+
 }
