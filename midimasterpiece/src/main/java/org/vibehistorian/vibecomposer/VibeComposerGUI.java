@@ -168,6 +168,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
+import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.ArrangementSectionSelectorPanel;
@@ -293,6 +294,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static GUIConfig guiConfig = new GUIConfig();
 	public static MidiGenerator melodyGen = null;
+	public static List<PatternMap> patternMaps = PatternMap.multiMap();
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
 	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,

@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
@@ -45,7 +46,13 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 @XmlType(propOrder = {})
 public class GUIConfig {
 
+	public GUIConfig() {
+	}
+
 	private PhraseNotes melodyNotes = null;
+
+	// pattern map
+	private List<PatternMap> patternMaps = new ArrayList<>();
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
@@ -150,11 +157,6 @@ public class GUIConfig {
 
 	private String bookmarkText = "";
 	private int regenerateCount = 0;
-
-
-	public GUIConfig() {
-
-	}
 
 	public String getSoundbankName() {
 		return soundbankName;
@@ -848,6 +850,14 @@ public class GUIConfig {
 
 	public void setMelodyLegacyMode(boolean melodyLegacyMode) {
 		this.melodyLegacyMode = melodyLegacyMode;
+	}
+
+	public List<PatternMap> getPatternMaps() {
+		return patternMaps;
+	}
+
+	public void setPatternMaps(List<PatternMap> patternMaps) {
+		this.patternMaps = patternMaps;
 	}
 
 }
