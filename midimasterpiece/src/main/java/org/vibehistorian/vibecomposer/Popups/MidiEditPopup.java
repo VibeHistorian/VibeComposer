@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -45,8 +46,10 @@ import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
+import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -94,7 +97,13 @@ public class MidiEditPopup extends CloseablePopup {
 	public static int snapToTimeGridChoice = 2;
 	public static boolean snapToGridChoice = true;
 	public static boolean regenerateInPlaceChoice = false;
+
 	public CheckButton applyToMainBtn;
+
+	public ScrollComboBox<Integer> patternPartBox = new ScrollComboBox<>(false);
+	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
+	public ScrollComboBox<String> patternNameBox = new ScrollComboBox<>(false);
+
 	public JLabel historyLabel = new JLabel("Edit History:");
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
 	public boolean applyOnClose = true;
@@ -149,9 +158,6 @@ public class MidiEditPopup extends CloseablePopup {
 		allPanels.setMaximumSize(new Dimension(1500, 750));
 
 		JPanel buttonPanel = makeTopButtonPanel();
-
-		JPanel midiDragDropPanel = makeMidiDragDropPanel();
-		buttonPanel.add(midiDragDropPanel);
 
 		JPanel buttonPanel2 = makePatternSavingPanel();
 
@@ -270,6 +276,10 @@ public class MidiEditPopup extends CloseablePopup {
 
 		buttonPanel.add(VibeComposerGUI.makeButton("Undo", e -> undo()));
 		buttonPanel.add(VibeComposerGUI.makeButton("Redo", e -> redo()));
+
+		JPanel midiDragDropPanel = makeMidiDragDropPanel();
+		buttonPanel.add(midiDragDropPanel);
+
 		return buttonPanel;
 	}
 
@@ -397,8 +407,35 @@ public class MidiEditPopup extends CloseablePopup {
 
 	private JPanel makePatternSavingPanel() {
 		JPanel buttonPanel2 = new JPanel();
-		buttonPanel2.setLayout(new GridLayout(0, 4, 0, 0));
+		buttonPanel2.setLayout(new GridLayout(0, 8, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
+
+
+		ScrollComboBox.addAll(new Integer[] { 0, 1, 2, 3, 4 }, patternPartBox);
+		patternPartBox.setFunc(e -> loadParts());
+		patternPartOrderBox.setFunc(e -> loadNames());
+		//patternNameBox.setFunc(e -> loadNotes());
+
+		buttonPanel2.add(patternPartBox);
+		buttonPanel2.add(patternPartOrderBox);
+		buttonPanel2.add(patternNameBox);
+
+		loadParts();
+		loadNames();
+
+		buttonPanel2.add(VibeComposerGUI.makeButton("Load", e -> {
+			loadNotes(true);
+		}));
+		buttonPanel2.add(VibeComposerGUI.makeButton("Import", e -> {
+			loadNotes(false);
+		}));
+		buttonPanel2.add(VibeComposerGUI.makeButton("Save", e -> {
+			saveNotes(false);
+		}));
+		buttonPanel2.add(VibeComposerGUI.makeButton("Save New", e -> {
+			saveNotes(true);
+		}));
+
 
 		applyToMainBtn = new CheckButton("Apply to Global",
 				VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidiToggle());
@@ -418,6 +455,76 @@ public class MidiEditPopup extends CloseablePopup {
 			close();
 		}));
 		return buttonPanel2;
+	}
+
+	private void loadParts() {
+		patternNameBox.removeAllItems();
+		patternPartOrderBox.removeAllItems();
+		ScrollComboBox.addAll(
+				VibeComposerGUI.patternMaps.get(patternPartBox.getSelectedIndex()).getKeys(),
+				patternPartOrderBox);
+	}
+
+	private void loadNames() {
+		patternNameBox.removeAllItems();
+		ScrollComboBox.addAll(VibeComposerGUI.patternMaps.get(patternPartBox.getSelectedIndex())
+				.getPatternNames(patternPartOrderBox.getSelectedItem()), patternNameBox);
+	}
+
+	private void loadNotes(boolean overwrite) {
+		PhraseNotes pn = getPatternMap().get(patternPartOrderBox.getSelectedItem(),
+				patternNameBox.getSelectedItem());
+		if (pn == null) {
+			return;
+		}
+		// TODO: overwrite notes setting
+		if (overwrite) {
+			setCustomValues(pn);
+		} else {
+			// import instead
+		}
+	}
+
+	private void saveNotes(boolean newName) {
+		String patternName = (newName) ? ("Custom: " + String.valueOf(new Date().hashCode()))
+				: patternNameBox.getSelectedItem();
+		getPatternMap().put(patternPartOrderBox.getSelectedItem(), patternName, getValues());
+		if (newName) {
+			patternNameBox.addItem(patternName);
+		}
+		sec.putPattern(part, partOrder, getSelectedPattern());
+	}
+
+	private UsedPattern getSelectedPattern() {
+		return new UsedPattern(patternPartBox.getSelectedIndex(),
+				patternPartOrderBox.getSelectedItem(), patternNameBox.getSelectedItem());
+	}
+
+	public PatternMap getPatternMap() {
+		return VibeComposerGUI.patternMaps.get(patternPartBox.getSelectedIndex());
+	}
+
+	public void setCustomValues(PhraseNotes values) {
+
+		int vmin = -1 * baseMargin;
+		int vmax = baseMargin;
+		if (!values.isEmpty()) {
+			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.min().getAsInt();
+			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.max().getAsInt();
+		}
+		mvea.setMin(Math.min(mvea.min, vmin));
+		mvea.setMax(Math.max(mvea.max, vmax));
+
+		values.setCustom(true);
+
+
+		mvea.setValues(values);
+		saveToHistory();
+
+		apply();
+		repaintMvea();
 	}
 
 	public void setupIdentifiers(int secPartNum, int secPartOrder) {
@@ -521,28 +628,12 @@ public class MidiEditPopup extends CloseablePopup {
 			return;
 		}
 
-		int vmin = -1 * baseMargin;
-		int vmax = baseMargin;
-
 		values = values.copy();
 
-		if (!values.isEmpty()) {
-			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.min().getAsInt();
-			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.max().getAsInt();
-		}
-		mvea.setMin(Math.min(mvea.min, vmin));
-		mvea.setMax(Math.max(mvea.max, vmax));
-		values.setCustom(true);
 
+		setCustomValues(values);
 
-		mvea.setValues(values);
-		saveToHistory();
-
-		apply();
 		LG.i("Custom MIDI setup successful: " + part + ", " + partOrder);
-		repaintMvea();
 	}
 
 	public void saveToHistory() {

@@ -180,8 +180,8 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 
 	}
 
-	public Object getSelectedItem() {
-		return scb.getSelectedItem();
+	public T getSelectedItem() {
+		return (T) scb.getSelectedItem();
 	}
 
 	public int getItemCount() {
@@ -274,20 +274,6 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		if (requiresSettingPrototype) {
 			setPrototype(val);
 		}
-	}
-
-	public static <T> void addAll(T[] choices, ScrollComboPanel<T> choice) {
-		for (T c : choices) {
-			choice.addItem(c);
-		}
-
-		/*if (choice.getItemCount() > 0) {
-			SwingUtilities.invokeLater(() -> {
-				choice.lockButt.setBounds(choice.getWidth() - 7, choice.getHeight() - 8, 8, 8);
-				LG.i(choice.lockButt.getBounds().toString());
-				LG.i(choice.getSize().toString());
-			});
-		}*/
 	}
 
 	public boolean isRegenerating() {

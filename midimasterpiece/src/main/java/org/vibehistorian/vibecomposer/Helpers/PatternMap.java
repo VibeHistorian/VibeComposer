@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,60 +12,77 @@ import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
 @XmlRootElement(name = "PatternMap")
 @XmlType(propOrder = {})
 public class PatternMap {
 
-	// exists for specific inst. - 0 to 4
-	// query for a part, get map of pattern names and their notes
-	Map<Integer, NamedNotesMap> partPatternMap = new HashMap<>();
+	// exists for specific part. - 0 to 4
+	// query for a partOrder, get map of pattern names and their notes
+	Map<Integer, NamedNotesMap> partOrderPatternMap = new HashMap<>();
+	public static final String[] BASE_PATTERNS = { "MAIN", "VERSE", "INST" };
 
 	public PatternMap() {
 	}
 
-	public void putRaw(Integer part, String name, PhraseNotes notes) {
-		put(part, name, notes, true);
+	public void putRaw(Integer partOrder, String name, PhraseNotes notes) {
+		put(partOrder, name, notes, false);
 	}
 
-	public void put(Integer part, String name, PhraseNotes notes) {
-		put(part, name, notes, false);
+	public void put(Integer partOrder, String name, PhraseNotes notes) {
+		put(partOrder, name, notes, true);
 	}
 
-	public void put(Integer part, String name, PhraseNotes notes, boolean putAsCopy) {
-		if (notes == null) {
-			return;
+	public void put(Integer partOrder, String name, PhraseNotes notes, boolean putAsCopy) {
+		if (notes != null && putAsCopy) {
+			notes = notes.copy();
 		}
-		if (!partPatternMap.containsKey(part)) {
-			partPatternMap.put(part, new NamedNotesMap());
+		if (!partOrderPatternMap.containsKey(partOrder)) {
+			partOrderPatternMap.put(partOrder, new NamedNotesMap());
 		}
-		partPatternMap.get(part).put(name, putAsCopy ? notes.copy() : notes);
+		partOrderPatternMap.get(partOrder).put(name, notes);
 	}
 
-	public PhraseNotes getRaw(Integer part, String name) {
-		if (!partPatternMap.containsKey(part)) {
+	public PhraseNotes getRaw(Integer partOrder, String name) {
+		if (!partOrderPatternMap.containsKey(partOrder)) {
 			return null;
 		}
-		return partPatternMap.get(part).get(name);
+		return partOrderPatternMap.get(partOrder).get(name);
 	}
 
-	public PhraseNotes get(Integer part, String name) {
-		PhraseNotes pn = getRaw(part, name);
+	public PhraseNotes get(Integer partOrder, String name) {
+		PhraseNotes pn = getRaw(partOrder, name);
 		return (pn != null) ? pn.copy() : null;
 	}
 
-	public Set<String> getPatternNames(Integer part) {
-		if (!partPatternMap.containsKey(part)) {
+	public List<Integer> getKeys() {
+		List<Integer> keys = new ArrayList<>(partOrderPatternMap.keySet());
+		Collections.sort(keys);
+		return keys;
+	}
+
+	public void remove(Integer partOrder) {
+		partOrderPatternMap.remove(partOrder);
+	}
+
+	public NamedNotesMap getNamedMap(Integer partOrder) {
+		return partOrderPatternMap.get(partOrder);
+	}
+
+	public Set<String> getPatternNames(Integer partOrder) {
+		if (!partOrderPatternMap.containsKey(partOrder)) {
 			return null;
 		}
-		return partPatternMap.get(part).keySet();
+		return partOrderPatternMap.get(partOrder).keySet();
 	}
 
-	public Map<Integer, NamedNotesMap> getPartPatternMap() {
-		return partPatternMap;
+	public Map<Integer, NamedNotesMap> getpartOrderPatternMap() {
+		return partOrderPatternMap;
 	}
 
-	public void setPartPatternMap(Map<Integer, NamedNotesMap> partPatternMap) {
-		this.partPatternMap = partPatternMap;
+	public void setpartOrderPatternMap(Map<Integer, NamedNotesMap> partOrderPatternMap) {
+		this.partOrderPatternMap = partOrderPatternMap;
 	}
 
 	public static List<PatternMap> multiMap() {
@@ -90,8 +108,8 @@ public class PatternMap {
 		if (other == null) {
 			return map;
 		}
-		for (Integer key : other.getPartPatternMap().keySet()) {
-			for (Entry<String, PhraseNotes> nameNotes : other.getPartPatternMap().get(key)
+		for (Integer key : other.getpartOrderPatternMap().keySet()) {
+			for (Entry<String, PhraseNotes> nameNotes : other.getpartOrderPatternMap().get(key)
 					.entrySet()) {
 				map.put(key, nameNotes.getKey(),
 						(nameNotes.getValue() != null) ? nameNotes.getValue().copy() : null);
@@ -99,12 +117,25 @@ public class PatternMap {
 		}
 		return map;
 	}
-}
 
-@XmlRootElement(name = "NamedNotesMap")
-@XmlType(propOrder = {})
-class NamedNotesMap extends HashMap<String, PhraseNotes> {
-
-	private static final long serialVersionUID = -5573846527689276057L;
-
+	public static void checkMapBounds(List<PatternMap> patternMaps) {
+		// remove old partOrders, add new partOrders
+		for (int i = 0; i < 5; i++) {
+			PatternMap map = patternMaps.get(i);
+			List<Integer> partOrders = VibeComposerGUI.getInstList(i).stream()
+					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+			List<Integer> mappartOrdersToRemove = map.getKeys();
+			List<Integer> mappartOrdersCopy = new ArrayList<>(mappartOrdersToRemove);
+			mappartOrdersToRemove.removeAll(partOrders);
+			for (Integer p : mappartOrdersToRemove) {
+				map.remove(p);
+			}
+			partOrders.removeAll(mappartOrdersCopy);
+			for (Integer p : partOrders) {
+				for (String name : BASE_PATTERNS) {
+					map.put(p, name, null);
+				}
+			}
+		}
+	}
 }

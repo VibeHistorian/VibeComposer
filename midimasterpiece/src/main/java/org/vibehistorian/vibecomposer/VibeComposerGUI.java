@@ -7870,6 +7870,9 @@ public class VibeComposerGUI extends JFrame
 			gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
 		}
 
+		PatternMap.checkMapBounds(patternMaps);
+		gc.setPatternMaps(PatternMap.multiMapCopy(patternMaps));
+
 		gc.setRandomSeed(lastRandomSeed);
 		gc.setMidiMode(midiMode.isSelected());
 
@@ -8001,6 +8004,10 @@ public class VibeComposerGUI extends JFrame
 		if (gc.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
 			dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
+		}
+
+		if (gc.getPatternMaps() != null && !gc.getPatternMaps().isEmpty()) {
+			patternMaps = gc.getPatternMaps();
 		}
 
 		// seed

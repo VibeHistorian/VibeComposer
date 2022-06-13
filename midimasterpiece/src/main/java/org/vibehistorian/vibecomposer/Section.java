@@ -39,6 +39,8 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.Helpers.UsedPatternMap;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -162,6 +164,8 @@ public class Section {
 	public static final List<Integer> EMPTY_SECTION_VARS = IntStream.iterate(0, f -> f)
 			.limit(sectionVariationNames.length).boxed().collect(Collectors.toList());
 	private int transitionType = 0;
+
+	private List<UsedPatternMap> patterns = UsedPatternMap.multiMap();
 
 	public Section() {
 
@@ -1060,6 +1064,22 @@ public class Section {
 			List<Integer> vars = getVariation(part, partOrder);
 			return (vars != null && vars.contains(0)) ? 12 : 0;
 		}
+	}
+
+	public List<UsedPatternMap> getPatterns() {
+		return patterns;
+	}
+
+	public void setPatterns(List<UsedPatternMap> patterns) {
+		this.patterns = patterns;
+	}
+
+	public void putPattern(int inst, int part, UsedPattern name) {
+		patterns.get(inst).put(part, name);
+	}
+
+	public UsedPattern getPattern(int inst, int part) {
+		return patterns.get(inst).get(part);
 	}
 
 }
