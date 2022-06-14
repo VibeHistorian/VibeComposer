@@ -87,8 +87,10 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 				for (Object o : stringables) {
 					String num = o.toString();
 					int partOrder = 0;
+					int panelOrder = 1;
 					try {
-						partOrder = VibeComposerGUI.getAbsoluteOrder(part, Integer.valueOf(num));
+						panelOrder = Integer.valueOf(num);
+						partOrder = VibeComposerGUI.getAbsoluteOrder(part, panelOrder);
 					} catch (Exception e) {
 						continue;
 					}
@@ -109,7 +111,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					
 						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
 					}*/
-					boolean isCustomMidi = sec.containsPhrase(part, partOrder);
+					boolean isCustomMidi = sec.containsPattern(part, panelOrder)
+							&& sec.getPattern(part, panelOrder).isCustom();
 
 					Color instCellColor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
 							part > 0 ? 0.55 : 0.7);

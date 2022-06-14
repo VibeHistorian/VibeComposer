@@ -170,6 +170,7 @@ import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.ArrangementSectionSelectorPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
@@ -419,7 +420,7 @@ public class VibeComposerGUI extends JFrame
 	public static Triple<Integer, Integer, Integer> highlightedTableCell = null;
 	public static Triple<Integer, Integer, Integer> copyDraggingOrigin = null;
 	public static Point arrangementActualTableMousePoint = null;
-	PhraseNotes copyDraggedNotes = null;
+	UsedPattern copyDraggedPattern = null;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -3583,26 +3584,18 @@ public class VibeComposerGUI extends JFrame
 					}
 				} else if (evt.isControlDown()) {
 					// begin copy-dragging
-					if (partAbsoluteOrder < getInstList(part).size()) {
-
-					}
 					Section sec = actualArrangement.getSections().get(secOrder);
 					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
-					if (hasSinglePresence && sec.getPartPhraseNotes() != null
-							&& part < sec.getPartPhraseNotes().size()
-							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
-
+					if (hasSinglePresence && sec.containsPattern(part, panelOrder)) {
 						copyDraggingOrigin = Triple.of(part, partAbsoluteOrder, secOrder);
-						prepareCustomMidiSubcellCopy(part, partAbsoluteOrder, sec);
+						prepareCustomMidiSubcellCopy(part, panelOrder, sec);
 
 					}
 				} else if (currentMidi != null && partAbsoluteOrder < getInstList(part).size()) {
 					Section sec = actualArrangement.getSections().get(secOrder);
 					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
 
-					if (hasSinglePresence && sec.getPartPhraseNotes() != null
-							&& part < sec.getPartPhraseNotes().size()
-							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
+					if (hasSinglePresence && sec.containsPattern(part, panelOrder)) {
 						currentMidiEditorPopup = new MidiEditPopup(sec, part, panelOrder);
 						currentMidiEditorPopup.setSec(sec);
 						currentMidiEditorSectionIndex = secOrder;
@@ -3635,9 +3628,8 @@ public class VibeComposerGUI extends JFrame
 		Triple<Integer, Integer, Integer> partOrderSection = calculateCurrentTableSubcell(evt);
 		if (partOrderSection != null) {
 			Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
-			PhraseNotes newNotes = copyDraggedNotes.copy();
-			newNotes.setCustom(true);
-			sec.addPhraseNotes(partOrderSection.getLeft(), partOrderSection.getMiddle(), newNotes);
+			UsedPattern newPattern = copyDraggedPattern;
+			sec.putPattern(partOrderSection.getLeft(), partOrderSection.getMiddle(), newPattern);
 			if (!sec.getPresence(partOrderSection.getLeft())
 					.contains(partOrderSection.getMiddle())) {
 				sec.setPresence(partOrderSection.getLeft(), partOrderSection.getMiddle());
@@ -3652,15 +3644,15 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void prepareCustomMidiSubcellCopy(int part, int partAbsoluteOrder, Section sec) {
+	private void prepareCustomMidiSubcellCopy(int part, int panelOrder, Section sec) {
 		copyDragging = true;
-		copyDraggedNotes = sec.getPhraseNotes(part, partAbsoluteOrder);
+		copyDraggedPattern = sec.getPattern(part, panelOrder);
 		scrollableArrangementActualTable.repaint();
 	}
 
 	public void resetCopyDrag() {
 		copyDragging = false;
-		copyDraggedNotes = null;
+		copyDraggedPattern = null;
 		copyDraggingOrigin = null;
 		scrollableArrangementActualTable.repaint();
 	}

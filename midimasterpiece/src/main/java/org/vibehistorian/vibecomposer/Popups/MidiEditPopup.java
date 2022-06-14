@@ -109,7 +109,6 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
-		setupIdentifiers(secPartNum, secPartOrder);
 		sec = section;
 		applyOnClose = true;
 		trackScopeUpDown = 0;
@@ -123,42 +122,28 @@ public class MidiEditPopup extends CloseablePopup {
 
 		JPanel buttonPanel2 = makePatternSavingPanel();
 
-
-		PhraseNotes values = loadSecValues(secPartNum, secPartOrder);
-
-		values.setCustom(true);
-		int vmin = -1 * baseMargin * trackScope;
-		int vmax = baseMargin * trackScope;
-		if (values != null && !values.isEmpty()) {
-			int[] vals = values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.toArray();
-			if (vals != null && vals.length > 0) {
-				vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-						.min().getAsInt();
-				vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-						.max().getAsInt();
-			}
-			/*else {
-				values.add(new PhraseNote(
-						new Note(60, sec.getSectionDuration() > 0 ? sec.getSectionDuration()
-								: MidiGenerator.GENERATED_MEASURE_LENGTH)));
-				}*/
-
-		}
-		int min = vmin;
-		int max = vmax;
-		mvea = new MidiEditArea(min, max, values);
-		mvea.setPop(this);
-		mvea.setPreferredSize(new Dimension(1500, 600));
-
-		MidiEditArea.sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
+		setupIdentifiers(secPartNum, secPartOrder);
 
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(1500, 600));
 		mveaPanel.setMinimumSize(new Dimension(1500, 600));
-		mveaPanel.add(mvea);
+
+		PhraseNotes values = loadSecValues(secPartNum, secPartOrder);
+		if (values.isEmpty()) {
+			recomposePart(false);
+		}
 
 		JPanel bottomSettingsPanel = bottomActionsPreferencesPanel(values);
+
+
+		mvea = new MidiEditArea(126, 1, values);
+		mvea.setPop(this);
+		mvea.setPreferredSize(new Dimension(1500, 600));
+		mveaPanel.add(mvea);
+
+		setCustomValues(values);
+
+		MidiEditArea.sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
 
 
 		allPanels.add(buttonPanel);
@@ -167,11 +152,6 @@ public class MidiEditPopup extends CloseablePopup {
 
 		allPanels.add(mveaPanel);
 
-		if (values.isEmpty()) {
-			recomposePart(false);
-		} else {
-			saveToHistory();
-		}
 		addKeyboardControls(allPanels);
 
 		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
@@ -195,7 +175,6 @@ public class MidiEditPopup extends CloseablePopup {
 				patternNameBox.setSelectedItem(UsedPattern.GENERATED);
 			}
 		} else {
-
 			patternNameBox.setSelectedItem(pat.getName());
 		}
 		return values;
@@ -517,8 +496,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void setCustomValues(PhraseNotes values) {
 
-		int vmin = -1 * baseMargin;
-		int vmax = baseMargin;
+		int vmin = -1 * baseMargin * trackScope;
+		int vmax = baseMargin * trackScope;
 		if (!values.isEmpty()) {
 			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
 					.min().getAsInt();
@@ -541,6 +520,9 @@ public class MidiEditPopup extends CloseablePopup {
 	public void setupIdentifiers(int secPartNum, int secPartOrder) {
 		part = secPartNum;
 		partOrder = secPartOrder;
+		patternPartBox.setSelectedIndex(part);
+		patternPartOrderBox.setSelectedItem(partOrder);
+		patternNameBox.setSelectedItem(sec.getPatternName(part, partOrder));
 		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + VibeComposerGUI.instNames[part]
 				+ ", Order: " + secPartOrder);
 	}
@@ -610,7 +592,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public void setup(Section sec) {
 		LG.i("Midi Edit Popup Setup, Part: " + part + ", Order: " + partOrder);
 
-		if (!sec.containsPhrase(part, partOrder)) {
+		if (!sec.containsPattern(part, partOrder)) {
 			close();
 			LG.i("MidiEditPopup cannot be setup - section doesn't contain the part/partOrder!");
 			return;
@@ -618,12 +600,12 @@ public class MidiEditPopup extends CloseablePopup {
 
 		setSec(sec);
 		PhraseNotes values = loadSecValues(part, partOrder);
-		if (values == null) {
+		/*if (values == null) {
 			LG.i("Setup - not applicable, or not custom midi!");
 			apply();
 			repaintMvea();
 			return;
-		}
+		}*/
 
 		setCustomValues(values);
 
@@ -793,12 +775,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public boolean isSectionCustom() {
-		PhraseNotes pn = sec.getPartPhraseNotes().get(part).get(partOrder);
-		if (pn != null && pn.isCustom()) {
-			return true;
-		} else {
-			return false;
-		}
+		return sec.containsPattern(part, partOrder) && sec.getPattern(part, partOrder).isCustom();
 	}
 
 	public PhraseNotes getValues() {

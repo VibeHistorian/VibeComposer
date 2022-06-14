@@ -237,12 +237,11 @@ public class MidiEditArea extends JComponent {
 			playNote(draggedNote);
 
 			dragMode.add(DM.VELOCITY);
-		} else if (pop.displayDrumHelper.isSelected() && pop.getSec() != null
-				&& pop.getSec().getPartPhraseNotes().size() == 5) {
+		} else if (pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
 			int row = getPitchFromPosition(evt.getPoint().y) - min;
-			List<PhraseNotes> noteNotes = pop.getSec().getPartPhraseNotes().get(4);
+			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(4);
 			if (row >= 0 && row < noteNotes.size()) {
-				pop.setupIdentifiers(4, row);
+				pop.setupIdentifiers(4, VibeComposerGUI.getInstList(4).get(row).getPanelOrder());
 				// TODO
 				pop.setup(pop.getSec());
 			}
@@ -1022,10 +1021,9 @@ public class MidiEditArea extends JComponent {
 				}
 			}
 
-			if (pop.displayDrumHelper.isSelected() && pop.getSec() != null
-					&& pop.getSec().getPartPhraseNotes().size() == 5) {
+			if (pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
 				g.setColor(OMNI.alphen(nonHighlightedColor, VibeComposerGUI.isDarkMode ? 40 : 80));
-				List<PhraseNotes> noteNotes = pop.getSec().getPartPhraseNotes().get(4);
+				List<PhraseNotes> noteNotes = pop.getSec().getPatterns(4);
 				for (int i = 0; i < noteNotes.size(); i++) {
 					noteNotes.get(i).remakeNoteStartTimes();
 					for (int j = 0; j < noteNotes.get(i).size(); j++) {

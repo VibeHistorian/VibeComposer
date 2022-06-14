@@ -31,8 +31,8 @@ import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class ArrangementPartInclusionPopup extends CloseablePopup {
 
-	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "VERSES",
-			"INSTRUMENTAL" };
+	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "VERSE",
+			"INST" };
 	public static final Integer[] ENERGY_WEIGHTS = new Integer[] { 50, 50, 50, 50 };
 
 	JPanel tablesPanel = new JPanel();

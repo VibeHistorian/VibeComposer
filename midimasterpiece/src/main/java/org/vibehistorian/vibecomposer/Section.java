@@ -970,70 +970,12 @@ public class Section {
 		this.displayAlternateChords = displayAlternateChords;
 	}
 
-
-	public List<PartPhraseNotes> getPartPhraseNotes() {
-		return partPhraseNotes;
-	}
-
-	public void addPhraseNotes(int part, int partOrder, PhraseNotes pn) {
-		while (partPhraseNotes.size() <= part) {
-			partPhraseNotes.add(new PartPhraseNotes(null, partPhraseNotes.size()));
+	public boolean containsPattern(int part, int partOrder) {
+		UsedPattern pat = getPattern(part, partOrder);
+		if (pat == null || pat.getName() == null) {
+			return false;
 		}
-		while (partPhraseNotes.get(part).size() <= partOrder) {
-			PhraseNotes pn2 = new PhraseNotes();
-			pn2.setPartOrder(partPhraseNotes.get(part).size());
-			partPhraseNotes.get(part).add(pn2);
-		}
-		partPhraseNotes.get(part).set(partOrder, pn);
-	}
-
-	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
-		if (partPhraseNotes == null) {
-			return;
-		}
-		for (PartPhraseNotes phrn : partPhraseNotes) {
-			PartPhraseNotes phrnCopy = new PartPhraseNotes(
-					phrn.stream().map(e -> e.copy()).collect(Collectors.toList()), null);
-			phrnCopy.setPart(phrn.getPart());
-			storePhraseNotesList(phrnCopy);
-		}
-	}
-
-	public void storePhraseNotesList(PartPhraseNotes phrNotesList) {
-		if (phrNotesList == null) {
-			phrNotesList = new PartPhraseNotes();
-		}
-
-		Set<Integer> customPhraseNotes = null;
-
-		if (phrNotesList.getPart() < partPhraseNotes.size()) {
-			customPhraseNotes = partPhraseNotes.get(phrNotesList.getPart()).stream()
-					.filter(e -> e.isCustom()).map(e -> e.getPartOrder())
-					.collect(Collectors.toSet());
-			for (PhraseNotes pn : phrNotesList) {
-				if (customPhraseNotes.contains(pn.getPartOrder())) {
-					pn.setCustom(true);
-				}
-			}
-		}
-
-		if (phrNotesList.getPart() < partPhraseNotes.size()) {
-			partPhraseNotes.set(phrNotesList.getPart(), phrNotesList);
-		} else {
-			partPhraseNotes.add(phrNotesList);
-		}
-	}
-
-	public boolean containsPhrase(int part, int partOrder) {
-		return getPartPhraseNotes() != null && getPartPhraseNotes().size() > part
-				&& getPartPhraseNotes().get(part).size() > partOrder;
-	}
-
-	public PhraseNotes getPhraseNotes(int part, int partOrder) {
-		if (!containsPhrase(part, partOrder)) {
-			return null;
-		}
-		return partPhraseNotes.get(part).get(partOrder);
+		return true;
 	}
 
 	public List<Double> getGeneratedSectionBeatDurations() {
@@ -1083,6 +1025,23 @@ public class Section {
 
 	public UsedPattern getPattern(int part, int partOrder) {
 		return patterns.get(part).get(partOrder);
+	}
+
+	public List<PhraseNotes> getPatterns(int part) {
+		UsedPatternMap upMap = patterns.get(part);
+		List<PhraseNotes> patterns = new ArrayList<>();
+		for (Integer partOrder : upMap.keySet()) {
+			patterns.add(VibeComposerGUI.guiConfig.getPattern(upMap.get(partOrder)));
+		}
+		return patterns;
+	}
+
+	public String getPatternName(int part, int partOrder) {
+		UsedPattern pat = getPattern(part, partOrder);
+		if (pat == null) {
+			return UsedPattern.NONE;
+		}
+		return pat.getName();
 	}
 
 }
