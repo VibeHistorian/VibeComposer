@@ -134,7 +134,6 @@ public abstract class InstPanel extends JPanel {
 	protected Section relatedSection = null;
 
 	protected PhraseNotes customMidi = null;
-	protected CheckButton customMidiToggle = new CheckButton("MIDI'd", false);
 
 	public InstPanel() {
 
@@ -214,31 +213,6 @@ public abstract class InstPanel extends JPanel {
 		copyButton.addActionListener(l);
 		randomizeButton.addActionListener(l);
 
-		customMidiToggle.setEnabled(false);
-		customMidiToggle.setRunnable(() -> {
-			if (!customMidiToggle.isSelected()) {
-				customMidi = null;
-				// turn off customized midi
-				if (relatedSection != null) {
-					if (relatedSection.getInstPartList(getPartNum()) != null) {
-						if (relatedSection.getInstPartList(getPartNum())
-								.get(getAbsoluteOrder()) != null) {
-							relatedSection.getInstPartList(getPartNum()).get(getAbsoluteOrder())
-									.setCustomMidi(null);
-						}
-					}
-				}
-				if (VibeComposerGUI.currentMidiEditorPopup != null
-						&& VibeComposerGUI.currentMidiEditorPopup.part == getPartNum()
-						&& VibeComposerGUI.currentMidiEditorPopup.partOrder == getAbsoluteOrder()) {
-					VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.setSelectedRaw(false);
-					VibeComposerGUI.currentMidiEditorPopup.applyToMainBtn.repaint();
-				}
-				customMidiToggle.setEnabled(false);
-				customMidiToggle.repaint();
-			}
-		});
-
 		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
@@ -282,7 +256,6 @@ public abstract class InstPanel extends JPanel {
 		this.add(muteInst);
 		this.add(lockInst);
 		this.add(instrument);
-		this.add(customMidiToggle);
 	}
 
 	public void addOffsetAndDelayControls() {
@@ -376,8 +349,6 @@ public abstract class InstPanel extends JPanel {
 		setPatternSeed(part.getPatternSeed());
 		setPattern(part.getPattern());
 		setPatternFlip(part.isPatternFlip());
-
-		setCustomMidi(part.getCustomMidi());
 
 		if (comboPanel != null && pattern.isEnabled()) {
 			comboPanel.setVelocities(part.getCustomVelocities());
@@ -756,31 +727,8 @@ public abstract class InstPanel extends JPanel {
 		return customMidi;
 	}
 
-	public void setCustomMidi(PhraseNotes customMidi) {
-		if (customMidi != null) {
-			customMidi.setPartOrder(this.getAbsoluteOrder());
-			customMidi.setCustom(true);
-			customMidiToggle.setSelected(true);
-			customMidiToggle.setEnabled(true);
-			customMidiToggle.repaint();
-		} else {
-			customMidiToggle.setSelected(false);
-			customMidiToggle.setEnabled(false);
-			customMidiToggle.repaint();
-		}
-		this.customMidi = customMidi;
-	}
-
 	public int getAbsoluteOrder() {
 		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getPanelOrder());
-	}
-
-	public boolean getCustomMidiToggle() {
-		return customMidiToggle.isSelected();
-	}
-
-	public void setCustomMidiToggle(boolean val) {
-		this.customMidiToggle.setSelected(val);
 	}
 
 	public int getFeedbackCount() {

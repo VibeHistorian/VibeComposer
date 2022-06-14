@@ -178,9 +178,9 @@ public class MidiEditArea extends JComponent {
 				reset();
 				if (SwingUtilities.isLeftMouseButton(evt)
 						&& MidiEditPopup.regenerateInPlaceChoice) {
-					if (pop.applyToMainBtn.isSelected()) {
-						values.setCustom(false);
-					}
+
+					// TODO save as generated?
+
 					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
 				}
 			}
@@ -243,8 +243,7 @@ public class MidiEditArea extends JComponent {
 			List<PhraseNotes> noteNotes = pop.getSec().getPartPhraseNotes().get(4);
 			if (row >= 0 && row < noteNotes.size()) {
 				pop.setupIdentifiers(4, row);
-				pop.applyToMainBtn.setSelectedRaw(
-						VibeComposerGUI.getInstList(4).get(row).getCustomMidiToggle());
+				// TODO
 				pop.setup(pop.getSec());
 			}
 

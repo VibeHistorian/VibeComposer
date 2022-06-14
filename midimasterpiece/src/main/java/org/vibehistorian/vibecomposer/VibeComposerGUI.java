@@ -3573,6 +3573,7 @@ public class VibeComposerGUI extends JFrame
 				manualArrangement.repaint();
 				scrollableArrangementActualTable.repaint();
 			} else {
+				int panelOrder = getInstList(part).get(partAbsoluteOrder).getPanelOrder();
 				if (evt.isAltDown()) {
 					if (secOrder + 1 < arrSection.getItemCount()) {
 						arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
@@ -3586,8 +3587,7 @@ public class VibeComposerGUI extends JFrame
 
 					}
 					Section sec = actualArrangement.getSections().get(secOrder);
-					boolean hasSinglePresence = sec.getPresence(part)
-							.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
 					if (hasSinglePresence && sec.getPartPhraseNotes() != null
 							&& part < sec.getPartPhraseNotes().size()
 							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
@@ -3598,13 +3598,12 @@ public class VibeComposerGUI extends JFrame
 					}
 				} else if (currentMidi != null && partAbsoluteOrder < getInstList(part).size()) {
 					Section sec = actualArrangement.getSections().get(secOrder);
-					boolean hasSinglePresence = sec.getPresence(part)
-							.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
+					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
 
 					if (hasSinglePresence && sec.getPartPhraseNotes() != null
 							&& part < sec.getPartPhraseNotes().size()
 							&& partAbsoluteOrder < sec.getPartPhraseNotes().get(part).size()) {
-						currentMidiEditorPopup = new MidiEditPopup(sec, part, partAbsoluteOrder);
+						currentMidiEditorPopup = new MidiEditPopup(sec, part, panelOrder);
 						currentMidiEditorPopup.setSec(sec);
 						currentMidiEditorSectionIndex = secOrder;
 					}

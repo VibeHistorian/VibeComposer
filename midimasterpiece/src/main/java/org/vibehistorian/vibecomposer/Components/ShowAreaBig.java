@@ -540,10 +540,8 @@ public class ShowAreaBig extends JComponent {
 									y - actualHeight, x, actualHeight * 2);
 							if (pointInRect) {
 								noteDescription = VibeComposerGUI.instNames[phrase.part] + "#"
-										+ VibeComposerGUI.getInstList(phrase.part)
-												.get(phrase.partOrder).getPanelOrder()
-										+ "|" + MidiUtils.pitchOrDrumToString(currNote, phrase.part,
-												false);
+										+ phrase.partOrder + "|" + MidiUtils
+												.pitchOrDrumToString(currNote, phrase.part, false);
 								mouseProcessed = true;
 								mouseHighlightedNote = true;
 							}

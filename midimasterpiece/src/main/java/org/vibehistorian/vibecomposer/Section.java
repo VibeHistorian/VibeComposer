@@ -355,8 +355,7 @@ public class Section {
 		sec.setArpParts(getArpParts());
 		sec.setDrumParts(getDrumParts());
 
-		// TODO: need real deep copy once elements are changed manually
-		sec.setPartPhraseNotes(getPartPhraseNotes());
+		sec.setPatterns(patterns);
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
@@ -631,6 +630,10 @@ public class Section {
 			}
 			return offset;
 		}
+	}
+
+	public String getPatternType() {
+		return UsedPattern.BASE_PATTERNS[getTypeMelodyOffset() + 1];
 	}
 
 	public int getTypeMelodyOffset() {
@@ -1074,12 +1077,12 @@ public class Section {
 		this.patterns = patterns;
 	}
 
-	public void putPattern(int inst, int part, UsedPattern name) {
-		patterns.get(inst).put(part, name);
+	public void putPattern(int part, int partOrder, UsedPattern pat) {
+		patterns.get(part).put(partOrder, pat);
 	}
 
-	public UsedPattern getPattern(int inst, int part) {
-		return patterns.get(inst).get(part);
+	public UsedPattern getPattern(int part, int partOrder) {
+		return patterns.get(part).get(partOrder);
 	}
 
 }

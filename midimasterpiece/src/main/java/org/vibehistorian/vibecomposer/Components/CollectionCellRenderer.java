@@ -109,10 +109,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					
 						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
 					}*/
-					boolean isCustomMidi = sec.containsPhrase(part, partOrder)
-							&& sec.getPartPhraseNotes().get(part).get(partOrder).isCustom();
-					boolean isGlobalCustomMidi = VibeComposerGUI.getInstList(part).get(partOrder)
-							.getCustomMidiToggle();
+					boolean isCustomMidi = sec.containsPhrase(part, partOrder);
+
 					Color instCellColor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
 							part > 0 ? 0.55 : 0.7);
 					if (counter > 0) {
@@ -157,7 +155,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					int numVars = Section.variationDescriptions[part].length - 2;
 					double moveX = (endX - startX) / (numVars);
 
-					if (isCustomMidi || isGlobalCustomMidi) {
+					if (isCustomMidi) {
 						g.setColor(OMNI.alphen(isCustomMidi ? Color.red : VibeComposerGUI.uiColor(),
 								150));
 						g.fillRect((int) startX + 2, 0, (int) widthDividerValue - 4, 5);
@@ -168,7 +166,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					for (int i = 0; i < numVars; i++) {
 						int varX = (int) (startX + ((moveX * i) + 1));
 						if (actualVars.contains(i)) {
-							if (isCustomMidi || isGlobalCustomMidi) {
+							if (isCustomMidi) {
 								if (!Section.variationDescriptions[part][i + 2]
 										.startsWith("Transpose")) {
 									continue;

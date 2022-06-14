@@ -3258,7 +3258,7 @@ public class MidiGenerator implements JMC {
 					copiedPhrases.add(m);
 				} else {
 					Note emptyMeasureNote = new Note(Integer.MIN_VALUE, measureLength);
-					Phrase emptyPhrase = new PhraseExt(0, i, secOrder);
+					Phrase emptyPhrase = new PhraseExt(0, mp.getOrder(), secOrder);
 					emptyPhrase.setStartTime(START_TIME_DELAY);
 					emptyPhrase.add(emptyMeasureNote);
 					copiedPhrases.add(emptyPhrase.copy());
@@ -3819,7 +3819,7 @@ public class MidiGenerator implements JMC {
 			List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
 			List<Integer> variations) {
 		LG.d("Processing: " + ip.partInfo());
-		Phrase phr = new PhraseExt(0, ip.getAbsoluteOrder(), secOrder);
+		Phrase phr = new PhraseExt(0, ip.getOrder(), secOrder);
 
 		int measures = sec.getMeasures();
 
@@ -3972,7 +3972,7 @@ public class MidiGenerator implements JMC {
 
 		int seed = ip.getPatternSeedWithPartOffset();
 
-		Phrase phr = new PhraseExt(1, ip.getAbsoluteOrder(), secOrder);
+		Phrase phr = new PhraseExt(1, ip.getOrder(), secOrder);
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(1) : 100;
 		int minVel = MidiGeneratorUtils.multiplyVelocity(ip.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = MidiGeneratorUtils.multiplyVelocity(ip.getVelocityMax(), volMultiplier, 1, 0);
@@ -4244,7 +4244,7 @@ public class MidiGenerator implements JMC {
 		int measures = sec.getMeasures();
 
 		int orderSeed = ip.getPatternSeedWithPartOffset() + ip.getOrder();
-		Phrase phr = new PhraseExt(2, ip.getAbsoluteOrder(), secOrder);
+		Phrase phr = new PhraseExt(2, ip.getOrder(), secOrder);
 		List<Chord> chords = new ArrayList<>();
 		Random variationGenerator = new Random(
 				gc.getArrangement().getSeed() + ip.getOrder() + sec.getTypeSeedOffset());
@@ -4638,7 +4638,7 @@ public class MidiGenerator implements JMC {
 
 		int measures = sec.getMeasures();
 
-		Phrase phr = new PhraseExt(3, ip.getAbsoluteOrder(), secOrder);
+		Phrase phr = new PhraseExt(3, ip.getOrder(), secOrder);
 
 		ArpPart apClone = (ArpPart) ip.clone();
 		int seed = ip.getPatternSeedWithPartOffset() + ip.getOrder();
@@ -4905,7 +4905,7 @@ public class MidiGenerator implements JMC {
 
 		int measures = sec.getMeasures();
 
-		Phrase phr = new PhraseExt(4, ip.getAbsoluteOrder(), secOrder);
+		Phrase phr = new PhraseExt(4, ip.getOrder(), secOrder);
 
 		DrumPart dpClone = (DrumPart) ip.clone();
 		boolean kicky = ip.getInstrument() < 38;
@@ -5111,14 +5111,14 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void addPhraseNotesToSection(Section sec, InstPart ip, List<Note> noteList) {
-		int absOrder = ip.getAbsoluteOrder();
 		PhraseNotes pn = new PhraseNotes(noteList);
-		pn.setPartOrder(absOrder);
+		pn.setPartOrder(ip.getOrder());
 		pn.setCustom(false);
-		sec.addPhraseNotes(ip.getPartNum(), absOrder, pn);
 
 		LG.i("Added pattern to GC");
-		gc.putPattern(UsedPattern.generated(ip), pn);
+		UsedPattern pat = UsedPattern.generated(ip);
+		gc.putPattern(pat, pn);
+		sec.putPattern(ip.getPartNum(), ip.getOrder(), pat);
 	}
 
 	private List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
@@ -5206,7 +5206,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	public Phrase fillChordSlash(List<int[]> actualProgression, int measures) {
-		Phrase chordSlashPhrase = new PhraseExt(2, 0, secOrder);
+		Phrase chordSlashPhrase = new PhraseExt(2, 1, secOrder);
 		Random chordSlashGenerator = new Random(gc.getRandomSeed() + 2);
 		for (int i = 0; i < measures; i++) {
 			// fill slash chord slashes

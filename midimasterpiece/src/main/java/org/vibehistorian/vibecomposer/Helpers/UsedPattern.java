@@ -59,4 +59,9 @@ public class UsedPattern {
 		return VibeComposerGUI.instNames[part] + partOrder + "-" + new Date().hashCode();
 	}
 
+	@Override
+	public String toString() {
+		return "[" + part + ", " + partOrder + ", " + name + "]";
+	}
+
 }
