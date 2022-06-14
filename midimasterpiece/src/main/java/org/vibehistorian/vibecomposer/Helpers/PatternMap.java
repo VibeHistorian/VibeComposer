@@ -21,7 +21,6 @@ public class PatternMap {
 	// exists for specific part. - 0 to 4
 	// query for a partOrder, get map of pattern names and their notes
 	Map<Integer, NamedNotesMap> partOrderPatternMap = new HashMap<>();
-	public static final String[] BASE_PATTERNS = { "MAIN", "VERSE", "INST" };
 
 	public PatternMap() {
 	}
@@ -119,6 +118,10 @@ public class PatternMap {
 	}
 
 	public static void checkMapBounds(List<PatternMap> patternMaps) {
+		if (patternMaps.isEmpty()) {
+			patternMaps.addAll(multiMap());
+		}
+
 		// remove old partOrders, add new partOrders
 		for (int i = 0; i < 5; i++) {
 			PatternMap map = patternMaps.get(i);
@@ -132,7 +135,7 @@ public class PatternMap {
 			}
 			partOrders.removeAll(mappartOrdersCopy);
 			for (Integer p : partOrders) {
-				for (String name : BASE_PATTERNS) {
+				for (String name : UsedPattern.BASE_PATTERNS) {
 					map.put(p, name, null);
 				}
 			}

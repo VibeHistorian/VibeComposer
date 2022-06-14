@@ -63,6 +63,7 @@ import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -5093,25 +5094,9 @@ public class MidiGenerator implements JMC {
 	}
 
 	private boolean overwriteWithCustomSectionMidi(Section sec, Phrase phr, InstPart ip) {
-		PhraseNotes pn = sec.getPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder());
-		if (pn == null || !pn.isCustom()) {
-			// if section has a customized part, try to get midi from it
-			// otherwise try to get it from a global inst panel
-			pn = (sec.getInstPartList(ip.getPartNum()) != null)
-					? sec.getInstPartList(ip.getPartNum()).get(ip.getAbsoluteOrder())
-							.getCustomMidi()
-					: VibeComposerGUI.getInstList(ip.getPartNum()).get(ip.getAbsoluteOrder())
-							.getCustomMidi();
-			if (pn != null && pn.isCustom()) {
-				LG.i("Custom midi found in custom panel? : "
-						+ (sec.getInstPartList(ip.getPartNum()) != null));
-				PhraseNotes secPn = pn.copy();
-				secPn.setCustom(false);
-				sec.addPhraseNotes(ip.getPartNum(), ip.getAbsoluteOrder(), secPn);
-			}
-		}
-
-		if (pn != null && pn.isCustom()) {
+		PhraseNotes pn = gc.getPattern(sec.getPattern(ip.getPartNum(), ip.getOrder()));
+		LG.i("Loaded pattern: " + (pn != null));
+		if (pn != null) {
 			Phrase customPhr = pn.makePhrase();
 			MidiUtils.scalePhrase(customPhr,
 					progressionDurations.stream().mapToDouble(e -> e).sum() * sec.getMeasures());
@@ -5131,6 +5116,9 @@ public class MidiGenerator implements JMC {
 		pn.setPartOrder(absOrder);
 		pn.setCustom(false);
 		sec.addPhraseNotes(ip.getPartNum(), absOrder, pn);
+
+		LG.i("Added pattern to GC");
+		gc.putPattern(UsedPattern.generated(ip), pn);
 	}
 
 	private List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,

@@ -32,6 +32,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -858,6 +859,23 @@ public class GUIConfig {
 
 	public void setPatternMaps(List<PatternMap> patternMaps) {
 		this.patternMaps = patternMaps;
+	}
+
+	public void putPattern(UsedPattern pattern, PhraseNotes pn) {
+		if (pattern == null) {
+			return;
+		}
+		if (UsedPattern.NONE.equals(pattern.getName())) {
+			pn = null;
+		}
+		patternMaps.get(pattern.getPart()).put(pattern.getPartOrder(), pattern.getName(), pn);
+	}
+
+	public PhraseNotes getPattern(UsedPattern pattern) {
+		if (pattern == null || UsedPattern.NONE.equals(pattern.getName())) {
+			return null;
+		}
+		return patternMaps.get(pattern.getPart()).get(pattern.getPartOrder(), pattern.getName());
 	}
 
 }

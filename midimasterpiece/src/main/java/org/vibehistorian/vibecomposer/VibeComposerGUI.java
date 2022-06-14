@@ -292,9 +292,8 @@ public class VibeComposerGUI extends JFrame
 	private boolean isSoundbankSynth = false;
 	private boolean needSoundbankRefresh = false;
 
-	private static GUIConfig guiConfig = new GUIConfig();
+	public static GUIConfig guiConfig = new GUIConfig();
 	public static MidiGenerator melodyGen = null;
-	public static List<PatternMap> patternMaps = PatternMap.multiMap();
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
 	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
@@ -5633,7 +5632,7 @@ public class VibeComposerGUI extends JFrame
 
 		prepareUI(regenerate);
 		GUIConfig midiConfig = new GUIConfig();
-		copyGUItoConfig(midiConfig);
+		copyGUItoConfig(midiConfig, true);
 		melodyGen = new MidiGenerator(midiConfig);
 		fillUserParameters(regenerate);
 
@@ -7863,6 +7862,10 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void copyGUItoConfig(GUIConfig gc) {
+		copyGUItoConfig(gc, false);
+	}
+
+	public void copyGUItoConfig(GUIConfig gc, boolean isNew) {
 		// seed
 		//GUIConfig gc = new GUIConfig();
 
@@ -7870,8 +7873,10 @@ public class VibeComposerGUI extends JFrame
 			gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
 		}
 
-		PatternMap.checkMapBounds(patternMaps);
-		gc.setPatternMaps(PatternMap.multiMapCopy(patternMaps));
+		PatternMap.checkMapBounds(guiConfig.getPatternMaps());
+		if (isNew) {
+			gc.setPatternMaps(PatternMap.multiMapCopy(guiConfig.getPatternMaps()));
+		}
 
 		gc.setRandomSeed(lastRandomSeed);
 		gc.setMidiMode(midiMode.isSelected());
@@ -8007,7 +8012,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (gc.getPatternMaps() != null && !gc.getPatternMaps().isEmpty()) {
-			patternMaps = gc.getPatternMaps();
+			guiConfig.setPatternMaps(gc.getPatternMaps());
 		}
 
 		// seed

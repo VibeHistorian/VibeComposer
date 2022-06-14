@@ -13,7 +13,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -100,7 +99,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public CheckButton applyToMainBtn;
 
-	public ScrollComboBox<Integer> patternPartBox = new ScrollComboBox<>(false);
+	public ScrollComboBox<String> patternPartBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<String> patternNameBox = new ScrollComboBox<>(false);
 
@@ -117,7 +116,12 @@ public class MidiEditPopup extends CloseablePopup {
 		applyOnClose = true;
 		trackScopeUpDown = 0;
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
-		PhraseNotes values = sec.getPartPhraseNotes().get(part).get(partOrder);
+		PhraseNotes values = VibeComposerGUI.guiConfig
+				.getPattern(sec.getPattern(secPartNum, secPartOrder));
+		if (values == null) {
+			values = sec.getPartPhraseNotes().get(part).get(partOrder);
+		}
+
 		if (values == null) {
 			values = VibeComposerGUI.getInstList(part).get(partOrder).getCustomMidi();
 		}
@@ -411,7 +415,7 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
 
 
-		ScrollComboBox.addAll(new Integer[] { 0, 1, 2, 3, 4 }, patternPartBox);
+		ScrollComboBox.addAll(VibeComposerGUI.instNames, patternPartBox);
 		patternPartBox.setFunc(e -> loadParts());
 		patternPartOrderBox.setFunc(e -> loadNames());
 		//patternNameBox.setFunc(e -> loadNotes());
@@ -460,15 +464,22 @@ public class MidiEditPopup extends CloseablePopup {
 	private void loadParts() {
 		patternNameBox.removeAllItems();
 		patternPartOrderBox.removeAllItems();
-		ScrollComboBox.addAll(
-				VibeComposerGUI.patternMaps.get(patternPartBox.getSelectedIndex()).getKeys(),
-				patternPartOrderBox);
+		ScrollComboBox.addAll(VibeComposerGUI.guiConfig.getPatternMaps()
+				.get(patternPartBox.getSelectedIndex()).getKeys(), patternPartOrderBox);
+		if (patternPartOrderBox.getItemCount() > 0) {
+			patternPartOrderBox.setSelectedIndex(0);
+		}
 	}
 
 	private void loadNames() {
 		patternNameBox.removeAllItems();
-		ScrollComboBox.addAll(VibeComposerGUI.patternMaps.get(patternPartBox.getSelectedIndex())
-				.getPatternNames(patternPartOrderBox.getSelectedItem()), patternNameBox);
+		ScrollComboBox.addAll(
+				VibeComposerGUI.guiConfig.getPatternMaps().get(patternPartBox.getSelectedIndex())
+						.getPatternNames(patternPartOrderBox.getSelectedItem()),
+				patternNameBox);
+		if (patternNameBox.getItemCount() > 0) {
+			patternNameBox.setSelectedIndex(0);
+		}
 	}
 
 	private void loadNotes(boolean overwrite) {
@@ -486,13 +497,14 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private void saveNotes(boolean newName) {
-		String patternName = (newName) ? ("Custom: " + String.valueOf(new Date().hashCode()))
+		Integer realOrder = VibeComposerGUI.getInstList(part).get(partOrder).getPanelOrder();
+		String patternName = (newName) ? UsedPattern.generateName(part, realOrder)
 				: patternNameBox.getSelectedItem();
 		getPatternMap().put(patternPartOrderBox.getSelectedItem(), patternName, getValues());
 		if (newName) {
 			patternNameBox.addItem(patternName);
 		}
-		sec.putPattern(part, partOrder, getSelectedPattern());
+		sec.putPattern(part, realOrder, getSelectedPattern());
 	}
 
 	private UsedPattern getSelectedPattern() {
@@ -501,7 +513,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public PatternMap getPatternMap() {
-		return VibeComposerGUI.patternMaps.get(patternPartBox.getSelectedIndex());
+		return VibeComposerGUI.guiConfig.getPatternMaps().get(patternPartBox.getSelectedIndex());
 	}
 
 	public void setCustomValues(PhraseNotes values) {
