@@ -28,6 +28,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private int part = 0;
 	private int section = 0;
 	public static final int MIN_CELLS = 8;
+	public static final Color[] CUSTOM_PATTERN_COLORS = { VibeComposerGUI.darkModeUIColor,
+			VibeComposerGUI.lightModeUIColor, new Color(150, 200, 200), Color.red };
 
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
 			int col) {
@@ -159,7 +161,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					double moveX = (endX - startX) / (numVars);
 
 					if (isCustomMidi) {
-						g.setColor(OMNI.alphen(isCustomMidi ? Color.red : VibeComposerGUI.uiColor(),
+						g.setColor(OMNI.alphen(
+								CUSTOM_PATTERN_COLORS[sec.getPattern(part, panelOrder).getType()],
 								150));
 						g.fillRect((int) startX + 2, 0, (int) widthDividerValue - 4, 5);
 					}

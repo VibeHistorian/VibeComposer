@@ -5910,11 +5910,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
-			boolean isSavedAsCustomSection = currentMidiEditorPopup.isSectionCustom();
-			if (!isSavedAsCustomSection) {
-				currentMidiEditorPopup.getValues().setCustom(false);
-			}
-			currentMidiEditorPopup.apply();
+			currentMidiEditorPopup.saveNotes(false);
 		}
 
 	}

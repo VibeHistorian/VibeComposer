@@ -8,8 +8,11 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 public class UsedPattern {
 
 	public static final String NONE = "NONE";
+	public static final String MAIN = "MAIN";
+	public static final String VERSE = "VERSE";
+	public static final String INST = "INST";
 	public static final String GENERATED = "**GENERATED**";
-	public static final String[] BASE_PATTERNS = { NONE, "MAIN", "VERSE", "INST" };
+	public static final String[] BASE_PATTERNS = { NONE, MAIN, VERSE, INST };
 
 	Integer part;
 	Integer partOrder;
@@ -61,6 +64,22 @@ public class UsedPattern {
 
 	public boolean isCustom() {
 		return !UsedPattern.NONE.equals(getName()) && !UsedPattern.GENERATED.equals(getName());
+	}
+
+	public int getType() {
+		if (name == null) {
+			return -1;
+		}
+		switch (name) {
+		case MAIN:
+			return 0;
+		case VERSE:
+			return 1;
+		case INST:
+			return 2;
+		default:
+			return 3;
+		}
 	}
 
 	@Override

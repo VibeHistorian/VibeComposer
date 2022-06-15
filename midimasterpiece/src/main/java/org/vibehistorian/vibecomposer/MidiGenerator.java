@@ -5113,11 +5113,12 @@ public class MidiGenerator implements JMC {
 	private void addPhraseNotesToSection(Section sec, InstPart ip, List<Note> noteList) {
 		PhraseNotes pn = new PhraseNotes(noteList);
 		pn.setPartOrder(ip.getOrder());
-		pn.setCustom(false);
 
 		LG.i("Added pattern to GC");
 		UsedPattern pat = UsedPattern.generated(ip);
 		gc.putPattern(pat, pn);
+		// TODO: sometimes not overwrite main/verse/inst?
+		gc.putPattern(new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType()), pn);
 		sec.putPattern(ip.getPartNum(), ip.getOrder(), pat);
 	}
 

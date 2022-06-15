@@ -72,6 +72,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public ScrollComboBox<String> snapToTimeGrid = new ScrollComboBox<>(false);
 	public CheckButton regenerateInPlaceOnChange = new CheckButton("R~ on Change",
 			regenerateInPlaceChoice);
+	public CheckButton applyOnLoad = new CheckButton("Apply on Load/Import", applyOnLoadChoice);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
 	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, 0.25, 1 / 3.0, 0.5,
 			2 / 3.0, 1.0, 4 / 3.0, 2.0, 4.0 };
@@ -96,6 +97,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public static int snapToTimeGridChoice = 2;
 	public static boolean snapToGridChoice = true;
 	public static boolean regenerateInPlaceChoice = false;
+	public static boolean applyOnLoadChoice = true;
 
 	public ScrollComboBox<String> patternPartBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
@@ -103,14 +105,14 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public JLabel historyLabel = new JLabel("Edit History:");
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
-	public boolean applyOnClose = true;
+	public boolean saveOnClose = true;
 	public JList<File> generatedMidi;
 	public CheckButton displayDrumHelper = new CheckButton("Drum Ghosts", false);
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
 		sec = section;
-		applyOnClose = true;
+		saveOnClose = true;
 		trackScopeUpDown = 0;
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 
@@ -366,9 +368,14 @@ public class MidiEditPopup extends CloseablePopup {
 		regenerateInPlaceOnChange.setFunc(e -> {
 			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
 		});
+		applyOnLoad.setFunc(e -> {
+			applyOnLoadChoice = applyOnLoad.isSelected();
+		});
 		displayDrumHelper.setFunc(e -> {
 			repaintMvea();
 		});
+
+		bottomSettingsPanel.add(applyOnLoad);
 		bottomSettingsPanel.add(regenerateInPlaceOnChange);
 		bottomSettingsPanel.add(displayDrumHelper);
 		bottomSettingsPanel.add(new JLabel("  Highlight Mode:"));
@@ -415,21 +422,25 @@ public class MidiEditPopup extends CloseablePopup {
 		loadParts();
 		loadNames();
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Load", e -> {
+		buttonPanel2.add(VibeComposerGUI.makeButton("Load Pattern", e -> {
 			loadNotes(true);
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("Import", e -> {
+		buttonPanel2.add(VibeComposerGUI.makeButton("Import Pattern", e -> {
 			loadNotes(false);
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("Save", e -> {
+		buttonPanel2.add(VibeComposerGUI.makeButton("Save Pattern<br>+ Apply", e -> {
 			saveNotes(false);
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("Save New", e -> {
+		buttonPanel2.add(VibeComposerGUI.makeButton("Save Pattern as New<br>+ Apply", e -> {
 			saveNotes(true);
 		}));
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Close without Saving", e -> {
-			applyOnClose = false;
+		buttonPanel2.add(VibeComposerGUI.makeButton("Apply", e -> {
+			apply();
+		}));
+
+		buttonPanel2.add(VibeComposerGUI.makeButton("Close without Applying", e -> {
+			saveOnClose = false;
 			close();
 		}));
 		return buttonPanel2;
@@ -468,16 +479,35 @@ public class MidiEditPopup extends CloseablePopup {
 		} else {
 			// import instead
 		}
+		if (applyOnLoadChoice) {
+			apply();
+		}
 	}
 
-	private void saveNotes(boolean newName) {
+	public void saveNotes(boolean newName) {
 		String patternName = (newName) ? UsedPattern.generateName(part, partOrder)
 				: patternNameBox.getSelectedItem();
-		getPatternMap().put(patternPartOrderBox.getSelectedItem(), patternName, getValues());
+
 		if (newName) {
 			patternNameBox.addItem(patternName);
+			patternNameBox.setSelectedItem(patternName);
+			// store in current part as new
+			VibeComposerGUI.guiConfig.getPatternMaps().get(part).put(partOrder, patternName,
+					getValues());
+		} else {
+			// store in selected part
+			getPatternMap().put(patternPartOrderBox.getSelectedItem(), patternName, getValues());
 		}
-		sec.putPattern(part, partOrder, getSelectedPattern());
+		apply();
+		if (newName) {
+			setSelectedPattern(sec.getPattern(part, partOrder));
+		}
+	}
+
+	private void setSelectedPattern(UsedPattern pat) {
+		patternPartBox.setSelectedIndex(pat.getPart());
+		patternPartOrderBox.setSelectedItem(pat.getPartOrder());
+		patternNameBox.setSelectedItem(pat.getName());
 	}
 
 	private UsedPattern getSelectedPattern() {
@@ -507,13 +537,10 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea.setMin(Math.min(mvea.min, vmin));
 		mvea.setMax(Math.max(mvea.max, vmax));
 
-		values.setCustom(true);
-
 
 		mvea.setValues(values);
 		saveToHistory();
 
-		apply();
 		repaintMvea();
 	}
 
@@ -577,6 +604,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public void apply() {
 		if (mvea != null && mvea.getValues() != null) {
 			// TODO
+			sec.putPattern(part, partOrder, getSelectedPattern());
 			VibeComposerGUI.scrollableArrangementActualTable.repaint();
 		}
 	}
@@ -720,8 +748,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (applyOnClose) {
-					apply();
+				if (saveOnClose) {
+					saveNotes(false);
 				}
 			}
 

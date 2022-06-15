@@ -20,7 +20,6 @@ import jm.music.data.Phrase;
 public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	private static final long serialVersionUID = 8933379402297939538L;
 
-	private boolean isCustom = false;
 	private int partOrder = -1;
 
 	public PhraseNotes() {
@@ -48,7 +47,6 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 	public PhraseNotes copy() {
 		PhraseNotes pn = new PhraseNotes(makeNotes());
-		pn.setCustom(isCustom);
 		pn.setPartOrder(partOrder);
 		return pn;
 	}
@@ -60,15 +58,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 	@XmlElement(name = "phraseNote")
 	public List<PhraseNote> getPhraseNotes() {
-		return isCustom ? this : null;
-	}
-
-	public boolean isCustom() {
-		return isCustom;
-	}
-
-	public void setCustom(boolean isCustom) {
-		this.isCustom = isCustom;
+		return this;
 	}
 
 	public int getPartOrder() {
