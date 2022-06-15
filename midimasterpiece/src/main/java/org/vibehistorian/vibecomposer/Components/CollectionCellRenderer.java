@@ -114,7 +114,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
 					}*/
 					boolean isCustomMidi = sec.containsPattern(part, panelOrder)
-							&& sec.getPattern(part, panelOrder).isCustom();
+							&& sec.getPattern(part, panelOrder).isCustom(part, panelOrder);
 
 					Color instCellColor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
 							part > 0 ? 0.55 : 0.7);

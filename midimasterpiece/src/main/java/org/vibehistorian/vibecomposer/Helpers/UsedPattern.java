@@ -62,8 +62,10 @@ public class UsedPattern {
 		return VibeComposerGUI.instNames[part] + partOrder + "-" + new Date().hashCode();
 	}
 
-	public boolean isCustom() {
-		return !UsedPattern.NONE.equals(getName()) && !UsedPattern.GENERATED.equals(getName());
+	public boolean isCustom(int part, int partOrder) {
+		return (part != this.part) || (partOrder != this.partOrder)
+				|| (!UsedPattern.NONE.equals(getName())
+						&& !UsedPattern.GENERATED.equals(getName()));
 	}
 
 	public int getType() {
