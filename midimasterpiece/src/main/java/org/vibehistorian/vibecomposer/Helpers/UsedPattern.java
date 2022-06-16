@@ -59,7 +59,8 @@ public class UsedPattern {
 	}
 
 	public static String generateName(int part, int partOrder) {
-		return VibeComposerGUI.instNames[part] + partOrder + "-" + new Date().hashCode();
+		return VibeComposerGUI.instNames[part].substring(0, 1) + partOrder + "-"
+				+ new Date().hashCode();
 	}
 
 	public boolean isCustom(int part, int partOrder) {

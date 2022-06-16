@@ -122,17 +122,20 @@ public class PatternMap {
 			patternMaps.addAll(multiMap());
 		}
 
-		// remove old partOrders, add new partOrders
+
 		for (int i = 0; i < 5; i++) {
 			PatternMap map = patternMaps.get(i);
 			List<Integer> partOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			List<Integer> mappartOrdersToRemove = map.getKeys();
 			List<Integer> mappartOrdersCopy = new ArrayList<>(mappartOrdersToRemove);
-			mappartOrdersToRemove.removeAll(partOrders);
+			// remove old partOrders
+			/*mappartOrdersToRemove.removeAll(partOrders);
 			for (Integer p : mappartOrdersToRemove) {
 				map.remove(p);
-			}
+			}*/
+
+			// add new partOrders
 			partOrders.removeAll(mappartOrdersCopy);
 			for (Integer p : partOrders) {
 				for (String name : UsedPattern.BASE_PATTERNS) {
