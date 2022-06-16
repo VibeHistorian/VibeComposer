@@ -9506,7 +9506,7 @@ public class VibeComposerGUI extends JFrame
 			return;
 		}
 
-		InstPanel ip = getInstList(part).get(partOrder);
+		InstPanel ip = getPanelByOrder(partOrder, getInstList(part));
 		Integer trackNum = ip.getSequenceTrack();
 		if (trackNum == null || trackNum < 0) {
 			return;

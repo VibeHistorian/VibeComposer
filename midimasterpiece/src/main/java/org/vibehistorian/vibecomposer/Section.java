@@ -37,7 +37,6 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Helpers.UsedPatternMap;
@@ -156,9 +155,6 @@ public class Section {
 
 	// map integer(part type), [part order][presence/section variation]
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
-
-	// map 
-	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>();
 
 	private List<Integer> sectionVariations = null;
 	public static final List<Integer> EMPTY_SECTION_VARS = IntStream.iterate(0, f -> f)

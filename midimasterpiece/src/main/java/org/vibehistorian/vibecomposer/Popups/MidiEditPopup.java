@@ -64,40 +64,28 @@ import jm.music.data.Score;
 
 public class MidiEditPopup extends CloseablePopup {
 
-	MidiEditArea mvea = null;
-	InstPanel ip = null;
-	JTextField text = null;
-	Section sec = null;
+	public static int highlightModeChoice = 3;
+	public static int snapToTimeGridChoice = 2;
+	public static boolean snapToGridChoice = true;
+	public static boolean regenerateInPlaceChoice = false;
+	public static boolean applyOnLoadChoice = false;
+
+	public static final int baseMargin = 5;
+	public static int trackScope = 1;
+	public static int trackScopeUpDown = 0;
+	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, 0.25, 1 / 3.0, 0.5,
+			2 / 3.0, 1.0, 4 / 3.0, 2.0, 4.0 };
+
+	public static double getTimeGrid() {
+		return TIME_GRID[snapToTimeGridChoice];
+	}
+
 	public ScrollComboBox<String> highlightMode = new ScrollComboBox<>(false);
 	public ScrollComboBox<String> snapToTimeGrid = new ScrollComboBox<>(false);
 	public CheckButton regenerateInPlaceOnChange = new CheckButton("R~ on Change",
 			regenerateInPlaceChoice);
 	public CheckButton applyOnLoad = new CheckButton("Apply on Load/Import", applyOnLoadChoice);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
-	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, 0.25, 1 / 3.0, 0.5,
-			2 / 3.0, 1.0, 4 / 3.0, 2.0, 4.0 };
-
-	public int notesHistoryIndex = 0;
-
-	public List<PhraseNotes> notesHistory = new ArrayList<>();
-
-
-	public static double getTimeGrid() {
-		return TIME_GRID[snapToTimeGridChoice];
-	}
-
-	public static final int baseMargin = 5;
-	public static int trackScope = 1;
-	public static int trackScopeUpDown = 0;
-
-
-	public int part = 0;
-	public int partOrder = 0;
-	public static int highlightModeChoice = 3;
-	public static int snapToTimeGridChoice = 2;
-	public static boolean snapToGridChoice = true;
-	public static boolean regenerateInPlaceChoice = false;
-	public static boolean applyOnLoadChoice = true;
 
 	public ScrollComboBox<String> patternPartBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
@@ -105,9 +93,20 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public JLabel historyLabel = new JLabel("Edit History:");
 	public ScrollComboBox<String> editHistoryBox = new ScrollComboBox<>(false);
-	public boolean saveOnClose = true;
-	public JList<File> generatedMidi;
 	public CheckButton displayDrumHelper = new CheckButton("Drum Ghosts", false);
+
+	public JList<File> generatedMidi;
+	public boolean saveOnClose = true;
+	public int notesHistoryIndex = 0;
+	public List<PhraseNotes> notesHistory = new ArrayList<>();
+
+	public int part = 0;
+	public int partOrder = 0;
+
+	MidiEditArea mvea = null;
+	InstPanel ip = null;
+	JTextField text = null;
+	Section sec = null;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
@@ -164,6 +163,11 @@ public class MidiEditPopup extends CloseablePopup {
 
 	private PhraseNotes loadSecValues(int secPartNum, int secPartOrder) {
 		UsedPattern pat = sec.getPattern(secPartNum, secPartOrder);
+		if (pat == null) {
+			LG.i("Replacing pattern with section type pattern!");
+			pat = new UsedPattern(secPartNum, secPartOrder, sec.getPatternType());
+			sec.putPattern(secPartNum, secPartOrder, pat);
+		}
 		LG.i("Loading pattern: " + pat.toString());
 		PhraseNotes values = VibeComposerGUI.guiConfig.getPattern(pat);
 		if (values == null) {
@@ -406,9 +410,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 	private JPanel makePatternSavingPanel() {
 		JPanel buttonPanel2 = new JPanel();
-		buttonPanel2.setLayout(new GridLayout(0, 10, 0, 0));
+		buttonPanel2.setLayout(new GridLayout(0, 11, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
-
 
 		ScrollComboBox.addAll(VibeComposerGUI.instNames, patternPartBox);
 		patternPartBox.setFunc(e -> loadParts());
@@ -439,8 +442,12 @@ public class MidiEditPopup extends CloseablePopup {
 					saveNotes(true);
 				}));
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Apply", e -> {
+		/*buttonPanel2.add(VibeComposerGUI.makeButton("Apply", e -> {
 			apply();
+		}));*/
+
+		buttonPanel2.add(VibeComposerGUI.makeButton("Unapply", e -> {
+			unapply();
 		}));
 
 		buttonPanel2.add(VibeComposerGUI.makeButton("Close without Applying", e -> {
@@ -620,7 +627,18 @@ public class MidiEditPopup extends CloseablePopup {
 	public void apply() {
 		if (mvea != null && mvea.getValues() != null) {
 			// TODO
-			sec.putPattern(part, partOrder, getSelectedPattern());
+			UsedPattern pat = getSelectedPattern();
+			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(true);
+			sec.putPattern(part, partOrder, pat);
+			VibeComposerGUI.scrollableArrangementActualTable.repaint();
+		}
+	}
+
+	public void unapply() {
+		if (mvea != null && mvea.getValues() != null) {
+			UsedPattern pat = getSelectedPattern();
+			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(false);
+			sec.putPattern(part, partOrder, new UsedPattern(part, partOrder, UsedPattern.NONE));
 			VibeComposerGUI.scrollableArrangementActualTable.repaint();
 		}
 	}

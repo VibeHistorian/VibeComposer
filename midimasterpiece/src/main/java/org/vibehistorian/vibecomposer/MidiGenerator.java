@@ -5095,8 +5095,18 @@ public class MidiGenerator implements JMC {
 
 	private boolean overwriteWithCustomSectionMidi(Section sec, Phrase phr, InstPart ip) {
 		PhraseNotes pn = gc.getPattern(sec.getPattern(ip.getPartNum(), ip.getOrder()));
-		LG.i("Loaded pattern: " + (pn != null));
+		if (pn == null || !pn.isApplied()) {
+			LG.i("Pattern 1 is null: " + (pn == null));
+			pn = gc.getPattern(
+					new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType()));
+			LG.i("Pattern 2 is null: " + (pn == null));
+			if (pn != null && !pn.isApplied()) {
+				pn = null;
+			}
+		}
+
 		if (pn != null) {
+			LG.i("Loaded pattern for: " + ip.partInfo());
 			Phrase customPhr = pn.makePhrase();
 			MidiUtils.scalePhrase(customPhr,
 					progressionDurations.stream().mapToDouble(e -> e).sum() * sec.getMeasures());
@@ -5113,6 +5123,7 @@ public class MidiGenerator implements JMC {
 	private void addPhraseNotesToSection(Section sec, InstPart ip, List<Note> noteList) {
 		PhraseNotes pn = new PhraseNotes(noteList);
 		pn.setPartOrder(ip.getOrder());
+		pn.setApplied(false);
 
 		LG.i("Added pattern to GC");
 		UsedPattern pat = UsedPattern.generated(ip);

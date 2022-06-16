@@ -179,8 +179,7 @@ public class MidiEditArea extends JComponent {
 				if (SwingUtilities.isLeftMouseButton(evt)
 						&& MidiEditPopup.regenerateInPlaceChoice) {
 
-					// TODO save as generated?
-
+					pop.apply();
 					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
 				}
 			}

@@ -21,6 +21,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	private static final long serialVersionUID = 8933379402297939538L;
 
 	private int partOrder = -1;
+	private boolean applied = false;
 
 	public PhraseNotes() {
 		super();
@@ -48,6 +49,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	public PhraseNotes copy() {
 		PhraseNotes pn = new PhraseNotes(makeNotes());
 		pn.setPartOrder(partOrder);
+		pn.setApplied(applied);
 		return pn;
 	}
 
@@ -76,5 +78,13 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 			pn.setAbsoluteStartTime(current);
 			current += pn.getRv();
 		}
+	}
+
+	public boolean isApplied() {
+		return applied;
+	}
+
+	public void setApplied(boolean applied) {
+		this.applied = applied;
 	}
 }

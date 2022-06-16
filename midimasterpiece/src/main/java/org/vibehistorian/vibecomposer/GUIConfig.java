@@ -878,4 +878,11 @@ public class GUIConfig {
 		return patternMaps.get(pattern.getPart()).get(pattern.getPartOrder(), pattern.getName());
 	}
 
+	public PhraseNotes getPatternRaw(UsedPattern pattern) {
+		if (pattern == null || UsedPattern.NONE.equals(pattern.getName())) {
+			return null;
+		}
+		return patternMaps.get(pattern.getPart()).getRaw(pattern.getPartOrder(), pattern.getName());
+	}
+
 }
