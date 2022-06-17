@@ -63,10 +63,14 @@ public class UsedPattern {
 				+ new Date().hashCode();
 	}
 
+	// different part, or different part order
+	// or non-standard naming
+	// or generated but applied manually
 	public boolean isCustom(int part, int partOrder) {
 		return (part != this.part) || (partOrder != this.partOrder)
-				|| (!UsedPattern.NONE.equals(getName())
-						&& !UsedPattern.GENERATED.equals(getName()));
+				|| (!UsedPattern.NONE.equals(getName()) && !UsedPattern.GENERATED.equals(getName()))
+				|| (UsedPattern.GENERATED.equals(getName())
+						&& VibeComposerGUI.guiConfig.getPatternRaw(this).isApplied());
 	}
 
 	public int getType() {

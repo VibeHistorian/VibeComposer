@@ -3629,10 +3629,11 @@ public class VibeComposerGUI extends JFrame
 		if (partOrderSection != null) {
 			Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
 			UsedPattern newPattern = copyDraggedPattern;
-			sec.putPattern(partOrderSection.getLeft(), partOrderSection.getMiddle(), newPattern);
-			if (!sec.getPresence(partOrderSection.getLeft())
-					.contains(partOrderSection.getMiddle())) {
-				sec.setPresence(partOrderSection.getLeft(), partOrderSection.getMiddle());
+			int part = partOrderSection.getLeft();
+			int panelOrder = getInstList(part).get(partOrderSection.getMiddle()).getPanelOrder();
+			sec.putPattern(part, panelOrder, newPattern);
+			if (!sec.getPresence(part).contains(panelOrder)) {
+				sec.setPresence(part, panelOrder);
 			}
 			setActualModel(actualArrangement.convertToActualTableModel(), false);
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
