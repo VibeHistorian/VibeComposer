@@ -9,21 +9,31 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 @XmlRootElement(name = "PatternMap")
 @XmlType(propOrder = {})
+@XmlSeeAlso({ NamedNotesMap.class })
 public class PatternMap {
 
 	// exists for specific part. - 0 to 4
 	// query for a partOrder, get map of pattern names and their notes
 	Map<Integer, NamedNotesMap> partOrderPatternMap = new HashMap<>();
+	int part = 0;
 
 	public PatternMap() {
 	}
+
+	public PatternMap(int part) {
+		this.part = part;
+	}
+
 
 	public void putRaw(Integer partOrder, String name, PhraseNotes notes) {
 		put(partOrder, name, notes, false);
@@ -40,14 +50,14 @@ public class PatternMap {
 		if (!partOrderPatternMap.containsKey(partOrder)) {
 			partOrderPatternMap.put(partOrder, new NamedNotesMap());
 		}
-		partOrderPatternMap.get(partOrder).put(name, notes);
+		partOrderPatternMap.get(partOrder).getMap().put(name, notes);
 	}
 
 	public PhraseNotes getRaw(Integer partOrder, String name) {
 		if (!partOrderPatternMap.containsKey(partOrder)) {
 			return null;
 		}
-		return partOrderPatternMap.get(partOrder).get(name);
+		return partOrderPatternMap.get(partOrder).getMap().get(name);
 	}
 
 	public PhraseNotes get(Integer partOrder, String name) {
@@ -73,21 +83,22 @@ public class PatternMap {
 		if (!partOrderPatternMap.containsKey(partOrder)) {
 			return null;
 		}
-		return partOrderPatternMap.get(partOrder).keySet();
+		return partOrderPatternMap.get(partOrder).getMap().keySet();
 	}
 
-	public Map<Integer, NamedNotesMap> getpartOrderPatternMap() {
+	@XmlElement
+	public Map<Integer, NamedNotesMap> getPartOrderPatternMap() {
 		return partOrderPatternMap;
 	}
 
-	public void setpartOrderPatternMap(Map<Integer, NamedNotesMap> partOrderPatternMap) {
+	public void setPartOrderPatternMap(Map<Integer, NamedNotesMap> partOrderPatternMap) {
 		this.partOrderPatternMap = partOrderPatternMap;
 	}
 
 	public static List<PatternMap> multiMap() {
 		List<PatternMap> multiMap = new ArrayList<>();
 		for (int i = 0; i < 5; i++) {
-			multiMap.add(i, new PatternMap());
+			multiMap.add(i, new PatternMap(i));
 		}
 		return multiMap;
 	}
@@ -107,9 +118,9 @@ public class PatternMap {
 		if (other == null) {
 			return map;
 		}
-		for (Integer key : other.getpartOrderPatternMap().keySet()) {
-			for (Entry<String, PhraseNotes> nameNotes : other.getpartOrderPatternMap().get(key)
-					.entrySet()) {
+		for (Integer key : other.getPartOrderPatternMap().keySet()) {
+			for (Entry<String, PhraseNotes> nameNotes : other.getPartOrderPatternMap().get(key)
+					.getMap().entrySet()) {
 				map.put(key, nameNotes.getKey(),
 						(nameNotes.getValue() != null) ? nameNotes.getValue().copy() : null);
 			}
@@ -143,5 +154,15 @@ public class PatternMap {
 				}
 			}
 		}
+	}
+
+	@XmlAttribute
+	public int getPart() {
+		return part;
+	}
+
+
+	public void setPart(int part) {
+		this.part = part;
 	}
 }

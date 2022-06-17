@@ -2,9 +2,14 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import java.util.Date;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
+@XmlRootElement(name = "UsedPattern")
+@XmlType(propOrder = {})
 public class UsedPattern {
 
 	public static final String NONE = "NONE";
@@ -17,6 +22,9 @@ public class UsedPattern {
 	Integer part;
 	Integer partOrder;
 	String name;
+
+	public UsedPattern() {
+	}
 
 	public UsedPattern(Integer part, Integer partOrder, String name) {
 		super();
@@ -67,10 +75,21 @@ public class UsedPattern {
 	// or non-standard naming
 	// or generated but applied manually
 	public boolean isCustom(int part, int partOrder) {
-		return (part != this.part) || (partOrder != this.partOrder)
-				|| (!UsedPattern.NONE.equals(getName()) && !UsedPattern.GENERATED.equals(getName()))
-				|| (UsedPattern.GENERATED.equals(getName())
-						&& VibeComposerGUI.guiConfig.getPatternRaw(this).isApplied());
+		if ((part != this.part) || (partOrder != this.partOrder)) {
+			return true;
+		}
+		if (!UsedPattern.NONE.equals(getName()) && !UsedPattern.GENERATED.equals(getName())) {
+			return true;
+		}
+
+		if (UsedPattern.GENERATED.equals(getName())) {
+			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(this);
+			if (pn != null && pn.isApplied()) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public int getType() {

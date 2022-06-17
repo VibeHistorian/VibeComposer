@@ -439,7 +439,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	private JPanel makePatternSavingPanel() {
 		JPanel buttonPanel2 = new JPanel();
-		buttonPanel2.setLayout(new GridLayout(0, 11, 0, 0));
+		buttonPanel2.setLayout(new GridLayout(0, 10, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
 
 		ScrollComboBox.addAll(VibeComposerGUI.instNames, patternPartBox);
@@ -501,28 +501,39 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private void loadParts() {
-		patternNameBox.removeAllItems();
-		patternPartOrderBox.removeAllItems();
-		ScrollComboBox.addAll(VibeComposerGUI.guiConfig.getPatternMaps()
-				.get(patternPartBox.getSelectedIndex()).getKeys(), patternPartOrderBox);
-		if (patternPartOrderBox.getItemCount() > 0) {
-			patternPartOrderBox.setSelectedIndex(0);
+		loadParts(patternPartBox, patternPartOrderBox, patternNameBox);
+	}
+
+	public static void loadParts(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
+			ScrollComboBox<PatternNameMarker> names) {
+		names.removeAllItems();
+		partOrders.removeAllItems();
+		ScrollComboBox.addAll(
+				VibeComposerGUI.guiConfig.getPatternMaps().get(parts.getSelectedIndex()).getKeys(),
+				partOrders);
+		if (partOrders.getItemCount() > 0) {
+			partOrders.setSelectedIndex(0);
 		}
 	}
 
 	private void loadNames() {
-		patternNameBox.removeAllItems();
-		int part = patternPartBox.getSelectedIndex();
-		int partOrder = patternPartOrderBox.getSelectedItem();
-		Set<String> names = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
+		loadNames(patternPartBox, patternPartOrderBox, patternNameBox);
+	}
+
+	public static void loadNames(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
+			ScrollComboBox<PatternNameMarker> names) {
+		names.removeAllItems();
+		int part = parts.getSelectedIndex();
+		int partOrder = partOrders.getSelectedItem();
+		Set<String> patternNames = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
-		List<PatternNameMarker> namesWithMarkers = names.stream()
+		List<PatternNameMarker> namesWithMarkers = patternNames.stream()
 				.map(e -> new PatternNameMarker(e,
 						VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, e) != null))
 				.collect(Collectors.toList());
-		ScrollComboBox.addAll(namesWithMarkers, patternNameBox);
-		if (patternNameBox.getItemCount() > 0) {
-			patternNameBox.setSelectedIndex(0);
+		ScrollComboBox.addAll(namesWithMarkers, names);
+		if (names.getItemCount() > 0) {
+			names.setSelectedIndex(0);
 		}
 	}
 

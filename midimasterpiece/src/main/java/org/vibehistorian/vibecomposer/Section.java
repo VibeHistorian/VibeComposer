@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -1007,6 +1008,7 @@ public class Section {
 		}
 	}
 
+	@XmlElement(name = "pattern")
 	public List<UsedPatternMap> getPatterns() {
 		return patterns;
 	}

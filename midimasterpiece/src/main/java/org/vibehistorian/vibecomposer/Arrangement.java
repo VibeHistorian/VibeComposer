@@ -463,7 +463,6 @@ public class Arrangement {
 			partInclusionMap.put(i, data);
 		}
 		partInclusionMap.get(0)[0][1] = Boolean.FALSE;
-		partInclusionMap.get(0)[0][3] = Boolean.FALSE;
 		partInclusionMap.get(0)[0][4] = Boolean.FALSE;
 	}
 

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
@@ -853,6 +854,7 @@ public class GUIConfig {
 		this.melodyLegacyMode = melodyLegacyMode;
 	}
 
+	@XmlElement(name = "patternMap")
 	public List<PatternMap> getPatternMaps() {
 		return patternMaps;
 	}

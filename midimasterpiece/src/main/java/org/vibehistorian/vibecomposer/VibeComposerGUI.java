@@ -6558,7 +6558,6 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
 				a.accept(e);
 			}
 
@@ -8000,10 +7999,6 @@ public class VibeComposerGUI extends JFrame
 		if (gc.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
 			dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
-		}
-
-		if (gc.getPatternMaps() != null && !gc.getPatternMaps().isEmpty()) {
-			guiConfig.setPatternMaps(gc.getPatternMaps());
 		}
 
 		// seed
