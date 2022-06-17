@@ -466,9 +466,23 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel2.add(VibeComposerGUI.makeButton("<html>Save Pattern<br>+ Apply</html>", e -> {
 			saveNotes(false);
 		}));
-		buttonPanel2.add(
-				VibeComposerGUI.makeButton("<html>Save Pattern as New<br>+ Apply</html>", e -> {
-					saveNotes(true);
+		buttonPanel2.add(VibeComposerGUI
+				.makeButtonMoused("<html>Save Pattern as New<br>+ Apply</html>", e -> {
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						saveNotes(true);
+					} else {
+						new PatternNamePopup(patternName -> {
+							PatternNameMarker pnm = new PatternNameMarker(patternName, true);
+							patternNameBox.addItem(pnm);
+							patternNameBox.setSelectedItem(pnm);
+							// store in current part as new
+							VibeComposerGUI.guiConfig.getPatternMaps().get(part).put(partOrder,
+									patternName, getValues());
+							apply();
+							setSelectedPattern(sec.getPattern(part, partOrder));
+						});
+					}
+
 				}));
 
 		/*buttonPanel2.add(VibeComposerGUI.makeButton("Apply", e -> {

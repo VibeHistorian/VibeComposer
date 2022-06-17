@@ -80,6 +80,7 @@ public class ShowAreaBig extends JComponent {
 	public static double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
 			MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
 	public static Point mousePoint = null;
+	public static boolean consumed = false;
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
@@ -224,6 +225,7 @@ public class ShowAreaBig extends JComponent {
 										actualStartingX, y - actualHeight, x, actualHeight * 2);
 								if (pointInRect) {
 									if (leftMouseOpenPopup) {
+										consumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
 										VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
 												VibeComposerGUI.actualArrangement.getSections()
