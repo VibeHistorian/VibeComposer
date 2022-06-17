@@ -3599,6 +3599,9 @@ public class VibeComposerGUI extends JFrame
 						currentMidiEditorPopup = new MidiEditPopup(sec, part, panelOrder);
 						currentMidiEditorPopup.setSec(sec);
 						currentMidiEditorSectionIndex = secOrder;
+					} else {
+						LG.i("Presence: " + hasSinglePresence + ", contains pattern: "
+								+ sec.containsPattern(part, panelOrder));
 					}
 				}
 			}
@@ -9254,6 +9257,11 @@ public class VibeComposerGUI extends JFrame
 		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
 	}
 
+	public static InstPanel getPanelByOrder(int part, int partOrder) {
+		return getInstList(part).stream().filter(e -> e.getPanelOrder() == partOrder).findFirst()
+				.get();
+	}
+
 	private static int getRandomFromArray(Random generator, int[] array, int from) {
 		return getRandomFromToArray(generator, array, from, array.length);
 	}
@@ -9507,7 +9515,7 @@ public class VibeComposerGUI extends JFrame
 			return;
 		}
 
-		InstPanel ip = getPanelByOrder(partOrder, getInstList(part));
+		InstPanel ip = getPanelByOrder(part, partOrder);
 		Integer trackNum = ip.getSequenceTrack();
 		if (trackNum == null || trackNum < 0) {
 			return;

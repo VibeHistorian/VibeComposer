@@ -135,7 +135,7 @@ public class ShowAreaBig extends JComponent {
 						&& !SwingUtilities.isMiddleMouseButton(evt)) {
 					return;
 				}
-				boolean popupOpen = SwingUtilities.isLeftMouseButton(evt);
+				boolean leftMouseOpenPopup = SwingUtilities.isLeftMouseButton(evt);
 				LG.d("Checking note overlap for: " + evt.getPoint());
 
 				Enumeration<?> enum1 = sp.score.getPartList().elements();
@@ -223,7 +223,7 @@ public class ShowAreaBig extends JComponent {
 								boolean pointInRect = OMNI.pointInRect(evt.getPoint(),
 										actualStartingX, y - actualHeight, x, actualHeight * 2);
 								if (pointInRect) {
-									if (popupOpen) {
+									if (leftMouseOpenPopup) {
 										LG.i("Opening popup for section#: " + phrase.secOrder);
 										VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
 												VibeComposerGUI.actualArrangement.getSections()
@@ -237,24 +237,25 @@ public class ShowAreaBig extends JComponent {
 									} else {
 										if (evt.isShiftDown()) {
 											// mute, instead of solo
-											VibeComposerGUI.getInstList(phrase.part)
-													.get(phrase.partOrder).getSoloMuter()
-													.toggleMute(true);
+											VibeComposerGUI
+													.getPanelByOrder(phrase.part, phrase.partOrder)
+													.getSoloMuter().toggleMute(true);
 										} else {
 											boolean unsoloAll = false;
 											if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
 												unsoloAll = VibeComposerGUI.isSingleSolo()
-														&& (VibeComposerGUI.getInstList(phrase.part)
-																.get(phrase.partOrder)
+														&& (VibeComposerGUI
+																.getPanelByOrder(phrase.part,
+																		phrase.partOrder)
 																.getSoloMuter().soloState == State.FULL);
 											}
 											if (!unsoloAll) {
 												VibeComposerGUI.globalSoloMuter.toggleSolo(true);
 											}
 
-											VibeComposerGUI.getInstList(phrase.part)
-													.get(phrase.partOrder).getSoloMuter()
-													.toggleSolo(true);
+											VibeComposerGUI
+													.getPanelByOrder(phrase.part, phrase.partOrder)
+													.getSoloMuter().toggleSolo(true);
 										}
 
 										return;

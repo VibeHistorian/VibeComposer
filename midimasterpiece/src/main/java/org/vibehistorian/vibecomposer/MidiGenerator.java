@@ -5103,11 +5103,13 @@ public class MidiGenerator implements JMC {
 		PhraseNotes pn = gc.getPattern(pat);
 		if (pn == null || !pn.isApplied()) {
 			LG.i("Pattern 1 is null: " + (pn == null));
-			pn = gc.getPattern(
-					new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType()));
+			pat = new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType());
+			pn = gc.getPattern(pat);
 			LG.i("Pattern 2 is null: " + (pn == null));
 			if (pn != null && !pn.isApplied()) {
 				pn = null;
+			} else {
+				sec.putPattern(ip.getPartNum(), ip.getOrder(), pat);
 			}
 		}
 
