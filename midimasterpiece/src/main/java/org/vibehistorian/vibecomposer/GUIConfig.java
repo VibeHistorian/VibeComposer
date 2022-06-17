@@ -872,17 +872,31 @@ public class GUIConfig {
 	}
 
 	public PhraseNotes getPattern(UsedPattern pattern) {
-		if (pattern == null || UsedPattern.NONE.equals(pattern.getName())) {
+		if (pattern == null) {
 			return null;
 		}
-		return patternMaps.get(pattern.getPart()).get(pattern.getPartOrder(), pattern.getName());
+		return getPattern(pattern.getPart(), pattern.getPartOrder(), pattern.getName());
+	}
+
+	public PhraseNotes getPattern(int part, int partOrder, String patName) {
+		if (UsedPattern.NONE.equals(patName)) {
+			return null;
+		}
+		return patternMaps.get(part).get(partOrder, patName);
 	}
 
 	public PhraseNotes getPatternRaw(UsedPattern pattern) {
-		if (pattern == null || UsedPattern.NONE.equals(pattern.getName())) {
+		if (pattern == null) {
 			return null;
 		}
-		return patternMaps.get(pattern.getPart()).getRaw(pattern.getPartOrder(), pattern.getName());
+		return getPatternRaw(pattern.getPart(), pattern.getPartOrder(), pattern.getName());
+	}
+
+	public PhraseNotes getPatternRaw(int part, int partOrder, String patName) {
+		if (UsedPattern.NONE.equals(patName)) {
+			return null;
+		}
+		return patternMaps.get(part).getRaw(partOrder, patName);
 	}
 
 }

@@ -2449,7 +2449,7 @@ public class MidiGenerator implements JMC {
 			actualDurations = progressionDurations;
 		} else if (!gc.getMelodyParts().isEmpty()) {
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
-					generatedRootProgression, 0, new Section(), new ArrayList<>());
+					generatedRootProgression, 0, new Section(), new ArrayList<>(), true);
 		}
 
 		progressionDurationsBackup = actualDurations;
@@ -3236,7 +3236,7 @@ public class MidiGenerator implements JMC {
 						mp.setSpeed(100);
 					}
 					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, notesSeedOffset,
-							sec, variations);
+							sec, variations, false);
 					if (sectionVariations.get(3) > 0) {
 						mp.setSpeed(speedSave);
 					}
@@ -3817,7 +3817,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillMelodyFromPart(MelodyPart ip, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
-			List<Integer> variations) {
+			List<Integer> variations, boolean ignoreCustomMidi) {
 		LG.d("Processing: " + ip.partInfo());
 		Phrase phr = new PhraseExt(0, ip.getOrder(), secOrder);
 
@@ -3858,7 +3858,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
+		if (ignoreCustomMidi || !overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			Vector<Note> noteList = new Vector<>();
 			fullMelodyMap.values().forEach(e -> noteList.addAll(e));
 
@@ -3869,8 +3869,9 @@ public class MidiGenerator implements JMC {
 				MidiUtils.transposePhrase(phrSaved, ScaleMode.IONIAN.noteAdjustScale,
 						ScaleMode.IONIAN.noteAdjustScale);
 			}
-
-			addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
+			if (!ignoreCustomMidi) {
+				addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
+			}
 		} else {
 			Mod.transpose(phr, ip.getTranspose());
 			if (gc.isCustomMidiForceScale()) {
