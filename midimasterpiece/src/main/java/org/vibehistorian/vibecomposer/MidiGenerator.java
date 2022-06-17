@@ -5094,7 +5094,13 @@ public class MidiGenerator implements JMC {
 	}
 
 	private boolean overwriteWithCustomSectionMidi(Section sec, Phrase phr, InstPart ip) {
-		PhraseNotes pn = gc.getPattern(sec.getPattern(ip.getPartNum(), ip.getOrder()));
+		UsedPattern pat = sec.getPattern(ip.getPartNum(), ip.getOrder());
+		if (pat != null && UsedPattern.NONE.equalsIgnoreCase(pat.getName())) {
+			// NONE = forced to regenerate
+			return false;
+		}
+
+		PhraseNotes pn = gc.getPattern(pat);
 		if (pn == null || !pn.isApplied()) {
 			LG.i("Pattern 1 is null: " + (pn == null));
 			pn = gc.getPattern(
@@ -5125,11 +5131,17 @@ public class MidiGenerator implements JMC {
 		pn.setPartOrder(ip.getOrder());
 		pn.setApplied(false);
 
-		LG.i("Added pattern to GC");
+		LG.i("Adding generated/section pattern to GC!");
 		UsedPattern pat = UsedPattern.generated(ip);
 		gc.putPattern(pat, pn);
-		// TODO: sometimes not overwrite main/verse/inst?
-		gc.putPattern(new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType()), pn);
+		UsedPattern sectionTypePat = new UsedPattern(ip.getPartNum(), ip.getOrder(),
+				sec.getPatternType());
+		PhraseNotes oldPn = gc.getPattern(sectionTypePat);
+		if (oldPn != null && oldPn.isApplied()) {
+			LG.i("Skipping section pattern for: " + ip.partInfo());
+		} else {
+			gc.putPattern(sectionTypePat, pn);
+		}
 		sec.putPattern(ip.getPartNum(), ip.getOrder(), pat);
 	}
 

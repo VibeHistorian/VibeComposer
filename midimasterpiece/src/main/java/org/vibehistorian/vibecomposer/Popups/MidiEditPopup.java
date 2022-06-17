@@ -171,18 +171,14 @@ public class MidiEditPopup extends CloseablePopup {
 		LG.i("Loading pattern: " + pat.toString());
 		PhraseNotes values = VibeComposerGUI.guiConfig.getPattern(pat);
 		if (values == null) {
-			values = VibeComposerGUI.guiConfig
-					.getPattern(new UsedPattern(secPartNum, secPartOrder, UsedPattern.GENERATED));
+			pat = new UsedPattern(secPartNum, secPartOrder, UsedPattern.GENERATED);
+			values = VibeComposerGUI.guiConfig.getPattern(pat);
 			if (values == null) {
-				values = VibeComposerGUI.guiConfig.getPattern(
-						new UsedPattern(secPartNum, secPartOrder, sec.getPatternType()));
-				patternNameBox.setSelectedItem(sec.getPatternType());
-			} else {
-				patternNameBox.setSelectedItem(UsedPattern.GENERATED);
+				pat = new UsedPattern(secPartNum, secPartOrder, sec.getPatternType());
+				values = VibeComposerGUI.guiConfig.getPattern(pat);
 			}
-		} else {
-			patternNameBox.setSelectedItem(pat.getName());
 		}
+		setSelectedPattern(pat);
 		return values;
 	}
 
