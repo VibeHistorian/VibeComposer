@@ -5097,16 +5097,16 @@ public class MidiGenerator implements JMC {
 	private boolean overwriteWithCustomSectionMidi(Section sec, Phrase phr, InstPart ip) {
 		UsedPattern pat = sec.getPattern(ip.getPartNum(), ip.getOrder());
 		if (pat != null && UsedPattern.NONE.equalsIgnoreCase(pat.getName())) {
-			// NONE = forced to regenerate
+			LG.i("Forced generation, pattern none!");
 			return false;
 		}
 
 		PhraseNotes pn = gc.getPattern(pat);
 		if (pn == null || !pn.isApplied()) {
-			LG.i("Pattern 1 is null: " + (pn == null));
+			//LG.i("Pattern 1 is null: " + (pn == null));
 			pat = new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType());
 			pn = gc.getPattern(pat);
-			LG.i("Pattern 2 is null: " + (pn == null));
+			//LG.i("Pattern 2 is null: " + (pn == null));
 			if (pn != null && !pn.isApplied()) {
 				pn = null;
 			} else {
@@ -5115,12 +5115,11 @@ public class MidiGenerator implements JMC {
 		}
 
 		if (pn != null) {
-			LG.i("Loaded pattern for: " + ip.partInfo());
+			LG.i("Loaded pattern for: " + ip.partInfo() + ", pattern: " + pat.toString());
 			Phrase customPhr = pn.makePhrase();
 			MidiUtils.scalePhrase(customPhr,
 					progressionDurations.stream().mapToDouble(e -> e).sum() * sec.getMeasures());
 			phr.setNoteList(customPhr.getNoteList());
-			LG.i("Overwritten with custom MIDI: " + ip.getPartNum() + ", " + ip.getAbsoluteOrder());
 			return true;
 		} else {
 			//LG.d("Not overwritten with MIDI: " + ip.getPartNum() + ", " + ip.getAbsoluteOrder());

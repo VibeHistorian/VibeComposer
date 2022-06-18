@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -166,8 +167,12 @@ public class MidiEditPopup extends CloseablePopup {
 		mveaPanel.setMinimumSize(new Dimension(1500, 600));
 
 		PhraseNotes values = loadSecValues(secPartNum, secPartOrder);
-		if (values.isEmpty()) {
-			recomposePart(false);
+		if (values == null || values.isEmpty()) {
+			values = recomposePart(false);
+			if (values == null) {
+				new TemporaryInfoPopup("Recomposing produced no notes, quitting!", 1500);
+				return;
+			}
 		}
 
 		JPanel bottomSettingsPanel = bottomActionsPreferencesPanel(values);
@@ -207,14 +212,10 @@ public class MidiEditPopup extends CloseablePopup {
 		LG.i("Loading pattern: " + pat.toString());
 		PhraseNotes values = VibeComposerGUI.guiConfig.getPattern(pat);
 		if (values == null) {
-			pat = new UsedPattern(secPartNum, secPartOrder, UsedPattern.GENERATED);
-			values = VibeComposerGUI.guiConfig.getPattern(pat);
-			if (values == null) {
-				pat = new UsedPattern(secPartNum, secPartOrder, sec.getPatternType());
-				values = VibeComposerGUI.guiConfig.getPattern(pat);
-			}
+			LG.e("-----------------------LoadSecValues returns null!--------------");
+		} else {
+			setSelectedPattern(pat);
 		}
-		setSelectedPattern(pat);
 		return values;
 	}
 
@@ -734,7 +735,10 @@ public class MidiEditPopup extends CloseablePopup {
 			repaintMvea();
 			return;
 		}*/
-
+		if (values == null || values.isEmpty()) {
+			LG.e("-----------------------Part needed to be recomposed on setup!--------------");
+			values = recomposePart(false);
+		}
 		setCustomValues(values);
 
 		LG.i("Custom MIDI setup successful: " + part + ", " + partOrder);
@@ -763,7 +767,7 @@ public class MidiEditPopup extends CloseablePopup {
 		}
 	}
 
-	public void recomposePart(boolean isRandom) {
+	public PhraseNotes recomposePart(boolean isRandom) {
 		MidiGenerator mg = VibeComposerGUI.melodyGen;
 
 		mg.storeGlobalParts();
@@ -774,7 +778,8 @@ public class MidiEditPopup extends CloseablePopup {
 		sec.putPattern(part, partOrder, getSelectedPatternNone());
 
 		LG.i("Chord prog: " + mg.chordProgression.size());
-		InstPart ip = MidiGenerator.gc.getInstPartList(part).get(partOrder);
+		InstPart ip = MidiGenerator.gc.getInstPartList(part).stream()
+				.filter(e -> e.getOrder() == partOrder).findFirst().get();
 
 		int seed = ip.getPatternSeed();
 		if (isRandom) {
@@ -806,10 +811,26 @@ public class MidiEditPopup extends CloseablePopup {
 
 		mg.replaceChordsDurationsFromBackup();
 		mg.restoreGlobalPartsToGuiConfig();
+
+		UsedPattern generatedPat = sec.getPattern(part, partOrder);
+		LG.i("Recompose, new pattern: " + generatedPat.toString());
+		PhraseNotes pn = MidiGenerator.gc.getPattern(generatedPat);
+		VibeComposerGUI.guiConfig.putPattern(generatedPat, pn);
+
 		mvea.min = 110;
 		mvea.max = 10;
-		setup(sec);
-		//mg.fill
+
+
+		if (pn == null) {
+			new TemporaryInfoPopup("Recomposing produced no notes, quitting!", 1500);
+			saveOnClose = false;
+			close();
+			return new PhraseNotes(Collections.singletonList(new Note("C4")));
+		} else {
+			setup(sec);
+			//mg.fill
+			return getValues();
+		}
 	}
 
 	public void repaintMvea() {
