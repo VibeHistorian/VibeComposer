@@ -89,6 +89,9 @@ public class MidiEditPopup extends CloseablePopup {
 
 		@Override
 		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+
 			if (obj == null || !(obj instanceof PatternNameMarker)) {
 				return false;
 			}

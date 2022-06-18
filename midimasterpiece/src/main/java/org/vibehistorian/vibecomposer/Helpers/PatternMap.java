@@ -128,7 +128,8 @@ public class PatternMap {
 		return map;
 	}
 
-	public static void checkMapBounds(List<PatternMap> patternMaps) {
+	public static void checkMapBounds(List<PatternMap> patternMaps,
+			boolean removeOldForNewArrangement) {
 		if (patternMaps.isEmpty()) {
 			patternMaps.addAll(multiMap());
 		}
@@ -140,11 +141,24 @@ public class PatternMap {
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			List<Integer> mappartOrdersToRemove = map.getKeys();
 			List<Integer> mappartOrdersCopy = new ArrayList<>(mappartOrdersToRemove);
-			// remove old partOrders
-			/*mappartOrdersToRemove.removeAll(partOrders);
-			for (Integer p : mappartOrdersToRemove) {
-				map.remove(p);
-			}*/
+			if (removeOldForNewArrangement) {
+				// remove old partOrders
+				mappartOrdersToRemove.removeAll(partOrders);
+				for (Integer p : mappartOrdersToRemove) {
+					map.remove(p);
+				}
+
+				// remove old generated
+				for (Integer k : map.getKeys()) {
+					Map<String, PhraseNotes> nnm = map.getNamedMap(k).getMap();
+					Set<String> names = nnm.keySet().stream()
+							.filter(e -> e.startsWith(UsedPattern.GENERATED))
+							.collect(Collectors.toSet());
+					for (String n : names) {
+						nnm.remove(n);
+					}
+				}
+			}
 
 			// add new partOrders
 			partOrders.removeAll(mappartOrdersCopy);

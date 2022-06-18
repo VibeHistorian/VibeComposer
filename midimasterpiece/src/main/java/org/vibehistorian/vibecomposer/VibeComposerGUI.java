@@ -7863,11 +7863,6 @@ public class VibeComposerGUI extends JFrame
 			gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
 		}
 
-		PatternMap.checkMapBounds(guiConfig.getPatternMaps());
-		if (isNew) {
-			gc.setPatternMaps(PatternMap.multiMapCopy(guiConfig.getPatternMaps()));
-		}
-
 		gc.setRandomSeed(lastRandomSeed);
 		gc.setMidiMode(midiMode.isSelected());
 
@@ -7880,11 +7875,11 @@ public class VibeComposerGUI extends JFrame
 		arrangement.setFromTable(scrollableArrangementTable);
 		boolean overrideSuccessful = manualArrangement.isSelected()
 				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
-		LG.d(("Is Manual Arrangement: " + overrideSuccessful));
-		if (overrideSuccessful) {
-			arrangement.setOverridden(true);
-		} else {
-			arrangement.setOverridden(false);
+		arrangement.setOverridden(overrideSuccessful);
+
+		PatternMap.checkMapBounds(guiConfig.getPatternMaps(), !overrideSuccessful);
+		if (isNew) {
+			gc.setPatternMaps(PatternMap.multiMapCopy(guiConfig.getPatternMaps()));
 		}
 
 		arrangement.setSeed(

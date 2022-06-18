@@ -16,7 +16,7 @@ public class UsedPattern {
 	public static final String MAIN = "MAIN";
 	public static final String VERSE = "VERSE";
 	public static final String INST = "INST";
-	public static final String GENERATED = "**GENERATED**";
+	public static final String GENERATED = "**GEN**";
 	public static final String[] BASE_PATTERNS = { NONE, MAIN, VERSE, INST };
 
 	Integer part;
@@ -61,6 +61,11 @@ public class UsedPattern {
 		return new UsedPattern(ip.getPartNum(), ip.getOrder(), GENERATED);
 	}
 
+	public static UsedPattern generated(InstPart ip, PhraseNotes pn) {
+		return new UsedPattern(ip.getPartNum(), ip.getOrder(),
+				GENERATED + "[" + pn.hashCode() + "]");
+	}
+
 	public static UsedPattern generateNew(InstPart ip) {
 		return new UsedPattern(ip.getPartNum(), ip.getOrder(),
 				generateName(ip.getPartNum(), ip.getOrder()));
@@ -72,21 +77,14 @@ public class UsedPattern {
 	}
 
 	// different part, or different part order
-	// or non-standard naming
-	// or generated but applied manually
+	// or applied manually
 	public boolean isCustom(int part, int partOrder) {
 		if ((part != this.part) || (partOrder != this.partOrder)) {
 			return true;
 		}
-		if (!UsedPattern.NONE.equals(getName()) && !UsedPattern.GENERATED.equals(getName())) {
+		PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(this);
+		if (pn != null && pn.isApplied()) {
 			return true;
-		}
-
-		if (UsedPattern.GENERATED.equals(getName())) {
-			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(this);
-			if (pn != null && pn.isApplied()) {
-				return true;
-			}
 		}
 
 		return false;

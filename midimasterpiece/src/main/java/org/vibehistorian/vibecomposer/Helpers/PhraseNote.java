@@ -123,4 +123,43 @@ public class PhraseNote implements Cloneable {
 		}
 		return null;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(duration);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + dynamic;
+		temp = Double.doubleToLongBits(offset);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + pitch;
+		temp = Double.doubleToLongBits(rv);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PhraseNote other = (PhraseNote) obj;
+		if (Double.doubleToLongBits(duration) != Double.doubleToLongBits(other.duration))
+			return false;
+		if (dynamic != other.dynamic)
+			return false;
+		if (Double.doubleToLongBits(offset) != Double.doubleToLongBits(other.offset))
+			return false;
+		if (pitch != other.pitch)
+			return false;
+		if (Double.doubleToLongBits(rv) != Double.doubleToLongBits(other.rv))
+			return false;
+		return true;
+	}
+
 }

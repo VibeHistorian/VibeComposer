@@ -87,4 +87,28 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	public void setApplied(boolean applied) {
 		this.applied = applied;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + partOrder;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PhraseNotes other = (PhraseNotes) obj;
+		if (partOrder != other.partOrder)
+			return false;
+		return true;
+	}
+
+
 }

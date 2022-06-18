@@ -428,6 +428,7 @@ public class Arrangement {
 
 	public void setOverridden(boolean overridden) {
 		this.overridden = overridden;
+		LG.d(("ARRANGEMENT overridden: " + overridden));
 	}
 
 	public int getSeed() {

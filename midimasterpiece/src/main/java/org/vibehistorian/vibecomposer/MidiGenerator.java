@@ -5135,7 +5135,7 @@ public class MidiGenerator implements JMC {
 		pn.setApplied(false);
 
 		LG.i("Adding generated/section pattern to GC!");
-		UsedPattern pat = UsedPattern.generated(ip);
+		UsedPattern pat = UsedPattern.generated(ip, pn);
 		gc.putPattern(pat, pn);
 		UsedPattern sectionTypePat = new UsedPattern(ip.getPartNum(), ip.getOrder(),
 				sec.getPatternType());

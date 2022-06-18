@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -15,7 +16,7 @@ import org.vibehistorian.vibecomposer.LG;
 @XmlSeeAlso({ PhraseNotes.class })
 public class NamedNotesMap {
 
-	private Map<String, PhraseNotes> namedNotesMap = new HashMap<>();
+	private Map<String, PhraseNotes> namedNotesMap = new LinkedHashMap<>();
 
 	public NamedNotesMap() {
 	}
@@ -35,7 +36,6 @@ public class NamedNotesMap {
 	}
 
 	public void setNamedNotesMap(Map<String, PhraseNotes> namedNotesMap) {
-		LG.i("setting map                                              xxxx");
 		for (Entry<String, PhraseNotes> s : namedNotesMap.entrySet()) {
 			LG.i(s.getKey() + " :|||: " + s.getValue().toStringPitches());
 		}
