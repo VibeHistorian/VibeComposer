@@ -478,7 +478,7 @@ public class MidiEditPopup extends CloseablePopup {
 						new PatternNamePopup(patternName -> {
 							PatternNameMarker pnm = new PatternNameMarker(patternName, true);
 							patternNameBox.addItem(pnm);
-							patternNameBox.setSelectedItem(pnm);
+							patternNameBox.setVal(pnm);
 							// store in current part as new
 							VibeComposerGUI.guiConfig.getPatternMaps().get(part).put(partOrder,
 									patternName, getValues());
@@ -569,7 +569,7 @@ public class MidiEditPopup extends CloseablePopup {
 		if (newName) {
 			PatternNameMarker pnm = new PatternNameMarker(patternName, true);
 			patternNameBox.addItem(pnm);
-			patternNameBox.setSelectedItem(pnm);
+			patternNameBox.setValRaw(pnm);
 			// store in current part as new
 			VibeComposerGUI.guiConfig.getPatternMaps().get(part).put(partOrder, patternName,
 					getValues());
@@ -586,9 +586,10 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private void setSelectedPattern(UsedPattern pat) {
+		LG.i("Setting pattern selection: " + pat.toString());
 		patternPartBox.setSelectedIndex(pat.getPart());
-		patternPartOrderBox.setSelectedItem(pat.getPartOrder());
-		patternNameBox.setSelectedItem(new PatternNameMarker(pat.getName(), true));
+		patternPartOrderBox.setVal(pat.getPartOrder());
+		patternNameBox.setValRaw(new PatternNameMarker(pat.getName(), true));
 	}
 
 	private UsedPattern getSelectedPattern() {
@@ -634,9 +635,9 @@ public class MidiEditPopup extends CloseablePopup {
 			setSelectedPattern(pat);
 		} else {
 			patternPartBox.setSelectedIndex(part);
-			patternPartOrderBox.setSelectedItem(partOrder);
+			patternPartOrderBox.setVal(partOrder);
 			String patName = sec.getPatternName(part, partOrder);
-			patternNameBox.setSelectedItem(new PatternNameMarker(patName,
+			patternNameBox.setValRaw(new PatternNameMarker(patName,
 					VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, patName) != null));
 		}
 		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + VibeComposerGUI.instNames[part]

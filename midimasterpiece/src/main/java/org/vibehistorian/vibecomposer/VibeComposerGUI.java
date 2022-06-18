@@ -2812,7 +2812,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettingsLeft.add(useArrangement);
 		pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
-		JButton resetArrangementBtn = makeButton("Reset Arr.", "ArrangementReset");
+		JButton resetArrangementBtn = makeButton("Reset", "ArrangementReset");
 		JButton randomizeArrangementBtn = makeButton("Randomize", e -> {
 			Random arrGen = new Random();
 			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
@@ -2916,14 +2916,14 @@ public class VibeComposerGUI extends JFrame
 		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection");
 
 		arrangementSettingsLeft.add(randomizeArrangementBtn);
-		//arrangementSettings.add(pieceLength);
 		arrangementSettingsLeft.add(randomizeArrangementOnCompose);
+		arrangementSettingsLeft.add(resetArrangementBtn);
+		//arrangementSettings.add(pieceLength);
 
 		arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
 		arrangementSettingsLeft.add(arrangementVariationChance);
 		arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
 		arrangementSettingsLeft.add(arrangementPartVariationChance);
-		arrangementSettingsLeft.add(resetArrangementBtn);
 		arrangementSettingsLeft.add(arrangementPartInclusionBtn);
 		arrangementSettingsLeft.add(arrangementGlobalVariationBtn);
 

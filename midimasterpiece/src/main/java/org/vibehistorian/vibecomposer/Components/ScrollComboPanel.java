@@ -248,7 +248,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		}
 
 		if (isEnabled() && isDifferent) {
-			setSelectedItem(item);
+			setValRaw(item);
 		}
 
 		if (func != null) {
@@ -261,7 +261,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		discardInteraction();
 	}
 
-	public void setSelectedItem(T item) {
+	public void setValRaw(T item) {
 		scb.setSelectedItem(item);
 	}
 

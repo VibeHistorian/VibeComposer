@@ -94,7 +94,7 @@ public class BassPanel extends InstPanel {
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
 		}
-		patternJoinMode.setSelectedItem(PatternJoinMode.EXPAND);
+		patternJoinMode.setValRaw(PatternJoinMode.EXPAND);
 	}
 
 

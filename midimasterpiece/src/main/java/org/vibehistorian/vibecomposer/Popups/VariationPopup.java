@@ -365,7 +365,7 @@ public class VariationPopup {
 		scaleMode.addItem(OMNI.EMPTYCOMBO);
 		ScrollComboBox.addAll(scaleModes, scaleMode);
 		if (secC.getCustomScale() != null) {
-			scaleMode.setSelectedItem(secC.getCustomScale().toString());
+			scaleMode.setValRaw(secC.getCustomScale().toString());
 		}
 		scaleMode.setFunc(e -> {
 			secC.setCustomScale(

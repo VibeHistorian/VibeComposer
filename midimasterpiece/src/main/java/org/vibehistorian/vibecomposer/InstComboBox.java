@@ -88,7 +88,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 		for (int i = 0; i < this.getItemCount(); i++) {
 			int inst = Integer.valueOf(this.getItemAt(i).split(": ")[0].trim());
 			if (inst == instrument) {
-				setSelectedItem(getItemAt(i));
+				setValRaw(getItemAt(i));
 				discardInteraction();
 				return true;
 			}

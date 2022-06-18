@@ -415,7 +415,7 @@ public class VisualPatternPanel extends JPanel {
 	protected void randomizePattern() {
 		//LG.i("Randomize pattern.");
 		if (patternType.isEnabled()) {
-			patternType.setSelectedItem(RhythmPattern.CUSTOM);
+			patternType.setValRaw(RhythmPattern.CUSTOM);
 			shiftPanel.setInt(0);
 			Random rand = new Random();
 			for (int i = 0; i < MAX_HITS; i++) {
