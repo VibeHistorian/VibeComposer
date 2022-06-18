@@ -75,6 +75,10 @@ public class PatternMap {
 		partOrderPatternMap.remove(partOrder);
 	}
 
+	public void removePattern(Integer partOrder, String patName) {
+		partOrderPatternMap.get(partOrder).getMap().remove(patName);
+	}
+
 	public NamedNotesMap getNamedMap(Integer partOrder) {
 		return partOrderPatternMap.get(partOrder);
 	}

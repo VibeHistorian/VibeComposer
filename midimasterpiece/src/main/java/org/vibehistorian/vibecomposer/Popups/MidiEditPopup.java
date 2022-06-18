@@ -447,7 +447,7 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
 
 		ScrollComboBox.addAll(VibeComposerGUI.instNames, patternPartBox);
-		patternPartBox.setFunc(e -> loadParts());
+		patternPartBox.setFunc(e -> loadPartOrders());
 		patternPartOrderBox.setFunc(e -> loadNames());
 		//patternNameBox.setFunc(e -> loadNotes());
 
@@ -455,7 +455,7 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel2.add(patternPartOrderBox);
 		buttonPanel2.add(patternNameBox);
 
-		loadParts();
+		loadPartOrders();
 		loadNames();
 
 		buttonPanel2.add(VibeComposerGUI.makeButton("Load Pattern", e -> {
@@ -504,19 +504,19 @@ public class MidiEditPopup extends CloseablePopup {
 		return buttonPanel2;
 	}
 
-	private void loadParts() {
-		loadParts(patternPartBox, patternPartOrderBox, patternNameBox);
+	private void loadPartOrders() {
+		loadPartOrders(patternPartBox, patternPartOrderBox, patternNameBox);
 	}
 
-	public static void loadParts(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
+	public static void loadPartOrders(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
 			ScrollComboBox<PatternNameMarker> names) {
-		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
-			return;
-		}
 		names.removeAllItems();
 		partOrders.removeAllItems();
-		ScrollComboBox.addAll(
-				VibeComposerGUI.guiConfig.getPatternMaps().get(parts.getSelectedIndex()).getKeys(),
+		int part = parts.getSelectedIndex();
+		if (VibeComposerGUI.guiConfig.getPatternMaps().size() <= part) {
+			return;
+		}
+		ScrollComboBox.addAll(VibeComposerGUI.guiConfig.getPatternMaps().get(part).getKeys(),
 				partOrders);
 		if (partOrders.getItemCount() > 0) {
 			partOrders.setSelectedIndex(0);
@@ -529,12 +529,15 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public static void loadNames(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
 			ScrollComboBox<PatternNameMarker> names) {
-		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
-			return;
-		}
 		names.removeAllItems();
 		int part = parts.getSelectedIndex();
-		int partOrder = partOrders.getSelectedItem();
+		if (VibeComposerGUI.guiConfig.getPatternMaps().size() <= part) {
+			return;
+		}
+		Integer partOrder = partOrders.getSelectedItem();
+		if (partOrder == null) {
+			return;
+		}
 		Set<String> patternNames = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
 		List<PatternNameMarker> namesWithMarkers = patternNames.stream()
