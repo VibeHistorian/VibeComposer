@@ -40,7 +40,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 
 	JScrollPane scroll;
 
-	public ArrangementPartInclusionPopup(Arrangement arr, Point parentLoc, Dimension parentDim) {
+	public ArrangementPartInclusionPopup(Arrangement arr) {
 		super("Arrangement - Part Inclusion", 10, new Point(-500, -600));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

@@ -510,6 +510,9 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public static void loadParts(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
 			ScrollComboBox<PatternNameMarker> names) {
+		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
+			return;
+		}
 		names.removeAllItems();
 		partOrders.removeAllItems();
 		ScrollComboBox.addAll(
@@ -526,6 +529,9 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public static void loadNames(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
 			ScrollComboBox<PatternNameMarker> names) {
+		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
+			return;
+		}
 		names.removeAllItems();
 		int part = parts.getSelectedIndex();
 		int partOrder = partOrders.getSelectedItem();

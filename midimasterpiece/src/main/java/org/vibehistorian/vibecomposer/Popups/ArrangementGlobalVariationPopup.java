@@ -28,7 +28,7 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 
 	JScrollPane scroll;
 
-	public ArrangementGlobalVariationPopup(Arrangement arr, Point parentLoc, Dimension parentDim) {
+	public ArrangementGlobalVariationPopup(Arrangement arr) {
 		super("Arrangement - Variation Selection", 10, new Point(-400, -500));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

@@ -204,6 +204,7 @@ import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
+import org.vibehistorian.vibecomposer.Popups.PatternManagerPopup;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
@@ -2135,11 +2136,11 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.add(filterLabel);
 		arpsSettingsPanel.add(groupFilterSliders[3]);
 
-		arpAddJButton = makeButton("  +Arp ", "AddArp");
+		arpAddJButton = makeButton("+Arp ", "AddArp");
 		arpsSettingsPanel.add(arpAddJButton);
 
 		randomArpsToGenerate = new JTextField("3", 2);
-		randomizeArps = makeButton("Generate Arps:    ", e -> {
+		randomizeArps = makeButton("Generate Arps:", e -> {
 			createPanels(3, Integer.valueOf(randomArpsToGenerate.getText()), false);
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
@@ -2714,17 +2715,15 @@ public class VibeComposerGUI extends JFrame
 
 	private void openPartInclusionPopup() {
 		arrangement.recalculatePartInclusionMapBoundsIfNeeded();
-		new ArrangementPartInclusionPopup(arrangement,
-				new Point(MouseInfo.getPointerInfo().getLocation().x,
-						vibeComposerGUI.getLocation().y),
-				vibeComposerGUI.getSize());
+		new ArrangementPartInclusionPopup(arrangement);
 	}
 
 	private void openGlobalVariationPopup() {
-		new ArrangementGlobalVariationPopup(arrangement,
-				new Point(MouseInfo.getPointerInfo().getLocation().x,
-						vibeComposerGUI.getLocation().y),
-				vibeComposerGUI.getSize());
+		new ArrangementGlobalVariationPopup(arrangement);
+	}
+
+	private void openPatternManagerPopup() {
+		new PatternManagerPopup();
 	}
 
 	private void applyCustomPanelsToSection(String action, int replacedPartNum, Integer secOrder) {
@@ -2826,7 +2825,7 @@ public class VibeComposerGUI extends JFrame
 				60);
 		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> openGlobalVariationPopup(),
 				50);
-		JButton patternManagerBtn = makeButton("Patterns", e -> openGlobalVariationPopup(), 70);
+		JButton patternManagerBtn = makeButton("Patterns", e -> openPatternManagerPopup(), 70);
 
 		randomizeArrangementOnCompose = makeCheckBox("on Compose", true, true);
 
