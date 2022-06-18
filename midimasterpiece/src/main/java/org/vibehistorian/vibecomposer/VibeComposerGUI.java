@@ -2812,7 +2812,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettingsLeft.add(useArrangement);
 		pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
-		JButton resetArrangementBtn = makeButton("Reset", "ArrangementReset");
+		JButton resetArrangementBtn = makeButton("Reset", "ArrangementReset", 60, 30);
 		JButton randomizeArrangementBtn = makeButton("Randomize", e -> {
 			Random arrGen = new Random();
 			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
@@ -2821,9 +2821,12 @@ public class VibeComposerGUI extends JFrame
 			if (canRegenerateOnChange()) {
 				composeMidi(true);
 			}
-		});
-		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> openPartInclusionPopup());
-		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> openGlobalVariationPopup());
+		}, 90);
+		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> openPartInclusionPopup(),
+				60);
+		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> openGlobalVariationPopup(),
+				50);
+		JButton patternManagerBtn = makeButton("Patterns", e -> openGlobalVariationPopup(), 70);
 
 		randomizeArrangementOnCompose = makeCheckBox("on Compose", true, true);
 
@@ -2844,76 +2847,48 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
-		JButton commitPanelBtn = makeButton("Apply", "ArrangementApply");
-		commitPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		JButton commitAllPanelBtn = makeButton("Apply..", e -> openApplyCustomSectionPopup());
-		commitAllPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		JButton undoPanelBtn = new JButton("<-*");
-		undoPanelBtn.setPreferredSize(new Dimension(25, 25));
-		undoPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		undoPanelBtn.addActionListener(new ActionListener() {
+		JButton commitPanelBtn = makeButton("Apply", "ArrangementApply", 50, 30);
+		JButton commitAllPanelBtn = makeButton("Apply..", e -> openApplyCustomSectionPopup(), 60);
+		JButton undoPanelBtn = makeButton("<-*",
+				e -> arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true),
+				30);
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true);
-				//resetArrSectionInBackground();
-			}
-
-		});
-
-		JButton clearPanelBtn = new JButton("X*");
-		clearPanelBtn.setPreferredSize(new Dimension(25, 25));
-		clearPanelBtn.setMargin(new Insets(0, 0, 0, 0));
-		clearPanelBtn.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (!GLOBAL.equals(arrSection.getVal())) {
-					Section sec = actualArrangement.getSections()
-							.get(arrSection.getSelectedIndex() - 1);
-					if (sec.hasCustomizedParts()) {
-						sec.resetCustomizedParts();
-						setActualModel(actualArrangement.convertToActualTableModel(), false);
-						CheckButton cb = arrSection.getCurrentButton();
-						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
-						cb.repaint();
-						arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(),
-								true);
-					}
+		JButton clearPanelBtn = makeButton("X*", e -> {
+			if (!GLOBAL.equals(arrSection.getVal())) {
+				Section sec = actualArrangement.getSections()
+						.get(arrSection.getSelectedIndex() - 1);
+				if (sec.hasCustomizedParts()) {
+					sec.resetCustomizedParts();
+					setActualModel(actualArrangement.convertToActualTableModel(), false);
+					CheckButton cb = arrSection.getCurrentButton();
+					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
+					cb.repaint();
+					arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true);
 				}
 			}
+		}, 30);
 
-		});
-		JButton clearAllPanelsBtn = new JButton("CLR*");
-		clearAllPanelsBtn.setPreferredSize(new Dimension(35, 25));
-		clearAllPanelsBtn.setMargin(new Insets(0, 0, 0, 0));
-		clearAllPanelsBtn.addActionListener(new ActionListener() {
+		JButton clearAllPanelsBtn = makeButton("CLR*", e -> {
+			actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
+			setActualModel(actualArrangement.convertToActualTableModel(), false);
+			arrSection.getButtons().forEach(cb -> {
+				if (!GLOBAL.equals(cb.getText())) {
+					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
+					repaint();
+				}
+			});
+			scrollableArrangementActualTable.repaint();
+		}, 40);
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
-				setActualModel(actualArrangement.convertToActualTableModel(), false);
-				arrSection.getButtons().forEach(cb -> {
-					if (!GLOBAL.equals(cb.getText())) {
-						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
-						repaint();
-					}
-				});
-				scrollableArrangementActualTable.repaint();
-			}
-
-		});
-		JButton copySelectedBtn = makeButton("Cc", "ArrangementAddLast");
-		copySelectedBtn.setPreferredSize(new Dimension(25, 30));
-		copySelectedBtn.setMargin(new Insets(0, 0, 0, 0));
-		JButton removeSelectedBtn = makeButton("X", "ArrangementRemoveLast");
+		JButton copySelectedBtn = makeButton("Cc", "ArrangementAddLast", 30, 30);
+		JButton removeSelectedBtn = makeButton("X", "ArrangementRemoveLast", 30, 30);
 		newSectionBox = new ScrollComboBox<>(false);
 		newSectionBox.addItem(OMNI.EMPTYCOMBO);
 		for (SectionType type : Section.SectionType.values()) {
 			newSectionBox.addItem(type.toString());
 		}
 
-		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection");
+		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection", 35, 30);
 
 		arrangementSettingsLeft.add(randomizeArrangementBtn);
 		arrangementSettingsLeft.add(randomizeArrangementOnCompose);
@@ -2926,6 +2901,7 @@ public class VibeComposerGUI extends JFrame
 		arrangementSettingsLeft.add(arrangementPartVariationChance);
 		arrangementSettingsLeft.add(arrangementPartInclusionBtn);
 		arrangementSettingsLeft.add(arrangementGlobalVariationBtn);
+		arrangementSettingsLeft.add(patternManagerBtn);
 
 		arrangementMiddleColoredPanel = new JPanel();
 		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
@@ -6533,9 +6509,17 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private JButton makeButton(String name, String actionCommand) {
+		return makeButton(name, actionCommand, -1, -1);
+	}
+
+	private JButton makeButton(String name, String actionCommand, int width, int height) {
 		JButton butt = new JButton(name);
 		butt.addActionListener(this);
 		butt.setActionCommand(actionCommand);
+		if (width > 0 && height > 0) {
+			butt.setPreferredSize(new Dimension(width, height));
+			butt.setMargin(new Insets(0, 0, 0, 0));
+		}
 		return butt;
 	}
 
@@ -6549,6 +6533,26 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
+		return butt;
+	}
+
+	public static JButton makeButton(String name, Consumer<? super Object> a, int width) {
+		return makeButton(name, a, width, 30);
+	}
+
+	public static JButton makeButton(String name, Consumer<? super Object> a, int width,
+			int height) {
+		JButton butt = new JButton(name);
+		butt.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				a.accept(new Object());
+			}
+
+		});
+		butt.setPreferredSize(new Dimension(width, height));
+		butt.setMargin(new Insets(0, 0, 0, 0));
 		return butt;
 	}
 
