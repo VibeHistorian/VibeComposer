@@ -1154,7 +1154,6 @@ public class VibeComposerGUI extends JFrame
 					manualArrangement.setSelected(false);
 					vibeComposerGUI.repaint();
 				} catch (JAXBException | IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 					return;
 				}
@@ -2428,7 +2427,6 @@ public class VibeComposerGUI extends JFrame
 							unmarshallDrums(loadedFile);
 							drumPartPresetBox.setVal(OMNI.EMPTYCOMBO);
 						} catch (JAXBException | IOException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 							return;
 						}
@@ -9573,7 +9571,6 @@ public class VibeComposerGUI extends JFrame
 			queueMidiEventForRemoval(trackNum, noteOff);
 			queueMidiEventForRemoval(trackNum, noteOn);
 		} catch (InvalidMidiDataException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -84,7 +84,6 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 
 	@Override
 	protected void addFrameWindowOperation() {
-		// TODO Auto-generated method stub
 
 	}
 

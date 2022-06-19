@@ -124,8 +124,6 @@ public class ShowAreaBig extends JComponent {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 

@@ -118,7 +118,6 @@ public class PhraseNote implements Cloneable {
 		try {
 			return (PhraseNote) super.clone();
 		} catch (CloneNotSupportedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
