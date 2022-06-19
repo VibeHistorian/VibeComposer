@@ -39,7 +39,6 @@ public class DrumPanel extends InstPanel {
 		initDefaults(l);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(4, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 

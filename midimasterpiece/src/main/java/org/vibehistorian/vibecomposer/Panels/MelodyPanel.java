@@ -59,7 +59,6 @@ public class MelodyPanel extends InstPanel {
 		this.add(panelOrder);*/
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
 		transpose.getKnob().setTickSpacing(10);

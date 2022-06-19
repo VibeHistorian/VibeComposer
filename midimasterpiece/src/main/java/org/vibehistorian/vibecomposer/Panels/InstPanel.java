@@ -57,6 +57,7 @@ import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.JKnob;
+import org.vibehistorian.vibecomposer.Components.MidiMVI;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.RangeSlider;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -76,6 +77,8 @@ public abstract class InstPanel extends JPanel {
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
+
+	protected MidiMVI midiMVI = new MidiMVI();
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, VisualPatternPanel.MAX_HITS);
 	protected KnobPanel chordSpan = new KnobPanel("Span", 1, 1, 4);
@@ -252,9 +255,12 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void addDefaultInstrumentControls() {
+		soloMuter = new SoloMuter(getPartNum(), SoloMuter.Type.SINGLE);
 		this.add(soloMuter);
 		this.add(muteInst);
 		this.add(lockInst);
+		midiMVI.setupParent(this);
+		this.add(midiMVI);
 		this.add(instrument);
 	}
 

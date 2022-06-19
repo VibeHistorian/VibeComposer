@@ -43,7 +43,6 @@ public class BassPanel extends InstPanel {
 		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
 		//this.add(useRhythm);

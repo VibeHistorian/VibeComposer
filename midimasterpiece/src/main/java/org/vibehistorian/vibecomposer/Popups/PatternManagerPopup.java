@@ -162,10 +162,16 @@ public class PatternManagerPopup extends CloseablePopup {
 	}
 
 	private void unapply(int part, Integer partOrder, String pat) {
+		toggle(part, partOrder, pat, false);
+	}
+
+	public static Boolean toggle(int part, Integer partOrder, String pat, Boolean forcedState) {
 		PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, pat);
-		if (pn != null) {
-			pn.setApplied(false);
+		if (pn == null) {
+			return null;
 		}
+		pn.setApplied((forcedState != null) ? forcedState : !pn.isApplied());
+		return pn.isApplied();
 	}
 
 	public boolean filter(int mode, String patternName) {

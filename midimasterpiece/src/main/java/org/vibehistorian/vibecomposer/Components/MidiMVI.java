@@ -1,0 +1,113 @@
+package org.vibehistorian.vibecomposer.Components;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Popups.PatternManagerPopup;
+
+public class MidiMVI extends JComponent {
+
+	private static final long serialVersionUID = 2226722368743495710L;
+
+	public static final String[] BUTTONS = { "M", "V", "I" };
+	public static final int BUTTON_WIDTH = 17;
+	public static final Dimension DEFAULT_SIZE = new Dimension(BUTTON_WIDTH * BUTTONS.length, 25);
+	Dimension defaultSize = DEFAULT_SIZE;
+	InstPanel parent;
+
+	public MidiMVI() {
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent evt) {
+				if (!isEnabled() || VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
+					return;
+				}
+				if (SwingUtilities.isLeftMouseButton(evt)) {
+					int butt = getButton(evt);
+					if (butt < 0) {
+						return;
+					}
+					LG.i("Button: " + BUTTONS[butt]);
+					Boolean result = PatternManagerPopup.toggle(parent.getPartNum(),
+							parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[butt + 1], null);
+					if (result != null) {
+						repaint();
+					}
+				}
+			}
+		});
+		setOpaque(true);
+		updateSizes(defaultSize);
+	}
+
+	public void setupParent(InstPanel parent) {
+		this.parent = parent;
+	}
+
+	@Override
+	protected void paintComponent(Graphics guh) {
+		if (guh instanceof Graphics2D) {
+			Graphics2D g = (Graphics2D) guh;
+			g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
+					: new Color(180, 180, 180));
+			int width = getWidth();
+			int height = getHeight();
+			g.fillRect(0, 0, width, height);
+
+			for (int i = 0; i < BUTTONS.length; i++) {
+				boolean active = isActive(i);
+				g.setColor(OMNI.alphen(CollectionCellRenderer.CUSTOM_PATTERN_COLORS[i],
+						active ? 160 : 60));
+				int startX = i * BUTTON_WIDTH + 1;
+
+				g.fillRect(startX, 0, BUTTON_WIDTH, height);
+				g.setColor(Color.white);
+				g.drawString(BUTTONS[i], startX + BUTTON_WIDTH / 3, height * 2 / 3);
+			}
+
+			g.setColor(Color.black);
+			g.drawRect(0, 0, width, height);
+		}
+	}
+
+	private boolean isActive(int i) {
+		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
+			return false;
+		}
+		PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
+				parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[i + 1]);
+		return (pn != null) && pn.isApplied();
+	}
+
+	private int getButton(MouseEvent evt) {
+		if (!OMNI.mouseInComp(this)) {
+			return -1;
+		}
+
+		return OMNI.clamp(evt.getPoint().x / BUTTON_WIDTH, 0, BUTTONS.length - 1);
+	}
+
+	public void updateSizes(Dimension size) {
+		setPreferredSize(size);
+		setMinimumSize(size);
+		setMaximumSize(size);
+		setSize(size);
+	}
+
+	public void setDefaultSize(Dimension size) {
+		defaultSize = size;
+	}
+}
