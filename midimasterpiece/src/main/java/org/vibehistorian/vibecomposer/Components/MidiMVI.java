@@ -37,21 +37,33 @@ public class MidiMVI extends JComponent {
 				if (!isEnabled() || VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
 					return;
 				}
-				if (SwingUtilities.isLeftMouseButton(evt)) {
-					int butt = getButton(evt);
-					if (butt < 0) {
-						return;
-					}
-					LG.i("Button: " + BUTTONS[butt]);
-					if (butt <= 2) {
-						PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
-								UsedPattern.BASE_PATTERNS[butt + 1], null);
-					} else {
-						PatternManagerPopup.unapply2(3, parent.getPartNum(), parent.getPanelOrder(),
-								false);
-					}
+				int butt = getButton(evt);
+				if (butt < 0) {
+					return;
+				}
 
-					repaint();
+				LG.i("Button: " + BUTTONS[butt]);
+				if (SwingUtilities.isLeftMouseButton(evt)) {
+					processButton(butt);
+				} else if (SwingUtilities.isRightMouseButton(evt)) {
+					boolean activate = !isActive(butt);
+					for (int i = 0; i < 2; i++) {
+						PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
+								UsedPattern.BASE_PATTERNS[i + 1], activate);
+					}
+					PatternManagerPopup.unapply2(3, parent.getPartNum(), parent.getPanelOrder(),
+							activate);
+				}
+				repaint();
+			}
+
+			private void processButton(int butt) {
+				if (butt <= 2) {
+					PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
+							UsedPattern.BASE_PATTERNS[butt + 1], null);
+				} else {
+					PatternManagerPopup.unapply2(3, parent.getPartNum(), parent.getPanelOrder(),
+							false);
 				}
 			}
 		});
