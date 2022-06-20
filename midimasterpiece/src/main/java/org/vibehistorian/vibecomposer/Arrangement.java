@@ -558,16 +558,21 @@ public class Arrangement {
 		for (int i = 0; i < 5; i++) {
 			int typesCount = Section.variationDescriptions[i].length - 1;
 			Boolean[] data = new Boolean[typesCount];
-			data[0] = Boolean.TRUE;
+			Boolean data0 = Boolean.TRUE;
 			for (int k = 1; k < typesCount; k++) {
 				data[k] = getBooleanFromOldData1D(globalVariationMap.get(i), k);
+				data0 &= data[k];
 			}
+			data[0] = data0;
 			globalVariationMap.put(i, data);
 		}
 		Boolean[] data = new Boolean[Section.sectionVariationNames.length + 1];
+		Boolean data0 = Boolean.TRUE;
 		for (int k = 0; k < data.length; k++) {
 			data[k] = getBooleanFromOldData1D(globalVariationMap.get(5), k);
+			data0 &= data[k];
 		}
+		data[0] = data0;
 		globalVariationMap.put(5, data);
 	}
 
@@ -613,14 +618,16 @@ public class Arrangement {
 				initGlobalVariationMap();
 			}
 			if (i < 5) {
-				if (getGlobalVariationMap().get(i).length <= Section.variationDescriptions[i].length
+				if (getGlobalVariationMap().get(i).length < Section.variationDescriptions[i].length
 						- 1) {
 					initGlobalVariationMapFromOldData();
+					return;
 				}
 			} else {
-				if (getGlobalVariationMap().get(i).length <= Section.sectionVariationNames.length
+				if (getGlobalVariationMap().get(i).length < Section.sectionVariationNames.length
 						+ 1) {
 					initGlobalVariationMapFromOldData();
+					return;
 				}
 			}
 		}
