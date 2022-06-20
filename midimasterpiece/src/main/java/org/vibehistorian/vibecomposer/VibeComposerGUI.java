@@ -5781,7 +5781,7 @@ public class VibeComposerGUI extends JFrame
 			masterpieceSeed = randomVal;
 		}
 
-		LG.i(("Melody seed: " + masterpieceSeed));
+		LG.i(("Master seed: " + masterpieceSeed));
 		lastRandomSeed = masterpieceSeed;
 		return masterpieceSeed;
 	}
@@ -6657,7 +6657,7 @@ public class VibeComposerGUI extends JFrame
 		boolean soloMuterPossibleChange = false;
 		boolean triggerRegenerate = false;
 
-		LG.i(("Processing '" + ae.getActionCommand() + "'.."));
+		LG.i(("<<<<<<<<<<<<<<<<Processing '" + ae.getActionCommand() + "'>>>>>>>>>>>>>>>>>>"));
 		long actionSystemTime = System.currentTimeMillis();
 
 		boolean isCompose = "Compose".equals(ae.getActionCommand());

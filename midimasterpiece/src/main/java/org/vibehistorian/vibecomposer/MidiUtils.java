@@ -368,7 +368,7 @@ public class MidiUtils {
 			long bestMatchCount = orderedBestMatches.values().stream()
 					.filter(e -> finalBestMatch == e).count();
 			if (bestMatchCount > 1) {
-				LG.i(bestMatchCount + " best chords for:  " + bestMatch + " notes.");
+				LG.d(bestMatchCount + " best chords for:  " + bestMatch + " notes.");
 
 				if (bestMatchCount >= orderOfMatch) {
 					orderedBestMatches.values().removeIf(e -> e != finalBestMatch);
@@ -377,10 +377,10 @@ public class MidiUtils {
 				String expectedNextChordString = progressionCircle
 						.get((circleIndex) + 1 % progressionCircle.size());
 				if (orderedBestMatches.containsKey(expectedNextChordString)) {
-					LG.i("Circle: " + expectedNextChordString);
+					LG.d("Circle: " + expectedNextChordString);
 					return expectedNextChordString;
 				} else {
-					LG.i("Circle chord not a best match: " + expectedNextChordString);
+					LG.d("Circle chord not a best match: " + expectedNextChordString);
 				}
 			}
 		}
@@ -390,7 +390,7 @@ public class MidiUtils {
 		if (orderedBestMatches.keySet().size() > orderOfMatch - 1) {
 			return (String) orderedBestMatches.keySet().toArray()[orderOfMatch - 1];
 		}
-		LG.i("Only one chord matches? Huh..");
+		LG.d("Only one chord matches? Huh..");
 		return (String) orderedBestMatches.keySet().toArray()[0];
 	}
 

@@ -271,7 +271,7 @@ public class MidiGenerator implements JMC {
 		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
 
 		int seed = mp.getPatternSeedWithPartOffset();
-		LG.i("Seed: " + seed);
+		LG.d("Seed: " + seed);
 
 
 		// A B A C pattern
@@ -813,7 +813,7 @@ public class MidiGenerator implements JMC {
 			//LG.d("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
 			mbs.add(mb);
-			LG.i("Created block: " + StringUtils.join(blockNotes, ","));
+			LG.d("Created block: " + StringUtils.join(blockNotes, ","));
 		}
 		return mbs;
 	}
@@ -1117,7 +1117,7 @@ public class MidiGenerator implements JMC {
 		double requiredPercentageCs = gc.getMelodyTonicNoteTarget() / 100.0;
 		int needed = (int) Math.floor(
 				fullMelody.stream().filter(e -> e.getPitch() >= 0).count() * requiredPercentageCs);
-		LG.i("Found C's: " + pitches[0] + ", needed: " + needed);
+		LG.d("Found C's: " + pitches[0] + ", needed: " + needed);
 		int surplusTonics = pitches[0] - needed;
 
 		if (gc.getMelodyTonicNoteTarget() > 0 && notesSeedOffset == 0) {
@@ -1201,7 +1201,7 @@ public class MidiGenerator implements JMC {
 					* requiredPercentage);
 
 			int modeNote = MidiUtils.MAJ_SCALE.get(scale.modeTargetNote);
-			LG.i("Found Mode notes: " + pitches[modeNote] + ", needed: " + needed);
+			LG.d("Found Mode notes: " + pitches[modeNote] + ", needed: " + needed);
 			if (pitches[modeNote] < needed) {
 				int chordSize = fullMelodyMap.keySet().size();
 				int difference = needed - pitches[modeNote];
@@ -1237,7 +1237,7 @@ public class MidiGenerator implements JMC {
 						break;
 					}
 				}
-				LG.i("MODE: Remaining difference after first pairs: " + (-1 * difference));
+				LG.d("MODE: Remaining difference after first pairs: " + (-1 * difference));
 			}
 
 		}
@@ -1276,7 +1276,7 @@ public class MidiGenerator implements JMC {
 				}
 			}
 
-			LG.i("Found Chord notes: " + found + ", needed: " + needed);
+			LG.d("Found Chord notes: " + found + ", needed: " + needed);
 			if (found < needed) {
 				int difference = needed - found;
 				/*int chanceToConvertOthers = 100
@@ -1321,7 +1321,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 
-				LG.i("CHORD: Remaining difference: " + (-1 * difference));
+				LG.d("CHORD: Remaining difference: " + (-1 * difference));
 			}
 
 		}
@@ -1666,7 +1666,7 @@ public class MidiGenerator implements JMC {
 			//top3.entrySet().stream().forEach(System.out::println);
 			// TODO: if prevChordString not a major chord, not indexed in circle -> never continue circle?
 			String chordString = applyChordFreqMap(top3, orderOfMatch, prevChordString, freqMap);
-			LG.i("Alternate chord #" + i + ": " + chordString);
+			LG.d("Alternate chord #" + i + ": " + chordString);
 			chordStrings.add(chordString);
 			prevChordString = chordString;
 		}
@@ -1816,7 +1816,7 @@ public class MidiGenerator implements JMC {
 				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordIndex);
 				if (chordIndex != 1 || gc.isDimAugDom7thEnabled()) {
 					spicyChordString = parallelChordString;
-					LG.i("PARALLEL: " + spicyChordString);
+					LG.d("PARALLEL: " + spicyChordString);
 				}
 			}
 
@@ -1851,7 +1851,7 @@ public class MidiGenerator implements JMC {
 			lastUnspicedChord = chordString;
 
 		}
-		LG.i("CHORD PROG LENGTH: " + cpr.size());
+		LG.d("CHORD PROG LENGTH: " + cpr.size());
 		if (isBackwards) {
 			Collections.reverse(progressionDurations);
 			Collections.reverse(cpr);
@@ -1865,7 +1865,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		for (String s : debugMsg) {
-			LG.i(s);
+			LG.d(s);
 		}
 
 		// similarity generation - replace chords 4-7 with chords from 0-3
@@ -2553,7 +2553,6 @@ public class MidiGenerator implements JMC {
 			}
 
 			int notesSeedOffset = sec.getTypeMelodyOffset();
-			LG.i("Section energy type: " + notesSeedOffset);
 
 			Random variationGen = new Random(arrSeed + sec.getTypeSeedOffset());
 			List<Integer> sectionVariations = calculateSectionVariations(arr, secOrder, sec,
@@ -2602,7 +2601,7 @@ public class MidiGenerator implements JMC {
 				}
 				sec.setTransitionType(transType);
 			}
-			LG.i("Transition type: " + sec.getTransitionType());
+			LG.i("Transition type: " + sec.getTransitionType() + ", MVI: " + notesSeedOffset);
 
 
 			// reset back to normal?
@@ -3155,7 +3154,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isPartEnabled(part) && partPadding.size() > 0
 				&& trackCount < partPadding.get(part)) {
 			int tracksToPad = partPadding.get(part) - trackCount;
-			LG.i("Padding: " + part + ", #: " + tracksToPad);
+			LG.d("Padding: " + part + ", #: " + tracksToPad);
 			for (int i = 0; i < tracksToPad; i++) {
 				score.add(PartExt.makeFillerPart());
 			}
@@ -3852,7 +3851,7 @@ public class MidiGenerator implements JMC {
 							MidiUtils.adjustScaleByChord(ScaleMode.IONIAN.noteAdjustScale,
 									minorChord),
 							gc.isTransposedNotesForceScale());
-					LG.i("Transposing melody to match minor chord! Chord#: " + i);
+					LG.d("Transposing melody to match minor chord! Chord#: " + i);
 					break;
 				}
 			}
