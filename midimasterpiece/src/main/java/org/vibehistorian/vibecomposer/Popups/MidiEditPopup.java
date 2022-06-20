@@ -276,7 +276,7 @@ public class MidiEditPopup extends CloseablePopup {
 						int pitch = rnd
 								.nextInt(mvea.max - mvea.min + 1 - trackScope * baseMargin * 2)
 								+ mvea.min + baseMargin * trackScope;
-						if (snapToScaleGrid.isSelected()) {
+						if (isSnapPitch()) {
 							int closestNormalized = MidiUtils
 									.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12);
 
@@ -312,6 +312,10 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel.add(midiDragDropPanel);
 
 		return buttonPanel;
+	}
+
+	public boolean isSnapPitch() {
+		return snapToScaleGrid.isSelected() && part != 4;
 	}
 
 	private JPanel makeMidiDragDropPanel() {
@@ -508,8 +512,8 @@ public class MidiEditPopup extends CloseablePopup {
 		loadPartOrders(patternPartBox, patternPartOrderBox, patternNameBox);
 	}
 
-	public static void loadPartOrders(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
-			ScrollComboBox<PatternNameMarker> names) {
+	public static void loadPartOrders(ScrollComboBox<String> parts,
+			ScrollComboBox<Integer> partOrders, ScrollComboBox<PatternNameMarker> names) {
 		names.removeAllItems();
 		partOrders.removeAllItems();
 		int part = parts.getSelectedIndex();
@@ -556,14 +560,40 @@ public class MidiEditPopup extends CloseablePopup {
 		if (pn == null) {
 			return;
 		}
-		// TODO: overwrite notes setting
+
 		if (overwrite) {
 			setCustomValues(pn);
 		} else {
 			// import instead
+			UsedPattern pat = sec.getPattern(part, partOrder);
+			PhraseNotes oldPn = VibeComposerGUI.guiConfig.getPattern(pat);
+
+			if (oldPn != null) {
+				pn.remakeNoteStartTimes();
+				oldPn.remakeNoteStartTimes();
+
+				for (PhraseNote n : pn) {
+					int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
+							n.getPitch() % 12);
+					if (isSnapPitch()) {
+						n.setPitch(MidiUtils.octavePitch(n.getPitch()) + closestNormalized);
+					}
+					n.setRv(0);
+					n.setOffset(n.getStartTime());
+					oldPn.add(0, n);
+				}
+
+				setCustomValues(oldPn);
+			} else {
+				setCustomValues(pn);
+			}
+
+			setSelectedPattern(pat);
 		}
 		if (applyOnLoadChoice) {
 			apply();
+		} else {
+			repaintMvea();
 		}
 	}
 
@@ -707,6 +737,7 @@ public class MidiEditPopup extends CloseablePopup {
 			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(true);
 			sec.putPattern(part, partOrder, pat);
 			LG.i("Applied: " + pat.toString());
+			repaintMvea();
 			VibeComposerGUI.scrollableArrangementActualTable.repaint();
 		}
 	}

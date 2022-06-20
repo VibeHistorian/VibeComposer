@@ -334,7 +334,7 @@ public class MidiEditArea extends JComponent {
 					LG.d("Inserting new note..");
 					int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
 							orderVal.y % 12);
-					PhraseNote insertedPn = new PhraseNote(pop.snapToScaleGrid.isSelected()
+					PhraseNote insertedPn = new PhraseNote(pop.isSnapPitch()
 							? (MidiUtils.octavePitch(orderVal.y) + closestNormalized)
 							: orderVal.y);
 					insertedPn.setDuration(MidiGenerator.Durations.EIGHTH_NOTE);
@@ -658,7 +658,7 @@ public class MidiEditArea extends JComponent {
 				// PITCH
 				if (draggingAny(DM.PITCH)) {
 					int pitch = getPitchFromPosition(evt.getPoint().y);
-					if (pop.snapToScaleGrid.isSelected()) {
+					if (pop.isSnapPitch()) {
 						pitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, pitch % 12)
 								+ MidiUtils.octavePitch(pitch);
 					}
@@ -714,7 +714,7 @@ public class MidiEditArea extends JComponent {
 		if (pitch == Note.REST && values.get(pos).getRv() < MidiGenerator.DBL_ERR) {
 			values.remove(pos);
 		} else {
-			if (pop.snapToScaleGrid.isSelected()) {
+			if (pop.isSnapPitch()) {
 				int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
 						pitch % 12);
 
@@ -1105,12 +1105,21 @@ public class MidiEditArea extends JComponent {
 		double quarterNoteLength = (getWidth() - marginX) / sectionLength;
 		double noteDragMarginTime = noteDragMarginX / quarterNoteLength;
 		double mouseClickTime = (xy.x - marginX) / quarterNoteLength;
-		for (int i = 0; i < possibleNotes.size(); i++) {
-			PhraseNote pn = possibleNotes.get(i);
-			if (mouseClickTime > (pn.getStartTime() - noteDragMarginTime)
-					&& mouseClickTime < (pn.getStartTime() + pn.getDuration()
-							+ noteDragMarginTime)) {
-				return possibleNotes.get(i);
+		Integer index = getNoteByTime(possibleNotes, noteDragMarginTime, mouseClickTime);
+		if (index != null) {
+			return possibleNotes.get(index);
+		}
+		return null;
+	}
+
+
+	public static Integer getNoteByTime(List<PhraseNote> notes, double noteDragMarginTime,
+			double time) {
+		for (int i = 0; i < notes.size(); i++) {
+			PhraseNote pn = notes.get(i);
+			if (time > (pn.getStartTime() - noteDragMarginTime)
+					&& time < (pn.getStartTime() + pn.getDuration() + noteDragMarginTime)) {
+				return i;
 			}
 		}
 
