@@ -6,12 +6,14 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
@@ -22,8 +24,8 @@ public class MidiMVI extends JComponent {
 
 	private static final long serialVersionUID = 2226722368743495710L;
 
-	public static final String[] BUTTONS = { "M", "V", "I" };
-	public static final int BUTTON_WIDTH = 17;
+	public static final String[] BUTTONS = { "M", "V", "I", "C" };
+	public static final int BUTTON_WIDTH = 15;
 	public static final Dimension DEFAULT_SIZE = new Dimension(BUTTON_WIDTH * BUTTONS.length, 25);
 	Dimension defaultSize = DEFAULT_SIZE;
 	InstPanel parent;
@@ -41,11 +43,15 @@ public class MidiMVI extends JComponent {
 						return;
 					}
 					LG.i("Button: " + BUTTONS[butt]);
-					Boolean result = PatternManagerPopup.toggle(parent.getPartNum(),
-							parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[butt + 1], null);
-					if (result != null) {
-						repaint();
+					if (butt <= 2) {
+						PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
+								UsedPattern.BASE_PATTERNS[butt + 1], null);
+					} else {
+						PatternManagerPopup.unapply2(3, parent.getPartNum(), parent.getPanelOrder(),
+								false);
 					}
+
+					repaint();
 				}
 			}
 		});
@@ -75,7 +81,9 @@ public class MidiMVI extends JComponent {
 
 				g.fillRect(startX, 0, BUTTON_WIDTH, height);
 				g.setColor(Color.white);
-				g.drawString(BUTTONS[i], startX + BUTTON_WIDTH / 3, height * 2 / 3);
+				g.drawString(BUTTONS[i],
+						startX + BUTTON_WIDTH / 2 - SwingUtils.getDrawStringWidth(BUTTONS[i]) / 2,
+						height * 2 / 3);
 			}
 
 			g.setColor(Color.black);
@@ -87,9 +95,30 @@ public class MidiMVI extends JComponent {
 		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
 			return false;
 		}
-		PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
-				parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[i + 1]);
-		return (pn != null) && pn.isApplied();
+
+		if (i <= 2) {
+			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
+					parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[i + 1]);
+			return (pn != null) && pn.isApplied();
+		} else {
+			Set<String> patternNames = VibeComposerGUI.guiConfig.getPatternMaps()
+					.get(parent.getPartNum()).getPatternNames(parent.getPanelOrder());
+			if (patternNames == null) {
+				return false;
+			}
+			for (String bp : UsedPattern.BASE_PATTERNS) {
+				patternNames.remove(bp);
+			}
+			for (String name : patternNames) {
+				PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
+						parent.getPanelOrder(), name);
+				if (pn != null && pn.isApplied()) {
+					return true;
+				}
+
+			}
+			return false;
+		}
 	}
 
 	private int getButton(MouseEvent evt) {

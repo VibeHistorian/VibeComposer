@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -87,7 +88,7 @@ public class PatternMap {
 		if (!partOrderPatternMap.containsKey(partOrder)) {
 			return null;
 		}
-		return partOrderPatternMap.get(partOrder).getMap().keySet();
+		return new HashSet<>(partOrderPatternMap.get(partOrder).getMap().keySet());
 	}
 
 	@XmlElement

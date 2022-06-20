@@ -734,11 +734,17 @@ public class MidiEditPopup extends CloseablePopup {
 		if (mvea != null && mvea.getValues() != null) {
 			// TODO
 			UsedPattern pat = getSelectedPattern();
-			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(true);
-			sec.putPattern(part, partOrder, pat);
-			LG.i("Applied: " + pat.toString());
-			repaintMvea();
-			VibeComposerGUI.scrollableArrangementActualTable.repaint();
+			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(pat);
+			if (pn != null) {
+				pn.setApplied(true);
+				sec.putPattern(part, partOrder, pat);
+				LG.i("Applied: " + pat.toString());
+
+				repaintMvea();
+				VibeComposerGUI.scrollableArrangementActualTable.repaint();
+			} else {
+				LG.e("Failed to apply pattern, null: " + pat.toString());
+			}
 		}
 	}
 

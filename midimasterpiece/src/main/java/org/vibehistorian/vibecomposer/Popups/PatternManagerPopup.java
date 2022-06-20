@@ -144,7 +144,7 @@ public class PatternManagerPopup extends CloseablePopup {
 
 	}
 
-	private void unapply2(int mode, int part, Integer partOrder, boolean remove) {
+	public static void unapply2(int mode, int part, Integer partOrder, boolean remove) {
 		Set<String> patNames = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
 		patNames = patNames.stream().filter(e -> filter(mode, e)).collect(Collectors.toSet());
@@ -153,7 +153,7 @@ public class PatternManagerPopup extends CloseablePopup {
 		}
 	}
 
-	private void unapply3(int part, Integer partOrder, String name, boolean remove) {
+	public static void unapply3(int part, Integer partOrder, String name, boolean remove) {
 		if (remove) {
 			VibeComposerGUI.guiConfig.getPatternMaps().get(part).removePattern(partOrder, name);
 		} else {
@@ -161,7 +161,7 @@ public class PatternManagerPopup extends CloseablePopup {
 		}
 	}
 
-	private void unapply(int part, Integer partOrder, String pat) {
+	public static void unapply(int part, Integer partOrder, String pat) {
 		toggle(part, partOrder, pat, false);
 	}
 
@@ -174,13 +174,15 @@ public class PatternManagerPopup extends CloseablePopup {
 		return pn.isApplied();
 	}
 
-	public boolean filter(int mode, String patternName) {
+	public static boolean filter(int mode, String patternName) {
 		switch (mode) {
 		case 0:
 			return true;
 		case 1:
 			return genMatch(patternName);
 		case 2:
+			return customMatch(patternName) && !genMatch(patternName);
+		case 3:
 			return customMatch(patternName);
 		default:
 			return true;
@@ -188,18 +190,15 @@ public class PatternManagerPopup extends CloseablePopup {
 
 	}
 
-	public boolean genMatch(String patternName) {
+	public static boolean genMatch(String patternName) {
 		return (patternName != null) && patternName.startsWith(UsedPattern.GENERATED);
 	}
 
-	public boolean customMatch(String patternName) {
+	public static boolean customMatch(String patternName) {
 		for (String base : UsedPattern.BASE_PATTERNS) {
 			if (base.equals(patternName)) {
 				return false;
 			}
-		}
-		if (genMatch(patternName)) {
-			return false;
 		}
 		return true;
 	}
