@@ -11,7 +11,6 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -883,18 +882,16 @@ public class MidiEditArea extends JComponent {
 
 			}
 
-			List<Double> chordSpacings = new ArrayList<>(
-					pop != null ? pop.getSec().getGeneratedDurations()
-							: Arrays.asList(new Double[] { 4.0, 4.0, 4.0, 4.0 }));
-			List<Double> chordSpacingsTemp = new ArrayList<>(chordSpacings);
-			if (pop != null) {
-				for (int i = 1; i < pop.getSec().getMeasures(); i++) {
-					chordSpacings.addAll(chordSpacingsTemp);
-				}
-			}
 
 			// draw chord spacing
-			if (chordSpacings != null) {
+			if (pop != null) {
+				List<Double> chordSpacings = new ArrayList<>(pop.getSec().getGeneratedDurations());
+				List<Double> chordSpacingsTemp = new ArrayList<>(chordSpacings);
+				if (pop != null) {
+					for (int i = 1; i < pop.getSec().getMeasures(); i++) {
+						chordSpacings.addAll(chordSpacingsTemp);
+					}
+				}
 
 				double line = 0;
 				for (int i = 0; i < chordSpacings.size(); i++) {

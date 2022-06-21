@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -115,14 +116,15 @@ public class PatternManagerPopup extends CloseablePopup {
 	}
 
 	public void setCustomValues(PhraseNotes values) {
-
 		int vmin = -1 * MidiEditPopup.baseMargin * MidiEditPopup.trackScope;
 		int vmax = MidiEditPopup.baseMargin * MidiEditPopup.trackScope;
 		if (!values.isEmpty()) {
-			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.min().getAsInt();
-			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
-					.max().getAsInt();
+			IntSummaryStatistics notes = values.stream().map(e -> e.getPitch()).filter(e -> e >= 0)
+					.mapToInt(e -> e).boxed().collect(Collectors.summarizingInt(Integer::intValue));
+			if (notes.getCount() > 0) {
+				vmin += notes.getMin();
+				vmax += notes.getMax();
+			}
 		}
 		mvea.setMin(Math.min(mvea.min, vmin));
 		mvea.setMax(Math.max(mvea.max, vmax));
@@ -131,7 +133,13 @@ public class PatternManagerPopup extends CloseablePopup {
 		mvea.part = OMNI.clamp(patternPartBox.getSelectedIndex(), 0, 4);
 		mvea.setValues(values);
 
+		repaintMvea();
+	}
+
+	public void repaintMvea() {
 		mvea.setAndRepaint();
+		MidiEditArea.sectionLength = mvea.getValues().stream().map(e -> e.getRv())
+				.mapToDouble(e -> e).sum();
 	}
 
 	private void loadParts() {
