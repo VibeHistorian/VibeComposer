@@ -8374,11 +8374,7 @@ public class VibeComposerGUI extends JFrame
 		} else if (part == 3) {
 			createRandomArpPanels(panelCount, onlyAdd, null);
 		} else if (part == 4) {
-			if (new Random().nextInt(100) < randomDrumsOverrandomize.getInt()) {
-				createRandomDrumPanels(panelCount, onlyAdd, null);
-			} else {
-				createBlueprintedDrumPanels(panelCount, onlyAdd, null);
-			}
+			createBlueprintedDrumPanels(panelCount, onlyAdd, null);
 		} else {
 			throw new IllegalArgumentException("Unsupported panel part!");
 		}
@@ -8516,71 +8512,12 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			DrumPart dpart = DrumDefaults.getDrumFromInstrument(
-					!ip.getInstrumentBox().isEnabled() ? ip.getInstrument() : pitches.get(i));
-			int order = DrumDefaults.getOrder(dpart.getInstrument());
-			DrumSettings settings = DrumDefaults.drumSettings[order];
-			settings.applyToDrumPart(dpart, lastRandomSeed);
-
-
-			dpart.setOrder(ip.getPanelOrder());
-			dpart.setMuted(ip.getMuteInst());
-			switch (randomDrumHitsMultiplierOnGenerate.getSelectedIndex()) {
-			case 0:
-				break;
-			case 1:
-				dpart.setHitsPerPattern(dpart.getHitsPerPattern() / 2);
-				break;
-			case 2:
-				dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 3 / 4);
-				break;
-			case 3:
-				dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 3 / 2);
-				break;
-			case 4:
-				dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 2);
-				break;
-			default:
-				throw new IllegalArgumentException("Multiplier index too high.");
-			}
-			ip.setFromInstPart(dpart);
-
-			//dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
-
-			if (settings.isSwingable()) {
-				ip.setDelay(slide);
-				ip.setSwingPercent(swingPercent);
+			if (new Random().nextInt(100) < randomDrumsOverrandomize.getInt()) {
+				setupOverrandomizedDrum(panelGenerator, slide, swingPercent, pitches, i, ip);
 			} else {
-				ip.setSwingPercent(50);
+				setupBlueprintedDrum(panelGenerator, slide, swingPercent, pitches, i, ip);
 			}
 
-			if (settings.isDynamicable() && (ip.getPattern() != RhythmPattern.MELODY1)) {
-				double ghostChanceReducer = (drumPanels.size() > 10) ? 0.8 : 1.0;
-				ip.setIsVelocityPattern(panelGenerator.nextInt(
-						100) < randomDrumVelocityPatternChance.getInt() * ghostChanceReducer);
-			} else {
-				ip.setIsVelocityPattern(false);
-			}
-
-			if (drumPanels.size() > 10 && ip.getPattern() == RhythmPattern.FULL
-					&& panelGenerator.nextInt() < 30) {
-				ip.setPattern(RhythmPattern.ALT);
-			}
-
-			if (settings.isVariableShift()
-					&& panelGenerator.nextInt(100) < randomDrumShiftChance.getInt()) {
-				// settings set the maximum shift, this sets 0 - max randomly
-				ip.setPatternShift(panelGenerator.nextInt(ip.getPatternShift() + 1));
-			}
-
-			ip.applyPauseChance(panelGenerator);
-			ip.growPattern(panelGenerator, 1, 5);
-
-			//if (dp.getPatternShift() > 0) {
-			ip.getComboPanel().reapplyShift();
-			//}
-
-			ip.getComboPanel().reapplyHits();
 
 			/*DrumPart panelPart = dp.toDrumPart(lastRandomSeed);
 			int[] drumPartArray = displayDrumPart(panelPart, chords, maxPatternPerChord);
@@ -8597,6 +8534,75 @@ public class VibeComposerGUI extends JFrame
 		}*/
 
 		repaint();
+	}
+
+	private void setupBlueprintedDrum(Random panelGenerator, int slide, int swingPercent,
+			List<Integer> pitches, int i, DrumPanel ip) {
+		DrumPart dpart = DrumDefaults.getDrumFromInstrument(
+				!ip.getInstrumentBox().isEnabled() ? ip.getInstrument() : pitches.get(i));
+		int order = DrumDefaults.getOrder(dpart.getInstrument());
+		DrumSettings settings = DrumDefaults.drumSettings[order];
+		settings.applyToDrumPart(dpart, lastRandomSeed);
+
+
+		dpart.setOrder(ip.getPanelOrder());
+		dpart.setMuted(ip.getMuteInst());
+		switch (randomDrumHitsMultiplierOnGenerate.getSelectedIndex()) {
+		case 0:
+			break;
+		case 1:
+			dpart.setHitsPerPattern(dpart.getHitsPerPattern() / 2);
+			break;
+		case 2:
+			dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 3 / 4);
+			break;
+		case 3:
+			dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 3 / 2);
+			break;
+		case 4:
+			dpart.setHitsPerPattern(dpart.getHitsPerPattern() * 2);
+			break;
+		default:
+			throw new IllegalArgumentException("Multiplier index too high.");
+		}
+		ip.setFromInstPart(dpart);
+
+		//dp.setHitsPerPattern(dp.getHitsPerPattern() * randomDrumHitsMultiplierLastState);
+
+		if (settings.isSwingable()) {
+			ip.setDelay(slide);
+			ip.setSwingPercent(swingPercent);
+		} else {
+			ip.setSwingPercent(50);
+		}
+
+		if (settings.isDynamicable() && (ip.getPattern() != RhythmPattern.MELODY1)) {
+			double ghostChanceReducer = (drumPanels.size() > 10) ? 0.8 : 1.0;
+			ip.setIsVelocityPattern(panelGenerator
+					.nextInt(100) < randomDrumVelocityPatternChance.getInt() * ghostChanceReducer);
+		} else {
+			ip.setIsVelocityPattern(false);
+		}
+
+		if (drumPanels.size() > 10 && ip.getPattern() == RhythmPattern.FULL
+				&& panelGenerator.nextInt() < 30) {
+			ip.setPattern(RhythmPattern.ALT);
+		}
+
+		if (settings.isVariableShift()
+				&& panelGenerator.nextInt(100) < randomDrumShiftChance.getInt()) {
+			// settings set the maximum shift, this sets 0 - max randomly
+			ip.setPatternShift(panelGenerator.nextInt(ip.getPatternShift() + 1));
+		}
+
+		ip.applyPauseChance(panelGenerator);
+		ip.growPattern(panelGenerator, 1, 5);
+
+		//if (dp.getPatternShift() > 0) {
+		ip.getComboPanel().reapplyShift();
+		//}
+
+		ip.getComboPanel().reapplyHits();
 	}
 
 	private int[] displayDrumPart(DrumPart dp, int chords, int maxPatternPerChord) {
@@ -8626,159 +8632,99 @@ public class VibeComposerGUI extends JFrame
 		return displayArray;
 	}
 
-	private void createRandomDrumPanels(int panelCount, boolean onlyAdd,
-			DrumPanel randomizedPanel) {
-		ScrollComboBox.discardInteractions();
-		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) getAffectedPanels(4);
-
-		Random drumPanelGenerator = new Random();
-		for (Iterator<DrumPanel> panelI = affectedDrums.iterator(); panelI.hasNext();) {
-			DrumPanel panel = panelI.next();
-			if (!onlyAdd) {
-				((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
-				panelI.remove();
-			}
-
-		}
-
-		panelCount -= affectedDrums.size();
-
-		int slide = 0;
-
-		if (randomDrumSlide.isSelected()) {
-			slide = drumPanelGenerator.nextInt(100) - 50;
-		}
-
-		int swingPercent = 50;
-		if (onlyAdd && affectedDrums.size() > 0) {
-			Optional<Integer> existingSwing = affectedDrums.stream()
-					.filter(e -> (e.getSwingPercent() != 50)).map(e -> e.getSwingPercent())
-					.findFirst();
-			if (existingSwing.isPresent()) {
-				swingPercent = existingSwing.get();
-			}
-		}
-		// nothing's changed.. still the same..
-		if (swingPercent == 50) {
-			swingPercent = 50
-					+ drumPanelGenerator.nextInt(randomDrumMaxSwingAdjust.getInt() * 2 + 1)
-					- randomDrumMaxSwingAdjust.getInt();
-		}
+	private void setupOverrandomizedDrum(Random drumPanelGenerator, int slide, int swingPercent,
+			List<Integer> pitches, int i, DrumPanel ip) {
+		ip.setInstrument(pitches.get(i));
+		//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 
 
-		List<Integer> pitches = new ArrayList<>();
-		for (int i = 0; i < panelCount; i++) {
-			pitches.add(
-					InstUtils.getInstByIndex(drumPanelGenerator.nextInt(127), InstUtils.POOL.DRUM));
-		}
-		Collections.sort(pitches);
-		if (!onlyAdd && pitches.size() > 3) {
-			pitches.set(0, 35);
-			pitches.set(1, 36);
-			pitches.set(2, 38);
+		ip.setChordSpan(drumPanelGenerator.nextInt(2) + 1);
+		RhythmPattern pattern = RhythmPattern.FULL;
+		// use pattern in half the cases if checkbox selected
 
-		}
-		Collections.sort(pitches);
-		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
-		viablePatterns.remove(RhythmPattern.CUSTOM);
-		for (int i = 0; i < panelCount; i++) {
-			DrumPanel ip = (DrumPanel) addInstPanelToLayout(4);
-			ip.setInstrument(pitches.get(i));
-			//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
-
-
-			ip.setChordSpan(drumPanelGenerator.nextInt(2) + 1);
-			RhythmPattern pattern = RhythmPattern.FULL;
-			// use pattern in half the cases if checkbox selected
-
-			if (randomDrumPattern.isSelected()) {
-				int[] patternWeights = { 35, 60, 80, 90, 90, 100 };
-				int randomWeight = drumPanelGenerator.nextInt(100);
-				for (int j = 0; j < patternWeights.length; j++) {
-					if (randomWeight < patternWeights[j]) {
-						pattern = viablePatterns.get(j);
-						break;
-					}
+		if (randomDrumPattern.isSelected()) {
+			int[] patternWeights = { 35, 60, 80, 90, 90, 100 };
+			int randomWeight = drumPanelGenerator.nextInt(100);
+			for (int j = 0; j < patternWeights.length; j++) {
+				if (randomWeight < patternWeights[j]) {
+					pattern = RhythmPattern.VIABLE_PATTERNS.get(j);
+					break;
 				}
 			}
-
-			int hits = 4;
-			while (drumPanelGenerator.nextBoolean() && hits < 16) {
-				hits *= 2;
-			}
-			if ((hits / ip.getChordSpan() >= 8)) {
-				hits /= 2;
-			}
-
-			switch (randomDrumHitsMultiplierOnGenerate.getSelectedIndex()) {
-			case 0:
-				break;
-			case 1:
-				hits /= 2;
-				break;
-			case 2:
-				hits = hits * 3 / 4;
-				break;
-			case 3:
-				hits = hits * 3 / 2;
-				break;
-			case 4:
-				hits *= 2;
-				break;
-			default:
-				throw new IllegalArgumentException("Multiplier index too high.");
-			}
-			ip.setHitsPerPattern(hits * 2);
-
-			int adjustVelocity = -1 * ip.getHitsPerPattern() / ip.getChordSpan();
-
-
-			ip.setPattern(pattern);
-			int velocityMin = drumPanelGenerator.nextInt(30) + 50 + adjustVelocity;
-
-			ip.setVelocityMax(1 + velocityMin + drumPanelGenerator.nextInt(25));
-			ip.setVelocityMin(velocityMin);
-
-			if (pattern != RhythmPattern.FULL) {
-				ip.setPauseChance(drumPanelGenerator.nextInt(5) + 0);
-			} else {
-				ip.setPauseChance(drumPanelGenerator.nextInt(40) + 40);
-			}
-
-			// punchy drums - kicks, snares
-			if (PUNCHY_DRUMS.contains(ip.getInstrument())) {
-				adjustVelocity += 15;
-				ip.setExceptionChance(drumPanelGenerator.nextInt(3));
-			} else {
-				ip.setDelay(slide);
-				ip.setSwingPercent(swingPercent);
-				ip.setExceptionChance(drumPanelGenerator.nextInt(10));
-				if (drumPanelGenerator.nextInt(100) < 75) {
-					ip.setPattern(RhythmPattern.MELODY1);
-				}
-			}
-
-			if (randomDrumUseChordFill.isSelected()) {
-				ip.setChordSpanFill(ChordSpanFill.getWeighted(drumPanelGenerator.nextInt(100)));
-			}
-			ip.setFillFlip(false);
-			ip.setPatternFlip(false);
-
-			ip.setIsVelocityPattern(drumPanelGenerator.nextInt(100) < Integer
-					.valueOf(randomDrumVelocityPatternChance.getInt()));
-
-			if (drumPanelGenerator.nextInt(100) < randomDrumShiftChance.getInt()
-					&& pattern != RhythmPattern.FULL) {
-				ip.setPatternShift(
-						drumPanelGenerator.nextInt(ip.getPattern().pattern.length - 1) + 1);
-				ip.getComboPanel().reapplyShift();
-			}
-
-			ip.getComboPanel().reapplyHits();
-
 		}
 
-		repaint();
+		int hits = 4;
+		while (drumPanelGenerator.nextBoolean() && hits < 16) {
+			hits *= 2;
+		}
+		if ((hits / ip.getChordSpan() >= 8)) {
+			hits /= 2;
+		}
+
+		switch (randomDrumHitsMultiplierOnGenerate.getSelectedIndex()) {
+		case 0:
+			break;
+		case 1:
+			hits /= 2;
+			break;
+		case 2:
+			hits = hits * 3 / 4;
+			break;
+		case 3:
+			hits = hits * 3 / 2;
+			break;
+		case 4:
+			hits *= 2;
+			break;
+		default:
+			throw new IllegalArgumentException("Multiplier index too high.");
+		}
+		ip.setHitsPerPattern(hits * 2);
+
+		int adjustVelocity = -1 * ip.getHitsPerPattern() / ip.getChordSpan();
+
+
+		ip.setPattern(pattern);
+		int velocityMin = drumPanelGenerator.nextInt(30) + 50 + adjustVelocity;
+
+		ip.setVelocityMax(1 + velocityMin + drumPanelGenerator.nextInt(25));
+		ip.setVelocityMin(velocityMin);
+
+		if (pattern != RhythmPattern.FULL) {
+			ip.setPauseChance(drumPanelGenerator.nextInt(5) + 0);
+		} else {
+			ip.setPauseChance(drumPanelGenerator.nextInt(40) + 40);
+		}
+
+		// punchy drums - kicks, snares
+		if (PUNCHY_DRUMS.contains(ip.getInstrument())) {
+			adjustVelocity += 15;
+			ip.setExceptionChance(drumPanelGenerator.nextInt(3));
+		} else {
+			ip.setDelay(slide);
+			ip.setSwingPercent(swingPercent);
+			ip.setExceptionChance(drumPanelGenerator.nextInt(10));
+			if (drumPanelGenerator.nextInt(100) < 75) {
+				ip.setPattern(RhythmPattern.MELODY1);
+			}
+		}
+
+		if (randomDrumUseChordFill.isSelected()) {
+			ip.setChordSpanFill(ChordSpanFill.getWeighted(drumPanelGenerator.nextInt(100)));
+		}
+		ip.setFillFlip(false);
+		ip.setPatternFlip(false);
+
+		ip.setIsVelocityPattern(drumPanelGenerator.nextInt(100) < Integer
+				.valueOf(randomDrumVelocityPatternChance.getInt()));
+
+		if (drumPanelGenerator.nextInt(100) < randomDrumShiftChance.getInt()
+				&& pattern != RhythmPattern.FULL) {
+			ip.setPatternShift(drumPanelGenerator.nextInt(ip.getPattern().pattern.length - 1) + 1);
+			ip.getComboPanel().reapplyShift();
+		}
+
+		ip.getComboPanel().reapplyHits();
 	}
 
 	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,

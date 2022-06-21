@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "rhythmPattern")
 @XmlEnum
 public enum RhythmPattern {
+
 	FULL(new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }, 0), ALT(new int[] { 1, 0, 1, 0, 1, 0, 1, 0 }, 1),
 	ONEPER4(new int[] { 1, 0, 0, 0, 1, 0, 0, 0 }, 3),
 	TRESILLO(new int[] { 1, 0, 0, 1, 0, 0, 1, 0 }, 7),
@@ -22,6 +23,12 @@ public enum RhythmPattern {
 
 	public final int[] pattern;
 	public final int maxShift;
+
+	public static final List<RhythmPattern> VIABLE_PATTERNS = new ArrayList<>(
+			Arrays.asList(RhythmPattern.values()));
+	static {
+		VIABLE_PATTERNS.remove(RhythmPattern.CUSTOM);
+	}
 
 	private RhythmPattern(int[] pattern, int mShift) {
 		this.pattern = pattern;
