@@ -1,15 +1,19 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
@@ -21,18 +25,59 @@ public class PatternManagerPopup extends CloseablePopup {
 	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<PatternNameMarker> patternNameBox = new ScrollComboBox<>(false);
 
+	MidiEditArea mvea = null;
+
+	int panelWidth = 1000;
+
 	CustomCheckBox removeCB = new CustomCheckBox("Remove", false);
 
 	public PatternManagerPopup() {
-		super("Pattern Manager", 16);
+		super("Pattern Manager", 14);
+
+		JPanel allPanels = new JPanel();
+		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
+		allPanels.setMaximumSize(new Dimension(panelWidth, 500));
+
+		JPanel mveaPanel = new JPanel();
+		mveaPanel.setPreferredSize(new Dimension(panelWidth, 350));
+		mveaPanel.setMinimumSize(new Dimension(panelWidth, 350));
+		mvea = new MidiEditArea(126, 1, new PhraseNotes());
+		mvea.setPop(null);
+		mvea.setPreferredSize(new Dimension(panelWidth, 350));
+		mvea.setEnabled(false);
+		mveaPanel.add(mvea);
 
 		JPanel patternManagerPanel = new JPanel();
 		patternManagerPanel.setLayout(new GridLayout(0, 3, 0, 0));
-		//patternManagerPanel.setPreferredSize(new Dimension(size));
+		patternManagerPanel.setPreferredSize(new Dimension(panelWidth, 150));
+		patternManagerPanel.setMinimumSize(new Dimension(panelWidth, 150));
 
 		patternPartBox.setFunc(e -> loadPartOrders());
 		patternPartOrderBox.setFunc(e -> loadNames());
-		//patternNameBox.setFunc(e -> loadNotes());
+		patternNameBox.setFunc(e -> {
+			int part = patternPartBox.getSelectedIndex();
+			Integer partOrder = patternPartOrderBox.getSelectedItem();
+			String name = (patternNameBox.getSelectedItem() != null)
+					? patternNameBox.getSelectedItem().name
+					: "";
+			int depth = 3;
+			if ("".equals(name)) {
+				depth = 2;
+				if (null == partOrder) {
+					depth = 1;
+					if (part >= 5) {
+						depth = 0;
+					}
+				}
+			}
+			if (depth == 3) {
+				PhraseNotes pn = VibeComposerGUI.guiConfig.getPattern(part, partOrder, name);
+				if (pn != null) {
+					setCustomValues(pn);
+				}
+			}
+
+		});
 
 		loadParts();
 		loadPartOrders();
@@ -54,8 +99,11 @@ public class PatternManagerPopup extends CloseablePopup {
 
 		patternManagerPanel.add(removeCB);
 
-		frame.add(patternManagerPanel);
+		allPanels.add(patternManagerPanel);
+		allPanels.add(mveaPanel);
+		frame.add(allPanels);
 
+		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.pack();
 		frame.setVisible(true);
 		LG.d("Opened Pattern Manager popup!");
@@ -64,6 +112,26 @@ public class PatternManagerPopup extends CloseablePopup {
 	@Override
 	protected void addFrameWindowOperation() {
 		frame.addWindowListener(EMPTY_WINDOW_LISTENER);
+	}
+
+	public void setCustomValues(PhraseNotes values) {
+
+		int vmin = -1 * MidiEditPopup.baseMargin * MidiEditPopup.trackScope;
+		int vmax = MidiEditPopup.baseMargin * MidiEditPopup.trackScope;
+		if (!values.isEmpty()) {
+			vmin += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.min().getAsInt();
+			vmax += values.stream().map(e -> e.getPitch()).filter(e -> e >= 0).mapToInt(e -> e)
+					.max().getAsInt();
+		}
+		mvea.setMin(Math.min(mvea.min, vmin));
+		mvea.setMax(Math.max(mvea.max, vmax));
+
+
+		mvea.part = OMNI.clamp(patternPartBox.getSelectedIndex(), 0, 4);
+		mvea.setValues(values);
+
+		mvea.setAndRepaint();
 	}
 
 	private void loadParts() {

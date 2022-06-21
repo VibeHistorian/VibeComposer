@@ -66,61 +66,6 @@ import jm.music.data.Score;
 
 public class MidiEditPopup extends CloseablePopup {
 
-	public static class PatternNameMarker implements Comparable<PatternNameMarker> {
-		public String name = "";
-		public boolean loadable = false;
-
-		public PatternNameMarker(String name, boolean loadable) {
-			super();
-			this.name = name;
-			this.loadable = loadable;
-		}
-
-		@Override
-		public String toString() {
-			return name + (!loadable ? " (!)" : "");
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(name, loadable);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-
-			if (obj == null || !(obj instanceof PatternNameMarker)) {
-				return false;
-			}
-			PatternNameMarker other = (PatternNameMarker) obj;
-			return (loadable == other.loadable) && name.equals(other.name);
-		}
-
-
-		@Override
-		public int compareTo(PatternNameMarker o) {
-			if (o == null) {
-				return -1;
-			}
-			if (loadable && !o.loadable) {
-				return -1;
-			} else if (!loadable) {
-				return 1;
-			}
-
-			boolean name1Base = UsedPattern.BASE_PATTERNS_SET.contains(name);
-			boolean name2Base = UsedPattern.BASE_PATTERNS_SET.contains(o.name);
-			if (name1Base && !name2Base) {
-				return 1;
-			} else if (!name1Base) {
-				return -1;
-			}
-			return 0;
-		}
-	}
-
 	public static int highlightModeChoice = 3;
 	public static int snapToTimeGridChoice = 2;
 	public static boolean snapToGridChoice = true;
@@ -365,9 +310,7 @@ public class MidiEditPopup extends CloseablePopup {
 				lastNote.setRv(lastNote.getRv() + MidiEditArea.sectionLength - length);
 			}
 			pn.forEach(f -> f.setPitch(f.getPitch() - VibeComposerGUI.transposeScore.getInt()));
-			mvea.setValues(pn.copy());
-			saveToHistory();
-			repaintMvea();
+			setCustomValues(pn.copy());
 
 			return pn;
 		}));
@@ -692,6 +635,7 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea.setMax(Math.max(mvea.max, vmax));
 
 
+		mvea.part = part;
 		mvea.setValues(values);
 		saveToHistory();
 
@@ -1002,6 +946,61 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public PhraseNotes getValues() {
 		return mvea.getValues();
+	}
+
+	public static class PatternNameMarker implements Comparable<PatternNameMarker> {
+		public String name = "";
+		public boolean loadable = false;
+
+		public PatternNameMarker(String name, boolean loadable) {
+			super();
+			this.name = name;
+			this.loadable = loadable;
+		}
+
+		@Override
+		public String toString() {
+			return name + (!loadable ? " (!)" : "");
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(name, loadable);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+
+			if (obj == null || !(obj instanceof PatternNameMarker)) {
+				return false;
+			}
+			PatternNameMarker other = (PatternNameMarker) obj;
+			return (loadable == other.loadable) && name.equals(other.name);
+		}
+
+
+		@Override
+		public int compareTo(PatternNameMarker o) {
+			if (o == null) {
+				return -1;
+			}
+			if (loadable && !o.loadable) {
+				return -1;
+			} else if (!loadable) {
+				return 1;
+			}
+
+			boolean name1Base = UsedPattern.BASE_PATTERNS_SET.contains(name);
+			boolean name2Base = UsedPattern.BASE_PATTERNS_SET.contains(o.name);
+			if (name1Base && !name2Base) {
+				return 1;
+			} else if (!name1Base) {
+				return -1;
+			}
+			return 0;
+		}
 	}
 
 }
