@@ -80,7 +80,7 @@ public class MidiEditArea extends JComponent {
 		setMin(minimum);
 		setMax(maximum);
 		values = vals;
-		reset();
+		resetBase();
 
 		addMouseWheelListener(new MouseWheelListener() {
 			@Override
@@ -506,7 +506,7 @@ public class MidiEditArea extends JComponent {
 
 	}
 
-	public void reset() {
+	private void resetBase() {
 		draggedNote = null;
 		draggedNoteCopy = null;
 		dragMode.clear();
@@ -522,7 +522,10 @@ public class MidiEditArea extends JComponent {
 		mousePoint = null;
 
 		orderValPressed = null;
+	}
 
+	public void reset() {
+		resetBase();
 		setAndRepaint();
 	}
 

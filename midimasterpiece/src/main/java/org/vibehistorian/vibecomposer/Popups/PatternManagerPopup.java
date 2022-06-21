@@ -195,11 +195,6 @@ public class PatternManagerPopup extends CloseablePopup {
 	}
 
 	public static boolean customMatch(String patternName) {
-		for (String base : UsedPattern.BASE_PATTERNS) {
-			if (base.equals(patternName)) {
-				return false;
-			}
-		}
-		return true;
+		return UsedPattern.BASE_PATTERNS_SET.contains(patternName);
 	}
 }

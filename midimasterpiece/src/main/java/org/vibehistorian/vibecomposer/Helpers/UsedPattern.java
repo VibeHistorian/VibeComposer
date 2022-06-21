@@ -1,6 +1,8 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
@@ -18,6 +20,12 @@ public class UsedPattern {
 	public static final String INST = "INST";
 	public static final String GENERATED = "**GEN**";
 	public static final String[] BASE_PATTERNS = { NONE, MAIN, VERSE, INST };
+	public static final Set<String> BASE_PATTERNS_SET = new LinkedHashSet<>();
+	static {
+		for (String s : BASE_PATTERNS) {
+			BASE_PATTERNS_SET.add(s);
+		}
+	}
 
 	Integer part;
 	Integer partOrder;
