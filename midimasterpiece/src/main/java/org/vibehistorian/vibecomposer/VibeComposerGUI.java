@@ -566,7 +566,7 @@ public class VibeComposerGUI extends JFrame
 	JButton randomizeDrums;
 	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
-	JCheckBox randomDrumsOverrandomize;
+	KnobPanel randomDrumsOverrandomize;
 	KnobPanel randomDrumMaxSwingAdjust;
 	JCheckBox randomDrumSlide;
 	JCheckBox randomDrumPattern;
@@ -954,6 +954,21 @@ public class VibeComposerGUI extends JFrame
 		//instrumentTabPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		recalculateTabPaneCounts();
 		switchDarkMode();
+
+		/*for (Component c : everythingPanel.getComponents()) {
+			if (c != instrumentTabPane) {
+				c.setVisible(false);
+			}
+			if (c instanceof Container) {
+				Container cnt = (Container) c;
+				for (Component cs : cnt.getComponents()) {
+					if (cs == compose) {
+						c.setVisible(true);
+					}
+				}
+			}
+		
+		}*/
 		pack();
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
@@ -964,6 +979,7 @@ public class VibeComposerGUI extends JFrame
 		initKeyboardListener();
 
 		setVisible(true);
+
 		repaint();
 		//initScrollPaneListeners();
 		UndoManager.recordingEvents = true;
@@ -2471,7 +2487,7 @@ public class VibeComposerGUI extends JFrame
 		drumExtraSettings.add(randomDrumShiftChance);
 		drumExtraSettings.add(clearPatternSeeds);
 
-		randomDrumsOverrandomize = new CustomCheckBox("Overrandomize", false);
+		randomDrumsOverrandomize = new DetachedKnobPanel("Overrandomize", 0, 0, 100);
 		drumExtraSettings.add(randomDrumsOverrandomize);
 
 		toggleableComponents.add(drumExtraSettings);
@@ -7803,6 +7819,7 @@ public class VibeComposerGUI extends JFrame
 		// drum panel
 		cs.add(randomDrumHitsMultiplierOnGenerate);
 		cs.add(drumPartPresetAddCheckbox);
+		cs.add(randomDrumsOverrandomize);
 
 		// extra settings
 		cs.add(globalNoteLengthMultiplier);
@@ -8357,7 +8374,7 @@ public class VibeComposerGUI extends JFrame
 		} else if (part == 3) {
 			createRandomArpPanels(panelCount, onlyAdd, null);
 		} else if (part == 4) {
-			if (randomDrumsOverrandomize.isSelected()) {
+			if (new Random().nextInt(100) < randomDrumsOverrandomize.getInt()) {
 				createRandomDrumPanels(panelCount, onlyAdd, null);
 			} else {
 				createBlueprintedDrumPanels(panelCount, onlyAdd, null);

@@ -88,7 +88,7 @@ public class MidiMVI extends JComponent {
 			for (int i = 0; i < BUTTONS.length; i++) {
 				boolean active = isActive(i);
 				g.setColor(OMNI.alphen(CollectionCellRenderer.CUSTOM_PATTERN_COLORS[i],
-						active ? 160 : 60));
+						active ? 190 : 50));
 				int startX = i * BUTTON_WIDTH + 1;
 
 				g.fillRect(startX, 0, BUTTON_WIDTH, height);
