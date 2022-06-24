@@ -2011,7 +2011,7 @@ public class MidiGenerator implements JMC {
 							MAX_JUMP_SKELETON_CHORD = Math.min(4, MAX_JUMP_SKELETON_CHORD + 1);
 							break;
 						default:
-							throw new IllegalArgumentException("Too much variation!");
+							break;
 						}
 					}
 				}
@@ -4245,6 +4245,8 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[1]);
+
 		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
 		}
@@ -4253,7 +4255,7 @@ public class MidiGenerator implements JMC {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
 					gc.isTransposedNotesForceScale());
 		}
-		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[1] + ip.getTranspose() + modTrans);
+		Mod.transpose(phr, ip.getTranspose() + modTrans);
 		phr.setStartTime(START_TIME_DELAY);
 		addOffsetsToPhrase(phr, ip);
 		if (genVars && variations != null) {
@@ -4595,6 +4597,8 @@ public class MidiGenerator implements JMC {
 				chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
 			}
 		}
+		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[2]);
+
 		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			MidiUtils.addChordsToPhrase(phr, chords, flamming);
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
@@ -4617,7 +4621,7 @@ public class MidiGenerator implements JMC {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
 					gc.isTransposedNotesForceScale());
 		}
-		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[2] + extraTranspose + modTrans);
+		Mod.transpose(phr, extraTranspose + modTrans);
 		int hits = ip.getHitsPerPattern();
 		int swingPercentAmount = (hits % 2 == 0) ? ip.getSwingPercent() : 50;
 		swingPhrase(phr, swingPercentAmount, Durations.QUARTER_NOTE);
@@ -4877,6 +4881,8 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[3]);
+
 		if (!overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
 		}
@@ -4898,7 +4904,7 @@ public class MidiGenerator implements JMC {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
 					gc.isTransposedNotesForceScale());
 		}
-		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[3] + extraTranspose + modTrans);
+		Mod.transpose(phr, extraTranspose + modTrans);
 
 		MidiGeneratorUtils.applyNoteLengthMultiplier(phr.getNoteList(),
 				ip.getNoteLengthMultiplier());

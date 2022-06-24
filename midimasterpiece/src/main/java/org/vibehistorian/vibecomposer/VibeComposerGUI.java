@@ -9525,8 +9525,7 @@ public class VibeComposerGUI extends JFrame
 				}
 
 				pitch = notes.get(0).getPitch() + transposeScore.getInt() + extraTranspose
-						+ sec.getTransposeVariation(part, partOrder)
-						+ MidiGenerator.DEFAULT_INSTRUMENT_TRANSPOSE[part] + ip.getTranspose();
+						+ sec.getTransposeVariation(part, partOrder) + ip.getTranspose();
 			}
 
 			Track trk = sequencer.getSequence().getTracks()[trackNum];
