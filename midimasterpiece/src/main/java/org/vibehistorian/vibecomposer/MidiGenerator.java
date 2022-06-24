@@ -2327,6 +2327,7 @@ public class MidiGenerator implements JMC {
 		LG.i("========================== MIDI GENERATION IN PROGRESS, " + new Date().toString()
 				+ " ===========================");
 		long systemTime = System.currentTimeMillis();
+		boolean logPerformance = false;
 		customDrumMappingNumbers = null;
 		trackList.clear();
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
@@ -2432,7 +2433,10 @@ public class MidiGenerator implements JMC {
 			});
 			System.setOut(dummyStream);
 		}
-
+		if (logPerformance) {
+			LG.i("Generated chords, starting arrangement after: "
+					+ (System.currentTimeMillis() - systemTime));
+		}
 		// Arrangement process..
 		LG.i("Starting arrangement..");
 
@@ -2451,7 +2455,9 @@ public class MidiGenerator implements JMC {
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
 					generatedRootProgression, 0, new Section(), new ArrayList<>(), true);
 		}
-
+		if (logPerformance) {
+			LG.i("First pre-melody filled at: " + (System.currentTimeMillis() - systemTime));
+		}
 		progressionDurationsBackup = actualDurations;
 		chordProgressionBackup = actualProgression;
 		rootProgressionBackup = generatedRootProgression;
@@ -2507,7 +2513,8 @@ public class MidiGenerator implements JMC {
 		modScale = gc.getScaleMode();
 		gc.getArrangement().recalculatePartInclusionMapBoundsIfNeeded();
 		for (Section sec : arr.getSections()) {
-			LG.i("*********************************** Processing section.. " + sec.getType() + "!");
+			LG.i("*********************************** Processing section.. " + sec.getType()
+					+ "!***** Time: " + (System.currentTimeMillis() - systemTime));
 			currentSection = sec;
 			if (overridden) {
 				sec.initPartMapFromOldData();
@@ -2661,6 +2668,10 @@ public class MidiGenerator implements JMC {
 				skipN1Chord();
 			}
 
+			if (logPerformance) {
+				LG.i("After variations and transitions, at: "
+						+ (System.currentTimeMillis() - systemTime));
+			}
 
 			rand.setSeed(arrSeed);
 			variationGen.setSeed(arrSeed);
@@ -2676,6 +2687,9 @@ public class MidiGenerator implements JMC {
 			fillMelodyPartsForSection(measureLength, overridden, sec, notesSeedOffset,
 					sectionVariations, sectionChordsReplaced);
 
+			if (logPerformance) {
+				LG.i("After fill melody, at: " + (System.currentTimeMillis() - systemTime));
+			}
 			// possible chord changes handled after melody parts are filled
 			if (twoFiveOneChanged) {
 				twoFiveOneChanged = false;
@@ -2689,6 +2703,9 @@ public class MidiGenerator implements JMC {
 			fillOtherPartsForSection(sec, arr, overridden, sectionVariations, variationGen, arrSeed,
 					measureLength);
 
+			if (logPerformance) {
+				LG.i("After fill other, at: " + (System.currentTimeMillis() - systemTime));
+			}
 			postprocessMelodyRhythmAccents(sec, arr, measureLength, overridden);
 
 			if (gcPartsReplaced) {
@@ -2697,6 +2714,10 @@ public class MidiGenerator implements JMC {
 			counter += sec.getMeasures();
 			sectionStartTimer += ((sec.getSectionDuration() > 0) ? sec.getSectionDuration()
 					: measureLength) * sec.getMeasures();
+
+			if (logPerformance) {
+				LG.i("End of section, at: " + (System.currentTimeMillis() - systemTime));
+			}
 		}
 		LG.d("Added phrases to sections..");
 		if (false) {
@@ -2764,6 +2785,9 @@ public class MidiGenerator implements JMC {
 				chordParts.get(0).addPhrase(csp);
 			}
 
+		}
+		if (logPerformance) {
+			LG.i("Added to parts, at: " + (System.currentTimeMillis() - systemTime));
 		}
 		LG.d("Added sections to parts..");
 		int trackCounter = 1;
@@ -2892,6 +2916,9 @@ public class MidiGenerator implements JMC {
 		}
 
 
+		if (logPerformance) {
+			LG.i("Added to score, at: " + (System.currentTimeMillis() - systemTime));
+		}
 		LG.d("Added parts to score..");
 		Random rand = new Random(mainGeneratorSeed + 999);
 		for (Object o : score.getPartList()) {
