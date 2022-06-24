@@ -155,7 +155,7 @@ public class ScrollComboBox2<T> extends JComboBox<T> {
 
 		if (isEnabled() && regenerating && interacting && VibeComposerGUI.canRegenerateOnChange()
 				&& isDifferent) {
-			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			VibeComposerGUI.vibeComposerGUI.regenerate();
 		}
 		discardInteraction();
 	}

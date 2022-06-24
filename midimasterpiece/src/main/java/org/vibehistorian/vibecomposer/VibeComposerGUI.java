@@ -1543,7 +1543,7 @@ public class VibeComposerGUI extends JFrame
 		recalculateSoloMuters();
 		if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
 			stopMidi();
-			composeMidi(true);
+			regenerate();
 		}
 	}
 
@@ -1719,7 +1719,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateSoloMuters();
 
 			if (canRegenerateOnChange()) {
-				composeMidi(true);
+				regenerate();
 			}
 		});
 		melodySettingsExtraPanelOrg.add(randomizeMelodies);
@@ -2002,7 +2002,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
 			if (canRegenerateOnChange()) {
-				composeMidi(true);
+				regenerate();
 			}
 		});
 		randomChordsGenerateOnCompose = makeCheckBox("On Compose", true, true);
@@ -2161,7 +2161,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateSoloMuters();
 
 			if (canRegenerateOnChange()) {
-				composeMidi(true);
+				regenerate();
 			}
 		});
 		randomArpsGenerateOnCompose = makeCheckBox("on Compose", true, true);
@@ -2325,7 +2325,7 @@ public class VibeComposerGUI extends JFrame
 			recalculateTabPaneCounts();
 			recalculateSoloMuters();
 			if (canRegenerateOnChange()) {
-				composeMidi(true);
+				regenerate();
 			}
 		});
 		randomDrumsGenerateOnCompose = makeCheckBox("on Compose", true, true);
@@ -2832,7 +2832,7 @@ public class VibeComposerGUI extends JFrame
 					Integer.valueOf(pieceLength.getText()));
 			recalculateTabPaneCounts();
 			if (canRegenerateOnChange()) {
-				composeMidi(true);
+				regenerate();
 			}
 		}, 90);
 		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> openPartInclusionPopup(),
@@ -3982,7 +3982,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 		if (canRegenerateOnChange()) {
-			composeMidi(true);
+			regenerate();
 		}
 	}
 
@@ -4680,7 +4680,7 @@ public class VibeComposerGUI extends JFrame
 									- 50) || sequencerEnded) {
 								stopMidi();
 								if (!loopBeatCompose.isSelected()) {
-									composeMidi(true);
+									regenerate();
 								} else {
 									ActionEvent action = new ActionEvent(VibeComposerGUI.this,
 											ActionEvent.ACTION_PERFORMED, "Compose");
@@ -5565,8 +5565,17 @@ public class VibeComposerGUI extends JFrame
 		needToRecalculateSoloMutersAfterSequenceGenerated = true;
 	}
 
+	public void regenerate() {
+		composeMidi(true);
+	}
+
+	public void compose() {
+		composeMidi(false);
+	}
+
 	public void composeMidi(boolean regenerate) {
 		composingInProgress = true;
+		boolean logPerformance = true;
 		long systemTime = System.currentTimeMillis();
 		if (sequencer != null) {
 			sequencer.stop();
@@ -5615,8 +5624,12 @@ public class VibeComposerGUI extends JFrame
 		int regenerateCount = (regenerate) ? guiConfig.getRegenerateCount() + 1 : 0;
 
 		prepareUI(regenerate);
+		if (logPerformance) {
+			LG.i("After prepareUI: " + (System.currentTimeMillis() - systemTime));
+		}
 		GUIConfig midiConfig = new GUIConfig();
 		copyGUItoConfig(midiConfig, true);
+
 		melodyGen = new MidiGenerator(midiConfig);
 		fillUserParameters(regenerate);
 
@@ -5638,6 +5651,11 @@ public class VibeComposerGUI extends JFrame
 
 		// unapply S/M, generate, reapply S/M with new track numbering
 		unapplySolosMutes(true);
+
+		if (logPerformance) {
+			LG.i("After setup: " + (System.currentTimeMillis() - systemTime));
+		}
+
 		try {
 			melodyGen.generateMasterpiece(masterpieceSeed, relPath);
 		} catch (Exception e) {
@@ -5654,6 +5672,10 @@ public class VibeComposerGUI extends JFrame
 		reapplySolosMutes();
 
 		cleanUpUIAfterCompose(regenerate);
+
+		if (logPerformance) {
+			LG.i("After cleanup: " + (System.currentTimeMillis() - systemTime));
+		}
 
 		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
 				|| configHistory.getItemCount() == 0) {
@@ -5674,7 +5696,7 @@ public class VibeComposerGUI extends JFrame
 			LG.i(("Failed to write into Random Seed History.."));
 		}
 
-		handleGeneratedMidi(regenerate, relPath);
+		handleGeneratedMidi(regenerate, relPath, systemTime);
 		resetArrSectionInBackground();
 		composingInProgress = false;
 		LG.i("================== VibeComposerGUI::composeMidi time: "
@@ -5981,7 +6003,9 @@ public class VibeComposerGUI extends JFrame
 
 	}
 
-	private void handleGeneratedMidi(boolean regenerate, String relPath) {
+	private void handleGeneratedMidi(boolean regenerate, String relPath, long systemTime) {
+
+		boolean logPerformance = false;
 
 		currentMidi = null;
 		try {
@@ -6003,6 +6027,10 @@ public class VibeComposerGUI extends JFrame
 				sequencer.open(); // Open device
 			}
 
+			if (logPerformance) {
+				LG.i("After sequencer setup: " + (System.currentTimeMillis() - systemTime));
+			}
+
 
 			// Create sequence, the File must contain MIDI file data.
 			currentMidi = new File(relPath);
@@ -6011,6 +6039,10 @@ public class VibeComposerGUI extends JFrame
 			repaint();
 			if (!prepareMidiPlayback(synthesizer)) {
 				return;
+			}
+
+			if (logPerformance) {
+				LG.i("After prepare midi playback: " + (System.currentTimeMillis() - systemTime));
 			}
 
 			resetSequencerTickPosition();
@@ -6166,6 +6198,10 @@ public class VibeComposerGUI extends JFrame
 						midiNavigate(startPos);
 					}
 				}
+			}
+
+			if (logPerformance) {
+				LG.i("After slider setup: " + (System.currentTimeMillis() - systemTime));
 			}
 
 			sequencer.start();  // start the playback
@@ -7060,7 +7096,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (triggerRegenerate && canRegenerateOnChange()) {
-			composeMidi(true);
+			regenerate();
 		}
 
 		LG.i("Finished '" + ae.getActionCommand() + "' in: "

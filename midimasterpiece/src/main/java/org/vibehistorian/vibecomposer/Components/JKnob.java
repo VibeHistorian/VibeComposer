@@ -535,7 +535,7 @@ public class JKnob extends JComponent
 		pressedOnSpot = false;
 		if (isEnabled() && regenerating && !SwingUtilities.isMiddleMouseButton(e)
 				&& VibeComposerGUI.canRegenerateOnChange() && (fineStart != curr)) {
-			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			VibeComposerGUI.vibeComposerGUI.regenerate();
 		}
 
 		fine = false;

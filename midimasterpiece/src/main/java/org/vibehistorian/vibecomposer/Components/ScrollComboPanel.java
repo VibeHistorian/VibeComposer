@@ -256,7 +256,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		}
 		if (isEnabled() && regenerating && interacting && VibeComposerGUI.canRegenerateOnChange()
 				&& isDifferent) {
-			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			VibeComposerGUI.vibeComposerGUI.regenerate();
 		}
 		discardInteraction();
 	}

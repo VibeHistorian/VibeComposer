@@ -213,7 +213,7 @@ public class VisualPatternPanel extends JPanel {
 
 							@Override
 							public void actionPerformed(ActionEvent e) {
-								VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+								VibeComposerGUI.vibeComposerGUI.regenerate();
 							}
 						});
 						tmr.setRepeats(false);
@@ -263,7 +263,7 @@ public class VisualPatternPanel extends JPanel {
 						randomizePattern();
 					}
 					if (VibeComposerGUI.canRegenerateOnChange()) {
-						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+						VibeComposerGUI.vibeComposerGUI.regenerate();
 					}
 				}
 			}

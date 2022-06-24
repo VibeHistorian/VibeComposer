@@ -60,7 +60,7 @@ public class KnobValuePopup extends CloseablePopup {
 	@Override
 	public void close() {
 		if (VibeComposerGUI.canRegenerateOnChange() && regenerating) {
-			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			VibeComposerGUI.vibeComposerGUI.regenerate();
 		}
 		super.close();
 	}
