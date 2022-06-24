@@ -6716,7 +6716,7 @@ public class VibeComposerGUI extends JFrame
 		boolean isRegenerate = "Regenerate".equals(ae.getActionCommand());
 		if (composingInProgress) {
 			LG.i("Cannot process action '" + ae.getActionCommand() + "', composing in progress!");
-			new TemporaryInfoPopup("Composing in progress..", 500);
+			new TemporaryInfoPopup("Composing in progress..", 1000);
 			return;
 		}
 
