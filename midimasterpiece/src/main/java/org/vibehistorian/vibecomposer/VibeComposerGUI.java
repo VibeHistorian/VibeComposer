@@ -389,7 +389,9 @@ public class VibeComposerGUI extends JFrame
 	public static JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP);
 	public static JScrollPane scoreScrollPane;
 	public static ShowPanelBig scorePanel;
-	public static Dimension scrollPaneDimension = new Dimension(1600, 400);
+	public static final int DEFAULT_WIDTH = 1600;
+	public static final int DEFAULT_HEIGHT = 400;
+	public static Dimension scrollPaneDimension = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	int arrangementRowHeaderWidth = 120;
 	public static final int TABLE_COLUMN_MIN_WIDTH = 80;
 
@@ -685,6 +687,7 @@ public class VibeComposerGUI extends JFrame
 
 	JLabel tipLabel;
 	public static JLabel currentChords = new JLabel("Chords:[]");
+	public static List<String> currentChordsInternal = new ArrayList<>();
 	JLabel messageLabel;
 	ScrollComboBox<String> presetLoadBox;
 	ScrollComboBox<String> drumPartPresetBox;
@@ -1494,7 +1497,11 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		soloMuterTrackControlPanel.add(new JLabel("Track History: "));
-		soloMuterTrackControlPanel.add(configHistory);
+		JPanel configPanel = new JPanel();
+		configPanel.setOpaque(false);
+		configPanel.setMaximumSize(new Dimension(500, 30));
+		configPanel.add(configHistory);
+		soloMuterTrackControlPanel.add(configPanel);
 		soloMuterTrackControlPanel.add(makeButton("Load", e -> {
 			if (configHistory.getItemCount() > 0) {
 				guiConfig = configHistory.getVal();
@@ -1511,10 +1518,11 @@ public class VibeComposerGUI extends JFrame
 		JTextField bookmarkField = new JTextField("Intro1", 8);
 		soloMuterTrackControlPanel.add(bookmarkField);
 		JButton butt = makeButton("Add Bookmark Text", e -> {
-			guiConfig.setBookmarkText(bookmarkField.getText());
-
-			configHistory.removeItemAt(configHistory.getItemCount() - 1);
-			configHistory.addItem(guiConfig);
+			GUIConfig historyCfg = configHistory.getSelectedItem();
+			historyCfg.setBookmarkText(bookmarkField.getText());
+			configHistory.removeItemAt(configHistory.getSelectedIndex());
+			configHistory.addItem(historyCfg);
+			configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
 		});
 		soloMuterTrackControlPanel.add(butt);
 
@@ -4037,7 +4045,7 @@ public class VibeComposerGUI extends JFrame
 		macroParams.add(allowRepPanel);
 
 		JPanel globalSwingPanel = new JPanel();
-		globalSwingOverride = new CustomCheckBox("<html>Global Swing<br>Override</html>", true);
+		globalSwingOverride = new CustomCheckBox("<html>Global Swing<br>Override</html>", false);
 		globalSwingOverrideValue = new KnobPanel("", 50);
 		globalSwingOverrideApplyButton = new JButton("A");
 		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
@@ -4360,7 +4368,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setOpaque(false);
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
-		sliderPanel.setPreferredSize(new Dimension(1250, 40));
+		sliderPanel.setPreferredSize(new Dimension(1250, 55));
 
 		sliderPanel.add(new JLabel("                                 "));
 
@@ -4905,8 +4913,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void copyChords() {
-		userChords.setupChords(
-				currentChords.getText().substring(8, currentChords.getText().length() - 1));
+		userChords.setupChords(currentChordsInternal);
 		LG.i(("Copied chords: " + userChords.getChordListString()));
 	}
 
@@ -5347,7 +5354,7 @@ public class VibeComposerGUI extends JFrame
 			newPrefSize = new Dimension(1900, 600);
 			//ShowPanelBig.panelMaxHeight = 600;
 		} else {
-			newPrefSize = new Dimension(1600, 435);
+			newPrefSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT + 35);
 			//ShowPanelBig.panelMaxHeight = 400;
 		}
 		if (scorePanel != null) {
@@ -5934,7 +5941,10 @@ public class VibeComposerGUI extends JFrame
 
 
 		List<String> prettyChords = MidiGenerator.chordInts;
-		currentChords.setText("Chords:[" + StringUtils.join(prettyChords, ",") + "]");
+		currentChords.setText(
+				StringUtils.abbreviate("Chords:[" + StringUtils.join(prettyChords, ",") + "]", 60));
+		currentChordsInternal.clear();
+		currentChordsInternal.addAll(prettyChords);
 
 		if (MelodyMidiDropPane.userMelody != null) {
 			String chords = StringUtils.join(MidiGenerator.chordInts, ",");

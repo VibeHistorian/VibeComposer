@@ -69,7 +69,7 @@ public class ShowAreaBig extends JComponent {
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	public static int areaHeight = 400;
+	public static int areaHeight = VibeComposerGUI.DEFAULT_HEIGHT;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };

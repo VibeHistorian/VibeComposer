@@ -895,7 +895,7 @@ public class GUIConfig {
 	}
 
 	public PhraseNotes getPatternRaw(int part, int partOrder, String patName) {
-		if (UsedPattern.NONE.equals(patName)) {
+		if (UsedPattern.NONE.equals(patName) || patternMaps.size() <= part) {
 			return null;
 		}
 		return patternMaps.get(part).getRaw(partOrder, patName);
