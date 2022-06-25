@@ -2807,14 +2807,12 @@ public class MidiGenerator implements JMC {
 					for (int j = i + 1; j < gc.getMelodyParts().size(); j++) {
 						ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(j).getOrder(),
 								VibeComposerGUI.melodyPanels);
-						((PartExt) melodyParts.get(j)).setTrackNumber(-1);
 						ip.setSequenceTrack(-1);
 					}
 					break;
 				}
-				//if (VibeComposerGUI.apSm)
 			} else {
-				((PartExt) melodyParts.get(i)).setTrackNumber(-1);
+				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
 				ip.setSequenceTrack(-1);
 			}
 		}
@@ -2828,10 +2826,9 @@ public class MidiGenerator implements JMC {
 				score.add(bassParts.get(i));
 				((PartExt) bassParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
-				//if (VibeComposerGUI.apSm)
 			} else {
+				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
 				ip.setSequenceTrack(-1);
-				((PartExt) arpParts.get(i)).setTrackNumber(-1);
 			}
 		}
 		trackCounter += padScoreParts(score, partPadding, 1, trackCounter - lastPartTrackCount);
@@ -2846,8 +2843,8 @@ public class MidiGenerator implements JMC {
 				((PartExt) chordParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 			} else {
+				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
 				ip.setSequenceTrack(-1);
-				((PartExt) chordParts.get(i)).setTrackNumber(-1);
 			}
 
 		}
@@ -2862,10 +2859,9 @@ public class MidiGenerator implements JMC {
 				score.add(arpParts.get(i));
 				((PartExt) arpParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
-				//if (VibeComposerGUI.apSm)
 			} else {
+				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
 				ip.setSequenceTrack(-1);
-				((PartExt) arpParts.get(i)).setTrackNumber(-1);
 			}
 		}
 		trackCounter += padScoreParts(score, partPadding, 3, trackCounter - lastPartTrackCount);
@@ -2882,7 +2878,6 @@ public class MidiGenerator implements JMC {
 		Mod.transpose(score, gc.getTranspose());
 
 		// add drums after transposing transposable parts
-
 		for (int i = 0; i < drumParts.size(); i++) {
 			if (!COLLAPSE_DRUM_TRACKS) {
 				score.add(drumParts.get(i));
@@ -2898,13 +2893,11 @@ public class MidiGenerator implements JMC {
 						InstPanel ip2 = VibeComposerGUI.getPanelByOrder(
 								gc.getDrumParts().get(j).getOrder(), VibeComposerGUI.drumPanels);
 						ip2.setSequenceTrack(-1);
-						((PartExt) drumParts.get(j)).setTrackNumber(-1);
 					}
 					break;
 				}
 			} else {
 				ip.setSequenceTrack(-1);
-				((PartExt) drumParts.get(i)).setTrackNumber(-1);
 			}
 			if (!COLLAPSE_DRUM_TRACKS) {
 				trackCounter++;
@@ -2912,7 +2905,7 @@ public class MidiGenerator implements JMC {
 		}
 		if (!COLLAPSE_DRUM_TRACKS) {
 			trackCounter += padScoreParts(score, partPadding, 4, trackCounter - lastPartTrackCount);
-			lastPartTrackCount = trackCounter;
+			//lastPartTrackCount = trackCounter;
 		}
 
 
@@ -3178,8 +3171,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private int padScoreParts(Score score, List<Integer> partPadding, int part, int trackCount) {
-		if (gc.isPartEnabled(part) && partPadding.size() > 0
-				&& trackCount < partPadding.get(part)) {
+		if (paddable(partPadding, part, trackCount)) {
 			int tracksToPad = partPadding.get(part) - trackCount;
 			LG.d("Padding: " + part + ", #: " + tracksToPad);
 			for (int i = 0; i < tracksToPad; i++) {
@@ -3188,6 +3180,20 @@ public class MidiGenerator implements JMC {
 			return tracksToPad;
 		}
 		return 0;
+	}
+
+	private int padSingle(Score score, List<Integer> partPadding, int part, int trackCount) {
+		if (paddable(partPadding, part, trackCount)) {
+			LG.d("Padding Single: " + part + ", #: " + 1);
+			score.add(PartExt.makeFillerPart());
+			return 1;
+		}
+		return 0;
+	}
+
+	private boolean paddable(List<Integer> partPadding, int part, int trackCount) {
+		return gc.isPartEnabled(part) && partPadding.size() > part
+				&& trackCount < partPadding.get(part);
 	}
 
 	private List<Integer> calculateSectionVariations(Arrangement arr, int secOrder, Section sec,
