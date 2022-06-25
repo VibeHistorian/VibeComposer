@@ -1497,11 +1497,8 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		soloMuterTrackControlPanel.add(new JLabel("Track History: "));
-		JPanel configPanel = new JPanel();
-		configPanel.setOpaque(false);
-		configPanel.setMaximumSize(new Dimension(500, 30));
-		configPanel.add(configHistory);
-		soloMuterTrackControlPanel.add(configPanel);
+		configHistory.box().setPreferredSize(new Dimension(450, 30));
+		soloMuterTrackControlPanel.add(configHistory);
 		soloMuterTrackControlPanel.add(makeButton("Load", e -> {
 			if (configHistory.getItemCount() > 0) {
 				guiConfig = configHistory.getVal();
