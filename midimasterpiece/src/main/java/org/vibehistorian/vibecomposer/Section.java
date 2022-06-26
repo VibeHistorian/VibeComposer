@@ -668,7 +668,7 @@ public class Section {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
 			//LG.d(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
@@ -680,7 +680,7 @@ public class Section {
 				} else {
 					//LG.d("Found index for j: " + j + ", index: " + oldIndex);
 				}
-				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+				for (int k = 1; k < variationDescriptions[i].length; k++) {
 					if (oldIndex == null) {
 						data[j][k] = Boolean.FALSE;
 					} else {

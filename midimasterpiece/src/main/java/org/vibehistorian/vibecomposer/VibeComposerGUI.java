@@ -3481,8 +3481,8 @@ public class VibeComposerGUI extends JFrame
 							}
 						} else {
 							arrangement.initPartInclusionMapIfNull();
-							sec.generatePresences(new Random(), part,
-									arrangement.getInclMap(), true);
+							sec.generatePresences(new Random(), part, arrangement.getInclMap(),
+									true);
 						}
 					}
 				} else if (evt.isShiftDown()) {
@@ -3610,14 +3610,20 @@ public class VibeComposerGUI extends JFrame
 	protected void processActualArrangementCopyDragging(MouseEvent evt) {
 		Triple<Integer, Integer, Integer> partOrderSection = calculateCurrentTableSubcell(evt);
 		if (partOrderSection != null) {
+			PhraseNotes pn = guiConfig.getPatternRaw(copyDraggedPattern);
+			if (pn == null) {
+				new TemporaryInfoPopup("Invalid pattern for copying!", 1500);
+				return;
+			}
 			Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
 			UsedPattern newPattern = copyDraggedPattern;
 			int part = partOrderSection.getLeft();
 			int panelOrder = getInstList(part).get(partOrderSection.getMiddle()).getPanelOrder();
 			sec.putPattern(part, panelOrder, newPattern);
 			if (!sec.getPresence(part).contains(panelOrder)) {
-				sec.setPresence(part, panelOrder);
+				sec.setPresence(part, partOrderSection.getMiddle());
 			}
+			pn.setApplied(true);
 			setActualModel(actualArrangement.convertToActualTableModel(), false);
 			refreshVariationPopupButtons(actualArrangement.getSections().size());
 			manualArrangement.setSelected(true);
