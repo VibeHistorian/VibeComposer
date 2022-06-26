@@ -146,12 +146,11 @@ public class JMusicUtilsCustom implements JMC {
 
 	}
 
-	public static void humanize(Part part, Random generator, double rhythmVariation,
+	public static void humanize(PartExt part, Random generator, double rhythmVariation,
 			boolean isDrum) {
 		if (part == null) {
 			return;
 		}
-		boolean left = true;
 		Enumeration enum1 = part.getPhraseList().elements();
 		while (enum1.hasMoreElements()) {
 			Phrase phr = (Phrase) enum1.nextElement();

@@ -75,7 +75,6 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import jm.JMC;
 import jm.music.data.Note;
-import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
@@ -2333,22 +2332,30 @@ public class MidiGenerator implements JMC {
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
 		Score score = new Score("MainScore", 120);
+		Score scoreFull = new Score("MainScore", 120);
 
-		List<Part> melodyParts = new ArrayList<>();
+		List<PartExt> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 			PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
 					gc.getMelodyParts().get(i).getMidiChannel() - 1);
 			melodyParts.add(p);
 		}
 
-		List<Part> chordParts = new ArrayList<>();
+		List<PartExt> melodyPartsFull = new ArrayList<>();
+		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
+			PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
+					gc.getMelodyParts().get(i).getMidiChannel() - 1);
+			melodyPartsFull.add(p);
+		}
+
+		List<PartExt> chordParts = new ArrayList<>();
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
 			PartExt p = new PartExt("Chords" + i, gc.getChordParts().get(i).getInstrument(),
 					gc.getChordParts().get(i).getMidiChannel() - 1);
 			chordParts.add(p);
 		}
 
-		List<Part> arpParts = new ArrayList<>();
+		List<PartExt> arpParts = new ArrayList<>();
 		for (int i = 0; i < gc.getArpParts().size(); i++) {
 			PartExt p = new PartExt("Arps" + i, gc.getArpParts().get(i).getInstrument(),
 					gc.getArpParts().get(i).getMidiChannel() - 1);
@@ -2356,7 +2363,7 @@ public class MidiGenerator implements JMC {
 		}
 
 
-		List<Part> bassParts = new ArrayList<>();
+		List<PartExt> bassParts = new ArrayList<>();
 		for (int i = 0; i < gc.getBassParts().size(); i++) {
 			PartExt p = new PartExt("Bass" + i, gc.getBassParts().get(i).getInstrument(),
 					gc.getBassParts().get(i).getMidiChannel() - 1);
@@ -2364,10 +2371,16 @@ public class MidiGenerator implements JMC {
 		}
 
 
-		List<Part> drumParts = new ArrayList<>();
+		List<PartExt> drumParts = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
 			PartExt p = new PartExt("MainDrums", 0, 9);
 			drumParts.add(p);
+		}
+
+		List<PartExt> drumPartsFull = new ArrayList<>();
+		for (int i = 0; i < gc.getDrumParts().size(); i++) {
+			PartExt p = new PartExt("MainDrums", 0, 9);
+			drumPartsFull.add(p);
 		}
 
 
@@ -2745,8 +2758,8 @@ public class MidiGenerator implements JMC {
 						melodyParts.get(VibeComposerGUI.getAbsoluteOrder(0,
 								firstPresentPart.get().getOrder())).addPhrase(p);
 					}
-
 				}
+				melodyPartsFull.get(i).addPhrase(p);
 			}
 			for (int i = 0; i < sec.getBasses().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
@@ -2776,6 +2789,7 @@ public class MidiGenerator implements JMC {
 				} else {
 					drumParts.get(i).addPhrase(p);
 				}
+				drumPartsFull.get(i).addPhrase(p);
 
 			}
 			if (gc.getChordParts().size() > 0 && gc.isChordsEnable()) {
@@ -2790,6 +2804,47 @@ public class MidiGenerator implements JMC {
 			LG.i("Added to parts, at: " + (System.currentTimeMillis() - systemTime));
 		}
 		LG.d("Added sections to parts..");
+		setupScore(mainGeneratorSeed, systemTime, logPerformance, score, melodyParts, chordParts,
+				arpParts, bassParts, drumParts, true);
+		setupScore(mainGeneratorSeed, systemTime, logPerformance, scoreFull, melodyPartsFull,
+				chordParts, arpParts, bassParts, drumPartsFull, false);
+
+		score.setTempo(gc.getBpm());
+		scoreFull.setTempo(gc.getBpm());
+
+		// write midi without log
+
+		PrintStream dummyStream = new PrintStream(new OutputStream() {
+			public void write(int b) {
+				// NO-OP
+			}
+		});
+		System.setOut(dummyStream);
+
+		JMusicUtilsCustom.midi(score, fileName);
+		JMusicUtilsCustom.midi(scoreFull, VibeComposerGUI.TEMPORARY_SEQUENCE_MIDI_NAME);
+		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
+			System.setOut(originalStream);
+		} else {
+			VibeComposerGUI.dconsole.redirectOut();
+		}
+
+
+		// view midi
+		LAST_SCORES.add(0, scoreFull);
+		if (LAST_SCORES.size() > LAST_SCORES_LIMIT) {
+			LAST_SCORES = LAST_SCORES.subList(0, LAST_SCORES_LIMIT);
+		}
+
+		gc.setActualArrangement(arr);
+		LG.i("MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
+		LG.i("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
+	}
+
+	private void setupScore(int mainGeneratorSeed, long systemTime, boolean logPerformance,
+			Score score, List<PartExt> melodyParts, List<PartExt> chordParts,
+			List<PartExt> arpParts, List<PartExt> bassParts, List<PartExt> drumParts,
+			boolean allowCombination) {
 		int trackCounter = 1;
 
 		List<Integer> partPadding = VibeComposerGUI.padGeneratedMidi.isSelected()
@@ -2803,7 +2858,7 @@ public class MidiGenerator implements JMC {
 				score.add(melodyParts.get(i));
 				((PartExt) melodyParts.get(i)).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
-				if (gc.isCombineMelodyTracks()) {
+				if (allowCombination && gc.isCombineMelodyTracks()) {
 					for (int j = i + 1; j < gc.getMelodyParts().size(); j++) {
 						ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(j).getOrder(),
 								VibeComposerGUI.melodyPanels);
@@ -2879,7 +2934,7 @@ public class MidiGenerator implements JMC {
 
 		// add drums after transposing transposable parts
 		for (int i = 0; i < drumParts.size(); i++) {
-			if (!COLLAPSE_DRUM_TRACKS) {
+			if (!allowCombination || !COLLAPSE_DRUM_TRACKS) {
 				score.add(drumParts.get(i));
 			}
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
@@ -2887,7 +2942,7 @@ public class MidiGenerator implements JMC {
 			if (!gc.getDrumParts().get(i).isMuted() && gc.isDrumsEnable()) {
 				ip.setSequenceTrack(trackCounter);
 				((PartExt) drumParts.get(i)).setTrackNumber(trackCounter);
-				if (COLLAPSE_DRUM_TRACKS) {
+				if (allowCombination && COLLAPSE_DRUM_TRACKS) {
 					score.add(drumParts.get(i));
 					for (int j = i + 1; j < gc.getDrumParts().size(); j++) {
 						InstPanel ip2 = VibeComposerGUI.getPanelByOrder(
@@ -2899,11 +2954,11 @@ public class MidiGenerator implements JMC {
 			} else {
 				ip.setSequenceTrack(-1);
 			}
-			if (!COLLAPSE_DRUM_TRACKS) {
+			if (!allowCombination || !COLLAPSE_DRUM_TRACKS) {
 				trackCounter++;
 			}
 		}
-		if (!COLLAPSE_DRUM_TRACKS) {
+		if (!allowCombination || !COLLAPSE_DRUM_TRACKS) {
 			trackCounter += padScoreParts(score, partPadding, 4, trackCounter - lastPartTrackCount);
 			//lastPartTrackCount = trackCounter;
 		}
@@ -2912,11 +2967,13 @@ public class MidiGenerator implements JMC {
 		if (logPerformance) {
 			LG.i("Added to score, at: " + (System.currentTimeMillis() - systemTime));
 		}
-		LG.d("Added parts to score..");
+		LG.d("Added parts to score.., allow combo: " + allowCombination);
 		Random rand = new Random(mainGeneratorSeed + 999);
 		for (Object o : score.getPartList()) {
 			PartExt pe = (PartExt) o;
-
+			if (pe == null || pe.isFillerPart()) {
+				continue;
+			}
 			boolean isDrum = pe.getTitle().contains("MainDrum");
 			boolean shouldRandomize = (isDrum && VibeComposerGUI.humanizeDrums.getInt() > 0)
 					|| (!isDrum && VibeComposerGUI.humanizeNotes.getInt() > 0);
@@ -2930,35 +2987,6 @@ public class MidiGenerator implements JMC {
 						isDrum);
 			}
 		}
-
-		score.setTempo(gc.getBpm());
-
-		// write midi without log
-
-		PrintStream dummyStream = new PrintStream(new OutputStream() {
-			public void write(int b) {
-				// NO-OP
-			}
-		});
-		System.setOut(dummyStream);
-
-		JMusicUtilsCustom.midi(score, fileName);
-		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
-			System.setOut(originalStream);
-		} else {
-			VibeComposerGUI.dconsole.redirectOut();
-		}
-
-
-		// view midi
-		LAST_SCORES.add(0, score);
-		if (LAST_SCORES.size() > LAST_SCORES_LIMIT) {
-			LAST_SCORES = LAST_SCORES.subList(0, LAST_SCORES_LIMIT);
-		}
-
-		gc.setActualArrangement(arr);
-		LG.i("MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
-		LG.i("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
 	}
 
 	private void postprocessMelodyRhythmAccents(Section sec, Arrangement arr, double measureLength,

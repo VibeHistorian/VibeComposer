@@ -235,6 +235,7 @@ public class VibeComposerGUI extends JFrame
 	private static final String EXPORT_FOLDER = "exports";
 	private static final String MID_EXTENSION = ".mid";
 	private static final String SAVED_MIDIS_FOLDER_BASE = "/saved_";
+	public static final String TEMPORARY_SEQUENCE_MIDI_NAME = "tempSequenceMidi.mid";
 
 	public static List<Image> SECTION_VARIATIONS_ICONS = new ArrayList<>();
 	private static final String[] SECTION_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
@@ -639,6 +640,7 @@ public class VibeComposerGUI extends JFrame
 	public static Sequencer sequencer = null;
 	public static Map<Integer, List<MidiEvent>> midiEventsToRemove = new HashMap<>();
 	public File currentMidi = null;
+	public File currentSequenceMidi = null;
 	MidiDevice device = null;
 
 	public static JButton showScore;
@@ -1771,13 +1773,6 @@ public class VibeComposerGUI extends JFrame
 		});
 
 		combineMelodyTracks = new CustomCheckBox("<html>Combine<br>MIDI Tracks</html>", false);
-		combineMelodyTracks.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				fixCombinedMelodyTracks();
-			}
-		});
 
 		melodySettingsExtraPanelOrg.add(melody1ForcePatterns);
 		melodySettingsExtraPanelOrg.add(combineMelodyTracks);
@@ -2472,15 +2467,6 @@ public class VibeComposerGUI extends JFrame
 
 
 		combineDrumTracks = new CustomCheckBox("Combine MIDI Tracks", false);
-		combineDrumTracks.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				drumPanels
-						.forEach(f -> f.getSoloMuter().setVisible(!combineDrumTracks.isSelected()));
-			}
-
-		});
 		drumExtraSettings.add(combineDrumTracks);
 
 		drumExtraSettings.add(makeButton("Save Drums As", "DrumSave"));
@@ -4791,13 +4777,8 @@ public class VibeComposerGUI extends JFrame
 				boolean turnOff = ip.getMuteInst() || presences == null
 						|| !presences.contains(ip.getPanelOrder());
 				if (!turnOff) {
-					if (part == 4 && combineDrumTracks.isSelected()) {
-						turnOff |= ((soloCondition ? groupSoloMuters.get(4).soloState == State.OFF
-								: groupSoloMuters.get(4).muteState != State.OFF));
-					} else {
-						turnOff |= ((soloCondition ? ip.getSoloMuter().soloState == State.OFF
-								: ip.getSoloMuter().muteState != State.OFF));
-					}
+					turnOff |= ((soloCondition ? ip.getSoloMuter().soloState == State.OFF
+							: ip.getSoloMuter().muteState != State.OFF));
 				}
 
 				boolean isIgnoreFill = false;
@@ -5222,10 +5203,6 @@ public class VibeComposerGUI extends JFrame
 			for (int j = 0; j < 4; j++) {
 				List<? extends InstPanel> panels = getInstList(j);
 				for (int i = 0; i < panels.size(); i++) {
-					if (combineMelodyTracks.isSelected() && j == 0 && i > 0) {
-						// melody panels under first
-						continue;
-					}
 					double vol = panels.get(i).getVolSlider().getValue() / 100.0;
 					int channel = panels.get(i).getMidiChannel() - 1;
 					sendVolumeMessage(vol, channel);
@@ -5674,7 +5651,7 @@ public class VibeComposerGUI extends JFrame
 
 		guiConfig = midiConfig;
 		//LG.i("Adding to config history, reason: " + regenerate);
-		fixCombinedTracks();
+		//fixCombinedTracks();
 		reapplySolosMutes();
 
 		cleanUpUIAfterCompose(regenerate);
@@ -5968,7 +5945,7 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		fixCombinedMelodyTracks();
+		//fixCombinedMelodyTracks();
 
 		actualArrangement = new Arrangement();
 		actualArrangement.setPreviewChorus(false);
@@ -6017,6 +5994,7 @@ public class VibeComposerGUI extends JFrame
 		boolean logPerformance = false;
 
 		currentMidi = null;
+		currentSequenceMidi = null;
 		try {
 			if (sequencer != null) {
 				sequencer.stop();
@@ -6043,6 +6021,12 @@ public class VibeComposerGUI extends JFrame
 
 			// Create sequence, the File must contain MIDI file data.
 			currentMidi = new File(relPath);
+			if (currentMidi == null) {
+				new TemporaryInfoPopup("Error: Could not load currently generated MIDI file!",
+						3000);
+				return;
+			}
+			currentSequenceMidi = new File(TEMPORARY_SEQUENCE_MIDI_NAME);
 			generatedMidi.setListData(new File[] { currentMidi });
 			//sizeRespectingPack();
 			repaint();
@@ -6241,7 +6225,7 @@ public class VibeComposerGUI extends JFrame
 			throws InvalidMidiDataException, MidiUnavailableException {
 		Sequence sequence = null;
 		try {
-			sequence = MidiSystem.getSequence(currentMidi);
+			sequence = MidiSystem.getSequence(currentSequenceMidi);
 		} catch (Exception e) {
 			new TemporaryInfoPopup(
 					"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
@@ -6390,8 +6374,7 @@ public class VibeComposerGUI extends JFrame
 
 		Optional<DrumPanel> notExcludedDrum = drumPanels.stream()
 				.filter(e -> e.getSequenceTrack() >= 0).findFirst();
-		Integer notExcludedCombinedDrumTrack = (combineDrumTracks.isSelected()
-				&& notExcludedDrum.isPresent()) ? notExcludedDrum.get().getSequenceTrack() : null;
+		Integer notExcludedCombinedDrumTrack = null;
 		for (int i = 0; i < 5; i++) {
 			List<? extends InstPanel> panels = getInstList(i);
 
@@ -6461,47 +6444,20 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		Optional<DrumPanel> notExcludedDrum = drumPanels.stream()
-				.filter(e -> e.getSequenceTrack() >= 0).findFirst();
-
-		// drum specific
-		if (combineDrumTracks.isSelected() && notExcludedDrum.isPresent()) {
-			sequencer.setTrackSolo(notExcludedDrum.get().getSequenceTrack(),
-					groupSoloMuters.get(4).soloState != State.OFF);
-		}
-
-		if (combineDrumTracks.isSelected() && notExcludedDrum.isPresent()) {
-			sequencer.setTrackMute(notExcludedDrum.get().getSequenceTrack(),
-					groupSoloMuters.get(4).muteState != State.OFF);
-		}
-
 	}
 
 	private void toggleExclude() {
 		if (globalSoloMuter.soloState != State.OFF) {
 			for (int i = 0; i < 5; i++) {
 				List<? extends InstPanel> panels = getInstList(i);
-				if (i < 4 || !combineDrumTracks.isSelected()) {
-					panels.forEach(e -> {
-						if (e.getSoloMuter().soloState == State.OFF) {
-							e.setMuteInst(true);
-						} else {
-							e.getSoloMuter().unsolo();
-							e.setMuteInst(false);
-						}
-					});
-				} else {
-					if (groupSoloMuters.get(4).soloState != State.OFF) {
-						panels.forEach(e -> {
-							e.getSoloMuter().unsolo();
-							e.setMuteInst(false);
-						});
+				panels.forEach(e -> {
+					if (e.getSoloMuter().soloState == State.OFF) {
+						e.setMuteInst(true);
 					} else {
-						panels.forEach(e -> {
-							e.setMuteInst(true);
-						});
+						e.getSoloMuter().unsolo();
+						e.setMuteInst(false);
 					}
-				}
+				});
 			}
 		} else {
 			for (int i = 0; i < 5; i++) {
@@ -8180,7 +8136,7 @@ public class VibeComposerGUI extends JFrame
 		arrSection.setVisible(true);
 
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
-		fixCombinedMelodyTracks();
+		//fixCombinedMelodyTracks();
 
 	}
 
@@ -8247,10 +8203,6 @@ public class VibeComposerGUI extends JFrame
 			}
 		} else {
 			ip.setBackground(OMNI.alphen(instColors[inst], 60));
-
-			if (inst == 4) {
-				ip.getSoloMuter().setVisible(!combineDrumTracks.isSelected());
-			}
 		}
 
 		if (initializingPart != null) {
