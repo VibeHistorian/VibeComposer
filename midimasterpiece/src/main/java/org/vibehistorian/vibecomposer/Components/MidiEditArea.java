@@ -46,8 +46,6 @@ public class MidiEditArea extends JComponent {
 	PhraseNotes values = null;
 	public int part = 0;
 
-	int colStart = 0;
-	int rowStart = 0;
 	int marginX = 80;
 	int marginY = 40;
 
