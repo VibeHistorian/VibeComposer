@@ -32,10 +32,13 @@ import java.util.stream.Collectors;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.vibehistorian.vibecomposer.Section.SectionType;
+import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 
 @XmlRootElement(name = "arrangement")
@@ -439,12 +442,25 @@ public class Arrangement {
 		this.seed = seed;
 	}
 
-	public Map<Integer, Object[][]> getPartInclusionMap() {
+	@XmlTransient
+	public Map<Integer, Object[][]> getInclMap() {
 		return partInclusionMap;
 	}
 
-	public void setPartInclusionMap(Map<Integer, Object[][]> partInclusionMap) {
+	public void setInclMap(Map<Integer, Object[][]> partInclusionMap) {
 		this.partInclusionMap = partInclusionMap;
+	}
+
+	@XmlElement(name = "partInclusions")
+	public InclusionMapJAXB getPartInclusionMap() {
+		if (partInclusionMap.isEmpty()) {
+			return null;
+		}
+		return InclusionMapJAXB.from(partInclusionMap);
+	}
+
+	public void setPartInclusionMap(InclusionMapJAXB map) {
+		partInclusionMap = InclusionMapJAXB.toMap(map);
 	}
 
 	public void initPartInclusionMap() {
@@ -482,17 +498,17 @@ public class Arrangement {
 	}
 
 	public void recalculatePartInclusionMapBoundsIfNeeded() {
-		if (getPartInclusionMap() == null) {
+		if (getInclMap() == null) {
 			initPartInclusionMap();
 			return;
 		}
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {
 			int actualInstCount = VibeComposerGUI.getInstList(i).size();
-			if (getPartInclusionMap().get(i) == null) {
+			if (getInclMap().get(i) == null) {
 				initPartInclusionMap();
 			}
-			int secInstCount = getPartInclusionMap().get(i).length;
+			int secInstCount = getInclMap().get(i).length;
 			if (secInstCount != actualInstCount) {
 				needsArrayCopy = true;
 				break;
@@ -505,7 +521,7 @@ public class Arrangement {
 	}
 
 	private void initPartInclusionMapFromOldData() {
-		if (getPartInclusionMap() == null) {
+		if (getInclMap() == null) {
 			initPartInclusionMap();
 			return;
 		}
@@ -518,10 +534,10 @@ public class Arrangement {
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				for (int k = 1; k < ArrangementPartInclusionPopup.ENERGY_LEVELS.length; k++) {
-					data[j][k] = getBooleanFromOldData(getPartInclusionMap().get(i), j, k);
+					data[j][k] = getBooleanFromOldData(getInclMap().get(i), j, k);
 				}
 			}
-			getPartInclusionMap().put(i, data);
+			getInclMap().put(i, data);
 		}
 	}
 

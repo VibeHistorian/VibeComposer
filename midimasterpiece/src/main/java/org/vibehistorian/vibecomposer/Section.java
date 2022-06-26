@@ -38,6 +38,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Helpers.UsedPatternMap;
@@ -494,8 +495,7 @@ public class Section {
 	public void generatePresences(Random presRand, boolean forceAdd) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap(),
-					forceAdd);
+			generatePresences(presRand, i, VibeComposerGUI.arrangement.getInclMap(), forceAdd);
 		}
 
 	}
@@ -708,10 +708,10 @@ public class Section {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
-				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+				for (int k = 1; k < variationDescriptions[i].length; k++) {
 					data[j][k] = Boolean.FALSE;
 				}
 			}
@@ -726,13 +726,25 @@ public class Section {
 		}
 	}
 
+	@XmlElement(name = "partVariations")
+	public InclusionMapJAXB getPartPresenceVariationMap() {
+		if (partPresenceVariationMap.isEmpty()) {
+			return null;
+		}
+		return InclusionMapJAXB.from(partPresenceVariationMap);
+	}
 
-	public Map<Integer, Object[][]> getPartPresenceVariationMap() {
+	public void setPartPresenceVariationMap(InclusionMapJAXB map) {
+		partPresenceVariationMap = InclusionMapJAXB.toMap(map);
+	}
+
+	@XmlTransient
+	public Map<Integer, Object[][]> getPartMap() {
 		return partPresenceVariationMap;
 	}
 
 
-	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
+	public void setPartMap(Map<Integer, Object[][]> partPresenceVariationMap) {
 		this.partPresenceVariationMap = partPresenceVariationMap;
 	}
 
@@ -814,7 +826,7 @@ public class Section {
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {
 			int actualInstCount = VibeComposerGUI.getInstList(i).size();
-			int secInstCount = getPartPresenceVariationMap().get(i).length;
+			int secInstCount = getPartMap().get(i).length;
 			if (secInstCount != actualInstCount) {
 				needsArrayCopy = true;
 				break;

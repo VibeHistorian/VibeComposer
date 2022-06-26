@@ -3482,7 +3482,7 @@ public class VibeComposerGUI extends JFrame
 						} else {
 							arrangement.initPartInclusionMapIfNull();
 							sec.generatePresences(new Random(), part,
-									arrangement.getPartInclusionMap(), true);
+									arrangement.getInclMap(), true);
 						}
 					}
 				} else if (evt.isShiftDown()) {
@@ -5568,6 +5568,7 @@ public class VibeComposerGUI extends JFrame
 		if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
 				|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
 			LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
+			new TemporaryInfoPopup(("Nothing to compose! Uncheck MANUAL arrangement!"), 3000);
 			composingInProgress = false;
 			return;
 		}

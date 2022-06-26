@@ -54,10 +54,10 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
-			if (arr.getPartInclusionMap() == null) {
+			if (arr.getInclMap() == null) {
 				arr.initPartInclusionMap();
 			}
-			if (arr.getPartInclusionMap().get(i) == null) {
+			if (arr.getInclMap().get(i) == null) {
 				arr.initPartInclusionMap();
 			}
 
@@ -65,7 +65,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
-			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getPartInclusionMap().get(i),
+			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getInclMap().get(i),
 					ENERGY_LEVELS, partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
