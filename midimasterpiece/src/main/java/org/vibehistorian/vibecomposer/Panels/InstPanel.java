@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -791,25 +792,35 @@ public abstract class InstPanel extends JPanel {
 
 	}
 
-	public int addToRhythmGrid(int[] rhythmGrid, Random rand, int multiplier) {
+	public int addToRhythmGrid(int[] rhythmGrid, Random rand, Random permutationRand,
+			int multiplier) {
 		// forward calculation
 		long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
 				.stream().filter(e -> e > 0).count();
-		Pair<Integer[], Map<Integer, Integer>> mappedGrid = makeMappedRhythmGrid();
-		Integer[] panelRhythmGrid = mappedGrid.getLeft();
+		Pair<List<Integer>, Map<Integer, Integer>> mappedGrid = makeMappedRhythmGrid();
+		List<Integer> panelRhythmGrid = mappedGrid.getLeft();
 		//StringUtils.join(rhythmGrid, ",");
 		List<Integer> fillPattern = getChordSpanFill().getPatternByLength(4, getFillFlip());
 		for (int i = 0; i < 4 * 32; i++) {
 			if (fillPattern.get(i / 32) < 1) {
-				panelRhythmGrid[i] = 0;
+				panelRhythmGrid.set(i, 0);
 			}
 		}
 		//LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
+		List<Integer> permutatedOrder = IntStream.iterate(0, e -> e + 1)
+				.limit(panelRhythmGrid.size()).boxed().collect(Collectors.toList());
+		Collections.shuffle(permutatedOrder, permutationRand);
+
 		int changed = 0;
-		for (int i = 0; i < panelRhythmGrid.length; i++) {
-			if (panelRhythmGrid[i] != null && panelRhythmGrid[i] > 0) {
-				int nextVal = rhythmGrid[i] + panelRhythmGrid[i] * multiplier;
-				int mapped = mappedGrid.getRight().get(i);
+		for (int i = 0; i < panelRhythmGrid.size(); i++) {
+			int index = permutatedOrder.get(i);
+			if (panelRhythmGrid.get(index) != null && panelRhythmGrid.get(index) > 0) {
+				Integer mapped = mappedGrid.getRight().get(index);
+				if (mapped == null) {
+					LG.i("Skipping not mapped " + index);
+					continue;
+				}
+				int nextVal = rhythmGrid[index] + panelRhythmGrid.get(index) * multiplier;
 				if (totalAvailable >= 2 && getComboPanel().getPattern(mapped) > 0) {
 					if (nextVal > MAX_RHYTHM_DENSITY
 							|| (nextVal > TARGET_RHYTHM_DENSITY && rand.nextInt(100) < 50)) {
@@ -820,10 +831,10 @@ public abstract class InstPanel extends JPanel {
 						//LG.i(panelInfo() + " Unchecked: " + mapped);
 						//rhythmGrid[i] = nextVal;
 					} else {
-						rhythmGrid[i] = nextVal;
+						rhythmGrid[index] = nextVal;
 					}
 				} else {
-					rhythmGrid[i] = nextVal;
+					rhythmGrid[index] = nextVal;
 				}
 
 			}
@@ -844,7 +855,7 @@ public abstract class InstPanel extends JPanel {
 		return premadePattern;
 	}
 
-	protected Pair<Integer[], Map<Integer, Integer>> makeMappedRhythmGrid() {
+	protected Pair<List<Integer>, Map<Integer, Integer>> makeMappedRhythmGrid() {
 
 		// shift
 		List<Integer> rhythmGridBase = getFinalPatternCopy().subList(0, getHitsPerPattern());
@@ -901,7 +912,7 @@ public abstract class InstPanel extends JPanel {
 				rhythmGridSpanned.set(i, 1);
 			}
 		}
-		return Pair.of(rhythmGridSpanned.toArray(new Integer[0]), gridMap);
+		return Pair.of(rhythmGridSpanned, gridMap);
 	}
 
 	public List<ScrollComboPanel> findScrollComboBoxesByFirstVal(Object firstVal) {

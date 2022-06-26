@@ -4001,6 +4001,7 @@ public class VibeComposerGUI extends JFrame
 		// count rhythm weights in a 1/32 grid across 4 chords span
 		int[] rhythmGrid = new int[4 * 32];
 		Random rand = new Random();
+		Random permutationRand = new Random();
 		int[] panelChanges = new int[3];
 		int start = currentTabOnly ? currentTab : 4;
 		int end = currentTabOnly ? currentTab : 2;
@@ -4008,7 +4009,8 @@ public class VibeComposerGUI extends JFrame
 			List<? extends InstPanel> panels = getInstList(i);
 			int totalChanged = 0;
 			for (int j = 0; j < panels.size(); j++) {
-				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand, multiplier);
+				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand, permutationRand,
+						multiplier);
 			}
 			panelChanges[i - 2] = totalChanged;
 			//LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
@@ -8747,7 +8749,7 @@ public class VibeComposerGUI extends JFrame
 			ip.setDelay(slide);
 			ip.setSwingPercent(swingPercent);
 			ip.setExceptionChance(drumPanelGenerator.nextInt(10));
-			if (drumPanelGenerator.nextInt(100) < 75) {
+			if (drumPanelGenerator.nextInt(100) < 30) {
 				ip.setPattern(RhythmPattern.MELODY1);
 			}
 		}

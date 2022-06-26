@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JButton;
@@ -153,14 +154,14 @@ public class DrumPanel extends InstPanel {
 	}
 
 	@Override
-	protected Pair<Integer[], Map<Integer, Integer>> makeMappedRhythmGrid() {
+	protected Pair<List<Integer>, Map<Integer, Integer>> makeMappedRhythmGrid() {
 		int weightMultiplier = VibeComposerGUI.PUNCHY_DRUMS.contains(getInstrument()) ? 3
 				: (DrumDefaults.getOrder(getInstrument()) != 2 ? 2 : 1);
-		Pair<Integer[], Map<Integer, Integer>> mapped = super.makeMappedRhythmGrid();
-		Integer[] baseGrid = mapped.getLeft();
-		for (int i = 0; i < baseGrid.length; i++) {
-			if (baseGrid[i] != null && baseGrid[i] > 0) {
-				baseGrid[i] = weightMultiplier;
+		Pair<List<Integer>, Map<Integer, Integer>> mapped = super.makeMappedRhythmGrid();
+		List<Integer> baseGrid = mapped.getLeft();
+		for (int i = 0; i < baseGrid.size(); i++) {
+			if (baseGrid.get(i) != null && baseGrid.get(i) > 0) {
+				baseGrid.set(i, weightMultiplier);
 			}
 		}
 
