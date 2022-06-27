@@ -3877,7 +3877,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillMelodyFromPart(MelodyPart ip, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
-			List<Integer> variations, boolean ignoreCustomMidi) {
+			List<Integer> variations, boolean melodyEmptyPass) {
 		LG.d("Processing: " + ip.partInfo());
 		Phrase phr = new PhraseExt(0, ip.getOrder(), secOrder);
 
@@ -3918,7 +3918,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		if (ignoreCustomMidi || !overwriteWithCustomSectionMidi(sec, phr, ip)) {
+		if (melodyEmptyPass || !overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			Vector<Note> noteList = new Vector<>();
 			fullMelodyMap.values().forEach(e -> noteList.addAll(e));
 
@@ -3929,7 +3929,7 @@ public class MidiGenerator implements JMC {
 				MidiUtils.transposePhrase(phrSaved, ScaleMode.IONIAN.noteAdjustScale,
 						ScaleMode.IONIAN.noteAdjustScale);
 			}
-			if (!ignoreCustomMidi) {
+			if (!melodyEmptyPass) {
 				addPhraseNotesToSection(sec, ip, phrSaved.getNoteList());
 			}
 		} else {
@@ -3981,7 +3981,7 @@ public class MidiGenerator implements JMC {
 
 		}
 
-		if (ip.getOrder() == 1) {
+		if (ip.getOrder() == 1 && !melodyEmptyPass) {
 			List<Integer> notePattern = new ArrayList<>();
 			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
 			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
