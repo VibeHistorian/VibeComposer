@@ -123,6 +123,7 @@ class RangeSliderUI extends BasicSliderUI {
 						// found snap point
 						if (bestValue != sliderValue) {
 							slider.setValue(bestValue);
+							break;
 						}
 					}
 				}
@@ -140,6 +141,7 @@ class RangeSliderUI extends BasicSliderUI {
 						// found snap point
 						if (bestValue != sliderValue) {
 							slider.setValue(bestValue);
+							break;
 						}
 					}
 				}

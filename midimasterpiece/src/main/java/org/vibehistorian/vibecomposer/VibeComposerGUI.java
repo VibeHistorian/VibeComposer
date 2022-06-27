@@ -682,9 +682,11 @@ public class VibeComposerGUI extends JFrame
 	boolean isKeySeeking = false;
 	public static boolean isDragging = false;
 	private static boolean pauseInfoResettable = true;
-	private static long pausedSliderPosition = 0;
+	private static int pausedBpm = 50;
+	private static int pausedSliderPosition = 0;
 	private static int pausedMeasureCounter = 0;
-	private static long startSliderPosition = 0;
+	private static int startBpm = 50;
+	private static int startSliderPosition = 0;
 	private static int startBeatCounter = 0;
 
 	JLabel tipLabel;
@@ -5816,6 +5818,10 @@ public class VibeComposerGUI extends JFrame
 
 	private void prepareUI(boolean regenerate) {
 
+		if (!regenerate && randomizeBpmOnCompose.isSelected()) {
+			randomizeBPM();
+		}
+
 		// MELODY
 		if (!regenerate && randomizeMelodiesOnCompose.isSelected()) {
 			int seed = randomSeed.getValue() != 0 ? randomSeed.getValue() : lastRandomSeed;
@@ -6137,22 +6143,20 @@ public class VibeComposerGUI extends JFrame
 			sliderExtended = Math.max(0, current - slider.getMaximum());
 			if (endDisplayed) {
 				sliderExtended -= measureWidth;
-			}
-
-			if (!endDisplayed) {
+			} else {
 				table.put(slider.getMaximum(), new JLabel("END"));
 				sliderMeasureStartTimes.add(slider.getMaximum());
 				sliderBeatStartTimes.add(slider.getMaximum());
 			}
-
 			//sliderBeatStartTimes.add(slider.getMaximum());
 
 			slider.setCustomMajorTicks(sliderMeasureStartTimes);
 			slider.setCustomMinorTicks(sliderBeatStartTimes);
 			/*LG.i(("Size measures: " + sliderMeasureStartTimes.size()));
-			LG.i(("Size beats: " + sliderBeatStartTimes.size()));
-			LG.i(("What beats: " + sliderBeatStartTimes.toString()));*/
+			LG.i(("Size beats: " + sliderBeatStartTimes.size()));*/
+			//LG.i(("What beats: " + sliderBeatStartTimes.toString()));
 
+			slider.setSnapToTicks(snapStartToBeat.isSelected());
 			if (startFromBar.isSelected()) {
 				int snapAdjustment = 50;
 				if (startBeatCounter >= sliderBeatStartTimes.size()) {
@@ -6162,6 +6166,12 @@ public class VibeComposerGUI extends JFrame
 					arrSection.setSelectedIndex(0);
 				}
 				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
+			} else {
+				int startVal = (mainBpm.getInt() != startBpm)
+						? (int) Math
+								.ceil(startSliderPosition * startBpm / (double) mainBpm.getInt())
+						: startSliderPosition;
+				slider.setValue(startVal);
 			}
 			// Force the slider to use the new labels
 			slider.setLabelTable(table);
@@ -6172,8 +6182,11 @@ public class VibeComposerGUI extends JFrame
 				long startPos = (startFromBar.isSelected()) ? delayed : pausedSliderPosition;
 				if (startPos < slider.getValue()) {
 					startPos = slider.getValue();
+					midiNavigate(startPos, 0);
+				} else {
+					midiNavigate(startPos);
 				}
-				midiNavigate(startPos);
+
 			} else {
 				String pauseBehavior = pauseBehaviorCombobox.getVal();
 				if (!"NEVER".equalsIgnoreCase(pauseBehavior)) {
@@ -6767,25 +6780,8 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		realBpm = Double.valueOf(mainBpm.getInt());
-		if (ae.getActionCommand() == "RandomizeBpm"
-				|| (isCompose && randomizeBpmOnCompose.isSelected())) {
-			Random instGen = new Random();
-
-			int bpm = instGen.nextInt(1 + bpmHigh.getInt() - bpmLow.getInt()) + bpmLow.getInt();
-			if (arpAffectsBpm.isSelected() && !arpPanels.isEmpty()) {
-				double highestArpPattern = arpPanels.stream()
-						.map(e -> (e.getPatternRepeat() * e.getHitsPerPattern())
-								/ (e.getChordSpan() * 8.0))
-						.max((e1, e2) -> Double.compare(e1, e2)).get();
-				LG.i(("Repeater value: " + highestArpPattern));
-				if (highestArpPattern > 1) {
-					bpm *= 1 / (0.5 + highestArpPattern * 0.5);
-				}
-			}
-			mainBpm.setInt(bpm);
-			mainBpm.getKnob().setMin(bpmLow.getInt());
-			mainBpm.getKnob().setMax(bpmHigh.getInt());
-			realBpm = bpm;
+		if (ae.getActionCommand() == "RandomizeBpm") {
+			randomizeBPM();
 		}
 
 		if (ae.getActionCommand() == "RandomizeTranspose") {
@@ -6830,7 +6826,6 @@ public class VibeComposerGUI extends JFrame
 				}
 			};*/
 			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
 			//worker.execute();
 		}
 
@@ -7076,6 +7071,25 @@ public class VibeComposerGUI extends JFrame
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
 	}
 
+	private void randomizeBPM() {
+		Random instGen = new Random();
+
+		int bpm = instGen.nextInt(1 + bpmHigh.getInt() - bpmLow.getInt()) + bpmLow.getInt();
+		if (arpAffectsBpm.isSelected() && !arpPanels.isEmpty()) {
+			double highestArpPattern = arpPanels.stream().map(
+					e -> (e.getPatternRepeat() * e.getHitsPerPattern()) / (e.getChordSpan() * 8.0))
+					.max((e1, e2) -> Double.compare(e1, e2)).get();
+			LG.i(("Repeater value: " + highestArpPattern));
+			if (highestArpPattern > 1) {
+				bpm *= 1 / (0.5 + highestArpPattern * 0.5);
+			}
+		}
+		mainBpm.setInt(bpm);
+		mainBpm.getKnob().setMin(bpmLow.getInt());
+		mainBpm.getKnob().setMax(bpmHigh.getInt());
+		realBpm = bpm;
+	}
+
 	private void enthickenText(Component comp) {
 		if (comp != null) {
 			comp.setFont(comp.getFont().deriveFont(Font.BOLD));
@@ -7292,11 +7306,15 @@ public class VibeComposerGUI extends JFrame
 
 	public static void savePauseInfo() {
 		pausedSliderPosition = slider.getUpperValue();
+		pausedBpm = mainBpm.getInt();
 		if (MidiGenerator.chordInts.size() > 0) {
-			pausedMeasureCounter = (int) (pausedSliderPosition - delayed()) / sliderMeasureWidth();
-			if (pausedMeasureCounter > 0 && sectionText.getText().equalsIgnoreCase("end")) {
-				pausedMeasureCounter--;
+			for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
+				if (sliderMeasureStartTimes.get(i) >= pausedSliderPosition + 50) {
+					pausedMeasureCounter = i - 1;
+					return;
+				}
 			}
+			pausedMeasureCounter = 0;
 		} else {
 			pausedMeasureCounter = 0;
 		}
@@ -7304,9 +7322,15 @@ public class VibeComposerGUI extends JFrame
 
 	private void saveStartInfo() {
 		startSliderPosition = slider.getValue();
+		startBpm = mainBpm.getInt();
 		if (MidiGenerator.chordInts.size() > 0) {
-			startBeatCounter = (int) ((startSliderPosition - delayed() + 20)
-					/ (beatFromBpm(0) * 4));
+			for (int i = 1; i < sliderBeatStartTimes.size(); i++) {
+				if (sliderBeatStartTimes.get(i) >= startSliderPosition + 50) {
+					startBeatCounter = i - 1;
+					return;
+				}
+			}
+			startBeatCounter = 0;
 		} else {
 			startBeatCounter = 0;
 		}
@@ -9409,7 +9433,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		if (slider.getUpperValue() < val) {
 			slider.setUpperValue(val);
-			midiNavigate(val);
+			midiNavigate(val, 0);
 		}
 		slider.setValue(val);
 	}
