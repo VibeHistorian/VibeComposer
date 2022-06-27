@@ -24,7 +24,7 @@ public class KnobValuePopup extends CloseablePopup {
 		stretchAfterCustomInput = stretch;
 
 		numPanel = new NumPanel("Knob", knob.updateAndGetValue(), knob.getMin(), knob.getMax());
-		numPanel.getSlider().setVisible(false);
+		numPanel.getValueRect().setVisible(false);
 		numPanel.setAllowValuesOutsideRange(allowValuesOutsideRange);
 		numPanel.setParentPopup(this);
 		numPanel.getTextfield().addKeyListener(new KeyListener() {

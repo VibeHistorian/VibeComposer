@@ -35,7 +35,7 @@ public class NumPanel extends JPanel {
 
 	private JTextField text = null;
 	private JLabel label = null;
-	private VeloRect slider = null;
+	private VeloRect valueRect = null;
 	boolean needToReset = false;
 	private int naturalMax = 100;
 	private int naturalMin = 0;
@@ -61,12 +61,12 @@ public class NumPanel extends JPanel {
 		defaultValue = value;
 		label = new JLabel(name);
 		text = new JTextField(String.valueOf(value), maximum > 999 ? 3 : 2);
-		slider = new VeloRect(minimum, maximum, value);
-		initSlider(minimum, maximum, value);
+		valueRect = new VeloRect(minimum, maximum, value);
+		initValueRect(minimum, maximum, value);
 		initText();
 		add(label);
 		add(text);
-		add(slider);
+		add(valueRect);
 		naturalMax = maximum;
 		naturalMin = minimum;
 		buttonPanel.setLayout(new GridLayout(5, 3, 0, 0));
@@ -152,13 +152,13 @@ public class NumPanel extends JPanel {
 
 	}
 
-	private void initSlider(int minimum, int maximum, int value) {
-		slider.setValue(value);
+	private void initValueRect(int minimum, int maximum, int value) {
+		valueRect.setValue(value);
 		//slider.setOrientation(JSlider.VERTICAL);
-		slider.setPreferredSize(new Dimension(20, 40));
+		valueRect.setPreferredSize(new Dimension(20, 40));
 		//slider.setPaintTicks(true);
 
-		slider.addMouseListener(new MouseAdapter() {
+		valueRect.addMouseListener(new MouseAdapter() {
 			boolean dragging = false;
 			Thread numCycle = null;
 			private Timer timer;
@@ -194,12 +194,12 @@ public class NumPanel extends JPanel {
 				buttonPresses++;
 				if (me.isShiftDown() || buttonPresses == 2) {
 					needToReset = true;
-					int potentialMax = slider.getValue() + slider.getMax() / 10;
-					int potentialMin = slider.getValue() - slider.getMax() / 10;
-					slider.setMax(
-							(potentialMax > slider.getMax()) ? slider.getMax() : potentialMax);
-					slider.setMin(
-							(potentialMin < slider.getMin()) ? slider.getMin() : potentialMin);
+					int potentialMax = valueRect.getValue() + valueRect.getMax() / 10;
+					int potentialMin = valueRect.getValue() - valueRect.getMax() / 10;
+					valueRect.setMax(
+							(potentialMax > valueRect.getMax()) ? valueRect.getMax() : potentialMax);
+					valueRect.setMin(
+							(potentialMin < valueRect.getMin()) ? valueRect.getMin() : potentialMin);
 				}
 				dragging = true;
 				startNumSliderThread(me);
@@ -211,14 +211,14 @@ public class NumPanel extends JPanel {
 			public void mouseReleased(MouseEvent me) {
 				if (needToReset || buttonPresses == 2) {
 					needToReset = false;
-					slider.setMax(naturalMax);
-					slider.setMin(naturalMin);
+					valueRect.setMax(naturalMax);
+					valueRect.setMin(naturalMin);
 				} else if (buttonPresses == 1) {
 					dragging = false;
 					if (needToReset) {
 						needToReset = false;
-						slider.setMax(naturalMax);
-						slider.setMin(naturalMin);
+						valueRect.setMax(naturalMax);
+						valueRect.setMin(naturalMin);
 					}
 				}
 				buttonPresses--;
@@ -249,7 +249,7 @@ public class NumPanel extends JPanel {
 			}
 
 			public void updateToolTip() {
-				text.setText(String.valueOf(slider.getValue()));
+				text.setText(String.valueOf(valueRect.getValue()));
 			}
 
 		});
@@ -290,14 +290,14 @@ public class NumPanel extends JPanel {
 			if (allowValuesOutsideRange) {
 				return;
 			}
-			if (tryValue > slider.getMax()) {
-				slider.setValue(slider.getMax());
+			if (tryValue > valueRect.getMax()) {
+				valueRect.setValue(valueRect.getMax());
 				updateTextLater(true);
-			} else if (tryValue < slider.getMin()) {
-				slider.setValue(slider.getMin());
+			} else if (tryValue < valueRect.getMin()) {
+				valueRect.setValue(valueRect.getMin());
 				updateTextLater(false);
 			} else {
-				slider.setValue(tryValue);
+				valueRect.setValue(tryValue);
 			}
 			text.setBackground(OMNI.alphen(Color.red, 0));
 		} catch (NumberFormatException ex) {
@@ -308,7 +308,7 @@ public class NumPanel extends JPanel {
 
 	private void updateTextLater(boolean isMaximum) {
 		SwingUtilities.invokeLater(
-				() -> text.setText(((isMaximum) ? slider.getMax() : slider.getMin()) + ""));
+				() -> text.setText(((isMaximum) ? valueRect.getMax() : valueRect.getMin()) + ""));
 	}
 
 	public String getName() {
@@ -316,15 +316,15 @@ public class NumPanel extends JPanel {
 	}
 
 	public int getInt() {
-		return slider.getValue();
+		return valueRect.getValue();
 	}
 
 	public void setInt(int val) {
 		text.setText(val + "");
 	}
 
-	public VeloRect getSlider() {
-		return slider;
+	public VeloRect getValueRect() {
+		return valueRect;
 	}
 
 	public JTextField getTextfield() {

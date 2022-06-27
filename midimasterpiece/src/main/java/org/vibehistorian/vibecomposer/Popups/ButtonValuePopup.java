@@ -23,7 +23,7 @@ public class ButtonValuePopup extends CloseablePopup {
 		randomNum = rand.nextInt();
 
 		numPanel = new NumPanel("Button", butt.getValue(), Integer.MIN_VALUE, Integer.MAX_VALUE);
-		numPanel.getSlider().setVisible(false);
+		numPanel.getValueRect().setVisible(false);
 		numPanel.getTextfield().addKeyListener(new KeyListener() {
 
 			@Override
