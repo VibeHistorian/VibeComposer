@@ -938,7 +938,6 @@ public class MidiEditArea extends JComponent {
 
 			// draw actual values
 
-			int ovalWidth = usableHeight / 40;
 			boolean drawDragPosition = draggingAny(DM.NOTE_START, DM.POSITION, DM.DURATION);
 			for (int i = 0; i < numValues; i++) {
 				PhraseNote pn = values.get(i);
@@ -964,14 +963,23 @@ public class MidiEditArea extends JComponent {
 					}
 				}*/
 
+				boolean currentlyHighlighted = (highlightedNote != null) && (pn == highlightedNote)
+						&& (highlightedDragLocation != null);
+
 				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
 				g.drawLine(drawX, drawY - 5, drawX, drawY + 5);
 				g.drawLine(drawX + width, drawY - 5, drawX + width, drawY + 5);
-				String drawnString = (width > 20)
+				String drawnString = (width > 20 || currentlyHighlighted)
 						? (pitchForText + "(" + MidiUtils.pitchToString(pitchForText) + ") :"
 								+ pn.getDynamic())
 						: String.valueOf(pitchForText);
-				g.drawString(drawnString, drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+				if (currentlyHighlighted) {
+					g.setColor(OMNI.alphen(
+							OMNI.mixColor(VibeComposerGUI.uiColor(),
+									VibeComposerGUI.isDarkMode ? Color.WHITE : Color.black, 0.8),
+							(int) (140 + 70 * (pn.getDynamic() / 127.0))));
+				}
+				g.drawString(drawnString, drawX + 1, drawY - numHeight - 1);
 
 				if ((draggedNote != null && pn == draggedNote) || selectedNotes.contains(pn)) {
 					g.setColor(OMNI.alphen(OMNI.mixColor(VibeComposerGUI.uiColor(), Color.red, 0.7),
@@ -982,8 +990,7 @@ public class MidiEditArea extends JComponent {
 				}
 
 				g.fillRect(drawX, drawY - 4, width, 8);
-				if (highlightedNote != null && pn == highlightedNote
-						&& highlightedDragLocation != null) {
+				if (currentlyHighlighted) {
 
 					switch (highlightedDragLocation) {
 					case 0:
