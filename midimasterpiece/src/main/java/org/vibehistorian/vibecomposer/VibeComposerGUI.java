@@ -9492,7 +9492,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
 			Section sec, boolean overrideLastPlayed) {
-		if (sequencer == null || !sequencer.isOpen() || pitch < 0
+		if (sequencer == null || !sequencer.isOpen() || (pitch < 0)
 				|| (!overrideLastPlayed && System.currentTimeMillis() - lastPlayedMs < 100)) {
 			return;
 		}
@@ -9518,6 +9518,11 @@ public class VibeComposerGUI extends JFrame
 
 				pitch = notes.get(0).getPitch() + transposeScore.getInt() + extraTranspose
 						+ sec.getTransposeVariation(part, partOrder) + ip.getTranspose();
+
+				if (pitch < 0 || pitch > 127) {
+					LG.d("Pitch too high to play: " + pitch);
+					return;
+				}
 			}
 
 			Track trk = sequencer.getSequence().getTracks()[trackNum];

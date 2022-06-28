@@ -86,7 +86,7 @@ public class MidiEditArea extends JComponent {
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if (!e.isAltDown()) {
 					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
-					if ((rot > 0 && max > 110) || (rot < 0 && min < 10)) {
+					if ((rot > 0 && max > 120) || (rot < 0 && min < 10)) {
 						return;
 					}
 					int originalTrackScopeUpDown = MidiEditPopup.trackScope;
@@ -100,7 +100,7 @@ public class MidiEditArea extends JComponent {
 				} else {
 					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
 					int originalTrackScope = MidiEditPopup.trackScope;
-					if (rot > 0 && (max > 110 || min < 10)) {
+					if (rot > 0 && (max > 120 || min < 10)) {
 						return;
 					}
 					MidiEditPopup.trackScope = Math.max(originalTrackScope + rot, 1);
@@ -168,9 +168,7 @@ public class MidiEditArea extends JComponent {
 						selectedNotes.clear();
 						selectedNotesCopy.clear();
 					} else {
-						selectedNotesCopy.clear();
-						selectedNotesCopy.addAll(selectedNotes.stream().map(e -> e.clone())
-								.collect(Collectors.toList()));
+						makeSelectedNotesCopy();
 					}
 				}
 				if (pop != null && saveToHistory) {
@@ -315,10 +313,8 @@ public class MidiEditArea extends JComponent {
 					values.add(insertionIndex, newNote);
 					newSelectedNotes.add(newNote);
 				}
-				List<PhraseNote> newSelectedNotesCopy = newSelectedNotes.stream()
-						.map(e -> e.clone()).collect(Collectors.toList());
 				selectedNotes = newSelectedNotes;
-				selectedNotesCopy = newSelectedNotesCopy;
+				makeSelectedNotesCopy();
 
 				dragMode.add(DM.POSITION);
 				if (!evt.isShiftDown())
@@ -404,10 +400,13 @@ public class MidiEditArea extends JComponent {
 		} else {
 			selectedNotes = newSelection;
 		}
+		makeSelectedNotesCopy();
+	}
+
+	public void makeSelectedNotesCopy() {
 		selectedNotesCopy.clear();
 		selectedNotesCopy
 				.addAll(selectedNotes.stream().map(e -> e.clone()).collect(Collectors.toList()));
-
 	}
 
 	private boolean noteInRect(PhraseNote pn, Rectangle rect) {
@@ -685,10 +684,10 @@ public class MidiEditArea extends JComponent {
 							int newPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
 									newPitchAbsolute % 12)
 									+ MidiUtils.octavePitch(newPitchAbsolute);
-							selectedNotes.get(i).setPitch(newPitch);
+							selectedNotes.get(i).setPitch(OMNI.clampPitch(newPitch));
 						}
 					} else {
-						draggedNote.setPitch(pitch);
+						draggedNote.setPitch(OMNI.clampPitch(pitch));
 					}
 
 					if (playNote) {

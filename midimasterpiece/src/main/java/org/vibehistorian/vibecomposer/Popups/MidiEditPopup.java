@@ -201,6 +201,11 @@ public class MidiEditPopup extends CloseablePopup {
 				deleteSelected();
 			}
 		};
+		Action selectAllAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				selectAll();
+			}
+		};
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
 		allPanels.getActionMap().put("undo", undoAction);
@@ -210,6 +215,9 @@ public class MidiEditPopup extends CloseablePopup {
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
 		allPanels.getActionMap().put("delete", deleteAction);
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAll");
+		allPanels.getActionMap().put("selectAll", selectAllAction);
 	}
 
 	private JPanel makeTopButtonPanel() {
@@ -706,6 +714,13 @@ public class MidiEditPopup extends CloseablePopup {
 			mvea.reset();
 			saveToHistory();
 		}
+	}
+
+	public void selectAll() {
+		mvea.selectedNotes.clear();
+		mvea.selectedNotes.addAll(mvea.getValues().stream().filter(e -> e.getPitch() >= 0)
+				.collect(Collectors.toList()));
+		mvea.makeSelectedNotesCopy();
 	}
 
 	public void apply() {
