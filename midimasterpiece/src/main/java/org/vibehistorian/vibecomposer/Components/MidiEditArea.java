@@ -387,6 +387,7 @@ public class MidiEditArea extends JComponent {
 	protected void selectAllNotes(MouseEvent evt) {
 		Rectangle rect = getRectFromPoint(evt.getPoint());
 		// any part of note within rectangle 
+		values.remakeNoteStartTimes();
 		List<PhraseNote> newSelection = values.stream().filter(e -> noteInRect(e, rect))
 				.collect(Collectors.toList());
 		if (evt.isControlDown()) {

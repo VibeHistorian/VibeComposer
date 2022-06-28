@@ -1022,6 +1022,9 @@ public class Section {
 
 	@XmlElement(name = "pattern")
 	public List<UsedPatternMap> getPatterns() {
+		if (getGeneratedDurations() == null) {
+			return null;
+		}
 		return patterns;
 	}
 
