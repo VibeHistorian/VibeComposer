@@ -21,6 +21,7 @@ public class MelodyPart extends InstPart {
 	private int splitChance = 0;
 	private int noteExceptionChance = 33;
 	private int speed = 0;
+	private int startNoteChance = 100;
 
 	public MelodyPart() {
 		partNum = 0;
@@ -124,5 +125,13 @@ public class MelodyPart extends InstPart {
 
 	public int getPartNum() {
 		return 0;
+	}
+
+	public int getStartNoteChance() {
+		return startNoteChance;
+	}
+
+	public void setStartNoteChance(int startNoteChance) {
+		this.startNoteChance = startNoteChance;
 	};
 }

@@ -125,6 +125,9 @@ public class MidiGenerator implements JMC {
 				Durations.QUARTER_NOTE, Durations.EIGHTH_NOTE };
 		CHORD_DUR_ARRAY = new double[] { Durations.WHOLE_NOTE * 2, Durations.DOTTED_HALF_NOTE * 2,
 				Durations.WHOLE_NOTE, Durations.HALF_NOTE };
+		MELODY_SKELETON_DURATIONS = new double[] { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
+				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE,
+				Durations.HALF_NOTE };
 	}
 
 	private static final boolean debugEnabled = true;
@@ -173,8 +176,8 @@ public class MidiGenerator implements JMC {
 	public static List<Integer> TARGET_NOTES = null;
 
 
-	// for internal use only
-	private static final double[] MELODY_SKELETON_DURATIONS = { Durations.SIXTEENTH_NOTE,
+	// for internal use only	
+	private static double[] MELODY_SKELETON_DURATIONS = { Durations.SIXTEENTH_NOTE,
 			Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE,
 			Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
 
@@ -823,8 +826,8 @@ public class MidiGenerator implements JMC {
 
 		int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
-		int orderSeed = mp.getPatternSeedWithPartOffset() + mp.getOrder();
 		int seed = mp.getPatternSeedWithPartOffset();
+		int orderSeed = seed + mp.getOrder();
 		Random splitGenerator = new Random(orderSeed + 4);
 		Random pauseGenerator = new Random(orderSeed + 5);
 		Random pauseGenerator2 = new Random(orderSeed + 7);
@@ -1051,6 +1054,8 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
+		Random startNoteRand = new Random(orderSeed + 25);
+
 		// repair target notes
 		for (int i = 0; i < firstNotePitches.size(); i++) {
 			if (fullMelodyMap.get(i).size() > 0) {
@@ -1066,27 +1071,64 @@ public class MidiGenerator implements JMC {
 				return;
 			}
 			Note n = e.get(0);
-			if (n.getPitch() >= 0 && n.getDuration() < Durations.QUARTER_NOTE * 1.1
-					&& e.get(1).getPitch() != n.getPitch() && e.get(2).getPitch() != n.getPitch()) {
+			int pitch = n.getPitch();
+			if (pitch >= 0 && n.getDuration() < Durations.QUARTER_NOTE * 1.1
+					&& e.get(1).getPitch() != pitch && e.get(2).getPitch() != pitch) {
 				n.setDuration(n.getDuration() * (1 + (mp.getAccents() / 200.0)));
 			}
 		});
+
+		// repair target notes
+		for (int i = 0; i < firstNotePitches.size(); i++) {
+			if (fullMelodyMap.get(i).size() > 0) {
+				Note n = fullMelodyMap.get(i).get(0);
+				double preferredDelay = MELODY_SKELETON_DURATIONS[startNoteRand.nextInt(3)];
+				if (n.getPitch() >= 0 && startNoteRand.nextInt(100) >= mp.getStartNoteChance()) {
+					int sixteenths = (int) Math.floor(n.getDuration() / Durations.SIXTEENTH_NOTE);
+					double usedDelay = -1;
+					switch (sixteenths) {
+					case 0:
+						n.setPitch(Note.REST);
+						break;
+					case 1:
+						n.setPitch(Note.REST);
+						break;
+					case 2:
+						usedDelay = Durations.SIXTEENTH_NOTE;
+						break;
+					case 3:
+						usedDelay = Math.min(preferredDelay, Durations.EIGHTH_NOTE);
+						break;
+					case 4:
+						usedDelay = Math.min(preferredDelay, Durations.EIGHTH_NOTE);
+						break;
+					default:
+						usedDelay = Math.min(preferredDelay, Durations.DOTTED_EIGHTH_NOTE);
+						break;
+					}
+					if (usedDelay > 0) {
+						n.setOffset(n.getOffset() + usedDelay);
+						n.setDuration(n.getDuration() - usedDelay);
+					}
+				}
+			}
+		}
 
 		if (sec.getVariation(0, mp.getAbsoluteOrder()).contains(Integer.valueOf(3))) {
 			double currRv = 0;
 			for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
 				List<Note> notes = fullMelodyMap.get(chordIndex);
 				for (Note n : notes) {
-					double noteStart = currRv + n.getOffset();
-					double noteEnd = noteStart + n.getDuration();
+					if (n.getPitch() >= 0) {
+						double noteStart = currRv + n.getOffset();
+						double noteEnd = noteStart + n.getDuration();
 
-					double closestEndOnGrid = Math.floor(noteEnd / Durations.EIGHTH_NOTE)
-							* Durations.EIGHTH_NOTE;
-					if (closestEndOnGrid > (noteStart + Durations.SIXTEENTH_NOTE / 2)) {
-						n.setDuration(closestEndOnGrid - noteStart);
+						double closestEndOnGrid = Math.floor(noteEnd / Durations.EIGHTH_NOTE)
+								* Durations.EIGHTH_NOTE;
+						if (closestEndOnGrid > (noteStart + Durations.SIXTEENTH_NOTE / 2)) {
+							n.setDuration(closestEndOnGrid - noteStart);
+						}
 					}
-
-
 				}
 			}
 		}
