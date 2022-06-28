@@ -636,6 +636,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 
 		mvea.part = part;
+		mvea.marginX = (mvea.part == 4) ? 160 : 80;
 		mvea.setValues(values);
 		saveToHistory();
 

@@ -131,6 +131,8 @@ public class PatternManagerPopup extends CloseablePopup {
 
 
 		mvea.part = OMNI.clamp(patternPartBox.getSelectedIndex(), 0, 4);
+		mvea.marginX = (mvea.part == 4) ? 160 : 80;
+
 		mvea.setValues(values);
 
 		repaintMvea();

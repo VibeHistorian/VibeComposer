@@ -46,8 +46,8 @@ public class MidiEditArea extends JComponent {
 	PhraseNotes values = null;
 	public int part = 0;
 
-	int marginX = 80;
-	int marginY = 40;
+	public int marginX = 80;
+	public int marginY = 40;
 
 	int markWidth = 6;
 	int numHeight = 6;
@@ -791,6 +791,9 @@ public class MidiEditArea extends JComponent {
 
 			// draw numbers left of Y line
 			// draw line marks
+
+			int drawEveryX = Math.max((int) Math.ceil((numHeight + 4) / rowHeight), 1);
+
 			for (int i = 0; i < 1 + (max - min); i++) {
 				int drawnInt = min + i;
 				String drawnValue = "" + (drawnInt) + " | "
@@ -817,7 +820,10 @@ public class MidiEditArea extends JComponent {
 				g.drawLine(bottomLeft.x, drawY, w, drawY);
 
 				g.setColor(VibeComposerGUI.uiColor());
-				g.drawString(drawnValue, drawValueX, drawY + numHeight / 2);
+				if (drawnInt % drawEveryX == 0) {
+					g.drawString(drawnValue, drawValueX, drawY + numHeight / 2);
+				}
+
 				g.drawLine(drawMarkX, drawY, drawMarkX + markWidth, drawY);
 
 
@@ -856,16 +862,20 @@ public class MidiEditArea extends JComponent {
 				double remainderToOne = curr % 1.0;
 				double remainderToFour = curr % 2.0;
 				if (remainderToOne < 0.05 || MidiUtils.isMultiple(remainderToFour, lineSpacing)) {
-					String drawnValue = "";
+					String drawnValue = null;
 					if (remainderToOne < 0.05) {
 						drawnValue = String.format("%.0f", curr);
 					} else {
-						drawnValue = dblDraw2(remainderToOne);
-						drawnValue = "." + drawnValue.split(",")[1];
+						if (lineSpacing > 0.49 || MidiUtils.roughlyEqual(remainderToOne, 0.5)) {
+							drawnValue = dblDraw2(remainderToOne);
+							drawnValue = "." + drawnValue.split(",")[1];
+						}
+					}
+					if (drawnValue != null) {
+						g.drawString(drawnValue, drawX - (numWidth * drawnValue.length()) / 2,
+								drawValueY);
 					}
 
-					g.drawString(drawnValue, drawX - (numWidth * drawnValue.length()) / 2,
-							drawValueY);
 				}
 				g.drawLine(drawX, drawMarkY, drawX, drawMarkY + markWidth);
 
@@ -957,9 +967,11 @@ public class MidiEditArea extends JComponent {
 				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
 				g.drawLine(drawX, drawY - 5, drawX, drawY + 5);
 				g.drawLine(drawX + width, drawY - 5, drawX + width, drawY + 5);
-
-				g.drawString(pitchForText + "(" + MidiUtils.pitchToString(pitchForText) + ") :"
-						+ pn.getDynamic(), drawX + ovalWidth / 2, drawY - ovalWidth / 2);
+				String drawnString = (width > 20)
+						? (pitchForText + "(" + MidiUtils.pitchToString(pitchForText) + ") :"
+								+ pn.getDynamic())
+						: String.valueOf(pitchForText);
+				g.drawString(drawnString, drawX + ovalWidth / 2, drawY - ovalWidth / 2);
 
 				if ((draggedNote != null && pn == draggedNote) || selectedNotes.contains(pn)) {
 					g.setColor(OMNI.alphen(OMNI.mixColor(VibeComposerGUI.uiColor(), Color.red, 0.7),
