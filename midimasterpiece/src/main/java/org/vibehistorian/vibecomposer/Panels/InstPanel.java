@@ -359,8 +359,10 @@ public abstract class InstPanel extends JPanel {
 
 		if (comboPanel != null && pattern.isEnabled()) {
 			comboPanel.setVelocities(part.getCustomVelocities());
-			if (part.getPattern() == RhythmPattern.CUSTOM && part.getCustomPattern() != null
-					&& part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS) {
+			if ((part.getPattern() == RhythmPattern.CUSTOM
+					|| part.getPattern() == RhythmPattern.EUCLID)
+					&& (part.getCustomPattern() != null)
+					&& (part.getCustomPattern().size() == VisualPatternPanel.MAX_HITS)) {
 				comboPanel.setTruePattern(new ArrayList<>(part.getCustomPattern()));
 			}
 		}
