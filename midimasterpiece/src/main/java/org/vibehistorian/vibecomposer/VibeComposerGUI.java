@@ -639,8 +639,8 @@ public class VibeComposerGUI extends JFrame
 	JList<File> generatedMidi;
 	public static Sequencer sequencer = null;
 	public static Map<Integer, List<MidiEvent>> midiEventsToRemove = new HashMap<>();
-	public File currentMidi = null;
-	public File currentSequenceMidi = null;
+	public static File currentMidi = null;
+	public static File currentSequenceMidi = null;
 	MidiDevice device = null;
 
 	public static JButton showScore;
@@ -5568,88 +5568,123 @@ public class VibeComposerGUI extends JFrame
 		composingInProgress = true;
 		boolean logPerformance = true;
 		long systemTime = System.currentTimeMillis();
-		if (sequencer != null) {
-			sequencer.stop();
-			flushMidiEvents();
-		}
-
-		if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
-				|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
-			LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
-			new TemporaryInfoPopup(("Nothing to compose! Uncheck MANUAL arrangement!"), 3000);
-			composingInProgress = false;
-			return;
-		}
-
-		saveStartInfo();
-		savedIndicatorLabel.setVisible(false);
-		if (midiMode.isSelected()) {
-			if (synth != null) {
-				if (isSoundbankSynth && soundfont != null) {
-					synth.unloadAllInstruments(soundfont);
-				}
-				synth.close();
-				synth = null;
-				System.gc();
-			}
-		} else {
-			if (device != null) {
-				if (synth != null) {
-					synth.close();
-					synth = null;
-				}
-				if (sequencer != null) {
-					sequencer.close();
-					sequencer = null;
-					LG.i(("CLOSED SEQUENCER!"));
-				}
-				device.close();
-				device = null;
-				LG.i(("CLOSED DEVICE!"));
-			}
-		}
-
-		needToRecalculateSoloMuters = true;
-
-		Integer masterpieceSeed = prepareMainSeed(regenerate);
-
-		int regenerateCount = (regenerate) ? guiConfig.getRegenerateCount() + 1 : 0;
-
-		prepareUI(regenerate);
-		if (logPerformance) {
-			LG.i("After prepareUI: " + (System.currentTimeMillis() - systemTime));
-		}
-		GUIConfig midiConfig = new GUIConfig();
-		copyGUItoConfig(midiConfig, true);
-
-		melodyGen = new MidiGenerator(midiConfig);
-		fillUserParameters(regenerate);
-
-		File makeDir = new File(MIDIS_FOLDER);
-		makeDir.mkdir();
-		makeDir = new File(MIDI_HISTORY_FOLDER);
-		makeDir.mkdir();
-
-		String seedData = "" + masterpieceSeed;
-		if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
-			seedData += "_" + melodyPanels.get(0).getPatternSeed();
-		}
-		String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
-				.replaceAll("#", "s");
-
-		String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
-				+ "_seed" + seedData;
-		String relPath = MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
-
-		// unapply S/M, generate, reapply S/M with new track numbering
-		unapplySolosMutes(true);
-
-		if (logPerformance) {
-			LG.i("After setup: " + (System.currentTimeMillis() - systemTime));
-		}
 
 		try {
+			if (sequencer != null) {
+				sequencer.stop();
+				flushMidiEvents();
+			}
+
+			if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
+					|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
+				LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
+				new TemporaryInfoPopup(("Nothing to compose! Uncheck MANUAL arrangement!"), 3000);
+				composingInProgress = false;
+				return;
+			}
+
+			saveStartInfo();
+			savedIndicatorLabel.setVisible(false);
+			if (midiMode.isSelected()) {
+				if (synth != null) {
+					if (isSoundbankSynth && soundfont != null) {
+						synth.unloadAllInstruments(soundfont);
+					}
+					synth.close();
+					synth = null;
+					System.gc();
+				}
+			} else {
+				if (device != null) {
+					if (synth != null) {
+						synth.close();
+						synth = null;
+					}
+					if (sequencer != null) {
+						sequencer.close();
+						sequencer = null;
+						LG.i(("CLOSED SEQUENCER!"));
+					}
+					device.close();
+					device = null;
+					LG.i(("CLOSED DEVICE!"));
+				}
+			}
+
+			needToRecalculateSoloMuters = true;
+
+			Integer masterpieceSeed = prepareMainSeed(regenerate);
+
+			int regenerateCount = (regenerate) ? guiConfig.getRegenerateCount() + 1 : 0;
+
+			prepareUI(regenerate);
+			if (logPerformance) {
+				LG.i("After prepareUI: " + (System.currentTimeMillis() - systemTime));
+			}
+			GUIConfig midiConfig = new GUIConfig();
+			copyGUItoConfig(midiConfig, true);
+
+			melodyGen = new MidiGenerator(midiConfig);
+			fillUserParameters(regenerate);
+
+			File makeDir = new File(MIDIS_FOLDER);
+			makeDir.mkdir();
+			makeDir = new File(MIDI_HISTORY_FOLDER);
+			makeDir.mkdir();
+
+			String seedData = "" + masterpieceSeed;
+			if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
+				seedData += "_" + melodyPanels.get(0).getPatternSeed();
+			}
+			String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
+					.replaceAll("#", "s");
+
+			String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
+					+ "_seed" + seedData;
+			String relPath = MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
+
+			// unapply S/M, generate, reapply S/M with new track numbering
+			unapplySolosMutes(true);
+
+			if (logPerformance) {
+				LG.i("After setup: " + (System.currentTimeMillis() - systemTime));
+			}
 			melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+
+			guiConfig = midiConfig;
+			//LG.i("Adding to config history, reason: " + regenerate);
+			//fixCombinedTracks();
+			reapplySolosMutes();
+
+			cleanUpUIAfterCompose(regenerate);
+
+			if (logPerformance) {
+				LG.i("After cleanup: " + (System.currentTimeMillis() - systemTime));
+			}
+
+			if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
+					|| configHistory.getItemCount() == 0) {
+				midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+				midiConfig.setRegenerateCount(regenerateCount);
+				configHistory.addItem(midiConfig);
+				configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
+				if (configHistory.getItemCount() > 10) {
+					configHistory.removeItemAt(0);
+				}
+			}
+
+			try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(new Date().toString() + ", Seed: " + seedData);
+			} catch (IOException e) {
+				LG.i(("Failed to write into Random Seed History.."));
+			}
+
+			handleGeneratedMidi(regenerate, relPath, systemTime);
+			resetArrSectionInBackground();
+			composingInProgress = false;
+
 		} catch (Exception e) {
 			LG.e("Exception during midi generation! Cause: " + e.getMessage(), e);
 			composingInProgress = false;
@@ -5657,40 +5692,6 @@ public class VibeComposerGUI extends JFrame
 			reapplySolosMutes();
 			return;
 		}
-
-		guiConfig = midiConfig;
-		//LG.i("Adding to config history, reason: " + regenerate);
-		//fixCombinedTracks();
-		reapplySolosMutes();
-
-		cleanUpUIAfterCompose(regenerate);
-
-		if (logPerformance) {
-			LG.i("After cleanup: " + (System.currentTimeMillis() - systemTime));
-		}
-
-		if (configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
-				|| configHistory.getItemCount() == 0) {
-			midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
-			midiConfig.setRegenerateCount(regenerateCount);
-			configHistory.addItem(midiConfig);
-			configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
-			if (configHistory.getItemCount() > 10) {
-				configHistory.removeItemAt(0);
-			}
-		}
-
-		try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)) {
-			out.println(new Date().toString() + ", Seed: " + seedData);
-		} catch (IOException e) {
-			LG.i(("Failed to write into Random Seed History.."));
-		}
-
-		handleGeneratedMidi(regenerate, relPath, systemTime);
-		resetArrSectionInBackground();
-		composingInProgress = false;
 		LG.i("================== VibeComposerGUI::composeMidi time: "
 				+ (System.currentTimeMillis() - systemTime) + " ms ==========================");
 	}
@@ -7222,6 +7223,7 @@ public class VibeComposerGUI extends JFrame
 		try {
 			GUIPreset preset = new GUIPreset();
 			copyGUItoConfig(preset);
+			preset.setPatternMaps(guiConfig.getPatternMaps());
 			List<Component> presetComps = makeSettableComponentList();
 			List<Integer> presetCompValues = new ArrayList<>();
 			for (int i = 0; i < presetComps.size(); i++) {
@@ -7307,7 +7309,7 @@ public class VibeComposerGUI extends JFrame
 	public static void savePauseInfo() {
 		pausedSliderPosition = slider.getUpperValue();
 		pausedBpm = mainBpm.getInt();
-		if (MidiGenerator.chordInts.size() > 0) {
+		if ((currentMidi != null) && (MidiGenerator.chordInts.size() > 0)) {
 			for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
 				if (sliderMeasureStartTimes.get(i) >= pausedSliderPosition + 50) {
 					pausedMeasureCounter = i - 1;
@@ -7323,7 +7325,7 @@ public class VibeComposerGUI extends JFrame
 	private void saveStartInfo() {
 		startSliderPosition = slider.getValue();
 		startBpm = mainBpm.getInt();
-		if (MidiGenerator.chordInts.size() > 0) {
+		if ((currentMidi != null) && (MidiGenerator.chordInts.size() > 0)) {
 			for (int i = 1; i < sliderBeatStartTimes.size(); i++) {
 				if (sliderBeatStartTimes.get(i) >= startSliderPosition + 50) {
 					startBeatCounter = i - 1;

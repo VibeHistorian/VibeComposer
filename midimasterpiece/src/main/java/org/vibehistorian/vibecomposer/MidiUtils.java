@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -40,7 +41,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
-import jm.music.tools.Mod;
 
 public class MidiUtils {
 
@@ -1555,7 +1555,29 @@ public class MidiUtils {
 			return;
 		}
 
-		Mod.changeLength(phr, newLength);
+		changePhraseLength(phr, newLength);
+	}
+
+	public static void changePhraseLength(Phrase phrase, double newLength) {
+		if (phrase == null || newLength <= 0.0) {
+			return;
+		}
+		final double oldLength = phrase.getEndTime() - phrase.getStartTime();
+		elongatePhrase(phrase, newLength / oldLength);
+	}
+
+	public static void elongatePhrase(Phrase phrase, double scaleFactor) {
+		if (phrase == null || scaleFactor <= 0.0) {
+			return;
+		}
+
+		Enumeration enum1 = phrase.getNoteList().elements();
+		while (enum1.hasMoreElements()) {
+			Note note = (Note) enum1.nextElement();
+			note.setRhythmValue(note.getRhythmValue() * scaleFactor);
+			note.setDuration(note.getDuration() * scaleFactor);
+			note.setOffset(note.getOffset() * scaleFactor);
+		}
 	}
 
 	public static boolean roughlyEqual(double first, double second) {

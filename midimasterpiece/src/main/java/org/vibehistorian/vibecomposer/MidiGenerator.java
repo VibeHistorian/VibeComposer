@@ -3981,8 +3981,9 @@ public class MidiGenerator implements JMC {
 						ScaleMode.IONIAN.noteAdjustScale);
 			}
 			if (ip.getOrder() == 1) {
+				int numChords = progressionDurations.size();
 				fullMelodyMap = new HashMap<>();
-				for (int i = 0; i < progressionDurations.size() * measures; i++) {
+				for (int i = 0; i < numChords * measures; i++) {
 					fullMelodyMap.put(i, new ArrayList<>());
 				}
 				int chordCounter = 0;
@@ -4004,19 +4005,16 @@ public class MidiGenerator implements JMC {
 					pns.get(pns.size() - 1).setRv(endTime - pns.get(pns.size() - 2).getStartTime());
 				}
 
-
 				for (int i = 0; i < pns.size(); i++) {
 					PhraseNote n = pns.get(i);
 					if (n.getStartTime() > (cumulativeChordDur - DBL_ERR)) {
-						chordCounter = (chordCounter + 1) % progressionDurations.size();
+						chordCounter = (chordCounter + 1) % numChords;
 						if (chordCounter == 0) {
 							measureCounter++;
 						}
-						cumulativeChordDur += progressionDurations
-								.get(chordCounter % progressionDurations.size());
+						cumulativeChordDur += progressionDurations.get(chordCounter % numChords);
 					}
-					fullMelodyMap.get(chordCounter + progressionDurations.size() * measureCounter)
-							.add(n.toNote());
+					fullMelodyMap.get(chordCounter + numChords * measureCounter).add(n.toNote());
 				}
 			}
 

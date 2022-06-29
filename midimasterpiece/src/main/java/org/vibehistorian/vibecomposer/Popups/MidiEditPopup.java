@@ -809,49 +809,53 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public PhraseNotes recomposePart(boolean isRandom) {
 		MidiGenerator mg = VibeComposerGUI.melodyGen;
+		try {
 
-		mg.storeGlobalParts();
-		mg.replaceWithSectionCustomChordDurations(sec);
+			mg.storeGlobalParts();
+			mg.replaceWithSectionCustomChordDurations(sec);
 
-		mg.progressionDurations = new ArrayList<>(sec.getGeneratedDurations());
+			mg.progressionDurations = new ArrayList<>(sec.getGeneratedDurations());
 
-		sec.putPattern(part, partOrder, getSelectedPatternNone());
+			sec.putPattern(part, partOrder, getSelectedPatternNone());
 
-		LG.i("Chord prog: " + mg.chordProgression.size());
-		InstPart ip = MidiGenerator.gc.getInstPartList(part).stream()
-				.filter(e -> e.getOrder() == partOrder).findFirst().get();
+			LG.i("Chord prog: " + mg.chordProgression.size());
+			InstPart ip = MidiGenerator.gc.getInstPartList(part).stream()
+					.filter(e -> e.getOrder() == partOrder).findFirst().get();
 
-		int seed = ip.getPatternSeed();
-		if (isRandom) {
-			ip.setPatternSeed(new Random().nextInt());
+			int seed = ip.getPatternSeed();
+			if (isRandom) {
+				ip.setPatternSeed(new Random().nextInt());
+			}
+			List<Integer> variations = sec.getVariation(part, partOrder);
+			switch (part) {
+			case 0:
+				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
+						sec.getTypeMelodyOffset(), sec, variations, false);
+				break;
+			case 1:
+				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);
+				break;
+			case 2:
+				mg.fillChordsFromPart((ChordPart) ip, mg.chordProgression, sec, variations);
+				break;
+			case 3:
+				mg.fillArpFromPart((ArpPart) ip, mg.chordProgression, sec, variations);
+				break;
+			case 4:
+				mg.fillDrumsFromPart((DrumPart) ip, mg.chordProgression, sec.isClimax(), sec,
+						variations);
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid part: " + part);
+			}
+			ip.setPatternSeed(seed);
+
+			mg.replaceChordsDurationsFromBackup();
+			mg.restoreGlobalPartsToGuiConfig();
+
+		} catch (Exception e) {
+			// error will be revealed in next popup
 		}
-		List<Integer> variations = sec.getVariation(part, partOrder);
-		switch (part) {
-		case 0:
-			mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
-					sec.getTypeMelodyOffset(), sec, variations, false);
-			break;
-		case 1:
-			mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);
-			break;
-		case 2:
-			mg.fillChordsFromPart((ChordPart) ip, mg.chordProgression, sec, variations);
-			break;
-		case 3:
-			mg.fillArpFromPart((ArpPart) ip, mg.chordProgression, sec, variations);
-			break;
-		case 4:
-			mg.fillDrumsFromPart((DrumPart) ip, mg.chordProgression, sec.isClimax(), sec,
-					variations);
-			break;
-		default:
-			throw new IllegalArgumentException("Invalid part: " + part);
-		}
-		ip.setPatternSeed(seed);
-
-		mg.replaceChordsDurationsFromBackup();
-		mg.restoreGlobalPartsToGuiConfig();
-
 		UsedPattern generatedPat = sec.getPattern(part, partOrder);
 		LG.i("Recompose, new pattern: " + generatedPat.toString());
 		PhraseNotes pn = MidiGenerator.gc.getPattern(generatedPat);
