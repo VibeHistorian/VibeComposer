@@ -196,10 +196,10 @@ public class NumPanel extends JPanel {
 					needToReset = true;
 					int potentialMax = valueRect.getValue() + valueRect.getMax() / 10;
 					int potentialMin = valueRect.getValue() - valueRect.getMax() / 10;
-					valueRect.setMax(
-							(potentialMax > valueRect.getMax()) ? valueRect.getMax() : potentialMax);
-					valueRect.setMin(
-							(potentialMin < valueRect.getMin()) ? valueRect.getMin() : potentialMin);
+					valueRect.setMax((potentialMax > valueRect.getMax()) ? valueRect.getMax()
+							: potentialMax);
+					valueRect.setMin((potentialMin < valueRect.getMin()) ? valueRect.getMin()
+							: potentialMin);
 				}
 				dragging = true;
 				startNumSliderThread(me);
@@ -288,6 +288,7 @@ public class NumPanel extends JPanel {
 		try {
 			tryValue = Integer.valueOf(text.getText());
 			if (allowValuesOutsideRange) {
+				text.setBackground(OMNI.alphen(Color.red, 0));
 				return;
 			}
 			if (tryValue > valueRect.getMax()) {
