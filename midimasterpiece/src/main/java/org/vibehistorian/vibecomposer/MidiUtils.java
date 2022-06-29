@@ -1550,7 +1550,7 @@ public class MidiUtils {
 	}
 
 	public static void scalePhrase(Phrase phr, double newLength) {
-		LG.i("Scale phrase: " + phr.getBeatLength() + ", to: " + newLength);
+		LG.d("Scale phrase: " + phr.getBeatLength() + ", to: " + newLength);
 		if (roughlyEqual(phr.getBeatLength(), newLength)) {
 			return;
 		}

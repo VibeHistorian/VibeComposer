@@ -9,8 +9,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
-import org.vibehistorian.vibecomposer.LG;
-
 @XmlRootElement(name = "namedNotesMap")
 @XmlType(propOrder = {})
 @XmlSeeAlso({ PhraseNotes.class })
@@ -36,8 +34,10 @@ public class NamedNotesMap {
 	}
 
 	public void setNamedNotesMap(Map<String, PhraseNotes> namedNotesMap) {
-		for (Entry<String, PhraseNotes> s : namedNotesMap.entrySet()) {
-			LG.i(s.getKey() + " :|||: " + s.getValue().toStringPitches());
+		for (String basePat : UsedPattern.BASE_PATTERNS) {
+			if (!namedNotesMap.containsKey(basePat)) {
+				namedNotesMap.put(basePat, null);
+			}
 		}
 		this.namedNotesMap = namedNotesMap;
 	}

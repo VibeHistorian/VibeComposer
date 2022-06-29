@@ -5208,9 +5208,11 @@ public class MidiGenerator implements JMC {
 		}
 
 		PhraseNotes pn = gc.getPattern(pat);
+		UsedPattern sectionTypePat = new UsedPattern(ip.getPartNum(), ip.getOrder(),
+				sec.getPatternType());
 		if (pn == null || !pn.isApplied()) {
 			//LG.i("Pattern 1 is null: " + (pn == null));
-			pat = new UsedPattern(ip.getPartNum(), ip.getOrder(), sec.getPatternType());
+			pat = sectionTypePat;
 			pn = gc.getPattern(pat);
 			//LG.i("Pattern 2 is null: " + (pn == null));
 			if (pn != null && !pn.isApplied()) {
@@ -5221,11 +5223,19 @@ public class MidiGenerator implements JMC {
 		}
 
 		if (pn != null) {
-			LG.i("Loaded pattern for: " + ip.partInfo() + ", pattern: " + pat.toString());
+			LG.d("Loaded pattern for: " + ip.partInfo() + ", pattern: " + pat.toString());
 			Phrase customPhr = pn.makePhrase();
 			MidiUtils.scalePhrase(customPhr,
 					progressionDurations.stream().mapToDouble(e -> e).sum() * sec.getMeasures());
 			phr.setNoteList(customPhr.getNoteList());
+
+			// also check if section pattern exists in GC..
+			PhraseNotes oldPn = gc.getPattern(sectionTypePat);
+			if (oldPn != null && oldPn.isApplied()) {
+				LG.d("Skipping section pattern for: " + ip.partInfo());
+			} else {
+				gc.putPattern(sectionTypePat, pn);
+			}
 			return true;
 		} else {
 			//LG.d("Not overwritten with MIDI: " + ip.getPartNum() + ", " + ip.getAbsoluteOrder());

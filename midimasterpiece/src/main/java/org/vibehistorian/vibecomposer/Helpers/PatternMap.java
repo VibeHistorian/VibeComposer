@@ -123,6 +123,7 @@ public class PatternMap {
 		if (other == null) {
 			return map;
 		}
+		map.part = other.part;
 		for (Integer key : other.getPartOrderPatternMap().keySet()) {
 			for (Entry<String, PhraseNotes> nameNotes : other.getPartOrderPatternMap().get(key)
 					.getMap().entrySet()) {
