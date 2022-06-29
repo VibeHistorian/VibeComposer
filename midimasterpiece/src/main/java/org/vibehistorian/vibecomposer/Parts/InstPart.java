@@ -373,8 +373,15 @@ public abstract class InstPart implements Cloneable {
 	public List<Integer> getFinalPatternCopy() {
 		List<Integer> premadePattern = null;
 		if (getPattern() != RhythmPattern.CUSTOM) {
-			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
-					getPatternShift());
+			RhythmPattern d = getPattern();
+			int shift = getPatternShift();
+			int hits = getHitsPerPattern();
+			premadePattern = ((d == RhythmPattern.EUCLID) && (getCustomPattern() != null))
+					? RhythmPattern.makeEuclideanPattern(hits,
+							(int) getCustomPattern().subList(0, hits).stream().filter(e -> e > 0)
+									.count(),
+							shift, null)
+					: d.getPatternByLength(hits, shift);
 		} else {
 			List<Integer> premadeCopy = new ArrayList<>(getCustomPattern());
 			Collections.rotate(premadeCopy, getPatternShift());

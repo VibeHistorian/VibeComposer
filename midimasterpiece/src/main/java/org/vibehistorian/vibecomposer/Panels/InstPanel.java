@@ -845,8 +845,15 @@ public abstract class InstPanel extends JPanel {
 	public List<Integer> getFinalPatternCopy() {
 		List<Integer> premadePattern = null;
 		if (getPattern() != RhythmPattern.CUSTOM) {
-			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
-					getPatternShift());
+			RhythmPattern d = getPattern();
+			int shift = getPatternShift();
+			int hits = getHitsPerPattern();
+			premadePattern = (d == RhythmPattern.EUCLID)
+					? RhythmPattern.makeEuclideanPattern(hits,
+							(int) comboPanel.getTruePattern().subList(0, hits).stream()
+									.filter(e -> e > 0).count(),
+							shift, null)
+					: d.getPatternByLength(hits, shift);
 		} else {
 			List<Integer> premadeCopy = new ArrayList<>(getComboPanel().getTruePattern());
 			Collections.rotate(premadeCopy, getPatternShift());

@@ -8788,8 +8788,7 @@ public class VibeComposerGUI extends JFrame
 			fixedChordStretch = randomChordStretchPicker.getVal();
 		}
 
-		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
-		viablePatterns.remove(RhythmPattern.CUSTOM);
+		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
 
 		for (int i = 0; i < panelCount; i++) {
 			boolean needNewChannel = false;
@@ -9003,8 +9002,7 @@ public class VibeComposerGUI extends JFrame
 
 		ArpPanel first = (affectedArps.isEmpty() || !affectedArps.get(0).getLockInst()
 				|| (randomizedPanel != null && start == 0)) ? null : affectedArps.get(0);
-		List<RhythmPattern> viablePatterns = new ArrayList<>(Arrays.asList(RhythmPattern.values()));
-		viablePatterns.remove(RhythmPattern.CUSTOM);
+		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
 
 		for (int i = start; i < panelCount; i++) {
 			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {

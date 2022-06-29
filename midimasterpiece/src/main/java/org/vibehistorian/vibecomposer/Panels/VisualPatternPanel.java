@@ -276,7 +276,13 @@ public class VisualPatternPanel extends JPanel {
 					VisualPatternPanel.this.setVisible(false);
 					RhythmPattern d = patternType.getVal();
 					if (d != RhythmPattern.CUSTOM) {
-						truePattern = d.getPatternByLength(MAX_HITS, 0);
+						int hits = hitsKnob.getInt();
+						truePattern = (d == RhythmPattern.EUCLID)
+								? RhythmPattern.makeEuclideanPattern(hits,
+										(int) truePattern.subList(0, hits).stream()
+												.filter(e -> e > 0).count(),
+										0, MAX_HITS)
+								: d.getPatternByLength(MAX_HITS, 0);
 						if (trueVelocities.isEmpty()) {
 							int updatedVel = (parentPanel.getVelocityMax()
 									+ parentPanel.getVelocityMin()) / 2;
