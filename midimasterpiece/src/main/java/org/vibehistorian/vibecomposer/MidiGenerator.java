@@ -5234,7 +5234,9 @@ public class MidiGenerator implements JMC {
 			if (oldPn != null && oldPn.isApplied()) {
 				LG.d("Skipping section pattern for: " + ip.partInfo());
 			} else {
-				gc.putPattern(sectionTypePat, pn);
+				oldPn = pn.copy();
+				oldPn.setApplied(false);
+				gc.putPattern(sectionTypePat, oldPn);
 			}
 			return true;
 		} else {

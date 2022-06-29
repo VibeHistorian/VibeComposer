@@ -150,8 +150,6 @@ public class MidiEditPopup extends CloseablePopup {
 
 		setCustomValues(values);
 
-		MidiEditArea.sectionLength = values.stream().map(e -> e.getRv()).mapToDouble(e -> e).sum();
-
 
 		allPanels.add(buttonPanel);
 		allPanels.add(buttonPanel2);
@@ -809,6 +807,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public PhraseNotes recomposePart(boolean isRandom) {
 		MidiGenerator mg = VibeComposerGUI.melodyGen;
+		UsedPattern oldPattern = sec.getPattern(part, partOrder);
 		try {
 
 			mg.storeGlobalParts();
@@ -864,6 +863,9 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea.min = 110;
 		mvea.max = 10;
 
+		if (oldPattern != null) {
+			sec.putPattern(part, partOrder, oldPattern);
+		}
 
 		if (pn == null) {
 			new TemporaryInfoPopup("Recomposing produced no notes, quitting!", 1500);
@@ -871,7 +873,7 @@ public class MidiEditPopup extends CloseablePopup {
 			close();
 			return new PhraseNotes(Collections.singletonList(new Note("C4")));
 		} else {
-			setup(sec);
+			setCustomValues(pn);
 			//mg.fill
 			return getValues();
 		}
