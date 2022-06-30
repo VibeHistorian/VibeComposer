@@ -5932,6 +5932,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
+			LG.i("MidiEditPopup is open - saving!");
 			currentMidiEditorPopup.saveNotes(false);
 		}
 

@@ -924,7 +924,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (saveOnClose) {
+				if (frame.isVisible() && saveOnClose) {
 					saveNotes(false);
 				}
 			}
