@@ -3464,9 +3464,18 @@ public class VibeComposerGUI extends JFrame
 							int absOrder = VibeComposerGUI.getAbsoluteOrder(part, p);
 							sec2.setPresence(part, absOrder);
 							sec2.setVariation(part, absOrder, sec.getVariation(part, absOrder));
+							if (evt.isShiftDown()) {
+								// CTRL+SHIFT+RMB/MMB -> also copy all section patterns if available and applied
+								UsedPattern pat = sec.getPattern(part, p);
+								if (pat != null) {
+									PhraseNotes pn = guiConfig.getPatternRaw(pat);
+									if (pn != null && pn.isApplied()) {
+										sec2.putPattern(part, p, pat);
+									}
+								}
+							}
 						}
 						sec2.setInstPartList(sec.getInstPartList(part), part);
-
 					}
 				} else if (randomizerButtonPressed) {
 					if (mClick) {
