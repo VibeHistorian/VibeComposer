@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -109,7 +110,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	MidiEditArea mvea = null;
 	InstPanel ip = null;
-	//JTextField text = null;
+	JTextField text = null;
 	Section sec = null;
 
 	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
@@ -326,9 +327,10 @@ public class MidiEditPopup extends CloseablePopup {
 	private JPanel bottomActionsPreferencesPanel(PhraseNotes values) {
 		JPanel bottomSettingsPanel = new JPanel();
 		bottomSettingsPanel.setLayout(new BoxLayout(bottomSettingsPanel, BoxLayout.X_AXIS));
-		/*text = new JTextField(values.toStringPitches(), 40);
+		text = new JTextField("", 25);
+		text.setEditable(false);
 		bottomSettingsPanel.add(text);
-		bottomSettingsPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
+		/*bottomSettingsPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
 			if (StringUtils.isNotEmpty(text.getText())) {
 				try {
 					String[] textSplit = text.getText().split(",");
@@ -476,8 +478,8 @@ public class MidiEditPopup extends CloseablePopup {
 			apply();
 		}));*/
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Unapply", e -> {
-			unapply();
+		buttonPanel2.add(VibeComposerGUI.makeButton("Apply 'NONE'", e -> {
+			applyNone();
 		}));
 
 		buttonPanel2.add(VibeComposerGUI.makeButton("<html>Close<br>(w/o Applying)</html>", e -> {
@@ -739,11 +741,12 @@ public class MidiEditPopup extends CloseablePopup {
 		}
 	}
 
-	public void unapply() {
+	public void applyNone() {
 		if (mvea != null && mvea.getValues() != null) {
 			UsedPattern pat = getSelectedPattern();
 			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(false);
 			sec.putPattern(part, partOrder, new UsedPattern(part, partOrder, UsedPattern.NONE));
+			repaintMvea();
 			VibeComposerGUI.scrollableArrangementActualTable.repaint();
 		}
 	}
@@ -883,7 +886,13 @@ public class MidiEditPopup extends CloseablePopup {
 		mvea.setAndRepaint();
 		MidiEditArea.sectionLength = mvea.getValues().stream().map(e -> e.getRv())
 				.mapToDouble(e -> e).sum();
-		//text.setText(mvea.getValues().toStringPitches());
+		if (sec != null) {
+			UsedPattern pat = sec.getPattern(part, partOrder);
+			String patName = (pat != null) ? pat.toString() : "<No pattern>";
+			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(pat);
+			patName += (pn != null && pn.isApplied()) ? " - Applied" : " - Not Applied";
+			text.setText(patName);
+		}
 	}
 
 	public void updateHistoryBox() {

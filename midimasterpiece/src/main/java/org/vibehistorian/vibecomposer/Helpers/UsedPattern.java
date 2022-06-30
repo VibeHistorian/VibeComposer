@@ -80,7 +80,7 @@ public class UsedPattern {
 	}
 
 	public static String generateName(int part, int partOrder) {
-		return VibeComposerGUI.instNames[part].substring(0, 1) + partOrder + "-"
+		return VibeComposerGUI.instNames[part].substring(0, 1) + partOrder + ";"
 				+ new Date().hashCode();
 	}
 
@@ -116,7 +116,7 @@ public class UsedPattern {
 
 	@Override
 	public String toString() {
-		return "[" + part + ", " + partOrder + ", " + name + "]";
+		return "[" + VibeComposerGUI.instNames[part] + ", " + partOrder + ", " + name + "]";
 	}
 
 }
