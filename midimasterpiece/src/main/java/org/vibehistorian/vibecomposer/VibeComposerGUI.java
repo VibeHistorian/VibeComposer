@@ -3465,6 +3465,7 @@ public class VibeComposerGUI extends JFrame
 							sec2.setPresence(part, absOrder);
 							sec2.setVariation(part, absOrder, sec.getVariation(part, absOrder));
 						}
+						sec2.setInstPartList(sec.getInstPartList(part), part);
 
 					}
 				} else if (randomizerButtonPressed) {
