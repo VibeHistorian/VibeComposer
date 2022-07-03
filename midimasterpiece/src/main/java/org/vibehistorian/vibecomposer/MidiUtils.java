@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 
 import jm.constants.Pitches;
 import jm.music.data.Note;
@@ -1289,7 +1290,7 @@ public class MidiUtils {
 		if (chords == null) {
 			return null;
 		}
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt();
 		addChordsToPhrase(phr, chords, 0.125);
 
 		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true);

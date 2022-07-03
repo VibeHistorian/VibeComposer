@@ -120,6 +120,10 @@ public class MidiEditPopup extends CloseablePopup {
 		trackScopeUpDown = 0;
 		LG.i("Midi Edit Popup, Part: " + secPartNum + ", Order: " + secPartOrder);
 
+
+		text = new JTextField("", 25);
+		text.setEditable(false);
+
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
 		allPanels.setMaximumSize(new Dimension(1500, 750));
@@ -327,8 +331,6 @@ public class MidiEditPopup extends CloseablePopup {
 	private JPanel bottomActionsPreferencesPanel(PhraseNotes values) {
 		JPanel bottomSettingsPanel = new JPanel();
 		bottomSettingsPanel.setLayout(new BoxLayout(bottomSettingsPanel, BoxLayout.X_AXIS));
-		text = new JTextField("", 25);
-		text.setEditable(false);
 		bottomSettingsPanel.add(text);
 		/*bottomSettingsPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
 			if (StringUtils.isNotEmpty(text.getText())) {
