@@ -1505,7 +1505,10 @@ public class VibeComposerGUI extends JFrame
 		soloMuterTrackControlPanel.add(configHistory);
 		soloMuterTrackControlPanel.add(makeButton("Load", e -> {
 			if (configHistory.getItemCount() > 0) {
-				guiConfig = configHistory.getVal();
+				guiConfig = configHistory.getSelectedItem();
+				configHistory.removeItemAt(configHistory.getSelectedIndex());
+				configHistory.addItem(guiConfig);
+				configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
 				copyConfigToGUI(guiConfig);
 				//clearAllSeeds();
 			}
@@ -5681,6 +5684,12 @@ public class VibeComposerGUI extends JFrame
 				if (configHistory.getItemCount() > 10) {
 					configHistory.removeItemAt(0);
 				}
+			} else if (regenerate) {
+				midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+				midiConfig.setRegenerateCount(regenerateCount);
+				configHistory.removeItemAt(configHistory.getItemCount() - 1);
+				configHistory.addItem(midiConfig);
+				configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
 			}
 
 			try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
