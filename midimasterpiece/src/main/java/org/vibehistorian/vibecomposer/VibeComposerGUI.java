@@ -6861,8 +6861,10 @@ public class VibeComposerGUI extends JFrame
 			if (retrival == JFileChooser.APPROVE_OPTION && chooser.getSelectedFile() != null) {
 				try {
 					String filepath = chooser.getSelectedFile().toString();
-					String filename = chooser.getSelectedFile().getName();
-					marshalDrums(filepath + ".xml");
+					String filename = chooser.getSelectedFile().getName().replaceAll(".xml", "");
+					marshalDrums(((filepath.length() > 4)
+							&& (filepath.lastIndexOf(".xml") == filepath.length() - 4)) ? filepath
+									: filepath + ".xml");
 					drumPartPresetBox.addItem(filename);
 				} catch (Exception ex) {
 					ex.printStackTrace();
