@@ -1118,7 +1118,13 @@ public class VibeComposerGUI extends JFrame
 
 
 		mainButtonsPanel.add(presetLoadBox);
-		mainButtonsPanel.add(makeButton("Load Preset", e -> loadPreset()));
+		mainButtonsPanel.add(makeButtonMoused("Load Preset", e -> {
+			if (SwingUtilities.isLeftMouseButton(e)) {
+				loadPreset();
+			} else {
+				openFolder(PRESET_FOLDER);
+			}
+		}));
 		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
 		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
 
