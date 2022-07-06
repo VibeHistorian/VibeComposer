@@ -8,6 +8,7 @@ import java.util.Random;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
 
 public class RandomValueButton extends JButton {
@@ -32,8 +33,12 @@ public class RandomValueButton extends JButton {
 					if (e.isControlDown()) {
 						setEnabled(!isEnabled());
 					} else if (isEnabled()) {
-						Random rand = new Random();
-						setValue(rand.nextInt());
+						if (e.isShiftDown()) {
+							setValue(VibeComposerGUI.getCurrentSeed());
+						} else {
+							Random rand = new Random();
+							setValue(rand.nextInt());
+						}
 					}
 				}
 			}

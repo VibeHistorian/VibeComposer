@@ -96,7 +96,7 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel patternRepeat = new KnobPanel("Repeat#", 1, 1, 4);
 
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
-	protected KnobPanel delay = new KnobPanel("Offset", 0, -1000, 1000);
+	protected KnobPanel offset = new KnobPanel("Offset", 0, -1000, 1000);
 	protected KnobPanel feedbackCount = new KnobPanel("Delays", 0, 0, 5);
 	protected KnobPanel feedbackDuration = new KnobPanel("FB Dur.", 500, -2000, 2000);
 	protected KnobPanel feedbackVol = new KnobPanel("FB Vol.", 80, 10, 150);
@@ -238,7 +238,7 @@ public abstract class InstPanel extends JPanel {
 
 		//toggleableComponents.add(stretchPanel);
 		toggleableComponents.add(exceptionChance);
-		toggleableComponents.add(delay);
+		toggleableComponents.add(offset);
 		toggleableComponents.add(feedbackDuration);
 		toggleableComponents.add(feedbackCount);
 		toggleableComponents.add(feedbackVol);
@@ -266,7 +266,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void addOffsetAndDelayControls() {
-		this.add(delay);
+		this.add(offset);
 		this.add(feedbackCount);
 		this.add(feedbackDuration);
 		this.add(feedbackVol);
@@ -287,7 +287,7 @@ public abstract class InstPanel extends JPanel {
 		swingPercent.addBackgroundWithBorder(OMNI.alphen(Color.yellow.brighter(), 50));
 		patternShift.addBackgroundWithBorder(OMNI.alphen(Color.red.darker().darker(), 50));
 		transpose.addBackgroundWithBorder(OMNI.alphen(Color.white, 50));
-		delay.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
+		offset.addBackgroundWithBorder(OMNI.alphen(Color.black, 30));
 		feedbackDuration.addBackgroundWithBorder(OMNI.alphen(Color.gray, 50));
 		feedbackCount.addBackgroundWithBorder(OMNI.alphen(Color.gray, 40));
 		feedbackVol.addBackgroundWithBorder(OMNI.alphen(Color.gray, 30));
@@ -307,7 +307,7 @@ public abstract class InstPanel extends JPanel {
 		pauseChance.setShowTextInKnob(b);
 		exceptionChance.setShowTextInKnob(b);
 		patternRepeat.setShowTextInKnob(b);
-		delay.setShowTextInKnob(b);
+		offset.setShowTextInKnob(b);
 		feedbackDuration.setShowTextInKnob(b);
 		feedbackCount.setShowTextInKnob(b);
 		feedbackVol.setShowTextInKnob(b);
@@ -341,7 +341,7 @@ public abstract class InstPanel extends JPanel {
 		setPatternRepeat(part.getPatternRepeat());
 
 		setTranspose(part.getTranspose());
-		setDelay(part.getDelay());
+		setOffset(part.getOffset());
 		setFeedbackDuration(part.getFeedbackDuration());
 		setFeedbackCount(part.getFeedbackCount());
 		setFeedbackVol(part.getFeedbackVol());
@@ -512,12 +512,12 @@ public abstract class InstPanel extends JPanel {
 		this.chordSpanFill.setVal(val);
 	}
 
-	public int getDelay() {
-		return delay.getInt();
+	public int getOffset() {
+		return offset.getInt();
 	}
 
-	public void setDelay(int val) {
-		this.delay.setInt(val);
+	public void setOffset(int val) {
+		this.offset.setInt(val);
 	}
 
 	public int getChordNotesStretch() {
@@ -899,7 +899,7 @@ public abstract class InstPanel extends JPanel {
 			rhythmGridSpanned.addAll(toAdd);
 		}
 		// delay
-		int delayShift = getDelay() / 125;
+		int delayShift = getOffset() / 125;
 		if (delayShift != 0) {
 			Collections.rotate(rhythmGridSpanned, delayShift);
 		}

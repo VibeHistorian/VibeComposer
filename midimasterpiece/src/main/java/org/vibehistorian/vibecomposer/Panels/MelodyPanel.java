@@ -88,10 +88,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("<html>Note<br>Targets</html>"));
 		noteTargets.setMargin(new Insets(0, 0, 0, 0));
 		noteTargets.setTextGenerator(e -> {
-			return StringUtils.join(MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts,
-					new Random().nextInt(),
-					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
-					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null), ",");
+			return StringUtils.join(noteTargets.getRandGenerator().apply(new Object()), ",");
 		});
 		noteTargets.setRandGenerator(e -> {
 			return MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts,

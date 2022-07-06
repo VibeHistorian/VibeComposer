@@ -276,7 +276,7 @@ public class ChordPanel extends InstPanel {
 			rhythmGridSpanned.addAll(toAdd);
 		}
 		// delay
-		int delayShift = getDelay() / 125;
+		int delayShift = getOffset() / 125;
 		if (delayShift != 0) {
 			Collections.rotate(rhythmGridSpanned, delayShift);
 		}

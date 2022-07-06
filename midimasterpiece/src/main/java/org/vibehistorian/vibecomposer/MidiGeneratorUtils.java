@@ -194,8 +194,9 @@ public class MidiGeneratorUtils {
 				List<Integer> choices = choiceMap.get(i);
 				int offset = (targetMode == 1) ? offsets.get(i) - chordOffsets.get(i)
 						: offsets.get(i);
-				int chordTargetNote = MidiUtils.getClosestFromList(choices, offset);
-				LG.n("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
+				int chordTargetNote = choices.contains(offset) ? offset
+						: MidiUtils.getClosestFromList(choices, offset + 1);
+				LG.i("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
 				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
 						: chordTargetNote);
 			}
@@ -205,13 +206,13 @@ public class MidiGeneratorUtils {
 					last += (new Random(randomSeed).nextBoolean() ? 2 : -2);
 					offsets.set(offsets.size() - 1,
 							MidiUtils.getClosestFromList(choiceMap.get(offsets.size() - 1), last));
-					LG.d("Last offset moved!");
+					LG.i("Last offset moved!");
 				}
 			}
 		} else {
 			int last = offsets.get(offsets.size() - 1);
 			if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
-				last += (new Random(randomSeed).nextBoolean() ? 1 : -1);
+				last += (new Random(randomSeed).nextInt(100) < 75 ? 1 : -1);
 				offsets.set(offsets.size() - 1, last);
 			}
 		}

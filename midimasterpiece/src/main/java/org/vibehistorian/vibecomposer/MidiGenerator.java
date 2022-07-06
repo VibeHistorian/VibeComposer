@@ -4711,8 +4711,8 @@ public class MidiGenerator implements JMC {
 	}
 
 	private static void addOffsetsToPhrase(Phrase phr, InstPart ip) {
-		if (ip.getDelay() != 0) {
-			double offsetDelay = (noteMultiplier * ip.getDelay()) / 1000.0;
+		if (ip.getOffset() != 0) {
+			double offsetDelay = (noteMultiplier * ip.getOffset()) / 1000.0;
 			for (Object no : phr.getNoteList()) {
 				Note n = (Note) no;
 				n.setOffset(n.getOffset() + offsetDelay);

@@ -77,7 +77,7 @@ public class BassPanel extends InstPanel {
 		//this.add(melodyPattern);
 
 		this.add(minMaxVelSlider);
-		this.add(delay);
+		this.add(offset);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
