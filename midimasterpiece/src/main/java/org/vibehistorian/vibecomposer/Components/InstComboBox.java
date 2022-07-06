@@ -1,10 +1,13 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
 
 public class InstComboBox extends ScrollComboBox<String> {
 

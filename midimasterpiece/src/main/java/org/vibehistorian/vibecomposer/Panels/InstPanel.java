@@ -49,7 +49,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.InstComboBox;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -57,6 +56,7 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.InstComboBox;
 import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.Components.MidiMVI;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
