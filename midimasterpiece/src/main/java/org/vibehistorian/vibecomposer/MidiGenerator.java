@@ -854,7 +854,6 @@ public class MidiGenerator implements JMC {
 		int minVel = MidiGeneratorUtils.multiplyVelocity(mp.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = MidiGeneratorUtils.multiplyVelocity(mp.getVelocityMax(), volMultiplier, 1, 0);
 
-		int[] pitches = new int[12];
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
 			n1.setPitch(n1.getPitch() + mp.getTranspose());
@@ -957,6 +956,24 @@ public class MidiGenerator implements JMC {
 		List<Integer> fillerPattern = mp.getChordSpanFill()
 				.getPatternByLength(fullMelodyMap.keySet().size(), mp.isFillFlip());
 
+		int[] pitches = new int[12];
+		fullMelody.forEach(e -> {
+			int pitch = e.getPitch();
+			if (pitch >= 0) {
+				pitches[pitch % 12]++;
+			}
+		});
+		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords, sec, mp);
+
+
+		MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
+
+
+		if (gc.getMelodyReplaceAvoidNotes() > 0) {
+			MidiGeneratorUtils.replaceAvoidNotes(fullMelodyMap, chords,
+					mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes());
+		}
+
 		// pause by %, sort not-paused into pitches
 		for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
 			List<Note> notes = MelodyUtils
@@ -974,7 +991,7 @@ public class MidiGenerator implements JMC {
 				Note n = notes.get(j);
 				if (startIndex == 1) {
 					if (n.equals(fullMelodyMap.get(chordIndex).get(0))) {
-						pitches[n.getPitch() % 12]++;
+						//pitches[n.getPitch() % 12]++;
 						continue;
 					}
 				}
@@ -985,24 +1002,9 @@ public class MidiGenerator implements JMC {
 				if (fillerPattern.get(chordIndex) < 1) {
 					n.setPitch(Integer.MIN_VALUE);
 				} else {
-					pitches[n.getPitch() % 12]++;
+					//pitches[n.getPitch() % 12]++;
 				}
 			}
-
-			if (fillerPattern.get(chordIndex) < 1) {
-				firstNotePitches.set(chordIndex, Integer.MIN_VALUE);
-			}
-		}
-
-
-		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords, sec, mp);
-
-		MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
-
-
-		if (gc.getMelodyReplaceAvoidNotes() > 0) {
-			MidiGeneratorUtils.replaceAvoidNotes(fullMelodyMap, chords,
-					mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes());
 		}
 
 
@@ -1057,11 +1059,12 @@ public class MidiGenerator implements JMC {
 		Random startNoteRand = new Random(orderSeed + 25);
 
 		// repair target notes
-		for (int i = 0; i < firstNotePitches.size(); i++) {
-			if (fullMelodyMap.get(i).size() > 0) {
-				Note n = fullMelodyMap.get(i).get(0);
-				if (n.getPitch() >= 0 || gc.isMelodyFillPausesPerChord()) {
-					n.setPitch(firstNotePitches.get(i));
+		for (int chordIndex = 0; chordIndex < firstNotePitches.size(); chordIndex++) {
+			if (fullMelodyMap.get(chordIndex).size() > 0) {
+				Note n = fullMelodyMap.get(chordIndex).get(0);
+				if (fillerPattern.get(chordIndex) > 0
+						&& (n.getPitch() >= 0 || gc.isMelodyFillPausesPerChord())) {
+					n.setPitch(firstNotePitches.get(chordIndex));
 				}
 			}
 		}
