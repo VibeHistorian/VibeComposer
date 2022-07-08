@@ -190,12 +190,14 @@ public class MidiGeneratorUtils {
 		}
 		if (targetMode >= 1) {
 			Map<Integer, List<Integer>> choiceMap = getChordNoteChoicesFromChords(chords);
+			Random offsetRandomizer = new Random(randomSeed);
 			for (int i = 0; i < chordOffsets.size(); i++) {
 				List<Integer> choices = choiceMap.get(i);
 				int offset = (targetMode == 1) ? offsets.get(i) - chordOffsets.get(i)
 						: offsets.get(i);
 				int chordTargetNote = choices.contains(offset) ? offset
-						: MidiUtils.getClosestFromList(choices, offset + 1);
+						: MidiUtils.getClosestFromList(choices,
+								offset + (offsetRandomizer.nextInt(100) < 75 ? 1 : 0));
 				LG.i("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
 				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
 						: chordTargetNote);
