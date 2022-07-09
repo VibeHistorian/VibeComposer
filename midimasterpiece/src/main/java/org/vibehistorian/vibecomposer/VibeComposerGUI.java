@@ -1103,6 +1103,27 @@ public class VibeComposerGUI extends JFrame
 
 		presetLoadBox = new ScrollComboBox<String>(false);
 		presetLoadBox.setEditable(true);
+		reloadPresetBox();
+
+
+		mainButtonsPanel.add(presetLoadBox);
+		mainButtonsPanel.add(makeButtonMoused("Load Preset", e -> {
+			if (SwingUtilities.isLeftMouseButton(e)) {
+				loadPreset();
+			} else {
+				openFolder(PRESET_FOLDER);
+			}
+		}));
+		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
+		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
+
+		everythingPanel.add(mainButtonsPanel, constraints);
+	}
+
+	private void reloadPresetBox() {
+		String currentItem = presetLoadBox.getItemCount() > 0 ? presetLoadBox.getSelectedItem()
+				: null;
+		presetLoadBox.removeAllItems();
 		presetLoadBox.addItem(OMNI.EMPTYCOMBO);
 		File folder = new File(PRESET_FOLDER);
 		if (folder.exists()) {
@@ -1123,24 +1144,15 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-
-		mainButtonsPanel.add(presetLoadBox);
-		mainButtonsPanel.add(makeButtonMoused("Load Preset", e -> {
-			if (SwingUtilities.isLeftMouseButton(e)) {
-				loadPreset();
-			} else {
-				openFolder(PRESET_FOLDER);
-			}
-		}));
-		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
-		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
-
-		everythingPanel.add(mainButtonsPanel, constraints);
+		if (currentItem != null) {
+			presetLoadBox.setValRaw(currentItem);
+		}
 	}
 
 	private void undefaultPreset() {
 		File loadedFile = new File(PRESET_FOLDER + "/default.xml");
-		if (loadedFile.exists()) {
+		boolean exists = loadedFile.exists();
+		if (exists) {
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
 
 			f.applyPattern("yyMMdd-HH-mm-ss");
@@ -1149,7 +1161,12 @@ public class VibeComposerGUI extends JFrame
 
 			File renamedFile = new File(PRESET_FOLDER + "/default-" + fdate + ".xml");
 			loadedFile.renameTo(renamedFile);
+
+			reloadPresetBox();
 		}
+
+		new TemporaryInfoPopup(exists ? "Undefaulted 'default' preset!" : "Nothing to undefault!",
+				2000);
 	}
 
 	private void loadDrums() {
