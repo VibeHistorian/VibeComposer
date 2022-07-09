@@ -9559,17 +9559,19 @@ public class VibeComposerGUI extends JFrame
 			if (part < 4) {
 				Pair<ScaleMode, Integer> scaleKey = keyChangeAt(
 						actualArrangement.getSections().indexOf(sec));
-				List<Note> notes = Collections.singletonList(new Note(pitch, durationMs / 1000.0));
-				int extraTranspose = 0;
+				int extraTranspose = (part > 0) ? ip.getTranspose() : 0;
+				List<Note> notes = Collections.singletonList(new Note(
+						(part > 0) ? pitch : (pitch + ip.getTranspose()), durationMs / 1000.0));
 				if (scaleKey != null) {
+					boolean snapToScale = (scaleKey.getLeft() != ScaleMode.IONIAN)
+							|| VibeComposerGUI.transposedNotesForceScale.isSelected();
 					MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
-							scaleKey.getLeft().noteAdjustScale,
-							VibeComposerGUI.transposedNotesForceScale.isSelected());
-					extraTranspose = scaleKey.getRight();
+							scaleKey.getLeft().noteAdjustScale, snapToScale);
+					extraTranspose += scaleKey.getRight();
 				}
 
 				pitch = notes.get(0).getPitch() + transposeScore.getInt() + extraTranspose
-						+ sec.getTransposeVariation(part, partOrder) + ip.getTranspose();
+						+ sec.getTransposeVariation(part, partOrder);
 
 				if (pitch < 0 || pitch > 127) {
 					LG.d("Pitch too high to play: " + pitch);
