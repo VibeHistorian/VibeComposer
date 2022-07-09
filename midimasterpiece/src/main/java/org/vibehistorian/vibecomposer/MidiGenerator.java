@@ -2804,7 +2804,7 @@ public class MidiGenerator implements JMC {
 								firstPresentPart.get().getOrder())).addPhrase(p);
 					}
 				}
-				melodyPartsFull.get(i).addPhrase(p);
+				melodyPartsFull.get(i).addPhrase(p.copy());
 			}
 			for (int i = 0; i < sec.getBasses().size(); i++) {
 				Phrase bp = sec.getBasses().get(i);
@@ -2834,7 +2834,7 @@ public class MidiGenerator implements JMC {
 				} else {
 					drumParts.get(i).addPhrase(p);
 				}
-				drumPartsFull.get(i).addPhrase(p);
+				drumPartsFull.get(i).addPhrase(p.copy());
 
 			}
 			if (gc.getChordParts().size() > 0 && gc.isChordsEnable()) {
@@ -2850,9 +2850,9 @@ public class MidiGenerator implements JMC {
 		}
 		LG.d("Added sections to parts..");
 		setupScore(mainGeneratorSeed, systemTime, logPerformance, score, melodyParts, chordParts,
-				arpParts, bassParts, drumParts, true);
+				arpParts, bassParts, drumParts, true, true);
 		setupScore(mainGeneratorSeed, systemTime, logPerformance, scoreFull, melodyPartsFull,
-				chordParts, arpParts, bassParts, drumPartsFull, false);
+				chordParts, arpParts, bassParts, drumPartsFull, false, false);
 
 		score.setTempo(gc.getBpm());
 		scoreFull.setTempo(gc.getBpm());
@@ -2889,7 +2889,7 @@ public class MidiGenerator implements JMC {
 	private void setupScore(int mainGeneratorSeed, long systemTime, boolean logPerformance,
 			Score score, List<PartExt> melodyParts, List<PartExt> chordParts,
 			List<PartExt> arpParts, List<PartExt> bassParts, List<PartExt> drumParts,
-			boolean allowCombination) {
+			boolean allowCombination, boolean transposeBCA) {
 		int trackCounter = 1;
 
 		List<Integer> partPadding = VibeComposerGUI.padGeneratedMidi.isSelected()
@@ -2916,8 +2916,14 @@ public class MidiGenerator implements JMC {
 				ip.setSequenceTrack(-1);
 			}
 		}
+
+		if (!transposeBCA) {
+			Mod.transpose(score, gc.getTranspose());
+		}
+
 		trackCounter += padScoreParts(score, partPadding, 0, trackCounter - lastPartTrackCount);
 		lastPartTrackCount = trackCounter;
+
 
 		for (int i = 0; i < bassParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getBassParts().get(i).getOrder(),
@@ -2975,7 +2981,10 @@ public class MidiGenerator implements JMC {
 			}
 		}*/
 		//int[] backTranspose = { 0, 2, 4, 5, 7, 9, 11, 12 };
-		Mod.transpose(score, gc.getTranspose());
+		if (transposeBCA) {
+			Mod.transpose(score, gc.getTranspose());
+		}
+
 
 		// add drums after transposing transposable parts
 		for (int i = 0; i < drumParts.size(); i++) {
