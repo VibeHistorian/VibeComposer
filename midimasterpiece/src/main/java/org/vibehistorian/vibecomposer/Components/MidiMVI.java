@@ -47,12 +47,16 @@ public class MidiMVI extends JComponent {
 					processButton(butt);
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
 					boolean activate = !isActive(butt);
-					for (int i = 0; i < 2; i++) {
+					for (int i = 0; i <= 2; i++) {
 						PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
 								UsedPattern.BASE_PATTERNS[i + 1], activate);
 					}
-					PatternManagerPopup.unapply2(3, parent.getPartNum(), parent.getPanelOrder(),
-							activate);
+					if (!activate) {
+						PatternManagerPopup.unapply2(2, parent.getPartNum(), parent.getPanelOrder(),
+								false);
+						PatternManagerPopup.unapply2(1, parent.getPartNum(), parent.getPanelOrder(),
+								false);
+					}
 				}
 				repaint();
 			}
@@ -62,7 +66,9 @@ public class MidiMVI extends JComponent {
 					PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
 							UsedPattern.BASE_PATTERNS[butt + 1], null);
 				} else {
-					PatternManagerPopup.unapply2(3, parent.getPartNum(), parent.getPanelOrder(),
+					PatternManagerPopup.unapply2(2, parent.getPartNum(), parent.getPanelOrder(),
+							false);
+					PatternManagerPopup.unapply2(1, parent.getPartNum(), parent.getPanelOrder(),
 							false);
 				}
 			}

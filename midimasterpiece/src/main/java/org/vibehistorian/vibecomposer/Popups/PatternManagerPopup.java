@@ -48,10 +48,15 @@ public class PatternManagerPopup extends CloseablePopup {
 		mvea.setEnabled(false);
 		mveaPanel.add(mvea);
 
-		JPanel patternManagerPanel = new JPanel();
-		patternManagerPanel.setLayout(new GridLayout(0, 3, 0, 0));
-		patternManagerPanel.setPreferredSize(new Dimension(panelWidth, 150));
-		patternManagerPanel.setMinimumSize(new Dimension(panelWidth, 150));
+		JPanel patternComboBoxPanel = new JPanel();
+		patternComboBoxPanel.setLayout(new GridLayout(0, 3, 0, 0));
+		patternComboBoxPanel.setPreferredSize(new Dimension(panelWidth, 50));
+		patternComboBoxPanel.setMinimumSize(new Dimension(panelWidth, 50));
+
+		JPanel patternButtonsPanel = new JPanel();
+		patternButtonsPanel.setLayout(new GridLayout(0, 4, 0, 0));
+		patternButtonsPanel.setPreferredSize(new Dimension(panelWidth, 50));
+		patternButtonsPanel.setMinimumSize(new Dimension(panelWidth, 50));
 
 		patternPartBox.setFunc(e -> loadPartOrders());
 		patternPartOrderBox.setFunc(e -> loadNames());
@@ -84,23 +89,27 @@ public class PatternManagerPopup extends CloseablePopup {
 		loadPartOrders();
 		loadNames();
 
-		patternManagerPanel.add(patternPartBox);
-		patternManagerPanel.add(patternPartOrderBox);
-		patternManagerPanel.add(patternNameBox);
+		patternComboBoxPanel.add(patternPartBox);
+		patternComboBoxPanel.add(patternPartOrderBox);
+		patternComboBoxPanel.add(patternNameBox);
 
-		patternManagerPanel.add(VibeComposerGUI.makeButton("Unapply Selected", e -> {
+		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply Selected", e -> {
 			unapply(0);
 		}));
-		patternManagerPanel.add(VibeComposerGUI.makeButton("Unapply Generated (Multi)", e -> {
+		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply Generated (Multi)", e -> {
 			unapply(1);
 		}));
-		patternManagerPanel.add(VibeComposerGUI.makeButton("Unapply Custom (Multi)", e -> {
+		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply Custom (Multi)", e -> {
 			unapply(2);
 		}));
+		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply M/V/I (Multi)", e -> {
+			unapply(3);
+		}));
 
-		patternManagerPanel.add(removeCB);
+		patternButtonsPanel.add(removeCB);
 
-		allPanels.add(patternManagerPanel);
+		allPanels.add(patternComboBoxPanel);
+		allPanels.add(patternButtonsPanel);
 		allPanels.add(mveaPanel);
 		frame.add(allPanels);
 
@@ -259,7 +268,7 @@ public class PatternManagerPopup extends CloseablePopup {
 		case 1:
 			return genMatch(patternName);
 		case 2:
-			return customMatch(patternName) && !genMatch(patternName);
+			return !customMatch(patternName) && !genMatch(patternName);
 		case 3:
 			return customMatch(patternName);
 		default:
