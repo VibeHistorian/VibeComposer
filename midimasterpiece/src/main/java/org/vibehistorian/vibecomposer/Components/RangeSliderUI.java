@@ -123,6 +123,7 @@ class RangeSliderUI extends BasicSliderUI {
 						// found snap point
 						if (bestValue != sliderValue) {
 							slider.setValue(bestValue);
+							break;
 						}
 					}
 				}
@@ -140,6 +141,7 @@ class RangeSliderUI extends BasicSliderUI {
 						// found snap point
 						if (bestValue != sliderValue) {
 							slider.setValue(bestValue);
+							break;
 						}
 					}
 				}
@@ -714,7 +716,7 @@ class RangeSliderUI extends BasicSliderUI {
 			if (rangeSlider.isEnabled()) {
 				if (!(rangeSlider instanceof PlayheadRangeSlider)
 						&& VibeComposerGUI.canRegenerateOnChange()) {
-					VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+					VibeComposerGUI.vibeComposerGUI.regenerate();
 				} else if (rangeSlider instanceof PlayheadRangeSlider) {
 					VibeComposerGUI.currentTime.setText(
 							VibeComposerGUI.millisecondsToTimeString(rangeSlider.getUpperValue()));

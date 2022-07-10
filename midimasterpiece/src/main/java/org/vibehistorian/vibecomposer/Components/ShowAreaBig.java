@@ -69,7 +69,7 @@ public class ShowAreaBig extends JComponent {
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	public static int areaHeight = 400;
+	public static int areaHeight = VibeComposerGUI.DEFAULT_HEIGHT;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };
@@ -80,6 +80,7 @@ public class ShowAreaBig extends JComponent {
 	public static double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
 			MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
 	public static Point mousePoint = null;
+	public static boolean consumed = false;
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
@@ -123,8 +124,6 @@ public class ShowAreaBig extends JComponent {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 
@@ -135,7 +134,7 @@ public class ShowAreaBig extends JComponent {
 						&& !SwingUtilities.isMiddleMouseButton(evt)) {
 					return;
 				}
-				boolean popupOpen = SwingUtilities.isLeftMouseButton(evt);
+				boolean leftMouseOpenPopup = SwingUtilities.isLeftMouseButton(evt);
 				LG.d("Checking note overlap for: " + evt.getPoint());
 
 				Enumeration<?> enum1 = sp.score.getPartList().elements();
@@ -223,7 +222,8 @@ public class ShowAreaBig extends JComponent {
 								boolean pointInRect = OMNI.pointInRect(evt.getPoint(),
 										actualStartingX, y - actualHeight, x, actualHeight * 2);
 								if (pointInRect) {
-									if (popupOpen) {
+									if (leftMouseOpenPopup) {
+										consumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
 										VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
 												VibeComposerGUI.actualArrangement.getSections()
@@ -237,24 +237,25 @@ public class ShowAreaBig extends JComponent {
 									} else {
 										if (evt.isShiftDown()) {
 											// mute, instead of solo
-											VibeComposerGUI.getInstList(phrase.part)
-													.get(phrase.partOrder).getSoloMuter()
-													.toggleMute(true);
+											VibeComposerGUI
+													.getPanelByOrder(phrase.part, phrase.partOrder)
+													.getSoloMuter().toggleMute(true);
 										} else {
 											boolean unsoloAll = false;
 											if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
 												unsoloAll = VibeComposerGUI.isSingleSolo()
-														&& (VibeComposerGUI.getInstList(phrase.part)
-																.get(phrase.partOrder)
+														&& (VibeComposerGUI
+																.getPanelByOrder(phrase.part,
+																		phrase.partOrder)
 																.getSoloMuter().soloState == State.FULL);
 											}
 											if (!unsoloAll) {
 												VibeComposerGUI.globalSoloMuter.toggleSolo(true);
 											}
 
-											VibeComposerGUI.getInstList(phrase.part)
-													.get(phrase.partOrder).getSoloMuter()
-													.toggleSolo(true);
+											VibeComposerGUI
+													.getPanelByOrder(phrase.part, phrase.partOrder)
+													.getSoloMuter().toggleSolo(true);
 										}
 
 										return;
@@ -540,10 +541,8 @@ public class ShowAreaBig extends JComponent {
 									y - actualHeight, x, actualHeight * 2);
 							if (pointInRect) {
 								noteDescription = VibeComposerGUI.instNames[phrase.part] + "#"
-										+ VibeComposerGUI.getInstList(phrase.part)
-												.get(phrase.partOrder).getPanelOrder()
-										+ "|" + MidiUtils.pitchOrDrumToString(currNote, phrase.part,
-												false);
+										+ phrase.partOrder + "|" + MidiUtils
+												.pitchOrDrumToString(currNote, phrase.part, false);
 								mouseProcessed = true;
 								mouseHighlightedNote = true;
 							}

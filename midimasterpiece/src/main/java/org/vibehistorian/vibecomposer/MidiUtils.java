@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -36,11 +37,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
-import jm.music.tools.Mod;
 
 public class MidiUtils {
 
@@ -368,7 +369,7 @@ public class MidiUtils {
 			long bestMatchCount = orderedBestMatches.values().stream()
 					.filter(e -> finalBestMatch == e).count();
 			if (bestMatchCount > 1) {
-				LG.i(bestMatchCount + " best chords for:  " + bestMatch + " notes.");
+				LG.d(bestMatchCount + " best chords for:  " + bestMatch + " notes.");
 
 				if (bestMatchCount >= orderOfMatch) {
 					orderedBestMatches.values().removeIf(e -> e != finalBestMatch);
@@ -377,10 +378,10 @@ public class MidiUtils {
 				String expectedNextChordString = progressionCircle
 						.get((circleIndex) + 1 % progressionCircle.size());
 				if (orderedBestMatches.containsKey(expectedNextChordString)) {
-					LG.i("Circle: " + expectedNextChordString);
+					LG.d("Circle: " + expectedNextChordString);
 					return expectedNextChordString;
 				} else {
-					LG.i("Circle chord not a best match: " + expectedNextChordString);
+					LG.d("Circle chord not a best match: " + expectedNextChordString);
 				}
 			}
 		}
@@ -390,7 +391,7 @@ public class MidiUtils {
 		if (orderedBestMatches.keySet().size() > orderOfMatch - 1) {
 			return (String) orderedBestMatches.keySet().toArray()[orderOfMatch - 1];
 		}
-		LG.i("Only one chord matches? Huh..");
+		LG.d("Only one chord matches? Huh..");
 		return (String) orderedBestMatches.keySet().toArray()[0];
 	}
 
@@ -1289,7 +1290,7 @@ public class MidiUtils {
 		if (chords == null) {
 			return null;
 		}
-		Phrase phr = new Phrase();
+		Phrase phr = new PhraseExt();
 		addChordsToPhrase(phr, chords, 0.125);
 
 		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true);
@@ -1550,12 +1551,34 @@ public class MidiUtils {
 	}
 
 	public static void scalePhrase(Phrase phr, double newLength) {
-		LG.i("Scale phrase: " + phr.getBeatLength() + ", to: " + newLength);
+		LG.d("Scale phrase: " + phr.getBeatLength() + ", to: " + newLength);
 		if (roughlyEqual(phr.getBeatLength(), newLength)) {
 			return;
 		}
 
-		Mod.changeLength(phr, newLength);
+		changePhraseLength(phr, newLength);
+	}
+
+	public static void changePhraseLength(Phrase phrase, double newLength) {
+		if (phrase == null || newLength <= 0.0) {
+			return;
+		}
+		final double oldLength = phrase.getEndTime() - phrase.getStartTime();
+		elongatePhrase(phrase, newLength / oldLength);
+	}
+
+	public static void elongatePhrase(Phrase phrase, double scaleFactor) {
+		if (phrase == null || scaleFactor <= 0.0) {
+			return;
+		}
+
+		Enumeration enum1 = phrase.getNoteList().elements();
+		while (enum1.hasMoreElements()) {
+			Note note = (Note) enum1.nextElement();
+			note.setRhythmValue(note.getRhythmValue() * scaleFactor);
+			note.setDuration(note.getDuration() * scaleFactor);
+			note.setOffset(note.getOffset() * scaleFactor);
+		}
 	}
 
 	public static boolean roughlyEqual(double first, double second) {

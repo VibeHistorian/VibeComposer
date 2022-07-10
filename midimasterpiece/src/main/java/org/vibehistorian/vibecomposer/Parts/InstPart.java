@@ -48,7 +48,7 @@ public abstract class InstPart implements Cloneable {
 	protected int exceptionChance = 5;
 	protected int patternRepeat = 1;
 
-	protected int delay = 0;
+	protected int offset = 0;
 	protected int transpose = 0;
 	protected int feedbackCount = 0;
 	protected int feedbackDuration = 500;
@@ -98,7 +98,7 @@ public abstract class InstPart implements Cloneable {
 		setPatternRepeat(panel.getPatternRepeat());
 
 		setTranspose(panel.getTranspose());
-		setDelay(panel.getDelay());
+		setOffset(panel.getOffset());
 		setFeedbackDuration(panel.getFeedbackDuration());
 		setFeedbackCount(panel.getFeedbackCount());
 		setFeedbackVol(panel.getFeedbackVol());
@@ -136,12 +136,12 @@ public abstract class InstPart implements Cloneable {
 
 	}
 
-	public int getDelay() {
-		return delay;
+	public int getOffset() {
+		return offset;
 	}
 
-	public void setDelay(int delay) {
-		this.delay = delay;
+	public void setOffset(int offset) {
+		this.offset = offset;
 	}
 
 	public int getInstrument() {
@@ -373,8 +373,15 @@ public abstract class InstPart implements Cloneable {
 	public List<Integer> getFinalPatternCopy() {
 		List<Integer> premadePattern = null;
 		if (getPattern() != RhythmPattern.CUSTOM) {
-			premadePattern = getPattern().getPatternByLength(getHitsPerPattern(),
-					getPatternShift());
+			RhythmPattern d = getPattern();
+			int shift = getPatternShift();
+			int hits = getHitsPerPattern();
+			premadePattern = ((d == RhythmPattern.EUCLID) && (getCustomPattern() != null))
+					? RhythmPattern.makeEuclideanPattern(hits,
+							(int) getCustomPattern().subList(0, hits).stream().filter(e -> e > 0)
+									.count(),
+							shift, null)
+					: d.getPatternByLength(hits, shift);
 		} else {
 			List<Integer> premadeCopy = new ArrayList<>(getCustomPattern());
 			Collections.rotate(premadeCopy, getPatternShift());

@@ -28,6 +28,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private int part = 0;
 	private int section = 0;
 	public static final int MIN_CELLS = 8;
+	public static final Color[] CUSTOM_PATTERN_COLORS = { VibeComposerGUI.darkModeUIColor,
+			VibeComposerGUI.lightModeUIColor, new Color(150, 200, 200), Color.red };
 
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
 			int col) {
@@ -87,8 +89,10 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 				for (Object o : stringables) {
 					String num = o.toString();
 					int partOrder = 0;
+					int panelOrder = 1;
 					try {
-						partOrder = VibeComposerGUI.getAbsoluteOrder(part, Integer.valueOf(num));
+						panelOrder = Integer.valueOf(num);
+						partOrder = VibeComposerGUI.getAbsoluteOrder(part, panelOrder);
 					} catch (Exception e) {
 						continue;
 					}
@@ -109,10 +113,9 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					
 						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
 					}*/
-					boolean isCustomMidi = sec.containsPhrase(part, partOrder)
-							&& sec.getPartPhraseNotes().get(part).get(partOrder).isCustom();
-					boolean isGlobalCustomMidi = VibeComposerGUI.getInstList(part).get(partOrder)
-							.getCustomMidiToggle();
+					boolean isCustomMidi = sec.containsPattern(part, panelOrder)
+							&& sec.getPattern(part, panelOrder).isCustom(part, panelOrder);
+
 					Color instCellColor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
 							part > 0 ? 0.55 : 0.7);
 					if (counter > 0) {
@@ -157,8 +160,9 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					int numVars = Section.variationDescriptions[part].length - 2;
 					double moveX = (endX - startX) / (numVars);
 
-					if (isCustomMidi || isGlobalCustomMidi) {
-						g.setColor(OMNI.alphen(isCustomMidi ? Color.red : VibeComposerGUI.uiColor(),
+					if (isCustomMidi) {
+						g.setColor(OMNI.alphen(
+								CUSTOM_PATTERN_COLORS[sec.getPattern(part, panelOrder).getType()],
 								150));
 						g.fillRect((int) startX + 2, 0, (int) widthDividerValue - 4, 5);
 					}
@@ -168,7 +172,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					for (int i = 0; i < numVars; i++) {
 						int varX = (int) (startX + ((moveX * i) + 1));
 						if (actualVars.contains(i)) {
-							if (isCustomMidi || isGlobalCustomMidi) {
+							if (isCustomMidi) {
 								if (!Section.variationDescriptions[part][i + 2]
 										.startsWith("Transpose")) {
 									continue;

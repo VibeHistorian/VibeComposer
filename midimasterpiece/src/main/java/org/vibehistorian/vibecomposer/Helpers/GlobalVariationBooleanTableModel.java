@@ -47,7 +47,7 @@ public class GlobalVariationBooleanTableModel extends AbstractTableModel {
 				allFilled &= (Boolean) tableData[i];
 			}
 			if (allFilled) {
-				tableData[1] = Boolean.TRUE;
+				tableData[0] = Boolean.TRUE;
 			}
 			fireTableDataChanged();
 		} else if (column == 0) {

@@ -213,7 +213,7 @@ public class VisualPatternPanel extends JPanel {
 
 							@Override
 							public void actionPerformed(ActionEvent e) {
-								VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+								VibeComposerGUI.vibeComposerGUI.regenerate();
 							}
 						});
 						tmr.setRepeats(false);
@@ -263,7 +263,7 @@ public class VisualPatternPanel extends JPanel {
 						randomizePattern();
 					}
 					if (VibeComposerGUI.canRegenerateOnChange()) {
-						VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+						VibeComposerGUI.vibeComposerGUI.regenerate();
 					}
 				}
 			}
@@ -276,7 +276,13 @@ public class VisualPatternPanel extends JPanel {
 					VisualPatternPanel.this.setVisible(false);
 					RhythmPattern d = patternType.getVal();
 					if (d != RhythmPattern.CUSTOM) {
-						truePattern = d.getPatternByLength(MAX_HITS, 0);
+						int hits = hitsKnob.getInt();
+						truePattern = (d == RhythmPattern.EUCLID)
+								? RhythmPattern.makeEuclideanPattern(hits,
+										(int) truePattern.subList(0, hits).stream()
+												.filter(e -> e > 0).count(),
+										0, MAX_HITS)
+								: d.getPatternByLength(MAX_HITS, 0);
 						if (trueVelocities.isEmpty()) {
 							int updatedVel = (parentPanel.getVelocityMax()
 									+ parentPanel.getVelocityMin()) / 2;
@@ -415,7 +421,7 @@ public class VisualPatternPanel extends JPanel {
 	protected void randomizePattern() {
 		//LG.i("Randomize pattern.");
 		if (patternType.isEnabled()) {
-			patternType.setSelectedItem(RhythmPattern.CUSTOM);
+			patternType.setValRaw(RhythmPattern.CUSTOM);
 			shiftPanel.setInt(0);
 			Random rand = new Random();
 			for (int i = 0; i < MAX_HITS; i++) {

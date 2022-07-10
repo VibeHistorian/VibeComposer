@@ -17,8 +17,6 @@ public class ChordletPickerPopup extends CloseablePopup {
 
 	@Override
 	protected void addFrameWindowOperation() {
-		// TODO Auto-generated method stub
-
 	}
 
 }

@@ -83,7 +83,7 @@ public class VariationPopup {
 
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
-			if (sec.getPartPresenceVariationMap().get(i) == null) {
+			if (sec.getPartMap().get(i) == null) {
 				sec.initPartMap();
 			}
 
@@ -92,7 +92,7 @@ public class VariationPopup {
 					.collect(Collectors.toList());
 
 			table.setModel(new VariationsBooleanTableModel(fI, sectionOrder - 1,
-					sec.getPartPresenceVariationMap().get(i), Section.variationDescriptions[i],
+					sec.getPartMap().get(i), Section.variationDescriptions[i],
 					partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
@@ -365,7 +365,7 @@ public class VariationPopup {
 		scaleMode.addItem(OMNI.EMPTYCOMBO);
 		ScrollComboBox.addAll(scaleModes, scaleMode);
 		if (secC.getCustomScale() != null) {
-			scaleMode.setSelectedItem(secC.getCustomScale().toString());
+			scaleMode.setValRaw(secC.getCustomScale().toString());
 		}
 		scaleMode.setFunc(e -> {
 			secC.setCustomScale(

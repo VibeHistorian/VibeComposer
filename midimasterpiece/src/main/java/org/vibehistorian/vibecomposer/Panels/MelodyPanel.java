@@ -41,6 +41,7 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
 	private KnobPanel speed = new KnobPanel("Speed", 50);
 	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
+	private KnobPanel startNoteChance = new KnobPanel("Start%", 80);
 
 	public void initComponents(ActionListener l) {
 
@@ -59,7 +60,6 @@ public class MelodyPanel extends InstPanel {
 		this.add(panelOrder);*/
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(0, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
 		transpose.getKnob().setTickSpacing(10);
@@ -88,10 +88,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("<html>Note<br>Targets</html>"));
 		noteTargets.setMargin(new Insets(0, 0, 0, 0));
 		noteTargets.setTextGenerator(e -> {
-			return StringUtils.join(MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts,
-					new Random().nextInt(),
-					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
-					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null), ",");
+			return StringUtils.join(noteTargets.getRandGenerator().apply(new Object()), ",");
 		});
 		noteTargets.setRandGenerator(e -> {
 			return MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts,
@@ -139,6 +136,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(noteLengthMultiplier);
 		this.add(swingPercent);
 		this.add(accents);
+		this.add(startNoteChance);
 
 
 		this.add(alternatingRhythmChance);
@@ -167,12 +165,14 @@ public class MelodyPanel extends InstPanel {
 	public void addBackgroundsForKnobs() {
 		super.addBackgroundsForKnobs();
 		speed.addBackgroundWithBorder(OMNI.alphen(Color.red, 50));
+		startNoteChance.addBackgroundWithBorder(OMNI.alphen(Color.black, 70));
 	}
 
 	@Override
 	public void toggleComponentTexts(boolean b) {
 		super.toggleComponentTexts(b);
 		speed.setShowTextInKnob(b);
+		startNoteChance.setShowTextInKnob(b);
 	}
 
 	public void toggleCombinedMelodyDisabledUI(boolean b) {
@@ -203,6 +203,7 @@ public class MelodyPanel extends InstPanel {
 		part.setBlockJump(getBlockJump());
 		part.setDoubledRhythmChance(getDoubledRhythmChance());
 		part.setLeadChordsChance(getLeadChordsChance());
+		part.setStartNoteChance(getStartNoteChance());
 		part.setMaxNoteExceptions(getMaxNoteExceptions());
 		part.setNoteExceptionChance(getNoteExceptionChance());
 		part.setSpeed(getSpeed());
@@ -224,6 +225,7 @@ public class MelodyPanel extends InstPanel {
 		setBlockJump(part.getBlockJump());
 		setDoubledRhythmChance(part.getDoubledRhythmChance());
 		setLeadChordsChance(part.getLeadChordsChance());
+		setStartNoteChance(part.getStartNoteChance());
 		setMaxNoteExceptions(part.getMaxNoteExceptions());
 		setNoteExceptionChance(part.getNoteExceptionChance());
 		setSpeed(part.getSpeed());
@@ -271,6 +273,7 @@ public class MelodyPanel extends InstPanel {
 		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
 		speed.setInt(mp1.speed.getInt());
 		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
+		startNoteChance.setInt(mp1.startNoteChance.getInt());
 		//setInstrument(mp1.getInstrument());
 	}
 
@@ -344,6 +347,14 @@ public class MelodyPanel extends InstPanel {
 
 	public void setLeadChordsChance(int val) {
 		this.leadChordsChance.setInt(val);
+	}
+
+	public int getStartNoteChance() {
+		return startNoteChance.getInt();
+	}
+
+	public void setStartNoteChance(int val) {
+		this.startNoteChance.setInt(val);
 	}
 
 	public RandomIntegerListButton getNoteTargetsButton() {

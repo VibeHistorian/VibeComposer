@@ -4,27 +4,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.Random;
+import java.util.function.Consumer;
 
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.Components.RandomValueButton;
-import org.vibehistorian.vibecomposer.Panels.NumPanel;
+import javax.swing.JTextField;
 
-public class ButtonValuePopup extends CloseablePopup {
-	private RandomValueButton butt = null;
-	private NumPanel numPanel = null;
-	private Integer customInput = null;
-	public int randomNum = Integer.MIN_VALUE;
+public class PatternNamePopup extends CloseablePopup {
+	private Consumer<String> callback = null;
+	private JTextField textField = new JTextField("", 8);
 
-	public ButtonValuePopup(RandomValueButton butt) {
-		super("Button Value Setting", 0);
-		this.butt = butt;
-		Random rand = new Random();
-		randomNum = rand.nextInt();
+	public PatternNamePopup(Consumer<String> callback) {
+		super("Pattern - New", 0);
+		this.callback = callback;
 
-		numPanel = new NumPanel("Button", butt.getValue(), Integer.MIN_VALUE, Integer.MAX_VALUE);
-		numPanel.getValueRect().setVisible(false);
-		numPanel.getTextfield().addKeyListener(new KeyListener() {
+		textField.addKeyListener(new KeyListener() {
 
 			@Override
 			public void keyTyped(KeyEvent e) {
@@ -48,7 +40,7 @@ public class ButtonValuePopup extends CloseablePopup {
 
 		});
 
-		frame.add(numPanel);
+		frame.add(textField);
 		frame.pack();
 		frame.setVisible(true);
 
@@ -65,21 +57,7 @@ public class ButtonValuePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				try {
-					customInput = Integer.valueOf(numPanel.getTextfield().getText());
-				} catch (NumberFormatException ex) {
-					LG.d("Invalid value: " + numPanel.getTextfield().getText());
-				}
-				if (customInput != null) {
-					butt.setValue(customInput);
-				}
-
-				/*if (RandomValueButton.singlePopup != null) {
-					if (RandomValueButton.singlePopup.randomNum == randomNum) {
-						RandomValueButton.singlePopup = null;
-					}
-				}*/
-
+				callback.accept(textField.getText());
 			}
 
 			@Override

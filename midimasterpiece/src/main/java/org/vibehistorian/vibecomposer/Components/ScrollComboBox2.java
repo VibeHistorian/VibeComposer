@@ -22,7 +22,7 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
-public class ScrollComboBox2<T> extends JComboBox<T> {
+public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable {
 
 	private static final long serialVersionUID = -1471401267249157092L;
 	private boolean scrollEnabled = true;
@@ -155,7 +155,7 @@ public class ScrollComboBox2<T> extends JComboBox<T> {
 
 		if (isEnabled() && regenerating && interacting && VibeComposerGUI.canRegenerateOnChange()
 				&& isDifferent) {
-			VibeComposerGUI.vibeComposerGUI.composeMidi(true);
+			VibeComposerGUI.vibeComposerGUI.regenerate();
 		}
 		discardInteraction();
 	}
@@ -218,7 +218,8 @@ public class ScrollComboBox2<T> extends JComboBox<T> {
 		func = null;
 	}
 
-	private void setEnabledGlobal(boolean enabled) {
+	@Override
+	public void setEnabledGlobal(boolean enabled) {
 		InstPanel instParent = SwingUtils.getInstParent(this);
 		if (instParent == null) {
 			setEnabled(enabled);

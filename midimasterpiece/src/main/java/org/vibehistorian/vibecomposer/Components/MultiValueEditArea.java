@@ -27,9 +27,8 @@ public class MultiValueEditArea extends JComponent {
 	List<Integer> values = null;
 	Map<Integer, Set<Integer>> highlightedGrid = null;
 
-	int colStart = 2;
-	int rowStart = 1;
-	int rowHeightCorrection = 3;
+	int marginX = 40;
+	int marginY = 40;
 
 	int markWidth = 6;
 	int numHeight = 6;
@@ -104,21 +103,24 @@ public class MultiValueEditArea extends JComponent {
 			Graphics2D g = (Graphics2D) guh;
 			int w = getWidth();
 			int h = getHeight();
-			int numValues = values.size();
-			int colDivisors = numValues + colStart;
-			double colWidth = w / (double) colDivisors;
-			int rowDivisors = max - min + rowHeightCorrection + rowStart;
-			double rowHeight = h / (double) rowDivisors;
 			// clear screen
 			g.setColor(VibeComposerGUI.isDarkMode ? VibeComposerGUI.panelColorHigh
 					: VibeComposerGUI.panelColorLow.darker());
 			g.fillRect(0, 0, w, h);
+			int numSize = values.size();
+			if (numSize == 0) {
+				return;
+			}
+			int rowDivisors = max - min;
+			int usableHeight = h - marginY * 2;
+			double rowHeight = usableHeight / (double) rowDivisors;
+
+			Point bottomLeft = new Point(marginX, usableHeight + marginY);
+			double colWidth = (w - marginX * 2) / numSize;
 
 			// draw graph lines - first to last value X, min to max value Y
 			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 80));
 
-			Point bottomLeft = new Point((int) colWidth * (colStart - 1),
-					(int) rowHeight * (rowDivisors - rowStart));
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
 
@@ -146,7 +148,7 @@ public class MultiValueEditArea extends JComponent {
 
 			// draw numbers below X line
 			// draw line marks
-			for (int i = 0; i < numValues; i++) {
+			for (int i = 0; i < numSize; i++) {
 				String drawnValue = "" + (i + 1);
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
@@ -164,7 +166,7 @@ public class MultiValueEditArea extends JComponent {
 			g.setColor(dotColor);
 
 			// draw line helpers/dots
-			for (int i = 0; i < numValues; i++) {
+			for (int i = 0; i < numSize; i++) {
 				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
 				Set<Integer> helpers = highlightedGrid != null ? highlightedGrid.get(i) : null;
 				for (int j = 0; j < 1 + max - min; j++) {
@@ -184,11 +186,11 @@ public class MultiValueEditArea extends JComponent {
 			// draw actual values
 
 			int ovalWidth = w / 40;
-			for (int i = 0; i < numValues; i++) {
+			for (int i = 0; i < numSize; i++) {
 				int drawX = bottomLeft.x + (int) (colWidth * (i + 1));
 				int drawY = bottomLeft.y - (int) (rowHeight * (values.get(i) + 1 - min));
 
-				if (i < numValues - 1) {
+				if (i < numSize - 1) {
 					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
 					g.drawLine(drawX, drawY, drawX + (int) colWidth,
 							bottomLeft.y - (int) (rowHeight * (values.get(i + 1) + 1 - min)));
@@ -210,20 +212,32 @@ public class MultiValueEditArea extends JComponent {
 
 
 	public Point getOrderAndValueFromPosition(Point xy) {
+		int numSize = values.size();
+		if (numSize == 0) {
+			return null;
+		}
 		int w = getWidth();
 		int h = getHeight();
-		int colDivisors = values.size() + colStart;
-		double colWidth = w / (double) colDivisors;
-		int rowDivisors = max - min + rowHeightCorrection + rowStart;
-		double rowHeight = h / (double) rowDivisors;
+		int rowDivisors = max - min;
+		int usableHeight = h - marginY * 2;
+		double rowHeight = usableHeight / (double) rowDivisors;
 
-		Point bottomLeftAdjusted = new Point((int) (colWidth * (colStart - 0.5)),
-				(int) (rowHeight * (rowDivisors - rowStart - 0.5)));
-		int xValue = (int) ((xy.x - bottomLeftAdjusted.x) / colWidth);
-		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min - 1;
+		Point bottomLeftAdjusted = new Point(marginX,
+				usableHeight + marginY - (int) (rowHeight / 2));
 
-		xValue = OMNI.clamp(xValue, 0, values.size() - 1);
+		int yValue = (int) ((bottomLeftAdjusted.y - xy.y) / rowHeight) + min;
 		yValue = OMNI.clamp(yValue, min, max);
+
+
+		if (numSize == 1) {
+			return new Point(0, yValue);
+		}
+
+		double colWidth = (w - bottomLeftAdjusted.x * 2) / (double) numSize;
+
+		int searchX = (int) ((xy.x - bottomLeftAdjusted.x - colWidth / 2) / colWidth);
+
+		int xValue = OMNI.clamp(searchX, 0, numSize - 1);
 
 		Point orderValue = new Point(xValue, yValue);
 		//LG.d("Incoming point: " + xy.toString());

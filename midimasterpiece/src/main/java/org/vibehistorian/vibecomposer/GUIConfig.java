@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
@@ -30,7 +31,9 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -45,7 +48,13 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 @XmlType(propOrder = {})
 public class GUIConfig {
 
+	public GUIConfig() {
+	}
+
 	private PhraseNotes melodyNotes = null;
+
+	// pattern map
+	private List<PatternMap> patternMaps = new ArrayList<>();
 
 	// arrangement
 	private Arrangement arrangement = new Arrangement();
@@ -150,11 +159,6 @@ public class GUIConfig {
 
 	private String bookmarkText = "";
 	private int regenerateCount = 0;
-
-
-	public GUIConfig() {
-
-	}
 
 	public String getSoundbankName() {
 		return soundbankName;
@@ -848,6 +852,53 @@ public class GUIConfig {
 
 	public void setMelodyLegacyMode(boolean melodyLegacyMode) {
 		this.melodyLegacyMode = melodyLegacyMode;
+	}
+
+	@XmlElement(name = "patternMap")
+	public List<PatternMap> getPatternMaps() {
+		return patternMaps;
+	}
+
+	public void setPatternMaps(List<PatternMap> patternMaps) {
+		this.patternMaps = patternMaps;
+	}
+
+	public void putPattern(UsedPattern pattern, PhraseNotes pn) {
+		if (pattern == null) {
+			return;
+		}
+		if (UsedPattern.NONE.equals(pattern.getName())) {
+			pn = null;
+		}
+		patternMaps.get(pattern.getPart()).put(pattern.getPartOrder(), pattern.getName(), pn);
+	}
+
+	public PhraseNotes getPattern(UsedPattern pattern) {
+		if (pattern == null) {
+			return null;
+		}
+		return getPattern(pattern.getPart(), pattern.getPartOrder(), pattern.getName());
+	}
+
+	public PhraseNotes getPattern(int part, int partOrder, String patName) {
+		if (UsedPattern.NONE.equals(patName)) {
+			return null;
+		}
+		return patternMaps.get(part).get(partOrder, patName);
+	}
+
+	public PhraseNotes getPatternRaw(UsedPattern pattern) {
+		if (pattern == null) {
+			return null;
+		}
+		return getPatternRaw(pattern.getPart(), pattern.getPartOrder(), pattern.getName());
+	}
+
+	public PhraseNotes getPatternRaw(int part, int partOrder, String patName) {
+		if (UsedPattern.NONE.equals(patName) || patternMaps.size() <= part) {
+			return null;
+		}
+		return patternMaps.get(part).getRaw(partOrder, patName);
 	}
 
 }

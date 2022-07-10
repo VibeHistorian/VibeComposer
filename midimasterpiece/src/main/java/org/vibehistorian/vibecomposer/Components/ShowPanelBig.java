@@ -224,8 +224,12 @@ public class ShowPanelBig extends JPanel {
 
 		MouseListener ml = new MouseAdapter() {
 			@Override
-			public void mousePressed(MouseEvent evt) {
+			public void mouseReleased(MouseEvent evt) {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
+					if (ShowAreaBig.consumed) {
+						ShowAreaBig.consumed = false;
+						return;
+					}
 					Point xy = MouseInfo.getPointerInfo().getLocation();
 					SwingUtilities.convertPointFromScreen(xy, sa);
 

@@ -15,6 +15,7 @@ public class UndoManager {
 	public static ScrollComboBox<String> historyBox = new ScrollComboBox<>(false);
 	public static int historyIndex = 0;
 	public static boolean recordingEvents = false;
+	public static final int HISTORY_LIMIT = 100;
 
 	static {
 		historyBox.setFunc(e -> {
@@ -40,10 +41,8 @@ public class UndoManager {
 			undoList = undoList.subList(0, historyIndex + 1);
 		}
 
-		undoList.add(cs.stream().map(e -> MutablePair.of(e, VibeComposerGUI.getComponentValue(e)))
+		save(cs.stream().map(e -> MutablePair.of(e, VibeComposerGUI.getComponentValue(e)))
 				.collect(Collectors.toList()));
-		historyIndex = undoList.size() - 1;
-		updateHistoryBox();
 	}
 
 	public static void saveToHistory(Component c) {
@@ -62,7 +61,15 @@ public class UndoManager {
 			undoList = undoList.subList(0, historyIndex + 1);
 		}
 
-		undoList.add(Collections.singletonList(MutablePair.of(c, val)));
+		save(Collections.singletonList(MutablePair.of(c, val)));
+	}
+
+	private static void save(List<Pair<Component, Integer>> historyItems) {
+		undoList.add(historyItems);
+		if (undoList.size() >= HISTORY_LIMIT) {
+			undoList = undoList.subList(HISTORY_LIMIT / 5, HISTORY_LIMIT);
+			LG.i("Cleaned items from Undo history: " + HISTORY_LIMIT / 5);
+		}
 		historyIndex = undoList.size() - 1;
 		updateHistoryBox();
 	}

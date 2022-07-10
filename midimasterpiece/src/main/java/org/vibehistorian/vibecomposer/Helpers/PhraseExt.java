@@ -17,9 +17,9 @@ public class PhraseExt extends Phrase {
 		super();
 	}
 
-	public PhraseExt(int partNum, int absoluteOrder, int secOrder) {
+	public PhraseExt(int partNum, int partOrder, int secOrder) {
 		part = partNum;
-		partOrder = absoluteOrder;
+		this.partOrder = partOrder;
 		this.secOrder = secOrder;
 	}
 

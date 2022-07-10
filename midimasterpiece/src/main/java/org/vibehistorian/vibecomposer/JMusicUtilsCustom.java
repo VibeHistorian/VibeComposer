@@ -45,8 +45,10 @@ public class JMusicUtilsCustom implements JMC {
 		if (phr.length < 2)
 			return;
 		// the new phrase has the start time of the earliest one
-		PhraseExt firstPhrase = (PhraseExt) phr[0];
-		Phrase nphr = new PhraseExt(firstPhrase, firstPhrase.getStartTime());
+		Phrase firstPhrase = phr[0];
+		Phrase nphr = (firstPhrase instanceof PhraseExt)
+				? new PhraseExt((PhraseExt) firstPhrase, firstPhrase.getStartTime())
+				: new Phrase(firstPhrase.getStartTime());
 
 		Note n;
 		boolean finished = false;
@@ -146,12 +148,11 @@ public class JMusicUtilsCustom implements JMC {
 
 	}
 
-	public static void humanize(Part part, Random generator, double rhythmVariation,
+	public static void humanize(PartExt part, Random generator, double rhythmVariation,
 			boolean isDrum) {
 		if (part == null) {
 			return;
 		}
-		boolean left = true;
 		Enumeration enum1 = part.getPhraseList().elements();
 		while (enum1.hasMoreElements()) {
 			Phrase phr = (Phrase) enum1.nextElement();

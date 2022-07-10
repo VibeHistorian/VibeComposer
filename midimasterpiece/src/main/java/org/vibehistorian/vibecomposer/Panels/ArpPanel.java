@@ -38,7 +38,6 @@ public class ArpPanel extends InstPanel {
 		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(3, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 		addDefaultPanelButtons();
 

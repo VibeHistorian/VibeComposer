@@ -212,7 +212,7 @@ public class ChordletPanel extends JPanel {
 					addChord(e, false);
 				}
 			});
-			LG.i("Set up chords: " + chordlets.size());
+			LG.d("Set up chords: " + chordlets.size());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

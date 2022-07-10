@@ -51,7 +51,6 @@ public class ChordPanel extends InstPanel {
 		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(2, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 		this.add(instPoolPicker);
 		addDefaultPanelButtons();
@@ -74,6 +73,9 @@ public class ChordPanel extends InstPanel {
 		this.add(chordSpan);
 		this.add(pauseChance);
 
+		this.add(patternJoinMode);
+		this.add(stretchPanel);
+
 		this.add(strum);
 		this.add(strumType);
 		this.add(strumPauseChance);
@@ -81,9 +83,7 @@ public class ChordPanel extends InstPanel {
 		strum.getKnob().setTickThresholds(VibeComposerGUI.MILISECOND_LIST_STRUM);
 		strum.getKnob().setTickSpacing(50);
 
-		this.add(stretchPanel);
 		this.add(noteLengthMultiplier);
-		this.add(patternJoinMode);
 
 		this.add(minMaxVelSlider);
 
@@ -276,7 +276,7 @@ public class ChordPanel extends InstPanel {
 			rhythmGridSpanned.addAll(toAdd);
 		}
 		// delay
-		int delayShift = getDelay() / 125;
+		int delayShift = getOffset() / 125;
 		if (delayShift != 0) {
 			Collections.rotate(rhythmGridSpanned, delayShift);
 		}

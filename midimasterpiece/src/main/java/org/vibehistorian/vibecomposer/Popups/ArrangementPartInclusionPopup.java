@@ -31,8 +31,8 @@ import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class ArrangementPartInclusionPopup extends CloseablePopup {
 
-	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "VERSES",
-			"INSTRUMENTAL" };
+	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "VERSE",
+			"INST" };
 	public static final Integer[] ENERGY_WEIGHTS = new Integer[] { 50, 50, 50, 50 };
 
 	JPanel tablesPanel = new JPanel();
@@ -40,7 +40,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 
 	JScrollPane scroll;
 
-	public ArrangementPartInclusionPopup(Arrangement arr, Point parentLoc, Dimension parentDim) {
+	public ArrangementPartInclusionPopup(Arrangement arr) {
 		super("Arrangement - Part Inclusion", 10, new Point(-500, -600));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -54,10 +54,10 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
-			if (arr.getPartInclusionMap() == null) {
+			if (arr.getInclMap() == null) {
 				arr.initPartInclusionMap();
 			}
-			if (arr.getPartInclusionMap().get(i) == null) {
+			if (arr.getInclMap().get(i) == null) {
 				arr.initPartInclusionMap();
 			}
 
@@ -65,7 +65,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
-			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getPartInclusionMap().get(i),
+			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getInclMap().get(i),
 					ENERGY_LEVELS, partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);

@@ -20,8 +20,8 @@ import jm.music.data.Phrase;
 public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	private static final long serialVersionUID = 8933379402297939538L;
 
-	private boolean isCustom = false;
 	private int partOrder = -1;
+	private boolean applied = false;
 
 	public PhraseNotes() {
 		super();
@@ -48,8 +48,8 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 	public PhraseNotes copy() {
 		PhraseNotes pn = new PhraseNotes(makeNotes());
-		pn.setCustom(isCustom);
 		pn.setPartOrder(partOrder);
+		pn.setApplied(applied);
 		return pn;
 	}
 
@@ -60,15 +60,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 	@XmlElement(name = "phraseNote")
 	public List<PhraseNote> getPhraseNotes() {
-		return isCustom ? this : null;
-	}
-
-	public boolean isCustom() {
-		return isCustom;
-	}
-
-	public void setCustom(boolean isCustom) {
-		this.isCustom = isCustom;
+		return this;
 	}
 
 	public int getPartOrder() {
@@ -87,4 +79,36 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 			current += pn.getRv();
 		}
 	}
+
+	public boolean isApplied() {
+		return applied;
+	}
+
+	public void setApplied(boolean applied) {
+		this.applied = applied;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + partOrder;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PhraseNotes other = (PhraseNotes) obj;
+		if (partOrder != other.partOrder)
+			return false;
+		return true;
+	}
+
+
 }

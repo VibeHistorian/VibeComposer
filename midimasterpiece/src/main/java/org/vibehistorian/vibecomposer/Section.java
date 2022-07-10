@@ -31,14 +31,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Helpers.PartPhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.Helpers.UsedPatternMap;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -155,13 +158,12 @@ public class Section {
 	// map integer(part type), [part order][presence/section variation]
 	private Map<Integer, Object[][]> partPresenceVariationMap = new HashMap<>();
 
-	// map 
-	private List<PartPhraseNotes> partPhraseNotes = new ArrayList<>();
-
 	private List<Integer> sectionVariations = null;
 	public static final List<Integer> EMPTY_SECTION_VARS = IntStream.iterate(0, f -> f)
 			.limit(sectionVariationNames.length).boxed().collect(Collectors.toList());
 	private int transitionType = 0;
+
+	private List<UsedPatternMap> patterns = UsedPatternMap.multiMap();
 
 	public Section() {
 
@@ -351,8 +353,7 @@ public class Section {
 		sec.setArpParts(getArpParts());
 		sec.setDrumParts(getDrumParts());
 
-		// TODO: need real deep copy once elements are changed manually
-		sec.setPartPhraseNotes(getPartPhraseNotes());
+		sec.setPatterns(patterns);
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
@@ -494,8 +495,7 @@ public class Section {
 	public void generatePresences(Random presRand, boolean forceAdd) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i, VibeComposerGUI.arrangement.getPartInclusionMap(),
-					forceAdd);
+			generatePresences(presRand, i, VibeComposerGUI.arrangement.getInclMap(), forceAdd);
 		}
 
 	}
@@ -629,6 +629,10 @@ public class Section {
 		}
 	}
 
+	public String getPatternType() {
+		return UsedPattern.BASE_PATTERNS[getTypeMelodyOffset() + 1];
+	}
+
 	public int getTypeMelodyOffset() {
 		return getTypeMelodyOffset(type);
 	}
@@ -664,7 +668,7 @@ public class Section {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
 			//LG.d(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
@@ -676,7 +680,7 @@ public class Section {
 				} else {
 					//LG.d("Found index for j: " + j + ", index: " + oldIndex);
 				}
-				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+				for (int k = 1; k < variationDescriptions[i].length; k++) {
 					if (oldIndex == null) {
 						data[j][k] = Boolean.FALSE;
 					} else {
@@ -704,10 +708,10 @@ public class Section {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
 					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
 			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length + 1];
+			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
-				for (int k = 1; k < variationDescriptions[i].length + 1; k++) {
+				for (int k = 1; k < variationDescriptions[i].length; k++) {
 					data[j][k] = Boolean.FALSE;
 				}
 			}
@@ -722,13 +726,25 @@ public class Section {
 		}
 	}
 
+	@XmlElement(name = "partVariations")
+	public InclusionMapJAXB getPartPresenceVariationMap() {
+		if (partPresenceVariationMap.isEmpty()) {
+			return null;
+		}
+		return InclusionMapJAXB.from(partPresenceVariationMap);
+	}
 
-	public Map<Integer, Object[][]> getPartPresenceVariationMap() {
+	public void setPartPresenceVariationMap(InclusionMapJAXB map) {
+		partPresenceVariationMap = InclusionMapJAXB.toMap(map);
+	}
+
+	@XmlTransient
+	public Map<Integer, Object[][]> getPartMap() {
 		return partPresenceVariationMap;
 	}
 
 
-	public void setPartPresenceVariationMap(Map<Integer, Object[][]> partPresenceVariationMap) {
+	public void setPartMap(Map<Integer, Object[][]> partPresenceVariationMap) {
 		this.partPresenceVariationMap = partPresenceVariationMap;
 	}
 
@@ -810,7 +826,7 @@ public class Section {
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {
 			int actualInstCount = VibeComposerGUI.getInstList(i).size();
-			int secInstCount = getPartPresenceVariationMap().get(i).length;
+			int secInstCount = getPartMap().get(i).length;
 			if (secInstCount != actualInstCount) {
 				needsArrayCopy = true;
 				break;
@@ -963,70 +979,12 @@ public class Section {
 		this.displayAlternateChords = displayAlternateChords;
 	}
 
-
-	public List<PartPhraseNotes> getPartPhraseNotes() {
-		return partPhraseNotes;
-	}
-
-	public void addPhraseNotes(int part, int partOrder, PhraseNotes pn) {
-		while (partPhraseNotes.size() <= part) {
-			partPhraseNotes.add(new PartPhraseNotes(null, partPhraseNotes.size()));
+	public boolean containsPattern(int part, int partOrder) {
+		UsedPattern pat = getPattern(part, partOrder);
+		if (pat == null || pat.getName() == null) {
+			return false;
 		}
-		while (partPhraseNotes.get(part).size() <= partOrder) {
-			PhraseNotes pn2 = new PhraseNotes();
-			pn2.setPartOrder(partPhraseNotes.get(part).size());
-			partPhraseNotes.get(part).add(pn2);
-		}
-		partPhraseNotes.get(part).set(partOrder, pn);
-	}
-
-	public void setPartPhraseNotes(List<PartPhraseNotes> partPhraseNotes) {
-		if (partPhraseNotes == null) {
-			return;
-		}
-		for (PartPhraseNotes phrn : partPhraseNotes) {
-			PartPhraseNotes phrnCopy = new PartPhraseNotes(
-					phrn.stream().map(e -> e.copy()).collect(Collectors.toList()), null);
-			phrnCopy.setPart(phrn.getPart());
-			storePhraseNotesList(phrnCopy);
-		}
-	}
-
-	public void storePhraseNotesList(PartPhraseNotes phrNotesList) {
-		if (phrNotesList == null) {
-			phrNotesList = new PartPhraseNotes();
-		}
-
-		Set<Integer> customPhraseNotes = null;
-
-		if (phrNotesList.getPart() < partPhraseNotes.size()) {
-			customPhraseNotes = partPhraseNotes.get(phrNotesList.getPart()).stream()
-					.filter(e -> e.isCustom()).map(e -> e.getPartOrder())
-					.collect(Collectors.toSet());
-			for (PhraseNotes pn : phrNotesList) {
-				if (customPhraseNotes.contains(pn.getPartOrder())) {
-					pn.setCustom(true);
-				}
-			}
-		}
-
-		if (phrNotesList.getPart() < partPhraseNotes.size()) {
-			partPhraseNotes.set(phrNotesList.getPart(), phrNotesList);
-		} else {
-			partPhraseNotes.add(phrNotesList);
-		}
-	}
-
-	public boolean containsPhrase(int part, int partOrder) {
-		return getPartPhraseNotes() != null && getPartPhraseNotes().size() > part
-				&& getPartPhraseNotes().get(part).size() > partOrder;
-	}
-
-	public PhraseNotes getPhraseNotes(int part, int partOrder) {
-		if (!containsPhrase(part, partOrder)) {
-			return null;
-		}
-		return partPhraseNotes.get(part).get(partOrder);
+		return true;
 	}
 
 	public List<Double> getGeneratedSectionBeatDurations() {
@@ -1060,6 +1018,43 @@ public class Section {
 			List<Integer> vars = getVariation(part, partOrder);
 			return (vars != null && vars.contains(0)) ? 12 : 0;
 		}
+	}
+
+	@XmlElement(name = "pattern")
+	public List<UsedPatternMap> getPatterns() {
+		if (getGeneratedDurations() == null) {
+			return null;
+		}
+		return patterns;
+	}
+
+	public void setPatterns(List<UsedPatternMap> patterns) {
+		this.patterns = patterns;
+	}
+
+	public void putPattern(int part, int partOrder, UsedPattern pat) {
+		patterns.get(part).put(partOrder, pat);
+	}
+
+	public UsedPattern getPattern(int part, int partOrder) {
+		return patterns.get(part).get(partOrder);
+	}
+
+	public List<PhraseNotes> getPatterns(int part) {
+		UsedPatternMap upMap = patterns.get(part);
+		List<PhraseNotes> patterns = new ArrayList<>();
+		for (Integer partOrder : upMap.keySet()) {
+			patterns.add(VibeComposerGUI.guiConfig.getPattern(upMap.get(partOrder)));
+		}
+		return patterns;
+	}
+
+	public String getPatternName(int part, int partOrder) {
+		UsedPattern pat = getPattern(part, partOrder);
+		if (pat == null) {
+			return UsedPattern.NONE;
+		}
+		return pat.getName();
 	}
 
 }

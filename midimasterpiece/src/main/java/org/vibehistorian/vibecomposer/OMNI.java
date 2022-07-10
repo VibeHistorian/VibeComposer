@@ -9,6 +9,8 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
+import jm.music.data.Note;
+
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
 	public static final List<Integer> PART_INTS = Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 });
@@ -159,5 +161,12 @@ public class OMNI {
 			}
 		}
 		return -1;
+	}
+
+	public static int clampPitch(int newPitch) {
+		if (newPitch < Note.REST + 100) {
+			return Note.REST;
+		}
+		return clamp(newPitch, 0, 127);
 	}
 }

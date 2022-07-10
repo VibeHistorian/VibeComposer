@@ -43,7 +43,6 @@ public class BassPanel extends InstPanel {
 		this.add(panSlider);
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
-		soloMuter = new SoloMuter(1, SoloMuter.Type.SINGLE);
 		addDefaultInstrumentControls();
 
 		//this.add(useRhythm);
@@ -78,7 +77,7 @@ public class BassPanel extends InstPanel {
 		//this.add(melodyPattern);
 
 		this.add(minMaxVelSlider);
-		this.add(delay);
+		this.add(offset);
 
 		this.add(patternSeedLabel);
 		this.add(patternSeed);
@@ -94,7 +93,7 @@ public class BassPanel extends InstPanel {
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
 		}
-		patternJoinMode.setSelectedItem(PatternJoinMode.EXPAND);
+		patternJoinMode.setValRaw(PatternJoinMode.EXPAND);
 	}
 
 

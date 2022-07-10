@@ -1,10 +1,13 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.Components;
 
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
 
 public class InstComboBox extends ScrollComboBox<String> {
 
@@ -88,7 +91,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 		for (int i = 0; i < this.getItemCount(); i++) {
 			int inst = Integer.valueOf(this.getItemAt(i).split(": ")[0].trim());
 			if (inst == instrument) {
-				setSelectedItem(getItemAt(i));
+				setValRaw(getItemAt(i));
 				discardInteraction();
 				return true;
 			}

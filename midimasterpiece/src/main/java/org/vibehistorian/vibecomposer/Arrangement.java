@@ -32,10 +32,13 @@ import java.util.stream.Collectors;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.vibehistorian.vibecomposer.Section.SectionType;
+import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 
 @XmlRootElement(name = "arrangement")
@@ -428,6 +431,7 @@ public class Arrangement {
 
 	public void setOverridden(boolean overridden) {
 		this.overridden = overridden;
+		LG.d(("ARRANGEMENT overridden: " + overridden));
 	}
 
 	public int getSeed() {
@@ -438,12 +442,25 @@ public class Arrangement {
 		this.seed = seed;
 	}
 
-	public Map<Integer, Object[][]> getPartInclusionMap() {
+	@XmlTransient
+	public Map<Integer, Object[][]> getInclMap() {
 		return partInclusionMap;
 	}
 
-	public void setPartInclusionMap(Map<Integer, Object[][]> partInclusionMap) {
+	public void setInclMap(Map<Integer, Object[][]> partInclusionMap) {
 		this.partInclusionMap = partInclusionMap;
+	}
+
+	@XmlElement(name = "partInclusions")
+	public InclusionMapJAXB getPartInclusionMap() {
+		if (partInclusionMap.isEmpty()) {
+			return null;
+		}
+		return InclusionMapJAXB.from(partInclusionMap);
+	}
+
+	public void setPartInclusionMap(InclusionMapJAXB map) {
+		partInclusionMap = InclusionMapJAXB.toMap(map);
 	}
 
 	public void initPartInclusionMap() {
@@ -463,7 +480,6 @@ public class Arrangement {
 			partInclusionMap.put(i, data);
 		}
 		partInclusionMap.get(0)[0][1] = Boolean.FALSE;
-		partInclusionMap.get(0)[0][3] = Boolean.FALSE;
 		partInclusionMap.get(0)[0][4] = Boolean.FALSE;
 	}
 
@@ -482,17 +498,17 @@ public class Arrangement {
 	}
 
 	public void recalculatePartInclusionMapBoundsIfNeeded() {
-		if (getPartInclusionMap() == null) {
+		if (getInclMap() == null) {
 			initPartInclusionMap();
 			return;
 		}
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {
 			int actualInstCount = VibeComposerGUI.getInstList(i).size();
-			if (getPartInclusionMap().get(i) == null) {
+			if (getInclMap().get(i) == null) {
 				initPartInclusionMap();
 			}
-			int secInstCount = getPartInclusionMap().get(i).length;
+			int secInstCount = getInclMap().get(i).length;
 			if (secInstCount != actualInstCount) {
 				needsArrayCopy = true;
 				break;
@@ -505,7 +521,7 @@ public class Arrangement {
 	}
 
 	private void initPartInclusionMapFromOldData() {
-		if (getPartInclusionMap() == null) {
+		if (getInclMap() == null) {
 			initPartInclusionMap();
 			return;
 		}
@@ -518,10 +534,10 @@ public class Arrangement {
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				for (int k = 1; k < ArrangementPartInclusionPopup.ENERGY_LEVELS.length; k++) {
-					data[j][k] = getBooleanFromOldData(getPartInclusionMap().get(i), j, k);
+					data[j][k] = getBooleanFromOldData(getInclMap().get(i), j, k);
 				}
 			}
-			getPartInclusionMap().put(i, data);
+			getInclMap().put(i, data);
 		}
 	}
 
@@ -558,16 +574,21 @@ public class Arrangement {
 		for (int i = 0; i < 5; i++) {
 			int typesCount = Section.variationDescriptions[i].length - 1;
 			Boolean[] data = new Boolean[typesCount];
-			data[0] = Boolean.TRUE;
+			Boolean data0 = Boolean.TRUE;
 			for (int k = 1; k < typesCount; k++) {
 				data[k] = getBooleanFromOldData1D(globalVariationMap.get(i), k);
+				data0 &= data[k];
 			}
+			data[0] = data0;
 			globalVariationMap.put(i, data);
 		}
 		Boolean[] data = new Boolean[Section.sectionVariationNames.length + 1];
+		Boolean data0 = Boolean.TRUE;
 		for (int k = 0; k < data.length; k++) {
 			data[k] = getBooleanFromOldData1D(globalVariationMap.get(5), k);
+			data0 &= data[k];
 		}
+		data[0] = data0;
 		globalVariationMap.put(5, data);
 	}
 
@@ -613,14 +634,16 @@ public class Arrangement {
 				initGlobalVariationMap();
 			}
 			if (i < 5) {
-				if (getGlobalVariationMap().get(i).length <= Section.variationDescriptions[i].length
+				if (getGlobalVariationMap().get(i).length < Section.variationDescriptions[i].length
 						- 1) {
 					initGlobalVariationMapFromOldData();
+					return;
 				}
 			} else {
-				if (getGlobalVariationMap().get(i).length <= Section.sectionVariationNames.length
+				if (getGlobalVariationMap().get(i).length < Section.sectionVariationNames.length
 						+ 1) {
 					initGlobalVariationMapFromOldData();
+					return;
 				}
 			}
 		}
