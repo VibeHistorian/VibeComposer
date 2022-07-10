@@ -1,7 +1,7 @@
-# VibeComposer 2.1
+# VibeComposer 2.2
 ## Interactive Music Generator
 
-![VibeComposer Advanced_UI Preview](https://i.imgur.com/yWwXKnB.png)
+![VibeComposer Advanced_UI Preview](https://i.imgur.com/o8dDRsx.png)
 
 #### Arranged Track Examples (v2.1): 
 - [Darker](https://soundcloud.com/vibehistorian/darker)
@@ -12,8 +12,8 @@
 
 
 #### How to run it (on Windows):
-1. [Make sure you have installed the Java Runtime Environment 1.8.0](https://java.com/en/download/)
-2. [Download the latest release (.jar, or .exe for convenience)](https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.1-beta)
+1. [Download and install JRE - Java Runtime Environment (at least ver. 1.8.0)](https://java.com/en/download/)
+2. [Download the latest release (.jar, or .exe for convenience)](https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.2-beta)
 3. Run/double-click the executable
   > Note: some users report getting browser warnings like "[xyz] is not commonly downloaded and may be dangerous." when downloading the .exe - this is a known issue of Launch4j (used to wrap JAVA .jar as an .exe)<br>
   > To avoid it, you can instead download and run the .jar version itself, which is not wrapped. <br>
@@ -21,7 +21,7 @@
 
 #### How to run it (on Linux/Mac):
 1. Same thing as Windows, but you should only use the JAR (.jar) file instead of the executable (.exe) file.
-2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, and use command: "java -jar VibeComposer-v2.0-beta-JAR.jar"
+2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, and use command: "java -jar VibeComposer-v2.2-beta-JAR.jar"
 3. In case it still doesn't work, feel free to contact me (email/discord below).
 
 #### How to use it:
