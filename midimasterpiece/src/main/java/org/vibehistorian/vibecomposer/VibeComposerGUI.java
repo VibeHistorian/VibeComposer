@@ -4342,6 +4342,28 @@ public class VibeComposerGUI extends JFrame
 		});
 		customChordsPanel.add(dotdotChordsButton);
 
+		JButton ivChordsButton = new JButton("Ch");
+		ivChordsButton.setPreferredSize(new Dimension(25, 25));
+		ivChordsButton.setMargin(new Insets(0, 0, 0, 0));
+		ivChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
+						userChords.getChordListString(), userChordsDurations.getText());
+				if (normalizedChords != null) {
+					List<String> chords = normalizedChords.getLeft();
+					List<String> chordStrings = new ArrayList<>();
+					chords.forEach(ch -> {
+						chordStrings
+								.add(MidiUtils.chordStringFromPitches(MidiUtils.mappedChord(ch)));
+					});
+					userChords.setupChords(chordStrings);
+				}
+			}
+		});
+		customChordsPanel.add(ivChordsButton);
+
 		JButton resetChordsButton = new JButton("R");
 		resetChordsButton.setPreferredSize(new Dimension(25, 25));
 		resetChordsButton.setMargin(new Insets(0, 0, 0, 0));

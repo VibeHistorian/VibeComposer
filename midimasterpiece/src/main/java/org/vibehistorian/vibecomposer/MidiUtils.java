@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
@@ -276,10 +277,10 @@ public class MidiUtils {
 	private static Map<String, int[]> createChordMap() {
 		Map<String, int[]> chordMap = new HashMap<>();
 
-		for (int i = 1; i <= 7; i++) {
+		for (int i = 0; i < 12; i++) {
 			for (int j = 0; j < SPICE_CHORDS_LIST.size(); j++) {
-				chordMap.put(CHORD_FIRST_LETTERS.get(i - 1) + SPICE_NAMES_LIST.get(j),
-						transposeChord(SPICE_CHORDS_LIST.get(j), diaTransMap.get(i)));
+				chordMap.put(SEMITONE_LETTERS.get(i) + SPICE_NAMES_LIST.get(j),
+						transposeChord(SPICE_CHORDS_LIST.get(j), i));
 			}
 		}
 		return chordMap;
@@ -400,10 +401,12 @@ public class MidiUtils {
 		List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
 
 		for (String ch : chords) {
+			if (ch.contains("6") || ch.contains("#")) {
+				continue;
+			}
 			int transposeByLetter = targetScale
 					.get(CHORD_FIRST_LETTERS.indexOf(ch.substring(0, 1)));
-			if (ch.contains("6")
-					|| !isSpiceValid(transposeByLetter, ch.substring(1), targetScale)) {
+			if (!isSpiceValid(transposeByLetter, ch.substring(1), targetScale)) {
 				continue;
 			}
 			int[] chord = chordsMap.get(ch);
@@ -723,7 +726,7 @@ public class MidiUtils {
 		}
 
 		int[] mappedChord = null;
-		if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
+		/*if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
 			String testChordString = chordString;
 			testChordString = testChordString.replaceFirst("#", "");
 			mappedChord = chordsMap.get(testChordString);
@@ -732,13 +735,13 @@ public class MidiUtils {
 				for (int i = 0; i < mappedChord.length; i++) {
 					mappedChord[i] = mappedChord[i] + 1;
 				}
-
+		
 				if (inversion != null) {
 					return chordInversion(mappedChord, inversion);
 				}
 				return mappedChord;
 			}
-		}
+		}*/
 
 		mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
@@ -1610,6 +1613,17 @@ public class MidiUtils {
 
 	public static int octavePitch(int pitch) {
 		return pitch - pitch % 12;
+	}
+
+	public static String chordStringFromPitches(int[] pitches) {
+		int[] normalized60 = normalizeChord(pitches);
+		for (Entry<String, int[]> nameChords : chordsMap.entrySet()) {
+			if (Arrays.equals(normalized60, normalizeChord(nameChords.getValue()))) {
+				return nameChords.getKey();
+			}
+		}
+		return makeSpelledChord(normalized60);
+
 	}
 
 }
