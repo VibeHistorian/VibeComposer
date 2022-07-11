@@ -27,12 +27,14 @@ public class ShowScorePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				frame.remove(VibeComposerGUI.scoreScrollPane);
-				currentPopupMap.remove(12);
-				VibeComposerGUI.instrumentTabPane.add(VibeComposerGUI.scoreScrollPane, 7);
-				VibeComposerGUI.instrumentTabPane.setTitleAt(7, " Score ");
-				VibeComposerGUI.scorePopup = null;
-				frame.dispose();
+				if (frame.isVisible()) {
+					frame.remove(VibeComposerGUI.scoreScrollPane);
+					currentPopupMap.remove(12);
+					VibeComposerGUI.instrumentTabPane.add(VibeComposerGUI.scoreScrollPane, 7);
+					VibeComposerGUI.instrumentTabPane.setTitleAt(7, " Score ");
+					VibeComposerGUI.scorePopup = null;
+					frame.dispose();
+				}
 			}
 
 			@Override

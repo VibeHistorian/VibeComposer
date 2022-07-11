@@ -188,14 +188,16 @@ public class VisualArrayPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (butt != null) {
-					butt.setValues(mvea.getValues());
+				if (frame.isVisible()) {
+					if (butt != null) {
+						butt.setValues(mvea.getValues());
+					}
+
+					if (closeFunc != null) {
+						closeFunc.accept(new Object());
+					}
 				}
 
-				if (closeFunc != null) {
-					closeFunc.accept(new Object());
-				}
-				handleClose();
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {
 						RandomValueButton.singlePopup = null;

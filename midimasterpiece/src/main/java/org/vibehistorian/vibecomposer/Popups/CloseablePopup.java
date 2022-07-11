@@ -76,6 +76,7 @@ public abstract class CloseablePopup {
 	public void close() {
 		Toolkit.getDefaultToolkit().getSystemEventQueue()
 				.postEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+		handleClose();
 
 	}
 

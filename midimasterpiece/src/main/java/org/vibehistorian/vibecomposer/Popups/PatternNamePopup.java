@@ -57,7 +57,9 @@ public class PatternNamePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				callback.accept(textField.getText());
+				if (frame.isVisible()) {
+					callback.accept(textField.getText());
+				}
 			}
 
 			@Override

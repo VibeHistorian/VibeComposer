@@ -57,14 +57,17 @@ public class ButtonIntegerListValuePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				try {
-					customInput = intListField.getText();
-				} catch (NumberFormatException ex) {
-					LG.d("Invalid value: " + intListField.getText());
+				if (frame.isVisible()) {
+					try {
+						customInput = intListField.getText();
+					} catch (NumberFormatException ex) {
+						LG.d("Invalid value: " + intListField.getText());
+					}
+					if (customInput != null) {
+						butt.setValue(customInput);
+					}
 				}
-				if (customInput != null) {
-					butt.setValue(customInput);
-				}
+
 
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {
