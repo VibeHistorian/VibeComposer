@@ -641,8 +641,6 @@ public class VibeComposerGUI extends JFrame
 				: lastRandomSeed;
 	}
 
-	double realBpm = 60;
-
 	JList<File> generatedMidi;
 	public static Sequencer sequencer = null;
 	public static Map<Integer, List<MidiEvent>> midiEventsToRemove = new HashMap<>();
@@ -6851,7 +6849,6 @@ public class VibeComposerGUI extends JFrame
 			tabPanePossibleChange = true;
 		}
 
-		realBpm = Double.valueOf(mainBpm.getInt());
 		if (ae.getActionCommand() == "RandomizeBpm") {
 			randomizeBPM();
 		}
@@ -7161,7 +7158,6 @@ public class VibeComposerGUI extends JFrame
 		mainBpm.setInt(bpm);
 		mainBpm.getKnob().setMin(bpmLow.getInt());
 		mainBpm.getKnob().setMax(bpmHigh.getInt());
-		realBpm = bpm;
 	}
 
 	private void enthickenText(Component comp) {
