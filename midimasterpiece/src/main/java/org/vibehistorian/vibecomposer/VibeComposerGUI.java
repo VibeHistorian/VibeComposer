@@ -145,6 +145,7 @@ import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
@@ -4283,16 +4284,15 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chords2x = new ArrayList<>(chords);
-					chords.forEach(ch -> {
-						chords2x.add(ch);
-					});
-					userChords.setupChords(chords2x);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<String> chords = userChords.getChordList();
+				List<String> chords2x = new ArrayList<>(chords);
+				chords.forEach(ch -> {
+					chords2x.add(ch);
+				});
+				userChords.setupChords(chords2x);
 			}
 		});
 		customChordsPanel.add(twoExChordsButton);
@@ -4304,17 +4304,16 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chordsDd = new ArrayList<>();
-					chords.forEach(ch -> {
-						chordsDd.add(ch);
-						chordsDd.add(ch);
-					});
-					userChords.setupChords(chordsDd);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<String> chords = userChords.getChordList();
+				List<String> chordsDd = new ArrayList<>();
+				chords.forEach(ch -> {
+					chordsDd.add(ch);
+					chordsDd.add(ch);
+				});
+				userChords.setupChords(chordsDd);
 			}
 		});
 		customChordsPanel.add(ddChordsButton);
@@ -4326,16 +4325,17 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chordsDotDot = new ArrayList<>();
-					chords.forEach(ch -> {
-						chordsDotDot.add(MidiUtils.makeSpelledChord(MidiUtils.mappedChord(ch)));
-					});
-					userChords.setupChords(chordsDotDot);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<Chordlet> chordlets = userChords.getChordlets();
+				List<String> chordsDotDot = new ArrayList<>();
+				chordlets.forEach(ch -> {
+					chordsDotDot.add(MidiUtils
+							.makeSpelledChord(MidiUtils.mappedChord(ch.getChordText(), true))
+							+ ch.getInversionText());
+				});
+				userChords.setupChords(chordsDotDot);
 			}
 		});
 		customChordsPanel.add(dotdotChordsButton);
@@ -4347,17 +4347,17 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chordStrings = new ArrayList<>();
-					chords.forEach(ch -> {
-						chordStrings
-								.add(MidiUtils.chordStringFromPitches(MidiUtils.mappedChord(ch)));
-					});
-					userChords.setupChords(chordStrings);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<Chordlet> chordlets = userChords.getChordlets();
+				List<String> chordStrings = new ArrayList<>();
+				chordlets.forEach(ch -> {
+					chordStrings.add(MidiUtils
+							.chordStringFromPitches(MidiUtils.mappedChord(ch.getChordText(), true))
+							+ ch.getInversionText());
+				});
+				userChords.setupChords(chordStrings);
 			}
 		});
 		customChordsPanel.add(ivChordsButton);

@@ -324,7 +324,7 @@ public class Chordlet extends JComponent {
 	}
 
 	public String getChordText() {
-		return getSpicedText() + (inversion != null ? ("." + inversion) : "");
+		return getSpicedText() + getInversionText();
 	}
 
 	public String getSpicedText() {
@@ -352,4 +352,7 @@ public class Chordlet extends JComponent {
 		update();
 	}
 
+	public String getInversionText() {
+		return (inversion != null ? ("." + inversion) : "");
+	}
 }
