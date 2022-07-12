@@ -6248,7 +6248,6 @@ public class VibeComposerGUI extends JFrame
 			slider.setPaintLabels(true);
 
 			if (loopBeat.isSelected()) {
-				resetPauseInfo();
 				long startPos = (startFromBar.isSelected()) ? delayed : pausedSliderPosition;
 				if (startPos < slider.getValue()) {
 					startPos = slider.getValue();
@@ -6256,6 +6255,7 @@ public class VibeComposerGUI extends JFrame
 				} else {
 					midiNavigate(startPos);
 				}
+				resetPauseInfo();
 
 			} else {
 				String pauseBehavior = pauseBehaviorCombobox.getVal();
