@@ -59,6 +59,7 @@ import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Popups.MidiEditPopup.PatternNameMarker;
 
 import jm.music.data.Note;
 import jm.music.data.Part;
@@ -462,7 +463,7 @@ public class MidiEditPopup extends CloseablePopup {
 					if (SwingUtilities.isLeftMouseButton(e)) {
 						saveNotes(true);
 					} else {
-						new PatternNamePopup(patternName -> {
+						new TextProcessingPopup("Pattern - New", patternName -> {
 							PatternNameMarker pnm = new PatternNameMarker(patternName, true);
 							patternNameBox.addItem(pnm);
 							patternNameBox.setVal(pnm);
