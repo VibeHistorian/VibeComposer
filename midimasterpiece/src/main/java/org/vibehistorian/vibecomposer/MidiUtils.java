@@ -999,6 +999,11 @@ public class MidiUtils {
 	}
 
 	public static int[] transposeChord(int[] chord, final Integer[] mode, final Integer[] modeTo) {
+		return transposeChord(chord, mode, modeTo, false);
+	}
+
+	public static int[] transposeChord(int[] chord, final Integer[] mode, final Integer[] modeTo,
+			boolean keepOutliers) {
 		int[] transposedChord = new int[chord.length];
 
 		List<Integer> modeList = new ArrayList<>();
@@ -1015,7 +1020,7 @@ public class MidiUtils {
 			int searchPitch = Integer.valueOf(pitch % 12);
 			int originalIndex = modeList.indexOf(searchPitch);
 
-			if (originalIndex == -1) {
+			if (originalIndex == -1 && !keepOutliers) {
 				if (modeToList.contains(searchPitch)) {
 					//LG.i("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
@@ -1028,15 +1033,20 @@ public class MidiUtils {
 				continue;
 			}
 
+			if (originalIndex >= 0) {
+				int originalMovement = mode[originalIndex];
+				int newMovement = modeTo[originalIndex];
 
-			int originalMovement = mode[originalIndex];
-			int newMovement = modeTo[originalIndex];
-
-			if (pitch != Note.REST) {
-				transposedChord[j] = pitch - originalMovement + newMovement;
+				if (pitch != Note.REST) {
+					transposedChord[j] = pitch - originalMovement + newMovement;
+				} else {
+					transposedChord[j] = pitch;
+				}
 			} else {
 				transposedChord[j] = pitch;
 			}
+
+
 		}
 		return transposedChord;
 	}
@@ -1330,7 +1340,7 @@ public class MidiUtils {
 			}*/
 		}
 		for (Chord c : chords) {
-			c.setNotes(transposeChord(c.getNotes(), detectionResult.getKey().noteAdjustScale,
+			c.setNotes(transposeChord(c.getNotes(), targetMode.noteAdjustScale,
 					ScaleMode.IONIAN.noteAdjustScale));
 		}
 

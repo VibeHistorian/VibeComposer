@@ -201,6 +201,7 @@ import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementGlobalVariationPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
+import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -4399,6 +4400,18 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		customChordsPanel.add(melodifyChordsButton);
+
+		JButton chordTransformButton = new JButton("T");
+		chordTransformButton.setPreferredSize(new Dimension(25, 25));
+		chordTransformButton.setMargin(new Insets(0, 0, 0, 0));
+		chordTransformButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new ChordTransformPopup(userChords.getChordListString());
+			}
+		});
+		customChordsPanel.add(chordTransformButton);
 
 		userChordsDurations = new JTextField("4,4,4,4", 9);
 		JLabel userChordsDurationsLabel = new JLabel("Chord durations:");
