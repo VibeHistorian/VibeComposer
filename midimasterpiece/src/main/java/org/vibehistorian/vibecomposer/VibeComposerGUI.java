@@ -2910,7 +2910,7 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
 			setActualModel(actualArrangement.convertToActualTableModel(), false);
 			arrSection.getButtons().forEach(cb -> {
-				if (!GLOBAL.equals(cb.getText())) {
+				if (!GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
 					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 					repaint();
 				}
