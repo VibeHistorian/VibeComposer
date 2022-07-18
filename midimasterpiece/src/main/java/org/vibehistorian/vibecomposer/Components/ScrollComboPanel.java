@@ -146,8 +146,10 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 			return;
 		}
 		instParent.getAllComponentsLike(this, ScrollComboPanel.class).forEach(e -> {
-			e.selectRandomValue();
-			e.repaint();
+			if (e.isEnabled()) {
+				e.selectRandomValue();
+				e.repaint();
+			}
 		});
 	}
 

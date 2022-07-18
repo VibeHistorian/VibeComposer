@@ -793,8 +793,10 @@ public class JKnob extends JComponent
 		}
 		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
 			ip.findKnobsByName(getName()).forEach(e -> {
-				e.setValue(val);
-				e.paintComponent(e.getGraphics());
+				if (e.isEnabled()) {
+					e.setValue(val);
+					e.paintComponent(e.getGraphics());
+				}
 			});
 		}
 	}
@@ -808,8 +810,10 @@ public class JKnob extends JComponent
 		}
 		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
 			ip.findKnobsByName(getName()).forEach(e -> {
-				e.setTheta(thetaVal);
-				e.paintComponent(e.getGraphics());
+				if (e.isEnabled()) {
+					e.setTheta(thetaVal);
+					e.paintComponent(e.getGraphics());
+				}
 			});
 		}
 	}

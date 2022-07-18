@@ -413,8 +413,10 @@ public class VisualPatternPanel extends JPanel {
 		}
 		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
 		allPanels.forEach(e -> {
-			e.getComboPanel().randomizePattern();
-			e.getComboPanel().repaint();
+			if (e.getComboPanel().patternType.isEnabled()) {
+				e.getComboPanel().randomizePattern();
+				e.getComboPanel().repaint();
+			}
 		});
 	}
 
