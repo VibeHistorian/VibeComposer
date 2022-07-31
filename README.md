@@ -3,7 +3,8 @@
 
 ![VibeComposer Advanced_UI Preview](https://i.imgur.com/o8dDRsx.png)
 
-#### Arranged Track Examples (v2.1): 
+#### Arranged Track Examples (v2.2 & v2.1): 
+- [A World Beyond](https://soundcloud.com/vibehistorian/a-world-beyond)
 - [Darker](https://soundcloud.com/vibehistorian/darker)
 - [Wolves in Winter](https://soundcloud.com/vibehistorian/wolves-in-winter)
 - [Dew Drop](https://soundcloud.com/vibehistorian/dew-drop)
