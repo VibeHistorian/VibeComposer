@@ -1626,7 +1626,14 @@ public class MidiUtils {
 	}
 
 	public static String chordStringFromPitches(int[] pitches) {
+		String preferredStartPitch = MidiUtils.SEMITONE_LETTERS.get(pitches[0] % 12);
 		int[] normalized60 = normalizeChord(pitches);
+		for (Entry<String, int[]> nameChords : chordsMap.entrySet()) {
+			if (nameChords.getKey().startsWith(preferredStartPitch)
+					&& Arrays.equals(normalized60, normalizeChord(nameChords.getValue()))) {
+				return nameChords.getKey();
+			}
+		}
 		for (Entry<String, int[]> nameChords : chordsMap.entrySet()) {
 			if (Arrays.equals(normalized60, normalizeChord(nameChords.getValue()))) {
 				return nameChords.getKey();
