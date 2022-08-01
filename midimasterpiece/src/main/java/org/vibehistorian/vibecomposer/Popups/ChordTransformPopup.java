@@ -15,9 +15,12 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 
 public class ChordTransformPopup extends CloseablePopup {
 	private ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
+	private KnobPanel transpose = new DetachedKnobPanel("Transpose By", 0, -12, 12);
 	private ChordletPanel userChords = null;
 
 	public ChordTransformPopup(String chords) {
@@ -37,6 +40,10 @@ public class ChordTransformPopup extends CloseablePopup {
 		JPanel modePanel = new JPanel();
 		modePanel.add(new JLabel("Mode"));
 		modePanel.add(scaleMode);
+		modePanel.add(transpose);
+		modePanel.add(VibeComposerGUI.makeButton("R", e -> {
+			transpose.setInt(-1 * transpose.getInt());
+		}));
 		allPanel.add(modePanel);
 
 		allPanel.add(VibeComposerGUI.makeButton("From Ionian To Mode", e -> {
@@ -54,11 +61,13 @@ public class ChordTransformPopup extends CloseablePopup {
 		List<Chordlet> chordlets = userChords.getChordlets();
 		List<String> newModeChords = new ArrayList<>();
 		chordlets.forEach(ch -> {
-			newModeChords.add(MidiUtils.chordStringFromPitches(
-					MidiUtils.transposeChord(MidiUtils.mappedChord(ch.getChordText(), true),
-							ScaleMode.IONIAN.noteAdjustScale,
-							ScaleMode.valueOf(scaleMode.getVal()).noteAdjustScale, true))
-					+ ch.getInversionText());
+			int[] pitches = MidiUtils.transposeChord(MidiUtils.mappedChord(ch.getChordText(), true),
+					ScaleMode.IONIAN.noteAdjustScale,
+					ScaleMode.valueOf(scaleMode.getVal()).noteAdjustScale, true);
+			if (transpose.getInt() != 0) {
+				pitches = MidiUtils.transposeChord(pitches, transpose.getInt());
+			}
+			newModeChords.add(MidiUtils.chordStringFromPitches(pitches) + ch.getInversionText());
 		});
 		userChords.setupChords(newModeChords);
 	}
@@ -67,11 +76,14 @@ public class ChordTransformPopup extends CloseablePopup {
 		List<Chordlet> chordlets = userChords.getChordlets();
 		List<String> newModeChords = new ArrayList<>();
 		chordlets.forEach(ch -> {
-			newModeChords.add(MidiUtils.chordStringFromPitches(
-					MidiUtils.transposeChord(MidiUtils.mappedChord(ch.getChordText(), true),
-							ScaleMode.valueOf(scaleMode.getVal()).noteAdjustScale,
-							ScaleMode.IONIAN.noteAdjustScale, true))
-					+ ch.getInversionText());
+			int[] pitches = MidiUtils.mappedChord(ch.getChordText(), true);
+			if (transpose.getInt() != 0) {
+				pitches = MidiUtils.transposeChord(pitches, transpose.getInt());
+			}
+			pitches = MidiUtils.transposeChord(pitches,
+					ScaleMode.valueOf(scaleMode.getVal()).noteAdjustScale,
+					ScaleMode.IONIAN.noteAdjustScale, true);
+			newModeChords.add(MidiUtils.chordStringFromPitches(pitches) + ch.getInversionText());
 		});
 		userChords.setupChords(newModeChords);
 	}
