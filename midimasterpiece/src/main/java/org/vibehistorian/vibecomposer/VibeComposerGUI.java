@@ -692,7 +692,7 @@ public class VibeComposerGUI extends JFrame
 	private static int pausedBpm = 50;
 	private static int pausedSliderPosition = 0;
 	private static int pausedMeasureCounter = 0;
-	private static int startBpm = 50;
+	private static int startBpm = -1;
 	private static int startSliderPosition = 0;
 	private static int startBeatCounter = 0;
 
@@ -3893,7 +3893,7 @@ public class VibeComposerGUI extends JFrame
 		randomButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JButton randomizeInstruments = makeButton("Randomize Inst.", "RandomizeInst");
 
-		JButton randomizeBpm = makeButton("Randomize BPM", "RandomizeBpm");
+		JButton randomizeBpm = makeButton("Randomize BPM", e -> randomizeBPM());
 		JButton randomizeTranspose = makeButton("Randomize Key", "RandomizeTranspose");
 
 		JPanel randomInstPanel = new JPanel();
@@ -5198,7 +5198,8 @@ public class VibeComposerGUI extends JFrame
 						: MidiSystem.getSynthesizer();
 				synth = defSynth;
 				String soundbankOptional = (soundfont != null) ? "SB_" : "";
-				String filename = f.format(date) + "_" + soundbankOptional + currentMidi.getName();
+				String filename = f.format(date) + "_" + soundbankOptional
+						+ getFilenameForSaving(currentMidi.getName());
 				File exportFolderDir = new File(EXPORT_FOLDER);
 				exportFolderDir.mkdir();
 
@@ -6240,6 +6241,9 @@ public class VibeComposerGUI extends JFrame
 			//LG.i(("What beats: " + sliderBeatStartTimes.toString()));
 
 			slider.setSnapToTicks(snapStartToBeat.isSelected());
+			// fix misalignment from different BPMs
+			adjustSavedPositions();
+
 			if (startFromBar.isSelected()) {
 				int snapAdjustment = 50;
 				if (startBeatCounter >= sliderBeatStartTimes.size()) {
@@ -6250,10 +6254,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
 			} else {
-				int startVal = (mainBpm.getInt() != startBpm)
-						? (int) Math
-								.ceil(startSliderPosition * startBpm / (double) mainBpm.getInt())
-						: startSliderPosition;
+				int startVal = startSliderPosition;
 				slider.setValue(startVal);
 			}
 			// Force the slider to use the new labels
@@ -6319,8 +6320,23 @@ public class VibeComposerGUI extends JFrame
 				needToRecalculateSoloMuters = true;
 				needToRecalculateSoloMutersAfterSequenceGenerated = false;
 			}
+			startBpm = mainBpm.getInt();
 		} catch (MidiUnavailableException | InvalidMidiDataException ex) {
 			ex.printStackTrace();
+		}
+	}
+
+	private static void adjustSavedPositions() {
+		int currentBpm = mainBpm.getInt();
+		if (currentBpm > 0 && startBpm > 0) {
+			startSliderPosition = (currentBpm != startBpm)
+					? (int) Math.ceil(startSliderPosition * startBpm / (double) currentBpm)
+					: startSliderPosition;
+			startBpm = currentBpm;
+			pausedSliderPosition = (currentBpm != pausedBpm)
+					? (int) Math.ceil(pausedSliderPosition * pausedBpm / (double) currentBpm)
+					: pausedSliderPosition;
+			pausedBpm = currentBpm;
 		}
 	}
 
@@ -6862,10 +6878,6 @@ public class VibeComposerGUI extends JFrame
 			tabPanePossibleChange = true;
 		}
 
-		if (ae.getActionCommand() == "RandomizeBpm") {
-			randomizeBPM();
-		}
-
 		if (ae.getActionCommand() == "RandomizeTranspose") {
 			Random instGen = new Random();
 			transposeScore.setInt(instGen.nextInt(12) - 6);
@@ -7248,7 +7260,8 @@ public class VibeComposerGUI extends JFrame
 
 	private void saveGuiConfigFile(int rating) {
 		if (currentMidi != null) {
-			LG.i(("Saving file: " + currentMidi.getName()));
+			String newFileName = getFilenameForSaving(currentMidi.getName());
+			LG.i(("Saving file: " + (rating >= 0 ? newFileName : saveCustomFilename.getText())));
 
 			Date date = new Date();
 			String saveDirectory = SAVED_MIDIS_FOLDER_BASE;
@@ -7263,7 +7276,7 @@ public class VibeComposerGUI extends JFrame
 
 				File makeSavedDir = new File(MIDIS_FOLDER + saveDirectory);
 				makeSavedDir.mkdir();
-				name = currentMidi.getName();
+				name = newFileName;
 				name = name.substring(0, name.length() - 4);
 
 				additionalInfo = f.format(date);
@@ -7402,9 +7415,8 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void saveStartInfo() {
+	public static void saveStartInfo() {
 		startSliderPosition = slider.getValue();
-		startBpm = mainBpm.getInt();
 		if ((currentMidi != null) && (MidiGenerator.chordInts.size() > 0)) {
 			for (int i = 1; i < sliderBeatStartTimes.size(); i++) {
 				if (sliderBeatStartTimes.get(i) >= startSliderPosition + 50) {
@@ -9723,5 +9735,9 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 		return foundSolo;
+	}
+
+	public static String getFilenameForSaving(String oldName) {
+		return oldName.replaceFirst("bpm[0-9]{1,3}_", "bpm" + mainBpm.getInt() + "_");
 	}
 }
