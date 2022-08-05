@@ -4059,7 +4059,8 @@ public class MidiGenerator implements JMC {
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		if (scale != ScaleMode.IONIAN) {
-			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale);
+			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
+					gc.isTransposedNotesForceScale());
 		}
 		if ((modTrans + extraTranspose) != 0) {
 			Mod.transpose(phr, modTrans + extraTranspose);
