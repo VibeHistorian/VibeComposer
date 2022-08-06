@@ -98,15 +98,22 @@ public class MidiEditArea extends JComponent {
 						setAndRepaint();
 					}
 				} else {
-					int rot = (e.getWheelRotation() > 0) ? -1 : 1;
+					int rot = (e.getWheelRotation() > 0) ? 1 : -1;
 					int originalTrackScope = MidiEditPopup.trackScope;
 					if (rot > 0 && (max > 120 || min < 10)) {
 						return;
 					}
-					MidiEditPopup.trackScope = Math.max(originalTrackScope + rot, 1);
+					MidiEditPopup.trackScope = originalTrackScope + rot;
+					if (rot < 0 && ((max - min) <= MidiEditPopup.baseMargin * 4)) {
+						MidiEditPopup.trackScope++;
+					}
 					if (originalTrackScope != MidiEditPopup.trackScope) {
-						min -= MidiEditPopup.baseMargin * rot;
-						max += MidiEditPopup.baseMargin * rot;
+						if (!(rot > 0 && max > 120)) {
+							max += MidiEditPopup.baseMargin * rot;
+						}
+						if (!(rot > 0 && min < 10)) {
+							min -= MidiEditPopup.baseMargin * rot;
+						}
 						setAndRepaint();
 					}
 				}
