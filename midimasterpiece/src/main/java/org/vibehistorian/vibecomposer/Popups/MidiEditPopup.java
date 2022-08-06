@@ -157,6 +157,16 @@ public class MidiEditPopup extends CloseablePopup {
 
 		setCustomValues(values);
 
+		values.remakeNoteStartTimes();
+
+		for (PhraseNote pn : values) {
+			if (pn.getStartTime() < 0) {
+				displayingPhraseMarginX = true;
+			} else if (pn.getStartTime() + pn.getDuration() > MidiEditArea.sectionLength) {
+				displayingPhraseMarginX = true;
+			}
+		}
+		displayPhraseMargins.setSelected(displayingPhraseMarginX);
 
 		allPanels.add(buttonPanel);
 		allPanels.add(buttonPanel2);
@@ -393,6 +403,7 @@ public class MidiEditPopup extends CloseablePopup {
 		displayDrumHelper.setFunc(e -> {
 			repaintMvea();
 		});
+
 		displayPhraseMargins.setFunc(e -> {
 			displayingPhraseMarginX = displayPhraseMargins.isSelected();
 			repaintMvea();
