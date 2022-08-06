@@ -59,7 +59,6 @@ import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup.PatternNameMarker;
 
 import jm.music.data.Note;
 import jm.music.data.Part;
@@ -74,6 +73,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public static boolean regenerateInPlaceChoice = false;
 	public static boolean applyOnLoadChoice = false;
 	public static boolean loadOnSelectChoice = false;
+	public static boolean displayingPhraseMarginX = false;
 
 	public static final int baseMargin = 5;
 	public static int trackScope = 1;
@@ -92,6 +92,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public CheckButton applyOnLoad = new CheckButton("Apply on Load/Import", applyOnLoadChoice);
 	public CheckButton loadOnSelect = new CheckButton("Load on Select", loadOnSelectChoice);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
+	public CheckButton displayPhraseMargins = new CheckButton("Margins", displayingPhraseMarginX);
 
 	public ScrollComboBox<String> patternPartBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
@@ -392,6 +393,10 @@ public class MidiEditPopup extends CloseablePopup {
 		displayDrumHelper.setFunc(e -> {
 			repaintMvea();
 		});
+		displayPhraseMargins.setFunc(e -> {
+			displayingPhraseMarginX = displayPhraseMargins.isSelected();
+			repaintMvea();
+		});
 
 		patternNameBox.setFunc(e -> {
 			if (loadOnSelectChoice) {
@@ -403,6 +408,7 @@ public class MidiEditPopup extends CloseablePopup {
 		bottomSettingsPanel.add(applyOnLoad);
 		bottomSettingsPanel.add(regenerateInPlaceOnChange);
 		bottomSettingsPanel.add(displayDrumHelper);
+		bottomSettingsPanel.add(displayPhraseMargins);
 		bottomSettingsPanel.add(new JLabel("  Highlight Mode:"));
 		bottomSettingsPanel.add(highlightMode);
 		bottomSettingsPanel.add(new JLabel("  Snap To Time:"));
