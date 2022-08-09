@@ -108,6 +108,7 @@ public class GUIConfig {
 	private boolean melodyPatternFlip = false;
 	private int melodyBlockTargetMode = 2;
 	private int melodyPatternEffect = 2;
+	private boolean melodyPatternFlexible = false;
 	private int melodyRhythmAccents = 0;
 	private int melodyRhythmAccentsMode = 0;
 	private boolean melodyRhythmAccentsPocket = false;
@@ -899,6 +900,14 @@ public class GUIConfig {
 			return null;
 		}
 		return patternMaps.get(part).getRaw(partOrder, patName);
+	}
+
+	public boolean isMelodyPatternFlexible() {
+		return melodyPatternFlexible;
+	}
+
+	public void setMelodyPatternFlexible(boolean melodyPatternFlexible) {
+		this.melodyPatternFlexible = melodyPatternFlexible;
 	}
 
 }

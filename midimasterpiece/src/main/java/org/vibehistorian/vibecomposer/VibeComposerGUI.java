@@ -502,6 +502,7 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
 	ScrollComboBox<String> melodyPatternEffect;
+	JCheckBox melodyPatternFlexible;
 	ScrollComboBox<String> melodyRhythmAccents;
 	ScrollComboBox<String> melodyRhythmAccentsMode;
 	JCheckBox melodyRhythmAccentsPocket;
@@ -1688,6 +1689,7 @@ public class VibeComposerGUI extends JFrame
 		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" },
 				melodyPatternEffect);
 		melodyPatternEffect.setSelectedIndex(2);
+		melodyPatternFlexible = makeCheckBox("Flexible", true, false);
 		melodyPatternRandomizeOnCompose = makeCheckBox(
 				"<html>Randomize Pattern<br> on Compose</html>", true, true);
 		melodyRhythmAccents = new ScrollComboBox<>();
@@ -1733,6 +1735,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternFlexible);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
 		JPanel postProcessPanel = new JPanel();
 		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -8092,6 +8095,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
 		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
+		gc.setMelodyPatternFlexible(melodyPatternFlexible.isSelected());
 		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
 		gc.setMelodyRhythmAccentsMode(melodyRhythmAccentsMode.getSelectedIndex());
 		gc.setMelodyRhythmAccentsPocket(melodyRhythmAccentsPocket.isSelected());
@@ -8229,6 +8233,7 @@ public class VibeComposerGUI extends JFrame
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
 		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
+		melodyPatternFlexible.setSelected(gc.isMelodyPatternFlexible());
 		melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
 		melodyRhythmAccentsMode.setSelectedIndex(gc.getMelodyRhythmAccentsMode());
 		melodyRhythmAccentsPocket.setSelected(gc.isMelodyRhythmAccentsPocket());

@@ -480,22 +480,38 @@ public class MidiGenerator implements JMC {
 										remainingDirChanges);
 				remainingDirChanges -= blockChangesPair.getRight();
 				List<Integer> blockChanges = blockChangesPair.getLeft();
+				boolean FLEXIBLE_PATTERN = gc.isMelodyPatternFlexible();
+				if (FLEXIBLE_PATTERN && existingPattern != null) {
+					int blockChangesSum = blockChanges.stream().mapToInt(e -> e).sum();
+					int newLastBlockChange = blockChanges.get(blockChanges.size() - 1)
+							+ (chord2 - chord1) - blockChangesSum;
+					blockChanges.set(blockChanges.size() - 1, newLastBlockChange);
+				}
 				LG.d("Block changes: " + blockChanges);
 				int startingNote = chord1 % 7;
 
 				List<Integer> forcedLengths = (existingPattern != null
-						&& gc.getMelodyPatternEffect() == 0)
+						&& gc.getMelodyPatternEffect() != 1)
 								? existingPattern.getRight().stream().map(e -> e.durations.size())
 										.collect(Collectors.toList())
 								: null;
 
 				List<MelodyBlock> melodyBlocks = (existingPattern != null
-						&& gc.getMelodyPatternEffect() > 0)
+						&& gc.getMelodyPatternEffect() > 0 && !FLEXIBLE_PATTERN)
 								? existingPattern.getRight()
 								: generateMelodyBlocksForDurations(mp, sec, durations, roots,
 										melodyBlockGeneratorSeed + blockOffset, blockChanges,
 										MAX_JUMP_SKELETON_CHORD, startingNote, chordIndex,
 										forcedLengths, remainingDirChanges);
+				if (FLEXIBLE_PATTERN && existingPattern != null
+						&& gc.getMelodyPatternEffect() > 0) {
+					List<MelodyBlock> storedMelodyBlocks = existingPattern.getRight();
+					LG.i("HALF PATTERN - set last melody block to newly generated block! Sizes equal?: "
+							+ (storedMelodyBlocks.size() == melodyBlocks.size()));
+					storedMelodyBlocks.set(storedMelodyBlocks.size() - 1,
+							melodyBlocks.get(melodyBlocks.size() - 1));
+					melodyBlocks = storedMelodyBlocks;
+				}
 				//LG.d("Starting note: " + startingNote);
 
 				if (existingPattern == null) {
