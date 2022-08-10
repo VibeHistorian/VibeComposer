@@ -22,6 +22,7 @@ public class MelodyPart extends InstPart {
 	private int noteExceptionChance = 33;
 	private int speed = 0;
 	private int startNoteChance = 100;
+	private boolean patternFlexible = false;
 
 	public MelodyPart() {
 		partNum = 0;
@@ -133,5 +134,13 @@ public class MelodyPart extends InstPart {
 
 	public void setStartNoteChance(int startNoteChance) {
 		this.startNoteChance = startNoteChance;
+	}
+
+	public boolean isPatternFlexible() {
+		return patternFlexible;
+	}
+
+	public void setPatternFlexible(boolean patternFlexible) {
+		this.patternFlexible = patternFlexible;
 	};
 }

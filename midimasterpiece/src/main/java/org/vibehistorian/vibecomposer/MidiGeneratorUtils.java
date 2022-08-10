@@ -198,7 +198,7 @@ public class MidiGeneratorUtils {
 				int chordTargetNote = choices.contains(offset) ? offset
 						: MidiUtils.getClosestFromList(choices,
 								offset + (offsetRandomizer.nextInt(100) < 75 ? 1 : 0));
-				LG.i("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
+				LG.d("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
 				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
 						: chordTargetNote);
 			}

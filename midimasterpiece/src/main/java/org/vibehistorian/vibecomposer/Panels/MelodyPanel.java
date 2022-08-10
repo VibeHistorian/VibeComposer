@@ -42,6 +42,7 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel speed = new KnobPanel("Speed", 50);
 	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 	private KnobPanel startNoteChance = new KnobPanel("Start%", 80);
+	private JCheckBox patternFlexible = new CustomCheckBox("Flex", true);
 
 	public void initComponents(ActionListener l) {
 
@@ -127,6 +128,7 @@ public class MelodyPanel extends InstPanel {
 			return MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
 					new Random().nextInt());
 		});
+		this.add(patternFlexible);
 
 		this.add(blockJump);
 		this.add(maxNoteExceptions);
@@ -208,6 +210,7 @@ public class MelodyPanel extends InstPanel {
 		part.setNoteExceptionChance(getNoteExceptionChance());
 		part.setSpeed(getSpeed());
 		part.setSplitChance(getSplitChance());
+		part.setPatternFlexible(getPatternFlexible());
 
 		return part;
 	}
@@ -230,6 +233,7 @@ public class MelodyPanel extends InstPanel {
 		setNoteExceptionChance(part.getNoteExceptionChance());
 		setSpeed(part.getSpeed());
 		setSplitChance(part.getSplitChance());
+		setPatternFlexible(part.isPatternFlexible());
 	}
 
 	@Override
@@ -373,6 +377,14 @@ public class MelodyPanel extends InstPanel {
 	@Override
 	public Class<? extends InstPart> getPartClass() {
 		return MelodyPart.class;
+	}
+
+	public boolean getPatternFlexible() {
+		return patternFlexible.isSelected();
+	}
+
+	public void setPatternFlexible(boolean val) {
+		this.patternFlexible.setSelected(val);
 	}
 }
 
