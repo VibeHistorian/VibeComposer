@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -809,13 +808,29 @@ public abstract class InstPanel extends JPanel {
 			}
 		}
 		//LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
-		List<Integer> permutatedOrder = IntStream.iterate(0, e -> e + 1)
-				.limit(panelRhythmGrid.size()).boxed().collect(Collectors.toList());
-		Collections.shuffle(permutatedOrder, permutationRand);
+
+		// sort by most crowded after addition of this layer / most needing of sidechaining
+		List<Pair<Integer, Integer>> orderOverlapPairs = new ArrayList<>();
+		for (int i = 0; i < panelRhythmGrid.size(); i++) {
+			if (panelRhythmGrid.get(i) != null && panelRhythmGrid.get(i) > 0) {
+				Integer mapped = mappedGrid.getRight().get(i);
+				if (mapped == null) {
+					continue;
+				}
+				int nextVal = rhythmGrid[i] + panelRhythmGrid.get(i) * multiplier;
+				orderOverlapPairs.add(Pair.of(i, nextVal));
+			} else {
+				orderOverlapPairs.add(Pair.of(i, rhythmGrid[i]));
+			}
+		}
+		Collections.sort(orderOverlapPairs, (p1, p2) -> (p2.getRight().compareTo(p1.getRight())));
+
+		/*LG.i(StringUtils.join(orderOverlapPairs.stream().map(e -> e.getLeft() + "|" + e.getRight())
+				.collect(Collectors.toList()), ","));*/
 
 		int changed = 0;
 		for (int i = 0; i < panelRhythmGrid.size(); i++) {
-			int index = permutatedOrder.get(i);
+			Integer index = orderOverlapPairs.get(i).getLeft();
 			if (panelRhythmGrid.get(index) != null && panelRhythmGrid.get(index) > 0) {
 				Integer mapped = mappedGrid.getRight().get(index);
 				if (mapped == null) {
