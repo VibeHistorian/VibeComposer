@@ -1153,7 +1153,7 @@ public class MidiEditArea extends JComponent {
 			return null;
 		}
 
-		if (sec == null || !sec.isCustomChordsDurationsEnabled()) {
+		if (sec == null || !sec.isCustomChordsEnabled()) {
 			return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, false);
 		} else {
 			return MidiUtils.getHighlightTargetsFromChords(sec.getCustomChordsList(), false);

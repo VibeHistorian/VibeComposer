@@ -105,7 +105,8 @@ public class Section {
 	private Phrase chordSlash;
 
 	// customized chords/durations
-	private boolean customChordsDurationsEnabled = false;
+	private boolean customChordsEnabled = false;
+	private boolean customDurationsEnabled = false;
 	private boolean displayAlternateChords = false;
 	private String customChords = "?";
 	private String customDurations = "4,4,4,4";
@@ -357,7 +358,7 @@ public class Section {
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
-		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
+		sec.setCustomChordsEnabled(customChordsEnabled);
 		sec.setSectionDuration(sectionDuration);
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
@@ -925,12 +926,12 @@ public class Section {
 		this.customDurations = customDurations;
 	}
 
-	public boolean isCustomChordsDurationsEnabled() {
-		return customChordsDurationsEnabled;
+	public boolean isCustomChordsEnabled() {
+		return customChordsEnabled;
 	}
 
-	public void setCustomChordsDurationsEnabled(boolean customChordsDurationsEnabled) {
-		this.customChordsDurationsEnabled = customChordsDurationsEnabled;
+	public void setCustomChordsEnabled(boolean customChordsEnabled) {
+		this.customChordsEnabled = customChordsEnabled;
 	}
 
 	@XmlTransient
@@ -1055,6 +1056,14 @@ public class Section {
 			return UsedPattern.NONE;
 		}
 		return pat.getName();
+	}
+
+	public boolean isCustomDurationsEnabled() {
+		return customDurationsEnabled;
+	}
+
+	public void setCustomDurationsEnabled(boolean customDurationsEnabled) {
+		this.customDurationsEnabled = customDurationsEnabled;
 	}
 
 }

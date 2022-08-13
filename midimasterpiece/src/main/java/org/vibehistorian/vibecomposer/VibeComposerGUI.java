@@ -616,6 +616,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel longProgressionSimilarity;
 	ScrollComboBox<String> keyChangeTypeSelection;
 	public static CheckButton userChordsEnabled;
+	public static CheckButton userDurationsEnabled;
 	public static JTextField userChordsDurations;
 	public static ChordletPanel userChords;
 
@@ -1611,7 +1612,7 @@ public class VibeComposerGUI extends JFrame
 			secConfig.setSectionSwingOverride(sectionGuiConfig.getGlobalSwingOverride());*/
 			currentSec.setCustomChords(sectionGuiConfig.getCustomChords());
 			currentSec.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
-			currentSec.setCustomChordsDurationsEnabled(true);
+			currentSec.setCustomChordsEnabled(true);
 			arrSection.getCurrentButton().repaint();
 			switchPanelsForSectionSelection(arrSection.getVal());
 
@@ -3794,7 +3795,7 @@ public class VibeComposerGUI extends JFrame
 										/ 2; j++) {
 									// in case of swap chords, behave same as custom chords
 									if (sectionVars.get(j) > 0
-											|| (j == 1 && sec.isCustomChordsDurationsEnabled())) {
+											|| (j == 1 && sec.isCustomChordsEnabled())) {
 										g.drawImage(SECTION_VARIATIONS_ICONS.get(j), currentX, 6,
 												this);
 									}
@@ -3865,7 +3866,7 @@ public class VibeComposerGUI extends JFrame
 				? (int) sec.getSectionVariations().stream().filter(e -> e > 0).count()
 				: 0;
 		count += (sec.isTransition() ? 1 : 0);
-		count += (sec.isCustomChordsDurationsEnabled() ? 1 : 0);
+		count += (sec.isCustomChordsEnabled() ? 1 : 0);
 		int color = 0;
 		int total = Section.sectionVariationNames.length + 1;
 		if (isDarkMode) {
@@ -4413,9 +4414,9 @@ public class VibeComposerGUI extends JFrame
 		});
 		customChordsPanel.add(chordTransformButton);
 
+		userDurationsEnabled = new CheckButton("Custom Durations", false);
+		customChordsPanel.add(userDurationsEnabled);
 		userChordsDurations = new JTextField("4,4,4,4", 9);
-		JLabel userChordsDurationsLabel = new JLabel("Chord durations:");
-		customChordsPanel.add(userChordsDurationsLabel);
 		customChordsPanel.add(userChordsDurations);
 
 
@@ -4424,11 +4425,11 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(customChordsPanel, constraints);
 
 		toggleableComponents.add(twoExChordsButton);
+		toggleableComponents.add(userDurationsEnabled);
 		toggleableComponents.add(userChordsDurations);
 		toggleableComponents.add(dotdotChordsButton);
 		toggleableComponents.add(ddChordsButton);
 		toggleableComponents.add(normalizeChordsButton);
-		toggleableComponents.add(userChordsDurationsLabel);
 
 	}
 
@@ -5827,15 +5828,28 @@ public class VibeComposerGUI extends JFrame
 
 			// solve user chords
 			String chords = userChords.getChordListString();
-			if (userChordsEnabled.isSelected() && userChords.getChordletsRaw().size() > 0) {
+			boolean customChords = userChordsEnabled.isSelected()
+					&& userChords.getChordletsRaw().size() > 0;
+			if ((customChords) || userDurationsEnabled.isEnabled()) {
 				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(chords,
 						userChordsDurations.getText());
-				if (solvedChordsDurations != null) {
-					MidiGenerator.userChords = solvedChordsDurations.getLeft();
-					MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
+				if (userDurationsEnabled.isSelected()) {
+					if (solvedChordsDurations != null) {
+						MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
+					} else {
+						MidiGenerator.userChordsDurations.clear();
+					}
+				} else {
+					MidiGenerator.userChordsDurations.clear();
+				}
+				if (customChords) {
+					if (solvedChordsDurations != null) {
+						MidiGenerator.userChords = solvedChordsDurations.getLeft();
+					} else {
+						MidiGenerator.userChords.clear();
+					}
 				} else {
 					MidiGenerator.userChords.clear();
-					MidiGenerator.userChordsDurations.clear();
 				}
 			} else {
 				MidiGenerator.userChords.clear();

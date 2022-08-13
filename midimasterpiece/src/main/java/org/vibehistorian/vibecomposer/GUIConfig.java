@@ -128,6 +128,7 @@ public class GUIConfig {
 	private boolean useChordFormula = false;
 	private int longProgressionSimilarity = 0;
 	private boolean customChordsEnabled = true;
+	private boolean customDurationsEnabled = true;
 	private String customChords = "?";
 	private String customChordDurations = "4,4,4,4";
 
@@ -899,6 +900,14 @@ public class GUIConfig {
 			return null;
 		}
 		return patternMaps.get(part).getRaw(partOrder, patName);
+	}
+
+	public boolean isCustomDurationsEnabled() {
+		return customDurationsEnabled;
+	}
+
+	public void setCustomDurationsEnabled(boolean customDurationsEnabled) {
+		this.customDurationsEnabled = customDurationsEnabled;
 	}
 
 }

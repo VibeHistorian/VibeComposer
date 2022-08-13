@@ -510,7 +510,7 @@ public class MidiGenerator implements JMC {
 						&& gc.getMelodyPatternEffect() > 0) {
 					List<MelodyBlock> storedMelodyBlocks = new ArrayList<>(
 							existingPattern.getRight());
-					LG.i("HALF PATTERN - set last melody block to newly generated block! Sizes equal?: "
+					LG.d("HALF PATTERN - set last melody block to newly generated block! Sizes equal?: "
 							+ (storedMelodyBlocks.size() == melodyBlocks.size()));
 					storedMelodyBlocks.set(storedMelodyBlocks.size() - 1,
 							melodyBlocks.get(melodyBlocks.size() - 1));
@@ -2691,7 +2691,7 @@ public class MidiGenerator implements JMC {
 
 			// reset back to normal?
 			boolean sectionChordsReplaced = false;
-			if (sec.isCustomChordsDurationsEnabled()) {
+			if (sec.isCustomChordsEnabled()) {
 				sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
 			} else {
 				sec.setGeneratedSectionBeatDurations(new ArrayList<>(progressionDurations));
@@ -3147,11 +3147,11 @@ public class MidiGenerator implements JMC {
 					double intersection;
 					if (!sixteenthAlignedDrumHits.isEmpty()) {
 						intersection = sixteenthAlignedDrumHits.get(0);
-						LG.i("Found 16th intersections: " + intersection + ", note start: "
+						LG.d("Found 16th intersections: " + intersection + ", note start: "
 								+ (currTime + n.getOffset()));
 					} else {
 						intersection = intersectingDrumHits.get(0);
-						LG.i("No 16th intersections: " + intersection + ", note start: "
+						LG.d("No 16th intersections: " + intersection + ", note start: "
 								+ (currTime + n.getOffset()));
 					}
 					int noteInsertionIndex = i + addedNotes;

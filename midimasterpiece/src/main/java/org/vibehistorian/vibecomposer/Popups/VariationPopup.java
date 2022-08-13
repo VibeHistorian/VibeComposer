@@ -92,8 +92,7 @@ public class VariationPopup {
 					.collect(Collectors.toList());
 
 			table.setModel(new VariationsBooleanTableModel(fI, sectionOrder - 1,
-					sec.getPartMap().get(i), Section.variationDescriptions[i],
-					partNames));
+					sec.getPartMap().get(i), Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -207,7 +206,7 @@ public class VariationPopup {
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
 		int heightLimit = 850;
-		frame.setPreferredSize(new Dimension(650, Math.min(parentDim.height, heightLimit)));
+		frame.setPreferredSize(new Dimension(680, Math.min(parentDim.height, heightLimit)));
 		int newLocX = parentLoc.x - 190;
 		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);
 		frame.add(scroll);
@@ -272,13 +271,13 @@ public class VariationPopup {
 	private void addCustomChordsDurations(Section sec) {
 		JPanel customChordsDurationsPanel = new JPanel();
 		JCheckBox userChordsEnabled = new CustomCheckBox("Custom Chords",
-				sec.isCustomChordsDurationsEnabled());
+				sec.isCustomChordsEnabled());
 		customChordsDurationsPanel.add(userChordsEnabled);
 		userChordsEnabled.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				sec.setCustomChordsDurationsEnabled(userChordsEnabled.isSelected());
+				sec.setCustomChordsEnabled(userChordsEnabled.isSelected());
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
@@ -291,16 +290,29 @@ public class VariationPopup {
 				? VibeComposerGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
 		userChords = new ChordletPanel(300,
-				(sec.isCustomChordsDurationsEnabled() || sec.isDisplayAlternateChords())
+				(sec.isCustomChordsEnabled() || sec.isDisplayAlternateChords())
 						? sec.getCustomChords()
 						: guiUserChords);
 		userChords.setToolTipText(tooltip);
 		customChordsDurationsPanel.add(userChords);
+
+
+		JCheckBox userDurationsEnabled = new CustomCheckBox("Custom Durations",
+				sec.isCustomDurationsEnabled());
+		customChordsDurationsPanel.add(userDurationsEnabled);
+		userDurationsEnabled.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				sec.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
+				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+			}
+
+		});
 		userChordsDurations = new JTextField(
-				sec.isCustomChordsDurationsEnabled() ? sec.getCustomDurations()
+				sec.isCustomDurationsEnabled() ? sec.getCustomDurations()
 						: VibeComposerGUI.userChordsDurations.getText(),
 				7);
-		customChordsDurationsPanel.add(new JLabel("Chord durations:"));
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 

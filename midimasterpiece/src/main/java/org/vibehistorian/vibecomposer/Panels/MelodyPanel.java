@@ -106,7 +106,7 @@ public class MelodyPanel extends InstPanel {
 				return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, true);
 			} else {
 				return MidiUtils.getHighlightTargetsFromChords(
-						relatedSection.isCustomChordsDurationsEnabled()
+						relatedSection.isCustomChordsEnabled()
 								? relatedSection.getCustomChordsList()
 								: MidiGenerator.chordInts,
 						true);
