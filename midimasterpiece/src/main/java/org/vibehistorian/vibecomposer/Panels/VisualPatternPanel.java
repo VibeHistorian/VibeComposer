@@ -32,6 +32,7 @@ import javax.swing.event.DocumentListener;
 
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -423,12 +424,26 @@ public class VisualPatternPanel extends JPanel {
 	protected void randomizePattern() {
 		//LG.i("Randomize pattern.");
 		if (patternType.isEnabled()) {
-			patternType.setValRaw(RhythmPattern.CUSTOM);
-			shiftPanel.setInt(0);
 			Random rand = new Random();
-			for (int i = 0; i < MAX_HITS; i++) {
-				truePattern.set(i, rand.nextInt(2));
+			if (RhythmPattern.EUCLID.equals(patternType.getVal())) {
+				long oldNum = truePattern.subList(0, lastHits).stream().filter(e -> e > 0).count();
+				int newNum = rand.nextInt((lastHits / 2) + 1) + (lastHits / 4) + 1;
+				if (newNum == oldNum) {
+					if (newNum == lastHits) {
+						newNum--;
+					} else {
+						newNum++;
+					}
+				}
+				newNum = OMNI.clamp(newNum, 1, lastHits);
+				truePattern = RhythmPattern.makeEuclideanPattern(lastHits, newNum, 0, MAX_HITS);
+			} else {
+				patternType.setValRaw(RhythmPattern.CUSTOM);
+				for (int i = 0; i < MAX_HITS; i++) {
+					truePattern.set(i, rand.nextInt(2));
+				}
 			}
+			shiftPanel.setInt(0);
 			reapplyShift();
 		}
 	}
