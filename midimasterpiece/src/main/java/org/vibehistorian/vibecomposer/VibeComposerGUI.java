@@ -5827,27 +5827,31 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 
 			// solve user chords
-			String chords = userChords.getChordListString();
 			boolean customChords = userChordsEnabled.isSelected()
 					&& userChords.getChordletsRaw().size() > 0;
 			if ((customChords) || userDurationsEnabled.isEnabled()) {
-				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(chords,
-						userChordsDurations.getText());
-				if (userDurationsEnabled.isSelected()) {
-					if (solvedChordsDurations != null) {
-						MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
-					} else {
-						MidiGenerator.userChordsDurations.clear();
-					}
-				} else {
-					MidiGenerator.userChordsDurations.clear();
+				List<String> chords = userChords.getChordList();
+				List<Double> durations = new ArrayList<>();
+				String[] durationSplit = userChordsDurations.getText().split(",");
+				if ((userChordsEnabled.isSelected() && durationSplit.length < chords.size())
+						|| !userDurationsEnabled.isSelected()) {
+					durationSplit = null;
 				}
-				if (customChords) {
-					if (solvedChordsDurations != null) {
-						MidiGenerator.userChords = solvedChordsDurations.getLeft();
-					} else {
-						MidiGenerator.userChords.clear();
+
+				try {
+					for (int i = 0; i < chords.size(); i++) {
+						durations.add(durationSplit != null
+								? (stretchMidi.getInt() * Double.valueOf(durationSplit[i]) / 100.0)
+								: MidiGenerator.Durations.WHOLE_NOTE);
 					}
+				} catch (Exception e) {
+					new TemporaryInfoPopup("Invalid durations!", 3000);
+				}
+
+				MidiGenerator.userChordsDurations = durations;
+
+				if (customChords) {
+					MidiGenerator.userChords = chords;
 				} else {
 					MidiGenerator.userChords.clear();
 				}
@@ -6722,7 +6726,6 @@ public class VibeComposerGUI extends JFrame
 		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
 		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 		MidiGenerator.userChords.clear();
-		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(),
 				userChords.chordCount() > 0 ? userChords.chordCount()
 						: MidiGenerator.gc.getFixedDuration(),
@@ -7611,14 +7614,14 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
+	/*public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
 			JTextField customChordsDurations) {
-
+	
 		String text = customChords.getText().replaceAll(" ", "");
 		customChords.setText(text);
 		String[] userChordsSplit = text.split(",");
 		//LG.i((StringUtils.join(userChordsSplit, ";")));
-
+	
 		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
 		if (userChordsSplit.length != userChordsDurationsSplit.length) {
 			List<Integer> durations = IntStream.iterate(4, n -> n).limit(userChordsSplit.length)
@@ -7627,7 +7630,7 @@ public class VibeComposerGUI extends JFrame
 			userChordsDurationsSplit = customChordsDurations.getText().split(",");
 		}
 		return solveUserChords(userChordsSplit, userChordsDurationsSplit);
-	}
+	}*/
 
 	public static Pair<List<String>, List<Double>> solveUserChords(String customChords,
 			String customChordsDurations) {
