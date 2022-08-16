@@ -105,11 +105,10 @@ public class MelodyPanel extends InstPanel {
 			if (relatedSection == null) {
 				return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, true);
 			} else {
-				return MidiUtils.getHighlightTargetsFromChords(
-						relatedSection.isCustomChordsEnabled()
+				return MidiUtils
+						.getHighlightTargetsFromChords(relatedSection.isCustomChordsEnabled()
 								? relatedSection.getCustomChordsList()
-								: MidiGenerator.chordInts,
-						true);
+								: MidiGenerator.chordInts, true);
 			}
 
 		});
@@ -276,8 +275,8 @@ public class MelodyPanel extends InstPanel {
 		splitChance.setInt(mp1.splitChance.getInt());
 		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
 		speed.setInt(mp1.speed.getInt());
-		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
-		startNoteChance.setInt(mp1.startNoteChance.getInt());
+		//leadChordsChance.setInt(mp1.leadChordsChance.getInt());
+		//startNoteChance.setInt(mp1.startNoteChance.getInt());
 		//setInstrument(mp1.getInstrument());
 	}
 
