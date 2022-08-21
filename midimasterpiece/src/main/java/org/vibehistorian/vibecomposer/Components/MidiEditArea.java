@@ -908,7 +908,8 @@ public class MidiEditArea extends JComponent {
 
 
 			// draw chord spacing
-			if ((pop != null) && (pop.getSec() != null)) {
+			if ((pop != null) && (pop.getSec() != null)
+					&& (pop.getSec().getGeneratedDurations() != null)) {
 				List<Double> chordSpacings = new ArrayList<>(pop.getSec().getGeneratedDurations());
 				double spacingSum = chordSpacings.stream().mapToDouble(e -> e).sum()
 						* pop.getSec().getMeasures();
