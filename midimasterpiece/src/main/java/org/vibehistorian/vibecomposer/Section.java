@@ -354,7 +354,7 @@ public class Section {
 		sec.setArpParts(getArpParts());
 		sec.setDrumParts(getDrumParts());
 
-		sec.setPatterns(patterns);
+		sec.setPatterns(UsedPatternMap.multiMapCopy(patterns));
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
