@@ -5829,7 +5829,7 @@ public class VibeComposerGUI extends JFrame
 			// solve user chords
 			boolean customChords = userChordsEnabled.isSelected()
 					&& userChords.getChordletsRaw().size() > 0;
-			if ((customChords) || userDurationsEnabled.isEnabled()) {
+			if ((customChords) || userDurationsEnabled.isSelected()) {
 				List<String> chords = userChords.getChordList();
 				List<Double> durations = new ArrayList<>();
 				String[] durationSplit = userChordsDurations.getText().split(",");
@@ -9114,7 +9114,7 @@ public class VibeComposerGUI extends JFrame
 
 		ArpPanel first = (affectedArps.isEmpty() || !affectedArps.get(0).getLockInst()
 				|| (randomizedPanel != null && start == 0)) ? null : affectedArps.get(0);
-		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
+		List<RhythmPattern> viablePatterns = new ArrayList<>(RhythmPattern.VIABLE_PATTERNS);
 
 		for (int i = start; i < panelCount; i++) {
 			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {
