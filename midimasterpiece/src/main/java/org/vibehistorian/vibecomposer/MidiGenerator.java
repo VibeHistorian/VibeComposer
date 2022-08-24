@@ -173,7 +173,7 @@ public class MidiGenerator implements JMC {
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
 	public static boolean RANDOMIZE_TARGET_NOTES = false;
 
-	public static List<Integer> TARGET_NOTES = null;
+	public static Map<Integer, List<Integer>> TARGET_NOTES = null;
 
 
 	// for internal use only	
@@ -273,6 +273,7 @@ public class MidiGenerator implements JMC {
 		int BLOCK_TARGET_MODE = gc.getMelodyBlockTargetMode();
 
 		int seed = mp.getPatternSeedWithPartOffset();
+		int melodyBlockGeneratorSeed = seed + notesSeedOffset;
 		LG.d("Seed: " + seed);
 
 
@@ -296,14 +297,17 @@ public class MidiGenerator implements JMC {
 		while (chords.size() > blockChordNoteChoices.size()) {
 			blockChordNoteChoices.addAll(blockChordNoteChoices);
 		}
-		if (RANDOMIZE_TARGET_NOTES) {
-			if (TARGET_NOTES == null) {
-				TARGET_NOTES = new ArrayList<>(MidiGeneratorUtils.generateOffsets(roots, seed,
-						gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation()));
-			}
-			blockChordNoteChoices = TARGET_NOTES;
+		if (TARGET_NOTES == null) {
+			TARGET_NOTES = new HashMap<>();
 		}
-		TARGET_NOTES = blockChordNoteChoices;
+		if (RANDOMIZE_TARGET_NOTES) {
+			int targetNoteSeed = VibeComposerGUI.vibeComposerGUI.melody1ForcePatterns.isSelected()
+					? (seed + 1)
+					: (seed + mp.getOrder());
+			blockChordNoteChoices = MidiGeneratorUtils.generateOffsets(roots, targetNoteSeed,
+					gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation());
+		}
+		TARGET_NOTES.put(mp.getOrder(), blockChordNoteChoices);
 		LG.d("Choices: " + blockChordNoteChoices);
 
 		Vector<Note> noteList = new Vector<>();
@@ -313,20 +317,18 @@ public class MidiGenerator implements JMC {
 		int pitchPickerOffset = notesSeedOffset;
 		int rhythmOffset = notesSeedOffset;
 
-		int melodyBlockGeneratorSeed = seed + notesSeedOffset;
-
 		int firstBlockOffset = Math.abs(blockSeedOffsets.get(0));
 		if (firstBlockOffset > 0) {
 			firstBlockOffset--;
 		}
 
 		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset + firstBlockOffset);
-		Random exceptionGenerator = new Random(seed + 2 + notesSeedOffset + firstBlockOffset);
+		Random exceptionGenerator = new Random(melodyBlockGeneratorSeed + 2 + firstBlockOffset);
 		Random sameRhythmGenerator = new Random(seed + 3 + firstBlockOffset);
 		Random alternateRhythmGenerator = new Random(seed + 4);
-		Random durationGenerator = new Random(seed + notesSeedOffset + 5);
-		Random embellishmentGenerator = new Random(seed + notesSeedOffset + 10);
-		Random soloGenerator = new Random(seed + notesSeedOffset + 25);
+		Random durationGenerator = new Random(melodyBlockGeneratorSeed + 5);
+		Random embellishmentGenerator = new Random(melodyBlockGeneratorSeed + 10);
+		Random soloGenerator = new Random(melodyBlockGeneratorSeed + 25);
 		//Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
 
 		double[] melodySkeletonDurations = { Durations.QUARTER_NOTE, Durations.HALF_NOTE,

@@ -5807,7 +5807,8 @@ public class VibeComposerGUI extends JFrame
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
 			MidiGenerator.TARGET_NOTES = (melody1ForcePatterns.isSelected()
 					&& !melodyPanels.get(0).getNoteTargetsButton().isEnabled())
-							? melodyPanels.get(0).getChordNoteChoices()
+							? melodyPanels.stream().collect(Collectors.toMap(
+									MelodyPanel::getPanelOrder, MelodyPanel::getChordNoteChoices))
 							: null;
 
 			/*boolean addStartDelay = useArrangement.isSelected() || arrangementCustom.isSelected()
@@ -5956,15 +5957,17 @@ public class VibeComposerGUI extends JFrame
 
 		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
 			if (melody1ForcePatterns.isSelected()) {
+				MelodyPanel firstMp = melodyPanels.get(0);
 				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
-						melodyPanels.get(0).getAlternatingRhythmChance(),
-						melodyPanels.get(0).getPatternSeed() == 0 ? lastRandomSeed
-								: melodyPanels.get(0).getPatternSeed());
-				melodyPanels.get(0).setMelodyPatternOffsets(pat);
+						firstMp.getAlternatingRhythmChance(),
+						firstMp.getPanelOrder() + (firstMp.getPatternSeed() == 0 ? lastRandomSeed
+								: firstMp.getPatternSeed()));
+				firstMp.setMelodyPatternOffsets(pat);
 			} else {
 				melodyPanels.forEach(e -> e.setMelodyPatternOffsets(
 						MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
-								e.getPatternSeed() == 0 ? lastRandomSeed : e.getPatternSeed())));
+								e.getPanelOrder() + (e.getPatternSeed() == 0 ? lastRandomSeed
+										: e.getPatternSeed()))));
 			}
 		}
 
@@ -6048,9 +6051,14 @@ public class VibeComposerGUI extends JFrame
 
 		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
 				&& MidiGenerator.TARGET_NOTES != null) {
-			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
-			guiConfig.getMelodyParts()
-					.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
+			for (int i = 0; i < melodyPanels.size(); i++) {
+				int mpOrder = melodyPanels.get(i).getPanelOrder();
+				List<Integer> notes = MidiGenerator.TARGET_NOTES.get(mpOrder);
+				if (notes != null) {
+					melodyPanels.get(i).setChordNoteChoices(notes);
+					guiConfig.getMelodyParts().get(i).setChordNoteChoices(notes);
+				}
+			}
 		}
 
 		for (int i = 0; i < arpPanels.size(); i++) {

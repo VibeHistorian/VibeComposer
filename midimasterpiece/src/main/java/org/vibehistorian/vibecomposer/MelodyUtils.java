@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import jm.music.data.Note;
 
@@ -220,6 +221,11 @@ public class MelodyUtils {
 			LG.d("Viable blocks size is 0, getting random block!");
 			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
 					melodyBlockGenerator, 4);
+			if (block == null) {
+				LG.e("**************************************Fatal error generating melody block!");
+				new TemporaryInfoPopup(
+						"Error generating melody block: " + blockChange + ", " + length, 2000);
+			}
 			return Pair.of(blockOfList(block), block);
 		}
 		return viableBlocks.get(melodyBlockGenerator.nextInt(viableBlocks.size()));

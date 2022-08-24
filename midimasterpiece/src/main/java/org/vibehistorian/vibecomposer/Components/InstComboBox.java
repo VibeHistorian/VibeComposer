@@ -22,10 +22,16 @@ public class InstComboBox extends ScrollComboBox<String> {
 	}
 
 	public void setInstPool(InstUtils.POOL instPool) {
+		if (!isEnabled()) {
+			return;
+		}
 		this.instPool = instPool;
 	}
 
 	public void initInstPool(InstUtils.POOL instPool) {
+		if (!isEnabled()) {
+			return;
+		}
 		this.instPool = instPool;
 		this.removeAllItems();
 		String[] choices = InstUtils.INST_POOLS.get(instPool);
@@ -49,6 +55,9 @@ public class InstComboBox extends ScrollComboBox<String> {
 	}
 
 	public void changeInstPoolMapping(String[] pool) {
+		if (!isEnabled()) {
+			return;
+		}
 		int index = getSelectedIndex();
 		this.removeAllItems();
 		for (String c : pool) {
