@@ -7568,7 +7568,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void recalculateTabPaneCounts() {
 		instrumentTabPane.setTitleAt(0, "Melody (" + melodyPanels.size() + ")");
-		instrumentTabPane.setTitleAt(1, " Bass  (1)");
+		instrumentTabPane.setTitleAt(1, " Bass  (" + bassPanels.size() + ")");
 		instrumentTabPane.setTitleAt(2, "Chords (" + chordPanels.size() + ")");
 		instrumentTabPane.setTitleAt(3, " Arps  (" + arpPanels.size() + ")");
 		instrumentTabPane.setTitleAt(4, " Drums (" + drumPanels.size() + ")");
@@ -9248,17 +9248,20 @@ public class VibeComposerGUI extends JFrame
 
 			RhythmPattern pattern = RhythmPattern.FULL;
 			// use pattern if checkbox selected and %chance 
-			if (panelGenerator.nextInt(100) < 30 + arpPanels.size() * 5) {
+			int patternChanceIncrease = (ip.getPanelOrder() < 4 || arpPanels.size() < 3) ? 0
+					: arpPanels.size() * 5;
+			int fillChanceIncrease = (ip.getPanelOrder() < 4 || arpPanels.size() < 3) ? 0
+					: (arpPanels.size() - 3) * 5;
+			if (panelGenerator.nextInt(100) < (30 + patternChanceIncrease)) {
 				if (randomArpPattern.isSelected()) {
 					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
 				}
 			}
 			ip.setPattern(pattern);
 			if (randomArpUseChordFill.isSelected()) {
-				int exoticFillChanceIncrease = (arpPanels.size() > 3) ? (arpPanels.size() - 3) * 5
-						: 0;
-				ip.setChordSpanFill(ChordSpanFill
-						.getWeighted(panelGenerator.nextInt(100) + exoticFillChanceIncrease));
+				int fillWeight = OMNI.clampChance(
+						panelGenerator.nextInt(100 - fillChanceIncrease) + fillChanceIncrease);
+				ip.setChordSpanFill(ChordSpanFill.getWeighted(fillWeight));
 			} else {
 				ip.setChordSpanFill(ChordSpanFill.ALL);
 			}

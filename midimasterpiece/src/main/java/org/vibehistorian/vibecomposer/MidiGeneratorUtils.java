@@ -406,7 +406,7 @@ public class MidiGeneratorUtils {
 		// 80 + 15 +- 5 + 100/20 -> 95-105 vel.
 		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5
 				+ accent / 20;
-		return OMNI.clamp(newVelocity, 0, 127);
+		return OMNI.clampVel(newVelocity);
 	}
 
 	static void applyCrescendoMultiplierMinimum(List<Note> notes, double maxDuration,

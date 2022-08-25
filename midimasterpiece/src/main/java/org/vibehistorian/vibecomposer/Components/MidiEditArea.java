@@ -232,8 +232,7 @@ public class MidiEditArea extends JComponent {
 		} else if (evt.isControlDown()) {
 			if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 				PhraseNote note = values.get(orderVal.x);
-				int velocity = OMNI.clamp((int) (127 * (orderVal.y - min) / (double) (max - min)),
-						0, 127);
+				int velocity = OMNI.clampVel((127 * (orderVal.y - min) / (double) (max - min)));
 				if (velocity != note.getDynamic()) {
 					note.setDynamic(velocity);
 					playNote(note);
@@ -574,8 +573,8 @@ public class MidiEditArea extends JComponent {
 					Point orderVal = getOrderAndValueFromPosition(evt.getPoint());
 					if (orderVal != null && values.get(orderVal.x).getPitch() >= 0) {
 						PhraseNote note = values.get(orderVal.x);
-						int velocity = OMNI.clamp(
-								(int) (127 * (orderVal.y - min) / (double) (max - min)), 0, 127);
+						int velocity = OMNI
+								.clampVel((127 * (orderVal.y - min) / (double) (max - min)));
 						if (velocity != note.getDynamic()) {
 							note.setDynamic(velocity);
 							playNote(note);
@@ -661,7 +660,7 @@ public class MidiEditArea extends JComponent {
 				// VELOCITY
 				if (draggingAny(DM.VELOCITY)) {
 					int velocity = getVelocityFromPosition(evt.getPoint());
-					velocity = OMNI.clamp(velocity, 0, 127);
+					velocity = OMNI.clampVel(velocity);
 					if (draggingAny(DM.MULTIPLE)) {
 						int velocityChange = velocity - draggedNoteCopy.getDynamic();
 						for (int i = 0; i < selectedNotesCopy.size(); i++) {
