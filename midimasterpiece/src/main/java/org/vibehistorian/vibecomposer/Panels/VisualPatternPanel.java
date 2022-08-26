@@ -464,13 +464,70 @@ public class VisualPatternPanel extends JPanel {
 					}
 					reapplyShift();
 					if (lastHits != 24 && lastHits != 10) {
-						hitsPanel.getKnob().setValue(2 * lastHits);
+						hitsPanel.setInt(2 * lastHits);
 					}
 
 
 				}
 			});
 		}
+	}
+
+	public void linkExpander(JButton expander) {
+		if (expander != null) {
+			expander.addMouseListener(new MouseAdapter() {
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					if (e.isControlDown()) {
+						expand2xGlobal();
+					} else {
+						expand2x();
+					}
+				}
+			});
+		}
+	}
+
+	public void expand2xGlobal() {
+		InstPanel instParent = parentPanel;
+		if (instParent == null) {
+			expand2x();
+			repaint();
+			return;
+		}
+		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
+		allPanels.forEach(e -> {
+			if (e.getComboPanel().hitsPanel.isEnabled()) {
+				e.getComboPanel().expand2x();
+				e.getComboPanel().repaint();
+			}
+		});
+	}
+
+	public void expand2x() {
+		List<Integer> tickThresholds = hitsPanel.getKnob().getTickThresholds();
+		if (!hitsPanel.isEnabled() || !chordSpanPanel.isEnabled() || chordSpanPanel.getInt() > 2
+				|| !(tickThresholds.contains(lastHits * 2))) {
+			return;
+		}
+		List<Integer> firstPattern = truePattern.subList(0, lastHits);
+		Collections.rotate(firstPattern, shiftPanel.getInt());
+		for (int i = 0; i < lastHits; i++) {
+			firstPattern.add(0);
+		}
+		truePattern = firstPattern;
+		while (truePattern.size() < MAX_HITS) {
+			truePattern.addAll(firstPattern);
+		}
+		truePattern = truePattern.subList(0, MAX_HITS);
+		if (shiftPanel.getInt() > 0) {
+			shiftPanel.setInt(0);
+		}
+		patternType.setVal(RhythmPattern.CUSTOM);
+		hitsPanel.setInt(lastHits * 2);
+		chordSpanPanel.setInt(chordSpanPanel.getInt() * 2);
+		reapplyShift();
 	}
 
 	public void linkVelocityToggle(JButton veloToggler) {

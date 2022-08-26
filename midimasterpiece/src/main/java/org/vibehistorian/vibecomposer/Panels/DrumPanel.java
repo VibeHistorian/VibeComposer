@@ -59,17 +59,22 @@ public class DrumPanel extends InstPanel {
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
 		doublerButt.setMargin(new Insets(0, 0, 0, 0));
+		JButton expanderButt = new JButton("<>");
+		expanderButt.setPreferredSize(new Dimension(25, 30));
+		expanderButt.setMargin(new Insets(0, 0, 0, 0));
 		JButton veloTogglerButt = new JButton("V");
 		veloTogglerButt.setPreferredSize(new Dimension(25, 30));
 		veloTogglerButt.setMargin(new Insets(0, 0, 0, 0));
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.linkDoubler(doublerButt);
+		comboPanel.linkExpander(expanderButt);
 		comboPanel.linkVelocityToggle(veloTogglerButt);
 		comboPanel.setBigModeAllowed(true);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
 
 		comboPanelWrapper.add(doublerButt);
+		comboPanelWrapper.add(expanderButt);
 		comboPanelWrapper.add(comboPanel);
 		comboPanelWrapper.add(veloTogglerButt);
 
