@@ -5751,7 +5751,12 @@ public class VibeComposerGUI extends JFrame
 			} else if (regenerate) {
 				midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 				midiConfig.setRegenerateCount(regenerateCount);
-				configHistory.removeItemAt(configHistory.getItemCount() - 1);
+				String oldBookmarkText = configHistory.getItemCount() > 0
+						? configHistory.getLastVal().getBookmarkText()
+						: "";
+				if (StringUtils.isEmpty(oldBookmarkText)) {
+					configHistory.removeItemAt(configHistory.getItemCount() - 1);
+				}
 				configHistory.addItem(midiConfig);
 				configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
 			}
