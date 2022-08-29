@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
@@ -221,6 +222,11 @@ public class MidiEditPopup extends CloseablePopup {
 				selectAll();
 			}
 		};
+		Action transposeSelectedAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				transposeSelected();
+			}
+		};
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
 		allPanels.getActionMap().put("undo", undoAction);
@@ -233,6 +239,10 @@ public class MidiEditPopup extends CloseablePopup {
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAll");
 		allPanels.getActionMap().put("selectAll", selectAllAction);
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
+				KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK),
+				"transposeSelected");
+		allPanels.getActionMap().put("transposeSelected", transposeSelectedAction);
 	}
 
 	private JPanel makeTopButtonPanel() {
@@ -559,7 +569,7 @@ public class MidiEditPopup extends CloseablePopup {
 	private void loadNotes(boolean overwrite) {
 		PhraseNotes pn = getPatternMap().get(patternPartOrderBox.getSelectedItem(),
 				patternNameBox.getSelectedItem().name);
-		if (pn == null) {
+		if (pn == null || pn.isEmpty()) {
 			return;
 		}
 
@@ -651,6 +661,11 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void setCustomValues(PhraseNotes values) {
 
+		if (values == null || values.isEmpty()) {
+			new TemporaryInfoPopup("Empty pattern!", 1000);
+			return;
+		}
+
 		int vmin = -1 * baseMargin * trackScope;
 		int vmax = baseMargin * trackScope;
 		if (!values.isEmpty()) {
@@ -734,6 +749,25 @@ public class MidiEditPopup extends CloseablePopup {
 			mvea.reset();
 			saveToHistory();
 		}
+	}
+
+	public void transposeSelected() {
+		new TextProcessingPopup("Transpose amount", e -> {
+			if (mvea == null || mvea.selectedNotes == null || mvea.selectedNotes.isEmpty()) {
+				new TemporaryInfoPopup("No notes selected!", 1000);
+				return;
+			}
+			try {
+				int parsedInt = Integer.valueOf(e);
+				for (PhraseNote n : mvea.selectedNotes) {
+					// 0..127 midi value
+					n.setPitch(OMNI.clampMidi(n.getPitch() + parsedInt));
+				}
+				setCustomValues(mvea.getValues());
+			} catch (Exception ex) {
+				new TemporaryInfoPopup("Invalid number entered!", 1500);
+			}
+		});
 	}
 
 	public void selectAll() {

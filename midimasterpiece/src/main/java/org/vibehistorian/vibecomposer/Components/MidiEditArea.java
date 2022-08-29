@@ -660,11 +660,11 @@ public class MidiEditArea extends JComponent {
 				// VELOCITY
 				if (draggingAny(DM.VELOCITY)) {
 					int velocity = getVelocityFromPosition(evt.getPoint());
-					velocity = OMNI.clampVel(velocity);
+					velocity = OMNI.clampMidi(velocity);
 					if (draggingAny(DM.MULTIPLE)) {
 						int velocityChange = velocity - draggedNoteCopy.getDynamic();
 						for (int i = 0; i < selectedNotesCopy.size(); i++) {
-							selectedNotes.get(i).setDynamic(OMNI.clampVel(
+							selectedNotes.get(i).setDynamic(OMNI.clampMidi(
 									selectedNotesCopy.get(i).getDynamic() + velocityChange));
 						}
 					} else {

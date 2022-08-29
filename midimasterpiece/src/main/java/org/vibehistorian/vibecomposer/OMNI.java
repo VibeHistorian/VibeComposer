@@ -88,10 +88,10 @@ public class OMNI {
 	}
 
 	public static int clampVel(double d) {
-		return clampVel((int) d);
+		return clampMidi((int) d);
 	}
 
-	public static int clampVel(int d) {
+	public static int clampMidi(int d) {
 		return clamp(d, 0, 127);
 	}
 

@@ -5307,7 +5307,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	protected void sendPanMessage(int pan100, int channel) {
-		int value127 = useMidiCC.isSelected() ? OMNI.clampVel(pan100 * 127 / 100) : 64;
+		int value127 = useMidiCC.isSelected() ? OMNI.clampMidi(pan100 * 127 / 100) : 64;
 		sendMidiCcMessage(value127, channel, 10);
 	}
 
