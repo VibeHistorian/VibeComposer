@@ -9035,6 +9035,10 @@ public class VibeComposerGUI extends JFrame
 				if (panelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
 					maxShift /= 2;
 				}
+				if (beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75) {
+					maxShift /= 2;
+				}
+
 				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
 				ip.setPatternShift(0);
@@ -9283,6 +9287,10 @@ public class VibeComposerGUI extends JFrame
 			if (panelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
 				//LG.d("Arp getPattern: " + ip.getPattern().name());
 				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
+
+				if (beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75) {
+					maxShift /= 2;
+				}
 				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
 			} else {
 				ip.setPatternShift(0);
