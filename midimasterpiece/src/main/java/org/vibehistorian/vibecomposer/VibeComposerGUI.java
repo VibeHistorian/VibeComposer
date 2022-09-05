@@ -734,6 +734,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox highlightPatterns;
 	public static JCheckBox highlightScoreNotes;
 	public static JCheckBox customFilenameAddTimestamp;
+	public static JCheckBox miniScorePopup;
 
 
 	public static void main(String args[]) {
@@ -1446,6 +1447,7 @@ public class VibeComposerGUI extends JFrame
 		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern (-Perf)", true);
 		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
 		customFilenameAddTimestamp = new CustomCheckBox("Add Timestamp To Custom Filenames", false);
+		miniScorePopup = new CustomCheckBox("Mini Score Popup", true);
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1477,6 +1479,7 @@ public class VibeComposerGUI extends JFrame
 		displayStylePanel.add(highlightPatterns);
 		displayStylePanel.add(highlightScoreNotes);
 		displayStylePanel.add(customFilenameAddTimestamp);
+		displayStylePanel.add(miniScorePopup);
 		extraSettingsPanel.add(displayStylePanel);
 
 
@@ -5051,13 +5054,27 @@ public class VibeComposerGUI extends JFrame
 
 
 		showScore = new JButton("Show Score Tab");
-		showScore.addActionListener(new ActionListener() {
+		showScore.addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void mouseClicked(MouseEvent e) {
 				if (scorePanel != null) {
 					if (instrumentTabPane.getComponentCount() == 8) {
 						instrumentTabPane.remove(scoreScrollPane);
+						if (VibeComposerGUI.miniScorePopup.isSelected()) {
+							ShowPanelBig.beatWidthBase = 600;
+							ShowPanelBig.beatWidthBaseIndex = 0;
+							scorePanel.updatePanelHeight(300);
+							//scoreScrollPane.setMaximumSize(new Dimension(600, 300));
+							scorePanel.getShowArea().setNoteHeight(4);
+							scorePanel.setScore();
+							scorePanel.setAlignmentX(LEFT_ALIGNMENT);
+							scoreScrollPane.repaint();
+							/*SwingUtilities.invokeLater(() -> {
+								ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, e.getPoint(), 0.0,
+										0.0);
+							});*/
+						}
 						scorePopup = new ShowScorePopup(scoreScrollPane);
 					} else {
 						if (scorePopup != null) {
@@ -7980,6 +7997,7 @@ public class VibeComposerGUI extends JFrame
 		// extra settings
 		cs.add(globalNoteLengthMultiplier);
 		cs.add(copyChordsAfterGenerate);
+		cs.add(miniScorePopup);
 
 		return cs;
 	}
