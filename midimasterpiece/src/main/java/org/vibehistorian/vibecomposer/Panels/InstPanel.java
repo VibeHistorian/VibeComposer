@@ -213,10 +213,47 @@ public abstract class InstPanel extends JPanel {
 			}
 		});
 
-		copyButton.addActionListener(l);
+		copyButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				InstPart part = toInstPart(VibeComposerGUI.lastRandomSeed);
+				InstPanel newPanel = VibeComposerGUI.vibeComposerGUI.addInstPanelToLayout(
+						VibeComposerGUI.instrumentTabPane.getSelectedIndex(), part, true);
+				newPanel.setPatternSeed(getPatternSeed());
+
+				// todo checkbox set cc'd panel's midichannel?
+				if (true) {
+					newPanel.setMidiChannel(getMidiChannel());
+				} else {
+					switch (VibeComposerGUI.instrumentTabPane.getSelectedIndex()) {
+					case 2:
+						newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+						newPanel.setPanByOrder(5);
+						break;
+					case 3:
+						newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
+						newPanel.setPanByOrder(7);
+						break;
+					case 4:
+						newPanel.getComboPanel().reapplyHits();
+						break;
+					default:
+						break;
+					}
+				}
+
+				if (SwingUtilities.isRightMouseButton(e)) {
+					setChordSpanFill(ChordSpanFill.HALF1);
+					newPanel.setChordSpanFill(ChordSpanFill.HALF2);
+				}
+
+				VibeComposerGUI.vibeComposerGUI.recalculateTabPaneCounts();
+				VibeComposerGUI.vibeComposerGUI.recalculateGenerationCounts();
+			}
+
+		});
 		randomizeButton.addActionListener(l);
 
-		copyButton.setActionCommand("CopyPart");
 		copyButton.setPreferredSize(new Dimension(25, 30));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 

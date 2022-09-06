@@ -7153,42 +7153,6 @@ public class VibeComposerGUI extends JFrame
 			tabPanePossibleChange = true;
 		}
 
-		if (ae.getActionCommand() == "CopyPart") {
-
-			JButton source = (JButton) ae.getSource();
-			InstPanel sourcePanel = (InstPanel) source.getParent();
-			InstPart part = null;
-
-			part = sourcePanel.toInstPart(lastRandomSeed);
-			InstPanel newPanel = addInstPanelToLayout(instrumentTabPane.getSelectedIndex(), part,
-					true);
-			newPanel.setPatternSeed(sourcePanel.getPatternSeed());
-
-			// todo checkbox set cc'd panel's midichannel?
-			if (true) {
-				newPanel.setMidiChannel(sourcePanel.getMidiChannel());
-			} else {
-				switch (instrumentTabPane.getSelectedIndex()) {
-				case 2:
-					newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
-					newPanel.setPanByOrder(5);
-					break;
-				case 3:
-					newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
-					newPanel.setPanByOrder(7);
-					break;
-				case 4:
-					newPanel.getComboPanel().reapplyHits();
-					break;
-				default:
-					break;
-				}
-			}
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-			//LG.i(("Set sequencer solo: " + sourcePanel.getMidiChannel()));
-		}
-
 		if (ae.getActionCommand() == "RandomizePart") {
 
 			JButton source = (JButton) ae.getSource();
@@ -7582,13 +7546,13 @@ public class VibeComposerGUI extends JFrame
 		return (sequencer != null) && (sequencer.isOpen()) && (sequencer.getSequence() != null);
 	}
 
-	private void recalculateGenerationCounts() {
+	public void recalculateGenerationCounts() {
 		randomChordsToGenerate.setText("" + Math.max(1, chordPanels.size()));
 		randomArpsToGenerate.setText("" + Math.max(1, arpPanels.size()));
 		randomDrumsToGenerate.setText("" + Math.max(1, drumPanels.size()));
 	}
 
-	private void recalculateTabPaneCounts() {
+	public void recalculateTabPaneCounts() {
 		instrumentTabPane.setTitleAt(0, "Melody (" + melodyPanels.size() + ")");
 		instrumentTabPane.setTitleAt(1, " Bass  (" + bassPanels.size() + ")");
 		instrumentTabPane.setTitleAt(2, "Chords (" + chordPanels.size() + ")");

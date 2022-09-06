@@ -1089,8 +1089,7 @@ public class MidiUtils {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					n.setPitch(pitch - difference);
-					/*LG.i(
-							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
+					//LG.i("Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
 				}
 				continue;
 			}
