@@ -998,9 +998,11 @@ public class VibeComposerGUI extends JFrame
 		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime)
 				+ " ms! Creating Panels in background...");
 
-		generatePanels(2);
-		generatePanels(3);
-		generatePanels(4);
+		generateInitialMelodyPanels();
+		for (int i = 1; i < 5; i++) {
+			generatePanels(i);
+		}
+
 		composingInProgress = false;
 		LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
 	}
@@ -1631,6 +1633,18 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
+	private void generatePanels(int part) {
+		int panelCount = isCustomSection() ? getInstList(part).size()
+				: Integer.valueOf(randomPanelsToGenerate[part].getText());
+		createPanels(part, panelCount, false);
+		recalculateTabPaneCounts();
+		recalculateSoloMuters();
+
+		if (canRegenerateOnChange()) {
+			regenerate();
+		}
+	}
+
 	private void initMelodyGenSettings(int startY, int anchorSide) {
 
 		JPanel scrollableMelodyPanels = new JPanel();
@@ -1691,35 +1705,6 @@ public class VibeComposerGUI extends JFrame
 
 		toggleableComponents.add(melodySettingsExtraPanelShape);
 		toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
-	}
-
-	private JPanel initMelodySettingsPlusPlus() {
-		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
-		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS++");
-		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
-		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
-
-
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
-		melodySettingsExtraPanelBlocksPatternsCompose
-				.add(new JLabel("<html>Note Target<br>Mode</html>"));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
-		JPanel postProcessPanel = new JPanel();
-		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		postProcessPanel.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
-		postProcessPanel.add(melodyRhythmAccents);
-		postProcessPanel.add(new JLabel("Mode"));
-		postProcessPanel.add(melodyRhythmAccentsMode);
-		postProcessPanel.add(melodyRhythmAccentsPocket);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(postProcessPanel);
-		return melodySettingsExtraPanelBlocksPatternsCompose;
 	}
 
 	private JPanel initMelodySettings() {
@@ -1802,18 +1787,6 @@ public class VibeComposerGUI extends JFrame
 		return melodySettingsExtraPanelOrg;
 	}
 
-	private void generatePanels(int part) {
-		int panelCount = isCustomSection() ? getInstList(part).size()
-				: Integer.valueOf(randomPanelsToGenerate[part].getText());
-		createPanels(part, panelCount, false);
-		recalculateTabPaneCounts();
-		recalculateSoloMuters();
-
-		if (canRegenerateOnChange()) {
-			regenerate();
-		}
-	}
-
 	private JPanel initMelodySettingsPlus() {
 		JPanel melodySettingsExtraPanelShape = new JPanel();
 		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1878,6 +1851,35 @@ public class VibeComposerGUI extends JFrame
 		return melodySettingsExtraPanelShape;
 	}
 
+	private JPanel initMelodySettingsPlusPlus() {
+		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
+		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
+		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS++");
+		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
+		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
+
+
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
+		melodySettingsExtraPanelBlocksPatternsCompose
+				.add(new JLabel("<html>Note Target<br>Mode</html>"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
+		JPanel postProcessPanel = new JPanel();
+		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		postProcessPanel.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
+		postProcessPanel.add(melodyRhythmAccents);
+		postProcessPanel.add(new JLabel("Mode"));
+		postProcessPanel.add(melodyRhythmAccentsMode);
+		postProcessPanel.add(melodyRhythmAccentsPocket);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(postProcessPanel);
+		return melodySettingsExtraPanelBlocksPatternsCompose;
+	}
+
 	public static JCheckBox makeCheckBox(String string, boolean b, boolean thick) {
 		JCheckBox cb = new CustomCheckBox(string, b);
 		if (thick) {
@@ -1888,7 +1890,7 @@ public class VibeComposerGUI extends JFrame
 		return cb;
 	}
 
-	public void fixCombinedMelodyTracks() {
+	/*public void fixCombinedMelodyTracks() {
 		if (combineMelodyTracks == null) {
 			return;
 		}
@@ -1912,10 +1914,15 @@ public class VibeComposerGUI extends JFrame
 		if (!foundValid) {
 			melodyPanels.get(0).toggleCombinedMelodyDisabledUI(true);
 		}
-	}
+	}*/
 
 	private void initMelody(int startY, int anchorSide) {
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		instrumentTabPane.addTab("Melody", melodyParentPanel);
+	}
 
+	private void generateInitialMelodyPanels() {
 		for (int i = 0; i < 3; i++) {
 			MelodyPanel melodyPanel = new MelodyPanel(this);
 			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
@@ -1931,8 +1938,6 @@ public class VibeComposerGUI extends JFrame
 				if (i > 1) {
 					melodyPanel.setMuteInst(true);
 				}
-				melodyPanel.toggleCombinedMelodyDisabledUI(
-						combineMelodyTracks != null && !combineMelodyTracks.isSelected());
 				melodyPanel.setVelocityMax(70);
 				melodyPanel.setVelocityMin(40);
 				melodyPanel.setMidiChannel(i + 6);
@@ -1956,18 +1961,10 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setNoteLengthMultiplier(108);
 			}
 		}
-
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Melody", melodyParentPanel);
-
-
 	}
 
 
 	private void initBass(int startY, int anchorSide) {
-		BassPanel bassPanel = new BassPanel(this);
 
 		JPanel scrollableBassPanels = new JPanel();
 		scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
@@ -2033,12 +2030,7 @@ public class VibeComposerGUI extends JFrame
 		bassParentPanel.add(borderPanel);
 		bassParentPanel.add(bassScrollPane);
 
-		scrollableBassPanels.add(bassPanel);
-
 		bassSettingsAdvancedPanel.setVisible(false);
-
-
-		bassPanels.add(bassPanel);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
