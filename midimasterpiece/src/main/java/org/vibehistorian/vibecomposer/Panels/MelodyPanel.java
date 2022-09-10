@@ -62,6 +62,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		addDefaultInstrumentControls();
+		addDefaultPanelButtons();
 
 		transpose.getKnob().setTickSpacing(10);
 		Integer[] allowedMelodyTransposes = new Integer[] { 0, 4, 5, 7 };

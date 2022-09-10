@@ -110,8 +110,6 @@ public class DrumPanel extends InstPanel {
 
 	public DrumPanel(ActionListener l) {
 		initComponents(l);
-		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveDrum," + panelOrder);
 	}
 
 	public DrumPart toDrumPart(int lastRandomSeed) {

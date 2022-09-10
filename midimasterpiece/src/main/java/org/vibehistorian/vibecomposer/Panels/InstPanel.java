@@ -216,6 +216,9 @@ public abstract class InstPanel extends JPanel {
 		copyButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				if (!copyButton.isEnabled()) {
+					return;
+				}
 				InstPart part = toInstPart(VibeComposerGUI.lastRandomSeed);
 				InstPanel newPanel = VibeComposerGUI.vibeComposerGUI.addInstPanelToLayout(
 						VibeComposerGUI.instrumentTabPane.getSelectedIndex(), part, true);
@@ -242,13 +245,14 @@ public abstract class InstPanel extends JPanel {
 					}
 				}
 
-				if (SwingUtilities.isRightMouseButton(e)) {
+				if (SwingUtilities.isMiddleMouseButton(e)) {
 					setChordSpanFill(ChordSpanFill.HALF1);
 					newPanel.setChordSpanFill(ChordSpanFill.HALF2);
 				}
 
 				VibeComposerGUI.vibeComposerGUI.recalculateTabPaneCounts();
 				VibeComposerGUI.vibeComposerGUI.recalculateGenerationCounts();
+				VibeComposerGUI.vibeComposerGUI.repaint();
 			}
 
 		});
@@ -309,6 +313,10 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void addDefaultPanelButtons() {
+		removeButton.addActionListener(e -> {
+			VibeComposerGUI.removeInstPanel(getPartNum(), getPanelOrder(), true);
+			VibeComposerGUI.vibeComposerGUI.recalculateGeneratorAndTabCounts();
+		});
 		this.add(removeButton);
 		this.add(copyButton);
 		this.add(randomizeButton);
@@ -619,8 +627,6 @@ public abstract class InstPanel extends JPanel {
 
 	public void setPanelOrder(int val) {
 		this.panelOrder.setText("" + val);
-		String removeActionString = removeButton.getActionCommand().split(",")[0];
-		removeButton.setActionCommand(removeActionString + "," + val);
 	}
 
 	public boolean getFillFlip() {

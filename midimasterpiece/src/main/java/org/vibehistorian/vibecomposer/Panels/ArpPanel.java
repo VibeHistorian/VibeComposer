@@ -110,9 +110,6 @@ public class ArpPanel extends InstPanel {
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d);
 		}
-
-		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveArp," + panelOrder);
 	}
 
 
