@@ -8475,63 +8475,62 @@ public class VibeComposerGUI extends JFrame
 		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
 		int[] melodyChannels = { 1, 7, 8 };
 		panelCount -= remainingPanels.size();
+		ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
+				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };
 		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
 			boolean needNewChannel = false;
-			MelodyPanel melodyPanel = null;
+			MelodyPanel ip = null;
 			if (randomizedPanel != null) {
-				melodyPanel = randomizedPanel;
+				ip = randomizedPanel;
 			} else {
 				if (panelIndex < removedPanels.size()) {
-					melodyPanel = removedPanels.get(panelIndex);
+					ip = removedPanels.get(panelIndex);
 				} else {
-					melodyPanel = (MelodyPanel) addInstPanelToLayout(0);
+					ip = (MelodyPanel) addInstPanelToLayout(0);
 					needNewChannel = true;
 				}
 			}
 			if (randomizeInstOnComposeOrGen.isSelected()) {
-				melodyPanel.setInstrument(melodyPanel.getInstrumentBox().getRandomInstrument());
+				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
 			}
 
-			melodyPanel.setSpeed(panelGenerator.nextInt(25));
-			melodyPanel.setMaxBlockChange(3 + panelGenerator.nextInt(5));
+			ip.setSpeed(panelGenerator.nextInt(25));
+			ip.setMaxBlockChange(3 + panelGenerator.nextInt(5));
 			//melodyPanel.setSplitChance(melodyRand.nextInt(15));
-			melodyPanel.setNoteExceptionChance(10 + panelGenerator.nextInt(15));
-			melodyPanel.setMaxNoteExceptions(panelGenerator.nextInt(2));
-			melodyPanel.setLeadChordsChance(panelGenerator.nextInt(50));
+			ip.setNoteExceptionChance(10 + panelGenerator.nextInt(15));
+			ip.setMaxNoteExceptions(panelGenerator.nextInt(2));
+			ip.setLeadChordsChance(panelGenerator.nextInt(50));
 
-			ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL,
-					ChordSpanFill.EVEN, ChordSpanFill.ODD, ChordSpanFill.HALF1,
-					ChordSpanFill.HALF2 };
-			melodyPanel.setChordSpanFill(melodyFills[panelGenerator.nextInt(melodyFills.length)]);
-			melodyPanel.setFillFlip(false);
+			ip.setChordSpanFill(melodyFills[panelGenerator.nextInt(melodyFills.length)]);
+			ip.setFillFlip(false);
 
-			int panelOrder = melodyPanel.getPanelOrder();
+			int panelOrder = ip.getPanelOrder();
 			if (panelOrder > 1) {
-				melodyPanel.setFillPauses(true);
-				melodyPanel.setPauseChance(50 + panelGenerator.nextInt(40));
+				ip.setFillPauses(true);
+				ip.setPauseChance(50 + panelGenerator.nextInt(40));
 				/*melodyPanel.toggleCombinedMelodyDisabledUI(
 						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
-				melodyPanel.setVelocityMax(65 + panelGenerator.nextInt(20));
-				melodyPanel.setVelocityMin(40 + panelGenerator.nextInt(20));
+				ip.setVelocityMax(65 + panelGenerator.nextInt(20));
+				ip.setVelocityMin(40 + panelGenerator.nextInt(20));
 				if (panelOrder % 2 == 0) {
-					melodyPanel.setTranspose(0);
-					melodyPanel.getPanSlider().setValue(75);
+					ip.setTranspose(0);
+					ip.getPanSlider().setValue(75);
 				} else {
-					melodyPanel.setTranspose(-12);
-					melodyPanel.getPanSlider().setValue(25);
+					ip.setTranspose(-12);
+					ip.getPanSlider().setValue(25);
 				}
-				melodyPanel.setNoteLengthMultiplier(70 + panelGenerator.nextInt(40));
+				ip.setNoteLengthMultiplier(70 + panelGenerator.nextInt(40));
 			} else {
-				melodyPanel.setFillPauses(panelGenerator.nextBoolean());
-				melodyPanel.setPauseChance(panelGenerator.nextInt(35));
-				melodyPanel.setTranspose(12);
-				melodyPanel.setVelocityMax(80 + panelGenerator.nextInt(30));
-				melodyPanel.setVelocityMin(50 + panelGenerator.nextInt(25));
-				melodyPanel.setNoteLengthMultiplier(100 + panelGenerator.nextInt(25));
+				ip.setFillPauses(panelGenerator.nextBoolean());
+				ip.setPauseChance(panelGenerator.nextInt(35));
+				ip.setTranspose(12);
+				ip.setVelocityMax(80 + panelGenerator.nextInt(30));
+				ip.setVelocityMin(50 + panelGenerator.nextInt(25));
+				ip.setNoteLengthMultiplier(100 + panelGenerator.nextInt(25));
 			}
 
 			if (needNewChannel) {
-				melodyPanel.setMidiChannel(melodyChannels[(panelOrder - 1) % 3]);
+				ip.setMidiChannel(melodyChannels[(panelOrder - 1) % 3]);
 			}
 		}
 		repaint();
@@ -8566,6 +8565,10 @@ public class VibeComposerGUI extends JFrame
 		}
 		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
 		panelCount -= remainingPanels.size();
+		ChordSpanFill[] bassFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
+				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };
+		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
+
 		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
 			boolean needNewChannel = false;
 			BassPanel ip = null;
@@ -8582,7 +8585,56 @@ public class VibeComposerGUI extends JFrame
 			if (randomizeInstOnComposeOrGen.isSelected()) {
 				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
 			}
+			ip.setChordSpanFill(bassFills[panelGenerator.nextInt(bassFills.length)]);
+			ip.setFillFlip(false);
 			ip.setPatternSeed(seed);
+
+			int panelOrder = ip.getPanelOrder();
+			if (panelOrder > 1) {
+				ip.setPauseChance(30 + panelGenerator.nextInt(40));
+				/*melodyPanel.toggleCombinedMelodyDisabledUI(
+						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
+				ip.setVelocityMax(50 + panelGenerator.nextInt(20));
+				ip.setVelocityMin(30 + panelGenerator.nextInt(20));
+				if (panelOrder % 2 == 0) {
+					ip.setTranspose(0);
+				} else {
+					ip.setTranspose(12);
+				}
+				ip.setNoteLengthMultiplier(60 + panelGenerator.nextInt(40));
+
+				// default SINGLE = 4
+				RhythmPattern pattern = RhythmPattern.SINGLE;
+				// use pattern in 20% of the cases if checkbox selected
+				int patternChance = 50;
+				if (panelGenerator.nextInt(100) < patternChance) {
+					// TODO: BASS SETTINGS toggles
+					if (true) {
+						pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
+						if (pattern == RhythmPattern.MELODY1) {
+							pattern = RhythmPattern.FULL;
+						}
+					}
+				}
+				ip.setPattern(pattern);
+
+				int hits = 4;
+				while (panelGenerator.nextBoolean() && hits < 16) {
+					hits *= 2;
+				}
+				if ((hits / ip.getChordSpan() >= 8)) {
+					hits /= 2;
+				}
+
+				ip.setHitsPerPattern(hits * 2);
+
+			} else {
+				ip.setPauseChance(panelGenerator.nextInt(10));
+				ip.setTranspose(0);
+				ip.setVelocityMax(60 + panelGenerator.nextInt(30));
+				ip.setVelocityMin(40 + panelGenerator.nextInt(25));
+				ip.setNoteLengthMultiplier(80 + panelGenerator.nextInt(25));
+			}
 
 			if (needNewChannel) {
 				ip.setMidiChannel(9);
