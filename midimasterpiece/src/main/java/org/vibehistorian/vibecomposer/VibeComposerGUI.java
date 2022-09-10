@@ -1579,11 +1579,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void recomposeSection() {
-		if (arrSection.getSelectedIndex() == 0) {
+		if (!isCustomSection()) {
 			return;
 		}
 		manualArrangement.setSelected(true);
-		for (int i = 2; i < 5; i++) {
+		for (int i = 0; i < 5; i++) {
 			createPanels(i, getInstList(i).size(), false);
 			applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
 		}
@@ -8179,9 +8179,7 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
 
 		recreateInstPanelsFromInstParts(0, gc.getMelodyParts());
-		if (gc.getBassParts() != null && !gc.getBassParts().isEmpty()) {
-			recreateInstPanelsFromInstParts(1, gc.getBassParts());
-		}
+		recreateInstPanelsFromInstParts(1, gc.getBassParts());
 
 		recreateInstPanelsFromInstParts(2, gc.getChordParts());
 		recreateInstPanelsFromInstParts(3, gc.getArpParts());
@@ -8541,8 +8539,56 @@ public class VibeComposerGUI extends JFrame
 
 	private void createRandomBassPanels(int panelCount, boolean onlyAdd,
 			BassPanel randomizedPanel) {
-		// TODO Auto-generated method stub
+		createRandomBassPanels(new Random().nextInt(), panelCount, onlyAdd, null);
+	}
 
+	private void createRandomBassPanels(int seed, int panelCount, boolean onlyAdd,
+			BassPanel randomizedPanel) {
+		ScrollComboBox.discardInteractions();
+		List<BassPanel> affectedBasses = (List<BassPanel>) (List<?>) getAffectedPanels(1);
+
+		Random panelGenerator = new Random(seed);
+		List<BassPanel> removedPanels = new ArrayList<>();
+		List<BassPanel> remainingPanels = new ArrayList<>();
+		for (Iterator<BassPanel> panelI = affectedBasses.iterator(); panelI.hasNext();) {
+			BassPanel panel = panelI.next();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) bassScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
+			}
+
+		}
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+		panelCount -= remainingPanels.size();
+		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
+			boolean needNewChannel = false;
+			BassPanel ip = null;
+			if (randomizedPanel != null) {
+				ip = randomizedPanel;
+			} else {
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
+				} else {
+					ip = (BassPanel) addInstPanelToLayout(1);
+					needNewChannel = true;
+				}
+			}
+			if (randomizeInstOnComposeOrGen.isSelected()) {
+				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
+			}
+			ip.setPatternSeed(seed);
+
+			if (needNewChannel) {
+				ip.setMidiChannel(9);
+			}
+		}
+		repaint();
 	}
 
 	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,

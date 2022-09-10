@@ -3416,23 +3416,26 @@ public class MidiGenerator implements JMC {
 		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()) {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(1);
-			boolean added = presences.contains(gc.getBassParts().get(0).getOrder());
-			if (added) {
-				List<Integer> variations = (overridden) ? sec.getVariation(1, 0) : null;
-				BassPart bp = gc.getBassParts().get(0);
-				Phrase b = fillBassFromPart(bp, rootProgression, sec, variations);
+			for (int i = 0; i < gc.getBassParts().size(); i++) {
+				BassPart bp = (BassPart) gc.getBassParts().get(i);
+				boolean added = presences.contains(bp.getOrder());
+				if (added) {
+					List<Integer> variations = (overridden) ? sec.getVariation(1, i) : null;
+					Phrase b = fillBassFromPart(bp, rootProgression, sec, variations);
 
-				if (bp.isDoubleOct()) {
-					b = JMusicUtilsCustom.doublePhrase(b, 12, false, -15);
-					b.setStartTime(START_TIME_DELAY);
+					if (bp.isDoubleOct()) {
+						b = JMusicUtilsCustom.doublePhrase(b, 12, false, -15);
+						b.setStartTime(START_TIME_DELAY);
+					}
+					if (bassParts.get(i).getInstrument() != bp.getInstrument()) {
+						b.setInstrument(bp.getInstrument());
+					}
+					copiedPhrases.add(b);
+				} else {
+					copiedPhrases.add(emptyPhrase.copy());
 				}
-				if (bassParts.get(0).getInstrument() != bp.getInstrument()) {
-					b.setInstrument(bp.getInstrument());
-				}
-				copiedPhrases.add(b);
-			} else {
-				copiedPhrases.add(emptyPhrase.copy());
 			}
+
 			sec.setBasses(copiedPhrases);
 		}
 
@@ -3534,15 +3537,19 @@ public class MidiGenerator implements JMC {
 
 		rand.setSeed(arrSeed + 10);
 		variationGen.setSeed(arrSeed + 10);
-		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()
-				&& !gc.getBassParts().get(0).isMuted()) {
+		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(1);
-			boolean added = (overridden && presences.contains(gc.getBassParts().get(0).getOrder()))
-					|| (!overridden && rand.nextInt(100) < sec.getBassChance());
-			added &= gc.getArrangement().isPartInclusion(1, 0, notesSeedOffset);
-			if (added) {
-				if (!overridden)
-					sec.setPresence(1, 0);
+			for (int i = 0; i < gc.getBassParts().size(); i++) {
+				BassPart bp = (BassPart) gc.getBassParts().get(i);
+				rand.setSeed(arrSeed + 50 + bp.getOrder());
+				variationGen.setSeed(arrSeed + 50 + bp.getOrder());
+				boolean added = (overridden && presences.contains(bp.getOrder()))
+						|| (!overridden && rand.nextInt(100) < sec.getBassChance());
+				added &= gc.getArrangement().isPartInclusion(1, i, notesSeedOffset);
+				if (added && !bp.isMuted()) {
+					if (!overridden)
+						sec.setPresence(1, i);
+				}
 			}
 		}
 
