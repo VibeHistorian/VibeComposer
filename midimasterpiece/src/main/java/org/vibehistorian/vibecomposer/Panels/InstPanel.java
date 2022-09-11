@@ -118,8 +118,8 @@ public abstract class InstPanel extends JPanel {
 	protected VisualPatternPanel comboPanel = null;
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
-	protected CheckButton lockInst = new CheckButton("Lock", false);
-	protected CheckButton muteInst = new CheckButton("Excl.", false);
+	protected CheckButton lockInst = new CheckButton("<html>&#x1F512;</html>", false);
+	protected CheckButton muteInst = new CheckButton("Ex", false);
 
 	protected VeloRect volSlider = new VeloRect(0, 100, 100);
 	protected VeloRect panSlider = new VeloRect(0, 100, 50);
@@ -188,23 +188,26 @@ public abstract class InstPanel extends JPanel {
 		chordSpanFill.setOpaque(false);
 		chordSpanFillPanel.add(fillFlip);
 
+		muteInst.setPreferredSize(new Dimension(20, 25));
+		muteInst.setMargin(new Insets(0, 0, 0, 0));
+
+		lockInst.setPreferredSize(new Dimension(20, 25));
+		lockInst.setMargin(new Insets(0, 0, 0, 0));
 		lockInst.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isMiddleMouseButton(evt)) {
-					if (evt.isControlDown()) {
-						for (Component c : getComponents()) {
-							if (c instanceof ScrollComboBox) {
-								((ScrollComboBox) c).setEnabled(true);
-							} else if (c instanceof KnobPanel) {
-								((KnobPanel) c).setBlockInput(false);
-							} else if (c instanceof JPanel) {
-								for (Component c2 : ((JPanel) c).getComponents()) {
-									if (c2 instanceof ScrollComboBox) {
-										((ScrollComboBox) c2).setEnabled(true);
-									} else if (c instanceof KnobPanel) {
-										((KnobPanel) c2).setBlockInput(false);
-									}
+					for (Component c : getComponents()) {
+						if (c instanceof ScrollComboBox) {
+							((ScrollComboBox) c).setEnabled(true);
+						} else if (c instanceof KnobPanel) {
+							((KnobPanel) c).setBlockInput(false);
+						} else if (c instanceof JPanel) {
+							for (Component c2 : ((JPanel) c).getComponents()) {
+								if (c2 instanceof ScrollComboBox) {
+									((ScrollComboBox) c2).setEnabled(true);
+								} else if (c instanceof KnobPanel) {
+									((KnobPanel) c2).setBlockInput(false);
 								}
 							}
 						}
