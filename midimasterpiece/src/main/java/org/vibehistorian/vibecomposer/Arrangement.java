@@ -479,8 +479,10 @@ public class Arrangement {
 			}
 			partInclusionMap.put(i, data);
 		}
-		partInclusionMap.get(0)[0][1] = Boolean.FALSE;
-		partInclusionMap.get(0)[0][4] = Boolean.FALSE;
+		if (partInclusionMap.get(0).length > 0) {
+			partInclusionMap.get(0)[0][1] = Boolean.FALSE;
+			partInclusionMap.get(0)[0][4] = Boolean.FALSE;
+		}
 	}
 
 	public void initPartInclusionMapIfNull() {

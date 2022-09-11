@@ -4408,6 +4408,9 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (melodyPanels.isEmpty()) {
+					return;
+				}
 				userChords.alignWithMelodyTargetNotes(melodyPanels.get(0).getChordNoteChoices());
 			}
 		});
@@ -5733,7 +5736,8 @@ public class VibeComposerGUI extends JFrame
 			makeDir.mkdir();
 
 			String seedData = "" + masterpieceSeed;
-			if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
+			if (!melodyPanels.isEmpty() && melodyPanels.get(0).getPatternSeed() != 0
+					&& !melodyPanels.get(0).getMuteInst()) {
 				seedData += "_" + melodyPanels.get(0).getPatternSeed();
 			}
 			String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
@@ -5834,9 +5838,11 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
 			MidiGenerator.TARGET_NOTES = (melody1ForcePatterns.isSelected()
+					&& !melodyPanels.isEmpty()
 					&& !melodyPanels.get(0).getNoteTargetsButton().isEnabled())
-							? melodyPanels.stream().collect(Collectors.toMap(
-									MelodyPanel::getPanelOrder, MelodyPanel::getChordNoteChoices))
+							? melodyPanels.stream()
+									.collect(Collectors.toMap(MelodyPanel::getPanelOrder,
+											MelodyPanel::getChordNoteChoices))
 							: null;
 
 			/*boolean addStartDelay = useArrangement.isSelected() || arrangementCustom.isSelected()
@@ -5984,7 +5990,8 @@ public class VibeComposerGUI extends JFrame
 			randomizeMelodySeeds();
 		}
 
-		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
+		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()
+				&& !melodyPanels.isEmpty()) {
 			if (melody1ForcePatterns.isSelected()) {
 				MelodyPanel firstMp = melodyPanels.get(0);
 				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
@@ -6001,7 +6008,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (melody1ForcePatterns.isSelected()) {
+		if (melody1ForcePatterns.isSelected() && !melodyPanels.isEmpty()) {
 			MelodyPanel mp1 = melodyPanels.get(0);
 			for (int i = 1; i < melodyPanels.size(); i++) {
 				melodyPanels.get(i).overridePatterns(mp1);
@@ -6013,7 +6020,7 @@ public class VibeComposerGUI extends JFrame
 
 		// ARPS
 		if (instrumentTabPane.getSelectedIndex() != 3 && arpCopyMelodyInst.isSelected()
-				&& !melodyPanels.get(0).getMuteInst()) {
+				&& !melodyPanels.isEmpty() && !melodyPanels.get(0).getMuteInst()) {
 			if (arpPanels.size() > 0 && !arpPanels.get(0).getLockInst()) {
 				arpPanels.get(0).getInstrumentBox().initInstPool(POOL.MELODY);
 				arpPanels.get(0).setInstPool(POOL.MELODY);
@@ -8863,7 +8870,8 @@ public class VibeComposerGUI extends JFrame
 		int fixedInstrument = -1;
 		int fixedHits = -1;
 
-		if (arpCopyMelodyInst.isSelected() && !melodyPanels.get(0).getMuteInst()) {
+		if (arpCopyMelodyInst.isSelected() && !melodyPanels.isEmpty()
+				&& !melodyPanels.get(0).getMuteInst()) {
 			fixedInstrument = melodyPanels.get(0).getInstrument();
 			if (affectedArps.size() > 0) {
 				affectedArps.get(0).setInstrument(fixedInstrument);
@@ -8968,7 +8976,7 @@ public class VibeComposerGUI extends JFrame
 
 
 			if (first == null && panelIndex == 0 && !onlyAdd && arpCopyMelodyInst.isSelected()
-					&& !melodyPanels.get(0).getMuteInst()) {
+					&& !melodyPanels.isEmpty() && !melodyPanels.get(0).getMuteInst()) {
 				ip.setInstrument(fixedInstrument);
 			}
 
