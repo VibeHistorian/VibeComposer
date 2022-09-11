@@ -161,18 +161,19 @@ public class MelodyUtils {
 
 	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
 			Integer length, Random melodyBlockGenerator, int approx) {
+		final int clampedBlockChange = OMNI.clamp(blockChange, -7, 7);
 		List<Integer[]> usedList = getBlocksForType(type);
 		// length fits, note distance and distance roughly equal (diff < approx)
 		List<Integer[]> filteredList = usedList.stream()
 				.filter(e -> (length == null || e.length == length)
-						&& (Math.abs(blockChange(e) - Math.abs(blockChange)) <= approx))
+						&& (Math.abs(blockChange(e) - Math.abs(clampedBlockChange)) <= approx))
 				.collect(Collectors.toList());
 		if (filteredList.size() == 0) {
 			return null;
 		}
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
 		Integer[] block = filteredList.get(rand2);
-		if (blockChange(block) == -1 * blockChange) {
+		if (blockChange(block) == -1 * clampedBlockChange) {
 			return inverse(block);
 		} else {
 			return block;
