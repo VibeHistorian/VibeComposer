@@ -983,8 +983,10 @@ public class VibeComposerGUI extends JFrame
 		pack();
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
+		boolean presetLoaded = false;
 		if (presetLoadBox.getVal().equalsIgnoreCase("default")) {
 			loadPreset();
+			presetLoaded = true;
 		}
 
 		initKeyboardListener();
@@ -998,9 +1000,11 @@ public class VibeComposerGUI extends JFrame
 		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime)
 				+ " ms! Creating Panels in background...");
 
-		generateInitialMelodyPanels();
-		for (int i = 1; i < 5; i++) {
-			generatePanels(i);
+		if (!presetLoaded) {
+			generateInitialMelodyPanels();
+			for (int i = 1; i < 5; i++) {
+				generatePanels(i);
+			}
 		}
 
 		composingInProgress = false;
@@ -1924,10 +1928,8 @@ public class VibeComposerGUI extends JFrame
 
 	private void generateInitialMelodyPanels() {
 		for (int i = 0; i < 3; i++) {
-			MelodyPanel melodyPanel = new MelodyPanel(this);
-			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
+			MelodyPanel melodyPanel = (MelodyPanel) addInstPanelToLayout(0);
 			melodyPanel.setInstrument(73);
-			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			if (i > 0) {
 				melodyPanel.setAccents(50);
@@ -8280,29 +8282,29 @@ public class VibeComposerGUI extends JFrame
 
 	// -------------- GENERIC INST PANEL METHODS ----------------------------
 
-	public InstPanel addInstPanelToLayout(int inst) {
-		return addInstPanelToLayout(inst, null, true);
+	public InstPanel addInstPanelToLayout(int part) {
+		return addInstPanelToLayout(part, null, true);
 	}
 
-	public InstPanel addInstPanelToLayout(int inst, boolean recalc) {
-		return addInstPanelToLayout(inst, null, recalc);
+	public InstPanel addInstPanelToLayout(int part, boolean recalc) {
+		return addInstPanelToLayout(part, null, recalc);
 	}
 
-	public InstPanel addInstPanelToLayout(int inst, InstPart initializingPart,
+	public InstPanel addInstPanelToLayout(int part, InstPart initializingPart,
 			boolean recalcArrangement) {
-		InstPanel ip = InstPanel.makeInstPanel(inst, this);
-		List<InstPanel> affectedPanels = getAffectedPanels(inst);
+		InstPanel ip = InstPanel.makeInstPanel(part, this);
+		List<InstPanel> affectedPanels = getAffectedPanels(part);
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
 		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
 		if (isCustomSection()) {
 			ip.toggleGlobalElements(false);
 			ip.toggleEnabledCopyRemove(false);
-			if (inst == 4) {
+			if (part == 4) {
 				ip.getInstrumentBox().setEnabled(true);
 			}
 		} else {
-			ip.setBackground(OMNI.alphen(instColors[inst], 60));
+			ip.setBackground(OMNI.alphen(instColors[part], 60));
 		}
 
 		if (initializingPart != null) {
@@ -8319,10 +8321,10 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (inst < 4 || !bottomUpReverseDrumPanels.isSelected()) {
-			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder - 1);
+		if (part < 4 || !bottomUpReverseDrumPanels.isSelected()) {
+			((JPanel) getInstPane(part).getViewport().getView()).add(ip, panelOrder - 1);
 		} else {
-			((JPanel) getInstPane(inst).getViewport().getView()).add(ip,
+			((JPanel) getInstPane(part).getViewport().getView()).add(ip,
 					affectedPanels.size() - panelOrder);
 		}
 		return ip;

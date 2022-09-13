@@ -74,6 +74,7 @@ public abstract class InstPanel extends JPanel {
 	private static final long serialVersionUID = 4381939543337887617L;
 	public static final int TARGET_RHYTHM_DENSITY = 8;
 	public static final int MAX_RHYTHM_DENSITY = 11;
+	public static final int SMALL_BTN_HEIGHT = 27;
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
@@ -155,7 +156,7 @@ public abstract class InstPanel extends JPanel {
 		for (ChordSpanFill fill : ChordSpanFill.values()) {
 			chordSpanFill.addItem(fill);
 		}
-		panelOrder.setPreferredSize(new Dimension(20, 30));
+		panelOrder.setPreferredSize(new Dimension(20, SMALL_BTN_HEIGHT));
 
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		//volSlider.setMaximum(100);
@@ -188,10 +189,10 @@ public abstract class InstPanel extends JPanel {
 		chordSpanFill.setOpaque(false);
 		chordSpanFillPanel.add(fillFlip);
 
-		muteInst.setPreferredSize(new Dimension(20, 25));
+		muteInst.setPreferredSize(new Dimension(20, SMALL_BTN_HEIGHT));
 		muteInst.setMargin(new Insets(0, 0, 0, 0));
 
-		lockInst.setPreferredSize(new Dimension(20, 25));
+		lockInst.setPreferredSize(new Dimension(20, SMALL_BTN_HEIGHT));
 		lockInst.setMargin(new Insets(0, 0, 0, 0));
 		lockInst.addMouseListener(new MouseAdapter() {
 			@Override
@@ -261,11 +262,14 @@ public abstract class InstPanel extends JPanel {
 		});
 		randomizeButton.addActionListener(l);
 
-		copyButton.setPreferredSize(new Dimension(25, 30));
+		removeButton.setPreferredSize(new Dimension(25, SMALL_BTN_HEIGHT));
+		removeButton.setMargin(new Insets(0, 0, 0, 0));
+
+		copyButton.setPreferredSize(new Dimension(25, SMALL_BTN_HEIGHT));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
 		randomizeButton.setActionCommand("RandomizePart");
-		randomizeButton.setPreferredSize(new Dimension(15, 30));
+		randomizeButton.setPreferredSize(new Dimension(15, SMALL_BTN_HEIGHT));
 		randomizeButton.setMargin(new Insets(0, 0, 0, 0));
 
 		instrument.setPrototype("XXXXXXXXXXXX");

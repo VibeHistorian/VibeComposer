@@ -34,7 +34,7 @@ public class MelodyPanel extends InstPanel {
 	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("1,2,1,3", this);
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 7, 0, 7);
 	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
-	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
+	private KnobPanel maxNoteExceptions = new KnobPanel("Max<br>Exc.", 0, 0, 4);
 	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Pattern", 33);
 	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
 	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
