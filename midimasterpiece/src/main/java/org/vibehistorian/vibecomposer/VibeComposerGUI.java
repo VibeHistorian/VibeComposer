@@ -1005,10 +1005,10 @@ public class VibeComposerGUI extends JFrame
 			for (int i = 1; i < 5; i++) {
 				generatePanels(i);
 			}
+			LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
 		}
 
 		composingInProgress = false;
-		LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
 	}
 
 
@@ -1049,13 +1049,13 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initTitles(int startY, int anchorSide) {
-		mainTitle = new JLabel("Vibe Composer");
+		/*mainTitle = new JLabel("Vibe Composer");
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		subTitle = new JLabel("by Vibe Historian");
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-
+		
 		mainTitle.setFont(new Font("Courier", Font.BOLD, 25));
-		//subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));
+		subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));*/
 		constraints.weightx = 100;
 		constraints.weighty = 100;
 		constraints.gridx = 0;
@@ -5532,8 +5532,8 @@ public class VibeComposerGUI extends JFrame
 		toggledComposeColor = uiComposeTextColor();
 
 
-		mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
-		subTitle.setForeground(toggledUIColor);
+		//mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
+		//subTitle.setForeground(toggledUIColor);
 		messageLabel.setForeground(toggledUIColor);
 		tipLabel.setForeground(toggledUIColor);
 		currentTime.setForeground(toggledUIColor);
