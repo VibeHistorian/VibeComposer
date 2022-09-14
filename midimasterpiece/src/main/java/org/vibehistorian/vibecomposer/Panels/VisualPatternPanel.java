@@ -834,7 +834,7 @@ public class VisualPatternPanel extends JPanel {
 
 		VisualPatternPanel.this.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
 
-		parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 20 : 50));
+		parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 6 : 50));
 		repaint();
 	}
 

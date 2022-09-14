@@ -140,7 +140,7 @@ public abstract class InstPanel extends JPanel {
 	protected PhraseNotes customMidi = null;
 
 	public InstPanel() {
-
+		super(new FlowLayout(FlowLayout.CENTER, 2, 0));
 	}
 
 	public void initDefaultsPost() {
