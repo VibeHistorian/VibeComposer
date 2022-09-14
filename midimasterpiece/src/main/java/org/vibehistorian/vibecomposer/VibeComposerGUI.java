@@ -9090,6 +9090,9 @@ public class VibeComposerGUI extends JFrame
 				ip.setMidiChannel(2 + (ip.getPanelOrder() - 1) % 7);
 				ip.setPanByOrder(7);
 			}
+
+			ip.getComboPanel().reapplyShift();
+			ip.getComboPanel().reapplyHits();
 		}
 
 		/*if (!affectedArps.isEmpty()) {
