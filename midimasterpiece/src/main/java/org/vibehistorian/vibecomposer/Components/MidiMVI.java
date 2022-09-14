@@ -25,8 +25,11 @@ public class MidiMVI extends JComponent {
 	private static final long serialVersionUID = 2226722368743495710L;
 
 	public static final String[] BUTTONS = { "M", "V", "I", "C" };
+	public static final int BUTTON_ROWS = 2;
 	public static final int BUTTON_WIDTH = 15;
-	public static final Dimension DEFAULT_SIZE = new Dimension(BUTTON_WIDTH * BUTTONS.length, 25);
+	public static final int BUTTON_HEIGHT = 18;
+	public static final Dimension DEFAULT_SIZE = new Dimension(
+			BUTTON_WIDTH * ((BUTTONS.length + 1) / 2), BUTTON_HEIGHT * BUTTON_ROWS);
 	Dimension defaultSize = DEFAULT_SIZE;
 	InstPanel parent;
 
@@ -90,18 +93,36 @@ public class MidiMVI extends JComponent {
 			int width = getWidth();
 			int height = getHeight();
 			g.fillRect(0, 0, width, height);
+			int buttonMaxPerRow = (BUTTONS.length + 1) / 2;
 
-			for (int i = 0; i < BUTTONS.length; i++) {
+			for (int i = 0; i < buttonMaxPerRow; i++) {
 				boolean active = isActive(i);
-				g.setColor(OMNI.alphen(CollectionCellRenderer.CUSTOM_PATTERN_COLORS[i],
+				g.setColor(OMNI.alphen(
+						CollectionCellRenderer.CUSTOM_PATTERN_COLORS[i
+								% CollectionCellRenderer.CUSTOM_PATTERN_COLORS.length],
 						active ? 190 : 50));
 				int startX = i * BUTTON_WIDTH + 1;
 
-				g.fillRect(startX, 0, BUTTON_WIDTH, height);
+				g.fillRect(startX, 0, BUTTON_WIDTH, BUTTON_HEIGHT);
 				g.setColor(Color.white);
 				g.drawString(BUTTONS[i],
 						startX + BUTTON_WIDTH / 2 - SwingUtils.getDrawStringWidth(BUTTONS[i]) / 2,
-						height * 2 / 3);
+						height * 1 / 3);
+			}
+
+			for (int i = buttonMaxPerRow; i < BUTTONS.length; i++) {
+				boolean active = isActive(i);
+				g.setColor(OMNI.alphen(
+						CollectionCellRenderer.CUSTOM_PATTERN_COLORS[i
+								% CollectionCellRenderer.CUSTOM_PATTERN_COLORS.length],
+						active ? 190 : 50));
+				int startX = (i - buttonMaxPerRow) * BUTTON_WIDTH + 1;
+
+				g.fillRect(startX, BUTTON_HEIGHT + 1, BUTTON_WIDTH, height);
+				g.setColor(Color.white);
+				g.drawString(BUTTONS[i],
+						startX + BUTTON_WIDTH / 2 - SwingUtils.getDrawStringWidth(BUTTONS[i]) / 2,
+						height * 5 / 6);
 			}
 
 			g.setColor(Color.black);
@@ -144,7 +165,16 @@ public class MidiMVI extends JComponent {
 			return -1;
 		}
 
-		return OMNI.clamp(evt.getPoint().x / BUTTON_WIDTH, 0, BUTTONS.length - 1);
+		if (BUTTONS.length == 1) {
+			return 0;
+		}
+
+		int maxButtonsPerRow = (BUTTONS.length + 1) / 2;
+		int xButton = OMNI.clamp(evt.getPoint().x / BUTTON_WIDTH, 0, maxButtonsPerRow - 1);
+		int yButton = OMNI.clamp(evt.getPoint().y / BUTTON_HEIGHT, 0, BUTTON_ROWS - 1);
+		int buttonOrder = xButton + yButton * maxButtonsPerRow;
+
+		return buttonOrder < BUTTONS.length ? buttonOrder : -1;
 	}
 
 	public void updateSizes(Dimension size) {
