@@ -51,8 +51,8 @@ public abstract class InstPart implements Cloneable {
 	protected int offset = 0;
 	protected int transpose = 0;
 	protected int feedbackCount = 0;
-	protected int feedbackDuration = 500;
-	protected int feedbackVol = 80;
+	protected int feedbackDuration = 750;
+	protected int feedbackVol = 65;
 
 	protected int velocityMin = 69;
 	protected int velocityMax = 90;

@@ -8586,12 +8586,13 @@ public class VibeComposerGUI extends JFrame
 			if (randomizeInstOnComposeOrGen.isSelected()) {
 				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
 			}
-			ip.setChordSpanFill(bassFills[panelGenerator.nextInt(bassFills.length)]);
-			ip.setFillFlip(false);
-			ip.setPatternSeed(seed);
-
 			int panelOrder = ip.getPanelOrder();
+
+			ip.setFillFlip(false);
+
 			if (panelOrder > 1) {
+				ip.setChordSpanFill(bassFills[panelGenerator.nextInt(bassFills.length)]);
+				ip.setPatternSeed(seed);
 				ip.setPauseChance(30 + panelGenerator.nextInt(40));
 				/*melodyPanel.toggleCombinedMelodyDisabledUI(
 						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/

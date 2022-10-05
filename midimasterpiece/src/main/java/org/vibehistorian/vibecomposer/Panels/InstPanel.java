@@ -98,8 +98,8 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
 	protected KnobPanel offset = new KnobPanel("Offset", 0, -1000, 1000);
 	protected KnobPanel feedbackCount = new KnobPanel("Delays", 0, 0, 5);
-	protected KnobPanel feedbackDuration = new KnobPanel("FB Dur.", 500, -2000, 2000);
-	protected KnobPanel feedbackVol = new KnobPanel("FB Vol.", 80, 10, 150);
+	protected KnobPanel feedbackDuration = new KnobPanel("FB Dur.", 750, -2000, 2000);
+	protected KnobPanel feedbackVol = new KnobPanel("FB Vol.", 65, 10, 150);
 
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
