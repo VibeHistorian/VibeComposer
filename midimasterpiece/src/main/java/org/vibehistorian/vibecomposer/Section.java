@@ -359,6 +359,7 @@ public class Section {
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
 		sec.setCustomChordsEnabled(customChordsEnabled);
+		sec.setCustomDurationsEnabled(customDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {

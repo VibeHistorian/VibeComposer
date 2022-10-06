@@ -1625,6 +1625,9 @@ public class VibeComposerGUI extends JFrame
 			currentSec.setCustomChords(sectionGuiConfig.getCustomChords());
 			currentSec.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
 			currentSec.setCustomChordsEnabled(true);
+			if (!"4,4,4,4".equals(currentSec.getCustomDurations())) {
+				currentSec.setCustomDurationsEnabled(true);
+			}
 			arrSection.getCurrentButton().repaint();
 			switchPanelsForSectionSelection(arrSection.getVal());
 
@@ -8088,6 +8091,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setCustomChordsEnabled(userChordsEnabled.isSelected());
 		gc.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		gc.setCustomChordDurations(userChordsDurations.getText());
+		gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
 		gc.setSpiceChance(spiceChance.getInt());
 		gc.setSpiceParallelChance(spiceParallelChance.getInt());
 		gc.setDimAugDom7thEnabled(spiceAllowDimAug.isSelected());
@@ -8231,6 +8235,7 @@ public class VibeComposerGUI extends JFrame
 		userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
 		userChords.setupChords(gc.getCustomChords());
 		userChordsDurations.setText(gc.getCustomChordDurations());
+		userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
 
 		// arps
 		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
