@@ -42,6 +42,7 @@ public class ShowScorePopup extends CloseablePopup {
 					VibeComposerGUI.instrumentTabPane.setTitleAt(7, " Score ");
 					currentPopupMap.remove(12);
 					//if (VibeComposerGUI.miniScorePopup.isSelected()) {
+					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesBig;
 					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
 							.get(ShowPanelBig.beatWidthBaseIndex);
 					VibeComposerGUI.scorePanel

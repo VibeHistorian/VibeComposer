@@ -1241,7 +1241,7 @@ public class MidiEditArea extends JComponent {
 		double quarterNoteLength = getQuarterNoteLength();
 
 		double durationTime = (xy.x - marginX) / quarterNoteLength;
-		double mouseCorrectionTime = (dragX - marginX - startTime) / quarterNoteLength;
+		double mouseCorrectionTime = (dragX - marginX) / quarterNoteLength;
 
 		return draggedNoteCopy.getDuration() + durationTime - mouseCorrectionTime;
 	}
@@ -1255,7 +1255,7 @@ public class MidiEditArea extends JComponent {
 		double quarterNoteLength = getQuarterNoteLength();
 
 		double offsetTime = (xy.x - marginX) / quarterNoteLength;
-		double mouseCorrectionTime = (dragX - marginX - startTime) / quarterNoteLength;
+		double mouseCorrectionTime = (dragX - marginX) / quarterNoteLength;
 
 		return draggedNoteCopy.getOffset() + offsetTime - mouseCorrectionTime;
 	}

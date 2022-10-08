@@ -2699,7 +2699,8 @@ public class MidiGenerator implements JMC {
 				sec.setGeneratedSectionBeatDurations(new ArrayList<>(progressionDurations));
 			}
 			if (!sectionChordsReplaced) {
-				if (sectionVariations.get(1) > 0) {
+				if (sectionVariations.get(1) > 0 && alternateChords != null
+						&& !alternateChords.isEmpty()) {
 					//LG.d("Section Variation: Chord Swap!");
 					rootProgression = melodyBasedRootProgression;
 					chordProgression = melodyBasedChordProgression;

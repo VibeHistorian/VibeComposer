@@ -3760,7 +3760,7 @@ public class VibeComposerGUI extends JFrame
 		};
 		scoreScrollPane.setViewportView(scrollableScorePanel);
 
-		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		/*scoreScrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
@@ -5074,36 +5074,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (scorePanel != null) {
-					if (instrumentTabPane.getComponentCount() == 8) {
-						instrumentTabPane.remove(scoreScrollPane);
-						if (VibeComposerGUI.miniScorePopup.isSelected()) {
-							ShowPanelBig.beatWidthBase = 600;
-							ShowPanelBig.beatWidthBaseIndex = 0;
-							scorePanel.updatePanelHeight(300);
-							//scoreScrollPane.setMaximumSize(new Dimension(600, 300));
-							scorePanel.getShowArea().setNoteHeight(4);
-							scorePanel.setScore();
-							scorePanel.setAlignmentX(LEFT_ALIGNMENT);
-							scoreScrollPane.repaint();
-							/*SwingUtilities.invokeLater(() -> {
-								ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, e.getPoint(), 0.0,
-										0.0);
-							});*/
-						}
-						scorePopup = new ShowScorePopup(scoreScrollPane);
-					} else {
-						if (scorePopup != null) {
-							scorePopup.close();
-							scorePopup = null;
-						}
-						if (instrumentTabPane.getComponentCount() < 8) {
-							instrumentTabPane.add(scoreScrollPane, 7);
-							instrumentTabPane.setTitleAt(7, " Score ");
-						}
-
-					}
-				}
+				toggleShowScorePopup();
 			}
 		});
 
@@ -7355,6 +7326,15 @@ public class VibeComposerGUI extends JFrame
 			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
 			LG.i(("Stopped Midi!"));
+			/*if (scorePopup != null) {
+				LG.i(ShowPanelBig.rulerScrollPane.getPreferredSize());
+				LG.i(ShowPanelBig.rulerScrollPane.getWidth());
+				LG.i(ShowPanelBig.areaScrollPane.getWidth());
+				LG.i(ShowPanelBig.horizontalPane.getWidth());
+				LG.i(scoreScrollPane.getWidth());
+				LG.i(scorePopup.getFrame().getWidth());
+			}*/
+
 		} else {
 			LG.i(("Sequencer is NULL!"));
 		}
@@ -9743,6 +9723,39 @@ public class VibeComposerGUI extends JFrame
 			device.getReceivers().forEach(e -> e.send(midiMessage, -1));
 		} else if (synth != null && synth.isOpen()) {
 			synth.getReceivers().forEach(e -> e.send(midiMessage, -1));
+		}
+	}
+
+	public void toggleShowScorePopup() {
+		if (scorePanel != null) {
+			if (instrumentTabPane.getComponentCount() == 8) {
+				instrumentTabPane.remove(scoreScrollPane);
+				if (VibeComposerGUI.miniScorePopup.isSelected()) {
+					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesSmall;
+					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
+							.get(ShowPanelBig.beatWidthBaseIndex);
+					scorePanel.updatePanelHeight(300);
+					//scoreScrollPane.setMaximumSize(new Dimension(600, 300));
+					scorePanel.getShowArea().setNoteHeight(4);
+					scorePanel.setScore();
+					scorePanel.setAlignmentX(LEFT_ALIGNMENT);
+					scoreScrollPane.repaint();
+					SwingUtilities.invokeLater(() -> {
+						ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0);
+					});
+				}
+				scorePopup = new ShowScorePopup(scoreScrollPane);
+			} else {
+				if (scorePopup != null) {
+					scorePopup.close();
+					scorePopup = null;
+				}
+				if (instrumentTabPane.getComponentCount() < 8) {
+					instrumentTabPane.add(scoreScrollPane, 7);
+					instrumentTabPane.setTitleAt(7, " Score ");
+				}
+
+			}
 		}
 	}
 

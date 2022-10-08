@@ -54,7 +54,7 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 				g.setColor(new Color(230, 230, 230));
 				g.drawString("" + sec.getMeasures(), 3, height / 2);
 
-				String customDurations = sec.isCustomChordsEnabled()
+				String customDurations = sec.isCustomDurationsEnabled()
 						? sec.getCustomDurations().replaceAll(" ", "")
 						: "";
 				String customChords = ((sec.isCustomChordsEnabled()
