@@ -1452,7 +1452,8 @@ public class MidiGenerator implements JMC {
 
 		boolean skipCounter = startTimes.get(0) < DBL_ERR;
 		if (skipCounter) {
-			pattern.set(0, (notes.size() > 0 && notes.get(0).getPitch() < 0) ? 0 : 1);
+			pattern.set(0, (notes.size() > 0 && notes.get(0).getPitch() < 0) ? 0
+					: notes.get(0).getPitch());
 		}
 
 		for (Note n : notes) {
@@ -1464,7 +1465,7 @@ public class MidiGenerator implements JMC {
 					+ ", OFFSET: " + n.getOffset());*/
 			for (int i = explored; i < hits; i++) {
 				if (startTimes.get(counter) < durationBuckets.get(i)) {
-					int nextPitch = (n.getPitch() > 0) ? 1 : 0;
+					int nextPitch = (n.getPitch() > 0) ? n.getPitch() : 0;
 					pattern.set(i, nextPitch);
 					explored = i;
 					break;
@@ -1474,10 +1475,10 @@ public class MidiGenerator implements JMC {
 		}
 		if (gc.isMelodyPatternFlip()) {
 			for (int i = 0; i < pattern.size(); i++) {
-				pattern.set(i, 1 - pattern.get(i));
+				pattern.set(i, pattern.get(i) > 0 ? 0 : 1);
 			}
 		}
-		//LG.d("Melody note pattern: " + StringUtils.join(pattern, ", "));
+		//LG.i("Melody note pattern: " + StringUtils.join(pattern, ", "));
 		return pattern;
 	}
 
@@ -4266,7 +4267,7 @@ public class MidiGenerator implements JMC {
 					if (ip.isPatternFlip()) {
 						for (int p = 0; p < pattern.size(); p++) {
 							if (pattern.get(p) >= 0) {
-								pattern.set(p, 1 - pattern.get(p));
+								pattern.set(p, pattern.get(p) > 0 ? 0 : 1);
 							}
 						}
 					}
@@ -4309,11 +4310,11 @@ public class MidiGenerator implements JMC {
 
 						int durMultiplier = 1;
 						boolean joinApplicable = joinMode != PatternJoinMode.NOJOIN
-								&& (pattern.get(p) == 1) && (p >= nextP);
+								&& (pattern.get(p) > 0) && (p >= nextP);
 						if (joinApplicable) {
 							nextP = p + 1;
 							while (nextP < pattern.size()) {
-								if (pattern.get(nextP) == stretchedByNote
+								if (Integer.signum(pattern.get(nextP)) == stretchedByNote
 										|| pattern.get(nextP) == -1) {
 									durMultiplier++;
 									nextP++;
@@ -4621,7 +4622,7 @@ public class MidiGenerator implements JMC {
 				if (ip.isPatternFlip()) {
 					for (int p = 0; p < pattern.size(); p++) {
 						if (pattern.get(p) >= 0) {
-							pattern.set(p, 1 - pattern.get(p));
+							pattern.set(p, pattern.get(p) > 0 ? 0 : 1);
 						}
 					}
 				}
@@ -4645,7 +4646,7 @@ public class MidiGenerator implements JMC {
 					// less plucky
 					//cC.setDurationRatio(cC.getDurationRatio() + (1 - cC.getDurationRatio()) / 2);
 					if (pattern.get(p) < 1
-							|| (p + patternExtension <= nextP && stretchedByNote == 1)
+							|| ((p + patternExtension <= nextP) && stretchedByNote == 1)
 							|| skipNotes > 0) {
 						if (skipNotes > 0) {
 							skipNotes--;
@@ -4670,12 +4671,13 @@ public class MidiGenerator implements JMC {
 					}
 
 					int durMultiplier = 1;
-					boolean joinApplicable = (pattern.get(p) == 1)
+					boolean joinApplicable = (pattern.get(p) > 0)
 							&& (p + patternExtension >= nextP);
 					if (joinApplicable) {
 						nextP = p + 1;
 						while (nextP < pattern.size()) {
-							if (pattern.get(nextP) == stretchedByNote || pattern.get(nextP) == -1) {
+							if (Integer.signum(pattern.get(nextP)) == stretchedByNote
+									|| pattern.get(nextP) == -1) {
 								durMultiplier++;
 								nextP++;
 							} else {
@@ -5492,6 +5494,7 @@ public class MidiGenerator implements JMC {
 			}
 			Collections.rotate(arpPausesPattern, ap.getPatternShift());
 		} else if (ap.getPattern() == RhythmPattern.MELODY1 && melodyNotePattern != null) {
+			// TODO: already set from melodyNotePatternMap in later processing, remove?
 			//LG.d("Setting note pattern!");
 			arpPausesPattern = melodyNotePattern;
 			ap.setPatternShift(0);
@@ -5599,7 +5602,7 @@ public class MidiGenerator implements JMC {
 		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
 			// if random pause or not present in pattern: pause
 			boolean blankDrum = uiGenerator1drumPattern.nextInt(100) < dp.getPauseChance()
-					|| !premadePattern.get(j).equals(1);
+					|| premadePattern.get(j) < 1;
 			if (dp.isPatternFlip()) {
 				blankDrum = !blankDrum;
 			}
