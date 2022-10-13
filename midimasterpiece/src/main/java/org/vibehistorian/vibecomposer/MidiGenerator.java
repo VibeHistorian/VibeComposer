@@ -128,6 +128,9 @@ public class MidiGenerator implements JMC {
 		MELODY_SKELETON_DURATIONS = new double[] { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE,
 				Durations.HALF_NOTE };
+		MELODY_SKELETON_DURATIONS_SHORT = new double[] { Durations.SIXTEENTH_NOTE / 2.0,
+				Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE,
+				Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
 	}
 
 	private static final boolean debugEnabled = true;
@@ -176,7 +179,11 @@ public class MidiGenerator implements JMC {
 	public static Map<Integer, List<Integer>> TARGET_NOTES = null;
 
 
-	// for internal use only	
+	// for internal use only
+	private static double[] MELODY_SKELETON_DURATIONS_SHORT = { Durations.SIXTEENTH_NOTE / 2.0,
+			Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE,
+			Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
+
 	private static double[] MELODY_SKELETON_DURATIONS = { Durations.SIXTEENTH_NOTE,
 			Durations.EIGHTH_NOTE, Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE,
 			Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE };
@@ -675,10 +682,14 @@ public class MidiGenerator implements JMC {
 		if (localEmbGenerator.nextInt(100) >= EMBELLISHMENT_CHANCE) {
 			return Collections.singletonList(n);
 		}
-		int[] melodySkeletonDurationWeights = Rhythm
-				.normalizedCumulativeWeights(new int[] { 100, 300, 100, 300, 100, 100 });
+		boolean shortNotes = n.getRhythmValue() > Durations.QUARTER_NOTE - DBL_ERR;
+		int[] melodySkeletonDurationWeights = shortNotes
+				? Rhythm.normalizedCumulativeWeights(
+						new int[] { 100, 100, 300, 100, 300, 100, 100 })
+				: Rhythm.normalizedCumulativeWeights(new int[] { 100, 300, 100, 300, 100, 100 });
 		Rhythm blockRhythm = new Rhythm(localEmbGenerator.nextInt(), n.getRhythmValue(),
-				MELODY_SKELETON_DURATIONS, melodySkeletonDurationWeights);
+				shortNotes ? MELODY_SKELETON_DURATIONS_SHORT : MELODY_SKELETON_DURATIONS,
+				melodySkeletonDurationWeights);
 		List<Double> blockDurations = blockRhythm.makeDurations(notesNeeded,
 				Durations.SIXTEENTH_NOTE);
 
@@ -748,12 +759,17 @@ public class MidiGenerator implements JMC {
 					chordIndex, roots.size(), 40, 0.25, false);
 			int addQuick = (speed - 50) * 2;
 			int addSlow = addQuick * -1;
-			int[] melodySkeletonDurationWeights = Rhythm
-					.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
+			boolean shortNotes = durations.get(blockIndex) < Durations.QUARTER_NOTE - DBL_ERR;
+			int[] melodySkeletonDurationWeights = shortNotes
+					? Rhythm.normalizedCumulativeWeights(
+							new int[] { 100 + addQuick, 100 + addQuick, 300 + addQuick,
+									100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow })
+					: Rhythm.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
 							100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
 
 			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + blockIndex,
-					durations.get(blockIndex), MELODY_SKELETON_DURATIONS,
+					durations.get(blockIndex),
+					shortNotes ? MELODY_SKELETON_DURATIONS_SHORT : MELODY_SKELETON_DURATIONS,
 					melodySkeletonDurationWeights);
 			//int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
@@ -832,7 +848,7 @@ public class MidiGenerator implements JMC {
 
 			}
 
-			LG.d("Block durations" + StringUtils.join(blockDurations, ","));
+			LG.d("Block durations: " + StringUtils.join(blockDurations, ","));
 			prevBlockType = blockType;
 			//LG.d("Block Durations size: " + blockDurations.size());
 			MelodyBlock mb = new MelodyBlock(blockNotes, blockDurations, false);
@@ -875,7 +891,7 @@ public class MidiGenerator implements JMC {
 		int volMultiplier = (gc.isScaleMidiVelocityInArrangement()) ? sec.getVol(0) : 100;
 		int minVel = MidiGeneratorUtils.multiplyVelocity(mp.getVelocityMin(), volMultiplier, 0, 1);
 		int maxVel = MidiGeneratorUtils.multiplyVelocity(mp.getVelocityMax(), volMultiplier, 1, 0);
-
+		LG.d("Sum:" + skeleton.stream().mapToDouble(e -> e.getRhythmValue()).sum());
 		for (int i = 0; i < skeleton.size(); i++) {
 			Note n1 = skeleton.get(i);
 			n1.setPitch(n1.getPitch() + mp.getTranspose());
@@ -2473,7 +2489,9 @@ public class MidiGenerator implements JMC {
 		}
 
 		List<int[]> generatedRootProgression = (userRootProgression != null) ? userRootProgression
-				: generateChordProgression(mainGeneratorSeed, gc.getFixedDuration());
+				: generateChordProgression(mainGeneratorSeed,
+						!userChordsDurations.isEmpty() ? userChordsDurations.size()
+								: gc.getFixedDuration());
 		if (!userChordsDurations.isEmpty()) {
 			progressionDurations = userChordsDurations;
 		}

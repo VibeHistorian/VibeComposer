@@ -5840,17 +5840,18 @@ public class VibeComposerGUI extends JFrame
 			// solve user chords
 			boolean customChords = userChordsEnabled.isSelected()
 					&& userChords.getChordletsRaw().size() > 0;
-			if ((customChords) || userDurationsEnabled.isSelected()) {
+			if (customChords || userDurationsEnabled.isSelected()) {
 				List<String> chords = userChords.getChordList();
 				List<Double> durations = new ArrayList<>();
 				String[] durationSplit = userChordsDurations.getText().split(",");
-				if ((userChordsEnabled.isSelected() && durationSplit.length < chords.size())
+				if ((customChords && durationSplit.length < chords.size())
 						|| !userDurationsEnabled.isSelected()) {
 					durationSplit = null;
 				}
 
 				try {
-					for (int i = 0; i < chords.size(); i++) {
+					for (int i = 0; i < (customChords ? chords.size()
+							: durationSplit.length); i++) {
 						durations.add(durationSplit != null
 								? (stretchMidi.getInt() * Double.valueOf(durationSplit[i]) / 100.0)
 								: MidiGenerator.Durations.WHOLE_NOTE);
