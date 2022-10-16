@@ -923,6 +923,24 @@ public class Section {
 		return customDurations;
 	}
 
+	public List<Double> getCustomDurationsList() {
+		if (StringUtils.isEmpty(customDurations)) {
+			return null;
+		} else {
+			String[] durations = customDurations.split(",");
+			List<Double> durationsList = new ArrayList<>();
+			try {
+				for (String c : durations) {
+					durationsList.add(Double.parseDouble(c));
+				}
+			} catch (Exception ex) {
+				LG.e(">>>>Custom section durations have wrong (not double) values!");
+				return null;
+			}
+			return durationsList;
+		}
+	}
+
 	public void setCustomDurations(String customDurations) {
 		this.customDurations = customDurations;
 	}
