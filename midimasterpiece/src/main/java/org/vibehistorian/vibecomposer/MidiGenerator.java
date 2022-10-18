@@ -5103,7 +5103,6 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				chordDurationArp *= halfDurMulti;
-				double durationNow = 0;
 
 				// reset every 2
 				if (chordIndex % 2 == 0) {
@@ -5113,16 +5112,26 @@ public class MidiGenerator implements JMC {
 						arpPattern);
 				List<Integer> octavePatternSpanned = partOfList(chordSpanPart, ip.getChordSpan(),
 						arpOctavePattern);
+				List<Integer> melodyPattern = (melodyNotePatternMap != null)
+						? melodyNotePatternMap.get(chordIndex)
+						: null;
 				List<Integer> pausePatternSpanned = (ip.getPattern() == RhythmPattern.MELODY1
-						&& melodyNotePatternMap != null)
-								? new ArrayList<>(melodyNotePatternMap.get(chordIndex))
+						&& melodyPattern != null) ? new ArrayList<>(melodyPattern)
 								: partOfList(chordSpanPart, ip.getChordSpan(), arpPausesPattern);
 				List<Integer> velocityPatternSpanned = !arpVelocityPattern.isEmpty()
 						? partOfList(chordSpanPart, ip.getChordSpan(), arpVelocityPattern)
 						: null;
 
+				double melodySubdivisions = -1;
+				if (melodyPattern != null && melodyPattern.size() > 0) {
+					melodySubdivisions = progressionDurations.get(chordIndex)
+							/ melodyPattern.size();
+				}
+				int lastMelodyIndex = 0;
+				boolean melodyNoteCorrections = true;
 
 				int p = 0;
+				double durationNow = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(chordIndex)) {
 					int velocity = velocityPatternSpanned != null
 							? velocityPatternSpanned.get(p % velocityPatternSpanned.size())
@@ -5136,6 +5145,34 @@ public class MidiGenerator implements JMC {
 						int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
 								: ((patternNum < 6) ? 0 : 12);
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
+					}
+
+					if (melodyNoteCorrections) {
+						Integer melodyPitch = null;
+						if (melodySubdivisions > 0) {
+							for (int mInd = lastMelodyIndex; mInd < melodyPattern.size(); mInd++) {
+								melodyPitch = melodyPattern.get(mInd);
+								if (melodyPitch != null) {
+									break;
+								}
+								if (mInd * melodySubdivisions > durationNow + chordDurationArp) {
+									break;
+								}
+							}
+							lastMelodyIndex = (int) Math
+									.round((durationNow + chordDurationArp) / melodySubdivisions);
+						}
+
+						LG.i("Last MelodyIndex: " + lastMelodyIndex + ", pitch: " + melodyPitch);
+
+						if (melodyPitch != null) {
+							if (MidiUtils.getSemitonalDistance(melodyPitch, pitch) == 1) {
+								LG.i("Old pitch: " + pitch);
+								pitch = MidiUtils.octavePitch(pitch) + (melodyPitch % 12)
+										+ ((pitch % 12 >= 6) && (melodyPitch % 12) < 6 ? 12 : 0);
+								LG.i("new pitch: " + pitch);
+							}
+						}
 					}
 
 					boolean isPause = pausePatternSpanned.get(p % pausePatternSpanned.size()) == 0;
