@@ -5163,9 +5163,10 @@ public class MidiGenerator implements JMC {
 									.round((durationNow + chordDurationArp) / melodySubdivisions);
 						}
 
-						LG.i("Last MelodyIndex: " + lastMelodyIndex + ", pitch: " + melodyPitch);
-
 						if (melodyPitch != null) {
+
+							LG.i("Last MelodyIndex: " + lastMelodyIndex + ", pitch: "
+									+ melodyPitch);
 							if (MidiUtils.getSemitonalDistance(melodyPitch, pitch) == 1) {
 								LG.i("Old pitch: " + pitch);
 								pitch = MidiUtils.octavePitch(pitch) + (melodyPitch % 12)

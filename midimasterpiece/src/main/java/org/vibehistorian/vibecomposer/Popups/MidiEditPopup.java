@@ -42,6 +42,7 @@ import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.MidiDropPane;
@@ -177,7 +178,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		addKeyboardControls(allPanels);
 
-		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
+		SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);

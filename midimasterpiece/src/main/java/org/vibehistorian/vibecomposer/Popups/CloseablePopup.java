@@ -1,6 +1,5 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
@@ -9,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JFrame;
+
+import org.vibehistorian.vibecomposer.SwingUtils;
 
 public abstract class CloseablePopup {
 	final JFrame frame = new JFrame();
@@ -51,10 +52,12 @@ public abstract class CloseablePopup {
 
 	public CloseablePopup(String windowTitle, Integer popupType, Point locOffset) {
 		this.setPopupType(popupType);
-		Point loc = MouseInfo.getPointerInfo().getLocation();
+		Point loc = SwingUtils.getMouseLocation();
 		loc.translate(12, 12);
 		loc.translate(locOffset.x, locOffset.y);
-		frame.setLocation(loc);
+		SwingUtils.setFrameLocation(frame, loc);
+
+		//frame.setLocation(-500, 50);
 		addFrameWindowOperation();
 		frame.setTitle(windowTitle);
 		handleOpen();

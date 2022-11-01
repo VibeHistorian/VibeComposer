@@ -35,6 +35,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SectionConfig;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -208,7 +209,7 @@ public class VariationPopup {
 		int heightLimit = 850;
 		frame.setPreferredSize(new Dimension(680, Math.min(parentDim.height, heightLimit)));
 		int newLocX = parentLoc.x - 190;
-		frame.setLocation((newLocX < 0) ? 0 : newLocX, parentLoc.y);
+		SwingUtils.setFrameLocation(frame, new Point(newLocX, parentLoc.y));
 		frame.add(scroll);
 		frame.setTitle("Variations - Section " + section);
 		frame.pack();

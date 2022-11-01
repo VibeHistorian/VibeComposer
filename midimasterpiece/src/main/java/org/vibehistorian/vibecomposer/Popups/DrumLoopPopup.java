@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
-import java.awt.MouseInfo;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +14,7 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
@@ -63,7 +63,7 @@ public class DrumLoopPopup {
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
-		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
+		frame.setLocation(SwingUtils.getMouseLocation());
 		frame.add(scroll);
 		frame.pack();
 		frame.setVisible(true);

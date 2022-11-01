@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class PatternManagerPopup extends CloseablePopup {
 	CustomCheckBox removeCB = new CustomCheckBox("Remove", false);
 
 	public PatternManagerPopup() {
-		super("Pattern Manager", 14);
+		super("Pattern Manager", 14, new Point(-2000, -2000));
 
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
@@ -113,7 +114,6 @@ public class PatternManagerPopup extends CloseablePopup {
 		allPanels.add(mveaPanel);
 		frame.add(allPanels);
 
-		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.pack();
 		frame.setVisible(true);
 		LG.d("Opened Pattern Manager popup!");
