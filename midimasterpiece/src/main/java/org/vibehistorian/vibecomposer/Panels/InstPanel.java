@@ -747,7 +747,7 @@ public abstract class InstPanel extends JPanel {
 	public void setPanByOrder(int order, int panelLimit) {
 		order--;
 		getPanSlider().setValue(
-				50 + (order % 2 == 0 ? 1 : -1) * ((order - 1) % panelLimit) * (49 / panelLimit));
+				50 + (order % 2 == 0 ? 1 : -1) * (order % panelLimit) * (49 / panelLimit));
 	}
 
 	public void applyPauseChance(Random randGen) {
