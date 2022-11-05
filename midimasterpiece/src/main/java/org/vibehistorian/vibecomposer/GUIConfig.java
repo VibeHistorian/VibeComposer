@@ -134,6 +134,7 @@ public class GUIConfig {
 
 	// arp gen
 	private boolean useOctaveAdjustments = false;
+	private boolean randomArpCorrectMelodyNotes = false;
 
 	// drum gen
 	private boolean drumCustomMapping = true;
@@ -908,6 +909,14 @@ public class GUIConfig {
 
 	public void setCustomDurationsEnabled(boolean customDurationsEnabled) {
 		this.customDurationsEnabled = customDurationsEnabled;
+	}
+
+	public boolean isRandomArpCorrectMelodyNotes() {
+		return randomArpCorrectMelodyNotes;
+	}
+
+	public void setRandomArpCorrectMelodyNotes(boolean randomArpCorrectMelodyNotes) {
+		this.randomArpCorrectMelodyNotes = randomArpCorrectMelodyNotes;
 	}
 
 }

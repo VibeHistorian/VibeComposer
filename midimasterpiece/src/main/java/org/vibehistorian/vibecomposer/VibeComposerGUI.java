@@ -560,6 +560,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxVel;
 	KnobPanel randomArpMinLength;
 	KnobPanel randomArpMaxLength;
+	JCheckBox randomArpCorrectMelodyNotes;
 	JCheckBox arpCopyMelodyInst;
 
 	// drum gen settings
@@ -2250,6 +2251,8 @@ public class VibeComposerGUI extends JFrame
 		randomArpMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
 		randomArpMinLength = new DetachedKnobPanel("Min<br>Length", 75, 25, 200);
 		randomArpMaxLength = new DetachedKnobPanel("Max<br>Length", 100, 25, 200);
+		randomArpCorrectMelodyNotes = new CustomCheckBox("<html>Correct Notes<br>by Melody</html>",
+				false);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -2298,6 +2301,7 @@ public class VibeComposerGUI extends JFrame
 		arpSettingsExtraPanel.add(randomArpShiftChance);
 		arpSettingsExtraPanel.add(randomArpMinLength);
 		arpSettingsExtraPanel.add(randomArpMaxLength);
+		arpSettingsExtraPanel.add(randomArpCorrectMelodyNotes);
 		arpSettingsExtraPanel.add(clearArpPatternSeeds);
 		toggleableComponents.add(arpSettingsExtraPanel);
 
@@ -7832,7 +7836,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(arpCopyMelodyInst);
 		cs.add(randomArpAllSameInst);
 		cs.add(randomArpLimitPowerOfTwo);
-		cs.add(randomArpUseOctaveAdjustments);
+		cs.add(null); // randomArpUseOctaveAdjustments
 		cs.add(randomArpMaxRepeat);
 		cs.add(randomArpMinVel);
 		cs.add(randomArpMaxVel);
@@ -7896,14 +7900,6 @@ public class VibeComposerGUI extends JFrame
 
 		// ---------------- VIBECOMPOSER 2 ------------------------------------
 
-		// melody panel
-
-		// bass panel
-
-		// chords panel
-
-		// arps panel
-
 		// drum panel
 		cs.add(randomDrumHitsMultiplierOnGenerate);
 		cs.add(drumPartPresetAddCheckbox);
@@ -7914,11 +7910,16 @@ public class VibeComposerGUI extends JFrame
 		cs.add(copyChordsAfterGenerate);
 		cs.add(miniScorePopup);
 
+		// arps panel
+		cs.add(randomArpCorrectMelodyNotes);
+
 		return cs;
 	}
 
 	public static void setComponent(Component c, Integer num, boolean repaint) {
-		if (c instanceof ScrollComboPanel) {
+		if (c == null) {
+			return;
+		} else if (c instanceof ScrollComboPanel) {
 			ScrollComboPanel csc = ((ScrollComboPanel) c);
 			if (csc.getItemCount() > 0) {
 				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
@@ -8084,6 +8085,7 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		gc.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
+		gc.setRandomArpCorrectMelodyNotes(randomArpCorrectMelodyNotes.isSelected());
 
 		// drums
 		boolean isCustomMidiDevice = midiMode.isSelected()
@@ -8220,6 +8222,7 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
+		randomArpCorrectMelodyNotes.setSelected(gc.isRandomArpCorrectMelodyNotes());
 
 		arrSection.setVisible(true);
 

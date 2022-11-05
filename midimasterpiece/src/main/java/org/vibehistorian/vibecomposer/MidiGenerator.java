@@ -5128,7 +5128,6 @@ public class MidiGenerator implements JMC {
 							/ melodyPattern.size();
 				}
 				int lastMelodyIndex = 0;
-				boolean melodyNoteCorrections = true;
 
 				int p = 0;
 				double durationNow = 0;
@@ -5147,7 +5146,7 @@ public class MidiGenerator implements JMC {
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
 					}
 
-					if (melodyNoteCorrections) {
+					if (gc.isRandomArpCorrectMelodyNotes()) {
 						Integer melodyPitch = null;
 						if (melodySubdivisions > 0) {
 							for (int mInd = lastMelodyIndex; mInd < melodyPattern.size(); mInd++) {
