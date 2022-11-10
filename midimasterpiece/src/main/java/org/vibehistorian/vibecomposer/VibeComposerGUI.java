@@ -7944,6 +7944,10 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static Integer getComponentValue(Component c) {
+		if (c == null) {
+			return 0;
+		}
+
 		if (c instanceof ScrollComboPanel) {
 			return ((ScrollComboPanel) c).getSelectedIndex();
 		} else if (c instanceof KnobPanel) {
