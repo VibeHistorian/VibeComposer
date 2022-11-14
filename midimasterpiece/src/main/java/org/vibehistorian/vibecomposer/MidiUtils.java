@@ -147,6 +147,9 @@ public class MidiUtils {
 	public static final int[] cMaj6th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.A4 };
 	public static final int[] cMin6th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.A4 };
 
+	public static final int[] cChromatic = { Pitches.C4, Pitches.D4, Pitches.E4, Pitches.F4,
+			Pitches.G4, Pitches.A4, Pitches.B4 };
+
 	public static final List<int[]> SPICE_CHORDS_LIST = new ArrayList<>();
 
 	static {

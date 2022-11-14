@@ -5026,6 +5026,7 @@ public class MidiGenerator implements JMC {
 				.getPatternByLength(actualProgression.size(), ip.isFillFlip());
 		for (int i = 0; i < measures; i++) {
 			int chordSpanPart = 0;
+			int spannedPulseCounter = 0;
 			int extraTranspose = 0;
 			boolean ignoreChordSpanFill = false;
 			boolean forceRandomOct = false;
@@ -5121,6 +5122,12 @@ public class MidiGenerator implements JMC {
 				List<Integer> velocityPatternSpanned = !arpVelocityPattern.isEmpty()
 						? partOfList(chordSpanPart, ip.getChordSpan(), arpVelocityPattern)
 						: null;
+				List<Integer> contour = ip.getArpContour();
+				List<Integer> arpContourSpanned = (contour != null && !contour.isEmpty()) ? contour
+						: null;
+				Integer contourInterval = (arpContourSpanned != null)
+						? Math.max(repeatedArpsPerChord / arpContourSpanned.size(), 1)
+						: null;
 
 				double melodySubdivisions = -1;
 				if (melodyPattern != null && melodyPattern.size() > 0) {
@@ -5129,18 +5136,27 @@ public class MidiGenerator implements JMC {
 				}
 				int lastMelodyIndex = 0;
 
-				int p = 0;
+				int pulse = 0;
 				double durationNow = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(chordIndex)) {
 					int velocity = velocityPatternSpanned != null
-							? velocityPatternSpanned.get(p % velocityPatternSpanned.size())
+							? velocityPatternSpanned.get(pulse % velocityPatternSpanned.size())
 							: (velocityGenerator.nextInt(maxVel - minVel) + minVel);
 
-					Integer patternNum = pitchPatternSpanned.get(p);
+					Integer patternNum = pitchPatternSpanned.get(pulse);
 
 					int pitch = MidiUtils.getXthChordNote(patternNum, chord);
+					if ((contourInterval != null) && (spannedPulseCounter % contourInterval == 0)) {
+						pitch = 24 + MidiUtils.getXthChordNote(arpContourSpanned.get(
+								(spannedPulseCounter / contourInterval) % arpContourSpanned.size()),
+								MidiUtils.cChromatic);
+						LG.i("Replaced with ARP contour pitch: " + pitch + ", at pulse: " + pulse
+								+ ", spanned: " + spannedPulseCounter + ", #: "
+								+ spannedPulseCounter / contourInterval);
+					}
+
 					if (gc.isUseOctaveAdjustments() || forceRandomOct) {
-						int octaveAdjustGenerated = octavePatternSpanned.get(p);
+						int octaveAdjustGenerated = octavePatternSpanned.get(pulse);
 						int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
 								: ((patternNum < 6) ? 0 : 12);
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
@@ -5175,7 +5191,8 @@ public class MidiGenerator implements JMC {
 						}
 					}
 
-					boolean isPause = pausePatternSpanned.get(p % pausePatternSpanned.size()) == 0;
+					boolean isPause = pausePatternSpanned
+							.get(pulse % pausePatternSpanned.size()) == 0;
 					if (ip.isPatternFlip()) {
 						isPause = !isPause;
 					}
@@ -5201,7 +5218,8 @@ public class MidiGenerator implements JMC {
 					double durMultiplier = GLOBAL_DURATION_MULTIPLIER * ip.getChordSpan();
 					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance() && pitch >= 0) {
 						double splitDuration = usedDuration / 2;
-						int patternNum2 = pitchPatternSpanned.get((p + 1) % repeatedArpsPerChord);
+						int patternNum2 = pitchPatternSpanned
+								.get((pulse + 1) % repeatedArpsPerChord);
 						int pitch2 = MidiUtils.getXthChordNote(patternNum2, chord) + extraTranspose;
 						if (pitch2 >= 0) {
 							pitch2 = MidiUtils.transposeNote((pitch + pitch2) / 2,
@@ -5223,12 +5241,14 @@ public class MidiGenerator implements JMC {
 						phr.addNote(n1);
 					}
 					durationNow += usedDuration;
-					p = (p + 1) % repeatedArpsPerChord;
+					pulse = (pulse + 1) % repeatedArpsPerChord;
+					spannedPulseCounter++;
 				}
 
 				chordSpanPart++;
 				if (chordSpanPart >= ip.getChordSpan()) {
 					chordSpanPart = 0;
+					spannedPulseCounter = 0;
 				}
 			}
 		}

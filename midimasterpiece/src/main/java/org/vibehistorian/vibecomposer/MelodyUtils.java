@@ -33,10 +33,12 @@ public class MelodyUtils {
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 	public static List<List<Integer>> SOLO_MELODY_PATTERNS = new ArrayList<>();
+	public static List<Integer> ALT_PATTERN_INDEXES = new ArrayList<>(
+			Arrays.asList(new Integer[] { 0, 1, 8, 9, 10, 12, 15, 16 }));
 
 	public static List<List<Integer>> CHORD_DIRECTIONS = new ArrayList<>();
 
-	public static final int NUM_LISTS = 3;
+	public static final int NUM_LISTS = 4;
 
 	static {
 
@@ -57,6 +59,7 @@ public class MelodyUtils {
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, 1, 2 }));
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, -1, 1 }));
 
+		// ALT PATTERNS: 0, 1, 8, 9, 10, 12, 15, 16
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3, 1, 2, 1, 4 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 3 }));
@@ -64,7 +67,7 @@ public class MelodyUtils {
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 2, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 1 })); // 7
 		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 1 }));
@@ -506,9 +509,8 @@ public class MelodyUtils {
 			rand.setSeed(randomSeed);
 		}
 		if (rand.nextInt(100) < altPatternChance) {
-			List<Integer> altPatternIndices = Arrays.asList(0, 1);
 			return new ArrayList<>(MELODY_PATTERNS
-					.get(altPatternIndices.get(rand.nextInt(altPatternIndices.size()))));
+					.get(ALT_PATTERN_INDEXES.get(rand.nextInt(ALT_PATTERN_INDEXES.size()))));
 		}
 		return new ArrayList<>(MELODY_PATTERNS.get(rand.nextInt(MELODY_PATTERNS.size())));
 	}
