@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Components.ArpPickerMini;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
@@ -30,6 +31,7 @@ public class ArpPanel extends InstPanel {
 
 	private ArpPickerMini arpPattern = new ArpPickerMini(this);
 	private RandomIntegerListButton arpContour = new RandomIntegerListButton("?", this);
+	private CheckButton arpContourChordMode = new CheckButton("C", true);
 	private KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
 	public void initComponents(ActionListener l) {
@@ -83,6 +85,7 @@ public class ArpPanel extends InstPanel {
 		});
 		arpContour.setHighlighterGenerator(null);
 		this.add(arpContour);
+		this.add(arpContourChordMode);
 		this.add(arpPatternRotate);
 
 		this.add(stretchPanel);
@@ -140,6 +143,7 @@ public class ArpPanel extends InstPanel {
 		part.setArpPatternCustom(
 				arpPattern.getVal() == ArpPattern.CUSTOM ? arpPattern.getCustomValues() : null);
 		part.setArpContour(getArpContour());
+		part.setArpContourChordMode(getArpContourChordMode());
 		return part;
 	}
 
@@ -153,6 +157,7 @@ public class ArpPanel extends InstPanel {
 			arpPattern.setCustomValues(part.getArpPatternCustom());
 		}
 		setArpContour(part.getArpContour());
+		setArpContourChordMode(part.isArpContourChordMode());
 	}
 
 	public ArpPattern getArpPattern() {
@@ -195,5 +200,13 @@ public class ArpPanel extends InstPanel {
 
 	public void setArpContour(List<Integer> val) {
 		this.arpContour.setValues(val);
+	}
+
+	public boolean getArpContourChordMode() {
+		return arpContourChordMode.isSelected();
+	}
+
+	public void setArpContourChordMode(boolean val) {
+		this.arpContourChordMode.setSelected(val);
 	}
 }

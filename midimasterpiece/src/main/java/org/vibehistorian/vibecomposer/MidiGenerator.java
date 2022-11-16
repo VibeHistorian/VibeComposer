@@ -5081,6 +5081,8 @@ public class MidiGenerator implements JMC {
 								: Durations.WHOLE_NOTE / ((double) repeatedArpsPerChord);
 				int[] chord = convertChordToLength(actualProgression.get(chordIndex),
 						ip.getChordNotesStretch(), ip.isStretchEnabled());
+				/*List<Integer> chordNotes = Arrays.stream(chord).boxed().map(e -> e % 12)
+						.collect(Collectors.toList());*/
 				if (directions != null) {
 					ArpPattern pat = (directions.get(chordIndex)) ? ArpPattern.UP : ArpPattern.DOWN;
 					arpPattern = pat.getPatternByLength(ip.getHitsPerPattern(), chord.length,
@@ -5147,12 +5149,18 @@ public class MidiGenerator implements JMC {
 
 					int pitch = MidiUtils.getXthChordNote(patternNum, chord);
 					if ((contourInterval != null) && (spannedPulseCounter % contourInterval == 0)) {
-						pitch = 24 + MidiUtils.getXthChordNote(arpContourSpanned.get(
+						int newPitch = 24 + MidiUtils.getXthChordNote(arpContourSpanned.get(
 								(spannedPulseCounter / contourInterval) % arpContourSpanned.size()),
 								MidiUtils.cChromatic);
-						LG.i("Replaced with ARP contour pitch: " + pitch + ", at pulse: " + pulse
+						if (ip.isArpContourChordMode()) {
+							newPitch += rootProgression.get(chordIndex)[0] % 12;
+							newPitch = MidiUtils.octavePitch(newPitch) + MidiUtils
+									.getClosestPitchFromList(MidiUtils.MAJ_SCALE, newPitch);
+						}
+						pitch = newPitch;
+						/*LG.i("Replaced with ARP contour pitch: " + pitch + ", at pulse: " + pulse
 								+ ", spanned: " + spannedPulseCounter + ", #: "
-								+ spannedPulseCounter / contourInterval);
+								+ spannedPulseCounter / contourInterval);*/
 					}
 
 					if (gc.isUseOctaveAdjustments() || forceRandomOct) {
