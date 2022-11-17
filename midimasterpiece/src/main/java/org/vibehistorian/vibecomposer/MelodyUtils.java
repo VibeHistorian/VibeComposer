@@ -542,4 +542,47 @@ public class MelodyUtils {
 				+ main8th.size());
 		return sorted;
 	}
+
+	public static Pair<Integer, Integer[]> generateBlockByBlockChangeAndLength(Integer blockChange,
+			int approx, Random blockNotesGenerator, Integer forcedLength, int remainingVariance,
+			int remainingDirChanges) {
+		// TODO 
+		remainingVariance = Math.max(0, remainingVariance);
+		Random rnd = new Random(blockNotesGenerator.nextInt());
+		int newLen = (forcedLength != null) ? forcedLength : (rnd.nextInt(2) + 3);
+		int last = newLen - 1;
+		Integer[] newBlock = new Integer[newLen];
+		newBlock[0] = 0;
+		newBlock[last] = Math.abs(blockChange) + rnd.nextInt(approx * 2 + 1) - approx;
+		if (blockChange < 0 && newBlock[last] > 0) {
+			newBlock[last] *= -1;
+		}
+		int currentMin = Math.min(0, newBlock[last]);
+		int currentMax = Math.max(0, newBlock[last]);
+
+		for (int i = 1; i < last; i++) {
+			newBlock[i] = rnd.nextInt(remainingVariance * 2 + (currentMax - currentMin) + 1)
+					+ currentMin - remainingVariance;
+			// between lowest note and lowest possible note
+			int varianceOverlapLow = currentMin - newBlock[i];
+			if (varianceOverlapLow > 0) {
+				remainingVariance -= varianceOverlapLow;
+				currentMin = newBlock[i];
+			}
+			// between highest note and highest possible note
+			int varianceOverlapHigh = newBlock[i] - currentMax;
+			if (varianceOverlapHigh > 0) {
+				remainingVariance -= varianceOverlapHigh;
+				currentMax = newBlock[i];
+			}
+			remainingVariance = Math.max(0, remainingVariance);
+		}
+
+
+		/*viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
+		viableBlocks.removeIf(
+				e -> MelodyUtils.interblockDirectionChange(e.getRight()) > remainingDirChanges);*/
+		LG.i("generateBlockByBlockChangeAndLength: " + StringUtils.join(newBlock, ","));
+		return Pair.of(Integer.MAX_VALUE, newBlock);
+	}
 }
