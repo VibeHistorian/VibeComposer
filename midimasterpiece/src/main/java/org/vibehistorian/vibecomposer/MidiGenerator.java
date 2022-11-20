@@ -3802,6 +3802,10 @@ public class MidiGenerator implements JMC {
 	}
 
 	public boolean replaceWithSectionCustomChordDurations(Section sec) {
+		if (!sec.isCustomChordsEnabled() && !sec.isCustomDurationsEnabled()) {
+			return false;
+		}
+
 		List<String> chords = sec.getCustomChordsList();
 		if ((chords == null || chords.isEmpty()) && sec.isCustomChordsEnabled()) {
 			return false;
@@ -3871,6 +3875,10 @@ public class MidiGenerator implements JMC {
 
 		sec.setSectionBeatDurations(progressionDurations);
 		sec.setSectionDuration(progressionDurations.stream().mapToDouble(e -> e).sum());
+		if (!sec.isCustomChordsEnabled()) {
+			sec.setCustomChords(StringUtils.join(chords, ","));
+			sec.setDisplayAlternateChords(true);
+		}
 		LG.i("Using SECTION custom progression: " + StringUtils.join(chords, ","));
 
 		return true;

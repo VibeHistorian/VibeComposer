@@ -1216,7 +1216,7 @@ public class VibeComposerGUI extends JFrame
 
 					recalculateTabPaneCounts();
 					recalculateGenerationCounts();
-					manualArrangement.setSelected(false);
+					//manualArrangement.setSelected(false);
 					vibeComposerGUI.repaint();
 				} catch (JAXBException | IOException e) {
 					e.printStackTrace();
@@ -1242,6 +1242,7 @@ public class VibeComposerGUI extends JFrame
 		String filePath = PRESET_FOLDER + "/" + presetName + ".xml";
 		saveGuiPresetFileByFilePath(filePath);
 		presetLoadBox.addItem(presetName);
+		new TemporaryInfoPopup("Saved preset: " + presetName, 2000);
 	}
 
 	private void initExtraSettings() {
