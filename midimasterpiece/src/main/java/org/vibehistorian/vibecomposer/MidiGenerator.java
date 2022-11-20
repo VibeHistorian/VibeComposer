@@ -2951,7 +2951,10 @@ public class MidiGenerator implements JMC {
 				adjustArrangementPresencesIfNeeded(sec, arr.getSections().get(secOrder - 1));
 			}*/
 
-			fillMelodyPartsForSection(measureLength, overridden, sec, notesSeedOffset,
+			double currentMeasureLength = (sec.getSectionDuration() > 0) ? sec.getSectionDuration()
+					: measureLength;
+
+			fillMelodyPartsForSection(currentMeasureLength, overridden, sec, notesSeedOffset,
 					sectionVariations, sectionChordsReplaced);
 
 			if (logPerformance) {
@@ -2968,7 +2971,7 @@ public class MidiGenerator implements JMC {
 			}
 
 			fillOtherPartsForSection(sec, arr, overridden, sectionVariations, variationGen, arrSeed,
-					measureLength);
+					currentMeasureLength);
 
 			if (logPerformance) {
 				LG.i("After fill other, at: " + (System.currentTimeMillis() - systemTime));
@@ -2979,8 +2982,7 @@ public class MidiGenerator implements JMC {
 				restoreGlobalPartsToGuiConfig();
 			}
 			counter += sec.getMeasures();
-			sectionStartTimer += ((sec.getSectionDuration() > 0) ? sec.getSectionDuration()
-					: measureLength) * sec.getMeasures();
+			sectionStartTimer += currentMeasureLength * sec.getMeasures();
 
 			if (logPerformance) {
 				LG.i("End of section, at: " + (System.currentTimeMillis() - systemTime));
