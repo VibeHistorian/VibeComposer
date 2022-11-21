@@ -59,9 +59,6 @@ public class KnobValuePopup extends CloseablePopup {
 
 	@Override
 	public void close() {
-		if (VibeComposerGUI.canRegenerateOnChange() && frame.isVisible() && regenerating) {
-			VibeComposerGUI.vibeComposerGUI.regenerate();
-		}
 		super.close();
 	}
 
@@ -99,6 +96,10 @@ public class KnobValuePopup extends CloseablePopup {
 								knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
 							}
 							knob.repaint();
+						}
+
+						if (VibeComposerGUI.canRegenerateOnChange() && regenerating) {
+							VibeComposerGUI.vibeComposerGUI.regenerate();
 						}
 
 					}
