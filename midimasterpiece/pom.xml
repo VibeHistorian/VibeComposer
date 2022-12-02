@@ -3,7 +3,7 @@
     <groupId>org.vibehistorian.vibecomposer</groupId>
     <artifactId>vibecomposer</artifactId>
     <name>VibeComposer</name>
-    <version>v2.2-beta</version>
+    <version>v2.3-beta</version>
     <packaging>jar</packaging>
 
     <repositories>
@@ -129,12 +129,13 @@
                  </classPath>
                  <jre>
                    <minVersion>1.8.0</minVersion>
+                   <path>/</path>
                  </jre>
                  <versionInfo>
                    <fileVersion>1.1.1.1</fileVersion>
                    <txtFileVersion>1.1</txtFileVersion>
                    <fileDescription>VibeComposer</fileDescription>
-                   <copyright>Copyright VibeHistorian 2021</copyright>
+                   <copyright>Copyright VibeHistorian 2023</copyright>
                    <productVersion>1.1.1.1</productVersion>
                    <txtProductVersion>1.1</txtProductVersion>
                    <productName>VibeComposer</productName>
@@ -160,8 +161,6 @@
         </descriptorRefs>
         <finalName>${project.name}-${project.version}-JAR</finalName>
         <appendAssemblyId>false</appendAssemblyId>
-                <source>1.8</source>
-                <target>1.8</target>
       </configuration>
     </plugin>
   </plugins>
