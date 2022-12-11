@@ -46,7 +46,8 @@ public class MelodyPanel extends InstPanel {
 
 	public void initComponents(ActionListener l) {
 
-		ScrollComboBox.addAll(new Integer[] { 1, 7, 8, 15 }, midiChannel);
+		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15 },
+				midiChannel);
 		midiChannel.setVal(1);
 		instPool = POOL.MELODY;
 		instrument.initInstPool(instPool);
