@@ -375,7 +375,11 @@ public class Section {
 	}
 
 	public void resetCustomizedParts(int partNum) {
-		setInstPartList(null, partNum);
+		if (partNum > 4) {
+			resetCustomizedParts();
+		} else {
+			setInstPartList(null, partNum);
+		}
 	}
 
 	public void resetCustomizedParts() {

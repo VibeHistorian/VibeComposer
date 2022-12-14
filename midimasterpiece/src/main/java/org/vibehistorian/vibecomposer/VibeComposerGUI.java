@@ -2950,11 +2950,14 @@ public class VibeComposerGUI extends JFrame
 				Section sec = actualArrangement.getSections()
 						.get(arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
-					sec.resetCustomizedParts();
+					sec.resetCustomizedParts(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
 					setActualModel(actualArrangement.convertToActualTableModel(), false);
-					CheckButton cb = arrSection.getCurrentButton();
-					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
-					cb.repaint();
+					if (!sec.hasCustomizedParts()) {
+						CheckButton cb = arrSection.getCurrentButton();
+						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
+						cb.repaint();
+					}
+
 					arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true);
 				}
 			}
@@ -9693,8 +9696,8 @@ public class VibeComposerGUI extends JFrame
 
 
 	public static boolean canRegenerateOnChange() {
-		return sequencer != null && regenerateWhenValuesChange.isSelected() && !heavyBackgroundTasksInProgress
-				&& arrSection.getSelectedIndex() == 0;
+		return sequencer != null && regenerateWhenValuesChange.isSelected()
+				&& !heavyBackgroundTasksInProgress && arrSection.getSelectedIndex() == 0;
 	}
 
 	public static int calculateSectionMeasureStart(int sectIndex) {
