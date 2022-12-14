@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 // Imports for the GUI classes.
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -94,6 +95,7 @@ public class JKnob extends JComponent
 	public static boolean fine = false;
 	public static int fineStart = 50;
 	public static boolean ctrlClick = false;
+	boolean scrollEnabled = true;
 
 	private Consumer<? super Object> func = null;
 
@@ -161,6 +163,12 @@ public class JKnob extends JComponent
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
+				if (!scrollEnabled && !e.isControlDown()) {
+					Container cont = JKnob.this.getParent();
+					cont.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, cont));
+					return;
+				}
+
 				int val = 0;
 				if (tickSpacing > 0) {
 					int index = tickThresholds.indexOf(curr);
@@ -820,5 +828,13 @@ public class JKnob extends JComponent
 
 	public int getValueRaw() {
 		return curr;
+	}
+
+	public boolean isScrollEnabled() {
+		return scrollEnabled;
+	}
+
+	public void setScrollEnabled(boolean scrollEnabled) {
+		this.scrollEnabled = scrollEnabled;
 	}
 }

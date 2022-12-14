@@ -312,6 +312,17 @@ public abstract class InstPanel extends JPanel {
 		this.add(instrument);
 	}
 
+	public void addOffsetAndDelayControls(boolean scrollEnabled) {
+		this.add(offset);
+		offset.setScrollEnabled(false);
+		this.add(feedbackCount);
+		feedbackCount.setScrollEnabled(false);
+		this.add(feedbackDuration);
+		feedbackDuration.setScrollEnabled(false);
+		this.add(feedbackVol);
+		feedbackVol.setScrollEnabled(false);
+	}
+
 	public void addOffsetAndDelayControls() {
 		this.add(offset);
 		this.add(feedbackCount);

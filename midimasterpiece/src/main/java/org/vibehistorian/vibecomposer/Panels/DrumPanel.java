@@ -48,6 +48,7 @@ public class DrumPanel extends InstPanel {
 
 		// pattern business
 		this.add(hitsPerPattern);
+		hitsPerPattern.setScrollEnabled(false);
 
 		hitsPerPattern.getKnob().setTickThresholds(Arrays.asList(
 				new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32, VisualPatternPanel.MAX_HITS }));
@@ -81,20 +82,25 @@ public class DrumPanel extends InstPanel {
 		this.add(comboPanelWrapper);
 		this.add(patternFlip);
 		this.add(patternShift);
+		patternShift.setScrollEnabled(false);
 		this.add(isVelocityPattern);
 		comboPanel.linkGhostNoteSwitch(isVelocityPattern);
 
 		this.add(chordSpan);
+		chordSpan.setScrollEnabled(false);
 		this.add(pauseChance);
+		pauseChance.setScrollEnabled(false);
 
 		this.add(swingPercent);
+		swingPercent.setScrollEnabled(false);
 
 		this.add(exceptionChance);
+		exceptionChance.setScrollEnabled(false);
 
 		this.add(minMaxVelSlider);
 
 
-		addOffsetAndDelayControls();
+		addOffsetAndDelayControls(false);
 
 
 		this.add(patternSeedLabel);
