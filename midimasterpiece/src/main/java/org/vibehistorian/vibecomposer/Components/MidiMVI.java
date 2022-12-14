@@ -11,8 +11,10 @@ import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -134,7 +136,8 @@ public class MidiMVI extends JComponent {
 		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
 			return false;
 		}
-
+		int partNum = parent.getPartNum();
+		int panelOrder = parent.getPanelOrder();
 		if (i <= 2) {
 			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
 					parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[i + 1]);
@@ -148,14 +151,32 @@ public class MidiMVI extends JComponent {
 			for (String bp : UsedPattern.BASE_PATTERNS) {
 				patternNames.remove(bp);
 			}
-			for (String name : patternNames) {
+
+			// remove not applied patterns
+			patternNames.removeIf(name -> {
 				PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
 						parent.getPanelOrder(), name);
-				if (pn != null && pn.isApplied()) {
-					return true;
-				}
+				return (pn == null || !pn.isApplied());
+			});
 
+			// pattern name must appear in at least one section
+			for (int secIndex = 0; secIndex < VibeComposerGUI.actualArrangement.getSections()
+					.size(); secIndex++) {
+				Section sec = VibeComposerGUI.actualArrangement.getSections().get(secIndex);
+				if (sec.containsPattern(partNum, panelOrder)) {
+					String secPatternName = sec.getPattern(partNum, panelOrder).getName();
+					if (StringUtils.isNotEmpty(secPatternName)) {
+						for (String name : patternNames) {
+							if (secPatternName.equals(name)) {
+								return true;
+							}
+
+						}
+					}
+				}
 			}
+
+
 			return false;
 		}
 	}
