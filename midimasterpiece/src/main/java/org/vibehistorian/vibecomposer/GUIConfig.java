@@ -127,9 +127,9 @@ public class GUIConfig {
 
 	private boolean useChordFormula = false;
 	private int longProgressionSimilarity = 0;
-	private boolean customChordsEnabled = true;
-	private boolean customDurationsEnabled = true;
-	private String customChords = "?";
+	private boolean customChordsEnabled = false;
+	private boolean customDurationsEnabled = false;
+	private String customChords = "C";
 	private String customChordDurations = "4,4,4,4";
 
 	// arp gen

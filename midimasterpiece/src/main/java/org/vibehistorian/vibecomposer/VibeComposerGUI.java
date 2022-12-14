@@ -265,6 +265,8 @@ public class VibeComposerGUI extends JFrame
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 
+	public static GUIPreset defaultGuiPreset = null;
+
 	public static VariationPopup varPopup = null;
 	public static MidiEditPopup currentMidiEditorPopup = null;
 	public static int currentMidiEditorSectionIndex = 0;
@@ -668,7 +670,7 @@ public class VibeComposerGUI extends JFrame
 	JLabel savedIndicatorLabel;
 	Color[] savedIndicatorForegroundColors = { new Color(220, 220, 220), Color.green, Color.magenta,
 			Color.orange };
-	public static boolean composingInProgress = false;
+	public static boolean heavyBackgroundTasksInProgress = false;
 
 	Thread cycle;
 	JCheckBox useMidiCC;
@@ -984,6 +986,8 @@ public class VibeComposerGUI extends JFrame
 		pack();
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
+		defaultGuiPreset = copyCurrentViewToPreset();
+
 		boolean presetLoaded = false;
 		if (presetLoadBox.getVal().equalsIgnoreCase("default")) {
 			loadPreset();
@@ -992,7 +996,7 @@ public class VibeComposerGUI extends JFrame
 
 		initKeyboardListener();
 		// block compose/regenerate until UI fully loaded
-		composingInProgress = true;
+		heavyBackgroundTasksInProgress = true;
 		setVisible(true);
 
 		repaint();
@@ -1009,7 +1013,7 @@ public class VibeComposerGUI extends JFrame
 			LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
 		}
 
-		composingInProgress = false;
+		heavyBackgroundTasksInProgress = false;
 	}
 
 
@@ -1128,6 +1132,25 @@ public class VibeComposerGUI extends JFrame
 		}));
 		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
 		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
+		mainButtonsPanel.add(makeButton("Reset All", e -> {
+			if (heavyBackgroundTasksInProgress) {
+				return;
+			}
+			loadPresetObject(defaultGuiPreset);
+			heavyBackgroundTasksInProgress = true;
+			randomPanelsToGenerate[0].setText("" + 3);
+			randomPanelsToGenerate[1].setText("" + 1);
+			randomPanelsToGenerate[2].setText("" + 2);
+			randomPanelsToGenerate[3].setText("" + 3);
+			randomPanelsToGenerate[4].setText("" + 6);
+			generateInitialMelodyPanels();
+			for (int i = 1; i < 5; i++) {
+				generatePanels(i);
+			}
+			manualArrangement.setSelected(false);
+			heavyBackgroundTasksInProgress = false;
+			LG.i("Default Panels generated!");
+		}));
 
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}
@@ -1197,27 +1220,7 @@ public class VibeComposerGUI extends JFrame
 			if (loadedFile.exists()) {
 				try {
 					GUIPreset preset = unmarshallPreset(loadedFile);
-					guiConfig = preset;
-					copyConfigToGUI(guiConfig);
-					List<Component> presetComps = makeSettableComponentList();
-					for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
-						setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
-					}
-					clearAllSeeds();
-					if (isFullMode != preset.isFullMode()) {
-						switchFullMode();
-					}
-					if (isDarkMode != preset.isDarkMode()) {
-						switchDarkMode();
-					}
-					if (isBigMonitorMode != preset.isBigMode()) {
-						switchBigMonitorMode();
-					}
-
-					recalculateTabPaneCounts();
-					recalculateGenerationCounts();
-					//manualArrangement.setSelected(false);
-					vibeComposerGUI.repaint();
+					loadPresetObject(preset);
 				} catch (JAXBException | IOException e) {
 					e.printStackTrace();
 					return;
@@ -1226,6 +1229,35 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		LG.i("Loaded preset: " + presetName);
+	}
+
+	public void loadPresetObject(GUIPreset preset) {
+		if (heavyBackgroundTasksInProgress) {
+			return;
+		}
+		heavyBackgroundTasksInProgress = true;
+		guiConfig = preset;
+		copyConfigToGUI(guiConfig);
+		List<Component> presetComps = makeSettableComponentList();
+		for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
+			setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
+		}
+		clearAllSeeds();
+		if (isFullMode != preset.isFullMode()) {
+			switchFullMode();
+		}
+		if (isDarkMode != preset.isDarkMode()) {
+			switchDarkMode();
+		}
+		if (isBigMonitorMode != preset.isBigMode()) {
+			switchBigMonitorMode();
+		}
+
+		recalculateTabPaneCounts();
+		recalculateGenerationCounts();
+		//manualArrangement.setSelected(false);
+		vibeComposerGUI.repaint();
+		heavyBackgroundTasksInProgress = false;
 	}
 
 	private void savePreset() {
@@ -4543,7 +4575,7 @@ public class VibeComposerGUI extends JFrame
 
 			private void recalculateSolosMutes() {
 				// recalc sequencer tracks from button colorings
-				if (needToRecalculateSoloMuters && !composingInProgress) {
+				if (needToRecalculateSoloMuters && !heavyBackgroundTasksInProgress) {
 					needToRecalculateSoloMuters = false;
 					unapplySolosMutes(true);
 
@@ -4758,7 +4790,7 @@ public class VibeComposerGUI extends JFrame
 							}
 						}
 
-						if (loopBeat.isSelected() && !composingInProgress && !isDragging
+						if (loopBeat.isSelected() && !heavyBackgroundTasksInProgress && !isDragging
 								&& (sequencer != null)) {
 							/*if (showScore.isSelected() && !loopBeatCompose.isSelected()) {
 								showScore.setSelected(false);
@@ -4809,7 +4841,7 @@ public class VibeComposerGUI extends JFrame
 						}
 					} catch (Exception e) {
 						LG.e("Exception in SEQUENCE SLIDER:");
-						composingInProgress = false;
+						heavyBackgroundTasksInProgress = false;
 						LG.e(e.getMessage());
 						e.printStackTrace();
 						try {
@@ -5649,7 +5681,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void composeMidi(boolean regenerate) {
-		composingInProgress = true;
+		heavyBackgroundTasksInProgress = true;
 		boolean logPerformance = true;
 		long systemTime = System.currentTimeMillis();
 
@@ -5663,7 +5695,7 @@ public class VibeComposerGUI extends JFrame
 					|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
 				LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
 				new TemporaryInfoPopup(("Nothing to compose! Uncheck MANUAL arrangement!"), 3000);
-				composingInProgress = false;
+				heavyBackgroundTasksInProgress = false;
 				return;
 			}
 
@@ -5779,11 +5811,11 @@ public class VibeComposerGUI extends JFrame
 
 			handleGeneratedMidi(regenerate, relPath, systemTime);
 			resetArrSectionInBackground();
-			composingInProgress = false;
+			heavyBackgroundTasksInProgress = false;
 
 		} catch (Exception e) {
 			LG.e("Exception during midi generation! Cause: " + e.getMessage(), e);
-			composingInProgress = false;
+			heavyBackgroundTasksInProgress = false;
 			new TemporaryInfoPopup(BUG_HUNT_MESSAGE, null);
 			reapplySolosMutes();
 			return;
@@ -6841,7 +6873,7 @@ public class VibeComposerGUI extends JFrame
 
 		boolean isCompose = "Compose".equals(ae.getActionCommand());
 		boolean isRegenerate = "Regenerate".equals(ae.getActionCommand());
-		if (composingInProgress) {
+		if (heavyBackgroundTasksInProgress) {
 			LG.i("Cannot process action '" + ae.getActionCommand() + "', composing in progress!");
 			new TemporaryInfoPopup("Composing in progress..", 1000);
 			return;
@@ -7264,23 +7296,28 @@ public class VibeComposerGUI extends JFrame
 
 	private void saveGuiPresetFileByFilePath(String filePath) {
 		try {
-			GUIPreset preset = new GUIPreset();
-			copyGUItoConfig(preset);
-			preset.setPatternMaps(guiConfig.getPatternMaps());
-			List<Component> presetComps = makeSettableComponentList();
-			List<Integer> presetCompValues = new ArrayList<>();
-			for (int i = 0; i < presetComps.size(); i++) {
-				presetCompValues.add(getComponentValue(presetComps.get(i)));
-			}
-			preset.setOrderedValuesUI(presetCompValues);
-			preset.setDarkMode(isDarkMode);
-			preset.setFullMode(isFullMode);
-			preset.setBigMode(isBigMonitorMode);
+			GUIPreset preset = copyCurrentViewToPreset();
 			marshalPreset(preset, filePath);
 		} catch (IOException | JAXBException e) {
 			// Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public GUIPreset copyCurrentViewToPreset() {
+		GUIPreset preset = new GUIPreset();
+		copyGUItoConfig(preset);
+		preset.setPatternMaps(guiConfig.getPatternMaps());
+		List<Component> presetComps = makeSettableComponentList();
+		List<Integer> presetCompValues = new ArrayList<>();
+		for (int i = 0; i < presetComps.size(); i++) {
+			presetCompValues.add(getComponentValue(presetComps.get(i)));
+		}
+		preset.setOrderedValuesUI(presetCompValues);
+		preset.setDarkMode(isDarkMode);
+		preset.setFullMode(isFullMode);
+		preset.setBigMode(isBigMonitorMode);
+		return preset;
 	}
 
 	private void playMidi() {
@@ -9656,7 +9693,7 @@ public class VibeComposerGUI extends JFrame
 
 
 	public static boolean canRegenerateOnChange() {
-		return sequencer != null && regenerateWhenValuesChange.isSelected() && !composingInProgress
+		return sequencer != null && regenerateWhenValuesChange.isSelected() && !heavyBackgroundTasksInProgress
 				&& arrSection.getSelectedIndex() == 0;
 	}
 
