@@ -26,6 +26,7 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
@@ -1308,7 +1309,7 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel sidePanel = new JPanel();
 		sidePanel.setLayout(new GridLayout(0, 1, 10, 10));
-		JPanel viewPanel = new JPanel();
+		JPanel viewPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		viewPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		viewPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		JPanel titlePanel = new JPanel();
@@ -1340,7 +1341,7 @@ public class VibeComposerGUI extends JFrame
 				viewPanel.add(currentSettingsMenuPanel);
 				settingsMenuTitle.setText(buttonName);
 
-				viewPanel.repaint();
+				SwingUtilities.updateComponentTreeUI(extraSettingsPanel);
 			});
 
 			sidePanel.add(butt);
@@ -1432,14 +1433,49 @@ public class VibeComposerGUI extends JFrame
 		// INSTRUMENTS
 		JPanel allInstsPanel = new JPanel();
 
-		drumMappingPanel.setLayout(new GridLayout(0, 3, 10, 30));
-		useAllInsts = new CustomCheckBox("Use All Inst., Except:", false);
+		allInstsPanel.setLayout(new GridLayout(0, 3, 10, 30));
+		useAllInsts = new CustomCheckBox("(Experimental) Use all Inst., except:", false);
+		useAllInsts.setHorizontalTextPosition(SwingConstants.RIGHT);
 		allInstsPanel.add(useAllInsts);
 		bannedInsts = new JTextField("", 8);
 		allInstsPanel.add(bannedInsts);
 		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
 		allInstsPanel.add(reinitInstPools);
+
+		// 				soundbank
+		soundbankFilename = new ScrollComboBox<String>(false);
+		soundbankFilename.setEditable(true);
+		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
+		File folder = new File(SOUNDBANK_FOLDER);
+		if (folder.exists()) {
+			File[] listOfFiles = folder.listFiles();
+			for (File f : listOfFiles) {
+				if (f.isFile()) {
+					String fileName = f.getName();
+					if (fileName.endsWith(".sf2")) {
+						soundbankFilename.addItem(fileName);
+					}
+				}
+			}
+		}
+		soundbankFilename.setVal(soundbankFilename.getLastVal());
+		soundbankFilename.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				needSoundbankRefresh = true;
+			}
+		});
+
+		JPanel soundbankPanel = new JPanel();
+		soundbankPanel.setLayout(new GridLayout(0, 2, 10, 30));
+		JLabel soundbankLabel = new JLabel("Soundbank name:");
+		soundbankPanel.add(soundbankLabel);
+		soundbankPanel.add(soundbankFilename);
+
 		instrumentsSettingsPanel.add(allInstsPanel);
+		instrumentsSettingsPanel.add(soundbankPanel);
+
 
 		// PAUSE
 		JPanel startFromPausePanel = new JPanel();
@@ -1503,38 +1539,6 @@ public class VibeComposerGUI extends JFrame
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
 		bpmLowHighPanel.add(arpAffectsBpm);
-
-		// SOUNDBANK
-		soundbankFilename = new ScrollComboBox<String>(false);
-		soundbankFilename.setEditable(true);
-		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
-		File folder = new File(SOUNDBANK_FOLDER);
-		if (folder.exists()) {
-			File[] listOfFiles = folder.listFiles();
-			for (File f : listOfFiles) {
-				if (f.isFile()) {
-					String fileName = f.getName();
-					if (fileName.endsWith(".sf2")) {
-						soundbankFilename.addItem(fileName);
-					}
-				}
-			}
-		}
-		soundbankFilename.setVal(soundbankFilename.getLastVal());
-		soundbankFilename.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				needSoundbankRefresh = true;
-			}
-		});
-
-		JPanel soundbankPanel = new JPanel();
-		soundbankPanel.setLayout(new GridLayout(0, 2, 10, 30));
-		JLabel soundbankLabel = new JLabel("Soundbank name:");
-		soundbankPanel.add(soundbankLabel);
-		soundbankPanel.add(soundbankFilename);
-		instrumentsSettingsPanel.add(soundbankPanel);
 
 		// DISPLAY
 		displayVeloRectValues = new CustomCheckBox("Display Bar Values", true);
