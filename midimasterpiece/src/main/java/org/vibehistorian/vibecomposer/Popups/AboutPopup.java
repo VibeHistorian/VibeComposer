@@ -22,7 +22,7 @@ public class AboutPopup extends CloseablePopup {
 		textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		scroll = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		textArea.append("Copyright \u00a9 Vibe Historian 2021");
+		textArea.append("Copyright \u00a9 Vibe Historian 2023");
 		textArea.append("" + "\r\n"
 				+ "This program is free software; you can redistribute it and/or modify\r\n"
 				+ "it under the terms of the GNU General Public License as published by\r\n"

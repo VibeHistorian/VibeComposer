@@ -1285,7 +1285,6 @@ public class VibeComposerGUI extends JFrame
 
 		JPanel composeSettingsPanel = new JPanel();
 		JPanel scoreMidiPanel = new JPanel();
-		JPanel scalePanel = new JPanel();
 		JPanel panelGenerationSettingsPanel = new JPanel();
 		JPanel chordChoicePanel = new JPanel();
 		JPanel humanizationPanel = new JPanel();
@@ -1297,7 +1296,6 @@ public class VibeComposerGUI extends JFrame
 		HashMap<String, JPanel> settingsMenuItems = new LinkedHashMap<>();
 		settingsMenuItems.put("COMPOSE", composeSettingsPanel);
 		settingsMenuItems.put("Score/Midi", scoreMidiPanel);
-		settingsMenuItems.put("Scale", scalePanel);
 		settingsMenuItems.put("Generation", panelGenerationSettingsPanel);
 		settingsMenuItems.put("Chords", chordChoicePanel);
 		settingsMenuItems.put("Humanization", humanizationPanel);
@@ -1320,7 +1318,7 @@ public class VibeComposerGUI extends JFrame
 		extraSettingsPanel.add(titlePanel, BorderLayout.NORTH);
 		extraSettingsPanel.add(sidePanel, BorderLayout.WEST);
 		extraSettingsPanel.add(viewPanel, BorderLayout.CENTER);
-		extraSettingsPanel.setPreferredSize(new Dimension(800, 600));
+		extraSettingsPanel.setPreferredSize(new Dimension(800, 500));
 
 		// default on first open
 		currentSettingsMenuPanel = composeSettingsPanel;
@@ -1383,12 +1381,6 @@ public class VibeComposerGUI extends JFrame
 		swingMultiPanel.add(swingUnitMultiplier);
 		humanizationPanel.add(swingMultiPanel);
 
-
-		// SCALE
-		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
-		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
-		scalePanel.add(customMidiForceScale);
-		scalePanel.add(transposedNotesForceScale);
 
 		// SCORE
 		JPanel padMidiPanel = new JPanel();
@@ -1508,16 +1500,6 @@ public class VibeComposerGUI extends JFrame
 		pauseBehaviorPanel.add(moveStartToCustomizedSection);
 
 		// CHORDS
-		JPanel keyChangePanel = new JPanel();
-		keyChangePanel.setLayout(new GridLayout(0, 2, 10, 30));
-		keyChangeTypeSelection = new ScrollComboBox<String>(false);
-		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
-				keyChangeTypeSelection);
-		keyChangeTypeSelection.setVal("TWOFIVEONE");
-		keyChangeTypeSelection.addItemListener(this);
-		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
-		keyChangePanel.add(keyChangeTypeSelection);
-
 		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
 		useChordFormula = new CustomCheckBox("Chord Formula", true);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
@@ -1530,7 +1512,6 @@ public class VibeComposerGUI extends JFrame
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
 		chordChoicePanel.add(squishChordsProgressively);
-		chordChoicePanel.add(keyChangePanel);
 
 		// BPM
 		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
@@ -1608,16 +1589,35 @@ public class VibeComposerGUI extends JFrame
 
 		// GENERATION
 
+		//          scale
+		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
+		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
+
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
 				"Track History - Include Regenerated Tracks", false);
 		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
 		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 
+
+		JPanel keyChangePanel = new JPanel();
+		keyChangePanel.setLayout(new GridLayout(0, 2, 10, 30));
+		keyChangeTypeSelection = new ScrollComboBox<String>(false);
+		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
+				keyChangeTypeSelection);
+		keyChangeTypeSelection.setVal("TWOFIVEONE");
+		keyChangeTypeSelection.setPreferredSize(new Dimension(250, 30));
+		keyChangeTypeSelection.addItemListener(this);
+		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
+		keyChangePanel.add(keyChangeTypeSelection);
+
+		panelGenerationSettingsPanel.add(customMidiForceScale);
+		panelGenerationSettingsPanel.add(transposedNotesForceScale);
 		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
 		panelGenerationSettingsPanel.add(melodyPatternFlip);
 		panelGenerationSettingsPanel.add(patternApplyPausesWhenGenerating);
+		panelGenerationSettingsPanel.add(keyChangePanel);
 
 		initHelperPopups();
 	}
