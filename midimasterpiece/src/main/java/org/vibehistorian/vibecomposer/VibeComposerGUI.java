@@ -19,6 +19,7 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -74,6 +75,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -725,6 +727,7 @@ public class VibeComposerGUI extends JFrame
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static JPanel extraSettingsPanel;
+	public static JPanel currentSettingsMenuPanel = null;
 
 	public static boolean isShowingTextInKnobs = true;
 	public static JCheckBox displayVeloRectValues;
@@ -1106,7 +1109,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		extraSettingsPanel = new JPanel();
-		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
+		extraSettingsPanel.setLayout(new BorderLayout());
 
 		mainButtonsPanel.add(makeButton("Settings", e -> openExtraSettingsPopup()));
 
@@ -1278,90 +1281,169 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initExtraSettings() {
-		JPanel arrangementExtraSettingsPanel = new JPanel();
-		arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
-				true);
+
+		JPanel composeSettingsPanel = new JPanel();
+		JPanel scoreMidiPanel = new JPanel();
+		JPanel scalePanel = new JPanel();
+		JPanel panelGenerationSettingsPanel = new JPanel();
+		JPanel chordChoicePanel = new JPanel();
+		JPanel humanizationPanel = new JPanel();
+		JPanel instrumentsSettingsPanel = new JPanel();
+		JPanel pauseBehaviorPanel = new JPanel();
+		JPanel bpmLowHighPanel = new JPanel();
+		JPanel displayStylePanel = new JPanel();
+
+		HashMap<String, JPanel> settingsMenuItems = new LinkedHashMap<>();
+		settingsMenuItems.put("COMPOSE", composeSettingsPanel);
+		settingsMenuItems.put("Score/Midi", scoreMidiPanel);
+		settingsMenuItems.put("Scale", scalePanel);
+		settingsMenuItems.put("Generation", panelGenerationSettingsPanel);
+		settingsMenuItems.put("Chords", chordChoicePanel);
+		settingsMenuItems.put("Humanization", humanizationPanel);
+		settingsMenuItems.put("Instruments", instrumentsSettingsPanel);
+
+		settingsMenuItems.put("Pause Behavior", pauseBehaviorPanel);
+		settingsMenuItems.put("BPM", bpmLowHighPanel);
+		settingsMenuItems.put("Display", displayStylePanel);
+
+		JPanel sidePanel = new JPanel();
+		sidePanel.setLayout(new GridLayout(0, 1, 10, 10));
+		JPanel viewPanel = new JPanel();
+		viewPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		viewPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		JPanel titlePanel = new JPanel();
+		titlePanel.setBorder(new SoftBevelBorder(BevelBorder.RAISED));
+		JLabel settingsMenuTitle = new JLabel();
+		titlePanel.add(settingsMenuTitle);
+
+		extraSettingsPanel.add(titlePanel, BorderLayout.NORTH);
+		extraSettingsPanel.add(sidePanel, BorderLayout.WEST);
+		extraSettingsPanel.add(viewPanel, BorderLayout.CENTER);
+		extraSettingsPanel.setPreferredSize(new Dimension(800, 600));
+
+		// default on first open
+		currentSettingsMenuPanel = composeSettingsPanel;
+		viewPanel.add(currentSettingsMenuPanel);
+		settingsMenuTitle.setText("COMPOSE");
+
+		for (Map.Entry<String, JPanel> entry : settingsMenuItems.entrySet()) {
+			String buttonName = entry.getKey();
+			JPanel menuPanel = entry.getValue();
+			menuPanel.setLayout(new GridLayout(0, 1, 20, 20));
+			JButton butt = makeButton(buttonName, e -> {
+				if (currentSettingsMenuPanel != null) {
+					//viewPanel.remove(currentSettingsMenuPanel);
+					currentSettingsMenuPanel.setVisible(false);
+				}
+				currentSettingsMenuPanel = menuPanel;
+				currentSettingsMenuPanel.setVisible(true);
+				viewPanel.add(currentSettingsMenuPanel);
+				settingsMenuTitle.setText(buttonName);
+
+				viewPanel.repaint();
+			});
+
+			sidePanel.add(butt);
+		}
+
+		// COMPOSE
+
 		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset Customized Panels on Compose",
 				true, true);
-
-		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
-		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
-		//RandomIntegerListButton bt = new RandomIntegerListButton("0,1,2,3");
-		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
-		arrangementExtraSettingsPanel.add(useMidiCC);
-		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
-		//arrangementExtraSettingsPanel.add(bt);
-
-		JPanel humanizationPanel = new JPanel();
-		humanizationPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-
-		// / 10000
-		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
-		// / 10000
-		humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
-
-		// / 1000
-		globalNoteLengthMultiplier = new DetachedKnobPanel("Note Length Multiplier<br>/1000", 950,
-				250, 1000);
-
-		swingUnitMultiplier = new ScrollComboBox<Double>(false);
-		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
-		swingUnitMultiplier.setSelectedIndex(0);
-
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
 		sidechainPatternsOnCompose = makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
 				true, true);
+		copyChordsAfterGenerate = makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
+				true);
+
+		composeSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
+		composeSettingsPanel.add(randomizeTimingsOnCompose);
+		composeSettingsPanel.add(sidechainPatternsOnCompose);
+		composeSettingsPanel.add(copyChordsAfterGenerate);
+
+
+		// HUMANIZATION
+		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
+		humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
+		globalNoteLengthMultiplier = new DetachedKnobPanel("Note Length Multiplier<br>/1000", 950,
+				250, 1000);
+
+		JPanel swingMultiPanel = new JPanel();
+		swingMultiPanel.setLayout(new GridLayout(0, 2, 10, 30));
+		swingUnitMultiplier = new ScrollComboBox<Double>(false);
+		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
+		swingUnitMultiplier.setSelectedIndex(0);
 
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
 		humanizationPanel.add(globalNoteLengthMultiplier);
-		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
-		humanizationPanel.add(swingUnitMultiplier);
-		humanizationPanel.add(randomizeTimingsOnCompose);
-		humanizationPanel.add(sidechainPatternsOnCompose);
+		swingMultiPanel.add(new JLabel("Swing Period Multiplier"));
+		swingMultiPanel.add(swingUnitMultiplier);
+		humanizationPanel.add(swingMultiPanel);
 
-		JPanel scalePanel = new JPanel();
-		scalePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+
+		// SCALE
 		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
 		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
 		scalePanel.add(customMidiForceScale);
 		scalePanel.add(transposedNotesForceScale);
 
-		JPanel scoreMidiPanel = new JPanel();
-		scoreMidiPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		// SCORE
+		JPanel padMidiPanel = new JPanel();
+		padMidiPanel.setLayout(new GridLayout(0, 2, 10, 30));
 		padGeneratedMidi = new CustomCheckBox("Pad Generated .mid File (# of tracks):", true);
 		padGeneratedMidiValues = new RandomIntegerListButton("3,2,5,5,6", null);
 		padGeneratedMidiValues.min = 1;
 		padGeneratedMidiValues.max = 12;
 		padGeneratedMidiValues.editableCount = false;
+		padMidiPanel.add(padGeneratedMidi);
+		padMidiPanel.add(padGeneratedMidiValues);
 
-		scoreMidiPanel.add(padGeneratedMidi);
-		scoreMidiPanel.add(padGeneratedMidiValues);
+		//                stretch
+		stretchMidi = new DetachedKnobPanel("Stretch MIDI%:", 100, 25, 400);
+		stretchMidi.getKnob().setTickSpacing(25);
+		stretchMidi.getKnob().setTickThresholds(
+				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
 
-		extraSettingsPanel.add(arrangementExtraSettingsPanel);
-		extraSettingsPanel.add(humanizationPanel);
-		extraSettingsPanel.add(scalePanel);
-		extraSettingsPanel.add(scoreMidiPanel);
+		//                  arrangement midi settings
+		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
+				true);
+		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
+		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
 
-		//JPanel loopBeatExtraSettingsPanel = new JPanel();arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		//loopBeatExtraSettingsPanel.add(loopBeatCompose);
-		//extraSettingsPanel.add(loopBeatExtraSettingsPanel);
+		//                 drum mapping
+		JPanel drumMappingPanel = new JPanel();
+		drumMappingPanel.setLayout(new GridLayout(0, 2, 10, 30));
+		drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
+		drumCustomMapping.setToolTipText(
+				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
+		drumCustomMappingNumbers = new JTextField(
+				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
+		drumMappingPanel.add(drumCustomMapping);
+		drumMappingPanel.add(drumCustomMappingNumbers);
 
+		scoreMidiPanel.add(padMidiPanel);
+		scoreMidiPanel.add(drumMappingPanel);
+		scoreMidiPanel.add(useMidiCC);
+		scoreMidiPanel.add(stretchMidi);
+		scoreMidiPanel.add(arrangementScaleMidiVelocity);
+
+		// INSTRUMENTS
 		JPanel allInstsPanel = new JPanel();
-		allInstsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+
+		drumMappingPanel.setLayout(new GridLayout(0, 3, 10, 30));
 		useAllInsts = new CustomCheckBox("Use All Inst., Except:", false);
 		allInstsPanel.add(useAllInsts);
 		bannedInsts = new JTextField("", 8);
 		allInstsPanel.add(bannedInsts);
 		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
 		allInstsPanel.add(reinitInstPools);
-		extraSettingsPanel.add(allInstsPanel);
+		instrumentsSettingsPanel.add(allInstsPanel);
 
-
-		JPanel pauseBehaviorPanel = new JPanel();
-		pauseBehaviorPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		// PAUSE
+		JPanel startFromPausePanel = new JPanel();
+		drumMappingPanel.setLayout(new GridLayout(0, 2, 10, 30));
 		pauseBehaviorLabel = new JLabel("Start From Pause:");
 		pauseBehaviorCombobox = new ScrollComboBox<>(false);
 		startFromBar = new CustomCheckBox("Start From Bar", true);
@@ -1381,78 +1463,48 @@ public class VibeComposerGUI extends JFrame
 		});
 		ScrollComboBox.addAll(new String[] { "On regenerate", "On compose/regenerate", "Never" },
 				pauseBehaviorCombobox);
-		pauseBehaviorPanel.add(pauseBehaviorLabel);
-		pauseBehaviorPanel.add(pauseBehaviorCombobox);
+		startFromPausePanel.add(pauseBehaviorLabel);
+		startFromPausePanel.add(pauseBehaviorCombobox);
+		pauseBehaviorPanel.add(startFromPausePanel);
 		pauseBehaviorPanel.add(startFromBar);
 		pauseBehaviorPanel.add(rememberLastPos);
 		pauseBehaviorPanel.add(snapStartToBeat);
 		pauseBehaviorPanel.add(moveStartToCustomizedSection);
 
-		JPanel customDrumMappingPanel = new JPanel();
-		customDrumMappingPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
-		drumCustomMappingNumbers = new JTextField(
-				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
-		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
-		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
-
-		customDrumMappingPanel.add(drumCustomMapping);
-		customDrumMappingPanel.add(drumCustomMappingNumbers);
-		customDrumMappingPanel.add(melodyPatternFlip);
-		customDrumMappingPanel.add(patternApplyPausesWhenGenerating);
-		drumCustomMapping.setToolTipText(
-				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
-
-		extraSettingsPanel.add(pauseBehaviorPanel);
-		extraSettingsPanel.add(customDrumMappingPanel);
-
-
-		// CHORD SETTINGS 2
+		// CHORDS
+		JPanel keyChangePanel = new JPanel();
+		keyChangePanel.setLayout(new GridLayout(0, 2, 10, 30));
 		keyChangeTypeSelection = new ScrollComboBox<String>(false);
 		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
 				keyChangeTypeSelection);
 		keyChangeTypeSelection.setVal("TWOFIVEONE");
 		keyChangeTypeSelection.addItemListener(this);
+		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
+		keyChangePanel.add(keyChangeTypeSelection);
 
-		JPanel chordChoicePanel = new JPanel();
-		chordChoicePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
 		useChordFormula = new CustomCheckBox("Chord Formula", true);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		squishChordsProgressively = new CustomCheckBox("<html>Flatten<br>Progressively</html>",
 				false);
-		copyChordsAfterGenerate = makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
-				true);
 		longProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0, 100);
-
 
 		chordChoicePanel.add(useChordFormula);
 		chordChoicePanel.add(longProgressionSimilarity);
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
 		chordChoicePanel.add(squishChordsProgressively);
-		chordChoicePanel.add(copyChordsAfterGenerate);
-		chordChoicePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
-		chordChoicePanel.add(keyChangeTypeSelection);
-		extraSettingsPanel.add(chordChoicePanel);
+		chordChoicePanel.add(keyChangePanel);
 
-		JPanel bpmLowHighPanel = new JPanel();
-		bpmLowHighPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-
+		// BPM
 		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
 		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 50, 20, 249);
 		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 95, 21, 250);
-		stretchMidi = new DetachedKnobPanel("Stretch MIDI%:", 100, 25, 400);
-		stretchMidi.getKnob().setTickSpacing(25);
-		stretchMidi.getKnob().setTickThresholds(
-				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
 		bpmLowHighPanel.add(arpAffectsBpm);
-		bpmLowHighPanel.add(stretchMidi);
 
-		extraSettingsPanel.add(bpmLowHighPanel);
-
+		// SOUNDBANK
 		soundbankFilename = new ScrollComboBox<String>(false);
 		soundbankFilename.setEditable(true);
 		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
@@ -1476,15 +1528,15 @@ public class VibeComposerGUI extends JFrame
 				needSoundbankRefresh = true;
 			}
 		});
+
 		JPanel soundbankPanel = new JPanel();
-		soundbankPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		soundbankPanel.setLayout(new GridLayout(0, 2, 10, 30));
 		JLabel soundbankLabel = new JLabel("Soundbank name:");
 		soundbankPanel.add(soundbankLabel);
 		soundbankPanel.add(soundbankFilename);
-		extraSettingsPanel.add(soundbankPanel);
+		instrumentsSettingsPanel.add(soundbankPanel);
 
-		JPanel displayStylePanel = new JPanel();
-		displayStylePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		// DISPLAY
 		displayVeloRectValues = new CustomCheckBox("Display Bar Values", true);
 		knobControlByDragging = new CustomCheckBox("Knob Up-Down Control", false);
 		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern (-Perf)", true);
@@ -1516,18 +1568,8 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		displayStylePanel.add(checkbutt);
-		displayStylePanel.add(displayVeloRectValues);
-		displayStylePanel.add(knobControlByDragging);
-		displayStylePanel.add(highlightPatterns);
-		displayStylePanel.add(highlightScoreNotes);
-		displayStylePanel.add(customFilenameAddTimestamp);
-		displayStylePanel.add(miniScorePopup);
-		extraSettingsPanel.add(displayStylePanel);
 
 
-		JPanel panelGenerationSettingsPanel = new JPanel();
-		panelGenerationSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		bottomUpReverseDrumPanels = new CustomCheckBox("Bottom-Top Drum Display", false);
 		bottomUpReverseDrumPanels.addChangeListener(new ChangeListener() {
 
@@ -1551,14 +1593,27 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
+		displayStylePanel.add(bottomUpReverseDrumPanels);
+		displayStylePanel.add(checkbutt);
+		displayStylePanel.add(displayVeloRectValues);
+		displayStylePanel.add(knobControlByDragging);
+		displayStylePanel.add(highlightPatterns);
+		displayStylePanel.add(highlightScoreNotes);
+		displayStylePanel.add(customFilenameAddTimestamp);
+		displayStylePanel.add(miniScorePopup);
+
+		// GENERATION
+
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
 				"Track History - Include Regenerated Tracks", false);
+		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
+		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 
-		panelGenerationSettingsPanel.add(bottomUpReverseDrumPanels);
 		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
-		extraSettingsPanel.add(panelGenerationSettingsPanel);
+		panelGenerationSettingsPanel.add(melodyPatternFlip);
+		panelGenerationSettingsPanel.add(patternApplyPausesWhenGenerating);
 
 		initHelperPopups();
 	}
@@ -5295,7 +5350,7 @@ public class VibeComposerGUI extends JFrame
 		helperPopupsPanel.add(makeButton("User Manual (opens browser)", e -> openHelpPopup()));
 		helperPopupsPanel.add(makeButton("Debug Console", e -> openDebugConsole()));
 		helperPopupsPanel.add(makeButton("About VibeComposer", e -> openAboutPopup()));
-		extraSettingsPanel.add(helperPopupsPanel);
+		extraSettingsPanel.add(helperPopupsPanel, BorderLayout.SOUTH);
 	}
 
 	private void startMidiCcThread() {

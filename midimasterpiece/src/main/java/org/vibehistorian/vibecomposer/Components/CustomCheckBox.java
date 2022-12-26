@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
+import javax.swing.SwingConstants;
 
 import org.vibehistorian.vibecomposer.UndoManager;
 
@@ -30,6 +31,7 @@ public class CustomCheckBox extends JCheckBox {
 
 	public CustomCheckBox(String text, Icon icon, boolean selected) {
 		super(text, icon, selected);
+		this.setHorizontalTextPosition(SwingConstants.LEFT);
 		addActionListener(new ActionListener() {
 
 			@Override
