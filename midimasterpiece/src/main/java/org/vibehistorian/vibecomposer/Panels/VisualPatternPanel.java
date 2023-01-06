@@ -30,6 +30,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
@@ -846,9 +848,12 @@ public class VisualPatternPanel extends JPanel {
 		this.viewOnly = viewOnly;
 	}
 
-	public void notifyPatternHighlight(double quarterNotesInMeasure, int chordNumInMeasure,
-			List<Double> beatQuarterNotesInMeasure, boolean turnOff, boolean ignoreFill,
-			int totalChords) {
+	public static final double[] SPAN_4_ZONES = { 0.0, 0.25, 0.5, 0.75 };
+	public static final double[] SPAN_2_ZONES = { 0.0, 0.5 };
+
+	public void notifyPatternHighlight(double currentPatternTime, int chordNumInMeasure,
+			List<Double> prevChordDurations, boolean turnOff, boolean ignoreFill, int totalChords,
+			double currentChordDuration) {
 
 		if (parentPanel == null) {
 			return;
@@ -863,10 +868,10 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 
-		/*LG.d(parentPanel.getPanelOrder() + "#");
-		LG.d("Quarter notes: " + quarterNotesInMeasure);
-		LG.d(StringUtils.join(beatQuarterNotesInMeasure, ", "));
-		LG.d("Chord num: " + chordNumInMeasure);*/
+		LG.i(parentPanel.getPanelOrder() + "#");
+		LG.i("Quarter notes: " + currentPatternTime);
+		LG.i(StringUtils.join(prevChordDurations, ", "));
+		LG.i("Chord num: " + chordNumInMeasure);
 		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(totalChords,
 				parentPanel.getFillFlip());
 
@@ -880,25 +885,62 @@ public class VisualPatternPanel extends JPanel {
 			return;
 		}
 
+		// which chord part is current chord?
+		// what does actual pattern look like after pattern repeats?
+		// what position in the full pattern? (modulo full pattern).
+
 		// chordspan = 1 --> subtract sum of all beatDurationsInMeasure
 		//        --> remaining duration divided by whole note == percentage
 
 		// chordSpan = 2 --> subtract pairs/triples/quadruples
-		int indexOfSubtractableDurations = chordSpanPanel.getInt()
-				* ((chordNumInMeasure) / chordSpanPanel.getInt());
+		int chordSpan = chordSpanPanel.getInt();
+		int patternRepeat = parentPanel.getPatternRepeat();
+		while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
+			chordSpan /= 2;
+			patternRepeat /= 2;
+		}
+		int indexOfSubtractableDurations = chordSpan * ((chordNumInMeasure) / chordSpan);
 		for (int i = 0; i < indexOfSubtractableDurations; i++) {
-			quarterNotesInMeasure -= beatQuarterNotesInMeasure.get(i);
+			currentPatternTime -= prevChordDurations.get(i);
 		}
+		LG.i("Quarter notes: " + currentPatternTime);
 
-		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpanPanel.getInt();
-		double percentage = (10.0 + (quarterNotesInMeasure / patternTotalDuration)) % 1.0;
+		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpan;
+		double percentage = (currentPatternTime / patternTotalDuration);
 
-
-		if (parentPanel.getPatternRepeat() > 1) {
-			percentage = (percentage * parentPanel.getPatternRepeat()) % 1.0;
+		if (patternRepeat > 1 && chordSpan == 1) {
+			percentage *= patternRepeat;
 		}
-		//LG.d("Percentage: " + percentage);
-		int highlightedHit = (int) (percentage * lastHits);
+		LG.i("Percentage raw: " + percentage);
+		LG.i("Last chord duration: " + currentChordDuration);
+
+		if (chordSpan > 1) {
+			int chordSpanPart = chordNumInMeasure % chordSpan;
+			// part -> which part of pattern to use
+
+			double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
+			double normalizedPercentage = percentage / patternCoverage;
+			//normalizedPercentage /= patternRepeat;
+			normalizedPercentage -= (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
+					: SPAN_2_ZONES[chordSpanPart];
+			LG.i("Percentage norm: " + normalizedPercentage);
+			double newPercentage = normalizedPercentage % patternCoverage;
+			//newPercentage %= 1.0;
+			newPercentage *= patternCoverage;
+			double repeatThreshold = (chordSpan == 4) ? 0.25 : 0.5;
+			newPercentage %= repeatThreshold;
+			newPercentage += (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
+					: SPAN_2_ZONES[chordSpanPart];
+			percentage = newPercentage;
+			//double zoneCalc = wholeNotesInMeasure / chordSpan;
+			//int leftover = (int) Math.floor((percentage % wholeNotesInMeasure) / zoneCalc);
+			//percentage = (percentage - (leftover * zoneCalc))
+			//		+ ((chordSpan == 4) ? SPAN_4_ZONES[leftover] : SPAN_2_ZONES[leftover]);
+		}
+		// 10 for modulo calc
+		percentage = (10.0 + percentage) % 1.0;
+		LG.i("Percentage: " + percentage);
+		int highlightedHit = (int) Math.floor(percentage * lastHits);
 		if (highlightedHit < 0) {
 			highlightedHit = 0;
 		}

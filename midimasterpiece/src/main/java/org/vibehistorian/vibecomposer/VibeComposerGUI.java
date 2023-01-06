@@ -145,6 +145,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
@@ -697,6 +698,8 @@ public class VibeComposerGUI extends JFrame
 	private static int startBpm = -1;
 	private static int startSliderPosition = 0;
 	private static int startBeatCounter = 0;
+
+	public static double currentBeatMultiplier = 1.0;
 
 	JLabel tipLabel;
 	public static JLabel currentChords = new JLabel("Chords:[]");
@@ -4924,17 +4927,18 @@ public class VibeComposerGUI extends JFrame
 		int part = instrumentTabPane.getSelectedIndex();
 		if (part >= 2 && part <= 4) {
 			int measureStart = sliderMeasureStartTimes.get(
-					sectIndex >= 0 && (sectIndex < sliderMeasureStartTimes.size() - 1) ? sectIndex
+					(sectIndex >= 0 && (sectIndex < sliderMeasureStartTimes.size() - 1)) ? sectIndex
 							: 0);
 			int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
 			int beatChordNumInMeasure = 0;
-			int bfsiEnd = 0;
+			int bfsi = beatFindingStartIndex;
+			//int bfsiEnd = 0;
 			int lastMeasureStartTimeIndex = 0;
 			double quarterNote = beatFromBpm(0);
-			List<Double> beatQuarterNotesInMeasure = new ArrayList<>();
-			for (int bfsi = beatFindingStartIndex; bfsi < sliderBeatStartTimes.size(); bfsi++) {
+			List<Double> prevChordDurations = new ArrayList<>();
+			for (; bfsi < sliderBeatStartTimes.size(); bfsi++) {
 				if (sliderBeatStartTimes.get(bfsi) > val) {
-					bfsiEnd = bfsi;
+					//bfsiEnd = bfsi;
 					break;
 				} else {
 
@@ -4944,13 +4948,13 @@ public class VibeComposerGUI extends JFrame
 						// reset when exactly on measure
 						beatChordNumInMeasure = 0;
 						lastMeasureStartTimeIndex = measureIndex;
-						beatQuarterNotesInMeasure.clear();
+						prevChordDurations.clear();
 					} else {
 						beatChordNumInMeasure++;
 					}
 
 					if (beatChordNumInMeasure > 0) {
-						beatQuarterNotesInMeasure.add((sliderBeatStartTimes.get(bfsi)
+						prevChordDurations.add((sliderBeatStartTimes.get(bfsi)
 								- sliderBeatStartTimes.get(bfsi - 1)) / quarterNote);
 					}
 				}
@@ -4965,9 +4969,11 @@ public class VibeComposerGUI extends JFrame
 			if (quarterNotesInMeasure < MidiGenerator.DBL_ERR) {
 				return;
 			}
-
-
-			// needed: wholeNotesInMeasure, beatNumInMeasure, beatDurationsInMeasure
+			// need current chord's duration!
+			double currentChordDuration = (sliderBeatStartTimes.size() > bfsi)
+					? (sliderBeatStartTimes.get(bfsi) - sliderBeatStartTimes.get(bfsi - 1))
+							/ quarterNote
+					: Durations.WHOLE_NOTE;
 
 			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
 			List<InstPanel> panels = getAffectedPanels(part);
@@ -4996,8 +5002,8 @@ public class VibeComposerGUI extends JFrame
 						- MidiGenerator.noteMultiplier * (ip.getOffset() / 1000.0);
 
 				ip.getComboPanel().notifyPatternHighlight(delayedQuarterNotes,
-						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff, isIgnoreFill,
-						totalChords);
+						beatChordNumInMeasure, prevChordDurations, turnOff, isIgnoreFill,
+						totalChords, currentChordDuration);
 			}
 			/*for (InstPanel ip : panels) {
 				if (ip.getMuteInst()
@@ -5872,6 +5878,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			handleGeneratedMidi(regenerate, relPath, systemTime);
+			currentBeatMultiplier = beatDurationMultiplier.getSelectedItem();
 			resetArrSectionInBackground();
 			heavyBackgroundTasksInProgress = false;
 

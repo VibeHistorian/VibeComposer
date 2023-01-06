@@ -1651,4 +1651,28 @@ public class MidiUtils {
 
 	}
 
+	public static List<Integer> extendListToLength(List<Integer> arpPattern, int actualSize) {
+		if (arpPattern == null) {
+			return null;
+		}
+		int listSize = arpPattern.size();
+		if (actualSize == 0 || listSize == 0) {
+			return new ArrayList<>();
+		}
+
+		if (actualSize < listSize) {
+			return arpPattern.subList(0, actualSize);
+		}
+
+		if (actualSize == listSize) {
+			return arpPattern;
+		}
+
+		List<Integer> extendedList = new ArrayList<>(arpPattern);
+		for (int i = listSize; i < actualSize; i++) {
+			extendedList.add(arpPattern.get(i - listSize) % listSize);
+		}
+		return extendedList;
+	}
+
 }
