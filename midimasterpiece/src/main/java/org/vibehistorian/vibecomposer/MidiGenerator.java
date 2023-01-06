@@ -3543,7 +3543,7 @@ public class MidiGenerator implements JMC {
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
 				MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
 				boolean added = presences.contains(mp.getOrder());
-				if (added) {
+				if (added && !mp.isMuted()) {
 					List<int[]> usedMelodyProg = chordProgression;
 					List<int[]> usedRoots = rootProgression;
 
@@ -3608,7 +3608,7 @@ public class MidiGenerator implements JMC {
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
 				BassPart bp = (BassPart) gc.getBassParts().get(i);
 				boolean added = presences.contains(bp.getOrder());
-				if (added) {
+				if (added && !bp.isMuted()) {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, i) : null;
 					Phrase b = fillBassFromPart(bp, rootProgression, sec, variations);
 
@@ -3666,7 +3666,7 @@ public class MidiGenerator implements JMC {
 				// if arp1 supports melody with same instrument, always introduce it in second half
 				List<Integer> variations = (overridden) ? sec.getVariation(3, i) : null;
 				boolean added = presences.contains(ap.getOrder());
-				if (added) {
+				if (added && !ap.isMuted()) {
 					Phrase a = fillArpFromPart(ap, chordProgression, sec, variations);
 					if (arpParts.get(i).getInstrument() != ap.getInstrument()) {
 						a.setInstrument(ap.getInstrument());
@@ -5099,6 +5099,7 @@ public class MidiGenerator implements JMC {
 						ip.getChordNotesStretch(), ip.isStretchEnabled());
 				/*List<Integer> chordNotes = Arrays.stream(chord).boxed().map(e -> e % 12)
 						.collect(Collectors.toList());*/
+
 				if (directions != null) {
 					ArpPattern pat = (directions.get(chordIndex)) ? ArpPattern.UP : ArpPattern.DOWN;
 					arpPattern = pat.getPatternByLength(ip.getHitsPerPattern(), chord.length,
@@ -5121,24 +5122,31 @@ public class MidiGenerator implements JMC {
 						ip.setArpPatternCustom(arpPattern);
 					}
 				}
+
+				int actualPatternSize = (int) Math.round(arpPattern.size()
+						* progressionDurations.get(chordIndex) / Durations.WHOLE_NOTE);
+
 				chordDurationArp *= halfDurMulti;
 
 				// reset every 2
 				if (chordIndex % 2 == 0) {
 					//exceptionGenerator.setSeed(seed + 1);
 				}
-				List<Integer> pitchPatternSpanned = partOfList(chordSpanPart, ip.getChordSpan(),
-						arpPattern);
-				List<Integer> octavePatternSpanned = partOfList(chordSpanPart, ip.getChordSpan(),
-						arpOctavePattern);
+				List<Integer> pitchPatternSpanned = partOfListClean(chordSpanPart,
+						ip.getChordSpan(),
+						MidiUtils.sublistIfPossible(arpPattern, actualPatternSize));
+				List<Integer> octavePatternSpanned = partOfListClean(chordSpanPart,
+						ip.getChordSpan(),
+						MidiUtils.sublistIfPossible(arpOctavePattern, actualPatternSize));
 				List<Integer> melodyPattern = (melodyNotePatternMap != null)
 						? melodyNotePatternMap.get(chordIndex)
 						: null;
 				List<Integer> pausePatternSpanned = (ip.getPattern() == RhythmPattern.MELODY1
 						&& melodyPattern != null) ? new ArrayList<>(melodyPattern)
-								: partOfList(chordSpanPart, ip.getChordSpan(), arpPausesPattern);
+								: partOfListClean(chordSpanPart, ip.getChordSpan(), MidiUtils
+										.sublistIfPossible(arpPausesPattern, actualPatternSize));
 				List<Integer> velocityPatternSpanned = !arpVelocityPattern.isEmpty()
-						? partOfList(chordSpanPart, ip.getChordSpan(), arpVelocityPattern)
+						? partOfListClean(chordSpanPart, ip.getChordSpan(), arpVelocityPattern)
 						: null;
 				List<Integer> contour = ip.getArpContour();
 				List<Integer> arpContourSpanned = (contour != null && !contour.isEmpty()) ? contour
@@ -5803,8 +5811,8 @@ public class MidiGenerator implements JMC {
 			arpPausesPattern = arpPausesPattern.subList(0, ap.getHitsPerPattern());
 		}
 
-		List<Integer> arpPattern = makeRandomArpPattern(ap.getHitsPerPattern(), true,
-				uiGenerator2arpPattern);
+		List<Integer> arpPattern = (ap.getArpPattern() != ArpPattern.RANDOM) ? new ArrayList<>()
+				: makeRandomArpPattern(ap.getHitsPerPattern(), true, uiGenerator2arpPattern);
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 
 		Collections.rotate(arpPattern, -1 * ap.getArpPatternRotate());

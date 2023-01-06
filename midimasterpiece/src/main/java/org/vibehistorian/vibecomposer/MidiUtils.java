@@ -1651,7 +1651,7 @@ public class MidiUtils {
 
 	}
 
-	public static List<Integer> extendListToLength(List<Integer> arpPattern, int actualSize) {
+	public static List<Integer> sublistIfPossible(List<Integer> arpPattern, int actualSize) {
 		if (arpPattern == null) {
 			return null;
 		}
@@ -1661,18 +1661,18 @@ public class MidiUtils {
 		}
 
 		if (actualSize < listSize) {
-			return arpPattern.subList(0, actualSize);
+			return new ArrayList<>(arpPattern.subList(0, actualSize));
 		}
-
-		if (actualSize == listSize) {
+		return arpPattern;
+		/*if (actualSize == listSize) {
 			return arpPattern;
 		}
-
+		
 		List<Integer> extendedList = new ArrayList<>(arpPattern);
 		for (int i = listSize; i < actualSize; i++) {
 			extendedList.add(arpPattern.get(i - listSize) % listSize);
 		}
-		return extendedList;
+		return extendedList;*/
 	}
 
 }

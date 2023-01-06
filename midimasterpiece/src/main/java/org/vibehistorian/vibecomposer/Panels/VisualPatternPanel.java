@@ -895,10 +895,7 @@ public class VisualPatternPanel extends JPanel {
 		// chordSpan = 2 --> subtract pairs/triples/quadruples
 		int chordSpan = chordSpanPanel.getInt();
 		int patternRepeat = parentPanel.getPatternRepeat();
-		while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
-			chordSpan /= 2;
-			patternRepeat /= 2;
-		}
+
 		int indexOfSubtractableDurations = chordSpan * ((chordNumInMeasure) / chordSpan);
 		for (int i = 0; i < indexOfSubtractableDurations; i++) {
 			currentPatternTime -= prevChordDurations.get(i);
@@ -907,18 +904,19 @@ public class VisualPatternPanel extends JPanel {
 
 		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpan;
 		double percentage = (currentPatternTime / patternTotalDuration);
-
-		if (patternRepeat > 1 && chordSpan == 1) {
-			percentage *= patternRepeat;
-		}
 		LG.i("Percentage raw: " + percentage);
 		LG.i("Last chord duration: " + currentChordDuration);
 
-		if (chordSpan > 1) {
+		double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
+		if (chordSpan > 1 && patternCoverage > 1) {
+			/*while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
+				chordSpan /= 2;
+				patternRepeat /= 2;
+			}*/
+
 			int chordSpanPart = chordNumInMeasure % chordSpan;
 			// part -> which part of pattern to use
 
-			double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
 			double normalizedPercentage = percentage / patternCoverage;
 			//normalizedPercentage /= patternRepeat;
 			normalizedPercentage -= (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
@@ -936,6 +934,8 @@ public class VisualPatternPanel extends JPanel {
 			//int leftover = (int) Math.floor((percentage % wholeNotesInMeasure) / zoneCalc);
 			//percentage = (percentage - (leftover * zoneCalc))
 			//		+ ((chordSpan == 4) ? SPAN_4_ZONES[leftover] : SPAN_2_ZONES[leftover]);
+		} else {
+			percentage *= patternRepeat;
 		}
 		// 10 for modulo calc
 		percentage = (10.0 + percentage) % 1.0;
