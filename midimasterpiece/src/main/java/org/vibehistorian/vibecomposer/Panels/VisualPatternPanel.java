@@ -32,6 +32,7 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
@@ -908,24 +909,24 @@ public class VisualPatternPanel extends JPanel {
 		LG.i("Last chord duration: " + currentChordDuration);
 
 		double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
-		if (chordSpan > 1 && patternCoverage > 1) {
-			/*while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
+		/*if (chordSpan > 1 && patternRepeat != 3 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
+			while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
 				chordSpan /= 2;
 				patternRepeat /= 2;
-			}*/
-
+			}
+		}*/
+		if (chordSpan > 1 && patternRepeat > 1 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
 			int chordSpanPart = chordNumInMeasure % chordSpan;
-			// part -> which part of pattern to use
-
 			double normalizedPercentage = percentage / patternCoverage;
-			//normalizedPercentage /= patternRepeat;
+			// percentage within a chord part
 			normalizedPercentage -= (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
 					: SPAN_2_ZONES[chordSpanPart];
-			LG.i("Percentage norm: " + normalizedPercentage);
+			LG.i("Percentage norm (current chord): " + normalizedPercentage);
+
+			double repeatThreshold = (chordSpan == 4) ? 0.25 : 0.5;
 			double newPercentage = normalizedPercentage % patternCoverage;
 			//newPercentage %= 1.0;
 			newPercentage *= patternCoverage;
-			double repeatThreshold = (chordSpan == 4) ? 0.25 : 0.5;
 			newPercentage %= repeatThreshold;
 			newPercentage += (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
 					: SPAN_2_ZONES[chordSpanPart];
@@ -934,9 +935,9 @@ public class VisualPatternPanel extends JPanel {
 			//int leftover = (int) Math.floor((percentage % wholeNotesInMeasure) / zoneCalc);
 			//percentage = (percentage - (leftover * zoneCalc))
 			//		+ ((chordSpan == 4) ? SPAN_4_ZONES[leftover] : SPAN_2_ZONES[leftover]);
-		} else {
-			percentage *= patternRepeat;
 		}
+
+		percentage *= patternRepeat;
 		// 10 for modulo calc
 		percentage = (10.0 + percentage) % 1.0;
 		LG.i("Percentage: " + percentage);
