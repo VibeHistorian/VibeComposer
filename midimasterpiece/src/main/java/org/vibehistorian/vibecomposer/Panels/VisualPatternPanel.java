@@ -30,8 +30,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -869,10 +867,10 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 
-		LG.i(parentPanel.getPanelOrder() + "#");
+		/*LG.i(parentPanel.getPanelOrder() + "#");
 		LG.i("Quarter notes: " + currentPatternTime);
 		LG.i(StringUtils.join(prevChordDurations, ", "));
-		LG.i("Chord num: " + chordNumInMeasure);
+		LG.i("Chord num: " + chordNumInMeasure);*/
 		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(totalChords,
 				parentPanel.getFillFlip());
 
@@ -901,12 +899,12 @@ public class VisualPatternPanel extends JPanel {
 		for (int i = 0; i < indexOfSubtractableDurations; i++) {
 			currentPatternTime -= prevChordDurations.get(i);
 		}
-		LG.i("Quarter notes: " + currentPatternTime);
 
 		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpan;
 		double percentage = (currentPatternTime / patternTotalDuration);
+		/*LG.i("Quarter notes: " + currentPatternTime);
 		LG.i("Percentage raw: " + percentage);
-		LG.i("Last chord duration: " + currentChordDuration);
+		LG.i("Last chord duration: " + currentChordDuration);*/
 
 		double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
 		/*if (chordSpan > 1 && patternRepeat != 3 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
@@ -921,7 +919,7 @@ public class VisualPatternPanel extends JPanel {
 			// percentage within a chord part
 			normalizedPercentage -= (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
 					: SPAN_2_ZONES[chordSpanPart];
-			LG.i("Percentage norm (current chord): " + normalizedPercentage);
+			//LG.i("Percentage norm (current chord): " + normalizedPercentage);
 
 			double repeatThreshold = (chordSpan == 4) ? 0.25 : 0.5;
 			double newPercentage = normalizedPercentage % patternCoverage;
@@ -940,7 +938,7 @@ public class VisualPatternPanel extends JPanel {
 		percentage *= patternRepeat;
 		// 10 for modulo calc
 		percentage = (10.0 + percentage) % 1.0;
-		LG.i("Percentage: " + percentage);
+		//LG.i("Percentage: " + percentage);
 		int highlightedHit = (int) Math.floor(percentage * lastHits);
 		if (highlightedHit < 0) {
 			highlightedHit = 0;

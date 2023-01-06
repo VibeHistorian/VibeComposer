@@ -582,7 +582,7 @@ public class MelodyUtils {
 		/*viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
 		viableBlocks.removeIf(
 				e -> MelodyUtils.interblockDirectionChange(e.getRight()) > remainingDirChanges);*/
-		LG.i("generateBlockByBlockChangeAndLength: " + StringUtils.join(newBlock, ","));
+		LG.d("generateBlockByBlockChangeAndLength: " + StringUtils.join(newBlock, ","));
 		return Pair.of(Integer.MAX_VALUE, newBlock);
 	}
 }

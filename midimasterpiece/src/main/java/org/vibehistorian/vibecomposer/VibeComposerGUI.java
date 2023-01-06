@@ -503,6 +503,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyArpySurprises;
 	JCheckBox melodySingleNoteExceptions;
 	JCheckBox melodyFillPausesPerChord;
+	KnobPanel melodyNewBlocksChance;
 	JCheckBox melodyLegacyMode;
 
 	JCheckBox melodyAvoidChordJumps;
@@ -1909,6 +1910,7 @@ public class VibeComposerGUI extends JFrame
 				true);
 		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>",
 				true);
+		melodyNewBlocksChance = new KnobPanel("New<br>Blocks%", 25);
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
 		melodyAvoidChordJumps = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 		melodyUseDirectionsFromProgression = new CustomCheckBox(
@@ -1950,6 +1952,7 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
+		melodySettingsExtraPanelShape.add(melodyNewBlocksChance);
 		melodySettingsExtraPanelShape.add(melodyLegacyMode);
 		return melodySettingsExtraPanelShape;
 	}
@@ -8163,6 +8166,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
 		gc.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
 		gc.setMelodyLegacyMode(melodyLegacyMode.isSelected());
+		gc.setMelodyNewBlocksChance(melodyNewBlocksChance.getInt());
 		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
 		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
@@ -8300,6 +8304,7 @@ public class VibeComposerGUI extends JFrame
 		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
 		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
 		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
+		melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
 		melodyAvoidChordJumps.setSelected(gc.isMelodyAvoidChordJumps());
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());

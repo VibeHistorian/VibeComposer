@@ -774,7 +774,9 @@ public class MidiGenerator implements JMC {
 			//int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
 			blockNotesGenerator.setSeed(melodyBlockGeneratorSeed + blockIndex);
-			boolean GENERATE_NEW_BLOCKS = false;
+			Random generateNewBlocksDecider = new Random(melodyBlockGeneratorSeed + blockIndex);
+			boolean GENERATE_NEW_BLOCKS = generateNewBlocksDecider.nextInt(100) < gc
+					.getMelodyNewBlocksChance();
 			Pair<Integer, Integer[]> typeBlock = (GENERATE_NEW_BLOCKS)
 					? MelodyUtils.generateBlockByBlockChangeAndLength(blockChanges.get(blockIndex),
 							maxJump, blockNotesGenerator,
@@ -5132,6 +5134,8 @@ public class MidiGenerator implements JMC {
 				if (chordIndex % 2 == 0) {
 					//exceptionGenerator.setSeed(seed + 1);
 				}
+				// sublistIfPossible - fix for shorter patterns due to chord duration splitting unevenly
+
 				List<Integer> pitchPatternSpanned = partOfListClean(chordSpanPart,
 						ip.getChordSpan(),
 						MidiUtils.sublistIfPossible(arpPattern, actualPatternSize));
@@ -5162,6 +5166,7 @@ public class MidiGenerator implements JMC {
 				}
 				int lastMelodyIndex = 0;
 
+				int pulseListSize = Math.min(repeatedArpsPerChord, pitchPatternSpanned.size());
 				int pulse = 0;
 				double durationNow = 0;
 				while (durationNow + DBL_ERR < progressionDurations.get(chordIndex)) {
@@ -5169,9 +5174,9 @@ public class MidiGenerator implements JMC {
 							? velocityPatternSpanned.get(pulse % velocityPatternSpanned.size())
 							: (velocityGenerator.nextInt(maxVel - minVel) + minVel);
 
-					Integer patternNum = pitchPatternSpanned.get(pulse);
+					Integer noteInChord = pitchPatternSpanned.get(pulse);
 
-					int pitch = MidiUtils.getXthChordNote(patternNum, chord);
+					int pitch = MidiUtils.getXthChordNote(noteInChord, chord);
 					if ((contourInterval != null) && (spannedPulseCounter % contourInterval == 0)) {
 						int newPitch = 24 + MidiUtils.getXthChordNote(arpContourSpanned.get(
 								(spannedPulseCounter / contourInterval) % arpContourSpanned.size()),
@@ -5189,8 +5194,8 @@ public class MidiGenerator implements JMC {
 
 					if (gc.isUseOctaveAdjustments() || forceRandomOct) {
 						int octaveAdjustGenerated = octavePatternSpanned.get(pulse);
-						int octaveAdjustmentFromPattern = (patternNum < 2) ? -12
-								: ((patternNum < 6) ? 0 : 12);
+						int octaveAdjustmentFromPattern = (noteInChord < 2) ? -12
+								: ((noteInChord < 6) ? 0 : 12);
 						pitch += octaveAdjustmentFromPattern + octaveAdjustGenerated;
 					}
 
@@ -5250,8 +5255,7 @@ public class MidiGenerator implements JMC {
 					double durMultiplier = GLOBAL_DURATION_MULTIPLIER * ip.getChordSpan();
 					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance() && pitch >= 0) {
 						double splitDuration = usedDuration / 2;
-						int patternNum2 = pitchPatternSpanned
-								.get((pulse + 1) % repeatedArpsPerChord);
+						int patternNum2 = pitchPatternSpanned.get((pulse + 1) % pulseListSize);
 						int pitch2 = MidiUtils.getXthChordNote(patternNum2, chord) + extraTranspose;
 						if (pitch2 >= 0) {
 							pitch2 = MidiUtils.transposeNote((pitch + pitch2) / 2,
@@ -5273,7 +5277,7 @@ public class MidiGenerator implements JMC {
 						phr.addNote(n1);
 					}
 					durationNow += usedDuration;
-					pulse = (pulse + 1) % repeatedArpsPerChord;
+					pulse = (pulse + 1) % pulseListSize;
 					spannedPulseCounter++;
 				}
 

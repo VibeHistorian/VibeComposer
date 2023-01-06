@@ -101,6 +101,7 @@ public class GUIConfig {
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
 	private boolean melodyFillPausesPerChord = false;
+	private int melodyNewBlocksChance = 0;
 	private boolean melodyLegacyMode = false;
 
 	private boolean melodyAvoidChordJumps = false;
@@ -917,6 +918,14 @@ public class GUIConfig {
 
 	public void setRandomArpCorrectMelodyNotes(boolean randomArpCorrectMelodyNotes) {
 		this.randomArpCorrectMelodyNotes = randomArpCorrectMelodyNotes;
+	}
+
+	public int getMelodyNewBlocksChance() {
+		return melodyNewBlocksChance;
+	}
+
+	public void setMelodyNewBlocksChance(int melodyNewBlocksChance) {
+		this.melodyNewBlocksChance = melodyNewBlocksChance;
 	}
 
 }
