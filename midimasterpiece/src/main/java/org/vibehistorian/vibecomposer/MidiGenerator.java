@@ -4528,6 +4528,11 @@ public class MidiGenerator implements JMC {
 						if (joinApplicable) {
 							nextP = p + 1;
 							while (nextP < pattern.size()) {
+								if (durationNow + duration * durMultiplier > progressionDurations
+										.get(chordIndex)) {
+									break;
+								}
+
 								if (Integer.signum(pattern.get(nextP)) == stretchedByNote
 										|| pattern.get(nextP) == -1) {
 									durMultiplier++;
@@ -4571,6 +4576,9 @@ public class MidiGenerator implements JMC {
 
 						durationNow += duration;
 						p = (p + 1) % pattern.size();
+						if (p == 0) {
+							nextP = -1;
+						}
 					}
 					chordSpanPart = (chordSpanPart + 1) % ip.getChordSpan();
 				}
@@ -4890,6 +4898,10 @@ public class MidiGenerator implements JMC {
 					if (joinApplicable) {
 						nextP = p + 1;
 						while (nextP < pattern.size()) {
+							if (durationNow + duration * durMultiplier
+									+ DBL_ERR > progressionDurations.get(chordIndex)) {
+								break;
+							}
 							if (Integer.signum(pattern.get(nextP)) == stretchedByNote
 									|| pattern.get(nextP) == -1) {
 								durMultiplier++;
