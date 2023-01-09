@@ -9421,7 +9421,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (drumPanels.size() > 10 && ip.getPattern() == RhythmPattern.FULL
-				&& panelGenerator.nextInt() < 30) {
+				&& panelGenerator.nextInt(100) < 30) {
 			ip.setPattern(RhythmPattern.ALT);
 		}
 

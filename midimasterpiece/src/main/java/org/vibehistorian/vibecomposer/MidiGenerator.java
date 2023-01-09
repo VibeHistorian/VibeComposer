@@ -1939,7 +1939,7 @@ public class MidiGenerator implements JMC {
 		if (fixedLength == 8) {
 			int[] replacementOrder = new int[] { 4, 7, 5, 6 };
 			for (int i : replacementOrder) {
-				if (similarityGenerator.nextInt() < gc.getLongProgressionSimilarity()) {
+				if (similarityGenerator.nextInt(100) < gc.getLongProgressionSimilarity()) {
 					chordProgList.set(i, chordProgList.get(i - 4));
 					LG.i("Replaced " + i + "-th chord!");
 				} else if (i == 5) {
@@ -2124,7 +2124,7 @@ public class MidiGenerator implements JMC {
 		if (fixedLength == 8) {
 			int[] replacementOrder = new int[] { 4, 7, 5, 6 };
 			for (int i : replacementOrder) {
-				if (similarityGenerator.nextInt() < gc.getLongProgressionSimilarity()) {
+				if (similarityGenerator.nextInt(100) < gc.getLongProgressionSimilarity()) {
 					chordInts.set(i, chordInts.get(i - 4));
 					cpr.set(i, cpr.get(i - 4).clone());
 					LG.i("Replaced " + i + "-th chord!");
