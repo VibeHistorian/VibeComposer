@@ -279,7 +279,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
+	private static boolean isFullMode = false;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static final Color COMPOSE_COLOR = new Color(180, 150, 90);
@@ -4558,6 +4558,10 @@ public class VibeComposerGUI extends JFrame
 		toggleableComponents.add(dotdotChordsButton);
 		toggleableComponents.add(ddChordsButton);
 		toggleableComponents.add(normalizeChordsButton);
+		toggleableComponents.add(ivChordsButton);
+		toggleableComponents.add(limitChordsButton);
+		toggleableComponents.add(melodifyChordsButton);
+		toggleableComponents.add(chordTransformButton);
 
 	}
 
