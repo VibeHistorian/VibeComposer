@@ -28,9 +28,9 @@
 2. Drag'n'Drop into your DAW, or just save it for later.
 
 
-**Note:** if no sound is coming out but the playback slider is moving (the song appears to be playing), try unchecking 'MIDI Transmitter Mode" and clicking 'Regenerate', or changing the MIDI device to something else.
+  > Note: if no sound is coming out but the playback slider is moving (the song appears to be playing), try unchecking 'MIDI Transmitter Mode" and clicking 'Regenerate', or changing the MIDI device to something else.
 
-**Note 2:** if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
+  > Note 2: if you want direct playback into your DAW, install a virtual MIDI cable (loopMIDI is recommended) 
     and then it can be selected as one of the MIDI transmitter devices in the dropdown menu.
     
 #### Building requirements:
