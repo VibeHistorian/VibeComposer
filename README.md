@@ -1,34 +1,25 @@
-# VibeComposer 2.2
+# VibeComposer 2.3
 ## Interactive Music Generator
 
-![VibeComposer Advanced_UI Preview](https://i.imgur.com/o8dDRsx.png)
+![VibeComposer Simple UI Preview](https://i.imgur.com/O53OLLq.png)
 
-#### Arranged Track Examples (v2.2 & v2.1): 
-- [A World Beyond](https://soundcloud.com/vibehistorian/a-world-beyond)
-- [Darker](https://soundcloud.com/vibehistorian/darker)
-- [Wolves in Winter](https://soundcloud.com/vibehistorian/wolves-in-winter)
-- [Dew Drop](https://soundcloud.com/vibehistorian/dew-drop)
-- [Astral Ballad](https://soundcloud.com/vibehistorian/astral-ballad)
+#### Arranged Track Examples (v2.3): 
+- [Good Night](https://soundcloud.com/vibehistorian/good-night)
+- [Winter Tale](https://soundcloud.com/vibehistorian/winter-tale)
+- [Glowing Apart](https://soundcloud.com/vibehistorian/glowing-apart)
+- [Anti Hero](https://soundcloud.com/vibehistorian/anti-hero)
 
-
-
-#### How to run it (on Windows):
+#### How to run it:
 1. [Download and install JRE - Java Runtime Environment (at least ver. 1.8.0)](https://java.com/en/download/)
-2. [Download the latest release (.jar, or .exe for convenience)](https://github.com/VibeHistorian/VibeComposer/releases/tag/v2.2-beta)
-3. Run/double-click the executable
-  > Note: some users report getting browser warnings like "[xyz] is not commonly downloaded and may be dangerous." when downloading the .exe - this is a known issue of Launch4j (used to wrap JAVA .jar as an .exe)<br>
-  > To avoid it, you can instead download and run the .jar version itself, which is not wrapped. <br>
-  > Note 2: If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from the release, place it in the same folder as the .jar and run that instead.
-
-#### How to run it (on Linux/Mac):
-1. Same thing as Windows, but you should only use the JAR (.jar) file instead of the executable (.exe) file.
-2. If step 1 doesn't work, it might be necessary to open a terminal in the location where the .jar was downloaded, and use command: "java -jar VibeComposer-v2.2-beta-JAR.jar"
-3. In case it still doesn't work, feel free to contact me (email/discord below).
+2. [Download the latest release (.jar)](https://github.com/VibeHistorian/VibeComposer/releases/download/v2.3-beta/VibeComposer-2.3-beta-JAR.jar) (other formats available under Releases (right sidebar))
+3. Double-click to run
+  > Note: (Windows-only) If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from Releases, place it in the same folder as the .jar and run that instead.
+  > If you run into any issues, feel free to contact me (email/discord below).
 
 #### How to use it:
-1. Click 'Compose' to hear a preview of the song (one measure loop).
+1. Click the big orange 'Compose' button to compose a new song preview.
 
-    -  Make any adjustments you want, then click 'Regenerate' to hear the new changes. Some knobs/comboboxes react instantly without needing to Regenerate.
+    -  Make any adjustments you want, then click 'Regenerate' to hear the new changes. Some knobs/comboboxes react instantly without needing to Regenerate (for convenience).
 
     -  If you like what you hear, you can enable Arrangement by checking 'ARRANGE' and clicking 'Regenerate' again, 
      which creates a fully 'arranged' track with varying energy levels and new variations.
@@ -48,7 +39,9 @@
 	-- this should create 2 jars and 1 wrapped exe
 
 #### Arrangement examples made with earlier versions of VibeComposer: 
-- https://soundcloud.com/vibehistorian/legend
+- https://soundcloud.com/vibehistorian/a-world-beyond
+- https://soundcloud.com/vibehistorian/darker
+- https://soundcloud.com/vibehistorian/dew-drop
 - https://soundcloud.com/vibehistorian/the-spirit-molecule
 - https://soundcloud.com/vibehistorian/space-journey
 - https://soundcloud.com/vibehistorian/anaesthesia-blues
