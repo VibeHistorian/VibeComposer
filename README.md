@@ -14,6 +14,7 @@
 2. [Download the latest release (.jar)](https://github.com/VibeHistorian/VibeComposer/releases/download/v2.3-beta/VibeComposer-2.3-beta-JAR.jar) (other formats available under Releases (right sidebar))
 3. Double-click to run
   > Note: (Windows-only) If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from Releases, place it in the same folder as the .jar and run that instead.
+  
   > If you run into any issues, feel free to contact me (email/discord below).
 
 #### How to use it:
