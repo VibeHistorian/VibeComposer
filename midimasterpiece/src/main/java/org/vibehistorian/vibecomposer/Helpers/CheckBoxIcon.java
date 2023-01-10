@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
+import javax.swing.SwingConstants;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -27,9 +28,15 @@ public class CheckBoxIcon implements Icon {
 						: VibeComposerGUI.panelColorHigh);
 		g.setColor(color);
 
-		g.drawRect(1, 1, width, height);
-		g.fillRect(3, 3, width - 2, height - 2);
-
+		int newHeight = (abstractButton.getHeight() - height) / 2;
+		if (abstractButton.getHorizontalTextPosition() == SwingConstants.LEFT) {
+			int newWidth = abstractButton.getWidth() - width;
+			g.drawRect(newWidth - 3, newHeight, width, height);
+			g.fillRect(newWidth - 1, newHeight + 2, width - 2, height - 2);
+		} else {
+			g.drawRect(1, newHeight, width, height);
+			g.fillRect(3, newHeight + 2, width - 2, height - 2);
+		}
 	}
 
 	@Override

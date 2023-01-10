@@ -198,7 +198,7 @@ public class MidiGeneratorUtils {
 				int chordTargetNote = choices.contains(offset) ? offset
 						: MidiUtils.getClosestFromList(choices,
 								offset + (offsetRandomizer.nextInt(100) < 75 ? 1 : 0));
-				LG.i("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
+				LG.d("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
 				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
 						: chordTargetNote);
 			}
@@ -406,7 +406,7 @@ public class MidiGeneratorUtils {
 		// 80 + 15 +- 5 + 100/20 -> 95-105 vel.
 		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5
 				+ accent / 20;
-		return OMNI.clamp(newVelocity, 0, 127);
+		return OMNI.clampMidi(newVelocity);
 	}
 
 	static void applyCrescendoMultiplierMinimum(List<Note> notes, double maxDuration,

@@ -4,13 +4,20 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Components.ArpPickerMini;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -23,6 +30,8 @@ public class ArpPanel extends InstPanel {
 	private static final long serialVersionUID = 6648220153568966988L;
 
 	private ArpPickerMini arpPattern = new ArpPickerMini(this);
+	private RandomIntegerListButton arpContour = new RandomIntegerListButton("?", this);
+	private CheckButton arpContourChordMode = new CheckButton("C", true);
 	private KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
 	public void initComponents(ActionListener l) {
@@ -65,6 +74,18 @@ public class ArpPanel extends InstPanel {
 		JLabel notePresetLabel = new JLabel("Dir:");
 		this.add(notePresetLabel);
 		this.add(arpPattern);
+		arpContour.setMargin(new Insets(0, 0, 0, 0));
+		arpContour.setTextGenerator(e -> {
+			return StringUtils.join(arpContour.getRandGenerator().apply(new Object()), ",");
+		});
+		arpContour.setRandGenerator(e -> {
+			Random rnd = new Random();
+			return new ArrayList<>(Arrays
+					.asList(MelodyUtils.getRandomForType(rnd.nextInt(MelodyUtils.NUM_LISTS), rnd)));
+		});
+		arpContour.setHighlighterGenerator(null);
+		this.add(arpContour);
+		this.add(arpContourChordMode);
 		this.add(arpPatternRotate);
 
 		this.add(stretchPanel);
@@ -110,9 +131,6 @@ public class ArpPanel extends InstPanel {
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d);
 		}
-
-		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveArp," + panelOrder);
 	}
 
 
@@ -124,6 +142,8 @@ public class ArpPanel extends InstPanel {
 		part.setArpPatternRotate(getArpPatternRotate());
 		part.setArpPatternCustom(
 				arpPattern.getVal() == ArpPattern.CUSTOM ? arpPattern.getCustomValues() : null);
+		part.setArpContour(getArpContour());
+		part.setArpContourChordMode(getArpContourChordMode());
 		return part;
 	}
 
@@ -136,6 +156,8 @@ public class ArpPanel extends InstPanel {
 		if (part.getArpPattern() == ArpPattern.CUSTOM) {
 			arpPattern.setCustomValues(part.getArpPatternCustom());
 		}
+		setArpContour(part.getArpContour());
+		setArpContourChordMode(part.isArpContourChordMode());
 	}
 
 	public ArpPattern getArpPattern() {
@@ -170,5 +192,21 @@ public class ArpPanel extends InstPanel {
 
 	public void setArpPatternCustom(List<Integer> arpPatternCustom) {
 		arpPattern.setCustomValues(arpPatternCustom);
+	}
+
+	public List<Integer> getArpContour() {
+		return OMNI.parseIntsString(arpContour.getValue());
+	}
+
+	public void setArpContour(List<Integer> val) {
+		this.arpContour.setValues(val);
+	}
+
+	public boolean getArpContourChordMode() {
+		return arpContourChordMode.isSelected();
+	}
+
+	public void setArpContourChordMode(boolean val) {
+		this.arpContourChordMode.setSelected(val);
 	}
 }

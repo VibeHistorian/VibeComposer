@@ -54,10 +54,10 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 				g.setColor(new Color(230, 230, 230));
 				g.drawString("" + sec.getMeasures(), 3, height / 2);
 
-				String customDurations = sec.isCustomChordsDurationsEnabled()
+				String customDurations = sec.isCustomDurationsEnabled()
 						? sec.getCustomDurations().replaceAll(" ", "")
 						: "";
-				String customChords = ((sec.isCustomChordsDurationsEnabled()
+				String customChords = ((sec.isCustomChordsEnabled()
 						|| sec.isDisplayAlternateChords())
 								? sec.getCustomChords().replaceAll(" ", "")
 								: "");
@@ -65,7 +65,7 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 						? VibeComposerGUI.userChords.getChordListString()
 						: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
 
-				String guiUserDurations = (VibeComposerGUI.userChordsEnabled.isSelected()
+				String guiUserDurations = (VibeComposerGUI.userDurationsEnabled.isSelected()
 						? VibeComposerGUI.userChordsDurations.getText()
 						: "4,4,4,4").replaceAll(" ", "");
 

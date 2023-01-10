@@ -1,21 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JSlider;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
-import org.vibehistorian.vibecomposer.LG;
-
-public class SliderPopupListener extends MouseAdapter {
+/*public class SliderPopupListener extends MouseAdapter {
 	private JDialog toolTip = null;
 	private final JLabel label = new JLabel("", SwingConstants.CENTER);
 	private final Dimension size = new Dimension(30, 20);
@@ -94,4 +79,4 @@ public class SliderPopupListener extends MouseAdapter {
 		};
 		cycle.start();
 	}
-}
+}*/

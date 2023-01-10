@@ -48,6 +48,7 @@ public class DrumPanel extends InstPanel {
 
 		// pattern business
 		this.add(hitsPerPattern);
+		hitsPerPattern.setScrollEnabled(false);
 
 		hitsPerPattern.getKnob().setTickThresholds(Arrays.asList(
 				new Integer[] { 4, 6, 8, 10, 12, 16, 24, 32, VisualPatternPanel.MAX_HITS }));
@@ -59,37 +60,47 @@ public class DrumPanel extends InstPanel {
 		JButton doublerButt = new JButton("Dd");
 		doublerButt.setPreferredSize(new Dimension(25, 30));
 		doublerButt.setMargin(new Insets(0, 0, 0, 0));
+		JButton expanderButt = new JButton("<>");
+		expanderButt.setPreferredSize(new Dimension(25, 30));
+		expanderButt.setMargin(new Insets(0, 0, 0, 0));
 		JButton veloTogglerButt = new JButton("V");
 		veloTogglerButt.setPreferredSize(new Dimension(25, 30));
 		veloTogglerButt.setMargin(new Insets(0, 0, 0, 0));
 		comboPanel = makeVisualPatternPanel();
 		comboPanel.linkDoubler(doublerButt);
+		comboPanel.linkExpander(expanderButt);
 		comboPanel.linkVelocityToggle(veloTogglerButt);
 		comboPanel.setBigModeAllowed(true);
 		comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JPanel comboPanelWrapper = new JPanel();
 
 		comboPanelWrapper.add(doublerButt);
+		comboPanelWrapper.add(expanderButt);
 		comboPanelWrapper.add(comboPanel);
 		comboPanelWrapper.add(veloTogglerButt);
 
 		this.add(comboPanelWrapper);
 		this.add(patternFlip);
 		this.add(patternShift);
+		patternShift.setScrollEnabled(false);
 		this.add(isVelocityPattern);
 		comboPanel.linkGhostNoteSwitch(isVelocityPattern);
 
 		this.add(chordSpan);
+		chordSpan.setScrollEnabled(false);
 		this.add(pauseChance);
+		pauseChance.setScrollEnabled(false);
 
 		this.add(swingPercent);
+		swingPercent.setScrollEnabled(false);
 
 		this.add(exceptionChance);
+		exceptionChance.setScrollEnabled(false);
 
 		this.add(minMaxVelSlider);
 
 
-		addOffsetAndDelayControls();
+		addOffsetAndDelayControls(false);
 
 
 		this.add(patternSeedLabel);
@@ -105,8 +116,6 @@ public class DrumPanel extends InstPanel {
 
 	public DrumPanel(ActionListener l) {
 		initComponents(l);
-		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveDrum," + panelOrder);
 	}
 
 	public DrumPart toDrumPart(int lastRandomSeed) {

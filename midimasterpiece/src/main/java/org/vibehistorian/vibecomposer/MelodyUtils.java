@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import jm.music.data.Note;
 
@@ -32,10 +33,12 @@ public class MelodyUtils {
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 	public static List<List<Integer>> SOLO_MELODY_PATTERNS = new ArrayList<>();
+	public static List<Integer> ALT_PATTERN_INDEXES = new ArrayList<>(
+			Arrays.asList(new Integer[] { 0, 1, 8, 9, 10, 12, 15, 16 }));
 
 	public static List<List<Integer>> CHORD_DIRECTIONS = new ArrayList<>();
 
-	public static final int NUM_LISTS = 3;
+	public static final int NUM_LISTS = 4;
 
 	static {
 
@@ -56,6 +59,7 @@ public class MelodyUtils {
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, 1, 2 }));
 		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, -1, 1 }));
 
+		// ALT PATTERNS: 0, 1, 8, 9, 10, 12, 15, 16
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3, 1, 2, 1, 4 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 3 }));
@@ -63,7 +67,7 @@ public class MelodyUtils {
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 3 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 2, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 1 }));
+		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 1 })); // 7
 		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 2 }));
 		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 1 }));
@@ -160,18 +164,19 @@ public class MelodyUtils {
 
 	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
 			Integer length, Random melodyBlockGenerator, int approx) {
+		final int clampedBlockChange = OMNI.clamp(blockChange, -7, 7);
 		List<Integer[]> usedList = getBlocksForType(type);
 		// length fits, note distance and distance roughly equal (diff < approx)
 		List<Integer[]> filteredList = usedList.stream()
 				.filter(e -> (length == null || e.length == length)
-						&& (Math.abs(blockChange(e) - Math.abs(blockChange)) <= approx))
+						&& (Math.abs(blockChange(e) - Math.abs(clampedBlockChange)) <= approx))
 				.collect(Collectors.toList());
 		if (filteredList.size() == 0) {
 			return null;
 		}
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
 		Integer[] block = filteredList.get(rand2);
-		if (blockChange(block) == -1 * blockChange) {
+		if (blockChange(block) == -1 * clampedBlockChange) {
 			return inverse(block);
 		} else {
 			return block;
@@ -220,6 +225,11 @@ public class MelodyUtils {
 			LG.d("Viable blocks size is 0, getting random block!");
 			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
 					melodyBlockGenerator, 4);
+			if (block == null) {
+				LG.e("**************************************Fatal error generating melody block!");
+				new TemporaryInfoPopup(
+						"Error generating melody block: " + blockChange + ", " + length, 2000);
+			}
 			return Pair.of(blockOfList(block), block);
 		}
 		return viableBlocks.get(melodyBlockGenerator.nextInt(viableBlocks.size()));
@@ -499,9 +509,8 @@ public class MelodyUtils {
 			rand.setSeed(randomSeed);
 		}
 		if (rand.nextInt(100) < altPatternChance) {
-			List<Integer> altPatternIndices = Arrays.asList(0, 1);
 			return new ArrayList<>(MELODY_PATTERNS
-					.get(altPatternIndices.get(rand.nextInt(altPatternIndices.size()))));
+					.get(ALT_PATTERN_INDEXES.get(rand.nextInt(ALT_PATTERN_INDEXES.size()))));
 		}
 		return new ArrayList<>(MELODY_PATTERNS.get(rand.nextInt(MELODY_PATTERNS.size())));
 	}
@@ -532,5 +541,48 @@ public class MelodyUtils {
 		LG.n("Others: " + others.size() + ", 16th: " + main16th.size() + ", 8th: "
 				+ main8th.size());
 		return sorted;
+	}
+
+	public static Pair<Integer, Integer[]> generateBlockByBlockChangeAndLength(Integer blockChange,
+			int approx, Random blockNotesGenerator, Integer forcedLength, int remainingVariance,
+			int remainingDirChanges) {
+		// TODO 
+		remainingVariance = Math.max(0, remainingVariance);
+		Random rnd = new Random(blockNotesGenerator.nextInt());
+		int newLen = (forcedLength != null) ? forcedLength : (rnd.nextInt(2) + 3);
+		int last = newLen - 1;
+		Integer[] newBlock = new Integer[newLen];
+		newBlock[0] = 0;
+		newBlock[last] = Math.abs(blockChange) + rnd.nextInt(approx * 2 + 1) - approx;
+		if (blockChange < 0 && newBlock[last] > 0) {
+			newBlock[last] *= -1;
+		}
+		int currentMin = Math.min(0, newBlock[last]);
+		int currentMax = Math.max(0, newBlock[last]);
+
+		for (int i = 1; i < last; i++) {
+			newBlock[i] = rnd.nextInt(remainingVariance * 2 + (currentMax - currentMin) + 1)
+					+ currentMin - remainingVariance;
+			// between lowest note and lowest possible note
+			int varianceOverlapLow = currentMin - newBlock[i];
+			if (varianceOverlapLow > 0) {
+				remainingVariance -= varianceOverlapLow;
+				currentMin = newBlock[i];
+			}
+			// between highest note and highest possible note
+			int varianceOverlapHigh = newBlock[i] - currentMax;
+			if (varianceOverlapHigh > 0) {
+				remainingVariance -= varianceOverlapHigh;
+				currentMax = newBlock[i];
+			}
+			remainingVariance = Math.max(0, remainingVariance);
+		}
+
+
+		/*viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
+		viableBlocks.removeIf(
+				e -> MelodyUtils.interblockDirectionChange(e.getRight()) > remainingDirChanges);*/
+		LG.d("generateBlockByBlockChangeAndLength: " + StringUtils.join(newBlock, ","));
+		return Pair.of(Integer.MAX_VALUE, newBlock);
 	}
 }

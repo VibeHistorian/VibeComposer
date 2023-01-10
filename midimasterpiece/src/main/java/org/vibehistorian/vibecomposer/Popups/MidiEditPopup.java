@@ -40,7 +40,9 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.MidiDropPane;
@@ -73,6 +75,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public static boolean regenerateInPlaceChoice = false;
 	public static boolean applyOnLoadChoice = false;
 	public static boolean loadOnSelectChoice = false;
+	public static boolean displayingPhraseMarginX = false;
 
 	public static final int baseMargin = 5;
 	public static int trackScope = 1;
@@ -91,6 +94,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public CheckButton applyOnLoad = new CheckButton("Apply on Load/Import", applyOnLoadChoice);
 	public CheckButton loadOnSelect = new CheckButton("Load on Select", loadOnSelectChoice);
 	public CheckButton snapToScaleGrid = new CheckButton("Snap to Scale", snapToGridChoice);
+	public CheckButton displayPhraseMargins = new CheckButton("Margins", displayingPhraseMarginX);
 
 	public ScrollComboBox<String> patternPartBox = new ScrollComboBox<>(false);
 	public ScrollComboBox<Integer> patternPartOrderBox = new ScrollComboBox<>(false);
@@ -155,6 +159,16 @@ public class MidiEditPopup extends CloseablePopup {
 
 		setCustomValues(values);
 
+		values.remakeNoteStartTimes();
+
+		for (PhraseNote pn : values) {
+			if (pn.getStartTime() < 0) {
+				displayingPhraseMarginX = true;
+			} else if (pn.getStartTime() + pn.getDuration() > MidiEditArea.sectionLength) {
+				displayingPhraseMarginX = true;
+			}
+		}
+		displayPhraseMargins.setSelected(displayingPhraseMarginX);
 
 		allPanels.add(buttonPanel);
 		allPanels.add(buttonPanel2);
@@ -164,7 +178,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		addKeyboardControls(allPanels);
 
-		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
+		SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
@@ -209,6 +223,11 @@ public class MidiEditPopup extends CloseablePopup {
 				selectAll();
 			}
 		};
+		Action transposeSelectedAction = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				transposeSelected();
+			}
+		};
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo");
 		allPanels.getActionMap().put("undo", undoAction);
@@ -221,6 +240,10 @@ public class MidiEditPopup extends CloseablePopup {
 		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAll");
 		allPanels.getActionMap().put("selectAll", selectAllAction);
+		allPanels.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
+				KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK),
+				"transposeSelected");
+		allPanels.getActionMap().put("transposeSelected", transposeSelectedAction);
 	}
 
 	private JPanel makeTopButtonPanel() {
@@ -392,6 +415,11 @@ public class MidiEditPopup extends CloseablePopup {
 			repaintMvea();
 		});
 
+		displayPhraseMargins.setFunc(e -> {
+			displayingPhraseMarginX = displayPhraseMargins.isSelected();
+			repaintMvea();
+		});
+
 		patternNameBox.setFunc(e -> {
 			if (loadOnSelectChoice) {
 				loadNotes(true);
@@ -402,6 +430,7 @@ public class MidiEditPopup extends CloseablePopup {
 		bottomSettingsPanel.add(applyOnLoad);
 		bottomSettingsPanel.add(regenerateInPlaceOnChange);
 		bottomSettingsPanel.add(displayDrumHelper);
+		bottomSettingsPanel.add(displayPhraseMargins);
 		bottomSettingsPanel.add(new JLabel("  Highlight Mode:"));
 		bottomSettingsPanel.add(highlightMode);
 		bottomSettingsPanel.add(new JLabel("  Snap To Time:"));
@@ -462,7 +491,7 @@ public class MidiEditPopup extends CloseablePopup {
 					if (SwingUtilities.isLeftMouseButton(e)) {
 						saveNotes(true);
 					} else {
-						new PatternNamePopup(patternName -> {
+						new TextProcessingPopup("Pattern - New", patternName -> {
 							PatternNameMarker pnm = new PatternNameMarker(patternName, true);
 							patternNameBox.addItem(pnm);
 							patternNameBox.setVal(pnm);
@@ -541,7 +570,7 @@ public class MidiEditPopup extends CloseablePopup {
 	private void loadNotes(boolean overwrite) {
 		PhraseNotes pn = getPatternMap().get(patternPartOrderBox.getSelectedItem(),
 				patternNameBox.getSelectedItem().name);
-		if (pn == null) {
+		if (pn == null || pn.isEmpty()) {
 			return;
 		}
 
@@ -633,6 +662,11 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void setCustomValues(PhraseNotes values) {
 
+		if (values == null || values.isEmpty()) {
+			new TemporaryInfoPopup("Empty pattern!", 1000);
+			return;
+		}
+
 		int vmin = -1 * baseMargin * trackScope;
 		int vmax = baseMargin * trackScope;
 		if (!values.isEmpty()) {
@@ -716,6 +750,25 @@ public class MidiEditPopup extends CloseablePopup {
 			mvea.reset();
 			saveToHistory();
 		}
+	}
+
+	public void transposeSelected() {
+		new TextProcessingPopup("Transpose amount", e -> {
+			if (mvea == null || mvea.selectedNotes == null || mvea.selectedNotes.isEmpty()) {
+				new TemporaryInfoPopup("No notes selected!", 1000);
+				return;
+			}
+			try {
+				int parsedInt = Integer.valueOf(e);
+				for (PhraseNote n : mvea.selectedNotes) {
+					// 0..127 midi value
+					n.setPitch(OMNI.clampMidi(n.getPitch() + parsedInt));
+				}
+				setCustomValues(mvea.getValues());
+			} catch (Exception ex) {
+				new TemporaryInfoPopup("Invalid number entered!", 1500);
+			}
+		});
 	}
 
 	public void selectAll() {

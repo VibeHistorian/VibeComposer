@@ -34,7 +34,7 @@ public class MelodyPanel extends InstPanel {
 	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("1,2,1,3", this);
 	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 7, 0, 7);
 	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
-	private KnobPanel maxNoteExceptions = new KnobPanel("Max Note<br>Exc. #", 0, 0, 4);
+	private KnobPanel maxNoteExceptions = new KnobPanel("Max<br>Exc.", 0, 0, 4);
 	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Pattern", 33);
 	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
 	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
@@ -42,16 +42,18 @@ public class MelodyPanel extends InstPanel {
 	private KnobPanel speed = new KnobPanel("Speed", 50);
 	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 	private KnobPanel startNoteChance = new KnobPanel("Start%", 80);
+	private JCheckBox patternFlexible = new CustomCheckBox("Flex", true);
 
 	public void initComponents(ActionListener l) {
 
-		ScrollComboBox.addAll(new Integer[] { 1, 7, 8, 15 }, midiChannel);
+		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15 },
+				midiChannel);
 		midiChannel.setVal(1);
 		instPool = POOL.MELODY;
 		instrument.initInstPool(instPool);
 		setInstrument(73);
 		initDefaults(l);
-		volSlider.setDefaultValue(69);
+		volSlider.setDefaultValue(50);
 		setVelocityMin(80);
 		setVelocityMax(105);
 		this.add(volSlider);
@@ -61,6 +63,7 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("#"));
 		this.add(panelOrder);
 		addDefaultInstrumentControls();
+		addDefaultPanelButtons();
 
 		transpose.getKnob().setTickSpacing(10);
 		Integer[] allowedMelodyTransposes = new Integer[] { 0, 4, 5, 7 };
@@ -104,11 +107,10 @@ public class MelodyPanel extends InstPanel {
 			if (relatedSection == null) {
 				return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, true);
 			} else {
-				return MidiUtils.getHighlightTargetsFromChords(
-						relatedSection.isCustomChordsDurationsEnabled()
+				return MidiUtils
+						.getHighlightTargetsFromChords(relatedSection.isCustomChordsEnabled()
 								? relatedSection.getCustomChordsList()
-								: MidiGenerator.chordInts,
-						true);
+								: MidiGenerator.chordInts, true);
 			}
 
 		});
@@ -127,6 +129,7 @@ public class MelodyPanel extends InstPanel {
 			return MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
 					new Random().nextInt());
 		});
+		this.add(patternFlexible);
 
 		this.add(blockJump);
 		this.add(maxNoteExceptions);
@@ -208,6 +211,7 @@ public class MelodyPanel extends InstPanel {
 		part.setNoteExceptionChance(getNoteExceptionChance());
 		part.setSpeed(getSpeed());
 		part.setSplitChance(getSplitChance());
+		part.setPatternFlexible(getPatternFlexible());
 
 		return part;
 	}
@@ -230,6 +234,7 @@ public class MelodyPanel extends InstPanel {
 		setNoteExceptionChance(part.getNoteExceptionChance());
 		setSpeed(part.getSpeed());
 		setSplitChance(part.getSplitChance());
+		setPatternFlexible(part.isPatternFlexible());
 	}
 
 	@Override
@@ -250,7 +255,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public void setChordNoteChoices(List<Integer> val) {
-		this.noteTargets.setValue(StringUtils.join(val, ","));
+		this.noteTargets.setValues(val);
 	}
 
 	public List<Integer> getMelodyPatternOffsets() {
@@ -258,7 +263,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public void setMelodyPatternOffsets(List<Integer> val) {
-		this.patternStructure.setValue(StringUtils.join(val, ","));
+		this.patternStructure.setValues(val);
 	}
 
 	public void overridePatterns(MelodyPanel mp1) {
@@ -272,8 +277,8 @@ public class MelodyPanel extends InstPanel {
 		splitChance.setInt(mp1.splitChance.getInt());
 		noteExceptionChance.setInt(mp1.noteExceptionChance.getInt());
 		speed.setInt(mp1.speed.getInt());
-		leadChordsChance.setInt(mp1.leadChordsChance.getInt());
-		startNoteChance.setInt(mp1.startNoteChance.getInt());
+		//leadChordsChance.setInt(mp1.leadChordsChance.getInt());
+		//startNoteChance.setInt(mp1.startNoteChance.getInt());
 		//setInstrument(mp1.getInstrument());
 	}
 
@@ -373,6 +378,14 @@ public class MelodyPanel extends InstPanel {
 	@Override
 	public Class<? extends InstPart> getPartClass() {
 		return MelodyPart.class;
+	}
+
+	public boolean getPatternFlexible() {
+		return patternFlexible.isSelected();
+	}
+
+	public void setPatternFlexible(boolean val) {
+		this.patternFlexible.setSelected(val);
 	}
 }
 

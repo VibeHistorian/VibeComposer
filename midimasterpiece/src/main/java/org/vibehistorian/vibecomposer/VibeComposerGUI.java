@@ -19,12 +19,14 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
@@ -74,6 +76,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -142,9 +145,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
@@ -200,6 +205,7 @@ import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementGlobalVariationPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
+import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
@@ -263,6 +269,8 @@ public class VibeComposerGUI extends JFrame
 	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
 	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 
+	public static GUIPreset defaultGuiPreset = null;
+
 	public static VariationPopup varPopup = null;
 	public static MidiEditPopup currentMidiEditorPopup = null;
 	public static int currentMidiEditorSectionIndex = 0;
@@ -271,7 +279,7 @@ public class VibeComposerGUI extends JFrame
 	public static Color panelColorHigh, panelColorLow;
 	public static boolean isBigMonitorMode = false;
 	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
+	private static boolean isFullMode = false;
 	public static Color darkModeUIColor = Color.CYAN;
 	public static Color lightModeUIColor = new Color(0, 90, 255);
 	public static final Color COMPOSE_COLOR = new Color(180, 150, 90);
@@ -468,9 +476,13 @@ public class VibeComposerGUI extends JFrame
 
 	JButton soloAllDrums;
 
+	// all gen settings
+	JButton[] addPanelButtons = new JButton[5];
+	JButton[] generatePanelButtons = new JButton[5];
+	JTextField[] randomPanelsToGenerate = new JTextField[5];
+
 	// melody gen settings
-	JButton randomizeMelodies;
-	JCheckBox randomizeMelodiesOnCompose;
+	JCheckBox generateMelodiesOnCompose;
 	KnobPanel melodyUseOldAlgoChance;
 	JCheckBox randomMelodyOnRegenerate;
 	JCheckBox randomMelodySameSeed;
@@ -491,6 +503,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyArpySurprises;
 	JCheckBox melodySingleNoteExceptions;
 	JCheckBox melodyFillPausesPerChord;
+	KnobPanel melodyNewBlocksChance;
 	JCheckBox melodyLegacyMode;
 
 	JCheckBox melodyAvoidChordJumps;
@@ -512,9 +525,6 @@ public class VibeComposerGUI extends JFrame
 	// - there's nothing here - 
 
 	// chord gen settings
-	JButton chordAddJButton;
-	JButton randomizeChords;
-	JTextField randomChordsToGenerate;
 	JCheckBox randomChordsGenerateOnCompose;
 	JCheckBox randomChordDelay;
 	JCheckBox randomChordStrum;
@@ -537,9 +547,6 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomChordMaxVel;
 
 	// arp gen settings
-	JButton arpAddJButton;
-	JButton randomizeArps;
-	JTextField randomArpsToGenerate;
 	JCheckBox randomArpsGenerateOnCompose;
 	JCheckBox randomArpTranspose;
 	JCheckBox randomArpPattern;
@@ -560,15 +567,13 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel randomArpMaxVel;
 	KnobPanel randomArpMinLength;
 	KnobPanel randomArpMaxLength;
+	JCheckBox randomArpCorrectMelodyNotes;
 	JCheckBox arpCopyMelodyInst;
 
 	// drum gen settings
 	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 39, 40 });
 	public static List<Integer> KICK_DRUMS = Arrays.asList(new Integer[] { 35, 36 });
 	public static List<Integer> SNARE_DRUMS = Arrays.asList(new Integer[] { 38, 40 });
-	JButton drumAddJButton;
-	JButton randomizeDrums;
-	JTextField randomDrumsToGenerate;
 	JCheckBox randomDrumsGenerateOnCompose;
 	KnobPanel randomDrumsOverrandomize;
 	KnobPanel randomDrumMaxSwingAdjust;
@@ -614,6 +619,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel longProgressionSimilarity;
 	ScrollComboBox<String> keyChangeTypeSelection;
 	public static CheckButton userChordsEnabled;
+	public static CheckButton userDurationsEnabled;
 	public static JTextField userChordsDurations;
 	public static ChordletPanel userChords;
 
@@ -640,8 +646,6 @@ public class VibeComposerGUI extends JFrame
 		return (randomSeed != null && randomSeed.getValue() != 0) ? randomSeed.getValue()
 				: lastRandomSeed;
 	}
-
-	double realBpm = 60;
 
 	JList<File> generatedMidi;
 	public static Sequencer sequencer = null;
@@ -671,12 +675,12 @@ public class VibeComposerGUI extends JFrame
 	JLabel savedIndicatorLabel;
 	Color[] savedIndicatorForegroundColors = { new Color(220, 220, 220), Color.green, Color.magenta,
 			Color.orange };
-	public static boolean composingInProgress = false;
+	public static boolean heavyBackgroundTasksInProgress = false;
 
 	Thread cycle;
 	JCheckBox useMidiCC;
 	CheckButton loopBeat;
-	CheckButton loopBeatCompose;
+	ScrollComboBox<String> loopBeatCompose;
 	public static PlayheadRangeSlider slider;
 	public static int sliderExtended = 0;
 	public static List<Integer> sliderMeasureStartTimes = null;
@@ -692,9 +696,11 @@ public class VibeComposerGUI extends JFrame
 	private static int pausedBpm = 50;
 	private static int pausedSliderPosition = 0;
 	private static int pausedMeasureCounter = 0;
-	private static int startBpm = 50;
+	private static int startBpm = -1;
 	private static int startSliderPosition = 0;
 	private static int startBeatCounter = 0;
+
+	public static double currentBeatMultiplier = 1.0;
 
 	JLabel tipLabel;
 	public static JLabel currentChords = new JLabel("Chords:[]");
@@ -726,6 +732,7 @@ public class VibeComposerGUI extends JFrame
 	private static GridBagConstraints constraints = new GridBagConstraints();
 
 	public static JPanel extraSettingsPanel;
+	public static JPanel currentSettingsMenuPanel = null;
 
 	public static boolean isShowingTextInKnobs = true;
 	public static JCheckBox displayVeloRectValues;
@@ -733,6 +740,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox highlightPatterns;
 	public static JCheckBox highlightScoreNotes;
 	public static JCheckBox customFilenameAddTimestamp;
+	public static JCheckBox miniScorePopup;
 
 
 	public static void main(String args[]) {
@@ -986,18 +994,34 @@ public class VibeComposerGUI extends JFrame
 		pack();
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
+		defaultGuiPreset = copyCurrentViewToPreset();
+
+		boolean presetLoaded = false;
 		if (presetLoadBox.getVal().equalsIgnoreCase("default")) {
 			loadPreset();
+			presetLoaded = true;
 		}
 
 		initKeyboardListener();
-
+		// block compose/regenerate until UI fully loaded
+		heavyBackgroundTasksInProgress = true;
 		setVisible(true);
 
 		repaint();
 		//initScrollPaneListeners();
 		UndoManager.recordingEvents = true;
-		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime) + " ms!");
+		LG.i("VibeComposer started in: " + (System.currentTimeMillis() - sysTime)
+				+ " ms! Creating Panels in background...");
+
+		if (!presetLoaded) {
+			generateInitialMelodyPanels();
+			for (int i = 1; i < 5; i++) {
+				generatePanels(i);
+			}
+			LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
+		}
+
+		heavyBackgroundTasksInProgress = false;
 	}
 
 
@@ -1038,13 +1062,13 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initTitles(int startY, int anchorSide) {
-		mainTitle = new JLabel("Vibe Composer");
+		/*mainTitle = new JLabel("Vibe Composer");
 		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		subTitle = new JLabel("by Vibe Historian");
 		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-
+		
 		mainTitle.setFont(new Font("Courier", Font.BOLD, 25));
-		//subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));
+		subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));*/
 		constraints.weightx = 100;
 		constraints.weighty = 100;
 		constraints.gridx = 0;
@@ -1090,7 +1114,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		extraSettingsPanel = new JPanel();
-		extraSettingsPanel.setLayout(new BoxLayout(extraSettingsPanel, BoxLayout.Y_AXIS));
+		extraSettingsPanel.setLayout(new BorderLayout());
 
 		mainButtonsPanel.add(makeButton("Settings", e -> openExtraSettingsPopup()));
 
@@ -1116,6 +1140,25 @@ public class VibeComposerGUI extends JFrame
 		}));
 		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
 		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
+		mainButtonsPanel.add(makeButton("Reset All", e -> {
+			if (heavyBackgroundTasksInProgress) {
+				return;
+			}
+			loadPresetObject(defaultGuiPreset);
+			heavyBackgroundTasksInProgress = true;
+			randomPanelsToGenerate[0].setText("" + 3);
+			randomPanelsToGenerate[1].setText("" + 1);
+			randomPanelsToGenerate[2].setText("" + 2);
+			randomPanelsToGenerate[3].setText("" + 3);
+			randomPanelsToGenerate[4].setText("" + 6);
+			generateInitialMelodyPanels();
+			for (int i = 1; i < 5; i++) {
+				generatePanels(i);
+			}
+			manualArrangement.setSelected(false);
+			heavyBackgroundTasksInProgress = false;
+			LG.i("Default Panels generated!");
+		}));
 
 		everythingPanel.add(mainButtonsPanel, constraints);
 	}
@@ -1185,27 +1228,7 @@ public class VibeComposerGUI extends JFrame
 			if (loadedFile.exists()) {
 				try {
 					GUIPreset preset = unmarshallPreset(loadedFile);
-					guiConfig = preset;
-					copyConfigToGUI(guiConfig);
-					List<Component> presetComps = makeSettableComponentList();
-					for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
-						setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
-					}
-					clearAllSeeds();
-					if (isFullMode != preset.isFullMode()) {
-						switchFullMode();
-					}
-					if (isDarkMode != preset.isDarkMode()) {
-						switchDarkMode();
-					}
-					if (isBigMonitorMode != preset.isBigMode()) {
-						switchBigMonitorMode();
-					}
-
-					recalculateTabPaneCounts();
-					recalculateGenerationCounts();
-					manualArrangement.setSelected(false);
-					vibeComposerGUI.repaint();
+					loadPresetObject(preset);
 				} catch (JAXBException | IOException e) {
 					e.printStackTrace();
 					return;
@@ -1214,6 +1237,35 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		LG.i("Loaded preset: " + presetName);
+	}
+
+	public void loadPresetObject(GUIPreset preset) {
+		if (heavyBackgroundTasksInProgress) {
+			return;
+		}
+		heavyBackgroundTasksInProgress = true;
+		guiConfig = preset;
+		copyConfigToGUI(guiConfig);
+		List<Component> presetComps = makeSettableComponentList();
+		for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
+			setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
+		}
+		clearAllSeeds();
+		if (isFullMode != preset.isFullMode()) {
+			switchFullMode();
+		}
+		if (isDarkMode != preset.isDarkMode()) {
+			switchDarkMode();
+		}
+		if (isBigMonitorMode != preset.isBigMode()) {
+			switchBigMonitorMode();
+		}
+
+		recalculateTabPaneCounts();
+		recalculateGenerationCounts();
+		//manualArrangement.setSelected(false);
+		vibeComposerGUI.repaint();
+		heavyBackgroundTasksInProgress = false;
 	}
 
 	private void savePreset() {
@@ -1230,184 +1282,163 @@ public class VibeComposerGUI extends JFrame
 		String filePath = PRESET_FOLDER + "/" + presetName + ".xml";
 		saveGuiPresetFileByFilePath(filePath);
 		presetLoadBox.addItem(presetName);
+		new TemporaryInfoPopup("Saved preset: " + presetName, 2000);
 	}
 
 	private void initExtraSettings() {
-		JPanel arrangementExtraSettingsPanel = new JPanel();
-		arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
-				true);
+
+		JPanel composeSettingsPanel = new JPanel();
+		JPanel scoreMidiPanel = new JPanel();
+		JPanel panelGenerationSettingsPanel = new JPanel();
+		JPanel chordChoicePanel = new JPanel();
+		JPanel humanizationPanel = new JPanel();
+		JPanel instrumentsSettingsPanel = new JPanel();
+		JPanel pauseBehaviorPanel = new JPanel();
+		JPanel bpmLowHighPanel = new JPanel();
+		JPanel displayStylePanel = new JPanel();
+
+		HashMap<String, JPanel> settingsMenuItems = new LinkedHashMap<>();
+		settingsMenuItems.put("COMPOSE", composeSettingsPanel);
+		settingsMenuItems.put("Score/Midi", scoreMidiPanel);
+		settingsMenuItems.put("Generation", panelGenerationSettingsPanel);
+		settingsMenuItems.put("Chords", chordChoicePanel);
+		settingsMenuItems.put("Humanization", humanizationPanel);
+		settingsMenuItems.put("Instruments", instrumentsSettingsPanel);
+
+		settingsMenuItems.put("Pause Behavior", pauseBehaviorPanel);
+		settingsMenuItems.put("BPM", bpmLowHighPanel);
+		settingsMenuItems.put("Display", displayStylePanel);
+
+		JPanel sidePanel = new JPanel();
+		sidePanel.setLayout(new GridLayout(0, 1, 10, 10));
+		JPanel viewPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		viewPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		viewPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		JPanel titlePanel = new JPanel();
+		titlePanel.setBorder(new SoftBevelBorder(BevelBorder.RAISED));
+		JLabel settingsMenuTitle = new JLabel();
+		titlePanel.add(settingsMenuTitle);
+
+		extraSettingsPanel.add(titlePanel, BorderLayout.NORTH);
+		extraSettingsPanel.add(sidePanel, BorderLayout.WEST);
+		extraSettingsPanel.add(viewPanel, BorderLayout.CENTER);
+		extraSettingsPanel.setPreferredSize(new Dimension(800, 500));
+
+		// default on first open
+		currentSettingsMenuPanel = composeSettingsPanel;
+		viewPanel.add(currentSettingsMenuPanel);
+		settingsMenuTitle.setText("COMPOSE");
+
+		for (Map.Entry<String, JPanel> entry : settingsMenuItems.entrySet()) {
+			String buttonName = entry.getKey();
+			JPanel menuPanel = entry.getValue();
+			menuPanel.setLayout(new GridLayout(0, 1, 20, 20));
+			JButton butt = makeButton(buttonName, e -> {
+				if (currentSettingsMenuPanel != null) {
+					//viewPanel.remove(currentSettingsMenuPanel);
+					currentSettingsMenuPanel.setVisible(false);
+				}
+				currentSettingsMenuPanel = menuPanel;
+				currentSettingsMenuPanel.setVisible(true);
+				viewPanel.add(currentSettingsMenuPanel);
+				settingsMenuTitle.setText(buttonName);
+
+				SwingUtilities.updateComponentTreeUI(extraSettingsPanel);
+			});
+
+			sidePanel.add(butt);
+		}
+
+		// COMPOSE
+
 		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset Customized Panels on Compose",
 				true, true);
-
-		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
-		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
-		//RandomIntegerListButton bt = new RandomIntegerListButton("0,1,2,3");
-		arrangementExtraSettingsPanel.add(arrangementScaleMidiVelocity);
-		arrangementExtraSettingsPanel.add(useMidiCC);
-		arrangementExtraSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
-		//arrangementExtraSettingsPanel.add(bt);
-
-		JPanel humanizationPanel = new JPanel();
-		humanizationPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-
-		// / 10000
-		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
-		// / 10000
-		humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
-
-		// / 1000
-		globalNoteLengthMultiplier = new DetachedKnobPanel("Note Length Multiplier<br>/1000", 950,
-				250, 1000);
-
-		swingUnitMultiplier = new ScrollComboBox<Double>(false);
-		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
-		swingUnitMultiplier.setSelectedIndex(0);
-
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
 		sidechainPatternsOnCompose = makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
 				true, true);
+		copyChordsAfterGenerate = makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
+				true);
+
+		composeSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
+		composeSettingsPanel.add(randomizeTimingsOnCompose);
+		composeSettingsPanel.add(sidechainPatternsOnCompose);
+		composeSettingsPanel.add(copyChordsAfterGenerate);
+
+
+		// HUMANIZATION
+		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
+		humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
+		globalNoteLengthMultiplier = new DetachedKnobPanel("Note Length Multiplier<br>/1000", 950,
+				250, 1000);
+
+		JPanel swingMultiPanel = new JPanel();
+		swingMultiPanel.setLayout(new GridLayout(0, 2, 10, 30));
+		swingUnitMultiplier = new ScrollComboBox<Double>(false);
+		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, swingUnitMultiplier);
+		swingUnitMultiplier.setSelectedIndex(0);
 
 		humanizationPanel.add(humanizeNotes);
 		humanizationPanel.add(humanizeDrums);
 		humanizationPanel.add(globalNoteLengthMultiplier);
-		humanizationPanel.add(new JLabel("Swing Period Multiplier"));
-		humanizationPanel.add(swingUnitMultiplier);
-		humanizationPanel.add(randomizeTimingsOnCompose);
-		humanizationPanel.add(sidechainPatternsOnCompose);
+		swingMultiPanel.add(new JLabel("Swing Period Multiplier"));
+		swingMultiPanel.add(swingUnitMultiplier);
+		humanizationPanel.add(swingMultiPanel);
 
-		JPanel scalePanel = new JPanel();
-		scalePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
-		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
-		scalePanel.add(customMidiForceScale);
-		scalePanel.add(transposedNotesForceScale);
 
-		JPanel scoreMidiPanel = new JPanel();
-		scoreMidiPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		// SCORE
+		JPanel padMidiPanel = new JPanel();
+		padMidiPanel.setLayout(new GridLayout(0, 2, 10, 30));
 		padGeneratedMidi = new CustomCheckBox("Pad Generated .mid File (# of tracks):", true);
 		padGeneratedMidiValues = new RandomIntegerListButton("3,2,5,5,6", null);
 		padGeneratedMidiValues.min = 1;
 		padGeneratedMidiValues.max = 12;
 		padGeneratedMidiValues.editableCount = false;
+		padMidiPanel.add(padGeneratedMidi);
+		padMidiPanel.add(padGeneratedMidiValues);
 
-		scoreMidiPanel.add(padGeneratedMidi);
-		scoreMidiPanel.add(padGeneratedMidiValues);
+		//                stretch
+		stretchMidi = new DetachedKnobPanel("Stretch MIDI%:", 100, 25, 400);
+		stretchMidi.getKnob().setTickSpacing(25);
+		stretchMidi.getKnob().setTickThresholds(
+				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
 
-		extraSettingsPanel.add(arrangementExtraSettingsPanel);
-		extraSettingsPanel.add(humanizationPanel);
-		extraSettingsPanel.add(scalePanel);
-		extraSettingsPanel.add(scoreMidiPanel);
+		//                  arrangement midi settings
+		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
+				true);
+		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
+		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
 
-		//JPanel loopBeatExtraSettingsPanel = new JPanel();arrangementExtraSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		//loopBeatExtraSettingsPanel.add(loopBeatCompose);
-		//extraSettingsPanel.add(loopBeatExtraSettingsPanel);
+		//                 drum mapping
+		JPanel drumMappingPanel = new JPanel();
+		drumMappingPanel.setLayout(new GridLayout(0, 2, 10, 30));
+		drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
+		drumCustomMapping.setToolTipText(
+				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
+		drumCustomMappingNumbers = new JTextField(
+				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
+		drumMappingPanel.add(drumCustomMapping);
+		drumMappingPanel.add(drumCustomMappingNumbers);
 
+		scoreMidiPanel.add(padMidiPanel);
+		scoreMidiPanel.add(drumMappingPanel);
+		scoreMidiPanel.add(useMidiCC);
+		scoreMidiPanel.add(stretchMidi);
+		scoreMidiPanel.add(arrangementScaleMidiVelocity);
+
+		// INSTRUMENTS
 		JPanel allInstsPanel = new JPanel();
-		allInstsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		useAllInsts = new CustomCheckBox("Use All Inst., Except:", false);
+
+		allInstsPanel.setLayout(new GridLayout(0, 3, 10, 30));
+		useAllInsts = new CustomCheckBox("(Experimental) Use all Inst., except:", false);
+		useAllInsts.setHorizontalTextPosition(SwingConstants.RIGHT);
 		allInstsPanel.add(useAllInsts);
 		bannedInsts = new JTextField("", 8);
 		allInstsPanel.add(bannedInsts);
 		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
 		allInstsPanel.add(reinitInstPools);
-		extraSettingsPanel.add(allInstsPanel);
 
-
-		JPanel pauseBehaviorPanel = new JPanel();
-		pauseBehaviorPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		pauseBehaviorLabel = new JLabel("Start From Pause:");
-		pauseBehaviorCombobox = new ScrollComboBox<>(false);
-		startFromBar = new CustomCheckBox("Start From Bar", true);
-		rememberLastPos = new CustomCheckBox("Remember Last Pos.", true);
-		moveStartToCustomizedSection = new CustomCheckBox("Move Start For Customized Section",
-				true);
-		snapStartToBeat = new CustomCheckBox("Snap Start To Beat", true);
-		snapStartToBeat.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (slider.getSnapToTicks() != snapStartToBeat.isSelected()) {
-					slider.setSnapToTicks(snapStartToBeat.isSelected());
-				}
-			}
-
-		});
-		ScrollComboBox.addAll(new String[] { "On regenerate", "On compose/regenerate", "Never" },
-				pauseBehaviorCombobox);
-		pauseBehaviorPanel.add(pauseBehaviorLabel);
-		pauseBehaviorPanel.add(pauseBehaviorCombobox);
-		pauseBehaviorPanel.add(startFromBar);
-		pauseBehaviorPanel.add(rememberLastPos);
-		pauseBehaviorPanel.add(snapStartToBeat);
-		pauseBehaviorPanel.add(moveStartToCustomizedSection);
-
-		JPanel customDrumMappingPanel = new JPanel();
-		customDrumMappingPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
-		drumCustomMappingNumbers = new JTextField(
-				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
-		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
-		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
-
-		customDrumMappingPanel.add(drumCustomMapping);
-		customDrumMappingPanel.add(drumCustomMappingNumbers);
-		customDrumMappingPanel.add(melodyPatternFlip);
-		customDrumMappingPanel.add(patternApplyPausesWhenGenerating);
-		drumCustomMapping.setToolTipText(
-				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
-
-		extraSettingsPanel.add(pauseBehaviorPanel);
-		extraSettingsPanel.add(customDrumMappingPanel);
-
-
-		// CHORD SETTINGS 2
-		keyChangeTypeSelection = new ScrollComboBox<String>(false);
-		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
-				keyChangeTypeSelection);
-		keyChangeTypeSelection.setVal("TWOFIVEONE");
-		keyChangeTypeSelection.addItemListener(this);
-
-		JPanel chordChoicePanel = new JPanel();
-		chordChoicePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
-		useChordFormula = new CustomCheckBox("Chord Formula", true);
-		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
-		squishChordsProgressively = new CustomCheckBox("<html>Flatten<br>Progressively</html>",
-				false);
-		copyChordsAfterGenerate = makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
-				true);
-		longProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0, 100);
-
-
-		chordChoicePanel.add(useChordFormula);
-		chordChoicePanel.add(longProgressionSimilarity);
-		chordChoicePanel.add(randomChordVoicingChance);
-		chordChoicePanel.add(spiceFlattenBigChords);
-		chordChoicePanel.add(squishChordsProgressively);
-		chordChoicePanel.add(copyChordsAfterGenerate);
-		chordChoicePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
-		chordChoicePanel.add(keyChangeTypeSelection);
-		extraSettingsPanel.add(chordChoicePanel);
-
-		JPanel bpmLowHighPanel = new JPanel();
-		bpmLowHighPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-
-		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
-		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 50, 20, 249);
-		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 95, 21, 250);
-		stretchMidi = new DetachedKnobPanel("Stretch MIDI%:", 100, 25, 400);
-		stretchMidi.getKnob().setTickSpacing(25);
-		stretchMidi.getKnob().setTickThresholds(
-				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
-		bpmLowHighPanel.add(bpmLow);
-		bpmLowHighPanel.add(bpmHigh);
-		bpmLowHighPanel.add(arpAffectsBpm);
-		bpmLowHighPanel.add(stretchMidi);
-
-		extraSettingsPanel.add(bpmLowHighPanel);
-
+		// 				soundbank
 		soundbankFilename = new ScrollComboBox<String>(false);
 		soundbankFilename.setEditable(true);
 		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
@@ -1431,20 +1462,76 @@ public class VibeComposerGUI extends JFrame
 				needSoundbankRefresh = true;
 			}
 		});
+
 		JPanel soundbankPanel = new JPanel();
-		soundbankPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		soundbankPanel.setLayout(new GridLayout(0, 2, 10, 30));
 		JLabel soundbankLabel = new JLabel("Soundbank name:");
 		soundbankPanel.add(soundbankLabel);
 		soundbankPanel.add(soundbankFilename);
-		extraSettingsPanel.add(soundbankPanel);
 
-		JPanel displayStylePanel = new JPanel();
-		displayStylePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+		instrumentsSettingsPanel.add(allInstsPanel);
+		instrumentsSettingsPanel.add(soundbankPanel);
+
+
+		// PAUSE
+		JPanel startFromPausePanel = new JPanel();
+		drumMappingPanel.setLayout(new GridLayout(0, 2, 10, 30));
+		pauseBehaviorLabel = new JLabel("Start From Pause:");
+		pauseBehaviorCombobox = new ScrollComboBox<>(false);
+		startFromBar = new CustomCheckBox("Start From Bar", true);
+		rememberLastPos = new CustomCheckBox("Remember Last Pos.", true);
+		moveStartToCustomizedSection = new CustomCheckBox("Move Start For Customized Section",
+				true);
+		snapStartToBeat = new CustomCheckBox("Snap Start To Beat", true);
+		snapStartToBeat.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (slider.getSnapToTicks() != snapStartToBeat.isSelected()) {
+					slider.setSnapToTicks(snapStartToBeat.isSelected());
+				}
+			}
+
+		});
+		ScrollComboBox.addAll(new String[] { "On regenerate", "On compose/regenerate", "Never" },
+				pauseBehaviorCombobox);
+		startFromPausePanel.add(pauseBehaviorLabel);
+		startFromPausePanel.add(pauseBehaviorCombobox);
+		pauseBehaviorPanel.add(startFromPausePanel);
+		pauseBehaviorPanel.add(startFromBar);
+		pauseBehaviorPanel.add(rememberLastPos);
+		pauseBehaviorPanel.add(snapStartToBeat);
+		pauseBehaviorPanel.add(moveStartToCustomizedSection);
+
+		// CHORDS
+		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
+		useChordFormula = new CustomCheckBox("Chord Formula", true);
+		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
+		squishChordsProgressively = new CustomCheckBox("<html>Flatten<br>Progressively</html>",
+				false);
+		longProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0, 100);
+
+		chordChoicePanel.add(useChordFormula);
+		chordChoicePanel.add(longProgressionSimilarity);
+		chordChoicePanel.add(randomChordVoicingChance);
+		chordChoicePanel.add(spiceFlattenBigChords);
+		chordChoicePanel.add(squishChordsProgressively);
+
+		// BPM
+		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
+		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 50, 20, 249);
+		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 95, 21, 250);
+		bpmLowHighPanel.add(bpmLow);
+		bpmLowHighPanel.add(bpmHigh);
+		bpmLowHighPanel.add(arpAffectsBpm);
+
+		// DISPLAY
 		displayVeloRectValues = new CustomCheckBox("Display Bar Values", true);
 		knobControlByDragging = new CustomCheckBox("Knob Up-Down Control", false);
 		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern (-Perf)", true);
 		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
 		customFilenameAddTimestamp = new CustomCheckBox("Add Timestamp To Custom Filenames", false);
+		miniScorePopup = new CustomCheckBox("Mini Score Popup", true);
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1470,17 +1557,8 @@ public class VibeComposerGUI extends JFrame
 			}
 
 		});
-		displayStylePanel.add(checkbutt);
-		displayStylePanel.add(displayVeloRectValues);
-		displayStylePanel.add(knobControlByDragging);
-		displayStylePanel.add(highlightPatterns);
-		displayStylePanel.add(highlightScoreNotes);
-		displayStylePanel.add(customFilenameAddTimestamp);
-		extraSettingsPanel.add(displayStylePanel);
 
 
-		JPanel panelGenerationSettingsPanel = new JPanel();
-		panelGenerationSettingsPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
 		bottomUpReverseDrumPanels = new CustomCheckBox("Bottom-Top Drum Display", false);
 		bottomUpReverseDrumPanels.addChangeListener(new ChangeListener() {
 
@@ -1504,14 +1582,46 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 
+		displayStylePanel.add(bottomUpReverseDrumPanels);
+		displayStylePanel.add(checkbutt);
+		displayStylePanel.add(displayVeloRectValues);
+		displayStylePanel.add(knobControlByDragging);
+		displayStylePanel.add(highlightPatterns);
+		displayStylePanel.add(highlightScoreNotes);
+		displayStylePanel.add(customFilenameAddTimestamp);
+		displayStylePanel.add(miniScorePopup);
+
+		// GENERATION
+
+		//          scale
+		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
+		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
+
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
 				"Track History - Include Regenerated Tracks", false);
+		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
+		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 
-		panelGenerationSettingsPanel.add(bottomUpReverseDrumPanels);
+
+		JPanel keyChangePanel = new JPanel();
+		keyChangePanel.setLayout(new GridLayout(0, 2, 10, 30));
+		keyChangeTypeSelection = new ScrollComboBox<String>(false);
+		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" },
+				keyChangeTypeSelection);
+		keyChangeTypeSelection.setVal("TWOFIVEONE");
+		keyChangeTypeSelection.setPreferredSize(new Dimension(250, 30));
+		keyChangeTypeSelection.addItemListener(this);
+		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
+		keyChangePanel.add(keyChangeTypeSelection);
+
+		panelGenerationSettingsPanel.add(customMidiForceScale);
+		panelGenerationSettingsPanel.add(transposedNotesForceScale);
 		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
-		extraSettingsPanel.add(panelGenerationSettingsPanel);
+		panelGenerationSettingsPanel.add(melodyPatternFlip);
+		panelGenerationSettingsPanel.add(patternApplyPausesWhenGenerating);
+		panelGenerationSettingsPanel.add(keyChangePanel);
 
 		initHelperPopups();
 	}
@@ -1572,11 +1682,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void recomposeSection() {
-		if (arrSection.getSelectedIndex() == 0) {
+		if (!isCustomSection()) {
 			return;
 		}
 		manualArrangement.setSelected(true);
-		for (int i = 2; i < 5; i++) {
+		for (int i = 0; i < 5; i++) {
 			createPanels(i, getInstList(i).size(), false);
 			applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
 		}
@@ -1611,7 +1721,10 @@ public class VibeComposerGUI extends JFrame
 			secConfig.setSectionSwingOverride(sectionGuiConfig.getGlobalSwingOverride());*/
 			currentSec.setCustomChords(sectionGuiConfig.getCustomChords());
 			currentSec.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
-			currentSec.setCustomChordsDurationsEnabled(true);
+			currentSec.setCustomChordsEnabled(true);
+			if (!"4,4,4,4".equals(currentSec.getCustomDurations())) {
+				currentSec.setCustomDurationsEnabled(true);
+			}
 			arrSection.getCurrentButton().repaint();
 			switchPanelsForSectionSelection(arrSection.getVal());
 
@@ -1622,6 +1735,22 @@ public class VibeComposerGUI extends JFrame
 			//copyConfigToGUI(guiConfig);
 			//clearAllSeeds();
 		}
+	}
+
+	private void generatePanels(int part, boolean triggerRegenerate) {
+		int panelCount = isCustomSection() ? getInstList(part).size()
+				: Integer.valueOf(randomPanelsToGenerate[part].getText());
+		createPanels(part, panelCount, false);
+		recalculateTabPaneCounts();
+		recalculateSoloMuters();
+
+		if (triggerRegenerate && canRegenerateOnChange()) {
+			regenerate();
+		}
+	}
+
+	private void generatePanels(int part) {
+		generatePanels(part, false);
 	}
 
 	private void initMelodyGenSettings(int startY, int anchorSide) {
@@ -1652,97 +1781,41 @@ public class VibeComposerGUI extends JFrame
 		//melodySettingsPanel.add(melodyFirstNoteFromChord);
 		//melodySettingsPanel.add(new JLabel("But Randomized:"));
 		//melodySettingsPanel.add(randomChordNote);
-
-		// ---- EXTRA -----
-
-		JPanel melodySettingsExtraPanelShape = new JPanel();
-		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelShape.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS+");
-		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
-		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
-
-		melodyBasicChordsOnly = new CustomCheckBox("<html>Base<br> Chords</html>", false);
-		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
-		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 20);
-		melodyEmphasizeKey = new CustomCheckBox("<html>Emphasize<br> Key</html>", true);
-		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
-		melodyArpySurprises = new CustomCheckBox("<html>Insert<br> Arps</html>", false);
-		melodySingleNoteExceptions = new CustomCheckBox("<html>Single Note<br>Exceptions</html>",
-				true);
-		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>",
-				true);
-		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
-		melodyAvoidChordJumps = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
-		melodyUseDirectionsFromProgression = new CustomCheckBox(
-				"<html>Use Chord<br>Directions</html>", false);
-		melodyBlockTargetMode = new ScrollComboBox<>();
-		ScrollComboBox.addAll(
-				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
-				melodyBlockTargetMode);
-		melodyBlockTargetMode.setSelectedIndex(2);
-		melodyTargetNotesRandomizeOnCompose = makeCheckBox(
-				"<html>Randomize Targets<br> on Compose</html>", true, true);
-		melodyPatternEffect = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" },
-				melodyPatternEffect);
-		melodyPatternEffect.setSelectedIndex(2);
-		melodyPatternRandomizeOnCompose = makeCheckBox(
-				"<html>Randomize Pattern<br> on Compose</html>", true, true);
-		melodyRhythmAccents = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
-				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
-		melodyRhythmAccentsMode = new ScrollComboBox<>();
-		ScrollComboBox.addAll(
-				new String[] { "Mute", "Pitch+", "Pitch-", "Pitch~", "Vol+", "Vol-", "---" },
-				melodyRhythmAccentsMode);
-		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
-
-		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
-		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
-		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
-
-		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
-		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
-		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
-		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
-		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
-		melodySettingsExtraPanelShape.add(melodyArpySurprises);
-		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
-		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
-		melodySettingsExtraPanelShape.add(melodyLegacyMode);
 		//melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
 
-		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
-		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS++");
-		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
-		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
+		JPanel melodySettingsExtraPanelOrg = initMelodySettings();
+		JPanel melodySettingsExtraPanelShape = initMelodySettingsPlus();
+		JPanel melodySettingsExtraPanelBlocksPatternsCompose = initMelodySettingsPlusPlus();
 
 
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
-		melodySettingsExtraPanelBlocksPatternsCompose
-				.add(new JLabel("<html>Note Target<br>Mode</html>"));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
-		JPanel postProcessPanel = new JPanel();
-		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		postProcessPanel.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
-		postProcessPanel.add(melodyRhythmAccents);
-		postProcessPanel.add(new JLabel("Mode"));
-		postProcessPanel.add(melodyRhythmAccentsMode);
-		postProcessPanel.add(melodyRhythmAccentsPocket);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(postProcessPanel);
+		//scrollableMelodyPanels.add(melodySettingsPanel);
+		melodyParentPanel = new JPanel() {
+			@Override
+			public Dimension getPreferredSize() {
+				return scrollPaneDimension;
+			}
+		};
+		melodyParentPanel.setLayout(new BoxLayout(melodyParentPanel, BoxLayout.Y_AXIS));
+		JPanel borderPanel = new JPanel() {
+			@Override
+			public Dimension getMaximumSize() {
+				return new Dimension(scrollPaneDimension.width, 150);
+			}
+		};
+		borderPanel.setLayout(new DynamicGridLayout(0, 1));
+		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		borderPanel.add(melodySettingsExtraPanelOrg);
+		borderPanel.add(melodySettingsExtraPanelShape);
+		borderPanel.add(melodySettingsExtraPanelBlocksPatternsCompose);
+		melodyParentPanel.add(borderPanel);
+		melodyParentPanel.add(melodyScrollPane);
+		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
 
+		toggleableComponents.add(melodySettingsExtraPanelShape);
+		toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
+	}
+
+	private JPanel initMelodySettings() {
 		JPanel melodySettingsExtraPanelOrg = new JPanel();
 		melodySettingsExtraPanelOrg.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1755,18 +1828,18 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(filterLabel);
 		melodySettingsExtraPanelOrg.add(groupFilterSliders[0]);
 
-		randomizeMelodies = makeButton("Randomize Melodies", e -> {
-			createPanels(0, 3, false);
-			recalculateTabPaneCounts();
-			recalculateSoloMuters();
-
-			if (canRegenerateOnChange()) {
-				regenerate();
-			}
+		addPanelButtons[0] = makeButton("+Melody", e -> {
+			addPanel(0);
 		});
-		melodySettingsExtraPanelOrg.add(randomizeMelodies);
-		randomizeMelodiesOnCompose = makeCheckBox("On Compose", false, true);
-		melodySettingsExtraPanelOrg.add(randomizeMelodiesOnCompose);
+		generatePanelButtons[0] = makeButton("Generate Melodies:", e -> {
+			generatePanels(0, true);
+		});
+		randomPanelsToGenerate[0] = new JTextField("3", 2);
+		melodySettingsExtraPanelOrg.add(addPanelButtons[0]);
+		melodySettingsExtraPanelOrg.add(generatePanelButtons[0]);
+		melodySettingsExtraPanelOrg.add(randomPanelsToGenerate[0]);
+		generateMelodiesOnCompose = makeCheckBox("On Compose", false, true);
+		melodySettingsExtraPanelOrg.add(generateMelodiesOnCompose);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
 		JButton clearUserMelodySeed = makeButton("Clear Seed",
@@ -1819,33 +1892,102 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(dropPane);
 		melodySettingsExtraPanelOrg.add(new JLabel("in Mode:"));
 		melodySettingsExtraPanelOrg.add(userMelodyScaleModeSelect);
+		return melodySettingsExtraPanelOrg;
+	}
+
+	private JPanel initMelodySettingsPlus() {
+		JPanel melodySettingsExtraPanelShape = new JPanel();
+		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanelShape.setMaximumSize(new Dimension(1800, 50));
+		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS+");
+		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
+		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
+
+		melodyBasicChordsOnly = new CustomCheckBox("<html>Base<br> Chords</html>", false);
+		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
+		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 20);
+		melodyEmphasizeKey = new CustomCheckBox("<html>Emphasize<br> Key</html>", true);
+		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
+		melodyArpySurprises = new CustomCheckBox("<html>Insert<br> Arps</html>", false);
+		melodySingleNoteExceptions = new CustomCheckBox("<html>Single Note<br>Exceptions</html>",
+				true);
+		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>",
+				true);
+		melodyNewBlocksChance = new KnobPanel("New<br>Blocks%", 25);
+		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
+		melodyAvoidChordJumps = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
+		melodyUseDirectionsFromProgression = new CustomCheckBox(
+				"<html>Use Chord<br>Directions</html>", false);
+		melodyBlockTargetMode = new ScrollComboBox<>();
+		ScrollComboBox.addAll(
+				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
+				melodyBlockTargetMode);
+		melodyBlockTargetMode.setSelectedIndex(2);
+		melodyTargetNotesRandomizeOnCompose = makeCheckBox(
+				"<html>Randomize Targets<br> on Compose</html>", true, true);
+		melodyPatternEffect = new ScrollComboBox<>();
+		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" },
+				melodyPatternEffect);
+		melodyPatternEffect.setSelectedIndex(2);
+		melodyPatternRandomizeOnCompose = makeCheckBox(
+				"<html>Randomize Pattern<br> on Compose</html>", true, true);
+		melodyRhythmAccents = new ScrollComboBox<>();
+		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
+				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
+		melodyRhythmAccentsMode = new ScrollComboBox<>();
+		ScrollComboBox.addAll(
+				new String[] { "Mute", "Pitch+", "Pitch-", "Pitch~", "Vol+", "Vol-", "---" },
+				melodyRhythmAccentsMode);
+		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
+
+		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
+		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
+		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
+
+		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
+		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
+		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
+		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
+		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
+		melodySettingsExtraPanelShape.add(melodyArpySurprises);
+		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
+		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
+		melodySettingsExtraPanelShape.add(melodyNewBlocksChance);
+		melodySettingsExtraPanelShape.add(melodyLegacyMode);
+		return melodySettingsExtraPanelShape;
+	}
+
+	private JPanel initMelodySettingsPlusPlus() {
+		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
+		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
+		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
+		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS++");
+		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
+		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
 
 
-		//scrollableMelodyPanels.add(melodySettingsPanel);
-		melodyParentPanel = new JPanel() {
-			@Override
-			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
-			}
-		};
-		melodyParentPanel.setLayout(new BoxLayout(melodyParentPanel, BoxLayout.Y_AXIS));
-		JPanel borderPanel = new JPanel() {
-			@Override
-			public Dimension getMaximumSize() {
-				return new Dimension(scrollPaneDimension.width, 150);
-			}
-		};
-		borderPanel.setLayout(new DynamicGridLayout(0, 1));
-		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
-		borderPanel.add(melodySettingsExtraPanelOrg);
-		borderPanel.add(melodySettingsExtraPanelShape);
-		borderPanel.add(melodySettingsExtraPanelBlocksPatternsCompose);
-		melodyParentPanel.add(borderPanel);
-		melodyParentPanel.add(melodyScrollPane);
-		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
-
-		toggleableComponents.add(melodySettingsExtraPanelShape);
-		toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
+		melodySettingsExtraPanelBlocksPatternsCompose
+				.add(new JLabel("<html>Note Target<br>Mode</html>"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
+		JPanel postProcessPanel = new JPanel();
+		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		postProcessPanel.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
+		postProcessPanel.add(melodyRhythmAccents);
+		postProcessPanel.add(new JLabel("Mode"));
+		postProcessPanel.add(melodyRhythmAccentsMode);
+		postProcessPanel.add(melodyRhythmAccentsPocket);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(postProcessPanel);
+		return melodySettingsExtraPanelBlocksPatternsCompose;
 	}
 
 	public static JCheckBox makeCheckBox(String string, boolean b, boolean thick) {
@@ -1858,7 +2000,7 @@ public class VibeComposerGUI extends JFrame
 		return cb;
 	}
 
-	public void fixCombinedMelodyTracks() {
+	/*public void fixCombinedMelodyTracks() {
 		if (combineMelodyTracks == null) {
 			return;
 		}
@@ -1882,15 +2024,18 @@ public class VibeComposerGUI extends JFrame
 		if (!foundValid) {
 			melodyPanels.get(0).toggleCombinedMelodyDisabledUI(true);
 		}
-	}
+	}*/
 
 	private void initMelody(int startY, int anchorSide) {
+		constraints.gridy = startY;
+		constraints.anchor = anchorSide;
+		instrumentTabPane.addTab("Melody", melodyParentPanel);
+	}
 
+	private void generateInitialMelodyPanels() {
 		for (int i = 0; i < 3; i++) {
-			MelodyPanel melodyPanel = new MelodyPanel(this);
-			((JPanel) melodyScrollPane.getViewport().getView()).add(melodyPanel);
+			MelodyPanel melodyPanel = (MelodyPanel) addInstPanelToLayout(0);
 			melodyPanel.setInstrument(73);
-			melodyPanels.add(melodyPanel);
 			melodyPanel.setPanelOrder(i + 1);
 			if (i > 0) {
 				melodyPanel.setAccents(50);
@@ -1901,8 +2046,6 @@ public class VibeComposerGUI extends JFrame
 				if (i > 1) {
 					melodyPanel.setMuteInst(true);
 				}
-				melodyPanel.toggleCombinedMelodyDisabledUI(
-						combineMelodyTracks != null && !combineMelodyTracks.isSelected());
 				melodyPanel.setVelocityMax(70);
 				melodyPanel.setVelocityMin(40);
 				melodyPanel.setMidiChannel(i + 6);
@@ -1926,18 +2069,10 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setNoteLengthMultiplier(108);
 			}
 		}
-
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Melody", melodyParentPanel);
-
-
 	}
 
 
 	private void initBass(int startY, int anchorSide) {
-		BassPanel bassPanel = new BassPanel(this);
 
 		JPanel scrollableBassPanels = new JPanel();
 		scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
@@ -1965,6 +2100,18 @@ public class VibeComposerGUI extends JFrame
 		bassSettingsPanel.add(filterLabel);
 		bassSettingsPanel.add(groupFilterSliders[1]);
 
+		addPanelButtons[1] = makeButton("+Bass", e -> {
+			addPanel(1);
+		});
+		generatePanelButtons[1] = makeButton("Generate Basses:", e -> {
+			generatePanels(1, true);
+		});
+		randomPanelsToGenerate[1] = new JTextField("1", 2);
+		bassSettingsPanel.add(addPanelButtons[1]);
+		bassSettingsPanel.add(generatePanelButtons[1]);
+		bassSettingsPanel.add(randomPanelsToGenerate[1]);
+
+
 		JPanel bassSettingsAdvancedPanel = new JPanel();
 		bassSettingsAdvancedPanel.add(new JLabel("BASS SETTINGS+"));
 		//bassSettingsAdvancedPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -1991,12 +2138,7 @@ public class VibeComposerGUI extends JFrame
 		bassParentPanel.add(borderPanel);
 		bassParentPanel.add(bassScrollPane);
 
-		scrollableBassPanels.add(bassPanel);
-
 		bassSettingsAdvancedPanel.setVisible(false);
-
-
-		bassPanels.add(bassPanel);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
@@ -2028,21 +2170,18 @@ public class VibeComposerGUI extends JFrame
 		chordSettingsPanel.add(filterLabel);
 		chordSettingsPanel.add(groupFilterSliders[2]);
 
-		chordAddJButton = makeButton("+Chord", "AddChord");
-		chordSettingsPanel.add(chordAddJButton);
-
-		randomChordsToGenerate = new JTextField("2", 2);
-		randomizeChords = makeButton("Generate Chords:", e -> {
-			createPanels(2, Integer.valueOf(randomChordsToGenerate.getText()), false);
-			recalculateTabPaneCounts();
-			recalculateSoloMuters();
-			if (canRegenerateOnChange()) {
-				regenerate();
-			}
+		addPanelButtons[2] = makeButton("+Chord", e -> {
+			addPanel(2);
 		});
+		generatePanelButtons[2] = makeButton("Generate Chords:", e -> {
+			generatePanels(2, true);
+		});
+		randomPanelsToGenerate[2] = new JTextField("2", 2);
+		chordSettingsPanel.add(addPanelButtons[2]);
+		chordSettingsPanel.add(generatePanelButtons[2]);
+		chordSettingsPanel.add(randomPanelsToGenerate[2]);
+
 		randomChordsGenerateOnCompose = makeCheckBox("On Compose", true, true);
-		chordSettingsPanel.add(randomizeChords);
-		chordSettingsPanel.add(randomChordsToGenerate);
 		chordSettingsPanel.add(randomChordsGenerateOnCompose);
 
 
@@ -2153,10 +2292,6 @@ public class VibeComposerGUI extends JFrame
 	private void initChords(int startY, int anchorSide) {
 		// ---- CHORDS ----
 		// gridy 50 - 99 range
-
-
-		createRandomChordPanels(Integer.valueOf(randomChordsToGenerate.getText()), false, null);
-
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		instrumentTabPane.addTab("Chords", chordParentPanel);
@@ -2186,22 +2321,18 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.add(filterLabel);
 		arpsSettingsPanel.add(groupFilterSliders[3]);
 
-		arpAddJButton = makeButton("+Arp ", "AddArp");
-		arpsSettingsPanel.add(arpAddJButton);
-
-		randomArpsToGenerate = new JTextField("3", 2);
-		randomizeArps = makeButton("Generate Arps:", e -> {
-			createPanels(3, Integer.valueOf(randomArpsToGenerate.getText()), false);
-			recalculateTabPaneCounts();
-			recalculateSoloMuters();
-
-			if (canRegenerateOnChange()) {
-				regenerate();
-			}
+		addPanelButtons[3] = makeButton("+Arp", e -> {
+			addPanel(3);
 		});
+		generatePanelButtons[3] = makeButton("Generate Arps:", e -> {
+			generatePanels(3, true);
+		});
+		randomPanelsToGenerate[3] = new JTextField("3", 2);
+		arpsSettingsPanel.add(addPanelButtons[3]);
+		arpsSettingsPanel.add(generatePanelButtons[3]);
+		arpsSettingsPanel.add(randomPanelsToGenerate[3]);
+
 		randomArpsGenerateOnCompose = makeCheckBox("on Compose", true, true);
-		arpsSettingsPanel.add(randomizeArps);
-		arpsSettingsPanel.add(randomArpsToGenerate);
 		arpsSettingsPanel.add(randomArpsGenerateOnCompose);
 
 
@@ -2222,6 +2353,8 @@ public class VibeComposerGUI extends JFrame
 		randomArpMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
 		randomArpMinLength = new DetachedKnobPanel("Min<br>Length", 75, 25, 200);
 		randomArpMaxLength = new DetachedKnobPanel("Max<br>Length", 100, 25, 200);
+		randomArpCorrectMelodyNotes = new CustomCheckBox("<html>Correct Notes<br>by Melody</html>",
+				false);
 
 		arpsSettingsPanel.add(new JLabel("Arp#"));
 		arpsSettingsPanel.add(randomArpHitsPicker);
@@ -2270,6 +2403,7 @@ public class VibeComposerGUI extends JFrame
 		arpSettingsExtraPanel.add(randomArpShiftChance);
 		arpSettingsExtraPanel.add(randomArpMinLength);
 		arpSettingsExtraPanel.add(randomArpMaxLength);
+		arpSettingsExtraPanel.add(randomArpCorrectMelodyNotes);
 		arpSettingsExtraPanel.add(clearArpPatternSeeds);
 		toggleableComponents.add(arpSettingsExtraPanel);
 
@@ -2309,10 +2443,6 @@ public class VibeComposerGUI extends JFrame
 
 	private void initArps(int startY, int anchorSide) {
 		// --- ARPS -----------
-
-
-		createRandomArpPanels(Integer.valueOf(randomArpsToGenerate.getText()), false, null);
-
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		instrumentTabPane.addTab("Arps", arpParentPanel);
@@ -2351,21 +2481,18 @@ public class VibeComposerGUI extends JFrame
 		drumsPanel.add(groupFilterSliders[4]);
 		//drumsPanel.add(drumInst);
 
-		drumAddJButton = makeButton(" +Drum ", "AddDrum");
-		drumsPanel.add(drumAddJButton);
-
-		randomDrumsToGenerate = new JTextField("6", 2);
-		randomizeDrums = makeButton("Generate Drums: ", e -> {
-			createPanels(4, Integer.valueOf(randomDrumsToGenerate.getText()), false);
-			recalculateTabPaneCounts();
-			recalculateSoloMuters();
-			if (canRegenerateOnChange()) {
-				regenerate();
-			}
+		addPanelButtons[4] = makeButton("+Drum", e -> {
+			addPanel(4);
 		});
+		generatePanelButtons[4] = makeButton("Generate Drums:", e -> {
+			generatePanels(4, true);
+		});
+		randomPanelsToGenerate[4] = new JTextField("6", 2);
+		drumsPanel.add(addPanelButtons[4]);
+		drumsPanel.add(generatePanelButtons[4]);
+		drumsPanel.add(randomPanelsToGenerate[4]);
+
 		randomDrumsGenerateOnCompose = makeCheckBox("on Compose", true, true);
-		drumsPanel.add(randomizeDrums);
-		drumsPanel.add(randomDrumsToGenerate);
 		drumsPanel.add(randomDrumsGenerateOnCompose);
 
 		JButton clearPatternSeeds = makeButton("Clear Presets", "ClearPatterns");
@@ -2551,10 +2678,6 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initDrums(int startY, int anchorSide) {
-
-
-		createRandomDrumPanels((Integer.valueOf(randomDrumsToGenerate.getText())), false, null);
-
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		instrumentTabPane.addTab("Drums", drumParentPanel);
@@ -2896,11 +3019,14 @@ public class VibeComposerGUI extends JFrame
 				Section sec = actualArrangement.getSections()
 						.get(arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
-					sec.resetCustomizedParts();
+					sec.resetCustomizedParts(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
 					setActualModel(actualArrangement.convertToActualTableModel(), false);
-					CheckButton cb = arrSection.getCurrentButton();
-					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
-					cb.repaint();
+					if (!sec.hasCustomizedParts()) {
+						CheckButton cb = arrSection.getCurrentButton();
+						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
+						cb.repaint();
+					}
+
 					arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true);
 				}
 			}
@@ -2910,7 +3036,7 @@ public class VibeComposerGUI extends JFrame
 			actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
 			setActualModel(actualArrangement.convertToActualTableModel(), false);
 			arrSection.getButtons().forEach(cb -> {
-				if (!GLOBAL.equals(cb.getText())) {
+				if (!GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
 					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 					repaint();
 				}
@@ -3743,7 +3869,7 @@ public class VibeComposerGUI extends JFrame
 		};
 		scoreScrollPane.setViewportView(scrollableScorePanel);
 
-		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		/*scoreScrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
@@ -3794,7 +3920,7 @@ public class VibeComposerGUI extends JFrame
 										/ 2; j++) {
 									// in case of swap chords, behave same as custom chords
 									if (sectionVars.get(j) > 0
-											|| (j == 1 && sec.isCustomChordsDurationsEnabled())) {
+											|| (j == 1 && sec.isCustomChordsEnabled())) {
 										g.drawImage(SECTION_VARIATIONS_ICONS.get(j), currentX, 6,
 												this);
 									}
@@ -3865,7 +3991,7 @@ public class VibeComposerGUI extends JFrame
 				? (int) sec.getSectionVariations().stream().filter(e -> e > 0).count()
 				: 0;
 		count += (sec.isTransition() ? 1 : 0);
-		count += (sec.isCustomChordsDurationsEnabled() ? 1 : 0);
+		count += (sec.isCustomChordsEnabled() ? 1 : 0);
 		int color = 0;
 		int total = Section.sectionVariationNames.length + 1;
 		if (isDarkMode) {
@@ -3893,7 +4019,7 @@ public class VibeComposerGUI extends JFrame
 		randomButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JButton randomizeInstruments = makeButton("Randomize Inst.", "RandomizeInst");
 
-		JButton randomizeBpm = makeButton("Randomize BPM", "RandomizeBpm");
+		JButton randomizeBpm = makeButton("Randomize BPM", e -> randomizeBPM());
 		JButton randomizeTranspose = makeButton("Randomize Key", "RandomizeTranspose");
 
 		JPanel randomInstPanel = new JPanel();
@@ -4285,16 +4411,15 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chords2x = new ArrayList<>(chords);
-					chords.forEach(ch -> {
-						chords2x.add(ch);
-					});
-					userChords.setupChords(chords2x);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<String> chords = userChords.getChordList();
+				List<String> chords2x = new ArrayList<>(chords);
+				chords.forEach(ch -> {
+					chords2x.add(ch);
+				});
+				userChords.setupChords(chords2x);
 			}
 		});
 		customChordsPanel.add(twoExChordsButton);
@@ -4306,17 +4431,16 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chordsDd = new ArrayList<>();
-					chords.forEach(ch -> {
-						chordsDd.add(ch);
-						chordsDd.add(ch);
-					});
-					userChords.setupChords(chordsDd);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<String> chords = userChords.getChordList();
+				List<String> chordsDd = new ArrayList<>();
+				chords.forEach(ch -> {
+					chordsDd.add(ch);
+					chordsDd.add(ch);
+				});
+				userChords.setupChords(chordsDd);
 			}
 		});
 		customChordsPanel.add(ddChordsButton);
@@ -4328,19 +4452,42 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Pair<List<String>, List<Double>> normalizedChords = solveUserChords(
-						userChords.getChordListString(), userChordsDurations.getText());
-				if (normalizedChords != null) {
-					List<String> chords = normalizedChords.getLeft();
-					List<String> chordsDotDot = new ArrayList<>();
-					chords.forEach(ch -> {
-						chordsDotDot.add(MidiUtils.makeSpelledChord(MidiUtils.mappedChord(ch)));
-					});
-					userChords.setupChords(chordsDotDot);
+				if (userChords.chordCount() < 1) {
+					return;
 				}
+				List<Chordlet> chordlets = userChords.getChordlets();
+				List<String> chordsDotDot = new ArrayList<>();
+				chordlets.forEach(ch -> {
+					chordsDotDot.add(MidiUtils
+							.makeSpelledChord(MidiUtils.mappedChord(ch.getChordText(), true))
+							+ ch.getInversionText());
+				});
+				userChords.setupChords(chordsDotDot);
 			}
 		});
 		customChordsPanel.add(dotdotChordsButton);
+
+		JButton ivChordsButton = new JButton("Ch");
+		ivChordsButton.setPreferredSize(new Dimension(25, 25));
+		ivChordsButton.setMargin(new Insets(0, 0, 0, 0));
+		ivChordsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (userChords.chordCount() < 1) {
+					return;
+				}
+				List<Chordlet> chordlets = userChords.getChordlets();
+				List<String> chordStrings = new ArrayList<>();
+				chordlets.forEach(ch -> {
+					chordStrings.add(MidiUtils
+							.chordStringFromPitches(MidiUtils.mappedChord(ch.getChordText(), true))
+							+ ch.getInversionText());
+				});
+				userChords.setupChords(chordStrings);
+			}
+		});
+		customChordsPanel.add(ivChordsButton);
 
 		JButton resetChordsButton = new JButton("R");
 		resetChordsButton.setPreferredSize(new Dimension(25, 25));
@@ -4375,14 +4522,29 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (melodyPanels.isEmpty()) {
+					return;
+				}
 				userChords.alignWithMelodyTargetNotes(melodyPanels.get(0).getChordNoteChoices());
 			}
 		});
 		customChordsPanel.add(melodifyChordsButton);
 
+		JButton chordTransformButton = new JButton("T");
+		chordTransformButton.setPreferredSize(new Dimension(25, 25));
+		chordTransformButton.setMargin(new Insets(0, 0, 0, 0));
+		chordTransformButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new ChordTransformPopup(userChords.getChordListString());
+			}
+		});
+		customChordsPanel.add(chordTransformButton);
+
+		userDurationsEnabled = new CheckButton("Custom Durations", false);
+		customChordsPanel.add(userDurationsEnabled);
 		userChordsDurations = new JTextField("4,4,4,4", 9);
-		JLabel userChordsDurationsLabel = new JLabel("Chord durations:");
-		customChordsPanel.add(userChordsDurationsLabel);
 		customChordsPanel.add(userChordsDurations);
 
 
@@ -4391,11 +4553,15 @@ public class VibeComposerGUI extends JFrame
 		everythingPanel.add(customChordsPanel, constraints);
 
 		toggleableComponents.add(twoExChordsButton);
+		toggleableComponents.add(userDurationsEnabled);
 		toggleableComponents.add(userChordsDurations);
 		toggleableComponents.add(dotdotChordsButton);
 		toggleableComponents.add(ddChordsButton);
 		toggleableComponents.add(normalizeChordsButton);
-		toggleableComponents.add(userChordsDurationsLabel);
+		toggleableComponents.add(ivChordsButton);
+		toggleableComponents.add(limitChordsButton);
+		toggleableComponents.add(melodifyChordsButton);
+		toggleableComponents.add(chordTransformButton);
 
 	}
 
@@ -4485,7 +4651,7 @@ public class VibeComposerGUI extends JFrame
 
 			private void recalculateSolosMutes() {
 				// recalc sequencer tracks from button colorings
-				if (needToRecalculateSoloMuters && !composingInProgress) {
+				if (needToRecalculateSoloMuters && !heavyBackgroundTasksInProgress) {
 					needToRecalculateSoloMuters = false;
 					unapplySolosMutes(true);
 
@@ -4700,7 +4866,7 @@ public class VibeComposerGUI extends JFrame
 							}
 						}
 
-						if (loopBeat.isSelected() && !composingInProgress && !isDragging
+						if (loopBeat.isSelected() && !heavyBackgroundTasksInProgress && !isDragging
 								&& (sequencer != null)) {
 							/*if (showScore.isSelected() && !loopBeatCompose.isSelected()) {
 								showScore.setSelected(false);
@@ -4722,13 +4888,22 @@ public class VibeComposerGUI extends JFrame
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
 									- 50) || sequencerEnded) {
 								stopMidi();
-								if (!loopBeatCompose.isSelected()) {
+								switch (loopBeatCompose.getVal()) {
+								case "REGENERATE":
 									regenerate();
-								} else {
+									break;
+								case "COMPOSE":
 									ActionEvent action = new ActionEvent(VibeComposerGUI.this,
 											ActionEvent.ACTION_PERFORMED, "Compose");
 									SwingUtilities.invokeLater(() -> actionPerformed(action));
-
+									break;
+								case "REPLAY":
+									playMidi(true);
+									break;
+								default:
+									stopMidi();
+									throw new IllegalArgumentException(
+											"Unsupported loop beat behavior!");
 								}
 							}
 						}
@@ -4751,7 +4926,7 @@ public class VibeComposerGUI extends JFrame
 						}
 					} catch (Exception e) {
 						LG.e("Exception in SEQUENCE SLIDER:");
-						composingInProgress = false;
+						heavyBackgroundTasksInProgress = false;
 						LG.e(e.getMessage());
 						e.printStackTrace();
 						try {
@@ -4772,17 +4947,18 @@ public class VibeComposerGUI extends JFrame
 		int part = instrumentTabPane.getSelectedIndex();
 		if (part >= 2 && part <= 4) {
 			int measureStart = sliderMeasureStartTimes.get(
-					sectIndex >= 0 && (sectIndex < sliderMeasureStartTimes.size() - 1) ? sectIndex
+					(sectIndex >= 0 && (sectIndex < sliderMeasureStartTimes.size() - 1)) ? sectIndex
 							: 0);
 			int beatFindingStartIndex = sliderBeatStartTimes.indexOf(measureStart);
 			int beatChordNumInMeasure = 0;
-			int bfsiEnd = 0;
+			int bfsi = beatFindingStartIndex;
+			//int bfsiEnd = 0;
 			int lastMeasureStartTimeIndex = 0;
 			double quarterNote = beatFromBpm(0);
-			List<Double> beatQuarterNotesInMeasure = new ArrayList<>();
-			for (int bfsi = beatFindingStartIndex; bfsi < sliderBeatStartTimes.size(); bfsi++) {
+			List<Double> prevChordDurations = new ArrayList<>();
+			for (; bfsi < sliderBeatStartTimes.size(); bfsi++) {
 				if (sliderBeatStartTimes.get(bfsi) > val) {
-					bfsiEnd = bfsi;
+					//bfsiEnd = bfsi;
 					break;
 				} else {
 
@@ -4792,13 +4968,13 @@ public class VibeComposerGUI extends JFrame
 						// reset when exactly on measure
 						beatChordNumInMeasure = 0;
 						lastMeasureStartTimeIndex = measureIndex;
-						beatQuarterNotesInMeasure.clear();
+						prevChordDurations.clear();
 					} else {
 						beatChordNumInMeasure++;
 					}
 
 					if (beatChordNumInMeasure > 0) {
-						beatQuarterNotesInMeasure.add((sliderBeatStartTimes.get(bfsi)
+						prevChordDurations.add((sliderBeatStartTimes.get(bfsi)
 								- sliderBeatStartTimes.get(bfsi - 1)) / quarterNote);
 					}
 				}
@@ -4813,9 +4989,11 @@ public class VibeComposerGUI extends JFrame
 			if (quarterNotesInMeasure < MidiGenerator.DBL_ERR) {
 				return;
 			}
-
-
-			// needed: wholeNotesInMeasure, beatNumInMeasure, beatDurationsInMeasure
+			// need current chord's duration!
+			double currentChordDuration = (sliderBeatStartTimes.size() > bfsi)
+					? (sliderBeatStartTimes.get(bfsi) - sliderBeatStartTimes.get(bfsi - 1))
+							/ quarterNote
+					: Durations.WHOLE_NOTE;
 
 			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
 			List<InstPanel> panels = getAffectedPanels(part);
@@ -4844,8 +5022,8 @@ public class VibeComposerGUI extends JFrame
 						- MidiGenerator.noteMultiplier * (ip.getOffset() / 1000.0);
 
 				ip.getComboPanel().notifyPatternHighlight(delayedQuarterNotes,
-						beatChordNumInMeasure, beatQuarterNotesInMeasure, turnOff, isIgnoreFill,
-						totalChords);
+						beatChordNumInMeasure, prevChordDurations, turnOff, isIgnoreFill,
+						totalChords, currentChordDuration);
 			}
 			/*for (InstPanel ip : panels) {
 				if (ip.getMuteInst()
@@ -4963,7 +5141,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel playSavePanel = new JPanel();
 		playSavePanel.setOpaque(false);
 		stopMidi = makeButton("STOP", e -> stopMidi());
-		playMidi = makeButton("PLAY", e -> playMidi());
+		playMidi = makeButton("PLAY", e -> playMidi(false));
 		pauseMidi = makeButton("PAUSE", e -> pauseMidi());
 		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
 		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
@@ -5017,26 +5195,11 @@ public class VibeComposerGUI extends JFrame
 
 
 		showScore = new JButton("Show Score Tab");
-		showScore.addActionListener(new ActionListener() {
+		showScore.addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (scorePanel != null) {
-					if (instrumentTabPane.getComponentCount() == 8) {
-						instrumentTabPane.remove(scoreScrollPane);
-						scorePopup = new ShowScorePopup(scoreScrollPane);
-					} else {
-						if (scorePopup != null) {
-							scorePopup.close();
-							scorePopup = null;
-						}
-						if (instrumentTabPane.getComponentCount() < 8) {
-							instrumentTabPane.add(scoreScrollPane, 7);
-							instrumentTabPane.setTitleAt(7, " Score ");
-						}
-
-					}
-				}
+			public void mouseClicked(MouseEvent e) {
+				toggleShowScorePopup();
 			}
 		});
 
@@ -5048,7 +5211,8 @@ public class VibeComposerGUI extends JFrame
 
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
 		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
-		loopBeatCompose = new CheckButton("Compose On Loop Repeat", false, uiComposeTextColor());
+		loopBeatCompose = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "REGENERATE", "COMPOSE", "REPLAY" }, loopBeatCompose);
 
 		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -5128,6 +5292,7 @@ public class VibeComposerGUI extends JFrame
 		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(loopBeatCount);
+		playSettingsPanel.add(new JLabel("On Loop:"));
 		playSettingsPanel.add(loopBeatCompose);
 		playSettingsPanel.add(midiMode);
 		playSettingsPanel.add(midiModeDevices);
@@ -5165,7 +5330,8 @@ public class VibeComposerGUI extends JFrame
 						: MidiSystem.getSynthesizer();
 				synth = defSynth;
 				String soundbankOptional = (soundfont != null) ? "SB_" : "";
-				String filename = f.format(date) + "_" + soundbankOptional + currentMidi.getName();
+				String filename = f.format(date) + "_" + soundbankOptional
+						+ getFilenameForSaving(currentMidi.getName());
 				File exportFolderDir = new File(EXPORT_FOLDER);
 				exportFolderDir.mkdir();
 
@@ -5216,7 +5382,7 @@ public class VibeComposerGUI extends JFrame
 		helperPopupsPanel.add(makeButton("User Manual (opens browser)", e -> openHelpPopup()));
 		helperPopupsPanel.add(makeButton("Debug Console", e -> openDebugConsole()));
 		helperPopupsPanel.add(makeButton("About VibeComposer", e -> openAboutPopup()));
-		extraSettingsPanel.add(helperPopupsPanel);
+		extraSettingsPanel.add(helperPopupsPanel, BorderLayout.SOUTH);
 	}
 
 	private void startMidiCcThread() {
@@ -5272,7 +5438,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	protected void sendPanMessage(int pan100, int channel) {
-		int value127 = useMidiCC.isSelected() ? OMNI.clampVel(pan100 * 127 / 100) : 64;
+		int value127 = useMidiCC.isSelected() ? OMNI.clampMidi(pan100 * 127 / 100) : 64;
 		sendMidiCcMessage(value127, channel, 10);
 	}
 
@@ -5322,7 +5488,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
-		randomizeMelodiesOnCompose.setSelected(state);
+		generateMelodiesOnCompose.setSelected(state);
 		randomChordsGenerateOnCompose.setSelected(state);
 		randomArpsGenerateOnCompose.setSelected(state);
 		randomDrumsGenerateOnCompose.setSelected(state);
@@ -5342,7 +5508,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
-		randomizeMelodiesOnCompose.setForeground(fg);
+		generateMelodiesOnCompose.setForeground(fg);
 		randomChordsGenerateOnCompose.setForeground(fg);
 		randomArpsGenerateOnCompose.setForeground(fg);
 		randomDrumsGenerateOnCompose.setForeground(fg);
@@ -5467,8 +5633,8 @@ public class VibeComposerGUI extends JFrame
 		toggledComposeColor = uiComposeTextColor();
 
 
-		mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
-		subTitle.setForeground(toggledUIColor);
+		//mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
+		//subTitle.setForeground(toggledUIColor);
 		messageLabel.setForeground(toggledUIColor);
 		tipLabel.setForeground(toggledUIColor);
 		currentTime.setForeground(toggledUIColor);
@@ -5479,7 +5645,7 @@ public class VibeComposerGUI extends JFrame
 		playMidi.setForeground(toggledUIColor);
 		pauseMidi.setForeground(toggledUIColor);
 		stopMidi.setForeground(toggledUIColor);
-		loopBeatCompose.setOpaqueColor(toggledComposeColor);
+		loopBeatCompose.setForeground(toggledComposeColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
@@ -5565,12 +5731,10 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void toggleButtonEnabledForPanels(boolean isOriginal) {
-		chordAddJButton.setEnabled(isOriginal);
-		arpAddJButton.setEnabled(isOriginal);
-		drumAddJButton.setEnabled(isOriginal);
-		randomChordsToGenerate.setEnabled(isOriginal);
-		randomArpsToGenerate.setEnabled(isOriginal);
-		randomDrumsToGenerate.setEnabled(isOriginal);
+		for (int i = 0; i < 5; i++) {
+			addPanelButtons[i].setEnabled(isOriginal);
+			randomPanelsToGenerate[i].setEnabled(isOriginal);
+		}
 	}
 
 	private void softCloseSynth() {
@@ -5607,7 +5771,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void composeMidi(boolean regenerate) {
-		composingInProgress = true;
+		LG.i("==========Compose Midi: Starting...================");
+		heavyBackgroundTasksInProgress = true;
 		boolean logPerformance = true;
 		long systemTime = System.currentTimeMillis();
 
@@ -5621,7 +5786,7 @@ public class VibeComposerGUI extends JFrame
 					|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
 				LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
 				new TemporaryInfoPopup(("Nothing to compose! Uncheck MANUAL arrangement!"), 3000);
-				composingInProgress = false;
+				heavyBackgroundTasksInProgress = false;
 				return;
 			}
 
@@ -5675,7 +5840,8 @@ public class VibeComposerGUI extends JFrame
 			makeDir.mkdir();
 
 			String seedData = "" + masterpieceSeed;
-			if (melodyPanels.get(0).getPatternSeed() != 0 && !melodyPanels.get(0).getMuteInst()) {
+			if (!melodyPanels.isEmpty() && melodyPanels.get(0).getPatternSeed() != 0
+					&& !melodyPanels.get(0).getMuteInst()) {
 				seedData += "_" + melodyPanels.get(0).getPatternSeed();
 			}
 			String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
@@ -5716,7 +5882,12 @@ public class VibeComposerGUI extends JFrame
 			} else if (regenerate) {
 				midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 				midiConfig.setRegenerateCount(regenerateCount);
-				configHistory.removeItemAt(configHistory.getItemCount() - 1);
+				String oldBookmarkText = configHistory.getItemCount() > 0
+						? configHistory.getLastVal().getBookmarkText()
+						: "";
+				if (StringUtils.isEmpty(oldBookmarkText)) {
+					configHistory.removeItemAt(configHistory.getItemCount() - 1);
+				}
 				configHistory.addItem(midiConfig);
 				configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
 			}
@@ -5730,12 +5901,13 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			handleGeneratedMidi(regenerate, relPath, systemTime);
+			currentBeatMultiplier = beatDurationMultiplier.getSelectedItem();
 			resetArrSectionInBackground();
-			composingInProgress = false;
+			heavyBackgroundTasksInProgress = false;
 
 		} catch (Exception e) {
 			LG.e("Exception during midi generation! Cause: " + e.getMessage(), e);
-			composingInProgress = false;
+			heavyBackgroundTasksInProgress = false;
 			new TemporaryInfoPopup(BUG_HUNT_MESSAGE, null);
 			reapplySolosMutes();
 			return;
@@ -5771,8 +5943,11 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
 					&& melodyTargetNotesRandomizeOnCompose.isSelected();
 			MidiGenerator.TARGET_NOTES = (melody1ForcePatterns.isSelected()
+					&& !melodyPanels.isEmpty()
 					&& !melodyPanels.get(0).getNoteTargetsButton().isEnabled())
-							? melodyPanels.get(0).getChordNoteChoices()
+							? melodyPanels.stream()
+									.collect(Collectors.toMap(MelodyPanel::getPanelOrder,
+											MelodyPanel::getChordNoteChoices))
 							: null;
 
 			/*boolean addStartDelay = useArrangement.isSelected() || arrangementCustom.isSelected()
@@ -5792,16 +5967,34 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 
 			// solve user chords
-			String chords = userChords.getChordListString();
-			if (userChordsEnabled.isSelected() && userChords.getChordletsRaw().size() > 0) {
-				Pair<List<String>, List<Double>> solvedChordsDurations = solveUserChords(chords,
-						userChordsDurations.getText());
-				if (solvedChordsDurations != null) {
-					MidiGenerator.userChords = solvedChordsDurations.getLeft();
-					MidiGenerator.userChordsDurations = solvedChordsDurations.getRight();
+			boolean customChords = userChordsEnabled.isSelected()
+					&& userChords.getChordletsRaw().size() > 0;
+			if (customChords || userDurationsEnabled.isSelected()) {
+				List<String> chords = userChords.getChordList();
+				List<Double> durations = new ArrayList<>();
+				String[] durationSplit = userChordsDurations.getText().split(",");
+				if ((customChords && durationSplit.length < chords.size())
+						|| !userDurationsEnabled.isSelected()) {
+					durationSplit = null;
+				}
+
+				try {
+					for (int i = 0; i < (customChords ? chords.size()
+							: durationSplit.length); i++) {
+						durations.add(durationSplit != null
+								? (stretchMidi.getInt() * Double.valueOf(durationSplit[i]) / 100.0)
+								: MidiGenerator.Durations.WHOLE_NOTE);
+					}
+				} catch (Exception e) {
+					new TemporaryInfoPopup("Invalid durations!", 3000);
+				}
+
+				MidiGenerator.userChordsDurations = durations;
+
+				if (customChords) {
+					MidiGenerator.userChords = chords;
 				} else {
 					MidiGenerator.userChords.clear();
-					MidiGenerator.userChordsDurations.clear();
 				}
 			} else {
 				MidiGenerator.userChords.clear();
@@ -5872,9 +6065,10 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		// MELODY
-		if (!regenerate && randomizeMelodiesOnCompose.isSelected()) {
+		if (!regenerate && generateMelodiesOnCompose.isSelected()) {
 			int seed = getCurrentSeed();
-			createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt());
+			createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt(), melodyPanels.size(),
+					false, null);
 		}
 
 		if (!regenerate && randomizeTimingsOnCompose.isSelected()) {
@@ -5902,22 +6096,25 @@ public class VibeComposerGUI extends JFrame
 			randomizeMelodySeeds();
 		}
 
-		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()) {
+		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()
+				&& !melodyPanels.isEmpty()) {
 			if (melody1ForcePatterns.isSelected()) {
+				MelodyPanel firstMp = melodyPanels.get(0);
 				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
-						melodyPanels.get(0).getAlternatingRhythmChance(),
-						melodyPanels.get(0).getPatternSeed() == 0 ? lastRandomSeed
-								: melodyPanels.get(0).getPatternSeed());
-				melodyPanels.get(0).setMelodyPatternOffsets(pat);
+						firstMp.getAlternatingRhythmChance(),
+						firstMp.getPanelOrder() + (firstMp.getPatternSeed() == 0 ? lastRandomSeed
+								: firstMp.getPatternSeed()));
+				firstMp.setMelodyPatternOffsets(pat);
 			} else {
 				melodyPanels.forEach(e -> e.setMelodyPatternOffsets(
 						MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
-								e.getPatternSeed() == 0 ? lastRandomSeed : e.getPatternSeed())));
+								e.getPanelOrder() + (e.getPatternSeed() == 0 ? lastRandomSeed
+										: e.getPatternSeed()))));
 			}
 		}
 
 
-		if (melody1ForcePatterns.isSelected()) {
+		if (melody1ForcePatterns.isSelected() && !melodyPanels.isEmpty()) {
 			MelodyPanel mp1 = melodyPanels.get(0);
 			for (int i = 1; i < melodyPanels.size(); i++) {
 				melodyPanels.get(i).overridePatterns(mp1);
@@ -5929,7 +6126,7 @@ public class VibeComposerGUI extends JFrame
 
 		// ARPS
 		if (instrumentTabPane.getSelectedIndex() != 3 && arpCopyMelodyInst.isSelected()
-				&& !melodyPanels.get(0).getMuteInst()) {
+				&& !melodyPanels.isEmpty() && !melodyPanels.get(0).getMuteInst()) {
 			if (arpPanels.size() > 0 && !arpPanels.get(0).getLockInst()) {
 				arpPanels.get(0).getInstrumentBox().initInstPool(POOL.MELODY);
 				arpPanels.get(0).setInstPool(POOL.MELODY);
@@ -5996,9 +6193,14 @@ public class VibeComposerGUI extends JFrame
 
 		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
 				&& MidiGenerator.TARGET_NOTES != null) {
-			melodyPanels.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
-			guiConfig.getMelodyParts()
-					.forEach(e -> e.setChordNoteChoices(MidiGenerator.TARGET_NOTES));
+			for (int i = 0; i < melodyPanels.size(); i++) {
+				int mpOrder = melodyPanels.get(i).getPanelOrder();
+				List<Integer> notes = MidiGenerator.TARGET_NOTES.get(mpOrder);
+				if (notes != null) {
+					melodyPanels.get(i).setChordNoteChoices(notes);
+					guiConfig.getMelodyParts().get(i).setChordNoteChoices(notes);
+				}
+			}
 		}
 
 		for (int i = 0; i < arpPanels.size(); i++) {
@@ -6207,6 +6409,9 @@ public class VibeComposerGUI extends JFrame
 			//LG.i(("What beats: " + sliderBeatStartTimes.toString()));
 
 			slider.setSnapToTicks(snapStartToBeat.isSelected());
+			// fix misalignment from different BPMs
+			adjustSavedPositions();
+
 			if (startFromBar.isSelected()) {
 				int snapAdjustment = 50;
 				if (startBeatCounter >= sliderBeatStartTimes.size()) {
@@ -6217,10 +6422,7 @@ public class VibeComposerGUI extends JFrame
 				}
 				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
 			} else {
-				int startVal = (mainBpm.getInt() != startBpm)
-						? (int) Math
-								.ceil(startSliderPosition * startBpm / (double) mainBpm.getInt())
-						: startSliderPosition;
+				int startVal = startSliderPosition;
 				slider.setValue(startVal);
 			}
 			// Force the slider to use the new labels
@@ -6228,7 +6430,6 @@ public class VibeComposerGUI extends JFrame
 			slider.setPaintLabels(true);
 
 			if (loopBeat.isSelected()) {
-				resetPauseInfo();
 				long startPos = (startFromBar.isSelected()) ? delayed : pausedSliderPosition;
 				if (startPos < slider.getValue()) {
 					startPos = slider.getValue();
@@ -6236,6 +6437,7 @@ public class VibeComposerGUI extends JFrame
 				} else {
 					midiNavigate(startPos);
 				}
+				resetPauseInfo();
 
 			} else {
 				String pauseBehavior = pauseBehaviorCombobox.getVal();
@@ -6286,8 +6488,23 @@ public class VibeComposerGUI extends JFrame
 				needToRecalculateSoloMuters = true;
 				needToRecalculateSoloMutersAfterSequenceGenerated = false;
 			}
+			startBpm = mainBpm.getInt();
 		} catch (MidiUnavailableException | InvalidMidiDataException ex) {
 			ex.printStackTrace();
+		}
+	}
+
+	private static void adjustSavedPositions() {
+		int currentBpm = mainBpm.getInt();
+		if (currentBpm > 0 && startBpm > 0) {
+			startSliderPosition = (currentBpm != startBpm)
+					? (int) Math.ceil(startSliderPosition * startBpm / (double) currentBpm)
+					: startSliderPosition;
+			startBpm = currentBpm;
+			pausedSliderPosition = (currentBpm != pausedBpm)
+					? (int) Math.ceil(pausedSliderPosition * pausedBpm / (double) currentBpm)
+					: pausedSliderPosition;
+			pausedBpm = currentBpm;
 		}
 	}
 
@@ -6659,7 +6876,6 @@ public class VibeComposerGUI extends JFrame
 		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
 		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 		MidiGenerator.userChords.clear();
-		MidiGenerator.userChordsDurations.clear();
 		mg.generatePrettyUserChords(new Random().nextInt(),
 				userChords.chordCount() > 0 ? userChords.chordCount()
 						: MidiGenerator.gc.getFixedDuration(),
@@ -6749,7 +6965,7 @@ public class VibeComposerGUI extends JFrame
 
 		boolean isCompose = "Compose".equals(ae.getActionCommand());
 		boolean isRegenerate = "Regenerate".equals(ae.getActionCommand());
-		if (composingInProgress) {
+		if (heavyBackgroundTasksInProgress) {
 			LG.i("Cannot process action '" + ae.getActionCommand() + "', composing in progress!");
 			new TemporaryInfoPopup("Composing in progress..", 1000);
 			return;
@@ -6816,22 +7032,14 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (isCompose && addInst[2].isSelected() && randomChordsGenerateOnCompose.isSelected()) {
-			createPanels(2, Integer.valueOf(randomChordsToGenerate.getText()), false);
-			tabPanePossibleChange = true;
+			generatePanels(2);
 		}
 		if (isCompose && addInst[3].isSelected() && randomArpsGenerateOnCompose.isSelected()) {
-			createPanels(3, Integer.valueOf(randomArpsToGenerate.getText()), false);
-			tabPanePossibleChange = true;
+			generatePanels(3);
 		}
 
 		if (isCompose && addInst[4].isSelected() && randomDrumsGenerateOnCompose.isSelected()) {
-			createPanels(4, Integer.valueOf(randomDrumsToGenerate.getText()), false);
-			tabPanePossibleChange = true;
-		}
-
-		realBpm = Double.valueOf(mainBpm.getInt());
-		if (ae.getActionCommand() == "RandomizeBpm") {
-			randomizeBPM();
+			generatePanels(4);
 		}
 
 		if (ae.getActionCommand() == "RandomizeTranspose") {
@@ -6983,24 +7191,6 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		if (ae.getActionCommand() == "AddDrum") {
-			//addDrumPanelToLayout();
-			createRandomDrumPanels(drumPanels.size() + 1, true, null);
-			//sizeRespectingPack();
-			repaint();
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand().startsWith("RemoveDrum,")) {
-			String drumNumber = ae.getActionCommand().split(",")[1];
-
-			removeInstPanel(4, Integer.valueOf(drumNumber), true);
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-		}
-
-
 		if (ae.getActionCommand() == "ClearChordPatterns")
 
 		{
@@ -7009,42 +7199,6 @@ public class VibeComposerGUI extends JFrame
 				cp.setPattern(RhythmPattern.FULL);
 
 			}
-		}
-
-		if (ae.getActionCommand() == "AddChord") {
-			//addChordPanelToLayout();
-			createRandomChordPanels(chordPanels.size() + 1, true, null);
-
-			//sizeRespectingPack();
-			repaint();
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand().startsWith("RemoveChord,")) {
-			String chordNumber = ae.getActionCommand().split(",")[1];
-
-			removeInstPanel(2, Integer.valueOf(chordNumber), true);
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand() == "AddArp")
-
-		{
-			//addArpPanelToLayout();
-			createRandomArpPanels(arpPanels.size() + 1, true, null);
-			//sizeRespectingPack();
-			repaint();
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand().startsWith("RemoveArp,")) {
-			String arpNumber = ae.getActionCommand().split(",")[1];
-			removeInstPanel(3, Integer.valueOf(arpNumber), true);
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
 		}
 
 		if (ae.getActionCommand() == "ClearArpPatterns") {
@@ -7060,42 +7214,6 @@ public class VibeComposerGUI extends JFrame
 			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
 					Integer.valueOf(pieceLength.getText()));
 			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand() == "CopyPart") {
-
-			JButton source = (JButton) ae.getSource();
-			InstPanel sourcePanel = (InstPanel) source.getParent();
-			InstPart part = null;
-
-			part = sourcePanel.toInstPart(lastRandomSeed);
-			InstPanel newPanel = addInstPanelToLayout(instrumentTabPane.getSelectedIndex(), part,
-					true);
-			newPanel.setPatternSeed(sourcePanel.getPatternSeed());
-
-			// todo checkbox set cc'd panel's midichannel?
-			if (true) {
-				newPanel.setMidiChannel(sourcePanel.getMidiChannel());
-			} else {
-				switch (instrumentTabPane.getSelectedIndex()) {
-				case 2:
-					newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
-					newPanel.setPanByOrder(5);
-					break;
-				case 3:
-					newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
-					newPanel.setPanByOrder(7);
-					break;
-				case 4:
-					newPanel.getComboPanel().reapplyHits();
-					break;
-				default:
-					break;
-				}
-			}
-			soloMuterPossibleChange = true;
-			tabPanePossibleChange = true;
-			//LG.i(("Set sequencer solo: " + sourcePanel.getMidiChannel()));
 		}
 
 		if (ae.getActionCommand() == "RandomizePart") {
@@ -7139,7 +7257,6 @@ public class VibeComposerGUI extends JFrame
 		mainBpm.setInt(bpm);
 		mainBpm.getKnob().setMin(bpmLow.getInt());
 		mainBpm.getKnob().setMax(bpmHigh.getInt());
-		realBpm = bpm;
 	}
 
 	private void enthickenText(Component comp) {
@@ -7217,7 +7334,8 @@ public class VibeComposerGUI extends JFrame
 
 	private void saveGuiConfigFile(int rating) {
 		if (currentMidi != null) {
-			LG.i(("Saving file: " + currentMidi.getName()));
+			String newFileName = getFilenameForSaving(currentMidi.getName());
+			LG.i(("Saving file: " + (rating >= 0 ? newFileName : saveCustomFilename.getText())));
 
 			Date date = new Date();
 			String saveDirectory = SAVED_MIDIS_FOLDER_BASE;
@@ -7232,7 +7350,7 @@ public class VibeComposerGUI extends JFrame
 
 				File makeSavedDir = new File(MIDIS_FOLDER + saveDirectory);
 				makeSavedDir.mkdir();
-				name = currentMidi.getName();
+				name = newFileName;
 				name = name.substring(0, name.length() - 4);
 
 				additionalInfo = f.format(date);
@@ -7270,18 +7388,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void saveGuiPresetFileByFilePath(String filePath) {
 		try {
-			GUIPreset preset = new GUIPreset();
-			copyGUItoConfig(preset);
-			preset.setPatternMaps(guiConfig.getPatternMaps());
-			List<Component> presetComps = makeSettableComponentList();
-			List<Integer> presetCompValues = new ArrayList<>();
-			for (int i = 0; i < presetComps.size(); i++) {
-				presetCompValues.add(getComponentValue(presetComps.get(i)));
-			}
-			preset.setOrderedValuesUI(presetCompValues);
-			preset.setDarkMode(isDarkMode);
-			preset.setFullMode(isFullMode);
-			preset.setBigMode(isBigMonitorMode);
+			GUIPreset preset = copyCurrentViewToPreset();
 			marshalPreset(preset, filePath);
 		} catch (IOException | JAXBException e) {
 			// Auto-generated catch block
@@ -7289,11 +7396,30 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void playMidi() {
+	public GUIPreset copyCurrentViewToPreset() {
+		GUIPreset preset = new GUIPreset();
+		copyGUItoConfig(preset);
+		preset.setPatternMaps(guiConfig.getPatternMaps());
+		List<Component> presetComps = makeSettableComponentList();
+		List<Integer> presetCompValues = new ArrayList<>();
+		for (int i = 0; i < presetComps.size(); i++) {
+			presetCompValues.add(getComponentValue(presetComps.get(i)));
+		}
+		preset.setOrderedValuesUI(presetCompValues);
+		preset.setDarkMode(isDarkMode);
+		preset.setFullMode(isFullMode);
+		preset.setBigMode(isBigMonitorMode);
+		return preset;
+	}
+
+	private void playMidi(boolean replay) {
 		LG.i(("Starting Midi.."));
 		if (sequencer != null) {
 			if (sequencer.isRunning()) {
-				sequencer.stop();
+				if (!replay) {
+					sequencer.stop();
+				}
+
 				long startPos = (startFromBar.isSelected())
 						? sliderMeasureStartTimes.get(pausedMeasureCounter)
 						: pausedSliderPosition;
@@ -7302,7 +7428,9 @@ public class VibeComposerGUI extends JFrame
 				}
 				midiNavigate(startPos);
 			} else {
-				sequencer.stop();
+				if (!replay) {
+					sequencer.stop();
+				}
 				savePauseInfo();
 				if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
 					LG.d(("Unpausing.."));
@@ -7314,20 +7442,37 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			LG.d(("Position set.."));
-			try {
-				Thread.sleep(25);
-			} catch (InterruptedException e) {
-				// Auto-generated catch block
-				e.printStackTrace();
+			if (!replay) {
+				try {
+					Thread.sleep(25);
+				} catch (InterruptedException e) {
+					// Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				sequencer.setLoopCount(1);
 			}
+
 			sequencer.start();
 			startMidiCcThread();
+			sequencer.setLoopCount(0);
 			LG.i("Started Midi: " + pausedSliderPosition + "/" + slider.getMaximum() + ", measure: "
 					+ pausedMeasureCounter);
 		} else {
 			LG.i(("Sequencer is NULL!"));
 		}
 	}
+
+	/*private void replayMidi() {
+		LG.i(("Replaying Midi.."));
+		if (sequencer != null) {
+			if (sequencer.isRunning()) {
+				sequencer.stop();
+			}
+		} else {
+			LG.i(("Sequencer is NULL!"));
+		}
+	}*/
 
 	private void stopMidi() {
 		LG.i(("Stopping Midi.."));
@@ -7338,6 +7483,15 @@ public class VibeComposerGUI extends JFrame
 			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
 			LG.i(("Stopped Midi!"));
+			/*if (scorePopup != null) {
+				LG.i(ShowPanelBig.rulerScrollPane.getPreferredSize());
+				LG.i(ShowPanelBig.rulerScrollPane.getWidth());
+				LG.i(ShowPanelBig.areaScrollPane.getWidth());
+				LG.i(ShowPanelBig.horizontalPane.getWidth());
+				LG.i(scoreScrollPane.getWidth());
+				LG.i(scorePopup.getFrame().getWidth());
+			}*/
+
 		} else {
 			LG.i(("Sequencer is NULL!"));
 		}
@@ -7371,9 +7525,8 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void saveStartInfo() {
+	public static void saveStartInfo() {
 		startSliderPosition = slider.getValue();
-		startBpm = mainBpm.getInt();
 		if ((currentMidi != null) && (MidiGenerator.chordInts.size() > 0)) {
 			for (int i = 1; i < sliderBeatStartTimes.size(); i++) {
 				if (sliderBeatStartTimes.get(i) >= startSliderPosition + 50) {
@@ -7492,15 +7645,23 @@ public class VibeComposerGUI extends JFrame
 		return (sequencer != null) && (sequencer.isOpen()) && (sequencer.getSequence() != null);
 	}
 
-	private void recalculateGenerationCounts() {
-		randomChordsToGenerate.setText("" + Math.max(1, chordPanels.size()));
-		randomArpsToGenerate.setText("" + Math.max(1, arpPanels.size()));
-		randomDrumsToGenerate.setText("" + Math.max(1, drumPanels.size()));
+	public void recalculateGeneratorAndTabCounts() {
+		recalculateGenerationCounts();
+		recalculateTabPaneCounts();
 	}
 
-	private void recalculateTabPaneCounts() {
+	public void recalculateGenerationCounts() {
+		for (int i = 0; i < 5; i++) {
+			randomPanelsToGenerate[i].setText("" + Math.max(1, getInstList(i).size()));
+		}
+	}
+
+	public void recalculateTabPaneCounts() {
+		if (instrumentTabPane.getComponentCount() < 7) {
+			return;
+		}
 		instrumentTabPane.setTitleAt(0, "Melody (" + melodyPanels.size() + ")");
-		instrumentTabPane.setTitleAt(1, " Bass  (1)");
+		instrumentTabPane.setTitleAt(1, " Bass  (" + bassPanels.size() + ")");
 		instrumentTabPane.setTitleAt(2, "Chords (" + chordPanels.size() + ")");
 		instrumentTabPane.setTitleAt(3, " Arps  (" + arpPanels.size() + ")");
 		instrumentTabPane.setTitleAt(4, " Drums (" + drumPanels.size() + ")");
@@ -7554,14 +7715,14 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
+	/*public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
 			JTextField customChordsDurations) {
-
+	
 		String text = customChords.getText().replaceAll(" ", "");
 		customChords.setText(text);
 		String[] userChordsSplit = text.split(",");
 		//LG.i((StringUtils.join(userChordsSplit, ";")));
-
+	
 		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
 		if (userChordsSplit.length != userChordsDurationsSplit.length) {
 			List<Integer> durations = IntStream.iterate(4, n -> n).limit(userChordsSplit.length)
@@ -7570,7 +7731,7 @@ public class VibeComposerGUI extends JFrame
 			userChordsDurationsSplit = customChordsDurations.getText().split(",");
 		}
 		return solveUserChords(userChordsSplit, userChordsDurationsSplit);
-	}
+	}*/
 
 	public static Pair<List<String>, List<Double>> solveUserChords(String customChords,
 			String customChordsDurations) {
@@ -7781,7 +7942,7 @@ public class VibeComposerGUI extends JFrame
 	public List<Component> makeSettableComponentList() {
 		List<Component> cs = new ArrayList<>();
 		// melody panel
-		cs.add(randomizeMelodiesOnCompose);
+		cs.add(generateMelodiesOnCompose);
 		cs.add(melody1ForcePatterns);
 		cs.add(combineMelodyTracks);
 		cs.add(randomMelodySameSeed);
@@ -7827,7 +7988,7 @@ public class VibeComposerGUI extends JFrame
 		cs.add(arpCopyMelodyInst);
 		cs.add(randomArpAllSameInst);
 		cs.add(randomArpLimitPowerOfTwo);
-		cs.add(randomArpUseOctaveAdjustments);
+		cs.add(null); // randomArpUseOctaveAdjustments
 		cs.add(randomArpMaxRepeat);
 		cs.add(randomArpMinVel);
 		cs.add(randomArpMaxVel);
@@ -7891,14 +8052,6 @@ public class VibeComposerGUI extends JFrame
 
 		// ---------------- VIBECOMPOSER 2 ------------------------------------
 
-		// melody panel
-
-		// bass panel
-
-		// chords panel
-
-		// arps panel
-
 		// drum panel
 		cs.add(randomDrumHitsMultiplierOnGenerate);
 		cs.add(drumPartPresetAddCheckbox);
@@ -7907,12 +8060,18 @@ public class VibeComposerGUI extends JFrame
 		// extra settings
 		cs.add(globalNoteLengthMultiplier);
 		cs.add(copyChordsAfterGenerate);
+		cs.add(miniScorePopup);
+
+		// arps panel
+		cs.add(randomArpCorrectMelodyNotes);
 
 		return cs;
 	}
 
 	public static void setComponent(Component c, Integer num, boolean repaint) {
-		if (c instanceof ScrollComboPanel) {
+		if (c == null) {
+			return;
+		} else if (c instanceof ScrollComboPanel) {
 			ScrollComboPanel csc = ((ScrollComboPanel) c);
 			if (csc.getItemCount() > 0) {
 				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
@@ -7937,6 +8096,10 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static Integer getComponentValue(Component c) {
+		if (c == null) {
+			return 0;
+		}
+
 		if (c instanceof ScrollComboPanel) {
 			return ((ScrollComboPanel) c).getSelectedIndex();
 		} else if (c instanceof KnobPanel) {
@@ -8045,6 +8208,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
 		gc.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
 		gc.setMelodyLegacyMode(melodyLegacyMode.isSelected());
+		gc.setMelodyNewBlocksChance(melodyNewBlocksChance.getInt());
 		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
 		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
@@ -8066,6 +8230,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setCustomChordsEnabled(userChordsEnabled.isSelected());
 		gc.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		gc.setCustomChordDurations(userChordsDurations.getText());
+		gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
 		gc.setSpiceChance(spiceChance.getInt());
 		gc.setSpiceParallelChance(spiceParallelChance.getInt());
 		gc.setDimAugDom7thEnabled(spiceAllowDimAug.isSelected());
@@ -8077,6 +8242,7 @@ public class VibeComposerGUI extends JFrame
 
 		// arps
 		gc.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
+		gc.setRandomArpCorrectMelodyNotes(randomArpCorrectMelodyNotes.isSelected());
 
 		// drums
 		boolean isCustomMidiDevice = midiMode.isSelected()
@@ -8158,9 +8324,7 @@ public class VibeComposerGUI extends JFrame
 		melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
 
 		recreateInstPanelsFromInstParts(0, gc.getMelodyParts());
-		if (gc.getBassParts() != null && !gc.getBassParts().isEmpty()) {
-			recreateInstPanelsFromInstParts(1, gc.getBassParts());
-		}
+		recreateInstPanelsFromInstParts(1, gc.getBassParts());
 
 		recreateInstPanelsFromInstParts(2, gc.getChordParts());
 		recreateInstPanelsFromInstParts(3, gc.getArpParts());
@@ -8182,6 +8346,7 @@ public class VibeComposerGUI extends JFrame
 		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
 		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
 		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
+		melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
 		melodyAvoidChordJumps.setSelected(gc.isMelodyAvoidChordJumps());
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
@@ -8211,9 +8376,11 @@ public class VibeComposerGUI extends JFrame
 		userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
 		userChords.setupChords(gc.getCustomChords());
 		userChordsDurations.setText(gc.getCustomChordDurations());
+		userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
 
 		// arps
 		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
+		randomArpCorrectMelodyNotes.setSelected(gc.isRandomArpCorrectMelodyNotes());
 
 		arrSection.setVisible(true);
 
@@ -8262,29 +8429,29 @@ public class VibeComposerGUI extends JFrame
 
 	// -------------- GENERIC INST PANEL METHODS ----------------------------
 
-	public InstPanel addInstPanelToLayout(int inst) {
-		return addInstPanelToLayout(inst, null, true);
+	public InstPanel addInstPanelToLayout(int part) {
+		return addInstPanelToLayout(part, null, true);
 	}
 
-	public InstPanel addInstPanelToLayout(int inst, boolean recalc) {
-		return addInstPanelToLayout(inst, null, recalc);
+	public InstPanel addInstPanelToLayout(int part, boolean recalc) {
+		return addInstPanelToLayout(part, null, recalc);
 	}
 
-	public InstPanel addInstPanelToLayout(int inst, InstPart initializingPart,
+	public InstPanel addInstPanelToLayout(int part, InstPart initializingPart,
 			boolean recalcArrangement) {
-		InstPanel ip = InstPanel.makeInstPanel(inst, this);
-		List<InstPanel> affectedPanels = getAffectedPanels(inst);
+		InstPanel ip = InstPanel.makeInstPanel(part, this);
+		List<InstPanel> affectedPanels = getAffectedPanels(part);
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
 		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		if (arrSection != null && !GLOBAL.equals(arrSection.getVal())) {
+		if (isCustomSection()) {
 			ip.toggleGlobalElements(false);
 			ip.toggleEnabledCopyRemove(false);
-			if (inst == 4) {
+			if (part == 4) {
 				ip.getInstrumentBox().setEnabled(true);
 			}
 		} else {
-			ip.setBackground(OMNI.alphen(instColors[inst], 60));
+			ip.setBackground(OMNI.alphen(instColors[part], 60));
 		}
 
 		if (initializingPart != null) {
@@ -8301,16 +8468,20 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (inst < 4 || !bottomUpReverseDrumPanels.isSelected()) {
-			((JPanel) getInstPane(inst).getViewport().getView()).add(ip, panelOrder - 1);
+		if (part < 4 || !bottomUpReverseDrumPanels.isSelected()) {
+			((JPanel) getInstPane(part).getViewport().getView()).add(ip, panelOrder - 1);
 		} else {
-			((JPanel) getInstPane(inst).getViewport().getView()).add(ip,
+			((JPanel) getInstPane(part).getViewport().getView()).add(ip,
 					affectedPanels.size() - panelOrder);
 		}
 		return ip;
 	}
 
-	private void removeInstPanel(int inst, int order, boolean singleRemove) {
+	public boolean isCustomSection() {
+		return arrSection != null && !GLOBAL.equals(arrSection.getVal());
+	}
+
+	public static void removeInstPanel(int inst, int order, boolean singleRemove) {
 
 		List<? extends InstPanel> panels = getInstList(inst);
 		InstPanel panel = getPanelByOrder(order, panels);
@@ -8320,7 +8491,7 @@ public class VibeComposerGUI extends JFrame
 
 		actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
 
-		repaint();
+		vibeComposerGUI.repaint();
 	}
 
 	private List<InstPart> getInstPartsFromInstPanels(int inst, boolean removeMuted) {
@@ -8384,70 +8555,33 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void randomizePanel(InstPanel panel) {
-		if (panel instanceof DrumPanel) {
-			createRandomDrumPanels(drumPanels.size() + 1, true, (DrumPanel) panel);
-		} else if (panel instanceof ArpPanel) {
-			createRandomArpPanels(arpPanels.size() + 1, true, (ArpPanel) panel);
-		} else if (panel instanceof ChordPanel) {
+		int partNum = panel.getPartNum();
+		if (partNum == 0) {
+			createRandomMelodyPanels(new Random().nextInt(), melodyPanels.size() + 1, true,
+					(MelodyPanel) panel);
+		} else if (partNum == 1) {
+
+		} else if (partNum == 2) {
 			createRandomChordPanels(chordPanels.size() + 1, true, (ChordPanel) panel);
+		} else if (partNum == 3) {
+			createRandomArpPanels(arpPanels.size() + 1, true, (ArpPanel) panel);
+		} else if (partNum == 4) {
+			createRandomDrumPanels(drumPanels.size() + 1, true, (DrumPanel) panel);
 		}
 	}
 
-	protected void createRandomMelodyPanels(int seed) {
-		ScrollComboBox.discardInteractions();
-		Random melodyRand = new Random(seed);
-		for (int i = 0; i < 3; i++) {
-			MelodyPanel melodyPanel = melodyPanels.get(i);
-			if (melodyPanel.getLockInst()) {
-				continue;
-			}
-			if (randomizeInstOnComposeOrGen.isSelected()) {
-				melodyPanel.setInstrument(melodyPanel.getInstrumentBox().getRandomInstrument());
-			}
-
-			melodyPanel.setSpeed(melodyRand.nextInt(25));
-			melodyPanel.setMaxBlockChange(3 + melodyRand.nextInt(5));
-			//melodyPanel.setSplitChance(melodyRand.nextInt(15));
-			melodyPanel.setNoteExceptionChance(10 + melodyRand.nextInt(15));
-			melodyPanel.setMaxNoteExceptions(melodyRand.nextInt(2));
-			melodyPanel.setLeadChordsChance(melodyRand.nextInt(50));
-
-			ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL,
-					ChordSpanFill.EVEN, ChordSpanFill.ODD, ChordSpanFill.HALF1,
-					ChordSpanFill.HALF2 };
-			melodyPanel.setChordSpanFill(melodyFills[melodyRand.nextInt(melodyFills.length)]);
-			melodyPanel.setFillFlip(false);
-
-			if (i > 0) {
-				melodyPanel.setFillPauses(true);
-				melodyPanel.setPauseChance(50 + melodyRand.nextInt(40));
-				/*melodyPanel.toggleCombinedMelodyDisabledUI(
-						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
-				melodyPanel.setVelocityMax(65 + melodyRand.nextInt(20));
-				melodyPanel.setVelocityMin(40 + melodyRand.nextInt(20));
-				/*if (i % 2 == 1) {
-					melodyPanel.setTranspose(0);
-					melodyPanel.getPanSlider().setValue(75);
-				} else {
-					melodyPanel.setTranspose(-12);
-					melodyPanel.getPanSlider().setValue(25);
-				}*/
-				melodyPanel.setNoteLengthMultiplier(70 + melodyRand.nextInt(40));
-			} else {
-				melodyPanel.setFillPauses(melodyRand.nextBoolean());
-				melodyPanel.setPauseChance(melodyRand.nextInt(35));
-				//melodyPanel.setTranspose(12);
-				melodyPanel.setVelocityMax(80 + melodyRand.nextInt(30));
-				melodyPanel.setVelocityMin(50 + melodyRand.nextInt(25));
-				melodyPanel.setNoteLengthMultiplier(100 + melodyRand.nextInt(25));
-			}
-		}
+	private void addPanel(int part) {
+		createPanels(part, getAffectedPanels(part).size() + 1, true);
+		recalculateGeneratorAndTabCounts();
+		recalculateSoloMuters();
 		repaint();
 	}
 
 	private void createPanels(int part, int panelCount, boolean onlyAdd) {
 		if (part == 0) {
-			createRandomMelodyPanels(new Random().nextInt());
+			createRandomMelodyPanels(panelCount, onlyAdd, null);
+		} else if (part == 1) {
+			createRandomBassPanels(panelCount, onlyAdd, null);
 		} else if (part == 2) {
 			createRandomChordPanels(panelCount, onlyAdd, null);
 		} else if (part == 3) {
@@ -8459,6 +8593,668 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
+	protected void createRandomMelodyPanels(int panelCount, boolean onlyAdd,
+			MelodyPanel randomizedPanel) {
+		createRandomMelodyPanels(new Random().nextInt(), panelCount, onlyAdd, null);
+	}
+
+	protected void createRandomMelodyPanels(int seed, int panelCount, boolean onlyAdd,
+			MelodyPanel randomizedPanel) {
+		ScrollComboBox.discardInteractions();
+		List<MelodyPanel> affectedMelodies = (List<MelodyPanel>) (List<?>) getAffectedPanels(0);
+
+		Random panelGenerator = new Random(seed);
+		List<MelodyPanel> removedPanels = new ArrayList<>();
+		List<MelodyPanel> remainingPanels = new ArrayList<>();
+		for (Iterator<MelodyPanel> panelI = affectedMelodies.iterator(); panelI.hasNext();) {
+			MelodyPanel panel = panelI.next();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) melodyScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
+			}
+
+		}
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+		int[] melodyChannels = { 1, 7, 8 };
+		panelCount -= remainingPanels.size();
+		ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
+				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };
+		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
+			boolean needNewChannel = false;
+			MelodyPanel ip = null;
+			if (randomizedPanel != null) {
+				ip = randomizedPanel;
+			} else {
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
+				} else {
+					ip = (MelodyPanel) addInstPanelToLayout(0);
+					needNewChannel = true;
+				}
+			}
+			if (randomizeInstOnComposeOrGen.isSelected()) {
+				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
+			}
+
+			ip.setSpeed(panelGenerator.nextInt(25));
+			ip.setMaxBlockChange(3 + panelGenerator.nextInt(5));
+			//melodyPanel.setSplitChance(melodyRand.nextInt(15));
+			ip.setNoteExceptionChance(10 + panelGenerator.nextInt(15));
+			ip.setMaxNoteExceptions(panelGenerator.nextInt(2));
+			ip.setLeadChordsChance(panelGenerator.nextInt(50));
+
+			ip.setChordSpanFill(melodyFills[panelGenerator.nextInt(melodyFills.length)]);
+			ip.setFillFlip(false);
+
+			int panelOrder = ip.getPanelOrder();
+			if (panelOrder > 1) {
+				ip.setFillPauses(true);
+				ip.setPauseChance(50 + panelGenerator.nextInt(40));
+				/*melodyPanel.toggleCombinedMelodyDisabledUI(
+						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
+				ip.setVelocityMax(65 + panelGenerator.nextInt(20));
+				ip.setVelocityMin(40 + panelGenerator.nextInt(20));
+				if (panelOrder % 2 == 0) {
+					ip.setTranspose(0);
+					ip.getPanSlider().setValue(75);
+				} else {
+					ip.setTranspose(-12);
+					ip.getPanSlider().setValue(25);
+				}
+				ip.setNoteLengthMultiplier(70 + panelGenerator.nextInt(40));
+			} else {
+				ip.setFillPauses(panelGenerator.nextBoolean());
+				ip.setPauseChance(panelGenerator.nextInt(35));
+				ip.setTranspose(12);
+				ip.setVelocityMax(80 + panelGenerator.nextInt(30));
+				ip.setVelocityMin(50 + panelGenerator.nextInt(25));
+				ip.setNoteLengthMultiplier(100 + panelGenerator.nextInt(25));
+			}
+
+			if (needNewChannel) {
+				ip.setMidiChannel(melodyChannels[(panelOrder - 1) % 3]);
+			}
+		}
+		repaint();
+	}
+
+	private void createRandomBassPanels(int panelCount, boolean onlyAdd,
+			BassPanel randomizedPanel) {
+		createRandomBassPanels(new Random().nextInt(), panelCount, onlyAdd, null);
+	}
+
+	private void createRandomBassPanels(int seed, int panelCount, boolean onlyAdd,
+			BassPanel randomizedPanel) {
+		ScrollComboBox.discardInteractions();
+		List<BassPanel> affectedBasses = (List<BassPanel>) (List<?>) getAffectedPanels(1);
+
+		Random panelGenerator = new Random(seed);
+		List<BassPanel> removedPanels = new ArrayList<>();
+		List<BassPanel> remainingPanels = new ArrayList<>();
+		for (Iterator<BassPanel> panelI = affectedBasses.iterator(); panelI.hasNext();) {
+			BassPanel panel = panelI.next();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) bassScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
+			}
+
+		}
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+		panelCount -= remainingPanels.size();
+		ChordSpanFill[] bassFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
+				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };
+		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
+
+		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
+			boolean needNewChannel = false;
+			BassPanel ip = null;
+			if (randomizedPanel != null) {
+				ip = randomizedPanel;
+			} else {
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
+				} else {
+					ip = (BassPanel) addInstPanelToLayout(1);
+					needNewChannel = true;
+				}
+			}
+			if (randomizeInstOnComposeOrGen.isSelected()) {
+				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
+			}
+			int panelOrder = ip.getPanelOrder();
+
+			ip.setFillFlip(false);
+
+			if (panelOrder > 1) {
+				ip.setChordSpanFill(bassFills[panelGenerator.nextInt(bassFills.length)]);
+				ip.setPatternSeed(seed);
+				ip.setPauseChance(30 + panelGenerator.nextInt(40));
+				/*melodyPanel.toggleCombinedMelodyDisabledUI(
+						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
+				ip.setVelocityMax(50 + panelGenerator.nextInt(20));
+				ip.setVelocityMin(30 + panelGenerator.nextInt(20));
+				if (panelOrder % 2 == 0) {
+					ip.setTranspose(0);
+				} else {
+					ip.setTranspose(12);
+				}
+				ip.setNoteLengthMultiplier(60 + panelGenerator.nextInt(40));
+
+				// default SINGLE = 4
+				RhythmPattern pattern = RhythmPattern.SINGLE;
+				// use pattern in 20% of the cases if checkbox selected
+				int patternChance = 50;
+				if (panelGenerator.nextInt(100) < patternChance) {
+					// TODO: BASS SETTINGS toggles
+					if (true) {
+						pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
+						if (pattern == RhythmPattern.MELODY1) {
+							pattern = RhythmPattern.FULL;
+						}
+					}
+				}
+				ip.setPattern(pattern);
+
+				int hits = 4;
+				while (panelGenerator.nextBoolean() && hits < 16) {
+					hits *= 2;
+				}
+				if ((hits / ip.getChordSpan() >= 8)) {
+					hits /= 2;
+				}
+
+				ip.setHitsPerPattern(hits * 2);
+
+			} else {
+				ip.setPauseChance(panelGenerator.nextInt(10));
+				ip.setTranspose(0);
+				ip.setVelocityMax(60 + panelGenerator.nextInt(30));
+				ip.setVelocityMin(40 + panelGenerator.nextInt(25));
+				ip.setNoteLengthMultiplier(80 + panelGenerator.nextInt(25));
+			}
+
+			if (needNewChannel) {
+				ip.setMidiChannel(9);
+			}
+		}
+		repaint();
+	}
+
+	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,
+			ChordPanel randomizedPanel) {
+		ScrollComboBox.discardInteractions();
+		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) getAffectedPanels(2);
+
+		Random panelGenerator = new Random();
+		List<ChordPanel> removedPanels = new ArrayList<>();
+		List<ChordPanel> remainingPanels = new ArrayList<>();
+		for (Iterator<ChordPanel> panelI = affectedChords.iterator(); panelI.hasNext();) {
+			ChordPanel panel = panelI.next();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
+			}
+
+		}
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+
+		panelCount -= remainingPanels.size();
+
+		int fixedChordStretch = -1;
+		if (randomChordStretchType.getVal().equals("FIXED")) {
+			fixedChordStretch = randomChordStretchPicker.getVal();
+		}
+
+		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
+
+		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
+			boolean needNewChannel = false;
+			ChordPanel ip = null;
+			if (randomizedPanel != null) {
+				ip = randomizedPanel;
+			} else {
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
+				} else {
+					ip = (ChordPanel) addInstPanelToLayout(2);
+					needNewChannel = true;
+				}
+			}
+			InstUtils.POOL pool = ip.getInstPool();
+
+			if ((randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
+					&& ip.getInstrumentBox().isEnabled()) {
+				pool = (panelGenerator.nextInt(100) < randomChordSustainChance.getInt())
+						? InstUtils.POOL.CHORD
+						: InstUtils.POOL.PLUCK;
+				ip.getInstrumentBox().initInstPool(pool);
+				ip.setInstPool(pool);
+				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
+
+			}
+
+			ip.setTransitionChance(panelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
+			ip.setTransitionSplit((getRandomFromArray(panelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
+			if (orderedTransposeGeneration.isSelected()) {
+				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
+			} else {
+				ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
+			}
+
+			boolean pad = ip.getInstPool() == POOL.LONG_PAD;
+
+			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
+			ip.setStrum(strumPair.getRight());
+			ip.setStrumType(strumPair.getLeft());
+			if (randomChordDelay.isSelected()) {
+				ip.setOffset((getRandomFromArray(panelGenerator, MILISECOND_ARRAY_DELAY, 0)));
+			} else {
+				ip.setOffset(0);
+			}
+
+
+			if (randomChordUseChordFill.isSelected() && !pad) {
+				ip.setChordSpanFill(ChordSpanFill.getWeighted(panelGenerator.nextInt(100)));
+			} else {
+				ip.setChordSpanFill(ChordSpanFill.ALL);
+			}
+			ip.setFillFlip(false);
+			ip.setPatternFlip(false);
+
+			// default SINGLE = 4
+			RhythmPattern pattern = RhythmPattern.SINGLE;
+			// use pattern in 20% of the cases if checkbox selected
+			int patternChance = pool == InstUtils.POOL.PLUCK ? 25 : 10;
+			if (!pad && panelGenerator.nextInt(100) < patternChance) {
+				if (randomChordPattern.isSelected()) {
+					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
+					if (pattern == RhythmPattern.MELODY1) {
+						pattern = RhythmPattern.FULL;
+					}
+					if (ip.getStrum() > 501) {
+						ip.setStrum(ip.getStrum() / 2);
+					}
+				}
+			}
+
+			if (!randomChordStretchType.getVal().equals("NONE")
+					&& panelGenerator.nextInt(100) < randomChordStretchGenerationChance.getInt()) {
+				ip.setStretchEnabled(true);
+				if (fixedChordStretch < 0) {
+					int atMost = randomChordStretchPicker.getVal();
+					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
+				} else {
+					ip.setChordNotesStretch(fixedChordStretch);
+				}
+				if (ip.getChordNotesStretch() > 3 && ip.getStrum() > 999) {
+					ip.setStrum(ip.getStrum() / 2);
+				}
+			} else {
+				ip.setStretchEnabled(false);
+			}
+
+			ip.setStrumPauseChance(
+					panelGenerator.nextInt(randomChordMaxStrumPauseChance.getInt() + 1));
+
+			ip.setPattern(pattern);
+			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
+					&& ip.getStrum() > 499) {
+				ip.setStrum(ip.getStrum() / 4);
+			}
+
+			if (pad || panelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
+				ip.setPatternJoinMode(PatternJoinMode.EXPAND);
+			} else {
+				ip.setPatternJoinMode(PatternJoinMode.NOJOIN);
+			}
+
+
+			ip.setVelocityMax(randomChordMaxVel.getInt());
+			ip.setVelocityMin(randomChordMinVel.getInt());
+
+			if (randomChordVaryLength.isSelected()) {
+				if (pool == InstUtils.POOL.PLUCK) {
+					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 50);
+				} else {
+					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 85);
+				}
+
+			}
+
+			if (panelGenerator.nextInt(100) < randomChordShiftChance.getInt()) {
+				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
+				// test opposite check for shift distance
+				if (panelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
+					maxShift /= 2;
+				}
+				if (beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75) {
+					maxShift /= 2;
+				}
+
+				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
+			} else {
+				ip.setPatternShift(0);
+			}
+
+			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
+			ip.setPauseChance(panelGenerator.nextInt(pauseMax + 1));
+			ip.applyPauseChance(panelGenerator);
+			ip.growPattern(panelGenerator, 1, 5);
+
+			if (needNewChannel) {
+				ip.setMidiChannel(11 + (ip.getPanelOrder() - 1) % 5);
+				ip.setPanByOrder(5);
+			}
+		}
+
+		repaint();
+	}
+
+	protected void createRandomArpPanels(int panelCount, boolean onlyAdd,
+			ArpPanel randomizedPanel) {
+		ScrollComboBox.discardInteractions();
+		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) getAffectedPanels(3);
+
+		Random panelGenerator = new Random();
+		List<ArpPanel> removedPanels = new ArrayList<>();
+		List<ArpPanel> remainingPanels = new ArrayList<>();
+		for (Iterator<ArpPanel> panelI = affectedArps.iterator(); panelI.hasNext();) {
+			ArpPanel panel = panelI.next();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
+			}
+
+		}
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+
+		panelCount -= remainingPanels.size();
+
+		int fixedHitsGenerated = -1;
+		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
+			Random instGen = new Random();
+			if (randomArpLimitPowerOfTwo.isSelected()) {
+				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
+						0);
+			} else {
+				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
+
+				if (fixedHitsGenerated == 5) {
+					// reduced chance of 5
+					fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
+							+ 2;
+				}
+				if (fixedHitsGenerated == 7) {
+					// eliminate 7
+					fixedHitsGenerated++;
+				}
+			}
+
+			randomArpHitsPicker.setVal(fixedHitsGenerated);
+		}
+
+		int fixedInstrument = -1;
+		int fixedHits = -1;
+
+		if (arpCopyMelodyInst.isSelected() && !melodyPanels.isEmpty()
+				&& !melodyPanels.get(0).getMuteInst()) {
+			fixedInstrument = melodyPanels.get(0).getInstrument();
+			if (affectedArps.size() > 0) {
+				affectedArps.get(0).setInstrument(fixedInstrument);
+			}
+		}
+
+		int fixedArpStretch = -1;
+		if (randomArpStretchType.getVal().equals("FIXED")) {
+			fixedArpStretch = randomArpStretchPicker.getVal();
+		}
+
+
+		int start = 0;
+		if (randomizedPanel != null) {
+			start = randomizedPanel.getPanelOrder() - 1;
+			panelCount = start + 1;
+		}
+
+		ArpPanel first = (affectedArps.isEmpty() || !affectedArps.get(0).getLockInst()
+				|| (randomizedPanel != null && start == 0)) ? null : affectedArps.get(0);
+		List<RhythmPattern> viablePatterns = new ArrayList<>(RhythmPattern.VIABLE_PATTERNS);
+
+		for (int panelIndex = start; panelIndex < panelCount; panelIndex++) {
+			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {
+				fixedInstrument = first.getInstrument();
+			}
+			if (randomArpAllSameHits.isSelected() && first != null && fixedHits < 0) {
+				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
+			}
+			ArpPanel ip = null;
+			boolean needNewChannel = false;
+			if (randomizedPanel != null) {
+				ip = randomizedPanel;
+			} else {
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
+				} else {
+					needNewChannel = true;
+					ip = (ArpPanel) addInstPanelToLayout(3);
+				}
+			}
+
+
+			if (randomArpHitsPerPattern.isSelected()) {
+				if (fixedHits > 0) {
+					ip.setHitsPerPattern(fixedHits);
+				} else {
+					if (fixedHitsGenerated > 0) {
+						ip.setHitsPerPattern(fixedHitsGenerated);
+					} else {
+						Random instGen = new Random();
+						int value = -1;
+						if (randomArpLimitPowerOfTwo.isSelected()) {
+							value = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
+									0);
+						} else {
+							value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
+
+							if (value == 5) {
+								// reduced chance of 5
+								value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
+										+ 2;
+							}
+							if (value == 7) {
+								// eliminate 7
+								value++;
+							}
+						}
+						ip.setHitsPerPattern(value);
+					}
+				}
+			} else {
+				ip.setHitsPerPattern(randomArpHitsPicker.getSelectedIndex() + 1);
+			}
+
+			if (randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
+				int instrument = ip.getInstrumentBox().getRandomInstrument();
+
+				if (randomArpAllSameInst.isSelected()) {
+					if (fixedInstrument >= 0) {
+						instrument = fixedInstrument;
+					} else {
+						fixedInstrument = instrument;
+					}
+				}
+				if (ip.getInstrumentBox().isEnabled()) {
+					ip.setInstrument(instrument);
+				}
+			}
+
+			ip.setChordSpan(panelGenerator.nextInt(2) + 1);
+
+			if (orderedTransposeGeneration.isSelected()) {
+				ip.setTranspose((((ip.getPanelOrder() + 1) % 3) - 1) * 12);
+			} else {
+				if (first == null && panelIndex == 0 && !onlyAdd) {
+					ip.setTranspose(12);
+				} else {
+					ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
+				}
+			}
+
+
+			if (first == null && panelIndex == 0 && !onlyAdd && arpCopyMelodyInst.isSelected()
+					&& !melodyPanels.isEmpty() && !melodyPanels.get(0).getMuteInst()) {
+				ip.setInstrument(fixedInstrument);
+			}
+
+
+			if (ip.getChordSpan() == 1) {
+				ip.setPatternRepeat(panelGenerator.nextInt(randomArpMaxRepeat.getInt()) + 1);
+			} else {
+				ip.setPatternRepeat(1);
+				if (panelGenerator.nextBoolean() == true) {
+					if ((first == null && panelIndex > 1) || (first != null)) {
+						ip.setHitsPerPattern(ip.getHitsPerPattern() * ip.getChordSpan());
+					}
+
+				}
+			}
+
+			boolean fastArp = (ip.getPatternRepeat() * ip.getHitsPerPattern()
+					/ (double) ip.getChordSpan()) >= 16;
+			if (fastArp) {
+				ip.setExceptionChance(
+						panelGenerator.nextInt(1 + (randomArpMaxExceptionChance.getInt() / 3)));
+			} else {
+				ip.setExceptionChance(
+						panelGenerator.nextInt(1 + randomArpMaxExceptionChance.getInt()));
+			}
+
+			if (!randomArpStretchType.getVal().equals("NONE")
+					&& panelGenerator.nextInt(100) < randomArpStretchGenerationChance.getInt()) {
+				ip.setStretchEnabled(true);
+				if (fixedArpStretch < 0) {
+					int atMost = randomArpStretchPicker.getVal();
+					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
+				} else {
+					ip.setChordNotesStretch(fixedArpStretch);
+				}
+			} else {
+				ip.setStretchEnabled(false);
+			}
+
+			RhythmPattern pattern = RhythmPattern.FULL;
+			// use pattern if checkbox selected and %chance 
+			int patternChanceIncrease = (ip.getPanelOrder() < 4 || arpPanels.size() < 3) ? 0
+					: arpPanels.size() * 5;
+			int fillChanceIncrease = (ip.getPanelOrder() < 4 || arpPanels.size() < 3) ? 0
+					: (arpPanels.size() - 3) * 5;
+			if (panelGenerator.nextInt(100) < (30 + patternChanceIncrease)) {
+				if (randomArpPattern.isSelected()) {
+					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
+				}
+			}
+			ip.setPattern(pattern);
+			if (randomArpUseChordFill.isSelected()) {
+				int fillWeight = OMNI.clampChance(
+						panelGenerator.nextInt(100 - fillChanceIncrease) + fillChanceIncrease);
+				ip.setChordSpanFill(ChordSpanFill.getWeighted(fillWeight));
+			} else {
+				ip.setChordSpanFill(ChordSpanFill.ALL);
+			}
+			ip.setFillFlip(false);
+			ip.setPatternFlip(false);
+
+			ip.setVelocityMax(randomArpMaxVel.getInt());
+			ip.setVelocityMin(randomArpMinVel.getInt());
+
+			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
+			ip.setPauseChance(panelGenerator.nextInt(pauseMax + 1));
+			ip.applyPauseChance(panelGenerator);
+
+			if (panelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
+				//LG.d("Arp getPattern: " + ip.getPattern().name());
+				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
+
+				if (beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75) {
+					maxShift /= 2;
+				}
+				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
+			} else {
+				ip.setPatternShift(0);
+			}
+
+			ip.growPattern(panelGenerator, 1, 5);
+
+			int lengthRange = Math.max(1,
+					1 + randomArpMaxLength.getInt() - randomArpMinLength.getInt());
+			ip.setNoteLengthMultiplier(
+					panelGenerator.nextInt(lengthRange) + randomArpMinLength.getInt());
+
+			if (panelGenerator.nextBoolean()) {
+				int arpPatternOrder = 0;
+				// excludes CUSTOM pattern
+				int[] patternWeights = { 60, 68, 75, 83, 91, 97, 100 };
+				int randomWeight = panelGenerator.nextInt(100);
+				for (int j = 0; j < patternWeights.length; j++) {
+					if (randomWeight < patternWeights[j]) {
+						arpPatternOrder = j;
+						break;
+					}
+				}
+				ip.setArpPattern(ArpPattern.values()[arpPatternOrder]);
+				if (arpPatternOrder > 0 && panelGenerator.nextBoolean()) {
+					ip.setArpPatternRotate(
+							panelGenerator.nextInt(Math.min(4, ip.getChordNotesStretch())));
+				}
+			} else {
+				ip.setArpPattern(ArpPattern.RANDOM);
+			}
+
+			if (needNewChannel) {
+				ip.setMidiChannel(2 + (ip.getPanelOrder() - 1) % 7);
+				ip.setPanByOrder(7);
+			}
+
+			ip.getComboPanel().reapplyShift();
+			ip.getComboPanel().reapplyHits();
+		}
+
+		/*if (!affectedArps.isEmpty()) {
+			ArpPanel lowest = affectedArps.get(0);
+			if (!lowest.getLockInst()) {
+				lowest.setPatternRepeat(1);
+				lowest.setChordSpan(1);
+		
+			}
+		}*/
+
+		//sizeRespectingPack();
+		repaint();
+	}
 
 	protected void createRandomDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
@@ -8579,22 +9375,23 @@ public class VibeComposerGUI extends JFrame
 
 		/*int[] drumHitGrid = IntStream.iterate(0, e -> e).limit(chords * maxPatternPerChord)
 				.toArray();*/
-		for (int i = 0; i < panelCount; i++) {
+		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
 			DrumPanel ip = null;
 			if (randomizedPanel != null) {
 				ip = randomizedPanel;
 			} else {
-				if (i < removedPanels.size()) {
-					ip = removedPanels.get(i);
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
 				} else {
 					ip = (DrumPanel) addInstPanelToLayout(4);
 				}
 			}
 
 			if (new Random().nextInt(100) < randomDrumsOverrandomize.getInt()) {
-				setupOverrandomizedDrum(panelGenerator, slide, swingPercent, pitches, i, ip);
+				setupOverrandomizedDrum(panelGenerator, slide, swingPercent, pitches, panelIndex,
+						ip);
 			} else {
-				setupBlueprintedDrum(panelGenerator, slide, swingPercent, pitches, i, ip);
+				setupBlueprintedDrum(panelGenerator, slide, swingPercent, pitches, panelIndex, ip);
 			}
 
 
@@ -8616,9 +9413,9 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void setupBlueprintedDrum(Random panelGenerator, int slide, int swingPercent,
-			List<Integer> pitches, int i, DrumPanel ip) {
+			List<Integer> pitches, int panelIndex, DrumPanel ip) {
 		DrumPart dpart = DrumDefaults.getDrumFromInstrument(
-				!ip.getInstrumentBox().isEnabled() ? ip.getInstrument() : pitches.get(i));
+				!ip.getInstrumentBox().isEnabled() ? ip.getInstrument() : pitches.get(panelIndex));
 		int order = DrumDefaults.getOrder(dpart.getInstrument());
 		DrumSettings settings = DrumDefaults.drumSettings[order];
 		settings.applyToDrumPart(dpart, lastRandomSeed);
@@ -8666,7 +9463,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		if (drumPanels.size() > 10 && ip.getPattern() == RhythmPattern.FULL
-				&& panelGenerator.nextInt() < 30) {
+				&& panelGenerator.nextInt(100) < 30) {
 			ip.setPattern(RhythmPattern.ALT);
 		}
 
@@ -8686,36 +9483,9 @@ public class VibeComposerGUI extends JFrame
 		ip.getComboPanel().reapplyHits();
 	}
 
-	private int[] displayDrumPart(DrumPart dp, int chords, int maxPatternPerChord) {
-		int[] displayArray = new int[chords * maxPatternPerChord];
-		List<Integer> patternGenerated = MidiGenerator.generateDrumPatternFromPart(dp);
-		patternGenerated = MidiUtils.intersperse(0, dp.getChordSpan() - 1, patternGenerated);
-		patternGenerated = MidiUtils.intersperse(0,
-				(maxPatternPerChord / dp.getHitsPerPattern()) - 1, patternGenerated);
-		//LG.i((StringUtils.join(patternGenerated, ",")));
-		int size = patternGenerated.size();
-		//LG.i(("Size: " + size));
-		int patternValue = (dp.getInstrument() <= 40 || dp.getInstrument() == 53) ? 3 : 1;
-		List<Integer> fillPattern = dp.getChordSpanFill().getPatternByLength(chords,
-				dp.isFillFlip());
-		for (int c = 0; c < chords; c++) {
-			if (fillPattern.get(c) < 1) {
-				continue;
-			}
-			for (int j = 0; j < maxPatternPerChord; j++) {
-				int index = c * maxPatternPerChord + j;
-				if (patternGenerated.get(index % patternGenerated.size()) > 0) {
-					displayArray[index] += patternValue;
-				}
-
-			}
-		}
-		return displayArray;
-	}
-
 	private void setupOverrandomizedDrum(Random drumPanelGenerator, int slide, int swingPercent,
-			List<Integer> pitches, int i, DrumPanel ip) {
-		ip.setInstrument(pitches.get(i));
+			List<Integer> pitches, int panelIndex, DrumPanel ip) {
+		ip.setInstrument(pitches.get(panelIndex));
 		//dp.setPitch(32 + drumPanelGenerator.nextInt(33));
 
 
@@ -8809,453 +9579,31 @@ public class VibeComposerGUI extends JFrame
 		ip.getComboPanel().reapplyHits();
 	}
 
-	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,
-			ChordPanel randomizedPanel) {
-		ScrollComboBox.discardInteractions();
-		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) getAffectedPanels(2);
-
-		Random panelGenerator = new Random();
-		List<ChordPanel> removedPanels = new ArrayList<>();
-		List<ChordPanel> remainingPanels = new ArrayList<>();
-		for (Iterator<ChordPanel> panelI = affectedChords.iterator(); panelI.hasNext();) {
-			ChordPanel panel = panelI.next();
-			if (!onlyAdd && !panel.getLockInst()) {
-				if (removedPanels.size() >= panelCount) {
-					((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
-					panelI.remove();
-				} else {
-					removedPanels.add(panel);
-				}
-			} else {
-				remainingPanels.add(panel);
+	private int[] displayDrumPart(DrumPart dp, int chords, int maxPatternPerChord) {
+		int[] displayArray = new int[chords * maxPatternPerChord];
+		List<Integer> patternGenerated = MidiGenerator.generateDrumPatternFromPart(dp);
+		patternGenerated = MidiUtils.intersperse(0, dp.getChordSpan() - 1, patternGenerated);
+		patternGenerated = MidiUtils.intersperse(0,
+				(maxPatternPerChord / dp.getHitsPerPattern()) - 1, patternGenerated);
+		//LG.i((StringUtils.join(patternGenerated, ",")));
+		int size = patternGenerated.size();
+		//LG.i(("Size: " + size));
+		int patternValue = (dp.getInstrument() <= 40 || dp.getInstrument() == 53) ? 3 : 1;
+		List<Integer> fillPattern = dp.getChordSpanFill().getPatternByLength(chords,
+				dp.isFillFlip());
+		for (int c = 0; c < chords; c++) {
+			if (fillPattern.get(c) < 1) {
+				continue;
 			}
-
-		}
-		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
-
-		panelCount -= remainingPanels.size();
-
-		int fixedChordStretch = -1;
-		if (randomChordStretchType.getVal().equals("FIXED")) {
-			fixedChordStretch = randomChordStretchPicker.getVal();
-		}
-
-		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
-
-		for (int i = 0; i < panelCount; i++) {
-			boolean needNewChannel = false;
-			ChordPanel ip = null;
-			if (randomizedPanel != null) {
-				ip = randomizedPanel;
-			} else {
-				if (i < removedPanels.size()) {
-					ip = removedPanels.get(i);
-				} else {
-					ip = (ChordPanel) addInstPanelToLayout(2);
-					needNewChannel = true;
-				}
-			}
-			InstUtils.POOL pool = ip.getInstPool();
-
-			if ((randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
-					&& ip.getInstrumentBox().isEnabled()) {
-				pool = (panelGenerator.nextInt(100) < randomChordSustainChance.getInt())
-						? InstUtils.POOL.CHORD
-						: InstUtils.POOL.PLUCK;
-				ip.getInstrumentBox().initInstPool(pool);
-				ip.setInstPool(pool);
-				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
-
-			}
-
-			ip.setTransitionChance(panelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
-			ip.setTransitionSplit((getRandomFromArray(panelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
-			if (orderedTransposeGeneration.isSelected()) {
-				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
-			} else {
-				ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
-			}
-
-			boolean pad = ip.getInstPool() == POOL.LONG_PAD;
-
-			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
-			ip.setStrum(strumPair.getRight());
-			ip.setStrumType(strumPair.getLeft());
-			if (randomChordDelay.isSelected()) {
-				ip.setOffset((getRandomFromArray(panelGenerator, MILISECOND_ARRAY_DELAY, 0)));
-			} else {
-				ip.setOffset(0);
-			}
-
-
-			if (randomChordUseChordFill.isSelected() && !pad) {
-				ip.setChordSpanFill(ChordSpanFill.getWeighted(panelGenerator.nextInt(100)));
-			} else {
-				ip.setChordSpanFill(ChordSpanFill.ALL);
-			}
-			ip.setFillFlip(false);
-			ip.setPatternFlip(false);
-
-			// default SINGLE = 4
-			RhythmPattern pattern = RhythmPattern.SINGLE;
-			// use pattern in 20% of the cases if checkbox selected
-			int patternChance = pool == InstUtils.POOL.PLUCK ? 25 : 10;
-			if (!pad && panelGenerator.nextInt(100) < patternChance) {
-				if (randomChordPattern.isSelected()) {
-					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
-					if (pattern == RhythmPattern.MELODY1) {
-						pattern = RhythmPattern.FULL;
-					}
-					if (ip.getStrum() > 501) {
-						ip.setStrum(ip.getStrum() / 2);
-					}
-				}
-			}
-
-			if (!randomChordStretchType.getVal().equals("NONE")
-					&& panelGenerator.nextInt(100) < randomChordStretchGenerationChance.getInt()) {
-				ip.setStretchEnabled(true);
-				if (fixedChordStretch < 0) {
-					int atMost = randomChordStretchPicker.getVal();
-					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
-				} else {
-					ip.setChordNotesStretch(fixedChordStretch);
-				}
-				if (ip.getChordNotesStretch() > 3 && ip.getStrum() > 999) {
-					ip.setStrum(ip.getStrum() / 2);
-				}
-			} else {
-				ip.setStretchEnabled(false);
-			}
-
-			ip.setStrumPauseChance(
-					panelGenerator.nextInt(randomChordMaxStrumPauseChance.getInt() + 1));
-
-			ip.setPattern(pattern);
-			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
-					&& ip.getStrum() > 499) {
-				ip.setStrum(ip.getStrum() / 4);
-			}
-
-			if (pad || panelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
-				ip.setPatternJoinMode(PatternJoinMode.EXPAND);
-			} else {
-				ip.setPatternJoinMode(PatternJoinMode.NOJOIN);
-			}
-
-
-			ip.setVelocityMax(randomChordMaxVel.getInt());
-			ip.setVelocityMin(randomChordMinVel.getInt());
-
-			if (randomChordVaryLength.isSelected()) {
-				if (pool == InstUtils.POOL.PLUCK) {
-					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 50);
-				} else {
-					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 85);
+			for (int j = 0; j < maxPatternPerChord; j++) {
+				int index = c * maxPatternPerChord + j;
+				if (patternGenerated.get(index % patternGenerated.size()) > 0) {
+					displayArray[index] += patternValue;
 				}
 
-			}
-
-			if (panelGenerator.nextInt(100) < randomChordShiftChance.getInt()) {
-				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
-				// test opposite check for shift distance
-				if (panelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
-					maxShift /= 2;
-				}
-				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
-			} else {
-				ip.setPatternShift(0);
-			}
-
-			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
-			ip.setPauseChance(panelGenerator.nextInt(pauseMax + 1));
-			ip.applyPauseChance(panelGenerator);
-			ip.growPattern(panelGenerator, 1, 5);
-
-			if (needNewChannel) {
-				ip.setMidiChannel(11 + (ip.getPanelOrder() - 1) % 5);
-				ip.setPanByOrder(5);
 			}
 		}
-
-		repaint();
-	}
-
-	protected void createRandomArpPanels(int panelCount, boolean onlyAdd,
-			ArpPanel randomizedPanel) {
-		ScrollComboBox.discardInteractions();
-		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) getAffectedPanels(3);
-
-		Random panelGenerator = new Random();
-		List<ArpPanel> removedPanels = new ArrayList<>();
-		List<ArpPanel> remainingPanels = new ArrayList<>();
-		for (Iterator<ArpPanel> panelI = affectedArps.iterator(); panelI.hasNext();) {
-			ArpPanel panel = panelI.next();
-			if (!onlyAdd && !panel.getLockInst()) {
-				if (removedPanels.size() >= panelCount) {
-					((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
-					panelI.remove();
-				} else {
-					removedPanels.add(panel);
-				}
-			} else {
-				remainingPanels.add(panel);
-			}
-
-		}
-		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
-
-		panelCount -= remainingPanels.size();
-
-		int fixedHitsGenerated = -1;
-		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
-			Random instGen = new Random();
-			if (randomArpLimitPowerOfTwo.isSelected()) {
-				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
-						0);
-			} else {
-				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-
-				if (fixedHitsGenerated == 5) {
-					// reduced chance of 5
-					fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
-							+ 2;
-				}
-				if (fixedHitsGenerated == 7) {
-					// eliminate 7
-					fixedHitsGenerated++;
-				}
-			}
-
-			randomArpHitsPicker.setVal(fixedHitsGenerated);
-		}
-
-		int fixedInstrument = -1;
-		int fixedHits = -1;
-
-		if (arpCopyMelodyInst.isSelected() && !melodyPanels.get(0).getMuteInst()) {
-			fixedInstrument = melodyPanels.get(0).getInstrument();
-			if (affectedArps.size() > 0) {
-				affectedArps.get(0).setInstrument(fixedInstrument);
-			}
-		}
-
-		int fixedArpStretch = -1;
-		if (randomArpStretchType.getVal().equals("FIXED")) {
-			fixedArpStretch = randomArpStretchPicker.getVal();
-		}
-
-
-		int start = 0;
-		if (randomizedPanel != null) {
-			start = randomizedPanel.getPanelOrder() - 1;
-			panelCount = start + 1;
-		}
-
-		ArpPanel first = (affectedArps.isEmpty() || !affectedArps.get(0).getLockInst()
-				|| (randomizedPanel != null && start == 0)) ? null : affectedArps.get(0);
-		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
-
-		for (int i = start; i < panelCount; i++) {
-			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {
-				fixedInstrument = first.getInstrument();
-			}
-			if (randomArpAllSameHits.isSelected() && first != null && fixedHits < 0) {
-				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
-			}
-			ArpPanel ip = null;
-			boolean needNewChannel = false;
-			if (randomizedPanel != null) {
-				ip = randomizedPanel;
-			} else {
-				if (i < removedPanels.size()) {
-					ip = removedPanels.get(i);
-				} else {
-					needNewChannel = true;
-					ip = (ArpPanel) addInstPanelToLayout(3);
-				}
-			}
-
-
-			if (randomArpHitsPerPattern.isSelected()) {
-				if (fixedHits > 0) {
-					ip.setHitsPerPattern(fixedHits);
-				} else {
-					if (fixedHitsGenerated > 0) {
-						ip.setHitsPerPattern(fixedHitsGenerated);
-					} else {
-						Random instGen = new Random();
-						int value = -1;
-						if (randomArpLimitPowerOfTwo.isSelected()) {
-							value = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
-									0);
-						} else {
-							value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-
-							if (value == 5) {
-								// reduced chance of 5
-								value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
-										+ 2;
-							}
-							if (value == 7) {
-								// eliminate 7
-								value++;
-							}
-						}
-						ip.setHitsPerPattern(value);
-					}
-				}
-			} else {
-				ip.setHitsPerPattern(randomArpHitsPicker.getSelectedIndex() + 1);
-			}
-
-			if (randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
-				int instrument = ip.getInstrumentBox().getRandomInstrument();
-
-				if (randomArpAllSameInst.isSelected()) {
-					if (fixedInstrument >= 0) {
-						instrument = fixedInstrument;
-					} else {
-						fixedInstrument = instrument;
-					}
-				}
-				if (ip.getInstrumentBox().isEnabled()) {
-					ip.setInstrument(instrument);
-				}
-			}
-
-			ip.setChordSpan(panelGenerator.nextInt(2) + 1);
-
-			if (orderedTransposeGeneration.isSelected()) {
-				ip.setTranspose((((ip.getPanelOrder() + 1) % 3) - 1) * 12);
-			} else {
-				if (first == null && i == 0 && !onlyAdd) {
-					ip.setTranspose(12);
-				} else {
-					ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
-				}
-			}
-
-
-			if (first == null && i == 0 && !onlyAdd && arpCopyMelodyInst.isSelected()
-					&& !melodyPanels.get(0).getMuteInst()) {
-				ip.setInstrument(fixedInstrument);
-			}
-
-
-			if (ip.getChordSpan() == 1) {
-				ip.setPatternRepeat(panelGenerator.nextInt(randomArpMaxRepeat.getInt()) + 1);
-			} else {
-				ip.setPatternRepeat(1);
-				if (panelGenerator.nextBoolean() == true) {
-					if ((first == null && i > 1) || (first != null)) {
-						ip.setHitsPerPattern(ip.getHitsPerPattern() * ip.getChordSpan());
-					}
-
-				}
-			}
-
-			boolean fastArp = (ip.getPatternRepeat() * ip.getHitsPerPattern()
-					/ (double) ip.getChordSpan()) >= 16;
-			if (fastArp) {
-				ip.setExceptionChance(
-						panelGenerator.nextInt(1 + (randomArpMaxExceptionChance.getInt() / 3)));
-			} else {
-				ip.setExceptionChance(
-						panelGenerator.nextInt(1 + randomArpMaxExceptionChance.getInt()));
-			}
-
-			if (!randomArpStretchType.getVal().equals("NONE")
-					&& panelGenerator.nextInt(100) < randomArpStretchGenerationChance.getInt()) {
-				ip.setStretchEnabled(true);
-				if (fixedArpStretch < 0) {
-					int atMost = randomArpStretchPicker.getVal();
-					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
-				} else {
-					ip.setChordNotesStretch(fixedArpStretch);
-				}
-			} else {
-				ip.setStretchEnabled(false);
-			}
-
-			RhythmPattern pattern = RhythmPattern.FULL;
-			// use pattern if checkbox selected and %chance 
-			if (panelGenerator.nextInt(100) < 30 + arpPanels.size() * 5) {
-				if (randomArpPattern.isSelected()) {
-					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
-				}
-			}
-			ip.setPattern(pattern);
-			if (randomArpUseChordFill.isSelected()) {
-				int exoticFillChanceIncrease = (arpPanels.size() > 3) ? (arpPanels.size() - 3) * 5
-						: 0;
-				ip.setChordSpanFill(ChordSpanFill
-						.getWeighted(panelGenerator.nextInt(100) + exoticFillChanceIncrease));
-			} else {
-				ip.setChordSpanFill(ChordSpanFill.ALL);
-			}
-			ip.setFillFlip(false);
-			ip.setPatternFlip(false);
-
-			ip.setVelocityMax(randomArpMaxVel.getInt());
-			ip.setVelocityMin(randomArpMinVel.getInt());
-
-			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
-			ip.setPauseChance(panelGenerator.nextInt(pauseMax + 1));
-			ip.applyPauseChance(panelGenerator);
-
-			if (panelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
-				//LG.d("Arp getPattern: " + ip.getPattern().name());
-				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
-				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
-			} else {
-				ip.setPatternShift(0);
-			}
-
-			ip.growPattern(panelGenerator, 1, 5);
-
-			int lengthRange = Math.max(1,
-					1 + randomArpMaxLength.getInt() - randomArpMinLength.getInt());
-			ip.setNoteLengthMultiplier(
-					panelGenerator.nextInt(lengthRange) + randomArpMinLength.getInt());
-
-			if (panelGenerator.nextBoolean()) {
-				int arpPatternOrder = 0;
-				// excludes CUSTOM pattern
-				int[] patternWeights = { 60, 68, 75, 83, 91, 97, 100 };
-				int randomWeight = panelGenerator.nextInt(100);
-				for (int j = 0; j < patternWeights.length; j++) {
-					if (randomWeight < patternWeights[j]) {
-						arpPatternOrder = j;
-						break;
-					}
-				}
-				ip.setArpPattern(ArpPattern.values()[arpPatternOrder]);
-				if (arpPatternOrder > 0 && panelGenerator.nextBoolean()) {
-					ip.setArpPatternRotate(
-							panelGenerator.nextInt(Math.min(4, ip.getChordNotesStretch())));
-				}
-			} else {
-				ip.setArpPattern(ArpPattern.RANDOM);
-			}
-
-			if (needNewChannel) {
-				ip.setMidiChannel(2 + (ip.getPanelOrder() - 1) % 7);
-				ip.setPanByOrder(7);
-			}
-		}
-
-		/*if (!affectedArps.isEmpty()) {
-			ArpPanel lowest = affectedArps.get(0);
-			if (!lowest.getLockInst()) {
-				lowest.setPatternRepeat(1);
-				lowest.setChordSpan(1);
-		
-			}
-		}*/
-
-		//sizeRespectingPack();
-		repaint();
+		return displayArray;
 	}
 
 	private static int getValidPanelNumber(List<? extends InstPanel> panels) {
@@ -9461,8 +9809,8 @@ public class VibeComposerGUI extends JFrame
 
 
 	public static boolean canRegenerateOnChange() {
-		return sequencer != null && regenerateWhenValuesChange.isSelected() && !composingInProgress
-				&& arrSection.getSelectedIndex() == 0;
+		return sequencer != null && regenerateWhenValuesChange.isSelected()
+				&& !heavyBackgroundTasksInProgress && arrSection.getSelectedIndex() == 0;
 	}
 
 	public static int calculateSectionMeasureStart(int sectIndex) {
@@ -9537,6 +9885,39 @@ public class VibeComposerGUI extends JFrame
 			device.getReceivers().forEach(e -> e.send(midiMessage, -1));
 		} else if (synth != null && synth.isOpen()) {
 			synth.getReceivers().forEach(e -> e.send(midiMessage, -1));
+		}
+	}
+
+	public void toggleShowScorePopup() {
+		if (scorePanel != null) {
+			if (instrumentTabPane.getComponentCount() == 8) {
+				instrumentTabPane.remove(scoreScrollPane);
+				if (VibeComposerGUI.miniScorePopup.isSelected()) {
+					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesSmall;
+					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
+							.get(ShowPanelBig.beatWidthBaseIndex);
+					scorePanel.updatePanelHeight(300);
+					//scoreScrollPane.setMaximumSize(new Dimension(600, 300));
+					scorePanel.getShowArea().setNoteHeight(4);
+					scorePanel.setScore();
+					scorePanel.setAlignmentX(LEFT_ALIGNMENT);
+					scoreScrollPane.repaint();
+					SwingUtilities.invokeLater(() -> {
+						ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0);
+					});
+				}
+				scorePopup = new ShowScorePopup(scoreScrollPane);
+			} else {
+				if (scorePopup != null) {
+					scorePopup.close();
+					scorePopup = null;
+				}
+				if (instrumentTabPane.getComponentCount() < 8) {
+					instrumentTabPane.add(scoreScrollPane, 7);
+					instrumentTabPane.setTitleAt(7, " Score ");
+				}
+
+			}
 		}
 	}
 
@@ -9692,5 +10073,9 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 		return foundSolo;
+	}
+
+	public static String getFilenameForSaving(String oldName) {
+		return oldName.replaceFirst("bpm[0-9]{1,3}_", "bpm" + mainBpm.getInt() + "_");
 	}
 }

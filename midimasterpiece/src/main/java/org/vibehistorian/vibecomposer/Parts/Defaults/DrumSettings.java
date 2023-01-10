@@ -17,7 +17,7 @@ public class DrumSettings {
 		COOL_16_PATTERNS.add(
 				Arrays.asList(new Integer[] { 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }));
 		COOL_16_PATTERNS.add(
-				Arrays.asList(new Integer[] { 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0 }));
+				Arrays.asList(new Integer[] { 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0 }));
 		COOL_16_PATTERNS.add(
 				Arrays.asList(new Integer[] { 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0 }));
 		COOL_16_PATTERNS.add(

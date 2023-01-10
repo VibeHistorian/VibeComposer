@@ -297,6 +297,10 @@ public class ShowAreaBig extends JComponent {
 	 * @param int The new note height
 	 */
 	public void setNoteHeight(int val) {
+		if (val < 4) {
+			repaint();
+			return;
+		}
 		noteHeight = val;
 		reInit();
 		repaint();

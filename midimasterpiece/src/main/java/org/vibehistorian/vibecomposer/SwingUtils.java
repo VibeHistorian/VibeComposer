@@ -7,6 +7,9 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -21,6 +24,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -195,5 +199,33 @@ public class SwingUtils {
 			}
 		}
 		return (maybeParent instanceof InstPanel) ? (InstPanel) maybeParent : null;
+	}
+
+	public static Point getMouseLocation() {
+		PointerInfo pi = MouseInfo.getPointerInfo();
+		Point mp = pi.getLocation();
+		//Point mousePointFixed = new Point(mp);
+		/*if (VibeComposerGUI.vibeComposerGUI.getLocation().x < 0) {
+			//mp.x *= -1;
+		}
+		LG.i("Mouse: " + mp.toString());*/
+		return mp;
+	}
+
+	public static void setFrameLocation(JFrame frame, Point loc) {
+		loc.x = Math.max(VibeComposerGUI.vibeComposerGUI.getLocation().x + 50, loc.x);
+		loc.y = Math.max(VibeComposerGUI.vibeComposerGUI.getLocation().y + 50, loc.y);
+		if (loc.x < 0) {
+			Timer tmr = new Timer(50, new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					frame.setLocation(loc);
+				}
+			});
+			tmr.setRepeats(false);
+			tmr.start();
+		} else {
+			frame.setLocation(loc);
+		}
 	}
 }

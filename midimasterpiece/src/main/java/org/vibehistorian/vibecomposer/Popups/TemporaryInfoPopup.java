@@ -1,6 +1,5 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.MouseInfo;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -10,6 +9,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class TemporaryInfoPopup {
@@ -29,7 +30,8 @@ public class TemporaryInfoPopup {
 		JPanel panel = new JPanel();
 		panel.add(textLabel);
 
-		frame.setLocation(MouseInfo.getPointerInfo().getLocation());
+		LG.i(VibeComposerGUI.vibeComposerGUI.getLocation().toString());
+		SwingUtils.setFrameLocation(frame, SwingUtils.getMouseLocation());
 		if (hideWindowControls) {
 			frame.setUndecorated(hideWindowControls);
 		}

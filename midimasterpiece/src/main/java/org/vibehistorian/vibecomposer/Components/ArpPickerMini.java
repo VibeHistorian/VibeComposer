@@ -158,7 +158,9 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 			return;
 		}
 		instParent.getAllComponentsLike(this, ArpPickerMini.class).forEach(e -> {
-			e.setRandomCustomValues();
+			if (e.isEnabled()) {
+				e.setRandomCustomValues();
+			}
 		});
 	}
 }

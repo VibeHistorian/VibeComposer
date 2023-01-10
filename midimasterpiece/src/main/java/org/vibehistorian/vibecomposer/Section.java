@@ -105,7 +105,8 @@ public class Section {
 	private Phrase chordSlash;
 
 	// customized chords/durations
-	private boolean customChordsDurationsEnabled = false;
+	private boolean customChordsEnabled = false;
+	private boolean customDurationsEnabled = false;
 	private boolean displayAlternateChords = false;
 	private String customChords = "?";
 	private String customDurations = "4,4,4,4";
@@ -353,11 +354,12 @@ public class Section {
 		sec.setArpParts(getArpParts());
 		sec.setDrumParts(getDrumParts());
 
-		sec.setPatterns(patterns);
+		sec.setPatterns(UsedPatternMap.multiMapCopy(patterns));
 
 		sec.setCustomChords(getCustomChords());
 		sec.setCustomDurations(getCustomDurations());
-		sec.setCustomChordsDurationsEnabled(customChordsDurationsEnabled);
+		sec.setCustomChordsEnabled(customChordsEnabled);
+		sec.setCustomDurationsEnabled(customDurationsEnabled);
 		sec.setSectionDuration(sectionDuration);
 		sec.setDisplayAlternateChords(isDisplayAlternateChords());
 		if (sectionBeatDurations != null) {
@@ -373,7 +375,11 @@ public class Section {
 	}
 
 	public void resetCustomizedParts(int partNum) {
-		setInstPartList(null, partNum);
+		if (partNum > 4) {
+			resetCustomizedParts();
+		} else {
+			setInstPartList(null, partNum);
+		}
 	}
 
 	public void resetCustomizedParts() {
@@ -921,16 +927,34 @@ public class Section {
 		return customDurations;
 	}
 
+	public List<Double> getCustomDurationsList() {
+		if (StringUtils.isEmpty(customDurations)) {
+			return null;
+		} else {
+			String[] durations = customDurations.split(",");
+			List<Double> durationsList = new ArrayList<>();
+			try {
+				for (String c : durations) {
+					durationsList.add(Double.parseDouble(c));
+				}
+			} catch (Exception ex) {
+				LG.e(">>>>Custom section durations have wrong (not double) values!");
+				return null;
+			}
+			return durationsList;
+		}
+	}
+
 	public void setCustomDurations(String customDurations) {
 		this.customDurations = customDurations;
 	}
 
-	public boolean isCustomChordsDurationsEnabled() {
-		return customChordsDurationsEnabled;
+	public boolean isCustomChordsEnabled() {
+		return customChordsEnabled;
 	}
 
-	public void setCustomChordsDurationsEnabled(boolean customChordsDurationsEnabled) {
-		this.customChordsDurationsEnabled = customChordsDurationsEnabled;
+	public void setCustomChordsEnabled(boolean customChordsEnabled) {
+		this.customChordsEnabled = customChordsEnabled;
 	}
 
 	@XmlTransient
@@ -1055,6 +1079,14 @@ public class Section {
 			return UsedPattern.NONE;
 		}
 		return pat.getName();
+	}
+
+	public boolean isCustomDurationsEnabled() {
+		return customDurationsEnabled;
+	}
+
+	public void setCustomDurationsEnabled(boolean customDurationsEnabled) {
+		this.customDurationsEnabled = customDurationsEnabled;
 	}
 
 }

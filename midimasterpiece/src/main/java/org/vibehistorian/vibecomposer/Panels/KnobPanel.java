@@ -19,6 +19,7 @@ public class KnobPanel extends TransparentablePanel {
 	boolean showTextInKnob = false;
 	String name = "";
 	LockComponentButton lockButt = null;
+	boolean scrollEnabled = true;
 
 	public KnobPanel(String name, int value) {
 		this(name, value, 0, 100);
@@ -99,6 +100,14 @@ public class KnobPanel extends TransparentablePanel {
 	public void setRegenerating(boolean b) {
 		knob.setRegenerating(b);
 		lockButt.setVisible(false);
+	}
+
+	public boolean isScrollEnabled() {
+		return knob.isScrollEnabled();
+	}
+
+	public void setScrollEnabled(boolean scrollEnabled) {
+		knob.setScrollEnabled(scrollEnabled);
 	}
 
 }

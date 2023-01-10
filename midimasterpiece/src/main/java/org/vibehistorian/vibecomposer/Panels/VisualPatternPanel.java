@@ -30,8 +30,10 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -413,20 +415,36 @@ public class VisualPatternPanel extends JPanel {
 		}
 		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
 		allPanels.forEach(e -> {
-			e.getComboPanel().randomizePattern();
-			e.getComboPanel().repaint();
+			if (e.getComboPanel().patternType.isEnabled()) {
+				e.getComboPanel().randomizePattern();
+				e.getComboPanel().repaint();
+			}
 		});
 	}
 
 	protected void randomizePattern() {
 		//LG.i("Randomize pattern.");
 		if (patternType.isEnabled()) {
-			patternType.setValRaw(RhythmPattern.CUSTOM);
-			shiftPanel.setInt(0);
 			Random rand = new Random();
-			for (int i = 0; i < MAX_HITS; i++) {
-				truePattern.set(i, rand.nextInt(2));
+			if (RhythmPattern.EUCLID.equals(patternType.getVal())) {
+				long oldNum = truePattern.subList(0, lastHits).stream().filter(e -> e > 0).count();
+				int newNum = rand.nextInt((lastHits / 2) + 1) + (lastHits / 4) + 1;
+				if (newNum == oldNum) {
+					if (newNum == lastHits) {
+						newNum--;
+					} else {
+						newNum++;
+					}
+				}
+				newNum = OMNI.clamp(newNum, 1, lastHits);
+				truePattern = RhythmPattern.makeEuclideanPattern(lastHits, newNum, 0, MAX_HITS);
+			} else {
+				patternType.setValRaw(RhythmPattern.CUSTOM);
+				for (int i = 0; i < MAX_HITS; i++) {
+					truePattern.set(i, rand.nextInt(2));
+				}
 			}
+			shiftPanel.setInt(0);
 			reapplyShift();
 		}
 	}
@@ -447,13 +465,70 @@ public class VisualPatternPanel extends JPanel {
 					}
 					reapplyShift();
 					if (lastHits != 24 && lastHits != 10) {
-						hitsPanel.getKnob().setValue(2 * lastHits);
+						hitsPanel.setInt(2 * lastHits);
 					}
 
 
 				}
 			});
 		}
+	}
+
+	public void linkExpander(JButton expander) {
+		if (expander != null) {
+			expander.addMouseListener(new MouseAdapter() {
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					if (e.isControlDown()) {
+						expand2xGlobal();
+					} else {
+						expand2x();
+					}
+				}
+			});
+		}
+	}
+
+	public void expand2xGlobal() {
+		InstPanel instParent = parentPanel;
+		if (instParent == null) {
+			expand2x();
+			repaint();
+			return;
+		}
+		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
+		allPanels.forEach(e -> {
+			if (e.getComboPanel().hitsPanel.isEnabled()) {
+				e.getComboPanel().expand2x();
+				e.getComboPanel().repaint();
+			}
+		});
+	}
+
+	public void expand2x() {
+		List<Integer> tickThresholds = hitsPanel.getKnob().getTickThresholds();
+		if (!hitsPanel.isEnabled() || !chordSpanPanel.isEnabled() || chordSpanPanel.getInt() > 2
+				|| !(tickThresholds.contains(lastHits * 2))) {
+			return;
+		}
+		List<Integer> firstPattern = truePattern.subList(0, lastHits);
+		Collections.rotate(firstPattern, shiftPanel.getInt());
+		for (int i = 0; i < lastHits; i++) {
+			firstPattern.add(0);
+		}
+		truePattern = firstPattern;
+		while (truePattern.size() < MAX_HITS) {
+			truePattern.addAll(firstPattern);
+		}
+		truePattern = truePattern.subList(0, MAX_HITS);
+		if (shiftPanel.getInt() > 0) {
+			shiftPanel.setInt(0);
+		}
+		patternType.setVal(RhythmPattern.CUSTOM);
+		hitsPanel.setInt(lastHits * 2);
+		chordSpanPanel.setInt(chordSpanPanel.getInt() * 2);
+		reapplyShift();
 	}
 
 	public void linkVelocityToggle(JButton veloToggler) {
@@ -760,7 +835,7 @@ public class VisualPatternPanel extends JPanel {
 
 		VisualPatternPanel.this.setPreferredSize(new Dimension(width + bigModeWidthOffset, height));
 
-		parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 20 : 50));
+		parentPanel.setMaximumSize(new Dimension(3000, height > 50 ? height + 6 : 50));
 		repaint();
 	}
 
@@ -772,9 +847,12 @@ public class VisualPatternPanel extends JPanel {
 		this.viewOnly = viewOnly;
 	}
 
-	public void notifyPatternHighlight(double quarterNotesInMeasure, int chordNumInMeasure,
-			List<Double> beatQuarterNotesInMeasure, boolean turnOff, boolean ignoreFill,
-			int totalChords) {
+	public static final double[] SPAN_4_ZONES = { 0.0, 0.25, 0.5, 0.75 };
+	public static final double[] SPAN_2_ZONES = { 0.0, 0.5 };
+
+	public void notifyPatternHighlight(double currentPatternTime, int chordNumInMeasure,
+			List<Double> prevChordDurations, boolean turnOff, boolean ignoreFill, int totalChords,
+			double currentChordDuration) {
 
 		if (parentPanel == null) {
 			return;
@@ -789,10 +867,10 @@ public class VisualPatternPanel extends JPanel {
 		}
 
 
-		/*LG.d(parentPanel.getPanelOrder() + "#");
-		LG.d("Quarter notes: " + quarterNotesInMeasure);
-		LG.d(StringUtils.join(beatQuarterNotesInMeasure, ", "));
-		LG.d("Chord num: " + chordNumInMeasure);*/
+		/*LG.i(parentPanel.getPanelOrder() + "#");
+		LG.i("Quarter notes: " + currentPatternTime);
+		LG.i(StringUtils.join(prevChordDurations, ", "));
+		LG.i("Chord num: " + chordNumInMeasure);*/
 		List<Integer> fillPattern = parentPanel.getChordSpanFill().getPatternByLength(totalChords,
 				parentPanel.getFillFlip());
 
@@ -806,25 +884,62 @@ public class VisualPatternPanel extends JPanel {
 			return;
 		}
 
+		// which chord part is current chord?
+		// what does actual pattern look like after pattern repeats?
+		// what position in the full pattern? (modulo full pattern).
+
 		// chordspan = 1 --> subtract sum of all beatDurationsInMeasure
 		//        --> remaining duration divided by whole note == percentage
 
 		// chordSpan = 2 --> subtract pairs/triples/quadruples
-		int indexOfSubtractableDurations = chordSpanPanel.getInt()
-				* ((chordNumInMeasure) / chordSpanPanel.getInt());
+		int chordSpan = chordSpanPanel.getInt();
+		int patternRepeat = parentPanel.getPatternRepeat();
+
+		int indexOfSubtractableDurations = chordSpan * ((chordNumInMeasure) / chordSpan);
 		for (int i = 0; i < indexOfSubtractableDurations; i++) {
-			quarterNotesInMeasure -= beatQuarterNotesInMeasure.get(i);
+			currentPatternTime -= prevChordDurations.get(i);
 		}
 
-		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpanPanel.getInt();
-		double percentage = (10.0 + (quarterNotesInMeasure / patternTotalDuration)) % 1.0;
+		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpan;
+		double percentage = (currentPatternTime / patternTotalDuration);
+		/*LG.i("Quarter notes: " + currentPatternTime);
+		LG.i("Percentage raw: " + percentage);
+		LG.i("Last chord duration: " + currentChordDuration);*/
 
+		double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
+		/*if (chordSpan > 1 && patternRepeat != 3 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
+			while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
+				chordSpan /= 2;
+				patternRepeat /= 2;
+			}
+		}*/
+		if (chordSpan > 1 && patternRepeat > 1 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
+			int chordSpanPart = chordNumInMeasure % chordSpan;
+			double normalizedPercentage = percentage / patternCoverage;
+			// percentage within a chord part
+			normalizedPercentage -= (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
+					: SPAN_2_ZONES[chordSpanPart];
+			//LG.i("Percentage norm (current chord): " + normalizedPercentage);
 
-		if (parentPanel.getPatternRepeat() > 1) {
-			percentage = (percentage * parentPanel.getPatternRepeat()) % 1.0;
+			double repeatThreshold = (chordSpan == 4) ? 0.25 : 0.5;
+			double newPercentage = normalizedPercentage % patternCoverage;
+			//newPercentage %= 1.0;
+			newPercentage *= patternCoverage;
+			newPercentage %= repeatThreshold;
+			newPercentage += (chordSpan == 4) ? SPAN_4_ZONES[chordSpanPart]
+					: SPAN_2_ZONES[chordSpanPart];
+			percentage = newPercentage;
+			//double zoneCalc = wholeNotesInMeasure / chordSpan;
+			//int leftover = (int) Math.floor((percentage % wholeNotesInMeasure) / zoneCalc);
+			//percentage = (percentage - (leftover * zoneCalc))
+			//		+ ((chordSpan == 4) ? SPAN_4_ZONES[leftover] : SPAN_2_ZONES[leftover]);
 		}
-		//LG.d("Percentage: " + percentage);
-		int highlightedHit = (int) (percentage * lastHits);
+
+		percentage *= patternRepeat;
+		// 10 for modulo calc
+		percentage = (10.0 + percentage) % 1.0;
+		//LG.i("Percentage: " + percentage);
+		int highlightedHit = (int) Math.floor(percentage * lastHits);
 		if (highlightedHit < 0) {
 			highlightedHit = 0;
 		}

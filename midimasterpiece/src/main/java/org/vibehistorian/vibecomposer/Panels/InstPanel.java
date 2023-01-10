@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -75,6 +74,7 @@ public abstract class InstPanel extends JPanel {
 	private static final long serialVersionUID = 4381939543337887617L;
 	public static final int TARGET_RHYTHM_DENSITY = 8;
 	public static final int MAX_RHYTHM_DENSITY = 11;
+	public static final int SMALL_BTN_HEIGHT = 27;
 
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
@@ -98,8 +98,8 @@ public abstract class InstPanel extends JPanel {
 	protected KnobPanel transpose = new KnobPanel("Transpose", 0, -36, 36, 12);
 	protected KnobPanel offset = new KnobPanel("Offset", 0, -1000, 1000);
 	protected KnobPanel feedbackCount = new KnobPanel("Delays", 0, 0, 5);
-	protected KnobPanel feedbackDuration = new KnobPanel("FB Dur.", 500, -2000, 2000);
-	protected KnobPanel feedbackVol = new KnobPanel("FB Vol.", 80, 10, 150);
+	protected KnobPanel feedbackDuration = new KnobPanel("FB Dur.", 750, -2000, 2000);
+	protected KnobPanel feedbackVol = new KnobPanel("FB Vol.", 65, 10, 150);
 
 
 	protected RangeSlider minMaxVelSlider = new RangeSlider(0, 127);
@@ -119,8 +119,8 @@ public abstract class InstPanel extends JPanel {
 	protected VisualPatternPanel comboPanel = null;
 	protected KnobPanel patternShift = new KnobPanel("Shift", 0, 0, 8);
 
-	protected CheckButton lockInst = new CheckButton("Lock", false);
-	protected CheckButton muteInst = new CheckButton("Excl.", false);
+	protected CheckButton lockInst = new CheckButton("<html>&#x1F512;</html>", false);
+	protected CheckButton muteInst = new CheckButton("Ex", false);
 
 	protected VeloRect volSlider = new VeloRect(0, 100, 100);
 	protected VeloRect panSlider = new VeloRect(0, 100, 50);
@@ -140,7 +140,7 @@ public abstract class InstPanel extends JPanel {
 	protected PhraseNotes customMidi = null;
 
 	public InstPanel() {
-
+		super(new FlowLayout(FlowLayout.CENTER, 2, 0));
 	}
 
 	public void initDefaultsPost() {
@@ -156,7 +156,7 @@ public abstract class InstPanel extends JPanel {
 		for (ChordSpanFill fill : ChordSpanFill.values()) {
 			chordSpanFill.addItem(fill);
 		}
-		panelOrder.setPreferredSize(new Dimension(20, 30));
+		panelOrder.setPreferredSize(new Dimension(20, SMALL_BTN_HEIGHT));
 
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		//volSlider.setMaximum(100);
@@ -189,23 +189,26 @@ public abstract class InstPanel extends JPanel {
 		chordSpanFill.setOpaque(false);
 		chordSpanFillPanel.add(fillFlip);
 
+		muteInst.setPreferredSize(new Dimension(20, SMALL_BTN_HEIGHT));
+		muteInst.setMargin(new Insets(0, 0, 0, 0));
+
+		lockInst.setPreferredSize(new Dimension(20, SMALL_BTN_HEIGHT));
+		lockInst.setMargin(new Insets(0, 0, 0, 0));
 		lockInst.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (SwingUtilities.isMiddleMouseButton(evt)) {
-					if (evt.isControlDown()) {
-						for (Component c : getComponents()) {
-							if (c instanceof ScrollComboBox) {
-								((ScrollComboBox) c).setEnabled(true);
-							} else if (c instanceof KnobPanel) {
-								((KnobPanel) c).setBlockInput(false);
-							} else if (c instanceof JPanel) {
-								for (Component c2 : ((JPanel) c).getComponents()) {
-									if (c2 instanceof ScrollComboBox) {
-										((ScrollComboBox) c2).setEnabled(true);
-									} else if (c instanceof KnobPanel) {
-										((KnobPanel) c2).setBlockInput(false);
-									}
+					for (Component c : getComponents()) {
+						if (c instanceof ScrollComboBox) {
+							((ScrollComboBox) c).setEnabled(true);
+						} else if (c instanceof KnobPanel) {
+							((KnobPanel) c).setBlockInput(false);
+						} else if (c instanceof JPanel) {
+							for (Component c2 : ((JPanel) c).getComponents()) {
+								if (c2 instanceof ScrollComboBox) {
+									((ScrollComboBox) c2).setEnabled(true);
+								} else if (c instanceof KnobPanel) {
+									((KnobPanel) c2).setBlockInput(false);
 								}
 							}
 						}
@@ -214,15 +217,59 @@ public abstract class InstPanel extends JPanel {
 			}
 		});
 
-		copyButton.addActionListener(l);
+		copyButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (!copyButton.isEnabled()) {
+					return;
+				}
+				InstPart part = toInstPart(VibeComposerGUI.lastRandomSeed);
+				InstPanel newPanel = VibeComposerGUI.vibeComposerGUI.addInstPanelToLayout(
+						VibeComposerGUI.instrumentTabPane.getSelectedIndex(), part, true);
+				newPanel.setPatternSeed(getPatternSeed());
+
+				// todo checkbox set cc'd panel's midichannel?
+				if (true) {
+					newPanel.setMidiChannel(getMidiChannel());
+				} else {
+					switch (VibeComposerGUI.instrumentTabPane.getSelectedIndex()) {
+					case 2:
+						newPanel.setMidiChannel(11 + (newPanel.getPanelOrder() - 1) % 5);
+						newPanel.setPanByOrder(5);
+						break;
+					case 3:
+						newPanel.setMidiChannel(2 + (newPanel.getPanelOrder() - 1) % 7);
+						newPanel.setPanByOrder(7);
+						break;
+					case 4:
+						newPanel.getComboPanel().reapplyHits();
+						break;
+					default:
+						break;
+					}
+				}
+
+				if (SwingUtilities.isMiddleMouseButton(e)) {
+					setChordSpanFill(ChordSpanFill.HALF1);
+					newPanel.setChordSpanFill(ChordSpanFill.HALF2);
+				}
+
+				VibeComposerGUI.vibeComposerGUI.recalculateTabPaneCounts();
+				VibeComposerGUI.vibeComposerGUI.recalculateGenerationCounts();
+				VibeComposerGUI.vibeComposerGUI.repaint();
+			}
+
+		});
 		randomizeButton.addActionListener(l);
 
-		copyButton.setActionCommand("CopyPart");
-		copyButton.setPreferredSize(new Dimension(25, 30));
+		removeButton.setPreferredSize(new Dimension(25, SMALL_BTN_HEIGHT));
+		removeButton.setMargin(new Insets(0, 0, 0, 0));
+
+		copyButton.setPreferredSize(new Dimension(25, SMALL_BTN_HEIGHT));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
 		randomizeButton.setActionCommand("RandomizePart");
-		randomizeButton.setPreferredSize(new Dimension(15, 30));
+		randomizeButton.setPreferredSize(new Dimension(15, SMALL_BTN_HEIGHT));
 		randomizeButton.setMargin(new Insets(0, 0, 0, 0));
 
 		instrument.setPrototype("XXXXXXXXXXXX");
@@ -265,6 +312,17 @@ public abstract class InstPanel extends JPanel {
 		this.add(instrument);
 	}
 
+	public void addOffsetAndDelayControls(boolean scrollEnabled) {
+		this.add(offset);
+		offset.setScrollEnabled(false);
+		this.add(feedbackCount);
+		feedbackCount.setScrollEnabled(false);
+		this.add(feedbackDuration);
+		feedbackDuration.setScrollEnabled(false);
+		this.add(feedbackVol);
+		feedbackVol.setScrollEnabled(false);
+	}
+
 	public void addOffsetAndDelayControls() {
 		this.add(offset);
 		this.add(feedbackCount);
@@ -273,6 +331,10 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public void addDefaultPanelButtons() {
+		removeButton.addActionListener(e -> {
+			VibeComposerGUI.removeInstPanel(getPartNum(), getPanelOrder(), true);
+			VibeComposerGUI.vibeComposerGUI.recalculateGeneratorAndTabCounts();
+		});
 		this.add(removeButton);
 		this.add(copyButton);
 		this.add(randomizeButton);
@@ -583,8 +645,6 @@ public abstract class InstPanel extends JPanel {
 
 	public void setPanelOrder(int val) {
 		this.panelOrder.setText("" + val);
-		String removeActionString = removeButton.getActionCommand().split(",")[0];
-		removeButton.setActionCommand(removeActionString + "," + val);
 	}
 
 	public boolean getFillFlip() {
@@ -698,7 +758,7 @@ public abstract class InstPanel extends JPanel {
 	public void setPanByOrder(int order, int panelLimit) {
 		order--;
 		getPanSlider().setValue(
-				50 + (order % 2 == 0 ? 1 : -1) * ((order - 1) % panelLimit) * (49 / panelLimit));
+				50 + (order % 2 == 0 ? 1 : -1) * (order % panelLimit) * (49 / panelLimit));
 	}
 
 	public void applyPauseChance(Random randGen) {
@@ -809,13 +869,29 @@ public abstract class InstPanel extends JPanel {
 			}
 		}
 		//LG.i(getPartNum() + "grid: " + StringUtils.join(panelRhythmGrid, ','));
-		List<Integer> permutatedOrder = IntStream.iterate(0, e -> e + 1)
-				.limit(panelRhythmGrid.size()).boxed().collect(Collectors.toList());
-		Collections.shuffle(permutatedOrder, permutationRand);
+
+		// sort by most crowded after addition of this layer / most needing of sidechaining
+		List<Pair<Integer, Integer>> orderOverlapPairs = new ArrayList<>();
+		for (int i = 0; i < panelRhythmGrid.size(); i++) {
+			if (panelRhythmGrid.get(i) != null && panelRhythmGrid.get(i) > 0) {
+				Integer mapped = mappedGrid.getRight().get(i);
+				if (mapped == null) {
+					continue;
+				}
+				int nextVal = rhythmGrid[i] + panelRhythmGrid.get(i) * multiplier;
+				orderOverlapPairs.add(Pair.of(i, nextVal));
+			} else {
+				orderOverlapPairs.add(Pair.of(i, rhythmGrid[i]));
+			}
+		}
+		Collections.sort(orderOverlapPairs, (p1, p2) -> (p2.getRight().compareTo(p1.getRight())));
+
+		/*LG.i(StringUtils.join(orderOverlapPairs.stream().map(e -> e.getLeft() + "|" + e.getRight())
+				.collect(Collectors.toList()), ","));*/
 
 		int changed = 0;
 		for (int i = 0; i < panelRhythmGrid.size(); i++) {
-			int index = permutatedOrder.get(i);
+			Integer index = orderOverlapPairs.get(i).getLeft();
 			if (panelRhythmGrid.get(index) != null && panelRhythmGrid.get(index) > 0) {
 				Integer mapped = mappedGrid.getRight().get(index);
 				if (mapped == null) {

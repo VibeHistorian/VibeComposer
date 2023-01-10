@@ -88,7 +88,11 @@ public class OMNI {
 	}
 
 	public static int clampVel(double d) {
-		return clamp((int) d, 0, 127);
+		return clampMidi((int) d);
+	}
+
+	public static int clampMidi(int d) {
+		return clamp(d, 0, 127);
 	}
 
 	public static <T> T getWeightedValue(T[] values, int searchedWeight, int[] weights) {

@@ -142,9 +142,6 @@ public class ChordPanel extends InstPanel {
 				//}
 			}
 		});
-
-		removeButton.addActionListener(l);
-		removeButton.setActionCommand("RemoveChord," + panelOrder);
 	}
 
 	public int getTransitionChance() {

@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +69,9 @@ public class RandomIntegerListButton extends JButton {
 	}
 
 	public List<Integer> getValues() {
+		if (getValue().isEmpty()) {
+			return new ArrayList<>(Arrays.asList(new Integer[] { 0 }));
+		}
 		String[] valueSplit = getValue().split(",");
 		List<Integer> values = new ArrayList<>();
 		for (String s : valueSplit) {
@@ -78,20 +82,23 @@ public class RandomIntegerListButton extends JButton {
 	}
 
 	public String getValue() {
-		return getText();
+		String txt = getText();
+		return "?".equals(txt) ? "" : txt;
 	}
 
 	public void setValues(List<Integer> values) {
-		setValue(StringUtils.join(values, ","));
+		setValue((values != null) ? StringUtils.join(values, ",") : "?");
 	}
 
 	public void setValue(String value) {
 		if (!isEnabled()) {
 			return;
 		}
+		if (StringUtils.isEmpty(value)) {
+			value = "?";
+		}
 		setText(value);
-
-		if (postFunc != null) {
+		if (!"?".equals(value) && (postFunc != null)) {
 			postFunc.accept(new Object());
 		}
 	}

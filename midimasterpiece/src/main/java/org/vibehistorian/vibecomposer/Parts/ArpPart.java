@@ -14,6 +14,8 @@ public class ArpPart extends InstPart {
 	private ArpPattern arpPattern = ArpPattern.RANDOM;
 	private int arpPatternRotate = 0;
 	private List<Integer> arpPatternCustom = null;
+	private List<Integer> arpContour = null;
+	private boolean arpContourChordMode = false;
 
 	public ArpPart() {
 		partNum = 3;
@@ -49,5 +51,25 @@ public class ArpPart extends InstPart {
 
 	public void setArpPatternCustom(List<Integer> arpPatternCustom) {
 		this.arpPatternCustom = arpPatternCustom;
+	}
+
+
+	public List<Integer> getArpContour() {
+		return arpContour;
+	}
+
+
+	public void setArpContour(List<Integer> arpContour) {
+		this.arpContour = arpContour;
+	}
+
+
+	public boolean isArpContourChordMode() {
+		return arpContourChordMode;
+	}
+
+
+	public void setArpContourChordMode(boolean arpContourChordMode) {
+		this.arpContourChordMode = arpContourChordMode;
 	};
 }

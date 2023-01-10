@@ -59,9 +59,6 @@ public class KnobValuePopup extends CloseablePopup {
 
 	@Override
 	public void close() {
-		if (VibeComposerGUI.canRegenerateOnChange() && regenerating) {
-			VibeComposerGUI.vibeComposerGUI.regenerate();
-		}
 		super.close();
 	}
 
@@ -76,30 +73,36 @@ public class KnobValuePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				try {
-					customInput = Integer.valueOf(numPanel.getTextfield().getText());
-				} catch (NumberFormatException ex) {
-					LG.d("Invalid value: " + numPanel.getTextfield().getText());
-				}
-				if (customInput != null) {
-					int val = customInput;
-					if (stretchAfterCustomInput) {
-						if (val > knob.getMax()) {
-							knob.setMax(val);
-						} else if (val < knob.getMin()) {
-							knob.setMin(val);
-						}
-						knob.setValue(val);
-						knob.repaint();
-					} else {
-						if (knob.getMin() <= val && knob.getMax() >= val) {
-							knob.setValue(val);
-						} else {
-							knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
-						}
-						knob.repaint();
+				if (frame.isVisible()) {
+					try {
+						customInput = Integer.valueOf(numPanel.getTextfield().getText());
+					} catch (NumberFormatException ex) {
+						LG.d("Invalid value: " + numPanel.getTextfield().getText());
 					}
+					if (customInput != null) {
+						int val = customInput;
+						if (stretchAfterCustomInput) {
+							if (val > knob.getMax()) {
+								knob.setMax(val);
+							} else if (val < knob.getMin()) {
+								knob.setMin(val);
+							}
+							knob.setValue(val);
+							knob.repaint();
+						} else {
+							if (knob.getMin() <= val && knob.getMax() >= val) {
+								knob.setValue(val);
+							} else {
+								knob.setValue(OMNI.clamp(val, knob.getMin(), knob.getMax()));
+							}
+							knob.repaint();
+						}
 
+						if (VibeComposerGUI.canRegenerateOnChange() && regenerating) {
+							VibeComposerGUI.vibeComposerGUI.regenerate();
+						}
+
+					}
 				}
 
 

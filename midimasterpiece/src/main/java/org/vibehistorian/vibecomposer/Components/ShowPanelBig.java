@@ -70,10 +70,13 @@ public class ShowPanelBig extends JPanel {
 	private static final long serialVersionUID = 1464206032589622048L;
 	public Score score;
 	protected double beatWidth; //10.0;
-	public static final int beatWidthBaseDefault = 1500;
-	public static int beatWidthBase = 1550;
-	public static final List<Integer> beatWidthBases = Arrays.asList(new Integer[] { 1550, 1800,
+	public static final int beatWidthBaseDefault = 1600;
+	public static int beatWidthBase = 1600;
+	public static final List<Integer> beatWidthBasesBig = Arrays.asList(new Integer[] { 1600, 1800,
 			2200, 2700, 3300, 4000, 4800, 5700, 6800, 8200, 10000, 12500 });
+	public static final List<Integer> beatWidthBasesSmall = Arrays.asList(
+			new Integer[] { 630, 800, 1050, 1300, 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700 });
+	public static List<Integer> beatWidthBases = beatWidthBasesBig;
 	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
 	private ShowAreaBig sa;
@@ -81,7 +84,7 @@ public class ShowPanelBig extends JPanel {
 	private JPanel pan;
 	private int panelHeight;
 	public static JScrollPane areaScrollPane;
-	private JScrollPane rulerScrollPane;
+	public static JScrollPane rulerScrollPane;
 	public static JScrollPane horizontalPane;
 	public static CheckButton soloMuterHighlight;
 	public static double maxEndTime = 10.0;
@@ -100,7 +103,7 @@ public class ShowPanelBig extends JPanel {
 		super();
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
+		setAlignmentX(LEFT_ALIGNMENT);
 		// Because the ScrollPanel can only take one componenet 
 		// a panel called apn is created to hold all comoponenets
 		// then only pan is added to this classes ScrollPane
@@ -125,13 +128,19 @@ public class ShowPanelBig extends JPanel {
 		horizontalPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(beatWidthBaseDefault, getHeight() - 50);
+				return new Dimension(beatWidthBases.get(0), getHeight() - 50);
+			}
+
+			@Override
+			public Dimension getMinimumSize() {
+				return new Dimension(beatWidthBases.get(0), getHeight() - 50);
 			}
 		};
 		horizontalPane.setViewportView(pan);
 		horizontalPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		horizontalPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 		horizontalPane.getHorizontalScrollBar().setUnitIncrement(16);
+		horizontalPane.setAlignmentX(LEFT_ALIGNMENT);
 
 
 		scorePartPanel = new JPanel();
@@ -278,10 +287,12 @@ public class ShowPanelBig extends JPanel {
 		};
 
 		sa.addMouseListener(ml);
+		sa.setAlignmentX(LEFT_ALIGNMENT);
 
 		JPanel areaPanel = new JPanel();
 		areaPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
 				ShowAreaBig.areaHeight));
+		areaPanel.setAlignmentX(LEFT_ALIGNMENT);
 		areaPanel.add(sa);
 
 		areaScrollPane = new JScrollPane() {
@@ -294,6 +305,7 @@ public class ShowPanelBig extends JPanel {
 		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		areaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		areaScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		areaScrollPane.setAlignmentX(LEFT_ALIGNMENT);
 		setupMouseWheelListener();
 
 		areaPanel.setVisible(true);
@@ -302,10 +314,12 @@ public class ShowPanelBig extends JPanel {
 		ruler = new ShowRulerBig(this);
 		ruler.setVisible(true);
 		ruler.addMouseListener(ml);
+		ruler.setAlignmentX(LEFT_ALIGNMENT);
 
 		JPanel rulerPanel = new JPanel();
 		rulerPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
 				ShowRulerBig.maxHeight));
+		rulerPanel.setAlignmentX(LEFT_ALIGNMENT);
 		rulerPanel.add(ruler);
 
 		rulerScrollPane = new JScrollPane() {
@@ -315,9 +329,11 @@ public class ShowPanelBig extends JPanel {
 			}
 		};
 		rulerScrollPane.setViewportView(rulerPanel);
+		// for parity with area
 		rulerScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		rulerScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		rulerScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		rulerScrollPane.setAlignmentX(LEFT_ALIGNMENT);
 
 
 		rulerPanel.setVisible(true);
@@ -483,7 +499,7 @@ public class ShowPanelBig extends JPanel {
 		update();
 		//LG.d();
 		//areaScrollPane.getVerticalScrollBar().setValue(50);
-		repaint();
+		//repaint();
 	}
 
 	/**
@@ -491,7 +507,7 @@ public class ShowPanelBig extends JPanel {
 	 */
 	public void updatePanelHeight(int height) {
 		panelHeight = height;
-		this.setSize(new Dimension(beatWidthBaseDefault, panelHeight));
+		this.setSize(new Dimension(beatWidthBase - 50, panelHeight));
 	}
 
 	/**
@@ -515,6 +531,10 @@ public class ShowPanelBig extends JPanel {
 		ruler.setSize(sizeX, ShowRulerBig.maxHeight);
 		pan.repaint();
 		repaintMinimum();
+		areaScrollPane.setMaximumSize(new Dimension(beatWidthBase, panelHeight - 70));
+		rulerScrollPane.setMaximumSize(new Dimension(beatWidthBase, ShowRulerBig.maxHeight + 10));
+		horizontalPane.setMaximumSize(new Dimension(beatWidthBases.get(0), panelHeight - 30));
+		horizontalPane.setSize(new Dimension(beatWidthBases.get(0), panelHeight - 30));
 		this.repaint();
 	}
 

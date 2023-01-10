@@ -65,14 +65,17 @@ public class ButtonValuePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				try {
-					customInput = Integer.valueOf(numPanel.getTextfield().getText());
-				} catch (NumberFormatException ex) {
-					LG.d("Invalid value: " + numPanel.getTextfield().getText());
+				if (frame.isVisible()) {
+					try {
+						customInput = Integer.valueOf(numPanel.getTextfield().getText());
+					} catch (NumberFormatException ex) {
+						LG.d("Invalid value: " + numPanel.getTextfield().getText());
+					}
+					if (customInput != null) {
+						butt.setValue(customInput);
+					}
 				}
-				if (customInput != null) {
-					butt.setValue(customInput);
-				}
+
 
 				/*if (RandomValueButton.singlePopup != null) {
 					if (RandomValueButton.singlePopup.randomNum == randomNum) {

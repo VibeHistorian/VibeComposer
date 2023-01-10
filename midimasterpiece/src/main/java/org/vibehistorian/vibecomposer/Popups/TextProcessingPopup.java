@@ -8,12 +8,12 @@ import java.util.function.Consumer;
 
 import javax.swing.JTextField;
 
-public class PatternNamePopup extends CloseablePopup {
+public class TextProcessingPopup extends CloseablePopup {
 	private Consumer<String> callback = null;
 	private JTextField textField = new JTextField("", 8);
 
-	public PatternNamePopup(Consumer<String> callback) {
-		super("Pattern - New", 0);
+	public TextProcessingPopup(String title, Consumer<String> callback) {
+		super(title, 0);
 		this.callback = callback;
 
 		textField.addKeyListener(new KeyListener() {
@@ -57,7 +57,9 @@ public class PatternNamePopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				callback.accept(textField.getText());
+				if (frame.isVisible()) {
+					callback.accept(textField.getText());
+				}
 			}
 
 			@Override

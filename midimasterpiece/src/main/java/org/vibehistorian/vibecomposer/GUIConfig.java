@@ -101,6 +101,7 @@ public class GUIConfig {
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
 	private boolean melodyFillPausesPerChord = false;
+	private int melodyNewBlocksChance = 0;
 	private boolean melodyLegacyMode = false;
 
 	private boolean melodyAvoidChordJumps = false;
@@ -127,12 +128,14 @@ public class GUIConfig {
 
 	private boolean useChordFormula = false;
 	private int longProgressionSimilarity = 0;
-	private boolean customChordsEnabled = true;
-	private String customChords = "?";
+	private boolean customChordsEnabled = false;
+	private boolean customDurationsEnabled = false;
+	private String customChords = "C";
 	private String customChordDurations = "4,4,4,4";
 
 	// arp gen
 	private boolean useOctaveAdjustments = false;
+	private boolean randomArpCorrectMelodyNotes = false;
 
 	// drum gen
 	private boolean drumCustomMapping = true;
@@ -899,6 +902,30 @@ public class GUIConfig {
 			return null;
 		}
 		return patternMaps.get(part).getRaw(partOrder, patName);
+	}
+
+	public boolean isCustomDurationsEnabled() {
+		return customDurationsEnabled;
+	}
+
+	public void setCustomDurationsEnabled(boolean customDurationsEnabled) {
+		this.customDurationsEnabled = customDurationsEnabled;
+	}
+
+	public boolean isRandomArpCorrectMelodyNotes() {
+		return randomArpCorrectMelodyNotes;
+	}
+
+	public void setRandomArpCorrectMelodyNotes(boolean randomArpCorrectMelodyNotes) {
+		this.randomArpCorrectMelodyNotes = randomArpCorrectMelodyNotes;
+	}
+
+	public int getMelodyNewBlocksChance() {
+		return melodyNewBlocksChance;
+	}
+
+	public void setMelodyNewBlocksChance(int melodyNewBlocksChance) {
+		this.melodyNewBlocksChance = melodyNewBlocksChance;
 	}
 
 }

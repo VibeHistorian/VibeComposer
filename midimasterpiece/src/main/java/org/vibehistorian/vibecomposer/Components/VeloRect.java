@@ -53,6 +53,9 @@ public class VeloRect extends JComponent {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (!isEnabled()) {
+					if ((visualParent != null) && SwingUtilities.isLeftMouseButton(evt)) {
+						visualParent.checkPattern(visualParentOrderIndex, 1);
+					}
 					return;
 				}
 				if (SwingUtilities.isLeftMouseButton(evt)) {
