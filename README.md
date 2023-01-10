@@ -11,7 +11,7 @@
 
 #### How to run it:
 1. [Download and install JRE - Java Runtime Environment (at least ver. 1.8.0)](https://java.com/en/download/)
-2. [Download the latest release (.jar)](https://github.com/VibeHistorian/VibeComposer/releases/download/v2.3-beta/VibeComposer-2.3-beta-JAR.jar) (other formats available under Releases (right sidebar))
+2. [Download the latest release (.jar)](https://github.com/VibeHistorian/VibeComposer/releases/download/v2.3-beta/VibeComposer-2.3-beta-JAR.jar) (other formats available under Releases - Assets (right sidebar))
 3. Double-click to run
   > Note: (Windows-only) If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from Releases, place it in the same folder as the .jar and run that instead.
   
