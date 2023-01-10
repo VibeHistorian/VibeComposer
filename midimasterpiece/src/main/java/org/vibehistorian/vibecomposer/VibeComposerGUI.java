@@ -680,7 +680,7 @@ public class VibeComposerGUI extends JFrame
 	Thread cycle;
 	JCheckBox useMidiCC;
 	CheckButton loopBeat;
-	CheckButton loopBeatCompose;
+	ScrollComboBox<String> loopBeatCompose;
 	public static PlayheadRangeSlider slider;
 	public static int sliderExtended = 0;
 	public static List<Integer> sliderMeasureStartTimes = null;
@@ -1737,16 +1737,20 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void generatePanels(int part) {
+	private void generatePanels(int part, boolean triggerRegenerate) {
 		int panelCount = isCustomSection() ? getInstList(part).size()
 				: Integer.valueOf(randomPanelsToGenerate[part].getText());
 		createPanels(part, panelCount, false);
 		recalculateTabPaneCounts();
 		recalculateSoloMuters();
 
-		if (canRegenerateOnChange()) {
+		if (triggerRegenerate && canRegenerateOnChange()) {
 			regenerate();
 		}
+	}
+
+	private void generatePanels(int part) {
+		generatePanels(part, false);
 	}
 
 	private void initMelodyGenSettings(int startY, int anchorSide) {
@@ -1828,7 +1832,7 @@ public class VibeComposerGUI extends JFrame
 			addPanel(0);
 		});
 		generatePanelButtons[0] = makeButton("Generate Melodies:", e -> {
-			generatePanels(0);
+			generatePanels(0, true);
 		});
 		randomPanelsToGenerate[0] = new JTextField("3", 2);
 		melodySettingsExtraPanelOrg.add(addPanelButtons[0]);
@@ -2100,7 +2104,7 @@ public class VibeComposerGUI extends JFrame
 			addPanel(1);
 		});
 		generatePanelButtons[1] = makeButton("Generate Basses:", e -> {
-			generatePanels(1);
+			generatePanels(1, true);
 		});
 		randomPanelsToGenerate[1] = new JTextField("1", 2);
 		bassSettingsPanel.add(addPanelButtons[1]);
@@ -2170,7 +2174,7 @@ public class VibeComposerGUI extends JFrame
 			addPanel(2);
 		});
 		generatePanelButtons[2] = makeButton("Generate Chords:", e -> {
-			generatePanels(2);
+			generatePanels(2, true);
 		});
 		randomPanelsToGenerate[2] = new JTextField("2", 2);
 		chordSettingsPanel.add(addPanelButtons[2]);
@@ -2321,7 +2325,7 @@ public class VibeComposerGUI extends JFrame
 			addPanel(3);
 		});
 		generatePanelButtons[3] = makeButton("Generate Arps:", e -> {
-			generatePanels(3);
+			generatePanels(3, true);
 		});
 		randomPanelsToGenerate[3] = new JTextField("3", 2);
 		arpsSettingsPanel.add(addPanelButtons[3]);
@@ -2481,7 +2485,7 @@ public class VibeComposerGUI extends JFrame
 			addPanel(4);
 		});
 		generatePanelButtons[4] = makeButton("Generate Drums:", e -> {
-			generatePanels(4);
+			generatePanels(4, true);
 		});
 		randomPanelsToGenerate[4] = new JTextField("6", 2);
 		drumsPanel.add(addPanelButtons[4]);
@@ -4880,13 +4884,22 @@ public class VibeComposerGUI extends JFrame
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
 									- 50) || sequencerEnded) {
 								stopMidi();
-								if (!loopBeatCompose.isSelected()) {
+								switch (loopBeatCompose.getVal()) {
+								case "REGENERATE":
 									regenerate();
-								} else {
+									break;
+								case "COMPOSE":
 									ActionEvent action = new ActionEvent(VibeComposerGUI.this,
 											ActionEvent.ACTION_PERFORMED, "Compose");
 									SwingUtilities.invokeLater(() -> actionPerformed(action));
-
+									break;
+								case "REPLAY":
+									playMidi(true);
+									break;
+								default:
+									stopMidi();
+									throw new IllegalArgumentException(
+											"Unsupported loop beat behavior!");
 								}
 							}
 						}
@@ -5124,7 +5137,7 @@ public class VibeComposerGUI extends JFrame
 		JPanel playSavePanel = new JPanel();
 		playSavePanel.setOpaque(false);
 		stopMidi = makeButton("STOP", e -> stopMidi());
-		playMidi = makeButton("PLAY", e -> playMidi());
+		playMidi = makeButton("PLAY", e -> playMidi(false));
 		pauseMidi = makeButton("PAUSE", e -> pauseMidi());
 		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
 		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
@@ -5194,7 +5207,8 @@ public class VibeComposerGUI extends JFrame
 
 		loopBeat = new CheckButton("Loop Quarter Notes", false);
 		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
-		loopBeatCompose = new CheckButton("Compose On Loop Repeat", false, uiComposeTextColor());
+		loopBeatCompose = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "REGENERATE", "COMPOSE", "REPLAY" }, loopBeatCompose);
 
 		midiMode = new CheckButton("MIDI Transmitter Mode", true);
 		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
@@ -5274,6 +5288,7 @@ public class VibeComposerGUI extends JFrame
 		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(loopBeatCount);
+		playSettingsPanel.add(new JLabel("On Loop:"));
 		playSettingsPanel.add(loopBeatCompose);
 		playSettingsPanel.add(midiMode);
 		playSettingsPanel.add(midiModeDevices);
@@ -5626,7 +5641,7 @@ public class VibeComposerGUI extends JFrame
 		playMidi.setForeground(toggledUIColor);
 		pauseMidi.setForeground(toggledUIColor);
 		stopMidi.setForeground(toggledUIColor);
-		loopBeatCompose.setOpaqueColor(toggledComposeColor);
+		loopBeatCompose.setForeground(toggledComposeColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
@@ -5752,6 +5767,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void composeMidi(boolean regenerate) {
+		LG.i("==========Compose Midi: Starting...================");
 		heavyBackgroundTasksInProgress = true;
 		boolean logPerformance = true;
 		long systemTime = System.currentTimeMillis();
@@ -7392,11 +7408,14 @@ public class VibeComposerGUI extends JFrame
 		return preset;
 	}
 
-	private void playMidi() {
+	private void playMidi(boolean replay) {
 		LG.i(("Starting Midi.."));
 		if (sequencer != null) {
 			if (sequencer.isRunning()) {
-				sequencer.stop();
+				if (!replay) {
+					sequencer.stop();
+				}
+
 				long startPos = (startFromBar.isSelected())
 						? sliderMeasureStartTimes.get(pausedMeasureCounter)
 						: pausedSliderPosition;
@@ -7405,7 +7424,9 @@ public class VibeComposerGUI extends JFrame
 				}
 				midiNavigate(startPos);
 			} else {
-				sequencer.stop();
+				if (!replay) {
+					sequencer.stop();
+				}
 				savePauseInfo();
 				if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
 					LG.d(("Unpausing.."));
@@ -7417,20 +7438,37 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			LG.d(("Position set.."));
-			try {
-				Thread.sleep(25);
-			} catch (InterruptedException e) {
-				// Auto-generated catch block
-				e.printStackTrace();
+			if (!replay) {
+				try {
+					Thread.sleep(25);
+				} catch (InterruptedException e) {
+					// Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				sequencer.setLoopCount(1);
 			}
+
 			sequencer.start();
 			startMidiCcThread();
+			sequencer.setLoopCount(0);
 			LG.i("Started Midi: " + pausedSliderPosition + "/" + slider.getMaximum() + ", measure: "
 					+ pausedMeasureCounter);
 		} else {
 			LG.i(("Sequencer is NULL!"));
 		}
 	}
+
+	/*private void replayMidi() {
+		LG.i(("Replaying Midi.."));
+		if (sequencer != null) {
+			if (sequencer.isRunning()) {
+				sequencer.stop();
+			}
+		} else {
+			LG.i(("Sequencer is NULL!"));
+		}
+	}*/
 
 	private void stopMidi() {
 		LG.i(("Stopping Midi.."));
