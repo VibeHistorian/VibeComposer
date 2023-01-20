@@ -8233,7 +8233,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
 		gc.setSpiceChance(spiceChance.getInt());
 		gc.setSpiceParallelChance(spiceParallelChance.getInt());
-		gc.setDimAugDom7thEnabled(spiceAllowDimAug.isSelected());
+		gc.setDimAug6thEnabled(spiceAllowDimAug.isSelected());
 		gc.setEnable9th13th(spiceAllow9th13th.isSelected());
 		gc.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
 		gc.setSquishProgressively(squishChordsProgressively.isSelected());
@@ -8361,7 +8361,7 @@ public class VibeComposerGUI extends JFrame
 		// chords
 		spiceChance.setInt(gc.getSpiceChance());
 		spiceParallelChance.setInt(gc.getSpiceParallelChance());
-		spiceAllowDimAug.setSelected(gc.isDimAugDom7thEnabled());
+		spiceAllowDimAug.setSelected(gc.isDimAug6thEnabled());
 		spiceAllow9th13th.setSelected(gc.isEnable9th13th());
 		spiceFlattenBigChords.setSelected(gc.isSpiceFlattenBigChords());
 		squishChordsProgressively.setSelected(gc.isSquishProgressively());

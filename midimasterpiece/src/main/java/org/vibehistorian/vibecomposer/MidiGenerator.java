@@ -1822,7 +1822,7 @@ public class MidiGenerator implements JMC {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled()
+			if (!gc.isDimAug6thEnabled()
 					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
@@ -1850,7 +1850,7 @@ public class MidiGenerator implements JMC {
 				LG.w("Next list is EMPTY! Adding default C chord!");
 				next.add("C");
 			}
-			int bSkipper = (!gc.isDimAugDom7thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
+			int bSkipper = (!gc.isDimAug6thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
 					? 1
 					: 0;
 			int nextInt = generator.nextInt(Math.max(next.size() - bSkipper, 1));
@@ -1885,7 +1885,7 @@ public class MidiGenerator implements JMC {
 				spicyChordString = tempSpicyChordString;
 			}
 
-			if (!gc.isDimAugDom7thEnabled()) {
+			if (!gc.isDimAug6thEnabled()) {
 				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
 					int scaleOrder = gc.getScaleMode().ordinal();
 					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
@@ -1897,7 +1897,7 @@ public class MidiGenerator implements JMC {
 				int chordOrder = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
 				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordOrder);
 				// #1 - is Ddim allowed?
-				if (chordOrder != 1 || gc.isDimAugDom7thEnabled()) {
+				if (chordOrder != 1 || gc.isDimAug6thEnabled()) {
 					spicyChordString = parallelChordString;
 					LG.d("PARALLEL: " + spicyChordString);
 				}
@@ -1985,7 +1985,7 @@ public class MidiGenerator implements JMC {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled()
+			if (!gc.isDimAug6thEnabled()
 					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
@@ -2020,7 +2020,7 @@ public class MidiGenerator implements JMC {
 				cpr.add(prevChord);
 				break;
 			}
-			int bSkipper = (!gc.isDimAugDom7thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
+			int bSkipper = (!gc.isDimAug6thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
 					? 1
 					: 0;
 			int nextInt = generator.nextInt(Math.max(next.size() - bSkipper, 1));
@@ -2055,7 +2055,7 @@ public class MidiGenerator implements JMC {
 				spicyChordString = tempSpicyChordString;
 			}
 
-			if (!gc.isDimAugDom7thEnabled()) {
+			if (!gc.isDimAug6thEnabled()) {
 				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
 					int scaleOrder = gc.getScaleMode().ordinal();
 					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
@@ -2066,7 +2066,7 @@ public class MidiGenerator implements JMC {
 			if (parallelGenerator.nextInt(100) < gc.getSpiceParallelChance()) {
 				int chordIndex = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
 				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordIndex);
-				if (chordIndex != 1 || gc.isDimAugDom7thEnabled()) {
+				if (chordIndex != 1 || gc.isDimAug6thEnabled()) {
 					spicyChordString = parallelChordString;
 					LG.d("PARALLEL: " + spicyChordString);
 				}

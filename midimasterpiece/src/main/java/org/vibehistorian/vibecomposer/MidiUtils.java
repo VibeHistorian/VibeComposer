@@ -131,6 +131,7 @@ public class MidiUtils {
 	public static final int[] cAug4 = { Pitches.C4, Pitches.E4, Pitches.GS4 };
 	public static final int[] cDim4 = { Pitches.C4, Pitches.EF4, Pitches.GF4 };
 	public static final int[] c7th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4 };
+	public static final int[] cMinMaj7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.B4 };
 	public static final int[] cMaj7th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4 };
 	public static final int[] cMin7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4 };
 	public static final int[] cMaj9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
@@ -159,6 +160,7 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cMaj7th4);
 		SPICE_CHORDS_LIST.add(cMin7th4);
 		SPICE_CHORDS_LIST.add(c7th4);
+		SPICE_CHORDS_LIST.add(cMinMaj7th4);
 
 		SPICE_CHORDS_LIST.add(cSus2nd4);
 		SPICE_CHORDS_LIST.add(cSus4th4);
@@ -185,8 +187,8 @@ public class MidiUtils {
 			.asList(new String[] { "sus4", "sus2", "sus7" });
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays
-			.asList(new String[] { "", "m", "maj7", "m7", "7", "sus2", "sus4", "sus7", "maj6", "m6",
-					"maj9", "m9", "maj13", "m13", "aug", "dim" });
+			.asList(new String[] { "", "m", "maj7", "m7", "7", "mM7", "sus2", "sus4", "sus7",
+					"maj6", "m6", "maj9", "m9", "maj13", "m13", "aug", "dim" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "C", "D", "E", "F", "G", "A", "B" });
@@ -1424,7 +1426,7 @@ public class MidiUtils {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
 			String chordString = SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled() && BANNED_DIM_AUG_6_LIST.contains(chordString)) {
+			if (!gc.isDimAug6thEnabled() && BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && BANNED_9_13_LIST.contains(chordString)) {
@@ -1433,13 +1435,9 @@ public class MidiUtils {
 			allowedSpiceChordsMiddle.add(chordString);
 		}
 
-		List<String> allowedSpiceChords = new ArrayList<>();
-		for (String s : allowedSpiceChordsMiddle) {
-			if (BANNED_DIM_AUG_6_LIST.contains(s) || BANNED_SUSSY_LIST.contains(s)) {
-				continue;
-			}
-			allowedSpiceChords.add(s);
-		}
+		List<String> allowedSpiceChords = new ArrayList<>(allowedSpiceChordsMiddle);
+		allowedSpiceChords.removeAll(BANNED_DIM_AUG_6_LIST);
+		allowedSpiceChords.removeAll(BANNED_SUSSY_LIST);
 
 		Random rand = new Random();
 

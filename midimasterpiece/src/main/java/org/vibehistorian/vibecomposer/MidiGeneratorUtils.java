@@ -573,9 +573,12 @@ public class MidiGeneratorUtils {
 		String spicyChordString = firstLetter
 				+ spicyChordListCopy.get(spiceGenerator.nextInt(spicyChordListCopy.size()));
 		if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
+			// keep formerly minor as minor
 			spicyChordString = spicyChordString.replace("maj", "m");
 		} else if (chordString.length() == 1 && spicyChordString.contains("m")
-				&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")) {
+				&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")
+				&& !spicyChordString.contains("mM")) {
+			// keep formerly major as major
 			spicyChordString = spicyChordString.replace("m", "maj");
 		}
 		return spicyChordString;
