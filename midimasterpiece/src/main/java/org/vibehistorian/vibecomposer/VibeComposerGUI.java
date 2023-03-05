@@ -6559,6 +6559,7 @@ public class VibeComposerGUI extends JFrame
 			} else if (synth != null) {
 				// do nothing, all set
 			} else {
+				LG.i("Using Default system Synthesizer!");
 				// use default system synth
 				for (Transmitter tm : sequencer.getTransmitters()) {
 					tm.close();
