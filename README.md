@@ -20,7 +20,7 @@
   > If you run into any issues, feel free to contact me (email/discord below).
 
 #### How to use it:
-1. Click the big orange 'Compose' button to compose a new song preview.
+1. Click the big golden 'Compose' button to compose a new song preview.
 
     -  Make any adjustments you want, then click 'Regenerate' to hear the new changes. Some knobs/comboboxes react instantly without needing to Regenerate (for convenience).
 
