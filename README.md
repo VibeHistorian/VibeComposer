@@ -4,6 +4,8 @@
 ![VibeComposer Simple UI Preview](https://i.imgur.com/O53OLLq.png)
 
 #### Arranged Track Examples (v2.3): 
+- [ANTI_BODIES](https://soundcloud.com/vibehistorian/anti_bodies)
+- [Slow Burn](https://soundcloud.com/vibehistorian/slow-burn)
 - [Good Night](https://soundcloud.com/vibehistorian/good-night)
 - [Winter Tale](https://soundcloud.com/vibehistorian/winter-tale)
 - [Glowing Apart](https://soundcloud.com/vibehistorian/glowing-apart)
