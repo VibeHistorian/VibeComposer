@@ -958,7 +958,6 @@ public class VibeComposerGUI extends JFrame
 		int screenHeight = d.height;
 		int screenWidth = d.width;
 		setSize(screenWidth / 2, screenHeight / 2);
-		setLocation(screenWidth / 4, screenHeight / 4);
 
 		setFocusable(true);
 		requestFocus();
@@ -992,6 +991,7 @@ public class VibeComposerGUI extends JFrame
 		
 		}*/
 		pack();
+		setLocationRelativeTo(null);
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
 		defaultGuiPreset = copyCurrentViewToPreset();
@@ -7821,6 +7821,8 @@ public class VibeComposerGUI extends JFrame
 
 			// Write the wave file to disk
 			AudioSystem.write(stream2, AudioFileFormat.Type.WAVE, new File(wavFileName));
+		} catch (Exception e) {
+			LG.e("TERRIBLE WAV ERROR!", e);
 		} finally {
 			if (stream1 != null)
 				stream1.close();
