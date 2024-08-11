@@ -506,7 +506,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyNewBlocksChance;
 	JCheckBox melodyLegacyMode;
 
-	JCheckBox melodyAvoidChordJumps;
+	JCheckBox melodyAvoidChordJumpsLegacy;
 	JCheckBox melodyUseDirectionsFromProgression;
 	JCheckBox melodyPatternFlip;
 	public static JCheckBox patternApplyPausesWhenGenerating;
@@ -1916,7 +1916,29 @@ public class VibeComposerGUI extends JFrame
 				true);
 		melodyNewBlocksChance = new KnobPanel("New<br>Blocks%", 25);
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
-		melodyAvoidChordJumps = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
+		melodyAvoidChordJumpsLegacy = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
+
+		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
+		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
+		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
+
+		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
+		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
+		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
+		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
+		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
+		melodySettingsExtraPanelShape.add(melodyArpySurprises);
+		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
+		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
+		melodySettingsExtraPanelShape.add(melodyNewBlocksChance);
+		melodySettingsExtraPanelShape.add(melodyLegacyMode);
+		return melodySettingsExtraPanelShape;
+	}
+
+	private JPanel initMelodySettingsPlusPlus() {
 		melodyUseDirectionsFromProgression = new CustomCheckBox(
 				"<html>Use Chord<br>Directions</html>", false);
 		melodyBlockTargetMode = new ScrollComboBox<>();
@@ -1941,27 +1963,6 @@ public class VibeComposerGUI extends JFrame
 				melodyRhythmAccentsMode);
 		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
 
-		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
-		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
-		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
-
-		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
-		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
-		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
-		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
-		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
-		melodySettingsExtraPanelShape.add(melodyArpySurprises);
-		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
-		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
-		melodySettingsExtraPanelShape.add(melodyNewBlocksChance);
-		melodySettingsExtraPanelShape.add(melodyLegacyMode);
-		return melodySettingsExtraPanelShape;
-	}
-
-	private JPanel initMelodySettingsPlusPlus() {
 		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
 		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
 		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
@@ -8213,7 +8214,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyLegacyMode(melodyLegacyMode.isSelected());
 		gc.setMelodyNewBlocksChance(melodyNewBlocksChance.getInt());
 		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
-		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumps.isSelected());
+		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumpsLegacy.isSelected());
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
 		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
 		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
@@ -8350,7 +8351,7 @@ public class VibeComposerGUI extends JFrame
 		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
 		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
 		melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
-		melodyAvoidChordJumps.setSelected(gc.isMelodyAvoidChordJumps());
+		melodyAvoidChordJumpsLegacy.setSelected(gc.isMelodyAvoidChordJumps());
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
 		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
