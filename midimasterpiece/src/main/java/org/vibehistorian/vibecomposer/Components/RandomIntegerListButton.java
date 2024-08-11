@@ -16,6 +16,7 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
@@ -53,7 +54,17 @@ public class RandomIntegerListButton extends JButton {
 
 				} else if (SwingUtilities.isMiddleMouseButton(e)) {
 					if (e.isControlDown()) {
-						setEnabled(!isEnabled());
+						boolean disableButton = !isEnabled();
+						setEnabled(disableButton);
+						if (e.isShiftDown()) {
+							InstPanel instParent = SwingUtils
+									.getInstParent(RandomIntegerListButton.this);
+							instParent.getAllComponentsLike(RandomIntegerListButton.this,
+									RandomIntegerListButton.class).forEach(butt -> {
+										butt.setEnabled(disableButton);
+										butt.repaint();
+									});
+						}
 					} else if (isEnabled()) {
 						if (MidiGenerator.gc == null || MidiGenerator.chordInts.isEmpty()
 								|| textGenerator == null) {

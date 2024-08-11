@@ -285,8 +285,11 @@ public class VibeComposerGUI extends JFrame
 	public static final Color COMPOSE_COLOR = new Color(180, 150, 90);
 	public static final Color COMPOSE_COLOR_TEXT = new Color(220, 170, 60);
 	public static final Color COMPOSE_COLOR_TEXT_LIGHT = new Color(255, 193, 85);
+	public static final Color REGENERATE_COLOR_TEXT = new Color(220, 70, 60);
+	public static final Color REGENERATE_COLOR_TEXT_LIGHT = new Color(150, 0, 0);
 	public static Color toggledUIColor = Color.cyan;
 	public static Color toggledComposeColor = COMPOSE_COLOR_TEXT;
+	public static Color toggledRegenerateColor = REGENERATE_COLOR_TEXT;
 
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
@@ -1599,7 +1602,7 @@ public class VibeComposerGUI extends JFrame
 
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
-				"Track History - Include Regenerated Tracks", false);
+				"Track History - Include Regenerated Tracks", true);
 		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
 		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 
@@ -1841,10 +1844,20 @@ public class VibeComposerGUI extends JFrame
 		generateMelodiesOnCompose = makeCheckBox("On Compose", false, true);
 		melodySettingsExtraPanelOrg.add(generateMelodiesOnCompose);
 
-		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> randomizeMelodySeeds());
+		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> {
+			if (canRegenerateOnChange()) {
+				if (!randomMelodyOnRegenerate.isSelected()) {
+					randomizeMelodySeeds();
+				}
+
+				regenerate();
+			} else {
+				randomizeMelodySeeds();
+			}
+		});
 		JButton clearUserMelodySeed = makeButton("Clear Seed",
 				e -> getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
-		randomMelodySameSeed = new CustomCheckBox("Same#", true);
+		randomMelodySameSeed = new CustomCheckBox("Same#", false);
 		randomMelodyOnRegenerate = makeCheckBox("on Regen", false, true);
 		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
@@ -5522,7 +5535,6 @@ public class VibeComposerGUI extends JFrame
 		randomizeScaleModeOnCompose.setForeground(fg);
 		melodyTargetNotesRandomizeOnCompose.setForeground(fg);
 		melodyPatternRandomizeOnCompose.setForeground(fg);
-		randomMelodyOnRegenerate.setForeground(fg);
 		switchOnComposeRandom.setForeground(fg);
 		randomizeTimingsOnCompose.setForeground(fg);
 		sidechainPatternsOnCompose.setForeground(fg);
@@ -5599,6 +5611,10 @@ public class VibeComposerGUI extends JFrame
 		return isDarkMode ? COMPOSE_COLOR_TEXT : COMPOSE_COLOR_TEXT_LIGHT;
 	}
 
+	public static Color uiRegenerateTextColor() {
+		return isDarkMode ? REGENERATE_COLOR_TEXT : REGENERATE_COLOR_TEXT_LIGHT;
+	}
+
 	public void removeComboBoxArrows(Container parent) {
 		for (Component c : parent.getComponents()) {
 			if (c instanceof ScrollComboBox) {
@@ -5632,6 +5648,7 @@ public class VibeComposerGUI extends JFrame
 
 		toggledUIColor = uiColor();
 		toggledComposeColor = uiComposeTextColor();
+		toggledRegenerateColor = uiRegenerateTextColor();
 
 
 		//mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
@@ -5642,12 +5659,13 @@ public class VibeComposerGUI extends JFrame
 		totalTime.setForeground(toggledUIColor);
 		compose.setForeground(toggledUIColor);
 		compose.setBackground(COMPOSE_COLOR);
-		regenerate.setForeground(toggledUIColor);
+		regenerate.setForeground(toggledRegenerateColor);
 		playMidi.setForeground(toggledUIColor);
 		pauseMidi.setForeground(toggledUIColor);
 		stopMidi.setForeground(toggledUIColor);
 		loopBeatCompose.setForeground(toggledComposeColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
+		randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
 		for (JSeparator x : separators) {
@@ -6095,6 +6113,24 @@ public class VibeComposerGUI extends JFrame
 
 		if (regenerate && randomMelodyOnRegenerate.isSelected()) {
 			randomizeMelodySeeds();
+		}
+
+		if (regenerate && randomMelodyOnRegenerate.isSelected() && !melodyPanels.isEmpty()) {
+			if (melodyPatternRandomizeOnCompose.isSelected()) {
+				melodyPanels.forEach(e -> {
+					e.setMelodyPatternOffsets(
+							MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
+									e.getPanelOrder() + (e.getPatternSeed() == 0 ? lastRandomSeed
+											: e.getPatternSeed())));
+				});
+			}
+			if (melodyTargetNotesRandomizeOnCompose.isSelected()) {
+				melodyPanels.forEach(e -> {
+					e.setChordNoteChoices(e.getNoteTargetsButton().getRandGenerator().apply(e
+							.getPanelOrder()
+							+ (e.getPatternSeed() == 0 ? lastRandomSeed : e.getPatternSeed())));
+				});
+			}
 		}
 
 		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()
