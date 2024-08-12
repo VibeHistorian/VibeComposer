@@ -189,6 +189,8 @@ public class MidiEditArea extends JComponent {
 						&& MidiEditPopup.regenerateInPlaceChoice) {
 
 					pop.apply();
+					selectedNotes.clear();
+					selectedNotesCopy.clear();
 					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
 				}
 			}

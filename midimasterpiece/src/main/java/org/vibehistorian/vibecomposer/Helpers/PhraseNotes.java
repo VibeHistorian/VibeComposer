@@ -40,8 +40,8 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 		return stream().map(e -> e.toNote()).collect(Collectors.toList());
 	}
 
-	public Phrase makePhrase() {
-		Phrase phr = new PhraseExt();
+	public PhraseExt makePhrase() {
+		PhraseExt phr = new PhraseExt();
 		makeNotes().forEach(e -> phr.addNote(e));
 		return phr;
 	}
