@@ -67,6 +67,7 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -684,6 +685,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox useMidiCC;
 	CheckButton loopBeat;
 	ScrollComboBox<String> loopBeatCompose;
+	public static JPanel sliderPanel;
 	public static PlayheadRangeSlider slider;
 	public static int sliderExtended = 0;
 	public static List<Integer> sliderMeasureStartTimes = null;
@@ -753,6 +755,7 @@ public class VibeComposerGUI extends JFrame
 		isDarkMode = true;
 		vibeComposerGUI = new VibeComposerGUI("VibeComposer2.4 (BETA)");
 		vibeComposerGUI.init();
+		//Toolkit.getDefaultToolkit().getSystemEventQueue().push(new TimedEventQueue());
 		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 	}
 
@@ -767,6 +770,7 @@ public class VibeComposerGUI extends JFrame
 			@Override
 			protected void paintComponent(Graphics g) {
 				super.paintComponent(g);
+				//LG.i("Painted main.");
 				Graphics2D g2d = (Graphics2D) g;
 				g2d.setRenderingHint(RenderingHints.KEY_RENDERING,
 						RenderingHints.VALUE_RENDER_QUALITY);
@@ -1845,20 +1849,15 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelOrg.add(generateMelodiesOnCompose);
 
 		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> {
+			randomizeMelodySeeds();
 			if (canRegenerateOnChange()) {
-				if (!randomMelodyOnRegenerate.isSelected()) {
-					randomizeMelodySeeds();
-				}
-
 				regenerate();
-			} else {
-				randomizeMelodySeeds();
 			}
 		});
 		JButton clearUserMelodySeed = makeButton("Clear Seed",
 				e -> getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
 		randomMelodySameSeed = new CustomCheckBox("Same#", false);
-		randomMelodyOnRegenerate = makeCheckBox("on Regen", false, true);
+		randomMelodyOnRegenerate = makeCheckBox("on Manual Regen.", false, true);
 		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
 		dropPane = new MelodyMidiDropPane();
@@ -4580,8 +4579,8 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void initSliderPanel(int startY, int anchorSide) {
-		JPanel sliderPanel = new JPanel();
-		sliderPanel.setOpaque(false);
+		sliderPanel = new JPanel();
+		sliderPanel.setOpaque(true);
 		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.X_AXIS));
 		sliderPanel.setPreferredSize(new Dimension(1250, 55));
 
@@ -4653,6 +4652,9 @@ public class VibeComposerGUI extends JFrame
 					try {
 						recalculateSolosMutes();
 						try {
+							if (SwingUtilities.isEventDispatchThread()) {
+								LG.i("SB EDT!");
+							}
 							sleep(100);
 						} catch (InterruptedException e) {
 							LG.e(e.getMessage());
@@ -4791,6 +4793,7 @@ public class VibeComposerGUI extends JFrame
 		Thread cycle = new Thread() {
 
 			public void run() {
+				int sleepTime = 10;
 				int allowedActionsOnZero = 0;
 				while (true) {
 					try {
@@ -4799,6 +4802,12 @@ public class VibeComposerGUI extends JFrame
 								if (allowedActionsOnZero == 0) {
 									slider.setUpperValue(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
+									if ((currentMidiEditorPopup != null)
+											&& currentMidiEditorPopup.getFrame().isVisible()) {
+										sleepTime = 20;
+									} else {
+										sleepTime = 10;
+									}
 								} else {
 									slider.setUpperValueRaw(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
@@ -4933,7 +4942,7 @@ public class VibeComposerGUI extends JFrame
 								sleep(25);
 							}*/
 							allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
-							sleep(10);
+							sleep(sleepTime);
 
 						} catch (InterruptedException e) {
 							LG.e("THREAD INTERRUPTED!");
@@ -5193,7 +5202,10 @@ public class VibeComposerGUI extends JFrame
 			}
 		});
 		saveCustom.setForeground(savedIndicatorForegroundColors[3]);
-		saveCustomFilename = new JTextField("savefilename", 12);
+		Calendar nowDate = Calendar.getInstance();
+		String yearMonth = nowDate.get(Calendar.YEAR) + "-"
+				+ StringUtils.leftPad(String.valueOf(nowDate.get(Calendar.MONTH) + 1), 2, "0");
+		saveCustomFilename = new JTextField(yearMonth + "/savefilename", 12);
 		savedIndicatorLabel = new JLabel("[Saved!]");
 		savedIndicatorLabel.setVisible(false);
 
@@ -5687,6 +5699,7 @@ public class VibeComposerGUI extends JFrame
 			arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
 		}
 
+		sliderPanel.setBackground(panelColorLow);
 
 		globalSoloMuter.reapplyTextColor();
 		for (SoloMuter sm : groupSoloMuters) {
@@ -5782,15 +5795,24 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public void regenerate() {
-		composeMidi(true);
+		regenerate(false);
+	}
+
+	public void regenerate(boolean manual) {
+		composeMidi(true, manual);
 	}
 
 	public void compose() {
-		composeMidi(false);
+		compose(false);
 	}
 
-	public void composeMidi(boolean regenerate) {
-		LG.i("==========Compose Midi: Starting...================");
+	public void compose(boolean manual) {
+		composeMidi(false, manual);
+	}
+
+	public void composeMidi(boolean regenerate, boolean manual) {
+		LG.i("==========Compose Midi [" + (regenerate ? "Regenerate" : "Compose") + "|"
+				+ (manual ? "Manual" : "OnChange") + "]: Starting...================");
 		heavyBackgroundTasksInProgress = true;
 		boolean logPerformance = true;
 		long systemTime = System.currentTimeMillis();
@@ -5843,7 +5865,7 @@ public class VibeComposerGUI extends JFrame
 
 			int regenerateCount = (regenerate) ? guiConfig.getRegenerateCount() + 1 : 0;
 
-			prepareUI(regenerate);
+			prepareUI(regenerate, manual);
 			if (logPerformance) {
 				LG.i("After prepareUI: " + (System.currentTimeMillis() - systemTime));
 			}
@@ -5851,7 +5873,7 @@ public class VibeComposerGUI extends JFrame
 			copyGUItoConfig(midiConfig, true);
 
 			melodyGen = new MidiGenerator(midiConfig);
-			fillUserParameters(regenerate);
+			fillUserParameters(regenerate, manual);
 
 			File makeDir = new File(MIDIS_FOLDER);
 			makeDir.mkdir();
@@ -5954,7 +5976,7 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public void fillUserParameters(boolean regenerate) {
+	public void fillUserParameters(boolean regenerate, boolean manual) {
 		try {
 			MidiGenerator.COLLAPSE_DRUM_TRACKS = combineDrumTracks.isSelected();
 			MidiGenerator.recalculateDurations(stretchMidi.getInt());
@@ -6077,7 +6099,7 @@ public class VibeComposerGUI extends JFrame
 		return masterpieceSeed;
 	}
 
-	private void prepareUI(boolean regenerate) {
+	private void prepareUI(boolean regenerate, boolean manual) {
 
 		if (!regenerate && randomizeBpmOnCompose.isSelected()) {
 			randomizeBPM();
@@ -6111,7 +6133,7 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (regenerate && randomMelodyOnRegenerate.isSelected()) {
+		if (regenerate && manual && randomMelodyOnRegenerate.isSelected()) {
 			randomizeMelodySeeds();
 		}
 
@@ -6994,6 +7016,14 @@ public class VibeComposerGUI extends JFrame
 	// Deal with Action events (button pushes)
 
 	public void actionPerformed(ActionEvent ae) {
+		actionPerformedTask(ae);
+		/*Thread actionThread = new Thread(() -> {
+			actionPerformedTask(ae);
+		});
+		actionThread.start();*/
+	}
+
+	public void actionPerformedTask(ActionEvent ae) {
 		boolean tabPanePossibleChange = false;
 		boolean soloMuterPossibleChange = false;
 		boolean triggerRegenerate = false;
@@ -7096,7 +7126,7 @@ public class VibeComposerGUI extends JFrame
 		if (isCompose || isRegenerate) {
 
 			switchMidiButtons(false);
-			composeMidi(isRegenerate);
+			composeMidi(isRegenerate, true);
 			switchMidiButtons(true);
 			repaint();
 			/*SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
