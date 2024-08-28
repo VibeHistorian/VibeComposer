@@ -32,8 +32,6 @@ import static org.vibehistorian.vibecomposer.MidiUtils.transposeScale;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -134,8 +132,6 @@ public class MidiGenerator implements JMC {
 	}
 
 	private static final boolean debugEnabled = true;
-	private static final PrintStream originalStream = System.out;
-
 	// big G
 	public static GUIConfig gc;
 
@@ -1011,9 +1007,9 @@ public class MidiGenerator implements JMC {
 		});
 		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords, sec, mp);
 
-
-		MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
-
+		if (!ScaleMode.LOCRIAN.equals(gc.getScaleMode())) {
+			MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
+		}
 
 		if (gc.getMelodyReplaceAvoidNotes() > 0) {
 			MidiGeneratorUtils.replaceAvoidNotes(fullMelodyMap, chords,
@@ -1285,7 +1281,7 @@ public class MidiGenerator implements JMC {
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		List<Note> modeNoteChanges = new ArrayList<>();
-		if (gc.getMelodyModeNoteTarget() > 0 && scale.modeTargetNote > 0) {
+		if (gc.getMelodyModeNoteTarget() > 0 && scale.modeTargetNote >= 0) {
 			double requiredPercentage = gc.getMelodyModeNoteTarget() / 100.0;
 			int needed = (int) Math.ceil(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
 					* requiredPercentage);
@@ -1822,8 +1818,7 @@ public class MidiGenerator implements JMC {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAug6thEnabled()
-					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
+			if (!gc.isDimAug6thEnabled() && MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
@@ -1985,8 +1980,7 @@ public class MidiGenerator implements JMC {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAug6thEnabled()
-					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
+			if (!gc.isDimAug6thEnabled() && MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
@@ -2694,12 +2688,7 @@ public class MidiGenerator implements JMC {
 						customInversionIndexList, userRootProgression);
 
 		if (!debugEnabled) {
-			PrintStream dummyStream = new PrintStream(new OutputStream() {
-				public void write(int b) {
-					// NO-OP
-				}
-			});
-			System.setOut(dummyStream);
+			System.setOut(VibeComposerGUI.dummyOut);
 		}
 		if (logPerformance) {
 			LG.i("Generated chords, starting arrangement after: "
@@ -3072,17 +3061,13 @@ public class MidiGenerator implements JMC {
 
 		// write midi without log
 
-		PrintStream dummyStream = new PrintStream(new OutputStream() {
-			public void write(int b) {
-				// NO-OP
-			}
-		});
-		System.setOut(dummyStream);
+		System.setOut(VibeComposerGUI.dummyOut);
 
 		JMusicUtilsCustom.midi(score, fileName);
 		JMusicUtilsCustom.midi(scoreFull, VibeComposerGUI.TEMPORARY_SEQUENCE_MIDI_NAME);
 		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
-			System.setOut(originalStream);
+			System.setOut(VibeComposerGUI.originalOut);
+			System.setErr(VibeComposerGUI.dummyOut);
 		} else {
 			VibeComposerGUI.dconsole.redirectOut();
 		}

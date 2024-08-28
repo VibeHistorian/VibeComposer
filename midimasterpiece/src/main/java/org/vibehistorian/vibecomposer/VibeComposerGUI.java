@@ -63,6 +63,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -727,6 +729,16 @@ public class VibeComposerGUI extends JFrame
 	JPanel controlPanel;
 	JScrollPane everythingPane;
 
+
+	static final PrintStream originalOut = System.out;
+	static final PrintStream originalErr = System.err;
+	static final PrintStream dummyOut = new PrintStream(new OutputStream() {
+		public void write(int b) {
+			// NO-OP
+		}
+	});
+
+
 	public static Map<Integer, SoloMuter> cpSm = null;
 	public static Map<Integer, SoloMuter> apSm = null;
 	public static Map<Integer, SoloMuter> dpSm = null;
@@ -757,6 +769,10 @@ public class VibeComposerGUI extends JFrame
 		vibeComposerGUI.init();
 		//Toolkit.getDefaultToolkit().getSystemEventQueue().push(new TimedEventQueue());
 		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+	}
+
+	static {
+		System.setErr(VibeComposerGUI.dummyOut);
 	}
 
 	public VibeComposerGUI(String title) {
@@ -4871,7 +4887,7 @@ public class VibeComposerGUI extends JFrame
 								int part = instrumentTabPane.getSelectedIndex();
 								if (part >= 2 && part <= 4) {
 									if (highlightPatterns.isSelected()) {
-										SwingUtilities.invokeAndWait(() -> notifyVisualPatterns(val,
+										SwingUtilities.invokeLater(() -> notifyVisualPatterns(val,
 												finalSectIndex, actualSec));
 									}
 								}

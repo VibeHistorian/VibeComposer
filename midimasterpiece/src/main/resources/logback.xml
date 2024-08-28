@@ -1,14 +1,24 @@
-<configuration>
+<configuration scan="true" scanPeriod="30 seconds">
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <!-- encoders are assigned the type
-         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default  %d{HH:mm:ss.SSS}  %-5level %logger{10}-->
-    <encoder>
-      <pattern> [%-6.6thread]%msg%n</pattern>
-    </encoder>
-  </appender>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter"> 
+            <level>info</level>
+        </filter>
+        <encoder>
+            <pattern>%date{ISO8601} [%-6.6thread]%-4level: %message%n</pattern>
+        </encoder>
+    </appender>
 
-  <root level="info">
-    <appender-ref ref="STDOUT" />
-  </root>
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{ISO8601} [%-6.6thread]%-4level: %message%n</pattern>
+        </encoder>
+        <target>System.err</target>
+    </appender>
+
+    <root>
+        <level value="debug" />
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STDERR"/>
+    </root>
 </configuration>

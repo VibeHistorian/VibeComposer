@@ -539,8 +539,10 @@ public class ShowPanelBig extends JPanel {
 	}
 
 	public void repaintMinimum() {
-		sa.repaint();
-		ruler.repaint();
+		SwingUtilities.invokeLater(() -> {
+			sa.repaint();
+			ruler.repaint();
+		});
 	}
 
 	public static void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {

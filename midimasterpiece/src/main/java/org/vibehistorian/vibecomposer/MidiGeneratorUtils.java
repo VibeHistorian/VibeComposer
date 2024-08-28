@@ -447,9 +447,14 @@ public class MidiGeneratorUtils {
 	}
 
 	static void applyBadIntervalRemoval(List<Note> fullMelody) {
-
-		int previousPitch = -1;
-		for (int i = 0; i < fullMelody.size(); i++) {
+		if (fullMelody.isEmpty()) {
+			return;
+		}
+		int previousPitch = fullMelody.get(0).getPitch();
+		if (previousPitch < 0) {
+			previousPitch = -1;
+		}
+		for (int i = 1; i < fullMelody.size(); i++) {
 			Note n = fullMelody.get(i);
 			int pitch = n.getPitch();
 			if (pitch < 0) {
@@ -460,11 +465,19 @@ public class MidiGeneratorUtils {
 				n.setPitch(pitch - 1);
 			} else if (pitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
 				n.setPitch(pitch + 1);
-			} else if ((i < fullMelody.size() - 1)
-					&& (pitch - fullMelody.get(i + 1).getPitch() >= 12)) {
+			} else if ((i > 0) && (pitch - previousPitch >= 12)) {
 				// set G as a step for too wild intervals
-				LG.i("Reducing interval - changing note to 5th");
-				n.setPitch(pitch - (pitch % 12) + 7);
+				int avgPitch = (pitch + previousPitch) / 2;
+				int avgSemi = avgPitch % 12;
+				if (avgSemi > 9) {
+					n.setPitch(avgPitch - avgSemi + 12);
+				} else if (avgSemi < 3) {
+					n.setPitch(avgPitch - avgSemi);
+				} else {
+					n.setPitch(avgPitch - avgSemi + 7);
+				}
+				LG.i("Reducing interval - changing note to: " + n.getPitch());
+				//n.setPitch(previousPitch - (previousPitch % 12) + 7);
 			}
 			previousPitch = n.getPitch();
 		}

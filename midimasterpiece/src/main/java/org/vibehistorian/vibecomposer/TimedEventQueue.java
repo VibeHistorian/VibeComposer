@@ -13,7 +13,7 @@ public class TimedEventQueue extends EventQueue {
 		if (endNano - startNano > 5000000) {
 			String evtString = event.toString();
 			if (true || !evtString.contains("InvocationEvent")) {
-				LG.w(((endNano - startNano) / 1000000) + "ms: " + evtString);
+				LG.i(((endNano - startNano) / 1000000) + "ms: " + evtString);
 			}
 		}
 	}
