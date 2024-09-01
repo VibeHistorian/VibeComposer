@@ -25,7 +25,7 @@ public class DebugConsole {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if (!outCache.isEmpty()) {
+			if (outCache.length() > 0) {
 				textArea.append(outCache.toString());
 				outCache = new StringBuilder();
 				frame.revalidate();

@@ -37,6 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
@@ -360,7 +361,7 @@ public class Arrangement {
 		}
 		String sCell = (String) cell;
 		sCell = sCell.replaceAll(" ", "");
-		return Arrays.asList(sCell.split(",")).stream().filter(e -> !e.isBlank())
+		return Arrays.asList(sCell.split(",")).stream().filter(StringUtils::isNotEmpty)
 				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
 	}
 
