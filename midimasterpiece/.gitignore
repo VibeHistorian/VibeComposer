@@ -1,5 +1,6 @@
 /target/
-.idea/
+/midis/
+/.idea/
 .settings
 .project
 .classpath
