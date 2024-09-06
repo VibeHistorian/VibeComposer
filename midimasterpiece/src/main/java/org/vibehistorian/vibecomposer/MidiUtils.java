@@ -60,7 +60,7 @@ public class MidiUtils {
 				DIATONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
 				AEOLIAN_SCALE = { 0, 2, 3, 5, 7, 8, 10 }, DORIAN_SCALE = { 0, 2, 3, 5, 7, 9, 10 },
 				PHRYGIAN_SCALE = { 0, 1, 3, 5, 7, 8, 10 }, LYDIAN_SCALE = { 0, 2, 4, 6, 7, 9, 11 },
-				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
+				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTA_MAJOR_SCALE = { 0, 2, 4, 4, 7, 7, 9 }, PENTA_MINOR_SCALE = { 0, 3, 4, 4, 7, 7, 10 },
 				BLUES_SCALE = { 0, 2, 3, 4, 7, 9, 12 }, TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 },
 				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 },
 				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 },
@@ -102,7 +102,7 @@ public class MidiUtils {
 		WHISKEY(Scales.WHISKEY_SCALE, 1), DOUBLE_HARM(Scales.DOUBLE_HARM_SCALE, 1),
 		BBORIAN(Scales.BBORIAN_SCALE, 0), EBOLIAN(Scales.EBOLIAN_SCALE, 4),
 		ABRYGIAN(Scales.ABRYGIAN_SCALE, 1), DBOCRIAN(Scales.DBOCRIAN_SCALE, 6),
-		GBFS(Scales.GBFS_SCALE, 2);
+		GBFS(Scales.GBFS_SCALE, 2), PENTA_MAJOR(Scales.PENTA_MAJOR_SCALE, 1), PENTA_MINOR(Scales.PENTA_MINOR_SCALE, 1);
 
 		public Integer[] noteAdjustScale;
 		public Integer modeTargetNote;
@@ -1046,6 +1046,9 @@ public class MidiUtils {
 
 			if (originalIndex >= 0) {
 				int originalMovement = mode[originalIndex];
+				if (modeTo.length-1 < originalIndex) {
+					originalIndex = (int)Math.floor(modeTo.length * (originalIndex / Double.valueOf(mode.length)));
+				}
 				int newMovement = modeTo[originalIndex];
 
 				if (pitch != Note.REST) {
@@ -1107,6 +1110,9 @@ public class MidiUtils {
 
 
 			int originalMovement = mode[originalIndex];
+			if (modeTo.length-1 < originalIndex) {
+				originalIndex = (int)Math.floor(modeTo.length * (originalIndex / Double.valueOf(mode.length)));
+			}
 			int newMovement = modeTo[originalIndex];
 
 			n.setPitch(pitch - originalMovement + newMovement);
