@@ -14,13 +14,14 @@ import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 public class ShowScorePopup extends CloseablePopup {
 
 	public ShowScorePopup(JScrollPane scoreScrollPane) {
-		super("MIDI Score", 12, new Point(-400, -500));
+		super("MIDI Score", 12, new Point(-400, -500), VibeComposerGUI.vibeComposerGUI);
 		frame.add(scoreScrollPane);
 		if (VibeComposerGUI.miniScorePopup.isSelected()) {
 			frame.setPreferredSize(new Dimension(650, 325));
 			frame.setMaximumSize(new Dimension(650, 325));
 			frame.setResizable(true);
 		}
+		frame.setAlwaysOnTop(true);
 		frame.pack();
 		frame.setVisible(true);
 	}

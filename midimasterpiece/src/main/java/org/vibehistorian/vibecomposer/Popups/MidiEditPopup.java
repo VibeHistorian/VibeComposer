@@ -178,7 +178,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 		addKeyboardControls(allPanels);
 
-		SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
+		//SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
+		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);

@@ -1,18 +1,18 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Point;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public abstract class CloseablePopup {
-	final JFrame frame = new JFrame();
+	final JDialog frame;
 	public static Map<Integer, CloseablePopup> currentPopupMap = new HashMap<>();
 	private Integer popupType = 0;
 	public static WindowListener EMPTY_WINDOW_LISTENER = new WindowListener() {
@@ -51,11 +51,22 @@ public abstract class CloseablePopup {
 	}
 
 	public CloseablePopup(String windowTitle, Integer popupType, Point locOffset) {
+		this(windowTitle, popupType, locOffset, null);
+	}
+
+	public CloseablePopup(String windowTitle, Integer popupType, Point locOffset, Component parentComponent) {
+		if (parentComponent != null) {
+			frame = new JDialog(SwingUtilities.windowForComponent(parentComponent));
+		} else {
+			frame = new JDialog();
+		}
+
 		this.setPopupType(popupType);
 		Point loc = SwingUtils.getMouseLocation();
 		loc.translate(12, 12);
 		loc.translate(locOffset.x, locOffset.y);
-		SwingUtils.setFrameLocation(frame, loc);
+		frame.setLocation(loc);
+		//SwingUtils.setFrameLocation(frame, loc);
 
 		//frame.setLocation(-500, 50);
 		addFrameWindowOperation();
@@ -85,8 +96,8 @@ public abstract class CloseablePopup {
 
 	protected abstract void addFrameWindowOperation();
 
-	public JFrame getFrame() {
-		return frame;
+	public boolean isVisible() {
+		return frame.isVisible();
 	}
 
 	public Integer getPopupType() {

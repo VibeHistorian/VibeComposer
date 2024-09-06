@@ -4819,7 +4819,7 @@ public class VibeComposerGUI extends JFrame
 									slider.setUpperValue(
 											(int) (sequencer.getMicrosecondPosition() / 1000));
 									if ((currentMidiEditorPopup != null)
-											&& currentMidiEditorPopup.getFrame().isVisible()) {
+											&& currentMidiEditorPopup.isVisible()) {
 										sleepTime = 20;
 									} else {
 										sleepTime = 10;
@@ -6241,7 +6241,7 @@ public class VibeComposerGUI extends JFrame
 			arrangement.setOverridden(false);
 		}
 
-		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
+		if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
 			LG.i("MidiEditPopup is open - saving!");
 			currentMidiEditorPopup.saveNotes(false);
 		}
@@ -6300,7 +6300,7 @@ public class VibeComposerGUI extends JFrame
 		}*/
 
 
-		if (currentMidiEditorPopup != null && currentMidiEditorPopup.getFrame().isVisible()) {
+		if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
 			if (actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
 				currentMidiEditorPopup.close();
 				currentMidiEditorPopup = null;
@@ -10065,7 +10065,7 @@ public class VibeComposerGUI extends JFrame
 			lastPlayedMs = System.currentTimeMillis();
 
 			if (!sequencer.isRunning() && !(currentMidiEditorPopup != null
-					&& currentMidiEditorPopup.getFrame().isVisible()
+					&& currentMidiEditorPopup.isVisible()
 					&& MidiEditPopup.regenerateInPlaceChoice)) {
 				long returnPos = sequencer.getTickPosition();
 				boolean prevSoloState = sequencer.getTrackSolo(trackNum);

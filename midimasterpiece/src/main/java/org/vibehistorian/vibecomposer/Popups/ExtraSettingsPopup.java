@@ -26,10 +26,6 @@ public class ExtraSettingsPopup extends CloseablePopup {
 		LG.d("Opened Extra Settings page!");
 	}
 
-	public JFrame getFrame() {
-		return frame;
-	}
-
 	protected void addFrameWindowOperation() {
 		frame.addWindowListener(new WindowListener() {
 
