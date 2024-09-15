@@ -759,13 +759,14 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox customFilenameAddTimestamp;
 	public static JCheckBox miniScorePopup;
 
+	public static final String CURRENT_VERSION = "2.4";
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
 		UIManager.put("CheckBox.icon", new CheckBoxIcon());
 
 		isDarkMode = true;
-		vibeComposerGUI = new VibeComposerGUI("VibeComposer2.4 (BETA)");
+		vibeComposerGUI = new VibeComposerGUI("VibeComposer" + CURRENT_VERSION + " (BETA)");
 		vibeComposerGUI.init();
 		//Toolkit.getDefaultToolkit().getSystemEventQueue().push(new TimedEventQueue());
 		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -8213,6 +8214,7 @@ public class VibeComposerGUI extends JFrame
 			gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
 		}
 
+		gc.setVersion(CURRENT_VERSION);
 		gc.setRandomSeed(lastRandomSeed);
 		gc.setMidiMode(midiMode.isSelected());
 
@@ -8342,7 +8344,12 @@ public class VibeComposerGUI extends JFrame
 
 	public void copyConfigToGUI(GUIConfig gc) {
 		arrSection.setVisible(false);
+		randomMelodyOnRegenerate.setSelected(false);
 		arrSection.setSelectedIndex(0);
+
+		if (!CURRENT_VERSION.equals(gc.getVersion())) {
+			LG.w("Loaded file is for an older version of VibeComposer! Curremt: " + CURRENT_VERSION + ", File version: " + gc.getVersion());
+		}
 
 		if (gc.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();

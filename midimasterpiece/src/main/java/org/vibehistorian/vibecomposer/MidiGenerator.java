@@ -52,6 +52,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Components.ShowAreaBig;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
@@ -2620,13 +2621,13 @@ public class MidiGenerator implements JMC {
 
 		List<PartExt> drumParts = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("MainDrums", 0, 9);
+			PartExt p = new PartExt("Drums" + i, 0, 9);
 			drumParts.add(p);
 		}
 
 		List<PartExt> drumPartsFull = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("MainDrums", 0, 9);
+			PartExt p = new PartExt("Drums" + i, 0, 9);
 			drumPartsFull.add(p);
 		}
 
@@ -3221,18 +3222,21 @@ public class MidiGenerator implements JMC {
 		}
 		LG.d("Added parts to score.., allow combo: " + allowCombination);
 		Random rand = new Random(mainGeneratorSeed + 999);
+		long humanizerRandSeed = rand.nextLong();
 		for (Object o : score.getPartList()) {
 			PartExt pe = (PartExt) o;
 			if (pe == null || pe.isFillerPart()) {
 				continue;
 			}
-			boolean isDrum = pe.getTitle().contains("MainDrum");
+			boolean isDrum = pe.getTitle().contains("Drum");
 			boolean shouldRandomize = (isDrum && VibeComposerGUI.humanizeDrums.getInt() > 0)
 					|| (!isDrum && VibeComposerGUI.humanizeNotes.getInt() > 0);
 
 
 			if (shouldRandomize) {
-
+				int noteColorIndex = ShowAreaBig.getIndexForPartName(pe.getTitle());
+				int partOrder = ShowAreaBig.getPartOrderForPartName(pe.getTitle());
+				rand.setSeed(humanizerRandSeed + noteColorIndex * 1000 + partOrder);
 				JMusicUtilsCustom.humanize(pe, rand,
 						isDrum ? noteMultiplier * VibeComposerGUI.humanizeDrums.getInt() / 10000.0
 								: noteMultiplier * VibeComposerGUI.humanizeNotes.getInt() / 10000.0,

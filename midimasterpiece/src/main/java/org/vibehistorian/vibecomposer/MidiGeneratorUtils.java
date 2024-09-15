@@ -1,14 +1,10 @@
 package org.vibehistorian.vibecomposer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
@@ -216,6 +212,19 @@ public class MidiGeneratorUtils {
 			if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
 				last += (new Random(randomSeed).nextInt(100) < 75 ? 1 : -1);
 				offsets.set(offsets.size() - 1, last);
+			}
+		}
+		// try to set one of the offsets as the root note, if a close one is available and no offset is root yet
+		if (new Random(randomSeed).nextInt(100) < 90 && (targetMode == 2) && !offsets.contains(0)) {
+			LG.i("Trying to insert root note into note targets..");
+			List<Integer> randomIterationOrder = IntStream.range(0, offsets.size()).boxed().collect(Collectors.toList());
+			Collections.shuffle(randomIterationOrder, new Random(randomSeed + 1324));
+			for (int i = 0; i < offsets.size(); i++) {
+					if (MidiUtils.containsRootNote(chords.get(i % chords.size())) && Math.abs(offsets.get(i)) <= 2) {
+						offsets.set(i, 0);
+						LG.i("Root note inserted into note targets! At index: " + i);
+						break;
+					}
 			}
 		}
 

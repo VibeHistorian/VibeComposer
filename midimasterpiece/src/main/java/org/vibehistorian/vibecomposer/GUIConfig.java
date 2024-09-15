@@ -51,6 +51,8 @@ public class GUIConfig {
 	public GUIConfig() {
 	}
 
+	private String version = VibeComposerGUI.CURRENT_VERSION;
+
 	private PhraseNotes melodyNotes = null;
 
 	// pattern map
@@ -928,4 +930,11 @@ public class GUIConfig {
 		this.melodyNewBlocksChance = melodyNewBlocksChance;
 	}
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
 }

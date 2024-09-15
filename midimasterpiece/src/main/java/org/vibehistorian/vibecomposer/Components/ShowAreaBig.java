@@ -45,6 +45,7 @@ import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -99,6 +100,14 @@ public class ShowAreaBig extends JComponent {
 		} else {
 			throw new IllegalArgumentException("Unknown part name: " + partName);
 		}
+	}
+
+	public static int getPartOrderForPartName(String partName) {
+		int partNameIndex = getIndexForPartName(partName);
+		if (partNameIndex < 0) {
+			return -1;
+		}
+		return Integer.parseInt(StringUtils.getDigits(partName));
 	}
 
 	public ShowAreaBig(ShowPanelBig sp) {

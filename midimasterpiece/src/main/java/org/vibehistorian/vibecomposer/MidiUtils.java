@@ -1033,15 +1033,15 @@ public class MidiUtils {
 
 			if (originalIndex == -1 && !keepOutliers) {
 				if (modeToList.contains(searchPitch)) {
-					//LG.i("Pitch found only in modeTo, not changing: " + pitch);
+					LG.d("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					transposedChord[j] = pitch - difference;
 					/*LG.i(
 							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
+					continue;
 				}
-				continue;
 			}
 
 			if (originalIndex >= 0) {
@@ -1677,6 +1677,18 @@ public class MidiUtils {
 			extendedList.add(arpPattern.get(i - listSize) % listSize);
 		}
 		return extendedList;*/
+	}
+
+	public static boolean containsRootNote(int[] chord) {
+		if (chord == null) {
+			return false;
+		}
+		for (int i = 0; i < chord.length; i++) {
+			if (chord[i] % 12 == 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
