@@ -3806,6 +3806,14 @@ public class MidiGenerator implements JMC {
 	}
 
 	public boolean replaceWithSectionCustomChordDurations(Section sec) {
+		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
+
+		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
+				? sc.getBeatDurationMultiplierIndex()
+				: gc.getBeatDurationMultiplierIndex();
+		double defaultDurationMultiplier = (beatDurMultiIndex == 2) ? 2.0
+				: ((beatDurMultiIndex == 0) ? 0.5 : 1.0);
+
 		if (!sec.isCustomChordsEnabled() && !sec.isCustomDurationsEnabled()) {
 			return false;
 		}
@@ -3826,9 +3834,9 @@ public class MidiGenerator implements JMC {
 		} else if (sec.isCustomChordsEnabled()) {
 			durations = new ArrayList<>();
 			for (int i = 0; i < chords.size(); i++) {
-				durations.add((i < progressionDurations.size() && !progressionDurations.isEmpty())
+				durations.add(i < progressionDurations.size()
 						? progressionDurations.get(i)
-						: Durations.WHOLE_NOTE);
+						: Durations.WHOLE_NOTE * defaultDurationMultiplier);
 			}
 		} else {
 			chords = generateChordProgressionList(gc.getRandomSeed(), durations.size());
@@ -3862,20 +3870,6 @@ public class MidiGenerator implements JMC {
 		chordProgression = mappedChords;
 		rootProgression = mappedRootChords;
 		progressionDurations = durations;
-
-		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
-		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
-				? sc.getBeatDurationMultiplierIndex()
-				: gc.getBeatDurationMultiplierIndex();
-		if (beatDurMultiIndex == 0) {
-			for (int i = 0; i < progressionDurations.size(); i++) {
-				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
-			}
-		} else if (beatDurMultiIndex == 2) {
-			for (int i = 0; i < progressionDurations.size(); i++) {
-				progressionDurations.set(i, progressionDurations.get(i) * 2);
-			}
-		}
 
 		sec.setSectionBeatDurations(progressionDurations);
 		sec.setSectionDuration(progressionDurations.stream().mapToDouble(e -> e).sum());
