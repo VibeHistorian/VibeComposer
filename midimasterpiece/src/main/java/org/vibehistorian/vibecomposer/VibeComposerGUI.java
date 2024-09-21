@@ -8481,6 +8481,11 @@ public class VibeComposerGUI extends JFrame
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 		//fixCombinedMelodyTracks();
 
+
+		if (MidiGenerator.chordInts.isEmpty()) {
+			MidiGenerator.chordInts = userChords.getChordList();
+		}
+
 	}
 
 	private void sizeRespectingPack() {

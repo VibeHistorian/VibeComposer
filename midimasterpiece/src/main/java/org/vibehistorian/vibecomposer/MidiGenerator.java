@@ -3604,7 +3604,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(1);
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
-				BassPart bp = (BassPart) gc.getBassParts().get(i);
+				BassPart bp = gc.getBassParts().get(i);
 				boolean added = presences.contains(bp.getOrder());
 				if (added && !bp.isMuted()) {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, i) : null;
@@ -3631,7 +3631,7 @@ public class MidiGenerator implements JMC {
 			Set<Integer> presences = sec.getPresence(2);
 			boolean useChordSlash = false;
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
-				ChordPart cp = (ChordPart) gc.getChordParts().get(i);
+				ChordPart cp = gc.getChordParts().get(i);
 				boolean added = presences.contains(cp.getOrder());
 				if (added && !cp.isMuted()) {
 					if (i == 0) {
@@ -3660,7 +3660,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
-				ArpPart ap = (ArpPart) gc.getArpParts().get(i);
+				ArpPart ap = gc.getArpParts().get(i);
 				// if arp1 supports melody with same instrument, always introduce it in second half
 				List<Integer> variations = (overridden) ? sec.getVariation(3, i) : null;
 				boolean added = presences.contains(ap.getOrder());
@@ -3681,7 +3681,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
-				DrumPart dp = (DrumPart) gc.getDrumParts().get(i);
+				DrumPart dp = gc.getDrumParts().get(i);
 				variationGen.setSeed(arrSeed + 300 + dp.getOrder());
 
 				boolean added = presences.contains(dp.getOrder());
@@ -3707,7 +3707,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isMelodyEnable() && !gc.getMelodyParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(0);
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-				MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
+				MelodyPart mp = gc.getMelodyParts().get(i);
 				int melodyChanceMultiplier = (sec.getTypeMelodyOffset() == 0 && i == 0) ? 2 : 1;
 				// temporary increase for chance of main (#1) melody
 				int oldChance = sec.getMelodyChance();
@@ -3727,7 +3727,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(1);
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
-				BassPart bp = (BassPart) gc.getBassParts().get(i);
+				BassPart bp = gc.getBassParts().get(i);
 				rand.setSeed(arrSeed + 50 + bp.getOrder());
 				variationGen.setSeed(arrSeed + 50 + bp.getOrder());
 				boolean added = (overridden && presences.contains(bp.getOrder()))
@@ -3743,7 +3743,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isChordsEnable() && !gc.getChordParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(2);
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
-				ChordPart cp = (ChordPart) gc.getChordParts().get(i);
+				ChordPart cp = gc.getChordParts().get(i);
 				rand.setSeed(arrSeed + 100 + cp.getOrder());
 				variationGen.setSeed(arrSeed + 100 + cp.getOrder());
 				boolean added = (overridden && presences.contains(cp.getOrder()))
@@ -3759,7 +3759,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isArpsEnable() && !gc.getArpParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
-				ArpPart ap = (ArpPart) gc.getArpParts().get(i);
+				ArpPart ap = gc.getArpParts().get(i);
 				rand.setSeed(arrSeed + 200 + ap.getOrder());
 				variationGen.setSeed(arrSeed + 200 + ap.getOrder());
 				// if arp1 supports melody with same instrument, always introduce it in second half
@@ -3780,7 +3780,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isDrumsEnable() && !gc.getDrumParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
-				DrumPart dp = (DrumPart) gc.getDrumParts().get(i);
+				DrumPart dp = gc.getDrumParts().get(i);
 				rand.setSeed(arrSeed + 300 + dp.getOrder());
 
 				// multiply drum chance using section note type + what drum it is
