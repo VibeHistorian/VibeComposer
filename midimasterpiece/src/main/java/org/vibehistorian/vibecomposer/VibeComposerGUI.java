@@ -7370,8 +7370,9 @@ public class VibeComposerGUI extends JFrame
 						.valueOf(randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
 								: InstUtils.POOL.PLUCK;
 
-				cp.getInstrumentBox().initInstPool(pool);
 				cp.setInstPool(pool);
+				pool = cp.getInstPool();
+				cp.getInstrumentBox().initInstPool(pool);
 
 				cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 			}
@@ -8938,8 +8939,9 @@ public class VibeComposerGUI extends JFrame
 				pool = (panelGenerator.nextInt(100) < randomChordSustainChance.getInt())
 						? InstUtils.POOL.CHORD
 						: InstUtils.POOL.PLUCK;
-				ip.getInstrumentBox().initInstPool(pool);
 				ip.setInstPool(pool);
+				pool = ip.getInstPool();
+				ip.getInstrumentBox().initInstPool(pool);
 				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
 
 			}

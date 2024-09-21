@@ -212,9 +212,10 @@ public class MidiUtils {
 	public static final List<Integer> MAJ_SCALE = Arrays.asList(Scales.MAJOR_SCALE);
 	public static final List<Integer> MIN_SCALE = Arrays.asList(Scales.AEOLIAN_SCALE);
 
-	// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
-	public static final List<Integer> relevancyOrder = Arrays
-			.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
+	// default emphasize key for % 12
+	// Mode note will be inserted in second position if possible
+	public static final List<Integer> keyEmphasisOrder = Arrays
+			.asList(0, 7, 4, 5, 9, 2, 11);
 
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
@@ -473,7 +474,7 @@ public class MidiUtils {
 	}
 
 	public static List<Pair<ScaleMode, Integer>> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
-			boolean forceDifferentTranspose) {
+			boolean forceDifferentTranspose, int progressiveNoteDiscardThreshold) {
 		int bestNotContained = Integer.MAX_VALUE;
 		ScaleMode bestMode = null;
 		int transposeUpBy = 0;
@@ -501,6 +502,18 @@ public class MidiUtils {
 		LG.i("Examining pitches: " + StringUtils.join(pitches, ", "));
 		LG.i("# of pitches: " + pitches.size());
 		LG.i("Pitch array: " + Arrays.toString(pitchCounts));
+
+		if (progressiveNoteDiscardThreshold > 0) {
+			double threshold = (mostFrequents * progressiveNoteDiscardThreshold) / 100.0;
+			for (int i = 0; i < pitchCounts.length; i++) {
+				if (pitchCounts[i] < threshold) {
+					pitches.remove(i);
+					pitchCounts[i] = 0;
+				}
+			}
+			LG.i("Remaining pitches: " + Arrays.toString(pitchCounts));
+		}
+
 		List<Pair<ScaleMode, Integer>> validResults = new ArrayList<>();
 		Pair<ScaleMode, Integer> returnPair = null;
 		for (ScaleMode mode : ScaleMode.values()) {
@@ -543,7 +556,13 @@ public class MidiUtils {
 
 		}
 		if (bestNotContained > 0) {
-			return null;
+			// e.g. -1 = disabled prog. threshold, above 20% frequency discarded notes start to be meaningless for detecting key
+			if (progressiveNoteDiscardThreshold < 0 && progressiveNoteDiscardThreshold > 20) {
+				return null;
+			} else {
+				return detectKeyAndMode(phr, targetMode,
+						forceDifferentTranspose, progressiveNoteDiscardThreshold + 10);
+			}
 		}
 		if (returnPair != null) {
 			LG.i("Returning best: " + returnPair.toString());
@@ -557,7 +576,6 @@ public class MidiUtils {
 
 	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale,
 			boolean forceDifferentTranspose) {
-
 
 		Set<Integer> desiredPitches = new HashSet<>();
 		for (int i = 0; i < scale.length; i++) {
@@ -1322,7 +1340,7 @@ public class MidiUtils {
 		Phrase phr = new PhraseExt();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true);
+		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true, -1);
 		return detectionResults;
 	}
 

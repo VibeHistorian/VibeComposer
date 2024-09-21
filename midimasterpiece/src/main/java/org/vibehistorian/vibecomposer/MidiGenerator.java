@@ -353,6 +353,13 @@ public class MidiGenerator implements JMC {
 		List<int[]> stretchedChords = usedChords.stream()
 				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
 		//LG.d("Alt: " + alternateRhythm);
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		List<Integer> emphasizeKeyNoteOrder = new ArrayList<>(MidiUtils.keyEmphasisOrder);
+		if (scale != null && scale.modeTargetNote >= 0) {
+			Integer ionianTargetNote = MidiUtils.MAJ_SCALE.get(scale.modeTargetNote);
+			emphasizeKeyNoteOrder.remove(ionianTargetNote);
+			emphasizeKeyNoteOrder.add(1, ionianTargetNote);
+		}
 		int maxBlockChangeAdjustment = 0;
 		boolean embellish = false;
 		for (int o = 0; o < measures; o++) {
@@ -576,8 +583,8 @@ public class MidiGenerator implements JMC {
 								for (int l = 0; l < mb.durations.size(); l++) {
 									if (!pitches.get(k).equals(pitches.get(l))) {
 										boolean swap = false;
-										if (MidiUtils.relevancyOrder.indexOf(
-												pitches.get(k) % 12) < MidiUtils.relevancyOrder
+										if (emphasizeKeyNoteOrder.indexOf(
+												pitches.get(k) % 12) < emphasizeKeyNoteOrder
 														.indexOf(pitches.get(l) % 12)) {
 											swap = sortedDurs.get(k) + DBL_ERR < sortedDurs.get(l);
 										} else {
