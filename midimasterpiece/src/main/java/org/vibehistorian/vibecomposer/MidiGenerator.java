@@ -3307,12 +3307,17 @@ public class MidiGenerator implements JMC {
 					Note n = notes.get(i);
 					double currTime = currentRv;
 					currentRv += n.getRhythmValue();
+					int originalPitch = n.getPitch();
 
 					if (accentGenerator.nextInt(100) >= mp.getAccents()) {
 						continue;
 					}
 
 					if (n.getDuration() - DBL_ERR < Durations.SIXTEENTH_NOTE) {
+						continue;
+					}
+
+					if (originalPitch < 0) {
 						continue;
 					}
 
@@ -3347,7 +3352,6 @@ public class MidiGenerator implements JMC {
 
 					// |---x----------| -> |---|---------| -> old note's duration is intersection length, new note's offset is moved up by the same amount
 					double intersectionLength = intersection - currTime - n.getOffset();
-					int originalPitch = n.getPitch();
 					Note splitNote = new Note(originalPitch, 0, n.getDynamic());
 					splitNote.setDuration(n.getDuration() - intersectionLength);
 					splitNote.setOffset(n.getOffset() + intersectionLength);

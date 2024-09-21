@@ -136,6 +136,13 @@ public class MidiGeneratorUtils {
 					choices.add(index - 7);
 				}
 			}
+			if (choices.isEmpty()) {
+				//choices.add(0);
+				for (int pitch : c) {
+					choices.add(MidiUtils.MAJ_SCALE.indexOf(MidiUtils.getClosestPitchFromList(MidiUtils.MAJ_SCALE, pitch)));
+				}
+				LG.i("No chord note present in Chord: " + Arrays.toString(c));
+			}
 			choiceMap.put(counter++, choices);
 		}
 		return choiceMap;
