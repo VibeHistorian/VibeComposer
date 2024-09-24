@@ -165,14 +165,12 @@ public class JMusicUtilsCustom implements JMC {
 		if (phrase == null) {
 			return;
 		}
-		Enumeration enum1 = phrase.getNoteList().elements();
-		int counter = -1;
-		while (enum1.hasMoreElements()) {
-			Note n = (Note) enum1.nextElement();
-			counter++;
-			if (counter == 0) {
+		Vector<Note> notes = phrase.getNoteList();
+		for (int i = 0; i < notes.size(); i++) {
+			if (i == 0) {
 				continue;
 			}
+			Note n = notes.get(i);
 			// create new pitch value
 			if (pitchVariation > 0) {
 				n.setPitch(n.getPitch()
@@ -184,12 +182,12 @@ public class JMusicUtilsCustom implements JMC {
 				double varDur = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
 				double dur = n.getDuration();
 				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + MidiGenerator.DBL_ERR) {
-					n.setOffset(n.getOffset() + varOffset / 5);
-					n.setDuration(n.getDuration() + varDur / 5);
-				} else {
-					n.setOffset(n.getOffset() + varOffset);
-					n.setDuration(n.getDuration() + varDur);
+					varOffset /= 5;
+					varDur /= 5;
 				}
+				n.setOffset(n.getOffset() + varOffset);
+				n.setDuration(n.getDuration() + varDur);
+
 
 			}
 			// create new dynamic value
@@ -198,6 +196,7 @@ public class JMusicUtilsCustom implements JMC {
 						- dynamicVariation));
 			}
 		}
+		MidiGeneratorUtils.applySamePitchCollisionAvoidance(notes);
 	}
 
 	public static void midi(Score scr, String fileName) {

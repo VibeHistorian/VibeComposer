@@ -418,6 +418,24 @@ public class MidiGeneratorUtils {
 		}
 	}
 
+	public static void applySamePitchCollisionAvoidance(List<Note> notes) {
+		List<Pair<Double, Note>> sn = JMusicUtilsCustom.makeNoteStartTimes(notes);
+		for (int i = 0; i < sn.size(); i++) {
+			Note n = sn.get(i).getRight();
+			double duration = n.getDuration();
+			if (i < sn.size() - 1 && n.getPitch() == sn.get(i + 1).getRight().getPitch()) {
+				double difference = sn.get(i + 1).getLeft() - sn.get(i).getLeft();
+				duration = Math.min(duration, difference);
+			} else if (i < sn.size() - 2
+					&& n.getPitch() == sn.get(i + 2).getRight().getPitch()) {
+				double difference = sn.get(i + 2).getLeft() - sn.get(i).getLeft();
+				duration = Math.min(duration, difference);
+			}
+
+			n.setDuration(duration);
+		}
+	}
+
 	static int addAccent(int velocity, Random accentGenerator, int accent) {
 		// 80 + 15 +- 5 + 100/20 -> 95-105 vel.
 		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5
