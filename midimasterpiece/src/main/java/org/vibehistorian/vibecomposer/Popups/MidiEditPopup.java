@@ -50,7 +50,9 @@ import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
@@ -63,8 +65,6 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import jm.music.data.Note;
-import jm.music.data.Part;
-import jm.music.data.Phrase;
 import jm.music.data.Score;
 
 public class MidiEditPopup extends CloseablePopup {
@@ -178,7 +178,8 @@ public class MidiEditPopup extends CloseablePopup {
 
 		addKeyboardControls(allPanels);
 
-		SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
+		//SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
+		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
@@ -404,6 +405,8 @@ public class MidiEditPopup extends CloseablePopup {
 		});
 		regenerateInPlaceOnChange.setFunc(e -> {
 			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
+			VibeComposerGUI.manualArrangement.setSelected(true);
+			VibeComposerGUI.manualArrangement.repaint();
 		});
 		applyOnLoad.setFunc(e -> {
 			applyOnLoadChoice = applyOnLoad.isSelected();
@@ -709,7 +712,7 @@ public class MidiEditPopup extends CloseablePopup {
 		Pair<ScaleMode, Integer> scaleKey = VibeComposerGUI
 				.keyChangeAt(VibeComposerGUI.actualArrangement.getSections().indexOf(sec));
 
-		Phrase phr = mvea.getValues().makePhrase();
+		PhraseExt phr = mvea.getValues().makePhrase();
 
 		List<Note> notes = phr.getNoteList();
 		int extraTranspose = 0;
@@ -727,7 +730,7 @@ public class MidiEditPopup extends CloseablePopup {
 			e.setPitch(pitch);
 		});
 		Score scr = new Score();
-		Part prt = new Part();
+		PartExt prt = PartExt.makeFillerPart();
 		prt.add(phr);
 		scr.add(prt);
 
@@ -749,6 +752,10 @@ public class MidiEditPopup extends CloseablePopup {
 			mvea.selectedNotesCopy.clear();
 			mvea.reset();
 			saveToHistory();
+
+			if (MidiEditPopup.regenerateInPlaceChoice) {
+				VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+			}
 		}
 	}
 
@@ -765,6 +772,12 @@ public class MidiEditPopup extends CloseablePopup {
 					n.setPitch(OMNI.clampMidi(n.getPitch() + parsedInt));
 				}
 				setCustomValues(mvea.getValues());
+
+				if (MidiEditPopup.regenerateInPlaceChoice) {
+					mvea.selectedNotes.clear();
+					mvea.selectedNotesCopy.clear();
+					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+				}
 			} catch (Exception ex) {
 				new TemporaryInfoPopup("Invalid number entered!", 1500);
 			}
@@ -808,6 +821,12 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void undo() {
 		loadFromHistory(notesHistoryIndex - 1);
+
+		if (MidiEditPopup.regenerateInPlaceChoice) {
+			mvea.selectedNotes.clear();
+			mvea.selectedNotesCopy.clear();
+			VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+		}
 	}
 
 	public void redo() {

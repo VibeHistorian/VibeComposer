@@ -51,6 +51,8 @@ public class GUIConfig {
 	public GUIConfig() {
 	}
 
+	private String version = VibeComposerGUI.CURRENT_VERSION;
+
 	private PhraseNotes melodyNotes = null;
 
 	// pattern map
@@ -115,7 +117,7 @@ public class GUIConfig {
 
 	// chord gen
 	private int chordSlashChance = 0;
-	private boolean dimAugDom7thEnabled = false;
+	private boolean dimAug6thEnabled = false;
 	private boolean enable9th13th = false;
 	private int spiceChance = 15;
 	private boolean spiceFlattenBigChords = false;
@@ -251,12 +253,12 @@ public class GUIConfig {
 		this.firstNoteRandomized = firstNoteRandomized;
 	}
 
-	public boolean isDimAugDom7thEnabled() {
-		return dimAugDom7thEnabled;
+	public boolean isDimAug6thEnabled() {
+		return dimAug6thEnabled;
 	}
 
-	public void setDimAugDom7thEnabled(boolean dimAugDom7thEnabled) {
-		this.dimAugDom7thEnabled = dimAugDom7thEnabled;
+	public void setDimAug6thEnabled(boolean dimAug6thEnabled) {
+		this.dimAug6thEnabled = dimAug6thEnabled;
 	}
 
 	public String getFirstChord() {
@@ -928,4 +930,11 @@ public class GUIConfig {
 		this.melodyNewBlocksChance = melodyNewBlocksChance;
 	}
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
 }

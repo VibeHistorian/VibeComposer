@@ -1,14 +1,10 @@
 package org.vibehistorian.vibecomposer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
@@ -140,6 +136,13 @@ public class MidiGeneratorUtils {
 					choices.add(index - 7);
 				}
 			}
+			if (choices.isEmpty()) {
+				//choices.add(0);
+				for (int pitch : c) {
+					choices.add(MidiUtils.MAJ_SCALE.indexOf(MidiUtils.getClosestPitchFromList(MidiUtils.MAJ_SCALE, pitch)));
+				}
+				LG.i("No chord note present in Chord: " + Arrays.toString(c));
+			}
 			choiceMap.put(counter++, choices);
 		}
 		return choiceMap;
@@ -216,6 +219,19 @@ public class MidiGeneratorUtils {
 			if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
 				last += (new Random(randomSeed).nextInt(100) < 75 ? 1 : -1);
 				offsets.set(offsets.size() - 1, last);
+			}
+		}
+		// try to set one of the offsets as the root note, if a close one is available and no offset is root yet
+		if (new Random(randomSeed).nextInt(100) < 90 && (targetMode == 2) && !offsets.contains(0)) {
+			LG.i("Trying to insert root note into note targets..");
+			List<Integer> randomIterationOrder = IntStream.range(0, offsets.size()).boxed().collect(Collectors.toList());
+			Collections.shuffle(randomIterationOrder, new Random(randomSeed + 1324));
+			for (int i = 0; i < offsets.size(); i++) {
+					if (MidiUtils.containsRootNote(chords.get(i % chords.size())) && Math.abs(offsets.get(i)) <= 2) {
+						offsets.set(i, 0);
+						LG.i("Root note inserted into note targets! At index: " + i);
+						break;
+					}
 			}
 		}
 
@@ -402,6 +418,24 @@ public class MidiGeneratorUtils {
 		}
 	}
 
+	public static void applySamePitchCollisionAvoidance(List<Note> notes) {
+		List<Pair<Double, Note>> sn = JMusicUtilsCustom.makeNoteStartTimes(notes);
+		for (int i = 0; i < sn.size(); i++) {
+			Note n = sn.get(i).getRight();
+			double duration = n.getDuration();
+			if (i < sn.size() - 1 && n.getPitch() == sn.get(i + 1).getRight().getPitch()) {
+				double difference = sn.get(i + 1).getLeft() - sn.get(i).getLeft();
+				duration = Math.min(duration, difference);
+			} else if (i < sn.size() - 2
+					&& n.getPitch() == sn.get(i + 2).getRight().getPitch()) {
+				double difference = sn.get(i + 2).getLeft() - sn.get(i).getLeft();
+				duration = Math.min(duration, difference);
+			}
+
+			n.setDuration(duration);
+		}
+	}
+
 	static int addAccent(int velocity, Random accentGenerator, int accent) {
 		// 80 + 15 +- 5 + 100/20 -> 95-105 vel.
 		int newVelocity = velocity + MidiGenerator.BASE_ACCENT + accentGenerator.nextInt(11) - 5
@@ -447,9 +481,14 @@ public class MidiGeneratorUtils {
 	}
 
 	static void applyBadIntervalRemoval(List<Note> fullMelody) {
-
-		int previousPitch = -1;
-		for (int i = 0; i < fullMelody.size(); i++) {
+		if (fullMelody.isEmpty()) {
+			return;
+		}
+		int previousPitch = fullMelody.get(0).getPitch();
+		if (previousPitch < 0) {
+			previousPitch = -1;
+		}
+		for (int i = 1; i < fullMelody.size(); i++) {
 			Note n = fullMelody.get(i);
 			int pitch = n.getPitch();
 			if (pitch < 0) {
@@ -460,11 +499,19 @@ public class MidiGeneratorUtils {
 				n.setPitch(pitch - 1);
 			} else if (pitch % 12 == 11 && Math.abs(pitch - previousPitch) == 6) {
 				n.setPitch(pitch + 1);
-			} else if ((i < fullMelody.size() - 1)
-					&& (pitch - fullMelody.get(i + 1).getPitch() >= 12)) {
+			} else if ((i > 0) && (pitch - previousPitch >= 12)) {
 				// set G as a step for too wild intervals
-				LG.i("Reducing interval - changing note to 5th");
-				n.setPitch(pitch - (pitch % 12) + 7);
+				int avgPitch = (pitch + previousPitch) / 2;
+				int avgSemi = avgPitch % 12;
+				if (avgSemi > 9) {
+					n.setPitch(avgPitch - avgSemi + 12);
+				} else if (avgSemi < 3) {
+					n.setPitch(avgPitch - avgSemi);
+				} else {
+					n.setPitch(avgPitch - avgSemi + 7);
+				}
+				LG.i("Reducing interval - changing note to: " + n.getPitch());
+				//n.setPitch(previousPitch - (previousPitch % 12) + 7);
 			}
 			previousPitch = n.getPitch();
 		}
@@ -573,9 +620,12 @@ public class MidiGeneratorUtils {
 		String spicyChordString = firstLetter
 				+ spicyChordListCopy.get(spiceGenerator.nextInt(spicyChordListCopy.size()));
 		if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
+			// keep formerly minor as minor
 			spicyChordString = spicyChordString.replace("maj", "m");
 		} else if (chordString.length() == 1 && spicyChordString.contains("m")
-				&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")) {
+				&& !spicyChordString.contains("dim") && !spicyChordString.contains("maj")
+				&& !spicyChordString.contains("mM")) {
+			// keep formerly major as major
 			spicyChordString = spicyChordString.replace("m", "maj");
 		}
 		return spicyChordString;

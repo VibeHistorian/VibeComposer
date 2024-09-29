@@ -1,6 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -10,11 +10,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 public class PopupUtils {
-	public static void addEmptySpaceCloser(JPanel panel, JFrame parentFrame) {
+	public static void addEmptySpaceCloser(JPanel panel, Window parentFrame) {
 		addEmptySpaceCloser(panel, parentFrame, null);
 	}
 
-	public static void addEmptySpaceCloser(JPanel panel, JFrame parentFrame, Runnable rn) {
+	public static void addEmptySpaceCloser(JPanel panel, Window parentFrame, Runnable rn) {
 		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {

@@ -42,10 +42,6 @@ public class AboutPopup extends CloseablePopup {
 		LG.d("Opened About page!");
 	}
 
-	public JFrame getFrame() {
-		return frame;
-	}
-
 	@Override
 	protected void addFrameWindowOperation() {
 		// do nothing

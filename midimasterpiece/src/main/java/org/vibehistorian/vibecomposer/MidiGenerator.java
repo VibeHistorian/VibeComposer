@@ -32,8 +32,6 @@ import static org.vibehistorian.vibecomposer.MidiUtils.transposeScale;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,6 +52,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Components.ShowAreaBig;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
@@ -134,8 +133,6 @@ public class MidiGenerator implements JMC {
 	}
 
 	private static final boolean debugEnabled = true;
-	private static final PrintStream originalStream = System.out;
-
 	// big G
 	public static GUIConfig gc;
 
@@ -356,6 +353,13 @@ public class MidiGenerator implements JMC {
 		List<int[]> stretchedChords = usedChords.stream()
 				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
 		//LG.d("Alt: " + alternateRhythm);
+		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
+		List<Integer> emphasizeKeyNoteOrder = new ArrayList<>(MidiUtils.keyEmphasisOrder);
+		if (scale != null && scale.modeTargetNote >= 0) {
+			Integer ionianTargetNote = MidiUtils.MAJ_SCALE.get(scale.modeTargetNote);
+			emphasizeKeyNoteOrder.remove(ionianTargetNote);
+			emphasizeKeyNoteOrder.add(1, ionianTargetNote);
+		}
 		int maxBlockChangeAdjustment = 0;
 		boolean embellish = false;
 		for (int o = 0; o < measures; o++) {
@@ -579,8 +583,8 @@ public class MidiGenerator implements JMC {
 								for (int l = 0; l < mb.durations.size(); l++) {
 									if (!pitches.get(k).equals(pitches.get(l))) {
 										boolean swap = false;
-										if (MidiUtils.relevancyOrder.indexOf(
-												pitches.get(k) % 12) < MidiUtils.relevancyOrder
+										if (emphasizeKeyNoteOrder.indexOf(
+												pitches.get(k) % 12) < emphasizeKeyNoteOrder
 														.indexOf(pitches.get(l) % 12)) {
 											swap = sortedDurs.get(k) + DBL_ERR < sortedDurs.get(l);
 										} else {
@@ -1011,9 +1015,9 @@ public class MidiGenerator implements JMC {
 		});
 		applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords, sec, mp);
 
-
-		MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
-
+		if (!ScaleMode.LOCRIAN.equals(gc.getScaleMode())) {
+			MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
+		}
 
 		if (gc.getMelodyReplaceAvoidNotes() > 0) {
 			MidiGeneratorUtils.replaceAvoidNotes(fullMelodyMap, chords,
@@ -1285,7 +1289,7 @@ public class MidiGenerator implements JMC {
 
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		List<Note> modeNoteChanges = new ArrayList<>();
-		if (gc.getMelodyModeNoteTarget() > 0 && scale.modeTargetNote > 0) {
+		if (gc.getMelodyModeNoteTarget() > 0 && scale.modeTargetNote >= 0) {
 			double requiredPercentage = gc.getMelodyModeNoteTarget() / 100.0;
 			int needed = (int) Math.ceil(fullMelody.stream().filter(e -> e.getPitch() >= 0).count()
 					* requiredPercentage);
@@ -1822,8 +1826,7 @@ public class MidiGenerator implements JMC {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled()
-					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
+			if (!gc.isDimAug6thEnabled() && MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
@@ -1850,7 +1853,7 @@ public class MidiGenerator implements JMC {
 				LG.w("Next list is EMPTY! Adding default C chord!");
 				next.add("C");
 			}
-			int bSkipper = (!gc.isDimAugDom7thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
+			int bSkipper = (!gc.isDimAug6thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
 					? 1
 					: 0;
 			int nextInt = generator.nextInt(Math.max(next.size() - bSkipper, 1));
@@ -1885,7 +1888,7 @@ public class MidiGenerator implements JMC {
 				spicyChordString = tempSpicyChordString;
 			}
 
-			if (!gc.isDimAugDom7thEnabled()) {
+			if (!gc.isDimAug6thEnabled()) {
 				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
 					int scaleOrder = gc.getScaleMode().ordinal();
 					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
@@ -1897,7 +1900,7 @@ public class MidiGenerator implements JMC {
 				int chordOrder = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
 				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordOrder);
 				// #1 - is Ddim allowed?
-				if (chordOrder != 1 || gc.isDimAugDom7thEnabled()) {
+				if (chordOrder != 1 || gc.isDimAug6thEnabled()) {
 					spicyChordString = parallelChordString;
 					LG.d("PARALLEL: " + spicyChordString);
 				}
@@ -1985,8 +1988,7 @@ public class MidiGenerator implements JMC {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
 			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled()
-					&& MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
+			if (!gc.isDimAug6thEnabled() && MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
@@ -2020,7 +2022,7 @@ public class MidiGenerator implements JMC {
 				cpr.add(prevChord);
 				break;
 			}
-			int bSkipper = (!gc.isDimAugDom7thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
+			int bSkipper = (!gc.isDimAug6thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
 					? 1
 					: 0;
 			int nextInt = generator.nextInt(Math.max(next.size() - bSkipper, 1));
@@ -2055,7 +2057,7 @@ public class MidiGenerator implements JMC {
 				spicyChordString = tempSpicyChordString;
 			}
 
-			if (!gc.isDimAugDom7thEnabled()) {
+			if (!gc.isDimAug6thEnabled()) {
 				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
 					int scaleOrder = gc.getScaleMode().ordinal();
 					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
@@ -2066,7 +2068,7 @@ public class MidiGenerator implements JMC {
 			if (parallelGenerator.nextInt(100) < gc.getSpiceParallelChance()) {
 				int chordIndex = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
 				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordIndex);
-				if (chordIndex != 1 || gc.isDimAugDom7thEnabled()) {
+				if (chordIndex != 1 || gc.isDimAug6thEnabled()) {
 					spicyChordString = parallelChordString;
 					LG.d("PARALLEL: " + spicyChordString);
 				}
@@ -2626,13 +2628,13 @@ public class MidiGenerator implements JMC {
 
 		List<PartExt> drumParts = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("MainDrums", 0, 9);
+			PartExt p = new PartExt("Drums" + i, 0, 9);
 			drumParts.add(p);
 		}
 
 		List<PartExt> drumPartsFull = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("MainDrums", 0, 9);
+			PartExt p = new PartExt("Drums" + i, 0, 9);
 			drumPartsFull.add(p);
 		}
 
@@ -2694,12 +2696,7 @@ public class MidiGenerator implements JMC {
 						customInversionIndexList, userRootProgression);
 
 		if (!debugEnabled) {
-			PrintStream dummyStream = new PrintStream(new OutputStream() {
-				public void write(int b) {
-					// NO-OP
-				}
-			});
-			System.setOut(dummyStream);
+			System.setOut(VibeComposerGUI.dummyOut);
 		}
 		if (logPerformance) {
 			LG.i("Generated chords, starting arrangement after: "
@@ -3072,17 +3069,13 @@ public class MidiGenerator implements JMC {
 
 		// write midi without log
 
-		PrintStream dummyStream = new PrintStream(new OutputStream() {
-			public void write(int b) {
-				// NO-OP
-			}
-		});
-		System.setOut(dummyStream);
+		System.setOut(VibeComposerGUI.dummyOut);
 
 		JMusicUtilsCustom.midi(score, fileName);
 		JMusicUtilsCustom.midi(scoreFull, VibeComposerGUI.TEMPORARY_SEQUENCE_MIDI_NAME);
 		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
-			System.setOut(originalStream);
+			System.setOut(VibeComposerGUI.originalOut);
+			System.setErr(VibeComposerGUI.dummyOut);
 		} else {
 			VibeComposerGUI.dconsole.redirectOut();
 		}
@@ -3236,18 +3229,21 @@ public class MidiGenerator implements JMC {
 		}
 		LG.d("Added parts to score.., allow combo: " + allowCombination);
 		Random rand = new Random(mainGeneratorSeed + 999);
+		long humanizerRandSeed = rand.nextLong();
 		for (Object o : score.getPartList()) {
 			PartExt pe = (PartExt) o;
 			if (pe == null || pe.isFillerPart()) {
 				continue;
 			}
-			boolean isDrum = pe.getTitle().contains("MainDrum");
+			boolean isDrum = pe.getTitle().contains("Drum");
 			boolean shouldRandomize = (isDrum && VibeComposerGUI.humanizeDrums.getInt() > 0)
 					|| (!isDrum && VibeComposerGUI.humanizeNotes.getInt() > 0);
 
 
 			if (shouldRandomize) {
-
+				int noteColorIndex = ShowAreaBig.getIndexForPartName(pe.getTitle());
+				int partOrder = ShowAreaBig.getPartOrderForPartName(pe.getTitle());
+				rand.setSeed(humanizerRandSeed + noteColorIndex * 1000 + partOrder);
 				JMusicUtilsCustom.humanize(pe, rand,
 						isDrum ? noteMultiplier * VibeComposerGUI.humanizeDrums.getInt() / 10000.0
 								: noteMultiplier * VibeComposerGUI.humanizeNotes.getInt() / 10000.0,
@@ -3311,12 +3307,17 @@ public class MidiGenerator implements JMC {
 					Note n = notes.get(i);
 					double currTime = currentRv;
 					currentRv += n.getRhythmValue();
+					int originalPitch = n.getPitch();
 
 					if (accentGenerator.nextInt(100) >= mp.getAccents()) {
 						continue;
 					}
 
 					if (n.getDuration() - DBL_ERR < Durations.SIXTEENTH_NOTE) {
+						continue;
+					}
+
+					if (originalPitch < 0) {
 						continue;
 					}
 
@@ -3351,7 +3352,6 @@ public class MidiGenerator implements JMC {
 
 					// |---x----------| -> |---|---------| -> old note's duration is intersection length, new note's offset is moved up by the same amount
 					double intersectionLength = intersection - currTime - n.getOffset();
-					int originalPitch = n.getPitch();
 					Note splitNote = new Note(originalPitch, 0, n.getDynamic());
 					splitNote.setDuration(n.getDuration() - intersectionLength);
 					splitNote.setOffset(n.getOffset() + intersectionLength);
@@ -3608,7 +3608,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(1);
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
-				BassPart bp = (BassPart) gc.getBassParts().get(i);
+				BassPart bp = gc.getBassParts().get(i);
 				boolean added = presences.contains(bp.getOrder());
 				if (added && !bp.isMuted()) {
 					List<Integer> variations = (overridden) ? sec.getVariation(1, i) : null;
@@ -3635,7 +3635,7 @@ public class MidiGenerator implements JMC {
 			Set<Integer> presences = sec.getPresence(2);
 			boolean useChordSlash = false;
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
-				ChordPart cp = (ChordPart) gc.getChordParts().get(i);
+				ChordPart cp = gc.getChordParts().get(i);
 				boolean added = presences.contains(cp.getOrder());
 				if (added && !cp.isMuted()) {
 					if (i == 0) {
@@ -3664,7 +3664,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
-				ArpPart ap = (ArpPart) gc.getArpParts().get(i);
+				ArpPart ap = gc.getArpParts().get(i);
 				// if arp1 supports melody with same instrument, always introduce it in second half
 				List<Integer> variations = (overridden) ? sec.getVariation(3, i) : null;
 				boolean added = presences.contains(ap.getOrder());
@@ -3685,7 +3685,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
-				DrumPart dp = (DrumPart) gc.getDrumParts().get(i);
+				DrumPart dp = gc.getDrumParts().get(i);
 				variationGen.setSeed(arrSeed + 300 + dp.getOrder());
 
 				boolean added = presences.contains(dp.getOrder());
@@ -3711,7 +3711,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isMelodyEnable() && !gc.getMelodyParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(0);
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-				MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
+				MelodyPart mp = gc.getMelodyParts().get(i);
 				int melodyChanceMultiplier = (sec.getTypeMelodyOffset() == 0 && i == 0) ? 2 : 1;
 				// temporary increase for chance of main (#1) melody
 				int oldChance = sec.getMelodyChance();
@@ -3731,7 +3731,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isBassEnable() && !gc.getBassParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(1);
 			for (int i = 0; i < gc.getBassParts().size(); i++) {
-				BassPart bp = (BassPart) gc.getBassParts().get(i);
+				BassPart bp = gc.getBassParts().get(i);
 				rand.setSeed(arrSeed + 50 + bp.getOrder());
 				variationGen.setSeed(arrSeed + 50 + bp.getOrder());
 				boolean added = (overridden && presences.contains(bp.getOrder()))
@@ -3747,7 +3747,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isChordsEnable() && !gc.getChordParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(2);
 			for (int i = 0; i < gc.getChordParts().size(); i++) {
-				ChordPart cp = (ChordPart) gc.getChordParts().get(i);
+				ChordPart cp = gc.getChordParts().get(i);
 				rand.setSeed(arrSeed + 100 + cp.getOrder());
 				variationGen.setSeed(arrSeed + 100 + cp.getOrder());
 				boolean added = (overridden && presences.contains(cp.getOrder()))
@@ -3763,7 +3763,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isArpsEnable() && !gc.getArpParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(3);
 			for (int i = 0; i < gc.getArpParts().size(); i++) {
-				ArpPart ap = (ArpPart) gc.getArpParts().get(i);
+				ArpPart ap = gc.getArpParts().get(i);
 				rand.setSeed(arrSeed + 200 + ap.getOrder());
 				variationGen.setSeed(arrSeed + 200 + ap.getOrder());
 				// if arp1 supports melody with same instrument, always introduce it in second half
@@ -3784,7 +3784,7 @@ public class MidiGenerator implements JMC {
 		if (gc.isDrumsEnable() && !gc.getDrumParts().isEmpty()) {
 			Set<Integer> presences = sec.getPresence(4);
 			for (int i = 0; i < gc.getDrumParts().size(); i++) {
-				DrumPart dp = (DrumPart) gc.getDrumParts().get(i);
+				DrumPart dp = gc.getDrumParts().get(i);
 				rand.setSeed(arrSeed + 300 + dp.getOrder());
 
 				// multiply drum chance using section note type + what drum it is
@@ -3806,6 +3806,14 @@ public class MidiGenerator implements JMC {
 	}
 
 	public boolean replaceWithSectionCustomChordDurations(Section sec) {
+		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
+
+		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
+				? sc.getBeatDurationMultiplierIndex()
+				: gc.getBeatDurationMultiplierIndex();
+		double defaultDurationMultiplier = (beatDurMultiIndex == 2) ? 2.0
+				: ((beatDurMultiIndex == 0) ? 0.5 : 1.0);
+
 		if (!sec.isCustomChordsEnabled() && !sec.isCustomDurationsEnabled()) {
 			return false;
 		}
@@ -3826,9 +3834,9 @@ public class MidiGenerator implements JMC {
 		} else if (sec.isCustomChordsEnabled()) {
 			durations = new ArrayList<>();
 			for (int i = 0; i < chords.size(); i++) {
-				durations.add((i < progressionDurations.size() && !progressionDurations.isEmpty())
+				durations.add(i < progressionDurations.size()
 						? progressionDurations.get(i)
-						: Durations.WHOLE_NOTE);
+						: Durations.WHOLE_NOTE * defaultDurationMultiplier);
 			}
 		} else {
 			chords = generateChordProgressionList(gc.getRandomSeed(), durations.size());
@@ -3862,20 +3870,6 @@ public class MidiGenerator implements JMC {
 		chordProgression = mappedChords;
 		rootProgression = mappedRootChords;
 		progressionDurations = durations;
-
-		SectionConfig sc = (currentSection != null) ? currentSection.getSecConfig() : null;
-		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
-				? sc.getBeatDurationMultiplierIndex()
-				: gc.getBeatDurationMultiplierIndex();
-		if (beatDurMultiIndex == 0) {
-			for (int i = 0; i < progressionDurations.size(); i++) {
-				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
-			}
-		} else if (beatDurMultiIndex == 2) {
-			for (int i = 0; i < progressionDurations.size(); i++) {
-				progressionDurations.set(i, progressionDurations.get(i) * 2);
-			}
-		}
 
 		sec.setSectionBeatDurations(progressionDurations);
 		sec.setSectionDuration(progressionDurations.stream().mapToDouble(e -> e).sum());

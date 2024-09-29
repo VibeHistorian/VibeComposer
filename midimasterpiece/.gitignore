@@ -1,5 +1,6 @@
 /target/
-.idea/
+/midis/
+/.idea/
 .settings
 .project
 .classpath
@@ -16,3 +17,5 @@
 *.zip
 *.bat
 *.lnk
+/*.jar
+/*.exe

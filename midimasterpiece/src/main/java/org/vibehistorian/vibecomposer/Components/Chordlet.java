@@ -10,20 +10,19 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
+
+import static org.vibehistorian.vibecomposer.SwingUtils.popupMenus;
 
 public class Chordlet extends JComponent {
 
@@ -48,6 +47,9 @@ public class Chordlet extends JComponent {
 	private long dragLimitMs = 0;
 	private boolean canRemoveChordlet = false;
 
+	private Pair<JPopupMenu, MouseListener> semitonePopupPair = null;
+	private Pair<JPopupMenu, MouseListener> spicePopupPair = null;
+
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
 		setupChord(chord);
 		setParentPanel(chordletPanel);
@@ -56,112 +58,124 @@ public class Chordlet extends JComponent {
 
 	private void setupListeners() {
 		// RMB - first letter/sharp change
-		SwingUtils.addPopupMenu(this, (evt, e) -> {
-			firstLetter = e.substring(0, 1);
-			sharp = e.length() > 1;
-			update();
-		}, e -> {
-			if (SwingUtilities.isRightMouseButton(e)) {
-				return true;
-			}
-			return false;
-		}, MidiUtils.SEMITONE_LETTERS, MidiUtils.SEMITONE_LETTERS.stream()
-				.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
+		boolean initialized = (semitonePopupPair != null);
+		if (!initialized) {
+			semitonePopupPair = SwingUtils.addPopupMenu(this, (evt, e) -> {
+				firstLetter = e.substring(0, 1);
+				sharp = e.length() > 1;
+				update();
+			}, e -> {
+				if (SwingUtilities.isRightMouseButton(e)) {
+					return true;
+				}
+				return false;
+			}, MidiUtils.SEMITONE_LETTERS, MidiUtils.SEMITONE_LETTERS.stream()
+					.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
+		}
 
-		// MMB - spice change
-		SwingUtils.addPopupMenu(this, (evt, e) -> {
-			spice = e;
+		// MMB - spice change - must be set up on each update to change the starting letter/sharp
+		List<String> chordSpiceList = MidiUtils.SPICE_NAMES_LIST.stream().map(e -> firstLetter + sharpString() + e).collect(Collectors.toList());
+		if (initialized) {
+			this.removeMouseListener(spicePopupPair.getValue());
+			popupMenus.remove(spicePopupPair.getKey());
+		}
+		spicePopupPair = SwingUtils.addPopupMenu(this, (evt, e) -> {
+			setupChord(e + ((inversion != null) ? ("." + inversion) : ""));
 			update();
 		}, e -> {
 			if (SwingUtilities.isMiddleMouseButton(e)) {
 				return true;
 			}
 			return false;
-		}, MidiUtils.SPICE_NAMES_LIST, null);
+		}, chordSpiceList, chordSpiceList.stream()
+				.map(e -> Chordlet.getColorForChord(e)).collect(Collectors.toList()));
 
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e)) {
-					if (!mouseOverCloseButton(e)) {
-						long currentTimeMs = System.currentTimeMillis();
-						if (currentTimeMs - lastClickMs < 500) {
-							resetToBaseChord();
-							lastClickMs = 0;
+		// other listeners
+		if (!initialized) {
+			addMouseListener(new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent e) {
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						if (!mouseOverCloseButton(e)) {
+							long currentTimeMs = System.currentTimeMillis();
+							if (currentTimeMs - lastClickMs < 500) {
+								resetToBaseChord();
+								lastClickMs = 0;
+							} else {
+								lastClickMs = currentTimeMs;
+							}
 						} else {
-							lastClickMs = currentTimeMs;
+							canRemoveChordlet = true;
 						}
-					} else {
-						canRemoveChordlet = true;
+						dragP = new Point(e.getPoint());
+						repaint();
 					}
-					dragP = new Point(e.getPoint());
-					repaint();
 				}
-			}
 
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e) && mouseOverCloseButton(e)
-						&& canRemoveChordlet) {
-					cPanel.removeChordlet(Chordlet.this, true);
-				} else {
-					canRemoveChordlet = false;
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					if (SwingUtilities.isLeftMouseButton(e) && mouseOverCloseButton(e)
+							&& canRemoveChordlet) {
+						cPanel.removeChordlet(Chordlet.this, true);
+					} else {
+						canRemoveChordlet = false;
+					}
+					reset();
 				}
-				reset();
-			}
-		});
+			});
 
-		addMouseMotionListener(new MouseMotionListener() {
+			addMouseMotionListener(new MouseMotionListener() {
 
-			@Override
-			public void mouseDragged(MouseEvent e) {
-				processMouseDrag(e);
-			}
-
-			@Override
-			public void mouseMoved(MouseEvent e) {
-				if (dragP != null) {
+				@Override
+				public void mouseDragged(MouseEvent e) {
 					processMouseDrag(e);
 				}
-			}
 
-		});
-
-		addMouseWheelListener(new MouseWheelListener() {
-
-			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) {
-				// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size 
-				int movement = e.getWheelRotation() > 0 ? -1 : 1;
-
-				if (e.isControlDown()) {
-					int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);
-					int newSpiceIndex = (dragSpiceIndex + movement
-							+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
-							% MidiUtils.SPICE_NAMES_LIST.size();
-					spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);
-				} else if (e.isShiftDown()) {
-					int firstLetterIndex = MidiUtils.SEMITONE_LETTERS
-							.indexOf(firstLetter + sharpString());
-					String newFirst = MidiUtils.SEMITONE_LETTERS.get(
-							(firstLetterIndex + movement + MidiUtils.SEMITONE_LETTERS.size() * 50)
-									% MidiUtils.SEMITONE_LETTERS.size());
-					firstLetter = newFirst.substring(0, 1);
-					sharp = newFirst.length() > 1;
-				} else {
-
-					if (inversion == null) {
-						inversion = movement;
-					} else if (inversion / movement > 0 && Math.abs(inversion + movement) > 5) {
-						inversion = null;
-					} else {
-						inversion += movement;
+				@Override
+				public void mouseMoved(MouseEvent e) {
+					if (dragP != null) {
+						processMouseDrag(e);
 					}
 				}
 
-				update();
-			}
-		});
+			});
+
+			addMouseWheelListener(new MouseWheelListener() {
+
+				@Override
+				public void mouseWheelMoved(MouseWheelEvent e) {
+					// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size
+					int movement = e.getWheelRotation() > 0 ? -1 : 1;
+
+					if (e.isControlDown()) {
+						int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);
+						int newSpiceIndex = (dragSpiceIndex + movement
+								+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
+								% MidiUtils.SPICE_NAMES_LIST.size();
+						spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);
+					} else if (e.isShiftDown()) {
+						int firstLetterIndex = MidiUtils.SEMITONE_LETTERS
+								.indexOf(firstLetter + sharpString());
+						String newFirst = MidiUtils.SEMITONE_LETTERS.get(
+								(firstLetterIndex + movement + MidiUtils.SEMITONE_LETTERS.size() * 50)
+										% MidiUtils.SEMITONE_LETTERS.size());
+						firstLetter = newFirst.substring(0, 1);
+						sharp = newFirst.length() > 1;
+					} else {
+
+						if (inversion == null) {
+							inversion = movement;
+						} else if (inversion / movement > 0 && Math.abs(inversion + movement) > 5) {
+							inversion = null;
+						} else {
+							inversion += movement;
+						}
+					}
+
+					update();
+				}
+			});
+		}
 	}
 
 	protected boolean mouseOverCloseButton(MouseEvent e) {
@@ -233,6 +247,7 @@ public class Chordlet extends JComponent {
 		calculateWidth(getChordText());
 		setPreferredSize(new Dimension(width, height));
 		setSize(new Dimension(width, height));
+		setupListeners();
 		if (cPanel != null) {
 			cPanel.revalidate();
 			cPanel.repaint();

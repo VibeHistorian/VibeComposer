@@ -165,14 +165,12 @@ public class JMusicUtilsCustom implements JMC {
 		if (phrase == null) {
 			return;
 		}
-		Enumeration enum1 = phrase.getNoteList().elements();
-		int counter = 0;
-		while (enum1.hasMoreElements()) {
-			Note n = (Note) enum1.nextElement();
-			if (counter == 0) {
+		Vector<Note> notes = phrase.getNoteList();
+		for (int i = 0; i < notes.size(); i++) {
+			if (i == 0) {
 				continue;
 			}
-			counter++;
+			Note n = notes.get(i);
 			// create new pitch value
 			if (pitchVariation > 0) {
 				n.setPitch(n.getPitch()
@@ -180,15 +178,16 @@ public class JMusicUtilsCustom implements JMC {
 			}
 			// create new rhythm and duration values
 			if (rhythmVariation > 0.0) {
-				double var = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
+				double varOffset = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
+				double varDur = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
 				double dur = n.getDuration();
 				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + MidiGenerator.DBL_ERR) {
-					n.setOffset(n.getOffset() + var / 5);
-					n.setDuration(n.getDuration() + var / 5);
-				} else {
-					n.setOffset(n.getOffset() + var);
-					n.setDuration(n.getDuration() + var);
+					varOffset /= 5;
+					varDur /= 5;
 				}
+				n.setOffset(n.getOffset() + varOffset);
+				n.setDuration(n.getDuration() + varDur);
+
 
 			}
 			// create new dynamic value
@@ -197,6 +196,7 @@ public class JMusicUtilsCustom implements JMC {
 						- dynamicVariation));
 			}
 		}
+		MidiGeneratorUtils.applySamePitchCollisionAvoidance(notes);
 	}
 
 	public static void midi(Score scr, String fileName) {

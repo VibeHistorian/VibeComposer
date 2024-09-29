@@ -200,7 +200,7 @@ public class ShowPanelBig extends JPanel {
 			});
 			scorePartPanel.add(toggler);
 
-			soloMuterHighlight = new CheckButton("Highlight Audible", false);
+			soloMuterHighlight = new CheckButton("Highlight Audible", true);
 			soloMuterHighlight.setRunnable(() -> {
 				if (soloMuterHighlight.isSelected()) {
 					/*for (int i = 0; i < 5; i++) {
@@ -349,7 +349,7 @@ public class ShowPanelBig extends JPanel {
 
 		//zoomIn(areaScrollPane, new Point(0, 200), 0.0, 1.0);
 
-		soloMuterHighlight.setSelected(true);
+		//soloMuterHighlight.setSelected(true);
 		repaint();
 
 		// set up a more zoomed in first view
@@ -539,8 +539,10 @@ public class ShowPanelBig extends JPanel {
 	}
 
 	public void repaintMinimum() {
-		sa.repaint();
-		ruler.repaint();
+		SwingUtilities.invokeLater(() -> {
+			sa.repaint();
+			ruler.repaint();
+		});
 	}
 
 	public static void zoomIn(JScrollPane pane, Point point, double zoomX, double zoomY) {

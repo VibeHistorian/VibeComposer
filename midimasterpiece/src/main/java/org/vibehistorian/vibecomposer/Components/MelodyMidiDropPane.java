@@ -24,7 +24,7 @@ public class MelodyMidiDropPane extends MidiDropPane {
 	public final static Function<Phrase, PhraseNotes> melodyMidiConverter = e -> {
 
 		List<Pair<ScaleMode, Integer>> detectionResults = MidiUtils.detectKeyAndMode(e, null,
-				false);
+				false, 0);
 
 		if (detectionResults == null) {
 			LG.d("Melody uses unknown key, skipped!");

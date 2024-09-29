@@ -189,6 +189,8 @@ public class MidiEditArea extends JComponent {
 						&& MidiEditPopup.regenerateInPlaceChoice) {
 
 					pop.apply();
+					selectedNotes.clear();
+					selectedNotesCopy.clear();
 					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
 				}
 			}
@@ -782,7 +784,7 @@ public class MidiEditArea extends JComponent {
 			// to draw scale/key helpers
 			Color highlightedScaleKeyColor = OMNI.alphen(VibeComposerGUI.uiColor(),
 					VibeComposerGUI.isDarkMode ? 65 : 90);
-			Color highlightedScaleKeyHelperColor = OMNI.alphen(highlightedScaleKeyColor, 40);
+			Color highlightedScaleKeyHelperColor = OMNI.alphen(highlightedScaleKeyColor, 20);
 			List<Integer> highlightedScaleKey = calculateHighlightedScaleKey();
 			Color nonHighlightedColor = VibeComposerGUI.isDarkMode ? new Color(150, 100, 30, 65)
 					: new Color(150, 150, 150, 100);
@@ -896,10 +898,12 @@ public class MidiEditArea extends JComponent {
 
 				// draw line helpers/dots
 				g.setColor(highlightedScaleKeyHelperColor);
-				for (int j = 0; j < 1 + max - min; j++) {
+				/*for (int j = 0; j < 1 + max - min; j++) {
 					int drawDotY = bottomLeft.y - (int) (rowHeight * (j + 1));
 					g.drawLine(drawX, drawDotY - 2, drawX, drawDotY + 2);
-				}
+				}*/
+				g.drawLine(drawX, bottomLeft.y, drawX,
+						bottomLeft.y - (int) rowHeight * (max - min + 2));
 
 				prev = curr;
 

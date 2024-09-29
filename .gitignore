@@ -1,1 +1,5 @@
-/consoleLogs1.txt
+/.idea/
+*.txt
+*.mid
+*.exe
+*.jar

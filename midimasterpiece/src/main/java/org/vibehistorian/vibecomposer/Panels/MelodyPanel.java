@@ -95,7 +95,7 @@ public class MelodyPanel extends InstPanel {
 		});
 		noteTargets.setRandGenerator(e -> {
 			return MidiGeneratorUtils.generateOffsets(MidiGenerator.chordInts,
-					new Random().nextInt(),
+					(e instanceof Integer) ? (Integer) e : new Random().nextInt(),
 					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
 					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null);
 		});

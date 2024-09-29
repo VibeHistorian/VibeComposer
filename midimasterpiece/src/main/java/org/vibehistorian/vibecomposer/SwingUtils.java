@@ -10,12 +10,7 @@ import java.awt.GridLayout;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.PointerInfo;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
@@ -30,6 +25,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.Timer;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public class SwingUtils {
@@ -119,14 +115,14 @@ public class SwingUtils {
 		timer.start();
 	}
 
-	public static void addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
+	public static Pair<JPopupMenu, MouseListener> addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
 			Function<MouseEvent, Boolean> actionOnMousePress, List<String> displayedPopupItems,
 			List<Color> popupItemColors) {
-		addPopupMenu(comp, actionOnSelect, actionOnMousePress, displayedPopupItems, popupItemColors,
+		return addPopupMenu(comp, actionOnSelect, actionOnMousePress, displayedPopupItems, popupItemColors,
 				1);
 	}
 
-	public static void addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
+	public static Pair<JPopupMenu, MouseListener> addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
 			Function<MouseEvent, Boolean> actionOnMousePress, List<String> displayedPopupItems,
 			List<Color> popupItemColors, int columns) {
 		final JPopupMenu popup = new JPopupMenu();
@@ -173,8 +169,7 @@ public class SwingUtils {
 			});
 			popup.add(newE);
 		}
-
-		comp.addMouseListener(new MouseAdapter() {
+		MouseListener listener = new MouseAdapter() {
 
 			@Override
 			public void mousePressed(MouseEvent evt) {
@@ -184,7 +179,9 @@ public class SwingUtils {
 				}
 			}
 
-		});
+		};
+		comp.addMouseListener(listener);
+		return Pair.of(popup, listener);
 	}
 
 	public static InstPanel getInstParent(Component comp) {

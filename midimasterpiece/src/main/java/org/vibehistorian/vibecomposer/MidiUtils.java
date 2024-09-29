@@ -60,7 +60,7 @@ public class MidiUtils {
 				DIATONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
 				AEOLIAN_SCALE = { 0, 2, 3, 5, 7, 8, 10 }, DORIAN_SCALE = { 0, 2, 3, 5, 7, 9, 10 },
 				PHRYGIAN_SCALE = { 0, 1, 3, 5, 7, 8, 10 }, LYDIAN_SCALE = { 0, 2, 4, 6, 7, 9, 11 },
-				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTATONIC_SCALE = { 0, 2, 4, 7, 9 },
+				MIXOLYDIAN_SCALE = { 0, 2, 4, 5, 7, 9, 10 }, PENTA_MAJOR_SCALE = { 0, 2, 4, 4, 7, 7, 9 }, PENTA_MINOR_SCALE = { 0, 3, 4, 4, 7, 7, 10 },
 				BLUES_SCALE = { 0, 2, 3, 4, 7, 9, 12 }, TURKISH_SCALE = { 0, 1, 3, 5, 7, 10, 11 },
 				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 },
 				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 },
@@ -102,7 +102,7 @@ public class MidiUtils {
 		WHISKEY(Scales.WHISKEY_SCALE, 1), DOUBLE_HARM(Scales.DOUBLE_HARM_SCALE, 1),
 		BBORIAN(Scales.BBORIAN_SCALE, 0), EBOLIAN(Scales.EBOLIAN_SCALE, 4),
 		ABRYGIAN(Scales.ABRYGIAN_SCALE, 1), DBOCRIAN(Scales.DBOCRIAN_SCALE, 6),
-		GBFS(Scales.GBFS_SCALE, 2);
+		GBFS(Scales.GBFS_SCALE, 2), PENTA_MAJOR(Scales.PENTA_MAJOR_SCALE, 1), PENTA_MINOR(Scales.PENTA_MINOR_SCALE, 1);
 
 		public Integer[] noteAdjustScale;
 		public Integer modeTargetNote;
@@ -131,6 +131,7 @@ public class MidiUtils {
 	public static final int[] cAug4 = { Pitches.C4, Pitches.E4, Pitches.GS4 };
 	public static final int[] cDim4 = { Pitches.C4, Pitches.EF4, Pitches.GF4 };
 	public static final int[] c7th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.BF4 };
+	public static final int[] cMinMaj7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.B4 };
 	public static final int[] cMaj7th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4 };
 	public static final int[] cMin7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4 };
 	public static final int[] cMaj9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
@@ -159,6 +160,7 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cMaj7th4);
 		SPICE_CHORDS_LIST.add(cMin7th4);
 		SPICE_CHORDS_LIST.add(c7th4);
+		SPICE_CHORDS_LIST.add(cMinMaj7th4);
 
 		SPICE_CHORDS_LIST.add(cSus2nd4);
 		SPICE_CHORDS_LIST.add(cSus4th4);
@@ -185,8 +187,8 @@ public class MidiUtils {
 			.asList(new String[] { "sus4", "sus2", "sus7" });
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays
-			.asList(new String[] { "", "m", "maj7", "m7", "7", "sus2", "sus4", "sus7", "maj6", "m6",
-					"maj9", "m9", "maj13", "m13", "aug", "dim" });
+			.asList(new String[] { "", "m", "maj7", "m7", "7", "mM7", "sus2", "sus4", "sus7",
+					"maj6", "m6", "maj9", "m9", "maj13", "m13", "aug", "dim" });
 	// index 0 unused
 	public static final List<String> CHORD_FIRST_LETTERS = Arrays
 			.asList(new String[] { "C", "D", "E", "F", "G", "A", "B" });
@@ -210,9 +212,10 @@ public class MidiUtils {
 	public static final List<Integer> MAJ_SCALE = Arrays.asList(Scales.MAJOR_SCALE);
 	public static final List<Integer> MIN_SCALE = Arrays.asList(Scales.AEOLIAN_SCALE);
 
-	// relevancy order for % 12: 0, 7, 2, 5, 9, 4, 11
-	public static final List<Integer> relevancyOrder = Arrays
-			.asList(new Integer[] { 0, 7, 2, 5, 9, 4, 11 });
+	// default emphasize key for % 12
+	// Mode note will be inserted in second position if possible
+	public static final List<Integer> keyEmphasisOrder = Arrays
+			.asList(0, 7, 4, 5, 9, 2, 11);
 
 
 	public static final Map<String, List<String>> cpRulesMap = createChordProgressionRulesMap();
@@ -471,7 +474,7 @@ public class MidiUtils {
 	}
 
 	public static List<Pair<ScaleMode, Integer>> detectKeyAndMode(Phrase phr, ScaleMode targetMode,
-			boolean forceDifferentTranspose) {
+			boolean forceDifferentTranspose, int progressiveNoteDiscardThreshold) {
 		int bestNotContained = Integer.MAX_VALUE;
 		ScaleMode bestMode = null;
 		int transposeUpBy = 0;
@@ -499,6 +502,18 @@ public class MidiUtils {
 		LG.i("Examining pitches: " + StringUtils.join(pitches, ", "));
 		LG.i("# of pitches: " + pitches.size());
 		LG.i("Pitch array: " + Arrays.toString(pitchCounts));
+
+		if (progressiveNoteDiscardThreshold > 0) {
+			double threshold = (mostFrequents * progressiveNoteDiscardThreshold) / 100.0;
+			for (int i = 0; i < pitchCounts.length; i++) {
+				if (pitchCounts[i] < threshold) {
+					pitches.remove(i);
+					pitchCounts[i] = 0;
+				}
+			}
+			LG.i("Remaining pitches: " + Arrays.toString(pitchCounts));
+		}
+
 		List<Pair<ScaleMode, Integer>> validResults = new ArrayList<>();
 		Pair<ScaleMode, Integer> returnPair = null;
 		for (ScaleMode mode : ScaleMode.values()) {
@@ -541,7 +556,13 @@ public class MidiUtils {
 
 		}
 		if (bestNotContained > 0) {
-			return null;
+			// e.g. -1 = disabled prog. threshold, above 20% frequency discarded notes start to be meaningless for detecting key
+			if (progressiveNoteDiscardThreshold < 0 && progressiveNoteDiscardThreshold > 20) {
+				return null;
+			} else {
+				return detectKeyAndMode(phr, targetMode,
+						forceDifferentTranspose, progressiveNoteDiscardThreshold + 10);
+			}
 		}
 		if (returnPair != null) {
 			LG.i("Returning best: " + returnPair.toString());
@@ -555,7 +576,6 @@ public class MidiUtils {
 
 	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale,
 			boolean forceDifferentTranspose) {
-
 
 		Set<Integer> desiredPitches = new HashSet<>();
 		for (int i = 0; i < scale.length; i++) {
@@ -1031,19 +1051,22 @@ public class MidiUtils {
 
 			if (originalIndex == -1 && !keepOutliers) {
 				if (modeToList.contains(searchPitch)) {
-					//LG.i("Pitch found only in modeTo, not changing: " + pitch);
+					LG.d("Pitch found only in modeTo, not changing: " + pitch);
 				} else {
 					int closestPitch = getClosestFromList(modeToList, searchPitch);
 					int difference = searchPitch - closestPitch;
 					transposedChord[j] = pitch - difference;
 					/*LG.i(
 							"Not indexed pitch.. " + pitch + ", lowered by.. " + difference);*/
+					continue;
 				}
-				continue;
 			}
 
 			if (originalIndex >= 0) {
 				int originalMovement = mode[originalIndex];
+				if (modeTo.length-1 < originalIndex) {
+					originalIndex = (int)Math.floor(modeTo.length * (originalIndex / Double.valueOf(mode.length)));
+				}
 				int newMovement = modeTo[originalIndex];
 
 				if (pitch != Note.REST) {
@@ -1105,6 +1128,9 @@ public class MidiUtils {
 
 
 			int originalMovement = mode[originalIndex];
+			if (modeTo.length-1 < originalIndex) {
+				originalIndex = (int)Math.floor(modeTo.length * (originalIndex / Double.valueOf(mode.length)));
+			}
 			int newMovement = modeTo[originalIndex];
 
 			n.setPitch(pitch - originalMovement + newMovement);
@@ -1314,7 +1340,7 @@ public class MidiUtils {
 		Phrase phr = new PhraseExt();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true);
+		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true, -1);
 		return detectionResults;
 	}
 
@@ -1424,7 +1450,7 @@ public class MidiUtils {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
 			String chordString = SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAugDom7thEnabled() && BANNED_DIM_AUG_6_LIST.contains(chordString)) {
+			if (!gc.isDimAug6thEnabled() && BANNED_DIM_AUG_6_LIST.contains(chordString)) {
 				continue;
 			}
 			if (!gc.isEnable9th13th() && BANNED_9_13_LIST.contains(chordString)) {
@@ -1433,13 +1459,9 @@ public class MidiUtils {
 			allowedSpiceChordsMiddle.add(chordString);
 		}
 
-		List<String> allowedSpiceChords = new ArrayList<>();
-		for (String s : allowedSpiceChordsMiddle) {
-			if (BANNED_DIM_AUG_6_LIST.contains(s) || BANNED_SUSSY_LIST.contains(s)) {
-				continue;
-			}
-			allowedSpiceChords.add(s);
-		}
+		List<String> allowedSpiceChords = new ArrayList<>(allowedSpiceChordsMiddle);
+		allowedSpiceChords.removeAll(BANNED_DIM_AUG_6_LIST);
+		allowedSpiceChords.removeAll(BANNED_SUSSY_LIST);
 
 		Random rand = new Random();
 
@@ -1673,6 +1695,18 @@ public class MidiUtils {
 			extendedList.add(arpPattern.get(i - listSize) % listSize);
 		}
 		return extendedList;*/
+	}
+
+	public static boolean containsRootNote(int[] chord) {
+		if (chord == null) {
+			return false;
+		}
+		for (int i = 0; i < chord.length; i++) {
+			if (chord[i] % 12 == 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
