@@ -1,19 +1,13 @@
-# VibeComposer 2.3
+# VibeComposer 2.4
 ## Interactive Music Generator
 
-![VibeComposer Simple UI Preview](https://i.imgur.com/O53OLLq.png)
+![VibeComposer Default UI Preview](https://i.imgur.com/ZslPA3T.png)
 
-#### Arranged Track Examples (v2.3): 
-- [ANTI_BODIES](https://soundcloud.com/vibehistorian/anti_bodies)
-- [Slow Burn](https://soundcloud.com/vibehistorian/slow-burn)
-- [Good Night](https://soundcloud.com/vibehistorian/good-night)
-- [Winter Tale](https://soundcloud.com/vibehistorian/winter-tale)
-- [Glowing Apart](https://soundcloud.com/vibehistorian/glowing-apart)
-- [Anti Hero](https://soundcloud.com/vibehistorian/anti-hero)
+#### Arranged Track Examples (v2.4): 
 
 #### How to run it:
 1. [Download and install JRE - Java Runtime Environment (at least ver. 1.8.0)](https://java.com/en/download/)
-2. [Download the latest release (.jar)](https://github.com/VibeHistorian/VibeComposer/releases/download/v2.3-beta/VibeComposer-2.3-beta-JAR.jar) (other formats available under Releases - Assets (right sidebar))
+2. [Download the latest release (.jar)](https://github.com/VibeHistorian/VibeComposer/releases/download/v2.4-beta/VibeComposer-2.4-beta-JAR.jar) (.exe format available under Releases - Assets (right sidebar) if preferred)
 3. Double-click to run
   > Note: (Windows-only) If double-clicking the .jar doesn't work: download VibeComposerLauncher.bat from Releases, place it in the same folder as the .jar and run that instead.
   
@@ -42,6 +36,10 @@
 	-- this should create 2 jars and 1 wrapped exe
 
 #### Arrangement examples made with earlier versions of VibeComposer: 
+- https://soundcloud.com/vibehistorian/anti_bodies
+- https://soundcloud.com/vibehistorian/good-night
+- https://soundcloud.com/vibehistorian/winter-tale
+- https://soundcloud.com/vibehistorian/anti-hero
 - https://soundcloud.com/vibehistorian/a-world-beyond
 - https://soundcloud.com/vibehistorian/darker
 - https://soundcloud.com/vibehistorian/dew-drop
