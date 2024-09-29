@@ -4,6 +4,7 @@
 ![VibeComposer Default UI Preview](https://i.imgur.com/ZslPA3T.png)
 
 #### Arranged Track Examples (v2.4): 
+- [Mistake](https://soundcloud.com/vibehistorian/mistake-radio-edit-vibecomposer-v24-track-1)
 
 #### How to run it:
 1. [Download and install JRE - Java Runtime Environment (at least ver. 1.8.0)](https://java.com/en/download/)
