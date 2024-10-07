@@ -19,30 +19,18 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-import java.util.Vector;
-import java.util.stream.Collectors;
-
+import jm.constants.Pitches;
+import jm.music.data.Note;
+import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 
-import jm.constants.Pitches;
-import jm.music.data.Note;
-import jm.music.data.Phrase;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class MidiUtils {
 
@@ -65,10 +53,11 @@ public class MidiUtils {
 				INDIAN_SCALE = { 0, 1, 1, 4, 5, 8, 10 }, LOCRIAN_SCALE = { 0, 1, 3, 4, 6, 8, 10 },
 				HARMONIC_MAJOR_SCALE = { 0, 2, 4, 5, 7, 8, 11 },
 				WHISKEY_SCALE = { 0, 3, 5, 6, 7, 10, 11 },
-				DOUBLE_HARM_SCALE = { 0, 1, 4, 5, 7, 8, 11 },
+				DOUBLE_HARM_MINOR_SCALE = { 0, 1, 4, 5, 7, 8, 11 },
 				BBORIAN_SCALE = { 1, 2, 4, 6, 7, 9, 11 }, EBOLIAN_SCALE = { 1, 2, 4, 6, 8, 9, 11 },
 				ABRYGIAN_SCALE = { 1, 3, 4, 6, 8, 9, 11 },
-				DBOCRIAN_SCALE = { 1, 3, 4, 6, 8, 10, 11 }, GBFS_SCALE = { 1, 3, 5, 6, 8, 10, 11 };
+				DBOCRIAN_SCALE = { 1, 3, 4, 6, 8, 10, 11 }, GBFS_SCALE = { 1, 3, 5, 6, 8, 10, 11 },
+				HUNGARIAN_MINOR_SCALE = { 0, 2, 3, 6, 7, 8, 11 };
 
 	}
 
@@ -99,10 +88,10 @@ public class MidiUtils {
 		LOCRIAN(Scales.LOCRIAN_SCALE, 4), BLUES(Scales.BLUES_SCALE, -1),
 		HARM_MINOR(Scales.HARMONIC_MINOR_SCALE, 5), TURKISH(Scales.TURKISH_SCALE, -1),
 		INDIAN(Scales.INDIAN_SCALE, 2), HARM_MAJOR(Scales.HARMONIC_MAJOR_SCALE, 5),
-		WHISKEY(Scales.WHISKEY_SCALE, 1), DOUBLE_HARM(Scales.DOUBLE_HARM_SCALE, 1),
+		WHISKEY(Scales.WHISKEY_SCALE, 1), DOUBLE_HARM(Scales.DOUBLE_HARM_MINOR_SCALE, 1),
 		BBORIAN(Scales.BBORIAN_SCALE, 0), EBOLIAN(Scales.EBOLIAN_SCALE, 4),
 		ABRYGIAN(Scales.ABRYGIAN_SCALE, 1), DBOCRIAN(Scales.DBOCRIAN_SCALE, 6),
-		GBFS(Scales.GBFS_SCALE, 2), PENTA_MAJOR(Scales.PENTA_MAJOR_SCALE, 1), PENTA_MINOR(Scales.PENTA_MINOR_SCALE, 1);
+		GBFS(Scales.GBFS_SCALE, 2), PENTA_MAJOR(Scales.PENTA_MAJOR_SCALE, 1), PENTA_MINOR(Scales.PENTA_MINOR_SCALE, 1), HUNGARIAN_MINOR(Scales.HUNGARIAN_MINOR_SCALE, 3);
 
 		public Integer[] noteAdjustScale;
 		public Integer modeTargetNote;
