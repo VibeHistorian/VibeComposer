@@ -1,10 +1,27 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Point;
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SectionConfig;
+import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -14,36 +31,6 @@ import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.JTableHeader;
-
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.SectionConfig;
-import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
-import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
-import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
-import org.vibehistorian.vibecomposer.Panels.KnobPanel;
-import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class VariationPopup {
 
@@ -107,14 +94,12 @@ public class VariationPopup {
 					LG.d("Clicked VariationPopup table cell! " + row + ", " + col);
 					if (col >= 1) {
 						if (SwingUtilities.isMiddleMouseButton(evt)) {
-							Boolean val = (Boolean) tables[fI].getModel().getValueAt(row, col);
-							if (val) {
-								for (Section sec : VibeComposerGUI.actualArrangement
-										.getSections()) {
-									sec.removeVariationForPart(fI, row, col);
-								}
-								table.repaint();
+							for (Section sec : VibeComposerGUI.actualArrangement
+									.getSections()) {
+								sec.removeVariationForPart(fI, row, col);
 							}
+							table.repaint();
+
 							tables[fI].getModel().setValueAt(Boolean.FALSE, row, col);
 						}
 

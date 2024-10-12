@@ -1,13 +1,13 @@
 package org.vibehistorian.vibecomposer;
 
+import jm.constants.Pitches;
+import jm.music.data.Note;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import org.vibehistorian.vibecomposer.Enums.StrumType;
-
-import jm.music.data.Note;
 
 public class Chord {
 	private int[] notes;
@@ -25,7 +25,7 @@ public class Chord {
 	}
 
 	public static Chord EMPTY(double rhythmValue) {
-		Chord c = new Chord(new int[] { Integer.MIN_VALUE });
+		Chord c = new Chord(new int[] {Pitches.REST });
 		c.setRhythmValue(rhythmValue);
 		return c;
 	}

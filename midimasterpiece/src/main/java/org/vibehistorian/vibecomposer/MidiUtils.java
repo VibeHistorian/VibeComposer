@@ -634,7 +634,7 @@ public class MidiUtils {
 		if (shortenedTo > 0.999) {
 			return;
 		}
-		pr.addNote(Integer.MIN_VALUE, (1 - shortenedTo) * rv);
+		pr.addNote(Pitches.REST, (1 - shortenedTo) * rv);
 	}
 
 	public static int[] transposeChord(int[] chord, int transposeBy) {
@@ -1128,7 +1128,7 @@ public class MidiUtils {
 
 	public static int getClosestPitchFromList(List<Integer> list, int valToFind) {
 		if (list == null || list.isEmpty()) {
-			return Integer.MIN_VALUE;
+			return Pitches.REST;
 		}
 		valToFind = valToFind % 12;
 
@@ -1173,7 +1173,7 @@ public class MidiUtils {
 
 	public static int getClosestFromList(List<Integer> list, int valToFind) {
 		if (list == null || list.isEmpty()) {
-			return Integer.MIN_VALUE;
+			return Pitches.REST;
 		}
 		int closest = list.get(0);
 		int closestDistance = Math.abs(valToFind - closest);
