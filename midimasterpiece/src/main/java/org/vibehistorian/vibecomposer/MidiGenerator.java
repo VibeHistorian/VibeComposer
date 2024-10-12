@@ -19,41 +19,14 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
-import static org.vibehistorian.vibecomposer.MidiUtils.applyChordFreqMap;
-import static org.vibehistorian.vibecomposer.MidiUtils.cIonianScale4;
-import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
-import static org.vibehistorian.vibecomposer.MidiUtils.cpRulesMap;
-import static org.vibehistorian.vibecomposer.MidiUtils.getBasicChordsFromRoots;
-import static org.vibehistorian.vibecomposer.MidiUtils.maX;
-import static org.vibehistorian.vibecomposer.MidiUtils.mappedChord;
-import static org.vibehistorian.vibecomposer.MidiUtils.pickDurationWeightedRandom;
-import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
-import static org.vibehistorian.vibecomposer.MidiUtils.transposeScale;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.Vector;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
+import jm.JMC;
+import jm.music.data.Note;
+import jm.music.data.Phrase;
+import jm.music.data.Score;
+import jm.music.tools.Mod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.ShowAreaBig;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
@@ -72,11 +45,14 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
-import jm.JMC;
-import jm.music.data.Note;
-import jm.music.data.Phrase;
-import jm.music.data.Score;
-import jm.music.tools.Mod;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.vibehistorian.vibecomposer.MidiUtils.*;
 
 public class MidiGenerator implements JMC {
 
@@ -1020,7 +996,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		if (gc.getMelodyReplaceAvoidNotes() > 0) {
-			MidiGeneratorUtils.replaceAvoidNotes(fullMelodyMap, chords,
+			MidiGeneratorUtils.replaceNearChordNotes(fullMelodyMap, chords,
 					mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes());
 		}
 
@@ -3069,9 +3045,11 @@ public class MidiGenerator implements JMC {
 
 		// write midi without log
 
-		System.setOut(VibeComposerGUI.dummyOut);
+		//System.setOut(VibeComposerGUI.dummyOut);
 
+		LG.i("Printing score...");
 		JMusicUtilsCustom.midi(score, fileName);
+		LG.i("Printing scoreFull...");
 		JMusicUtilsCustom.midi(scoreFull, VibeComposerGUI.TEMPORARY_SEQUENCE_MIDI_NAME);
 		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
 			System.setOut(VibeComposerGUI.originalOut);
@@ -3107,7 +3085,7 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.melodyPanels);
 			if (!gc.getMelodyParts().get(i).isMuted() && gc.isMelodyEnable()) {
 				score.add(melodyParts.get(i));
-				((PartExt) melodyParts.get(i)).setTrackNumber(trackCounter);
+				melodyParts.get(i).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 				if (allowCombination && gc.isCombineMelodyTracks()) {
 					for (int j = i + 1; j < gc.getMelodyParts().size(); j++) {
@@ -3136,7 +3114,7 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.bassPanels);
 			if (!gc.getBassParts().get(i).isMuted() && gc.isBassEnable()) {
 				score.add(bassParts.get(i));
-				((PartExt) bassParts.get(i)).setTrackNumber(trackCounter);
+				bassParts.get(i).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 			} else {
 				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
@@ -3152,7 +3130,7 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.chordPanels);
 			if (!gc.getChordParts().get(i).isMuted() && gc.isChordsEnable()) {
 				score.add(chordParts.get(i));
-				((PartExt) chordParts.get(i)).setTrackNumber(trackCounter);
+				chordParts.get(i).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 			} else {
 				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
@@ -3169,7 +3147,7 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.arpPanels);
 			if (!gc.getArpParts().get(i).isMuted() && gc.isArpsEnable()) {
 				score.add(arpParts.get(i));
-				((PartExt) arpParts.get(i)).setTrackNumber(trackCounter);
+				arpParts.get(i).setTrackNumber(trackCounter);
 				ip.setSequenceTrack(trackCounter++);
 			} else {
 				trackCounter += padSingle(score, partPadding, 0, trackCounter - lastPartTrackCount);
@@ -3201,7 +3179,7 @@ public class MidiGenerator implements JMC {
 					VibeComposerGUI.drumPanels);
 			if (!gc.getDrumParts().get(i).isMuted() && gc.isDrumsEnable()) {
 				ip.setSequenceTrack(trackCounter);
-				((PartExt) drumParts.get(i)).setTrackNumber(trackCounter);
+				drumParts.get(i).setTrackNumber(trackCounter);
 				if (allowCombination && COLLAPSE_DRUM_TRACKS) {
 					score.add(drumParts.get(i));
 					for (int j = i + 1; j < gc.getDrumParts().size(); j++) {

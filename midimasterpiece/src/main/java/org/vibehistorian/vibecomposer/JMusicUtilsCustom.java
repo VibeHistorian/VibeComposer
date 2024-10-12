@@ -1,22 +1,5 @@
 package org.vibehistorian.vibecomposer;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.Vector;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
-import org.vibehistorian.vibecomposer.Helpers.PartExt;
-import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
-
 import jm.JMC;
 import jm.midi.SMF;
 import jm.midi.Track;
@@ -33,11 +16,39 @@ import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import jm.music.tools.Mod;
+import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Vector;
 
 public class JMusicUtilsCustom implements JMC {
 
 	private static double tickRemainder = 0.0;
 	private static final short DEFAULT_PPQN = 960;
+
+	public static class EventPair {
+		public double time;
+		public Event ev;
+
+		public EventPair(double t, Event e) {
+			time = t;
+			ev = e;
+		}
+	}
 
 	public static void consolidate(Part p) {
 
@@ -166,28 +177,38 @@ public class JMusicUtilsCustom implements JMC {
 			return;
 		}
 		Vector<Note> notes = phrase.getNoteList();
+		PhraseNotes phraseNotes = new PhraseNotes(notes);
+		phraseNotes.remakeNoteStartTimes();
+
+		List<Double> offsets = MidiGeneratorUtils.generateOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
+		List<Double> durations = MidiGeneratorUtils.generateOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
+
 		for (int i = 0; i < notes.size(); i++) {
-			if (i == 0) {
+			Note n = notes.get(i);
+			if (i < 1) {
 				continue;
 			}
-			Note n = notes.get(i);
+
 			// create new pitch value
 			if (pitchVariation > 0) {
 				n.setPitch(n.getPitch()
 						+ (int) (generator.nextDouble() * (pitchVariation * 2) - pitchVariation));
 			}
 			// create new rhythm and duration values
+
 			if (rhythmVariation > 0.0) {
-				double varOffset = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
-				double varDur = (generator.nextDouble() * (rhythmVariation * 2) - rhythmVariation);
+				double varOffset = offsets.get(i - 1);
+				double varDur = durations.get(i - 1);
 				double dur = n.getDuration();
 				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + MidiGenerator.DBL_ERR) {
-					varOffset /= 5;
 					varDur /= 5;
 				}
-				n.setOffset(n.getOffset() + varOffset);
-				n.setDuration(n.getDuration() + varDur);
 
+
+				n.setOffset(n.getOffset() + varOffset);
+				//LG.i("Note start time: " + phraseNotes.get(i).getAbsoluteStartTime() + ", rv: " + n.getRhythmValue() + "; new off: " + n.getOffset());
+
+				n.setDuration(dur + varDur);
 
 			}
 			// create new dynamic value
@@ -196,7 +217,9 @@ public class JMusicUtilsCustom implements JMC {
 						- dynamicVariation));
 			}
 		}
-		MidiGeneratorUtils.applySamePitchCollisionAvoidance(notes);
+		if (!isDrum) {
+			MidiGeneratorUtils.applySamePitchCollisionAvoidance(notes);
+		}
 	}
 
 	public static void midi(Score scr, String fileName) {
@@ -254,31 +277,12 @@ public class JMusicUtilsCustom implements JMC {
 			//System.out.println("partTempoMultiplier = " + partTempoMultiplier);
 
 			//order phrases based on their startTimes
-			phraseNumb = inst.getPhraseList().size();
-			for (int i = 0; i < phraseNumb; i++) {
-				phrase1 = (Phrase) inst.getPhraseList().elementAt(i);
-				for (int j = 0; j < phraseNumb; j++) {
-					phrase2 = (Phrase) inst.getPhraseList().elementAt(j);
-					if (phrase2.getStartTime() > phrase1.getStartTime()) {
-						inst.getPhraseList().setElementAt(phrase2, i);
-						inst.getPhraseList().setElementAt(phrase1, j);
-						break;
-					}
-				}
-			}
+			Vector<Phrase> phrList = inst.getPhraseList();
+			Collections.sort(phrList, Comparator.comparingDouble(Phrase::getStartTime));
+
 			//break Note objects into NoteStart's and NoteEnd's
 			//as well as combining all phrases into one list
 			//			HashMap midiEvents = new HashMap();
-
-			class EventPair {
-				public double time;
-				public Event ev;
-
-				public EventPair(double t, Event e) {
-					time = t;
-					ev = e;
-				}
-			}
 			;
 			LinkedList<EventPair> midiEvents = new LinkedList<EventPair>();
 
@@ -303,7 +307,7 @@ public class JMusicUtilsCustom implements JMC {
 						new EventPair(0, new KeySig(inst.getKeySignature(), inst.getKeyQuality())));
 			}
 
-			Enumeration partEnum = inst.getPhraseList().elements();
+			Enumeration partEnum = phrList.elements();
 			double max = 0;
 			double startTime = 0.0;
 			double offsetValue = 0.0;
@@ -312,6 +316,7 @@ public class JMusicUtilsCustom implements JMC {
 				Phrase phrase = (Phrase) partEnum.nextElement();
 				Enumeration phraseEnum = phrase.getNoteList().elements();
 				startTime = phrase.getStartTime() * partTempoMultiplier;
+				//LG.i("Phr start time: " + startTime);
 				if (phrase.getInstrument() != NO_INSTRUMENT) {
 					midiEvents.add(new EventPair(startTime, new PChange(
 							(short) phrase.getInstrument(), (short) inst.getChannel(), 0)));
@@ -352,7 +357,7 @@ public class JMusicUtilsCustom implements JMC {
 						pitch = Note.freqToMidiPitch(note.getFrequency());
 					} else
 						pitch = note.getPitch();
-					if (pitch != REST) {
+					if (pitch >= 0) {
 						midiEvents.add(new EventPair(new Double(startTime + offsetValue),
 								new NoteOn((short) pitch, (short) note.getDynamic(),
 										(short) inst.getChannel(), 0)));
@@ -430,6 +435,7 @@ public class JMusicUtilsCustom implements JMC {
 				time = (int) (((((sortStart - st) * (double) smf.getPPQN()))) + 0.5);
 				st = sortStart;
 				event.setTime(time);
+				//LG.i("Event time: " + time);
 				smfTrack.addEvent(event);
 			}
 			smfTrack.addEvent(new EndTrack());
@@ -468,7 +474,7 @@ public class JMusicUtilsCustom implements JMC {
 			startTimes.add(Pair.of(current + n.getOffset(), n));
 			current += n.getRhythmValue();
 		}
-		Collections.sort(startTimes, Comparator.comparing(e -> e.getKey()));
+		Collections.sort(startTimes, Map.Entry.comparingByKey());
 		return startTimes;
 	}
 }

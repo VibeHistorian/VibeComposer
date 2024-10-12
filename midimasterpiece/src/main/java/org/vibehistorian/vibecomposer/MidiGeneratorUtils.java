@@ -1,16 +1,21 @@
 package org.vibehistorian.vibecomposer;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-
+import jm.music.data.Note;
+import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 
-import jm.music.data.Note;
-import jm.music.data.Phrase;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class MidiGeneratorUtils {
 
@@ -519,11 +524,11 @@ public class MidiGeneratorUtils {
 
 	}
 
-	static void replaceAvoidNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
-			int randomSeed, int notesToAvoid) {
+	static void replaceNearChordNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
+									  int randomSeed, int notesToAvoid) {
 		Random rand = new Random(randomSeed);
 		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
-			Set<Integer> avoidNotes = MidiUtils.avoidNotesFromChord(chords.get(i % chords.size()),
+			Set<Integer> avoidNotes = MidiUtils.getNearNotesFromChord(chords.get(i % chords.size()),
 					notesToAvoid);
 			//LG.d(StringUtils.join(avoidNotes, ","));
 			List<Note> notes = fullMelodyMap.get(i);
@@ -673,6 +678,70 @@ public class MidiGeneratorUtils {
 			}
 			currIndex += 1 + delays.size();
 		}
+	}
+
+	public static List<Double> generateOffsets(int size, double offsetVariation, long randomSeed) {
+		if (size < 1) {
+			return new ArrayList<>();
+		} else if (size == 1) {
+			return Collections.singletonList(0.0);
+		}
+
+		// Initialize random number generator with the seed
+		Random random = new Random(randomSeed);
+
+		// List to store the offsets
+		List<Double> offsets = new ArrayList<>();
+
+		// Generate size - 1 random offsets between -offsetVariation and +offsetVariation
+		double sum = 0;
+		for (int i = 0; i < size - 1; i++) {
+			double offset = -offsetVariation + (2 * offsetVariation) * random.nextDouble();
+			offsets.add(offset);
+			sum += offset;
+		}
+
+		// Try to correct the sum by using the last element
+		double lastOffset = -sum;
+
+		// If last offset exceeds bounds, adjust several elements iteratively
+		if (Math.abs(sum) > offsetVariation) {
+			// Randomly adjust values that are not already at the boundary
+			double excess = sum;
+			//LG.i("Excess before: " + excess);
+			for (int i = 0; i < size - 1 && Math.abs(excess) > 0.00001; i++) {
+				double current = offsets.get(i);
+				double adjustment = (random.nextDouble() - 0.5) * 2 * Math.min(Math.abs(excess), offsetVariation - Math.abs(current));
+
+				// Apply adjustment only if it reduces excess
+				if ((excess < 0 && adjustment < 0) || (excess > 0 && adjustment > 0)) {
+					adjustment *= -1;
+				}
+				offsets.set(i, current + adjustment);
+				excess += adjustment;
+			}
+			// Now, set the last value to the remaining excess
+			//LG.i("Excess AFTER: " + excess);
+			lastOffset = -excess;
+		}
+
+		// Make sure the last value is within bounds
+		if (lastOffset < -offsetVariation) lastOffset = -offsetVariation;
+		if (lastOffset > offsetVariation) lastOffset = offsetVariation;
+
+		// Add the final corrected value
+		offsets.add(lastOffset);
+
+		// Shuffle the offsets list to randomize order
+		Collections.shuffle(offsets, random);
+
+		//LG.i("Offset variation: " + offsetVariation);
+		/*LG.i("Random values: " + offsets.stream()
+				.map(d -> String.format("%.2f", d*100)) // Format each double to 5 decimal places
+				.collect(Collectors.joining(" ")));*/
+		//LG.i("Sum = " + offsets.stream().mapToDouble(e -> e).sum());
+
+		return offsets;
 	}
 
 }

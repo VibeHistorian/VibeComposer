@@ -1,10 +1,10 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 
-import java.util.Enumeration;
-
 import jm.music.data.Note;
 import jm.music.data.Phrase;
+
+import java.util.Enumeration;
 
 public class PhraseExt extends Phrase {
 

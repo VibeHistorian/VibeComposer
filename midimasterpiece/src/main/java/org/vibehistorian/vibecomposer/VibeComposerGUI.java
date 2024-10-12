@@ -1809,7 +1809,7 @@ public class VibeComposerGUI extends JFrame
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
 		melodyAvoidChordJumpsLegacy = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 
-		melodyReplaceAvoidNotes = new KnobPanel("Replace<br>Avoid Notes", 2, 0, 2);
+		melodyReplaceAvoidNotes = new KnobPanel("Replace Near<br>Chord Notes", 1, 0, 2);
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
 		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
 

@@ -1058,7 +1058,7 @@ public class MidiUtils {
 				}
 				int newMovement = modeTo[originalIndex];
 
-				if (pitch != Note.REST) {
+				if (pitch >= 0) {
 					transposedChord[j] = pitch - originalMovement + newMovement;
 				} else {
 					transposedChord[j] = pitch;
@@ -1504,7 +1504,7 @@ public class MidiUtils {
 		return respicedChordsList;
 	}
 
-	public static Set<Integer> avoidNotesFromChord(int[] chord, int notesToAvoid) {
+	public static Set<Integer> getNearNotesFromChord(int[] chord, int notesToAvoid) {
 		Set<Integer> avoidNotes = new HashSet<>();
 		Set<Integer> safeNotes = new HashSet<>();
 		safeNotes.add(0);
