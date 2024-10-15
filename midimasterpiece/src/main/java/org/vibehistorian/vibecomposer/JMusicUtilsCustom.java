@@ -185,7 +185,7 @@ public class JMusicUtilsCustom implements JMC {
 
 		for (int i = 0; i < notes.size(); i++) {
 			Note n = notes.get(i);
-			if (i < 1) {
+			if (i == 0) {
 				continue;
 			}
 
@@ -424,7 +424,7 @@ public class JMusicUtilsCustom implements JMC {
 			Collections.sort(midiEvents, new CompareKey());
 			//Add times to events, now that things are sorted
 			double st = 0.0; //start time
-			double sortStart; // start time from list of notes ons and offs.
+			double sortStart = 0.0; // start time from list of notes ons and offs.
 			int time; // the start time as ppqn value
 			resetTicker();
 
@@ -438,7 +438,10 @@ public class JMusicUtilsCustom implements JMC {
 				//LG.i("Event time: " + time);
 				smfTrack.addEvent(event);
 			}
-			smfTrack.addEvent(new EndTrack());
+			int actualEndTime = (int) ((score.getEndTime() - sortStart) * (double)smf.getPPQN() + 0.5);
+			Event endTrack = new EndTrack();
+			endTrack.setTime(actualEndTime);
+			smfTrack.addEvent(endTrack);
 			//add this track to the SMF
 			smf.getTrackList().addElement(smfTrack);
 			System.out.println();
