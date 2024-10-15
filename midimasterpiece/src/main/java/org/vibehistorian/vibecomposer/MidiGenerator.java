@@ -3522,7 +3522,7 @@ public class MidiGenerator implements JMC {
 			List<Phrase> copiedPhrases = new ArrayList<>();
 			Set<Integer> presences = sec.getPresence(0);
 			for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-				MelodyPart mp = (MelodyPart) gc.getMelodyParts().get(i);
+				MelodyPart mp = gc.getMelodyParts().get(i);
 				boolean added = presences.contains(mp.getOrder());
 				if (added && !mp.isMuted()) {
 					List<int[]> usedMelodyProg = chordProgression;
@@ -3538,12 +3538,13 @@ public class MidiGenerator implements JMC {
 					List<Integer> variations = (overridden) ? sec.getVariation(0, i) : null;
 					int speedSave = mp.getSpeed();
 					// max speed variation
-					if (sectionVariations.get(3) > 0) {
+					boolean speedVariation = sectionVariations.get(3) > 0;
+					if (speedVariation) {
 						mp.setSpeed(100);
 					}
 					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, notesSeedOffset,
 							sec, variations, false);
-					if (sectionVariations.get(3) > 0) {
+					if (speedVariation) {
 						mp.setSpeed(speedSave);
 					}
 					if (melodyParts.get(i).getInstrument() != mp.getInstrument()) {
@@ -4251,7 +4252,7 @@ public class MidiGenerator implements JMC {
 
 		}
 
-		if (ip.getOrder() == 1 && !melodyEmptyPass) {
+		if (ip.getOrder() == 1) {
 			List<Integer> notePattern = new ArrayList<>();
 			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
 			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
