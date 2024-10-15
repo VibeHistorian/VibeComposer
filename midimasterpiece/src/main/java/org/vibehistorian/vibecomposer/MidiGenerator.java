@@ -3046,7 +3046,7 @@ public class MidiGenerator implements JMC {
 
 		// write midi without log
 
-		//System.setOut(VibeComposerGUI.dummyOut);
+		System.setOut(VibeComposerGUI.dummyOut);
 
 		LG.i("Printing score...");
 		JMusicUtilsCustom.midi(score, fileName);
