@@ -629,6 +629,7 @@ public class VibeComposerGUI extends JFrame
 
 		isDarkMode = true;
 		vibeComposerGUI = new VibeComposerGUI("VibeComposer" + CURRENT_VERSION + " (BETA)");
+		vibeComposerGUI.setMainIcon();
 		vibeComposerGUI.init();
 		//Toolkit.getDefaultToolkit().getSystemEventQueue().push(new TimedEventQueue());
 		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -640,6 +641,13 @@ public class VibeComposerGUI extends JFrame
 
 	public VibeComposerGUI(String title) {
 		super(title);
+	}
+
+	private void setMainIcon() {
+		this.setIconImage(new ImageIcon(new ImageIcon(
+				this.getClass().getResource("/VibeComposer2_LOGO_NARROW.jpg"))
+				.getImage().getScaledInstance(24, 24, java.awt.Image.SCALE_SMOOTH))
+				.getImage());
 	}
 
 	private void init() {
