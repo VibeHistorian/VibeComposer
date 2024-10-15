@@ -28,36 +28,27 @@ see <https://www.gnu.org/licenses/>.
  */
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+import jm.music.data.Note;
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
+import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.PartExt;
-import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
-
-import jm.music.data.Note;
 
 //--------------
 //second class!!
@@ -615,6 +606,12 @@ public class ShowAreaBig extends JComponent {
 		}
 		//g.drawImage(offScreenImage, 0, 0, this);
 		//g.dispose();
+
+		if (mouseProcessed && noteDescription != null) {
+			g.setColor(new Color(210, 210, 210));
+			g.drawString(noteDescription, mousePoint.x + 10, mousePoint.y - 10);
+		}
+
 		if (noteHeight > 7) {
 			float usedFontHeight = Math.min(15, Float.valueOf(noteHeight * 9 / 10));
 			g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
@@ -629,11 +626,6 @@ public class ShowAreaBig extends JComponent {
 					g.drawString(noteString, viewPoint.x, y);
 				}
 			}
-		}
-
-		if (mouseProcessed && noteDescription != null) {
-			g.setColor(new Color(210, 210, 210));
-			g.drawString(noteDescription, mousePoint.x + 10, mousePoint.y - 10);
 		}
 
 	}
