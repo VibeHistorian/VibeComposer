@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
+import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
+
 public class JMusicUtilsCustom implements JMC {
 
 	private static double tickRemainder = 0.0;
@@ -47,6 +49,19 @@ public class JMusicUtilsCustom implements JMC {
 		public EventPair(double t, Event e) {
 			time = t;
 			ev = e;
+		}
+	}
+
+	public static class CompareKey implements Comparator {
+		public int compare(Object a, Object b) {
+			EventPair ae = (EventPair) a;
+			EventPair be = (EventPair) b;
+			if (ae.time - be.time < 0)
+				return -1;
+			else if (ae.time - be.time > 0)
+				return 1;
+			else
+				return 0;
 		}
 	}
 
@@ -200,7 +215,7 @@ public class JMusicUtilsCustom implements JMC {
 				double varOffset = offsets.get(i - 1);
 				double varDur = durations.get(i - 1);
 				double dur = n.getDuration();
-				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + MidiGenerator.DBL_ERR) {
+				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + DBL_ERR) {
 					varDur /= 5;
 				}
 
@@ -284,7 +299,7 @@ public class JMusicUtilsCustom implements JMC {
 			//as well as combining all phrases into one list
 			//			HashMap midiEvents = new HashMap();
 			;
-			LinkedList<EventPair> midiEvents = new LinkedList<EventPair>();
+			LinkedList<EventPair> midiEvents = new LinkedList<>();
 
 			/*if(inst.getTempo() != Part.DEFAULT_TEMPO){
 				//System.out.println("Adding part tempo");
@@ -308,8 +323,7 @@ public class JMusicUtilsCustom implements JMC {
 			}
 
 			Enumeration partEnum = phrList.elements();
-			double max = 0;
-			double startTime = 0.0;
+            double startTime = 0.0;
 			double offsetValue = 0.0;
 			int phraseCounter = 0;
 			while (partEnum.hasMoreElements()) {
@@ -332,7 +346,6 @@ public class JMusicUtilsCustom implements JMC {
 				}
 
 				////////////////////////////////////////////////
-				int noteCounter = 0;
 				//System.out.println();
 				System.out.print(" Phrase " + phraseCounter++ + ":");
 				// set a silly starting value to force and initial pan cc event
@@ -374,7 +387,40 @@ public class JMusicUtilsCustom implements JMC {
 					System.out.print("."); // completed a note
 				}
 			}
-			/*
+
+			//Sort the hashmap by starttime (key value)
+			Collections.sort(midiEvents, new CompareKey());
+			//Add times to events, now that things are sorted
+			double st = 0.0; //start time
+			double sortStart = 0.0; // start time from list of notes ons and offs.
+			int time; // the start time as ppqn value
+			resetTicker();
+
+			int timeCounter = 0;
+			for (int index = 0; index < midiEvents.size(); index++) {
+				EventPair ep = midiEvents.get(index);
+				Event event = ep.ev;
+				sortStart = ep.time;
+				int newValue = (int) Math.round(sortStart * smf.getPPQN());
+				time = newValue - timeCounter;
+				timeCounter = newValue;
+				event.setTime(time);
+				smfTrack.addEvent(event);
+			}
+			int actualEndTime = (int) ((score.getEndTime() - sortStart) * (double)smf.getPPQN() + 0.5);
+			Event endTrack = new EndTrack();
+			endTrack.setTime(actualEndTime);
+			smfTrack.addEvent(endTrack);
+			//add this track to the SMF
+			smf.getTrackList().addElement(smfTrack);
+			System.out.println();
+		}
+	}
+
+	private static void resetTicker() {
+		tickRemainder = 0.0;
+
+			/* OLD CODE ---------------
 			//Sort lists so start times are in the right order
 			Enumeration start = midiNoteEvents.elements();
 			Enumeration timeing = timeingList.elements();
@@ -407,49 +453,6 @@ public class JMusicUtilsCustom implements JMC {
 				timeing = timeingList.elements();
 			}
 			*/
-
-			//Sort the hashmap by starttime (key value)
-			class CompareKey implements Comparator {
-				public int compare(Object a, Object b) {
-					EventPair ae = (EventPair) a;
-					EventPair be = (EventPair) b;
-					if (ae.time - be.time < 0)
-						return -1;
-					else if (ae.time - be.time > 0)
-						return 1;
-					else
-						return 0;
-				}
-			}
-			Collections.sort(midiEvents, new CompareKey());
-			//Add times to events, now that things are sorted
-			double st = 0.0; //start time
-			double sortStart = 0.0; // start time from list of notes ons and offs.
-			int time; // the start time as ppqn value
-			resetTicker();
-
-			for (int index = 0; index < midiEvents.size(); index++) {
-				EventPair ep = midiEvents.get(index);
-				Event event = ep.ev;
-				sortStart = ep.time;
-				time = (int) (((((sortStart - st) * (double) smf.getPPQN()))) + 0.5);
-				st = sortStart;
-				event.setTime(time);
-				//LG.i("Event time: " + time);
-				smfTrack.addEvent(event);
-			}
-			int actualEndTime = (int) ((score.getEndTime() - sortStart) * (double)smf.getPPQN() + 0.5);
-			Event endTrack = new EndTrack();
-			endTrack.setTime(actualEndTime);
-			smfTrack.addEvent(endTrack);
-			//add this track to the SMF
-			smf.getTrackList().addElement(smfTrack);
-			System.out.println();
-		}
-	}
-
-	private static void resetTicker() {
-		tickRemainder = 0.0;
 	}
 
 	/**
