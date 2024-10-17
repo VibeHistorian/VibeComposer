@@ -612,11 +612,14 @@ public class ShowAreaBig extends JComponent {
 			g.drawString(noteDescription, mousePoint.x + 10, mousePoint.y - 10);
 		}
 
+		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
+		if (mousePoint != null) {
+			g.drawLine(mousePoint.x, 0, mousePoint.x, areaHeight);
+		}
+
 		if (noteHeight > 7) {
 			float usedFontHeight = Math.min(15, Float.valueOf(noteHeight * 9 / 10));
 			g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
-			g.setColor(
-					OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
 			Point viewPoint = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
 
 			for (int i = 15; i < 105; i++) {
