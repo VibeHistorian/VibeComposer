@@ -411,6 +411,7 @@ public class ShowAreaBig extends JComponent {
 		}
 
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
+		int minX = -1;
 
 		double highlightX = (VibeComposerGUI.slider != null
 				&& VibeComposerGUI.sliderMeasureStartTimes != null) ? maxX
@@ -491,6 +492,9 @@ public class ShowAreaBig extends JComponent {
 				Enumeration<?> enum3 = phrase.getNoteList().elements();
 				double oldXBeat = phrase.getStartTime();
 				oldX = (int) (Math.round(oldXBeat * beatWidth));
+				if (minX < 0) {
+					minX = oldX;
+				}
 				// calc the phrase rectangles
 				rectLeft = oldX;
 				rectTop = 100000;
@@ -612,15 +616,25 @@ public class ShowAreaBig extends JComponent {
 			g.drawString(noteDescription, mousePoint.x + 10, mousePoint.y - 10);
 		}
 
+		Point viewPoint = ShowPanelBig.areaScrollPane.getViewport().getViewPosition();
 		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
 		if (mousePoint != null) {
-			g.drawLine(mousePoint.x, 0, mousePoint.x, areaHeight);
+			if (minX >= 0) {
+				double placeInScore = sp.getSequencePosFromMousePos(MouseInfo.getPointerInfo().getLocation());
+				int mouseX = (int) Math.round(placeInScore * maxX);
+				int timePos = (int) (placeInScore * VibeComposerGUI.slider.getMaximum());
+				// TODO: buggy scrollpane dimension - extra 35px set when switching Big mode back
+				int scrollPaneDim = VibeComposerGUI.scrollPaneDimension.height < 500 ? 400 : 600;
+				int pos = viewPoint.y + scrollPaneDim * 4 / 5;
+				//LG.i(pos);
+				g.drawLine(mouseX, 0, mouseX, areaHeight);
+				g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseX + 10, Math.min(areaHeight - 5, pos));
+			}
 		}
 
 		if (noteHeight > 7) {
 			float usedFontHeight = Math.min(15, Float.valueOf(noteHeight * 9 / 10));
 			g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
-			Point viewPoint = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
 
 			for (int i = 15; i < 105; i++) {
 				if (MidiUtils.MAJ_SCALE.contains(i % 12)) {

@@ -9649,6 +9649,18 @@ public class VibeComposerGUI extends JFrame
 		return v;
 	}
 
+	public static String millisecondsToDetailedTimeString(int l) {
+		long i = l / 1000;
+		long m = i / 60;
+		long s = i % 60;
+		String sM = String.valueOf(m);
+		String sS = String.valueOf(s);
+		if (sS.length() < 2)
+			sS = "0" + sS;
+		String v = sM + ":" + sS + "." + (l % 1000);
+		return v;
+	}
+
 	public static long msToTicks(long ms) {
 		if (ms == 0 || sequencer.getSequence() == null)
 			return 0;

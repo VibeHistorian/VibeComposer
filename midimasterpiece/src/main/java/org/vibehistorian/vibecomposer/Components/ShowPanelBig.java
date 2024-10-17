@@ -29,13 +29,17 @@ see <https://www.gnu.org/licenses/>.
 */
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Adjustable;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.MouseInfo;
-import java.awt.Point;
+import jm.music.data.Part;
+import jm.music.data.Phrase;
+import jm.music.data.Score;
+import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -48,23 +52,6 @@ import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-
-import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-
-import jm.music.data.Part;
-import jm.music.data.Phrase;
-import jm.music.data.Score;
 
 public class ShowPanelBig extends JPanel {
 	private static final long serialVersionUID = 1464206032589622048L;
@@ -239,33 +226,8 @@ public class ShowPanelBig extends JPanel {
 						ShowAreaBig.consumed = false;
 						return;
 					}
-					Point xy = MouseInfo.getPointerInfo().getLocation();
-					SwingUtilities.convertPointFromScreen(xy, sa);
-
-					int lastUsableSliderTime = VibeComposerGUI.sliderMeasureStartTimes
-							.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1);
-
-					double correctionPercentage = 1.0
-							- (VibeComposerGUI.sliderExtended / (double) lastUsableSliderTime);
-
-					double usableEnd = correctionPercentage * (maxEndTime * beatWidth);
-					/*LG.d("XY: " + xy.toString() + ", start: " + usableStart
-							+ ", end: " + usableEnd);*/
-
-					double percentage = xy.getX() / usableEnd;
-					LG.d("Percentage in MIDI: " + percentage);
-					/*LG.i("Slider ratio: "
-							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
-									/ VibeComposerGUI.beatFromBpm(0));
-					LG.i("Score ratio: " + usableEnd / beatWidth);
-					LG.i("Delayed: " + VibeComposerGUI.delayed());
-					LG.i("Total div 144: "
-							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
-									/ 144);
-					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
-					LG.i(VibeComposerGUI.sliderExtended);*/
-
-					if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
+					Double percentage = getSequencePosFromMousePos(MouseInfo.getPointerInfo().getLocation());
+					if (percentage == null) {
 						return;
 					}
 
@@ -364,6 +326,38 @@ public class ShowPanelBig extends JPanel {
 		});
 	}
 
+	protected Double getSequencePosFromMousePos(Point xy) {
+		SwingUtilities.convertPointFromScreen(xy, sa);
+
+		int lastUsableSliderTime = VibeComposerGUI.sliderMeasureStartTimes
+				.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1);
+
+		double correctionPercentage = 1.0
+				- (VibeComposerGUI.sliderExtended / (double) lastUsableSliderTime);
+
+		double usableEnd = correctionPercentage * (maxEndTime * beatWidth);
+					/*LG.d("XY: " + xy.toString() + ", start: " + usableStart
+							+ ", end: " + usableEnd);*/
+
+		double percentage = xy.getX() / usableEnd;
+		LG.d("Percentage in MIDI: " + percentage);
+					/*LG.i("Slider ratio: "
+							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
+									/ VibeComposerGUI.beatFromBpm(0));
+					LG.i("Score ratio: " + usableEnd / beatWidth);
+					LG.i("Delayed: " + VibeComposerGUI.delayed());
+					LG.i("Total div 144: "
+							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
+									/ 144);
+					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
+					LG.i(VibeComposerGUI.sliderExtended);*/
+
+		if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
+			return null;
+		}
+		return percentage;
+	}
+
 	public void setupMouseWheelListener() {
 		if (areaScrollPane.getMouseListeners() != null) {
 			for (MouseWheelListener mwl : areaScrollPane.getMouseWheelListeners()) {
@@ -436,6 +430,7 @@ public class ShowPanelBig extends JPanel {
 						Adjustable adj = areaScrollPane.getVerticalScrollBar();
 						int scroll = e.getUnitsToScroll() * adj.getBlockIncrement();
 						adj.setValue(adj.getValue() + scroll);
+						VibeComposerGUI.scoreScrollPane.repaint();
 					}
 				}
 			}
