@@ -412,7 +412,6 @@ public class ShowAreaBig extends JComponent {
 		}
 
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
-		double phraseOrNoteMaxX = maxX;
 		int minX = -1;
 
 		double highlightX = (VibeComposerGUI.slider != null
@@ -597,7 +596,6 @@ public class ShowAreaBig extends JComponent {
 							g.setColor(aC);
 							g.drawString("#", actualStartingX - 7, y + 5);
 						}
-						phraseOrNoteMaxX = Math.max(phraseOrNoteMaxX, actualStartingX + x);
 					}
 					oldXBeat += aNote.getRhythmValue();
 					oldX = (int) (Math.round(oldXBeat * beatWidth));
@@ -626,14 +624,13 @@ public class ShowAreaBig extends JComponent {
 				Point mouseLoc = SwingUtils.getMouseLocation();
 				if (OMNI.mouseInComp(ShowPanelBig.areaScrollPane, mouseLoc)) {
 					double placeInScore = sp.getSequencePosFromMousePos(mouseLoc);
-					int mouseX = (int) Math.round(placeInScore * phraseOrNoteMaxX);
 					int timePos = (int) (placeInScore * VibeComposerGUI.slider.getMaximum());
 					// TODO: buggy scrollpane dimension - extra 35px set when switching Big mode back
 					int scrollPaneDim = VibeComposerGUI.scrollPaneDimension.height < 500 ? 400 : 600;
 					int pos = viewPoint.y + scrollPaneDim * 4 / 5;
 					//LG.i(pos);
-					g.drawLine(mouseX, 0, mouseX, areaHeight);
-					g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseX + 10, Math.min(areaHeight - 5, pos));
+					g.drawLine(mouseLoc.x, 0, mouseLoc.x, areaHeight);
+					g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseLoc.x + 10, Math.min(areaHeight - 5, pos));
 				}
 			}
 		}
