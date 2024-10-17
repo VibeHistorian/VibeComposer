@@ -1,25 +1,18 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.MouseInfo;
-import java.awt.Point;
+import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
+import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 
 public class VeloRect extends JComponent {
 
@@ -111,7 +104,7 @@ public class VeloRect extends JComponent {
 		if (!isEnabled()) {
 			return;
 		}
-		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
+		Point xy = new Point(SwingUtils.getMouseLocation());
 		SwingUtilities.convertPointFromScreen(xy, VeloRect.this);
 		int newVal = max - (max * xy.y / getHeight());
 		if (fine) {

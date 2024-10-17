@@ -1,32 +1,23 @@
 package org.vibehistorian.vibecomposer;
 
-import java.awt.Adjustable;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.PointerInfo;
-import java.awt.event.*;
+import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.Timer;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 public class SwingUtils {
 
@@ -199,14 +190,12 @@ public class SwingUtils {
 	}
 
 	public static Point getMouseLocation() {
-		PointerInfo pi = MouseInfo.getPointerInfo();
-		Point mp = pi.getLocation();
 		//Point mousePointFixed = new Point(mp);
 		/*if (VibeComposerGUI.vibeComposerGUI.getLocation().x < 0) {
 			//mp.x *= -1;
 		}
 		LG.i("Mouse: " + mp.toString());*/
-		return mp;
+		return MouseInfo.getPointerInfo().getLocation();
 	}
 
 	public static void setFrameLocation(JFrame frame, Point loc) {

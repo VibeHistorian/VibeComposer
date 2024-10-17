@@ -39,6 +39,7 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
@@ -411,6 +412,7 @@ public class ShowAreaBig extends JComponent {
 		}
 
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
+		double phraseOrNoteMaxX = maxX;
 		int minX = -1;
 
 		double highlightX = (VibeComposerGUI.slider != null
@@ -595,6 +597,7 @@ public class ShowAreaBig extends JComponent {
 							g.setColor(aC);
 							g.drawString("#", actualStartingX - 7, y + 5);
 						}
+						phraseOrNoteMaxX = Math.max(phraseOrNoteMaxX, actualStartingX + x);
 					}
 					oldXBeat += aNote.getRhythmValue();
 					oldX = (int) (Math.round(oldXBeat * beatWidth));
@@ -620,15 +623,18 @@ public class ShowAreaBig extends JComponent {
 		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
 		if (mousePoint != null) {
 			if (minX >= 0) {
-				double placeInScore = sp.getSequencePosFromMousePos(MouseInfo.getPointerInfo().getLocation());
-				int mouseX = (int) Math.round(placeInScore * maxX);
-				int timePos = (int) (placeInScore * VibeComposerGUI.slider.getMaximum());
-				// TODO: buggy scrollpane dimension - extra 35px set when switching Big mode back
-				int scrollPaneDim = VibeComposerGUI.scrollPaneDimension.height < 500 ? 400 : 600;
-				int pos = viewPoint.y + scrollPaneDim * 4 / 5;
-				//LG.i(pos);
-				g.drawLine(mouseX, 0, mouseX, areaHeight);
-				g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseX + 10, Math.min(areaHeight - 5, pos));
+				Point mouseLoc = SwingUtils.getMouseLocation();
+				if (OMNI.mouseInComp(ShowPanelBig.areaScrollPane, mouseLoc)) {
+					double placeInScore = sp.getSequencePosFromMousePos(mouseLoc);
+					int mouseX = (int) Math.round(placeInScore * phraseOrNoteMaxX);
+					int timePos = (int) (placeInScore * VibeComposerGUI.slider.getMaximum());
+					// TODO: buggy scrollpane dimension - extra 35px set when switching Big mode back
+					int scrollPaneDim = VibeComposerGUI.scrollPaneDimension.height < 500 ? 400 : 600;
+					int pos = viewPoint.y + scrollPaneDim * 4 / 5;
+					//LG.i(pos);
+					g.drawLine(mouseX, 0, mouseX, areaHeight);
+					g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseX + 10, Math.min(areaHeight - 5, pos));
+				}
 			}
 		}
 

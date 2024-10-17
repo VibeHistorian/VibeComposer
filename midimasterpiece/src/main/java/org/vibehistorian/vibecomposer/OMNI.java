@@ -1,15 +1,12 @@
 package org.vibehistorian.vibecomposer;
 
-import java.awt.Color;
-import java.awt.MouseInfo;
-import java.awt.Point;
+import jm.music.data.Note;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.swing.JComponent;
-
-import jm.music.data.Note;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
@@ -119,7 +116,7 @@ public class OMNI {
 	}
 
 	public static boolean mouseInComp(JComponent c) {
-		return mouseInComp(c, MouseInfo.getPointerInfo().getLocation());
+		return mouseInComp(c, SwingUtils.getMouseLocation());
 	}
 
 	public static boolean mouseInComp(JComponent c, Point p) {

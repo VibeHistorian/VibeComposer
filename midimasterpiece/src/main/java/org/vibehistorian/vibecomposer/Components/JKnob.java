@@ -2,16 +2,18 @@ package org.vibehistorian.vibecomposer.Components;
 
 
 // Imports for the GUI classes.
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
+import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UndoManager;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -23,19 +25,6 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
-import javax.swing.JComponent;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.UndoManager;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Panels.KnobPanel;
-import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 
 /**
  * JKnob.java -
@@ -506,7 +495,7 @@ public class JKnob extends JComponent
 
 			fine = VibeComposerGUI.knobControlByDragging.isSelected() || e.isShiftDown();
 			fineStart = curr;
-			startPoint = new Point(MouseInfo.getPointerInfo().getLocation());
+			startPoint = new Point(SwingUtils.getMouseLocation());
 			SwingUtilities.convertPointFromScreen(startPoint, JKnob.this);
 			recalc(e);
 		} else if (SwingUtilities.isRightMouseButton(e)) {
@@ -590,7 +579,7 @@ public class JKnob extends JComponent
 		if (!isEnabled()) {
 			return;
 		}
-		Point xy = new Point(MouseInfo.getPointerInfo().getLocation());
+		Point xy = new Point(SwingUtils.getMouseLocation());
 		SwingUtilities.convertPointFromScreen(xy, JKnob.this);
 
 		int yChange = startPoint.y - xy.y;

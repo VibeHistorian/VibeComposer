@@ -2840,7 +2840,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		recalculateActualArrangementSection(secOrder - 1);
 		varPopup = new VariationPopup(secOrder, actualArrangement.getSections().get(secOrder - 1),
-				new Point(MouseInfo.getPointerInfo().getLocation().x,
+				new Point(SwingUtils.getMouseLocation().x,
 						vibeComposerGUI.getLocation().y),
 				vibeComposerGUI.getSize());
 	}
@@ -3661,7 +3661,7 @@ public class VibeComposerGUI extends JFrame
 
 	private double calculateMousePointPercentageInTable(int row, int secOrder) {
 
-		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+		Point mousePoint = SwingUtils.getMouseLocation();
 		Point tablePoint = scrollableArrangementActualTable.getLocation();
 		SwingUtilities.convertPointToScreen(tablePoint, scrollableArrangementActualTable);
 		Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);

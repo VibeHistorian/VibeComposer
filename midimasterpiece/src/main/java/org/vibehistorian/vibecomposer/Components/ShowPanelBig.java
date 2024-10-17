@@ -36,6 +36,7 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
@@ -226,7 +227,7 @@ public class ShowPanelBig extends JPanel {
 						ShowAreaBig.consumed = false;
 						return;
 					}
-					Double percentage = getSequencePosFromMousePos(MouseInfo.getPointerInfo().getLocation());
+					Double percentage = getSequencePosFromMousePos(SwingUtils.getMouseLocation());
 					if (percentage == null) {
 						return;
 					}
