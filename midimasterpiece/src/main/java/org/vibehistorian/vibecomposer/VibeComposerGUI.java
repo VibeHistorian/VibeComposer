@@ -7543,6 +7543,11 @@ public class VibeComposerGUI extends JFrame
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().solo();
 		}
+		if (groupSoloMuters.stream().filter(e -> e.soloState == State.FULL).count() == 5) {
+			groupSm.smParent.solo();
+		} else {
+			groupSm.smParent.halfSolo();
+		}
 		if (!sequenceReady())
 			return;
 		for (InstPanel ip : groupList) {
@@ -7589,6 +7594,11 @@ public class VibeComposerGUI extends JFrame
 		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
 		for (InstPanel ip : groupList) {
 			ip.getSoloMuter().mute();
+		}
+		if (groupSoloMuters.stream().filter(e -> e.muteState == State.FULL).count() == 5) {
+			groupSm.smParent.mute();
+		} else {
+			groupSm.smParent.halfMute();
 		}
 		if (!sequenceReady())
 			return;

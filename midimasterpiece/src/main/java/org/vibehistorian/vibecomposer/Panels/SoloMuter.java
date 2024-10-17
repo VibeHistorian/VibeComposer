@@ -1,21 +1,15 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
+import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 
 public class SoloMuter extends JPanel {
 
@@ -123,7 +117,6 @@ public class SoloMuter extends JPanel {
 				smParent.solo();
 				smParent.smParent.solo();
 			} else if (type == Type.GROUP) {
-				smParent.solo();
 				VibeComposerGUI.soloGroup(this);
 			} else {
 				// do nothing
@@ -180,7 +173,6 @@ public class SoloMuter extends JPanel {
 				smParent.smParent.mute();
 			} else if (type == Type.GROUP) {
 				VibeComposerGUI.muteGroup(this);
-				smParent.mute();
 			} else {
 				// do nothing
 			}
@@ -194,7 +186,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.setScore());
+				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.update());
 			}
 		}
 	}

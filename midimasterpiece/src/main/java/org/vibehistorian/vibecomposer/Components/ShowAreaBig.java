@@ -620,7 +620,7 @@ public class ShowAreaBig extends JComponent {
 		Point viewPoint = ShowPanelBig.areaScrollPane.getViewport().getViewPosition();
 		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
 		if (mousePoint != null) {
-			if (minX >= 0) {
+			if (minX >= 0 && ShowPanelBig.scoreBox.getSelectedIndex() == 0) {
 				Point mouseLoc = SwingUtils.getMouseLocation();
 				if (OMNI.mouseInComp(ShowPanelBig.areaScrollPane, mouseLoc)) {
 					double placeInScore = sp.getSequencePosFromMousePos(mouseLoc);
