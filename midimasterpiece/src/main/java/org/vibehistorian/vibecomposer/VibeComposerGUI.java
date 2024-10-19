@@ -194,6 +194,16 @@ public class VibeComposerGUI extends JFrame
 		return affectedPanels;
 	}
 
+	public static final List<Integer> TYPICAL_MIDI_CH_START = Arrays.asList(1,9,11,2,10);
+	public static final Map<Integer, List<Integer>> TYPICAL_MIDI_CH = new HashMap<>();
+	static {
+		TYPICAL_MIDI_CH.put(0, Arrays.asList(1,7,8));
+		TYPICAL_MIDI_CH.put(1, Arrays.asList(9));
+		TYPICAL_MIDI_CH.put(2, Arrays.asList(11,12,13,14,15));
+		TYPICAL_MIDI_CH.put(3, Arrays.asList(2,3,4,5,6,7,8));
+		TYPICAL_MIDI_CH.put(4, Arrays.asList(10));
+	}
+
 	public static List<? extends InstPanel> getInstList(int order) {
 		switch (order) {
 		case 0:
@@ -242,6 +252,14 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 		return sectionPanels;
+	}
+
+	public static int getNextFreeMidiChannel(int order, int panelOrder) {
+		List<InstPanel> instPanels = (List<InstPanel>) getInstList(order);
+		List<Integer> typicalChannels = TYPICAL_MIDI_CH.get(order);
+		Set<Integer> usedChannels = instPanels.stream().map(e -> e.getMidiChannel()).collect(Collectors.toSet());
+		return typicalChannels.stream().filter(e -> !usedChannels.contains(e)).findFirst()
+				.orElse(TYPICAL_MIDI_CH_START.get(order) + (panelOrder - 1) % typicalChannels.size());
 	}
 
 	// arrangement
@@ -456,6 +474,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel globalNoteLengthMultiplier;
 	public static ScrollComboBox<Double> swingUnitMultiplier;
 	public static JCheckBox customMidiForceScale;
+	public static JCheckBox reuseMidiChannelAfterCopy;
 	public static JCheckBox transposedNotesForceScale;
 	public static JCheckBox padGeneratedMidi;
 	public static RandomIntegerListButton padGeneratedMidiValues;
@@ -1489,6 +1508,7 @@ public class VibeComposerGUI extends JFrame
 
 		//          scale
 		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
+		reuseMidiChannelAfterCopy = new CustomCheckBox("Reuse MIDI Ch. After Copy (Cc)", true);
 		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
 
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
@@ -1511,6 +1531,7 @@ public class VibeComposerGUI extends JFrame
 
 		panelGenerationSettingsPanel.add(customMidiForceScale);
 		panelGenerationSettingsPanel.add(transposedNotesForceScale);
+		panelGenerationSettingsPanel.add(reuseMidiChannelAfterCopy);
 		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
 		panelGenerationSettingsPanel.add(melodyPatternFlip);
@@ -1951,11 +1972,10 @@ public class VibeComposerGUI extends JFrame
 				melodyPanel.setMidiChannel(i + 6);
 				if (i % 2 == 1) {
 					melodyPanel.setTranspose(0);
-					melodyPanel.getPanSlider().setValue(75);
 				} else {
 					melodyPanel.setTranspose(-12);
-					melodyPanel.getPanSlider().setValue(25);
 				}
+				melodyPanel.setPanByOrder(3);
 				melodyPanel.getVolSlider().setValue(45);
 			} else {
 				melodyPanel.setAccents(75);
@@ -8033,6 +8053,9 @@ public class VibeComposerGUI extends JFrame
 		// arps panel
 		cs.add(randomArpCorrectMelodyNotes);
 
+		// extra settings - generation
+		cs.add(reuseMidiChannelAfterCopy);
+
 		return cs;
 	}
 
@@ -8600,7 +8623,6 @@ public class VibeComposerGUI extends JFrame
 
 		}
 		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
-		int[] melodyChannels = { 1, 7, 8 };
 		panelCount -= remainingPanels.size();
 		ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
 				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };
@@ -8641,11 +8663,10 @@ public class VibeComposerGUI extends JFrame
 				ip.setVelocityMin(40 + panelGenerator.nextInt(20));
 				if (panelOrder % 2 == 0) {
 					ip.setTranspose(0);
-					ip.getPanSlider().setValue(75);
 				} else {
 					ip.setTranspose(-12);
-					ip.getPanSlider().setValue(25);
 				}
+				ip.setPanByOrder(3);
 				ip.setNoteLengthMultiplier(70 + panelGenerator.nextInt(40));
 			} else {
 				ip.setFillPauses(panelGenerator.nextBoolean());
@@ -8657,7 +8678,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (needNewChannel) {
-				ip.setMidiChannel(melodyChannels[(panelOrder - 1) % 3]);
+				ip.setMidiChannel(TYPICAL_MIDI_CH.get(0).get((panelOrder - 1) % 3));
 			}
 		}
 		repaint();
@@ -8940,7 +8961,7 @@ public class VibeComposerGUI extends JFrame
 			ip.growPattern(panelGenerator, 1, 5);
 
 			if (needNewChannel) {
-				ip.setMidiChannel(11 + (ip.getPanelOrder() - 1) % 5);
+				ip.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(2, ip.getPanelOrder()));
 				ip.setPanByOrder(5);
 			}
 		}
@@ -9215,7 +9236,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (needNewChannel) {
-				ip.setMidiChannel(2 + (ip.getPanelOrder() - 1) % 7);
+				ip.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(3, ip.getPanelOrder()));
 				ip.setPanByOrder(7);
 			}
 

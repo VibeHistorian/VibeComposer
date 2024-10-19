@@ -1,29 +1,26 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Color;
-import java.awt.Insets;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGeneratorUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
-import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class MelodyPanel extends InstPanel {
 
@@ -121,14 +118,10 @@ public class MelodyPanel extends InstPanel {
 		this.add(new JLabel("Pattern"));
 		patternStructure.setMargin(new Insets(0, 0, 0, 0));
 		this.add(patternStructure);
-		patternStructure.setTextGenerator(e -> {
-			return StringUtils.join(MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
-					new Random().nextInt()), ",");
-		});
-		patternStructure.setRandGenerator(e -> {
-			return MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
-					new Random().nextInt());
-		});
+		patternStructure.setTextGenerator(e -> StringUtils.join(MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
+                new Random().nextInt()), ","));
+		patternStructure.setRandGenerator(e -> MelodyUtils.getRandomMelodyPattern(getAlternatingRhythmChance(),
+                new Random().nextInt()));
 		this.add(patternFlexible);
 
 		this.add(blockJump);
