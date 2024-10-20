@@ -1,18 +1,17 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import jm.music.data.Note;
+import jm.music.data.Phrase;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-
-import org.apache.commons.lang3.StringUtils;
-
-import jm.music.data.Note;
-import jm.music.data.Phrase;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @XmlRootElement(name = "phraseNotes")
 @XmlType(propOrder = {})
@@ -22,6 +21,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 	private int partOrder = -1;
 	private boolean applied = false;
+	private List<PhraseNote> iterationOrder = null;
 
 	public PhraseNotes() {
 		super();
@@ -72,12 +72,24 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	}
 
 	public void remakeNoteStartTimes() {
+		remakeNoteStartTimes(false);
+	}
+
+	public void remakeNoteStartTimes(boolean manipulateOrder) {
 		double current = 0.0;
 		for (PhraseNote pn : this) {
 			pn.setStartTime(current + pn.getOffset());
 			pn.setAbsoluteStartTime(current);
 			current += pn.getRv();
 		}
+		if (manipulateOrder) {
+			iterationOrder = new ArrayList<>(this);
+			iterationOrder.sort(Comparator.comparingDouble(PhraseNote::getStartTime));
+		}
+	}
+
+	public List<PhraseNote> getIterationOrder() {
+		return iterationOrder != null && iterationOrder.size() == this.size() ? iterationOrder : this;
 	}
 
 	public boolean isApplied() {

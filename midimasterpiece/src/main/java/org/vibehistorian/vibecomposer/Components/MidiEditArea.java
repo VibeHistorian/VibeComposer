@@ -1,10 +1,18 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
+import jm.music.data.Note;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -18,21 +26,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
-
-import jm.music.data.Note;
 
 public class MidiEditArea extends JComponent {
 
@@ -181,6 +174,7 @@ public class MidiEditArea extends JComponent {
 					}
 				}
 				if (pop != null && saveToHistory) {
+					values.remakeNoteStartTimes(true);
 					pop.saveToHistory();
 				}
 
@@ -985,18 +979,18 @@ public class MidiEditArea extends JComponent {
 				int drawY = bottomLeft.y - (int) (rowHeight * (pitch + 1 - min));
 				int width = (int) (quarterNoteLength * pn.getDuration());
 
-				// draw straight line connecting values -- TODO: requires offset checking
-				/*if (i < numValues - 1) {
-					int nextPitch = values.get(i + 1).getPitch();
-					if (nextPitch >= 0) {
+				// draw straight line connecting values
+				// TODO: checkbox to enable it
+				if (false && i < numValues - 1) {
+					PhraseNote nextPn = values.getIterationOrder().stream().skip(i + 1).filter(e -> e.getPitch() >= 0).findFirst().orElse(null);
+					if (nextPn != null) {
 						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
-						g.drawLine(drawX, drawY,
-								drawX + (int) (quarterNoteLength
-										* (pn.getRv() + pn.getOffset())),
-								bottomLeft.y - (int) (rowHeight
-										* (values.get(i + 1).getPitch() + 1 - min)));
+						int drawXNext = bottomLeft.x
+								+ (int) (quarterNoteLength * (nextPn.getStartTime() + getPhraseMarginX()));
+						int drawYNext = bottomLeft.y - (int) (rowHeight * (nextPn.getPitch() + 1 - min));
+						g.drawLine(drawX, drawY, drawXNext, drawYNext);
 					}
-				}*/
+				}
 
 				boolean currentlyHighlighted = (highlightedNote != null) && (pn == highlightedNote)
 						&& (highlightedDragLocation != null);

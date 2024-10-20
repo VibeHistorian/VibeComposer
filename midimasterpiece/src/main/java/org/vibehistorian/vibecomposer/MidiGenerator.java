@@ -720,9 +720,6 @@ public class MidiGenerator implements JMC {
 
 		List<MelodyBlock> mbs = new ArrayList<>();
 
-		// TODO: generate some common-sense durations, pick randomly from melody phrases, refinement later
-
-
 		//LG.d(StringUtils.join(melodySkeletonDurationWeights, ','));
 		Random blockNotesGenerator = new Random(melodyBlockGeneratorSeed);
 
@@ -2338,15 +2335,11 @@ public class MidiGenerator implements JMC {
 						if (currentDirection) {
 							startIndex = MidiGeneratorUtils.selectClosestIndexFromChord(chord,
 									previousNotePitch, true);
-							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
-								endIndex--;
-							}
+							endIndex = Math.min(endIndex, startIndex + MAX_JUMP_SKELETON_CHORD);
 						} else {
 							endIndex = MidiGeneratorUtils.selectClosestIndexFromChord(chord,
 									previousNotePitch, false);
-							while (endIndex - startIndex > MAX_JUMP_SKELETON_CHORD) {
-								startIndex++;
-							}
+							startIndex = Math.max(endIndex - MAX_JUMP_SKELETON_CHORD, startIndex);
 						}
 					}
 					double positionInChord = durCounter / progressionDurations.get(i);

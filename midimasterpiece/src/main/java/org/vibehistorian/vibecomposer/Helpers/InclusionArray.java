@@ -1,10 +1,11 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.ArrayList;
+import org.vibehistorian.vibecomposer.LG;
 
 import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
 
 @XmlRootElement(name = "incl")
 @XmlType(propOrder = {})
@@ -31,8 +32,7 @@ public class InclusionArray implements Cloneable {
 		try {
 			return (InclusionArray) super.clone();
 		} catch (CloneNotSupportedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LG.e("Unsupported cloning!", e);
 		}
 		return null;
 	}
