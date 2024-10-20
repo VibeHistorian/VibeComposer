@@ -19,21 +19,12 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
@@ -43,6 +34,14 @@ import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement(name = "GUIConfig")
 @XmlType(propOrder = {})
@@ -81,6 +80,8 @@ public class GUIConfig {
 	private Integer globalSwingOverride = null;
 	private boolean customMidiForceScale = false;
 	private boolean transposedNotesForceScale = false;
+	private int humanizeDrums = 20;
+	private int humanizeNotes = 150;
 
 
 	// melody gen
@@ -105,6 +106,7 @@ public class GUIConfig {
 	private boolean melodyFillPausesPerChord = false;
 	private int melodyNewBlocksChance = 0;
 	private boolean melodyLegacyMode = false;
+	private List<Integer> melodyBlockChoicePreference = new ArrayList<>();
 
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
@@ -937,4 +939,28 @@ public class GUIConfig {
     public void setVersion(String version) {
         this.version = version;
     }
+
+	public int getHumanizeDrums() {
+		return humanizeDrums;
+	}
+
+	public void setHumanizeDrums(int humanizeDrums) {
+		this.humanizeDrums = humanizeDrums;
+	}
+
+	public int getHumanizeNotes() {
+		return humanizeNotes;
+	}
+
+	public void setHumanizeNotes(int humanizeNotes) {
+		this.humanizeNotes = humanizeNotes;
+	}
+
+	public List<Integer> getMelodyBlockChoicePreference() {
+		return melodyBlockChoicePreference;
+	}
+
+	public void setMelodyBlockChoicePreference(List<Integer> melodyBlockChoicePreference) {
+		this.melodyBlockChoicePreference = melodyBlockChoicePreference;
+	}
 }

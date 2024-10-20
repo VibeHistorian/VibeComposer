@@ -1,6 +1,13 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Dimension;
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
+import org.vibehistorian.vibecomposer.SwingUtils;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -10,15 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import javax.swing.JButton;
-import javax.swing.SwingUtilities;
-
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 
 public class RandomIntegerListButton extends JButton {
 
@@ -81,7 +79,7 @@ public class RandomIntegerListButton extends JButton {
 
 	public List<Integer> getValues() {
 		if (getValue().isEmpty()) {
-			return new ArrayList<>(Arrays.asList(new Integer[] { 0 }));
+			return new ArrayList<>(Arrays.asList(0));
 		}
 		String[] valueSplit = getValue().split(",");
 		List<Integer> values = new ArrayList<>();
@@ -98,10 +96,18 @@ public class RandomIntegerListButton extends JButton {
 	}
 
 	public void setValues(List<Integer> values) {
-		setValue((values != null) ? StringUtils.join(values, ",") : "?");
+		setValues(values, true);
+	}
+
+	public void setValues(List<Integer> values, boolean checkPost) {
+		setValue((values != null) ? StringUtils.join(values, ",") : "?", checkPost);
 	}
 
 	public void setValue(String value) {
+		setValue(value, true);
+	}
+
+	public void setValue(String value, boolean checkPost) {
 		if (!isEnabled()) {
 			return;
 		}
@@ -109,7 +115,7 @@ public class RandomIntegerListButton extends JButton {
 			value = "?";
 		}
 		setText(value);
-		if (!"?".equals(value) && (postFunc != null)) {
+		if (checkPost && !"?".equals(value) && (postFunc != null)) {
 			postFunc.accept(new Object());
 		}
 	}

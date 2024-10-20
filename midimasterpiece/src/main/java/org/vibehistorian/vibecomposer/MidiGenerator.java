@@ -233,7 +233,7 @@ public class MidiGenerator implements JMC {
 
 	protected Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
 			List<int[]> roots, int measures, int notesSeedOffset, Section sec,
-			List<Integer> variations) {
+			List<Integer> variations, List<Integer> melodyBlockJumpPreference) {
 
 		boolean genVars = variations == null;
 
@@ -302,6 +302,10 @@ public class MidiGenerator implements JMC {
 		if (firstBlockOffset > 0) {
 			firstBlockOffset--;
 		}
+		List<Integer> usedMelodyBlockJumpPreference = (melodyBlockJumpPreference != null) && (melodyBlockJumpPreference.size() == MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE.size())
+			&& MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE.containsAll(melodyBlockJumpPreference)
+				? melodyBlockJumpPreference :
+				Collections.emptyList();
 
 		Random pitchPickerGenerator = new Random(seed + pitchPickerOffset + firstBlockOffset);
 		Random exceptionGenerator = new Random(melodyBlockGeneratorSeed + 2 + firstBlockOffset);
@@ -495,7 +499,7 @@ public class MidiGenerator implements JMC {
 								: generateMelodyBlocksForDurations(mp, sec, durations, roots,
 										melodyBlockGeneratorSeed + blockOffset, blockChanges,
 										MAX_JUMP_SKELETON_CHORD, startingNote, chordIndex,
-										forcedLengths, remainingDirChanges);
+										forcedLengths, remainingDirChanges, usedMelodyBlockJumpPreference);
 				if (FLEXIBLE_PATTERN && existingPattern != null
 						&& gc.getMelodyPatternEffect() > 0) {
 					List<MelodyBlock> storedMelodyBlocks = new ArrayList<>(
@@ -714,9 +718,9 @@ public class MidiGenerator implements JMC {
 	}
 
 	protected List<MelodyBlock> generateMelodyBlocksForDurations(MelodyPart mp, Section sec,
-			List<Double> durations, List<int[]> roots, int melodyBlockGeneratorSeed,
-			List<Integer> blockChanges, int maxJump, int startingNote, int chordIndex,
-			List<Integer> forcedLengths, int remainingDirChanges) {
+																 List<Double> durations, List<int[]> roots, int melodyBlockGeneratorSeed,
+																 List<Integer> blockChanges, int maxJump, int startingNote, int chordIndex,
+																 List<Integer> forcedLengths, int remainingDirChanges, List<Integer> usedMelodyBlockJumpPreference) {
 
 		List<MelodyBlock> mbs = new ArrayList<>();
 
@@ -763,7 +767,7 @@ public class MidiGenerator implements JMC {
 					: MelodyUtils.getRandomByApproxBlockChangeAndLength(
 							blockChanges.get(blockIndex), maxJump, blockNotesGenerator,
 							(forcedLengths != null ? forcedLengths.get(blockIndex) : null),
-							remainingVariance, remainingDirChanges);
+							remainingVariance, remainingDirChanges, usedMelodyBlockJumpPreference);
 			Integer[] blockNotesArray = typeBlock.getRight();
 			int blockType = typeBlock.getLeft();
 
@@ -777,8 +781,8 @@ public class MidiGenerator implements JMC {
 				}
 			}
 
-			// try to find a different type for this block change
-			if (blockType == prevBlockType || chordyBlockNotMatchingChord) {
+			// try to find a different type for this block change (only for static/non generated blocks)
+			if (blockType != Integer.MAX_VALUE && (blockType == prevBlockType || chordyBlockNotMatchingChord)) {
 				int length = blockNotesArray.length;
 				List<Integer> typesToChoose = new ArrayList<>();
 				for (int j = 0; j < MelodyUtils.NUM_LISTS; j++) {
@@ -2688,7 +2692,8 @@ public class MidiGenerator implements JMC {
 			actualDurations = progressionDurations;
 		} else if (!gc.getMelodyParts().isEmpty()) {
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
-					generatedRootProgression, 0, new Section(), new ArrayList<>(), true);
+					generatedRootProgression, 0, new Section(), new ArrayList<>(),
+					true, gc.getMelodyBlockChoicePreference());
 		}
 		if (logPerformance) {
 			LG.i("First pre-melody filled at: " + (System.currentTimeMillis() - systemTime));
@@ -3208,8 +3213,8 @@ public class MidiGenerator implements JMC {
 				continue;
 			}
 			boolean isDrum = pe.getTitle().contains("Drum");
-			boolean shouldRandomize = (isDrum && VibeComposerGUI.humanizeDrums.getInt() > 0)
-					|| (!isDrum && VibeComposerGUI.humanizeNotes.getInt() > 0);
+			boolean shouldRandomize = (isDrum && gc.getHumanizeDrums() > 0)
+					|| (!isDrum && gc.getHumanizeNotes() > 0);
 
 
 			if (shouldRandomize) {
@@ -3217,8 +3222,8 @@ public class MidiGenerator implements JMC {
 				int partOrder = ShowAreaBig.getPartOrderForPartName(pe.getTitle());
 				rand.setSeed(humanizerRandSeed + noteColorIndex * 1000 + partOrder);
 				JMusicUtilsCustom.humanize(pe, rand,
-						isDrum ? noteMultiplier * VibeComposerGUI.humanizeDrums.getInt() / 10000.0
-								: noteMultiplier * VibeComposerGUI.humanizeNotes.getInt() / 10000.0,
+						isDrum ? noteMultiplier * gc.getHumanizeDrums() / 10000.0
+								: noteMultiplier * gc.getHumanizeNotes() / 10000.0,
 						isDrum);
 			}
 		}
@@ -3536,7 +3541,7 @@ public class MidiGenerator implements JMC {
 						mp.setSpeed(100);
 					}
 					Phrase m = fillMelodyFromPart(mp, usedMelodyProg, usedRoots, notesSeedOffset,
-							sec, variations, false);
+							sec, variations, false, gc.getMelodyBlockChoicePreference());
 					if (speedVariation) {
 						mp.setSpeed(speedSave);
 					}
@@ -4143,7 +4148,7 @@ public class MidiGenerator implements JMC {
 
 	public Phrase fillMelodyFromPart(MelodyPart ip, List<int[]> actualProgression,
 			List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
-			List<Integer> variations, boolean melodyEmptyPass) {
+			List<Integer> variations, boolean melodyEmptyPass, List<Integer> melodyBlockJumpPreference) {
 		LG.d("Processing: " + ip.partInfo());
 		Phrase phr = new PhraseExt(0, ip.getOrder(), secOrder);
 
@@ -4159,7 +4164,7 @@ public class MidiGenerator implements JMC {
 						generatedRootProgression, measures, notesSeedOffset, sec, variations);
 			} else {
 				skeletonNotes = generateMelodyBlockSkeletonFromChords(ip, actualProgression,
-						generatedRootProgression, measures, notesSeedOffset, sec, variations);
+						generatedRootProgression, measures, notesSeedOffset, sec, variations, melodyBlockJumpPreference);
 			}
 
 		}

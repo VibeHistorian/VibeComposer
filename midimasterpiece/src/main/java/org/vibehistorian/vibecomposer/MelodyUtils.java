@@ -1,5 +1,11 @@
 package org.vibehistorian.vibecomposer;
 
+import jm.music.data.Note;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,18 +17,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
-import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-
-import jm.music.data.Note;
-
 public class MelodyUtils {
 
 	//public static final List<Integer> chordyNotes = Arrays.asList(new Integer[] { 0, 2, 4, 7 });
 	public static final List<Integer> cMajorSubstituteNotes = Arrays
-			.asList(new Integer[] { 0, 2, 3, 5 });
+			.asList(0, 2, 3, 5);
 
 	public static List<Integer[]> SCALEY = new ArrayList<>();
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
@@ -33,8 +32,8 @@ public class MelodyUtils {
 	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 	public static List<List<Integer>> SOLO_MELODY_PATTERNS = new ArrayList<>();
-	public static List<Integer> ALT_PATTERN_INDEXES = new ArrayList<>(
-			Arrays.asList(new Integer[] { 0, 1, 8, 9, 10, 12, 15, 16 }));
+	public static List<Integer> ALT_PATTERN_INDEXES = Arrays.asList(0, 1, 8, 9, 10, 12, 15, 16);
+	public static List<Integer> BLOCK_CHANGE_JUMP_PREFERENCE = Arrays.asList(0, 7, 4, 3, 1, 2, 5, 6);
 
 	public static List<List<Integer>> CHORD_DIRECTIONS = new ArrayList<>();
 
@@ -42,46 +41,46 @@ public class MelodyUtils {
 
 	static {
 
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { -1, -1, 1, 2 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { -1, 0, 0, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, -1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, 1, 0 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, 0, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, -1, 1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, -1, 0 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, -1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 1, 1, 2 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(-1, -1, 1, 2));
+		CHORD_DIRECTIONS.add(Arrays.asList(-1, 0, 0, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, -1, -1, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, -1, 1, 0));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, -1, 0, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, -1, 1, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, 1, -1, 0));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, 1, -1, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, 1, 1, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, 1, 1, 2));
 		//CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, 1, -1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 0, 0, -1, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 1, 2 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 1, -1, 0, 1 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, 1, 2 }));
-		CHORD_DIRECTIONS.add(Arrays.asList(new Integer[] { 2, 0, -1, 1 }));
+		CHORD_DIRECTIONS.add(Arrays.asList(0, 0, -1, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(1, -1, 1, 2));
+		CHORD_DIRECTIONS.add(Arrays.asList(1, -1, 0, 1));
+		CHORD_DIRECTIONS.add(Arrays.asList(2, 0, 1, 2));
+		CHORD_DIRECTIONS.add(Arrays.asList(2, 0, -1, 1));
 
 		// ALT PATTERNS: 0, 1, 8, 9, 10, 12, 15, 16
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3, 1, 2, 1, 4 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 1, 3, 2, 2, 3, 4 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 4, 1, 2, 1, 3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 3, 3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 2, 1 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, 2, 3 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 1 })); // 7
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 1, 3));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 1, 3, 1, 2, 1, 4));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 1, 3, 2, 2, 3, 4));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 3, 4, 1, 2, 1, 3));
+		MELODY_PATTERNS.add(Arrays.asList(1, 1, 2, 3));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 3, 1));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 3, 2));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 3, 3));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 2, 1));
+		MELODY_PATTERNS.add(Arrays.asList(1, 2, 2, 3));
+		MELODY_PATTERNS.add(Arrays.asList(1, 1, 2, 1)); // 7
 		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 2, 2 }));
-		MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 2 }));
+		MELODY_PATTERNS.add(Arrays.asList(1, 1, 1, 2));
 		//MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, 1, 1 }));
 		// inverse patterns
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 1, -1, 2 }));
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -2, -1 }));
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, 2, -1, 2 }));
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, 2, 3 }));
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, 2, 2 }));
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, -1, 1 }));
-		SOLO_MELODY_PATTERNS.add(Arrays.asList(new Integer[] { 1, -1, 1, 2 }));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, 1, -1, 2));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, 2, -2, -1));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, 2, -1, 2));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, -1, 2, 3));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, -1, 2, 2));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, -1, -1, 1));
+		SOLO_MELODY_PATTERNS.add(Arrays.asList(1, -1, 1, 2));
 		MELODY_PATTERNS.addAll(SOLO_MELODY_PATTERNS);
 
 
@@ -145,6 +144,7 @@ public class MelodyUtils {
 
 		BLOCK_CHANGE_MAP = allBlocks.stream()
 				.collect(Collectors.groupingBy(e -> blockChange(e.getRight())));
+		//LG.i("BLOCK_CHANGE_MAP:" + BLOCK_CHANGE_MAP);
 	}
 
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
@@ -187,8 +187,8 @@ public class MelodyUtils {
 	}
 
 	public static Pair<Integer, Integer[]> getRandomByApproxBlockChangeAndLength(int blockChange,
-			int approx, Random melodyBlockGenerator, Integer length, int remainingVariance,
-			int remainingDirChanges) {
+																				 int approx, Random melodyBlockGenerator, Integer length, int remainingVariance,
+																				 int remainingDirChanges, List<Integer> usedMelodyBlockJumpPreference) {
 		//LG.d("Chosen change: " + chosenChange);
 		List<Pair<Integer, Integer[]>> viableBlocks = new ArrayList<>();
 		int start = Math.max(blockChange - approx, -7);
@@ -235,6 +235,14 @@ public class MelodyUtils {
 			}
 			return Pair.of(blockOfList(block), block);
 		}
+		// TODO: RIP complexity
+		if (!usedMelodyBlockJumpPreference.isEmpty()) {
+			viableBlocks.sort(Comparator.comparingInt(e -> usedMelodyBlockJumpPreference.indexOf(Math.abs(blockChange(e.getRight())))));
+			double blockToGet = melodyBlockGenerator.nextDouble();
+			int blockToGetIndex = Math.min(viableBlocks.size() - 1, (int) (blockToGet * blockToGet * viableBlocks.size()));
+			return viableBlocks.get(blockToGetIndex);
+		}
+
 		return viableBlocks.get(melodyBlockGenerator.nextInt(viableBlocks.size()));
 
 	}
@@ -549,7 +557,7 @@ public class MelodyUtils {
 	public static Pair<Integer, Integer[]> generateBlockByBlockChangeAndLength(Integer blockChange,
 			int approx, Random blockNotesGenerator, Integer forcedLength, int remainingVariance,
 			int remainingDirChanges) {
-		// TODO 
+		// TODO remainingDirChanges unused
 		remainingVariance = Math.max(0, remainingVariance);
 		Random rnd = new Random(blockNotesGenerator.nextInt());
 		int newLen = (forcedLength != null) ? forcedLength : (rnd.nextInt(2) + 3);

@@ -1,7 +1,39 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import jm.music.data.Note;
+import jm.music.data.Score;
+import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.MidiDropPane;
+import org.vibehistorian.vibecomposer.Components.MidiEditArea;
+import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
+import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.Helpers.PatternMap;
+import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Parts.ArpPart;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
+import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
@@ -19,53 +51,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Components.CheckButton;
-import org.vibehistorian.vibecomposer.Components.MidiDropPane;
-import org.vibehistorian.vibecomposer.Components.MidiEditArea;
-import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
-import org.vibehistorian.vibecomposer.Helpers.PartExt;
-import org.vibehistorian.vibecomposer.Helpers.PatternMap;
-import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Parts.ArpPart;
-import org.vibehistorian.vibecomposer.Parts.BassPart;
-import org.vibehistorian.vibecomposer.Parts.ChordPart;
-import org.vibehistorian.vibecomposer.Parts.DrumPart;
-import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.MelodyPart;
-
-import jm.music.data.Note;
-import jm.music.data.Score;
 
 public class MidiEditPopup extends CloseablePopup {
 
@@ -906,7 +891,7 @@ public class MidiEditPopup extends CloseablePopup {
 			switch (part) {
 			case 0:
 				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
-						sec.getTypeMelodyOffset(), sec, variations, false);
+						sec.getTypeMelodyOffset(), sec, variations, false, VibeComposerGUI.melodyBlockChoicePreference.getValues());
 				break;
 			case 1:
 				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);

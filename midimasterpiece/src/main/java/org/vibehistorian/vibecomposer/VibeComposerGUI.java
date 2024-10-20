@@ -406,6 +406,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyReplaceAvoidNotes;
 	KnobPanel melodyMaxDirChanges;
 	public static KnobPanel melodyTargetNoteVariation;
+	public static RandomIntegerListButton melodyBlockChoicePreference;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -476,6 +477,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox customMidiForceScale;
 	public static JCheckBox reuseMidiChannelAfterCopy;
 	public static JCheckBox transposedNotesForceScale;
+	public static JCheckBox transposeNotePreview;
 	public static JCheckBox padGeneratedMidi;
 	public static RandomIntegerListButton padGeneratedMidiValues;
 	public static JCheckBox randomizeTimingsOnCompose;
@@ -1351,6 +1353,9 @@ public class VibeComposerGUI extends JFrame
 		reinitInstPools = makeButton("Initialize All Inst.", "InitAllInsts");
 		allInstsPanel.add(reinitInstPools);
 
+
+		transposeNotePreview = new CustomCheckBox("Transpose Note Previews in MIDI Editor", true);
+
 		// 				soundbank
 		soundbankFilename = new ScrollComboBox<String>(false);
 		soundbankFilename.setEditable(true);
@@ -1384,6 +1389,7 @@ public class VibeComposerGUI extends JFrame
 
 		instrumentsSettingsPanel.add(allInstsPanel);
 		instrumentsSettingsPanel.add(soundbankPanel);
+		instrumentsSettingsPanel.add(transposeNotePreview);
 
 
 		// PAUSE
@@ -1432,8 +1438,8 @@ public class VibeComposerGUI extends JFrame
 
 		// BPM
 		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
-		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 50, 20, 249);
-		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 95, 21, 250);
+		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 60, 20, 249);
+		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 100, 21, 250);
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
 		bpmLowHighPanel.add(arpAffectsBpm);
@@ -1514,6 +1520,31 @@ public class VibeComposerGUI extends JFrame
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
 				"Track History - Include Regenerated Tracks", true);
+		JPanel melodyBlockChoicePreferencePanel = new JPanel();
+		melodyBlockChoicePreferencePanel.setLayout(new GridLayout(0, 2, 10, 30));
+		melodyBlockChoicePreferencePanel.add(new JLabel("<html>Melody Block Choice<br>Preferred Order</html>"));
+		melodyBlockChoicePreference = new RandomIntegerListButton("0", null);
+		melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
+		melodyBlockChoicePreference.min = 0;
+		melodyBlockChoicePreference.max = 7;
+		melodyBlockChoicePreference.editableCount = false;
+		melodyBlockChoicePreference.setRandGenerator(e -> {
+			List<Integer> scrambledDefaultPreference = new ArrayList<>(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
+			Collections.shuffle(scrambledDefaultPreference, new Random());
+			return scrambledDefaultPreference;
+		});
+		melodyBlockChoicePreference.setTextGenerator(e -> StringUtils.join(melodyBlockChoicePreference.getRandGenerator()
+				.apply(new Object()),","));
+		melodyBlockChoicePreference.setPostFunc(e -> {
+			// verify it's set correctly
+			List<Integer> vals = melodyBlockChoicePreference.getValues();
+			if (vals.size() > 1 && (vals.size() != MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE.size() ||
+				!vals.containsAll(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE))) {
+				melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE, false);
+				return;
+			}
+		});
+		melodyBlockChoicePreferencePanel.add(melodyBlockChoicePreference);
 		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
 		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 
@@ -1534,7 +1565,8 @@ public class VibeComposerGUI extends JFrame
 		panelGenerationSettingsPanel.add(reuseMidiChannelAfterCopy);
 		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
-		panelGenerationSettingsPanel.add(melodyPatternFlip);
+		panelGenerationSettingsPanel.add(melodyBlockChoicePreferencePanel);
+		//panelGenerationSettingsPanel.add(melodyPatternFlip); -- pattern flip is now also available per-instrument..
 		panelGenerationSettingsPanel.add(patternApplyPausesWhenGenerating);
 		panelGenerationSettingsPanel.add(keyChangePanel);
 
@@ -8014,8 +8046,9 @@ public class VibeComposerGUI extends JFrame
 		// extras
 		cs.add(useMidiCC);
 		cs.add(arrangementResetCustomPanelsOnCompose);
-		cs.add(humanizeNotes);
-		cs.add(humanizeDrums);
+		// TODO: humanize - move to GUIConfig, changes the score..
+		cs.add(null);
+		cs.add(null);
 		cs.add(loopBeatCompose);
 		cs.add(useAllInsts);
 		//cs.add(bannedInsts);
@@ -8053,8 +8086,10 @@ public class VibeComposerGUI extends JFrame
 		// arps panel
 		cs.add(randomArpCorrectMelodyNotes);
 
-		// extra settings - generation
+		// extra settings 2.5
 		cs.add(reuseMidiChannelAfterCopy);
+		cs.add(transposeNotePreview);
+		cs.add(moveStartToCustomizedSection);
 
 		return cs;
 	}
@@ -8170,6 +8205,8 @@ public class VibeComposerGUI extends JFrame
 		gc.setAllowChordRepeats(allowChordRepeats.isSelected());
 		gc.setGlobalSwingOverride(
 				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
+		gc.setHumanizeDrums(humanizeDrums.getInt());
+		gc.setHumanizeNotes(humanizeNotes.getInt());
 
 		// parts
 		gc.setMelodyEnable(addInst[0].isSelected());
@@ -8211,6 +8248,8 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
 		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
 		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
+
+		gc.setMelodyBlockChoicePreference(melodyBlockChoicePreference.getValues());
 
 
 		// chords
@@ -8303,6 +8342,8 @@ public class VibeComposerGUI extends JFrame
 		if (gc.getGlobalSwingOverride() != null) {
 			globalSwingOverrideValue.setInt(gc.getGlobalSwingOverride());
 		}
+		humanizeDrums.setInt(gc.getHumanizeDrums());
+		humanizeNotes.setInt(gc.getHumanizeNotes());
 
 		// parts
 		setAddInst(0, gc.isMelodyEnable());
@@ -8354,6 +8395,8 @@ public class VibeComposerGUI extends JFrame
 		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
 		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
 		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
+
+		melodyBlockChoicePreference.setValues(gc.getMelodyBlockChoicePreference());
 
 		// chords
 		spiceChance.setInt(gc.getSpiceChance());
@@ -8754,15 +8797,12 @@ public class VibeComposerGUI extends JFrame
 
 				// default SINGLE = 4
 				RhythmPattern pattern = RhythmPattern.SINGLE;
-				// use pattern in 20% of the cases if checkbox selected
+				// use pattern in 50% of the cases if checkbox selected
 				int patternChance = 50;
 				if (panelGenerator.nextInt(100) < patternChance) {
-					// TODO: BASS SETTINGS toggles
-					if (true) {
-						pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
-						if (pattern == RhythmPattern.MELODY1) {
-							pattern = RhythmPattern.FULL;
-						}
+					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
+					if (pattern == RhythmPattern.MELODY1) {
+						pattern = RhythmPattern.FULL;
 					}
 				}
 				ip.setPattern(pattern);
@@ -9949,8 +9989,7 @@ public class VibeComposerGUI extends JFrame
 			return;
 		}
 		try {
-			// todo checkbox setting - "transpose previewed note"
-			if (part < 4) {
+			if (part < 4 && transposeNotePreview.isSelected()) {
 				Pair<ScaleMode, Integer> scaleKey = keyChangeAt(
 						actualArrangement.getSections().indexOf(sec));
 				int extraTranspose = (part > 0) ? ip.getTranspose() : 0;
@@ -9958,7 +9997,7 @@ public class VibeComposerGUI extends JFrame
 						(part > 0) ? pitch : (pitch + ip.getTranspose()), durationMs / 1000.0));
 				if (scaleKey != null) {
 					boolean snapToScale = (scaleKey.getLeft() != ScaleMode.IONIAN)
-							|| VibeComposerGUI.transposedNotesForceScale.isSelected();
+							|| transposedNotesForceScale.isSelected();
 					MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
 							scaleKey.getLeft().noteAdjustScale, snapToScale);
 					extraTranspose += scaleKey.getRight();
