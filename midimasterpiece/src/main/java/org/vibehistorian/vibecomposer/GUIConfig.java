@@ -101,6 +101,7 @@ public class GUIConfig {
 	private int melodyMaxDirChanges = 2;
 	private int melodyTargetNoteVariation = 4;
 
+	private boolean melody1ForcePatterns = false;
 	private boolean melodyArpySurprises = false;
 	private boolean melodySingleNoteExceptions = false;
 	private boolean melodyFillPausesPerChord = false;
@@ -962,5 +963,13 @@ public class GUIConfig {
 
 	public void setMelodyBlockChoicePreference(List<Integer> melodyBlockChoicePreference) {
 		this.melodyBlockChoicePreference = melodyBlockChoicePreference;
+	}
+
+	public boolean isMelody1ForcePatterns() {
+		return melody1ForcePatterns;
+	}
+
+	public void setMelody1ForcePatterns(boolean melody1ForcePatterns) {
+		this.melody1ForcePatterns = melody1ForcePatterns;
 	}
 }

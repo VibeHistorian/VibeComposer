@@ -236,10 +236,12 @@ public class MelodyUtils {
 			return Pair.of(blockOfList(block), block);
 		}
 		// TODO: RIP complexity
+		// TODO: allow choosing the weighting function - n^2 too weighty, maybe n^1.5 is just right..
 		if (!usedMelodyBlockJumpPreference.isEmpty()) {
 			viableBlocks.sort(Comparator.comparingInt(e -> usedMelodyBlockJumpPreference.indexOf(Math.abs(blockChange(e.getRight())))));
-			double blockToGet = melodyBlockGenerator.nextDouble();
-			int blockToGetIndex = Math.min(viableBlocks.size() - 1, (int) (blockToGet * blockToGet * viableBlocks.size()));
+			double floatingIndex = melodyBlockGenerator.nextDouble();
+			double weighted = Math.pow(floatingIndex, 2);
+			int blockToGetIndex = Math.min(viableBlocks.size() - 1, (int) (weighted * viableBlocks.size()));
 			return viableBlocks.get(blockToGetIndex);
 		}
 

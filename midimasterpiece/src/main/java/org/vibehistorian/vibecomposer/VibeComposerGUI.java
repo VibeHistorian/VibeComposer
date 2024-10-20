@@ -7963,7 +7963,7 @@ public class VibeComposerGUI extends JFrame
 		List<Component> cs = new ArrayList<>();
 		// melody panel
 		cs.add(generateMelodiesOnCompose);
-		cs.add(melody1ForcePatterns);
+		cs.add(null);
 		cs.add(combineMelodyTracks);
 		cs.add(randomMelodySameSeed);
 		cs.add(randomMelodyOnRegenerate);
@@ -8046,7 +8046,6 @@ public class VibeComposerGUI extends JFrame
 		// extras
 		cs.add(useMidiCC);
 		cs.add(arrangementResetCustomPanelsOnCompose);
-		// TODO: humanize - move to GUIConfig, changes the score..
 		cs.add(null);
 		cs.add(null);
 		cs.add(loopBeatCompose);
@@ -8233,6 +8232,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyModeNoteTarget(melodyModeNoteTarget.getInt());
 		gc.setMelodyEmphasizeKey(melodyEmphasizeKey.isSelected());
 
+		gc.setMelody1ForcePatterns(melody1ForcePatterns.isSelected());
 		gc.setMelodyArpySurprises(melodyArpySurprises.isSelected());
 		gc.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
 		gc.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
@@ -8381,6 +8381,7 @@ public class VibeComposerGUI extends JFrame
 		melodyEmphasizeKey.setSelected(gc.isMelodyEmphasizeKey());
 
 		melodyArpySurprises.setSelected(gc.isMelodyArpySurprises());
+		melody1ForcePatterns.setSelected(gc.isMelody1ForcePatterns());
 		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
 		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
 		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
