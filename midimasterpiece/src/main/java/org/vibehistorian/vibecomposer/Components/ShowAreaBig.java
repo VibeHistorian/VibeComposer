@@ -294,8 +294,6 @@ public class ShowAreaBig extends JComponent {
 
 	/**
 	 * Specify the size of the notation.
-	 *
-	 * @param int The new note height
 	 */
 	public void setNoteHeight(int val) {
 		if (val < 4) {
@@ -326,8 +324,6 @@ public class ShowAreaBig extends JComponent {
 
 	/**
 	 * Display notes thinner than stave width or not.
-	 *
-	 * @param int The thinNote value ( 0, 1, 2, 3 etc.)
 	 */
 	public void setThinNote(int newVal) {
 		if (newVal >= 0)
@@ -636,6 +632,7 @@ public class ShowAreaBig extends JComponent {
 		}
 
 		if (noteHeight > 7) {
+			Point viewPointH = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
 			float usedFontHeight = Math.min(15, Float.valueOf(noteHeight * 9 / 10));
 			g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
 
@@ -643,7 +640,7 @@ public class ShowAreaBig extends JComponent {
 				if (MidiUtils.MAJ_SCALE.contains(i % 12)) {
 					int y = getNotePosY(i) + (int) (usedFontHeight / 4) + 2;
 					String noteString = MidiUtils.pitchToString(i);
-					g.drawString(noteString, viewPoint.x, y);
+					g.drawString(noteString, viewPointH.x, y);
 				}
 			}
 		}
