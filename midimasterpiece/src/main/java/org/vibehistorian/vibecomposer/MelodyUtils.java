@@ -26,6 +26,7 @@ public class MelodyUtils {
 	public static List<Integer[]> SCALEY = new ArrayList<>();
 	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
 	public static List<Integer[]> ARPY = new ArrayList<>();
+	public static List<Integer[]> WAVY = new ArrayList<>();
 	public static List<Integer[]> CHORDY = new ArrayList<>();
 
 	public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP = new HashMap<>();
@@ -87,43 +88,52 @@ public class MelodyUtils {
 		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
 
 
-		SCALEY.add(new Integer[] { 0, 1, 2 });
-		SCALEY.add(new Integer[] { 0, 1, 2, 3 });
-		SCALEY.add(new Integer[] { 0, 1, 4 });
-		SCALEY.add(new Integer[] { 0, 1, 2, 1 });
-		SCALEY.add(new Integer[] { 0, 4, 2 });
-		SCALEY.add(new Integer[] { 0, 1, 2, 0 });
-		SCALEY.add(new Integer[] { 0, 1, 2, 4 });
-		SCALEY.add(new Integer[] { 0, 0, 0 });
+		SCALEY.add(block(0, 1, 2));
+		SCALEY.add(block(0, 1, 2, 3));
+		SCALEY.add(block(0, 1, 4));
+		SCALEY.add(block(0, 1, 2, 1));
+		SCALEY.add(block(0, 4, 2));
+		SCALEY.add(block(0, 1, 2, 0));
+		SCALEY.add(block(0, 1, 2, 4));
+		SCALEY.add(block(0, 0, 0));
 
-		NEIGHBORY.add(new Integer[] { 0, -1, 0 });
-		NEIGHBORY.add(new Integer[] { 0, 1, 0, 1 });
-		NEIGHBORY.add(new Integer[] { 0, 1, -1 });
-		NEIGHBORY.add(new Integer[] { 0, -1, 0, 1 });
-		NEIGHBORY.add(new Integer[] { 0, -1, 2 });
-		NEIGHBORY.add(new Integer[] { 0, 1, -1, 0 });
-		NEIGHBORY.add(new Integer[] { 0, -1, 0, 2 });
-		NEIGHBORY.add(new Integer[] { 0, 1, 3, 2 });
-		NEIGHBORY.add(new Integer[] { 0, 0, -1, 0 });
+		NEIGHBORY.add(block(0, -1, 0));
+		NEIGHBORY.add(block(0, 1, 0, 1));
+		NEIGHBORY.add(block(0, 1, -1));
+		NEIGHBORY.add(block(0, -1, 0, 1));
+		NEIGHBORY.add(block(0, -1, 2));
+		NEIGHBORY.add(block(0, 1, -1, 0));
+		NEIGHBORY.add(block(0, -1, 0, 2));
+		NEIGHBORY.add(block(0, 1, 3, 2));
+		NEIGHBORY.add(block(0, 0, -1, 0));
 
 
-		CHORDY.add(new Integer[] { 0, 2, 4 });
-		CHORDY.add(new Integer[] { 0, 4, 2 });
-		CHORDY.add(new Integer[] { 0, 4, 2, 7 });
-		CHORDY.add(new Integer[] { 0, 7, 4, 2 });
+		CHORDY.add(block(0, 2, 4));
+		CHORDY.add(block(0, 4, 2));
+		CHORDY.add(block(0, 4, 2, 7));
+		CHORDY.add(block(0, 7, 4, 2));
 
-		ARPY.add(new Integer[] { 0, 2, 0, 2 });
-		ARPY.add(new Integer[] { 0, 2, 1 });
-		ARPY.add(new Integer[] { 0, 2, 4, 2 });
-		ARPY.add(new Integer[] { 0, 2, 1, 3 });
-		ARPY.add(new Integer[] { 0, 2, 3 });
-		ARPY.add(new Integer[] { 0, 3, 1, 2 });
-		ARPY.add(new Integer[] { 0, 1, 4, 5 });
-		ARPY.add(new Integer[] { 0, 1, 7, 6 });
-		ARPY.add(new Integer[] { 0, 1, 6, 7 });
-		/*ARPY.add(new Integer[] { 0, 3, 5 });
-		ARPY.add(new Integer[] { 0, 4, 6 });
-		ARPY.add(new Integer[] { 0, 4, 7 });*/
+		ARPY.add(block(0, 2, 0, 2));
+		ARPY.add(block(0, 2, 1));
+		ARPY.add(block(0, 2, 4, 2));
+		ARPY.add(block(0, 2, 1, 3));
+		ARPY.add(block(0, 2, 3));
+		ARPY.add(block(0, 3, 1, 2));
+		ARPY.add(block(0, 1, 4, 5));
+		ARPY.add(block(0, 1, 7, 6));
+		ARPY.add(block(0, 1, 6, 7));
+		/*ARPY.add(block(0, 3, 5));
+		ARPY.add(block(0, 4, 6));
+		ARPY.add(block(0, 4, 7));*/
+
+		WAVY.add(block(0, -2, 3, 4));
+		WAVY.add(block(0, -2, 2, 6));
+		WAVY.add(block(0, -2, 3, 6));
+		WAVY.add(block(0, -2, -1, 2));
+		WAVY.add(block(0, -1, -2, 1));
+		WAVY.add(block(0, 1, -1, 2));
+		WAVY.add(block(0, 2, -1, -2));
+		WAVY.add(block(0, -3, -2, -1));
 
 
 		List<Pair<Integer, Integer[]>> allBlocks = new ArrayList<>();
@@ -131,6 +141,7 @@ public class MelodyUtils {
 		NEIGHBORY.forEach(e -> allBlocks.add(Pair.of(1, e)));
 		ARPY.forEach(e -> allBlocks.add(Pair.of(2, e)));
 		CHORDY.forEach(e -> allBlocks.add(Pair.of(3, e)));
+		WAVY.forEach(e -> allBlocks.add(Pair.of(4, e)));
 
 		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(0,
 				SCALEY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
@@ -140,11 +151,20 @@ public class MelodyUtils {
 				ARPY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
 		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(3,
 				CHORDY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
+		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(4,
+				CHORDY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
 
 
 		BLOCK_CHANGE_MAP = allBlocks.stream()
 				.collect(Collectors.groupingBy(e -> blockChange(e.getRight())));
 		//LG.i("BLOCK_CHANGE_MAP:" + BLOCK_CHANGE_MAP);
+	}
+
+	private static Integer[] block(Integer... notePositions) {
+		if (notePositions == null) {
+			return null;
+		}
+		return notePositions;
 	}
 
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
@@ -256,6 +276,7 @@ public class MelodyUtils {
 			blocks.addAll(NEIGHBORY);
 			blocks.addAll(ARPY);
 			blocks.addAll(CHORDY);
+			blocks.addAll(WAVY);
 			return blocks;
 		}
 
@@ -268,6 +289,8 @@ public class MelodyUtils {
 			return new ArrayList<>(ARPY);
 		case 3:
 			return new ArrayList<>(CHORDY);
+		case 4:
+			return new ArrayList<>(WAVY);
 		default:
 			throw new IllegalArgumentException("Blocks type too random!");
 		}
@@ -490,6 +513,8 @@ public class MelodyUtils {
 			return 2;
 		} else if (containsBlock(CHORDY, block, invertedBlock)) {
 			return 3;
+		} else if (containsBlock(WAVY, block, invertedBlock)) {
+			return 4;
 		}
 		throw new IllegalArgumentException("Unknown block: " + StringUtils.join(block, ","));
 	}
