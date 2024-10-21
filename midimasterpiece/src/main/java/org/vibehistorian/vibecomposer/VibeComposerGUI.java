@@ -666,8 +666,8 @@ public class VibeComposerGUI extends JFrame
 
 	private void setMainIcon() {
 		this.setIconImage(new ImageIcon(new ImageIcon(
-				this.getClass().getResource("/VibeComposer2_LOGO_NARROW.jpg"))
-				.getImage().getScaledInstance(24, 24, java.awt.Image.SCALE_SMOOTH))
+				this.getClass().getResource("/VibeComposer2_LOGO_INVERT_NARROW.jpg"))
+				.getImage().getScaledInstance(48, 48, java.awt.Image.SCALE_SMOOTH))
 				.getImage());
 	}
 
