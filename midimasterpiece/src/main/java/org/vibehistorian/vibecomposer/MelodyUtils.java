@@ -584,7 +584,6 @@ public class MelodyUtils {
 	public static Pair<Integer, Integer[]> generateBlockByBlockChangeAndLength(Integer blockChange,
 			int approx, Random blockNotesGenerator, Integer forcedLength, int remainingVariance,
 			int remainingDirChanges) {
-		// TODO remainingDirChanges unused
 		remainingVariance = Math.max(0, remainingVariance);
 		Random rnd = new Random(blockNotesGenerator.nextInt());
 		int newLen = (forcedLength != null) ? forcedLength : (rnd.nextInt(2) + 3);
@@ -598,10 +597,22 @@ public class MelodyUtils {
 		int currentMin = Math.min(0, newBlock[last]);
 		int currentMax = Math.max(0, newBlock[last]);
 
+		int defaultDirection = Integer.signum(currentMax - currentMin);
+		int dirChangesLeft = remainingDirChanges;
+		boolean restrictDirectionChanges = (defaultDirection != 0);
+
+
 		for (int i = 1; i < last; i++) {
-			int usableRemainingVariance = (remainingVariance + 1) / 2; // don't use all the jumpiness at once
-			newBlock[i] = rnd.nextInt(usableRemainingVariance * 2 + (currentMax - currentMin) + 1)
-					+ currentMin - usableRemainingVariance;
+			boolean cantChangeDir = restrictDirectionChanges && dirChangesLeft < 1;
+			int usableRemainingVariance = cantChangeDir ? 0 : (remainingVariance + 1) / 2; // don't use all the jumpiness at once
+			boolean ascending = newBlock[last] - newBlock[i-1] > 0;
+			int high = cantChangeDir ? (ascending ? newBlock[last] : newBlock[i-1]) : currentMax;
+			int low = cantChangeDir ? (ascending ? newBlock[i-1] : newBlock[last]) : currentMin;
+			newBlock[i] = rnd.nextInt(usableRemainingVariance * 2 + (high - low) + 1)
+					+ low - usableRemainingVariance;
+
+
+
 			// between lowest note and lowest possible note
 			int varianceOverlapLow = currentMin - newBlock[i];
 			if (varianceOverlapLow > 0) {
@@ -614,6 +625,13 @@ public class MelodyUtils {
 				remainingVariance -= varianceOverlapHigh;
 				currentMax = newBlock[i];
 			}
+
+			if (!restrictDirectionChanges && !cantChangeDir) {
+				Integer[] testedBlock = Arrays.copyOf(newBlock, i + 2);
+				testedBlock[i + 1] = newBlock[last];
+				dirChangesLeft = remainingDirChanges - interblockDirectionChange(testedBlock);
+			}
+
 			remainingVariance = Math.max(0, remainingVariance);
 		}
 
