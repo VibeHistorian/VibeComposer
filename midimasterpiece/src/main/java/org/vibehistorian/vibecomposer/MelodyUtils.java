@@ -599,8 +599,9 @@ public class MelodyUtils {
 		int currentMax = Math.max(0, newBlock[last]);
 
 		for (int i = 1; i < last; i++) {
-			newBlock[i] = rnd.nextInt(remainingVariance * 2 + (currentMax - currentMin) + 1)
-					+ currentMin - remainingVariance;
+			int usableRemainingVariance = (remainingVariance + 1) / 2; // don't use all the jumpiness at once
+			newBlock[i] = rnd.nextInt(usableRemainingVariance * 2 + (currentMax - currentMin) + 1)
+					+ currentMin - usableRemainingVariance;
 			// between lowest note and lowest possible note
 			int varianceOverlapLow = currentMin - newBlock[i];
 			if (varianceOverlapLow > 0) {
