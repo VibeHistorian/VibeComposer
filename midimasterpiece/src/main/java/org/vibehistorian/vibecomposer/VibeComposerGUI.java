@@ -31,6 +31,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.Components.*;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
+import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
@@ -407,6 +408,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyMaxDirChanges;
 	public static KnobPanel melodyTargetNoteVariation;
 	public static RandomIntegerListButton melodyBlockChoicePreference;
+	VeloRect[] melodyBlockTypePreference;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -1002,8 +1004,8 @@ public class VibeComposerGUI extends JFrame
 		//unsoloAll = makeButton("S", "UnsoloAllTracks");
 
 		globalVolSlider = new VeloRect(0, 150, 100);
-		globalReverbSlider = new VeloRect(0, 127, 60);
-		globalChorusSlider = new VeloRect(0, 127, 15);
+		globalReverbSlider = VeloRect.midi( 60);
+		globalChorusSlider = VeloRect.midi( 15);
 
 		mainButtonsPanel.add(new JLabel("Vol."));
 		mainButtonsPanel.add(globalVolSlider);
@@ -1770,7 +1772,7 @@ public class VibeComposerGUI extends JFrame
 
 		addInst[0] = new CustomCheckBox("MELODY", true);
 		melodySettingsExtraPanelOrg.add(addInst[0]);
-		groupFilterSliders[0] = new VeloRect(0, 127, 127);
+		groupFilterSliders[0] = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		melodySettingsExtraPanelOrg.add(filterLabel);
 		melodySettingsExtraPanelOrg.add(groupFilterSliders[0]);
@@ -1856,6 +1858,8 @@ public class VibeComposerGUI extends JFrame
 		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
 
+		melodyUseDirectionsFromProgression = new CustomCheckBox(
+				"<html>Use Chord<br>Directions</html>", false);
 		melodyBasicChordsOnly = new CustomCheckBox("<html>Base<br> Chords</html>", false);
 		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
 		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 20);
@@ -1866,7 +1870,6 @@ public class VibeComposerGUI extends JFrame
 				true);
 		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>",
 				true);
-		melodyNewBlocksChance = new KnobPanel("New<br>Blocks%", 25);
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
 		melodyAvoidChordJumpsLegacy = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 
@@ -1874,25 +1877,32 @@ public class VibeComposerGUI extends JFrame
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
 		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
 
-		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
 		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
 		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
+		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
+		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
 		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
 		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
+		melodySettingsExtraPanelShape.add(melodyUseDirectionsFromProgression);
 		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
 		melodySettingsExtraPanelShape.add(melodyArpySurprises);
 		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
 		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
-		melodySettingsExtraPanelShape.add(melodyNewBlocksChance);
 		melodySettingsExtraPanelShape.add(melodyLegacyMode);
 		return melodySettingsExtraPanelShape;
 	}
 
 	private JPanel initMelodySettingsPlusPlus() {
-		melodyUseDirectionsFromProgression = new CustomCheckBox(
-				"<html>Use Chord<br>Directions</html>", false);
+		JPanel melodyBlockTypePreferences = new JPanel();
+		melodyBlockTypePreference = new VeloRect[5];
+		for (int i = 0; i < 5; i++) {
+			melodyBlockTypePreference[i] = VeloRect.percent(BlockType.values()[i].defaultChance);
+			melodyBlockTypePreferences.add(melodyBlockTypePreference[i]);
+		}
+
+
+		melodyNewBlocksChance = new KnobPanel("New<br>Blocks%", 25);
 		melodyBlockTargetMode = new ScrollComboBox<>();
 		ScrollComboBox.addAll(
 				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
@@ -1923,8 +1933,13 @@ public class VibeComposerGUI extends JFrame
 		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
 
-
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyUseDirectionsFromProgression);
+		JLabel blockTypesLabel = new JLabel("<html>Block<br>Types</html>");
+		blockTypesLabel.setToolTipText("Types (in order): " +
+				Arrays.stream(BlockType.values()).map(e -> e.name()).collect(Collectors.joining(",")));
+		melodySettingsExtraPanelBlocksPatternsCompose
+				.add(blockTypesLabel);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTypePreferences);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyNewBlocksChance);
 		melodySettingsExtraPanelBlocksPatternsCompose
 				.add(new JLabel("<html>Note Target<br>Mode</html>"));
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
@@ -2047,7 +2062,7 @@ public class VibeComposerGUI extends JFrame
 		bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
 		bassSettingsPanel.add(addInst[1]);
 
-		groupFilterSliders[1] = new VeloRect(0, 127, 127);
+		groupFilterSliders[1] = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		bassSettingsPanel.add(filterLabel);
 		bassSettingsPanel.add(groupFilterSliders[1]);
@@ -2117,7 +2132,7 @@ public class VibeComposerGUI extends JFrame
 
 		addInst[2] = new CustomCheckBox("CHORDS", true);
 		chordSettingsPanel.add(addInst[2]);
-		groupFilterSliders[2] = new VeloRect(0, 127, 127);
+		groupFilterSliders[2] = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		chordSettingsPanel.add(filterLabel);
 		chordSettingsPanel.add(groupFilterSliders[2]);
@@ -2268,7 +2283,7 @@ public class VibeComposerGUI extends JFrame
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		addInst[3] = new CustomCheckBox("ARPS", true);
 		arpsSettingsPanel.add(addInst[3]);
-		groupFilterSliders[3] = new VeloRect(0, 127, 127);
+		groupFilterSliders[3] = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		arpsSettingsPanel.add(filterLabel);
 		arpsSettingsPanel.add(groupFilterSliders[3]);
@@ -2420,14 +2435,14 @@ public class VibeComposerGUI extends JFrame
 		addInst[4] = new CustomCheckBox("DRUMS", true);
 		drumsPanel.add(addInst[4]);
 
-		drumVolumeSlider = new VeloRect(0, 100, 65);
+		drumVolumeSlider = VeloRect.percent( 65);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
 		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
 		//drumVolumeSlider.setPaintTicks(true);
 		JLabel volSliderLabel = new JLabel("Vol.");
 		drumsPanel.add(volSliderLabel);
 		drumsPanel.add(drumVolumeSlider);
-		groupFilterSliders[4] = new VeloRect(0, 127, 127);
+		groupFilterSliders[4] = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		drumsPanel.add(filterLabel);
 		drumsPanel.add(groupFilterSliders[4]);
@@ -8250,6 +8265,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
 
 		gc.setMelodyBlockChoicePreference(melodyBlockChoicePreference.getValues());
+		gc.setMelodyBlockTypePreference(Arrays.stream(melodyBlockTypePreference).map(e -> e.getValue()).collect(Collectors.toList()));
 
 
 		// chords
@@ -8292,6 +8308,7 @@ public class VibeComposerGUI extends JFrame
 
 		if (!CURRENT_VERSION.equals(gc.getVersion())) {
 			LG.w("Loaded file is for an older version of VibeComposer! Curremt: " + CURRENT_VERSION + ", File version: " + gc.getVersion());
+			new TemporaryInfoPopup("Loaded file is for an older version of VibeComposer! Not all features may work the same as they did then!", 2500);
 		}
 
 		if (gc.getMelodyNotes() != null) {
@@ -8398,6 +8415,10 @@ public class VibeComposerGUI extends JFrame
 		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
 
 		melodyBlockChoicePreference.setValues(gc.getMelodyBlockChoicePreference());
+		for (int i = 0; i < 5; i++) {
+			int value = i < gc.getMelodyBlockTypePreference().size() ? gc.getMelodyBlockTypePreference().get(i) : BlockType.values()[i].defaultChance;
+			melodyBlockTypePreference[i].setValue(value);
+		}
 
 		// chords
 		spiceChance.setInt(gc.getSpiceChance());

@@ -108,6 +108,7 @@ public class GUIConfig {
 	private int melodyNewBlocksChance = 0;
 	private boolean melodyLegacyMode = false;
 	private List<Integer> melodyBlockChoicePreference = new ArrayList<>();
+	private List<Integer> melodyBlockTypePreference = new ArrayList<>();
 
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
@@ -971,5 +972,13 @@ public class GUIConfig {
 
 	public void setMelody1ForcePatterns(boolean melody1ForcePatterns) {
 		this.melody1ForcePatterns = melody1ForcePatterns;
+	}
+
+	public List<Integer> getMelodyBlockTypePreference() {
+		return melodyBlockTypePreference;
+	}
+
+	public void setMelodyBlockTypePreference(List<Integer> melodyBlockTypePreference) {
+		this.melodyBlockTypePreference = melodyBlockTypePreference;
 	}
 }

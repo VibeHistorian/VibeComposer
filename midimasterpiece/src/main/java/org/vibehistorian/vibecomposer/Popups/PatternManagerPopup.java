@@ -1,25 +1,21 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Point;
-import java.util.IntSummaryStatistics;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.swing.BoxLayout;
-import javax.swing.JPanel;
-
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup.PatternNameMarker;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.IntSummaryStatistics;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PatternManagerPopup extends CloseablePopup {
 
@@ -34,7 +30,7 @@ public class PatternManagerPopup extends CloseablePopup {
 	CustomCheckBox removeCB = new CustomCheckBox("Remove", false);
 
 	public PatternManagerPopup() {
-		super("Pattern Manager", 14, new Point(-2000, -2000));
+		super("Pattern Manager", 14, new Point(-200, -200));
 
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));

@@ -21,4 +21,8 @@
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="STDERR"/>
     </root>
+
+    <logger name="ch.qos.logback" level="INFO">
+        <appender-ref ref="STDOUT" />
+    </logger>
 </configuration>

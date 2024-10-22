@@ -437,9 +437,8 @@ public class MidiGenerator implements JMC {
 					int addQuick = (speed - 50) * 4;
 					int addSlow = addQuick * -1;
 
-					int[] melodySkeletonDurationWeights = Rhythm
-							.normalizedCumulativeWeights(new int[] { 200 + addQuick,
-									200 + addQuick / 2, 200 + addQuick, 200 + addSlow });
+					int[] melodySkeletonDurationWeights = MelodyUtils
+							.normalizedCumulativeWeights(200 + addQuick, 200 + addQuick / 2, 200 + addQuick, 200 + addSlow);
 
 
 					Rhythm rhythm = new Rhythm(rhythmSeed, rhythmDuration, melodySkeletonDurations,
@@ -670,9 +669,8 @@ public class MidiGenerator implements JMC {
 		}
 		boolean shortNotes = n.getRhythmValue() > Durations.QUARTER_NOTE - DBL_ERR;
 		int[] melodySkeletonDurationWeights = shortNotes
-				? Rhythm.normalizedCumulativeWeights(
-						new int[] { 100, 100, 300, 100, 300, 100, 100 })
-				: Rhythm.normalizedCumulativeWeights(new int[] { 100, 300, 100, 300, 100, 100 });
+				? MelodyUtils.normalizedCumulativeWeights(100, 100, 300, 100, 300, 100, 100)
+				: MelodyUtils.normalizedCumulativeWeights(100, 300, 100, 300, 100, 100);
 		Rhythm blockRhythm = new Rhythm(localEmbGenerator.nextInt(), n.getRhythmValue(),
 				shortNotes ? MELODY_SKELETON_DURATIONS_SHORT : MELODY_SKELETON_DURATIONS,
 				melodySkeletonDurationWeights);
@@ -744,11 +742,10 @@ public class MidiGenerator implements JMC {
 			int addSlow = addQuick * -1;
 			boolean shortNotes = durations.get(blockIndex) < Durations.QUARTER_NOTE - DBL_ERR;
 			int[] melodySkeletonDurationWeights = shortNotes
-					? Rhythm.normalizedCumulativeWeights(
-							new int[] { 100 + addQuick, 100 + addQuick, 300 + addQuick,
-									100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow })
-					: Rhythm.normalizedCumulativeWeights(new int[] { 100 + addQuick, 300 + addQuick,
-							100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow });
+					? MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 100 + addQuick, 300 + addQuick,
+									100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow)
+					: MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 300 + addQuick,
+							100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow);
 
 			Rhythm blockRhythm = new Rhythm(melodyBlockGeneratorSeed + blockIndex,
 					durations.get(blockIndex),
@@ -768,7 +765,7 @@ public class MidiGenerator implements JMC {
 					: MelodyUtils.getRandomByApproxBlockChangeAndLength(
 							blockChanges.get(blockIndex), maxJump, blockNotesGenerator,
 							(forcedLengths != null ? forcedLengths.get(blockIndex) : null),
-							remainingVariance, remainingDirChanges, usedMelodyBlockJumpPreference);
+							remainingVariance, remainingDirChanges, usedMelodyBlockJumpPreference, gc.getMelodyBlockTypePreference());
 			Integer[] blockNotesArray = typeBlock.getRight();
 			int blockType = typeBlock.getLeft();
 
@@ -793,8 +790,7 @@ public class MidiGenerator implements JMC {
 					}
 				}
 				if (typesToChoose.size() > 0) {
-					int randomType = typesToChoose
-							.get(blockNotesGenerator.nextInt(typesToChoose.size()));
+					int randomType = BlockType.getWeightedType(typesToChoose, gc.getMelodyBlockTypePreference(), blockNotesGenerator.nextInt(100));
 					Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
 							randomType, blockChanges.get(blockIndex), length, blockNotesGenerator,
 							0);

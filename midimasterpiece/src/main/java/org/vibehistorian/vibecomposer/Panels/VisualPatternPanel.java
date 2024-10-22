@@ -1,8 +1,22 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
+import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -17,29 +31,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Components.VeloRect;
-import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 
 public class VisualPatternPanel extends JPanel {
 
@@ -154,7 +145,7 @@ public class VisualPatternPanel extends JPanel {
 			truePattern.add(1);
 			trueVelocities.add(defaultVel);
 			hitChecks[i] = new ColorCheckBox();
-			hitVelocities[i] = new VeloRect(0, 127, defaultVel);
+			hitVelocities[i] = VeloRect.midi(defaultVel);
 			hitVelocities[i].linkVisualParent(VisualPatternPanel.this, i);
 			//hitVelocities[i].setDefaultSize(new Dimension(CheckBoxIcon.width, CheckBoxIcon.width));
 			hitVelocities[i].setVisible(false);

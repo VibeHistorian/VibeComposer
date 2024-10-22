@@ -180,26 +180,4 @@ public class Rhythm {
 				+ durations.stream().mapToDouble(e -> e).sum());*/
 		return durations;
 	}
-
-	public static int[] normalizedCumulativeWeights(int[] weights) {
-		int[] finalWeights = new int[weights.length];
-		double total = 0;
-		for (int w : weights) {
-			if (w > 0) {
-				total += w;
-			}
-		}
-		for (int i = 0; i < weights.length; i++) {
-			double normalizedWeight = weights[i] * 100.0 / total;
-			finalWeights[i] = (int) Math.round(normalizedWeight);
-			if (finalWeights[i] < 0) {
-				finalWeights[i] = 0;
-			}
-			if (i > 0) {
-				finalWeights[i] += finalWeights[i - 1];
-			}
-		}
-		finalWeights[weights.length - 1] = 100;
-		return finalWeights;
-	}
 }

@@ -2,6 +2,8 @@ package org.vibehistorian.vibecomposer.Enums;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +72,18 @@ public enum BlockType {
             newBlock[i] = block[i] * -1;
         }
         return newBlock;
+    }
+
+    public static Integer getWeightedType(List<Integer> limitedTypes, List<Integer> weights, int target) {
+        Integer[] actualWeights = new Integer[limitedTypes.size()];
+        if (limitedTypes.size() != weights.size()) {
+            int count = 0;
+            for (Integer i : limitedTypes) {
+                actualWeights[count++] = weights.get(i);
+            }
+        }
+        int[] normalizedWeights = MelodyUtils.normalizedCumulativeWeights(actualWeights);
+        return (Integer) OMNI.getWeightedValue(limitedTypes.toArray(), target, normalizedWeights);
     }
 
     private static boolean containsBlock(List<Integer[]> blocks, Integer[] block,

@@ -111,8 +111,8 @@ public abstract class InstPanel extends JPanel {
 	protected CheckButton lockInst = new CheckButton("<html>&#x1F512;</html>", false);
 	protected CheckButton muteInst = new CheckButton("Ex", false);
 
-	protected VeloRect volSlider = new VeloRect(0, 100, 100);
-	protected VeloRect panSlider = new VeloRect(0, 100, 50);
+	protected VeloRect volSlider = VeloRect.percent(100);
+	protected VeloRect panSlider = VeloRect.percent(50);
 
 	protected ScrollComboBox<Integer> midiChannel = new ScrollComboBox<>();
 

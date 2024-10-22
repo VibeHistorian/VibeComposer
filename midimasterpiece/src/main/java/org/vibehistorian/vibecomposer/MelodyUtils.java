@@ -122,17 +122,22 @@ public class MelodyUtils {
 
 	public static Pair<Integer, Integer[]> getRandomByApproxBlockChangeAndLength(int blockChange,
 																				 int approx, Random melodyBlockGenerator, Integer length, int remainingVariance,
-																				 int remainingDirChanges, List<Integer> usedMelodyBlockJumpPreference) {
+																				 int remainingDirChanges, List<Integer> usedMelodyBlockJumpPreference,
+																				 List<Integer> melodyBlockTypePreference) {
 		//LG.d("Chosen change: " + chosenChange);
 		List<Pair<Integer, Integer[]>> viableBlocks = new ArrayList<>();
 		int start = Math.max(blockChange - approx, -7);
 		int end = Math.min(blockChange + approx, 7);
+		int[] viableBlockTypeCounts = new int[5];
+		Arrays.fill(viableBlockTypeCounts, 0);
+
 		for (int i = start; i <= end; i++) {
 			if (BLOCK_CHANGE_MAP.containsKey(i)) {
 				for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(i)) {
 					Integer[] block = typeBlock.getRight();
 					if (length == null || block.length == length) {
 						viableBlocks.add(typeBlock);
+						viableBlockTypeCounts[typeBlock.getLeft()]++;
 					}
 				}
 
@@ -143,6 +148,7 @@ public class MelodyUtils {
 					Integer[] block = typeBlock.getRight();
 					if (length == null || block.length == length) {
 						invertedBlocks.add(Pair.of(typeBlock.getLeft(), BlockType.inverse(block)));
+						viableBlockTypeCounts[typeBlock.getLeft()]++;
 					}
 				}
 				viableBlocks.addAll(invertedBlocks);
@@ -150,11 +156,22 @@ public class MelodyUtils {
 		}
 
 		//int sizeBefore = viableBlocks.size();
-		viableBlocks.removeIf(e -> MelodyUtils.variance(e.getRight()) > remainingVariance);
+		for (int i = viableBlocks.size() - 1; i >= 0; i--) {
+			Pair<Integer, Integer[]> block = viableBlocks.get(i);
+			if (MelodyUtils.variance(block.getRight()) > remainingVariance) {
+				viableBlocks.remove(block);
+				viableBlockTypeCounts[block.getLeft()]--;
+			}
+		}
 		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
 				+ ", for variance remaining: " + remainingVariance);*/
-		viableBlocks.removeIf(
-				e -> MelodyUtils.interblockDirectionChange(e.getRight()) > remainingDirChanges);
+		for (int i = viableBlocks.size() - 1; i >= 0; i--) {
+			Pair<Integer, Integer[]> block = viableBlocks.get(i);
+			if (MelodyUtils.interblockDirectionChange(block.getRight()) > remainingDirChanges) {
+				viableBlocks.remove(block);
+				viableBlockTypeCounts[block.getLeft()]--;
+			}
+		}
 		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
 				+ ", for dir change remaining: " + remainingDirChanges);*/
 		//viableBlocks.forEach(e -> LG.d(StringUtils.join(e, ',')));
@@ -171,8 +188,32 @@ public class MelodyUtils {
 		}
 		// TODO: RIP complexity
 		// TODO: allow choosing the weighting function - n^2 too weighty, maybe n^1.5 is just right..
+
+
 		if (!usedMelodyBlockJumpPreference.isEmpty()) {
 			viableBlocks.sort(Comparator.comparingInt(e -> usedMelodyBlockJumpPreference.indexOf(Math.abs(blockChange(e.getRight())))));
+		}
+		if (!melodyBlockTypePreference.isEmpty() && melodyBlockTypePreference.stream().anyMatch(e -> e > 0)) {
+			int[] adjustedCounts = new int[5];
+			int totalMatching = 0;
+			for (int i = 0; i < 5; i++) {
+				// if weight > 0, keep at least one
+				int min = melodyBlockTypePreference.get(i) > 0 && viableBlockTypeCounts[i] > 0 ? 1 : 0;
+				adjustedCounts[i] = Math.max(min, viableBlockTypeCounts[i] * melodyBlockTypePreference.get(i) / 100);
+				totalMatching += viableBlockTypeCounts[i] > 0 ? adjustedCounts[i] : 0;
+			}
+			// can't filter out if there would be nothing left
+			if (totalMatching > 0) {
+				for (int i = viableBlocks.size() - 1; i >= 0; i--) {
+					Pair<Integer, Integer[]> block = viableBlocks.get(i);
+					if (adjustedCounts[block.getLeft()] < viableBlockTypeCounts[block.getLeft()]) {
+						viableBlocks.remove(block);
+						viableBlockTypeCounts[block.getLeft()]--;
+					}
+				}
+			}
+		}
+		if (!usedMelodyBlockJumpPreference.isEmpty()) {
 			double floatingIndex = melodyBlockGenerator.nextDouble();
 			double weighted = Math.pow(floatingIndex, 2);
 			int blockToGetIndex = Math.min(viableBlocks.size() - 1, (int) (weighted * viableBlocks.size()));
@@ -364,6 +405,32 @@ public class MelodyUtils {
 		changeList.clear();
 		changeList.addAll(finalList);
 
+	}
+
+	public static int[] normalizedCumulativeWeights(Integer... weights) {
+		int[] finalWeights = new int[weights.length];
+		double total = 0;
+		for (int w : weights) {
+			if (w > 0) {
+				total += w;
+			}
+		}
+		for (int i = 0; i < weights.length; i++) {
+			if (total == 0) {
+				finalWeights[i] = (int) Math.round((i + 1) * 100 / (double)weights.length);
+				continue;
+			}
+			double normalizedWeight = weights[i] * 100.0 / total;
+			finalWeights[i] = (int) Math.round(normalizedWeight);
+			if (finalWeights[i] < 0) {
+				finalWeights[i] = 0;
+			}
+			if (i > 0) {
+				finalWeights[i] += finalWeights[i - 1];
+			}
+		}
+		finalWeights[weights.length - 1] = 100;
+		return finalWeights;
 	}
 
 	public boolean blockContainsJump(Integer[] block, int jump) {

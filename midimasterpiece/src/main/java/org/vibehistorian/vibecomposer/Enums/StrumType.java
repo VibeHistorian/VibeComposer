@@ -1,5 +1,9 @@
 package org.vibehistorian.vibecomposer.Enums;
 
+import jm.music.data.Note;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,11 +11,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Rhythm;
-
-import jm.music.data.Note;
 
 public enum StrumType {
 	ARP_U(Strums.STRUM_ARP), ARP_D(Strums.STRUM_ARP), RAND_U(Strums.STRUM_MED),
@@ -29,8 +28,7 @@ public enum StrumType {
 	public static final List<StrumType> HUMANY = Arrays
 			.asList(new StrumType[] { HUMAN_U, HUMAN, HUMAN_D });
 
-	public static final int[] STRUMMINESS_WEIGHTS = Rhythm
-			.normalizedCumulativeWeights(new int[] { 27, 3, 70 });
+	public static final int[] STRUMMINESS_WEIGHTS = MelodyUtils.normalizedCumulativeWeights(27, 3, 70);
 
 	public static List<StrumType> getWeighted(int value) {
 		List<StrumType>[] lists = new List[] { ARPY, RANDY, HUMANY };
