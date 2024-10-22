@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer;
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
@@ -10,27 +11,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.vibehistorian.vibecomposer.Enums.BlockType.BLOCK_CHANGE_MAP;
+import static org.vibehistorian.vibecomposer.Enums.BlockType.blockChange;
+import static org.vibehistorian.vibecomposer.Enums.BlockType.blockOfList;
+import static org.vibehistorian.vibecomposer.Enums.BlockType.getBlocksForType;
 
 public class MelodyUtils {
 
 	//public static final List<Integer> chordyNotes = Arrays.asList(new Integer[] { 0, 2, 4, 7 });
 	public static final List<Integer> cMajorSubstituteNotes = Arrays
 			.asList(0, 2, 3, 5);
-
-	public static List<Integer[]> SCALEY = new ArrayList<>();
-	public static List<Integer[]> NEIGHBORY = new ArrayList<>();
-	public static List<Integer[]> ARPY = new ArrayList<>();
-	public static List<Integer[]> WAVY = new ArrayList<>();
-	public static List<Integer[]> CHORDY = new ArrayList<>();
-
-	public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP = new HashMap<>();
-	public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 	public static List<List<Integer>> MELODY_PATTERNS = new ArrayList<>();
 	public static List<List<Integer>> SOLO_MELODY_PATTERNS = new ArrayList<>();
 	public static List<Integer> ALT_PATTERN_INDEXES = Arrays.asList(0, 1, 8, 9, 10, 12, 15, 16);
@@ -85,86 +79,6 @@ public class MelodyUtils {
 		MELODY_PATTERNS.addAll(SOLO_MELODY_PATTERNS);
 
 
-		// TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
-
-
-		SCALEY.add(block(0, 1, 2));
-		SCALEY.add(block(0, 1, 2, 3));
-		SCALEY.add(block(0, 1, 4));
-		SCALEY.add(block(0, 1, 2, 1));
-		SCALEY.add(block(0, 4, 2));
-		SCALEY.add(block(0, 1, 2, 0));
-		SCALEY.add(block(0, 1, 2, 4));
-		SCALEY.add(block(0, 0, 0));
-
-		NEIGHBORY.add(block(0, -1, 0));
-		NEIGHBORY.add(block(0, 1, 0, 1));
-		NEIGHBORY.add(block(0, 1, -1));
-		NEIGHBORY.add(block(0, -1, 0, 1));
-		NEIGHBORY.add(block(0, -1, 2));
-		NEIGHBORY.add(block(0, 1, -1, 0));
-		NEIGHBORY.add(block(0, -1, 0, 2));
-		NEIGHBORY.add(block(0, 1, 3, 2));
-		NEIGHBORY.add(block(0, 0, -1, 0));
-
-
-		CHORDY.add(block(0, 2, 4));
-		CHORDY.add(block(0, 4, 2));
-		CHORDY.add(block(0, 4, 2, 7));
-		CHORDY.add(block(0, 7, 4, 2));
-
-		ARPY.add(block(0, 2, 0, 2));
-		ARPY.add(block(0, 2, 1));
-		ARPY.add(block(0, 2, 4, 2));
-		ARPY.add(block(0, 2, 1, 3));
-		ARPY.add(block(0, 2, 3));
-		ARPY.add(block(0, 3, 1, 2));
-		ARPY.add(block(0, 1, 4, 5));
-		ARPY.add(block(0, 1, 7, 6));
-		ARPY.add(block(0, 1, 6, 7));
-		/*ARPY.add(block(0, 3, 5));
-		ARPY.add(block(0, 4, 6));
-		ARPY.add(block(0, 4, 7));*/
-
-		WAVY.add(block(0, -2, 3, 4));
-		WAVY.add(block(0, -2, 2, 6));
-		WAVY.add(block(0, -2, 3, 6));
-		WAVY.add(block(0, -2, -1, 2));
-		WAVY.add(block(0, -1, -2, 1));
-		WAVY.add(block(0, 1, -1, 2));
-		WAVY.add(block(0, 2, -1, -2));
-		WAVY.add(block(0, -3, -2, -1));
-
-
-		List<Pair<Integer, Integer[]>> allBlocks = new ArrayList<>();
-		SCALEY.forEach(e -> allBlocks.add(Pair.of(0, e)));
-		NEIGHBORY.forEach(e -> allBlocks.add(Pair.of(1, e)));
-		ARPY.forEach(e -> allBlocks.add(Pair.of(2, e)));
-		CHORDY.forEach(e -> allBlocks.add(Pair.of(3, e)));
-		WAVY.forEach(e -> allBlocks.add(Pair.of(4, e)));
-
-		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(0,
-				SCALEY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
-		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(1,
-				NEIGHBORY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
-		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(2,
-				ARPY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
-		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(3,
-				CHORDY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
-		AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(4,
-				CHORDY.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
-
-
-		BLOCK_CHANGE_MAP = allBlocks.stream()
-				.collect(Collectors.groupingBy(e -> blockChange(e.getRight())));
-		//LG.i("BLOCK_CHANGE_MAP:" + BLOCK_CHANGE_MAP);
-	}
-
-	private static Integer[] block(Integer... notePositions) {
-		if (notePositions == null) {
-			return null;
-		}
-		return notePositions;
 	}
 
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
@@ -200,7 +114,7 @@ public class MelodyUtils {
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
 		Integer[] block = filteredList.get(rand2);
 		if (blockChange(block) == -1 * clampedBlockChange) {
-			return inverse(block);
+			return BlockType.inverse(block);
 		} else {
 			return block;
 		}
@@ -228,7 +142,7 @@ public class MelodyUtils {
 				for (Pair<Integer, Integer[]> typeBlock : BLOCK_CHANGE_MAP.get(i * -1)) {
 					Integer[] block = typeBlock.getRight();
 					if (length == null || block.length == length) {
-						invertedBlocks.add(Pair.of(typeBlock.getLeft(), inverse(block)));
+						invertedBlocks.add(Pair.of(typeBlock.getLeft(), BlockType.inverse(block)));
 					}
 				}
 				viableBlocks.addAll(invertedBlocks);
@@ -269,51 +183,12 @@ public class MelodyUtils {
 
 	}
 
-	public static List<Integer[]> getBlocksForType(Integer type) {
-		if (type == null) {
-			List<Integer[]> blocks = new ArrayList<>();
-			blocks.addAll(SCALEY);
-			blocks.addAll(NEIGHBORY);
-			blocks.addAll(ARPY);
-			blocks.addAll(CHORDY);
-			blocks.addAll(WAVY);
-			return blocks;
-		}
-
-		switch (type) {
-		case 0:
-			return new ArrayList<>(SCALEY);
-		case 1:
-			return new ArrayList<>(NEIGHBORY);
-		case 2:
-			return new ArrayList<>(ARPY);
-		case 3:
-			return new ArrayList<>(CHORDY);
-		case 4:
-			return new ArrayList<>(WAVY);
-		default:
-			throw new IllegalArgumentException("Blocks type too random!");
-		}
-	}
-
-	public static Integer[] inverse(Integer[] block) {
-		Integer[] newBlock = new Integer[block.length];
-		for (int i = 0; i < block.length; i++) {
-			newBlock[i] = block[i] * -1;
-		}
-		return newBlock;
-	}
-
 	public static List<Integer> inverse(List<Integer> block) {
 		List<Integer> newBlock = new ArrayList<>();
 		for (int i = 0; i < block.size(); i++) {
 			newBlock.add(block.get(i) * -1);
 		}
 		return newBlock;
-	}
-
-	public static Integer blockChange(Integer[] block) {
-		return block[block.length - 1] - block[0];
 	}
 
 	public static int interblockDirectionChange(Integer[] block) {
@@ -494,47 +369,6 @@ public class MelodyUtils {
 	public boolean blockContainsJump(Integer[] block, int jump) {
 		for (int i = 1; i < block.length; i++) {
 			if (Math.abs(block[i] - block[i - 1]) == jump) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static int blockOfList(Integer[] block) {
-		if (block == null) {
-			throw new IllegalArgumentException("Block is NULL!");
-		}
-		Integer[] invertedBlock = inverse(block);
-		if (containsBlock(SCALEY, block, invertedBlock)) {
-			return 0;
-		} else if (containsBlock(NEIGHBORY, block, invertedBlock)) {
-			return 1;
-		} else if (containsBlock(ARPY, block, invertedBlock)) {
-			return 2;
-		} else if (containsBlock(CHORDY, block, invertedBlock)) {
-			return 3;
-		} else if (containsBlock(WAVY, block, invertedBlock)) {
-			return 4;
-		}
-		throw new IllegalArgumentException("Unknown block: " + StringUtils.join(block, ","));
-	}
-
-	private static boolean containsBlock(List<Integer[]> blocks, Integer[] block,
-			Integer[] invertedBlock) {
-		for (int i = 0; i < blocks.size(); i++) {
-			if (block.length != blocks.get(i).length) {
-				continue;
-			}
-			boolean isDirectBlock = true;
-			boolean isInvertedBlock = true;
-			for (int j = 0; j < block.length; j++) {
-				if (!block[j].equals(blocks.get(i)[j])) {
-					isDirectBlock = false;
-				} else if (!invertedBlock[j].equals(blocks.get(i)[j])) {
-					isInvertedBlock = false;
-				}
-			}
-			if (isDirectBlock || isInvertedBlock) {
 				return true;
 			}
 		}

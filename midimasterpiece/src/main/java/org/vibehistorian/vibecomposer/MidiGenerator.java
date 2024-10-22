@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.ShowAreaBig;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
+import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -680,7 +681,7 @@ public class MidiGenerator implements JMC {
 
 		// split note according to rhythm, apply pitch change to notes
 		// pick embellishment pitch pattern according to rhythm length (3 or 4)
-		List<Integer[]> pitchPatterns = MelodyUtils.NEIGHBORY.stream()
+		List<Integer[]> pitchPatterns = BlockType.NEIGHBORY.blocks.stream()
 				.filter(e -> e.length == notesNeeded).collect(Collectors.toList());
 		if (pitchPatterns.isEmpty()) {
 			LG.e("No melody pitch patterns found for: " + notesNeeded);
@@ -785,8 +786,8 @@ public class MidiGenerator implements JMC {
 			if (blockType != Integer.MAX_VALUE && (blockType == prevBlockType || chordyBlockNotMatchingChord)) {
 				int length = blockNotesArray.length;
 				List<Integer> typesToChoose = new ArrayList<>();
-				for (int j = 0; j < MelodyUtils.NUM_LISTS; j++) {
-					if (j != blockType && MelodyUtils.AVAILABLE_BLOCK_CHANGES_PER_TYPE.get(j)
+				for (int j = 0; j < BlockType.values().length; j++) {
+					if (j != blockType && BlockType.AVAILABLE_BLOCK_CHANGES_PER_TYPE.get(j)
 							.contains(Math.abs(blockChanges.get(blockIndex)))) {
 						typesToChoose.add(j);
 					}
