@@ -153,13 +153,13 @@ public class MidiGeneratorUtils {
 		return choiceMap;
 	}
 
-	public static List<Integer> generateOffsets(List<String> chordStrings, int randomSeed,
-			int targetMode, int targetNoteVariation, Boolean isPublic) {
+	public static List<Integer> generateNoteTargetOffsets(List<String> chordStrings, int randomSeed,
+														  int targetMode, int targetNoteVariation, Boolean isPublic) {
 		List<int[]> chords = new ArrayList<>();
 		for (int i = 0; i < chordStrings.size(); i++) {
 			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
 		}
-		return MidiGeneratorUtils.generateOffsets(chords, randomSeed, targetMode,
+		return MidiGeneratorUtils.generateNoteTargetOffsets(chords, randomSeed, targetMode,
 				targetNoteVariation);
 	}
 
@@ -176,8 +176,8 @@ public class MidiGeneratorUtils {
 		return Pair.of(startingNote, startingPitch);
 	}
 
-	static List<Integer> generateOffsets(List<int[]> chords, int randomSeed, int targetMode,
-			int targetNoteVariation) {
+	static List<Integer> generateNoteTargetOffsets(List<int[]> chords, int randomSeed, int targetMode,
+												   int targetNoteVariation) {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
 				MidiGenerator.gc != null && MidiGenerator.gc.isMelodyUseDirectionsFromProgression()
@@ -186,16 +186,16 @@ public class MidiGeneratorUtils {
 						: randomizedChordDirections(chords.size(), randomSeed),
 				randomSeed + 1, targetNoteVariation);
 		List<Integer> offsets = new ArrayList<>();
-		for (int i = 0; i < chordOffsets.size(); i++) {
-			/*LG.d("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
+		if (targetMode == 1) {
+			for (int i = 0; i < chordOffsets.size(); i++) {
+				/*LG.d("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
 					+ multipliedDirections.get(i));*/
-			if (targetMode == 1) {
 				offsets.add(chordOffsets.get(i) + multipliedDirections.get(i));
-			} else {
-				offsets.add(multipliedDirections.get(i));
 			}
-
+		} else {
+			offsets = multipliedDirections;
 		}
+
 		if (targetMode >= 1) {
 			Map<Integer, List<Integer>> choiceMap = getChordNoteChoicesFromChords(chords);
 			Random offsetRandomizer = new Random(randomSeed);
@@ -394,7 +394,7 @@ public class MidiGeneratorUtils {
 		int startingOct = startingPitch / 12;
 		int startingNote = MidiUtils.MAJ_SCALE.indexOf(startingPitch % 12);
 		if (startingNote < 0) {
-			throw new IllegalArgumentException("BAD STARTING NOTE!");
+			startingNote = MidiUtils.MAJ_SCALE.indexOf(MidiUtils.getClosestPitchFromList(MidiUtils.MAJ_SCALE, startingPitch % 12));
 		}
 		return startingNote + startingOct * 7
 				+ ((BLOCK_TARGET_MODE > 0) ? blockChordNoteChoices.get(chordNoteChoiceIndex) : 0);
@@ -680,7 +680,7 @@ public class MidiGeneratorUtils {
 		}
 	}
 
-	public static List<Double> generateOffsets(int size, double offsetVariation, long randomSeed) {
+	public static List<Double> generateRhythmOffsets(int size, double offsetVariation, long randomSeed) {
 		if (size < 1) {
 			return new ArrayList<>();
 		} else if (size == 1) {

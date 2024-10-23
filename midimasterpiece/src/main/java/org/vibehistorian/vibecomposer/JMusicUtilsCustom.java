@@ -195,8 +195,8 @@ public class JMusicUtilsCustom implements JMC {
 		PhraseNotes phraseNotes = new PhraseNotes(notes);
 		phraseNotes.remakeNoteStartTimes();
 
-		List<Double> offsets = MidiGeneratorUtils.generateOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
-		List<Double> durations = MidiGeneratorUtils.generateOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
+		List<Double> offsets = MidiGeneratorUtils.generateRhythmOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
+		List<Double> durations = MidiGeneratorUtils.generateRhythmOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
 
 		for (int i = 0; i < notes.size(); i++) {
 			Note n = notes.get(i);

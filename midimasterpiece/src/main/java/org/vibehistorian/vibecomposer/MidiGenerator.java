@@ -262,7 +262,7 @@ public class MidiGenerator implements JMC {
 		// A B A C pattern
 		List<Integer> blockSeedOffsets = (mp.getMelodyPatternOffsets() != null)
 				? mp.getMelodyPatternOffsets()
-				: new ArrayList<>(Arrays.asList(new Integer[] { 1, 2, 1, 3 }));
+				: new ArrayList<>(Arrays.asList(1, 2, 1, 3));
 
 		while (blockSeedOffsets.size() < chords.size()) {
 			blockSeedOffsets.addAll(blockSeedOffsets);
@@ -273,21 +273,28 @@ public class MidiGenerator implements JMC {
 
 
 		// Chord note choices
-		List<Integer> blockChordNoteChoices = (mp.getChordNoteChoices() != null)
-				? mp.getChordNoteChoices()
-				: new ArrayList<>(Arrays.asList(new Integer[] { 0, 2, 2, 4 }));
-		while (chords.size() > blockChordNoteChoices.size()) {
-			blockChordNoteChoices.addAll(blockChordNoteChoices);
-		}
+		List<Integer> blockChordNoteChoices;
 		if (TARGET_NOTES == null) {
 			TARGET_NOTES = new HashMap<>();
 		}
 		if (RANDOMIZE_TARGET_NOTES) {
-			int targetNoteSeed = VibeComposerGUI.vibeComposerGUI.melody1ForcePatterns.isSelected()
-					? (seed + 1)
-					: (seed + mp.getOrder());
-			blockChordNoteChoices = MidiGeneratorUtils.generateOffsets(roots, targetNoteSeed,
-					gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation());
+			if (gc.getActualArrangement().getSections().indexOf(sec) < 1) {
+				int targetNoteSeed = VibeComposerGUI.vibeComposerGUI.melody1ForcePatterns.isSelected()
+						? (seed + 1)
+						: (seed + mp.getOrder());
+				blockChordNoteChoices = MidiGeneratorUtils.generateNoteTargetOffsets(roots, targetNoteSeed,
+						gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation());
+			} else {
+				blockChordNoteChoices = TARGET_NOTES.get(mp.getOrder());
+			}
+		} else {
+			blockChordNoteChoices = (mp.getChordNoteChoices() != null)
+					? mp.getChordNoteChoices()
+					: new ArrayList<>(Arrays.asList(0, 2, 2, 4));
+
+			while (chords.size() > blockChordNoteChoices.size()) {
+				blockChordNoteChoices.addAll(blockChordNoteChoices);
+			}
 		}
 		TARGET_NOTES.put(mp.getOrder(), blockChordNoteChoices);
 		LG.d("Choices: " + blockChordNoteChoices);
@@ -332,8 +339,8 @@ public class MidiGenerator implements JMC {
 			usedChords = chords;
 		}
 
-		List<int[]> stretchedChords = usedChords.stream()
-				.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
+		//List<int[]> stretchedChords = usedChords.stream()
+		//		.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
 		//LG.d("Alt: " + alternateRhythm);
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
 		List<Integer> emphasizeKeyNoteOrder = new ArrayList<>(MidiUtils.keyEmphasisOrder);
@@ -346,7 +353,7 @@ public class MidiGenerator implements JMC {
 		boolean embellish = false;
 		for (int o = 0; o < measures; o++) {
 
-			for (int chordIndex = 0; chordIndex < stretchedChords.size(); chordIndex++) {
+			for (int chordIndex = 0; chordIndex < usedChords.size(); chordIndex++) {
 				// either after first measure, or after first half of combined chord prog
 
 				if (genVars && (chordIndex == 0)) {
@@ -452,9 +459,9 @@ public class MidiGenerator implements JMC {
 				}
 				LG.d("Overall Block Durations: " + StringUtils.join(durations, ",")
 						+ ", Doubled rhythm: " + sameRhythmTwice);
-				int chord1 = MidiGeneratorUtils.getStartingNote(stretchedChords,
+				int chord1 = MidiGeneratorUtils.getStartingNote(rootProgression,
 						blockChordNoteChoices, chordIndex, BLOCK_TARGET_MODE);
-				int chord2 = MidiGeneratorUtils.getStartingNote(stretchedChords,
+				int chord2 = MidiGeneratorUtils.getStartingNote(rootProgression,
 						blockChordNoteChoices, chordIndex + 1, BLOCK_TARGET_MODE);
 				int startingOct = chord1 / 7;
 
