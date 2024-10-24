@@ -261,7 +261,7 @@ public class VibeComposerGUI extends JFrame
 	public static CheckButton manualArrangement;
 	JTextField pieceLength;
 	RandomValueButton arrangementSeed;
-	CheckButton useArrangement;
+	public static CheckButton useArrangement;
 	JCheckBox randomizeArrangementOnCompose;
 	public static final String GLOBAL = "Global";
 	public static ArrangementSectionSelectorPanel arrSection;

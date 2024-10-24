@@ -219,11 +219,14 @@ public class ShowAreaBig extends JComponent {
 											consumed = true;
 											LG.i("Opening inst. tab for section#: " + (phrase.secOrder + 1));
 											SwingUtilities.invokeLater(() -> {
-												VibeComposerGUI.arrSection.setSelectedIndex(phrase.secOrder + 1);
 												VibeComposerGUI.instrumentTabPane.setSelectedIndex(phrase.part);
-												VibeComposerGUI.arrSection.getButtons().forEach(e -> e.repaint());
-												VibeComposerGUI.arrSection.repaint();
-												VibeComposerGUI.switchTabPaneToScoreAfterApply = true;
+												// assume user wants to change Global settings
+												if (VibeComposerGUI.useArrangement.isSelected()) {
+													VibeComposerGUI.arrSection.setSelectedIndex(phrase.secOrder + 1);
+													VibeComposerGUI.arrSection.getButtons().forEach(e -> e.repaint());
+													VibeComposerGUI.arrSection.repaint();
+													VibeComposerGUI.switchTabPaneToScoreAfterApply = true;
+												}
 												JComponent toFlash = VibeComposerGUI.getAffectedPanels(phrase.part).get(phrase.partOrder - 1).getInstrumentBox();
 												Timer tmr = new Timer(250, e -> SwingUtils.flashComponentCustom(toFlash,
 														(f, state) -> {
