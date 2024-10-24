@@ -1,20 +1,14 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 
 public class ApplyCustomSectionPopup extends CloseablePopup {
 
@@ -36,22 +30,18 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 
 		panel.add(sectionOptions);
 
-		applier.addActionListener(new ActionListener() {
+		applier.addActionListener(e -> {
+            if (sectionOptions.getItemCount() > 0) {
+                VibeComposerGUI.vibeComposerGUI.handleArrangementAction(
+                        "ArrangementApply," + (sectionOptions.getSelectedIndex() + startIndex),
+                        0, 0);
+            } else {
+                VibeComposerGUI.vibeComposerGUI.handleArrangementAction("ArrangementApply", 0,
+                        0);
+            }
+            close();
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (sectionOptions.getItemCount() > 0) {
-					VibeComposerGUI.vibeComposerGUI.handleArrangementAction(
-							"ArrangementApply," + (sectionOptions.getSelectedIndex() + startIndex),
-							0, 0);
-				} else {
-					VibeComposerGUI.vibeComposerGUI.handleArrangementAction("ArrangementApply", 0,
-							0);
-				}
-				close();
-
-			}
-		});
+        });
 		panel.add(applier);
 		panel.setPreferredSize(new Dimension(300, 100));
 

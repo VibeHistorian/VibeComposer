@@ -245,6 +245,8 @@ public class ShowPanelBig extends JPanel {
 						VibeComposerGUI.sequencer.start();
 					}
 
+				} else if (SwingUtilities.isRightMouseButton(evt)) {
+					ShowAreaBig.consumed = false;
 				}
 			}
 		};

@@ -1,27 +1,23 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MelodyUtils;
-import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Components.ArpPickerMini;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 public class ArpPanel extends InstPanel {
 	/**
@@ -88,6 +84,11 @@ public class ArpPanel extends InstPanel {
 		this.add(arpContourChordMode);
 		this.add(arpPatternRotate);
 
+
+		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		stretchPanel.setMaximumSize(new Dimension(3000, 50));
+		stretchPanel.add(stretchEnabled);
+		stretchPanel.add(chordNotesStretch);
 		this.add(stretchPanel);
 		this.add(noteLengthMultiplier);
 

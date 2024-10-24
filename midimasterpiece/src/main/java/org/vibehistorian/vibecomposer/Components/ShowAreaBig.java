@@ -131,11 +131,8 @@ public class ShowAreaBig extends JComponent {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				if (!SwingUtilities.isLeftMouseButton(evt)
-						&& !SwingUtilities.isMiddleMouseButton(evt)) {
-					return;
-				}
 				boolean leftMouseOpenPopup = SwingUtilities.isLeftMouseButton(evt);
+				boolean rightMouseOpenSectionTab = SwingUtilities.isRightMouseButton(evt);
 				LG.d("Checking note overlap for: " + evt.getPoint());
 
 				Enumeration<?> enum1 = sp.score.getPartList().elements();
@@ -217,6 +214,28 @@ public class ShowAreaBig extends JComponent {
 														.getSections().get(phrase.secOrder));
 										VibeComposerGUI.currentMidiEditorSectionIndex = phrase.secOrder;
 										return;
+									} else if (rightMouseOpenSectionTab) {
+										if (!consumed) {
+											consumed = true;
+											LG.i("Opening inst. tab for section#: " + (phrase.secOrder + 1));
+											SwingUtilities.invokeLater(() -> {
+												VibeComposerGUI.arrSection.setSelectedIndex(phrase.secOrder + 1);
+												VibeComposerGUI.instrumentTabPane.setSelectedIndex(phrase.part);
+												VibeComposerGUI.arrSection.getButtons().forEach(e -> e.repaint());
+												VibeComposerGUI.arrSection.repaint();
+												VibeComposerGUI.switchTabPaneToScoreAfterApply = true;
+												JComponent toFlash = VibeComposerGUI.getAffectedPanels(phrase.part).get(phrase.partOrder - 1).getInstrumentBox();
+												Timer tmr = new Timer(250, e -> SwingUtils.flashComponentCustom(toFlash,
+														(f, state) -> {
+															f.setOpaque(state);
+															f.setBackground(state ? Color.RED : null);
+															f.repaint();
+															LG.i(f + "; " + state);
+														}, 100, 400));
+												tmr.setRepeats(false);
+												tmr.start();
+											});
+										}
 									} else {
 										if (evt.isShiftDown()) {
 											// mute, instead of solo

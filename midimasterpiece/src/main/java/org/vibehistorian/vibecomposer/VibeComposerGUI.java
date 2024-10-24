@@ -80,8 +80,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -165,8 +163,6 @@ public class VibeComposerGUI extends JFrame
 	public static int arrangementLightModeHighestColor = 180;
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
-
-	private static List<JSeparator> separators = new ArrayList<>();
 
 	private static Soundbank soundfont = null;
 	private Synthesizer synth = null;
@@ -271,7 +267,8 @@ public class VibeComposerGUI extends JFrame
 	public static ArrangementSectionSelectorPanel arrSection;
 	public static JScrollPane arrSectionPane;
 	public static boolean switchTabPaneAfterApply;
-	JPanel arrangementMiddleColoredPanel;
+	public static boolean switchTabPaneToScoreAfterApply;
+	static JPanel arrangementMiddleColoredPanel;
 	ScrollComboBox<String> newSectionBox;
 
 	// instrument scrollers
@@ -2736,10 +2733,19 @@ public class VibeComposerGUI extends JFrame
 				checkManual = true;
 			}
 
-			if (switchTabPaneAfterApply && instrumentTabPane.getSelectedIndex() < 5) {
-				switchTabPaneAfterApply = false;
-				instrumentTabPane.setSelectedIndex(6);
-				arrSection.setSelectedIndexWithProperty(0, true);
+			if (instrumentTabPane.getSelectedIndex() < 5) {
+				if (switchTabPaneAfterApply) {
+					switchTabPaneAfterApply = false;
+					instrumentTabPane.setSelectedIndex(6);
+					arrSection.setSelectedIndexWithProperty(0, true);
+				}
+				if (switchTabPaneToScoreAfterApply) {
+					switchTabPaneToScoreAfterApply = false;
+					if (instrumentTabPane.getComponents().length > 7) {
+						instrumentTabPane.setSelectedIndex(7);
+					}
+					arrSection.setSelectedIndexWithProperty(0, true);
+				}
 			}
 
 
@@ -2958,18 +2964,6 @@ public class VibeComposerGUI extends JFrame
 		defaultButtons
 				.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
 		arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons);
-		arrSection.addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				String selItem = arrSection.getVal();
-				if (selItem == null || (arrSection.getItemCount() - 1 != actualArrangement
-						.getSections().size())) {
-					return;
-				}
-				switchPanelsForSectionSelection(selItem);
-			}
-		});
 
 		JButton commitPanelBtn = makeButton("Apply", "ArrangementApply", 50, 30);
 		JButton commitAllPanelBtn = makeButton("Apply..", e -> openApplyCustomSectionPopup(), 60);
@@ -3417,7 +3411,7 @@ public class VibeComposerGUI extends JFrame
 		return null;
 	}
 
-	private void switchPanelsForSectionSelection(String selItem) {
+	public void switchPanelsForSectionSelection(String selItem) {
 		List<InstPanel> addedPanels = new ArrayList<>();
 
 		if (GLOBAL.equals(selItem)) {
@@ -5629,10 +5623,6 @@ public class VibeComposerGUI extends JFrame
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
 		randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
-
-		for (JSeparator x : separators) {
-			x.setForeground(toggledUIColor);
-		}
 
 		panelColorHigh = UIManager.getColor("Panel.background");
 		panelColorLow = UIManager.getColor("Panel.background");
@@ -8323,7 +8313,7 @@ public class VibeComposerGUI extends JFrame
 		actualArrangement = gc.getActualArrangement();
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		setActualModel(actualArrangement.convertToActualTableModel());
-		arrSection.setSelectedIndex(0);
+		//arrSection.setSelectedIndex(0);
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
 		arrangementVariationChance.setInt(gc.getArrangementVariationChance());
@@ -8463,33 +8453,6 @@ public class VibeComposerGUI extends JFrame
 		//everythingPane.getVerticalScrollBar().setValue(ver);
 		//everythingPane.getHorizontalScrollBar().setValue(hor);
 
-	}
-
-	private void createHorizontalSeparator(int y, JFrame f) {
-		int anchorTemp = constraints.anchor;
-		JPanel sepPanel = new JPanel();
-		sepPanel.setLayout(new BoxLayout(sepPanel, BoxLayout.X_AXIS));
-
-		JSeparator x = new JSeparator(SwingConstants.HORIZONTAL);
-		//x.setPreferredSize(new Dimension(2000, 2));
-		constraints.fill = GridBagConstraints.BOTH;
-		sepPanel.add(x);
-		constraints.gridy = y;
-		//constraints.anchor = GridBagConstraints.CENTER;
-		everythingPanel.add(sepPanel, constraints);
-		constraints.anchor = anchorTemp;
-		separators.add(x);
-		constraints.fill = GridBagConstraints.NONE;
-	}
-
-	private void addHorizontalSeparatorToPanel(JPanel panel) {
-		JPanel sepPanel = new JPanel();
-		sepPanel.setLayout(new BoxLayout(sepPanel, BoxLayout.X_AXIS));
-		sepPanel.setMaximumSize(new Dimension(5000, 5));
-		JSeparator x = new JSeparator(SwingConstants.HORIZONTAL);
-		sepPanel.add(x);
-		panel.add(sepPanel);
-		separators.add(x);
 	}
 
 	// -------------- GENERIC INST PANEL METHODS ----------------------------

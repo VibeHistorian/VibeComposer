@@ -166,11 +166,6 @@ public abstract class InstPanel extends JPanel {
 			}
 		}
 
-		stretchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		stretchPanel.setMaximumSize(new Dimension(3000, 50));
-		stretchPanel.add(stretchEnabled);
-		stretchPanel.add(chordNotesStretch);
-
 		chordSpanFillPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		chordSpanFillPanel.setMaximumSize(new Dimension(3000, 50));
 		chordSpanFillPanel.add(new JLabel("Fill"));
@@ -638,6 +633,10 @@ public abstract class InstPanel extends JPanel {
 		accents.setInt(val);
 	}
 
+	public JLabel getPanelOrderLabel() {
+		return panelOrder;
+	}
+
 	public int getPanelOrder() {
 		return Integer.valueOf(panelOrder.getText());
 	}
@@ -831,6 +830,10 @@ public abstract class InstPanel extends JPanel {
 
 	public void setFeedbackVol(int val) {
 		this.feedbackVol.setInt(val);
+	}
+
+	public MidiMVI getMidiMVI() {
+		return midiMVI;
 	}
 
 	public String panelInfo() {

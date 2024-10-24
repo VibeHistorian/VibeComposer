@@ -1,17 +1,17 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ArrangementSectionSelectorPanel extends JPanel {
 
@@ -29,6 +29,19 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 		addAllButtons(defaultButtons);
 		addAllButtons(buttons);
 		setSelectedIndex(0);
+
+		addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				String selItem = getVal();
+				if (selItem == null || (getItemCount() - 1 != VibeComposerGUI.actualArrangement
+						.getSections().size())) {
+					return;
+				}
+				VibeComposerGUI.vibeComposerGUI.switchPanelsForSectionSelection(selItem);
+			}
+		});
 	}
 
 	public void addAllButtons(List<CheckButton> cbs) {

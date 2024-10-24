@@ -85,17 +85,17 @@ public class SwingUtils {
 		return textwidth;
 	}
 
-	public static void flashComponent(final JComponent field, Color flashColor,
-			final int timerDelay, int totalTime) {
+	public static void flashComponentCustom(final JComponent field, BiConsumer<JComponent, Boolean> customFlasher,
+									  final int timerDelay, int totalTime) {
 		final int totalCount = totalTime / timerDelay;
 		javax.swing.Timer timer = new javax.swing.Timer(timerDelay, new ActionListener() {
 			int count = 0;
 
 			public void actionPerformed(ActionEvent evt) {
 				if (count % 2 == 0) {
-					field.setBackground(flashColor);
+					customFlasher.accept(field, true);
 				} else {
-					field.setBackground(null);
+					customFlasher.accept(field, false);
 					if (count >= totalCount) {
 						((Timer) evt.getSource()).stop();
 					}
@@ -104,6 +104,13 @@ public class SwingUtils {
 			}
 		});
 		timer.start();
+	}
+
+	public static void flashComponent(final JComponent field, Color flashColor,
+			final int timerDelay, int totalTime) {
+		flashComponentCustom(field, (f, state) -> {
+			f.setBackground(state ? flashColor : null);
+		}, timerDelay, totalTime);
 	}
 
 	public static Pair<JPopupMenu, MouseListener> addPopupMenu(JComponent comp, BiConsumer<ActionEvent, String> actionOnSelect,
