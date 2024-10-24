@@ -221,15 +221,15 @@ public abstract class InstPanel extends JPanel {
 				if (!VibeComposerGUI.reuseMidiChannelAfterCopy.isSelected() && !SwingUtilities.isMiddleMouseButton(e)) {
 					switch (VibeComposerGUI.instrumentTabPane.getSelectedIndex()) {
 					case 0:
-						newPanel.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(0, newPanel.getPanelOrder()));
+						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(3);
 						break;
 					case 2:
-						newPanel.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(2, newPanel.getPanelOrder()));
+						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(5);
 						break;
 					case 3:
-						newPanel.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(3, newPanel.getPanelOrder()));
+						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(7);
 						break;
 					default:
@@ -288,6 +288,17 @@ public abstract class InstPanel extends JPanel {
 
 		addBackgroundsForKnobs();
 		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
+	}
+
+	public void setNextFreeMidiChannel() {
+		int part = this.getPartNum();
+		int order = this.getPanelOrder();
+		List<InstPanel> instPanels = (List<InstPanel>) VibeComposerGUI.getInstList(part);
+		List<Integer> typicalChannels = VibeComposerGUI.TYPICAL_MIDI_CH.get(part);
+		Set<Integer> usedChannels = instPanels.stream().filter(e -> !this.equals(e)).map(e -> e.getMidiChannel()).collect(Collectors.toSet());
+
+		setMidiChannel(typicalChannels.stream().filter(e -> !usedChannels.contains(e)).findFirst()
+				.orElse(VibeComposerGUI.TYPICAL_MIDI_CH_START.get(part) + (order - 1) % typicalChannels.size()));
 	}
 
 	public void addDefaultInstrumentControls() {

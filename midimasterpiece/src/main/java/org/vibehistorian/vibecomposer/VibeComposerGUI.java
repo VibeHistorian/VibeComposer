@@ -255,14 +255,6 @@ public class VibeComposerGUI extends JFrame
 		return sectionPanels;
 	}
 
-	public static int getNextFreeMidiChannel(int order, int panelOrder) {
-		List<InstPanel> instPanels = (List<InstPanel>) getInstList(order);
-		List<Integer> typicalChannels = TYPICAL_MIDI_CH.get(order);
-		Set<Integer> usedChannels = instPanels.stream().map(e -> e.getMidiChannel()).collect(Collectors.toSet());
-		return typicalChannels.stream().filter(e -> !usedChannels.contains(e)).findFirst()
-				.orElse(TYPICAL_MIDI_CH_START.get(order) + (panelOrder - 1) % typicalChannels.size());
-	}
-
 	// arrangement
 	public static Arrangement arrangement;
 	public static Arrangement actualArrangement;
@@ -9029,7 +9021,7 @@ public class VibeComposerGUI extends JFrame
 			ip.growPattern(panelGenerator, 1, 5);
 
 			if (needNewChannel) {
-				ip.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(2, ip.getPanelOrder()));
+				ip.setNextFreeMidiChannel();
 				ip.setPanByOrder(5);
 			}
 		}
@@ -9304,7 +9296,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (needNewChannel) {
-				ip.setMidiChannel(VibeComposerGUI.getNextFreeMidiChannel(3, ip.getPanelOrder()));
+				ip.setNextFreeMidiChannel();
 				ip.setPanByOrder(7);
 			}
 

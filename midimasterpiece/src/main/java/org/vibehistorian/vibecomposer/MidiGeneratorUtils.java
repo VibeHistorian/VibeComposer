@@ -164,16 +164,6 @@ public class MidiGeneratorUtils {
 		return choiceMap;
 	}
 
-	public static List<Integer> generateNoteTargetOffsets(List<String> chordStrings, int randomSeed,
-														  int targetMode, int targetNoteVariation, Boolean isPublic, MelodyUtils.NoteTargetDirection direction) {
-		List<int[]> chords = new ArrayList<>();
-		for (int i = 0; i < chordStrings.size(); i++) {
-			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
-		}
-		return MidiGeneratorUtils.generateNoteTargetOffsets(chords, randomSeed, targetMode,
-				targetNoteVariation, direction);
-	}
-
 	static Pair<Integer, Integer> normalizeNotePitch(int startingNote, int startingPitch) {
 		if (startingNote >= 7) {
 			int divided = startingNote / 7;
@@ -185,6 +175,16 @@ public class MidiGeneratorUtils {
 			startingNote += (7 * divided);
 		}
 		return Pair.of(startingNote, startingPitch);
+	}
+
+	public static List<Integer> generateNoteTargetOffsets(List<String> chordStrings, int randomSeed,
+														  int targetMode, int targetNoteVariation, Boolean isPublic, MelodyUtils.NoteTargetDirection direction) {
+		List<int[]> chords = new ArrayList<>();
+		for (int i = 0; i < chordStrings.size(); i++) {
+			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
+		}
+		return MidiGeneratorUtils.generateNoteTargetOffsets(chords, randomSeed, targetMode,
+				targetNoteVariation, direction);
 	}
 
 	static List<Integer> generateNoteTargetOffsets(List<int[]> chords, int randomSeed, int targetMode,
