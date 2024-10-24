@@ -113,6 +113,7 @@ public class GUIConfig {
 	private boolean melodyAvoidChordJumps = false;
 	private boolean melodyUseDirectionsFromProgression = true;
 	private boolean melodyPatternFlip = false;
+	private MelodyUtils.NoteTargetDirection noteTargetDirectionChoice = MelodyUtils.NoteTargetDirection.ANY;
 	private int melodyBlockTargetMode = 2;
 	private int melodyPatternEffect = 2;
 	private int melodyRhythmAccents = 0;
@@ -980,5 +981,13 @@ public class GUIConfig {
 
 	public void setMelodyBlockTypePreference(List<Integer> melodyBlockTypePreference) {
 		this.melodyBlockTypePreference = melodyBlockTypePreference;
+	}
+
+	public MelodyUtils.NoteTargetDirection getNoteTargetDirectionChoice() {
+		return noteTargetDirectionChoice;
+	}
+
+	public void setNoteTargetDirectionChoice(MelodyUtils.NoteTargetDirection noteTargetDirectionChoice) {
+		this.noteTargetDirectionChoice = noteTargetDirectionChoice;
 	}
 }

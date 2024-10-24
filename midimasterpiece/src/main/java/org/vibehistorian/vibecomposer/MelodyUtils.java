@@ -22,6 +22,16 @@ import static org.vibehistorian.vibecomposer.Enums.BlockType.getBlocksForType;
 
 public class MelodyUtils {
 
+	public enum NoteTargetDirection {
+		ANY(0), ASC(1), DESC(-1);
+
+		public int direction;
+
+		NoteTargetDirection(int direction) {
+			this.direction = direction;
+		}
+	}
+
 	//public static final List<Integer> chordyNotes = Arrays.asList(new Integer[] { 0, 2, 4, 7 });
 	public static final List<Integer> cMajorSubstituteNotes = Arrays
 			.asList(0, 2, 3, 5);

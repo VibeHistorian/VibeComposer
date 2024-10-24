@@ -397,6 +397,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox melodyUseDirectionsFromProgression;
 	JCheckBox melodyPatternFlip;
 	public static JCheckBox patternApplyPausesWhenGenerating;
+	public static ScrollComboBox<MelodyUtils.NoteTargetDirection> noteTargetDirectionChoice;
 	public static ScrollComboBox<String> melodyBlockTargetMode;
 	JCheckBox melodyTargetNotesRandomizeOnCompose;
 	ScrollComboBox<String> melodyPatternEffect;
@@ -1942,6 +1943,9 @@ public class VibeComposerGUI extends JFrame
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyNewBlocksChance);
 		melodySettingsExtraPanelBlocksPatternsCompose
 				.add(new JLabel("<html>Note Target<br>Mode</html>"));
+		noteTargetDirectionChoice = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(MelodyUtils.NoteTargetDirection.values(), noteTargetDirectionChoice);
+		melodySettingsExtraPanelBlocksPatternsCompose.add(noteTargetDirectionChoice);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
@@ -8256,6 +8260,7 @@ public class VibeComposerGUI extends JFrame
 		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
 		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumpsLegacy.isSelected());
 		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
+		gc.setNoteTargetDirectionChoice(noteTargetDirectionChoice.getSelectedItem());
 		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
 		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
 		gc.setMelodyRhythmAccentsMode(melodyRhythmAccentsMode.getSelectedIndex());
@@ -8406,6 +8411,7 @@ public class VibeComposerGUI extends JFrame
 		melodyAvoidChordJumpsLegacy.setSelected(gc.isMelodyAvoidChordJumps());
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
 		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
+		noteTargetDirectionChoice.setVal(gc.getNoteTargetDirectionChoice());
 		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
 		melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
 		melodyRhythmAccentsMode.setSelectedIndex(gc.getMelodyRhythmAccentsMode());

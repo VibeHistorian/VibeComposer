@@ -1172,12 +1172,22 @@ public class MidiUtils {
 	}
 
 	public static int getClosestFromList(List<Integer> list, int valToFind) {
+		return getClosestFromList(list, valToFind, 0);
+	}
+
+	public static int getClosestFromList(List<Integer> list, int valToFind, int direction) {
 		if (list == null || list.isEmpty()) {
 			return Pitches.REST;
 		}
-		int closest = list.get(0);
+		int closest = direction <= 0 ? list.get(0) : list.get(list.size() - 1);
 		int closestDistance = Math.abs(valToFind - closest);
 		for (int i = 1; i < list.size(); i++) {
+			int rawDistance = valToFind - list.get(i);
+			if (direction == -1 && rawDistance < 0) {
+				continue;
+			} else if (direction == 1 && rawDistance > 0) {
+				continue;
+			}
 			int distance = Math.abs(valToFind - list.get(i));
 			if (distance < closestDistance) {
 				closestDistance = distance;

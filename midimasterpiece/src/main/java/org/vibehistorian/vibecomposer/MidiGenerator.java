@@ -283,7 +283,7 @@ public class MidiGenerator implements JMC {
 						? (seed + 1)
 						: (seed + mp.getOrder());
 				blockChordNoteChoices = MidiGeneratorUtils.generateNoteTargetOffsets(roots, targetNoteSeed,
-						gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation());
+						gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation(), gc.getNoteTargetDirectionChoice());
 			} else {
 				blockChordNoteChoices = TARGET_NOTES.get(mp.getOrder());
 			}
@@ -459,9 +459,9 @@ public class MidiGenerator implements JMC {
 				}
 				LG.d("Overall Block Durations: " + StringUtils.join(durations, ",")
 						+ ", Doubled rhythm: " + sameRhythmTwice);
-				int chord1 = MidiGeneratorUtils.getStartingNote(rootProgression,
+				int chord1 = MidiGeneratorUtils.getStartingNote(roots,
 						blockChordNoteChoices, chordIndex, BLOCK_TARGET_MODE);
-				int chord2 = MidiGeneratorUtils.getStartingNote(rootProgression,
+				int chord2 = MidiGeneratorUtils.getStartingNote(roots,
 						blockChordNoteChoices, chordIndex + 1, BLOCK_TARGET_MODE);
 				int startingOct = chord1 / 7;
 
@@ -3216,18 +3216,20 @@ public class MidiGenerator implements JMC {
 			if (pe == null || pe.isFillerPart()) {
 				continue;
 			}
-			boolean isDrum = pe.getTitle().contains("Drum");
+			int noteColorIndex = ShowAreaBig.getIndexForPartName(pe.getTitle());
+			boolean isDrum = noteColorIndex == 4;
 			boolean shouldRandomize = (isDrum && gc.getHumanizeDrums() > 0)
 					|| (!isDrum && gc.getHumanizeNotes() > 0);
 
 
 			if (shouldRandomize) {
-				int noteColorIndex = ShowAreaBig.getIndexForPartName(pe.getTitle());
 				int partOrder = ShowAreaBig.getPartOrderForPartName(pe.getTitle());
+				// 3x less for chords - they're already humanized via strum settings
+				double divisor = (noteColorIndex == 2) ? 30000.0 : 10000.0;
 				rand.setSeed(humanizerRandSeed + noteColorIndex * 1000 + partOrder);
 				JMusicUtilsCustom.humanize(pe, rand,
-						isDrum ? noteMultiplier * gc.getHumanizeDrums() / 10000.0
-								: noteMultiplier * gc.getHumanizeNotes() / 10000.0,
+						isDrum ? noteMultiplier * gc.getHumanizeDrums() / divisor
+								: noteMultiplier * gc.getHumanizeNotes() / divisor,
 						isDrum);
 			}
 		}

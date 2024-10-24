@@ -67,19 +67,29 @@ public class MidiGeneratorUtils {
 	}
 
 	static List<Integer> multipliedDirections(List<Integer> directions, int randomSeed,
-			int targetNoteVariation) {
+											  int targetNoteVariation, MelodyUtils.NoteTargetDirection direction) {
 		if (targetNoteVariation < 1) {
 			targetNoteVariation = 1;
 		}
 		Random rand = new Random(randomSeed);
 		List<Integer> multiDirs = new ArrayList<>();
 		for (Integer o : directions) {
+			if (direction == MelodyUtils.NoteTargetDirection.ASC) {
+				o = Math.abs(o);
+			} else if (direction == MelodyUtils.NoteTargetDirection.DESC) {
+				o = Math.abs(o) * -1;
+			}
 			int multiplied = (rand.nextInt(targetNoteVariation) + 1) * o;
-			if (o < 0) {
+			if (direction == MelodyUtils.NoteTargetDirection.ANY && o < 0) {
 				// small correction for too low dips
 				multiplied++;
 			}
 			multiDirs.add(multiplied);
+		}
+		if (direction == MelodyUtils.NoteTargetDirection.ASC) {
+			Collections.sort(multiDirs);
+		} else if (direction == MelodyUtils.NoteTargetDirection.DESC) {
+			Collections.sort(multiDirs, (e1,e2) -> Integer.compare(e2,e1));
 		}
 		return multiDirs;
 	}
@@ -148,19 +158,20 @@ public class MidiGeneratorUtils {
 				}
 				LG.i("No chord note present in Chord: " + Arrays.toString(c));
 			}
+			Collections.sort(choices);
 			choiceMap.put(counter++, choices);
 		}
 		return choiceMap;
 	}
 
 	public static List<Integer> generateNoteTargetOffsets(List<String> chordStrings, int randomSeed,
-														  int targetMode, int targetNoteVariation, Boolean isPublic) {
+														  int targetMode, int targetNoteVariation, Boolean isPublic, MelodyUtils.NoteTargetDirection direction) {
 		List<int[]> chords = new ArrayList<>();
 		for (int i = 0; i < chordStrings.size(); i++) {
 			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
 		}
 		return MidiGeneratorUtils.generateNoteTargetOffsets(chords, randomSeed, targetMode,
-				targetNoteVariation);
+				targetNoteVariation, direction);
 	}
 
 	static Pair<Integer, Integer> normalizeNotePitch(int startingNote, int startingPitch) {
@@ -177,14 +188,14 @@ public class MidiGeneratorUtils {
 	}
 
 	static List<Integer> generateNoteTargetOffsets(List<int[]> chords, int randomSeed, int targetMode,
-												   int targetNoteVariation) {
+												   int targetNoteVariation, MelodyUtils.NoteTargetDirection direction) {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
 				MidiGenerator.gc != null && MidiGenerator.gc.isMelodyUseDirectionsFromProgression()
 						? generateMelodyOffsetDirectionsFromChordProgression(chords, true,
 								randomSeed)
 						: randomizedChordDirections(chords.size(), randomSeed),
-				randomSeed + 1, targetNoteVariation);
+				randomSeed + 1, targetNoteVariation, direction);
 		List<Integer> offsets = new ArrayList<>();
 		if (targetMode == 1) {
 			for (int i = 0; i < chordOffsets.size(); i++) {
@@ -205,8 +216,8 @@ public class MidiGeneratorUtils {
 						: offsets.get(i);
 				int chordTargetNote = choices.contains(offset) ? offset
 						: MidiUtils.getClosestFromList(choices,
-								offset + (offsetRandomizer.nextInt(100) < 75 ? 1 : 0));
-				LG.d("Offset old: " + offset + ", C T NOte: " + chordTargetNote);
+								offset + (offsetRandomizer.nextInt(100) < 75 ? 1 : 0), direction.direction);
+				LG.d("Offset old: " + offset + ", Chord Target Note: " + chordTargetNote);
 				offsets.set(i, (targetMode == 1) ? chordTargetNote + chordOffsets.get(i)
 						: chordTargetNote);
 			}
@@ -215,7 +226,7 @@ public class MidiGeneratorUtils {
 				if (offsets.size() > 3 && (last == offsets.get(offsets.size() - 3))) {
 					last += (new Random(randomSeed).nextBoolean() ? 2 : -2);
 					offsets.set(offsets.size() - 1,
-							MidiUtils.getClosestFromList(choiceMap.get(offsets.size() - 1), last));
+							MidiUtils.getClosestFromList(choiceMap.get(offsets.size() - 1), last, direction.direction));
 					LG.i("Last offset moved!");
 				}
 			}
