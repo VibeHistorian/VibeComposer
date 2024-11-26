@@ -651,7 +651,7 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox customFilenameAddTimestamp;
 	public static JCheckBox miniScorePopup;
 
-	public static final String CURRENT_VERSION = "2.5";
+	public static final String CURRENT_VERSION = "2.6";
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
