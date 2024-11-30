@@ -254,14 +254,12 @@ public class MidiEditPopup extends CloseablePopup {
 		JPanel midiDragDropPanel = new JPanel();
 		midiDragDropPanel.setLayout(new GridLayout(0, 1));
 
-		generatedMidi = new JList<File>();
+		generatedMidi = new JList<>();
 		MidiListCellRenderer dndRenderer = new MidiListCellRenderer();
 		dndRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 		generatedMidi.setCellRenderer(dndRenderer);
 		generatedMidi.setBorder(new BevelBorder(BevelBorder.RAISED));
-		generatedMidi.setTransferHandler(new FileTransferHandler(e -> {
-			return buildMidiFileFromNotes();
-		}));
+		generatedMidi.setTransferHandler(new FileTransferHandler(e -> buildMidiFileFromNotes()));
 		generatedMidi.setDragEnabled(true);
 		generatedMidi.setListData(new File[] { new File("tempMidi.mid") });
 
