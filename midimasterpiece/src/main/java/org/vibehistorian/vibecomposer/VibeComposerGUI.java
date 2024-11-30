@@ -844,6 +844,11 @@ public class VibeComposerGUI extends JFrame
 			everythingPanel.add(instrumentTabPane, constraints);
 			for (int i = 0; i < 5; i++) {
 				instrumentTabPane.setBackgroundAt(i, OMNI.alphen(instColors[i], 40));
+				int finalI = i;
+				addInst[i].addChangeListener((evt) -> {
+					instrumentTabPane.setBackgroundAt(finalI,
+							OMNI.alphen(addInst[finalI].isSelected() ? instColors[finalI] : Color.white, 40));
+				});
 			}
 
 			// arrangement
@@ -973,8 +978,6 @@ public class VibeComposerGUI extends JFrame
 
 	protected void setAddInst(int partNum, boolean b) {
 		addInst[partNum].setSelected(b);
-		instrumentTabPane.setBackgroundAt(partNum,
-				OMNI.alphen(b ? instColors[partNum] : Color.white, 40));
 	}
 
 	private void initKeyboardListener() {
@@ -4237,7 +4240,7 @@ public class VibeComposerGUI extends JFrame
 		beatDurationMultiplier = new ScrollComboBox<Double>();
 		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, beatDurationMultiplier);
 		JPanel useDoubledPanel = new JPanel();
-		useDoubledPanel.add(new JLabel("Beat Dur. Multiplier"));
+		useDoubledPanel.add(new JLabel("<html>Beat Duration<br>Multiplier</html>"));
 		useDoubledPanel.add(beatDurationMultiplier);
 		beatDurationMultiplier.setSelectedIndex(1);
 		useDoubledPanel.setOpaque(false);
