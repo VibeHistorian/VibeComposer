@@ -36,7 +36,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 	public PhraseNotes(List<Note> notes) {
 		this();
-		addAll(notes.stream().map(e -> new PhraseNote(e)).collect(Collectors.toList()));
+		addAll(notes.stream().map(PhraseNote::new).collect(Collectors.toList()));
 	}
 
 	public static PhraseNotes fromPN(List<PhraseNote> notes) {
@@ -44,7 +44,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 		if (notes == null) {
 			 return pn;
 		}
-		pn.addAll(notes.stream().map(e -> e.clone()).collect(Collectors.toList()));
+		pn.addAll(notes.stream().map(PhraseNote::clone).collect(Collectors.toList()));
 		return pn.copy();
 	}
 
@@ -55,12 +55,12 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 	}
 
 	public List<Note> makeNotes() {
-		return stream().map(e -> e.toNote()).collect(Collectors.toList());
+		return stream().map(PhraseNote::toNote).collect(Collectors.toList());
 	}
 
 	public PhraseExt makePhrase() {
 		PhraseExt phr = new PhraseExt();
-		makeNotes().forEach(e -> phr.addNote(e));
+		makeNotes().forEach(phr::addNote);
 		return phr;
 	}
 
@@ -153,7 +153,7 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 
 
 	public void stretch(double beatDurationMult, boolean remakeOrder) {
-		stream().forEach(e -> {
+		this.forEach(e -> {
 			e.setRv(e.getRv() * beatDurationMult);
 			e.setDuration(e.getDuration() * beatDurationMult);
 			e.setOffset(e.getOffset() * beatDurationMult);

@@ -420,47 +420,8 @@ public class JMusicUtilsCustom implements JMC {
 
 	private static void resetTicker() {
 		tickRemainder = 0.0;
-
-			/* OLD CODE ---------------
-			//Sort lists so start times are in the right order
-			Enumeration start = midiNoteEvents.elements();
-			Enumeration timeing = timeingList.elements();
-			Vector sortedStarts = new Vector();
-			Vector sortedEvents = new Vector();
-			while(start.hasMoreElements()){
-				double smallest = ((Double)start.nextElement()).doubleValue();
-				Event anevent = (Event) timeing.nextElement();
-				int index = 0, count = 0;
-				while(start.hasMoreElements()){
-					count++;
-					double d1 = ((Double)start.nextElement()).doubleValue();
-					Event event1 = (Event) timeing.nextElement();
-					if(smallest == d1){ //if note time is equal
-						if(zeroVelEventQ(event1)) {
-							index = count;
-						}
-					}
-					if(smallest > d1){
-						smallest = d1;
-						index = count;
-					}
-				}
-				sortedStarts.addElement(midiNoteEvents.elementAt(index));
-				sortedEvents.addElement(timeingList.elementAt(index));
-				midiNoteEvents.removeElementAt(index);
-				timeingList.removeElementAt(index);
-				//reset lists for next run
-				start = midiNoteEvents.elements();
-				timeing = timeingList.elements();
-			}
-			*/
 	}
 
-	/**
-	 * We need to call this any time we calculate unusual time values,
-	 * to prevent time creep due to the MIDI tick roundoff error.
-	 * This method wriiten by Bob Lee.
-	 */
 	private static double tickRounder(double timeValue) {
 		final double tick = 1. / (double) DEFAULT_PPQN;
 		final double halfTick = 1. / (DEFAULT_PPQN * 2.);

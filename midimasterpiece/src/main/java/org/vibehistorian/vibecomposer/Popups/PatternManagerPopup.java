@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Popups;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.LG;
@@ -121,7 +122,7 @@ public class PatternManagerPopup extends CloseablePopup {
 
 	private void loadParts() {
 		patternPartBox.removeAllItems();
-		ScrollComboBox.addAll(VibeComposerGUI.instNames, patternPartBox);
+		ScrollComboBox.addAll(Constants.instNames, patternPartBox);
 		patternPartBox.addItem("");
 	}
 

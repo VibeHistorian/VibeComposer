@@ -1,14 +1,14 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Parts.InstPart;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @XmlRootElement(name = "UsedPattern")
 @XmlType(propOrder = {})
@@ -22,9 +22,7 @@ public class UsedPattern {
 	public static final String[] BASE_PATTERNS = { NONE, MAIN, VERSE, INST };
 	public static final Set<String> BASE_PATTERNS_SET = new LinkedHashSet<>();
 	static {
-		for (String s : BASE_PATTERNS) {
-			BASE_PATTERNS_SET.add(s);
-		}
+        Collections.addAll(BASE_PATTERNS_SET, BASE_PATTERNS);
 	}
 
 	Integer part;
@@ -80,23 +78,18 @@ public class UsedPattern {
 	}
 
 	public static String generateName(int part, int partOrder) {
-		return VibeComposerGUI.instNames[part].substring(0, 1) + partOrder + ";"
+		return Constants.instNames[part].substring(0, 1) + partOrder + ";"
 				+ new Date().hashCode();
 	}
 
 	// different part, or different part order
 	// or applied manually
-	public boolean isCustom(int part, int partOrder) {
+	public boolean isCustom(int part, int partOrder, final PhraseNotes currentPattern) {
 		if ((part != this.part) || (partOrder != this.partOrder)) {
 			return true;
 		}
-		PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(this);
-		if (pn != null && pn.isApplied()) {
-			return true;
-		}
-
-		return false;
-	}
+        return currentPattern != null && currentPattern.isApplied();
+    }
 
 	public int getType() {
 		if (name == null) {
@@ -116,7 +109,6 @@ public class UsedPattern {
 
 	@Override
 	public String toString() {
-		return "[" + VibeComposerGUI.instNames[part] + ", " + partOrder + ", " + name + "]";
+		return "[" + Constants.instNames[part] + ", " + partOrder + ", " + name + "]";
 	}
-
 }

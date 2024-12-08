@@ -1,9 +1,17 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Point;
+import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -11,23 +19,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.JTableHeader;
-
-import org.vibehistorian.vibecomposer.Arrangement;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
-import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
 public class ArrangementPartInclusionPopup extends CloseablePopup {
 
@@ -78,12 +69,12 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 			categoryPanel.setMaximumSize(new Dimension(2000, 40));
 			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
 			JPanel categoryButtons = new JPanel();
-			JLabel categoryName = new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
+			JLabel categoryName = new JLabel(Constants.instNames[i].toUpperCase());
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
 			categoryPanel.add(categoryName);
-			categoryPanel.addBackground(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
+			categoryPanel.addBackground(OMNI.alphen(Constants.instColors[i], 50));
 
 			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.add(categoryButtons);

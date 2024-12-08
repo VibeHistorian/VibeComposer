@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Popups;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -129,13 +130,13 @@ public class VariationPopup {
 			boolean commited = sec.getInstPartList(fI) != null;
 			JPanel categoryButtons = new JPanel();
 			JLabel categoryName = commited
-					? new JLabel("*" + VibeComposerGUI.instNames[i] + " - Committed")
-					: new JLabel(VibeComposerGUI.instNames[i].toUpperCase());
+					? new JLabel("*" + Constants.instNames[i] + " - Committed")
+					: new JLabel(Constants.instNames[i].toUpperCase());
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
 			categoryPanel.add(categoryName);
-			categoryPanel.addBackground(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
+			categoryPanel.addBackground(OMNI.alphen(Constants.instColors[i], 50));
 
 			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.add(categoryButtons);
@@ -311,10 +312,10 @@ public class VariationPopup {
 		instVolumesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		for (int i = 0; i < 5; i++) {
 			int val = sec.getVol(i);
-			KnobPanel panel = new DetachedKnobPanel(VibeComposerGUI.instNames[i], 100, 20, 150);
+			KnobPanel panel = new DetachedKnobPanel(Constants.instNames[i], 100, 20, 150);
 			panel.setInt(val);
 			panel.setShowTextInKnob(VibeComposerGUI.isShowingTextInKnobs);
-			panel.addBackgroundWithBorder(OMNI.alphen(VibeComposerGUI.instColors[i], 50));
+			panel.addBackgroundWithBorder(OMNI.alphen(Constants.instColors[i], 50));
 			knobs.add(panel);
 			instVolumesPanel.add(panel);
 		}

@@ -1,5 +1,13 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,14 +17,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlSeeAlso;
-import javax.xml.bind.annotation.XmlType;
-
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 @XmlRootElement(name = "PatternMap")
 @XmlType(propOrder = {})
@@ -112,9 +112,8 @@ public class PatternMap {
 		if (others == null) {
 			return null;
 		}
-		List<PatternMap> maps = others.stream().map(e -> PatternMap.mapCopy(e))
-				.collect(Collectors.toList());
-		return maps;
+        return others.stream().map(PatternMap::mapCopy)
+                .collect(Collectors.toList());
 	}
 
 
@@ -144,7 +143,7 @@ public class PatternMap {
 		for (int i = 0; i < 5; i++) {
 			PatternMap map = patternMaps.get(i);
 			List<Integer> partOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
+					.map(InstPanel::getPanelOrder).collect(Collectors.toList());
 			List<Integer> mapPartOrdersToRemove = map.getKeys();
 			List<Integer> mapPartOrdersCopy = new ArrayList<>(mapPartOrdersToRemove);
 			if (removeOldForNewArrangement) {

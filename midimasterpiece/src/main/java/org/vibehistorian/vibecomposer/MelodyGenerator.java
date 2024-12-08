@@ -26,7 +26,7 @@ public class MelodyGenerator {
     public static final int maxAllowedScaleNotes = 7;
 
     // internal only
-    private List<Integer> MELODY_SCALE = cIonianScale4;
+    private final List<Integer> MELODY_SCALE = cIonianScale4;
     private int samePitchCount = 0;
     private int previousPitch = 0;
 

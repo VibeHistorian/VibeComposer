@@ -9,6 +9,7 @@ import org.vibehistorian.vibecomposer.Components.MidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
@@ -266,7 +267,7 @@ public class MidiEditPopup extends CloseablePopup {
 		midiDragDropPanel.add(generatedMidi);
 		midiDragDropPanel.add(new MidiDropPane(e -> {
 			PhraseNotes pn = new PhraseNotes(e);
-			double length = pn.stream().map(f -> f.getRv()).mapToDouble(f -> f).sum();
+			double length = pn.stream().map(PhraseNote::getRv).mapToDouble(f -> f).sum();
 			LG.i("Dropped MIDI Length: " + length);
 			if (length > mvea.sectionLength + DBL_ERR) {
 				return null;
@@ -399,7 +400,7 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel2.setLayout(new GridLayout(0, 10, 0, 0));
 		buttonPanel2.setPreferredSize(new Dimension(1500, 50));
 
-		ScrollComboBox.addAll(VibeComposerGUI.instNames, patternPartBox);
+		ScrollComboBox.addAll(Constants.instNames, patternPartBox);
 		patternPartBox.setFunc(e -> loadPartOrders());
 		patternPartOrderBox.setFunc(e -> loadNames());
 		//patternNameBox.setFunc(e -> loadNotes());
@@ -604,7 +605,7 @@ public class MidiEditPopup extends CloseablePopup {
 		partOrder = secPartOrder;
 		UsedPattern pat = sec.getPattern(part, partOrder);
 
-		if (pat != null && pat.isCustom(part, partOrder)) {
+		if (pat != null && pat.isCustom(part, partOrder, VibeComposerGUI.guiConfig.getPatternRaw(pat))) {
 			setSelectedPattern(pat);
 		} else {
 			patternPartBox.setSelectedIndex(part);
@@ -613,7 +614,7 @@ public class MidiEditPopup extends CloseablePopup {
 			patternNameBox.setValRaw(new PatternNameMarker(patName,
 					VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, patName) != null));
 		}
-		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + VibeComposerGUI.instNames[part]
+		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + Constants.instNames[part]
 				+ ", Order: " + secPartOrder);
 	}
 
@@ -873,8 +874,11 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public boolean isSectionCustom() {
-		return sec.containsPattern(part, partOrder)
-				&& sec.getPattern(part, partOrder).isCustom(part, partOrder);
+		if (!sec.containsPattern(part, partOrder)) {
+			return false;
+		}
+		UsedPattern pat = sec.getPattern(part, partOrder);
+		return pat.isCustom(part, partOrder, VibeComposerGUI.guiConfig.getPatternRaw(pat));
 	}
 
 	public PhraseNotes getValues() {

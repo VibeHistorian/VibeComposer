@@ -19,6 +19,18 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
+import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
+import org.vibehistorian.vibecomposer.Section.SectionType;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,40 +41,27 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Section.SectionType;
-import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
-import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
-
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
 public class Arrangement {
 	private static List<List<String>> DEFAULT_ARRANGEMENTS = new ArrayList<>();
 
 	private static final List<String> POP_ARRANGEMENT = new ArrayList<>(
-			Arrays.asList(new String[] { "INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
-					"CHORUS3", "CLIMAX", "CLIMAX", "OUTRO" }));
+			Arrays.asList("INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
+                    "CHORUS3", "CLIMAX", "CLIMAX", "OUTRO"));
 	private static final List<String> EDM_ARRANGEMENT = new ArrayList<>(
-			Arrays.asList(new String[] { "INTRO", "BUILDUP1", "CHORUS2", "CHORUS3", "VERSE1",
-					"VERSE2", "CHORUS3", "CLIMAX", "OUTRO" }));
+			Arrays.asList("INTRO", "BUILDUP1", "CHORUS2", "CHORUS3", "VERSE1",
+                    "VERSE2", "CHORUS3", "CLIMAX", "OUTRO"));
 
 	private static final List<String> EDM_ARRANGEMENT2 = new ArrayList<>(
-			Arrays.asList(new String[] { "INTRO", "BUILDUP1", "CHORUS2", "CHORUS3", "VERSE1",
-					"BREAKDOWN", "CHILL", "BUILDUP1", "BUILDUP2", "CHORUS3", "CLIMAX", "BREAKDOWN",
-					"CHILL", "CLIMAX", "CLIMAX", "HALF_CHORUS", "OUTRO" }));
+			Arrays.asList("INTRO", "BUILDUP1", "CHORUS2", "CHORUS3", "VERSE1",
+                    "BREAKDOWN", "CHILL", "BUILDUP1", "BUILDUP2", "CHORUS3", "CLIMAX", "BREAKDOWN",
+                    "CHILL", "CLIMAX", "CLIMAX", "HALF_CHORUS", "OUTRO"));
 
 	private static final List<String> POP_ARRANGEMENT2 = new ArrayList<>(
-			Arrays.asList(new String[] { "HALF_CHORUS", "HALF_CHORUS", "OUTRO", "VERSE2", "CHORUS2",
-					"VERSE2", "CHORUS3", "BREAKDOWN", "BUILDUP1", "BUILDUP2", "CHORUS3", "CLIMAX",
-					"OUTRO" }));
+			Arrays.asList("HALF_CHORUS", "HALF_CHORUS", "OUTRO", "VERSE2", "CHORUS2",
+                    "VERSE2", "CHORUS3", "BREAKDOWN", "BUILDUP1", "BUILDUP2", "CHORUS3", "CLIMAX",
+                    "OUTRO"));
 
 	static {
 		DEFAULT_ARRANGEMENTS.add(POP_ARRANGEMENT);

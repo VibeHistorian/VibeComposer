@@ -37,7 +37,6 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
-import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -133,7 +132,6 @@ public class MidiGenerator implements JMC {
 	private static final String ARP_PAUSES_KEY = "ARP_PAUSES";
 
 	// visibles/settables
-	public static DrumGenSettings DRUM_SETTINGS = new DrumGenSettings();
 
 	public static List<String> userChords = new ArrayList<>();
 	public static List<Double> userChordsDurations = new ArrayList<>();
@@ -1386,7 +1384,7 @@ public class MidiGenerator implements JMC {
 		LG.i("Printing score...");
 		JMusicUtilsCustom.midi(score, fileName);
 		LG.i("Printing scoreFull...");
-		JMusicUtilsCustom.midi(scoreFull, VibeComposerGUI.TEMPORARY_SEQUENCE_MIDI_NAME);
+		JMusicUtilsCustom.midi(scoreFull, Constants.TEMPORARY_SEQUENCE_MIDI_NAME);
 		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
 			System.setOut(VibeComposerGUI.originalOut);
 			System.setErr(VibeComposerGUI.dummyOut);

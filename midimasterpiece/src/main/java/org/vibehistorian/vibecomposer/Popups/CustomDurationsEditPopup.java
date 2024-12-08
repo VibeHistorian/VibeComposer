@@ -76,7 +76,7 @@ public class CustomDurationsEditPopup extends CloseablePopup {
         cdMvea.addKeyboardControls(cdMveaPanel);
         cdMvea.setAndRepaint();
         JPanel midiDragDropPanel = makeMidiDragDropPanel();
-        midiDragDropPanel.setPreferredSize(new Dimension(1000, 100));
+        midiDragDropPanel.setMaximumSize(new Dimension(1000, 80));
         mainVertPanel.add(midiDragDropPanel, BorderLayout.NORTH);
         mainVertPanel.add(cdMveaPanel, BorderLayout.CENTER);
         frame.add(mainVertPanel);

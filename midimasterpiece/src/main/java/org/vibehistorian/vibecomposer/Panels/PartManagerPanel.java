@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
@@ -33,7 +34,7 @@ public class PartManagerPanel extends TransparentablePanel {
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.setBorder(new BevelBorder(BevelBorder.LOWERED));
 
-        String folderName = VibeComposerGUI.instNames[partNum];
+        String folderName = Constants.instNames[partNum];
         partName.setText("Presets:");
 
         initPresetField(folderName);
@@ -85,7 +86,7 @@ public class PartManagerPanel extends TransparentablePanel {
                         fileName = fileName.substring(0, pos);
                     }
                     try {
-                        int numOfParts = countStringOccurrences(f, "</" + VibeComposerGUI.instPartNames[part] + "Part>");
+                        int numOfParts = countStringOccurrences(f, "</" + Constants.instPartNames[part] + "Part>");
                         partPresetBox.addItem(fileName + " [" + numOfParts + "]");
                     } catch (IOException e) {
                         LG.e(e);

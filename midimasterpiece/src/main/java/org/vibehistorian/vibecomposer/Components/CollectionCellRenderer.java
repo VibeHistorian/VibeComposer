@@ -1,22 +1,19 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
-
 import org.apache.commons.lang3.tuple.Triple;
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
+
+import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class CollectionCellRenderer extends JComponent implements TableCellRenderer {
 
@@ -64,7 +61,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					: VibeComposerGUI.panelColorHigh;
 			g.setColor(panelC);
 			g.fillRect(0, 0, width, height);
-			Color icolor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
+			Color icolor = OMNI.mixColor(panelC, Constants.instColors[part],
 					part > 0 ? 0.5 : 0.7);
 
 			int guiPanelsCount = VibeComposerGUI.getInstList(part).size();
@@ -113,13 +110,16 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					
 						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
 					}*/
-					boolean isCustomMidi = sec.containsPattern(part, panelOrder)
-							&& sec.getPattern(part, panelOrder).isCustom(part, panelOrder);
+					boolean isCustomMidi = false;
+					if (sec.containsPattern(part, panelOrder)) {
+						UsedPattern pat = sec.getPattern(part, panelOrder);
+						isCustomMidi = pat.isCustom(part, panelOrder, VibeComposerGUI.guiConfig.getPatternRaw(pat));
+					}
 
-					Color instCellColor = OMNI.mixColor(panelC, VibeComposerGUI.instColors[part],
+					Color instCellColor = OMNI.mixColor(panelC, Constants.instColors[part],
 							part > 0 ? 0.55 : 0.7);
 					if (counter > 0) {
-						Color nextColor = part < 4 ? VibeComposerGUI.instColors[part + 1]
+						Color nextColor = part < 4 ? Constants.instColors[part + 1]
 								: Color.red;
 						double percentageMix = counter / (double) Math.max(counter,
 								VibeComposerGUI.getInstList(part).size());

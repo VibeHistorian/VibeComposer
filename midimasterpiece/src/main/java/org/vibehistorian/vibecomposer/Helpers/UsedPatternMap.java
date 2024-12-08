@@ -1,14 +1,13 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @XmlRootElement(name = "UsedPatternMap")
 @XmlType(propOrder = {})
@@ -27,6 +26,7 @@ public class UsedPatternMap extends HashMap<Integer, UsedPattern> {
 
 	public UsedPatternMap(UsedPatternMap other) {
 		super.putAll(other);
+		this.part = other.part;
 	}
 
 	public static List<UsedPatternMap> multiMap() {
@@ -41,9 +41,8 @@ public class UsedPatternMap extends HashMap<Integer, UsedPattern> {
 		if (others == null) {
 			return null;
 		}
-		List<UsedPatternMap> maps = others.stream().map(e -> new UsedPatternMap(e))
-				.collect(Collectors.toList());
-		return maps;
+        return others.stream().map(UsedPatternMap::new)
+                .collect(Collectors.toList());
 	}
 
 	@XmlElement(name = "usedPatternMap")
@@ -59,6 +58,4 @@ public class UsedPatternMap extends HashMap<Integer, UsedPattern> {
 	public void setPart(int part) {
 		this.part = part;
 	}
-
-
 }

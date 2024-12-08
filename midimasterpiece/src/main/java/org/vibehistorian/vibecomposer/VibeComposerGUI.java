@@ -90,24 +90,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 // main class
-
 public class VibeComposerGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener {
 
 	private static final long serialVersionUID = -677536546851756969L;
-
-	private static final String BUG_HUNT_MESSAGE = "You found a bug! Save your project as a new preset, and send the .xml to my email: vibehistorian@gmail.com!";
-	private static final String FILENAME_VALID_CHARACTERS = "[a-zA-Z0-9,\\-_ ']";
-	private static final String FILENAME_VALID_NAME = "^" + FILENAME_VALID_CHARACTERS + "+$";
-	private static final String MIDIS_FOLDER = "midis";
-	private static final String DRUMS_FOLDER = "drums";
-	private static final String MIDI_HISTORY_FOLDER = MIDIS_FOLDER + "/midi_history";
-	private static final String PRESET_FOLDER = "presets";
-	private static final String SOUNDBANK_FOLDER = ".";
-	private static final String EXPORT_FOLDER = "exports";
-	private static final String MID_EXTENSION = ".mid";
-	private static final String SAVED_MIDIS_FOLDER_BASE = "/saved_";
-	public static final String TEMPORARY_SEQUENCE_MIDI_NAME = "tempSequenceMidi.mid";
 
 	public static List<Image> SECTION_VARIATIONS_ICONS = new ArrayList<>();
 	private static final String[] SECTION_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
@@ -118,21 +104,6 @@ public class VibeComposerGUI extends JFrame
 	public static List<Image> LOCK_COMPONENT_ICONS = new ArrayList<>();
 	private static final String[] LOCK_COMPONENT_ICON_NAMES = new String[] { "lock.png",
 			"toggle_lock.png", "lock_white.png", "toggle_lock_white.png" };
-
-	public static final int[] MILISECOND_ARRAY_STRUM = { 0, 31, 62, 125, 250, 333, 375, 500, 666,
-			750, 1000, 1333, 1500, 2000 };
-	public static final List<Integer> MILISECOND_LIST_STRUM = Arrays.stream(MILISECOND_ARRAY_STRUM)
-			.mapToObj(e -> Integer.valueOf(e)).collect(Collectors.toList());
-
-	public static final int[] MILISECOND_ARRAY_FEEDBACK = { -2000, -1500, -1333, -1000, -750, -666,
-			-500, -375, -333, -250, -125, -62, -31, 31, 62, 125, 250, 333, 375, 500, 666, 750, 1000,
-			1333, 1500, 2000 };
-	public static final List<Integer> MILISECOND_LIST_FEEDBACK = Arrays
-			.stream(MILISECOND_ARRAY_FEEDBACK).mapToObj(e -> Integer.valueOf(e))
-			.collect(Collectors.toList());
-
-	public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
-	public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
 
 	public static GUIPreset defaultGuiPreset = null;
 
@@ -174,11 +145,6 @@ public class VibeComposerGUI extends JFrame
 	public static MidiGenerator melodyGen = null;
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
-	public static Color[] instColors = { Color.blue, Color.black, Color.green, Color.magenta,
-			Color.yellow };
-	public static String[] instNames = { "Melody", "Bass", "Chords", "Arps", "Drums" };
-	public static String[] instPartNames = { "melody", "bass", "chord", "arp", "drum" };
-
 	// instrument panels added into scrollpanes
 	public static List<MelodyPanel> melodyPanels = new ArrayList<>();
 	public static List<BassPanel> bassPanels = new ArrayList<>();
@@ -191,16 +157,6 @@ public class VibeComposerGUI extends JFrame
 				? getSectionPanelList(inst)
 				: (List<InstPanel>) getInstList(inst);
 		return affectedPanels;
-	}
-
-	public static final List<Integer> TYPICAL_MIDI_CH_START = Arrays.asList(1,9,11,2,10);
-	public static final Map<Integer, List<Integer>> TYPICAL_MIDI_CH = new HashMap<>();
-	static {
-		TYPICAL_MIDI_CH.put(0, Arrays.asList(1,7,8));
-		TYPICAL_MIDI_CH.put(1, Arrays.asList(9));
-		TYPICAL_MIDI_CH.put(2, Arrays.asList(11,12,13,14,15));
-		TYPICAL_MIDI_CH.put(3, Arrays.asList(2,3,4,5,6,7,8));
-		TYPICAL_MIDI_CH.put(4, Arrays.asList(10));
 	}
 
 	public static List<? extends InstPanel> getInstList(int order) {
@@ -665,7 +621,7 @@ public class VibeComposerGUI extends JFrame
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 			public void uncaughtException(Thread t, Throwable e) {
 				LG.e("Uncaught EXCEPTION!", e);
-				new TemporaryInfoPopup("Unknown error! " + BUG_HUNT_MESSAGE, 3000);
+				new TemporaryInfoPopup("Unknown error! " + Constants.BUG_HUNT_MESSAGE, 3000);
 				if (sequencer != null && sequencer.isRunning()) {
 					sequencer.stop();
 				}
@@ -843,11 +799,11 @@ public class VibeComposerGUI extends JFrame
 			});
 			everythingPanel.add(instrumentTabPane, constraints);
 			for (int i = 0; i < 5; i++) {
-				instrumentTabPane.setBackgroundAt(i, OMNI.alphen(instColors[i], 40));
+				instrumentTabPane.setBackgroundAt(i, OMNI.alphen(Constants.instColors[i], 40));
 				int finalI = i;
 				addInst[i].addChangeListener((evt) -> {
 					instrumentTabPane.setBackgroundAt(finalI,
-							OMNI.alphen(addInst[finalI].isSelected() ? instColors[finalI] : Color.white, 40));
+							OMNI.alphen(addInst[finalI].isSelected() ? Constants.instColors[finalI] : Color.white, 40));
 				});
 			}
 
@@ -1100,7 +1056,7 @@ public class VibeComposerGUI extends JFrame
 			if (SwingUtilities.isLeftMouseButton(e)) {
 				loadPreset();
 			} else {
-				openFolder(PRESET_FOLDER);
+				openFolder(Constants.PRESET_FOLDER);
 			}
 		}));
 		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
@@ -1133,7 +1089,7 @@ public class VibeComposerGUI extends JFrame
 				: null;
 		presetLoadBox.removeAllItems();
 		presetLoadBox.addItem(OMNI.EMPTYCOMBO);
-		File folder = new File(PRESET_FOLDER);
+		File folder = new File(Constants.PRESET_FOLDER);
 		if (folder.exists()) {
 			File[] listOfFiles = folder.listFiles();
 			for (File f : listOfFiles) {
@@ -1158,7 +1114,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void undefaultPreset() {
-		File loadedFile = new File(PRESET_FOLDER + "/default.xml");
+		File loadedFile = new File(Constants.PRESET_FOLDER + "/default.xml");
 		boolean exists = loadedFile.exists();
 		if (exists) {
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
@@ -1167,7 +1123,7 @@ public class VibeComposerGUI extends JFrame
 			Date date = new Date();
 			String fdate = f.format(date);
 
-			File renamedFile = new File(PRESET_FOLDER + "/default-" + fdate + ".xml");
+			File renamedFile = new File(Constants.PRESET_FOLDER + "/default-" + fdate + ".xml");
 			loadedFile.renameTo(renamedFile);
 
 			reloadPresetBox();
@@ -1189,14 +1145,14 @@ public class VibeComposerGUI extends JFrame
 			return;
 		} else {
 			// check if file exists | special case: --- should load new GUIConfig()
-			File loadedFile = new File(PRESET_FOLDER + "/" + presetName + ".xml");
+			File loadedFile = new File(Constants.PRESET_FOLDER + "/" + presetName + ".xml");
 			if (loadedFile.exists()) {
 				try {
 					GUIPreset preset = unmarshallPreset(loadedFile);
 					loadPresetObject(preset);
 				} catch (JAXBException | IOException e) {
 					LG.e("Could not load preset!", e);
-					new TemporaryInfoPopup("Preset loading failed! " + BUG_HUNT_MESSAGE, 2000);
+					new TemporaryInfoPopup("Preset loading failed! " + Constants.BUG_HUNT_MESSAGE, 2000);
 					return;
 				}
 			}
@@ -1237,16 +1193,16 @@ public class VibeComposerGUI extends JFrame
 	private void savePreset() {
 		String presetName = (String) presetLoadBox.getEditor().getItem();
 		LG.i("Trying to save preset: " + presetName);
-		if (!presetName.matches(FILENAME_VALID_NAME)) {
+		if (!presetName.matches(Constants.FILENAME_VALID_NAME)) {
 			new TemporaryInfoPopup("Name contains invalid characters: "
-					+ presetName.replaceAll(FILENAME_VALID_CHARACTERS, ""), 2500);
+					+ presetName.replaceAll(Constants.FILENAME_VALID_CHARACTERS, ""), 2500);
 			return;
 		}
 		presetName = presetName.replaceAll(" ", "_");
-		File makeSavedDir = new File(PRESET_FOLDER);
+		File makeSavedDir = new File(Constants.PRESET_FOLDER);
 		makeSavedDir.mkdir();
 
-		String filePath = PRESET_FOLDER + "/" + presetName + ".xml";
+		String filePath = Constants.PRESET_FOLDER + "/" + presetName + ".xml";
 		saveGuiPresetFileByFilePath(filePath);
 		presetLoadBox.addItem(presetName);
 		new TemporaryInfoPopup("Saved preset: " + presetName, 2000);
@@ -1395,7 +1351,7 @@ public class VibeComposerGUI extends JFrame
 		soundbankFilename = new ScrollComboBox<String>(false);
 		soundbankFilename.setEditable(true);
 		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
-		File folder = new File(SOUNDBANK_FOLDER);
+		File folder = new File(Constants.SOUNDBANK_FOLDER);
 		if (folder.exists()) {
 			File[] listOfFiles = folder.listFiles();
 			for (File f : listOfFiles) {
@@ -2043,6 +1999,7 @@ public class VibeComposerGUI extends JFrame
 				.add(new JLabel("<html>Note Target<br>Mode</html>"));
 		noteTargetDirectionChoice = new ScrollComboBox<>(false);
 		ScrollComboBox.addAll(MelodyUtils.NoteTargetDirection.values(), noteTargetDirectionChoice);
+		noteTargetDirectionChoice.setSelectedIndex(1); // ASC
 		melodySettingsExtraPanelBlocksPatternsCompose.add(noteTargetDirectionChoice);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
 		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
@@ -5172,7 +5129,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton save3Star = makeButtonMoused("Save 3*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "3star/");
+				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "3star/");
 			} else {
 				saveGuiConfigFile(3);
 			}
@@ -5180,7 +5137,7 @@ public class VibeComposerGUI extends JFrame
 		save3Star.setForeground(savedIndicatorForegroundColors[0]);
 		JButton save4Star = makeButtonMoused("Save 4*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "4star/");
+				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "4star/");
 			} else {
 				saveGuiConfigFile(4);
 			}
@@ -5188,7 +5145,7 @@ public class VibeComposerGUI extends JFrame
 		save4Star.setForeground(savedIndicatorForegroundColors[1]);
 		JButton save5Star = makeButtonMoused("Save 5*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "5star/");
+				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "5star/");
 			} else {
 				saveGuiConfigFile(5);
 			}
@@ -5196,7 +5153,7 @@ public class VibeComposerGUI extends JFrame
 		save5Star.setForeground(savedIndicatorForegroundColors[2]);
 		JButton saveCustom = makeButtonMoused("Save ->", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(MIDIS_FOLDER + SAVED_MIDIS_FOLDER_BASE + "custom/");
+				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "custom/");
 			} else {
 				saveGuiConfigFile(-1);
 			}
@@ -5213,7 +5170,7 @@ public class VibeComposerGUI extends JFrame
 
 		JButton saveWavFile = makeButtonMoused("Export .WAV", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(EXPORT_FOLDER);
+				openFolder(Constants.EXPORT_FOLDER);
 			} else {
 				saveWavFile();
 			}
@@ -5358,10 +5315,10 @@ public class VibeComposerGUI extends JFrame
 				String soundbankOptional = (soundfont != null) ? "SB_" : "";
 				String filename = f.format(date) + "_" + soundbankOptional
 						+ getFilenameForSaving(currentMidi.getName());
-				File exportFolderDir = new File(EXPORT_FOLDER);
+				File exportFolderDir = new File(Constants.EXPORT_FOLDER);
 				exportFolderDir.mkdir();
 
-				saveWavFile(EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
+				saveWavFile(Constants.EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
 				synth = null;
 				if (device != null) {
 					device.close();
@@ -5710,7 +5667,7 @@ public class VibeComposerGUI extends JFrame
 				}
 			});
 			int fI = i;
-			getAffectedPanels(i).forEach(e -> e.setBackground(OMNI.alphen(instColors[fI], 60)));
+			getAffectedPanels(i).forEach(e -> e.setBackground(OMNI.alphen(Constants.instColors[fI], 60)));
 		}
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
 
@@ -5871,9 +5828,9 @@ public class VibeComposerGUI extends JFrame
 			melodyGen = new MidiGenerator(midiConfig);
 			fillUserParameters(regenerate, manual);
 
-			File makeDir = new File(MIDIS_FOLDER);
+			File makeDir = new File(Constants.MIDIS_FOLDER);
 			makeDir.mkdir();
-			makeDir = new File(MIDI_HISTORY_FOLDER);
+			makeDir = new File(Constants.MIDI_HISTORY_FOLDER);
 			makeDir.mkdir();
 
 			String seedData = "" + masterpieceSeed;
@@ -5886,7 +5843,7 @@ public class VibeComposerGUI extends JFrame
 
 			String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
 					+ "_seed" + seedData;
-			String relPath = MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
+			String relPath = Constants.MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
 
 			// unapply S/M, generate, reapply S/M with new track numbering
 			unapplySolosMutes(true);
@@ -5945,7 +5902,7 @@ public class VibeComposerGUI extends JFrame
 		} catch (Exception e) {
 			LG.e("Exception during midi generation! Cause: " + e.getMessage(), e);
 			heavyBackgroundTasksInProgress = false;
-			new TemporaryInfoPopup(BUG_HUNT_MESSAGE, null);
+			new TemporaryInfoPopup(Constants.BUG_HUNT_MESSAGE, null);
 			if (sequencer != null && sequencer.isRunning()) {
 				sequencer.stop();
 			}
@@ -6368,7 +6325,7 @@ public class VibeComposerGUI extends JFrame
 						3000);
 				return;
 			}
-			currentSequenceMidi = new File(TEMPORARY_SEQUENCE_MIDI_NAME);
+			currentSequenceMidi = new File(Constants.TEMPORARY_SEQUENCE_MIDI_NAME);
 			generatedMidi.setListData(new File[] { currentMidi });
 			//sizeRespectingPack();
 			repaint();
@@ -7382,7 +7339,7 @@ public class VibeComposerGUI extends JFrame
 			LG.i(("Saving file: " + (rating >= 0 ? newFileName : saveCustomFilename.getText())));
 
 			Date date = new Date();
-			String saveDirectory = SAVED_MIDIS_FOLDER_BASE;
+			String saveDirectory = Constants.SAVED_MIDIS_FOLDER_BASE;
 			String name = "";
 
 			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
@@ -7392,7 +7349,7 @@ public class VibeComposerGUI extends JFrame
 			if (rating >= 0) {
 				saveDirectory += rating + "star/";
 
-				File makeSavedDir = new File(MIDIS_FOLDER + saveDirectory);
+				File makeSavedDir = new File(Constants.MIDIS_FOLDER + saveDirectory);
 				makeSavedDir.mkdir();
 				name = newFileName;
 				name = name.substring(0, name.length() - 4);
@@ -7406,14 +7363,14 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
-			String finalFilePath = MIDIS_FOLDER + saveDirectory + additionalInfo
-					+ (additionalInfo.isEmpty() ? "" : "_") + name + MID_EXTENSION;
+			String finalFilePath = Constants.MIDIS_FOLDER + saveDirectory + additionalInfo
+					+ (additionalInfo.isEmpty() ? "" : "_") + name + Constants.MID_EXTENSION;
 			LG.i("Saving to final path: " + finalFilePath);
 			File savedMidi = new File(finalFilePath);
 			try {
 				FileUtils.copyFile(currentMidi, savedMidi);
 				copyGUItoConfig(guiConfig);
-				marshalConfig(guiConfig, finalFilePath, MID_EXTENSION.length());
+				marshalConfig(guiConfig, finalFilePath, Constants.MID_EXTENSION.length());
 				if (rating >= 3) {
 					savedIndicatorLabel.setForeground(savedIndicatorForegroundColors[rating - 3]);
 				} else {
@@ -8581,7 +8538,7 @@ public class VibeComposerGUI extends JFrame
 				ip.getInstrumentBox().setEnabled(true);
 			}
 		} else {
-			ip.setBackground(OMNI.alphen(instColors[part], 60));
+			ip.setBackground(OMNI.alphen(Constants.instColors[part], 60));
 		}
 
 		if (initializingPart != null) {
@@ -8809,7 +8766,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			if (needNewChannel) {
-				ip.setMidiChannel(TYPICAL_MIDI_CH.get(0).get((panelOrder - 1) % 3));
+				ip.setMidiChannel(Constants.TYPICAL_MIDI_CH.get(0).get((panelOrder - 1) % 3));
 			}
 		}
 		repaint();
@@ -8981,7 +8938,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			ip.setTransitionChance(panelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
-			ip.setTransitionSplit((getRandomFromArray(panelGenerator, MILISECOND_ARRAY_SPLIT, 0)));
+			ip.setTransitionSplit((getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_SPLIT, 0)));
 			if (orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
 			} else {
@@ -8994,7 +8951,7 @@ public class VibeComposerGUI extends JFrame
 			ip.setStrum(strumPair.getRight());
 			ip.setStrumType(strumPair.getLeft());
 			if (randomChordDelay.isSelected()) {
-				ip.setOffset((getRandomFromArray(panelGenerator, MILISECOND_ARRAY_DELAY, 0)));
+				ip.setOffset((getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_DELAY, 0)));
 			} else {
 				ip.setOffset(0);
 			}
@@ -9860,7 +9817,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public int selectRandomStrumByStruminess() {
-		return singleWeightedSelectFromArray(MILISECOND_ARRAY_STRUM, randomChordStruminess.getInt(),
+		return singleWeightedSelectFromArray(Constants.MILISECOND_ARRAY_STRUM, randomChordStruminess.getInt(),
 				1);
 	}
 

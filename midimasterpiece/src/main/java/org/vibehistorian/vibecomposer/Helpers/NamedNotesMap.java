@@ -1,13 +1,12 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlSeeAlso;
-import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "namedNotesMap")
 @XmlType(propOrder = {})
@@ -41,6 +40,4 @@ public class NamedNotesMap {
 		}
 		this.namedNotesMap = namedNotesMap;
 	}
-
-
 }

@@ -1,26 +1,17 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Point;
-
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.JTableHeader;
-
 import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.Helpers.GlobalVariationBooleanTableModel;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Helpers.GlobalVariationBooleanTableModel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
+import org.vibehistorian.vibecomposer.Section;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
 
 public class ArrangementGlobalVariationPopup extends CloseablePopup {
 	JPanel tablesPanel = new JPanel();
@@ -71,14 +62,14 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 			categoryPanel.setMaximumSize(new Dimension(2000, 40));
 			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
 			JPanel categoryButtons = new JPanel();
-			String name = (i < 5) ? VibeComposerGUI.instNames[i].toUpperCase()
+			String name = (i < 5) ? Constants.instNames[i].toUpperCase()
 					: "SECTION VARIATIONS";
 			JLabel categoryName = new JLabel(name);
 			categoryName.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryName.setFont(new Font("Arial", Font.BOLD, 13));
 			categoryName.setBorder(new BevelBorder(BevelBorder.RAISED));
 			categoryPanel.add(categoryName);
-			Color categoryColor = (i < 5) ? VibeComposerGUI.instColors[i] : Color.cyan;
+			Color categoryColor = (i < 5) ? Constants.instColors[i] : Color.cyan;
 			categoryPanel.addBackground(OMNI.alphen(categoryColor, 50));
 
 			categoryButtons.setAlignmentX(Component.LEFT_ALIGNMENT);

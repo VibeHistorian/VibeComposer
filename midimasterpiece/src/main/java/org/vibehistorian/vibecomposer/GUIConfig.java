@@ -25,9 +25,7 @@ import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.Panels.ArpGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
-import org.vibehistorian.vibecomposer.Panels.DrumGenSettings;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
@@ -164,8 +162,6 @@ public class GUIConfig {
 	private boolean arpsEnable = true;
 	private boolean drumsEnable = true;
 	private ChordGenSettings chordGenSettings = new ChordGenSettings();
-	private DrumGenSettings drumGenSettings = new DrumGenSettings();
-	private ArpGenSettings arpGenSettings = new ArpGenSettings();
 
 	private boolean midiMode = true;
 	private long randomSeed = 0;
@@ -366,22 +362,6 @@ public class GUIConfig {
 
 	public void setArpParts(List<ArpPart> arpParts) {
 		this.arpParts = arpParts;
-	}
-
-	public DrumGenSettings getDrumGenSettings() {
-		return drumGenSettings;
-	}
-
-	public void setDrumGenSettings(DrumGenSettings drumGenSettings) {
-		this.drumGenSettings = drumGenSettings;
-	}
-
-	public ArpGenSettings getArpGenSettings() {
-		return arpGenSettings;
-	}
-
-	public void setArpGenSettings(ArpGenSettings arpGenSettings) {
-		this.arpGenSettings = arpGenSettings;
 	}
 
 	public List<MelodyPart> getMelodyParts() {

@@ -19,24 +19,7 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlList;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
+import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -50,7 +33,22 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
-import jm.music.data.Phrase;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlList;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @XmlRootElement(name = "section")
 @XmlType(propOrder = {})
@@ -137,19 +135,19 @@ public class Section {
 	public void setInstPartList(List<? extends InstPart> parts, int partNum) {
 		switch (partNum) {
 		case 0:
-			setMelodyParts((List<MelodyPart>) (List<?>) parts);
+			setMelodyParts((List<MelodyPart>) parts);
 			break;
 		case 1:
-			setBassParts((List<BassPart>) (List<?>) parts);
+			setBassParts((List<BassPart>) parts);
 			break;
 		case 2:
-			setChordParts((List<ChordPart>) (List<?>) parts);
+			setChordParts((List<ChordPart>) parts);
 			break;
 		case 3:
-			setArpParts((List<ArpPart>) (List<?>) parts);
+			setArpParts((List<ArpPart>) parts);
 			break;
 		case 4:
-			setDrumParts((List<DrumPart>) (List<?>) parts);
+			setDrumParts((List<DrumPart>) parts);
 			break;
 		default:
 			throw new IllegalArgumentException("PartNum incorrect: " + partNum);

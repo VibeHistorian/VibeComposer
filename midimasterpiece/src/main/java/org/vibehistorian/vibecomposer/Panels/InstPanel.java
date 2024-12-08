@@ -29,6 +29,7 @@ import org.vibehistorian.vibecomposer.Components.RangeSlider;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -273,7 +274,7 @@ public abstract class InstPanel extends JPanel {
 		chordSpan.getKnob().setTickSpacing(50);
 		chordSpan.getKnob().setTickThresholds(Arrays.asList(new Integer[] { 1, 2, 4 }));
 
-		feedbackDuration.getKnob().setTickThresholds(VibeComposerGUI.MILISECOND_LIST_FEEDBACK);
+		feedbackDuration.getKnob().setTickThresholds(Constants.MILISECOND_LIST_FEEDBACK);
 		feedbackDuration.getKnob().setTickSpacing(50);
 
 		//toggleableComponents.add(stretchPanel);
@@ -299,11 +300,11 @@ public abstract class InstPanel extends JPanel {
 		int part = this.getPartNum();
 		int order = this.getPanelOrder();
 		List<InstPanel> instPanels = (List<InstPanel>) VibeComposerGUI.getInstList(part);
-		List<Integer> typicalChannels = VibeComposerGUI.TYPICAL_MIDI_CH.get(part);
+		List<Integer> typicalChannels = Constants.TYPICAL_MIDI_CH.get(part);
 		Set<Integer> usedChannels = instPanels.stream().filter(e -> !this.equals(e)).map(e -> e.getMidiChannel()).collect(Collectors.toSet());
 
 		setMidiChannel(typicalChannels.stream().filter(e -> !usedChannels.contains(e)).findFirst()
-				.orElse(VibeComposerGUI.TYPICAL_MIDI_CH_START.get(part) + (order - 1) % typicalChannels.size()));
+				.orElse(Constants.TYPICAL_MIDI_CH_START.get(part) + (order - 1) % typicalChannels.size()));
 	}
 
 	public void addDefaultInstrumentControls() {

@@ -11,7 +11,6 @@ public class ChordGenSettings extends InstGenSettings {
 	private boolean useSplit = false;
 	private int sustainChance = 25;
 	private int flattenVoicingChance = 100;
-	private boolean useShortening = true;
 
 	public ChordGenSettings() {
 		super();
@@ -49,14 +48,6 @@ public class ChordGenSettings extends InstGenSettings {
 		this.sustainChance = val;
 	}
 
-	public boolean isUseShortening() {
-		return useShortening;
-	}
-
-	public void setUseShortening(boolean val) {
-		this.useShortening = val;
-	}
-
 	public int getFlattenVoicingChance() {
 		return flattenVoicingChance;
 	}
@@ -64,6 +55,4 @@ public class ChordGenSettings extends InstGenSettings {
 	public void setFlattenVoicingChance(int val) {
 		this.flattenVoicingChance = val;
 	}
-
-
 }

@@ -30,6 +30,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.LG;
@@ -453,10 +454,10 @@ public class ShowAreaBig extends JComponent {
 					&& !soloMuterHighlightedTracks.contains(part.getTrackNumber())) {
 				continue;
 			}
-			Color noteColor = VibeComposerGUI.instColors[noteColorIndex];
+			Color noteColor = Constants.instColors[noteColorIndex];
 			if (samePrevColorCounter > 0) {
 				Color nextColor = noteColorIndex < 4
-						? VibeComposerGUI.instColors[noteColorIndex + 1]
+						? Constants.instColors[noteColorIndex + 1]
 						: Color.red;
 				double percentageMix = samePrevColorCounter
 						/ (double) Math.max(samePrevColorCounter,
@@ -531,7 +532,7 @@ public class ShowAreaBig extends JComponent {
 							boolean pointInRect = OMNI.pointInRect(mousePoint, actualStartingX,
 									y - actualHeight, x, actualHeight * 2);
 							if (pointInRect) {
-								noteDescription = VibeComposerGUI.instNames[phrase.part] + "#"
+								noteDescription = Constants.instNames[phrase.part] + "#"
 										+ phrase.partOrder + "|" + MidiUtils
 												.pitchOrDrumToString(currNote, phrase.part, false);
 								mouseProcessed = true;

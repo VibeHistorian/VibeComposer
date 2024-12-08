@@ -32,6 +32,7 @@ package org.vibehistorian.vibecomposer.Components;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -140,8 +141,8 @@ public class ShowPanelBig extends JPanel {
 		scorePartPanel.add(scoreBox);
 		scorePartPanel.add(new JLabel("Included Parts"));
 		for (int i = 0; i < 5; i++) {
-			partsShown[i] = new CheckButton(VibeComposerGUI.instNames[i], true,
-					OMNI.alphen(VibeComposerGUI.instColors[i], 75));
+			partsShown[i] = new CheckButton(Constants.instNames[i], true,
+					OMNI.alphen(Constants.instColors[i], 75));
 			partsShown[i].setRunnable(() -> setScore());
 			int fI = i;
 			partsShown[i].addMouseListener(new MouseAdapter() {

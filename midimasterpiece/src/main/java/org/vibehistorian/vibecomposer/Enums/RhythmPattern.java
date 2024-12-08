@@ -1,14 +1,13 @@
 package org.vibehistorian.vibecomposer.Enums;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlType;
 
 @XmlType(name = "rhythmPattern")
 @XmlEnum
@@ -33,7 +32,7 @@ public enum RhythmPattern {
 		VIABLE_PATTERNS.remove(RhythmPattern.EUCLID);
 	}
 
-	private RhythmPattern(int[] pattern, int mShift) {
+	RhythmPattern(int[] pattern, int mShift) {
 		this.pattern = pattern;
 		maxShift = mShift;
 	}
@@ -51,9 +50,9 @@ public enum RhythmPattern {
 
 	public double getNoteFrequency() {
 		double counter = 0;
-		for (int i = 0; i < pattern.length; i++) {
-			counter += pattern[i];
-		}
+        for (int j : pattern) {
+            counter += j;
+        }
 		return counter / (double) pattern.length;
 	}
 
@@ -66,10 +65,10 @@ public enum RhythmPattern {
 		}
 
 		List<List<Integer>> first = IntStream.iterate(1, e -> e).limit(usedHits)
-				.mapToObj(e -> new ArrayList<Integer>(Collections.singletonList(e)))
+				.mapToObj(e -> new ArrayList<>(Collections.singletonList(e)))
 				.collect(Collectors.toList());
 		List<List<Integer>> second = IntStream.iterate(0, e -> e).limit(length - usedHits)
-				.mapToObj(e -> new ArrayList<Integer>(Collections.singletonList(e)))
+				.mapToObj(e -> new ArrayList<>(Collections.singletonList(e)))
 				.collect(Collectors.toList());
 
 		int firstLength = first.size();
@@ -97,8 +96,8 @@ public enum RhythmPattern {
 			minLength = Math.min(firstLength, second.size());
 		}
 
-		first.forEach(e -> result.addAll(e));
-		second.forEach(e -> result.addAll(e));
+		first.forEach(result::addAll);
+		second.forEach(result::addAll);
 		//LG.i(StringUtils.join(result, ","));
 		Collections.rotate(result, patternShift);
 		if (maxHits != null) {

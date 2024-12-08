@@ -1,12 +1,12 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -82,7 +82,7 @@ public class ChordPanel extends InstPanel {
 		this.add(strumType);
 		this.add(strumPauseChance);
 
-		strum.getKnob().setTickThresholds(VibeComposerGUI.MILISECOND_LIST_STRUM);
+		strum.getKnob().setTickThresholds(Constants.MILISECOND_LIST_STRUM);
 		strum.getKnob().setTickSpacing(50);
 
 		this.add(noteLengthMultiplier);
