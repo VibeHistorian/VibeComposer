@@ -1,9 +1,8 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.Enumeration;
-
 import jm.music.data.Part;
-import jm.music.data.Phrase;
+
+import java.util.Enumeration;
 
 public class PartExt extends Part {
 
@@ -31,14 +30,14 @@ public class PartExt extends Part {
 		Enumeration enum1 = this.getPhraseList().elements();
 		while (enum1.hasMoreElements()) {
 			PhraseExt oldPhrase = (PhraseExt) enum1.nextElement();
-			i.addPhrase((PhraseExt) oldPhrase.copy());
+			i.addPhrase(oldPhrase.copy());
 		}
 
-		i.setTempo(this.getTempo());
-		i.setTimeIndex(this.getTimeIndex());
-		i.setMyScore(this.getMyScore());
-		i.setTrackNumber(this.getTrackNumber());
-		i.setFillerPart(this.isFillerPart());
+		i.setTempo(this.getTempo()); // double
+		i.setTimeIndex(this.getTimeIndex()); // int
+		i.setMyScore(this.getMyScore()); // TBD - score
+		i.setTrackNumber(this.getTrackNumber()); // int
+		i.setFillerPart(this.isFillerPart()); // bool
 		return i;
 	}
 

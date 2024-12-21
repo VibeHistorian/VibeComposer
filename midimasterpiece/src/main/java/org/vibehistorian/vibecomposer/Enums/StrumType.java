@@ -17,16 +17,16 @@ public enum StrumType {
 	RAND(Strums.STRUM_MED), RAND_D(Strums.STRUM_MED), RAND_WU(Strums.STRUM_MED),
 	HUMAN_U(Strums.STRUM_HUMAN), HUMAN(Strums.STRUM_HUMAN), HUMAN_D(Strums.STRUM_HUMAN);
 
-	public List<Integer> CHOICES;
+	public final List<Integer> CHOICES;
 
 	StrumType(List<Integer> strums) {
 		CHOICES = strums;
 	}
 
-	public static final List<StrumType> ARPY = Arrays.asList(new StrumType[] { ARP_U, ARP_D });
-	public static final List<StrumType> RANDY = Arrays.asList(new StrumType[] { RAND_WU });
+	public static final List<StrumType> ARPY = Arrays.asList(ARP_U, ARP_D);
+	public static final List<StrumType> RANDY = Collections.singletonList(RAND_WU);
 	public static final List<StrumType> HUMANY = Arrays
-			.asList(new StrumType[] { HUMAN_U, HUMAN, HUMAN_D });
+			.asList(HUMAN_U, HUMAN, HUMAN_D);
 
 	public static final int[] STRUMMINESS_WEIGHTS = MelodyUtils.normalizedCumulativeWeights(27, 3, 70);
 
@@ -44,7 +44,7 @@ public enum StrumType {
 
 		List<Double> noteOffsets = new ArrayList<>();
 		List<Integer> noteIndexes = IntStream.iterate(0, e -> e + 1).limit(notes.size())
-				.mapToObj(e -> e).collect(Collectors.toList());
+				.boxed().collect(Collectors.toList());
 		//LG.d("Processing: " + type.toString());
 		boolean sort = false;
 		boolean reverse = false;
@@ -123,8 +123,8 @@ public enum StrumType {
 class Strums {
 
 	public static final List<Integer> STRUM_ARP = Arrays
-			.asList(new Integer[] { 250, 333, 375, 500, 666, 1000, 1500, 2000 });
+			.asList(250, 333, 375, 500, 666, 1000, 1500, 2000);
 	public static final List<Integer> STRUM_MED = Arrays
-			.asList(new Integer[] { 62, 125, 250, 333, 375 });
-	public static final List<Integer> STRUM_HUMAN = Arrays.asList(new Integer[] { 31, 62, 125 });
+			.asList(62, 125, 250, 333, 375);
+	public static final List<Integer> STRUM_HUMAN = Arrays.asList(31, 62, 125);
 }

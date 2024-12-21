@@ -51,7 +51,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.vibehistorian.vibecomposer.MidiUtils.*;
+import static org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
+import static org.vibehistorian.vibecomposer.MidiUtils.cpRulesMap;
+import static org.vibehistorian.vibecomposer.MidiUtils.mappedChord;
 
 public class MidiGenerator implements JMC {
 
@@ -61,10 +64,6 @@ public class MidiGenerator implements JMC {
 	public static double SPLIT_DURATION_MULTIPLIER = 0.97;
 	public static final int[] DEFAULT_INSTRUMENT_TRANSPOSE = { 0, -24, -12, -24, 0 };
 
-	public enum ShowScoreMode {
-		NODRUMSCHORDS, DRUMSONLY, CHORDSONLY, ALL;
-	}
-
 	public static double noteMultiplier = 1.0;
 
 	public static class Durations {
@@ -73,7 +72,7 @@ public class MidiGenerator implements JMC {
 		public static double DOTTED_SIXTEENTH_NOTE = 0.375 * noteMultiplier;
 		public static double EIGHTH_NOTE = 0.5 * noteMultiplier;
 		public static double DOTTED_EIGHTH_NOTE = 0.75 * noteMultiplier;
-		public static double QUARTER_NOTE = 1.0 * noteMultiplier;
+		public static double QUARTER_NOTE = noteMultiplier;
 		public static double DOTTED_QUARTER_NOTE = 1.5 * noteMultiplier;
 		public static double HALF_NOTE = 2.0 * noteMultiplier;
 		public static double DOTTED_HALF_NOTE = 3.0 * noteMultiplier;
@@ -87,7 +86,7 @@ public class MidiGenerator implements JMC {
 		Durations.DOTTED_SIXTEENTH_NOTE = 0.375 * noteMultiplier;
 		Durations.EIGHTH_NOTE = 0.5 * noteMultiplier;
 		Durations.DOTTED_EIGHTH_NOTE = 0.75 * noteMultiplier;
-		Durations.QUARTER_NOTE = 1.0 * noteMultiplier;
+		Durations.QUARTER_NOTE = noteMultiplier;
 		Durations.DOTTED_QUARTER_NOTE = 1.5 * noteMultiplier;
 		Durations.HALF_NOTE = 2.0 * noteMultiplier;
 		Durations.DOTTED_HALF_NOTE = 3.0 * noteMultiplier;
@@ -97,8 +96,6 @@ public class MidiGenerator implements JMC {
 		START_TIME_DELAY = Durations.QUARTER_NOTE;
 		MELODY_DUR_ARRAY = new double[] { Durations.HALF_NOTE, Durations.DOTTED_QUARTER_NOTE,
 				Durations.QUARTER_NOTE, Durations.EIGHTH_NOTE };
-		CHORD_DUR_ARRAY = new double[] { Durations.WHOLE_NOTE * 2, Durations.DOTTED_HALF_NOTE * 2,
-				Durations.WHOLE_NOTE, Durations.HALF_NOTE };
 		MelodyGenerator.MELODY_SKELETON_DURATIONS = new double[] { Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.DOTTED_EIGHTH_NOTE, Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE,
 				Durations.HALF_NOTE };
@@ -119,7 +116,6 @@ public class MidiGenerator implements JMC {
 	public static List<InstPart> trackList = new ArrayList<>();
 
 	// constants
-	public static final boolean MAXIMIZE_CHORUS_MAIN_MELODY = false;
 	public static final int MELODY_PATTERN_RESOLUTION = 16;
 
 	public static final int MAXIMUM_PATTERN_LENGTH = 8;
@@ -149,8 +145,6 @@ public class MidiGenerator implements JMC {
 			Durations.QUARTER_NOTE, Durations.EIGHTH_NOTE };
 	public static final double[] MELODY_DUR_CHANCE = { 0.3, 0.6, 1.0, 1.0 };
 
-	private static double[] CHORD_DUR_ARRAY = { Durations.WHOLE_NOTE, Durations.HALF_NOTE };
-	private double[] CHORD_DUR_CHANCE = { 0.0, 0.20, 0.80, 1.0 };
 	private static Map<Integer, Integer> customDrumMappingNumbers = null;
 
 	public List<Double> progressionDurations = new ArrayList<>();
@@ -161,10 +155,6 @@ public class MidiGenerator implements JMC {
 	public List<int[]> chordProgressionBackup = new ArrayList<>();
 	public List<int[]> rootProgressionBackup = new ArrayList<>();
 
-	private int melodyResForChord(int chordIndex) {
-		return (int) (Math.round(MELODY_PATTERN_RESOLUTION * progressionDurations.get(chordIndex)
-				/ Durations.WHOLE_NOTE));
-	}
 	Section currentSection = null;
 
 	// global parts
@@ -174,25 +164,6 @@ public class MidiGenerator implements JMC {
 	private List<DrumPart> drumParts = null;
 	private List<ArpPart> arpParts = null;
 
-	public List<? extends InstPart> getInstPartList(int order) {
-		if (order < 0 || order > 4) {
-			throw new IllegalArgumentException("Inst part list order wrong.");
-		}
-		switch (order) {
-		case 0:
-			return melodyParts;
-		case 1:
-			return bassParts;
-		case 2:
-			return chordParts;
-		case 3:
-			return arpParts;
-		case 4:
-			return drumParts;
-		}
-		return null;
-	}
-
 	public static List<Integer> melodyNotePattern = null;
 	public static Map<Integer, List<Integer>> melodyNotePatternMap = null;
 	int secOrder = -1;
@@ -200,10 +171,10 @@ public class MidiGenerator implements JMC {
 	private int modTrans = 0;
 	ScaleMode modScale = null;
 
-	private MelodyGenerator mgen;
+	private final MelodyGenerator mgen;
 
 	public MidiGenerator(GUIConfig gc) {
-		this.gc = gc;
+		MidiGenerator.gc = gc;
 		mgen = new MelodyGenerator(gc, this);
 	}
 
@@ -256,7 +227,7 @@ public class MidiGenerator implements JMC {
 
 		boolean skipCounter = startTimes.get(0) < DBL_ERR;
 		if (skipCounter) {
-			pattern.set(0, (notes.size() > 0 && notes.get(0).getPitch() < 0) ? 0
+			pattern.set(0, (!notes.isEmpty() && notes.get(0).getPitch() < 0) ? 0
 					: notes.get(0).getPitch());
 		}
 
@@ -269,7 +240,7 @@ public class MidiGenerator implements JMC {
 					+ ", OFFSET: " + n.getOffset());*/
 			for (int i = explored; i < hits; i++) {
 				if (startTimes.get(counter) < durationBuckets.get(i)) {
-					int nextPitch = (n.getPitch() > 0) ? n.getPitch() : 0;
+					int nextPitch = Math.max(n.getPitch(), 0);
 					pattern.set(i, nextPitch);
 					explored = i;
 					break;
@@ -278,9 +249,7 @@ public class MidiGenerator implements JMC {
 			counter++;
 		}
 		if (gc.isMelodyPatternFlip()) {
-			for (int i = 0; i < pattern.size(); i++) {
-				pattern.set(i, pattern.get(i) > 0 ? 0 : 1);
-			}
+            pattern.replaceAll(integer -> integer > 0 ? 0 : 1);
 		}
 		//LG.i("Melody note pattern: " + StringUtils.join(pattern, ", "));
 		return pattern;
@@ -330,11 +299,9 @@ public class MidiGenerator implements JMC {
 		if (logSwing)
 			LG.d("-----------------------------STARTING SWING -----------------------------------");
 
-		List<Double> durationBuckets = new ArrayList<>();
 		List<Integer> chordSeparators = new ArrayList<>();
 		for (int i = 0; i < notes.size(); i++) {
 			durCounter += notes.get(i).getRhythmValue();
-			durationBuckets.add(durCounter);
 			if (durCounter + DBL_ERR > currentChordDur) {
 				chordSeparators.add(i);
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
@@ -399,7 +366,6 @@ public class MidiGenerator implements JMC {
 					LG.d(durCounter + " is Multiple of Unit");
 				// nothing was caught in first half, SKIP swinging for this 2-unit bit of time
 				if (swungNote == null && MidiUtils.isMultiple(durCounter, 2 * swingUnitOfTime)) {
-					swungNote = null;
 					latestSuitableNote = null;
 					if (logSwing)
 						LG.d("Can't swing this!");
@@ -466,84 +432,22 @@ public class MidiGenerator implements JMC {
 			currentChordDur = progressionDurations.get(0);
 			durCounter = 0.0;
 			chordCounter = 0;
-			for (int i = 0; i < notes.size(); i++) {
-				durCounter += notes.get(i).getRhythmValue();
-				if (durCounter - DBL_ERR > currentChordDur) {
-					chordCounter = (chordCounter + 1) % progressionDurations.size();
-					currentChordDur = progressionDurations.get(chordCounter);
-					durCounter = 0.0;
-				}
-				LG.d("Dur: " + durCounter + ", chord counter: " + chordCounter);
-			}
+            for (Note note : notes) {
+                durCounter += note.getRhythmValue();
+                if (durCounter - DBL_ERR > currentChordDur) {
+                    chordCounter = (chordCounter + 1) % progressionDurations.size();
+                    currentChordDur = progressionDurations.get(chordCounter);
+                    durCounter = 0.0;
+                }
+                LG.d("Dur: " + durCounter + ", chord counter: " + chordCounter);
+            }
 		}
-	}
-
-	public static List<String> getChordsFromMelodyPitches(int orderOfMatch, List<Double> durations,
-			Map<Integer, List<Note>> melodyMap, Map<String, Set<Integer>> freqMap) {
-		List<String> chordStrings = new ArrayList<>();
-		String prevChordString = null;
-
-		for (int i = 0; i < melodyMap.keySet().size(); i++) {
-			List<Integer> chordFreqs = new ArrayList<>();
-			double totalDuration = 0;
-			for (Note n : melodyMap.get(i)) {
-				double dur = n.getRhythmValue();
-				double durCounter = 0.0;
-				int index = i;
-				if (index >= durations.size()) {
-					index = durations.size() - 1;
-				}
-				while (durCounter < dur && totalDuration < durations.get(index)) {
-					chordFreqs.add(n.getPitch() % 12);
-					durCounter += Durations.EIGHTH_NOTE;
-					totalDuration += Durations.EIGHTH_NOTE;
-				}
-			}
-
-			Map<Integer, Long> freqCounts = chordFreqs.stream()
-					.collect(Collectors.groupingBy(e -> e, Collectors.counting()));
-
-			Map<Integer, Long> top3 = freqCounts.entrySet().stream()
-					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(4)
-					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-							(e1, e2) -> e1, LinkedHashMap::new));
-
-			//top3.entrySet().stream().forEach(System.out::println);
-			// TODO: if prevChordString not a major chord, not indexed in circle -> never continue circle?
-			String chordString = applyChordFreqMap(top3, orderOfMatch, prevChordString, freqMap);
-			LG.d("Alternate chord #" + i + ": " + chordString);
-			chordStrings.add(chordString);
-			prevChordString = chordString;
-		}
-		return chordStrings;
 	}
 
 	public void generatePrettyUserChords(int mainGeneratorSeed, int fixedLength,
 			double maxDuration) {
 		generateChordProgression(mainGeneratorSeed, fixedLength);
 	}
-
-	/*public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern, double start,
-			double end, double maxDur) {
-		List<Double> durations = new ArrayList<>();
-		double addDur = maxDur / pattern.size();
-		double dur = addDur;
-		double total = dur;
-		for (int i = 0; i < pattern.size(); i++) {
-			if (pattern.get(i) < 1) {
-				dur += addDur;
-			} else {
-				if (total > start - 0.01 && total < end + 0.01) {
-					durations.add(dur);
-				} else if (total > end)
-					dur = addDur;
-			}
-		}
-		durations.add(dur);
-	
-		return durations;
-	}*/
-
 
 	private List<String> generateChordProgressionList(long mainGeneratorSeed, int fixedLength) {
 		List<String> chordProgList = new ArrayList<>();
@@ -561,14 +465,14 @@ public class MidiGenerator implements JMC {
 
 
 		if (fixedLength == 0) {
-			List<Integer> progLengths = Arrays.asList(new Integer[] { 4, 5, 6, 8 });
+			List<Integer> progLengths = Arrays.asList(4, 5, 6, 8);
 			fixedLength = progLengths.get(lengthGenerator.nextInt(progLengths.size()));
 		}
 		int maxLength = (fixedLength > 0) ? fixedLength : 8;
 		List<String> next = r.get("S");
 		if (firstChord != null) {
-			next = new ArrayList<String>();
-			next.add(String.valueOf(firstChord));
+			next = new ArrayList<>();
+			next.add(firstChord);
 		}
 		List<String> debugMsg = new ArrayList<>();
 
@@ -599,7 +503,7 @@ public class MidiGenerator implements JMC {
 		String lastUnspicedChord = null;
 		Random chordRepeatGenerator = new Random(mainGeneratorSeed);
 		for (int chordIndex = 0; chordIndex < maxLength; chordIndex++) {
-			if (next.size() == 0 && prevChord != null) {
+			if (next.isEmpty() && prevChord != null) {
 				LG.w("Next list is EMPTY! Adding default C chord!");
 				next.add("C");
 			}
@@ -616,7 +520,7 @@ public class MidiGenerator implements JMC {
 			} else {
 				if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
 						&& chordProgList.size() == 1 && chordRepeatGenerator.nextInt(100) < 10) {
-					chordString = String.valueOf(lastUnspicedChord);
+					chordString = lastUnspicedChord;
 					canRepeatChord = false;
 				} else {
 					chordString = next.get(nextInt);
@@ -657,8 +561,6 @@ public class MidiGenerator implements JMC {
 			}
 
 			chordProgList.add(spicyChordString);
-			/*mappedChord = transposeChord(mappedChord, Mod.MAJOR_SCALE,
-					gc.getScaleMode().noteAdjustScale);*/
 
 			debugMsg.add("Generated int: " + nextInt + ", for chord: " + spicyChordString);
 			prevChord = spicyChordString;
@@ -677,11 +579,6 @@ public class MidiGenerator implements JMC {
 		if (isBackwards) {
 			Collections.reverse(debugMsg);
 			Collections.reverse(chordProgList);
-			//FIRST_CHORD = lastChord;
-			//LAST_CHORD = firstChord;
-		} else {
-			//FIRST_CHORD = firstChord;
-			//LAST_CHORD = lastChord;
 		}
 
 		for (String s : debugMsg) {
@@ -729,8 +626,8 @@ public class MidiGenerator implements JMC {
 		double currentDuration = 0.0;
 		List<String> next = r.get("S");
 		if (firstChord != null) {
-			next = new ArrayList<String>();
-			next.add(String.valueOf(firstChord));
+			next = new ArrayList<>();
+			next.add(firstChord);
 		}
 		List<String> debugMsg = new ArrayList<>();
 
@@ -768,7 +665,7 @@ public class MidiGenerator implements JMC {
 
 			double dur = fixedDuration;
 
-			if (next.size() == 0 && prevChord != null) {
+			if (next.isEmpty() && prevChord != null) {
 				cpr.add(prevChord);
 				break;
 			}
@@ -861,11 +758,6 @@ public class MidiGenerator implements JMC {
 			Collections.reverse(cpr);
 			Collections.reverse(debugMsg);
 			Collections.reverse(chordInts);
-			//FIRST_CHORD = lastChord;
-			//LAST_CHORD = firstChord;
-		} else {
-			//FIRST_CHORD = firstChord;
-			//LAST_CHORD = lastChord;
 		}
 
 		for (String s : debugMsg) {
@@ -1020,8 +912,8 @@ public class MidiGenerator implements JMC {
 		rootProgression = generatedRootProgression;
 
 		// run one empty pass through melody generation
-		if (mgen.userMelody != null) {
-			mgen.processUserMelody(mgen.userMelody);
+		if (MelodyGenerator.userMelody != null) {
+			mgen.processUserMelody(MelodyGenerator.userMelody);
 			actualProgression = chordProgression;
 			generatedRootProgression = rootProgression;
 			actualDurations = progressionDurations;
@@ -1409,13 +1301,9 @@ public class MidiGenerator implements JMC {
 				? sc.getBeatDurationMultiplierIndex()
 				: gc.getBeatDurationMultiplierIndex();
 		if (beatDurMultiIndex == 0) {
-			for (int i = 0; i < progressionDurations.size(); i++) {
-				progressionDurations.set(i, progressionDurations.get(i) * 0.5);
-			}
+            progressionDurations.replaceAll(aDouble -> aDouble * 0.5);
 		} else if (beatDurMultiIndex == 2) {
-			for (int i = 0; i < progressionDurations.size(); i++) {
-				progressionDurations.set(i, progressionDurations.get(i) * 2);
-			}
+            progressionDurations.replaceAll(aDouble -> aDouble * 2);
 		}
 		return durations;
 	}

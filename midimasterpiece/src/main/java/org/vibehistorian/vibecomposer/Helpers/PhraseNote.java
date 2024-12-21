@@ -34,7 +34,7 @@ public class PhraseNote implements Cloneable {
 	}
 
 	public PhraseNote(int pitch) {
-		this(pitch >= 0 ? pitch : Note.REST, 69, 1.0, 1.0, 0.0);
+		this(pitch >= 0 ? pitch : Pitches.REST, 69, 1.0, 1.0, 0.0);
 	}
 
 	public PhraseNote(int pitch, int dynamic, double rv, double duration, double offset) {

@@ -32,7 +32,7 @@ public class PhraseExt extends Phrase {
 
 	@Override
 	public Phrase copy() {
-		Phrase phr = new PhraseExt(part, partOrder, secOrder);
+		PhraseExt phr = new PhraseExt(part, partOrder, secOrder);
 		copyAttribs(phr);
 		Enumeration enum1 = this.getNoteList().elements();
 		while (enum1.hasMoreElements()) {
@@ -41,17 +41,16 @@ public class PhraseExt extends Phrase {
 		return phr;
 	}
 
-	private void copyAttribs(Phrase phr) {
-		// NB: start time now covered by position
-		phr.setStartTime(getStartTime());
-		phr.setTitle(getTitle() + " copy");
-		phr.setInstrument(getInstrument());
-		phr.setAppend(getAppend());
-		phr.setPan(getPan());
-		phr.setLinkedPhrase(getLinkedPhrase());
-		phr.setMyPart(getMyPart());
-		phr.setTempo(getTempo());
-		phr.setNumerator(getNumerator());
-		phr.setDenominator(getDenominator());
+	private void copyAttribs(PhraseExt phr) {
+		phr.setStartTime(getStartTime()); // double
+		phr.setTitle(getTitle() + " copy"); // string
+		phr.setInstrument(getInstrument()); // int
+		phr.setAppend(getAppend()); // bool
+		phr.setPan(getPan()); // double
+		phr.setLinkedPhrase(getLinkedPhrase()); // PhraseExt
+		phr.setMyPart(getMyPart()); // TBD - PartExt
+		phr.setTempo(getTempo()); // double
+		phr.setNumerator(getNumerator()); // int
+		phr.setDenominator(getDenominator()); // int
 	}
 }

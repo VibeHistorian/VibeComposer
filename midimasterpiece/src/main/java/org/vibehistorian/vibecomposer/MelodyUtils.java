@@ -97,29 +97,18 @@ public class MelodyUtils {
 		return usedList.get(rand2);
 	}
 
-	public static Integer[] getRandomForTypeAndLength(Integer type, Random melodyBlockGenerator,
-			int length) {
-		List<Integer[]> usedList = getBlocksForType(type);
-		List<Integer[]> filteredList = usedList.stream().filter(e -> e.length == length)
-				.collect(Collectors.toList());
-		if (filteredList.size() == 0) {
-			return null;
-		}
-		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
-		return filteredList.get(rand2);
-	}
-
 	public static Integer[] getRandomForTypeAndBlockChangeAndLength(Integer type, int blockChange,
 			Integer length, Random melodyBlockGenerator, int approx) {
 		final int clampedBlockChange = OMNI.clamp(blockChange, -7, 7);
 		List<Integer[]> usedList = getBlocksForType(type);
 		// length fits, note distance and distance roughly equal (diff < approx)
 		// exception is block of length 1 - no blockchange possible there, accept as-is
+		boolean skipFilter = (length != null && length == 1);
 		List<Integer[]> filteredList = usedList.stream()
-				.filter(e -> (length == null || e.length == length)
-						&& (length == 1 || (Math.abs(blockChange(e) - Math.abs(clampedBlockChange)) <= approx)))
+				.filter(e -> skipFilter || ((length == null || e.length == length)
+						&& (Math.abs(blockChange(e) - Math.abs(clampedBlockChange)) <= approx)))
 				.collect(Collectors.toList());
-		if (filteredList.size() == 0) {
+		if (filteredList.isEmpty()) {
 			return null;
 		}
 		int rand2 = melodyBlockGenerator.nextInt(filteredList.size());
@@ -174,8 +163,6 @@ public class MelodyUtils {
 				viableBlockTypeCounts[block.getLeft()]--;
 			}
 		}
-		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
-				+ ", for variance remaining: " + remainingVariance);*/
 		for (int i = viableBlocks.size() - 1; i >= 0; i--) {
 			Pair<Integer, Integer[]> block = viableBlocks.get(i);
 			if (MelodyUtils.interblockDirectionChange(block.getRight()) > remainingDirChanges) {
@@ -183,10 +170,7 @@ public class MelodyUtils {
 				viableBlockTypeCounts[block.getLeft()]--;
 			}
 		}
-		/*LG.d("Size difference: " + (sizeBefore - viableBlocks.size())
-				+ ", for dir change remaining: " + remainingDirChanges);*/
-		//viableBlocks.forEach(e -> LG.d(StringUtils.join(e, ',')));
-		if (viableBlocks.size() == 0) {
+		if (viableBlocks.isEmpty()) {
 			LG.d("Viable blocks size is 0, getting random block!");
 			Integer[] block = getRandomForTypeAndBlockChangeAndLength(null, blockChange, length,
 					melodyBlockGenerator, 4);
@@ -197,9 +181,6 @@ public class MelodyUtils {
 			}
 			return Pair.of(blockOfList(block), block);
 		}
-		// TODO: RIP complexity
-		// TODO: allow choosing the weighting function - n^2 too weighty, maybe n^1.5 is just right..
-
 
 		if (!usedMelodyBlockJumpPreference.isEmpty()) {
 			viableBlocks.sort(Comparator.comparingInt(e -> usedMelodyBlockJumpPreference.indexOf(Math.abs(blockChange(e.getRight())))));
@@ -237,9 +218,9 @@ public class MelodyUtils {
 
 	public static List<Integer> inverse(List<Integer> block) {
 		List<Integer> newBlock = new ArrayList<>();
-		for (int i = 0; i < block.size(); i++) {
-			newBlock.add(block.get(i) * -1);
-		}
+        for (Integer integer : block) {
+            newBlock.add(integer * -1);
+        }
 		return newBlock;
 	}
 
@@ -307,8 +288,6 @@ public class MelodyUtils {
 			reducableIndices.add(i);
 
 		}
-		//LG.d("Initial: " + StringUtils.join(changeList, ","));
-		//LG.d("reducableIndices i's: " + StringUtils.join(reducableIndices, ", "));
 		if (change > 0) {
 			reducableIndices.removeIf(e -> changeList.get(e) == -1 * maxBlockChange);
 		} else if (change < 0) {
@@ -318,7 +297,7 @@ public class MelodyUtils {
 		rand.setSeed(randSeed);
 		int increment = (change > 0) ? -1 : 1;
 		for (int i = 0; i < Math.abs(change); i++) {
-			if (reducableIndices.size() == 0)
+			if (reducableIndices.isEmpty())
 				break;
 			int redI = rand.nextInt(reducableIndices.size());
 			int redIndex = reducableIndices.get(redI);
@@ -330,13 +309,9 @@ public class MelodyUtils {
 		}
 		rand.setSeed(randSeed);
 
-		//LG.d("Decr: " + StringUtils.join(changeList, ","));
-		//Collections.shuffle(changeList, rand);
-
 		smartShuffleMaxDirChange(changeList, rand, maxDirChanges);
 		int remainingDirChange = calculateDirectionChanges(changeList);
 
-		//LG.d("Shuffled: " + StringUtils.join(changeList, ","));
 		return Pair.of(changeList, remainingDirChange);
 	}
 
@@ -482,9 +457,9 @@ public class MelodyUtils {
 			}
 			currTime += n.getRhythmValue();
 		}
-		Collections.sort(main8th, Comparator.comparing(e -> e.getRhythmValue()));
-		Collections.sort(main16th, Comparator.comparing(e -> e.getRhythmValue()));
-		Collections.sort(others, Comparator.comparing(e -> e.getRhythmValue()));
+		main8th.sort(Comparator.comparing(Note::getRhythmValue));
+		main16th.sort(Comparator.comparing(Note::getRhythmValue));
+		others.sort(Comparator.comparing(Note::getRhythmValue));
 		sorted.addAll(others);
 		sorted.addAll(main16th);
 		sorted.addAll(main8th);

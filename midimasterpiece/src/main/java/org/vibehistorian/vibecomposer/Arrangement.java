@@ -21,6 +21,7 @@ package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 
@@ -33,7 +34,6 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
 public class Arrangement {
-	private static List<List<String>> DEFAULT_ARRANGEMENTS = new ArrayList<>();
+	private static final List<List<String>> DEFAULT_ARRANGEMENTS = new ArrayList<>();
 
 	private static final List<String> POP_ARRANGEMENT = new ArrayList<>(
 			Arrays.asList("INTRO", "CHORUS1", "CHORUS2", "BREAKDOWN", "CHILL",
@@ -116,10 +116,65 @@ public class Arrangement {
 	}
 
 	private static final List<String> variableSections = new ArrayList<>(
-			Arrays.asList(new String[] { "VERSE2", "CHORUS2", "CLIMAX", "CHILL", "OUTRO" }));
+			Arrays.asList("VERSE2", "CHORUS2", "CLIMAX", "CHILL", "OUTRO"));
+
+	private List<Section> sections = new ArrayList<>();
+	private boolean previewChorus = false;
+	private boolean overridden;
+	private int seed = 0;
+	private Map<Integer, Object[][]> partInclusionMap = new HashMap<>();
+	private Map<Integer, Boolean[]> globalVariationMap = new HashMap<>();
+
+	public Arrangement(List<Section> sections) {
+		super();
+		this.sections = sections;
+	}
+
+	public Arrangement() {
+		resetArrangement();
+		setPreviewChorus(true);
+		initGlobalVariationMap();
+	}
+
+	public List<Section> getSections() {
+		return sections;
+	}
+
+	public void setSections(List<Section> sections) {
+		this.sections = sections;
+	}
+
+	public void resetArrangement() {
+		sections.clear();
+		Section preview = new Section("PREVIEW", 1, 100, 100, 100, 100, 100);
+		sections.add(preview);
+	}
+
+	public void generateDefaultArrangement() {
+		sections.clear();
+		// type, length, melody%, bass%, chord%, arp%, drum%
+		for (Section s : defaultSections.values()) {
+			sections.add(s.deepCopy());
+		}
+	}
+
+	public void initGlobalVariationMap() {
+		for (int i = 0; i < 5; i++) {
+			int typesCount = Section.variationDescriptions[i].length - 1;
+			Boolean[] data = new Boolean[typesCount];
+			data[0] = Boolean.TRUE;
+			for (int k = 1; k < typesCount; k++) {
+				data[k] = Boolean.TRUE;
+			}
+			globalVariationMap.put(i, data);
+		}
+		Boolean[] data = new Boolean[Section.sectionVariationNames.length + 1];
+		Arrays.fill(data, Boolean.TRUE);
+		globalVariationMap.put(5, data);
+	}
 
 	public void randomizeFully(int maxLength, int seed, int replacementChance, int insertChance,
-			int maxInsertsPerSection, int maxInsertsTotal, int variabilityChance) {
+							   int maxInsertsPerSection, int maxInsertsTotal, int variabilityChance) {
 		Random arrGen = new Random(seed);
 		List<String> newArrangementSkeleton = new ArrayList<>(
 				DEFAULT_ARRANGEMENTS.get(arrGen.nextInt(DEFAULT_ARRANGEMENTS.size())));
@@ -171,47 +226,6 @@ public class Arrangement {
 				sections.add(sec);
 			}
 			lastSec = sec;
-		}
-	}
-
-
-	private List<Section> sections = new ArrayList<>();
-	private boolean previewChorus = false;
-	private boolean overridden;
-	private int seed = 0;
-	private Map<Integer, Object[][]> partInclusionMap = new HashMap<>();
-	private Map<Integer, Boolean[]> globalVariationMap = new HashMap<>();
-
-	public Arrangement(List<Section> sections) {
-		super();
-		this.sections = sections;
-	}
-
-	public Arrangement() {
-		resetArrangement();
-		setPreviewChorus(true);
-		initGlobalVariationMap();
-	}
-
-	public List<Section> getSections() {
-		return sections;
-	}
-
-	public void setSections(List<Section> sections) {
-		this.sections = sections;
-	}
-
-	public void resetArrangement() {
-		sections.clear();
-		Section preview = new Section("PREVIEW", 1, 100, 100, 100, 100, 100);
-		sections.add(preview);
-	}
-
-	public void generateDefaultArrangement() {
-		sections.clear();
-		// type, length, melody%, bass%, chord%, arp%, drum%
-		for (Section s : defaultSections.values()) {
-			sections.add(s.deepCopy());
 		}
 	}
 
@@ -360,8 +374,8 @@ public class Arrangement {
 		}
 		String sCell = (String) cell;
 		sCell = sCell.replaceAll(" ", "");
-		return Arrays.asList(sCell.split(",")).stream().filter(StringUtils::isNotEmpty)
-				.map(e -> Integer.valueOf(e)).collect(Collectors.toList());
+		return Arrays.stream(sCell.split(",")).filter(StringUtils::isNotEmpty)
+				.map(Integer::valueOf).collect(Collectors.toList());
 	}
 
 	public Section addDefaultSection(JTable tbl, String defaultType, Integer col) {
@@ -415,10 +429,7 @@ public class Arrangement {
 
 	public void removeSectionExact(JTable tbl, int col) {
 		int[] columns = new int[] { col };
-		if (columns.length == 0) {
-			return;
-		}
-		List<Section> secs = new ArrayList<>();
+        List<Section> secs = new ArrayList<>();
 		for (int i : columns) {
 			secs.add(sections.get(i));
 		}
@@ -468,9 +479,8 @@ public class Arrangement {
 
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
-			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][typesCount];
+                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+            Object[][] data = new Object[rowOrders.size()][typesCount];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				for (int k = 1; k < typesCount; k++) {
@@ -529,9 +539,8 @@ public class Arrangement {
 		}
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
-			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders
+                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+            Object[][] data = new Object[rowOrders
 					.size()][ArrangementPartInclusionPopup.ENERGY_LEVELS.length];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
@@ -547,25 +556,8 @@ public class Arrangement {
 		if (oldData.length <= j || oldData[j].length <= k) {
 			return Boolean.TRUE;
 		} else {
-			return (Boolean) oldData[j][k];
+			return oldData[j][k];
 		}
-	}
-
-	public void initGlobalVariationMap() {
-		for (int i = 0; i < 5; i++) {
-			int typesCount = Section.variationDescriptions[i].length - 1;
-			Boolean[] data = new Boolean[typesCount];
-			data[0] = Boolean.TRUE;
-			for (int k = 1; k < typesCount; k++) {
-				data[k] = Boolean.TRUE;
-			}
-			globalVariationMap.put(i, data);
-		}
-		Boolean[] data = new Boolean[Section.sectionVariationNames.length + 1];
-		for (int k = 0; k < data.length; k++) {
-			data[k] = Boolean.TRUE;
-		}
-		globalVariationMap.put(5, data);
 	}
 
 	public void initGlobalVariationMapFromOldData() {
@@ -598,7 +590,7 @@ public class Arrangement {
 		if (oldData == null || oldData.length <= j) {
 			return Boolean.FALSE;
 		} else {
-			return (Boolean) oldData[j];
+			return oldData[j];
 		}
 	}
 

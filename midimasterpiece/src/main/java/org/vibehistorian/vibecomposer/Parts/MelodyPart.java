@@ -29,7 +29,6 @@ public class MelodyPart extends InstPart {
 	private List<Integer> customDurationChances = null;
 
 	public MelodyPart() {
-		partNum = 0;
 	}
 
 	public boolean isFillPauses() {

@@ -21,7 +21,7 @@ public enum BlockType {
     INTERVAL(100),
     NOTE(100);
 
-    public int defaultChance;
+    public final int defaultChance;
     public List<Integer[]> blocks = new ArrayList<>();
 
     BlockType(int chance) {
@@ -29,13 +29,10 @@ public enum BlockType {
     }
 
 
-    public static Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP;
-    public static Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
+    public static final Map<Integer, List<Pair<Integer, Integer[]>>> BLOCK_CHANGE_MAP;
+    public static final Map<Integer, Set<Integer>> AVAILABLE_BLOCK_CHANGES_PER_TYPE = new HashMap<>();
 
     private static Integer[] block(Integer... notePositions) {
-        if (notePositions == null) {
-            return null;
-        }
         return notePositions;
     }
 
@@ -44,10 +41,6 @@ public enum BlockType {
     }
 
     static {
-
-        // TODO: way too crazy idea - use permutations of the array presets for extreme variation (first 0 locked, the rest varies wildly)
-
-
         SCALEY.blocks.add(block(0, 1, 2));
         SCALEY.blocks.add(block(0, 1, 2, 3));
         SCALEY.blocks.add(block(0, 1, 4));
@@ -82,9 +75,6 @@ public enum BlockType {
         ARPY.blocks.add(block(0, 1, 4, 5));
         ARPY.blocks.add(block(0, 1, 7, 6));
         ARPY.blocks.add(block(0, 1, 6, 7));
-		/*ARPY.blocks.add(block(0, 3, 5));
-		ARPY.blocks.add(block(0, 4, 6));
-		ARPY.blocks.add(block(0, 4, 7));*/
 
         WAVY.blocks.add(block(0, -2, 3, 4));
         WAVY.blocks.add(block(0, -2, 2, 6));
@@ -105,17 +95,15 @@ public enum BlockType {
 
         NOTE.blocks.add(block(0));
 
-
         List<Pair<Integer, Integer[]>> allBlocks = new ArrayList<>();
         for (BlockType blockType : BlockType.values()) {
             blockType.blocks.forEach(e -> allBlocks.add(Pair.of(blockType.ordinal(), e)));
             AVAILABLE_BLOCK_CHANGES_PER_TYPE.put(blockType.ordinal(),
-                    blockType.blocks.stream().map(e -> blockChange(e)).collect(Collectors.toSet()));
+                    blockType.blocks.stream().map(BlockType::blockChange).collect(Collectors.toSet()));
         }
 
         BLOCK_CHANGE_MAP = allBlocks.stream()
                 .collect(Collectors.groupingBy(e -> blockChange(e.getRight())));
-        //LG.i("BLOCK_CHANGE_MAP:" + BLOCK_CHANGE_MAP);
     }
 
     public static List<Integer[]> getBlocksForType(Integer type) {
@@ -165,16 +153,16 @@ public enum BlockType {
 
     private static boolean containsBlock(List<Integer[]> blocks, Integer[] block,
                                          Integer[] invertedBlock) {
-        for (int i = 0; i < blocks.size(); i++) {
-            if (block.length != blocks.get(i).length) {
+        for (Integer[] blk : blocks) {
+            if (block.length != blk.length) {
                 continue;
             }
             boolean isDirectBlock = true;
             boolean isInvertedBlock = true;
             for (int j = 0; j < block.length; j++) {
-                if (!block[j].equals(blocks.get(i)[j])) {
+                if (!block[j].equals(blk[j])) {
                     isDirectBlock = false;
-                } else if (!invertedBlock[j].equals(blocks.get(i)[j])) {
+                } else if (!invertedBlock[j].equals(blk[j])) {
                     isInvertedBlock = false;
                 }
             }

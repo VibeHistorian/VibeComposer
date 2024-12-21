@@ -99,8 +99,8 @@ public class Chord {
 		for (int i = notes.length - 1; i >= 0; i--) {
 			int pitch;
 			if (gen.nextInt(100) < strumPauseChance) {
-				pitch = Note.REST;
-				notes[i] = Note.REST;
+				pitch = Pitches.REST;
+				notes[i] = Pitches.REST;
 			} else {
 				pitch = notes[i];
 			}
@@ -109,7 +109,7 @@ public class Chord {
 				pitch += transpose;
 			}
 			double rhythm = (i > 0) ? 0.0 : rhythmValue;
-			if (pitch < 0 && pitch > Note.REST) {
+			if (pitch < 0 && pitch > Pitches.REST) {
 				LG.d("ERROR - Chord pitch: " + pitch);
 			}
 			Note n = new Note(pitch, rhythm, velocity);

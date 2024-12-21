@@ -34,13 +34,9 @@ import java.util.stream.Collectors;
 
 public class MidiUtils {
 
-	public enum PARTS {
-		MELODY, ARPS, CHORDS, BASSROOTS, DRUMS;
-	}
-
 	public interface Scales {
 
-		public static final Integer[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		Integer[] CHROMATIC_SCALE = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
 				MAJOR_SCALE = { 0, 2, 4, 5, 7, 9, 11 }, MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 10 },
 				HARMONIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 11 },
 				MELODIC_MINOR_SCALE = { 0, 2, 3, 5, 7, 8, 9, 10, 11 }, // mix of ascend and descend
@@ -64,22 +60,6 @@ public class MidiUtils {
 	//full scale
 	public static final List<Integer> cIonianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
 			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
-	/*public static final List<Integer> cDorianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
-			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
-	public static final List<Integer> cPhrygianScale4 = new ArrayList<>(
-			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4,
-					Pitches.BF4, Pitches.C5));
-	public static final List<Integer> cLydianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
-			Pitches.D4, Pitches.E4, Pitches.FS4, Pitches.G4, Pitches.A4, Pitches.B4, Pitches.C5));
-	public static final List<Integer> cMixolydianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
-			Pitches.D4, Pitches.E4, Pitches.F4, Pitches.G4, Pitches.A4, Pitches.BF4, Pitches.C5));
-	public static final List<Integer> cAeolianScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
-			Pitches.D4, Pitches.EF4, Pitches.F4, Pitches.G4, Pitches.AF4, Pitches.BF4, Pitches.C5));
-	public static final List<Integer> cLocrianScale4 = new ArrayList<>(
-			Arrays.asList(Pitches.C4, Pitches.DF4, Pitches.EF4, Pitches.F4, Pitches.GF4,
-					Pitches.AF4, Pitches.BF4, Pitches.C5));
-	public static final List<Integer> cBluesScale4 = new ArrayList<>(Arrays.asList(Pitches.C4,
-			Pitches.D4, Pitches.EF4, Pitches.E4, Pitches.G4, Pitches.A4, Pitches.C5));*/
 
 	public enum ScaleMode {
 		IONIAN(Scales.MAJOR_SCALE, 0), DORIAN(Scales.DORIAN_SCALE, 2),
@@ -93,26 +73,19 @@ public class MidiUtils {
 		ABRYGIAN(Scales.ABRYGIAN_SCALE, 1), DBOCRIAN(Scales.DBOCRIAN_SCALE, 6),
 		GBFS(Scales.GBFS_SCALE, 2), PENTA_MAJOR(Scales.PENTA_MAJOR_SCALE, 1), PENTA_MINOR(Scales.PENTA_MINOR_SCALE, 1), HUNGARIAN_MINOR(Scales.HUNGARIAN_MINOR_SCALE, 3);
 
-		public Integer[] noteAdjustScale;
-		public Integer modeTargetNote;
+		public final Integer[] noteAdjustScale;
+		public final Integer modeTargetNote;
 
-		private ScaleMode(Integer[] adjust, Integer targetNote) {
+		ScaleMode(Integer[] adjust, Integer targetNote) {
 			this.noteAdjustScale = adjust;
 			modeTargetNote = targetNote;
 		}
 	}
 
 	// C D E F G A B = Red Orange Yellow Green Cyan Purple GRAY
-	public static final List<Color> CHORD_COLORS = Arrays.asList(new Color[] { new Color(220, 0, 0),
-			new Color(220, 100, 0), new Color(160, 160, 0), new Color(50, 190, 0),
-			new Color(0, 160, 160), new Color(150, 60, 200), new Color(150, 120, 120) });
-
-	public static final List<ScaleMode> majorishModes = Arrays
-			.asList(new ScaleMode[] { ScaleMode.IONIAN, ScaleMode.LYDIAN, ScaleMode.MIXOLYDIAN,
-					ScaleMode.BLUES, ScaleMode.TURKISH });
-	public static final List<ScaleMode> minorishModes = Arrays
-			.asList(new ScaleMode[] { ScaleMode.DORIAN, ScaleMode.PHRYGIAN, ScaleMode.AEOLIAN,
-					ScaleMode.HARM_MINOR, ScaleMode.LOCRIAN, ScaleMode.INDIAN });
+	public static final List<Color> CHORD_COLORS = Arrays.asList(new Color(220, 0, 0),
+            new Color(220, 100, 0), new Color(160, 160, 0), new Color(50, 190, 0),
+            new Color(0, 160, 160), new Color(150, 60, 200), new Color(150, 120, 120));
 
 	//chords
 	public static final int[] cMaj4 = { Pitches.C4, Pitches.E4, Pitches.G4 };
@@ -168,35 +141,21 @@ public class MidiUtils {
 		SPICE_CHORDS_LIST.add(cDim4);
 	}
 
-	public static final List<String> BANNED_DIM_AUG_6_LIST = Arrays
-			.asList(new String[] { "dim", "aug", "maj6", "m6" });
-	public static final List<String> BANNED_9_13_LIST = Arrays
-			.asList(new String[] { "maj9", "m9", "maj13", "m13" });
-	public static final List<String> BANNED_SUSSY_LIST = Arrays
-			.asList(new String[] { "sus4", "sus2", "sus7" });
+	public static final List<String> BANNED_DIM_AUG_6_LIST = Arrays.asList("dim", "aug", "maj6", "m6");
+	public static final List<String> BANNED_9_13_LIST = Arrays.asList("maj9", "m9", "maj13", "m13");
+	public static final List<String> BANNED_SUSSY_LIST = Arrays.asList("sus4", "sus2", "sus7");
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays
-			.asList(new String[] { "", "m", "maj7", "m7", "7", "mM7", "sus2", "sus4", "sus7",
-					"maj6", "m6", "maj9", "m9", "maj13", "m13", "aug", "dim" });
+			.asList("", "m", "maj7", "m7", "7", "mM7", "sus2", "sus4", "sus7",
+                    "maj6", "m6", "maj9", "m9", "maj13", "m13", "aug", "dim");
 	// index 0 unused
-	public static final List<String> CHORD_FIRST_LETTERS = Arrays
-			.asList(new String[] { "C", "D", "E", "F", "G", "A", "B" });
-	public static final List<String> MAJOR_CHORDS = Arrays
-			.asList(new String[] { "C", "Dm", "Em", "F", "G", "Am", "Bdim" });
-	public static final List<String> MINOR_CHORDS = Arrays
-			.asList(new String[] { "Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#" });
-	public static final List<String> SEMITONE_LETTERS = Arrays.asList(
-			new String[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
-	public static final List<String> SEMITONE_LETTERS_ORDERED = Arrays.asList(
-			new String[] { "C", "D", "E", "F", "G", "A", "B", "C#", "D#", "F#", "G#", "A#" });
-	public static final List<String> MAJOR_MINOR_CHORDS = Arrays.asList(new String[] { "C", "Dm",
-			"Em", "F", "G", "Am", "Bdim", "Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#" });
+	public static final List<String> CHORD_FIRST_LETTERS = Arrays.asList("C", "D", "E", "F", "G", "A", "B");
+	public static final List<String> MAJOR_CHORDS = Arrays.asList("C", "Dm", "Em", "F", "G", "Am", "Bdim");
+	public static final List<String> MINOR_CHORDS = Arrays.asList("Cm", "Ddim", "D#", "Fm", "Gm", "G#", "A#");
+	public static final List<String> SEMITONE_LETTERS = Arrays.asList("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B");
+	public static final List<String> SEMITONE_LETTERS_ORDERED = Arrays.asList("C", "D", "E", "F", "G", "A", "B", "C#", "D#", "F#", "G#", "A#");
 
-	public static final List<Integer> majorChordsModRating = Arrays
-			.asList(new Integer[] { 3, 2, 1, 3, 3, 1, -10 });
-
-	public static final List<String> progressionCircle = Arrays
-			.asList(new String[] { "C", "F", "Bdim", "Em", "Am", "Dm", "G", "C" });
+	public static final List<String> progressionCircle = Arrays.asList("C", "F", "Bdim", "Em", "Am", "Dm", "G", "C");
 
 	public static final List<Integer> MAJ_SCALE = Arrays.asList(Scales.MAJOR_SCALE);
 	public static final List<Integer> MIN_SCALE = Arrays.asList(Scales.AEOLIAN_SCALE);
@@ -246,21 +205,6 @@ public class MidiUtils {
 		return cpMap;
 	}
 
-	private static Map<String, List<String>> createChordProgressionForwardRulesMinorMap() {
-		Map<String, List<String>> cpMap = new HashMap<>();
-		cpMap.put("S",
-				new ArrayList<>(Arrays.asList("Cm", "Ddim", "E", "Fm", "G", "A", "A#", "Bdim")));
-		cpMap.put("Cm", new ArrayList<>(Arrays.asList("Ddim", "E", "Fm", "G", "A", "A#", "Bdim")));
-		cpMap.put("Ddim", new ArrayList<>(Arrays.asList("G", "Bdim")));
-		cpMap.put("E", new ArrayList<>(Arrays.asList("Ddim", "Fm", "A")));
-		cpMap.put("Fm", new ArrayList<>(Arrays.asList("Ddim", "G", "Bdim")));
-		cpMap.put("G", new ArrayList<>(Arrays.asList("Cm", "A", "Bdim")));
-		cpMap.put("A", new ArrayList<>(Arrays.asList("Ddim", "Fm")));
-		cpMap.put("A#", new ArrayList<>(Arrays.asList("Ddim", "E", "Fm")));
-		cpMap.put("Bdim", new ArrayList<>(Arrays.asList("Cm", "G", "A")));
-		return cpMap;
-	}
-
 	// diaTransMap.get(i) == MAJOR_SCALE.get(i) ? 
 	private static Map<Integer, Integer> createDiaTransMap() {
 		Map<Integer, Integer> diaMap = new HashMap<>();
@@ -292,9 +236,7 @@ public class MidiUtils {
 		Map<Integer, List<Pair<String, String>>> modMap = new HashMap<>();
 
 		for (int i = -5; i <= 6; i++) {
-			if (i == 0) {
-				continue;
-			} else {
+			if (i != 0) {
 				List<Pair<String, String>> pair = getKeyModPairs(i, freqMap);
 				if (pair != null) {
 					modMap.put(i, pair);
@@ -331,13 +273,6 @@ public class MidiUtils {
 		return pairs.isEmpty() ? null : pairs;
 	}
 
-
-	public static int ratePairForModulation(Pair<String, String> pair) {
-		int val1 = majorChordsModRating.get(MAJOR_CHORDS.indexOf(pair.getLeft()));
-		int val2 = majorChordsModRating.get(MAJOR_CHORDS.indexOf(pair.getRight()));
-		return val1 + val2;
-	}
-
 	// order freq map by which chord contains most of the passed in notes
 	// -> create map 
 	public static String applyChordFreqMap(Map<Integer, Long> frequentNotes, int orderOfMatch,
@@ -354,7 +289,7 @@ public class MidiUtils {
 					counter += frequentNotes.get(i);
 				}
 			}
-			chordMatchesMap.put(l, Long.valueOf(counter));
+			chordMatchesMap.put(l, (long) counter);
 			if (counter > bestMatch) {
 				bestMatch = counter;
 			}
@@ -594,49 +529,6 @@ public class MidiUtils {
 		return Pair.of(bestNotContained, transposeUpBy);
 	}
 
-	/*
-		public static String prettyChord(long chordNum) {
-			String chordString = String.valueOf(chordNum);
-			int firstNum = Character.digit(chordString.charAt(0), 10);
-			String chordLetter = NUM_TO_LETTER.get(firstNum);
-			String chordQualifier = "";
-			//Long normalizedNum = Long.valueOf(chordNum / firstNum);
-			//LG.i("Normalized: " + normalizedNum);
-			if (chordNum < 10) {
-				return chordLetter;
-			} else if (chordNum < 100) {
-				return chordLetter + "m";
-			} else {
-				int numIndex = SPICE_SELECT_LIST.indexOf(Long.valueOf((chordNum / firstNum) / 10L));
-				chordQualifier = SPICE_SELECT_PRETTY.get(numIndex);
-				return chordLetter + chordQualifier;
-			}
-		}
-	
-		public static long unprettyChord(String chord) {
-			int firstNum = NUM_TO_LETTER.indexOf(String.valueOf(chord.charAt(0)));
-			if (chord.length() == 1) {
-				return firstNum;
-			}
-			if (chord.length() == 2 && chord.charAt(1) == 'm') {
-				return firstNum * 10;
-			}
-			int chordQualifierIndex = SPICE_SELECT_PRETTY.indexOf(chord.substring(1));
-			long chordLong = SPICE_SELECT_LIST.get(chordQualifierIndex) * 10;
-			return chordLong * firstNum;
-	
-		}*/
-
-	public static void addShortenedNote(Phrase pr, Note n, double shortenedTo) {
-		double rv = n.getRhythmValue();
-		n.setRhythmValue(shortenedTo * rv);
-		pr.addNote(n);
-		if (shortenedTo > 0.999) {
-			return;
-		}
-		pr.addNote(Pitches.REST, (1 - shortenedTo) * rv);
-	}
-
 	public static int[] transposeChord(int[] chord, int transposeBy) {
 		if (transposeBy == 0)
 			return chord;
@@ -743,25 +635,7 @@ public class MidiUtils {
 			inversion = null;
 		}
 
-		int[] mappedChord = null;
-		/*if (chordString.length() >= 2 && "#".equals(chordString.substring(1, 2))) {
-			String testChordString = chordString;
-			testChordString = testChordString.replaceFirst("#", "");
-			mappedChord = chordsMap.get(testChordString);
-			if (mappedChord != null) {
-				mappedChord = Arrays.copyOf(mappedChord, mappedChord.length);
-				for (int i = 0; i < mappedChord.length; i++) {
-					mappedChord[i] = mappedChord[i] + 1;
-				}
-		
-				if (inversion != null) {
-					return chordInversion(mappedChord, inversion);
-				}
-				return mappedChord;
-			}
-		}*/
-
-		mappedChord = chordsMap.get(chordString);
+		int[] mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
 			return null;
 		}
@@ -866,28 +740,6 @@ public class MidiUtils {
 		Integer note = pitch + octaveAdjust * octaveMultiplier;
 		//LG.i("Note: " + note);
 		return (note <= 0 || note >= 127) ? null : note;
-	}
-
-	public static int getStandardizedPitch(int pitch, int scaleTranspose, int tolerance) {
-		int result = pitch;
-		int lowBound = Pitches.C4 + scaleTranspose - tolerance;
-		int highBound = Pitches.C5 + scaleTranspose + tolerance;
-
-		while (result > highBound) {
-			result -= 12;
-		}
-		while (result < lowBound) {
-			result += 12;
-		}
-		return result;
-	}
-
-	public static List<Integer> extendScaleByOctaveUpDown(List<Integer> scale) {
-		List<Integer> extended = new ArrayList<>();
-		extended.addAll(transposeScale(scale, -12, false));
-		extended.addAll(transposeScale(scale, 0, false));
-		extended.addAll(transposeScale(scale, 12, false));
-		return extended;
 	}
 
 	public static double pickDurationWeightedRandom(Random generator, double durationLeft,
@@ -1309,8 +1161,6 @@ public class MidiUtils {
 		for (Chord c : chords) {
 			c.setFlam(flam);
 			Note[] notes = c.getNotesBackwards().toArray(new Note[] {});
-			//Note lastNote = notes[notes.length - 1];
-			//lastNote.setDuration(lastNote.getDuration() * 3);
 			phr.addNoteList(notes);
 		}
 	}
@@ -1366,11 +1216,6 @@ public class MidiUtils {
 		}
 		if (detectionResult.getKey() != targetMode) {
 			return null;
-			/*for (Chord c : chords) {
-				c.setNotes(transposeChord(c.getNotes(),
-						detectionResult.getKey().noteAdjustScale,
-						ScaleMode.IONIAN.noteAdjustScale));
-			}*/
 		}
 		for (Chord c : chords) {
 			c.setNotes(transposeChord(c.getNotes(), targetMode.noteAdjustScale,
@@ -1379,13 +1224,6 @@ public class MidiUtils {
 
 
 		List<String> solvedChords = new ArrayList<>();
-		List<Integer> majorScaleNormalized = MAJ_SCALE;
-		String firstLetterFirstChord = rawChords.substring(0, 1).toUpperCase();
-		int firstPitchFirstChord = majorScaleNormalized
-				.get(CHORD_FIRST_LETTERS.indexOf(firstLetterFirstChord));
-		if (rawChords.length() > 1 && "#".equals(rawChords.substring(1, 2))) {
-			firstPitchFirstChord++;
-		}
 
 		for (Chord c : chords) {
 			int[] notes = c.getNotes();
@@ -1393,42 +1231,33 @@ public class MidiUtils {
 			// C,Fsus2,G,Am
 			LG.i("Pitches: " + StringUtils.join(notes, ','));
 			boolean solved = false;
-			for (int i = 0; i < notes.length; i++) {
-				int firstPitch = notes[i] % 12;
-				int index = majorScaleNormalized.indexOf(firstPitch);
-				if (index < 0) {
-					return null;
-				}
+            for (int note : notes) {
+                int firstPitch = note % 12;
+                int index = MAJ_SCALE.indexOf(firstPitch);
+                if (index < 0) {
+                    return null;
+                }
 
-				String firstLetter = CHORD_FIRST_LETTERS.get(index);
-				for (String spice : SPICE_NAMES_LIST) {
-					String combinedChord = firstLetter + spice;
-					int[] mapped = mappedChord(combinedChord);
-					if (Arrays.equals(normalizeChord(mapped), normalizeChord(notes))) {
-						solvedChords.add(combinedChord);
-						solved = true;
-						break;
-					}
-				}
-				if (solved)
-					break;
-			}
+                String firstLetter = CHORD_FIRST_LETTERS.get(index);
+                for (String spice : SPICE_NAMES_LIST) {
+                    String combinedChord = firstLetter + spice;
+                    int[] mapped = mappedChord(combinedChord);
+                    if (Arrays.equals(normalizeChord(mapped), normalizeChord(notes))) {
+                        solvedChords.add(combinedChord);
+                        solved = true;
+                        break;
+                    }
+                }
+                if (solved)
+                    break;
+            }
 		}
 
 
 		LG.i(solvedChords.toString());
 		if (solvedChords.size() == chords.size()) {
-			String firstletterFirstSolvedChord = solvedChords.get(0).substring(0, 1);
-			int firstPitchFirstSolvedChord = majorScaleNormalized
-					.get(CHORD_FIRST_LETTERS.indexOf(firstletterFirstSolvedChord));
-			if (firstPitchFirstChord > firstPitchFirstSolvedChord && transposeUpBy > 0) {
-				//transposeUpBy -= 12;
-			} else if (firstPitchFirstChord < firstPitchFirstSolvedChord && transposeUpBy < 0) {
-				//transposeUpBy += 12;
-			}
 			VibeComposerGUI.transposeScore
 					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
-			//VibeComposerGUI.scaleMode.setVal(detectionResult.getKey().toString());
 			return solvedChords;
 		} else {
 			return null;
@@ -1519,16 +1348,16 @@ public class MidiUtils {
 		Set<Integer> safeNotes = new HashSet<>();
 		safeNotes.add(0);
 		safeNotes.add(7);
-		for (int i = 0; i < chord.length; i++) {
-			if (notesToAvoid >= 1) {
-				avoidNotes.add((chord[i] + 1) % 12);
-			}
-			if (notesToAvoid >= 2) {
-				avoidNotes.add((chord[i] + 11) % 12);
-				avoidNotes.add((chord[i] + 2) % 12);
-			}
-			safeNotes.add(chord[i] % 12);
-		}
+        for (int j : chord) {
+            if (notesToAvoid >= 1) {
+                avoidNotes.add((j + 1) % 12);
+            }
+            if (notesToAvoid >= 2) {
+                avoidNotes.add((j + 11) % 12);
+                avoidNotes.add((j + 2) % 12);
+            }
+            safeNotes.add(j % 12);
+        }
 		avoidNotes.removeAll(safeNotes);
 		return avoidNotes;
 	}
@@ -1536,15 +1365,15 @@ public class MidiUtils {
 	public static Integer[] adjustScaleByChord(Integer[] noteAdjustScale, int[] chord) {
 		Integer[] adjustedScale = Arrays.copyOf(noteAdjustScale, noteAdjustScale.length);
 		int[] normalizedChord = normalizeChord(chord);
-		for (int i = 0; i < normalizedChord.length; i++) {
-			boolean changedNote = MAJ_SCALE.indexOf(normalizedChord[i]) == -1;
-			if (changedNote) {
-				int indexToChange = MIN_SCALE.indexOf(normalizedChord[i]);
-				adjustedScale[indexToChange] = normalizedChord[i];
-				LG.d("Changed at index: " + indexToChange + ", to: " + normalizedChord[i]);
-			}
+        for (int j : normalizedChord) {
+            boolean changedNote = !MAJ_SCALE.contains(j);
+            if (changedNote) {
+                int indexToChange = MIN_SCALE.indexOf(j);
+                adjustedScale[indexToChange] = j;
+                LG.d("Changed at index: " + indexToChange + ", to: " + j);
+            }
 
-		}
+        }
 		return adjustedScale;
 	}
 
@@ -1556,7 +1385,7 @@ public class MidiUtils {
 			Set<Integer> mapped = MidiUtils.mappedChordList(chords.get(i), true);
 			if (scaleOf7) {
 				mapped.removeIf(e -> !MidiUtils.MAJ_SCALE.contains(e));
-				mapped = mapped.stream().map(e -> MidiUtils.MAJ_SCALE.indexOf(e))
+				mapped = mapped.stream().map(MidiUtils.MAJ_SCALE::indexOf)
 						.collect(Collectors.toSet());
 			}
 
@@ -1577,13 +1406,13 @@ public class MidiUtils {
 			return pitchToString(pitch);
 		} else {
 			if (MidiGenerator.gc.isDrumCustomMapping() && !forceGmNames) {
-				Integer drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS_SEMI);
+				int drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS_SEMI);
 				if (drumIndex < 0) {
 					return pitchToString(pitch);
 				}
 				return InstUtils.DRUM_INST_NAMES_SEMI[drumIndex];
 			} else {
-				Integer drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS);
+				int drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS);
 				if (drumIndex < 0) {
 					return pitchToString(pitch);
 				}
@@ -1630,11 +1459,7 @@ public class MidiUtils {
 	public static boolean isMultiple(double bigger, double smaller) {
 		double result = bigger / smaller;
 		double rounded = Math.round(result);
-		if (roughlyEqual(result, rounded)) {
-			return true;
-		} else {
-			return false;
-		}
+        return roughlyEqual(result, rounded);
 	}
 
 	public static double getChordKeyness(int[] mapped) {
@@ -1642,11 +1467,11 @@ public class MidiUtils {
 			throw new IllegalArgumentException("Input chord is null or empty!");
 		}
 		int inKey = 0;
-		for (int i = 0; i < mapped.length; i++) {
-			if (MAJ_SCALE.contains(mapped[i] % 12)) {
-				inKey++;
-			}
-		}
+        for (int j : mapped) {
+            if (MAJ_SCALE.contains(j % 12)) {
+                inKey++;
+            }
+        }
 		return inKey / (double) mapped.length;
 	}
 
@@ -1685,26 +1510,17 @@ public class MidiUtils {
 			return new ArrayList<>(arpPattern.subList(0, actualSize));
 		}
 		return arpPattern;
-		/*if (actualSize == listSize) {
-			return arpPattern;
-		}
-		
-		List<Integer> extendedList = new ArrayList<>(arpPattern);
-		for (int i = listSize; i < actualSize; i++) {
-			extendedList.add(arpPattern.get(i - listSize) % listSize);
-		}
-		return extendedList;*/
 	}
 
 	public static boolean containsRootNote(int[] chord) {
 		if (chord == null) {
 			return false;
 		}
-		for (int i = 0; i < chord.length; i++) {
-			if (chord[i] % 12 == 0) {
-				return true;
-			}
-		}
+        for (int j : chord) {
+            if (j % 12 == 0) {
+                return true;
+            }
+        }
 		return false;
 	}
 

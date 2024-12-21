@@ -1,9 +1,9 @@
 package org.vibehistorian.vibecomposer.Parts;
 
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-
-import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 
 @XmlRootElement(name = "bassPart")
 @XmlType(propOrder = {})
@@ -17,7 +17,6 @@ public class BassPart extends InstPart {
 	private PatternJoinMode patternJoinMode = PatternJoinMode.EXPAND;
 
 	public BassPart() {
-		partNum = 1;
 	}
 
 	public boolean isUseRhythm() {

@@ -1,11 +1,11 @@
 package org.vibehistorian.vibecomposer.Parts;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-
-import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
+import org.vibehistorian.vibecomposer.InstUtils;
+
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "chordPart")
 @XmlType(propOrder = {})
@@ -23,7 +23,6 @@ public class ChordPart extends InstPart {
 	private StrumType strumType = StrumType.ARP_U;
 
 	public ChordPart() {
-		partNum = 2;
 	}
 
 

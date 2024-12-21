@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import jm.constants.Pitches;
-import jm.music.data.Note;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.LG;
@@ -281,12 +280,12 @@ public class MidiEditArea extends JComponent {
 	}
 
 	public void deleteSelected() {
-		if (selectedNotes.size() > 0) {
+		if (!selectedNotes.isEmpty()) {
 			selectedNotes.forEach(e -> {
 				if (e.getRv() < MidiGenerator.DBL_ERR) {
 					getValues().remove(e);
 				} else {
-					e.setPitch(Note.REST);
+					e.setPitch(Pitches.REST);
 				}
 			});
 			selectedNotes.clear();
@@ -469,7 +468,7 @@ public class MidiEditArea extends JComponent {
 		if (isAlt && sameNotePressed) {
 			splitNotes(orderVal.x, evt.getPoint());
 		} else if (selectedNotes.size() < 2 && sameNotePressed) {
-			setVal(orderVal.x, Note.REST);
+			setVal(orderVal.x, Pitches.REST);
 		} else {
 			selectAllNotes(evt);
 			return false;

@@ -46,24 +46,17 @@ public class MidiGeneratorUtils {
 		}
 		chordDirs = chordDirs.subList(0, chords);
 		return chordDirs;
-		/*
-		List<Integer> dirs = new ArrayList<>();
-		//dirs.add(0);
-		for (int i = 0; i < chords; i++) {
-			dirs.add(rand.nextInt(3) - 1);
-		}
-		return dirs;*/
 	}
 
 	static List<Integer> convertRootsToOffsets(List<Integer> roots, int targetMode) {
 		List<Integer> offsets = new ArrayList<>();
-		for (int i = 0; i < roots.size(); i++) {
-			int value = -1 * roots.get(i);
-			if (targetMode == 0) {
-				value /= 2;
-			}
-			offsets.add(value);
-		}
+        for (Integer root : roots) {
+            int value = -1 * root;
+            if (targetMode == 0) {
+                value /= 2;
+            }
+            offsets.add(value);
+        }
 		return offsets;
 	}
 
@@ -93,22 +86,22 @@ public class MidiGeneratorUtils {
 		if (direction == MelodyUtils.NoteTargetDirection.ASC) {
 			Collections.sort(multiDirs);
 		} else if (direction == MelodyUtils.NoteTargetDirection.DESC) {
-			Collections.sort(multiDirs, (e1,e2) -> Integer.compare(e2,e1));
+			multiDirs.sort((e1, e2) -> Integer.compare(e2, e1));
 		}
 		return multiDirs;
 	}
 
 	static List<Integer> getRootIndexes(List<int[]> chords) {
 		List<Integer> rootIndexes = new ArrayList<>();
-		for (int i = 0; i < chords.size(); i++) {
-			int root = chords.get(i)[0];
-			int rootIndex = MidiUtils.MAJ_SCALE.indexOf(root % 12);
-			if (rootIndex < 0) {
-				int closestPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, root % 12);
-				rootIndex = MidiUtils.MAJ_SCALE.indexOf(closestPitch % 12);
-			}
-			rootIndexes.add(rootIndex);
-		}
+        for (int[] chord : chords) {
+            int root = chord[0];
+            int rootIndex = MidiUtils.MAJ_SCALE.indexOf(root % 12);
+            if (rootIndex < 0) {
+                int closestPitch = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE, root % 12);
+                rootIndex = MidiUtils.MAJ_SCALE.indexOf(closestPitch % 12);
+            }
+            rootIndexes.add(rootIndex);
+        }
 		return rootIndexes;
 	}
 
@@ -120,11 +113,9 @@ public class MidiGeneratorUtils {
 
 		int minAffectedChord = OMNI.clamp((int) (affectedMeasure * chordSize) - 1, 1,
 				chordSize - 1);
-		//LG.d("Min affected: " + minAffectedChord);
 		if (chordNum < minAffectedChord) {
 			return param;
 		}
-		//LG.d("Old param: " + param);
 
 		int chordRange = chordSize - 1 - minAffectedChord;
 		double effect = (chordRange > 0) ? ((chordNum - minAffectedChord) / ((double) chordRange))
@@ -134,14 +125,13 @@ public class MidiGeneratorUtils {
 
 		int multiplier = reverseEffect ? -1 : 1;
 		if (transitionType == 1) {
-			param += maxEffect * effect * multiplier;
+			param += (int) (maxEffect * effect * multiplier);
 		} else {
-			param -= maxEffect * effect * multiplier;
+			param -= (int) (maxEffect * effect * multiplier);
 		}
 		if (clampChance) {
 			param = OMNI.clampChance(param);
 		}
-		//LG.d("New param: " + param);
 		return param;
 	}
 
@@ -158,7 +148,6 @@ public class MidiGeneratorUtils {
 				}
 			}
 			if (choices.isEmpty()) {
-				//choices.add(0);
 				for (int pitch : c) {
 					choices.add(MidiUtils.MAJ_SCALE.indexOf(MidiUtils.getClosestPitchFromList(MidiUtils.MAJ_SCALE, pitch)));
 				}
@@ -186,9 +175,9 @@ public class MidiGeneratorUtils {
 	public static List<Integer> generateNoteTargetOffsets(List<String> chordStrings, int randomSeed,
 														  int targetMode, int targetNoteVariation, Boolean isPublic, MelodyUtils.NoteTargetDirection direction) {
 		List<int[]> chords = new ArrayList<>();
-		for (int i = 0; i < chordStrings.size(); i++) {
-			chords.add(MidiUtils.mappedChord(chordStrings.get(i)));
-		}
+        for (String chordString : chordStrings) {
+            chords.add(MidiUtils.mappedChord(chordString));
+        }
 		return MidiGeneratorUtils.generateNoteTargetOffsets(chords, randomSeed, targetMode,
 				targetNoteVariation, direction);
 	}
@@ -205,8 +194,6 @@ public class MidiGeneratorUtils {
 		List<Integer> offsets = new ArrayList<>();
 		if (targetMode == 1) {
 			for (int i = 0; i < chordOffsets.size(); i++) {
-				/*LG.d("Chord offset: " + chordOffsets.get(i) + ", multiDir: "
-					+ multipliedDirections.get(i));*/
 				offsets.add(chordOffsets.get(i) + multipliedDirections.get(i));
 			}
 		} else {
@@ -264,21 +251,11 @@ public class MidiGeneratorUtils {
 					}
 			}
 		}
-
-		//int min = offsets.stream().min((e1, e2) -> e1.compareTo(e2)).get();
-		/*if (min == -1) {
-			for (int i = 0; i < offsets.size(); i++) {
-				offsets.set(i, offsets.get(i) + 1);
-			}
-		}*/
-
-		LG.d("RANDOMIZED OFFSETS");
 		return offsets;
 	}
 
 	static List<Boolean> generateMelodyDirectionsFromChordProgression(List<int[]> progression,
 			boolean roots) {
-
 		List<Boolean> ascDirectionList = new ArrayList<>();
 
 		for (int i = 0; i < progression.size(); i++) {
@@ -293,7 +270,6 @@ public class MidiGeneratorUtils {
 								- 1];
 				ascDirectionList.add(Boolean.valueOf(current <= next));
 			}
-
 		}
 
 		return ascDirectionList;
@@ -355,42 +331,6 @@ public class MidiGeneratorUtils {
 			normReturnPitch += 12;
 		}
 		return normReturnPitch;
-	}
-
-	private static boolean fits(int pitch, int min, int max, boolean isInclusive) {
-		if (isInclusive) {
-			if (pitch >= min && pitch <= max) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			if (pitch > min && pitch < max) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-	}
-
-	public static List<Double> getSustainedDurationsFromPattern(List<Integer> pattern,
-			double addDur) {
-		List<Double> durations = new ArrayList<>();
-		double dur = 0;
-		int end = pattern.size();
-		for (int i = 0; i < end; i++) {
-			if (pattern.get(i) < 1) {
-				dur += addDur;
-			} else {
-				dur = addDur;
-			}
-			if (i < end - 1 && pattern.get(i + 1) == 1) {
-				durations.add(dur);
-			}
-		}
-		durations.add(dur);
-
-		return durations;
 	}
 
 	public static int multiplyVelocity(int velocity, int multiplierPercentage, int maxAdjust,
@@ -675,15 +615,6 @@ public class MidiGeneratorUtils {
 
 	}
 
-	static void multiDelayPhrase(Phrase phr, List<Double> delays) {
-		if (delays.isEmpty()) {
-			return;
-		}
-		List<Double> volMultipliers = DoubleStream.iterate(0.8, e -> e * 0.8).limit(delays.size())
-				.boxed().collect(Collectors.toList());
-		multiDelayPhrase(phr, delays, volMultipliers);
-	}
-
 	static void multiDelayPhrase(Phrase phr, List<Double> delays, List<Double> volMultipliers) {
 		if (delays.isEmpty() || (delays.size() != volMultipliers.size())) {
 			return;
@@ -747,7 +678,6 @@ public class MidiGeneratorUtils {
 				excess += adjustment;
 			}
 			// Now, set the last value to the remaining excess
-			//LG.i("Excess AFTER: " + excess);
 			lastOffset = -excess;
 		}
 
@@ -760,12 +690,6 @@ public class MidiGeneratorUtils {
 
 		// Shuffle the offsets list to randomize order
 		Collections.shuffle(offsets, random);
-
-		//LG.i("Offset variation: " + offsetVariation);
-		/*LG.i("Random values: " + offsets.stream()
-				.map(d -> String.format("%.2f", d*100)) // Format each double to 5 decimal places
-				.collect(Collectors.joining(" ")));*/
-		//LG.i("Sum = " + offsets.stream().mapToDouble(e -> e).sum());
 
 		return offsets;
 	}

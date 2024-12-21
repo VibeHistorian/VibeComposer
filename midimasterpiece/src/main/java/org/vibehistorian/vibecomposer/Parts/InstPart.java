@@ -79,8 +79,6 @@ public abstract class InstPart implements Cloneable {
 
 	protected boolean muted = false;
 
-	protected int partNum = 0;
-
 	protected PhraseNotes customMidi = null;
 
 	public void setFromPanel(InstPanel panel, int lastRandomSeed) {
@@ -208,7 +206,7 @@ public abstract class InstPart implements Cloneable {
 	}
 
 	public int getPatternSeedWithPartOffset() {
-		return patternSeed + partNum * 10000;
+		return patternSeed + getPartNum() * 10000;
 	}
 
 	public void setPatternSeed(int patternSeed) {

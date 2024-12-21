@@ -1,21 +1,21 @@
 package org.vibehistorian.vibecomposer;
 
-import jm.music.data.Note;
+import jm.constants.Pitches;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
-	public static final List<Integer> PART_INTS = Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 });
+	public static final List<Integer> PART_INTS = Arrays.asList(0, 1, 2, 3, 4);
 
 	public static Color alphen(Color c, int alphaValue) {
-		Color newC = new Color(c.getRed(), c.getGreen(), c.getBlue(),
-				OMNI.clamp(alphaValue, 0, 255));
-		return newC;
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(),
+                OMNI.clamp(alphaValue, 0, 255));
 	}
 
 	public static Color mult(Color c, double multer) {
@@ -65,9 +65,7 @@ public class OMNI {
 	}
 
 	public static void clampIntList(List<Integer> list, int min, int max) {
-		for (int i = 0; i < list.size(); i++) {
-			list.set(i, clamp(list.get(i), min, max));
-		}
+        list.replaceAll(num -> clamp(num, min, max));
 	}
 
 	public static void clampIntArray(Integer[] array, int min, int max) {
@@ -102,13 +100,12 @@ public class OMNI {
 	}
 
 	public static Color mixColor(Color c1, Color c2, double percentageMix) {
-		Color newColor = new Color((int) interp(c1.getRed(), c2.getRed(), percentageMix),
+        //LG.d("Color: " + c1.toString());
+		//LG.d("Mixed: " + newColor.toString());
+		return new Color((int) interp(c1.getRed(), c2.getRed(), percentageMix),
 				(int) interp(c1.getGreen(), c2.getGreen(), percentageMix),
 				(int) interp(c1.getBlue(), c2.getBlue(), percentageMix),
 				(int) interp(c1.getAlpha(), c2.getAlpha(), percentageMix));
-		//LG.d("Color: " + c1.toString());
-		//LG.d("Mixed: " + newColor.toString());
-		return newColor;
 	}
 
 	public static double interp(double n1, double n2, double normalizedPercentage) {
@@ -143,12 +140,12 @@ public class OMNI {
 	}
 
 	public static <T extends Number> T maxOf(List<T> list) {
-		return (T) list.stream().max((e1, e2) -> Double.compare(e1.doubleValue(), e2.doubleValue()))
+		return list.stream().max(Comparator.comparingDouble(Number::doubleValue))
 				.get();
 	}
 
 	public static <T extends Number> T minOf(List<T> list) {
-		return (T) list.stream().min((e1, e2) -> Double.compare(e1.doubleValue(), e2.doubleValue()))
+		return list.stream().min(Comparator.comparingDouble(Number::doubleValue))
 				.get();
 	}
 
@@ -165,8 +162,8 @@ public class OMNI {
 	}
 
 	public static int clampPitch(int newPitch) {
-		if (newPitch < Note.REST + 100) {
-			return Note.REST;
+		if (newPitch < Pitches.REST + 100) {
+			return Pitches.REST;
 		}
 		return clamp(newPitch, 0, 127);
 	}

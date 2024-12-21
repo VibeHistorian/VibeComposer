@@ -13,5 +13,4 @@ public class MelodyBlock {
 	public List<Integer> notes;
 	public List<Double> durations;
 	public boolean inverse;
-
 }

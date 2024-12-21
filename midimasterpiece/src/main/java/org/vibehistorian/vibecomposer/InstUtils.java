@@ -1,13 +1,9 @@
 package org.vibehistorian.vibecomposer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InstUtils {
@@ -148,17 +144,6 @@ public class InstUtils {
 			drumInstStrings[i] = (i + 36) + ": " + namePart;
 		}
 		return drumInstStrings;
-	}
-
-	public static String[] combineInstrumentPools(String[]... instPools) {
-		Set<String> allInstruments = new HashSet<>();
-		for (String[] pool : instPools) {
-			allInstruments.addAll(Arrays.asList(pool));
-		}
-		List<String> allInstrumentsSorted = new ArrayList<>(allInstruments);
-		Collections.sort(allInstrumentsSorted, (o1, o2) -> Integer.valueOf(o1.split(": ")[0].trim())
-				.compareTo(Integer.valueOf(o2.split(": ")[0].trim())));
-		return allInstrumentsSorted.toArray(new String[] {});
 	}
 
 	public static final String[] DRUM_KITS = { "0: DRUMKIT0", "1: DRUMKIT1", "2: DRUMKIT2",

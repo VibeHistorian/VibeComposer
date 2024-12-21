@@ -411,11 +411,11 @@ public class Section {
 		Set<Integer> pres = new HashSet<>();
 
 		Object[][] data = partPresenceVariationMap.get(part);
-		for (int i = 0; i < data.length; i++) {
-			if (data[i][1] == Boolean.TRUE) {
-				pres.add((Integer) data[i][0]);
-			}
-		}
+        for (Object[] datum : data) {
+            if (datum[1] == Boolean.TRUE) {
+                pres.add((Integer) datum[0]);
+            }
+        }
 		return pres;
 	}
 
@@ -483,7 +483,7 @@ public class Section {
 		initPartMapIfNull();
 		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i + 2] = vars
-					.contains(Integer.valueOf(i));
+					.contains(i);
 		}
 	}
 
@@ -492,7 +492,7 @@ public class Section {
 		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i
 					+ 2] = ((Boolean) partPresenceVariationMap.get(part)[partOrder][i + 2])
-							|| vars.contains(Integer.valueOf(i));
+							|| vars.contains(i);
 		}
 	}
 
@@ -510,7 +510,7 @@ public class Section {
 		int chance = getChanceForInst(part);
 		//LG.d("Chance: " + chance);
 		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
-		panels.removeIf(e -> e.getMuteInst());
+		panels.removeIf(InstPanel::getMuteInst);
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
 				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
@@ -526,14 +526,14 @@ public class Section {
 		}
 		//LG.d("Panels size: " + panels.size());
 		int added = 0;
-		for (int j = 0; j < panels.size(); j++) {
-			if (presRand.nextInt(100) < chance) {
-				setPresence(part,
-						VibeComposerGUI.getAbsoluteOrder(part, panels.get(j).getPanelOrder()));
-				added++;
-			}
-		}
-		if (forceAdd && added == 0 && panels.size() > 0) {
+        for (InstPanel instPanel : panels) {
+            if (presRand.nextInt(100) < chance) {
+                setPresence(part,
+                        VibeComposerGUI.getAbsoluteOrder(part, instPanel.getPanelOrder()));
+                added++;
+            }
+        }
+		if (forceAdd && added == 0 && !panels.isEmpty()) {
 			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
 			setPresence(part, VibeComposerGUI.getAbsoluteOrder(part, panel.getPanelOrder()));
 		}
@@ -670,9 +670,8 @@ public class Section {
 		//LG.d("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
-			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
+                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+            Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
 			//LG.d(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
 			for (int j = 0; j < rowOrders.size(); j++) {
@@ -710,9 +709,8 @@ public class Section {
 	public void initPartMap() {
 		for (int i = 0; i < 5; i++) {
 			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(e -> e.getPanelOrder()).collect(Collectors.toList());
-			Collections.sort(rowOrders);
-			Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
+                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+            Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
 				for (int k = 1; k < variationDescriptions[i].length; k++) {
@@ -796,14 +794,14 @@ public class Section {
 		double count = 0;
 		double total = 0;
 		Object[][] data = partPresenceVariationMap.get(part);
-		for (int i = 0; i < data.length; i++) {
-			for (int j = 2; j < data[i].length; j++) {
-				if (data[i][j] == Boolean.TRUE) {
-					count++;
-				}
-				total++;
-			}
-		}
+        for (Object[] datum : data) {
+            for (int j = 2; j < datum.length; j++) {
+                if (datum[j] == Boolean.TRUE) {
+                    count++;
+                }
+                total++;
+            }
+        }
 		return count / total;
 	}
 

@@ -1,14 +1,13 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "inclusions")
 @XmlType(propOrder = {})
@@ -74,7 +73,7 @@ public class InclusionMapJAXB {
 				result.put(i, new Object[0][0]);
 				continue;
 			}
-			List<Integer> rowOrders = list.stream().map(e -> e.getPart())
+			List<Integer> rowOrders = list.stream().map(InclusionArray::getPart)
 					.collect(Collectors.toList());
 			Object[][] data = new Object[rowOrders
 					.size()][jaxb.map.get(i).get(0).getOptions().size() + 1];

@@ -1,11 +1,10 @@
 package org.vibehistorian.vibecomposer.Parts;
 
-import java.util.List;
+import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-
-import org.vibehistorian.vibecomposer.Enums.ArpPattern;
+import java.util.List;
 
 @XmlRootElement(name = "arpPart")
 @XmlType(propOrder = {})
@@ -18,7 +17,6 @@ public class ArpPart extends InstPart {
 	private boolean arpContourChordMode = false;
 
 	public ArpPart() {
-		partNum = 3;
 	}
 
 
