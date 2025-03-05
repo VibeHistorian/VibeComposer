@@ -22,7 +22,7 @@ public class DrumPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6219184197272490684L;
 
-	private JCheckBox isVelocityPattern = new CustomCheckBox("Ghosts", true);
+	private final JCheckBox isVelocityPattern = new CustomCheckBox("Ghosts", true);
 
 	public void initComponents(ActionListener l) {
 

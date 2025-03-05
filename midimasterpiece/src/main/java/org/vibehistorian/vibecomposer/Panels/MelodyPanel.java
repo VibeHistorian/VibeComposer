@@ -36,20 +36,20 @@ public class MelodyPanel extends InstPanel {
 
 	public static final int CUSTOM_DURATIONS_LIMIT = 10;
 
-	private JCheckBox fillPauses = new CustomCheckBox("<html>Fill<br>Pauses</html>", false);
-	private RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4", this);
-	private RandomIntegerListButton patternStructure = new RandomIntegerListButton("1,2,1,3", this);
-	private KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 7, 0, 7);
-	private KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
-	private KnobPanel maxNoteExceptions = new KnobPanel("Max<br>Exc.", 0, 0, 4);
-	private KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Pattern", 33);
-	private KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
-	private KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
-	private KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
-	private KnobPanel speed = new KnobPanel("Speed", 50, -100, 100);
-	private KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
-	private KnobPanel startNoteChance = new KnobPanel("Start%", 80);
-	private JCheckBox patternFlexible = new CustomCheckBox("Flex", true);
+	private final JCheckBox fillPauses = new CustomCheckBox("<html>Fill<br>Pauses</html>", false);
+	private final RandomIntegerListButton noteTargets = new RandomIntegerListButton("0,2,2,4", this);
+	private final RandomIntegerListButton patternStructure = new RandomIntegerListButton("1,2,1,3", this);
+	private final KnobPanel maxBlockChange = new KnobPanel("Max Block<br>Change +-", 7, 0, 7);
+	private final KnobPanel blockJump = new KnobPanel("Block<br>Jump", 1, 0, 4);
+	private final KnobPanel maxNoteExceptions = new KnobPanel("Max<br>Exc.", 0, 0, 4);
+	private final KnobPanel alternatingRhythmChance = new KnobPanel("Alt.<br>Pattern", 33);
+	private final KnobPanel doubledRhythmChance = new KnobPanel("Doubled<br>Rhythm%", 0);
+	private final KnobPanel splitChance = new KnobPanel("Split<br>Long%", 0);
+	private final KnobPanel noteExceptionChance = new KnobPanel("Note<br> Exc.%", 25);
+	private final KnobPanel speed = new KnobPanel("Speed", 50, -100, 100);
+	private final KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
+	private final KnobPanel startNoteChance = new KnobPanel("Start%", 80);
+	private final JCheckBox patternFlexible = new CustomCheckBox("Flex", true);
 
 	private PhraseNotes customDurationValues = new PhraseNotes();
 	private List<Integer> customDurationChances = new ArrayList<>(IntStream.iterate(50, e -> e).limit(CUSTOM_DURATIONS_LIMIT).boxed().collect(Collectors.toList()));

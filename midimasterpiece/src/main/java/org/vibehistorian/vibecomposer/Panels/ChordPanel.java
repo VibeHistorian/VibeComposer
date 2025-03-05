@@ -21,17 +21,17 @@ public class ChordPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 7721347698114633901L;
 
-	private KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
-	private KnobPanel transitionSplit = new KnobPanel("Split<br>%%", 625, 0, 1000);
+	private final KnobPanel transitionChance = new KnobPanel("Tran-<br>sition%", 0);
+	private final KnobPanel transitionSplit = new KnobPanel("Split<br>%%", 625, 0, 1000);
 
-	private KnobPanel strum = new KnobPanel("Strum", 0, 0, 2000);
-	private KnobPanel strumPauseChance = new KnobPanel("Strum<br>Pause", 0);
+	private final KnobPanel strum = new KnobPanel("Strum", 0, 0, 2000);
+	private final KnobPanel strumPauseChance = new KnobPanel("Strum<br>Pause", 0);
 
-	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
+	private final ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
-	private ScrollComboBox<InstUtils.POOL> instPoolPicker = new ScrollComboBox<>();
+	private final ScrollComboBox<InstUtils.POOL> instPoolPicker = new ScrollComboBox<>();
 
-	private ScrollComboBox<StrumType> strumType = new ScrollComboBox<>();
+	private final ScrollComboBox<StrumType> strumType = new ScrollComboBox<>();
 
 	public void initComponents(ActionListener l) {
 

@@ -1005,7 +1005,6 @@ public class MelodyGeneratorNewOnly {
         List<Note> modeNoteChanges = applyModeNoteTargets(fullMelody, fullMelodyMap, pitches,
                 surplusTonics);
         applyChordNoteTargets(fullMelody, fullMelodyMap, chords, modeNoteChanges, sec, mp);
-
     }
 
     private int applyTonicNoteTargets(List<Note> fullMelody, Map<Integer, List<Note>> fullMelodyMap,

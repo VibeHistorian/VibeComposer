@@ -240,15 +240,11 @@ public class MidiUtils {
 				List<Pair<String, String>> pair = getKeyModPairs(i, freqMap);
 				if (pair != null) {
 					modMap.put(i, pair);
-					/*LG.i(
-							"Trans: " + i + ", pair: " + (pair == null ? "NULL" : pair.toString()));*/
-
 				}
 			}
 		}
 
 		return modMap;
-
 	}
 
 	private static List<Pair<String, String>> getKeyModPairs(int toKey,

@@ -19,13 +19,13 @@ public class BassPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = -1472358707275766819L;
 
-	private JCheckBox useRhythm = new CustomCheckBox("Use Pattern", true);
-	private JCheckBox alternatingRhythm = new CustomCheckBox("Random Alt. Rhythm", true);
-	private JCheckBox doubleOct = new CustomCheckBox("Oct. Interval", false);
-	private KnobPanel noteVariation = new KnobPanel("Note Variance", 50);
-	private JCheckBox melodyPattern = new CustomCheckBox("Melody1 Pattern", false);
+	private final JCheckBox useRhythm = new CustomCheckBox("Use Pattern", true);
+	private final JCheckBox alternatingRhythm = new CustomCheckBox("Random Alt. Rhythm", true);
+	private final JCheckBox doubleOct = new CustomCheckBox("Oct. Interval", false);
+	private final KnobPanel noteVariation = new KnobPanel("Note Variance", 50);
+	private final JCheckBox melodyPattern = new CustomCheckBox("Melody1 Pattern", false);
 
-	private ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
+	private final ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
 	public void initComponents(ActionListener l) {
 		ScrollComboBox.addAll(new Integer[] { 9 }, midiChannel);

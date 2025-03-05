@@ -2322,7 +2322,7 @@ public class MidiGenerator implements JMC {
 
 		if (melodyEmptyPass || !overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			Vector<Note> noteList = new Vector<>();
-			fullMelodyMap.values().forEach(e -> noteList.addAll(e));
+			fullMelodyMap.values().forEach(noteList::addAll);
 
 			phr.addNoteList(noteList, true);
 			Phrase phrSaved = phr.copy();
@@ -2354,7 +2354,7 @@ public class MidiGenerator implements JMC {
 				List<PhraseNote> pns = new ArrayList<>(pn);
 
 				if (pns.size() >= 2) {
-					Collections.sort(pns, Comparator.comparing(e -> e.getStartTime()));
+					pns.sort(Comparator.comparing(PhraseNote::getStartTime));
 					double endTime = pn.get(pn.size() - 1).getAbsoluteStartTime()
 							+ pn.get(pn.size() - 1).getRv();
 					for (int i = 0; i < pns.size() - 1; i++) {
@@ -2365,17 +2365,16 @@ public class MidiGenerator implements JMC {
 					pns.get(pns.size() - 1).setRv(endTime - pns.get(pns.size() - 2).getStartTime());
 				}
 
-				for (int i = 0; i < pns.size(); i++) {
-					PhraseNote n = pns.get(i);
-					if (n.getStartTime() > (cumulativeChordDur - DBL_ERR)) {
-						chordCounter = (chordCounter + 1) % numChords;
-						if (chordCounter == 0) {
-							measureCounter++;
-						}
-						cumulativeChordDur += progressionDurations.get(chordCounter % numChords);
-					}
-					fullMelodyMap.get(chordCounter + numChords * measureCounter).add(n.toNote());
-				}
+                for (PhraseNote n : pns) {
+                    if (n.getStartTime() > (cumulativeChordDur - DBL_ERR)) {
+                        chordCounter = (chordCounter + 1) % numChords;
+                        if (chordCounter == 0) {
+                            measureCounter++;
+                        }
+                        cumulativeChordDur += progressionDurations.get(chordCounter % numChords);
+                    }
+                    fullMelodyMap.get(chordCounter + numChords * measureCounter).add(n.toNote());
+                }
 			}
 
 
@@ -2401,7 +2400,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> melodyVars = sec.getVariation(0, ip.getAbsoluteOrder());
 		// extraTranspose variation
 		int extraTranspose = 0;
-		if (melodyVars != null && melodyVars.contains(Integer.valueOf(0))) {
+		if (melodyVars != null && melodyVars.contains(0)) {
 			extraTranspose = 12;
 		}
 

@@ -25,10 +25,10 @@ public class ArpPanel extends InstPanel {
 	 */
 	private static final long serialVersionUID = 6648220153568966988L;
 
-	private ArpPickerMini arpPattern = new ArpPickerMini(this);
-	private RandomIntegerListButton arpContour = new RandomIntegerListButton("?", this);
-	private CheckButton arpContourChordMode = new CheckButton("C", true);
-	private KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
+	private final ArpPickerMini arpPattern = new ArpPickerMini(this);
+	private final RandomIntegerListButton arpContour = new RandomIntegerListButton("?", this);
+	private final CheckButton arpContourChordMode = new CheckButton("C", true);
+	private final KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
 	public void initComponents(ActionListener l) {
 

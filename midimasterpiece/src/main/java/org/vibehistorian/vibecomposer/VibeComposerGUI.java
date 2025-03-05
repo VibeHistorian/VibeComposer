@@ -9876,12 +9876,6 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static int getAbsoluteOrder(int partNum, int partOrder) {
-		/*List<? extends InstPanel> panels = getInstList(partNum);
-		for (int i = 0; i < panels.size(); i++) {
-			if (panels.get(i).getPanelOrder() == partOrder) {
-				return i;
-			}
-		}*/
 		List<Integer> allPanelOrders = getInstList(partNum).stream().map(e -> e.getPanelOrder())
 				.collect(Collectors.toList());
 		allPanelOrders.sort(Comparator.comparing(e -> e));

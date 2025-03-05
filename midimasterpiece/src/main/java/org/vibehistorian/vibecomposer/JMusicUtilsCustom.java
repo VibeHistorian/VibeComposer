@@ -262,10 +262,8 @@ public class JMusicUtilsCustom implements JMC {
 			System.out.println("Converting to SMF data structure...");
 
 		double scoreTempo = score.getTempo();
-		double partTempoMultiplier = 1.0;
-		double phraseTempoMultiplier = 1.0;
-		int phraseNumb;
-		Phrase phrase1, phrase2;
+		double partTempoMultiplier;
+		double phraseTempoMultiplier;
 
 		//Add a tempo track at the start of top of the list
 		//Add time sig to the tempo track
