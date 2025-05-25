@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -78,7 +79,10 @@ public class MidiHandler {
 					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
 					if (REPLAY_MODE) {
-						VibeComposerGUI.playNextNote(OMNI.clampMidi(shortMessage.getData2()), -1, -1);
+						VibeComposerGUI.playNextNote(MidiUtils.octavePitch(OMNI.clampPitch(shortMessage.getData1())) - 60,
+								(int)OMNI.clamp(shortMessage.getData2()*1.5, 50, 120),
+								2,
+								1);
 					} else {
 						VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
 								OMNI.clampMidi(shortMessage.getData2()), 0, 1, VibeComposerGUI.actualArrangement.getSections().get(0), true);

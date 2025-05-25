@@ -10016,16 +10016,34 @@ public class VibeComposerGUI extends JFrame
 
 	public static long lastPlayedMs = 0;
 
-	public static void playNextNote(int velocity, int part, int partOrder) {
-		Phrase nextNoteMelody = MelodyMidiDropPane.userMelody;
+	public static void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
+		part = part < 0 ? 0 : part;
+		partOrder = partOrder < 1 ? 1 : partOrder;
+		Phrase nextNoteMelody = guiConfig.getMelodyParts().get(part).getCustomMidi() != null
+				? guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi().makePhrase() : null;
+		int transpose = keyboardTranspose;
 		if (nextNoteMelody == null) {
-			LG.i("No user melody/midi to play!");
-			return;
+			LG.d("No custom melody to play!");
+			nextNoteMelody = MelodyMidiDropPane.userMelody;
+			if (nextNoteMelody == null) {
+				LG.d("No user melody/midi to play!");
+				nextNoteMelody = scorePanel.score.getPart(part).getPhrase(partOrder-1);
+				if (nextNoteMelody == null) {
+					LG.i("No actual melody to play!");
+					return;
+				}
+				transpose += -1 * (melodyPanels.get(partOrder-1).getTranspose() + transposeScore.getInt());
+			}
 		}
-		MidiHandler.lastNoteIndex = (MidiHandler.lastNoteIndex + 1) % nextNoteMelody.size();
-		Note n = nextNoteMelody.getNote(MidiHandler.lastNoteIndex);
-		playNote(n.getPitch(), (int) (n.getDuration() * 1000 * 60 / guiConfig.getBpm()),
-				n.getDynamic(), part < 0 ? 0 : part, partOrder < 1 ? 1 : partOrder, actualArrangement.getSections().get(0), true);
+		MidiHandler.lastNoteIndex = (MidiHandler.lastNoteIndex) % nextNoteMelody.size();
+		Note n;
+		while ((n = nextNoteMelody.getNote(++MidiHandler.lastNoteIndex)) != null) {
+			if (n.getPitch() >= 1) {
+				playNote(n.getPitch() + transpose, (int) (n.getDuration() * 1000 * 60 / guiConfig.getBpm()),
+						velocity, part, partOrder, actualArrangement.getSections().get(0), true);
+				break;
+			}
+		}
 	}
 
 	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
