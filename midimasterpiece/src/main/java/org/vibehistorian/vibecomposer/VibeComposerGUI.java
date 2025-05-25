@@ -23,6 +23,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.sun.media.sound.AudioSynthesizer;
 import jm.music.data.Note;
+import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.tools.Mod;
 import org.apache.commons.io.FileUtils;
@@ -10021,7 +10022,8 @@ public class VibeComposerGUI extends JFrame
 	public static void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
 		part = part < 0 ? 0 : part;
 		partOrder = partOrder < 1 ? 1 : partOrder;
-		Phrase nextNoteMelody = guiConfig.getMelodyParts().get(part).getCustomMidi() != null
+		LG.i(keyboardTranspose + ", " + velocity + ", " + part + ", " + partOrder);
+		Phrase nextNoteMelody = part == 0 && guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi() != null
 				? guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi().makePhrase() : null;
 		int transpose = keyboardTranspose;
 		if (nextNoteMelody == null) {
@@ -10029,7 +10031,8 @@ public class VibeComposerGUI extends JFrame
 			nextNoteMelody = MelodyMidiDropPane.userMelody;
 			if (nextNoteMelody == null) {
 				LG.d("No user melody/midi to play!");
-				nextNoteMelody = scorePanel.score.getPart(instNames[part] + "" + (partOrder-1)).getPhrase(partOrder-1);
+				Part scorePart = scorePanel.score.getPart(instNames[part] + "" + (partOrder-1));
+				nextNoteMelody = scorePart == null ? null : scorePart.getPhrase(0);
 				if (nextNoteMelody == null) {
 					LG.i("No actual melody to play!");
 					return;

@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -74,7 +73,7 @@ public class MidiHandler {
 				ShortMessage shortMessage = (ShortMessage) msg;
 				//int command = shortMessage.getCommand();
 				//int status = shortMessage.getStatus();
-				LG.i("Keyboard: " + shortMessage.getChannel() + ", " + shortMessage.getData1() + ", " + shortMessage.getData2());
+				//LG.i("Keyboard: " + shortMessage.getChannel() + ", " + shortMessage.getData1() + ", " + shortMessage.getData2());
 				if (shortMessage.getChannel() == 15 && shortMessage.getData2() > 0) {
 					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
@@ -83,10 +82,21 @@ public class MidiHandler {
 						// TODO: part based on octave played (mod #parts), partOrder based on note played (mod #partOrders in part)
 						// drums, bass, chords, arp, melody
 						// calculate div to get how many octaves to add
-						VibeComposerGUI.playNextNote(MidiUtils.octavePitch(OMNI.clampPitch(shortMessage.getData1())) - 60,
+						int[] DBCAM = {4,1,2,3,0};
+						int normalizedPitch5OctavePiano = OMNI.clamp(shortMessage.getData1()-36, 0, 59);
+						int dbcamIndex = normalizedPitch5OctavePiano / 12;
+						int remainder = normalizedPitch5OctavePiano % 12;
+						int numParts = VibeComposerGUI.getInstList(DBCAM[dbcamIndex]).size();
+						if (numParts == 0) {
+							LG.i("Nothing to replay!");
+							return;
+						}
+						int partOrder = (remainder % numParts) + 1;
+						int extraTranspose = dbcamIndex == 0 ? 0 : (remainder >= 6 ? 12 : 0);
+						VibeComposerGUI.playNextNote(extraTranspose,
 								(int)OMNI.clamp(shortMessage.getData2()*1.5, 50, 120),
-								2,
-								1);
+								DBCAM[dbcamIndex],
+								partOrder);
 					} else {
 						VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
 								OMNI.clampMidi(shortMessage.getData2()), 0, 1, VibeComposerGUI.actualArrangement.getSections().get(0), true);
