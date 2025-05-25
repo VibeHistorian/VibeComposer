@@ -90,6 +90,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.vibehistorian.vibecomposer.Constants.instNames;
+
 // main class
 public class VibeComposerGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener {
@@ -10027,12 +10029,12 @@ public class VibeComposerGUI extends JFrame
 			nextNoteMelody = MelodyMidiDropPane.userMelody;
 			if (nextNoteMelody == null) {
 				LG.d("No user melody/midi to play!");
-				nextNoteMelody = scorePanel.score.getPart(part).getPhrase(partOrder-1);
+				nextNoteMelody = scorePanel.score.getPart(instNames[part] + "" + (partOrder-1)).getPhrase(partOrder-1);
 				if (nextNoteMelody == null) {
 					LG.i("No actual melody to play!");
 					return;
 				}
-				transpose += -1 * (melodyPanels.get(partOrder-1).getTranspose() + transposeScore.getInt());
+				transpose += -1 * (getInstList(part).get(partOrder-1).getTranspose() + transposeScore.getInt());
 			}
 		}
 		MidiHandler.lastNoteIndex = (MidiHandler.lastNoteIndex) % nextNoteMelody.size();
@@ -10090,7 +10092,7 @@ public class VibeComposerGUI extends JFrame
 
 			long startPos = (sequencer.isRunning()) ? sequencer.getTickPosition() : 0;
 
-			int startDelayMicroseconds = 50000;
+			int startDelayMicroseconds = -5000;
 			MidiEvent noteOn = new MidiEvent(noteOnMsg,
 					startPos + (msToTicks(startDelayMicroseconds)));
 			trk.add(noteOn);

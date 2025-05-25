@@ -51,6 +51,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.vibehistorian.vibecomposer.Constants.instNames;
 import static org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
 import static org.vibehistorian.vibecomposer.MidiUtils.cpRulesMap;
@@ -803,28 +804,28 @@ public class MidiGenerator implements JMC {
 
 		List<PartExt> melodyParts = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-			PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
+			PartExt p = new PartExt(instNames[0] + i, gc.getMelodyParts().get(i).getInstrument(),
 					gc.getMelodyParts().get(i).getMidiChannel() - 1);
 			melodyParts.add(p);
 		}
 
 		List<PartExt> melodyPartsFull = new ArrayList<>();
 		for (int i = 0; i < gc.getMelodyParts().size(); i++) {
-			PartExt p = new PartExt("Melodies" + i, gc.getMelodyParts().get(i).getInstrument(),
+			PartExt p = new PartExt(instNames[0] + i, gc.getMelodyParts().get(i).getInstrument(),
 					gc.getMelodyParts().get(i).getMidiChannel() - 1);
 			melodyPartsFull.add(p);
 		}
 
 		List<PartExt> chordParts = new ArrayList<>();
 		for (int i = 0; i < gc.getChordParts().size(); i++) {
-			PartExt p = new PartExt("Chords" + i, gc.getChordParts().get(i).getInstrument(),
+			PartExt p = new PartExt(instNames[2] + i, gc.getChordParts().get(i).getInstrument(),
 					gc.getChordParts().get(i).getMidiChannel() - 1);
 			chordParts.add(p);
 		}
 
 		List<PartExt> arpParts = new ArrayList<>();
 		for (int i = 0; i < gc.getArpParts().size(); i++) {
-			PartExt p = new PartExt("Arps" + i, gc.getArpParts().get(i).getInstrument(),
+			PartExt p = new PartExt(instNames[3] + i, gc.getArpParts().get(i).getInstrument(),
 					gc.getArpParts().get(i).getMidiChannel() - 1);
 			arpParts.add(p);
 		}
@@ -832,7 +833,7 @@ public class MidiGenerator implements JMC {
 
 		List<PartExt> bassParts = new ArrayList<>();
 		for (int i = 0; i < gc.getBassParts().size(); i++) {
-			PartExt p = new PartExt("Bass" + i, gc.getBassParts().get(i).getInstrument(),
+			PartExt p = new PartExt(instNames[1] + i, gc.getBassParts().get(i).getInstrument(),
 					gc.getBassParts().get(i).getMidiChannel() - 1);
 			bassParts.add(p);
 		}
@@ -840,13 +841,13 @@ public class MidiGenerator implements JMC {
 
 		List<PartExt> drumParts = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("Drums" + i, 0, 9);
+			PartExt p = new PartExt(instNames[4] + i, 0, 9);
 			drumParts.add(p);
 		}
 
 		List<PartExt> drumPartsFull = new ArrayList<>();
 		for (int i = 0; i < gc.getDrumParts().size(); i++) {
-			PartExt p = new PartExt("Drums" + i, 0, 9);
+			PartExt p = new PartExt(instNames[4] + i, 0, 9);
 			drumPartsFull.add(p);
 		}
 

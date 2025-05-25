@@ -26,7 +26,7 @@ public class PartExt extends Part {
 	@Override
 	public Part copy() {
 		PartExt i;
-		i = new PartExt(this.getTitle() + " copy", this.getInstrument(), this.getChannel());
+		i = new PartExt(this.getTitle(), this.getInstrument(), this.getChannel());
 		Enumeration enum1 = this.getPhraseList().elements();
 		while (enum1.hasMoreElements()) {
 			PhraseExt oldPhrase = (PhraseExt) enum1.nextElement();

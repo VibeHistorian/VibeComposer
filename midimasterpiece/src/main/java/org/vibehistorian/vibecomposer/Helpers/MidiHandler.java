@@ -79,6 +79,10 @@ public class MidiHandler {
 					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
 					if (REPLAY_MODE) {
+
+						// TODO: part based on octave played (mod #parts), partOrder based on note played (mod #partOrders in part)
+						// drums, bass, chords, arp, melody
+						// calculate div to get how many octaves to add
 						VibeComposerGUI.playNextNote(MidiUtils.octavePitch(OMNI.clampPitch(shortMessage.getData1())) - 60,
 								(int)OMNI.clamp(shortMessage.getData2()*1.5, 50, 120),
 								2,
