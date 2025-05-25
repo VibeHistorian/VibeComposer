@@ -15,6 +15,9 @@ import java.util.List;
 
 public class MidiHandler {
 
+	public static boolean REPLAY_MODE = true;
+	public static int lastNoteIndex = -1;
+
 	public MidiHandler() {
 		MidiDevice device = null;
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
@@ -74,8 +77,12 @@ public class MidiHandler {
 				if (shortMessage.getChannel() == 15 && shortMessage.getData2() > 0) {
 					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
-					VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
-							OMNI.clampMidi(shortMessage.getData2()), 0, 1, VibeComposerGUI.actualArrangement.getSections().get(0), true);
+					if (REPLAY_MODE) {
+						VibeComposerGUI.playNextNote(OMNI.clampMidi(shortMessage.getData2()), -1, -1);
+					} else {
+						VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
+								OMNI.clampMidi(shortMessage.getData2()), 0, 1, VibeComposerGUI.actualArrangement.getSections().get(0), true);
+					}
 				}
 
 			} else {

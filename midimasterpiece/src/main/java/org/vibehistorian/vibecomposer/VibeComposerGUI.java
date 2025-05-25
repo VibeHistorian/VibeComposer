@@ -10016,6 +10016,18 @@ public class VibeComposerGUI extends JFrame
 
 	public static long lastPlayedMs = 0;
 
+	public static void playNextNote(int velocity, int part, int partOrder) {
+		Phrase nextNoteMelody = MelodyMidiDropPane.userMelody;
+		if (nextNoteMelody == null) {
+			LG.i("No user melody/midi to play!");
+			return;
+		}
+		MidiHandler.lastNoteIndex = (MidiHandler.lastNoteIndex + 1) % nextNoteMelody.size();
+		Note n = nextNoteMelody.getNote(MidiHandler.lastNoteIndex);
+		playNote(n.getPitch(), (int) (n.getDuration() * 1000 * 60 / guiConfig.getBpm()),
+				n.getDynamic(), part < 0 ? 0 : part, partOrder < 1 ? 1 : partOrder, actualArrangement.getSections().get(0), true);
+	}
+
 	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
 			Section sec, boolean overrideLastPlayed) {
 		if (sequencer == null || !sequencer.isOpen() || (pitch < 0)
