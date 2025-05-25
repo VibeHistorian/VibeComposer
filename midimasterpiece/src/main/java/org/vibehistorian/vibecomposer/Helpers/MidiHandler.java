@@ -1,6 +1,8 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import java.util.List;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
@@ -9,9 +11,7 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Transmitter;
-
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import java.util.List;
 
 public class MidiHandler {
 
@@ -23,7 +23,7 @@ public class MidiHandler {
 				device = MidiSystem.getMidiDevice(infos[i]);
 				//does the device have any transmitters?
 				//if it does, add it to the device list
-				LG.d(infos[i].toString());
+				LG.i(infos[i].toString());
 
 				//get all transmitters
 				List<Transmitter> transmitters = device.getTransmitters();
@@ -33,28 +33,32 @@ public class MidiHandler {
 					//create a new receiver
 					transmitters.get(j).setReceiver(
 							//using my own MidiInputReceiver
-							new MidiInputReceiver(device.getDeviceInfo().toString()));
+                            new MidiInputReceiver(device.getDeviceInfo().toString()));
 				}
 
 				Transmitter trans = device.getTransmitter();
 				trans.setReceiver(new MidiInputReceiver(device.getDeviceInfo().toString()));
 
 				//open each device
-				device.open();
+				if (!device.isOpen() && device.getDeviceInfo().getName().equalsIgnoreCase("pianoport")) {
+					device.open();
+					LG.i(device.getDeviceInfo() + " Was OPENED");
+				} else {
+					LG.i(device.getDeviceInfo() + " SKIPPED");
+				}
 				//if code gets this far without throwing an exception
 				//print a success message
-				LG.d(device.getDeviceInfo() + " Was Opened");
 
 
 			} catch (MidiUnavailableException e) {
-				LG.d(device.getDeviceInfo() + " CAN'T be opened!");
+				LG.i(device.getDeviceInfo() + " CAN'T be opened!");
 			}
 		}
 
 
 	}
 
-	class MidiInputReceiver implements Receiver {
+	static class MidiInputReceiver implements Receiver {
 		public String name;
 
 		public MidiInputReceiver(String name) {
@@ -66,15 +70,16 @@ public class MidiHandler {
 				ShortMessage shortMessage = (ShortMessage) msg;
 				//int command = shortMessage.getCommand();
 				//int status = shortMessage.getStatus();
-				System.out.printf("Keyboard: %d, %d, %d\n", shortMessage.getChannel(),
-						shortMessage.getData1(), shortMessage.getData2());
+				LG.i("Keyboard: " + shortMessage.getChannel() + ", " + shortMessage.getData1() + ", " + shortMessage.getData2());
 				if (shortMessage.getChannel() == 15 && shortMessage.getData2() > 0) {
-
 					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
+				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
+					VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
+							OMNI.clampMidi(shortMessage.getData2()), 0, 1, VibeComposerGUI.actualArrangement.getSections().get(0), true);
 				}
 
 			} else {
-				LG.d("Bad msg");
+				LG.i("Bad msg");
 			}
 		}
 

@@ -39,6 +39,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
+import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
@@ -512,7 +513,7 @@ public class VibeComposerGUI extends JFrame
 	public static ShowScorePopup scorePopup;
 	CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
-	//MidiHandler mh = new MidiHandler();
+	MidiHandler mh = new MidiHandler();
 	JCheckBox combineDrumTracks;
 	JCheckBox combineMelodyTracks;
 	public static CheckButton regenerateWhenValuesChange;
