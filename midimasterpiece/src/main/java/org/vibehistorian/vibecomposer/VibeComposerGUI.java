@@ -511,6 +511,16 @@ public class VibeComposerGUI extends JFrame
 	public static File currentMidi = null;
 	public static File currentSequenceMidi = null;
 	MidiDevice device = null;
+	public static Map<String, Integer> partAndOrderLastNoteIndexes = new HashMap<>();
+
+	public static int getNextNoteIndex(int part, int partOrder) {
+		Integer noteIndex = partAndOrderLastNoteIndexes.get(part + "#" + partOrder);
+		if (noteIndex == null) {
+			noteIndex = -1;
+		}
+		partAndOrderLastNoteIndexes.put(part + "#" + partOrder, ++noteIndex);
+		return noteIndex;
+	}
 
 	public static JButton showScore;
 	public static ShowScorePopup scorePopup;
@@ -5778,6 +5788,7 @@ public class VibeComposerGUI extends JFrame
 			if (sequencer != null) {
 				sequencer.stop();
 				flushMidiEvents();
+				partAndOrderLastNoteIndexes.clear();
 			}
 
 			if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
@@ -10041,9 +10052,9 @@ public class VibeComposerGUI extends JFrame
 				transpose += -1 * (getInstList(part).get(partOrder-1).getTranspose() + transposeScore.getInt());
 			}
 		}
-		MidiHandler.lastNoteIndex = (MidiHandler.lastNoteIndex) % nextNoteMelody.size();
+		int nextNoteIndex = getNextNoteIndex(part, partOrder) % nextNoteMelody.size();
 		Note n;
-		while ((n = nextNoteMelody.getNote(++MidiHandler.lastNoteIndex)) != null) {
+		while ((n = nextNoteMelody.getNote(nextNoteIndex++)) != null) {
 			if (n.getPitch() >= 1) {
 				playNote(n.getPitch() + transpose, (int) (n.getDuration() * 1000 * 60 / guiConfig.getBpm()),
 						velocity, part, partOrder, actualArrangement.getSections().get(0), true);

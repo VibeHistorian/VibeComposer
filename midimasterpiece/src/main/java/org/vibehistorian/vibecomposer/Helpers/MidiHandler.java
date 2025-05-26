@@ -16,7 +16,6 @@ import java.util.List;
 public class MidiHandler {
 
 	public static boolean REPLAY_MODE = true;
-	public static int lastNoteIndex = -1;
 
 	public MidiHandler() {
 		MidiDevice device = null;
@@ -43,16 +42,12 @@ public class MidiHandler {
 				trans.setReceiver(new MidiInputReceiver(device.getDeviceInfo().toString()));
 
 				//open each device
-				if (!device.isOpen() && device.getDeviceInfo().getName().equalsIgnoreCase("pianoport")) {
+				if (device.getDeviceInfo().getName().equalsIgnoreCase("pianoport") && !device.isOpen()) {
 					device.open();
 					LG.i(device.getDeviceInfo() + " Was OPENED");
 				} else {
 					LG.i(device.getDeviceInfo() + " SKIPPED");
 				}
-				//if code gets this far without throwing an exception
-				//print a success message
-
-
 			} catch (MidiUnavailableException e) {
 				LG.i(device.getDeviceInfo() + " CAN'T be opened!");
 			}
@@ -78,10 +73,6 @@ public class MidiHandler {
 					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
 					if (REPLAY_MODE) {
-
-						// TODO: part based on octave played (mod #parts), partOrder based on note played (mod #partOrders in part)
-						// drums, bass, chords, arp, melody
-						// calculate div to get how many octaves to add
 						int[] DBCAM = {4,1,2,3,0};
 						int normalizedPitch5OctavePiano = OMNI.clamp(shortMessage.getData1()-36, 0, 59);
 						int dbcamIndex = normalizedPitch5OctavePiano / 12;
@@ -94,7 +85,7 @@ public class MidiHandler {
 						int partOrder = (remainder % numParts) + 1;
 						int extraTranspose = dbcamIndex == 0 ? 0 : (remainder >= 6 ? 12 : 0);
 						VibeComposerGUI.playNextNote(extraTranspose,
-								(int)OMNI.clamp(shortMessage.getData2()*1.5, 50, 120),
+								(int)OMNI.clamp(shortMessage.getData2()*1.5, 40, 120),
 								DBCAM[dbcamIndex],
 								partOrder);
 					} else {
