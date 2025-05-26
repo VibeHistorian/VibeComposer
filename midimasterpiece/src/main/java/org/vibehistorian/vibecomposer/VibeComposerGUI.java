@@ -6859,6 +6859,7 @@ public class VibeComposerGUI extends JFrame
 			LG.e(ex);
 			LG.i(("NO SOUNDBANK WITH THAT NAME FOUND!"));
 		}
+		synth = synthesizer;
 		return synthesizer;
 	}
 
@@ -10087,6 +10088,13 @@ public class VibeComposerGUI extends JFrame
 				}
 			}
 
+			vibeComposerGUI.playNote(ip.getMidiChannel() - 1, pitch, velocity, durationMs);
+
+			// LEGACY WAY THROUGH SEQUENCER - not needed?
+			/*boolean test = true;
+			if (test) {
+				return;
+			}
 			Track trk = sequencer.getSequence().getTracks()[trackNum];
 			ShortMessage noteOnMsg = new ShortMessage();
 			noteOnMsg.setMessage(ShortMessage.NOTE_ON, ip.getMidiChannel() - 1, pitch, velocity);
@@ -10126,13 +10134,45 @@ public class VibeComposerGUI extends JFrame
 				tmr.start();
 			}
 			queueMidiEventForRemoval(trackNum, noteOff);
-			queueMidiEventForRemoval(trackNum, noteOn);
+			queueMidiEventForRemoval(trackNum, noteOn);*/
 		} catch (InvalidMidiDataException e) {
 			LG.e(e);
 		}
 	}
 
-	public static void queueMidiEventForRemoval(int trackNum, MidiEvent mve) {
+	private void playNote(int midiChannel, int note, int velocity, int durationMs) throws InvalidMidiDataException {
+		if (!midiMode.isSelected()) {
+			if (synth == null) {
+				if (sequencer.isRunning()) {
+					sequencer.stop();
+				}
+				synth = loadSynth();
+				LG.i("Loaded new synth!");
+			}
+			MidiChannel[] channels = synth.getChannels();
+			MidiChannel channel = channels[midiChannel];
+			channel.noteOn(note, velocity);
+			Timer tmr = new Timer(durationMs, e -> channel.noteOff(note));
+			tmr.setRepeats(false);
+			tmr.start();
+		} else {
+			if (device == null) {
+				LG.i("Can't play into a null midi device!");
+				return;
+			}
+			ShortMessage noteOnMsg = new ShortMessage();
+			noteOnMsg.setMessage(ShortMessage.NOTE_ON, midiChannel, note, velocity);
+			ShortMessage noteOffMsg = new ShortMessage();
+			noteOffMsg.setMessage(ShortMessage.NOTE_OFF, midiChannel, note, 0);
+
+			device.getReceivers().forEach(e -> e.send(noteOnMsg, -1));
+			Timer tmr = new Timer(durationMs, e -> device.getReceivers().forEach(r -> r.send(noteOffMsg, -1)));
+			tmr.setRepeats(false);
+			tmr.start();
+		}
+	}
+
+	/*public static void queueMidiEventForRemoval(int trackNum, MidiEvent mve) {
 		if (midiEventsToRemove.containsKey(trackNum)) {
 			midiEventsToRemove.get(trackNum).add(mve);
 		} else {
@@ -10140,7 +10180,7 @@ public class VibeComposerGUI extends JFrame
 			mves.add(mve);
 			midiEventsToRemove.put(trackNum, mves);
 		}
-	}
+	}*/
 
 	public static void flushMidiEvents() {
 		if (sequencer == null || !sequencer.isOpen() || midiEventsToRemove.isEmpty()) {
