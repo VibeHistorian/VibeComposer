@@ -10032,7 +10032,7 @@ public class VibeComposerGUI extends JFrame
 			nextNoteMelody = MelodyMidiDropPane.userMelody;
 			if (nextNoteMelody == null) {
 				LG.d("No user melody/midi to play!");
-				Part scorePart = scorePanel.score.getPart(instNames[part] + "" + (partOrder-1));
+				Part scorePart = (scorePanel == null || scorePanel.score == null) ? null : scorePanel.score.getPart(instNames[part] + "" + (partOrder-1));
 				nextNoteMelody = scorePart == null ? null : scorePart.getPhrase(0);
 				if (nextNoteMelody == null) {
 					LG.i("No actual melody to play!");
