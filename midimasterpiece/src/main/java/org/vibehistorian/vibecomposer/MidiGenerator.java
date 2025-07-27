@@ -1292,6 +1292,7 @@ public class MidiGenerator implements JMC {
 			LAST_SCORES = LAST_SCORES.subList(0, LAST_SCORES_LIMIT);
 		}
 
+		// Test
 		gc.setActualArrangement(arr);
 		LG.i("MidiGenerator time: " + (System.currentTimeMillis() - systemTime) + " ms");
 		LG.i("********Viewing midi seed: " + mainGeneratorSeed + "************* ");
