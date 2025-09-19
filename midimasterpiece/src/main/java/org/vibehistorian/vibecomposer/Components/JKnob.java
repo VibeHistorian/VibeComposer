@@ -196,7 +196,15 @@ public class JKnob extends JComponent
 
 			// Draw the knob.
 			Color bgColorOval = (VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob;
-			g2d.setColor(!isEnabled() ? bgColorOval.darker() : bgColorOval);
+
+			boolean disabled = !isEnabled();
+			if (disabled) {
+				bgColorOval = bgColorOval.darker();
+			} else if (defaultValue == curr) {
+				bgColorOval = OMNI.alphen(bgColorOval, 127);
+			}
+
+			g2d.setColor(bgColorOval);
 			g2d.fillOval(0, 0, 2 * radius, 2 * radius);
 
 			// Find the center of the spot.
@@ -210,21 +218,27 @@ public class JKnob extends JComponent
 			// Draw arcs.
 
 			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - 20, 20 * 2);
-			if (VibeComposerGUI.isDarkMode) {
-				g2d.setColor(OMNI.alphen(VibeComposerGUI.darkModeUIColor, 100));
-			} else {
-				g2d.setColor(OMNI.alphen(Color.white, 180));
-			}
-			g2d.fillArc(0, 0, 2 * radius, 2 * radius, 270 - arcCut,
-					-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
+			if (disabled || defaultValue != curr) {
+				if (VibeComposerGUI.isDarkMode) {
+					g2d.setColor(OMNI.alphen(VibeComposerGUI.darkModeUIColor, 100));
+				} else {
+					g2d.setColor(OMNI.alphen(Color.white, 180));
+				}
+				g2d.fillArc(0, 0, 2 * radius, 2 * radius, 270 - arcCut,
+						-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
 
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
-			g2d.fillArc(arcWidth, arcWidth, 2 * (radius - arcWidth), 2 * (radius - arcWidth),
-					270 - arcCut, -1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
+				g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
+				g2d.fillArc(arcWidth, arcWidth, 2 * (radius - arcWidth), 2 * (radius - arcWidth),
+						270 - arcCut, -1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
+			}
 
 			// Draw value.
-			g2d.setColor((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
-					: VibeComposerGUI.lightModeUIColor.darker());
+			Color valueColor = (VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
+					: VibeComposerGUI.lightModeUIColor.darker();
+			if (defaultValue == curr) {
+				valueColor = OMNI.alphen(valueColor, 180);
+			}
+			g2d.setColor(valueColor);
 			Point cnt = getCenter();
 			String valueString = String.valueOf(curr);
 
