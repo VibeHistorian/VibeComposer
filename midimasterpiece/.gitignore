@@ -1,5 +1,8 @@
-/target/
-/midis/
+/target/*
+/midis/*
+/exports/*
+/presets/*
+/PartPresets/*
 /.idea/
 .settings
 .project
