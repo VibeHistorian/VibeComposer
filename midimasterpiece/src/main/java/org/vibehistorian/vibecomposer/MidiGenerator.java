@@ -2305,23 +2305,6 @@ public class MidiGenerator implements JMC {
 		Map<Integer, List<Note>> fullMelodyMap = mgen.makeFullMelodyMap(ip, actualProgression, generatedRootProgression,
 				notesSeedOffset, sec, variations, melodyBlockJumpPreference);
 
-		for (int i = 0; i < generatedRootProgression.size() * measures; i++) {
-			for (int j = 0; j < MidiUtils.MINOR_CHORDS.size(); j++) {
-				int[] minorChord = MidiUtils.mappedChord(MidiUtils.MINOR_CHORDS.get(j));
-				boolean isMinor = Arrays.equals(MidiUtils.normalizeChord(minorChord),
-						MidiUtils.normalizeChord(
-								generatedRootProgression.get(i % generatedRootProgression.size())));
-				if (isMinor) {
-					MidiUtils.transposeNotes(fullMelodyMap.get(i), ScaleMode.IONIAN.noteAdjustScale,
-							MidiUtils.adjustScaleByChord(ScaleMode.IONIAN.noteAdjustScale,
-									minorChord),
-							gc.isTransposedNotesForceScale());
-					LG.d("Transposing melody to match minor chord! Chord#: " + i);
-					break;
-				}
-			}
-		}
-
 		if (melodyEmptyPass || !overwriteWithCustomSectionMidi(sec, phr, ip)) {
 			Vector<Note> noteList = new Vector<>();
 			fullMelodyMap.values().forEach(noteList::addAll);

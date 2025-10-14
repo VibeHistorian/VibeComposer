@@ -369,6 +369,7 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel melodyReplaceAvoidNotes;
 	KnobPanel melodyMaxDirChanges;
 	public static KnobPanel melodyTargetNoteVariation;
+	JPanel melodyBlockTypePreferences;
 	VeloRect[] melodyBlockTypePreference;
 
 	// melody extra settings
@@ -1939,6 +1940,22 @@ public class VibeComposerGUI extends JFrame
 		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>",
 				true);
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
+		melodyLegacyMode.addChangeListener((evt) -> {
+			boolean nonLegacyVisible = !melodyLegacyMode.isSelected();
+			melodyChordNoteTarget.setVisible(nonLegacyVisible);
+			melodyTonicNoteTarget.setVisible(nonLegacyVisible);
+			melodyModeNoteTarget.setVisible(nonLegacyVisible);
+			melodyEmphasizeKey.setVisible(nonLegacyVisible);
+
+			melodyBlockTypePreferences.setVisible(nonLegacyVisible);
+			melodyNewBlocksChance.setVisible(nonLegacyVisible);
+			melodyBlockTargetMode.setVisible(nonLegacyVisible);
+			melodyTargetNotesRandomizeOnCompose.setVisible(nonLegacyVisible);
+			melodyPatternEffect.setVisible(nonLegacyVisible);
+			melodyPatternRandomizeOnCompose.setVisible(nonLegacyVisible);
+			noteTargetDirectionChoice.setVisible(nonLegacyVisible);
+
+		});
 		melodyAvoidChordJumpsLegacy = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 
 		melodyReplaceAvoidNotes = new KnobPanel("Replace Near<br>Chord Notes", 1, 0, 2);
@@ -1963,7 +1980,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private JPanel initMelodySettingsPlusPlus() {
-		JPanel melodyBlockTypePreferences = new JPanel();
+		melodyBlockTypePreferences = new JPanel();
 		melodyBlockTypePreference = new VeloRect[BlockType.values().length];
 		for (int i = 0; i < BlockType.values().length; i++) {
 			melodyBlockTypePreference[i] = VeloRect.percent(BlockType.values()[i].defaultChance);
