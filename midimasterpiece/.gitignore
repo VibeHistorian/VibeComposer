@@ -7,7 +7,8 @@
 .settings
 .project
 .classpath
-
+/.proxyai/
+1500
 *.iml
 *.mid
 
