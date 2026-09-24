@@ -6,7 +6,7 @@
 - `src/main/java/org/vibehistorian/vibecomposer/VibeComposerGUI.java` is the legacy UI owner. Search for a feature's fields and methods with `rg -n "Melody|melody" <file>` and inspect focused line ranges; avoid repeatedly dumping the whole class.
 - `VibeComposerGUI_MigrationBackup.java` is a read-only reference. Do not edit it.
 - `MelodyGUI.java` is the first extracted UI module. It owns melody controls and melody-specific UI setup, initial panel creation, panel randomization, and seed randomization. Its `Context` interface receives shared window operations so this class does not depend on `VibeComposerGUI`.
-- `ChordGUI.java` owns chord UI state, chord settings construction, the chord tab, progression controls, and custom chord editing. Cross-instrument workflows stay in `VibeComposerGUI` and read chord controls through `ChordGUI`; its `Context` interface supplies shared window operations.
+- `ChordGUI.java` owns chord UI state, chord settings construction, the chord tab, progression controls, custom chord editing, and randomized chord panel creation. Cross-instrument workflows stay in `VibeComposerGUI` and read chord controls through `ChordGUI`; its `Context` interface supplies shared window operations.
 - `SwingUtils.java` holds shared Swing helpers. Put generally useful UI helpers here instead of making a feature module call back into the main window.
 - Other prepared module files (`ArpGUI`, `DrumGUI`, `ArrangementGUI`, `ScoreGUI`, `ExtraSettingsGUI`, `GenerationGUI`, and `VibeComposerCoreGUI`) may still be skeletons; inspect each before relying on it.
 - Cross-cutting models and components include `GUIConfig.java`, `Panels/MelodyPanel.java`, and `Components/MelodyMidiDropPane.java`.

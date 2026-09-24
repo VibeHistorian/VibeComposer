@@ -77,6 +77,6 @@
 # Status:
 - MelodyGUI migration: complete for melody UI state, settings construction, initial panel setup, melody panel randomization, and seed randomization.
 - BassGUI migration: complete for bass panel state, bass tab construction, and random bass panel creation.
-- ChordGUI migration: complete for chord UI state, settings construction, chord tab setup, progression controls, and custom chord controls. Cross-instrument workflows remain in VibeComposerGUI and access chord state through ChordGUI.
+- ChordGUI migration: complete for chord UI state, settings construction, chord tab setup, progression controls, custom chord controls, and randomized chord panel creation. Cross-instrument workflows remain in VibeComposerGUI and access chord state through ChordGUI.
 - Phase 1: In progress
 

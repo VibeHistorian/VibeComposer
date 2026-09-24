@@ -945,6 +945,51 @@ public class VibeComposerGUI extends JFrame
 							MelodyGUI.melodyPanels.get(0).getChordNoteChoices());
 				}
 			}
+
+			@Override
+			public List<ChordPanel> getAffectedChordPanels() {
+				return (List<ChordPanel>) (List<?>) getAffectedPanels(2);
+			}
+
+			@Override
+			public JScrollPane getChordScrollPane() {
+				return ChordGUI.chordScrollPane;
+			}
+
+			@Override
+			public ChordPanel addChordPanel() {
+				return (ChordPanel) VibeComposerGUI.this.addInstPanelToLayout(2);
+			}
+
+			@Override
+			public boolean randomizeInstrumentOnComposeOrGen() {
+				return randomizeInstOnComposeOrGen.isSelected();
+			}
+
+			@Override
+			public boolean orderedTransposeGeneration() {
+				return orderedTransposeGeneration.isSelected();
+			}
+
+			@Override
+			public int getRandomFromArray(Random generator, int[] values, int from) {
+				return VibeComposerGUI.getRandomFromArray(generator, values, from);
+			}
+
+			@Override
+			public Pair<StrumType, Integer> getRandomStrumPair() {
+				return VibeComposerGUI.this.getRandomStrumPair();
+			}
+
+			@Override
+			public boolean useShortBeatDuration() {
+				return beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75;
+			}
+
+			@Override
+			public void repaintMainWindow() {
+				VibeComposerGUI.this.repaint();
+			}
 		});
 	}
 
@@ -8560,7 +8605,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		} else if (partNum == 1) {
 
 		} else if (partNum == 2) {
-			createRandomChordPanels(ChordGUI.chordPanels.size() + 1, true, (ChordPanel) panel);
+			chordGUI.createRandomChordPanels(ChordGUI.chordPanels.size() + 1, true,
+					(ChordPanel) panel);
 		} else if (partNum == 3) {
 			createRandomArpPanels(arpPanels.size() + 1, true, (ArpPanel) panel);
 		} else if (partNum == 4) {
@@ -8581,7 +8627,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		} else if (part == 1) {
 			bassGUI.createRandomBassPanels(panelCount, onlyAdd, null);
 		} else if (part == 2) {
-			createRandomChordPanels(panelCount, onlyAdd, null);
+			chordGUI.createRandomChordPanels(panelCount, onlyAdd, null);
 		} else if (part == 3) {
 			createRandomArpPanels(panelCount, onlyAdd, null);
 		} else if (part == 4) {
@@ -8615,7 +8661,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		bassGUI.createRandomBassPanels(seed, panelCount, onlyAdd, randomizedPanel);
 	}
 
-	protected void createRandomChordPanels(int panelCount, boolean onlyAdd,
+	@Deprecated
+protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
 		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) getAffectedPanels(2);

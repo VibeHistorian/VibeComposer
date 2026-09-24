@@ -20,7 +20,12 @@ see <https://www.gnu.org/licenses/>.
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.*;
+import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
+import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 
@@ -32,8 +37,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import static org.vibehistorian.vibecomposer.InstUtils.POOL;
 
 /** Builds and owns chord controls and their UI state. */
 public class ChordGUI {
@@ -117,6 +128,15 @@ public class ChordGUI {
         void randomizeUserChords();
         int getMaxChordProgressionLength();
         void alignChordsWithMelody(ChordletPanel chordlets);
+        List<ChordPanel> getAffectedChordPanels();
+        JScrollPane getChordScrollPane();
+        ChordPanel addChordPanel();
+        boolean randomizeInstrumentOnComposeOrGen();
+        boolean orderedTransposeGeneration();
+        int getRandomFromArray(Random generator, int[] values, int from);
+        Pair<StrumType, Integer> getRandomStrumPair();
+        boolean useShortBeatDuration();
+        void repaintMainWindow();
     }
 
     public void initExtraSettingsChords(JPanel chordChoicePanel) {
@@ -594,6 +614,183 @@ public class ChordGUI {
 		context.getToggleableComponents().add(melodifyChordsButton);
 		context.getToggleableComponents().add(chordTransformButton);
 
+	}
+
+public void createRandomChordPanels(int panelCount, boolean onlyAdd,
+			ChordPanel randomizedPanel) {
+		ScrollComboBox.discardInteractions();
+		List<ChordPanel> affectedChords = context.getAffectedChordPanels();
+
+		Random panelGenerator = new Random();
+		List<ChordPanel> removedPanels = new ArrayList<>();
+		List<ChordPanel> remainingPanels = new ArrayList<>();
+		for (Iterator<ChordPanel> panelI = affectedChords.iterator(); panelI.hasNext();) {
+			ChordPanel panel = panelI.next();
+			if (!onlyAdd && !panel.getLockInst()) {
+				if (removedPanels.size() >= panelCount) {
+					((JPanel) context.getChordScrollPane().getViewport().getView()).remove(panel);
+					panelI.remove();
+				} else {
+					removedPanels.add(panel);
+				}
+			} else {
+				remainingPanels.add(panel);
+			}
+
+		}
+		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+
+		panelCount -= remainingPanels.size();
+
+		int fixedChordStretch = -1;
+		if (ChordGUI.randomChordStretchType.getVal().equals("FIXED")) {
+			fixedChordStretch = ChordGUI.randomChordStretchPicker.getVal();
+		}
+
+		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
+
+		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
+			boolean needNewChannel = false;
+			ChordPanel ip = null;
+			if (randomizedPanel != null) {
+				ip = randomizedPanel;
+			} else {
+				if (panelIndex < removedPanels.size()) {
+					ip = removedPanels.get(panelIndex);
+				} else {
+					ip = (ChordPanel) context.addChordPanel();
+					needNewChannel = true;
+				}
+			}
+			InstUtils.POOL pool = ip.getInstPool();
+
+			if ((context.randomizeInstrumentOnComposeOrGen() || onlyAdd)
+					&& ip.getInstrumentBox().isEnabled()) {
+				pool = (panelGenerator.nextInt(100) < ChordGUI.randomChordSustainChance.getInt())
+						? InstUtils.POOL.CHORD
+						: InstUtils.POOL.PLUCK;
+				ip.setInstPool(pool);
+				pool = ip.getInstPool();
+				ip.getInstrumentBox().initInstPool(pool);
+				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
+
+			}
+
+			ip.setTransitionChance(panelGenerator.nextInt(ChordGUI.randomChordMaxSplitChance.getInt() + 1));
+			ip.setTransitionSplit((context.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_SPLIT, 0)));
+			if (context.orderedTransposeGeneration()) {
+				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
+			} else {
+				ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
+			}
+
+			boolean pad = ip.getInstPool() == POOL.LONG_PAD;
+
+			Pair<StrumType, Integer> strumPair = context.getRandomStrumPair();
+			ip.setStrum(strumPair.getRight());
+			ip.setStrumType(strumPair.getLeft());
+			if (ChordGUI.randomChordDelay.isSelected()) {
+				ip.setOffset((context.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_DELAY, 0)));
+			} else {
+				ip.setOffset(0);
+			}
+
+
+			if (ChordGUI.randomChordUseChordFill.isSelected() && !pad) {
+				ip.setChordSpanFill(ChordSpanFill.getWeighted(panelGenerator.nextInt(100)));
+			} else {
+				ip.setChordSpanFill(ChordSpanFill.ALL);
+			}
+			ip.setFillFlip(false);
+			ip.setPatternFlip(false);
+
+			// default SINGLE = 4
+			RhythmPattern pattern = RhythmPattern.SINGLE;
+			// use pattern in 20% of the cases if checkbox selected
+			int patternChance = pool == InstUtils.POOL.PLUCK ? 25 : 10;
+			if (!pad && panelGenerator.nextInt(100) < patternChance) {
+				if (ChordGUI.randomChordPattern.isSelected()) {
+					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
+					if (pattern == RhythmPattern.MELODY1) {
+						pattern = RhythmPattern.FULL;
+					}
+					if (ip.getStrum() > 501) {
+						ip.setStrum(ip.getStrum() / 2);
+					}
+				}
+			}
+
+			if (!ChordGUI.randomChordStretchType.getVal().equals("NONE")
+					&& panelGenerator.nextInt(100) < ChordGUI.randomChordStretchGenerationChance.getInt()) {
+				ip.setStretchEnabled(true);
+				if (fixedChordStretch < 0) {
+					int atMost = ChordGUI.randomChordStretchPicker.getVal();
+					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
+				} else {
+					ip.setChordNotesStretch(fixedChordStretch);
+				}
+				if (ip.getChordNotesStretch() > 3 && ip.getStrum() > 999) {
+					ip.setStrum(ip.getStrum() / 2);
+				}
+			} else {
+				ip.setStretchEnabled(false);
+			}
+
+			ip.setStrumPauseChance(
+					panelGenerator.nextInt(ChordGUI.randomChordMaxStrumPauseChance.getInt() + 1));
+
+			ip.setPattern(pattern);
+			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
+					&& ip.getStrum() > 499) {
+				ip.setStrum(ip.getStrum() / 4);
+			}
+
+			if (pad || panelGenerator.nextInt(100) < ChordGUI.randomChordExpandChance.getInt()) {
+				ip.setPatternJoinMode(PatternJoinMode.EXPAND);
+			} else {
+				ip.setPatternJoinMode(PatternJoinMode.NOJOIN);
+			}
+
+
+			ip.setVelocityMax(ChordGUI.randomChordMaxVel.getInt());
+			ip.setVelocityMin(ChordGUI.randomChordMinVel.getInt());
+
+			if (ChordGUI.randomChordVaryLength.isSelected()) {
+				if (pool == InstUtils.POOL.PLUCK) {
+					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 50);
+				} else {
+					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 85);
+				}
+
+			}
+
+			if (panelGenerator.nextInt(100) < ChordGUI.randomChordShiftChance.getInt()) {
+				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
+				// test opposite check for shift distance
+				if (panelGenerator.nextInt(100) >= ChordGUI.randomChordShiftChance.getInt()) {
+					maxShift /= 2;
+				}
+				if (context.useShortBeatDuration()) {
+					maxShift /= 2;
+				}
+
+				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
+			} else {
+				ip.setPatternShift(0);
+			}
+
+			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
+			ip.setPauseChance(panelGenerator.nextInt(pauseMax + 1));
+			ip.applyPauseChance(panelGenerator);
+			ip.growPattern(panelGenerator, 1, 5);
+
+			if (needNewChannel) {
+				ip.setNextFreeMidiChannel();
+				ip.setPanByOrder(5);
+			}
+		}
+
+		context.repaintMainWindow();
 	}
 
     /** Cleanup method called when this module is no longer needed. */
