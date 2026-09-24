@@ -20,7 +20,10 @@
 
 ## Effective commands
 
-Run from the repository root (`D:\Production\IdeaProjects\VibeComposer\midimasterpiece`):
+Run from the project root (`D:\Production\IdeaProjects\VibeComposer\midimasterpiece`):
+
+Prefer file operations through IDEA MCP.
+Arbitrary cmd / powershell / pwsh exe commands require user approval and are therefore slow.
 
 ```powershell
 rg -n "Melody|melody" src/main/java/org/vibehistorian/vibecomposer/VibeComposerGUI.java

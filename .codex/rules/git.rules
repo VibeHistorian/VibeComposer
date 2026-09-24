@@ -1,25 +1,63 @@
-# Allow
-git status
-git diff
-git log
-git show
-git branch --show-current
-git rev-parse
+# Allow read-only Git commands.
+prefix_rule(
+    pattern = ["git", ["status", "diff", "log", "show"]],
+    decision = "allow",
+    justification = "Read-only Git inspection is allowed for this repository.",
+    match = [
+        "git status --short",
+        "git diff --stat",
+        "git log -5",
+        "git show HEAD",
+    ],
+    not_match = ["git commit -m update"],
+)
 
-# Deny
-git add
-git commit
-git push
-git pull
-git fetch
-git merge
-git rebase
-git reset
-git checkout
-git switch
-git restore
-git clean
-git cherry-pick
-git revert
-git tag
-git stash
+prefix_rule(
+    pattern = ["git", "branch", "--show-current"],
+    decision = "allow",
+    justification = "Reading the current branch is allowed for this repository.",
+    match = ["git branch --show-current"],
+    not_match = ["git branch -D old-branch"],
+)
+
+prefix_rule(
+    pattern = ["git", "rev-parse"],
+    decision = "allow",
+    justification = "Read-only Git revision inspection is allowed for this repository.",
+    match = ["git rev-parse --show-toplevel"],
+    not_match = ["git push origin main"],
+)
+
+# Forbid Git commands that change repository state or contact a remote.
+prefix_rule(
+    pattern = [
+        "git",
+        [
+            "add",
+            "commit",
+            "push",
+            "pull",
+            "fetch",
+            "merge",
+            "rebase",
+            "reset",
+            "checkout",
+            "switch",
+            "restore",
+            "clean",
+            "cherry-pick",
+            "revert",
+            "tag",
+            "stash",
+        ],
+    ],
+    decision = "forbidden",
+    justification = "This repository forbids Git commands that modify repository state or contact a remote.",
+    match = [
+        "git add .",
+        "git commit -m update",
+        "git push origin main",
+        "git checkout main",
+    ],
+    not_match = ["git status --short"],
+)
