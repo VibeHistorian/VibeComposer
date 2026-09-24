@@ -1367,7 +1367,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < chordParts.size(); i++) {
 
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getChordParts().get(i).getOrder(),
-					VibeComposerGUI.chordPanels);
+					ChordGUI.chordPanels);
 			if (!gc.getChordParts().get(i).isMuted() && gc.isChordsEnable()) {
 				score.add(chordParts.get(i));
 				chordParts.get(i).setTrackNumber(trackCounter);

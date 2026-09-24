@@ -1,12 +1,12 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +64,7 @@ public class ChordletPanel extends JPanel {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 		rawChords.setToolTipText(tooltip);
-		JButton okButton = VibeComposerGUI.makeButton("OK", e -> {
+		JButton okButton = SwingUtils.makeButton("OK", e -> {
 			toggleChordDisplay();
 		});
 		okButton.setPreferredSize(new Dimension(30, 25));
@@ -80,13 +80,13 @@ public class ChordletPanel extends JPanel {
 		});
 
 
-		JButton addButton = VibeComposerGUI.makeButton("+", e -> {
+		JButton addButton = SwingUtils.makeButton("+", e -> {
 			addChord("C", true);
 		});
 
 		setupChordPickers(addButton);
 
-		JButton switchButton = VibeComposerGUI.makeButton("<>", e -> {
+		JButton switchButton = SwingUtils.makeButton("<>", e -> {
 			toggleChordDisplay();
 		});
 		addButton.setMargin(new Insets(0, 0, 4, 0));
@@ -268,9 +268,9 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public void update() {
-		/*if (!VibeComposerGUI.userChordsEnabled.isSelected()) {
-			VibeComposerGUI.userChordsEnabled.setSelected(true);
-			VibeComposerGUI.userChordsEnabled.repaint();
+		/*if (!ChordGUI.userChordsEnabled.isSelected()) {
+			ChordGUI.userChordsEnabled.setSelected(true);
+			ChordGUI.userChordsEnabled.repaint();
 		}*/
 		if (!chordletsDisplayed) {
 			rawChords.setText(getChordListString());

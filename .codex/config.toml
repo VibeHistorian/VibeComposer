@@ -1,5 +1,6 @@
 approval_policy = "never"
 sandbox_mode = "workspace-write"
+model_reasoning_summary = "detailed"
 
 [sandbox_workspace_write]
 network_access = false

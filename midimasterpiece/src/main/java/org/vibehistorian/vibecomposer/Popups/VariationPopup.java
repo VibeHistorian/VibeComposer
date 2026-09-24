@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Popups;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.LG;
@@ -273,8 +274,8 @@ public class VariationPopup {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
-		String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
-				? VibeComposerGUI.userChords.getChordListString()
+		String guiUserChords = (ChordGUI.userChordsEnabled.isSelected()
+				? ChordGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
 		userChords = new ChordletPanel(300,
 				(sec.isCustomChordsEnabled() || sec.isDisplayAlternateChords())
@@ -298,7 +299,7 @@ public class VariationPopup {
 		});
 		userChordsDurations = new JTextField(
 				sec.isCustomDurationsEnabled() ? sec.getCustomDurations()
-						: VibeComposerGUI.userChordsDurations.getText(),
+						: ChordGUI.userChordsDurations.getText(),
 				7);
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

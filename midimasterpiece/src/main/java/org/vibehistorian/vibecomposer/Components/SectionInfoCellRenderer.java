@@ -11,6 +11,7 @@ import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
@@ -61,12 +62,12 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 						|| sec.isDisplayAlternateChords())
 								? sec.getCustomChords().replaceAll(" ", "")
 								: "");
-				String guiUserChords = (VibeComposerGUI.userChordsEnabled.isSelected()
-						? VibeComposerGUI.userChords.getChordListString()
+				String guiUserChords = (ChordGUI.userChordsEnabled.isSelected()
+						? ChordGUI.userChords.getChordListString()
 						: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
 
-				String guiUserDurations = (VibeComposerGUI.userDurationsEnabled.isSelected()
-						? VibeComposerGUI.userChordsDurations.getText()
+				String guiUserDurations = (ChordGUI.userDurationsEnabled.isSelected()
+						? ChordGUI.userChordsDurations.getText()
 						: "4,4,4,4").replaceAll(" ", "");
 
 				if (customChords.trim().isEmpty() || guiUserChords.equalsIgnoreCase(customChords)) {
