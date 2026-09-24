@@ -1351,7 +1351,7 @@ public class MidiGenerator implements JMC {
 
 		for (int i = 0; i < bassParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getBassParts().get(i).getOrder(),
-					VibeComposerGUI.bassPanels);
+					BassGUI.bassPanels);
 			if (!gc.getBassParts().get(i).isMuted() && gc.isBassEnable()) {
 				score.add(bassParts.get(i));
 				bassParts.get(i).setTrackNumber(trackCounter);

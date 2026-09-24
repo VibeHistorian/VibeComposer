@@ -62,7 +62,7 @@
 
 ## Mapping Progress
 - [x] Melody
-- [ ] Bass
+- [x] Bass
 - [ ] Chord
 - [ ] Arp
 - [ ] Drum
@@ -76,5 +76,6 @@
 ------------------------------------------------------------------
 # Status:
 - MelodyGUI migration: complete for melody UI state, settings construction, initial panel setup, melody panel randomization, and seed randomization.
+- BassGUI migration: complete for bass panel state, bass tab construction, and random bass panel creation.
 - Phase 1: In progress
 

@@ -22,13 +22,12 @@
 
 Run from the project root (`D:\Production\IdeaProjects\VibeComposer\midimasterpiece`):
 
-Prefer file operations through IDEA MCP.
-Arbitrary cmd / powershell / pwsh exe commands require user approval and are therefore slow.
+Prefer simple file operations through IDEA MCP.
 
 ```powershell
 rg -n "Melody|melody" src/main/java/org/vibehistorian/vibecomposer/VibeComposerGUI.java
 Get-Content src/main/java/org/vibehistorian/vibecomposer/VibeComposerGUI.java | Select-Object -Skip 1700 -First 100
-mvn -DskipTests compile
+mvnd -DskipTests compile
 ```
 
 `rg -n` is effective for locating scattered references; `Get-Content` with `Select-Object` is useful for reviewing a bounded source section. `mvn -DskipTests compile` successfully checked the MelodyGUI migration without running tests.
