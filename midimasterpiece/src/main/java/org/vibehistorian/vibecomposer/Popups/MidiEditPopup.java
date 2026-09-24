@@ -21,6 +21,7 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MelodyGUI;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -729,7 +730,7 @@ public class MidiEditPopup extends CloseablePopup {
 			switch (part) {
 			case 0:
 				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
-						sec.getTypeMelodyOffset(), sec, variations, false, VibeComposerGUI.melodyBlockChoicePreference.getValues());
+						sec.getTypeMelodyOffset(), sec, variations, false, MelodyGUI.melodyBlockChoicePreference.getValues());
 				break;
 			case 1:
 				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);

@@ -147,7 +147,7 @@ public class MelodyGenerator {
         if (RANDOMIZE_TARGET_NOTES) {
             if (gc.getActualArrangement().getSections().indexOf(sec) < 1
                     || TARGET_NOTES.get(mp.getOrderOffset()) == null) {
-                int targetNoteSeed = VibeComposerGUI.vibeComposerGUI.melody1ForcePatterns.isSelected()
+                int targetNoteSeed = MelodyGUI.melody1ForcePatterns.isSelected()
                         ? (seed + 1)
                         : (seed + mp.getOrderOffset());
                 blockChordNoteChoices = MidiGeneratorUtils.generateNoteTargetOffsets(roots, targetNoteSeed,

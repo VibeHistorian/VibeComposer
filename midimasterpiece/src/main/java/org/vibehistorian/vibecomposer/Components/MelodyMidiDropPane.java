@@ -8,8 +8,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.MelodyGUI;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 
 import jm.music.data.Phrase;
@@ -32,10 +32,10 @@ public class MelodyMidiDropPane extends MidiDropPane {
 		}
 
 		MelodyMidiDropPane.userMelodyCandidate = e;
-		VibeComposerGUI.userMelodyScaleModeSelect.removeAllItems();
-		VibeComposerGUI.userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
+		MelodyGUI.userMelodyScaleModeSelect.removeAllItems();
+		MelodyGUI.userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
 		for (Pair<ScaleMode, Integer> p : detectionResults) {
-			VibeComposerGUI.userMelodyScaleModeSelect
+			MelodyGUI.userMelodyScaleModeSelect
 					.addItem(p.getLeft().toString() + "," + p.getRight());
 		}
 		return new PhraseNotes(userMelodyCandidate);

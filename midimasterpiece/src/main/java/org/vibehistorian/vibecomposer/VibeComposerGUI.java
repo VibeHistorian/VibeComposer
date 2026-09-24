@@ -88,6 +88,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -150,7 +151,8 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
 	// instrument panels added into scrollpanes
-	public static List<MelodyPanel> melodyPanels = new ArrayList<>();
+	@Deprecated
+	public static List<MelodyPanel> __melodyPanels = MelodyGUI.melodyPanels;
 	public static List<BassPanel> bassPanels = new ArrayList<>();
 	public static List<ChordPanel> chordPanels = new ArrayList<>();
 	public static List<ArpPanel> arpPanels = new ArrayList<>();
@@ -166,7 +168,7 @@ public class VibeComposerGUI extends JFrame
 	public static List<? extends InstPanel> getInstList(int order) {
 		switch (order) {
 		case 0:
-			return melodyPanels;
+			return MelodyGUI.melodyPanels;
 		case 1:
 			return bassPanels;
 		case 2:
@@ -185,7 +187,7 @@ public class VibeComposerGUI extends JFrame
 	public static JScrollPane getInstPane(int order) {
 		switch (order) {
 		case 0:
-			return melodyScrollPane;
+			return MelodyGUI.melodyScrollPane;
 		case 1:
 			return bassScrollPane;
 		case 2:
@@ -252,13 +254,15 @@ public class VibeComposerGUI extends JFrame
 	int arrangementRowHeaderWidth = 120;
 	public static final int TABLE_COLUMN_MIN_WIDTH = 80;
 
-	public static JScrollPane melodyScrollPane;
+	@Deprecated
+	public static JScrollPane __melodyScrollPane;
 	public static JScrollPane bassScrollPane;
 	public static JScrollPane chordScrollPane;
 	public static JScrollPane arpScrollPane;
 	public static JScrollPane drumScrollPane;
 
-	public static JPanel melodyParentPanel;
+	@Deprecated
+	public static JPanel __melodyParentPanel;
 	public static JPanel bassParentPanel;
 	public static JPanel chordParentPanel;
 	public static JPanel arpParentPanel;
@@ -331,52 +335,52 @@ public class VibeComposerGUI extends JFrame
 	JTextField[] randomPanelsToGenerate = new JTextField[5];
 
 	// melody gen settings
-	JCheckBox generateMelodiesOnCompose;
-	KnobPanel melodyUseOldAlgoChance;
-	JCheckBox randomMelodyOnRegenerate;
-	JCheckBox randomMelodySameSeed;
-	JCheckBox melodyFirstNoteFromChord;
-	JCheckBox randomChordNote;
+	@Deprecated JCheckBox __generateMelodiesOnCompose;
+	@Deprecated KnobPanel __melodyUseOldAlgoChance;
+	@Deprecated JCheckBox __randomMelodyOnRegenerate;
+	@Deprecated JCheckBox __randomMelodySameSeed;
+	@Deprecated JCheckBox __melodyFirstNoteFromChord;
+	@Deprecated JCheckBox __randomChordNote;
 
-	JCheckBox melodyBasicChordsOnly;
-	KnobPanel melodyChordNoteTarget;
-	KnobPanel melodyTonicNoteTarget;
-	JCheckBox melodyEmphasizeKey;
-	KnobPanel melodyModeNoteTarget;
+	@Deprecated JCheckBox __melodyBasicChordsOnly;
+	@Deprecated KnobPanel __melodyChordNoteTarget;
+	@Deprecated KnobPanel __melodyTonicNoteTarget;
+	@Deprecated JCheckBox __melodyEmphasizeKey;
+	@Deprecated KnobPanel __melodyModeNoteTarget;
 
-	JCheckBox useUserMelody;
-	public MelodyMidiDropPane dropPane;
-	public static ScrollComboBox<String> userMelodyScaleModeSelect;
+	@Deprecated JCheckBox __useUserMelody;
+	@Deprecated public MelodyMidiDropPane __dropPane;
+	@Deprecated public static ScrollComboBox<String> __userMelodyScaleModeSelect;
 
-	JCheckBox melody1ForcePatterns;
-	JCheckBox melodyArpySurprises;
-	JCheckBox melodySingleNoteExceptions;
-	JCheckBox melodyFillPausesPerChord;
-	KnobPanel melodyNewBlocksChance;
-	JCheckBox melodyLegacyMode;
+	@Deprecated JCheckBox __melody1ForcePatterns;
+	@Deprecated JCheckBox __melodyArpySurprises;
+	@Deprecated JCheckBox __melodySingleNoteExceptions;
+	@Deprecated JCheckBox __melodyFillPausesPerChord;
+	@Deprecated KnobPanel __melodyNewBlocksChance;
+	@Deprecated JCheckBox __melodyLegacyMode;
 
-	JCheckBox melodyAvoidChordJumpsLegacy;
-	JCheckBox melodyUseDirectionsFromProgression;
-	JCheckBox melodyPatternFlip;
-	public static ScrollComboBox<MelodyUtils.NoteTargetDirection> noteTargetDirectionChoice;
-	public static ScrollComboBox<String> melodyBlockTargetMode;
-	JCheckBox melodyTargetNotesRandomizeOnCompose;
-	ScrollComboBox<String> melodyPatternEffect;
-	ScrollComboBox<String> melodyRhythmAccents;
-	ScrollComboBox<String> melodyRhythmAccentsMode;
-	JCheckBox melodyRhythmAccentsPocket;
-	JCheckBox melodyPatternRandomizeOnCompose;
-	KnobPanel melodyReplaceAvoidNotes;
-	KnobPanel melodyMaxDirChanges;
-	public static KnobPanel melodyTargetNoteVariation;
-	JPanel melodyBlockTypePreferences;
-	VeloRect[] melodyBlockTypePreference;
+	@Deprecated JCheckBox __melodyAvoidChordJumpsLegacy;
+	@Deprecated JCheckBox __melodyUseDirectionsFromProgression;
+	@Deprecated JCheckBox __melodyPatternFlip;
+	@Deprecated public static ScrollComboBox<MelodyUtils.NoteTargetDirection> __noteTargetDirectionChoice;
+	@Deprecated public static ScrollComboBox<String> __melodyBlockTargetMode;
+	@Deprecated JCheckBox __melodyTargetNotesRandomizeOnCompose;
+	@Deprecated ScrollComboBox<String> __melodyPatternEffect;
+	@Deprecated ScrollComboBox<String> __melodyRhythmAccents;
+	@Deprecated ScrollComboBox<String> __melodyRhythmAccentsMode;
+	@Deprecated JCheckBox __melodyRhythmAccentsPocket;
+	@Deprecated JCheckBox __melodyPatternRandomizeOnCompose;
+	@Deprecated KnobPanel __melodyReplaceAvoidNotes;
+	@Deprecated KnobPanel __melodyMaxDirChanges;
+	@Deprecated public static KnobPanel __melodyTargetNoteVariation;
+	@Deprecated JPanel __melodyBlockTypePreferences;
+	@Deprecated VeloRect[] __melodyBlockTypePreference;
 
 	// melody extra settings
-	public static RandomIntegerListButton melodyBlockChoicePreference;
-	public static JCheckBox melodyUseCustomDurations;
-	public static JCheckBox melodyCustomDurationsRandomWeighting;
-	public static JCheckBox melodyCustomDurationsStrictMode;
+	@Deprecated public static RandomIntegerListButton __melodyBlockChoicePreference;
+	@Deprecated public static JCheckBox __melodyUseCustomDurations;
+	@Deprecated public static JCheckBox __melodyCustomDurationsRandomWeighting;
+	@Deprecated public static JCheckBox __melodyCustomDurationsStrictMode;
 
 	// bass gen settings
 	// - there's nothing here - 
@@ -529,7 +533,7 @@ public class VibeComposerGUI extends JFrame
 	ScrollComboBox<String> midiModeDevices;
 	MidiHandler mh = new MidiHandler();
 	JCheckBox combineDrumTracks;
-	JCheckBox combineMelodyTracks;
+	@Deprecated JCheckBox __combineMelodyTracks;
 	public static CheckButton regenerateWhenValuesChange;
 
 
@@ -610,6 +614,7 @@ public class VibeComposerGUI extends JFrame
 	public static VibeComposerGUI vibeComposerGUI = null;
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
+	private MelodyGUI melodyGUI;
 
 	public static JPanel extraSettingsPanel;
 	public static JPanel currentSettingsMenuPanel = null;
@@ -656,6 +661,105 @@ public class VibeComposerGUI extends JFrame
 		super(title);
 	}
 
+	private void initMelodyGUI() {
+		melodyGUI = new MelodyGUI(new MelodyGUI.Context() {
+			@Override
+			public Dimension getScrollPaneDimension() {
+				return scrollPaneDimension;
+			}
+
+			@Override
+			public Set<Component> getToggleableComponents() {
+				return toggleableComponents;
+			}
+
+			@Override
+			public JCheckBox[] getAddInst() {
+				return addInst;
+			}
+
+			@Override
+			public VeloRect[] getGroupFilterSliders() {
+				return groupFilterSliders;
+			}
+
+			@Override
+			public JButton[] getAddPanelButtons() {
+				return addPanelButtons;
+			}
+
+			@Override
+			public JButton[] getGeneratePanelButtons() {
+				return generatePanelButtons;
+			}
+
+			@Override
+			public JTextField[] getRandomPanelsToGenerate() {
+				return randomPanelsToGenerate;
+			}
+
+			@Override
+			public JButton makeButton(String name, Consumer<? super Object> action) {
+				return SwingUtils.makeButton(name, action);
+			}
+
+			@Override
+			public void addPanel(int part) {
+				VibeComposerGUI.this.addPanel(part);
+			}
+
+			@Override
+			public void generatePanels(int part, boolean triggerRegenerate) {
+				VibeComposerGUI.this.generatePanels(part, triggerRegenerate);
+			}
+
+			@Override
+			public boolean canRegenerateOnChange() {
+				return VibeComposerGUI.this.canRegenerateOnChange();
+			}
+
+			@Override
+			public void regenerate() {
+				VibeComposerGUI.this.regenerate();
+			}
+
+			@Override
+			public List<? extends InstPanel> getAffectedMelodyPanels() {
+				return getAffectedPanels(0);
+			}
+
+			@Override
+			public MelodyPanel addMelodyPanel() {
+				return (MelodyPanel) VibeComposerGUI.this.addInstPanelToLayout(0);
+			}
+
+			@Override
+			public boolean forceTransposedNotesToScale() {
+				return transposedNotesForceScale.isSelected();
+			}
+
+			@Override
+			public boolean randomizeInstrumentOnComposeOrGen() {
+				return randomizeInstOnComposeOrGen.isSelected();
+			}
+
+			@Override
+			public void repaintMainWindow() {
+				VibeComposerGUI.this.repaint();
+			}
+
+			@Override
+			public void setScoreTranspose(int transpose) {
+				transposeScore.setInt(transpose);
+			}
+
+			@Override
+			public void setGlobalScaleMode(String mode) {
+				scaleMode.setVal(mode);
+			}
+		});
+	}
+
 	private void setMainIcon() {
 		this.setIconImage(new ImageIcon(new ImageIcon(
 				this.getClass().getResource("/VibeComposer2_LOGO_INVERT_NARROW.jpg"))
@@ -664,6 +768,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void init() {
+		initMelodyGUI();
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
 
@@ -756,7 +861,7 @@ public class VibeComposerGUI extends JFrame
 			// drums
 			initDrumGenSettings(190, GridBagConstraints.WEST);
 
-			initMelodyGenSettings(220, GridBagConstraints.WEST);
+			melodyGUI.initMelodyGenSettings(220, GridBagConstraints.WEST);
 
 			//createHorizontalSeparator(240, this);
 
@@ -767,7 +872,7 @@ public class VibeComposerGUI extends JFrame
 		{
 			// ---- INSTRUMENT PANELS ----
 
-			initMelody(300, GridBagConstraints.WEST);
+			melodyGUI.initMelody(300, GridBagConstraints.WEST, constraints, instrumentTabPane);
 
 			//createHorizontalSeparator(30, this);
 
@@ -928,7 +1033,7 @@ public class VibeComposerGUI extends JFrame
 				+ " ms! Creating Panels in background...");
 
 		if (!presetLoaded) {
-			generateInitialMelodyPanels();
+			melodyGUI.generateInitialMelodyPanels();
 			for (int i = 1; i < 5; i++) {
 				generatePanels(i);
 			}
@@ -1087,7 +1192,7 @@ public class VibeComposerGUI extends JFrame
 			randomPanelsToGenerate[2].setText("" + 2);
 			randomPanelsToGenerate[3].setText("" + 3);
 			randomPanelsToGenerate[4].setText("" + 6);
-			generateInitialMelodyPanels();
+			melodyGUI.generateInitialMelodyPanels();
 			for (int i = 1; i < 5; i++) {
 				generatePanels(i);
 			}
@@ -1296,7 +1401,7 @@ public class VibeComposerGUI extends JFrame
 		initExtraSettingsInstruments(instrumentsSettingsPanel);
 		initExtraSettingsPause(pauseBehaviorPanel);
 		initExtraSettingsChords(chordChoicePanel);
-		initExtraSettingsMelody(melodyTweaksPanel);
+		melodyGUI.initExtraSettingsMelody(melodyTweaksPanel);
 		initExtraSettingsBpm(bpmLowHighPanel);
 		initExtraSettingsDisplay(displayStylePanel);
 		initExtraSettingsGeneration(panelGenerationSettingsPanel);
@@ -1446,48 +1551,9 @@ public class VibeComposerGUI extends JFrame
 		chordChoicePanel.add(squishChordsProgressively);
 	}
 
-	private void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
-		// MELODY
-		JPanel melodyBlockChoicePreferencePanel = new JPanel();
-		melodyBlockChoicePreferencePanel.setLayout(new GridLayout(0, 2));
-		melodyBlockChoicePreference = new RandomIntegerListButton("0", null);
-		melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
-		melodyBlockChoicePreference.min = 0;
-		melodyBlockChoicePreference.max = 7;
-		melodyBlockChoicePreference.editableCount = false;
-		melodyBlockChoicePreference.setRandGenerator(e -> {
-			List<Integer> scrambledDefaultPreference = new ArrayList<>(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
-			Collections.shuffle(scrambledDefaultPreference, new Random());
-			return scrambledDefaultPreference;
-		});
-		melodyBlockChoicePreference.setTextGenerator(e -> StringUtils.join(melodyBlockChoicePreference.getRandGenerator()
-				.apply(new Object()),","));
-		melodyBlockChoicePreference.setPostFunc(e -> {
-			// verify it's set correctly
-			List<Integer> vals = melodyBlockChoicePreference.getValues();
-			if (vals.size() > 1 && (vals.size() != MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE.size() ||
-					!vals.containsAll(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE))) {
-				melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE, false);
-				return;
-			}
-		});
-
-		melodyUseCustomDurations = new CustomCheckBox("Use custom durations", true);
-		melodyCustomDurationsRandomWeighting = new CustomCheckBox("Apply random weighting to custom durations", true);
-		melodyCustomDurationsStrictMode = new CustomCheckBox("Apply custom durations strictly (strict mode)", true);
-
-		melodyBlockChoicePreferencePanel.add(new JLabel("<html>Melody Block Choice<br>Preferred Order</html>"));
-		melodyBlockChoicePreferencePanel.add(melodyBlockChoicePreference);
-		melodyGenerationSettingsPanel.add(melodyBlockChoicePreferencePanel);
-
-		JPanel melodyCustomDurationsPanel = new JPanel();
-		melodyCustomDurationsPanel.setLayout(new GridLayout(0, 2));
-		melodyCustomDurationsPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
-		melodyCustomDurationsPanel.add(melodyUseCustomDurations);
-		melodyCustomDurationsPanel.add(melodyCustomDurationsRandomWeighting);
-		melodyCustomDurationsPanel.add(melodyCustomDurationsStrictMode);
-		melodyGenerationSettingsPanel.add(melodyCustomDurationsPanel);
-		//melodyGenerationSettingsPanel.add("South", melodyCustomDurations);
+	@Deprecated
+	private void __initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
+		melodyGUI.initExtraSettingsMelody(melodyGenerationSettingsPanel);
 	}
 
 	private void initExtraSettingsGeneration(JPanel panelGenerationSettingsPanel) {
@@ -1501,7 +1567,7 @@ public class VibeComposerGUI extends JFrame
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
 				"Track History - Include Regenerated Tracks", true);
-		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
+		MelodyGUI.melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
 		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 		allowValuesOutOfRange = new CustomCheckBox("(Experimental!) Allow Knob Values Out of Range", false);
 
@@ -1522,7 +1588,7 @@ public class VibeComposerGUI extends JFrame
 		panelGenerationSettingsPanel.add(reuseMidiChannelAfterCopy);
 		panelGenerationSettingsPanel.add(orderedTransposeGeneration);
 		panelGenerationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
-		//panelGenerationSettingsPanel.add(melodyPatternFlip); -- pattern flip is now also available per-instrument..
+		//panelGenerationSettingsPanel.add(MelodyGUI.melodyPatternFlip); -- pattern flip is now also available per-instrument..
 		panelGenerationSettingsPanel.add(patternApplyPausesWhenGenerating);
 		panelGenerationSettingsPanel.add(allowValuesOutOfRange);
 		panelGenerationSettingsPanel.add(keyChangePanel);
@@ -1771,361 +1837,64 @@ public class VibeComposerGUI extends JFrame
 		generatePanels(part, false);
 	}
 
-	private void initMelodyGenSettings(int startY, int anchorSide) {
-
-		JPanel scrollableMelodyPanels = new JPanel();
-		scrollableMelodyPanels.setLayout(new BoxLayout(scrollableMelodyPanels, BoxLayout.Y_AXIS));
-		scrollableMelodyPanels.setAutoscrolls(true);
-
-		melodyScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
-			}
-		};
-		melodyScrollPane.setViewportView(scrollableMelodyPanels);
-		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		//melodySettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
-
-		randomChordNote = new CustomCheckBox();
-		randomChordNote.setSelected(true);
-		melodyFirstNoteFromChord = new CustomCheckBox();
-		melodyFirstNoteFromChord.setSelected(true);
-
-
-		//melodySettingsPanel.add(new JLabel("Note#1 From Chord:"));
-		//melodySettingsPanel.add(melodyFirstNoteFromChord);
-		//melodySettingsPanel.add(new JLabel("But Randomized:"));
-		//melodySettingsPanel.add(randomChordNote);
-		//melodySettingsExtraPanelShape.add(melodyAvoidChordJumps);
-
-		JPanel melodySettingsExtraPanelOrg = initMelodySettings();
-		JPanel melodySettingsExtraPanelShape = initMelodySettingsPlus();
-		JPanel melodySettingsExtraPanelBlocksPatternsCompose = initMelodySettingsPlusPlus();
-
-
-		//scrollableMelodyPanels.add(melodySettingsPanel);
-		melodyParentPanel = new JPanel() {
-			@Override
-			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
-			}
-		};
-		melodyParentPanel.setLayout(new BoxLayout(melodyParentPanel, BoxLayout.Y_AXIS));
-		JPanel borderPanel = new JPanel() {
-			@Override
-			public Dimension getMaximumSize() {
-				return new Dimension(scrollPaneDimension.width, 150);
-			}
-		};
-		borderPanel.setLayout(new DynamicGridLayout(0, 1));
-		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
-		borderPanel.add(melodySettingsExtraPanelOrg);
-		borderPanel.add(melodySettingsExtraPanelShape);
-		borderPanel.add(melodySettingsExtraPanelBlocksPatternsCompose);
-		melodyParentPanel.add(borderPanel);
-		melodyParentPanel.add(melodyScrollPane);
-		//addHorizontalSeparatorToPanel(scrollableMelodyPanels);
-
-		toggleableComponents.add(melodySettingsExtraPanelShape);
-		toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
+	@Deprecated
+	private void __initMelodyGenSettings(int startY, int anchorSide) {
+		melodyGUI.initMelodyGenSettings(startY, anchorSide);
 	}
 
-	private JPanel initMelodySettings() {
-		JPanel melodySettingsExtraPanelOrg = new JPanel();
-		melodySettingsExtraPanelOrg.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		melodySettingsExtraPanelOrg.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelOrg.setMaximumSize(new Dimension(1800, 50));
-
-		addInst[0] = new CustomCheckBox("MELODY", true);
-		melodySettingsExtraPanelOrg.add(addInst[0]);
-		groupFilterSliders[0] = VeloRect.midi( 127);
-		JLabel filterLabel = new JLabel("LP");
-		melodySettingsExtraPanelOrg.add(filterLabel);
-		melodySettingsExtraPanelOrg.add(groupFilterSliders[0]);
-
-		addPanelButtons[0] = makeButton("+Melody", e -> {
-			addPanel(0);
-		});
-		generatePanelButtons[0] = makeButton("Generate Melodies:", e -> {
-			generatePanels(0, true);
-		});
-		randomPanelsToGenerate[0] = new JTextField("3", 2);
-		melodySettingsExtraPanelOrg.add(addPanelButtons[0]);
-		melodySettingsExtraPanelOrg.add(generatePanelButtons[0]);
-		melodySettingsExtraPanelOrg.add(randomPanelsToGenerate[0]);
-		generateMelodiesOnCompose = makeCheckBox("On Compose", false, true);
-		melodySettingsExtraPanelOrg.add(generateMelodiesOnCompose);
-
-		JButton generateUserMelodySeed = makeButton("Randomize Seed", e -> {
-			randomizeMelodySeeds();
-			if (canRegenerateOnChange()) {
-				regenerate();
-			}
-		});
-		JButton clearUserMelodySeed = makeButton("Clear Seeds",
-				e -> getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
-		randomMelodySameSeed = new CustomCheckBox("Same#", false);
-		randomMelodyOnRegenerate = makeCheckBox("on Manual Regen.", false, true);
-		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
-
-		dropPane = new MelodyMidiDropPane();
-		useUserMelody = new CustomCheckBox("<html>Use MIDI<br>Melody File</html>", true);
-		userMelodyScaleModeSelect = new ScrollComboBox<>(false);
-		userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
-		userMelodyScaleModeSelect.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
-					if (userMelodyScaleModeSelect.getSelectedIndex() > 0) {
-						if (MelodyMidiDropPane.userMelodyCandidate != null) {
-							Phrase melody = MelodyMidiDropPane.userMelodyCandidate.copy();
-							String item = userMelodyScaleModeSelect
-									.getItemAt(userMelodyScaleModeSelect.getSelectedIndex());
-							String[] itemSplit = item.split(",");
-							int transposeUpBy = Integer.valueOf(itemSplit[1]);
-							ScaleMode toMode = ScaleMode.valueOf(itemSplit[0]);
-							Mod.transpose(melody, transposeUpBy);
-							MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,
-									ScaleMode.IONIAN.noteAdjustScale,
-									transposedNotesForceScale.isSelected());
-							VibeComposerGUI.transposeScore.setInt(transposeUpBy * -1);
-							VibeComposerGUI.scaleMode.setVal(toMode.toString());
-							MelodyMidiDropPane.userMelody = melody;
-						}
-						userMelodyScaleModeSelect.setSelectedIndex(0);
-					}
-				}
-			}
-
-		});
-
-		combineMelodyTracks = new CustomCheckBox("<html>Combine<br>MIDI Tracks</html>", false);
-
-		melodySettingsExtraPanelOrg.add(melody1ForcePatterns);
-		melodySettingsExtraPanelOrg.add(combineMelodyTracks);
-		melodySettingsExtraPanelOrg.add(generateUserMelodySeed);
-		melodySettingsExtraPanelOrg.add(randomMelodySameSeed);
-		melodySettingsExtraPanelOrg.add(randomMelodyOnRegenerate);
-		melodySettingsExtraPanelOrg.add(clearUserMelodySeed);
-		melodySettingsExtraPanelOrg.add(useUserMelody);
-		melodySettingsExtraPanelOrg.add(dropPane);
-		melodySettingsExtraPanelOrg.add(new JLabel("in Mode:"));
-		melodySettingsExtraPanelOrg.add(userMelodyScaleModeSelect);
-		return melodySettingsExtraPanelOrg;
+	@Deprecated
+	private JPanel __initMelodySettings() {
+		return melodyGUI.initMelodySettings();
 	}
 
-	private JPanel initMelodySettingsPlus() {
-		JPanel melodySettingsExtraPanelShape = new JPanel();
-		melodySettingsExtraPanelShape.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelShape.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel2 = new JLabel("MELODY SETTINGS+");
-		melodyExtraLabel2.setPreferredSize(new Dimension(120, 30));
-		melodyExtraLabel2.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsExtraPanelShape.add(melodyExtraLabel2);
-
-		melodyUseDirectionsFromProgression = new CustomCheckBox(
-				"<html>Use Chord<br>Directions</html>", false);
-		melodyBasicChordsOnly = new CustomCheckBox("<html>Base<br> Chords</html>", false);
-		melodyChordNoteTarget = new KnobPanel("Chord Note<br> Target%", 40);
-		melodyTonicNoteTarget = new KnobPanel("Tonic Note<br> Target%", 20);
-		melodyEmphasizeKey = new CustomCheckBox("<html>Emphasize<br> Key</html>", true);
-		melodyModeNoteTarget = new KnobPanel("Mode Note<br> Target%", 15);
-		melodyArpySurprises = new CustomCheckBox("<html>Insert<br> Arps</html>", false);
-		melodySingleNoteExceptions = new CustomCheckBox("<html>Single Note<br>Exceptions</html>",
-				true);
-		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>",
-				true);
-		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
-		melodyLegacyMode.addChangeListener((evt) -> {
-			boolean nonLegacyVisible = !melodyLegacyMode.isSelected();
-			melodyChordNoteTarget.setVisible(nonLegacyVisible);
-			melodyTonicNoteTarget.setVisible(nonLegacyVisible);
-			melodyModeNoteTarget.setVisible(nonLegacyVisible);
-			melodyEmphasizeKey.setVisible(nonLegacyVisible);
-
-			melodyBlockTypePreferences.setVisible(nonLegacyVisible);
-			melodyNewBlocksChance.setVisible(nonLegacyVisible);
-			melodyBlockTargetMode.setVisible(nonLegacyVisible);
-			melodyTargetNotesRandomizeOnCompose.setVisible(nonLegacyVisible);
-			melodyPatternEffect.setVisible(nonLegacyVisible);
-			melodyPatternRandomizeOnCompose.setVisible(nonLegacyVisible);
-			noteTargetDirectionChoice.setVisible(nonLegacyVisible);
-
-		});
-		melodyAvoidChordJumpsLegacy = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
-
-		melodyReplaceAvoidNotes = new KnobPanel("Replace Near<br>Chord Notes", 1, 0, 2);
-		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
-		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
-
-		melodySettingsExtraPanelShape.add(melodyChordNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyTonicNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyModeNoteTarget);
-		melodySettingsExtraPanelShape.add(melodyEmphasizeKey);
-		melodySettingsExtraPanelShape.add(melodyBasicChordsOnly);
-		melodySettingsExtraPanelShape.add(melodyReplaceAvoidNotes);
-		melodySettingsExtraPanelShape.add(melodyMaxDirChanges);
-		melodySettingsExtraPanelShape.add(melodyUseDirectionsFromProgression);
-		melodySettingsExtraPanelShape.add(melodyTargetNoteVariation);
-		melodySettingsExtraPanelShape.add(melodyArpySurprises);
-		melodySettingsExtraPanelShape.add(melodySingleNoteExceptions);
-		melodySettingsExtraPanelShape.add(melodyFillPausesPerChord);
-		melodySettingsExtraPanelShape.add(melodyLegacyMode);
-		melodySettingsExtraPanelShape.add(new PartManagerPanel(0));
-		return melodySettingsExtraPanelShape;
+	@Deprecated
+	private JPanel __initMelodySettingsPlus() {
+		return melodyGUI.initMelodySettingsPlus();
 	}
 
-	private JPanel initMelodySettingsPlusPlus() {
-		melodyBlockTypePreferences = new JPanel();
-		melodyBlockTypePreference = new VeloRect[BlockType.values().length];
-		for (int i = 0; i < BlockType.values().length; i++) {
-			melodyBlockTypePreference[i] = VeloRect.percent(BlockType.values()[i].defaultChance);
-			melodyBlockTypePreferences.add(melodyBlockTypePreference[i]);
-		}
-
-
-		melodyNewBlocksChance = new KnobPanel("New<br>Blocks%", 25);
-		melodyBlockTargetMode = new ScrollComboBox<>();
-		ScrollComboBox.addAll(
-				new String[] { "#. Chord Note", "Chord Root + #", "MIDI 60 (C4) + #" },
-				melodyBlockTargetMode);
-		melodyBlockTargetMode.setSelectedIndex(2);
-		melodyTargetNotesRandomizeOnCompose = makeCheckBox(
-				"<html>Randomize Targets<br> on Compose</html>", true, true);
-		melodyPatternEffect = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" },
-				melodyPatternEffect);
-		melodyPatternEffect.setSelectedIndex(2);
-		melodyPatternRandomizeOnCompose = makeCheckBox(
-				"<html>Randomize Pattern<br> on Compose</html>", true, true);
-		melodyRhythmAccents = new ScrollComboBox<>();
-		ScrollComboBox.addAll(new String[] { "None", "Snares", "Kicks", "Rides,OpenHH",
-				"Snares,Kicks", "Snares,Rides,OpenHH" }, melodyRhythmAccents);
-		melodyRhythmAccentsMode = new ScrollComboBox<>();
-		ScrollComboBox.addAll(
-				new String[] { "Mute", "Pitch+", "Pitch-", "Pitch~", "Vol+", "Vol-", "---" },
-				melodyRhythmAccentsMode);
-		melodyRhythmAccentsPocket = new CustomCheckBox("Pocket", false);
-
-		JPanel melodySettingsExtraPanelBlocksPatternsCompose = new JPanel();
-		melodySettingsExtraPanelBlocksPatternsCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-		melodySettingsExtraPanelBlocksPatternsCompose.setMaximumSize(new Dimension(1800, 50));
-		JLabel melodyExtraLabel3 = new JLabel("MELODY SETTINGS++");
-		melodyExtraLabel3.setPreferredSize(new Dimension(120, 30));
-		melodyExtraLabel3.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyExtraLabel3);
-
-		JLabel blockTypesLabel = new JLabel("<html>Block<br>Types</html>");
-		blockTypesLabel.setToolTipText("Types (in order): " +
-				Arrays.stream(BlockType.values()).map(e -> e.name()).collect(Collectors.joining(",")));
-		melodySettingsExtraPanelBlocksPatternsCompose
-				.add(blockTypesLabel);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTypePreferences);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyNewBlocksChance);
-		melodySettingsExtraPanelBlocksPatternsCompose
-				.add(new JLabel("<html>Note Target<br>Mode</html>"));
-		noteTargetDirectionChoice = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(MelodyUtils.NoteTargetDirection.values(), noteTargetDirectionChoice);
-		noteTargetDirectionChoice.setSelectedIndex(1); // ASC
-		melodySettingsExtraPanelBlocksPatternsCompose.add(noteTargetDirectionChoice);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyBlockTargetMode);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyTargetNotesRandomizeOnCompose);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(new JLabel("Pattern Effect"));
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternEffect);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(melodyPatternRandomizeOnCompose);
-		JPanel postProcessPanel = new JPanel();
-		postProcessPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		postProcessPanel.add(new JLabel("<html>Drum Rhythm Accents<br>(Post-process)</html>"));
-		postProcessPanel.add(melodyRhythmAccents);
-		postProcessPanel.add(new JLabel("Mode"));
-		postProcessPanel.add(melodyRhythmAccentsMode);
-		postProcessPanel.add(melodyRhythmAccentsPocket);
-		melodySettingsExtraPanelBlocksPatternsCompose.add(postProcessPanel);
-		return melodySettingsExtraPanelBlocksPatternsCompose;
+	@Deprecated
+	private JPanel __initMelodySettingsPlusPlus() {
+		return melodyGUI.initMelodySettingsPlusPlus();
 	}
 
 	public static JCheckBox makeCheckBox(String string, boolean b, boolean thick) {
-		JCheckBox cb = new CustomCheckBox(string, b);
-		if (thick) {
-			Font fnt = cb.getFont();
-			fnt = fnt.deriveFont(Font.BOLD);
-			cb.setFont(fnt);
-		}
-		return cb;
+		return SwingUtils.makeCheckBox(string, b, thick);
 	}
 
 	/*public void fixCombinedMelodyTracks() {
-		if (combineMelodyTracks == null) {
+		if (MelodyGUI.combineMelodyTracks == null) {
 			return;
 		}
 		boolean foundValid = false;
 		int start = currentMidi == null ? 1 : 0;
-		for (int i = start; i < melodyPanels.size(); i++) {
-			if (combineMelodyTracks.isSelected()) {
-				boolean isValid = melodyPanels.get(i).getSequenceTrack() >= 0;
+		for (int i = start; i < MelodyGUI.melodyPanels.size(); i++) {
+			if (MelodyGUI.combineMelodyTracks.isSelected()) {
+				boolean isValid = MelodyGUI.melodyPanels.get(i).getSequenceTrack() >= 0;
 				if (!foundValid && isValid) {
 					foundValid = true;
-					melodyPanels.get(i).toggleCombinedMelodyDisabledUI(true);
+					MelodyGUI.melodyPanels.get(i).toggleCombinedMelodyDisabledUI(true);
 				} else {
-					melodyPanels.get(i)
-							.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+					MelodyGUI.melodyPanels.get(i)
+							.toggleCombinedMelodyDisabledUI(!MelodyGUI.combineMelodyTracks.isSelected());
 				}
 			} else {
-				melodyPanels.get(i)
-						.toggleCombinedMelodyDisabledUI(!combineMelodyTracks.isSelected());
+				MelodyGUI.melodyPanels.get(i)
+						.toggleCombinedMelodyDisabledUI(!MelodyGUI.combineMelodyTracks.isSelected());
 			}
 		}
 		if (!foundValid) {
-			melodyPanels.get(0).toggleCombinedMelodyDisabledUI(true);
+			MelodyGUI.melodyPanels.get(0).toggleCombinedMelodyDisabledUI(true);
 		}
 	}*/
 
-	private void initMelody(int startY, int anchorSide) {
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Melody", melodyParentPanel);
+	@Deprecated
+	private void __initMelody(int startY, int anchorSide) {
+		melodyGUI.initMelody(startY, anchorSide, constraints, instrumentTabPane);
 	}
 
-	private void generateInitialMelodyPanels() {
-		for (int i = 0; i < 3; i++) {
-			MelodyPanel melodyPanel = (MelodyPanel) addInstPanelToLayout(0);
-			melodyPanel.setInstrument(73);
-			melodyPanel.setOrderAndOffset(i + 1, i + 1);
-			if (i > 0) {
-				melodyPanel.setAccents(50);
-				melodyPanel.setFillPauses(true);
-				melodyPanel.setSpeed(0);
-				melodyPanel.setPauseChance(70);
-
-				if (i > 1) {
-					melodyPanel.setMuteInst(true);
-				}
-				melodyPanel.setVelocityMax(70);
-				melodyPanel.setVelocityMin(40);
-				melodyPanel.setMidiChannel(i + 6);
-				if (i % 2 == 1) {
-					melodyPanel.setTranspose(0);
-				} else {
-					melodyPanel.setTranspose(-12);
-				}
-				melodyPanel.setPanByOrder(3);
-				melodyPanel.getVolSlider().setValue(45);
-			} else {
-				melodyPanel.setAccents(75);
-				melodyPanel.setFillPauses(false);
-				melodyPanel.setSpeed(15);
-				melodyPanel.setPauseChance(15);
-				melodyPanel.setTranspose(12);
-				melodyPanel.setVelocityMax(100);
-				melodyPanel.setVelocityMin(50);
-				melodyPanel.getVolSlider().setValue(60);
-				melodyPanel.setNoteLengthMultiplier(108);
-			}
-		}
+	@Deprecated
+	private void __generateInitialMelodyPanels() {
+		melodyGUI.generateInitialMelodyPanels();
 	}
 
 
@@ -3283,7 +3052,7 @@ public class VibeComposerGUI extends JFrame
 						: (Collection<? extends Object>) value;
 
 				/*arrangementTableProcessComponent(comp, row, col, value,
-						new int[] { 0, 0, melodyPanels.size(), 1, chordPanels.size(),
+						new int[] { 0, 0, MelodyGUI.melodyPanels.size(), 1, chordPanels.size(),
 								arpPanels.size(), drumPanels.size() },
 						true);*/
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col);
@@ -4523,10 +4292,10 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (melodyPanels.isEmpty()) {
+				if (MelodyGUI.melodyPanels.isEmpty()) {
 					return;
 				}
-				userChords.alignWithMelodyTargetNotes(melodyPanels.get(0).getChordNoteChoices());
+				userChords.alignWithMelodyTargetNotes(MelodyGUI.melodyPanels.get(0).getChordNoteChoices());
 			}
 		});
 		customChordsPanel.add(melodifyChordsButton);
@@ -5502,7 +5271,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
-		generateMelodiesOnCompose.setSelected(state);
+		MelodyGUI.generateMelodiesOnCompose.setSelected(state);
 		randomChordsGenerateOnCompose.setSelected(state);
 		randomArpsGenerateOnCompose.setSelected(state);
 		randomDrumsGenerateOnCompose.setSelected(state);
@@ -5514,15 +5283,15 @@ public class VibeComposerGUI extends JFrame
 		randomizeArrangementOnCompose.setSelected(state);
 		arrangementResetCustomPanelsOnCompose.setSelected(state);
 		randomizeScaleModeOnCompose.setSelected(state);
-		melodyTargetNotesRandomizeOnCompose.setSelected(state);
-		melodyPatternRandomizeOnCompose.setSelected(state);
+		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
+		MelodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
 		randomizeTimingsOnCompose.setSelected(state);
 		sidechainPatternsOnCompose.setSelected(state);
 		copyChordsAfterGenerate.setSelected(state);
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
-		generateMelodiesOnCompose.setForeground(fg);
+		MelodyGUI.generateMelodiesOnCompose.setForeground(fg);
 		randomChordsGenerateOnCompose.setForeground(fg);
 		randomArpsGenerateOnCompose.setForeground(fg);
 		randomDrumsGenerateOnCompose.setForeground(fg);
@@ -5533,8 +5302,8 @@ public class VibeComposerGUI extends JFrame
 		randomizeArrangementOnCompose.setForeground(fg);
 		arrangementResetCustomPanelsOnCompose.setForeground(fg);
 		randomizeScaleModeOnCompose.setForeground(fg);
-		melodyTargetNotesRandomizeOnCompose.setForeground(fg);
-		melodyPatternRandomizeOnCompose.setForeground(fg);
+		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(fg);
+		MelodyGUI.melodyPatternRandomizeOnCompose.setForeground(fg);
 		switchOnComposeRandom.setForeground(fg);
 		randomizeTimingsOnCompose.setForeground(fg);
 		sidechainPatternsOnCompose.setForeground(fg);
@@ -5665,7 +5434,7 @@ public class VibeComposerGUI extends JFrame
 		stopMidi.setForeground(toggledUIColor);
 		loopBeatCompose.setForeground(toggledComposeColor);
 		randomArpHitsPerPattern.setForeground(toggledUIColor);
-		randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
+		MelodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
 		panelColorHigh = UIManager.getColor("Panel.background");
@@ -5866,9 +5635,9 @@ public class VibeComposerGUI extends JFrame
 			makeDir.mkdir();
 
 			String seedData = "" + masterpieceSeed;
-			if (!melodyPanels.isEmpty() && melodyPanels.get(0).getPatternSeed() != 0
-					&& !melodyPanels.get(0).getMuteInst()) {
-				seedData += "_" + melodyPanels.get(0).getPatternSeed();
+			if (!MelodyGUI.melodyPanels.isEmpty() && MelodyGUI.melodyPanels.get(0).getPatternSeed() != 0
+					&& !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
+				seedData += "_" + MelodyGUI.melodyPanels.get(0).getPatternSeed();
 			}
 			String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
 					.replaceAll("#", "s");
@@ -5955,8 +5724,8 @@ public class VibeComposerGUI extends JFrame
 				}
 			});
 		}
-		if (combineMelodyTracks.isSelected()) {
-			melodyPanels.forEach(e -> {
+		if (MelodyGUI.combineMelodyTracks.isSelected()) {
+			MelodyGUI.melodyPanels.forEach(e -> {
 				if (e.getSequenceTrack() < 0) {
 					e.getSoloMuter().unsolo();
 					e.getSoloMuter().unmute();
@@ -5971,11 +5740,11 @@ public class VibeComposerGUI extends JFrame
 			MidiGenerator.recalculateDurations(stretchMidi.getInt());
 			MidiGenerator.GLOBAL_DURATION_MULTIPLIER = globalNoteLengthMultiplier.getInt() / 1000.0;
 			MelodyGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
-					&& melodyTargetNotesRandomizeOnCompose.isSelected();
-			MelodyGenerator.TARGET_NOTES = (melody1ForcePatterns.isSelected()
-					&& !melodyPanels.isEmpty()
-					&& !melodyPanels.get(0).getNoteTargetsButton().isEnabled())
-							? melodyPanels.stream()
+					&& MelodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected();
+			MelodyGenerator.TARGET_NOTES = (MelodyGUI.melody1ForcePatterns.isSelected()
+					&& !MelodyGUI.melodyPanels.isEmpty()
+					&& !MelodyGUI.melodyPanels.get(0).getNoteTargetsButton().isEnabled())
+							? MelodyGUI.melodyPanels.stream()
 									.collect(Collectors.toMap(MelodyPanel::getPanelOrder,
 											MelodyPanel::getChordNoteChoices))
 							: null;
@@ -6015,7 +5784,7 @@ public class VibeComposerGUI extends JFrame
 				MidiGenerator.userChordsDurations.clear();
 			}
 
-			if (MelodyMidiDropPane.userMelody != null && useUserMelody.isSelected()) {
+			if (MelodyMidiDropPane.userMelody != null && MelodyGUI.useUserMelody.isSelected()) {
 				MelodyGenerator.userMelody = MelodyMidiDropPane.userMelody;
 			} else {
 				MelodyGenerator.userMelody = null;
@@ -6102,9 +5871,9 @@ public class VibeComposerGUI extends JFrame
 		}
 
 		// MELODY
-		if (!regenerate && generateMelodiesOnCompose.isSelected()) {
+		if (!regenerate && MelodyGUI.generateMelodiesOnCompose.isSelected()) {
 			int seed = getCurrentSeed();
-			createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt(), melodyPanels.size(),
+			melodyGUI.createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt(), MelodyGUI.melodyPanels.size(),
 					false, null);
 		}
 
@@ -6129,13 +5898,13 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (regenerate && manual && randomMelodyOnRegenerate.isSelected()) {
-			randomizeMelodySeeds();
+		if (regenerate && manual && MelodyGUI.randomMelodyOnRegenerate.isSelected()) {
+			melodyGUI.randomizeMelodySeeds();
 		}
 
-		if (regenerate && randomMelodyOnRegenerate.isSelected() && !melodyPanels.isEmpty()) {
-			if (melodyPatternRandomizeOnCompose.isSelected()) {
-				melodyPanels.forEach(e -> {
+		if (regenerate && MelodyGUI.randomMelodyOnRegenerate.isSelected() && !MelodyGUI.melodyPanels.isEmpty()) {
+			if (MelodyGUI.melodyPatternRandomizeOnCompose.isSelected()) {
+				MelodyGUI.melodyPanels.forEach(e -> {
 					if (e.getLockInst() == true) {
 						return;
 					}
@@ -6145,8 +5914,8 @@ public class VibeComposerGUI extends JFrame
 											: e.getPatternSeed())));
 				});
 			}
-			if (melodyTargetNotesRandomizeOnCompose.isSelected()) {
-				melodyPanels.forEach(e -> {
+			if (MelodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected()) {
+				MelodyGUI.melodyPanels.forEach(e -> {
 					if (e.getLockInst() == true) {
 						return;
 					}
@@ -6157,17 +5926,17 @@ public class VibeComposerGUI extends JFrame
 			}
 		}
 
-		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected()
-				&& !melodyPanels.isEmpty()) {
-			if (melody1ForcePatterns.isSelected()) {
-				MelodyPanel firstMp = melodyPanels.get(0);
+		if (!regenerate && MelodyGUI.melodyPatternRandomizeOnCompose.isSelected()
+				&& !MelodyGUI.melodyPanels.isEmpty()) {
+			if (MelodyGUI.melody1ForcePatterns.isSelected()) {
+				MelodyPanel firstMp = MelodyGUI.melodyPanels.get(0);
 				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
 						firstMp.getAlternatingRhythmChance(),
 						firstMp.getPanelOrder() + (firstMp.getPatternSeed() == 0 ? lastRandomSeed
 								: firstMp.getPatternSeed()));
 				firstMp.setMelodyPatternOffsets(pat);
 			} else {
-				melodyPanels.forEach(e -> {
+				MelodyGUI.melodyPanels.forEach(e -> {
 					if (e.getLockInst() == true) {
 						return;
 					}
@@ -6180,10 +5949,10 @@ public class VibeComposerGUI extends JFrame
 		}
 
 
-		if (melody1ForcePatterns.isSelected() && !melodyPanels.isEmpty()) {
-			MelodyPanel mp1 = melodyPanels.get(0);
-			for (int i = 1; i < melodyPanels.size(); i++) {
-				melodyPanels.get(i).overridePatterns(mp1);
+		if (MelodyGUI.melody1ForcePatterns.isSelected() && !MelodyGUI.melodyPanels.isEmpty()) {
+			MelodyPanel mp1 = MelodyGUI.melodyPanels.get(0);
+			for (int i = 1; i < MelodyGUI.melodyPanels.size(); i++) {
+				MelodyGUI.melodyPanels.get(i).overridePatterns(mp1);
 			}
 		}
 
@@ -6192,11 +5961,11 @@ public class VibeComposerGUI extends JFrame
 
 		// ARPS
 		if (instrumentTabPane.getSelectedIndex() != 3 && arpCopyMelodyInst.isSelected()
-				&& !melodyPanels.isEmpty() && !melodyPanels.get(0).getMuteInst()) {
+				&& !MelodyGUI.melodyPanels.isEmpty() && !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
 			if (arpPanels.size() > 0 && !arpPanels.get(0).getLockInst()) {
 				arpPanels.get(0).getInstrumentBox().initInstPool(POOL.MELODY);
 				arpPanels.get(0).setInstPool(POOL.MELODY);
-				arpPanels.get(0).setInstrument(melodyPanels.get(0).getInstrument());
+				arpPanels.get(0).setInstrument(MelodyGUI.melodyPanels.get(0).getInstrument());
 			}
 		}
 
@@ -6257,13 +6026,13 @@ public class VibeComposerGUI extends JFrame
 			userChords.setupChords(MidiGenerator.chordInts);
 		}
 
-		if (!regenerate && melodyTargetNotesRandomizeOnCompose.isSelected()
+		if (!regenerate && MelodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected()
 				&& MelodyGenerator.TARGET_NOTES != null) {
-			for (int i = 0; i < melodyPanels.size(); i++) {
-				int mpOrder = melodyPanels.get(i).getPanelOrder();
+			for (int i = 0; i < MelodyGUI.melodyPanels.size(); i++) {
+				int mpOrder = MelodyGUI.melodyPanels.get(i).getPanelOrder();
 				List<Integer> notes = MelodyGenerator.TARGET_NOTES.get(mpOrder);
 				if (notes != null) {
-					melodyPanels.get(i).setChordNoteChoices(notes);
+					MelodyGUI.melodyPanels.get(i).setChordNoteChoices(notes);
 					guiConfig.getMelodyParts().get(i).setChordNoteChoices(notes);
 				}
 			}
@@ -6685,28 +6454,9 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	private void randomizeMelodySeeds() {
-		List<InstPanel> affectedPanels = getAffectedPanels(0);
-		Random rand = new Random();
-		int melodySeed = rand.nextInt();
-		affectedPanels.forEach(e -> e.setVisible(false));
-		if (!randomMelodySameSeed.isSelected()) {
-			affectedPanels.forEach(e -> {
-				if (e.getLockInst() == true) {
-					return;
-				}
-				int seed = rand.nextInt();
-				e.setPatternSeed(seed);
-			});
-		} else {
-			affectedPanels.forEach(e -> {
-				if (e.getLockInst() == true) {
-					return;
-				}
-				e.setPatternSeed(melodySeed);
-			});
-		}
-		affectedPanels.forEach(e -> e.setVisible(true));
+	@Deprecated
+	private void __randomizeMelodySeeds() {
+		melodyGUI.randomizeMelodySeeds();
 	}
 
 	private void unapplySolosMutes(boolean onlyIncluded) {
@@ -6721,7 +6471,7 @@ public class VibeComposerGUI extends JFrame
 							: drumPanels.size());
 					countReducer = Math.max(countReducer - 1, 0);
 				}
-				if (combineMelodyTracks.isSelected()) {
+				if (MelodyGUI.combineMelodyTracks.isSelected()) {
 					countReducer += 2;
 				}
 				int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
@@ -6907,16 +6657,7 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static JButton makeButton(String name, Consumer<? super Object> a) {
-		JButton butt = new JButton(name);
-		butt.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				a.accept(new Object());
-			}
-
-		});
-		return butt;
+		return SwingUtils.makeButton(name, a);
 	}
 
 	public static JButton makeButton(String name, Consumer<? super Object> a, int width) {
@@ -7065,9 +6806,9 @@ public class VibeComposerGUI extends JFrame
 		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(bannedInsts.getText().split(",")));
 
 		/*{
-			int inst = melodyPanels.get(0).getInstrument();
-			melodyPanels.get(0).getInstrumentBox().initInstPool(melodyPanels.get(0).getInstPool());
-			melodyPanels.get(0).getInstrumentBox().setInstrument(inst);
+			int inst = MelodyGUI.melodyPanels.get(0).getInstrument();
+			MelodyGUI.melodyPanels.get(0).getInstrumentBox().initInstPool(MelodyGUI.melodyPanels.get(0).getInstPool());
+			MelodyGUI.melodyPanels.get(0).getInstrumentBox().setInstrument(inst);
 			inst = bassPanel.getInstrument();
 			bassPanel.getInstrumentBox().initInstPool(bassPanel.getInstPool());
 			bassPanel.getInstrumentBox().setInstrument(inst);
@@ -7080,10 +6821,10 @@ public class VibeComposerGUI extends JFrame
 			} else {
 				InstUtils.initNormalInsts();
 			}
-			for (int i = 0; i < melodyPanels.size(); i++) {
-				int inst = melodyPanels.get(i).getInstrumentBox().getInstrument();
-				melodyPanels.get(i).getInstrumentBox().initInstPool(InstUtils.POOL.MELODY);
-				melodyPanels.get(i).getInstrumentBox().setInstrument(inst);
+			for (int i = 0; i < MelodyGUI.melodyPanels.size(); i++) {
+				int inst = MelodyGUI.melodyPanels.get(i).getInstrumentBox().getInstrument();
+				MelodyGUI.melodyPanels.get(i).getInstrumentBox().initInstPool(InstUtils.POOL.MELODY);
+				MelodyGUI.melodyPanels.get(i).getInstrumentBox().setInstrument(inst);
 			}
 			for (int i = 0; i < bassPanels.size(); i++) {
 				int inst = bassPanels.get(i).getInstrumentBox().getInstrument();
@@ -7330,18 +7071,18 @@ public class VibeComposerGUI extends JFrame
 				ap.getInstrumentBox().setInstrument(ap.getInstrumentBox().getRandomInstrument());
 			}
 		}
-		if (!melodyPanels.isEmpty()) {
+		if (!MelodyGUI.melodyPanels.isEmpty()) {
 
-			if (!combineMelodyTracks.isSelected()) {
-				for (MelodyPanel mp : melodyPanels) {
+			if (!MelodyGUI.combineMelodyTracks.isSelected()) {
+				for (MelodyPanel mp : MelodyGUI.melodyPanels) {
 					if (!mp.getLockInst()) {
 						mp.getInstrumentBox()
 								.setInstrument(mp.getInstrumentBox().getRandomInstrument());
 					}
 				}
 			} else {
-				int inst = melodyPanels.get(0).getInstrumentBox().getRandomInstrument();
-				for (MelodyPanel mp : melodyPanels) {
+				int inst = MelodyGUI.melodyPanels.get(0).getInstrumentBox().getRandomInstrument();
+				for (MelodyPanel mp : MelodyGUI.melodyPanels) {
 					if (!mp.getLockInst()) {
 						mp.getInstrumentBox().setInstrument(inst);
 					}
@@ -7706,7 +7447,7 @@ public class VibeComposerGUI extends JFrame
 		if (instrumentTabPane.getComponentCount() < 7) {
 			return;
 		}
-		instrumentTabPane.setTitleAt(0, "Melody (" + melodyPanels.size() + ")");
+		instrumentTabPane.setTitleAt(0, "Melody (" + MelodyGUI.melodyPanels.size() + ")");
 		instrumentTabPane.setTitleAt(1, " Bass  (" + bassPanels.size() + ")");
 		instrumentTabPane.setTitleAt(2, "Chords (" + chordPanels.size() + ")");
 		instrumentTabPane.setTitleAt(3, " Arps  (" + arpPanels.size() + ")");
@@ -8039,14 +7780,14 @@ public class VibeComposerGUI extends JFrame
 	public List<Component> makeSettableComponentList() {
 		List<Component> cs = new ArrayList<>();
 		// melody panel
-		cs.add(generateMelodiesOnCompose);
+		cs.add(MelodyGUI.generateMelodiesOnCompose);
 		cs.add(null);
-		cs.add(combineMelodyTracks);
-		cs.add(randomMelodySameSeed);
-		cs.add(randomMelodyOnRegenerate);
-		cs.add(useUserMelody);
-		cs.add(melodyPatternRandomizeOnCompose);
-		cs.add(melodyTargetNotesRandomizeOnCompose);
+		cs.add(MelodyGUI.combineMelodyTracks);
+		cs.add(MelodyGUI.randomMelodySameSeed);
+		cs.add(MelodyGUI.randomMelodyOnRegenerate);
+		cs.add(MelodyGUI.useUserMelody);
+		cs.add(MelodyGUI.melodyPatternRandomizeOnCompose);
+		cs.add(MelodyGUI.melodyTargetNotesRandomizeOnCompose);
 
 		// bass panel
 
@@ -8307,38 +8048,38 @@ public class VibeComposerGUI extends JFrame
 		gc.setChordGenSettings(getChordSettingsFromUI());
 
 		// melody
-		gc.setMelodyUseOldAlgoChance(melodyUseOldAlgoChance.getInt());
-		gc.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
-		gc.setFirstNoteRandomized(randomChordNote.isSelected());
-		gc.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
-		gc.setMelodyTonicNoteTarget(melodyTonicNoteTarget.getInt());
-		gc.setMelodyChordNoteTarget(melodyChordNoteTarget.getInt());
-		gc.setMelodyModeNoteTarget(melodyModeNoteTarget.getInt());
-		gc.setMelodyEmphasizeKey(melodyEmphasizeKey.isSelected());
+		gc.setMelodyUseOldAlgoChance(MelodyGUI.melodyUseOldAlgoChance.getInt());
+		gc.setFirstNoteFromChord(MelodyGUI.melodyFirstNoteFromChord.isSelected());
+		gc.setFirstNoteRandomized(MelodyGUI.randomChordNote.isSelected());
+		gc.setMelodyBasicChordsOnly(MelodyGUI.melodyBasicChordsOnly.isSelected());
+		gc.setMelodyTonicNoteTarget(MelodyGUI.melodyTonicNoteTarget.getInt());
+		gc.setMelodyChordNoteTarget(MelodyGUI.melodyChordNoteTarget.getInt());
+		gc.setMelodyModeNoteTarget(MelodyGUI.melodyModeNoteTarget.getInt());
+		gc.setMelodyEmphasizeKey(MelodyGUI.melodyEmphasizeKey.isSelected());
 
-		gc.setMelody1ForcePatterns(melody1ForcePatterns.isSelected());
-		gc.setMelodyArpySurprises(melodyArpySurprises.isSelected());
-		gc.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
-		gc.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
-		gc.setMelodyLegacyMode(melodyLegacyMode.isSelected());
-		gc.setMelodyNewBlocksChance(melodyNewBlocksChance.getInt());
-		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
-		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumpsLegacy.isSelected());
-		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
-		gc.setNoteTargetDirectionChoice(noteTargetDirectionChoice.getSelectedItem());
-		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
-		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
-		gc.setMelodyRhythmAccentsMode(melodyRhythmAccentsMode.getSelectedIndex());
-		gc.setMelodyRhythmAccentsPocket(melodyRhythmAccentsPocket.isSelected());
-		gc.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
-		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
-		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
+		gc.setMelody1ForcePatterns(MelodyGUI.melody1ForcePatterns.isSelected());
+		gc.setMelodyArpySurprises(MelodyGUI.melodyArpySurprises.isSelected());
+		gc.setMelodySingleNoteExceptions(MelodyGUI.melodySingleNoteExceptions.isSelected());
+		gc.setMelodyFillPausesPerChord(MelodyGUI.melodyFillPausesPerChord.isSelected());
+		gc.setMelodyLegacyMode(MelodyGUI.melodyLegacyMode.isSelected());
+		gc.setMelodyNewBlocksChance(MelodyGUI.melodyNewBlocksChance.getInt());
+		gc.setMelodyUseDirectionsFromProgression(MelodyGUI.melodyUseDirectionsFromProgression.isSelected());
+		gc.setMelodyAvoidChordJumps(MelodyGUI.melodyAvoidChordJumpsLegacy.isSelected());
+		gc.setMelodyBlockTargetMode(MelodyGUI.melodyBlockTargetMode.getSelectedIndex());
+		gc.setNoteTargetDirectionChoice(MelodyGUI.noteTargetDirectionChoice.getSelectedItem());
+		gc.setMelodyPatternEffect(MelodyGUI.melodyPatternEffect.getSelectedIndex());
+		gc.setMelodyRhythmAccents(MelodyGUI.melodyRhythmAccents.getSelectedIndex());
+		gc.setMelodyRhythmAccentsMode(MelodyGUI.melodyRhythmAccentsMode.getSelectedIndex());
+		gc.setMelodyRhythmAccentsPocket(MelodyGUI.melodyRhythmAccentsPocket.isSelected());
+		gc.setMelodyReplaceAvoidNotes(MelodyGUI.melodyReplaceAvoidNotes.getInt());
+		gc.setMelodyMaxDirChanges(MelodyGUI.melodyMaxDirChanges.getInt());
+		gc.setMelodyTargetNoteVariation(MelodyGUI.melodyTargetNoteVariation.getInt());
 
-		gc.setMelodyBlockChoicePreference(melodyBlockChoicePreference.getValues());
-		gc.setMelodyBlockTypePreference(Arrays.stream(melodyBlockTypePreference).map(e -> e.getValue()).collect(Collectors.toList()));
-		gc.setMelodyUseCustomDurations(melodyUseCustomDurations.isSelected());
-		gc.setMelodyCustomDurationsRandomWeighting(melodyCustomDurationsRandomWeighting.isSelected());
-		gc.setMelodyCustomDurationsStrictMode(melodyCustomDurationsStrictMode.isSelected());
+		gc.setMelodyBlockChoicePreference(MelodyGUI.melodyBlockChoicePreference.getValues());
+		gc.setMelodyBlockTypePreference(Arrays.stream(MelodyGUI.melodyBlockTypePreference).map(e -> e.getValue()).collect(Collectors.toList()));
+		gc.setMelodyUseCustomDurations(MelodyGUI.melodyUseCustomDurations.isSelected());
+		gc.setMelodyCustomDurationsRandomWeighting(MelodyGUI.melodyCustomDurationsRandomWeighting.isSelected());
+		gc.setMelodyCustomDurationsStrictMode(MelodyGUI.melodyCustomDurationsStrictMode.isSelected());
 
 
 		// chords
@@ -8369,14 +8110,14 @@ public class VibeComposerGUI extends JFrame
 				&& !(midiModeDevices.getVal()).contains("ervill");
 		gc.setDrumCustomMapping(drumCustomMapping.isSelected() && isCustomMidiDevice);
 		gc.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
-		gc.setMelodyPatternFlip(melodyPatternFlip.isSelected());
+		gc.setMelodyPatternFlip(MelodyGUI.melodyPatternFlip.isSelected());
 
-		gc.setCombineMelodyTracks(combineMelodyTracks.isSelected());
+		gc.setCombineMelodyTracks(MelodyGUI.combineMelodyTracks.isSelected());
 	}
 
 	public void copyConfigToGUI(GUIConfig gc) {
 		arrSection.setVisible(false);
-		randomMelodyOnRegenerate.setSelected(false);
+		MelodyGUI.randomMelodyOnRegenerate.setSelected(false);
 		arrSection.setSelectedIndex(0);
 
 		if (!CURRENT_VERSION.equals(gc.getVersion())) {
@@ -8386,10 +8127,10 @@ public class VibeComposerGUI extends JFrame
 
 		if (gc.getMelodyNotes() != null) {
 			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
-			dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
+			MelodyGUI.dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
 		} else {
 			MelodyMidiDropPane.userMelody = null;
-			dropPane.getMessage().setText(" * * Drag'n'Drop MIDI Here * * ");
+			MelodyGUI.dropPane.getMessage().setText(" * * Drag'n'Drop MIDI Here * * ");
 		}
 
 		// seed
@@ -8452,7 +8193,7 @@ public class VibeComposerGUI extends JFrame
 			drumCustomMappingNumbers
 					.setText(StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
 		}
-		melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
+		MelodyGUI.melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
 
 		recreateInstPanelsFromInstParts(0, gc.getMelodyParts());
 		recreateInstPanelsFromInstParts(1, gc.getBassParts());
@@ -8464,41 +8205,41 @@ public class VibeComposerGUI extends JFrame
 		setChordSettingsInUI(gc.getChordGenSettings());
 
 		// melody
-		melodyFirstNoteFromChord.setSelected(gc.isFirstNoteFromChord());
-		randomChordNote.setSelected(gc.isFirstNoteRandomized());
-		melodyUseOldAlgoChance.setInt(gc.getMelodyUseOldAlgoChance());
-		melodyBasicChordsOnly.setSelected(gc.isMelodyBasicChordsOnly());
-		melodyTonicNoteTarget.setInt(gc.getMelodyTonicNoteTarget());
-		melodyChordNoteTarget.setInt(gc.getMelodyChordNoteTarget());
-		melodyModeNoteTarget.setInt(gc.getMelodyModeNoteTarget());
-		melodyEmphasizeKey.setSelected(gc.isMelodyEmphasizeKey());
+		MelodyGUI.melodyFirstNoteFromChord.setSelected(gc.isFirstNoteFromChord());
+		MelodyGUI.randomChordNote.setSelected(gc.isFirstNoteRandomized());
+		MelodyGUI.melodyUseOldAlgoChance.setInt(gc.getMelodyUseOldAlgoChance());
+		MelodyGUI.melodyBasicChordsOnly.setSelected(gc.isMelodyBasicChordsOnly());
+		MelodyGUI.melodyTonicNoteTarget.setInt(gc.getMelodyTonicNoteTarget());
+		MelodyGUI.melodyChordNoteTarget.setInt(gc.getMelodyChordNoteTarget());
+		MelodyGUI.melodyModeNoteTarget.setInt(gc.getMelodyModeNoteTarget());
+		MelodyGUI.melodyEmphasizeKey.setSelected(gc.isMelodyEmphasizeKey());
 
-		melodyArpySurprises.setSelected(gc.isMelodyArpySurprises());
-		melody1ForcePatterns.setSelected(gc.isMelody1ForcePatterns());
-		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
-		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
-		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
-		melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
-		melodyAvoidChordJumpsLegacy.setSelected(gc.isMelodyAvoidChordJumps());
-		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
-		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
-		noteTargetDirectionChoice.setVal(gc.getNoteTargetDirectionChoice());
-		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
-		melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
-		melodyRhythmAccentsMode.setSelectedIndex(gc.getMelodyRhythmAccentsMode());
-		melodyRhythmAccentsPocket.setSelected(gc.isMelodyRhythmAccentsPocket());
-		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
-		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
-		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
+		MelodyGUI.melodyArpySurprises.setSelected(gc.isMelodyArpySurprises());
+		MelodyGUI.melody1ForcePatterns.setSelected(gc.isMelody1ForcePatterns());
+		MelodyGUI.melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
+		MelodyGUI.melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
+		MelodyGUI.melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
+		MelodyGUI.melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
+		MelodyGUI.melodyAvoidChordJumpsLegacy.setSelected(gc.isMelodyAvoidChordJumps());
+		MelodyGUI.melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
+		MelodyGUI.melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
+		MelodyGUI.noteTargetDirectionChoice.setVal(gc.getNoteTargetDirectionChoice());
+		MelodyGUI.melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
+		MelodyGUI.melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
+		MelodyGUI.melodyRhythmAccentsMode.setSelectedIndex(gc.getMelodyRhythmAccentsMode());
+		MelodyGUI.melodyRhythmAccentsPocket.setSelected(gc.isMelodyRhythmAccentsPocket());
+		MelodyGUI.melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
+		MelodyGUI.melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
+		MelodyGUI.melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
 
-		melodyBlockChoicePreference.setValues(gc.getMelodyBlockChoicePreference());
+		MelodyGUI.melodyBlockChoicePreference.setValues(gc.getMelodyBlockChoicePreference());
 		for (int i = 0; i < BlockType.values().length; i++) {
 			int value = i < gc.getMelodyBlockTypePreference().size() ? gc.getMelodyBlockTypePreference().get(i) : BlockType.values()[i].defaultChance;
-			melodyBlockTypePreference[i].setValue(value);
+			MelodyGUI.melodyBlockTypePreference[i].setValue(value);
 		}
-		melodyUseCustomDurations.setSelected(gc.isMelodyUseCustomDurations());
-		melodyCustomDurationsRandomWeighting.setSelected(gc.isMelodyCustomDurationsRandomWeighting());
-		melodyCustomDurationsStrictMode.setSelected(gc.isMelodyCustomDurationsStrictMode());
+		MelodyGUI.melodyUseCustomDurations.setSelected(gc.isMelodyUseCustomDurations());
+		MelodyGUI.melodyCustomDurationsRandomWeighting.setSelected(gc.isMelodyCustomDurationsRandomWeighting());
+		MelodyGUI.melodyCustomDurationsStrictMode.setSelected(gc.isMelodyCustomDurationsStrictMode());
 
 		// chords
 		spiceChance.setInt(gc.getSpiceChance());
@@ -8526,7 +8267,7 @@ public class VibeComposerGUI extends JFrame
 
 		arrSection.setVisible(true);
 
-		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
+		MelodyGUI.combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 		//fixCombinedMelodyTracks();
 
 
@@ -8680,7 +8421,7 @@ public class VibeComposerGUI extends JFrame
 	private void randomizePanel(InstPanel panel) {
 		int partNum = panel.getPartNum();
 		if (partNum == 0) {
-			createRandomMelodyPanels(new Random().nextInt(), melodyPanels.size() + 1, true,
+			melodyGUI.createRandomMelodyPanels(new Random().nextInt(), MelodyGUI.melodyPanels.size() + 1, true,
 					(MelodyPanel) panel);
 		} else if (partNum == 1) {
 
@@ -8702,7 +8443,7 @@ public class VibeComposerGUI extends JFrame
 
 	private void createPanels(int part, int panelCount, boolean onlyAdd) {
 		if (part == 0) {
-			createRandomMelodyPanels(panelCount, onlyAdd, null);
+			melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd, null);
 		} else if (part == 1) {
 			createRandomBassPanels(panelCount, onlyAdd, null);
 		} else if (part == 2) {
@@ -8716,93 +8457,16 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	protected void createRandomMelodyPanels(int panelCount, boolean onlyAdd,
+	@Deprecated
+	protected void __createRandomMelodyPanels(int panelCount, boolean onlyAdd,
 			MelodyPanel randomizedPanel) {
-		createRandomMelodyPanels(new Random().nextInt(), panelCount, onlyAdd, null);
+		melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd, randomizedPanel);
 	}
 
-	protected void createRandomMelodyPanels(int seed, int panelCount, boolean onlyAdd,
+	@Deprecated
+	protected void __createRandomMelodyPanels(int seed, int panelCount, boolean onlyAdd,
 			MelodyPanel randomizedPanel) {
-		ScrollComboBox.discardInteractions();
-		List<MelodyPanel> affectedMelodies = (List<MelodyPanel>) (List<?>) getAffectedPanels(0);
-
-		Random panelGenerator = new Random(seed);
-		List<MelodyPanel> removedPanels = new ArrayList<>();
-		List<MelodyPanel> remainingPanels = new ArrayList<>();
-		for (Iterator<MelodyPanel> panelI = affectedMelodies.iterator(); panelI.hasNext();) {
-			MelodyPanel panel = panelI.next();
-			if (!onlyAdd && !panel.getLockInst()) {
-				if (removedPanels.size() >= panelCount) {
-					((JPanel) melodyScrollPane.getViewport().getView()).remove(panel);
-					panelI.remove();
-				} else {
-					removedPanels.add(panel);
-				}
-			} else {
-				remainingPanels.add(panel);
-			}
-
-		}
-		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
-		panelCount -= remainingPanels.size();
-		ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
-				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };
-		for (int panelIndex = 0; panelIndex < panelCount; panelIndex++) {
-			boolean needNewChannel = false;
-			MelodyPanel ip = null;
-			if (randomizedPanel != null) {
-				ip = randomizedPanel;
-			} else {
-				if (panelIndex < removedPanels.size()) {
-					ip = removedPanels.get(panelIndex);
-				} else {
-					ip = (MelodyPanel) addInstPanelToLayout(0);
-					needNewChannel = true;
-				}
-			}
-			if (randomizeInstOnComposeOrGen.isSelected()) {
-				ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
-			}
-
-			ip.setSpeed(panelGenerator.nextInt(25));
-			ip.setMaxBlockChange(3 + panelGenerator.nextInt(5));
-			//melodyPanel.setSplitChance(melodyRand.nextInt(15));
-			ip.setNoteExceptionChance(10 + panelGenerator.nextInt(15));
-			ip.setMaxNoteExceptions(panelGenerator.nextInt(2));
-			ip.setLeadChordsChance(panelGenerator.nextInt(50));
-
-			ip.setChordSpanFill(melodyFills[panelGenerator.nextInt(melodyFills.length)]);
-			ip.setFillFlip(false);
-
-			int panelOrder = ip.getPanelOrder();
-			if (panelOrder > 1) {
-				ip.setFillPauses(true);
-				ip.setPauseChance(50 + panelGenerator.nextInt(40));
-				/*melodyPanel.toggleCombinedMelodyDisabledUI(
-						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
-				ip.setVelocityMax(65 + panelGenerator.nextInt(20));
-				ip.setVelocityMin(40 + panelGenerator.nextInt(20));
-				if (panelOrder % 2 == 0) {
-					ip.setTranspose(0);
-				} else {
-					ip.setTranspose(-12);
-				}
-				ip.setPanByOrder(3);
-				ip.setNoteLengthMultiplier(70 + panelGenerator.nextInt(40));
-			} else {
-				ip.setFillPauses(panelGenerator.nextBoolean());
-				ip.setPauseChance(panelGenerator.nextInt(35));
-				ip.setTranspose(12);
-				ip.setVelocityMax(80 + panelGenerator.nextInt(30));
-				ip.setVelocityMin(50 + panelGenerator.nextInt(25));
-				ip.setNoteLengthMultiplier(100 + panelGenerator.nextInt(25));
-			}
-
-			if (needNewChannel) {
-				ip.setMidiChannel(Constants.TYPICAL_MIDI_CH.get(0).get((panelOrder - 1) % 3));
-			}
-		}
-		repaint();
+		melodyGUI.createRandomMelodyPanels(seed, panelCount, onlyAdd, randomizedPanel);
 	}
 
 	private void createRandomBassPanels(int panelCount, boolean onlyAdd,
@@ -8863,7 +8527,7 @@ public class VibeComposerGUI extends JFrame
 				ip.setPatternSeed(seed);
 				ip.setPauseChance(30 + panelGenerator.nextInt(40));
 				/*melodyPanel.toggleCombinedMelodyDisabledUI(
-						combineMelodyTracks != null && !combineMelodyTracks.isSelected());*/
+						MelodyGUI.combineMelodyTracks != null && !MelodyGUI.combineMelodyTracks.isSelected());*/
 				ip.setVelocityMax(50 + panelGenerator.nextInt(20));
 				ip.setVelocityMin(30 + panelGenerator.nextInt(20));
 				if (panelOrder % 2 == 0) {
@@ -9139,9 +8803,9 @@ public class VibeComposerGUI extends JFrame
 		int fixedInstrument = -1;
 		int fixedHits = -1;
 
-		if (arpCopyMelodyInst.isSelected() && !melodyPanels.isEmpty()
-				&& !melodyPanels.get(0).getMuteInst()) {
-			fixedInstrument = melodyPanels.get(0).getInstrument();
+		if (arpCopyMelodyInst.isSelected() && !MelodyGUI.melodyPanels.isEmpty()
+				&& !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
+			fixedInstrument = MelodyGUI.melodyPanels.get(0).getInstrument();
 			if (affectedArps.size() > 0) {
 				affectedArps.get(0).setInstrument(fixedInstrument);
 			}
@@ -9245,7 +8909,7 @@ public class VibeComposerGUI extends JFrame
 
 
 			if (first == null && panelIndex == 0 && !onlyAdd && arpCopyMelodyInst.isSelected()
-					&& !melodyPanels.isEmpty() && !melodyPanels.get(0).getMuteInst()) {
+					&& !MelodyGUI.melodyPanels.isEmpty() && !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
 				ip.setInstrument(fixedInstrument);
 			}
 

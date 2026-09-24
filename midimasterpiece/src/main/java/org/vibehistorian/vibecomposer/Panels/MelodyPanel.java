@@ -9,6 +9,7 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.MelodyGUI;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGeneratorUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -17,7 +18,6 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.CustomDurationsEditPopup;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,8 +118,8 @@ public class MelodyPanel extends InstPanel {
 		noteTargets.setRandGenerator(e -> {
 			return MidiGeneratorUtils.generateNoteTargetOffsets(MidiGenerator.chordInts,
 					(e instanceof Integer) ? (Integer) e : new Random().nextInt(),
-					VibeComposerGUI.melodyBlockTargetMode.getSelectedIndex(),
-					VibeComposerGUI.melodyTargetNoteVariation.getInt(), null, VibeComposerGUI.noteTargetDirectionChoice.getSelectedItem());
+					MelodyGUI.melodyBlockTargetMode.getSelectedIndex(),
+					MelodyGUI.melodyTargetNoteVariation.getInt(), null, MelodyGUI.noteTargetDirectionChoice.getSelectedItem());
 		});
 		noteTargets.setHighlighterGenerator(e -> {
 			if (MidiGenerator.chordInts.isEmpty()) {

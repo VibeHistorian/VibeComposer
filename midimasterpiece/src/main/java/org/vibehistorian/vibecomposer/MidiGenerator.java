@@ -1322,7 +1322,7 @@ public class MidiGenerator implements JMC {
 		int lastPartTrackCount = 1;
 		for (int i = 0; i < melodyParts.size(); i++) {
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(i).getOrder(),
-					VibeComposerGUI.melodyPanels);
+					MelodyGUI.melodyPanels);
 			if (!gc.getMelodyParts().get(i).isMuted() && gc.isMelodyEnable()) {
 				score.add(melodyParts.get(i));
 				melodyParts.get(i).setTrackNumber(trackCounter);
@@ -1330,7 +1330,7 @@ public class MidiGenerator implements JMC {
 				if (allowCombination && gc.isCombineMelodyTracks()) {
 					for (int j = i + 1; j < gc.getMelodyParts().size(); j++) {
 						ip = VibeComposerGUI.getPanelByOrder(gc.getMelodyParts().get(j).getOrder(),
-								VibeComposerGUI.melodyPanels);
+								MelodyGUI.melodyPanels);
 						ip.setSequenceTrack(-1);
 					}
 					break;

@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 import javax.swing.*;
@@ -17,11 +18,26 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SwingUtils {
 
 	public static List<JPopupMenu> popupMenus = new ArrayList<>();
+
+	public static JCheckBox makeCheckBox(String text, boolean selected, boolean bold) {
+		JCheckBox checkBox = new CustomCheckBox(text, selected);
+		if (bold) {
+			checkBox.setFont(checkBox.getFont().deriveFont(Font.BOLD));
+		}
+		return checkBox;
+	}
+
+	public static JButton makeButton(String text, Consumer<? super Object> action) {
+		JButton button = new JButton(text);
+		button.addActionListener(event -> action.accept(new Object()));
+		return button;
+	}
 
 	public static double getScrolledPosition(JScrollPane pane, boolean horizontal) {
 		//LG.i("Get scrl pos: " + pane.getHorizontalScrollBar().getVisibleAmount() / 2.0);
