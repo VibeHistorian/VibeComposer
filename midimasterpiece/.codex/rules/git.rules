@@ -1,0 +1,25 @@
+# Allow
+git status
+git diff
+git log
+git show
+git branch --show-current
+git rev-parse
+
+# Deny
+git add
+git commit
+git push
+git pull
+git fetch
+git merge
+git rebase
+git reset
+git checkout
+git switch
+git restore
+git clean
+git cherry-pick
+git revert
+git tag
+git stash

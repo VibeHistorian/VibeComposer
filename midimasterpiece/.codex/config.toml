@@ -1,0 +1,8 @@
+  [mcp_servers.idea]
+    url = "http://127.0.0.1:64342/stream"
+
+  approval_policy = "never"
+  sandbox_mode = "workspace-write"
+
+  [sandbox_workspace_write]
+  network_access = false
