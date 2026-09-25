@@ -56,7 +56,6 @@
     *   Move `initExtraSettingsGeneration`.
 10. Address VibeComposerCoreGUI:
     *   Identify the remaining "Core" logic (UI framework, shared components like `currentChords`, `midimessage`, `time`, `sequencer` etc.).
-    *   Move these to `VibeComposerCoreGUI`.
 
 ***************************************************************
 
@@ -70,7 +69,7 @@
 - [x] Score
 - [x] ExtraSettings
 - [x] Generation
-- [ ] Core/CoreGUI
+- [ ] Core cleanup
 
 
 ------------------------------------------------------------------
@@ -82,7 +81,7 @@
 - DrumGUI migration: complete for drum UI state, generation settings and tab construction, and randomized drum panel creation. Shared window operations and cross-instrument workflows remain in VibeComposerGUI through DrumGUI.Context.
 - ArrangementGUI migration: in progress for arrangement state ownership, control and table initialization, action dispatch, and popup/model helpers. Cross-instrument custom-panel application and table rendering/editing handlers remain in VibeComposerGUI.
 - ScoreGUI migration: complete for score UI state, score tab and display settings, score rendering initialization, and popup toggling. Playback and MIDI workflows remain in VibeComposerGUI and access score state through ScoreGUI.
-- ExtraSettingsGUI migration: complete for extra settings state, settings window construction, and score/MIDI, instrument, pause, BPM, display, humanization, and compose settings panels. Shared window actions are supplied through its context. Generation-specific settings controls are owned by GenerationGUI.
-- GenerationGUI migration: complete for generation settings construction and controls. Generation workflows remain in VibeComposerGUI and other modules, which access the controls through GenerationGUI.
+- ExtraSettingsGUI migration: complete for extra settings state, settings window construction, and all popup panels, including Generation. Shared window actions are supplied through its context.
+- GenerationGUI migration: complete for the main-window randomization and macro panels built by `initRandomButtons` and `initMacroParams`. Cross-instrument actions remain in VibeComposerGUI and are supplied through GenerationGUI.Context.
 - Phase 1: In progress
 

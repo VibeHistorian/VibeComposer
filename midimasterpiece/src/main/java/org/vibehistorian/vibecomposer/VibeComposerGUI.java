@@ -300,11 +300,11 @@ public class VibeComposerGUI extends JFrame
 	public static ScrollComboBox<String> scaleMode;
 	JCheckBox randomizeScaleModeOnCompose;
 	ScrollComboBox<String> __chordProgressionLength;
-	ScrollComboBox<Double> beatDurationMultiplier;
+	ScrollComboBox<Double> __beatDurationMultiplier;
 	JCheckBox __allowChordRepeats;
-	JCheckBox globalSwingOverride;
-	KnobPanel globalSwingOverrideValue;
-	JButton globalSwingOverrideApplyButton;
+	JCheckBox __globalSwingOverride;
+	KnobPanel __globalSwingOverrideValue;
+	JButton __globalSwingOverrideApplyButton;
 	public static KnobPanel loopBeatCount;
 	public static JLabel __pauseBehaviorLabel;
 	public static ScrollComboBox<String> __pauseBehaviorCombobox;
@@ -486,19 +486,19 @@ public class VibeComposerGUI extends JFrame
 	public static ChordletPanel __userChords;
 
 	// randomization button settings
-	JCheckBox randomizeInstOnComposeOrGen;
-	JCheckBox randomizeBpmOnCompose;
-	JCheckBox randomizeTransposeOnCompose;
-	JCheckBox randomizeChordStrumsOnCompose;
+	JCheckBox __randomizeInstOnComposeOrGen;
+	JCheckBox __randomizeBpmOnCompose;
+	JCheckBox __randomizeTransposeOnCompose;
+	JCheckBox __randomizeChordStrumsOnCompose;
 	@Deprecated JCheckBox __arpAffectsBpm;
 	public static KnobPanel mainBpm;
 	public static KnobPanel __bpmLow;
 	public static KnobPanel __bpmHigh;
 	public static KnobPanel __stretchMidi;
 	@Deprecated public static KnobPanel __transposeScore;
-	JButton switchOnComposeRandom;
-	JButton sidechainPatterns;
-	JButton sidechainPatternsTab;
+	JButton __switchOnComposeRandom;
+	JButton __sidechainPatterns;
+	JButton __sidechainPatternsTab;
 
 	// seed / midi
 	public static RandomValueButton randomSeed;
@@ -619,6 +619,7 @@ public class VibeComposerGUI extends JFrame
 	private ArpGUI arpGUI;
 	private ScoreGUI scoreGUI;
 	private ExtraSettingsGUI extraSettingsGUI;
+	private GenerationGUI generationGUI;
 
 	public static JPanel __extraSettingsPanel;
 	public static JPanel __currentSettingsMenuPanel = null;
@@ -683,6 +684,47 @@ public class VibeComposerGUI extends JFrame
 			@Override public ItemListener keyChangeTypeSelectionListener() { return VibeComposerGUI.this; }
 		});
 		extraSettingsGUI.initExtraSettings();
+	}
+
+	private void initGenerationGUI() {
+		generationGUI = new GenerationGUI(new GenerationGUI.Context() {
+			@Override public JButton makeButton(String name, String actionCommand) {
+				return VibeComposerGUI.this.makeButton(name, actionCommand);
+			}
+			@Override public JButton makeButton(String name, Consumer<? super Object> action) {
+				return VibeComposerGUI.makeButton(name, action);
+			}
+			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) {
+				return VibeComposerGUI.makeCheckBox(label, selected, thick);
+			}
+			@Override public void addControlPanel(JPanel panel, int startY, int anchorSide) {
+				constraints.gridy = startY;
+				constraints.anchor = anchorSide;
+				controlPanel.add(panel);
+			}
+			@Override public void alignControlPanel() {
+				controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			}
+			@Override public void addToggleableComponent(Component component) {
+				toggleableComponents.add(component);
+			}
+			@Override public void enthickenText(Component component) {
+				VibeComposerGUI.this.enthickenText(component);
+			}
+			@Override public void randomizeBpm() { VibeComposerGUI.this.randomizeBPM(); }
+			@Override public void randomizeTranspose(boolean currentTabOnly) {
+				VibeComposerGUI.this.randomizeTranspose(currentTabOnly);
+			}
+			@Override public void sidechainPatterns(boolean showPopup, boolean currentTabOnly) {
+				VibeComposerGUI.this.sidechainPatterns(showPopup, currentTabOnly);
+			}
+			@Override public void applyGlobalSwing(int swing, boolean customPanels) {
+				VibeComposerGUI.this.applyGlobalSwing(swing, customPanels);
+			}
+			@Override public void setChordProgressionLength(int size) {
+				VibeComposerGUI.this.setChordProgressionLength(size);
+			}
+		});
 	}
 
 	private void initArrangementGUI() {
@@ -827,12 +869,12 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public boolean forceTransposedNotesToScale() {
-				return GenerationGUI.transposedNotesForceScale.isSelected();
+				return ExtraSettingsGUI.transposedNotesForceScale.isSelected();
 			}
 
 			@Override
 			public boolean randomizeInstrumentOnComposeOrGen() {
-				return randomizeInstOnComposeOrGen.isSelected();
+				return GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
 			}
 
 			@Override
@@ -911,7 +953,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public boolean randomizeInstrumentOnComposeOrGen() {
-				return randomizeInstOnComposeOrGen.isSelected();
+				return GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
 			}
 
 			@Override
@@ -1062,12 +1104,12 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public JCheckBox getRandomizeInstrumentOnComposeOrGen() {
-				return randomizeInstOnComposeOrGen;
+				return GenerationGUI.randomizeInstOnComposeOrGen;
 			}
 
 			@Override
 			public boolean orderedTransposeGeneration() {
-				return GenerationGUI.orderedTransposeGeneration.isSelected();
+				return ExtraSettingsGUI.orderedTransposeGeneration.isSelected();
 			}
 
 			@Override
@@ -1077,7 +1119,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public boolean useShortBeatDuration() {
-				return beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75;
+				return GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75;
 			}
 
 			@Override
@@ -1254,12 +1296,12 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public boolean randomizeInstrumentOnComposeOrGen() {
-				return randomizeInstOnComposeOrGen.isSelected();
+				return GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
 			}
 
 			@Override
 			public boolean orderedTransposeGeneration() {
-				return GenerationGUI.orderedTransposeGeneration.isSelected();
+				return ExtraSettingsGUI.orderedTransposeGeneration.isSelected();
 			}
 
 			@Override
@@ -1274,7 +1316,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public boolean useShortBeatDuration() {
-				return beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75;
+				return GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75;
 			}
 
 			@Override
@@ -1364,9 +1406,10 @@ public class VibeComposerGUI extends JFrame
 		initTitles(0, GridBagConstraints.CENTER);
 
 		initExtraSettingsGUI();
+		initGenerationGUI();
 
 		// randomization buttons
-		initRandomButtons(350, GridBagConstraints.CENTER);
+		generationGUI.initRandomButtons(350, GridBagConstraints.CENTER);
 
 		//createHorizontalSeparator(15, this);
 
@@ -1399,8 +1442,8 @@ public class VibeComposerGUI extends JFrame
 
 		}
 		LG.i("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
-		boolean randomizeInstsTemp = randomizeInstOnComposeOrGen.isSelected();
-		randomizeInstOnComposeOrGen.setSelected(true);
+		boolean randomizeInstsTemp = GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
+		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(true);
 		{
 			// ---- INSTRUMENT PANELS ----
 
@@ -1468,7 +1511,7 @@ public class VibeComposerGUI extends JFrame
 
 
 		}
-		randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
+		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
 		LG.i("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		scoreGUI.initScoreSettings(330, GridBagConstraints.CENTER);
 		LG.i("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -1478,7 +1521,7 @@ public class VibeComposerGUI extends JFrame
 		{
 
 
-			initMacroParams(360, GridBagConstraints.CENTER);
+			generationGUI.initMacroParams(360, GridBagConstraints.CENTER);
 
 			// chord settings - variety/spice
 			// chord settings - progressions
@@ -1985,7 +2028,7 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 				currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
 			}
 			/*SectionConfig secConfig = currentSec.getSecConfig();
-			if (sectionGuiConfig.getBeatDurationMultiplierIndex() != beatDurationMultiplier
+			if (sectionGuiConfig.getBeatDurationMultiplierIndex() != GenerationGUI.beatDurationMultiplier
 					.getSelectedIndex()) {
 				secConfig.setBeatDurationMultiplierIndex(
 						sectionGuiConfig.getBeatDurationMultiplierIndex());
@@ -3598,112 +3641,8 @@ private void __initChords(int startY, int anchorSide) {
 		butt.repaint();
 	}
 
-	private void initRandomButtons(int startY, int anchorSide) {
-		JPanel randomButtonsPanel = new JPanel();
-		//randomButtonsPanel.setBackground(new Color(60, 20, 60));
-		randomButtonsPanel.setLayout(new GridLayout(0, 2));
-		randomButtonsPanel.setOpaque(false);
-		randomButtonsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		randomButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		JButton randomizeInstruments = makeButton("Randomize Inst.", "RandomizeInst");
-
-		JButton randomizeBpm = makeButton("Randomize BPM", e -> randomizeBPM());
-		JButton randomizeTranspose = makeButton("Randomize Key", "RandomizeTranspose");
-
-		JPanel randomInstPanel = new JPanel();
-		JPanel randomBpmPanel = new JPanel();
-		JPanel randomTransposePanel = new JPanel();
-		JPanel randomBottomPanel = new JPanel();
-		randomInstPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomBpmPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomTransposePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomBottomPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomInstPanel.setOpaque(false);
-		randomBpmPanel.setOpaque(false);
-		randomTransposePanel.setOpaque(false);
-		randomBottomPanel.setOpaque(false);
-
-
-		randomizeInstOnComposeOrGen = makeCheckBox("on Compose/Gen", true, true);
-		randomizeBpmOnCompose = makeCheckBox("on Compose", true, true);
-		randomizeTransposeOnCompose = makeCheckBox("on Compose", true, true);
-		randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomizeBpmOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomizeTransposeOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-
-		constraints.anchor = GridBagConstraints.CENTER;
-
-
-		randomButtonsPanel.add(randomizeInstruments);
-		randomButtonsPanel.add(randomizeInstOnComposeOrGen);
-		//randomButtonsPanel.add(randomInstPanel);
-
-		randomButtonsPanel.add(randomizeBpm);
-		randomButtonsPanel.add(randomizeBpmOnCompose);
-		//randomButtonsPanel.add(randomBpmPanel);
-
-		randomButtonsPanel.add(randomizeTranspose);
-		randomButtonsPanel.add(randomizeTransposeOnCompose);
-		//randomButtonsPanel.add(randomTransposePanel);
-
-
-		JButton randomizeStrums = makeButton("Randomize Strums", "RandStrums");
-		randomizeStrums.setAlignmentX(Component.LEFT_ALIGNMENT);
-		randomButtonsPanel.add(randomizeStrums);
-
-		randomizeChordStrumsOnCompose = makeCheckBox("on Compose", false, true);
-		//randomButtonsPanel.add(randomizeChordStrumsOnCompose);
-
-		switchOnComposeRandom = makeButton("Untick all 'on Compose'", "UncheckComposeRandom");
-		switchOnComposeRandom.setPreferredSize(new Dimension(170, 20));
-		switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
-		switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));
-		enthickenText(switchOnComposeRandom);
-		randomButtonsPanel.add(switchOnComposeRandom);
-
-
-		JPanel transposePanel = new JPanel();
-		//transposePanel.setBorder(new BevelBorder(BevelBorder.RAISED));
-		//transposePanel.setOpaque(false);
-		transposePanel.setPreferredSize(new Dimension(170, 20));
-		JButton transposeAllBtn = makeButton("All", e -> randomizeTranspose(false));
-		JButton transposeTabBtn = makeButton("Tab", e -> randomizeTranspose(true));
-		transposeAllBtn.setMargin(new Insets(0, 0, 0, 0));
-		transposeTabBtn.setMargin(new Insets(0, 0, 0, 0));
-		transposeAllBtn.setPreferredSize(new Dimension(35, 20));
-		transposeTabBtn.setPreferredSize(new Dimension(35, 20));
-		JLabel transposeLabel = new JLabel("R. Transpose");
-		transposeLabel.setPreferredSize(new Dimension(80, 20));
-		transposePanel.add(transposeLabel);
-		transposePanel.add(transposeAllBtn);
-		transposePanel.add(transposeTabBtn);
-		randomButtonsPanel.add(transposePanel);
-
-		JPanel sidechainPanel = new JPanel();
-		//sidechainPanel.setOpaque(false);
-		sidechainPanel.setPreferredSize(new Dimension(170, 20));
-		sidechainPatterns = makeButton("All", e -> sidechainPatterns(true, false));
-		sidechainPatternsTab = makeButton("Tab", e -> sidechainPatterns(true, true));
-		sidechainPatterns.setMargin(new Insets(0, 0, 0, 0));
-		sidechainPatternsTab.setMargin(new Insets(0, 0, 0, 0));
-		sidechainPatterns.setPreferredSize(new Dimension(35, 20));
-		sidechainPatternsTab.setPreferredSize(new Dimension(35, 20));
-		sidechainPanel.add(new JLabel("Sidechain"));
-		sidechainPanel.add(sidechainPatterns);
-		sidechainPanel.add(sidechainPatternsTab);
-		randomButtonsPanel.add(sidechainPanel);
-		//randomButtonsPanel.add(randomBottomPanel);
-
-		toggleableComponents.add(randomizeStrums);
-		//toggleableComponents.add(randomizeChordStrumsOnCompose);
-		toggleableComponents.add(sidechainPanel);
-		toggleableComponents.add(transposePanel);
-		controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		controlPanel.add(randomButtonsPanel);
-
+	@Deprecated private void __initRandomButtons(int startY, int anchorSide) {
+		generationGUI.initRandomButtons(startY, anchorSide);
 	}
 
 
@@ -3772,66 +3711,8 @@ private void __initChords(int startY, int anchorSide) {
 		}
 	}
 
-	private void initMacroParams(int startY, int anchorSide) {
-		JPanel macroParams = new JPanel();
-		macroParams.setLayout(new GridLayout(2, 0, 0, 0));
-		macroParams.setOpaque(false);
-		macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		ChordGUI.chordProgressionLength = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new String[] { "4", "8", "RANDOM" }, ChordGUI.chordProgressionLength);
-		setChordProgressionLength(4);
-		JLabel chordDurationFixedLabel = new JLabel("# of Chords");
-		JPanel chordProgPanel = new JPanel();
-		chordProgPanel.add(chordDurationFixedLabel);
-		chordProgPanel.add(ChordGUI.chordProgressionLength);
-		chordProgPanel.setOpaque(false);
-		macroParams.add(chordProgPanel);
-
-		ChordGUI.allowChordRepeats = new CustomCheckBox("Allow Chord Repeats", true);
-		JPanel allowRepPanel = new JPanel();
-		allowRepPanel.add(ChordGUI.allowChordRepeats);
-		allowRepPanel.setOpaque(false);
-		macroParams.add(allowRepPanel);
-
-		JPanel globalSwingPanel = new JPanel();
-		globalSwingOverride = new CustomCheckBox("<html>Global Swing<br>Override</html>", false);
-		globalSwingOverrideValue = new KnobPanel("", 50);
-		globalSwingOverrideApplyButton = new JButton("A");
-		globalSwingOverrideApplyButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				int swing = globalSwingOverrideValue.getInt();
-				applyGlobalSwing(swing, false);
-			}
-		});
-		globalSwingPanel.add(globalSwingOverride);
-		globalSwingPanel.add(globalSwingOverrideValue);
-		globalSwingPanel.add(globalSwingOverrideApplyButton);
-		globalSwingPanel.setOpaque(false);
-		macroParams.add(globalSwingPanel);
-
-
-		beatDurationMultiplier = new ScrollComboBox<Double>();
-		ScrollComboBox.addAll(new Double[] { 0.5, 1.0, 2.0 }, beatDurationMultiplier);
-		JPanel useDoubledPanel = new JPanel();
-		useDoubledPanel.add(new JLabel("<html>Beat Duration<br>Multiplier</html>"));
-		useDoubledPanel.add(beatDurationMultiplier);
-		beatDurationMultiplier.setSelectedIndex(1);
-		useDoubledPanel.setOpaque(false);
-		macroParams.add(useDoubledPanel);
-
-		chordProgPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		allowRepPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-
-		//toggleableComponents.add(globalSwingPanel);
-		//toggleableComponents.add(useDoubledPanel);
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		controlPanel.add(macroParams);
+	@Deprecated private void __initMacroParams(int startY, int anchorSide) {
+		generationGUI.initMacroParams(startY, anchorSide);
 	}
 
 	private void applyGlobalSwing(int swing, boolean customPanels) {
@@ -4480,9 +4361,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 							boolean sequencerEnded = slider.getMaximum()
 									- slider.getUpperValue() < 100 && !sequencer.isRunning();
 							double mult = 1;
-							if (beatDurationMultiplier.getSelectedIndex() == 0) {
+							if (GenerationGUI.beatDurationMultiplier.getSelectedIndex() == 0) {
 								mult = 0.5;
-							} else if (beatDurationMultiplier.getSelectedIndex() == 2) {
+							} else if (GenerationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
 								mult = 2;
 							}
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
@@ -5087,10 +4968,10 @@ private void __initCustomChords(int startY, int anchorSide) {
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
 		ArpGUI.randomArpsGenerateOnCompose.setSelected(state);
 		DrumGUI.randomDrumsGenerateOnCompose.setSelected(state);
-		randomizeBpmOnCompose.setSelected(state);
-		randomizeTransposeOnCompose.setSelected(state);
-		//randomizeChordStrumsOnCompose.setSelected(state);
-		randomizeInstOnComposeOrGen.setSelected(state);
+		GenerationGUI.randomizeBpmOnCompose.setSelected(state);
+		GenerationGUI.randomizeTransposeOnCompose.setSelected(state);
+		//GenerationGUI.randomizeChordStrumsOnCompose.setSelected(state);
+		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(state);
 		ArpGUI.randomArpHitsPerPattern.setSelected(state);
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
@@ -5107,16 +4988,16 @@ private void __initCustomChords(int startY, int anchorSide) {
 		ChordGUI.randomChordsGenerateOnCompose.setForeground(fg);
 		ArpGUI.randomArpsGenerateOnCompose.setForeground(fg);
 		DrumGUI.randomDrumsGenerateOnCompose.setForeground(fg);
-		randomizeBpmOnCompose.setForeground(fg);
-		randomizeTransposeOnCompose.setForeground(fg);
-		//randomizeChordStrumsOnCompose.setForeground(fg);
-		randomizeInstOnComposeOrGen.setForeground(fg);
+		GenerationGUI.randomizeBpmOnCompose.setForeground(fg);
+		GenerationGUI.randomizeTransposeOnCompose.setForeground(fg);
+		//GenerationGUI.randomizeChordStrumsOnCompose.setForeground(fg);
+		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(fg);
 		ArrangementGUI.randomizeArrangementOnCompose.setForeground(fg);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(fg);
 		randomizeScaleModeOnCompose.setForeground(fg);
 		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(fg);
 		MelodyGUI.melodyPatternRandomizeOnCompose.setForeground(fg);
-		switchOnComposeRandom.setForeground(fg);
+		GenerationGUI.switchOnComposeRandom.setForeground(fg);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setForeground(fg);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setForeground(fg);
 		ChordGUI.copyChordsAfterGenerate.setForeground(fg);
@@ -5477,7 +5358,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 				LG.i("After cleanup: " + (System.currentTimeMillis() - systemTime));
 			}
 
-			if (GenerationGUI.configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
+			if (ExtraSettingsGUI.configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
 					|| configHistory.getItemCount() == 0) {
 				midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 				midiConfig.setRegenerateCount(regenerateCount);
@@ -5508,7 +5389,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			}
 
 			handleGeneratedMidi(regenerate, relPath, systemTime);
-			currentBeatMultiplier = beatDurationMultiplier.getSelectedItem();
+			currentBeatMultiplier = GenerationGUI.beatDurationMultiplier.getSelectedItem();
 			resetArrSectionInBackground();
 			heavyBackgroundTasksInProgress = false;
 
@@ -5678,7 +5559,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 	private void prepareUI(boolean regenerate, boolean manual) {
 
-		if (!regenerate && randomizeBpmOnCompose.isSelected()) {
+		if (!regenerate && GenerationGUI.randomizeBpmOnCompose.isSelected()) {
 			randomizeBPM();
 		}
 
@@ -5690,18 +5571,18 @@ private void __initCustomChords(int startY, int anchorSide) {
 		}
 
 		if (!regenerate && ExtraSettingsGUI.randomizeTimingsOnCompose.isSelected()) {
-			if (globalSwingOverride.isSelected()) {
-				globalSwingOverrideValue
+			if (GenerationGUI.globalSwingOverride.isSelected()) {
+				GenerationGUI.globalSwingOverrideValue
 						.setInt(50 + new Random().nextInt(DrumGUI.randomDrumMaxSwingAdjust.getInt() * 2 + 1)
 								- DrumGUI.randomDrumMaxSwingAdjust.getInt());
 			}
 			double randomBeatMultiplier = new Random().nextDouble();
 			if (randomBeatMultiplier < 0.85) {
-				beatDurationMultiplier.setSelectedIndex(1);
+				GenerationGUI.beatDurationMultiplier.setSelectedIndex(1);
 			} else if (randomBeatMultiplier < 0.95) {
-				beatDurationMultiplier.setSelectedIndex(0);
+				GenerationGUI.beatDurationMultiplier.setSelectedIndex(0);
 			} else {
-				beatDurationMultiplier.setSelectedIndex(2);
+				GenerationGUI.beatDurationMultiplier.setSelectedIndex(2);
 			}
 		}
 
@@ -6124,9 +6005,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 			}
 
 			double divisor = 1;
-			if (beatDurationMultiplier.getSelectedIndex() == 0) {
+			if (GenerationGUI.beatDurationMultiplier.getSelectedIndex() == 0) {
 				divisor = 0.5;
-			} else if (beatDurationMultiplier.getSelectedIndex() == 2) {
+			} else if (GenerationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
 				divisor = 2;
 			}
 			loopBeatCount.getKnob()
@@ -6646,7 +6527,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		}
 
 		if (ae.getActionCommand() == "RandStrums"
-				|| (isCompose & randomizeChordStrumsOnCompose.isSelected())) {
+				|| (isCompose & GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
 			for (InstPanel p : getAffectedPanels(2)) {
 				ChordPanel cp = (ChordPanel) p;
 				Pair<StrumType, Integer> strumPair = getRandomStrumPair();
@@ -6666,7 +6547,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			randomizeInsts();
 			triggerRegenerate = true;
 		}
-		if (isCompose && randomizeInstOnComposeOrGen.isSelected()) {
+		if (isCompose && GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
 			randomizeInsts();
 		}
 
@@ -6691,7 +6572,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			triggerRegenerate = true;
 		}
 
-		if (isCompose && randomizeTransposeOnCompose.isSelected()) {
+		if (isCompose && GenerationGUI.randomizeTransposeOnCompose.isSelected()) {
 			Random instGen = new Random();
 			ScoreGUI.transposeScore.setInt(instGen.nextInt(12) - 6);
 		}
@@ -6732,14 +6613,14 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		if (ae.getActionCommand() == "UncheckComposeRandom") {
 			switchAllOnComposeCheckboxes(false);
-			switchOnComposeRandom.setText("  Tick all 'on Compose'   ");
-			switchOnComposeRandom.setActionCommand("CheckComposeRandom");
+			GenerationGUI.switchOnComposeRandom.setText("  Tick all 'on Compose'   ");
+			GenerationGUI.switchOnComposeRandom.setActionCommand("CheckComposeRandom");
 		}
 
 		if (ae.getActionCommand() == "CheckComposeRandom") {
 			switchAllOnComposeCheckboxes(true);
-			switchOnComposeRandom.setText("Untick all 'on Compose'");
-			switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
+			GenerationGUI.switchOnComposeRandom.setText("Untick all 'on Compose'");
+			GenerationGUI.switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
 		}
 
 		if (ae.getActionCommand() == "CopySeed") {
@@ -7662,9 +7543,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 		cs.add(ArrangementGUI.randomizeArrangementOnCompose);
 
 		// randomization panel
-		cs.add(randomizeInstOnComposeOrGen);
-		cs.add(randomizeBpmOnCompose);
-		cs.add(randomizeTransposeOnCompose);
+		cs.add(GenerationGUI.randomizeInstOnComposeOrGen);
+		cs.add(GenerationGUI.randomizeBpmOnCompose);
+		cs.add(GenerationGUI.randomizeTransposeOnCompose);
 
 		// globals
 		cs.add(randomizeScaleModeOnCompose);
@@ -7691,13 +7572,13 @@ private void __initCustomChords(int startY, int anchorSide) {
 		cs.add(ExtraSettingsGUI.displayVeloRectValues);
 		cs.add(ExtraSettingsGUI.knobControlByDragging);
 		cs.add(DrumGUI.bottomUpReverseDrumPanels);
-		cs.add(GenerationGUI.orderedTransposeGeneration);
-		cs.add(GenerationGUI.patternApplyPausesWhenGenerating);
+		cs.add(ExtraSettingsGUI.orderedTransposeGeneration);
+		cs.add(ExtraSettingsGUI.patternApplyPausesWhenGenerating);
 		cs.add(ExtraSettingsGUI.highlightPatterns);
 		cs.add(ScoreGUI.highlightScoreNotes);
 		cs.add(ExtraSettingsGUI.randomizeTimingsOnCompose);
 		cs.add(ExtraSettingsGUI.customFilenameAddTimestamp);
-		cs.add(GenerationGUI.configHistoryStoreRegeneratedTracks);
+		cs.add(ExtraSettingsGUI.configHistoryStoreRegeneratedTracks);
 		cs.add(ExtraSettingsGUI.sidechainPatternsOnCompose);
 
 		// ---------------- VIBECOMPOSER 2 ------------------------------------
@@ -7716,10 +7597,10 @@ private void __initCustomChords(int startY, int anchorSide) {
 		cs.add(ArpGUI.randomArpCorrectMelodyNotes);
 
 		// extra settings 2.5
-		cs.add(GenerationGUI.reuseMidiChannelAfterCopy);
+		cs.add(ExtraSettingsGUI.reuseMidiChannelAfterCopy);
 		cs.add(ExtraSettingsGUI.transposeNotePreview);
 		cs.add(ExtraSettingsGUI.moveStartToCustomizedSection);
-		cs.add(GenerationGUI.allowValuesOutOfRange);
+		cs.add(ExtraSettingsGUI.allowValuesOutOfRange);
 
 		return cs;
 	}
@@ -7834,13 +7715,13 @@ private void __initCustomChords(int startY, int anchorSide) {
 		gc.setTranspose(ScoreGUI.transposeScore.getInt());
 		gc.setBpm(Double.valueOf(mainBpm.getInt()));
 		gc.setArpAffectsBpm(ArpGUI.arpAffectsBpm.isSelected());
-		gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
+		gc.setBeatDurationMultiplierIndex(GenerationGUI.beatDurationMultiplier.getSelectedIndex());
 		gc.setSwingUnitMultiplierIndex(ExtraSettingsGUI.swingUnitMultiplier.getSelectedIndex());
-		gc.setCustomMidiForceScale(GenerationGUI.customMidiForceScale.isSelected());
-		gc.setTransposedNotesForceScale(GenerationGUI.transposedNotesForceScale.isSelected());
+		gc.setCustomMidiForceScale(ExtraSettingsGUI.customMidiForceScale.isSelected());
+		gc.setTransposedNotesForceScale(ExtraSettingsGUI.transposedNotesForceScale.isSelected());
 		gc.setAllowChordRepeats(ChordGUI.allowChordRepeats.isSelected());
 		gc.setGlobalSwingOverride(
-				globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
+				GenerationGUI.globalSwingOverride.isSelected() ? GenerationGUI.globalSwingOverrideValue.getInt() : null);
 		gc.setHumanizeDrums(DrumGUI.humanizeDrums.getInt());
 		gc.setHumanizeNotes(ExtraSettingsGUI.humanizeNotes.getInt());
 
@@ -7899,7 +7780,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		gc.setLongProgressionSimilarity(ChordGUI.longProgressionSimilarity.getInt());
 		gc.setFirstChord(ChordGUI.firstChordSelection.getVal());
 		gc.setLastChord(ChordGUI.lastChordSelection.getVal());
-		gc.setKeyChangeType(KeyChangeType.valueOf(GenerationGUI.keyChangeTypeSelection.getVal()));
+		gc.setKeyChangeType(KeyChangeType.valueOf(ExtraSettingsGUI.keyChangeTypeSelection.getVal()));
 		gc.setCustomChordsEnabled(ChordGUI.userChordsEnabled.isSelected());
 		gc.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
 		gc.setCustomChordDurations(ChordGUI.userChordsDurations.getText());
@@ -7979,14 +7860,14 @@ private void __initCustomChords(int startY, int anchorSide) {
 		mainBpm.setInt(bpm);
 
 		ArpGUI.arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
-		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
+		GenerationGUI.beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
 		ExtraSettingsGUI.swingUnitMultiplier.setSelectedIndex(gc.getSwingUnitMultiplierIndex());
-		GenerationGUI.customMidiForceScale.setSelected(gc.isCustomMidiForceScale());
-		GenerationGUI.transposedNotesForceScale.setSelected(gc.isTransposedNotesForceScale());
+		ExtraSettingsGUI.customMidiForceScale.setSelected(gc.isCustomMidiForceScale());
+		ExtraSettingsGUI.transposedNotesForceScale.setSelected(gc.isTransposedNotesForceScale());
 		ChordGUI.allowChordRepeats.setSelected(gc.isAllowChordRepeats());
-		globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
+		GenerationGUI.globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
 		if (gc.getGlobalSwingOverride() != null) {
-			globalSwingOverrideValue.setInt(gc.getGlobalSwingOverride());
+			GenerationGUI.globalSwingOverrideValue.setInt(gc.getGlobalSwingOverride());
 		}
 		DrumGUI.humanizeDrums.setInt(gc.getHumanizeDrums());
 		ExtraSettingsGUI.humanizeNotes.setInt(gc.getHumanizeNotes());
@@ -8067,7 +7948,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		ChordGUI.longProgressionSimilarity.setInt(gc.getLongProgressionSimilarity());
 		ChordGUI.firstChordSelection.setVal(gc.getFirstChord());
 		ChordGUI.lastChordSelection.setVal(gc.getLastChord());
-		GenerationGUI.keyChangeTypeSelection.setVal(gc.getKeyChangeType().toString());
+		ExtraSettingsGUI.keyChangeTypeSelection.setVal(gc.getKeyChangeType().toString());
 		ChordGUI.userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
 		ChordGUI.userChords.setupChords(gc.getCustomChords());
 		ChordGUI.userChordsDurations.setText(gc.getCustomChordDurations());
@@ -8343,7 +8224,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 			}
 			InstUtils.POOL pool = ip.getInstPool();
 
-			if ((randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
+			if ((GenerationGUI.randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
 					&& ip.getInstrumentBox().isEnabled()) {
 				pool = (panelGenerator.nextInt(100) < ChordGUI.randomChordSustainChance.getInt())
 						? InstUtils.POOL.CHORD
@@ -8357,7 +8238,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 
 			ip.setTransitionChance(panelGenerator.nextInt(ChordGUI.randomChordMaxSplitChance.getInt() + 1));
 			ip.setTransitionSplit((getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_SPLIT, 0)));
-			if (GenerationGUI.orderedTransposeGeneration.isSelected()) {
+			if (ExtraSettingsGUI.orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
 			} else {
 				ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
@@ -8449,7 +8330,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 				if (panelGenerator.nextInt(100) >= ChordGUI.randomChordShiftChance.getInt()) {
 					maxShift /= 2;
 				}
-				if (beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75) {
+				if (GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75) {
 					maxShift /= 2;
 				}
 
@@ -9058,7 +8939,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 						(part > 0) ? pitch : (pitch + ip.getTranspose()), durationMs / 1000.0));
 				if (scaleKey != null) {
 					boolean snapToScale = (scaleKey.getLeft() != ScaleMode.IONIAN)
-							|| GenerationGUI.transposedNotesForceScale.isSelected();
+							|| ExtraSettingsGUI.transposedNotesForceScale.isSelected();
 					MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
 							scaleKey.getLeft().noteAdjustScale, snapToScale);
 					extraTranspose += scaleKey.getRight();

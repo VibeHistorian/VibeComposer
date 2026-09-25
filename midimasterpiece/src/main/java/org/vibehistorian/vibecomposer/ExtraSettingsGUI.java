@@ -61,13 +61,19 @@ public class ExtraSettingsGUI {
     public static JCheckBox knobControlByDragging;
     public static JCheckBox highlightPatterns;
     public static JCheckBox customFilenameAddTimestamp;
+    public static JCheckBox customMidiForceScale;
+    public static JCheckBox reuseMidiChannelAfterCopy;
+    public static JCheckBox transposedNotesForceScale;
+    public static JCheckBox orderedTransposeGeneration;
+    public static JCheckBox configHistoryStoreRegeneratedTracks;
+    public static JCheckBox patternApplyPausesWhenGenerating;
+    public static JCheckBox allowValuesOutOfRange;
+    public static ScrollComboBox<String> keyChangeTypeSelection;
 
     private final Context context;
-    private final GenerationGUI generationGUI;
 
     public ExtraSettingsGUI(Context context) {
         this.context = context;
-        this.generationGUI = new GenerationGUI(context.keyChangeTypeSelectionListener());
     }
 
     public void initExtraSettings() {
@@ -148,7 +154,7 @@ public class ExtraSettingsGUI {
 		context.melodyGUI().initExtraSettingsMelody(melodyTweaksPanel);
 		initExtraSettingsBpm(bpmLowHighPanel);
 		initExtraSettingsDisplay(displayStylePanel);
-		generationGUI.initGenerationSettings(panelGenerationSettingsPanel);
+		initGenerationSettings(panelGenerationSettingsPanel);
 
 		context.initHelperPopups(extraSettingsPanel);
 	}
@@ -391,6 +397,35 @@ public class ExtraSettingsGUI {
 	}
 
 	public void initGenerationSettings(JPanel generationSettingsPanel) {
-		generationGUI.initGenerationSettings(generationSettingsPanel);
+		// GENERATION
+		customMidiForceScale = new CustomCheckBox("Force MIDI Melody Notes To Scale", false);
+		reuseMidiChannelAfterCopy = new CustomCheckBox("Reuse MIDI Ch. After Copy (Cc)", true);
+		transposedNotesForceScale = new CustomCheckBox("Force Transposed Notes To Scale", false);
+		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
+		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
+				"Track History - Include Regenerated Tracks", true);
+		MelodyGUI.melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
+		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
+		allowValuesOutOfRange = new CustomCheckBox("(Experimental!) Allow Knob Values Out of Range", false);
+
+		JPanel keyChangePanel = new JPanel();
+		keyChangePanel.setLayout(new GridLayout(0, 2, 10, 30));
+		keyChangeTypeSelection = new ScrollComboBox<String>(false);
+		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" }, keyChangeTypeSelection);
+		keyChangeTypeSelection.setVal("TWOFIVEONE");
+		keyChangeTypeSelection.setPreferredSize(new Dimension(250, 30));
+		keyChangeTypeSelection.addItemListener(context.keyChangeTypeSelectionListener());
+		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
+		keyChangePanel.add(keyChangeTypeSelection);
+
+		generationSettingsPanel.add(customMidiForceScale);
+		generationSettingsPanel.add(transposedNotesForceScale);
+		generationSettingsPanel.add(reuseMidiChannelAfterCopy);
+		generationSettingsPanel.add(orderedTransposeGeneration);
+		generationSettingsPanel.add(configHistoryStoreRegeneratedTracks);
+		// Melody pattern flips are also available per-instrument.
+		generationSettingsPanel.add(patternApplyPausesWhenGenerating);
+		generationSettingsPanel.add(allowValuesOutOfRange);
+		generationSettingsPanel.add(keyChangePanel);
 	}
 }

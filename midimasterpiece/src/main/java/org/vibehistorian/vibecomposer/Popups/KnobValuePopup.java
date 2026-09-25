@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.GenerationGUI;
+import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
+
 
 import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.LG;
@@ -77,7 +78,7 @@ public class KnobValuePopup extends CloseablePopup {
 							knob.setValue(val);
 							knob.repaint();
 						} else {
-							if (GenerationGUI.allowValuesOutOfRange.isSelected() ||
+							if (ExtraSettingsGUI.allowValuesOutOfRange.isSelected() ||
 									(knob.getMin() <= val && val <= knob.getMax())) {
 								knob.setValue(val);
 							} else {

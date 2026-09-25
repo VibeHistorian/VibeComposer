@@ -10,7 +10,7 @@
 - `ArpGUI.java` owns arp UI state, settings and tab construction, and randomized arp panel creation. Its `Context` interface supplies shared window operations.
 - `ArrangementGUI.java` owns arrangement UI state, controls and table initialization, action dispatch, and popup/model helpers. Its `Context` supplies shared window operations and delegates cross-instrument or table-editing work that still belongs to `VibeComposerGUI`.
 - `SwingUtils.java` holds shared Swing helpers. Put generally useful UI helpers here instead of making a feature module call back into the main window.
-- `ExtraSettingsGUI` owns extra settings state, settings window construction, and non-generation settings panels. `GenerationGUI` owns generation-specific controls. `VibeComposerCoreGUI` may still be a skeleton; inspect it before relying on it. `ScoreGUI` owns score UI state, tab setup, and popup behavior.
+- `ExtraSettingsGUI` owns settings popup state and construction, including its Generation tab. `GenerationGUI` owns the randomization and macro controls in the main window, built by `initRandomButtons` and `initMacroParams`. `VibeComposerCoreGUI` may still be a skeleton; inspect it before relying on it. `ScoreGUI` owns score UI state, tab setup, and popup behavior.
 - Cross-cutting models and components include `GUIConfig.java`, `Panels/MelodyPanel.java`, and `Components/MelodyMidiDropPane.java`.
 
 ## Conventions and boundaries

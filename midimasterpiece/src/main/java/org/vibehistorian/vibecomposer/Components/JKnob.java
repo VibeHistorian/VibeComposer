@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-import org.vibehistorian.vibecomposer.GenerationGUI;
 
 
 // Imports for the GUI classes.
@@ -362,7 +361,7 @@ public class JKnob extends JComponent
 		int intVal = min + (int) Math.round(val * diff);
 		int smallestDiff = Integer.MAX_VALUE;
 		int smallestInt = 0;
-		if (tickSpacing > 0 && !GenerationGUI.allowValuesOutOfRange.isSelected()) {
+		if (tickSpacing > 0 && !ExtraSettingsGUI.allowValuesOutOfRange.isSelected()) {
 			for (Integer i : tickThresholds) {
 				int currentDiff = Math.abs(intVal - i);
 				if (smallestDiff > currentDiff) {
