@@ -122,20 +122,13 @@ public class ArpGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
-		Dimension getScrollPaneDimension();
-		Set<Component> getToggleableComponents();
 		JButton makeButton(String name, Consumer<? super Object> action);
 		JButton makeButton(String name, String actionCommand);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
-		List<ArpPanel> getAffectedArpPanels();
 		ArpPanel addArpPanel();
-		JCheckBox getRandomizeInstrumentOnComposeOrGen();
-		boolean orderedTransposeGeneration();
-		int getRandomFromArray(Random generator, int[] values, int from);
-		boolean useShortBeatDuration();
-		MelodyPanel getFirstMelodyPanel();
-		void repaintMainWindow();
+		List<InstPanel> getAffectedPanels(int instrument);
+		List<? extends InstPanel> getInstList(int instrument);
 	}
 
 	public void initArpGenSettings(int startY, int anchorSide) {
@@ -146,7 +139,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				Dimension size = context.getScrollPaneDimension();
+				Dimension size = UITheme.scrollPaneDimension;
 				return new Dimension(size.width, size.height - 100);
 			}
 		};
@@ -215,8 +208,8 @@ public class ArpGUI implements InstrumentGUIControls {
 		randomArpMaxExceptionChance = new DetachedKnobPanel("Max.<br>Split%", 20);
 		arpsSettingsPanel.add(randomArpMaxExceptionChance);
 
-		context.getToggleableComponents().add(randomArpStretchType);
-		context.getToggleableComponents().add(randomArpStretchPicker);
+		UITheme.toggleableComponents.add(randomArpStretchType);
+		UITheme.toggleableComponents.add(randomArpStretchPicker);
 
 		JButton clearArpPatternSeeds = context.makeButton("Clear Seeds", "ClearArpSeeds");
 		JPanel arpSettingsExtraPanel = new JPanel();
@@ -240,7 +233,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpSettingsExtraPanel.add(randomArpCorrectMelodyNotes);
 		arpSettingsExtraPanel.add(clearArpPatternSeeds);
 		arpSettingsExtraPanel.add(new PartManagerPanel(3));
-		context.getToggleableComponents().add(arpSettingsExtraPanel);
+		UITheme.toggleableComponents.add(arpSettingsExtraPanel);
 
 		arpsSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		arpsSettingsPanel.setMaximumSize(new Dimension(1800, 50));
@@ -250,7 +243,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpParentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
-				return context.getScrollPaneDimension();
+				return UITheme.scrollPaneDimension;
 			}
 		};
 		arpParentPanel.setLayout(new BoxLayout(arpParentPanel, BoxLayout.Y_AXIS));
@@ -258,7 +251,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		JPanel borderPanel = new JPanel() {
 			@Override
 			public Dimension getMaximumSize() {
-				return new Dimension(context.getScrollPaneDimension().width, 100);
+				return new Dimension(UITheme.scrollPaneDimension.width, 100);
 			}
 		};
 		borderPanel.setLayout(new DynamicGridLayout(0, 1));
@@ -275,7 +268,7 @@ public class ArpGUI implements InstrumentGUIControls {
 
 	public void createRandomArpPanels(int panelCount, boolean onlyAdd, ArpPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<ArpPanel> affectedArps = context.getAffectedArpPanels();
+		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) context.getAffectedPanels(3);
 
 		Random panelGenerator = new Random();
 		List<ArpPanel> removedPanels = new ArrayList<>();
@@ -300,7 +293,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
 			Random instGen = new Random();
 			if (randomArpLimitPowerOfTwo.isSelected()) {
-				fixedHitsGenerated = context.getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 }, 0);
+				fixedHitsGenerated = OMNI.getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 }, 0);
 			} else {
 				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 				if (fixedHitsGenerated == 5) {
@@ -315,7 +308,8 @@ public class ArpGUI implements InstrumentGUIControls {
 
 		int fixedInstrument = -1;
 		int fixedHits = -1;
-		MelodyPanel firstMelodyPanel = context.getFirstMelodyPanel();
+		List<? extends InstPanel> melodyPanels = context.getInstList(0);
+		MelodyPanel firstMelodyPanel = melodyPanels.isEmpty() ? null : (MelodyPanel) melodyPanels.get(0);
 		if (arpCopyMelodyInst.isSelected() && firstMelodyPanel != null
 				&& !firstMelodyPanel.getMuteInst()) {
 			fixedInstrument = firstMelodyPanel.getInstrument();
@@ -366,7 +360,7 @@ public class ArpGUI implements InstrumentGUIControls {
 					Random instGen = new Random();
 					int value;
 					if (randomArpLimitPowerOfTwo.isSelected()) {
-						value = context.getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 }, 0);
+						value = OMNI.getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 }, 0);
 					} else {
 						value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
 						if (value == 5) {
@@ -382,7 +376,7 @@ public class ArpGUI implements InstrumentGUIControls {
 				ip.setHitsPerPattern(randomArpHitsPicker.getSelectedIndex() + 1);
 			}
 
-			if (context.getRandomizeInstrumentOnComposeOrGen().isSelected() || onlyAdd) {
+			if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
 				int instrument = ip.getInstrumentBox().getRandomInstrument();
 				if (randomArpAllSameInst.isSelected()) {
 					if (fixedInstrument >= 0) {
@@ -397,7 +391,7 @@ public class ArpGUI implements InstrumentGUIControls {
 			}
 
 			ip.setChordSpan(panelGenerator.nextInt(2) + 1);
-			if (context.orderedTransposeGeneration()) {
+			if (ExtraSettingsGUI.orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder() + 1) % 3) - 1) * 12);
 			} else if (first == null && panelIndex == 0 && !onlyAdd) {
 				ip.setTranspose(12);
@@ -466,7 +460,8 @@ public class ArpGUI implements InstrumentGUIControls {
 
 			if (panelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
 				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
-				if (context.useShortBeatDuration()) {
+				if (GenerationGUI.beatDurationMultiplier != null
+						&& GenerationGUI.beatDurationMultiplier.getVal() < 0.75) {
 					maxShift /= 2;
 				}
 				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
@@ -503,7 +498,7 @@ public class ArpGUI implements InstrumentGUIControls {
 			ip.getComboPanel().reapplyShift();
 			ip.getComboPanel().reapplyHits();
 		}
-		context.repaintMainWindow();
+		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 
 	/** Cleanup method called when this module is no longer needed. */

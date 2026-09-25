@@ -147,11 +147,6 @@ public class ArrangementGUI {
 
 	/** Supplies the cross-tab work that belongs to the main window. */
 	public interface Context {
-		Dimension getScrollPaneDimension();
-		JPanel getEverythingPanel();
-		GridBagConstraints getConstraints();
-		Set<Component> getToggleableComponents();
-		JTabbedPane getInstrumentTabPane();
 		JButton makeButton(String name, String actionCommand, int width, int height);
 		JButton makeButton(String name, Consumer<? super Object> action, int width);
 		JCheckBox makeCheckBox(String label, boolean selected, boolean thick);
@@ -159,18 +154,8 @@ public class ArrangementGUI {
 		boolean canRegenerateOnChange();
 		void regenerate();
 		void openApplyCustomSectionPopup();
-		List<? extends InstPanel> getInstrumentPanels(int instrument);
-		JScrollPane getInstrumentPanelScrollPane(int instrument);
-		List<InstPart> getCustomSectionParts(int instrument);
-		InstPanel makeInstrumentPanel(int instrument);
-		int getAbsoluteOrder(int instrument, int relativeOrder);
 		void toggleButtonEnabledForPanels();
-		PhraseNotes getPatternRaw(UsedPattern pattern);
-		void showInvalidPatternCopyInfo();
-		boolean hasCurrentMidi();
-		void openMidiEditPopup(Section section, int instrument, int panelOrder,
-				int sectionOrder);
-		JFrame getMainWindow();
+		List<? extends InstPanel> getInstList(int instrument);
 	}
 
 	public void applyCustomPanelsToSection(String action, int replacedPartNum,
@@ -185,7 +170,7 @@ public class ArrangementGUI {
 		for (int i = sectionOrder; i < lastSectionOrder; i++) {
 			Section section = actualArrangement.getSections().get(i - 1);
 			if (replacedPartNum >= 0 && replacedPartNum < 5) {
-				section.setInstPartList(context.getCustomSectionParts(replacedPartNum),
+				section.setInstPartList(VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(replacedPartNum),
 						replacedPartNum);
 			}
 			if (replacedPartNum < 5) {
@@ -202,7 +187,7 @@ public class ArrangementGUI {
 		if (row >= 2 && sectionOrder >= 0) {
 			int instrument = row - 2;
 			double orderPercentage = calculateMousePointPercentageInTable(row, sectionOrder);
-			int actualSize = context.getInstrumentPanels(instrument).size();
+			int actualSize = context.getInstList(instrument).size();
 			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
 			int panelOrder = (int) Math.floor(orderPercentage * visualSize);
 			if ((actualSize > CollectionCellRenderer.MIN_CELLS && panelOrder == actualSize)
@@ -222,8 +207,8 @@ public class ArrangementGUI {
 			LG.i("Resetting to normal panels!");
 			arrangementMiddleColoredPanel.setBackground(UITheme.panelColorHigh.brighter());
 			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = context.getInstrumentPanelScrollPane(instrument);
-				List<? extends InstPanel> panels = context.getInstrumentPanels(instrument);
+				JScrollPane pane = VibeComposerGUI.getInstPane(instrument);
+				List<? extends InstPanel> panels = context.getInstList(instrument);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				for (Component component : panelView.getComponents()) {
 					if (component instanceof InstPanel) panelView.remove(component);
@@ -240,11 +225,11 @@ public class ArrangementGUI {
 			int sectionOrder = Integer.valueOf(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = context.getInstrumentPanelScrollPane(instrument);
+				JScrollPane pane = VibeComposerGUI.getInstPane(instrument);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				List<InstPanel> sectionPanels = new ArrayList<>();
 				List<Integer> missingPanels = new ArrayList<>();
-				context.getInstrumentPanels(instrument)
+				context.getInstList(instrument)
 						.forEach(panel -> missingPanels.add(panel.getPanelOrder()));
 				List<? extends InstPart> sectionParts = section.getInstPartList(instrument);
 				if (sectionParts != null) {
@@ -253,7 +238,7 @@ public class ArrangementGUI {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = context.makeInstrumentPanel(instrument);
+								InstPanel copy = InstPanel.makeInstPanel(instrument, VibeComposerGUI.vibeComposerGUI);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -262,7 +247,7 @@ public class ArrangementGUI {
 					}
 				}
 				if (!missingPanels.isEmpty()) {
-					List<? extends InstPanel> panels = new ArrayList<>(context.getInstrumentPanels(instrument))
+					List<? extends InstPanel> panels = new ArrayList<>(context.getInstList(instrument))
 							.stream().filter(panel -> missingPanels.contains(panel.getPanelOrder()))
 							.collect(java.util.stream.Collectors.toList());
 					for (Component component : panelView.getComponents()) {
@@ -274,7 +259,7 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = context.makeInstrumentPanel(instrument);
+								InstPanel copy = InstPanel.makeInstPanel(instrument, VibeComposerGUI.vibeComposerGUI);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
@@ -301,9 +286,9 @@ public class ArrangementGUI {
 		addedPanels.forEach(panel -> panel.setVisible(true));
 		context.toggleButtonEnabledForPanels();
 		for (int instrument = 0; instrument < 5; instrument++) {
-			context.getInstrumentPanelScrollPane(instrument).repaint();
+			VibeComposerGUI.getInstPane(instrument).repaint();
 		}
-		if (context.getInstrumentTabPane().getSelectedIndex() == 6) {
+		if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 6) {
 			actualArrangement.getSections().forEach(Section::initPartMapFromOldData);
 			scrollableArrangementActualTable.repaint();
 		}
@@ -334,7 +319,7 @@ public class ArrangementGUI {
 
 		double orderPercentage = calculateMousePointPercentageInTable(row, sectionOrder);
 		int instrument = row - 2;
-		List<? extends InstPanel> panels = context.getInstrumentPanels(instrument);
+		List<? extends InstPanel> panels = context.getInstList(instrument);
 		int actualSize = panels.size();
 		int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
 		int partOrder = (int) Math.floor(orderPercentage * visualSize);
@@ -354,7 +339,7 @@ public class ArrangementGUI {
 				if (sectionOrder + 1 < arrSection.getItemCount()) {
 					arrSection.setSelectedIndexWithProperty(sectionOrder + 1, true);
 					arrSection.repaint();
-					context.getInstrumentTabPane().setSelectedIndex(instrument);
+					VibeComposerGUI.instrumentTabPane.setSelectedIndex(instrument);
 					switchTabPaneAfterApply = true;
 				}
 			} else if (event.isControlDown()) {
@@ -364,11 +349,14 @@ public class ArrangementGUI {
 					copyDraggingOrigin = Triple.of(instrument, partOrder, sectionOrder);
 					prepareCustomMidiSubcellCopy(instrument, panelOrder, section);
 				}
-			} else if (context.hasCurrentMidi()) {
+			} else if ((PlaybackState.currentMidi != null)) {
 				Section section = actualArrangement.getSections().get(sectionOrder);
 				if (section.getPresence(instrument).contains(panelOrder)
 						&& section.containsPattern(instrument, panelOrder)) {
-					context.openMidiEditPopup(section, instrument, panelOrder, sectionOrder);
+					ApplicationSessionState.currentMidiEditorPopup = new org.vibehistorian.vibecomposer.Popups.MidiEditPopup(
+							section, instrument, panelOrder);
+					ApplicationSessionState.currentMidiEditorPopup.setSec(section);
+					ApplicationSessionState.currentMidiEditorSectionIndex = sectionOrder;
 				} else {
 					LG.i("Presence: " + section.getPresence(instrument).contains(panelOrder)
 							+ ", contains pattern: " + section.containsPattern(instrument, panelOrder));
@@ -396,14 +384,14 @@ public class ArrangementGUI {
 					target.removeVariationForAllParts(instrument, i);
 				}
 				for (Integer panel : section.getPresence(instrument)) {
-					int absoluteOrder = context.getAbsoluteOrder(instrument, panel);
+					int absoluteOrder = VibeComposerGUI.getAbsoluteOrder(instrument, panel);
 					target.setPresence(instrument, absoluteOrder);
 					target.setVariation(instrument, absoluteOrder,
 							section.getVariation(instrument, absoluteOrder));
 					if (event.isShiftDown()) {
 						UsedPattern pattern = section.getPattern(instrument, panel);
 						if (pattern != null) {
-							PhraseNotes notes = context.getPatternRaw(pattern);
+							PhraseNotes notes = ApplicationSessionState.guiConfig.getPatternRaw(pattern);
 							if (notes != null && notes.isApplied()) target.putPattern(instrument, panel, pattern);
 						}
 					}
@@ -488,14 +476,14 @@ public class ArrangementGUI {
 			LG.i("Can't copy custom midi - invalid part!");
 			return;
 		}
-		PhraseNotes notes = context.getPatternRaw(copyDraggedPattern);
+		PhraseNotes notes = ApplicationSessionState.guiConfig.getPatternRaw(copyDraggedPattern);
 		if (notes == null) {
-			context.showInvalidPatternCopyInfo();
+			new org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup("Invalid pattern for copying!", 1500);
 			return;
 		}
 		Section section = actualArrangement.getSections().get(target.getRight());
 		int instrument = target.getLeft();
-		int panelOrder = context.getInstrumentPanels(instrument).get(target.getMiddle()).getPanelOrder();
+		int panelOrder = context.getInstList(instrument).get(target.getMiddle()).getPanelOrder();
 		section.putPattern(instrument, panelOrder, copyDraggedPattern);
 		if (!section.getPresence(instrument).contains(panelOrder))
 			section.setPresence(instrument, target.getMiddle());
@@ -590,7 +578,7 @@ public class ArrangementGUI {
 			};
 			button.addActionListener(e -> openVariationPopup(sectionIndex + 1));
 			int width = Math.max(GUIConstants.TABLE_COLUMN_MIN_WIDTH,
-					(context.getScrollPaneDimension().width - arrangementRowHeaderWidth) / count);
+					(UITheme.scrollPaneDimension.width - arrangementRowHeaderWidth) / count);
 			button.setPreferredSize(new Dimension(width, 50));
 			button.addMouseListener(new MouseAdapter() {
 				@Override public void mousePressed(MouseEvent event) {
@@ -699,7 +687,7 @@ public class ArrangementGUI {
 				Section sec = ArrangementGUI.actualArrangement.getSections()
 						.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
-					sec.resetCustomizedParts(context.getInstrumentTabPane().getSelectedIndex());
+					sec.resetCustomizedParts(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
 					setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
 					if (!sec.hasCustomizedParts()) {
 						CheckButton cb = ArrangementGUI.arrSection.getCurrentButton();
@@ -764,12 +752,12 @@ public class ArrangementGUI {
 		arrangementSettingsRight.add(ArrangementGUI.arrangementSeed);
 		ArrangementGUI.arrangementSettings.add(arrangementSettingsRight);
 
-		GridBagConstraints constraints = context.getConstraints();
+		GridBagConstraints constraints = VibeComposerGUI.constraints;
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 		ArrangementGUI.arrSectionPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() {
-				return new Dimension(context.getScrollPaneDimension().width, 45);
+				return new Dimension(UITheme.scrollPaneDimension.width, 45);
 			}
 		};
 		ArrangementGUI.arrSectionPane.setViewportView(ArrangementGUI.arrSection);
@@ -778,9 +766,9 @@ public class ArrangementGUI {
 		ArrangementGUI.arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		ArrangementGUI.arrSectionPane.setOpaque(true);
 		ArrangementGUI.arrSection.setOpaque(true);
-		context.getEverythingPanel().add(ArrangementGUI.arrSectionPane, constraints);
+		VibeComposerGUI.vibeComposerGUI.everythingPanel.add(ArrangementGUI.arrSectionPane, constraints);
 		constraints.gridy = startY + 1;
-		context.getEverythingPanel().add(ArrangementGUI.arrangementSettings, constraints);
+		VibeComposerGUI.vibeComposerGUI.everythingPanel.add(ArrangementGUI.arrangementSettings, constraints);
 
 		ArrangementGUI.scrollableArrangementTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 3846279087936376003L;
@@ -820,7 +808,7 @@ public class ArrangementGUI {
 		ArrangementGUI.arrangement.generateDefaultArrangement();
 		ArrangementGUI.scrollableArrangementTable.setModel(ArrangementGUI.arrangement.convertToTableModel());
 		ArrangementGUI.arrangementScrollPane = new JScrollPane() {
-			@Override public Dimension getPreferredSize() { return context.getScrollPaneDimension(); }
+			@Override public Dimension getPreferredSize() { return UITheme.scrollPaneDimension; }
 		};
 		ArrangementGUI.scrollableArrangementTable.setRowHeight(35);
 		ArrangementGUI.scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
@@ -843,7 +831,7 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementTable.setRowSelectionAllowed(false);
 		ArrangementGUI.scrollableArrangementTable.setColumnSelectionAllowed(true);
 		ArrangementGUI.scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(
-				context.getScrollPaneDimension().width - ArrangementGUI.arrangementRowHeaderWidth, 30));
+				UITheme.scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
 		ArrangementGUI.scrollableArrangementTable.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
 			@Override public void columnMoved(TableColumnModelEvent e) {
 				ArrangementGUI.arrangementTableColumnDragging = true;
@@ -890,7 +878,7 @@ public class ArrangementGUI {
 				}
 				int height = 350 / getModel().getRowCount();
 				int width = Math.max(GUIConstants.TABLE_COLUMN_MIN_WIDTH,
-						(int) ((context.getScrollPaneDimension().getWidth() - 60)
+						(int) ((UITheme.scrollPaneDimension.getWidth() - 60)
 								/ getModel().getColumnCount()) - 2);
 				if (row == 1) return new SectionInfoCellRenderer(width, height, col);
 				Collection<?> stringables = value instanceof String
@@ -930,7 +918,7 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
 		ArrangementGUI.scrollableArrangementActualTable.setModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
 		ArrangementGUI.arrangementActualScrollPane = new JScrollPane() {
-			@Override public Dimension getPreferredSize() { return context.getScrollPaneDimension(); }
+			@Override public Dimension getPreferredSize() { return UITheme.scrollPaneDimension; }
 		};
 		JList<String> actualList = new JList<>();
 		actualList.setListData(new String[] { "", "Section", "Info", "Melody", "Bass", "Chord", "Arp", "Drum" });
@@ -964,19 +952,19 @@ public class ArrangementGUI {
 		ArrangementGUI.actualArrangementCombinedPanel.setLayout(
 				new BoxLayout(ArrangementGUI.actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
 		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(
-				context.getScrollPaneDimension().width - ArrangementGUI.arrangementRowHeaderWidth, 30));
+				UITheme.scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable.getTableHeader());
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable);
 		ArrangementGUI.variationButtonsPanel = new JPanel();
 		refreshVariationPopupButtons(1);
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.variationButtonsPanel);
 		ArrangementGUI.arrangementActualScrollPane.setViewportView(ArrangementGUI.actualArrangementCombinedPanel);
-		context.getInstrumentTabPane().addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
-		context.getInstrumentTabPane().addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
-		context.getToggleableComponents().add(commitAllPanelBtn);
-		context.getToggleableComponents().add(undoPanelBtn);
-		context.getToggleableComponents().add(clearPanelBtn);
-		context.getToggleableComponents().add(clearAllPanelsBtn);
+		VibeComposerGUI.instrumentTabPane.addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
+		VibeComposerGUI.instrumentTabPane.addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
+		UITheme.toggleableComponents.add(commitAllPanelBtn);
+		UITheme.toggleableComponents.add(undoPanelBtn);
+		UITheme.toggleableComponents.add(clearPanelBtn);
+		UITheme.toggleableComponents.add(clearAllPanelsBtn);
 		resetArrSection();
 	}
 
@@ -1016,7 +1004,7 @@ public class ArrangementGUI {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
 		} else if (action.equalsIgnoreCase("ArrangementAddLast")) {
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSection(scrollableArrangementTable);
 			} else {
 				actualArrangement.duplicateSection(scrollableArrangementActualTable);
@@ -1027,7 +1015,7 @@ public class ArrangementGUI {
 				pieceLength.setText("" + ++maxLength);
 			}
 		} else if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSection(scrollableArrangementTable);
 			} else {
 				actualArrangement.removeSection(scrollableArrangementActualTable);
@@ -1045,25 +1033,25 @@ public class ArrangementGUI {
 			if (GLOBAL.equals(selectedItem)) {
 				return;
 			}
-			int replacedPartNum = context.getInstrumentTabPane().getSelectedIndex();
+			int replacedPartNum = VibeComposerGUI.instrumentTabPane.getSelectedIndex();
 			Integer sectionOrder = Integer.valueOf(selectedItem.split(":")[0]);
 		applyCustomPanelsToSection(action, replacedPartNum, sectionOrder);
-			if (context.getInstrumentTabPane().getSelectedIndex() < 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() < 5) {
 				resetArrSectionSelection = false;
 				resetArrSectionPanel = false;
 				refreshActual = true;
 				checkManual = true;
 			}
-			if (context.getInstrumentTabPane().getSelectedIndex() < 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() < 5) {
 				if (switchTabPaneAfterApply) {
 					switchTabPaneAfterApply = false;
-					context.getInstrumentTabPane().setSelectedIndex(6);
+					VibeComposerGUI.instrumentTabPane.setSelectedIndex(6);
 					arrSection.setSelectedIndexWithProperty(0, true);
 				}
 				if (switchTabPaneToScoreAfterApply) {
 					switchTabPaneToScoreAfterApply = false;
-					if (context.getInstrumentTabPane().getComponents().length > 7) {
-						context.getInstrumentTabPane().setSelectedIndex(7);
+					if (VibeComposerGUI.instrumentTabPane.getComponents().length > 7) {
+						VibeComposerGUI.instrumentTabPane.setSelectedIndex(7);
 					}
 					arrSection.setSelectedIndexWithProperty(0, true);
 				}
@@ -1091,7 +1079,7 @@ public class ArrangementGUI {
 			if (OMNI.EMPTYCOMBO.equals(selectedItem)) {
 				return;
 			}
-			if (context.getInstrumentTabPane().getSelectedIndex() != 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() != 5) {
 				Section addedSection = actualArrangement
 						.addDefaultSection(scrollableArrangementActualTable, selectedItem, column);
 				addedSection.recalculatePartVariationMapBoundsIfNeeded();
@@ -1113,7 +1101,7 @@ public class ArrangementGUI {
 			newSectionBox.setSelectedIndex(0);
 		} else if (action.startsWith("ArrangementRemove,")) {
 			Integer sectionIndex = Integer.valueOf(action.split(",")[1]);
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSectionExact(scrollableArrangementTable, sectionIndex);
 			} else {
 				actualArrangement.removeSectionExact(scrollableArrangementActualTable, sectionIndex);
@@ -1125,7 +1113,7 @@ public class ArrangementGUI {
 		} else if (action.startsWith("ArrangementAdd,")) {
 			LG.i("add exact");
 			Integer sectionIndex = Integer.valueOf(action.split(",")[1]);
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSectionExact(scrollableArrangementTable, sectionIndex);
 			} else {
 				actualArrangement.duplicateSectionExact(scrollableArrangementActualTable, sectionIndex);
@@ -1164,7 +1152,7 @@ public class ArrangementGUI {
 			varPopup.getFrame().dispose();
 		}
 		recalculateActualArrangementSection(sectionOrder - 1);
-		JFrame mainWindow = context.getMainWindow();
+		JFrame mainWindow = VibeComposerGUI.vibeComposerGUI;
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
 				new Point(SwingUtils.getMouseLocation().x, mainWindow.getLocation().y), mainWindow.getSize());
 	}

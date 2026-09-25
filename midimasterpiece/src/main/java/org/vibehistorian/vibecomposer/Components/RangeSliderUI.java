@@ -722,7 +722,7 @@ class RangeSliderUI extends BasicSliderUI {
 					VibeComposerGUI.vibeComposerGUI.regenerate();
 				} else if (rangeSlider instanceof PlayheadRangeSlider) {
 					PlaybackState.currentTime.setText(
-							VibeComposerGUI.millisecondsToTimeString(rangeSlider.getUpperValue()));
+							OMNI.millisecondsToTimeString(rangeSlider.getUpperValue()));
 				}
 			}
 		}

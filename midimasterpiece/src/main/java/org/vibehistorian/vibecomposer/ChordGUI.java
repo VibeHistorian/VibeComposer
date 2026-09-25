@@ -200,33 +200,18 @@ public class ChordGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
-        Dimension getScrollPaneDimension();
-        Set<Component> getToggleableComponents();
         JButton makeButton(String name, Consumer<? super Object> action);
         JButton makeButton(String name, String actionCommand);
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
-        GridBagConstraints getConstraints();
-        JPanel getControlPanel();
-        JPanel getEverythingPanel();
-        ItemListener getItemListener();
-        String getScaleMode();
-        GUIConfig getGuiConfig();
         void copyGUItoConfig();
         void randomizeUserChords();
-        int getMaxChordProgressionLength();
-        void alignChordsWithMelody(ChordletPanel chordlets);
-        List<ChordPanel> getAffectedChordPanels();
-        ChordPanel addChordPanel();
-        boolean randomizeInstrumentOnComposeOrGen();
-        boolean orderedTransposeGeneration();
-        int getRandomFromArray(Random generator, int[] values, int from);
-        Pair<StrumType, Integer> getRandomStrumPair();
-        boolean useShortBeatDuration();
-        void repaintMainWindow();
+			void alignChordsWithMelody(ChordletPanel chordlets);
+		ChordPanel addChordPanel();
+		List<InstPanel> getAffectedPanels(int instrument);
     }
 
-    public void initExtraSettingsChords(JPanel chordChoicePanel) {
+	public static void initExtraSettingsChords(JPanel chordChoicePanel) {
 		// CHORDS
 		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
 		useChordFormula = new CustomCheckBox("Chord Formula", true);
@@ -242,6 +227,28 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordChoicePanel.add(squishChordsProgressively);
 	}
 
+	public static int getMaxChordProgressionLength() {
+		switch (chordProgressionLength.getSelectedIndex()) {
+		case 0:
+			return 4;
+		case 1:
+			return 8;
+		default:
+			return 16;
+		}
+	}
+
+	public static Pair<StrumType, Integer> getRandomStrumPair() {
+		StrumType type = selectTypeByStrumminess(randomChordStruminess.getInt());
+		Integer strum = MidiUtils.getRandom(new Random(), type.CHOICES.toArray(new Integer[] {}));
+		return Pair.of(type, strum);
+	}
+
+	private static StrumType selectTypeByStrumminess(int strumminess) {
+		List<StrumType> types = StrumType.getWeighted(new Random().nextInt(100));
+		return types.get(new Random().nextInt(types.size()));
+	}
+
     public void initChordGenSettings(int startY, int anchorSide) {
 		JPanel scrollableChordPanels = new JPanel();
 		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
@@ -250,7 +257,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(context.getScrollPaneDimension().width, context.getScrollPaneDimension().height - 100);
+				return new Dimension(UITheme.scrollPaneDimension.width, UITheme.scrollPaneDimension.height - 100);
 			}
 		};
 		chordScrollPane.setViewportView(scrollableChordPanels);
@@ -342,13 +349,13 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordSettingsExtraPanel.add(clearChordPatternSeeds);
 		chordSettingsExtraPanel.add(new PartManagerPanel(2));
 
-		context.getToggleableComponents().add(randomChordDelay);
-		context.getToggleableComponents().add(stretchLabel);
-		context.getToggleableComponents().add(randomChordStretchType);
-		context.getToggleableComponents().add(randomChordStretchPicker);
-		context.getToggleableComponents().add(randomChordSplit);
+		UITheme.toggleableComponents.add(randomChordDelay);
+		UITheme.toggleableComponents.add(stretchLabel);
+		UITheme.toggleableComponents.add(randomChordStretchType);
+		UITheme.toggleableComponents.add(randomChordStretchPicker);
+		UITheme.toggleableComponents.add(randomChordSplit);
 
-		context.getToggleableComponents().add(chordSettingsExtraPanel);
+		UITheme.toggleableComponents.add(chordSettingsExtraPanel);
 
 
 		//constraints.gridy = startY;
@@ -366,7 +373,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordParentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
-				return context.getScrollPaneDimension();
+				return UITheme.scrollPaneDimension;
 			}
 		};
 		chordParentPanel.setLayout(new BoxLayout(chordParentPanel, BoxLayout.Y_AXIS));
@@ -374,7 +381,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		JPanel borderPanel = new JPanel() {
 			@Override
 			public Dimension getMaximumSize() {
-				return new Dimension(context.getScrollPaneDimension().width, 100);
+				return new Dimension(UITheme.scrollPaneDimension.width, 100);
 			}
 		};
 		borderPanel.setLayout(new DynamicGridLayout(0, 1));
@@ -411,12 +418,12 @@ public class ChordGUI implements InstrumentGUIControls {
 		firstChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
 		firstChordSelection.setVal("?");
-		firstChordSelection.addItemListener(context.getItemListener());
+		firstChordSelection.addItemListener(VibeComposerGUI.vibeComposerGUI);
 
 		lastChordSelection = new ScrollComboBox<String>(false);
 		lastChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), lastChordSelection);
-		lastChordSelection.addItemListener(context.getItemListener());
+		lastChordSelection.addItemListener(VibeComposerGUI.vibeComposerGUI);
 
 		JPanel spiceChancePanel = new JPanel();
 		spiceChancePanel.add(spiceChance);
@@ -458,9 +465,9 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordProgressionSettingsPanel.add(firstChordsPanel);
 		chordProgressionSettingsPanel.add(lastChordsPanel);
 
-		context.getConstraints().gridy = startY;
-		context.getConstraints().anchor = anchorSide;
-		context.getControlPanel().add(chordProgressionSettingsPanel);
+		VibeComposerGUI.constraints.gridy = startY;
+		VibeComposerGUI.constraints.anchor = anchorSide;
+		VibeComposerGUI.vibeComposerGUI.controlPanel.add(chordProgressionSettingsPanel);
 	}
 
     public void initCustomChords(int startY, int anchorSide) {
@@ -500,7 +507,7 @@ public class ChordGUI implements InstrumentGUIControls {
 				if (!chords.equalsIgnoreCase(checkedChords)) {
 					putClientProperty(JComponent.TOOL_TIP_TEXT_KEY,
 							(StringUtils.join(MidiUtils.getKeyModesForChordsAndTarget(chords,
-									MidiUtils.ScaleMode.valueOf(context.getScaleMode())))));
+									MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal())))));
 					checkedChords = chords;
 				}
 
@@ -512,7 +519,7 @@ public class ChordGUI implements InstrumentGUIControls {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				List<String> normalizedChords = MidiUtils.processRawChords(
-						userChords.getChordListString(), MidiUtils.ScaleMode.valueOf(context.getScaleMode()));
+						userChords.getChordListString(), MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal()));
 				if (normalizedChords != null) {
 					userChords.setupChords(normalizedChords);
 				}
@@ -528,7 +535,7 @@ public class ChordGUI implements InstrumentGUIControls {
 			public void actionPerformed(ActionEvent e) {
 				context.copyGUItoConfig();
 				List<String> normalizedChords = MidiUtils
-						.respiceChords(userChords.getChordListString(), context.getGuiConfig());
+						.respiceChords(userChords.getChordListString(), ApplicationSessionState.guiConfig);
 				if (normalizedChords != null) {
 					userChords.setupChords(normalizedChords);
 				}
@@ -640,8 +647,8 @@ public class ChordGUI implements InstrumentGUIControls {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (userChords.chordCount() > context.getMaxChordProgressionLength()) {
-					userChords.cullChordsAbove(context.getMaxChordProgressionLength());
+				if (userChords.chordCount() > getMaxChordProgressionLength()) {
+					userChords.cullChordsAbove(getMaxChordProgressionLength());
 				}
 			}
 		});
@@ -677,27 +684,27 @@ public class ChordGUI implements InstrumentGUIControls {
 		customChordsPanel.add(userChordsDurations);
 
 
-		context.getConstraints().gridy = startY;
-		context.getConstraints().anchor = anchorSide;
-		context.getEverythingPanel().add(customChordsPanel, context.getConstraints());
+		VibeComposerGUI.constraints.gridy = startY;
+		VibeComposerGUI.constraints.anchor = anchorSide;
+		VibeComposerGUI.vibeComposerGUI.everythingPanel.add(customChordsPanel, VibeComposerGUI.constraints);
 
-		context.getToggleableComponents().add(twoExChordsButton);
-		context.getToggleableComponents().add(userDurationsEnabled);
-		context.getToggleableComponents().add(userChordsDurations);
-		context.getToggleableComponents().add(dotdotChordsButton);
-		context.getToggleableComponents().add(ddChordsButton);
-		context.getToggleableComponents().add(normalizeChordsButton);
-		context.getToggleableComponents().add(ivChordsButton);
-		context.getToggleableComponents().add(limitChordsButton);
-		context.getToggleableComponents().add(melodifyChordsButton);
-		context.getToggleableComponents().add(chordTransformButton);
+		UITheme.toggleableComponents.add(twoExChordsButton);
+		UITheme.toggleableComponents.add(userDurationsEnabled);
+		UITheme.toggleableComponents.add(userChordsDurations);
+		UITheme.toggleableComponents.add(dotdotChordsButton);
+		UITheme.toggleableComponents.add(ddChordsButton);
+		UITheme.toggleableComponents.add(normalizeChordsButton);
+		UITheme.toggleableComponents.add(ivChordsButton);
+		UITheme.toggleableComponents.add(limitChordsButton);
+		UITheme.toggleableComponents.add(melodifyChordsButton);
+		UITheme.toggleableComponents.add(chordTransformButton);
 
 	}
 
 public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<ChordPanel> affectedChords = context.getAffectedChordPanels();
+		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) context.getAffectedPanels(2);
 
 		Random panelGenerator = new Random();
 		List<ChordPanel> removedPanels = new ArrayList<>();
@@ -742,7 +749,7 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			}
 			InstUtils.POOL pool = ip.getInstPool();
 
-			if ((context.randomizeInstrumentOnComposeOrGen() || onlyAdd)
+			if ((GenerationGUI.randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
 					&& ip.getInstrumentBox().isEnabled()) {
 				pool = (panelGenerator.nextInt(100) < ChordGUI.randomChordSustainChance.getInt())
 						? InstUtils.POOL.CHORD
@@ -755,8 +762,8 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			}
 
 			ip.setTransitionChance(panelGenerator.nextInt(ChordGUI.randomChordMaxSplitChance.getInt() + 1));
-			ip.setTransitionSplit((context.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_SPLIT, 0)));
-			if (context.orderedTransposeGeneration()) {
+			ip.setTransitionSplit((OMNI.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_SPLIT, 0)));
+			if (ExtraSettingsGUI.orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
 			} else {
 				ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
@@ -764,11 +771,11 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 
 			boolean pad = ip.getInstPool() == POOL.LONG_PAD;
 
-			Pair<StrumType, Integer> strumPair = context.getRandomStrumPair();
+			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
 			ip.setStrum(strumPair.getRight());
 			ip.setStrumType(strumPair.getLeft());
 			if (ChordGUI.randomChordDelay.isSelected()) {
-				ip.setOffset((context.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_DELAY, 0)));
+				ip.setOffset((OMNI.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_DELAY, 0)));
 			} else {
 				ip.setOffset(0);
 			}
@@ -848,7 +855,7 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 				if (panelGenerator.nextInt(100) >= ChordGUI.randomChordShiftChance.getInt()) {
 					maxShift /= 2;
 				}
-				if (context.useShortBeatDuration()) {
+				if ((GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75)) {
 					maxShift /= 2;
 				}
 
@@ -868,7 +875,7 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			}
 		}
 
-		context.repaintMainWindow();
+		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 
     /** Cleanup method called when this module is no longer needed. */

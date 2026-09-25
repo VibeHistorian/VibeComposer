@@ -22,16 +22,8 @@ public class ExtraSettingsGUI {
         JCheckBox makeCheckBox(String label, boolean selected, boolean thick);
         void initHelperPopups(JPanel settingsPanel);
         void markSoundbankRefreshNeeded();
-        void setSnapToTicks(boolean enabled);
-        void repaintMainWindow();
-        List<? extends InstPanel> getInstList(int order);
-        List<InstPanel> getAffectedPanels(int inst);
-        List<DrumPanel> getDrumPanels();
-        JScrollPane getDrumPanelScrollPane();
-        ChordGUI chordGUI();
-        MelodyGUI melodyGUI();
-        ScoreGUI scoreGUI();
-        ItemListener keyChangeTypeSelectionListener();
+        List<InstPanel> getAffectedPanels(int instrument);
+        List<? extends InstPanel> getInstList(int instrument);
     }
 
     public static JPanel extraSettingsPanel;
@@ -91,9 +83,11 @@ public class ExtraSettingsGUI {
     }
 
     private final Context context;
+    private final DrumGUI drumGUI;
 
-    public ExtraSettingsGUI(Context context) {
+    public ExtraSettingsGUI(Context context, DrumGUI drumGUI) {
         this.context = context;
+        this.drumGUI = drumGUI;
     }
 
     public void initExtraSettings() {
@@ -170,8 +164,8 @@ public class ExtraSettingsGUI {
 		initExtraSettingsScore(scoreMidiPanel);
 		initExtraSettingsInstruments(instrumentsSettingsPanel);
 		initExtraSettingsPause(pauseBehaviorPanel);
-		context.chordGUI().initExtraSettingsChords(chordChoicePanel);
-		context.melodyGUI().initExtraSettingsMelody(melodyTweaksPanel);
+		ChordGUI.initExtraSettingsChords(chordChoicePanel);
+		MelodyGUI.initExtraSettingsMelody(melodyTweaksPanel);
 		initExtraSettingsBpm(bpmLowHighPanel);
 		initExtraSettingsDisplay(displayStylePanel);
 		initGenerationSettings(panelGenerationSettingsPanel);
@@ -288,7 +282,7 @@ public class ExtraSettingsGUI {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				context.setSnapToTicks(snapStartToBeat.isSelected());
+				PlaybackState.slider.setSnapToTicks(snapStartToBeat.isSelected());
 			}
 
 		});
@@ -322,7 +316,7 @@ public class ExtraSettingsGUI {
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				context.repaintMainWindow();
+				VibeComposerGUI.vibeComposerGUI.repaint();
 			}
 		});
 
@@ -351,18 +345,18 @@ public class ExtraSettingsGUI {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				for (DrumPanel dp : context.getDrumPanels()) {
+				for (DrumPanel dp : drumGUI.getPanels()) {
 					dp.setVisible(false);
-					((JPanel) context.getDrumPanelScrollPane().getViewport().getView()).remove(dp);
+					((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).remove(dp);
 
 				}
-				List<DrumPanel> sortedDps = new ArrayList<>(context.getDrumPanels());
+				List<DrumPanel> sortedDps = new ArrayList<>(drumGUI.getPanels());
 				Collections.sort(sortedDps, Comparator.comparing(e1 -> e1.getPanelOrder()));
 				for (DrumPanel dp : sortedDps) {
 					if (!DrumGUI.bottomUpReverseDrumPanels.isSelected()) {
-						((JPanel) context.getDrumPanelScrollPane().getViewport().getView()).add(dp);
+						((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp);
 					} else {
-						((JPanel) context.getDrumPanelScrollPane().getViewport().getView()).add(dp, 0);
+						((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp, 0);
 					}
 					dp.setVisible(true);
 				}
@@ -375,7 +369,7 @@ public class ExtraSettingsGUI {
 		displayStylePanel.add(knobControlByDragging);
 		displayStylePanel.add(highlightPatterns);
 		displayStylePanel.add(customFilenameAddTimestamp);
-		context.scoreGUI().initDisplaySettings(displayStylePanel);
+		ScoreGUI.initDisplaySettings(displayStylePanel);
 	}
 
     public void initExtraSettingsHumanize(JPanel humanizationPanel) {
@@ -434,7 +428,7 @@ public class ExtraSettingsGUI {
 		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" }, keyChangeTypeSelection);
 		keyChangeTypeSelection.setVal("TWOFIVEONE");
 		keyChangeTypeSelection.setPreferredSize(new Dimension(250, 30));
-		keyChangeTypeSelection.addItemListener(context.keyChangeTypeSelectionListener());
+		keyChangeTypeSelection.addItemListener(VibeComposerGUI.vibeComposerGUI);
 		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
 		keyChangePanel.add(keyChangeTypeSelection);
 

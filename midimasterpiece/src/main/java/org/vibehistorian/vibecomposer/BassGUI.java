@@ -26,6 +26,7 @@ import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 
@@ -84,14 +85,11 @@ public class BassGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {
-        Dimension getScrollPaneDimension();
         JButton makeButton(String name, Consumer<? super Object> action);
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
-        List<BassPanel> getAffectedBassPanels();
         BassPanel addBassPanel();
-        boolean randomizeInstrumentOnComposeOrGen();
-        void repaintMainWindow();
+        List<InstPanel> getAffectedPanels(int instrument);
     }
 
     /**
@@ -105,7 +103,7 @@ public class BassGUI implements InstrumentGUIControls {
         bassScrollPane = new JScrollPane() {
             @Override
             public Dimension getPreferredSize() {
-                Dimension size = context.getScrollPaneDimension();
+                Dimension size = UITheme.scrollPaneDimension;
                 return new Dimension(size.width, size.height - 100);
             }
         };
@@ -142,14 +140,14 @@ public class BassGUI implements InstrumentGUIControls {
         bassParentPanel = new JPanel() {
             @Override
             public Dimension getPreferredSize() {
-                return context.getScrollPaneDimension();
+                return UITheme.scrollPaneDimension;
             }
         };
         bassParentPanel.setLayout(new BoxLayout(bassParentPanel, BoxLayout.Y_AXIS));
         JPanel borderPanel = new JPanel() {
             @Override
             public Dimension getMaximumSize() {
-                return new Dimension(context.getScrollPaneDimension().width, 100);
+                return new Dimension(UITheme.scrollPaneDimension.width, 100);
             }
         };
         borderPanel.setLayout(new DynamicGridLayout(0, 1));
@@ -170,7 +168,7 @@ public class BassGUI implements InstrumentGUIControls {
     public void createRandomBassPanels(int seed, int panelCount, boolean onlyAdd,
             BassPanel randomizedPanel) {
         ScrollComboBox.discardInteractions();
-        List<BassPanel> affectedBasses = context.getAffectedBassPanels();
+        List<BassPanel> affectedBasses = (List<BassPanel>) (List<?>) context.getAffectedPanels(1);
 
         Random panelGenerator = new Random(seed);
         List<BassPanel> removedPanels = new ArrayList<>();
@@ -205,7 +203,7 @@ public class BassGUI implements InstrumentGUIControls {
                 ip = context.addBassPanel();
                 needNewChannel = true;
             }
-            if (context.randomizeInstrumentOnComposeOrGen()) {
+            if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
                 ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
             }
             int panelOrder = ip.getPanelOrder();
@@ -259,7 +257,7 @@ public class BassGUI implements InstrumentGUIControls {
                 ip.setMidiChannel(9);
             }
         }
-        context.repaintMainWindow();
+        VibeComposerGUI.vibeComposerGUI.repaint();
     }
     
     /**

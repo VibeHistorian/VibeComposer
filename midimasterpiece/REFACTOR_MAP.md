@@ -189,6 +189,7 @@ The remaining static fields on `VibeComposerGUI` are classified here before owne
 - **2.3.4 Playback runtime:** added `PlaybackState` for sequencer, MIDI files, playhead display, timing markers, pause bookkeeping, and note indexing.
 - **2.3.5 Application/session services:** added `ApplicationSessionState` for active config/history, preset/editor session, soundbank, undo managers, console, output streams, and background-task status.
 - **2.3.6 Feature and cross-feature state:** moved macro and seed controls to `GenerationGUI`, and shared solo/mute state to `SoloMuteState`.
+- **2.3 context ownership cleanup:** removed context accessors that only relayed theme, playback, session, generation, chord, or instrument-panel state owned by another module. Call sites now read that owner directly; contexts retain window operations and cross-feature workflows.
 
 ### Phase 2.3 status — complete
 

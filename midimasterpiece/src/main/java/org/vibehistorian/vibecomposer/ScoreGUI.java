@@ -42,18 +42,6 @@ public class ScoreGUI {
 	public static void saveToConfig(GUIConfig gc) { gc.setTranspose(transposeScore.getInt()); }
 	public static void loadFromConfig(GUIConfig gc) { transposeScore.setInt(gc.getTranspose()); }
 
-	private final Context context;
-
-	public ScoreGUI(Context context) {
-		this.context = context;
-	}
-
-	/** Supplies shared window components used by the score tab and popup. */
-	public interface Context {
-		Dimension getScrollPaneDimension();
-		JTabbedPane getInstrumentTabPane();
-	}
-
 	public void initScoreSettings(int startY, int anchorSide) {
 		JPanel scrollableScorePanel = new JPanel();
 		scrollableScorePanel.setLayout(new BoxLayout(scrollableScorePanel, BoxLayout.Y_AXIS));
@@ -61,14 +49,14 @@ public class ScoreGUI {
 		scoreScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return context.getScrollPaneDimension();
+				return UITheme.scrollPaneDimension;
 			}
 		};
 		scoreScrollPane.setViewportView(scrollableScorePanel);
 		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		context.getInstrumentTabPane().addTab("Score", scoreScrollPane);
+		VibeComposerGUI.instrumentTabPane.addTab("Score", scoreScrollPane);
 	}
 
 	public KnobPanel createTransposeControl() {
@@ -87,7 +75,7 @@ public class ScoreGUI {
 		return showScore;
 	}
 
-	public void initDisplaySettings(JPanel displayStylePanel) {
+	public static void initDisplaySettings(JPanel displayStylePanel) {
 		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
 		miniScorePopup = new CustomCheckBox("Mini Score Popup", true);
 		displayStylePanel.add(highlightScoreNotes);
@@ -108,7 +96,7 @@ public class ScoreGUI {
 	}
 
 	public void toggleShowScorePopup() {
-		JTabbedPane instrumentTabPane = context.getInstrumentTabPane();
+		JTabbedPane instrumentTabPane = VibeComposerGUI.instrumentTabPane;
 		if (scorePanel != null) {
 			if (instrumentTabPane.getComponentCount() == 8) {
 				instrumentTabPane.remove(scoreScrollPane);

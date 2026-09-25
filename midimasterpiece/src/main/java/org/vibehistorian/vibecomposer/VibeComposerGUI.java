@@ -34,8 +34,6 @@ import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
@@ -51,7 +49,6 @@ import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.sound.midi.*;
@@ -67,20 +64,32 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.Constants.instNames;
-import static org.vibehistorian.vibecomposer.GUIConstants.*;
-import static org.vibehistorian.vibecomposer.UITheme.*;
-import static org.vibehistorian.vibecomposer.PlaybackState.*;
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
+import static org.vibehistorian.vibecomposer.Constants.instNames;
+import static org.vibehistorian.vibecomposer.GUIConstants.COMPOSE_COLOR;
+import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_HEIGHT;
+import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
 import static org.vibehistorian.vibecomposer.GenerationGUI.*;
-import static org.vibehistorian.vibecomposer.SoloMuteState.*;
+import static org.vibehistorian.vibecomposer.PlaybackState.*;
+import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
+import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
+import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMuters;
+import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated;
+import static org.vibehistorian.vibecomposer.UITheme.*;
 
 // main class
 public class VibeComposerGUI extends JFrame
@@ -210,7 +219,7 @@ JLabel messageLabel;
 
 	public static VibeComposerGUI vibeComposerGUI = null;
 
-	private static GridBagConstraints constraints = new GridBagConstraints();
+	static GridBagConstraints constraints = new GridBagConstraints();
 	private MelodyGUI melodyGUI;
 	private BassGUI bassGUI;
 	private ChordGUI chordGUI;
@@ -262,17 +271,9 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) { return VibeComposerGUI.makeCheckBox(label, selected, thick); }
 			@Override public void initHelperPopups(JPanel settingsPanel) { VibeComposerGUI.this.initHelperPopups(settingsPanel); }
 			@Override public void markSoundbankRefreshNeeded() { needSoundbankRefresh = true; }
-			@Override public void setSnapToTicks(boolean enabled) { slider.setSnapToTicks(enabled); }
-			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
-			@Override public List<? extends InstPanel> getInstList(int order) { return VibeComposerGUI.getInstList(order); }
-			@Override public List<InstPanel> getAffectedPanels(int inst) { return VibeComposerGUI.getAffectedPanels(inst); }
-			@Override public List<DrumPanel> getDrumPanels() { return drumGUI.getPanels(); }
-			@Override public JScrollPane getDrumPanelScrollPane() { return drumGUI.getPanelScrollPane(); }
-			@Override public ChordGUI chordGUI() { return chordGUI; }
-			@Override public MelodyGUI melodyGUI() { return melodyGUI; }
-			@Override public ScoreGUI scoreGUI() { return scoreGUI; }
-			@Override public ItemListener keyChangeTypeSelectionListener() { return VibeComposerGUI.this; }
-		});
+			@Override public List<InstPanel> getAffectedPanels(int instrument) { return VibeComposerGUI.getAffectedPanels(instrument); }
+			@Override public List<? extends InstPanel> getInstList(int instrument) { return VibeComposerGUI.getInstList(instrument); }
+		}, drumGUI);
 		extraSettingsGUI.initExtraSettings();
 	}
 
@@ -295,9 +296,6 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void alignControlPanel() {
 				controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			}
-			@Override public void addToggleableComponent(Component component) {
-				toggleableComponents.add(component);
-			}
 			@Override public void enthickenText(Component component) {
 				VibeComposerGUI.this.enthickenText(component);
 			}
@@ -319,11 +317,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initArrangementGUI() {
 		arrangementGUI = new ArrangementGUI(new ArrangementGUI.Context() {
-			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
-			@Override public JPanel getEverythingPanel() { return everythingPanel; }
-			@Override public GridBagConstraints getConstraints() { return constraints; }
-			@Override public Set<Component> getToggleableComponents() { return toggleableComponents; }
-			@Override public JTabbedPane getInstrumentTabPane() { return instrumentTabPane; }
 			@Override public JButton makeButton(String name, String actionCommand, int width,
 					int height) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand, width, height);
@@ -345,60 +338,21 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void openApplyCustomSectionPopup() {
 				VibeComposerGUI.this.openApplyCustomSectionPopup();
 			}
-			@Override public List<? extends InstPanel> getInstrumentPanels(int instrument) {
-				return VibeComposerGUI.getInstList(instrument);
-			}
-			@Override public JScrollPane getInstrumentPanelScrollPane(int instrument) {
-				return VibeComposerGUI.getInstPane(instrument);
-			}
-			@Override public List<InstPart> getCustomSectionParts(int instrument) {
-				return getInstPartsFromCustomSectionInstPanels(instrument);
-			}
-			@Override public InstPanel makeInstrumentPanel(int instrument) {
-				return InstPanel.makeInstPanel(instrument, VibeComposerGUI.this);
-			}
-			@Override public int getAbsoluteOrder(int instrument, int relativeOrder) {
-				return VibeComposerGUI.getAbsoluteOrder(instrument, relativeOrder);
-			}
 			@Override public void toggleButtonEnabledForPanels() {
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
-			@Override public PhraseNotes getPatternRaw(UsedPattern pattern) {
-				return guiConfig.getPatternRaw(pattern);
+			@Override public List<? extends InstPanel> getInstList(int instrument) {
+				return VibeComposerGUI.getInstList(instrument);
 			}
-			@Override public void showInvalidPatternCopyInfo() {
-				new TemporaryInfoPopup("Invalid pattern for copying!", 1500);
-			}
-			@Override public boolean hasCurrentMidi() { return currentMidi != null; }
-			@Override public void openMidiEditPopup(Section section, int instrument, int panelOrder,
-					int sectionOrder) {
-				currentMidiEditorPopup = new MidiEditPopup(section, instrument, panelOrder);
-				currentMidiEditorPopup.setSec(section);
-				currentMidiEditorSectionIndex = sectionOrder;
-			}
-			@Override public JFrame getMainWindow() { return VibeComposerGUI.this; }
 		});
 	}
 
 	private void initScoreGUI() {
-		scoreGUI = new ScoreGUI(new ScoreGUI.Context() {
-			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
-			@Override public JTabbedPane getInstrumentTabPane() { return instrumentTabPane; }
-		});
+		scoreGUI = new ScoreGUI();
 	}
 
 	private void initMelodyGUI() {
 		melodyGUI = new MelodyGUI(new MelodyGUI.Context() {
-			@Override
-			public Dimension getScrollPaneDimension() {
-				return scrollPaneDimension;
-			}
-
-			@Override
-			public Set<Component> getToggleableComponents() {
-				return toggleableComponents;
-			}
-
 			@Override
 			public JButton makeButton(String name, Consumer<? super Object> action) {
 				return SwingUtils.makeButton(name, action);
@@ -425,49 +379,19 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 
 			@Override
-			public List<? extends InstPanel> getAffectedMelodyPanels() {
-				return getAffectedPanels(0);
-			}
-
-			@Override
 			public MelodyPanel addMelodyPanel() {
 				return (MelodyPanel) VibeComposerGUI.this.addInstPanelToLayout(0);
 			}
-
 			@Override
-			public boolean forceTransposedNotesToScale() {
-				return ExtraSettingsGUI.transposedNotesForceScale.isSelected();
+			public List<InstPanel> getAffectedPanels(int instrument) {
+				return VibeComposerGUI.getAffectedPanels(instrument);
 			}
 
-			@Override
-			public boolean randomizeInstrumentOnComposeOrGen() {
-				return GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
-			}
-
-			@Override
-			public void repaintMainWindow() {
-				VibeComposerGUI.this.repaint();
-			}
-
-			@Override
-			public void setScoreTranspose(int transpose) {
-				ScoreGUI.transposeScore.setInt(transpose);
-			}
-
-			@Override
-			public void setGlobalScaleMode(String mode) {
-				scaleMode.setVal(mode);
-			}
 		});
 	}
 
 	private void initBassGUI() {
 		bassGUI = new BassGUI(new BassGUI.Context() {
-			@Override
-			public Dimension getScrollPaneDimension() {
-				return scrollPaneDimension;
-			}
-
 			@Override
 			public JButton makeButton(String name, Consumer<? super Object> action) {
 				return SwingUtils.makeButton(name, action);
@@ -484,24 +408,14 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 
 			@Override
-			public List<BassPanel> getAffectedBassPanels() {
-				return (List<BassPanel>) (List<?>) getAffectedPanels(1);
-			}
-
-			@Override
 			public BassPanel addBassPanel() {
 				return (BassPanel) VibeComposerGUI.this.addInstPanelToLayout(1);
 			}
-
 			@Override
-			public boolean randomizeInstrumentOnComposeOrGen() {
-				return GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
+			public List<InstPanel> getAffectedPanels(int instrument) {
+				return VibeComposerGUI.getAffectedPanels(instrument);
 			}
 
-			@Override
-			public void repaintMainWindow() {
-				VibeComposerGUI.this.repaint();
-			}
 		});
 	}
 
@@ -509,8 +423,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initDrumGUI() {
 		drumGUI = new DrumGUI(new DrumGUI.Context() {
-			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
-			@Override public Set<Component> getToggleableComponents() { return toggleableComponents; }
 			@Override public JButton makeButton(String name, Consumer<? super Object> action) {
 				return SwingUtils.makeButton(name, action);
 			}
@@ -521,30 +433,18 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void generatePanels(boolean triggerRegenerate) {
 				VibeComposerGUI.this.generatePanels(4, triggerRegenerate);
 			}
-			@Override public List<DrumPanel> getAffectedDrumPanels() {
-				return (List<DrumPanel>) (List<?>) getAffectedPanels(4);
-			}
 			@Override public DrumPanel addDrumPanel() {
 				return (DrumPanel) VibeComposerGUI.this.addInstPanelToLayout(4);
 			}
-			@Override public int getLastRandomSeed() { return lastRandomSeed; }
-			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
+			@Override public List<InstPanel> getAffectedPanels(int instrument) {
+				return VibeComposerGUI.getAffectedPanels(instrument);
+			}
 		});
 	}
 
 
 	private void initArpGUI() {
 		arpGUI = new ArpGUI(new ArpGUI.Context() {
-			@Override
-			public Dimension getScrollPaneDimension() {
-				return scrollPaneDimension;
-			}
-
-			@Override
-			public Set<Component> getToggleableComponents() {
-				return toggleableComponents;
-			}
-
 			@Override
 			public JButton makeButton(String name, Consumer<? super Object> action) {
 				return SwingUtils.makeButton(name, action);
@@ -566,60 +466,24 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 
 			@Override
-			public List<ArpPanel> getAffectedArpPanels() {
-				return (List<ArpPanel>) (List<?>) getAffectedPanels(3);
-			}
-
-			@Override
 			public ArpPanel addArpPanel() {
 				return (ArpPanel) VibeComposerGUI.this.addInstPanelToLayout(3);
 			}
-
 			@Override
-			public JCheckBox getRandomizeInstrumentOnComposeOrGen() {
-				return GenerationGUI.randomizeInstOnComposeOrGen;
+			public List<InstPanel> getAffectedPanels(int instrument) {
+				return VibeComposerGUI.getAffectedPanels(instrument);
+			}
+			@Override
+			public List<? extends InstPanel> getInstList(int instrument) {
+				return VibeComposerGUI.getInstList(instrument);
 			}
 
-			@Override
-			public boolean orderedTransposeGeneration() {
-				return ExtraSettingsGUI.orderedTransposeGeneration.isSelected();
-			}
-
-			@Override
-			public int getRandomFromArray(Random generator, int[] values, int from) {
-				return VibeComposerGUI.getRandomFromArray(generator, values, from);
-			}
-
-			@Override
-			public boolean useShortBeatDuration() {
-				return GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75;
-			}
-
-			@Override
-			public MelodyPanel getFirstMelodyPanel() {
-				return melodyGUI.getPanels().isEmpty() ? null : melodyGUI.getPanels().get(0);
-			}
-
-			@Override
-			public void repaintMainWindow() {
-				VibeComposerGUI.this.repaint();
-			}
 		});
 	}
 
 
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
-			@Override
-			public Dimension getScrollPaneDimension() {
-				return scrollPaneDimension;
-			}
-
-			@Override
-			public Set<Component> getToggleableComponents() {
-				return toggleableComponents;
-			}
-
 			@Override
 			public JButton makeButton(String name, Consumer<? super Object> action) {
 				return SwingUtils.makeButton(name, action);
@@ -641,36 +505,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 
 			@Override
-			public GridBagConstraints getConstraints() {
-				return constraints;
-			}
-
-			@Override
-			public JPanel getControlPanel() {
-				return controlPanel;
-			}
-
-			@Override
-			public JPanel getEverythingPanel() {
-				return everythingPanel;
-			}
-
-			@Override
-			public ItemListener getItemListener() {
-				return VibeComposerGUI.this;
-			}
-
-			@Override
-			public String getScaleMode() {
-				return scaleMode.getVal();
-			}
-
-			@Override
-			public GUIConfig getGuiConfig() {
-				return guiConfig;
-			}
-
-			@Override
 			public void copyGUItoConfig() {
 				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
 			}
@@ -678,11 +512,6 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override
 			public void randomizeUserChords() {
 				VibeComposerGUI.this.randomizeUserChords();
-			}
-
-			@Override
-			public int getMaxChordProgressionLength() {
-				return VibeComposerGUI.this.getMaxChordProgressionLength();
 			}
 
 			@Override
@@ -694,44 +523,14 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 
 			@Override
-			public List<ChordPanel> getAffectedChordPanels() {
-				return (List<ChordPanel>) (List<?>) getAffectedPanels(2);
-			}
-
-			@Override
 			public ChordPanel addChordPanel() {
 				return (ChordPanel) VibeComposerGUI.this.addInstPanelToLayout(2);
 			}
-
 			@Override
-			public boolean randomizeInstrumentOnComposeOrGen() {
-				return GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
+			public List<InstPanel> getAffectedPanels(int instrument) {
+				return VibeComposerGUI.getAffectedPanels(instrument);
 			}
 
-			@Override
-			public boolean orderedTransposeGeneration() {
-				return ExtraSettingsGUI.orderedTransposeGeneration.isSelected();
-			}
-
-			@Override
-			public int getRandomFromArray(Random generator, int[] values, int from) {
-				return VibeComposerGUI.getRandomFromArray(generator, values, from);
-			}
-
-			@Override
-			public Pair<StrumType, Integer> getRandomStrumPair() {
-				return VibeComposerGUI.this.getRandomStrumPair();
-			}
-
-			@Override
-			public boolean useShortBeatDuration() {
-				return GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75;
-			}
-
-			@Override
-			public void repaintMainWindow() {
-				VibeComposerGUI.this.repaint();
-			}
 		});
 	}
 
@@ -1781,7 +1580,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 						if (allowedActionsOnZero == 0) {
 							if (ArrangementGUI.actualArrangement != null && slider.getMaximum() > 0) {
-								String newTime = millisecondsToTimeString(slider.getUpperValue());
+								String newTime = OMNI.millisecondsToTimeString(slider.getUpperValue());
 								if (!newTime.equals(currentTime.getText())) {
 									currentTime.setText(newTime);
 								}
@@ -3313,7 +3112,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 			resetSequencerTickPosition();
 
-			totalTime.setText(microsecondsToTimeString(sequencer.getMicrosecondLength()));
+			totalTime.setText(OMNI.microsecondsToTimeString(sequencer.getMicrosecondLength()));
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
 			slider.setPaintTicks(true);
 			int measureWidth = sliderMeasureWidth();
@@ -3615,18 +3414,6 @@ public static final String CURRENT_VERSION = "2.6";
 		}
 
 	}
-
-	private int getMaxChordProgressionLength() {
-		switch (ChordGUI.chordProgressionLength.getSelectedIndex()) {
-		case 0:
-			return 4;
-		case 1:
-			return 8;
-		default:
-			return 16;
-		}
-	}
-
 
 	private void unapplySolosMutes(boolean onlyIncluded) {
 		if (!sequenceReady()) {
@@ -4006,7 +3793,7 @@ public static final String CURRENT_VERSION = "2.6";
 				|| (isCompose & GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
 			for (InstPanel p : getAffectedPanels(2)) {
 				ChordPanel cp = (ChordPanel) p;
-				Pair<StrumType, Integer> strumPair = getRandomStrumPair();
+				Pair<StrumType, Integer> strumPair = ChordGUI.getRandomStrumPair();
 				cp.setStrum(strumPair.getRight());
 				cp.setStrumType(strumPair.getLeft());
 				if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
@@ -5195,7 +4982,7 @@ public static final String CURRENT_VERSION = "2.6";
 		return parts;
 	}
 
-	private List<InstPart> getInstPartsFromCustomSectionInstPanels(int inst) {
+	static List<InstPart> getInstPartsFromCustomSectionInstPanels(int inst) {
 		JPanel panePanel = ((JPanel) getInstPane(inst).getViewport().getView());
 		List<InstPart> parts = new ArrayList<>();
 		for (Component c : panePanel.getComponents()) {
@@ -5285,14 +5072,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 
 
-
-
-
-
-
-
-
-
 	private static int getValidPanelNumber(List<? extends InstPanel> panels) {
 		panels.sort(Comparator.comparing(e1 -> e1.getPanelOrder()));
 		if (panels.stream().anyMatch(e -> e.getLockInst())) {
@@ -5300,14 +5079,6 @@ public static final String CURRENT_VERSION = "2.6";
 		} else {
 			return getLowestAvailablePanelNumber(panels);
 		}
-	}
-
-	private static int getHighestPanelNumber(List<? extends InstPanel> panels) {
-		int highest = 0;
-		for (InstPanel p : panels) {
-			highest = (p.getPanelOrder() > highest) ? p.getPanelOrder() : highest;
-		}
-		return highest + 1;
 	}
 
 
@@ -5331,77 +5102,13 @@ public static final String CURRENT_VERSION = "2.6";
 				.get();
 	}
 
-	private static int getRandomFromArray(Random generator, int[] array, int from) {
-		return getRandomFromToArray(generator, array, from, array.length);
-	}
-
-	private static int getRandomFromToArray(Random generator, int[] array, int from, int to) {
-		from = Math.max(from, 0);
-		to = Math.min(to, array.length);
-		return array[generator.nextInt(to - from) + from];
-	}
-
-
-	public static String microsecondsToTimeString(long l) {
-		long i = l / 1000000;
-		long m = i / 60;
-		long s = i % 60;
-		String sM = String.valueOf(m);
-		String sS = String.valueOf(s);
-		if (sS.length() < 2)
-			sS = "0" + sS;
-		String v = sM + ":" + sS;
-		return v;
-	}
-
-	public static String millisecondsToTimeString(int l) {
-		long i = l / 1000;
-		long m = i / 60;
-		long s = i % 60;
-		String sM = String.valueOf(m);
-		String sS = String.valueOf(s);
-		if (sS.length() < 2)
-			sS = "0" + sS;
-		String v = sM + ":" + sS;
-		return v;
-	}
-
-	public static String millisecondsToDetailedTimeString(int l) {
-		long i = l / 1000;
-		long m = i / 60;
-		long s = i % 60;
-		String sM = String.valueOf(m);
-		String sS = String.valueOf(s);
-		if (sS.length() < 2)
-			sS = "0" + sS;
-		String v = sM + ":" + sS + "." + (l % 1000);
-		return v;
-	}
-
-	public static long msToTicks(long ms) {
-		if (ms == 0 || sequencer.getSequence() == null)
-			return 0;
-		float fps = sequencer.getSequence().getDivisionType();
-		try {
-			if (fps == Sequence.PPQ)
-				return (long) (ms * sequencer.getTempoInBPM()
-						* sequencer.getSequence().getResolution() / 60000000);
-			else if (fps > Sequence.PPQ)
-				return (long) (ms * fps * sequencer.getSequence().getResolution() / 1000000);
-			else
-				throw new Exception();
-		} catch (Exception e) {
-			return 0;
-		}
-	}
-
 	public static void midiNavigate(long sliderValue) {
 		midiNavigate(sliderValue, 25);
 	}
 
 	public static void midiNavigate(long sliderValue, int offset) {
 		long time = (sliderValue - offset) * 1000;
-		long timeTicks = msToTicks(time);
+		long timeTicks = PlaybackState.msToSequencerTicks(time);
 		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
 			if (time >= 0) {
 				sequencer.setMicrosecondPosition(time);
@@ -5415,65 +5122,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		}
 		flushMidiEvents();
-	}
-
-	public int selectRandomStrumByStruminess() {
-		return singleWeightedSelectFromArray(Constants.MILISECOND_ARRAY_STRUM, ChordGUI.randomChordStruminess.getInt(),
-				1);
-	}
-
-	public Pair<StrumType, Integer> getRandomStrumPair() {
-		StrumType sType = selectTypeByStrumminess(ChordGUI.randomChordStruminess.getInt());
-		Integer strum = MidiUtils.getRandom(new Random(), sType.CHOICES.toArray(new Integer[] {}));
-		return Pair.of(sType, strum);
-	}
-
-	private StrumType selectTypeByStrumminess(int int1) {
-		List<StrumType> types = StrumType.getWeighted(new Random().nextInt(100));
-		StrumType type = types.get(new Random().nextInt(types.size()));
-		return type;
-	}
-
-	public int singleWeightedSelectFromArray(int[] oldArray, int weight, int from) {
-		int[] array = Arrays.copyOfRange(oldArray, from, oldArray.length);
-		//LG.i(("New array: " + Arrays.toString(array)));
-		Random weightGen = new Random();
-		double[] realWeights = new double[array.length];
-		int mid = array.length / 2;
-		for (int i = 0; i < array.length; i++) {
-			realWeights[i] = 1.0 / Double.valueOf(array.length);
-		}
-		double lowMultiplier = 1.0;
-		double highMultiplier = 1.0;
-		// 100 max, 0 min
-		// weight 80 -> multiply high by
-		if (weight > 50) {
-			highMultiplier = 1 + Math.abs(weight - 50) / 100.0;
-			lowMultiplier = 1.0 / highMultiplier;
-		} else {
-			lowMultiplier = 1 + Math.abs(50 - weight) / 100.0;
-			highMultiplier = 1.0 / lowMultiplier;
-		}
-		double totalWeight = 0;
-		for (int i = 0; i < array.length; i++) {
-			double multiplier = ((i < mid) ? lowMultiplier : highMultiplier);
-			realWeights[i] *= Math.pow(multiplier, Math.abs(i - mid));
-			totalWeight += realWeights[i];
-		}
-		double targetWeight = totalWeight * weightGen.nextDouble();
-		//LG.i(("Total: " + totalWeight + ", Target: " + targetWeight));
-		// -> strength of reduction depends on how far from ends
-		totalWeight = 0;
-
-		//LG.i(("New array: " + Arrays.toString(realWeights)));
-		for (int i = 0; i < array.length; i++) {
-			totalWeight += realWeights[i];
-			if (totalWeight >= targetWeight) {
-				return array[i];
-			}
-		}
-		return array[array.length - 1];
-
 	}
 
 	public static int getAbsoluteOrder(int partNum, int partOrder) {
@@ -5639,10 +5287,10 @@ public static final String CURRENT_VERSION = "2.6";
 
 			int startDelayMicroseconds = -5000;
 			MidiEvent noteOn = new MidiEvent(noteOnMsg,
-					startPos + (msToTicks(startDelayMicroseconds)));
+				startPos + (PlaybackState.msToSequencerTicks(startDelayMicroseconds)));
 			trk.add(noteOn);
 			MidiEvent noteOff = new MidiEvent(noteOffMsg,
-					startPos + (msToTicks(startDelayMicroseconds + durationMs * 1000)));
+				startPos + (PlaybackState.msToSequencerTicks(startDelayMicroseconds + durationMs * 1000)));
 			trk.add(noteOff);
 
 			lastPlayedMs = System.currentTimeMillis();

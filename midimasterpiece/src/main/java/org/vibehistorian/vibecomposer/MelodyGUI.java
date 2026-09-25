@@ -212,20 +212,13 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
-		Dimension getScrollPaneDimension();
-		Set<Component> getToggleableComponents();
 		JButton makeButton(String name, Consumer<? super Object> action);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
 		boolean canRegenerateOnChange();
 		void regenerate();
-		List<? extends InstPanel> getAffectedMelodyPanels();
 		MelodyPanel addMelodyPanel();
-		boolean forceTransposedNotesToScale();
-		boolean randomizeInstrumentOnComposeOrGen();
-		void repaintMainWindow();
-		void setScoreTranspose(int transpose);
-		void setGlobalScaleMode(String mode);
+		List<InstPanel> getAffectedPanels(int instrument);
 	}
 
 	public void initMelodyGenSettings(int startY, int anchorSide) {
@@ -236,7 +229,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		melodyScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				Dimension size = context.getScrollPaneDimension();
+				Dimension size = UITheme.scrollPaneDimension;
 				return new Dimension(size.width, size.height - 100);
 			}
 		};
@@ -257,14 +250,14 @@ public class MelodyGUI implements InstrumentGUIControls {
 		melodyParentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
-				return context.getScrollPaneDimension();
+				return UITheme.scrollPaneDimension;
 			}
 		};
 		melodyParentPanel.setLayout(new BoxLayout(melodyParentPanel, BoxLayout.Y_AXIS));
 		JPanel borderPanel = new JPanel() {
 			@Override
 			public Dimension getMaximumSize() {
-				return new Dimension(context.getScrollPaneDimension().width, 150);
+				return new Dimension(UITheme.scrollPaneDimension.width, 150);
 			}
 		};
 		borderPanel.setLayout(new DynamicGridLayout(0, 1));
@@ -275,8 +268,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 		melodyParentPanel.add(borderPanel);
 		melodyParentPanel.add(melodyScrollPane);
 
-		context.getToggleableComponents().add(melodySettingsExtraPanelShape);
-		context.getToggleableComponents().add(melodySettingsExtraPanelBlocksPatternsCompose);
+		UITheme.toggleableComponents.add(melodySettingsExtraPanelShape);
+		UITheme.toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
 	}
 
 	JPanel initMelodySettings() {
@@ -308,7 +301,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 			}
 		});
 		JButton clearUserMelodySeed = context.makeButton("Clear Seeds",
-				e -> context.getAffectedMelodyPanels().forEach(m -> m.setPatternSeed(0)));
+				e -> context.getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
 		randomMelodySameSeed = new CustomCheckBox("Same#", false);
 		randomMelodyOnRegenerate = SwingUtils.makeCheckBox("on Manual Regen.", false, true);
 		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
@@ -329,9 +322,9 @@ public class MelodyGUI implements InstrumentGUIControls {
 				ScaleMode toMode = ScaleMode.valueOf(itemSplit[0]);
 				Mod.transpose(melody, transposeUpBy);
 				MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,
-						ScaleMode.IONIAN.noteAdjustScale, context.forceTransposedNotesToScale());
-				context.setScoreTranspose(transposeUpBy * -1);
-				context.setGlobalScaleMode(toMode.toString());
+				ScaleMode.IONIAN.noteAdjustScale, ExtraSettingsGUI.transposedNotesForceScale.isSelected());
+				ScoreGUI.transposeScore.setInt(transposeUpBy * -1);
+				GenerationGUI.scaleMode.setVal(toMode.toString());
 				MelodyMidiDropPane.userMelody = melody;
 				userMelodyScaleModeSelect.setSelectedIndex(0);
 			}
@@ -469,7 +462,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		return settings;
 	}
 
-	public void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
+	public static void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
 		JPanel blockChoicePanel = new JPanel(new GridLayout(0, 2));
 		melodyBlockChoicePreference = new RandomIntegerListButton("0", null);
 		melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
@@ -545,7 +538,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 	}
 
 	public void randomizeMelodySeeds() {
-		List<? extends InstPanel> affectedPanels = context.getAffectedMelodyPanels();
+		List<? extends InstPanel> affectedPanels = context.getAffectedPanels(0);
 		Random random = new Random();
 		int melodySeed = random.nextInt();
 		affectedPanels.forEach(panel -> panel.setVisible(false));
@@ -573,8 +566,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 	public void createRandomMelodyPanels(int seed, int panelCount, boolean onlyAdd,
 			MelodyPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<MelodyPanel> affectedMelodies = (List<MelodyPanel>) (List<?>) context
-				.getAffectedMelodyPanels();
+		List<MelodyPanel> affectedMelodies = (List<MelodyPanel>) (List<?>) context.getAffectedPanels(0);
 
 		Random panelGenerator = new Random(seed);
 		List<MelodyPanel> removedPanels = new ArrayList<>();
@@ -607,7 +599,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 				panel = context.addMelodyPanel();
 				needNewChannel = true;
 			}
-			if (context.randomizeInstrumentOnComposeOrGen()) {
+			if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
 				panel.setInstrument(panel.getInstrumentBox().getRandomInstrument());
 			}
 
@@ -641,6 +633,6 @@ public class MelodyGUI implements InstrumentGUIControls {
 				panel.setMidiChannel(Constants.TYPICAL_MIDI_CH.get(0).get((panelOrder - 1) % 3));
 			}
 		}
-		context.repaintMainWindow();
+		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 }

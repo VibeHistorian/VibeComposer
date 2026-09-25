@@ -28,6 +28,7 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
@@ -118,16 +119,12 @@ public class DrumGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
-		Dimension getScrollPaneDimension();
-		Set<Component> getToggleableComponents();
 		JButton makeButton(String name, Consumer<? super Object> action);
 		JButton makeButton(String name, String actionCommand);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
-		List<DrumPanel> getAffectedDrumPanels();
 		DrumPanel addDrumPanel();
-		int getLastRandomSeed();
-		void repaintMainWindow();
+		List<InstPanel> getAffectedPanels(int instrument);
 	}
 
 	public void initDrumGenSettings(int startY, int anchorSide) {
@@ -138,7 +135,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		drumScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(context.getScrollPaneDimension().width, context.getScrollPaneDimension().height - 100);
+				return new Dimension(UITheme.scrollPaneDimension.width, UITheme.scrollPaneDimension.height - 100);
 			}
 		};
 		drumScrollPane.setViewportView(scrollableDrumPanels);
@@ -203,7 +200,7 @@ public class DrumGUI implements InstrumentGUIControls {
 
 			@Override
 			public void itemStateChanged(ItemEvent event) {
-				List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) context.getAffectedDrumPanels();
+				List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) context.getAffectedPanels(4);
 				if (event.getStateChange() == ItemEvent.SELECTED) {
 					for (int i = 0; i < affectedDrums.size(); i++) {
 						int newHits = affectedDrums.get(i).getHitsPerPattern();
@@ -271,7 +268,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		drumExtraSettings.add(clearPatternSeeds);
 		drumExtraSettings.add(new PartManagerPanel(4));
 
-		context.getToggleableComponents().add(drumExtraSettings);
+		UITheme.toggleableComponents.add(drumExtraSettings);
 
 		drumsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		drumsPanel.setMaximumSize(new Dimension(1800, 50));
@@ -284,7 +281,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		drumParentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
-				return context.getScrollPaneDimension();
+				return UITheme.scrollPaneDimension;
 			}
 		};
 		drumParentPanel.setLayout(new BoxLayout(drumParentPanel, BoxLayout.Y_AXIS));
@@ -292,7 +289,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		JPanel borderPanel = new JPanel() {
 			@Override
 			public Dimension getMaximumSize() {
-				return new Dimension(context.getScrollPaneDimension().width, 100);
+				return new Dimension(UITheme.scrollPaneDimension.width, 100);
 			}
 		};
 		borderPanel.setLayout(new DynamicGridLayout(0, 1));
@@ -312,7 +309,7 @@ public class DrumGUI implements InstrumentGUIControls {
 	public void createRandomDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) context.getAffectedDrumPanels();
+		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) context.getAffectedPanels(4);
 
 		Random panelGenerator = new Random();
 		List<DrumPanel> removedPanels = new ArrayList<>();
@@ -448,7 +445,7 @@ public class DrumGUI implements InstrumentGUIControls {
 			}
 
 
-			/*DrumPart panelPart = dp.toDrumPart(context.getLastRandomSeed());
+			/*DrumPart panelPart = dp.toDrumPart(GenerationGUI.lastRandomSeed);
 			int[] drumPartArray = displayDrumPart(panelPart, chords, maxPatternPerChord);
 			for (int j = 0; j < drumPartArray.length; j++) {
 				drumHitGrid[j] += drumPartArray[j];
@@ -462,7 +459,7 @@ public class DrumGUI implements InstrumentGUIControls {
 			System.out.print(drumHitGrid[i] + ", ");
 		}*/
 
-		context.repaintMainWindow();
+		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 	private void setupBlueprintedDrum(Random panelGenerator, int slide, int swingPercent,
 			List<Integer> pitches, int panelIndex, DrumPanel ip) {
@@ -470,7 +467,7 @@ public class DrumGUI implements InstrumentGUIControls {
 				!ip.getInstrumentBox().isEnabled() ? ip.getInstrument() : pitches.get(panelIndex));
 		int order = DrumDefaults.getOrder(dpart.getInstrument());
 		DrumSettings settings = DrumDefaults.drumSettings[order];
-		settings.applyToDrumPart(dpart, context.getLastRandomSeed());
+		settings.applyToDrumPart(dpart, GenerationGUI.lastRandomSeed);
 
 
 		dpart.setOrder(ip.getPanelOrder());

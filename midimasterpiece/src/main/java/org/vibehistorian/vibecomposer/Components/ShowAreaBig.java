@@ -622,7 +622,7 @@ public class ShowAreaBig extends JComponent {
 						int scrollPaneDim = UITheme.scrollPaneDimension.height < 500 ? 400 : 600;
 						int pos = viewPoint.y + scrollPaneDim * 4 / 5;
 						//LG.i(pos);
-						g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseLoc.x + 10, Math.min(areaHeight - 5, pos));
+						g.drawString(OMNI.millisecondsToDetailedTimeString(timePos), mouseLoc.x + 10, Math.min(areaHeight - 5, pos));
 					}
 				}
 			}

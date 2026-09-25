@@ -19,7 +19,6 @@ public class GenerationGUI {
         JCheckBox makeCheckBox(String label, boolean selected, boolean thick);
         void addControlPanel(JPanel panel, int startY, int anchorSide);
         void alignControlPanel();
-        void addToggleableComponent(Component component);
         void enthickenText(Component component);
         void randomizeBpm();
         void randomizeTranspose(boolean currentTabOnly);
@@ -133,9 +132,9 @@ public class GenerationGUI {
         sidechainPanel.add(sidechainPatternsTab);
         randomButtonsPanel.add(sidechainPanel);
 
-        context.addToggleableComponent(randomizeStrums);
-        context.addToggleableComponent(sidechainPanel);
-        context.addToggleableComponent(transposePanel);
+        UITheme.toggleableComponents.add(randomizeStrums);
+        UITheme.toggleableComponents.add(sidechainPanel);
+        UITheme.toggleableComponents.add(transposePanel);
         context.alignControlPanel();
         context.addControlPanel(randomButtonsPanel, startY, anchorSide);
     }

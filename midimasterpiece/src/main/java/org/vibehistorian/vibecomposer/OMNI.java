@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
@@ -166,5 +167,48 @@ public class OMNI {
 			return Pitches.REST;
 		}
 		return clamp(newPitch, 0, 127);
+	}
+
+	public static int getRandomFromArray(Random generator, int[] array, int from) {
+		return getRandomFromToArray(generator, array, from, array.length);
+	}
+
+	public static int getRandomFromToArray(Random generator, int[] array, int from, int to) {
+		from = Math.max(from, 0);
+		to = Math.min(to, array.length);
+		return array[generator.nextInt(to - from) + from];
+	}
+
+	public static String microsecondsToTimeString(long l) {
+		long i = l / 1000000;
+		long m = i / 60;
+		long s = i % 60;
+		String sM = String.valueOf(m);
+		String sS = String.valueOf(s);
+		if (sS.length() < 2)
+			sS = "0" + sS;
+		return sM + ":" + sS;
+	}
+
+	public static String millisecondsToTimeString(int l) {
+		long i = l / 1000;
+		long m = i / 60;
+		long s = i % 60;
+		String sM = String.valueOf(m);
+		String sS = String.valueOf(s);
+		if (sS.length() < 2)
+			sS = "0" + sS;
+		return sM + ":" + sS;
+	}
+
+	public static String millisecondsToDetailedTimeString(int l) {
+		long i = l / 1000;
+		long m = i / 60;
+		long s = i % 60;
+		String sM = String.valueOf(m);
+		String sS = String.valueOf(s);
+		if (sS.length() < 2)
+			sS = "0" + sS;
+		return sM + ":" + sS + "." + (l % 1000);
 	}
 }

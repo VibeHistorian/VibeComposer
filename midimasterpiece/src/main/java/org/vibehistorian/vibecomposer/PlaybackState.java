@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.sound.midi.MidiEvent;
+import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -44,6 +45,23 @@ public final class PlaybackState {
 	static int startBeatCounter;
 	public static double currentBeatMultiplier = 1.0;
 	public static long lastPlayedMs;
+
+	public static long msToSequencerTicks(long ms) {
+		if (ms == 0 || sequencer == null || sequencer.getSequence() == null)
+			return 0;
+		float fps = sequencer.getSequence().getDivisionType();
+		try {
+			if (fps == Sequence.PPQ)
+				return (long) (ms * sequencer.getTempoInBPM()
+						* sequencer.getSequence().getResolution() / 60000000);
+			else if (fps > Sequence.PPQ)
+				return (long) (ms * fps * sequencer.getSequence().getResolution() / 1000000);
+			else
+				throw new Exception();
+		} catch (Exception e) {
+			return 0;
+		}
+	}
 
 	public static int getNextNoteIndex(int part, int partOrder) {
 		String key = part + "#" + partOrder;
