@@ -495,17 +495,12 @@ public static final String CURRENT_VERSION = "2.6";
 				currentMidiEditorPopup.setSec(section);
 				currentMidiEditorSectionIndex = sectionOrder;
 			}
-			@Override public void arrangementTableProcessSectionType(Component component,
-					String value) {
-				VibeComposerGUI.this.arrangementTableProcessSectionType(component, value);
+			@Override public Color getPanelColorLow() { return VibeComposerGUI.panelColorLow; }
+			@Override public List<Image> getSectionVariationIcons() {
+				return SECTION_VARIATIONS_ICONS;
 			}
-			@Override public void arrangementTableProcessComponent(Component component, int row,
-					int column, String value, int[] maxCounts, boolean actual) {
-				VibeComposerGUI.this.arrangementTableProcessComponent(component, row, column,
-						value, maxCounts, actual);
-			}
-			@Override public void refreshVariationPopupButtons(int count) {
-				VibeComposerGUI.this.refreshVariationPopupButtons(count);
+			@Override public List<Image> getSectionTransitionIcons() {
+				return SECTION_TRANSITION_ICONS;
 			}
 			@Override public JFrame getMainWindow() { return VibeComposerGUI.this; }
 		});
@@ -1608,171 +1603,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 
 
-	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
-		int typeOffset = Section.getTypeMelodyOffset(valueAt);
-		comp.setBackground(new Color(100 + 15 * typeOffset, 150, 150));
-	}
-
-	private void arrangementTableProcessComponent(Component comp, int row, int col, String value,
-			int[] maxCounts, boolean actual) {
-		if (row >= 2) {
-
-			// 2,3,4,5,6 -> melody, bass, chord, arp, drum counts
-			//LG.d("Comp class: " + comp.getClass());
-			if (value.isEmpty() || value.equalsIgnoreCase("*")) {
-				comp.setBackground(panelColorLow.darker());
-			} else {
-				int count = (actual) ? (StringUtils.countMatches(value, ",") + 1)
-						: Integer.valueOf(value);
-				int color = 0;
-				if (isDarkMode) {
-					color = ArrangementGUI.arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];
-					color = Math.min(color, 170);
-				} else {
-					color = ArrangementGUI.arrangementLightModeHighestColor - (70 * count) / maxCounts[row];
-					color = Math.max(color, 130);
-				}
-
-				int extraRed = 0;
-				if (actual && ArrangementGUI.actualArrangement.getSections().size() > col) {
-					double remaining = 255 - color - 1;
-					extraRed += ArrangementGUI.actualArrangement.getSections().get(col)
-							.countVariationsForPartType(row - 2) * remaining;
-					extraRed = Math.min(255 - color - 1, extraRed);
-				}
-
-				comp.setBackground(new Color(color + extraRed, color, color));
-			}
-		} else {
-			comp.setBackground(new Color(100, 150, 150));
-		}
-	}
-
-
-
-	private void refreshVariationPopupButtons(int count) {
-		/*if (count == variationButtonsPanel.getComponents().length) {
-			return;
-		}*/
-		ArrangementGUI.variationButtonsPanel.removeAll();
-		for (int i = 0; i < count; i++) {
-			int fI = i;
-			JButton butt = new JButton("Edit " + (i + 1)) {
-				private static final long serialVersionUID = -374920351085418730L;
-
-				@Override
-				public void paintComponent(Graphics guh) {
-					super.paintComponent(guh);
-					if (ArrangementGUI.actualArrangement != null) {
-						if (ArrangementGUI.actualArrangement.getSections() != null
-								&& fI < ArrangementGUI.actualArrangement.getSections().size()) {
-							if (guh instanceof Graphics2D) {
-								Graphics2D g = (Graphics2D) guh;
-								Section sec = ArrangementGUI.actualArrangement.getSections().get(fI);
-								List<Integer> sectionVars = sec.getSectionVariations();
-								if (sectionVars == null) {
-									sectionVars = Section.EMPTY_SECTION_VARS;
-								}
-								int xsizeForIcon = Math.max(16,
-										((this.getWidth() / Section.sectionVariationNames.length)
-												- 2));
-								int currentX = 8;
-								for (int j = 0; j < (Section.sectionVariationNames.length + 1)
-										/ 2; j++) {
-									// in case of swap chords, behave same as custom chords
-									if (sectionVars.get(j) > 0
-											|| (j == 1 && sec.isCustomChordsEnabled())) {
-										g.drawImage(SECTION_VARIATIONS_ICONS.get(j), currentX, 6,
-												this);
-									}
-									currentX += xsizeForIcon + 2;
-								}
-								if (sec.getTransitionType() > 0) {
-									g.drawImage(
-											SECTION_TRANSITION_ICONS
-													.get(sec.getTransitionType() - 1),
-											this.getWidth() - 18, 6, this);
-								}
-
-								currentX = 8;
-								for (int j = (Section.sectionVariationNames.length + 1)
-										/ 2; j < Section.sectionVariationNames.length; j++) {
-									if (sectionVars.get(j) > 0) {
-										g.drawImage(SECTION_VARIATIONS_ICONS.get(j), currentX,
-												this.getHeight() * 3 / 4 - 6, this);
-									}
-									currentX += xsizeForIcon + 2;
-								}
-							}
-						}
-
-					}
-
-				}
-			};
-			butt.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					ArrangementGUI.arrangementGUI.openVariationPopup(fI + 1);
-
-				}
-			});
-
-			int width = Math.max(TABLE_COLUMN_MIN_WIDTH,
-					(scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth) / count);
-			butt.setPreferredSize(new Dimension(width, 50));
-			butt.addMouseListener(new MouseAdapter() {
-				@Override
-				public void mousePressed(MouseEvent evt) {
-					if (SwingUtilities.isMiddleMouseButton(evt)) {
-						ArrangementGUI.actualArrangement.getSections().get(fI)
-								.setSectionVariations(new ArrayList<>());
-						recolorVariationPopupButton(butt, ArrangementGUI.actualArrangement.getSections().get(fI));
-					}
-				}
-			});
-			recolorVariationPopupButton(butt, ArrangementGUI.actualArrangement.getSections().get(i));
-			ArrangementGUI.variationButtonsPanel.add(butt);
-		}
-	}
-
-	public static void recolorAllVariationButtons() {
-		for (Component c : ArrangementGUI.variationButtonsPanel.getComponents()) {
-			if (c instanceof JButton) {
-				JButton butt = (JButton) c;
-				int secOrder = Integer.valueOf(butt.getText().split(" ")[1]);
-				Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder - 1);
-				recolorVariationPopupButton(butt, sec);
-			}
-		}
-	}
-
-	public static void recolorVariationPopupButton(JButton butt, Section sec) {
-		int count = (sec.getSectionVariations() != null)
-				? (int) sec.getSectionVariations().stream().filter(e -> e > 0).count()
-				: 0;
-		count += (sec.isTransition() ? 1 : 0);
-		count += (sec.isCustomChordsEnabled() ? 1 : 0);
-		int color = 0;
-		int total = Section.sectionVariationNames.length + 1;
-		if (isDarkMode) {
-			color = ArrangementGUI.arrangementDarkModeLowestColor + (35 * count) / total;
-			color = Math.min(color, 135);
-		} else {
-			color = ArrangementGUI.arrangementLightModeHighestColor - (70 * count) / total;
-			color = Math.max(color, 130);
-		}
-
-		double extraRed = 0;
-		double remaining = 255 - color - 1;
-		extraRed = Math.min(remaining, (count * remaining) / (double) total);
-
-		butt.setBackground(new Color(color + (int) (extraRed / 2), color, color));
-		butt.repaint();
-	}
-
-
-
 	private void randomizeTranspose(boolean currentTabOnly) {
 		int currentTab = instrumentTabPane.getSelectedIndex();
 		if (currentTabOnly && currentTab >= 4) {
@@ -2853,7 +2683,8 @@ public static final String CURRENT_VERSION = "2.6";
 		for (DrumPanel dp : drumGUI.getPanels()) {
 			dp.getComboPanel().reapplyHits();
 		}
-		refreshVariationPopupButtons(ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
+		ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
+				ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
 		pack();
 	}
 
@@ -2980,7 +2811,8 @@ public static final String CURRENT_VERSION = "2.6";
 			int fI = i;
 			getAffectedPanels(i).forEach(e -> e.setBackground(OMNI.alphen(Constants.instColors[fI], 60)));
 		}
-		refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
+		ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
+				ArrangementGUI.actualArrangement.getSections().size());
 
 		//switchFullMode(isDarkMode);
 
@@ -3578,7 +3410,8 @@ public static final String CURRENT_VERSION = "2.6";
 			} else {
 				ArrangementGUI.arrSection.setSelectedIndex(0);
 			}
-			refreshVariationPopupButtons(ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
+			ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
+					ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
 			ArrangementGUI.arrSection.getButtons().forEach(e -> e.repaint());
 			ArrangementGUI.arrSection.repaint();
 		});
@@ -5640,7 +5473,8 @@ public static final String CURRENT_VERSION = "2.6";
 		ArrangementGUI.scrollableArrangementTable.setModel(ArrangementGUI.arrangement.convertToTableModel());
 		ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
 		//arrSection.setSelectedIndex(0);
-		refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
+		ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
+				ArrangementGUI.actualArrangement.getSections().size());
 
 		ArrangementGUI.arrangementVariationChance.setInt(gc.getArrangementVariationChance());
 		ArrangementGUI.arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
@@ -6208,22 +6042,6 @@ public static final String CURRENT_VERSION = "2.6";
 		int measure = calculateSectionMeasureStart(sectIndex);
 		int startSliderVal = sliderMeasureStartTimes.get(measure);
 		setSliderStart(startSliderVal);
-	}
-
-	public static void recolorVariationPopupButton(int sectionOrder) {
-		if (ArrangementGUI.actualArrangement == null || sectionOrder - 1 >= ArrangementGUI.actualArrangement.getSections().size())
-			return;
-
-		for (Component c : ArrangementGUI.variationButtonsPanel.getComponents()) {
-			if (c instanceof JButton) {
-				JButton cbutt = (JButton) c;
-				if (cbutt.getText().equals("Edit " + sectionOrder)) {
-					VibeComposerGUI.recolorVariationPopupButton(cbutt,
-							ArrangementGUI.actualArrangement.getSections().get(sectionOrder - 1));
-					break;
-				}
-			}
-		}
 	}
 
 	public static List<? extends InstPanel> sortPanels(List<? extends InstPanel> panels) {

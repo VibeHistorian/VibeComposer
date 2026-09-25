@@ -20,6 +20,7 @@ see <https://www.gnu.org/licenses/>.
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
@@ -138,10 +139,9 @@ public class ArrangementGUI {
 		boolean hasCurrentMidi();
 		void openMidiEditPopup(Section section, int instrument, int panelOrder,
 				int sectionOrder);
-		void arrangementTableProcessSectionType(Component component, String value);
-		void arrangementTableProcessComponent(Component component, int row, int column,
-				String value, int[] maxCounts, boolean actual);
-		void refreshVariationPopupButtons(int count);
+		Color getPanelColorLow();
+		List<Image> getSectionVariationIcons();
+		List<Image> getSectionTransitionIcons();
 		JFrame getMainWindow();
 	}
 
@@ -442,7 +442,7 @@ public class ArrangementGUI {
 			}
 		}
 		setActualModel(actualArrangement.convertToActualTableModel(), false);
-		context.refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons(actualArrangement.getSections().size());
 		manualArrangement.setSelected(true);
 		manualArrangement.repaint();
 		scrollableArrangementActualTable.repaint();
@@ -473,7 +473,7 @@ public class ArrangementGUI {
 			section.setPresence(instrument, target.getMiddle());
 		notes.setApplied(true);
 		setActualModel(actualArrangement.convertToActualTableModel(), false);
-		context.refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons(actualArrangement.getSections().size());
 		manualArrangement.setSelected(true);
 		manualArrangement.repaint();
 		scrollableArrangementActualTable.repaint();
@@ -484,6 +484,146 @@ public class ArrangementGUI {
 		copyDraggedPattern = null;
 		copyDraggingOrigin = null;
 		scrollableArrangementActualTable.repaint();
+	}
+
+	protected void arrangementTableProcessSectionType(Component component, String value) {
+		int typeOffset = Section.getTypeMelodyOffset(value);
+		component.setBackground(new Color(100 + 15 * typeOffset, 150, 150));
+	}
+
+	private void arrangementTableProcessComponent(Component component, int row, int column,
+			String value, int[] maxCounts, boolean actual) {
+		if (row < 2) {
+			component.setBackground(new Color(100, 150, 150));
+			return;
+		}
+		if (value.isEmpty() || value.equalsIgnoreCase("*")) {
+			component.setBackground(context.getPanelColorLow().darker());
+			return;
+		}
+		int count = actual ? StringUtils.countMatches(value, ",") + 1 : Integer.valueOf(value);
+		int color;
+		if (context.isDarkMode()) {
+			color = arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];
+			color = Math.min(color, 170);
+		} else {
+			color = arrangementLightModeHighestColor - (70 * count) / maxCounts[row];
+			color = Math.max(color, 130);
+		}
+		int extraRed = 0;
+		if (actual && actualArrangement.getSections().size() > column) {
+			double remaining = 255 - color - 1;
+			extraRed += actualArrangement.getSections().get(column)
+					.countVariationsForPartType(row - 2) * remaining;
+			extraRed = Math.min(255 - color - 1, extraRed);
+		}
+		component.setBackground(new Color(color + extraRed, color, color));
+	}
+
+	public void refreshVariationPopupButtons(int count) {
+		variationButtonsPanel.removeAll();
+		for (int i = 0; i < count; i++) {
+			int sectionIndex = i;
+			JButton button = new JButton("Edit " + (i + 1)) {
+				private static final long serialVersionUID = -374920351085418730L;
+
+				@Override public void paintComponent(Graphics graphics) {
+					super.paintComponent(graphics);
+					if (actualArrangement == null || actualArrangement.getSections() == null
+							|| sectionIndex >= actualArrangement.getSections().size()
+							|| !(graphics instanceof Graphics2D)) return;
+					Graphics2D g = (Graphics2D) graphics;
+					Section section = actualArrangement.getSections().get(sectionIndex);
+					List<Integer> sectionVars = section.getSectionVariations();
+					if (sectionVars == null) sectionVars = Section.EMPTY_SECTION_VARS;
+					int xsizeForIcon = Math.max(16,
+							(this.getWidth() / Section.sectionVariationNames.length) - 2);
+					int currentX = 8;
+					for (int j = 0; j < (Section.sectionVariationNames.length + 1) / 2; j++) {
+						if (sectionVars.get(j) > 0 || (j == 1 && section.isCustomChordsEnabled())) {
+							g.drawImage(context.getSectionVariationIcons().get(j), currentX, 6, this);
+						}
+						currentX += xsizeForIcon + 2;
+					}
+					if (section.getTransitionType() > 0) {
+						g.drawImage(context.getSectionTransitionIcons()
+								.get(section.getTransitionType() - 1), this.getWidth() - 18, 6, this);
+					}
+					currentX = 8;
+					for (int j = (Section.sectionVariationNames.length + 1) / 2;
+							j < Section.sectionVariationNames.length; j++) {
+						if (sectionVars.get(j) > 0) {
+							g.drawImage(context.getSectionVariationIcons().get(j), currentX,
+									this.getHeight() * 3 / 4 - 6, this);
+						}
+						currentX += xsizeForIcon + 2;
+					}
+				}
+			};
+			button.addActionListener(e -> openVariationPopup(sectionIndex + 1));
+			int width = Math.max(context.getTableColumnMinWidth(),
+					(context.getScrollPaneDimension().width - arrangementRowHeaderWidth) / count);
+			button.setPreferredSize(new Dimension(width, 50));
+			button.addMouseListener(new MouseAdapter() {
+				@Override public void mousePressed(MouseEvent event) {
+					if (SwingUtilities.isMiddleMouseButton(event)) {
+						actualArrangement.getSections().get(sectionIndex)
+								.setSectionVariations(new ArrayList<>());
+						recolorVariationPopupButton(button,
+								actualArrangement.getSections().get(sectionIndex));
+					}
+				}
+			});
+			recolorVariationPopupButton(button, actualArrangement.getSections().get(i));
+			variationButtonsPanel.add(button);
+		}
+	}
+
+	public void recolorAllVariationButtons() {
+		for (Component component : variationButtonsPanel.getComponents()) {
+			if (component instanceof JButton) {
+				JButton button = (JButton) component;
+				int sectionOrder = Integer.valueOf(button.getText().split(" ")[1]);
+				Section section = actualArrangement.getSections().get(sectionOrder - 1);
+				recolorVariationPopupButton(button, section);
+			}
+		}
+	}
+
+	public void recolorVariationPopupButton(int sectionOrder) {
+		if (actualArrangement == null
+				|| sectionOrder - 1 >= actualArrangement.getSections().size()) return;
+		for (Component component : variationButtonsPanel.getComponents()) {
+			if (component instanceof JButton) {
+				JButton button = (JButton) component;
+				if (button.getText().equals("Edit " + sectionOrder)) {
+					recolorVariationPopupButton(button,
+							actualArrangement.getSections().get(sectionOrder - 1));
+					break;
+				}
+			}
+		}
+	}
+
+	private void recolorVariationPopupButton(JButton button, Section section) {
+		int count = section.getSectionVariations() != null
+				? (int) section.getSectionVariations().stream().filter(value -> value > 0).count()
+				: 0;
+		count += section.isTransition() ? 1 : 0;
+		count += section.isCustomChordsEnabled() ? 1 : 0;
+		int color;
+		int total = Section.sectionVariationNames.length + 1;
+		if (context.isDarkMode()) {
+			color = arrangementDarkModeLowestColor + (35 * count) / total;
+			color = Math.min(color, 135);
+		} else {
+			color = arrangementLightModeHighestColor - (70 * count) / total;
+			color = Math.max(color, 130);
+		}
+		double remaining = 255 - color - 1;
+		double extraRed = Math.min(remaining, (count * remaining) / (double) total);
+		button.setBackground(new Color(color + (int) (extraRed / 2), color, color));
+		button.repaint();
 	}
 
 	public void initArrangementSettings(int startY, int anchorSide) {
@@ -622,7 +762,7 @@ public class ArrangementGUI {
 						: ArrangementGUI.arrangementLightModeText);
 				if (getModel().getColumnCount() <= col) return comp;
 				if (row == 0) {
-					context.arrangementTableProcessSectionType(comp,
+					arrangementTableProcessSectionType(comp,
 							(String) getModel().getValueAt(row, col));
 					return comp;
 				}
@@ -641,7 +781,7 @@ public class ArrangementGUI {
 					value = 0;
 					getModel().setValueAt(value, row, col);
 				}
-				context.arrangementTableProcessComponent(comp, row, col, String.valueOf(value),
+				arrangementTableProcessComponent(comp, row, col, String.valueOf(value),
 						new int[] { 0, 0, 100, 100, 100, 100, 100 }, false);
 				return comp;
 			}
@@ -716,7 +856,7 @@ public class ArrangementGUI {
 						: ArrangementGUI.arrangementLightModeText);
 				if (value == null || getModel().getColumnCount() <= col) return comp;
 				if (row == 0) {
-					context.arrangementTableProcessSectionType(comp,
+					arrangementTableProcessSectionType(comp,
 							(String) getModel().getValueAt(row, col));
 					return comp;
 				}
@@ -800,7 +940,7 @@ public class ArrangementGUI {
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable.getTableHeader());
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable);
 		ArrangementGUI.variationButtonsPanel = new JPanel();
-		context.refreshVariationPopupButtons(1);
+		refreshVariationPopupButtons(1);
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.variationButtonsPanel);
 		ArrangementGUI.arrangementActualScrollPane.setViewportView(ArrangementGUI.actualArrangementCombinedPanel);
 		context.getInstrumentTabPane().addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
@@ -982,7 +1122,7 @@ public class ArrangementGUI {
 				arrSection.setSelectedIndexWithProperty(index, true);
 			}
 			arrSection.repaint();
-			context.refreshVariationPopupButtons(actualArrangement.getSections().size());
+			refreshVariationPopupButtons(actualArrangement.getSections().size());
 		}
 		if (checkManual) {
 			manualArrangement.setSelected(true);

@@ -269,7 +269,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setCustomChordsEnabled(userChordsEnabled.isSelected());
-				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+				ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 		});
@@ -296,7 +296,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
-				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+				ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 		});
@@ -342,7 +342,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setTransitionType(transitionBox.getSelectedIndex());
-				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+				ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
 			}
 		});
 		transitionPanel.add(new JLabel("Transition Type "));
@@ -452,7 +452,7 @@ public class VariationPopup {
 					if (index == 1) {
 						sec.setDisplayAlternateChords(sectionVar.isSelected());
 					}
-					VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+					ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
 				}
 
 			});
@@ -485,7 +485,7 @@ public class VariationPopup {
 				sectionObject.setInstVelocityMultiplier(instVolumes);
 				ArrangementGUI.arrangementGUI.setActualModel(
 						ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
-				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
+					ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
 			}
 
 			@Override
