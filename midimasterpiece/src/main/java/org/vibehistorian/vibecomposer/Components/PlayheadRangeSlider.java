@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ScoreGUI;
+
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class PlayheadRangeSlider extends RangeSlider {
@@ -12,8 +14,8 @@ public class PlayheadRangeSlider extends RangeSlider {
 		VibeComposerGUI.isDragging = upperDragging;
 		if (VibeComposerGUI.instrumentTabPane.getTabCount() < 8
 				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
-			if (VibeComposerGUI.scorePanel != null) {
-				VibeComposerGUI.scorePanel.repaintMinimum();
+			if (ScoreGUI.scorePanel != null) {
+				ScoreGUI.scorePanel.repaintMinimum();
 			}
 		}
 
@@ -28,8 +30,8 @@ public class PlayheadRangeSlider extends RangeSlider {
 		super.setUpperValue(value);
 		if ((VibeComposerGUI.instrumentTabPane.getTabCount() < 8
 				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7)
-				&& VibeComposerGUI.highlightScoreNotes.isSelected()) {
-			VibeComposerGUI.scorePanel.repaintMinimum();
+				&& ScoreGUI.highlightScoreNotes.isSelected()) {
+			ScoreGUI.scorePanel.repaintMinimum();
 		}
 	}
 }

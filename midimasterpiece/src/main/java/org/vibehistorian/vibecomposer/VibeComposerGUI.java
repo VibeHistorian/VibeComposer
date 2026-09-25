@@ -245,8 +245,8 @@ public class VibeComposerGUI extends JFrame
 			instrumentTabUndoManager.saveToHistory(instrumentTabPane);
 		}
 	};
-	public static JScrollPane scoreScrollPane;
-	public static ShowPanelBig scorePanel;
+	@Deprecated public static JScrollPane __scoreScrollPane;
+	@Deprecated public static ShowPanelBig __scorePanel;
 	public static final int DEFAULT_WIDTH = 1600;
 	public static final int DEFAULT_HEIGHT = 400;
 	public static Dimension scrollPaneDimension = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -495,7 +495,7 @@ public class VibeComposerGUI extends JFrame
 	public static KnobPanel bpmLow;
 	public static KnobPanel bpmHigh;
 	public static KnobPanel stretchMidi;
-	public static KnobPanel transposeScore;
+	@Deprecated public static KnobPanel __transposeScore;
 	JButton switchOnComposeRandom;
 	JButton sidechainPatterns;
 	JButton sidechainPatternsTab;
@@ -526,8 +526,8 @@ public class VibeComposerGUI extends JFrame
 		return noteIndex;
 	}
 
-	public static JButton showScore;
-	public static ShowScorePopup scorePopup;
+	@Deprecated public static JButton __showScore;
+	@Deprecated public static ShowScorePopup __scorePopup;
 	CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	MidiHandler mh = new MidiHandler();
@@ -617,6 +617,7 @@ public class VibeComposerGUI extends JFrame
 	private BassGUI bassGUI;
 	private ChordGUI chordGUI;
 	private ArpGUI arpGUI;
+	private ScoreGUI scoreGUI;
 
 	public static JPanel extraSettingsPanel;
 	public static JPanel currentSettingsMenuPanel = null;
@@ -625,9 +626,9 @@ public class VibeComposerGUI extends JFrame
 	public static JCheckBox displayVeloRectValues;
 	public static JCheckBox knobControlByDragging;
 	public static JCheckBox highlightPatterns;
-	public static JCheckBox highlightScoreNotes;
+	@Deprecated public static JCheckBox __highlightScoreNotes;
 	public static JCheckBox customFilenameAddTimestamp;
-	public static JCheckBox miniScorePopup;
+	@Deprecated public static JCheckBox __miniScorePopup;
 
 	public static final String CURRENT_VERSION = "2.6";
 
@@ -724,6 +725,13 @@ public class VibeComposerGUI extends JFrame
 		});
 	}
 
+	private void initScoreGUI() {
+		scoreGUI = new ScoreGUI(new ScoreGUI.Context() {
+			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
+			@Override public JTabbedPane getInstrumentTabPane() { return instrumentTabPane; }
+		});
+	}
+
 	private void initMelodyGUI() {
 		melodyGUI = new MelodyGUI(new MelodyGUI.Context() {
 			@Override
@@ -813,7 +821,7 @@ public class VibeComposerGUI extends JFrame
 
 			@Override
 			public void setScoreTranspose(int transpose) {
-				transposeScore.setInt(transpose);
+				ScoreGUI.transposeScore.setInt(transpose);
 			}
 
 			@Override
@@ -1269,6 +1277,7 @@ public class VibeComposerGUI extends JFrame
 		initDrumGUI();
 		initChordGUI();
 		initArrangementGUI();
+		initScoreGUI();
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
 
@@ -1440,7 +1449,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
 		LG.i("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
-		initScoreSettings(330, GridBagConstraints.CENTER);
+		scoreGUI.initScoreSettings(330, GridBagConstraints.CENTER);
 		LG.i("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		//createHorizontalSeparator(327, this);
 
@@ -2117,9 +2126,7 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 		displayVeloRectValues = new CustomCheckBox("Display Bar Values", true);
 		knobControlByDragging = new CustomCheckBox("Knob Up-Down Control", false);
 		highlightPatterns = new CustomCheckBox("Highlight Sequencer Pattern (-Perf)", true);
-		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
 		customFilenameAddTimestamp = new CustomCheckBox("Add Timestamp To Custom Filenames", false);
-		miniScorePopup = new CustomCheckBox("Mini Score Popup", true);
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -2175,9 +2182,8 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 		displayStylePanel.add(displayVeloRectValues);
 		displayStylePanel.add(knobControlByDragging);
 		displayStylePanel.add(highlightPatterns);
-		displayStylePanel.add(highlightScoreNotes);
 		displayStylePanel.add(customFilenameAddTimestamp);
-		displayStylePanel.add(miniScorePopup);
+		scoreGUI.initDisplaySettings(displayStylePanel);
 	}
 
 	private static void initExtraSettingsHumanize(JPanel humanizationPanel) {
@@ -3759,35 +3765,36 @@ private void __initChords(int startY, int anchorSide) {
 		}
 	}
 
-	private void initScoreSettings(int startY, int anchorSide) {
+	@Deprecated
+	private void __initScoreSettings(int startY, int anchorSide) {
 		JPanel scrollableScorePanel = new JPanel();
 		scrollableScorePanel.setLayout(new BoxLayout(scrollableScorePanel, BoxLayout.Y_AXIS));
 		scrollableScorePanel.setAutoscrolls(true);
-		scoreScrollPane = new JScrollPane() {
+		ScoreGUI.scoreScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				return scrollPaneDimension;
 			}
 		};
-		scoreScrollPane.setViewportView(scrollableScorePanel);
+		ScoreGUI.scoreScrollPane.setViewportView(scrollableScorePanel);
 
-		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		/*scoreScrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+		ScoreGUI.scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+		ScoreGUI.scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		ScoreGUI.scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		/*ScoreGUI.scoreScrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-				if (scorePanel != null) {
+				if (ScoreGUI.scorePanel != null) {
 					LG.i("Updating pos!");
 					SwingUtilities.invokeLater(() -> {
-							scorePanel.update();
+							ScoreGUI.scorePanel.update();
 		
 					});
 				}
 			}
 		});*/
 
-		instrumentTabPane.addTab("Score", scoreScrollPane);
+		instrumentTabPane.addTab("Score", ScoreGUI.scoreScrollPane);
 	}
 
 
@@ -4782,8 +4789,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 						if (loopBeat.isSelected() && !heavyBackgroundTasksInProgress && !isDragging
 								&& (sequencer != null)) {
-							/*if (showScore.isSelected() && !loopBeatCompose.isSelected()) {
-								showScore.setSelected(false);
+							/*if (ScoreGUI.showScore.isSelected() && !loopBeatCompose.isSelected()) {
+								ScoreGUI.showScore.setSelected(false);
 							
 							}*/
 							int startPos = delayed();
@@ -4825,7 +4832,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 						try {
 							/*int tabIndex = instrumentTabPane.getSelectedIndex();
 							if (loopBeat.isSelected() || (tabIndex >= 2 && tabIndex <= 4)
-									|| (scorePopup != null || tabIndex == 7)) {
+									|| (ScoreGUI.scorePopup != null || tabIndex == 7)) {
 								sleep(5);
 								allowedActionsOnZero = (allowedActionsOnZero + 1) % 5;
 							} else {
@@ -4972,8 +4979,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		//controlSettingsPanel.setLayout(new BoxLayout(controlSettingsPanel, BoxLayout.Y_AXIS));
 		controlSettingsPanel.setOpaque(false);
 
-		transposeScore = new KnobPanel("Global Transpose<br>(Key)", 0, -24, 24);
-		controlSettingsPanel.add(transposeScore);
+		controlSettingsPanel.add(scoreGUI.createTransposeControl());
 
 		mainBpm = new DetachedKnobPanel("BPM", 80, bpmLow.getInt(), bpmHigh.getInt());
 		mainBpm.getKnob().setStretchAfterCustomInput(true);
@@ -5111,14 +5117,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		});
 
 
-		showScore = new JButton("Show Score Tab");
-		showScore.addMouseListener(new MouseAdapter() {
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				toggleShowScorePopup();
-			}
-		});
+		scoreGUI.createShowScoreButton();
 
 		regenerateWhenValuesChange = new CheckButton("Regenerate on Change", true);
 		/*showScorePicker = new ScrollComboBox<String>();
@@ -5205,7 +5204,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		playSettingsPanel.setOpaque(false);
 
 		playSettingsPanel.add(regenerateWhenValuesChange);
-		playSettingsPanel.add(showScore);
+		playSettingsPanel.add(ScoreGUI.showScore);
 		//playSettingsPanel.add(showScorePicker);
 		playSettingsPanel.add(loopBeat);
 		playSettingsPanel.add(loopBeatCount);
@@ -5465,9 +5464,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 			newPrefSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT + 35);
 			//ShowPanelBig.panelMaxHeight = 400;
 		}
-		if (scorePanel != null) {
-			scorePanel.updatePanelHeight(newPrefSize.height);
-			scorePanel.update();
+		if (ScoreGUI.scorePanel != null) {
+			ScoreGUI.scorePanel.updatePanelHeight(newPrefSize.height);
+			ScoreGUI.scorePanel.update();
 		}
 		scrollPaneDimension = newPrefSize;
 		instrumentTabPane.setPreferredSize(newPrefSize);
@@ -5607,8 +5606,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		//switchFullMode(isDarkMode);
 
-		if (scorePanel != null) {
-			scorePanel.update();
+		if (ScoreGUI.scorePanel != null) {
+			ScoreGUI.scorePanel.update();
 		}
 
 
@@ -5617,9 +5616,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 		//setVisible(true);
 		repaint();
 		ArrangementGUI.arrSectionPane.repaint();
-		if (scorePanel != null) {
+		if (ScoreGUI.scorePanel != null) {
 
-			scorePanel.setupMouseWheelListener();
+			ScoreGUI.scorePanel.setupMouseWheelListener();
 		}
 		initScrollPaneListeners();
 	}
@@ -5773,7 +5772,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 					&& !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
 				seedData += "_" + MelodyGUI.melodyPanels.get(0).getPatternSeed();
 			}
-			String keyTrans = MidiUtils.SEMITONE_LETTERS.get((transposeScore.getInt() + 120) % 12)
+			String keyTrans = MidiUtils.SEMITONE_LETTERS.get((ScoreGUI.transposeScore.getInt() + 120) % 12)
 					.replaceAll("#", "s");
 
 			String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
@@ -6188,8 +6187,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 			ArrangementGUI.actualArrangement.getSections().add(sec.deepCopy());
 		}
 		guiConfig.setActualArrangement(ArrangementGUI.actualArrangement);
-		VibeComposerGUI.pianoRoll();
-		/*if (showScore.isSelected()) {
+		ScoreGUI.pianoRoll();
+		/*if (ScoreGUI.showScore.isSelected()) {
 			instrumentTabPane.setSelectedIndex(7);
 		}*/
 
@@ -7009,13 +7008,13 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		if (ae.getActionCommand() == "RandomizeTranspose") {
 			Random instGen = new Random();
-			transposeScore.setInt(instGen.nextInt(12) - 6);
+			ScoreGUI.transposeScore.setInt(instGen.nextInt(12) - 6);
 			triggerRegenerate = true;
 		}
 
 		if (isCompose && randomizeTransposeOnCompose.isSelected()) {
 			Random instGen = new Random();
-			transposeScore.setInt(instGen.nextInt(12) - 6);
+			ScoreGUI.transposeScore.setInt(instGen.nextInt(12) - 6);
 		}
 
 
@@ -7394,13 +7393,13 @@ private void __initCustomChords(int startY, int anchorSide) {
 			slider.setUpperValue(slider.getValue());
 			resetPauseInfo();
 			LG.i(("Stopped Midi!"));
-			/*if (scorePopup != null) {
+			/*if (ScoreGUI.scorePopup != null) {
 				LG.i(ShowPanelBig.rulerScrollPane.getPreferredSize());
 				LG.i(ShowPanelBig.rulerScrollPane.getWidth());
 				LG.i(ShowPanelBig.areaScrollPane.getWidth());
 				LG.i(ShowPanelBig.horizontalPane.getWidth());
-				LG.i(scoreScrollPane.getWidth());
-				LG.i(scorePopup.getFrame().getWidth());
+				LG.i(ScoreGUI.scoreScrollPane.getWidth());
+				LG.i(ScoreGUI.scorePopup.getFrame().getWidth());
 			}*/
 
 		} else {
@@ -8016,7 +8015,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		cs.add(orderedTransposeGeneration);
 		cs.add(patternApplyPausesWhenGenerating);
 		cs.add(highlightPatterns);
-		cs.add(highlightScoreNotes);
+		cs.add(ScoreGUI.highlightScoreNotes);
 		cs.add(randomizeTimingsOnCompose);
 		cs.add(customFilenameAddTimestamp);
 		cs.add(configHistoryStoreRegeneratedTracks);
@@ -8032,7 +8031,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		// extra settings
 		cs.add(globalNoteLengthMultiplier);
 		cs.add(ChordGUI.copyChordsAfterGenerate);
-		cs.add(miniScorePopup);
+		cs.add(ScoreGUI.miniScorePopup);
 
 		// arps panel
 		cs.add(ArpGUI.randomArpCorrectMelodyNotes);
@@ -8153,7 +8152,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			gc.setFixedDuration(0);
 		}
 
-		gc.setTranspose(transposeScore.getInt());
+		gc.setTranspose(ScoreGUI.transposeScore.getInt());
 		gc.setBpm(Double.valueOf(mainBpm.getInt()));
 		gc.setArpAffectsBpm(ArpGUI.arpAffectsBpm.isSelected());
 		gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
@@ -8293,7 +8292,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		ArrangementGUI.pieceLength.setText(String.valueOf(gc.getPieceLength()));
 		setChordProgressionLength(gc.getFixedDuration());
 
-		transposeScore.setInt(gc.getTranspose());
+		ScoreGUI.transposeScore.setInt(gc.getTranspose());
 		int bpm = (int) Math.round(gc.getBpm());
 		mainBpm.getKnob().setMin(Math.min(VibeComposerGUI.mainBpm.getKnob().getMin(), bpm));
 		mainBpm.getKnob().setMax(Math.max(VibeComposerGUI.mainBpm.getKnob().getMax(), bpm));
@@ -9195,18 +9194,19 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 		throw new IllegalArgumentException("Absolute order not found!");
 	}
 
-	public static void pianoRoll() {
+	@Deprecated
+	public static void __pianoRoll() {
 		if (MidiGenerator.LAST_SCORES.isEmpty()) {
 			return;
 		}
-		if (scorePanel == null) {
-			scorePanel = new ShowPanelBig();
-			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
+		if (ScoreGUI.scorePanel == null) {
+			ScoreGUI.scorePanel = new ShowPanelBig();
+			((JPanel) ScoreGUI.scoreScrollPane.getViewport().getView()).add(ScoreGUI.scorePanel);
 		}
 		ShowPanelBig.scoreBox.setSelectedIndex(0);
 
-		scorePanel.setScore();
-		scoreScrollPane.repaint();
+		ScoreGUI.scorePanel.setScore();
+		ScoreGUI.scoreScrollPane.repaint();
 	}
 
 
@@ -9290,32 +9290,33 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 		}
 	}
 
-	public void toggleShowScorePopup() {
-		if (scorePanel != null) {
+	@Deprecated
+	public void __toggleShowScorePopup() {
+		if (ScoreGUI.scorePanel != null) {
 			if (instrumentTabPane.getComponentCount() == 8) {
-				instrumentTabPane.remove(scoreScrollPane);
-				if (VibeComposerGUI.miniScorePopup.isSelected()) {
+				instrumentTabPane.remove(ScoreGUI.scoreScrollPane);
+				if (ScoreGUI.miniScorePopup.isSelected()) {
 					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesSmall;
 					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
 							.get(ShowPanelBig.beatWidthBaseIndex);
-					scorePanel.updatePanelHeight(300);
-					//scoreScrollPane.setMaximumSize(new Dimension(600, 300));
-					scorePanel.getShowArea().setNoteHeight(4);
-					scorePanel.setScore();
-					scorePanel.setAlignmentX(LEFT_ALIGNMENT);
-					scoreScrollPane.repaint();
+					ScoreGUI.scorePanel.updatePanelHeight(300);
+					//ScoreGUI.scoreScrollPane.setMaximumSize(new Dimension(600, 300));
+					ScoreGUI.scorePanel.getShowArea().setNoteHeight(4);
+					ScoreGUI.scorePanel.setScore();
+					ScoreGUI.scorePanel.setAlignmentX(LEFT_ALIGNMENT);
+					ScoreGUI.scoreScrollPane.repaint();
 					SwingUtilities.invokeLater(() -> {
 						ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0);
 					});
 				}
-				scorePopup = new ShowScorePopup(scoreScrollPane);
+				ScoreGUI.scorePopup = new ShowScorePopup(ScoreGUI.scoreScrollPane);
 			} else {
-				if (scorePopup != null) {
-					scorePopup.close();
-					scorePopup = null;
+				if (ScoreGUI.scorePopup != null) {
+					ScoreGUI.scorePopup.close();
+					ScoreGUI.scorePopup = null;
 				}
 				if (instrumentTabPane.getComponentCount() < 8) {
-					instrumentTabPane.add(scoreScrollPane, 7);
+					instrumentTabPane.add(ScoreGUI.scoreScrollPane, 7);
 					instrumentTabPane.setTitleAt(7, " Score ");
 				}
 
@@ -9337,13 +9338,13 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 			nextNoteMelody = MelodyMidiDropPane.userMelody;
 			if (nextNoteMelody == null) {
 				LG.d("No user melody/midi to play!");
-				Part scorePart = (scorePanel == null || scorePanel.score == null) ? null : scorePanel.score.getPart(instNames[part] + "" + (partOrder-1));
+				Part scorePart = (ScoreGUI.scorePanel == null || ScoreGUI.scorePanel.score == null) ? null : ScoreGUI.scorePanel.score.getPart(instNames[part] + "" + (partOrder-1));
 				nextNoteMelody = scorePart == null ? null : scorePart.getPhrase(0);
 				if (nextNoteMelody == null) {
 					LG.i("No actual melody to play!");
 					return;
 				}
-				transpose += -1 * (getInstList(part).get(partOrder-1).getTranspose() + transposeScore.getInt());
+				transpose += -1 * (getInstList(part).get(partOrder-1).getTranspose() + ScoreGUI.transposeScore.getInt());
 			}
 		}
 		int nextNoteIndex = getNextNoteIndex(part, partOrder) % nextNoteMelody.size();
@@ -9384,7 +9385,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 					extraTranspose += scaleKey.getRight();
 				}
 
-				pitch = notes.get(0).getPitch() + transposeScore.getInt() + extraTranspose
+				pitch = notes.get(0).getPitch() + ScoreGUI.transposeScore.getInt() + extraTranspose
 						+ sec.getTransposeVariation(part, partOrder);
 
 				if (pitch < 0 || pitch > 127) {

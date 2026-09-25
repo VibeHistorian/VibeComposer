@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ScoreGUI;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import jm.constants.Pitches;
@@ -280,7 +282,7 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 			pn.forEach(f -> {
 				if (f.getPitch() != Pitches.REST) {
-					f.setPitch(f.getPitch() - VibeComposerGUI.transposeScore.getInt());
+					f.setPitch(f.getPitch() - ScoreGUI.transposeScore.getInt());
 				}
 			});
 			mvea.setCustomValues(pn.copy());
@@ -639,7 +641,7 @@ public class MidiEditPopup extends CloseablePopup {
 		final int finalExtraTranspose = extraTranspose;
 		notes.forEach(e -> {
 			if (e.getPitch() != Pitches.REST) {
-				int pitch = e.getPitch() + VibeComposerGUI.transposeScore.getInt() + finalExtraTranspose
+				int pitch = e.getPitch() + ScoreGUI.transposeScore.getInt() + finalExtraTranspose
 						+ ip.getTranspose();
 				e.setPitch(pitch);
 			}

@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ScoreGUI;
+
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.WindowEvent;
@@ -16,7 +18,7 @@ public class ShowScorePopup extends CloseablePopup {
 	public ShowScorePopup(JScrollPane scoreScrollPane) {
 		super("MIDI Score", 12, new Point(-400, -500), VibeComposerGUI.vibeComposerGUI);
 		frame.add(scoreScrollPane);
-		if (VibeComposerGUI.miniScorePopup.isSelected()) {
+		if (ScoreGUI.miniScorePopup.isSelected()) {
 			frame.setPreferredSize(new Dimension(650, 325));
 			frame.setMaximumSize(new Dimension(650, 325));
 			frame.setResizable(true);
@@ -38,20 +40,20 @@ public class ShowScorePopup extends CloseablePopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				if (frame.isVisible()) {
-					frame.remove(VibeComposerGUI.scoreScrollPane);
-					VibeComposerGUI.instrumentTabPane.add(VibeComposerGUI.scoreScrollPane, 7);
+					frame.remove(ScoreGUI.scoreScrollPane);
+					VibeComposerGUI.instrumentTabPane.add(ScoreGUI.scoreScrollPane, 7);
 					VibeComposerGUI.instrumentTabPane.setTitleAt(7, " Score ");
 					currentPopupMap.remove(12);
-					//if (VibeComposerGUI.miniScorePopup.isSelected()) {
+					//if (ScoreGUI.miniScorePopup.isSelected()) {
 					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesBig;
 					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
 							.get(ShowPanelBig.beatWidthBaseIndex);
-					VibeComposerGUI.scorePanel
+					ScoreGUI.scorePanel
 							.updatePanelHeight(VibeComposerGUI.scrollPaneDimension.height);
-					VibeComposerGUI.scorePanel.getShowArea().setNoteHeight(7);
-					VibeComposerGUI.scorePanel.setScore();
-					VibeComposerGUI.scoreScrollPane.repaint();
-					VibeComposerGUI.scorePopup = null;
+					ScoreGUI.scorePanel.getShowArea().setNoteHeight(7);
+					ScoreGUI.scorePanel.setScore();
+					ScoreGUI.scoreScrollPane.repaint();
+					ScoreGUI.scorePopup = null;
 					SwingUtilities.invokeLater(() -> {
 						ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 300), 0.0,
 								(7 / 5.0) - 1.0);

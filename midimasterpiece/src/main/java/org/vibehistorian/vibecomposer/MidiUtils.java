@@ -1252,8 +1252,8 @@ public class MidiUtils {
 
 		LG.i(solvedChords.toString());
 		if (solvedChords.size() == chords.size()) {
-			VibeComposerGUI.transposeScore
-					.setInt(VibeComposerGUI.transposeScore.getInt() + (transposeUpBy * -1));
+			ScoreGUI.transposeScore
+					.setInt(ScoreGUI.transposeScore.getInt() + (transposeUpBy * -1));
 			return solvedChords;
 		} else {
 			return null;

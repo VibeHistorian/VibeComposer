@@ -19,31 +19,123 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
+
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-/**
- * Score GUI module - Handles all score-related UI components and logic.
- */
+/** Owns score display state, settings, and popup behavior. */
 public class ScoreGUI {
+	public static JScrollPane scoreScrollPane;
+	public static ShowPanelBig scorePanel;
+	public static KnobPanel transposeScore;
+	public static JButton showScore;
+	public static ShowScorePopup scorePopup;
+	public static JCheckBox highlightScoreNotes;
+	public static JCheckBox miniScorePopup;
 
-    /**
-     * Initialize score settings UI.
-     */
-    public void initScoreSettings() {
-        // TODO: Move score settings initialization here
-    }
+	private final Context context;
 
-    /**
-     * Handle operations related to the score panel.
-     */
-    public void handleScoreOperations() {
-        // TODO: Move score-related logic here
-    }
+	public ScoreGUI(Context context) {
+		this.context = context;
+	}
 
-    /**
-     * Cleanup method called when this module is no longer needed.
-     */
-    public void cleanup() {
-        // Clean up score resources
-    }
+	/** Supplies shared window components used by the score tab and popup. */
+	public interface Context {
+		Dimension getScrollPaneDimension();
+		JTabbedPane getInstrumentTabPane();
+	}
+
+	public void initScoreSettings(int startY, int anchorSide) {
+		JPanel scrollableScorePanel = new JPanel();
+		scrollableScorePanel.setLayout(new BoxLayout(scrollableScorePanel, BoxLayout.Y_AXIS));
+		scrollableScorePanel.setAutoscrolls(true);
+		scoreScrollPane = new JScrollPane() {
+			@Override
+			public Dimension getPreferredSize() {
+				return context.getScrollPaneDimension();
+			}
+		};
+		scoreScrollPane.setViewportView(scrollableScorePanel);
+		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		context.getInstrumentTabPane().addTab("Score", scoreScrollPane);
+	}
+
+	public KnobPanel createTransposeControl() {
+		transposeScore = new KnobPanel("Global Transpose<br>(Key)", 0, -24, 24);
+		return transposeScore;
+	}
+
+	public JButton createShowScoreButton() {
+		showScore = new JButton("Show Score Tab");
+		showScore.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				toggleShowScorePopup();
+			}
+		});
+		return showScore;
+	}
+
+	public void initDisplaySettings(JPanel displayStylePanel) {
+		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
+		miniScorePopup = new CustomCheckBox("Mini Score Popup", true);
+		displayStylePanel.add(highlightScoreNotes);
+		displayStylePanel.add(miniScorePopup);
+	}
+
+	public static void pianoRoll() {
+		if (MidiGenerator.LAST_SCORES.isEmpty()) {
+			return;
+		}
+		if (scorePanel == null) {
+			scorePanel = new ShowPanelBig();
+			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
+		}
+		ShowPanelBig.scoreBox.setSelectedIndex(0);
+		scorePanel.setScore();
+		scoreScrollPane.repaint();
+	}
+
+	public void toggleShowScorePopup() {
+		JTabbedPane instrumentTabPane = context.getInstrumentTabPane();
+		if (scorePanel != null) {
+			if (instrumentTabPane.getComponentCount() == 8) {
+				instrumentTabPane.remove(scoreScrollPane);
+				if (miniScorePopup.isSelected()) {
+					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesSmall;
+					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
+							.get(ShowPanelBig.beatWidthBaseIndex);
+					scorePanel.updatePanelHeight(300);
+					scorePanel.getShowArea().setNoteHeight(4);
+					scorePanel.setScore();
+					scorePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+					scoreScrollPane.repaint();
+					SwingUtilities.invokeLater(() ->
+							ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0));
+				}
+				scorePopup = new ShowScorePopup(scoreScrollPane);
+			} else {
+				cleanup();
+				if (instrumentTabPane.getComponentCount() < 8) {
+					instrumentTabPane.add(scoreScrollPane, 7);
+					instrumentTabPane.setTitleAt(7, " Score ");
+				}
+			}
+		}
+	}
+
+	public void cleanup() {
+		if (scorePopup != null) {
+			scorePopup.close();
+			scorePopup = null;
+		}
+	}
 }

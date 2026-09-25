@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.ScoreGUI;
+
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
@@ -131,7 +133,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.setScore());
+				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.setScore());
 			}
 		}
 	}
@@ -186,7 +188,7 @@ public class SoloMuter extends JPanel {
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> VibeComposerGUI.scorePanel.update());
+				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.update());
 			}
 		}
 	}

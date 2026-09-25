@@ -29,6 +29,8 @@ see <https://www.gnu.org/licenses/>.
 */
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ScoreGUI;
+
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
@@ -323,7 +325,7 @@ public class ShowPanelBig extends JPanel {
 		sa.setNoteHeight(ShowAreaBig.noteHeight + 2);
 		setScore();
 		double changeY = ShowAreaBig.noteHeight / originalHeight;
-		VibeComposerGUI.scoreScrollPane.repaint();
+		ScoreGUI.scoreScrollPane.repaint();
 
 		SwingUtilities.invokeLater(() -> {
 			zoomIn(areaScrollPane, new Point(0, 300), 0.0, changeY - 1.0);
@@ -386,7 +388,7 @@ public class ShowPanelBig extends JPanel {
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
 					double changeY = ShowAreaBig.noteHeight / originalHeight;
-					VibeComposerGUI.scoreScrollPane.repaint();
+					ScoreGUI.scoreScrollPane.repaint();
 
 					if (e.getWheelRotation() > 0) {
 						zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
@@ -398,7 +400,7 @@ public class ShowPanelBig extends JPanel {
 
 
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
-					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
+					/*SwingUtils.setScrolledPosition(ScoreGUI.scoreScrollPane, true,
 							positionPercentage);*/
 				} else if (e.isControlDown()) {
 					double originalWidth = Math.round(
@@ -414,7 +416,7 @@ public class ShowPanelBig extends JPanel {
 					double changeX = Math.round(
 							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth)
 							/ originalWidth;
-					VibeComposerGUI.scoreScrollPane.repaint();
+					ScoreGUI.scoreScrollPane.repaint();
 
 					if (e.getWheelRotation() > 0) {
 						zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
@@ -425,7 +427,7 @@ public class ShowPanelBig extends JPanel {
 					}
 
 
-					/*SwingUtils.setScrolledPosition(VibeComposerGUI.scoreScrollPane, true,
+					/*SwingUtils.setScrolledPosition(ScoreGUI.scoreScrollPane, true,
 							positionPercentage);*/
 				} else {
 					if (e.isShiftDown()) {
@@ -438,7 +440,7 @@ public class ShowPanelBig extends JPanel {
 						Adjustable adj = areaScrollPane.getVerticalScrollBar();
 						int scroll = e.getUnitsToScroll() * adj.getBlockIncrement();
 						adj.setValue(adj.getValue() + scroll);
-						VibeComposerGUI.scoreScrollPane.repaint();
+						ScoreGUI.scoreScrollPane.repaint();
 					}
 				}
 			}
