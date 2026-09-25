@@ -155,7 +155,7 @@ public class VibeComposerGUI extends JFrame
 	public static List<MelodyPanel> __melodyPanels = MelodyGUI.melodyPanels;
 	@Deprecated public static List<BassPanel> __bassPanels = BassGUI.bassPanels;
 	@Deprecated public static List<ChordPanel> __chordPanels = ChordGUI.chordPanels;
-	public static List<ArpPanel> arpPanels = new ArrayList<>();
+	@Deprecated public static List<ArpPanel> __arpPanels = ArpGUI.arpPanels;
 	public static List<DrumPanel> drumPanels = new ArrayList<>();
 
 	public static List<InstPanel> getAffectedPanels(int inst) {
@@ -174,7 +174,7 @@ public class VibeComposerGUI extends JFrame
 		case 2:
 			return ChordGUI.chordPanels;
 		case 3:
-			return arpPanels;
+			return ArpGUI.arpPanels;
 		case 4:
 			return drumPanels;
 		}
@@ -193,7 +193,7 @@ public class VibeComposerGUI extends JFrame
 		case 2:
 			return ChordGUI.chordScrollPane;
 		case 3:
-			return arpScrollPane;
+			return ArpGUI.arpScrollPane;
 		case 4:
 			return drumScrollPane;
 		}
@@ -258,14 +258,14 @@ public class VibeComposerGUI extends JFrame
 	public static JScrollPane __melodyScrollPane;
 	@Deprecated public static JScrollPane __bassScrollPane;
 	@Deprecated public static JScrollPane __chordScrollPane;
-	public static JScrollPane arpScrollPane;
+	@Deprecated public static JScrollPane __arpScrollPane;
 	public static JScrollPane drumScrollPane;
 
 	@Deprecated
 	public static JPanel __melodyParentPanel;
 	@Deprecated public static JPanel __bassParentPanel;
 	@Deprecated public static JPanel __chordParentPanel;
-	public static JPanel arpParentPanel;
+	@Deprecated public static JPanel __arpParentPanel;
 	public static JPanel drumParentPanel;
 
 	JScrollPane arrangementScrollPane;
@@ -322,7 +322,7 @@ public class VibeComposerGUI extends JFrame
 
 	// add/skip instruments
 	SettingsPanel __chordSettingsPanel;
-	SettingsPanel arpSettingsPanel;
+	@Deprecated SettingsPanel __arpSettingsPanel;
 	SettingsPanel drumSettingsPanel;
 	static JCheckBox[] addInst = new JCheckBox[5];
 	VeloRect drumVolumeSlider;
@@ -408,28 +408,28 @@ public class VibeComposerGUI extends JFrame
 	KnobPanel __randomChordMaxVel;
 
 	// arp gen settings
-	JCheckBox randomArpsGenerateOnCompose;
-	JCheckBox randomArpTranspose;
-	JCheckBox randomArpPattern;
-	JCheckBox randomArpHitsPerPattern;
-	JCheckBox randomArpAllSameInst;
-	JCheckBox randomArpAllSameHits;
-	JCheckBox randomArpLimitPowerOfTwo;
-	KnobPanel randomArpShiftChance;
-	ScrollComboBox<Integer> randomArpHitsPicker;
-	JCheckBox randomArpUseChordFill;
-	ScrollComboBox<String> randomArpStretchType;
-	ScrollComboBox<Integer> randomArpStretchPicker;
-	KnobPanel randomArpStretchGenerationChance;
-	KnobPanel randomArpMaxExceptionChance;
-	JCheckBox randomArpUseOctaveAdjustments;
-	KnobPanel randomArpMaxRepeat;
-	KnobPanel randomArpMinVel;
-	KnobPanel randomArpMaxVel;
-	KnobPanel randomArpMinLength;
-	KnobPanel randomArpMaxLength;
-	JCheckBox randomArpCorrectMelodyNotes;
-	JCheckBox arpCopyMelodyInst;
+	@Deprecated JCheckBox __randomArpsGenerateOnCompose;
+	@Deprecated JCheckBox __randomArpTranspose;
+	@Deprecated JCheckBox __randomArpPattern;
+	@Deprecated JCheckBox __randomArpHitsPerPattern;
+	@Deprecated JCheckBox __randomArpAllSameInst;
+	@Deprecated JCheckBox __randomArpAllSameHits;
+	@Deprecated JCheckBox __randomArpLimitPowerOfTwo;
+	@Deprecated KnobPanel __randomArpShiftChance;
+	@Deprecated ScrollComboBox<Integer> __randomArpHitsPicker;
+	@Deprecated JCheckBox __randomArpUseChordFill;
+	@Deprecated ScrollComboBox<String> __randomArpStretchType;
+	@Deprecated ScrollComboBox<Integer> __randomArpStretchPicker;
+	@Deprecated KnobPanel __randomArpStretchGenerationChance;
+	@Deprecated KnobPanel __randomArpMaxExceptionChance;
+	@Deprecated JCheckBox __randomArpUseOctaveAdjustments;
+	@Deprecated KnobPanel __randomArpMaxRepeat;
+	@Deprecated KnobPanel __randomArpMinVel;
+	@Deprecated KnobPanel __randomArpMaxVel;
+	@Deprecated KnobPanel __randomArpMinLength;
+	@Deprecated KnobPanel __randomArpMaxLength;
+	@Deprecated JCheckBox __randomArpCorrectMelodyNotes;
+	@Deprecated JCheckBox __arpCopyMelodyInst;
 
 	// drum gen settings
 	public static List<Integer> PUNCHY_DRUMS = Arrays.asList(new Integer[] { 35, 36, 38, 39, 40 });
@@ -491,7 +491,7 @@ public class VibeComposerGUI extends JFrame
 	JCheckBox randomizeBpmOnCompose;
 	JCheckBox randomizeTransposeOnCompose;
 	JCheckBox randomizeChordStrumsOnCompose;
-	JCheckBox arpAffectsBpm;
+	@Deprecated JCheckBox __arpAffectsBpm;
 	public static KnobPanel mainBpm;
 	public static KnobPanel bpmLow;
 	public static KnobPanel bpmHigh;
@@ -617,6 +617,7 @@ public class VibeComposerGUI extends JFrame
 	private MelodyGUI melodyGUI;
 	private BassGUI bassGUI;
 	private ChordGUI chordGUI;
+	private ArpGUI arpGUI;
 
 	public static JPanel extraSettingsPanel;
 	public static JPanel currentSettingsMenuPanel = null;
@@ -831,6 +832,145 @@ public class VibeComposerGUI extends JFrame
 		});
 	}
 
+	private void initArpGUI() {
+		arpGUI = new ArpGUI(new ArpGUI.Context() {
+			@Override
+			public Dimension getScrollPaneDimension() {
+				return scrollPaneDimension;
+			}
+
+			@Override
+			public Set<Component> getToggleableComponents() {
+				return toggleableComponents;
+			}
+
+			@Override
+			public JCheckBox[] getAddInst() {
+				return addInst;
+			}
+
+			@Override
+			public VeloRect[] getGroupFilterSliders() {
+				return groupFilterSliders;
+			}
+
+			@Override
+			public JButton[] getAddPanelButtons() {
+				return addPanelButtons;
+			}
+
+			@Override
+			public JButton[] getGeneratePanelButtons() {
+				return generatePanelButtons;
+			}
+
+			@Override
+			public JTextField[] getRandomPanelsToGenerate() {
+				return randomPanelsToGenerate;
+			}
+
+			@Override
+			public JButton makeButton(String name, Consumer<? super Object> action) {
+				return SwingUtils.makeButton(name, action);
+			}
+
+			@Override
+			public JButton makeButton(String name, String actionCommand) {
+				return VibeComposerGUI.this.makeButton(name, actionCommand);
+			}
+
+			@Override
+			public void addPanel(int part) {
+				VibeComposerGUI.this.addPanel(part);
+			}
+
+			@Override
+			public void generatePanels(int part, boolean triggerRegenerate) {
+				VibeComposerGUI.this.generatePanels(part, triggerRegenerate);
+			}
+
+			@Override
+			public GridBagConstraints getConstraints() {
+				return constraints;
+			}
+
+			@Override
+			public JTabbedPane getInstrumentTabPane() {
+				return instrumentTabPane;
+			}
+
+			@Override
+			public List<ArpPanel> getAffectedArpPanels() {
+				return (List<ArpPanel>) (List<?>) getAffectedPanels(3);
+			}
+
+			@Override
+			public ArpPanel addArpPanel() {
+				return (ArpPanel) VibeComposerGUI.this.addInstPanelToLayout(3);
+			}
+
+			@Override
+			public JCheckBox getRandomizeInstrumentOnComposeOrGen() {
+				return randomizeInstOnComposeOrGen;
+			}
+
+			@Override
+			public boolean orderedTransposeGeneration() {
+				return orderedTransposeGeneration.isSelected();
+			}
+
+			@Override
+			public int getRandomFromArray(Random generator, int[] values, int from) {
+				return VibeComposerGUI.getRandomFromArray(generator, values, from);
+			}
+
+			@Override
+			public boolean useShortBeatDuration() {
+				return beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75;
+			}
+
+			@Override
+			public MelodyPanel getFirstMelodyPanel() {
+				return MelodyGUI.melodyPanels.isEmpty() ? null : MelodyGUI.melodyPanels.get(0);
+			}
+
+			@Override
+			public void repaintMainWindow() {
+				VibeComposerGUI.this.repaint();
+			}
+		});
+	}
+
+	@Deprecated
+	private void syncArpGUICompatibilityFields() {
+		__arpPanels = ArpGUI.arpPanels;
+		__arpScrollPane = ArpGUI.arpScrollPane;
+		__arpParentPanel = ArpGUI.arpParentPanel;
+		__randomArpsGenerateOnCompose = ArpGUI.randomArpsGenerateOnCompose;
+		__randomArpTranspose = ArpGUI.randomArpTranspose;
+		__randomArpPattern = ArpGUI.randomArpPattern;
+		__randomArpHitsPerPattern = ArpGUI.randomArpHitsPerPattern;
+		__randomArpAllSameInst = ArpGUI.randomArpAllSameInst;
+		__randomArpAllSameHits = ArpGUI.randomArpAllSameHits;
+		__randomArpLimitPowerOfTwo = ArpGUI.randomArpLimitPowerOfTwo;
+		__randomArpShiftChance = ArpGUI.randomArpShiftChance;
+		__randomArpHitsPicker = ArpGUI.randomArpHitsPicker;
+		__randomArpUseChordFill = ArpGUI.randomArpUseChordFill;
+		__randomArpStretchType = ArpGUI.randomArpStretchType;
+		__randomArpStretchPicker = ArpGUI.randomArpStretchPicker;
+		__randomArpStretchGenerationChance = ArpGUI.randomArpStretchGenerationChance;
+		__randomArpMaxExceptionChance = ArpGUI.randomArpMaxExceptionChance;
+		__randomArpUseOctaveAdjustments = ArpGUI.randomArpUseOctaveAdjustments;
+		__randomArpMaxRepeat = ArpGUI.randomArpMaxRepeat;
+		__randomArpMinVel = ArpGUI.randomArpMinVel;
+		__randomArpMaxVel = ArpGUI.randomArpMaxVel;
+		__randomArpMinLength = ArpGUI.randomArpMinLength;
+		__randomArpMaxLength = ArpGUI.randomArpMaxLength;
+		__randomArpCorrectMelodyNotes = ArpGUI.randomArpCorrectMelodyNotes;
+		__arpCopyMelodyInst = ArpGUI.arpCopyMelodyInst;
+		__arpSettingsPanel = ArpGUI.arpSettingsPanel;
+	}
+
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
 			@Override
@@ -1003,6 +1143,7 @@ public class VibeComposerGUI extends JFrame
 	private void init() {
 		initMelodyGUI();
 		initBassGUI();
+		initArpGUI();
 		initChordGUI();
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
@@ -1088,7 +1229,8 @@ public class VibeComposerGUI extends JFrame
 			//createHorizontalSeparator(100, this);
 
 			// arps
-			initArpGenSettings(105, GridBagConstraints.WEST);
+			arpGUI.initArpGenSettings(105, GridBagConstraints.WEST);
+			syncArpGUICompatibilityFields();
 
 			//createHorizontalSeparator(150, this);
 
@@ -1120,7 +1262,7 @@ public class VibeComposerGUI extends JFrame
 			chordGUI.initChords(311, GridBagConstraints.WEST);
 			__chordScrollPane = ChordGUI.chordScrollPane;
 			__chordParentPanel = ChordGUI.chordParentPanel;
-			initArps(312, GridBagConstraints.WEST);
+			arpGUI.initArps(312, GridBagConstraints.WEST);
 			initDrums(313, GridBagConstraints.WEST);
 			LG.i("Insts: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
@@ -1836,12 +1978,13 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 
 	private void initExtraSettingsBpm(JPanel bpmLowHighPanel) {
 		// BPM
-		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
+		ArpGUI.arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
+		__arpAffectsBpm = ArpGUI.arpAffectsBpm;
 		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 60, 20, 249);
 		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 100, 21, 250);
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
-		bpmLowHighPanel.add(arpAffectsBpm);
+		bpmLowHighPanel.add(ArpGUI.arpAffectsBpm);
 	}
 
 	private void initExtraSettingsDisplay(JPanel displayStylePanel) {
@@ -2300,158 +2443,16 @@ private void __initChords(int startY, int anchorSide) {
 		instrumentTabPane.addTab("Chords", __chordParentPanel);
 	}
 
-	private void initArpGenSettings(int startY, int anchorSide) {
-		JPanel scrollableArpPanels = new JPanel();
-		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
-		scrollableArpPanels.setAutoscrolls(true);
-
-		arpScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(scrollPaneDimension.width, scrollPaneDimension.height - 100);
-			}
-		};
-		arpScrollPane.setViewportView(scrollableArpPanels);
-		arpScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-		JPanel arpsSettingsPanel = new JPanel();
-		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addInst[3] = new CustomCheckBox("ARPS", true);
-		arpsSettingsPanel.add(addInst[3]);
-		groupFilterSliders[3] = VeloRect.midi( 127);
-		JLabel filterLabel = new JLabel("LP");
-		arpsSettingsPanel.add(filterLabel);
-		arpsSettingsPanel.add(groupFilterSliders[3]);
-
-		addPanelButtons[3] = makeButton("+Arp", e -> {
-			addPanel(3);
-		});
-		generatePanelButtons[3] = makeButton("Generate Arps:", e -> {
-			generatePanels(3, true);
-		});
-		randomPanelsToGenerate[3] = new JTextField("3", 2);
-		arpsSettingsPanel.add(addPanelButtons[3]);
-		arpsSettingsPanel.add(generatePanelButtons[3]);
-		arpsSettingsPanel.add(randomPanelsToGenerate[3]);
-
-		randomArpsGenerateOnCompose = makeCheckBox("on Compose", true, true);
-		arpsSettingsPanel.add(randomArpsGenerateOnCompose);
-
-
-		randomArpTranspose = new CustomCheckBox("Transpose", true);
-		randomArpPattern = new CustomCheckBox("Patterns", true);
-		randomArpHitsPicker = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, randomArpHitsPicker);
-		randomArpHitsPicker.setVal(4);
-		randomArpHitsPerPattern = new CustomCheckBox("Random#", true);
-		randomArpAllSameInst = new CustomCheckBox("One Inst.", false);
-		randomArpAllSameHits = new CustomCheckBox("One #", true);
-		randomArpLimitPowerOfTwo = new CustomCheckBox("<html>Limit 2<sup>n</sup>", true);
-		randomArpUseChordFill = new CustomCheckBox("Fills", true);
-		randomArpShiftChance = new DetachedKnobPanel("Shift%", 50);
-		randomArpUseOctaveAdjustments = new CustomCheckBox("Rand. Oct.", false);
-		randomArpMaxRepeat = new DetachedKnobPanel("Max<br>Repeat", 2, 1, 4);
-		randomArpMinVel = new DetachedKnobPanel("Min<br>Vel", 65, 0, 126);
-		randomArpMaxVel = new DetachedKnobPanel("Max<br>Vel", 90, 1, 127);
-		randomArpMinLength = new DetachedKnobPanel("Min<br>Length", 75, 25, 200);
-		randomArpMaxLength = new DetachedKnobPanel("Max<br>Length", 100, 25, 200);
-		randomArpCorrectMelodyNotes = new CustomCheckBox("<html>Correct Notes<br>by Melody</html>",
-				false);
-
-		arpsSettingsPanel.add(new JLabel("Arp#"));
-		arpsSettingsPanel.add(randomArpHitsPicker);
-		arpsSettingsPanel.add(randomArpHitsPerPattern);
-		arpsSettingsPanel.add(randomArpAllSameHits);
-		arpsSettingsPanel.add(randomArpUseChordFill);
-
-		arpsSettingsPanel.add(randomArpTranspose);
-
-		randomArpStretchType = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new String[] { "NONE", "FIXED", "AT_MOST" }, randomArpStretchType);
-		randomArpStretchType.setVal("AT_MOST");
-		JLabel stretchLabel = new JLabel("VOICES");
-		arpsSettingsPanel.add(stretchLabel);
-		arpsSettingsPanel.add(randomArpStretchType);
-		randomArpStretchPicker = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new Integer[] { 3, 4, 5, 6 }, randomArpStretchPicker);
-		randomArpStretchPicker.setVal(4);
-		arpsSettingsPanel.add(randomArpStretchPicker);
-		randomArpStretchGenerationChance = new DetachedKnobPanel("Chance", 50);
-		arpsSettingsPanel.add(randomArpStretchGenerationChance);
-		randomArpMaxExceptionChance = new DetachedKnobPanel("Max.<br>Split%", 20);
-		arpsSettingsPanel.add(randomArpMaxExceptionChance);
-
-		toggleableComponents.add(stretchLabel);
-		toggleableComponents.add(randomArpStretchType);
-		toggleableComponents.add(randomArpStretchPicker);
-
-		JButton clearArpPatternSeeds = makeButton("Clear Seeds", "ClearArpSeeds");
-		JPanel arpSettingsExtraPanel = new JPanel();
-		JLabel csExtra = new JLabel("ARP SETTINGS+");
-		csExtra.setPreferredSize(new Dimension(120, 30));
-		csExtra.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		arpSettingsExtraPanel.add(csExtra);
-
-		arpCopyMelodyInst = new CustomCheckBox("Arp#1 Copy Melody Inst.", true);
-
-		arpSettingsExtraPanel.add(arpCopyMelodyInst);
-		arpSettingsExtraPanel.add(randomArpAllSameInst);
-		arpSettingsExtraPanel.add(randomArpLimitPowerOfTwo);
-		arpSettingsExtraPanel.add(randomArpUseOctaveAdjustments);
-		arpSettingsExtraPanel.add(randomArpMaxRepeat);
-		arpSettingsExtraPanel.add(randomArpMinVel);
-		arpSettingsExtraPanel.add(randomArpMaxVel);
-		arpSettingsExtraPanel.add(randomArpPattern);
-		arpSettingsExtraPanel.add(randomArpShiftChance);
-		arpSettingsExtraPanel.add(randomArpMinLength);
-		arpSettingsExtraPanel.add(randomArpMaxLength);
-		arpSettingsExtraPanel.add(randomArpCorrectMelodyNotes);
-		arpSettingsExtraPanel.add(clearArpPatternSeeds);
-		arpSettingsExtraPanel.add(new PartManagerPanel(3));
-		toggleableComponents.add(arpSettingsExtraPanel);
-
-
-		arpsSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		arpsSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-		//scrollableArpPanels.add(arpsSettingsPanel);
-		arpSettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		arpSettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
-		//constraints.gridy = startY + 1;
-		//scrollableArpPanels.add(arpSettingsExtraPanel);
-
-		arpParentPanel = new JPanel() {
-			@Override
-			public Dimension getPreferredSize() {
-				return scrollPaneDimension;
-			}
-		};
-		arpParentPanel.setLayout(new BoxLayout(arpParentPanel, BoxLayout.Y_AXIS));
-
-
-		JPanel borderPanel = new JPanel() {
-			@Override
-			public Dimension getMaximumSize() {
-				return new Dimension(scrollPaneDimension.width, 100);
-			}
-		};
-		borderPanel.setLayout(new DynamicGridLayout(0, 1));
-		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
-		borderPanel.add(arpsSettingsPanel);
-		borderPanel.add(arpSettingsExtraPanel);
-		arpParentPanel.add(borderPanel);
-		arpParentPanel.add(arpScrollPane);
-
-		//addHorizontalSeparatorToPanel(scrollableArpPanels);
+	@Deprecated
+	private void __initArpGenSettings(int startY, int anchorSide) {
+		arpGUI.initArpGenSettings(startY, anchorSide);
+		syncArpGUICompatibilityFields();
 	}
 
-	private void initArps(int startY, int anchorSide) {
-		// --- ARPS -----------
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Arps", arpParentPanel);
+	@Deprecated
+	private void __initArps(int startY, int anchorSide) {
+		arpGUI.initArps(startY, anchorSide);
 	}
-
 	private void initDrumGenSettings(int startY, int anchorSide) {
 		JPanel scrollableDrumPanels = new JPanel();
 		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
@@ -3230,7 +3231,7 @@ private void __initChords(int startY, int anchorSide) {
 
 				/*arrangementTableProcessComponent(comp, row, col, value,
 						new int[] { 0, 0, MelodyGUI.melodyPanels.size(), 1, ChordGUI.chordPanels.size(),
-								arpPanels.size(), drumPanels.size() },
+								ArpGUI.arpPanels.size(), drumPanels.size() },
 						true);*/
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col);
 			}
@@ -5452,13 +5453,13 @@ private void __initCustomChords(int startY, int anchorSide) {
 	private void switchAllOnComposeCheckboxes(boolean state) {
 		MelodyGUI.generateMelodiesOnCompose.setSelected(state);
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
-		randomArpsGenerateOnCompose.setSelected(state);
+		ArpGUI.randomArpsGenerateOnCompose.setSelected(state);
 		randomDrumsGenerateOnCompose.setSelected(state);
 		randomizeBpmOnCompose.setSelected(state);
 		randomizeTransposeOnCompose.setSelected(state);
 		//randomizeChordStrumsOnCompose.setSelected(state);
 		randomizeInstOnComposeOrGen.setSelected(state);
-		randomArpHitsPerPattern.setSelected(state);
+		ArpGUI.randomArpHitsPerPattern.setSelected(state);
 		randomizeArrangementOnCompose.setSelected(state);
 		arrangementResetCustomPanelsOnCompose.setSelected(state);
 		randomizeScaleModeOnCompose.setSelected(state);
@@ -5472,7 +5473,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
 		MelodyGUI.generateMelodiesOnCompose.setForeground(fg);
 		ChordGUI.randomChordsGenerateOnCompose.setForeground(fg);
-		randomArpsGenerateOnCompose.setForeground(fg);
+		ArpGUI.randomArpsGenerateOnCompose.setForeground(fg);
 		randomDrumsGenerateOnCompose.setForeground(fg);
 		randomizeBpmOnCompose.setForeground(fg);
 		randomizeTransposeOnCompose.setForeground(fg);
@@ -5612,7 +5613,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		pauseMidi.setForeground(toggledUIColor);
 		stopMidi.setForeground(toggledUIColor);
 		loopBeatCompose.setForeground(toggledComposeColor);
-		randomArpHitsPerPattern.setForeground(toggledUIColor);
+		ArpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
 		MelodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
@@ -6139,12 +6140,12 @@ private void __initCustomChords(int startY, int anchorSide) {
 		// BASS
 
 		// ARPS
-		if (instrumentTabPane.getSelectedIndex() != 3 && arpCopyMelodyInst.isSelected()
+		if (instrumentTabPane.getSelectedIndex() != 3 && ArpGUI.arpCopyMelodyInst.isSelected()
 				&& !MelodyGUI.melodyPanels.isEmpty() && !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
-			if (arpPanels.size() > 0 && !arpPanels.get(0).getLockInst()) {
-				arpPanels.get(0).getInstrumentBox().initInstPool(POOL.MELODY);
-				arpPanels.get(0).setInstPool(POOL.MELODY);
-				arpPanels.get(0).setInstrument(MelodyGUI.melodyPanels.get(0).getInstrument());
+			if (ArpGUI.arpPanels.size() > 0 && !ArpGUI.arpPanels.get(0).getLockInst()) {
+				ArpGUI.arpPanels.get(0).getInstrumentBox().initInstPool(POOL.MELODY);
+				ArpGUI.arpPanels.get(0).setInstPool(POOL.MELODY);
+				ArpGUI.arpPanels.get(0).setInstrument(MelodyGUI.melodyPanels.get(0).getInstrument());
 			}
 		}
 
@@ -6217,10 +6218,10 @@ private void __initCustomChords(int startY, int anchorSide) {
 			}
 		}
 
-		for (int i = 0; i < arpPanels.size(); i++) {
+		for (int i = 0; i < ArpGUI.arpPanels.size(); i++) {
 			ArpPart ap = MidiGenerator.gc.getArpParts().get(i);
 			if (ap.getArpPattern() == ArpPattern.RANDOM) {
-				arpPanels.get(i).setArpPatternCustom(ap.getArpPatternCustom());
+				ArpGUI.arpPanels.get(i).setArpPatternCustom(ap.getArpPatternCustom());
 			}
 		}
 
@@ -7044,7 +7045,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		if (isCompose && addInst[2].isSelected() && ChordGUI.randomChordsGenerateOnCompose.isSelected()) {
 			generatePanels(2);
 		}
-		if (isCompose && addInst[3].isSelected() && randomArpsGenerateOnCompose.isSelected()) {
+		if (isCompose && addInst[3].isSelected() && ArpGUI.randomArpsGenerateOnCompose.isSelected()) {
 			generatePanels(3);
 		}
 
@@ -7198,8 +7199,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		Random instGen = new Random();
 
 		int bpm = instGen.nextInt(1 + bpmHigh.getInt() - bpmLow.getInt()) + bpmLow.getInt();
-		if (arpAffectsBpm.isSelected() && !arpPanels.isEmpty()) {
-			double highestArpPattern = arpPanels.stream().map(
+		if (ArpGUI.arpAffectsBpm.isSelected() && !ArpGUI.arpPanels.isEmpty()) {
+			double highestArpPattern = ArpGUI.arpPanels.stream().map(
 					e -> (e.getPatternRepeat() * e.getHitsPerPattern()) / (e.getChordSpan() * 8.0))
 					.max((e1, e2) -> Double.compare(e1, e2)).get();
 			LG.i(("Repeater value: " + highestArpPattern));
@@ -7245,7 +7246,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 				cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
 			}
 		}
-		for (ArpPanel ap : arpPanels) {
+		for (ArpPanel ap : ArpGUI.arpPanels) {
 			if (!ap.getLockInst()) {
 				ap.getInstrumentBox().setInstrument(ap.getInstrumentBox().getRandomInstrument());
 			}
@@ -7629,7 +7630,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		instrumentTabPane.setTitleAt(0, "Melody (" + MelodyGUI.melodyPanels.size() + ")");
 		instrumentTabPane.setTitleAt(1, " Bass  (" + BassGUI.bassPanels.size() + ")");
 		instrumentTabPane.setTitleAt(2, "Chords (" + ChordGUI.chordPanels.size() + ")");
-		instrumentTabPane.setTitleAt(3, " Arps  (" + arpPanels.size() + ")");
+		instrumentTabPane.setTitleAt(3, " Arps  (" + ArpGUI.arpPanels.size() + ")");
 		instrumentTabPane.setTitleAt(4, " Drums (" + drumPanels.size() + ")");
 		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangement.getSections().size() + ")");
 		instrumentTabPane.setTitleAt(6,
@@ -7991,28 +7992,28 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 
 		// arp panel
-		cs.add(randomArpsGenerateOnCompose);
+		cs.add(ArpGUI.randomArpsGenerateOnCompose);
 		//cs.add(randomArpsToGenerate);
-		cs.add(randomArpHitsPicker);
-		cs.add(randomArpHitsPerPattern);
-		cs.add(randomArpAllSameHits);
-		cs.add(randomArpUseChordFill);
-		cs.add(randomArpTranspose);
-		cs.add(randomArpStretchType);
-		cs.add(randomArpStretchPicker);
-		cs.add(randomArpStretchGenerationChance);
-		cs.add(randomArpMaxExceptionChance);
-		cs.add(arpCopyMelodyInst);
-		cs.add(randomArpAllSameInst);
-		cs.add(randomArpLimitPowerOfTwo);
+		cs.add(ArpGUI.randomArpHitsPicker);
+		cs.add(ArpGUI.randomArpHitsPerPattern);
+		cs.add(ArpGUI.randomArpAllSameHits);
+		cs.add(ArpGUI.randomArpUseChordFill);
+		cs.add(ArpGUI.randomArpTranspose);
+		cs.add(ArpGUI.randomArpStretchType);
+		cs.add(ArpGUI.randomArpStretchPicker);
+		cs.add(ArpGUI.randomArpStretchGenerationChance);
+		cs.add(ArpGUI.randomArpMaxExceptionChance);
+		cs.add(ArpGUI.arpCopyMelodyInst);
+		cs.add(ArpGUI.randomArpAllSameInst);
+		cs.add(ArpGUI.randomArpLimitPowerOfTwo);
 		cs.add(null); // randomArpUseOctaveAdjustments
-		cs.add(randomArpMaxRepeat);
-		cs.add(randomArpMinVel);
-		cs.add(randomArpMaxVel);
-		cs.add(randomArpPattern);
-		cs.add(randomArpShiftChance);
-		cs.add(randomArpMinLength);
-		cs.add(randomArpMaxLength);
+		cs.add(ArpGUI.randomArpMaxRepeat);
+		cs.add(ArpGUI.randomArpMinVel);
+		cs.add(ArpGUI.randomArpMaxVel);
+		cs.add(ArpGUI.randomArpPattern);
+		cs.add(ArpGUI.randomArpShiftChance);
+		cs.add(ArpGUI.randomArpMinLength);
+		cs.add(ArpGUI.randomArpMaxLength);
 
 		// drum panel
 		cs.add(randomDrumsGenerateOnCompose);
@@ -8080,7 +8081,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		cs.add(miniScorePopup);
 
 		// arps panel
-		cs.add(randomArpCorrectMelodyNotes);
+		cs.add(ArpGUI.randomArpCorrectMelodyNotes);
 
 		// extra settings 2.5
 		cs.add(reuseMidiChannelAfterCopy);
@@ -8200,7 +8201,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		gc.setTranspose(transposeScore.getInt());
 		gc.setBpm(Double.valueOf(mainBpm.getInt()));
-		gc.setArpAffectsBpm(arpAffectsBpm.isSelected());
+		gc.setArpAffectsBpm(ArpGUI.arpAffectsBpm.isSelected());
 		gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
 		gc.setSwingUnitMultiplierIndex(swingUnitMultiplier.getSelectedIndex());
 		gc.setCustomMidiForceScale(customMidiForceScale.isSelected());
@@ -8281,8 +8282,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		gc.setSpiceForceScale(ChordGUI.spiceForceScale.isSelected());
 
 		// arps
-		gc.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
-		gc.setRandomArpCorrectMelodyNotes(randomArpCorrectMelodyNotes.isSelected());
+		gc.setUseOctaveAdjustments(ArpGUI.randomArpUseOctaveAdjustments.isSelected());
+		gc.setRandomArpCorrectMelodyNotes(ArpGUI.randomArpCorrectMelodyNotes.isSelected());
 
 		// drums
 		boolean isCustomMidiDevice = midiMode.isSelected()
@@ -8345,7 +8346,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		mainBpm.setInt(bpm);
 
-		arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
+		ArpGUI.arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
 		beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
 		swingUnitMultiplier.setSelectedIndex(gc.getSwingUnitMultiplierIndex());
 		customMidiForceScale.setSelected(gc.isCustomMidiForceScale());
@@ -8441,8 +8442,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		ChordGUI.userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
 
 		// arps
-		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
-		randomArpCorrectMelodyNotes.setSelected(gc.isRandomArpCorrectMelodyNotes());
+		ArpGUI.randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
+		ArpGUI.randomArpCorrectMelodyNotes.setSelected(gc.isRandomArpCorrectMelodyNotes());
 
 		arrSection.setVisible(true);
 
@@ -8608,7 +8609,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			chordGUI.createRandomChordPanels(ChordGUI.chordPanels.size() + 1, true,
 					(ChordPanel) panel);
 		} else if (partNum == 3) {
-			createRandomArpPanels(arpPanels.size() + 1, true, (ArpPanel) panel);
+			arpGUI.createRandomArpPanels(ArpGUI.arpPanels.size() + 1, true, (ArpPanel) panel);
 		} else if (partNum == 4) {
 			createRandomDrumPanels(drumPanels.size() + 1, true, (DrumPanel) panel);
 		}
@@ -8629,7 +8630,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		} else if (part == 2) {
 			chordGUI.createRandomChordPanels(panelCount, onlyAdd, null);
 		} else if (part == 3) {
-			createRandomArpPanels(panelCount, onlyAdd, null);
+			arpGUI.createRandomArpPanels(panelCount, onlyAdd, null);
 		} else if (part == 4) {
 			createRandomDrumPanels(panelCount, onlyAdd, null);
 		} else {
@@ -8839,294 +8840,11 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 		repaint();
 	}
 
-	protected void createRandomArpPanels(int panelCount, boolean onlyAdd,
+	@Deprecated
+	protected void __createRandomArpPanels(int panelCount, boolean onlyAdd,
 			ArpPanel randomizedPanel) {
-		ScrollComboBox.discardInteractions();
-		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) getAffectedPanels(3);
-
-		Random panelGenerator = new Random();
-		List<ArpPanel> removedPanels = new ArrayList<>();
-		List<ArpPanel> remainingPanels = new ArrayList<>();
-		for (Iterator<ArpPanel> panelI = affectedArps.iterator(); panelI.hasNext();) {
-			ArpPanel panel = panelI.next();
-			if (!onlyAdd && !panel.getLockInst()) {
-				if (removedPanels.size() >= panelCount) {
-					((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
-					panelI.remove();
-				} else {
-					removedPanels.add(panel);
-				}
-			} else {
-				remainingPanels.add(panel);
-			}
-
-		}
-		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
-
-		panelCount -= remainingPanels.size();
-
-		int fixedHitsGenerated = -1;
-		if (randomArpHitsPerPattern.isSelected() && randomArpAllSameHits.isSelected()) {
-			Random instGen = new Random();
-			if (randomArpLimitPowerOfTwo.isSelected()) {
-				fixedHitsGenerated = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
-						0);
-			} else {
-				fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-
-				if (fixedHitsGenerated == 5) {
-					// reduced chance of 5
-					fixedHitsGenerated = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
-							+ 2;
-				}
-				if (fixedHitsGenerated == 7) {
-					// eliminate 7
-					fixedHitsGenerated++;
-				}
-			}
-
-			randomArpHitsPicker.setVal(fixedHitsGenerated);
-		}
-
-		int fixedInstrument = -1;
-		int fixedHits = -1;
-
-		if (arpCopyMelodyInst.isSelected() && !MelodyGUI.melodyPanels.isEmpty()
-				&& !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
-			fixedInstrument = MelodyGUI.melodyPanels.get(0).getInstrument();
-			if (affectedArps.size() > 0) {
-				affectedArps.get(0).setInstrument(fixedInstrument);
-			}
-		}
-
-		int fixedArpStretch = -1;
-		if (randomArpStretchType.getVal().equals("FIXED")) {
-			fixedArpStretch = randomArpStretchPicker.getVal();
-		}
-
-
-		int start = 0;
-		if (randomizedPanel != null) {
-			start = randomizedPanel.getPanelOrder() - 1;
-			panelCount = start + 1;
-		}
-
-		ArpPanel first = (affectedArps.isEmpty() || !affectedArps.get(0).getLockInst()
-				|| (randomizedPanel != null && start == 0)) ? null : affectedArps.get(0);
-		List<RhythmPattern> viablePatterns = new ArrayList<>(RhythmPattern.VIABLE_PATTERNS);
-
-		for (int panelIndex = start; panelIndex < panelCount; panelIndex++) {
-			if (randomArpAllSameInst.isSelected() && first != null && fixedInstrument < 0) {
-				fixedInstrument = first.getInstrument();
-			}
-			if (randomArpAllSameHits.isSelected() && first != null && fixedHits < 0) {
-				fixedHits = first.getHitsPerPattern() / first.getChordSpan();
-			}
-			ArpPanel ip = null;
-			boolean needNewChannel = false;
-			if (randomizedPanel != null) {
-				ip = randomizedPanel;
-			} else {
-				if (panelIndex < removedPanels.size()) {
-					ip = removedPanels.get(panelIndex);
-				} else {
-					needNewChannel = true;
-					ip = (ArpPanel) addInstPanelToLayout(3);
-				}
-			}
-
-
-			if (randomArpHitsPerPattern.isSelected()) {
-				if (fixedHits > 0) {
-					ip.setHitsPerPattern(fixedHits);
-				} else {
-					if (fixedHitsGenerated > 0) {
-						ip.setHitsPerPattern(fixedHitsGenerated);
-					} else {
-						Random instGen = new Random();
-						int value = -1;
-						if (randomArpLimitPowerOfTwo.isSelected()) {
-							value = getRandomFromArray(instGen, new int[] { 2, 4, 4, 8, 8, 8, 8 },
-									0);
-						} else {
-							value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1) + 2;
-
-							if (value == 5) {
-								// reduced chance of 5
-								value = instGen.nextInt(MidiGenerator.MAXIMUM_PATTERN_LENGTH - 1)
-										+ 2;
-							}
-							if (value == 7) {
-								// eliminate 7
-								value++;
-							}
-						}
-						ip.setHitsPerPattern(value);
-					}
-				}
-			} else {
-				ip.setHitsPerPattern(randomArpHitsPicker.getSelectedIndex() + 1);
-			}
-
-			if (randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
-				int instrument = ip.getInstrumentBox().getRandomInstrument();
-
-				if (randomArpAllSameInst.isSelected()) {
-					if (fixedInstrument >= 0) {
-						instrument = fixedInstrument;
-					} else {
-						fixedInstrument = instrument;
-					}
-				}
-				if (ip.getInstrumentBox().isEnabled()) {
-					ip.setInstrument(instrument);
-				}
-			}
-
-			ip.setChordSpan(panelGenerator.nextInt(2) + 1);
-
-			if (orderedTransposeGeneration.isSelected()) {
-				ip.setTranspose((((ip.getPanelOrder() + 1) % 3) - 1) * 12);
-			} else {
-				if (first == null && panelIndex == 0 && !onlyAdd) {
-					ip.setTranspose(12);
-				} else {
-					ip.setTranspose((panelGenerator.nextInt(3) - 1) * 12);
-				}
-			}
-
-
-			if (first == null && panelIndex == 0 && !onlyAdd && arpCopyMelodyInst.isSelected()
-					&& !MelodyGUI.melodyPanels.isEmpty() && !MelodyGUI.melodyPanels.get(0).getMuteInst()) {
-				ip.setInstrument(fixedInstrument);
-			}
-
-
-			if (ip.getChordSpan() == 1) {
-				ip.setPatternRepeat(panelGenerator.nextInt(randomArpMaxRepeat.getInt()) + 1);
-			} else {
-				ip.setPatternRepeat(1);
-				if (panelGenerator.nextBoolean() == true) {
-					if ((first == null && panelIndex > 1) || (first != null)) {
-						ip.setHitsPerPattern(ip.getHitsPerPattern() * ip.getChordSpan());
-					}
-
-				}
-			}
-
-			boolean fastArp = (ip.getPatternRepeat() * ip.getHitsPerPattern()
-					/ (double) ip.getChordSpan()) >= 16;
-			if (fastArp) {
-				ip.setExceptionChance(
-						panelGenerator.nextInt(1 + (randomArpMaxExceptionChance.getInt() / 3)));
-			} else {
-				ip.setExceptionChance(
-						panelGenerator.nextInt(1 + randomArpMaxExceptionChance.getInt()));
-			}
-
-			if (!randomArpStretchType.getVal().equals("NONE")
-					&& panelGenerator.nextInt(100) < randomArpStretchGenerationChance.getInt()) {
-				ip.setStretchEnabled(true);
-				if (fixedArpStretch < 0) {
-					int atMost = randomArpStretchPicker.getVal();
-					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
-				} else {
-					ip.setChordNotesStretch(fixedArpStretch);
-				}
-			} else {
-				ip.setStretchEnabled(false);
-			}
-
-			RhythmPattern pattern = RhythmPattern.FULL;
-			// use pattern if checkbox selected and %chance 
-			int patternChanceIncrease = (ip.getPanelOrder() < 4 || arpPanels.size() < 3) ? 0
-					: arpPanels.size() * 5;
-			int fillChanceIncrease = (ip.getPanelOrder() < 4 || arpPanels.size() < 3) ? 0
-					: (arpPanels.size() - 3) * 5;
-			if (panelGenerator.nextInt(100) < (30 + patternChanceIncrease)) {
-				if (randomArpPattern.isSelected()) {
-					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
-				}
-			}
-			ip.setPattern(pattern);
-			if (randomArpUseChordFill.isSelected()) {
-				int fillWeight = OMNI.clampChance(
-						panelGenerator.nextInt(100 - fillChanceIncrease) + fillChanceIncrease);
-				ip.setChordSpanFill(ChordSpanFill.getWeighted(fillWeight));
-			} else {
-				ip.setChordSpanFill(ChordSpanFill.ALL);
-			}
-			ip.setFillFlip(false);
-			ip.setPatternFlip(false);
-
-			ip.setVelocityMax(randomArpMaxVel.getInt());
-			ip.setVelocityMin(randomArpMinVel.getInt());
-
-			int pauseMax = (int) (50 * ip.getPattern().getNoteFrequency());
-			ip.setPauseChance(panelGenerator.nextInt(pauseMax + 1));
-			ip.applyPauseChance(panelGenerator);
-
-			if (panelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
-				//LG.d("Arp getPattern: " + ip.getPattern().name());
-				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
-
-				if (beatDurationMultiplier != null && beatDurationMultiplier.getVal() < 0.75) {
-					maxShift /= 2;
-				}
-				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
-			} else {
-				ip.setPatternShift(0);
-			}
-
-			ip.growPattern(panelGenerator, 1, 5);
-
-			int lengthRange = Math.max(1,
-					1 + randomArpMaxLength.getInt() - randomArpMinLength.getInt());
-			ip.setNoteLengthMultiplier(
-					panelGenerator.nextInt(lengthRange) + randomArpMinLength.getInt());
-
-			if (panelGenerator.nextBoolean()) {
-				int arpPatternOrder = 0;
-				// excludes CUSTOM pattern
-				int[] patternWeights = { 60, 68, 75, 83, 91, 97, 100 };
-				int randomWeight = panelGenerator.nextInt(100);
-				for (int j = 0; j < patternWeights.length; j++) {
-					if (randomWeight < patternWeights[j]) {
-						arpPatternOrder = j;
-						break;
-					}
-				}
-				ip.setArpPattern(ArpPattern.values()[arpPatternOrder]);
-				if (arpPatternOrder > 0 && panelGenerator.nextBoolean()) {
-					ip.setArpPatternRotate(
-							panelGenerator.nextInt(Math.min(4, ip.getChordNotesStretch())));
-				}
-			} else {
-				ip.setArpPattern(ArpPattern.RANDOM);
-			}
-
-			if (needNewChannel) {
-				ip.setNextFreeMidiChannel();
-				ip.setPanByOrder(7);
-			}
-
-			ip.getComboPanel().reapplyShift();
-			ip.getComboPanel().reapplyHits();
-		}
-
-		/*if (!affectedArps.isEmpty()) {
-			ArpPanel lowest = affectedArps.get(0);
-			if (!lowest.getLockInst()) {
-				lowest.setPatternRepeat(1);
-				lowest.setChordSpan(1);
-		
-			}
-		}*/
-
-		//sizeRespectingPack();
-		repaint();
+		arpGUI.createRandomArpPanels(panelCount, onlyAdd, randomizedPanel);
 	}
-
 	protected void createRandomDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();

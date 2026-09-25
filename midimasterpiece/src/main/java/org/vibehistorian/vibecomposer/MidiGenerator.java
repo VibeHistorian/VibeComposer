@@ -1384,7 +1384,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < arpParts.size(); i++) {
 
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getArpParts().get(i).getOrder(),
-					VibeComposerGUI.arpPanels);
+					ArpGUI.arpPanels);
 			if (!gc.getArpParts().get(i).isMuted() && gc.isArpsEnable()) {
 				score.add(arpParts.get(i));
 				arpParts.get(i).setTrackNumber(trackCounter);
