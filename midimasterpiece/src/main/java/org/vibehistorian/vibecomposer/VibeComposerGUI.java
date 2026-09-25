@@ -320,8 +320,6 @@ public static final String CURRENT_VERSION = "2.6";
 	private void initArrangementGUI() {
 		arrangementGUI = new ArrangementGUI(new ArrangementGUI.Context() {
 			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
-			@Override public boolean isDarkMode() { return UITheme.isDarkMode; }
-			@Override public int getTableColumnMinWidth() { return TABLE_COLUMN_MIN_WIDTH; }
 			@Override public JPanel getEverythingPanel() { return everythingPanel; }
 			@Override public GridBagConstraints getConstraints() { return constraints; }
 			@Override public Set<Component> getToggleableComponents() { return toggleableComponents; }
@@ -362,9 +360,6 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public int getAbsoluteOrder(int instrument, int relativeOrder) {
 				return VibeComposerGUI.getAbsoluteOrder(instrument, relativeOrder);
 			}
-			@Override public boolean isFullMode() { return UITheme.isFullMode; }
-			@Override public Color getPanelColorHigh() { return UITheme.panelColorHigh; }
-			@Override public Color getUiColor() { return UITheme.uiColor(); }
 			@Override public void toggleButtonEnabledForPanels() {
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
@@ -380,13 +375,6 @@ public static final String CURRENT_VERSION = "2.6";
 				currentMidiEditorPopup = new MidiEditPopup(section, instrument, panelOrder);
 				currentMidiEditorPopup.setSec(section);
 				currentMidiEditorSectionIndex = sectionOrder;
-			}
-			@Override public Color getPanelColorLow() { return UITheme.panelColorLow; }
-			@Override public List<Image> getSectionVariationIcons() {
-				return GUIAssets.SECTION_VARIATIONS_ICONS;
-			}
-			@Override public List<Image> getSectionTransitionIcons() {
-				return GUIAssets.SECTION_TRANSITION_ICONS;
 			}
 			@Override public JFrame getMainWindow() { return VibeComposerGUI.this; }
 		});

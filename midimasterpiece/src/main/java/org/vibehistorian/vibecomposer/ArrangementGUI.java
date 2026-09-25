@@ -148,8 +148,6 @@ public class ArrangementGUI {
 	/** Supplies the cross-tab work that belongs to the main window. */
 	public interface Context {
 		Dimension getScrollPaneDimension();
-		boolean isDarkMode();
-		int getTableColumnMinWidth();
 		JPanel getEverythingPanel();
 		GridBagConstraints getConstraints();
 		Set<Component> getToggleableComponents();
@@ -166,18 +164,12 @@ public class ArrangementGUI {
 		List<InstPart> getCustomSectionParts(int instrument);
 		InstPanel makeInstrumentPanel(int instrument);
 		int getAbsoluteOrder(int instrument, int relativeOrder);
-		boolean isFullMode();
-		Color getPanelColorHigh();
-		Color getUiColor();
 		void toggleButtonEnabledForPanels();
 		PhraseNotes getPatternRaw(UsedPattern pattern);
 		void showInvalidPatternCopyInfo();
 		boolean hasCurrentMidi();
 		void openMidiEditPopup(Section section, int instrument, int panelOrder,
 				int sectionOrder);
-		Color getPanelColorLow();
-		List<Image> getSectionVariationIcons();
-		List<Image> getSectionTransitionIcons();
 		JFrame getMainWindow();
 	}
 
@@ -228,7 +220,7 @@ public class ArrangementGUI {
 		List<InstPanel> addedPanels = new ArrayList<>();
 		if (GLOBAL.equals(selectedItem)) {
 			LG.i("Resetting to normal panels!");
-			arrangementMiddleColoredPanel.setBackground(context.getPanelColorHigh().brighter());
+			arrangementMiddleColoredPanel.setBackground(UITheme.panelColorHigh.brighter());
 			for (int instrument = 0; instrument < 5; instrument++) {
 				JScrollPane pane = context.getInstrumentPanelScrollPane(instrument);
 				List<? extends InstPanel> panels = context.getInstrumentPanels(instrument);
@@ -244,7 +236,7 @@ public class ArrangementGUI {
 			}
 		} else {
 			LG.i("Switching panels!");
-			arrangementMiddleColoredPanel.setBackground(context.getUiColor().darker().darker());
+			arrangementMiddleColoredPanel.setBackground(UITheme.uiColor().darker().darker());
 			int sectionOrder = Integer.valueOf(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (int instrument = 0; instrument < 5; instrument++) {
@@ -298,7 +290,7 @@ public class ArrangementGUI {
 						panel.getInstrumentBox().setEnabled(true);
 					}
 					panel.getToggleableComponents()
-							.forEach(component -> component.setVisible(context.isFullMode()));
+							.forEach(component -> component.setVisible(UITheme.isFullMode));
 					panel.setVisible(false);
 					panelView.add(panel);
 				}
@@ -534,12 +526,12 @@ public class ArrangementGUI {
 			return;
 		}
 		if (value.isEmpty() || value.equalsIgnoreCase("*")) {
-			component.setBackground(context.getPanelColorLow().darker());
+			component.setBackground(UITheme.panelColorLow.darker());
 			return;
 		}
 		int count = actual ? StringUtils.countMatches(value, ",") + 1 : Integer.valueOf(value);
 		int color;
-		if (context.isDarkMode()) {
+		if (UITheme.isDarkMode) {
 			color = arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];
 			color = Math.min(color, 170);
 		} else {
@@ -577,19 +569,19 @@ public class ArrangementGUI {
 					int currentX = 8;
 					for (int j = 0; j < (Section.sectionVariationNames.length + 1) / 2; j++) {
 						if (sectionVars.get(j) > 0 || (j == 1 && section.isCustomChordsEnabled())) {
-							g.drawImage(context.getSectionVariationIcons().get(j), currentX, 6, this);
+							g.drawImage(GUIAssets.SECTION_VARIATIONS_ICONS.get(j), currentX, 6, this);
 						}
 						currentX += xsizeForIcon + 2;
 					}
 					if (section.getTransitionType() > 0) {
-						g.drawImage(context.getSectionTransitionIcons()
+						g.drawImage(GUIAssets.SECTION_TRANSITION_ICONS
 								.get(section.getTransitionType() - 1), this.getWidth() - 18, 6, this);
 					}
 					currentX = 8;
 					for (int j = (Section.sectionVariationNames.length + 1) / 2;
 							j < Section.sectionVariationNames.length; j++) {
 						if (sectionVars.get(j) > 0) {
-							g.drawImage(context.getSectionVariationIcons().get(j), currentX,
+							g.drawImage(GUIAssets.SECTION_VARIATIONS_ICONS.get(j), currentX,
 									this.getHeight() * 3 / 4 - 6, this);
 						}
 						currentX += xsizeForIcon + 2;
@@ -597,7 +589,7 @@ public class ArrangementGUI {
 				}
 			};
 			button.addActionListener(e -> openVariationPopup(sectionIndex + 1));
-			int width = Math.max(context.getTableColumnMinWidth(),
+			int width = Math.max(GUIConstants.TABLE_COLUMN_MIN_WIDTH,
 					(context.getScrollPaneDimension().width - arrangementRowHeaderWidth) / count);
 			button.setPreferredSize(new Dimension(width, 50));
 			button.addMouseListener(new MouseAdapter() {
@@ -649,7 +641,7 @@ public class ArrangementGUI {
 		count += section.isCustomChordsEnabled() ? 1 : 0;
 		int color;
 		int total = Section.sectionVariationNames.length + 1;
-		if (context.isDarkMode()) {
+		if (UITheme.isDarkMode) {
 			color = arrangementDarkModeLowestColor + (35 * count) / total;
 			color = Math.min(color, 135);
 		} else {
@@ -794,7 +786,7 @@ public class ArrangementGUI {
 			private static final long serialVersionUID = 3846279087936376003L;
 			@Override public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
-				comp.setForeground(context.isDarkMode() ? ArrangementGUI.arrangementDarkModeText
+				comp.setForeground(UITheme.isDarkMode ? ArrangementGUI.arrangementDarkModeText
 						: ArrangementGUI.arrangementLightModeText);
 				if (getModel().getColumnCount() <= col) return comp;
 				if (row == 0) {
@@ -888,7 +880,7 @@ public class ArrangementGUI {
 				Component comp = super.prepareRenderer(renderer, row, col);
 				Object value = getModel().getValueAt(row,
 						ArrangementGUI.scrollableArrangementActualTable.convertColumnIndexToModel(col));
-				comp.setForeground(context.isDarkMode() ? ArrangementGUI.arrangementDarkModeText
+				comp.setForeground(UITheme.isDarkMode ? ArrangementGUI.arrangementDarkModeText
 						: ArrangementGUI.arrangementLightModeText);
 				if (value == null || getModel().getColumnCount() <= col) return comp;
 				if (row == 0) {
@@ -897,7 +889,7 @@ public class ArrangementGUI {
 					return comp;
 				}
 				int height = 350 / getModel().getRowCount();
-				int width = Math.max(context.getTableColumnMinWidth(),
+				int width = Math.max(GUIConstants.TABLE_COLUMN_MIN_WIDTH,
 						(int) ((context.getScrollPaneDimension().getWidth() - 60)
 								/ getModel().getColumnCount()) - 2);
 				if (row == 1) return new SectionInfoCellRenderer(width, height, col);
