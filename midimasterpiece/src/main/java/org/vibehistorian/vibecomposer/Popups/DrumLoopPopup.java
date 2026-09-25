@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.PlaybackState;
+
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
@@ -103,7 +105,7 @@ public class DrumLoopPopup {
 
 	private void startOmnipresentThread() {
 		// init thread
-		Sequencer sequencer = VibeComposerGUI.sequencer;
+		Sequencer sequencer = PlaybackState.sequencer;
 		Thread cycle = new Thread() {
 
 			public void run() {
@@ -113,7 +115,7 @@ public class DrumLoopPopup {
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
 							slider.setValue(
-									VibeComposerGUI.slider.getUpperValue() % slider.getMaximum());
+									PlaybackState.slider.getUpperValue() % slider.getMaximum());
 						}
 
 						try {
@@ -151,7 +153,7 @@ public class DrumLoopPopup {
 
 
 		slider = new JSlider();
-		slider.setMaximum(VibeComposerGUI.slider.getMaximum() / 4);
+		slider.setMaximum(PlaybackState.slider.getMaximum() / 4);
 		slider.setToolTipText("Test");
 		sliderPanel.add(slider);
 		hitsPanel.add(sliderPanel);

@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 
 
@@ -197,7 +200,7 @@ public class JKnob extends JComponent
 					RenderingHints.VALUE_ANTIALIAS_ON);
 
 			// Draw the knob.
-			Color bgColorOval = (VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob;
+			Color bgColorOval = (UITheme.isDarkMode) ? darkModeKnob : lightModeKnob;
 
 			boolean disabled = !isEnabled();
 			if (disabled) {
@@ -221,22 +224,22 @@ public class JKnob extends JComponent
 
 			//g2d.fillArc(0, 10, 2 * radius, 2 * (radius - 3), 270 - 20, 20 * 2);
 			if (disabled || defaultValue != curr) {
-				if (VibeComposerGUI.isDarkMode) {
-					g2d.setColor(OMNI.alphen(VibeComposerGUI.darkModeUIColor, 100));
+				if (UITheme.isDarkMode) {
+					g2d.setColor(OMNI.alphen(UITheme.darkModeUIColor, 100));
 				} else {
 					g2d.setColor(OMNI.alphen(Color.white, 180));
 				}
 				g2d.fillArc(0, 0, 2 * radius, 2 * radius, 270 - arcCut,
 						-1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
 
-				g2d.setColor((VibeComposerGUI.isDarkMode) ? darkModeKnob : lightModeKnob);
+				g2d.setColor((UITheme.isDarkMode) ? darkModeKnob : lightModeKnob);
 				g2d.fillArc(arcWidth, arcWidth, 2 * (radius - arcWidth), 2 * (radius - arcWidth),
 						270 - arcCut, -1 * (int) ((360 - 2 * arcCut) * toDouble(theta)));
 			}
 
 			// Draw value.
-			Color valueColor = (VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor
-					: VibeComposerGUI.lightModeUIColor.darker();
+			Color valueColor = (UITheme.isDarkMode) ? UITheme.darkModeUIColor
+					: UITheme.lightModeUIColor.darker();
 			if (defaultValue == curr) {
 				valueColor = OMNI.alphen(valueColor, 180);
 			}
@@ -247,7 +250,7 @@ public class JKnob extends JComponent
 			g2d.drawString(valueString, cnt.x - 1 - valueString.length() * 3, cnt.y + 4);
 
 			if (showTextInKnob) {
-				if (VibeComposerGUI.isDarkMode) {
+				if (UITheme.isDarkMode) {
 					g2d.setColor(OMNI.alphen(Color.white, 230));
 				} else {
 					g2d.setColor(OMNI.alphen(Color.black, 210));
@@ -289,7 +292,7 @@ public class JKnob extends JComponent
 			}
 
 			// Draw the spot.
-			if (VibeComposerGUI.isDarkMode) {
+			if (UITheme.isDarkMode) {
 				g2d.setColor(spotColor);
 			} else {
 				g2d.setColor(Color.white);
@@ -496,7 +499,7 @@ public class JKnob extends JComponent
 			ctrlClick = true;
 		}
 
-		VibeComposerGUI.actionUndoManager.saveToHistory(this.parent(), updateAndGetValue());
+		ApplicationSessionState.actionUndoManager.saveToHistory(this.parent(), updateAndGetValue());
 
 		if (SwingUtilities.isLeftMouseButton(e)) {
 			Point mouseLoc = e.getPoint();

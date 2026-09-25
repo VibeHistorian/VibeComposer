@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -39,7 +42,7 @@ public class CheckButton extends JButton {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				VibeComposerGUI.actionUndoManager.saveToHistory(CheckButton.this);
+				ApplicationSessionState.actionUndoManager.saveToHistory(CheckButton.this);
 				setSelected(!selected);
 			}
 
@@ -52,7 +55,7 @@ public class CheckButton extends JButton {
 			bgColor = opaqueColor;
 			setBackground(OMNI.alphen(bgColor, selected ? 60 : 0));
 		} else {
-			setBackground(OMNI.alphen(VibeComposerGUI.uiColor(), selected ? 60 : 0));
+			setBackground(OMNI.alphen(UITheme.uiColor(), selected ? 60 : 0));
 		}
 	}
 
@@ -114,7 +117,7 @@ public class CheckButton extends JButton {
 					c = OMNI.alphen(bgColor, 80);
 				}
 			} else {
-				c = OMNI.alphen(VibeComposerGUI.uiColor(), 80);
+				c = OMNI.alphen(UITheme.uiColor(), 80);
 			}
 			g.setColor(c);
 			g.drawRect(0, 0, getWidth(), getHeight());

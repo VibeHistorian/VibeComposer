@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.ScoreGUI;
 
 import java.awt.Dimension;
@@ -49,7 +51,7 @@ public class ShowScorePopup extends CloseablePopup {
 					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
 							.get(ShowPanelBig.beatWidthBaseIndex);
 					ScoreGUI.scorePanel
-							.updatePanelHeight(VibeComposerGUI.scrollPaneDimension.height);
+							.updatePanelHeight(UITheme.scrollPaneDimension.height);
 					ScoreGUI.scorePanel.getShowArea().setNoteHeight(7);
 					ScoreGUI.scorePanel.setScore();
 					ScoreGUI.scoreScrollPane.repaint();

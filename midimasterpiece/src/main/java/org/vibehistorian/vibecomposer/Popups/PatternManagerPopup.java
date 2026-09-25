@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -74,7 +76,7 @@ public class PatternManagerPopup extends CloseablePopup {
 				}
 			}
 			if (depth == 3) {
-				PhraseNotes pn = VibeComposerGUI.guiConfig.getPattern(part, partOrder, name);
+				PhraseNotes pn = ApplicationSessionState.guiConfig.getPattern(part, partOrder, name);
 				if (pn != null) {
 					mvea.setCustomValues(pn);
 				}
@@ -168,7 +170,7 @@ public class PatternManagerPopup extends CloseablePopup {
 		switch (depth) {
 		case 0:
 			for (int i = 0; i < 5; i++) {
-				List<Integer> partOrders = VibeComposerGUI.guiConfig.getPatternMaps().get(i)
+				List<Integer> partOrders = ApplicationSessionState.guiConfig.getPatternMaps().get(i)
 						.getKeys();
 				for (Integer pO : partOrders) {
 					unapply2(mode, i, pO, remove);
@@ -176,7 +178,7 @@ public class PatternManagerPopup extends CloseablePopup {
 			}
 			break;
 		case 1:
-			List<Integer> partOrders = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
+			List<Integer> partOrders = ApplicationSessionState.guiConfig.getPatternMaps().get(part)
 					.getKeys();
 			for (Integer pO : partOrders) {
 				unapply2(mode, part, pO, remove);
@@ -199,7 +201,7 @@ public class PatternManagerPopup extends CloseablePopup {
 	}
 
 	public static void unapply2(int mode, int part, Integer partOrder, boolean remove) {
-		Set<String> patNames = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
+		Set<String> patNames = ApplicationSessionState.guiConfig.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
 		patNames = patNames.stream().filter(e -> filter(mode, e)).collect(Collectors.toSet());
 		for (String pat : patNames) {
@@ -209,7 +211,7 @@ public class PatternManagerPopup extends CloseablePopup {
 
 	public static void unapply3(int part, Integer partOrder, String name, boolean remove) {
 		if (remove) {
-			VibeComposerGUI.guiConfig.getPatternMaps().get(part).removePattern(partOrder, name);
+			ApplicationSessionState.guiConfig.getPatternMaps().get(part).removePattern(partOrder, name);
 		} else {
 			unapply(part, partOrder, name);
 		}
@@ -220,7 +222,7 @@ public class PatternManagerPopup extends CloseablePopup {
 	}
 
 	public static Boolean toggle(int part, Integer partOrder, String pat, Boolean forcedState) {
-		PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, pat);
+		PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(part, partOrder, pat);
 		if (pn == null) {
 			return null;
 		}

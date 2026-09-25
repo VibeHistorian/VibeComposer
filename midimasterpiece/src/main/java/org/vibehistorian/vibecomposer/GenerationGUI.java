@@ -1,13 +1,14 @@
 package org.vibehistorian.vibecomposer;
 
-import org.vibehistorian.vibecomposer.Components.*;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.RandomValueButton;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.Arrays;
 import java.util.function.Consumer;
 
 /** Owns the generation and macro controls in the main window. */
@@ -38,6 +39,17 @@ public class GenerationGUI {
     public static KnobPanel globalSwingOverrideValue;
     public static JButton globalSwingOverrideApplyButton;
     public static ScrollComboBox<Double> beatDurationMultiplier;
+    public static ScrollComboBox<String> scaleMode;
+    public static KnobPanel loopBeatCount;
+    public static KnobPanel mainBpm;
+    public static RandomValueButton randomSeed;
+    public static int lastRandomSeed;
+    public static CheckButton regenerateWhenValuesChange;
+
+    public static int getCurrentSeed() {
+        return (randomSeed != null && randomSeed.getValue() != 0) ? randomSeed.getValue()
+                : lastRandomSeed;
+    }
 
     public static void saveToConfig(GUIConfig gc) {
         gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());

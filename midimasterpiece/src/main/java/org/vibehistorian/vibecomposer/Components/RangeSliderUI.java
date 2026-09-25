@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -360,7 +363,7 @@ class RangeSliderUI extends BasicSliderUI {
 		int rightMid = center.x + 25;
 		if (g instanceof Graphics2D) {
 			g.setFont(new Font("Arial", Font.PLAIN, 12));
-			Color col = VibeComposerGUI.toggledUIColor;
+			Color col = UITheme.toggledUIColor;
 			g.setColor(UIManager.getColor("Label.foreground"));
 			Graphics2D g2d = (Graphics2D) g;
 			String valueString = slider.getName();
@@ -391,7 +394,7 @@ class RangeSliderUI extends BasicSliderUI {
 
 		Rectangle trackBounds = trackRect;
 
-		Color col = VibeComposerGUI.isDarkMode ? JKnob.darkModeKnob : JKnob.lightModeKnob;
+		Color col = UITheme.isDarkMode ? JKnob.darkModeKnob : JKnob.lightModeKnob;
 
 		if (slider.getOrientation() == JSlider.HORIZONTAL) {
 			// Determine position of selected range by moving from the middle
@@ -463,7 +466,7 @@ class RangeSliderUI extends BasicSliderUI {
 		int w = knobBounds.width;
 		int h = knobBounds.height;
 
-		Color col = VibeComposerGUI.toggledUIColor;
+		Color col = UITheme.toggledUIColor;
 
 		if (g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g.create();
@@ -718,7 +721,7 @@ class RangeSliderUI extends BasicSliderUI {
 						&& VibeComposerGUI.canRegenerateOnChange()) {
 					VibeComposerGUI.vibeComposerGUI.regenerate();
 				} else if (rangeSlider instanceof PlayheadRangeSlider) {
-					VibeComposerGUI.currentTime.setText(
+					PlaybackState.currentTime.setText(
 							VibeComposerGUI.millisecondsToTimeString(rangeSlider.getUpperValue()));
 				}
 			}

@@ -1,15 +1,13 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Dimension;
+import org.vibehistorian.vibecomposer.GenerationGUI;
+import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Random;
-
-import javax.swing.JButton;
-import javax.swing.SwingUtilities;
-
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
 
 public class RandomValueButton extends JButton {
 
@@ -34,7 +32,7 @@ public class RandomValueButton extends JButton {
 						setEnabled(!isEnabled());
 					} else if (isEnabled()) {
 						if (e.isShiftDown()) {
-							setValue(VibeComposerGUI.getCurrentSeed());
+							setValue(GenerationGUI.getCurrentSeed());
 						} else {
 							Random rand = new Random();
 							setValue(rand.nextInt());

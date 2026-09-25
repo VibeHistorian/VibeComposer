@@ -19,6 +19,8 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.GenerationGUI;
+
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -220,7 +222,7 @@ public abstract class InstPanel extends JPanel {
 				if (!copyButton.isEnabled()) {
 					return;
 				}
-				InstPart part = toInstPart(VibeComposerGUI.lastRandomSeed);
+				InstPart part = toInstPart(GenerationGUI.lastRandomSeed);
 				InstPanel newPanel = VibeComposerGUI.vibeComposerGUI.addInstPanelToLayout(
 						VibeComposerGUI.instrumentTabPane.getSelectedIndex(), part, true);
 				newPanel.setPatternSeed(getPatternSeed());

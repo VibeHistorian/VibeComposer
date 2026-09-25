@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.UITheme;
+
 import jm.constants.Pitches;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -990,12 +992,12 @@ public class MidiEditArea extends JComponent {
 			int usableHeight = h - marginY * 2;
 			double rowHeight = usableHeight / (double) rowDivisors;
 			// clear screen
-			g.setColor(VibeComposerGUI.isDarkMode ? VibeComposerGUI.panelColorHigh
+			g.setColor(UITheme.isDarkMode ? UITheme.panelColorHigh
 					: new Color(180, 184, 188));
 			g.fillRect(0, 0, w, h);
 
 			// draw graph lines - first to last value X, min to max value Y
-			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 80));
+			g.setColor(OMNI.alphen(UITheme.uiColor(), 80));
 
 			Point bottomLeft = new Point(marginX, usableHeight + marginY);
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
@@ -1004,15 +1006,15 @@ public class MidiEditArea extends JComponent {
 			double quarterNoteLength = getQuarterNoteLength();
 
 			// to draw scale/key helpers
-			Color highlightedScaleKeyColor = OMNI.alphen(VibeComposerGUI.uiColor(),
-					VibeComposerGUI.isDarkMode ? 65 : 90);
+			Color highlightedScaleKeyColor = OMNI.alphen(UITheme.uiColor(),
+					UITheme.isDarkMode ? 65 : 90);
 			Color highlightedScaleKeyHelperColor = OMNI.alphen(highlightedScaleKeyColor, 20);
 			List<Integer> highlightedScaleKey = calculateHighlightedScaleKey();
-			Color nonHighlightedColor = VibeComposerGUI.isDarkMode ? new Color(150, 100, 30, 65)
+			Color nonHighlightedColor = UITheme.isDarkMode ? new Color(150, 100, 30, 65)
 					: new Color(150, 150, 150, 100);
 			//Color nonHighlightedHelperColor = OMNI.alphen(nonHighlightedColor, 50);
 
-			Color highlightedChordNoteColor = VibeComposerGUI.isDarkMode
+			Color highlightedChordNoteColor = UITheme.isDarkMode
 					? new Color(220, 180, 150, 100)
 					: new Color(0, 0, 0, 150);
 			//Color highlightedChordNoteHelperColor = OMNI.alphen(highlightedChordNoteColor, 60);
@@ -1051,7 +1053,7 @@ public class MidiEditArea extends JComponent {
 
 				g.drawLine(bottomLeft.x, drawY, w, drawY);
 
-				g.setColor(VibeComposerGUI.uiColor());
+				g.setColor(UITheme.uiColor());
 				if (drawnInt % drawEveryX == 0) {
 					g.drawString(drawnValue, drawValueX, drawY + numHeight / 2);
 				}
@@ -1085,7 +1087,7 @@ public class MidiEditArea extends JComponent {
 				if (MidiUtils.roughlyEqual(curr, prev)) {
 					continue;
 				}
-				g.setColor(VibeComposerGUI.uiColor());
+				g.setColor(UITheme.uiColor());
 				//String drawnValue = "" + (i + 1);
 				//int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 				//		: drawnValue.length();
@@ -1152,7 +1154,7 @@ public class MidiEditArea extends JComponent {
 				double line = getPhraseMarginX();
 				for (int i = 0; i < chordSpacings.size(); i++) {
 					g.setColor(
-							OMNI.alphen(VibeComposerGUI.isDarkMode ? Color.green : Color.red, 90));
+							OMNI.alphen(UITheme.isDarkMode ? Color.green : Color.red, 90));
 					int drawX = bottomLeft.x + (int) (quarterNoteLength * line);
 					// vertical separators
 					if ((i > 0) || (getPhraseMarginX() > DBL_ERR)) {
@@ -1184,7 +1186,7 @@ public class MidiEditArea extends JComponent {
 
 				if (getPhraseMarginX() > DBL_ERR) {
 					g.setColor(
-							OMNI.alphen(VibeComposerGUI.isDarkMode ? Color.green : Color.red, 90));
+							OMNI.alphen(UITheme.isDarkMode ? Color.green : Color.red, 90));
 					int drawX = bottomLeft.x + (int) (quarterNoteLength * line);
 					// vertical separators
 					g.drawLine(drawX, bottomLeft.y, drawX, 0);
@@ -1212,7 +1214,7 @@ public class MidiEditArea extends JComponent {
 				if (false && i < numValues - 1) {
 					PhraseNote nextPn = values.getIterationOrder().stream().skip(i + 1).filter(e -> e.getPitch() >= 0).findFirst().orElse(null);
 					if (nextPn != null) {
-						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
+						g.setColor(OMNI.alphen(UITheme.uiColor(), 50));
 						int drawXNext = bottomLeft.x
 								+ (int) (quarterNoteLength * (nextPn.getStartTime() + getPhraseMarginX()));
 						int drawYNext = bottomLeft.y - (int) (rowHeight * (nextPn.getPitch() + 1 - currentMin)) + (int)(rowHeight/2);
@@ -1223,7 +1225,7 @@ public class MidiEditArea extends JComponent {
 				boolean currentlyHighlighted = (highlightedNote != null) && (pn == highlightedNote)
 						&& (highlightedDragLocation != null);
 
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
+				g.setColor(OMNI.alphen(UITheme.uiColor(), 140));
 				g.drawLine(drawX, drawY - 5, drawX, drawY + 5);
 				g.drawLine(drawX + width, drawY - 5, drawX + width, drawY + 5);
 
@@ -1238,17 +1240,17 @@ public class MidiEditArea extends JComponent {
 				}
 				if (currentlyHighlighted) {
 					g.setColor(OMNI.alphen(
-							OMNI.mixColor(VibeComposerGUI.uiColor(),
-									VibeComposerGUI.isDarkMode ? Color.WHITE : Color.black, 0.8),
+							OMNI.mixColor(UITheme.uiColor(),
+									UITheme.isDarkMode ? Color.WHITE : Color.black, 0.8),
 							(int) (140 + 70 * (pn.getDynamic() / 127.0))));
 				}
 				g.drawString(drawnString, drawX + 1, drawY - numHeight - 1);
 
 				if ((draggedNote != null && pn == draggedNote) || selectedNotes.contains(pn)) {
-					g.setColor(OMNI.alphen(OMNI.mixColor(VibeComposerGUI.uiColor(), Color.red, 0.7),
+					g.setColor(OMNI.alphen(OMNI.mixColor(UITheme.uiColor(), Color.red, 0.7),
 							(int) (30 + 140 * (pn.getDynamic() / 127.0))));
 				} else {
-					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
+					g.setColor(OMNI.alphen(UITheme.uiColor(),
 							(int) (30 + 140 * (pn.getDynamic() / 127.0))));
 				}
 
@@ -1269,7 +1271,7 @@ public class MidiEditArea extends JComponent {
 						break;
 					}
 
-					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 140));
+					g.setColor(OMNI.alphen(UITheme.uiColor(), 140));
 					if (drawDragPosition) {
 						switch (highlightedDragLocation) {
 						case 0:
@@ -1288,7 +1290,7 @@ public class MidiEditArea extends JComponent {
 				}
 
 				if (draggingAny(DM.VELOCITY_SHAPE)) {
-					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
+					g.setColor(OMNI.alphen(UITheme.uiColor(),
 							(int) (30 + 140 * (pn.getDynamic() / 127.0))));
 					g.drawLine(drawX + width / 2, drawY, drawX + width / 2,
 							drawY + 63 - pn.getDynamic());
@@ -1296,7 +1298,7 @@ public class MidiEditArea extends JComponent {
 			}
 
 			if (mousePoint != null) {
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 150));
+				g.setColor(OMNI.alphen(UITheme.uiColor(), 150));
 
 				if (dragX != null) {
 					Rectangle rect = getRectFromPoint(mousePoint);
@@ -1326,7 +1328,7 @@ public class MidiEditArea extends JComponent {
 			}
 
 			if (pop != null && pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
-				g.setColor(OMNI.alphen(nonHighlightedColor, VibeComposerGUI.isDarkMode ? 40 : 80));
+				g.setColor(OMNI.alphen(nonHighlightedColor, UITheme.isDarkMode ? 40 : 80));
 				List<PhraseNotes> noteNotes = pop.getSec().getPatterns(4);
 				for (int i = 0; i < noteNotes.size(); i++) {
 					noteNotes.get(i).remakeNoteStartTimes();

@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.GenerationGUI;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import org.vibehistorian.vibecomposer.LG;
@@ -72,7 +74,7 @@ public class MidiHandler {
 				//int status = shortMessage.getStatus();
 				//LG.i("Keyboard: " + shortMessage.getChannel() + ", " + shortMessage.getData1() + ", " + shortMessage.getData2());
 				if (shortMessage.getChannel() == 15 && shortMessage.getData2() > 0) {
-					VibeComposerGUI.mainBpm.setInt(shortMessage.getData2());
+					GenerationGUI.mainBpm.setInt(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
 					if (REPLAY_MODE) {
 						int[] DBCAM = {4,1,2,3,0};

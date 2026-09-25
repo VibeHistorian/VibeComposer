@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.SoloMuteState;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.ScoreGUI;
 
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
@@ -49,10 +52,10 @@ public class SoloMuter extends JPanel {
 		this.type = type;
 		if (type == Type.GROUP) {
 			setPreferredSize(new Dimension(70, 35));
-			smParent = VibeComposerGUI.globalSoloMuter;
+			smParent = SoloMuteState.globalSoloMuter;
 			setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		} else if (type == Type.SINGLE) {
-			smParent = VibeComposerGUI.groupSoloMuters.get(inst);
+			smParent = SoloMuteState.groupSoloMuters.get(inst);
 		}
 
 		this.inst = inst;
@@ -67,8 +70,8 @@ public class SoloMuter extends JPanel {
 				if (SwingUtilities.isLeftMouseButton(e)) {
 					toggleSolo(true);
 				} else if (SwingUtilities.isMiddleMouseButton(e) && type != Type.GLOBAL) {
-					if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
-						VibeComposerGUI.globalSoloMuter.toggleSolo(true);
+					if (SoloMuteState.globalSoloMuter.soloState != State.OFF) {
+						SoloMuteState.globalSoloMuter.toggleSolo(true);
 					}
 					toggleSolo(true);
 				}
@@ -127,9 +130,9 @@ public class SoloMuter extends JPanel {
 
 		if (recalc) {
 			if (VibeComposerGUI.sequenceReady()) {
-				VibeComposerGUI.needToRecalculateSoloMuters = true;
+				SoloMuteState.needToRecalculateSoloMuters = true;
 			} else {
-				VibeComposerGUI.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+				SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
 					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
@@ -152,7 +155,7 @@ public class SoloMuter extends JPanel {
 			return;
 		soloState = State.OFF;
 		soloer.setBackground(EMPTY);
-		soloer.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+		soloer.setForeground(UITheme.isDarkMode ? OFF_DARK : OFF_LIGHT);
 	}
 
 	public void toggleMute(boolean recalc) {
@@ -181,9 +184,9 @@ public class SoloMuter extends JPanel {
 		}
 		if (recalc) {
 			if (VibeComposerGUI.sequenceReady()) {
-				VibeComposerGUI.needToRecalculateSoloMuters = true;
+				SoloMuteState.needToRecalculateSoloMuters = true;
 			} else {
-				VibeComposerGUI.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+				SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
 
 			}
 			if (ShowPanelBig.soloMuterHighlight != null
@@ -207,18 +210,18 @@ public class SoloMuter extends JPanel {
 			return;
 		muteState = State.OFF;
 		muter.setBackground(EMPTY);
-		muter.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+		muter.setForeground(UITheme.isDarkMode ? OFF_DARK : OFF_LIGHT);
 	}
 
 	public void reapplyTextColor() {
 		if (muteState == State.OFF) {
-			muter.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+			muter.setForeground(UITheme.isDarkMode ? OFF_DARK : OFF_LIGHT);
 		} else {
 			muter.setForeground(Color.black);
 		}
 
 		if (soloState == State.OFF) {
-			soloer.setForeground(VibeComposerGUI.isDarkMode ? OFF_DARK : OFF_LIGHT);
+			soloer.setForeground(UITheme.isDarkMode ? OFF_DARK : OFF_LIGHT);
 		} else {
 			soloer.setForeground(Color.black);
 		}

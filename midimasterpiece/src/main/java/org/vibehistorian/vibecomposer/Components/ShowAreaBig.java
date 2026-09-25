@@ -28,11 +28,17 @@ see <https://www.gnu.org/licenses/>.
  */
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.SoloMuteState;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.PlaybackState;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.GUIConstants;
+import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.LG;
@@ -65,7 +71,7 @@ public class ShowAreaBig extends JComponent {
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	public static int areaHeight = VibeComposerGUI.DEFAULT_HEIGHT;
+	public static int areaHeight = GUIConstants.DEFAULT_HEIGHT;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };
@@ -208,14 +214,14 @@ public class ShowAreaBig extends JComponent {
 									if (leftMouseOpenPopup) {
 										consumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
-										VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
+										ApplicationSessionState.currentMidiEditorPopup = new MidiEditPopup(
 												ArrangementGUI.actualArrangement.getSections()
 														.get(phrase.secOrder),
 												phrase.part, phrase.partOrder);
-										VibeComposerGUI.currentMidiEditorPopup
+										ApplicationSessionState.currentMidiEditorPopup
 												.setSec(ArrangementGUI.actualArrangement
 														.getSections().get(phrase.secOrder));
-										VibeComposerGUI.currentMidiEditorSectionIndex = phrase.secOrder;
+										ApplicationSessionState.currentMidiEditorSectionIndex = phrase.secOrder;
 										return;
 									} else if (rightMouseOpenSectionTab) {
 										if (!consumed) {
@@ -249,7 +255,7 @@ public class ShowAreaBig extends JComponent {
 													.getSoloMuter().toggleMute(true);
 										} else {
 											boolean unsoloAll = false;
-											if (VibeComposerGUI.globalSoloMuter.soloState != State.OFF) {
+											if (SoloMuteState.globalSoloMuter.soloState != State.OFF) {
 												unsoloAll = VibeComposerGUI.isSingleSolo()
 														&& (VibeComposerGUI
 																.getPanelByOrder(phrase.part,
@@ -257,7 +263,7 @@ public class ShowAreaBig extends JComponent {
 																.getSoloMuter().soloState == State.FULL);
 											}
 											if (!unsoloAll) {
-												VibeComposerGUI.globalSoloMuter.toggleSolo(true);
+												SoloMuteState.globalSoloMuter.toggleSolo(true);
 											}
 
 											VibeComposerGUI
@@ -350,8 +356,8 @@ public class ShowAreaBig extends JComponent {
 		//offScreenImage.getGraphics();
 		int rectLeft, rectTop, rectRight, rectBot;
 		//clear
-		g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
-				: VibeComposerGUI.panelColorLow);
+		g.setColor(UITheme.isDarkMode ? new Color(100, 100, 100)
+				: UITheme.panelColorLow);
 		g.fillRect(0, 0, this.getSize().width, areaHeight);
 		//get current maxWidth
 		//paint staves
@@ -388,7 +394,7 @@ public class ShowAreaBig extends JComponent {
 		g.drawLine(0, (e + w * 13), maxWidth, (e + w * 13));
 		// leger lines
 		g.setColor(
-				VibeComposerGUI.isDarkMode ? new Color(140, 140, 140) : new Color(200, 200, 200));
+				UITheme.isDarkMode ? new Color(140, 140, 140) : new Color(200, 200, 200));
 		for (int k = 0; k < maxWidth; k += 10) {
 			g.drawLine(k, (e + w), k + 1, (e + w)); // middle C
 			// above treble
@@ -416,15 +422,15 @@ public class ShowAreaBig extends JComponent {
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
 		int minX = -1;
 
-		double highlightX = (VibeComposerGUI.slider != null
-				&& VibeComposerGUI.sliderMeasureStartTimes != null
-				&& !VibeComposerGUI.sliderMeasureStartTimes.isEmpty())
-				? maxX * (VibeComposerGUI.slider.getUpperValue())
-						/ (double) ((VibeComposerGUI.sliderExtended > 0
-								? VibeComposerGUI.sliderExtended
+		double highlightX = (PlaybackState.slider != null
+				&& PlaybackState.sliderMeasureStartTimes != null
+				&& !PlaybackState.sliderMeasureStartTimes.isEmpty())
+				? maxX * (PlaybackState.slider.getUpperValue())
+						/ (double) ((PlaybackState.sliderExtended > 0
+								? PlaybackState.sliderExtended
 								: 0)
-								+ VibeComposerGUI.sliderMeasureStartTimes
-										.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1))
+								+ PlaybackState.sliderMeasureStartTimes
+										.get(PlaybackState.sliderMeasureStartTimes.size() - 1))
 				: -1;
 
 		Set<Integer> soloMuterHighlightedTracks = getSoloMuterHighlightedTracks();
@@ -603,7 +609,7 @@ public class ShowAreaBig extends JComponent {
 		}
 
 		Point viewPoint = ShowPanelBig.areaScrollPane.getViewport().getViewPosition();
-		g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), VibeComposerGUI.isDarkMode ? 120 : 140));
+		g.setColor(OMNI.alphen(UITheme.uiColor(), UITheme.isDarkMode ? 120 : 140));
 		if (mousePoint != null) {
 			if (minX >= 0) {
 				Point mouseLoc = SwingUtils.getMouseLocation();
@@ -611,9 +617,9 @@ public class ShowAreaBig extends JComponent {
 					Double placeInScore = sp.getSequencePosFromMousePos(mouseLoc);
 					g.drawLine(mouseLoc.x, 0, mouseLoc.x, areaHeight);
 					if (ShowPanelBig.scoreBox.getSelectedIndex() == 0 && placeInScore != null) {
-						int timePos = (int) (placeInScore * VibeComposerGUI.slider.getMaximum());
+						int timePos = (int) (placeInScore * PlaybackState.slider.getMaximum());
 						// TODO: buggy scrollpane dimension - extra 35px set when switching Big mode back
-						int scrollPaneDim = VibeComposerGUI.scrollPaneDimension.height < 500 ? 400 : 600;
+						int scrollPaneDim = UITheme.scrollPaneDimension.height < 500 ? 400 : 600;
 						int pos = viewPoint.y + scrollPaneDim * 4 / 5;
 						//LG.i(pos);
 						g.drawString(VibeComposerGUI.millisecondsToDetailedTimeString(timePos), mouseLoc.x + 10, Math.min(areaHeight - 5, pos));
@@ -642,7 +648,7 @@ public class ShowAreaBig extends JComponent {
 		Set<Integer> soloMuterHighlightedTracks = new HashSet<>();
 		if (ShowPanelBig.soloMuterHighlight != null
 				&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-			boolean checkMutes = VibeComposerGUI.globalSoloMuter.soloState == State.OFF;
+			boolean checkMutes = SoloMuteState.globalSoloMuter.soloState == State.OFF;
 			for (int i = 0; i < 5; i++) {
 				for (InstPanel ip : VibeComposerGUI.getInstList(i)) {
 					if (checkMutes) {

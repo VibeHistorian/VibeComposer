@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import org.vibehistorian.vibecomposer.Components.CheckButton;
@@ -24,9 +26,9 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 
 	public ArrangementSectionSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons) {
 		setOpaque(false);
-		//setMaximumSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
-		//setPreferredSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
-		setMinimumSize(new Dimension(VibeComposerGUI.scrollPaneDimension.width, 30));
+		//setMaximumSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
+		//setPreferredSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
+		setMinimumSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
 		unremovableButtons = defaultButtons.size();
 		addAllButtons(defaultButtons);
 		addAllButtons(buttons);

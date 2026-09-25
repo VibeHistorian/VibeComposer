@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+
 import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
@@ -238,7 +240,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		}
 
 		if (interacting) {
-			VibeComposerGUI.actionUndoManager.saveToHistory(this);
+			ApplicationSessionState.actionUndoManager.saveToHistory(this);
 		}
 
 		if (isEnabled() && isDifferent) {

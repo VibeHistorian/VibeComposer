@@ -898,7 +898,7 @@ public class MidiGenerator implements JMC {
 						customInversionIndexList, userRootProgression);
 
 		if (!debugEnabled) {
-			System.setOut(VibeComposerGUI.dummyOut);
+			System.setOut(ApplicationSessionState.dummyOut);
 		}
 		if (logPerformance) {
 			LG.i("Generated chords, starting arrangement after: "
@@ -1272,17 +1272,17 @@ public class MidiGenerator implements JMC {
 
 		// write midi without log
 
-		System.setOut(VibeComposerGUI.dummyOut);
+		System.setOut(ApplicationSessionState.dummyOut);
 
 		LG.i("Printing score...");
 		JMusicUtilsCustom.midi(score, fileName);
 		LG.i("Printing scoreFull...");
 		JMusicUtilsCustom.midi(scoreFull, Constants.TEMPORARY_SEQUENCE_MIDI_NAME);
-		if (VibeComposerGUI.dconsole == null || !VibeComposerGUI.dconsole.getFrame().isVisible()) {
-			System.setOut(VibeComposerGUI.originalOut);
-			System.setErr(VibeComposerGUI.dummyOut);
+		if (ApplicationSessionState.dconsole == null || !ApplicationSessionState.dconsole.getFrame().isVisible()) {
+			System.setOut(ApplicationSessionState.originalOut);
+			System.setErr(ApplicationSessionState.dummyOut);
 		} else {
-			VibeComposerGUI.dconsole.redirectOut();
+			ApplicationSessionState.dconsole.redirectOut();
 		}
 
 

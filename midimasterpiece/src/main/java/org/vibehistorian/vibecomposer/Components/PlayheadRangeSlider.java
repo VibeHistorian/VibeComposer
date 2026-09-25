@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.PlaybackState;
+
 import org.vibehistorian.vibecomposer.ScoreGUI;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -11,7 +13,7 @@ public class PlayheadRangeSlider extends RangeSlider {
 	@Override
 	public void setUpperDragging(boolean upperDragging) {
 		super.setUpperDragging(upperDragging);
-		VibeComposerGUI.isDragging = upperDragging;
+		PlaybackState.isDragging = upperDragging;
 		if (VibeComposerGUI.instrumentTabPane.getTabCount() < 8
 				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
 			if (ScoreGUI.scorePanel != null) {

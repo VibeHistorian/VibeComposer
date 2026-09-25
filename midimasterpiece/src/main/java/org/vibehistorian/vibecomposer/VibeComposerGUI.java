@@ -75,6 +75,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.Constants.instNames;
+import static org.vibehistorian.vibecomposer.GUIConstants.*;
+import static org.vibehistorian.vibecomposer.UITheme.*;
+import static org.vibehistorian.vibecomposer.PlaybackState.*;
+import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
+import static org.vibehistorian.vibecomposer.GenerationGUI.*;
+import static org.vibehistorian.vibecomposer.SoloMuteState.*;
 
 // main class
 public class VibeComposerGUI extends JFrame
@@ -82,50 +88,14 @@ public class VibeComposerGUI extends JFrame
 
 	private static final long serialVersionUID = -677536546851756969L;
 
-	public static List<Image> SECTION_VARIATIONS_ICONS = new ArrayList<>();
-	private static final String[] SECTION_VAR_ICON_NAMES = new String[] { "v0_skipChord.png",
-			"v1_swapChords.png", "v2_swapMelody.png", "v3_melodySpeed.png", "v4_keyChange.png", };
-	public static List<Image> SECTION_TRANSITION_ICONS = new ArrayList<>();
-	private static final String[] SECTION_TRANSITION_ICON_NAMES = new String[] { "v5_transUp.png",
-			"v6_transDown.png", "v7_transCut.png", "v8_halvedTempo.png" };
-	public static List<Image> LOCK_COMPONENT_ICONS = new ArrayList<>();
-	private static final String[] LOCK_COMPONENT_ICON_NAMES = new String[] { "lock.png",
-			"toggle_lock.png", "lock_white.png", "toggle_lock_white.png" };
-
-	public static GUIPreset defaultGuiPreset = null;
-
-public static MidiEditPopup currentMidiEditorPopup = null;
-	public static int currentMidiEditorSectionIndex = 0;
-
 	// COLORS
-	public static Color panelColorHigh, panelColorLow;
-	public static boolean isBigMonitorMode = false;
-	public static boolean isDarkMode = true;
-	private static boolean isFullMode = true;
-	public static Color darkModeUIColor = Color.CYAN;
-	public static Color lightModeUIColor = new Color(0, 90, 255);
-	public static final Color COMPOSE_COLOR = new Color(180, 150, 90);
-	public static final Color COMPOSE_COLOR_TEXT = new Color(220, 170, 60);
-	public static final Color COMPOSE_COLOR_TEXT_LIGHT = new Color(255, 193, 85);
-	public static final Color REGENERATE_COLOR_TEXT = new Color(220, 70, 60);
-	public static final Color REGENERATE_COLOR_TEXT_LIGHT = new Color(150, 0, 0);
-	public static Color toggledUIColor = Color.cyan;
-	public static Color toggledComposeColor = COMPOSE_COLOR_TEXT;
-	public static Color toggledRegenerateColor = REGENERATE_COLOR_TEXT;
 
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
 
-private static Set<Component> toggleableComponents = new HashSet<>();
-
-	private static Soundbank soundfont = null;
 	private Synthesizer synth = null;
 	private boolean isSoundbankSynth = false;
 	private boolean needSoundbankRefresh = false;
-
-	public static GUIConfig guiConfig = new GUIConfig();
-	public static MidiGenerator melodyGen = null;
-	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 
 	// instrument panels added into scrollpanes
 
@@ -191,12 +161,6 @@ private static Set<Component> toggleableComponents = new HashSet<>();
 		}
 	};
 
-public static final int DEFAULT_WIDTH = 1600;
-	public static final int DEFAULT_HEIGHT = 400;
-	public static Dimension scrollPaneDimension = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-
-	public static final int TABLE_COLUMN_MIN_WIDTH = 80;
-
 // arrangement subcells - copy dragging
 
 // instrument global settings
@@ -207,44 +171,16 @@ public static final int DEFAULT_WIDTH = 1600;
 
 	// macro params
 
-public static ScrollComboBox<String> scaleMode;
 	JCheckBox randomizeScaleModeOnCompose;
 
-public static KnobPanel loopBeatCount;
-
-public static KnobPanel mainBpm;
-
 // seed / midi
-	public static RandomValueButton randomSeed;
-	public static int lastRandomSeed = 0;
-
-	public static int getCurrentSeed() {
-		return (randomSeed != null && randomSeed.getValue() != 0) ? randomSeed.getValue()
-				: lastRandomSeed;
-	}
 
 	JList<File> generatedMidi;
-	public static Sequencer sequencer = null;
-	public static Map<Integer, List<MidiEvent>> midiEventsToRemove = new HashMap<>();
-	public static File currentMidi = null;
-	public static File currentSequenceMidi = null;
 	MidiDevice device = null;
-	public static Map<String, Integer> partAndOrderLastNoteIndexes = new HashMap<>();
-
-	public static int getNextNoteIndex(int part, int partOrder) {
-		Integer noteIndex = partAndOrderLastNoteIndexes.get(part + "#" + partOrder);
-		if (noteIndex == null) {
-			noteIndex = -1;
-		}
-		partAndOrderLastNoteIndexes.put(part + "#" + partOrder, ++noteIndex);
-		return noteIndex;
-	}
 
 CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	MidiHandler mh = new MidiHandler();
-
-public static CheckButton regenerateWhenValuesChange;
 
 JButton compose;
 	JButton regenerate;
@@ -257,63 +193,21 @@ JButton compose;
 	JLabel savedIndicatorLabel;
 	Color[] savedIndicatorForegroundColors = { new Color(220, 220, 220), Color.green, Color.magenta,
 			Color.orange };
-	public static boolean heavyBackgroundTasksInProgress = false;
-
 	Thread cycle;
 
-	static CheckButton loopBeat;
 	ScrollComboBox<String> loopBeatCompose;
-	public static JPanel sliderPanel;
-	public static PlayheadRangeSlider slider;
-	public static int sliderExtended = 0;
-	public static List<Integer> sliderMeasureStartTimes = null;
-	public static List<Integer> sliderBeatStartTimes = null;
-
-	public static JLabel currentTime;
 	JLabel totalTime;
-	public static int currentSectionIndex = -1;
-	public static JLabel sectionText;
 	boolean isKeySeeking = false;
-	public static boolean isDragging = false;
-	private static boolean pauseInfoResettable = true;
-	private static int pausedBpm = 50;
-	private static int pausedSliderPosition = 0;
-	private static int pausedMeasureCounter = 0;
-	private static int startBpm = -1;
-	private static int startSliderPosition = 0;
-	private static int startBeatCounter = 0;
-
-	public static double currentBeatMultiplier = 1.0;
 
 JLabel messageLabel;
 	ScrollComboBox<String> presetLoadBox;
 	VeloRect globalVolSlider;
 	VeloRect globalReverbSlider;
 	VeloRect globalChorusSlider;
-	public static SoloMuter globalSoloMuter;
-	public static List<SoloMuter> groupSoloMuters;
-	public static boolean needToRecalculateSoloMuters = false;
-	public static boolean needToRecalculateSoloMutersAfterSequenceGenerated = false;
-
 	JPanel everythingPanel;
 	JPanel controlPanel;
 	JScrollPane everythingPane;
 
-static final PrintStream originalOut = System.out;
-	static final PrintStream originalErr = System.err;
-	static final PrintStream dummyOut = new PrintStream(new OutputStream() {
-		public void write(int b) {
-			// NO-OP
-		}
-	});
-
-public static Map<Integer, SoloMuter> cpSm = null;
-	public static Map<Integer, SoloMuter> apSm = null;
-	public static Map<Integer, SoloMuter> dpSm = null;
-
-	public static UndoManager actionUndoManager = new UndoManager();
-	public static UndoManager instrumentTabUndoManager = new UndoManager();
-	public static DebugConsole dconsole = null;
 	public static VibeComposerGUI vibeComposerGUI = null;
 
 	private static GridBagConstraints constraints = new GridBagConstraints();
@@ -353,7 +247,7 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	static {
-		System.setErr(VibeComposerGUI.dummyOut);
+		System.setErr(ApplicationSessionState.dummyOut);
 	}
 
 	public VibeComposerGUI(String title) {
@@ -426,7 +320,7 @@ public static final String CURRENT_VERSION = "2.6";
 	private void initArrangementGUI() {
 		arrangementGUI = new ArrangementGUI(new ArrangementGUI.Context() {
 			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
-			@Override public boolean isDarkMode() { return VibeComposerGUI.isDarkMode; }
+			@Override public boolean isDarkMode() { return UITheme.isDarkMode; }
 			@Override public int getTableColumnMinWidth() { return TABLE_COLUMN_MIN_WIDTH; }
 			@Override public JPanel getEverythingPanel() { return everythingPanel; }
 			@Override public GridBagConstraints getConstraints() { return constraints; }
@@ -468,9 +362,9 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public int getAbsoluteOrder(int instrument, int relativeOrder) {
 				return VibeComposerGUI.getAbsoluteOrder(instrument, relativeOrder);
 			}
-			@Override public boolean isFullMode() { return VibeComposerGUI.isFullMode; }
-			@Override public Color getPanelColorHigh() { return VibeComposerGUI.panelColorHigh; }
-			@Override public Color getUiColor() { return VibeComposerGUI.uiColor(); }
+			@Override public boolean isFullMode() { return UITheme.isFullMode; }
+			@Override public Color getPanelColorHigh() { return UITheme.panelColorHigh; }
+			@Override public Color getUiColor() { return UITheme.uiColor(); }
 			@Override public void toggleButtonEnabledForPanels() {
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
@@ -487,12 +381,12 @@ public static final String CURRENT_VERSION = "2.6";
 				currentMidiEditorPopup.setSec(section);
 				currentMidiEditorSectionIndex = sectionOrder;
 			}
-			@Override public Color getPanelColorLow() { return VibeComposerGUI.panelColorLow; }
+			@Override public Color getPanelColorLow() { return UITheme.panelColorLow; }
 			@Override public List<Image> getSectionVariationIcons() {
-				return SECTION_VARIATIONS_ICONS;
+				return GUIAssets.SECTION_VARIATIONS_ICONS;
 			}
 			@Override public List<Image> getSectionTransitionIcons() {
-				return SECTION_TRANSITION_ICONS;
+				return GUIAssets.SECTION_TRANSITION_ICONS;
 			}
 			@Override public JFrame getMainWindow() { return VibeComposerGUI.this; }
 		});
@@ -887,25 +781,7 @@ public static final String CURRENT_VERSION = "2.6";
 				g2d.fillRect(0, 0, w, h);
 			}
 		};
-		for (int i = 0; i < SECTION_VAR_ICON_NAMES.length; i++) {
-			SECTION_VARIATIONS_ICONS.add(new ImageIcon(new ImageIcon(
-					this.getClass().getResource("/icons/sectionvars/" + SECTION_VAR_ICON_NAMES[i]))
-							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
-									.getImage());
-		}
-		for (int i = 0; i < SECTION_TRANSITION_ICON_NAMES.length; i++) {
-			SECTION_TRANSITION_ICONS.add(new ImageIcon(new ImageIcon(this.getClass()
-					.getResource("/icons/transitions/" + SECTION_TRANSITION_ICON_NAMES[i]))
-							.getImage().getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH))
-									.getImage());
-		}
-
-		for (int i = 0; i < LOCK_COMPONENT_ICON_NAMES.length; i++) {
-			LOCK_COMPONENT_ICONS.add(new ImageIcon(new ImageIcon(
-					this.getClass().getResource("/icons/" + LOCK_COMPONENT_ICON_NAMES[i]))
-							.getImage().getScaledInstance(8, 8, java.awt.Image.SCALE_SMOOTH))
-									.getImage());
-		}
+		GUIAssets.load();
 
 		controlPanel = new JPanel();
 		controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
@@ -2704,18 +2580,6 @@ public static final String CURRENT_VERSION = "2.6";
 		SwingUtilities.updateComponentTreeUI(this);
 		SwingUtilities.updateComponentTreeUI(ExtraSettingsGUI.extraSettingsPanel);
 		SwingUtils.popupMenus.forEach(e -> SwingUtilities.updateComponentTreeUI(e));
-	}
-
-	public static Color uiColor() {
-		return (isDarkMode) ? darkModeUIColor : lightModeUIColor;
-	}
-
-	public static Color uiComposeTextColor() {
-		return isDarkMode ? COMPOSE_COLOR_TEXT : COMPOSE_COLOR_TEXT_LIGHT;
-	}
-
-	public static Color uiRegenerateTextColor() {
-		return isDarkMode ? REGENERATE_COLOR_TEXT : REGENERATE_COLOR_TEXT_LIGHT;
 	}
 
 	public void removeComboBoxArrows(Container parent) {
@@ -5235,8 +5099,8 @@ public static final String CURRENT_VERSION = "2.6";
 		ExtraSettingsGUI.loadFromConfig(gc);
 
 		int bpm = (int) Math.round(gc.getBpm());
-		mainBpm.getKnob().setMin(Math.min(VibeComposerGUI.mainBpm.getKnob().getMin(), bpm));
-		mainBpm.getKnob().setMax(Math.max(VibeComposerGUI.mainBpm.getKnob().getMax(), bpm));
+		mainBpm.getKnob().setMin(Math.min(GenerationGUI.mainBpm.getKnob().getMin(), bpm));
+		mainBpm.getKnob().setMax(Math.max(GenerationGUI.mainBpm.getKnob().getMax(), bpm));
 		mainBpm.setInt(bpm);
 
 		melodyGUI.loadPartsFromConfig(gc, parts -> recreateInstPanelsFromInstParts(0, parts));
@@ -5701,7 +5565,6 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 
-	public static long lastPlayedMs = 0;
 
 	public static void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
 		part = part < 0 ? 0 : part;

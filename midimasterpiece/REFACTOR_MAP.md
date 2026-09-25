@@ -167,3 +167,30 @@ After ownership and state seams are clear, inspect remaining large method groups
 
 Start with **2.1**, limited to the five shared instrument-control arrays. It is a concrete ownership leak repeated across all five instrument GUIs, can be migrated without changing the persisted config format, and establishes the typed access pattern needed by 2.2. Then move config mappings feature-by-feature, beginning with one module and retaining the same load/save behavior before broadening the change.
 
+## Phase 2.3 Progress — Shared State by Lifetime and Behavior
+
+### Static field inventory
+
+The remaining static fields on `VibeComposerGUI` are classified here before ownership changes. This inventory excludes static methods and fields owned by the already extracted feature GUIs.
+
+- **Immutable presentation constants:** `COMPOSE_COLOR`, `COMPOSE_COLOR_TEXT`, `COMPOSE_COLOR_TEXT_LIGHT`, `REGENERATE_COLOR_TEXT`, `REGENERATE_COLOR_TEXT_LIGHT`, `DEFAULT_WIDTH`, `DEFAULT_HEIGHT`, and `TABLE_COLUMN_MIN_WIDTH`. Moved to `GUIConstants`.
+- **Window and theme preferences:** `panelColorHigh`, `panelColorLow`, `isBigMonitorMode`, `isDarkMode`, `isFullMode`, `darkModeUIColor`, `lightModeUIColor`, `toggledUIColor`, `toggledComposeColor`, `toggledRegenerateColor`, `scrollPaneDimension`, and `toggleableComponents`. Moved to `UITheme`; immutable colors and dimensions stay in `GUIConstants`.
+- **Shared UI assets:** `SECTION_VARIATIONS_ICONS`, `SECTION_VAR_ICON_NAMES`, `SECTION_TRANSITION_ICONS`, `SECTION_TRANSITION_ICON_NAMES`, `LOCK_COMPONENT_ICONS`, and `LOCK_COMPONENT_ICON_NAMES`. Moved to `GUIAssets`, which loads and caches these resources.
+- **Playback runtime:** `sequencer`, `midiEventsToRemove`, `currentMidi`, `currentSequenceMidi`, `partAndOrderLastNoteIndexes`, `loopBeat`, `sliderPanel`, `slider`, `sliderExtended`, `sliderMeasureStartTimes`, `sliderBeatStartTimes`, `currentTime`, `currentSectionIndex`, `sectionText`, `isDragging`, `pauseInfoResettable`, `pausedBpm`, `pausedSliderPosition`, `pausedMeasureCounter`, `startBpm`, `startSliderPosition`, `startBeatCounter`, `currentBeatMultiplier`, and `lastPlayedMs`. Moved to `PlaybackState`, including `getNextNoteIndex`.
+- **Application/session services:** `defaultGuiPreset`, `currentMidiEditorPopup`, `currentMidiEditorSectionIndex`, `soundfont`, `melodyGen`, `guiConfig`, `configHistory`, `heavyBackgroundTasksInProgress`, `originalOut`, `originalErr`, `dummyOut`, `actionUndoManager`, `instrumentTabUndoManager`, and `dconsole`. Moved to `ApplicationSessionState`.
+- **Feature or cross-feature state:** `scaleMode`, `loopBeatCount`, `mainBpm`, `randomSeed`, `lastRandomSeed`, and `regenerateWhenValuesChange` now belong to `GenerationGUI`, including `getCurrentSeed`; `globalSoloMuter`, `groupSoloMuters`, `needToRecalculateSoloMuters`, `needToRecalculateSoloMutersAfterSequenceGenerated`, `cpSm`, `apSm`, and `dpSm` belong to `SoloMuteState`.
+- **Composition root and class metadata:** `instrumentTabPane`, `vibeComposerGUI`, and `constraints` remain with `VibeComposerGUI` for window composition and construction. `CURRENT_VERSION` is application metadata; `serialVersionUID` is serialization metadata.
+
+### Completed slices
+
+- **2.3.1 Immutable presentation constants:** added `GUIConstants` for shared compose/regenerate colors, default dimensions, and minimum table column width. Updated active callers and removed these fields from `VibeComposerGUI`; values and behavior are unchanged.
+- **2.3.2 Theme and display preferences:** added `UITheme`, moved mutable palette and display settings with their palette helpers, and migrated active callers.
+- **2.3.3 Shared image assets:** added `GUIAssets` for the section and lock image caches, source names, and loading.
+- **2.3.4 Playback runtime:** added `PlaybackState` for sequencer, MIDI files, playhead display, timing markers, pause bookkeeping, and note indexing.
+- **2.3.5 Application/session services:** added `ApplicationSessionState` for active config/history, preset/editor session, soundbank, undo managers, console, output streams, and background-task status.
+- **2.3.6 Feature and cross-feature state:** moved macro and seed controls to `GenerationGUI`, and shared solo/mute state to `SoloMuteState`.
+
+### Phase 2.3 status — complete
+
+Every mutable `VibeComposerGUI` static field now has a focused owner or a defined composition-root role. Active callers have been migrated without forwarding fields on `VibeComposerGUI`. Owner fields remain static to preserve the application's existing single-window lifetime; replacing component-level static access with injected dependencies is the next boundary in phase 2.4.
+

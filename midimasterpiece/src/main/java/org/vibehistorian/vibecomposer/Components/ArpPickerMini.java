@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -59,14 +61,14 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 					int drawY = bottomY - (int) (rowHeight * (values.get(i) - min));
 
 					if (i < numValues - 1) {
-						g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
+						g.setColor(OMNI.alphen(UITheme.uiColor(), 50));
 						g.drawLine(drawX, drawY, drawX + (int) colWidth,
 								bottomY - (int) (rowHeight * (values.get(i + 1) - min)));
 					}
 
 
-					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(),
-							VibeComposerGUI.isDarkMode ? 150 : 220));
+					g.setColor(OMNI.alphen(UITheme.uiColor(),
+							UITheme.isDarkMode ? 150 : 220));
 					g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
 					//g.drawString("" + values.get(i), drawX + ovalWidth / 2, drawY - ovalWidth / 2);

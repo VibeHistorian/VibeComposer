@@ -1,9 +1,8 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
+import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +36,7 @@ public class ExtraSettingsPopup extends CloseablePopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				//int bpm = VibeComposerGUI.mainBpm.getInt();
+				//int bpm = GenerationGUI.mainBpm.getInt();
 				int low = ExtraSettingsGUI.bpmLow.getInt();
 				int high = ExtraSettingsGUI.bpmHigh.getInt();
 				if (low > high) {
@@ -45,12 +44,12 @@ public class ExtraSettingsPopup extends CloseablePopup {
 					ExtraSettingsGUI.bpmHigh.setInt(high);
 				}
 				//bpm = OMNI.clamp(bpm, low, high);
-				VibeComposerGUI.mainBpm.getKnob()
-						.setMin(Math.min(VibeComposerGUI.mainBpm.getKnob().getMin(), low));
-				VibeComposerGUI.mainBpm.getKnob()
-						.setMax(Math.max(VibeComposerGUI.mainBpm.getKnob().getMax(), high));
-				//VibeComposerGUI.mainBpm.getKnob().setMaxRaw(high);
-				//VibeComposerGUI.mainBpm.setInt(bpm);
+				GenerationGUI.mainBpm.getKnob()
+						.setMin(Math.min(GenerationGUI.mainBpm.getKnob().getMin(), low));
+				GenerationGUI.mainBpm.getKnob()
+						.setMax(Math.max(GenerationGUI.mainBpm.getKnob().getMax(), high));
+				//GenerationGUI.mainBpm.getKnob().setMaxRaw(high);
+				//GenerationGUI.mainBpm.setInt(bpm);
 			}
 
 			@Override

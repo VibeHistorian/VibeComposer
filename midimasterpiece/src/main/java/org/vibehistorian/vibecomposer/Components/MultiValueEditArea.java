@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.UITheme;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -104,8 +106,8 @@ public class MultiValueEditArea extends JComponent {
 			int w = getWidth();
 			int h = getHeight();
 			// clear screen
-			g.setColor(VibeComposerGUI.isDarkMode ? VibeComposerGUI.panelColorHigh
-					: VibeComposerGUI.panelColorLow.darker());
+			g.setColor(UITheme.isDarkMode ? UITheme.panelColorHigh
+					: UITheme.panelColorLow.darker());
 			g.fillRect(0, 0, w, h);
 			int numSize = values.size();
 			if (numSize == 0) {
@@ -119,7 +121,7 @@ public class MultiValueEditArea extends JComponent {
 			double colWidth = (w - marginX * 2) / numSize;
 
 			// draw graph lines - first to last value X, min to max value Y
-			g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 80));
+			g.setColor(OMNI.alphen(UITheme.uiColor(), 80));
 
 			g.drawLine(bottomLeft.x, bottomLeft.y, bottomLeft.x, 0);
 			g.drawLine(bottomLeft.x, bottomLeft.y, w, bottomLeft.y);
@@ -136,10 +138,10 @@ public class MultiValueEditArea extends JComponent {
 				int drawMarkX = bottomLeft.x - markWidth / 2;
 				int drawY = bottomLeft.y - (int) (rowHeight * (i + 1));
 
-				g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 40));
+				g.setColor(OMNI.alphen(UITheme.uiColor(), 40));
 				g.drawLine(bottomLeft.x, drawY, w, drawY);
 
-				g.setColor(VibeComposerGUI.uiColor());
+				g.setColor(UITheme.uiColor());
 				g.drawString(drawnValue, drawValueX, drawY + numHeight / 2);
 				g.drawLine(drawMarkX, drawY, drawMarkX + markWidth, drawY);
 
@@ -161,7 +163,7 @@ public class MultiValueEditArea extends JComponent {
 
 
 			}
-			Color dotColor = OMNI.alphen(VibeComposerGUI.uiColor(), 80);
+			Color dotColor = OMNI.alphen(UITheme.uiColor(), 80);
 			Color highlightedDotColor = new Color(220, 30, 50);
 			g.setColor(dotColor);
 
@@ -191,13 +193,13 @@ public class MultiValueEditArea extends JComponent {
 				int drawY = bottomLeft.y - (int) (rowHeight * (values.get(i) + 1 - min));
 
 				if (i < numSize - 1) {
-					g.setColor(OMNI.alphen(VibeComposerGUI.uiColor(), 50));
+					g.setColor(OMNI.alphen(UITheme.uiColor(), 50));
 					g.drawLine(drawX, drawY, drawX + (int) colWidth,
 							bottomLeft.y - (int) (rowHeight * (values.get(i + 1) + 1 - min)));
 				}
 
 
-				g.setColor(VibeComposerGUI.uiColor());
+				g.setColor(UITheme.uiColor());
 				g.drawOval(drawX - ovalWidth / 2, drawY - ovalWidth / 2, ovalWidth, ovalWidth);
 
 				g.drawString("" + values.get(i), drawX + ovalWidth / 2, drawY - ovalWidth / 2);

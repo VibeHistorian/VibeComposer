@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.GenerationGUI;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
@@ -539,7 +542,7 @@ public class VisualPatternPanel extends JPanel {
 						} else if (parentPanel != null) {
 							parentPanel.applyPauseChance(new Random(
 									parentPanel.getPatternSeed() != 0 ? parentPanel.getPatternSeed()
-											: VibeComposerGUI.lastRandomSeed));
+											: GenerationGUI.lastRandomSeed));
 						}
 
 					} else if (SwingUtilities.isMiddleMouseButton(evt) && parentPanel != null) {
@@ -715,7 +718,7 @@ public class VisualPatternPanel extends JPanel {
 	}
 
 	public void reapplyHitsRaw() {
-		boolean showBIG = (VibeComposerGUI.isBigMonitorMode || viewOnly) && bigModeAllowed;
+		boolean showBIG = (UITheme.isBigMonitorMode || viewOnly) && bigModeAllowed;
 		int nowHits = hitsPanel.getInt();
 		if (nowHits > MAX_HITS)
 			nowHits = MAX_HITS;

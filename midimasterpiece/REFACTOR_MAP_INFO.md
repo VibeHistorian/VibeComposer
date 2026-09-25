@@ -11,6 +11,7 @@
 - `ArrangementGUI.java` owns arrangement UI state, controls and table initialization, action dispatch, and popup/model helpers. Its `Context` supplies shared window operations and delegates cross-instrument or table-editing work that still belongs to `VibeComposerGUI`.
 - `SwingUtils.java` holds shared Swing helpers. Put generally useful UI helpers here instead of making a feature module call back into the main window.
 - `ExtraSettingsGUI` owns settings popup state and construction, including its Generation tab. `GenerationGUI` owns the randomization and macro controls in the main window, built by `initRandomButtons` and `initMacroParams`. `VibeComposerCoreGUI` may still be a skeleton; inspect it before relying on it. `ScoreGUI` owns score UI state, tab setup, and popup behavior.
+- Shared state extracted in phase 2.3 has focused owners: `GUIConstants` for immutable presentation values, `UITheme` for display preferences, `GUIAssets` for image caches, `PlaybackState` for playback runtime, `ApplicationSessionState` for active application/session services, and `SoloMuteState` for cross-instrument solo/mute state.
 - Cross-cutting models and components include `GUIConfig.java`, `Panels/MelodyPanel.java`, and `Components/MelodyMidiDropPane.java`.
 
 ## Conventions and boundaries

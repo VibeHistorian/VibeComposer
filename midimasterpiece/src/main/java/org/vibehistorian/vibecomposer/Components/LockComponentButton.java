@@ -12,7 +12,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.GUIAssets;
+import org.vibehistorian.vibecomposer.UITheme;
 
 public class LockComponentButton extends JComponent {
 
@@ -52,16 +53,16 @@ public class LockComponentButton extends JComponent {
 		}
 		boolean isLocked = linkedComponent.isEnabled();
 		int iconIndex = isLocked ? 1 : 0;
-		if (VibeComposerGUI.isDarkMode) {
+		if (UITheme.isDarkMode) {
 			iconIndex += 2;
 		}
 		if (iconIndex >= 2 && g instanceof Graphics2D) {
 			Graphics2D g2d = (Graphics2D) g;
 			Composite c = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, .5f);
 			g2d.setComposite(c);
-			g2d.drawImage(VibeComposerGUI.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
+			g2d.drawImage(GUIAssets.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
 		} else {
-			g.drawImage(VibeComposerGUI.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
+			g.drawImage(GUIAssets.LOCK_COMPONENT_ICONS.get(iconIndex), 0, 0, this);
 		}
 		//g.dispose();
 	}

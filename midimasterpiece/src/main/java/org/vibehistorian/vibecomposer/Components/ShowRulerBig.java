@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.PlaybackState;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -95,15 +97,15 @@ public class ShowRulerBig extends JComponent {
 
 		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
 
-		double highlightX = (VibeComposerGUI.slider != null
-				&& VibeComposerGUI.sliderMeasureStartTimes != null
-				&& !VibeComposerGUI.sliderMeasureStartTimes.isEmpty())
-						? (maxX * VibeComposerGUI.slider.getUpperValue())
-								/ (double) ((VibeComposerGUI.sliderExtended > 0
-										? VibeComposerGUI.sliderExtended
+		double highlightX = (PlaybackState.slider != null
+				&& PlaybackState.sliderMeasureStartTimes != null
+				&& !PlaybackState.sliderMeasureStartTimes.isEmpty())
+						? (maxX * PlaybackState.slider.getUpperValue())
+								/ (double) ((PlaybackState.sliderExtended > 0
+										? PlaybackState.sliderExtended
 										: 0)
-										+ VibeComposerGUI.sliderMeasureStartTimes.get(
-												VibeComposerGUI.sliderMeasureStartTimes.size() - 1))
+										+ PlaybackState.sliderMeasureStartTimes.get(
+												PlaybackState.sliderMeasureStartTimes.size() - 1))
 						: -1;
 
 

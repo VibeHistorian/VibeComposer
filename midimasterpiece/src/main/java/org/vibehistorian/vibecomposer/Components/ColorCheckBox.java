@@ -1,17 +1,10 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.RenderingHints;
-
-import javax.swing.JCheckBox;
-
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.UITheme;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class ColorCheckBox extends JCheckBox {
 
@@ -45,13 +38,13 @@ public class ColorCheckBox extends JCheckBox {
 		Color color = null;
 
 		if (highlighted && isSelected()) {
-			color = VibeComposerGUI.isDarkMode ? VeloRect.highlightColorDark
+			color = UITheme.isDarkMode ? VeloRect.highlightColorDark
 					: VeloRect.highlightColorLight;
 		} else {
 			color = isSelected()
-					? ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.darker()
-							: VibeComposerGUI.lightModeUIColor)
-					: VibeComposerGUI.panelColorLow;
+					? ((UITheme.isDarkMode) ? UITheme.darkModeUIColor.darker()
+							: UITheme.lightModeUIColor)
+					: UITheme.panelColorLow;
 		}
 
 		//g.setColor(color);

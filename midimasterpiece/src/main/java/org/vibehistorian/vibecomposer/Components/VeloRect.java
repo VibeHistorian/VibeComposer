@@ -1,12 +1,11 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -211,7 +210,7 @@ public class VeloRect extends JComponent {
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
 			int displayedValue = isEnabled() ? val : max / 5;
-			g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
+			g.setColor(UITheme.isDarkMode ? new Color(100, 100, 100)
 					: new Color(180, 180, 180));
 
 			int minX = (ColorCheckBox.HIDE_MARGINS) ? marginLeft : 0;
@@ -223,9 +222,9 @@ public class VeloRect extends JComponent {
 			Color c = null;
 
 			if (highlighted && isEnabled()) {
-				c = VibeComposerGUI.isDarkMode ? highlightColorDark : highlightColorLight;
+				c = UITheme.isDarkMode ? highlightColorDark : highlightColorLight;
 			} else {
-				c = OMNI.alphen(VibeComposerGUI.uiColor(), isEnabled() ? 150 : 70);
+				c = OMNI.alphen(UITheme.uiColor(), isEnabled() ? 150 : 70);
 			}
 
 			g.setColor(c);

@@ -1064,7 +1064,7 @@ public class Section {
 		UsedPatternMap upMap = patterns.get(part);
 		List<PhraseNotes> patterns = new ArrayList<>();
 		for (Integer partOrder : upMap.keySet()) {
-			patterns.add(VibeComposerGUI.guiConfig.getPattern(upMap.get(partOrder)));
+			patterns.add(ApplicationSessionState.guiConfig.getPattern(upMap.get(partOrder)));
 		}
 		return patterns;
 	}

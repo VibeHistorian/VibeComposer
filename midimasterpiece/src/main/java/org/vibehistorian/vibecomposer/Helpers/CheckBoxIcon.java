@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.UITheme;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -22,10 +24,10 @@ public class CheckBoxIcon implements Icon {
 		ButtonModel buttonModel = abstractButton.getModel();
 
 		Color color = buttonModel.isSelected()
-				? ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.darkModeUIColor.darker()
-						: VibeComposerGUI.lightModeUIColor)
-				: ((VibeComposerGUI.isDarkMode) ? VibeComposerGUI.panelColorLow
-						: VibeComposerGUI.panelColorHigh);
+				? ((UITheme.isDarkMode) ? UITheme.darkModeUIColor.darker()
+						: UITheme.lightModeUIColor)
+				: ((UITheme.isDarkMode) ? UITheme.panelColorLow
+						: UITheme.panelColorHigh);
 		g.setColor(color);
 
 		int newHeight = (abstractButton.getHeight() - height) / 2;

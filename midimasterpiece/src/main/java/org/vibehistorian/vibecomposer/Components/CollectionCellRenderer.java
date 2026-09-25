@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import org.apache.commons.lang3.tuple.Triple;
@@ -27,8 +30,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private int part = 0;
 	private int section = 0;
 	public static final int MIN_CELLS = 8;
-	public static final Color[] CUSTOM_PATTERN_COLORS = { VibeComposerGUI.darkModeUIColor,
-			VibeComposerGUI.lightModeUIColor, new Color(150, 200, 200), Color.red };
+	public static final Color[] CUSTOM_PATTERN_COLORS = { UITheme.darkModeUIColor,
+			UITheme.lightModeUIColor, new Color(150, 200, 200), Color.red };
 
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
 			int col) {
@@ -43,8 +46,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 			boolean hasFocus, int row, int column) {
 		/*TableModel mdl = table.getModel();
-		height = (int) ((VibeComposerGUI.scrollPaneDimension.getHeight() - 50) / mdl.getRowCount());
-		width = (int) ((VibeComposerGUI.scrollPaneDimension.getWidth() - 100)
+		height = (int) ((UITheme.scrollPaneDimension.getHeight() - 50) / mdl.getRowCount());
+		width = (int) ((UITheme.scrollPaneDimension.getWidth() - 100)
 				/ mdl.getColumnCount());
 		stringables = value instanceof String ? Collections.singleton((String) value)
 				: (Collection<? extends Object>) value;
@@ -59,8 +62,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
-			Color panelC = VibeComposerGUI.isDarkMode ? VibeComposerGUI.panelColorLow
-					: VibeComposerGUI.panelColorHigh;
+			Color panelC = UITheme.isDarkMode ? UITheme.panelColorLow
+					: UITheme.panelColorHigh;
 			g.setColor(panelC);
 			g.fillRect(0, 0, width, height);
 			Color icolor = OMNI.mixColor(panelC, Constants.instColors[part],
@@ -115,7 +118,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					boolean isCustomMidi = false;
 					if (sec.containsPattern(part, panelOrder)) {
 						UsedPattern pat = sec.getPattern(part, panelOrder);
-						isCustomMidi = pat.isCustom(part, panelOrder, VibeComposerGUI.guiConfig.getPatternRaw(pat));
+						isCustomMidi = pat.isCustom(part, panelOrder, ApplicationSessionState.guiConfig.getPatternRaw(pat));
 					}
 
 					Color instCellColor = OMNI.mixColor(panelC, Constants.instColors[part],

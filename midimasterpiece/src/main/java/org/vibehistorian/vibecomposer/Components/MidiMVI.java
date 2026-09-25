@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import java.awt.Color;
@@ -41,7 +44,7 @@ public class MidiMVI extends JComponent {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				if (!isEnabled() || VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
+				if (!isEnabled() || ApplicationSessionState.guiConfig.getPatternMaps().isEmpty()) {
 					return;
 				}
 				int butt = getButton(evt);
@@ -92,7 +95,7 @@ public class MidiMVI extends JComponent {
 	protected void paintComponent(Graphics guh) {
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
-			g.setColor(VibeComposerGUI.isDarkMode ? new Color(100, 100, 100)
+			g.setColor(UITheme.isDarkMode ? new Color(100, 100, 100)
 					: new Color(180, 180, 180));
 			int width = getWidth();
 			int height = getHeight();
@@ -135,17 +138,17 @@ public class MidiMVI extends JComponent {
 	}
 
 	private boolean isActive(int i) {
-		if (VibeComposerGUI.guiConfig.getPatternMaps().isEmpty()) {
+		if (ApplicationSessionState.guiConfig.getPatternMaps().isEmpty()) {
 			return false;
 		}
 		int partNum = parent.getPartNum();
 		int panelOrder = parent.getPanelOrder();
 		if (i <= 2) {
-			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
+			PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(parent.getPartNum(),
 					parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[i + 1]);
 			return (pn != null) && pn.isApplied();
 		} else {
-			Set<String> patternNames = VibeComposerGUI.guiConfig.getPatternMaps()
+			Set<String> patternNames = ApplicationSessionState.guiConfig.getPatternMaps()
 					.get(parent.getPartNum()).getPatternNames(parent.getPanelOrder());
 			if (patternNames == null) {
 				return false;
@@ -156,7 +159,7 @@ public class MidiMVI extends JComponent {
 
 			// remove not applied patterns
 			patternNames.removeIf(name -> {
-				PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(parent.getPartNum(),
+				PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(parent.getPartNum(),
 						parent.getPanelOrder(), name);
 				return (pn == null || !pn.isApplied());
 			});

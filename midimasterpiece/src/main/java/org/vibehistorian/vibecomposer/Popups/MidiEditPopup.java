@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 
 
@@ -179,7 +181,7 @@ public class MidiEditPopup extends CloseablePopup {
 			sec.putPattern(secPartNum, secPartOrder, pat);
 		}
 		LG.i("Loading pattern: " + pat.toString());
-		PhraseNotes values = VibeComposerGUI.guiConfig.getPattern(pat);
+		PhraseNotes values = ApplicationSessionState.guiConfig.getPattern(pat);
 		if (values == null) {
 			LG.e("-----------------------LoadSecValues returns null!--------------");
 		} else {
@@ -442,7 +444,7 @@ public class MidiEditPopup extends CloseablePopup {
 							patternNameBox.addItem(pnm);
 							patternNameBox.setVal(pnm);
 							// store in current part as new
-							VibeComposerGUI.guiConfig.getPatternMaps().get(part).put(partOrder,
+							ApplicationSessionState.guiConfig.getPatternMaps().get(part).put(partOrder,
 									patternName, getValues());
 							apply();
 							setSelectedPattern(sec.getPattern(part, partOrder));
@@ -475,10 +477,10 @@ public class MidiEditPopup extends CloseablePopup {
 		names.removeAllItems();
 		partOrders.removeAllItems();
 		int part = parts.getSelectedIndex();
-		if (VibeComposerGUI.guiConfig.getPatternMaps().size() <= part) {
+		if (ApplicationSessionState.guiConfig.getPatternMaps().size() <= part) {
 			return;
 		}
-		ScrollComboBox.addAll(VibeComposerGUI.guiConfig.getPatternMaps().get(part).getKeys(),
+		ScrollComboBox.addAll(ApplicationSessionState.guiConfig.getPatternMaps().get(part).getKeys(),
 				partOrders);
 		if (partOrders.getItemCount() > 0) {
 			partOrders.setSelectedIndex(0);
@@ -493,18 +495,18 @@ public class MidiEditPopup extends CloseablePopup {
 			ScrollComboBox<PatternNameMarker> names) {
 		names.removeAllItems();
 		int part = parts.getSelectedIndex();
-		if (VibeComposerGUI.guiConfig.getPatternMaps().size() <= part) {
+		if (ApplicationSessionState.guiConfig.getPatternMaps().size() <= part) {
 			return;
 		}
 		Integer partOrder = partOrders.getSelectedItem();
 		if (partOrder == null) {
 			return;
 		}
-		Set<String> patternNames = VibeComposerGUI.guiConfig.getPatternMaps().get(part)
+		Set<String> patternNames = ApplicationSessionState.guiConfig.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
 		List<PatternNameMarker> namesWithMarkers = patternNames.stream()
 				.map(e -> new PatternNameMarker(e,
-						VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, e) != null))
+						ApplicationSessionState.guiConfig.getPatternRaw(part, partOrder, e) != null))
 				.collect(Collectors.toList());
 		Collections.sort(namesWithMarkers);
 		ScrollComboBox.addAll(namesWithMarkers, names);
@@ -527,7 +529,7 @@ public class MidiEditPopup extends CloseablePopup {
 		} else {
 			// import instead
 			UsedPattern pat = sec.getPattern(part, partOrder);
-			PhraseNotes oldPn = VibeComposerGUI.guiConfig.getPattern(pat);
+			PhraseNotes oldPn = ApplicationSessionState.guiConfig.getPattern(pat);
 
 			if (oldPn != null) {
 				pn.remakeNoteStartTimes();
@@ -573,7 +575,7 @@ public class MidiEditPopup extends CloseablePopup {
 			patternNameBox.addItem(pnm);
 			patternNameBox.setValRaw(pnm);
 			// store in current part as new
-			VibeComposerGUI.guiConfig.getPatternMaps().get(part).put(partOrder, patternName,
+			ApplicationSessionState.guiConfig.getPatternMaps().get(part).put(partOrder, patternName,
 					getValues());
 		} else {
 			// store in selected part
@@ -605,7 +607,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public PatternMap getPatternMap() {
-		return VibeComposerGUI.guiConfig.getPatternMaps().get(patternPartBox.getSelectedIndex());
+		return ApplicationSessionState.guiConfig.getPatternMaps().get(patternPartBox.getSelectedIndex());
 	}
 
 	public void setupIdentifiers(int secPartNum, int secPartOrder) {
@@ -613,14 +615,14 @@ public class MidiEditPopup extends CloseablePopup {
 		partOrder = secPartOrder;
 		UsedPattern pat = sec.getPattern(part, partOrder);
 
-		if (pat != null && pat.isCustom(part, partOrder, VibeComposerGUI.guiConfig.getPatternRaw(pat))) {
+		if (pat != null && pat.isCustom(part, partOrder, ApplicationSessionState.guiConfig.getPatternRaw(pat))) {
 			setSelectedPattern(pat);
 		} else {
 			patternPartBox.setSelectedIndex(part);
 			patternPartOrderBox.setVal(partOrder);
 			String patName = sec.getPatternName(part, partOrder);
 			patternNameBox.setValRaw(new PatternNameMarker(patName,
-					VibeComposerGUI.guiConfig.getPatternRaw(part, partOrder, patName) != null));
+					ApplicationSessionState.guiConfig.getPatternRaw(part, partOrder, patName) != null));
 		}
 		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + Constants.instNames[part]
 				+ ", Order: " + secPartOrder);
@@ -663,7 +665,7 @@ public class MidiEditPopup extends CloseablePopup {
 		if (mvea != null && mvea.getValues() != null) {
 			// TODO
 			UsedPattern pat = getSelectedPattern();
-			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(pat);
+			PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(pat);
 			if (pn != null) {
 				pn.setApplied(true);
 				sec.putPattern(part, partOrder, pat);
@@ -680,7 +682,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public void applyNone() {
 		if (mvea != null && mvea.getValues() != null) {
 			UsedPattern pat = getSelectedPattern();
-			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(false);
+			ApplicationSessionState.guiConfig.getPatternRaw(pat).setApplied(false);
 			sec.putPattern(part, partOrder, new UsedPattern(part, partOrder, UsedPattern.NONE));
 			repaintMvea();
 			ArrangementGUI.scrollableArrangementActualTable.repaint();
@@ -714,7 +716,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public PhraseNotes recomposePart(boolean isRandom) {
-		MidiGenerator mg = VibeComposerGUI.melodyGen;
+		MidiGenerator mg = ApplicationSessionState.melodyGen;
 		UsedPattern oldPattern = sec.getPattern(part, partOrder);
 		try {
 
@@ -766,7 +768,7 @@ public class MidiEditPopup extends CloseablePopup {
 		UsedPattern generatedPat = sec.getPattern(part, partOrder);
 		LG.i("Recompose, new pattern: " + generatedPat.toString());
 		PhraseNotes pn = MidiGenerator.gc.getPattern(generatedPat);
-		VibeComposerGUI.guiConfig.putPattern(generatedPat, pn);
+		ApplicationSessionState.guiConfig.putPattern(generatedPat, pn);
 
 		mvea.setCurrentMin(110);
 		mvea.setCurrentMax(10);
@@ -800,7 +802,7 @@ public class MidiEditPopup extends CloseablePopup {
 		if (sec != null) {
 			UsedPattern pat = sec.getPattern(part, partOrder);
 			String patName = (pat != null) ? pat.toString() : "<No pattern>";
-			PhraseNotes pn = VibeComposerGUI.guiConfig.getPatternRaw(pat);
+			PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(pat);
 			patName += (pn != null && pn.isApplied()) ? " - Applied" : " - Not Applied";
 			text.setText(patName);
 		}
@@ -886,7 +888,7 @@ public class MidiEditPopup extends CloseablePopup {
 			return false;
 		}
 		UsedPattern pat = sec.getPattern(part, partOrder);
-		return pat.isCustom(part, partOrder, VibeComposerGUI.guiConfig.getPatternRaw(pat));
+		return pat.isCustom(part, partOrder, ApplicationSessionState.guiConfig.getPatternRaw(pat));
 	}
 
 	public PhraseNotes getValues() {

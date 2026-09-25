@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+
 import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
@@ -138,7 +140,7 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 		}
 
 		if (interacting) {
-			VibeComposerGUI.actionUndoManager.saveToHistory(this);
+			ApplicationSessionState.actionUndoManager.saveToHistory(this);
 		}
 
 		if (isEnabled()) {

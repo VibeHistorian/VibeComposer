@@ -29,7 +29,10 @@ see <https://www.gnu.org/licenses/>.
 */
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.PlaybackState;
+
 import org.vibehistorian.vibecomposer.ScoreGUI;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import jm.music.data.Part;
 import jm.music.data.Phrase;
@@ -69,7 +72,7 @@ public class ShowPanelBig extends JPanel {
 			new Integer[] { 630, 800, 1050, 1300, 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700 });
 	public static List<Integer> beatWidthBases = beatWidthBasesBig;
 	public static int beatWidthBaseIndex = 0;
-	public static int panelMaxHeight = VibeComposerGUI.scrollPaneDimension.height;
+	public static int panelMaxHeight = UITheme.scrollPaneDimension.height;
 	private ShowAreaBig sa;
 	private ShowRulerBig ruler;
 	private JPanel pan;
@@ -235,17 +238,17 @@ public class ShowPanelBig extends JPanel {
 						return;
 					}
 
-					boolean sequenceRunning = VibeComposerGUI.sequencer.isRunning();
+					boolean sequenceRunning = PlaybackState.sequencer.isRunning();
 					if (sequenceRunning) {
-						VibeComposerGUI.sequencer.stop();
+						PlaybackState.sequencer.stop();
 					}
 
-					int valueToSet = (int) (percentage * VibeComposerGUI.slider.getMaximum());
+					int valueToSet = (int) (percentage * PlaybackState.slider.getMaximum());
 					//LG.d("Value to set: " + valueToSet);
 					VibeComposerGUI.setSliderEnd(valueToSet);
 					VibeComposerGUI.savePauseInfo();
 					if (sequenceRunning) {
-						VibeComposerGUI.sequencer.start();
+						PlaybackState.sequencer.start();
 					}
 
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
@@ -335,12 +338,12 @@ public class ShowPanelBig extends JPanel {
 	protected Double getSequencePosFromMousePos(Point xy) {
 		SwingUtilities.convertPointFromScreen(xy, sa);
 
-		int lastUsableSliderTime = VibeComposerGUI.sliderMeasureStartTimes
-				.get(VibeComposerGUI.sliderMeasureStartTimes.size() - 1);
+		int lastUsableSliderTime = PlaybackState.sliderMeasureStartTimes
+				.get(PlaybackState.sliderMeasureStartTimes.size() - 1);
 
-		int sliderExtension = (VibeComposerGUI.sliderExtended < 0)
-				? lastUsableSliderTime - VibeComposerGUI.slider.getMaximum()
-				: VibeComposerGUI.sliderExtended;
+		int sliderExtension = (PlaybackState.sliderExtended < 0)
+				? lastUsableSliderTime - PlaybackState.slider.getMaximum()
+				: PlaybackState.sliderExtended;
 
 		double correctionPercentage = 1.0
 				- (sliderExtension / (double) lastUsableSliderTime);
@@ -352,15 +355,15 @@ public class ShowPanelBig extends JPanel {
 		double percentage = xy.getX() / usableEnd;
 		//LG.d("Percentage in MIDI: " + percentage);
 					/*LG.i("Slider ratio: "
-							+ (VibeComposerGUI.slider.getMaximum() + VibeComposerGUI.delayed())
+							+ (PlaybackState.slider.getMaximum() + VibeComposerGUI.delayed())
 									/ VibeComposerGUI.beatFromBpm(0));
 					LG.i("Score ratio: " + usableEnd / beatWidth);
 					LG.i("Delayed: " + VibeComposerGUI.delayed());
 					LG.i("Total div 144: "
-							+ (VibeComposerGUI.slider.getMaximum() - VibeComposerGUI.delayed())
+							+ (PlaybackState.slider.getMaximum() - VibeComposerGUI.delayed())
 									/ 144);
-					LG.i(StringUtils.join(VibeComposerGUI.sliderBeatStartTimes, ","));
-					LG.i(VibeComposerGUI.sliderExtended);*/
+					LG.i(StringUtils.join(PlaybackState.sliderBeatStartTimes, ","));
+					LG.i(PlaybackState.sliderExtended);*/
 
 		if (xy.getX() > usableEnd || xy.getX() < beatWidth) {
 			return null;
