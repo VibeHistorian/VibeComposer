@@ -27,6 +27,7 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
+import org.vibehistorian.vibecomposer.Parts.BassPart;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -66,6 +67,20 @@ public class BassGUI implements InstrumentGUIControls {
     @Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
     @Override public JScrollPane getPanelScrollPane() { return bassScrollPane; }
     @Override public List<BassPanel> getPanels() { return bassPanels; }
+
+    public void saveToConfig(GUIConfig gc, int seed) {
+        gc.setBassEnable(enabledCheckBox.isSelected());
+        List<BassPart> parts = new ArrayList<>();
+        for (BassPanel panel : bassPanels) parts.add((BassPart) panel.toInstPart(seed));
+        org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
+        gc.setBassParts(parts);
+    }
+
+    public void loadFromConfig(GUIConfig gc) { enabledCheckBox.setSelected(gc.isBassEnable()); }
+
+    public void loadPartsFromConfig(GUIConfig gc, java.util.function.Consumer<List<BassPart>> restorePanels) {
+        restorePanels.accept(gc.getBassParts());
+    }
 
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {

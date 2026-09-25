@@ -28,6 +28,7 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
+import org.vibehistorian.vibecomposer.Parts.ChordPart;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -43,6 +44,7 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import static org.vibehistorian.vibecomposer.InstUtils.POOL;
 
@@ -116,6 +118,85 @@ public class ChordGUI implements InstrumentGUIControls {
     @Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
     @Override public JScrollPane getPanelScrollPane() { return chordScrollPane; }
     @Override public List<ChordPanel> getPanels() { return chordPanels; }
+
+    public void saveToConfig(GUIConfig gc, int seed) {
+        gc.setChordsEnable(enabledCheckBox.isSelected());
+        List<ChordPart> parts = new ArrayList<>();
+        for (ChordPanel panel : chordPanels) parts.add((ChordPart) panel.toInstPart(seed));
+        org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
+        gc.setChordParts(parts);
+        gc.setChordGenSettings(getChordSettingsFromUI());
+        gc.setAllowChordRepeats(allowChordRepeats.isSelected());
+        gc.setFixedDuration(chordProgressionLength.getSelectedIndex() < 2
+                ? Integer.valueOf(chordProgressionLength.getVal()) : 0);
+        gc.setUseChordFormula(useChordFormula.isSelected());
+        gc.setLongProgressionSimilarity(longProgressionSimilarity.getInt());
+        gc.setFirstChord(firstChordSelection.getVal());
+        gc.setLastChord(lastChordSelection.getVal());
+        gc.setCustomChordsEnabled(userChordsEnabled.isSelected());
+        gc.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+        gc.setCustomChordDurations(userChordsDurations.getText());
+        gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
+        gc.setSpiceChance(spiceChance.getInt());
+        gc.setSpiceParallelChance(spiceParallelChance.getInt());
+        gc.setDimAug6thEnabled(spiceAllowDimAug.isSelected());
+        gc.setEnable9th13th(spiceAllow9th13th.isSelected());
+        gc.setSpiceFlattenBigChords(spiceFlattenBigChords.isSelected());
+        gc.setSquishProgressively(squishChordsProgressively.isSelected());
+        gc.setChordSlashChance(chordSlashChance.getInt());
+        gc.setSpiceForceScale(spiceForceScale.isSelected());
+    }
+
+    public void loadFromConfig(GUIConfig gc, IntConsumer setProgressionLength) {
+        enabledCheckBox.setSelected(gc.isChordsEnable());
+        allowChordRepeats.setSelected(gc.isAllowChordRepeats());
+        setProgressionLength.accept(gc.getFixedDuration());
+        spiceChance.setInt(gc.getSpiceChance());
+        spiceParallelChance.setInt(gc.getSpiceParallelChance());
+        spiceAllowDimAug.setSelected(gc.isDimAug6thEnabled());
+        spiceAllow9th13th.setSelected(gc.isEnable9th13th());
+        spiceFlattenBigChords.setSelected(gc.isSpiceFlattenBigChords());
+        squishChordsProgressively.setSelected(gc.isSquishProgressively());
+        chordSlashChance.setInt(gc.getChordSlashChance());
+        spiceForceScale.setSelected(gc.isSpiceForceScale());
+        useChordFormula.setSelected(gc.isUseChordFormula());
+        longProgressionSimilarity.setInt(gc.getLongProgressionSimilarity());
+        firstChordSelection.setVal(gc.getFirstChord());
+        lastChordSelection.setVal(gc.getLastChord());
+        userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
+        userChords.setupChords(gc.getCustomChords());
+        userChordsDurations.setText(gc.getCustomChordDurations());
+        userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
+        setChordSettingsInUI(gc.getChordGenSettings());
+    }
+
+    public void loadPartsFromConfig(GUIConfig gc, Consumer<List<ChordPart>> restorePanels) {
+        restorePanels.accept(gc.getChordParts());
+    }
+
+    private ChordGenSettings getChordSettingsFromUI() {
+        ChordGenSettings settings = new ChordGenSettings();
+        settings.setIncludePresets(randomChordPattern.isSelected());
+        settings.setUseDelay(randomChordDelay.isSelected());
+        settings.setUseStrum(randomChordStrum.isSelected());
+        settings.setUseSplit(randomChordSplit.isSelected());
+        settings.setUseTranspose(randomChordTranspose.isSelected());
+        settings.setShiftChance(randomChordShiftChance.getInt());
+        settings.setSustainChance(randomChordSustainChance.getInt());
+        settings.setFlattenVoicingChance(randomChordVoicingChance.getInt());
+        return settings;
+    }
+
+    private void setChordSettingsInUI(ChordGenSettings settings) {
+        randomChordPattern.setSelected(settings.isIncludePresets());
+        randomChordDelay.setSelected(settings.isUseDelay());
+        randomChordStrum.setSelected(settings.isUseStrum());
+        randomChordSplit.setSelected(settings.isUseSplit());
+        randomChordTranspose.setSelected(settings.isUseTranspose());
+        randomChordShiftChance.setInt(settings.getShiftChance());
+        randomChordSustainChance.setInt(settings.getSustainChance());
+        randomChordVoicingChance.setInt(settings.getFlattenVoicingChance());
+    }
 
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {

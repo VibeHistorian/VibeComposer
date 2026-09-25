@@ -28,6 +28,7 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Components.SectionInfoCellRenderer;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Panels.ArrangementSectionSelectorPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
@@ -101,6 +102,41 @@ public class ArrangementGUI {
 	public static JCheckBox arrangementScaleMidiVelocity;
 	public static JCheckBox arrangementResetCustomPanelsOnCompose;
 	public static VariationPopup varPopup;
+
+	public void saveToConfig(GUIConfig gc, boolean isNew, int seed, List<PatternMap> activePatternMaps) {
+		arrangement.setPreviewChorus(!useArrangement.isSelected());
+		arrangement.setFromTable(scrollableArrangementTable);
+		boolean overrideSuccessful = manualArrangement.isSelected()
+				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
+		arrangement.setOverridden(overrideSuccessful);
+		PatternMap.checkMapBounds(activePatternMaps, !overrideSuccessful);
+		if (isNew) gc.setPatternMaps(PatternMap.multiMapCopy(activePatternMaps));
+		int arrangementSeedValue = arrangementSeed.getValue() != 0 ? arrangementSeed.getValue() : seed;
+		arrangement.setSeed(arrangementSeedValue);
+		actualArrangement.setSeed(arrangementSeedValue);
+		gc.setArrangement(arrangement);
+		gc.setActualArrangement(actualArrangement);
+		gc.setArrangementVariationChance(arrangementVariationChance.getInt());
+		gc.setArrangementPartVariationChance(arrangementPartVariationChance.getInt());
+		gc.setScaleMidiVelocityInArrangement(arrangementScaleMidiVelocity.isSelected());
+		gc.setArrangementEnabled(useArrangement.isSelected());
+		gc.setPieceLength(Integer.valueOf(pieceLength.getText()));
+	}
+
+	public void loadFromConfig(GUIConfig gc) {
+		arrangement = gc.getArrangement();
+		actualArrangement = gc.getActualArrangement();
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
+		setActualModel(actualArrangement.convertToActualTableModel());
+		refreshVariationPopupButtons(actualArrangement.getSections().size());
+		arrangementVariationChance.setInt(gc.getArrangementVariationChance());
+		arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
+		arrangementScaleMidiVelocity.setSelected(gc.isScaleMidiVelocityInArrangement());
+		arrangementSeed.setValue(arrangement.getSeed());
+		useArrangement.setSelected(gc.isArrangementEnabled());
+		manualArrangement.setSelected(true);
+		pieceLength.setText(String.valueOf(gc.getPieceLength()));
+	}
 
 	private final Context context;
 

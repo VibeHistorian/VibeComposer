@@ -39,6 +39,17 @@ public class GenerationGUI {
     public static JButton globalSwingOverrideApplyButton;
     public static ScrollComboBox<Double> beatDurationMultiplier;
 
+    public static void saveToConfig(GUIConfig gc) {
+        gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
+        gc.setGlobalSwingOverride(globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
+    }
+
+    public static void loadFromConfig(GUIConfig gc) {
+        beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
+        globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
+        if (gc.getGlobalSwingOverride() != null) globalSwingOverrideValue.setInt(gc.getGlobalSwingOverride());
+    }
+
     private final Context context;
 
     public GenerationGUI(Context context) {

@@ -33,6 +33,7 @@ import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
+import org.vibehistorian.vibecomposer.Parts.ArpPart;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -96,6 +97,28 @@ public class ArpGUI implements InstrumentGUIControls {
 	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
 	@Override public JScrollPane getPanelScrollPane() { return arpScrollPane; }
 	@Override public List<ArpPanel> getPanels() { return arpPanels; }
+
+	public void saveToConfig(GUIConfig gc, int seed) {
+		gc.setArpsEnable(enabledCheckBox.isSelected());
+		List<ArpPart> parts = new ArrayList<>();
+		for (ArpPanel panel : arpPanels) parts.add((ArpPart) panel.toInstPart(seed));
+		org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
+		gc.setArpParts(parts);
+		gc.setArpAffectsBpm(arpAffectsBpm.isSelected());
+		gc.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
+		gc.setRandomArpCorrectMelodyNotes(randomArpCorrectMelodyNotes.isSelected());
+	}
+
+	public void loadFromConfig(GUIConfig gc) {
+		enabledCheckBox.setSelected(gc.isArpsEnable());
+		arpAffectsBpm.setSelected(gc.isArpAffectsBpm());
+		randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
+		randomArpCorrectMelodyNotes.setSelected(gc.isRandomArpCorrectMelodyNotes());
+	}
+
+	public void loadPartsFromConfig(GUIConfig gc, Consumer<List<ArpPart>> restorePanels) {
+		restorePanels.accept(gc.getArpParts());
+	}
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {

@@ -34,6 +34,9 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -115,6 +118,97 @@ public class MelodyGUI implements InstrumentGUIControls {
 	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
 	@Override public JScrollPane getPanelScrollPane() { return melodyScrollPane; }
 	@Override public List<MelodyPanel> getPanels() { return melodyPanels; }
+
+	public void saveToConfig(GUIConfig gc, int seed) {
+		gc.setMelodyEnable(enabledCheckBox.isSelected());
+		List<MelodyPart> parts = new ArrayList<>();
+		for (MelodyPanel panel : melodyPanels) parts.add((MelodyPart) panel.toInstPart(seed));
+		InstPart.sortParts(parts);
+		gc.setMelodyParts(parts);
+		gc.setMelodyUseOldAlgoChance(melodyUseOldAlgoChance.getInt());
+		gc.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
+		gc.setFirstNoteRandomized(randomChordNote.isSelected());
+		gc.setMelodyBasicChordsOnly(melodyBasicChordsOnly.isSelected());
+		gc.setMelodyTonicNoteTarget(melodyTonicNoteTarget.getInt());
+		gc.setMelodyChordNoteTarget(melodyChordNoteTarget.getInt());
+		gc.setMelodyModeNoteTarget(melodyModeNoteTarget.getInt());
+		gc.setMelodyEmphasizeKey(melodyEmphasizeKey.isSelected());
+		gc.setMelody1ForcePatterns(melody1ForcePatterns.isSelected());
+		gc.setMelodyArpySurprises(melodyArpySurprises.isSelected());
+		gc.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
+		gc.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
+		gc.setMelodyLegacyMode(melodyLegacyMode.isSelected());
+		gc.setMelodyNewBlocksChance(melodyNewBlocksChance.getInt());
+		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
+		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumpsLegacy.isSelected());
+		gc.setMelodyBlockTargetMode(melodyBlockTargetMode.getSelectedIndex());
+		gc.setNoteTargetDirectionChoice(noteTargetDirectionChoice.getSelectedItem());
+		gc.setMelodyPatternEffect(melodyPatternEffect.getSelectedIndex());
+		gc.setMelodyRhythmAccents(melodyRhythmAccents.getSelectedIndex());
+		gc.setMelodyRhythmAccentsMode(melodyRhythmAccentsMode.getSelectedIndex());
+		gc.setMelodyRhythmAccentsPocket(melodyRhythmAccentsPocket.isSelected());
+		gc.setMelodyReplaceAvoidNotes(melodyReplaceAvoidNotes.getInt());
+		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
+		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
+		gc.setMelodyBlockChoicePreference(melodyBlockChoicePreference.getValues());
+		gc.setMelodyBlockTypePreference(Arrays.stream(melodyBlockTypePreference).map(e -> e.getValue()).collect(java.util.stream.Collectors.toList()));
+		gc.setMelodyUseCustomDurations(melodyUseCustomDurations.isSelected());
+		gc.setMelodyCustomDurationsRandomWeighting(melodyCustomDurationsRandomWeighting.isSelected());
+		gc.setMelodyCustomDurationsStrictMode(melodyCustomDurationsStrictMode.isSelected());
+		gc.setMelodyPatternFlip(melodyPatternFlip.isSelected());
+		gc.setCombineMelodyTracks(combineMelodyTracks.isSelected());
+		if (MelodyMidiDropPane.userMelody != null) gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
+	}
+
+	public void loadFromConfig(GUIConfig gc) {
+		enabledCheckBox.setSelected(gc.isMelodyEnable());
+		melodyFirstNoteFromChord.setSelected(gc.isFirstNoteFromChord());
+		randomChordNote.setSelected(gc.isFirstNoteRandomized());
+		melodyUseOldAlgoChance.setInt(gc.getMelodyUseOldAlgoChance());
+		melodyBasicChordsOnly.setSelected(gc.isMelodyBasicChordsOnly());
+		melodyTonicNoteTarget.setInt(gc.getMelodyTonicNoteTarget());
+		melodyChordNoteTarget.setInt(gc.getMelodyChordNoteTarget());
+		melodyModeNoteTarget.setInt(gc.getMelodyModeNoteTarget());
+		melodyEmphasizeKey.setSelected(gc.isMelodyEmphasizeKey());
+		melodyArpySurprises.setSelected(gc.isMelodyArpySurprises());
+		melody1ForcePatterns.setSelected(gc.isMelody1ForcePatterns());
+		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
+		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
+		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
+		melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
+		melodyAvoidChordJumpsLegacy.setSelected(gc.isMelodyAvoidChordJumps());
+		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
+		melodyBlockTargetMode.setSelectedIndex(gc.getMelodyBlockTargetMode());
+		noteTargetDirectionChoice.setVal(gc.getNoteTargetDirectionChoice());
+		melodyPatternEffect.setSelectedIndex(gc.getMelodyPatternEffect());
+		melodyRhythmAccents.setSelectedIndex(gc.getMelodyRhythmAccents());
+		melodyRhythmAccentsMode.setSelectedIndex(gc.getMelodyRhythmAccentsMode());
+		melodyRhythmAccentsPocket.setSelected(gc.isMelodyRhythmAccentsPocket());
+		melodyReplaceAvoidNotes.setInt(gc.getMelodyReplaceAvoidNotes());
+		melodyMaxDirChanges.setInt(gc.getMelodyMaxDirChanges());
+		melodyTargetNoteVariation.setInt(gc.getMelodyTargetNoteVariation());
+		melodyBlockChoicePreference.setValues(gc.getMelodyBlockChoicePreference());
+		for (int i = 0; i < BlockType.values().length; i++) {
+			int value = i < gc.getMelodyBlockTypePreference().size() ? gc.getMelodyBlockTypePreference().get(i) : BlockType.values()[i].defaultChance;
+			melodyBlockTypePreference[i].setValue(value);
+		}
+		melodyUseCustomDurations.setSelected(gc.isMelodyUseCustomDurations());
+		melodyCustomDurationsRandomWeighting.setSelected(gc.isMelodyCustomDurationsRandomWeighting());
+		melodyCustomDurationsStrictMode.setSelected(gc.isMelodyCustomDurationsStrictMode());
+		melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
+		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
+		if (gc.getMelodyNotes() != null) {
+			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
+			dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
+		} else {
+			MelodyMidiDropPane.userMelody = null;
+			dropPane.getMessage().setText(" * * Drag'n'Drop MIDI Here * * ");
+		}
+	}
+
+	public void loadPartsFromConfig(GUIConfig gc, Consumer<List<MelodyPart>> restorePanels) {
+		restorePanels.accept(gc.getMelodyParts());
+	}
 
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {

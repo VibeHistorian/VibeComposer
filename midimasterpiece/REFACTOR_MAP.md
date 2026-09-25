@@ -85,6 +85,7 @@
 - GenerationGUI migration: complete for the main-window randomization and macro panels built by `initRandomButtons` and `initMacroParams`. Cross-instrument actions remain in VibeComposerGUI and are supplied through GenerationGUI.Context.
 - Deprecated `__` migration scaffolding cleanup: complete. Removed legacy fields, obsolete method copies, and GUI compatibility sync methods from `VibeComposerGUI`; no active source files reference `__` members. Verified with `mvn -DskipTests compile`.
 - Phase 2.1 instrument-control ownership: complete. Melody, bass, chord, arp, and drum GUIs now own their enabled checkbox, group filter slider, add/generate buttons, generation-count field, panel scroll pane, and panel list. Their contexts no longer receive indexed control arrays or instrument-indexed panel callbacks. `VibeComposerGUI` keeps the established 0–4 instrument order behind a typed module accessor, and remaining static callers use the corresponding typed panel-list or scroll-pane accessor. Verified with `mvn -DskipTests compile`.
+- Phase 2.2 config transfer ownership: complete. Melody, bass, chord, arp, drum, arrangement, score, generation, and extra-settings modules now save and restore their own `GUIConfig` fields. Instrument modules also own enabled state and part serialization/restoration; the window supplies only the panel recreation callback. `VibeComposerGUI` retains version/session/BPM transfer and explicitly orders validation, transient-state preparation, module-control loading, panel recreation, and derived chord refresh. `GUIConfig` fields and XML shape are unchanged. Verified with `mvn -DskipTests compile`.
 - COMPLETED
 
 ***************************************************************
@@ -96,8 +97,8 @@
 The first extraction phase has established feature GUI classes and reduced `VibeComposerGUI.java` from about 10.5k to about 7.1k lines. The remaining size is driven less by feature construction and more by coordination, application state, and cross-module access:
 
 - `VibeComposerGUI` still owns broad static state for theme, layout, active configuration, playback, MIDI editing, undo, and the application window. A source scan finds about 300 active `VibeComposerGUI` references across `Components`, `Panels`, and `Popups`, so this coupling needs staged migration.
-- `MelodyGUI`, `BassGUI`, `ChordGUI`, `ArpGUI`, and `DrumGUI` receive five shared arrays through their `Context` interfaces (`addInst`, group filters, add buttons, generate buttons, and generation counts), then select their own element by instrument index. This leaks the parent’s indexing scheme into each feature module.
-- `copyGUItoConfig` and `copyConfigToGUI` in `VibeComposerGUI` map settings for all GUI modules. The classes already own the controls, but not their save/load mapping.
+- Instrument GUIs previously received five shared arrays through their `Context` interfaces and selected controls by instrument index. Phase 2.1 moved those controls and panel collections into their owning modules; the parent now preserves the established instrument order only for cross-instrument operations.
+- `copyGUItoConfig` and `copyConfigToGUI` in `VibeComposerGUI` now coordinate feature-owned mappings and retain application-level version, seed, MIDI mode, BPM, and scale mode transfer. Panel restoration remains a narrow callback because layout creation belongs to the window.
 - `GUIConfig` is a JAXB persistence object with a flat field/getter shape. Restructuring it would affect saved preset compatibility and is not required to give GUI modules ownership of their mappings.
 - `VibeComposerCoreGUI` is currently an empty skeleton. It should not become a new catch-all for state simply because the former parent class is large.
 

@@ -39,6 +39,9 @@ public class ScoreGUI {
 	public static JCheckBox highlightScoreNotes;
 	public static JCheckBox miniScorePopup;
 
+	public static void saveToConfig(GUIConfig gc) { gc.setTranspose(transposeScore.getInt()); }
+	public static void loadFromConfig(GUIConfig gc) { transposeScore.setInt(gc.getTranspose()); }
+
 	private final Context context;
 
 	public ScoreGUI(Context context) {

@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.*;
 import org.vibehistorian.vibecomposer.Panels.*;
+import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
@@ -70,6 +71,24 @@ public class ExtraSettingsGUI {
     public static JCheckBox patternApplyPausesWhenGenerating;
     public static JCheckBox allowValuesOutOfRange;
     public static ScrollComboBox<String> keyChangeTypeSelection;
+
+    public static void saveToConfig(GUIConfig gc) {
+        gc.setSoundbankName((String) soundbankFilename.getEditor().getItem());
+        gc.setSwingUnitMultiplierIndex(swingUnitMultiplier.getSelectedIndex());
+        gc.setCustomMidiForceScale(customMidiForceScale.isSelected());
+        gc.setTransposedNotesForceScale(transposedNotesForceScale.isSelected());
+        gc.setHumanizeNotes(humanizeNotes.getInt());
+        gc.setKeyChangeType(KeyChangeType.valueOf(keyChangeTypeSelection.getVal()));
+    }
+
+    public static void loadFromConfig(GUIConfig gc) {
+        soundbankFilename.getEditor().setItem(gc.getSoundbankName());
+        swingUnitMultiplier.setSelectedIndex(gc.getSwingUnitMultiplierIndex());
+        customMidiForceScale.setSelected(gc.isCustomMidiForceScale());
+        transposedNotesForceScale.setSelected(gc.isTransposedNotesForceScale());
+        humanizeNotes.setInt(gc.getHumanizeNotes());
+        keyChangeTypeSelection.setVal(gc.getKeyChangeType().toString());
+    }
 
     private final Context context;
 

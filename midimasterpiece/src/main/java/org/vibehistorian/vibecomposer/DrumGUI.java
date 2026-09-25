@@ -19,6 +19,7 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -90,6 +91,30 @@ public class DrumGUI implements InstrumentGUIControls {
 	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
 	@Override public JScrollPane getPanelScrollPane() { return drumScrollPane; }
 	@Override public List<DrumPanel> getPanels() { return drumPanels; }
+
+	public void saveToConfig(GUIConfig gc, int seed, boolean customMidiDevice) {
+		gc.setDrumsEnable(enabledCheckBox.isSelected());
+		List<DrumPart> parts = new ArrayList<>();
+		for (DrumPanel panel : drumPanels) parts.add((DrumPart) panel.toInstPart(seed));
+		org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
+		gc.setDrumParts(parts);
+		gc.setHumanizeDrums(humanizeDrums.getInt());
+		gc.setDrumCustomMapping(drumCustomMapping.isSelected() && customMidiDevice);
+		gc.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
+	}
+
+	public void loadFromConfig(GUIConfig gc) {
+		enabledCheckBox.setSelected(gc.isDrumsEnable());
+		humanizeDrums.setInt(gc.getHumanizeDrums());
+		drumCustomMappingNumbers.setText(gc.getDrumCustomMappingNumbers());
+		if (StringUtils.countMatches(drumCustomMappingNumbers.getText(), ",") != InstUtils.DRUM_INST_NUMBERS_SEMI.length - 1) {
+			drumCustomMappingNumbers.setText(StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
+		}
+	}
+
+	public void loadPartsFromConfig(GUIConfig gc, Consumer<List<DrumPart>> restorePanels) {
+		restorePanels.accept(gc.getDrumParts());
+	}
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
