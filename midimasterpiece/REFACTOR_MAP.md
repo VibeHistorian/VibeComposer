@@ -69,7 +69,7 @@
 - [x] Score
 - [x] ExtraSettings
 - [x] Generation
-- [ ] Core cleanup
+- [x] Core cleanup
 
 
 ------------------------------------------------------------------
@@ -83,5 +83,6 @@
 - ScoreGUI migration: complete for score UI state, score tab and display settings, score rendering initialization, and popup toggling. Playback and MIDI workflows remain in VibeComposerGUI and access score state through ScoreGUI.
 - ExtraSettingsGUI migration: complete for extra settings state, settings window construction, and all popup panels, including Generation. Shared window actions are supplied through its context.
 - GenerationGUI migration: complete for the main-window randomization and macro panels built by `initRandomButtons` and `initMacroParams`. Cross-instrument actions remain in VibeComposerGUI and are supplied through GenerationGUI.Context.
-- Phase 1: In progress
+- Deprecated `__` migration scaffolding cleanup: complete. Removed legacy fields, obsolete method copies, and GUI compatibility sync methods from `VibeComposerGUI`; no active source files reference `__` members. Verified with `mvn -DskipTests compile`.
+- COMPLETED
 
