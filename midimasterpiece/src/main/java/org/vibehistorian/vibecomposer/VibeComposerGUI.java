@@ -461,16 +461,39 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void openApplyCustomSectionPopup() {
 				VibeComposerGUI.this.openApplyCustomSectionPopup();
 			}
-			@Override public void processActualArrangementMouseEvent(MouseEvent event) {
-				VibeComposerGUI.this.processActualArrangementMouseEvent(event);
+			@Override public List<? extends InstPanel> getInstrumentPanels(int instrument) {
+				return VibeComposerGUI.getInstList(instrument);
 			}
-			@Override public void processActualArrangementCopyDragging(MouseEvent event) {
-				VibeComposerGUI.this.processActualArrangementCopyDragging(event);
+			@Override public JScrollPane getInstrumentPanelScrollPane(int instrument) {
+				return VibeComposerGUI.getInstPane(instrument);
 			}
-			@Override public void resetCopyDrag() { VibeComposerGUI.this.resetCopyDrag(); }
-			@Override public Triple<Integer, Integer, Integer> calculateCurrentTableSubcell(
-					MouseEvent event) {
-				return VibeComposerGUI.this.calculateCurrentTableSubcell(event);
+			@Override public List<InstPart> getCustomSectionParts(int instrument) {
+				return getInstPartsFromCustomSectionInstPanels(instrument);
+			}
+			@Override public InstPanel makeInstrumentPanel(int instrument) {
+				return InstPanel.makeInstPanel(instrument, VibeComposerGUI.this);
+			}
+			@Override public int getAbsoluteOrder(int instrument, int relativeOrder) {
+				return VibeComposerGUI.getAbsoluteOrder(instrument, relativeOrder);
+			}
+			@Override public boolean isFullMode() { return VibeComposerGUI.isFullMode; }
+			@Override public Color getPanelColorHigh() { return VibeComposerGUI.panelColorHigh; }
+			@Override public Color getUiColor() { return VibeComposerGUI.uiColor(); }
+			@Override public void toggleButtonEnabledForPanels() {
+				VibeComposerGUI.this.toggleButtonEnabledForPanels();
+			}
+			@Override public PhraseNotes getPatternRaw(UsedPattern pattern) {
+				return guiConfig.getPatternRaw(pattern);
+			}
+			@Override public void showInvalidPatternCopyInfo() {
+				new TemporaryInfoPopup("Invalid pattern for copying!", 1500);
+			}
+			@Override public boolean hasCurrentMidi() { return currentMidi != null; }
+			@Override public void openMidiEditPopup(Section section, int instrument, int panelOrder,
+					int sectionOrder) {
+				currentMidiEditorPopup = new MidiEditPopup(section, instrument, panelOrder);
+				currentMidiEditorPopup.setSec(section);
+				currentMidiEditorSectionIndex = sectionOrder;
 			}
 			@Override public void arrangementTableProcessSectionType(Component component,
 					String value) {
@@ -483,10 +506,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override public void refreshVariationPopupButtons(int count) {
 				VibeComposerGUI.this.refreshVariationPopupButtons(count);
-			}
-			@Override public void applyCustomPanelsToSection(String action, int replacedPartNum,
-					Integer sectionOrder) {
-				VibeComposerGUI.this.applyCustomPanelsToSection(action, replacedPartNum, sectionOrder);
 			}
 			@Override public JFrame getMainWindow() { return VibeComposerGUI.this; }
 		});
@@ -1472,7 +1491,8 @@ public static final String CURRENT_VERSION = "2.6";
 		ArrangementGUI.manualArrangement.setSelected(true);
 		for (int i = 0; i < 5; i++) {
 			createPanels(i, getInstList(i).size(), false);
-			applyCustomPanelsToSection("", i, ArrangementGUI.arrSection.getSelectedIndex());
+			ArrangementGUI.arrangementGUI.applyCustomPanelsToSection("", i,
+					ArrangementGUI.arrSection.getSelectedIndex());
 		}
 		ArrangementGUI.arrSection.getCurrentButton().repaint();
 		recalculateTabPaneCounts();
@@ -1510,7 +1530,8 @@ public static final String CURRENT_VERSION = "2.6";
 				currentSec.setCustomDurationsEnabled(true);
 			}
 			ArrangementGUI.arrSection.getCurrentButton().repaint();
-			switchPanelsForSectionSelection(ArrangementGUI.arrSection.getVal());
+			ArrangementGUI.arrangementGUI
+					.switchPanelsForSectionSelection(ArrangementGUI.arrSection.getVal());
 
 			/*if (sectionGuiConfig.getGlobalSwingOverride() != null) {
 				applyGlobalSwing(sectionGuiConfig.getGlobalSwingOverride(), true);
@@ -1586,446 +1607,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 
 
-
-	private void applyCustomPanelsToSection(String action, int replacedPartNum, Integer secOrder) {
-		int lastSecOrder = secOrder + 1;
-		if (action.endsWith("+")) {
-			lastSecOrder = ArrangementGUI.actualArrangement.getSections().size() + 1;
-		} else if (action.contains(",")) {
-			String lastSecIndexString = action.split(",")[1];
-			lastSecOrder = Integer.valueOf(lastSecIndexString) + 1;
-		}
-
-		for (int i = secOrder; i < lastSecOrder; i++) {
-			Section sec = ArrangementGUI.actualArrangement.getSections().get(i - 1);
-			// parts
-			switch (replacedPartNum) {
-			case 0:
-				sec.setMelodyParts(
-						(List<MelodyPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(0));
-				break;
-			case 1:
-				sec.setBassParts(
-						(List<BassPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(1));
-				break;
-			case 2:
-				sec.setChordParts(
-						(List<ChordPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(2));
-				break;
-			case 3:
-				sec.setArpParts(
-						(List<ArpPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(3));
-				break;
-			case 4:
-				sec.setDrumParts(
-						(List<DrumPart>) (List<?>) getInstPartsFromCustomSectionInstPanels(4));
-				break;
-			default:
-				break;
-			}
-			if (replacedPartNum < 5) {
-				String suffix = "";
-				if (sec.hasCustomizedParts()) {
-					suffix = "*";
-				}
-				ArrangementGUI.arrSection.getButtons().get(i).setText(i + ": " + sec.getType() + suffix);
-			}
-		}
-	}
-
-
-
-
-	protected Triple<Integer, Integer, Integer> calculateCurrentTableSubcell(MouseEvent evt) {
-		int row = ArrangementGUI.scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
-		int secOrder = ArrangementGUI.scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
-
-		//LG.d(("Current subcell: " + row + ", " + secOrder));
-		if (row >= 2 && secOrder >= 0) {
-			int part = row - 2;
-			double orderPercentage = calculateMousePointPercentageInTable(row, secOrder);
-
-			int actualSize = getInstList(part).size();
-			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
-			int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
-
-			//LG.d("COPY - Selected subcell: " + (partAbsoluteOrder + 1));
-			if ((actualSize > CollectionCellRenderer.MIN_CELLS && partAbsoluteOrder == actualSize)
-					|| (actualSize <= CollectionCellRenderer.MIN_CELLS
-							&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
-				//LG.d("Can't copy: randomizer cell not a valid target - " + (partAbsoluteOrder + 1));
-				return null;
-			} else if (partAbsoluteOrder >= actualSize) {
-				//LG.d("Can't copy: subcell not present in part - " + (partAbsoluteOrder + 1));
-				return null;
-			}
-			return Triple.of(part, partAbsoluteOrder, secOrder);
-		}
-		return null;
-	}
-
-	public void switchPanelsForSectionSelection(String selItem) {
-		List<InstPanel> addedPanels = new ArrayList<>();
-
-		if (ArrangementGUI.GLOBAL.equals(selItem)) {
-			LG.i(("Resetting to normal panels!"));
-			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
-			for (int i = 0; i < 5; i++) {
-				JScrollPane pane = getInstPane(i);
-				List<? extends InstPanel> panels = getInstList(i);
-				for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
-					if (c instanceof InstPanel) {
-						InstPanel ip = (InstPanel) c;
-						//LG.i(("Switching panel!"));
-						((JPanel) pane.getViewport().getView()).remove(ip);
-					}
-				}
-				panels.forEach(p -> {
-					((JPanel) pane.getViewport().getView()).add(p);
-					p.setVisible(false);
-					//p.setBackground(panelColorLow.darker());
-				});
-				addedPanels.addAll(panels);
-			}
-		} else {
-			LG.i(("Switching panels!"));
-			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
-			int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
-			Section sec = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
-			for (int i = 0; i < 5; i++) {
-				JScrollPane pane = getInstPane(i);
-				List<InstPanel> sectionPanels = new ArrayList<>();
-				List<Integer> missingPanels = new ArrayList<>();
-				getInstList(i).forEach(e -> missingPanels.add(e.getPanelOrder()));
-				if (sec.getInstPartList(i) != null) {
-					//LG.i(("Creating panels from section parts! " + i));
-					List<? extends InstPart> ips = sec.getInstPartList(i);
-					for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
-						if (c instanceof InstPanel) {
-							int order = ((InstPanel) c).getAbsoluteOrder();
-							if (order < ips.size()) {
-								((JPanel) pane.getViewport().getView()).remove(c);
-								InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
-								pCopy.setFromInstPart(ips.get(order));
-								sectionPanels.add(pCopy);
-								missingPanels.remove(Integer.valueOf(order));
-							}
-						}
-					}
-				}
-				if (!missingPanels.isEmpty()) {
-					//LG.i(("Making copies of normal panels! " + i));
-					List<? extends InstPanel> panels = getInstList(i).stream()
-							.filter(e -> missingPanels.contains(e.getPanelOrder()))
-							.collect(Collectors.toList());
-					//Set<Integer> presence = sec.getPresence(i);
-					for (Component c : ((JPanel) pane.getViewport().getView()).getComponents()) {
-						if (c instanceof InstPanel) {
-							InstPanel ip = (InstPanel) c;
-
-							//LG.i(("Switching panel!"));
-							int order = ip.getPanelOrder();
-							if (missingPanels.contains(order)) {
-								((JPanel) pane.getViewport().getView()).remove(ip);
-								/*if (!presence.contains(ip.getPanelOrder())) {
-									continue;
-								}*/
-								InstPanel p = panels.stream()
-										.filter(e -> e.getPanelOrder() == order).findFirst().get();
-								InstPanel pCopy = InstPanel.makeInstPanel(i, VibeComposerGUI.this);
-								pCopy.setRelatedSection(sec);
-								pCopy.setFromInstPart(p.toInstPart(0));
-								sectionPanels.add(pCopy);
-							}
-						}
-
-					}
-				}
-				sectionPanels.sort(Comparator.comparing(e -> e.getPanelOrder()));
-				sectionPanels.forEach(p -> {
-					p.toggleEnabledCopyRemove(false);
-					p.toggleGlobalElements(false);
-					if (p.getPartClass() == DrumPart.class) {
-						p.getInstrumentBox().setEnabled(true);
-					}
-					p.getToggleableComponents().forEach(g -> g.setVisible(isFullMode));
-					p.setVisible(false);
-					((JPanel) pane.getViewport().getView()).add(p);
-				});
-				addedPanels.addAll(sectionPanels);
-			}
-		}
-		ArrangementGUI.arrangementMiddleColoredPanel.repaint();
-		addedPanels.forEach(p -> p.setVisible(true));
-		toggleButtonEnabledForPanels();
-		for (int i = 0; i < 5; i++) {
-			JScrollPane pane = getInstPane(i);
-			pane.repaint();
-		}
-		if (instrumentTabPane.getSelectedIndex() == 6) {
-			ArrangementGUI.actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
-			ArrangementGUI.scrollableArrangementActualTable.repaint();
-		}
-	}
-
-	private void processActualArrangementMouseEvent(java.awt.event.MouseEvent evt) {
-		int row = ArrangementGUI.scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
-		int secOrder = ArrangementGUI.scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
-
-
-		LG.d(("Clicked! " + row + ", " + secOrder));
-		boolean rClick = SwingUtilities.isRightMouseButton(evt);
-		boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
-		if (row == 0 && secOrder >= 0) {
-			if (rClick) {
-				ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
-			} else if (mClick) {
-				ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
-			}
-		} else if (row >= 2 && secOrder >= 0) {
-			double orderPercentage = calculateMousePointPercentageInTable(row, secOrder);
-
-			int part = row - 2;
-			int actualSize = getInstList(part).size();
-			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
-			int partAbsoluteOrder = (int) Math.floor(orderPercentage * visualSize);
-
-			LG.d("Percentage: " + orderPercentage);
-			LG.d("Selected subcell: " + (partAbsoluteOrder + 1));
-			boolean randomizerButtonPressed = false;
-			if ((actualSize > CollectionCellRenderer.MIN_CELLS && partAbsoluteOrder == actualSize)
-					|| (actualSize <= CollectionCellRenderer.MIN_CELLS
-							&& partAbsoluteOrder == CollectionCellRenderer.MIN_CELLS)) {
-				randomizerButtonPressed = true;
-			} else if (partAbsoluteOrder >= actualSize) {
-				LG.d("Can't interact: subcell not present in part - " + (partAbsoluteOrder + 1));
-				return;
-			}
-
-
-			if (rClick || mClick) {
-				//LG.d(("Clickable! rClick: " + rClick));
-				Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
-				boolean hasPresence = !sec.getPresence(part).isEmpty();
-				boolean hasVariation = hasPresence && sec.hasVariation(part);
-
-				if (evt.isControlDown()) {
-					if (hasPresence) {
-						int secOrder2 = secOrder;
-						if (mClick) {
-							secOrder2++;
-							if (secOrder2 >= ArrangementGUI.actualArrangement.getSections().size()) {
-								return;
-							}
-						} else if (rClick) {
-							secOrder2--;
-							if (secOrder2 < 0) {
-								return;
-							}
-						}
-						Section sec2 = ArrangementGUI.actualArrangement.getSections().get(secOrder2);
-						sec2.resetAllPresence(part);
-						for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-							sec2.removeVariationForAllParts(part, i);
-						}
-						for (Integer p : sec.getPresence(part)) {
-							int absOrder = VibeComposerGUI.getAbsoluteOrder(part, p);
-							sec2.setPresence(part, absOrder);
-							sec2.setVariation(part, absOrder, sec.getVariation(part, absOrder));
-							if (evt.isShiftDown()) {
-								// CTRL+SHIFT+RMB/MMB -> also copy all section patterns if available and applied
-								UsedPattern pat = sec.getPattern(part, p);
-								if (pat != null) {
-									PhraseNotes pn = guiConfig.getPatternRaw(pat);
-									if (pn != null && pn.isApplied()) {
-										sec2.putPattern(part, p, pat);
-									}
-								}
-							}
-						}
-						sec2.setInstPartList(sec.getInstPartList(part), part);
-					}
-				} else if (randomizerButtonPressed) {
-					if (mClick) {
-						if (hasVariation) {
-							for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-								sec.removeVariationForAllParts(part, i);
-							}
-						} else if (hasPresence) {
-							sec.generateVariations(new Random(), part);
-						}
-					} else {
-						if (hasPresence) {
-							for (int i = 0; i < getInstList(part).size(); i++) {
-								sec.resetPresence(part, i);
-							}
-						} else {
-							ArrangementGUI.arrangement.initPartInclusionMapIfNull();
-							sec.generatePresences(new Random(), part, ArrangementGUI.arrangement.getInclMap(),
-									true);
-						}
-					}
-				} else if (evt.isShiftDown()) {
-					boolean hasAnyPresence = ArrangementGUI.actualArrangement.getSections().stream()
-							.anyMatch(e -> e.getPresence(part).contains(
-									getInstList(part).get(partAbsoluteOrder).getPanelOrder()));
-					if (mClick) {
-						boolean hasAnyVariation = hasAnyPresence
-								&& ArrangementGUI.actualArrangement.getSections().stream().anyMatch(
-										e -> !e.getVariation(part, partAbsoluteOrder).isEmpty());
-						for (Section asec : ArrangementGUI.actualArrangement.getSections()) {
-							if (hasAnyVariation) {
-								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-									asec.removeVariationForPart(part, partAbsoluteOrder, i);
-								}
-							} else if (hasAnyPresence && asec.getPresence(part).contains(
-									getInstList(part).get(partAbsoluteOrder).getPanelOrder())) {
-								asec.generateVariationForPartAndOrder(new Random(), part,
-										partAbsoluteOrder, false);
-							}
-						}
-					} else {
-						if (hasAnyPresence) {
-							for (Section asec : ArrangementGUI.actualArrangement.getSections()) {
-								asec.initPartMapFromOldData();
-								for (int i = 0; i < getInstList(part).size(); i++) {
-									asec.resetPresence(part, partAbsoluteOrder);
-								}
-							}
-						} else {
-							ArrangementGUI.arrangement.initPartInclusionMapIfNull();
-							for (Section asec : ArrangementGUI.actualArrangement.getSections()) {
-								asec.initPartMapFromOldData();
-								if (new Random().nextInt(100) < asec.getChanceForInst(part)) {
-									asec.setPresence(part, partAbsoluteOrder);
-								}
-							}
-						}
-					}
-				} else {
-					boolean hasSinglePresence = sec.getPresence(part)
-							.contains(getInstList(part).get(partAbsoluteOrder).getPanelOrder());
-					boolean hasSingleVariation = hasSinglePresence
-							&& !sec.getVariation(part, partAbsoluteOrder).isEmpty();
-
-					if (mClick) {
-						if (hasSingleVariation) {
-							for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
-								sec.removeVariationForPart(part, partAbsoluteOrder, i);
-							}
-						} else if (hasSinglePresence) {
-							sec.generateVariationForPartAndOrder(new Random(), part,
-									partAbsoluteOrder, true);
-						}
-					} else {
-						sec.initPartMapFromOldData();
-						if (hasSinglePresence) {
-							sec.resetPresence(part, partAbsoluteOrder);
-						} else {
-							sec.setPresence(part, partAbsoluteOrder);
-						}
-					}
-				}
-
-
-				ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
-				refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
-				ArrangementGUI.manualArrangement.setSelected(true);
-				ArrangementGUI.manualArrangement.repaint();
-				ArrangementGUI.scrollableArrangementActualTable.repaint();
-			} else {
-				int panelOrder = getInstList(part).get(partAbsoluteOrder).getPanelOrder();
-				if (evt.isAltDown()) {
-					if (secOrder + 1 < ArrangementGUI.arrSection.getItemCount()) {
-						ArrangementGUI.arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
-						ArrangementGUI.arrSection.repaint();
-						instrumentTabPane.setSelectedIndex(part);
-						ArrangementGUI.switchTabPaneAfterApply = true;
-					}
-				} else if (evt.isControlDown()) {
-					// begin copy-dragging
-					Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
-					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
-					if (hasSinglePresence && sec.containsPattern(part, panelOrder)) {
-						ArrangementGUI.copyDraggingOrigin = Triple.of(part, partAbsoluteOrder, secOrder);
-						prepareCustomMidiSubcellCopy(part, panelOrder, sec);
-
-					}
-				} else if (currentMidi != null && partAbsoluteOrder < getInstList(part).size()) {
-					Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
-					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
-
-					if (hasSinglePresence && sec.containsPattern(part, panelOrder)) {
-						currentMidiEditorPopup = new MidiEditPopup(sec, part, panelOrder);
-						currentMidiEditorPopup.setSec(sec);
-						currentMidiEditorSectionIndex = secOrder;
-					} else {
-						LG.i("Presence: " + hasSinglePresence + ", contains pattern: "
-								+ sec.containsPattern(part, panelOrder));
-					}
-				}
-			}
-
-		}
-	}
-
-	private double calculateMousePointPercentageInTable(int row, int secOrder) {
-
-		Point mousePoint = SwingUtils.getMouseLocation();
-		Point tablePoint = ArrangementGUI.scrollableArrangementActualTable.getLocation();
-		SwingUtilities.convertPointToScreen(tablePoint, ArrangementGUI.scrollableArrangementActualTable);
-		Rectangle r = ArrangementGUI.scrollableArrangementActualTable.getCellRect(row, secOrder, false);
-
-		mousePoint.x -= tablePoint.x;
-		mousePoint.y -= tablePoint.y;
-
-		mousePoint.x -= r.x;
-		mousePoint.y -= r.y;
-
-
-		double orderPercentage = OMNI.clamp((mousePoint.x / (double) r.width), 0.01, 0.99);
-		return orderPercentage;
-	}
-
-	protected void processActualArrangementCopyDragging(MouseEvent evt) {
-		Triple<Integer, Integer, Integer> partOrderSection = calculateCurrentTableSubcell(evt);
-		if (partOrderSection != null) {
-			PhraseNotes pn = guiConfig.getPatternRaw(ArrangementGUI.copyDraggedPattern);
-			if (pn == null) {
-				new TemporaryInfoPopup("Invalid pattern for copying!", 1500);
-				return;
-			}
-			Section sec = ArrangementGUI.actualArrangement.getSections().get(partOrderSection.getRight());
-			UsedPattern newPattern = ArrangementGUI.copyDraggedPattern;
-			int part = partOrderSection.getLeft();
-			int panelOrder = getInstList(part).get(partOrderSection.getMiddle()).getPanelOrder();
-			sec.putPattern(part, panelOrder, newPattern);
-			if (!sec.getPresence(part).contains(panelOrder)) {
-				sec.setPresence(part, partOrderSection.getMiddle());
-			}
-			pn.setApplied(true);
-			ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
-			refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
-			ArrangementGUI.manualArrangement.setSelected(true);
-			ArrangementGUI.manualArrangement.repaint();
-			ArrangementGUI.scrollableArrangementActualTable.repaint();
-		} else {
-			LG.i("Can't copy custom midi - invalid part!");
-		}
-	}
-
-	private void prepareCustomMidiSubcellCopy(int part, int panelOrder, Section sec) {
-		ArrangementGUI.copyDragging = true;
-		ArrangementGUI.copyDraggedPattern = sec.getPattern(part, panelOrder);
-		ArrangementGUI.scrollableArrangementActualTable.repaint();
-	}
-
-	public void resetCopyDrag() {
-		ArrangementGUI.copyDragging = false;
-		ArrangementGUI.copyDraggedPattern = null;
-		ArrangementGUI.copyDraggingOrigin = null;
-		ArrangementGUI.scrollableArrangementActualTable.repaint();
-	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
 		int typeOffset = Section.getTypeMelodyOffset(valueAt);

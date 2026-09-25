@@ -41,7 +41,7 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 						.getSections().size())) {
 					return;
 				}
-				VibeComposerGUI.vibeComposerGUI.switchPanelsForSectionSelection(selItem);
+				ArrangementGUI.arrangementGUI.switchPanelsForSectionSelection(selItem);
 			}
 		});
 	}
