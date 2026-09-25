@@ -28,16 +28,12 @@ import jm.music.data.Phrase;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.Components.*;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
-import org.vibehistorian.vibecomposer.Enums.BlockType;
-import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
-import org.vibehistorian.vibecomposer.Helpers.PatternMap;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
@@ -46,11 +42,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
-import org.vibehistorian.vibecomposer.Parts.BassPart;
-import org.vibehistorian.vibecomposer.Parts.ChordPart;
-import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Parts.Wrappers.ArpPartsWrapper;
 import org.vibehistorian.vibecomposer.Parts.Wrappers.InstPartsWrapper;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
@@ -81,7 +73,6 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.vibehistorian.vibecomposer.Constants.instNames;
 
@@ -4788,82 +4779,6 @@ public static final String CURRENT_VERSION = "2.6";
 		if (instrumentTabPane.getComponentCount() >= 8) {
 			instrumentTabPane.setTitleAt(7, " Score ");
 		}
-	}
-
-	public static Pair<List<String>, List<Double>> solveUserChords(String[] userChordsSplit,
-			String[] userChordsDurationsSplit) {
-		LG.i(("Solving custom chords.."));
-		List<String> solvedChords = new ArrayList<>();
-		List<Double> solvedDurations = new ArrayList<>();
-
-		try {
-
-			if (userChordsSplit.length == userChordsDurationsSplit.length) {
-
-				List<String> userChordsParsed = new ArrayList<>();
-				List<Double> userChordsDurationsParsed = new ArrayList<>();
-				for (int i = 0; i < userChordsDurationsSplit.length; i++) {
-					int[] mappedChordAttempt = MidiUtils.mappedChord(userChordsSplit[i]);
-					if (mappedChordAttempt != null) {
-						userChordsParsed.add(userChordsSplit[i]);
-					}
-
-					userChordsDurationsParsed.add(Double.valueOf(userChordsDurationsSplit[i])
-							* ExtraSettingsGUI.stretchMidi.getInt() / 100.0);
-				}
-				if (userChordsParsed.size() == userChordsDurationsParsed.size()) {
-					solvedChords = userChordsParsed;
-					solvedDurations = userChordsDurationsParsed;
-				} else {
-					LG.i("Lengths don't match, solved only these: " + userChordsParsed.toString()
-							+ " !");
-				}
-			}
-		} catch (Exception e) {
-			LG.i(("Bad user input in custom chords/durations!\n"));
-			LG.e(e);
-		}
-		if (!solvedChords.isEmpty() && !solvedDurations.isEmpty()) {
-			LG.i((solvedChords.toString()));
-			LG.i((solvedDurations.toString()));
-			return Pair.of(solvedChords, solvedDurations);
-		} else {
-			return null;
-		}
-	}
-
-	/*public static Pair<List<String>, List<Double>> solveUserChords(JTextField customChords,
-			JTextField customChordsDurations) {
-
-		String text = customChords.getText().replaceAll(" ", "");
-		customChords.setText(text);
-		String[] userChordsSplit = text.split(",");
-		//LG.i((StringUtils.join(userChordsSplit, ";")));
-
-		String[] userChordsDurationsSplit = customChordsDurations.getText().split(",");
-		if (userChordsSplit.length != userChordsDurationsSplit.length) {
-			List<Integer> durations = IntStream.iterate(4, n -> n).limit(userChordsSplit.length)
-					.boxed().collect(Collectors.toList());
-			customChordsDurations.setText(StringUtils.join(durations, ","));
-			userChordsDurationsSplit = customChordsDurations.getText().split(",");
-		}
-		return solveUserChords(userChordsSplit, userChordsDurationsSplit);
-	}*/
-
-	public static Pair<List<String>, List<Double>> solveUserChords(String customChords,
-			String customChordsDurations) {
-
-		String text = customChords.replaceAll(" ", "");
-		String[] userChordsSplit = text.split(",");
-		//LG.i((StringUtils.join(userChordsSplit, ";")));
-
-		String[] userChordsDurationsSplit = customChordsDurations.split(",");
-		if (userChordsSplit.length != userChordsDurationsSplit.length) {
-			List<Integer> durations = IntStream.iterate(4, n -> n).limit(userChordsSplit.length)
-					.boxed().collect(Collectors.toList());
-			userChordsDurationsSplit = StringUtils.join(durations, ",").split(",");
-		}
-		return solveUserChords(userChordsSplit, userChordsDurationsSplit);
 	}
 
 	public String chordSelect(String s) {
