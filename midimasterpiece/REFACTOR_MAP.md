@@ -65,7 +65,7 @@
 - [x] Bass
 - [x] Chord
 - [x] Arp
-- [ ] Drum
+- [x] Drum
 - [ ] Arrangement
 - [ ] Score
 - [ ] ExtraSettings
@@ -79,5 +79,6 @@
 - BassGUI migration: complete for bass panel state, bass tab construction, and random bass panel creation.
 - ChordGUI migration: complete for chord UI state, settings construction, chord tab setup, progression controls, custom chord controls, and randomized chord panel creation. Cross-instrument workflows remain in VibeComposerGUI and access chord state through ChordGUI.
 - ArpGUI migration: complete for arp UI state, settings and tab construction, and randomized arp panel creation. Shared window operations and cross-instrument access are supplied through its context or remain in VibeComposerGUI.
+- DrumGUI migration: complete for drum UI state, generation settings and tab construction, and randomized drum panel creation. Shared window operations and cross-instrument workflows remain in VibeComposerGUI through DrumGUI.Context.
 - Phase 1: In progress
 

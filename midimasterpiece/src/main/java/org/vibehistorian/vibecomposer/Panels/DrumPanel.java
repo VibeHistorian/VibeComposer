@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.DrumGUI;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
@@ -154,7 +155,7 @@ public class DrumPanel extends InstPanel {
 
 	@Override
 	protected Pair<List<Integer>, Map<Integer, Integer>> makeMappedRhythmGrid() {
-		int weightMultiplier = VibeComposerGUI.PUNCHY_DRUMS.contains(getInstrument()) ? 3
+		int weightMultiplier = DrumGUI.PUNCHY_DRUMS.contains(getInstrument()) ? 3
 				: (DrumDefaults.getOrder(getInstrument()) != 2 ? 2 : 1);
 		Pair<List<Integer>, Map<Integer, Integer>> mapped = super.makeMappedRhythmGrid();
 		List<Integer> baseGrid = mapped.getLeft();

@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.DrumGUI;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
@@ -33,8 +34,8 @@ public class DrumLoopPopup {
 		hitsPanel.setLayout(new BoxLayout(hitsPanel, BoxLayout.Y_AXIS));
 		initSliderPanel();
 
-		for (int i = VibeComposerGUI.drumPanels.size() - 1; i >= 0; i--) {
-			DrumPanel dp = VibeComposerGUI.drumPanels.get(i);
+		for (int i = DrumGUI.drumPanels.size() - 1; i >= 0; i--) {
+			DrumPanel dp = DrumGUI.drumPanels.get(i);
 			JPanel textHitsPanel = new JPanel();
 			JTextField drumNum = new JTextField(dp.getInstrument() + "", 8);
 			drumNum.setFocusable(false);
@@ -69,8 +70,8 @@ public class DrumLoopPopup {
 		hitsPanel.setLayout(new BoxLayout(hitsPanel, BoxLayout.Y_AXIS));
 
 
-		for (int i = 0; i < VibeComposerGUI.drumPanels.size(); i++) {
-			DrumPanel dp = VibeComposerGUI.drumPanels.get(i);
+		for (int i = 0; i < DrumGUI.drumPanels.size(); i++) {
+			DrumPanel dp = DrumGUI.drumPanels.get(i);
 			JPanel textHitsPanel = new JPanel();
 			JTextField drumNum = new JTextField(dp.getInstrument() + "", 8);
 			drumNum.setFocusable(false);

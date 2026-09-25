@@ -1416,7 +1416,7 @@ public class MidiGenerator implements JMC {
 				score.add(drumParts.get(i));
 			}
 			InstPanel ip = VibeComposerGUI.getPanelByOrder(gc.getDrumParts().get(i).getOrder(),
-					VibeComposerGUI.drumPanels);
+					DrumGUI.drumPanels);
 			if (!gc.getDrumParts().get(i).isMuted() && gc.isDrumsEnable()) {
 				ip.setSequenceTrack(trackCounter);
 				drumParts.get(i).setTrackNumber(trackCounter);
@@ -1424,7 +1424,7 @@ public class MidiGenerator implements JMC {
 					score.add(drumParts.get(i));
 					for (int j = i + 1; j < gc.getDrumParts().size(); j++) {
 						InstPanel ip2 = VibeComposerGUI.getPanelByOrder(
-								gc.getDrumParts().get(j).getOrder(), VibeComposerGUI.drumPanels);
+								gc.getDrumParts().get(j).getOrder(), DrumGUI.drumPanels);
 						ip2.setSequenceTrack(-1);
 					}
 					break;
@@ -2016,7 +2016,7 @@ public class MidiGenerator implements JMC {
 				// multiply drum chance using section note type + what drum it is
 				int drumChanceMultiplier = 1;
 				if (sec.getTypeMelodyOffset() == 0
-						&& VibeComposerGUI.PUNCHY_DRUMS.contains(dp.getInstrument())) {
+						&& DrumGUI.PUNCHY_DRUMS.contains(dp.getInstrument())) {
 					drumChanceMultiplier = 2;
 				}
 
