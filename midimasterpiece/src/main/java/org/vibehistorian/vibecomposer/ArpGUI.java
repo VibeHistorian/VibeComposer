@@ -47,12 +47,17 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /** Builds and owns arpeggio controls and their UI state. */
-public class ArpGUI {
+public class ArpGUI implements InstrumentGUIControls {
 
-	public static List<ArpPanel> arpPanels = new ArrayList<>();
-	public static JScrollPane arpScrollPane;
+	private final List<ArpPanel> arpPanels = new ArrayList<>();
+	private JScrollPane arpScrollPane;
 	public static JPanel arpParentPanel;
 	public static SettingsPanel arpSettingsPanel;
+	private JCheckBox enabledCheckBox;
+	private VeloRect groupFilterSlider;
+	private JButton addPanelButton;
+	private JButton generatePanelButton;
+	private JTextField randomPanelsToGenerate;
 
 	public static JCheckBox randomArpsGenerateOnCompose;
 	public static JCheckBox randomArpTranspose;
@@ -84,21 +89,22 @@ public class ArpGUI {
 		this.context = context;
 	}
 
+	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
+	@Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
+	@Override public JButton getAddPanelButton() { return addPanelButton; }
+	@Override public JButton getGeneratePanelButton() { return generatePanelButton; }
+	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
+	@Override public JScrollPane getPanelScrollPane() { return arpScrollPane; }
+	@Override public List<ArpPanel> getPanels() { return arpPanels; }
+
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
 		Dimension getScrollPaneDimension();
 		Set<Component> getToggleableComponents();
-		JCheckBox[] getAddInst();
-		VeloRect[] getGroupFilterSliders();
-		JButton[] getAddPanelButtons();
-		JButton[] getGeneratePanelButtons();
-		JTextField[] getRandomPanelsToGenerate();
 		JButton makeButton(String name, Consumer<? super Object> action);
 		JButton makeButton(String name, String actionCommand);
-		void addPanel(int part);
-		void generatePanels(int part, boolean triggerRegenerate);
-		GridBagConstraints getConstraints();
-		JTabbedPane getInstrumentTabPane();
+		void addPanel();
+		void generatePanels(boolean triggerRegenerate);
 		List<ArpPanel> getAffectedArpPanels();
 		ArpPanel addArpPanel();
 		JCheckBox getRandomizeInstrumentOnComposeOrGen();
@@ -110,11 +116,6 @@ public class ArpGUI {
 	}
 
 	public void initArpGenSettings(int startY, int anchorSide) {
-		JCheckBox[] addInst = context.getAddInst();
-		VeloRect[] groupFilterSliders = context.getGroupFilterSliders();
-		JButton[] addPanelButtons = context.getAddPanelButtons();
-		JButton[] generatePanelButtons = context.getGeneratePanelButtons();
-		JTextField[] randomPanelsToGenerate = context.getRandomPanelsToGenerate();
 		JPanel scrollableArpPanels = new JPanel();
 		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
 		scrollableArpPanels.setAutoscrolls(true);
@@ -132,19 +133,19 @@ public class ArpGUI {
 
 		JPanel arpsSettingsPanel = new JPanel();
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addInst[3] = new CustomCheckBox("ARPS", true);
-		arpsSettingsPanel.add(addInst[3]);
-		groupFilterSliders[3] = VeloRect.midi(127);
+		enabledCheckBox = new CustomCheckBox("ARPS", true);
+		arpsSettingsPanel.add(enabledCheckBox);
+		groupFilterSlider = VeloRect.midi(127);
 		JLabel filterLabel = new JLabel("LP");
 		arpsSettingsPanel.add(filterLabel);
-		arpsSettingsPanel.add(groupFilterSliders[3]);
+		arpsSettingsPanel.add(groupFilterSlider);
 
-		addPanelButtons[3] = context.makeButton("+Arp", e -> context.addPanel(3));
-		generatePanelButtons[3] = context.makeButton("Generate Arps:", e -> context.generatePanels(3, true));
-		randomPanelsToGenerate[3] = new JTextField("3", 2);
-		arpsSettingsPanel.add(addPanelButtons[3]);
-		arpsSettingsPanel.add(generatePanelButtons[3]);
-		arpsSettingsPanel.add(randomPanelsToGenerate[3]);
+		addPanelButton = context.makeButton("+Arp", e -> context.addPanel());
+		generatePanelButton = context.makeButton("Generate Arps:", e -> context.generatePanels(true));
+		randomPanelsToGenerate = new JTextField("3", 2);
+		arpsSettingsPanel.add(addPanelButton);
+		arpsSettingsPanel.add(generatePanelButton);
+		arpsSettingsPanel.add(randomPanelsToGenerate);
 
 		randomArpsGenerateOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		arpsSettingsPanel.add(randomArpsGenerateOnCompose);
@@ -245,11 +246,8 @@ public class ArpGUI {
 		arpParentPanel.add(arpScrollPane);
 	}
 
-	public void initArps(int startY, int anchorSide) {
-		GridBagConstraints constraints = context.getConstraints();
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		context.getInstrumentTabPane().addTab("Arps", arpParentPanel);
+	public JPanel initArps() {
+		return arpParentPanel;
 	}
 
 	public void createRandomArpPanels(int panelCount, boolean onlyAdd, ArpPanel randomizedPanel) {

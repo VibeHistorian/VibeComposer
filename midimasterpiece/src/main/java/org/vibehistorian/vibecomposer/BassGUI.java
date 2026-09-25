@@ -42,11 +42,16 @@ import java.util.function.Consumer;
 /**
  * Bass GUI module - Handles all bass-related UI components and logic.
  */
-public class BassGUI {
+public class BassGUI implements InstrumentGUIControls {
 
-    public static List<BassPanel> bassPanels = new ArrayList<>();
-    public static JScrollPane bassScrollPane;
+    private final List<BassPanel> bassPanels = new ArrayList<>();
+    private JScrollPane bassScrollPane;
     public static JPanel bassParentPanel;
+    private JCheckBox enabledCheckBox;
+    private VeloRect groupFilterSlider;
+    private JButton addPanelButton;
+    private JButton generatePanelButton;
+    private JTextField randomPanelsToGenerate;
 
     private final Context context;
 
@@ -54,17 +59,20 @@ public class BassGUI {
         this.context = context;
     }
 
+    @Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
+    @Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
+    @Override public JButton getAddPanelButton() { return addPanelButton; }
+    @Override public JButton getGeneratePanelButton() { return generatePanelButton; }
+    @Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
+    @Override public JScrollPane getPanelScrollPane() { return bassScrollPane; }
+    @Override public List<BassPanel> getPanels() { return bassPanels; }
+
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {
         Dimension getScrollPaneDimension();
-        JCheckBox[] getAddInst();
-        VeloRect[] getGroupFilterSliders();
-        JButton[] getAddPanelButtons();
-        JButton[] getGeneratePanelButtons();
-        JTextField[] getRandomPanelsToGenerate();
         JButton makeButton(String name, Consumer<? super Object> action);
-        void addPanel(int part);
-        void generatePanels(int part, boolean triggerRegenerate);
+        void addPanel();
+        void generatePanels(boolean triggerRegenerate);
         List<BassPanel> getAffectedBassPanels();
         BassPanel addBassPanel();
         boolean randomizeInstrumentOnComposeOrGen();
@@ -74,8 +82,7 @@ public class BassGUI {
     /**
      * Build the bass tab and its shared controls.
      */
-    public void initBass(int startY, int anchorSide, GridBagConstraints constraints,
-            JTabbedPane instrumentTabPane) {
+    public JPanel initBass() {
         JPanel scrollableBassPanels = new JPanel();
         scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
         scrollableBassPanels.setAutoscrolls(true);
@@ -92,28 +99,23 @@ public class BassGUI {
         bassScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         JPanel bassSettingsPanel = new JPanel();
-        JCheckBox[] addInst = context.getAddInst();
-        VeloRect[] groupFilterSliders = context.getGroupFilterSliders();
-        JButton[] addPanelButtons = context.getAddPanelButtons();
-        JButton[] generatePanelButtons = context.getGeneratePanelButtons();
-        JTextField[] randomPanelsToGenerate = context.getRandomPanelsToGenerate();
-        addInst[1] = new CustomCheckBox("BASS", true);
+        enabledCheckBox = new CustomCheckBox("BASS", true);
         bassSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-        bassSettingsPanel.add(addInst[1]);
+        bassSettingsPanel.add(enabledCheckBox);
 
-        groupFilterSliders[1] = VeloRect.midi(127);
+        groupFilterSlider = VeloRect.midi(127);
         bassSettingsPanel.add(new JLabel("LP"));
-        bassSettingsPanel.add(groupFilterSliders[1]);
+        bassSettingsPanel.add(groupFilterSlider);
 
-        addPanelButtons[1] = context.makeButton("+Bass", e -> context.addPanel(1));
-        generatePanelButtons[1] = context.makeButton("Generate Basses:",
-                e -> context.generatePanels(1, true));
-        randomPanelsToGenerate[1] = new JTextField("1", 2);
-        bassSettingsPanel.add(addPanelButtons[1]);
-        bassSettingsPanel.add(generatePanelButtons[1]);
-        bassSettingsPanel.add(randomPanelsToGenerate[1]);
+        addPanelButton = context.makeButton("+Bass", e -> context.addPanel());
+        generatePanelButton = context.makeButton("Generate Basses:",
+                e -> context.generatePanels(true));
+        randomPanelsToGenerate = new JTextField("1", 2);
+        bassSettingsPanel.add(addPanelButton);
+        bassSettingsPanel.add(generatePanelButton);
+        bassSettingsPanel.add(randomPanelsToGenerate);
 
         JPanel bassSettingsAdvancedPanel = new JPanel();
         bassSettingsAdvancedPanel.add(new JLabel("BASS SETTINGS+"));
@@ -142,9 +144,7 @@ public class BassGUI {
         bassParentPanel.add(borderPanel);
         bassParentPanel.add(bassScrollPane);
 
-        constraints.gridy = startY;
-        constraints.anchor = anchorSide;
-        instrumentTabPane.addTab("Bass", bassParentPanel);
+        return bassParentPanel;
     }
 
     public void createRandomBassPanels(int panelCount, boolean onlyAdd,

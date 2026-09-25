@@ -49,11 +49,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /** Builds and owns the melody controls and their UI state. */
-public class MelodyGUI {
+public class MelodyGUI implements InstrumentGUIControls {
 
-	public static List<MelodyPanel> melodyPanels = new ArrayList<>();
-	public static JScrollPane melodyScrollPane;
+	private final List<MelodyPanel> melodyPanels = new ArrayList<>();
+	private JScrollPane melodyScrollPane;
 	public static JPanel melodyParentPanel;
+	private JCheckBox enabledCheckBox;
+	private VeloRect groupFilterSlider;
+	private JButton addPanelButton;
+	private JButton generatePanelButton;
+	private JTextField randomPanelsToGenerate;
 
 	public static JCheckBox generateMelodiesOnCompose;
 	public static KnobPanel melodyUseOldAlgoChance;
@@ -103,18 +108,21 @@ public class MelodyGUI {
 		this.context = context;
 	}
 
+	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
+	@Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
+	@Override public JButton getAddPanelButton() { return addPanelButton; }
+	@Override public JButton getGeneratePanelButton() { return generatePanelButton; }
+	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
+	@Override public JScrollPane getPanelScrollPane() { return melodyScrollPane; }
+	@Override public List<MelodyPanel> getPanels() { return melodyPanels; }
+
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
 		Dimension getScrollPaneDimension();
 		Set<Component> getToggleableComponents();
-		JCheckBox[] getAddInst();
-		VeloRect[] getGroupFilterSliders();
-		JButton[] getAddPanelButtons();
-		JButton[] getGeneratePanelButtons();
-		JTextField[] getRandomPanelsToGenerate();
 		JButton makeButton(String name, Consumer<? super Object> action);
-		void addPanel(int part);
-		void generatePanels(int part, boolean triggerRegenerate);
+		void addPanel();
+		void generatePanels(boolean triggerRegenerate);
 		boolean canRegenerateOnChange();
 		void regenerate();
 		List<? extends InstPanel> getAffectedMelodyPanels();
@@ -183,24 +191,19 @@ public class MelodyGUI {
 		settings.setAlignmentX(Component.LEFT_ALIGNMENT);
 		settings.setMaximumSize(new Dimension(1800, 50));
 
-		JCheckBox[] addInst = context.getAddInst();
-		VeloRect[] groupFilterSliders = context.getGroupFilterSliders();
-		JButton[] addPanelButtons = context.getAddPanelButtons();
-		JButton[] generatePanelButtons = context.getGeneratePanelButtons();
-		JTextField[] randomPanelsToGenerate = context.getRandomPanelsToGenerate();
-		addInst[0] = new CustomCheckBox("MELODY", true);
-		settings.add(addInst[0]);
-		groupFilterSliders[0] = VeloRect.midi(127);
+		enabledCheckBox = new CustomCheckBox("MELODY", true);
+		settings.add(enabledCheckBox);
+		groupFilterSlider = VeloRect.midi(127);
 		settings.add(new JLabel("LP"));
-		settings.add(groupFilterSliders[0]);
+		settings.add(groupFilterSlider);
 
-		addPanelButtons[0] = context.makeButton("+Melody", e -> context.addPanel(0));
-		generatePanelButtons[0] = context.makeButton("Generate Melodies:",
-				e -> context.generatePanels(0, true));
-		randomPanelsToGenerate[0] = new JTextField("3", 2);
-		settings.add(addPanelButtons[0]);
-		settings.add(generatePanelButtons[0]);
-		settings.add(randomPanelsToGenerate[0]);
+		addPanelButton = context.makeButton("+Melody", e -> context.addPanel());
+		generatePanelButton = context.makeButton("Generate Melodies:",
+				e -> context.generatePanels(true));
+		randomPanelsToGenerate = new JTextField("3", 2);
+		settings.add(addPanelButton);
+		settings.add(generatePanelButton);
+		settings.add(randomPanelsToGenerate);
 		generateMelodiesOnCompose = SwingUtils.makeCheckBox("On Compose", false, true);
 		settings.add(generateMelodiesOnCompose);
 
@@ -410,11 +413,8 @@ public class MelodyGUI {
 		melodyGenerationSettingsPanel.add(customDurationsPanel);
 	}
 
-	public void initMelody(int startY, int anchorSide, GridBagConstraints constraints,
-			JTabbedPane instrumentTabPane) {
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		instrumentTabPane.addTab("Melody", melodyParentPanel);
+	public JPanel initMelody() {
+		return melodyParentPanel;
 	}
 
 	public void generateInitialMelodyPanels() {

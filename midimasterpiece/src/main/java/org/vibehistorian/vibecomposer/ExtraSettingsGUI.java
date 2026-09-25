@@ -25,7 +25,8 @@ public class ExtraSettingsGUI {
         void repaintMainWindow();
         List<? extends InstPanel> getInstList(int order);
         List<InstPanel> getAffectedPanels(int inst);
-        JScrollPane getInstPane(int order);
+        List<DrumPanel> getDrumPanels();
+        JScrollPane getDrumPanelScrollPane();
         ChordGUI chordGUI();
         MelodyGUI melodyGUI();
         ScoreGUI scoreGUI();
@@ -331,18 +332,18 @@ public class ExtraSettingsGUI {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				for (DrumPanel dp : DrumGUI.drumPanels) {
+				for (DrumPanel dp : context.getDrumPanels()) {
 					dp.setVisible(false);
-					((JPanel) context.getInstPane(4).getViewport().getView()).remove(dp);
+					((JPanel) context.getDrumPanelScrollPane().getViewport().getView()).remove(dp);
 
 				}
-				List<DrumPanel> sortedDps = new ArrayList<>(DrumGUI.drumPanels);
+				List<DrumPanel> sortedDps = new ArrayList<>(context.getDrumPanels());
 				Collections.sort(sortedDps, Comparator.comparing(e1 -> e1.getPanelOrder()));
 				for (DrumPanel dp : sortedDps) {
 					if (!DrumGUI.bottomUpReverseDrumPanels.isSelected()) {
-						((JPanel) context.getInstPane(4).getViewport().getView()).add(dp);
+						((JPanel) context.getDrumPanelScrollPane().getViewport().getView()).add(dp);
 					} else {
-						((JPanel) context.getInstPane(4).getViewport().getView()).add(dp, 0);
+						((JPanel) context.getDrumPanelScrollPane().getViewport().getView()).add(dp, 0);
 					}
 					dp.setVisible(true);
 				}

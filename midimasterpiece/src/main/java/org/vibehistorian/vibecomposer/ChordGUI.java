@@ -47,11 +47,16 @@ import java.util.function.Consumer;
 import static org.vibehistorian.vibecomposer.InstUtils.POOL;
 
 /** Builds and owns chord controls and their UI state. */
-public class ChordGUI {
+public class ChordGUI implements InstrumentGUIControls {
 
-    public static List<ChordPanel> chordPanels = new ArrayList<>();
-    public static JScrollPane chordScrollPane;
+    private final List<ChordPanel> chordPanels = new ArrayList<>();
+    private JScrollPane chordScrollPane;
     public static JPanel chordParentPanel;
+    private JCheckBox enabledCheckBox;
+    private VeloRect groupFilterSlider;
+    private JButton addPanelButton;
+    private JButton generatePanelButton;
+    private JTextField randomPanelsToGenerate;
     public static JPanel chordSettingsPanel;
     public static JLabel currentChords = new JLabel("Chords:[]");
     public static List<String> currentChordsInternal = new ArrayList<>();
@@ -104,21 +109,23 @@ public class ChordGUI {
         this.context = context;
     }
 
+    @Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
+    @Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
+    @Override public JButton getAddPanelButton() { return addPanelButton; }
+    @Override public JButton getGeneratePanelButton() { return generatePanelButton; }
+    @Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
+    @Override public JScrollPane getPanelScrollPane() { return chordScrollPane; }
+    @Override public List<ChordPanel> getPanels() { return chordPanels; }
+
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
         Dimension getScrollPaneDimension();
         Set<Component> getToggleableComponents();
-        JCheckBox[] getAddInst();
-        VeloRect[] getGroupFilterSliders();
-        JButton[] getAddPanelButtons();
-        JButton[] getGeneratePanelButtons();
-        JTextField[] getRandomPanelsToGenerate();
         JButton makeButton(String name, Consumer<? super Object> action);
         JButton makeButton(String name, String actionCommand);
-        void addPanel(int part);
-        void generatePanels(int part, boolean triggerRegenerate);
+        void addPanel();
+        void generatePanels(boolean triggerRegenerate);
         GridBagConstraints getConstraints();
-        JTabbedPane getInstrumentTabPane();
         JPanel getControlPanel();
         JPanel getEverythingPanel();
         ItemListener getItemListener();
@@ -129,7 +136,6 @@ public class ChordGUI {
         int getMaxChordProgressionLength();
         void alignChordsWithMelody(ChordletPanel chordlets);
         List<ChordPanel> getAffectedChordPanels();
-        JScrollPane getChordScrollPane();
         ChordPanel addChordPanel();
         boolean randomizeInstrumentOnComposeOrGen();
         boolean orderedTransposeGeneration();
@@ -156,11 +162,6 @@ public class ChordGUI {
 	}
 
     public void initChordGenSettings(int startY, int anchorSide) {
-        JCheckBox[] addInst = context.getAddInst();
-        VeloRect[] groupFilterSliders = context.getGroupFilterSliders();
-        JButton[] addPanelButtons = context.getAddPanelButtons();
-        JButton[] generatePanelButtons = context.getGeneratePanelButtons();
-        JTextField[] randomPanelsToGenerate = context.getRandomPanelsToGenerate();
 		JPanel scrollableChordPanels = new JPanel();
 		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
 		scrollableChordPanels.setAutoscrolls(true);
@@ -178,23 +179,23 @@ public class ChordGUI {
         chordSettingsPanel = new JPanel();
 		chordSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		addInst[2] = new CustomCheckBox("CHORDS", true);
-		chordSettingsPanel.add(addInst[2]);
-		groupFilterSliders[2] = VeloRect.midi( 127);
+		enabledCheckBox = new CustomCheckBox("CHORDS", true);
+		chordSettingsPanel.add(enabledCheckBox);
+		groupFilterSlider = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		chordSettingsPanel.add(filterLabel);
-		chordSettingsPanel.add(groupFilterSliders[2]);
+		chordSettingsPanel.add(groupFilterSlider);
 
-		addPanelButtons[2] = context.makeButton("+Chord", e -> {
-			context.addPanel(2);
+		addPanelButton = context.makeButton("+Chord", e -> {
+			context.addPanel();
 		});
-		generatePanelButtons[2] = context.makeButton("Generate Chords:", e -> {
-			context.generatePanels(2, true);
+		generatePanelButton = context.makeButton("Generate Chords:", e -> {
+			context.generatePanels(true);
 		});
-		randomPanelsToGenerate[2] = new JTextField("2", 2);
-		chordSettingsPanel.add(addPanelButtons[2]);
-		chordSettingsPanel.add(generatePanelButtons[2]);
-		chordSettingsPanel.add(randomPanelsToGenerate[2]);
+		randomPanelsToGenerate = new JTextField("2", 2);
+		chordSettingsPanel.add(addPanelButton);
+		chordSettingsPanel.add(generatePanelButton);
+		chordSettingsPanel.add(randomPanelsToGenerate);
 
 		randomChordsGenerateOnCompose = SwingUtils.makeCheckBox("On Compose", true, true);
 		chordSettingsPanel.add(randomChordsGenerateOnCompose);
@@ -305,12 +306,8 @@ public class ChordGUI {
 		//addHorizontalSeparatorToPanel(scrollableChordPanels);
 	}
 
-    public void initChords(int startY, int anchorSide) {
-		// ---- CHORDS ----
-		// gridy 50 - 99 range
-		context.getConstraints().gridy = startY;
-		context.getConstraints().anchor = anchorSide;
-		context.getInstrumentTabPane().addTab("Chords", chordParentPanel);
+    public JPanel initChords() {
+		return chordParentPanel;
 	}
 
     public void initChordProgressionSettings(int startY, int anchorSide) {
@@ -628,7 +625,7 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel panel = panelI.next();
 			if (!onlyAdd && !panel.getLockInst()) {
 				if (removedPanels.size() >= panelCount) {
-					((JPanel) context.getChordScrollPane().getViewport().getView()).remove(panel);
+					((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
 					panelI.remove();
 				} else {
 					removedPanels.add(panel);

@@ -84,6 +84,7 @@
 - ExtraSettingsGUI migration: complete for extra settings state, settings window construction, and all popup panels, including Generation. Shared window actions are supplied through its context.
 - GenerationGUI migration: complete for the main-window randomization and macro panels built by `initRandomButtons` and `initMacroParams`. Cross-instrument actions remain in VibeComposerGUI and are supplied through GenerationGUI.Context.
 - Deprecated `__` migration scaffolding cleanup: complete. Removed legacy fields, obsolete method copies, and GUI compatibility sync methods from `VibeComposerGUI`; no active source files reference `__` members. Verified with `mvn -DskipTests compile`.
+- Phase 2.1 instrument-control ownership: complete. Melody, bass, chord, arp, and drum GUIs now own their enabled checkbox, group filter slider, add/generate buttons, generation-count field, panel scroll pane, and panel list. Their contexts no longer receive indexed control arrays or instrument-indexed panel callbacks. `VibeComposerGUI` keeps the established 0–4 instrument order behind a typed module accessor, and remaining static callers use the corresponding typed panel-list or scroll-pane accessor. Verified with `mvn -DskipTests compile`.
 - COMPLETED
 
 ***************************************************************

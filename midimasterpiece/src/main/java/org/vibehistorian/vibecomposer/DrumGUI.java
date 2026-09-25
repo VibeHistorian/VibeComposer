@@ -44,12 +44,17 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /** Builds and owns drum controls and drum panel generation. */
-public class DrumGUI {
+public class DrumGUI implements InstrumentGUIControls {
 
-	public static List<DrumPanel> drumPanels = new ArrayList<>();
-	public static JScrollPane drumScrollPane;
+	private final List<DrumPanel> drumPanels = new ArrayList<>();
+	private JScrollPane drumScrollPane;
 	public static JPanel drumParentPanel;
 	public static SettingsPanel drumSettingsPanel;
+	private JCheckBox enabledCheckBox;
+	private VeloRect groupFilterSlider;
+	private JButton addPanelButton;
+	private JButton generatePanelButton;
+	private JTextField randomPanelsToGenerate;
 	public static VeloRect drumVolumeSlider;
 	public static JButton soloAllDrums;
 	public static JCheckBox bottomUpReverseDrumPanels;
@@ -78,21 +83,22 @@ public class DrumGUI {
 		this.context = context;
 	}
 
+	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
+	@Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
+	@Override public JButton getAddPanelButton() { return addPanelButton; }
+	@Override public JButton getGeneratePanelButton() { return generatePanelButton; }
+	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
+	@Override public JScrollPane getPanelScrollPane() { return drumScrollPane; }
+	@Override public List<DrumPanel> getPanels() { return drumPanels; }
+
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
 		Dimension getScrollPaneDimension();
 		Set<Component> getToggleableComponents();
-		JCheckBox[] getAddInst();
-		VeloRect[] getGroupFilterSliders();
-		JButton[] getAddPanelButtons();
-		JButton[] getGeneratePanelButtons();
-		JTextField[] getRandomPanelsToGenerate();
 		JButton makeButton(String name, Consumer<? super Object> action);
 		JButton makeButton(String name, String actionCommand);
-		void addPanel(int part);
-		void generatePanels(int part, boolean triggerRegenerate);
-		GridBagConstraints getConstraints();
-		JTabbedPane getInstrumentTabPane();
+		void addPanel();
+		void generatePanels(boolean triggerRegenerate);
 		List<DrumPanel> getAffectedDrumPanels();
 		DrumPanel addDrumPanel();
 		int getLastRandomSeed();
@@ -100,11 +106,6 @@ public class DrumGUI {
 	}
 
 	public void initDrumGenSettings(int startY, int anchorSide) {
-		JCheckBox[] addInst = context.getAddInst();
-		VeloRect[] groupFilterSliders = context.getGroupFilterSliders();
-		JButton[] addPanelButtons = context.getAddPanelButtons();
-		JButton[] generatePanelButtons = context.getGeneratePanelButtons();
-		JTextField[] randomPanelsToGenerate = context.getRandomPanelsToGenerate();
 		JPanel scrollableDrumPanels = new JPanel();
 		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
 		scrollableDrumPanels.setAutoscrolls(true);
@@ -121,8 +122,8 @@ public class DrumGUI {
 
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		addInst[4] = new CustomCheckBox("DRUMS", true);
-		drumsPanel.add(addInst[4]);
+		enabledCheckBox = new CustomCheckBox("DRUMS", true);
+		drumsPanel.add(enabledCheckBox);
 
 		drumVolumeSlider = VeloRect.percent( 65);
 		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
@@ -131,22 +132,22 @@ public class DrumGUI {
 		JLabel volSliderLabel = new JLabel("Vol.");
 		drumsPanel.add(volSliderLabel);
 		drumsPanel.add(drumVolumeSlider);
-		groupFilterSliders[4] = VeloRect.midi( 127);
+		groupFilterSlider = VeloRect.midi( 127);
 		JLabel filterLabel = new JLabel("LP");
 		drumsPanel.add(filterLabel);
-		drumsPanel.add(groupFilterSliders[4]);
+		drumsPanel.add(groupFilterSlider);
 		//drumsPanel.add(drumInst);
 
-		addPanelButtons[4] = context.makeButton("+Drum", e -> {
-			context.addPanel(4);
+		addPanelButton = context.makeButton("+Drum", e -> {
+			context.addPanel();
 		});
-		generatePanelButtons[4] = context.makeButton("Generate Drums:", e -> {
-			context.generatePanels(4, true);
+		generatePanelButton = context.makeButton("Generate Drums:", e -> {
+			context.generatePanels(true);
 		});
-		randomPanelsToGenerate[4] = new JTextField("6", 2);
-		drumsPanel.add(addPanelButtons[4]);
-		drumsPanel.add(generatePanelButtons[4]);
-		drumsPanel.add(randomPanelsToGenerate[4]);
+		randomPanelsToGenerate = new JTextField("6", 2);
+		drumsPanel.add(addPanelButton);
+		drumsPanel.add(generatePanelButton);
+		drumsPanel.add(randomPanelsToGenerate);
 
 		randomDrumsGenerateOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		drumsPanel.add(randomDrumsGenerateOnCompose);
@@ -279,11 +280,8 @@ public class DrumGUI {
 		//addHorizontalSeparatorToPanel(scrollableDrumPanels);
 	}
 
-	public void initDrums(int startY, int anchorSide) {
-		context.getConstraints().gridy = startY;
-		context.getConstraints().anchor = anchorSide;
-		context.getInstrumentTabPane().addTab("Drums", drumParentPanel);
-
+	public JPanel initDrums() {
+		return drumParentPanel;
 	}
 
 	public void createRandomDrumPanels(int panelCount, boolean onlyAdd,
