@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -47,8 +49,8 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
-			if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
-				Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
+			if (section < ArrangementGUI.actualArrangement.getSections().size()) {
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(section);
 				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150));
 				g.fillRect(0, 0, width, height);
 

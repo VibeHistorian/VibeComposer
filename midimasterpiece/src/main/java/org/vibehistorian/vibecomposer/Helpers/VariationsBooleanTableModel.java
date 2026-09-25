@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +41,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(int row, int column) {
 		if (column >= 2
-				&& !VibeComposerGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
+				&& !ArrangementGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
 			return "X";
 		}
 		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
@@ -60,7 +62,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int column) {
-		if (!VibeComposerGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
+		if (!ArrangementGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
 			tableData[row][column] = Boolean.FALSE;
 			fireTableDataChanged();
 			return;
@@ -84,7 +86,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 		}
 		int realTableRow = part + 2;
 		if (oldPresence != null && !oldPresence.equals(tableData[row][1])) {
-			Object vcVal = VibeComposerGUI.scrollableArrangementActualTable.getModel()
+			Object vcVal = ArrangementGUI.scrollableArrangementActualTable.getModel()
 					.getValueAt(realTableRow, sectionOrder);
 			if (vcVal instanceof Set) {
 				Set<Integer> presence = (Set<Integer>) vcVal;
@@ -94,12 +96,12 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 				} else {
 					presence.add(realOrder);
 				}
-				VibeComposerGUI.scrollableArrangementActualTable.getModel().setValueAt(presence,
+				ArrangementGUI.scrollableArrangementActualTable.getModel().setValueAt(presence,
 						realTableRow, sectionOrder);
 			}
 		}
 
-		VibeComposerGUI.scrollableArrangementActualTable.repaint();
+		ArrangementGUI.scrollableArrangementActualTable.repaint();
 	}
 
 	@Override

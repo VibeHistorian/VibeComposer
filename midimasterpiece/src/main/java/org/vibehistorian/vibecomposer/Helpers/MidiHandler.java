@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -90,7 +92,7 @@ public class MidiHandler {
 								partOrder);
 					} else {
 						VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
-								OMNI.clampMidi(shortMessage.getData2()), 0, 1, VibeComposerGUI.actualArrangement.getSections().get(0), true);
+								OMNI.clampMidi(shortMessage.getData2()), 0, 1, ArrangementGUI.actualArrangement.getSections().get(0), true);
 					}
 				}
 

@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -35,7 +37,7 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
 				String selItem = getVal();
-				if (selItem == null || (getItemCount() - 1 != VibeComposerGUI.actualArrangement
+				if (selItem == null || (getItemCount() - 1 != ArrangementGUI.actualArrangement
 						.getSections().size())) {
 					return;
 				}
@@ -69,7 +71,7 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (buttonIndex > 0 && SwingUtilities.isMiddleMouseButton(evt)) {
-					VibeComposerGUI.openVariationPopup(buttonIndex);
+					ArrangementGUI.arrangementGUI.openVariationPopup(buttonIndex);
 				}
 			}
 		});

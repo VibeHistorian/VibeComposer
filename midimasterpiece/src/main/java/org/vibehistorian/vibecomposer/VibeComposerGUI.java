@@ -112,7 +112,7 @@ public class VibeComposerGUI extends JFrame
 
 	public static GUIPreset defaultGuiPreset = null;
 
-	public static VariationPopup varPopup = null;
+	@Deprecated public static VariationPopup __varPopup = null;
 	public static MidiEditPopup currentMidiEditorPopup = null;
 	public static int currentMidiEditorSectionIndex = 0;
 
@@ -134,10 +134,10 @@ public class VibeComposerGUI extends JFrame
 
 	Color messageColorDarkMode = new Color(200, 200, 200);
 	Color messageColorLightMode = new Color(120, 120, 200);
-	Color arrangementLightModeText = new Color(220, 220, 220);
-	public static int arrangementDarkModeLowestColor = 100;
-	Color arrangementDarkModeText = new Color(50, 50, 50);
-	public static int arrangementLightModeHighestColor = 180;
+	@Deprecated Color __arrangementLightModeText = ArrangementGUI.arrangementLightModeText;
+	@Deprecated public static int __arrangementDarkModeLowestColor = ArrangementGUI.arrangementDarkModeLowestColor;
+	@Deprecated Color __arrangementDarkModeText = ArrangementGUI.arrangementDarkModeText;
+	@Deprecated public static int __arrangementLightModeHighestColor = ArrangementGUI.arrangementLightModeHighestColor;
 
 	private static Set<Component> toggleableComponents = new HashSet<>();
 
@@ -215,25 +215,24 @@ public class VibeComposerGUI extends JFrame
 		return sectionPanels;
 	}
 
-	// arrangement
-	public static Arrangement arrangement;
-	public static Arrangement actualArrangement;
-
-	JPanel arrangementSettings;
-	KnobPanel arrangementVariationChance;
-	public static KnobPanel arrangementPartVariationChance;
-	public static CheckButton manualArrangement;
-	JTextField pieceLength;
-	RandomValueButton arrangementSeed;
-	public static CheckButton useArrangement;
-	JCheckBox randomizeArrangementOnCompose;
-	public static final String GLOBAL = "Global";
-	public static ArrangementSectionSelectorPanel arrSection;
-	public static JScrollPane arrSectionPane;
-	public static boolean switchTabPaneAfterApply;
-	public static boolean switchTabPaneToScoreAfterApply;
-	static JPanel arrangementMiddleColoredPanel;
-	ScrollComboBox<String> newSectionBox;
+	// Arrangement fields retained during the module migration.
+	@Deprecated public static Arrangement __arrangement;
+	@Deprecated public static Arrangement __actualArrangement;
+	@Deprecated JPanel __arrangementSettings;
+	@Deprecated KnobPanel __arrangementVariationChance;
+	@Deprecated public static KnobPanel __arrangementPartVariationChance;
+	@Deprecated public static CheckButton __manualArrangement;
+	@Deprecated JTextField __pieceLength;
+	@Deprecated RandomValueButton __arrangementSeed;
+	@Deprecated public static CheckButton __useArrangement;
+	@Deprecated JCheckBox __randomizeArrangementOnCompose;
+	@Deprecated public static final String __GLOBAL = ArrangementGUI.GLOBAL;
+	@Deprecated public static ArrangementSectionSelectorPanel __arrSection;
+	@Deprecated public static JScrollPane __arrSectionPane;
+	@Deprecated public static boolean __switchTabPaneAfterApply;
+	@Deprecated public static boolean __switchTabPaneToScoreAfterApply;
+	@Deprecated static JPanel __arrangementMiddleColoredPanel;
+	@Deprecated ScrollComboBox<String> __newSectionBox;
 
 	// instrument scrollers
 	public static JTabbedPane instrumentTabPane = new JTabbedPane(JTabbedPane.TOP) {
@@ -251,7 +250,7 @@ public class VibeComposerGUI extends JFrame
 	public static final int DEFAULT_WIDTH = 1600;
 	public static final int DEFAULT_HEIGHT = 400;
 	public static Dimension scrollPaneDimension = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-	int arrangementRowHeaderWidth = 120;
+	@Deprecated int __arrangementRowHeaderWidth = ArrangementGUI.arrangementRowHeaderWidth;
 	public static final int TABLE_COLUMN_MIN_WIDTH = 80;
 
 	@Deprecated
@@ -268,23 +267,23 @@ public class VibeComposerGUI extends JFrame
 	@Deprecated public static JPanel __arpParentPanel;
 	@Deprecated public static JPanel __drumParentPanel;
 
-	JScrollPane arrangementScrollPane;
-	JScrollPane arrangementActualScrollPane;
-	public static JTable scrollableArrangementTable;
-	public static JTable scrollableArrangementActualTable;
-	public static boolean arrangementTableColumnDragging = false;
-	public static boolean actualArrangementTableColumnDragging = false;
+	@Deprecated JScrollPane __arrangementScrollPane;
+	@Deprecated JScrollPane __arrangementActualScrollPane;
+	@Deprecated public static JTable __scrollableArrangementTable;
+	@Deprecated public static JTable __scrollableArrangementActualTable;
+	@Deprecated public static boolean __arrangementTableColumnDragging = false;
+	@Deprecated public static boolean __actualArrangementTableColumnDragging = false;
 
-	JPanel actualArrangementCombinedPanel;
-	JPanel arrangementCombinedPanel;
-	public static JPanel variationButtonsPanel;
+	@Deprecated JPanel __actualArrangementCombinedPanel;
+	@Deprecated JPanel __arrangementCombinedPanel;
+	@Deprecated public static JPanel __variationButtonsPanel;
 
 	// arrangement subcells - copy dragging
-	public static boolean copyDragging = false;
-	public static Triple<Integer, Integer, Integer> highlightedTableCell = null;
-	public static Triple<Integer, Integer, Integer> copyDraggingOrigin = null;
-	public static Point arrangementActualTableMousePoint = null;
-	UsedPattern copyDraggedPattern = null;
+	@Deprecated public static boolean __copyDragging = false;
+	@Deprecated public static Triple<Integer, Integer, Integer> __highlightedTableCell = null;
+	@Deprecated public static Triple<Integer, Integer, Integer> __copyDraggingOrigin = null;
+	@Deprecated public static Point __arrangementActualTableMousePoint = null;
+	@Deprecated UsedPattern __copyDraggedPattern = null;
 
 	// instrument global settings
 	JTextField bannedInsts;
@@ -443,7 +442,7 @@ public class VibeComposerGUI extends JFrame
 	@Deprecated KnobPanel __randomDrumVelocityPatternChance;
 	@Deprecated KnobPanel __randomDrumShiftChance;
 	@Deprecated JCheckBox __randomDrumUseChordFill;
-	JCheckBox arrangementScaleMidiVelocity;
+	@Deprecated JCheckBox __arrangementScaleMidiVelocity;
 	public static KnobPanel humanizeNotes;
 	@Deprecated public static KnobPanel __humanizeDrums;
 	public static KnobPanel globalNoteLengthMultiplier;
@@ -456,7 +455,7 @@ public class VibeComposerGUI extends JFrame
 	public static RandomIntegerListButton padGeneratedMidiValues;
 	public static JCheckBox randomizeTimingsOnCompose;
 	public static JCheckBox sidechainPatternsOnCompose;
-	JCheckBox arrangementResetCustomPanelsOnCompose;
+	@Deprecated JCheckBox __arrangementResetCustomPanelsOnCompose;
 	@Deprecated ScrollComboBox<String> __randomDrumHitsMultiplier;
 	@Deprecated ScrollComboBox<String> __randomDrumHitsMultiplierOnGenerate;
 	@Deprecated public static JCheckBox __drumCustomMapping;
@@ -662,6 +661,67 @@ public class VibeComposerGUI extends JFrame
 
 	public VibeComposerGUI(String title) {
 		super(title);
+	}
+
+	private void initArrangementGUI() {
+		new ArrangementGUI(new ArrangementGUI.Context() {
+			@Override public Dimension getScrollPaneDimension() { return scrollPaneDimension; }
+			@Override public boolean isDarkMode() { return VibeComposerGUI.isDarkMode; }
+			@Override public int getTableColumnMinWidth() { return TABLE_COLUMN_MIN_WIDTH; }
+			@Override public JPanel getEverythingPanel() { return everythingPanel; }
+			@Override public GridBagConstraints getConstraints() { return constraints; }
+			@Override public Set<Component> getToggleableComponents() { return toggleableComponents; }
+			@Override public JTabbedPane getInstrumentTabPane() { return instrumentTabPane; }
+			@Override public JButton makeButton(String name, String actionCommand, int width,
+					int height) {
+				return VibeComposerGUI.this.makeButton(name, actionCommand, width, height);
+			}
+			@Override public JButton makeButton(String name, Consumer<? super Object> action,
+					int width) {
+				return VibeComposerGUI.makeButton(name, action, width);
+			}
+			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) {
+				return VibeComposerGUI.makeCheckBox(label, selected, thick);
+			}
+			@Override public void recalculateTabPaneCounts() {
+				VibeComposerGUI.this.recalculateTabPaneCounts();
+			}
+			@Override public boolean canRegenerateOnChange() {
+				return VibeComposerGUI.this.canRegenerateOnChange();
+			}
+			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
+			@Override public void openApplyCustomSectionPopup() {
+				VibeComposerGUI.this.openApplyCustomSectionPopup();
+			}
+			@Override public void processActualArrangementMouseEvent(MouseEvent event) {
+				VibeComposerGUI.this.processActualArrangementMouseEvent(event);
+			}
+			@Override public void processActualArrangementCopyDragging(MouseEvent event) {
+				VibeComposerGUI.this.processActualArrangementCopyDragging(event);
+			}
+			@Override public void resetCopyDrag() { VibeComposerGUI.this.resetCopyDrag(); }
+			@Override public Triple<Integer, Integer, Integer> calculateCurrentTableSubcell(
+					MouseEvent event) {
+				return VibeComposerGUI.this.calculateCurrentTableSubcell(event);
+			}
+			@Override public void arrangementTableProcessSectionType(Component component,
+					String value) {
+				VibeComposerGUI.this.arrangementTableProcessSectionType(component, value);
+			}
+			@Override public void arrangementTableProcessComponent(Component component, int row,
+					int column, String value, int[] maxCounts, boolean actual) {
+				VibeComposerGUI.this.arrangementTableProcessComponent(component, row, column,
+						value, maxCounts, actual);
+			}
+			@Override public void refreshVariationPopupButtons(int count) {
+				VibeComposerGUI.this.refreshVariationPopupButtons(count);
+			}
+			@Override public void applyCustomPanelsToSection(String action, int replacedPartNum,
+					Integer sectionOrder) {
+				VibeComposerGUI.this.applyCustomPanelsToSection(action, replacedPartNum, sectionOrder);
+			}
+			@Override public JFrame getMainWindow() { return VibeComposerGUI.this; }
+		});
 	}
 
 	private void initMelodyGUI() {
@@ -1208,6 +1268,7 @@ public class VibeComposerGUI extends JFrame
 		initArpGUI();
 		initDrumGUI();
 		initChordGUI();
+		initArrangementGUI();
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
 
@@ -1357,8 +1418,8 @@ public class VibeComposerGUI extends JFrame
 							setAddInst(indx, true);
 						}
 					} else if (indx == 6) {
-						actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
-						scrollableArrangementActualTable.repaint();
+						ArrangementGUI.actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
+						ArrangementGUI.scrollableArrangementActualTable.repaint();
 					}
 				}
 			});
@@ -1373,7 +1434,7 @@ public class VibeComposerGUI extends JFrame
 			}
 
 			// arrangement
-			initArrangementSettings(325, GridBagConstraints.CENTER);
+			ArrangementGUI.arrangementGUI.initArrangementSettings(325, GridBagConstraints.CENTER);
 
 
 		}
@@ -1493,8 +1554,8 @@ public class VibeComposerGUI extends JFrame
 		for (int i = 0; i < 5; i++) {
 			SwingUtils.setupScrollpanePriorityScrolling(getInstPane(i));
 		}
-		SwingUtils.setupScrollpanePriorityScrolling(arrangementScrollPane);
-		SwingUtils.setupScrollpanePriorityScrolling(arrangementActualScrollPane);
+		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementScrollPane);
+		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementActualScrollPane);
 	}
 
 	protected void setAddInst(int partNum, boolean b) {
@@ -1641,7 +1702,7 @@ public class VibeComposerGUI extends JFrame
 			for (int i = 1; i < 5; i++) {
 				generatePanels(i);
 			}
-			manualArrangement.setSelected(false);
+			ArrangementGUI.manualArrangement.setSelected(false);
 			heavyBackgroundTasksInProgress = false;
 			LG.i("Default Panels generated!");
 		}));
@@ -1873,7 +1934,7 @@ public class VibeComposerGUI extends JFrame
 				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
 
 		//                  arrangement midi settings
-		arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
+		ArrangementGUI.arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
 				true);
 		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
 		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
@@ -1893,7 +1954,7 @@ public class VibeComposerGUI extends JFrame
 		scoreMidiPanel.add(drumMappingPanel);
 		scoreMidiPanel.add(useMidiCC);
 		scoreMidiPanel.add(stretchMidi);
-		scoreMidiPanel.add(arrangementScaleMidiVelocity);
+		scoreMidiPanel.add(ArrangementGUI.arrangementScaleMidiVelocity);
 	}
 
 	private void initExtraSettingsInstruments(JPanel instrumentsSettingsPanel) {
@@ -2075,7 +2136,7 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 				for (int i = 0; i < 5; i++) {
 					getInstList(i)
 							.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
-					if (arrSection.getSelectedIndex() > 0) {
+					if (ArrangementGUI.arrSection.getSelectedIndex() > 0) {
 						getAffectedPanels(i).forEach(
 								ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
 					}
@@ -2142,7 +2203,7 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 
 	private void initExtraSettingsCompose(JPanel composeSettingsPanel) {
 		// COMPOSE
-		arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset Customized Panels on Compose",
+		ArrangementGUI.arrangementResetCustomPanelsOnCompose = makeCheckBox("Reset Customized Panels on Compose",
 				true, true);
 		randomizeTimingsOnCompose = makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
@@ -2151,7 +2212,7 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 		ChordGUI.copyChordsAfterGenerate = makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
 				true);
 
-		composeSettingsPanel.add(arrangementResetCustomPanelsOnCompose);
+		composeSettingsPanel.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
 		composeSettingsPanel.add(randomizeTimingsOnCompose);
 		composeSettingsPanel.add(sidechainPatternsOnCompose);
 		composeSettingsPanel.add(ChordGUI.copyChordsAfterGenerate);
@@ -2216,12 +2277,12 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 		if (!isCustomSection()) {
 			return;
 		}
-		manualArrangement.setSelected(true);
+		ArrangementGUI.manualArrangement.setSelected(true);
 		for (int i = 0; i < 5; i++) {
 			createPanels(i, getInstList(i).size(), false);
-			applyCustomPanelsToSection("", i, arrSection.getSelectedIndex());
+			applyCustomPanelsToSection("", i, ArrangementGUI.arrSection.getSelectedIndex());
 		}
-		arrSection.getCurrentButton().repaint();
+		ArrangementGUI.arrSection.getCurrentButton().repaint();
 		recalculateTabPaneCounts();
 		recalculateSoloMuters();
 		if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
@@ -2231,10 +2292,10 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 	}
 
 	private void replaceSection() {
-		if (configHistory.getItemCount() > 0 && arrSection.getSelectedIndex() > 0) {
+		if (configHistory.getItemCount() > 0 && ArrangementGUI.arrSection.getSelectedIndex() > 0) {
 			GUIConfig sectionGuiConfig = configHistory.getVal();
-			Section currentSec = actualArrangement.getSections()
-					.get(arrSection.getSelectedIndex() - 1);
+			Section currentSec = ArrangementGUI.actualArrangement.getSections()
+					.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 			for (int i = 0; i < 5; i++) {
 				currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
 			}
@@ -2256,8 +2317,8 @@ private void __initExtraSettingsChords(JPanel chordChoicePanel) {
 			if (!"4,4,4,4".equals(currentSec.getCustomDurations())) {
 				currentSec.setCustomDurationsEnabled(true);
 			}
-			arrSection.getCurrentButton().repaint();
-			switchPanelsForSectionSelection(arrSection.getVal());
+			ArrangementGUI.arrSection.getCurrentButton().repaint();
+			switchPanelsForSectionSelection(ArrangementGUI.arrSection.getVal());
 
 			/*if (sectionGuiConfig.getGlobalSwingOverride() != null) {
 				applyGlobalSwing(sectionGuiConfig.getGlobalSwingOverride(), true);
@@ -2528,22 +2589,22 @@ private void __initChords(int startY, int anchorSide) {
 		drumGUI.initDrums(startY, anchorSide);
 	}
 
-	public static void setActualModel(TableModel model) {
-		setActualModel(model, true);
+	@Deprecated public static void __setActualModel(TableModel model) {
+		__setActualModel(model, true);
 	}
 
-	public static void setActualModel(TableModel model, boolean reset) {
-		scrollableArrangementActualTable.setModel(model);
-		scrollableArrangementActualTable.setRowSelectionAllowed(false);
-		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+	@Deprecated public static void __setActualModel(TableModel model, boolean reset) {
+		ArrangementGUI.scrollableArrangementActualTable.setModel(model);
+		ArrangementGUI.scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		ArrangementGUI.scrollableArrangementActualTable.setColumnSelectionAllowed(true);
 		if (reset) {
-			resetArrSection();
+			ArrangementGUI.arrangementGUI.resetArrSection();
 		}
 
 	}
 
-	public static void resetArrSection() {
-		List<Section> actualSections = actualArrangement.getSections();
+	@Deprecated public static void __resetArrSection() {
+		List<Section> actualSections = ArrangementGUI.actualArrangement.getSections();
 		if (actualSections != null) {
 			List<String> sectionNamesNumbers = new ArrayList<>();
 			for (int i = 0; i < actualSections.size(); i++) {
@@ -2554,53 +2615,53 @@ private void __initChords(int startY, int anchorSide) {
 				}
 				sectionNamesNumbers.add((i + 1) + ": " + actualSections.get(i).getType() + suffix);
 			}
-			arrSection.setButtons(new ArrayList<>());
-			arrSection.addAll(sectionNamesNumbers.toArray(new String[] {}));
+			ArrangementGUI.arrSection.setButtons(new ArrayList<>());
+			ArrangementGUI.arrSection.addAll(sectionNamesNumbers.toArray(new String[] {}));
 		}
 	}
 
-	public void handleArrangementAction(String action, int seed, int maxLength) {
+	@Deprecated public void __handleArrangementAction(String action, int seed, int maxLength) {
 		boolean refreshActual = false;
 		boolean resetArrSectionSelection = true;
 		boolean resetArrSectionPanel = true;
 		boolean checkManual = false;
 		if (action.equalsIgnoreCase("ArrangementReset")) {
-			arrangement.generateDefaultArrangement();
-			pieceLength.setText("12");
+			ArrangementGUI.arrangement.generateDefaultArrangement();
+			ArrangementGUI.pieceLength.setText("12");
 		} else if (action.equalsIgnoreCase("ArrangementAddLast")) {
 			if (instrumentTabPane.getSelectedIndex() == 5) {
-				arrangement.duplicateSection(scrollableArrangementTable);
+				ArrangementGUI.arrangement.duplicateSection(ArrangementGUI.scrollableArrangementTable);
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-				actualArrangement.duplicateSection(scrollableArrangementActualTable);
+				ArrangementGUI.actualArrangement.duplicateSection(ArrangementGUI.scrollableArrangementActualTable);
 				refreshActual = true;
 				checkManual = true;
 			}
-			if (arrangement.getSections().size() > maxLength) {
-				pieceLength.setText("" + ++maxLength);
+			if (ArrangementGUI.arrangement.getSections().size() > maxLength) {
+				ArrangementGUI.pieceLength.setText("" + ++maxLength);
 			}
 		} else if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
 			if (instrumentTabPane.getSelectedIndex() == 5) {
-				arrangement.removeSection(scrollableArrangementTable);
+				ArrangementGUI.arrangement.removeSection(ArrangementGUI.scrollableArrangementTable);
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-				actualArrangement.removeSection(scrollableArrangementActualTable);
+				ArrangementGUI.actualArrangement.removeSection(ArrangementGUI.scrollableArrangementActualTable);
 				refreshActual = true;
 				checkManual = true;
 			}
 			//pieceLength.setText("" + --maxLength);
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			// on compose -> this must happen before compose part
-			arrangement.randomizeFully(maxLength, seed, 50, 30, 2, 4, 15);
+			ArrangementGUI.arrangement.randomizeFully(maxLength, seed, 50, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
 			//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
 			Integer secOrder = Integer.valueOf(action.split(",")[1]);
-			openVariationPopup(secOrder);
+			ArrangementGUI.arrangementGUI.openVariationPopup(secOrder);
 			return;
 			//variationJD.getFrame().setTitle(action);
 		} else if (action.startsWith("ArrangementApply")) {
-			String selItem = arrSection.getVal();
-			if (GLOBAL.equals(selItem)) {
+			String selItem = ArrangementGUI.arrSection.getVal();
+			if (ArrangementGUI.GLOBAL.equals(selItem)) {
 				return;
 			}
 
@@ -2618,26 +2679,26 @@ private void __initChords(int startY, int anchorSide) {
 			}
 
 			if (instrumentTabPane.getSelectedIndex() < 5) {
-				if (switchTabPaneAfterApply) {
-					switchTabPaneAfterApply = false;
+				if (ArrangementGUI.switchTabPaneAfterApply) {
+					ArrangementGUI.switchTabPaneAfterApply = false;
 					instrumentTabPane.setSelectedIndex(6);
-					arrSection.setSelectedIndexWithProperty(0, true);
+					ArrangementGUI.arrSection.setSelectedIndexWithProperty(0, true);
 				}
-				if (switchTabPaneToScoreAfterApply) {
-					switchTabPaneToScoreAfterApply = false;
+				if (ArrangementGUI.switchTabPaneToScoreAfterApply) {
+					ArrangementGUI.switchTabPaneToScoreAfterApply = false;
 					if (instrumentTabPane.getComponents().length > 7) {
 						instrumentTabPane.setSelectedIndex(7);
 					}
-					arrSection.setSelectedIndexWithProperty(0, true);
+					ArrangementGUI.arrSection.setSelectedIndexWithProperty(0, true);
 				}
 			}
 
 
 		} else if (action.startsWith("ArrangementClearPanels")) {
-			String selItem = arrSection.getVal();
-			if (!GLOBAL.equals(selItem)) {
+			String selItem = ArrangementGUI.arrSection.getVal();
+			if (!ArrangementGUI.GLOBAL.equals(selItem)) {
 				Integer secOrder = Integer.valueOf(selItem.split(":")[0]);
-				Section sec = actualArrangement.getSections().get(secOrder - 1);
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder - 1);
 				// parts
 				sec.setMelodyParts(null);
 				sec.setBassParts(null);
@@ -2652,40 +2713,40 @@ private void __initChords(int startY, int anchorSide) {
 				selItem = action.split(",")[1];
 				col = SectionDropDownCheckButton.popupIndex - 1;
 			} else {
-				selItem = newSectionBox.getVal();
+				selItem = ArrangementGUI.newSectionBox.getVal();
 			}
 			if (OMNI.EMPTYCOMBO.equals(selItem)) {
 				return;
 			}
 			if (instrumentTabPane.getSelectedIndex() != 5) {
-				Section addedSec = actualArrangement
-						.addDefaultSection(scrollableArrangementActualTable, selItem, col);
+				Section addedSec = ArrangementGUI.actualArrangement
+						.addDefaultSection(ArrangementGUI.scrollableArrangementActualTable, selItem, col);
 				addedSec.recalculatePartVariationMapBoundsIfNeeded();
-				arrangement.initPartInclusionMapIfNull();
+				ArrangementGUI.arrangement.initPartInclusionMapIfNull();
 				addedSec.generatePresences(
-						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
+						ArrangementGUI.arrangementSeed.getValue() != 0 ? new Random(ArrangementGUI.arrangementSeed.getValue())
 								: new Random(),
 						false);
-				resetArrSectionSelection = actualArrangement.getSections()
-						.indexOf(addedSec) == arrSection.getSelectedIndex() - 2;
+				resetArrSectionSelection = ArrangementGUI.actualArrangement.getSections()
+						.indexOf(addedSec) == ArrangementGUI.arrSection.getSelectedIndex() - 2;
 				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			} else {
-				arrangement.addDefaultSection(scrollableArrangementTable, selItem);
-				if (arrangement.getSections().size() > maxLength) {
-					pieceLength.setText("" + ++maxLength);
+				ArrangementGUI.arrangement.addDefaultSection(ArrangementGUI.scrollableArrangementTable, selItem);
+				if (ArrangementGUI.arrangement.getSections().size() > maxLength) {
+					ArrangementGUI.pieceLength.setText("" + ++maxLength);
 				}
 			}
-			newSectionBox.setSelectedIndex(0);
+			ArrangementGUI.newSectionBox.setSelectedIndex(0);
 		} else if (action.startsWith("ArrangementRemove,")) {
 			Integer secIndex = Integer.valueOf(action.split(",")[1]);
 			if (instrumentTabPane.getSelectedIndex() == 5) {
-				arrangement.removeSectionExact(scrollableArrangementTable, secIndex);
+				ArrangementGUI.arrangement.removeSectionExact(ArrangementGUI.scrollableArrangementTable, secIndex);
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-				actualArrangement.removeSectionExact(scrollableArrangementActualTable, secIndex);
-				resetArrSectionSelection = secIndex < arrSection.getSelectedIndex();
+				ArrangementGUI.actualArrangement.removeSectionExact(ArrangementGUI.scrollableArrangementActualTable, secIndex);
+				resetArrSectionSelection = secIndex < ArrangementGUI.arrSection.getSelectedIndex();
 				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
@@ -2694,64 +2755,64 @@ private void __initChords(int startY, int anchorSide) {
 			LG.i(("add exact"));
 			Integer secIndex = Integer.valueOf(action.split(",")[1]);
 			if (instrumentTabPane.getSelectedIndex() == 5) {
-				arrangement.duplicateSectionExact(scrollableArrangementTable, secIndex);
+				ArrangementGUI.arrangement.duplicateSectionExact(ArrangementGUI.scrollableArrangementTable, secIndex);
 			} else {
 				//actualArrangement.resortByIndexes(scrollableArrangementActualTable);
-				actualArrangement.duplicateSectionExact(scrollableArrangementActualTable, secIndex);
-				resetArrSectionSelection = secIndex < arrSection.getSelectedIndex() - 1;
+				ArrangementGUI.actualArrangement.duplicateSectionExact(ArrangementGUI.scrollableArrangementActualTable, secIndex);
+				resetArrSectionSelection = secIndex < ArrangementGUI.arrSection.getSelectedIndex() - 1;
 				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			}
-			if (arrangement.getSections().size() > maxLength) {
-				pieceLength.setText("" + ++maxLength);
+			if (ArrangementGUI.arrangement.getSections().size() > maxLength) {
+				ArrangementGUI.pieceLength.setText("" + ++maxLength);
 			}
 		}
 
 		if (!refreshActual) {
-			scrollableArrangementTable.setModel(arrangement.convertToTableModel());
+			ArrangementGUI.scrollableArrangementTable.setModel(ArrangementGUI.arrangement.convertToTableModel());
 		} else {
-			int index = arrSection.getSelectedIndex();
-			setActualModel(actualArrangement.convertToActualTableModel(), resetArrSectionPanel);
+			int index = ArrangementGUI.arrSection.getSelectedIndex();
+			ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), resetArrSectionPanel);
 			if (resetArrSectionSelection) {
-				arrSection.setSelectedIndexWithProperty(0, true);
+				ArrangementGUI.arrSection.setSelectedIndexWithProperty(0, true);
 			} else {
-				arrSection.setSelectedIndexWithProperty(index, true);
+				ArrangementGUI.arrSection.setSelectedIndexWithProperty(index, true);
 			}
-			arrSection.repaint();
-			refreshVariationPopupButtons(actualArrangement.getSections().size());
+			ArrangementGUI.arrSection.repaint();
+			refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
 		}
 		if (checkManual) {
-			manualArrangement.setSelected(true);
-			manualArrangement.repaint();
+			ArrangementGUI.manualArrangement.setSelected(true);
+			ArrangementGUI.manualArrangement.repaint();
 		}
 		recalculateTabPaneCounts();
 	}
 
-	private void openPartInclusionPopup() {
-		arrangement.recalculatePartInclusionMapBoundsIfNeeded();
-		new ArrangementPartInclusionPopup(arrangement);
+	@Deprecated private void __openPartInclusionPopup() {
+		ArrangementGUI.arrangement.recalculatePartInclusionMapBoundsIfNeeded();
+		new ArrangementPartInclusionPopup(ArrangementGUI.arrangement);
 	}
 
-	private void openGlobalVariationPopup() {
-		new ArrangementGlobalVariationPopup(arrangement);
+	@Deprecated private void __openGlobalVariationPopup() {
+		new ArrangementGlobalVariationPopup(ArrangementGUI.arrangement);
 	}
 
-	private void openPatternManagerPopup() {
+	@Deprecated private void __openPatternManagerPopup() {
 		new PatternManagerPopup();
 	}
 
 	private void applyCustomPanelsToSection(String action, int replacedPartNum, Integer secOrder) {
 		int lastSecOrder = secOrder + 1;
 		if (action.endsWith("+")) {
-			lastSecOrder = actualArrangement.getSections().size() + 1;
+			lastSecOrder = ArrangementGUI.actualArrangement.getSections().size() + 1;
 		} else if (action.contains(",")) {
 			String lastSecIndexString = action.split(",")[1];
 			lastSecOrder = Integer.valueOf(lastSecIndexString) + 1;
 		}
 
 		for (int i = secOrder; i < lastSecOrder; i++) {
-			Section sec = actualArrangement.getSections().get(i - 1);
+			Section sec = ArrangementGUI.actualArrangement.getSections().get(i - 1);
 			// parts
 			switch (replacedPartNum) {
 			case 0:
@@ -2782,39 +2843,39 @@ private void __initChords(int startY, int anchorSide) {
 				if (sec.hasCustomizedParts()) {
 					suffix = "*";
 				}
-				arrSection.getButtons().get(i).setText(i + ": " + sec.getType() + suffix);
+				ArrangementGUI.arrSection.getButtons().get(i).setText(i + ": " + sec.getType() + suffix);
 			}
 		}
 	}
 
-	public static void openVariationPopup(int secOrder) {
-		if (varPopup != null) {
-			varPopup.getFrame().dispose();
+	@Deprecated public static void __openVariationPopup(int secOrder) {
+		if (ArrangementGUI.varPopup != null) {
+			ArrangementGUI.varPopup.getFrame().dispose();
 		}
-		recalculateActualArrangementSection(secOrder - 1);
-		varPopup = new VariationPopup(secOrder, actualArrangement.getSections().get(secOrder - 1),
+		ArrangementGUI.recalculateActualArrangementSection(secOrder - 1);
+		ArrangementGUI.varPopup = new VariationPopup(secOrder, ArrangementGUI.actualArrangement.getSections().get(secOrder - 1),
 				new Point(SwingUtils.getMouseLocation().x,
 						vibeComposerGUI.getLocation().y),
 				vibeComposerGUI.getSize());
 	}
 
-	public static void recalculateActualArrangementSection(int secOrder) {
-		if (actualArrangement == null || actualArrangement.getSections() == null
-				|| actualArrangement.getSections().size() <= secOrder) {
+	@Deprecated public static void __recalculateActualArrangementSection(int secOrder) {
+		if (ArrangementGUI.actualArrangement == null || ArrangementGUI.actualArrangement.getSections() == null
+				|| ArrangementGUI.actualArrangement.getSections().size() <= secOrder) {
 			return;
 		}
 
-		Section sec = actualArrangement.getSections().get(secOrder);
+		Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
 		if (sec != null) {
 			sec.recalculatePartVariationMapBoundsIfNeeded();
 		}
 	}
 
-	private void initArrangementSettings(int startY, int anchorSide) {
+	@Deprecated private void __initArrangementSettings(int startY, int anchorSide) {
 
-		arrangementSettings = new JPanel();
-		arrangementSettings.setOpaque(false);
-		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		ArrangementGUI.arrangementSettings = new JPanel();
+		ArrangementGUI.arrangementSettings.setOpaque(false);
+		ArrangementGUI.arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
 		JPanel arrangementSettingsLeft = new JPanel();
 		arrangementSettingsLeft.setOpaque(false);
@@ -2822,143 +2883,143 @@ private void __initChords(int startY, int anchorSide) {
 		JPanel arrangementSettingsRight = new JPanel();
 		arrangementSettingsRight.setOpaque(false);
 		arrangementSettingsRight.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		useArrangement = new CheckButton("ARRANGE", false);
-		arrangementSettingsLeft.add(useArrangement);
-		pieceLength = new JTextField("12", 2);
+		ArrangementGUI.useArrangement = new CheckButton("ARRANGE", false);
+		arrangementSettingsLeft.add(ArrangementGUI.useArrangement);
+		ArrangementGUI.pieceLength = new JTextField("12", 2);
 		//arrangementSettings.add(new JLabel("Max Length:"));
 		JButton resetArrangementBtn = makeButton("Reset", "ArrangementReset", 60, 30);
 		JButton randomizeArrangementBtn = makeButton("Randomize", e -> {
 			Random arrGen = new Random();
-			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
-					Integer.valueOf(pieceLength.getText()));
+			ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
+					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
 			recalculateTabPaneCounts();
 			if (canRegenerateOnChange()) {
 				regenerate();
 			}
 		}, 90);
-		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> openPartInclusionPopup(),
+		JButton arrangementPartInclusionBtn = makeButton("Parts", e -> ArrangementGUI.arrangementGUI.openPartInclusionPopup(),
 				60);
-		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> openGlobalVariationPopup(),
+		JButton arrangementGlobalVariationBtn = makeButton("Vars", e -> ArrangementGUI.arrangementGUI.openGlobalVariationPopup(),
 				50);
-		JButton patternManagerBtn = makeButton("Patterns", e -> openPatternManagerPopup(), 70);
+		JButton patternManagerBtn = makeButton("Patterns", e -> ArrangementGUI.arrangementGUI.openPatternManagerPopup(), 70);
 
-		randomizeArrangementOnCompose = makeCheckBox("on Compose", true, true);
+		ArrangementGUI.randomizeArrangementOnCompose = makeCheckBox("on Compose", true, true);
 
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons
-				.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
-		arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons);
+				.add(new SectionDropDownCheckButton(ArrangementGUI.GLOBAL, true, OMNI.alphen(Color.pink, 70)));
+		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons);
 
 		JButton commitPanelBtn = makeButton("Apply", "ArrangementApply", 50, 30);
 		JButton commitAllPanelBtn = makeButton("Apply..", e -> openApplyCustomSectionPopup(), 60);
 		JButton undoPanelBtn = makeButton("<-*",
-				e -> arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true),
+				e -> ArrangementGUI.arrSection.setSelectedIndexWithProperty(ArrangementGUI.arrSection.getSelectedIndex(), true),
 				30);
 
 		JButton clearPanelBtn = makeButton("X*", e -> {
-			if (!GLOBAL.equals(arrSection.getVal())) {
-				Section sec = actualArrangement.getSections()
-						.get(arrSection.getSelectedIndex() - 1);
+			if (!ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
+				Section sec = ArrangementGUI.actualArrangement.getSections()
+						.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
 					sec.resetCustomizedParts(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
-					setActualModel(actualArrangement.convertToActualTableModel(), false);
+					ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
 					if (!sec.hasCustomizedParts()) {
-						CheckButton cb = arrSection.getCurrentButton();
+						CheckButton cb = ArrangementGUI.arrSection.getCurrentButton();
 						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 						cb.repaint();
 					}
 
-					arrSection.setSelectedIndexWithProperty(arrSection.getSelectedIndex(), true);
+					ArrangementGUI.arrSection.setSelectedIndexWithProperty(ArrangementGUI.arrSection.getSelectedIndex(), true);
 				}
 			}
 		}, 30);
 
 		JButton clearAllPanelsBtn = makeButton("CLR*", e -> {
-			actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
-			setActualModel(actualArrangement.convertToActualTableModel(), false);
-			arrSection.getButtons().forEach(cb -> {
-				if (!GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
+			ArrangementGUI.actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
+			ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
+			ArrangementGUI.arrSection.getButtons().forEach(cb -> {
+				if (!ArrangementGUI.GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
 					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 					repaint();
 				}
 			});
-			scrollableArrangementActualTable.repaint();
+			ArrangementGUI.scrollableArrangementActualTable.repaint();
 		}, 40);
 
 		JButton copySelectedBtn = makeButton("Cc", "ArrangementAddLast", 30, 30);
 		JButton removeSelectedBtn = makeButton("X", "ArrangementRemoveLast", 30, 30);
-		newSectionBox = new ScrollComboBox<>(false);
-		newSectionBox.addItem(OMNI.EMPTYCOMBO);
+		ArrangementGUI.newSectionBox = new ScrollComboBox<>(false);
+		ArrangementGUI.newSectionBox.addItem(OMNI.EMPTYCOMBO);
 		for (SectionType type : Section.SectionType.values()) {
-			newSectionBox.addItem(type.toString());
+			ArrangementGUI.newSectionBox.addItem(type.toString());
 		}
 
 		JButton addNewSectionBtn = makeButton("Add", "ArrangementAddNewSection", 35, 30);
 
 		arrangementSettingsLeft.add(randomizeArrangementBtn);
-		arrangementSettingsLeft.add(randomizeArrangementOnCompose);
+		arrangementSettingsLeft.add(ArrangementGUI.randomizeArrangementOnCompose);
 		arrangementSettingsLeft.add(resetArrangementBtn);
 		//arrangementSettings.add(pieceLength);
 
-		arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
-		arrangementSettingsLeft.add(arrangementVariationChance);
-		arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
-		arrangementSettingsLeft.add(arrangementPartVariationChance);
+		ArrangementGUI.arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
+		arrangementSettingsLeft.add(ArrangementGUI.arrangementVariationChance);
+		ArrangementGUI.arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
+		arrangementSettingsLeft.add(ArrangementGUI.arrangementPartVariationChance);
 		arrangementSettingsLeft.add(arrangementPartInclusionBtn);
 		arrangementSettingsLeft.add(arrangementGlobalVariationBtn);
 		arrangementSettingsLeft.add(patternManagerBtn);
 
-		arrangementMiddleColoredPanel = new JPanel();
-		arrangementMiddleColoredPanel.add(new JLabel("                                      "));
-		arrangementSettings.add(arrangementSettingsLeft);
-		arrangementSettings.add(arrangementMiddleColoredPanel);
+		ArrangementGUI.arrangementMiddleColoredPanel = new JPanel();
+		ArrangementGUI.arrangementMiddleColoredPanel.add(new JLabel("                                      "));
+		ArrangementGUI.arrangementSettings.add(arrangementSettingsLeft);
+		ArrangementGUI.arrangementSettings.add(ArrangementGUI.arrangementMiddleColoredPanel);
 
 
-		manualArrangement = new CheckButton("MANUAL", false);
-		arrangementSettingsRight.add(manualArrangement);
+		ArrangementGUI.manualArrangement = new CheckButton("MANUAL", false);
+		arrangementSettingsRight.add(ArrangementGUI.manualArrangement);
 		arrangementSettingsRight.add(commitPanelBtn);
 		arrangementSettingsRight.add(commitAllPanelBtn);
 		arrangementSettingsRight.add(undoPanelBtn);
 		arrangementSettingsRight.add(clearPanelBtn);
 		arrangementSettingsRight.add(clearAllPanelsBtn);
 
-		arrangementSettingsRight.add(newSectionBox);
+		arrangementSettingsRight.add(ArrangementGUI.newSectionBox);
 		arrangementSettingsRight.add(addNewSectionBtn);
 		arrangementSettingsRight.add(copySelectedBtn);
 		arrangementSettingsRight.add(removeSelectedBtn);
 
 		arrangementSettingsRight.add(new JLabel("Seed"));
-		arrangementSeed = new RandomValueButton(0);
-		arrangementSettingsRight.add(arrangementSeed);
-		arrangementSettings.add(arrangementSettingsRight);
+		ArrangementGUI.arrangementSeed = new RandomValueButton(0);
+		arrangementSettingsRight.add(ArrangementGUI.arrangementSeed);
+		ArrangementGUI.arrangementSettings.add(arrangementSettingsRight);
 
 		constraints.gridy = startY;
 		constraints.anchor = anchorSide;
 
-		arrSectionPane = new JScrollPane() {
+		ArrangementGUI.arrSectionPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				return new Dimension(scrollPaneDimension.width, 45);
 			}
 		};
-		arrSectionPane.setViewportView(arrSection);
-		arrSectionPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		arrSectionPane.getHorizontalScrollBar().setUnitIncrement(32);
-		arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		arrSectionPane.setOpaque(true);
-		arrSection.setOpaque(true);
-		everythingPanel.add(arrSectionPane, constraints);
+		ArrangementGUI.arrSectionPane.setViewportView(ArrangementGUI.arrSection);
+		ArrangementGUI.arrSectionPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		ArrangementGUI.arrSectionPane.getHorizontalScrollBar().setUnitIncrement(32);
+		ArrangementGUI.arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		ArrangementGUI.arrSectionPane.setOpaque(true);
+		ArrangementGUI.arrSection.setOpaque(true);
+		everythingPanel.add(ArrangementGUI.arrSectionPane, constraints);
 		constraints.gridy = startY + 1;
-		everythingPanel.add(arrangementSettings, constraints);
+		everythingPanel.add(ArrangementGUI.arrangementSettings, constraints);
 
-		scrollableArrangementTable = new JTable(5, 5) {
+		ArrangementGUI.scrollableArrangementTable = new JTable(5, 5) {
 
 			private static final long serialVersionUID = 3846279087936376003L;
 
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
-				comp.setForeground(isDarkMode ? arrangementDarkModeText : arrangementLightModeText);
+				comp.setForeground(isDarkMode ? ArrangementGUI.arrangementDarkModeText : ArrangementGUI.arrangementLightModeText);
 				if (getModel().getColumnCount() <= col) {
 					return comp;
 				}
@@ -2974,7 +3035,7 @@ private void __initChords(int startY, int anchorSide) {
 				}
 
 				Object objValue = getModel().getValueAt(row,
-						scrollableArrangementTable.convertColumnIndexToModel(col));
+						ArrangementGUI.scrollableArrangementTable.convertColumnIndexToModel(col));
 				Integer value = (objValue instanceof String) ? Integer.valueOf((String) objValue)
 						: (Integer) objValue;
 				if (value > 100) {
@@ -2991,47 +3052,47 @@ private void __initChords(int startY, int anchorSide) {
 			}
 		};
 
-		arrangement = new Arrangement();
-		actualArrangement = new Arrangement();
-		arrangement.generateDefaultArrangement();
+		ArrangementGUI.arrangement = new Arrangement();
+		ArrangementGUI.actualArrangement = new Arrangement();
+		ArrangementGUI.arrangement.generateDefaultArrangement();
 
-		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
-		arrangementScrollPane = new JScrollPane() {
+		ArrangementGUI.scrollableArrangementTable.setModel(ArrangementGUI.arrangement.convertToTableModel());
+		ArrangementGUI.arrangementScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				return scrollPaneDimension;
 			}
 		};
-		scrollableArrangementTable.setRowHeight(35);
-		scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
+		ArrangementGUI.scrollableArrangementTable.setRowHeight(35);
+		ArrangementGUI.scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
 
-		arrangementScrollPane.setViewportView(scrollableArrangementTable);
+		ArrangementGUI.arrangementScrollPane.setViewportView(ArrangementGUI.scrollableArrangementTable);
 		JList<String> list = new JList<>();
 		list.setListData(
 				new String[] { "Section", "Bars", "Melody%", "Bass%", "Chord%", "Arp%", "Drum%" });
-		list.setFixedCellHeight(scrollableArrangementTable.getRowHeight()
-				+ scrollableArrangementTable.getRowMargin());
-		arrangementScrollPane.setRowHeaderView(list);
-		arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		list.setFixedCellHeight(ArrangementGUI.scrollableArrangementTable.getRowHeight()
+				+ ArrangementGUI.scrollableArrangementTable.getRowMargin());
+		ArrangementGUI.arrangementScrollPane.setRowHeaderView(list);
+		ArrangementGUI.arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		ArrangementGUI.arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		//actualArrangement.generateDefaultArrangement();
-		if (useArrangement.isSelected()) {
-			arrangement.setPreviewChorus(false);
-			actualArrangement.setPreviewChorus(false);
+		if (ArrangementGUI.useArrangement.isSelected()) {
+			ArrangementGUI.arrangement.setPreviewChorus(false);
+			ArrangementGUI.actualArrangement.setPreviewChorus(false);
 		} else {
-			arrangement.setPreviewChorus(true);
-			actualArrangement.setPreviewChorus(true);
-			actualArrangement.resetArrangement();
+			ArrangementGUI.arrangement.setPreviewChorus(true);
+			ArrangementGUI.actualArrangement.setPreviewChorus(true);
+			ArrangementGUI.actualArrangement.resetArrangement();
 		}
-		scrollableArrangementTable.setRowSelectionAllowed(false);
-		scrollableArrangementTable.setColumnSelectionAllowed(true);
-		scrollableArrangementTable.getTableHeader().setPreferredSize(
-				new Dimension(scrollPaneDimension.width - arrangementRowHeaderWidth, 30));
-		scrollableArrangementTable.getColumnModel()
+		ArrangementGUI.scrollableArrangementTable.setRowSelectionAllowed(false);
+		ArrangementGUI.scrollableArrangementTable.setColumnSelectionAllowed(true);
+		ArrangementGUI.scrollableArrangementTable.getTableHeader().setPreferredSize(
+				new Dimension(scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
+		ArrangementGUI.scrollableArrangementTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
 					@Override
 					public void columnMoved(TableColumnModelEvent e) {
-						arrangementTableColumnDragging = true;
+						ArrangementGUI.arrangementTableColumnDragging = true;
 					}
 
 					@Override
@@ -3059,29 +3120,29 @@ private void __initChords(int startY, int anchorSide) {
 					}
 
 				});
-		scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
+		ArrangementGUI.scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				LG.d(("MOVED HEADER"));
-				arrangement.resortByIndexes(scrollableArrangementTable, false);
-				arrangementTableColumnDragging = false;
+				ArrangementGUI.arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false);
+				ArrangementGUI.arrangementTableColumnDragging = false;
 			}
 		});
-		scrollableArrangementTable.addMouseListener(new java.awt.event.MouseAdapter() {
+		ArrangementGUI.scrollableArrangementTable.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mousePressed(java.awt.event.MouseEvent evt) {
-				int row = scrollableArrangementTable.rowAtPoint(evt.getPoint());
-				int secOrder = scrollableArrangementTable.columnAtPoint(evt.getPoint());
+				int row = ArrangementGUI.scrollableArrangementTable.rowAtPoint(evt.getPoint());
+				int secOrder = ArrangementGUI.scrollableArrangementTable.columnAtPoint(evt.getPoint());
 
 				//LG.i(("Clicked! " + row + ", " + secOrder));
 				if (row == 0 && secOrder >= 0) {
 					boolean rClick = SwingUtilities.isRightMouseButton(evt);
 					boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 					if (rClick) {
-						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
+						ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
 					} else if (mClick) {
 						//LG.i(("mClick"));
-						handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
+						ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
 					}
 
 				}
@@ -3089,15 +3150,15 @@ private void __initChords(int startY, int anchorSide) {
 		});
 
 
-		scrollableArrangementActualTable = new JTable(5, 5) {
+		ArrangementGUI.scrollableArrangementActualTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
 				Object value = getModel().getValueAt(row,
-						scrollableArrangementActualTable.convertColumnIndexToModel(col));
-				comp.setForeground(isDarkMode ? arrangementDarkModeText : arrangementLightModeText);
+						ArrangementGUI.scrollableArrangementActualTable.convertColumnIndexToModel(col));
+				comp.setForeground(isDarkMode ? ArrangementGUI.arrangementDarkModeText : ArrangementGUI.arrangementLightModeText);
 				if (value == null)
 					return comp;
 				if (getModel().getColumnCount() <= col) {
@@ -3129,7 +3190,7 @@ private void __initChords(int startY, int anchorSide) {
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col);
 			}
 		};
-		scrollableArrangementActualTable.addMouseListener(new java.awt.event.MouseAdapter() {
+		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mousePressed(java.awt.event.MouseEvent evt) {
 				processActualArrangementMouseEvent(evt);
@@ -3137,42 +3198,42 @@ private void __initChords(int startY, int anchorSide) {
 
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				if (copyDragging) {
+				if (ArrangementGUI.copyDragging) {
 					processActualArrangementCopyDragging(evt);
 					resetCopyDrag();
 				}
 			};
 		});
 
-		scrollableArrangementActualTable.addMouseMotionListener(new MouseMotionListener() {
+		ArrangementGUI.scrollableArrangementActualTable.addMouseMotionListener(new MouseMotionListener() {
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				boolean repaintAnyway = highlightedTableCell != null;
-				highlightedTableCell = calculateCurrentTableSubcell(e);
-				arrangementActualTableMousePoint = new Point(e.getPoint());
-				if (highlightedTableCell != null || repaintAnyway) {
-					scrollableArrangementActualTable.repaint();
+				boolean repaintAnyway = ArrangementGUI.highlightedTableCell != null;
+				ArrangementGUI.highlightedTableCell = calculateCurrentTableSubcell(e);
+				ArrangementGUI.arrangementActualTableMousePoint = new Point(e.getPoint());
+				if (ArrangementGUI.highlightedTableCell != null || repaintAnyway) {
+					ArrangementGUI.scrollableArrangementActualTable.repaint();
 				}
 			}
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				boolean repaintAnyway = highlightedTableCell != null;
-				highlightedTableCell = calculateCurrentTableSubcell(e);
-				arrangementActualTableMousePoint = new Point(e.getPoint());
-				if (highlightedTableCell != null || repaintAnyway) {
-					scrollableArrangementActualTable.repaint();
+				boolean repaintAnyway = ArrangementGUI.highlightedTableCell != null;
+				ArrangementGUI.highlightedTableCell = calculateCurrentTableSubcell(e);
+				ArrangementGUI.arrangementActualTableMousePoint = new Point(e.getPoint());
+				if (ArrangementGUI.highlightedTableCell != null || repaintAnyway) {
+					ArrangementGUI.scrollableArrangementActualTable.repaint();
 				}
 			}
 		});
 
 		//scrollableArrangementActualTable.setDefaultRenderer(Iterable.class, new ListCellRenderer());
 
-		scrollableArrangementActualTable.setRowHeight(35);
-		scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
-		scrollableArrangementActualTable.setModel(actualArrangement.convertToActualTableModel());
-		arrangementActualScrollPane = new JScrollPane() {
+		ArrangementGUI.scrollableArrangementActualTable.setRowHeight(35);
+		ArrangementGUI.scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
+		ArrangementGUI.scrollableArrangementActualTable.setModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
+		ArrangementGUI.arrangementActualScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				return scrollPaneDimension;
@@ -3182,21 +3243,21 @@ private void __initChords(int startY, int anchorSide) {
 		JList<String> actualList = new JList<>();
 		actualList.setListData(
 				new String[] { "", "Section", "Info", "Melody", "Bass", "Chord", "Arp", "Drum" });
-		actualList.setFixedCellHeight(scrollableArrangementActualTable.getRowHeight()
-				+ scrollableArrangementActualTable.getRowMargin());
-		arrangementActualScrollPane.setRowHeaderView(actualList);
-		arrangementActualScrollPane
+		actualList.setFixedCellHeight(ArrangementGUI.scrollableArrangementActualTable.getRowHeight()
+				+ ArrangementGUI.scrollableArrangementActualTable.getRowMargin());
+		ArrangementGUI.arrangementActualScrollPane.setRowHeaderView(actualList);
+		ArrangementGUI.arrangementActualScrollPane
 				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		ArrangementGUI.arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 
-		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
-		scrollableArrangementActualTable.setRowSelectionAllowed(false);
-		scrollableArrangementActualTable.getColumnModel()
+		ArrangementGUI.scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+		ArrangementGUI.scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		ArrangementGUI.scrollableArrangementActualTable.getColumnModel()
 				.addColumnModelListener(new TableColumnModelListener() {
 					@Override
 					public void columnMoved(TableColumnModelEvent e) {
-						actualArrangementTableColumnDragging = true;
+						ArrangementGUI.actualArrangementTableColumnDragging = true;
 
 					}
 
@@ -3225,36 +3286,36 @@ private void __initChords(int startY, int anchorSide) {
 					}
 
 				});
-		scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
+		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				LG.i(("MOVED"));
-				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true);
-				actualArrangementTableColumnDragging = false;
-				manualArrangement.setSelected(true);
-				manualArrangement.repaint();
+				ArrangementGUI.actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true);
+				ArrangementGUI.actualArrangementTableColumnDragging = false;
+				ArrangementGUI.manualArrangement.setSelected(true);
+				ArrangementGUI.manualArrangement.repaint();
 			}
 		});
 		//scrollableArrangementActualTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 
-		actualArrangementCombinedPanel = new JPanel();
-		actualArrangementCombinedPanel
-				.setLayout(new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
-		scrollableArrangementActualTable.getTableHeader().setPreferredSize(
-				new Dimension(scrollPaneDimension.width - arrangementRowHeaderWidth, 30));
-		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
-		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
+		ArrangementGUI.actualArrangementCombinedPanel = new JPanel();
+		ArrangementGUI.actualArrangementCombinedPanel
+				.setLayout(new BoxLayout(ArrangementGUI.actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
+		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().setPreferredSize(
+				new Dimension(scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
+		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable.getTableHeader());
+		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable);
 
 
-		variationButtonsPanel = new JPanel();
+		ArrangementGUI.variationButtonsPanel = new JPanel();
 		refreshVariationPopupButtons(1);
-		actualArrangementCombinedPanel.add(variationButtonsPanel);
+		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.variationButtonsPanel);
 
-		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
+		ArrangementGUI.arrangementActualScrollPane.setViewportView(ArrangementGUI.actualArrangementCombinedPanel);
 
-		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
-		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
+		instrumentTabPane.addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
+		instrumentTabPane.addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
 
 
 		//toggleableComponents.add(arrSection);
@@ -3264,12 +3325,12 @@ private void __initChords(int startY, int anchorSide) {
 		toggleableComponents.add(clearPanelBtn);
 		toggleableComponents.add(clearAllPanelsBtn);
 
-		resetArrSection();
+		ArrangementGUI.arrangementGUI.resetArrSection();
 	}
 
 	protected Triple<Integer, Integer, Integer> calculateCurrentTableSubcell(MouseEvent evt) {
-		int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
-		int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
+		int row = ArrangementGUI.scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
+		int secOrder = ArrangementGUI.scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
 		//LG.d(("Current subcell: " + row + ", " + secOrder));
 		if (row >= 2 && secOrder >= 0) {
@@ -3298,9 +3359,9 @@ private void __initChords(int startY, int anchorSide) {
 	public void switchPanelsForSectionSelection(String selItem) {
 		List<InstPanel> addedPanels = new ArrayList<>();
 
-		if (GLOBAL.equals(selItem)) {
+		if (ArrangementGUI.GLOBAL.equals(selItem)) {
 			LG.i(("Resetting to normal panels!"));
-			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
+			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 			for (int i = 0; i < 5; i++) {
 				JScrollPane pane = getInstPane(i);
 				List<? extends InstPanel> panels = getInstList(i);
@@ -3320,9 +3381,9 @@ private void __initChords(int startY, int anchorSide) {
 			}
 		} else {
 			LG.i(("Switching panels!"));
-			arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
+			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(uiColor().darker().darker());
 			int sectionOrder = Integer.valueOf(selItem.split(":")[0]) - 1;
-			Section sec = actualArrangement.getSections().get(sectionOrder);
+			Section sec = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
 			for (int i = 0; i < 5; i++) {
 				JScrollPane pane = getInstPane(i);
 				List<InstPanel> sectionPanels = new ArrayList<>();
@@ -3386,7 +3447,7 @@ private void __initChords(int startY, int anchorSide) {
 				addedPanels.addAll(sectionPanels);
 			}
 		}
-		arrangementMiddleColoredPanel.repaint();
+		ArrangementGUI.arrangementMiddleColoredPanel.repaint();
 		addedPanels.forEach(p -> p.setVisible(true));
 		toggleButtonEnabledForPanels();
 		for (int i = 0; i < 5; i++) {
@@ -3394,14 +3455,14 @@ private void __initChords(int startY, int anchorSide) {
 			pane.repaint();
 		}
 		if (instrumentTabPane.getSelectedIndex() == 6) {
-			actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
-			scrollableArrangementActualTable.repaint();
+			ArrangementGUI.actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
+			ArrangementGUI.scrollableArrangementActualTable.repaint();
 		}
 	}
 
 	private void processActualArrangementMouseEvent(java.awt.event.MouseEvent evt) {
-		int row = scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
-		int secOrder = scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
+		int row = ArrangementGUI.scrollableArrangementActualTable.rowAtPoint(evt.getPoint());
+		int secOrder = ArrangementGUI.scrollableArrangementActualTable.columnAtPoint(evt.getPoint());
 
 
 		LG.d(("Clicked! " + row + ", " + secOrder));
@@ -3409,9 +3470,9 @@ private void __initChords(int startY, int anchorSide) {
 		boolean mClick = !rClick && SwingUtilities.isMiddleMouseButton(evt);
 		if (row == 0 && secOrder >= 0) {
 			if (rClick) {
-				handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
+				ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
 			} else if (mClick) {
-				handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
+				ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementAdd," + secOrder, 0, 0);
 			}
 		} else if (row >= 2 && secOrder >= 0) {
 			double orderPercentage = calculateMousePointPercentageInTable(row, secOrder);
@@ -3436,7 +3497,7 @@ private void __initChords(int startY, int anchorSide) {
 
 			if (rClick || mClick) {
 				//LG.d(("Clickable! rClick: " + rClick));
-				Section sec = actualArrangement.getSections().get(secOrder);
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
 				boolean hasPresence = !sec.getPresence(part).isEmpty();
 				boolean hasVariation = hasPresence && sec.hasVariation(part);
 
@@ -3445,7 +3506,7 @@ private void __initChords(int startY, int anchorSide) {
 						int secOrder2 = secOrder;
 						if (mClick) {
 							secOrder2++;
-							if (secOrder2 >= actualArrangement.getSections().size()) {
+							if (secOrder2 >= ArrangementGUI.actualArrangement.getSections().size()) {
 								return;
 							}
 						} else if (rClick) {
@@ -3454,7 +3515,7 @@ private void __initChords(int startY, int anchorSide) {
 								return;
 							}
 						}
-						Section sec2 = actualArrangement.getSections().get(secOrder2);
+						Section sec2 = ArrangementGUI.actualArrangement.getSections().get(secOrder2);
 						sec2.resetAllPresence(part);
 						for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
 							sec2.removeVariationForAllParts(part, i);
@@ -3491,20 +3552,20 @@ private void __initChords(int startY, int anchorSide) {
 								sec.resetPresence(part, i);
 							}
 						} else {
-							arrangement.initPartInclusionMapIfNull();
-							sec.generatePresences(new Random(), part, arrangement.getInclMap(),
+							ArrangementGUI.arrangement.initPartInclusionMapIfNull();
+							sec.generatePresences(new Random(), part, ArrangementGUI.arrangement.getInclMap(),
 									true);
 						}
 					}
 				} else if (evt.isShiftDown()) {
-					boolean hasAnyPresence = actualArrangement.getSections().stream()
+					boolean hasAnyPresence = ArrangementGUI.actualArrangement.getSections().stream()
 							.anyMatch(e -> e.getPresence(part).contains(
 									getInstList(part).get(partAbsoluteOrder).getPanelOrder()));
 					if (mClick) {
 						boolean hasAnyVariation = hasAnyPresence
-								&& actualArrangement.getSections().stream().anyMatch(
+								&& ArrangementGUI.actualArrangement.getSections().stream().anyMatch(
 										e -> !e.getVariation(part, partAbsoluteOrder).isEmpty());
-						for (Section asec : actualArrangement.getSections()) {
+						for (Section asec : ArrangementGUI.actualArrangement.getSections()) {
 							if (hasAnyVariation) {
 								for (int i = 2; i < Section.variationDescriptions[part].length; i++) {
 									asec.removeVariationForPart(part, partAbsoluteOrder, i);
@@ -3517,15 +3578,15 @@ private void __initChords(int startY, int anchorSide) {
 						}
 					} else {
 						if (hasAnyPresence) {
-							for (Section asec : actualArrangement.getSections()) {
+							for (Section asec : ArrangementGUI.actualArrangement.getSections()) {
 								asec.initPartMapFromOldData();
 								for (int i = 0; i < getInstList(part).size(); i++) {
 									asec.resetPresence(part, partAbsoluteOrder);
 								}
 							}
 						} else {
-							arrangement.initPartInclusionMapIfNull();
-							for (Section asec : actualArrangement.getSections()) {
+							ArrangementGUI.arrangement.initPartInclusionMapIfNull();
+							for (Section asec : ArrangementGUI.actualArrangement.getSections()) {
 								asec.initPartMapFromOldData();
 								if (new Random().nextInt(100) < asec.getChanceForInst(part)) {
 									asec.setPresence(part, partAbsoluteOrder);
@@ -3559,31 +3620,31 @@ private void __initChords(int startY, int anchorSide) {
 				}
 
 
-				setActualModel(actualArrangement.convertToActualTableModel(), false);
-				refreshVariationPopupButtons(actualArrangement.getSections().size());
-				manualArrangement.setSelected(true);
-				manualArrangement.repaint();
-				scrollableArrangementActualTable.repaint();
+				ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
+				refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
+				ArrangementGUI.manualArrangement.setSelected(true);
+				ArrangementGUI.manualArrangement.repaint();
+				ArrangementGUI.scrollableArrangementActualTable.repaint();
 			} else {
 				int panelOrder = getInstList(part).get(partAbsoluteOrder).getPanelOrder();
 				if (evt.isAltDown()) {
-					if (secOrder + 1 < arrSection.getItemCount()) {
-						arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
-						arrSection.repaint();
+					if (secOrder + 1 < ArrangementGUI.arrSection.getItemCount()) {
+						ArrangementGUI.arrSection.setSelectedIndexWithProperty(secOrder + 1, true);
+						ArrangementGUI.arrSection.repaint();
 						instrumentTabPane.setSelectedIndex(part);
-						switchTabPaneAfterApply = true;
+						ArrangementGUI.switchTabPaneAfterApply = true;
 					}
 				} else if (evt.isControlDown()) {
 					// begin copy-dragging
-					Section sec = actualArrangement.getSections().get(secOrder);
+					Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
 					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
 					if (hasSinglePresence && sec.containsPattern(part, panelOrder)) {
-						copyDraggingOrigin = Triple.of(part, partAbsoluteOrder, secOrder);
+						ArrangementGUI.copyDraggingOrigin = Triple.of(part, partAbsoluteOrder, secOrder);
 						prepareCustomMidiSubcellCopy(part, panelOrder, sec);
 
 					}
 				} else if (currentMidi != null && partAbsoluteOrder < getInstList(part).size()) {
-					Section sec = actualArrangement.getSections().get(secOrder);
+					Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder);
 					boolean hasSinglePresence = sec.getPresence(part).contains(panelOrder);
 
 					if (hasSinglePresence && sec.containsPattern(part, panelOrder)) {
@@ -3603,9 +3664,9 @@ private void __initChords(int startY, int anchorSide) {
 	private double calculateMousePointPercentageInTable(int row, int secOrder) {
 
 		Point mousePoint = SwingUtils.getMouseLocation();
-		Point tablePoint = scrollableArrangementActualTable.getLocation();
-		SwingUtilities.convertPointToScreen(tablePoint, scrollableArrangementActualTable);
-		Rectangle r = scrollableArrangementActualTable.getCellRect(row, secOrder, false);
+		Point tablePoint = ArrangementGUI.scrollableArrangementActualTable.getLocation();
+		SwingUtilities.convertPointToScreen(tablePoint, ArrangementGUI.scrollableArrangementActualTable);
+		Rectangle r = ArrangementGUI.scrollableArrangementActualTable.getCellRect(row, secOrder, false);
 
 		mousePoint.x -= tablePoint.x;
 		mousePoint.y -= tablePoint.y;
@@ -3621,13 +3682,13 @@ private void __initChords(int startY, int anchorSide) {
 	protected void processActualArrangementCopyDragging(MouseEvent evt) {
 		Triple<Integer, Integer, Integer> partOrderSection = calculateCurrentTableSubcell(evt);
 		if (partOrderSection != null) {
-			PhraseNotes pn = guiConfig.getPatternRaw(copyDraggedPattern);
+			PhraseNotes pn = guiConfig.getPatternRaw(ArrangementGUI.copyDraggedPattern);
 			if (pn == null) {
 				new TemporaryInfoPopup("Invalid pattern for copying!", 1500);
 				return;
 			}
-			Section sec = actualArrangement.getSections().get(partOrderSection.getRight());
-			UsedPattern newPattern = copyDraggedPattern;
+			Section sec = ArrangementGUI.actualArrangement.getSections().get(partOrderSection.getRight());
+			UsedPattern newPattern = ArrangementGUI.copyDraggedPattern;
 			int part = partOrderSection.getLeft();
 			int panelOrder = getInstList(part).get(partOrderSection.getMiddle()).getPanelOrder();
 			sec.putPattern(part, panelOrder, newPattern);
@@ -3635,27 +3696,27 @@ private void __initChords(int startY, int anchorSide) {
 				sec.setPresence(part, partOrderSection.getMiddle());
 			}
 			pn.setApplied(true);
-			setActualModel(actualArrangement.convertToActualTableModel(), false);
-			refreshVariationPopupButtons(actualArrangement.getSections().size());
-			manualArrangement.setSelected(true);
-			manualArrangement.repaint();
-			scrollableArrangementActualTable.repaint();
+			ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
+			refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
+			ArrangementGUI.manualArrangement.setSelected(true);
+			ArrangementGUI.manualArrangement.repaint();
+			ArrangementGUI.scrollableArrangementActualTable.repaint();
 		} else {
 			LG.i("Can't copy custom midi - invalid part!");
 		}
 	}
 
 	private void prepareCustomMidiSubcellCopy(int part, int panelOrder, Section sec) {
-		copyDragging = true;
-		copyDraggedPattern = sec.getPattern(part, panelOrder);
-		scrollableArrangementActualTable.repaint();
+		ArrangementGUI.copyDragging = true;
+		ArrangementGUI.copyDraggedPattern = sec.getPattern(part, panelOrder);
+		ArrangementGUI.scrollableArrangementActualTable.repaint();
 	}
 
 	public void resetCopyDrag() {
-		copyDragging = false;
-		copyDraggedPattern = null;
-		copyDraggingOrigin = null;
-		scrollableArrangementActualTable.repaint();
+		ArrangementGUI.copyDragging = false;
+		ArrangementGUI.copyDraggedPattern = null;
+		ArrangementGUI.copyDraggingOrigin = null;
+		ArrangementGUI.scrollableArrangementActualTable.repaint();
 	}
 
 	protected void arrangementTableProcessSectionType(Component comp, String valueAt) {
@@ -3676,17 +3737,17 @@ private void __initChords(int startY, int anchorSide) {
 						: Integer.valueOf(value);
 				int color = 0;
 				if (isDarkMode) {
-					color = arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];
+					color = ArrangementGUI.arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];
 					color = Math.min(color, 170);
 				} else {
-					color = arrangementLightModeHighestColor - (70 * count) / maxCounts[row];
+					color = ArrangementGUI.arrangementLightModeHighestColor - (70 * count) / maxCounts[row];
 					color = Math.max(color, 130);
 				}
 
 				int extraRed = 0;
-				if (actual && actualArrangement.getSections().size() > col) {
+				if (actual && ArrangementGUI.actualArrangement.getSections().size() > col) {
 					double remaining = 255 - color - 1;
-					extraRed += actualArrangement.getSections().get(col)
+					extraRed += ArrangementGUI.actualArrangement.getSections().get(col)
 							.countVariationsForPartType(row - 2) * remaining;
 					extraRed = Math.min(255 - color - 1, extraRed);
 				}
@@ -3734,7 +3795,7 @@ private void __initChords(int startY, int anchorSide) {
 		/*if (count == variationButtonsPanel.getComponents().length) {
 			return;
 		}*/
-		variationButtonsPanel.removeAll();
+		ArrangementGUI.variationButtonsPanel.removeAll();
 		for (int i = 0; i < count; i++) {
 			int fI = i;
 			JButton butt = new JButton("Edit " + (i + 1)) {
@@ -3743,12 +3804,12 @@ private void __initChords(int startY, int anchorSide) {
 				@Override
 				public void paintComponent(Graphics guh) {
 					super.paintComponent(guh);
-					if (actualArrangement != null) {
-						if (actualArrangement.getSections() != null
-								&& fI < actualArrangement.getSections().size()) {
+					if (ArrangementGUI.actualArrangement != null) {
+						if (ArrangementGUI.actualArrangement.getSections() != null
+								&& fI < ArrangementGUI.actualArrangement.getSections().size()) {
 							if (guh instanceof Graphics2D) {
 								Graphics2D g = (Graphics2D) guh;
-								Section sec = actualArrangement.getSections().get(fI);
+								Section sec = ArrangementGUI.actualArrangement.getSections().get(fI);
 								List<Integer> sectionVars = sec.getSectionVariations();
 								if (sectionVars == null) {
 									sectionVars = Section.EMPTY_SECTION_VARS;
@@ -3793,35 +3854,35 @@ private void __initChords(int startY, int anchorSide) {
 			butt.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					openVariationPopup(fI + 1);
+					ArrangementGUI.arrangementGUI.openVariationPopup(fI + 1);
 
 				}
 			});
 
 			int width = Math.max(TABLE_COLUMN_MIN_WIDTH,
-					(scrollPaneDimension.width - arrangementRowHeaderWidth) / count);
+					(scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth) / count);
 			butt.setPreferredSize(new Dimension(width, 50));
 			butt.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent evt) {
 					if (SwingUtilities.isMiddleMouseButton(evt)) {
-						actualArrangement.getSections().get(fI)
+						ArrangementGUI.actualArrangement.getSections().get(fI)
 								.setSectionVariations(new ArrayList<>());
-						recolorVariationPopupButton(butt, actualArrangement.getSections().get(fI));
+						recolorVariationPopupButton(butt, ArrangementGUI.actualArrangement.getSections().get(fI));
 					}
 				}
 			});
-			recolorVariationPopupButton(butt, actualArrangement.getSections().get(i));
-			variationButtonsPanel.add(butt);
+			recolorVariationPopupButton(butt, ArrangementGUI.actualArrangement.getSections().get(i));
+			ArrangementGUI.variationButtonsPanel.add(butt);
 		}
 	}
 
 	public static void recolorAllVariationButtons() {
-		for (Component c : variationButtonsPanel.getComponents()) {
+		for (Component c : ArrangementGUI.variationButtonsPanel.getComponents()) {
 			if (c instanceof JButton) {
 				JButton butt = (JButton) c;
 				int secOrder = Integer.valueOf(butt.getText().split(" ")[1]);
-				Section sec = actualArrangement.getSections().get(secOrder - 1);
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(secOrder - 1);
 				recolorVariationPopupButton(butt, sec);
 			}
 		}
@@ -3836,10 +3897,10 @@ private void __initChords(int startY, int anchorSide) {
 		int color = 0;
 		int total = Section.sectionVariationNames.length + 1;
 		if (isDarkMode) {
-			color = arrangementDarkModeLowestColor + (35 * count) / total;
+			color = ArrangementGUI.arrangementDarkModeLowestColor + (35 * count) / total;
 			color = Math.min(color, 135);
 		} else {
-			color = arrangementLightModeHighestColor - (70 * count) / total;
+			color = ArrangementGUI.arrangementLightModeHighestColor - (70 * count) / total;
 			color = Math.max(color, 130);
 		}
 
@@ -4648,7 +4709,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 
 						if (allowedActionsOnZero == 0) {
-							if (actualArrangement != null && slider.getMaximum() > 0) {
+							if (ArrangementGUI.actualArrangement != null && slider.getMaximum() > 0) {
 								String newTime = millisecondsToTimeString(slider.getUpperValue());
 								if (!newTime.equals(currentTime.getText())) {
 									currentTime.setText(newTime);
@@ -4656,9 +4717,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 								int val = slider.getUpperValue();
 								int sectIndex = -1;
 								if (sliderMeasureStartTimes != null
-										&& actualArrangement.getSections().size() > 0) {
+										&& ArrangementGUI.actualArrangement.getSections().size() > 0) {
 									int sectIndexCounter = 0;
-									List<Integer> secMeasures = actualArrangement.getSections()
+									List<Integer> secMeasures = ArrangementGUI.actualArrangement.getSections()
 											.stream().map(e -> e.getMeasures())
 											.collect(Collectors.toList());
 									int currentMeasure = secMeasures.get(0);
@@ -4681,8 +4742,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 								Section sec = null;
 								if (sectIndex >= 0
-										&& sectIndex < actualArrangement.getSections().size()) {
-									sec = actualArrangement.getSections().get(sectIndex);
+										&& sectIndex < ArrangementGUI.actualArrangement.getSections().size()) {
+									sec = ArrangementGUI.actualArrangement.getSections().get(sectIndex);
 								}
 								currentSectionIndex = sectIndex;
 								int finalSectIndex = sectIndex;
@@ -5353,8 +5414,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		//randomizeChordStrumsOnCompose.setSelected(state);
 		randomizeInstOnComposeOrGen.setSelected(state);
 		ArpGUI.randomArpHitsPerPattern.setSelected(state);
-		randomizeArrangementOnCompose.setSelected(state);
-		arrangementResetCustomPanelsOnCompose.setSelected(state);
+		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
+		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
 		randomizeScaleModeOnCompose.setSelected(state);
 		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
 		MelodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
@@ -5372,8 +5433,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		randomizeTransposeOnCompose.setForeground(fg);
 		//randomizeChordStrumsOnCompose.setForeground(fg);
 		randomizeInstOnComposeOrGen.setForeground(fg);
-		randomizeArrangementOnCompose.setForeground(fg);
-		arrangementResetCustomPanelsOnCompose.setForeground(fg);
+		ArrangementGUI.randomizeArrangementOnCompose.setForeground(fg);
+		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(fg);
 		randomizeScaleModeOnCompose.setForeground(fg);
 		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(fg);
 		MelodyGUI.melodyPatternRandomizeOnCompose.setForeground(fg);
@@ -5415,7 +5476,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		for (DrumPanel dp : DrumGUI.drumPanels) {
 			dp.getComboPanel().reapplyHits();
 		}
-		refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
+		refreshVariationPopupButtons(ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
 		pack();
 	}
 
@@ -5475,7 +5536,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 	private void switchDarkMode() {
 		//setVisible(false);
-		arrSection.setSelectedIndex(0);
+		ArrangementGUI.arrSection.setSelectedIndex(0);
 
 		LG.i(("Switching dark mode!"));
 		if (isDarkMode) {
@@ -5519,10 +5580,10 @@ private void __initCustomChords(int startY, int anchorSide) {
 			panelColorHigh = panelColorHigh.darker();
 			//panelColorLow = panelColorLow.darker();
 		}
-		if (GLOBAL.equals(arrSection.getVal())) {
-			arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
+		if (ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
+			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
 		} else {
-			arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
+			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
 		}
 
 		sliderPanel.setBackground(panelColorLow);
@@ -5542,7 +5603,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			int fI = i;
 			getAffectedPanels(i).forEach(e -> e.setBackground(OMNI.alphen(Constants.instColors[fI], 60)));
 		}
-		refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
 
 		//switchFullMode(isDarkMode);
 
@@ -5555,7 +5616,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		//sizeRespectingPack();
 		//setVisible(true);
 		repaint();
-		arrSectionPane.repaint();
+		ArrangementGUI.arrSectionPane.repaint();
 		if (scorePanel != null) {
 
 			scorePanel.setupMouseWheelListener();
@@ -5585,7 +5646,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 	}
 
 	private void toggleButtonEnabledForPanels() {
-		toggleButtonEnabledForPanels(GLOBAL.equals(arrSection.getVal()));
+		toggleButtonEnabledForPanels(ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal()));
 	}
 
 	private void toggleButtonEnabledForPanels(boolean isOriginal) {
@@ -5650,8 +5711,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 				partAndOrderLastNoteIndexes.clear();
 			}
 
-			if (manualArrangement.isSelected() && (actualArrangement.getSections().isEmpty()
-					|| !actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
+			if (ArrangementGUI.manualArrangement.isSelected() && (ArrangementGUI.actualArrangement.getSections().isEmpty()
+					|| !ArrangementGUI.actualArrangement.getSections().stream().anyMatch(e -> e.hasPresence()))) {
 				LG.i(("Nothing to compose! Uncheck MANUAL arrangement!"));
 				new TemporaryInfoPopup(("Nothing to compose! Uncheck MANUAL arrangement!"), 3000);
 				heavyBackgroundTasksInProgress = false;
@@ -6042,12 +6103,12 @@ private void __initCustomChords(int startY, int anchorSide) {
 			}
 		}
 
-		if (!regenerate && arrangementResetCustomPanelsOnCompose.isSelected()) {
-			actualArrangement.getSections().forEach(e -> e.resetCustomizedParts());
+		if (!regenerate && ArrangementGUI.arrangementResetCustomPanelsOnCompose.isSelected()) {
+			ArrangementGUI.actualArrangement.getSections().forEach(e -> e.resetCustomizedParts());
 		} else {
 			// check each section number of customized panels to see if it matches current counts
-			for (int i = 0; i < actualArrangement.getSections().size(); i++) {
-				Section sec = actualArrangement.getSections().get(i);
+			for (int i = 0; i < ArrangementGUI.actualArrangement.getSections().size(); i++) {
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(i);
 				for (int j = 0; j < 5; j++) {
 					List<?> partList = sec.getInstPartList(j);
 					if (partList != null && partList.size() > getInstList(j).size()) {
@@ -6062,16 +6123,16 @@ private void __initCustomChords(int startY, int anchorSide) {
 			scaleMode.setSelectedIndex(allowedScales[new Random().nextInt(allowedScales.length)]);
 		}
 
-		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
-			handleArrangementAction("ArrangementRandomize", lastRandomSeed,
-					Integer.valueOf(pieceLength.getText()));
+		if (!regenerate && ArrangementGUI.randomizeArrangementOnCompose.isSelected()) {
+			ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementRandomize", lastRandomSeed,
+					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
 		}
 
-		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
-				&& manualArrangement.isSelected()) {
-			arrangement.setOverridden(true);
+		if ((regenerate || !ArrangementGUI.randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
+				&& ArrangementGUI.manualArrangement.isSelected()) {
+			ArrangementGUI.arrangement.setOverridden(true);
 		} else {
-			arrangement.setOverridden(false);
+			ArrangementGUI.arrangement.setOverridden(false);
 		}
 
 		if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
@@ -6120,13 +6181,13 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		//fixCombinedMelodyTracks();
 
-		actualArrangement = new Arrangement();
-		actualArrangement.setPreviewChorus(false);
-		actualArrangement.getSections().clear();
+		ArrangementGUI.actualArrangement = new Arrangement();
+		ArrangementGUI.actualArrangement.setPreviewChorus(false);
+		ArrangementGUI.actualArrangement.getSections().clear();
 		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
-			actualArrangement.getSections().add(sec.deepCopy());
+			ArrangementGUI.actualArrangement.getSections().add(sec.deepCopy());
 		}
-		guiConfig.setActualArrangement(actualArrangement);
+		guiConfig.setActualArrangement(ArrangementGUI.actualArrangement);
 		VibeComposerGUI.pianoRoll();
 		/*if (showScore.isSelected()) {
 			instrumentTabPane.setSelectedIndex(7);
@@ -6134,12 +6195,12 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 
 		if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
-			if (actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
+			if (ArrangementGUI.actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
 				currentMidiEditorPopup.close();
 				currentMidiEditorPopup = null;
 			} else {
 				currentMidiEditorPopup
-						.setup(actualArrangement.getSections().get(currentMidiEditorSectionIndex));
+						.setup(ArrangementGUI.actualArrangement.getSections().get(currentMidiEditorSectionIndex));
 			}
 		} else {
 			LG.d("No midi editor is open!");
@@ -6148,16 +6209,16 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 	private void resetArrSectionInBackground() {
 		SwingUtilities.invokeLater(() -> {
-			int arrSectionIndex = arrSection.getSelectedIndex();
-			setActualModel(actualArrangement.convertToActualTableModel());
-			if (arrSectionIndex != 0 && arrSectionIndex < arrSection.getItemCount()) {
-				arrSection.setSelectedIndex(arrSectionIndex);
+			int arrSectionIndex = ArrangementGUI.arrSection.getSelectedIndex();
+			ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
+			if (arrSectionIndex != 0 && arrSectionIndex < ArrangementGUI.arrSection.getItemCount()) {
+				ArrangementGUI.arrSection.setSelectedIndex(arrSectionIndex);
 			} else {
-				arrSection.setSelectedIndex(0);
+				ArrangementGUI.arrSection.setSelectedIndex(0);
 			}
-			refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
-			arrSection.getButtons().forEach(e -> e.repaint());
-			arrSection.repaint();
+			refreshVariationPopupButtons(ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
+			ArrangementGUI.arrSection.getButtons().forEach(e -> e.repaint());
+			ArrangementGUI.arrSection.repaint();
 		});
 
 	}
@@ -6229,7 +6290,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 			int sectIndex = 0;
 			int realIndex = 1;
 			Section prevSec = null;
-			int sectionMaxText = Math.max(20 - actualArrangement.getSections().size(), 3);
+			int sectionMaxText = Math.max(20 - ArrangementGUI.actualArrangement.getSections().size(), 3);
 			int explored = 0;
 			int exploredSize = 0;
 			boolean endDisplayed = false;
@@ -6238,8 +6299,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 				int sizeCounter = exploredSize;
 
-				for (int i = explored; i < actualArrangement.getSections().size(); i++) {
-					Section arrSec = actualArrangement.getSections().get(i);
+				for (int i = explored; i < ArrangementGUI.actualArrangement.getSections().size(); i++) {
+					Section arrSec = ArrangementGUI.actualArrangement.getSections().get(i);
 					if (sizeCounter == sectIndex
 							|| (sectIndex < sizeCounter + arrSec.getMeasures())) {
 						sec = arrSec;
@@ -6326,7 +6387,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 					startBeatCounter = 0;
 					pausedSliderPosition = 0;
 					pausedMeasureCounter = 0;
-					arrSection.setSelectedIndex(0);
+					ArrangementGUI.arrSection.setSelectedIndex(0);
 				}
 				slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
 			} else {
@@ -6797,7 +6858,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 	}
 
 	private void openApplyCustomSectionPopup() {
-		if (arrSection.getSelectedIndex() > 0) {
+		if (ArrangementGUI.arrSection.getSelectedIndex() > 0) {
 			new ApplyCustomSectionPopup();
 		}
 	}
@@ -7058,8 +7119,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		if (ae.getActionCommand().startsWith("Arrangement")) {
 			Random arrGen = new Random();
-			handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
-					Integer.valueOf(pieceLength.getText()));
+			ArrangementGUI.arrangementGUI.handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
+					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
 			tabPanePossibleChange = true;
 		}
 
@@ -7177,7 +7238,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		for (int i = 0; i < 5; i++) {
 			getInstList(i).forEach(e -> e.setPatternSeed(0));
 		}
-		arrangementSeed.setValue(0);
+		ArrangementGUI.arrangementSeed.setValue(0);
 	}
 
 	private void saveGuiConfigFile(int rating) {
@@ -7525,9 +7586,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 		instrumentTabPane.setTitleAt(2, "Chords (" + ChordGUI.chordPanels.size() + ")");
 		instrumentTabPane.setTitleAt(3, " Arps  (" + ArpGUI.arpPanels.size() + ")");
 		instrumentTabPane.setTitleAt(4, " Drums (" + DrumGUI.drumPanels.size() + ")");
-		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangement.getSections().size() + ")");
+		instrumentTabPane.setTitleAt(5, "Arrangement (" + ArrangementGUI.arrangement.getSections().size() + ")");
 		instrumentTabPane.setTitleAt(6,
-				"Generated Arrangement (" + actualArrangement.getSections().size() + ")");
+				"Generated Arrangement (" + ArrangementGUI.actualArrangement.getSections().size() + ")");
 		if (instrumentTabPane.getComponentCount() >= 8) {
 			instrumentTabPane.setTitleAt(7, " Score ");
 		}
@@ -7920,7 +7981,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		cs.add(DrumGUI.randomDrumShiftChance);
 
 		// arrangement panel 
-		cs.add(randomizeArrangementOnCompose);
+		cs.add(ArrangementGUI.randomizeArrangementOnCompose);
 
 		// randomization panel
 		cs.add(randomizeInstOnComposeOrGen);
@@ -7936,7 +7997,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		// extras
 		cs.add(useMidiCC);
-		cs.add(arrangementResetCustomPanelsOnCompose);
+		cs.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
 		cs.add(null);
 		cs.add(null);
 		cs.add(loopBeatCompose);
@@ -8055,37 +8116,37 @@ private void __initCustomChords(int startY, int anchorSide) {
 		gc.setMidiMode(midiMode.isSelected());
 
 		// arrangement
-		if (!useArrangement.isSelected()) {
-			arrangement.setPreviewChorus(true);
+		if (!ArrangementGUI.useArrangement.isSelected()) {
+			ArrangementGUI.arrangement.setPreviewChorus(true);
 		} else {
-			arrangement.setPreviewChorus(false);
+			ArrangementGUI.arrangement.setPreviewChorus(false);
 		}
-		arrangement.setFromTable(scrollableArrangementTable);
-		boolean overrideSuccessful = manualArrangement.isSelected()
-				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
-		arrangement.setOverridden(overrideSuccessful);
+		ArrangementGUI.arrangement.setFromTable(ArrangementGUI.scrollableArrangementTable);
+		boolean overrideSuccessful = ArrangementGUI.manualArrangement.isSelected()
+				&& ArrangementGUI.actualArrangement.setFromActualTable(ArrangementGUI.scrollableArrangementActualTable, false);
+		ArrangementGUI.arrangement.setOverridden(overrideSuccessful);
 
 		PatternMap.checkMapBounds(guiConfig.getPatternMaps(), !overrideSuccessful);
 		if (isNew) {
 			gc.setPatternMaps(PatternMap.multiMapCopy(guiConfig.getPatternMaps()));
 		}
 
-		arrangement.setSeed(
-				arrangementSeed.getValue() != 0 ? arrangementSeed.getValue() : lastRandomSeed);
-		actualArrangement.setSeed(
-				arrangementSeed.getValue() != 0 ? arrangementSeed.getValue() : lastRandomSeed);
+		ArrangementGUI.arrangement.setSeed(
+				ArrangementGUI.arrangementSeed.getValue() != 0 ? ArrangementGUI.arrangementSeed.getValue() : lastRandomSeed);
+		ArrangementGUI.actualArrangement.setSeed(
+				ArrangementGUI.arrangementSeed.getValue() != 0 ? ArrangementGUI.arrangementSeed.getValue() : lastRandomSeed);
 
-		gc.setArrangement(arrangement);
-		gc.setActualArrangement(actualArrangement);
-		gc.setArrangementVariationChance(arrangementVariationChance.getInt());
-		gc.setArrangementPartVariationChance(arrangementPartVariationChance.getInt());
-		gc.setScaleMidiVelocityInArrangement(arrangementScaleMidiVelocity.isSelected());
-		gc.setArrangementEnabled(useArrangement.isSelected());
+		gc.setArrangement(ArrangementGUI.arrangement);
+		gc.setActualArrangement(ArrangementGUI.actualArrangement);
+		gc.setArrangementVariationChance(ArrangementGUI.arrangementVariationChance.getInt());
+		gc.setArrangementPartVariationChance(ArrangementGUI.arrangementPartVariationChance.getInt());
+		gc.setScaleMidiVelocityInArrangement(ArrangementGUI.arrangementScaleMidiVelocity.isSelected());
+		gc.setArrangementEnabled(ArrangementGUI.useArrangement.isSelected());
 
 		// macro
 		gc.setScaleMode(ScaleMode.valueOf(scaleMode.getVal()));
 		gc.setSoundbankName((String) soundbankFilename.getEditor().getItem());
-		gc.setPieceLength(Integer.valueOf(pieceLength.getText()));
+		gc.setPieceLength(Integer.valueOf(ArrangementGUI.pieceLength.getText()));
 		if (ChordGUI.chordProgressionLength.getSelectedIndex() < 2) {
 			gc.setFixedDuration(Integer.valueOf(ChordGUI.chordProgressionLength.getVal()));
 		} else {
@@ -8189,9 +8250,9 @@ private void __initCustomChords(int startY, int anchorSide) {
 	}
 
 	public void copyConfigToGUI(GUIConfig gc) {
-		arrSection.setVisible(false);
+		ArrangementGUI.arrSection.setVisible(false);
 		MelodyGUI.randomMelodyOnRegenerate.setSelected(false);
-		arrSection.setSelectedIndex(0);
+		ArrangementGUI.arrSection.setSelectedIndex(0);
 
 		if (!CURRENT_VERSION.equals(gc.getVersion())) {
 			LG.w("Loaded file is for an older version of VibeComposer! Curremt: " + CURRENT_VERSION + ", File version: " + gc.getVersion());
@@ -8212,24 +8273,24 @@ private void __initCustomChords(int startY, int anchorSide) {
 		midiMode.setSelected(gc.isMidiMode());
 
 		// arrangement
-		arrangement = gc.getArrangement();
-		actualArrangement = gc.getActualArrangement();
-		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
-		setActualModel(actualArrangement.convertToActualTableModel());
+		ArrangementGUI.arrangement = gc.getArrangement();
+		ArrangementGUI.actualArrangement = gc.getActualArrangement();
+		ArrangementGUI.scrollableArrangementTable.setModel(ArrangementGUI.arrangement.convertToTableModel());
+		ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
 		//arrSection.setSelectedIndex(0);
-		refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons(ArrangementGUI.actualArrangement.getSections().size());
 
-		arrangementVariationChance.setInt(gc.getArrangementVariationChance());
-		arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
-		arrangementScaleMidiVelocity.setSelected(gc.isScaleMidiVelocityInArrangement());
-		arrangementSeed.setValue(arrangement.getSeed());
-		useArrangement.setSelected(gc.isArrangementEnabled());
-		manualArrangement.setSelected(true);
+		ArrangementGUI.arrangementVariationChance.setInt(gc.getArrangementVariationChance());
+		ArrangementGUI.arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
+		ArrangementGUI.arrangementScaleMidiVelocity.setSelected(gc.isScaleMidiVelocityInArrangement());
+		ArrangementGUI.arrangementSeed.setValue(ArrangementGUI.arrangement.getSeed());
+		ArrangementGUI.useArrangement.setSelected(gc.isArrangementEnabled());
+		ArrangementGUI.manualArrangement.setSelected(true);
 
 		// macro
 		scaleMode.setVal(gc.getScaleMode().toString());
 		soundbankFilename.getEditor().setItem(gc.getSoundbankName());
-		pieceLength.setText(String.valueOf(gc.getPieceLength()));
+		ArrangementGUI.pieceLength.setText(String.valueOf(gc.getPieceLength()));
 		setChordProgressionLength(gc.getFixedDuration());
 
 		transposeScore.setInt(gc.getTranspose());
@@ -8338,7 +8399,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 		ArpGUI.randomArpUseOctaveAdjustments.setSelected(gc.isUseOctaveAdjustments());
 		ArpGUI.randomArpCorrectMelodyNotes.setSelected(gc.isRandomArpCorrectMelodyNotes());
 
-		arrSection.setVisible(true);
+		ArrangementGUI.arrSection.setVisible(true);
 
 		MelodyGUI.combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 		//fixCombinedMelodyTracks();
@@ -8396,8 +8457,8 @@ private void __initCustomChords(int startY, int anchorSide) {
 		affectedPanels.add(panelOrder - 1, ip);
 		removeComboBoxArrows(ip);
 		if (recalcArrangement) {
-			if (actualArrangement != null && actualArrangement.getSections() != null) {
-				actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
+			if (ArrangementGUI.actualArrangement != null && ArrangementGUI.actualArrangement.getSections() != null) {
+				ArrangementGUI.actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
 			}
 		}
 
@@ -8412,7 +8473,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 	}
 
 	public static boolean isCustomSection() {
-		return arrSection != null && arrSection.getSelectedIndex() != 0 && !GLOBAL.equals(arrSection.getVal());
+		return ArrangementGUI.arrSection != null && ArrangementGUI.arrSection.getSelectedIndex() != 0 && !ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal());
 	}
 
 	public static void removeInstPanel(int inst, int order, boolean singleRemove) {
@@ -8423,7 +8484,7 @@ private void __initCustomChords(int startY, int anchorSide) {
 
 		panels.remove(panel);
 
-		actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
+		ArrangementGUI.actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
 
 		vibeComposerGUI.repaint();
 	}
@@ -9151,16 +9212,16 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 
 	public static boolean canRegenerateOnChange() {
 		return sequencer != null && regenerateWhenValuesChange.isSelected()
-				&& !heavyBackgroundTasksInProgress && arrSection.getSelectedIndex() == 0;
+				&& !heavyBackgroundTasksInProgress && ArrangementGUI.arrSection.getSelectedIndex() == 0;
 	}
 
 	public static int calculateSectionMeasureStart(int sectIndex) {
-		if (actualArrangement == null || actualArrangement.getSections() == null
+		if (ArrangementGUI.actualArrangement == null || ArrangementGUI.actualArrangement.getSections() == null
 				|| sliderMeasureStartTimes == null || sliderMeasureStartTimes.isEmpty()
-				|| sectIndex < 0 || sectIndex > actualArrangement.getSections().size()) {
+				|| sectIndex < 0 || sectIndex > ArrangementGUI.actualArrangement.getSections().size()) {
 			return 0;
 		}
-		List<Section> secs = actualArrangement.getSections();
+		List<Section> secs = ArrangementGUI.actualArrangement.getSections();
 		int measureCounter = 0;
 		for (int i = 1; i < secs.size() && i < sectIndex; i++) {
 			measureCounter += secs.get(i).getMeasures();
@@ -9201,15 +9262,15 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 	}
 
 	public static void recolorVariationPopupButton(int sectionOrder) {
-		if (actualArrangement == null || sectionOrder - 1 >= actualArrangement.getSections().size())
+		if (ArrangementGUI.actualArrangement == null || sectionOrder - 1 >= ArrangementGUI.actualArrangement.getSections().size())
 			return;
 
-		for (Component c : VibeComposerGUI.variationButtonsPanel.getComponents()) {
+		for (Component c : ArrangementGUI.variationButtonsPanel.getComponents()) {
 			if (c instanceof JButton) {
 				JButton cbutt = (JButton) c;
 				if (cbutt.getText().equals("Edit " + sectionOrder)) {
 					VibeComposerGUI.recolorVariationPopupButton(cbutt,
-							actualArrangement.getSections().get(sectionOrder - 1));
+							ArrangementGUI.actualArrangement.getSections().get(sectionOrder - 1));
 					break;
 				}
 			}
@@ -9290,7 +9351,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 		while ((n = nextNoteMelody.getNote(nextNoteIndex++)) != null) {
 			if (n.getPitch() >= 1) {
 				playNote(n.getPitch() + transpose, (int) (n.getDuration() * 1000 * 60 / guiConfig.getBpm()),
-						velocity, part, partOrder, actualArrangement.getSections().get(0), true);
+						velocity, part, partOrder, ArrangementGUI.actualArrangement.getSections().get(0), true);
 				break;
 			}
 		}
@@ -9311,7 +9372,7 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 		try {
 			if (part < 4 && transposeNotePreview.isSelected()) {
 				Pair<ScaleMode, Integer> scaleKey = keyChangeAt(
-						actualArrangement.getSections().indexOf(sec));
+						ArrangementGUI.actualArrangement.getSections().indexOf(sec));
 				int extraTranspose = (part > 0) ? ip.getTranspose() : 0;
 				List<Note> notes = Collections.singletonList(new Note(
 						(part > 0) ? pitch : (pitch + ip.getTranspose()), durationMs / 1000.0));
@@ -9442,15 +9503,15 @@ protected void __createRandomChordPanels(int panelCount, boolean onlyAdd,
 	}
 
 	public static Pair<ScaleMode, Integer> keyChangeAt(int sectionIndex) {
-		if (actualArrangement == null || actualArrangement.getSections() == null || sectionIndex < 0
-				|| sectionIndex >= actualArrangement.getSections().size()) {
+		if (ArrangementGUI.actualArrangement == null || ArrangementGUI.actualArrangement.getSections() == null || sectionIndex < 0
+				|| sectionIndex >= ArrangementGUI.actualArrangement.getSections().size()) {
 			return null;
 		}
 
 		ScaleMode lastMode = ScaleMode.valueOf(scaleMode.getVal());
 		int lastKeyChange = 0;
 		for (int i = 0; i < sectionIndex; i++) {
-			Section sec = actualArrangement.getSections().get(i);
+			Section sec = ArrangementGUI.actualArrangement.getSections().get(i);
 			if (sec.isSectionVar(4)) {
 				SectionConfig secC = sec.getSecConfig();
 				lastMode = secC.getCustomScale() != null ? secC.getCustomScale() : lastMode;

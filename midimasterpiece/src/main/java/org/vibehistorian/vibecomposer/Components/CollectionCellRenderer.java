@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
@@ -78,8 +80,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			double widthDividerValue = (width / (double) widthDivider);
 
 			double x = 0;
-			if (section < VibeComposerGUI.actualArrangement.getSections().size()) {
-				Section sec = VibeComposerGUI.actualArrangement.getSections().get(section);
+			if (section < ArrangementGUI.actualArrangement.getSections().size()) {
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(section);
 				double startX = x;
 				double endX = (x + widthDividerValue);
 				int counter = 0;
@@ -131,15 +133,15 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66);
 
 					// highlight copier/copiee
-					if (VibeComposerGUI.copyDragging && (VibeComposerGUI.copyDraggingOrigin != null)
-							&& VibeComposerGUI.copyDraggingOrigin
+					if (ArrangementGUI.copyDragging && (ArrangementGUI.copyDraggingOrigin != null)
+							&& ArrangementGUI.copyDraggingOrigin
 									.equals(Triple.of(part, partOrder, section))) {
 						subcellColor = OMNI.mixColor(subcellColor, Color.green, 0.4);
-					} else if (VibeComposerGUI.highlightedTableCell != null
-							&& VibeComposerGUI.highlightedTableCell
+					} else if (ArrangementGUI.highlightedTableCell != null
+							&& ArrangementGUI.highlightedTableCell
 									.equals(Triple.of(part, partOrder, section))) {
 						subcellColor = OMNI.mixColor(subcellColor,
-								VibeComposerGUI.copyDragging ? Color.red : Color.white, 0.3);
+								ArrangementGUI.copyDragging ? Color.red : Color.white, 0.3);
 						cellDescription = VibeComposerGUI.getInstList(part).get(partOrder)
 								.getInstrumentBox().getVal();
 					}
@@ -224,7 +226,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 
 			g.setColor(new Color(210, 210, 210));
 			if (cellDescription != null
-					&& VibeComposerGUI.arrangementActualTableMousePoint != null) {
+					&& ArrangementGUI.arrangementActualTableMousePoint != null) {
 				g.drawString(cellDescription,
 						width / 2 - SwingUtils.getDrawStringWidth(cellDescription) / 2, 10);
 			}

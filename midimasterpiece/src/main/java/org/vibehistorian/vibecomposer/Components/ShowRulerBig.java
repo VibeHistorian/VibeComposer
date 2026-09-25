@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
@@ -76,9 +78,9 @@ public class ShowRulerBig extends JComponent {
 		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		g.setFont(font);
 		int startOffset = MidiGenerator.START_TIME_DELAY > MidiGenerator.DBL_ERR ? 1 : 0;
-		if (VibeComposerGUI.actualArrangement != null) {
+		if (ArrangementGUI.actualArrangement != null) {
 			double durCounter = startOffset;
-			for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+			for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
 				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150, 200));
 				int xLocStart = (int) Math.round(durCounter * beatWidth);
 				durCounter += (sec.getSectionDuration() > 0 ? sec.getSectionDuration()
@@ -122,9 +124,9 @@ public class ShowRulerBig extends JComponent {
 							ShowRulerBig.maxHeight);
 			}
 		}
-		if (VibeComposerGUI.actualArrangement != null) {
+		if (ArrangementGUI.actualArrangement != null) {
 			double durCounter = startOffset;
-			for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+			for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
 				int xLocStart = (int) Math.round(durCounter * beatWidth);
 				durCounter += (sec.getSectionDuration() > 0 ? sec.getSectionDuration()
 						: MidiGenerator.GENERATED_MEASURE_LENGTH) * sec.getMeasures();

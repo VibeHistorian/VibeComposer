@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
@@ -23,20 +25,20 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 		JPanel panel = new JPanel();
 		panel.add(description);
 
-		int startIndex = VibeComposerGUI.arrSection.getSelectedIndex();
-		for (int i = startIndex; i < VibeComposerGUI.arrSection.getItemCount(); i++) {
-			sectionOptions.addItem(VibeComposerGUI.arrSection.getVal(i));
+		int startIndex = ArrangementGUI.arrSection.getSelectedIndex();
+		for (int i = startIndex; i < ArrangementGUI.arrSection.getItemCount(); i++) {
+			sectionOptions.addItem(ArrangementGUI.arrSection.getVal(i));
 		}
 
 		panel.add(sectionOptions);
 
 		applier.addActionListener(e -> {
             if (sectionOptions.getItemCount() > 0) {
-                VibeComposerGUI.vibeComposerGUI.handleArrangementAction(
+                ArrangementGUI.arrangementGUI.handleArrangementAction(
                         "ArrangementApply," + (sectionOptions.getSelectedIndex() + startIndex),
                         0, 0);
             } else {
-                VibeComposerGUI.vibeComposerGUI.handleArrangementAction("ArrangementApply", 0,
+                ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementApply", 0,
                         0);
             }
             close();
@@ -47,8 +49,8 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 
 		JPanel panelGlobal = new JPanel();
 		panelGlobal.add(VibeComposerGUI.makeButton("Apply to Global", e -> {
-			Section sec = VibeComposerGUI.actualArrangement.getSections()
-					.get(VibeComposerGUI.arrSection.getSelectedIndex() - 1);
+			Section sec = ArrangementGUI.actualArrangement.getSections()
+					.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 			for (int i = 0; i < 5; i++) {
 				List<? extends InstPart> customizedParts = sec.getInstPartList(i);
 				if (customizedParts != null) {

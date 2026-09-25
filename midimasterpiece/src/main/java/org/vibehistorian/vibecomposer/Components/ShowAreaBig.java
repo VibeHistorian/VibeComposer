@@ -28,6 +28,8 @@ see <https://www.gnu.org/licenses/>.
  */
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Constants;
@@ -207,11 +209,11 @@ public class ShowAreaBig extends JComponent {
 										consumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
 										VibeComposerGUI.currentMidiEditorPopup = new MidiEditPopup(
-												VibeComposerGUI.actualArrangement.getSections()
+												ArrangementGUI.actualArrangement.getSections()
 														.get(phrase.secOrder),
 												phrase.part, phrase.partOrder);
 										VibeComposerGUI.currentMidiEditorPopup
-												.setSec(VibeComposerGUI.actualArrangement
+												.setSec(ArrangementGUI.actualArrangement
 														.getSections().get(phrase.secOrder));
 										VibeComposerGUI.currentMidiEditorSectionIndex = phrase.secOrder;
 										return;
@@ -222,11 +224,11 @@ public class ShowAreaBig extends JComponent {
 											SwingUtilities.invokeLater(() -> {
 												VibeComposerGUI.instrumentTabPane.setSelectedIndex(phrase.part);
 												// assume user wants to change Global settings
-												if (VibeComposerGUI.useArrangement.isSelected()) {
-													VibeComposerGUI.arrSection.setSelectedIndex(phrase.secOrder + 1);
-													VibeComposerGUI.arrSection.getButtons().forEach(e -> e.repaint());
-													VibeComposerGUI.arrSection.repaint();
-													VibeComposerGUI.switchTabPaneToScoreAfterApply = true;
+												if (ArrangementGUI.useArrangement.isSelected()) {
+													ArrangementGUI.arrSection.setSelectedIndex(phrase.secOrder + 1);
+													ArrangementGUI.arrSection.getButtons().forEach(e -> e.repaint());
+													ArrangementGUI.arrSection.repaint();
+													ArrangementGUI.switchTabPaneToScoreAfterApply = true;
 												}
 												JComponent toFlash = VibeComposerGUI.getAffectedPanels(phrase.part).get(phrase.partOrder - 1).getInstrumentBox();
 												Timer tmr = new Timer(200, e -> SwingUtils.flashComponentCustom(toFlash,

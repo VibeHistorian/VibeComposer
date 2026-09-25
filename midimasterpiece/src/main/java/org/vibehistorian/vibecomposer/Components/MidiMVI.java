@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -160,9 +162,9 @@ public class MidiMVI extends JComponent {
 			});
 
 			// pattern name must appear in at least one section
-			for (int secIndex = 0; secIndex < VibeComposerGUI.actualArrangement.getSections()
+			for (int secIndex = 0; secIndex < ArrangementGUI.actualArrangement.getSections()
 					.size(); secIndex++) {
-				Section sec = VibeComposerGUI.actualArrangement.getSections().get(secIndex);
+				Section sec = ArrangementGUI.actualArrangement.getSections().get(secIndex);
 				if (sec.containsPattern(partNum, panelOrder)) {
 					String secPatternName = sec.getPattern(partNum, panelOrder).getName();
 					if (StringUtils.isNotEmpty(secPatternName)) {

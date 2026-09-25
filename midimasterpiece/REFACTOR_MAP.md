@@ -80,5 +80,6 @@
 - ChordGUI migration: complete for chord UI state, settings construction, chord tab setup, progression controls, custom chord controls, and randomized chord panel creation. Cross-instrument workflows remain in VibeComposerGUI and access chord state through ChordGUI.
 - ArpGUI migration: complete for arp UI state, settings and tab construction, and randomized arp panel creation. Shared window operations and cross-instrument access are supplied through its context or remain in VibeComposerGUI.
 - DrumGUI migration: complete for drum UI state, generation settings and tab construction, and randomized drum panel creation. Shared window operations and cross-instrument workflows remain in VibeComposerGUI through DrumGUI.Context.
+- ArrangementGUI migration: in progress for arrangement state ownership, control and table initialization, action dispatch, and popup/model helpers. Cross-instrument custom-panel application and table rendering/editing handlers remain in VibeComposerGUI.
 - Phase 1: In progress
 

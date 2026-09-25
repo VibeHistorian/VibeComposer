@@ -499,7 +499,7 @@ public class Section {
 	public void generatePresences(Random presRand, boolean forceAdd) {
 		initPartMapIfNull();
 		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i, VibeComposerGUI.arrangement.getInclMap(), forceAdd);
+			generatePresences(presRand, i, ArrangementGUI.arrangement.getInclMap(), forceAdd);
 		}
 
 	}
@@ -546,7 +546,7 @@ public class Section {
 		if (presence.isEmpty()) {
 			return;
 		}
-		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		int chance = ArrangementGUI.arrangementPartVariationChance.getInt();
 		int added = 0;
 		for (Integer i : presence) {
 			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
@@ -568,7 +568,7 @@ public class Section {
 	public void generateVariationForPartAndOrder(Random presRand, int part, int order,
 			boolean forceAdd) {
 		initPartMapIfNull();
-		int chance = VibeComposerGUI.arrangementPartVariationChance.getInt();
+		int chance = ArrangementGUI.arrangementPartVariationChance.getInt();
 		int added = 0;
 		for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 			if (presRand.nextInt(100) < chance) {

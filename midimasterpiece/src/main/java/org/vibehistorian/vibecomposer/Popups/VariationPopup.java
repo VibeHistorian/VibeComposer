@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -58,8 +60,8 @@ public class VariationPopup {
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, () -> {
-			VibeComposerGUI.manualArrangement.setSelected(true);
-			VibeComposerGUI.manualArrangement.repaint();
+			ArrangementGUI.manualArrangement.setSelected(true);
+			ArrangementGUI.manualArrangement.repaint();
 		});
 
 		addTypesMeasures(sec);
@@ -96,7 +98,7 @@ public class VariationPopup {
 					LG.d("Clicked VariationPopup table cell! " + row + ", " + col);
 					if (col >= 1) {
 						if (SwingUtilities.isMiddleMouseButton(evt)) {
-							for (Section sec : VibeComposerGUI.actualArrangement
+							for (Section sec : ArrangementGUI.actualArrangement
 									.getSections()) {
 								sec.removeVariationForPart(fI, row, col);
 							}
@@ -170,13 +172,13 @@ public class VariationPopup {
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isMiddleMouseButton(e) && col >= 2) {
-						Boolean[] vars = VibeComposerGUI.arrangement.getGlobalVariationMap()
+						Boolean[] vars = ArrangementGUI.arrangement.getGlobalVariationMap()
 								.get(fI);
 						if (vars[col - 1]) {
 							vars[col - 1] = Boolean.FALSE;
 						} else {
 							vars[col - 1] = Boolean.TRUE;
-							for (Section sec : VibeComposerGUI.actualArrangement.getSections()) {
+							for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
 								sec.removeVariationForAllParts(fI, col);
 							}
 						}
@@ -472,7 +474,7 @@ public class VariationPopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				VibeComposerGUI.varPopup = null;
+				ArrangementGUI.varPopup = null;
 				sectionObject.setCustomChords(userChords.getChordListString());
 				sectionObject.setCustomDurations(userChordsDurations.getText());
 				List<Integer> instVolumes = new ArrayList<>();
@@ -480,8 +482,8 @@ public class VariationPopup {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-				VibeComposerGUI.setActualModel(
-						VibeComposerGUI.actualArrangement.convertToActualTableModel(), false);
+				ArrangementGUI.arrangementGUI.setActualModel(
+						ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
 				VibeComposerGUI.recolorVariationPopupButton(sectionOrder);
 			}
 

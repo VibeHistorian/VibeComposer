@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Score;
@@ -341,8 +343,8 @@ public class MidiEditPopup extends CloseablePopup {
 		});
 		regenerateInPlaceOnChange.setFunc(e -> {
 			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
-			VibeComposerGUI.manualArrangement.setSelected(true);
-			VibeComposerGUI.manualArrangement.repaint();
+			ArrangementGUI.manualArrangement.setSelected(true);
+			ArrangementGUI.manualArrangement.repaint();
 		});
 		applyOnLoad.setFunc(e -> {
 			applyOnLoadChoice = applyOnLoad.isSelected();
@@ -621,7 +623,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	private File buildMidiFileFromNotes() {
 		Pair<ScaleMode, Integer> scaleKey = VibeComposerGUI
-				.keyChangeAt(VibeComposerGUI.actualArrangement.getSections().indexOf(sec));
+				.keyChangeAt(ArrangementGUI.actualArrangement.getSections().indexOf(sec));
 
 		PhraseExt phr = mvea.getValues().makePhrase();
 
@@ -663,7 +665,7 @@ public class MidiEditPopup extends CloseablePopup {
 				LG.i("Applied: " + pat.toString());
 
 				repaintMvea();
-				VibeComposerGUI.scrollableArrangementActualTable.repaint();
+				ArrangementGUI.scrollableArrangementActualTable.repaint();
 			} else {
 				LG.e("Failed to apply pattern, null: " + pat.toString());
 			}
@@ -676,7 +678,7 @@ public class MidiEditPopup extends CloseablePopup {
 			VibeComposerGUI.guiConfig.getPatternRaw(pat).setApplied(false);
 			sec.putPattern(part, partOrder, new UsedPattern(part, partOrder, UsedPattern.NONE));
 			repaintMvea();
-			VibeComposerGUI.scrollableArrangementActualTable.repaint();
+			ArrangementGUI.scrollableArrangementActualTable.repaint();
 		}
 	}
 

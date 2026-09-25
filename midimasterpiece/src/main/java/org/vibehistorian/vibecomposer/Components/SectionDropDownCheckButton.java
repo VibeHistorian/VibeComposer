@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ArrangementGUI;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public class SectionDropDownCheckButton extends CheckButton {
 		Arrangement.defaultSections.keySet().forEach(e -> dropDownOptions.add(e));
 
 		SwingUtils.addPopupMenu(this, (evt, e) -> {
-			VibeComposerGUI.vibeComposerGUI.handleArrangementAction("ArrangementAddNewSection," + e,
+			ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementAddNewSection," + e,
 					0, 0);
 			LG.d("popupindex: " + popupIndex);
 		}, e -> {
