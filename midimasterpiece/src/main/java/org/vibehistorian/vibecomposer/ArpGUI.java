@@ -498,7 +498,6 @@ public class ArpGUI implements InstrumentGUIControls {
 			ip.getComboPanel().reapplyShift();
 			ip.getComboPanel().reapplyHits();
 		}
-		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 
 	/** Cleanup method called when this module is no longer needed. */

@@ -21,20 +21,20 @@ package org.vibehistorian.vibecomposer;
 
 import jm.music.data.Phrase;
 import jm.music.tools.Mod;
-import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
+import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -47,7 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -558,8 +557,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		affectedPanels.forEach(panel -> panel.setVisible(true));
 	}
 
-	public void createRandomMelodyPanels(int panelCount, boolean onlyAdd,
-			MelodyPanel randomizedPanel) {
+	public void createRandomMelodyPanels(int panelCount, boolean onlyAdd) {
 		createRandomMelodyPanels(new Random().nextInt(), panelCount, onlyAdd, null);
 	}
 
@@ -633,6 +631,5 @@ public class MelodyGUI implements InstrumentGUIControls {
 				panel.setMidiChannel(Constants.TYPICAL_MIDI_CH.get(0).get((panelOrder - 1) % 3));
 			}
 		}
-		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 }

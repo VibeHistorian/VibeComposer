@@ -160,8 +160,7 @@ public class BassGUI implements InstrumentGUIControls {
         return bassParentPanel;
     }
 
-    public void createRandomBassPanels(int panelCount, boolean onlyAdd,
-            BassPanel randomizedPanel) {
+    public void createRandomBassPanels(int panelCount, boolean onlyAdd) {
         createRandomBassPanels(new Random().nextInt(), panelCount, onlyAdd, null);
     }
 
@@ -257,7 +256,6 @@ public class BassGUI implements InstrumentGUIControls {
                 ip.setMidiChannel(9);
             }
         }
-        VibeComposerGUI.vibeComposerGUI.repaint();
     }
     
     /**

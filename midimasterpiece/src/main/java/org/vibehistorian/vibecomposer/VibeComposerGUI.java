@@ -2844,8 +2844,8 @@ public static final String CURRENT_VERSION = "2.6";
 		// MELODY
 		if (!regenerate && MelodyGUI.generateMelodiesOnCompose.isSelected()) {
 			int seed = getCurrentSeed();
-			melodyGUI.createRandomMelodyPanels(seed != 0 ? seed : new Random().nextInt(), melodyGUI.getPanels().size(),
-					false, null);
+			createPanels(0, melodyGUI.getPanels().size(), false,
+					seed != 0 ? seed : new Random().nextInt(), null);
 		}
 
 		if (!regenerate && ExtraSettingsGUI.randomizeTimingsOnCompose.isSelected()) {
@@ -5033,17 +5033,15 @@ public static final String CURRENT_VERSION = "2.6";
 	private void randomizePanel(InstPanel panel) {
 		int partNum = panel.getPartNum();
 		if (partNum == 0) {
-			melodyGUI.createRandomMelodyPanels(new Random().nextInt(), melodyGUI.getPanels().size() + 1, true,
-					(MelodyPanel) panel);
+			createPanels(partNum, melodyGUI.getPanels().size() + 1, true, new Random().nextInt(), panel);
 		} else if (partNum == 1) {
 
 		} else if (partNum == 2) {
-			chordGUI.createRandomChordPanels(chordGUI.getPanels().size() + 1, true,
-					(ChordPanel) panel);
+			createPanels(partNum, chordGUI.getPanels().size() + 1, true, null, panel);
 		} else if (partNum == 3) {
-			arpGUI.createRandomArpPanels(arpGUI.getPanels().size() + 1, true, (ArpPanel) panel);
+			createPanels(partNum, arpGUI.getPanels().size() + 1, true, null, panel);
 		} else if (partNum == 4) {
-			drumGUI.createRandomDrumPanels(drumGUI.getPanels().size() + 1, true, (DrumPanel) panel);
+			createPanels(partNum, drumGUI.getPanels().size() + 1, true, null, panel);
 		}
 	}
 
@@ -5055,19 +5053,35 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	private void createPanels(int part, int panelCount, boolean onlyAdd) {
+		createPanels(part, panelCount, onlyAdd, null, null);
+	}
+
+	private void createPanels(int part, int panelCount, boolean onlyAdd, Integer seed,
+			InstPanel randomizedPanel) {
 		if (part == 0) {
-			melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd, null);
+			if (seed == null) {
+				melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd);
+			} else {
+				melodyGUI.createRandomMelodyPanels(seed, panelCount, onlyAdd,
+						(MelodyPanel) randomizedPanel);
+			}
 		} else if (part == 1) {
-			bassGUI.createRandomBassPanels(panelCount, onlyAdd, null);
+			if (seed == null) {
+				bassGUI.createRandomBassPanels(panelCount, onlyAdd);
+			} else {
+				bassGUI.createRandomBassPanels(seed, panelCount, onlyAdd,
+						(BassPanel) randomizedPanel);
+			}
 		} else if (part == 2) {
-			chordGUI.createRandomChordPanels(panelCount, onlyAdd, null);
+			chordGUI.createRandomChordPanels(panelCount, onlyAdd, (ChordPanel) randomizedPanel);
 		} else if (part == 3) {
-			arpGUI.createRandomArpPanels(panelCount, onlyAdd, null);
+			arpGUI.createRandomArpPanels(panelCount, onlyAdd, (ArpPanel) randomizedPanel);
 		} else if (part == 4) {
-			drumGUI.createRandomDrumPanels(panelCount, onlyAdd, null);
+			drumGUI.createRandomDrumPanels(panelCount, onlyAdd, (DrumPanel) randomizedPanel);
 		} else {
 			throw new IllegalArgumentException("Unsupported panel part!");
 		}
+		repaint();
 	}
 
 

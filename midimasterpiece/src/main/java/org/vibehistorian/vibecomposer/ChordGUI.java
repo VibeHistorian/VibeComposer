@@ -875,7 +875,6 @@ public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			}
 		}
 
-		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 
     /** Cleanup method called when this module is no longer needed. */

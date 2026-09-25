@@ -459,7 +459,6 @@ public class DrumGUI implements InstrumentGUIControls {
 			System.out.print(drumHitGrid[i] + ", ");
 		}*/
 
-		VibeComposerGUI.vibeComposerGUI.repaint();
 	}
 	private void setupBlueprintedDrum(Random panelGenerator, int slide, int swingPercent,
 			List<Integer> pitches, int panelIndex, DrumPanel ip) {
