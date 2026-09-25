@@ -1316,8 +1316,8 @@ public class MidiGenerator implements JMC {
 			boolean allowCombination, boolean transposeBCA) {
 		int trackCounter = 1;
 
-		List<Integer> partPadding = VibeComposerGUI.padGeneratedMidi.isSelected()
-				? VibeComposerGUI.padGeneratedMidiValues.getValues()
+		List<Integer> partPadding = ExtraSettingsGUI.padGeneratedMidi.isSelected()
+				? ExtraSettingsGUI.padGeneratedMidiValues.getValues()
 				: new ArrayList<>();
 		int lastPartTrackCount = 1;
 		for (int i = 0; i < melodyParts.size(); i++) {

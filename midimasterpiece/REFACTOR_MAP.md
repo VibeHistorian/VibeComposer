@@ -68,8 +68,8 @@
 - [x] Drum
 - [x] Arrangement
 - [x] Score
-- [ ] ExtraSettings
-- [ ] Generation
+- [x] ExtraSettings
+- [x] Generation
 - [ ] Core/CoreGUI
 
 
@@ -82,5 +82,7 @@
 - DrumGUI migration: complete for drum UI state, generation settings and tab construction, and randomized drum panel creation. Shared window operations and cross-instrument workflows remain in VibeComposerGUI through DrumGUI.Context.
 - ArrangementGUI migration: in progress for arrangement state ownership, control and table initialization, action dispatch, and popup/model helpers. Cross-instrument custom-panel application and table rendering/editing handlers remain in VibeComposerGUI.
 - ScoreGUI migration: complete for score UI state, score tab and display settings, score rendering initialization, and popup toggling. Playback and MIDI workflows remain in VibeComposerGUI and access score state through ScoreGUI.
+- ExtraSettingsGUI migration: complete for extra settings state, settings window construction, and score/MIDI, instrument, pause, BPM, display, humanization, and compose settings panels. Shared window actions are supplied through its context. Generation-specific settings controls are owned by GenerationGUI.
+- GenerationGUI migration: complete for generation settings construction and controls. Generation workflows remain in VibeComposerGUI and other modules, which access the controls through GenerationGUI.
 - Phase 1: In progress
 

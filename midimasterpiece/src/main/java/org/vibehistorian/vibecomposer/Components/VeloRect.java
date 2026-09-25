@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
+
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
@@ -233,7 +235,7 @@ public class VeloRect extends JComponent {
 			g.drawRect(minX, 0, xWidth, height);
 
 
-			if (isEnabled() && VibeComposerGUI.displayVeloRectValues.isSelected()) {
+			if (isEnabled() && ExtraSettingsGUI.displayVeloRectValues.isSelected()) {
 				g.setColor(OMNI.alphen(Color.black, 127));
 				String value = String.valueOf(val);
 				if (value.length() == 1) {

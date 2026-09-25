@@ -19,6 +19,9 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer.Panels;
 
+import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
+import org.vibehistorian.vibecomposer.GenerationGUI;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.InstComboBox;
@@ -224,7 +227,7 @@ public abstract class InstPanel extends JPanel {
 				newPanel.setPatternSeed(getPatternSeed());
 
 				// for MMB, intention is to split into 2 to modify the 2 pattern halves separately, but typically for one instrument
-				if (!VibeComposerGUI.reuseMidiChannelAfterCopy.isSelected() && !SwingUtilities.isMiddleMouseButton(e)) {
+				if (!GenerationGUI.reuseMidiChannelAfterCopy.isSelected() && !SwingUtilities.isMiddleMouseButton(e)) {
 					switch (VibeComposerGUI.instrumentTabPane.getSelectedIndex()) {
 					case 0:
 						newPanel.setNextFreeMidiChannel();
@@ -293,7 +296,7 @@ public abstract class InstPanel extends JPanel {
 
 
 		addBackgroundsForKnobs();
-		toggleComponentTexts(VibeComposerGUI.isShowingTextInKnobs);
+		toggleComponentTexts(ExtraSettingsGUI.isShowingTextInKnobs);
 	}
 
 	public void setNextFreeMidiChannel() {
@@ -792,7 +795,7 @@ public abstract class InstPanel extends JPanel {
 
 	public void applyPauseChance(Random randGen) {
 		if (getPauseChance() > 0 && getPattern() != RhythmPattern.MELODY1
-				&& VibeComposerGUI.patternApplyPausesWhenGenerating.isSelected()) {
+				&& GenerationGUI.patternApplyPausesWhenGenerating.isSelected()) {
 			long totalAvailable = getComboPanel().getTruePattern().subList(0, getHitsPerPattern())
 					.stream().filter(e -> e > 0).count();
 			for (int j = 0; j < getHitsPerPattern() && totalAvailable >= 2; j++) {

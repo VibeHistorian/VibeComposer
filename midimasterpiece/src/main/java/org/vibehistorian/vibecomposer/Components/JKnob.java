@@ -1,5 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
+import org.vibehistorian.vibecomposer.GenerationGUI;
+
 
 // Imports for the GUI classes.
 
@@ -359,7 +362,7 @@ public class JKnob extends JComponent
 		int intVal = min + (int) Math.round(val * diff);
 		int smallestDiff = Integer.MAX_VALUE;
 		int smallestInt = 0;
-		if (tickSpacing > 0 && !VibeComposerGUI.allowValuesOutOfRange.isSelected()) {
+		if (tickSpacing > 0 && !GenerationGUI.allowValuesOutOfRange.isSelected()) {
 			for (Integer i : tickThresholds) {
 				int currentDiff = Math.abs(intVal - i);
 				if (smallestDiff > currentDiff) {
@@ -500,7 +503,7 @@ public class JKnob extends JComponent
 			Point mouseLoc = e.getPoint();
 			pressedOnSpot = isOnCenter(mouseLoc);
 			if (pressedOnSpot) {
-				fine = VibeComposerGUI.knobControlByDragging.isSelected() || e.isShiftDown();
+				fine = ExtraSettingsGUI.knobControlByDragging.isSelected() || e.isShiftDown();
 				fineStart = curr;
 				startPoint = new Point(SwingUtils.getMouseLocation());
 				SwingUtilities.convertPointFromScreen(startPoint, JKnob.this);

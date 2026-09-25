@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import org.vibehistorian.vibecomposer.ArrangementGUI;
+import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
@@ -317,7 +318,7 @@ public class VariationPopup {
 			int val = sec.getVol(i);
 			KnobPanel panel = new DetachedKnobPanel(Constants.instNames[i], 100, 20, 150);
 			panel.setInt(val);
-			panel.setShowTextInKnob(VibeComposerGUI.isShowingTextInKnobs);
+			panel.setShowTextInKnob(ExtraSettingsGUI.isShowingTextInKnobs);
 			panel.addBackgroundWithBorder(OMNI.alphen(Constants.instColors[i], 50));
 			knobs.add(panel);
 			instVolumesPanel.add(panel);

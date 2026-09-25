@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
+import org.vibehistorian.vibecomposer.GenerationGUI;
+
 import org.vibehistorian.vibecomposer.ScoreGUI;
 
 import org.vibehistorian.vibecomposer.ArrangementGUI;
@@ -635,7 +637,7 @@ public class MidiEditPopup extends CloseablePopup {
 		if (scaleKey != null) {
 			MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
 					scaleKey.getLeft().noteAdjustScale,
-					VibeComposerGUI.transposedNotesForceScale.isSelected());
+					GenerationGUI.transposedNotesForceScale.isSelected());
 			extraTranspose = scaleKey.getRight();
 		}
 		final int finalExtraTranspose = extraTranspose;
