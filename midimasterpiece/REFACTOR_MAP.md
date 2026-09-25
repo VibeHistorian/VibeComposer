@@ -79,10 +79,89 @@
 - ChordGUI migration: complete for chord UI state, settings construction, chord tab setup, progression controls, custom chord controls, and randomized chord panel creation. Cross-instrument workflows remain in VibeComposerGUI and access chord state through ChordGUI.
 - ArpGUI migration: complete for arp UI state, settings and tab construction, and randomized arp panel creation. Shared window operations and cross-instrument access are supplied through its context or remain in VibeComposerGUI.
 - DrumGUI migration: complete for drum UI state, generation settings and tab construction, and randomized drum panel creation. Shared window operations and cross-instrument workflows remain in VibeComposerGUI through DrumGUI.Context.
-- ArrangementGUI migration: in progress for arrangement state ownership, control and table initialization, action dispatch, and popup/model helpers. Cross-instrument custom-panel application and table rendering/editing handlers remain in VibeComposerGUI.
+- ArrangementGUI migration: complete for arrangement state ownership, control and table initialization, action dispatch, and popup/model helpers. Cross-instrument custom-panel application and table rendering/editing handlers remain in VibeComposerGUI as coordinator work.
 - ScoreGUI migration: complete for score UI state, score tab and display settings, score rendering initialization, and popup toggling. Playback and MIDI workflows remain in VibeComposerGUI and access score state through ScoreGUI.
 - ExtraSettingsGUI migration: complete for extra settings state, settings window construction, and all popup panels, including Generation. Shared window actions are supplied through its context.
 - GenerationGUI migration: complete for the main-window randomization and macro panels built by `initRandomButtons` and `initMacroParams`. Cross-instrument actions remain in VibeComposerGUI and are supplied through GenerationGUI.Context.
 - Deprecated `__` migration scaffolding cleanup: complete. Removed legacy fields, obsolete method copies, and GUI compatibility sync methods from `VibeComposerGUI`; no active source files reference `__` members. Verified with `mvn -DskipTests compile`.
 - COMPLETED
+
+***************************************************************
+
+# Next Phase Plan - Ownership and Shared State
+
+## Assessment
+
+The first extraction phase has established feature GUI classes and reduced `VibeComposerGUI.java` from about 10.5k to about 7.1k lines. The remaining size is driven less by feature construction and more by coordination, application state, and cross-module access:
+
+- `VibeComposerGUI` still owns broad static state for theme, layout, active configuration, playback, MIDI editing, undo, and the application window. A source scan finds about 300 active `VibeComposerGUI` references across `Components`, `Panels`, and `Popups`, so this coupling needs staged migration.
+- `MelodyGUI`, `BassGUI`, `ChordGUI`, `ArpGUI`, and `DrumGUI` receive five shared arrays through their `Context` interfaces (`addInst`, group filters, add buttons, generate buttons, and generation counts), then select their own element by instrument index. This leaks the parent’s indexing scheme into each feature module.
+- `copyGUItoConfig` and `copyConfigToGUI` in `VibeComposerGUI` map settings for all GUI modules. The classes already own the controls, but not their save/load mapping.
+- `GUIConfig` is a JAXB persistence object with a flat field/getter shape. Restructuring it would affect saved preset compatibility and is not required to give GUI modules ownership of their mappings.
+- `VibeComposerCoreGUI` is currently an empty skeleton. It should not become a new catch-all for state simply because the former parent class is large.
+
+## Target boundaries
+
+1. **Instrument GUI ownership:** each instrument GUI owns its enabled checkbox, group filter, add/generate buttons, generation count field, and panel collection. Cross-instrument code uses a small typed API when it truly needs to visit all instruments; feature modules no longer receive arrays and index into them.
+2. **Config mapping ownership:** `GUIConfig` remains the persistence DTO and keeps its existing serialized field names. Each feature GUI implements focused `saveToConfig(GUIConfig)` and `loadFromConfig(GUIConfig)` operations for its own settings and parts. `VibeComposerGUI` coordinates the order of those calls and application-wide sequencing.
+3. **Shared state ownership:** classify shared values before moving them: immutable constants, user preferences/theme, window metrics, playback runtime, active configuration/history, and application services have different lifetimes and owners. Extract focused owners for these concerns; do not replace `VibeComposerGUI` with one mutable `GlobalState` bag.
+4. **Application access:** gradually replace component-level reads and callbacks through `VibeComposerGUI` static fields with narrow injected services or callbacks. Keep cross-feature workflows in a coordinator until a cohesive workflow has a clear owner.
+5. **Composition root:** after the above boundaries settle, keep `VibeComposerGUI` responsible for window lifecycle, assembling modules, and coordinating workflows that span modules. Use `VibeComposerCoreGUI` only for actual shared UI composition and helpers.
+
+## Work sequence
+
+### 2.1 Replace instrument-indexed UI arrays
+
+- Add the corresponding control fields to each instrument GUI and create the controls there.
+- Replace the five array getters in each instrument `Context` with either no dependency or a narrow callback for the few operations that still belong to the window coordinator.
+- Update shared operations such as enable/disable, counts, and configuration mapping to use typed module accessors. Preserve the existing instrument order at public boundaries during this pass to avoid mixing an enum migration into the ownership change.
+- Remove the parent-owned arrays after all callers have moved. Keep the instrument modules’ panel lists instance-owned as part of the same boundary, then migrate remaining static callers in a follow-up sweep.
+
+**Done when:** no instrument GUI receives a multi-instrument UI array or chooses its controls with `[0]` through `[4]`; each control has one owning instrument GUI.
+
+### 2.2 Move config transfer beside the controls
+
+- Extract melody, bass, chord, arp, drum, arrangement, score, generation, and extra-settings portions of the two bulk copy methods into their owning modules.
+- Keep application-level ordering in `VibeComposerGUI`: validate version, prepare dependent state, load module settings, recreate panels, then run derived-state refreshes. Make ordering explicit because the current load path mixes control values, panel creation, and derived updates.
+- Keep the flat `GUIConfig` JAXB model and XML names stable in this phase. Do not put Swing controls or GUI-module instances inside `GUIConfig`.
+- Once module operations are complete, reduce the parent methods to orchestration and shared settings that have no feature owner.
+
+**Done when:** each feature module can populate its own portion of a supplied config and restore its own UI from one, while existing preset files retain the same persistence shape.
+
+### 2.3 Extract shared state by lifetime and behavior
+
+Inventory each static field and assign it to one of these categories before changing references:
+
+- **Immutable presentation constants:** colors, default dimensions, and table widths belong in focused constants/theme definitions; keep mutable active theme choices separate.
+- **Window and theme preferences:** dark/light mode, monitor mode, dynamic palette, and window metrics belong to a UI preferences/theme owner.
+- **Playback runtime:** sequencer, slider position and ranges, current time/section, pause bookkeeping, and MIDI event queues belong with playback control and presentation.
+- **Application/session services:** active config/history, MIDI editor session, undo managers, and application callbacks need explicit app-level owners rather than module statics.
+- **Feature state:** arrangement, score, and instrument data stays with the feature modules that own it.
+
+Move one category at a time, migrate its callers, then remove its old static field. Prefer instance ownership and constructor/context injection. A temporary forwarding API may keep each step buildable, but it should have a tracked removal point.
+
+### 2.4 Remove direct main-window coupling from shared components
+
+- Start with high-fan-out families (`Components`, `Panels`, and `Popups`) and replace direct `VibeComposerGUI` lookups with the smallest needed dependency: a theme provider, playback access, panel actions, or popup/window services.
+- Keep callbacks narrow and behavior-based; do not pass the whole `VibeComposerGUI` or a generic service locator into every component.
+- Migrate constructors and callers in groups so each group compiles before continuing.
+
+**Done when:** shared components can be constructed with the dependencies they use and do not need to find the main window through static access.
+
+### 2.5 Re-home remaining coordinator workflows
+
+After ownership and state seams are clear, inspect remaining large method groups in `VibeComposerGUI` and move cohesive workflows such as playback/MIDI lifecycle, instrument-panel management, and arrangement-wide actions to focused controllers or feature modules. Leave genuinely cross-feature decisions in the window coordinator.
+
+## Phase completion criteria
+
+- Instrument GUIs own their controls and panel state without indexed control arrays.
+- Each GUI feature saves and restores its own config fields; `GUIConfig` keeps its existing persisted format.
+- Mutable theme, playback, and session state have explicit owners and are not stored as unrelated static fields on `VibeComposerGUI`.
+- Shared components use narrow dependencies instead of locating the main window globally.
+- `VibeComposerGUI` is primarily the window composition root and cross-feature coordinator; `VibeComposerCoreGUI` has only a defined shared-UI responsibility.
+- Compile after each work sequence and check representative preset load/save flows before removing any compatibility forwarding API.
+
+## Recommended first implementation slice
+
+Start with **2.1**, limited to the five shared instrument-control arrays. It is a concrete ownership leak repeated across all five instrument GUIs, can be migrated without changing the persisted config format, and establishes the typed access pattern needed by 2.2. Then move config mappings feature-by-feature, beginning with one module and retaining the same load/save behavior before broadening the change.
 

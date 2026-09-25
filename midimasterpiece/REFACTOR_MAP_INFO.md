@@ -21,6 +21,7 @@
 - Arrangement state is exposed as static fields on `ArrangementGUI` while callers across the application are being migrated. Keep new arrangement references on `ArrangementGUI`.
 - Keep workflows that coordinate multiple instrument types in `VibeComposerGUI`; pass only the shared operations a module needs through its context interface.
 - Update component and popup callers when a moved field changes owner. Search the whole `src/main/java` tree, excluding the migration backup when checking active references.
+- The first extraction phase is complete. The next phase plan is recorded in `REFACTOR_MAP.md` under **Ownership and Shared State**. Treat static feature fields and broad context APIs as migration scaffolding to reduce gradually; do not add new global state or pass the main window as a general-purpose context.
 
 ## Effective commands
 
