@@ -117,6 +117,10 @@ Move one category at a time, migrate its callers, then remove its old static fie
 
 After ownership and state seams are clear, inspect remaining large method groups in `VibeComposerGUI` and move cohesive workflows such as playback/MIDI lifecycle, instrument-panel management, and arrangement-wide actions to focused controllers or feature modules. Leave genuinely cross-feature decisions in the window coordinator.
 
+### 2.6 Tackle VibeComposerGUI references in non-UI (model) classes
+
+Generator and model classes may still be referencing VibeComposerGUI out of convenience - these should be decoupled while preserving the functionality (e.g. midi generation feeding back the sequencer track numbers which should be set/enabled for the main sequencer for solo/mute purposes).
+
 ## Phase completion criteria
 
 - Instrument GUIs own their controls and panel state without indexed control arrays.
