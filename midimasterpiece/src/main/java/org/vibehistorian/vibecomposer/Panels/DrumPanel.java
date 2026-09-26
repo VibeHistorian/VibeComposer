@@ -24,17 +24,17 @@ public class DrumPanel extends InstPanel {
 
 	private final JCheckBox isVelocityPattern = new CustomCheckBox("Ghosts", true);
 
-	public void initComponents(ActionListener l) {
+	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
 		instrument.setScrollEnabled(false);
 		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
-		initDefaults(l);
+		initDefaults(l, soloMuterContext);
 		//this.add(new JLabel("#"));
 		this.add(panelOrder);
-		addDefaultInstrumentControls();
+		addDefaultInstrumentControls(soloMuterContext);
 		addDefaultPanelButtons();
 
 		this.add(chordSpanFillPanel);
@@ -108,8 +108,8 @@ public class DrumPanel extends InstPanel {
 		initDefaultsPost();
 	}
 
-	public DrumPanel(ActionListener l) {
-		initComponents(l);
+	public DrumPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
+		initComponents(l, soloMuterContext);
 	}
 
 	public DrumPart toDrumPart(int lastRandomSeed) {

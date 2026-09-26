@@ -203,6 +203,7 @@ Every mutable `VibeComposerGUI` static field now has a focused owner or a define
 - **2.4.4 Part preset management:** `PartManagerPanel` receives save, load, and count-recalculation operations through a focused context supplied by the instrument GUIs.
 - **2.4.5 Arrangement rendering:** `CollectionCellRenderer` receives panel-list and absolute-order lookups from `ArrangementGUI.Context`.
 - **2.4.6 Score playback actions:** `ShowPanelBig` receives slider and pause callbacks through `ScoreGUI.Context`; `ScoreGUI.pianoRoll()` is now instance-owned.
-- Remaining coupling in `JKnob`, combo controls, instrument panel lifecycle, solo/mute controls, score rendering, and MIDI editing is still in scope. Phase 2.4 is in progress.
-- Verification: `mvn -DskipTests compile` succeeds for the current slice. Tests were skipped.
+- **2.4.7 Solo/mute controls:** `SoloMuter` sends solo and mute toggle events through an injected context. The window coordinates group-wide state changes, sequence recalculation flags, and score refreshes; `SoloMuter` no longer looks up `VibeComposerGUI`, `ShowPanelBig`, or `ScoreGUI` statically. Instrument-panel construction supplies this context to single, group, and global controls.
+- Remaining coupling in `JKnob`, combo controls, instrument panel lifecycle, score rendering, and MIDI editing is still in scope. Phase 2.4 is in progress.
+- Verification: `mvn -DskipTests compile` succeeds for this slice. Tests were skipped.
 

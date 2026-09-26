@@ -30,20 +30,20 @@ public class ArpPanel extends InstPanel {
 	private final CheckButton arpContourChordMode = new CheckButton("C", true);
 	private final KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
-	public void initComponents(ActionListener l) {
+	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
 
 		instrument.initInstPool(instPool);
 		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
 		midiChannel.setVal(2);
 
-		initDefaults(l);
+		initDefaults(l, soloMuterContext);
 		volSlider.setDefaultValue(50);
 		this.add(volSlider);
 		this.add(panSlider);
 		//this.add(new JLabel("#"));
 		this.add(panelOrder);
-		addDefaultInstrumentControls();
+		addDefaultInstrumentControls(soloMuterContext);
 		addDefaultPanelButtons();
 
 		this.add(transpose);
@@ -126,8 +126,8 @@ public class ArpPanel extends InstPanel {
 		arpPatternRotate.setShowTextInKnob(b);
 	}
 
-	public ArpPanel(ActionListener l) {
-		initComponents(l);
+	public ArpPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
+		initComponents(l, soloMuterContext);
 
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d);

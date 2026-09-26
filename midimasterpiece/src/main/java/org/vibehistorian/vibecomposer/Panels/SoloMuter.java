@@ -3,11 +3,6 @@ package org.vibehistorian.vibecomposer.Panels;
 import org.vibehistorian.vibecomposer.SoloMuteState;
 import org.vibehistorian.vibecomposer.UITheme;
 
-import org.vibehistorian.vibecomposer.ScoreGUI;
-
-import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
@@ -17,6 +12,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class SoloMuter extends JPanel {
+	public interface Context {
+		void onSoloToggled(SoloMuter soloMuter, boolean recalculate);
+		void onMuteToggled(SoloMuter soloMuter, boolean recalculate);
+	}
 
 	public enum Type {
 		SINGLE, GROUP, GLOBAL;
@@ -45,9 +44,11 @@ public class SoloMuter extends JPanel {
 	public State soloState = State.OFF;
 	public State muteState = State.OFF;
 	public SoloMuter smParent = null;
+	private final Context context;
 
-	public SoloMuter(Integer inst, Type type) {
+	public SoloMuter(Integer inst, Type type, Context context) {
 		super();
+		this.context = context;
 		setOpaque(false);
 		this.type = type;
 		if (type == Type.GROUP) {
@@ -105,40 +106,7 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void toggleSolo(boolean recalc) {
-		if (soloState != State.OFF) {
-			unsolo();
-			if (type == Type.SINGLE) {
-				VibeComposerGUI.recalcGroupSolo(inst);
-				VibeComposerGUI.recalcGlobals();
-			} else if (type == Type.GROUP) {
-				VibeComposerGUI.unsoloGroup(this, true);
-				VibeComposerGUI.recalcGlobals();
-			} else {
-				VibeComposerGUI.unsoloAllTracks(true);
-			}
-		} else {
-			if (type == Type.SINGLE) {
-				solo();
-				smParent.solo();
-				smParent.smParent.solo();
-			} else if (type == Type.GROUP) {
-				VibeComposerGUI.soloGroup(this);
-			} else {
-				// do nothing
-			}
-		}
-
-		if (recalc) {
-			if (VibeComposerGUI.sequenceReady()) {
-				SoloMuteState.needToRecalculateSoloMuters = true;
-			} else {
-				SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
-			}
-			if (ShowPanelBig.soloMuterHighlight != null
-					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.setScore());
-			}
-		}
+		context.onSoloToggled(this, recalc);
 	}
 
 	public void solo() {
@@ -159,41 +127,7 @@ public class SoloMuter extends JPanel {
 	}
 
 	public void toggleMute(boolean recalc) {
-		if (muteState != State.OFF) {
-			unmute();
-			if (type == Type.SINGLE) {
-				VibeComposerGUI.recalcGroupMute(inst);
-				VibeComposerGUI.recalcGlobals();
-			} else if (type == Type.GROUP) {
-				VibeComposerGUI.unmuteGroup(this, true);
-				VibeComposerGUI.recalcGlobals();
-			} else {
-				VibeComposerGUI.unmuteAllTracks(true);
-			}
-		} else {
-
-			if (type == Type.SINGLE) {
-				mute();
-				smParent.mute();
-				smParent.smParent.mute();
-			} else if (type == Type.GROUP) {
-				VibeComposerGUI.muteGroup(this);
-			} else {
-				// do nothing
-			}
-		}
-		if (recalc) {
-			if (VibeComposerGUI.sequenceReady()) {
-				SoloMuteState.needToRecalculateSoloMuters = true;
-			} else {
-				SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
-
-			}
-			if (ShowPanelBig.soloMuterHighlight != null
-					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.update());
-			}
-		}
+		context.onMuteToggled(this, recalc);
 	}
 
 	public void mute() {

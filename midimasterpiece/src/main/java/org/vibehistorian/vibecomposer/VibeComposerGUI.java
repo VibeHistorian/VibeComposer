@@ -92,7 +92,7 @@ import static org.vibehistorian.vibecomposer.UITheme.*;
 
 // main class
 public class VibeComposerGUI extends JFrame
-		implements ActionListener, ItemListener, WindowListener {
+		implements ActionListener, ItemListener, WindowListener, SoloMuter.Context {
 
 	private static final long serialVersionUID = -677536546851756969L;
 
@@ -882,7 +882,7 @@ public static final String CURRENT_VERSION = "2.6";
 		mainButtonsPanel.add(new JLabel("Ch."));
 		mainButtonsPanel.add(globalChorusSlider);
 
-		globalSoloMuter = new SoloMuter(-1, SoloMuter.Type.GLOBAL);
+		globalSoloMuter = new SoloMuter(-1, SoloMuter.Type.GLOBAL, this);
 
 		mainButtonsPanel.add(globalSoloMuter);
 		globalSoloMuter.setBackground(null);
@@ -1091,7 +1091,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 		groupSoloMuters = new ArrayList<>();
 		for (int i = 0; i < 5; i++) {
-			SoloMuter sm = new SoloMuter(i, SoloMuter.Type.GROUP);
+			SoloMuter sm = new SoloMuter(i, SoloMuter.Type.GROUP, this);
 			groupSoloMuters.add(sm);
 			soloMuterTrackControlPanel.add(sm);
 		}
@@ -4304,6 +4304,74 @@ public static final String CURRENT_VERSION = "2.6";
 		return (sequencer != null) && (sequencer.isOpen()) && (sequencer.getSequence() != null);
 	}
 
+	@Override
+	public void onSoloToggled(SoloMuter soloMuter, boolean recalculate) {
+		if (soloMuter.soloState != State.OFF) {
+			soloMuter.unsolo();
+			if (soloMuter.type == SoloMuter.Type.SINGLE) {
+				recalcGroupSolo(soloMuter.inst);
+				recalcGlobals();
+			} else if (soloMuter.type == SoloMuter.Type.GROUP) {
+				unsoloGroup(soloMuter, true);
+				recalcGlobals();
+			} else {
+				unsoloAllTracks(true);
+			}
+		} else if (soloMuter.type == SoloMuter.Type.SINGLE) {
+			soloMuter.solo();
+			soloMuter.smParent.solo();
+			soloMuter.smParent.smParent.solo();
+		} else if (soloMuter.type == SoloMuter.Type.GROUP) {
+			soloGroup(soloMuter);
+		}
+
+		if (recalculate) {
+			if (sequenceReady()) {
+				needToRecalculateSoloMuters = true;
+			} else {
+				needToRecalculateSoloMutersAfterSequenceGenerated = true;
+			}
+			if (ShowPanelBig.soloMuterHighlight != null
+					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.setScore());
+			}
+		}
+	}
+
+	@Override
+	public void onMuteToggled(SoloMuter soloMuter, boolean recalculate) {
+		if (soloMuter.muteState != State.OFF) {
+			soloMuter.unmute();
+			if (soloMuter.type == SoloMuter.Type.SINGLE) {
+				recalcGroupMute(soloMuter.inst);
+				recalcGlobals();
+			} else if (soloMuter.type == SoloMuter.Type.GROUP) {
+				unmuteGroup(soloMuter, true);
+				recalcGlobals();
+			} else {
+				unmuteAllTracks(true);
+			}
+		} else if (soloMuter.type == SoloMuter.Type.SINGLE) {
+			soloMuter.mute();
+			soloMuter.smParent.mute();
+			soloMuter.smParent.smParent.mute();
+		} else if (soloMuter.type == SoloMuter.Type.GROUP) {
+			muteGroup(soloMuter);
+		}
+
+		if (recalculate) {
+			if (sequenceReady()) {
+				needToRecalculateSoloMuters = true;
+			} else {
+				needToRecalculateSoloMutersAfterSequenceGenerated = true;
+			}
+			if (ShowPanelBig.soloMuterHighlight != null
+					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.update());
+			}
+		}
+	}
+
 	public void recalculateGeneratorAndTabCounts() {
 		recalculateGenerationCounts();
 		recalculateTabPaneCounts();
@@ -4825,7 +4893,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 	public InstPanel addInstPanelToLayout(int part, InstPart initializingPart,
 			boolean recalcArrangement) {
-		InstPanel ip = InstPanel.makeInstPanel(part, this);
+		InstPanel ip = InstPanel.makeInstPanel(part, this, this);
 		List<InstPanel> affectedPanels = getAffectedPanels(part);
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 

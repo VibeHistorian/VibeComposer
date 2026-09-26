@@ -27,19 +27,19 @@ public class BassPanel extends InstPanel {
 
 	private final ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
-	public void initComponents(ActionListener l) {
+	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
 		ScrollComboBox.addAll(new Integer[] { 9 }, midiChannel);
 		midiChannel.setVal(9);
 		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
-		initDefaults(l);
+		initDefaults(l, soloMuterContext);
 		volSlider.setDefaultValue(50);
 		this.add(volSlider);
 		this.add(panSlider);
 		//this.add(new JLabel("#"));
 		this.add(panelOrder);
-		addDefaultInstrumentControls();
+		addDefaultInstrumentControls(soloMuterContext);
 
 		//this.add(useRhythm);
 		this.add(alternatingRhythm);
@@ -83,8 +83,8 @@ public class BassPanel extends InstPanel {
 		initDefaultsPost();
 	}
 
-	public BassPanel(ActionListener l) {
-		initComponents(l);
+	public BassPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
+		initComponents(l, soloMuterContext);
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
 		}

@@ -144,7 +144,7 @@ public abstract class InstPanel extends JPanel {
 		}
 	}
 
-	public void initDefaults(ActionListener l) {
+	public void initDefaults(ActionListener l, SoloMuter.Context soloMuterContext) {
 		setOpaque(false);
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
@@ -311,8 +311,8 @@ public abstract class InstPanel extends JPanel {
 				.orElse(Constants.TYPICAL_MIDI_CH_START.get(part) + (order - 1) % typicalChannels.size()));
 	}
 
-	public void addDefaultInstrumentControls() {
-		soloMuter = new SoloMuter(getPartNum(), SoloMuter.Type.SINGLE);
+	public void addDefaultInstrumentControls(SoloMuter.Context soloMuterContext) {
+		soloMuter = new SoloMuter(getPartNum(), SoloMuter.Type.SINGLE, soloMuterContext);
 		this.add(soloMuter);
 		this.add(muteInst);
 		this.add(lockInst);
@@ -736,24 +736,25 @@ public abstract class InstPanel extends JPanel {
 	}
 
 
-	public static InstPanel makeInstPanel(int inst, ActionListener l) {
+	public static InstPanel makeInstPanel(int inst, ActionListener l,
+			SoloMuter.Context soloMuterContext) {
 
 		InstPanel ip = null;
 		switch (inst) {
 		case 0:
-			ip = new MelodyPanel(l);
+			ip = new MelodyPanel(l, soloMuterContext);
 			break;
 		case 1:
-			ip = new BassPanel(l);
+			ip = new BassPanel(l, soloMuterContext);
 			break;
 		case 2:
-			ip = new ChordPanel(l);
+			ip = new ChordPanel(l, soloMuterContext);
 			break;
 		case 3:
-			ip = new ArpPanel(l);
+			ip = new ArpPanel(l, soloMuterContext);
 			break;
 		case 4:
-			ip = new DrumPanel(l);
+			ip = new DrumPanel(l, soloMuterContext);
 			break;
 		}
 		return ip;

@@ -33,7 +33,7 @@ public class ChordPanel extends InstPanel {
 
 	private final ScrollComboBox<StrumType> strumType = new ScrollComboBox<>();
 
-	public void initComponents(ActionListener l) {
+	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
 
 
 		instrument.initInstPool(InstUtils.POOL.PLUCK);
@@ -42,13 +42,13 @@ public class ChordPanel extends InstPanel {
 				midiChannel);
 		midiChannel.setVal(11);
 
-		initDefaults(l);
+		initDefaults(l, soloMuterContext);
 		volSlider.setDefaultValue(40);
 		this.add(volSlider);
 		this.add(panSlider);
 		//this.add(new JLabel("#"));
 		this.add(panelOrder);
-		addDefaultInstrumentControls();
+		addDefaultInstrumentControls(soloMuterContext);
 		this.add(instPoolPicker);
 		addDefaultPanelButtons();
 
@@ -119,8 +119,8 @@ public class ChordPanel extends InstPanel {
 		strum.setShowTextInKnob(b);
 	}
 
-	public ChordPanel(ActionListener l) {
-		initComponents(l);
+	public ChordPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
+		initComponents(l, soloMuterContext);
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
 				instPoolPicker.addItem(p);

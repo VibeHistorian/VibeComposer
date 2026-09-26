@@ -241,7 +241,8 @@ public class ArrangementGUI {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = InstPanel.makeInstPanel(instrument, VibeComposerGUI.vibeComposerGUI);
+								InstPanel copy = InstPanel.makeInstPanel(instrument,
+										VibeComposerGUI.vibeComposerGUI, VibeComposerGUI.vibeComposerGUI);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -262,7 +263,8 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = InstPanel.makeInstPanel(instrument, VibeComposerGUI.vibeComposerGUI);
+								InstPanel copy = InstPanel.makeInstPanel(instrument,
+										VibeComposerGUI.vibeComposerGUI, VibeComposerGUI.vibeComposerGUI);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
