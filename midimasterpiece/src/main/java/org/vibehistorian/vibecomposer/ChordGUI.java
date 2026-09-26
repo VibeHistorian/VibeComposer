@@ -240,7 +240,6 @@ public class ChordGUI implements InstrumentGUIControls {
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
         void copyGUItoConfig();
-        void randomizeUserChords();
 			void alignChordsWithMelody(ChordletPanel chordlets);
 		ChordPanel addChordPanel();
 		List<InstPanel> getAffectedPanels(int instrument);
@@ -513,11 +512,11 @@ public class ChordGUI implements InstrumentGUIControls {
 		tipLabel = new JLabel();
 		//chordToolTip.add(tipLabel);
 
-		JButton randomizeCustomChords = SwingUtils.makeButton("    Randomize Chords    ", e -> {
-			userChordsEnabled.setSelected(true);
-			context.randomizeUserChords();
-			userChordsEnabled.repaint();
-		});
+        JButton randomizeCustomChords = SwingUtils.makeButton("    Randomize Chords    ", e -> {
+            userChordsEnabled.setSelected(true);
+            randomizeUserChords();
+            userChordsEnabled.repaint();
+        });
 		customChordsPanel.add(randomizeCustomChords);
 
 		userChordsEnabled = new CheckButton("Custom Chords", false);
@@ -729,7 +728,24 @@ public class ChordGUI implements InstrumentGUIControls {
 		return customChordsPanel;
 	}
 
-public void createRandomChordPanels(int panelCount, boolean onlyAdd,
+	private void randomizeUserChords() {
+		context.copyGUItoConfig();
+		MidiGenerator mg = new MidiGenerator(ApplicationSessionState.guiConfig);
+		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
+		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
+		MidiGenerator.userChords.clear();
+		mg.generatePrettyUserChords(new Random().nextInt(),
+				userChords.chordCount() > 0 ? userChords.chordCount()
+						: MidiGenerator.gc.getFixedDuration(),
+				4 * MidiGenerator.Durations.WHOLE_NOTE);
+		userChords.setupChords(MidiGenerator.chordInts);
+	}
+
+	public static String chordSelect(String chord) {
+		return MidiUtils.MAJOR_CHORDS.contains(chord) ? chord : null;
+	}
+
+	public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
 		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) context.getAffectedPanels(2);

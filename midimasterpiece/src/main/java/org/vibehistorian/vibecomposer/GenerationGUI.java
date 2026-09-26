@@ -1,24 +1,36 @@
 package org.vibehistorian.vibecomposer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Panels.ArpPanel;
+import org.vibehistorian.vibecomposer.Panels.BassPanel;
+import org.vibehistorian.vibecomposer.Panels.ChordPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
+import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 /** Owns the generation and macro controls in the main window. */
 public class GenerationGUI {
     public interface Context {
         JButton makeButton(String name, String actionCommand);
-        void randomizeBpm();
-        void randomizeTranspose(boolean currentTabOnly);
         void switchAllOnComposeCheckboxes(boolean state);
-        void sidechainPatterns(boolean showPopup, boolean currentTabOnly);
-        void applyGlobalSwing(int swing, boolean customPanels);
+        int getSelectedInstrumentTab();
+        List<InstPanel> getAffectedPanels(int instrument);
+        List<? extends InstPanel> getInstList(int instrument);
+        boolean canRegenerateOnChange();
+        void regenerate();
     }
 
     public static JCheckBox randomizeInstOnComposeOrGen;
@@ -70,7 +82,7 @@ public class GenerationGUI {
         randomButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton randomizeInstruments = context.makeButton("Randomize Inst.", "RandomizeInst");
-        JButton randomizeBpm = SwingUtils.makeButton("Randomize BPM", e -> context.randomizeBpm());
+        JButton randomizeBpm = SwingUtils.makeButton("Randomize BPM", e -> randomizeBpm());
         JButton randomizeTranspose = context.makeButton("Randomize Key", "RandomizeTranspose");
 
         randomizeInstOnComposeOrGen = SwingUtils.makeCheckBox("on Compose/Gen", true, true);
@@ -106,8 +118,8 @@ public class GenerationGUI {
 
         JPanel transposePanel = new JPanel();
         transposePanel.setPreferredSize(new Dimension(170, 20));
-        JButton transposeAllBtn = SwingUtils.makeButton("All", e -> context.randomizeTranspose(false));
-        JButton transposeTabBtn = SwingUtils.makeButton("Tab", e -> context.randomizeTranspose(true));
+        JButton transposeAllBtn = SwingUtils.makeButton("All", e -> randomizeTranspose(false));
+        JButton transposeTabBtn = SwingUtils.makeButton("Tab", e -> randomizeTranspose(true));
         transposeAllBtn.setMargin(new Insets(0, 0, 0, 0));
         transposeTabBtn.setMargin(new Insets(0, 0, 0, 0));
         transposeAllBtn.setPreferredSize(new Dimension(35, 20));
@@ -121,8 +133,8 @@ public class GenerationGUI {
 
         JPanel sidechainPanel = new JPanel();
         sidechainPanel.setPreferredSize(new Dimension(170, 20));
-        sidechainPatterns = SwingUtils.makeButton("All", e -> context.sidechainPatterns(true, false));
-        sidechainPatternsTab = SwingUtils.makeButton("Tab", e -> context.sidechainPatterns(true, true));
+        sidechainPatterns = SwingUtils.makeButton("All", e -> sidechainPatterns(true, false));
+        sidechainPatternsTab = SwingUtils.makeButton("Tab", e -> sidechainPatterns(true, true));
         sidechainPatterns.setMargin(new Insets(0, 0, 0, 0));
         sidechainPatternsTab.setMargin(new Insets(0, 0, 0, 0));
         sidechainPatterns.setPreferredSize(new Dimension(35, 20));
@@ -136,6 +148,138 @@ public class GenerationGUI {
         UITheme.toggleableComponents.add(sidechainPanel);
         UITheme.toggleableComponents.add(transposePanel);
         return randomButtonsPanel;
+    }
+
+    public void randomizeBpm() {
+        Random random = new Random();
+        int bpm = random.nextInt(1 + ExtraSettingsGUI.bpmHigh.getInt() - ExtraSettingsGUI.bpmLow.getInt())
+                + ExtraSettingsGUI.bpmLow.getInt();
+        if (ArpGUI.arpAffectsBpm.isSelected() && !context.getInstList(3).isEmpty()) {
+            double highestArpPattern = context.getInstList(3).stream()
+                    .map(panel -> ( ((ArpPanel) panel).getPatternRepeat()
+                            * ((ArpPanel) panel).getHitsPerPattern())
+                            / (((ArpPanel) panel).getChordSpan() * 8.0))
+                    .max(Double::compare).get();
+            LG.i("Repeater value: " + highestArpPattern);
+            if (highestArpPattern > 1) {
+                bpm = (int) (bpm * (1 / (0.5 + highestArpPattern * 0.5)));
+            }
+        }
+        mainBpm.setInt(bpm);
+        mainBpm.getKnob().setMin(ExtraSettingsGUI.bpmLow.getInt());
+        mainBpm.getKnob().setMax(ExtraSettingsGUI.bpmHigh.getInt());
+    }
+
+    public void randomizeInstruments() {
+        Random random = new Random();
+        for (InstPanel panel : context.getInstList(2)) {
+            ChordPanel chordPanel = (ChordPanel) panel;
+            if (!chordPanel.getLockInst()) {
+                InstUtils.POOL pool = random.nextInt(100) < ChordGUI.randomChordSustainChance.getInt()
+                        ? InstUtils.POOL.CHORD : InstUtils.POOL.PLUCK;
+                chordPanel.setInstPool(pool);
+                chordPanel.getInstrumentBox().initInstPool(chordPanel.getInstPool());
+                chordPanel.setInstrument(chordPanel.getInstrumentBox().getRandomInstrument());
+            }
+        }
+        for (InstPanel panel : context.getInstList(3)) {
+            ArpPanel arpPanel = (ArpPanel) panel;
+            if (!arpPanel.getLockInst()) {
+                arpPanel.getInstrumentBox().setInstrument(arpPanel.getInstrumentBox().getRandomInstrument());
+            }
+        }
+        List<? extends InstPanel> melodyPanels = context.getInstList(0);
+        if (!melodyPanels.isEmpty()) {
+            if (!MelodyGUI.combineMelodyTracks.isSelected()) {
+                for (InstPanel panel : melodyPanels) {
+                    MelodyPanel melodyPanel = (MelodyPanel) panel;
+                    if (!melodyPanel.getLockInst()) {
+                        melodyPanel.getInstrumentBox().setInstrument(
+                                melodyPanel.getInstrumentBox().getRandomInstrument());
+                    }
+                }
+            } else {
+                int instrument = ((MelodyPanel) melodyPanels.get(0)).getInstrumentBox().getRandomInstrument();
+                for (InstPanel panel : melodyPanels) {
+                    MelodyPanel melodyPanel = (MelodyPanel) panel;
+                    if (!melodyPanel.getLockInst()) {
+                        melodyPanel.getInstrumentBox().setInstrument(instrument);
+                    }
+                }
+            }
+        }
+        for (InstPanel panel : context.getInstList(1)) {
+            BassPanel bassPanel = (BassPanel) panel;
+            if (!bassPanel.getLockInst()) {
+                bassPanel.getInstrumentBox().setInstrument(bassPanel.getInstrumentBox().getRandomInstrument());
+            }
+        }
+    }
+
+    public void randomizeTranspose(boolean currentTabOnly) {
+        int currentTab = context.getSelectedInstrumentTab();
+        if (currentTabOnly && currentTab >= 4) {
+            new TemporaryInfoPopup("Nothing to transpose in this tab!", null);
+            return;
+        }
+        int start = currentTabOnly ? currentTab : 0;
+        int end = currentTabOnly ? currentTab : 3;
+        Random rand = new Random();
+        for (int instrument = start; instrument <= end; instrument++) {
+            List<Integer> availableTransposes = new ArrayList<>(
+                    instrument == 1 ? Arrays.asList(-12, 0) : Arrays.asList(-12, 0, 12));
+            List<InstPanel> panels = context.getAffectedPanels(instrument);
+            int maxSame = Math.max(2, (int) Math.ceil(panels.size() / 3.0));
+            int[] transposesApplied = { 0, 0, 0 };
+            for (InstPanel panel : panels) {
+                int transpose = availableTransposes.get(rand.nextInt(availableTransposes.size()));
+                panel.setTranspose(transpose);
+                int transposeIndex = (transpose / 12) + 1;
+                transposesApplied[transposeIndex]++;
+                if (transposesApplied[transposeIndex] >= maxSame && availableTransposes.size() > 1) {
+                    availableTransposes.remove(Integer.valueOf(transpose));
+                }
+            }
+        }
+        if (context.canRegenerateOnChange()) {
+            context.regenerate();
+        }
+    }
+
+    public void sidechainPatterns(boolean showPopup, boolean currentTabOnly) {
+        int currentTab = context.getSelectedInstrumentTab();
+        if (currentTabOnly && (currentTab <= 1 || currentTab >= 5)) {
+            new TemporaryInfoPopup("Only chords/arps/drums can be sidechained!", null);
+            return;
+        }
+        int multiplier = currentTabOnly && currentTab < 4 ? 3 : 1;
+        int[] rhythmGrid = new int[4 * 32];
+        Random rand = new Random();
+        Random permutationRand = new Random();
+        int[] panelChanges = new int[3];
+        int start = currentTabOnly ? currentTab : 4;
+        int end = currentTabOnly ? currentTab : 2;
+        for (int instrument = start; instrument >= end; instrument--) {
+            List<? extends InstPanel> panels = context.getInstList(instrument);
+            int totalChanged = 0;
+            for (InstPanel panel : panels) {
+                totalChanged += panel.addToRhythmGrid(rhythmGrid, rand, permutationRand, multiplier);
+            }
+            panelChanges[instrument - 2] = totalChanged;
+        }
+        String popupMsg = "Chord/Arp/Drum changes: " + StringUtils.join(panelChanges, '/');
+        LG.i(popupMsg);
+        if (showPopup) {
+            new TemporaryInfoPopup(popupMsg, null);
+        }
+    }
+
+    public void applyGlobalSwing(int swing, boolean customPanels) {
+        for (int instrument = 0; instrument < 5; instrument++) {
+            List<? extends InstPanel> panels = customPanels
+                    ? context.getAffectedPanels(instrument) : context.getInstList(instrument);
+            panels.forEach(panel -> panel.setSwingPercent(swing));
+        }
     }
 
     public JPanel initMacroParams() {
@@ -165,7 +309,7 @@ public class GenerationGUI {
         globalSwingOverrideValue = new KnobPanel("", 50);
         globalSwingOverrideApplyButton = new JButton("A");
         globalSwingOverrideApplyButton.addActionListener(e ->
-                context.applyGlobalSwing(globalSwingOverrideValue.getInt(), false));
+                applyGlobalSwing(globalSwingOverrideValue.getInt(), false));
         globalSwingPanel.add(globalSwingOverride);
         globalSwingPanel.add(globalSwingOverrideValue);
         globalSwingPanel.add(globalSwingOverrideApplyButton);

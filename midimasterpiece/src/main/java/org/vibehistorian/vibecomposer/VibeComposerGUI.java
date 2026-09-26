@@ -490,19 +490,14 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
 			}
-			@Override public void randomizeBpm() { VibeComposerGUI.this.randomizeBPM(); }
-			@Override public void randomizeTranspose(boolean currentTabOnly) {
-				VibeComposerGUI.this.randomizeTranspose(currentTabOnly);
-			}
 			@Override public void switchAllOnComposeCheckboxes(boolean state) {
 				VibeComposerGUI.this.switchAllOnComposeCheckboxes(state);
 			}
-			@Override public void sidechainPatterns(boolean showPopup, boolean currentTabOnly) {
-				VibeComposerGUI.this.sidechainPatterns(showPopup, currentTabOnly);
-			}
-			@Override public void applyGlobalSwing(int swing, boolean customPanels) {
-				VibeComposerGUI.this.applyGlobalSwing(swing, customPanels);
-			}
+			@Override public int getSelectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
+			@Override public List<InstPanel> getAffectedPanels(int instrument) { return VibeComposerGUI.getAffectedPanels(instrument); }
+			@Override public List<? extends InstPanel> getInstList(int instrument) { return VibeComposerGUI.getInstList(instrument); }
+			@Override public boolean canRegenerateOnChange() { return VibeComposerGUI.canRegenerateOnChange(); }
+			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 		});
 	}
 
@@ -809,11 +804,6 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override
 			public void copyGUItoConfig() {
 				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
-			}
-
-			@Override
-			public void randomizeUserChords() {
-				VibeComposerGUI.this.randomizeUserChords();
 			}
 
 			@Override
@@ -1487,87 +1477,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 
 
-
-
-
-	private void randomizeTranspose(boolean currentTabOnly) {
-		int currentTab = instrumentTabPane.getSelectedIndex();
-		if (currentTabOnly && currentTab >= 4) {
-			new TemporaryInfoPopup("Nothing to transpose in this tab!", null);
-			return;
-		}
-		int start = currentTabOnly ? currentTab : 0;
-		int end = currentTabOnly ? currentTab : 3;
-		Random rand = new Random();
-		for (int i = start; i <= end; i++) {
-			List<Integer> availableTransposes = new ArrayList<>(
-					(i == 1) ? Arrays.asList(new Integer[] { -12, 0 })
-							: Arrays.asList(new Integer[] { -12, 0, 12 }));
-			List<InstPanel> panels = getAffectedPanels(i);
-			int maxSame = Math.max(2, (int) Math.ceil(panels.size() / 3.0));
-			int[] transposesApplied = { 0, 0, 0 };
-			for (int j = 0; j < panels.size(); j++) {
-				int randed = rand.nextInt(availableTransposes.size());
-				int transpose = availableTransposes.get(randed);
-				panels.get(j).setTranspose(transpose);
-
-
-				int transposeIndex = (transpose / 12) + 1;
-				transposesApplied[transposeIndex]++;
-				if (transposesApplied[transposeIndex] >= maxSame) {
-					availableTransposes.remove(Integer.valueOf(transpose));
-				}
-			}
-		}
-		if (canRegenerateOnChange()) {
-			regenerate();
-		}
-	}
-
-	public void sidechainPatterns(boolean showPopup, boolean currentTabOnly) {
-		int currentTab = instrumentTabPane.getSelectedIndex();
-		if (currentTabOnly && (currentTab <= 1 || instrumentTabPane.getSelectedIndex() >= 5)) {
-			new TemporaryInfoPopup("Only chords/arps/drums can be sidechained!", null);
-			return;
-		}
-		int multiplier = currentTabOnly && currentTab < 4 ? 3 : 1;
-		// count rhythm weights in a 1/32 grid across 4 chords span
-		int[] rhythmGrid = new int[4 * 32];
-		Random rand = new Random();
-		Random permutationRand = new Random();
-		int[] panelChanges = new int[3];
-		int start = currentTabOnly ? currentTab : 4;
-		int end = currentTabOnly ? currentTab : 2;
-		for (int i = start; i >= end; i--) {
-			List<? extends InstPanel> panels = getInstList(i);
-			int totalChanged = 0;
-			for (int j = 0; j < panels.size(); j++) {
-				totalChanged += panels.get(j).addToRhythmGrid(rhythmGrid, rand, permutationRand,
-						multiplier);
-			}
-			panelChanges[i - 2] = totalChanged;
-			//LG.i("GRID: " + StringUtils.join(rhythmGrid, ','));
-		}
-		String popupMsg = "Chord/Arp/Drum changes: " + StringUtils.join(panelChanges, '/');
-		LG.i(popupMsg);
-		if (showPopup) {
-			new TemporaryInfoPopup(popupMsg, null);
-		}
-	}
-
-
-	private void applyGlobalSwing(int swing, boolean customPanels) {
-		if (customPanels) {
-			for (int i = 0; i < 5; i++) {
-				getAffectedPanels(i).forEach(e -> e.setSwingPercent(swing));
-			}
-		} else {
-			for (int i = 0; i < 5; i++) {
-				getInstList(i).forEach(e -> e.setSwingPercent(swing));
-			}
-		}
-
-	}
 
 
 
@@ -2783,8 +2692,8 @@ public static final String CURRENT_VERSION = "2.6";
 				MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.EIGHTH_NOTE;
 			}*/
 
-			MidiGenerator.FIRST_CHORD = chordSelect(ChordGUI.firstChordSelection.getVal());
-			MidiGenerator.LAST_CHORD = chordSelect(ChordGUI.lastChordSelection.getVal());
+			MidiGenerator.FIRST_CHORD = ChordGUI.chordSelect(ChordGUI.firstChordSelection.getVal());
+			MidiGenerator.LAST_CHORD = ChordGUI.chordSelect(ChordGUI.lastChordSelection.getVal());
 
 			// solve user chords
 			boolean customChords = ChordGUI.userChordsEnabled.isSelected()
@@ -2873,7 +2782,7 @@ public static final String CURRENT_VERSION = "2.6";
 	private void prepareUI(boolean regenerate, boolean manual) {
 
 		if (!regenerate && GenerationGUI.randomizeBpmOnCompose.isSelected()) {
-			randomizeBPM();
+			generationGUI.randomizeBpm();
 		}
 
 		// MELODY
@@ -2900,7 +2809,7 @@ public static final String CURRENT_VERSION = "2.6";
 		}
 
 		if (!regenerate && ExtraSettingsGUI.sidechainPatternsOnCompose.isSelected()) {
-			sidechainPatterns(false, false);
+			generationGUI.sidechainPatterns(false, false);
 		}
 
 
@@ -3285,20 +3194,6 @@ public static final String CURRENT_VERSION = "2.6";
 		return butt;
 	}
 
-	private void randomizeUserChords() {
-		copyGUItoConfig(guiConfig);
-		MidiGenerator mg = new MidiGenerator(guiConfig);
-		MidiGenerator.FIRST_CHORD = chordSelect(ChordGUI.firstChordSelection.getVal());
-		MidiGenerator.LAST_CHORD = chordSelect(ChordGUI.lastChordSelection.getVal());
-		MidiGenerator.userChords.clear();
-		mg.generatePrettyUserChords(new Random().nextInt(),
-				ChordGUI.userChords.chordCount() > 0 ? ChordGUI.userChords.chordCount()
-						: MidiGenerator.gc.getFixedDuration(),
-				4 * MidiGenerator.Durations.WHOLE_NOTE);
-		List<String> prettyChords = MidiGenerator.chordInts;
-		ChordGUI.userChords.setupChords(prettyChords);
-	}
-
 	private void openDrumViewPopup() {
 		new DrumLoopPopup(drumGUI.getPanels());
 	}
@@ -3436,11 +3331,11 @@ public static final String CURRENT_VERSION = "2.6";
 		}
 
 		if (ae.getActionCommand() == "RandomizeInst") {
-			randomizeInsts();
+			generationGUI.randomizeInstruments();
 			triggerRegenerate = true;
 		}
 		if (isCompose && GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
-			randomizeInsts();
+			generationGUI.randomizeInstruments();
 		}
 
 		if (isCompose || isRegenerate) {
@@ -3557,77 +3452,8 @@ public static final String CURRENT_VERSION = "2.6";
 		messageLabel.setText("::" + ae.getActionCommand() + "::");
 	}
 
-	private void randomizeBPM() {
-		Random instGen = new Random();
-
-		int bpm = instGen.nextInt(1 + ExtraSettingsGUI.bpmHigh.getInt() - ExtraSettingsGUI.bpmLow.getInt()) + ExtraSettingsGUI.bpmLow.getInt();
-		if (ArpGUI.arpAffectsBpm.isSelected() && !arpGUI.getPanels().isEmpty()) {
-			double highestArpPattern = arpGUI.getPanels().stream().map(
-					e -> (e.getPatternRepeat() * e.getHitsPerPattern()) / (e.getChordSpan() * 8.0))
-					.max((e1, e2) -> Double.compare(e1, e2)).get();
-			LG.i(("Repeater value: " + highestArpPattern));
-			if (highestArpPattern > 1) {
-				bpm *= 1 / (0.5 + highestArpPattern * 0.5);
-			}
-		}
-		mainBpm.setInt(bpm);
-		mainBpm.getKnob().setMin(ExtraSettingsGUI.bpmLow.getInt());
-		mainBpm.getKnob().setMax(ExtraSettingsGUI.bpmHigh.getInt());
-	}
-
 	public void recalculateSoloMuters() {
 		soloMuteController.recalculatePanels();
-	}
-
-	private void randomizeInsts() {
-		Random instGen = new Random();
-
-
-		for (ChordPanel cp : chordGUI.getPanels()) {
-			if (!cp.getLockInst()) {
-
-				InstUtils.POOL pool = (instGen.nextInt(100) < Integer
-						.valueOf(ChordGUI.randomChordSustainChance.getInt())) ? InstUtils.POOL.CHORD
-								: InstUtils.POOL.PLUCK;
-
-				cp.setInstPool(pool);
-				pool = cp.getInstPool();
-				cp.getInstrumentBox().initInstPool(pool);
-
-				cp.setInstrument(cp.getInstrumentBox().getRandomInstrument());
-			}
-		}
-		for (ArpPanel ap : arpGUI.getPanels()) {
-			if (!ap.getLockInst()) {
-				ap.getInstrumentBox().setInstrument(ap.getInstrumentBox().getRandomInstrument());
-			}
-		}
-		if (!melodyGUI.getPanels().isEmpty()) {
-
-			if (!MelodyGUI.combineMelodyTracks.isSelected()) {
-				for (MelodyPanel mp : melodyGUI.getPanels()) {
-					if (!mp.getLockInst()) {
-						mp.getInstrumentBox()
-								.setInstrument(mp.getInstrumentBox().getRandomInstrument());
-					}
-				}
-			} else {
-				int inst = melodyGUI.getPanels().get(0).getInstrumentBox().getRandomInstrument();
-				for (MelodyPanel mp : melodyGUI.getPanels()) {
-					if (!mp.getLockInst()) {
-						mp.getInstrumentBox().setInstrument(inst);
-					}
-				}
-			}
-
-		}
-
-		for (BassPanel bp : bassGUI.getPanels()) {
-			if (!bp.getLockInst()) {
-				bp.getInstrumentBox().setInstrument(bp.getInstrumentBox().getRandomInstrument());
-			}
-		}
-
 	}
 
 	private void clearAllSeeds() {
@@ -3756,14 +3582,6 @@ public static final String CURRENT_VERSION = "2.6";
 				"Generated Arrangement (" + ArrangementGUI.actualArrangement.getSections().size() + ")");
 		if (instrumentTabPane.getComponentCount() >= 8) {
 			instrumentTabPane.setTitleAt(7, " Score ");
-		}
-	}
-
-	public String chordSelect(String s) {
-		if (!MidiUtils.MAJOR_CHORDS.contains(s)) {
-			return null;
-		} else {
-			return s;
 		}
 	}
 
