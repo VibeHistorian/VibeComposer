@@ -3868,13 +3868,6 @@ public static final String CURRENT_VERSION = "2.6";
 			tabPanePossibleChange = true;
 		}
 
-		if (ae.getActionCommand() == "RandomizePart") {
-
-			JButton source = (JButton) ae.getSource();
-			InstPanel sourcePanel = (InstPanel) source.getParent();
-			randomizePanel(sourcePanel);
-			triggerRegenerate = true;
-		}
 		// recalcs
 		if (tabPanePossibleChange) {
 			recalculateTabPaneCounts();
@@ -4893,7 +4886,8 @@ public static final String CURRENT_VERSION = "2.6";
 
 	public InstPanel addInstPanelToLayout(int part, InstPart initializingPart,
 			boolean recalcArrangement) {
-		InstPanel ip = InstPanel.makeInstPanel(part, this, this);
+		InstPanel ip = InstPanel.makeInstPanel(part, this);
+		configureRandomizeAction(ip);
 		List<InstPanel> affectedPanels = getAffectedPanels(part);
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
@@ -4929,6 +4923,31 @@ public static final String CURRENT_VERSION = "2.6";
 					affectedPanels.size() - panelOrder);
 		}
 		return ip;
+	}
+
+	public void configureRandomizeAction(InstPanel panel) {
+		panel.setRandomizeAction(this::randomizePart);
+	}
+
+	private void randomizePart(InstPanel panel) {
+		String actionName = "RandomizePart";
+		long actionSystemTime = System.currentTimeMillis();
+		LG.i(("<<<<<<<<<<<<<<<<Processing '" + actionName + "'>>>>>>>>>>>>>>>>>>"));
+		if (heavyBackgroundTasksInProgress) {
+			LG.i("Cannot process action '" + actionName + "', composing in progress!");
+			new TemporaryInfoPopup("Composing in progress..", 1000);
+			return;
+		}
+
+		refreshBannedInstruments();
+		randomizePanel(panel);
+		if (canRegenerateOnChange()) {
+			regenerate();
+		}
+
+		LG.i("Finished '" + actionName + "' in: "
+				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
+		messageLabel.setText("::" + actionName + "::");
 	}
 
 	public static boolean isCustomSection() {

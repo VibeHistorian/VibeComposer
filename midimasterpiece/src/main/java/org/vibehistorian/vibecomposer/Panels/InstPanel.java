@@ -49,7 +49,6 @@ import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -61,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class InstPanel extends JPanel {
@@ -126,6 +126,7 @@ public abstract class InstPanel extends JPanel {
 	protected SoloMuter soloMuter;
 	protected JButton copyButton = new JButton("Cc");
 	protected JButton randomizeButton = new JButton("?");
+	private Consumer<InstPanel> randomizeAction = panel -> {};
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
@@ -144,7 +145,7 @@ public abstract class InstPanel extends JPanel {
 		}
 	}
 
-	public void initDefaults(ActionListener l, SoloMuter.Context soloMuterContext) {
+	public void initDefaults(SoloMuter.Context soloMuterContext) {
 		setOpaque(false);
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setMaximumSize(new Dimension(3000, 50));
@@ -258,7 +259,7 @@ public abstract class InstPanel extends JPanel {
 			}
 
 		});
-		randomizeButton.addActionListener(l);
+		randomizeButton.addActionListener(e -> randomizeAction.accept(this));
 
 		removeButton.setPreferredSize(new Dimension(25, SMALL_BTN_HEIGHT));
 		removeButton.setMargin(new Insets(0, 0, 0, 0));
@@ -266,7 +267,6 @@ public abstract class InstPanel extends JPanel {
 		copyButton.setPreferredSize(new Dimension(25, SMALL_BTN_HEIGHT));
 		copyButton.setMargin(new Insets(0, 0, 0, 0));
 
-		randomizeButton.setActionCommand("RandomizePart");
 		randomizeButton.setPreferredSize(new Dimension(15, SMALL_BTN_HEIGHT));
 		randomizeButton.setMargin(new Insets(0, 0, 0, 0));
 
@@ -347,6 +347,10 @@ public abstract class InstPanel extends JPanel {
 		this.add(removeButton);
 		this.add(copyButton);
 		this.add(randomizeButton);
+	}
+
+	public void setRandomizeAction(Consumer<InstPanel> randomizeAction) {
+		this.randomizeAction = randomizeAction == null ? panel -> {} : randomizeAction;
 	}
 
 	public void addBackgroundsForKnobs() {
@@ -736,25 +740,24 @@ public abstract class InstPanel extends JPanel {
 	}
 
 
-	public static InstPanel makeInstPanel(int inst, ActionListener l,
-			SoloMuter.Context soloMuterContext) {
+	public static InstPanel makeInstPanel(int inst, SoloMuter.Context soloMuterContext) {
 
 		InstPanel ip = null;
 		switch (inst) {
 		case 0:
-			ip = new MelodyPanel(l, soloMuterContext);
+			ip = new MelodyPanel(soloMuterContext);
 			break;
 		case 1:
-			ip = new BassPanel(l, soloMuterContext);
+			ip = new BassPanel(soloMuterContext);
 			break;
 		case 2:
-			ip = new ChordPanel(l, soloMuterContext);
+			ip = new ChordPanel(soloMuterContext);
 			break;
 		case 3:
-			ip = new ArpPanel(l, soloMuterContext);
+			ip = new ArpPanel(soloMuterContext);
 			break;
 		case 4:
-			ip = new DrumPanel(l, soloMuterContext);
+			ip = new DrumPanel(soloMuterContext);
 			break;
 		}
 		return ip;

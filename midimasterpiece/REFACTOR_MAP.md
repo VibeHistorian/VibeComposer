@@ -204,6 +204,7 @@ Every mutable `VibeComposerGUI` static field now has a focused owner or a define
 - **2.4.5 Arrangement rendering:** `CollectionCellRenderer` receives panel-list and absolute-order lookups from `ArrangementGUI.Context`.
 - **2.4.6 Score playback actions:** `ShowPanelBig` receives slider and pause callbacks through `ScoreGUI.Context`; `ScoreGUI.pianoRoll()` is now instance-owned.
 - **2.4.7 Solo/mute controls:** `SoloMuter` sends solo and mute toggle events through an injected context. The window coordinates group-wide state changes, sequence recalculation flags, and score refreshes; `SoloMuter` no longer looks up `VibeComposerGUI`, `ShowPanelBig`, or `ScoreGUI` statically. Instrument-panel construction supplies this context to single, group, and global controls.
+- **2.4.8 Instrument-panel randomization:** removed the main-window `ActionListener` dependency from `InstPanel` and its subclasses, and replaced the `RandomizePart` command dispatch with a focused panel callback. The window installs the callback after construction and retains the existing randomize and auto-regenerate behavior.
 - Remaining coupling in `JKnob`, combo controls, instrument panel lifecycle, score rendering, and MIDI editing is still in scope. Phase 2.4 is in progress.
 - Verification: `mvn -DskipTests compile` succeeds for this slice. Tests were skipped.
 

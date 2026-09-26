@@ -11,7 +11,6 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +23,14 @@ public class DrumPanel extends InstPanel {
 
 	private final JCheckBox isVelocityPattern = new CustomCheckBox("Ghosts", true);
 
-	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
+	public void initComponents(SoloMuter.Context soloMuterContext) {
 
 		instrument.initInstPool(InstUtils.POOL.DRUM);
 		instrument.setInstrument(36);
 		instrument.setScrollEnabled(false);
 		ScrollComboBox.addAll(new Integer[] { 10 }, midiChannel);
 
-		initDefaults(l, soloMuterContext);
+		initDefaults(soloMuterContext);
 		//this.add(new JLabel("#"));
 		this.add(panelOrder);
 		addDefaultInstrumentControls(soloMuterContext);
@@ -108,8 +107,8 @@ public class DrumPanel extends InstPanel {
 		initDefaultsPost();
 	}
 
-	public DrumPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
-		initComponents(l, soloMuterContext);
+	public DrumPanel(SoloMuter.Context soloMuterContext) {
+		initComponents(soloMuterContext);
 	}
 
 	public DrumPart toDrumPart(int lastRandomSeed) {

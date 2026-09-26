@@ -13,7 +13,6 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,14 +29,14 @@ public class ArpPanel extends InstPanel {
 	private final CheckButton arpContourChordMode = new CheckButton("C", true);
 	private final KnobPanel arpPatternRotate = new KnobPanel("Rotate", 0, 0, 8);
 
-	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
+	public void initComponents(SoloMuter.Context soloMuterContext) {
 
 		instrument.initInstPool(instPool);
 		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
 		midiChannel.setVal(2);
 
-		initDefaults(l, soloMuterContext);
+		initDefaults(soloMuterContext);
 		volSlider.setDefaultValue(50);
 		this.add(volSlider);
 		this.add(panSlider);
@@ -126,8 +125,8 @@ public class ArpPanel extends InstPanel {
 		arpPatternRotate.setShowTextInKnob(b);
 	}
 
-	public ArpPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
-		initComponents(l, soloMuterContext);
+	public ArpPanel(SoloMuter.Context soloMuterContext) {
+		initComponents(soloMuterContext);
 
 		for (ArpPattern d : ArpPattern.values()) {
 			arpPattern.addItem(d);

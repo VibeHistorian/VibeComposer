@@ -10,7 +10,6 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 public class BassPanel extends InstPanel {
 
@@ -27,13 +26,13 @@ public class BassPanel extends InstPanel {
 
 	private final ScrollComboBox<PatternJoinMode> patternJoinMode = new ScrollComboBox<>();
 
-	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
+	public void initComponents(SoloMuter.Context soloMuterContext) {
 		ScrollComboBox.addAll(new Integer[] { 9 }, midiChannel);
 		midiChannel.setVal(9);
 		instPool = InstUtils.POOL.BASS;
 		instrument.initInstPool(instPool);
 		setInstrument(74);
-		initDefaults(l, soloMuterContext);
+		initDefaults(soloMuterContext);
 		volSlider.setDefaultValue(50);
 		this.add(volSlider);
 		this.add(panSlider);
@@ -83,8 +82,8 @@ public class BassPanel extends InstPanel {
 		initDefaultsPost();
 	}
 
-	public BassPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
-		initComponents(l, soloMuterContext);
+	public BassPanel(SoloMuter.Context soloMuterContext) {
+		initComponents(soloMuterContext);
 		for (PatternJoinMode pjm : PatternJoinMode.values()) {
 			patternJoinMode.addItem(pjm);
 		}

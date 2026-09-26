@@ -21,7 +21,6 @@ import org.vibehistorian.vibecomposer.Popups.CustomDurationsEditPopup;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ public class MelodyPanel extends InstPanel {
 	private PhraseNotes customDurationValues = new PhraseNotes();
 	private List<Integer> customDurationChances = new ArrayList<>(IntStream.iterate(50, e -> e).limit(CUSTOM_DURATIONS_LIMIT).boxed().collect(Collectors.toList()));
 
-	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
+	public void initComponents(SoloMuter.Context soloMuterContext) {
 
 		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
@@ -62,7 +61,7 @@ public class MelodyPanel extends InstPanel {
 		instPool = POOL.MELODY;
 		instrument.initInstPool(instPool);
 		setInstrument(73);
-		initDefaults(l, soloMuterContext);
+		initDefaults(soloMuterContext);
 		volSlider.setDefaultValue(50);
 		setVelocityMin(80);
 		setVelocityMax(105);
@@ -204,8 +203,8 @@ public class MelodyPanel extends InstPanel {
 
 	}
 
-	public MelodyPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
-		initComponents(l, soloMuterContext);
+	public MelodyPanel(SoloMuter.Context soloMuterContext) {
+		initComponents(soloMuterContext);
 	}
 
 

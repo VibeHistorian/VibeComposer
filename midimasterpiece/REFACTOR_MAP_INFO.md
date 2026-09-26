@@ -14,6 +14,7 @@
 - Shared state extracted in phase 2.3 has focused owners: `GUIConstants` for immutable presentation values, `UITheme` for display preferences, `GUIAssets` for image caches, `PlaybackState` for playback runtime, `ApplicationSessionState` for active application/session services, and `SoloMuteState` for cross-instrument solo/mute state.
 - Phase 2.4 has started by injecting section-selection actions and the parent/tab owners needed by arrangement and score components. Arrangement list popups and renderers receive panel-list access from their callers; `PartManagerPanel` receives explicit preset operations. Continue by migrating the remaining instrument controls and editor families; do not mark phase 2.4 complete while active `VibeComposerGUI` references remain in shared `Components`, `Panels`, or `Popups`.
 - Phase 2.4.7 removes `VibeComposerGUI`, `ShowPanelBig`, and `ScoreGUI` lookups from `SoloMuter`. Its solo/mute toggle events use a focused context supplied when the window creates global, group, and instrument controls; the window continues to coordinate cross-group updates and score refreshes.
+- Phase 2.4.8 removes the main window's `ActionListener` from instrument-panel constructors and replaces the `RandomizePart` command path with a focused callback. The composition root installs it, and `VibeComposerGUI` retains the randomization and auto-regeneration behavior.
 - Cross-cutting models and components include `GUIConfig.java`, `Panels/MelodyPanel.java`, and `Components/MelodyMidiDropPane.java`.
 
 ## Conventions and boundaries

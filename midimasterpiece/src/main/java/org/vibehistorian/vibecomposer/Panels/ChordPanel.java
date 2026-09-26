@@ -10,7 +10,6 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -33,7 +32,7 @@ public class ChordPanel extends InstPanel {
 
 	private final ScrollComboBox<StrumType> strumType = new ScrollComboBox<>();
 
-	public void initComponents(ActionListener l, SoloMuter.Context soloMuterContext) {
+	public void initComponents(SoloMuter.Context soloMuterContext) {
 
 
 		instrument.initInstPool(InstUtils.POOL.PLUCK);
@@ -42,7 +41,7 @@ public class ChordPanel extends InstPanel {
 				midiChannel);
 		midiChannel.setVal(11);
 
-		initDefaults(l, soloMuterContext);
+		initDefaults(soloMuterContext);
 		volSlider.setDefaultValue(40);
 		this.add(volSlider);
 		this.add(panSlider);
@@ -119,8 +118,8 @@ public class ChordPanel extends InstPanel {
 		strum.setShowTextInKnob(b);
 	}
 
-	public ChordPanel(ActionListener l, SoloMuter.Context soloMuterContext) {
-		initComponents(l, soloMuterContext);
+	public ChordPanel(SoloMuter.Context soloMuterContext) {
+		initComponents(soloMuterContext);
 		for (InstUtils.POOL p : InstUtils.POOL.values()) {
 			if (p != InstUtils.POOL.DRUM) {
 				instPoolPicker.addItem(p);
