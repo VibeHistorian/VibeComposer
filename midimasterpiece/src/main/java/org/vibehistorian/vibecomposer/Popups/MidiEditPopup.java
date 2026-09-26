@@ -1,24 +1,15 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
-
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
-
-import org.vibehistorian.vibecomposer.ScoreGUI;
-
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Score;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.MidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PatternMap;
@@ -26,11 +17,6 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
-import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MelodyGUI;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
@@ -39,8 +25,6 @@ import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -195,7 +179,7 @@ public class MidiEditPopup extends CloseablePopup {
 		buttonPanel.setLayout(new GridLayout(0, 5, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(1500, 50));
 
-		buttonPanel.add(VibeComposerGUI.makeButton("Rand. Pitch", e -> {
+		buttonPanel.add(SwingUtils.makeButton("Rand. Pitch", e -> {
 			int size = mvea.getValues().size();
 			boolean successRandGenerator = false;
 			/*if (butt != null && butt.getRandGenerator() != null) {
@@ -236,7 +220,7 @@ public class MidiEditPopup extends CloseablePopup {
 			repaintMvea();
 		}));
 
-		buttonPanel.add(VibeComposerGUI.makeButton("Rand. Velocity", e -> {
+		buttonPanel.add(SwingUtils.makeButton("Rand. Velocity", e -> {
 			Random rand = new Random();
 			InstPanel ip = VibeComposerGUI.getAffectedPanels(part).get(partOrder);
 			int velmin = ip.getVelocityMin();
@@ -248,8 +232,8 @@ public class MidiEditPopup extends CloseablePopup {
 			repaintMvea();
 		}));
 
-		buttonPanel.add(VibeComposerGUI.makeButton("Undo", e -> mvea.undo()));
-		buttonPanel.add(VibeComposerGUI.makeButton("Redo", e -> mvea.redo()));
+		buttonPanel.add(SwingUtils.makeButton("Undo", e -> mvea.undo()));
+		buttonPanel.add(SwingUtils.makeButton("Redo", e -> mvea.redo()));
 
 		JPanel midiDragDropPanel = makeMidiDragDropPanel();
 		buttonPanel.add(midiDragDropPanel);
@@ -301,7 +285,7 @@ public class MidiEditPopup extends CloseablePopup {
 		JPanel bottomSettingsPanel = new JPanel();
 		bottomSettingsPanel.setLayout(new BoxLayout(bottomSettingsPanel, BoxLayout.X_AXIS));
 		bottomSettingsPanel.add(text);
-		/*bottomSettingsPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
+		/*bottomSettingsPanel.add(SwingUtils.makeButton("Apply", e -> {
 			if (StringUtils.isNotEmpty(text.getText())) {
 				try {
 					String[] textSplit = text.getText().split(",");
@@ -422,19 +406,19 @@ public class MidiEditPopup extends CloseablePopup {
 		loadPartOrders();
 		loadNames();
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Load Pattern", e -> {
+		buttonPanel2.add(SwingUtils.makeButton("Load Pattern", e -> {
 			loadNotes(true);
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("Import Pattern", e -> {
+		buttonPanel2.add(SwingUtils.makeButton("Import Pattern", e -> {
 			loadNotes(false);
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("Save Pattern", e -> {
+		buttonPanel2.add(SwingUtils.makeButton("Save Pattern", e -> {
 			saveNotes(false, false);
 		}));
-		buttonPanel2.add(VibeComposerGUI.makeButton("<html>Save Pattern<br>+ Apply</html>", e -> {
+		buttonPanel2.add(SwingUtils.makeButton("<html>Save Pattern<br>+ Apply</html>", e -> {
 			saveNotes(false);
 		}));
-		buttonPanel2.add(VibeComposerGUI
+		buttonPanel2.add(SwingUtils
 				.makeButtonMoused("<html>Save Pattern as New<br>+ Apply</html>", e -> {
 					if (SwingUtilities.isLeftMouseButton(e)) {
 						saveNotes(true);
@@ -453,15 +437,15 @@ public class MidiEditPopup extends CloseablePopup {
 
 				}));
 
-		/*buttonPanel2.add(VibeComposerGUI.makeButton("Apply", e -> {
+		/*buttonPanel2.add(SwingUtils.makeButton("Apply", e -> {
 			apply();
 		}));*/
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("Apply 'NONE'", e -> {
+		buttonPanel2.add(SwingUtils.makeButton("Apply 'NONE'", e -> {
 			applyNone();
 		}));
 
-		buttonPanel2.add(VibeComposerGUI.makeButton("<html>Close<br>(w/o Applying)</html>", e -> {
+		buttonPanel2.add(SwingUtils.makeButton("<html>Close<br>(w/o Applying)</html>", e -> {
 			saveOnClose = false;
 			close();
 		}));

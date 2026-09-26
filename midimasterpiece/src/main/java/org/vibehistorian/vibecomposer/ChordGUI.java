@@ -21,28 +21,37 @@ package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Components.*;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.Chordlet;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
-import org.vibehistorian.vibecomposer.Panels.*;
-import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
+import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
+import org.vibehistorian.vibecomposer.Panels.ChordPanel;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
+import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
@@ -249,7 +258,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		return types.get(new Random().nextInt(types.size()));
 	}
 
-    public void initChordGenSettings(int startY, int anchorSide) {
+    public void initChordGenSettings() {
 		JPanel scrollableChordPanels = new JPanel();
 		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
 		scrollableChordPanels.setAutoscrolls(true);
@@ -398,7 +407,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		return chordParentPanel;
 	}
 
-    public void initChordProgressionSettings(int startY, int anchorSide) {
+    public JPanel initChordProgressionSettings() {
 		// CHORD SETTINGS 1 - chord variety
 		JPanel chordProgressionSettingsPanel = new JPanel();
 		chordProgressionSettingsPanel.setLayout(new GridLayout(2, 0, 0, 0));
@@ -418,12 +427,10 @@ public class ChordGUI implements InstrumentGUIControls {
 		firstChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), firstChordSelection);
 		firstChordSelection.setVal("?");
-		firstChordSelection.addItemListener(VibeComposerGUI.vibeComposerGUI);
 
 		lastChordSelection = new ScrollComboBox<String>(false);
 		lastChordSelection.addItem("?");
 		ScrollComboBox.addAll(MidiUtils.MAJOR_CHORDS.toArray(new String[] {}), lastChordSelection);
-		lastChordSelection.addItemListener(VibeComposerGUI.vibeComposerGUI);
 
 		JPanel spiceChancePanel = new JPanel();
 		spiceChancePanel.add(spiceChance);
@@ -465,12 +472,10 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordProgressionSettingsPanel.add(firstChordsPanel);
 		chordProgressionSettingsPanel.add(lastChordsPanel);
 
-		VibeComposerGUI.constraints.gridy = startY;
-		VibeComposerGUI.constraints.anchor = anchorSide;
-		VibeComposerGUI.vibeComposerGUI.controlPanel.add(chordProgressionSettingsPanel);
+		return chordProgressionSettingsPanel;
 	}
 
-    public void initCustomChords(int startY, int anchorSide) {
+    public JPanel initCustomChords() {
 		JPanel customChordsPanel = new JPanel();
 		customChordsPanel.setOpaque(false);
 		customChordsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -683,11 +688,6 @@ public class ChordGUI implements InstrumentGUIControls {
 		userChordsDurations = new JTextField("4,4,4,4", 9);
 		customChordsPanel.add(userChordsDurations);
 
-
-		VibeComposerGUI.constraints.gridy = startY;
-		VibeComposerGUI.constraints.anchor = anchorSide;
-		VibeComposerGUI.vibeComposerGUI.everythingPanel.add(customChordsPanel, VibeComposerGUI.constraints);
-
 		UITheme.toggleableComponents.add(twoExChordsButton);
 		UITheme.toggleableComponents.add(userDurationsEnabled);
 		UITheme.toggleableComponents.add(userChordsDurations);
@@ -699,6 +699,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		UITheme.toggleableComponents.add(melodifyChordsButton);
 		UITheme.toggleableComponents.add(chordTransformButton);
 
+		return customChordsPanel;
 	}
 
 public void createRandomChordPanels(int panelCount, boolean onlyAdd,

@@ -10,7 +10,7 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup.PatternNameMarker;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.SwingUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,16 +92,16 @@ public class PatternManagerPopup extends CloseablePopup {
 		patternComboBoxPanel.add(patternPartOrderBox);
 		patternComboBoxPanel.add(patternNameBox);
 
-		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply Selected", e -> {
+		patternButtonsPanel.add(SwingUtils.makeButton("Unapply Selected", e -> {
 			unapply(0);
 		}));
-		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply Generated (Multi)", e -> {
+		patternButtonsPanel.add(SwingUtils.makeButton("Unapply Generated (Multi)", e -> {
 			unapply(1);
 		}));
-		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply Custom (Multi)", e -> {
+		patternButtonsPanel.add(SwingUtils.makeButton("Unapply Custom (Multi)", e -> {
 			unapply(2);
 		}));
-		patternButtonsPanel.add(VibeComposerGUI.makeButton("Unapply M/V/I (Multi)", e -> {
+		patternButtonsPanel.add(SwingUtils.makeButton("Unapply M/V/I (Multi)", e -> {
 			unapply(3);
 		}));
 

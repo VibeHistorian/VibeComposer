@@ -44,7 +44,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /** Builds and owns arpeggio controls and their UI state. */
@@ -131,7 +130,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		List<? extends InstPanel> getInstList(int instrument);
 	}
 
-	public void initArpGenSettings(int startY, int anchorSide) {
+	public void initArpGenSettings() {
 		JPanel scrollableArpPanels = new JPanel();
 		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
 		scrollableArpPanels.setAutoscrolls(true);

@@ -39,6 +39,39 @@ public class SwingUtils {
 		return button;
 	}
 
+	public static JButton makeButton(String name, Consumer<? super Object> a, int width) {
+		return makeButton(name, a, width, 30);
+	}
+
+	public static JButton makeButton(String name, Consumer<? super Object> a, int width,
+									 int height) {
+		JButton butt = new JButton(name);
+		butt.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				a.accept(new Object());
+			}
+
+		});
+		butt.setPreferredSize(new Dimension(width, height));
+		butt.setMargin(new Insets(0, 0, 0, 0));
+		return butt;
+	}
+
+	public static JButton makeButtonMoused(String name, Consumer<? super MouseEvent> a) {
+		JButton butt = new JButton(name);
+		butt.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				a.accept(e);
+			}
+
+		});
+		return butt;
+	}
+
 	public static double getScrolledPosition(JScrollPane pane, boolean horizontal) {
 		//LG.i("Get scrl pos: " + pane.getHorizontalScrollBar().getVisibleAmount() / 2.0);
 		if (horizontal) {

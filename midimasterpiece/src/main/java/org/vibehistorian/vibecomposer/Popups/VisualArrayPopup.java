@@ -1,24 +1,19 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Point;
+import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Components.MultiValueEditArea;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.SwingUtils;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
-
-import javax.swing.BoxLayout;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-import org.vibehistorian.vibecomposer.Components.MultiValueEditArea;
-import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 
 public class VisualArrayPopup extends CloseablePopup {
 
@@ -41,21 +36,21 @@ public class VisualArrayPopup extends CloseablePopup {
 		buttonPanel.setLayout(new GridLayout(0, 4, 0, 0));
 		buttonPanel.setPreferredSize(new Dimension(500, 50));
 		if (addButtons) {
-			buttonPanel.add(VibeComposerGUI.makeButton("Add", e -> {
+			buttonPanel.add(SwingUtils.makeButton("Add", e -> {
 				if (mvea.getValues().size() > 31) {
 					return;
 				}
 				mvea.getValues().add(0);
 				repaintMvea();
 			}));
-			buttonPanel.add(VibeComposerGUI.makeButton("Remove", e -> {
+			buttonPanel.add(SwingUtils.makeButton("Remove", e -> {
 				if (mvea.getValues().size() <= 1) {
 					return;
 				}
 				mvea.getValues().remove(mvea.getValues().size() - 1);
 				repaintMvea();
 			}));
-			buttonPanel.add(VibeComposerGUI.makeButton("Clear", e -> {
+			buttonPanel.add(SwingUtils.makeButton("Clear", e -> {
 				int size = mvea.getValues().size();
 				mvea.getValues().clear();
 				for (int i = 0; i < size; i++) {
@@ -63,14 +58,14 @@ public class VisualArrayPopup extends CloseablePopup {
 				}
 				repaintMvea();
 			}));
-			buttonPanel.add(VibeComposerGUI.makeButton("2x", e -> {
+			buttonPanel.add(SwingUtils.makeButton("2x", e -> {
 				if (mvea.getValues().size() > 16) {
 					return;
 				}
 				mvea.getValues().addAll(mvea.getValues());
 				repaintMvea();
 			}));
-			buttonPanel.add(VibeComposerGUI.makeButton("Dd", e -> {
+			buttonPanel.add(SwingUtils.makeButton("Dd", e -> {
 				if (mvea.getValues().size() > 16) {
 					return;
 				}
@@ -84,7 +79,7 @@ public class VisualArrayPopup extends CloseablePopup {
 				oldValues.addAll(ddValues);
 				repaintMvea();
 			}));
-			buttonPanel.add(VibeComposerGUI.makeButton("1/2", e -> {
+			buttonPanel.add(SwingUtils.makeButton("1/2", e -> {
 				if (mvea.getValues().size() <= 1) {
 					return;
 				}
@@ -95,7 +90,7 @@ public class VisualArrayPopup extends CloseablePopup {
 
 				repaintMvea();
 			}));
-			buttonPanel.add(VibeComposerGUI.makeButton("???", e -> {
+			buttonPanel.add(SwingUtils.makeButton("???", e -> {
 				int size = mvea.getValues().size();
 				boolean successRandGenerator = false;
 				if (butt != null && butt.getRandGenerator() != null) {
@@ -125,7 +120,7 @@ public class VisualArrayPopup extends CloseablePopup {
 		}
 
 
-		buttonPanel.add(VibeComposerGUI.makeButton("> OK <", e -> close()));
+		buttonPanel.add(SwingUtils.makeButton("> OK <", e -> close()));
 
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(500, 500));
@@ -139,7 +134,7 @@ public class VisualArrayPopup extends CloseablePopup {
 			JPanel textPanel = new JPanel();
 			textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
 			textPanel.add(text);
-			textPanel.add(VibeComposerGUI.makeButton("Apply", e -> {
+			textPanel.add(SwingUtils.makeButton("Apply", e -> {
 				if (StringUtils.isNotEmpty(text.getText())) {
 					try {
 						String[] textSplit = text.getText().split(",");

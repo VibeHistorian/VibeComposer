@@ -40,9 +40,16 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.function.Consumer;
 
 /** Builds and owns drum controls and drum panel generation. */
@@ -127,7 +134,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		List<InstPanel> getAffectedPanels(int instrument);
 	}
 
-	public void initDrumGenSettings(int startY, int anchorSide) {
+	public void initDrumGenSettings() {
 		JPanel scrollableDrumPanels = new JPanel();
 		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
 		scrollableDrumPanels.setAutoscrolls(true);

@@ -1,22 +1,18 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.SwingUtils;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChordTransformPopup extends CloseablePopup {
 	private ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
@@ -41,15 +37,15 @@ public class ChordTransformPopup extends CloseablePopup {
 		modePanel.add(new JLabel("Mode"));
 		modePanel.add(scaleMode);
 		modePanel.add(transpose);
-		modePanel.add(VibeComposerGUI.makeButton("R", e -> {
+		modePanel.add(SwingUtils.makeButton("R", e -> {
 			transpose.setInt(-1 * transpose.getInt());
 		}));
 		allPanel.add(modePanel);
 
-		allPanel.add(VibeComposerGUI.makeButton("From Ionian To Mode", e -> {
+		allPanel.add(SwingUtils.makeButton("From Ionian To Mode", e -> {
 			convertFromIonian();
 		}));
-		allPanel.add(VibeComposerGUI.makeButton("From Mode To Ionian", e -> {
+		allPanel.add(SwingUtils.makeButton("From Mode To Ionian", e -> {
 			convertToIonian();
 		}));
 		frame.add(allPanel);

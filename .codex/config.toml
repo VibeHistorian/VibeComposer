@@ -9,3 +9,6 @@ sandbox = "elevated"
 
 [mcp_servers.idea]
 url = "http://127.0.0.1:64342/stream"
+
+[projects.'d:\production\ideaprojects\vibecomposer']
+trust_level = "trusted"

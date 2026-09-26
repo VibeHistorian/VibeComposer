@@ -97,11 +97,6 @@ public class VibeComposerGUI extends JFrame
 
 	private static final long serialVersionUID = -677536546851756969L;
 
-	// COLORS
-
-	Color messageColorDarkMode = new Color(200, 200, 200);
-	Color messageColorLightMode = new Color(120, 120, 200);
-
 	private Synthesizer synth = null;
 	private boolean isSoundbankSynth = false;
 	private boolean needSoundbankRefresh = false;
@@ -266,7 +261,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initExtraSettingsGUI() {
 		extraSettingsGUI = new ExtraSettingsGUI(new ExtraSettingsGUI.Context() {
-			@Override public JButton makeButton(String name, Consumer<? super Object> action) { return VibeComposerGUI.makeButton(name, action); }
+			@Override public JButton makeButton(String name, Consumer<? super Object> action) { return SwingUtils.makeButton(name, action); }
 			@Override public JButton makeButton(String name, String actionCommand) { return VibeComposerGUI.this.makeButton(name, actionCommand); }
 			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) { return VibeComposerGUI.makeCheckBox(label, selected, thick); }
 			@Override public void initHelperPopups(JPanel settingsPanel) { VibeComposerGUI.this.initHelperPopups(settingsPanel); }
@@ -283,7 +278,7 @@ public static final String CURRENT_VERSION = "2.6";
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
 			}
 			@Override public JButton makeButton(String name, Consumer<? super Object> action) {
-				return VibeComposerGUI.makeButton(name, action);
+				return SwingUtils.makeButton(name, action);
 			}
 			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) {
 				return VibeComposerGUI.makeCheckBox(label, selected, thick);
@@ -317,13 +312,12 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initArrangementGUI() {
 		arrangementGUI = new ArrangementGUI(new ArrangementGUI.Context() {
+			@Override public JTabbedPane getInstrumentTabPane() {
+				return VibeComposerGUI.instrumentTabPane;
+			}
 			@Override public JButton makeButton(String name, String actionCommand, int width,
 					int height) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand, width, height);
-			}
-			@Override public JButton makeButton(String name, Consumer<? super Object> action,
-					int width) {
-				return VibeComposerGUI.makeButton(name, action, width);
 			}
 			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) {
 				return VibeComposerGUI.makeCheckBox(label, selected, thick);
@@ -348,7 +342,7 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	private void initScoreGUI() {
-		scoreGUI = new ScoreGUI();
+		scoreGUI = new ScoreGUI(() -> VibeComposerGUI.instrumentTabPane);
 	}
 
 	private void initMelodyGUI() {
@@ -605,10 +599,10 @@ public static final String CURRENT_VERSION = "2.6";
 		LG.i("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// ---- INSTRUMENT SETTINGS ----
 		{
-			chordGUI.initChordGenSettings(40, GridBagConstraints.WEST);
-			arpGUI.initArpGenSettings(105, GridBagConstraints.WEST);
-			drumGUI.initDrumGenSettings(190, GridBagConstraints.WEST);
-			melodyGUI.initMelodyGenSettings(220, GridBagConstraints.WEST);
+			chordGUI.initChordGenSettings();
+			arpGUI.initArpGenSettings();
+			drumGUI.initDrumGenSettings();
+			melodyGUI.initMelodyGenSettings();
 
 		}
 		LG.i("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -687,13 +681,19 @@ public static final String CURRENT_VERSION = "2.6";
 
 			// chord settings - variety/spice
 			// chord settings - progressions
-			chordGUI.initChordProgressionSettings(370, GridBagConstraints.CENTER);
+			JPanel chordProgressionSettingsPanel = chordGUI.initChordProgressionSettings();
+			constraints.gridy = 370;
+			constraints.anchor = GridBagConstraints.CENTER;
+			controlPanel.add(chordProgressionSettingsPanel, constraints);
 
 			// chord tool tip
 
 			everythingPanel.add(controlPanel, constraints);
 
-			chordGUI.initCustomChords(380, GridBagConstraints.CENTER);
+			JPanel customChordsPanel = chordGUI.initCustomChords();
+			constraints.gridy = 380;
+			constraints.anchor = GridBagConstraints.CENTER;
+			everythingPanel.add(customChordsPanel, constraints);
 
 		}
 		LG.i("Butts, params, cp, chords: " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -884,18 +884,18 @@ public static final String CURRENT_VERSION = "2.6";
 		mainButtonsPanel.add(globalSoloMuter);
 		globalSoloMuter.setBackground(null);
 
-		mainButtonsPanel.add(makeButton("Toggle Dark Mode", e -> switchDarkMode()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Toggle Dark Mode", e -> switchDarkMode()));
 
-		mainButtonsPanel.add(makeButton("Toggle Adv. Features", e -> switchFullMode()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Toggle Adv. Features", e -> switchFullMode()));
 
-		mainButtonsPanel.add(makeButton("B I G/small", e -> switchBigMonitorMode()));
+		mainButtonsPanel.add(SwingUtils.makeButton("B I G/small", e -> switchBigMonitorMode()));
 
-		mainButtonsPanel.add(makeButton("Exclude Not Solo'd", e -> toggleExclude()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Exclude Not Solo'd", e -> toggleExclude()));
 
 		//mainButtonsPanel.add(makeButton("DrumView", e -> openDrumViewPopup()));
 
 
-		mainButtonsPanel.add(makeButton("Settings", e -> openExtraSettingsPopup()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Settings", e -> openExtraSettingsPopup()));
 
 
 		// ---- MESSAGE PANEL ----
@@ -910,16 +910,16 @@ public static final String CURRENT_VERSION = "2.6";
 
 
 		mainButtonsPanel.add(presetLoadBox);
-		mainButtonsPanel.add(makeButtonMoused("Load Preset", e -> {
+		mainButtonsPanel.add(SwingUtils.makeButtonMoused("Load Preset", e -> {
 			if (SwingUtilities.isLeftMouseButton(e)) {
 				loadPreset();
 			} else {
 				openFolder(Constants.PRESET_FOLDER);
 			}
 		}));
-		mainButtonsPanel.add(makeButton("Save Preset", e -> savePreset()));
-		mainButtonsPanel.add(makeButton("Undefault", e -> undefaultPreset()));
-		mainButtonsPanel.add(makeButton("Reset All", e -> {
+		mainButtonsPanel.add(SwingUtils.makeButton("Save Preset", e -> savePreset()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Undefault", e -> undefaultPreset()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Reset All", e -> {
 			if (heavyBackgroundTasksInProgress) {
 				return;
 			}
@@ -1096,7 +1096,7 @@ public static final String CURRENT_VERSION = "2.6";
 		soloMuterTrackControlPanel.add(new JLabel("Track History: "));
 		configHistory.box().setPreferredSize(new Dimension(450, 30));
 		soloMuterTrackControlPanel.add(configHistory);
-		soloMuterTrackControlPanel.add(makeButton("Load", e -> {
+		soloMuterTrackControlPanel.add(SwingUtils.makeButton("Load", e -> {
 			if (configHistory.getItemCount() > 0) {
 				guiConfig = configHistory.getSelectedItem();
 				configHistory.removeItemAt(configHistory.getSelectedIndex());
@@ -1106,15 +1106,15 @@ public static final String CURRENT_VERSION = "2.6";
 				//clearAllSeeds();
 			}
 		}));
-		JButton loadCustomBtn = makeButton("Replace Section", e -> replaceSection());
+		JButton loadCustomBtn = SwingUtils.makeButton("Replace Section", e -> replaceSection());
 
-		JButton recomposeSectionBtn = makeButton("Recompose Section", e -> recomposeSection());
+		JButton recomposeSectionBtn = SwingUtils.makeButton("Recompose Section", e -> recomposeSection());
 
 		soloMuterTrackControlPanel.add(loadCustomBtn);
 		soloMuterTrackControlPanel.add(recomposeSectionBtn);
 		JTextField bookmarkField = new JTextField("Intro1", 8);
 		soloMuterTrackControlPanel.add(bookmarkField);
-		JButton butt = makeButton("Add Bookmark Text", e -> {
+		JButton butt = SwingUtils.makeButton("Add Bookmark Text", e -> {
 			GUIConfig historyCfg = configHistory.getSelectedItem();
 			historyCfg.setBookmarkText(bookmarkField.getText());
 			configHistory.removeItemAt(configHistory.getSelectedIndex());
@@ -1870,12 +1870,12 @@ public static final String CURRENT_VERSION = "2.6";
 		compose.setPreferredSize(new Dimension(80, 40));
 		compose.setFont(compose.getFont().deriveFont(Font.BOLD));
 		regenerate = makeButton("Regenerate", "Regenerate");
-		regenerateStopPlay = makeButton("R!", e -> {
+		regenerateStopPlay = SwingUtils.makeButton("R!", e -> {
 			stopMidi();
 			actionPerformed(new ActionEvent(regenerateStopPlay, ActionEvent.ACTION_PERFORMED,
 					"Regenerate"));
 		});
-		regeneratePausePlay = makeButton("R~", e -> {
+		regeneratePausePlay = SwingUtils.makeButton("R~", e -> {
 			regenerateInPlace();
 		});
 		regenerateStopPlay.setMargin(new Insets(0, 0, 0, 0));
@@ -1884,8 +1884,8 @@ public static final String CURRENT_VERSION = "2.6";
 		regeneratePausePlay.setPreferredSize(new Dimension(25, 30));
 		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
 		JButton copySeed = makeButton("Copy Main Seed", "CopySeed");
-		JButton copyChords = makeButton("Copy chords", e -> copyChords());
-		JButton clearSeed = makeButton("Clear All Seeds", e -> clearAllSeeds());
+		JButton copyChords = SwingUtils.makeButton("Copy chords", e -> copyChords());
+		JButton clearSeed = SwingUtils.makeButton("Clear All Seeds", e -> clearAllSeeds());
 
 		controlSettingsPanel.add(regenerate);
 		controlSettingsPanel.add(regenerateStopPlay);
@@ -1923,14 +1923,14 @@ public static final String CURRENT_VERSION = "2.6";
 
 		JPanel playSavePanel = new JPanel();
 		playSavePanel.setOpaque(false);
-		stopMidi = makeButton("STOP", e -> stopMidi());
-		playMidi = makeButton("PLAY", e -> playMidi(false));
-		pauseMidi = makeButton("PAUSE", e -> pauseMidi());
+		stopMidi = SwingUtils.makeButton("STOP", e -> stopMidi());
+		playMidi = SwingUtils.makeButton("PLAY", e -> playMidi(false));
+		pauseMidi = SwingUtils.makeButton("PAUSE", e -> pauseMidi());
 		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
 		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
 		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
 
-		JButton save3Star = makeButtonMoused("Save 3*", e -> {
+		JButton save3Star = SwingUtils.makeButtonMoused("Save 3*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "3star/");
 			} else {
@@ -1938,7 +1938,7 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		});
 		save3Star.setForeground(savedIndicatorForegroundColors[0]);
-		JButton save4Star = makeButtonMoused("Save 4*", e -> {
+		JButton save4Star = SwingUtils.makeButtonMoused("Save 4*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "4star/");
 			} else {
@@ -1946,7 +1946,7 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		});
 		save4Star.setForeground(savedIndicatorForegroundColors[1]);
-		JButton save5Star = makeButtonMoused("Save 5*", e -> {
+		JButton save5Star = SwingUtils.makeButtonMoused("Save 5*", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "5star/");
 			} else {
@@ -1954,7 +1954,7 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		});
 		save5Star.setForeground(savedIndicatorForegroundColors[2]);
-		JButton saveCustom = makeButtonMoused("Save ->", e -> {
+		JButton saveCustom = SwingUtils.makeButtonMoused("Save ->", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "custom/");
 			} else {
@@ -1971,7 +1971,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 		JButton loadConfig = makeButton("LOAD..", "LoadGUIConfig");
 
-		JButton saveWavFile = makeButtonMoused("Export .WAV", e -> {
+		JButton saveWavFile = SwingUtils.makeButtonMoused("Export .WAV", e -> {
 			if (!SwingUtilities.isLeftMouseButton(e)) {
 				openFolder(Constants.EXPORT_FOLDER);
 			} else {
@@ -2158,9 +2158,9 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initHelperPopups(JPanel settingsPanel) {
 		JPanel helperPopupsPanel = new JPanel();
-		helperPopupsPanel.add(makeButton("User Manual (opens browser)", e -> openHelpPopup()));
-		helperPopupsPanel.add(makeButton("Debug Console", e -> openDebugConsole()));
-		helperPopupsPanel.add(makeButton("About VibeComposer", e -> openAboutPopup()));
+		helperPopupsPanel.add(SwingUtils.makeButton("User Manual (opens browser)", e -> openHelpPopup()));
+		helperPopupsPanel.add(SwingUtils.makeButton("Debug Console", e -> openDebugConsole()));
+		helperPopupsPanel.add(SwingUtils.makeButton("About VibeComposer", e -> openAboutPopup()));
 		settingsPanel.add(helperPopupsPanel, BorderLayout.SOUTH);
 	}
 
@@ -3609,43 +3609,6 @@ public static final String CURRENT_VERSION = "2.6";
 			butt.setPreferredSize(new Dimension(width, height));
 			butt.setMargin(new Insets(0, 0, 0, 0));
 		}
-		return butt;
-	}
-
-	public static JButton makeButton(String name, Consumer<? super Object> a) {
-		return SwingUtils.makeButton(name, a);
-	}
-
-	public static JButton makeButton(String name, Consumer<? super Object> a, int width) {
-		return makeButton(name, a, width, 30);
-	}
-
-	public static JButton makeButton(String name, Consumer<? super Object> a, int width,
-			int height) {
-		JButton butt = new JButton(name);
-		butt.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				a.accept(new Object());
-			}
-
-		});
-		butt.setPreferredSize(new Dimension(width, height));
-		butt.setMargin(new Insets(0, 0, 0, 0));
-		return butt;
-	}
-
-	public static JButton makeButtonMoused(String name, Consumer<? super MouseEvent> a) {
-		JButton butt = new JButton(name);
-		butt.addMouseListener(new MouseAdapter() {
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				a.accept(e);
-			}
-
-		});
 		return butt;
 	}
 

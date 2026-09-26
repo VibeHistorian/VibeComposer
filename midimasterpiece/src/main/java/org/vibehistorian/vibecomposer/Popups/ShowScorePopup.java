@@ -11,14 +11,17 @@ import java.awt.event.WindowListener;
 
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.JTabbedPane;
 
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 
 public class ShowScorePopup extends CloseablePopup {
+	private final JTabbedPane instrumentTabPane;
 
-	public ShowScorePopup(JScrollPane scoreScrollPane) {
+	public ShowScorePopup(JScrollPane scoreScrollPane, JTabbedPane instrumentTabPane) {
 		super("MIDI Score", 12, new Point(-400, -500), VibeComposerGUI.vibeComposerGUI);
+		this.instrumentTabPane = instrumentTabPane;
 		frame.add(scoreScrollPane);
 		if (ScoreGUI.miniScorePopup.isSelected()) {
 			frame.setPreferredSize(new Dimension(650, 325));
@@ -43,8 +46,8 @@ public class ShowScorePopup extends CloseablePopup {
 			public void windowClosing(WindowEvent e) {
 				if (frame.isVisible()) {
 					frame.remove(ScoreGUI.scoreScrollPane);
-					VibeComposerGUI.instrumentTabPane.add(ScoreGUI.scoreScrollPane, 7);
-					VibeComposerGUI.instrumentTabPane.setTitleAt(7, " Score ");
+					instrumentTabPane.add(ScoreGUI.scoreScrollPane, 7);
+					instrumentTabPane.setTitleAt(7, " Score ");
 					currentPopupMap.remove(12);
 					//if (ScoreGUI.miniScorePopup.isSelected()) {
 					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesBig;

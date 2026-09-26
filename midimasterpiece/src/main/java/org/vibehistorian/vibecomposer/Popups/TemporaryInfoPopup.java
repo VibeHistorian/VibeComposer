@@ -35,7 +35,7 @@ public class TemporaryInfoPopup {
 			tmr.start();
 		}
 		if (timeoutMs == null || timeoutMs < 0 || showOkButton) {
-			JButton okButton = VibeComposerGUI.makeButton("OK", e -> {
+			JButton okButton = SwingUtils.makeButton("OK", e -> {
 				frame.dispose();
 			});
 			panel.add(okButton);

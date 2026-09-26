@@ -6,6 +6,7 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 		panel.setPreferredSize(new Dimension(300, 100));
 
 		JPanel panelGlobal = new JPanel();
-		panelGlobal.add(VibeComposerGUI.makeButton("Apply to Global", e -> {
+		panelGlobal.add(SwingUtils.makeButton("Apply to Global", e -> {
 			Section sec = ArrangementGUI.actualArrangement.getSections()
 					.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 			for (int i = 0; i < 5; i++) {

@@ -1,17 +1,34 @@
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Components.*;
-import org.vibehistorian.vibecomposer.Panels.*;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
+import org.vibehistorian.vibecomposer.Panels.DrumPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+
 import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.SoftBevelBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /** Owns the extra settings window and its non-generation settings controls. */
@@ -428,7 +445,6 @@ public class ExtraSettingsGUI {
 		ScrollComboBox.addAll(new String[] { "PIVOT", "TWOFIVEONE", "DIRECT" }, keyChangeTypeSelection);
 		keyChangeTypeSelection.setVal("TWOFIVEONE");
 		keyChangeTypeSelection.setPreferredSize(new Dimension(250, 30));
-		keyChangeTypeSelection.addItemListener(VibeComposerGUI.vibeComposerGUI);
 		keyChangePanel.add(new JLabel("<html>Key Change<br>Type:</html>"));
 		keyChangePanel.add(keyChangeTypeSelection);
 

@@ -220,7 +220,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		List<InstPanel> getAffectedPanels(int instrument);
 	}
 
-	public void initMelodyGenSettings(int startY, int anchorSide) {
+	public void initMelodyGenSettings() {
 		JPanel scrollableMelodyPanels = new JPanel();
 		scrollableMelodyPanels.setLayout(new BoxLayout(scrollableMelodyPanels, BoxLayout.Y_AXIS));
 		scrollableMelodyPanels.setAutoscrolls(true);

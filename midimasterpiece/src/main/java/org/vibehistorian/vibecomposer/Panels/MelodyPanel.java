@@ -8,8 +8,8 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MelodyGUI;
+import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGeneratorUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -103,7 +103,7 @@ public class MelodyPanel extends InstPanel {
 
 		this.add(speed);
 
-		/*this.add(VibeComposerGUI.makeButton("Manual MIDI",
+		/*this.add(SwingUtils.makeButton("Manual MIDI",
 				e -> new VisualArrayPopup(-10, 10, new ArrayList<>())));*/
 
 		pauseChance.setInt(0);

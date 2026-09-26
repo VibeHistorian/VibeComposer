@@ -31,6 +31,16 @@ import java.awt.event.MouseEvent;
 
 /** Owns score display state, settings, and popup behavior. */
 public class ScoreGUI {
+	public interface Context {
+		JTabbedPane getInstrumentTabPane();
+	}
+
+	private final Context context;
+
+	public ScoreGUI(Context context) {
+		this.context = context;
+	}
+
 	public static JScrollPane scoreScrollPane;
 	public static ShowPanelBig scorePanel;
 	public static KnobPanel transposeScore;
@@ -56,7 +66,7 @@ public class ScoreGUI {
 		scoreScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 		scoreScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scoreScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		VibeComposerGUI.instrumentTabPane.addTab("Score", scoreScrollPane);
+		context.getInstrumentTabPane().addTab("Score", scoreScrollPane);
 	}
 
 	public KnobPanel createTransposeControl() {
@@ -96,7 +106,7 @@ public class ScoreGUI {
 	}
 
 	public void toggleShowScorePopup() {
-		JTabbedPane instrumentTabPane = VibeComposerGUI.instrumentTabPane;
+		JTabbedPane instrumentTabPane = context.getInstrumentTabPane();
 		if (scorePanel != null) {
 			if (instrumentTabPane.getComponentCount() == 8) {
 				instrumentTabPane.remove(scoreScrollPane);
@@ -112,7 +122,7 @@ public class ScoreGUI {
 					SwingUtilities.invokeLater(() ->
 							ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0));
 				}
-				scorePopup = new ShowScorePopup(scoreScrollPane);
+				scorePopup = new ShowScorePopup(scoreScrollPane, instrumentTabPane);
 			} else {
 				cleanup();
 				if (instrumentTabPane.getComponentCount() < 8) {
