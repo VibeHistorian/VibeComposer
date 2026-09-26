@@ -107,10 +107,92 @@ public class VibeComposerGUI extends JFrame
 		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 	};
 	private final PlaybackController playbackController;
+	private final InstrumentPanelController instrumentPanelController =
+			new InstrumentPanelController(new InstrumentPanelController.Context() {
+				@Override public InstPanel createPanel(int instrument) {
+					return InstPanel.makeInstPanel(instrument, VibeComposerGUI.this);
+				}
+				@Override public void configurePanel(InstPanel panel) {
+					configureRandomizeAction(panel);
+					configureInstPanelContext(panel);
+					configureInstrumentControlContext(panel);
+				}
+				@Override public List<InstPanel> getAffectedPanels(int instrument) {
+					return VibeComposerGUI.getAffectedPanels(instrument);
+				}
+				@Override public List<? extends InstPanel> getPanels(int instrument) {
+					return VibeComposerGUI.getInstList(instrument);
+				}
+				@Override public int getRandomPanelCount(int instrument) {
+					return Integer.parseInt(getInstrumentControls(instrument)
+							.getRandomPanelsToGenerate().getText());
+				}
+				@Override public JScrollPane getPanelScrollPane(int instrument) {
+					return VibeComposerGUI.getInstPane(instrument);
+				}
+				@Override public boolean isFullMode() { return UITheme.isFullMode; }
+				@Override public boolean isCustomSection() { return VibeComposerGUI.isCustomSection(); }
+				@Override public boolean reverseDrumPanelOrder() {
+					return DrumGUI.bottomUpReverseDrumPanels.isSelected();
+				}
+				@Override public void removeComboBoxArrows(InstPanel panel) {
+					VibeComposerGUI.this.removeComboBoxArrows(panel);
+				}
+				@Override public void recalculateArrangementPartMaps() {
+					ArrangementGUI.actualArrangement.getSections()
+							.forEach(section -> section.initPartMapFromOldData());
+				}
+				@Override public void recalculateTabPaneCounts() {
+					VibeComposerGUI.this.recalculateTabPaneCounts();
+				}
+				@Override public void recalculateAfterPanelGeneration() {
+					VibeComposerGUI.this.recalculateTabPaneCounts();
+					VibeComposerGUI.this.recalculateSoloMuters();
+				}
+				@Override public void recalculateAfterPanelAddition() {
+					VibeComposerGUI.this.recalculateGeneratorAndTabCounts();
+					VibeComposerGUI.this.recalculateSoloMuters();
+				}
+				@Override public void repaintInstrumentTabs() { instrumentTabPane.repaint(); }
+				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
+				@Override public boolean canRegenerateOnChange() {
+					return VibeComposerGUI.this.canRegenerateOnChange();
+				}
+				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
+				@Override public void randomizePanels(int instrument, int panelCount,
+						boolean onlyAdd, Integer seed, InstPanel randomizedPanel) {
+					if (instrument == 0) {
+						if (seed == null) {
+						melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd);
+					} else {
+						melodyGUI.createRandomMelodyPanels(seed, panelCount, onlyAdd,
+								(MelodyPanel) randomizedPanel);
+					}
+				} else if (instrument == 1) {
+					if (seed == null) {
+						bassGUI.createRandomBassPanels(panelCount, onlyAdd);
+					} else {
+						bassGUI.createRandomBassPanels(seed, panelCount, onlyAdd,
+								(BassPanel) randomizedPanel);
+					}
+				} else if (instrument == 2) {
+					chordGUI.createRandomChordPanels(panelCount, onlyAdd,
+							(ChordPanel) randomizedPanel);
+				} else if (instrument == 3) {
+					arpGUI.createRandomArpPanels(panelCount, onlyAdd,
+							(ArpPanel) randomizedPanel);
+				} else if (instrument == 4) {
+					drumGUI.createRandomDrumPanels(panelCount, onlyAdd,
+							(DrumPanel) randomizedPanel);
+				} else {
+					throw new IllegalArgumentException("Unsupported panel part!");
+				}
+			}
+			});
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public InstPanel addInstPanel(int instrument, InstPart initialPart,
 				boolean recalculateArrangement) {
-			return VibeComposerGUI.this.addInstPanelToLayout(instrument, initialPart,
+			return instrumentPanelController.addPanel(instrument, initialPart,
 					recalculateArrangement);
 		}
 		@Override public int getSelectedInstrumentIndex() {
@@ -123,7 +205,7 @@ public class VibeComposerGUI extends JFrame
 			return VibeComposerGUI.getAffectedPanels(instrument);
 		}
 		@Override public void removeInstPanel(int instrument, int panelOrder) {
-			VibeComposerGUI.removeInstPanel(instrument, panelOrder, true);
+			instrumentPanelController.removePanel(instrument, panelOrder);
 			VibeComposerGUI.this.recalculateGeneratorAndTabCounts();
 		}
 		@Override public int getAbsoluteOrder(int instrument, int panelOrder) {
@@ -431,6 +513,22 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void trySliderStartChange(int sectionIndex) {
 				VibeComposerGUI.this.trySliderStartChange(sectionIndex);
 			}
+			@Override public GUIConfig getSelectedConfigHistory() {
+				return configHistory.getItemCount() > 0 ? configHistory.getVal() : null;
+			}
+			@Override public void createRandomPanels(int instrument, int panelCount) {
+				instrumentPanelController.createRandomPanels(instrument, panelCount, false);
+			}
+			@Override public void recalculateAfterSectionRecompose() {
+				recalculateTabPaneCounts();
+				recalculateSoloMuters();
+			}
+			@Override public void regenerateAfterSectionRecomposeIfEnabled() {
+				if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
+					playbackController.stopMidi();
+					regenerate();
+				}
+			}
 		});
 	}
 
@@ -528,12 +626,12 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override
 			public void addPanel() {
-				VibeComposerGUI.this.addPanel(0);
+				instrumentPanelController.addRandomPanel(0);
 			}
 
 			@Override
 			public void generatePanels(boolean triggerRegenerate) {
-				VibeComposerGUI.this.generatePanels(0, triggerRegenerate);
+				instrumentPanelController.generatePanels(0, triggerRegenerate);
 			}
 
 			@Override
@@ -548,7 +646,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 			@Override
 			public MelodyPanel addMelodyPanel() {
-				return (MelodyPanel) VibeComposerGUI.this.addInstPanelToLayout(0);
+			return (MelodyPanel) instrumentPanelController.addPanel(0);
 			}
 			@Override
 			public List<InstPanel> getAffectedPanels(int instrument) {
@@ -565,17 +663,17 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override
 			public void addPanel() {
-				VibeComposerGUI.this.addPanel(1);
+				instrumentPanelController.addRandomPanel(1);
 			}
 
 			@Override
 			public void generatePanels(boolean triggerRegenerate) {
-				VibeComposerGUI.this.generatePanels(1, triggerRegenerate);
+				instrumentPanelController.generatePanels(1, triggerRegenerate);
 			}
 
 			@Override
 			public BassPanel addBassPanel() {
-				return (BassPanel) VibeComposerGUI.this.addInstPanelToLayout(1);
+			return (BassPanel) instrumentPanelController.addPanel(1);
 			}
 			@Override
 			public List<InstPanel> getAffectedPanels(int instrument) {
@@ -592,12 +690,12 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
 			}
-			@Override public void addPanel() { VibeComposerGUI.this.addPanel(4); }
+			@Override public void addPanel() { instrumentPanelController.addRandomPanel(4); }
 			@Override public void generatePanels(boolean triggerRegenerate) {
-				VibeComposerGUI.this.generatePanels(4, triggerRegenerate);
+				instrumentPanelController.generatePanels(4, triggerRegenerate);
 			}
 			@Override public DrumPanel addDrumPanel() {
-				return (DrumPanel) VibeComposerGUI.this.addInstPanelToLayout(4);
+			return (DrumPanel) instrumentPanelController.addPanel(4);
 			}
 			@Override public List<InstPanel> getAffectedPanels(int instrument) {
 				return VibeComposerGUI.getAffectedPanels(instrument);
@@ -613,17 +711,17 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override
 			public void addPanel() {
-				VibeComposerGUI.this.addPanel(3);
+				instrumentPanelController.addRandomPanel(3);
 			}
 
 			@Override
 			public void generatePanels(boolean triggerRegenerate) {
-				VibeComposerGUI.this.generatePanels(3, triggerRegenerate);
+				instrumentPanelController.generatePanels(3, triggerRegenerate);
 			}
 
 			@Override
 			public ArpPanel addArpPanel() {
-				return (ArpPanel) VibeComposerGUI.this.addInstPanelToLayout(3);
+			return (ArpPanel) instrumentPanelController.addPanel(3);
 			}
 			@Override
 			public List<InstPanel> getAffectedPanels(int instrument) {
@@ -645,12 +743,12 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override
 			public void addPanel() {
-				VibeComposerGUI.this.addPanel(2);
+				instrumentPanelController.addRandomPanel(2);
 			}
 
 			@Override
 			public void generatePanels(boolean triggerRegenerate) {
-				VibeComposerGUI.this.generatePanels(2, triggerRegenerate);
+				instrumentPanelController.generatePanels(2, triggerRegenerate);
 			}
 
 			@Override
@@ -673,7 +771,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 			@Override
 			public ChordPanel addChordPanel() {
-				return (ChordPanel) VibeComposerGUI.this.addInstPanelToLayout(2);
+			return (ChordPanel) instrumentPanelController.addPanel(2);
 			}
 			@Override
 			public List<InstPanel> getAffectedPanels(int instrument) {
@@ -938,7 +1036,7 @@ public static final String CURRENT_VERSION = "2.6";
 		if (!presetLoaded) {
 			melodyGUI.generateInitialMelodyPanels();
 			for (int i = 1; i < 5; i++) {
-				generatePanels(i);
+				instrumentPanelController.generatePanels(i);
 			}
 			LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
 		}
@@ -1094,7 +1192,7 @@ public static final String CURRENT_VERSION = "2.6";
 			getInstrumentControls(4).getRandomPanelsToGenerate().setText("6");
 			melodyGUI.generateInitialMelodyPanels();
 			for (int i = 1; i < 5; i++) {
-				generatePanels(i);
+				instrumentPanelController.generatePanels(i);
 			}
 			ArrangementGUI.manualArrangement.setSelected(false);
 			heavyBackgroundTasksInProgress = false;
@@ -1268,9 +1366,11 @@ public static final String CURRENT_VERSION = "2.6";
 				//clearAllSeeds();
 			}
 		}));
-		JButton loadCustomBtn = SwingUtils.makeButton("Replace Section", e -> replaceSection());
+		JButton loadCustomBtn = SwingUtils.makeButton("Replace Section",
+				e -> arrangementGUI.replaceSection());
 
-		JButton recomposeSectionBtn = SwingUtils.makeButton("Recompose Section", e -> recomposeSection());
+		JButton recomposeSectionBtn = SwingUtils.makeButton("Recompose Section",
+				e -> arrangementGUI.recomposeSection());
 
 		soloMuterTrackControlPanel.add(loadCustomBtn);
 		soloMuterTrackControlPanel.add(recomposeSectionBtn);
@@ -1295,84 +1395,6 @@ public static final String CURRENT_VERSION = "2.6";
 		constraints.anchor = anchorSide;
 		everythingPanel.add(soloMuterTrackControlPanel, constraints);
 	}
-
-	private void recomposeSection() {
-		if (!isCustomSection()) {
-			return;
-		}
-		ArrangementGUI.manualArrangement.setSelected(true);
-		for (int i = 0; i < 5; i++) {
-			createPanels(i, getInstList(i).size(), false);
-			ArrangementGUI.arrangementGUI.applyCustomPanelsToSection("", i,
-					ArrangementGUI.arrSection.getSelectedIndex());
-		}
-		ArrangementGUI.arrSection.getCurrentButton().repaint();
-		recalculateTabPaneCounts();
-		recalculateSoloMuters();
-		if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
-			playbackController.stopMidi();
-			regenerate();
-		}
-	}
-
-	private void replaceSection() {
-		if (configHistory.getItemCount() > 0 && ArrangementGUI.arrSection.getSelectedIndex() > 0) {
-			GUIConfig sectionGuiConfig = configHistory.getVal();
-			Section currentSec = ArrangementGUI.actualArrangement.getSections()
-					.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
-			for (int i = 0; i < 5; i++) {
-				currentSec.setInstPartList(sectionGuiConfig.getInstPartList(i), i);
-			}
-			/*SectionConfig secConfig = currentSec.getSecConfig();
-			if (sectionGuiConfig.getBeatDurationMultiplierIndex() != GenerationGUI.beatDurationMultiplier
-					.getSelectedIndex()) {
-				secConfig.setBeatDurationMultiplierIndex(
-						sectionGuiConfig.getBeatDurationMultiplierIndex());
-			}
-
-			if ((int) sectionGuiConfig.getBpm() != mainBpm.getInt()) {
-				secConfig.setSectionBpm((int) sectionGuiConfig.getBpm());
-			}
-
-			secConfig.setSectionSwingOverride(sectionGuiConfig.getGlobalSwingOverride());*/
-			currentSec.setCustomChords(sectionGuiConfig.getCustomChords());
-			currentSec.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
-			currentSec.setCustomChordsEnabled(true);
-			if (!"4,4,4,4".equals(currentSec.getCustomDurations())) {
-				currentSec.setCustomDurationsEnabled(true);
-			}
-			ArrangementGUI.arrSection.getCurrentButton().repaint();
-			ArrangementGUI.arrangementGUI
-					.switchPanelsForSectionSelection(ArrangementGUI.arrSection.getVal());
-
-			/*if (sectionGuiConfig.getGlobalSwingOverride() != null) {
-				applyGlobalSwing(sectionGuiConfig.getGlobalSwingOverride(), true);
-			}*/
-
-			//copyConfigToGUI(guiConfig);
-			//clearAllSeeds();
-		}
-	}
-
-	private void generatePanels(int part, boolean triggerRegenerate) {
-		int panelCount = isCustomSection() ? getInstList(part).size()
-				: Integer.valueOf(getInstrumentControls(part).getRandomPanelsToGenerate().getText());
-		createPanels(part, panelCount, false);
-		recalculateTabPaneCounts();
-		recalculateSoloMuters();
-
-		if (triggerRegenerate && canRegenerateOnChange()) {
-			regenerate();
-		}
-	}
-
-	private void generatePanels(int part) {
-		generatePanels(part, false);
-	}
-
-
-
-
 
 	/*public void fixCombinedMelodyTracks() {
 		if (MelodyGUI.combineMelodyTracks == null) {
@@ -2844,7 +2866,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 			handleGeneratedMidi(regenerate, relPath, systemTime);
 			currentBeatMultiplier = GenerationGUI.beatDurationMultiplier.getSelectedItem();
-			resetArrSectionInBackground();
+			arrangementGUI.resetSectionSelectionAfterGeneration();
 			heavyBackgroundTasksInProgress = false;
 
 		} catch (Exception e) {
@@ -3005,7 +3027,7 @@ public static final String CURRENT_VERSION = "2.6";
 		// MELODY
 		if (!regenerate && MelodyGUI.generateMelodiesOnCompose.isSelected()) {
 			int seed = getCurrentSeed();
-			createPanels(0, melodyGUI.getPanels().size(), false,
+			instrumentPanelController.createRandomPanels(0, melodyGUI.getPanels().size(), false,
 					seed != 0 ? seed : new Random().nextInt(), null);
 		}
 
@@ -3101,37 +3123,13 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		}
 
-		if (!regenerate && ArrangementGUI.arrangementResetCustomPanelsOnCompose.isSelected()) {
-			ArrangementGUI.actualArrangement.getSections().forEach(e -> e.resetCustomizedParts());
-		} else {
-			// check each section number of customized panels to see if it matches current counts
-			for (int i = 0; i < ArrangementGUI.actualArrangement.getSections().size(); i++) {
-				Section sec = ArrangementGUI.actualArrangement.getSections().get(i);
-				for (int j = 0; j < 5; j++) {
-					List<?> partList = sec.getInstPartList(j);
-					if (partList != null && partList.size() > getInstList(j).size()) {
-						sec.resetCustomizedParts(j);
-					}
-				}
-			}
-		}
-
 		if (!regenerate && randomizeScaleModeOnCompose.isSelected()) {
 			Integer[] allowedScales = new Integer[] { 0, 1, 3, 4, 5, 8 };
 			scaleMode.setSelectedIndex(allowedScales[new Random().nextInt(allowedScales.length)]);
 		}
 
-		if (!regenerate && ArrangementGUI.randomizeArrangementOnCompose.isSelected()) {
-			ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementRandomize", lastRandomSeed,
-					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
-		}
-
-		if ((regenerate || !ArrangementGUI.randomizeArrangementOnCompose.isSelected()) && (currentMidi != null)
-				&& ArrangementGUI.manualArrangement.isSelected()) {
-			ArrangementGUI.arrangement.setOverridden(true);
-		} else {
-			ArrangementGUI.arrangement.setOverridden(false);
-		}
+		ArrangementGUI.arrangementGUI.prepareForCompose(regenerate, currentMidi != null,
+				lastRandomSeed);
 
 		if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
 			LG.i("MidiEditPopup is open - saving!");
@@ -3203,23 +3201,6 @@ public static final String CURRENT_VERSION = "2.6";
 		} else {
 			LG.d("No midi editor is open!");
 		}
-	}
-
-	private void resetArrSectionInBackground() {
-		SwingUtilities.invokeLater(() -> {
-			int arrSectionIndex = ArrangementGUI.arrSection.getSelectedIndex();
-			ArrangementGUI.arrangementGUI.setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
-			if (arrSectionIndex != 0 && arrSectionIndex < ArrangementGUI.arrSection.getItemCount()) {
-				ArrangementGUI.arrSection.setSelectedIndex(arrSectionIndex);
-			} else {
-				ArrangementGUI.arrSection.setSelectedIndex(0);
-			}
-			ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
-					ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
-			ArrangementGUI.arrSection.getButtons().forEach(e -> e.repaint());
-			ArrangementGUI.arrSection.repaint();
-		});
-
 	}
 
 	private void handleGeneratedMidi(boolean regenerate, String relPath, long systemTime) {
@@ -3925,16 +3906,16 @@ public static final String CURRENT_VERSION = "2.6";
 
 		if (isCompose && getInstrumentControls(2).getEnabledCheckBox().isSelected()
 				&& ChordGUI.randomChordsGenerateOnCompose.isSelected()) {
-			generatePanels(2);
+			instrumentPanelController.generatePanels(2);
 		}
 		if (isCompose && getInstrumentControls(3).getEnabledCheckBox().isSelected()
 				&& ArpGUI.randomArpsGenerateOnCompose.isSelected()) {
-			generatePanels(3);
+			instrumentPanelController.generatePanels(3);
 		}
 
 		if (isCompose && getInstrumentControls(4).getEnabledCheckBox().isSelected()
 				&& DrumGUI.randomDrumsGenerateOnCompose.isSelected()) {
-			generatePanels(4);
+			instrumentPanelController.generatePanels(4);
 		}
 
 		if (ae.getActionCommand() == "RandomizeTranspose") {
@@ -4585,7 +4566,7 @@ public static final String CURRENT_VERSION = "2.6";
 			parts.get(i - startingOrder).setOrder(i + 1);
 		}
 
-		recreateInstPanelsFromInstParts(partNum, parts, clearPreviousPanels);
+		instrumentPanelController.recreatePanels(partNum, parts, clearPreviousPanels);
 	}
 
 	public void marshalConfig(GUIConfig config, String path, int cutOff)
@@ -4864,11 +4845,11 @@ public static final String CURRENT_VERSION = "2.6";
 		mainBpm.getKnob().setMax(Math.max(GenerationGUI.mainBpm.getKnob().getMax(), bpm));
 		mainBpm.setInt(bpm);
 
-		melodyGUI.loadPartsFromConfig(gc, parts -> recreateInstPanelsFromInstParts(0, parts));
-		bassGUI.loadPartsFromConfig(gc, parts -> recreateInstPanelsFromInstParts(1, parts));
-		chordGUI.loadPartsFromConfig(gc, parts -> recreateInstPanelsFromInstParts(2, parts));
-		arpGUI.loadPartsFromConfig(gc, parts -> recreateInstPanelsFromInstParts(3, parts));
-		drumGUI.loadPartsFromConfig(gc, parts -> recreateInstPanelsFromInstParts(4, parts));
+		melodyGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(0, parts));
+		bassGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(1, parts));
+		chordGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(2, parts));
+		arpGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(3, parts));
+		drumGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(4, parts));
 
 		ArrangementGUI.arrSection.setVisible(true);
 		if (MidiGenerator.chordInts.isEmpty()) {
@@ -4887,57 +4868,6 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	// -------------- GENERIC INST PANEL METHODS ----------------------------
-
-	public InstPanel addInstPanelToLayout(int part) {
-		return addInstPanelToLayout(part, null, true);
-	}
-
-	public InstPanel addInstPanelToLayout(int part, boolean recalc) {
-		return addInstPanelToLayout(part, null, recalc);
-	}
-
-	public InstPanel addInstPanelToLayout(int part, InstPart initializingPart,
-			boolean recalcArrangement) {
-		InstPanel ip = InstPanel.makeInstPanel(part, this);
-		configureRandomizeAction(ip);
-		configureInstPanelContext(ip);
-		configureInstrumentControlContext(ip);
-		List<InstPanel> affectedPanels = getAffectedPanels(part);
-		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
-
-		ip.getToggleableComponents().forEach(e -> e.setVisible(isFullMode));
-		if (isCustomSection()) {
-			ip.toggleGlobalElements(false);
-			ip.toggleEnabledCopyRemove(false);
-			if (part == 4) {
-				ip.getInstrumentBox().setEnabled(true);
-			}
-		} else {
-			ip.setBackground(OMNI.alphen(Constants.instColors[part], 60));
-		}
-
-		if (initializingPart != null) {
-			ip.setFromInstPart(initializingPart);
-		}
-		ip.setOrderAndOffset(panelOrder, (initializingPart != null) ? initializingPart.getOrderOffset() : panelOrder);
-
-		affectedPanels.add(panelOrder - 1, ip);
-		removeComboBoxArrows(ip);
-		if (recalcArrangement) {
-			if (ArrangementGUI.actualArrangement != null && ArrangementGUI.actualArrangement.getSections() != null) {
-				ArrangementGUI.actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
-			}
-		}
-
-
-		if (part < 4 || !DrumGUI.bottomUpReverseDrumPanels.isSelected()) {
-			((JPanel) getInstPane(part).getViewport().getView()).add(ip, panelOrder - 1);
-		} else {
-			((JPanel) getInstPane(part).getViewport().getView()).add(ip,
-					affectedPanels.size() - panelOrder);
-		}
-		return ip;
-	}
 
 	public void configureRandomizeAction(InstPanel panel) {
 		panel.setRandomizeAction(this::randomizePart);
@@ -4962,7 +4892,7 @@ public static final String CURRENT_VERSION = "2.6";
 		}
 
 		refreshBannedInstruments();
-		randomizePanel(panel);
+		instrumentPanelController.randomizePanel(panel);
 		if (canRegenerateOnChange()) {
 			regenerate();
 		}
@@ -4974,19 +4904,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	public static boolean isCustomSection() {
 		return ArrangementGUI.arrSection != null && ArrangementGUI.arrSection.getSelectedIndex() != 0 && !ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal());
-	}
-
-	public static void removeInstPanel(int inst, int order, boolean singleRemove) {
-
-		List<? extends InstPanel> panels = getInstList(inst);
-		InstPanel panel = getPanelByOrder(order, panels);
-		((JPanel) getInstPane(inst).getViewport().getView()).remove(panel);
-
-		panels.remove(panel);
-
-		ArrangementGUI.actualArrangement.getSections().forEach(e -> e.initPartMapFromOldData());
-
-		vibeComposerGUI.repaint();
 	}
 
 	public static List<InstPart> getInstPartsFromInstPanels(int inst, boolean removeMuted) {
@@ -5016,118 +4933,7 @@ public static final String CURRENT_VERSION = "2.6";
 		return parts;
 	}
 
-	private void recreateInstPanelsFromInstParts(int inst, List<? extends InstPart> parts) {
-		recreateInstPanelsFromInstParts(inst, parts, true);
-	}
 
-	private void recreateInstPanelsFromInstParts(int inst, List<? extends InstPart> parts,
-			boolean clearPreviousPanels) {
-		if (clearPreviousPanels) {
-			List<InstPanel> panels = getAffectedPanels(inst);
-			JScrollPane pane = getInstPane(inst);
-			for (InstPanel panel : panels) {
-				((JPanel) pane.getViewport().getView()).remove(panel);
-			}
-			panels.clear();
-		}
-
-		InstPart.sortParts(parts);
-		/*LG.i("Panel " + inst + ", order: " + StringUtils
-				.join(parts.stream().map(e -> e.getOrder()).collect(Collectors.toList()), ","));*/
-		List<InstPanel> newPanels = new ArrayList<>();
-		for (int i = 0; i < parts.size(); i++) {
-			newPanels.add(addInstPanelToLayout(inst, false));
-		}
-		for (int i = 0; i < newPanels.size(); i++) {
-			int newPanelOrder = newPanels.get(i).getPanelOrder();
-			newPanels.get(i).setFromInstPart(parts.get(i));
-			if (!clearPreviousPanels) {
-				newPanels.get(i).setOrderAndOffset(newPanelOrder, parts.get(i).getOrderOffset());
-			}
-			if (inst == 4 && newPanels.get(i).getComboPanel() != null) {
-				newPanels.get(i).getComboPanel().reapplyHits();
-			}
-		}
-		recalculateTabPaneCounts();
-		instrumentTabPane.repaint();
-	}
-
-	private void randomizePanel(InstPanel panel) {
-		int partNum = panel.getPartNum();
-		if (partNum == 0) {
-			createPanels(partNum, melodyGUI.getPanels().size() + 1, true, new Random().nextInt(), panel);
-		} else if (partNum == 1) {
-
-		} else if (partNum == 2) {
-			createPanels(partNum, chordGUI.getPanels().size() + 1, true, null, panel);
-		} else if (partNum == 3) {
-			createPanels(partNum, arpGUI.getPanels().size() + 1, true, null, panel);
-		} else if (partNum == 4) {
-			createPanels(partNum, drumGUI.getPanels().size() + 1, true, null, panel);
-		}
-	}
-
-	private void addPanel(int part) {
-		createPanels(part, getAffectedPanels(part).size() + 1, true);
-		recalculateGeneratorAndTabCounts();
-		recalculateSoloMuters();
-		repaint();
-	}
-
-	private void createPanels(int part, int panelCount, boolean onlyAdd) {
-		createPanels(part, panelCount, onlyAdd, null, null);
-	}
-
-	private void createPanels(int part, int panelCount, boolean onlyAdd, Integer seed,
-			InstPanel randomizedPanel) {
-		if (part == 0) {
-			if (seed == null) {
-				melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd);
-			} else {
-				melodyGUI.createRandomMelodyPanels(seed, panelCount, onlyAdd,
-						(MelodyPanel) randomizedPanel);
-			}
-		} else if (part == 1) {
-			if (seed == null) {
-				bassGUI.createRandomBassPanels(panelCount, onlyAdd);
-			} else {
-				bassGUI.createRandomBassPanels(seed, panelCount, onlyAdd,
-						(BassPanel) randomizedPanel);
-			}
-		} else if (part == 2) {
-			chordGUI.createRandomChordPanels(panelCount, onlyAdd, (ChordPanel) randomizedPanel);
-		} else if (part == 3) {
-			arpGUI.createRandomArpPanels(panelCount, onlyAdd, (ArpPanel) randomizedPanel);
-		} else if (part == 4) {
-			drumGUI.createRandomDrumPanels(panelCount, onlyAdd, (DrumPanel) randomizedPanel);
-		} else {
-			throw new IllegalArgumentException("Unsupported panel part!");
-		}
-		repaint();
-	}
-
-
-
-	private static int getValidPanelNumber(List<? extends InstPanel> panels) {
-		panels.sort(Comparator.comparing(e1 -> e1.getPanelOrder()));
-		if (panels.stream().anyMatch(e -> e.getLockInst())) {
-			return getLowestAvailablePanelNumber(panels);
-		} else {
-			return getLowestAvailablePanelNumber(panels);
-		}
-	}
-
-
-	private static int getLowestAvailablePanelNumber(List<? extends InstPanel> panels) {
-		int lowest = 0;
-		for (InstPanel p : panels) {
-			if (p.getPanelOrder() - lowest > 1) {
-				return lowest + 1;
-			}
-			lowest++;
-		}
-		return lowest + 1;
-	}
 
 	public static InstPanel getPanelByOrder(int order, List<? extends InstPanel> panels) {
 		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();

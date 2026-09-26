@@ -167,6 +167,86 @@ public class ArrangementGUI {
 		Dimension getVariationPopupWindowSize();
 		void trySliderStartChange(int sectionIndex);
 		MidiEditPopup.Context getMidiEditPopupContext();
+		GUIConfig getSelectedConfigHistory();
+		void createRandomPanels(int instrument, int panelCount);
+		void recalculateAfterSectionRecompose();
+		void regenerateAfterSectionRecomposeIfEnabled();
+	}
+
+	public void recomposeSection() {
+		if (arrSection == null || arrSection.getSelectedIndex() == 0
+				|| GLOBAL.equals(arrSection.getVal())) {
+			return;
+		}
+		manualArrangement.setSelected(true);
+		for (int instrument = 0; instrument < 5; instrument++) {
+			context.createRandomPanels(instrument, context.getInstList(instrument).size());
+			applyCustomPanelsToSection("", instrument, arrSection.getSelectedIndex());
+		}
+		arrSection.getCurrentButton().repaint();
+		context.recalculateAfterSectionRecompose();
+		context.regenerateAfterSectionRecomposeIfEnabled();
+	}
+
+	public void replaceSection() {
+		GUIConfig sectionGuiConfig = context.getSelectedConfigHistory();
+		if (sectionGuiConfig == null || arrSection.getSelectedIndex() <= 0) {
+			return;
+		}
+		Section currentSection = actualArrangement.getSections().get(arrSection.getSelectedIndex() - 1);
+		for (int instrument = 0; instrument < 5; instrument++) {
+			currentSection.setInstPartList(sectionGuiConfig.getInstPartList(instrument), instrument);
+		}
+		currentSection.setCustomChords(sectionGuiConfig.getCustomChords());
+		currentSection.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
+		currentSection.setCustomChordsEnabled(true);
+		if (!"4,4,4,4".equals(currentSection.getCustomDurations())) {
+			currentSection.setCustomDurationsEnabled(true);
+		}
+		arrSection.getCurrentButton().repaint();
+		switchPanelsForSectionSelection(arrSection.getVal());
+	}
+
+	public void resetSectionSelectionAfterGeneration() {
+		SwingUtilities.invokeLater(() -> {
+			int sectionIndex = arrSection.getSelectedIndex();
+			setActualModel(actualArrangement.convertToActualTableModel());
+			if (sectionIndex != 0 && sectionIndex < arrSection.getItemCount()) {
+				arrSection.setSelectedIndex(sectionIndex);
+			} else {
+				arrSection.setSelectedIndex(0);
+			}
+			refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
+			arrSection.getButtons().forEach(Component::repaint);
+			arrSection.repaint();
+		});
+	}
+
+	public void prepareForCompose(boolean regenerate, boolean hasCurrentMidi, int seed) {
+		if (!regenerate && arrangementResetCustomPanelsOnCompose.isSelected()) {
+			actualArrangement.getSections().forEach(Section::resetCustomizedParts);
+		} else {
+			for (Section section : actualArrangement.getSections()) {
+				for (int instrument = 0; instrument < 5; instrument++) {
+					List<?> parts = section.getInstPartList(instrument);
+					if (parts != null && parts.size() > context.getInstList(instrument).size()) {
+						section.resetCustomizedParts(instrument);
+					}
+				}
+			}
+		}
+
+		if (!regenerate && randomizeArrangementOnCompose.isSelected()) {
+			handleArrangementAction("ArrangementRandomize", seed,
+					Integer.parseInt(pieceLength.getText()));
+		}
+
+		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && hasCurrentMidi
+				&& manualArrangement.isSelected()) {
+			arrangement.setOverridden(true);
+		} else {
+			arrangement.setOverridden(false);
+		}
 	}
 
 	public void applyCustomPanelsToSection(String action, int replacedPartNum,
@@ -175,7 +255,7 @@ public class ArrangementGUI {
 		if (action.endsWith("+")) {
 			lastSectionOrder = actualArrangement.getSections().size() + 1;
 		} else if (action.contains(",")) {
-			lastSectionOrder = Integer.valueOf(action.split(",")[1]) + 1;
+			lastSectionOrder = Integer.parseInt(action.split(",")[1]) + 1;
 		}
 
 		for (int i = sectionOrder; i < lastSectionOrder; i++) {
@@ -528,7 +608,7 @@ public class ArrangementGUI {
 			component.setBackground(UITheme.panelColorLow.darker());
 			return;
 		}
-		int count = actual ? StringUtils.countMatches(value, ",") + 1 : Integer.valueOf(value);
+		int count = actual ? StringUtils.countMatches(value, ",") + 1 : Integer.parseInt(value);
 		int color;
 		if (UITheme.isDarkMode) {
 			color = arrangementDarkModeLowestColor + (70 * count) / maxCounts[row];

@@ -191,9 +191,11 @@ No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Pop
 ## Phase 2.5 Progress — Re-home Coordinator Workflows
 
 - **2.5.1 Playback transport:** added `PlaybackController` for MIDI play, pause, stop, seek, saved playhead position, sequencer position reset, and pending MIDI event cleanup. The window supplies the MIDI CC thread operation and focused reads for start-from-bar, current BPM, and generated chord availability. Playback buttons, score callbacks, slider actions, and compose/regenerate paths now call the controller directly; the matching transport methods were removed from `VibeComposerGUI`.
-- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.1. Tests were skipped.
+- **2.5.2 Instrument-panel workflows:** added `InstrumentPanelController` for panel creation and insertion, removal, restoration from saved parts, panel ordering, custom-section presentation, arrangement part-map refreshes, and add/generate/randomize panel dispatch. `VibeComposerGUI` supplies the panel factory and instrument-specific randomization operation plus focused layout/count/repaint operations; feature GUIs now use the controller through their existing panel contexts.
+- **2.5.3 Arrangement workflows:** moved section recomposition, replacement from config history, compose-time custom-part cleanup and arrangement randomization, manual-arrangement override selection, and post-generation table/selection refresh into `ArrangementGUI`. The module requests only cross-feature panel randomization, panel counts, config-history access, count/solo refresh, and optional playback regeneration through its context.
+- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.3. Tests were skipped.
 
 ### Phase 2.5 status — in progress
 
-The first workflow slice is re-homed. Remaining candidates from the map are instrument-panel lifecycle and management workflows, plus arrangement-wide actions that still coordinate in `VibeComposerGUI`. Keep cross-feature decisions in the composition root and move only cohesive operations with focused dependencies.
+Playback transport, instrument-panel lifecycle, and arrangement section actions are re-homed. Generation and compose coordination still spans several feature GUIs in `VibeComposerGUI`; continue extracting it only where a cohesive owner and focused dependencies are clear.
 
