@@ -19,25 +19,13 @@ see <https://www.gnu.org/licenses/>.
 
 package org.vibehistorian.vibecomposer.Panels;
 
-import org.vibehistorian.vibecomposer.GenerationGUI;
-
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Components.CheckButton;
-import org.vibehistorian.vibecomposer.Components.InstComboBox;
-import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
-import org.vibehistorian.vibecomposer.Components.JKnob;
-import org.vibehistorian.vibecomposer.Components.MidiMVI;
-import org.vibehistorian.vibecomposer.Components.RandomValueButton;
-import org.vibehistorian.vibecomposer.Components.RangeSlider;
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Components.ScrollComboBox2;
-import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
-import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.Components.*;
 import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
+import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
@@ -548,7 +536,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPatternSeed() {
-		return Integer.valueOf(patternSeed.getText());
+		return Integer.parseInt(patternSeed.getText());
 	}
 
 	public void setPatternSeed(int patternSeed) {
@@ -709,7 +697,7 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getPanelOrder() {
-		return Integer.valueOf(panelOrder.getText().split("\\(")[0]);
+		return Integer.parseInt(panelOrder.getText().split("\\(")[0]);
 	}
 
 	public void setPanelOrder(int val) {

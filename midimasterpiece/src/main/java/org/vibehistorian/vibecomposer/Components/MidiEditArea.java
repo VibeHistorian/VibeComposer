@@ -306,7 +306,7 @@ public class MidiEditArea extends JComponent {
 				return;
 			}
 			try {
-				int parsedInt = Integer.valueOf(e);
+				int parsedInt = Integer.parseInt(e);
 				for (PhraseNote n : selectedNotes) {
 					// 0..127 midi value
 					if (n.getPitch() == Pitches.REST) {

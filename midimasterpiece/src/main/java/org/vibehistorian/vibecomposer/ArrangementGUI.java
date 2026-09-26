@@ -122,7 +122,7 @@ public class ArrangementGUI {
 		gc.setArrangementPartVariationChance(arrangementPartVariationChance.getInt());
 		gc.setScaleMidiVelocityInArrangement(arrangementScaleMidiVelocity.isSelected());
 		gc.setArrangementEnabled(useArrangement.isSelected());
-		gc.setPieceLength(Integer.valueOf(pieceLength.getText()));
+		gc.setPieceLength(Integer.parseInt(pieceLength.getText()));
 	}
 
 	public void loadFromConfig(GUIConfig gc) {
@@ -313,7 +313,7 @@ public class ArrangementGUI {
 		} else {
 			LG.i("Switching panels!");
 			arrangementMiddleColoredPanel.setBackground(UITheme.uiColor().darker().darker());
-			int sectionOrder = Integer.valueOf(selectedItem.split(":")[0]) - 1;
+			int sectionOrder = Integer.parseInt(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (int instrument = 0; instrument < 5; instrument++) {
 				JScrollPane pane = context.getInstPane(instrument);
@@ -690,7 +690,7 @@ public class ArrangementGUI {
 		for (Component component : variationButtonsPanel.getComponents()) {
 			if (component instanceof JButton) {
 				JButton button = (JButton) component;
-				int sectionOrder = Integer.valueOf(button.getText().split(" ")[1]);
+				int sectionOrder = Integer.parseInt(button.getText().split(" ")[1]);
 				Section section = actualArrangement.getSections().get(sectionOrder - 1);
 				recolorVariationPopupButton(button, section);
 			}
@@ -751,7 +751,7 @@ public class ArrangementGUI {
 		JButton randomizeArrangementBtn = SwingUtils.makeButton("Randomize", e -> {
 			Random arrGen = new Random();
 			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
-					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
+					Integer.parseInt(ArrangementGUI.pieceLength.getText()));
 			context.recalculateTabPaneCounts();
 			if (context.canRegenerateOnChange()) {
 				context.regenerate();
@@ -1115,7 +1115,7 @@ public class ArrangementGUI {
 		} else if (action.equalsIgnoreCase("ArrangementRandomize")) {
 			arrangement.randomizeFully(maxLength, seed, 50, 30, 2, 4, 15);
 		} else if (action.startsWith("ArrangementOpenVariation,")) {
-			Integer sectionOrder = Integer.valueOf(action.split(",")[1]);
+			int sectionOrder = Integer.parseInt(action.split(",")[1]);
 			openVariationPopup(sectionOrder);
 			return;
 		} else if (action.startsWith("ArrangementApply")) {
@@ -1149,7 +1149,7 @@ public class ArrangementGUI {
 		} else if (action.startsWith("ArrangementClearPanels")) {
 			String selectedItem = arrSection.getVal();
 			if (!GLOBAL.equals(selectedItem)) {
-				Integer sectionOrder = Integer.valueOf(selectedItem.split(":")[0]);
+				int sectionOrder = Integer.parseInt(selectedItem.split(":")[0]);
 				Section sec = actualArrangement.getSections().get(sectionOrder - 1);
 				sec.setMelodyParts(null);
 				sec.setBassParts(null);
@@ -1190,7 +1190,7 @@ public class ArrangementGUI {
 			}
 			newSectionBox.setSelectedIndex(0);
 		} else if (action.startsWith("ArrangementRemove,")) {
-			Integer sectionIndex = Integer.valueOf(action.split(",")[1]);
+			int sectionIndex = Integer.parseInt(action.split(",")[1]);
 			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
 				arrangement.removeSectionExact(scrollableArrangementTable, sectionIndex);
 			} else {
@@ -1202,7 +1202,7 @@ public class ArrangementGUI {
 			}
 		} else if (action.startsWith("ArrangementAdd,")) {
 			LG.i("add exact");
-			Integer sectionIndex = Integer.valueOf(action.split(",")[1]);
+			int sectionIndex = Integer.parseInt(action.split(",")[1]);
 			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
 				arrangement.duplicateSectionExact(scrollableArrangementTable, sectionIndex);
 			} else {

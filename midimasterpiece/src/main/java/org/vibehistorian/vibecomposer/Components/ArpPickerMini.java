@@ -1,7 +1,5 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.UITheme;
-
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -10,6 +8,7 @@ import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,9 +116,9 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 		valueHolder = new RandomIntegerListButton("0", ap);
 		pane.add(bpo);
 		bpo.setBounds(0, 0, 8, 8);
-		pane.setComponentZOrder(bpo, Integer.valueOf(0));
-		pane.setComponentZOrder(lockButt, Integer.valueOf(1));
-		pane.setComponentZOrder(scb, Integer.valueOf(2));
+		pane.setComponentZOrder(bpo, 0);
+		pane.setComponentZOrder(lockButt, 1);
+		pane.setComponentZOrder(scb, 2);
 	}
 
 	protected void setRandomCustomValues() {

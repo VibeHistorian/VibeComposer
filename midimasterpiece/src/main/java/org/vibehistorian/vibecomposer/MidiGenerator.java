@@ -3033,7 +3033,7 @@ public class MidiGenerator implements JMC {
 
 		// extraTranspose variation
 		List<Integer> vars = sec.getVariation(2, ip.getAbsoluteOrder());
-		if (vars != null && vars.contains(Integer.valueOf(0))) {
+		if (vars != null && vars.contains(0)) {
 			extraTranspose += 12;
 		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
@@ -3393,7 +3393,7 @@ public class MidiGenerator implements JMC {
 
 		// extraTranspose variation
 		List<Integer> vars = sec.getVariation(3, ip.getAbsoluteOrder());
-		if (vars != null && vars.contains(Integer.valueOf(0))) {
+		if (vars != null && vars.contains(0)) {
 			extraTranspose += 12;
 		}
 

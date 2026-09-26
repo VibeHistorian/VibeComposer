@@ -122,8 +122,8 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 			pane.add(scb);
 			lockButt = new LockComponentButton(this);
 			pane.add(lockButt);
-			pane.setComponentZOrder(scb, Integer.valueOf(1));
-			pane.setComponentZOrder(lockButt, Integer.valueOf(0));
+			pane.setComponentZOrder(scb, 1);
+			pane.setComponentZOrder(lockButt, 0);
 			lockButt.setBounds(0, h - 8, 8, 8);
 
 			scb.setBounds(0, 0, 80, h);

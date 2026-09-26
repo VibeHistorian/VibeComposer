@@ -244,7 +244,7 @@ public class NumPanel extends JPanel {
 		}
 		int tryValue = 0;
 		try {
-			tryValue = Integer.valueOf(text.getText());
+			tryValue = Integer.parseInt(text.getText());
 			if (allowValuesOutsideRange) {
 				text.setBackground(OMNI.alphen(Color.red, 0));
 				return;

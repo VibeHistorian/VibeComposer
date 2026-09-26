@@ -715,8 +715,8 @@ public class MelodyGenerator {
                 }
 
                 if (fillChordMelodyMap && o == 0) {
-                    if (!chordMelodyMap1.containsKey(Integer.valueOf(i))) {
-                        chordMelodyMap1.put(Integer.valueOf(i), new ArrayList<>());
+                    if (!chordMelodyMap1.containsKey(i)) {
+                        chordMelodyMap1.put(i, new ArrayList<>());
                     }
                 }
                 if (i % 2 == 0) {
@@ -845,7 +845,7 @@ public class MelodyGenerator {
                     }
                     noteList.add(n);
                     if (fillChordMelodyMap && o == 0) {
-                        chordMelodyMap1.get(Integer.valueOf(i)).add(n);
+                        chordMelodyMap1.get(i).add(n);
                     }
                     durCounter += swingDuration;
                     if (!gc.isMelodyUseDirectionsFromProgression() && !changedDirectionByDivider
@@ -889,10 +889,10 @@ public class MelodyGenerator {
 
             int chosenPitch = 60 + (firstChord[chordNote] % 12);
 
-            previousPitch = chordScale.indexOf(Integer.valueOf(chosenPitch));
+            previousPitch = chordScale.indexOf(chosenPitch);
             if (previousPitch == -1) {
                 LG.d("ERROR PITCH -1 for: " + chosenPitch);
-                previousPitch = chordScale.indexOf(Integer.valueOf(chosenPitch + 1));
+                previousPitch = chordScale.indexOf(chosenPitch + 1);
                 if (previousPitch == -1) {
                     LG.i("NOT EVEN +1 pitch exists for " + chosenPitch + "!");
                 }

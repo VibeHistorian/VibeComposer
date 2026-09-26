@@ -1,27 +1,16 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.ChordGUI;
-import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.SectionConfig;
-import org.vibehistorian.vibecomposer.SwingUtils;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -250,7 +239,7 @@ public class VariationPopup {
 					if (OMNI.EMPTYCOMBO.equals(item)) {
 						return;
 					}
-					sec.setMeasures(Integer.valueOf(item));
+					sec.setMeasures(Integer.parseInt(item));
 
 				}
 			}

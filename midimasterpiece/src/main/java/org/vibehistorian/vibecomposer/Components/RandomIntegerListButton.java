@@ -11,7 +11,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,7 +79,7 @@ public class RandomIntegerListButton extends JButton {
 
 	public List<Integer> getValues() {
 		if (getValue().isEmpty()) {
-			return new ArrayList<>(Arrays.asList(0));
+			return new ArrayList<>(Collections.singletonList(0));
 		}
 		String[] valueSplit = getValue().split(",");
 		List<Integer> values = new ArrayList<>();

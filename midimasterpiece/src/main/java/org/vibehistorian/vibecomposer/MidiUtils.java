@@ -27,8 +27,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -883,7 +883,7 @@ public class MidiUtils {
 
 		for (int j = 0; j < chord.length; j++) {
 			int pitch = chord[j];
-			int searchPitch = Integer.valueOf(pitch % 12);
+			int searchPitch = pitch % 12;
 			int originalIndex = modeList.indexOf(searchPitch);
 
 			if (originalIndex == -1 && !keepOutliers) {
@@ -948,7 +948,7 @@ public class MidiUtils {
 			if (pitch < 0) {
 				continue;
 			}
-			int searchPitch = Integer.valueOf(pitch % 12);
+			int searchPitch = pitch % 12;
 			int originalIndex = modeList.indexOf(searchPitch);
 
 			if (originalIndex == -1) {

@@ -1,13 +1,13 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
+
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class InstComboBox extends ScrollComboBox<String> {
 
@@ -84,12 +84,12 @@ public class InstComboBox extends ScrollComboBox<String> {
 	}
 
 	public int getInstrument() {
-		return Integer.valueOf(getVal().split(": ")[0].trim());
+		return Integer.parseInt(getVal().split(": ")[0].trim());
 	}
 
 	public int getRandomInstrument() {
 		Random rand = new Random();
-		return Integer.valueOf(getItemAt(rand.nextInt(getItemCount())).split(": ")[0].trim());
+		return Integer.parseInt(getItemAt(rand.nextInt(getItemCount())).split(": ")[0].trim());
 	}
 
 	private boolean isBanned(String inst) {
@@ -98,7 +98,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 
 	private boolean instSet(int instrument) {
 		for (int i = 0; i < this.getItemCount(); i++) {
-			int inst = Integer.valueOf(this.getItemAt(i).split(": ")[0].trim());
+			int inst = Integer.parseInt(this.getItemAt(i).split(": ")[0].trim());
 			if (inst == instrument) {
 				setValRaw(getItemAt(i));
 				discardInteraction();

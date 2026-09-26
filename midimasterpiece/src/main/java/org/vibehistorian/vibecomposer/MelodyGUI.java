@@ -317,7 +317,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 				String item = userMelodyScaleModeSelect
 						.getItemAt(userMelodyScaleModeSelect.getSelectedIndex());
 				String[] itemSplit = item.split(",");
-				int transposeUpBy = Integer.valueOf(itemSplit[1]);
+				int transposeUpBy = Integer.parseInt(itemSplit[1]);
 				ScaleMode toMode = ScaleMode.valueOf(itemSplit[0]);
 				Mod.transpose(melody, transposeUpBy);
 				MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,

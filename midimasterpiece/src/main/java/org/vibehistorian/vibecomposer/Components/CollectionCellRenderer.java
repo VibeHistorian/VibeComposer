@@ -1,17 +1,15 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
-import org.vibehistorian.vibecomposer.UITheme;
-
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
 import org.apache.commons.lang3.tuple.Triple;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.ArrangementGUI;
 import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -100,7 +98,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					int partOrder = 0;
 					int panelOrder = 1;
 					try {
-						panelOrder = Integer.valueOf(num);
+						panelOrder = Integer.parseInt(num);
 						partOrder = getAbsoluteOrder.applyAsInt(part, panelOrder);
 					} catch (Exception e) {
 						continue;

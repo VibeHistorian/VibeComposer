@@ -1,17 +1,14 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
-import java.awt.Color;
-import java.awt.Graphics;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.SwingUtilities;
-
 import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.ArrangementGUI;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.SwingUtils;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SectionDropDownCheckButton extends CheckButton {
 
@@ -34,8 +31,7 @@ public class SectionDropDownCheckButton extends CheckButton {
 				if (Character.isDigit(SectionDropDownCheckButton.this.getText().charAt(0))) {
 					// not global
 					String digits = SectionDropDownCheckButton.this.getText().split(":")[0];
-					Integer index = Integer.valueOf(digits);
-					popupIndex = index;
+                    popupIndex = Integer.parseInt(digits);
 				} else {
 					// global/first
 					popupIndex = 0;

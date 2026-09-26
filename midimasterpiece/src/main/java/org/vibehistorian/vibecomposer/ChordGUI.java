@@ -137,7 +137,7 @@ public class ChordGUI implements InstrumentGUIControls {
         gc.setChordGenSettings(getChordSettingsFromUI());
         gc.setAllowChordRepeats(allowChordRepeats.isSelected());
         gc.setFixedDuration(chordProgressionLength.getSelectedIndex() < 2
-                ? Integer.valueOf(chordProgressionLength.getVal()) : 0);
+                ? Integer.parseInt(chordProgressionLength.getVal()) : 0);
         gc.setUseChordFormula(useChordFormula.isSelected());
         gc.setLongProgressionSimilarity(longProgressionSimilarity.getInt());
         gc.setFirstChord(firstChordSelection.getVal());

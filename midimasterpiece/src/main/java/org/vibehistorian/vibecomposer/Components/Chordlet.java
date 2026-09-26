@@ -1,26 +1,21 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.Stroke;
-import java.awt.event.*;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.swing.*;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
+import org.vibehistorian.vibecomposer.SwingUtils;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.SwingUtils.popupMenus;
 
@@ -198,7 +193,7 @@ public class Chordlet extends JComponent {
 	}
 
 	private void setupChord(String chord) {
-		if (chord == null || chord.length() == 0) {
+		if (chord == null || chord.isEmpty()) {
 			return;
 		}
 

@@ -116,7 +116,7 @@ public class InstUtils {
 
 
 	public static List<Integer> getInstNumbers(String[] instArray) {
-		return Arrays.asList(instArray).stream().map(e -> Integer.valueOf(e.split(": ")[0].trim()))
+		return Arrays.stream(instArray).map(e -> Integer.valueOf(e.split(": ")[0].trim()))
 				.collect(Collectors.toList());
 	}
 
@@ -149,7 +149,7 @@ public class InstUtils {
 	public static final String[] DRUM_KITS = { "0: DRUMKIT0", "1: DRUMKIT1", "2: DRUMKIT2",
 			"3: DRUMKIT3" };
 
-	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.asList(DRUM_KITS).stream()
+	public static final List<Integer> DRUM_KIT_NUMBERS = Arrays.stream(DRUM_KITS)
 			.map(e -> Integer.valueOf(e.split(": ")[0].trim())).collect(Collectors.toList());
 
 	public static Map<POOL, String[]> INST_POOLS = new HashMap<>();

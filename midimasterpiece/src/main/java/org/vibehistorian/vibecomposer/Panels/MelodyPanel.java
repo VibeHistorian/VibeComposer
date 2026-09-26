@@ -84,7 +84,7 @@ public class MelodyPanel extends InstPanel {
 		});
 		speed.getKnobLockPane().add(bpo);
 		bpo.setBounds(0, 0, 8, 8);
-		speed.getKnobLockPane().setComponentZOrder(bpo, Integer.valueOf(0));
+		speed.getKnobLockPane().setComponentZOrder(bpo, 0);
 
 		transpose.getKnob().setTickSpacing(10);
 		Integer[] allowedMelodyTransposes = new Integer[] { 0, 4, 5, 7 };
