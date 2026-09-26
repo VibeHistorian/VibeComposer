@@ -14,8 +14,6 @@ import java.awt.*;
 public class GenerationGUI {
     public interface Context {
         JButton makeButton(String name, String actionCommand);
-        void addControlPanel(JPanel panel, int startY, int anchorSide);
-        void alignControlPanel();
         void randomizeBpm();
         void randomizeTranspose(boolean currentTabOnly);
         void switchAllOnComposeCheckboxes(boolean state);
@@ -65,7 +63,7 @@ public class GenerationGUI {
         this.context = context;
     }
 
-    public void initRandomButtons(int startY, int anchorSide) {
+    public JPanel initRandomButtons() {
         JPanel randomButtonsPanel = new JPanel();
         randomButtonsPanel.setLayout(new GridLayout(0, 2));
         randomButtonsPanel.setOpaque(false);
@@ -138,11 +136,10 @@ public class GenerationGUI {
         UITheme.toggleableComponents.add(randomizeStrums);
         UITheme.toggleableComponents.add(sidechainPanel);
         UITheme.toggleableComponents.add(transposePanel);
-        context.alignControlPanel();
-        context.addControlPanel(randomButtonsPanel, startY, anchorSide);
+        return randomButtonsPanel;
     }
 
-    public void initMacroParams(int startY, int anchorSide) {
+    public JPanel initMacroParams() {
         JPanel macroParams = new JPanel();
         macroParams.setLayout(new GridLayout(2, 0, 0, 0));
         macroParams.setOpaque(false);
@@ -189,7 +186,7 @@ public class GenerationGUI {
         allowRepPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        context.addControlPanel(macroParams, startY, anchorSide);
+        return macroParams;
     }
 
     private void enthickenText(Component comp) {

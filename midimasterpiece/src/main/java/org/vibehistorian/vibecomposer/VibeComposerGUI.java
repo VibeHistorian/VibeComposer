@@ -274,14 +274,6 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
 			}
-			@Override public void addControlPanel(JPanel panel, int startY, int anchorSide) {
-				constraints.gridy = startY;
-				constraints.anchor = anchorSide;
-				controlPanel.add(panel);
-			}
-			@Override public void alignControlPanel() {
-				controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-			}
 			@Override public void randomizeBpm() { VibeComposerGUI.this.randomizeBPM(); }
 			@Override public void randomizeTranspose(boolean currentTabOnly) {
 				VibeComposerGUI.this.randomizeTranspose(currentTabOnly);
@@ -545,7 +537,11 @@ public static final String CURRENT_VERSION = "2.6";
 		initGenerationGUI();
 
 		// randomization buttons
-		generationGUI.initRandomButtons(350, GridBagConstraints.CENTER);
+		JPanel randomButtonsPanel = generationGUI.initRandomButtons();
+		controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		constraints.gridy = 350;
+		constraints.anchor = GridBagConstraints.CENTER;
+		controlPanel.add(randomButtonsPanel, constraints);
 
 		initSoloMutersAndTrackControl(20, GridBagConstraints.WEST);
 		LG.i("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -629,7 +625,10 @@ public static final String CURRENT_VERSION = "2.6";
 		{
 
 
-			generationGUI.initMacroParams(360, GridBagConstraints.CENTER);
+			JPanel macroParams = generationGUI.initMacroParams();
+			constraints.gridy = 360;
+			constraints.anchor = GridBagConstraints.CENTER;
+			controlPanel.add(macroParams, constraints);
 
 			// chord settings - variety/spice
 			// chord settings - progressions
@@ -847,7 +846,7 @@ public static final String CURRENT_VERSION = "2.6";
 		//mainButtonsPanel.add(makeButton("DrumView", e -> openDrumViewPopup()));
 
 
-		mainButtonsPanel.add(SwingUtils.makeButton("Settings", e -> openExtraSettingsPopup()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Settings", e -> new ExtraSettingsPopup()));
 
 
 		// ---- MESSAGE PANEL ----
@@ -2109,9 +2108,9 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initHelperPopups(JPanel settingsPanel) {
 		JPanel helperPopupsPanel = new JPanel();
-		helperPopupsPanel.add(SwingUtils.makeButton("User Manual (opens browser)", e -> openHelpPopup()));
+		helperPopupsPanel.add(SwingUtils.makeButton("User Manual (opens browser)", e -> new HelpPopup()));
 		helperPopupsPanel.add(SwingUtils.makeButton("Debug Console", e -> openDebugConsole()));
-		helperPopupsPanel.add(SwingUtils.makeButton("About VibeComposer", e -> openAboutPopup()));
+		helperPopupsPanel.add(SwingUtils.makeButton("About VibeComposer", e -> new AboutPopup()));
 		settingsPanel.add(helperPopupsPanel, BorderLayout.SOUTH);
 	}
 
@@ -3577,20 +3576,8 @@ public static final String CURRENT_VERSION = "2.6";
 		ChordGUI.userChords.setupChords(prettyChords);
 	}
 
-	private void openHelpPopup() {
-		new HelpPopup();
-	}
-
-	private void openAboutPopup() {
-		new AboutPopup();
-	}
-
 	private void openDrumViewPopup() {
 		new DrumLoopPopup(drumGUI.getPanels());
-	}
-
-	private void openExtraSettingsPopup() {
-		new ExtraSettingsPopup();
 	}
 
 	private void openApplyCustomSectionPopup() {
