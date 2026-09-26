@@ -188,3 +188,12 @@ No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Pop
 
 - Verification: `mvn -DskipTests compile` succeeds after 2.4.17. Tests were skipped.
 
+## Phase 2.5 Progress — Re-home Coordinator Workflows
+
+- **2.5.1 Playback transport:** added `PlaybackController` for MIDI play, pause, stop, seek, saved playhead position, sequencer position reset, and pending MIDI event cleanup. The window supplies the MIDI CC thread operation and focused reads for start-from-bar, current BPM, and generated chord availability. Playback buttons, score callbacks, slider actions, and compose/regenerate paths now call the controller directly; the matching transport methods were removed from `VibeComposerGUI`.
+- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.1. Tests were skipped.
+
+### Phase 2.5 status — in progress
+
+The first workflow slice is re-homed. Remaining candidates from the map are instrument-panel lifecycle and management workflows, plus arrangement-wide actions that still coordinate in `VibeComposerGUI`. Keep cross-feature decisions in the composition root and move only cohesive operations with focused dependencies.
+

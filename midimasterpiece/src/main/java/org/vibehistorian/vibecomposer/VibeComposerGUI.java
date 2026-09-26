@@ -106,6 +106,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 	};
+	private final PlaybackController playbackController;
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public InstPanel addInstPanel(int instrument, InstPart initialPart,
 				boolean recalculateArrangement) {
@@ -325,6 +326,12 @@ public static final String CURRENT_VERSION = "2.6";
 	public VibeComposerGUI(String title) {
 		super(title);
 		vibeComposerGUI = this;
+		playbackController = new PlaybackController(new PlaybackController.Context() {
+			@Override public void startMidiCcThread() { VibeComposerGUI.this.startMidiCcThread(); }
+			@Override public boolean startFromBar() { return ExtraSettingsGUI.startFromBar.isSelected(); }
+			@Override public int currentBpm() { return mainBpm.getInt(); }
+			@Override public boolean hasGeneratedChordData() { return !MidiGenerator.chordInts.isEmpty(); }
+		});
 	}
 
 	private void initExtraSettingsGUI() {
@@ -422,7 +429,7 @@ public static final String CURRENT_VERSION = "2.6";
 				return midiEditPopupContext;
 			}
 			@Override public void trySliderStartChange(int sectionIndex) {
-				VibeComposerGUI.trySliderStartChange(sectionIndex);
+				VibeComposerGUI.this.trySliderStartChange(sectionIndex);
 			}
 		});
 	}
@@ -454,10 +461,10 @@ public static final String CURRENT_VERSION = "2.6";
 				return VibeComposerGUI.this;
 			}
 			@Override public void setSliderEnd(int value) {
-				VibeComposerGUI.setSliderEnd(value);
+				VibeComposerGUI.this.setSliderEnd(value);
 			}
 			@Override public void savePauseInfo() {
-				VibeComposerGUI.savePauseInfo();
+				playbackController.savePauseInfo();
 			}
 			@Override public void openMidiEditor(int sectionOrder, int part, int panelOrder) {
 				Section section = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
@@ -1303,7 +1310,7 @@ public static final String CURRENT_VERSION = "2.6";
 		recalculateTabPaneCounts();
 		recalculateSoloMuters();
 		if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
-			stopMidi();
+			playbackController.stopMidi();
 			regenerate();
 		}
 	}
@@ -1510,9 +1517,9 @@ public static final String CURRENT_VERSION = "2.6";
 			public void mouseReleased(MouseEvent e) {
 
 				if (isDragging) {
-					savePauseInfo();
+					playbackController.savePauseInfo();
 					if (sequencer != null)
-						midiNavigate(slider.getUpperValue());
+						playbackController.midiNavigate(slider.getUpperValue());
 					isDragging = false;
 				}
 			}
@@ -1794,7 +1801,7 @@ public static final String CURRENT_VERSION = "2.6";
 												(float) (mainBpm.getInt() / guiConfig.getBpm()));
 									}
 									if (ExtraSettingsGUI.rememberLastPos.isSelected()) {
-										savePauseInfo();
+										playbackController.savePauseInfo();
 									}
 								}
 
@@ -1822,7 +1829,7 @@ public static final String CURRENT_VERSION = "2.6";
 							}
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
 									- 50) || sequencerEnded) {
-								stopMidi();
+								playbackController.stopMidi();
 								switch (loopBeatCompose.getVal()) {
 								case "REGENERATE":
 									regenerate();
@@ -1833,10 +1840,10 @@ public static final String CURRENT_VERSION = "2.6";
 									SwingUtilities.invokeLater(() -> actionPerformed(action));
 									break;
 								case "REPLAY":
-									playMidi(true);
+									playbackController.playMidi(true);
 									break;
 								default:
-									stopMidi();
+									playbackController.stopMidi();
 									throw new IllegalArgumentException(
 											"Unsupported loop beat behavior!");
 								}
@@ -2022,7 +2029,7 @@ public static final String CURRENT_VERSION = "2.6";
 		compose.setFont(compose.getFont().deriveFont(Font.BOLD));
 		regenerate = makeButton("Regenerate", "Regenerate");
 		regenerateStopPlay = SwingUtils.makeButton("R!", e -> {
-			stopMidi();
+			playbackController.stopMidi();
 			actionPerformed(new ActionEvent(regenerateStopPlay, ActionEvent.ACTION_PERFORMED,
 					"Regenerate"));
 		});
@@ -2064,22 +2071,22 @@ public static final String CURRENT_VERSION = "2.6";
 
 	public void regenerateInPlace() {
 		boolean wasSelected = ExtraSettingsGUI.startFromBar.isSelected();
-		pauseInfoResettable = false;
+		playbackController.setPauseInfoResettable(false);
 		ExtraSettingsGUI.startFromBar.setSelected(false);
-		pauseMidi();
+		playbackController.pauseMidi();
 		actionPerformed(
 				new ActionEvent(regeneratePausePlay, ActionEvent.ACTION_PERFORMED, "Regenerate"));
 		ExtraSettingsGUI.startFromBar.setSelected(wasSelected);
-		pauseInfoResettable = true;
+		playbackController.setPauseInfoResettable(true);
 	}
 
 	private void initPlayPanel(int startY, int anchorSide) {
 
 		JPanel playSavePanel = new JPanel();
 		playSavePanel.setOpaque(false);
-		stopMidi = SwingUtils.makeButton("STOP", e -> stopMidi());
-		playMidi = SwingUtils.makeButton("PLAY", e -> playMidi(false));
-		pauseMidi = SwingUtils.makeButton("PAUSE", e -> pauseMidi());
+		stopMidi = SwingUtils.makeButton("STOP", e -> playbackController.stopMidi());
+		playMidi = SwingUtils.makeButton("PLAY", e -> playbackController.playMidi(false));
+		pauseMidi = SwingUtils.makeButton("PAUSE", e -> playbackController.pauseMidi());
 		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
 		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
 		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
@@ -2247,7 +2254,7 @@ public static final String CURRENT_VERSION = "2.6";
 			return;
 		}
 		switchMidiButtons(false);
-		stopMidi();
+		playbackController.stopMidi();
 		//sizeRespectingPack();
 		repaint();
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
@@ -2668,7 +2675,7 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	private void closeMidiDevice() {
-		stopMidi();
+		playbackController.stopMidi();
 		if (sequencer != null) {
 			sequencer.close();
 			sequencer = null;
@@ -2713,7 +2720,7 @@ public static final String CURRENT_VERSION = "2.6";
 		try {
 			if (sequencer != null) {
 				sequencer.stop();
-				flushMidiEvents();
+				playbackController.flushMidiEvents();
 				partAndOrderLastNoteIndexes.clear();
 			}
 
@@ -2725,7 +2732,7 @@ public static final String CURRENT_VERSION = "2.6";
 				return;
 			}
 
-			saveStartInfo();
+			playbackController.saveStartInfo();
 			savedIndicatorLabel.setVisible(false);
 			if (midiMode.isSelected()) {
 				if (synth != null) {
@@ -3264,7 +3271,7 @@ public static final String CURRENT_VERSION = "2.6";
 				LG.i("After prepare midi playback: " + (System.currentTimeMillis() - systemTime));
 			}
 
-			resetSequencerTickPosition();
+			playbackController.resetSequencerTickPosition();
 
 			totalTime.setText(OMNI.microsecondsToTimeString(sequencer.getMicrosecondLength()));
 			slider.setMaximum((int) (sequencer.getMicrosecondLength() / 1000));
@@ -3394,11 +3401,11 @@ public static final String CURRENT_VERSION = "2.6";
 				long startPos = (ExtraSettingsGUI.startFromBar.isSelected()) ? delayed : pausedSliderPosition;
 				if (startPos < slider.getValue()) {
 					startPos = slider.getValue();
-					midiNavigate(startPos, 0);
+					playbackController.midiNavigate(startPos, 0);
 				} else {
-					midiNavigate(startPos);
+					playbackController.midiNavigate(startPos);
 				}
-				resetPauseInfo();
+				playbackController.resetPauseInfo();
 
 			} else {
 				String pauseBehavior = ExtraSettingsGUI.pauseBehaviorCombobox.getVal();
@@ -3414,14 +3421,14 @@ public static final String CURRENT_VERSION = "2.6";
 						if (startPos < slider.getValue()) {
 							startPos = slider.getValue();
 						}
-						midiNavigate(startPos);
+						playbackController.midiNavigate(startPos);
 					} else {
-						resetPauseInfo();
+						playbackController.resetPauseInfo();
 						int startPos = delayed / 2;
 						if (startPos < slider.getValue()) {
 							startPos = slider.getValue();
 						}
-						midiNavigate(startPos);
+						playbackController.midiNavigate(startPos);
 					}
 				}
 			}
@@ -3540,18 +3547,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		}
 		return true;
-	}
-
-	private void resetSequencerTickPosition() {
-
-		if (slider.getValue() < slider.getMaximum()) {
-			midiNavigate(slider.getValue());
-		} else {
-			slider.setValue(0);
-			midiNavigate(0);
-		}
-
-
 	}
 
 	private void setChordProgressionLength(int size) {
@@ -3806,7 +3801,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 		if (confirmed == JOptionPane.YES_OPTION) {
 			if (sequencer != null) {
-				stopMidi();
+				playbackController.stopMidi();
 				sequencer.close();
 			}
 			System.exit(0);
@@ -3999,7 +3994,7 @@ public static final String CURRENT_VERSION = "2.6";
 			else {
 				LG.i(("You chose " + filename));
 				try {
-					stopMidi();
+					playbackController.stopMidi();
 					guiConfig =
 
 							unmarshallConfig(files[0]);
@@ -4204,141 +4199,6 @@ public static final String CURRENT_VERSION = "2.6";
 		preset.setFullMode(isFullMode);
 		preset.setBigMode(isBigMonitorMode);
 		return preset;
-	}
-
-	private void playMidi(boolean replay) {
-		LG.i(("Starting Midi.."));
-		if (sequencer != null) {
-			if (sequencer.isRunning()) {
-				if (!replay) {
-					sequencer.stop();
-				}
-
-				long startPos = (ExtraSettingsGUI.startFromBar.isSelected())
-						? sliderMeasureStartTimes.get(pausedMeasureCounter)
-						: pausedSliderPosition;
-				if (startPos < slider.getValue()) {
-					startPos = slider.getValue();
-				}
-				midiNavigate(startPos);
-			} else {
-				if (!replay) {
-					sequencer.stop();
-				}
-				savePauseInfo();
-				if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
-					LG.d(("Unpausing.."));
-					midiNavigate(pausedSliderPosition);
-				} else {
-					LG.d(("Resetting.."));
-					resetSequencerTickPosition();
-				}
-			}
-
-			LG.d(("Position set.."));
-			if (!replay) {
-				try {
-					Thread.sleep(25);
-				} catch (InterruptedException e) {
-					// Auto-generated catch block
-					LG.e(e);
-				}
-			} else {
-				sequencer.setLoopCount(1);
-			}
-
-			sequencer.start();
-			startMidiCcThread();
-			sequencer.setLoopCount(0);
-			LG.i("Started Midi: " + pausedSliderPosition + "/" + slider.getMaximum() + ", measure: "
-					+ pausedMeasureCounter);
-		} else {
-			LG.i(("Sequencer is NULL!"));
-		}
-	}
-
-	/*private void replayMidi() {
-		LG.i(("Replaying Midi.."));
-		if (sequencer != null) {
-			if (sequencer.isRunning()) {
-				sequencer.stop();
-			}
-		} else {
-			LG.i(("Sequencer is NULL!"));
-		}
-	}*/
-
-	private void stopMidi() {
-		LG.i(("Stopping Midi.."));
-		if (sequencer != null) {
-			sequencer.stop();
-			flushMidiEvents();
-			//resetSequencerTickPosition();
-			slider.setUpperValue(slider.getValue());
-			resetPauseInfo();
-			LG.i(("Stopped Midi!"));
-			/*if (ScoreGUI.scorePopup != null) {
-				LG.i(ShowPanelBig.rulerScrollPane.getPreferredSize());
-				LG.i(ShowPanelBig.rulerScrollPane.getWidth());
-				LG.i(ShowPanelBig.areaScrollPane.getWidth());
-				LG.i(ShowPanelBig.horizontalPane.getWidth());
-				LG.i(ScoreGUI.scoreScrollPane.getWidth());
-				LG.i(ScoreGUI.scorePopup.getFrame().getWidth());
-			}*/
-
-		} else {
-			LG.i(("Sequencer is NULL!"));
-		}
-	}
-
-	private void pauseMidi() {
-		LG.i(("Pausing Midi.."));
-		if (sequencer != null) {
-			sequencer.stop();
-			flushMidiEvents();
-			savePauseInfo();
-			LG.i("Paused Midi: " + pausedSliderPosition + ", measure: " + pausedMeasureCounter);
-		} else {
-			LG.i(("Sequencer is NULL!"));
-		}
-	}
-
-	public static void savePauseInfo() {
-		pausedSliderPosition = slider.getUpperValue();
-		pausedBpm = mainBpm.getInt();
-		if ((currentMidi != null) && (MidiGenerator.chordInts.size() > 0)) {
-			for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
-				if (sliderMeasureStartTimes.get(i) >= pausedSliderPosition + 50) {
-					pausedMeasureCounter = i - 1;
-					return;
-				}
-			}
-			pausedMeasureCounter = 0;
-		} else {
-			pausedMeasureCounter = 0;
-		}
-	}
-
-	public static void saveStartInfo() {
-		startSliderPosition = slider.getValue();
-		if ((currentMidi != null) && (MidiGenerator.chordInts.size() > 0)) {
-			for (int i = 1; i < sliderBeatStartTimes.size(); i++) {
-				if (sliderBeatStartTimes.get(i) >= startSliderPosition + 50) {
-					startBeatCounter = i - 1;
-					return;
-				}
-			}
-			startBeatCounter = 0;
-		} else {
-			startBeatCounter = 0;
-		}
-	}
-
-	private void resetPauseInfo() {
-		if (pauseInfoResettable) {
-			pausedSliderPosition = 0;
-			pausedMeasureCounter = 0;
-		}
 	}
 
 	public static void unsoloAllTracks(boolean resetButtons) {
@@ -5278,28 +5138,6 @@ public static final String CURRENT_VERSION = "2.6";
 				.get();
 	}
 
-	public static void midiNavigate(long sliderValue) {
-		midiNavigate(sliderValue, 25);
-	}
-
-	public static void midiNavigate(long sliderValue, int offset) {
-		long time = (sliderValue - offset) * 1000;
-		long timeTicks = PlaybackState.msToSequencerTicks(time);
-		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
-			if (time >= 0) {
-				sequencer.setMicrosecondPosition(time);
-				//midiPauseProg = timeTicks;
-				//midiPauseProgMs = time;
-
-			} else {
-				sequencer.setMicrosecondPosition(0);
-				//midiPauseProg = 0;
-				//midiPauseProgMs = 0;
-			}
-		}
-		flushMidiEvents();
-	}
-
 	public static int getAbsoluteOrder(int partNum, int partOrder) {
 		List<Integer> allPanelOrders = getInstList(partNum).stream().map(e -> e.getPanelOrder())
 				.collect(Collectors.toList());
@@ -5331,18 +5169,18 @@ public static final String CURRENT_VERSION = "2.6";
 		return OMNI.clamp(measureCounter, 0, sliderMeasureStartTimes.size() - 1);
 	}
 
-	public static void setSliderStart(int val) {
+	public void setSliderStart(int val) {
 		if (val >= slider.getMaximum()) {
 			return;
 		}
 		if (slider.getUpperValue() < val) {
 			slider.setUpperValue(val);
-			midiNavigate(val, 0);
+			playbackController.midiNavigate(val, 0);
 		}
 		slider.setValue(val);
 	}
 
-	public static void setSliderEnd(int val) {
+	public void setSliderEnd(int val) {
 		if (val >= slider.getMaximum()) {
 			val = Math.max(0, slider.getMaximum() - 1);
 		}
@@ -5350,10 +5188,10 @@ public static final String CURRENT_VERSION = "2.6";
 			slider.setValue(val);
 		}
 		slider.setUpperValue(val);
-		midiNavigate(val, 0);
+		playbackController.midiNavigate(val, 0);
 	}
 
-	public static void trySliderStartChange(int sectIndex) {
+	public void trySliderStartChange(int sectIndex) {
 		if (ExtraSettingsGUI.moveStartToCustomizedSection == null || !ExtraSettingsGUI.moveStartToCustomizedSection.isSelected()
 				|| sliderMeasureStartTimes == null)
 			return;
@@ -5483,7 +5321,7 @@ public static final String CURRENT_VERSION = "2.6";
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						sequencer.stop();
-						flushMidiEvents();
+						playbackController.flushMidiEvents();
 						sequencer.setTickPosition(returnPos);
 						sequencer.setTrackSolo(trackNum, prevSoloState);
 					}
@@ -5539,21 +5377,6 @@ public static final String CURRENT_VERSION = "2.6";
 			midiEventsToRemove.put(trackNum, mves);
 		}
 	}*/
-
-	public static void flushMidiEvents() {
-		if (sequencer == null || !sequencer.isOpen() || midiEventsToRemove.isEmpty()) {
-			return;
-		}
-
-		midiEventsToRemove.entrySet().forEach(mves -> {
-			Track[] trks = sequencer.getSequence().getTracks();
-			if (mves.getKey() < trks.length) {
-				Track trk = trks[mves.getKey()];
-				mves.getValue().forEach(e -> trk.remove(e));
-			}
-		});
-		midiEventsToRemove.clear();
-	}
 
 	public static Pair<ScaleMode, Integer> keyChangeAt(int sectionIndex) {
 		if (ArrangementGUI.actualArrangement == null || ArrangementGUI.actualArrangement.getSections() == null || sectionIndex < 0
