@@ -49,9 +49,15 @@ import org.vibehistorian.vibecomposer.Popups.HelpPopup;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
-import javax.sound.midi.*;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Soundbank;
+import javax.sound.midi.Synthesizer;
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
 import javax.swing.plaf.ColorUIResource;
 import javax.xml.bind.JAXBContext;
@@ -90,6 +96,7 @@ public class VibeComposerGUI extends JFrame
 	private static final long serialVersionUID = -677536546851756969L;
 
 	private final MidiDeviceController midiDeviceController;
+	private final MidiCcController midiCcController;
 	private final MidiExportController midiExportController;
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
 		@Override public List<InstPanel> getAffectedPanels(int instrument) {
@@ -358,8 +365,6 @@ JButton compose;
 	JLabel savedIndicatorLabel;
 	Color[] savedIndicatorForegroundColors = { new Color(220, 220, 220), Color.green, Color.magenta,
 			Color.orange };
-	Thread cycle;
-
 	ScrollComboBox<String> loopBeatCompose;
 	JLabel totalTime;
 	boolean isKeySeeking = false;
@@ -419,7 +424,7 @@ public static final String CURRENT_VERSION = "2.6";
 		super(title);
 		vibeComposerGUI = this;
 		playbackController = new PlaybackController(new PlaybackController.Context() {
-			@Override public void startMidiCcThread() { VibeComposerGUI.this.startMidiCcThread(); }
+			@Override public void startMidiCcThread() { midiCcController.startMidiCcThread(); }
 			@Override public boolean startFromBar() { return ExtraSettingsGUI.startFromBar.isSelected(); }
 			@Override public int currentBpm() { return mainBpm.getInt(); }
 			@Override public boolean hasGeneratedChordData() { return !MidiGenerator.chordInts.isEmpty(); }
@@ -437,6 +442,23 @@ public static final String CURRENT_VERSION = "2.6";
 						null);
 			}
 		});
+		midiCcController = new MidiCcController(new MidiCcController.Context() {
+			@Override public boolean useMidiCc() { return ExtraSettingsGUI.useMidiCC.isSelected(); }
+			@Override public List<? extends InstPanel> getInstrumentPanels(int instrument) {
+				return VibeComposerGUI.getInstList(instrument);
+			}
+			@Override public int getDrumVolume() { return DrumGUI.drumVolumeSlider.getValue(); }
+			@Override public int getGlobalVolume() { return globalVolSlider.getValue(); }
+			@Override public int getGlobalReverb() { return globalReverbSlider.getValue(); }
+			@Override public int getGlobalChorus() { return globalChorusSlider.getValue(); }
+			@Override public int getGroupFilter(int instrument) {
+				return getInstrumentControls(instrument).getGroupFilterSlider().getValue();
+			}
+			@Override public boolean isSequencerRunning() { return sequencer != null && sequencer.isRunning(); }
+			@Override public void sendMidiMessage(ShortMessage message) {
+				midiDeviceController.sendVolumeMessage(message);
+			}
+		});
 		midiExportController = new MidiExportController(new MidiExportController.Context() {
 			@Override public Sequence getSequence() { return sequencer.getSequence(); }
 			@Override public double getBpm() { return guiConfig.getBpm(); }
@@ -445,7 +467,7 @@ public static final String CURRENT_VERSION = "2.6";
 				midiMode.setSelectedRaw(enabled);
 			}
 			@Override public Soundbank getSoundbank() { return soundfont; }
-			@Override public void sendAllMidiCc() { VibeComposerGUI.this.sendAllMidiCc(); }
+			@Override public void sendAllMidiCc() { midiCcController.sendAllMidiCc(); }
 		});
 	}
 
@@ -2328,104 +2350,6 @@ public static final String CURRENT_VERSION = "2.6";
 		settingsPanel.add(helperPopupsPanel, BorderLayout.SOUTH);
 	}
 
-	private void startMidiCcThread() {
-		if (cycle != null && cycle.isAlive()) {
-			LG.i(("MidiCcThread already exists!"));
-			return;
-		}
-		LG.i(("Starting new MidiCcThread..!"));
-		cycle = new Thread() {
-
-			public void run() {
-
-				while (sequencer != null && sequencer.isRunning()) {
-					sendAllMidiCc();
-
-					try {
-						sleep(25);
-					} catch (InterruptedException e) {
-						LG.e(e);
-						return;
-					}
-				}
-				LG.i(("ENDED MidiCcThread!"));
-				cycle = null;
-			}
-
-
-		};
-		cycle.start();
-	}
-
-	protected void sendAllMidiCc() {
-		if (ExtraSettingsGUI.useMidiCC.isSelected()) {
-			for (int j = 0; j < 4; j++) {
-				List<? extends InstPanel> panels = getInstList(j);
-				for (int i = 0; i < panels.size(); i++) {
-					double vol = panels.get(i).getVolSlider().getValue() / 100.0;
-					int channel = panels.get(i).getMidiChannel() - 1;
-					sendVolumeMessage(vol, channel);
-					sendReverbMessage(1.0, channel);
-					sendChorusMessage(1.0, channel);
-					sendLowPassFilterMessage(1.0, channel, j);
-					sendPanMessage(panels.get(i).getPanSlider().getValue(), channel);
-				}
-			}
-			double drumVol = DrumGUI.drumVolumeSlider.getValue() / 100.0;
-			sendVolumeMessage(drumVol, 9);
-			sendReverbMessage(0.5, 9);
-			sendChorusMessage(0.1, 9);
-			sendLowPassFilterMessage(1.0, 9, 4);
-			//drumGUI.getPanels().forEach(e -> sendPanMessage(e.getPanSlider().getValue(), 9));
-		}
-	}
-
-	protected void sendPanMessage(int pan100, int channel) {
-		int value127 = ExtraSettingsGUI.useMidiCC.isSelected() ? OMNI.clampMidi(pan100 * 127 / 100) : 64;
-		sendMidiCcMessage(value127, channel, 10);
-	}
-
-	protected void sendVolumeMessage(double volMultiplier, int channel) {
-		int value127 = ExtraSettingsGUI.useMidiCC.isSelected()
-				? OMNI.clampVel(volMultiplier * globalVolSlider.getValue() * 127 / 100.0)
-				: 100;
-		sendMidiCcMessage(value127, channel, 7);
-	}
-
-	protected void sendReverbMessage(double reverbMultiplier, int channel) {
-		int value127 = ExtraSettingsGUI.useMidiCC.isSelected()
-				? OMNI.clampVel(reverbMultiplier * globalReverbSlider.getValue())
-				: 0;
-		sendMidiCcMessage(value127, channel, 91);
-	}
-
-	protected void sendChorusMessage(double chorusMultiplier, int channel) {
-		int value127 = ExtraSettingsGUI.useMidiCC.isSelected()
-				? OMNI.clampVel(chorusMultiplier * globalChorusSlider.getValue())
-				: 0;
-		sendMidiCcMessage(value127, channel, 93);
-	}
-
-	protected void sendLowPassFilterMessage(double filterMultiplier, int channel, int part) {
-		int value127 = ExtraSettingsGUI.useMidiCC.isSelected()
-				? OMNI.clampVel(filterMultiplier * getInstrumentControls(part).getGroupFilterSlider().getValue())
-				: 127;
-		sendMidiCcMessage(value127, channel, 74);
-	}
-
-	protected void sendMidiCcMessage(int value, int channel, int midiCc) {
-
-		try {
-			ShortMessage volumeMessage = new ShortMessage();
-			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, midiCc, value);
-
-			midiDeviceController.sendVolumeMessage(volumeMessage);
-		} catch (InvalidMidiDataException e) {
-			// Auto-generated catch block
-			LG.e(e);
-		}
-	}
-
 	private void switchAllOnComposeCheckboxes(boolean state) {
 		MelodyGUI.generateMelodiesOnCompose.setSelected(state);
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
@@ -3319,7 +3243,7 @@ public static final String CURRENT_VERSION = "2.6";
 							? (int) Math.ceil(
 									OMNI.sumListDouble(MidiGenerator.userChordsDurations) / divisor)
 							: MidiGenerator.chordInts.size() * 4);
-			startMidiCcThread();
+			midiCcController.startMidiCcThread();
 			recalculateTabPaneCounts();
 			sequencer.setTempoFactor(1);
 			if (needToRecalculateSoloMutersAfterSequenceGenerated) {
