@@ -1,6 +1,7 @@
 # Original prompt (do not modify): Create a plan to split VibeComposerGUI (careful: >10k lines, won't fit into context window), 
 # currently owning a very large amount of organizable chunks of the GUI, into smaller GUI classes split logically (e.g. MelodyGUI, BassGUI, ChordGUI, ArpGUI, DrumGUI, ArrangementGUI, ScoreGUI, ExtraSettingsGUI, GenerationGUI, VibeComposerCoreGUI). 
 # The VibeComposerGUI class owns a very large number of fields, both static and non-static, which are typically instantiated once via various init methods and then live for the lifetime of the application (effectively singletons).
+# An overall broad goal for the refactoring is to try to eliminate cyclic dependencies, and to make it easier to later translate the application into a different language (e.g. C++) by having smaller, more focused, more independent classes.
 
 # Checkpoint 1 - Proposed Strategy
 
@@ -15,45 +16,7 @@
 
 # Checkpoint 2 - Action Plan
 
-1. Inventory: I will start by scanning VibeComposerGUI.java to identify all fields and categorize them into the 10 requested buckets.
-2. Refactoring Loop: For each category (e.g., Melody):
-   • Identify the specific lines/fields belonging to that category.
-   • Create the new class file.
-   • Move the code semantically and safely; for this migration, turning a field or method into a static field/method is OK.
-3. Once a method and all its associated fields are fully migrated to the new GUI class, its usages in VibeComposerGUI/in other callers should be replaced also.
-4. IMPORTANT: when deactivating an obsolete field/method in VibeComposerGUI, don't delete it - only mark it with 2 underscores '__'; deletions will be handled only after the whole thing is migrated and ready.
-5. IMPORTANT: for references to the original, VibeComposerGUI_MigrationBackup.java is available (this file shouldn't be edited, only read).
-
-# Checkpoint 3 - Rough plan for the next steps:
-1.  Address MelodyGUI:
-    *   Create `MelodyGUI.java`.
-    *   Move fields related to melody (e.g., `melodyPanels`, `melody...` related fields, `MelodyMidiDropPane`, `melodyBlockChoicePreference`, etc.) from `VibeComposerGUI.java` to `MelodyGUI.java`.
-    *   Move the `initMelody`, `initMelodyGenSettings`, and associated methods to `MelodyGUI.java`.
-    *   Update `VibeComposerGUI.java` to use `MelodyGUI` instance.
-2.  Address BassGUI:
-    *   Create `BassGUI.java`.
-    *   Move `bassPanels` and `initBass` to `BassGUI.java`.
-3.  Address ChordGUI:
-    *   Create `ChordGUI.java`.
-    *   Move `chordSettingsPanel`, `chord...` fields, `initChords`, `initChordGenSettings`, `initChordProgressionSettings`, `initCustomChords` to `ChordGUI.java`.
-4.  Address ArpGUI:
-    *   Create `Arp_GUI.java` (Note: The user asked for `ArpGUI`, but I should check if the package is `org.vibehistorian.vibecomposer`).
-    *   Move `arpSettingsPanel`, `arp...` fields, `initArps`, `initArpGenSettings` to `ArpGUI.java`.
-5.  Address DrumGUI:
-    *   Create `DrumGUI.java`.
-    *   Move `drumSettingsPanel`, `drum...` fields, `initDrums`, `initDrumGenSettings` to `DrumGUI.java`.
-6.  Address ArrangementGUI:
-    *   Create `ArrangementGUI.java`.
-    *   Move `initArrangementSettings` and related fields.
-7.  Address ScoreGUI:
-    *   Create `ScoreGUI.java`.
-    *   Move `scorePopup`, `score...` fields, `initScoreSettings`.
-8.  Address ExtraSettingsGUI:
-    *   Create `ExtraSettingsGUI.java`.
-    *   Move `initExtraSettings` and its sub-methods.
-9.  Address GenerationGUI:
-    *   Create `GenerationGUI.java`.
-    *   Move `initExtraSettingsGeneration`.
+1. - 9. Creation of smaller module GUIs
 10. Address VibeComposerCoreGUI:
     *   Identify the remaining "Core" logic (UI framework, shared components like `currentChords`, `midimessage`, `time`, `sequencer` etc.).
 
