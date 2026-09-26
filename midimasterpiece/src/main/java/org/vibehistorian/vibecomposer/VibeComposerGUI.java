@@ -75,7 +75,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
@@ -261,9 +260,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initExtraSettingsGUI() {
 		extraSettingsGUI = new ExtraSettingsGUI(new ExtraSettingsGUI.Context() {
-			@Override public JButton makeButton(String name, Consumer<? super Object> action) { return SwingUtils.makeButton(name, action); }
 			@Override public JButton makeButton(String name, String actionCommand) { return VibeComposerGUI.this.makeButton(name, actionCommand); }
-			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) { return VibeComposerGUI.makeCheckBox(label, selected, thick); }
 			@Override public void initHelperPopups(JPanel settingsPanel) { VibeComposerGUI.this.initHelperPopups(settingsPanel); }
 			@Override public void markSoundbankRefreshNeeded() { needSoundbankRefresh = true; }
 			@Override public List<InstPanel> getAffectedPanels(int instrument) { return VibeComposerGUI.getAffectedPanels(instrument); }
@@ -277,12 +274,6 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
 			}
-			@Override public JButton makeButton(String name, Consumer<? super Object> action) {
-				return SwingUtils.makeButton(name, action);
-			}
-			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) {
-				return VibeComposerGUI.makeCheckBox(label, selected, thick);
-			}
 			@Override public void addControlPanel(JPanel panel, int startY, int anchorSide) {
 				constraints.gridy = startY;
 				constraints.anchor = anchorSide;
@@ -290,9 +281,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override public void alignControlPanel() {
 				controlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-			}
-			@Override public void enthickenText(Component component) {
-				VibeComposerGUI.this.enthickenText(component);
 			}
 			@Override public void randomizeBpm() { VibeComposerGUI.this.randomizeBPM(); }
 			@Override public void randomizeTranspose(boolean currentTabOnly) {
@@ -319,9 +307,6 @@ public static final String CURRENT_VERSION = "2.6";
 					int height) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand, width, height);
 			}
-			@Override public JCheckBox makeCheckBox(String label, boolean selected, boolean thick) {
-				return VibeComposerGUI.makeCheckBox(label, selected, thick);
-			}
 			@Override public void recalculateTabPaneCounts() {
 				VibeComposerGUI.this.recalculateTabPaneCounts();
 			}
@@ -347,11 +332,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initMelodyGUI() {
 		melodyGUI = new MelodyGUI(new MelodyGUI.Context() {
-			@Override
-			public JButton makeButton(String name, Consumer<? super Object> action) {
-				return SwingUtils.makeButton(name, action);
-			}
-
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(0);
@@ -387,11 +367,6 @@ public static final String CURRENT_VERSION = "2.6";
 	private void initBassGUI() {
 		bassGUI = new BassGUI(new BassGUI.Context() {
 			@Override
-			public JButton makeButton(String name, Consumer<? super Object> action) {
-				return SwingUtils.makeButton(name, action);
-			}
-
-			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(1);
 			}
@@ -417,9 +392,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initDrumGUI() {
 		drumGUI = new DrumGUI(new DrumGUI.Context() {
-			@Override public JButton makeButton(String name, Consumer<? super Object> action) {
-				return SwingUtils.makeButton(name, action);
-			}
 			@Override public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
 			}
@@ -439,11 +411,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initArpGUI() {
 		arpGUI = new ArpGUI(new ArpGUI.Context() {
-			@Override
-			public JButton makeButton(String name, Consumer<? super Object> action) {
-				return SwingUtils.makeButton(name, action);
-			}
-
 			@Override
 			public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
@@ -478,11 +445,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
-			@Override
-			public JButton makeButton(String name, Consumer<? super Object> action) {
-				return SwingUtils.makeButton(name, action);
-			}
-
 			@Override
 			public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
@@ -1212,10 +1174,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 
 
-	public static JCheckBox makeCheckBox(String string, boolean b, boolean thick) {
-		return SwingUtils.makeCheckBox(string, b, thick);
-	}
-
 	/*public void fixCombinedMelodyTracks() {
 		if (MelodyGUI.combineMelodyTracks == null) {
 			return;
@@ -1858,7 +1816,7 @@ public static final String CURRENT_VERSION = "2.6";
 		controlSettingsPanel.add(new JLabel("Scale"));
 		controlSettingsPanel.add(scaleMode);
 
-		randomizeScaleModeOnCompose = makeCheckBox("Rand. on Compose", true, true);
+		randomizeScaleModeOnCompose = SwingUtils.makeCheckBox("Rand. on Compose", true, true);
 		controlSettingsPanel.add(randomizeScaleModeOnCompose);
 
 
@@ -3953,12 +3911,6 @@ public static final String CURRENT_VERSION = "2.6";
 		mainBpm.setInt(bpm);
 		mainBpm.getKnob().setMin(ExtraSettingsGUI.bpmLow.getInt());
 		mainBpm.getKnob().setMax(ExtraSettingsGUI.bpmHigh.getInt());
-	}
-
-	private void enthickenText(Component comp) {
-		if (comp != null) {
-			comp.setFont(comp.getFont().deriveFont(Font.BOLD));
-		}
 	}
 
 	public void recalculateSoloMuters() {

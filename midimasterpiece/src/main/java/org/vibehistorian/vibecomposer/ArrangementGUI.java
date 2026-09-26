@@ -151,7 +151,6 @@ public class ArrangementGUI {
 	public interface Context {
 		JTabbedPane getInstrumentTabPane();
 		JButton makeButton(String name, String actionCommand, int width, int height);
-		JCheckBox makeCheckBox(String label, boolean selected, boolean thick);
 		void recalculateTabPaneCounts();
 		boolean canRegenerateOnChange();
 		void regenerate();
@@ -674,7 +673,7 @@ public class ArrangementGUI {
 				e -> openGlobalVariationPopup(), 50);
 		JButton patternManagerBtn = SwingUtils.makeButton("Patterns", e -> openPatternManagerPopup(), 70);
 
-		ArrangementGUI.randomizeArrangementOnCompose = context.makeCheckBox("on Compose", true, true);
+		ArrangementGUI.randomizeArrangementOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
 		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons);

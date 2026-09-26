@@ -126,7 +126,6 @@ public class DrumGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
-		JButton makeButton(String name, Consumer<? super Object> action);
 		JButton makeButton(String name, String actionCommand);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
@@ -167,10 +166,10 @@ public class DrumGUI implements InstrumentGUIControls {
 		drumsPanel.add(groupFilterSlider);
 		//drumsPanel.add(drumInst);
 
-		addPanelButton = context.makeButton("+Drum", e -> {
+		addPanelButton = SwingUtils.makeButton("+Drum", e -> {
 			context.addPanel();
 		});
-		generatePanelButton = context.makeButton("Generate Drums:", e -> {
+		generatePanelButton = SwingUtils.makeButton("Generate Drums:", e -> {
 			context.generatePanels(true);
 		});
 		randomPanelsToGenerate = new JTextField("6", 2);

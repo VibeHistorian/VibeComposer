@@ -9,17 +9,13 @@ import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
-import java.util.function.Consumer;
 
 /** Owns the generation and macro controls in the main window. */
 public class GenerationGUI {
     public interface Context {
         JButton makeButton(String name, String actionCommand);
-        JButton makeButton(String name, Consumer<? super Object> action);
-        JCheckBox makeCheckBox(String label, boolean selected, boolean thick);
         void addControlPanel(JPanel panel, int startY, int anchorSide);
         void alignControlPanel();
-        void enthickenText(Component component);
         void randomizeBpm();
         void randomizeTranspose(boolean currentTabOnly);
         void sidechainPatterns(boolean showPopup, boolean currentTabOnly);
@@ -75,12 +71,12 @@ public class GenerationGUI {
         randomButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton randomizeInstruments = context.makeButton("Randomize Inst.", "RandomizeInst");
-        JButton randomizeBpm = context.makeButton("Randomize BPM", e -> context.randomizeBpm());
+        JButton randomizeBpm = SwingUtils.makeButton("Randomize BPM", e -> context.randomizeBpm());
         JButton randomizeTranspose = context.makeButton("Randomize Key", "RandomizeTranspose");
 
-        randomizeInstOnComposeOrGen = context.makeCheckBox("on Compose/Gen", true, true);
-        randomizeBpmOnCompose = context.makeCheckBox("on Compose", true, true);
-        randomizeTransposeOnCompose = context.makeCheckBox("on Compose", true, true);
+        randomizeInstOnComposeOrGen = SwingUtils.makeCheckBox("on Compose/Gen", true, true);
+        randomizeBpmOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
+        randomizeTransposeOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
         randomizeInstOnComposeOrGen.setAlignmentX(Component.LEFT_ALIGNMENT);
         randomizeBpmOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
         randomizeTransposeOnCompose.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -95,19 +91,19 @@ public class GenerationGUI {
         JButton randomizeStrums = context.makeButton("Randomize Strums", "RandStrums");
         randomizeStrums.setAlignmentX(Component.LEFT_ALIGNMENT);
         randomButtonsPanel.add(randomizeStrums);
-        randomizeChordStrumsOnCompose = context.makeCheckBox("on Compose", false, true);
+        randomizeChordStrumsOnCompose = SwingUtils.makeCheckBox("on Compose", false, true);
 
         switchOnComposeRandom = context.makeButton("Untick all 'on Compose'", "UncheckComposeRandom");
         switchOnComposeRandom.setPreferredSize(new Dimension(170, 20));
         switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
         switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));
-        context.enthickenText(switchOnComposeRandom);
+        enthickenText(switchOnComposeRandom);
         randomButtonsPanel.add(switchOnComposeRandom);
 
         JPanel transposePanel = new JPanel();
         transposePanel.setPreferredSize(new Dimension(170, 20));
-        JButton transposeAllBtn = context.makeButton("All", e -> context.randomizeTranspose(false));
-        JButton transposeTabBtn = context.makeButton("Tab", e -> context.randomizeTranspose(true));
+        JButton transposeAllBtn = SwingUtils.makeButton("All", e -> context.randomizeTranspose(false));
+        JButton transposeTabBtn = SwingUtils.makeButton("Tab", e -> context.randomizeTranspose(true));
         transposeAllBtn.setMargin(new Insets(0, 0, 0, 0));
         transposeTabBtn.setMargin(new Insets(0, 0, 0, 0));
         transposeAllBtn.setPreferredSize(new Dimension(35, 20));
@@ -121,8 +117,8 @@ public class GenerationGUI {
 
         JPanel sidechainPanel = new JPanel();
         sidechainPanel.setPreferredSize(new Dimension(170, 20));
-        sidechainPatterns = context.makeButton("All", e -> context.sidechainPatterns(true, false));
-        sidechainPatternsTab = context.makeButton("Tab", e -> context.sidechainPatterns(true, true));
+        sidechainPatterns = SwingUtils.makeButton("All", e -> context.sidechainPatterns(true, false));
+        sidechainPatternsTab = SwingUtils.makeButton("Tab", e -> context.sidechainPatterns(true, true));
         sidechainPatterns.setMargin(new Insets(0, 0, 0, 0));
         sidechainPatternsTab.setMargin(new Insets(0, 0, 0, 0));
         sidechainPatterns.setPreferredSize(new Dimension(35, 20));
@@ -187,5 +183,11 @@ public class GenerationGUI {
         globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         context.addControlPanel(macroParams, startY, anchorSide);
+    }
+
+    private void enthickenText(Component comp) {
+        if (comp != null) {
+            comp.setFont(comp.getFont().deriveFont(Font.BOLD));
+        }
     }
 }

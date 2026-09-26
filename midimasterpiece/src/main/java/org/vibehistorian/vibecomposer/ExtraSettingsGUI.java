@@ -29,14 +29,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /** Owns the extra settings window and its non-generation settings controls. */
 public class ExtraSettingsGUI {
     public interface Context {
-        JButton makeButton(String name, Consumer<? super Object> action);
         JButton makeButton(String name, String actionCommand);
-        JCheckBox makeCheckBox(String label, boolean selected, boolean thick);
         void initHelperPopups(JPanel settingsPanel);
         void markSoundbankRefreshNeeded();
         List<InstPanel> getAffectedPanels(int instrument);
@@ -160,7 +157,7 @@ public class ExtraSettingsGUI {
 			String buttonName = entry.getKey();
 			JPanel menuPanel = entry.getValue();
 			menuPanel.setLayout(new GridLayout(0, 1, 20, 20));
-			JButton butt = context.makeButton(buttonName, e -> {
+			JButton butt = SwingUtils.makeButton(buttonName, e -> {
 				if (currentSettingsMenuPanel != null) {
 					//viewPanel.remove(currentSettingsMenuPanel);
 					currentSettingsMenuPanel.setVisible(false);
@@ -412,13 +409,13 @@ public class ExtraSettingsGUI {
 
     public void initExtraSettingsCompose(JPanel composeSettingsPanel) {
 		// COMPOSE
-		ArrangementGUI.arrangementResetCustomPanelsOnCompose = context.makeCheckBox("Reset Customized Panels on Compose",
+		ArrangementGUI.arrangementResetCustomPanelsOnCompose = SwingUtils.makeCheckBox("Reset Customized Panels on Compose",
 				true, true);
-		randomizeTimingsOnCompose = context.makeCheckBox(
+		randomizeTimingsOnCompose = SwingUtils.makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
-		sidechainPatternsOnCompose = context.makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
+		sidechainPatternsOnCompose = SwingUtils.makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
 				true, true);
-		ChordGUI.copyChordsAfterGenerate = context.makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
+		ChordGUI.copyChordsAfterGenerate = SwingUtils.makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
 				true);
 
 		composeSettingsPanel.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);

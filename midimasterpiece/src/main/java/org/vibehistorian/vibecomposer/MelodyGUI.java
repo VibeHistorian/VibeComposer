@@ -211,7 +211,6 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
-		JButton makeButton(String name, Consumer<? super Object> action);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
 		boolean canRegenerateOnChange();
@@ -283,8 +282,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 		settings.add(new JLabel("LP"));
 		settings.add(groupFilterSlider);
 
-		addPanelButton = context.makeButton("+Melody", e -> context.addPanel());
-		generatePanelButton = context.makeButton("Generate Melodies:",
+		addPanelButton = SwingUtils.makeButton("+Melody", e -> context.addPanel());
+		generatePanelButton = SwingUtils.makeButton("Generate Melodies:",
 				e -> context.generatePanels(true));
 		randomPanelsToGenerate = new JTextField("3", 2);
 		settings.add(addPanelButton);
@@ -293,13 +292,13 @@ public class MelodyGUI implements InstrumentGUIControls {
 		generateMelodiesOnCompose = SwingUtils.makeCheckBox("On Compose", false, true);
 		settings.add(generateMelodiesOnCompose);
 
-		JButton generateUserMelodySeed = context.makeButton("Randomize Seed", e -> {
+		JButton generateUserMelodySeed = SwingUtils.makeButton("Randomize Seed", e -> {
 			randomizeMelodySeeds();
 			if (context.canRegenerateOnChange()) {
 				context.regenerate();
 			}
 		});
-		JButton clearUserMelodySeed = context.makeButton("Clear Seeds",
+		JButton clearUserMelodySeed = SwingUtils.makeButton("Clear Seeds",
 				e -> context.getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
 		randomMelodySameSeed = new CustomCheckBox("Same#", false);
 		randomMelodyOnRegenerate = SwingUtils.makeCheckBox("on Manual Regen.", false, true);

@@ -121,7 +121,6 @@ public class ArpGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
-		JButton makeButton(String name, Consumer<? super Object> action);
 		JButton makeButton(String name, String actionCommand);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
@@ -155,8 +154,8 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpsSettingsPanel.add(filterLabel);
 		arpsSettingsPanel.add(groupFilterSlider);
 
-		addPanelButton = context.makeButton("+Arp", e -> context.addPanel());
-		generatePanelButton = context.makeButton("Generate Arps:", e -> context.generatePanels(true));
+		addPanelButton = SwingUtils.makeButton("+Arp", e -> context.addPanel());
+		generatePanelButton = SwingUtils.makeButton("Generate Arps:", e -> context.generatePanels(true));
 		randomPanelsToGenerate = new JTextField("3", 2);
 		arpsSettingsPanel.add(addPanelButton);
 		arpsSettingsPanel.add(generatePanelButton);

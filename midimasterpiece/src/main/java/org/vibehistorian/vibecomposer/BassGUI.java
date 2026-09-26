@@ -85,7 +85,6 @@ public class BassGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {
-        JButton makeButton(String name, Consumer<? super Object> action);
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
         BassPanel addBassPanel();
@@ -122,8 +121,8 @@ public class BassGUI implements InstrumentGUIControls {
         bassSettingsPanel.add(new JLabel("LP"));
         bassSettingsPanel.add(groupFilterSlider);
 
-        addPanelButton = context.makeButton("+Bass", e -> context.addPanel());
-        generatePanelButton = context.makeButton("Generate Basses:",
+        addPanelButton = SwingUtils.makeButton("+Bass", e -> context.addPanel());
+        generatePanelButton = SwingUtils.makeButton("Generate Basses:",
                 e -> context.generatePanels(true));
         randomPanelsToGenerate = new JTextField("1", 2);
         bassSettingsPanel.add(addPanelButton);

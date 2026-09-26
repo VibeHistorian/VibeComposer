@@ -209,7 +209,6 @@ public class ChordGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
-        JButton makeButton(String name, Consumer<? super Object> action);
         JButton makeButton(String name, String actionCommand);
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
@@ -283,10 +282,10 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordSettingsPanel.add(filterLabel);
 		chordSettingsPanel.add(groupFilterSlider);
 
-		addPanelButton = context.makeButton("+Chord", e -> {
+		addPanelButton = SwingUtils.makeButton("+Chord", e -> {
 			context.addPanel();
 		});
-		generatePanelButton = context.makeButton("Generate Chords:", e -> {
+		generatePanelButton = SwingUtils.makeButton("Generate Chords:", e -> {
 			context.generatePanels(true);
 		});
 		randomPanelsToGenerate = new JTextField("2", 2);
@@ -486,7 +485,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		tipLabel = new JLabel();
 		//chordToolTip.add(tipLabel);
 
-		JButton randomizeCustomChords = context.makeButton("    Randomize Chords    ", e -> {
+		JButton randomizeCustomChords = SwingUtils.makeButton("    Randomize Chords    ", e -> {
 			userChordsEnabled.setSelected(true);
 			context.randomizeUserChords();
 			userChordsEnabled.repaint();
