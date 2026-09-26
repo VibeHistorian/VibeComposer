@@ -332,6 +332,7 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void initializeInstrumentPools() { VibeComposerGUI.this.initializeInstrumentPools(); }
 			@Override public void initHelperPopups(JPanel settingsPanel) { VibeComposerGUI.this.initHelperPopups(settingsPanel); }
 			@Override public void markSoundbankRefreshNeeded() { needSoundbankRefresh = true; }
+			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 			@Override public List<InstPanel> getAffectedPanels(int instrument) { return VibeComposerGUI.getAffectedPanels(instrument); }
 			@Override public List<? extends InstPanel> getInstList(int instrument) { return VibeComposerGUI.getInstList(instrument); }
 		}, drumGUI);
@@ -387,8 +388,35 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public List<? extends InstPanel> getInstList(int instrument) {
 				return VibeComposerGUI.getInstList(instrument);
 			}
+			@Override public List<InstPart> getInstPartsFromCustomSectionInstPanels(int instrument) {
+				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument);
+			}
+			@Override public JScrollPane getInstPane(int instrument) {
+				return VibeComposerGUI.getInstPane(instrument);
+			}
+			@Override public InstPanel makeCustomSectionInstPanel(int instrument) {
+				InstPanel panel = InstPanel.makeInstPanel(instrument, VibeComposerGUI.this);
+				VibeComposerGUI.this.configureRandomizeAction(panel);
+				VibeComposerGUI.this.configureInstPanelContext(panel);
+				VibeComposerGUI.this.configureInstrumentControlContext(panel);
+				return panel;
+			}
 			@Override public int getAbsoluteOrder(int instrument, int panelOrder) {
 				return VibeComposerGUI.getAbsoluteOrder(instrument, panelOrder);
+			}
+			@Override public void addArrangementComponents(JComponent sectionPane,
+					JComponent settings, int startY, int anchorSide) {
+				constraints.gridy = startY;
+				constraints.anchor = anchorSide;
+				everythingPanel.add(sectionPane, constraints);
+				constraints.gridy = startY + 1;
+				everythingPanel.add(settings, constraints);
+			}
+			@Override public Point getVariationPopupLocation() {
+				return new Point(SwingUtils.getMouseLocation().x, VibeComposerGUI.this.getLocation().y);
+			}
+			@Override public Dimension getVariationPopupWindowSize() {
+				return VibeComposerGUI.this.getSize();
 			}
 			@Override public MidiEditPopup.Context getMidiEditPopupContext() {
 				return midiEditPopupContext;

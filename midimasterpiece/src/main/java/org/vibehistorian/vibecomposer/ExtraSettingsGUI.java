@@ -36,6 +36,7 @@ public class ExtraSettingsGUI {
         void initializeInstrumentPools();
         void initHelperPopups(JPanel settingsPanel);
         void markSoundbankRefreshNeeded();
+        void repaintMainWindow();
         List<InstPanel> getAffectedPanels(int instrument);
         List<? extends InstPanel> getInstList(int instrument);
     }
@@ -331,7 +332,7 @@ public class ExtraSettingsGUI {
 		displayVeloRectValues.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				VibeComposerGUI.vibeComposerGUI.repaint();
+				context.repaintMainWindow();
 			}
 		});
 

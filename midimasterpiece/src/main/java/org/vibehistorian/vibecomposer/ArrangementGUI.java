@@ -157,7 +157,14 @@ public class ArrangementGUI {
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
 		List<? extends InstPanel> getInstList(int instrument);
+		List<InstPart> getInstPartsFromCustomSectionInstPanels(int instrument);
+		JScrollPane getInstPane(int instrument);
+		InstPanel makeCustomSectionInstPanel(int instrument);
 		int getAbsoluteOrder(int instrument, int panelOrder);
+		void addArrangementComponents(JComponent sectionPane, JComponent settings,
+				int startY, int anchorSide);
+		Point getVariationPopupLocation();
+		Dimension getVariationPopupWindowSize();
 		void trySliderStartChange(int sectionIndex);
 		MidiEditPopup.Context getMidiEditPopupContext();
 	}
@@ -174,7 +181,7 @@ public class ArrangementGUI {
 		for (int i = sectionOrder; i < lastSectionOrder; i++) {
 			Section section = actualArrangement.getSections().get(i - 1);
 			if (replacedPartNum >= 0 && replacedPartNum < 5) {
-				section.setInstPartList(VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(replacedPartNum),
+				section.setInstPartList(context.getInstPartsFromCustomSectionInstPanels(replacedPartNum),
 						replacedPartNum);
 			}
 			if (replacedPartNum < 5) {
@@ -211,7 +218,7 @@ public class ArrangementGUI {
 			LG.i("Resetting to normal panels!");
 			arrangementMiddleColoredPanel.setBackground(UITheme.panelColorHigh.brighter());
 			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = VibeComposerGUI.getInstPane(instrument);
+				JScrollPane pane = context.getInstPane(instrument);
 				List<? extends InstPanel> panels = context.getInstList(instrument);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				for (Component component : panelView.getComponents()) {
@@ -229,7 +236,7 @@ public class ArrangementGUI {
 			int sectionOrder = Integer.valueOf(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = VibeComposerGUI.getInstPane(instrument);
+				JScrollPane pane = context.getInstPane(instrument);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				List<InstPanel> sectionPanels = new ArrayList<>();
 				List<Integer> missingPanels = new ArrayList<>();
@@ -242,11 +249,7 @@ public class ArrangementGUI {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = InstPanel.makeInstPanel(instrument,
-										VibeComposerGUI.vibeComposerGUI);
-								VibeComposerGUI.vibeComposerGUI.configureRandomizeAction(copy);
-								VibeComposerGUI.vibeComposerGUI.configureInstPanelContext(copy);
-								VibeComposerGUI.vibeComposerGUI.configureInstrumentControlContext(copy);
+								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -267,11 +270,7 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = InstPanel.makeInstPanel(instrument,
-										VibeComposerGUI.vibeComposerGUI);
-								VibeComposerGUI.vibeComposerGUI.configureRandomizeAction(copy);
-								VibeComposerGUI.vibeComposerGUI.configureInstPanelContext(copy);
-								VibeComposerGUI.vibeComposerGUI.configureInstrumentControlContext(copy);
+								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
@@ -298,7 +297,7 @@ public class ArrangementGUI {
 		addedPanels.forEach(panel -> panel.setVisible(true));
 		context.toggleButtonEnabledForPanels();
 		for (int instrument = 0; instrument < 5; instrument++) {
-			VibeComposerGUI.getInstPane(instrument).repaint();
+			context.getInstPane(instrument).repaint();
 		}
 		if (context.getInstrumentTabPane().getSelectedIndex() == 6) {
 			actualArrangement.getSections().forEach(Section::initPartMapFromOldData);
@@ -396,7 +395,7 @@ public class ArrangementGUI {
 					target.removeVariationForAllParts(instrument, i);
 				}
 				for (Integer panel : section.getPresence(instrument)) {
-					int absoluteOrder = VibeComposerGUI.getAbsoluteOrder(instrument, panel);
+					int absoluteOrder = context.getAbsoluteOrder(instrument, panel);
 					target.setPresence(instrument, absoluteOrder);
 					target.setVariation(instrument, absoluteOrder,
 							section.getVariation(instrument, absoluteOrder));
@@ -766,9 +765,6 @@ public class ArrangementGUI {
 		arrangementSettingsRight.add(ArrangementGUI.arrangementSeed);
 		ArrangementGUI.arrangementSettings.add(arrangementSettingsRight);
 
-		GridBagConstraints constraints = VibeComposerGUI.constraints;
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
 		ArrangementGUI.arrSectionPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() {
 				return new Dimension(UITheme.scrollPaneDimension.width, 45);
@@ -780,9 +776,8 @@ public class ArrangementGUI {
 		ArrangementGUI.arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		ArrangementGUI.arrSectionPane.setOpaque(true);
 		ArrangementGUI.arrSection.setOpaque(true);
-		VibeComposerGUI.vibeComposerGUI.everythingPanel.add(ArrangementGUI.arrSectionPane, constraints);
-		constraints.gridy = startY + 1;
-		VibeComposerGUI.vibeComposerGUI.everythingPanel.add(ArrangementGUI.arrangementSettings, constraints);
+		context.addArrangementComponents(ArrangementGUI.arrSectionPane,
+				ArrangementGUI.arrangementSettings, startY, anchorSide);
 
 		ArrangementGUI.scrollableArrangementTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 3846279087936376003L;
@@ -1167,9 +1162,8 @@ public class ArrangementGUI {
 			varPopup.getFrame().dispose();
 		}
 		recalculateActualArrangementSection(sectionOrder - 1);
-		JFrame mainWindow = VibeComposerGUI.vibeComposerGUI;
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
-				new Point(SwingUtils.getMouseLocation().x, mainWindow.getLocation().y), mainWindow.getSize(),
+				context.getVariationPopupLocation(), context.getVariationPopupWindowSize(),
 				context::getInstList);
 	}
 

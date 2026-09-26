@@ -246,11 +246,6 @@ public class SwingUtils {
 	}
 
 	public static Point getMouseLocation() {
-		//Point mousePointFixed = new Point(mp);
-		/*if (VibeComposerGUI.vibeComposerGUI.getLocation().x < 0) {
-			//mp.x *= -1;
-		}
-		LG.i("Mouse: " + mp.toString());*/
 		return MouseInfo.getPointerInfo().getLocation();
 	}
 

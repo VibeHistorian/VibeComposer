@@ -176,10 +176,11 @@ Every mutable `VibeComposerGUI` static field now has a focused owner or a define
 - **2.4.14 Score canvas actions:** `ShowAreaBig` delegates MIDI editor opening, panel selection and solo/mute changes through score actions. `ShowPanelBig` delegates score repainting instead of locating `ScoreGUI`.
 - **2.4.15 MIDI editor actions:** `MidiEditPopup` and `MidiEditArea` receive panel, transpose, playback, chord-duration, regeneration, and arrangement refresh operations through a focused editor context.
 - **2.4.16 Score canvas ownership:** `ShowAreaBig` and `ShowRulerBig` read changing score dimensions, timing, and controls from their owning `ShowPanelBig` instance.
+- **2.4.17 ArrangementGUI main-window calls:** replaced direct `VibeComposerGUI` lookups for panel lists, panes, custom-section panel creation, absolute panel order, arrangement layout insertion, and variation-popup geometry with focused `ArrangementGUI.Context` operations.
 
 ### Phase 2.4 status — complete
 
-No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Popups`. Shared controls and editors now receive the window operations they use through focused contexts or callbacks.
+No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Popups`, and `ArrangementGUI` no longer references the main window directly. Shared controls and editors receive the window operations they use through focused contexts or callbacks.
 
-- Verification: `mvn -DskipTests compile` succeeds after 2.4.16. Tests were skipped.
+- Verification: `mvn -DskipTests compile` succeeds after 2.4.17. Tests were skipped.
 
