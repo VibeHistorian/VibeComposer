@@ -21,7 +21,6 @@ package org.vibehistorian.vibecomposer;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.sun.media.sound.AudioSynthesizer;
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
@@ -51,9 +50,6 @@ import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.sound.midi.*;
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
@@ -94,6 +90,7 @@ public class VibeComposerGUI extends JFrame
 	private static final long serialVersionUID = -677536546851756969L;
 
 	private final MidiDeviceController midiDeviceController;
+	private final MidiExportController midiExportController;
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
 		@Override public List<InstPanel> getAffectedPanels(int instrument) {
 			return VibeComposerGUI.getAffectedPanels(instrument);
@@ -439,6 +436,16 @@ public static final String CURRENT_VERSION = "2.6";
 						"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
 						null);
 			}
+		});
+		midiExportController = new MidiExportController(new MidiExportController.Context() {
+			@Override public Sequence getSequence() { return sequencer.getSequence(); }
+			@Override public double getBpm() { return guiConfig.getBpm(); }
+			@Override public boolean isTransmitterMode() { return midiMode.isSelected(); }
+			@Override public void setTransmitterMode(boolean enabled) {
+				midiMode.setSelectedRaw(enabled);
+			}
+			@Override public Soundbank getSoundbank() { return soundfont; }
+			@Override public void sendAllMidiCc() { VibeComposerGUI.this.sendAllMidiCc(); }
 		});
 	}
 
@@ -2274,7 +2281,8 @@ public static final String CURRENT_VERSION = "2.6";
 				File exportFolderDir = new File(Constants.EXPORT_FOLDER);
 				exportFolderDir.mkdir();
 
-				saveWavFile(Constants.EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
+				midiExportController.writeWaveFile(
+						Constants.EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
 				midiDeviceController.clearAfterWaveExport();
 				return null;
 			}
@@ -3834,104 +3842,6 @@ public static final String CURRENT_VERSION = "2.6";
 			return s;
 		}
 	}
-
-	@SuppressWarnings("restriction")
-	protected void saveWavFile(final String wavFileName, Synthesizer normalSynth)
-			throws MidiUnavailableException, IOException {
-		AudioSynthesizer synth = null;
-		AudioInputStream stream1 = null;
-		AudioInputStream stream2 = null;
-		try {
-			synth = (AudioSynthesizer) normalSynth;
-			synth.close();
-
-			// Open AudioStream from AudioSynthesizer with default values
-			stream1 = synth.openStream(null, null);
-			synth.open();
-			boolean midiModeSel = midiMode.isSelected();
-			if (midiModeSel) {
-				midiMode.setSelectedRaw(false);
-			} else {
-				if (soundfont != null) {
-					synth.unloadAllInstruments(soundfont);
-					synth.loadAllInstruments(soundfont);
-				}
-			}
-
-
-			// Play Sequence into AudioSynthesizer Receiver.
-			double totalLength = sendOutputSequenceMidiEvents(synth.getReceiver());
-			if (midiModeSel) {
-				midiMode.setSelectedRaw(midiModeSel);
-			}
-			// give it an extra 2 seconds, to the reverb to fade out--otherwise it sounds unnatural
-			totalLength += 2;
-			// Calculate how long the WAVE file needs to be.
-			long len = (long) (stream1.getFormat().getFrameRate() * totalLength);
-			stream2 = new AudioInputStream(stream1, stream1.getFormat(), len);
-
-
-			// Write the wave file to disk
-			AudioSystem.write(stream2, AudioFileFormat.Type.WAVE, new File(wavFileName));
-		} catch (Exception e) {
-			LG.e("TERRIBLE WAV ERROR!", e);
-		} finally {
-			if (stream1 != null)
-				stream1.close();
-			if (stream2 != null)
-				stream2.close();
-			if (synth != null)
-				synth.close();
-		}
-	}
-
-	private double sendOutputSequenceMidiEvents(Receiver receiver) {
-		Sequence sequence = sequencer.getSequence();
-		// this method is only designed to handle the PPQ division type.
-		assert sequence.getDivisionType() == Sequence.PPQ : sequence.getDivisionType();
-
-		int microsecondsPerQtrNote = (int) (500000 * 120 / guiConfig.getBpm());
-		int seqRes = sequence.getResolution();
-		long totalTime = 0;
-		sendAllMidiCc();
-		for (Track track : sequence.getTracks()) {
-			long lastTick = 0;
-			long curTime = 0;
-
-			for (int i = 0; i < track.size(); i++) {
-				MidiEvent event = track.get(i);
-				long tick = event.getTick();
-				curTime += ((tick - lastTick) * microsecondsPerQtrNote) / seqRes;
-				lastTick = tick;
-				MidiMessage msg = event.getMessage();
-				if (!(msg instanceof MetaMessage)) {
-					receiver.send(msg, curTime);
-				}
-			}
-
-			// make the total time be the time of the langest track
-			totalTime = Math.max(curTime, totalTime);
-		}
-
-		return totalTime / 1000000.0;
-	}
-
-	/*@SuppressWarnings("restriction")
-	private static AudioSynthesizer getAudioSynthesizer() throws MidiUnavailableException {
-		// First check if default synthesizer is AudioSynthesizer.
-		Synthesizer synth = MidiSystem.getSynthesizer();
-		if (synth instanceof AudioSynthesizer)
-			return (AudioSynthesizer) synth;
-
-		// now check the others...
-		for (MidiDevice.Info info : MidiSystem.getMidiDeviceInfo()) {
-			MidiDevice device = MidiSystem.getMidiDevice(info);
-			if (device instanceof AudioSynthesizer)
-				return (AudioSynthesizer) device;
-		}
-
-		throw new MidiUnavailableException("The AudioSynthesizer is not available.");
-	}*/
 
 	public static Class<?> getWrapperClass(int partNum) {
 		return ArpPartsWrapper.class;

@@ -197,7 +197,8 @@ No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Pop
 - **2.5.5 Generated-result synchronization:** moved generated chord display/custom-chord updates to `ChordGUI`, melody target-note updates to `MelodyGUI`, random arp-pattern updates to `ArpGUI`, and generated-arrangement copying to `ArrangementGUI`. `VibeComposerGUI` now sequences those module operations before refreshing the score and open MIDI editor.
 - **2.5.6 Solo/mute group actions:** moved group/global solo and mute toggling, panel-state reconciliation, readiness checks, and single-solo detection into `SoloMuteController`. The window delegates toggle events and supplies score refresh callbacks; the controller continues to own sequencer track application.
 - **2.5.7 MIDI device and synthesizer lifecycle:** added `MidiDeviceController` to own the active MIDI device and synthesizer, SoundFont loading, sequencer output connection and cleanup, direct MIDI message/note output, and endpoint preparation for compose and WAV export. `VibeComposerGUI` keeps mode controls and generated-sequence orchestration, delegating endpoint operations through a focused context.
-- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.7. Tests were skipped.
+- **2.5.8 WAV sequence rendering:** added `MidiExportController` for rendering the current MIDI sequence into WAV audio, including event timing, CC setup, SoundFont preparation, and audio stream writing. `VibeComposerGUI` keeps the export button, background worker, output filename, and playback restoration.
+- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.8. Tests were skipped.
 
 ### Phase 2.5 status — in progress
 
