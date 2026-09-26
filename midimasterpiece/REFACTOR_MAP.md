@@ -195,9 +195,10 @@ No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Pop
 - **2.5.3 Arrangement workflows:** moved section recomposition, replacement from config history, compose-time custom-part cleanup and arrangement randomization, manual-arrangement override selection, and post-generation table/selection refresh into `ArrangementGUI`. The module requests only cross-feature panel randomization, panel counts, config-history access, count/solo refresh, and optional playback regeneration through its context.
 - **2.5.4 Solo/mute track lifecycle:** moved sequencer track solo/mute reset and restoration around generation, plus the “Exclude Not Solo'd” panel action, into `SoloMuteController`. The composition root supplies only instrument panel lists and enabled state; sequencer access comes from `PlaybackState`.
 - **2.5.5 Generated-result synchronization:** moved generated chord display/custom-chord updates to `ChordGUI`, melody target-note updates to `MelodyGUI`, random arp-pattern updates to `ArpGUI`, and generated-arrangement copying to `ArrangementGUI`. `VibeComposerGUI` now sequences those module operations before refreshing the score and open MIDI editor.
-- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.5. Tests were skipped.
+- **2.5.6 Solo/mute group actions:** moved group/global solo and mute toggling, panel-state reconciliation, readiness checks, and single-solo detection into `SoloMuteController`. The window delegates toggle events and supplies score refresh callbacks; the controller continues to own sequencer track application.
+- **Verification:** `mvn -DskipTests compile` succeeds after 2.5.6. Tests were skipped.
 
-### Phase 2.5 status — complete
+### Phase 2.5 status — in progress
 
-Playback transport, instrument-panel lifecycle, arrangement section actions, solo/mute track application, and feature-owned generated-result updates are re-homed. `VibeComposerGUI` retains the high-level compose sequence and the cross-feature preparation it coordinates.
+Playback transport, instrument-panel lifecycle, arrangement section actions, solo/mute group actions and track application, and feature-owned generated-result updates are re-homed. `VibeComposerGUI` retains the high-level compose sequence and the cross-feature preparation it coordinates. Review remaining MIDI device and synthesizer lifecycle work as a possible next slice.
 

@@ -113,6 +113,18 @@ public class VibeComposerGUI extends JFrame
 				@Override public boolean isInstrumentEnabled(int instrument) {
 					return VibeComposerGUI.isEnabled(instrument);
 				}
+				@Override public void refreshScoreForSoloChange() {
+					if (ShowPanelBig.soloMuterHighlight != null
+							&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+						SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.setScore());
+					}
+				}
+				@Override public void refreshScoreForMuteChange() {
+					if (ShowPanelBig.soloMuterHighlight != null
+							&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+						SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.update());
+					}
+				}
 			});
 	private final InstrumentPanelController instrumentPanelController =
 			new InstrumentPanelController(new InstrumentPanelController.Context() {
@@ -589,7 +601,8 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override public void togglePanelSolo(int part, int panelOrder) {
 				InstPanel panel = getPanelByOrder(part, panelOrder);
-				boolean unsoloAll = globalSoloMuter.soloState != State.OFF && isSingleSolo()
+				boolean unsoloAll = globalSoloMuter.soloState != State.OFF
+						&& soloMuteController.isSingleSolo()
 						&& panel.getSoloMuter().soloState == State.FULL;
 				if (!unsoloAll) {
 					globalSoloMuter.toggleSolo(true);
@@ -1660,49 +1673,6 @@ public static final String CURRENT_VERSION = "2.6";
 		cycle.start();
 
 
-	}
-
-	public static void recalcGlobals() {
-		boolean shouldSolo = false;
-		boolean shouldMute = false;
-		for (SoloMuter sm : groupSoloMuters) {
-			shouldSolo |= (sm.soloState != State.OFF);
-			shouldMute |= (sm.muteState != State.OFF);
-		}
-		if (!shouldSolo) {
-			globalSoloMuter.unsolo();
-		}
-		if (!shouldMute) {
-			globalSoloMuter.unmute();
-		}
-	}
-
-	public static void recalcGroupSolo(int order) {
-		long soloCount = getInstList(order).stream()
-				.filter(e -> e.getSoloMuter().soloState == SoloMuter.State.FULL).count();
-		if (soloCount == 0) {
-			groupSoloMuters.get(order).unsolo();
-			//globalSoloMuter.solo();
-		} else if (soloCount < getInstList(order).size()) {
-			groupSoloMuters.get(order).halfSolo();
-			//globalSoloMuter.unsolo();
-		} else {
-			groupSoloMuters.get(order).solo();
-		}
-	}
-
-	public static void recalcGroupMute(int order) {
-		long muteCount = getInstList(order).stream()
-				.filter(e -> e.getSoloMuter().muteState == SoloMuter.State.FULL).count();
-		if (muteCount == 0) {
-			groupSoloMuters.get(order).unmute();
-			//globalSoloMuter.mute();
-		} else if (muteCount < getInstList(order).size()) {
-			groupSoloMuters.get(order).halfMute();
-			//globalSoloMuter.unmute();
-		} else {
-			groupSoloMuters.get(order).mute();
-		}
 	}
 
 	public static boolean isEnabled(int partNum) {
@@ -3847,12 +3817,7 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	public void recalculateSoloMuters() {
-		for (int i = 0; i < 5; i++) {
-			recalcGroupSolo(i);
-			recalcGroupMute(i);
-		}
-		recalcGlobals();
-		needToRecalculateSoloMutersAfterSequenceGenerated = true;
+		soloMuteController.recalculatePanels();
 	}
 
 	private void randomizeInsts() {
@@ -3996,180 +3961,14 @@ public static final String CURRENT_VERSION = "2.6";
 		return preset;
 	}
 
-	public static void unsoloAllTracks(boolean resetButtons) {
-
-		if (resetButtons) {
-			for (SoloMuter sm : groupSoloMuters) {
-				unsoloGroup(sm, resetButtons);
-
-			}
-		}
-
-
-	}
-
-	public static void toggleSoloGroup(SoloMuter groupSm) {
-		if (groupSm.soloState != State.OFF) {
-			unsoloGroup(groupSm, true);
-		} else {
-			soloGroup(groupSm);
-		}
-	}
-
-	public static void unsoloGroup(SoloMuter groupSm, boolean resetButtons) {
-		groupSm.unsolo();
-		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
-		for (InstPanel ip : groupList) {
-			ip.getSoloMuter().unsolo();
-		}
-		if (!VibeComposerGUI.sequenceReady()) {
-			return;
-		}
-		for (InstPanel ip : groupList) {
-			sequencer.setTrackSolo(ip.getSequenceTrack(), false);
-		}
-	}
-
-	public static void soloGroup(SoloMuter groupSm) {
-		groupSm.solo();
-		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
-		for (InstPanel ip : groupList) {
-			ip.getSoloMuter().solo();
-		}
-		if (groupSoloMuters.stream().filter(e -> e.soloState == State.FULL).count() == 5) {
-			groupSm.smParent.solo();
-		} else {
-			groupSm.smParent.halfSolo();
-		}
-		if (!sequenceReady())
-			return;
-		for (InstPanel ip : groupList) {
-			sequencer.setTrackSolo(ip.getSequenceTrack(), true);
-		}
-	}
-
-	public static void unmuteAllTracks(boolean resetButtons) {
-
-		if (resetButtons) {
-			for (SoloMuter sm : groupSoloMuters) {
-				unmuteGroup(sm, resetButtons);
-
-			}
-		}
-
-	}
-
-	public static void toggleMuteGroup(SoloMuter groupSm) {
-		if (groupSm.muteState != State.OFF) {
-			unmuteGroup(groupSm, true);
-		} else {
-			muteGroup(groupSm);
-		}
-	}
-
-	public static void unmuteGroup(SoloMuter groupSm, boolean resetButtons) {
-
-		groupSm.unmute();
-		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
-		for (InstPanel ip : groupList) {
-			ip.getSoloMuter().unmute();
-		}
-		if (!sequenceReady())
-			return;
-		for (InstPanel ip : groupList) {
-			sequencer.setTrackMute(ip.getSequenceTrack(), false);
-		}
-	}
-
-	public static void muteGroup(SoloMuter groupSm) {
-
-		groupSm.mute();
-		List<? extends InstPanel> groupList = getInstList(groupSm.inst);
-		for (InstPanel ip : groupList) {
-			ip.getSoloMuter().mute();
-		}
-		if (groupSoloMuters.stream().filter(e -> e.muteState == State.FULL).count() == 5) {
-			groupSm.smParent.mute();
-		} else {
-			groupSm.smParent.halfMute();
-		}
-		if (!sequenceReady())
-			return;
-		for (InstPanel ip : groupList) {
-			sequencer.setTrackMute(ip.getSequenceTrack(), true);
-		}
-	}
-
-	public static boolean sequenceReady() {
-		return (sequencer != null) && (sequencer.isOpen()) && (sequencer.getSequence() != null);
-	}
-
 	@Override
 	public void onSoloToggled(SoloMuter soloMuter, boolean recalculate) {
-		if (soloMuter.soloState != State.OFF) {
-			soloMuter.unsolo();
-			if (soloMuter.type == SoloMuter.Type.SINGLE) {
-				recalcGroupSolo(soloMuter.inst);
-				recalcGlobals();
-			} else if (soloMuter.type == SoloMuter.Type.GROUP) {
-				unsoloGroup(soloMuter, true);
-				recalcGlobals();
-			} else {
-				unsoloAllTracks(true);
-			}
-		} else if (soloMuter.type == SoloMuter.Type.SINGLE) {
-			soloMuter.solo();
-			soloMuter.smParent.solo();
-			soloMuter.smParent.smParent.solo();
-		} else if (soloMuter.type == SoloMuter.Type.GROUP) {
-			soloGroup(soloMuter);
-		}
-
-		if (recalculate) {
-			if (sequenceReady()) {
-				needToRecalculateSoloMuters = true;
-			} else {
-				needToRecalculateSoloMutersAfterSequenceGenerated = true;
-			}
-			if (ShowPanelBig.soloMuterHighlight != null
-					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.setScore());
-			}
-		}
+		soloMuteController.onSoloToggled(soloMuter, recalculate);
 	}
 
 	@Override
 	public void onMuteToggled(SoloMuter soloMuter, boolean recalculate) {
-		if (soloMuter.muteState != State.OFF) {
-			soloMuter.unmute();
-			if (soloMuter.type == SoloMuter.Type.SINGLE) {
-				recalcGroupMute(soloMuter.inst);
-				recalcGlobals();
-			} else if (soloMuter.type == SoloMuter.Type.GROUP) {
-				unmuteGroup(soloMuter, true);
-				recalcGlobals();
-			} else {
-				unmuteAllTracks(true);
-			}
-		} else if (soloMuter.type == SoloMuter.Type.SINGLE) {
-			soloMuter.mute();
-			soloMuter.smParent.mute();
-			soloMuter.smParent.smParent.mute();
-		} else if (soloMuter.type == SoloMuter.Type.GROUP) {
-			muteGroup(soloMuter);
-		}
-
-		if (recalculate) {
-			if (sequenceReady()) {
-				needToRecalculateSoloMuters = true;
-			} else {
-				needToRecalculateSoloMutersAfterSequenceGenerated = true;
-			}
-			if (ShowPanelBig.soloMuterHighlight != null
-					&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-				SwingUtilities.invokeLater(() -> ScoreGUI.scorePanel.update());
-			}
-		}
+		soloMuteController.onMuteToggled(soloMuter, recalculate);
 	}
 
 	public void recalculateGeneratorAndTabCounts() {
@@ -5016,31 +4815,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		}
 		return Pair.of(lastMode, lastKeyChange);
-	}
-
-	public static boolean isSingleSolo() {
-		int groupIndex = -1;
-		for (int i = 0; i < groupSoloMuters.size(); i++) {
-			if (groupSoloMuters.get(i).soloState != State.OFF) {
-				if (groupIndex >= 0) {
-					return false;
-				}
-				groupIndex = i;
-			}
-		}
-		if (groupIndex < 0) {
-			return false;
-		}
-		boolean foundSolo = false;
-		for (InstPanel ip : getInstList(groupIndex)) {
-			if (ip.getSoloMuter().soloState != State.OFF) {
-				if (foundSolo) {
-					return false;
-				}
-				foundSolo = true;
-			}
-		}
-		return foundSolo;
 	}
 
 	public static String getFilenameForSaving(String oldName) {
