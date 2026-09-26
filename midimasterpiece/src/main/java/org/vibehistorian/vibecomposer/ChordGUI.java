@@ -209,7 +209,6 @@ public class ChordGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
-        JButton makeButton(String name, String actionCommand);
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
         void copyGUItoConfig();
@@ -337,7 +336,8 @@ public class ChordGUI implements InstrumentGUIControls {
 		randomChordMaxStrumPauseChance = new DetachedKnobPanel("Max. Strum<br>Pause %", 35);
 		chordSettingsPanel.add(randomChordMaxStrumPauseChance);
 
-		JButton clearChordPatternSeeds = context.makeButton("Clear Seeds", "ClearChordSeeds");
+		JButton clearChordPatternSeeds = SwingUtils.makeButton("Clear Seeds",
+				e -> context.getAffectedPanels(2).forEach(panel -> panel.setPatternSeed(0)));
 
 		JPanel chordSettingsExtraPanel = new JPanel();
 		JLabel csExtra = new JLabel("CHORD SETTINGS+");

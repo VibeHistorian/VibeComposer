@@ -260,7 +260,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initExtraSettingsGUI() {
 		extraSettingsGUI = new ExtraSettingsGUI(new ExtraSettingsGUI.Context() {
-			@Override public JButton makeButton(String name, String actionCommand) { return VibeComposerGUI.this.makeButton(name, actionCommand); }
+			@Override public void initializeInstrumentPools() { VibeComposerGUI.this.initializeInstrumentPools(); }
 			@Override public void initHelperPopups(JPanel settingsPanel) { VibeComposerGUI.this.initHelperPopups(settingsPanel); }
 			@Override public void markSoundbankRefreshNeeded() { needSoundbankRefresh = true; }
 			@Override public List<InstPanel> getAffectedPanels(int instrument) { return VibeComposerGUI.getAffectedPanels(instrument); }
@@ -285,6 +285,9 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void randomizeBpm() { VibeComposerGUI.this.randomizeBPM(); }
 			@Override public void randomizeTranspose(boolean currentTabOnly) {
 				VibeComposerGUI.this.randomizeTranspose(currentTabOnly);
+			}
+			@Override public void switchAllOnComposeCheckboxes(boolean state) {
+				VibeComposerGUI.this.switchAllOnComposeCheckboxes(state);
 			}
 			@Override public void sidechainPatterns(boolean showPopup, boolean currentTabOnly) {
 				VibeComposerGUI.this.sidechainPatterns(showPopup, currentTabOnly);
@@ -392,9 +395,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initDrumGUI() {
 		drumGUI = new DrumGUI(new DrumGUI.Context() {
-			@Override public JButton makeButton(String name, String actionCommand) {
-				return VibeComposerGUI.this.makeButton(name, actionCommand);
-			}
 			@Override public void addPanel() { VibeComposerGUI.this.addPanel(4); }
 			@Override public void generatePanels(boolean triggerRegenerate) {
 				VibeComposerGUI.this.generatePanels(4, triggerRegenerate);
@@ -411,11 +411,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initArpGUI() {
 		arpGUI = new ArpGUI(new ArpGUI.Context() {
-			@Override
-			public JButton makeButton(String name, String actionCommand) {
-				return VibeComposerGUI.this.makeButton(name, actionCommand);
-			}
-
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(3);
@@ -445,11 +440,6 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
-			@Override
-			public JButton makeButton(String name, String actionCommand) {
-				return VibeComposerGUI.this.makeButton(name, actionCommand);
-			}
-
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(2);
@@ -1841,7 +1831,10 @@ public static final String CURRENT_VERSION = "2.6";
 		regenerateStopPlay.setPreferredSize(new Dimension(25, 30));
 		regeneratePausePlay.setPreferredSize(new Dimension(25, 30));
 		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
-		JButton copySeed = makeButton("Copy Main Seed", "CopySeed");
+		JButton copySeed = SwingUtils.makeButton("Copy Main Seed", e -> {
+			randomSeed.setValue(lastRandomSeed);
+			LG.i("Copied to random seed: " + lastRandomSeed);
+		});
 		JButton copyChords = SwingUtils.makeButton("Copy chords", e -> copyChords());
 		JButton clearSeed = SwingUtils.makeButton("Clear All Seeds", e -> clearAllSeeds());
 
@@ -3663,6 +3656,30 @@ public static final String CURRENT_VERSION = "2.6";
 		actionThread.start();*/
 	}
 
+	private void refreshBannedInstruments() {
+		InstComboBox.BANNED_INSTS.clear();
+		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(ExtraSettingsGUI.bannedInsts.getText().split(",")));
+	}
+
+	private void initializeInstrumentPools() {
+		refreshBannedInstruments();
+		if (ExtraSettingsGUI.useAllInsts.isSelected()) {
+			InstUtils.initAllInsts();
+		} else {
+			InstUtils.initNormalInsts();
+		}
+		for (int i = 0; i < melodyGUI.getPanels().size(); i++) {
+			int inst = melodyGUI.getPanels().get(i).getInstrumentBox().getInstrument();
+			melodyGUI.getPanels().get(i).getInstrumentBox().initInstPool(InstUtils.POOL.MELODY);
+			melodyGUI.getPanels().get(i).getInstrumentBox().setInstrument(inst);
+		}
+		for (int i = 0; i < bassGUI.getPanels().size(); i++) {
+			int inst = bassGUI.getPanels().get(i).getInstrumentBox().getInstrument();
+			bassGUI.getPanels().get(i).getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
+			bassGUI.getPanels().get(i).getInstrumentBox().setInstrument(inst);
+		}
+	}
+
 	public void actionPerformedTask(ActionEvent ae) {
 		boolean tabPanePossibleChange = false;
 		boolean soloMuterPossibleChange = false;
@@ -3679,8 +3696,7 @@ public static final String CURRENT_VERSION = "2.6";
 			return;
 		}
 
-		InstComboBox.BANNED_INSTS.clear();
-		InstComboBox.BANNED_INSTS.addAll(Arrays.asList(ExtraSettingsGUI.bannedInsts.getText().split(",")));
+		refreshBannedInstruments();
 
 		/*{
 			int inst = melodyGUI.getPanels().get(0).getInstrument();
@@ -3691,24 +3707,6 @@ public static final String CURRENT_VERSION = "2.6";
 			bassPanel.getInstrumentBox().setInstrument(inst);
 		}*/
 
-
-		if (ae.getActionCommand() == "InitAllInsts") {
-			if (ExtraSettingsGUI.useAllInsts.isSelected()) {
-				InstUtils.initAllInsts();
-			} else {
-				InstUtils.initNormalInsts();
-			}
-			for (int i = 0; i < melodyGUI.getPanels().size(); i++) {
-				int inst = melodyGUI.getPanels().get(i).getInstrumentBox().getInstrument();
-				melodyGUI.getPanels().get(i).getInstrumentBox().initInstPool(InstUtils.POOL.MELODY);
-				melodyGUI.getPanels().get(i).getInstrumentBox().setInstrument(inst);
-			}
-			for (int i = 0; i < bassGUI.getPanels().size(); i++) {
-				int inst = bassGUI.getPanels().get(i).getInstrumentBox().getInstrument();
-				bassGUI.getPanels().get(i).getInstrumentBox().initInstPool(InstUtils.POOL.BASS);
-				bassGUI.getPanels().get(i).getInstrumentBox().setInstrument(inst);
-			}
-		}
 
 		if (ae.getActionCommand() == "RandStrums"
 				|| (isCompose & GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
@@ -3798,27 +3796,6 @@ public static final String CURRENT_VERSION = "2.6";
 			//worker.execute();
 		}
 
-		if (ae.getActionCommand() == "UncheckComposeRandom") {
-			switchAllOnComposeCheckboxes(false);
-			GenerationGUI.switchOnComposeRandom.setText("  Tick all 'on Compose'   ");
-			GenerationGUI.switchOnComposeRandom.setActionCommand("CheckComposeRandom");
-		}
-
-		if (ae.getActionCommand() == "CheckComposeRandom") {
-			switchAllOnComposeCheckboxes(true);
-			GenerationGUI.switchOnComposeRandom.setText("Untick all 'on Compose'");
-			GenerationGUI.switchOnComposeRandom.setActionCommand("UncheckComposeRandom");
-		}
-
-		if (ae.getActionCommand() == "CopySeed") {
-			/*Toolkit toolkit = Toolkit.getDefaultToolkit();
-			Clipboard clipboard = toolkit.getSystemClipboard();
-			StringSelection strSel = new StringSelection(str);
-			clipboard.setContents(strSel, null);*/
-			randomSeed.setValue(lastRandomSeed);
-			LG.i(("Copied to random seed: " + lastRandomSeed));
-		}
-
 		if (ae.getActionCommand() == "LoadGUIConfig") {
 			FileDialog fd = new FileDialog(this, "Choose a file", FileDialog.LOAD);
 			fd.setDirectory(null);
@@ -3843,24 +3820,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
-		}
-
-		if (ae.getActionCommand() == "ClearChordSeeds")	{
-			for (InstPanel cp : getAffectedPanels(2)) {
-				cp.setPatternSeed(0);
-			}
-		}
-
-		if (ae.getActionCommand() == "ClearArpSeeds") {
-			for (InstPanel ap : getAffectedPanels(3)) {
-				ap.setPatternSeed(0);
-			}
-		}
-
-		if (ae.getActionCommand() == "ClearDrumSeeds") {
-			for (InstPanel dp : getAffectedPanels(4)) {
-				dp.setPatternSeed(0);
-			}
 		}
 
 		if (ae.getActionCommand().startsWith("Arrangement")) {

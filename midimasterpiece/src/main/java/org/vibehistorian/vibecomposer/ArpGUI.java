@@ -121,7 +121,6 @@ public class ArpGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
-		JButton makeButton(String name, String actionCommand);
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
 		ArpPanel addArpPanel();
@@ -209,7 +208,8 @@ public class ArpGUI implements InstrumentGUIControls {
 		UITheme.toggleableComponents.add(randomArpStretchType);
 		UITheme.toggleableComponents.add(randomArpStretchPicker);
 
-		JButton clearArpPatternSeeds = context.makeButton("Clear Seeds", "ClearArpSeeds");
+		JButton clearArpPatternSeeds = SwingUtils.makeButton("Clear Seeds",
+				e -> context.getAffectedPanels(3).forEach(panel -> panel.setPatternSeed(0)));
 		JPanel arpSettingsExtraPanel = new JPanel();
 		JLabel csExtra = new JLabel("ARP SETTINGS+");
 		csExtra.setPreferredSize(new Dimension(120, 30));

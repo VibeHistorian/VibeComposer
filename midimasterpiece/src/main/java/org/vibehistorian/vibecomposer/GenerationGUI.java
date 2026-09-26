@@ -18,6 +18,7 @@ public class GenerationGUI {
         void alignControlPanel();
         void randomizeBpm();
         void randomizeTranspose(boolean currentTabOnly);
+        void switchAllOnComposeCheckboxes(boolean state);
         void sidechainPatterns(boolean showPopup, boolean currentTabOnly);
         void applyGlobalSwing(int swing, boolean customPanels);
         void setChordProgressionLength(int size);
@@ -58,6 +59,7 @@ public class GenerationGUI {
     }
 
     private final Context context;
+    private boolean onComposeOptionsEnabled = true;
 
     public GenerationGUI(Context context) {
         this.context = context;
@@ -93,7 +95,12 @@ public class GenerationGUI {
         randomButtonsPanel.add(randomizeStrums);
         randomizeChordStrumsOnCompose = SwingUtils.makeCheckBox("on Compose", false, true);
 
-        switchOnComposeRandom = context.makeButton("Untick all 'on Compose'", "UncheckComposeRandom");
+        switchOnComposeRandom = SwingUtils.makeButton("Untick all 'on Compose'", e -> {
+            onComposeOptionsEnabled = !onComposeOptionsEnabled;
+            context.switchAllOnComposeCheckboxes(onComposeOptionsEnabled);
+            switchOnComposeRandom.setText(onComposeOptionsEnabled
+                    ? "Untick all 'on Compose'" : "  Tick all 'on Compose'   ");
+        });
         switchOnComposeRandom.setPreferredSize(new Dimension(170, 20));
         switchOnComposeRandom.setAlignmentX(Component.LEFT_ALIGNMENT);
         switchOnComposeRandom.setFont(switchOnComposeRandom.getFont().deriveFont(6));

@@ -33,7 +33,7 @@ import java.util.Map;
 /** Owns the extra settings window and its non-generation settings controls. */
 public class ExtraSettingsGUI {
     public interface Context {
-        JButton makeButton(String name, String actionCommand);
+        void initializeInstrumentPools();
         void initHelperPopups(JPanel settingsPanel);
         void markSoundbankRefreshNeeded();
         List<InstPanel> getAffectedPanels(int instrument);
@@ -239,7 +239,8 @@ public class ExtraSettingsGUI {
 		allInstsPanel.add(useAllInsts);
 		bannedInsts = new JTextField("", 8);
 		allInstsPanel.add(bannedInsts);
-		reinitInstPools = context.makeButton("Initialize All Inst.", "InitAllInsts");
+		reinitInstPools = SwingUtils.makeButton("Initialize All Inst.",
+				e -> context.initializeInstrumentPools());
 		allInstsPanel.add(reinitInstPools);
 
 
