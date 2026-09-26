@@ -11,7 +11,7 @@ import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -19,6 +19,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.IntFunction;
+import java.util.function.ToIntBiFunction;
 
 public class CollectionCellRenderer extends JComponent implements TableCellRenderer {
 
@@ -29,17 +31,22 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private Collection<? extends Object> stringables = new ArrayList<>();
 	private int part = 0;
 	private int section = 0;
+	private final IntFunction<List<? extends InstPanel>> getInstList;
+	private final ToIntBiFunction<Integer, Integer> getAbsoluteOrder;
 	public static final int MIN_CELLS = 8;
 	public static final Color[] CUSTOM_PATTERN_COLORS = { UITheme.darkModeUIColor,
 			UITheme.lightModeUIColor, new Color(150, 200, 200), Color.red };
 
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
-			int col) {
+			int col, IntFunction<List<? extends InstPanel>> getInstList,
+			ToIntBiFunction<Integer, Integer> getAbsoluteOrder) {
 		stringables = itrs;
 		height = h;
 		width = w;
 		part = partNum;
 		section = col;
+		this.getInstList = getInstList;
+		this.getAbsoluteOrder = getAbsoluteOrder;
 	}
 
 	@Override
@@ -69,7 +76,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			Color icolor = OMNI.mixColor(panelC, Constants.instColors[part],
 					part > 0 ? 0.5 : 0.7);
 
-			int guiPanelsCount = VibeComposerGUI.getInstList(part).size();
+			int guiPanelsCount = getInstList.apply(part).size();
 			int alphaValue = guiPanelsCount > 0 ? 240 : 0;
 
 			icolor = OMNI.alphen(icolor, alphaValue);
@@ -94,7 +101,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					int panelOrder = 1;
 					try {
 						panelOrder = Integer.valueOf(num);
-						partOrder = VibeComposerGUI.getAbsoluteOrder(part, panelOrder);
+						partOrder = getAbsoluteOrder.applyAsInt(part, panelOrder);
 					} catch (Exception e) {
 						continue;
 					}
@@ -106,15 +113,6 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					startX = x;
 					endX = (x + widthDividerValue);
 
-					/*Color noteColor = c;
-					if (counter > 0) {
-						Color nextColor = part < 4 ? VibeComposerGUI.instColors[part + 1]
-								: Color.red;
-						double percentageMix = (counter
-								/ (double) VibeComposerGUI.getInstList(part).size()) / 3;
-					
-						noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix);
-					}*/
 					boolean isCustomMidi = false;
 					if (sec.containsPattern(part, panelOrder)) {
 						UsedPattern pat = sec.getPattern(part, panelOrder);
@@ -127,7 +125,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 						Color nextColor = part < 4 ? Constants.instColors[part + 1]
 								: Color.red;
 						double percentageMix = counter / (double) Math.max(counter,
-								VibeComposerGUI.getInstList(part).size());
+								getInstList.apply(part).size());
 
 						instCellColor = OMNI.mixColor(instCellColor, nextColor, percentageMix / 3);
 					}
@@ -145,7 +143,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 									.equals(Triple.of(part, partOrder, section))) {
 						subcellColor = OMNI.mixColor(subcellColor,
 								ArrangementGUI.copyDragging ? Color.red : Color.white, 0.3);
-						cellDescription = VibeComposerGUI.getInstList(part).get(partOrder)
+						cellDescription = getInstList.apply(part).get(partOrder)
 								.getInstrumentBox().getVal();
 					}
 

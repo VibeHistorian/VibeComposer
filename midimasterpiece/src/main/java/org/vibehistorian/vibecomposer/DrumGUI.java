@@ -126,6 +126,7 @@ public class DrumGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
+		PartManagerPanel.Context getPartManagerContext();
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
 		DrumPanel addDrumPanel();
@@ -272,7 +273,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		randomDrumsOverrandomize = new DetachedKnobPanel("Overrandomize", 0, 0, 100);
 		drumExtraSettings.add(randomDrumsOverrandomize);
 		drumExtraSettings.add(clearPatternSeeds);
-		drumExtraSettings.add(new PartManagerPanel(4));
+		drumExtraSettings.add(new PartManagerPanel(4, context.getPartManagerContext()));
 
 		UITheme.toggleableComponents.add(drumExtraSettings);
 

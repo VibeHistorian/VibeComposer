@@ -209,6 +209,7 @@ public class ChordGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
+        PartManagerPanel.Context getPartManagerContext();
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
         void copyGUItoConfig();
@@ -355,7 +356,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordSettingsExtraPanel.add(randomChordPattern);
 		chordSettingsExtraPanel.add(randomChordShiftChance);
 		chordSettingsExtraPanel.add(clearChordPatternSeeds);
-		chordSettingsExtraPanel.add(new PartManagerPanel(2));
+		chordSettingsExtraPanel.add(new PartManagerPanel(2, context.getPartManagerContext()));
 
 		UITheme.toggleableComponents.add(randomChordDelay);
 		UITheme.toggleableComponents.add(stretchLabel);

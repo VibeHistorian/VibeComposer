@@ -31,8 +31,9 @@ import java.awt.event.MouseEvent;
 
 /** Owns score display state, settings, and popup behavior. */
 public class ScoreGUI {
-	public interface Context {
+	public interface Context extends ShowPanelBig.PlaybackActions {
 		JTabbedPane getInstrumentTabPane();
+		Component getMainWindowComponent();
 	}
 
 	private final Context context;
@@ -92,12 +93,12 @@ public class ScoreGUI {
 		displayStylePanel.add(miniScorePopup);
 	}
 
-	public static void pianoRoll() {
+	public void pianoRoll() {
 		if (MidiGenerator.LAST_SCORES.isEmpty()) {
 			return;
 		}
 		if (scorePanel == null) {
-			scorePanel = new ShowPanelBig();
+			scorePanel = new ShowPanelBig(context);
 			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
 		}
 		ShowPanelBig.scoreBox.setSelectedIndex(0);
@@ -122,7 +123,8 @@ public class ScoreGUI {
 					SwingUtilities.invokeLater(() ->
 							ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0));
 				}
-				scorePopup = new ShowScorePopup(scoreScrollPane, instrumentTabPane);
+				scorePopup = new ShowScorePopup(scoreScrollPane, instrumentTabPane,
+						context.getMainWindowComponent());
 			} else {
 				cleanup();
 				if (instrumentTabPane.getComponentCount() < 8) {

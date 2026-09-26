@@ -86,13 +86,11 @@ public class ArrangementGlobalVariationPopup extends CloseablePopup {
 						return;
 			
 					if (SwingUtilities.isLeftMouseButton(e)) {
-						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
 							table.getModel().setValueAt(Boolean.TRUE, k, col);
 			
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isRightMouseButton(e)) {
-						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}

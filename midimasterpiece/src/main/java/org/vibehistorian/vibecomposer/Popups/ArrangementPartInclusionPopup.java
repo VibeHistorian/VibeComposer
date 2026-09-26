@@ -5,8 +5,8 @@ import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -18,6 +18,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Random;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 public class ArrangementPartInclusionPopup extends CloseablePopup {
@@ -31,7 +32,8 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 
 	JScrollPane scroll;
 
-	public ArrangementPartInclusionPopup(Arrangement arr) {
+	public ArrangementPartInclusionPopup(Arrangement arr,
+			IntFunction<List<? extends InstPanel>> getInstList) {
 		super("Arrangement - Part Inclusion", 10, new Point(-500, -600));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -52,7 +54,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 				arr.initPartInclusionMap();
 			}
 
-			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
+			List<String> partNames = getInstList.apply(i).stream()
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
@@ -90,13 +92,13 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 						return;
 
 					if (SwingUtilities.isLeftMouseButton(e)) {
-						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
 							table.getModel().setValueAt(Boolean.TRUE, k, col);
 
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isRightMouseButton(e)) {
-						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}

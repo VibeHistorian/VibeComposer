@@ -318,15 +318,55 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public List<? extends InstPanel> getInstList(int instrument) {
 				return VibeComposerGUI.getInstList(instrument);
 			}
+			@Override public int getAbsoluteOrder(int instrument, int panelOrder) {
+				return VibeComposerGUI.getAbsoluteOrder(instrument, panelOrder);
+			}
+			@Override public void trySliderStartChange(int sectionIndex) {
+				VibeComposerGUI.trySliderStartChange(sectionIndex);
+			}
 		});
 	}
 
+	private PartManagerPanel.Context createPartManagerContext() {
+		return new PartManagerPanel.Context() {
+			@Override public int saveParts(String path, int part, boolean selectiveSave)
+					throws JAXBException {
+				return VibeComposerGUI.marshalParts(path, part, selectiveSave);
+			}
+			@Override public void loadParts(File file, int part, boolean clearPreviousPanels)
+					throws JAXBException, IOException {
+				VibeComposerGUI.this.unmarshallParts(file, part, clearPreviousPanels);
+			}
+			@Override public void recalculatePartCounts() {
+				VibeComposerGUI.this.recalculateTabPaneCounts();
+				VibeComposerGUI.this.recalculateGenerationCounts();
+				VibeComposerGUI.this.recalculateSoloMuters();
+			}
+		};
+	}
+
 	private void initScoreGUI() {
-		scoreGUI = new ScoreGUI(() -> VibeComposerGUI.instrumentTabPane);
+		scoreGUI = new ScoreGUI(new ScoreGUI.Context() {
+			@Override public JTabbedPane getInstrumentTabPane() {
+				return VibeComposerGUI.instrumentTabPane;
+			}
+			@Override public Component getMainWindowComponent() {
+				return VibeComposerGUI.this;
+			}
+			@Override public void setSliderEnd(int value) {
+				VibeComposerGUI.setSliderEnd(value);
+			}
+			@Override public void savePauseInfo() {
+				VibeComposerGUI.savePauseInfo();
+			}
+		});
 	}
 
 	private void initMelodyGUI() {
 		melodyGUI = new MelodyGUI(new MelodyGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(0);
@@ -361,6 +401,9 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initBassGUI() {
 		bassGUI = new BassGUI(new BassGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(1);
@@ -387,6 +430,9 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initDrumGUI() {
 		drumGUI = new DrumGUI(new DrumGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
 			@Override public void addPanel() { VibeComposerGUI.this.addPanel(4); }
 			@Override public void generatePanels(boolean triggerRegenerate) {
 				VibeComposerGUI.this.generatePanels(4, triggerRegenerate);
@@ -403,6 +449,9 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initArpGUI() {
 		arpGUI = new ArpGUI(new ArpGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(3);
@@ -432,6 +481,9 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
 			@Override
 			public void addPanel() {
 				VibeComposerGUI.this.addPanel(2);
@@ -1294,7 +1346,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 		sliderPanel.add(new JLabel("                                 "));
 
-		slider = new PlayheadRangeSlider();
+		slider = new PlayheadRangeSlider(instrumentTabPane);
 		slider.setMaximum(0);
 		//slider.setToolTipText("Test");
 		slider.setDisplayValues(false);
@@ -2975,7 +3027,7 @@ public static final String CURRENT_VERSION = "2.6";
 			ArrangementGUI.actualArrangement.getSections().add(sec.deepCopy());
 		}
 		guiConfig.setActualArrangement(ArrangementGUI.actualArrangement);
-		ScoreGUI.pianoRoll();
+		scoreGUI.pianoRoll();
 		/*if (ScoreGUI.showScore.isSelected()) {
 			instrumentTabPane.setSelectedIndex(7);
 		}*/
@@ -3582,7 +3634,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 	private void openApplyCustomSectionPopup() {
 		if (ArrangementGUI.arrSection.getSelectedIndex() > 0) {
-			new ApplyCustomSectionPopup();
+			new ApplyCustomSectionPopup(VibeComposerGUI::getInstList);
 		}
 	}
 

@@ -2,12 +2,8 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import org.vibehistorian.vibecomposer.UITheme;
 
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -16,6 +12,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
 
 public class ArrangementSectionSelectorPanel extends JPanel {
 
@@ -23,8 +22,18 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 	private static int unremovableButtons = 1;
 	private List<CheckButton> buttons = new ArrayList<>();
 	private int selectedIndex = -1;
+	private final Consumer<String> onSelectionChanged;
+	private final IntConsumer onOpenVariation;
+	private final IntConsumer onPlaybackStartChange;
+	private final IntSupplier getSectionCount;
 
-	public ArrangementSectionSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons) {
+	public ArrangementSectionSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons,
+			Consumer<String> onSelectionChanged, IntConsumer onOpenVariation,
+			IntConsumer onPlaybackStartChange, IntSupplier getSectionCount) {
+		this.onSelectionChanged = onSelectionChanged;
+		this.onOpenVariation = onOpenVariation;
+		this.onPlaybackStartChange = onPlaybackStartChange;
+		this.getSectionCount = getSectionCount;
 		setOpaque(false);
 		//setMaximumSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
 		//setPreferredSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
@@ -39,11 +48,10 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
 				String selItem = getVal();
-				if (selItem == null || (getItemCount() - 1 != ArrangementGUI.actualArrangement
-						.getSections().size())) {
+				if (selItem == null || getItemCount() - 1 != getSectionCount.getAsInt()) {
 					return;
 				}
-				ArrangementGUI.arrangementGUI.switchPanelsForSectionSelection(selItem);
+				onSelectionChanged.accept(selItem);
 			}
 		});
 	}
@@ -73,7 +81,7 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				if (buttonIndex > 0 && SwingUtilities.isMiddleMouseButton(evt)) {
-					ArrangementGUI.arrangementGUI.openVariationPopup(buttonIndex);
+					onOpenVariation.accept(buttonIndex);
 				}
 			}
 		});
@@ -137,7 +145,7 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 			buttons.get(selectedIndex).setSelectedRaw(true);
 		}
 		if (needFirePropertyChange) {
-			VibeComposerGUI.trySliderStartChange(selectedIndex);
+			onPlaybackStartChange.accept(selectedIndex);
 			firePropertyChange("selectedIndex", -1, selectedIndex);
 		}
 	}

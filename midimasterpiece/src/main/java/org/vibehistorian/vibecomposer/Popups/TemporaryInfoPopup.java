@@ -1,8 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 
@@ -23,7 +21,6 @@ public class TemporaryInfoPopup {
 		JPanel panel = new JPanel();
 		panel.add(textLabel);
 
-		LG.i(VibeComposerGUI.vibeComposerGUI.getLocation().toString());
 		SwingUtils.setFrameLocation(frame, SwingUtils.getMouseLocation());
 		if (hideWindowControls) {
 			frame.setUndecorated(hideWindowControls);

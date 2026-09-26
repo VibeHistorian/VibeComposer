@@ -5,7 +5,6 @@ import org.vibehistorian.vibecomposer.UITheme;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;

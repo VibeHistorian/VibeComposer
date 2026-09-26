@@ -12,7 +12,6 @@ import javax.swing.SwingUtilities;
 import org.vibehistorian.vibecomposer.Arrangement;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class SectionDropDownCheckButton extends CheckButton {
 

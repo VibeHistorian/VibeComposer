@@ -4,18 +4,23 @@ import org.vibehistorian.vibecomposer.PlaybackState;
 
 import org.vibehistorian.vibecomposer.ScoreGUI;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import javax.swing.JTabbedPane;
 
 public class PlayheadRangeSlider extends RangeSlider {
 
 	private static final long serialVersionUID = -8846762395904588112L;
+	private final JTabbedPane instrumentTabPane;
+
+	public PlayheadRangeSlider(JTabbedPane instrumentTabPane) {
+		this.instrumentTabPane = instrumentTabPane;
+	}
 
 	@Override
 	public void setUpperDragging(boolean upperDragging) {
 		super.setUpperDragging(upperDragging);
 		PlaybackState.isDragging = upperDragging;
-		if (VibeComposerGUI.instrumentTabPane.getTabCount() < 8
-				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7) {
+		if (instrumentTabPane.getTabCount() < 8
+				|| instrumentTabPane.getSelectedIndex() == 7) {
 			if (ScoreGUI.scorePanel != null) {
 				ScoreGUI.scorePanel.repaintMinimum();
 			}
@@ -30,8 +35,8 @@ public class PlayheadRangeSlider extends RangeSlider {
 	@Override
 	public void setUpperValue(int value) {
 		super.setUpperValue(value);
-		if ((VibeComposerGUI.instrumentTabPane.getTabCount() < 8
-				|| VibeComposerGUI.instrumentTabPane.getSelectedIndex() == 7)
+		if ((instrumentTabPane.getTabCount() < 8
+				|| instrumentTabPane.getSelectedIndex() == 7)
 				&& ScoreGUI.highlightScoreNotes.isSelected()) {
 			ScoreGUI.scorePanel.repaintMinimum();
 		}

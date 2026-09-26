@@ -16,12 +16,12 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -35,6 +35,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 public class VariationPopup {
@@ -53,7 +54,8 @@ public class VariationPopup {
 	KnobPanel keyChangeKnob = new DetachedKnobPanel("Key Change", 0, -12, 12);
 	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
-	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim) {
+	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim,
+			IntFunction<List<? extends InstPanel>> getInstList) {
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
@@ -80,7 +82,7 @@ public class VariationPopup {
 				sec.initPartMap();
 			}
 
-			List<String> partNames = VibeComposerGUI.getInstList(i).stream()
+			List<String> partNames = getInstList.apply(i).stream()
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
@@ -156,7 +158,7 @@ public class VariationPopup {
 						return;
 
 					if (SwingUtilities.isLeftMouseButton(e)) {
-						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
 							if (col > 1) {
 								if (table.getModel().getValueAt(k, 1) == Boolean.TRUE) {
 									table.getModel().setValueAt(Boolean.TRUE, k, col);
@@ -168,7 +170,7 @@ public class VariationPopup {
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isRightMouseButton(e)) {
-						for (int k = 0; k < VibeComposerGUI.getInstList(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}

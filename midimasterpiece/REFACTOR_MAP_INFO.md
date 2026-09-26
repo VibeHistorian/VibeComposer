@@ -12,6 +12,7 @@
 - `SwingUtils.java` holds shared Swing helpers. Put generally useful UI helpers here instead of making a feature module call back into the main window.
 - `ExtraSettingsGUI` owns settings popup state and construction, including its Generation tab. `GenerationGUI` owns the randomization and macro controls in the main window, built by `initRandomButtons` and `initMacroParams`. `VibeComposerCoreGUI` may still be a skeleton; inspect it before relying on it. `ScoreGUI` owns score UI state, tab setup, and popup behavior.
 - Shared state extracted in phase 2.3 has focused owners: `GUIConstants` for immutable presentation values, `UITheme` for display preferences, `GUIAssets` for image caches, `PlaybackState` for playback runtime, `ApplicationSessionState` for active application/session services, and `SoloMuteState` for cross-instrument solo/mute state.
+- Phase 2.4 has started by injecting section-selection actions and the parent/tab owners needed by arrangement and score components. Arrangement list popups and renderers receive panel-list access from their callers; `PartManagerPanel` receives explicit preset operations. Continue by migrating the remaining instrument controls and editor families; do not mark phase 2.4 complete while active `VibeComposerGUI` references remain in shared `Components`, `Panels`, or `Popups`.
 - Cross-cutting models and components include `GUIConfig.java`, `Panels/MelodyPanel.java`, and `Components/MelodyMidiDropPane.java`.
 
 ## Conventions and boundaries

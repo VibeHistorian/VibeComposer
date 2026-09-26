@@ -7,11 +7,11 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.function.IntFunction;
 
 public class ApplyCustomSectionPopup extends CloseablePopup {
 
@@ -19,7 +19,7 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 	ScrollComboBox<String> sectionOptions = new ScrollComboBox<>(false);
 	JButton applier = new JButton("APPLY");
 
-	public ApplyCustomSectionPopup() {
+	public ApplyCustomSectionPopup(IntFunction<List<? extends InstPanel>> getInstList) {
 		super("Apply Custom Section..", 11);
 		JPanel framePanel = new JPanel();
 		framePanel.setLayout(new GridLayout(0, 1, 0, 0));
@@ -55,7 +55,7 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 			for (int i = 0; i < 5; i++) {
 				List<? extends InstPart> customizedParts = sec.getInstPartList(i);
 				if (customizedParts != null) {
-					List<? extends InstPanel> globalIps = VibeComposerGUI.getInstList(i);
+					List<? extends InstPanel> globalIps = getInstList.apply(i);
 					for (int j = 0; j < customizedParts.size(); j++) {
 						InstPart ip = customizedParts.get(j);
 						globalIps.get(j).setFromInstPart(ip);

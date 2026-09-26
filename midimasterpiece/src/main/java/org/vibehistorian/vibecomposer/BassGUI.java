@@ -85,6 +85,7 @@ public class BassGUI implements InstrumentGUIControls {
 
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {
+        PartManagerPanel.Context getPartManagerContext();
         void addPanel();
         void generatePanels(boolean triggerRegenerate);
         BassPanel addBassPanel();
@@ -131,7 +132,7 @@ public class BassGUI implements InstrumentGUIControls {
 
         JPanel bassSettingsAdvancedPanel = new JPanel();
         bassSettingsAdvancedPanel.add(new JLabel("BASS SETTINGS+"));
-        bassSettingsAdvancedPanel.add(new PartManagerPanel(1));
+        bassSettingsAdvancedPanel.add(new PartManagerPanel(1, context.getPartManagerContext()));
         bassSettingsAdvancedPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         bassSettingsAdvancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         bassSettingsAdvancedPanel.setMaximumSize(new Dimension(1800, 50));

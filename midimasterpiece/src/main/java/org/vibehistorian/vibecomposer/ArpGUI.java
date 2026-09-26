@@ -121,6 +121,7 @@ public class ArpGUI implements InstrumentGUIControls {
 
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
+		PartManagerPanel.Context getPartManagerContext();
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
 		ArpPanel addArpPanel();
@@ -230,7 +231,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpSettingsExtraPanel.add(randomArpMaxLength);
 		arpSettingsExtraPanel.add(randomArpCorrectMelodyNotes);
 		arpSettingsExtraPanel.add(clearArpPatternSeeds);
-		arpSettingsExtraPanel.add(new PartManagerPanel(3));
+		arpSettingsExtraPanel.add(new PartManagerPanel(3, context.getPartManagerContext()));
 		UITheme.toggleableComponents.add(arpSettingsExtraPanel);
 
 		arpsSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

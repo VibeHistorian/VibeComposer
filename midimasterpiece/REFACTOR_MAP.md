@@ -195,3 +195,14 @@ The remaining static fields on `VibeComposerGUI` are classified here before owne
 
 Every mutable `VibeComposerGUI` static field now has a focused owner or a defined composition-root role. Active callers have been migrated without forwarding fields on `VibeComposerGUI`. Owner fields remain static to preserve the application's existing single-window lifetime; replacing component-level static access with injected dependencies is the next boundary in phase 2.4.
 
+## Phase 2.4 Progress — Shared Component Dependencies
+
+- **2.4.1 Arrangement section selector:** replaced its lookups of `ArrangementGUI`, `VibeComposerGUI`, and their static state with callbacks for section selection, variation popup opening, and playback start adjustment.
+- **2.4.2 Playhead and score popup ownership:** `PlayheadRangeSlider` receives its `JTabbedPane`, and `ShowScorePopup` receives its parent component through `ScoreGUI.Context`.
+- **2.4.3 Arrangement popup panel data:** part inclusion, variation, and custom-section popups receive instrument panel lists from their caller. Removed the unused no-argument `DrumLoopPopup` path and a main-window location log from `TemporaryInfoPopup`.
+- **2.4.4 Part preset management:** `PartManagerPanel` receives save, load, and count-recalculation operations through a focused context supplied by the instrument GUIs.
+- **2.4.5 Arrangement rendering:** `CollectionCellRenderer` receives panel-list and absolute-order lookups from `ArrangementGUI.Context`.
+- **2.4.6 Score playback actions:** `ShowPanelBig` receives slider and pause callbacks through `ScoreGUI.Context`; `ScoreGUI.pianoRoll()` is now instance-owned.
+- Remaining coupling in `JKnob`, combo controls, instrument panel lifecycle, solo/mute controls, score rendering, and MIDI editing is still in scope. Phase 2.4 is in progress.
+- Verification: `mvn -DskipTests compile` succeeds for the current slice. Tests were skipped.
+

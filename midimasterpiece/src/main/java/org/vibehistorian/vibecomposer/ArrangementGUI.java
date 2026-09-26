@@ -157,6 +157,8 @@ public class ArrangementGUI {
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
 		List<? extends InstPanel> getInstList(int instrument);
+		int getAbsoluteOrder(int instrument, int panelOrder);
+		void trySliderStartChange(int sectionIndex);
 	}
 
 	public void applyCustomPanelsToSection(String action, int replacedPartNum,
@@ -676,7 +678,9 @@ public class ArrangementGUI {
 		ArrangementGUI.randomizeArrangementOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
-		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons);
+		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons,
+				this::switchPanelsForSectionSelection, this::openVariationPopup,
+				context::trySliderStartChange, () -> actualArrangement.getSections().size());
 
 		JButton commitPanelBtn = context.makeButton("Apply", "ArrangementApply", 50, 30);
 		JButton commitAllPanelBtn = SwingUtils.makeButton("Apply..", e -> context.openApplyCustomSectionPopup(), 60);
@@ -884,7 +888,8 @@ public class ArrangementGUI {
 				if (row == 1) return new SectionInfoCellRenderer(width, height, col);
 				Collection<?> stringables = value instanceof String
 						? Collections.singleton((String) value) : (Collection<?>) value;
-				return new CollectionCellRenderer(stringables, width, height, row - 2, col);
+				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
+						context::getInstList, context::getAbsoluteOrder);
 			}
 		};
 		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {
@@ -1155,7 +1160,8 @@ public class ArrangementGUI {
 		recalculateActualArrangementSection(sectionOrder - 1);
 		JFrame mainWindow = VibeComposerGUI.vibeComposerGUI;
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
-				new Point(SwingUtils.getMouseLocation().x, mainWindow.getLocation().y), mainWindow.getSize());
+				new Point(SwingUtils.getMouseLocation().x, mainWindow.getLocation().y), mainWindow.getSize(),
+				context::getInstList);
 	}
 
 	public static void recalculateActualArrangementSection(int sectionOrder) {
@@ -1171,7 +1177,7 @@ public class ArrangementGUI {
 
 	public void openPartInclusionPopup() {
 		arrangement.recalculatePartInclusionMapBoundsIfNeeded();
-		new ArrangementPartInclusionPopup(arrangement);
+		new ArrangementPartInclusionPopup(arrangement, context::getInstList);
 	}
 
 	public void openGlobalVariationPopup() {

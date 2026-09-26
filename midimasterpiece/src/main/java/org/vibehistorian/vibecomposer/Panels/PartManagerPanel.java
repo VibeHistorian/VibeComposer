@@ -6,7 +6,6 @@ import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -20,16 +19,24 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class PartManagerPanel extends TransparentablePanel {
+	public interface Context {
+		int saveParts(String path, int part, boolean selectiveSave) throws JAXBException;
+		void loadParts(File file, int part, boolean clearPreviousPanels)
+				throws JAXBException, IOException;
+		void recalculatePartCounts();
+	}
 
     private int part = -1;
+    private final Context context;
 
     JLabel partName = new JLabel("");
     JTextField newPresetName = new JTextField("");
     ScrollComboBox<String> partPresetBox = new ScrollComboBox<>(false);
     JCheckBox overwriteExistingCheckbox = new CustomCheckBox("Overwrite", true);
 
-    public PartManagerPanel(int partNum) {
+    public PartManagerPanel(int partNum, Context context) {
         part = partNum;
+        this.context = context;
 
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -61,7 +68,7 @@ public class PartManagerPanel extends TransparentablePanel {
                     try {
                         String dirPath = makeSavedDir.getPath().toString();
                         String fileName = newPresetName.getText().replaceAll(".xml", "");
-                        int numParts = VibeComposerGUI.marshalParts(dirPath + "/" + fileName + ".xml", part, true);
+                        int numParts = context.saveParts(dirPath + "/" + fileName + ".xml", part, true);
                         partPresetBox.addItem(fileName + " [" + numParts + "]");
                         newPresetName.setText("");
                     } catch (Exception ex) {
@@ -110,7 +117,7 @@ public class PartManagerPanel extends TransparentablePanel {
                 File loadedFile = new File("PartPresets/" + folderName + "/" + itemName + ".xml");
                 if (loadedFile.exists()) {
                     try {
-                        VibeComposerGUI.vibeComposerGUI.unmarshallParts(loadedFile, part, overwriteExistingCheckbox.isSelected());
+                        context.loadParts(loadedFile, part, overwriteExistingCheckbox.isSelected());
                         partPresetBox.setVal(OMNI.EMPTYCOMBO);
                     } catch (JAXBException | IOException e) {
                         LG.e(e);
@@ -118,9 +125,7 @@ public class PartManagerPanel extends TransparentablePanel {
                     }
                 }
 
-                VibeComposerGUI.vibeComposerGUI.recalculateTabPaneCounts();
-                VibeComposerGUI.vibeComposerGUI.recalculateGenerationCounts();
-                VibeComposerGUI.vibeComposerGUI.recalculateSoloMuters();
+                context.recalculatePartCounts();
 
                 LG.i("Loaded preset: " + item);
             }

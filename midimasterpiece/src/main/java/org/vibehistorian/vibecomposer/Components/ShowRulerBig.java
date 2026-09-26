@@ -6,7 +6,6 @@ import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;

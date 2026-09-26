@@ -17,7 +17,6 @@ import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class SectionInfoCellRenderer extends JComponent implements TableCellRenderer {
 

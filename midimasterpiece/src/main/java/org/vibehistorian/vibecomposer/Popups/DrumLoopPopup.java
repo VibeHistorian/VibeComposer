@@ -7,7 +7,6 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.sound.midi.Sequencer;
 import javax.swing.*;
@@ -33,10 +32,6 @@ public class DrumLoopPopup {
 	private final List<DrumPanel> drumPanels;
 
 	@SuppressWarnings("unchecked")
-	public DrumLoopPopup() {
-		this((List<DrumPanel>) (List<?>) VibeComposerGUI.getInstList(4));
-	}
-
 	public DrumLoopPopup(List<DrumPanel> drumPanels) {
 		this.drumPanels = drumPanels;
 		dhpps.clear();

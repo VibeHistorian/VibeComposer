@@ -211,6 +211,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
+		PartManagerPanel.Context getPartManagerContext();
 		void addPanel();
 		void generatePanels(boolean triggerRegenerate);
 		boolean canRegenerateOnChange();
@@ -394,7 +395,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		settings.add(melodySingleNoteExceptions);
 		settings.add(melodyFillPausesPerChord);
 		settings.add(melodyLegacyMode);
-		settings.add(new PartManagerPanel(0));
+		settings.add(new PartManagerPanel(0, context.getPartManagerContext()));
 		return settings;
 	}
 
