@@ -168,6 +168,18 @@ Every mutable `VibeComposerGUI` static field now has a focused owner or a define
 - **2.4.6 Score playback actions:** `ShowPanelBig` receives slider and pause callbacks through `ScoreGUI.Context`; `ScoreGUI.pianoRoll()` is now instance-owned.
 - **2.4.7 Solo/mute controls:** `SoloMuter` sends solo and mute toggle events through an injected context. The window coordinates group-wide state changes, sequence recalculation flags, and score refreshes; `SoloMuter` no longer looks up `VibeComposerGUI`, `ShowPanelBig`, or `ScoreGUI` statically. Instrument-panel construction supplies this context to single, group, and global controls.
 - **2.4.8 Instrument-panel randomization:** removed the main-window `ActionListener` dependency from `InstPanel` and its subclasses, and replaced the `RandomizePart` command dispatch with a focused panel callback. The window installs the callback after construction and retains the existing randomize and auto-regenerate behavior.
-- Remaining coupling in `JKnob`, combo controls, instrument panel lifecycle, score rendering, and MIDI editing is still in scope. Phase 2.4 is in progress.
-- Verification: `mvn -DskipTests compile` succeeds for this slice. Tests were skipped.
+- **2.4.9 Knob and combo controls:** `JKnob`, `ScrollComboBox2`, and `ScrollComboPanel` receive affected-panel and regeneration operations through `InstrumentControlContext`; instrument-panel construction supplies the context.
+- **2.4.10 Instrument-panel lifecycle:** `InstPanel` receives copy, removal, panel-order, and peer-list operations through its focused `Context`. The window remains the lifecycle coordinator.
+- **2.4.11 Visual pattern controls:** `VisualPatternPanel` receives panel-list and regeneration operations through `InstrumentControlContext`, supplied by its owning `InstPanel`.
+- **2.4.12 Score popup and playhead controls:** `ShowScorePopup` receives its popup sizing mode and a close callback; score restoration stays in `ScoreGUI`. `PlayheadRangeSlider` receives score repaint and note-highlight operations.
+- **2.4.13 Value popups and range sliders:** `KnobValuePopup` and the range-slider UI receive regeneration operations through `InstrumentControlContext`.
+- **2.4.14 Score canvas actions:** `ShowAreaBig` delegates MIDI editor opening, panel selection and solo/mute changes through score actions. `ShowPanelBig` delegates score repainting instead of locating `ScoreGUI`.
+- **2.4.15 MIDI editor actions:** `MidiEditPopup` and `MidiEditArea` receive panel, transpose, playback, chord-duration, regeneration, and arrangement refresh operations through a focused editor context.
+- **2.4.16 Score canvas ownership:** `ShowAreaBig` and `ShowRulerBig` read changing score dimensions, timing, and controls from their owning `ShowPanelBig` instance.
+
+### Phase 2.4 status — complete
+
+No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Popups`. Shared controls and editors now receive the window operations they use through focused contexts or callbacks.
+
+- Verification: `mvn -DskipTests compile` succeeds after 2.4.16. Tests were skipped.
 

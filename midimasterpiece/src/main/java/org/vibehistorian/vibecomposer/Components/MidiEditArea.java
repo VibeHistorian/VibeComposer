@@ -1,7 +1,5 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.UITheme;
-
 import jm.constants.Pitches;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -13,7 +11,7 @@ import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.TextProcessingPopup;
 import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -207,7 +205,7 @@ public class MidiEditArea extends JComponent {
 					pop.apply();
 					selectedNotes.clear();
 					selectedNotesCopy.clear();
-					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+					pop.getContext().regenerateInPlace();
 				}
 			}
 		});
@@ -244,7 +242,7 @@ public class MidiEditArea extends JComponent {
 		if (pop != null && MidiEditPopup.regenerateInPlaceChoice) {
 			selectedNotes.clear();
 			selectedNotesCopy.clear();
-			VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+			pop.getContext().regenerateInPlace();
 		}
 	}
 
@@ -296,7 +294,7 @@ public class MidiEditArea extends JComponent {
 			saveToHistory();
 
 			if (MidiEditPopup.regenerateInPlaceChoice) {
-				VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+				pop.getContext().regenerateInPlace();
 			}
 		}
 	}
@@ -321,7 +319,7 @@ public class MidiEditArea extends JComponent {
 				if (MidiEditPopup.regenerateInPlaceChoice) {
 					selectedNotes.clear();
 					selectedNotesCopy.clear();
-					VibeComposerGUI.vibeComposerGUI.regenerateInPlace();
+					pop.getContext().regenerateInPlace();
 				}
 			} catch (Exception ex) {
 				new TemporaryInfoPopup("Invalid number entered!", 1500);
@@ -451,7 +449,7 @@ public class MidiEditArea extends JComponent {
 			int row = getPitchFromPosition(evt.getPoint().y) - currentMin;
 			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(4);
 			if (row >= 0 && row < noteNotes.size()) {
-				pop.setupIdentifiers(4, VibeComposerGUI.getInstList(4).get(row).getPanelOrder());
+				pop.setupIdentifiers(4, pop.getContext().getInstList(4).get(row).getPanelOrder());
 				// TODO
 				pop.setup(pop.getSec());
 			}
@@ -723,10 +721,10 @@ public class MidiEditArea extends JComponent {
 		if (pn != null && pop != null) {
 			if (selectedNotes.size() > 1 && selectedNotes.contains(pn)) {
 				selectedNotes.stream().map(e -> e.getPitch()).distinct()
-						.forEach(e -> VibeComposerGUI.playNote(e, durationMs, pn.getDynamic(),
+						.forEach(e -> pop.getContext().playNote(e, durationMs, pn.getDynamic(),
 								pop.part, pop.partOrder, pop.getSec(), true));
 			} else {
-				VibeComposerGUI.playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
+				pop.getContext().playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
 						pop.partOrder, pop.getSec(), false);
 			}
 		}
@@ -1354,7 +1352,8 @@ public class MidiEditArea extends JComponent {
 				&& (pop.getSec().getGeneratedDurations() != null)) {
 			return new ArrayList<>(pop.getSec().getGeneratedDurations());
 		} else {
-			chordSpacingDurations = VibeComposerGUI.getUserChordDurations();
+			// TODO: NPE possible
+			chordSpacingDurations = pop.getContext().getUserChordDurations();
 			return chordSpacingDurations;
 		}
 	}

@@ -46,7 +46,7 @@ public class ShowRulerBig extends JComponent {
 	public ShowRulerBig(ShowPanelBig sp) {
 		super();
 		this.sp = sp;
-		this.setSize(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
+		this.setSize(sp.getBeatWidthBase(), ShowRulerBig.maxHeight);
 		this.setBackground(Color.lightGray);
 		//this.addMouseListener(this);
 		//this.addMouseMotionListener(this);
@@ -62,12 +62,12 @@ public class ShowRulerBig extends JComponent {
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
+		return new Dimension(sp.getBeatWidthBase(), ShowRulerBig.maxHeight);
 	}
 
 	@Override
 	public Dimension getMinimumSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight);
+		return new Dimension(sp.getBeatWidthBase(), ShowRulerBig.maxHeight);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class ShowRulerBig extends JComponent {
 		g.setColor(Color.black);
 
 
-		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
+		double maxX = sp.getMaxEndTime() * beatWidth;
 
 		double highlightX = (PlaybackState.slider != null
 				&& PlaybackState.sliderMeasureStartTimes != null
@@ -108,7 +108,7 @@ public class ShowRulerBig extends JComponent {
 						: -1;
 
 
-		for (int i = 0; i < (ShowPanelBig.maxEndTime); i++) {
+		for (int i = 0; i < sp.getMaxEndTime(); i++) {
 			int xLoc = (int) Math.round((i + startOffset) * beatWidth);
 			if (i % timeSig == 0 && beatWidth > 10) {
 				g.drawLine(xLoc, 0, xLoc, ShowRulerBig.maxHeight);

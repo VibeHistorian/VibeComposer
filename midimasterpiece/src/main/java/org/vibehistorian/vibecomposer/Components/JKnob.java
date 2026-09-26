@@ -14,7 +14,6 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,6 +24,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -75,6 +75,7 @@ public class JKnob extends JComponent
 
 	private boolean stretchAfterCustomInput = false;
 	private boolean allowValuesOutsideRange = false;
+	private InstrumentControlContext instrumentControlContext;
 
 	private boolean showTextInKnob = false;
 	private String shownText = "";
@@ -526,7 +527,8 @@ public class JKnob extends JComponent
 					setEnabled(!isEnabled());
 				}
 			} else if (isEnabled()) {
-				KnobValuePopup kvp = new KnobValuePopup(this, stretchAfterCustomInput, true);
+				KnobValuePopup kvp = new KnobValuePopup(this, stretchAfterCustomInput, true,
+						instrumentControlContext);
 				kvp.setRegenerating(regenerating);
 			}
 		}
@@ -544,8 +546,9 @@ public class JKnob extends JComponent
 	public void mouseReleased(MouseEvent e) {
 		pressedOnSpot = false;
 		if (isEnabled() && regenerating && !SwingUtilities.isMiddleMouseButton(e)
-				&& VibeComposerGUI.canRegenerateOnChange() && (fineStart != curr)) {
-			VibeComposerGUI.vibeComposerGUI.regenerate();
+				&& instrumentControlContext != null
+				&& instrumentControlContext.canRegenerateOnChange() && (fineStart != curr)) {
+			instrumentControlContext.regenerate();
 		}
 
 		fine = false;
@@ -773,6 +776,10 @@ public class JKnob extends JComponent
 		this.func = func;
 	}
 
+	public void setInstrumentControlContext(InstrumentControlContext instrumentControlContext) {
+		this.instrumentControlContext = instrumentControlContext;
+	}
+
 	public void removeFunc() {
 		func = null;
 	}
@@ -788,7 +795,7 @@ public class JKnob extends JComponent
 			setEnabled(enabled);
 			return;
 		}
-		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+		for (InstPanel ip : affectedPanels(instParent)) {
 			ip.findKnobsByName(getName()).forEach(e -> {
 				e.setEnabled(enabled);
 			});
@@ -801,7 +808,7 @@ public class JKnob extends JComponent
 			setValue(val);
 			return;
 		}
-		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+		for (InstPanel ip : affectedPanels(instParent)) {
 			ip.findKnobsByName(getName()).forEach(e -> {
 				if (e.isEnabled()) {
 					e.setValue(val);
@@ -818,7 +825,7 @@ public class JKnob extends JComponent
 			repaint();
 			return;
 		}
-		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+		for (InstPanel ip : affectedPanels(instParent)) {
 			ip.findKnobsByName(getName()).forEach(e -> {
 				if (e.isEnabled()) {
 					e.setTheta(thetaVal);
@@ -826,6 +833,11 @@ public class JKnob extends JComponent
 				}
 			});
 		}
+	}
+
+	private List<InstPanel> affectedPanels(InstPanel instParent) {
+		return instrumentControlContext == null ? Collections.<InstPanel>emptyList()
+				: instrumentControlContext.getAffectedPanels(instParent.getPartNum());
 	}
 
 	public int getValueRaw() {

@@ -20,6 +20,7 @@ see <https://www.gnu.org/licenses/>.
 package org.vibehistorian.vibecomposer;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
+import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
@@ -106,6 +107,23 @@ public class ScoreGUI {
 		scoreScrollPane.repaint();
 	}
 
+	public PlayheadRangeSlider createPlayheadRangeSlider(JTabbedPane instrumentTabPane) {
+		return new PlayheadRangeSlider(instrumentTabPane, this::repaintScoreMinimum,
+				() -> highlightScoreNotes.isSelected());
+	}
+
+	private void repaintScoreMinimum() {
+		if (scorePanel != null) {
+			scorePanel.repaintMinimum();
+		}
+	}
+
+	public void repaintScoreDisplay() {
+		if (scoreScrollPane != null) {
+			scoreScrollPane.repaint();
+		}
+	}
+
 	public void toggleShowScorePopup() {
 		JTabbedPane instrumentTabPane = context.getInstrumentTabPane();
 		if (scorePanel != null) {
@@ -124,7 +142,8 @@ public class ScoreGUI {
 							ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0));
 				}
 				scorePopup = new ShowScorePopup(scoreScrollPane, instrumentTabPane,
-						context.getMainWindowComponent());
+						context.getMainWindowComponent(), miniScorePopup.isSelected(),
+						this::restoreScoreAfterPopup);
 			} else {
 				cleanup();
 				if (instrumentTabPane.getComponentCount() < 8) {
@@ -133,6 +152,20 @@ public class ScoreGUI {
 				}
 			}
 		}
+	}
+
+	private void restoreScoreAfterPopup() {
+		ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesBig;
+		ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
+				.get(ShowPanelBig.beatWidthBaseIndex);
+		scorePanel.updatePanelHeight(UITheme.scrollPaneDimension.height);
+		scorePanel.getShowArea().setNoteHeight(7);
+		scorePanel.setScore();
+		scoreScrollPane.repaint();
+		scorePopup = null;
+		SwingUtilities.invokeLater(() ->
+				ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 300), 0.0,
+						(7 / 5.0) - 1.0));
 	}
 
 	public void cleanup() {

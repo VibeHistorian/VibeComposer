@@ -4,6 +4,7 @@ import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.UITheme;
 
 import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
+import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -12,7 +13,6 @@ import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -60,6 +60,7 @@ public class VisualPatternPanel extends JPanel {
 	private JLabel[] separators = new JLabel[3];
 
 	private InstPanel parentPanel = null;
+	private InstrumentControlContext instrumentControlContext;
 
 	public static int width = 8 * CheckBoxIcon.width;
 	public static int height = 2 * CheckBoxIcon.width;
@@ -81,6 +82,16 @@ public class VisualPatternPanel extends JPanel {
 
 	public void setBigModeAllowed(boolean bigModeAllowed) {
 		this.bigModeAllowed = bigModeAllowed;
+	}
+
+	public void setInstrumentControlContext(InstrumentControlContext instrumentControlContext) {
+		this.instrumentControlContext = instrumentControlContext;
+	}
+
+	private InstrumentControlContext getInstrumentControlContext() {
+		InstrumentControlContext parentContext = parentPanel == null
+				? null : parentPanel.getInstrumentControlContext();
+		return parentContext != null ? parentContext : instrumentControlContext;
 	}
 
 	public static Map<Integer, Insets> smallModeInsetMap = new HashMap<>();
@@ -126,7 +137,8 @@ public class VisualPatternPanel extends JPanel {
 
 
 	public VisualPatternPanel(KnobPanel hitsKnob, ScrollComboBox<RhythmPattern> patternBox,
-			KnobPanel shiftKnob, KnobPanel chordSpanKnob, InstPanel parentPanel) {
+			KnobPanel shiftKnob, KnobPanel chordSpanKnob, InstPanel parentPanel,
+			InstrumentControlContext instrumentControlContext) {
 		super();
 		//setBackground(new Color(50, 50, 50));
 		FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 0, 0);
@@ -139,6 +151,7 @@ public class VisualPatternPanel extends JPanel {
 		this.patternType = patternBox;
 		this.shiftPanel = shiftKnob;
 		this.parentPanel = parentPanel;
+		this.instrumentControlContext = instrumentControlContext;
 		this.chordSpanPanel = chordSpanKnob;
 		lastHits = hitsPanel.getInt();
 		int sepCounter = 0;
@@ -202,27 +215,24 @@ public class VisualPatternPanel extends JPanel {
 				@Override
 				public void mouseReleased(MouseEvent e) {
 					mouseButton = -1;
+					InstrumentControlContext context = getInstrumentControlContext();
 
 					if (e.getButton() >= 1 && isEnabled()
-							&& VibeComposerGUI.canRegenerateOnChange()) {
+							&& context != null && context.canRegenerateOnChange()) {
 						Timer tmr = new Timer(100, new ActionListener() {
 
 							@Override
 							public void actionPerformed(ActionEvent e) {
-								VibeComposerGUI.vibeComposerGUI.regenerate();
+								InstrumentControlContext context = getInstrumentControlContext();
+								if (context != null && context.canRegenerateOnChange()) {
+									context.regenerate();
+								}
 							}
 						});
 						tmr.setRepeats(false);
 						tmr.start();
 					}
 
-					/*for (DrumPanel dp : VibeComposerGUI.drumPanels) {
-						if (dp.getComboPanel().needShift) {
-							dp.getComboPanel().reapplyShift();
-							dp.getComboPanel().needShift = false;
-							DrumLoopPopup.dhpps.get(dp).reapplyShift();
-						}
-					}*/
 				}
 			});
 			hitChecks[i].setMargin(new Insets(0, 0, 0, 0));
@@ -258,8 +268,9 @@ public class VisualPatternPanel extends JPanel {
 					} else {
 						randomizePattern();
 					}
-					if (VibeComposerGUI.canRegenerateOnChange()) {
-						VibeComposerGUI.vibeComposerGUI.regenerate();
+					InstrumentControlContext context = getInstrumentControlContext();
+					if (context != null && context.canRegenerateOnChange()) {
+						context.regenerate();
 					}
 				}
 			}
@@ -407,7 +418,10 @@ public class VisualPatternPanel extends JPanel {
 			repaint();
 			return;
 		}
-		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
+		InstrumentControlContext context = getInstrumentControlContext();
+		List<InstPanel> allPanels = context == null
+				? Collections.<InstPanel>emptyList()
+				: context.getAffectedPanels(instParent.getPartNum());
 		allPanels.forEach(e -> {
 			if (e.getComboPanel().patternType.isEnabled()) {
 				e.getComboPanel().randomizePattern();
@@ -491,7 +505,10 @@ public class VisualPatternPanel extends JPanel {
 			repaint();
 			return;
 		}
-		List<InstPanel> allPanels = VibeComposerGUI.getAffectedPanels(instParent.getPartNum());
+		InstrumentControlContext context = getInstrumentControlContext();
+		List<InstPanel> allPanels = context == null
+				? Collections.<InstPanel>emptyList()
+				: context.getAffectedPanels(instParent.getPartNum());
 		allPanels.forEach(e -> {
 			if (e.getComboPanel().hitsPanel.isEnabled()) {
 				e.getComboPanel().expand2x();

@@ -159,6 +159,7 @@ public class ArrangementGUI {
 		List<? extends InstPanel> getInstList(int instrument);
 		int getAbsoluteOrder(int instrument, int panelOrder);
 		void trySliderStartChange(int sectionIndex);
+		MidiEditPopup.Context getMidiEditPopupContext();
 	}
 
 	public void applyCustomPanelsToSection(String action, int replacedPartNum,
@@ -244,6 +245,8 @@ public class ArrangementGUI {
 								InstPanel copy = InstPanel.makeInstPanel(instrument,
 										VibeComposerGUI.vibeComposerGUI);
 								VibeComposerGUI.vibeComposerGUI.configureRandomizeAction(copy);
+								VibeComposerGUI.vibeComposerGUI.configureInstPanelContext(copy);
+								VibeComposerGUI.vibeComposerGUI.configureInstrumentControlContext(copy);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -267,6 +270,8 @@ public class ArrangementGUI {
 								InstPanel copy = InstPanel.makeInstPanel(instrument,
 										VibeComposerGUI.vibeComposerGUI);
 								VibeComposerGUI.vibeComposerGUI.configureRandomizeAction(copy);
+								VibeComposerGUI.vibeComposerGUI.configureInstPanelContext(copy);
+								VibeComposerGUI.vibeComposerGUI.configureInstrumentControlContext(copy);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
@@ -361,7 +366,7 @@ public class ArrangementGUI {
 				if (section.getPresence(instrument).contains(panelOrder)
 						&& section.containsPattern(instrument, panelOrder)) {
 					ApplicationSessionState.currentMidiEditorPopup = new MidiEditPopup(
-							section, instrument, panelOrder);
+							context.getMidiEditPopupContext(), section, instrument, panelOrder);
 					ApplicationSessionState.currentMidiEditorPopup.setSec(section);
 					ApplicationSessionState.currentMidiEditorSectionIndex = sectionOrder;
 				} else {

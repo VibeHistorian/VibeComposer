@@ -5,7 +5,6 @@ import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -30,6 +30,7 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 	private boolean hasPrototypeSet = false;
 	private boolean requiresSettingPrototype = false;
 	private Consumer<? super Object> func = null;
+	private InstrumentControlContext instrumentControlContext;
 	public static ScrollComboBox2<?> lastTouchedBox = null;
 
 	public ScrollComboBox2() {
@@ -134,7 +135,7 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 			userInteracting = false;
 			InstPanel parentIp = SwingUtils.getInstParent(this);
 			if (parentIp != null) {
-				VibeComposerGUI.getAffectedPanels(parentIp.getPartNum()).forEach(ip -> ip
+				getAffectedPanels(parentIp).forEach(ip -> ip
 						.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> e.setVal(item)));
 			}
 		}
@@ -151,9 +152,10 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 			func.accept(new Object());
 		}
 
-		if (isEnabled() && regenerating && interacting && VibeComposerGUI.canRegenerateOnChange()
+		if (isEnabled() && regenerating && interacting && instrumentControlContext != null
+				&& instrumentControlContext.canRegenerateOnChange()
 				&& isDifferent) {
-			VibeComposerGUI.vibeComposerGUI.regenerate();
+			instrumentControlContext.regenerate();
 		}
 		discardInteraction();
 	}
@@ -212,6 +214,10 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 		this.func = func;
 	}
 
+	public void setInstrumentControlContext(InstrumentControlContext instrumentControlContext) {
+		this.instrumentControlContext = instrumentControlContext;
+	}
+
 	public void removeFunc() {
 		func = null;
 	}
@@ -224,11 +230,16 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 			repaint();
 			return;
 		}
-		for (InstPanel ip : VibeComposerGUI.getAffectedPanels(instParent.getPartNum())) {
+		for (InstPanel ip : getAffectedPanels(instParent)) {
 			ip.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> {
 				e.setEnabled(enabled);
 				e.repaint();
 			});
 		}
+	}
+
+	private List<InstPanel> getAffectedPanels(InstPanel instParent) {
+		return instrumentControlContext == null ? Collections.<InstPanel>emptyList()
+				: instrumentControlContext.getAffectedPanels(instParent.getPartNum());
 	}
 }

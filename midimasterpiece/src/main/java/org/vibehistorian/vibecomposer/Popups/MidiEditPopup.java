@@ -48,6 +48,22 @@ import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
 
 public class MidiEditPopup extends CloseablePopup {
 
+	public interface Context {
+		Component getMainWindowComponent();
+		List<InstPanel> getAffectedPanels(int instrument);
+		List<? extends InstPanel> getInstList(int instrument);
+		Pair<ScaleMode, Integer> getScaleKey(Section section);
+		int getTranspose();
+		void regenerateInPlace();
+		void markArrangementManual();
+		void repaintActualArrangement();
+		void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
+				Section section, boolean overrideLastPlayed);
+		List<Double> getUserChordDurations();
+	}
+
+	private final Context context;
+
 	public static int highlightModeChoice = 3;
 	public static int snapToTimeGridChoice = 2;
 	public static boolean snapToGridChoice = true;
@@ -88,8 +104,9 @@ public class MidiEditPopup extends CloseablePopup {
 	JTextField text = null;
 	Section sec = null;
 
-	public MidiEditPopup(Section section, int secPartNum, int secPartOrder) {
+	public MidiEditPopup(Context context, Section section, int secPartNum, int secPartOrder) {
 		super("Edit MIDI Phrase (Graphical)", 14);
+		this.context = context;
 		sec = section;
 		saveOnClose = true;
 		trackScopeUpDown = 0;
@@ -150,8 +167,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		mvea.addKeyboardControls(allPanels);
 
-		//SwingUtils.setFrameLocation(frame, VibeComposerGUI.vibeComposerGUI.getLocation());
-		frame.setLocation(VibeComposerGUI.vibeComposerGUI.getLocation());
+		frame.setLocation(context.getMainWindowComponent().getLocation());
 		frame.add(allPanels);
 		frame.pack();
 		frame.setVisible(true);
@@ -222,7 +238,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		buttonPanel.add(SwingUtils.makeButton("Rand. Velocity", e -> {
 			Random rand = new Random();
-			InstPanel ip = VibeComposerGUI.getAffectedPanels(part).get(partOrder);
+			InstPanel ip = context.getAffectedPanels(part).get(partOrder);
 			int velmin = ip.getVelocityMin();
 			int velmax = ip.getVelocityMax();
 			mvea.getValues().forEach(n -> n.setDynamic(rand.nextInt(velmax - velmin + 1) + velmin));
@@ -271,7 +287,7 @@ public class MidiEditPopup extends CloseablePopup {
 			}
 			pn.forEach(f -> {
 				if (f.getPitch() != Pitches.REST) {
-					f.setPitch(f.getPitch() - ScoreGUI.transposeScore.getInt());
+					f.setPitch(f.getPitch() - context.getTranspose());
 				}
 			});
 			mvea.setCustomValues(pn.copy());
@@ -334,8 +350,7 @@ public class MidiEditPopup extends CloseablePopup {
 		});
 		regenerateInPlaceOnChange.setFunc(e -> {
 			regenerateInPlaceChoice = regenerateInPlaceOnChange.isSelected();
-			ArrangementGUI.manualArrangement.setSelected(true);
-			ArrangementGUI.manualArrangement.repaint();
+			context.markArrangementManual();
 		});
 		applyOnLoad.setFunc(e -> {
 			applyOnLoadChoice = applyOnLoad.isSelected();
@@ -613,14 +628,13 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private File buildMidiFileFromNotes() {
-		Pair<ScaleMode, Integer> scaleKey = VibeComposerGUI
-				.keyChangeAt(ArrangementGUI.actualArrangement.getSections().indexOf(sec));
+		Pair<ScaleMode, Integer> scaleKey = context.getScaleKey(sec);
 
 		PhraseExt phr = mvea.getValues().makePhrase();
 
 		List<Note> notes = phr.getNoteList();
 		int extraTranspose = 0;
-		InstPanel ip = VibeComposerGUI.getInstList(part).get(partOrder);
+		InstPanel ip = context.getInstList(part).get(partOrder);
 		if (scaleKey != null) {
 			MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
 					scaleKey.getLeft().noteAdjustScale,
@@ -630,7 +644,7 @@ public class MidiEditPopup extends CloseablePopup {
 		final int finalExtraTranspose = extraTranspose;
 		notes.forEach(e -> {
 			if (e.getPitch() != Pitches.REST) {
-				int pitch = e.getPitch() + ScoreGUI.transposeScore.getInt() + finalExtraTranspose
+				int pitch = e.getPitch() + context.getTranspose() + finalExtraTranspose
 						+ ip.getTranspose();
 				e.setPitch(pitch);
 			}
@@ -656,7 +670,7 @@ public class MidiEditPopup extends CloseablePopup {
 				LG.i("Applied: " + pat.toString());
 
 				repaintMvea();
-				ArrangementGUI.scrollableArrangementActualTable.repaint();
+				context.repaintActualArrangement();
 			} else {
 				LG.e("Failed to apply pattern, null: " + pat.toString());
 			}
@@ -669,7 +683,7 @@ public class MidiEditPopup extends CloseablePopup {
 			ApplicationSessionState.guiConfig.getPatternRaw(pat).setApplied(false);
 			sec.putPattern(part, partOrder, new UsedPattern(part, partOrder, UsedPattern.NONE));
 			repaintMvea();
-			ArrangementGUI.scrollableArrangementActualTable.repaint();
+			context.repaintActualArrangement();
 		}
 	}
 
@@ -865,6 +879,10 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void setSec(Section sec) {
 		this.sec = sec;
+	}
+
+	public Context getContext() {
+		return context;
 	}
 
 	public boolean isSectionCustom() {

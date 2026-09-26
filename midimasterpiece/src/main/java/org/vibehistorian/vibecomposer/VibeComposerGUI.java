@@ -49,6 +49,7 @@ import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
+import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.sound.midi.*;
@@ -95,6 +96,74 @@ public class VibeComposerGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener, SoloMuter.Context {
 
 	private static final long serialVersionUID = -677536546851756969L;
+
+	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
+		@Override public List<InstPanel> getAffectedPanels(int instrument) {
+			return VibeComposerGUI.getAffectedPanels(instrument);
+		}
+		@Override public boolean canRegenerateOnChange() {
+			return VibeComposerGUI.canRegenerateOnChange();
+		}
+		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
+	};
+	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
+		@Override public InstPanel addInstPanel(int instrument, InstPart initialPart,
+				boolean recalculateArrangement) {
+			return VibeComposerGUI.this.addInstPanelToLayout(instrument, initialPart,
+					recalculateArrangement);
+		}
+		@Override public int getSelectedInstrumentIndex() {
+			return VibeComposerGUI.instrumentTabPane.getSelectedIndex();
+		}
+		@Override public List<? extends InstPanel> getInstList(int instrument) {
+			return VibeComposerGUI.getInstList(instrument);
+		}
+		@Override public List<InstPanel> getAffectedPanels(int instrument) {
+			return VibeComposerGUI.getAffectedPanels(instrument);
+		}
+		@Override public void removeInstPanel(int instrument, int panelOrder) {
+			VibeComposerGUI.removeInstPanel(instrument, panelOrder, true);
+			VibeComposerGUI.this.recalculateGeneratorAndTabCounts();
+		}
+		@Override public int getAbsoluteOrder(int instrument, int panelOrder) {
+			return VibeComposerGUI.getAbsoluteOrder(instrument, panelOrder);
+		}
+		@Override public void recalculateAfterCopy() {
+			VibeComposerGUI.this.recalculateTabPaneCounts();
+			VibeComposerGUI.this.recalculateGenerationCounts();
+			VibeComposerGUI.this.repaint();
+		}
+	};
+	private final MidiEditPopup.Context midiEditPopupContext = new MidiEditPopup.Context() {
+		@Override public Component getMainWindowComponent() { return VibeComposerGUI.this; }
+		@Override public List<InstPanel> getAffectedPanels(int instrument) {
+			return VibeComposerGUI.getAffectedPanels(instrument);
+		}
+		@Override public List<? extends InstPanel> getInstList(int instrument) {
+			return VibeComposerGUI.getInstList(instrument);
+		}
+		@Override public Pair<ScaleMode, Integer> getScaleKey(Section section) {
+			return VibeComposerGUI.keyChangeAt(
+					ArrangementGUI.actualArrangement.getSections().indexOf(section));
+		}
+		@Override public int getTranspose() { return ScoreGUI.transposeScore.getInt(); }
+		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
+		@Override public void playNote(int pitch, int durationMs, int velocity, int part,
+				int partOrder, Section section, boolean overrideLastPlayed) {
+			VibeComposerGUI.playNote(pitch, durationMs, velocity, part, partOrder, section,
+					overrideLastPlayed);
+		}
+		@Override public List<Double> getUserChordDurations() {
+			return VibeComposerGUI.getUserChordDurations();
+		}
+		@Override public void markArrangementManual() {
+			ArrangementGUI.manualArrangement.setSelected(true);
+			ArrangementGUI.manualArrangement.repaint();
+		}
+		@Override public void repaintActualArrangement() {
+			ArrangementGUI.scrollableArrangementActualTable.repaint();
+		}
+	};
 
 	private Synthesizer synth = null;
 	private boolean isSoundbankSynth = false;
@@ -321,6 +390,9 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public int getAbsoluteOrder(int instrument, int panelOrder) {
 				return VibeComposerGUI.getAbsoluteOrder(instrument, panelOrder);
 			}
+			@Override public MidiEditPopup.Context getMidiEditPopupContext() {
+				return midiEditPopupContext;
+			}
 			@Override public void trySliderStartChange(int sectionIndex) {
 				VibeComposerGUI.trySliderStartChange(sectionIndex);
 			}
@@ -359,6 +431,58 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public void savePauseInfo() {
 				VibeComposerGUI.savePauseInfo();
 			}
+			@Override public void openMidiEditor(int sectionOrder, int part, int panelOrder) {
+				Section section = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
+				currentMidiEditorPopup = new MidiEditPopup(midiEditPopupContext, section, part,
+						panelOrder);
+				currentMidiEditorPopup.setSec(section);
+				currentMidiEditorSectionIndex = sectionOrder;
+			}
+			@Override public void selectPanelFromScore(int part, int panelOrder, int sectionOrder) {
+				instrumentTabPane.setSelectedIndex(part);
+				if (ArrangementGUI.useArrangement.isSelected()) {
+					ArrangementGUI.arrSection.setSelectedIndex(sectionOrder + 1);
+					ArrangementGUI.arrSection.getButtons().forEach(button -> button.repaint());
+					ArrangementGUI.arrSection.repaint();
+					ArrangementGUI.switchTabPaneToScoreAfterApply = true;
+				}
+			}
+			@Override public void togglePanelMute(int part, int panelOrder) {
+				getPanelByOrder(part, panelOrder).getSoloMuter().toggleMute(true);
+			}
+			@Override public void togglePanelSolo(int part, int panelOrder) {
+				InstPanel panel = getPanelByOrder(part, panelOrder);
+				boolean unsoloAll = globalSoloMuter.soloState != State.OFF && isSingleSolo()
+						&& panel.getSoloMuter().soloState == State.FULL;
+				if (!unsoloAll) {
+					globalSoloMuter.toggleSolo(true);
+				}
+				panel.getSoloMuter().toggleSolo(true);
+			}
+			@Override public JComponent getInstrumentBoxForPanel(int part, int panelOrder) {
+				return getAffectedPanels(part).get(panelOrder - 1).getInstrumentBox();
+			}
+			@Override public int getInstrumentPanelCount(int instrument) {
+				return getInstList(instrument).size();
+			}
+			@Override public Set<Integer> getSoloMuterHighlightedTracks() {
+				Set<Integer> tracks = new HashSet<>();
+				if (ShowPanelBig.soloMuterHighlight == null
+						|| !ShowPanelBig.soloMuterHighlight.isSelected()) {
+					return tracks;
+				}
+				boolean checkMutes = globalSoloMuter.soloState == State.OFF;
+				for (int instrument = 0; instrument < 5; instrument++) {
+					for (InstPanel panel : getInstList(instrument)) {
+						if (checkMutes ? panel.getSoloMuter().muteState == State.OFF
+								: panel.getSoloMuter().soloState != State.OFF) {
+							tracks.add(panel.getSequenceTrack());
+						}
+					}
+				}
+				return tracks;
+			}
+			@Override public void repaintScore() { scoreGUI.repaintScoreDisplay(); }
 		});
 	}
 
@@ -1346,7 +1470,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 		sliderPanel.add(new JLabel("                                 "));
 
-		slider = new PlayheadRangeSlider(instrumentTabPane);
+		slider = scoreGUI.createPlayheadRangeSlider(instrumentTabPane);
 		slider.setMaximum(0);
 		//slider.setToolTipText("Test");
 		slider.setDisplayValues(false);
@@ -4888,6 +5012,8 @@ public static final String CURRENT_VERSION = "2.6";
 			boolean recalcArrangement) {
 		InstPanel ip = InstPanel.makeInstPanel(part, this);
 		configureRandomizeAction(ip);
+		configureInstPanelContext(ip);
+		configureInstrumentControlContext(ip);
 		List<InstPanel> affectedPanels = getAffectedPanels(part);
 		int panelOrder = (affectedPanels.size() > 0) ? getValidPanelNumber(affectedPanels) : 1;
 
@@ -4927,6 +5053,14 @@ public static final String CURRENT_VERSION = "2.6";
 
 	public void configureRandomizeAction(InstPanel panel) {
 		panel.setRandomizeAction(this::randomizePart);
+	}
+
+	public void configureInstrumentControlContext(InstPanel panel) {
+		panel.setInstrumentControlContext(instrumentControlContext);
+	}
+
+	public void configureInstPanelContext(InstPanel panel) {
+		panel.setContext(instPanelContext);
 	}
 
 	private void randomizePart(InstPanel panel) {

@@ -24,7 +24,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 /**
  * UI delegate for the RangeSlider component. RangeSliderUI paints two thumbs,
@@ -48,6 +47,7 @@ class RangeSliderUI extends BasicSliderUI {
 	private boolean middleMousePressed = false;
 	private int oldLowerValue = Integer.MIN_VALUE;
 	private int oldUpperValue = Integer.MIN_VALUE;
+	private InstrumentControlContext instrumentControlContext;
 
 	/**
 	 * Constructs a RangeSliderUI for the specified slider component.
@@ -56,6 +56,10 @@ class RangeSliderUI extends BasicSliderUI {
 	 */
 	public RangeSliderUI(RangeSlider b) {
 		super(b);
+	}
+
+	public void setInstrumentControlContext(InstrumentControlContext instrumentControlContext) {
+		this.instrumentControlContext = instrumentControlContext;
 	}
 
 	/**
@@ -718,8 +722,9 @@ class RangeSliderUI extends BasicSliderUI {
 			super.mouseReleased(e);
 			if (rangeSlider.isEnabled()) {
 				if (!(rangeSlider instanceof PlayheadRangeSlider)
-						&& VibeComposerGUI.canRegenerateOnChange()) {
-					VibeComposerGUI.vibeComposerGUI.regenerate();
+						&& instrumentControlContext != null
+						&& instrumentControlContext.canRegenerateOnChange()) {
+					instrumentControlContext.regenerate();
 				} else if (rangeSlider instanceof PlayheadRangeSlider) {
 					PlaybackState.currentTime.setText(
 							OMNI.millisecondsToTimeString(rangeSlider.getUpperValue()));

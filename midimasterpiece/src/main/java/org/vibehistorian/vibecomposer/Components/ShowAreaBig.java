@@ -28,11 +28,7 @@ see <https://www.gnu.org/licenses/>.
  */
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.SoloMuteState;
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.PlaybackState;
-
-import org.vibehistorian.vibecomposer.ArrangementGUI;
 
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
@@ -45,11 +41,7 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +49,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Set;
 
 //--------------
@@ -115,7 +106,7 @@ public class ShowAreaBig extends JComponent {
 		super();
 		this.sp = sp;
 		//width and height of score notation area
-		this.setSize(ShowPanelBig.beatWidthBase, areaHeight);
+		this.setSize(sp.getBeatWidthBase(), areaHeight);
 
 		/*for (int i = 0; i < maxColours; i++) {
 			theColours[i][0] = (float) (Math.random() / maxColours / 2)
@@ -146,7 +137,7 @@ public class ShowAreaBig extends JComponent {
 
 				Enumeration<?> enum1 = sp.score.getPartList().elements();
 				double beatWidth = sp.beatWidth;
-				Set<Integer> soloMuterHighlightedTracks = getSoloMuterHighlightedTracks();
+				Set<Integer> soloMuterHighlightedTracks = sp.getSoloMuterHighlightedTracks();
 
 				while (enum1.hasMoreElements()) {
 					PartExt part = (PartExt) enum1.nextElement();
@@ -188,10 +179,10 @@ public class ShowAreaBig extends JComponent {
 							if ((currNote <= 127) && (currNote >= 0)) {
 								int y = getNotePosY(currNote);
 
-								double durationTrimmer = ShowPanelBig.trimNoteLengthBox
-										.getSelectedIndex() > 0
-												? noteTrimValues[ShowPanelBig.trimNoteLengthBox
-														.getSelectedIndex() - 1]
+								double durationTrimmer = sp.getTrimNoteLengthBox()
+									.getSelectedIndex() > 0
+										? noteTrimValues[sp.getTrimNoteLengthBox()
+												.getSelectedIndex() - 1]
 												: 1000;
 
 
@@ -214,29 +205,17 @@ public class ShowAreaBig extends JComponent {
 									if (leftMouseOpenPopup) {
 										consumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
-										ApplicationSessionState.currentMidiEditorPopup = new MidiEditPopup(
-												ArrangementGUI.actualArrangement.getSections()
-														.get(phrase.secOrder),
-												phrase.part, phrase.partOrder);
-										ApplicationSessionState.currentMidiEditorPopup
-												.setSec(ArrangementGUI.actualArrangement
-														.getSections().get(phrase.secOrder));
-										ApplicationSessionState.currentMidiEditorSectionIndex = phrase.secOrder;
+										sp.openMidiEditor(phrase.secOrder, phrase.part, phrase.partOrder);
 										return;
 									} else if (rightMouseOpenSectionTab) {
 										if (!consumed) {
 											consumed = true;
 											LG.i("Opening inst. tab for section#: " + (phrase.secOrder + 1));
 											SwingUtilities.invokeLater(() -> {
-												VibeComposerGUI.instrumentTabPane.setSelectedIndex(phrase.part);
-												// assume user wants to change Global settings
-												if (ArrangementGUI.useArrangement.isSelected()) {
-													ArrangementGUI.arrSection.setSelectedIndex(phrase.secOrder + 1);
-													ArrangementGUI.arrSection.getButtons().forEach(e -> e.repaint());
-													ArrangementGUI.arrSection.repaint();
-													ArrangementGUI.switchTabPaneToScoreAfterApply = true;
-												}
-												JComponent toFlash = VibeComposerGUI.getAffectedPanels(phrase.part).get(phrase.partOrder - 1).getInstrumentBox();
+												sp.selectPanelFromScore(phrase.part, phrase.partOrder,
+														phrase.secOrder);
+												JComponent toFlash = sp.getInstrumentBoxForPanel(phrase.part,
+													phrase.partOrder);
 												Timer tmr = new Timer(200, e -> SwingUtils.flashComponentCustom(toFlash,
 														(f, state) -> {
 															f.setOpaque(state);
@@ -250,25 +229,9 @@ public class ShowAreaBig extends JComponent {
 									} else {
 										if (evt.isShiftDown()) {
 											// mute, instead of solo
-											VibeComposerGUI
-													.getPanelByOrder(phrase.part, phrase.partOrder)
-													.getSoloMuter().toggleMute(true);
+											sp.togglePanelMute(phrase.part, phrase.partOrder);
 										} else {
-											boolean unsoloAll = false;
-											if (SoloMuteState.globalSoloMuter.soloState != State.OFF) {
-												unsoloAll = VibeComposerGUI.isSingleSolo()
-														&& (VibeComposerGUI
-																.getPanelByOrder(phrase.part,
-																		phrase.partOrder)
-																.getSoloMuter().soloState == State.FULL);
-											}
-											if (!unsoloAll) {
-												SoloMuteState.globalSoloMuter.toggleSolo(true);
-											}
-
-											VibeComposerGUI
-													.getPanelByOrder(phrase.part, phrase.partOrder)
-													.getSoloMuter().toggleSolo(true);
+											sp.togglePanelSolo(phrase.part, phrase.partOrder);
 										}
 
 										return;
@@ -293,7 +256,7 @@ public class ShowAreaBig extends JComponent {
 		noteOffset = new int[] { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 				noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 				noteHeight * 6 };
-		this.setSize(new Dimension(ShowPanelBig.beatWidthBase, areaHeight));
+		this.setSize(new Dimension(sp.getBeatWidthBase(), areaHeight));
 		//sp.updatePanelHeight();
 	}
 
@@ -326,12 +289,12 @@ public class ShowAreaBig extends JComponent {
 
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
+		return new Dimension(sp.getBeatWidthBase(), areaHeight);
 	}
 
 	@Override
 	public Dimension getMinimumSize() {
-		return new Dimension(ShowPanelBig.beatWidthBase, areaHeight);
+		return new Dimension(sp.getBeatWidthBase(), areaHeight);
 	}
 
 	/**
@@ -367,7 +330,7 @@ public class ShowAreaBig extends JComponent {
 		// e above middle C is at 255
 		//treble
 		double beatWidth = sp.beatWidth;
-		int maxWidth = (int) Math.round((ShowPanelBig.maxEndTime + noteOffsetXMargin) * beatWidth);
+		int maxWidth = (int) Math.round((sp.getMaxEndTime() + noteOffsetXMargin) * beatWidth);
 		g.drawLine(0, (e), maxWidth, (e));
 		g.drawLine(0, (e - w), maxWidth, (e - w));
 		g.drawLine(0, (e - w * 2), maxWidth, (e - w * 2));
@@ -419,7 +382,7 @@ public class ShowAreaBig extends JComponent {
 			g.drawLine(k, (e + w * 18), k + 1, (e + w * 18));
 		}
 
-		double maxX = (ShowPanelBig.maxEndTime) * beatWidth;
+		double maxX = sp.getMaxEndTime() * beatWidth;
 		int minX = -1;
 
 		double highlightX = (PlaybackState.slider != null
@@ -433,7 +396,7 @@ public class ShowAreaBig extends JComponent {
 										.get(PlaybackState.sliderMeasureStartTimes.size() - 1))
 				: -1;
 
-		Set<Integer> soloMuterHighlightedTracks = getSoloMuterHighlightedTracks();
+				Set<Integer> soloMuterHighlightedTracks = sp.getSoloMuterHighlightedTracks();
 
 		//g.drawLine(viewPoint.x + 4, 0, viewPoint.x + 4, areaHeight);
 
@@ -469,7 +432,7 @@ public class ShowAreaBig extends JComponent {
 						: Color.red;
 				double percentageMix = samePrevColorCounter
 						/ (double) Math.max(samePrevColorCounter,
-								VibeComposerGUI.getInstList(noteColorIndex).size());
+								sp.getInstrumentPanelCount(noteColorIndex));
 
 				noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix / 1.5);
 			}
@@ -511,10 +474,10 @@ public class ShowAreaBig extends JComponent {
 					if ((currNote <= 127) && (currNote >= 0)) {
 						int y = getNotePosY(currNote);
 
-						double durationTrimmer = ShowPanelBig.trimNoteLengthBox
+						double durationTrimmer = sp.getTrimNoteLengthBox()
 								.getSelectedIndex() > 0
-										? noteTrimValues[ShowPanelBig.trimNoteLengthBox
-												.getSelectedIndex() - 1]
+									? noteTrimValues[sp.getTrimNoteLengthBox()
+											.getSelectedIndex() - 1]
 										: 1000;
 
 
@@ -608,15 +571,15 @@ public class ShowAreaBig extends JComponent {
 			g.drawString(noteDescription, mousePoint.x + 10, mousePoint.y - 10);
 		}
 
-		Point viewPoint = ShowPanelBig.areaScrollPane.getViewport().getViewPosition();
+		Point viewPoint = sp.getAreaScrollPane().getViewport().getViewPosition();
 		g.setColor(OMNI.alphen(UITheme.uiColor(), UITheme.isDarkMode ? 120 : 140));
 		if (mousePoint != null) {
 			if (minX >= 0) {
 				Point mouseLoc = SwingUtils.getMouseLocation();
-				if (OMNI.mouseInComp(ShowPanelBig.areaScrollPane, mouseLoc)) {
+				if (OMNI.mouseInComp(sp.getAreaScrollPane(), mouseLoc)) {
 					Double placeInScore = sp.getSequencePosFromMousePos(mouseLoc);
 					g.drawLine(mouseLoc.x, 0, mouseLoc.x, areaHeight);
-					if (ShowPanelBig.scoreBox.getSelectedIndex() == 0 && placeInScore != null) {
+					if (sp.getScoreBox().getSelectedIndex() == 0 && placeInScore != null) {
 						int timePos = (int) (placeInScore * PlaybackState.slider.getMaximum());
 						// TODO: buggy scrollpane dimension - extra 35px set when switching Big mode back
 						int scrollPaneDim = UITheme.scrollPaneDimension.height < 500 ? 400 : 600;
@@ -629,7 +592,7 @@ public class ShowAreaBig extends JComponent {
 		}
 
 		if (noteHeight > 7) {
-			Point viewPointH = ShowPanelBig.horizontalPane.getViewport().getViewPosition();
+			Point viewPointH = sp.getHorizontalPane().getViewport().getViewPosition();
 			float usedFontHeight = Math.min(15, Float.valueOf(noteHeight * 9 / 10));
 			g.setFont(font.deriveFont(Font.BOLD, usedFontHeight));
 
@@ -642,29 +605,6 @@ public class ShowAreaBig extends JComponent {
 			}
 		}
 
-	}
-
-	private static Set<Integer> getSoloMuterHighlightedTracks() {
-		Set<Integer> soloMuterHighlightedTracks = new HashSet<>();
-		if (ShowPanelBig.soloMuterHighlight != null
-				&& ShowPanelBig.soloMuterHighlight.isSelected()) {
-			boolean checkMutes = SoloMuteState.globalSoloMuter.soloState == State.OFF;
-			for (int i = 0; i < 5; i++) {
-				for (InstPanel ip : VibeComposerGUI.getInstList(i)) {
-					if (checkMutes) {
-						if (ip.getSoloMuter().muteState == State.OFF) {
-							soloMuterHighlightedTracks.add(ip.getSequenceTrack());
-						}
-					} else {
-						if (ip.getSoloMuter().soloState != State.OFF) {
-							soloMuterHighlightedTracks.add(ip.getSequenceTrack());
-						}
-					}
-
-				}
-			}
-		}
-		return soloMuterHighlightedTracks;
 	}
 
 	private int getNotePosY(int currNote) {

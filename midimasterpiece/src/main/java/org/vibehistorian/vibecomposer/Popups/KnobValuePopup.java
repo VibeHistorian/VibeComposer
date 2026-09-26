@@ -7,7 +7,7 @@ import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -20,10 +20,13 @@ public class KnobValuePopup extends CloseablePopup {
 	private boolean stretchAfterCustomInput = false;
 	private Integer customInput = null;
 	private boolean regenerating = true;
+	private final InstrumentControlContext instrumentControlContext;
 
-	public KnobValuePopup(JKnob knob, boolean stretch, boolean allowValuesOutsideRange) {
+	public KnobValuePopup(JKnob knob, boolean stretch, boolean allowValuesOutsideRange,
+			InstrumentControlContext instrumentControlContext) {
 		super("Knob Value Setting", 0);
 		this.knob = knob;
+		this.instrumentControlContext = instrumentControlContext;
 		stretchAfterCustomInput = stretch;
 
 		numPanel = new NumPanel("Knob", knob.updateAndGetValue(), knob.getMin(), knob.getMax());
@@ -87,8 +90,9 @@ public class KnobValuePopup extends CloseablePopup {
 							knob.repaint();
 						}
 
-						if (VibeComposerGUI.canRegenerateOnChange() && regenerating) {
-							VibeComposerGUI.vibeComposerGUI.regenerate();
+						if (instrumentControlContext != null
+								&& instrumentControlContext.canRegenerateOnChange() && regenerating) {
+							instrumentControlContext.regenerate();
 						}
 
 					}

@@ -6,7 +6,6 @@ import org.vibehistorian.vibecomposer.Helpers.BoundsPopupMenuListener;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,6 +17,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -34,6 +34,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 	protected boolean hasPrototypeSet = false;
 	protected boolean requiresSettingPrototype = true;
 	private Consumer<? super Object> func = null;
+	private InstrumentControlContext instrumentControlContext;
 	public static ScrollComboPanel<?> lastTouchedBox = null;
 	protected LockComponentButton lockButt = null;
 	protected FireableComboBox<T> scb = null;
@@ -234,7 +235,7 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 			userInteracting = false;
 			InstPanel parentIp = SwingUtils.getInstParent(this);
 			if (parentIp != null) {
-				VibeComposerGUI.getAffectedPanels(parentIp.getPartNum()).forEach(ip -> ip
+				getAffectedPanels(parentIp).forEach(ip -> ip
 						.findScrollComboBoxesByFirstVal(getItemAt(0)).forEach(e -> e.setVal(item)));
 			}
 		}
@@ -250,9 +251,10 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		if (func != null) {
 			func.accept(new Object());
 		}
-		if (isEnabled() && regenerating && interacting && VibeComposerGUI.canRegenerateOnChange()
+		if (isEnabled() && regenerating && interacting && instrumentControlContext != null
+				&& instrumentControlContext.canRegenerateOnChange()
 				&& isDifferent) {
-			VibeComposerGUI.vibeComposerGUI.regenerate();
+			instrumentControlContext.regenerate();
 		}
 		discardInteraction();
 	}
@@ -334,6 +336,10 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 		this.func = func;
 	}
 
+	public void setInstrumentControlContext(InstrumentControlContext instrumentControlContext) {
+		this.instrumentControlContext = instrumentControlContext;
+	}
+
 	public void removeFunc() {
 		func = null;
 	}
@@ -354,6 +360,11 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 
 	public void removeAllItems() {
 		scb.removeAllItems();
+	}
+
+	private List<InstPanel> getAffectedPanels(InstPanel instParent) {
+		return instrumentControlContext == null ? Collections.<InstPanel>emptyList()
+				: instrumentControlContext.getAffectedPanels(instParent.getPartNum());
 	}
 
 	public void addItemListener(ItemListener itemListener) {

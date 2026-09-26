@@ -30,6 +30,7 @@ public class RangeSlider extends JSlider {
 	private List<Integer> customMajorTicks = null;
 	private List<Integer> customMinorTicks = null;
 	private boolean draggableRange = true;
+	private InstrumentControlContext instrumentControlContext;
 
 
 	/**
@@ -64,10 +65,19 @@ public class RangeSlider extends JSlider {
 	 */
 	@Override
 	public void updateUI() {
-		setUI(new RangeSliderUI(this));
+		RangeSliderUI rangeSliderUI = new RangeSliderUI(this);
+		rangeSliderUI.setInstrumentControlContext(instrumentControlContext);
+		setUI(rangeSliderUI);
 		// Update UI for slider labels.  This must be called after updating the
 		// UI of the slider.  Refer to JSlider.updateUI().
 		updateLabelUIs();
+	}
+
+	public void setInstrumentControlContext(InstrumentControlContext instrumentControlContext) {
+		this.instrumentControlContext = instrumentControlContext;
+		if (getUI() instanceof RangeSliderUI) {
+			((RangeSliderUI) getUI()).setInstrumentControlContext(instrumentControlContext);
+		}
 	}
 
 	/**

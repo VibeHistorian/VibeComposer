@@ -2,17 +2,21 @@ package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.PlaybackState;
 
-import org.vibehistorian.vibecomposer.ScoreGUI;
-
 import javax.swing.JTabbedPane;
+import java.util.function.BooleanSupplier;
 
 public class PlayheadRangeSlider extends RangeSlider {
 
 	private static final long serialVersionUID = -8846762395904588112L;
 	private final JTabbedPane instrumentTabPane;
+	private final Runnable repaintScore;
+	private final BooleanSupplier highlightScoreNotes;
 
-	public PlayheadRangeSlider(JTabbedPane instrumentTabPane) {
+	public PlayheadRangeSlider(JTabbedPane instrumentTabPane, Runnable repaintScore,
+			BooleanSupplier highlightScoreNotes) {
 		this.instrumentTabPane = instrumentTabPane;
+		this.repaintScore = repaintScore;
+		this.highlightScoreNotes = highlightScoreNotes;
 	}
 
 	@Override
@@ -21,9 +25,7 @@ public class PlayheadRangeSlider extends RangeSlider {
 		PlaybackState.isDragging = upperDragging;
 		if (instrumentTabPane.getTabCount() < 8
 				|| instrumentTabPane.getSelectedIndex() == 7) {
-			if (ScoreGUI.scorePanel != null) {
-				ScoreGUI.scorePanel.repaintMinimum();
-			}
+			repaintScore.run();
 		}
 
 	}
@@ -37,8 +39,8 @@ public class PlayheadRangeSlider extends RangeSlider {
 		super.setUpperValue(value);
 		if ((instrumentTabPane.getTabCount() < 8
 				|| instrumentTabPane.getSelectedIndex() == 7)
-				&& ScoreGUI.highlightScoreNotes.isSelected()) {
-			ScoreGUI.scorePanel.repaintMinimum();
+				&& highlightScoreNotes.getAsBoolean()) {
+			repaintScore.run();
 		}
 	}
 }

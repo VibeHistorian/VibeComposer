@@ -1,30 +1,27 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.UITheme;
-
-import org.vibehistorian.vibecomposer.ScoreGUI;
-
 import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.Component;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.Point;
 
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
 import javax.swing.JTabbedPane;
 
-import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
-
 public class ShowScorePopup extends CloseablePopup {
+	private final JScrollPane scoreScrollPane;
 	private final JTabbedPane instrumentTabPane;
+	private final Runnable onClose;
 
 	public ShowScorePopup(JScrollPane scoreScrollPane, JTabbedPane instrumentTabPane,
-			Component parentComponent) {
+			Component parentComponent, boolean miniScore, Runnable onClose) {
 		super("MIDI Score", 12, new Point(-400, -500), parentComponent);
+		this.scoreScrollPane = scoreScrollPane;
 		this.instrumentTabPane = instrumentTabPane;
+		this.onClose = onClose;
 		frame.add(scoreScrollPane);
-		if (ScoreGUI.miniScorePopup.isSelected()) {
+		if (miniScore) {
 			frame.setPreferredSize(new Dimension(650, 325));
 			frame.setMaximumSize(new Dimension(650, 325));
 			frame.setResizable(true);
@@ -46,25 +43,11 @@ public class ShowScorePopup extends CloseablePopup {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				if (frame.isVisible()) {
-					frame.remove(ScoreGUI.scoreScrollPane);
-					instrumentTabPane.add(ScoreGUI.scoreScrollPane, 7);
+					frame.remove(scoreScrollPane);
+					instrumentTabPane.add(scoreScrollPane, 7);
 					instrumentTabPane.setTitleAt(7, " Score ");
 					currentPopupMap.remove(12);
-					//if (ScoreGUI.miniScorePopup.isSelected()) {
-					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesBig;
-					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
-							.get(ShowPanelBig.beatWidthBaseIndex);
-					ScoreGUI.scorePanel
-							.updatePanelHeight(UITheme.scrollPaneDimension.height);
-					ScoreGUI.scorePanel.getShowArea().setNoteHeight(7);
-					ScoreGUI.scorePanel.setScore();
-					ScoreGUI.scoreScrollPane.repaint();
-					ScoreGUI.scorePopup = null;
-					SwingUtilities.invokeLater(() -> {
-						ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 300), 0.0,
-								(7 / 5.0) - 1.0);
-					});
-					//}
+					onClose.run();
 					frame.dispose();
 				}
 			}

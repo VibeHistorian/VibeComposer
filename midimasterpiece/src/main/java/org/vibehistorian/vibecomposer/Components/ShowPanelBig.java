@@ -31,7 +31,6 @@ package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.PlaybackState;
 
-import org.vibehistorian.vibecomposer.ScoreGUI;
 import org.vibehistorian.vibecomposer.UITheme;
 
 import jm.music.data.Part;
@@ -58,11 +57,20 @@ import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class ShowPanelBig extends JPanel {
 	public interface PlaybackActions {
 		void setSliderEnd(int value);
 		void savePauseInfo();
+		void openMidiEditor(int sectionOrder, int part, int panelOrder);
+		void selectPanelFromScore(int part, int panelOrder, int sectionOrder);
+		void togglePanelMute(int part, int panelOrder);
+		void togglePanelSolo(int part, int panelOrder);
+		JComponent getInstrumentBoxForPanel(int part, int panelOrder);
+		int getInstrumentPanelCount(int instrument);
+		Set<Integer> getSoloMuterHighlightedTracks();
+		void repaintScore();
 	}
 
 	private static final long serialVersionUID = 1464206032589622048L;
@@ -334,7 +342,7 @@ public class ShowPanelBig extends JPanel {
 		sa.setNoteHeight(ShowAreaBig.noteHeight + 2);
 		setScore();
 		double changeY = ShowAreaBig.noteHeight / originalHeight;
-		ScoreGUI.scoreScrollPane.repaint();
+		playbackActions.repaintScore();
 
 		SwingUtilities.invokeLater(() -> {
 			zoomIn(areaScrollPane, new Point(0, 300), 0.0, changeY - 1.0);
@@ -368,6 +376,34 @@ public class ShowPanelBig extends JPanel {
 		return percentage;
 	}
 
+	public void openMidiEditor(int sectionOrder, int part, int panelOrder) {
+		playbackActions.openMidiEditor(sectionOrder, part, panelOrder);
+	}
+
+	public void selectPanelFromScore(int part, int panelOrder, int sectionOrder) {
+		playbackActions.selectPanelFromScore(part, panelOrder, sectionOrder);
+	}
+
+	public void togglePanelMute(int part, int panelOrder) {
+		playbackActions.togglePanelMute(part, panelOrder);
+	}
+
+	public void togglePanelSolo(int part, int panelOrder) {
+		playbackActions.togglePanelSolo(part, panelOrder);
+	}
+
+	public JComponent getInstrumentBoxForPanel(int part, int panelOrder) {
+		return playbackActions.getInstrumentBoxForPanel(part, panelOrder);
+	}
+
+	public int getInstrumentPanelCount(int instrument) {
+		return playbackActions.getInstrumentPanelCount(instrument);
+	}
+
+	public Set<Integer> getSoloMuterHighlightedTracks() {
+		return playbackActions.getSoloMuterHighlightedTracks();
+	}
+
 	public void setupMouseWheelListener() {
 		if (areaScrollPane.getMouseListeners() != null) {
 			for (MouseWheelListener mwl : areaScrollPane.getMouseWheelListeners()) {
@@ -388,7 +424,7 @@ public class ShowPanelBig extends JPanel {
 							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
 					double changeY = ShowAreaBig.noteHeight / originalHeight;
-					ScoreGUI.scoreScrollPane.repaint();
+					playbackActions.repaintScore();
 
 					if (e.getWheelRotation() > 0) {
 						zoomIn(areaScrollPane, e.getPoint(), 0.0, changeY - 1.0);
@@ -400,8 +436,6 @@ public class ShowPanelBig extends JPanel {
 
 
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
-					/*SwingUtils.setScrolledPosition(ScoreGUI.scoreScrollPane, true,
-							positionPercentage);*/
 				} else if (e.isControlDown()) {
 					double originalWidth = Math.round(
 							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
@@ -416,7 +450,7 @@ public class ShowPanelBig extends JPanel {
 					double changeX = Math.round(
 							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth)
 							/ originalWidth;
-					ScoreGUI.scoreScrollPane.repaint();
+					playbackActions.repaintScore();
 
 					if (e.getWheelRotation() > 0) {
 						zoomIn(horizontalPane, horPanePoint, changeX - 1.0, 0.0);
@@ -427,8 +461,6 @@ public class ShowPanelBig extends JPanel {
 					}
 
 
-					/*SwingUtils.setScrolledPosition(ScoreGUI.scoreScrollPane, true,
-							positionPercentage);*/
 				} else {
 					if (e.isShiftDown()) {
 						// Horizontal scrolling
@@ -440,7 +472,7 @@ public class ShowPanelBig extends JPanel {
 						Adjustable adj = areaScrollPane.getVerticalScrollBar();
 						int scroll = e.getUnitsToScroll() * adj.getBlockIncrement();
 						adj.setValue(adj.getValue() + scroll);
-						ScoreGUI.scoreScrollPane.repaint();
+						playbackActions.repaintScore();
 					}
 				}
 			}
@@ -528,6 +560,13 @@ public class ShowPanelBig extends JPanel {
 	public ShowAreaBig getShowArea() {
 		return sa;
 	}
+
+	public int getBeatWidthBase() { return beatWidthBase; }
+	public double getMaxEndTime() { return maxEndTime; }
+	public ScrollComboBox<String> getTrimNoteLengthBox() { return trimNoteLengthBox; }
+	public JScrollPane getAreaScrollPane() { return areaScrollPane; }
+	public JScrollPane getHorizontalPane() { return horizontalPane; }
+	public ScrollComboBox2<Integer> getScoreBox() { return scoreBox; }
 
 	public void update() {
 		int sizeX = (int) Math

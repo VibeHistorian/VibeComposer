@@ -26,11 +26,13 @@ import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.InstComboBox;
+import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.Components.MidiMVI;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.RangeSlider;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox2;
 import org.vibehistorian.vibecomposer.Components.ScrollComboPanel;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Constants;
@@ -44,7 +46,6 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -64,6 +65,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class InstPanel extends JPanel {
+
+	public interface Context {
+		InstPanel addInstPanel(int instrument, InstPart initialPart, boolean recalculateArrangement);
+		int getSelectedInstrumentIndex();
+		List<? extends InstPanel> getInstList(int instrument);
+		List<InstPanel> getAffectedPanels(int instrument);
+		void removeInstPanel(int instrument, int panelOrder);
+		int getAbsoluteOrder(int instrument, int panelOrder);
+		void recalculateAfterCopy();
+	}
 
 	private static final long serialVersionUID = 4381939543337887617L;
 	public static final int TARGET_RHYTHM_DENSITY = 8;
@@ -127,6 +138,8 @@ public abstract class InstPanel extends JPanel {
 	protected JButton copyButton = new JButton("Cc");
 	protected JButton randomizeButton = new JButton("?");
 	private Consumer<InstPanel> randomizeAction = panel -> {};
+	private Context context;
+	private InstrumentControlContext instrumentControlContext;
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 
@@ -224,13 +237,16 @@ public abstract class InstPanel extends JPanel {
 					return;
 				}
 				InstPart part = toInstPart(GenerationGUI.lastRandomSeed);
-				InstPanel newPanel = VibeComposerGUI.vibeComposerGUI.addInstPanelToLayout(
-						VibeComposerGUI.instrumentTabPane.getSelectedIndex(), part, true);
+				if (context == null) {
+					return;
+				}
+				int selectedInstrument = context.getSelectedInstrumentIndex();
+				InstPanel newPanel = context.addInstPanel(selectedInstrument, part, true);
 				newPanel.setPatternSeed(getPatternSeed());
 
 				// for MMB, intention is to split into 2 to modify the 2 pattern halves separately, but typically for one instrument
 				if (!ExtraSettingsGUI.reuseMidiChannelAfterCopy.isSelected() && !SwingUtilities.isMiddleMouseButton(e)) {
-					switch (VibeComposerGUI.instrumentTabPane.getSelectedIndex()) {
+					switch (selectedInstrument) {
 					case 0:
 						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(3);
@@ -253,9 +269,7 @@ public abstract class InstPanel extends JPanel {
 					newPanel.setChordSpanFill(ChordSpanFill.HALF2);
 				}
 
-				VibeComposerGUI.vibeComposerGUI.recalculateTabPaneCounts();
-				VibeComposerGUI.vibeComposerGUI.recalculateGenerationCounts();
-				VibeComposerGUI.vibeComposerGUI.repaint();
+				context.recalculateAfterCopy();
 			}
 
 		});
@@ -303,7 +317,8 @@ public abstract class InstPanel extends JPanel {
 	public void setNextFreeMidiChannel() {
 		int part = this.getPartNum();
 		int order = this.getPanelOrder();
-		List<InstPanel> instPanels = (List<InstPanel>) VibeComposerGUI.getInstList(part);
+		List<? extends InstPanel> instPanels = context == null
+				? Collections.<InstPanel>emptyList() : context.getInstList(part);
 		List<Integer> typicalChannels = Constants.TYPICAL_MIDI_CH.get(part);
 		Set<Integer> usedChannels = instPanels.stream().filter(e -> !this.equals(e)).map(e -> e.getMidiChannel()).collect(Collectors.toSet());
 
@@ -341,8 +356,9 @@ public abstract class InstPanel extends JPanel {
 
 	public void addDefaultPanelButtons() {
 		removeButton.addActionListener(e -> {
-			VibeComposerGUI.removeInstPanel(getPartNum(), getPanelOrder(), true);
-			VibeComposerGUI.vibeComposerGUI.recalculateGeneratorAndTabCounts();
+			if (context != null) {
+				context.removeInstPanel(getPartNum(), getPanelOrder());
+			}
 		});
 		this.add(removeButton);
 		this.add(copyButton);
@@ -351,6 +367,40 @@ public abstract class InstPanel extends JPanel {
 
 	public void setRandomizeAction(Consumer<InstPanel> randomizeAction) {
 		this.randomizeAction = randomizeAction == null ? panel -> {} : randomizeAction;
+	}
+
+	public void setInstrumentControlContext(InstrumentControlContext context) {
+		this.instrumentControlContext = context;
+		if (comboPanel != null) {
+			comboPanel.setInstrumentControlContext(context);
+		}
+		applyInstrumentControlContext(this, context);
+	}
+
+	public InstrumentControlContext getInstrumentControlContext() {
+		return instrumentControlContext;
+	}
+
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
+	private static void applyInstrumentControlContext(Container container,
+			InstrumentControlContext context) {
+		for (Component component : container.getComponents()) {
+			if (component instanceof JKnob) {
+				((JKnob) component).setInstrumentControlContext(context);
+			} else if (component instanceof RangeSlider) {
+				((RangeSlider) component).setInstrumentControlContext(context);
+			} else if (component instanceof ScrollComboBox2) {
+				((ScrollComboBox2<?>) component).setInstrumentControlContext(context);
+			} else if (component instanceof ScrollComboPanel) {
+				((ScrollComboPanel<?>) component).setInstrumentControlContext(context);
+			}
+			if (component instanceof Container) {
+				applyInstrumentControlContext((Container) component, context);
+			}
+		}
 	}
 
 	public void addBackgroundsForKnobs() {
@@ -732,7 +782,8 @@ public abstract class InstPanel extends JPanel {
 	public abstract InstPart toInstPart(int lastRandomSeed);
 
 	public VisualPatternPanel makeVisualPatternPanel() {
-		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, this);
+		return new VisualPatternPanel(hitsPerPattern, pattern, patternShift, chordSpan, this,
+				instrumentControlContext);
 	}
 
 	public VisualPatternPanel getComboPanel() {
@@ -834,7 +885,8 @@ public abstract class InstPanel extends JPanel {
 	}
 
 	public int getAbsoluteOrder() {
-		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getPanelOrder());
+		return context == null ? getPanelOrder()
+				: context.getAbsoluteOrder(getPartNum(), getPanelOrder());
 	}
 
 	public int getFeedbackCount() {
@@ -1076,7 +1128,8 @@ public abstract class InstPanel extends JPanel {
 			LG.i("Found no component for global setting!");
 			return new ArrayList<>();
 		}
-		List<T> components = VibeComposerGUI.getAffectedPanels(getPartNum()).stream()
+		List<T> components = (context == null ? Collections.<InstPanel>emptyList()
+				: context.getAffectedPanels(getPartNum())).stream()
 				.map(e -> e.getComponentByClassIndex(clazz, indexInPanel))
 				.collect(Collectors.toList());
 		return components;
