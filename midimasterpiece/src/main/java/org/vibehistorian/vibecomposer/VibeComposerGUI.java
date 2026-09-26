@@ -63,10 +63,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -95,6 +93,7 @@ public class VibeComposerGUI extends JFrame
 
 	private static final long serialVersionUID = -677536546851756969L;
 
+	private final MidiDeviceController midiDeviceController;
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
 		@Override public List<InstPanel> getAffectedPanels(int instrument) {
 			return VibeComposerGUI.getAffectedPanels(instrument);
@@ -267,10 +266,6 @@ public class VibeComposerGUI extends JFrame
 		}
 	};
 
-	private Synthesizer synth = null;
-	private boolean isSoundbankSynth = false;
-	private boolean needSoundbankRefresh = false;
-
 	// instrument panels added into scrollpanes
 
 	public static List<InstPanel> getAffectedPanels(int inst) {
@@ -350,7 +345,6 @@ public class VibeComposerGUI extends JFrame
 // seed / midi
 
 	JList<File> generatedMidi;
-	MidiDevice device = null;
 
 CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
@@ -433,13 +427,28 @@ public static final String CURRENT_VERSION = "2.6";
 			@Override public int currentBpm() { return mainBpm.getInt(); }
 			@Override public boolean hasGeneratedChordData() { return !MidiGenerator.chordInts.isEmpty(); }
 		});
+		midiDeviceController = new MidiDeviceController(new MidiDeviceController.Context() {
+			@Override public boolean isTransmitterMode() { return midiMode.isSelected(); }
+			@Override public String getSelectedDeviceName() { return midiModeDevices.getVal(); }
+			@Override public File getSoundbankFile() {
+				return new File((String) ExtraSettingsGUI.soundbankFilename.getEditor().getItem());
+			}
+			@Override public void stopPlayback() { playbackController.stopMidi(); }
+			@Override public void showSequenceReadError() {
+				new TemporaryInfoPopup(
+						"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
+						null);
+			}
+		});
 	}
 
 	private void initExtraSettingsGUI() {
 		extraSettingsGUI = new ExtraSettingsGUI(new ExtraSettingsGUI.Context() {
 			@Override public void initializeInstrumentPools() { VibeComposerGUI.this.initializeInstrumentPools(); }
 			@Override public void initHelperPopups(JPanel settingsPanel) { VibeComposerGUI.this.initHelperPopups(settingsPanel); }
-			@Override public void markSoundbankRefreshNeeded() { needSoundbankRefresh = true; }
+			@Override public void markSoundbankRefreshNeeded() {
+				midiDeviceController.markSoundbankRefreshNeeded();
+			}
 			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 			@Override public List<InstPanel> getAffectedPanels(int instrument) { return VibeComposerGUI.getAffectedPanels(instrument); }
 			@Override public List<? extends InstPanel> getInstList(int instrument) { return VibeComposerGUI.getInstList(instrument); }
@@ -2153,10 +2162,10 @@ public static final String CURRENT_VERSION = "2.6";
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (device != null) {
-					closeMidiDevice();
+				if (midiDeviceController.hasMidiDevice()) {
+					midiDeviceController.closeMidiDevice();
 				} else {
-					softCloseSynth();
+					midiDeviceController.softCloseSynth();
 				}
 			}
 
@@ -2187,8 +2196,8 @@ public static final String CURRENT_VERSION = "2.6";
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (device != null) {
-					closeMidiDevice();
+				if (midiDeviceController.hasMidiDevice()) {
+					midiDeviceController.closeMidiDevice();
 				}
 			}
 
@@ -2258,9 +2267,7 @@ public static final String CURRENT_VERSION = "2.6";
 				Synthesizer defSynth;
 				f.applyPattern("yyMMdd-HH-mm-ss");
 				Date date = new Date();
-				defSynth = (synth != null && !midiMode.isSelected()) ? synth
-						: MidiSystem.getSynthesizer();
-				synth = defSynth;
+				defSynth = midiDeviceController.getSynthesizerForWaveExport();
 				String soundbankOptional = (soundfont != null) ? "SB_" : "";
 				String filename = f.format(date) + "_" + soundbankOptional
 						+ getFilenameForSaving(currentMidi.getName());
@@ -2268,11 +2275,7 @@ public static final String CURRENT_VERSION = "2.6";
 				exportFolderDir.mkdir();
 
 				saveWavFile(Constants.EXPORT_FOLDER + "/" + filename + "-export.wav", defSynth);
-				synth = null;
-				if (device != null) {
-					device.close();
-					device = null;
-				}
+				midiDeviceController.clearAfterWaveExport();
 				return null;
 			}
 
@@ -2281,9 +2284,9 @@ public static final String CURRENT_VERSION = "2.6";
 				try {
 					Synthesizer synthesizer = null;
 					if (!midiMode.isSelected()) {
-						synthesizer = loadSynth();
+						synthesizer = midiDeviceController.loadSynth();
 					}
-					prepareMidiPlayback(synthesizer);
+					midiDeviceController.prepareMidiPlayback(currentSequenceMidi, synthesizer);
 				} catch (InvalidMidiDataException | MidiUnavailableException e) {
 					LG.e(e);
 				}
@@ -2408,11 +2411,7 @@ public static final String CURRENT_VERSION = "2.6";
 			ShortMessage volumeMessage = new ShortMessage();
 			volumeMessage.setMessage(ShortMessage.CONTROL_CHANGE, channel, midiCc, value);
 
-			if (midiMode.isSelected() && device != null) {
-				device.getReceivers().forEach(e -> e.send(volumeMessage, -1));
-			} else if (synth != null && synth.isOpen()) {
-				synth.getReceivers().forEach(e -> e.send(volumeMessage, -1));
-			}
+			midiDeviceController.sendVolumeMessage(volumeMessage);
 		} catch (InvalidMidiDataException e) {
 			// Auto-generated catch block
 			LG.e(e);
@@ -2661,31 +2660,6 @@ public static final String CURRENT_VERSION = "2.6";
 		}
 	}
 
-	private void softCloseSynth() {
-		closeMidiDevice();
-		synth = null;
-	}
-
-	private void closeMidiDevice() {
-		playbackController.stopMidi();
-		if (sequencer != null) {
-			sequencer.close();
-			sequencer = null;
-		}
-
-		LG.i(("Closed sequencer!"));
-		MidiDevice oldDevice = device;
-		device = null;
-
-		if (oldDevice != null) {
-			oldDevice.close();
-		}
-
-		LG.i(("Closed oldDevice!"));
-		oldDevice = null;
-		needToRecalculateSoloMutersAfterSequenceGenerated = true;
-	}
-
 	public void regenerate() {
 		regenerate(false);
 	}
@@ -2726,31 +2700,7 @@ public static final String CURRENT_VERSION = "2.6";
 
 			playbackController.saveStartInfo();
 			savedIndicatorLabel.setVisible(false);
-			if (midiMode.isSelected()) {
-				if (synth != null) {
-					if (isSoundbankSynth && soundfont != null) {
-						synth.unloadAllInstruments(soundfont);
-					}
-					synth.close();
-					synth = null;
-					System.gc();
-				}
-			} else {
-				if (device != null) {
-					if (synth != null) {
-						synth.close();
-						synth = null;
-					}
-					if (sequencer != null) {
-						sequencer.close();
-						sequencer = null;
-						LG.i(("CLOSED SEQUENCER!"));
-					}
-					device.close();
-					device = null;
-					LG.i(("CLOSED DEVICE!"));
-				}
-			}
+			midiDeviceController.prepareForComposition();
 
 			needToRecalculateSoloMuters = true;
 
@@ -3140,7 +3090,7 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			Synthesizer synthesizer = null;
 			if (!midiMode.isSelected()) {
-				synthesizer = loadSynth();
+				synthesizer = midiDeviceController.loadSynth();
 			}
 
 
@@ -3169,7 +3119,7 @@ public static final String CURRENT_VERSION = "2.6";
 			generatedMidi.setListData(new File[] { currentMidi });
 			//sizeRespectingPack();
 			repaint();
-			if (!prepareMidiPlayback(synthesizer)) {
+			if (!midiDeviceController.prepareMidiPlayback(currentSequenceMidi, synthesizer)) {
 				return;
 			}
 
@@ -3386,129 +3336,6 @@ public static final String CURRENT_VERSION = "2.6";
 					: pausedSliderPosition;
 			pausedBpm = currentBpm;
 		}
-	}
-
-	private boolean prepareMidiPlayback(Synthesizer synthesizer)
-			throws InvalidMidiDataException, MidiUnavailableException {
-		Sequence sequence = null;
-		try {
-			sequence = MidiSystem.getSequence(currentSequenceMidi);
-		} catch (Exception e) {
-			new TemporaryInfoPopup(
-					"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
-					null);
-			return false;
-		}
-		sequencer.setSequence(sequence); // load it into sequencer
-
-		if (midiMode.isSelected()) {
-			if (device == null) {
-				for (Transmitter tm : sequencer.getTransmitters()) {
-					tm.close();
-				}
-				MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-				for (int i = 0; i < infos.length; i++) {
-					if (infos[i].toString().equalsIgnoreCase(midiModeDevices.getVal())) {
-						device = MidiSystem.getMidiDevice(infos[i]);
-						LG.d(infos[i].toString() + "| max recv: " + device.getMaxReceivers()
-								+ ", max trm: " + device.getMaxTransmitters());
-						if (device.getMaxReceivers() != 0) {
-							LG.d("Found max receivers != 0, opening midi receiver device: "
-									+ infos[i].toString());
-							device.open();
-							break;
-						}
-
-					}
-				}
-				sequencer.getTransmitter().setReceiver(device.getReceiver());
-			}
-
-
-		} else {
-			if (synthesizer != null) {
-				// open soundbank synth
-				for (Transmitter tm : sequencer.getTransmitters()) {
-					tm.close();
-				}
-
-				sequencer.getTransmitter().setReceiver(synthesizer.getReceiver());
-				synth = synthesizer;
-				isSoundbankSynth = true;
-
-			} else if (synth != null) {
-				// do nothing, all set
-			} else {
-				LG.i("Using Default system Synthesizer!");
-				// use default system synth
-				for (Transmitter tm : sequencer.getTransmitters()) {
-					tm.close();
-				}
-				synth = MidiSystem.getSynthesizer();
-				synth.open();
-				sequencer.getTransmitter().setReceiver(synth.getReceiver());
-				isSoundbankSynth = false;
-
-
-			}
-		}
-		return true;
-	}
-
-	private Synthesizer loadSynth() {
-		Synthesizer synthesizer = null;
-		try {
-			File soundbankFile = new File((String) ExtraSettingsGUI.soundbankFilename.getEditor().getItem());
-			if (soundbankFile.isFile()) {
-				if (synth == null || !isSoundbankSynth || needSoundbankRefresh) {
-					if (synth != null && isSoundbankSynth && soundfont != null) {
-						synth.unloadAllInstruments(soundfont);
-						synth.close();
-						synth = null;
-						System.gc();
-					}
-					synth = null;
-
-					soundfont = MidiSystem.getSoundbank(
-							new BufferedInputStream(new FileInputStream(soundbankFile)));
-					synthesizer = MidiSystem.getSynthesizer();
-
-					synthesizer.isSoundbankSupported(soundfont);
-					synthesizer.open();
-					synthesizer.loadAllInstruments(soundfont);
-					needSoundbankRefresh = false;
-				}
-				LG.i(("Playing using soundbank: "
-						+ (String) ExtraSettingsGUI.soundbankFilename.getEditor().getItem()));
-			} else {
-				if (synth != null && isSoundbankSynth && soundfont != null) {
-					synth.unloadAllInstruments(soundfont);
-					synth.close();
-					synth = null;
-					System.gc();
-				}
-				synthesizer = null;
-				synth = null;
-				soundfont = null;
-				LG.i(("NO SOUNDBANK WITH THAT NAME FOUND!"));
-			}
-
-
-		} catch (InvalidMidiDataException | IOException | MidiUnavailableException ex) {
-			if (synth != null && isSoundbankSynth && soundfont != null) {
-				synth.unloadAllInstruments(soundfont);
-				synth.close();
-				synth = null;
-				System.gc();
-			}
-			synthesizer = null;
-			synth = null;
-			soundfont = null;
-			LG.e(ex);
-			LG.i(("NO SOUNDBANK WITH THAT NAME FOUND!"));
-		}
-		synth = synthesizer;
-		return synthesizer;
 	}
 
 	private JButton makeButton(String name, String actionCommand) {
@@ -4626,11 +4453,7 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	public void sendMidiMessage(ShortMessage midiMessage) {
-		if (midiMode.isSelected() && device != null) {
-			device.getReceivers().forEach(e -> e.send(midiMessage, -1));
-		} else if (synth != null && synth.isOpen()) {
-			synth.getReceivers().forEach(e -> e.send(midiMessage, -1));
-		}
+		midiDeviceController.sendMessage(midiMessage);
 	}
 
 
@@ -4756,35 +4579,7 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	private void playNote(int midiChannel, int note, int velocity, int durationMs) throws InvalidMidiDataException {
-		if (!midiMode.isSelected()) {
-			if (synth == null) {
-				if (sequencer.isRunning()) {
-					sequencer.stop();
-				}
-				synth = loadSynth();
-				LG.i("Loaded new synth!");
-			}
-			MidiChannel[] channels = synth.getChannels();
-			MidiChannel channel = channels[midiChannel];
-			channel.noteOn(note, velocity);
-			Timer tmr = new Timer(durationMs, e -> channel.noteOff(note));
-			tmr.setRepeats(false);
-			tmr.start();
-		} else {
-			if (device == null) {
-				LG.i("Can't play into a null midi device!");
-				return;
-			}
-			ShortMessage noteOnMsg = new ShortMessage();
-			noteOnMsg.setMessage(ShortMessage.NOTE_ON, midiChannel, note, velocity);
-			ShortMessage noteOffMsg = new ShortMessage();
-			noteOffMsg.setMessage(ShortMessage.NOTE_OFF, midiChannel, note, 0);
-
-			device.getReceivers().forEach(e -> e.send(noteOnMsg, -1));
-			Timer tmr = new Timer(durationMs, e -> device.getReceivers().forEach(r -> r.send(noteOffMsg, -1)));
-			tmr.setRepeats(false);
-			tmr.start();
-		}
+		midiDeviceController.playNote(midiChannel, note, velocity, durationMs);
 	}
 
 	/*public static void queueMidiEventForRemoval(int trackNum, MidiEvent mve) {
