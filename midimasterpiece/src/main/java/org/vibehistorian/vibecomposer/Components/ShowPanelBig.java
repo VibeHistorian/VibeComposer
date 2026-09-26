@@ -29,10 +29,6 @@ see <https://www.gnu.org/licenses/>.
 */
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.PlaybackState;
-
-import org.vibehistorian.vibecomposer.UITheme;
-
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
@@ -41,7 +37,9 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,9 +84,9 @@ public class ShowPanelBig extends JPanel {
 	public static List<Integer> beatWidthBases = beatWidthBasesBig;
 	public static int beatWidthBaseIndex = 0;
 	public static int panelMaxHeight = UITheme.scrollPaneDimension.height;
-	private ShowAreaBig sa;
-	private ShowRulerBig ruler;
-	private JPanel pan;
+	private final ShowAreaBig sa;
+	private final ShowRulerBig ruler;
+	private final JPanel pan;
 	private int panelHeight;
 	public static JScrollPane areaScrollPane;
 	public static JScrollPane rulerScrollPane;
@@ -96,10 +94,8 @@ public class ShowPanelBig extends JPanel {
 	public static CheckButton soloMuterHighlight;
 	public static double maxEndTime = 10.0;
 
-	private static JPanel scorePartPanel;
-	private static CheckButton[] partsShown;
-	private static JButton toggler;
-	public static ScrollComboBox2<Integer> scoreBox;
+    private static CheckButton[] partsShown;
+    public static ScrollComboBox2<Integer> scoreBox;
 	public static ScrollComboBox<String> trimNoteLengthBox;
 
 	public ShowPanelBig(PlaybackActions playbackActions) {
@@ -151,7 +147,7 @@ public class ShowPanelBig extends JPanel {
 		horizontalPane.setAlignmentX(LEFT_ALIGNMENT);
 
 
-		scorePartPanel = new JPanel();
+        JPanel scorePartPanel = new JPanel();
 		scorePartPanel.setLayout(new BoxLayout(scorePartPanel, BoxLayout.X_AXIS));
 		scorePartPanel
 				.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight));
@@ -162,7 +158,7 @@ public class ShowPanelBig extends JPanel {
 		for (int i = 0; i < 5; i++) {
 			partsShown[i] = new CheckButton(Constants.instNames[i], true,
 					OMNI.alphen(Constants.instColors[i], 75));
-			partsShown[i].setRunnable(() -> setScore());
+			partsShown[i].setRunnable(this::setScore);
 			int fI = i;
 			partsShown[i].addMouseListener(new MouseAdapter() {
 				@Override
@@ -170,9 +166,10 @@ public class ShowPanelBig extends JPanel {
 					if (SwingUtilities.isMiddleMouseButton(evt)) {
 						boolean enableAll = true;
 						for (int j = 0; j < 5; j++) {
-							if (j != fI && partsShown[j].isSelected()) {
-								enableAll = false;
-							}
+                            if (j != fI && partsShown[j].isSelected()) {
+                                enableAll = false;
+                                break;
+                            }
 						}
 
 						for (int j = 0; j < 5; j++) {
@@ -186,7 +183,7 @@ public class ShowPanelBig extends JPanel {
 			scorePartPanel.add(partsShown[i]);
 		}
 		{
-			toggler = new JButton("All");
+            JButton toggler = new JButton("All");
 			toggler.addActionListener(new ActionListener() {
 
 				@Override
@@ -524,9 +521,9 @@ public class ShowPanelBig extends JPanel {
 				}
 
 			}
-			phrasesToRemove.forEach(e -> part.removePhrase(e));
+			phrasesToRemove.forEach(part::removePhrase);
 		}
-		partsToRemove.forEach(e -> scrCopy.removePart(e));
+		partsToRemove.forEach(scrCopy::removePart);
 		maxEndTime = score.getEndTime();
 		//LG.i("New score set with maxEndTime: " + maxEndTime);
 		this.score = scrCopy;

@@ -1,18 +1,17 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import org.vibehistorian.vibecomposer.GenerationGUI;
-import org.vibehistorian.vibecomposer.UITheme;
-
 import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -51,13 +50,10 @@ public class VisualPatternPanel extends JPanel {
 	private List<Integer> truePattern = new ArrayList<>();
 	private List<Integer> trueVelocities = new ArrayList<>();
 	public static final int MAX_HITS = 32;
-	private ColorCheckBox[] hitChecks = new ColorCheckBox[MAX_HITS];
-	private VeloRect[] hitVelocities = new VeloRect[MAX_HITS];
+	private final ColorCheckBox[] hitChecks = new ColorCheckBox[MAX_HITS];
+	private final VeloRect[] hitVelocities = new VeloRect[MAX_HITS];
 	private boolean showingVelocities = false;
 	private int lastHighlightedHit = -1;
-
-
-	private JLabel[] separators = new JLabel[3];
 
 	private InstPanel parentPanel = null;
 	private InstrumentControlContext instrumentControlContext;
@@ -293,7 +289,7 @@ public class VisualPatternPanel extends JPanel {
 						if (trueVelocities.isEmpty()) {
 							int updatedVel = (parentPanel.getVelocityMax()
 									+ parentPanel.getVelocityMin()) / 2;
-							trueVelocities = IntStream.iterate(updatedVel, e -> e).boxed()
+							trueVelocities = IntStream.iterate(updatedVel, e -> e).boxed().limit(truePattern.size())
 									.collect(Collectors.toList());
 						}
 					}

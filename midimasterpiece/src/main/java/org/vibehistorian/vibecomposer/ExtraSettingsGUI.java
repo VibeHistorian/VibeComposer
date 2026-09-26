@@ -23,7 +23,6 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -254,11 +253,13 @@ public class ExtraSettingsGUI {
 		File folder = new File(Constants.SOUNDBANK_FOLDER);
 		if (folder.exists()) {
 			File[] listOfFiles = folder.listFiles();
-			for (File f : listOfFiles) {
-				if (f.isFile()) {
-					String fileName = f.getName();
-					if (fileName.endsWith(".sf2")) {
-						soundbankFilename.addItem(fileName);
+			if (listOfFiles != null) {
+				for (File f : listOfFiles) {
+					if (f.isFile()) {
+						String fileName = f.getName();
+						if (fileName.endsWith(".sf2")) {
+							soundbankFilename.addItem(fileName);
+						}
 					}
 				}
 			}
@@ -367,7 +368,7 @@ public class ExtraSettingsGUI {
 
 				}
 				List<DrumPanel> sortedDps = new ArrayList<>(drumGUI.getPanels());
-				Collections.sort(sortedDps, Comparator.comparing(e1 -> e1.getPanelOrder()));
+				sortedDps.sort(Comparator.comparing(InstPanel::getPanelOrder));
 				for (DrumPanel dp : sortedDps) {
 					if (!DrumGUI.bottomUpReverseDrumPanels.isSelected()) {
 						((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp);

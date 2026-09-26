@@ -76,7 +76,7 @@ public class ScoreGUI {
 		return transposeScore;
 	}
 
-	public JButton createShowScoreButton() {
+	public void createShowScoreButton() {
 		showScore = new JButton("Show Score Tab");
 		showScore.addMouseListener(new MouseAdapter() {
 			@Override
@@ -84,7 +84,6 @@ public class ScoreGUI {
 				toggleShowScorePopup();
 			}
 		});
-		return showScore;
 	}
 
 	public static void initDisplaySettings(JPanel displayStylePanel) {

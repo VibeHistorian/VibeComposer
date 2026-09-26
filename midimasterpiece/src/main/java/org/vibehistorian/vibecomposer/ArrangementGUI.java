@@ -241,12 +241,9 @@ public class ArrangementGUI {
 					Integer.parseInt(pieceLength.getText()));
 		}
 
-		if ((regenerate || !randomizeArrangementOnCompose.isSelected()) && hasCurrentMidi
-				&& manualArrangement.isSelected()) {
-			arrangement.setOverridden(true);
-		} else {
-			arrangement.setOverridden(false);
-		}
+		boolean preserveArrangement = (regenerate || !randomizeArrangementOnCompose.isSelected()) && hasCurrentMidi
+				&& manualArrangement.isSelected();
+		arrangement.setOverridden(preserveArrangement);
 	}
 
 	public void applyCustomPanelsToSection(String action, int replacedPartNum,
@@ -620,8 +617,8 @@ public class ArrangementGUI {
 		int extraRed = 0;
 		if (actual && actualArrangement.getSections().size() > column) {
 			double remaining = 255 - color - 1;
-			extraRed += actualArrangement.getSections().get(column)
-					.countVariationsForPartType(row - 2) * remaining;
+            extraRed = (int) (extraRed + actualArrangement.getSections().get(column)
+                    .countVariationsForPartType(row - 2) * remaining);
 			extraRed = Math.min(255 - color - 1, extraRed);
 		}
 		component.setBackground(new Color(color + extraRed, color, color));
@@ -793,7 +790,7 @@ public class ArrangementGUI {
 			}
 		}, 30);
 		JButton clearAllPanelsBtn = SwingUtils.makeButton("CLR*", e -> {
-			ArrangementGUI.actualArrangement.getSections().forEach(s -> s.resetCustomizedParts());
+			ArrangementGUI.actualArrangement.getSections().forEach(Section::resetCustomizedParts);
 			setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
 			ArrangementGUI.arrSection.getButtons().forEach(cb -> {
 				if (!GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
@@ -1179,7 +1176,6 @@ public class ArrangementGUI {
 								: new Random(), false);
 				resetArrSectionSelection = actualArrangement.getSections()
 						.indexOf(addedSection) == arrSection.getSelectedIndex() - 2;
-				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			} else {
@@ -1196,7 +1192,6 @@ public class ArrangementGUI {
 			} else {
 				actualArrangement.removeSectionExact(scrollableArrangementActualTable, sectionIndex);
 				resetArrSectionSelection = sectionIndex < arrSection.getSelectedIndex();
-				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			}
@@ -1208,7 +1203,6 @@ public class ArrangementGUI {
 			} else {
 				actualArrangement.duplicateSectionExact(scrollableArrangementActualTable, sectionIndex);
 				resetArrSectionSelection = sectionIndex < arrSection.getSelectedIndex() - 1;
-				resetArrSectionPanel = true;
 				refreshActual = true;
 				checkManual = true;
 			}
