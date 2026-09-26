@@ -97,6 +97,15 @@ public class ArpGUI implements InstrumentGUIControls {
 	@Override public JScrollPane getPanelScrollPane() { return arpScrollPane; }
 	@Override public List<ArpPanel> getPanels() { return arpPanels; }
 
+	public void applyGeneratedPatterns(List<ArpPart> generatedParts) {
+		for (int i = 0; i < arpPanels.size(); i++) {
+			ArpPart part = generatedParts.get(i);
+			if (part.getArpPattern() == ArpPattern.RANDOM) {
+				arpPanels.get(i).setArpPatternCustom(part.getArpPatternCustom());
+			}
+		}
+	}
+
 	public void saveToConfig(GUIConfig gc, int seed) {
 		gc.setArpsEnable(enabledCheckBox.isSelected());
 		List<ArpPart> parts = new ArrayList<>();

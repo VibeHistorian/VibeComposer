@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -117,6 +118,21 @@ public class MelodyGUI implements InstrumentGUIControls {
 	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
 	@Override public JScrollPane getPanelScrollPane() { return melodyScrollPane; }
 	@Override public List<MelodyPanel> getPanels() { return melodyPanels; }
+
+	public void applyGeneratedTargetNotes(boolean regenerate,
+			Map<Integer, List<Integer>> targetNotes, GUIConfig config) {
+		if (regenerate || !melodyTargetNotesRandomizeOnCompose.isSelected() || targetNotes == null) {
+			return;
+		}
+		for (int i = 0; i < melodyPanels.size(); i++) {
+			int panelOrder = melodyPanels.get(i).getPanelOrder();
+			List<Integer> notes = targetNotes.get(panelOrder);
+			if (notes != null) {
+				melodyPanels.get(i).setChordNoteChoices(notes);
+				config.getMelodyParts().get(i).setChordNoteChoices(notes);
+			}
+		}
+	}
 
 	public void saveToConfig(GUIConfig gc, int seed) {
 		gc.setMelodyEnable(enabledCheckBox.isSelected());

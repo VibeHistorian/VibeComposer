@@ -53,7 +53,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 import static org.vibehistorian.vibecomposer.InstUtils.POOL;
 
@@ -156,10 +155,10 @@ public class ChordGUI implements InstrumentGUIControls {
         gc.setSpiceForceScale(spiceForceScale.isSelected());
     }
 
-    public void loadFromConfig(GUIConfig gc, IntConsumer setProgressionLength) {
+    public void loadFromConfig(GUIConfig gc) {
         enabledCheckBox.setSelected(gc.isChordsEnable());
         allowChordRepeats.setSelected(gc.isAllowChordRepeats());
-        setProgressionLength.accept(gc.getFixedDuration());
+        setProgressionLength(gc.getFixedDuration());
         spiceChance.setInt(gc.getSpiceChance());
         spiceParallelChance.setInt(gc.getSpiceParallelChance());
         spiceAllowDimAug.setSelected(gc.isDimAug6thEnabled());
@@ -177,6 +176,34 @@ public class ChordGUI implements InstrumentGUIControls {
         userChordsDurations.setText(gc.getCustomChordDurations());
         userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
         setChordSettingsInUI(gc.getChordGenSettings());
+    }
+
+    public void applyGeneratedChords(List<String> chords, boolean userMelodyAttached, GUIConfig config) {
+        currentChords.setText(StringUtils.abbreviate("Chords:[" + StringUtils.join(chords, ",") + "]", 60));
+        currentChordsInternal.clear();
+        currentChordsInternal.addAll(chords);
+
+        if (userMelodyAttached) {
+            userChords.setupChords(chords);
+            setProgressionLength(chords.size());
+            config.setCustomChords(StringUtils.join(chords, ","));
+        } else if (!userChordsEnabled.isSelected() && copyChordsAfterGenerate.isSelected()) {
+            userChords.setupChords(chords);
+        }
+    }
+
+    public static void setProgressionLength(int size) {
+        switch (size) {
+        case 4:
+            chordProgressionLength.setVal("4");
+            break;
+        case 8:
+            chordProgressionLength.setVal("8");
+            break;
+        default:
+            chordProgressionLength.setVal("RANDOM");
+            break;
+        }
     }
 
     public void loadPartsFromConfig(GUIConfig gc, Consumer<List<ChordPart>> restorePanels) {

@@ -222,6 +222,16 @@ public class ArrangementGUI {
 		});
 	}
 
+	public void applyGeneratedArrangement(Arrangement generatedArrangement, GUIConfig config) {
+		actualArrangement = new Arrangement();
+		actualArrangement.setPreviewChorus(false);
+		actualArrangement.getSections().clear();
+		for (Section section : generatedArrangement.getSections()) {
+			actualArrangement.getSections().add(section.deepCopy());
+		}
+		config.setActualArrangement(actualArrangement);
+	}
+
 	public void prepareForCompose(boolean regenerate, boolean hasCurrentMidi, int seed) {
 		if (!regenerate && arrangementResetCustomPanelsOnCompose.isSelected()) {
 			actualArrangement.getSections().forEach(Section::resetCustomizedParts);

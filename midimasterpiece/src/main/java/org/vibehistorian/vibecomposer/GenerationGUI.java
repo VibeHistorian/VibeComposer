@@ -19,7 +19,6 @@ public class GenerationGUI {
         void switchAllOnComposeCheckboxes(boolean state);
         void sidechainPatterns(boolean showPopup, boolean currentTabOnly);
         void applyGlobalSwing(int swing, boolean customPanels);
-        void setChordProgressionLength(int size);
     }
 
     public static JCheckBox randomizeInstOnComposeOrGen;
@@ -147,7 +146,7 @@ public class GenerationGUI {
 
         ChordGUI.chordProgressionLength = new ScrollComboBox<>(false);
         ScrollComboBox.addAll(new String[] { "4", "8", "RANDOM" }, ChordGUI.chordProgressionLength);
-        context.setChordProgressionLength(4);
+        ChordGUI.setProgressionLength(4);
         JLabel chordDurationFixedLabel = new JLabel("# of Chords");
         JPanel chordProgPanel = new JPanel();
         chordProgPanel.add(chordDurationFixedLabel);

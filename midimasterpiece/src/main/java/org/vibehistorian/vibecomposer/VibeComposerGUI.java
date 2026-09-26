@@ -29,7 +29,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.*;
-import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
@@ -39,7 +38,6 @@ import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
-import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.Wrappers.ArpPartsWrapper;
 import org.vibehistorian.vibecomposer.Parts.Wrappers.InstPartsWrapper;
@@ -107,6 +105,15 @@ public class VibeComposerGUI extends JFrame
 		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 	};
 	private final PlaybackController playbackController;
+	private final SoloMuteController soloMuteController =
+			new SoloMuteController(new SoloMuteController.Context() {
+				@Override public List<? extends InstPanel> getPanels(int instrument) {
+					return VibeComposerGUI.getInstList(instrument);
+				}
+				@Override public boolean isInstrumentEnabled(int instrument) {
+					return VibeComposerGUI.isEnabled(instrument);
+				}
+			});
 	private final InstrumentPanelController instrumentPanelController =
 			new InstrumentPanelController(new InstrumentPanelController.Context() {
 				@Override public InstPanel createPanel(int instrument) {
@@ -445,9 +452,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override public void applyGlobalSwing(int swing, boolean customPanels) {
 				VibeComposerGUI.this.applyGlobalSwing(swing, customPanels);
-			}
-			@Override public void setChordProgressionLength(int size) {
-				VibeComposerGUI.this.setChordProgressionLength(size);
 			}
 		});
 	}
@@ -1145,12 +1149,9 @@ public static final String CURRENT_VERSION = "2.6";
 		globalSoloMuter.setBackground(null);
 
 		mainButtonsPanel.add(SwingUtils.makeButton("Toggle Dark Mode", e -> switchDarkMode()));
-
 		mainButtonsPanel.add(SwingUtils.makeButton("Toggle Adv. Features", e -> switchFullMode()));
-
 		mainButtonsPanel.add(SwingUtils.makeButton("B I G/small", e -> switchBigMonitorMode()));
-
-		mainButtonsPanel.add(SwingUtils.makeButton("Exclude Not Solo'd", e -> toggleExclude()));
+		mainButtonsPanel.add(SwingUtils.makeButton("Exclude Not Solo'd", e -> soloMuteController.toggleExclude()));
 
 		//mainButtonsPanel.add(makeButton("DrumView", e -> openDrumViewPopup()));
 
@@ -1610,9 +1611,8 @@ public static final String CURRENT_VERSION = "2.6";
 				// recalc sequencer tracks from button colorings
 				if (needToRecalculateSoloMuters && !heavyBackgroundTasksInProgress) {
 					needToRecalculateSoloMuters = false;
-					unapplySolosMutes(true);
-
-					reapplySolosMutes();
+					soloMuteController.unapplyTracks();
+					soloMuteController.reapplyTracks();
 					recolorButtons();
 				}
 			}
@@ -2816,7 +2816,7 @@ public static final String CURRENT_VERSION = "2.6";
 			String relPath = Constants.MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
 
 			// unapply S/M, generate, reapply S/M with new track numbering
-			unapplySolosMutes(true);
+			soloMuteController.unapplyTracks();
 
 			if (logPerformance) {
 				LG.i("After setup: " + (System.currentTimeMillis() - systemTime));
@@ -2826,7 +2826,7 @@ public static final String CURRENT_VERSION = "2.6";
 			guiConfig = midiConfig;
 			//LG.i("Adding to config history, reason: " + regenerate);
 			//fixCombinedTracks();
-			reapplySolosMutes();
+			soloMuteController.reapplyTracks();
 
 			cleanUpUIAfterCompose(regenerate);
 
@@ -2877,7 +2877,7 @@ public static final String CURRENT_VERSION = "2.6";
 				sequencer.stop();
 			}
 			loopBeat.setSelected(false);
-			reapplySolosMutes();
+			soloMuteController.reapplyTracks();
 			return;
 		}
 		LG.i("================== VibeComposerGUI::composeMidi time: "
@@ -3139,57 +3139,12 @@ public static final String CURRENT_VERSION = "2.6";
 	}
 
 	private void cleanUpUIAfterCompose(boolean regenerate) {
-
-
-		List<String> prettyChords = MidiGenerator.chordInts;
-		ChordGUI.currentChords.setText(
-				StringUtils.abbreviate("Chords:[" + StringUtils.join(prettyChords, ",") + "]", 60));
-		ChordGUI.currentChordsInternal.clear();
-		ChordGUI.currentChordsInternal.addAll(prettyChords);
-
-		if (MelodyMidiDropPane.userMelody != null) {
-			String chords = StringUtils.join(MidiGenerator.chordInts, ",");
-			ChordGUI.userChords.setupChords(MidiGenerator.chordInts);
-			setChordProgressionLength(MidiGenerator.chordInts.size());
-			guiConfig.setCustomChords(chords);
-		} else if (!ChordGUI.userChordsEnabled.isSelected() && ChordGUI.copyChordsAfterGenerate.isSelected()) {
-			ChordGUI.userChords.setupChords(MidiGenerator.chordInts);
-		}
-
-		if (!regenerate && MelodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected()
-				&& MelodyGenerator.TARGET_NOTES != null) {
-			for (int i = 0; i < melodyGUI.getPanels().size(); i++) {
-				int mpOrder = melodyGUI.getPanels().get(i).getPanelOrder();
-				List<Integer> notes = MelodyGenerator.TARGET_NOTES.get(mpOrder);
-				if (notes != null) {
-					melodyGUI.getPanels().get(i).setChordNoteChoices(notes);
-					guiConfig.getMelodyParts().get(i).setChordNoteChoices(notes);
-				}
-			}
-		}
-
-		for (int i = 0; i < arpGUI.getPanels().size(); i++) {
-			ArpPart ap = MidiGenerator.gc.getArpParts().get(i);
-			if (ap.getArpPattern() == ArpPattern.RANDOM) {
-				arpGUI.getPanels().get(i).setArpPatternCustom(ap.getArpPatternCustom());
-			}
-		}
-
-		//fixCombinedMelodyTracks();
-
-		ArrangementGUI.actualArrangement = new Arrangement();
-		ArrangementGUI.actualArrangement.setPreviewChorus(false);
-		ArrangementGUI.actualArrangement.getSections().clear();
-		for (Section sec : MidiGenerator.gc.getActualArrangement().getSections()) {
-			ArrangementGUI.actualArrangement.getSections().add(sec.deepCopy());
-		}
-		guiConfig.setActualArrangement(ArrangementGUI.actualArrangement);
+		chordGUI.applyGeneratedChords(MidiGenerator.chordInts,
+				MelodyMidiDropPane.userMelody != null, guiConfig);
+		melodyGUI.applyGeneratedTargetNotes(regenerate, MelodyGenerator.TARGET_NOTES, guiConfig);
+		arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
+		arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(), guiConfig);
 		scoreGUI.pianoRoll();
-		/*if (ScoreGUI.showScore.isSelected()) {
-			instrumentTabPane.setSelectedIndex(7);
-		}*/
-
-
 		if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
 			if (ArrangementGUI.actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
 				currentMidiEditorPopup.close();
@@ -3528,147 +3483,6 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 		}
 		return true;
-	}
-
-	private void setChordProgressionLength(int size) {
-		switch (size) {
-		case 4:
-			ChordGUI.chordProgressionLength.setVal("4");
-			break;
-		case 8:
-			ChordGUI.chordProgressionLength.setVal("8");
-			break;
-		default:
-			ChordGUI.chordProgressionLength.setVal("RANDOM");
-			break;
-		}
-
-	}
-
-	private void unapplySolosMutes(boolean onlyIncluded) {
-		if (!sequenceReady()) {
-			return;
-		}
-		/*
-				int countReducer = 0;
-				if (DrumGUI.combineDrumTracks.isSelected()) {
-					countReducer = (int) ((onlyIncluded)
-							? drumGUI.getPanels().stream().filter(e -> !e.getMuteInst()).count()
-							: drumGUI.getPanels().size());
-					countReducer = Math.max(countReducer - 1, 0);
-				}
-				if (MelodyGUI.combineMelodyTracks.isSelected()) {
-					countReducer += 2;
-				}
-				int baseCount = (onlyIncluded) ? countAllIncludedPanels() : countAllPanels();
-				if (ExtraSettingsGUI.padGeneratedMidi.isSelected()) {
-					baseCount += calculatePaddedPartsCount(onlyIncluded);
-				}
-		*/
-		sequencer.setTrackSolo(0, false);
-		sequencer.setTrackMute(0, false);
-
-		Set<Integer> tracksToUnsolo = new HashSet<>();
-		Set<Integer> tracksToUnmute = new HashSet<>();
-
-		for (int i = 1; i < sequencer.getSequence().getTracks().length; i++) {
-			tracksToUnsolo.add(i);
-			tracksToUnmute.add(i);
-		}
-
-		Optional<DrumPanel> notExcludedDrum = drumGUI.getPanels().stream()
-				.filter(e -> e.getSequenceTrack() >= 0).findFirst();
-		Integer notExcludedCombinedDrumTrack = null;
-		for (int i = 0; i < 5; i++) {
-			List<? extends InstPanel> panels = getInstList(i);
-
-			if (!isEnabled(i)) {
-				continue;
-			}
-
-			if (i == 4 && notExcludedCombinedDrumTrack != null) {
-				// combined midi tracks -> unsolo drums
-				continue;
-			}
-			for (int j = 0; j < panels.size(); j++) {
-				Integer seqTrack = panels.get(j).getSequenceTrack();
-				if (seqTrack < 0 || panels.get(j).getMuteInst()) {
-					continue;
-				}
-				if (panels.get(j).getSoloMuter().soloState == State.FULL) {
-					tracksToUnsolo.remove(seqTrack);
-				} else if (panels.get(j).getSoloMuter().muteState == State.FULL) {
-					tracksToUnmute.remove(seqTrack);
-				}
-			}
-		}
-		tracksToUnsolo.forEach(e -> {
-			sequencer.setTrackSolo(e, false);
-			//LG.i("Unsoloed: " + e);
-		});
-		tracksToUnmute.forEach(e -> {
-			sequencer.setTrackMute(e, false);
-			//LG.i("Unmuted: " + e);
-		});
-	}
-
-	private int calculatePaddedPartsCount(boolean onlyIncluded) {
-		int count = 0;
-		List<Integer> paddedValues = ExtraSettingsGUI.padGeneratedMidiValues.getValues();
-		for (int i = 0; i < 5; i++) {
-			if (isEnabled(i)) {
-				List<? extends InstPanel> panels = getInstList(i);
-				long partCount = panels.stream().filter(e -> !e.getMuteInst()).count();
-				if (paddedValues.get(i) > partCount) {
-					count += (paddedValues.get(i) - partCount);
-				}
-			}
-		}
-		return count;
-	}
-
-	private void reapplySolosMutes() {
-		if (!sequenceReady()) {
-			return;
-		}
-		// set by soloState/muteState
-		for (int i = 0; i < 5; i++) {
-			List<? extends InstPanel> panels = getInstList(i);
-			for (int j = 0; j < panels.size(); j++) {
-				InstPanel ip = panels.get(j);
-				if (ip.getSequenceTrack() < 0) {
-					ip.getSoloMuter().unsolo();
-					ip.getSoloMuter().unmute();
-				} else {
-					sequencer.setTrackSolo(ip.getSequenceTrack(),
-							ip.getSoloMuter().soloState == State.FULL);
-					sequencer.setTrackMute(ip.getSequenceTrack(),
-							ip.getSoloMuter().muteState == State.FULL);
-				}
-			}
-		}
-
-	}
-
-	private void toggleExclude() {
-		if (globalSoloMuter.soloState != State.OFF) {
-			for (int i = 0; i < 5; i++) {
-				List<? extends InstPanel> panels = getInstList(i);
-				panels.forEach(e -> {
-					if (e.getSoloMuter().soloState == State.OFF) {
-						e.setMuteInst(true);
-					} else {
-						e.getSoloMuter().unsolo();
-						e.setMuteInst(false);
-					}
-				});
-			}
-		} else {
-			for (int i = 0; i < 5; i++) {
-				List<? extends InstPanel> panels = getInstList(i);
-				panels.forEach(e -> e.setMuteInst(false));
-			}
-		}
 	}
 
 	private Synthesizer loadSynth() {
@@ -4833,7 +4647,7 @@ public static final String CURRENT_VERSION = "2.6";
 		arrangementGUI.loadFromConfig(gc);
 		melodyGUI.loadFromConfig(gc);
 		bassGUI.loadFromConfig(gc);
-		chordGUI.loadFromConfig(gc, this::setChordProgressionLength);
+		chordGUI.loadFromConfig(gc);
 		arpGUI.loadFromConfig(gc);
 		drumGUI.loadFromConfig(gc);
 		ScoreGUI.loadFromConfig(gc);
