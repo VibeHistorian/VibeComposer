@@ -1348,7 +1348,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		copyConfigToGUI(guiConfig);
 		List<Component> presetComps = makeSettableComponentList();
 		for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
-			setComponent(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
+			UIComponentState.setValue(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
 		}
 		clearAllSeeds();
 		if (isFullMode != preset.isFullMode()) {
@@ -3536,7 +3536,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		List<Component> presetComps = makeSettableComponentList();
 		List<Integer> presetCompValues = new ArrayList<>();
 		for (int i = 0; i < presetComps.size(); i++) {
-			presetCompValues.add(getComponentValue(presetComps.get(i)));
+			presetCompValues.add(UIComponentState.getValue(presetComps.get(i)));
 		}
 		preset.setOrderedValuesUI(presetCompValues);
 		preset.setDarkMode(isDarkMode);
@@ -3827,59 +3827,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		cs.add(ExtraSettingsGUI.allowValuesOutOfRange);
 
 		return cs;
-	}
-
-	public static void setComponent(Component c, Integer num, boolean repaint) {
-		if (c == null) {
-			return;
-		} else if (c instanceof ScrollComboPanel) {
-			ScrollComboPanel csc = ((ScrollComboPanel) c);
-			if (csc.getItemCount() > 0) {
-				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
-			}
-		} else if (c instanceof KnobPanel) {
-			((KnobPanel) c).setInt(num);
-		} else if (c instanceof CustomCheckBox) {
-			((JCheckBox) c).setSelected(num != null && num > 0);
-		} else if (c instanceof CheckButton) {
-			((CheckButton) c).setSelected(num != null && num > 0);
-		} else if (c instanceof ScrollComboBox2) {
-			ScrollComboBox2 csc = ((ScrollComboBox2) c);
-			if (csc.getItemCount() > 0) {
-				csc.setSelectedIndex(Math.min(num, csc.getItemCount()));
-			}
-		} else if (c == instrumentTabPane) {
-			instrumentTabUndoManager.setRecordingEvents(false);
-			instrumentTabPane.setSelectedIndex(num < instrumentTabPane.getComponents().length ? num : num - 1);
-			instrumentTabUndoManager.setRecordingEvents(true);
-		} else {
-			throw new IllegalArgumentException("UNSUPPORTED COMPONENT!" + c.getClass());
-		}
-		if (repaint) {
-			c.repaint();
-		}
-	}
-
-	public static Integer getComponentValue(Component c) {
-		if (c == null) {
-			return 0;
-		}
-
-		if (c instanceof ScrollComboPanel) {
-			return ((ScrollComboPanel) c).getSelectedIndex();
-		} else if (c instanceof KnobPanel) {
-			return ((KnobPanel) c).getInt();
-		} else if (c instanceof CustomCheckBox) {
-			return ((JCheckBox) c).isSelected() ? 1 : 0;
-		} else if (c instanceof CheckButton) {
-			return ((CheckButton) c).isSelected() ? 1 : 0;
-		} else if (c instanceof ScrollComboBox2) {
-			return ((ScrollComboBox2) c).getSelectedIndex();
-		} else if (c == instrumentTabPane) {
-			return instrumentTabPane.getSelectedIndex();
-		} else {
-			throw new IllegalArgumentException("UNSUPPORTED COMPONENT!" + c.getClass());
-		}
 	}
 
 	public void copyGUItoConfig(GUIConfig gc) {

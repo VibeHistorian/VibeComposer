@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
+import javax.swing.JTabbedPane;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class UndoManager {
 			undoList = undoList.subList(0, historyIndex + 1);
 		}
 
-		save(cs.stream().map(e -> MutablePair.of(e, VibeComposerGUI.getComponentValue(e)))
+		save(cs.stream().map(e -> MutablePair.of(e, UIComponentState.getValue(e)))
 				.collect(Collectors.toList()));
 	}
 
@@ -49,7 +50,7 @@ public class UndoManager {
 		if (!recordingEvents) {
 			return;
 		}
-		saveToHistory(c, VibeComposerGUI.getComponentValue(c));
+		saveToHistory(c, UIComponentState.getValue(c));
 	}
 
 	public void saveToHistory(Component c, Integer val) {
@@ -95,8 +96,13 @@ public class UndoManager {
 		LG.i("Loading undoHistory with index: " + index);
 		if (undoList.size() > 0 && index >= 0 && index < undoList.size()) {
 			undoList.get(index).forEach(e -> {
-				//Integer currValue = VibeComposerGUI.getComponentValue(e.getLeft());
-				VibeComposerGUI.setComponent(e.getLeft(), e.getRight(), true);
+				if (e.getLeft() instanceof JTabbedPane) {
+					setRecordingEvents(false);
+					UIComponentState.setValue(e.getLeft(), e.getRight(), true);
+					setRecordingEvents(true);
+				} else {
+					UIComponentState.setValue(e.getLeft(), e.getRight(), true);
+				}
 				//e.setValue(currValue);
 			});
 

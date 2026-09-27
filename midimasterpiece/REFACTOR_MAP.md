@@ -240,6 +240,7 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.5 Playback position indexing:** consolidated the duplicate pause and start-position scans into one segment-index helper, keeping their 50 ms boundary and zero fallback unchanged.
 - **3.6 Playback restart flow:** captured the sequencer's running state before stopping it and moved the shared non-replay stop ahead of the branch. The resume/reset branch still uses the pre-stop state.
 - **3.7 Playback position reset:** consolidated the two identical navigation calls after the end-of-sequence check; the slider still resets to zero at its maximum before navigation.
+- **3.8 GUI value state ownership:** moved supported control value reads and restores from `VibeComposerGUI` to `UIComponentState`. Preset save/load and undo history use the shared helper; tab selection history suppression now sits in `UndoManager`.
 
 ### Phase 3 status
 
