@@ -13,8 +13,8 @@ import java.awt.event.MouseEvent;
 
 public class SoloMuter extends JPanel {
 	public interface Context {
-		void onSoloToggled(SoloMuter soloMuter, boolean recalculate);
-		void onMuteToggled(SoloMuter soloMuter, boolean recalculate);
+		void onSoloToggled(SoloMuter soloMuter);
+		void onMuteToggled(SoloMuter soloMuter);
 	}
 
 	public enum Type {
@@ -69,12 +69,12 @@ public class SoloMuter extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					toggleSolo(true);
+					toggleSolo();
 				} else if (SwingUtilities.isMiddleMouseButton(e) && type != Type.GLOBAL) {
 					if (SoloMuteState.globalSoloMuter.soloState != State.OFF) {
-						SoloMuteState.globalSoloMuter.toggleSolo(true);
+						SoloMuteState.globalSoloMuter.toggleSolo();
 					}
-					toggleSolo(true);
+					toggleSolo();
 				}
 
 			}
@@ -84,7 +84,7 @@ public class SoloMuter extends JPanel {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				toggleMute(true);
+				toggleMute();
 			}
 
 		});
@@ -105,8 +105,8 @@ public class SoloMuter extends JPanel {
 		muter.setForeground(Color.black);
 	}
 
-	public void toggleSolo(boolean recalc) {
-		context.onSoloToggled(this, recalc);
+	public void toggleSolo() {
+		context.onSoloToggled(this);
 	}
 
 	public void solo() {
@@ -126,8 +126,8 @@ public class SoloMuter extends JPanel {
 		soloer.setForeground(UITheme.isDarkMode ? OFF_DARK : OFF_LIGHT);
 	}
 
-	public void toggleMute(boolean recalc) {
-		context.onMuteToggled(this, recalc);
+	public void toggleMute() {
+		context.onMuteToggled(this);
 	}
 
 	public void mute() {

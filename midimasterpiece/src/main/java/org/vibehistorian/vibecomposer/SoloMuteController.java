@@ -230,7 +230,7 @@ public final class SoloMuteController {
 		}
 	}
 
-	public void onSoloToggled(SoloMuter muter, boolean recalculate) {
+	public void onSoloToggled(SoloMuter muter) {
 		if (muter.soloState != State.OFF) {
 			muter.unsolo();
 			if (muter.type == SoloMuter.Type.SINGLE) {
@@ -250,17 +250,15 @@ public final class SoloMuteController {
 			soloGroup(muter);
 		}
 
-		if (recalculate) {
-			if (sequenceReady()) {
-				SoloMuteState.needToRecalculateSoloMuters = true;
-			} else {
-				SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
-			}
-			context.refreshScoreForSoloChange();
+		if (sequenceReady()) {
+			SoloMuteState.needToRecalculateSoloMuters = true;
+		} else {
+			SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
 		}
+		context.refreshScoreForSoloChange();
 	}
 
-	public void onMuteToggled(SoloMuter muter, boolean recalculate) {
+	public void onMuteToggled(SoloMuter muter) {
 		if (muter.muteState != State.OFF) {
 			muter.unmute();
 			if (muter.type == SoloMuter.Type.SINGLE) {
@@ -280,14 +278,12 @@ public final class SoloMuteController {
 			muteGroup(muter);
 		}
 
-		if (recalculate) {
-			if (sequenceReady()) {
-				SoloMuteState.needToRecalculateSoloMuters = true;
-			} else {
-				SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
-			}
-			context.refreshScoreForMuteChange();
+		if (sequenceReady()) {
+			SoloMuteState.needToRecalculateSoloMuters = true;
+		} else {
+			SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
 		}
+		context.refreshScoreForMuteChange();
 	}
 
 	public boolean isSingleSolo() {

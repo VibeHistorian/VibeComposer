@@ -646,7 +646,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}
 			@Override public void togglePanelMute(int part, int panelOrder) {
-				getPanelByOrder(part, panelOrder).getSoloMuter().toggleMute(true);
+				getPanelByOrder(part, panelOrder).getSoloMuter().toggleMute();
 			}
 			@Override public void togglePanelSolo(int part, int panelOrder) {
 				InstPanel panel = getPanelByOrder(part, panelOrder);
@@ -654,9 +654,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 						&& soloMuteController.isSingleSolo()
 						&& panel.getSoloMuter().soloState == State.FULL;
 				if (!unsoloAll) {
-					globalSoloMuter.toggleSolo(true);
+					globalSoloMuter.toggleSolo();
 				}
-				panel.getSoloMuter().toggleSolo(true);
+				panel.getSoloMuter().toggleSolo();
 			}
 			@Override public JComponent getInstrumentBoxForPanel(int part, int panelOrder) {
 				return getAffectedPanels(part).get(panelOrder - 1).getInstrumentBox();
@@ -3546,13 +3546,13 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	@Override
-	public void onSoloToggled(SoloMuter soloMuter, boolean recalculate) {
-		soloMuteController.onSoloToggled(soloMuter, recalculate);
+	public void onSoloToggled(SoloMuter soloMuter) {
+		soloMuteController.onSoloToggled(soloMuter);
 	}
 
 	@Override
-	public void onMuteToggled(SoloMuter soloMuter, boolean recalculate) {
-		soloMuteController.onMuteToggled(soloMuter, recalculate);
+	public void onMuteToggled(SoloMuter soloMuter) {
+		soloMuteController.onMuteToggled(soloMuter);
 	}
 
 	public void recalculateGeneratorAndTabCounts() {

@@ -234,6 +234,7 @@ Phase slices should be focused, to make review of logical modifications easy to 
 ## Phase 3 Progress — Functional Simplification
 
 - **3.1 Solo/mute reset API:** removed `resetButtons` parameters from group and all-track solo/mute reset operations. Every active call passed `true`, so the parameter described an unused alternate behavior; the operations now express the behavior they already performed without that dead choice.
+- **3.2 Solo/mute toggle API:** removed the `recalculate` parameter from solo/mute toggle controls and their callbacks. Every active toggle recalculated sequencer solo/mute state and refreshed the score, so those steps are now unconditional parts of the toggle operation.
 
 ### Phase 3 status
 
