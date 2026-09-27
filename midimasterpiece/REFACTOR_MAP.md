@@ -236,6 +236,7 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.1 Solo/mute reset API:** removed `resetButtons` parameters from group and all-track solo/mute reset operations. Every active call passed `true`, so the parameter described an unused alternate behavior; the operations now express the behavior they already performed without that dead choice.
 - **3.2 Solo/mute toggle API:** removed the `recalculate` parameter from solo/mute toggle controls and their callbacks. Every active toggle recalculated sequencer solo/mute state and refreshed the score, so those steps are now unconditional parts of the toggle operation.
 - **3.3 Playback seek clamping:** replaced the nested negative-time check in `PlaybackController.midiNavigate` with a zero lower bound via `Math.max`, preserving the accepted seek condition and resulting position.
+- **3.4 Playback seek guard:** changed the boolean OR in the seek condition to short-circuit `||`. The duration check now runs only when the earlier sub-tick condition does not already allow the seek.
 
 ### Phase 3 status
 

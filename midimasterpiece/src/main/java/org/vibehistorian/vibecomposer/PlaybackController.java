@@ -140,7 +140,7 @@ public final class PlaybackController {
 	public void midiNavigate(long sliderValue, int offset) {
 		long time = (sliderValue - offset) * 1000;
 		long timeTicks = PlaybackState.msToSequencerTicks(time);
-		if (!(time != 0 && timeTicks == 0) | time >= sequencer.getMicrosecondLength()) {
+		if (!(time != 0 && timeTicks == 0) || time >= sequencer.getMicrosecondLength()) {
 			sequencer.setMicrosecondPosition(Math.max(0, time));
 		}
 		flushMidiEvents();
