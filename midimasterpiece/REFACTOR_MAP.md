@@ -220,3 +220,13 @@ Playback transport, instrument-panel lifecycle, arrangement section actions, sol
 
 Generation, arrangement models, part models, persistence defaults, pattern-map bounds, and MIDI input dispatch now use supplied data or focused callbacks instead of looking up the main window. Sequence track assignments still reach instrument panels through the composition root, preserving solo/mute track bookkeeping.
 
+--------------------------------------------------
+
+### Phase 3 - functional refactoring, not just moving
+
+Until now, most of the refactoring work was about moving GUI code from the god class to more relevant owners, and giving classes context so they don't have to back-reference the god class.
+In this phase, the goal is to identify and address functionality/responsibilities which isn't really about coordinating and can be split out (already alluded to by some steps in 2.5 which created new non-GUI controllers), 
+and functionality which can be simplified (e.g. less passing of parameters, or rewriting logic/event handling to do the same work in less code).
+The app should still behave the same, but the internals of how that is achieved may be rewritten.
+
+Phase slices should be focused, to make review of logical modifications easy to confirm. 
