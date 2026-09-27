@@ -241,6 +241,7 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.6 Playback restart flow:** captured the sequencer's running state before stopping it and moved the shared non-replay stop ahead of the branch. The resume/reset branch still uses the pre-stop state.
 - **3.7 Playback position reset:** consolidated the two identical navigation calls after the end-of-sequence check; the slider still resets to zero at its maximum before navigation.
 - **3.8 GUI value state ownership:** moved supported control value reads and restores from `VibeComposerGUI` to `UIComponentState`. Preset save/load and undo history use the shared helper; tab selection history suppression now sits in `UndoManager`.
+- **3.9 Instrument part workflow ownership:** moved locked-panel filtering for part saves and imported-part merging into `InstrumentPanelController`. The window retains XML file loading and presents the existing custom-section restriction message.
 
 ### Phase 3 status
 

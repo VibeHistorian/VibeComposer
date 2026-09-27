@@ -2,11 +2,18 @@ package org.vibehistorian.vibecomposer;
 
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Parts.Wrappers.InstPartsWrapper;
 
 import javax.swing.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /** Owns the shared lifecycle of instrument panels inside their instrument tabs. */
 public final class InstrumentPanelController {
@@ -29,6 +36,7 @@ public final class InstrumentPanelController {
 		void repaintMainWindow();
 		boolean canRegenerateOnChange();
 		void regenerate();
+		int getCurrentSeed();
 		void randomizePanels(int instrument, int panelCount, boolean onlyAdd, Integer seed,
 				InstPanel randomizedPanel);
 	}
@@ -178,6 +186,72 @@ public final class InstrumentPanelController {
 		}
 		context.recalculateTabPaneCounts();
 		context.repaintInstrumentTabs();
+	}
+
+	public int saveParts(String path, int instrument, boolean selectiveSave) throws JAXBException {
+		Class<? extends InstPartsWrapper> wrapperClass = InstPartsWrapper.getWrapperClass(instrument);
+		JAXBContext jaxbContext = JAXBContext.newInstance(wrapperClass, InstPartsWrapper.class);
+		Marshaller marshaller = jaxbContext.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		InstPartsWrapper<?> wrapper = InstPartsWrapper.forClass(wrapperClass);
+
+		List<? extends InstPanel> panels = context.getAffectedPanels(instrument);
+		if (selectiveSave && panels.stream().anyMatch(InstPanel::getLockInst)) {
+			panels = panels.stream().filter(InstPanel::getLockInst).collect(Collectors.toList());
+		}
+		List<InstPart> parts = panels.stream()
+				.map(panel -> panel.toInstPart(context.getCurrentSeed()))
+				.collect(Collectors.toList());
+		InstPart.sortParts(parts);
+		wrapper.setParts(parts);
+		marshaller.marshal(wrapper, new File(path));
+		LG.i("File saved: " + path);
+		return parts.size();
+	}
+
+	public boolean recreateImportedParts(int instrument, List<InstPart> parts,
+			boolean clearPreviousPanels) {
+		boolean customSection = context.isCustomSection();
+		if (!clearPreviousPanels && customSection) {
+			return false;
+		}
+
+		List<InstPanel> currentPanels = context.getAffectedPanels(instrument);
+		List<InstPart> lockedParts = currentPanels.stream().filter(InstPanel::getLockInst)
+				.map(panel -> panel.toInstPart(panel.getPatternSeed())).collect(Collectors.toList());
+		Map<Integer, List<InstPart>> lockedPartsByOriginalOrder = lockedParts.stream()
+				.collect(Collectors.groupingBy(part -> part.getOrder() - 1));
+		List<InstPart> nonLockedParts = currentPanels.stream().filter(panel -> !panel.getLockInst())
+				.map(panel -> panel.toInstPart(panel.getPatternSeed())).collect(Collectors.toList());
+
+		int importedPartCount = parts.size();
+		int replaceablePartCount = nonLockedParts.size();
+		if (clearPreviousPanels && customSection && replaceablePartCount != importedPartCount) {
+			if (importedPartCount > replaceablePartCount) {
+				parts = parts.subList(0, replaceablePartCount);
+			} else {
+				parts.addAll(nonLockedParts.subList(importedPartCount, replaceablePartCount));
+			}
+		}
+
+		if (clearPreviousPanels) {
+			List<InstPart> finalParts = parts;
+			lockedPartsByOriginalOrder.entrySet().stream()
+					.sorted(Map.Entry.comparingByKey())
+					.forEach(entry -> {
+						int newIndex = Math.min(finalParts.size(), entry.getKey());
+						finalParts.add(newIndex, entry.getValue().get(0));
+					});
+		}
+
+		int startingOrder = clearPreviousPanels ? 0 : replaceablePartCount;
+		int endingSize = parts.size() + startingOrder;
+		for (int i = startingOrder; i < endingSize; i++) {
+			parts.get(i - startingOrder).setOrder(i + 1);
+		}
+
+		recreatePanels(instrument, parts, clearPreviousPanels);
+		return true;
 	}
 
 	private static int getLowestAvailablePanelNumber(List<? extends InstPanel> panels) {

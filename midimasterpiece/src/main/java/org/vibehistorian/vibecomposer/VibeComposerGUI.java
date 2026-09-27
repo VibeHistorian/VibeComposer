@@ -38,7 +38,6 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.Wrappers.ArpPartsWrapper;
 import org.vibehistorian.vibecomposer.Parts.Wrappers.InstPartsWrapper;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
@@ -183,6 +182,7 @@ public class VibeComposerGUI extends JFrame
 					return VibeComposerGUI.this.canRegenerateOnChange();
 				}
 				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
+				@Override public int getCurrentSeed() { return GenerationGUI.lastRandomSeed; }
 				@Override public void randomizePanels(int instrument, int panelCount,
 						boolean onlyAdd, Integer seed, InstPanel randomizedPanel) {
 					if (instrument == 0) {
@@ -601,7 +601,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		return new PartManagerPanel.Context() {
 			@Override public int saveParts(String path, int part, boolean selectiveSave)
 					throws JAXBException {
-				return VibeComposerGUI.marshalParts(path, part, selectiveSave);
+				return instrumentPanelController.saveParts(path, part, selectiveSave);
 			}
 			@Override public void loadParts(File file, int part, boolean clearPreviousPanels)
 					throws JAXBException, IOException {
@@ -3584,80 +3584,14 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 	}
 
-	public static Class<?> getWrapperClass(int partNum) {
-		return ArpPartsWrapper.class;
-	}
-
-	public static int marshalParts(String path, int partNum, boolean selectiveSave) throws JAXBException {
-		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-		f.applyPattern("yyMMdd-hh-mm-ss");
-		Class<? extends InstPartsWrapper> wrapperClass = InstPartsWrapper.getWrapperClass(partNum);
-		JAXBContext context = JAXBContext.newInstance(wrapperClass, InstPartsWrapper.class);
-		Marshaller mar = context.createMarshaller();
-		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		InstPartsWrapper<?> wrapper = InstPartsWrapper.forClass(wrapperClass);
-		List<? extends InstPanel> affectedPanels = getAffectedPanels(partNum);
-		if (selectiveSave && affectedPanels.stream().anyMatch(e -> e.getLockInst())) {
-			affectedPanels = affectedPanels.stream().filter(e -> e.getLockInst()).collect(Collectors.toList());
-		}
-		List<? extends InstPart> parts = getInstPartsFromInstPanels(affectedPanels, false);
-		wrapper.setParts(parts);
-		mar.marshal(wrapper, new File(path));
-		LG.i("File saved: " + path);
-		return parts.size();
-	}
-
 	public void unmarshallParts(File f, int partNum, boolean clearPreviousPanels) throws JAXBException, IOException {
 		JAXBContext context = JAXBContext.newInstance(InstPartsWrapper.getWrapperClass(partNum), InstPartsWrapper.class);
 		InstPartsWrapper<?> wrapper = (InstPartsWrapper<?>) context.createUnmarshaller()
 				.unmarshal(new FileReader(f));
 		List<InstPart> parts = (List<InstPart>) wrapper.getParts();
-		boolean isCustomSection = isCustomSection();
-
-		if (!clearPreviousPanels && isCustomSection) {
+		if (!instrumentPanelController.recreateImportedParts(partNum, parts, clearPreviousPanels)) {
 			new TemporaryInfoPopup("Cannot change # of instruments in custom sections!", 1500);
-			return;
 		}
-
-		List<InstPanel> currentPanels = getAffectedPanels(partNum);
-		List<InstPart> lockedParts = currentPanels.stream().filter(e -> e.getLockInst())
-				.map(e -> e.toInstPart(e.getPatternSeed())).collect(Collectors.toList());
-		Map<Integer, List<InstPart>> originalLockedPartsOrder = lockedParts.stream().collect(Collectors.groupingBy(e -> e.getOrder()-1));
-		List<InstPart> nonLockedParts = currentPanels.stream().filter(e -> !e.getLockInst())
-				.map(e -> e.toInstPart(e.getPatternSeed())).collect(Collectors.toList());
-
-		int numParts = parts.size();
-		int numPartsToReplace = nonLockedParts.size();
-
-		if (clearPreviousPanels) {
-			if (isCustomSection && numPartsToReplace != numParts) {
-				if (numParts > numPartsToReplace) {
-					parts = parts.subList(0, numPartsToReplace);
-				} else {
-					parts.addAll(nonLockedParts.subList(numParts, numPartsToReplace));
-				}
-			}
-		}
-
-		// restore original order/placement of locked parts
-		if (clearPreviousPanels) {
-			// Iterate through the entries sorted by key (ascending order)
-			List<InstPart> finalParts = parts;
-			originalLockedPartsOrder.entrySet().stream()
-					.sorted(Map.Entry.comparingByKey())
-					.forEach(entry -> {
-						int newIndex = Math.min(finalParts.size(), entry.getKey());
-						finalParts.add(newIndex, entry.getValue().get(0));
-					});
-		}
-
-		int startingOrder = clearPreviousPanels ? 0 : numPartsToReplace;
-		int endingSize = parts.size() + startingOrder;
-		for (int i = startingOrder; i < endingSize; i++) {
-			parts.get(i - startingOrder).setOrder(i + 1);
-		}
-
-		instrumentPanelController.recreatePanels(partNum, parts, clearPreviousPanels);
 	}
 
 	public void marshalConfig(GUIConfig config, String path, int cutOff)
