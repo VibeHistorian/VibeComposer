@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -17,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.function.IntFunction;
 
 @XmlRootElement(name = "PatternMap")
 @XmlType(propOrder = {})
@@ -134,7 +134,8 @@ public class PatternMap {
 	}
 
 	public static void checkMapBounds(List<PatternMap> patternMaps,
-			boolean removeOldForNewArrangement) {
+			boolean removeOldForNewArrangement,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		if (patternMaps.isEmpty()) {
 			patternMaps.addAll(multiMap());
 		}
@@ -142,8 +143,8 @@ public class PatternMap {
 
 		for (int i = 0; i < 5; i++) {
 			PatternMap map = patternMaps.get(i);
-			List<Integer> partOrders = VibeComposerGUI.getInstList(i).stream()
-					.map(InstPanel::getPanelOrder).collect(Collectors.toList());
+			List<Integer> partOrders = partsForInstrument.apply(i).stream()
+					.map(InstPart::getOrder).collect(Collectors.toList());
 			List<Integer> mapPartOrdersToRemove = map.getKeys();
 			List<Integer> mapPartOrdersCopy = new ArrayList<>(mapPartOrdersToRemove);
 			if (removeOldForNewArrangement) {

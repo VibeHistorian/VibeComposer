@@ -11,7 +11,6 @@ import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.SwingConstants;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class CheckBoxIcon implements Icon {
 

@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LG {
-	private static final Logger LOGGER = LoggerFactory.getLogger(VibeComposerGUI.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(LG.class);
 
 	public static void d(String msg) {
 		LOGGER.debug(msg);

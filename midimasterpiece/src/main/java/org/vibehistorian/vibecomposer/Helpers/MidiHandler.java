@@ -1,12 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import org.vibehistorian.vibecomposer.GenerationGUI;
-
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
@@ -18,10 +13,18 @@ import javax.sound.midi.Transmitter;
 import java.util.List;
 
 public class MidiHandler {
+	public interface Context {
+		void setBpm(int bpm);
+		int getInstrumentPartCount(int instrument);
+		void playNextNote(int keyboardTranspose, int velocity, int instrument, int partOrder);
+		void playNote(int pitch, int durationMs, int velocity, int instrument, int partOrder);
+	}
 
 	public static boolean REPLAY_MODE = true;
+	private final Context context;
 
-	public MidiHandler() {
+	public MidiHandler(Context context) {
+		this.context = context;
 		MidiDevice device = null;
 		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 		for (int i = 0; i < infos.length; i++) {
@@ -39,11 +42,11 @@ public class MidiHandler {
 					//create a new receiver
 					transmitters.get(j).setReceiver(
 							//using my own MidiInputReceiver
-                            new MidiInputReceiver(device.getDeviceInfo().toString()));
+							new MidiInputReceiver(device.getDeviceInfo().toString(), context));
 				}
 
 				Transmitter trans = device.getTransmitter();
-				trans.setReceiver(new MidiInputReceiver(device.getDeviceInfo().toString()));
+				trans.setReceiver(new MidiInputReceiver(device.getDeviceInfo().toString(), context));
 
 				//open each device
 				if (device.getDeviceInfo().getName().equalsIgnoreCase("pianoport") && !device.isOpen()) {
@@ -62,9 +65,11 @@ public class MidiHandler {
 
 	static class MidiInputReceiver implements Receiver {
 		public String name;
+		private final Context context;
 
-		public MidiInputReceiver(String name) {
+		public MidiInputReceiver(String name, Context context) {
 			this.name = name;
+			this.context = context;
 		}
 
 		public void send(MidiMessage msg, long timeStamp) {
@@ -74,27 +79,27 @@ public class MidiHandler {
 				//int status = shortMessage.getStatus();
 				//LG.i("Keyboard: " + shortMessage.getChannel() + ", " + shortMessage.getData1() + ", " + shortMessage.getData2());
 				if (shortMessage.getChannel() == 15 && shortMessage.getData2() > 0) {
-					GenerationGUI.mainBpm.setInt(shortMessage.getData2());
+					context.setBpm(shortMessage.getData2());
 				} else if (shortMessage.getChannel() == 0 && shortMessage.getData2() > 0) {
 					if (REPLAY_MODE) {
 						int[] DBCAM = {4,1,2,3,0};
 						int normalizedPitch5OctavePiano = OMNI.clamp(shortMessage.getData1()-36, 0, 59);
 						int dbcamIndex = normalizedPitch5OctavePiano / 12;
 						int remainder = normalizedPitch5OctavePiano % 12;
-						int numParts = VibeComposerGUI.getInstList(DBCAM[dbcamIndex]).size();
+						int numParts = context.getInstrumentPartCount(DBCAM[dbcamIndex]);
 						if (numParts == 0) {
 							LG.i("Nothing to replay!");
 							return;
 						}
 						int partOrder = (remainder % numParts) + 1;
 						int extraTranspose = dbcamIndex == 0 ? 0 : (remainder >= 6 ? 12 : 0);
-						VibeComposerGUI.playNextNote(extraTranspose,
+						context.playNextNote(extraTranspose,
 								(int)OMNI.clamp(shortMessage.getData2()*1.5, 40, 120),
 								DBCAM[dbcamIndex],
 								partOrder);
 					} else {
-						VibeComposerGUI.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
-								OMNI.clampMidi(shortMessage.getData2()), 0, 1, ArrangementGUI.actualArrangement.getSections().get(0), true);
+						context.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
+								OMNI.clampMidi(shortMessage.getData2()), 0, 1);
 					}
 				}
 

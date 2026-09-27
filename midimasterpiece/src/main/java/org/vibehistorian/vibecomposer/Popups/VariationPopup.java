@@ -9,6 +9,7 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
@@ -44,10 +45,12 @@ public class VariationPopup {
 	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim,
-			IntFunction<List<? extends InstPanel>> getInstList) {
+			IntFunction<List<? extends InstPanel>> getInstList,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
+		sec.setPartsForInstrument(partsForInstrument);
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -68,7 +71,7 @@ public class VariationPopup {
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (sec.getPartMap().get(i) == null) {
-				sec.initPartMap();
+				sec.initPartMap(partsForInstrument);
 			}
 
 			List<String> partNames = getInstList.apply(i).stream()

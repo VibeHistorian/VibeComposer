@@ -207,3 +207,15 @@ No active `VibeComposerGUI` references remain in `Components`, `Panels`, or `Pop
 
 Playback transport, instrument-panel lifecycle, arrangement section actions, solo/mute actions and track application, feature-owned generated-result updates, MIDI device/synthesizer lifecycle, WAV rendering, live MIDI control output, generation operations, and custom chord generation are re-homed. `VibeComposerGUI` retains window composition, config serialization, the high-level compose sequence, and workflows that coordinate multiple features. Phase 2.6 can now address `VibeComposerGUI` references in generator and model classes.
 
+## Phase 2.6 Progress — Generator and Model Dependencies
+
+- `MidiGenerator` now derives absolute part order from the supplied `GUIConfig`. It reports generated sequence-track assignments through `SequenceTrackAssigner`; the composition root applies those assignments to instrument panels, while offline chord generation uses a no-op default.
+- `InstPart.getAbsoluteOrder` now takes the peer parts it indexes. `Arrangement` and `Section` use supplied `InstPart` collections for panel-order mapping, presence generation, and map resizing instead of reading the main window. `Section` receives a transient parts provider from the arrangement UI or MIDI generator, so this runtime callback does not change the saved preset format.
+- `PatternMap.checkMapBounds` accepts the active part provider. `GUIConfig` takes its default version from `Constants.APP_VERSION`, removing its dependency on the window class. The part-inclusion column names now belong to `Arrangement`, not its popup.
+- `MidiHandler` receives a small input-action context for BPM changes and note playback. The logging helper now names its own logger; stale main-window imports were removed from table/icon helpers.
+- **Verification:** `mvn -DskipTests compile` succeeds after 2.6. Tests were skipped. The active model/generator classes in this slice no longer reference `VibeComposerGUI`; the remaining direct references outside the window are in `SwingUtils` and `UndoManager`, which are UI helpers.
+
+### Phase 2.6 status — complete
+
+Generation, arrangement models, part models, persistence defaults, pattern-map bounds, and MIDI input dispatch now use supplied data or focused callbacks instead of looking up the main window. Sequence track assignments still reach instrument panels through the composition root, preserving solo/mute track bookkeeping.
+

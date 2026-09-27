@@ -547,7 +547,7 @@ public class MelodyGenerator {
             alternateChords = StringUtils.join(chordStrings, ",");
         }
         if (genVars && variations != null) {
-            sec.setVariation(0, mp.getAbsoluteOrder(), variations);
+            sec.setVariation(0, mp.getAbsoluteOrder(gc.getMelodyParts()), variations);
         }
         return noteList;
     }
@@ -868,7 +868,7 @@ public class MelodyGenerator {
 
         }
         if (genVars && variations != null) {
-            sec.setVariation(0, mp.getAbsoluteOrder(), variations);
+            sec.setVariation(0, mp.getAbsoluteOrder(gc.getMelodyParts()), variations);
         }
         return noteList;
     }
@@ -1452,7 +1452,7 @@ public class MelodyGenerator {
             }
         }
 
-        if (sec.getVariation(0, mp.getAbsoluteOrder()).contains(3)) {
+        if (sec.getVariation(0, mp.getAbsoluteOrder(gc.getMelodyParts())).contains(3)) {
             double currRv = 0;
             for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
                 List<Note> notes = fullMelodyMap.get(chordIndex);
@@ -1626,7 +1626,7 @@ public class MelodyGenerator {
                                        Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords, List<Note> modeNoteChanges,
                                        Section sec, MelodyPart mp) {
 
-        int chordNoteTargetChance = sec.getVariation(0, mp.getAbsoluteOrder()).contains(3)
+        int chordNoteTargetChance = sec.getVariation(0, mp.getAbsoluteOrder(gc.getMelodyParts())).contains(3)
                 ? (gc.getMelodyChordNoteTarget()
                 + (100 - gc.getMelodyChordNoteTarget()) / 3)
                 : gc.getMelodyChordNoteTarget();

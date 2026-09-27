@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Constants {
+    public static final String APP_VERSION = "2.6";
     public static final List<Integer> TYPICAL_MIDI_CH_START = Arrays.asList(1,9,11,2,10);
     public static final Map<Integer, List<Integer>> TYPICAL_MIDI_CH = new HashMap<>();
     public static final String TEMPORARY_SEQUENCE_MIDI_NAME = "tempSequenceMidi.mid";

@@ -48,7 +48,7 @@ public class GUIConfig {
 	public GUIConfig() {
 	}
 
-	private String version = VibeComposerGUI.CURRENT_VERSION;
+	private String version = Constants.APP_VERSION;
 
 	private PhraseNotes melodyNotes = null;
 
@@ -374,6 +374,17 @@ public class GUIConfig {
 
 	public List<BassPart> getBassParts() {
 		return bassParts;
+	}
+
+	public List<? extends InstPart> getInstParts(int instrument) {
+		switch (instrument) {
+		case 0: return getMelodyParts();
+		case 1: return getBassParts();
+		case 2: return getChordParts();
+		case 3: return getArpParts();
+		case 4: return getDrumParts();
+		default: throw new IllegalArgumentException("Instrument index out of range: " + instrument);
+		}
 	}
 
 	public void setBassParts(List<BassPart> bassParts) {

@@ -24,7 +24,6 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlList;
@@ -408,8 +407,17 @@ public abstract class InstPart implements Cloneable {
 
 	public abstract int getPartNum();
 
-	public int getAbsoluteOrder() {
-		return VibeComposerGUI.getAbsoluteOrder(getPartNum(), getOrder());
+	public int getAbsoluteOrder(List<? extends InstPart> parts) {
+		List<Integer> orders = new ArrayList<>();
+		for (InstPart part : parts) {
+			orders.add(part.getOrder());
+		}
+		Collections.sort(orders);
+		int absoluteOrder = orders.indexOf(getOrder());
+		if (absoluteOrder < 0) {
+			throw new IllegalArgumentException("Absolute order not found for part " + getOrder());
+		}
+		return absoluteOrder;
 	}
 
 	public PhraseNotes getCustomMidi() {

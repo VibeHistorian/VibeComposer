@@ -5,6 +5,7 @@ import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 
@@ -23,8 +24,7 @@ import java.util.stream.Collectors;
 
 public class ArrangementPartInclusionPopup extends CloseablePopup {
 
-	public static final String[] ENERGY_LEVELS = new String[] { "#", "ALL", "MAIN", "VERSE",
-			"INST" };
+	public static final String[] ENERGY_LEVELS = Arrangement.PART_INCLUSION_TYPES;
 	public static final Integer[] ENERGY_WEIGHTS = new Integer[] { 50, 50, 50, 50 };
 
 	JPanel tablesPanel = new JPanel();
@@ -33,7 +33,8 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 	JScrollPane scroll;
 
 	public ArrangementPartInclusionPopup(Arrangement arr,
-			IntFunction<List<? extends InstPanel>> getInstList) {
+			IntFunction<List<? extends InstPanel>> getInstList,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		super("Arrangement - Part Inclusion", 10, new Point(-500, -600));
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -48,10 +49,10 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 			JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (arr.getInclMap() == null) {
-				arr.initPartInclusionMap();
+				arr.initPartInclusionMap(partsForInstrument);
 			}
 			if (arr.getInclMap().get(i) == null) {
-				arr.initPartInclusionMap();
+				arr.initPartInclusionMap(partsForInstrument);
 			}
 
 			List<String> partNames = getInstList.apply(i).stream()

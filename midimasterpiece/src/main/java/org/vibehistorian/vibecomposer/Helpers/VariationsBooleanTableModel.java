@@ -7,7 +7,6 @@ import java.util.Set;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.vibehistorian.vibecomposer.VibeComposerGUI;
 
 public class VariationsBooleanTableModel extends AbstractTableModel {
 

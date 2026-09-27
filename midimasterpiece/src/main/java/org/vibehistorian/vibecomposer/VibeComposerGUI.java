@@ -162,7 +162,10 @@ public class VibeComposerGUI extends JFrame
 				}
 				@Override public void recalculateArrangementPartMaps() {
 					ArrangementGUI.actualArrangement.getSections()
-							.forEach(section -> section.initPartMapFromOldData());
+							.forEach(section -> {
+								section.setPartsForInstrument(i -> getInstPartsFromInstPanels(i, false));
+								section.initPartMapFromOldData(i -> getInstPartsFromInstPanels(i, false));
+							});
 				}
 				@Override public void recalculateTabPaneCounts() {
 					VibeComposerGUI.this.recalculateTabPaneCounts();
@@ -352,7 +355,21 @@ public class VibeComposerGUI extends JFrame
 
 CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
-	MidiHandler mh = new MidiHandler();
+	MidiHandler mh = new MidiHandler(new MidiHandler.Context() {
+		@Override public void setBpm(int bpm) { GenerationGUI.mainBpm.setInt(bpm); }
+		@Override public int getInstrumentPartCount(int instrument) {
+			return VibeComposerGUI.getInstList(instrument).size();
+		}
+		@Override public void playNextNote(int keyboardTranspose, int velocity, int instrument,
+				int partOrder) {
+			VibeComposerGUI.playNextNote(keyboardTranspose, velocity, instrument, partOrder);
+		}
+		@Override public void playNote(int pitch, int durationMs, int velocity, int instrument,
+				int partOrder) {
+			VibeComposerGUI.playNote(pitch, durationMs, velocity, instrument, partOrder,
+					ArrangementGUI.actualArrangement.getSections().get(0), true);
+		}
+	});
 
 JButton compose;
 	JButton regenerate;
@@ -390,7 +407,7 @@ JLabel messageLabel;
 	private GenerationGUI generationGUI;
 	private ArrangementGUI arrangementGUI;
 
-public static final String CURRENT_VERSION = "2.6";
+public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	public static void main(String args[]) {
 		FlatDarculaLaf.install();
@@ -525,6 +542,9 @@ public static final String CURRENT_VERSION = "2.6";
 			}
 			@Override public List<? extends InstPanel> getInstList(int instrument) {
 				return VibeComposerGUI.getInstList(instrument);
+			}
+			@Override public List<? extends InstPart> getInstrumentParts(int instrument) {
+				return VibeComposerGUI.getInstPartsFromInstPanels(instrument, false);
 			}
 			@Override public List<InstPart> getInstPartsFromCustomSectionInstPanels(int instrument) {
 				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument);
@@ -948,7 +968,10 @@ public static final String CURRENT_VERSION = "2.6";
 							setAddInst(indx, true);
 						}
 					} else if (indx == 6) {
-						ArrangementGUI.actualArrangement.getSections().forEach(s -> s.initPartMapFromOldData());
+						ArrangementGUI.actualArrangement.getSections().forEach(s -> {
+							s.setPartsForInstrument(i -> getInstPartsFromInstPanels(i, false));
+							s.initPartMapFromOldData(i -> getInstPartsFromInstPanels(i, false));
+						});
 						ArrangementGUI.scrollableArrangementActualTable.repaint();
 					}
 				}
@@ -2556,7 +2579,7 @@ public static final String CURRENT_VERSION = "2.6";
 			GUIConfig midiConfig = new GUIConfig();
 			copyGUItoConfig(midiConfig, true);
 
-			melodyGen = new MidiGenerator(midiConfig);
+			melodyGen = new MidiGenerator(midiConfig, this::assignSequenceTrack);
 			fillUserParameters(regenerate, manual);
 
 			File makeDir = new File(Constants.MIDIS_FOLDER);
@@ -3454,6 +3477,10 @@ public static final String CURRENT_VERSION = "2.6";
 
 	public void recalculateSoloMuters() {
 		soloMuteController.recalculatePanels();
+	}
+
+	private void assignSequenceTrack(int instrument, int panelOrder, int trackNumber) {
+		getPanelByOrder(instrument, panelOrder).setSequenceTrack(trackNumber);
 	}
 
 	private void clearAllSeeds() {

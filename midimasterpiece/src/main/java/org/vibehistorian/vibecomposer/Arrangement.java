@@ -21,8 +21,7 @@ package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Section.SectionType;
 
 import javax.swing.*;
@@ -40,10 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.function.IntFunction;
 
 @XmlRootElement(name = "arrangement")
 @XmlType(propOrder = {})
 public class Arrangement {
+	public static final String[] PART_INCLUSION_TYPES = { "#", "ALL", "MAIN", "VERSE", "INST" };
 	private static final List<List<String>> DEFAULT_ARRANGEMENTS = new ArrayList<>();
 
 	private static final List<String> POP_ARRANGEMENT = new ArrayList<>(
@@ -474,12 +475,12 @@ public class Arrangement {
 		partInclusionMap = InclusionMapJAXB.toMap(map);
 	}
 
-	public void initPartInclusionMap() {
-		int typesCount = ArrangementPartInclusionPopup.ENERGY_LEVELS.length;
+	public void initPartInclusionMap(IntFunction<List<? extends InstPart>> partsForInstrument) {
+		int typesCount = PART_INCLUSION_TYPES.length;
 
 		for (int i = 0; i < 5; i++) {
-			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
+					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders.size()][typesCount];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
@@ -495,30 +496,32 @@ public class Arrangement {
 		}
 	}
 
-	public void initPartInclusionMapIfNull() {
+	public void initPartInclusionMapIfNull(IntFunction<List<? extends InstPart>> partsForInstrument) {
 		if (partInclusionMap.get(0) == null) {
-			initPartInclusionMap();
+			initPartInclusionMap(partsForInstrument);
 		}
 	}
 
-	public boolean isPartInclusion(int part, int partOrder, int sectionType) {
-		initPartInclusionMapIfNull();
+	public boolean isPartInclusion(int part, int partOrder, int sectionType,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
+		initPartInclusionMapIfNull(partsForInstrument);
 		if (isOverridden()) {
 			return true;
 		}
 		return partInclusionMap.get(part)[partOrder][sectionType + 2] == Boolean.TRUE;
 	}
 
-	public void recalculatePartInclusionMapBoundsIfNeeded() {
+	public void recalculatePartInclusionMapBoundsIfNeeded(
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		if (getInclMap() == null) {
-			initPartInclusionMap();
+			initPartInclusionMap(partsForInstrument);
 			return;
 		}
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {
-			int actualInstCount = VibeComposerGUI.getInstList(i).size();
+			int actualInstCount = partsForInstrument.apply(i).size();
 			if (getInclMap().get(i) == null) {
-				initPartInclusionMap();
+				initPartInclusionMap(partsForInstrument);
 			}
 			int secInstCount = getInclMap().get(i).length;
 			if (secInstCount != actualInstCount) {
@@ -527,24 +530,25 @@ public class Arrangement {
 			}
 		}
 		if (needsArrayCopy) {
-			initPartInclusionMapFromOldData();
+			initPartInclusionMapFromOldData(partsForInstrument);
 		}
 
 	}
 
-	private void initPartInclusionMapFromOldData() {
+	private void initPartInclusionMapFromOldData(
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		if (getInclMap() == null) {
-			initPartInclusionMap();
+			initPartInclusionMap(partsForInstrument);
 			return;
 		}
 		for (int i = 0; i < 5; i++) {
-			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
+					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders
-					.size()][ArrangementPartInclusionPopup.ENERGY_LEVELS.length];
+					.size()][PART_INCLUSION_TYPES.length];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
-				for (int k = 1; k < ArrangementPartInclusionPopup.ENERGY_LEVELS.length; k++) {
+				for (int k = 1; k < PART_INCLUSION_TYPES.length; k++) {
 					data[j][k] = getBooleanFromOldData(getInclMap().get(i), j, k);
 				}
 			}

@@ -25,7 +25,6 @@ import org.vibehistorian.vibecomposer.Helpers.InclusionMapJAXB;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.Helpers.UsedPatternMap;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -76,6 +76,8 @@ public class Section {
 	public static final int VARIATION_CHANCE = 30;
 
 	private String type;
+	@XmlTransient
+	private transient List<List<? extends InstPart>> instrumentPartsSnapshot;
 	private int measures = 1;
 
 	private double startTime;
@@ -152,6 +154,17 @@ public class Section {
 		default:
 			throw new IllegalArgumentException("PartNum incorrect: " + partNum);
 		}
+	}
+
+	private int absoluteOrderForPanel(int instrument, int panelOrder,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
+		List<Integer> orders = partsForInstrument.apply(instrument).stream().map(InstPart::getOrder)
+				.sorted().collect(Collectors.toList());
+		int absoluteOrder = orders.indexOf(panelOrder);
+		if (absoluteOrder < 0) {
+			throw new IllegalArgumentException("Absolute order not found for part " + panelOrder);
+		}
+		return absoluteOrder;
 	}
 
 	// map integer(part type), [part order][presence/section variation]
@@ -407,10 +420,12 @@ public class Section {
 	}
 
 	public Set<Integer> getPresence(int part) {
-		initPartMapIfNull();
 		Set<Integer> pres = new HashSet<>();
 
 		Object[][] data = partPresenceVariationMap.get(part);
+		if (data == null) {
+			return pres;
+		}
         for (Object[] datum : data) {
             if (datum[1] == Boolean.TRUE) {
                 pres.add((Integer) datum[0]);
@@ -420,10 +435,12 @@ public class Section {
 	}
 
 	public Map<Integer, Integer> getPresenceWithIndices(int part) {
-		initPartMapIfNull();
 		Map<Integer, Integer> pres = new HashMap<>();
 
 		Object[][] data = partPresenceVariationMap.get(part);
+		if (data == null) {
+			return pres;
+		}
 		for (int i = 0; i < data.length; i++) {
 			if (data[i][1] == Boolean.TRUE) {
 				pres.put((Integer) data[i][0], i);
@@ -433,12 +450,10 @@ public class Section {
 	}
 
 	public void setPresence(int part, int partOrder) {
-		initPartMapIfNull();
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.TRUE;
 	}
 
 	public void resetPresence(int part, int partOrder) {
-		initPartMapIfNull();
 		partPresenceVariationMap.get(part)[partOrder][1] = Boolean.FALSE;
 		/*for (int i = 2; i < variationDescriptions[part].length; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i] = Boolean.FALSE;
@@ -446,7 +461,6 @@ public class Section {
 	}
 
 	public void resetAllPresence(int part) {
-		initPartMapIfNull();
 		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
 			partPresenceVariationMap.get(part)[i][1] = Boolean.FALSE;
 		}
@@ -457,7 +471,11 @@ public class Section {
 	}
 
 	public boolean hasVariation(int part) {
-		for (int i = 0; i < VibeComposerGUI.getInstList(part).size(); i++) {
+		Object[][] partData = partPresenceVariationMap.get(part);
+		if (partData == null) {
+			return false;
+		}
+		for (int i = 0; i < partData.length; i++) {
 			if (!getVariation(part, i).isEmpty()) {
 				return true;
 			}
@@ -466,13 +484,13 @@ public class Section {
 	}
 
 	public List<Integer> getVariation(int part, int partOrder) {
-		initPartMapIfNull();
 		List<Integer> variations = new ArrayList<>();
-		if (partPresenceVariationMap.get(part).length <= partOrder) {
+		Object[][] partData = partPresenceVariationMap.get(part);
+		if (partData == null || partData.length <= partOrder) {
 			return variations;
 		}
-		for (int i = 2; i < partPresenceVariationMap.get(part)[partOrder].length; i++) {
-			if (partPresenceVariationMap.get(part)[partOrder][i] == Boolean.TRUE) {
+		for (int i = 2; i < partData[partOrder].length; i++) {
+			if (partData[partOrder][i] == Boolean.TRUE) {
 				variations.add(i - 2);
 			}
 		}
@@ -480,7 +498,6 @@ public class Section {
 	}
 
 	public void setVariation(int part, int partOrder, List<Integer> vars) {
-		initPartMapIfNull();
 		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i + 2] = vars
 					.contains(i);
@@ -488,7 +505,6 @@ public class Section {
 	}
 
 	public void addVariation(int part, int partOrder, List<Integer> vars) {
-		initPartMapIfNull();
 		for (int i = 0; i < partPresenceVariationMap.get(part)[partOrder].length - 2; i++) {
 			partPresenceVariationMap.get(part)[partOrder][i
 					+ 2] = ((Boolean) partPresenceVariationMap.get(part)[partOrder][i + 2])
@@ -496,24 +512,17 @@ public class Section {
 		}
 	}
 
-	public void generatePresences(Random presRand, boolean forceAdd) {
-		initPartMapIfNull();
-		for (int i = 0; i < 5; i++) {
-			generatePresences(presRand, i, ArrangementGUI.arrangement.getInclMap(), forceAdd);
-		}
-
-	}
-
 	public void generatePresences(Random presRand, int part, Map<Integer, Object[][]> inclusionMap,
-			boolean forceAdd) {
-		initPartMapIfNull();
+			boolean forceAdd, IntFunction<List<? extends InstPart>> partsForInstrument) {
+		initPartMapIfNull(partsForInstrument);
 		int chance = getChanceForInst(part);
 		//LG.d("Chance: " + chance);
-		List<? extends InstPanel> panels = new ArrayList<>(VibeComposerGUI.getInstList(part));
-		panels.removeIf(InstPanel::getMuteInst);
+		List<? extends InstPart> allParts = partsForInstrument.apply(part);
+		List<InstPart> panels = new ArrayList<>(allParts);
+		panels.removeIf(InstPart::isMuted);
 		if (inclusionMap != null) {
 			panels.removeIf(e -> {
-				int absOrder = VibeComposerGUI.getAbsoluteOrder(part, e.getPanelOrder());
+				int absOrder = e.getAbsoluteOrder(allParts);
 				//LG.d("Abs order: " + absOrder);
 				//LG.d("Offset+2: " + (getTypeMelodyOffset() + 2));
 				if (inclusionMap.get(part).length <= absOrder || Boolean.FALSE
@@ -526,32 +535,52 @@ public class Section {
 		}
 		//LG.d("Panels size: " + panels.size());
 		int added = 0;
-        for (InstPanel instPanel : panels) {
+		for (InstPart instPanel : panels) {
             if (presRand.nextInt(100) < chance) {
                 setPresence(part,
-                        VibeComposerGUI.getAbsoluteOrder(part, instPanel.getPanelOrder()));
+                        instPanel.getAbsoluteOrder(allParts));
                 added++;
             }
         }
 		if (forceAdd && added == 0 && !panels.isEmpty()) {
-			InstPanel panel = panels.get(presRand.nextInt(panels.size()));
-			setPresence(part, VibeComposerGUI.getAbsoluteOrder(part, panel.getPanelOrder()));
+			InstPart panel = panels.get(presRand.nextInt(panels.size()));
+			setPresence(part, panel.getAbsoluteOrder(allParts));
 		}
 
 	}
 
-	public void generateVariations(Random presRand, int part) {
-		initPartMapIfNull();
+	public void generatePresences(Random presRand, Map<Integer, Object[][]> inclusionMap,
+			boolean forceAdd, IntFunction<List<? extends InstPart>> partsForInstrument) {
+		for (int part = 0; part < 5; part++) {
+			generatePresences(presRand, part, inclusionMap, forceAdd, partsForInstrument);
+		}
+	}
+
+	public void setPartsForInstrument(IntFunction<List<? extends InstPart>> partsForInstrument) {
+		instrumentPartsSnapshot = new ArrayList<>();
+		for (int instrument = 0; instrument < 5; instrument++) {
+			instrumentPartsSnapshot.add(new ArrayList<>(partsForInstrument.apply(instrument)));
+		}
+	}
+
+	private List<? extends InstPart> getPartsForInstrument(int instrument) {
+		return instrumentPartsSnapshot == null ? Collections.emptyList()
+				: instrumentPartsSnapshot.get(instrument);
+	}
+
+	public void generateVariations(Random presRand, int part, int variationChance,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
+		initPartMapIfNull(partsForInstrument);
 		List<Integer> presence = new ArrayList<>(getPresence(part));
 		if (presence.isEmpty()) {
 			return;
 		}
-		int chance = ArrangementGUI.arrangementPartVariationChance.getInt();
+		int chance = variationChance;
 		int added = 0;
 		for (Integer i : presence) {
 			for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 				if (presRand.nextInt(100) < chance) {
-					addVariation(part, VibeComposerGUI.getAbsoluteOrder(part, i),
+					addVariation(part, absoluteOrderForPanel(part, i, partsForInstrument),
 							Collections.singletonList(j - 2));
 					added++;
 				}
@@ -560,15 +589,16 @@ public class Section {
 		if (added == 0) {
 			int pres = presence.get(presRand.nextInt(presence.size()));
 			int randVar = presRand.nextInt(Section.variationDescriptions[part].length - 2);
-			addVariation(part, VibeComposerGUI.getAbsoluteOrder(part, pres),
+			addVariation(part, absoluteOrderForPanel(part, pres, partsForInstrument),
 					Collections.singletonList(randVar));
 		}
 	}
 
 	public void generateVariationForPartAndOrder(Random presRand, int part, int order,
-			boolean forceAdd) {
-		initPartMapIfNull();
-		int chance = ArrangementGUI.arrangementPartVariationChance.getInt();
+			boolean forceAdd, int variationChance,
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
+		initPartMapIfNull(partsForInstrument);
+		int chance = variationChance;
 		int added = 0;
 		for (int j = 2; j < Section.variationDescriptions[part].length; j++) {
 			if (presRand.nextInt(100) < chance) {
@@ -662,15 +692,16 @@ public class Section {
 		}
 	}
 
-	public void initPartMapFromOldData() {
+	public void initPartMapFromOldData(
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		if (partPresenceVariationMap == null) {
-			initPartMap();
+			initPartMap(partsForInstrument);
 			return;
 		}
 		//LG.d("INIT PART MAP FROM OLD DATA!");
 		for (int i = 0; i < 5; i++) {
-			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
+					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			Map<Integer, Integer> oldPresence = getPresenceWithIndices(i);
 			//LG.d(i + "'s OldPresence: " + StringUtils.join(oldPresence, ","));
@@ -706,10 +737,10 @@ public class Section {
 		}
 	}
 
-	public void initPartMap() {
+	public void initPartMap(IntFunction<List<? extends InstPart>> partsForInstrument) {
 		for (int i = 0; i < 5; i++) {
-			List<Integer> rowOrders = VibeComposerGUI.getInstList(i).stream()
-                    .map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
+					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
 			for (int j = 0; j < rowOrders.size(); j++) {
 				data[j][0] = rowOrders.get(j);
@@ -721,10 +752,27 @@ public class Section {
 		}
 	}
 
-	public void initPartMapIfNull() {
-		if (partPresenceVariationMap.get(0) == null) {
-			//LG.d("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
-			initPartMap();
+	public void initPartMapIfNull(IntFunction<List<? extends InstPart>> partsForInstrument) {
+		for (int instrument = 0; instrument < 5; instrument++) {
+			if (partPresenceVariationMap.get(instrument) == null) {
+				//LG.d("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
+				initPartMap(partsForInstrument);
+				return;
+			}
+		}
+	}
+
+	private void initPartMapIfNull() {
+		if (partPresenceVariationMap.get(0) != null) {
+			return;
+		}
+		if (instrumentPartsSnapshot != null) {
+			initPartMap(instrumentPartsSnapshot::get);
+			return;
+		}
+		for (int instrument = 0; instrument < 5; instrument++) {
+			partPresenceVariationMap.put(instrument,
+					new Object[0][variationDescriptions[instrument].length]);
 		}
 	}
 
@@ -824,10 +872,11 @@ public class Section {
 		return count / total;
 	}
 
-	public void recalculatePartVariationMapBoundsIfNeeded() {
+	public void recalculatePartVariationMapBoundsIfNeeded(
+			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		boolean needsArrayCopy = false;
 		for (int i = 0; i < 5; i++) {
-			int actualInstCount = VibeComposerGUI.getInstList(i).size();
+			int actualInstCount = partsForInstrument.apply(i).size();
 			int secInstCount = getPartMap().get(i).length;
 			if (secInstCount != actualInstCount) {
 				needsArrayCopy = true;
@@ -835,7 +884,7 @@ public class Section {
 			}
 		}
 		if (needsArrayCopy) {
-			initPartMapFromOldData();
+			initPartMapFromOldData(partsForInstrument);
 		}
 
 	}
@@ -844,7 +893,9 @@ public class Section {
 		if (variationNum < 2) {
 			return;
 		}
-		initPartMapIfNull();
+		if (partPresenceVariationMap.get(part) == null) {
+			return;
+		}
 		for (int i = 0; i < partPresenceVariationMap.get(part).length; i++) {
 			partPresenceVariationMap.get(part)[i][variationNum] = Boolean.FALSE;
 		}
@@ -854,7 +905,10 @@ public class Section {
 		if (variationNum < 2) {
 			return;
 		}
-		initPartMapIfNull();
+		if (partPresenceVariationMap.get(part) == null
+				|| partPresenceVariationMap.get(part).length <= partNum) {
+			return;
+		}
 		partPresenceVariationMap.get(part)[partNum][variationNum] = Boolean.FALSE;
 	}
 
