@@ -104,7 +104,7 @@ public class MidiEditArea extends JComponent {
 		resetBase();
 
 		addMouseWheelListener(e -> {
-            if (!e.isAltDown()) {
+            if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == 0) {
                 int rot = (e.getWheelRotation() > 0) ? -1 : 1;
                 if ((rot > 0 && currentMax > rangeMax -7) || (rot < 0 && currentMin < rangeMin +10)) {
                     return;
@@ -510,7 +510,7 @@ public class MidiEditArea extends JComponent {
 
 
 	private void handleLeftPress(MouseEvent evt) {
-		if (evt.isAltDown()) {
+		if ((evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
 			dragMode.add(DM.NOTE_START);
 		} else if (evt.isControlDown()) {
 			if (draggedNote == null || selectedNotes.isEmpty()) {

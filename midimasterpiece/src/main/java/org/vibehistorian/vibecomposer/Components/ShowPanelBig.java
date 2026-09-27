@@ -412,7 +412,7 @@ public class ShowPanelBig extends JPanel {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				if (e.isAltDown()) {
+				if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
 					if (e.getWheelRotation() > 0 && ShowAreaBig.noteHeight <= 4) {
 						return;
 					}

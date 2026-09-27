@@ -456,7 +456,7 @@ public class ArrangementGUI {
 		if (!rightClick && !middleClick) {
 			if (randomizerButtonPressed) return;
 			int panelOrder = panels.get(partOrder).getPanelOrder();
-			if (event.isAltDown()) {
+			if ((event.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
 				if (sectionOrder + 1 < arrSection.getItemCount()) {
 					arrSection.setSelectedIndexWithProperty(sectionOrder + 1, true);
 					arrSection.repaint();

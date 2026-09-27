@@ -100,7 +100,8 @@ public class ScrollComboPanel<T> extends TransparentablePanel implements Globall
 					ItemEvent evnt = new ItemEvent(scb, ItemEvent.ITEM_STATE_CHANGED,
 							getSelectedItem(), ItemEvent.SELECTED);
 					fireItemStateChanged(evnt);
-				} else if (SwingUtilities.isMiddleMouseButton(evt) && !evt.isAltDown()
+				} else if (SwingUtilities.isMiddleMouseButton(evt)
+						&& (evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == 0
 						&& !evt.isShiftDown()) {
 					if (evt.isControlDown()) {
 						if (regenerating) {

@@ -102,7 +102,8 @@ public class ArpPickerMini extends ScrollComboPanel<ArpPattern> {
 		scb.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				if (SwingUtilities.isMiddleMouseButton(evt) && evt.isAltDown()) {
+				if (SwingUtilities.isMiddleMouseButton(evt)
+						&& (evt.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
 					setVal(ArpPattern.RANDOM);
 					prepareInteraction(evt.isControlDown());
 					if (evt.isControlDown()) {
