@@ -1004,7 +1004,6 @@ public class MidiGenerator implements JMC {
 			LG.i("*********************************** Processing section.. " + sec.getType()
 					+ "!***** Time: " + (System.currentTimeMillis() - systemTime));
 			currentSection = sec;
-			sec.setPartsForInstrument(gc::getInstParts);
 			sec.initPartMapIfNull(gc::getInstParts);
 			sec.recalculatePartVariationMapBoundsIfNeeded(gc::getInstParts);
 			if (overridden) {

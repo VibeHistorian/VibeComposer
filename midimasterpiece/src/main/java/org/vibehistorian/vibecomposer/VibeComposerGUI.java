@@ -163,7 +163,6 @@ public class VibeComposerGUI extends JFrame
 				@Override public void recalculateArrangementPartMaps() {
 					ArrangementGUI.actualArrangement.getSections()
 							.forEach(section -> {
-								section.setPartsForInstrument(i -> getInstPartsFromInstPanels(i, false));
 								section.initPartMapFromOldData(i -> getInstPartsFromInstPanels(i, false));
 							});
 				}
@@ -969,7 +968,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 						}
 					} else if (indx == 6) {
 						ArrangementGUI.actualArrangement.getSections().forEach(s -> {
-							s.setPartsForInstrument(i -> getInstPartsFromInstPanels(i, false));
 							s.initPartMapFromOldData(i -> getInstPartsFromInstPanels(i, false));
 						});
 						ArrangementGUI.scrollableArrangementActualTable.repaint();

@@ -76,8 +76,6 @@ public class Section {
 	public static final int VARIATION_CHANCE = 30;
 
 	private String type;
-	@XmlTransient
-	private transient List<List<? extends InstPart>> instrumentPartsSnapshot;
 	private int measures = 1;
 
 	private double startTime;
@@ -556,18 +554,6 @@ public class Section {
 		}
 	}
 
-	public void setPartsForInstrument(IntFunction<List<? extends InstPart>> partsForInstrument) {
-		instrumentPartsSnapshot = new ArrayList<>();
-		for (int instrument = 0; instrument < 5; instrument++) {
-			instrumentPartsSnapshot.add(new ArrayList<>(partsForInstrument.apply(instrument)));
-		}
-	}
-
-	private List<? extends InstPart> getPartsForInstrument(int instrument) {
-		return instrumentPartsSnapshot == null ? Collections.emptyList()
-				: instrumentPartsSnapshot.get(instrument);
-	}
-
 	public void generateVariations(Random presRand, int part, int variationChance,
 			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		initPartMapIfNull(partsForInstrument);
@@ -763,16 +749,14 @@ public class Section {
 	}
 
 	private void initPartMapIfNull() {
-		if (partPresenceVariationMap.get(0) != null) {
-			return;
-		}
-		if (instrumentPartsSnapshot != null) {
-			initPartMap(instrumentPartsSnapshot::get);
-			return;
+		if (partPresenceVariationMap == null) {
+			partPresenceVariationMap = new HashMap<>();
 		}
 		for (int instrument = 0; instrument < 5; instrument++) {
-			partPresenceVariationMap.put(instrument,
-					new Object[0][variationDescriptions[instrument].length]);
+			if (partPresenceVariationMap.get(instrument) == null) {
+				partPresenceVariationMap.put(instrument,
+						new Object[0][variationDescriptions[instrument].length]);
+			}
 		}
 	}
 

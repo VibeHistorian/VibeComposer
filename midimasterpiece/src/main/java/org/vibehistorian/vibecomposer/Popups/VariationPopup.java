@@ -50,7 +50,6 @@ public class VariationPopup {
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
-		sec.setPartsForInstrument(partsForInstrument);
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
