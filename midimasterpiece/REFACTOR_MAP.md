@@ -230,3 +230,11 @@ and functionality which can be simplified (e.g. less passing of parameters, or r
 The app should still behave the same, but the internals of how that is achieved may be rewritten.
 
 Phase slices should be focused, to make review of logical modifications easy to confirm. 
+
+## Phase 3 Progress — Functional Simplification
+
+- **3.1 Solo/mute reset API:** removed `resetButtons` parameters from group and all-track solo/mute reset operations. Every active call passed `true`, so the parameter described an unused alternate behavior; the operations now express the behavior they already performed without that dead choice.
+
+### Phase 3 status
+
+Phase 3 has started. Continue with small behavior-preserving changes that simplify workflows or reduce unnecessary responsibilities and API surface. Keep each slice documented separately.

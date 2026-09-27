@@ -150,23 +150,13 @@ public final class SoloMuteController {
 		}
 	}
 
-	public void toggleSoloGroup(SoloMuter groupMuter) {
-		if (groupMuter.soloState != State.OFF) {
-			unsoloGroup(groupMuter, true);
-		} else {
-			soloGroup(groupMuter);
+	public void unsoloAllTracks() {
+		for (SoloMuter groupMuter : SoloMuteState.groupSoloMuters) {
+			unsoloGroup(groupMuter);
 		}
 	}
 
-	public void unsoloAllTracks(boolean resetButtons) {
-		if (resetButtons) {
-			for (SoloMuter groupMuter : SoloMuteState.groupSoloMuters) {
-				unsoloGroup(groupMuter, true);
-			}
-		}
-	}
-
-	public void unsoloGroup(SoloMuter groupMuter, boolean resetButtons) {
+	public void unsoloGroup(SoloMuter groupMuter) {
 		groupMuter.unsolo();
 		List<? extends InstPanel> panels = context.getPanels(groupMuter.inst);
 		for (InstPanel panel : panels) {
@@ -200,23 +190,13 @@ public final class SoloMuteController {
 		}
 	}
 
-	public void toggleMuteGroup(SoloMuter groupMuter) {
-		if (groupMuter.muteState != State.OFF) {
-			unmuteGroup(groupMuter, true);
-		} else {
-			muteGroup(groupMuter);
+	public void unmuteAllTracks() {
+		for (SoloMuter groupMuter : SoloMuteState.groupSoloMuters) {
+			unmuteGroup(groupMuter);
 		}
 	}
 
-	public void unmuteAllTracks(boolean resetButtons) {
-		if (resetButtons) {
-			for (SoloMuter groupMuter : SoloMuteState.groupSoloMuters) {
-				unmuteGroup(groupMuter, true);
-			}
-		}
-	}
-
-	public void unmuteGroup(SoloMuter groupMuter, boolean resetButtons) {
+	public void unmuteGroup(SoloMuter groupMuter) {
 		groupMuter.unmute();
 		List<? extends InstPanel> panels = context.getPanels(groupMuter.inst);
 		for (InstPanel panel : panels) {
@@ -257,10 +237,10 @@ public final class SoloMuteController {
 				recalculateGroupSolo(muter.inst);
 				recalculateGlobals();
 			} else if (muter.type == SoloMuter.Type.GROUP) {
-				unsoloGroup(muter, true);
+				unsoloGroup(muter);
 				recalculateGlobals();
 			} else {
-				unsoloAllTracks(true);
+				unsoloAllTracks();
 			}
 		} else if (muter.type == SoloMuter.Type.SINGLE) {
 			muter.solo();
@@ -287,10 +267,10 @@ public final class SoloMuteController {
 				recalculateGroupMute(muter.inst);
 				recalculateGlobals();
 			} else if (muter.type == SoloMuter.Type.GROUP) {
-				unmuteGroup(muter, true);
+				unmuteGroup(muter);
 				recalculateGlobals();
 			} else {
-				unmuteAllTracks(true);
+				unmuteAllTracks();
 			}
 		} else if (muter.type == SoloMuter.Type.SINGLE) {
 			muter.mute();
