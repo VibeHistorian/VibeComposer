@@ -33,6 +33,10 @@ import java.util.stream.Collectors;
 import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
 
 public class MidiEditArea extends JComponent {
+	@FunctionalInterface
+	public interface Context {
+		List<Double> getUserChordDurations();
+	}
 
 	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, MidiGenerator.Durations.SIXTEENTH_NOTE, 1 / 3.0, MidiGenerator.Durations.EIGHTH_NOTE,
 			2 / 3.0, MidiGenerator.Durations.QUARTER_NOTE, 4 / 3.0, MidiGenerator.Durations.HALF_NOTE, MidiGenerator.Durations.WHOLE_NOTE };
@@ -86,11 +90,13 @@ public class MidiEditArea extends JComponent {
 	int noteDragMarginX = 5;
 
 	MidiEditPopup pop = null;
+	private final Context context;
 	public int notesHistoryIndex = 0;
 	public List<PhraseNotes> notesHistory = new ArrayList<>();
 
-	public MidiEditArea(int minimum, int maximum, PhraseNotes vals) {
+	public MidiEditArea(int minimum, int maximum, PhraseNotes vals, Context context) {
 		super();
+		this.context = context;
 		setRange(minimum, maximum);
 		setCurrentMin(minimum);
 		setCurrentMax(maximum);
@@ -1351,11 +1357,8 @@ public class MidiEditArea extends JComponent {
 		if ((pop != null) && (pop.getSec() != null)
 				&& (pop.getSec().getGeneratedDurations() != null)) {
 			return new ArrayList<>(pop.getSec().getGeneratedDurations());
-		} else {
-			// TODO: NPE possible
-			chordSpacingDurations = pop.getContext().getUserChordDurations();
-			return chordSpacingDurations;
 		}
+		return context.getUserChordDurations();
 	}
 
 	private Rectangle getRectFromPoint(Point p) {

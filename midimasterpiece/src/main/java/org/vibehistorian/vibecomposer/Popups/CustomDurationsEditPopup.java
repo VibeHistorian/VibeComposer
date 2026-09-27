@@ -5,6 +5,7 @@ import org.vibehistorian.vibecomposer.Components.MidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
@@ -43,7 +44,7 @@ public class CustomDurationsEditPopup extends CloseablePopup {
 
         JPanel cdMveaPanel = new JPanel();
         cdMveaPanel.setLayout(new BoxLayout(cdMveaPanel, BoxLayout.X_AXIS));
-        cdMvea = new MidiEditArea(0, maxPitch, values);
+        cdMvea = new MidiEditArea(0, maxPitch, values, ChordGUI::getUserChordDurations);
         cdMvea.splitNotesByGrid = true;
         cdMvea.drawNoteStrings = false;
         cdMvea.sectionLength = MidiGenerator.Durations.WHOLE_NOTE;

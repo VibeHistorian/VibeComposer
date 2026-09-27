@@ -181,6 +181,7 @@ Every mutable `VibeComposerGUI` static field now has a focused owner or a define
 - **2.4.15 MIDI editor actions:** `MidiEditPopup` and `MidiEditArea` receive panel, transpose, playback, chord-duration, regeneration, and arrangement refresh operations through a focused editor context.
 - **2.4.16 Score canvas ownership:** `ShowAreaBig` and `ShowRulerBig` read changing score dimensions, timing, and controls from their owning `ShowPanelBig` instance.
 - **2.4.17 ArrangementGUI main-window calls:** replaced direct `VibeComposerGUI` lookups for panel lists, panes, custom-section panel creation, absolute panel order, arrangement layout insertion, and variation-popup geometry with focused `ArrangementGUI.Context` operations.
+- **2.4.18 MIDI editor chord durations:** moved user chord-duration parsing to `ChordGUI` and gave each `MidiEditArea` an explicit duration-provider context, removing its duration lookup dependency on `MidiEditPopup` and `VibeComposerGUI`.
 
 ### Phase 2.4 status — complete
 

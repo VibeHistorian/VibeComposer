@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.ChordGUI;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
@@ -40,7 +41,7 @@ public class PatternManagerPopup extends CloseablePopup {
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(panelWidth, 350));
 		mveaPanel.setMinimumSize(new Dimension(panelWidth, 350));
-		mvea = new MidiEditArea(126, 1, new PhraseNotes());
+		mvea = new MidiEditArea(126, 1, new PhraseNotes(), ChordGUI::getUserChordDurations);
 		mvea.setRange(126, 1);
 		mvea.setPop(null);
 		mvea.setPreferredSize(new Dimension(panelWidth, 350));

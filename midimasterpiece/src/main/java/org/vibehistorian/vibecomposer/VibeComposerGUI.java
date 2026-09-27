@@ -260,9 +260,6 @@ public class VibeComposerGUI extends JFrame
 			VibeComposerGUI.playNote(pitch, durationMs, velocity, part, partOrder, section,
 					overrideLastPlayed);
 		}
-		@Override public List<Double> getUserChordDurations() {
-			return VibeComposerGUI.getUserChordDurations();
-		}
 		@Override public void markArrangementManual() {
 			ArrangementGUI.manualArrangement.setSelected(true);
 			ArrangementGUI.manualArrangement.repaint();
@@ -2721,7 +2718,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					&& ChordGUI.userChords.getChordletsRaw().size() > 0;
 			if (customChords || ChordGUI.userDurationsEnabled.isSelected()) {
 				List<String> chords = ChordGUI.userChords.getChordList();
-				List<Double> durations = getUserChordDurations();
+				List<Double> durations = ChordGUI.getUserChordDurations();
 
 				MidiGenerator.userChordsDurations = durations;
 
@@ -2748,29 +2745,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			LG.e(e);
 		}
 
-	}
-
-	public static List<Double> getUserChordDurations() {
-		boolean forceDefault = !ChordGUI.userDurationsEnabled.isSelected();
-
-		List<Double> durations = new ArrayList<>();
-		String[] durationSplit = ChordGUI.userChordsDurations.getText().split(",");
-		boolean customChords = ChordGUI.userChordsEnabled.isSelected()
-				&& ChordGUI.userChords.getChordletsRaw().size() > 0;
-		boolean coversAllCustomChords = durationSplit.length >= ChordGUI.userChords.chordCount();
-
-		try {
-			for (int i = 0; i < (customChords && coversAllCustomChords ? ChordGUI.userChords.chordCount()
-					: durationSplit.length); i++) {
-				durations.add((durationSplit != null && !forceDefault && coversAllCustomChords)
-						? (ExtraSettingsGUI.stretchMidi.getInt() * Double.valueOf(durationSplit[i]) / 100.0)
-						: MidiGenerator.Durations.WHOLE_NOTE);
-			}
-		} catch (Exception e) {
-			new TemporaryInfoPopup("Invalid durations!", 3000);
-		}
-
-		return durations;
 	}
 
 	private Integer prepareMainSeed(boolean regenerate) {

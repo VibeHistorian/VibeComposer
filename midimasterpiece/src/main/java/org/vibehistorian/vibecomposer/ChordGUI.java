@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
+import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -270,6 +271,29 @@ public class ChordGUI implements InstrumentGUIControls {
 		default:
 			return 16;
 		}
+	}
+
+	public static List<Double> getUserChordDurations() {
+		boolean forceDefault = !userDurationsEnabled.isSelected();
+
+		List<Double> durations = new ArrayList<>();
+		String[] durationSplit = userChordsDurations.getText().split(",");
+		boolean customChords = userChordsEnabled.isSelected()
+				&& !userChords.getChordletsRaw().isEmpty();
+		boolean coversAllCustomChords = durationSplit.length >= userChords.chordCount();
+
+		try {
+			for (int i = 0; i < (customChords && coversAllCustomChords ? userChords.chordCount()
+					: durationSplit.length); i++) {
+				durations.add(!forceDefault && coversAllCustomChords
+						? ExtraSettingsGUI.stretchMidi.getInt() * Double.parseDouble(durationSplit[i]) / 100.0
+						: MidiGenerator.Durations.WHOLE_NOTE);
+			}
+		} catch (Exception e) {
+			new TemporaryInfoPopup("Invalid durations!", 3000);
+		}
+
+		return durations;
 	}
 
 	public static Pair<StrumType, Integer> getRandomStrumPair() {
@@ -567,10 +591,8 @@ public class ChordGUI implements InstrumentGUIControls {
 				context.copyGUItoConfig();
 				List<String> normalizedChords = MidiUtils
 						.respiceChords(userChords.getChordListString(), ApplicationSessionState.guiConfig);
-				if (normalizedChords != null) {
-					userChords.setupChords(normalizedChords);
-				}
-			}
+                userChords.setupChords(normalizedChords);
+            }
 		});
 		customChordsPanel.add(respiceChordsButton);
 
@@ -586,9 +608,7 @@ public class ChordGUI implements InstrumentGUIControls {
 				}
 				List<String> chords = userChords.getChordList();
 				List<String> chords2x = new ArrayList<>(chords);
-				chords.forEach(ch -> {
-					chords2x.add(ch);
-				});
+                chords2x.addAll(chords);
 				userChords.setupChords(chords2x);
 			}
 		});
