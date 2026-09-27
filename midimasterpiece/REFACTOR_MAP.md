@@ -238,6 +238,7 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.3 Playback seek clamping:** replaced the nested negative-time check in `PlaybackController.midiNavigate` with a zero lower bound via `Math.max`, preserving the accepted seek condition and resulting position.
 - **3.4 Playback seek guard:** changed the boolean OR in the seek condition to short-circuit `||`. The duration check now runs only when the earlier sub-tick condition does not already allow the seek.
 - **3.5 Playback position indexing:** consolidated the duplicate pause and start-position scans into one segment-index helper, keeping their 50 ms boundary and zero fallback unchanged.
+- **3.6 Playback restart flow:** captured the sequencer's running state before stopping it and moved the shared non-replay stop ahead of the branch. The resume/reset branch still uses the pre-stop state.
 
 ### Phase 3 status
 

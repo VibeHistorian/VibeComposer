@@ -24,11 +24,12 @@ public final class PlaybackController {
 	public void playMidi(boolean replay) {
 		LG.i("Starting Midi..");
 		if (sequencer != null) {
-			if (sequencer.isRunning()) {
-				if (!replay) {
-					sequencer.stop();
-				}
+			boolean wasRunning = sequencer.isRunning();
+			if (!replay) {
+				sequencer.stop();
+			}
 
+			if (wasRunning) {
 				long startPos = context.startFromBar()
 						? sliderMeasureStartTimes.get(pausedMeasureCounter)
 						: pausedSliderPosition;
@@ -37,9 +38,6 @@ public final class PlaybackController {
 				}
 				midiNavigate(startPos);
 			} else {
-				if (!replay) {
-					sequencer.stop();
-				}
 				savePauseInfo();
 				if (pausedSliderPosition > 0 && pausedSliderPosition < slider.getMaximum() - 100) {
 					LG.d("Unpausing..");
