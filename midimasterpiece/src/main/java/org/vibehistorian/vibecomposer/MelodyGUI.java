@@ -106,9 +106,11 @@ public class MelodyGUI implements InstrumentGUIControls {
 	public static JCheckBox combineMelodyTracks;
 
 	private final Context context;
+	private final InstrumentPanelController panelController;
 
-	public MelodyGUI(Context context) {
+	public MelodyGUI(Context context, InstrumentPanelController panelController) {
 		this.context = context;
+		this.panelController = panelController;
 	}
 
 	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
@@ -228,12 +230,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
-		void addPanel();
-		void generatePanels(boolean triggerRegenerate);
 		boolean canRegenerateOnChange();
 		void regenerate();
-		MelodyPanel addMelodyPanel();
-		List<InstPanel> getAffectedPanels(int instrument);
 	}
 
 	public void initMelodyGenSettings() {
@@ -299,9 +297,10 @@ public class MelodyGUI implements InstrumentGUIControls {
 		settings.add(new JLabel("LP"));
 		settings.add(groupFilterSlider);
 
-		addPanelButton = SwingUtils.makeButton("+Melody", e -> context.addPanel());
+		addPanelButton = SwingUtils.makeButton("+Melody",
+				e -> panelController.addRandomPanel(INST.MELODY));
 		generatePanelButton = SwingUtils.makeButton("Generate Melodies:",
-				e -> context.generatePanels(true));
+				e -> panelController.generatePanels(INST.MELODY, true));
 		randomPanelsToGenerate = new JTextField("3", 2);
 		settings.add(addPanelButton);
 		settings.add(generatePanelButton);
@@ -316,7 +315,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 			}
 		});
 		JButton clearUserMelodySeed = SwingUtils.makeButton("Clear Seeds",
-				e -> context.getAffectedPanels(0).forEach(m -> m.setPatternSeed(0)));
+				e -> panelController.getAffectedPanels(INST.MELODY)
+						.forEach(m -> m.setPatternSeed(0)));
 		randomMelodySameSeed = new CustomCheckBox("Same#", false);
 		randomMelodyOnRegenerate = SwingUtils.makeCheckBox("on Manual Regen.", false, true);
 		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
@@ -521,7 +521,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 	public void generateInitialMelodyPanels() {
 		for (int i = 0; i < 3; i++) {
-			MelodyPanel melodyPanel = context.addMelodyPanel();
+			MelodyPanel melodyPanel = (MelodyPanel) panelController.addPanel(INST.MELODY);
 			melodyPanel.setInstrument(73);
 			melodyPanel.setOrderAndOffset(i + 1, i + 1);
 			if (i > 0) {
@@ -553,7 +553,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 	}
 
 	public void randomizeMelodySeeds() {
-		List<? extends InstPanel> affectedPanels = context.getAffectedPanels(0);
+		List<? extends InstPanel> affectedPanels =
+				panelController.getAffectedPanels(INST.MELODY);
 		Random random = new Random();
 		int melodySeed = random.nextInt();
 		affectedPanels.forEach(panel -> panel.setVisible(false));
@@ -580,7 +581,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 	public void createRandomMelodyPanels(int seed, int panelCount, boolean onlyAdd,
 			MelodyPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<MelodyPanel> affectedMelodies = (List<MelodyPanel>) (List<?>) context.getAffectedPanels(0);
+		List<MelodyPanel> affectedMelodies = (List<MelodyPanel>) (List<?>)
+				panelController.getAffectedPanels(INST.MELODY);
 
 		Random panelGenerator = new Random(seed);
 		List<MelodyPanel> removedPanels = new ArrayList<>();
@@ -610,7 +612,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 			} else if (panelIndex < removedPanels.size()) {
 				panel = removedPanels.get(panelIndex);
 			} else {
-				panel = context.addMelodyPanel();
+				panel = (MelodyPanel) panelController.addPanel(INST.MELODY);
 				needNewChannel = true;
 			}
 			if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {

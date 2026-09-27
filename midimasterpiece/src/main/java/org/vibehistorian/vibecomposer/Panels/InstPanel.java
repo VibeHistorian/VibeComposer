@@ -21,19 +21,12 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.*;
-import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Section;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -55,12 +48,8 @@ import java.util.stream.Collectors;
 public abstract class InstPanel extends JPanel {
 
 	public interface Context {
-		InstPanel addInstPanel(int instrument, InstPart initialPart, boolean recalculateArrangement);
-		int getSelectedInstrumentIndex();
-		List<? extends InstPanel> getInstList(int instrument);
-		List<InstPanel> getAffectedPanels(int instrument);
-		void removeInstPanel(int instrument, int panelOrder);
-		int getAbsoluteOrder(int instrument, int panelOrder);
+		INST getSelectedInstrument();
+		int getAbsoluteOrder(INST instrument, int panelOrder);
 		void recalculateAfterCopy();
 	}
 
@@ -127,6 +116,7 @@ public abstract class InstPanel extends JPanel {
 	protected JButton randomizeButton = new JButton("?");
 	private Consumer<InstPanel> randomizeAction = panel -> {};
 	private Context context;
+	private InstrumentPanelController panelController;
 	private InstrumentControlContext instrumentControlContext;
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
@@ -228,22 +218,22 @@ public abstract class InstPanel extends JPanel {
 				if (context == null) {
 					return;
 				}
-				int selectedInstrument = context.getSelectedInstrumentIndex();
-				InstPanel newPanel = context.addInstPanel(selectedInstrument, part, true);
+				INST selectedInstrument = context.getSelectedInstrument();
+				InstPanel newPanel = panelController.addPanel(selectedInstrument, part, true);
 				newPanel.setPatternSeed(getPatternSeed());
 
 				// for MMB, intention is to split into 2 to modify the 2 pattern halves separately, but typically for one instrument
 				if (!ExtraSettingsGUI.reuseMidiChannelAfterCopy.isSelected() && !SwingUtilities.isMiddleMouseButton(e)) {
 					switch (selectedInstrument) {
-					case 0:
+					case MELODY:
 						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(3);
 						break;
-					case 2:
+					case CHORD:
 						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(5);
 						break;
-					case 3:
+					case ARP:
 						newPanel.setNextFreeMidiChannel();
 						newPanel.setPanByOrder(7);
 						break;
@@ -305,8 +295,9 @@ public abstract class InstPanel extends JPanel {
 	public void setNextFreeMidiChannel() {
 		int part = this.getPartNum();
 		int order = this.getPanelOrder();
-		List<? extends InstPanel> instPanels = context == null
-				? Collections.<InstPanel>emptyList() : context.getInstList(part);
+		List<? extends InstPanel> instPanels = panelController == null
+				? Collections.<InstPanel>emptyList()
+				: panelController.getInstList(INST.fromIndex(part));
 		List<Integer> typicalChannels = Constants.TYPICAL_MIDI_CH.get(part);
 		Set<Integer> usedChannels = instPanels.stream().filter(e -> !this.equals(e)).map(e -> e.getMidiChannel()).collect(Collectors.toSet());
 
@@ -344,8 +335,8 @@ public abstract class InstPanel extends JPanel {
 
 	public void addDefaultPanelButtons() {
 		removeButton.addActionListener(e -> {
-			if (context != null) {
-				context.removeInstPanel(getPartNum(), getPanelOrder());
+			if (panelController != null) {
+				panelController.removePanel(INST.fromIndex(getPartNum()), getPanelOrder());
 			}
 		});
 		this.add(removeButton);
@@ -369,8 +360,9 @@ public abstract class InstPanel extends JPanel {
 		return instrumentControlContext;
 	}
 
-	public void setContext(Context context) {
+	public void setContext(Context context, InstrumentPanelController panelController) {
 		this.context = context;
+		this.panelController = panelController;
 	}
 
 	private static void applyInstrumentControlContext(Container container,
@@ -874,7 +866,7 @@ public abstract class InstPanel extends JPanel {
 
 	public int getAbsoluteOrder() {
 		return context == null ? getPanelOrder()
-				: context.getAbsoluteOrder(getPartNum(), getPanelOrder());
+				: context.getAbsoluteOrder(INST.fromIndex(getPartNum()), getPanelOrder());
 	}
 
 	public int getFeedbackCount() {
@@ -1116,8 +1108,8 @@ public abstract class InstPanel extends JPanel {
 			LG.i("Found no component for global setting!");
 			return new ArrayList<>();
 		}
-		List<T> components = (context == null ? Collections.<InstPanel>emptyList()
-				: context.getAffectedPanels(getPartNum())).stream()
+		List<T> components = (panelController == null ? Collections.<InstPanel>emptyList()
+				: panelController.getAffectedPanels(INST.fromIndex(getPartNum()))).stream()
 				.map(e -> e.getComponentByClassIndex(clazz, indexInPanel))
 				.collect(Collectors.toList());
 		return components;

@@ -36,8 +36,6 @@ public class ExtraSettingsGUI {
         void initHelperPopups(JPanel settingsPanel);
         void markSoundbankRefreshNeeded();
         void repaintMainWindow();
-        List<InstPanel> getAffectedPanels(int instrument);
-        List<? extends InstPanel> getInstList(int instrument);
     }
 
     public static JPanel extraSettingsPanel;
@@ -98,10 +96,13 @@ public class ExtraSettingsGUI {
 
     private final Context context;
     private final DrumGUI drumGUI;
+    private final InstrumentPanelController panelController;
 
-    public ExtraSettingsGUI(Context context, DrumGUI drumGUI) {
+    public ExtraSettingsGUI(Context context, DrumGUI drumGUI,
+            InstrumentPanelController panelController) {
         this.context = context;
         this.drumGUI = drumGUI;
+        this.panelController = panelController;
     }
 
     public void initExtraSettings() {
@@ -343,11 +344,11 @@ public class ExtraSettingsGUI {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				isShowingTextInKnobs = !isShowingTextInKnobs;
-				for (int i = 0; i < 5; i++) {
-					context.getInstList(i)
+				for (INST instrument : INST.values()) {
+					panelController.getInstList(instrument)
 							.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
 					if (ArrangementGUI.arrSection.getSelectedIndex() > 0) {
-						context.getAffectedPanels(i).forEach(
+						panelController.getAffectedPanels(instrument).forEach(
 								ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
 					}
 

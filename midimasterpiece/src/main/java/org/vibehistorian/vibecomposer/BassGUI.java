@@ -26,7 +26,6 @@ import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 
@@ -39,7 +38,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Consumer;
 
 /**
  * Bass GUI module - Handles all bass-related UI components and logic.
@@ -56,9 +54,11 @@ public class BassGUI implements InstrumentGUIControls {
     private JTextField randomPanelsToGenerate;
 
     private final Context context;
+    private final InstrumentPanelController panelController;
 
-    public BassGUI(Context context) {
+    public BassGUI(Context context, InstrumentPanelController panelController) {
         this.context = context;
+        this.panelController = panelController;
     }
 
     @Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
@@ -86,10 +86,6 @@ public class BassGUI implements InstrumentGUIControls {
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {
         PartManagerPanel.Context getPartManagerContext();
-        void addPanel();
-        void generatePanels(boolean triggerRegenerate);
-        BassPanel addBassPanel();
-        List<InstPanel> getAffectedPanels(int instrument);
     }
 
     /**
@@ -122,9 +118,10 @@ public class BassGUI implements InstrumentGUIControls {
         bassSettingsPanel.add(new JLabel("LP"));
         bassSettingsPanel.add(groupFilterSlider);
 
-        addPanelButton = SwingUtils.makeButton("+Bass", e -> context.addPanel());
+        addPanelButton = SwingUtils.makeButton("+Bass",
+                e -> panelController.addRandomPanel(INST.BASS));
         generatePanelButton = SwingUtils.makeButton("Generate Basses:",
-                e -> context.generatePanels(true));
+                e -> panelController.generatePanels(INST.BASS, true));
         randomPanelsToGenerate = new JTextField("1", 2);
         bassSettingsPanel.add(addPanelButton);
         bassSettingsPanel.add(generatePanelButton);
@@ -167,7 +164,8 @@ public class BassGUI implements InstrumentGUIControls {
     public void createRandomBassPanels(int seed, int panelCount, boolean onlyAdd,
             BassPanel randomizedPanel) {
         ScrollComboBox.discardInteractions();
-        List<BassPanel> affectedBasses = (List<BassPanel>) (List<?>) context.getAffectedPanels(1);
+        List<BassPanel> affectedBasses = (List<BassPanel>) (List<?>)
+                panelController.getAffectedPanels(INST.BASS);
 
         Random panelGenerator = new Random(seed);
         List<BassPanel> removedPanels = new ArrayList<>();
@@ -199,7 +197,7 @@ public class BassGUI implements InstrumentGUIControls {
             } else if (panelIndex < removedPanels.size()) {
                 ip = removedPanels.get(panelIndex);
             } else {
-                ip = context.addBassPanel();
+                ip = (BassPanel) panelController.addPanel(INST.BASS);
                 needNewChannel = true;
             }
             if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {

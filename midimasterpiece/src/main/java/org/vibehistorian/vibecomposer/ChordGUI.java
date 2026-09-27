@@ -35,7 +35,6 @@ import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
@@ -115,9 +114,11 @@ public class ChordGUI implements InstrumentGUIControls {
     public static ChordletPanel userChords;
 
     private final Context context;
+    private final InstrumentPanelController panelController;
 
-    public ChordGUI(Context context) {
+    public ChordGUI(Context context, InstrumentPanelController panelController) {
         this.context = context;
+        this.panelController = panelController;
     }
 
     @Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
@@ -238,12 +239,8 @@ public class ChordGUI implements InstrumentGUIControls {
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
         PartManagerPanel.Context getPartManagerContext();
-        void addPanel();
-        void generatePanels(boolean triggerRegenerate);
         void copyGUItoConfig();
 			void alignChordsWithMelody(ChordletPanel chordlets);
-		ChordPanel addChordPanel();
-		List<InstPanel> getAffectedPanels(int instrument);
     }
 
 	public static void initExtraSettingsChords(JPanel chordChoicePanel) {
@@ -333,10 +330,10 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordSettingsPanel.add(groupFilterSlider);
 
 		addPanelButton = SwingUtils.makeButton("+Chord", e -> {
-			context.addPanel();
+			panelController.addRandomPanel(INST.CHORD);
 		});
 		generatePanelButton = SwingUtils.makeButton("Generate Chords:", e -> {
-			context.generatePanels(true);
+			panelController.generatePanels(INST.CHORD, true);
 		});
 		randomPanelsToGenerate = new JTextField("2", 2);
 		chordSettingsPanel.add(addPanelButton);
@@ -388,7 +385,8 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordSettingsPanel.add(randomChordMaxStrumPauseChance);
 
 		JButton clearChordPatternSeeds = SwingUtils.makeButton("Clear Seeds",
-				e -> context.getAffectedPanels(2).forEach(panel -> panel.setPatternSeed(0)));
+				e -> panelController.getAffectedPanels(INST.CHORD)
+						.forEach(panel -> panel.setPatternSeed(0)));
 
 		JPanel chordSettingsExtraPanel = new JPanel();
 		JLabel csExtra = new JLabel("CHORD SETTINGS+");
@@ -768,7 +766,8 @@ public class ChordGUI implements InstrumentGUIControls {
 	public void createRandomChordPanels(int panelCount, boolean onlyAdd,
 			ChordPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>) context.getAffectedPanels(2);
+		List<ChordPanel> affectedChords = (List<ChordPanel>) (List<?>)
+				panelController.getAffectedPanels(INST.CHORD);
 
 		Random panelGenerator = new Random();
 		List<ChordPanel> removedPanels = new ArrayList<>();
@@ -807,7 +806,7 @@ public class ChordGUI implements InstrumentGUIControls {
 				if (panelIndex < removedPanels.size()) {
 					ip = removedPanels.get(panelIndex);
 				} else {
-					ip = (ChordPanel) context.addChordPanel();
+					ip = (ChordPanel) panelController.addPanel(INST.CHORD);
 					needNewChannel = true;
 				}
 			}

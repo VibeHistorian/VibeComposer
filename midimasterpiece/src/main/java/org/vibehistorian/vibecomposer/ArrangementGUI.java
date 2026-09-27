@@ -151,10 +151,20 @@ public class ArrangementGUI {
 	}
 
 	private final Context context;
+	private final InstrumentPanelController panelController;
 
-	public ArrangementGUI(Context context) {
+	public ArrangementGUI(Context context, InstrumentPanelController panelController) {
 		this.context = context;
+		this.panelController = panelController;
 		arrangementGUI = this;
+	}
+
+	private List<? extends InstPanel> getInstList(int instrument) {
+		return panelController.getInstList(INST.fromIndex(instrument));
+	}
+
+	private JScrollPane getInstPane(int instrument) {
+		return panelController.getInstPane(INST.fromIndex(instrument));
 	}
 
 	/** Supplies the cross-tab work that belongs to the main window. */
@@ -166,10 +176,8 @@ public class ArrangementGUI {
 		void regenerate();
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
-		List<? extends InstPanel> getInstList(int instrument);
 		List<? extends InstPart> getInstrumentParts(int instrument);
 		List<InstPart> getInstPartsFromCustomSectionInstPanels(int instrument);
-		JScrollPane getInstPane(int instrument);
 		InstPanel makeCustomSectionInstPanel(int instrument);
 		int getAbsoluteOrder(int instrument, int panelOrder);
 		void addArrangementComponents(JComponent sectionPane, JComponent settings,
@@ -179,7 +187,6 @@ public class ArrangementGUI {
 		void trySliderStartChange(int sectionIndex);
 		MidiEditPopup.Context getMidiEditPopupContext();
 		GUIConfig getSelectedConfigHistory();
-		void createRandomPanels(int instrument, int panelCount);
 		void recalculateAfterSectionRecompose();
 		void regenerateAfterSectionRecomposeIfEnabled();
 	}
@@ -202,7 +209,8 @@ public class ArrangementGUI {
 		}
 		manualArrangement.setSelected(true);
 		for (int instrument = 0; instrument < 5; instrument++) {
-			context.createRandomPanels(instrument, context.getInstList(instrument).size());
+			panelController.createRandomPanels(INST.fromIndex(instrument),
+					getInstList(instrument).size(), false);
 			applyCustomPanelsToSection("", instrument, arrSection.getSelectedIndex());
 		}
 		arrSection.getCurrentButton().repaint();
@@ -261,7 +269,7 @@ public class ArrangementGUI {
 			for (Section section : actualArrangement.getSections()) {
 				for (int instrument = 0; instrument < 5; instrument++) {
 					List<?> parts = section.getInstPartList(instrument);
-					if (parts != null && parts.size() > context.getInstList(instrument).size()) {
+					if (parts != null && parts.size() > getInstList(instrument).size()) {
 						section.resetCustomizedParts(instrument);
 					}
 				}
@@ -307,7 +315,7 @@ public class ArrangementGUI {
 		if (row >= 2 && sectionOrder >= 0) {
 			int instrument = row - 2;
 			double orderPercentage = calculateMousePointPercentageInTable(row, sectionOrder);
-			int actualSize = context.getInstList(instrument).size();
+			int actualSize = getInstList(instrument).size();
 			int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
 			int panelOrder = (int) Math.floor(orderPercentage * visualSize);
 			if ((actualSize > CollectionCellRenderer.MIN_CELLS && panelOrder == actualSize)
@@ -327,8 +335,8 @@ public class ArrangementGUI {
 			LG.i("Resetting to normal panels!");
 			arrangementMiddleColoredPanel.setBackground(UITheme.panelColorHigh.brighter());
 			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = context.getInstPane(instrument);
-				List<? extends InstPanel> panels = context.getInstList(instrument);
+				JScrollPane pane = getInstPane(instrument);
+				List<? extends InstPanel> panels = getInstList(instrument);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				for (Component component : panelView.getComponents()) {
 					if (component instanceof InstPanel) panelView.remove(component);
@@ -345,11 +353,11 @@ public class ArrangementGUI {
 			int sectionOrder = Integer.parseInt(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = context.getInstPane(instrument);
+				JScrollPane pane = getInstPane(instrument);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				List<InstPanel> sectionPanels = new ArrayList<>();
 				List<Integer> missingPanels = new ArrayList<>();
-				context.getInstList(instrument)
+				getInstList(instrument)
 						.forEach(panel -> missingPanels.add(panel.getPanelOrder()));
 				List<? extends InstPart> sectionParts = section.getInstPartList(instrument);
 				if (sectionParts != null) {
@@ -367,7 +375,7 @@ public class ArrangementGUI {
 					}
 				}
 				if (!missingPanels.isEmpty()) {
-					List<? extends InstPanel> panels = new ArrayList<>(context.getInstList(instrument))
+					List<? extends InstPanel> panels = new ArrayList<>(getInstList(instrument))
 							.stream().filter(panel -> missingPanels.contains(panel.getPanelOrder()))
 							.collect(java.util.stream.Collectors.toList());
 					for (Component component : panelView.getComponents()) {
@@ -406,7 +414,7 @@ public class ArrangementGUI {
 		addedPanels.forEach(panel -> panel.setVisible(true));
 		context.toggleButtonEnabledForPanels();
 		for (int instrument = 0; instrument < 5; instrument++) {
-			context.getInstPane(instrument).repaint();
+			getInstPane(instrument).repaint();
 		}
 		if (context.getInstrumentTabPane().getSelectedIndex() == 6) {
 			actualArrangement.getSections().forEach(section ->
@@ -440,7 +448,7 @@ public class ArrangementGUI {
 
 		double orderPercentage = calculateMousePointPercentageInTable(row, sectionOrder);
 		int instrument = row - 2;
-		List<? extends InstPanel> panels = context.getInstList(instrument);
+		List<? extends InstPanel> panels = getInstList(instrument);
 		int actualSize = panels.size();
 		int visualSize = Math.max(CollectionCellRenderer.MIN_CELLS + 1, actualSize + 1);
 		int partOrder = (int) Math.floor(orderPercentage * visualSize);
@@ -611,7 +619,7 @@ public class ArrangementGUI {
 		}
 		Section section = actualArrangement.getSections().get(target.getRight());
 		int instrument = target.getLeft();
-		int panelOrder = context.getInstList(instrument).get(target.getMiddle()).getPanelOrder();
+		int panelOrder = getInstList(instrument).get(target.getMiddle()).getPanelOrder();
 		section.putPattern(instrument, panelOrder, copyDraggedPattern);
 		if (!section.getPresence(instrument).contains(panelOrder))
 			section.setPresence(instrument, target.getMiddle());
@@ -1010,7 +1018,7 @@ public class ArrangementGUI {
 				Collection<?> stringables = value instanceof String
 						? Collections.singleton((String) value) : (Collection<?>) value;
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
-						context::getInstList, context::getAbsoluteOrder);
+						ArrangementGUI.this::getInstList, context::getAbsoluteOrder);
 			}
 		};
 		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {
@@ -1279,7 +1287,7 @@ public class ArrangementGUI {
 		recalculateActualArrangementSection(sectionOrder - 1);
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
 				context.getVariationPopupLocation(), context.getVariationPopupWindowSize(),
-				context::getInstList, context::getInstrumentParts);
+				this::getInstList, context::getInstrumentParts);
 	}
 
 	public void recalculateActualArrangementSection(int sectionOrder) {
@@ -1295,7 +1303,7 @@ public class ArrangementGUI {
 
 	public void openPartInclusionPopup() {
 		arrangement.recalculatePartInclusionMapBoundsIfNeeded(context::getInstrumentParts);
-		new ArrangementPartInclusionPopup(arrangement, context::getInstList,
+		new ArrangementPartInclusionPopup(arrangement, this::getInstList,
 				context::getInstrumentParts);
 	}
 

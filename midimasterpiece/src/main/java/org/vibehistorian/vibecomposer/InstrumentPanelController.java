@@ -8,7 +8,7 @@ import javax.swing.*;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import java.awt.Component;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 /** Owns the shared lifecycle of instrument panels inside their instrument tabs. */
 public final class InstrumentPanelController {
 	public interface Context {
-		InstPanel createPanel(int instrument);
+		InstPanel createPanel(INST instrument);
 		void configurePanel(InstPanel panel);
-		List<? extends InstPanel> getPanels(int instrument);
-		int getRandomPanelCount(int instrument);
-		JScrollPane getPanelScrollPane(int instrument);
+		List<? extends InstPanel> getPanels(INST instrument);
+		int getRandomPanelCount(INST instrument);
+		JScrollPane getPanelScrollPane(INST instrument);
 		boolean isFullMode();
 		boolean isCustomSection();
 		boolean reverseDrumPanelOrder();
@@ -32,13 +32,14 @@ public final class InstrumentPanelController {
 		void recalculateTabPaneCounts();
 		void recalculateAfterPanelGeneration();
 		void recalculateAfterPanelAddition();
+		void recalculateAfterPanelRemoval();
 		void repaintInstrumentTabs();
 		void repaintMainWindow();
 		boolean canRegenerateOnChange();
 		void regenerate();
 		int getCurrentSeed();
-		void randomizePanels(int instrument, int panelCount, boolean onlyAdd, Integer seed,
-				InstPanel randomizedPanel);
+		void randomizePanels(INST instrument, int panelCount, boolean onlyAdd, Integer seed,
+							 InstPanel randomizedPanel);
 	}
 
 	private final Context context;
@@ -47,23 +48,23 @@ public final class InstrumentPanelController {
 		this.context = context;
 	}
 
-	public List<? extends InstPanel> getInstList(int instrument) {
+	public List<? extends InstPanel> getInstList(INST instrument) {
 		return context.getPanels(instrument);
 	}
 
-	public JScrollPane getInstPane(int instrument) {
+	public JScrollPane getInstPane(INST instrument) {
 		return context.getPanelScrollPane(instrument);
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<InstPanel> getAffectedPanels(int instrument) {
+	public List<InstPanel> getAffectedPanels(INST instrument) {
 		if (context.isCustomSection()) {
 			return getSectionPanelList(instrument);
 		}
 		return (List<InstPanel>) getInstList(instrument);
 	}
 
-	public List<InstPanel> getSectionPanelList(int instrument) {
+	public List<InstPanel> getSectionPanelList(INST instrument) {
 		JPanel panelContainer = (JPanel) getInstPane(instrument).getViewport().getView();
 		List<InstPanel> sectionPanels = new ArrayList<>();
 		for (Component component : panelContainer.getComponents()) {
@@ -74,16 +75,16 @@ public final class InstrumentPanelController {
 		return sectionPanels;
 	}
 
-	public InstPanel addPanel(int instrument) {
+	public InstPanel addPanel(INST instrument) {
 		return addPanel(instrument, null, true);
 	}
 
-	public InstPanel addPanel(int instrument, boolean recalculateArrangement) {
+	public InstPanel addPanel(INST instrument, boolean recalculateArrangement) {
 		return addPanel(instrument, null, recalculateArrangement);
 	}
 
-	public InstPanel addPanel(int instrument, InstPart initializingPart,
-			boolean recalculateArrangement) {
+	public InstPanel addPanel(INST instrument, InstPart initializingPart,
+							  boolean recalculateArrangement) {
 		InstPanel panel = context.createPanel(instrument);
 		context.configurePanel(panel);
 		List<InstPanel> affectedPanels = getAffectedPanels(instrument);
@@ -94,11 +95,11 @@ public final class InstrumentPanelController {
 		if (context.isCustomSection()) {
 			panel.toggleGlobalElements(false);
 			panel.toggleEnabledCopyRemove(false);
-			if (instrument == 4) {
+			if (instrument == INST.DRUM) {
 				panel.getInstrumentBox().setEnabled(true);
 			}
 		} else {
-			panel.setBackground(OMNI.alphen(Constants.instColors[instrument], 60));
+			panel.setBackground(OMNI.alphen(Constants.instColors[instrument.getIndex()], 60));
 		}
 
 		if (initializingPart != null) {
@@ -116,7 +117,7 @@ public final class InstrumentPanelController {
 
 		JPanel panelContainer = (JPanel) getInstPane(instrument)
 				.getViewport().getView();
-		if (instrument < 4 || !context.reverseDrumPanelOrder()) {
+		if (instrument != INST.DRUM || !context.reverseDrumPanelOrder()) {
 			panelContainer.add(panel, panelOrder - 1);
 		} else {
 			panelContainer.add(panel, affectedPanels.size() - panelOrder);
@@ -124,18 +125,18 @@ public final class InstrumentPanelController {
 		return panel;
 	}
 
-	public void addRandomPanel(int instrument) {
+	public void addRandomPanel(INST instrument) {
 		createRandomPanels(instrument, getAffectedPanels(instrument).size() + 1,
 				true, null, null);
 		context.recalculateAfterPanelAddition();
 		context.repaintMainWindow();
 	}
 
-	public void generatePanels(int instrument) {
+	public void generatePanels(INST instrument) {
 		generatePanels(instrument, false);
 	}
 
-	public void generatePanels(int instrument, boolean triggerRegenerate) {
+	public void generatePanels(INST instrument, boolean triggerRegenerate) {
 		int panelCount = context.isCustomSection()
 				? getInstList(instrument).size()
 				: context.getRandomPanelCount(instrument);
@@ -146,30 +147,38 @@ public final class InstrumentPanelController {
 		}
 	}
 
-	public void createRandomPanels(int instrument, int panelCount, boolean onlyAdd) {
+	public void createRandomPanels(INST instrument, int panelCount, boolean onlyAdd) {
 		createRandomPanels(instrument, panelCount, onlyAdd, null, null);
 	}
 
-	public void createRandomPanels(int instrument, int panelCount, boolean onlyAdd,
-			Integer seed, InstPanel randomizedPanel) {
+	public void createRandomPanels(INST instrument, int panelCount, boolean onlyAdd,
+								   Integer seed, InstPanel randomizedPanel) {
 		context.randomizePanels(instrument, panelCount, onlyAdd, seed, randomizedPanel);
 		context.repaintMainWindow();
 	}
 
 	public void randomizePanel(InstPanel panel) {
-		int instrument = panel.getPartNum();
-		if (instrument == 0) {
+		INST instrument = INST.fromIndex(panel.getPartNum());
+		switch (instrument) {
+		case MELODY:
 			createRandomPanels(instrument, getInstList(instrument).size() + 1, true,
 					new java.util.Random().nextInt(), panel);
-		} else if (instrument == 1) {
+			break;
+		case BASS:
 			// Bass panels do not currently expose single-panel randomization.
-		} else if (instrument == 2 || instrument == 3 || instrument == 4) {
+			break;
+		case CHORD:
+		case ARP:
+		case DRUM:
 			createRandomPanels(instrument, getInstList(instrument).size() + 1, true,
 					null, panel);
+			break;
+		default:
+			throw new IllegalStateException("Unsupported instrument: " + instrument);
 		}
 	}
 
-	public void removePanel(int instrument, int order) {
+	public void removePanel(INST instrument, int order) {
 		List<? extends InstPanel> panels = getInstList(instrument);
 		InstPanel panel = panels.stream().filter(candidate -> candidate.getPanelOrder() == order)
 				.findFirst().get();
@@ -177,14 +186,15 @@ public final class InstrumentPanelController {
 		panels.remove(panel);
 		context.recalculateArrangementPartMaps();
 		context.repaintMainWindow();
+		context.recalculateAfterPanelRemoval();
 	}
 
-	public void recreatePanels(int instrument, List<? extends InstPart> parts) {
+	public void recreatePanels(INST instrument, List<? extends InstPart> parts) {
 		recreatePanels(instrument, parts, true);
 	}
 
-	public void recreatePanels(int instrument, List<? extends InstPart> parts,
-			boolean clearPreviousPanels) {
+	public void recreatePanels(INST instrument, List<? extends InstPart> parts,
+							   boolean clearPreviousPanels) {
 		if (clearPreviousPanels) {
 			List<InstPanel> panels = getAffectedPanels(instrument);
 			JPanel panelContainer = (JPanel) getInstPane(instrument)
@@ -207,7 +217,7 @@ public final class InstrumentPanelController {
 			if (!clearPreviousPanels) {
 				panel.setOrderAndOffset(newPanelOrder, parts.get(i).getOrderOffset());
 			}
-			if (instrument == 4 && panel.getComboPanel() != null) {
+			if (instrument == INST.DRUM && panel.getComboPanel() != null) {
 				panel.getComboPanel().reapplyHits();
 			}
 		}
@@ -215,8 +225,9 @@ public final class InstrumentPanelController {
 		context.repaintInstrumentTabs();
 	}
 
-	public int saveParts(String path, int instrument, boolean selectiveSave) throws JAXBException {
-		Class<? extends InstPartsWrapper> wrapperClass = InstPartsWrapper.getWrapperClass(instrument);
+	public int saveParts(String path, INST instrument, boolean selectiveSave)
+			throws JAXBException {
+		Class<? extends InstPartsWrapper> wrapperClass = InstPartsWrapper.getWrapperClass(instrument.getIndex());
 		JAXBContext jaxbContext = JAXBContext.newInstance(wrapperClass, InstPartsWrapper.class);
 		Marshaller marshaller = jaxbContext.createMarshaller();
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
@@ -236,8 +247,8 @@ public final class InstrumentPanelController {
 		return parts.size();
 	}
 
-	public boolean recreateImportedParts(int instrument, List<InstPart> parts,
-			boolean clearPreviousPanels) {
+	public boolean recreateImportedParts(INST instrument, List<InstPart> parts,
+										 boolean clearPreviousPanels) {
 		boolean customSection = context.isCustomSection();
 		if (!clearPreviousPanels && customSection) {
 			return false;

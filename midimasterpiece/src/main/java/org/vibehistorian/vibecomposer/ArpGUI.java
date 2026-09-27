@@ -84,9 +84,11 @@ public class ArpGUI implements InstrumentGUIControls {
 	public static JCheckBox arpAffectsBpm;
 
 	private final Context context;
+	private final InstrumentPanelController panelController;
 
-	public ArpGUI(Context context) {
+	public ArpGUI(Context context, InstrumentPanelController panelController) {
 		this.context = context;
+		this.panelController = panelController;
 	}
 
 	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
@@ -131,11 +133,6 @@ public class ArpGUI implements InstrumentGUIControls {
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
-		void addPanel();
-		void generatePanels(boolean triggerRegenerate);
-		ArpPanel addArpPanel();
-		List<InstPanel> getAffectedPanels(int instrument);
-		List<? extends InstPanel> getInstList(int instrument);
 	}
 
 	public void initArpGenSettings() {
@@ -163,8 +160,10 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpsSettingsPanel.add(filterLabel);
 		arpsSettingsPanel.add(groupFilterSlider);
 
-		addPanelButton = SwingUtils.makeButton("+Arp", e -> context.addPanel());
-		generatePanelButton = SwingUtils.makeButton("Generate Arps:", e -> context.generatePanels(true));
+		addPanelButton = SwingUtils.makeButton("+Arp",
+				e -> panelController.addRandomPanel(INST.ARP));
+		generatePanelButton = SwingUtils.makeButton("Generate Arps:",
+				e -> panelController.generatePanels(INST.ARP, true));
 		randomPanelsToGenerate = new JTextField("3", 2);
 		arpsSettingsPanel.add(addPanelButton);
 		arpsSettingsPanel.add(generatePanelButton);
@@ -219,7 +218,8 @@ public class ArpGUI implements InstrumentGUIControls {
 		UITheme.toggleableComponents.add(randomArpStretchPicker);
 
 		JButton clearArpPatternSeeds = SwingUtils.makeButton("Clear Seeds",
-				e -> context.getAffectedPanels(3).forEach(panel -> panel.setPatternSeed(0)));
+				e -> panelController.getAffectedPanels(INST.ARP)
+						.forEach(panel -> panel.setPatternSeed(0)));
 		JPanel arpSettingsExtraPanel = new JPanel();
 		JLabel csExtra = new JLabel("ARP SETTINGS+");
 		csExtra.setPreferredSize(new Dimension(120, 30));
@@ -276,7 +276,8 @@ public class ArpGUI implements InstrumentGUIControls {
 
 	public void createRandomArpPanels(int panelCount, boolean onlyAdd, ArpPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>) context.getAffectedPanels(3);
+		List<ArpPanel> affectedArps = (List<ArpPanel>) (List<?>)
+				panelController.getAffectedPanels(INST.ARP);
 
 		Random panelGenerator = new Random();
 		List<ArpPanel> removedPanels = new ArrayList<>();
@@ -316,7 +317,7 @@ public class ArpGUI implements InstrumentGUIControls {
 
 		int fixedInstrument = -1;
 		int fixedHits = -1;
-		List<? extends InstPanel> melodyPanels = context.getInstList(0);
+		List<? extends InstPanel> melodyPanels = panelController.getInstList(INST.MELODY);
 		MelodyPanel firstMelodyPanel = melodyPanels.isEmpty() ? null : (MelodyPanel) melodyPanels.get(0);
 		if (arpCopyMelodyInst.isSelected() && firstMelodyPanel != null
 				&& !firstMelodyPanel.getMuteInst()) {
@@ -356,7 +357,7 @@ public class ArpGUI implements InstrumentGUIControls {
 				ip = removedPanels.get(panelIndex);
 			} else {
 				needNewChannel = true;
-				ip = context.addArpPanel();
+				ip = (ArpPanel) panelController.addPanel(INST.ARP);
 			}
 
 			if (randomArpHitsPerPattern.isSelected()) {

@@ -28,7 +28,6 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
@@ -87,9 +86,11 @@ public class DrumGUI implements InstrumentGUIControls {
 	public static JCheckBox combineDrumTracks;
 
 	private final Context context;
+	private final InstrumentPanelController panelController;
 
-	public DrumGUI(Context context) {
+	public DrumGUI(Context context, InstrumentPanelController panelController) {
 		this.context = context;
+		this.panelController = panelController;
 	}
 
 	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
@@ -127,10 +128,6 @@ public class DrumGUI implements InstrumentGUIControls {
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
-		void addPanel();
-		void generatePanels(boolean triggerRegenerate);
-		DrumPanel addDrumPanel();
-		List<InstPanel> getAffectedPanels(int instrument);
 	}
 
 	public void initDrumGenSettings() {
@@ -167,10 +164,10 @@ public class DrumGUI implements InstrumentGUIControls {
 		//drumsPanel.add(drumInst);
 
 		addPanelButton = SwingUtils.makeButton("+Drum", e -> {
-			context.addPanel();
+			panelController.addRandomPanel(INST.DRUM);
 		});
 		generatePanelButton = SwingUtils.makeButton("Generate Drums:", e -> {
-			context.generatePanels(true);
+			panelController.generatePanels(INST.DRUM, true);
 		});
 		randomPanelsToGenerate = new JTextField("6", 2);
 		drumsPanel.add(addPanelButton);
@@ -181,7 +178,8 @@ public class DrumGUI implements InstrumentGUIControls {
 		drumsPanel.add(randomDrumsGenerateOnCompose);
 
 		JButton clearPatternSeeds = SwingUtils.makeButton("Clear Seeds",
-				e -> context.getAffectedPanels(4).forEach(panel -> panel.setPatternSeed(0)));
+				e -> panelController.getAffectedPanels(INST.DRUM)
+						.forEach(panel -> panel.setPatternSeed(0)));
 
 		randomDrumMaxSwingAdjust = new DetachedKnobPanel("Max Swing+-", 20, 0, 50);
 		randomDrumSlide = new CustomCheckBox("Random Offset", false);
@@ -207,7 +205,8 @@ public class DrumGUI implements InstrumentGUIControls {
 
 			@Override
 			public void itemStateChanged(ItemEvent event) {
-				List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) context.getAffectedPanels(4);
+				List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>)
+						panelController.getAffectedPanels(INST.DRUM);
 				if (event.getStateChange() == ItemEvent.SELECTED) {
 					for (int i = 0; i < affectedDrums.size(); i++) {
 						int newHits = affectedDrums.get(i).getHitsPerPattern();
@@ -316,7 +315,8 @@ public class DrumGUI implements InstrumentGUIControls {
 	public void createRandomDrumPanels(int panelCount, boolean onlyAdd,
 			DrumPanel randomizedPanel) {
 		ScrollComboBox.discardInteractions();
-		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>) context.getAffectedPanels(4);
+		List<DrumPanel> affectedDrums = (List<DrumPanel>) (List<?>)
+				panelController.getAffectedPanels(INST.DRUM);
 
 		Random panelGenerator = new Random();
 		List<DrumPanel> removedPanels = new ArrayList<>();
@@ -440,7 +440,7 @@ public class DrumGUI implements InstrumentGUIControls {
 				if (panelIndex < removedPanels.size()) {
 					ip = removedPanels.get(panelIndex);
 				} else {
-					ip = (DrumPanel) context.addDrumPanel();
+					ip = (DrumPanel) panelController.addPanel(INST.DRUM);
 				}
 			}
 
