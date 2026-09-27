@@ -143,12 +143,12 @@ public final class PlaybackController {
 	}
 
 	public void resetSequencerTickPosition() {
-		if (slider.getValue() < slider.getMaximum()) {
-			midiNavigate(slider.getValue());
-		} else {
+		int position = slider.getValue();
+		if (position >= slider.getMaximum()) {
 			slider.setValue(0);
-			midiNavigate(0);
+			position = 0;
 		}
+		midiNavigate(position);
 	}
 
 	public void flushMidiEvents() {
