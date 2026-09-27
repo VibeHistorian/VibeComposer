@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.Track;
+import java.util.List;
 
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
 
@@ -98,28 +99,25 @@ public final class PlaybackController {
 	public void savePauseInfo() {
 		pausedSliderPosition = slider.getUpperValue();
 		pausedBpm = context.currentBpm();
-		if (currentMidi != null && context.hasGeneratedChordData()) {
-			for (int i = 1; i < sliderMeasureStartTimes.size(); i++) {
-				if (sliderMeasureStartTimes.get(i) >= pausedSliderPosition + 50) {
-					pausedMeasureCounter = i - 1;
-					return;
-				}
-			}
-		}
-		pausedMeasureCounter = 0;
+		pausedMeasureCounter = findCurrentSegmentIndex(pausedSliderPosition,
+				sliderMeasureStartTimes);
 	}
 
 	public void saveStartInfo() {
 		startSliderPosition = slider.getValue();
-		if (currentMidi != null && context.hasGeneratedChordData()) {
-			for (int i = 1; i < sliderBeatStartTimes.size(); i++) {
-				if (sliderBeatStartTimes.get(i) >= startSliderPosition + 50) {
-					startBeatCounter = i - 1;
-					return;
-				}
+		startBeatCounter = findCurrentSegmentIndex(startSliderPosition, sliderBeatStartTimes);
+	}
+
+	private int findCurrentSegmentIndex(int position, List<Integer> segmentStartTimes) {
+		if (currentMidi == null || !context.hasGeneratedChordData()) {
+			return 0; // forced
+		}
+		for (int i = 1; i < segmentStartTimes.size(); i++) {
+			if (segmentStartTimes.get(i) >= position + 50) {
+				return i - 1;
 			}
 		}
-		startBeatCounter = 0;
+		return 0;
 	}
 
 	public void setPauseInfoResettable(boolean resettable) {
