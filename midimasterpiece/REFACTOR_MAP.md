@@ -242,6 +242,7 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.7 Playback position reset:** consolidated the two identical navigation calls after the end-of-sequence check; the slider still resets to zero at its maximum before navigation.
 - **3.8 GUI value state ownership:** moved supported control value reads and restores from `VibeComposerGUI` to `UIComponentState`. Preset save/load and undo history use the shared helper; tab selection history suppression now sits in `UndoManager`.
 - **3.9 Instrument part workflow ownership:** moved locked-panel filtering for part saves and imported-part merging into `InstrumentPanelController`. The window retains XML file loading and presents the existing custom-section restriction message.
+- **3.10 Instrument panel lookup ownership:** moved instrument panel list and scroll-pane access, plus custom-section-aware affected-panel selection, into `InstrumentPanelController`. The window's static accessors delegate to the controller for compatibility; the controller context supplies the instrument-owned list and pane directly.
 
 ### Phase 3 status
 

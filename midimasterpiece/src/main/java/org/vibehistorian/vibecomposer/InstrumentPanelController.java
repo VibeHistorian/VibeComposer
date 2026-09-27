@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,7 +21,6 @@ public final class InstrumentPanelController {
 	public interface Context {
 		InstPanel createPanel(int instrument);
 		void configurePanel(InstPanel panel);
-		List<InstPanel> getAffectedPanels(int instrument);
 		List<? extends InstPanel> getPanels(int instrument);
 		int getRandomPanelCount(int instrument);
 		JScrollPane getPanelScrollPane(int instrument);
@@ -47,6 +47,33 @@ public final class InstrumentPanelController {
 		this.context = context;
 	}
 
+	public List<? extends InstPanel> getInstList(int instrument) {
+		return context.getPanels(instrument);
+	}
+
+	public JScrollPane getInstPane(int instrument) {
+		return context.getPanelScrollPane(instrument);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<InstPanel> getAffectedPanels(int instrument) {
+		if (context.isCustomSection()) {
+			return getSectionPanelList(instrument);
+		}
+		return (List<InstPanel>) getInstList(instrument);
+	}
+
+	public List<InstPanel> getSectionPanelList(int instrument) {
+		JPanel panelContainer = (JPanel) getInstPane(instrument).getViewport().getView();
+		List<InstPanel> sectionPanels = new ArrayList<>();
+		for (Component component : panelContainer.getComponents()) {
+			if (component instanceof InstPanel) {
+				sectionPanels.add((InstPanel) component);
+			}
+		}
+		return sectionPanels;
+	}
+
 	public InstPanel addPanel(int instrument) {
 		return addPanel(instrument, null, true);
 	}
@@ -59,7 +86,7 @@ public final class InstrumentPanelController {
 			boolean recalculateArrangement) {
 		InstPanel panel = context.createPanel(instrument);
 		context.configurePanel(panel);
-		List<InstPanel> affectedPanels = context.getAffectedPanels(instrument);
+		List<InstPanel> affectedPanels = getAffectedPanels(instrument);
 		int panelOrder = getLowestAvailablePanelNumber(affectedPanels);
 
 		panel.getToggleableComponents().forEach(component ->
@@ -87,7 +114,7 @@ public final class InstrumentPanelController {
 			context.recalculateArrangementPartMaps();
 		}
 
-		JPanel panelContainer = (JPanel) context.getPanelScrollPane(instrument)
+		JPanel panelContainer = (JPanel) getInstPane(instrument)
 				.getViewport().getView();
 		if (instrument < 4 || !context.reverseDrumPanelOrder()) {
 			panelContainer.add(panel, panelOrder - 1);
@@ -98,7 +125,7 @@ public final class InstrumentPanelController {
 	}
 
 	public void addRandomPanel(int instrument) {
-		createRandomPanels(instrument, context.getAffectedPanels(instrument).size() + 1,
+		createRandomPanels(instrument, getAffectedPanels(instrument).size() + 1,
 				true, null, null);
 		context.recalculateAfterPanelAddition();
 		context.repaintMainWindow();
@@ -110,7 +137,7 @@ public final class InstrumentPanelController {
 
 	public void generatePanels(int instrument, boolean triggerRegenerate) {
 		int panelCount = context.isCustomSection()
-				? context.getPanels(instrument).size()
+				? getInstList(instrument).size()
 				: context.getRandomPanelCount(instrument);
 		createRandomPanels(instrument, panelCount, false, null, null);
 		context.recalculateAfterPanelGeneration();
@@ -132,21 +159,21 @@ public final class InstrumentPanelController {
 	public void randomizePanel(InstPanel panel) {
 		int instrument = panel.getPartNum();
 		if (instrument == 0) {
-			createRandomPanels(instrument, context.getPanels(instrument).size() + 1, true,
+			createRandomPanels(instrument, getInstList(instrument).size() + 1, true,
 					new java.util.Random().nextInt(), panel);
 		} else if (instrument == 1) {
 			// Bass panels do not currently expose single-panel randomization.
 		} else if (instrument == 2 || instrument == 3 || instrument == 4) {
-			createRandomPanels(instrument, context.getPanels(instrument).size() + 1, true,
+			createRandomPanels(instrument, getInstList(instrument).size() + 1, true,
 					null, panel);
 		}
 	}
 
 	public void removePanel(int instrument, int order) {
-		List<? extends InstPanel> panels = context.getPanels(instrument);
+		List<? extends InstPanel> panels = getInstList(instrument);
 		InstPanel panel = panels.stream().filter(candidate -> candidate.getPanelOrder() == order)
 				.findFirst().get();
-		((JPanel) context.getPanelScrollPane(instrument).getViewport().getView()).remove(panel);
+		((JPanel) getInstPane(instrument).getViewport().getView()).remove(panel);
 		panels.remove(panel);
 		context.recalculateArrangementPartMaps();
 		context.repaintMainWindow();
@@ -159,8 +186,8 @@ public final class InstrumentPanelController {
 	public void recreatePanels(int instrument, List<? extends InstPart> parts,
 			boolean clearPreviousPanels) {
 		if (clearPreviousPanels) {
-			List<InstPanel> panels = context.getAffectedPanels(instrument);
-			JPanel panelContainer = (JPanel) context.getPanelScrollPane(instrument)
+			List<InstPanel> panels = getAffectedPanels(instrument);
+			JPanel panelContainer = (JPanel) getInstPane(instrument)
 					.getViewport().getView();
 			for (InstPanel panel : panels) {
 				panelContainer.remove(panel);
@@ -195,7 +222,7 @@ public final class InstrumentPanelController {
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		InstPartsWrapper<?> wrapper = InstPartsWrapper.forClass(wrapperClass);
 
-		List<? extends InstPanel> panels = context.getAffectedPanels(instrument);
+		List<? extends InstPanel> panels = getAffectedPanels(instrument);
 		if (selectiveSave && panels.stream().anyMatch(InstPanel::getLockInst)) {
 			panels = panels.stream().filter(InstPanel::getLockInst).collect(Collectors.toList());
 		}
@@ -216,7 +243,7 @@ public final class InstrumentPanelController {
 			return false;
 		}
 
-		List<InstPanel> currentPanels = context.getAffectedPanels(instrument);
+		List<InstPanel> currentPanels = getAffectedPanels(instrument);
 		List<InstPart> lockedParts = currentPanels.stream().filter(InstPanel::getLockInst)
 				.map(panel -> panel.toInstPart(panel.getPatternSeed())).collect(Collectors.toList());
 		Map<Integer, List<InstPart>> lockedPartsByOriginalOrder = lockedParts.stream()

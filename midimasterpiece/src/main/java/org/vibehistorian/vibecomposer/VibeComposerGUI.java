@@ -138,18 +138,15 @@ public class VibeComposerGUI extends JFrame
 					configureInstPanelContext(panel);
 					configureInstrumentControlContext(panel);
 				}
-				@Override public List<InstPanel> getAffectedPanels(int instrument) {
-					return VibeComposerGUI.getAffectedPanels(instrument);
-				}
 				@Override public List<? extends InstPanel> getPanels(int instrument) {
-					return VibeComposerGUI.getInstList(instrument);
+					return getOwnedInstrumentControls(instrument).getPanels();
 				}
 				@Override public int getRandomPanelCount(int instrument) {
 					return Integer.parseInt(getInstrumentControls(instrument)
 							.getRandomPanelsToGenerate().getText());
 				}
 				@Override public JScrollPane getPanelScrollPane(int instrument) {
-					return VibeComposerGUI.getInstPane(instrument);
+					return getOwnedInstrumentControls(instrument).getPanelScrollPane();
 				}
 				@Override public boolean isFullMode() { return UITheme.isFullMode; }
 				@Override public boolean isCustomSection() { return VibeComposerGUI.isCustomSection(); }
@@ -272,17 +269,18 @@ public class VibeComposerGUI extends JFrame
 	// instrument panels added into scrollpanes
 
 	public static List<InstPanel> getAffectedPanels(int inst) {
-		List<InstPanel> affectedPanels = isCustomSection()
-				? getSectionPanelList(inst)
-				: (List<InstPanel>) getInstList(inst);
-		return affectedPanels;
+		return getInstrumentPanelController().getAffectedPanels(inst);
 	}
 
 	public static List<? extends InstPanel> getInstList(int order) {
+		return getInstrumentPanelController().getInstList(order);
+	}
+
+	private static InstrumentPanelController getInstrumentPanelController() {
 		if (vibeComposerGUI == null) {
 			throw new IllegalStateException("The main window has not been initialized.");
 		}
-		return getInstrumentControls(order).getPanels();
+		return vibeComposerGUI.instrumentPanelController;
 	}
 
 	private static InstrumentGUIControls getInstrumentControls(int order) {
@@ -304,19 +302,11 @@ public class VibeComposerGUI extends JFrame
 	}
 
 	public static JScrollPane getInstPane(int order) {
-		return getInstrumentControls(order).getPanelScrollPane();
+		return getInstrumentPanelController().getInstPane(order);
 	}
 
 	public static List<InstPanel> getSectionPanelList(int order) {
-		JScrollPane viewPane = getInstPane(order);
-		JPanel viewPanel = (JPanel) viewPane.getViewport().getView();
-		List<InstPanel> sectionPanels = new ArrayList<>();
-		for (Component c : viewPanel.getComponents()) {
-			if (c instanceof InstPanel) {
-				sectionPanels.add((InstPanel) c);
-			}
-		}
-		return sectionPanels;
+		return getInstrumentPanelController().getSectionPanelList(order);
 	}
 
 	// Arrangement fields retained during the module migration.
