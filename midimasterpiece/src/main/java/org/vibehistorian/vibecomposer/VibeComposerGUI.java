@@ -2669,12 +2669,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 		// MELODY
-		if (!regenerate && MelodyGUI.generateMelodiesOnCompose.isSelected()) {
-			int seed = getCurrentSeed();
-			instrumentPanelController.createRandomPanels(INST.MELODY,
-					melodyGUI.getPanels().size(), false,
-					seed != 0 ? seed : new Random().nextInt(), null);
-		}
+		melodyGUI.generateRandomMelodyPanelsOnCompose(regenerate, lastRandomSeed);
 
 		if (!regenerate && ExtraSettingsGUI.randomizeTimingsOnCompose.isSelected()) {
 			if (GenerationGUI.globalSwingOverride.isSelected()) {
@@ -2697,63 +2692,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 
-		if (regenerate && manual && MelodyGUI.randomMelodyOnRegenerate.isSelected()) {
-			melodyGUI.randomizeMelodySeeds();
-		}
-
-		if (regenerate && MelodyGUI.randomMelodyOnRegenerate.isSelected() && !melodyGUI.getPanels().isEmpty()) {
-			if (MelodyGUI.melodyPatternRandomizeOnCompose.isSelected()) {
-				melodyGUI.getPanels().forEach(e -> {
-					if (e.getLockInst() == true) {
-						return;
-					}
-					e.setMelodyPatternOffsets(
-							MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
-									e.getPanelOrder() + (e.getPatternSeed() == 0 ? lastRandomSeed
-											: e.getPatternSeed())));
-				});
-			}
-			if (MelodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected()) {
-				melodyGUI.getPanels().forEach(e -> {
-					if (e.getLockInst() == true) {
-						return;
-					}
-					e.setChordNoteChoices(e.getNoteTargetsButton().getRandGenerator().apply(e
-							.getPanelOrder()
-							+ (e.getPatternSeed() == 0 ? lastRandomSeed : e.getPatternSeed())));
-				});
-			}
-		}
-
-		if (!regenerate && MelodyGUI.melodyPatternRandomizeOnCompose.isSelected()
-				&& !melodyGUI.getPanels().isEmpty()) {
-			if (MelodyGUI.melody1ForcePatterns.isSelected()) {
-				MelodyPanel firstMp = melodyGUI.getPanels().get(0);
-				List<Integer> pat = MelodyUtils.getRandomMelodyPattern(
-						firstMp.getAlternatingRhythmChance(),
-						firstMp.getPanelOrder() + (firstMp.getPatternSeed() == 0 ? lastRandomSeed
-								: firstMp.getPatternSeed()));
-				firstMp.setMelodyPatternOffsets(pat);
-			} else {
-				melodyGUI.getPanels().forEach(e -> {
-					if (e.getLockInst() == true) {
-						return;
-					}
-					e.setMelodyPatternOffsets(
-							MelodyUtils.getRandomMelodyPattern(e.getAlternatingRhythmChance(),
-									e.getPanelOrder() + (e.getPatternSeed() == 0 ? lastRandomSeed
-											: e.getPatternSeed())));
-				});
-			}
-		}
-
-
-		if (MelodyGUI.melody1ForcePatterns.isSelected() && !melodyGUI.getPanels().isEmpty()) {
-			MelodyPanel mp1 = melodyGUI.getPanels().get(0);
-			for (int i = 1; i < melodyGUI.getPanels().size(); i++) {
-				melodyGUI.getPanels().get(i).overridePatterns(mp1);
-			}
-		}
+		melodyGUI.prepareMelodyPatterns(regenerate, manual, lastRandomSeed);
 
 
 		// BASS

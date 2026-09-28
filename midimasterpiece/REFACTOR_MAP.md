@@ -248,17 +248,10 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.13 Instrument-typed context APIs:** changed context callbacks for arrangement operations, instrument controls, solo/mute, MIDI editing and input, MIDI CC, score playback, visual pattern controls, and part presets to accept `INST`. Score and MIDI data, section maps, panel factories, and persistence convert to the enum's stable index only at their boundaries. MIDI CC still skips the drum group in its general panel loop.
 - **3.14 Part-preset storage:** moved part-preset file discovery, XML part counting, JAXB serialization/deserialization, and preset path ownership into PartPresetStore. InstrumentPanelController retains panel-to-part conversion and imported-part merging; the window retains the custom-section restriction message and count refresh.
 - **3.15 Action-command predicate cleanup:** cached the command once in `actionPerformedTask`, changed action checks from reference identity to string-value equality, and used short-circuit `&&` for the compose-time strum option. Independent checks, ordering, and post-action recalculation/regeneration behavior remain intact.
+- **3.16 Melody compose-preparation ownership:** moved compose-time melody panel generation and melody seed, pattern, target-note, and forced-pattern preparation into `MelodyGUI`. The window calls the melody operations at their original points in `prepareUI`, preserving their order around timing and sidechain preparation. The prepared `lastRandomSeed` supplies the same seed value previously read through `getCurrentSeed()`.
 - **Verification:** `mvn -DskipTests compile` succeeds after 3.14. Tests were skipped.
-- **Verification:** `mvn -DskipTests compile` succeeds after 3.15. Tests were skipped.
+- **Verification:** `mvn -DskipTests compile` succeeds after 3.15 and 3.16. Tests were skipped; compose/regenerate scenarios were not manually exercised.
 
 ### Phase 3 status
 
 Phase 3 has started. Continue with small behavior-preserving changes that simplify workflows or reduce unnecessary responsibilities and API surface. Keep each slice documented separately.
-
-## Proposed Next Slice After 3.15
-
-This is the next candidate, not completed work. Keep `VibeComposerGUI` as the coordinator for operations that span feature GUIs; move only cohesive feature-owned work or simplify local control flow.
-
-- **3.16 Melody compose preparation ownership:** Move the melody-only block from `VibeComposerGUI.prepareUI` into a focused `MelodyGUI` operation. This includes optional melody-panel generation on compose, melody seed randomization on manual regenerate, melody pattern and target-note randomization, and forced-pattern propagation. Keep BPM/timing and sidechain randomization, arp instrument copying, scale selection, arrangement preparation, and MIDI-editor saving in the window because they coordinate other features. Pass only the compose/regenerate flags and the seed values the melody operation needs; preserve the present call order relative to other preparation steps. This slice should leave `prepareUI` as a shorter cross-feature coordinator without changing locked-panel handling, seeded results, or when each option runs.
-
-For 3.16, review compose and regenerate with melody generation enabled and disabled, locked and unlocked panels, forced patterns, and fixed versus random seeds. Keep this slice focused so any behavior difference is easy to locate.

@@ -574,6 +574,71 @@ public class MelodyGUI implements InstrumentGUIControls {
 		affectedPanels.forEach(panel -> panel.setVisible(true));
 	}
 
+	public void generateRandomMelodyPanelsOnCompose(boolean regenerate, int seed) {
+		if (!regenerate && generateMelodiesOnCompose.isSelected()) {
+			panelController.createRandomPanels(INST.MELODY, melodyPanels.size(), false,
+					seed != 0 ? seed : new Random().nextInt(), null);
+		}
+	}
+
+	public void prepareMelodyPatterns(boolean regenerate, boolean manual, int seed) {
+		if (regenerate && manual && randomMelodyOnRegenerate.isSelected()) {
+			randomizeMelodySeeds();
+		}
+
+		if (regenerate && randomMelodyOnRegenerate.isSelected() && !melodyPanels.isEmpty()) {
+			if (melodyPatternRandomizeOnCompose.isSelected()) {
+				melodyPanels.forEach(panel -> {
+					if (panel.getLockInst()) {
+						return;
+					}
+					panel.setMelodyPatternOffsets(
+							MelodyUtils.getRandomMelodyPattern(panel.getAlternatingRhythmChance(),
+									panel.getPanelOrder() + (panel.getPatternSeed() == 0 ? seed
+											: panel.getPatternSeed())));
+				});
+			}
+			if (melodyTargetNotesRandomizeOnCompose.isSelected()) {
+				melodyPanels.forEach(panel -> {
+					if (panel.getLockInst()) {
+						return;
+					}
+					panel.setChordNoteChoices(panel.getNoteTargetsButton().getRandGenerator()
+							.apply(panel.getPanelOrder()
+									+ (panel.getPatternSeed() == 0 ? seed : panel.getPatternSeed())));
+				});
+			}
+		}
+
+		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected() && !melodyPanels.isEmpty()) {
+			if (melody1ForcePatterns.isSelected()) {
+				MelodyPanel firstPanel = melodyPanels.get(0);
+				List<Integer> pattern = MelodyUtils.getRandomMelodyPattern(
+						firstPanel.getAlternatingRhythmChance(),
+						firstPanel.getPanelOrder() + (firstPanel.getPatternSeed() == 0 ? seed
+								: firstPanel.getPatternSeed()));
+				firstPanel.setMelodyPatternOffsets(pattern);
+			} else {
+				melodyPanels.forEach(panel -> {
+					if (panel.getLockInst()) {
+						return;
+					}
+					panel.setMelodyPatternOffsets(
+							MelodyUtils.getRandomMelodyPattern(panel.getAlternatingRhythmChance(),
+									panel.getPanelOrder() + (panel.getPatternSeed() == 0 ? seed
+											: panel.getPatternSeed())));
+				});
+			}
+		}
+
+		if (melody1ForcePatterns.isSelected() && !melodyPanels.isEmpty()) {
+			MelodyPanel firstPanel = melodyPanels.get(0);
+			for (int i = 1; i < melodyPanels.size(); i++) {
+				melodyPanels.get(i).overridePatterns(firstPanel);
+			}
+		}
+	}
+
 	public void createRandomMelodyPanels(int panelCount, boolean onlyAdd) {
 		createRandomMelodyPanels(new Random().nextInt(), panelCount, onlyAdd, null);
 	}
