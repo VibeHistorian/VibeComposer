@@ -46,7 +46,6 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.Wrappers.InstPartsWrapper;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
@@ -583,14 +582,19 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private PartManagerPanel.Context createPartManagerContext() {
 		return new PartManagerPanel.Context() {
-			@Override public int saveParts(String path, INST part, boolean selectiveSave)
+			@Override public List<PartPresetStore.PresetFile> listPresets(INST part) throws IOException {
+				return instrumentPanelController.listPartPresets(part);
+			}
+			@Override public int saveParts(String name, INST part, boolean selectiveSave)
 					throws JAXBException {
-				return instrumentPanelController.saveParts(path, part,
+				return instrumentPanelController.saveParts(name, part,
 						selectiveSave);
 			}
-			@Override public void loadParts(File file, INST part, boolean clearPreviousPanels)
+			@Override public void loadParts(String name, INST part, boolean clearPreviousPanels)
 					throws JAXBException, IOException {
-				VibeComposerGUI.this.unmarshallParts(file, part.getIndex(), clearPreviousPanels);
+				if (!instrumentPanelController.loadParts(name, part, clearPreviousPanels)) {
+					new TemporaryInfoPopup("Cannot change # of instruments in custom sections!", 1500);
+				}
 			}
 			@Override public void recalculatePartCounts() {
 				VibeComposerGUI.this.recalculateTabPaneCounts();
@@ -3466,17 +3470,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				"Generated Arrangement (" + ArrangementGUI.actualArrangement.getSections().size() + ")");
 		if (instrumentTabPane.getComponentCount() >= 8) {
 			instrumentTabPane.setTitleAt(7, " Score ");
-		}
-	}
-
-	public void unmarshallParts(File f, int partNum, boolean clearPreviousPanels) throws JAXBException, IOException {
-		JAXBContext context = JAXBContext.newInstance(InstPartsWrapper.getWrapperClass(partNum), InstPartsWrapper.class);
-		InstPartsWrapper<?> wrapper = (InstPartsWrapper<?>) context.createUnmarshaller()
-				.unmarshal(new FileReader(f));
-		List<InstPart> parts = (List<InstPart>) wrapper.getParts();
-		if (!instrumentPanelController.recreateImportedParts(
-				INST.fromIndex(partNum), parts, clearPreviousPanels)) {
-			new TemporaryInfoPopup("Cannot change # of instruments in custom sections!", 1500);
 		}
 	}
 

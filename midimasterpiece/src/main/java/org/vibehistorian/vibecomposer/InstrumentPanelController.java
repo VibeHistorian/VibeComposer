@@ -2,14 +2,11 @@ package org.vibehistorian.vibecomposer;
 
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.Wrappers.InstPartsWrapper;
 
 import javax.swing.*;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.awt.*;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -43,9 +40,14 @@ public final class InstrumentPanelController {
 	}
 
 	private final Context context;
+	private final PartPresetStore partPresetStore = new PartPresetStore();
 
 	public InstrumentPanelController(Context context) {
 		this.context = context;
+	}
+
+	public List<PartPresetStore.PresetFile> listPartPresets(INST instrument) throws IOException {
+		return partPresetStore.listPresets(instrument);
 	}
 
 	public List<? extends InstPanel> getInstList(INST instrument) {
@@ -225,14 +227,8 @@ public final class InstrumentPanelController {
 		context.repaintInstrumentTabs();
 	}
 
-	public int saveParts(String path, INST instrument, boolean selectiveSave)
+	public int saveParts(String name, INST instrument, boolean selectiveSave)
 			throws JAXBException {
-		Class<? extends InstPartsWrapper> wrapperClass = InstPartsWrapper.getWrapperClass(instrument.getIndex());
-		JAXBContext jaxbContext = JAXBContext.newInstance(wrapperClass, InstPartsWrapper.class);
-		Marshaller marshaller = jaxbContext.createMarshaller();
-		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		InstPartsWrapper<?> wrapper = InstPartsWrapper.forClass(wrapperClass);
-
 		List<? extends InstPanel> panels = getAffectedPanels(instrument);
 		if (selectiveSave && panels.stream().anyMatch(InstPanel::getLockInst)) {
 			panels = panels.stream().filter(InstPanel::getLockInst).collect(Collectors.toList());
@@ -241,10 +237,14 @@ public final class InstrumentPanelController {
 				.map(panel -> panel.toInstPart(context.getCurrentSeed()))
 				.collect(Collectors.toList());
 		InstPart.sortParts(parts);
-		wrapper.setParts(parts);
-		marshaller.marshal(wrapper, new File(path));
-		LG.i("File saved: " + path);
+		partPresetStore.save(instrument, name, parts);
 		return parts.size();
+	}
+
+	public boolean loadParts(String name, INST instrument, boolean clearPreviousPanels)
+			throws JAXBException, IOException {
+		List<InstPart> parts = partPresetStore.load(instrument, name);
+		return recreateImportedParts(instrument, parts, clearPreviousPanels);
 	}
 
 	public boolean recreateImportedParts(INST instrument, List<InstPart> parts,

@@ -246,7 +246,8 @@ Phase slices should be focused, to make review of logical modifications easy to 
 - **3.11 Instrument enum foundation:** added `INST` with stable 0–4 indices and `fromIndex` conversion. `InstrumentPanelController` now accepts `INST` for panel creation, generation, access, save/restore, and randomization workflows. Instrument GUIs and arrangement workflows call the controller directly with enum values; window accessors retain integer entry points where older callers still need them.
 - **3.12 Instrument-index migration:** replaced fixed five-item loops with `INST.values()` iteration in arrangement UI/model operations, section maps, solo/mute handling, score part controls, instrument-tab setup, pattern maps, and inclusion-map persistence. GUI config and section instrument dispatch, plus MIDI editor drum/chord checks, now map indices through `INST.fromIndex`. Integer keys remain at model and serialization boundaries.
 - **3.13 Instrument-typed context APIs:** changed context callbacks for arrangement operations, instrument controls, solo/mute, MIDI editing and input, MIDI CC, score playback, visual pattern controls, and part presets to accept `INST`. Score and MIDI data, section maps, panel factories, and persistence convert to the enum's stable index only at their boundaries. MIDI CC still skips the drum group in its general panel loop.
-- **Verification:** `mvn -DskipTests compile` succeeds after 3.13. Tests were skipped.
+- **3.14 Part-preset storage:** moved part-preset file discovery, XML part counting, JAXB serialization/deserialization, and preset path ownership into PartPresetStore. InstrumentPanelController retains panel-to-part conversion and imported-part merging; the window retains the custom-section restriction message and count refresh.
+- **Verification:** `mvn -DskipTests compile` succeeds after 3.14. Tests were skipped.
 
 ### Phase 3 status
 
