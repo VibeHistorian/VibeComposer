@@ -274,6 +274,12 @@ Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work t
 - Moved ownership of the corresponding controls and their colors into `MainWindowControls`; window workflows now access those controls through its focused getters. `GenerationGUI` and `PlaybackState` retain ownership of their established generation and playback state.
 - Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; the application was not manually launched.
 
+### Phase 4.2 status — complete
+
+- Added `ComposeCoordinator` to own compose/regenerate sequencing, seed and UI preparation, generator parameter setup, generation dispatch, config-history and seed-history updates, feature-generated results, and MIDI playback/slider setup.
+- `VibeComposerGUI` retains the public compose entry point and supplies focused callbacks for config transfer, sequence-track assignment, selected tab, slider timing, repaint, and tab-count refresh.
+- Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; compose/regenerate scenarios were not manually exercised.
+
 ### Phase 4 completion criteria
 
 - `VibeComposerGUI` primarily owns the window lifecycle, module/context assembly, and short cross-feature sequencing calls.
