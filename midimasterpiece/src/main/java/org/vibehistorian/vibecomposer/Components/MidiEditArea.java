@@ -457,7 +457,7 @@ public class MidiEditArea extends JComponent {
 			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex());
 			if (row >= 0 && row < noteNotes.size()) {
 				pop.setupIdentifiers(INST.DRUM.getIndex(),
-						pop.getContext().getInstList(INST.DRUM.getIndex()).get(row).getPanelOrder());
+				pop.getContext().getInstList(INST.DRUM).get(row).getPanelOrder());
 				// TODO
 				pop.setup(pop.getSec());
 			}
@@ -730,9 +730,10 @@ public class MidiEditArea extends JComponent {
 			if (selectedNotes.size() > 1 && selectedNotes.contains(pn)) {
 				selectedNotes.stream().map(e -> e.getPitch()).distinct()
 						.forEach(e -> pop.getContext().playNote(e, durationMs, pn.getDynamic(),
-								pop.part, pop.partOrder, pop.getSec(), true));
+								INST.fromIndex(pop.part), pop.partOrder, pop.getSec(), true));
 			} else {
-				pop.getContext().playNote(pn.getPitch(), durationMs, pn.getDynamic(), pop.part,
+				pop.getContext().playNote(pn.getPitch(), durationMs, pn.getDynamic(),
+						INST.fromIndex(pop.part),
 						pop.partOrder, pop.getSec(), false);
 			}
 		}

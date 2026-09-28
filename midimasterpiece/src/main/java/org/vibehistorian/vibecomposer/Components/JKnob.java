@@ -1,19 +1,14 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.ApplicationSessionState;
-import org.vibehistorian.vibecomposer.UITheme;
-
 import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
-
-// Imports for the GUI classes.
-
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.KnobValuePopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+
+// Imports for the GUI classes.
 
 /**
  * JKnob.java -
@@ -836,8 +833,9 @@ public class JKnob extends JComponent
 	}
 
 	private List<InstPanel> affectedPanels(InstPanel instParent) {
-		return instrumentControlContext == null ? Collections.<InstPanel>emptyList()
-				: instrumentControlContext.getAffectedPanels(instParent.getPartNum());
+		return instrumentControlContext == null ? Collections.emptyList()
+				: instrumentControlContext.getAffectedPanels(
+						org.vibehistorian.vibecomposer.INST.fromIndex(instParent.getPartNum()));
 	}
 
 	public int getValueRaw() {

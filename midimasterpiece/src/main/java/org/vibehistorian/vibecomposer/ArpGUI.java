@@ -240,7 +240,7 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpSettingsExtraPanel.add(randomArpMaxLength);
 		arpSettingsExtraPanel.add(randomArpCorrectMelodyNotes);
 		arpSettingsExtraPanel.add(clearArpPatternSeeds);
-		arpSettingsExtraPanel.add(new PartManagerPanel(3, context.getPartManagerContext()));
+		arpSettingsExtraPanel.add(new PartManagerPanel(INST.ARP, context.getPartManagerContext()));
 		UITheme.toggleableComponents.add(arpSettingsExtraPanel);
 
 		arpsSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

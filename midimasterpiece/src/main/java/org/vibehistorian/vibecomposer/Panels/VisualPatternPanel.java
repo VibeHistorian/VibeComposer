@@ -6,6 +6,7 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.GenerationGUI;
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
@@ -417,7 +418,7 @@ public class VisualPatternPanel extends JPanel {
 		InstrumentControlContext context = getInstrumentControlContext();
 		List<InstPanel> allPanels = context == null
 				? Collections.<InstPanel>emptyList()
-				: context.getAffectedPanels(instParent.getPartNum());
+				: context.getAffectedPanels(INST.fromIndex(instParent.getPartNum()));
 		allPanels.forEach(e -> {
 			if (e.getComboPanel().patternType.isEnabled()) {
 				e.getComboPanel().randomizePattern();
@@ -504,7 +505,7 @@ public class VisualPatternPanel extends JPanel {
 		InstrumentControlContext context = getInstrumentControlContext();
 		List<InstPanel> allPanels = context == null
 				? Collections.<InstPanel>emptyList()
-				: context.getAffectedPanels(instParent.getPartNum());
+				: context.getAffectedPanels(INST.fromIndex(instParent.getPartNum()));
 		allPanels.forEach(e -> {
 			if (e.getComboPanel().hitsPanel.isEnabled()) {
 				e.getComboPanel().expand2x();

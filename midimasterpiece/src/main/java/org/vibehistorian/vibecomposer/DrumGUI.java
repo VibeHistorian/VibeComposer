@@ -272,7 +272,7 @@ public class DrumGUI implements InstrumentGUIControls {
 		randomDrumsOverrandomize = new DetachedKnobPanel("Overrandomize", 0, 0, 100);
 		drumExtraSettings.add(randomDrumsOverrandomize);
 		drumExtraSettings.add(clearPatternSeeds);
-		drumExtraSettings.add(new PartManagerPanel(4, context.getPartManagerContext()));
+		drumExtraSettings.add(new PartManagerPanel(INST.DRUM, context.getPartManagerContext()));
 
 		UITheme.toggleableComponents.add(drumExtraSettings);
 

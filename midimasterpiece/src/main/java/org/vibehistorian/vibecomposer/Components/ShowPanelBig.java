@@ -62,12 +62,12 @@ public class ShowPanelBig extends JPanel {
 	public interface PlaybackActions {
 		void setSliderEnd(int value);
 		void savePauseInfo();
-		void openMidiEditor(int sectionOrder, int part, int panelOrder);
-		void selectPanelFromScore(int part, int panelOrder, int sectionOrder);
-		void togglePanelMute(int part, int panelOrder);
-		void togglePanelSolo(int part, int panelOrder);
-		JComponent getInstrumentBoxForPanel(int part, int panelOrder);
-		int getInstrumentPanelCount(int instrument);
+		void openMidiEditor(int sectionOrder, INST part, int panelOrder);
+		void selectPanelFromScore(INST part, int panelOrder, int sectionOrder);
+		void togglePanelMute(INST part, int panelOrder);
+		void togglePanelSolo(INST part, int panelOrder);
+		JComponent getInstrumentBoxForPanel(INST part, int panelOrder);
+		int getInstrumentPanelCount(INST instrument);
 		Set<Integer> getSoloMuterHighlightedTracks();
 		void repaintScore();
 	}
@@ -376,27 +376,27 @@ public class ShowPanelBig extends JPanel {
 		return percentage;
 	}
 
-	public void openMidiEditor(int sectionOrder, int part, int panelOrder) {
+	public void openMidiEditor(int sectionOrder, INST part, int panelOrder) {
 		playbackActions.openMidiEditor(sectionOrder, part, panelOrder);
 	}
 
-	public void selectPanelFromScore(int part, int panelOrder, int sectionOrder) {
+	public void selectPanelFromScore(INST part, int panelOrder, int sectionOrder) {
 		playbackActions.selectPanelFromScore(part, panelOrder, sectionOrder);
 	}
 
-	public void togglePanelMute(int part, int panelOrder) {
+	public void togglePanelMute(INST part, int panelOrder) {
 		playbackActions.togglePanelMute(part, panelOrder);
 	}
 
-	public void togglePanelSolo(int part, int panelOrder) {
+	public void togglePanelSolo(INST part, int panelOrder) {
 		playbackActions.togglePanelSolo(part, panelOrder);
 	}
 
-	public JComponent getInstrumentBoxForPanel(int part, int panelOrder) {
+	public JComponent getInstrumentBoxForPanel(INST part, int panelOrder) {
 		return playbackActions.getInstrumentBoxForPanel(part, panelOrder);
 	}
 
-	public int getInstrumentPanelCount(int instrument) {
+	public int getInstrumentPanelCount(INST instrument) {
 		return playbackActions.getInstrumentPanelCount(instrument);
 	}
 

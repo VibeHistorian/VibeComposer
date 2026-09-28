@@ -50,14 +50,14 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public interface Context {
 		Component getMainWindowComponent();
-		List<InstPanel> getAffectedPanels(int instrument);
-		List<? extends InstPanel> getInstList(int instrument);
+		List<InstPanel> getAffectedPanels(INST instrument);
+		List<? extends InstPanel> getInstList(INST instrument);
 		Pair<ScaleMode, Integer> getScaleKey(Section section);
 		int getTranspose();
 		void regenerateInPlace();
 		void markArrangementManual();
 		void repaintActualArrangement();
-		void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
+		void playNote(int pitch, int durationMs, int velocity, INST part, int partOrder,
 				Section section, boolean overrideLastPlayed);
 	}
 
@@ -237,7 +237,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		buttonPanel.add(SwingUtils.makeButton("Rand. Velocity", e -> {
 			Random rand = new Random();
-			InstPanel ip = context.getAffectedPanels(part).get(partOrder);
+			InstPanel ip = context.getAffectedPanels(INST.fromIndex(part)).get(partOrder);
 			int velmin = ip.getVelocityMin();
 			int velmax = ip.getVelocityMax();
 			mvea.getValues().forEach(n -> n.setDynamic(rand.nextInt(velmax - velmin + 1) + velmin));
@@ -633,7 +633,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 		List<Note> notes = phr.getNoteList();
 		int extraTranspose = 0;
-		InstPanel ip = context.getInstList(part).get(partOrder);
+		InstPanel ip = context.getInstList(INST.fromIndex(part)).get(partOrder);
 		if (scaleKey != null) {
 			MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
 					scaleKey.getLeft().noteAdjustScale,

@@ -129,7 +129,7 @@ public class BassGUI implements InstrumentGUIControls {
 
         JPanel bassSettingsAdvancedPanel = new JPanel();
         bassSettingsAdvancedPanel.add(new JLabel("BASS SETTINGS+"));
-        bassSettingsAdvancedPanel.add(new PartManagerPanel(1, context.getPartManagerContext()));
+        bassSettingsAdvancedPanel.add(new PartManagerPanel(INST.BASS, context.getPartManagerContext()));
         bassSettingsAdvancedPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         bassSettingsAdvancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         bassSettingsAdvancedPanel.setMaximumSize(new Dimension(1800, 50));

@@ -404,7 +404,7 @@ public class ChordGUI implements InstrumentGUIControls {
 		chordSettingsExtraPanel.add(randomChordPattern);
 		chordSettingsExtraPanel.add(randomChordShiftChance);
 		chordSettingsExtraPanel.add(clearChordPatternSeeds);
-		chordSettingsExtraPanel.add(new PartManagerPanel(2, context.getPartManagerContext()));
+        chordSettingsExtraPanel.add(new PartManagerPanel(INST.CHORD, context.getPartManagerContext()));
 
 		UITheme.toggleableComponents.add(randomChordDelay);
 		UITheme.toggleableComponents.add(stretchLabel);

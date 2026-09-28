@@ -114,7 +114,7 @@ public class ArrangementGUI {
 				&& actualArrangement.setFromActualTable(scrollableArrangementActualTable, false);
 		arrangement.setOverridden(overrideSuccessful);
 		PatternMap.checkMapBounds(activePatternMaps, !overrideSuccessful,
-				context::getInstrumentParts);
+				this::getInstrumentParts);
 		if (isNew) gc.setPatternMaps(PatternMap.multiMapCopy(activePatternMaps));
 		int arrangementSeedValue = arrangementSeed.getValue() != 0 ? arrangementSeed.getValue() : seed;
 		arrangement.setSeed(arrangementSeedValue);
@@ -163,6 +163,14 @@ public class ArrangementGUI {
 		return panelController.getInstList(INST.fromIndex(instrument));
 	}
 
+	private List<? extends InstPart> getInstrumentParts(int instrument) {
+		return context.getInstrumentParts(INST.fromIndex(instrument));
+	}
+
+	private int getAbsoluteOrder(int instrument, int panelOrder) {
+		return context.getAbsoluteOrder(INST.fromIndex(instrument), panelOrder);
+	}
+
 	private JScrollPane getInstPane(int instrument) {
 		return panelController.getInstPane(INST.fromIndex(instrument));
 	}
@@ -176,10 +184,10 @@ public class ArrangementGUI {
 		void regenerate();
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
-		List<? extends InstPart> getInstrumentParts(int instrument);
-		List<InstPart> getInstPartsFromCustomSectionInstPanels(int instrument);
-		InstPanel makeCustomSectionInstPanel(int instrument);
-		int getAbsoluteOrder(int instrument, int panelOrder);
+		List<? extends InstPart> getInstrumentParts(INST instrument);
+		List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument);
+		InstPanel makeCustomSectionInstPanel(INST instrument);
+		int getAbsoluteOrder(INST instrument, int panelOrder);
 		void addArrangementComponents(JComponent sectionPane, JComponent settings,
 				int startY, int anchorSide);
 		Point getVariationPopupLocation();
@@ -198,8 +206,8 @@ public class ArrangementGUI {
 	}
 
 	private void preparePartMap(Section section) {
-		section.initPartMapIfNull(context::getInstrumentParts);
-		section.recalculatePartVariationMapBoundsIfNeeded(context::getInstrumentParts);
+		section.initPartMapIfNull(this::getInstrumentParts);
+		section.recalculatePartVariationMapBoundsIfNeeded(this::getInstrumentParts);
 	}
 
 	public void recomposeSection() {
@@ -301,7 +309,7 @@ public class ArrangementGUI {
 		for (int i = sectionOrder; i < lastSectionOrder; i++) {
 			Section section = actualArrangement.getSections().get(i - 1);
 			if (replacedPartNum >= 0 && replacedPartNum < 5) {
-				section.setInstPartList(context.getInstPartsFromCustomSectionInstPanels(replacedPartNum),
+				section.setInstPartList(context.getInstPartsFromCustomSectionInstPanels(INST.fromIndex(replacedPartNum)),
 						replacedPartNum);
 			}
 			if (replacedPartNum < 5) {
@@ -371,7 +379,7 @@ public class ArrangementGUI {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = context.makeCustomSectionInstPanel(instrumentIndex);
+								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -392,7 +400,7 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = context.makeCustomSectionInstPanel(instrumentIndex);
+								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
@@ -423,7 +431,7 @@ public class ArrangementGUI {
 		}
 		if (context.getInstrumentTabPane().getSelectedIndex() == 6) {
 			actualArrangement.getSections().forEach(section ->
-					section.initPartMapFromOldData(context::getInstrumentParts));
+					section.initPartMapFromOldData(this::getInstrumentParts));
 			scrollableArrangementActualTable.repaint();
 		}
 	}
@@ -520,7 +528,7 @@ public class ArrangementGUI {
 					target.removeVariationForAllParts(instrument, i);
 				}
 				for (Integer panel : section.getPresence(instrument)) {
-					int absoluteOrder = context.getAbsoluteOrder(instrument, panel);
+					int absoluteOrder = context.getAbsoluteOrder(INST.fromIndex(instrument), panel);
 					target.setPresence(instrument, absoluteOrder);
 					target.setVariation(instrument, absoluteOrder,
 							section.getVariation(instrument, absoluteOrder));
@@ -541,13 +549,13 @@ public class ArrangementGUI {
 						section.removeVariationForAllParts(instrument, i);
 					}
 				} else if (hasPresence) section.generateVariations(new Random(), instrument,
-						arrangementPartVariationChance.getInt(), context::getInstrumentParts);
+						arrangementPartVariationChance.getInt(), this::getInstrumentParts);
 			} else if (hasPresence) {
 				for (int i = 0; i < panels.size(); i++) section.resetPresence(instrument, i);
 			} else {
-				arrangement.initPartInclusionMapIfNull(context::getInstrumentParts);
+				arrangement.initPartInclusionMapIfNull(this::getInstrumentParts);
 				section.generatePresences(new Random(), instrument, arrangement.getInclMap(), true,
-						context::getInstrumentParts);
+						this::getInstrumentParts);
 			}
 		} else if (event.isShiftDown()) {
 			int panelOrder = panels.get(partOrder).getPanelOrder();
@@ -562,18 +570,18 @@ public class ArrangementGUI {
 							item.removeVariationForPart(instrument, partOrder, i);
 					} else if (hasAnyPresence && item.getPresence(instrument).contains(panelOrder)) {
 						item.generateVariationForPartAndOrder(new Random(), instrument, partOrder, false,
-								arrangementPartVariationChance.getInt(), context::getInstrumentParts);
+								arrangementPartVariationChance.getInt(), this::getInstrumentParts);
 					}
 				}
 			} else if (hasAnyPresence) {
 				for (Section item : actualArrangement.getSections()) {
-					item.initPartMapFromOldData(context::getInstrumentParts);
+					item.initPartMapFromOldData(this::getInstrumentParts);
 					for (int i = 0; i < panels.size(); i++) item.resetPresence(instrument, partOrder);
 				}
 			} else {
-				arrangement.initPartInclusionMapIfNull(context::getInstrumentParts);
+				arrangement.initPartInclusionMapIfNull(this::getInstrumentParts);
 				for (Section item : actualArrangement.getSections()) {
-					item.initPartMapFromOldData(context::getInstrumentParts);
+					item.initPartMapFromOldData(this::getInstrumentParts);
 					if (new Random().nextInt(100) < item.getChanceForInst(instrument))
 						item.setPresence(instrument, partOrder);
 				}
@@ -589,11 +597,11 @@ public class ArrangementGUI {
 						section.removeVariationForPart(instrument, partOrder, i);
 				} else if (hasSinglePresence) {
 					section.generateVariationForPartAndOrder(new Random(), instrument, partOrder, true,
-							arrangementPartVariationChance.getInt(), context::getInstrumentParts);
+							arrangementPartVariationChance.getInt(), this::getInstrumentParts);
 				}
 			} else {
 				preparePartMap(section);
-				section.initPartMapFromOldData(context::getInstrumentParts);
+				section.initPartMapFromOldData(this::getInstrumentParts);
 				if (hasSinglePresence) section.resetPresence(instrument, partOrder);
 				else section.setPresence(instrument, partOrder);
 			}
@@ -1023,7 +1031,7 @@ public class ArrangementGUI {
 				Collection<?> stringables = value instanceof String
 						? Collections.singleton((String) value) : (Collection<?>) value;
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
-						ArrangementGUI.this::getInstList, context::getAbsoluteOrder);
+						ArrangementGUI.this::getInstList, ArrangementGUI.this::getAbsoluteOrder);
 			}
 		};
 		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {
@@ -1223,11 +1231,11 @@ public class ArrangementGUI {
 				Section addedSection = actualArrangement
 						.addDefaultSection(scrollableArrangementActualTable, selectedItem, column);
 				preparePartMap(addedSection);
-				arrangement.initPartInclusionMapIfNull(context::getInstrumentParts);
+				arrangement.initPartInclusionMapIfNull(this::getInstrumentParts);
 				addedSection.generatePresences(
 						arrangementSeed.getValue() != 0 ? new Random(arrangementSeed.getValue())
 								: new Random(), arrangement.getInclMap(), false,
-						context::getInstrumentParts);
+						this::getInstrumentParts);
 				resetArrSectionSelection = actualArrangement.getSections()
 						.indexOf(addedSection) == arrSection.getSelectedIndex() - 2;
 				refreshActual = true;
@@ -1292,7 +1300,7 @@ public class ArrangementGUI {
 		recalculateActualArrangementSection(sectionOrder - 1);
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
 				context.getVariationPopupLocation(), context.getVariationPopupWindowSize(),
-				this::getInstList, context::getInstrumentParts);
+				this::getInstList, this::getInstrumentParts);
 	}
 
 	public void recalculateActualArrangementSection(int sectionOrder) {
@@ -1307,9 +1315,9 @@ public class ArrangementGUI {
 	}
 
 	public void openPartInclusionPopup() {
-		arrangement.recalculatePartInclusionMapBoundsIfNeeded(context::getInstrumentParts);
+		arrangement.recalculatePartInclusionMapBoundsIfNeeded(this::getInstrumentParts);
 		new ArrangementPartInclusionPopup(arrangement, this::getInstList,
-				context::getInstrumentParts);
+				this::getInstrumentParts);
 	}
 
 	public void openGlobalVariationPopup() {

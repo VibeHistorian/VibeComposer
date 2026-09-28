@@ -168,7 +168,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		gc.setMelodyMaxDirChanges(melodyMaxDirChanges.getInt());
 		gc.setMelodyTargetNoteVariation(melodyTargetNoteVariation.getInt());
 		gc.setMelodyBlockChoicePreference(melodyBlockChoicePreference.getValues());
-		gc.setMelodyBlockTypePreference(Arrays.stream(melodyBlockTypePreference).map(e -> e.getValue()).collect(java.util.stream.Collectors.toList()));
+		gc.setMelodyBlockTypePreference(Arrays.stream(melodyBlockTypePreference).map(VeloRect::getValue).collect(java.util.stream.Collectors.toList()));
 		gc.setMelodyUseCustomDurations(melodyUseCustomDurations.isSelected());
 		gc.setMelodyCustomDurationsRandomWeighting(melodyCustomDurationsRandomWeighting.isSelected());
 		gc.setMelodyCustomDurationsStrictMode(melodyCustomDurationsStrictMode.isSelected());
@@ -411,7 +411,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		settings.add(melodySingleNoteExceptions);
 		settings.add(melodyFillPausesPerChord);
 		settings.add(melodyLegacyMode);
-		settings.add(new PartManagerPanel(0, context.getPartManagerContext()));
+		settings.add(new PartManagerPanel(INST.MELODY, context.getPartManagerContext()));
 		return settings;
 	}
 
@@ -600,7 +600,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 				remainingPanels.add(panel);
 			}
 		}
-		Collections.sort(removedPanels, java.util.Comparator.comparing(MelodyPanel::getPanelOrder));
+		removedPanels.sort(java.util.Comparator.comparing(MelodyPanel::getPanelOrder));
 		panelCount -= remainingPanels.size();
 		ChordSpanFill[] melodyFills = { ChordSpanFill.ALL, ChordSpanFill.ALL, ChordSpanFill.EVEN,
 				ChordSpanFill.ODD, ChordSpanFill.HALF1, ChordSpanFill.HALF2 };

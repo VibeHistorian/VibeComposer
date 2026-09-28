@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.INST;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
@@ -15,9 +16,9 @@ import java.util.List;
 public class MidiHandler {
 	public interface Context {
 		void setBpm(int bpm);
-		int getInstrumentPartCount(int instrument);
-		void playNextNote(int keyboardTranspose, int velocity, int instrument, int partOrder);
-		void playNote(int pitch, int durationMs, int velocity, int instrument, int partOrder);
+		int getInstrumentPartCount(INST instrument);
+		void playNextNote(int keyboardTranspose, int velocity, INST instrument, int partOrder);
+		void playNote(int pitch, int durationMs, int velocity, INST instrument, int partOrder);
 	}
 
 	public static boolean REPLAY_MODE = true;
@@ -86,7 +87,8 @@ public class MidiHandler {
 						int normalizedPitch5OctavePiano = OMNI.clamp(shortMessage.getData1()-36, 0, 59);
 						int dbcamIndex = normalizedPitch5OctavePiano / 12;
 						int remainder = normalizedPitch5OctavePiano % 12;
-						int numParts = context.getInstrumentPartCount(DBCAM[dbcamIndex]);
+						INST instrument = INST.fromIndex(DBCAM[dbcamIndex]);
+						int numParts = context.getInstrumentPartCount(instrument);
 						if (numParts == 0) {
 							LG.i("Nothing to replay!");
 							return;
@@ -95,11 +97,11 @@ public class MidiHandler {
 						int extraTranspose = dbcamIndex == 0 ? 0 : (remainder >= 6 ? 12 : 0);
 						context.playNextNote(extraTranspose,
 								(int)OMNI.clamp(shortMessage.getData2()*1.5, 40, 120),
-								DBCAM[dbcamIndex],
+								instrument,
 								partOrder);
 					} else {
 						context.playNote(OMNI.clampPitch(shortMessage.getData1()), 1000,
-								OMNI.clampMidi(shortMessage.getData2()), 0, 1);
+								OMNI.clampMidi(shortMessage.getData2()), INST.MELODY, 1);
 					}
 				}
 

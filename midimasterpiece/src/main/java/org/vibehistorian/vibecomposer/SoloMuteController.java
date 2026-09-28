@@ -12,8 +12,8 @@ import java.util.Set;
 /** Applies panel solo and mute state to the generated sequencer tracks. */
 public final class SoloMuteController {
 	public interface Context {
-		List<? extends InstPanel> getPanels(int instrument);
-		boolean isInstrumentEnabled(int instrument);
+		List<? extends InstPanel> getPanels(INST instrument);
+		boolean isInstrumentEnabled(INST instrument);
 		void refreshScoreForSoloChange();
 		void refreshScoreForMuteChange();
 	}
@@ -40,8 +40,7 @@ public final class SoloMuteController {
 			tracksToUnmute.add(track);
 		}
 
-		for (INST instrumentType : INST.values()) {
-			int instrument = instrumentType.getIndex();
+		for (INST instrument : INST.values()) {
 			if (!context.isInstrumentEnabled(instrument)) {
 				continue;
 			}
@@ -68,8 +67,7 @@ public final class SoloMuteController {
 		}
 
 		Sequencer sequencer = PlaybackState.sequencer;
-		for (INST instrumentType : INST.values()) {
-			int instrument = instrumentType.getIndex();
+		for (INST instrument : INST.values()) {
 			for (InstPanel panel : context.getPanels(instrument)) {
 				if (panel.getSequenceTrack() < 0) {
 					panel.getSoloMuter().unsolo();
@@ -86,8 +84,7 @@ public final class SoloMuteController {
 
 	public void toggleExclude() {
 		boolean hasSoloSelection = SoloMuteState.globalSoloMuter.soloState != State.OFF;
-		for (INST instrumentType : INST.values()) {
-			int instrument = instrumentType.getIndex();
+		for (INST instrument : INST.values()) {
 			for (InstPanel panel : context.getPanels(instrument)) {
 				if (hasSoloSelection && panel.getSoloMuter().soloState == State.OFF) {
 					panel.setMuteInst(true);
@@ -127,7 +124,7 @@ public final class SoloMuteController {
 	}
 
 	public void recalculateGroupSolo(int instrument) {
-		List<? extends InstPanel> panels = context.getPanels(instrument);
+		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(instrument));
 		long soloCount = panels.stream()
 				.filter(panel -> panel.getSoloMuter().soloState == State.FULL).count();
 		SoloMuter groupMuter = SoloMuteState.groupSoloMuters.get(instrument);
@@ -141,7 +138,7 @@ public final class SoloMuteController {
 	}
 
 	public void recalculateGroupMute(int instrument) {
-		List<? extends InstPanel> panels = context.getPanels(instrument);
+		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(instrument));
 		long muteCount = panels.stream()
 				.filter(panel -> panel.getSoloMuter().muteState == State.FULL).count();
 		SoloMuter groupMuter = SoloMuteState.groupSoloMuters.get(instrument);
@@ -162,7 +159,7 @@ public final class SoloMuteController {
 
 	public void unsoloGroup(SoloMuter groupMuter) {
 		groupMuter.unsolo();
-		List<? extends InstPanel> panels = context.getPanels(groupMuter.inst);
+		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(groupMuter.inst));
 		for (InstPanel panel : panels) {
 			panel.getSoloMuter().unsolo();
 		}
@@ -176,7 +173,7 @@ public final class SoloMuteController {
 
 	public void soloGroup(SoloMuter groupMuter) {
 		groupMuter.solo();
-		List<? extends InstPanel> panels = context.getPanels(groupMuter.inst);
+		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(groupMuter.inst));
 		for (InstPanel panel : panels) {
 			panel.getSoloMuter().solo();
 		}
@@ -202,7 +199,7 @@ public final class SoloMuteController {
 
 	public void unmuteGroup(SoloMuter groupMuter) {
 		groupMuter.unmute();
-		List<? extends InstPanel> panels = context.getPanels(groupMuter.inst);
+		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(groupMuter.inst));
 		for (InstPanel panel : panels) {
 			panel.getSoloMuter().unmute();
 		}
@@ -216,7 +213,7 @@ public final class SoloMuteController {
 
 	public void muteGroup(SoloMuter groupMuter) {
 		groupMuter.mute();
-		List<? extends InstPanel> panels = context.getPanels(groupMuter.inst);
+		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(groupMuter.inst));
 		for (InstPanel panel : panels) {
 			panel.getSoloMuter().mute();
 		}
@@ -304,7 +301,7 @@ public final class SoloMuteController {
 			return false;
 		}
 		boolean foundSolo = false;
-		for (InstPanel panel : context.getPanels(groupIndex)) {
+		for (InstPanel panel : context.getPanels(INST.fromIndex(groupIndex))) {
 			if (panel.getSoloMuter().soloState != State.OFF) {
 				if (foundSolo) {
 					return false;

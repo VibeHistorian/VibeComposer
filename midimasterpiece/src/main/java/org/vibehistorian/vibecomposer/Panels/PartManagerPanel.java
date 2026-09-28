@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Panels;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
@@ -20,13 +21,13 @@ import java.io.IOException;
 
 public class PartManagerPanel extends TransparentablePanel {
 	public interface Context {
-		int saveParts(String path, int part, boolean selectiveSave) throws JAXBException;
-		void loadParts(File file, int part, boolean clearPreviousPanels)
+		int saveParts(String path, INST part, boolean selectiveSave) throws JAXBException;
+		void loadParts(File file, INST part, boolean clearPreviousPanels)
 				throws JAXBException, IOException;
 		void recalculatePartCounts();
 	}
 
-    private int part = -1;
+    private final INST part;
     private final Context context;
 
     JLabel partName = new JLabel("");
@@ -34,14 +35,14 @@ public class PartManagerPanel extends TransparentablePanel {
     ScrollComboBox<String> partPresetBox = new ScrollComboBox<>(false);
     JCheckBox overwriteExistingCheckbox = new CustomCheckBox("Overwrite", true);
 
-    public PartManagerPanel(int partNum, Context context) {
-        part = partNum;
+    public PartManagerPanel(INST part, Context context) {
+        this.part = part;
         this.context = context;
 
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.setBorder(new BevelBorder(BevelBorder.LOWERED));
 
-        String folderName = Constants.instNames[partNum];
+        String folderName = Constants.instNames[part.getIndex()];
         partName.setText("Presets:");
 
         initPresetField(folderName);
@@ -93,11 +94,11 @@ public class PartManagerPanel extends TransparentablePanel {
                         fileName = fileName.substring(0, pos);
                     }
                     try {
-                        int numOfParts = countStringOccurrences(f, "</" + Constants.instPartNames[part] + "Part>");
+                        int numOfParts = countStringOccurrences(f, "</" + Constants.instPartNames[part.getIndex()] + "Part>");
                         partPresetBox.addItem(fileName + " [" + numOfParts + "]");
                     } catch (IOException e) {
                         LG.e(e);
-                        new TemporaryInfoPopup("Could not initialize presets for part: " + part, 3000);
+                        new TemporaryInfoPopup("Could not initialize presets for part: " + part.getIndex(), 3000);
                     }
                 }
             }

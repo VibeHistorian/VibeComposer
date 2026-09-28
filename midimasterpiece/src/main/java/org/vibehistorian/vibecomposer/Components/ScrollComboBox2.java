@@ -240,6 +240,7 @@ public class ScrollComboBox2<T> extends JComboBox<T> implements GloballyLockable
 
 	private List<InstPanel> getAffectedPanels(InstPanel instParent) {
 		return instrumentControlContext == null ? Collections.<InstPanel>emptyList()
-				: instrumentControlContext.getAffectedPanels(instParent.getPartNum());
+				: instrumentControlContext.getAffectedPanels(
+						org.vibehistorian.vibecomposer.INST.fromIndex(instParent.getPartNum()));
 	}
 }

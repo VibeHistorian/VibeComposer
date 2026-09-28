@@ -28,20 +28,11 @@ see <https://www.gnu.org/licenses/>.
  */
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.PlaybackState;
-
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Constants;
-import org.vibehistorian.vibecomposer.GUIConstants;
-import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.SwingUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -205,16 +196,16 @@ public class ShowAreaBig extends JComponent {
 									if (leftMouseOpenPopup) {
 										consumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
-										sp.openMidiEditor(phrase.secOrder, phrase.part, phrase.partOrder);
+										sp.openMidiEditor(phrase.secOrder, INST.fromIndex(phrase.part), phrase.partOrder);
 										return;
 									} else if (rightMouseOpenSectionTab) {
 										if (!consumed) {
 											consumed = true;
 											LG.i("Opening inst. tab for section#: " + (phrase.secOrder + 1));
 											SwingUtilities.invokeLater(() -> {
-												sp.selectPanelFromScore(phrase.part, phrase.partOrder,
+												sp.selectPanelFromScore(INST.fromIndex(phrase.part), phrase.partOrder,
 														phrase.secOrder);
-												JComponent toFlash = sp.getInstrumentBoxForPanel(phrase.part,
+												JComponent toFlash = sp.getInstrumentBoxForPanel(INST.fromIndex(phrase.part),
 													phrase.partOrder);
 												Timer tmr = new Timer(200, e -> SwingUtils.flashComponentCustom(toFlash,
 														(f, state) -> {
@@ -229,9 +220,9 @@ public class ShowAreaBig extends JComponent {
 									} else {
 										if (evt.isShiftDown()) {
 											// mute, instead of solo
-											sp.togglePanelMute(phrase.part, phrase.partOrder);
+											sp.togglePanelMute(INST.fromIndex(phrase.part), phrase.partOrder);
 										} else {
-											sp.togglePanelSolo(phrase.part, phrase.partOrder);
+											sp.togglePanelSolo(INST.fromIndex(phrase.part), phrase.partOrder);
 										}
 
 										return;
@@ -432,7 +423,7 @@ public class ShowAreaBig extends JComponent {
 						: Color.red;
 				double percentageMix = samePrevColorCounter
 						/ (double) Math.max(samePrevColorCounter,
-								sp.getInstrumentPanelCount(noteColorIndex));
+								sp.getInstrumentPanelCount(INST.fromIndex(noteColorIndex)));
 
 				noteColor = OMNI.mixColor(noteColor, nextColor, percentageMix / 1.5);
 			}

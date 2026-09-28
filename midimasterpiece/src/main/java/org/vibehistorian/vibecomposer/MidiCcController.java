@@ -10,12 +10,12 @@ import java.util.List;
 public final class MidiCcController {
 	public interface Context {
 		boolean useMidiCc();
-		List<? extends InstPanel> getInstrumentPanels(int instrument);
+		List<? extends InstPanel> getInstrumentPanels(INST instrument);
 		int getDrumVolume();
 		int getGlobalVolume();
 		int getGlobalReverb();
 		int getGlobalChorus();
-		int getGroupFilter(int instrument);
+		int getGroupFilter(INST instrument);
 		boolean isSequencerRunning();
 		void sendMidiMessage(ShortMessage message);
 	}
@@ -56,7 +56,10 @@ public final class MidiCcController {
 		if (!context.useMidiCc()) {
 			return;
 		}
-		for (int instrument = 0; instrument < 4; instrument++) {
+		for (INST instrument : INST.values()) {
+			if (instrument == INST.DRUM) {
+				continue;
+			}
 			List<? extends InstPanel> panels = context.getInstrumentPanels(instrument);
 			for (InstPanel panel : panels) {
 				double volume = panel.getVolSlider().getValue() / 100.0;
@@ -72,7 +75,7 @@ public final class MidiCcController {
 		sendVolumeMessage(drumVolume, 9);
 		sendReverbMessage(0.5, 9);
 		sendChorusMessage(0.1, 9);
-		sendLowPassFilterMessage(1.0, 9, 4);
+		sendLowPassFilterMessage(1.0, 9, INST.DRUM);
 	}
 
 	private void sendPanMessage(int pan100, int channel) {
@@ -101,7 +104,7 @@ public final class MidiCcController {
 		sendMidiCcMessage(value127, channel, 93);
 	}
 
-	private void sendLowPassFilterMessage(double filterMultiplier, int channel, int instrument) {
+	private void sendLowPassFilterMessage(double filterMultiplier, int channel, INST instrument) {
 		int value127 = context.useMidiCc()
 				? OMNI.clampVel(filterMultiplier * context.getGroupFilter(instrument))
 				: 127;

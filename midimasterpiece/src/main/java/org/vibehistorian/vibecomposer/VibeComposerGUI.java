@@ -106,7 +106,7 @@ public class VibeComposerGUI extends JFrame
 	private final MidiCcController midiCcController;
 	private final MidiExportController midiExportController;
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
-		@Override public List<InstPanel> getAffectedPanels(int instrument) {
+		@Override public List<InstPanel> getAffectedPanels(INST instrument) {
 			return VibeComposerGUI.getAffectedPanels(instrument);
 		}
 		@Override public boolean canRegenerateOnChange() {
@@ -117,11 +117,11 @@ public class VibeComposerGUI extends JFrame
 	private final PlaybackController playbackController;
 	private final SoloMuteController soloMuteController =
 			new SoloMuteController(new SoloMuteController.Context() {
-				@Override public List<? extends InstPanel> getPanels(int instrument) {
+				@Override public List<? extends InstPanel> getPanels(INST instrument) {
 					return VibeComposerGUI.getInstList(instrument);
 				}
-				@Override public boolean isInstrumentEnabled(int instrument) {
-					return VibeComposerGUI.isEnabled(instrument);
+				@Override public boolean isInstrumentEnabled(INST instrument) {
+					return VibeComposerGUI.isEnabled(instrument.getIndex());
 				}
 				@Override public void refreshScoreForSoloChange() {
 					if (ShowPanelBig.soloMuterHighlight != null
@@ -242,10 +242,10 @@ public class VibeComposerGUI extends JFrame
 	};
 	private final MidiEditPopup.Context midiEditPopupContext = new MidiEditPopup.Context() {
 		@Override public Component getMainWindowComponent() { return VibeComposerGUI.this; }
-		@Override public List<InstPanel> getAffectedPanels(int instrument) {
+		@Override public List<InstPanel> getAffectedPanels(INST instrument) {
 			return VibeComposerGUI.getAffectedPanels(instrument);
 		}
-		@Override public List<? extends InstPanel> getInstList(int instrument) {
+		@Override public List<? extends InstPanel> getInstList(INST instrument) {
 			return VibeComposerGUI.getInstList(instrument);
 		}
 		@Override public Pair<ScaleMode, Integer> getScaleKey(Section section) {
@@ -254,9 +254,9 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public int getTranspose() { return ScoreGUI.transposeScore.getInt(); }
 		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
-		@Override public void playNote(int pitch, int durationMs, int velocity, int part,
+		@Override public void playNote(int pitch, int durationMs, int velocity, INST part,
 				int partOrder, Section section, boolean overrideLastPlayed) {
-			VibeComposerGUI.playNote(pitch, durationMs, velocity, part, partOrder, section,
+			VibeComposerGUI.playNote(pitch, durationMs, velocity, part.getIndex(), partOrder, section,
 					overrideLastPlayed);
 		}
 		@Override public void markArrangementManual() {
@@ -269,10 +269,6 @@ public class VibeComposerGUI extends JFrame
 	};
 
 	// instrument panels added into scrollpanes
-
-	public static List<InstPanel> getAffectedPanels(int inst) {
-		return getAffectedPanels(INST.fromIndex(inst));
-	}
 
 	public static List<InstPanel> getAffectedPanels(INST instrument) {
 		return getInstrumentPanelController().getAffectedPanels(instrument);
@@ -365,16 +361,16 @@ CheckButton midiMode;
 	ScrollComboBox<String> midiModeDevices;
 	MidiHandler mh = new MidiHandler(new MidiHandler.Context() {
 		@Override public void setBpm(int bpm) { GenerationGUI.mainBpm.setInt(bpm); }
-		@Override public int getInstrumentPartCount(int instrument) {
+		@Override public int getInstrumentPartCount(INST instrument) {
 			return VibeComposerGUI.getInstList(instrument).size();
 		}
-		@Override public void playNextNote(int keyboardTranspose, int velocity, int instrument,
+		@Override public void playNextNote(int keyboardTranspose, int velocity, INST instrument,
 				int partOrder) {
-			VibeComposerGUI.playNextNote(keyboardTranspose, velocity, instrument, partOrder);
+			VibeComposerGUI.playNextNote(keyboardTranspose, velocity, instrument.getIndex(), partOrder);
 		}
-		@Override public void playNote(int pitch, int durationMs, int velocity, int instrument,
+		@Override public void playNote(int pitch, int durationMs, int velocity, INST instrument,
 				int partOrder) {
-			VibeComposerGUI.playNote(pitch, durationMs, velocity, instrument, partOrder,
+			VibeComposerGUI.playNote(pitch, durationMs, velocity, instrument.getIndex(), partOrder,
 					ArrangementGUI.actualArrangement.getSections().get(0), true);
 		}
 	});
@@ -410,6 +406,7 @@ JLabel messageLabel;
 	private BassGUI bassGUI;
 	private ChordGUI chordGUI;
 	private ArpGUI arpGUI;
+	private DrumGUI drumGUI;
 	private ScoreGUI scoreGUI;
 	private ExtraSettingsGUI extraSettingsGUI;
 	private GenerationGUI generationGUI;
@@ -469,14 +466,14 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		});
 		midiCcController = new MidiCcController(new MidiCcController.Context() {
 			@Override public boolean useMidiCc() { return ExtraSettingsGUI.useMidiCC.isSelected(); }
-			@Override public List<? extends InstPanel> getInstrumentPanels(int instrument) {
+			@Override public List<? extends InstPanel> getInstrumentPanels(INST instrument) {
 				return VibeComposerGUI.getInstList(instrument);
 			}
 			@Override public int getDrumVolume() { return DrumGUI.drumVolumeSlider.getValue(); }
 			@Override public int getGlobalVolume() { return globalVolSlider.getValue(); }
 			@Override public int getGlobalReverb() { return globalReverbSlider.getValue(); }
 			@Override public int getGlobalChorus() { return globalChorusSlider.getValue(); }
-			@Override public int getGroupFilter(int instrument) {
+			@Override public int getGroupFilter(INST instrument) {
 				return getInstrumentControls(instrument).getGroupFilterSlider().getValue();
 			}
 			@Override public boolean isSequencerRunning() { return sequencer != null && sequencer.isRunning(); }
@@ -544,21 +541,21 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void toggleButtonEnabledForPanels() {
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
-			@Override public List<? extends InstPart> getInstrumentParts(int instrument) {
-				return VibeComposerGUI.getInstPartsFromInstPanels(instrument, false);
+			@Override public List<? extends InstPart> getInstrumentParts(INST instrument) {
+				return VibeComposerGUI.getInstPartsFromInstPanels(instrument.getIndex(), false);
 			}
-			@Override public List<InstPart> getInstPartsFromCustomSectionInstPanels(int instrument) {
-				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument);
+			@Override public List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument) {
+				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument.getIndex());
 			}
-			@Override public InstPanel makeCustomSectionInstPanel(int instrument) {
-				InstPanel panel = InstPanel.makeInstPanel(instrument, VibeComposerGUI.this);
+			@Override public InstPanel makeCustomSectionInstPanel(INST instrument) {
+				InstPanel panel = InstPanel.makeInstPanel(instrument.getIndex(), VibeComposerGUI.this);
 				VibeComposerGUI.this.configureRandomizeAction(panel);
 				VibeComposerGUI.this.configureInstPanelContext(panel);
 				VibeComposerGUI.this.configureInstrumentControlContext(panel);
 				return panel;
 			}
-			@Override public int getAbsoluteOrder(int instrument, int panelOrder) {
-				return VibeComposerGUI.getAbsoluteOrder(instrument, panelOrder);
+			@Override public int getAbsoluteOrder(INST instrument, int panelOrder) {
+				return VibeComposerGUI.getAbsoluteOrder(instrument.getIndex(), panelOrder);
 			}
 			@Override public void addArrangementComponents(JComponent sectionPane,
 					JComponent settings, int startY, int anchorSide) {
@@ -598,14 +595,14 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private PartManagerPanel.Context createPartManagerContext() {
 		return new PartManagerPanel.Context() {
-			@Override public int saveParts(String path, int part, boolean selectiveSave)
+			@Override public int saveParts(String path, INST part, boolean selectiveSave)
 					throws JAXBException {
-				return instrumentPanelController.saveParts(path, INST.fromIndex(part),
+				return instrumentPanelController.saveParts(path, part,
 						selectiveSave);
 			}
-			@Override public void loadParts(File file, int part, boolean clearPreviousPanels)
+			@Override public void loadParts(File file, INST part, boolean clearPreviousPanels)
 					throws JAXBException, IOException {
-				VibeComposerGUI.this.unmarshallParts(file, part, clearPreviousPanels);
+				VibeComposerGUI.this.unmarshallParts(file, part.getIndex(), clearPreviousPanels);
 			}
 			@Override public void recalculatePartCounts() {
 				VibeComposerGUI.this.recalculateTabPaneCounts();
@@ -629,15 +626,15 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void savePauseInfo() {
 				playbackController.savePauseInfo();
 			}
-			@Override public void openMidiEditor(int sectionOrder, int part, int panelOrder) {
+			@Override public void openMidiEditor(int sectionOrder, INST part, int panelOrder) {
 				Section section = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
-				currentMidiEditorPopup = new MidiEditPopup(midiEditPopupContext, section, part,
+				currentMidiEditorPopup = new MidiEditPopup(midiEditPopupContext, section, part.getIndex(),
 						panelOrder);
 				currentMidiEditorPopup.setSec(section);
 				currentMidiEditorSectionIndex = sectionOrder;
 			}
-			@Override public void selectPanelFromScore(int part, int panelOrder, int sectionOrder) {
-				instrumentTabPane.setSelectedIndex(part);
+			@Override public void selectPanelFromScore(INST part, int panelOrder, int sectionOrder) {
+				instrumentTabPane.setSelectedIndex(part.getIndex());
 				if (ArrangementGUI.useArrangement.isSelected()) {
 					ArrangementGUI.arrSection.setSelectedIndex(sectionOrder + 1);
 					ArrangementGUI.arrSection.getButtons().forEach(button -> button.repaint());
@@ -645,11 +642,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					ArrangementGUI.switchTabPaneToScoreAfterApply = true;
 				}
 			}
-			@Override public void togglePanelMute(int part, int panelOrder) {
-				getPanelByOrder(part, panelOrder).getSoloMuter().toggleMute();
+			@Override public void togglePanelMute(INST part, int panelOrder) {
+				getPanelByOrder(part.getIndex(), panelOrder).getSoloMuter().toggleMute();
 			}
-			@Override public void togglePanelSolo(int part, int panelOrder) {
-				InstPanel panel = getPanelByOrder(part, panelOrder);
+			@Override public void togglePanelSolo(INST part, int panelOrder) {
+				InstPanel panel = getPanelByOrder(part.getIndex(), panelOrder);
 				boolean unsoloAll = globalSoloMuter.soloState != State.OFF
 						&& soloMuteController.isSingleSolo()
 						&& panel.getSoloMuter().soloState == State.FULL;
@@ -658,10 +655,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 				panel.getSoloMuter().toggleSolo();
 			}
-			@Override public JComponent getInstrumentBoxForPanel(int part, int panelOrder) {
-				return getAffectedPanels(INST.fromIndex(part)).get(panelOrder - 1).getInstrumentBox();
+			@Override public JComponent getInstrumentBoxForPanel(INST part, int panelOrder) {
+				return getAffectedPanels(part).get(panelOrder - 1).getInstrumentBox();
 			}
-			@Override public int getInstrumentPanelCount(int instrument) {
+			@Override public int getInstrumentPanelCount(INST instrument) {
 				return getInstList(instrument).size();
 			}
 			@Override public Set<Integer> getSoloMuterHighlightedTracks() {
@@ -710,8 +707,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 		}, instrumentPanelController);
 	}
-
-	private DrumGUI drumGUI;
 
 	private void initDrumGUI() {
 		drumGUI = new DrumGUI(new DrumGUI.Context() {
@@ -854,11 +849,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				public void mousePressed(MouseEvent e) {
 					int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
 					if (indx >= 0 && indx < INST.values().length) {
+						INST inst = INST.fromIndex(indx);
 						if (SwingUtilities.isRightMouseButton(e)) {
 							LG.i(("RMB pressed in instrument tab pane: " + indx));
-							INST instrument = INST.fromIndex(indx);
-							setAddInst(instrument,
-									!getInstrumentControls(instrument).getEnabledCheckBox().isSelected());
+							setAddInst(inst,
+									!getInstrumentControls(inst).getEnabledCheckBox().isSelected());
 						} else if (SwingUtilities.isMiddleMouseButton(e)) {
 							LG.i(("MMB pressed in instrument tab pane: " + indx));
 							boolean hasAny = false;
@@ -874,7 +869,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 									setAddInst(instrument, !hasAny);
 								}
 							}
-							setAddInst(indx, true);
+							setAddInst(inst, true);
 						}
 					} else if (indx == 6) {
 						ArrangementGUI.actualArrangement.getSections().forEach(s -> {
@@ -1030,10 +1025,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementScrollPane);
 		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementActualScrollPane);
-	}
-
-	protected void setAddInst(int partNum, boolean b) {
-		getInstrumentControls(partNum).getEnabledCheckBox().setSelected(b);
 	}
 
 	protected void setAddInst(INST instrument, boolean enabled) {
@@ -1818,7 +1809,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					: Durations.WHOLE_NOTE;
 
 			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
-			List<InstPanel> panels = getAffectedPanels(part);
+			INST instrument = INST.fromIndex(part);
+			List<InstPanel> panels = getAffectedPanels(instrument);
 			Set<Integer> presences = sec != null ? sec.getPresence(part) : null;
 			int totalChords = (sec != null && sec.getSectionBeatDurations() != null)
 					? sec.getSectionBeatDurations().size()
@@ -1833,7 +1825,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 				boolean isIgnoreFill = false;
 				if (!turnOff && sec != null) {
-					int ignoreFillIndex = INST.fromIndex(part) == INST.DRUM ? 0 : 1;
+					int ignoreFillIndex = instrument == INST.DRUM ? 0 : 1;
 					isIgnoreFill = sec
 							.getVariation(part,
 									VibeComposerGUI.getAbsoluteOrder(part, ip.getPanelOrder()))
