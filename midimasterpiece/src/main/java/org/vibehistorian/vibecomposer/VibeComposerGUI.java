@@ -3170,17 +3170,18 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	public void actionPerformedTask(ActionEvent ae) {
+		String actionCommand = ae.getActionCommand();
 		boolean tabPanePossibleChange = false;
 		boolean soloMuterPossibleChange = false;
 		boolean triggerRegenerate = false;
 
-		LG.i(("<<<<<<<<<<<<<<<<Processing '" + ae.getActionCommand() + "'>>>>>>>>>>>>>>>>>>"));
+		LG.i(("<<<<<<<<<<<<<<<<Processing '" + actionCommand + "'>>>>>>>>>>>>>>>>>>"));
 		long actionSystemTime = System.currentTimeMillis();
 
-		boolean isCompose = "Compose".equals(ae.getActionCommand());
-		boolean isRegenerate = "Regenerate".equals(ae.getActionCommand());
+		boolean isCompose = "Compose".equals(actionCommand);
+		boolean isRegenerate = "Regenerate".equals(actionCommand);
 		if (heavyBackgroundTasksInProgress) {
-			LG.i("Cannot process action '" + ae.getActionCommand() + "', composing in progress!");
+			LG.i("Cannot process action '" + actionCommand + "', composing in progress!");
 			new TemporaryInfoPopup("Composing in progress..", 1000);
 			return;
 		}
@@ -3197,8 +3198,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}*/
 
 
-		if (ae.getActionCommand() == "RandStrums"
-				|| (isCompose & GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
+		if ("RandStrums".equals(actionCommand)
+				|| (isCompose && GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
 			for (InstPanel p : getAffectedPanels(INST.CHORD)) {
 				ChordPanel cp = (ChordPanel) p;
 				Pair<StrumType, Integer> strumPair = ChordGUI.getRandomStrumPair();
@@ -3214,7 +3215,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 		}
 
-		if (ae.getActionCommand() == "RandomizeInst") {
+		if ("RandomizeInst".equals(actionCommand)) {
 			generationGUI.randomizeInstruments();
 			triggerRegenerate = true;
 		}
@@ -3240,7 +3241,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			instrumentPanelController.generatePanels(INST.DRUM);
 		}
 
-		if (ae.getActionCommand() == "RandomizeTranspose") {
+		if ("RandomizeTranspose".equals(actionCommand)) {
 			Random instGen = new Random();
 			ScoreGUI.transposeScore.setInt(instGen.nextInt(12) - 6);
 			triggerRegenerate = true;
@@ -3285,7 +3286,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			//worker.execute();
 		}
 
-		if (ae.getActionCommand() == "LoadGUIConfig") {
+		if ("LoadGUIConfig".equals(actionCommand)) {
 			FileDialog fd = new FileDialog(this, "Choose a file", FileDialog.LOAD);
 			fd.setDirectory(null);
 			fd.setFile("*.xml");
@@ -3311,9 +3312,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			tabPanePossibleChange = true;
 		}
 
-		if (ae.getActionCommand().startsWith("Arrangement")) {
+		if (actionCommand.startsWith("Arrangement")) {
 			Random arrGen = new Random();
-			ArrangementGUI.arrangementGUI.handleArrangementAction(ae.getActionCommand(), arrGen.nextInt(),
+			ArrangementGUI.arrangementGUI.handleArrangementAction(actionCommand, arrGen.nextInt(),
 					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
 			tabPanePossibleChange = true;
 		}
@@ -3331,9 +3332,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			regenerate();
 		}
 
-		LG.i("Finished '" + ae.getActionCommand() + "' in: "
+		LG.i("Finished '" + actionCommand + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
-		messageLabel.setText("::" + ae.getActionCommand() + "::");
+		messageLabel.setText("::" + actionCommand + "::");
 	}
 
 	public void recalculateSoloMuters() {
