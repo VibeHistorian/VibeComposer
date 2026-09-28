@@ -52,7 +52,6 @@ public final class MainWindowControls {
         void performAction(ActionEvent event);
         void regenerateInPlace();
         void clearAllSeeds();
-        void copyChords();
     }
 
     public interface PlaybackContext {
@@ -267,7 +266,7 @@ public final class MainWindowControls {
             GenerationGUI.randomSeed.setValue(GenerationGUI.lastRandomSeed);
             LG.i("Copied to random seed: " + GenerationGUI.lastRandomSeed);
         });
-        JButton copyChords = SwingUtils.makeButton("Copy chords", e -> composeContext.copyChords());
+        JButton copyChords = SwingUtils.makeButton("Copy chords", e -> ChordGUI.copyChords());
         JButton clearSeed = SwingUtils.makeButton("Clear All Seeds", e -> composeContext.clearAllSeeds());
 
         controlSettingsPanel.add(regenerate);

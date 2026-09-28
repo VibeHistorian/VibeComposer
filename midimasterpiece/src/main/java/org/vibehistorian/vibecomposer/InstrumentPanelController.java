@@ -54,6 +54,16 @@ public final class InstrumentPanelController {
 		return context.getPanels(instrument);
 	}
 
+	public int getAbsoluteOrder(INST instrument, int panelOrder) {
+		List<Integer> allPanelOrders = getInstList(instrument).stream()
+				.map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
+		int absoluteOrder = allPanelOrders.indexOf(panelOrder);
+		if (absoluteOrder >= 0) {
+			return absoluteOrder;
+		}
+		throw new IllegalArgumentException("Absolute order not found!");
+	}
+
 	public JScrollPane getInstPane(INST instrument) {
 		return context.getPanelScrollPane(instrument);
 	}

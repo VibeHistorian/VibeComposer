@@ -164,15 +164,44 @@ public class ArrangementGUI {
 	}
 
 	private List<? extends InstPart> getInstrumentParts(int instrument) {
-		return context.getInstrumentParts(INST.fromIndex(instrument));
+		return getInstPartsFromInstPanels(getInstList(instrument), false);
 	}
 
-	private int getAbsoluteOrder(int instrument, int panelOrder) {
-		return context.getAbsoluteOrder(INST.fromIndex(instrument), panelOrder);
+	private List<InstPart> getInstPartsFromInstPanels(List<? extends InstPanel> panels,
+			boolean removeMuted) {
+		List<InstPart> parts = new ArrayList<>();
+		for (InstPanel panel : panels) {
+			if (!removeMuted || !panel.getMuteInst()) {
+				parts.add(panel.toInstPart(GenerationGUI.lastRandomSeed));
+			}
+		}
+		InstPart.sortParts(parts);
+		return parts;
+	}
+
+	public void refreshPartMapsFromOldData() {
+		if (actualArrangement != null && actualArrangement.getSections() != null) {
+			actualArrangement.getSections().forEach(section ->
+					section.initPartMapFromOldData(this::getInstrumentParts));
+		}
 	}
 
 	private JScrollPane getInstPane(int instrument) {
 		return panelController.getInstPane(INST.fromIndex(instrument));
+	}
+
+	private List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument) {
+		JPanel panePanel = (JPanel) panelController.getInstPane(instrument)
+				.getViewport().getView();
+		List<InstPart> parts = new ArrayList<>();
+		int seed = GenerationGUI.lastRandomSeed == 0
+				? GenerationGUI.randomSeed.getValue() : GenerationGUI.lastRandomSeed;
+		for (Component component : panePanel.getComponents()) {
+			if (component instanceof InstPanel) {
+				parts.add(((InstPanel) component).toInstPart(seed));
+			}
+		}
+		return parts;
 	}
 
 	/** Supplies the cross-tab work that belongs to the main window. */
@@ -184,10 +213,7 @@ public class ArrangementGUI {
 		void regenerate();
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
-		List<? extends InstPart> getInstrumentParts(INST instrument);
-		List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument);
 		InstPanel makeCustomSectionInstPanel(INST instrument);
-		int getAbsoluteOrder(INST instrument, int panelOrder);
 		void addArrangementComponents(JComponent sectionPane, JComponent settings,
 				int startY, int anchorSide);
 		Point getVariationPopupLocation();
@@ -309,7 +335,8 @@ public class ArrangementGUI {
 		for (int i = sectionOrder; i < lastSectionOrder; i++) {
 			Section section = actualArrangement.getSections().get(i - 1);
 			if (replacedPartNum >= 0 && replacedPartNum < 5) {
-				section.setInstPartList(context.getInstPartsFromCustomSectionInstPanels(INST.fromIndex(replacedPartNum)),
+				section.setInstPartList(getInstPartsFromCustomSectionInstPanels(
+						INST.fromIndex(replacedPartNum)),
 						replacedPartNum);
 			}
 			if (replacedPartNum < 5) {
@@ -528,7 +555,7 @@ public class ArrangementGUI {
 					target.removeVariationForAllParts(instrument, i);
 				}
 				for (Integer panel : section.getPresence(instrument)) {
-					int absoluteOrder = context.getAbsoluteOrder(INST.fromIndex(instrument), panel);
+					int absoluteOrder = panelController.getAbsoluteOrder(INST.fromIndex(instrument), panel);
 					target.setPresence(instrument, absoluteOrder);
 					target.setVariation(instrument, absoluteOrder,
 							section.getVariation(instrument, absoluteOrder));
@@ -1031,7 +1058,7 @@ public class ArrangementGUI {
 				Collection<?> stringables = value instanceof String
 						? Collections.singleton((String) value) : (Collection<?>) value;
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
-						ArrangementGUI.this::getInstList, ArrangementGUI.this::getAbsoluteOrder);
+						ArrangementGUI.this::getInstList, (part, panelOrder) -> panelController.getAbsoluteOrder(INST.fromIndex(part), panelOrder));
 			}
 		};
 		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {

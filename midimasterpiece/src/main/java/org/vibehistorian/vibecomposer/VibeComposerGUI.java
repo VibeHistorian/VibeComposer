@@ -46,7 +46,6 @@ import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
-import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
@@ -76,7 +75,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -122,7 +120,7 @@ public class VibeComposerGUI extends JFrame
 					return VibeComposerGUI.getInstList(instrument);
 				}
 				@Override public boolean isInstrumentEnabled(INST instrument) {
-					return VibeComposerGUI.isEnabled(instrument);
+					return getInstrumentControls(instrument).getEnabledCheckBox().isSelected();
 				}
 				@Override public void refreshScoreForSoloChange() {
 					if (ShowPanelBig.soloMuterHighlight != null
@@ -166,10 +164,9 @@ public class VibeComposerGUI extends JFrame
 					VibeComposerGUI.this.removeComboBoxArrows(panel);
 				}
 				@Override public void recalculateArrangementPartMaps() {
-					ArrangementGUI.actualArrangement.getSections()
-							.forEach(section -> {
-								section.initPartMapFromOldData(i -> getInstPartsFromInstPanels(i, false));
-							});
+					if (arrangementGUI != null) {
+						arrangementGUI.refreshPartMapsFromOldData();
+					}
 				}
 				@Override public void recalculateTabPaneCounts() {
 					VibeComposerGUI.this.recalculateTabPaneCounts();
@@ -233,7 +230,7 @@ public class VibeComposerGUI extends JFrame
 			return INST.fromIndex(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
 		}
 		@Override public int getAbsoluteOrder(INST instrument, int panelOrder) {
-			return VibeComposerGUI.getAbsoluteOrder(instrument.getIndex(), panelOrder);
+			return instrumentPanelController.getAbsoluteOrder(instrument, panelOrder);
 		}
 		@Override public void recalculateAfterCopy() {
 			VibeComposerGUI.this.recalculateTabPaneCounts();
@@ -257,7 +254,7 @@ public class VibeComposerGUI extends JFrame
 		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST part,
 				int partOrder, Section section, boolean overrideLastPlayed) {
-			VibeComposerGUI.playNote(pitch, durationMs, velocity, part.getIndex(), partOrder, section,
+			VibeComposerGUI.this.playNote(pitch, durationMs, velocity, part.getIndex(), partOrder, section,
 					overrideLastPlayed);
 		}
 		@Override public void markArrangementManual() {
@@ -345,11 +342,11 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public void playNextNote(int keyboardTranspose, int velocity, INST instrument,
 				int partOrder) {
-			VibeComposerGUI.playNextNote(keyboardTranspose, velocity, instrument.getIndex(), partOrder);
+			VibeComposerGUI.this.playNextNote(keyboardTranspose, velocity, instrument.getIndex(), partOrder);
 		}
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST instrument,
 				int partOrder) {
-			VibeComposerGUI.playNote(pitch, durationMs, velocity, instrument.getIndex(), partOrder,
+			VibeComposerGUI.this.playNote(pitch, durationMs, velocity, instrument.getIndex(), partOrder,
 					ArrangementGUI.actualArrangement.getSections().get(0), true);
 		}
 	});
@@ -483,7 +480,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
 			@Override public void clearAllSeeds() { VibeComposerGUI.this.clearAllSeeds(); }
-			@Override public void copyChords() { VibeComposerGUI.this.copyChords(); }
 		}, new MainWindowControls.PlaybackContext() {
 			@Override public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
@@ -550,21 +546,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void toggleButtonEnabledForPanels() {
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
-			@Override public List<? extends InstPart> getInstrumentParts(INST instrument) {
-				return VibeComposerGUI.getInstPartsFromInstPanels(instrument.getIndex(), false);
-			}
-			@Override public List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument) {
-				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument);
-			}
 			@Override public InstPanel makeCustomSectionInstPanel(INST instrument) {
 				InstPanel panel = InstPanel.makeInstPanel(instrument.getIndex(), VibeComposerGUI.this);
 				VibeComposerGUI.this.configureRandomizeAction(panel);
 				VibeComposerGUI.this.configureInstPanelContext(panel);
 				VibeComposerGUI.this.configureInstrumentControlContext(panel);
 				return panel;
-			}
-			@Override public int getAbsoluteOrder(INST instrument, int panelOrder) {
-				return VibeComposerGUI.getAbsoluteOrder(instrument.getIndex(), panelOrder);
 			}
 			@Override public void addArrangementComponents(JComponent sectionPane,
 					JComponent settings, int startY, int anchorSide) {
@@ -884,9 +871,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							setAddInst(inst, true);
 						}
 					} else if (indx == 6) {
-						ArrangementGUI.actualArrangement.getSections().forEach(s -> {
-							s.initPartMapFromOldData(i -> getInstPartsFromInstPanels(i, false));
-						});
+						arrangementGUI.refreshPartMapsFromOldData();
 						ArrangementGUI.scrollableArrangementActualTable.repaint();
 					}
 				}
@@ -1169,60 +1154,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-	/*public void fixCombinedMelodyTracks() {
-		if (MelodyGUI.combineMelodyTracks == null) {
-			return;
-		}
-		boolean foundValid = false;
-		int start = currentMidi == null ? 1 : 0;
-		for (int i = start; i < melodyGUI.getPanels().size(); i++) {
-			if (MelodyGUI.combineMelodyTracks.isSelected()) {
-				boolean isValid = melodyGUI.getPanels().get(i).getSequenceTrack() >= 0;
-				if (!foundValid && isValid) {
-					foundValid = true;
-					melodyGUI.getPanels().get(i).toggleCombinedMelodyDisabledUI(true);
-				} else {
-					melodyGUI.getPanels().get(i)
-							.toggleCombinedMelodyDisabledUI(!MelodyGUI.combineMelodyTracks.isSelected());
-				}
-			} else {
-				melodyGUI.getPanels().get(i)
-						.toggleCombinedMelodyDisabledUI(!MelodyGUI.combineMelodyTracks.isSelected());
-			}
-		}
-		if (!foundValid) {
-			melodyGUI.getPanels().get(0).toggleCombinedMelodyDisabledUI(true);
-		}
-	}*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	private void initSliderPanel(int startY, int anchorSide) {
 		sliderPanel = new JPanel();
 		sliderPanel.setOpaque(true);
@@ -1366,25 +1297,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	}
 
-	public static boolean isEnabled(INST inst) {
-		return getInstrumentControls(inst).getEnabledCheckBox().isSelected();
-	}
-
 	public static int countAllPanels() {
 		int count = 0;
 		for (INST instrument : INST.values()) {
 			count += getInstList(instrument).size();
-		}
-		return count;
-	}
-
-	public static int countAllIncludedPanels() {
-		int count = 0;
-		for (INST instrument : INST.values()) {
-			if (getInstrumentControls(instrument).getEnabledCheckBox().isSelected()) {
-				List<? extends InstPanel> panels = getInstList(instrument);
-				count += panels.stream().filter(e -> !e.getMuteInst()).count();
-			}
 		}
 		return count;
 	}
@@ -1641,7 +1557,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					int ignoreFillIndex = instrument == INST.DRUM ? 0 : 1;
 					isIgnoreFill = sec
 							.getVariation(part,
-									VibeComposerGUI.getAbsoluteOrder(part, ip.getPanelOrder()))
+									instrumentPanelController.getAbsoluteOrder(INST.fromIndex(part),
+											ip.getPanelOrder()))
 							.contains(ignoreFillIndex);
 				}
 
@@ -1678,11 +1595,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	public static int sliderMeasureWidth() {
 		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH);
-	}
-
-	private void copyChords() {
-		ChordGUI.userChords.setupChords(ChordGUI.currentChordsInternal);
-		LG.i(("Copied chords: " + ChordGUI.userChords.getChordListString()));
 	}
 
 	public void regenerateInPlace() {
@@ -1941,12 +1853,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 		removeComboBoxArrows(everythingPanel);
-		//sizeRespectingPack();
 		//setVisible(true);
 		repaint();
 		ArrangementGUI.arrSectionPane.repaint();
 		if (ScoreGUI.scorePanel != null) {
-
 			ScoreGUI.scorePanel.setupMouseWheelListener();
 		}
 		initScrollPaneListeners();
@@ -1963,14 +1873,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			getInstList(instrument)
 					.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
 		}
-
-
-		/*instrumentTabPane
-				.setPreferredSize(isFullMode ? scrollPaneDimension : scrollPaneDimensionToggled);*/
-		/*if (isFullMode) {
-			pack();
-		}*/
-
 	}
 
 	private void toggleButtonEnabledForPanels() {
@@ -2670,16 +2572,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			MidiGenerator.chordInts = ChordGUI.userChords.getChordList();
 		}
 	}
-	private void sizeRespectingPack() {
-		Dimension oldSize = getSize();
-		//int ver = everythingPane.getVerticalScrollBar().getValue();
-		//int hor = everythingPane.getHorizontalScrollBar().getValue();
-		pack();
-		setSize(oldSize);
-		//everythingPane.getVerticalScrollBar().setValue(ver);
-		//everythingPane.getHorizontalScrollBar().setValue(hor);
-
-	}
 
 	// -------------- GENERIC INST PANEL METHODS ----------------------------
 
@@ -2720,55 +2612,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		return ArrangementGUI.arrSection != null && ArrangementGUI.arrSection.getSelectedIndex() != 0 && !ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal());
 	}
 
-	public static List<InstPart> getInstPartsFromInstPanels(int inst, boolean removeMuted) {
-		return getInstPartsFromInstPanels(getInstList(inst), removeMuted);
-	}
-
-	public static List<InstPart> getInstPartsFromInstPanels(List<? extends InstPanel> panels, boolean removeMuted) {
-		List<InstPart> parts = new ArrayList<>();
-		for (InstPanel p : panels) {
-			if (!removeMuted || !p.getMuteInst()) {
-				parts.add(p.toInstPart(lastRandomSeed));
-			}
-		}
-		InstPart.sortParts(parts);
-		return parts;
-	}
-
-	static List<InstPart> getInstPartsFromCustomSectionInstPanels(INST inst) {
-		JPanel panePanel = ((JPanel) getInstPane(inst).getViewport().getView());
-		List<InstPart> parts = new ArrayList<>();
-		for (Component c : panePanel.getComponents()) {
-			if (c instanceof InstPanel) {
-				parts.add(((InstPanel) c).toInstPart(
-						(lastRandomSeed == 0) ? randomSeed.getValue() : lastRandomSeed));
-			}
-		}
-		return parts;
-	}
-
-
-
-	public static InstPanel getPanelByOrder(int order, List<? extends InstPanel> panels) {
-		return panels.stream().filter(e -> e.getPanelOrder() == order).findFirst().get();
-	}
-
 	public static InstPanel getPanelByOrder(int part, int partOrder) {
 		return getInstList(part).stream().filter(e -> e.getPanelOrder() == partOrder).findFirst()
 				.get();
 	}
-
-	public static int getAbsoluteOrder(int partNum, int partOrder) {
-		List<Integer> allPanelOrders = getInstList(partNum).stream().map(e -> e.getPanelOrder())
-				.collect(Collectors.toList());
-		allPanelOrders.sort(Comparator.comparing(e -> e));
-		if (allPanelOrders.contains(partOrder)) {
-			return allPanelOrders.indexOf(partOrder);
-		}
-		throw new IllegalArgumentException("Absolute order not found!");
-	}
-
-
 
 	public static boolean canRegenerateOnChange() {
 		return sequencer != null && regenerateWhenValuesChange.isSelected()
@@ -2823,7 +2670,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 
-	public static void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
+	public void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
 		part = part < 0 ? INST.MELODY.getIndex() : part;
 		partOrder = partOrder < 1 ? 1 : partOrder;
 		LG.i(keyboardTranspose + ", " + velocity + ", " + part + ", " + partOrder);
@@ -2857,7 +2704,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 	}
 
-	public static void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
+	public void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
 			Section sec, boolean overrideLastPlayed) {
 		if (sequencer == null || !sequencer.isOpen() || (pitch < 0)
 				|| (!overrideLastPlayed && System.currentTimeMillis() - lastPlayedMs < 100)) {
@@ -2893,14 +2740,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}
 
-			vibeComposerGUI.playNote(ip.getMidiChannel() - 1, pitch, velocity, durationMs);
+			midiDeviceController.playNote(ip.getMidiChannel() - 1, pitch, velocity, durationMs);
 		} catch (InvalidMidiDataException e) {
 			LG.e(e);
 		}
-	}
-
-	private void playNote(int midiChannel, int note, int velocity, int durationMs) throws InvalidMidiDataException {
-		midiDeviceController.playNote(midiChannel, note, velocity, durationMs);
 	}
 
 	public static Pair<ScaleMode, Integer> keyChangeAt(int sectionIndex) {

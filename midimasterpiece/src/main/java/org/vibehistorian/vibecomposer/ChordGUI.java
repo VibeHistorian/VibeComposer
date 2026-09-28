@@ -194,6 +194,11 @@ public class ChordGUI implements InstrumentGUIControls {
         }
     }
 
+    public static void copyChords() {
+        userChords.setupChords(currentChordsInternal);
+        LG.i("Copied chords: " + userChords.getChordListString());
+    }
+
     public static void setProgressionLength(int size) {
         switch (size) {
         case 4:
