@@ -33,6 +33,7 @@ import jm.music.data.Part;
 import jm.music.data.Phrase;
 import jm.music.data.Score;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -155,32 +156,34 @@ public class ShowPanelBig extends JPanel {
 		scorePartPanel.add(new JLabel("Score History"));
 		scorePartPanel.add(scoreBox);
 		scorePartPanel.add(new JLabel("Included Parts"));
-		for (int i = 0; i < 5; i++) {
-			partsShown[i] = new CheckButton(Constants.instNames[i], true,
-					OMNI.alphen(Constants.instColors[i], 75));
-			partsShown[i].setRunnable(this::setScore);
-			int fI = i;
-			partsShown[i].addMouseListener(new MouseAdapter() {
+		for (INST instrument : INST.values()) {
+			int instrumentIndex = instrument.getIndex();
+			partsShown[instrumentIndex] = new CheckButton(Constants.instNames[instrumentIndex], true,
+					OMNI.alphen(Constants.instColors[instrumentIndex], 75));
+			partsShown[instrumentIndex].setRunnable(this::setScore);
+			partsShown[instrumentIndex].addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent evt) {
 					if (SwingUtilities.isMiddleMouseButton(evt)) {
 						boolean enableAll = true;
-						for (int j = 0; j < 5; j++) {
-                            if (j != fI && partsShown[j].isSelected()) {
+						for (INST otherInstrument : INST.values()) {
+							if (otherInstrument != instrument
+									&& partsShown[otherInstrument.getIndex()].isSelected()) {
                                 enableAll = false;
                                 break;
                             }
 						}
 
-						for (int j = 0; j < 5; j++) {
-							partsShown[j].setSelectedRaw(j == fI || enableAll);
+						for (INST otherInstrument : INST.values()) {
+							partsShown[otherInstrument.getIndex()]
+									.setSelectedRaw(otherInstrument == instrument || enableAll);
 						}
 						setScore();
 					}
 				}
 			});
-			partsShown[i].setMargin(new Insets(0, 0, 0, 0));
-			scorePartPanel.add(partsShown[i]);
+			partsShown[instrumentIndex].setMargin(new Insets(0, 0, 0, 0));
+			scorePartPanel.add(partsShown[instrumentIndex]);
 		}
 		{
             JButton toggler = new JButton("All");
@@ -208,14 +211,14 @@ public class ShowPanelBig extends JPanel {
 			soloMuterHighlight = new CheckButton("Highlight Audible", true);
 			soloMuterHighlight.setRunnable(() -> {
 				if (soloMuterHighlight.isSelected()) {
-					/*for (int i = 0; i < 5; i++) {
+					/*for (int i = 0; i < INST.values().length; i++) {
 						partsShown[i].setSelectedRaw(true);
 						partsShown[i].setEnabled(false);
 					}*/
 					setScore();
 					//toggler.setEnabled(false);
 				} else {
-					/*for (int i = 0; i < 5; i++) {
+					/*for (int i = 0; i < INST.values().length; i++) {
 						partsShown[i].setEnabled(true);
 					}*/
 					//toggler.setEnabled(true);
@@ -492,9 +495,9 @@ public class ShowPanelBig extends JPanel {
 
 	public void setScore(Score score) {
 		List<Integer> includedParts = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			if (partsShown[i].isSelected()) {
-				includedParts.add(i);
+		for (INST instrument : INST.values()) {
+			if (partsShown[instrument.getIndex()].isSelected()) {
+				includedParts.add(instrument.getIndex());
 			}
 		}
 		setScore(score, includedParts);

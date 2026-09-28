@@ -40,7 +40,8 @@ public final class SoloMuteController {
 			tracksToUnmute.add(track);
 		}
 
-		for (int instrument = 0; instrument < 5; instrument++) {
+		for (INST instrumentType : INST.values()) {
+			int instrument = instrumentType.getIndex();
 			if (!context.isInstrumentEnabled(instrument)) {
 				continue;
 			}
@@ -67,7 +68,8 @@ public final class SoloMuteController {
 		}
 
 		Sequencer sequencer = PlaybackState.sequencer;
-		for (int instrument = 0; instrument < 5; instrument++) {
+		for (INST instrumentType : INST.values()) {
+			int instrument = instrumentType.getIndex();
 			for (InstPanel panel : context.getPanels(instrument)) {
 				if (panel.getSequenceTrack() < 0) {
 					panel.getSoloMuter().unsolo();
@@ -84,7 +86,8 @@ public final class SoloMuteController {
 
 	public void toggleExclude() {
 		boolean hasSoloSelection = SoloMuteState.globalSoloMuter.soloState != State.OFF;
-		for (int instrument = 0; instrument < 5; instrument++) {
+		for (INST instrumentType : INST.values()) {
+			int instrument = instrumentType.getIndex();
 			for (InstPanel panel : context.getPanels(instrument)) {
 				if (hasSoloSelection && panel.getSoloMuter().soloState == State.OFF) {
 					panel.setMuteInst(true);
@@ -99,7 +102,8 @@ public final class SoloMuteController {
 	}
 
 	public void recalculatePanels() {
-		for (int instrument = 0; instrument < 5; instrument++) {
+		for (INST instrumentType : INST.values()) {
+			int instrument = instrumentType.getIndex();
 			recalculateGroupSolo(instrument);
 			recalculateGroupMute(instrument);
 		}

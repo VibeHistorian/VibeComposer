@@ -160,7 +160,8 @@ public class Arrangement {
 	}
 
 	public void initGlobalVariationMap() {
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			int typesCount = Section.variationDescriptions[i].length - 1;
 			Boolean[] data = new Boolean[typesCount];
 			data[0] = Boolean.TRUE;
@@ -219,8 +220,8 @@ public class Arrangement {
 			if (variableSections.contains(s) && arrGen.nextInt(100) < variabilityChance) {
 				sections.add(sec);
 				Section doubleSec = sec.deepCopy();
-				for (int i = 0; i < 5; i++) {
-					doubleSec.addChanceForInst(i, 10);
+				for (INST instrument : INST.values()) {
+					doubleSec.addChanceForInst(instrument.getIndex(), 10);
 				}
 				sections.add(doubleSec);
 			} else {
@@ -274,7 +275,8 @@ public class Arrangement {
 			Section s = getSections().get(i);
 			model.setValueAt(s.getType(), 0, i);
 			model.setValueAt(String.valueOf(s.getMeasures()), 1, i);
-			for (int j = 0; j < 5; j++) {
+			for (INST instrument : INST.values()) {
+				int j = instrument.getIndex();
 				/*String pres = StringUtils.join(s.getPresence(j));
 				pres = pres.replaceAll("\\[", "").replaceAll("\\]", "");
 				boolean isCustomizedPart = s.getInstPartList(j) != null;
@@ -478,7 +480,8 @@ public class Arrangement {
 	public void initPartInclusionMap(IntFunction<List<? extends InstPart>> partsForInstrument) {
 		int typesCount = PART_INCLUSION_TYPES.length;
 
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
 					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders.size()][typesCount];
@@ -518,7 +521,8 @@ public class Arrangement {
 			return;
 		}
 		boolean needsArrayCopy = false;
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			int actualInstCount = partsForInstrument.apply(i).size();
 			if (getInclMap().get(i) == null) {
 				initPartInclusionMap(partsForInstrument);
@@ -541,7 +545,8 @@ public class Arrangement {
 			initPartInclusionMap(partsForInstrument);
 			return;
 		}
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
 					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders
@@ -569,7 +574,8 @@ public class Arrangement {
 			initGlobalVariationMap();
 			return;
 		}
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			int typesCount = Section.variationDescriptions[i].length - 1;
 			Boolean[] data = new Boolean[typesCount];
 			Boolean data0 = Boolean.TRUE;

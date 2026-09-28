@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.INST;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -31,8 +33,8 @@ public class UsedPatternMap extends HashMap<Integer, UsedPattern> {
 
 	public static List<UsedPatternMap> multiMap() {
 		List<UsedPatternMap> multiMap = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			multiMap.add(i, new UsedPatternMap(i));
+		for (INST instrument : INST.values()) {
+			multiMap.add(instrument.getIndex(), new UsedPatternMap(instrument.getIndex()));
 		}
 		return multiMap;
 	}

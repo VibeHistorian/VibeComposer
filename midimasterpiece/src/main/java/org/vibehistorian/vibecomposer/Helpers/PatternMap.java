@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -102,8 +103,8 @@ public class PatternMap {
 
 	public static List<PatternMap> multiMap() {
 		List<PatternMap> multiMap = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			multiMap.add(i, new PatternMap(i));
+		for (INST instrument : INST.values()) {
+			multiMap.add(instrument.getIndex(), new PatternMap(instrument.getIndex()));
 		}
 		return multiMap;
 	}
@@ -141,7 +142,8 @@ public class PatternMap {
 		}
 
 
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			PatternMap map = patternMaps.get(i);
 			List<Integer> partOrders = partsForInstrument.apply(i).stream()
 					.map(InstPart::getOrder).collect(Collectors.toList());

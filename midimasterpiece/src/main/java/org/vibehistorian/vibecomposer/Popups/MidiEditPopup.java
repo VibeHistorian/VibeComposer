@@ -257,7 +257,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public boolean isSnapPitch() {
-		return snapToScaleGrid.isSelected() && part != 4;
+		return snapToScaleGrid.isSelected() && INST.fromIndex(part) != INST.DRUM;
 	}
 
 	private JPanel makeMidiDragDropPanel() {
@@ -733,26 +733,26 @@ public class MidiEditPopup extends CloseablePopup {
 				ip.setPatternSeed(new Random().nextInt());
 			}
 			List<Integer> variations = sec.getVariation(part, partOrder);
-			switch (part) {
-			case 0:
+			switch (INST.fromIndex(part)) {
+			case MELODY:
 				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
 						sec.getTypeMelodyOffset(), sec, variations, false, MelodyGUI.melodyBlockChoicePreference.getValues());
 				break;
-			case 1:
+			case BASS:
 				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);
 				break;
-			case 2:
+			case CHORD:
 				mg.fillChordsFromPart((ChordPart) ip, mg.chordProgression, sec, variations);
 				break;
-			case 3:
+			case ARP:
 				mg.fillArpFromPart((ArpPart) ip, mg.chordProgression, sec, variations);
 				break;
-			case 4:
+			case DRUM:
 				mg.fillDrumsFromPart((DrumPart) ip, mg.chordProgression, sec.isClimax(), sec,
 						variations);
 				break;
 			default:
-				throw new IllegalArgumentException("Invalid part: " + part);
+				throw new IllegalStateException("Unsupported instrument: " + part);
 			}
 			ip.setPatternSeed(seed);
 
@@ -788,7 +788,7 @@ public class MidiEditPopup extends CloseablePopup {
 
 	public void repaintMvea() {
 		mvea.setAndRepaint();
-		if (part == 2) {
+		if (INST.fromIndex(part) == INST.CHORD) {
 			mvea.getValues().remakeNoteStartTimes(true);
 			mvea.sectionLength = Math.ceil(mvea.getValues().getIterationOrder().get(mvea.getValues().size()-1).getEndTime() - DBL_ERR);
 		} else {

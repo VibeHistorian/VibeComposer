@@ -659,7 +659,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				panel.getSoloMuter().toggleSolo();
 			}
 			@Override public JComponent getInstrumentBoxForPanel(int part, int panelOrder) {
-				return getAffectedPanels(part).get(panelOrder - 1).getInstrumentBox();
+				return getAffectedPanels(INST.fromIndex(part)).get(panelOrder - 1).getInstrumentBox();
 			}
 			@Override public int getInstrumentPanelCount(int instrument) {
 				return getInstList(instrument).size();
@@ -671,7 +671,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					return tracks;
 				}
 				boolean checkMutes = globalSoloMuter.soloState == State.OFF;
-				for (int instrument = 0; instrument < 5; instrument++) {
+				for (INST instrument : INST.values()) {
 					for (InstPanel panel : getInstList(instrument)) {
 						if (checkMutes ? panel.getSoloMuter().muteState == State.OFF
 								: panel.getSoloMuter().soloState != State.OFF) {
@@ -853,22 +853,25 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				@Override
 				public void mousePressed(MouseEvent e) {
 					int indx = instrumentTabPane.indexAtLocation(e.getX(), e.getY());
-					if (indx >= 0 && indx < 5) {
+					if (indx >= 0 && indx < INST.values().length) {
 						if (SwingUtilities.isRightMouseButton(e)) {
 							LG.i(("RMB pressed in instrument tab pane: " + indx));
-							setAddInst(indx, !getInstrumentControls(indx).getEnabledCheckBox().isSelected());
+							INST instrument = INST.fromIndex(indx);
+							setAddInst(instrument,
+									!getInstrumentControls(instrument).getEnabledCheckBox().isSelected());
 						} else if (SwingUtilities.isMiddleMouseButton(e)) {
 							LG.i(("MMB pressed in instrument tab pane: " + indx));
 							boolean hasAny = false;
-							for (int i = 0; i < 5; i++) {
-								if (i != indx && getInstrumentControls(i).getEnabledCheckBox().isSelected()) {
+							for (INST instrument : INST.values()) {
+								if (instrument.getIndex() != indx
+										&& getInstrumentControls(instrument).getEnabledCheckBox().isSelected()) {
 									hasAny = true;
 									break;
 								}
 							}
-							for (int i = 0; i < 5; i++) {
-								if (i != indx) {
-									setAddInst(i, !hasAny);
+							for (INST instrument : INST.values()) {
+								if (instrument.getIndex() != indx) {
+									setAddInst(instrument, !hasAny);
 								}
 							}
 							setAddInst(indx, true);
@@ -882,13 +885,14 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			});
 			everythingPanel.add(instrumentTabPane, constraints);
-			for (int i = 0; i < 5; i++) {
-				instrumentTabPane.setBackgroundAt(i, OMNI.alphen(Constants.instColors[i], 40));
-				int finalI = i;
-				getInstrumentControls(i).getEnabledCheckBox().addChangeListener((evt) -> {
-					instrumentTabPane.setBackgroundAt(finalI,
-							OMNI.alphen(getInstrumentControls(finalI).getEnabledCheckBox().isSelected()
-									? Constants.instColors[finalI] : Color.white, 40));
+			for (INST instrument : INST.values()) {
+				int instrumentIndex = instrument.getIndex();
+				instrumentTabPane.setBackgroundAt(instrumentIndex,
+						OMNI.alphen(Constants.instColors[instrumentIndex], 40));
+				getInstrumentControls(instrument).getEnabledCheckBox().addChangeListener((evt) -> {
+					instrumentTabPane.setBackgroundAt(instrumentIndex,
+							OMNI.alphen(getInstrumentControls(instrument).getEnabledCheckBox().isSelected()
+									? Constants.instColors[instrumentIndex] : Color.white, 40));
 				});
 			}
 
@@ -1008,8 +1012,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		if (!presetLoaded) {
 			melodyGUI.generateInitialMelodyPanels();
-			for (int i = 1; i < 5; i++) {
-				instrumentPanelController.generatePanels(INST.fromIndex(i));
+			for (INST instrument : INST.values()) {
+				if (instrument != INST.MELODY) {
+					instrumentPanelController.generatePanels(instrument);
+				}
 			}
 			LG.i("Panels generated at : " + (System.currentTimeMillis() - sysTime) + " ms!");
 		}
@@ -1019,8 +1025,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 	private void initScrollPaneListeners() {
-		for (int i = 0; i < 5; i++) {
-			SwingUtils.setupScrollpanePriorityScrolling(getInstPane(i));
+		for (INST instrument : INST.values()) {
+			SwingUtils.setupScrollpanePriorityScrolling(getInstPane(instrument));
 		}
 		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementScrollPane);
 		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementActualScrollPane);
@@ -1028,6 +1034,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	protected void setAddInst(int partNum, boolean b) {
 		getInstrumentControls(partNum).getEnabledCheckBox().setSelected(b);
+	}
+
+	protected void setAddInst(INST instrument, boolean enabled) {
+		getInstrumentControls(instrument).getEnabledCheckBox().setSelected(enabled);
 	}
 
 	private void initKeyboardListener() {
@@ -1161,8 +1171,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			getInstrumentControls(INST.ARP).getRandomPanelsToGenerate().setText("3");
 			getInstrumentControls(INST.DRUM).getRandomPanelsToGenerate().setText("6");
 			melodyGUI.generateInitialMelodyPanels();
-			for (int i = 1; i < 5; i++) {
-				instrumentPanelController.generatePanels(INST.fromIndex(i));
+			for (INST instrument : INST.values()) {
+				if (instrument != INST.MELODY) {
+					instrumentPanelController.generatePanels(instrument);
+				}
 			}
 			ArrangementGUI.manualArrangement.setSelected(false);
 			heavyBackgroundTasksInProgress = false;
@@ -1317,8 +1329,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		soloMuterTrackControlPanel.add(emptySmLabel);
 
 		groupSoloMuters = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			SoloMuter sm = new SoloMuter(i, SoloMuter.Type.GROUP, this);
+		for (INST instrument : INST.values()) {
+			SoloMuter sm = new SoloMuter(instrument.getIndex(), SoloMuter.Type.GROUP, this);
 			groupSoloMuters.add(sm);
 			soloMuterTrackControlPanel.add(sm);
 		}
@@ -1510,22 +1522,23 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				long totalSoloCount = 0;
 				long totalMuteCount = 0;
 
-				for (int i = 0; i < 5; i++) {
-					long groupSoloCount = getInstList(i).stream()
+				for (INST instrument : INST.values()) {
+					int instrumentIndex = instrument.getIndex();
+					long groupSoloCount = getInstList(instrument).stream()
 							.filter(e -> e.getSoloMuter().soloState == SoloMuter.State.FULL)
 							.count();
-					if (groupSoloCount < getInstList(i).size() && groupSoloCount > 0) {
-						groupSoloMuters.get(i).halfSolo();
+					if (groupSoloCount < getInstList(instrument).size() && groupSoloCount > 0) {
+						groupSoloMuters.get(instrumentIndex).halfSolo();
 					} else if (groupSoloCount == 0) {
-						groupSoloMuters.get(i).unsolo();
+						groupSoloMuters.get(instrumentIndex).unsolo();
 					}
-					long groupMuteCount = getInstList(i).stream()
+					long groupMuteCount = getInstList(instrument).stream()
 							.filter(e -> e.getSoloMuter().muteState == SoloMuter.State.FULL)
 							.count();
-					if (groupMuteCount < getInstList(i).size() && groupMuteCount > 0) {
-						groupSoloMuters.get(i).halfMute();
+					if (groupMuteCount < getInstList(instrument).size() && groupMuteCount > 0) {
+						groupSoloMuters.get(instrumentIndex).halfMute();
 					} else if (groupMuteCount == 0) {
-						groupSoloMuters.get(i).unmute();
+						groupSoloMuters.get(instrumentIndex).unmute();
 					}
 					totalSoloCount += groupSoloCount;
 					totalMuteCount += groupMuteCount;
@@ -1556,17 +1569,17 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	public static int countAllPanels() {
 		int count = 0;
-		for (int i = 0; i < 5; i++) {
-			count += getInstList(i).size();
+		for (INST instrument : INST.values()) {
+			count += getInstList(instrument).size();
 		}
 		return count;
 	}
 
 	public static int countAllIncludedPanels() {
 		int count = 0;
-		for (int i = 0; i < 5; i++) {
-			if (isEnabled(i)) {
-				List<? extends InstPanel> panels = getInstList(i);
+		for (INST instrument : INST.values()) {
+			if (getInstrumentControls(instrument).getEnabledCheckBox().isSelected()) {
+				List<? extends InstPanel> panels = getInstList(instrument);
 				count += panels.stream().filter(e -> !e.getMuteInst()).count();
 			}
 		}
@@ -1820,7 +1833,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 				boolean isIgnoreFill = false;
 				if (!turnOff && sec != null) {
-					int ignoreFillIndex = part == 4 ? 0 : 1;
+					int ignoreFillIndex = INST.fromIndex(part) == INST.DRUM ? 0 : 1;
 					isIgnoreFill = sec
 							.getVariation(part,
 									VibeComposerGUI.getAbsoluteOrder(part, ip.getPanelOrder()))
@@ -2365,15 +2378,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			sm.reapplyTextColor();
 		}
 
-		for (int i = 0; i < 5; i++) {
-			getInstList(i).forEach(e -> e.getSoloMuter().reapplyTextColor());
-			getAffectedPanels(i).forEach(e -> {
+		for (INST instrument : INST.values()) {
+			int instrumentIndex = instrument.getIndex();
+			getInstList(instrument).forEach(e -> e.getSoloMuter().reapplyTextColor());
+			getAffectedPanels(instrument).forEach(e -> {
 				if (e.getComboPanel() != null) {
 					e.getComboPanel().reapplyHits();
 				}
 			});
-			int fI = i;
-			getAffectedPanels(i).forEach(e -> e.setBackground(OMNI.alphen(Constants.instColors[fI], 60)));
+			getAffectedPanels(instrument).forEach(e ->
+					e.setBackground(OMNI.alphen(Constants.instColors[instrumentIndex], 60)));
 		}
 		ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
 				ArrangementGUI.actualArrangement.getSections().size());
@@ -2404,8 +2418,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private void setFullMode(boolean mode) {
 		toggleableComponents.forEach(e -> e.setVisible(mode));
-		for (int i = 0; i < 5; i++) {
-			getInstList(i)
+		for (INST instrument : INST.values()) {
+			getInstList(instrument)
 					.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
 		}
 
@@ -2423,9 +2437,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void toggleButtonEnabledForPanels(boolean isOriginal) {
-		for (int i = 0; i < 5; i++) {
-			getInstrumentControls(i).getAddPanelButton().setEnabled(isOriginal);
-			getInstrumentControls(i).getRandomPanelsToGenerate().setEnabled(isOriginal);
+		for (INST instrument : INST.values()) {
+			getInstrumentControls(instrument).getAddPanelButton().setEnabled(isOriginal);
+			getInstrumentControls(instrument).getRandomPanelsToGenerate().setEnabled(isOriginal);
 		}
 	}
 
@@ -3221,7 +3235,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		if (ae.getActionCommand() == "RandStrums"
 				|| (isCompose & GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
-			for (InstPanel p : getAffectedPanels(2)) {
+			for (InstPanel p : getAffectedPanels(INST.CHORD)) {
 				ChordPanel cp = (ChordPanel) p;
 				Pair<StrumType, Integer> strumPair = ChordGUI.getRandomStrumPair();
 				cp.setStrum(strumPair.getRight());
@@ -3368,8 +3382,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private void clearAllSeeds() {
 		randomSeed.setValue(0);
-		for (int i = 0; i < 5; i++) {
-			getInstList(i).forEach(e -> e.setPatternSeed(0));
+		for (INST instrument : INST.values()) {
+			getInstList(instrument).forEach(e -> e.setPatternSeed(0));
 		}
 		ArrangementGUI.arrangementSeed.setValue(0);
 	}
@@ -3472,9 +3486,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	public void recalculateGenerationCounts() {
-		for (int i = 0; i < 5; i++) {
-			getInstrumentControls(i).getRandomPanelsToGenerate()
-					.setText("" + Math.max(1, getInstList(i).size()));
+		for (INST instrument : INST.values()) {
+			getInstrumentControls(instrument).getRandomPanelsToGenerate()
+					.setText("" + Math.max(1, getInstList(instrument).size()));
 		}
 	}
 
@@ -3909,10 +3923,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 	public static void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
-		part = part < 0 ? 0 : part;
+		part = part < 0 ? INST.MELODY.getIndex() : part;
 		partOrder = partOrder < 1 ? 1 : partOrder;
 		LG.i(keyboardTranspose + ", " + velocity + ", " + part + ", " + partOrder);
-		Phrase nextNoteMelody = part == 0 && guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi() != null
+		Phrase nextNoteMelody = INST.fromIndex(part) == INST.MELODY
+				&& guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi() != null
 				? guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi().makePhrase() : null;
 		int transpose = keyboardTranspose;
 		if (nextNoteMelody == null) {
@@ -3926,7 +3941,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					LG.i("No actual melody to play!");
 					return;
 				}
-				transpose += -1 * (getInstList(part).get(partOrder-1).getTranspose() + ScoreGUI.transposeScore.getInt());
+				transpose += -1 * (getInstList(INST.fromIndex(part)).get(partOrder-1).getTranspose()
+						+ ScoreGUI.transposeScore.getInt());
 			}
 		}
 		int nextNoteIndex = getNextNoteIndex(part, partOrder) % nextNoteMelody.size();

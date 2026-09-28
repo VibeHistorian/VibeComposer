@@ -3,11 +3,12 @@ package org.vibehistorian.vibecomposer.Popups;
 import org.vibehistorian.vibecomposer.Arrangement;
 import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.PartInclusionBooleanTableModel;
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -43,10 +44,10 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 		addPartInclusionButtons(arr);
 
 
-		for (int i = 0; i < 5; i++) {
-			int fI = i;
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 
-			JTable table = new JTable();
+            JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (arr.getInclMap() == null) {
 				arr.initPartInclusionMap(partsForInstrument);
@@ -59,7 +60,7 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
-			table.setModel(new PartInclusionBooleanTableModel(fI, arr.getInclMap().get(i),
+			table.setModel(new PartInclusionBooleanTableModel(i, arr.getInclMap().get(i),
 					ENERGY_LEVELS, partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
@@ -93,13 +94,13 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 						return;
 
 					if (SwingUtilities.isLeftMouseButton(e)) {
-						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(i).size(); k++) {
 							table.getModel().setValueAt(Boolean.TRUE, k, col);
 
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isRightMouseButton(e)) {
-						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(i).size(); k++) {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}
@@ -163,8 +164,8 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 			piRand.setSeed(seed);
 		}
 		emptyPartInclusions();
-		for (int i = 0; i < 5; i++) {
-			JTable tbl = tables[i];
+		for (INST instrument : INST.values()) {
+			JTable tbl = tables[instrument.getIndex()];
 			for (int j = 0; j < tbl.getRowCount(); j++) {
 				for (int k = 0; k < ENERGY_WEIGHTS.length; k++) {
 					if (piRand.nextInt(100) < ENERGY_WEIGHTS[k]) {
@@ -177,8 +178,8 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 	}
 
 	public void emptyPartInclusions() {
-		for (int i = 0; i < 5; i++) {
-			JTable tbl = tables[i];
+		for (INST instrument : INST.values()) {
+			JTable tbl = tables[instrument.getIndex()];
 			for (int j = 0; j < tbl.getRowCount(); j++) {
 				for (int k = 0; k < ENERGY_WEIGHTS.length; k++) {
 					tbl.getModel().setValueAt(Boolean.FALSE, j, k + 1);
@@ -188,8 +189,8 @@ public class ArrangementPartInclusionPopup extends CloseablePopup {
 	}
 
 	public void fillEmptyPartInclusions() {
-		for (int i = 0; i < 5; i++) {
-			JTable tbl = tables[i];
+		for (INST instrument : INST.values()) {
+			JTable tbl = tables[instrument.getIndex()];
 			for (int j = 0; j < tbl.getRowCount(); j++) {
 				boolean isEmpty = true;
 				for (int k = 0; k < ENERGY_WEIGHTS.length; k++) {

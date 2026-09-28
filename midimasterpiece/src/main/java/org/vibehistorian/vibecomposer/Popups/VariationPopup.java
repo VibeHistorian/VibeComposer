@@ -9,9 +9,9 @@ import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
+import org.vibehistorian.vibecomposer.Parts.InstPart;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -64,10 +64,10 @@ public class VariationPopup {
 		addVariationSettings(sec);
 		//addSectionConfigSettings(sec);
 		addInstVolumeKnobs(sec);
-		for (int i = 0; i < 5; i++) {
-			int fI = i;
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 
-			JTable table = new JTable();
+            JTable table = new JTable();
 			table.setAlignmentX(Component.LEFT_ALIGNMENT);
 			if (sec.getPartMap().get(i) == null) {
 				sec.initPartMap(partsForInstrument);
@@ -77,7 +77,7 @@ public class VariationPopup {
 					.map(e -> (e.getInstrumentBox().getVal()).split(": ")[1])
 					.collect(Collectors.toList());
 
-			table.setModel(new VariationsBooleanTableModel(fI, sectionOrder - 1,
+			table.setModel(new VariationsBooleanTableModel(i, sectionOrder - 1,
 					sec.getPartMap().get(i), Section.variationDescriptions[i], partNames));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
@@ -94,11 +94,11 @@ public class VariationPopup {
 						if (SwingUtilities.isMiddleMouseButton(evt)) {
 							for (Section sec : ArrangementGUI.actualArrangement
 									.getSections()) {
-								sec.removeVariationForPart(fI, row, col);
+								sec.removeVariationForPart(i, row, col);
 							}
 							table.repaint();
 
-							tables[fI].getModel().setValueAt(Boolean.FALSE, row, col);
+							tables[i].getModel().setValueAt(Boolean.FALSE, row, col);
 						}
 
 					}
@@ -124,7 +124,7 @@ public class VariationPopup {
 			categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			categoryPanel.setMaximumSize(new Dimension(2000, 40));
 			categoryPanel.setBorder(new BevelBorder(BevelBorder.RAISED));
-			boolean commited = sec.getInstPartList(fI) != null;
+			boolean commited = sec.getInstPartList(i) != null;
 			JPanel categoryButtons = new JPanel();
 			JLabel categoryName = commited
 					? new JLabel("*" + Constants.instNames[i] + " - Committed")
@@ -149,7 +149,7 @@ public class VariationPopup {
 						return;
 
 					if (SwingUtilities.isLeftMouseButton(e)) {
-						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(i).size(); k++) {
 							if (col > 1) {
 								if (table.getModel().getValueAt(k, 1) == Boolean.TRUE) {
 									table.getModel().setValueAt(Boolean.TRUE, k, col);
@@ -161,19 +161,19 @@ public class VariationPopup {
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isRightMouseButton(e)) {
-						for (int k = 0; k < getInstList.apply(fI).size(); k++) {
+						for (int k = 0; k < getInstList.apply(i).size(); k++) {
 							table.getModel().setValueAt(Boolean.FALSE, k, col);
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isMiddleMouseButton(e) && col >= 2) {
 						Boolean[] vars = ArrangementGUI.arrangement.getGlobalVariationMap()
-								.get(fI);
+								.get(i);
 						if (vars[col - 1]) {
 							vars[col - 1] = Boolean.FALSE;
 						} else {
 							vars[col - 1] = Boolean.TRUE;
 							for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
-								sec.removeVariationForAllParts(fI, col);
+								sec.removeVariationForAllParts(i, col);
 							}
 						}
 					}
@@ -307,7 +307,8 @@ public class VariationPopup {
 	private void addInstVolumeKnobs(Section sec) {
 		JPanel instVolumesPanel = new JPanel();
 		instVolumesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			int val = sec.getVol(i);
 			KnobPanel panel = new DetachedKnobPanel(Constants.instNames[i], 100, 20, 150);
 			panel.setInt(val);

@@ -208,10 +208,11 @@ public class ArrangementGUI {
 			return;
 		}
 		manualArrangement.setSelected(true);
-		for (int instrument = 0; instrument < 5; instrument++) {
-			panelController.createRandomPanels(INST.fromIndex(instrument),
-					getInstList(instrument).size(), false);
-			applyCustomPanelsToSection("", instrument, arrSection.getSelectedIndex());
+		for (INST instrument : INST.values()) {
+			int instrumentIndex = instrument.getIndex();
+			panelController.createRandomPanels(instrument,
+					getInstList(instrumentIndex).size(), false);
+			applyCustomPanelsToSection("", instrumentIndex, arrSection.getSelectedIndex());
 		}
 		arrSection.getCurrentButton().repaint();
 		context.recalculateAfterSectionRecompose();
@@ -224,8 +225,9 @@ public class ArrangementGUI {
 			return;
 		}
 		Section currentSection = actualArrangement.getSections().get(arrSection.getSelectedIndex() - 1);
-		for (int instrument = 0; instrument < 5; instrument++) {
-			currentSection.setInstPartList(sectionGuiConfig.getInstPartList(instrument), instrument);
+		for (INST instrument : INST.values()) {
+			int instrumentIndex = instrument.getIndex();
+			currentSection.setInstPartList(sectionGuiConfig.getInstPartList(instrumentIndex), instrumentIndex);
 		}
 		currentSection.setCustomChords(sectionGuiConfig.getCustomChords());
 		currentSection.setCustomDurations(sectionGuiConfig.getCustomChordDurations());
@@ -267,10 +269,11 @@ public class ArrangementGUI {
 			actualArrangement.getSections().forEach(Section::resetCustomizedParts);
 		} else {
 			for (Section section : actualArrangement.getSections()) {
-				for (int instrument = 0; instrument < 5; instrument++) {
-					List<?> parts = section.getInstPartList(instrument);
-					if (parts != null && parts.size() > getInstList(instrument).size()) {
-						section.resetCustomizedParts(instrument);
+				for (INST instrument : INST.values()) {
+					int instrumentIndex = instrument.getIndex();
+					List<?> parts = section.getInstPartList(instrumentIndex);
+					if (parts != null && parts.size() > getInstList(instrumentIndex).size()) {
+						section.resetCustomizedParts(instrumentIndex);
 					}
 				}
 			}
@@ -334,9 +337,10 @@ public class ArrangementGUI {
 		if (GLOBAL.equals(selectedItem)) {
 			LG.i("Resetting to normal panels!");
 			arrangementMiddleColoredPanel.setBackground(UITheme.panelColorHigh.brighter());
-			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = getInstPane(instrument);
-				List<? extends InstPanel> panels = getInstList(instrument);
+			for (INST instrument : INST.values()) {
+				int instrumentIndex = instrument.getIndex();
+				JScrollPane pane = getInstPane(instrumentIndex);
+				List<? extends InstPanel> panels = getInstList(instrumentIndex);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				for (Component component : panelView.getComponents()) {
 					if (component instanceof InstPanel) panelView.remove(component);
@@ -352,21 +356,22 @@ public class ArrangementGUI {
 			arrangementMiddleColoredPanel.setBackground(UITheme.uiColor().darker().darker());
 			int sectionOrder = Integer.parseInt(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
-			for (int instrument = 0; instrument < 5; instrument++) {
-				JScrollPane pane = getInstPane(instrument);
+			for (INST instrument : INST.values()) {
+				int instrumentIndex = instrument.getIndex();
+				JScrollPane pane = getInstPane(instrumentIndex);
 				JPanel panelView = (JPanel) pane.getViewport().getView();
 				List<InstPanel> sectionPanels = new ArrayList<>();
 				List<Integer> missingPanels = new ArrayList<>();
-				getInstList(instrument)
+				getInstList(instrumentIndex)
 						.forEach(panel -> missingPanels.add(panel.getPanelOrder()));
-				List<? extends InstPart> sectionParts = section.getInstPartList(instrument);
+				List<? extends InstPart> sectionParts = section.getInstPartList(instrumentIndex);
 				if (sectionParts != null) {
 					for (Component component : panelView.getComponents()) {
 						if (component instanceof InstPanel) {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
+								InstPanel copy = context.makeCustomSectionInstPanel(instrumentIndex);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -375,7 +380,7 @@ public class ArrangementGUI {
 					}
 				}
 				if (!missingPanels.isEmpty()) {
-					List<? extends InstPanel> panels = new ArrayList<>(getInstList(instrument))
+					List<? extends InstPanel> panels = new ArrayList<>(getInstList(instrumentIndex))
 							.stream().filter(panel -> missingPanels.contains(panel.getPanelOrder()))
 							.collect(java.util.stream.Collectors.toList());
 					for (Component component : panelView.getComponents()) {
@@ -387,7 +392,7 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
+								InstPanel copy = context.makeCustomSectionInstPanel(instrumentIndex);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
@@ -413,8 +418,8 @@ public class ArrangementGUI {
 		arrangementMiddleColoredPanel.repaint();
 		addedPanels.forEach(panel -> panel.setVisible(true));
 		context.toggleButtonEnabledForPanels();
-		for (int instrument = 0; instrument < 5; instrument++) {
-			getInstPane(instrument).repaint();
+		for (INST instrument : INST.values()) {
+			getInstPane(instrument.getIndex()).repaint();
 		}
 		if (context.getInstrumentTabPane().getSelectedIndex() == 6) {
 			actualArrangement.getSections().forEach(section ->

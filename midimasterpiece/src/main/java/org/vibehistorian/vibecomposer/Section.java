@@ -117,40 +117,41 @@ public class Section {
 	private List<ArpPart> arpParts = null;
 
 	public List<? extends InstPart> getInstPartList(int partNum) {
-		switch (partNum) {
-		case 0:
+		switch (INST.fromIndex(partNum)) {
+		case MELODY:
 			return melodyParts;
-		case 1:
+		case BASS:
 			return bassParts;
-		case 2:
+		case CHORD:
 			return chordParts;
-		case 3:
+		case ARP:
 			return arpParts;
-		case 4:
+		case DRUM:
 			return drumParts;
+		default:
+			throw new IllegalStateException("Unsupported instrument: " + partNum);
 		}
-		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
 	}
 
 	public void setInstPartList(List<? extends InstPart> parts, int partNum) {
-		switch (partNum) {
-		case 0:
+		switch (INST.fromIndex(partNum)) {
+		case MELODY:
 			setMelodyParts((List<MelodyPart>) parts);
 			break;
-		case 1:
+		case BASS:
 			setBassParts((List<BassPart>) parts);
 			break;
-		case 2:
+		case CHORD:
 			setChordParts((List<ChordPart>) parts);
 			break;
-		case 3:
+		case ARP:
 			setArpParts((List<ArpPart>) parts);
 			break;
-		case 4:
+		case DRUM:
 			setDrumParts((List<DrumPart>) parts);
 			break;
 		default:
-			throw new IllegalArgumentException("PartNum incorrect: " + partNum);
+			throw new IllegalStateException("Unsupported instrument: " + partNum);
 		}
 	}
 
@@ -336,7 +337,8 @@ public class Section {
 		Section sec = new Section(type, measures, melodyChance, bassChance, chordChance, arpChance,
 				drumChance);
 		Map<Integer, Object[][]> dataCopy = new HashMap<>();
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			if (partPresenceVariationMap.get(i).length == 0) {
 				dataCopy.put(i, new Object[0][0]);
 				continue;
@@ -384,7 +386,7 @@ public class Section {
 	}
 
 	public void resetCustomizedParts(int partNum) {
-		if (partNum > 4) {
+		if (partNum >= INST.values().length) {
 			resetCustomizedParts();
 		} else {
 			setInstPartList(null, partNum);
@@ -405,8 +407,8 @@ public class Section {
 	}
 
 	public boolean hasPresence() {
-		for (int i = 0; i < 5; i++) {
-			if (countPresence(i) > 0) {
+		for (INST instrument : INST.values()) {
+			if (countPresence(instrument.getIndex()) > 0) {
 				return true;
 			}
 		}
@@ -549,8 +551,9 @@ public class Section {
 
 	public void generatePresences(Random presRand, Map<Integer, Object[][]> inclusionMap,
 			boolean forceAdd, IntFunction<List<? extends InstPart>> partsForInstrument) {
-		for (int part = 0; part < 5; part++) {
-			generatePresences(presRand, part, inclusionMap, forceAdd, partsForInstrument);
+		for (INST instrument : INST.values()) {
+			generatePresences(presRand, instrument.getIndex(), inclusionMap, forceAdd,
+					partsForInstrument);
 		}
 	}
 
@@ -599,41 +602,41 @@ public class Section {
 	}
 
 	public int getChanceForInst(int inst) {
-		switch (inst) {
-		case 0:
+		switch (INST.fromIndex(inst)) {
+		case MELODY:
 			return melodyChance;
-		case 1:
+		case BASS:
 			return bassChance;
-		case 2:
+		case CHORD:
 			return chordChance;
-		case 3:
+		case ARP:
 			return arpChance;
-		case 4:
+		case DRUM:
 			return drumChance;
 		default:
-			throw new IllegalArgumentException("Too high inst. order");
+			throw new IllegalStateException("Unsupported instrument: " + inst);
 		}
 	}
 
 	public void addChanceForInst(int inst, int chance) {
-		switch (inst) {
-		case 0:
+		switch (INST.fromIndex(inst)) {
+		case MELODY:
 			melodyChance = OMNI.clampChance(melodyChance + chance);
 			break;
-		case 1:
+		case BASS:
 			bassChance = OMNI.clampChance(bassChance + chance);
 			break;
-		case 2:
+		case CHORD:
 			chordChance = OMNI.clampChance(chordChance + chance);
 			break;
-		case 3:
+		case ARP:
 			arpChance = OMNI.clampChance(arpChance + chance);
 			break;
-		case 4:
+		case DRUM:
 			drumChance = OMNI.clampChance(drumChance + chance);
 			break;
 		default:
-			throw new IllegalArgumentException("Too high inst. order");
+			throw new IllegalStateException("Unsupported instrument: " + inst);
 		}
 	}
 
@@ -685,7 +688,8 @@ public class Section {
 			return;
 		}
 		//LG.d("INIT PART MAP FROM OLD DATA!");
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
 					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
@@ -724,7 +728,8 @@ public class Section {
 	}
 
 	public void initPartMap(IntFunction<List<? extends InstPart>> partsForInstrument) {
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			List<Integer> rowOrders = partsForInstrument.apply(i).stream()
 					.map(InstPart::getOrder).sorted().collect(Collectors.toList());
             Object[][] data = new Object[rowOrders.size()][variationDescriptions[i].length];
@@ -739,7 +744,8 @@ public class Section {
 	}
 
 	public void initPartMapIfNull(IntFunction<List<? extends InstPart>> partsForInstrument) {
-		for (int instrument = 0; instrument < 5; instrument++) {
+		for (INST instrumentType : INST.values()) {
+			int instrument = instrumentType.getIndex();
 			if (partPresenceVariationMap.get(instrument) == null) {
 				//LG.d("INITIALIZING PART PRESENCE VARIATION MAP: was null!");
 				initPartMap(partsForInstrument);
@@ -752,7 +758,8 @@ public class Section {
 		if (partPresenceVariationMap == null) {
 			partPresenceVariationMap = new HashMap<>();
 		}
-		for (int instrument = 0; instrument < 5; instrument++) {
+		for (INST instrumentType : INST.values()) {
+			int instrument = instrumentType.getIndex();
 			if (partPresenceVariationMap.get(instrument) == null) {
 				partPresenceVariationMap.put(instrument,
 						new Object[0][variationDescriptions[instrument].length]);
@@ -859,7 +866,8 @@ public class Section {
 	public void recalculatePartVariationMapBoundsIfNeeded(
 			IntFunction<List<? extends InstPart>> partsForInstrument) {
 		boolean needsArrayCopy = false;
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			int actualInstCount = partsForInstrument.apply(i).size();
 			int secInstCount = getPartMap().get(i).length;
 			if (secInstCount != actualInstCount) {
@@ -1070,7 +1078,8 @@ public class Section {
 	}
 
 	public int getTransposeVariation(int part, int partOrder) {
-		if (part == 1 || part == 4) {
+		INST instrument = INST.fromIndex(part);
+		if (instrument == INST.BASS || instrument == INST.DRUM) {
 			return 0;
 		} else {
 			List<Integer> vars = getVariation(part, partOrder);

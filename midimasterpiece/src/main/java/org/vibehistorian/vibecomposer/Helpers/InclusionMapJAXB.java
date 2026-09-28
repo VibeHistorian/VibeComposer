@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
+import org.vibehistorian.vibecomposer.INST;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
@@ -45,7 +47,8 @@ public class InclusionMapJAXB {
 
 	public static InclusionMapJAXB from(Map<Integer, Object[][]> partPresenceVariationMap) {
 		InclusionMapJAXB jaxbMap = new InclusionMapJAXB();
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			Object[][] data = partPresenceVariationMap.get(i);
 			PartVarsList pvas = new PartVarsList();
 			if (data == null) {
@@ -67,7 +70,8 @@ public class InclusionMapJAXB {
 		if (jaxb == null || jaxb.map == null) {
 			return result;
 		}
-		for (int i = 0; i < 5; i++) {
+		for (INST instrument : INST.values()) {
+			int i = instrument.getIndex();
 			PartVarsList list = jaxb.map.get(i);
 			if (list == null || list.isEmpty()) {
 				result.put(i, new Object[0][0]);

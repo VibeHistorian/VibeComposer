@@ -377,13 +377,13 @@ public class GUIConfig {
 	}
 
 	public List<? extends InstPart> getInstParts(int instrument) {
-		switch (instrument) {
-		case 0: return getMelodyParts();
-		case 1: return getBassParts();
-		case 2: return getChordParts();
-		case 3: return getArpParts();
-		case 4: return getDrumParts();
-		default: throw new IllegalArgumentException("Instrument index out of range: " + instrument);
+		switch (INST.fromIndex(instrument)) {
+		case MELODY: return getMelodyParts();
+		case BASS: return getBassParts();
+		case CHORD: return getChordParts();
+		case ARP: return getArpParts();
+		case DRUM: return getDrumParts();
+		default: throw new IllegalStateException("Unsupported instrument: " + instrument);
 		}
 	}
 
@@ -688,19 +688,20 @@ public class GUIConfig {
 	}
 
 	public boolean isPartEnabled(int partNum) {
-		switch (partNum) {
-		case 0:
+		switch (INST.fromIndex(partNum)) {
+		case MELODY:
 			return melodyEnable;
-		case 1:
+		case BASS:
 			return bassEnable;
-		case 2:
+		case CHORD:
 			return chordsEnable;
-		case 3:
+		case ARP:
 			return arpsEnable;
-		case 4:
+		case DRUM:
 			return drumsEnable;
+		default:
+			throw new IllegalStateException("Unsupported instrument: " + partNum);
 		}
-		throw new IllegalArgumentException("Invalid partNum");
 	}
 
 	public boolean isMelodyEnable() {
@@ -794,19 +795,20 @@ public class GUIConfig {
 	}
 
 	public List<? extends InstPart> getInstPartList(int partNum) {
-		switch (partNum) {
-		case 0:
+		switch (INST.fromIndex(partNum)) {
+		case MELODY:
 			return melodyParts;
-		case 1:
+		case BASS:
 			return bassParts;
-		case 2:
+		case CHORD:
 			return chordParts;
-		case 3:
+		case ARP:
 			return arpParts;
-		case 4:
+		case DRUM:
 			return drumParts;
+		default:
+			throw new IllegalStateException("Unsupported instrument: " + partNum);
 		}
-		throw new IllegalArgumentException("PartNum incorrect: " + partNum);
 	}
 
 	@XmlTransient

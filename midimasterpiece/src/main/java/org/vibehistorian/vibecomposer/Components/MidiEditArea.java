@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.Components;
 import jm.constants.Pitches;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -409,7 +410,7 @@ public class MidiEditArea extends JComponent {
 		if (pop != null) {
 			part = pop.part;
 		}
-		marginX = (part == 4) ? 160 : 80;
+		marginX = INST.fromIndex(part) == INST.DRUM ? 160 : 80;
 		setValues(values);
 		saveToHistory();
 
@@ -453,9 +454,10 @@ public class MidiEditArea extends JComponent {
 			dragMode.add(DM.VELOCITY);
 		} else if (pop != null && pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
 			int row = getPitchFromPosition(evt.getPoint().y) - currentMin;
-			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(4);
+			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex());
 			if (row >= 0 && row < noteNotes.size()) {
-				pop.setupIdentifiers(4, pop.getContext().getInstList(4).get(row).getPanelOrder());
+				pop.setupIdentifiers(INST.DRUM.getIndex(),
+						pop.getContext().getInstList(INST.DRUM.getIndex()).get(row).getPanelOrder());
 				// TODO
 				pop.setup(pop.getSec());
 			}
@@ -1333,7 +1335,7 @@ public class MidiEditArea extends JComponent {
 
 			if (pop != null && pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
 				g.setColor(OMNI.alphen(nonHighlightedColor, UITheme.isDarkMode ? 40 : 80));
-				List<PhraseNotes> noteNotes = pop.getSec().getPatterns(4);
+				List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex());
 				for (int i = 0; i < noteNotes.size(); i++) {
 					noteNotes.get(i).remakeNoteStartTimes();
 					for (int j = 0; j < noteNotes.get(i).size(); j++) {

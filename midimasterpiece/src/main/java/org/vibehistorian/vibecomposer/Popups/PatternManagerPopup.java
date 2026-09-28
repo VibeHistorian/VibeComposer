@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Popups;
 
 import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.ChordGUI;
+import org.vibehistorian.vibecomposer.INST;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
@@ -170,7 +171,8 @@ public class PatternManagerPopup extends CloseablePopup {
 
 		switch (depth) {
 		case 0:
-			for (int i = 0; i < 5; i++) {
+			for (INST instrument : INST.values()) {
+				int i = instrument.getIndex();
 				List<Integer> partOrders = ApplicationSessionState.guiConfig.getPatternMaps().get(i)
 						.getKeys();
 				for (Integer pO : partOrders) {
