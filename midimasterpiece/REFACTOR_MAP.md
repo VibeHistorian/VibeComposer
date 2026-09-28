@@ -57,13 +57,11 @@
 
 ## Assessment
 
-The first extraction phase has established feature GUI classes and reduced `VibeComposerGUI.java` from about 10.5k to about 7.1k lines. The remaining size is driven less by feature construction and more by coordination, application state, and cross-module access:
+The feature extraction, shared-state ownership, component decoupling, coordinator-workflow extraction, and generator/model dependency phases are complete. `VibeComposerGUI.java` is now about 4k lines. The earlier estimate of about 7.1k lines and roughly 300 component references below described an intermediate stage and is no longer current; a current source scan finds only two direct references outside `VibeComposerGUI`, both in `SwingUtils`.
 
-- `VibeComposerGUI` still owns broad static state for theme, layout, active configuration, playback, MIDI editing, undo, and the application window. A source scan finds about 300 active `VibeComposerGUI` references across `Components`, `Panels`, and `Popups`, so this coupling needs staged migration.
-- Instrument GUIs previously received five shared arrays through their `Context` interfaces and selected controls by instrument index. Phase 2.1 moved those controls and panel collections into their owning modules; the parent now preserves the established instrument order only for cross-instrument operations.
-- `copyGUItoConfig` and `copyConfigToGUI` in `VibeComposerGUI` now coordinate feature-owned mappings and retain application-level version, seed, MIDI mode, BPM, and scale mode transfer. Panel restoration remains a narrow callback because layout creation belongs to the window.
-- `GUIConfig` is a JAXB persistence object with a flat field/getter shape. Restructuring it would affect saved preset compatibility and is not required to give GUI modules ownership of their mappings.
-- `VibeComposerCoreGUI` is currently an empty skeleton. It should not become a new catch-all for state simply because the former parent class is large.
+Remaining size comes from a mixture of legitimate window composition and cohesive responsibilities that can still have clearer owners: global window-control construction, the detailed compose workflow, preset/config file and view operations, and residual instrument, section, and MIDI helpers. Further extraction should reduce what the window owns while preserving a clear composition root; line count alone is not an acceptance criterion.
+
+`GUIConfig` remains a flat JAXB persistence object to preserve saved preset compatibility. `VibeComposerCoreGUI` is still an empty skeleton and should not become a catch-all for code removed from the window.
 
 ## Target boundaries
 
@@ -255,3 +253,25 @@ Phase slices should be focused, to make review of logical modifications easy to 
 ### Phase 3 status
 
 Phase 3 has started. Continue with small behavior-preserving changes that simplify workflows or reduce unnecessary responsibilities and API surface. Keep each slice documented separately.
+
+--------------------------------------------------
+
+## Phase 4 — Remaining Window Responsibilities
+
+Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work to focused owners. Keep the class responsible for `JFrame` lifecycle, assembling feature modules and their contexts, and sequencing cross-feature operations. A target near 2k lines is a useful direction, not a completion requirement; stop when ownership is clear and the remaining code is genuinely window composition or coordination.
+
+### Candidate work sequence
+
+- **4.1 Main-window controls and layout:** inspect construction and listener wiring in `init`, `initTitles`, `initSoloMutersAndTrackControl`, `initControlPanel`, and `initPlayPanel`. Move coherent groups of global controls, layout rules, and their local event handling into a focused main-window UI builder or controls class. Leave top-level window lifecycle and module assembly in `VibeComposerGUI`; do not use `VibeComposerCoreGUI` as a general-purpose destination.
+- **4.2 Compose workflow:** move detailed compose preparation, parameter filling, UI state changes, generation dispatch, cleanup, and generated-result handling from `composeMidi` and its helper methods into a `ComposeCoordinator` or similarly focused workflow owner. Keep the operation order explicit because it spans feature GUIs, playback, solo/mute, MIDI devices, and arrangement state. `VibeComposerGUI` should retain short entry points and supply narrow window callbacks.
+- **4.3 Preset and view workflows:** separate preset/config file operations, current-view snapshotting, and load/save presentation from window construction. Keep feature-owned config mappings in their current feature GUIs and preserve the existing `GUIConfig` XML shape. The window should retain only application-level restore ordering and callbacks that require the live window.
+- **4.4 Residual instrument, section, and MIDI helpers:** assign remaining panel-to-part conversion and panel-order utilities to `InstrumentPanelController`; section/playhead calculations to arrangement or playback owners; and note audition/output helpers to the appropriate MIDI owner. Migrate callers from `VibeComposerGUI` forwarding/static methods as ownership moves, retaining compatibility methods only while they have active callers.
+- **4.5 Review remaining dispatch and refresh code:** after the larger ownership moves, inspect action-command dispatch, tab/count refresh, background UI updates, and appearance switching. Extract only cohesive behavior with a clear owner; short cross-module sequencing and direct `JFrame` changes may remain in the window.
+
+### Phase 4 completion criteria
+
+- `VibeComposerGUI` primarily owns the window lifecycle, module/context assembly, and short cross-feature sequencing calls.
+- Compose, preset/view, and global-control work have focused owners with narrow dependencies; feature GUI config ownership and the persisted XML format remain intact.
+- Callers use the owner of instrument, section, playback, and MIDI behavior rather than routing through compatibility methods on `VibeComposerGUI`.
+- The `VibeComposerCoreGUI` class has a defined shared-UI responsibility before receiving code.
+- Each slice preserves behavior and is reviewed independently. Any compile or runtime verification is recorded with the slice; a particular source-line target is not required for completion.
