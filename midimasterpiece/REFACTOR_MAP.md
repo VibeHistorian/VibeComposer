@@ -280,6 +280,12 @@ Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work t
 - `VibeComposerGUI` retains the public compose entry point and supplies focused callbacks for config transfer, sequence-track assignment, selected tab, slider timing, repaint, and tab-count refresh.
 - Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; compose/regenerate scenarios were not manually exercised.
 
+### Phase 4.3 status — complete
+
+- Added `PresetViewController` for named preset loading and saving, config-file selection, saved MIDI/config sidecars, ordered current-view snapshot/restore values, and JAXB config/preset serialization. Existing preset naming, popup messages, file paths, and XML model classes remain unchanged.
+- `VibeComposerGUI` retains feature config mapping and application-level restore order, including module settings, panel recreation, and display-mode updates. The config-file chooser delegates the parsed config back to the window for that same restore sequence.
+- Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; preset/config load and save flows were not manually exercised.
+
 ### Phase 4 completion criteria
 
 - `VibeComposerGUI` primarily owns the window lifecycle, module/context assembly, and short cross-feature sequencing calls.

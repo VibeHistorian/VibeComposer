@@ -24,7 +24,6 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.InstComboBox;
 import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
@@ -63,13 +62,10 @@ import javax.sound.midi.Synthesizer;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.plaf.ColorUIResource;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -103,6 +99,7 @@ public class VibeComposerGUI extends JFrame
 	private final MidiCcController midiCcController;
 	private final MidiExportController midiExportController;
 	private final MainWindowControls mainWindowControls;
+	private PresetViewController presetViewController;
 	private ComposeCoordinator composeCoordinator;
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
 		@Override public List<InstPanel> getAffectedPanels(INST instrument) {
@@ -461,8 +458,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void switchFullMode() { VibeComposerGUI.this.switchFullMode(); }
 			@Override public void switchBigMonitorMode() { VibeComposerGUI.this.switchBigMonitorMode(); }
 			@Override public void toggleExcludeNotSoloed() { soloMuteController.toggleExclude(); }
-			@Override public void loadPreset() { VibeComposerGUI.this.loadPreset(); }
-			@Override public void savePreset() { VibeComposerGUI.this.savePreset(); }
+			@Override public void loadPreset() {
+				GUIPreset preset = presetViewController.loadPreset();
+				if (preset != null) {
+					VibeComposerGUI.this.loadPresetObject(preset);
+				}
+			}
+			@Override public void savePreset() {
+				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
+				presetViewController.savePreset(guiConfig);
+			}
 			@Override public void resetAll() { VibeComposerGUI.this.resetAllFromHeader(); }
 			@Override public void loadSelectedHistory(GUIConfig selectedConfig) {
 				guiConfig = selectedConfig;
@@ -488,7 +493,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void playPlaybackButton() { playbackController.playMidi(false); }
 			@Override public void pausePlaybackButton() { playbackController.pauseMidi(); }
 			@Override public void saveConfigFile(int rating) {
-				VibeComposerGUI.this.saveGuiConfigFile(rating);
+				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
+				String currentMidiFileName = currentMidi != null ? currentMidi.getName() : "";
+				presetViewController.saveGuiConfigFile(rating, guiConfig, currentMidi, VibeComposerGUI.getFilenameForSaving(currentMidiFileName));
 			}
 			@Override public void saveWavFile() { VibeComposerGUI.this.saveWavFile(); }
 			@Override public File getCurrentMidi() { return currentMidi; }
@@ -936,6 +943,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		// ---- PLAY PANEL ----
 		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
+		presetViewController = new PresetViewController(mainWindowControls);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -968,11 +976,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		setLocationRelativeTo(null);
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
 
-		defaultGuiPreset = copyCurrentViewToPreset();
+		defaultGuiPreset = new GUIPreset();
+		copyGUItoConfig(guiConfig);
+		defaultGuiPreset = presetViewController.copyCurrentViewToPreset(defaultGuiPreset, guiConfig);
 
 		boolean presetLoaded = false;
 		if (mainWindowControls.getPresetLoadBox().getVal().equalsIgnoreCase("default")) {
-			loadPreset();
+			GUIPreset preset = presetViewController.loadPreset();
+			if (preset != null) {
+				loadPresetObject(preset);
+			}
 			presetLoaded = true;
 		}
 
@@ -1082,30 +1095,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		LG.i("Default Panels generated!");
 	}
 
-	private void loadPreset() {
-		String presetName = (String) mainWindowControls.getPresetLoadBox().getEditor().getItem();
-		LG.i("Trying to load preset: " + presetName);
-
-		if (OMNI.EMPTYCOMBO.equalsIgnoreCase(presetName)) {
-			return;
-		} else {
-			// check if file exists | special case: --- should load new GUIConfig()
-			File loadedFile = new File(Constants.PRESET_FOLDER + "/" + presetName + ".xml");
-			if (loadedFile.exists()) {
-				try {
-					GUIPreset preset = unmarshallPreset(loadedFile);
-					loadPresetObject(preset);
-				} catch (JAXBException | IOException e) {
-					LG.e("Could not load preset!", e);
-					new TemporaryInfoPopup("Preset loading failed! " + Constants.BUG_HUNT_MESSAGE, 2000);
-					return;
-				}
-			}
-		}
-
-		LG.i("Loaded preset: " + presetName);
-	}
-
 	public void loadPresetObject(GUIPreset preset) {
 		if (heavyBackgroundTasksInProgress) {
 			return;
@@ -1113,10 +1102,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		heavyBackgroundTasksInProgress = true;
 		guiConfig = preset;
 		copyConfigToGUI(guiConfig);
-		List<Component> presetComps = makeSettableComponentList();
-		for (int i = 0; i < preset.getOrderedValuesUI().size(); i++) {
-			UIComponentState.setValue(presetComps.get(i), preset.getOrderedValuesUI().get(i), false);
-		}
+		presetViewController.restoreViewValues(preset);
 		clearAllSeeds();
 		if (isFullMode != preset.isFullMode()) {
 			switchFullMode();
@@ -1134,25 +1120,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		vibeComposerGUI.repaint();
 		heavyBackgroundTasksInProgress = false;
 	}
-
-	private void savePreset() {
-		String presetName = (String) mainWindowControls.getPresetLoadBox().getEditor().getItem();
-		LG.i("Trying to save preset: " + presetName);
-		if (!presetName.matches(Constants.FILENAME_VALID_NAME)) {
-			new TemporaryInfoPopup("Name contains invalid characters: "
-					+ presetName.replaceAll(Constants.FILENAME_VALID_CHARACTERS, ""), 2500);
-			return;
-		}
-		presetName = presetName.replaceAll(" ", "_");
-		File makeSavedDir = new File(Constants.PRESET_FOLDER);
-		makeSavedDir.mkdir();
-
-		String filePath = Constants.PRESET_FOLDER + "/" + presetName + ".xml";
-		saveGuiPresetFileByFilePath(filePath);
-		mainWindowControls.getPresetLoadBox().addItem(presetName);
-		new TemporaryInfoPopup("Saved preset: " + presetName, 2000);
-	}
-
 
 	private void initSliderPanel(int startY, int anchorSide) {
 		sliderPanel = new JPanel();
@@ -2141,26 +2108,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 		if ("LoadGUIConfig".equals(actionCommand)) {
-			FileDialog fd = new FileDialog(this, "Choose a file", FileDialog.LOAD);
-			fd.setDirectory(null);
-			fd.setFile("*.xml");
-			fd.setVisible(true);
-			String filename = fd.getFile();
-			File[] files = fd.getFiles();
-			if (filename == null)
-				LG.i(("You cancelled the choice"));
-			else {
-				LG.i(("You chose " + filename));
-				try {
-					playbackController.stopMidi();
-					guiConfig =
-
-							unmarshallConfig(files[0]);
-					copyConfigToGUI(guiConfig);
-					vibeComposerGUI.repaint();
-				} catch (JAXBException | IOException e) {
-					LG.e("Can't load config: " + filename, e);
-				}
+			GUIConfig loadedConfig = presetViewController.loadConfigFile(this);
+			if (loadedConfig != null) {
+				playbackController.stopMidi();
+				guiConfig = loadedConfig;
+				copyConfigToGUI(guiConfig);
+				repaint();
 			}
 			soloMuterPossibleChange = true;
 			tabPanePossibleChange = true;
@@ -2207,91 +2160,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ArrangementGUI.arrangementSeed.setValue(0);
 	}
 
-	private void saveGuiConfigFile(int rating) {
-		if (currentMidi != null) {
-			String newFileName = getFilenameForSaving(currentMidi.getName());
-		LG.i(("Saving file: " + (rating >= 0 ? newFileName
-				: mainWindowControls.getSaveCustomFilename().getText())));
-
-			Date date = new Date();
-			String saveDirectory = Constants.SAVED_MIDIS_FOLDER_BASE;
-			String name = "";
-
-			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-			f.applyPattern("yyMMdd-HH-mm-ss");
-			String additionalInfo = "";
-
-			if (rating >= 0) {
-				saveDirectory += rating + "star/";
-
-				File makeSavedDir = new File(Constants.MIDIS_FOLDER + saveDirectory);
-				makeSavedDir.mkdir();
-				name = newFileName;
-				name = name.substring(0, name.length() - 4);
-
-				additionalInfo = f.format(date);
-			} else {
-				saveDirectory += "custom/";
-			name = mainWindowControls.getSaveCustomFilename().getText();
-				if (ExtraSettingsGUI.customFilenameAddTimestamp.isSelected()) {
-					additionalInfo = f.format(date);
-				}
-			}
-
-			String finalFilePath = Constants.MIDIS_FOLDER + saveDirectory + additionalInfo
-					+ (additionalInfo.isEmpty() ? "" : "_") + name + Constants.MID_EXTENSION;
-			LG.i("Saving to final path: " + finalFilePath);
-			File savedMidi = new File(finalFilePath);
-			try {
-				FileUtils.copyFile(currentMidi, savedMidi);
-				copyGUItoConfig(guiConfig);
-				marshalConfig(guiConfig, finalFilePath, Constants.MID_EXTENSION.length());
-				if (rating >= 3) {
-					mainWindowControls.getSavedIndicatorLabel().setForeground(
-							mainWindowControls.getSavedIndicatorForegroundColor(rating - 3));
-				} else {
-					mainWindowControls.getSavedIndicatorLabel().setForeground(
-							mainWindowControls.getSavedIndicatorForegroundColor(3));
-				}
-
-				mainWindowControls.getSavedIndicatorLabel().setVisible(true);
-			} catch (IOException | JAXBException e) {
-				// Auto-generated catch block
-				LG.e("Error saving file: ", e);
-			}
-		} else {
-			LG.i(("currentMidi is NULL!"));
-			LG.w("Cannot save config file without a successful compose/regenerate first!");
-			new TemporaryInfoPopup("Cannot save config file without a successful compose/regenerate first!", 1500);
-		}
-	}
-
-	private void saveGuiPresetFileByFilePath(String filePath) {
-		try {
-			GUIPreset preset = copyCurrentViewToPreset();
-			marshalPreset(preset, filePath);
-		} catch (IOException | JAXBException e) {
-			// Auto-generated catch block
-			LG.e(e);
-		}
-	}
-
-	public GUIPreset copyCurrentViewToPreset() {
-		GUIPreset preset = new GUIPreset();
-		copyGUItoConfig(preset);
-		preset.setPatternMaps(guiConfig.getPatternMaps());
-		List<Component> presetComps = makeSettableComponentList();
-		List<Integer> presetCompValues = new ArrayList<>();
-		for (int i = 0; i < presetComps.size(); i++) {
-			presetCompValues.add(UIComponentState.getValue(presetComps.get(i)));
-		}
-		preset.setOrderedValuesUI(presetCompValues);
-		preset.setDarkMode(isDarkMode);
-		preset.setFullMode(isFullMode);
-		preset.setBigMode(isBigMonitorMode);
-		return preset;
-	}
-
 	@Override
 	public void onSoloToggled(SoloMuter soloMuter) {
 		soloMuteController.onSoloToggled(soloMuter);
@@ -2329,175 +2197,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (instrumentTabPane.getComponentCount() >= 8) {
 			instrumentTabPane.setTitleAt(7, " Score ");
 		}
-	}
-
-	public void marshalConfig(GUIConfig config, String path, int cutOff)
-			throws JAXBException, IOException {
-		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-		f.applyPattern("yyMMdd-hh-mm-ss");
-		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
-		Marshaller mar = context.createMarshaller();
-		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
-		String actualPath = path.substring(0, path.length() - cutOff);
-		mar.marshal(config, new File(actualPath + "_VCConfig.xml"));
-		LG.i("File saved: " + path);
-	}
-
-	public void marshalPreset(GUIPreset preset, String path) throws JAXBException, IOException {
-		SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-		f.applyPattern("yyMMdd-hh-mm-ss");
-		JAXBContext context = JAXBContext.newInstance(GUIPreset.class);
-		Marshaller mar = context.createMarshaller();
-		mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		mar.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
-		mar.marshal(preset, new File(path));
-		LG.i("File saved: " + path);
-	}
-
-	public GUIConfig unmarshallConfig(File f) throws JAXBException, IOException {
-		JAXBContext context = JAXBContext.newInstance(GUIConfig.class);
-		return (GUIConfig) context.createUnmarshaller().unmarshal(new FileReader(f));
-	}
-
-	public GUIPreset unmarshallPreset(File f) throws JAXBException, IOException {
-		JAXBContext context = JAXBContext.newInstance(GUIPreset.class);
-		return (GUIPreset) context.createUnmarshaller().unmarshal(new FileReader(f));
-	}
-
-	public List<Component> makeSettableComponentList() {
-		List<Component> cs = new ArrayList<>();
-		// melody panel
-		cs.add(MelodyGUI.generateMelodiesOnCompose);
-		cs.add(null);
-		cs.add(MelodyGUI.combineMelodyTracks);
-		cs.add(MelodyGUI.randomMelodySameSeed);
-		cs.add(MelodyGUI.randomMelodyOnRegenerate);
-		cs.add(MelodyGUI.useUserMelody);
-		cs.add(MelodyGUI.melodyPatternRandomizeOnCompose);
-		cs.add(MelodyGUI.melodyTargetNotesRandomizeOnCompose);
-
-		// bass panel
-
-		// chord panel
-		cs.add(ChordGUI.randomChordsGenerateOnCompose);
-		//cs.add(randomChordsToGenerate);
-		cs.add(ChordGUI.randomChordStruminess);
-		cs.add(ChordGUI.randomChordUseChordFill);
-		cs.add(ChordGUI.randomChordStretchType);
-		cs.add(ChordGUI.randomChordStretchPicker);
-		cs.add(ChordGUI.randomChordStretchGenerationChance);
-		cs.add(ChordGUI.randomChordMaxStrumPauseChance);
-		cs.add(ChordGUI.randomChordVaryLength);
-		cs.add(ChordGUI.randomChordExpandChance);
-		cs.add(ChordGUI.randomChordSustainChance);
-		cs.add(ChordGUI.randomChordMaxSplitChance);
-		cs.add(ChordGUI.chordSlashChance);
-		cs.add(ChordGUI.randomChordMinVel);
-		cs.add(ChordGUI.randomChordMaxVel);
-		cs.add(ChordGUI.randomChordPattern);
-		cs.add(ChordGUI.randomChordShiftChance);
-
-
-		// arp panel
-		cs.add(ArpGUI.randomArpsGenerateOnCompose);
-		//cs.add(randomArpsToGenerate);
-		cs.add(ArpGUI.randomArpHitsPicker);
-		cs.add(ArpGUI.randomArpHitsPerPattern);
-		cs.add(ArpGUI.randomArpAllSameHits);
-		cs.add(ArpGUI.randomArpUseChordFill);
-		cs.add(ArpGUI.randomArpTranspose);
-		cs.add(ArpGUI.randomArpStretchType);
-		cs.add(ArpGUI.randomArpStretchPicker);
-		cs.add(ArpGUI.randomArpStretchGenerationChance);
-		cs.add(ArpGUI.randomArpMaxExceptionChance);
-		cs.add(ArpGUI.arpCopyMelodyInst);
-		cs.add(ArpGUI.randomArpAllSameInst);
-		cs.add(ArpGUI.randomArpLimitPowerOfTwo);
-		cs.add(null); // randomArpUseOctaveAdjustments
-		cs.add(ArpGUI.randomArpMaxRepeat);
-		cs.add(ArpGUI.randomArpMinVel);
-		cs.add(ArpGUI.randomArpMaxVel);
-		cs.add(ArpGUI.randomArpPattern);
-		cs.add(ArpGUI.randomArpShiftChance);
-		cs.add(ArpGUI.randomArpMinLength);
-		cs.add(ArpGUI.randomArpMaxLength);
-
-		// drum panel
-		cs.add(DrumGUI.randomDrumsGenerateOnCompose);
-		//cs.add(randomDrumsToGenerate);
-		//cs.add(DrumGUI.randomDrumMaxSwingAdjust);
-		cs.add(DrumGUI.randomDrumUseChordFill);
-		cs.add(DrumGUI.randomDrumSlide);
-		cs.add(DrumGUI.combineDrumTracks);
-		cs.add(DrumGUI.randomDrumPattern);
-		cs.add(DrumGUI.randomDrumVelocityPatternChance);
-		cs.add(DrumGUI.randomDrumShiftChance);
-
-		// arrangement panel
-		cs.add(ArrangementGUI.randomizeArrangementOnCompose);
-
-		// randomization panel
-		cs.add(GenerationGUI.randomizeInstOnComposeOrGen);
-		cs.add(GenerationGUI.randomizeBpmOnCompose);
-		cs.add(GenerationGUI.randomizeTransposeOnCompose);
-
-		// globals
-		cs.add(mainWindowControls.getRandomizeScaleModeOnCompose());
-		cs.add(regenerateWhenValuesChange);
-		cs.add(loopBeat);
-		cs.add(loopBeatCount);
-		cs.add(mainWindowControls.getMidiMode());
-
-		// extras
-		cs.add(ExtraSettingsGUI.useMidiCC);
-		cs.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
-		cs.add(null);
-		cs.add(null);
-		cs.add(mainWindowControls.getLoopBeatCompose());
-		cs.add(ExtraSettingsGUI.useAllInsts);
-		//cs.add(ExtraSettingsGUI.bannedInsts);
-		cs.add(ExtraSettingsGUI.pauseBehaviorCombobox);
-		cs.add(ExtraSettingsGUI.startFromBar);
-		cs.add(ExtraSettingsGUI.rememberLastPos);
-		cs.add(ExtraSettingsGUI.snapStartToBeat);
-		cs.add(ExtraSettingsGUI.bpmLow);
-		cs.add(ExtraSettingsGUI.bpmHigh);
-		cs.add(ExtraSettingsGUI.stretchMidi);
-		cs.add(ExtraSettingsGUI.displayVeloRectValues);
-		cs.add(ExtraSettingsGUI.knobControlByDragging);
-		cs.add(DrumGUI.bottomUpReverseDrumPanels);
-		cs.add(ExtraSettingsGUI.orderedTransposeGeneration);
-		cs.add(ExtraSettingsGUI.patternApplyPausesWhenGenerating);
-		cs.add(ExtraSettingsGUI.highlightPatterns);
-		cs.add(ScoreGUI.highlightScoreNotes);
-		cs.add(ExtraSettingsGUI.randomizeTimingsOnCompose);
-		cs.add(ExtraSettingsGUI.customFilenameAddTimestamp);
-		cs.add(ExtraSettingsGUI.configHistoryStoreRegeneratedTracks);
-		cs.add(ExtraSettingsGUI.sidechainPatternsOnCompose);
-
-		// ---------------- VIBECOMPOSER 2 ------------------------------------
-
-		// drum panel
-		cs.add(DrumGUI.randomDrumHitsMultiplierOnGenerate);
-		cs.add(null);
-		cs.add(DrumGUI.randomDrumsOverrandomize);
-
-		// extra settings
-		cs.add(ExtraSettingsGUI.globalNoteLengthMultiplier);
-		cs.add(ChordGUI.copyChordsAfterGenerate);
-		cs.add(ScoreGUI.miniScorePopup);
-
-		// arps panel
-		cs.add(ArpGUI.randomArpCorrectMelodyNotes);
-
-		// extra settings 2.5
-		cs.add(ExtraSettingsGUI.reuseMidiChannelAfterCopy);
-		cs.add(ExtraSettingsGUI.transposeNotePreview);
-		cs.add(ExtraSettingsGUI.moveStartToCustomizedSection);
-		cs.add(ExtraSettingsGUI.allowValuesOutOfRange);
-
-		return cs;
 	}
 
 	public void copyGUItoConfig(GUIConfig gc) {
