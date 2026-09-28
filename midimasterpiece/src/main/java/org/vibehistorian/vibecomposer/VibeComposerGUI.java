@@ -121,7 +121,7 @@ public class VibeComposerGUI extends JFrame
 					return VibeComposerGUI.getInstList(instrument);
 				}
 				@Override public boolean isInstrumentEnabled(INST instrument) {
-					return VibeComposerGUI.isEnabled(instrument.getIndex());
+					return VibeComposerGUI.isEnabled(instrument);
 				}
 				@Override public void refreshScoreForSoloChange() {
 					if (ShowPanelBig.soloMuterHighlight != null
@@ -289,10 +289,6 @@ public class VibeComposerGUI extends JFrame
 		return vibeComposerGUI.instrumentPanelController;
 	}
 
-	private static InstrumentGUIControls getInstrumentControls(int order) {
-		return getInstrumentControls(INST.fromIndex(order));
-	}
-
 	private static InstrumentGUIControls getInstrumentControls(INST instrument) {
 		if (vibeComposerGUI == null) {
 			throw new IllegalStateException("The main window has not been initialized.");
@@ -311,16 +307,8 @@ public class VibeComposerGUI extends JFrame
 		}
 	}
 
-	public static JScrollPane getInstPane(int order) {
-		return getInstPane(INST.fromIndex(order));
-	}
-
 	public static JScrollPane getInstPane(INST instrument) {
 		return getInstrumentPanelController().getInstPane(instrument);
-	}
-
-	public static List<InstPanel> getSectionPanelList(int order) {
-		return getSectionPanelList(INST.fromIndex(order));
 	}
 
 	public static List<InstPanel> getSectionPanelList(INST instrument) {
@@ -545,7 +533,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return VibeComposerGUI.getInstPartsFromInstPanels(instrument.getIndex(), false);
 			}
 			@Override public List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument) {
-				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument.getIndex());
+				return VibeComposerGUI.getInstPartsFromCustomSectionInstPanels(instrument);
 			}
 			@Override public InstPanel makeCustomSectionInstPanel(INST instrument) {
 				InstPanel panel = InstPanel.makeInstPanel(instrument.getIndex(), VibeComposerGUI.this);
@@ -708,24 +696,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}, instrumentPanelController);
 	}
 
-	private void initDrumGUI() {
-		drumGUI = new DrumGUI(new DrumGUI.Context() {
-			@Override public PartManagerPanel.Context getPartManagerContext() {
-				return createPartManagerContext();
-			}
-		}, instrumentPanelController);
-	}
-
-
-	private void initArpGUI() {
-		arpGUI = new ArpGUI(new ArpGUI.Context() {
-			@Override public PartManagerPanel.Context getPartManagerContext() {
-				return createPartManagerContext();
-			}
-		}, instrumentPanelController);
-	}
-
-
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
 			@Override public PartManagerPanel.Context getPartManagerContext() {
@@ -744,6 +714,22 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}
 
+		}, instrumentPanelController);
+	}
+
+	private void initArpGUI() {
+		arpGUI = new ArpGUI(new ArpGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
+		}, instrumentPanelController);
+	}
+
+	private void initDrumGUI() {
+		drumGUI = new DrumGUI(new DrumGUI.Context() {
+			@Override public PartManagerPanel.Context getPartManagerContext() {
+				return createPartManagerContext();
+			}
 		}, instrumentPanelController);
 	}
 
@@ -967,20 +953,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		recalculateTabPaneCounts();
 		switchDarkMode();
 
-		/*for (Component c : everythingPanel.getComponents()) {
-			if (c != instrumentTabPane) {
-				c.setVisible(false);
-			}
-			if (c instanceof Container) {
-				Container cnt = (Container) c;
-				for (Component cs : cnt.getComponents()) {
-					if (cs == compose) {
-						c.setVisible(true);
-					}
-				}
-			}
-
-		}*/
 		pack();
 		setLocationRelativeTo(null);
 		LG.i("Dark, pack: " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -1222,10 +1194,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		new TemporaryInfoPopup(exists ? "Undefaulted 'default' preset!" : "Nothing to undefault!",
 				2000);
-	}
-
-	private void loadDrums() {
-
 	}
 
 	private void loadPreset() {
@@ -1554,8 +1522,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	}
 
-	public static boolean isEnabled(int partNum) {
-		return getInstrumentControls(partNum).getEnabledCheckBox().isSelected();
+	public static boolean isEnabled(INST inst) {
+		return getInstrumentControls(inst).getEnabledCheckBox().isSelected();
 	}
 
 	public static int countAllPanels() {
@@ -3817,7 +3785,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		return parts;
 	}
 
-	static List<InstPart> getInstPartsFromCustomSectionInstPanels(int inst) {
+	static List<InstPart> getInstPartsFromCustomSectionInstPanels(INST inst) {
 		JPanel panePanel = ((JPanel) getInstPane(inst).getViewport().getView());
 		List<InstPart> parts = new ArrayList<>();
 		for (Component c : panePanel.getComponents()) {
