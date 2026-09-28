@@ -27,36 +27,37 @@ import jm.music.data.Phrase;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.InstComboBox;
 import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
-import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
-import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
-import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
-import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.Panels.*;
+import org.vibehistorian.vibecomposer.Panels.ArpPanel;
+import org.vibehistorian.vibecomposer.Panels.BassPanel;
+import org.vibehistorian.vibecomposer.Panels.ChordPanel;
+import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
+import org.vibehistorian.vibecomposer.Panels.DrumPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
+import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
-import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
@@ -84,7 +85,6 @@ import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
 import static org.vibehistorian.vibecomposer.Constants.instNames;
-import static org.vibehistorian.vibecomposer.GUIConstants.COMPOSE_COLOR;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_HEIGHT;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
 import static org.vibehistorian.vibecomposer.GenerationGUI.*;
@@ -104,6 +104,7 @@ public class VibeComposerGUI extends JFrame
 	private final MidiDeviceController midiDeviceController;
 	private final MidiCcController midiCcController;
 	private final MidiExportController midiExportController;
+	private final MainWindowControls mainWindowControls;
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
 		@Override public List<InstPanel> getAffectedPanels(INST instrument) {
 			return VibeComposerGUI.getAffectedPanels(instrument);
@@ -332,20 +333,10 @@ public class VibeComposerGUI extends JFrame
 
 // instrument global settings
 
-// main title settings
-	JLabel mainTitle;
-	JLabel subTitle;
-
 	// macro params
-
-	JCheckBox randomizeScaleModeOnCompose;
 
 // seed / midi
 
-	JList<File> generatedMidi;
-
-CheckButton midiMode;
-	ScrollComboBox<String> midiModeDevices;
 	MidiHandler mh = new MidiHandler(new MidiHandler.Context() {
 		@Override public void setBpm(int bpm) { GenerationGUI.mainBpm.setInt(bpm); }
 		@Override public int getInstrumentPartCount(INST instrument) {
@@ -362,26 +353,9 @@ CheckButton midiMode;
 		}
 	});
 
-JButton compose;
-	JButton regenerate;
-	JButton regenerateStopPlay;
-	JButton regeneratePausePlay;
-	JButton playMidi;
-	JButton stopMidi;
-	JButton pauseMidi;
-	JTextField saveCustomFilename;
-	JLabel savedIndicatorLabel;
-	Color[] savedIndicatorForegroundColors = { new Color(220, 220, 220), Color.green, Color.magenta,
-			Color.orange };
-	ScrollComboBox<String> loopBeatCompose;
 	JLabel totalTime;
 	boolean isKeySeeking = false;
 
-JLabel messageLabel;
-	ScrollComboBox<String> presetLoadBox;
-	VeloRect globalVolSlider;
-	VeloRect globalReverbSlider;
-	VeloRect globalChorusSlider;
 	JPanel everythingPanel;
 	JPanel controlPanel;
 	JScrollPane everythingPane;
@@ -439,8 +413,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public boolean hasGeneratedChordData() { return !MidiGenerator.chordInts.isEmpty(); }
 		});
 		midiDeviceController = new MidiDeviceController(new MidiDeviceController.Context() {
-			@Override public boolean isTransmitterMode() { return midiMode.isSelected(); }
-			@Override public String getSelectedDeviceName() { return midiModeDevices.getVal(); }
+			@Override public boolean isTransmitterMode() {
+				return mainWindowControls.getMidiMode().isSelected();
+			}
+			@Override public String getSelectedDeviceName() {
+				return mainWindowControls.getMidiModeDevices().getVal();
+			}
 			@Override public File getSoundbankFile() {
 				return new File((String) ExtraSettingsGUI.soundbankFilename.getEditor().getItem());
 			}
@@ -457,9 +435,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return VibeComposerGUI.getInstList(instrument);
 			}
 			@Override public int getDrumVolume() { return DrumGUI.drumVolumeSlider.getValue(); }
-			@Override public int getGlobalVolume() { return globalVolSlider.getValue(); }
-			@Override public int getGlobalReverb() { return globalReverbSlider.getValue(); }
-			@Override public int getGlobalChorus() { return globalChorusSlider.getValue(); }
+			@Override public int getGlobalVolume() { return mainWindowControls.getGlobalVolSlider().getValue(); }
+			@Override public int getGlobalReverb() { return mainWindowControls.getGlobalReverbSlider().getValue(); }
+			@Override public int getGlobalChorus() { return mainWindowControls.getGlobalChorusSlider().getValue(); }
 			@Override public int getGroupFilter(INST instrument) {
 				return getInstrumentControls(instrument).getGroupFilterSlider().getValue();
 			}
@@ -471,12 +449,55 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		midiExportController = new MidiExportController(new MidiExportController.Context() {
 			@Override public Sequence getSequence() { return sequencer.getSequence(); }
 			@Override public double getBpm() { return guiConfig.getBpm(); }
-			@Override public boolean isTransmitterMode() { return midiMode.isSelected(); }
+			@Override public boolean isTransmitterMode() {
+				return mainWindowControls.getMidiMode().isSelected();
+			}
 			@Override public void setTransmitterMode(boolean enabled) {
-				midiMode.setSelectedRaw(enabled);
+				mainWindowControls.getMidiMode().setSelectedRaw(enabled);
 			}
 			@Override public Soundbank getSoundbank() { return soundfont; }
 			@Override public void sendAllMidiCc() { midiCcController.sendAllMidiCc(); }
+		});
+		mainWindowControls = new MainWindowControls(new MainWindowControls.HeaderContext() {
+			@Override public void switchDarkMode() { VibeComposerGUI.this.switchDarkMode(); }
+			@Override public void switchFullMode() { VibeComposerGUI.this.switchFullMode(); }
+			@Override public void switchBigMonitorMode() { VibeComposerGUI.this.switchBigMonitorMode(); }
+			@Override public void toggleExcludeNotSoloed() { soloMuteController.toggleExclude(); }
+			@Override public void loadPreset() { VibeComposerGUI.this.loadPreset(); }
+			@Override public void savePreset() { VibeComposerGUI.this.savePreset(); }
+			@Override public void resetAll() { VibeComposerGUI.this.resetAllFromHeader(); }
+			@Override public void loadSelectedHistory(GUIConfig selectedConfig) {
+				guiConfig = selectedConfig;
+				VibeComposerGUI.this.copyConfigToGUI(guiConfig);
+			}
+			@Override public void replaceSection() { arrangementGUI.replaceSection(); }
+			@Override public void recomposeSection() { arrangementGUI.recomposeSection(); }
+		}, new MainWindowControls.ComposeContext() {
+			@Override public JButton makeButton(String name, String actionCommand) {
+				return VibeComposerGUI.this.makeButton(name, actionCommand);
+			}
+			@Override public void stopPlayback() { playbackController.stopMidi(); }
+			@Override public void performAction(ActionEvent event) {
+				VibeComposerGUI.this.actionPerformed(event);
+			}
+			@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
+			@Override public void clearAllSeeds() { VibeComposerGUI.this.clearAllSeeds(); }
+			@Override public void copyChords() { VibeComposerGUI.this.copyChords(); }
+		}, new MainWindowControls.PlaybackContext() {
+			@Override public JButton makeButton(String name, String actionCommand) {
+				return VibeComposerGUI.this.makeButton(name, actionCommand);
+			}
+			@Override public void stopPlaybackButton() { playbackController.stopMidi(); }
+			@Override public void playPlaybackButton() { playbackController.playMidi(false); }
+			@Override public void pausePlaybackButton() { playbackController.pauseMidi(); }
+			@Override public void saveConfigFile(int rating) {
+				VibeComposerGUI.this.saveGuiConfigFile(rating);
+			}
+			@Override public void saveWavFile() { VibeComposerGUI.this.saveWavFile(); }
+			@Override public File getCurrentMidi() { return currentMidi; }
+			@Override public boolean hasMidiDevice() { return midiDeviceController.hasMidiDevice(); }
+			@Override public void closeMidiDevice() { midiDeviceController.closeMidiDevice(); }
+			@Override public void softCloseSynth() { midiDeviceController.softCloseSynth(); }
 		});
 	}
 
@@ -796,7 +817,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		//constraints.fill = GridBagConstraints.BOTH;
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
-		initTitles(0, GridBagConstraints.CENTER);
+		mainWindowControls.addHeaderControls(everythingPanel, constraints, 0, GridBagConstraints.CENTER, this);
 
 		initExtraSettingsGUI();
 		initGenerationGUI();
@@ -808,7 +829,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		constraints.anchor = GridBagConstraints.CENTER;
 		controlPanel.add(randomButtonsPanel, constraints);
 
-		initSoloMutersAndTrackControl(20, GridBagConstraints.WEST);
+		mainWindowControls.addSoloMuterAndTrackControls(everythingPanel, constraints, 20, GridBagConstraints.WEST, this);
 		LG.i("Titles, Extra, S/M " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// ---- INSTRUMENT SETTINGS ----
 		{
@@ -923,11 +944,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		//createHorizontalSeparator(400, this);
 
 		// ---- CONTROL PANEL -----
-		initControlPanel(410, GridBagConstraints.CENTER);
+		mainWindowControls.addComposeControls(everythingPanel, constraints, 410, GridBagConstraints.CENTER, scoreGUI.createTransposeControl(), ExtraSettingsGUI.bpmLow.getInt(), ExtraSettingsGUI.bpmHigh.getInt(), ChordGUI.currentChords);
 
 
 		// ---- PLAY PANEL ----
-		initPlayPanel(420, GridBagConstraints.CENTER);
+		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
@@ -964,7 +985,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		defaultGuiPreset = copyCurrentViewToPreset();
 
 		boolean presetLoaded = false;
-		if (presetLoadBox.getVal().equalsIgnoreCase("default")) {
+		if (mainWindowControls.getPresetLoadBox().getVal().equalsIgnoreCase("default")) {
 			loadPreset();
 			presetLoaded = true;
 		}
@@ -1053,155 +1074,30 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}, AWTEvent.MOUSE_EVENT_MASK);
 	}
 
-	private void initTitles(int startY, int anchorSide) {
-		/*mainTitle = new JLabel("Vibe Composer");
-		mainTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		subTitle = new JLabel("by Vibe Historian");
-		subTitle.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-
-		mainTitle.setFont(new Font("Courier", Font.BOLD, 25));
-		subTitle.setFont(subTitle.getFont().deriveFont(Font.BOLD));*/
-		constraints.weightx = 100;
-		constraints.weighty = 100;
-		constraints.gridx = 0;
-		constraints.gridy = startY;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
-		constraints.anchor = anchorSide;
-		//everythingPanel.add(mainTitle, constraints);
-		constraints.gridy = 1;
-		//everythingPanel.add(subTitle, constraints);
-
-		JPanel mainButtonsPanel = new JPanel();
-		mainButtonsPanel.setOpaque(false);
-		constraints.gridy = startY + 3;
-
-		//unsoloAll = makeButton("S", "UnsoloAllTracks");
-
-		globalVolSlider = new VeloRect(0, 150, 100);
-		globalReverbSlider = VeloRect.midi( 60);
-		globalChorusSlider = VeloRect.midi( 15);
-
-		mainButtonsPanel.add(new JLabel("Vol."));
-		mainButtonsPanel.add(globalVolSlider);
-		mainButtonsPanel.add(new JLabel("Rv."));
-		mainButtonsPanel.add(globalReverbSlider);
-		mainButtonsPanel.add(new JLabel("Ch."));
-		mainButtonsPanel.add(globalChorusSlider);
-
-		globalSoloMuter = new SoloMuter(-1, SoloMuter.Type.GLOBAL, this);
-
-		mainButtonsPanel.add(globalSoloMuter);
-		globalSoloMuter.setBackground(null);
-
-		mainButtonsPanel.add(SwingUtils.makeButton("Toggle Dark Mode", e -> switchDarkMode()));
-		mainButtonsPanel.add(SwingUtils.makeButton("Toggle Adv. Features", e -> switchFullMode()));
-		mainButtonsPanel.add(SwingUtils.makeButton("B I G/small", e -> switchBigMonitorMode()));
-		mainButtonsPanel.add(SwingUtils.makeButton("Exclude Not Solo'd", e -> soloMuteController.toggleExclude()));
-
-		//mainButtonsPanel.add(makeButton("DrumView", e -> openDrumViewPopup()));
-
-
-		mainButtonsPanel.add(SwingUtils.makeButton("Settings", e -> new ExtraSettingsPopup()));
-
-
-		// ---- MESSAGE PANEL ----
-
-		messageLabel = new JLabel("Click something!");
-		messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		//mainButtonsPanel.add(messageLabel);
-
-		presetLoadBox = new ScrollComboBox<String>(false);
-		presetLoadBox.setEditable(true);
-		reloadPresetBox();
-
-
-		mainButtonsPanel.add(presetLoadBox);
-		mainButtonsPanel.add(SwingUtils.makeButtonMoused("Load Preset", e -> {
-			if (SwingUtilities.isLeftMouseButton(e)) {
-				loadPreset();
-			} else {
-				openFolder(Constants.PRESET_FOLDER);
-			}
-		}));
-		mainButtonsPanel.add(SwingUtils.makeButton("Save Preset", e -> savePreset()));
-		mainButtonsPanel.add(SwingUtils.makeButton("Undefault", e -> undefaultPreset()));
-		mainButtonsPanel.add(SwingUtils.makeButton("Reset All", e -> {
-			if (heavyBackgroundTasksInProgress) {
-				return;
-			}
-			loadPresetObject(defaultGuiPreset);
-			heavyBackgroundTasksInProgress = true;
-			getInstrumentControls(INST.MELODY).getRandomPanelsToGenerate().setText("3");
-			getInstrumentControls(INST.BASS).getRandomPanelsToGenerate().setText("1");
-			getInstrumentControls(INST.CHORD).getRandomPanelsToGenerate().setText("2");
-			getInstrumentControls(INST.ARP).getRandomPanelsToGenerate().setText("3");
-			getInstrumentControls(INST.DRUM).getRandomPanelsToGenerate().setText("6");
-			melodyGUI.generateInitialMelodyPanels();
-			for (INST instrument : INST.values()) {
-				if (instrument != INST.MELODY) {
-					instrumentPanelController.generatePanels(instrument);
-				}
-			}
-			ArrangementGUI.manualArrangement.setSelected(false);
-			heavyBackgroundTasksInProgress = false;
-			LG.i("Default Panels generated!");
-		}));
-
-		everythingPanel.add(mainButtonsPanel, constraints);
-	}
-
-	private void reloadPresetBox() {
-		String currentItem = presetLoadBox.getItemCount() > 0 ? presetLoadBox.getSelectedItem()
-				: null;
-		presetLoadBox.removeAllItems();
-		presetLoadBox.addItem(OMNI.EMPTYCOMBO);
-		File folder = new File(Constants.PRESET_FOLDER);
-		if (folder.exists()) {
-			File[] listOfFiles = folder.listFiles();
-			for (File f : listOfFiles) {
-				if (f.isFile()) {
-					String fileName = f.getName();
-					int pos = fileName.lastIndexOf(".");
-					if (pos > 0 && pos < (fileName.length() - 1)) {
-						fileName = fileName.substring(0, pos);
-					}
-
-					presetLoadBox.addItem(fileName);
-					if (fileName.equalsIgnoreCase("default")) {
-						presetLoadBox.setVal(fileName);
-					}
-				}
+	private void resetAllFromHeader() {
+		if (heavyBackgroundTasksInProgress) {
+			return;
+		}
+		loadPresetObject(defaultGuiPreset);
+		heavyBackgroundTasksInProgress = true;
+		getInstrumentControls(INST.MELODY).getRandomPanelsToGenerate().setText("3");
+		getInstrumentControls(INST.BASS).getRandomPanelsToGenerate().setText("1");
+		getInstrumentControls(INST.CHORD).getRandomPanelsToGenerate().setText("2");
+		getInstrumentControls(INST.ARP).getRandomPanelsToGenerate().setText("3");
+		getInstrumentControls(INST.DRUM).getRandomPanelsToGenerate().setText("6");
+		melodyGUI.generateInitialMelodyPanels();
+		for (INST instrument : INST.values()) {
+			if (instrument != INST.MELODY) {
+				instrumentPanelController.generatePanels(instrument);
 			}
 		}
-
-		if (currentItem != null) {
-			presetLoadBox.setValRaw(currentItem);
-		}
-	}
-
-	private void undefaultPreset() {
-		File loadedFile = new File(Constants.PRESET_FOLDER + "/default.xml");
-		boolean exists = loadedFile.exists();
-		if (exists) {
-			SimpleDateFormat f = (SimpleDateFormat) SimpleDateFormat.getInstance();
-
-			f.applyPattern("yyMMdd-HH-mm-ss");
-			Date date = new Date();
-			String fdate = f.format(date);
-
-			File renamedFile = new File(Constants.PRESET_FOLDER + "/default-" + fdate + ".xml");
-			loadedFile.renameTo(renamedFile);
-
-			reloadPresetBox();
-		}
-
-		new TemporaryInfoPopup(exists ? "Undefaulted 'default' preset!" : "Nothing to undefault!",
-				2000);
+		ArrangementGUI.manualArrangement.setSelected(false);
+		heavyBackgroundTasksInProgress = false;
+		LG.i("Default Panels generated!");
 	}
 
 	private void loadPreset() {
-		String presetName = (String) presetLoadBox.getEditor().getItem();
+		String presetName = (String) mainWindowControls.getPresetLoadBox().getEditor().getItem();
 		LG.i("Trying to load preset: " + presetName);
 
 		if (OMNI.EMPTYCOMBO.equalsIgnoreCase(presetName)) {
@@ -1254,7 +1150,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void savePreset() {
-		String presetName = (String) presetLoadBox.getEditor().getItem();
+		String presetName = (String) mainWindowControls.getPresetLoadBox().getEditor().getItem();
 		LG.i("Trying to save preset: " + presetName);
 		if (!presetName.matches(Constants.FILENAME_VALID_NAME)) {
 			new TemporaryInfoPopup("Name contains invalid characters: "
@@ -1267,7 +1163,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		String filePath = Constants.PRESET_FOLDER + "/" + presetName + ".xml";
 		saveGuiPresetFileByFilePath(filePath);
-		presetLoadBox.addItem(presetName);
+		mainWindowControls.getPresetLoadBox().addItem(presetName);
 		new TemporaryInfoPopup("Saved preset: " + presetName, 2000);
 	}
 
@@ -1283,63 +1179,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 
-
-	private void initSoloMutersAndTrackControl(int startY, int anchorSide) {
-		JPanel soloMuterTrackControlPanel = new JPanel();
-		soloMuterTrackControlPanel.setOpaque(false);
-		JLabel emptySmLabel = new JLabel("");
-		emptySmLabel.setPreferredSize(new Dimension(1, 3));
-		soloMuterTrackControlPanel.add(emptySmLabel);
-
-		groupSoloMuters = new ArrayList<>();
-		for (INST instrument : INST.values()) {
-			SoloMuter sm = new SoloMuter(instrument.getIndex(), SoloMuter.Type.GROUP, this);
-			groupSoloMuters.add(sm);
-			soloMuterTrackControlPanel.add(sm);
-		}
-
-		soloMuterTrackControlPanel.add(new JLabel("Track History: "));
-		configHistory.box().setPreferredSize(new Dimension(450, 30));
-		soloMuterTrackControlPanel.add(configHistory);
-		soloMuterTrackControlPanel.add(SwingUtils.makeButton("Load", e -> {
-			if (configHistory.getItemCount() > 0) {
-				guiConfig = configHistory.getSelectedItem();
-				configHistory.removeItemAt(configHistory.getSelectedIndex());
-				configHistory.addItem(guiConfig);
-				configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
-				copyConfigToGUI(guiConfig);
-				//clearAllSeeds();
-			}
-		}));
-		JButton loadCustomBtn = SwingUtils.makeButton("Replace Section",
-				e -> arrangementGUI.replaceSection());
-
-		JButton recomposeSectionBtn = SwingUtils.makeButton("Recompose Section",
-				e -> arrangementGUI.recomposeSection());
-
-		soloMuterTrackControlPanel.add(loadCustomBtn);
-		soloMuterTrackControlPanel.add(recomposeSectionBtn);
-		JTextField bookmarkField = new JTextField("Intro1", 8);
-		soloMuterTrackControlPanel.add(bookmarkField);
-		JButton butt = SwingUtils.makeButton("Add Bookmark Text", e -> {
-			GUIConfig historyCfg = configHistory.getSelectedItem();
-			historyCfg.setBookmarkText(bookmarkField.getText());
-			configHistory.removeItemAt(configHistory.getSelectedIndex());
-			configHistory.addItem(historyCfg);
-			configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
-		});
-		soloMuterTrackControlPanel.add(butt);
-
-
-		toggleableComponents.add(bookmarkField);
-		toggleableComponents.add(butt);
-		toggleableComponents.add(loadCustomBtn);
-		toggleableComponents.add(recomposeSectionBtn);
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(soloMuterTrackControlPanel, constraints);
-	}
 
 	/*public void fixCombinedMelodyTracks() {
 		if (MelodyGUI.combineMelodyTracks == null) {
@@ -1653,7 +1492,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 						if (loopBeat.isSelected() && !heavyBackgroundTasksInProgress && !isDragging
 								&& (sequencer != null)) {
-							/*if (ScoreGUI.showScore.isSelected() && !loopBeatCompose.isSelected()) {
+							/*if (ScoreGUI.showScore.isSelected()
+									&& !mainWindowControls.getLoopBeatCompose().isSelected()) {
 								ScoreGUI.showScore.setSelected(false);
 
 							}*/
@@ -1673,7 +1513,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
 									- 50) || sequencerEnded) {
 								playbackController.stopMidi();
-								switch (loopBeatCompose.getVal()) {
+								switch (mainWindowControls.getLoopBeatCompose().getVal()) {
 								case "REGENERATE":
 									regenerate();
 									break;
@@ -1839,75 +1679,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH);
 	}
 
-	private void initControlPanel(int startY, int anchorSide) {
-		JPanel controlSettingsPanel = new JPanel();
-		//controlSettingsPanel.setLayout(new BoxLayout(controlSettingsPanel, BoxLayout.Y_AXIS));
-		controlSettingsPanel.setOpaque(false);
-
-		controlSettingsPanel.add(scoreGUI.createTransposeControl());
-
-		mainBpm = new DetachedKnobPanel("BPM", 80, ExtraSettingsGUI.bpmLow.getInt(), ExtraSettingsGUI.bpmHigh.getInt());
-		mainBpm.getKnob().setStretchAfterCustomInput(true);
-
-		controlSettingsPanel.add(mainBpm);
-		scaleMode = new ScrollComboBox<String>();
-		String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
-		for (int i = 0; i < MidiUtils.ScaleMode.values().length; i++) {
-			scaleModes[i] = MidiUtils.ScaleMode.values()[i].toString();
-		}
-		ScrollComboBox.addAll(scaleModes, scaleMode);
-
-		controlSettingsPanel.add(new JLabel("Scale"));
-		controlSettingsPanel.add(scaleMode);
-
-		randomizeScaleModeOnCompose = SwingUtils.makeCheckBox("Rand. on Compose", true, true);
-		controlSettingsPanel.add(randomizeScaleModeOnCompose);
-
-
-		randomSeed = new RandomValueButton(0);
-		compose = makeButton("COMPOSE", "Compose");
-		compose.setBackground(COMPOSE_COLOR);
-		compose.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		//compose.setBorderPainted(true);
-		compose.setPreferredSize(new Dimension(80, 40));
-		compose.setFont(compose.getFont().deriveFont(Font.BOLD));
-		regenerate = makeButton("Regenerate", "Regenerate");
-		regenerateStopPlay = SwingUtils.makeButton("R!", e -> {
-			playbackController.stopMidi();
-			actionPerformed(new ActionEvent(regenerateStopPlay, ActionEvent.ACTION_PERFORMED,
-					"Regenerate"));
-		});
-		regeneratePausePlay = SwingUtils.makeButton("R~", e -> {
-			regenerateInPlace();
-		});
-		regenerateStopPlay.setMargin(new Insets(0, 0, 0, 0));
-		regeneratePausePlay.setMargin(new Insets(0, 0, 0, 0));
-		regenerateStopPlay.setPreferredSize(new Dimension(25, 30));
-		regeneratePausePlay.setPreferredSize(new Dimension(25, 30));
-		regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
-		JButton copySeed = SwingUtils.makeButton("Copy Main Seed", e -> {
-			randomSeed.setValue(lastRandomSeed);
-			LG.i("Copied to random seed: " + lastRandomSeed);
-		});
-		JButton copyChords = SwingUtils.makeButton("Copy chords", e -> copyChords());
-		JButton clearSeed = SwingUtils.makeButton("Clear All Seeds", e -> clearAllSeeds());
-
-		controlSettingsPanel.add(regenerate);
-		controlSettingsPanel.add(regenerateStopPlay);
-		controlSettingsPanel.add(regeneratePausePlay);
-		controlSettingsPanel.add(compose);
-		controlSettingsPanel.add(randomSeed);
-		controlSettingsPanel.add(copySeed);
-		controlSettingsPanel.add(ChordGUI.currentChords);
-		controlSettingsPanel.add(copyChords);
-		controlSettingsPanel.add(clearSeed);
-
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(controlSettingsPanel, constraints);
-	}
-
 	private void copyChords() {
 		ChordGUI.userChords.setupChords(ChordGUI.currentChordsInternal);
 		LG.i(("Copied chords: " + ChordGUI.userChords.getChordListString()));
@@ -1919,182 +1690,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ExtraSettingsGUI.startFromBar.setSelected(false);
 		playbackController.pauseMidi();
 		actionPerformed(
-				new ActionEvent(regeneratePausePlay, ActionEvent.ACTION_PERFORMED, "Regenerate"));
+				new ActionEvent(mainWindowControls.getRegeneratePausePlayButton(),
+						ActionEvent.ACTION_PERFORMED, "Regenerate"));
 		ExtraSettingsGUI.startFromBar.setSelected(wasSelected);
 		playbackController.setPauseInfoResettable(true);
 	}
 
-	private void initPlayPanel(int startY, int anchorSide) {
-
-		JPanel playSavePanel = new JPanel();
-		playSavePanel.setOpaque(false);
-		stopMidi = SwingUtils.makeButton("STOP", e -> playbackController.stopMidi());
-		playMidi = SwingUtils.makeButton("PLAY", e -> playbackController.playMidi(false));
-		pauseMidi = SwingUtils.makeButton("PAUSE", e -> playbackController.pauseMidi());
-		stopMidi.setFont(stopMidi.getFont().deriveFont(Font.BOLD));
-		playMidi.setFont(playMidi.getFont().deriveFont(Font.BOLD));
-		pauseMidi.setFont(pauseMidi.getFont().deriveFont(Font.BOLD));
-
-		JButton save3Star = SwingUtils.makeButtonMoused("Save 3*", e -> {
-			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "3star/");
-			} else {
-				saveGuiConfigFile(3);
-			}
-		});
-		save3Star.setForeground(savedIndicatorForegroundColors[0]);
-		JButton save4Star = SwingUtils.makeButtonMoused("Save 4*", e -> {
-			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "4star/");
-			} else {
-				saveGuiConfigFile(4);
-			}
-		});
-		save4Star.setForeground(savedIndicatorForegroundColors[1]);
-		JButton save5Star = SwingUtils.makeButtonMoused("Save 5*", e -> {
-			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "5star/");
-			} else {
-				saveGuiConfigFile(5);
-			}
-		});
-		save5Star.setForeground(savedIndicatorForegroundColors[2]);
-		JButton saveCustom = SwingUtils.makeButtonMoused("Save ->", e -> {
-			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(Constants.MIDIS_FOLDER + Constants.SAVED_MIDIS_FOLDER_BASE + "custom/");
-			} else {
-				saveGuiConfigFile(-1);
-			}
-		});
-		saveCustom.setForeground(savedIndicatorForegroundColors[3]);
-		Calendar nowDate = Calendar.getInstance();
-		String yearMonth = nowDate.get(Calendar.YEAR) + "-"
-				+ StringUtils.leftPad(String.valueOf(nowDate.get(Calendar.MONTH) + 1), 2, "0");
-		saveCustomFilename = new JTextField(yearMonth + "/savefilename", 12);
-		savedIndicatorLabel = new JLabel("[Saved!]");
-		savedIndicatorLabel.setVisible(false);
-
-		JButton loadConfig = makeButton("LOAD..", "LoadGUIConfig");
-
-		JButton saveWavFile = SwingUtils.makeButtonMoused("Export .WAV", e -> {
-			if (!SwingUtilities.isLeftMouseButton(e)) {
-				openFolder(Constants.EXPORT_FOLDER);
-			} else {
-				saveWavFile();
-			}
-		});
-
-
-		scoreGUI.createShowScoreButton();
-
-		regenerateWhenValuesChange = new CheckButton("Regenerate on Change", true);
-		/*showScorePicker = new ScrollComboBox<String>();
-		ScrollComboBox.addAll(
-				new String[] { "NO Drums/Chords", "Drums Only", "Chords Only", "ALL" },
-				showScorePicker);*/
-
-		loopBeat = new CheckButton("Loop Quarter Notes", false);
-		loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
-		loopBeatCompose = new ScrollComboBox<>(false);
-		ScrollComboBox.addAll(new String[] { "REGENERATE", "COMPOSE", "REPLAY" }, loopBeatCompose);
-
-		midiMode = new CheckButton("MIDI Transmitter Mode", true);
-		midiMode.setToolTipText("Select a MIDI port on the right and click Regenerate.");
-
-		midiMode.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (midiDeviceController.hasMidiDevice()) {
-					midiDeviceController.closeMidiDevice();
-				} else {
-					midiDeviceController.softCloseSynth();
-				}
-			}
-
-		});
-
-		midiModeDevices = new ScrollComboBox<String>(false);
-		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-		MidiDevice dev = null;
-		for (int i = 0; i < infos.length; i++) {
-			try {
-				dev = MidiSystem.getMidiDevice(infos[i]);
-				if (dev.getMaxReceivers() != 0 && dev.getMaxTransmitters() == 0) {
-					midiModeDevices.addItem(infos[i].toString());
-					/*if (infos[i].toString().startsWith("loopMIDI")) {
-						midiModeDevices.setVal(infos[i].toString());
-					}*/
-					if (infos[i].toString().startsWith("Gervill")) {
-						midiModeDevices.setVal(infos[i].toString());
-					}
-					LG.i(("Added device: " + infos[i].toString()));
-				}
-			} catch (MidiUnavailableException e) {
-				// Auto-generated catch block
-				LG.e(e);
-			}
-		}
-		midiModeDevices.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (midiDeviceController.hasMidiDevice()) {
-					midiDeviceController.closeMidiDevice();
-				}
-			}
-
-		});
-
-		generatedMidi = new JList<File>();
-		generatedMidi.setCellRenderer(new MidiListCellRenderer());
-		generatedMidi.setTransferHandler(new FileTransferHandler(e -> {
-			return currentMidi;
-		}));
-		generatedMidi.setDragEnabled(true);
-
-		playSavePanel.add(playMidi);
-		playSavePanel.add(pauseMidi);
-		playSavePanel.add(stopMidi);
-		playSavePanel.add(save3Star);
-		playSavePanel.add(save4Star);
-		playSavePanel.add(save5Star);
-		playSavePanel.add(saveCustom);
-		playSavePanel.add(saveCustomFilename);
-		playSavePanel.add(savedIndicatorLabel);
-
-		playSavePanel.add(loadConfig);
-		playSavePanel.add(saveWavFile);
-		playSavePanel.add(new JLabel("Midi Drag'N'Drop:"));
-		playSavePanel.add(generatedMidi);
-
-		JPanel playSettingsPanel = new JPanel();
-		playSettingsPanel.setOpaque(false);
-
-		playSettingsPanel.add(regenerateWhenValuesChange);
-		playSettingsPanel.add(ScoreGUI.showScore);
-		//playSettingsPanel.add(showScorePicker);
-		playSettingsPanel.add(loopBeat);
-		playSettingsPanel.add(loopBeatCount);
-		playSettingsPanel.add(new JLabel("On Loop:"));
-		playSettingsPanel.add(loopBeatCompose);
-		playSettingsPanel.add(midiMode);
-		playSettingsPanel.add(midiModeDevices);
-
-
-		constraints.gridy = startY;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(playSettingsPanel, constraints);
-
-		constraints.gridy = startY + 5;
-		constraints.anchor = anchorSide;
-		everythingPanel.add(playSavePanel, constraints);
-	}
-
 	private void saveWavFile() {
 		if (currentMidi == null) {
-			messageLabel.setText("Need to compose first!");
-			messageLabel.repaint(0);
+			mainWindowControls.getMessageLabel().setText("Need to compose first!");
+			mainWindowControls.getMessageLabel().repaint(0);
 			return;
 		}
 		switchMidiButtons(false);
@@ -2127,7 +1732,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			protected void done() {
 				try {
 					Synthesizer synthesizer = null;
-					if (!midiMode.isSelected()) {
+					if (!mainWindowControls.getMidiMode().isSelected()) {
 						synthesizer = midiDeviceController.loadSynth();
 					}
 					midiDeviceController.prepareMidiPlayback(currentSequenceMidi, synthesizer);
@@ -2135,25 +1740,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					LG.e(e);
 				}
 				switchMidiButtons(true);
-				messageLabel.setText("PROCESSED WAV!");
+				mainWindowControls.getMessageLabel().setText("PROCESSED WAV!");
 				repaint();
 			}
 		};
 		worker.execute(); //here the process thread initiates
-	}
-
-	private void openFolder(String folderPath) {
-		File f = new File(folderPath);
-		if (!f.exists()) {
-			f.mkdirs();
-		}
-		Desktop desktop = Desktop.getDesktop();
-		try {
-			desktop.open(f);
-		} catch (IOException e) {
-			LG.e(e);
-		}
-
 	}
 
 	private void initHelperPopups(JPanel settingsPanel) {
@@ -2176,7 +1767,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ArpGUI.randomArpHitsPerPattern.setSelected(state);
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
-		randomizeScaleModeOnCompose.setSelected(state);
+		mainWindowControls.getRandomizeScaleModeOnCompose().setSelected(state);
 		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
 		MelodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setSelected(state);
@@ -2195,7 +1786,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(fg);
 		ArrangementGUI.randomizeArrangementOnCompose.setForeground(fg);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(fg);
-		randomizeScaleModeOnCompose.setForeground(fg);
+		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(fg);
 		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(fg);
 		MelodyGUI.melodyPatternRandomizeOnCompose.setForeground(fg);
 		GenerationGUI.switchOnComposeRandom.setForeground(fg);
@@ -2205,14 +1796,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void switchMidiButtons(boolean state) {
-		playMidi.setEnabled(state);
-		pauseMidi.setEnabled(state);
-		stopMidi.setEnabled(state);
-		compose.setEnabled(state);
-		//regenerate.setEnabled(state);
-		midiMode.setEnabled(state);
-		midiModeDevices.setEnabled(state);
-
+		mainWindowControls.toggleReadyState(state);
 	}
 
 	private void switchBigMonitorMode() {
@@ -2303,19 +1887,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		toggledRegenerateColor = uiRegenerateTextColor();
 
 
-		//mainTitle.setForeground((isDarkMode) ? new Color(0, 220, 220) : lightModeUIColor);
-		//subTitle.setForeground(toggledUIColor);
-		messageLabel.setForeground(toggledUIColor);
+		mainWindowControls.toggleFgColors(toggledUIColor, toggledRegenerateColor,
+				toggledComposeColor);
 		ChordGUI.tipLabel.setForeground(toggledUIColor);
 		currentTime.setForeground(toggledUIColor);
 		totalTime.setForeground(toggledUIColor);
-		compose.setForeground(toggledUIColor);
-		compose.setBackground(COMPOSE_COLOR);
-		regenerate.setForeground(toggledRegenerateColor);
-		playMidi.setForeground(toggledUIColor);
-		pauseMidi.setForeground(toggledUIColor);
-		stopMidi.setForeground(toggledUIColor);
-		loopBeatCompose.setForeground(toggledComposeColor);
 		ArpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
 		MelodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
@@ -2446,7 +2022,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 
 			playbackController.saveStartInfo();
-			savedIndicatorLabel.setVisible(false);
+			mainWindowControls.getSavedIndicatorLabel().setVisible(false);
 			midiDeviceController.prepareForComposition();
 
 			needToRecalculateSoloMuters = true;
@@ -2707,7 +2283,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 		}
 
-		if (!regenerate && randomizeScaleModeOnCompose.isSelected()) {
+		if (!regenerate && mainWindowControls.getRandomizeScaleModeOnCompose().isSelected()) {
 			Integer[] allowedScales = new Integer[] { 0, 1, 3, 4, 5, 8 };
 			scaleMode.setSelectedIndex(allowedScales[new Random().nextInt(allowedScales.length)]);
 		}
@@ -2753,7 +2329,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				sequencer.stop();
 			}
 			Synthesizer synthesizer = null;
-			if (!midiMode.isSelected()) {
+			if (!mainWindowControls.getMidiMode().isSelected()) {
 				synthesizer = midiDeviceController.loadSynth();
 			}
 
@@ -2780,7 +2356,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return;
 			}
 			currentSequenceMidi = new File(Constants.TEMPORARY_SEQUENCE_MIDI_NAME);
-			generatedMidi.setListData(new File[] { currentMidi });
+			mainWindowControls.getGeneratedMidi().setListData(new File[] { currentMidi });
 			//sizeRespectingPack();
 			repaint();
 			if (!midiDeviceController.prepareMidiPlayback(currentSequenceMidi, synthesizer)) {
@@ -3273,7 +2849,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		LG.i("Finished '" + actionCommand + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
-		messageLabel.setText("::" + actionCommand + "::");
+		mainWindowControls.getMessageLabel().setText("::" + actionCommand + "::");
 	}
 
 	public void recalculateSoloMuters() {
@@ -3295,7 +2871,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	private void saveGuiConfigFile(int rating) {
 		if (currentMidi != null) {
 			String newFileName = getFilenameForSaving(currentMidi.getName());
-			LG.i(("Saving file: " + (rating >= 0 ? newFileName : saveCustomFilename.getText())));
+		LG.i(("Saving file: " + (rating >= 0 ? newFileName
+				: mainWindowControls.getSaveCustomFilename().getText())));
 
 			Date date = new Date();
 			String saveDirectory = Constants.SAVED_MIDIS_FOLDER_BASE;
@@ -3316,7 +2893,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				additionalInfo = f.format(date);
 			} else {
 				saveDirectory += "custom/";
-				name = saveCustomFilename.getText();
+			name = mainWindowControls.getSaveCustomFilename().getText();
 				if (ExtraSettingsGUI.customFilenameAddTimestamp.isSelected()) {
 					additionalInfo = f.format(date);
 				}
@@ -3331,12 +2908,14 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				copyGUItoConfig(guiConfig);
 				marshalConfig(guiConfig, finalFilePath, Constants.MID_EXTENSION.length());
 				if (rating >= 3) {
-					savedIndicatorLabel.setForeground(savedIndicatorForegroundColors[rating - 3]);
+					mainWindowControls.getSavedIndicatorLabel().setForeground(
+							mainWindowControls.getSavedIndicatorForegroundColor(rating - 3));
 				} else {
-					savedIndicatorLabel.setForeground(savedIndicatorForegroundColors[3]);
+					mainWindowControls.getSavedIndicatorLabel().setForeground(
+							mainWindowControls.getSavedIndicatorForegroundColor(3));
 				}
 
-				savedIndicatorLabel.setVisible(true);
+				mainWindowControls.getSavedIndicatorLabel().setVisible(true);
 			} catch (IOException | JAXBException e) {
 				// Auto-generated catch block
 				LG.e("Error saving file: ", e);
@@ -3525,18 +3104,18 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		cs.add(GenerationGUI.randomizeTransposeOnCompose);
 
 		// globals
-		cs.add(randomizeScaleModeOnCompose);
+		cs.add(mainWindowControls.getRandomizeScaleModeOnCompose());
 		cs.add(regenerateWhenValuesChange);
 		cs.add(loopBeat);
 		cs.add(loopBeatCount);
-		cs.add(midiMode);
+		cs.add(mainWindowControls.getMidiMode());
 
 		// extras
 		cs.add(ExtraSettingsGUI.useMidiCC);
 		cs.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
 		cs.add(null);
 		cs.add(null);
-		cs.add(loopBeatCompose);
+		cs.add(mainWindowControls.getLoopBeatCompose());
 		cs.add(ExtraSettingsGUI.useAllInsts);
 		//cs.add(ExtraSettingsGUI.bannedInsts);
 		cs.add(ExtraSettingsGUI.pauseBehaviorCombobox);
@@ -3589,7 +3168,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	public void copyGUItoConfig(GUIConfig gc, boolean isNew) {
 		gc.setVersion(CURRENT_VERSION);
 		gc.setRandomSeed(lastRandomSeed);
-		gc.setMidiMode(midiMode.isSelected());
+		gc.setMidiMode(mainWindowControls.getMidiMode().isSelected());
 		gc.setBpm(Double.valueOf(mainBpm.getInt()));
 		gc.setScaleMode(ScaleMode.valueOf(scaleMode.getVal()));
 
@@ -3599,7 +3178,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		chordGUI.saveToConfig(gc, lastRandomSeed);
 		arpGUI.saveToConfig(gc, lastRandomSeed);
 		drumGUI.saveToConfig(gc, lastRandomSeed,
-				midiMode.isSelected() && !midiModeDevices.getVal().contains("ervill"));
+				mainWindowControls.getMidiMode().isSelected()
+						&& !mainWindowControls.getMidiModeDevices().getVal().contains("ervill"));
 		ScoreGUI.saveToConfig(gc);
 		GenerationGUI.saveToConfig(gc);
 		ExtraSettingsGUI.saveToConfig(gc);
@@ -3617,7 +3197,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		MelodyGUI.randomMelodyOnRegenerate.setSelected(false);
 		randomSeed.setValue((int) gc.getRandomSeed());
 		lastRandomSeed = randomSeed.getValue();
-		midiMode.setSelected(gc.isMidiMode());
+		mainWindowControls.getMidiMode().setSelected(gc.isMidiMode());
 		scaleMode.setVal(gc.getScaleMode().toString());
 
 		// Restore each module's controls and models before recreating its panels.
@@ -3696,7 +3276,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		LG.i("Finished '" + actionName + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
-		messageLabel.setText("::" + actionName + "::");
+		mainWindowControls.getMessageLabel().setText("::" + actionName + "::");
 	}
 
 	public static boolean isCustomSection() {

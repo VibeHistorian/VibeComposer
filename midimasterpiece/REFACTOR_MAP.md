@@ -268,6 +268,12 @@ Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work t
 - **4.4 Residual instrument, section, and MIDI helpers:** assign remaining panel-to-part conversion and panel-order utilities to `InstrumentPanelController`; section/playhead calculations to arrangement or playback owners; and note audition/output helpers to the appropriate MIDI owner. Migrate callers from `VibeComposerGUI` forwarding/static methods as ownership moves, retaining compatibility methods only while they have active callers.
 - **4.5 Review remaining dispatch and refresh code:** after the larger ownership moves, inspect action-command dispatch, tab/count refresh, background UI updates, and appearance switching. Extract only cohesive behavior with a clear owner; short cross-module sequencing and direct `JFrame` changes may remain in the window.
 
+### Phase 4.1 status — complete
+
+- Moved the shared header, global audio controls, solo/mute and track-history row, compose controls, and playback/save row from `VibeComposerGUI` into `MainWindowControls`. The window still assembles these panels in `init()` and supplies explicit callbacks for preset/history, arrangement, playback, MIDI-device, save, and export actions.
+- Moved ownership of the corresponding controls and their colors into `MainWindowControls`; window workflows now access those controls through its focused getters. `GenerationGUI` and `PlaybackState` retain ownership of their established generation and playback state.
+- Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; the application was not manually launched.
+
 ### Phase 4 completion criteria
 
 - `VibeComposerGUI` primarily owns the window lifecycle, module/context assembly, and short cross-feature sequencing calls.
