@@ -309,3 +309,56 @@ Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work t
 - Callers use the owner of instrument, section, playback, and MIDI behavior rather than routing through compatibility methods on `VibeComposerGUI`.
 - The `VibeComposerCoreGUI` class has a defined shared-UI responsibility before receiving code.
 - Each slice preserves behavior and is reviewed independently. Any compile or runtime verification is recorded with the slice; a particular source-line target is not required for completion.
+
+--------------------------------------------------
+
+## Phase 5 — Context, Static Access, and Structural Smells
+
+Phase 5 reviews the dependency seams left after feature extraction and workflow ownership. Its goal is to make lifetime and ownership explicit, shrink context APIs where callers currently receive more access than they need, and record broader structural smells as actionable candidates. Do not convert the existing static state into a new catch-all context or service locator.
+
+### Initial audit
+
+- The feature GUIs are still effectively process-wide singletons: mutable Swing controls remain static in `MelodyGUI`, `BassGUI`, `ChordGUI`, `ArpGUI`, `DrumGUI`, `ArrangementGUI`, and other feature owners. This makes ownership visible by class name, but does not make the controls instance-owned or support multiple windows, isolated editor sessions, or straightforward construction tests.
+- Static references remain in shared UI callers. For example, popups and renderers read arrangement state directly from `ArrangementGUI`; `MelodyPanel` and `MelodyMidiDropPane` read melody controls directly from `MelodyGUI`. The component/popup boundary is therefore decoupled from `VibeComposerGUI` in many places but still coupled to concrete feature-GUI singletons.
+- Most reviewed `Context` interfaces are already small. The clearest review candidates are `ArrangementGUI.Context` (15 operations spanning UI composition, table/popup access, playback, config history, and recomposition) and `InstrumentPanelController.Context` (18 operations spanning panel creation/storage, presentation, randomization, and refresh notifications). Inspect actual call sites before splitting either interface; method count alone is not a reason to fragment an API.
+- The shared `PartManagerPanel.Context` is a focused four-operation preset boundary. Keep this as the shape to prefer: give a component only the operations it performs, and pass an owner or collaborator directly when it only needs that collaborator's API.
+- `ApplicationSessionState` is a static holder for several unrelated lifetimes (active config/history, MIDI editor session, soundbank, generator, undo managers, console/streams, and background-task flag). The fields have an owner class, but the class still acts as a global access point. Separate app services from window/session/UI state as callers are migrated.
+- Mutable interaction and view state also appears in component statics, including score/editor view controls in `ShowPanelBig`, interaction state in `ScrollComboPanel`, and imported melody data in `MelodyMidiDropPane`. Decide scope from actual lifetime and sharing needs; do not preserve static scope just because there is one current window.
+- `VibeComposerGUI` is now about 2.2k lines in the active module. It has moved from a god class toward a composition root, but public static forwarding helpers and broad static imports still obscure which owner a caller depends on. Retain the class for window lifecycle and cross-feature ordering; move a helper only when it has a distinct behavior owner.
+
+This is an initial structural audit, not a complete field-by-field classification of all static members in the repository. Extend the inventory as each slice reaches its callers.
+
+### Static and lifetime policy
+
+Use `static` for immutable constants, pure/stateless utility methods, enum/factory helpers, and shared immutable data. A mutable process-wide cache may remain static only when its synchronization, invalidation, and lifetime are explicit. Mutable application services may be application-scoped objects assembled once by the composition root; they do not need static fields to remain shared for the application lifetime.
+
+Treat mutable Swing controls, window references, editor view state, drag/selection state, and feature runtime state as instance-owned by their window, editor, or feature owner. Keep genuinely application-wide runtime state (for example, a single active MIDI output lifecycle, if the product continues to guarantee one) behind an explicit application service and inject only the operations a client uses. Revisit this decision if the application later supports multiple windows or concurrent editor sessions.
+
+### Candidate work sequence
+
+- **5.1 Build the ownership/lifetime inventory:** classify mutable statics in feature GUIs, `ApplicationSessionState`, `PlaybackState`, `SoloMuteState`, and UI components as immutable/global service, application session, window, feature, editor, or transient interaction state. Record current owner, actual readers/writers, desired owner, and migration seam. Resolve ambiguous sharing from call sites before changing scope.
+- **5.2 Remove concrete feature-GUI lookups from shared UI:** start with arrangement popup/rendering consumers and melody panel/drop-pane consumers. Give each popup, renderer, or panel a narrow model snapshot, feature owner, or callback for the operations it uses. Migrate a caller family at a time, then make the associated feature fields instance-owned when no global callers remain.
+- **5.3 Reduce oversized contexts and relays:** trace construction and call sites for `ArrangementGUI.Context` and `InstrumentPanelController.Context`. Remove unused methods and callbacks that merely forward to another owner. Group dependencies by actual behavior; split a context only when it has clients with distinct needs or when doing so removes a real dependency cycle. Prefer direct collaborators for read-only owned data and callbacks for actions.
+- **5.4 Replace static feature access with composition-root instances:** have `VibeComposerGUI` own feature GUI instances and pass them or narrow collaborators to dependent components. Migrate in bounded feature groups; keep compatibility accessors temporarily only with an explicit removal checklist. Avoid an application-wide locator.
+- **5.5 Review application state owners:** separate unrelated `ApplicationSessionState` concerns by lifetime and behavior. Keep persistence DTOs (`GUIConfig`) separate from live GUI/session state. Decide whether each playback, MIDI, undo, and editor service is truly application-wide or belongs to one window/session; encode the choice in construction and ownership rather than comments alone.
+- **5.6 Record and address structural smells incrementally:** use the findings below as a backlog, add concrete locations and caller evidence as they are confirmed, and only refactor a smell in a behavior-focused slice.
+
+### Structural smell backlog
+
+- **Global mutable UI state:** feature classes own their controls semantically but expose many of them as public statics. This hides construction order, couples multiple editors/windows, and makes tests share state. Priority: high; address alongside feature-GUI instance migration.
+- **Concrete-owner coupling in UI leaves:** shared components and popups depend on `ArrangementGUI`/`MelodyGUI` statics. This preserves cycles at a different layer after removing direct window dependencies. Priority: high; migrate by caller family.
+- **Context interface breadth and callback forwarding:** the two broad contexts named above mix state queries, UI construction, actions, and refresh effects. Priority: medium; prune first, split only where call-site evidence supports it.
+- **Global holder with mixed lifetimes:** `ApplicationSessionState` groups editor, config, audio, undo, diagnostics, and background-task values. Priority: medium; split along actual lifecycle and injection seams.
+- **Composition-root facade residue:** public static forwarding methods, wildcard static imports, and direct reads from state holders make dependencies hard to see in `VibeComposerGUI` and controllers. Priority: medium; prefer explicit imports and owner APIs when touching call sites, then remove forwarding methods with no remaining callers.
+- **Controller boundary drift:** controllers should own one workflow and accept dependencies at the edge. Watch for controllers that combine domain decisions, Swing presentation, and a long list of unrelated callbacks; do not split solely by file size.
+- **Oversized UI/model classes and mixed responsibilities:** continue noting concrete class/method clusters (for example, arrangement table/popup behavior versus arrangement state, and MIDI editor rendering versus editing/input dispatch) before proposing extraction. Avoid line-count-only splits.
+- **Mutable static collections/constants:** declarations marked `static final` may still expose mutable arrays, maps, or lists. Treat mutability and safe publication separately from whether the reference is final; prefer immutable views/data where callers do not need mutation.
+
+### Phase 5 completion criteria
+
+- Mutable state has a documented owner and lifetime, and static scope is retained only where application-wide sharing is a deliberate requirement.
+- Shared UI components depend on feature behavior or collaborators rather than concrete feature-GUI statics.
+- Context interfaces contain only operations used by their clients; broad contexts have been narrowed or have documented call-site evidence for their combined role.
+- `ApplicationSessionState` no longer serves as an undifferentiated access point for unrelated lifetimes.
+- Structural smells are recorded with concrete locations, impact, and an order for addressing them; no broad rewrite is required to close the phase.
+- Each implementation slice preserves behavior and records its verification. No persisted config/XML shape changes are bundled into ownership-only work.

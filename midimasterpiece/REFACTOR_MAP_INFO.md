@@ -34,6 +34,7 @@
 - Phase 3.15 simplified `actionPerformedTask` command checks by caching the command, comparing strings by value, and short-circuiting the compose-time strum predicate. Independent checks and their ordering remain unchanged.
 - Phase 3.16 moved melody compose-time panel generation and melody seed, pattern, target-note, and forced-pattern preparation into `MelodyGUI`. `VibeComposerGUI` invokes the operations at their original points in the compose preparation sequence and passes the prepared seed.
 - Phase 4.5 moved shared look-and-feel switching and feature-control recoloring into `AppearanceController`. Playhead slider and status-label writes from the polling thread now run on Swing's event queue, and pending slider updates coalesce to the latest position; action dispatch and tab/count refresh remain short cross-feature composition-root operations.
+- Phase 4 is complete. Phase 5 is recorded in `REFACTOR_MAP.md` and audits context API size, mutable static access, explicit owner lifetimes, and general structural smells before selecting bounded migration slices.
 - Phase 2.4.7 removes `VibeComposerGUI`, `ShowPanelBig`, and `ScoreGUI` lookups from `SoloMuter`. Its solo/mute toggle events use a focused context supplied when the window creates global, group, and instrument controls; the window continues to coordinate cross-group updates and score refreshes.
 - Phase 2.4.8 removes the main window's `ActionListener` from instrument-panel constructors and replaces the `RandomizePart` command path with a focused callback. The composition root installs it, and `VibeComposerGUI` retains the randomization and auto-regeneration behavior.
 - Cross-cutting models and components include `GUIConfig.java`, `Panels/MelodyPanel.java`, and `Components/MelodyMidiDropPane.java`.
@@ -46,7 +47,7 @@
 - Arrangement state is exposed as static fields on `ArrangementGUI` while callers across the application are being migrated. Keep new arrangement references on `ArrangementGUI`.
 - Keep workflows that coordinate multiple instrument types in `VibeComposerGUI`; pass only the shared operations a module needs through its context interface.
 - Update component and popup callers when a moved field changes owner. Search the whole `src/main/java` tree, excluding the migration backup when checking active references.
-- The first extraction phase is complete. The next phase plan is recorded in `REFACTOR_MAP.md` under **Ownership and Shared State**. Treat static feature fields and broad context APIs as migration scaffolding to reduce gradually; do not add new global state or pass the main window as a general-purpose context.
+- The original extraction and phase 4 workflow moves are complete. Phase 5 now tracks the remaining ownership work. Treat mutable feature statics and concrete feature-GUI lookups as migration scaffolding to reduce gradually; use explicit instance owners and narrow contexts, and do not add new global state or pass the main window as a general-purpose context.
 
 ## Effective commands
 
