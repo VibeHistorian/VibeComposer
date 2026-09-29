@@ -122,17 +122,6 @@ public class VibeComposerGUI extends JFrame
 			});
 	private final InstrumentPanelController instrumentPanelController =
 			new InstrumentPanelController(new InstrumentPanelController.Context() {
-				@Override public InstPanel createConfiguredPanel(INST instrument) {
-					InstPanel panel = getOwnedInstrumentControls(instrument)
-							.createPanel(VibeComposerGUI.this);
-					configureRandomizeAction(panel);
-					configureInstPanelContext(panel);
-					configureInstrumentControlContext(panel);
-					return panel;
-				}
-				@Override public void removeComboBoxArrows(InstPanel panel) {
-					VibeComposerGUI.this.removeComboBoxArrows(panel);
-				}
 				@Override public void recalculateArrangementPartMaps() {
 					if (arrangementGUI != null) {
 						arrangementGUI.refreshPartMapsFromOldData();
@@ -155,8 +144,15 @@ public class VibeComposerGUI extends JFrame
 				@Override public void repaintInstrumentTabs() { instrumentTabPane.repaint(); }
 				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
-				@Override public int getCurrentSeed() { return GenerationGUI.lastRandomSeed; }
-			}, this::getOwnedInstrumentControls);
+			}, instrument -> {
+				InstPanel panel = getOwnedInstrumentControls(instrument)
+						.createPanel(VibeComposerGUI.this);
+				configureRandomizeAction(panel);
+				configureInstPanelContext(panel);
+				configureInstrumentControlContext(panel);
+				removeComboBoxArrows(panel);
+				return panel;
+			}, this::getOwnedInstrumentControls, () -> GenerationGUI.lastRandomSeed);
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public INST getSelectedInstrument() {
 			return INST.fromIndex(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
@@ -496,9 +492,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public Dimension getVariationPopupWindowSize() {
 				return VibeComposerGUI.this.getSize();
 			}
-			@Override public void setSliderStart(int sliderValue) {
-				playbackController.setSliderStart(sliderValue);
-			}
 			@Override public GUIConfig getSelectedConfigHistory() {
 				return configHistory.getItemCount() > 0 ? configHistory.getVal() : null;
 			}
@@ -512,7 +505,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					regenerate();
 				}
 			}
-		}, instrumentPanelController, instrumentTabPane, midiEditPopupContext);
+		}, playbackController, instrumentPanelController, instrumentTabPane,
+				midiEditPopupContext);
 	}
 
 	private PartManagerPanel.Context createPartManagerContext() {

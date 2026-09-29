@@ -91,7 +91,6 @@ public class ArrangementGUI {
 	public static boolean arrangementTableColumnDragging;
 	public static boolean actualArrangementTableColumnDragging;
 	public static JPanel actualArrangementCombinedPanel;
-	public static JPanel arrangementCombinedPanel;
 	public static JPanel variationButtonsPanel;
 	public static boolean copyDragging;
 	public static Triple<Integer, Integer, Integer> highlightedTableCell;
@@ -152,13 +151,16 @@ public class ArrangementGUI {
 	}
 
 	private final Context context;
+	private final PlaybackController playbackController;
 	private final InstrumentPanelController panelController;
 	private final JTabbedPane instrumentTabPane;
 	private final MidiEditPopup.Context midiEditPopupContext;
 
-	public ArrangementGUI(Context context, InstrumentPanelController panelController,
+	public ArrangementGUI(Context context, PlaybackController playbackController,
+			InstrumentPanelController panelController,
 			JTabbedPane instrumentTabPane, MidiEditPopup.Context midiEditPopupContext) {
 		this.context = context;
+		this.playbackController = playbackController;
 		this.panelController = panelController;
 		this.instrumentTabPane = instrumentTabPane;
 		this.midiEditPopupContext = midiEditPopupContext;
@@ -213,7 +215,7 @@ public class ArrangementGUI {
 			return;
 		}
 		int measure = calculateSectionMeasureStart(sectionIndex);
-		context.setSliderStart(PlaybackState.sliderMeasureStartTimes.get(measure));
+		playbackController.setSliderStart(PlaybackState.sliderMeasureStartTimes.get(measure));
 	}
 
 	private List<? extends InstPanel> getInstList(int instrument) {
@@ -263,7 +265,6 @@ public class ArrangementGUI {
 				int startY, int anchorSide);
 		Point getVariationPopupLocation();
 		Dimension getVariationPopupWindowSize();
-		void setSliderStart(int sliderValue);
 		GUIConfig getSelectedConfigHistory();
 		void recalculateAfterSectionRecompose();
 		void regenerateAfterSectionRecomposeIfEnabled();
@@ -450,7 +451,7 @@ public class ArrangementGUI {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = panelController.createConfiguredPanel(instrument);
+								InstPanel copy = panelController.setupInstrumentPanel(instrument);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -471,7 +472,7 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = panelController.createConfiguredPanel(instrument);
+								InstPanel copy = panelController.setupInstrumentPanel(instrument);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);

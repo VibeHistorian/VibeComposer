@@ -12,13 +12,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 /** Owns the shared lifecycle of instrument panels inside their instrument tabs. */
 public final class InstrumentPanelController {
 	public interface Context {
-		InstPanel createConfiguredPanel(INST instrument);
-		void removeComboBoxArrows(InstPanel panel);
 		void recalculateArrangementPartMaps();
 		void recalculateTabPaneCounts();
 		void recalculateAfterPanelGeneration();
@@ -27,16 +26,21 @@ public final class InstrumentPanelController {
 		void repaintInstrumentTabs();
 		void repaintMainWindow();
 		void regenerate();
-		int getCurrentSeed();
 	}
 
 	private final Context context;
+	private final Function<INST, InstPanel> setupInstPanel;
 	private final Function<INST, InstGUI<?>> instrumentGui;
+	private final IntSupplier currentSeed;
 	private final PartPresetStore partPresetStore = new PartPresetStore();
 
-	public InstrumentPanelController(Context context, Function<INST, InstGUI<?>> instrumentGui) {
+	public InstrumentPanelController(Context context,
+			Function<INST, InstPanel> setupInstPanel,
+			Function<INST, InstGUI<?>> instrumentGui, IntSupplier currentSeed) {
 		this.context = context;
+		this.setupInstPanel = setupInstPanel;
 		this.instrumentGui = instrumentGui;
+		this.currentSeed = currentSeed;
 	}
 
 	private InstGUI<?> instrumentGui(INST instrument) {
@@ -47,8 +51,8 @@ public final class InstrumentPanelController {
 		return partPresetStore.listPresets(instrument);
 	}
 
-	public InstPanel createConfiguredPanel(INST instrument) {
-		return context.createConfiguredPanel(instrument);
+	public InstPanel setupInstrumentPanel(INST instrument) {
+		return setupInstPanel.apply(instrument);
 	}
 
 	public List<? extends InstPanel> getInstList(INST instrument) {
@@ -110,7 +114,7 @@ public final class InstrumentPanelController {
 
 	public InstPanel addPanel(INST instrument, InstPart initializingPart,
 							  boolean recalculateArrangement) {
-		InstPanel panel = createConfiguredPanel(instrument);
+		InstPanel panel = setupInstPanel.apply(instrument);
 		List<InstPanel> affectedPanels = getAffectedPanels(instrument);
 		int panelOrder = getLowestAvailablePanelNumber(affectedPanels);
 
@@ -133,7 +137,6 @@ public final class InstrumentPanelController {
 				initializingPart == null ? panelOrder : initializingPart.getOrderOffset());
 
 		affectedPanels.add(panelOrder - 1, panel);
-		context.removeComboBoxArrows(panel);
 		if (recalculateArrangement && ArrangementGUI.actualArrangement != null
 				&& ArrangementGUI.actualArrangement.getSections() != null) {
 			context.recalculateArrangementPartMaps();
@@ -257,7 +260,7 @@ public final class InstrumentPanelController {
 			panels = panels.stream().filter(InstPanel::getLockInst).collect(Collectors.toList());
 		}
 		List<InstPart> parts = panels.stream()
-				.map(panel -> panel.toInstPart(context.getCurrentSeed()))
+				.map(panel -> panel.toInstPart(currentSeed.getAsInt()))
 				.collect(Collectors.toList());
 		InstPart.sortParts(parts);
 		partPresetStore.save(instrument, name, parts);
