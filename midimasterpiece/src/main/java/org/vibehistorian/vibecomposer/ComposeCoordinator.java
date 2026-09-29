@@ -283,7 +283,7 @@ public final class ComposeCoordinator {
     }
 
     private void prepareUI(boolean regenerate, boolean manual) {
-        if (!regenerate && randomizeBpmOnCompose.isSelected()) {
+        if (!regenerate && generationGUI.randomizeBpmOnCompose.isSelected()) {
             generationGUI.randomizeBpm();
         }
 

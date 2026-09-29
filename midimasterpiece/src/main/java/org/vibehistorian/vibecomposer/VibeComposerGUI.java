@@ -869,7 +869,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
 		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI,
-				arpGUI, melodyGUI);
+				arpGUI, melodyGUI, generationGUI);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -1584,8 +1584,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
 		arpGUI.randomArpsGenerateOnCompose.setSelected(state);
 		drumGUI.randomDrumsGenerateOnCompose.setSelected(state);
-		GenerationGUI.randomizeBpmOnCompose.setSelected(state);
-		GenerationGUI.randomizeTransposeOnCompose.setSelected(state);
+		generationGUI.randomizeBpmOnCompose.setSelected(state);
+		generationGUI.randomizeTransposeOnCompose.setSelected(state);
 		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(state);
 		arpGUI.randomArpHitsPerPattern.setSelected(state);
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
@@ -1666,7 +1666,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (appearanceController == null) {
 			appearanceController = new AppearanceController(new AppearanceController.Context() {
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
-			}, mainWindowControls, instrumentPanelController, drumGUI, arpGUI, melodyGUI);
+			}, mainWindowControls, instrumentPanelController, drumGUI, arpGUI, melodyGUI,
+					generationGUI);
 		}
 		return appearanceController;
 	}
@@ -1884,7 +1885,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			triggerRegenerate = true;
 		}
 
-		if (isCompose && GenerationGUI.randomizeTransposeOnCompose.isSelected()) {
+		if (isCompose && generationGUI.randomizeTransposeOnCompose.isSelected()) {
 			Random instGen = new Random();
 			scoreGUI.setTranspose(instGen.nextInt(12) - 6);
 		}

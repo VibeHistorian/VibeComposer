@@ -33,9 +33,9 @@ public class GenerationGUI {
     }
 
     public static JCheckBox randomizeInstOnComposeOrGen;
-    public static JCheckBox randomizeBpmOnCompose;
-    public static JCheckBox randomizeTransposeOnCompose;
-    public static JButton switchOnComposeRandom;
+    public JCheckBox randomizeBpmOnCompose;
+    public JCheckBox randomizeTransposeOnCompose;
+    public JButton switchOnComposeRandom;
     public static JButton sidechainPatterns;
     public static JButton sidechainPatternsTab;
     public static JCheckBox globalSwingOverride;

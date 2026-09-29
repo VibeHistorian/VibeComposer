@@ -26,16 +26,18 @@ public final class AppearanceController {
 	private final DrumGUI drumGUI;
 	private final ArpGUI arpGUI;
 	private final MelodyGUI melodyGUI;
+	private final GenerationGUI generationGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
 			InstrumentPanelController instrumentPanelController, DrumGUI drumGUI,
-			ArpGUI arpGUI, MelodyGUI melodyGUI) {
+			ArpGUI arpGUI, MelodyGUI melodyGUI, GenerationGUI generationGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
 		this.instrumentPanelController = instrumentPanelController;
 		this.drumGUI = drumGUI;
 		this.arpGUI = arpGUI;
 		this.melodyGUI = melodyGUI;
+		this.generationGUI = generationGUI;
 	}
 
 	public void switchDarkMode() {
@@ -122,15 +124,15 @@ public final class AppearanceController {
 		ChordGUI.randomChordsGenerateOnCompose.setForeground(foreground);
 		arpGUI.randomArpsGenerateOnCompose.setForeground(foreground);
 		drumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
-		GenerationGUI.randomizeBpmOnCompose.setForeground(foreground);
-		GenerationGUI.randomizeTransposeOnCompose.setForeground(foreground);
+		generationGUI.randomizeBpmOnCompose.setForeground(foreground);
+		generationGUI.randomizeTransposeOnCompose.setForeground(foreground);
 		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(foreground);
 		ArrangementGUI.randomizeArrangementOnCompose.setForeground(foreground);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(foreground);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(foreground);
 		melodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(foreground);
 		melodyGUI.melodyPatternRandomizeOnCompose.setForeground(foreground);
-		GenerationGUI.switchOnComposeRandom.setForeground(foreground);
+		generationGUI.switchOnComposeRandom.setForeground(foreground);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setForeground(foreground);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setForeground(foreground);
 		ChordGUI.copyChordsAfterGenerate.setForeground(foreground);

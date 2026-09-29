@@ -23,14 +23,17 @@ public final class PresetViewController {
 	private final DrumGUI drumGUI;
 	private final ArpGUI arpGUI;
 	private final MelodyGUI melodyGUI;
+	private final GenerationGUI generationGUI;
 
 	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI,
-			DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI) {
+			DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI,
+			GenerationGUI generationGUI) {
 		this.mainWindowControls = mainWindowControls;
 		this.scoreGUI = scoreGUI;
 		this.drumGUI = drumGUI;
 		this.arpGUI = arpGUI;
 		this.melodyGUI = melodyGUI;
+		this.generationGUI = generationGUI;
 	}
 
 	public GUIPreset loadPreset() {
@@ -284,8 +287,8 @@ public final class PresetViewController {
 		// arrangement and randomization panels
 		components.add(ArrangementGUI.randomizeArrangementOnCompose);
 		components.add(GenerationGUI.randomizeInstOnComposeOrGen);
-		components.add(GenerationGUI.randomizeBpmOnCompose);
-		components.add(GenerationGUI.randomizeTransposeOnCompose);
+		components.add(generationGUI.randomizeBpmOnCompose);
+		components.add(generationGUI.randomizeTransposeOnCompose);
 
 		// globals
 		components.add(mainWindowControls.getRandomizeScaleModeOnCompose());
