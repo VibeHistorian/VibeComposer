@@ -2,7 +2,7 @@
 
 ## Useful files
 
-- `REFACTOR_MAP.md` is the module plan and progress checklist. Update it as modules are completed.
+- `GUI_REFACTOR_MAP.md` is the module plan and progress checklist. Update it as modules are completed.
 - `src/main/java/org/vibehistorian/vibecomposer/VibeComposerGUI.java` is the legacy UI owner. Search for a feature's fields and methods with `rg -n "Melody|melody" <file>` and inspect focused line ranges; avoid repeatedly dumping the whole class.
 - `VibeComposerGUI_MigrationBackup.java` is a read-only reference. Do not edit it.
 - `MelodyGUI.java` is the first extracted UI module. It owns melody controls and melody-specific UI setup, initial panel creation, panel randomization, and seed randomization. Its `Context` interface receives shared window operations so this class does not depend on `VibeComposerGUI`.
@@ -34,7 +34,7 @@
 - Phase 3.15 simplified `actionPerformedTask` command checks by caching the command, comparing strings by value, and short-circuiting the compose-time strum predicate. Independent checks and their ordering remain unchanged.
 - Phase 3.16 moved melody compose-time panel generation and melody seed, pattern, target-note, and forced-pattern preparation into `MelodyGUI`. `VibeComposerGUI` invokes the operations at their original points in the compose preparation sequence and passes the prepared seed.
 - Phase 4.5 moved shared look-and-feel switching and feature-control recoloring into `AppearanceController`. Playhead slider and status-label writes from the polling thread now run on Swing's event queue, and pending slider updates coalesce to the latest position; action dispatch and tab/count refresh remain short cross-feature composition-root operations.
-- Phase 4 is complete. Phase 5 is recorded in `REFACTOR_MAP.md` and audits context API size, mutable static access, explicit owner lifetimes, and general structural smells before selecting bounded migration slices.
+- Phase 4 is complete. Phase 5 is recorded in `GUI_REFACTOR_MAP.md` and audits context API size, mutable static access, explicit owner lifetimes, and general structural smells before selecting bounded migration slices.
 - Phase 5.4.1 removed `ArrangementGUI`'s static self-reference. The window uses its owned instance; arrangement popups and section controls receive focused callbacks, and arrangement table reordering receives a recolor callback instead of calling the GUI from the model. Other `ArrangementGUI` static state remains for later caller-family migrations.
 - Phase 5.4.2 made `ScoreGUI` controls and popup state instance-owned. The composition root passes the score owner to its consumers, and chord normalization uses an injected transpose callback instead of a static score-control lookup.
 - Phase 5.4.3 made `DrumGUI`'s mutable controls instance-owned and migrated settings construction, composition, preset snapshots, appearance refresh, MIDI volume reads, and window callbacks to the composition root's drum owner. The shared drum-number lists remain static constants. `mvn -DskipTests compile` succeeds; tests were skipped.
