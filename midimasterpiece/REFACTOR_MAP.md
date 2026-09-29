@@ -295,6 +295,13 @@ Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work t
 - After assembling the main window, wired its `KnobPanel` controls to the shared regenerate-on-change context. Detached knobs retain their disabled regeneration behavior.
 - Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; keyboard, MIDI input, and editor audition were not manually exercised.
 
+### Phase 4.5 status — complete
+
+- Added `AppearanceController` for look-and-feel installation, shared Swing defaults, and recoloring controls owned across feature GUIs. `VibeComposerGUI` supplies the live window components and retains direct display-size and `JFrame` changes.
+- Routed playhead slider and playback status-label updates from the polling thread through the Swing event queue. Pending slider updates coalesce to the latest sequencer position, while the polling cadence and distinction between score-refreshing and raw slider updates remain intact.
+- Reviewed action-command dispatch and tab/count refresh. They remain in `VibeComposerGUI` because dispatch preserves cross-feature action ordering and the refresh is a short composition-root update spanning instrument and arrangement tabs.
+- Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; appearance switching and playback UI updates were not manually exercised.
+
 ### Phase 4 completion criteria
 
 - `VibeComposerGUI` primarily owns the window lifecycle, module/context assembly, and short cross-feature sequencing calls.

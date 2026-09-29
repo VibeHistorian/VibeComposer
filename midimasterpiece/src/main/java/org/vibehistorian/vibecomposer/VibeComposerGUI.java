@@ -20,30 +20,16 @@ see <https://www.gnu.org/licenses/>.
 package org.vibehistorian.vibecomposer;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatIntelliJLaf;
-import jm.music.data.Note;
-import jm.music.data.Part;
-import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.InstComboBox;
 import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
-import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import org.vibehistorian.vibecomposer.Panels.ArpPanel;
-import org.vibehistorian.vibecomposer.Panels.BassPanel;
-import org.vibehistorian.vibecomposer.Panels.ChordPanel;
-import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
-import org.vibehistorian.vibecomposer.Panels.DrumPanel;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Panels.KnobPanel;
-import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
-import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
-import org.vibehistorian.vibecomposer.Panels.SoloMuter;
+import org.vibehistorian.vibecomposer.Panels.*;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
@@ -61,7 +47,6 @@ import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
-import javax.swing.plaf.ColorUIResource;
 import javax.xml.bind.JAXBException;
 import java.awt.*;
 import java.awt.event.*;
@@ -70,16 +55,15 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
-import static org.vibehistorian.vibecomposer.Constants.instNames;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_HEIGHT;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
 import static org.vibehistorian.vibecomposer.GenerationGUI.*;
@@ -102,6 +86,9 @@ public class VibeComposerGUI extends JFrame
 	private final MainWindowControls mainWindowControls;
 	private PresetViewController presetViewController;
 	private ComposeCoordinator composeCoordinator;
+	private AppearanceController appearanceController;
+	private final AtomicBoolean playheadUpdatePending = new AtomicBoolean();
+	private final AtomicBoolean playheadRefreshPending = new AtomicBoolean();
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
 		@Override public List<InstPanel> getAffectedPanels(INST instrument) {
 			return VibeComposerGUI.getAffectedPanels(instrument);
@@ -345,7 +332,6 @@ public class VibeComposerGUI extends JFrame
 		}
 	});
 
-	JLabel totalTime;
 	boolean isKeySeeking = false;
 
 	JPanel everythingPanel;
@@ -1278,9 +1264,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
 							if (!isDragging && !isKeySeeking) {
+								queuePlayheadUpdate(allowedActionsOnZero == 0);
 								if (allowedActionsOnZero == 0) {
-									slider.setUpperValue(
-											(int) (sequencer.getMicrosecondPosition() / 1000));
 									if ((currentMidiEditorPopup != null)
 											&& currentMidiEditorPopup.isVisible()) {
 										sleepTime = 20;
@@ -1298,11 +1283,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 						if (allowedActionsOnZero == 0) {
 							if (ArrangementGUI.actualArrangement != null && slider.getMaximum() > 0) {
-								String newTime = OMNI.millisecondsToTimeString(slider.getUpperValue());
-								if (!newTime.equals(currentTime.getText())) {
-									currentTime.setText(newTime);
-								}
-								int val = slider.getUpperValue();
+								int val = sequencer != null && sequencer.isRunning()
+										&& !isDragging && !isKeySeeking
+										? (int) (sequencer.getMicrosecondPosition() / 1000)
+										: slider.getUpperValue();
+								String newTime = OMNI.millisecondsToTimeString(val);
+								SwingUtilities.invokeLater(() -> {
+									if (!newTime.equals(currentTime.getText())) {
+										currentTime.setText(newTime);
+									}
+								});
 								int sectIndex = -1;
 								if (sliderMeasureStartTimes != null
 										&& ArrangementGUI.actualArrangement.getSections().size() > 0) {
@@ -1342,9 +1332,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 									newText = sec.getType().toString();
 								}
 
-								if (!sectionText.getText().equalsIgnoreCase(newText)) {
-									sectionText.setText(newText);
-								}
+								String sectionName = newText;
+								SwingUtilities.invokeLater(() -> {
+									if (!sectionText.getText().equalsIgnoreCase(sectionName)) {
+										sectionText.setText(sectionName);
+									}
+								});
 
 								Section actualSec = sec;
 								int part = instrumentTabPane.getSelectedIndex();
@@ -1443,6 +1436,30 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 		};
 		cycle.start();
+	}
+
+	private void queuePlayheadUpdate(boolean refreshScore) {
+		if (refreshScore) {
+			playheadRefreshPending.set(true);
+		}
+		if (!playheadUpdatePending.compareAndSet(false, true)) {
+			return;
+		}
+		SwingUtilities.invokeLater(() -> {
+			boolean refresh = playheadRefreshPending.getAndSet(false);
+			if (sequencer != null && sequencer.isRunning() && !isDragging && !isKeySeeking) {
+				int playheadPosition = (int) (sequencer.getMicrosecondPosition() / 1000);
+				if (refresh) {
+					slider.setUpperValue(playheadPosition);
+				} else {
+					slider.setUpperValueRaw(playheadPosition);
+				}
+			}
+			playheadUpdatePending.set(false);
+			if (playheadRefreshPending.get()) {
+				queuePlayheadUpdate(false);
+			}
+		});
 	}
 
 
@@ -1648,25 +1665,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ChordGUI.copyChordsAfterGenerate.setSelected(state);
 	}
 
-	private void switchAllOnComposeCheckboxesForegrounds(Color fg) {
-		MelodyGUI.generateMelodiesOnCompose.setForeground(fg);
-		ChordGUI.randomChordsGenerateOnCompose.setForeground(fg);
-		ArpGUI.randomArpsGenerateOnCompose.setForeground(fg);
-		DrumGUI.randomDrumsGenerateOnCompose.setForeground(fg);
-		GenerationGUI.randomizeBpmOnCompose.setForeground(fg);
-		GenerationGUI.randomizeTransposeOnCompose.setForeground(fg);
-		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(fg);
-		ArrangementGUI.randomizeArrangementOnCompose.setForeground(fg);
-		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(fg);
-		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(fg);
-		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(fg);
-		MelodyGUI.melodyPatternRandomizeOnCompose.setForeground(fg);
-		GenerationGUI.switchOnComposeRandom.setForeground(fg);
-		ExtraSettingsGUI.randomizeTimingsOnCompose.setForeground(fg);
-		ExtraSettingsGUI.sidechainPatternsOnCompose.setForeground(fg);
-		ChordGUI.copyChordsAfterGenerate.setForeground(fg);
-	}
-
 	private void switchMidiButtons(boolean state) {
 		mainWindowControls.toggleReadyState(state);
 	}
@@ -1697,32 +1695,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		pack();
 	}
 
-	private void updateGlobalUI() {
-		ColorUIResource r = null;
-		if (!isDarkMode) {
-			r = new ColorUIResource(new Color(153, 160, 166));
-		} else {
-			r = new ColorUIResource(new Color(68, 66, 67));
-		}
-		UIManager.put("Button.background", r);
-		UIManager.put("Panel.background", r);
-		UIManager.put("ComboBox.background", r);
-		UIManager.put("ComboBox.buttonBackground",
-				isDarkMode ? new Color(60, 58, 61) : new Color(165, 170, 176));
-		UIManager.put("TextField.background", r);
-		UIManager.put("Table.background", r);
-		UIManager.put("TableHeader.background", r);
-		UIManager.put("TabbedPane.background", r);
-		UIManager.put("ScrollPane.background", r);
-		UIManager.put("ScrollPane.border", r);
-		UIManager.put("List.background", r);
-		UIManager.put("ScrollBar.background", r);
-		//UIManager.put("TiltedBorder.background", r);
-		SwingUtilities.updateComponentTreeUI(this);
-		SwingUtilities.updateComponentTreeUI(ExtraSettingsGUI.extraSettingsPanel);
-		SwingUtils.popupMenus.forEach(e -> SwingUtilities.updateComponentTreeUI(e));
-	}
-
 	public void removeComboBoxArrows(Container parent) {
 		for (Component c : parent.getComponents()) {
 			if (c instanceof ScrollComboBox) {
@@ -1740,85 +1712,30 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void switchDarkMode() {
-		//setVisible(false);
-		ArrangementGUI.arrSection.setSelectedIndex(0);
+		getAppearanceController().switchDarkMode();
 
-		LG.i(("Switching dark mode!"));
-		if (isDarkMode) {
-			FlatIntelliJLaf.install();
-		} else {
-			FlatDarculaLaf.install();
-		}
-		//UIManager.put("TabbedPane.contentOpaque", false);
-
-		isDarkMode = !isDarkMode;
-		updateGlobalUI();
-
-		toggledUIColor = uiColor();
-		toggledComposeColor = uiComposeTextColor();
-		toggledRegenerateColor = uiRegenerateTextColor();
-
-
-		mainWindowControls.toggleFgColors(toggledUIColor, toggledRegenerateColor,
-				toggledComposeColor);
-		ChordGUI.tipLabel.setForeground(toggledUIColor);
-		currentTime.setForeground(toggledUIColor);
-		totalTime.setForeground(toggledUIColor);
-		ArpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
-		MelodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
-		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
-
-		panelColorHigh = UIManager.getColor("Panel.background");
-		panelColorLow = UIManager.getColor("Panel.background");
-		if (isDarkMode) {
-			panelColorHigh = panelColorHigh.darker();
-			panelColorLow = panelColorLow.brighter();
-		} else {
-			panelColorHigh = panelColorHigh.darker();
-			//panelColorLow = panelColorLow.darker();
-		}
-		if (ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
-			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
-		} else {
-			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
-		}
-
-		sliderPanel.setBackground(panelColorLow);
-
-		globalSoloMuter.reapplyTextColor();
-		for (SoloMuter sm : groupSoloMuters) {
-			sm.reapplyTextColor();
-		}
-
-		for (INST instrument : INST.values()) {
-			int instrumentIndex = instrument.getIndex();
-			getInstList(instrument).forEach(e -> e.getSoloMuter().reapplyTextColor());
-			getAffectedPanels(instrument).forEach(e -> {
-				if (e.getComboPanel() != null) {
-					e.getComboPanel().reapplyHits();
-				}
-			});
-			getAffectedPanels(instrument).forEach(e ->
-					e.setBackground(OMNI.alphen(Constants.instColors[instrumentIndex], 60)));
-		}
 		ArrangementGUI.arrangementGUI.refreshVariationPopupButtons(
 				ArrangementGUI.actualArrangement.getSections().size());
-
-		//switchFullMode(isDarkMode);
 
 		if (ScoreGUI.scorePanel != null) {
 			ScoreGUI.scorePanel.update();
 		}
-
-
 		removeComboBoxArrows(everythingPanel);
-		//setVisible(true);
 		repaint();
 		ArrangementGUI.arrSectionPane.repaint();
 		if (ScoreGUI.scorePanel != null) {
 			ScoreGUI.scorePanel.setupMouseWheelListener();
 		}
 		initScrollPaneListeners();
+	}
+
+	private AppearanceController getAppearanceController() {
+		if (appearanceController == null) {
+			appearanceController = new AppearanceController(new AppearanceController.Context() {
+				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
+			}, mainWindowControls, instrumentPanelController);
+		}
+		return appearanceController;
 	}
 
 	private void switchFullMode() {

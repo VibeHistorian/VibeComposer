@@ -1,18 +1,16 @@
 package org.vibehistorian.vibecomposer;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import org.vibehistorian.vibecomposer.Components.CheckButton;
-import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
+import javax.swing.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /** Holds playback runtime state shared by playback controls and displays. */
 public final class PlaybackState {
@@ -32,6 +30,7 @@ public final class PlaybackState {
 	public static List<Integer> sliderMeasureStartTimes;
 	public static List<Integer> sliderBeatStartTimes;
 	public static JLabel currentTime;
+	public static JLabel totalTime;
 	public static int currentSectionIndex = -1;
 	public static JLabel sectionText;
 	public static boolean isDragging;
