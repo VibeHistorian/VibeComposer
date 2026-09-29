@@ -28,9 +28,10 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
-import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumDefaults;
 import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
@@ -52,19 +53,9 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 /** Builds and owns drum controls and drum panel generation. */
-public class DrumGUI implements InstrumentGUIControls {
+public class DrumGUI extends InstGUI<DrumPanel> {
 
-	private final List<DrumPanel> drumPanels = new ArrayList<>();
-	private JScrollPane drumScrollPane;
-	public static JPanel drumParentPanel;
-	public static SettingsPanel drumSettingsPanel;
-	private JCheckBox enabledCheckBox;
-	private VeloRect groupFilterSlider;
-	private JButton addPanelButton;
-	private JButton generatePanelButton;
-	private JTextField randomPanelsToGenerate;
 	public static VeloRect drumVolumeSlider;
-	public static JButton soloAllDrums;
 	public static JCheckBox bottomUpReverseDrumPanels;
 
 	public static final List<Integer> PUNCHY_DRUMS = Arrays.asList(35, 36, 38, 39, 40);
@@ -86,27 +77,24 @@ public class DrumGUI implements InstrumentGUIControls {
 	public static JCheckBox combineDrumTracks;
 
 	private final Context context;
-	private final InstrumentPanelController panelController;
 
 	public DrumGUI(Context context, InstrumentPanelController panelController) {
+		super(INST.DRUM, panelController);
 		this.context = context;
-		this.panelController = panelController;
 	}
 
-	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
-	@Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
-	@Override public JButton getAddPanelButton() { return addPanelButton; }
-	@Override public JButton getGeneratePanelButton() { return generatePanelButton; }
-	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
-	@Override public JScrollPane getPanelScrollPane() { return drumScrollPane; }
-	@Override public List<DrumPanel> getPanels() { return drumPanels; }
+	@Override public DrumPanel createPanel(SoloMuter.Context soloMuterContext) {
+		return new DrumPanel(soloMuterContext);
+	}
+
+	@Override public void createRandomPanels(int panelCount, boolean onlyAdd,
+			Integer seed, InstPanel randomizedPanel) {
+		createRandomDrumPanels(panelCount, onlyAdd, (DrumPanel) randomizedPanel);
+	}
 
 	public void saveToConfig(GUIConfig gc, int seed, boolean customMidiDevice) {
 		gc.setDrumsEnable(enabledCheckBox.isSelected());
-		List<DrumPart> parts = new ArrayList<>();
-		for (DrumPanel panel : drumPanels) parts.add((DrumPart) panel.toInstPart(seed));
-		org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
-		gc.setDrumParts(parts);
+		gc.setDrumParts(createParts(seed, DrumPart.class));
 		gc.setHumanizeDrums(humanizeDrums.getInt());
 		gc.setDrumCustomMapping(drumCustomMapping.isSelected() && customMidiDevice);
 		gc.setDrumCustomMappingNumbers(drumCustomMappingNumbers.getText());
@@ -135,44 +123,19 @@ public class DrumGUI implements InstrumentGUIControls {
 		scrollableDrumPanels.setLayout(new BoxLayout(scrollableDrumPanels, BoxLayout.Y_AXIS));
 		scrollableDrumPanels.setAutoscrolls(true);
 
-		drumScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(UITheme.scrollPaneDimension.width, UITheme.scrollPaneDimension.height - 100);
-			}
-		};
-		drumScrollPane.setViewportView(scrollableDrumPanels);
-		drumScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		drumScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		panelScrollPane = createPanelScrollPane(scrollableDrumPanels);
 
 		JPanel drumsPanel = new JPanel();
 		drumsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		enabledCheckBox = new CustomCheckBox("DRUMS", true);
-		drumsPanel.add(enabledCheckBox);
-
-		drumVolumeSlider = VeloRect.percent( 65);
-		//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
-		drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
-		//drumVolumeSlider.setPaintTicks(true);
-		JLabel volSliderLabel = new JLabel("Vol.");
-		drumsPanel.add(volSliderLabel);
-		drumsPanel.add(drumVolumeSlider);
-		groupFilterSlider = VeloRect.midi( 127);
-		JLabel filterLabel = new JLabel("LP");
-		drumsPanel.add(filterLabel);
-		drumsPanel.add(groupFilterSlider);
+		addPanelControls(drumsPanel, "DRUMS", "+Drum", "Generate Drums:", "6", () -> {
+			drumVolumeSlider = VeloRect.percent(65);
+			//drumVolumeSlider.setOrientation(JSlider.VERTICAL);
+			drumVolumeSlider.setPreferredSize(new Dimension(15, 35));
+			//drumVolumeSlider.setPaintTicks(true);
+			drumsPanel.add(new JLabel("Vol."));
+			drumsPanel.add(drumVolumeSlider);
+		});
 		//drumsPanel.add(drumInst);
-
-		addPanelButton = SwingUtils.makeButton("+Drum", e -> {
-			panelController.addRandomPanel(INST.DRUM);
-		});
-		generatePanelButton = SwingUtils.makeButton("Generate Drums:", e -> {
-			panelController.generatePanels(INST.DRUM, true);
-		});
-		randomPanelsToGenerate = new JTextField("6", 2);
-		drumsPanel.add(addPanelButton);
-		drumsPanel.add(generatePanelButton);
-		drumsPanel.add(randomPanelsToGenerate);
 
 		randomDrumsGenerateOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		drumsPanel.add(randomDrumsGenerateOnCompose);
@@ -284,13 +247,13 @@ public class DrumGUI implements InstrumentGUIControls {
 		//constraints.gridy = startY + 1;
 		//scrollableDrumPanels.add(drumExtraSettings);
 
-		drumParentPanel = new JPanel() {
+		parentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
 				return UITheme.scrollPaneDimension;
 			}
 		};
-		drumParentPanel.setLayout(new BoxLayout(drumParentPanel, BoxLayout.Y_AXIS));
+		parentPanel.setLayout(new BoxLayout(parentPanel, BoxLayout.Y_AXIS));
 
 		JPanel borderPanel = new JPanel() {
 			@Override
@@ -302,14 +265,14 @@ public class DrumGUI implements InstrumentGUIControls {
 		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
 		borderPanel.add(drumsPanel);
 		borderPanel.add(drumExtraSettings);
-		drumParentPanel.add(borderPanel);
-		drumParentPanel.add(drumScrollPane);
+		parentPanel.add(borderPanel);
+		parentPanel.add(panelScrollPane);
 
 		//addHorizontalSeparatorToPanel(scrollableDrumPanels);
 	}
 
 	public JPanel initDrums() {
-		return drumParentPanel;
+		return parentPanel;
 	}
 
 	public void createRandomDrumPanels(int panelCount, boolean onlyAdd,
@@ -325,7 +288,7 @@ public class DrumGUI implements InstrumentGUIControls {
 			DrumPanel panel = panelI.next();
 			if (!onlyAdd && !panel.getLockInst()) {
 				if (removedPanels.size() >= panelCount) {
-					((JPanel) drumScrollPane.getViewport().getView()).remove(panel);
+					((JPanel) panelScrollPane.getViewport().getView()).remove(panel);
 					panelI.remove();
 				} else {
 					removedPanels.add(panel);
@@ -510,14 +473,14 @@ public class DrumGUI implements InstrumentGUIControls {
 		}
 
 		if (settings.isDynamicable() && (ip.getPattern() != RhythmPattern.MELODY1)) {
-			double ghostChanceReducer = (drumPanels.size() > 10) ? 0.8 : 1.0;
+			double ghostChanceReducer = (panels.size() > 10) ? 0.8 : 1.0;
 			ip.setIsVelocityPattern(panelGenerator
 					.nextInt(100) < randomDrumVelocityPatternChance.getInt() * ghostChanceReducer);
 		} else {
 			ip.setIsVelocityPattern(false);
 		}
 
-		if (drumPanels.size() > 10 && ip.getPattern() == RhythmPattern.FULL
+		if (panels.size() > 10 && ip.getPattern() == RhythmPattern.FULL
 				&& panelGenerator.nextInt(100) < 30) {
 			ip.setPattern(RhythmPattern.ALT);
 		}

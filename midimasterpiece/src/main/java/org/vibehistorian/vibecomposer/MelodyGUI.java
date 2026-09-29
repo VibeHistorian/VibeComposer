@@ -53,16 +53,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /** Builds and owns the melody controls and their UI state. */
-public class MelodyGUI implements InstrumentGUIControls {
-
-	private final List<MelodyPanel> melodyPanels = new ArrayList<>();
-	private JScrollPane melodyScrollPane;
-	public static JPanel melodyParentPanel;
-	private JCheckBox enabledCheckBox;
-	private VeloRect groupFilterSlider;
-	private JButton addPanelButton;
-	private JButton generatePanelButton;
-	private JTextField randomPanelsToGenerate;
+public class MelodyGUI extends InstGUI<MelodyPanel> {
 
 	public static JCheckBox generateMelodiesOnCompose;
 	public static KnobPanel melodyUseOldAlgoChance;
@@ -107,13 +98,13 @@ public class MelodyGUI implements InstrumentGUIControls {
 	public static JCheckBox combineMelodyTracks;
 
 	private final Context context;
-	private final InstrumentPanelController panelController;
 
 	public MelodyGUI(Context context, InstrumentPanelController panelController) {
+		super(INST.MELODY, panelController);
 		this.context = context;
-		this.panelController = panelController;
 	}
 
+	@Override
 	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
 		return new MelodyPanel(soloMuterContext, seed -> MidiGeneratorUtils.generateNoteTargetOffsets(
 				MidiGenerator.chordInts, seed, melodyBlockTargetMode.getSelectedIndex(),
@@ -125,24 +116,16 @@ public class MelodyGUI implements InstrumentGUIControls {
 		modes.forEach(userMelodyScaleModeSelect::addItem);
 	}
 
-	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
-	@Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
-	@Override public JButton getAddPanelButton() { return addPanelButton; }
-	@Override public JButton getGeneratePanelButton() { return generatePanelButton; }
-	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
-	@Override public JScrollPane getPanelScrollPane() { return melodyScrollPane; }
-	@Override public List<MelodyPanel> getPanels() { return melodyPanels; }
-
 	public void applyGeneratedTargetNotes(boolean regenerate,
 			Map<Integer, List<Integer>> targetNotes, GUIConfig config) {
 		if (regenerate || !melodyTargetNotesRandomizeOnCompose.isSelected() || targetNotes == null) {
 			return;
 		}
-		for (int i = 0; i < melodyPanels.size(); i++) {
-			int panelOrder = melodyPanels.get(i).getPanelOrder();
+		for (int i = 0; i < panels.size(); i++) {
+			int panelOrder = panels.get(i).getPanelOrder();
 			List<Integer> notes = targetNotes.get(panelOrder);
 			if (notes != null) {
-				melodyPanels.get(i).setChordNoteChoices(notes);
+				panels.get(i).setChordNoteChoices(notes);
 				config.getMelodyParts().get(i).setChordNoteChoices(notes);
 			}
 		}
@@ -150,10 +133,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 	public void saveToConfig(GUIConfig gc, int seed) {
 		gc.setMelodyEnable(enabledCheckBox.isSelected());
-		List<MelodyPart> parts = new ArrayList<>();
-		for (MelodyPanel panel : melodyPanels) parts.add((MelodyPart) panel.toInstPart(seed));
-		InstPart.sortParts(parts);
-		gc.setMelodyParts(parts);
+		gc.setMelodyParts(createParts(seed, MelodyPart.class));
 		gc.setMelodyUseOldAlgoChance(melodyUseOldAlgoChance.getInt());
 		gc.setFirstNoteFromChord(melodyFirstNoteFromChord.isSelected());
 		gc.setFirstNoteRandomized(randomChordNote.isSelected());
@@ -250,16 +230,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		scrollableMelodyPanels.setLayout(new BoxLayout(scrollableMelodyPanels, BoxLayout.Y_AXIS));
 		scrollableMelodyPanels.setAutoscrolls(true);
 
-		melodyScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension size = UITheme.scrollPaneDimension;
-				return new Dimension(size.width, size.height - 100);
-			}
-		};
-		melodyScrollPane.setViewportView(scrollableMelodyPanels);
-		melodyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		melodyScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		panelScrollPane = createPanelScrollPane(scrollableMelodyPanels);
 		melodyUseOldAlgoChance = new KnobPanel("Legacy<br>Algo", 0);
 
 		randomChordNote = new CustomCheckBox();
@@ -271,13 +242,13 @@ public class MelodyGUI implements InstrumentGUIControls {
 		JPanel melodySettingsExtraPanelShape = initMelodySettingsPlus();
 		JPanel melodySettingsExtraPanelBlocksPatternsCompose = initMelodySettingsPlusPlus();
 
-		melodyParentPanel = new JPanel() {
+		parentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
 				return UITheme.scrollPaneDimension;
 			}
 		};
-		melodyParentPanel.setLayout(new BoxLayout(melodyParentPanel, BoxLayout.Y_AXIS));
+		parentPanel.setLayout(new BoxLayout(parentPanel, BoxLayout.Y_AXIS));
 		JPanel borderPanel = new JPanel() {
 			@Override
 			public Dimension getMaximumSize() {
@@ -289,8 +260,8 @@ public class MelodyGUI implements InstrumentGUIControls {
 		borderPanel.add(melodySettingsExtraPanelOrg);
 		borderPanel.add(melodySettingsExtraPanelShape);
 		borderPanel.add(melodySettingsExtraPanelBlocksPatternsCompose);
-		melodyParentPanel.add(borderPanel);
-		melodyParentPanel.add(melodyScrollPane);
+		parentPanel.add(borderPanel);
+		parentPanel.add(panelScrollPane);
 
 		UITheme.toggleableComponents.add(melodySettingsExtraPanelShape);
 		UITheme.toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
@@ -302,20 +273,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		settings.setAlignmentX(Component.LEFT_ALIGNMENT);
 		settings.setMaximumSize(new Dimension(1800, 50));
 
-		enabledCheckBox = new CustomCheckBox("MELODY", true);
-		settings.add(enabledCheckBox);
-		groupFilterSlider = VeloRect.midi(127);
-		settings.add(new JLabel("LP"));
-		settings.add(groupFilterSlider);
-
-		addPanelButton = SwingUtils.makeButton("+Melody",
-				e -> panelController.addRandomPanel(INST.MELODY));
-		generatePanelButton = SwingUtils.makeButton("Generate Melodies:",
-				e -> panelController.generatePanels(INST.MELODY, true));
-		randomPanelsToGenerate = new JTextField("3", 2);
-		settings.add(addPanelButton);
-		settings.add(generatePanelButton);
-		settings.add(randomPanelsToGenerate);
+		addPanelControls(settings, "MELODY", "+Melody", "Generate Melodies:", "3");
 		generateMelodiesOnCompose = SwingUtils.makeCheckBox("On Compose", false, true);
 		settings.add(generateMelodiesOnCompose);
 
@@ -527,7 +485,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 	}
 
 	public JPanel initMelody() {
-		return melodyParentPanel;
+		return parentPanel;
 	}
 
 	public void generateInitialMelodyPanels() {
@@ -587,7 +545,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 	public void generateRandomMelodyPanelsOnCompose(boolean regenerate, int seed) {
 		if (!regenerate && generateMelodiesOnCompose.isSelected()) {
-			panelController.createRandomPanels(INST.MELODY, melodyPanels.size(), false,
+			panelController.createRandomPanels(INST.MELODY, panels.size(), false,
 					seed != 0 ? seed : new Random().nextInt(), null);
 		}
 	}
@@ -597,9 +555,9 @@ public class MelodyGUI implements InstrumentGUIControls {
 			randomizeMelodySeeds();
 		}
 
-		if (regenerate && randomMelodyOnRegenerate.isSelected() && !melodyPanels.isEmpty()) {
+		if (regenerate && randomMelodyOnRegenerate.isSelected() && !panels.isEmpty()) {
 			if (melodyPatternRandomizeOnCompose.isSelected()) {
-				melodyPanels.forEach(panel -> {
+				panels.forEach(panel -> {
 					if (panel.getLockInst()) {
 						return;
 					}
@@ -610,7 +568,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 				});
 			}
 			if (melodyTargetNotesRandomizeOnCompose.isSelected()) {
-				melodyPanels.forEach(panel -> {
+				panels.forEach(panel -> {
 					if (panel.getLockInst()) {
 						return;
 					}
@@ -621,16 +579,16 @@ public class MelodyGUI implements InstrumentGUIControls {
 			}
 		}
 
-		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected() && !melodyPanels.isEmpty()) {
+		if (!regenerate && melodyPatternRandomizeOnCompose.isSelected() && !panels.isEmpty()) {
 			if (melody1ForcePatterns.isSelected()) {
-				MelodyPanel firstPanel = melodyPanels.get(0);
+				MelodyPanel firstPanel = panels.get(0);
 				List<Integer> pattern = MelodyUtils.getRandomMelodyPattern(
 						firstPanel.getAlternatingRhythmChance(),
 						firstPanel.getPanelOrder() + (firstPanel.getPatternSeed() == 0 ? seed
 								: firstPanel.getPatternSeed()));
 				firstPanel.setMelodyPatternOffsets(pattern);
 			} else {
-				melodyPanels.forEach(panel -> {
+				panels.forEach(panel -> {
 					if (panel.getLockInst()) {
 						return;
 					}
@@ -642,16 +600,26 @@ public class MelodyGUI implements InstrumentGUIControls {
 			}
 		}
 
-		if (melody1ForcePatterns.isSelected() && !melodyPanels.isEmpty()) {
-			MelodyPanel firstPanel = melodyPanels.get(0);
-			for (int i = 1; i < melodyPanels.size(); i++) {
-				melodyPanels.get(i).overridePatterns(firstPanel);
+		if (melody1ForcePatterns.isSelected() && !panels.isEmpty()) {
+			MelodyPanel firstPanel = panels.get(0);
+			for (int i = 1; i < panels.size(); i++) {
+				panels.get(i).overridePatterns(firstPanel);
 			}
 		}
 	}
 
 	public void createRandomMelodyPanels(int panelCount, boolean onlyAdd) {
 		createRandomMelodyPanels(new Random().nextInt(), panelCount, onlyAdd, null);
+	}
+
+	@Override
+	public void createRandomPanels(int panelCount, boolean onlyAdd, Integer seed,
+			InstPanel randomizedPanel) {
+		if (seed == null) {
+			createRandomMelodyPanels(panelCount, onlyAdd);
+		} else {
+			createRandomMelodyPanels(seed, panelCount, onlyAdd, (MelodyPanel) randomizedPanel);
+		}
 	}
 
 	public void createRandomMelodyPanels(int seed, int panelCount, boolean onlyAdd,
@@ -667,7 +635,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 			MelodyPanel panel = panelI.next();
 			if (!onlyAdd && !panel.getLockInst()) {
 				if (removedPanels.size() >= panelCount) {
-					((JPanel) melodyScrollPane.getViewport().getView()).remove(panel);
+					((JPanel) panelScrollPane.getViewport().getView()).remove(panel);
 					panelI.remove();
 				} else {
 					removedPanels.add(panel);

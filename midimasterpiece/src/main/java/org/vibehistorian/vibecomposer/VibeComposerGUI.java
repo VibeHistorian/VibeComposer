@@ -123,7 +123,8 @@ public class VibeComposerGUI extends JFrame
 	private final InstrumentPanelController instrumentPanelController =
 			new InstrumentPanelController(new InstrumentPanelController.Context() {
 				@Override public InstPanel createPanel(INST instrument) {
-					return VibeComposerGUI.this.makeInstrumentPanel(instrument);
+					return getOwnedInstrumentControls(instrument)
+							.createPanel(VibeComposerGUI.this);
 				}
 				@Override public void configurePanel(InstPanel panel) {
 					configureRandomizeAction(panel);
@@ -171,40 +172,10 @@ public class VibeComposerGUI extends JFrame
 				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 				@Override public int getCurrentSeed() { return GenerationGUI.lastRandomSeed; }
 				@Override public void randomizePanels(INST instrument, int panelCount,
-													  boolean onlyAdd, Integer seed, InstPanel randomizedPanel) {
-					switch (instrument) {
-					case MELODY:
-						if (seed == null) {
-							melodyGUI.createRandomMelodyPanels(panelCount, onlyAdd);
-						} else {
-							melodyGUI.createRandomMelodyPanels(seed, panelCount, onlyAdd,
-									(MelodyPanel) randomizedPanel);
-						}
-						break;
-					case BASS:
-						if (seed == null) {
-							bassGUI.createRandomBassPanels(panelCount, onlyAdd);
-						} else {
-							bassGUI.createRandomBassPanels(seed, panelCount, onlyAdd,
-									(BassPanel) randomizedPanel);
-						}
-						break;
-					case CHORD:
-						chordGUI.createRandomChordPanels(panelCount, onlyAdd,
-								(ChordPanel) randomizedPanel);
-						break;
-					case ARP:
-						arpGUI.createRandomArpPanels(panelCount, onlyAdd,
-								(ArpPanel) randomizedPanel);
-						break;
-					case DRUM:
-						drumGUI.createRandomDrumPanels(panelCount, onlyAdd,
-								(DrumPanel) randomizedPanel);
-						break;
-					default:
-						throw new IllegalArgumentException("Unsupported panel part: " + instrument);
-					}
-			}
+												  boolean onlyAdd, Integer seed, InstPanel randomizedPanel) {
+					getOwnedInstrumentControls(instrument).createRandomPanels(
+							panelCount, onlyAdd, seed, randomizedPanel);
+				}
 			});
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public INST getSelectedInstrument() {
@@ -268,14 +239,14 @@ public class VibeComposerGUI extends JFrame
 		return vibeComposerGUI.instrumentPanelController;
 	}
 
-	private static InstrumentGUIControls getInstrumentControls(INST instrument) {
+	private static InstGUI<?> getInstrumentControls(INST instrument) {
 		if (vibeComposerGUI == null) {
 			throw new IllegalStateException("The main window has not been initialized.");
 		}
 		return vibeComposerGUI.getOwnedInstrumentControls(instrument);
 	}
 
-	private InstrumentGUIControls getOwnedInstrumentControls(INST instrument) {
+	private InstGUI<?> getOwnedInstrumentControls(INST instrument) {
 		switch (instrument) {
 		case MELODY: return melodyGUI;
 		case BASS: return bassGUI;
@@ -535,7 +506,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
 			@Override public InstPanel makeCustomSectionInstPanel(INST instrument) {
-				InstPanel panel = VibeComposerGUI.this.makeInstrumentPanel(instrument);
+				InstPanel panel = VibeComposerGUI.this
+						.getOwnedInstrumentControls(instrument).createPanel(VibeComposerGUI.this);
 				VibeComposerGUI.this.configureRandomizeAction(panel);
 				VibeComposerGUI.this.configureInstPanelContext(panel);
 				VibeComposerGUI.this.configureInstrumentControlContext(panel);
@@ -682,22 +654,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 
 		}, instrumentPanelController);
-	}
-
-	private InstPanel makeInstrumentPanel(INST instrument) {
-		switch (instrument) {
-			case MELODY:
-				return melodyGUI.createPanel(this);
-			case BASS:
-				return new BassPanel(this);
-			case CHORD:
-				return new ChordPanel(this);
-			case ARP:
-				return new ArpPanel(this);
-			case DRUM:
-				return new DrumPanel(this);
-		}
-		throw new IllegalStateException("Unsupported instrument: " + instrument);
 	}
 
 	private void initBassGUI() {

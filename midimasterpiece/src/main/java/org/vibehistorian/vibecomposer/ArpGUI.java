@@ -22,7 +22,6 @@ package org.vibehistorian.vibecomposer;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -32,7 +31,7 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
-import org.vibehistorian.vibecomposer.Panels.SettingsPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 
 import javax.swing.*;
@@ -47,17 +46,7 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 /** Builds and owns arpeggio controls and their UI state. */
-public class ArpGUI implements InstrumentGUIControls {
-
-	private final List<ArpPanel> arpPanels = new ArrayList<>();
-	private JScrollPane arpScrollPane;
-	public static JPanel arpParentPanel;
-	public static SettingsPanel arpSettingsPanel;
-	private JCheckBox enabledCheckBox;
-	private VeloRect groupFilterSlider;
-	private JButton addPanelButton;
-	private JButton generatePanelButton;
-	private JTextField randomPanelsToGenerate;
+public class ArpGUI extends InstGUI<ArpPanel> {
 
 	public static JCheckBox randomArpsGenerateOnCompose;
 	public static JCheckBox randomArpTranspose;
@@ -84,36 +73,33 @@ public class ArpGUI implements InstrumentGUIControls {
 	public static JCheckBox arpAffectsBpm;
 
 	private final Context context;
-	private final InstrumentPanelController panelController;
 
 	public ArpGUI(Context context, InstrumentPanelController panelController) {
+		super(INST.ARP, panelController);
 		this.context = context;
-		this.panelController = panelController;
 	}
 
-	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
-	@Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
-	@Override public JButton getAddPanelButton() { return addPanelButton; }
-	@Override public JButton getGeneratePanelButton() { return generatePanelButton; }
-	@Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
-	@Override public JScrollPane getPanelScrollPane() { return arpScrollPane; }
-	@Override public List<ArpPanel> getPanels() { return arpPanels; }
+	@Override public ArpPanel createPanel(SoloMuter.Context soloMuterContext) {
+		return new ArpPanel(soloMuterContext);
+	}
+
+	@Override public void createRandomPanels(int panelCount, boolean onlyAdd,
+			Integer seed, InstPanel randomizedPanel) {
+		createRandomArpPanels(panelCount, onlyAdd, (ArpPanel) randomizedPanel);
+	}
 
 	public void applyGeneratedPatterns(List<ArpPart> generatedParts) {
-		for (int i = 0; i < arpPanels.size(); i++) {
+		for (int i = 0; i < panels.size(); i++) {
 			ArpPart part = generatedParts.get(i);
 			if (part.getArpPattern() == ArpPattern.RANDOM) {
-				arpPanels.get(i).setArpPatternCustom(part.getArpPatternCustom());
+				panels.get(i).setArpPatternCustom(part.getArpPatternCustom());
 			}
 		}
 	}
 
 	public void saveToConfig(GUIConfig gc, int seed) {
 		gc.setArpsEnable(enabledCheckBox.isSelected());
-		List<ArpPart> parts = new ArrayList<>();
-		for (ArpPanel panel : arpPanels) parts.add((ArpPart) panel.toInstPart(seed));
-		org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
-		gc.setArpParts(parts);
+		gc.setArpParts(createParts(seed, ArpPart.class));
 		gc.setArpAffectsBpm(arpAffectsBpm.isSelected());
 		gc.setUseOctaveAdjustments(randomArpUseOctaveAdjustments.isSelected());
 		gc.setRandomArpCorrectMelodyNotes(randomArpCorrectMelodyNotes.isSelected());
@@ -140,34 +126,11 @@ public class ArpGUI implements InstrumentGUIControls {
 		scrollableArpPanels.setLayout(new BoxLayout(scrollableArpPanels, BoxLayout.Y_AXIS));
 		scrollableArpPanels.setAutoscrolls(true);
 
-		arpScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension size = UITheme.scrollPaneDimension;
-				return new Dimension(size.width, size.height - 100);
-			}
-		};
-		arpScrollPane.setViewportView(scrollableArpPanels);
-		arpScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		arpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		panelScrollPane = createPanelScrollPane(scrollableArpPanels);
 
 		JPanel arpsSettingsPanel = new JPanel();
 		arpsSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		enabledCheckBox = new CustomCheckBox("ARPS", true);
-		arpsSettingsPanel.add(enabledCheckBox);
-		groupFilterSlider = VeloRect.midi(127);
-		JLabel filterLabel = new JLabel("LP");
-		arpsSettingsPanel.add(filterLabel);
-		arpsSettingsPanel.add(groupFilterSlider);
-
-		addPanelButton = SwingUtils.makeButton("+Arp",
-				e -> panelController.addRandomPanel(INST.ARP));
-		generatePanelButton = SwingUtils.makeButton("Generate Arps:",
-				e -> panelController.generatePanels(INST.ARP, true));
-		randomPanelsToGenerate = new JTextField("3", 2);
-		arpsSettingsPanel.add(addPanelButton);
-		arpsSettingsPanel.add(generatePanelButton);
-		arpsSettingsPanel.add(randomPanelsToGenerate);
+		addPanelControls(arpsSettingsPanel, "ARPS", "+Arp", "Generate Arps:", "3");
 
 		randomArpsGenerateOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		arpsSettingsPanel.add(randomArpsGenerateOnCompose);
@@ -248,13 +211,13 @@ public class ArpGUI implements InstrumentGUIControls {
 		arpSettingsExtraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		arpSettingsExtraPanel.setMaximumSize(new Dimension(1800, 50));
 
-		arpParentPanel = new JPanel() {
+		parentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
 				return UITheme.scrollPaneDimension;
 			}
 		};
-		arpParentPanel.setLayout(new BoxLayout(arpParentPanel, BoxLayout.Y_AXIS));
+		parentPanel.setLayout(new BoxLayout(parentPanel, BoxLayout.Y_AXIS));
 
 		JPanel borderPanel = new JPanel() {
 			@Override
@@ -266,12 +229,12 @@ public class ArpGUI implements InstrumentGUIControls {
 		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
 		borderPanel.add(arpsSettingsPanel);
 		borderPanel.add(arpSettingsExtraPanel);
-		arpParentPanel.add(borderPanel);
-		arpParentPanel.add(arpScrollPane);
+		parentPanel.add(borderPanel);
+		parentPanel.add(panelScrollPane);
 	}
 
 	public JPanel initArps() {
-		return arpParentPanel;
+		return parentPanel;
 	}
 
 	public void createRandomArpPanels(int panelCount, boolean onlyAdd, ArpPanel randomizedPanel) {
@@ -286,7 +249,7 @@ public class ArpGUI implements InstrumentGUIControls {
 			ArpPanel panel = panelI.next();
 			if (!onlyAdd && !panel.getLockInst()) {
 				if (removedPanels.size() >= panelCount) {
-					((JPanel) arpScrollPane.getViewport().getView()).remove(panel);
+					((JPanel) panelScrollPane.getViewport().getView()).remove(panel);
 					panelI.remove();
 				} else {
 					removedPanels.add(panel);
@@ -444,7 +407,7 @@ public class ArpGUI implements InstrumentGUIControls {
 			}
 
 			RhythmPattern pattern = RhythmPattern.FULL;
-			int panelTotal = arpPanels.size();
+			int panelTotal = panels.size();
 			int patternChanceIncrease = (ip.getPanelOrder() < 4 || panelTotal < 3) ? 0 : panelTotal * 5;
 			int fillChanceIncrease = (ip.getPanelOrder() < 4 || panelTotal < 3) ? 0 : (panelTotal - 3) * 5;
 			if (panelGenerator.nextInt(100) < (30 + patternChanceIncrease) && randomArpPattern.isSelected()) {

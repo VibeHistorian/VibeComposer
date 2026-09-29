@@ -26,7 +26,9 @@ import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 
 import javax.swing.*;
@@ -42,39 +44,31 @@ import java.util.Random;
 /**
  * Bass GUI module - Handles all bass-related UI components and logic.
  */
-public class BassGUI implements InstrumentGUIControls {
-
-    private final List<BassPanel> bassPanels = new ArrayList<>();
-    private JScrollPane bassScrollPane;
-    public static JPanel bassParentPanel;
-    private JCheckBox enabledCheckBox;
-    private VeloRect groupFilterSlider;
-    private JButton addPanelButton;
-    private JButton generatePanelButton;
-    private JTextField randomPanelsToGenerate;
+public class BassGUI extends InstGUI<BassPanel> {
 
     private final Context context;
-    private final InstrumentPanelController panelController;
 
     public BassGUI(Context context, InstrumentPanelController panelController) {
+        super(INST.BASS, panelController);
         this.context = context;
-        this.panelController = panelController;
     }
 
-    @Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
-    @Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
-    @Override public JButton getAddPanelButton() { return addPanelButton; }
-    @Override public JButton getGeneratePanelButton() { return generatePanelButton; }
-    @Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
-    @Override public JScrollPane getPanelScrollPane() { return bassScrollPane; }
-    @Override public List<BassPanel> getPanels() { return bassPanels; }
+    @Override public BassPanel createPanel(SoloMuter.Context soloMuterContext) {
+        return new BassPanel(soloMuterContext);
+    }
+
+    @Override public void createRandomPanels(int panelCount, boolean onlyAdd,
+            Integer seed, InstPanel randomizedPanel) {
+        if (seed == null) {
+            createRandomBassPanels(panelCount, onlyAdd);
+        } else {
+            createRandomBassPanels(seed, panelCount, onlyAdd, (BassPanel) randomizedPanel);
+        }
+    }
 
     public void saveToConfig(GUIConfig gc, int seed) {
         gc.setBassEnable(enabledCheckBox.isSelected());
-        List<BassPart> parts = new ArrayList<>();
-        for (BassPanel panel : bassPanels) parts.add((BassPart) panel.toInstPart(seed));
-        org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
-        gc.setBassParts(parts);
+        gc.setBassParts(createParts(seed, BassPart.class));
     }
 
     public void loadFromConfig(GUIConfig gc) { enabledCheckBox.setSelected(gc.isBassEnable()); }
@@ -96,36 +90,13 @@ public class BassGUI implements InstrumentGUIControls {
         scrollableBassPanels.setLayout(new BoxLayout(scrollableBassPanels, BoxLayout.Y_AXIS));
         scrollableBassPanels.setAutoscrolls(true);
 
-        bassScrollPane = new JScrollPane() {
-            @Override
-            public Dimension getPreferredSize() {
-                Dimension size = UITheme.scrollPaneDimension;
-                return new Dimension(size.width, size.height - 100);
-            }
-        };
-        bassScrollPane.setViewportView(scrollableBassPanels);
-        bassScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        bassScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        panelScrollPane = createPanelScrollPane(scrollableBassPanels);
 
         JPanel bassSettingsPanel = new JPanel();
-        enabledCheckBox = new CustomCheckBox("BASS", true);
         bassSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         bassSettingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         bassSettingsPanel.setMaximumSize(new Dimension(1800, 50));
-        bassSettingsPanel.add(enabledCheckBox);
-
-        groupFilterSlider = VeloRect.midi(127);
-        bassSettingsPanel.add(new JLabel("LP"));
-        bassSettingsPanel.add(groupFilterSlider);
-
-        addPanelButton = SwingUtils.makeButton("+Bass",
-                e -> panelController.addRandomPanel(INST.BASS));
-        generatePanelButton = SwingUtils.makeButton("Generate Basses:",
-                e -> panelController.generatePanels(INST.BASS, true));
-        randomPanelsToGenerate = new JTextField("1", 2);
-        bassSettingsPanel.add(addPanelButton);
-        bassSettingsPanel.add(generatePanelButton);
-        bassSettingsPanel.add(randomPanelsToGenerate);
+        addPanelControls(bassSettingsPanel, "BASS", "+Bass", "Generate Basses:", "1");
 
         JPanel bassSettingsAdvancedPanel = new JPanel();
         bassSettingsAdvancedPanel.add(new JLabel("BASS SETTINGS+"));
@@ -134,13 +105,13 @@ public class BassGUI implements InstrumentGUIControls {
         bassSettingsAdvancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         bassSettingsAdvancedPanel.setMaximumSize(new Dimension(1800, 50));
 
-        bassParentPanel = new JPanel() {
+        parentPanel = new JPanel() {
             @Override
             public Dimension getPreferredSize() {
                 return UITheme.scrollPaneDimension;
             }
         };
-        bassParentPanel.setLayout(new BoxLayout(bassParentPanel, BoxLayout.Y_AXIS));
+        parentPanel.setLayout(new BoxLayout(parentPanel, BoxLayout.Y_AXIS));
         JPanel borderPanel = new JPanel() {
             @Override
             public Dimension getMaximumSize() {
@@ -151,10 +122,10 @@ public class BassGUI implements InstrumentGUIControls {
         borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
         borderPanel.add(bassSettingsPanel);
         borderPanel.add(bassSettingsAdvancedPanel);
-        bassParentPanel.add(borderPanel);
-        bassParentPanel.add(bassScrollPane);
+        parentPanel.add(borderPanel);
+        parentPanel.add(panelScrollPane);
 
-        return bassParentPanel;
+        return parentPanel;
     }
 
     public void createRandomBassPanels(int panelCount, boolean onlyAdd) {
@@ -174,7 +145,7 @@ public class BassGUI implements InstrumentGUIControls {
             BassPanel panel = panelI.next();
             if (!onlyAdd && !panel.getLockInst()) {
                 if (removedPanels.size() >= panelCount) {
-                    ((JPanel) bassScrollPane.getViewport().getView()).remove(panel);
+                    ((JPanel) panelScrollPane.getViewport().getView()).remove(panel);
                     panelI.remove();
                 } else {
                     removedPanels.add(panel);

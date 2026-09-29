@@ -26,7 +26,6 @@ import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -35,8 +34,10 @@ import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
@@ -57,16 +58,8 @@ import java.util.function.Consumer;
 import static org.vibehistorian.vibecomposer.InstUtils.POOL;
 
 /** Builds and owns chord controls and their UI state. */
-public class ChordGUI implements InstrumentGUIControls {
+public class ChordGUI extends InstGUI<ChordPanel> {
 
-    private final List<ChordPanel> chordPanels = new ArrayList<>();
-    private JScrollPane chordScrollPane;
-    public static JPanel chordParentPanel;
-    private JCheckBox enabledCheckBox;
-    private VeloRect groupFilterSlider;
-    private JButton addPanelButton;
-    private JButton generatePanelButton;
-    private JTextField randomPanelsToGenerate;
     public static JPanel chordSettingsPanel;
     public static JLabel currentChords = new JLabel("Chords:[]");
     public static List<String> currentChordsInternal = new ArrayList<>();
@@ -114,27 +107,24 @@ public class ChordGUI implements InstrumentGUIControls {
     public static ChordletPanel userChords;
 
     private final Context context;
-    private final InstrumentPanelController panelController;
 
     public ChordGUI(Context context, InstrumentPanelController panelController) {
+        super(INST.CHORD, panelController);
         this.context = context;
-        this.panelController = panelController;
     }
 
-    @Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
-    @Override public VeloRect getGroupFilterSlider() { return groupFilterSlider; }
-    @Override public JButton getAddPanelButton() { return addPanelButton; }
-    @Override public JButton getGeneratePanelButton() { return generatePanelButton; }
-    @Override public JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
-    @Override public JScrollPane getPanelScrollPane() { return chordScrollPane; }
-    @Override public List<ChordPanel> getPanels() { return chordPanels; }
+    @Override public ChordPanel createPanel(SoloMuter.Context soloMuterContext) {
+        return new ChordPanel(soloMuterContext);
+    }
+
+    @Override public void createRandomPanels(int panelCount, boolean onlyAdd,
+            Integer seed, InstPanel randomizedPanel) {
+        createRandomChordPanels(panelCount, onlyAdd, (ChordPanel) randomizedPanel);
+    }
 
     public void saveToConfig(GUIConfig gc, int seed) {
         gc.setChordsEnable(enabledCheckBox.isSelected());
-        List<ChordPart> parts = new ArrayList<>();
-        for (ChordPanel panel : chordPanels) parts.add((ChordPart) panel.toInstPart(seed));
-        org.vibehistorian.vibecomposer.Parts.InstPart.sortParts(parts);
-        gc.setChordParts(parts);
+        gc.setChordParts(createParts(seed, ChordPart.class));
         gc.setChordGenSettings(getChordSettingsFromUI());
         gc.setAllowChordRepeats(allowChordRepeats.isSelected());
         gc.setFixedDuration(chordProgressionLength.getSelectedIndex() < 2
@@ -314,36 +304,12 @@ public class ChordGUI implements InstrumentGUIControls {
 		scrollableChordPanels.setLayout(new BoxLayout(scrollableChordPanels, BoxLayout.Y_AXIS));
 		scrollableChordPanels.setAutoscrolls(true);
 
-		chordScrollPane = new JScrollPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(UITheme.scrollPaneDimension.width, UITheme.scrollPaneDimension.height - 100);
-			}
-		};
-		chordScrollPane.setViewportView(scrollableChordPanels);
-		chordScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		chordScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        panelScrollPane = createPanelScrollPane(scrollableChordPanels);
 
         chordSettingsPanel = new JPanel();
 		chordSettingsPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		enabledCheckBox = new CustomCheckBox("CHORDS", true);
-		chordSettingsPanel.add(enabledCheckBox);
-		groupFilterSlider = VeloRect.midi( 127);
-		JLabel filterLabel = new JLabel("LP");
-		chordSettingsPanel.add(filterLabel);
-		chordSettingsPanel.add(groupFilterSlider);
-
-		addPanelButton = SwingUtils.makeButton("+Chord", e -> {
-			panelController.addRandomPanel(INST.CHORD);
-		});
-		generatePanelButton = SwingUtils.makeButton("Generate Chords:", e -> {
-			panelController.generatePanels(INST.CHORD, true);
-		});
-		randomPanelsToGenerate = new JTextField("2", 2);
-		chordSettingsPanel.add(addPanelButton);
-		chordSettingsPanel.add(generatePanelButton);
-		chordSettingsPanel.add(randomPanelsToGenerate);
+		addPanelControls(chordSettingsPanel, "CHORDS", "+Chord", "Generate Chords:", "2");
 
 		randomChordsGenerateOnCompose = SwingUtils.makeCheckBox("On Compose", true, true);
 		chordSettingsPanel.add(randomChordsGenerateOnCompose);
@@ -432,13 +398,13 @@ public class ChordGUI implements InstrumentGUIControls {
 		//scrollableChordPanels.add(chordSettingsExtraPanel);
 
 
-		chordParentPanel = new JPanel() {
+		parentPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
 				return UITheme.scrollPaneDimension;
 			}
 		};
-		chordParentPanel.setLayout(new BoxLayout(chordParentPanel, BoxLayout.Y_AXIS));
+		parentPanel.setLayout(new BoxLayout(parentPanel, BoxLayout.Y_AXIS));
 
 		JPanel borderPanel = new JPanel() {
 			@Override
@@ -450,14 +416,14 @@ public class ChordGUI implements InstrumentGUIControls {
 		borderPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
 		borderPanel.add(chordSettingsPanel);
 		borderPanel.add(chordSettingsExtraPanel);
-		chordParentPanel.add(borderPanel);
-		chordParentPanel.add(chordScrollPane);
+		parentPanel.add(borderPanel);
+		parentPanel.add(panelScrollPane);
 
 		//addHorizontalSeparatorToPanel(scrollableChordPanels);
 	}
 
     public JPanel initChords() {
-		return chordParentPanel;
+		return parentPanel;
 	}
 
     public JPanel initChordProgressionSettings() {
@@ -781,7 +747,7 @@ public class ChordGUI implements InstrumentGUIControls {
 			ChordPanel panel = panelI.next();
 			if (!onlyAdd && !panel.getLockInst()) {
 				if (removedPanels.size() >= panelCount) {
-					((JPanel) chordScrollPane.getViewport().getView()).remove(panel);
+					((JPanel) panelScrollPane.getViewport().getView()).remove(panel);
 					panelI.remove();
 				} else {
 					removedPanels.add(panel);
