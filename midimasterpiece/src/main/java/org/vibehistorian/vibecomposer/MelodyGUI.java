@@ -35,6 +35,7 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
+import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
@@ -111,6 +112,17 @@ public class MelodyGUI implements InstrumentGUIControls {
 	public MelodyGUI(Context context, InstrumentPanelController panelController) {
 		this.context = context;
 		this.panelController = panelController;
+	}
+
+	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
+		return new MelodyPanel(soloMuterContext, seed -> MidiGeneratorUtils.generateNoteTargetOffsets(
+				MidiGenerator.chordInts, seed, melodyBlockTargetMode.getSelectedIndex(),
+				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem()));
+	}
+
+	private void setUserMelodyScaleModes(List<String> modes) {
+		userMelodyScaleModeSelect.removeAllItems();
+		modes.forEach(userMelodyScaleModeSelect::addItem);
 	}
 
 	@Override public JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
@@ -320,7 +332,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 		randomMelodyOnRegenerate = SwingUtils.makeCheckBox("on Manual Regen.", false, true);
 		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
-		dropPane = new MelodyMidiDropPane();
+		dropPane = new MelodyMidiDropPane(this::setUserMelodyScaleModes);
 		useUserMelody = new CustomCheckBox("<html>Use MIDI<br>Melody File</html>", true);
 		userMelodyScaleModeSelect = new ScrollComboBox<>(false);
 		userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);

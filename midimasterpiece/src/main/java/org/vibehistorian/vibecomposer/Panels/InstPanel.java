@@ -770,30 +770,6 @@ public abstract class InstPanel extends JPanel {
 		return comboPanel;
 	}
 
-
-	public static InstPanel makeInstPanel(int inst, SoloMuter.Context soloMuterContext) {
-
-		InstPanel ip = null;
-		switch (inst) {
-		case 0:
-			ip = new MelodyPanel(soloMuterContext);
-			break;
-		case 1:
-			ip = new BassPanel(soloMuterContext);
-			break;
-		case 2:
-			ip = new ChordPanel(soloMuterContext);
-			break;
-		case 3:
-			ip = new ArpPanel(soloMuterContext);
-			break;
-		case 4:
-			ip = new DrumPanel(soloMuterContext);
-			break;
-		}
-		return ip;
-	}
-
 	public void toggleGlobalElements(boolean b) {
 		//getInstrumentBox().setEnabled(b);
 		getSoloMuter().setEnabled(b);

@@ -123,7 +123,7 @@ public class VibeComposerGUI extends JFrame
 	private final InstrumentPanelController instrumentPanelController =
 			new InstrumentPanelController(new InstrumentPanelController.Context() {
 				@Override public InstPanel createPanel(INST instrument) {
-					return InstPanel.makeInstPanel(instrument.getIndex(), VibeComposerGUI.this);
+					return VibeComposerGUI.this.makeInstrumentPanel(instrument);
 				}
 				@Override public void configurePanel(InstPanel panel) {
 					configureRandomizeAction(panel);
@@ -535,7 +535,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
 			@Override public InstPanel makeCustomSectionInstPanel(INST instrument) {
-				InstPanel panel = InstPanel.makeInstPanel(instrument.getIndex(), VibeComposerGUI.this);
+				InstPanel panel = VibeComposerGUI.this.makeInstrumentPanel(instrument);
 				VibeComposerGUI.this.configureRandomizeAction(panel);
 				VibeComposerGUI.this.configureInstPanelContext(panel);
 				VibeComposerGUI.this.configureInstrumentControlContext(panel);
@@ -682,6 +682,22 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 
 		}, instrumentPanelController);
+	}
+
+	private InstPanel makeInstrumentPanel(INST instrument) {
+		switch (instrument) {
+			case MELODY:
+				return melodyGUI.createPanel(this);
+			case BASS:
+				return new BassPanel(this);
+			case CHORD:
+				return new ChordPanel(this);
+			case ARP:
+				return new ArpPanel(this);
+			case DRUM:
+				return new DrumPanel(this);
+		}
+		throw new IllegalStateException("Unsupported instrument: " + instrument);
 	}
 
 	private void initBassGUI() {

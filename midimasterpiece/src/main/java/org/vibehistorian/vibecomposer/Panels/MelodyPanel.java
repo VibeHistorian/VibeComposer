@@ -8,10 +8,8 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MelodyGUI;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiGenerator;
-import org.vibehistorian.vibecomposer.MidiGeneratorUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
@@ -26,6 +24,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -49,6 +48,7 @@ public class MelodyPanel extends InstPanel {
 	private final KnobPanel leadChordsChance = new KnobPanel("Lead To<br>Chords%", 25);
 	private final KnobPanel startNoteChance = new KnobPanel("Start%", 80);
 	private final JCheckBox patternFlexible = new CustomCheckBox("Flex", true);
+	private final IntFunction<List<Integer>> noteTargetGenerator;
 
 	private PhraseNotes customDurationValues = new PhraseNotes();
 	private List<Integer> customDurationChances = new ArrayList<>(IntStream.iterate(50, e -> e).limit(CUSTOM_DURATIONS_LIMIT).boxed().collect(Collectors.toList()));
@@ -115,10 +115,8 @@ public class MelodyPanel extends InstPanel {
 			return StringUtils.join(noteTargets.getRandGenerator().apply(new Object()), ",");
 		});
 		noteTargets.setRandGenerator(e -> {
-			return MidiGeneratorUtils.generateNoteTargetOffsets(MidiGenerator.chordInts,
-					(e instanceof Integer) ? (Integer) e : new Random().nextInt(),
-					MelodyGUI.melodyBlockTargetMode.getSelectedIndex(),
-					MelodyGUI.melodyTargetNoteVariation.getInt(), null, MelodyGUI.noteTargetDirectionChoice.getSelectedItem());
+			int seed = (e instanceof Integer) ? (Integer) e : new Random().nextInt();
+			return noteTargetGenerator.apply(seed);
 		});
 		noteTargets.setHighlighterGenerator(e -> {
 			if (MidiGenerator.chordInts.isEmpty()) {
@@ -203,7 +201,9 @@ public class MelodyPanel extends InstPanel {
 
 	}
 
-	public MelodyPanel(SoloMuter.Context soloMuterContext) {
+	public MelodyPanel(SoloMuter.Context soloMuterContext,
+			IntFunction<List<Integer>> noteTargetGenerator) {
+		this.noteTargetGenerator = noteTargetGenerator;
 		initComponents(soloMuterContext);
 	}
 

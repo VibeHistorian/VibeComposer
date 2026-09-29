@@ -105,10 +105,6 @@ public final class InstrumentPanelController {
 		return addPanel(instrument, null, true);
 	}
 
-	public InstPanel addPanel(INST instrument, boolean recalculateArrangement) {
-		return addPanel(instrument, null, recalculateArrangement);
-	}
-
 	public InstPanel addPanel(INST instrument, InstPart initializingPart,
 							  boolean recalculateArrangement) {
 		InstPanel panel = context.createPanel(instrument);
@@ -234,7 +230,7 @@ public final class InstrumentPanelController {
 		InstPart.sortParts(parts);
 		List<InstPanel> newPanels = new ArrayList<>();
 		for (int i = 0; i < parts.size(); i++) {
-			newPanels.add(addPanel(instrument, false));
+			newPanels.add(addPanel(instrument, null, false));
 		}
 		for (int i = 0; i < newPanels.size(); i++) {
 			InstPanel panel = newPanels.get(i);
