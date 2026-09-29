@@ -50,11 +50,12 @@ public final class ComposeCoordinator {
     private final MelodyGUI melodyGUI;
     private final ChordGUI chordGUI;
     private final ArpGUI arpGUI;
-    private final DrumGUI drumGUI;
     private final GenerationGUI generationGUI;
     private final ArrangementGUI arrangementGUI;
     private final ScoreGUI scoreGUI;
     private final JLabel totalTime;
+
+    private final boolean logPerformance = false;
 
     public ComposeCoordinator(Context context, PlaybackController playbackController,
                               MidiDeviceController midiDeviceController,
@@ -62,7 +63,7 @@ public final class ComposeCoordinator {
                               SoloMuteController soloMuteController,
                               MainWindowControls mainWindowControls,
                               MelodyGUI melodyGUI, ChordGUI chordGUI, ArpGUI arpGUI,
-                              DrumGUI drumGUI, GenerationGUI generationGUI,
+                              GenerationGUI generationGUI,
                               ArrangementGUI arrangementGUI, ScoreGUI scoreGUI,
                               JLabel totalTime) {
         this.context = context;
@@ -74,7 +75,6 @@ public final class ComposeCoordinator {
         this.melodyGUI = melodyGUI;
         this.chordGUI = chordGUI;
         this.arpGUI = arpGUI;
-        this.drumGUI = drumGUI;
         this.generationGUI = generationGUI;
         this.arrangementGUI = arrangementGUI;
         this.scoreGUI = scoreGUI;
@@ -85,7 +85,6 @@ public final class ComposeCoordinator {
         LG.i("==========Compose Midi [" + (regenerate ? "Regenerate" : "Compose") + "|"
                 + (manual ? "Manual" : "OnChange") + "]: Starting...================");
         heavyBackgroundTasksInProgress = true;
-        boolean logPerformance = true;
         long systemTime = System.currentTimeMillis();
 
         try {
@@ -97,7 +96,7 @@ public final class ComposeCoordinator {
 
             if (ArrangementGUI.manualArrangement.isSelected()
                     && (ArrangementGUI.actualArrangement.getSections().isEmpty()
-                    || !ArrangementGUI.actualArrangement.getSections().stream().anyMatch(Section::hasPresence))) {
+                    || ArrangementGUI.actualArrangement.getSections().stream().noneMatch(Section::hasPresence))) {
                 LG.i("Nothing to compose! Uncheck MANUAL arrangement!");
                 new TemporaryInfoPopup("Nothing to compose! Uncheck MANUAL arrangement!", 3000);
                 heavyBackgroundTasksInProgress = false;
@@ -133,8 +132,8 @@ public final class ComposeCoordinator {
                     && !melodyGUI.getPanels().get(0).getMuteInst()) {
                 seedData += "_" + melodyGUI.getPanels().get(0).getPatternSeed();
             }
-            String keyTrans = MidiUtils.SEMITONE_LETTERS.get((ScoreGUI.transposeScore.getInt() + 120) % 12)
-                    .replaceAll("#", "s");
+            String keyTrans = MidiUtils.SEMITONE_LETTERS.get((scoreGUI.getTranspose() + 120) % 12)
+                    .replace("#", "s");
 
             String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
                     + "_seed" + seedData;
@@ -166,7 +165,8 @@ public final class ComposeCoordinator {
                 if (configHistory.getItemCount() > 10) {
                     configHistory.removeItemAt(0);
                 }
-            } else if (regenerate) {
+            } else {
+                // without 'configHistoryStoreRegeneratedTracks', regenerate will try to replace last history instead of creating new entries each time
                 midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
                 midiConfig.setRegenerateCount(regenerateCount);
                 String oldBookmarkText = configHistory.getItemCount() > 0
@@ -182,7 +182,7 @@ public final class ComposeCoordinator {
             try (FileWriter fw = new FileWriter("randomSeedHistory.txt", true);
                  BufferedWriter bw = new BufferedWriter(fw);
                  PrintWriter out = new PrintWriter(bw)) {
-                out.println(new Date().toString() + ", Seed: " + seedData);
+                out.println(new Date() + ", Seed: " + seedData);
             } catch (IOException e) {
                 LG.i("Failed to write into Random Seed History..");
             }
@@ -227,12 +227,11 @@ public final class ComposeCoordinator {
             MidiGenerator.LAST_CHORD = ChordGUI.chordSelect(ChordGUI.lastChordSelection.getVal());
 
             boolean customChords = ChordGUI.userChordsEnabled.isSelected()
-                    && ChordGUI.userChords.getChordletsRaw().size() > 0;
+                    && !ChordGUI.userChords.getChordletsRaw().isEmpty();
             if (customChords || ChordGUI.userDurationsEnabled.isSelected()) {
                 List<String> chords = ChordGUI.userChords.getChordList();
-                List<Double> durations = ChordGUI.getUserChordDurations();
 
-                MidiGenerator.userChordsDurations = durations;
+                MidiGenerator.userChordsDurations = ChordGUI.getUserChordDurations();
 
                 if (customChords) {
                     MidiGenerator.userChords = chords;
@@ -272,8 +271,7 @@ public final class ComposeCoordinator {
             masterpieceSeed = parsedSeed;
         } else {
             Random seedGenerator = new Random();
-            int randomVal = seedGenerator.nextInt();
-            masterpieceSeed = randomVal;
+            masterpieceSeed = seedGenerator.nextInt();
         }
 
         LG.i("Master seed: " + masterpieceSeed);
@@ -316,7 +314,7 @@ public final class ComposeCoordinator {
         // ARPS
         if (context.selectedInstrumentTab() != 3 && ArpGUI.arpCopyMelodyInst.isSelected()
                 && !melodyGUI.getPanels().isEmpty() && !melodyGUI.getPanels().get(0).getMuteInst()) {
-            if (arpGUI.getPanels().size() > 0 && !arpGUI.getPanels().get(0).getLockInst()) {
+            if (!arpGUI.getPanels().isEmpty() && !arpGUI.getPanels().get(0).getLockInst()) {
                 arpGUI.getPanels().get(0).getInstrumentBox().initInstPool(org.vibehistorian.vibecomposer.InstUtils.POOL.MELODY);
                 arpGUI.getPanels().get(0).setInstPool(org.vibehistorian.vibecomposer.InstUtils.POOL.MELODY);
                 arpGUI.getPanels().get(0).setInstrument(melodyGUI.getPanels().get(0).getInstrument());
@@ -478,12 +476,12 @@ public final class ComposeCoordinator {
                 if (sec != null && sec == prevSec && sec.getMeasures() > 1) {
                     // do not put into labels for followup measures
                 } else {
-                    table.put(Integer.valueOf(current), new JLabel(sectionText));
+                    table.put(current, new JLabel(sectionText));
                     realIndex++;
                 }
-                current += ((sec != null) && sec.getSectionDuration() > 0)
+                current = (int) (current + (((sec != null) && sec.getSectionDuration() > 0)
                         ? measureWidth * (sec.getSectionDuration() / fullMeasureNoteDuration)
-                        : measureWidth;
+                        : measureWidth));
                 sectIndex++;
                 prevSec = sec;
             }

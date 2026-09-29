@@ -19,9 +19,11 @@ import java.util.List;
 public final class PresetViewController {
 
 	private final MainWindowControls mainWindowControls;
+	private final ScoreGUI scoreGUI;
 
-	public PresetViewController(MainWindowControls mainWindowControls) {
+	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI) {
 		this.mainWindowControls = mainWindowControls;
+		this.scoreGUI = scoreGUI;
 	}
 
 	public GUIPreset loadPreset() {
@@ -58,7 +60,7 @@ public final class PresetViewController {
 			return;
 		}
 
-		presetName = presetName.replaceAll(" ", "_");
+		presetName = presetName.replace(" ", "_");
 		new File(Constants.PRESET_FOLDER).mkdir();
 		String filePath = Constants.PRESET_FOLDER + "/" + presetName + ".xml";
 		savePresetFile(filePath, config);
@@ -92,28 +94,7 @@ public final class PresetViewController {
 			LG.i("Saving file: " + (rating >= 0
 					? newFileName : mainWindowControls.getSaveCustomFilename().getText()));
 
-			Date date = new Date();
-			String saveDirectory = Constants.SAVED_MIDIS_FOLDER_BASE;
-			String name;
-			SimpleDateFormat dateFormat = (SimpleDateFormat) SimpleDateFormat.getInstance();
-			dateFormat.applyPattern("yyMMdd-HH-mm-ss");
-			String additionalInfo = "";
-
-			if (rating >= 0) {
-				saveDirectory += rating + "star/";
-				new File(Constants.MIDIS_FOLDER + saveDirectory).mkdir();
-				name = newFileName.substring(0, newFileName.length() - 4);
-				additionalInfo = dateFormat.format(date);
-			} else {
-				saveDirectory += "custom/";
-				name = mainWindowControls.getSaveCustomFilename().getText();
-				if (ExtraSettingsGUI.customFilenameAddTimestamp.isSelected()) {
-					additionalInfo = dateFormat.format(date);
-				}
-			}
-
-			String finalFilePath = Constants.MIDIS_FOLDER + saveDirectory + additionalInfo
-					+ (additionalInfo.isEmpty() ? "" : "_") + name + Constants.MID_EXTENSION;
+			String finalFilePath = createGuiConfigFilePath(rating, newFileName);
 			LG.i("Saving to final path: " + finalFilePath);
 			try {
 				FileUtils.copyFile(currentMidiFile, new File(finalFilePath));
@@ -135,6 +116,31 @@ public final class PresetViewController {
 			new TemporaryInfoPopup(
 					"Cannot save config file without a successful compose/regenerate first!", 1500);
 		}
+	}
+
+	private String createGuiConfigFilePath(int rating, String newFileName) {
+		Date date = new Date();
+		String saveDirectory = Constants.SAVED_MIDIS_FOLDER_BASE;
+		String name;
+		SimpleDateFormat dateFormat = (SimpleDateFormat) SimpleDateFormat.getInstance();
+		dateFormat.applyPattern("yyMMdd-HH-mm-ss");
+		String additionalInfo = "";
+
+		if (rating >= 0) {
+			saveDirectory += rating + "star/";
+			new File(Constants.MIDIS_FOLDER + saveDirectory).mkdir();
+			name = newFileName.substring(0, newFileName.length() - 4);
+			additionalInfo = dateFormat.format(date);
+		} else {
+			saveDirectory += "custom/";
+			name = mainWindowControls.getSaveCustomFilename().getText();
+			if (ExtraSettingsGUI.customFilenameAddTimestamp.isSelected()) {
+				additionalInfo = dateFormat.format(date);
+			}
+		}
+
+        return Constants.MIDIS_FOLDER + saveDirectory + additionalInfo
+                + (additionalInfo.isEmpty() ? "" : "_") + name + Constants.MID_EXTENSION;
 	}
 
 	public GUIPreset copyCurrentViewToPreset(GUIPreset preset, GUIConfig config) {
@@ -301,7 +307,7 @@ public final class PresetViewController {
 		components.add(ExtraSettingsGUI.orderedTransposeGeneration);
 		components.add(ExtraSettingsGUI.patternApplyPausesWhenGenerating);
 		components.add(ExtraSettingsGUI.highlightPatterns);
-		components.add(ScoreGUI.highlightScoreNotes);
+		components.add(scoreGUI.getHighlightScoreNotes());
 		components.add(ExtraSettingsGUI.randomizeTimingsOnCompose);
 		components.add(ExtraSettingsGUI.customFilenameAddTimestamp);
 		components.add(ExtraSettingsGUI.configHistoryStoreRegeneratedTracks);
@@ -313,7 +319,7 @@ public final class PresetViewController {
 		components.add(DrumGUI.randomDrumsOverrandomize);
 		components.add(ExtraSettingsGUI.globalNoteLengthMultiplier);
 		components.add(ChordGUI.copyChordsAfterGenerate);
-		components.add(ScoreGUI.miniScorePopup);
+		components.add(scoreGUI.getMiniScorePopup());
 		components.add(ArpGUI.randomArpCorrectMelodyNotes);
 		components.add(ExtraSettingsGUI.reuseMidiChannelAfterCopy);
 		components.add(ExtraSettingsGUI.transposeNotePreview);

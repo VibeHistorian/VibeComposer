@@ -222,6 +222,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
 		void regenerate();
+		void setScoreTranspose(int transpose);
 	}
 
 	public void initMelodyGenSettings() {
@@ -306,7 +307,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 				Mod.transpose(melody, transposeUpBy);
 				MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,
 				ScaleMode.IONIAN.noteAdjustScale, ExtraSettingsGUI.transposedNotesForceScale.isSelected());
-				ScoreGUI.transposeScore.setInt(transposeUpBy * -1);
+				context.setScoreTranspose(transposeUpBy * -1);
 				GenerationGUI.scaleMode.setVal(toMode.toString());
 				MelodyMidiDropPane.userMelody = melody;
 				userMelodyScaleModeSelect.setSelectedIndex(0);

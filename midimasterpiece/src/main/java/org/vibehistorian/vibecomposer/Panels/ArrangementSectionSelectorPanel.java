@@ -1,15 +1,13 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import org.vibehistorian.vibecomposer.UITheme;
-
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
+import org.vibehistorian.vibecomposer.UITheme;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,14 +24,17 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 	private final IntConsumer onOpenVariation;
 	private final IntConsumer onPlaybackStartChange;
 	private final IntSupplier getSectionCount;
+	private final Consumer<String> onAddSection;
 
 	public ArrangementSectionSelectorPanel(List<CheckButton> buttons, List<CheckButton> defaultButtons,
 			Consumer<String> onSelectionChanged, IntConsumer onOpenVariation,
-			IntConsumer onPlaybackStartChange, IntSupplier getSectionCount) {
+			IntConsumer onPlaybackStartChange, IntSupplier getSectionCount,
+			Consumer<String> onAddSection) {
 		this.onSelectionChanged = onSelectionChanged;
 		this.onOpenVariation = onOpenVariation;
 		this.onPlaybackStartChange = onPlaybackStartChange;
 		this.getSectionCount = getSectionCount;
+		this.onAddSection = onAddSection;
 		setOpaque(false);
 		//setMaximumSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
 		//setPreferredSize(new Dimension(UITheme.scrollPaneDimension.width, 30));
@@ -43,17 +44,13 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 		addAllButtons(buttons);
 		setSelectedIndex(0);
 
-		addPropertyChangeListener("selectedIndex", new PropertyChangeListener() {
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				String selItem = getVal();
-				if (selItem == null || getItemCount() - 1 != getSectionCount.getAsInt()) {
-					return;
-				}
-				onSelectionChanged.accept(selItem);
-			}
-		});
+		addPropertyChangeListener("selectedIndex", evt -> {
+            String selItem = getVal();
+            if (selItem == null || getItemCount() - 1 != getSectionCount.getAsInt()) {
+                return;
+            }
+            onSelectionChanged.accept(selItem);
+        });
 	}
 
 	public void addAllButtons(List<CheckButton> cbs) {
@@ -103,7 +100,7 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 	public void setButtons(List<CheckButton> buttons) {
 		removeAll();
 		this.buttons = this.buttons.subList(0, Math.min(this.buttons.size(), unremovableButtons));
-		this.buttons.forEach(e -> add(e));
+		this.buttons.forEach(this::add);
 		addAllButtons(buttons);
 		setSelectedIndex(0);
 	}
@@ -126,7 +123,8 @@ public class ArrangementSectionSelectorPanel extends JPanel {
 		if (selectedIndex < 0 || buttons.isEmpty()) {
 			selectedIndex = 0;
 		}
-		CheckButton cb = new SectionDropDownCheckButton(item, false);
+		CheckButton cb = new SectionDropDownCheckButton(item, false, null,
+				onAddSection);
 		addButton(cb, buttons.size());
 	}
 

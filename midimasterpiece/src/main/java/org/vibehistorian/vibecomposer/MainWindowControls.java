@@ -404,7 +404,7 @@ public final class MainWindowControls {
         JPanel playSettingsPanel = new JPanel();
         playSettingsPanel.setOpaque(false);
         playSettingsPanel.add(GenerationGUI.regenerateWhenValuesChange);
-        playSettingsPanel.add(ScoreGUI.showScore);
+        playSettingsPanel.add(scoreGUI.getShowScoreButton());
         PlaybackState.loopBeat = new CheckButton("Loop Quarter Notes", false);
         playSettingsPanel.add(PlaybackState.loopBeat);
         playSettingsPanel.add(GenerationGUI.loopBeatCount);

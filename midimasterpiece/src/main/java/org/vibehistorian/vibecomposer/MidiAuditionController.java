@@ -21,11 +21,13 @@ import static org.vibehistorian.vibecomposer.PlaybackState.*;
 public final class MidiAuditionController {
 	private final InstrumentPanelController panelController;
 	private final MidiDeviceController midiDeviceController;
+	private final ScoreGUI scoreGUI;
 
 	public MidiAuditionController(InstrumentPanelController panelController,
-			MidiDeviceController midiDeviceController) {
+			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI) {
 		this.panelController = panelController;
 		this.midiDeviceController = midiDeviceController;
+		this.scoreGUI = scoreGUI;
 	}
 
 	public void playNextNote(int keyboardTranspose, int velocity, INST instrument, int panelOrder) {
@@ -44,15 +46,15 @@ public final class MidiAuditionController {
 			nextNoteMelody = MelodyMidiDropPane.userMelody;
 			if (nextNoteMelody == null) {
 				LG.d("No user melody/midi to play!");
-				Part scorePart = ScoreGUI.scorePanel == null || ScoreGUI.scorePanel.score == null
-						? null : ScoreGUI.scorePanel.score.getPart(instNames[part] + "" + (partOrder - 1));
+				Part scorePart = scoreGUI.getScorePanel() == null || scoreGUI.getScorePanel().score == null
+						? null : scoreGUI.getScorePanel().score.getPart(instNames[part] + "" + (partOrder - 1));
 				nextNoteMelody = scorePart == null ? null : scorePart.getPhrase(0);
 				if (nextNoteMelody == null) {
 					LG.i("No actual melody to play!");
 					return;
 				}
 				transpose += -1 * (panelController.getPanelByOrder(activeInstrument, partOrder).getTranspose()
-						+ ScoreGUI.transposeScore.getInt());
+						+ scoreGUI.getTranspose());
 			}
 		}
 
@@ -96,7 +98,7 @@ public final class MidiAuditionController {
 					extraTranspose += scaleKey.getRight();
 				}
 
-				pitch = notes.get(0).getPitch() + ScoreGUI.transposeScore.getInt() + extraTranspose
+				pitch = notes.get(0).getPitch() + scoreGUI.getTranspose() + extraTranspose
 						+ section.getTransposeVariation(instrument.getIndex(), panelOrder);
 
 				if (pitch < 0 || pitch > 127) {

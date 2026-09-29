@@ -97,12 +97,14 @@ public class ExtraSettingsGUI {
     private final Context context;
     private final DrumGUI drumGUI;
     private final InstrumentPanelController panelController;
+    private final ScoreGUI scoreGUI;
 
     public ExtraSettingsGUI(Context context, DrumGUI drumGUI,
-            InstrumentPanelController panelController) {
+            InstrumentPanelController panelController, ScoreGUI scoreGUI) {
         this.context = context;
         this.drumGUI = drumGUI;
         this.panelController = panelController;
+        this.scoreGUI = scoreGUI;
     }
 
     public void initExtraSettings() {
@@ -387,7 +389,7 @@ public class ExtraSettingsGUI {
 		displayStylePanel.add(knobControlByDragging);
 		displayStylePanel.add(highlightPatterns);
 		displayStylePanel.add(customFilenameAddTimestamp);
-		ScoreGUI.initDisplaySettings(displayStylePanel);
+		scoreGUI.initDisplaySettings(displayStylePanel);
 	}
 
     public void initExtraSettingsHumanize(JPanel humanizationPanel) {

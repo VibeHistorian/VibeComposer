@@ -39,22 +39,29 @@ public class ScoreGUI {
 
 	private final Context context;
 
+	private JScrollPane scoreScrollPane;
+	private ShowPanelBig scorePanel;
+	private KnobPanel transposeScore;
+	private JButton showScore;
+	private ShowScorePopup scorePopup;
+	private JCheckBox highlightScoreNotes;
+	private JCheckBox miniScorePopup;
+
 	public ScoreGUI(Context context) {
 		this.context = context;
 	}
 
-	public static JScrollPane scoreScrollPane;
-	public static ShowPanelBig scorePanel;
-	public static KnobPanel transposeScore;
-	public static JButton showScore;
-	public static ShowScorePopup scorePopup;
-	public static JCheckBox highlightScoreNotes;
-	public static JCheckBox miniScorePopup;
+	public void saveToConfig(GUIConfig gc) { gc.setTranspose(transposeScore.getInt()); }
+	public void loadFromConfig(GUIConfig gc) { transposeScore.setInt(gc.getTranspose()); }
+	public int getTranspose() { return transposeScore.getInt(); }
+	public void setTranspose(int transpose) { transposeScore.setInt(transpose); }
+	public void adjustTranspose(int amount) { transposeScore.setInt(transposeScore.getInt() + amount); }
+	public ShowPanelBig getScorePanel() { return scorePanel; }
+	public JButton getShowScoreButton() { return showScore; }
+	public JCheckBox getHighlightScoreNotes() { return highlightScoreNotes; }
+	public JCheckBox getMiniScorePopup() { return miniScorePopup; }
 
-	public static void saveToConfig(GUIConfig gc) { gc.setTranspose(transposeScore.getInt()); }
-	public static void loadFromConfig(GUIConfig gc) { transposeScore.setInt(gc.getTranspose()); }
-
-	public void initScoreSettings(int startY, int anchorSide) {
+	public void initScoreSettings() {
 		JPanel scrollableScorePanel = new JPanel();
 		scrollableScorePanel.setLayout(new BoxLayout(scrollableScorePanel, BoxLayout.Y_AXIS));
 		scrollableScorePanel.setAutoscrolls(true);
@@ -86,7 +93,7 @@ public class ScoreGUI {
 		});
 	}
 
-	public static void initDisplaySettings(JPanel displayStylePanel) {
+	public void initDisplaySettings(JPanel displayStylePanel) {
 		highlightScoreNotes = new CustomCheckBox("Highlight Score Notes (-Perf)", true);
 		miniScorePopup = new CustomCheckBox("Mini Score Popup", true);
 		displayStylePanel.add(highlightScoreNotes);

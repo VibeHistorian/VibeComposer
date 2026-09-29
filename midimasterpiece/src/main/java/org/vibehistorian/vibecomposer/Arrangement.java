@@ -328,7 +328,8 @@ public class Arrangement {
 		this.previewChorus = previewChorus;
 	}
 
-	public void resortByIndexes(JTable scrollableArrangementTable, boolean isActual) {
+	public void resortByIndexes(JTable scrollableArrangementTable, boolean isActual,
+			Runnable recolorVariationButtons) {
 		TableModel m = scrollableArrangementTable.getModel();
 		int[] indexes = new int[m.getColumnCount()];
 		Section[] tempSections = new Section[m.getColumnCount()];
@@ -338,7 +339,7 @@ public class Arrangement {
 		sections = new ArrayList<>(Arrays.asList(tempSections));
 		scrollableArrangementTable
 				.setModel(isActual ? convertToActualTableModel() : convertToTableModel());
-		ArrangementGUI.arrangementGUI.recolorAllVariationButtons();
+		recolorVariationButtons.run();
 		scrollableArrangementTable.repaint();
 
 	}

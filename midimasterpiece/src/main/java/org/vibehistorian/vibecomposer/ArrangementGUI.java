@@ -65,7 +65,6 @@ import java.util.Random;
 
 /** Owns arrangement controls, data and operations. */
 public class ArrangementGUI {
-	public static ArrangementGUI arrangementGUI;
 	public static Arrangement arrangement;
 	public static Arrangement actualArrangement;
 	public static JPanel arrangementSettings;
@@ -103,7 +102,7 @@ public class ArrangementGUI {
 	public static int arrangementLightModeHighestColor = 180;
 	public static JCheckBox arrangementScaleMidiVelocity;
 	public static JCheckBox arrangementResetCustomPanelsOnCompose;
-	public static VariationPopup varPopup;
+	private VariationPopup varPopup;
 
 	public void saveToConfig(GUIConfig gc, boolean isNew, int seed, List<PatternMap> activePatternMaps) {
 		preparePartMaps(arrangement);
@@ -164,7 +163,16 @@ public class ArrangementGUI {
 		this.panelController = panelController;
 		this.instrumentTabPane = instrumentTabPane;
 		this.midiEditPopupContext = midiEditPopupContext;
-		arrangementGUI = this;
+	}
+
+	public interface ActionHandler {
+		void handleArrangementAction(String action, int seed, int maxLength);
+	}
+
+	public interface VariationPopupActions {
+		void recolorVariationPopupButton(int sectionOrder);
+		void setActualModel(TableModel model, boolean reset);
+		void clearVariationPopup();
 	}
 
 	public static boolean isCustomSection() {
@@ -895,10 +903,12 @@ public class ArrangementGUI {
 
 		ArrangementGUI.randomizeArrangementOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		List<CheckButton> defaultButtons = new ArrayList<>();
-		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
+		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70),
+				action -> handleArrangementAction(action, 0, 0)));
 		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons,
 				this::switchPanelsForSectionSelection, this::openVariationPopup,
-				this::trySliderStartChange, () -> actualArrangement.getSections().size());
+				this::trySliderStartChange, () -> actualArrangement.getSections().size(),
+				action -> handleArrangementAction(action, 0, 0));
 
 		JButton commitPanelBtn = context.makeButton("Apply", "ArrangementApply", 50, 30);
 		JButton commitAllPanelBtn = SwingUtils.makeButton("Apply..", e -> context.openApplyCustomSectionPopup(), 60);
@@ -1063,7 +1073,8 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.d("MOVED HEADER");
-				ArrangementGUI.arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false);
+				ArrangementGUI.arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false,
+						ArrangementGUI.this::recolorAllVariationButtons);
 				ArrangementGUI.arrangementTableColumnDragging = false;
 			}
 		});
@@ -1161,7 +1172,8 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.i("MOVED");
-				ArrangementGUI.actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true);
+				ArrangementGUI.actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true,
+						ArrangementGUI.this::recolorAllVariationButtons);
 				ArrangementGUI.actualArrangementTableColumnDragging = false;
 				ArrangementGUI.manualArrangement.setSelected(true);
 				ArrangementGUI.manualArrangement.repaint();
@@ -1372,7 +1384,17 @@ public class ArrangementGUI {
 		recalculateActualArrangementSection(sectionOrder - 1);
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
 				context.getVariationPopupLocation(), context.getVariationPopupWindowSize(),
-				this::getInstList, this::getInstrumentParts);
+				this::getInstList, this::getInstrumentParts, new VariationPopupActions() {
+					@Override public void recolorVariationPopupButton(int order) {
+						ArrangementGUI.this.recolorVariationPopupButton(order);
+					}
+					@Override public void setActualModel(TableModel model, boolean reset) {
+						ArrangementGUI.this.setActualModel(model, reset);
+					}
+					@Override public void clearVariationPopup() {
+						ArrangementGUI.this.varPopup = null;
+					}
+				});
 	}
 
 	public void recalculateActualArrangementSection(int sectionOrder) {

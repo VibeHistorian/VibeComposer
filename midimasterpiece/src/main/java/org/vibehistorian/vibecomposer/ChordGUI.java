@@ -235,7 +235,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
     public interface Context {
         PartManagerPanel.Context getPartManagerContext();
         void copyGUItoConfig();
-			void alignChordsWithMelody(ChordletPanel chordlets);
+        void adjustScoreTranspose(int amount);
+		void alignChordsWithMelody(ChordletPanel chordlets);
     }
 
 	public static void initExtraSettingsChords(JPanel chordChoicePanel) {
@@ -543,7 +544,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				List<String> normalizedChords = MidiUtils.processRawChords(
-						userChords.getChordListString(), MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal()));
+						userChords.getChordListString(), MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal()),
+						context::adjustScoreTranspose);
 				if (normalizedChords != null) {
 					userChords.setupChords(normalizedChords);
 				}

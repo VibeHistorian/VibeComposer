@@ -44,9 +44,13 @@ public class VariationPopup {
 	KnobPanel keyChangeKnob = new DetachedKnobPanel("Key Change", 0, -12, 12);
 	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
+	private final ArrangementGUI.VariationPopupActions arrangementActions;
+
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim,
 			IntFunction<List<? extends InstPanel>> getInstList,
-			IntFunction<List<? extends InstPart>> partsForInstrument) {
+			IntFunction<List<? extends InstPart>> partsForInstrument,
+			ArrangementGUI.VariationPopupActions arrangementActions) {
+		this.arrangementActions = arrangementActions;
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
@@ -104,19 +108,6 @@ public class VariationPopup {
 					}
 				}
 			});
-
-			if (i < 4) {
-				//table.getColumnModel().getColumn(0).setMaxWidth(27);
-			}
-			//table.setDefaultRenderer(Boolean.class, new BooleanRenderer());
-
-			/*JList<String> list = new JList<>();
-			String[] listData = new String[rowCount];
-			for (int j = 0; j < rowCount; j++) {
-				listData[j] = String.valueOf(j);
-			}
-			list.setListData(listData);
-			list.setFixedCellHeight(table.getRowHeight() + table.getRowMargin());*/
 
 			tables[i] = table;
 			TransparentablePanel categoryPanel = new TransparentablePanel();
@@ -262,7 +253,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setCustomChordsEnabled(userChordsEnabled.isSelected());
-				ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
+				arrangementActions.recolorVariationPopupButton(sectionOrder);
 			}
 
 		});
@@ -289,7 +280,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
-				ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
+				arrangementActions.recolorVariationPopupButton(sectionOrder);
 			}
 
 		});
@@ -336,7 +327,7 @@ public class VariationPopup {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				sec.setTransitionType(transitionBox.getSelectedIndex());
-				ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
+				arrangementActions.recolorVariationPopupButton(sectionOrder);
 			}
 		});
 		transitionPanel.add(new JLabel("Transition Type "));
@@ -446,7 +437,7 @@ public class VariationPopup {
 					if (index == 1) {
 						sec.setDisplayAlternateChords(sectionVar.isSelected());
 					}
-					ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
+					arrangementActions.recolorVariationPopupButton(sectionOrder);
 				}
 
 			});
@@ -469,7 +460,7 @@ public class VariationPopup {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				ArrangementGUI.varPopup = null;
+				arrangementActions.clearVariationPopup();
 				sectionObject.setCustomChords(userChords.getChordListString());
 				sectionObject.setCustomDurations(userChordsDurations.getText());
 				List<Integer> instVolumes = new ArrayList<>();
@@ -477,9 +468,9 @@ public class VariationPopup {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-				ArrangementGUI.arrangementGUI.setActualModel(
+				arrangementActions.setActualModel(
 						ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
-					ArrangementGUI.arrangementGUI.recolorVariationPopupButton(sectionOrder);
+				arrangementActions.recolorVariationPopupButton(sectionOrder);
 			}
 
 			@Override

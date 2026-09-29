@@ -321,7 +321,7 @@ public class MidiUtils {
 
 		//top3.entrySet().stream().forEach(System.out::println);
 		// return n-th most matching chord 
-		if (orderedBestMatches.keySet().size() > orderOfMatch - 1) {
+		if (orderedBestMatches.size() > orderOfMatch - 1) {
 			return (String) orderedBestMatches.keySet().toArray()[orderOfMatch - 1];
 		}
 		LG.d("Only one chord matches? Huh..");
@@ -445,7 +445,7 @@ public class MidiUtils {
 
 			if (detectionResult.getKey() == 0 && (targetMode != null) && (targetMode == mode)) {
 				bestForSure = true;
-				bestNotContained = detectionResult.getKey();
+				bestNotContained = 0;
 				bestMode = mode;
 				transposeUpBy = detectionResult.getValue();
 				LG.i("Found target mode: " + targetMode.toString());
@@ -477,7 +477,7 @@ public class MidiUtils {
 		}
 		if (bestNotContained > 0) {
 			// e.g. -1 = disabled prog. threshold, above 20% frequency discarded notes start to be meaningless for detecting key
-			if (progressiveNoteDiscardThreshold < 0 && progressiveNoteDiscardThreshold > 20) {
+			if (progressiveNoteDiscardThreshold < 0 || progressiveNoteDiscardThreshold > 20) {
 				return null;
 			} else {
 				return detectKeyAndMode(phr, targetMode,
@@ -497,10 +497,7 @@ public class MidiUtils {
 	public static Pair<Integer, Integer> detectKey(Set<Integer> pitches, Integer[] scale,
 			boolean forceDifferentTranspose) {
 
-		Set<Integer> desiredPitches = new HashSet<>();
-		for (int i = 0; i < scale.length; i++) {
-			desiredPitches.add(scale[i]);
-		}
+        Set<Integer> desiredPitches = new HashSet<>(Arrays.asList(scale));
 
 		int bestNotContained = pitches.size();
 		int transposeUpBy = 0;
@@ -733,7 +730,7 @@ public class MidiUtils {
 		if (Math.abs(chord[chord.length - 1] - chord[0]) >= 12) {
 			octaveMultiplier += Math.abs(chord[chord.length - 1] - chord[0]) / 12;
 		}
-		Integer note = pitch + octaveAdjust * octaveMultiplier;
+		int note = pitch + octaveAdjust * octaveMultiplier;
 		//LG.i("Note: " + note);
 		return (note <= 0 || note >= 127) ? null : note;
 	}
@@ -782,10 +779,9 @@ public class MidiUtils {
 	}
 
 	public static List<String> getBasicChordStringsFromRoots(List<int[]> roots) {
-		List<Integer> majorScaleNormalized = MAJ_SCALE;
-		List<String> basicChords = new ArrayList<>();
+        List<String> basicChords = new ArrayList<>();
 		for (int[] r : roots) {
-			int index = majorScaleNormalized.indexOf(r[0] % 12);
+			int index = MAJ_SCALE.indexOf(r[0] % 12);
 			String chordLong = MAJOR_CHORDS.get(index);
 			basicChords.add(chordLong);
 		}
@@ -872,14 +868,8 @@ public class MidiUtils {
 			boolean keepOutliers) {
 		int[] transposedChord = new int[chord.length];
 
-		List<Integer> modeList = new ArrayList<>();
-		for (int num : mode) {
-			modeList.add(num);
-		}
-		List<Integer> modeToList = new ArrayList<>();
-		for (int num : modeTo) {
-			modeToList.add(num);
-		}
+        List<Integer> modeList = new ArrayList<>(Arrays.asList(mode));
+        List<Integer> modeToList = new ArrayList<>(Arrays.asList(modeTo));
 
 		for (int j = 0; j < chord.length; j++) {
 			int pitch = chord[j];
@@ -902,7 +892,7 @@ public class MidiUtils {
 			if (originalIndex >= 0) {
 				int originalMovement = mode[originalIndex];
 				if (modeTo.length-1 < originalIndex) {
-					originalIndex = (int)Math.floor(modeTo.length * (originalIndex / Double.valueOf(mode.length)));
+					originalIndex = (int)Math.floor(modeTo.length * (originalIndex / (double) mode.length));
 				}
 				int newMovement = modeTo[originalIndex];
 
@@ -931,47 +921,39 @@ public class MidiUtils {
 
 	public static void transposeNotes(List<Note> notes, final Integer[] mode,
 			final Integer[] modeTo, boolean snapToScale) {
-		List<Integer> modeList = new ArrayList<>();
-		for (int num : mode) {
-			modeList.add(num);
-		}
-
-		List<Integer> modeToList = new ArrayList<>();
-		for (int num : modeTo) {
-			modeToList.add(num);
-		}
+        List<Integer> modeList = new ArrayList<>(Arrays.asList(mode));
+        List<Integer> modeToList = new ArrayList<>(Arrays.asList(modeTo));
 
 
-		for (int j = 0; j < notes.size(); j++) {
-			Note n = notes.get(j);
-			int pitch = n.getPitch();
-			if (pitch < 0) {
-				continue;
-			}
-			int searchPitch = pitch % 12;
-			int originalIndex = modeList.indexOf(searchPitch);
+        for (Note n : notes) {
+            int pitch = n.getPitch();
+            if (pitch < 0) {
+                continue;
+            }
+            int searchPitch = pitch % 12;
+            int originalIndex = modeList.indexOf(searchPitch);
 
-			if (originalIndex == -1) {
-				if (modeToList.contains(searchPitch)) {
-					//LG.i("Pitch found only in modeTo, not changing: " + pitch);
-				} else if (snapToScale) {
-					int closestPitch = getClosestFromList(modeToList, searchPitch);
-					int difference = searchPitch - closestPitch;
-					n.setPitch(pitch - difference);
-					//LG.i("Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
-				}
-				continue;
-			}
+            if (originalIndex == -1) {
+                if (modeToList.contains(searchPitch)) {
+                    //LG.i("Pitch found only in modeTo, not changing: " + pitch);
+                } else if (snapToScale) {
+                    int closestPitch = getClosestFromList(modeToList, searchPitch);
+                    int difference = searchPitch - closestPitch;
+                    n.setPitch(pitch - difference);
+                    //LG.i("Not indexed pitch.. " + pitch + ", lowered by.. " + difference);
+                }
+                continue;
+            }
 
 
-			int originalMovement = mode[originalIndex];
-			if (modeTo.length-1 < originalIndex) {
-				originalIndex = (int)Math.floor(modeTo.length * (originalIndex / Double.valueOf(mode.length)));
-			}
-			int newMovement = modeTo[originalIndex];
+            int originalMovement = mode[originalIndex];
+            if (modeTo.length - 1 < originalIndex) {
+                originalIndex = (int) Math.floor(modeTo.length * (originalIndex / (double) mode.length));
+            }
+            int newMovement = modeTo[originalIndex];
 
-			n.setPitch(pitch - originalMovement + newMovement);
-		}
+            n.setPitch(pitch - originalMovement + newMovement);
+        }
 	}
 
 	public static int getClosestPitchFromList(List<Integer> list, int valToFind) {
@@ -1177,7 +1159,7 @@ public class MidiUtils {
 
 	public static List<Pair<ScaleMode, Integer>> getKeyModesForChordsAndTarget(String rawChords,
 			ScaleMode targetMode) {
-		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
+		List<String> rawChordsList = Arrays.asList(rawChords.replace(" ", "").split(","));
 		List<Chord> chords = convertChordStringsToChords(rawChordsList);
 		if (chords == null) {
 			return null;
@@ -1185,12 +1167,12 @@ public class MidiUtils {
 		Phrase phr = new PhraseExt();
 		addChordsToPhrase(phr, chords, 0.125);
 
-		List<Pair<ScaleMode, Integer>> detectionResults = detectKeyAndMode(phr, targetMode, true, -1);
-		return detectionResults;
+        return detectKeyAndMode(phr, targetMode, true, -1);
 	}
 
-	public static List<String> processRawChords(String rawChords, ScaleMode targetMode) {
-		List<String> rawChordsList = Arrays.asList(rawChords.replaceAll(" ", "").split(","));
+	public static List<String> processRawChords(String rawChords, ScaleMode targetMode,
+			java.util.function.IntConsumer adjustScoreTranspose) {
+		List<String> rawChordsList = Arrays.asList(rawChords.replace(" ", "").split(","));
 		List<Chord> chords = convertChordStringsToChords(rawChordsList);
 		if (chords == null) {
 			return null;
@@ -1252,8 +1234,7 @@ public class MidiUtils {
 
 		LG.i(solvedChords.toString());
 		if (solvedChords.size() == chords.size()) {
-			ScoreGUI.transposeScore
-					.setInt(ScoreGUI.transposeScore.getInt() + (transposeUpBy * -1));
+			adjustScoreTranspose.accept(transposeUpBy * -1);
 			return solvedChords;
 		} else {
 			return null;
@@ -1289,7 +1270,7 @@ public class MidiUtils {
 
 		Random rand = new Random();
 
-		List<String> chordsList = Arrays.asList(chordsString.replaceAll(" ", "").split(","));
+		List<String> chordsList = Arrays.asList(chordsString.replace(" ", "").split(","));
 		List<String> respicedChordsList = new ArrayList<>();
 		for (int i = 0; i < chordsList.size(); i++) {
 			String chord = chordsList.get(i);
@@ -1318,13 +1299,13 @@ public class MidiUtils {
 					}
 
 
-					if (chord.length() > 1 && chord.substring(1, 2).equals("#")) {
+					if (chord.length() > 1 && chord.charAt(1) == '#') {
 						// insert at index 1
 						if (spicyChordString.length() > 2) {
-							spicyChordString = spicyChordString.substring(0, 1) + "#"
-									+ spicyChordString.substring(1, spicyChordString.length());
+							spicyChordString = spicyChordString.charAt(0) + "#"
+									+ spicyChordString.substring(1);
 						} else {
-							spicyChordString = spicyChordString.substring(0, 1) + "#";
+							spicyChordString = spicyChordString.charAt(0) + "#";
 						}
 
 					}

@@ -20,7 +20,8 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 	ScrollComboBox<String> sectionOptions = new ScrollComboBox<>(false);
 	JButton applier = new JButton("APPLY");
 
-	public ApplyCustomSectionPopup(IntFunction<List<? extends InstPanel>> getInstList) {
+	public ApplyCustomSectionPopup(IntFunction<List<? extends InstPanel>> getInstList,
+			ArrangementGUI.ActionHandler arrangementAction) {
 		super("Apply Custom Section..", 11);
 		JPanel framePanel = new JPanel();
 		framePanel.setLayout(new GridLayout(0, 1, 0, 0));
@@ -36,11 +37,11 @@ public class ApplyCustomSectionPopup extends CloseablePopup {
 
 		applier.addActionListener(e -> {
             if (sectionOptions.getItemCount() > 0) {
-                ArrangementGUI.arrangementGUI.handleArrangementAction(
+				arrangementAction.handleArrangementAction(
                         "ArrangementApply," + (sectionOptions.getSelectedIndex() + startIndex),
                         0, 0);
             } else {
-                ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementApply", 0,
+				arrangementAction.handleArrangementAction("ArrangementApply", 0,
                         0);
             }
             close();

@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.Arrangement;
-import org.vibehistorian.vibecomposer.ArrangementGUI;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.SwingUtils;
 
@@ -9,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SectionDropDownCheckButton extends CheckButton {
 
@@ -16,15 +16,15 @@ public class SectionDropDownCheckButton extends CheckButton {
 	private List<String> dropDownOptions = null;
 	public static int popupIndex = 0;
 
-	public SectionDropDownCheckButton(String name, boolean sel, Color alphen) {
+	public SectionDropDownCheckButton(String name, boolean sel, Color alphen,
+			Consumer<String> onAddSection) {
 		super(name, sel, alphen);
 
 		dropDownOptions = new ArrayList<>();
-		Arrangement.defaultSections.keySet().forEach(e -> dropDownOptions.add(e));
+        dropDownOptions.addAll(Arrangement.defaultSections.keySet());
 
 		SwingUtils.addPopupMenu(this, (evt, e) -> {
-			ArrangementGUI.arrangementGUI.handleArrangementAction("ArrangementAddNewSection," + e,
-					0, 0);
+			onAddSection.accept("ArrangementAddNewSection," + e);
 			LG.d("popupindex: " + popupIndex);
 		}, e -> {
 			if (SwingUtilities.isRightMouseButton(e) && dropDownOptions != null) {
@@ -40,10 +40,6 @@ public class SectionDropDownCheckButton extends CheckButton {
 			}
 			return false;
 		}, dropDownOptions, null);
-	}
-
-	public SectionDropDownCheckButton(String name, boolean sel) {
-		this(name, sel, null);
 	}
 
 	@Override
