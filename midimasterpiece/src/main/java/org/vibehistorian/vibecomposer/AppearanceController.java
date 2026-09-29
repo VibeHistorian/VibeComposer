@@ -24,13 +24,16 @@ public final class AppearanceController {
 	private final MainWindowControls mainWindowControls;
 	private final InstrumentPanelController instrumentPanelController;
 	private final DrumGUI drumGUI;
+	private final ArpGUI arpGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
-			InstrumentPanelController instrumentPanelController, DrumGUI drumGUI) {
+			InstrumentPanelController instrumentPanelController, DrumGUI drumGUI,
+			ArpGUI arpGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
 		this.instrumentPanelController = instrumentPanelController;
 		this.drumGUI = drumGUI;
+		this.arpGUI = arpGUI;
 	}
 
 	public void switchDarkMode() {
@@ -52,7 +55,7 @@ public final class AppearanceController {
 		ChordGUI.tipLabel.setForeground(toggledUIColor);
 		PlaybackState.currentTime.setForeground(toggledUIColor);
 		PlaybackState.totalTime.setForeground(toggledUIColor);
-		ArpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
+		arpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
 		MelodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
@@ -115,7 +118,7 @@ public final class AppearanceController {
 	private void switchAllOnComposeCheckboxesForegrounds(Color foreground) {
 		MelodyGUI.generateMelodiesOnCompose.setForeground(foreground);
 		ChordGUI.randomChordsGenerateOnCompose.setForeground(foreground);
-		ArpGUI.randomArpsGenerateOnCompose.setForeground(foreground);
+		arpGUI.randomArpsGenerateOnCompose.setForeground(foreground);
 		drumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
 		GenerationGUI.randomizeBpmOnCompose.setForeground(foreground);
 		GenerationGUI.randomizeTransposeOnCompose.setForeground(foreground);

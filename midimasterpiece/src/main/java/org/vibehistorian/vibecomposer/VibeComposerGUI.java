@@ -448,7 +448,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				midiDeviceController.markSoundbankRefreshNeeded();
 			}
 			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
-		}, drumGUI, instrumentPanelController, scoreGUI);
+		}, drumGUI, arpGUI, instrumentPanelController, scoreGUI);
 		extraSettingsGUI.initExtraSettings();
 	}
 
@@ -462,7 +462,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public int getSelectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
 			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
-		}, instrumentPanelController);
+		}, instrumentPanelController, arpGUI);
 	}
 
 	private void initArrangementGUI() {
@@ -865,7 +865,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		// ---- PLAY PANEL ----
 		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
-		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI);
+		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI, arpGUI);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -1578,12 +1578,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	private void switchAllOnComposeCheckboxes(boolean state) {
 		MelodyGUI.generateMelodiesOnCompose.setSelected(state);
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
-		ArpGUI.randomArpsGenerateOnCompose.setSelected(state);
+		arpGUI.randomArpsGenerateOnCompose.setSelected(state);
 		drumGUI.randomDrumsGenerateOnCompose.setSelected(state);
 		GenerationGUI.randomizeBpmOnCompose.setSelected(state);
 		GenerationGUI.randomizeTransposeOnCompose.setSelected(state);
 		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(state);
-		ArpGUI.randomArpHitsPerPattern.setSelected(state);
+		arpGUI.randomArpHitsPerPattern.setSelected(state);
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setSelected(state);
@@ -1662,7 +1662,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (appearanceController == null) {
 			appearanceController = new AppearanceController(new AppearanceController.Context() {
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
-			}, mainWindowControls, instrumentPanelController, drumGUI);
+			}, mainWindowControls, instrumentPanelController, drumGUI, arpGUI);
 		}
 		return appearanceController;
 	}
@@ -1865,7 +1865,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			instrumentPanelController.generatePanels(INST.CHORD);
 		}
 		if (isCompose && getInstrumentControls(INST.ARP).getEnabledCheckBox().isSelected()
-				&& ArpGUI.randomArpsGenerateOnCompose.isSelected()) {
+				&& arpGUI.randomArpsGenerateOnCompose.isSelected()) {
 			instrumentPanelController.generatePanels(INST.ARP);
 		}
 

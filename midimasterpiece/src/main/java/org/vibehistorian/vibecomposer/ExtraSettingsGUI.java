@@ -94,13 +94,15 @@ public class ExtraSettingsGUI {
 
     private final Context context;
     private final DrumGUI drumGUI;
+    private final ArpGUI arpGUI;
     private final InstrumentPanelController panelController;
     private final ScoreGUI scoreGUI;
 
-    public ExtraSettingsGUI(Context context, DrumGUI drumGUI,
+    public ExtraSettingsGUI(Context context, DrumGUI drumGUI, ArpGUI arpGUI,
             InstrumentPanelController panelController, ScoreGUI scoreGUI) {
         this.context = context;
         this.drumGUI = drumGUI;
+        this.arpGUI = arpGUI;
         this.panelController = panelController;
         this.scoreGUI = scoreGUI;
     }
@@ -317,12 +319,11 @@ public class ExtraSettingsGUI {
 
     public void initExtraSettingsBpm(JPanel bpmLowHighPanel) {
 		// BPM
-		ArpGUI.arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
 		bpmLow = new DetachedKnobPanel("Min<br>BPM.", 60, 20, 249);
 		bpmHigh = new DetachedKnobPanel("Max<br>BPM.", 100, 21, 250);
 		bpmLowHighPanel.add(bpmLow);
 		bpmLowHighPanel.add(bpmHigh);
-		bpmLowHighPanel.add(ArpGUI.arpAffectsBpm);
+		bpmLowHighPanel.add(arpGUI.arpAffectsBpm);
 	}
 
     public void initExtraSettingsDisplay(JPanel displayStylePanel) {

@@ -315,7 +315,7 @@ public final class ComposeCoordinator {
         // BASS
 
         // ARPS
-        if (context.selectedInstrumentTab() != 3 && ArpGUI.arpCopyMelodyInst.isSelected()
+        if (context.selectedInstrumentTab() != 3 && arpGUI.arpCopyMelodyInst.isSelected()
                 && !melodyGUI.getPanels().isEmpty() && !melodyGUI.getPanels().get(0).getMuteInst()) {
             if (!arpGUI.getPanels().isEmpty() && !arpGUI.getPanels().get(0).getLockInst()) {
                 arpGUI.getPanels().get(0).getInstrumentBox().initInstPool(org.vibehistorian.vibecomposer.InstUtils.POOL.MELODY);

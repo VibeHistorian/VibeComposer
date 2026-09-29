@@ -73,11 +73,13 @@ public class GenerationGUI {
 
     private final Context context;
     private final InstrumentPanelController panelController;
+    private final ArpGUI arpGUI;
     private boolean onComposeOptionsEnabled = true;
 
-    public GenerationGUI(Context context, InstrumentPanelController panelController) {
+    public GenerationGUI(Context context, InstrumentPanelController panelController, ArpGUI arpGUI) {
         this.context = context;
         this.panelController = panelController;
+        this.arpGUI = arpGUI;
     }
 
     public JPanel initRandomButtons() {
@@ -173,12 +175,12 @@ public class GenerationGUI {
         Random random = new Random();
         int bpm = random.nextInt(1 + ExtraSettingsGUI.bpmHigh.getInt() - ExtraSettingsGUI.bpmLow.getInt())
                 + ExtraSettingsGUI.bpmLow.getInt();
-        if (ArpGUI.arpAffectsBpm.isSelected()
+        if (arpGUI.arpAffectsBpm.isSelected()
                 && !panelController.getInstList(INST.ARP).isEmpty()) {
             double highestArpPattern = panelController.getInstList(INST.ARP).stream()
-                    .map(panel -> ( ((ArpPanel) panel).getPatternRepeat()
-                            * ((ArpPanel) panel).getHitsPerPattern())
-                            / (((ArpPanel) panel).getChordSpan() * 8.0))
+                    .map(panel -> ( panel.getPatternRepeat()
+                            * panel.getHitsPerPattern())
+                            / (panel.getChordSpan() * 8.0))
                     .max(Double::compare).get();
             LG.i("Repeater value: " + highestArpPattern);
             if (highestArpPattern > 1) {

@@ -48,35 +48,36 @@ import java.util.function.Consumer;
 /** Builds and owns arpeggio controls and their UI state. */
 public class ArpGUI extends InstGUI<ArpPanel> {
 
-	public static JCheckBox randomArpsGenerateOnCompose;
-	public static JCheckBox randomArpTranspose;
-	public static JCheckBox randomArpPattern;
-	public static JCheckBox randomArpHitsPerPattern;
-	public static JCheckBox randomArpAllSameInst;
-	public static JCheckBox randomArpAllSameHits;
-	public static JCheckBox randomArpLimitPowerOfTwo;
-	public static KnobPanel randomArpShiftChance;
-	public static ScrollComboBox<Integer> randomArpHitsPicker;
-	public static JCheckBox randomArpUseChordFill;
-	public static ScrollComboBox<String> randomArpStretchType;
-	public static ScrollComboBox<Integer> randomArpStretchPicker;
-	public static KnobPanel randomArpStretchGenerationChance;
-	public static KnobPanel randomArpMaxExceptionChance;
-	public static JCheckBox randomArpUseOctaveAdjustments;
-	public static KnobPanel randomArpMaxRepeat;
-	public static KnobPanel randomArpMinVel;
-	public static KnobPanel randomArpMaxVel;
-	public static KnobPanel randomArpMinLength;
-	public static KnobPanel randomArpMaxLength;
-	public static JCheckBox randomArpCorrectMelodyNotes;
-	public static JCheckBox arpCopyMelodyInst;
-	public static JCheckBox arpAffectsBpm;
+	public JCheckBox randomArpsGenerateOnCompose;
+	public JCheckBox randomArpTranspose;
+	public JCheckBox randomArpPattern;
+	public JCheckBox randomArpHitsPerPattern;
+	public JCheckBox randomArpAllSameInst;
+	public JCheckBox randomArpAllSameHits;
+	public JCheckBox randomArpLimitPowerOfTwo;
+	public KnobPanel randomArpShiftChance;
+	public ScrollComboBox<Integer> randomArpHitsPicker;
+	public JCheckBox randomArpUseChordFill;
+	public ScrollComboBox<String> randomArpStretchType;
+	public ScrollComboBox<Integer> randomArpStretchPicker;
+	public KnobPanel randomArpStretchGenerationChance;
+	public KnobPanel randomArpMaxExceptionChance;
+	public JCheckBox randomArpUseOctaveAdjustments;
+	public KnobPanel randomArpMaxRepeat;
+	public KnobPanel randomArpMinVel;
+	public KnobPanel randomArpMaxVel;
+	public KnobPanel randomArpMinLength;
+	public KnobPanel randomArpMaxLength;
+	public JCheckBox randomArpCorrectMelodyNotes;
+	public JCheckBox arpCopyMelodyInst;
+	public JCheckBox arpAffectsBpm;
 
 	private final Context context;
 
 	public ArpGUI(Context context, InstrumentPanelController panelController) {
 		super(INST.ARP, panelController);
 		this.context = context;
+		arpAffectsBpm = new CustomCheckBox("BPM slowed by ARP", false);
 	}
 
 	@Override public ArpPanel createPanel(SoloMuter.Context soloMuterContext) {

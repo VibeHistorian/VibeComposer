@@ -21,12 +21,14 @@ public final class PresetViewController {
 	private final MainWindowControls mainWindowControls;
 	private final ScoreGUI scoreGUI;
 	private final DrumGUI drumGUI;
+	private final ArpGUI arpGUI;
 
 	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI,
-			DrumGUI drumGUI) {
+			DrumGUI drumGUI, ArpGUI arpGUI) {
 		this.mainWindowControls = mainWindowControls;
 		this.scoreGUI = scoreGUI;
 		this.drumGUI = drumGUI;
+		this.arpGUI = arpGUI;
 	}
 
 	public GUIPreset loadPreset() {
@@ -246,27 +248,27 @@ public final class PresetViewController {
 		components.add(ChordGUI.randomChordShiftChance);
 
 		// arp panel
-		components.add(ArpGUI.randomArpsGenerateOnCompose);
-		components.add(ArpGUI.randomArpHitsPicker);
-		components.add(ArpGUI.randomArpHitsPerPattern);
-		components.add(ArpGUI.randomArpAllSameHits);
-		components.add(ArpGUI.randomArpUseChordFill);
-		components.add(ArpGUI.randomArpTranspose);
-		components.add(ArpGUI.randomArpStretchType);
-		components.add(ArpGUI.randomArpStretchPicker);
-		components.add(ArpGUI.randomArpStretchGenerationChance);
-		components.add(ArpGUI.randomArpMaxExceptionChance);
-		components.add(ArpGUI.arpCopyMelodyInst);
-		components.add(ArpGUI.randomArpAllSameInst);
-		components.add(ArpGUI.randomArpLimitPowerOfTwo);
+		components.add(arpGUI.randomArpsGenerateOnCompose);
+		components.add(arpGUI.randomArpHitsPicker);
+		components.add(arpGUI.randomArpHitsPerPattern);
+		components.add(arpGUI.randomArpAllSameHits);
+		components.add(arpGUI.randomArpUseChordFill);
+		components.add(arpGUI.randomArpTranspose);
+		components.add(arpGUI.randomArpStretchType);
+		components.add(arpGUI.randomArpStretchPicker);
+		components.add(arpGUI.randomArpStretchGenerationChance);
+		components.add(arpGUI.randomArpMaxExceptionChance);
+		components.add(arpGUI.arpCopyMelodyInst);
+		components.add(arpGUI.randomArpAllSameInst);
+		components.add(arpGUI.randomArpLimitPowerOfTwo);
 		components.add(null);
-		components.add(ArpGUI.randomArpMaxRepeat);
-		components.add(ArpGUI.randomArpMinVel);
-		components.add(ArpGUI.randomArpMaxVel);
-		components.add(ArpGUI.randomArpPattern);
-		components.add(ArpGUI.randomArpShiftChance);
-		components.add(ArpGUI.randomArpMinLength);
-		components.add(ArpGUI.randomArpMaxLength);
+		components.add(arpGUI.randomArpMaxRepeat);
+		components.add(arpGUI.randomArpMinVel);
+		components.add(arpGUI.randomArpMaxVel);
+		components.add(arpGUI.randomArpPattern);
+		components.add(arpGUI.randomArpShiftChance);
+		components.add(arpGUI.randomArpMinLength);
+		components.add(arpGUI.randomArpMaxLength);
 
 		// drum panel
 		components.add(drumGUI.randomDrumsGenerateOnCompose);
@@ -323,7 +325,7 @@ public final class PresetViewController {
 		components.add(ExtraSettingsGUI.globalNoteLengthMultiplier);
 		components.add(ChordGUI.copyChordsAfterGenerate);
 		components.add(scoreGUI.getMiniScorePopup());
-		components.add(ArpGUI.randomArpCorrectMelodyNotes);
+		components.add(arpGUI.randomArpCorrectMelodyNotes);
 		components.add(ExtraSettingsGUI.reuseMidiChannelAfterCopy);
 		components.add(ExtraSettingsGUI.transposeNotePreview);
 		components.add(ExtraSettingsGUI.moveStartToCustomizedSection);
