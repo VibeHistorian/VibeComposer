@@ -142,6 +142,28 @@ public final class PlaybackController {
 		flushMidiEvents();
 	}
 
+	public void setSliderStart(int value) {
+		if (value >= slider.getMaximum()) {
+			return;
+		}
+		if (slider.getUpperValue() < value) {
+			slider.setUpperValue(value);
+			midiNavigate(value, 0);
+		}
+		slider.setValue(value);
+	}
+
+	public void setSliderEnd(int value) {
+		if (value >= slider.getMaximum()) {
+			value = Math.max(0, slider.getMaximum() - 1);
+		}
+		if (slider.getValue() > value) {
+			slider.setValue(value);
+		}
+		slider.setUpperValue(value);
+		midiNavigate(value, 0);
+	}
+
 	public void resetSequencerTickPosition() {
 		int position = slider.getValue();
 		if (position >= slider.getMaximum()) {

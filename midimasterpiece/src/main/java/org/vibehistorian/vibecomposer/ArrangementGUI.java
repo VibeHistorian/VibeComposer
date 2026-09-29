@@ -20,6 +20,7 @@ see <https://www.gnu.org/licenses/>.
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
@@ -159,22 +160,64 @@ public class ArrangementGUI {
 		arrangementGUI = this;
 	}
 
+	public static boolean isCustomSection() {
+		return arrSection != null && arrSection.getSelectedIndex() != 0
+				&& !GLOBAL.equals(arrSection.getVal());
+	}
+
+	public static int calculateSectionMeasureStart(int sectionIndex) {
+		if (actualArrangement == null || actualArrangement.getSections() == null
+				|| PlaybackState.sliderMeasureStartTimes == null
+				|| PlaybackState.sliderMeasureStartTimes.isEmpty()
+				|| sectionIndex < 0 || sectionIndex > actualArrangement.getSections().size()) {
+			return 0;
+		}
+		List<Section> sections = actualArrangement.getSections();
+		int measureCounter = 0;
+		for (int i = 1; i < sections.size() && i < sectionIndex; i++) {
+			measureCounter += sections.get(i).getMeasures();
+		}
+		return OMNI.clamp(measureCounter, 0, PlaybackState.sliderMeasureStartTimes.size() - 1);
+	}
+
+	public static Pair<MidiUtils.ScaleMode, Integer> keyChangeAt(int sectionIndex) {
+		if (actualArrangement == null || actualArrangement.getSections() == null || sectionIndex < 0
+				|| sectionIndex >= actualArrangement.getSections().size()) {
+			return null;
+		}
+
+		MidiUtils.ScaleMode lastMode = MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal());
+		int lastKeyChange = 0;
+		for (int i = 0; i < sectionIndex; i++) {
+			Section section = actualArrangement.getSections().get(i);
+			if (section.isSectionVar(4)) {
+				SectionConfig sectionConfig = section.getSecConfig();
+				lastMode = sectionConfig.getCustomScale() != null
+						? sectionConfig.getCustomScale() : lastMode;
+				lastKeyChange = sectionConfig.getCustomKeyChange() != null
+						? sectionConfig.getCustomKeyChange() : lastKeyChange;
+			}
+		}
+		return Pair.of(lastMode, lastKeyChange);
+	}
+
+	public void trySliderStartChange(int sectionIndex) {
+		if (ExtraSettingsGUI.moveStartToCustomizedSection == null
+				|| !ExtraSettingsGUI.moveStartToCustomizedSection.isSelected()
+				|| PlaybackState.sliderMeasureStartTimes == null) {
+			return;
+		}
+		int measure = calculateSectionMeasureStart(sectionIndex);
+		context.setSliderStart(PlaybackState.sliderMeasureStartTimes.get(measure));
+	}
+
 	private List<? extends InstPanel> getInstList(int instrument) {
 		return panelController.getInstList(INST.fromIndex(instrument));
 	}
 
 	private List<? extends InstPart> getInstrumentParts(int instrument) {
-		return getInstPartsFromInstPanels(getInstList(instrument), false);
-	}
-
-	private List<InstPart> getInstPartsFromInstPanels(List<? extends InstPanel> panels,
-			boolean removeMuted) {
-		List<InstPart> parts = new ArrayList<>();
-		for (InstPanel panel : panels) {
-			if (!removeMuted || !panel.getMuteInst()) {
-				parts.add(panel.toInstPart(GenerationGUI.lastRandomSeed));
-			}
-		}
+		List<InstPart> parts = panelController.getPartsFromPanels(getInstList(instrument), false,
+				GenerationGUI.lastRandomSeed);
 		InstPart.sortParts(parts);
 		return parts;
 	}
@@ -193,15 +236,15 @@ public class ArrangementGUI {
 	private List<InstPart> getInstPartsFromCustomSectionInstPanels(INST instrument) {
 		JPanel panePanel = (JPanel) panelController.getInstPane(instrument)
 				.getViewport().getView();
-		List<InstPart> parts = new ArrayList<>();
+		List<InstPanel> panels = new ArrayList<>();
 		int seed = GenerationGUI.lastRandomSeed == 0
 				? GenerationGUI.randomSeed.getValue() : GenerationGUI.lastRandomSeed;
 		for (Component component : panePanel.getComponents()) {
 			if (component instanceof InstPanel) {
-				parts.add(((InstPanel) component).toInstPart(seed));
+				panels.add((InstPanel) component);
 			}
 		}
-		return parts;
+		return panelController.getPartsFromPanels(panels, false, seed);
 	}
 
 	/** Supplies the cross-tab work that belongs to the main window. */
@@ -209,7 +252,6 @@ public class ArrangementGUI {
 		JTabbedPane getInstrumentTabPane();
 		JButton makeButton(String name, String actionCommand, int width, int height);
 		void recalculateTabPaneCounts();
-		boolean canRegenerateOnChange();
 		void regenerate();
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
@@ -218,7 +260,7 @@ public class ArrangementGUI {
 				int startY, int anchorSide);
 		Point getVariationPopupLocation();
 		Dimension getVariationPopupWindowSize();
-		void trySliderStartChange(int sectionIndex);
+		void setSliderStart(int sliderValue);
 		MidiEditPopup.Context getMidiEditPopupContext();
 		GUIConfig getSelectedConfigHistory();
 		void recalculateAfterSectionRecompose();
@@ -838,7 +880,7 @@ public class ArrangementGUI {
 			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
 					Integer.parseInt(ArrangementGUI.pieceLength.getText()));
 			context.recalculateTabPaneCounts();
-			if (context.canRegenerateOnChange()) {
+			if (GenerationGUI.canRegenerateOnChange()) {
 				context.regenerate();
 			}
 		}, 90);
@@ -853,7 +895,7 @@ public class ArrangementGUI {
 		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70)));
 		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons,
 				this::switchPanelsForSectionSelection, this::openVariationPopup,
-				context::trySliderStartChange, () -> actualArrangement.getSections().size());
+				this::trySliderStartChange, () -> actualArrangement.getSections().size());
 
 		JButton commitPanelBtn = context.makeButton("Apply", "ArrangementApply", 50, 30);
 		JButton commitAllPanelBtn = SwingUtils.makeButton("Apply..", e -> context.openApplyCustomSectionPopup(), 60);

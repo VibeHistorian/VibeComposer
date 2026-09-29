@@ -286,6 +286,15 @@ Phase 4 reduces `VibeComposerGUI` further by assigning remaining cohesive work t
 - `VibeComposerGUI` retains feature config mapping and application-level restore order, including module settings, panel recreation, and display-mode updates. The config-file chooser delegates the parsed config back to the window for that same restore sequence.
 - Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; preset/config load and save flows were not manually exercised.
 
+### Phase 4.4 status — complete
+
+- Moved panel lookup by instrument/order and panel-to-part conversion into `InstrumentPanelController`. Arrangement map creation and custom-section panel snapshots now use those controller operations.
+- Moved custom-section detection, section measure-start lookup, and section key-change lookup into `ArrangementGUI`. Moved playhead range updates into `PlaybackController` and connected arrangement section selection directly to those owners.
+- Added `MidiAuditionController` for keyboard and MIDI-editor note selection, transposition, and audition dispatch through `MidiDeviceController`. MIDI handler and editor callbacks now call it directly.
+- Removed the corresponding `VibeComposerGUI` forwarding methods for panel lookup, custom-section detection, regeneration eligibility, section/playhead helpers, and note audition. Remaining instrument-list and affected-panel accessors retain active callers.
+- After assembling the main window, wired its `KnobPanel` controls to the shared regenerate-on-change context. Detached knobs retain their disabled regeneration behavior.
+- Verification: `mvn -DskipTests compile` succeeds. Tests were skipped; keyboard, MIDI input, and editor audition were not manually exercised.
+
 ### Phase 4 completion criteria
 
 - `VibeComposerGUI` primarily owns the window lifecycle, module/context assembly, and short cross-feature sequencing calls.

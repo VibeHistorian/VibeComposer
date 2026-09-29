@@ -22,7 +22,6 @@ public final class InstrumentPanelController {
 		int getRandomPanelCount(INST instrument);
 		JScrollPane getPanelScrollPane(INST instrument);
 		boolean isFullMode();
-		boolean isCustomSection();
 		boolean reverseDrumPanelOrder();
 		void removeComboBoxArrows(InstPanel panel);
 		void recalculateArrangementPartMaps();
@@ -32,7 +31,6 @@ public final class InstrumentPanelController {
 		void recalculateAfterPanelRemoval();
 		void repaintInstrumentTabs();
 		void repaintMainWindow();
-		boolean canRegenerateOnChange();
 		void regenerate();
 		int getCurrentSeed();
 		void randomizePanels(INST instrument, int panelCount, boolean onlyAdd, Integer seed,
@@ -54,6 +52,22 @@ public final class InstrumentPanelController {
 		return context.getPanels(instrument);
 	}
 
+	public InstPanel getPanelByOrder(INST instrument, int panelOrder) {
+		return getInstList(instrument).stream()
+				.filter(panel -> panel.getPanelOrder() == panelOrder).findFirst().get();
+	}
+
+	public List<InstPart> getPartsFromPanels(List<? extends InstPanel> panels,
+			boolean removeMuted, int seed) {
+		List<InstPart> parts = new ArrayList<>();
+		for (InstPanel panel : panels) {
+			if (!removeMuted || !panel.getMuteInst()) {
+				parts.add(panel.toInstPart(seed));
+			}
+		}
+		return parts;
+	}
+
 	public int getAbsoluteOrder(INST instrument, int panelOrder) {
 		List<Integer> allPanelOrders = getInstList(instrument).stream()
 				.map(InstPanel::getPanelOrder).sorted().collect(Collectors.toList());
@@ -70,7 +84,7 @@ public final class InstrumentPanelController {
 
 	@SuppressWarnings("unchecked")
 	public List<InstPanel> getAffectedPanels(INST instrument) {
-		if (context.isCustomSection()) {
+		if (ArrangementGUI.isCustomSection()) {
 			return getSectionPanelList(instrument);
 		}
 		return (List<InstPanel>) getInstList(instrument);
@@ -104,7 +118,7 @@ public final class InstrumentPanelController {
 
 		panel.getToggleableComponents().forEach(component ->
 				component.setVisible(context.isFullMode()));
-		if (context.isCustomSection()) {
+		if (ArrangementGUI.isCustomSection()) {
 			panel.toggleGlobalElements(false);
 			panel.toggleEnabledCopyRemove(false);
 			if (instrument == INST.DRUM) {
@@ -149,12 +163,12 @@ public final class InstrumentPanelController {
 	}
 
 	public void generatePanels(INST instrument, boolean triggerRegenerate) {
-		int panelCount = context.isCustomSection()
+		int panelCount = ArrangementGUI.isCustomSection()
 				? getInstList(instrument).size()
 				: context.getRandomPanelCount(instrument);
 		createRandomPanels(instrument, panelCount, false, null, null);
 		context.recalculateAfterPanelGeneration();
-		if (triggerRegenerate && context.canRegenerateOnChange()) {
+		if (triggerRegenerate && GenerationGUI.canRegenerateOnChange()) {
 			context.regenerate();
 		}
 	}
@@ -259,7 +273,7 @@ public final class InstrumentPanelController {
 
 	public boolean recreateImportedParts(INST instrument, List<InstPart> parts,
 										 boolean clearPreviousPanels) {
-		boolean customSection = context.isCustomSection();
+		boolean customSection = ArrangementGUI.isCustomSection();
 		if (!clearPreviousPanels && customSection) {
 			return false;
 		}

@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
@@ -95,6 +96,7 @@ public class VibeComposerGUI extends JFrame
 	private static final long serialVersionUID = -677536546851756969L;
 
 	private final MidiDeviceController midiDeviceController;
+	private final MidiAuditionController midiAuditionController;
 	private final MidiCcController midiCcController;
 	private final MidiExportController midiExportController;
 	private final MainWindowControls mainWindowControls;
@@ -105,7 +107,7 @@ public class VibeComposerGUI extends JFrame
 			return VibeComposerGUI.getAffectedPanels(instrument);
 		}
 		@Override public boolean canRegenerateOnChange() {
-			return VibeComposerGUI.canRegenerateOnChange();
+			return GenerationGUI.canRegenerateOnChange();
 		}
 		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 	};
@@ -152,7 +154,6 @@ public class VibeComposerGUI extends JFrame
 					return getOwnedInstrumentControls(instrument).getPanelScrollPane();
 				}
 				@Override public boolean isFullMode() { return UITheme.isFullMode; }
-				@Override public boolean isCustomSection() { return VibeComposerGUI.isCustomSection(); }
 				@Override public boolean reverseDrumPanelOrder() {
 					return DrumGUI.bottomUpReverseDrumPanels.isSelected();
 				}
@@ -180,9 +181,6 @@ public class VibeComposerGUI extends JFrame
 				}
 				@Override public void repaintInstrumentTabs() { instrumentTabPane.repaint(); }
 				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
-				@Override public boolean canRegenerateOnChange() {
-					return VibeComposerGUI.this.canRegenerateOnChange();
-				}
 				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 				@Override public int getCurrentSeed() { return GenerationGUI.lastRandomSeed; }
 				@Override public void randomizePanels(INST instrument, int panelCount,
@@ -243,14 +241,14 @@ public class VibeComposerGUI extends JFrame
 			return VibeComposerGUI.getInstList(instrument);
 		}
 		@Override public Pair<ScaleMode, Integer> getScaleKey(Section section) {
-			return VibeComposerGUI.keyChangeAt(
+			return ArrangementGUI.keyChangeAt(
 					ArrangementGUI.actualArrangement.getSections().indexOf(section));
 		}
 		@Override public int getTranspose() { return ScoreGUI.transposeScore.getInt(); }
 		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST part,
 				int partOrder, Section section, boolean overrideLastPlayed) {
-			VibeComposerGUI.this.playNote(pitch, durationMs, velocity, part.getIndex(), partOrder, section,
+			midiAuditionController.playNote(pitch, durationMs, velocity, part, partOrder, section,
 					overrideLastPlayed);
 		}
 		@Override public void markArrangementManual() {
@@ -338,11 +336,11 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public void playNextNote(int keyboardTranspose, int velocity, INST instrument,
 				int partOrder) {
-			VibeComposerGUI.this.playNextNote(keyboardTranspose, velocity, instrument.getIndex(), partOrder);
+			midiAuditionController.playNextNote(keyboardTranspose, velocity, instrument, partOrder);
 		}
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST instrument,
 				int partOrder) {
-			VibeComposerGUI.this.playNote(pitch, durationMs, velocity, instrument.getIndex(), partOrder,
+			midiAuditionController.playNote(pitch, durationMs, velocity, instrument, partOrder,
 					ArrangementGUI.actualArrangement.getSections().get(0), true);
 		}
 	});
@@ -423,6 +421,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 						null);
 			}
 		});
+		midiAuditionController = new MidiAuditionController(instrumentPanelController,
+				midiDeviceController);
 		midiCcController = new MidiCcController(new MidiCcController.Context() {
 			@Override public boolean useMidiCc() { return ExtraSettingsGUI.useMidiCC.isSelected(); }
 			@Override public List<? extends InstPanel> getInstrumentPanels(INST instrument) {
@@ -525,7 +525,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				VibeComposerGUI.this.switchAllOnComposeCheckboxes(state);
 			}
 			@Override public int getSelectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
-			@Override public boolean canRegenerateOnChange() { return VibeComposerGUI.canRegenerateOnChange(); }
 			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 		}, instrumentPanelController);
 	}
@@ -541,9 +540,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void recalculateTabPaneCounts() {
 				VibeComposerGUI.this.recalculateTabPaneCounts();
-			}
-			@Override public boolean canRegenerateOnChange() {
-				return VibeComposerGUI.this.canRegenerateOnChange();
 			}
 			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 			@Override public void openApplyCustomSectionPopup() {
@@ -576,8 +572,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public MidiEditPopup.Context getMidiEditPopupContext() {
 				return midiEditPopupContext;
 			}
-			@Override public void trySliderStartChange(int sectionIndex) {
-				VibeComposerGUI.this.trySliderStartChange(sectionIndex);
+			@Override public void setSliderStart(int sliderValue) {
+				playbackController.setSliderStart(sliderValue);
 			}
 			@Override public GUIConfig getSelectedConfigHistory() {
 				return configHistory.getItemCount() > 0 ? configHistory.getVal() : null;
@@ -628,7 +624,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return VibeComposerGUI.this;
 			}
 			@Override public void setSliderEnd(int value) {
-				VibeComposerGUI.this.setSliderEnd(value);
+				playbackController.setSliderEnd(value);
 			}
 			@Override public void savePauseInfo() {
 				playbackController.savePauseInfo();
@@ -650,10 +646,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}
 			@Override public void togglePanelMute(INST part, int panelOrder) {
-				getPanelByOrder(part.getIndex(), panelOrder).getSoloMuter().toggleMute();
+				instrumentPanelController.getPanelByOrder(part, panelOrder).getSoloMuter().toggleMute();
 			}
 			@Override public void togglePanelSolo(INST part, int panelOrder) {
-				InstPanel panel = getPanelByOrder(part.getIndex(), panelOrder);
+				InstPanel panel = instrumentPanelController.getPanelByOrder(part, panelOrder);
 				boolean unsoloAll = globalSoloMuter.soloState != State.OFF
 						&& soloMuteController.isSingleSolo()
 						&& panel.getSoloMuter().soloState == State.FULL;
@@ -694,11 +690,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
 			}
-			@Override
-			public boolean canRegenerateOnChange() {
-				return VibeComposerGUI.this.canRegenerateOnChange();
-			}
-
 			@Override
 			public void regenerate() {
 				VibeComposerGUI.this.regenerate();
@@ -936,7 +927,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		//createHorizontalSeparator(400, this);
 
 		// ---- CONTROL PANEL -----
-		mainWindowControls.addComposeControls(everythingPanel, constraints, 410, GridBagConstraints.CENTER, scoreGUI.createTransposeControl(), ExtraSettingsGUI.bpmLow.getInt(), ExtraSettingsGUI.bpmHigh.getInt(), ChordGUI.currentChords);
+		KnobPanel globalTransposeControl = scoreGUI.createTransposeControl();
+		mainWindowControls.addComposeControls(everythingPanel, constraints, 410,
+				GridBagConstraints.CENTER, globalTransposeControl, ExtraSettingsGUI.bpmLow.getInt(),
+				ExtraSettingsGUI.bpmHigh.getInt(), ChordGUI.currentChords);
 
 
 		// ---- PLAY PANEL ----
@@ -964,6 +958,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		add(everythingPane, constraints);
 		LG.i("Add everything: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		setFullMode(isFullMode);
+		configureKnobContexts(everythingPanel);
 		LG.i("Full: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		instrumentTabUndoManager.setRecordingEvents(true);
 		instrumentTabPane.setSelectedIndex(7);
@@ -2105,7 +2100,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			recalculateSoloMuters();
 		}
 
-		if (triggerRegenerate && canRegenerateOnChange()) {
+		if (triggerRegenerate && GenerationGUI.canRegenerateOnChange()) {
 			regenerate();
 		}
 
@@ -2119,7 +2114,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void assignSequenceTrack(int instrument, int panelOrder, int trackNumber) {
-		getPanelByOrder(instrument, panelOrder).setSequenceTrack(trackNumber);
+		instrumentPanelController.getPanelByOrder(INST.fromIndex(instrument), panelOrder)
+				.setSequenceTrack(trackNumber);
 	}
 
 	private void clearAllSeeds() {
@@ -2252,6 +2248,18 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		panel.setInstrumentControlContext(instrumentControlContext);
 	}
 
+	private void configureKnobContexts(Container container) {
+		for (Component component : container.getComponents()) {
+			if (component instanceof KnobPanel) {
+				((KnobPanel) component).getKnob()
+						.setInstrumentControlContext(instrumentControlContext);
+			}
+			if (component instanceof Container) {
+				configureKnobContexts((Container) component);
+			}
+		}
+	}
+
 	public void configureInstPanelContext(InstPanel panel) {
 		panel.setContext(instPanelContext, instrumentPanelController);
 	}
@@ -2268,171 +2276,13 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		refreshBannedInstruments();
 		instrumentPanelController.randomizePanel(panel);
-		if (canRegenerateOnChange()) {
+		if (GenerationGUI.canRegenerateOnChange()) {
 			regenerate();
 		}
 
 		LG.i("Finished '" + actionName + "' in: "
 				+ (System.currentTimeMillis() - actionSystemTime) + " ms");
 		mainWindowControls.getMessageLabel().setText("::" + actionName + "::");
-	}
-
-	public static boolean isCustomSection() {
-		return ArrangementGUI.arrSection != null && ArrangementGUI.arrSection.getSelectedIndex() != 0 && !ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal());
-	}
-
-	public static InstPanel getPanelByOrder(int part, int partOrder) {
-		return getInstList(part).stream().filter(e -> e.getPanelOrder() == partOrder).findFirst()
-				.get();
-	}
-
-	public static boolean canRegenerateOnChange() {
-		return sequencer != null && regenerateWhenValuesChange.isSelected()
-				&& !heavyBackgroundTasksInProgress && ArrangementGUI.arrSection.getSelectedIndex() == 0;
-	}
-
-	public static int calculateSectionMeasureStart(int sectIndex) {
-		if (ArrangementGUI.actualArrangement == null || ArrangementGUI.actualArrangement.getSections() == null
-				|| sliderMeasureStartTimes == null || sliderMeasureStartTimes.isEmpty()
-				|| sectIndex < 0 || sectIndex > ArrangementGUI.actualArrangement.getSections().size()) {
-			return 0;
-		}
-		List<Section> secs = ArrangementGUI.actualArrangement.getSections();
-		int measureCounter = 0;
-		for (int i = 1; i < secs.size() && i < sectIndex; i++) {
-			measureCounter += secs.get(i).getMeasures();
-		}
-		return OMNI.clamp(measureCounter, 0, sliderMeasureStartTimes.size() - 1);
-	}
-
-	public void setSliderStart(int val) {
-		if (val >= slider.getMaximum()) {
-			return;
-		}
-		if (slider.getUpperValue() < val) {
-			slider.setUpperValue(val);
-			playbackController.midiNavigate(val, 0);
-		}
-		slider.setValue(val);
-	}
-
-	public void setSliderEnd(int val) {
-		if (val >= slider.getMaximum()) {
-			val = Math.max(0, slider.getMaximum() - 1);
-		}
-		if (slider.getValue() > val) {
-			slider.setValue(val);
-		}
-		slider.setUpperValue(val);
-		playbackController.midiNavigate(val, 0);
-	}
-
-	public void trySliderStartChange(int sectIndex) {
-		if (ExtraSettingsGUI.moveStartToCustomizedSection == null || !ExtraSettingsGUI.moveStartToCustomizedSection.isSelected()
-				|| sliderMeasureStartTimes == null)
-			return;
-
-		int measure = calculateSectionMeasureStart(sectIndex);
-		int startSliderVal = sliderMeasureStartTimes.get(measure);
-		setSliderStart(startSliderVal);
-	}
-
-
-
-	public void playNextNote(int keyboardTranspose, int velocity, int part, int partOrder) {
-		part = part < 0 ? INST.MELODY.getIndex() : part;
-		partOrder = partOrder < 1 ? 1 : partOrder;
-		LG.i(keyboardTranspose + ", " + velocity + ", " + part + ", " + partOrder);
-		Phrase nextNoteMelody = INST.fromIndex(part) == INST.MELODY
-				&& guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi() != null
-				? guiConfig.getMelodyParts().get(partOrder-1).getCustomMidi().makePhrase() : null;
-		int transpose = keyboardTranspose;
-		if (nextNoteMelody == null) {
-			LG.d("No custom melody to play!");
-			nextNoteMelody = MelodyMidiDropPane.userMelody;
-			if (nextNoteMelody == null) {
-				LG.d("No user melody/midi to play!");
-				Part scorePart = (ScoreGUI.scorePanel == null || ScoreGUI.scorePanel.score == null) ? null : ScoreGUI.scorePanel.score.getPart(instNames[part] + "" + (partOrder-1));
-				nextNoteMelody = scorePart == null ? null : scorePart.getPhrase(0);
-				if (nextNoteMelody == null) {
-					LG.i("No actual melody to play!");
-					return;
-				}
-				transpose += -1 * (getInstList(INST.fromIndex(part)).get(partOrder-1).getTranspose()
-						+ ScoreGUI.transposeScore.getInt());
-			}
-		}
-		int nextNoteIndex = getNextNoteIndex(part, partOrder) % nextNoteMelody.size();
-		Note n;
-		while ((n = nextNoteMelody.getNote(nextNoteIndex++)) != null) {
-			if (n.getPitch() >= 1) {
-				playNote(n.getPitch() + transpose, (int) (n.getDuration() * 1000 * 60 / guiConfig.getBpm()),
-						velocity, part, partOrder, ArrangementGUI.actualArrangement.getSections().get(0), true);
-				break;
-			}
-		}
-	}
-
-	public void playNote(int pitch, int durationMs, int velocity, int part, int partOrder,
-			Section sec, boolean overrideLastPlayed) {
-		if (sequencer == null || !sequencer.isOpen() || (pitch < 0)
-				|| (!overrideLastPlayed && System.currentTimeMillis() - lastPlayedMs < 100)) {
-			return;
-		}
-
-		InstPanel ip = getPanelByOrder(part, partOrder);
-		Integer trackNum = ip.getSequenceTrack();
-		if (trackNum == null || trackNum < 0) {
-			return;
-		}
-		try {
-			if (part < 4 && ExtraSettingsGUI.transposeNotePreview.isSelected()) {
-				Pair<ScaleMode, Integer> scaleKey = keyChangeAt(
-						ArrangementGUI.actualArrangement.getSections().indexOf(sec));
-				int extraTranspose = (part > 0) ? ip.getTranspose() : 0;
-				List<Note> notes = Collections.singletonList(new Note(
-						(part > 0) ? pitch : (pitch + ip.getTranspose()), durationMs / 1000.0));
-				if (scaleKey != null) {
-					boolean snapToScale = (scaleKey.getLeft() != ScaleMode.IONIAN)
-							|| ExtraSettingsGUI.transposedNotesForceScale.isSelected();
-					MidiUtils.transposeNotes(notes, ScaleMode.IONIAN.noteAdjustScale,
-							scaleKey.getLeft().noteAdjustScale, snapToScale);
-					extraTranspose += scaleKey.getRight();
-				}
-
-				pitch = notes.get(0).getPitch() + ScoreGUI.transposeScore.getInt() + extraTranspose
-						+ sec.getTransposeVariation(part, partOrder);
-
-				if (pitch < 0 || pitch > 127) {
-					LG.d("Pitch too high to play: " + pitch);
-					return;
-				}
-			}
-
-			midiDeviceController.playNote(ip.getMidiChannel() - 1, pitch, velocity, durationMs);
-		} catch (InvalidMidiDataException e) {
-			LG.e(e);
-		}
-	}
-
-	public static Pair<ScaleMode, Integer> keyChangeAt(int sectionIndex) {
-		if (ArrangementGUI.actualArrangement == null || ArrangementGUI.actualArrangement.getSections() == null || sectionIndex < 0
-				|| sectionIndex >= ArrangementGUI.actualArrangement.getSections().size()) {
-			return null;
-		}
-
-		ScaleMode lastMode = ScaleMode.valueOf(scaleMode.getVal());
-		int lastKeyChange = 0;
-		for (int i = 0; i < sectionIndex; i++) {
-			Section sec = ArrangementGUI.actualArrangement.getSections().get(i);
-			if (sec.isSectionVar(4)) {
-				SectionConfig secC = sec.getSecConfig();
-				lastMode = secC.getCustomScale() != null ? secC.getCustomScale() : lastMode;
-				lastKeyChange = secC.getCustomKeyChange() != null ? secC.getCustomKeyChange()
-						: lastKeyChange;
-			}
-		}
-		return Pair.of(lastMode, lastKeyChange);
 	}
 
 	public static String getFilenameForSaving(String oldName) {

@@ -29,7 +29,6 @@ public class GenerationGUI {
         JButton makeButton(String name, String actionCommand);
         void switchAllOnComposeCheckboxes(boolean state);
         int getSelectedInstrumentTab();
-        boolean canRegenerateOnChange();
         void regenerate();
     }
 
@@ -53,6 +52,12 @@ public class GenerationGUI {
     public static int getCurrentSeed() {
         return (randomSeed != null && randomSeed.getValue() != 0) ? randomSeed.getValue()
                 : lastRandomSeed;
+    }
+
+    public static boolean canRegenerateOnChange() {
+        return PlaybackState.sequencer != null && regenerateWhenValuesChange.isSelected()
+                && !ApplicationSessionState.heavyBackgroundTasksInProgress
+                && ArrangementGUI.arrSection.getSelectedIndex() == 0;
     }
 
     public static void saveToConfig(GUIConfig gc) {
@@ -111,7 +116,7 @@ public class GenerationGUI {
                     cp.setStrum(cp.getStrum() / 2);
                 }
             }
-            if (context.canRegenerateOnChange()) {
+            if (canRegenerateOnChange()) {
                 context.regenerate();
             }
         });
@@ -259,7 +264,7 @@ public class GenerationGUI {
                 }
             }
         }
-        if (context.canRegenerateOnChange()) {
+        if (canRegenerateOnChange()) {
             context.regenerate();
         }
     }

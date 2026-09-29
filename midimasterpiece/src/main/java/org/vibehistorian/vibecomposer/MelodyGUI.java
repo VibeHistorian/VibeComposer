@@ -230,7 +230,6 @@ public class MelodyGUI implements InstrumentGUIControls {
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
-		boolean canRegenerateOnChange();
 		void regenerate();
 	}
 
@@ -310,7 +309,7 @@ public class MelodyGUI implements InstrumentGUIControls {
 
 		JButton generateUserMelodySeed = SwingUtils.makeButton("Randomize Seed", e -> {
 			randomizeMelodySeeds();
-			if (context.canRegenerateOnChange()) {
+			if (GenerationGUI.canRegenerateOnChange()) {
 				context.regenerate();
 			}
 		});
