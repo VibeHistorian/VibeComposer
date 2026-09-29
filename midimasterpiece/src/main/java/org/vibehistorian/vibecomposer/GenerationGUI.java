@@ -1,10 +1,12 @@
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
@@ -34,7 +36,6 @@ public class GenerationGUI {
     public static JCheckBox randomizeInstOnComposeOrGen;
     public static JCheckBox randomizeBpmOnCompose;
     public static JCheckBox randomizeTransposeOnCompose;
-    public static JCheckBox randomizeChordStrumsOnCompose;
     public static JButton switchOnComposeRandom;
     public static JButton sidechainPatterns;
     public static JButton sidechainPatternsTab;
@@ -99,10 +100,23 @@ public class GenerationGUI {
         randomButtonsPanel.add(randomizeTranspose);
         randomButtonsPanel.add(randomizeTransposeOnCompose);
 
-        JButton randomizeStrums = context.makeButton("Randomize Strums", "RandStrums");
+        JButton randomizeStrums = SwingUtils.makeButton("Randomize Strums", e -> {
+            for (InstPanel p : panelController.getAffectedPanels(INST.CHORD)) {
+                ChordPanel cp = (ChordPanel) p;
+                Pair<StrumType, Integer> strumPair = ChordGUI.getRandomStrumPair();
+                cp.setStrum(strumPair.getRight());
+                cp.setStrumType(strumPair.getLeft());
+                if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
+                        && cp.getStrum() > 999) {
+                    cp.setStrum(cp.getStrum() / 2);
+                }
+            }
+            if (context.canRegenerateOnChange()) {
+                context.regenerate();
+            }
+        });
         randomizeStrums.setAlignmentX(Component.LEFT_ALIGNMENT);
         randomButtonsPanel.add(randomizeStrums);
-        randomizeChordStrumsOnCompose = SwingUtils.makeCheckBox("on Compose", false, true);
 
         switchOnComposeRandom = SwingUtils.makeButton("Untick all 'on Compose'", e -> {
             onComposeOptionsEnabled = !onComposeOptionsEnabled;

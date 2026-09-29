@@ -30,7 +30,6 @@ import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
-import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
@@ -1642,7 +1641,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		DrumGUI.randomDrumsGenerateOnCompose.setSelected(state);
 		GenerationGUI.randomizeBpmOnCompose.setSelected(state);
 		GenerationGUI.randomizeTransposeOnCompose.setSelected(state);
-		//GenerationGUI.randomizeChordStrumsOnCompose.setSelected(state);
 		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(state);
 		ArpGUI.randomArpHitsPerPattern.setSelected(state);
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
@@ -1662,7 +1660,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		DrumGUI.randomDrumsGenerateOnCompose.setForeground(fg);
 		GenerationGUI.randomizeBpmOnCompose.setForeground(fg);
 		GenerationGUI.randomizeTransposeOnCompose.setForeground(fg);
-		//GenerationGUI.randomizeChordStrumsOnCompose.setForeground(fg);
 		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(fg);
 		ArrangementGUI.randomizeArrangementOnCompose.setForeground(fg);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(fg);
@@ -2008,33 +2005,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 		refreshBannedInstruments();
-
-		/*{
-			int inst = melodyGUI.getPanels().get(0).getInstrument();
-			melodyGUI.getPanels().get(0).getInstrumentBox().initInstPool(melodyGUI.getPanels().get(0).getInstPool());
-			melodyGUI.getPanels().get(0).getInstrumentBox().setInstrument(inst);
-			inst = bassPanel.getInstrument();
-			bassPanel.getInstrumentBox().initInstPool(bassPanel.getInstPool());
-			bassPanel.getInstrumentBox().setInstrument(inst);
-		}*/
-
-
-		if ("RandStrums".equals(actionCommand)
-				|| (isCompose && GenerationGUI.randomizeChordStrumsOnCompose.isSelected())) {
-			for (InstPanel p : getAffectedPanels(INST.CHORD)) {
-				ChordPanel cp = (ChordPanel) p;
-				Pair<StrumType, Integer> strumPair = ChordGUI.getRandomStrumPair();
-				cp.setStrum(strumPair.getRight());
-				cp.setStrumType(strumPair.getLeft());
-				if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
-						&& cp.getStrum() > 999) {
-					cp.setStrum(cp.getStrum() / 2);
-				}
-			}
-			if (!isCompose) {
-				triggerRegenerate = true;
-			}
-		}
 
 		if ("RandomizeInst".equals(actionCommand)) {
 			generationGUI.randomizeInstruments();
