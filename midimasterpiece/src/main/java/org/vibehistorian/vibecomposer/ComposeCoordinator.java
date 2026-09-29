@@ -216,8 +216,8 @@ public final class ComposeCoordinator {
             MidiGenerator.recalculateDurations(ExtraSettingsGUI.stretchMidi.getInt());
             MidiGenerator.GLOBAL_DURATION_MULTIPLIER = ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0;
             MelodyGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
-                    && MelodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected();
-            MelodyGenerator.TARGET_NOTES = (MelodyGUI.melody1ForcePatterns.isSelected()
+                    && melodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected();
+            MelodyGenerator.TARGET_NOTES = (melodyGUI.melody1ForcePatterns.isSelected()
                     && !melodyGUI.getPanels().isEmpty()
                     && !melodyGUI.getPanels().get(0).getNoteTargetsButton().isEnabled())
                     ? melodyGUI.getPanels().stream()
@@ -246,7 +246,7 @@ public final class ComposeCoordinator {
                 MidiGenerator.userChordsDurations.clear();
             }
 
-            if (MelodyMidiDropPane.userMelody != null && MelodyGUI.useUserMelody.isSelected()) {
+            if (MelodyMidiDropPane.userMelody != null && melodyGUI.useUserMelody.isSelected()) {
                 MelodyGenerator.userMelody = MelodyMidiDropPane.userMelody;
             } else {
                 MelodyGenerator.userMelody = null;

@@ -25,15 +25,17 @@ public final class AppearanceController {
 	private final InstrumentPanelController instrumentPanelController;
 	private final DrumGUI drumGUI;
 	private final ArpGUI arpGUI;
+	private final MelodyGUI melodyGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
 			InstrumentPanelController instrumentPanelController, DrumGUI drumGUI,
-			ArpGUI arpGUI) {
+			ArpGUI arpGUI, MelodyGUI melodyGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
 		this.instrumentPanelController = instrumentPanelController;
 		this.drumGUI = drumGUI;
 		this.arpGUI = arpGUI;
+		this.melodyGUI = melodyGUI;
 	}
 
 	public void switchDarkMode() {
@@ -56,7 +58,7 @@ public final class AppearanceController {
 		PlaybackState.currentTime.setForeground(toggledUIColor);
 		PlaybackState.totalTime.setForeground(toggledUIColor);
 		arpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
-		MelodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
+		melodyGUI.randomMelodyOnRegenerate.setForeground(toggledRegenerateColor);
 		switchAllOnComposeCheckboxesForegrounds(toggledComposeColor);
 
 		panelColorHigh = UIManager.getColor("Panel.background");
@@ -116,7 +118,7 @@ public final class AppearanceController {
 	}
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color foreground) {
-		MelodyGUI.generateMelodiesOnCompose.setForeground(foreground);
+		melodyGUI.generateMelodiesOnCompose.setForeground(foreground);
 		ChordGUI.randomChordsGenerateOnCompose.setForeground(foreground);
 		arpGUI.randomArpsGenerateOnCompose.setForeground(foreground);
 		drumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
@@ -126,8 +128,8 @@ public final class AppearanceController {
 		ArrangementGUI.randomizeArrangementOnCompose.setForeground(foreground);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(foreground);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(foreground);
-		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(foreground);
-		MelodyGUI.melodyPatternRandomizeOnCompose.setForeground(foreground);
+		melodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(foreground);
+		melodyGUI.melodyPatternRandomizeOnCompose.setForeground(foreground);
 		GenerationGUI.switchOnComposeRandom.setForeground(foreground);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setForeground(foreground);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setForeground(foreground);

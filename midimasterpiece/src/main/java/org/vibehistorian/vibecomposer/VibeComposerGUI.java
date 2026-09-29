@@ -184,6 +184,9 @@ public class VibeComposerGUI extends JFrame
 					ArrangementGUI.actualArrangement.getSections().indexOf(section));
 		}
 		@Override public int getTranspose() { return scoreGUI.getTranspose(); }
+		@Override public List<Integer> getMelodyBlockChoicePreference() {
+			return melodyGUI.melodyBlockChoicePreference.getValues();
+		}
 		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST part,
 				int partOrder, Section section, boolean overrideLastPlayed) {
@@ -448,7 +451,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				midiDeviceController.markSoundbankRefreshNeeded();
 			}
 			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
-		}, drumGUI, arpGUI, instrumentPanelController, scoreGUI);
+		}, drumGUI, arpGUI, melodyGUI, instrumentPanelController, scoreGUI);
 		extraSettingsGUI.initExtraSettings();
 	}
 
@@ -462,7 +465,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public int getSelectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
 			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
-		}, instrumentPanelController, arpGUI);
+		}, instrumentPanelController, arpGUI, melodyGUI);
 	}
 
 	private void initArrangementGUI() {
@@ -865,7 +868,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		// ---- PLAY PANEL ----
 		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
-		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI, arpGUI);
+		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI,
+				arpGUI, melodyGUI);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -1576,7 +1580,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
-		MelodyGUI.generateMelodiesOnCompose.setSelected(state);
+		melodyGUI.generateMelodiesOnCompose.setSelected(state);
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
 		arpGUI.randomArpsGenerateOnCompose.setSelected(state);
 		drumGUI.randomDrumsGenerateOnCompose.setSelected(state);
@@ -1587,8 +1591,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setSelected(state);
-		MelodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
-		MelodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
+		melodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
+		melodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setSelected(state);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setSelected(state);
 		ChordGUI.copyChordsAfterGenerate.setSelected(state);
@@ -1662,7 +1666,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (appearanceController == null) {
 			appearanceController = new AppearanceController(new AppearanceController.Context() {
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
-			}, mainWindowControls, instrumentPanelController, drumGUI, arpGUI);
+			}, mainWindowControls, instrumentPanelController, drumGUI, arpGUI, melodyGUI);
 		}
 		return appearanceController;
 	}
@@ -2045,7 +2049,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		// Prepare application state and clear transient controls before module settings load.
 		ArrangementGUI.arrSection.setVisible(false);
 		ArrangementGUI.arrSection.setSelectedIndex(0);
-		MelodyGUI.randomMelodyOnRegenerate.setSelected(false);
+		melodyGUI.randomMelodyOnRegenerate.setSelected(false);
 		randomSeed.setValue((int) gc.getRandomSeed());
 		lastRandomSeed = randomSeed.getValue();
 		mainWindowControls.getMidiMode().setSelected(gc.isMidiMode());

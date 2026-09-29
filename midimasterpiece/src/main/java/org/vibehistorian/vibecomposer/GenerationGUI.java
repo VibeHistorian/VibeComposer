@@ -74,12 +74,15 @@ public class GenerationGUI {
     private final Context context;
     private final InstrumentPanelController panelController;
     private final ArpGUI arpGUI;
+    private final MelodyGUI melodyGUI;
     private boolean onComposeOptionsEnabled = true;
 
-    public GenerationGUI(Context context, InstrumentPanelController panelController, ArpGUI arpGUI) {
+    public GenerationGUI(Context context, InstrumentPanelController panelController,
+            ArpGUI arpGUI, MelodyGUI melodyGUI) {
         this.context = context;
         this.panelController = panelController;
         this.arpGUI = arpGUI;
+        this.melodyGUI = melodyGUI;
     }
 
     public JPanel initRandomButtons() {
@@ -212,7 +215,7 @@ public class GenerationGUI {
         }
         List<? extends InstPanel> melodyPanels = panelController.getInstList(INST.MELODY);
         if (!melodyPanels.isEmpty()) {
-            if (!MelodyGUI.combineMelodyTracks.isSelected()) {
+            if (!melodyGUI.combineMelodyTracks.isSelected()) {
                 for (InstPanel panel : melodyPanels) {
                     MelodyPanel melodyPanel = (MelodyPanel) panel;
                     if (!melodyPanel.getLockInst()) {

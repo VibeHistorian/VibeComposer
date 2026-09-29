@@ -54,6 +54,7 @@ public class MidiEditPopup extends CloseablePopup {
 		List<? extends InstPanel> getInstList(INST instrument);
 		Pair<ScaleMode, Integer> getScaleKey(Section section);
 		int getTranspose();
+		List<Integer> getMelodyBlockChoicePreference();
 		void regenerateInPlace();
 		void markArrangementManual();
 		void repaintActualArrangement();
@@ -736,7 +737,8 @@ public class MidiEditPopup extends CloseablePopup {
 			switch (INST.fromIndex(part)) {
 			case MELODY:
 				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
-						sec.getTypeMelodyOffset(), sec, variations, false, MelodyGUI.melodyBlockChoicePreference.getValues());
+						sec.getTypeMelodyOffset(), sec, variations, false,
+						context.getMelodyBlockChoicePreference());
 				break;
 			case BASS:
 				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);

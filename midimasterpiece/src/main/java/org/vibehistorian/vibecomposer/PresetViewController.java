@@ -22,13 +22,15 @@ public final class PresetViewController {
 	private final ScoreGUI scoreGUI;
 	private final DrumGUI drumGUI;
 	private final ArpGUI arpGUI;
+	private final MelodyGUI melodyGUI;
 
 	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI,
-			DrumGUI drumGUI, ArpGUI arpGUI) {
+			DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI) {
 		this.mainWindowControls = mainWindowControls;
 		this.scoreGUI = scoreGUI;
 		this.drumGUI = drumGUI;
 		this.arpGUI = arpGUI;
+		this.melodyGUI = melodyGUI;
 	}
 
 	public GUIPreset loadPreset() {
@@ -220,14 +222,14 @@ public final class PresetViewController {
 	private List<Component> makeSettableComponentList() {
 		List<Component> components = new ArrayList<>();
 		// melody panel
-		components.add(MelodyGUI.generateMelodiesOnCompose);
+		components.add(melodyGUI.generateMelodiesOnCompose);
 		components.add(null);
-		components.add(MelodyGUI.combineMelodyTracks);
-		components.add(MelodyGUI.randomMelodySameSeed);
-		components.add(MelodyGUI.randomMelodyOnRegenerate);
-		components.add(MelodyGUI.useUserMelody);
-		components.add(MelodyGUI.melodyPatternRandomizeOnCompose);
-		components.add(MelodyGUI.melodyTargetNotesRandomizeOnCompose);
+		components.add(melodyGUI.combineMelodyTracks);
+		components.add(melodyGUI.randomMelodySameSeed);
+		components.add(melodyGUI.randomMelodyOnRegenerate);
+		components.add(melodyGUI.useUserMelody);
+		components.add(melodyGUI.melodyPatternRandomizeOnCompose);
+		components.add(melodyGUI.melodyTargetNotesRandomizeOnCompose);
 
 		// chord panel
 		components.add(ChordGUI.randomChordsGenerateOnCompose);

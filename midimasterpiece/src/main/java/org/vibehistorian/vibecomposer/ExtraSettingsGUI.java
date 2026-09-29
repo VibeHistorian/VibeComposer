@@ -95,14 +95,16 @@ public class ExtraSettingsGUI {
     private final Context context;
     private final DrumGUI drumGUI;
     private final ArpGUI arpGUI;
+    private final MelodyGUI melodyGUI;
     private final InstrumentPanelController panelController;
     private final ScoreGUI scoreGUI;
 
-    public ExtraSettingsGUI(Context context, DrumGUI drumGUI, ArpGUI arpGUI,
+    public ExtraSettingsGUI(Context context, DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI,
             InstrumentPanelController panelController, ScoreGUI scoreGUI) {
         this.context = context;
         this.drumGUI = drumGUI;
         this.arpGUI = arpGUI;
+        this.melodyGUI = melodyGUI;
         this.panelController = panelController;
         this.scoreGUI = scoreGUI;
     }
@@ -182,7 +184,7 @@ public class ExtraSettingsGUI {
 		initExtraSettingsInstruments(instrumentsSettingsPanel);
 		initExtraSettingsPause(pauseBehaviorPanel);
 		ChordGUI.initExtraSettingsChords(chordChoicePanel);
-		MelodyGUI.initExtraSettingsMelody(melodyTweaksPanel);
+		melodyGUI.initExtraSettingsMelody(melodyTweaksPanel);
 		initExtraSettingsBpm(bpmLowHighPanel);
 		initExtraSettingsDisplay(displayStylePanel);
 		initGenerationSettings(panelGenerationSettingsPanel);
@@ -433,7 +435,6 @@ public class ExtraSettingsGUI {
 		orderedTransposeGeneration = new CustomCheckBox("Ordered Transpose Generation", false);
 		configHistoryStoreRegeneratedTracks = new CustomCheckBox(
 				"Track History - Include Regenerated Tracks", true);
-		MelodyGUI.melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
 		patternApplyPausesWhenGenerating = new CustomCheckBox("Apply Pause% on Generate", true);
 		allowValuesOutOfRange = new CustomCheckBox("(Experimental!) Allow Knob Values Out of Range", false);
 

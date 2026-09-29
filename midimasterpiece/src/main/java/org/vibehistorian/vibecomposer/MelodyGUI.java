@@ -54,53 +54,54 @@ import java.util.stream.Collectors;
 /** Builds and owns the melody controls and their UI state. */
 public class MelodyGUI extends InstGUI<MelodyPanel> {
 
-	public static JCheckBox generateMelodiesOnCompose;
-	public static KnobPanel melodyUseOldAlgoChance;
-	public static JCheckBox randomMelodyOnRegenerate;
-	public static JCheckBox randomMelodySameSeed;
-	public static JCheckBox melodyFirstNoteFromChord;
-	public static JCheckBox randomChordNote;
-	public static JCheckBox melodyBasicChordsOnly;
-	public static KnobPanel melodyChordNoteTarget;
-	public static KnobPanel melodyTonicNoteTarget;
-	public static JCheckBox melodyEmphasizeKey;
-	public static KnobPanel melodyModeNoteTarget;
-	public static JCheckBox useUserMelody;
-	public static MelodyMidiDropPane dropPane;
-	public static ScrollComboBox<String> userMelodyScaleModeSelect;
-	public static JCheckBox melody1ForcePatterns;
-	public static JCheckBox melodyArpySurprises;
-	public static JCheckBox melodySingleNoteExceptions;
-	public static JCheckBox melodyFillPausesPerChord;
-	public static KnobPanel melodyNewBlocksChance;
-	public static JCheckBox melodyLegacyMode;
-	public static JCheckBox melodyAvoidChordJumpsLegacy;
-	public static JCheckBox melodyUseDirectionsFromProgression;
-	public static JCheckBox melodyPatternFlip;
-	public static ScrollComboBox<MelodyUtils.NoteTargetDirection> noteTargetDirectionChoice;
-	public static ScrollComboBox<String> melodyBlockTargetMode;
-	public static JCheckBox melodyTargetNotesRandomizeOnCompose;
-	public static ScrollComboBox<String> melodyPatternEffect;
-	public static ScrollComboBox<String> melodyRhythmAccents;
-	public static ScrollComboBox<String> melodyRhythmAccentsMode;
-	public static JCheckBox melodyRhythmAccentsPocket;
-	public static JCheckBox melodyPatternRandomizeOnCompose;
-	public static KnobPanel melodyReplaceAvoidNotes;
-	public static KnobPanel melodyMaxDirChanges;
-	public static KnobPanel melodyTargetNoteVariation;
-	public static JPanel melodyBlockTypePreferences;
-	public static VeloRect[] melodyBlockTypePreference;
-	public static RandomIntegerListButton melodyBlockChoicePreference;
-	public static JCheckBox melodyUseCustomDurations;
-	public static JCheckBox melodyCustomDurationsRandomWeighting;
-	public static JCheckBox melodyCustomDurationsStrictMode;
-	public static JCheckBox combineMelodyTracks;
+	public JCheckBox generateMelodiesOnCompose;
+	public KnobPanel melodyUseOldAlgoChance;
+	public JCheckBox randomMelodyOnRegenerate;
+	public JCheckBox randomMelodySameSeed;
+	public JCheckBox melodyFirstNoteFromChord;
+	public JCheckBox randomChordNote;
+	public JCheckBox melodyBasicChordsOnly;
+	public KnobPanel melodyChordNoteTarget;
+	public KnobPanel melodyTonicNoteTarget;
+	public JCheckBox melodyEmphasizeKey;
+	public KnobPanel melodyModeNoteTarget;
+	public JCheckBox useUserMelody;
+	public MelodyMidiDropPane dropPane;
+	public ScrollComboBox<String> userMelodyScaleModeSelect;
+	public JCheckBox melody1ForcePatterns;
+	public JCheckBox melodyArpySurprises;
+	public JCheckBox melodySingleNoteExceptions;
+	public JCheckBox melodyFillPausesPerChord;
+	public KnobPanel melodyNewBlocksChance;
+	public JCheckBox melodyLegacyMode;
+	public JCheckBox melodyAvoidChordJumpsLegacy;
+	public JCheckBox melodyUseDirectionsFromProgression;
+	public JCheckBox melodyPatternFlip;
+	public ScrollComboBox<MelodyUtils.NoteTargetDirection> noteTargetDirectionChoice;
+	public ScrollComboBox<String> melodyBlockTargetMode;
+	public JCheckBox melodyTargetNotesRandomizeOnCompose;
+	public ScrollComboBox<String> melodyPatternEffect;
+	public ScrollComboBox<String> melodyRhythmAccents;
+	public ScrollComboBox<String> melodyRhythmAccentsMode;
+	public JCheckBox melodyRhythmAccentsPocket;
+	public JCheckBox melodyPatternRandomizeOnCompose;
+	public KnobPanel melodyReplaceAvoidNotes;
+	public KnobPanel melodyMaxDirChanges;
+	public KnobPanel melodyTargetNoteVariation;
+	public JPanel melodyBlockTypePreferences;
+	public VeloRect[] melodyBlockTypePreference;
+	public RandomIntegerListButton melodyBlockChoicePreference;
+	public JCheckBox melodyUseCustomDurations;
+	public JCheckBox melodyCustomDurationsRandomWeighting;
+	public JCheckBox melodyCustomDurationsStrictMode;
+	public JCheckBox combineMelodyTracks;
 
 	private final Context context;
 
 	public MelodyGUI(Context context, InstrumentPanelController panelController) {
 		super(INST.MELODY, panelController);
 		this.context = context;
+		melodyPatternFlip = new CustomCheckBox("Inverse Melody1 Pattern", false);
 	}
 
 	@Override
@@ -446,7 +447,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		return settings;
 	}
 
-	public static void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
+	public void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
 		JPanel blockChoicePanel = new JPanel(new GridLayout(0, 2));
 		melodyBlockChoicePreference = new RandomIntegerListButton("0", null);
 		melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
