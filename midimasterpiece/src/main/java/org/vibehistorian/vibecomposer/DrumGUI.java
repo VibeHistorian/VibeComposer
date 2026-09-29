@@ -55,26 +55,27 @@ import java.util.function.Consumer;
 /** Builds and owns drum controls and drum panel generation. */
 public class DrumGUI extends InstGUI<DrumPanel> {
 
-	public static VeloRect drumVolumeSlider;
-	public static JCheckBox bottomUpReverseDrumPanels;
+	public VeloRect drumVolumeSlider;
+	public JCheckBox bottomUpReverseDrumPanels;
 
-	public static final List<Integer> PUNCHY_DRUMS = Arrays.asList(35, 36, 38, 39, 40);
-	public static final List<Integer> KICK_DRUMS = Arrays.asList(35, 36);
-	public static final List<Integer> SNARE_DRUMS = Arrays.asList(38, 40);
-	public static JCheckBox randomDrumsGenerateOnCompose;
-	public static KnobPanel randomDrumsOverrandomize;
-	public static KnobPanel randomDrumMaxSwingAdjust;
-	public static JCheckBox randomDrumSlide;
-	public static JCheckBox randomDrumPattern;
-	public static KnobPanel randomDrumVelocityPatternChance;
-	public static KnobPanel randomDrumShiftChance;
-	public static JCheckBox randomDrumUseChordFill;
-	public static KnobPanel humanizeDrums;
-	public static ScrollComboBox<String> randomDrumHitsMultiplier;
-	public static ScrollComboBox<String> randomDrumHitsMultiplierOnGenerate;
-	public static JCheckBox drumCustomMapping;
-	public static JTextField drumCustomMappingNumbers;
-	public static JCheckBox combineDrumTracks;
+	public static final List<Integer> PUNCHY_DRUMS = Collections.unmodifiableList(
+			Arrays.asList(35, 36, 38, 39, 40));
+	private static final List<Integer> KICK_DRUMS = Collections.unmodifiableList(Arrays.asList(35, 36));
+	private static final List<Integer> SNARE_DRUMS = Collections.unmodifiableList(Arrays.asList(38, 40));
+	public JCheckBox randomDrumsGenerateOnCompose;
+	public KnobPanel randomDrumsOverrandomize;
+	public KnobPanel randomDrumMaxSwingAdjust;
+	public JCheckBox randomDrumSlide;
+	public JCheckBox randomDrumPattern;
+	public KnobPanel randomDrumVelocityPatternChance;
+	public KnobPanel randomDrumShiftChance;
+	public JCheckBox randomDrumUseChordFill;
+	public KnobPanel humanizeDrums;
+	public ScrollComboBox<String> randomDrumHitsMultiplier;
+	public ScrollComboBox<String> randomDrumHitsMultiplierOnGenerate;
+	public JCheckBox drumCustomMapping;
+	public JTextField drumCustomMappingNumbers;
+	public JCheckBox combineDrumTracks;
 
 	private final Context context;
 

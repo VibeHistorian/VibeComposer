@@ -20,10 +20,13 @@ public final class PresetViewController {
 
 	private final MainWindowControls mainWindowControls;
 	private final ScoreGUI scoreGUI;
+	private final DrumGUI drumGUI;
 
-	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI) {
+	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI,
+			DrumGUI drumGUI) {
 		this.mainWindowControls = mainWindowControls;
 		this.scoreGUI = scoreGUI;
+		this.drumGUI = drumGUI;
 	}
 
 	public GUIPreset loadPreset() {
@@ -266,13 +269,13 @@ public final class PresetViewController {
 		components.add(ArpGUI.randomArpMaxLength);
 
 		// drum panel
-		components.add(DrumGUI.randomDrumsGenerateOnCompose);
-		components.add(DrumGUI.randomDrumUseChordFill);
-		components.add(DrumGUI.randomDrumSlide);
-		components.add(DrumGUI.combineDrumTracks);
-		components.add(DrumGUI.randomDrumPattern);
-		components.add(DrumGUI.randomDrumVelocityPatternChance);
-		components.add(DrumGUI.randomDrumShiftChance);
+		components.add(drumGUI.randomDrumsGenerateOnCompose);
+		components.add(drumGUI.randomDrumUseChordFill);
+		components.add(drumGUI.randomDrumSlide);
+		components.add(drumGUI.combineDrumTracks);
+		components.add(drumGUI.randomDrumPattern);
+		components.add(drumGUI.randomDrumVelocityPatternChance);
+		components.add(drumGUI.randomDrumShiftChance);
 
 		// arrangement and randomization panels
 		components.add(ArrangementGUI.randomizeArrangementOnCompose);
@@ -303,7 +306,7 @@ public final class PresetViewController {
 		components.add(ExtraSettingsGUI.stretchMidi);
 		components.add(ExtraSettingsGUI.displayVeloRectValues);
 		components.add(ExtraSettingsGUI.knobControlByDragging);
-		components.add(DrumGUI.bottomUpReverseDrumPanels);
+		components.add(drumGUI.bottomUpReverseDrumPanels);
 		components.add(ExtraSettingsGUI.orderedTransposeGeneration);
 		components.add(ExtraSettingsGUI.patternApplyPausesWhenGenerating);
 		components.add(ExtraSettingsGUI.highlightPatterns);
@@ -314,9 +317,9 @@ public final class PresetViewController {
 		components.add(ExtraSettingsGUI.sidechainPatternsOnCompose);
 
 		// VibeComposer 2
-		components.add(DrumGUI.randomDrumHitsMultiplierOnGenerate);
+		components.add(drumGUI.randomDrumHitsMultiplierOnGenerate);
 		components.add(null);
-		components.add(DrumGUI.randomDrumsOverrandomize);
+		components.add(drumGUI.randomDrumsOverrandomize);
 		components.add(ExtraSettingsGUI.globalNoteLengthMultiplier);
 		components.add(ChordGUI.copyChordsAfterGenerate);
 		components.add(scoreGUI.getMiniScorePopup());

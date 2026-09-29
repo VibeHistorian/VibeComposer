@@ -50,6 +50,7 @@ public final class ComposeCoordinator {
     private final MelodyGUI melodyGUI;
     private final ChordGUI chordGUI;
     private final ArpGUI arpGUI;
+    private final DrumGUI drumGUI;
     private final GenerationGUI generationGUI;
     private final ArrangementGUI arrangementGUI;
     private final ScoreGUI scoreGUI;
@@ -63,6 +64,7 @@ public final class ComposeCoordinator {
                               SoloMuteController soloMuteController,
                               MainWindowControls mainWindowControls,
                               MelodyGUI melodyGUI, ChordGUI chordGUI, ArpGUI arpGUI,
+                              DrumGUI drumGUI,
                               GenerationGUI generationGUI,
                               ArrangementGUI arrangementGUI, ScoreGUI scoreGUI,
                               JLabel totalTime) {
@@ -75,6 +77,7 @@ public final class ComposeCoordinator {
         this.melodyGUI = melodyGUI;
         this.chordGUI = chordGUI;
         this.arpGUI = arpGUI;
+        this.drumGUI = drumGUI;
         this.generationGUI = generationGUI;
         this.arrangementGUI = arrangementGUI;
         this.scoreGUI = scoreGUI;
@@ -209,7 +212,7 @@ public final class ComposeCoordinator {
 
     private void fillUserParameters(boolean regenerate, boolean manual) {
         try {
-            MidiGenerator.COLLAPSE_DRUM_TRACKS = DrumGUI.combineDrumTracks.isSelected();
+            MidiGenerator.COLLAPSE_DRUM_TRACKS = drumGUI.combineDrumTracks.isSelected();
             MidiGenerator.recalculateDurations(ExtraSettingsGUI.stretchMidi.getInt());
             MidiGenerator.GLOBAL_DURATION_MULTIPLIER = ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0;
             MelodyGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
@@ -290,8 +293,8 @@ public final class ComposeCoordinator {
         if (!regenerate && ExtraSettingsGUI.randomizeTimingsOnCompose.isSelected()) {
             if (globalSwingOverride.isSelected()) {
                 globalSwingOverrideValue
-                        .setInt(50 + new Random().nextInt(DrumGUI.randomDrumMaxSwingAdjust.getInt() * 2 + 1)
-                                - DrumGUI.randomDrumMaxSwingAdjust.getInt());
+                        .setInt(50 + new Random().nextInt(drumGUI.randomDrumMaxSwingAdjust.getInt() * 2 + 1)
+                                - drumGUI.randomDrumMaxSwingAdjust.getInt());
             }
             double randomBeatMultiplier = new Random().nextDouble();
             if (randomBeatMultiplier < 0.85) {

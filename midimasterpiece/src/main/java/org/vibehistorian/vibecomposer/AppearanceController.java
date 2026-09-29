@@ -23,12 +23,14 @@ public final class AppearanceController {
 	private final Context context;
 	private final MainWindowControls mainWindowControls;
 	private final InstrumentPanelController instrumentPanelController;
+	private final DrumGUI drumGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
-			InstrumentPanelController instrumentPanelController) {
+			InstrumentPanelController instrumentPanelController, DrumGUI drumGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
 		this.instrumentPanelController = instrumentPanelController;
+		this.drumGUI = drumGUI;
 	}
 
 	public void switchDarkMode() {
@@ -114,7 +116,7 @@ public final class AppearanceController {
 		MelodyGUI.generateMelodiesOnCompose.setForeground(foreground);
 		ChordGUI.randomChordsGenerateOnCompose.setForeground(foreground);
 		ArpGUI.randomArpsGenerateOnCompose.setForeground(foreground);
-		DrumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
+		drumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
 		GenerationGUI.randomizeBpmOnCompose.setForeground(foreground);
 		GenerationGUI.randomizeTransposeOnCompose.setForeground(foreground);
 		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(foreground);

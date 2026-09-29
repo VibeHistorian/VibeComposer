@@ -364,7 +364,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public List<? extends InstPanel> getInstrumentPanels(INST instrument) {
 				return VibeComposerGUI.getInstList(instrument);
 			}
-			@Override public int getDrumVolume() { return DrumGUI.drumVolumeSlider.getValue(); }
+			@Override public int getDrumVolume() { return drumGUI.drumVolumeSlider.getValue(); }
 			@Override public int getGlobalVolume() { return mainWindowControls.getGlobalVolSlider().getValue(); }
 			@Override public int getGlobalReverb() { return mainWindowControls.getGlobalReverbSlider().getValue(); }
 			@Override public int getGlobalChorus() { return mainWindowControls.getGlobalChorusSlider().getValue(); }
@@ -865,7 +865,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		// ---- PLAY PANEL ----
 		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
-		presetViewController = new PresetViewController(mainWindowControls, scoreGUI);
+		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -1579,7 +1579,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		MelodyGUI.generateMelodiesOnCompose.setSelected(state);
 		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
 		ArpGUI.randomArpsGenerateOnCompose.setSelected(state);
-		DrumGUI.randomDrumsGenerateOnCompose.setSelected(state);
+		drumGUI.randomDrumsGenerateOnCompose.setSelected(state);
 		GenerationGUI.randomizeBpmOnCompose.setSelected(state);
 		GenerationGUI.randomizeTransposeOnCompose.setSelected(state);
 		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(state);
@@ -1662,7 +1662,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (appearanceController == null) {
 			appearanceController = new AppearanceController(new AppearanceController.Context() {
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
-			}, mainWindowControls, instrumentPanelController);
+			}, mainWindowControls, instrumentPanelController, drumGUI);
 		}
 		return appearanceController;
 	}
@@ -1716,7 +1716,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					VibeComposerGUI.this.recalculateTabPaneCounts();
 				}
 			}, playbackController, midiDeviceController, midiCcController, soloMuteController,
-					mainWindowControls, melodyGUI, chordGUI, arpGUI, generationGUI,
+					mainWindowControls, melodyGUI, chordGUI, arpGUI, drumGUI, generationGUI,
 					arrangementGUI, scoreGUI, totalTime);
 		}
 		return composeCoordinator;
@@ -1870,7 +1870,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 		if (isCompose && getInstrumentControls(INST.DRUM).getEnabledCheckBox().isSelected()
-				&& DrumGUI.randomDrumsGenerateOnCompose.isSelected()) {
+				&& drumGUI.randomDrumsGenerateOnCompose.isSelected()) {
 			instrumentPanelController.generatePanels(INST.DRUM);
 		}
 

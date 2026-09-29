@@ -13,8 +13,6 @@ import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -217,13 +215,13 @@ public class ExtraSettingsGUI {
 		//                 drum mapping
 		JPanel drumMappingPanel = new JPanel();
 		drumMappingPanel.setLayout(new GridLayout(0, 2, 10, 30));
-		DrumGUI.drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
-		DrumGUI.drumCustomMapping.setToolTipText(
+		drumGUI.drumCustomMapping = new CustomCheckBox("Custom Drum Mapping", true);
+		drumGUI.drumCustomMapping.setToolTipText(
 				"<html>" + StringUtils.join(InstUtils.DRUM_INST_NAMES_SEMI, "|") + "</html>");
-		DrumGUI.drumCustomMappingNumbers = new JTextField(
+		drumGUI.drumCustomMappingNumbers = new JTextField(
 				StringUtils.join(InstUtils.DRUM_INST_NUMBERS_SEMI, ","));
-		drumMappingPanel.add(DrumGUI.drumCustomMapping);
-		drumMappingPanel.add(DrumGUI.drumCustomMappingNumbers);
+		drumMappingPanel.add(drumGUI.drumCustomMapping);
+		drumMappingPanel.add(drumGUI.drumCustomMappingNumbers);
 
 		scoreMidiPanel.add(padMidiPanel);
 		scoreMidiPanel.add(drumMappingPanel);
@@ -360,30 +358,26 @@ public class ExtraSettingsGUI {
 		});
 
 
-		DrumGUI.bottomUpReverseDrumPanels = new CustomCheckBox("Bottom-Top Drum Display", false);
-		DrumGUI.bottomUpReverseDrumPanels.addChangeListener(new ChangeListener() {
+		drumGUI.bottomUpReverseDrumPanels = new CustomCheckBox("Bottom-Top Drum Display", false);
+		drumGUI.bottomUpReverseDrumPanels.addChangeListener(e -> {
+            for (DrumPanel dp : drumGUI.getPanels()) {
+                dp.setVisible(false);
+                ((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).remove(dp);
 
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				for (DrumPanel dp : drumGUI.getPanels()) {
-					dp.setVisible(false);
-					((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).remove(dp);
+            }
+            List<DrumPanel> sortedDps = new ArrayList<>(drumGUI.getPanels());
+            sortedDps.sort(Comparator.comparing(InstPanel::getPanelOrder));
+            for (DrumPanel dp : sortedDps) {
+            if (!drumGUI.bottomUpReverseDrumPanels.isSelected()) {
+                    ((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp);
+                } else {
+                    ((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp, 0);
+                }
+                dp.setVisible(true);
+            }
+        });
 
-				}
-				List<DrumPanel> sortedDps = new ArrayList<>(drumGUI.getPanels());
-				sortedDps.sort(Comparator.comparing(InstPanel::getPanelOrder));
-				for (DrumPanel dp : sortedDps) {
-					if (!DrumGUI.bottomUpReverseDrumPanels.isSelected()) {
-						((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp);
-					} else {
-						((JPanel) drumGUI.getPanelScrollPane().getViewport().getView()).add(dp, 0);
-					}
-					dp.setVisible(true);
-				}
-			}
-		});
-
-		displayStylePanel.add(DrumGUI.bottomUpReverseDrumPanels);
+		displayStylePanel.add(drumGUI.bottomUpReverseDrumPanels);
 		displayStylePanel.add(checkbutt);
 		displayStylePanel.add(displayVeloRectValues);
 		displayStylePanel.add(knobControlByDragging);
@@ -395,7 +389,7 @@ public class ExtraSettingsGUI {
     public void initExtraSettingsHumanize(JPanel humanizationPanel) {
 		// HUMANIZATION
 		humanizeNotes = new DetachedKnobPanel("Humanize Notes<br>/10000", 150, 0, 1000);
-		DrumGUI.humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
+		drumGUI.humanizeDrums = new DetachedKnobPanel("Humanize Drums<br>/10000", 20, 0, 100);
 		globalNoteLengthMultiplier = new DetachedKnobPanel("Note Length Multiplier<br>/1000", 950,
 				250, 1000);
 
@@ -406,7 +400,7 @@ public class ExtraSettingsGUI {
 		swingUnitMultiplier.setSelectedIndex(0);
 
 		humanizationPanel.add(humanizeNotes);
-		humanizationPanel.add(DrumGUI.humanizeDrums);
+		humanizationPanel.add(drumGUI.humanizeDrums);
 		humanizationPanel.add(globalNoteLengthMultiplier);
 		swingMultiPanel.add(new JLabel("Swing Period Multiplier"));
 		swingMultiPanel.add(swingUnitMultiplier);
