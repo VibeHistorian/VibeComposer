@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Shared controls and panel collection owned by one instrument tab. */
-public abstract class InstGUI<P extends InstPanel> implements InstrumentGUIControls {
+public abstract class InstGUI<P extends InstPanel> {
 	protected final INST instrument;
 	protected final InstrumentPanelController panelController;
 	protected final List<P> panels = new ArrayList<>();
@@ -40,6 +40,14 @@ public abstract class InstGUI<P extends InstPanel> implements InstrumentGUIContr
 	/** Each instrument supplies its own randomization algorithm. */
 	public abstract void createRandomPanels(int panelCount, boolean onlyAdd,
 			Integer seed, InstPanel randomizedPanel);
+
+	public final int getRandomPanelCount() {
+		return Integer.parseInt(randomPanelsToGenerate.getText());
+	}
+
+	public boolean reversePanelOrder() {
+		return false;
+	}
 
 	protected final JScrollPane createPanelScrollPane(JPanel panelContainer) {
 		JScrollPane scrollPane = new JScrollPane() {
@@ -94,11 +102,10 @@ public abstract class InstGUI<P extends InstPanel> implements InstrumentGUIContr
 		return parts;
 	}
 
-	@Override public final JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
-	@Override public final VeloRect getGroupFilterSlider() { return groupFilterSlider; }
-	@Override public final JButton getAddPanelButton() { return addPanelButton; }
-	@Override public final JButton getGeneratePanelButton() { return generatePanelButton; }
-	@Override public final JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
-	@Override public final JScrollPane getPanelScrollPane() { return panelScrollPane; }
-	@Override public final List<P> getPanels() { return panels; }
+	public final JCheckBox getEnabledCheckBox() { return enabledCheckBox; }
+	public final VeloRect getGroupFilterSlider() { return groupFilterSlider; }
+	public final JButton getAddPanelButton() { return addPanelButton; }
+	public final JTextField getRandomPanelsToGenerate() { return randomPanelsToGenerate; }
+	public final JScrollPane getPanelScrollPane() { return panelScrollPane; }
+	public final List<P> getPanels() { return panels; }
 }

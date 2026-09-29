@@ -122,28 +122,13 @@ public class VibeComposerGUI extends JFrame
 			});
 	private final InstrumentPanelController instrumentPanelController =
 			new InstrumentPanelController(new InstrumentPanelController.Context() {
-				@Override public InstPanel createPanel(INST instrument) {
-					return getOwnedInstrumentControls(instrument)
+				@Override public InstPanel createConfiguredPanel(INST instrument) {
+					InstPanel panel = getOwnedInstrumentControls(instrument)
 							.createPanel(VibeComposerGUI.this);
-				}
-				@Override public void configurePanel(InstPanel panel) {
 					configureRandomizeAction(panel);
 					configureInstPanelContext(panel);
 					configureInstrumentControlContext(panel);
-				}
-				@Override public List<? extends InstPanel> getPanels(INST instrument) {
-					return getOwnedInstrumentControls(instrument).getPanels();
-				}
-				@Override public int getRandomPanelCount(INST instrument) {
-					return Integer.parseInt(getInstrumentControls(instrument)
-							.getRandomPanelsToGenerate().getText());
-				}
-				@Override public JScrollPane getPanelScrollPane(INST instrument) {
-					return getOwnedInstrumentControls(instrument).getPanelScrollPane();
-				}
-				@Override public boolean isFullMode() { return UITheme.isFullMode; }
-				@Override public boolean reverseDrumPanelOrder() {
-					return DrumGUI.bottomUpReverseDrumPanels.isSelected();
+					return panel;
 				}
 				@Override public void removeComboBoxArrows(InstPanel panel) {
 					VibeComposerGUI.this.removeComboBoxArrows(panel);
@@ -171,12 +156,7 @@ public class VibeComposerGUI extends JFrame
 				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 				@Override public int getCurrentSeed() { return GenerationGUI.lastRandomSeed; }
-				@Override public void randomizePanels(INST instrument, int panelCount,
-												  boolean onlyAdd, Integer seed, InstPanel randomizedPanel) {
-					getOwnedInstrumentControls(instrument).createRandomPanels(
-							panelCount, onlyAdd, seed, randomizedPanel);
-				}
-			});
+			}, this::getOwnedInstrumentControls);
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public INST getSelectedInstrument() {
 			return INST.fromIndex(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
@@ -488,9 +468,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private void initArrangementGUI() {
 		arrangementGUI = new ArrangementGUI(new ArrangementGUI.Context() {
-			@Override public JTabbedPane getInstrumentTabPane() {
-				return VibeComposerGUI.instrumentTabPane;
-			}
 			@Override public JButton makeButton(String name, String actionCommand, int width,
 					int height) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand, width, height);
@@ -505,14 +482,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void toggleButtonEnabledForPanels() {
 				VibeComposerGUI.this.toggleButtonEnabledForPanels();
 			}
-			@Override public InstPanel makeCustomSectionInstPanel(INST instrument) {
-				InstPanel panel = VibeComposerGUI.this
-						.getOwnedInstrumentControls(instrument).createPanel(VibeComposerGUI.this);
-				VibeComposerGUI.this.configureRandomizeAction(panel);
-				VibeComposerGUI.this.configureInstPanelContext(panel);
-				VibeComposerGUI.this.configureInstrumentControlContext(panel);
-				return panel;
-			}
 			@Override public void addArrangementComponents(JComponent sectionPane,
 					JComponent settings, int startY, int anchorSide) {
 				constraints.gridy = startY;
@@ -526,9 +495,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public Dimension getVariationPopupWindowSize() {
 				return VibeComposerGUI.this.getSize();
-			}
-			@Override public MidiEditPopup.Context getMidiEditPopupContext() {
-				return midiEditPopupContext;
 			}
 			@Override public void setSliderStart(int sliderValue) {
 				playbackController.setSliderStart(sliderValue);
@@ -546,7 +512,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					regenerate();
 				}
 			}
-		}, instrumentPanelController);
+		}, instrumentPanelController, instrumentTabPane, midiEditPopupContext);
 	}
 
 	private PartManagerPanel.Context createPartManagerContext() {

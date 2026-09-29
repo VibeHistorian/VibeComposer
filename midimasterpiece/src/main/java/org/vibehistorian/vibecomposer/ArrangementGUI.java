@@ -153,10 +153,15 @@ public class ArrangementGUI {
 
 	private final Context context;
 	private final InstrumentPanelController panelController;
+	private final JTabbedPane instrumentTabPane;
+	private final MidiEditPopup.Context midiEditPopupContext;
 
-	public ArrangementGUI(Context context, InstrumentPanelController panelController) {
+	public ArrangementGUI(Context context, InstrumentPanelController panelController,
+			JTabbedPane instrumentTabPane, MidiEditPopup.Context midiEditPopupContext) {
 		this.context = context;
 		this.panelController = panelController;
+		this.instrumentTabPane = instrumentTabPane;
+		this.midiEditPopupContext = midiEditPopupContext;
 		arrangementGUI = this;
 	}
 
@@ -249,19 +254,16 @@ public class ArrangementGUI {
 
 	/** Supplies the cross-tab work that belongs to the main window. */
 	public interface Context {
-		JTabbedPane getInstrumentTabPane();
 		JButton makeButton(String name, String actionCommand, int width, int height);
 		void recalculateTabPaneCounts();
 		void regenerate();
 		void openApplyCustomSectionPopup();
 		void toggleButtonEnabledForPanels();
-		InstPanel makeCustomSectionInstPanel(INST instrument);
 		void addArrangementComponents(JComponent sectionPane, JComponent settings,
 				int startY, int anchorSide);
 		Point getVariationPopupLocation();
 		Dimension getVariationPopupWindowSize();
 		void setSliderStart(int sliderValue);
-		MidiEditPopup.Context getMidiEditPopupContext();
 		GUIConfig getSelectedConfigHistory();
 		void recalculateAfterSectionRecompose();
 		void regenerateAfterSectionRecomposeIfEnabled();
@@ -448,7 +450,7 @@ public class ArrangementGUI {
 							int order = ((InstPanel) component).getAbsoluteOrder();
 							if (order < sectionParts.size()) {
 								panelView.remove(component);
-								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
+								InstPanel copy = panelController.createConfiguredPanel(instrument);
 								copy.setFromInstPart(sectionParts.get(order));
 								sectionPanels.add(copy);
 								missingPanels.remove(Integer.valueOf(order));
@@ -469,7 +471,7 @@ public class ArrangementGUI {
 								InstPanel source = panels.stream()
 										.filter(candidate -> candidate.getPanelOrder() == order)
 										.findFirst().get();
-								InstPanel copy = context.makeCustomSectionInstPanel(instrument);
+								InstPanel copy = panelController.createConfiguredPanel(instrument);
 								copy.setRelatedSection(section);
 								copy.setFromInstPart(source.toInstPart(0));
 								sectionPanels.add(copy);
@@ -498,7 +500,7 @@ public class ArrangementGUI {
 		for (INST instrument : INST.values()) {
 			getInstPane(instrument.getIndex()).repaint();
 		}
-		if (context.getInstrumentTabPane().getSelectedIndex() == 6) {
+		if (instrumentTabPane.getSelectedIndex() == 6) {
 			actualArrangement.getSections().forEach(section ->
 					section.initPartMapFromOldData(this::getInstrumentParts));
 			scrollableArrangementActualTable.repaint();
@@ -550,7 +552,7 @@ public class ArrangementGUI {
 				if (sectionOrder + 1 < arrSection.getItemCount()) {
 					arrSection.setSelectedIndexWithProperty(sectionOrder + 1, true);
 					arrSection.repaint();
-					context.getInstrumentTabPane().setSelectedIndex(instrument);
+					instrumentTabPane.setSelectedIndex(instrument);
 					switchTabPaneAfterApply = true;
 				}
 			} else if (event.isControlDown()) {
@@ -566,7 +568,7 @@ public class ArrangementGUI {
 				if (section.getPresence(instrument).contains(panelOrder)
 						&& section.containsPattern(instrument, panelOrder)) {
 					ApplicationSessionState.currentMidiEditorPopup = new MidiEditPopup(
-							context.getMidiEditPopupContext(), section, instrument, panelOrder);
+							midiEditPopupContext, section, instrument, panelOrder);
 					ApplicationSessionState.currentMidiEditorPopup.setSec(section);
 					ApplicationSessionState.currentMidiEditorSectionIndex = sectionOrder;
 				} else {
@@ -907,7 +909,7 @@ public class ArrangementGUI {
 				Section sec = ArrangementGUI.actualArrangement.getSections()
 						.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
-					sec.resetCustomizedParts(context.getInstrumentTabPane().getSelectedIndex());
+					sec.resetCustomizedParts(instrumentTabPane.getSelectedIndex());
 					setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
 					if (!sec.hasCustomizedParts()) {
 						CheckButton cb = ArrangementGUI.arrSection.getCurrentButton();
@@ -1176,8 +1178,8 @@ public class ArrangementGUI {
 		refreshVariationPopupButtons(1);
 		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.variationButtonsPanel);
 		ArrangementGUI.arrangementActualScrollPane.setViewportView(ArrangementGUI.actualArrangementCombinedPanel);
-		context.getInstrumentTabPane().addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
-		context.getInstrumentTabPane().addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
+		instrumentTabPane.addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
+		instrumentTabPane.addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
 		UITheme.toggleableComponents.add(commitAllPanelBtn);
 		UITheme.toggleableComponents.add(undoPanelBtn);
 		UITheme.toggleableComponents.add(clearPanelBtn);
@@ -1221,7 +1223,7 @@ public class ArrangementGUI {
 			arrangement.generateDefaultArrangement();
 			pieceLength.setText("12");
 		} else if (action.equalsIgnoreCase("ArrangementAddLast")) {
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSection(scrollableArrangementTable);
 			} else {
 				actualArrangement.duplicateSection(scrollableArrangementActualTable);
@@ -1232,7 +1234,7 @@ public class ArrangementGUI {
 				pieceLength.setText("" + ++maxLength);
 			}
 		} else if (action.equalsIgnoreCase("ArrangementRemoveLast")) {
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSection(scrollableArrangementTable);
 			} else {
 				actualArrangement.removeSection(scrollableArrangementActualTable);
@@ -1250,25 +1252,25 @@ public class ArrangementGUI {
 			if (GLOBAL.equals(selectedItem)) {
 				return;
 			}
-			int replacedPartNum = context.getInstrumentTabPane().getSelectedIndex();
+			int replacedPartNum = instrumentTabPane.getSelectedIndex();
 			Integer sectionOrder = Integer.valueOf(selectedItem.split(":")[0]);
 		applyCustomPanelsToSection(action, replacedPartNum, sectionOrder);
-			if (context.getInstrumentTabPane().getSelectedIndex() < 5) {
+			if (instrumentTabPane.getSelectedIndex() < 5) {
 				resetArrSectionSelection = false;
 				resetArrSectionPanel = false;
 				refreshActual = true;
 				checkManual = true;
 			}
-			if (context.getInstrumentTabPane().getSelectedIndex() < 5) {
+			if (instrumentTabPane.getSelectedIndex() < 5) {
 				if (switchTabPaneAfterApply) {
 					switchTabPaneAfterApply = false;
-					context.getInstrumentTabPane().setSelectedIndex(6);
+					instrumentTabPane.setSelectedIndex(6);
 					arrSection.setSelectedIndexWithProperty(0, true);
 				}
 				if (switchTabPaneToScoreAfterApply) {
 					switchTabPaneToScoreAfterApply = false;
-					if (context.getInstrumentTabPane().getComponents().length > 7) {
-						context.getInstrumentTabPane().setSelectedIndex(7);
+					if (instrumentTabPane.getComponents().length > 7) {
+						instrumentTabPane.setSelectedIndex(7);
 					}
 					arrSection.setSelectedIndexWithProperty(0, true);
 				}
@@ -1296,7 +1298,7 @@ public class ArrangementGUI {
 			if (OMNI.EMPTYCOMBO.equals(selectedItem)) {
 				return;
 			}
-			if (context.getInstrumentTabPane().getSelectedIndex() != 5) {
+			if (instrumentTabPane.getSelectedIndex() != 5) {
 				Section addedSection = actualArrangement
 						.addDefaultSection(scrollableArrangementActualTable, selectedItem, column);
 				preparePartMap(addedSection);
@@ -1318,7 +1320,7 @@ public class ArrangementGUI {
 			newSectionBox.setSelectedIndex(0);
 		} else if (action.startsWith("ArrangementRemove,")) {
 			int sectionIndex = Integer.parseInt(action.split(",")[1]);
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.removeSectionExact(scrollableArrangementTable, sectionIndex);
 			} else {
 				actualArrangement.removeSectionExact(scrollableArrangementActualTable, sectionIndex);
@@ -1329,7 +1331,7 @@ public class ArrangementGUI {
 		} else if (action.startsWith("ArrangementAdd,")) {
 			LG.i("add exact");
 			int sectionIndex = Integer.parseInt(action.split(",")[1]);
-			if (context.getInstrumentTabPane().getSelectedIndex() == 5) {
+			if (instrumentTabPane.getSelectedIndex() == 5) {
 				arrangement.duplicateSectionExact(scrollableArrangementTable, sectionIndex);
 			} else {
 				actualArrangement.duplicateSectionExact(scrollableArrangementActualTable, sectionIndex);

@@ -92,6 +92,10 @@ public class DrumGUI extends InstGUI<DrumPanel> {
 		createRandomDrumPanels(panelCount, onlyAdd, (DrumPanel) randomizedPanel);
 	}
 
+	@Override public boolean reversePanelOrder() {
+		return bottomUpReverseDrumPanels.isSelected();
+	}
+
 	public void saveToConfig(GUIConfig gc, int seed, boolean customMidiDevice) {
 		gc.setDrumsEnable(enabledCheckBox.isSelected());
 		gc.setDrumParts(createParts(seed, DrumPart.class));

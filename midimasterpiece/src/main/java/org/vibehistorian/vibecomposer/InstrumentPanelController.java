@@ -11,18 +11,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** Owns the shared lifecycle of instrument panels inside their instrument tabs. */
 public final class InstrumentPanelController {
 	public interface Context {
-		InstPanel createPanel(INST instrument);
-		void configurePanel(InstPanel panel);
-		List<? extends InstPanel> getPanels(INST instrument);
-		int getRandomPanelCount(INST instrument);
-		JScrollPane getPanelScrollPane(INST instrument);
-		boolean isFullMode();
-		boolean reverseDrumPanelOrder();
+		InstPanel createConfiguredPanel(INST instrument);
 		void removeComboBoxArrows(InstPanel panel);
 		void recalculateArrangementPartMaps();
 		void recalculateTabPaneCounts();
@@ -33,23 +28,31 @@ public final class InstrumentPanelController {
 		void repaintMainWindow();
 		void regenerate();
 		int getCurrentSeed();
-		void randomizePanels(INST instrument, int panelCount, boolean onlyAdd, Integer seed,
-							 InstPanel randomizedPanel);
 	}
 
 	private final Context context;
+	private final Function<INST, InstGUI<?>> instrumentGui;
 	private final PartPresetStore partPresetStore = new PartPresetStore();
 
-	public InstrumentPanelController(Context context) {
+	public InstrumentPanelController(Context context, Function<INST, InstGUI<?>> instrumentGui) {
 		this.context = context;
+		this.instrumentGui = instrumentGui;
+	}
+
+	private InstGUI<?> instrumentGui(INST instrument) {
+		return instrumentGui.apply(instrument);
 	}
 
 	public List<PartPresetStore.PresetFile> listPartPresets(INST instrument) throws IOException {
 		return partPresetStore.listPresets(instrument);
 	}
 
+	public InstPanel createConfiguredPanel(INST instrument) {
+		return context.createConfiguredPanel(instrument);
+	}
+
 	public List<? extends InstPanel> getInstList(INST instrument) {
-		return context.getPanels(instrument);
+		return instrumentGui(instrument).getPanels();
 	}
 
 	public InstPanel getPanelByOrder(INST instrument, int panelOrder) {
@@ -79,7 +82,7 @@ public final class InstrumentPanelController {
 	}
 
 	public JScrollPane getInstPane(INST instrument) {
-		return context.getPanelScrollPane(instrument);
+		return instrumentGui(instrument).getPanelScrollPane();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -107,13 +110,12 @@ public final class InstrumentPanelController {
 
 	public InstPanel addPanel(INST instrument, InstPart initializingPart,
 							  boolean recalculateArrangement) {
-		InstPanel panel = context.createPanel(instrument);
-		context.configurePanel(panel);
+		InstPanel panel = createConfiguredPanel(instrument);
 		List<InstPanel> affectedPanels = getAffectedPanels(instrument);
 		int panelOrder = getLowestAvailablePanelNumber(affectedPanels);
 
 		panel.getToggleableComponents().forEach(component ->
-				component.setVisible(context.isFullMode()));
+				component.setVisible(UITheme.isFullMode));
 		if (ArrangementGUI.isCustomSection()) {
 			panel.toggleGlobalElements(false);
 			panel.toggleEnabledCopyRemove(false);
@@ -139,7 +141,7 @@ public final class InstrumentPanelController {
 
 		JPanel panelContainer = (JPanel) getInstPane(instrument)
 				.getViewport().getView();
-		if (instrument != INST.DRUM || !context.reverseDrumPanelOrder()) {
+		if (instrument != INST.DRUM || !instrumentGui(instrument).reversePanelOrder()) {
 			panelContainer.add(panel, panelOrder - 1);
 		} else {
 			panelContainer.add(panel, affectedPanels.size() - panelOrder);
@@ -161,7 +163,7 @@ public final class InstrumentPanelController {
 	public void generatePanels(INST instrument, boolean triggerRegenerate) {
 		int panelCount = ArrangementGUI.isCustomSection()
 				? getInstList(instrument).size()
-				: context.getRandomPanelCount(instrument);
+				: instrumentGui(instrument).getRandomPanelCount();
 		createRandomPanels(instrument, panelCount, false, null, null);
 		context.recalculateAfterPanelGeneration();
 		if (triggerRegenerate && GenerationGUI.canRegenerateOnChange()) {
@@ -175,7 +177,8 @@ public final class InstrumentPanelController {
 
 	public void createRandomPanels(INST instrument, int panelCount, boolean onlyAdd,
 								   Integer seed, InstPanel randomizedPanel) {
-		context.randomizePanels(instrument, panelCount, onlyAdd, seed, randomizedPanel);
+		instrumentGui(instrument).createRandomPanels(panelCount, onlyAdd, seed,
+				randomizedPanel);
 		context.repaintMainWindow();
 	}
 
