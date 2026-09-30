@@ -168,16 +168,6 @@ public class ArrangementGUI {
 		this.midiEditPopupContext = midiEditPopupContext;
 	}
 
-	public interface ActionHandler {
-		void handleArrangementAction(String action, int seed, int maxLength);
-	}
-
-	public interface VariationPopupActions {
-		void recolorVariationPopupButton(int sectionOrder);
-		void setActualModel(TableModel model, boolean reset);
-		void clearVariationPopup();
-	}
-
 	public static boolean isCustomSection() {
 		return arrSection != null && arrSection.getSelectedIndex() != 0
 				&& !GLOBAL.equals(arrSection.getVal());
@@ -1391,17 +1381,55 @@ public class ArrangementGUI {
 		recalculateActualArrangementSection(sectionOrder - 1);
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
 				context.getVariationPopupLocation(), context.getVariationPopupWindowSize(),
-				this::getInstList, this::getInstrumentParts, chordGUI, new VariationPopupActions() {
+				this::getInstList, this::getInstrumentParts, chordGUI,
+				scrollableArrangementActualTable, new VariationPopup.ArrangementActions() {
 					@Override public void recolorVariationPopupButton(int order) {
 						ArrangementGUI.this.recolorVariationPopupButton(order);
 					}
-					@Override public void setActualModel(TableModel model, boolean reset) {
-						ArrangementGUI.this.setActualModel(model, reset);
+					@Override public void refreshActualModel(boolean reset) {
+						ArrangementGUI.this.setActualModel(actualArrangement.convertToActualTableModel(), reset);
 					}
 					@Override public void clearVariationPopup() {
 						ArrangementGUI.this.varPopup = null;
 					}
+					@Override public void markManualArrangement() {
+						manualArrangement.setSelected(true);
+						manualArrangement.repaint();
+					}
+					@Override public void removeVariationForAllSections(INST instrument, int row, int column) {
+						actualArrangement.getSections().forEach(section -> section.removeVariationForPart(
+								instrument.getIndex(), row, column));
+					}
+					@Override public void toggleGlobalVariation(INST instrument, int column) {
+						Boolean[] variations = arrangement.getGlobalVariationMap().get(instrument.getIndex());
+						if (variations[column - 1]) {
+							variations[column - 1] = Boolean.FALSE;
+						} else {
+							variations[column - 1] = Boolean.TRUE;
+							actualArrangement.getSections().forEach(section ->
+									section.removeVariationForAllParts(instrument.getIndex(), column));
+						}
+					}
+					@Override public Boolean[] getGlobalVariationMap(INST instrument) {
+						return arrangement.getGlobalVariationMap().get(instrument.getIndex());
+					}
 				});
+	}
+
+	public int getSelectedSectionIndex() {
+		return arrSection.getSelectedIndex();
+	}
+
+	public List<String> getSectionNamesFromSelectedIndex() {
+		List<String> names = new ArrayList<>();
+		for (int i = arrSection.getSelectedIndex(); i < arrSection.getItemCount(); i++) {
+			names.add(arrSection.getVal(i));
+		}
+		return names;
+	}
+
+	public Section getSelectedActualSection() {
+		return actualArrangement.getSections().get(arrSection.getSelectedIndex() - 1);
 	}
 
 	public void recalculateActualArrangementSection(int sectionOrder) {

@@ -44,13 +44,24 @@ public class VariationPopup {
 	KnobPanel keyChangeKnob = new DetachedKnobPanel("Key Change", 0, -12, 12);
 	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
-	private final ArrangementGUI.VariationPopupActions arrangementActions;
+	private final ArrangementActions arrangementActions;
 	private final ChordGUI chordGUI;
+
+	public interface ArrangementActions {
+		void recolorVariationPopupButton(int sectionOrder);
+		void refreshActualModel(boolean reset);
+		void clearVariationPopup();
+		void markManualArrangement();
+		void removeVariationForAllSections(INST instrument, int row, int column);
+		void toggleGlobalVariation(INST instrument, int column);
+		Boolean[] getGlobalVariationMap(INST instrument);
+	}
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim,
 			IntFunction<List<? extends InstPanel>> getInstList,
 			IntFunction<List<? extends InstPart>> partsForInstrument,
-			ChordGUI chordGUI, ArrangementGUI.VariationPopupActions arrangementActions) {
+			ChordGUI chordGUI, JTable actualArrangementTable,
+			ArrangementActions arrangementActions) {
 		this.arrangementActions = arrangementActions;
 		this.chordGUI = chordGUI;
 		addFrameWindowOperation();
@@ -59,10 +70,7 @@ public class VariationPopup {
 		tablesPanel.setLayout(new BoxLayout(tablesPanel, BoxLayout.Y_AXIS));
 
 		tablesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, () -> {
-			ArrangementGUI.manualArrangement.setSelected(true);
-			ArrangementGUI.manualArrangement.repaint();
-		});
+		PopupUtils.addEmptySpaceCloser(tablesPanel, frame, arrangementActions::markManualArrangement);
 
 		addTypesMeasures(sec);
 		addCustomChordsDurations(sec);
@@ -84,7 +92,8 @@ public class VariationPopup {
 					.collect(Collectors.toList());
 
 			table.setModel(new VariationsBooleanTableModel(i, sectionOrder - 1,
-					sec.getPartMap().get(i), Section.variationDescriptions[i], partNames));
+					sec.getPartMap().get(i), Section.variationDescriptions[i], partNames,
+					() -> arrangementActions.getGlobalVariationMap(instrument), actualArrangementTable));
 			table.setRowSelectionAllowed(false);
 			table.setColumnSelectionAllowed(false);
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -98,10 +107,7 @@ public class VariationPopup {
 					LG.d("Clicked VariationPopup table cell! " + row + ", " + col);
 					if (col >= 1) {
 						if (SwingUtilities.isMiddleMouseButton(evt)) {
-							for (Section sec : ArrangementGUI.actualArrangement
-									.getSections()) {
-								sec.removeVariationForPart(i, row, col);
-							}
+							arrangementActions.removeVariationForAllSections(instrument, row, col);
 							table.repaint();
 
 							tables[i].getModel().setValueAt(Boolean.FALSE, row, col);
@@ -159,16 +165,7 @@ public class VariationPopup {
 							//sec.resetPresence(fI, j);
 						}
 					} else if (SwingUtilities.isMiddleMouseButton(e) && col >= 2) {
-						Boolean[] vars = ArrangementGUI.arrangement.getGlobalVariationMap()
-								.get(i);
-						if (vars[col - 1]) {
-							vars[col - 1] = Boolean.FALSE;
-						} else {
-							vars[col - 1] = Boolean.TRUE;
-							for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
-								sec.removeVariationForAllParts(i, col);
-							}
-						}
+						arrangementActions.toggleGlobalVariation(instrument, col);
 					}
 					table.repaint();
 				}
@@ -470,8 +467,7 @@ public class VariationPopup {
 					instVolumes.add(kp.getInt());
 				}
 				sectionObject.setInstVelocityMultiplier(instVolumes);
-				arrangementActions.setActualModel(
-						ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
+				arrangementActions.refreshActualModel(false);
 				arrangementActions.recolorVariationPopupButton(sectionOrder);
 			}
 

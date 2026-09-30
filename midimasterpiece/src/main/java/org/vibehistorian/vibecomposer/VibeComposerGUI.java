@@ -1800,9 +1800,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void openApplyCustomSectionPopup() {
-		if (ArrangementGUI.arrSection.getSelectedIndex() > 0) {
+		if (arrangementGUI.getSelectedSectionIndex() > 0) {
 			new ApplyCustomSectionPopup(VibeComposerGUI::getInstList,
-					arrangementGUI::handleArrangementAction);
+					arrangementGUI::handleArrangementAction,
+					arrangementGUI.getSelectedSectionIndex(),
+					arrangementGUI.getSectionNamesFromSelectedIndex(),
+					arrangementGUI::getSelectedActualSection);
 		}
 	}
 

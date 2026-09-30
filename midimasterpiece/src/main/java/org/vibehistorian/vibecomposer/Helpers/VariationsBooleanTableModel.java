@@ -1,11 +1,10 @@
 package org.vibehistorian.vibecomposer.Helpers;
 
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
+import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import java.util.List;
 import java.util.Set;
-
-import javax.swing.table.AbstractTableModel;
+import java.util.function.Supplier;
 
 
 public class VariationsBooleanTableModel extends AbstractTableModel {
@@ -14,13 +13,15 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 
 	int part = 0;
 
-	Object tableData[][];
+	Object[][] tableData;
 
-	String columnNames[];
+	String[] columnNames;
 
 	List<String> partNames;
 
 	int sectionOrder;
+	private final Supplier<Boolean[]> globalVariationMapSupplier;
+	private final JTable actualArrangementTable;
 
 	@Override
 	public int getColumnCount() {
@@ -40,7 +41,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(int row, int column) {
 		if (column >= 2
-				&& !ArrangementGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
+				&& !globalVariationMapSupplier.get()[column - 1]) {
 			return "X";
 		}
 		if (column > 1 && tableData[row][1] == Boolean.FALSE) {
@@ -61,7 +62,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int column) {
-		if (!ArrangementGUI.arrangement.getGlobalVariationMap().get(part)[column - 1]) {
+		if (!globalVariationMapSupplier.get()[column - 1]) {
 			tableData[row][column] = Boolean.FALSE;
 			fireTableDataChanged();
 			return;
@@ -85,7 +86,7 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 		}
 		int realTableRow = part + 2;
 		if (oldPresence != null && !oldPresence.equals(tableData[row][1])) {
-			Object vcVal = ArrangementGUI.scrollableArrangementActualTable.getModel()
+			Object vcVal = actualArrangementTable.getModel()
 					.getValueAt(realTableRow, sectionOrder);
 			if (vcVal instanceof Set) {
 				Set<Integer> presence = (Set<Integer>) vcVal;
@@ -95,12 +96,12 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 				} else {
 					presence.add(realOrder);
 				}
-				ArrangementGUI.scrollableArrangementActualTable.getModel().setValueAt(presence,
+				actualArrangementTable.getModel().setValueAt(presence,
 						realTableRow, sectionOrder);
 			}
 		}
 
-		ArrangementGUI.scrollableArrangementActualTable.repaint();
+		actualArrangementTable.repaint();
 	}
 
 	@Override
@@ -109,11 +110,14 @@ public class VariationsBooleanTableModel extends AbstractTableModel {
 	}
 
 	public VariationsBooleanTableModel(int part, int sectionOrder, Object[][] data,
-			String[] colNames, List<String> partNames) {
+			String[] colNames, List<String> partNames, Supplier<Boolean[]> globalVariationMapSupplier,
+			JTable actualArrangementTable) {
 		this.part = part;
 		this.sectionOrder = sectionOrder;
 		tableData = data;
 		columnNames = colNames;
 		this.partNames = partNames;
+		this.globalVariationMapSupplier = globalVariationMapSupplier;
+		this.actualArrangementTable = actualArrangementTable;
 	}
 }
