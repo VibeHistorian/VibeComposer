@@ -740,7 +740,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		initArrangementGUI();
 		initScoreGUI();
 		midiAuditionController = new MidiAuditionController(instrumentPanelController,
-				midiDeviceController, scoreGUI,
+				midiDeviceController, scoreGUI, melodyGUI,
 				() -> ScaleMode.valueOf(generationGUI.scaleMode.getVal()));
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {

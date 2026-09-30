@@ -53,6 +53,8 @@ import java.util.stream.Collectors;
 
 /** Builds and owns the melody controls and their UI state. */
 public class MelodyGUI extends InstGUI<MelodyPanel> {
+	private Phrase userMelody;
+	private Phrase userMelodyCandidate;
 
 	public JCheckBox generateMelodiesOnCompose;
 	public KnobPanel melodyUseOldAlgoChance;
@@ -95,6 +97,10 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public JCheckBox melodyCustomDurationsRandomWeighting;
 	public JCheckBox melodyCustomDurationsStrictMode;
 	public JCheckBox combineMelodyTracks;
+
+	public Phrase getUserMelody() {
+		return userMelody;
+	}
 
 	private final Context context;
 
@@ -167,7 +173,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		gc.setMelodyCustomDurationsStrictMode(melodyCustomDurationsStrictMode.isSelected());
 		gc.setMelodyPatternFlip(melodyPatternFlip.isSelected());
 		gc.setCombineMelodyTracks(combineMelodyTracks.isSelected());
-		if (MelodyMidiDropPane.userMelody != null) gc.setMelodyNotes(new PhraseNotes(MelodyMidiDropPane.userMelody));
+		if (userMelody != null) gc.setMelodyNotes(new PhraseNotes(userMelody));
 	}
 
 	public void loadFromConfig(GUIConfig gc) {
@@ -208,10 +214,10 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodyPatternFlip.setSelected(gc.isMelodyPatternFlip());
 		combineMelodyTracks.setSelected(gc.isCombineMelodyTracks());
 		if (gc.getMelodyNotes() != null) {
-			MelodyMidiDropPane.userMelody = gc.getMelodyNotes().makePhrase();
+			userMelody = gc.getMelodyNotes().makePhrase();
 			dropPane.getMessage().setText("~MELODY LOADED FROM FILE~");
 		} else {
-			MelodyMidiDropPane.userMelody = null;
+			userMelody = null;
 			dropPane.getMessage().setText(" * * Drag'n'Drop MIDI Here * * ");
 		}
 	}
@@ -296,15 +302,16 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		randomMelodyOnRegenerate = SwingUtils.makeCheckBox("on Manual Regen.", false, true);
 		melody1ForcePatterns = new CustomCheckBox("<html>Force Melody#1<br> Outline</html>", true);
 
-		dropPane = new MelodyMidiDropPane(this::setUserMelodyScaleModes);
+		dropPane = new MelodyMidiDropPane(this::setUserMelodyScaleModes,
+				candidate -> userMelodyCandidate = candidate);
 		useUserMelody = new CustomCheckBox("<html>Use MIDI<br>Melody File</html>", true);
 		userMelodyScaleModeSelect = new ScrollComboBox<>(false);
 		userMelodyScaleModeSelect.addItem(OMNI.EMPTYCOMBO);
 		userMelodyScaleModeSelect.addItemListener(e -> {
 			if (e.getStateChange() == ItemEvent.SELECTED
 					&& userMelodyScaleModeSelect.getSelectedIndex() > 0
-					&& MelodyMidiDropPane.userMelodyCandidate != null) {
-				Phrase melody = MelodyMidiDropPane.userMelodyCandidate.copy();
+					&& userMelodyCandidate != null) {
+				Phrase melody = userMelodyCandidate.copy();
 				String item = userMelodyScaleModeSelect
 						.getItemAt(userMelodyScaleModeSelect.getSelectedIndex());
 				String[] itemSplit = item.split(",");
@@ -315,7 +322,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 				ScaleMode.IONIAN.noteAdjustScale, ExtraSettingsGUI.transposedNotesForceScale.isSelected());
 				context.setScoreTranspose(transposeUpBy * -1);
 				context.setScaleMode(toMode);
-				MelodyMidiDropPane.userMelody = melody;
+				userMelody = melody;
 				userMelodyScaleModeSelect.setSelectedIndex(0);
 			}
 		});

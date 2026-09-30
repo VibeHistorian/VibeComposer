@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
@@ -245,8 +244,8 @@ public final class ComposeCoordinator {
                 MidiGenerator.userChordsDurations.clear();
             }
 
-            if (MelodyMidiDropPane.userMelody != null && melodyGUI.useUserMelody.isSelected()) {
-                MelodyGenerator.userMelody = MelodyMidiDropPane.userMelody;
+            if (melodyGUI.getUserMelody() != null && melodyGUI.useUserMelody.isSelected()) {
+                MelodyGenerator.userMelody = melodyGUI.getUserMelody();
             } else {
                 MelodyGenerator.userMelody = null;
             }
@@ -338,7 +337,7 @@ public final class ComposeCoordinator {
 
     private void cleanUpUIAfterCompose(boolean regenerate) {
         chordGUI.applyGeneratedChords(MidiGenerator.chordInts,
-                MelodyMidiDropPane.userMelody != null, guiConfig);
+                melodyGUI.getUserMelody() != null, guiConfig);
         melodyGUI.applyGeneratedTargetNotes(regenerate, MelodyGenerator.TARGET_NOTES, guiConfig);
         arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
         arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(), guiConfig);

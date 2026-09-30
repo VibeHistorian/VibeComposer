@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
@@ -23,14 +22,16 @@ public final class MidiAuditionController {
 	private final InstrumentPanelController panelController;
 	private final MidiDeviceController midiDeviceController;
 	private final ScoreGUI scoreGUI;
+	private final MelodyGUI melodyGUI;
 	private final Supplier<MidiUtils.ScaleMode> scaleMode;
 
 	public MidiAuditionController(InstrumentPanelController panelController,
-			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI,
+			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI, MelodyGUI melodyGUI,
 			Supplier<MidiUtils.ScaleMode> scaleMode) {
 		this.panelController = panelController;
 		this.midiDeviceController = midiDeviceController;
 		this.scoreGUI = scoreGUI;
+		this.melodyGUI = melodyGUI;
 		this.scaleMode = scaleMode;
 	}
 
@@ -47,7 +48,7 @@ public final class MidiAuditionController {
 		int transpose = keyboardTranspose;
 		if (nextNoteMelody == null) {
 			LG.d("No custom melody to play!");
-			nextNoteMelody = MelodyMidiDropPane.userMelody;
+			nextNoteMelody = melodyGUI.getUserMelody();
 			if (nextNoteMelody == null) {
 				LG.d("No user melody/midi to play!");
 				Part scorePart = scoreGUI.getScorePanel() == null || scoreGUI.getScorePanel().score == null
