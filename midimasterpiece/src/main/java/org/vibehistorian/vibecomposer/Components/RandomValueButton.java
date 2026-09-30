@@ -1,6 +1,5 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.Popups.ButtonValuePopup;
 
 import javax.swing.*;
@@ -8,13 +7,20 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Random;
+import java.util.function.IntSupplier;
 
 public class RandomValueButton extends JButton {
 
 	private static final long serialVersionUID = -2737936353529731016L;
 	private int value = 0;
+	private IntSupplier currentSeed = () -> 0;
 
 	public RandomValueButton(int value) {
+		this(value, () -> 0);
+	}
+
+	public RandomValueButton(int value, IntSupplier currentSeed) {
+		this.currentSeed = currentSeed == null ? () -> 0 : currentSeed;
 		this.setPreferredSize(new Dimension(100, 30));
 		this.addMouseListener(new MouseAdapter() {
 			@Override
@@ -32,7 +38,7 @@ public class RandomValueButton extends JButton {
 						setEnabled(!isEnabled());
 					} else if (isEnabled()) {
 						if (e.isShiftDown()) {
-							setValue(GenerationGUI.getCurrentSeed());
+							setValue(RandomValueButton.this.currentSeed.getAsInt());
 						} else {
 							Random rand = new Random();
 							setValue(rand.nextInt());
@@ -46,6 +52,10 @@ public class RandomValueButton extends JButton {
 
 	public int getValue() {
 		return value;
+	}
+
+	public void setCurrentSeedSupplier(IntSupplier currentSeed) {
+		this.currentSeed = currentSeed == null ? () -> 0 : currentSeed;
 	}
 
 	public void setValue(int value) {

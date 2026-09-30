@@ -224,7 +224,9 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
 		boolean isRandomizeInstOnComposeOrGen();
+		boolean canRegenerateOnChange();
 		void regenerate();
+		void setScaleMode(ScaleMode scaleMode);
 		void setScoreTranspose(int transpose);
 		List<Double> getUserChordDurations();
 	}
@@ -283,7 +285,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 
 		JButton generateUserMelodySeed = SwingUtils.makeButton("Randomize Seed", e -> {
 			randomizeMelodySeeds();
-			if (GenerationGUI.canRegenerateOnChange()) {
+			if (context.canRegenerateOnChange()) {
 				context.regenerate();
 			}
 		});
@@ -312,7 +314,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 				MidiUtils.transposePhrase(melody, toMode.noteAdjustScale,
 				ScaleMode.IONIAN.noteAdjustScale, ExtraSettingsGUI.transposedNotesForceScale.isSelected());
 				context.setScoreTranspose(transposeUpBy * -1);
-				GenerationGUI.scaleMode.setVal(toMode.toString());
+				context.setScaleMode(toMode);
 				MelodyMidiDropPane.userMelody = melody;
 				userMelodyScaleModeSelect.setSelectedIndex(0);
 			}

@@ -236,6 +236,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         PartManagerPanel.Context getPartManagerContext();
         boolean isRandomizeInstOnComposeOrGen();
         boolean isBeatDurationMultiplierBelowOne();
+        MidiUtils.ScaleMode getScaleMode();
         void copyGUItoConfig();
         void adjustScoreTranspose(int amount);
 		void alignChordsWithMelody(ChordletPanel chordlets);
@@ -559,7 +560,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				if (!chords.equalsIgnoreCase(checkedChords)) {
 					putClientProperty(JComponent.TOOL_TIP_TEXT_KEY,
 							(StringUtils.join(MidiUtils.getKeyModesForChordsAndTarget(chords,
-									MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal())))));
+									context.getScaleMode()))));
 					checkedChords = chords;
 				}
 
@@ -571,7 +572,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				List<String> normalizedChords = MidiUtils.processRawChords(
-						userChords.getChordListString(), MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal()),
+						userChords.getChordListString(), context.getScaleMode(),
 						context::adjustScoreTranspose);
 				if (normalizedChords != null) {
 					userChords.setupChords(normalizedChords);

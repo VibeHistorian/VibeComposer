@@ -26,6 +26,7 @@ public final class InstrumentPanelController {
 		void repaintInstrumentTabs();
 		void repaintMainWindow();
 		void regenerate();
+		boolean canRegenerateOnChange();
 	}
 
 	private final Context context;
@@ -169,7 +170,7 @@ public final class InstrumentPanelController {
 				: instrumentGui(instrument).getRandomPanelCount();
 		createRandomPanels(instrument, panelCount, false, null, null);
 		context.recalculateAfterPanelGeneration();
-		if (triggerRegenerate && GenerationGUI.canRegenerateOnChange()) {
+		if (triggerRegenerate && context.canRegenerateOnChange()) {
 			context.regenerate();
 		}
 	}

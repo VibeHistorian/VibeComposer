@@ -294,9 +294,9 @@ public final class PresetViewController {
 
 		// globals
 		components.add(mainWindowControls.getRandomizeScaleModeOnCompose());
-		components.add(GenerationGUI.regenerateWhenValuesChange);
+		components.add(generationGUI.regenerateWhenValuesChange);
 		components.add(PlaybackState.loopBeat);
-		components.add(GenerationGUI.loopBeatCount);
+		components.add(generationGUI.loopBeatCount);
 		components.add(mainWindowControls.getMidiMode());
 
 		// extra settings

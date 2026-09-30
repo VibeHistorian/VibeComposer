@@ -24,7 +24,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
-import static org.vibehistorian.vibecomposer.GenerationGUI.*;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
 import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMuters;
 import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated;
@@ -138,7 +137,7 @@ public final class ComposeCoordinator {
             String keyTrans = MidiUtils.SEMITONE_LETTERS.get((scoreGUI.getTranspose() + 120) % 12)
                     .replace("#", "s");
 
-            String fileName = "bpm" + mainBpm.getInt() + "_" + keyTrans + "_" + scaleMode.getVal()
+            String fileName = "bpm" + generationGUI.mainBpm.getInt() + "_" + keyTrans + "_" + generationGUI.scaleMode.getVal()
                     + "_seed" + seedData;
             String relPath = Constants.MIDI_HISTORY_FOLDER + "/" + fileName + ".mid";
 
@@ -259,10 +258,10 @@ public final class ComposeCoordinator {
 
     private Integer prepareMainSeed(boolean regenerate) {
         int masterpieceSeed = 0;
-        int parsedSeed = randomSeed.getValue();
+        int parsedSeed = generationGUI.randomSeed.getValue();
 
         if (regenerate) {
-            masterpieceSeed = lastRandomSeed;
+            masterpieceSeed = generationGUI.lastRandomSeed;
             if (parsedSeed != 0) {
                 masterpieceSeed = parsedSeed;
             }
@@ -278,7 +277,7 @@ public final class ComposeCoordinator {
         }
 
         LG.i("Master seed: " + masterpieceSeed);
-        lastRandomSeed = masterpieceSeed;
+        generationGUI.lastRandomSeed = masterpieceSeed;
         return masterpieceSeed;
     }
 
@@ -288,7 +287,7 @@ public final class ComposeCoordinator {
         }
 
         // MELODY
-        melodyGUI.generateRandomMelodyPanelsOnCompose(regenerate, lastRandomSeed);
+        melodyGUI.generateRandomMelodyPanelsOnCompose(regenerate, generationGUI.lastRandomSeed);
 
         if (!regenerate && ExtraSettingsGUI.randomizeTimingsOnCompose.isSelected()) {
             if (generationGUI.globalSwingOverride.isSelected()) {
@@ -310,7 +309,7 @@ public final class ComposeCoordinator {
             generationGUI.sidechainPatterns(false, false);
         }
 
-        melodyGUI.prepareMelodyPatterns(regenerate, manual, lastRandomSeed);
+        melodyGUI.prepareMelodyPatterns(regenerate, manual, generationGUI.lastRandomSeed);
 
         // BASS
 
@@ -326,10 +325,10 @@ public final class ComposeCoordinator {
 
         if (!regenerate && mainWindowControls.getRandomizeScaleModeOnCompose().isSelected()) {
             Integer[] allowedScales = new Integer[] { 0, 1, 3, 4, 5, 8 };
-            scaleMode.setSelectedIndex(allowedScales[new Random().nextInt(allowedScales.length)]);
+            generationGUI.scaleMode.setSelectedIndex(allowedScales[new Random().nextInt(allowedScales.length)]);
         }
 
-        arrangementGUI.prepareForCompose(regenerate, currentMidi != null, lastRandomSeed);
+        arrangementGUI.prepareForCompose(regenerate, currentMidi != null, generationGUI.lastRandomSeed);
 
         if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
             LG.i("MidiEditPopup is open - saving!");
@@ -573,7 +572,7 @@ public final class ComposeCoordinator {
             } else if (generationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
                 divisor = 2;
             }
-            loopBeatCount.getKnob()
+            generationGUI.loopBeatCount.getKnob()
                     .setMax(!MidiGenerator.userChordsDurations.isEmpty()
                             ? (int) Math.ceil(
                             OMNI.sumListDouble(MidiGenerator.userChordsDurations) / divisor)
@@ -585,14 +584,14 @@ public final class ComposeCoordinator {
                 needToRecalculateSoloMuters = true;
                 needToRecalculateSoloMutersAfterSequenceGenerated = false;
             }
-            startBpm = mainBpm.getInt();
+            startBpm = generationGUI.mainBpm.getInt();
         } catch (MidiUnavailableException | InvalidMidiDataException ex) {
             LG.e(ex);
         }
     }
 
-    private static void adjustSavedPositions() {
-        int currentBpm = mainBpm.getInt();
+    private void adjustSavedPositions() {
+        int currentBpm = generationGUI.mainBpm.getInt();
         if (currentBpm > 0 && startBpm > 0) {
             startSliderPosition = (currentBpm != startBpm)
                     ? (int) Math.ceil(startSliderPosition * startBpm / (double) currentBpm)

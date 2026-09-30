@@ -51,6 +51,8 @@ public abstract class InstPanel extends JPanel {
 		INST getSelectedInstrument();
 		int getAbsoluteOrder(INST instrument, int panelOrder);
 		void recalculateAfterCopy();
+		int getCurrentSeed();
+		int getLastRandomSeed();
 	}
 
 	private static final long serialVersionUID = 4381939543337887617L;
@@ -214,7 +216,7 @@ public abstract class InstPanel extends JPanel {
 				if (!copyButton.isEnabled()) {
 					return;
 				}
-				InstPart part = toInstPart(GenerationGUI.lastRandomSeed);
+				InstPart part = toInstPart(context.getLastRandomSeed());
 				if (context == null) {
 					return;
 				}
@@ -363,6 +365,15 @@ public abstract class InstPanel extends JPanel {
 	public void setContext(Context context, InstrumentPanelController panelController) {
 		this.context = context;
 		this.panelController = panelController;
+		patternSeed.setCurrentSeedSupplier(context::getCurrentSeed);
+	}
+
+	public int getCurrentSeed() {
+		return context == null ? 0 : context.getCurrentSeed();
+	}
+
+	public int getLastRandomSeed() {
+		return context == null ? 0 : context.getLastRandomSeed();
 	}
 
 	private static void applyInstrumentControlContext(Container container,

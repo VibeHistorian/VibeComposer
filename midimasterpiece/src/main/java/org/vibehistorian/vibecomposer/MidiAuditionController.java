@@ -12,6 +12,7 @@ import jm.music.data.Phrase;
 import javax.sound.midi.InvalidMidiDataException;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.guiConfig;
 import static org.vibehistorian.vibecomposer.Constants.instNames;
@@ -22,12 +23,15 @@ public final class MidiAuditionController {
 	private final InstrumentPanelController panelController;
 	private final MidiDeviceController midiDeviceController;
 	private final ScoreGUI scoreGUI;
+	private final Supplier<MidiUtils.ScaleMode> scaleMode;
 
 	public MidiAuditionController(InstrumentPanelController panelController,
-			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI) {
+			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI,
+			Supplier<MidiUtils.ScaleMode> scaleMode) {
 		this.panelController = panelController;
 		this.midiDeviceController = midiDeviceController;
 		this.scoreGUI = scoreGUI;
+		this.scaleMode = scaleMode;
 	}
 
 	public void playNextNote(int keyboardTranspose, int velocity, INST instrument, int panelOrder) {
@@ -85,7 +89,7 @@ public final class MidiAuditionController {
 		try {
 			if (instrument.getIndex() < 4 && ExtraSettingsGUI.transposeNotePreview.isSelected()) {
 				Pair<MidiUtils.ScaleMode, Integer> scaleKey = ArrangementGUI.keyChangeAt(
-						ArrangementGUI.actualArrangement.getSections().indexOf(section));
+						ArrangementGUI.actualArrangement.getSections().indexOf(section), scaleMode.get());
 				int extraTranspose = instrument != INST.MELODY ? panel.getTranspose() : 0;
 				List<Note> notes = Collections.singletonList(new Note(
 						instrument != INST.MELODY ? pitch : pitch + panel.getTranspose(),

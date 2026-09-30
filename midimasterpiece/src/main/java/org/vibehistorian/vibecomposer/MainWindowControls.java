@@ -3,13 +3,10 @@ package org.vibehistorian.vibecomposer;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
-import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
-import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
-import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.sound.midi.MidiDevice;
@@ -44,6 +41,7 @@ public final class MainWindowControls {
         void loadSelectedHistory(GUIConfig selectedConfig);
         void replaceSection();
         void recomposeSection();
+        void openExtraSettings();
     }
 
     public interface ComposeContext {
@@ -140,7 +138,7 @@ public final class MainWindowControls {
         mainButtonsPanel.add(SwingUtils.makeButton("Exclude Not Solo'd",
                 e -> headerContext.toggleExcludeNotSoloed()));
 
-        mainButtonsPanel.add(SwingUtils.makeButton("Settings", e -> new ExtraSettingsPopup()));
+        mainButtonsPanel.add(SwingUtils.makeButton("Settings", e -> headerContext.openExtraSettings()));
 
         messageLabel = new JLabel("Click something!");
         messageLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -223,28 +221,21 @@ public final class MainWindowControls {
 
     public void addComposeControls(JPanel parent, GridBagConstraints constraints,
             int startY, int anchorSide, Component transposeControl, int minimumBpm,
-            int maximumBpm, JComponent currentChords, ChordGUI chordGUI) {
+            int maximumBpm, JComponent currentChords, ChordGUI chordGUI,
+            GenerationGUI generationGUI) {
         JPanel controlSettingsPanel = new JPanel();
         controlSettingsPanel.setOpaque(false);
         controlSettingsPanel.add(transposeControl);
 
-        GenerationGUI.mainBpm = new DetachedKnobPanel("BPM", 80, minimumBpm, maximumBpm);
-        GenerationGUI.mainBpm.getKnob().setStretchAfterCustomInput(true);
-        controlSettingsPanel.add(GenerationGUI.mainBpm);
+        generationGUI.initializeMainControls(minimumBpm, maximumBpm);
+        controlSettingsPanel.add(generationGUI.mainBpm);
 
-        GenerationGUI.scaleMode = new ScrollComboBox<String>();
-        String[] scaleModes = new String[MidiUtils.ScaleMode.values().length];
-        for (int i = 0; i < MidiUtils.ScaleMode.values().length; i++) {
-            scaleModes[i] = MidiUtils.ScaleMode.values()[i].toString();
-        }
-        ScrollComboBox.addAll(scaleModes, GenerationGUI.scaleMode);
         controlSettingsPanel.add(new JLabel("Scale"));
-        controlSettingsPanel.add(GenerationGUI.scaleMode);
+        controlSettingsPanel.add(generationGUI.scaleMode);
 
         randomizeScaleModeOnCompose = SwingUtils.makeCheckBox("Rand. on Compose", true, true);
         controlSettingsPanel.add(randomizeScaleModeOnCompose);
 
-        GenerationGUI.randomSeed = new RandomValueButton(0);
         compose = composeContext.makeButton("COMPOSE", "Compose");
         compose.setBackground(GUIConstants.COMPOSE_COLOR);
         compose.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -263,8 +254,8 @@ public final class MainWindowControls {
         regeneratePausePlay.setPreferredSize(new Dimension(25, 30));
         regenerate.setFont(regenerate.getFont().deriveFont(Font.BOLD));
         JButton copySeed = SwingUtils.makeButton("Copy Main Seed", e -> {
-            GenerationGUI.randomSeed.setValue(GenerationGUI.lastRandomSeed);
-            LG.i("Copied to random seed: " + GenerationGUI.lastRandomSeed);
+            generationGUI.randomSeed.setValue(generationGUI.lastRandomSeed);
+            LG.i("Copied to random seed: " + generationGUI.lastRandomSeed);
         });
         JButton copyChords = SwingUtils.makeButton("Copy chords", e -> chordGUI.copyChords());
         JButton clearSeed = SwingUtils.makeButton("Clear All Seeds", e -> composeContext.clearAllSeeds());
@@ -273,7 +264,7 @@ public final class MainWindowControls {
         controlSettingsPanel.add(regenerateStopPlay);
         controlSettingsPanel.add(regeneratePausePlay);
         controlSettingsPanel.add(compose);
-        controlSettingsPanel.add(GenerationGUI.randomSeed);
+        controlSettingsPanel.add(generationGUI.randomSeed);
         controlSettingsPanel.add(copySeed);
         controlSettingsPanel.add(currentChords);
         controlSettingsPanel.add(copyChords);
@@ -285,7 +276,7 @@ public final class MainWindowControls {
     }
 
     public void addPlaybackControls(JPanel parent, GridBagConstraints constraints,
-            int startY, int anchorSide, ScoreGUI scoreGUI) {
+            int startY, int anchorSide, ScoreGUI scoreGUI, GenerationGUI generationGUI) {
         JPanel playSavePanel = new JPanel();
         playSavePanel.setOpaque(false);
         stopMidi = SwingUtils.makeButton("STOP", e -> playbackContext.stopPlaybackButton());
@@ -344,8 +335,6 @@ public final class MainWindowControls {
         });
 
         scoreGUI.createShowScoreButton();
-        GenerationGUI.regenerateWhenValuesChange = new CheckButton("Regenerate on Change", true);
-        GenerationGUI.loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
         loopBeatCompose = new ScrollComboBox<>(false);
         ScrollComboBox.addAll(new String[] { "REGENERATE", "COMPOSE", "REPLAY" }, loopBeatCompose);
 
@@ -403,11 +392,11 @@ public final class MainWindowControls {
 
         JPanel playSettingsPanel = new JPanel();
         playSettingsPanel.setOpaque(false);
-        playSettingsPanel.add(GenerationGUI.regenerateWhenValuesChange);
+        playSettingsPanel.add(generationGUI.regenerateWhenValuesChange);
         playSettingsPanel.add(scoreGUI.getShowScoreButton());
         PlaybackState.loopBeat = new CheckButton("Loop Quarter Notes", false);
         playSettingsPanel.add(PlaybackState.loopBeat);
-        playSettingsPanel.add(GenerationGUI.loopBeatCount);
+        playSettingsPanel.add(generationGUI.loopBeatCount);
         playSettingsPanel.add(new JLabel("On Loop:"));
         playSettingsPanel.add(loopBeatCompose);
         playSettingsPanel.add(midiMode);

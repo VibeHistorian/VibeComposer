@@ -10,6 +10,7 @@ import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
+import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
@@ -42,22 +43,36 @@ public class GenerationGUI {
     public KnobPanel globalSwingOverrideValue;
     public JButton globalSwingOverrideApplyButton;
     public ScrollComboBox<Double> beatDurationMultiplier;
-    public static ScrollComboBox<String> scaleMode;
-    public static KnobPanel loopBeatCount;
-    public static KnobPanel mainBpm;
-    public static RandomValueButton randomSeed;
-    public static int lastRandomSeed;
-    public static CheckButton regenerateWhenValuesChange;
+    public ScrollComboBox<String> scaleMode;
+    public KnobPanel loopBeatCount;
+    public KnobPanel mainBpm;
+    public RandomValueButton randomSeed;
+    public int lastRandomSeed;
+    public CheckButton regenerateWhenValuesChange;
 
-    public static int getCurrentSeed() {
+    public int getCurrentSeed() {
         return (randomSeed != null && randomSeed.getValue() != 0) ? randomSeed.getValue()
                 : lastRandomSeed;
     }
 
-    public static boolean canRegenerateOnChange() {
-        return PlaybackState.sequencer != null && regenerateWhenValuesChange.isSelected()
+    public boolean canRegenerateOnChange() {
+        return PlaybackState.sequencer != null && regenerateWhenValuesChange != null
+                && regenerateWhenValuesChange.isSelected()
                 && !ApplicationSessionState.heavyBackgroundTasksInProgress
+                && ArrangementGUI.arrSection != null
                 && ArrangementGUI.arrSection.getSelectedIndex() == 0;
+    }
+
+    public void initializeMainControls(int minimumBpm, int maximumBpm) {
+        mainBpm = new DetachedKnobPanel("BPM", 80, minimumBpm, maximumBpm);
+        mainBpm.getKnob().setStretchAfterCustomInput(true);
+        scaleMode = new ScrollComboBox<>();
+        String[] scaleModes = Arrays.stream(MidiUtils.ScaleMode.values())
+                .map(MidiUtils.ScaleMode::toString).toArray(String[]::new);
+        ScrollComboBox.addAll(scaleModes, scaleMode);
+        randomSeed = new RandomValueButton(0, this::getCurrentSeed);
+        regenerateWhenValuesChange = new CheckButton("Regenerate on Change", true);
+        loopBeatCount = new DetachedKnobPanel("", 16, 1, 16);
     }
 
     public void saveToConfig(GUIConfig gc) {

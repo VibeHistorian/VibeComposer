@@ -198,13 +198,14 @@ public class ArrangementGUI {
 		return OMNI.clamp(measureCounter, 0, PlaybackState.sliderMeasureStartTimes.size() - 1);
 	}
 
-	public static Pair<MidiUtils.ScaleMode, Integer> keyChangeAt(int sectionIndex) {
+	public static Pair<MidiUtils.ScaleMode, Integer> keyChangeAt(int sectionIndex,
+			MidiUtils.ScaleMode initialMode) {
 		if (actualArrangement == null || actualArrangement.getSections() == null || sectionIndex < 0
 				|| sectionIndex >= actualArrangement.getSections().size()) {
 			return null;
 		}
 
-		MidiUtils.ScaleMode lastMode = MidiUtils.ScaleMode.valueOf(GenerationGUI.scaleMode.getVal());
+		MidiUtils.ScaleMode lastMode = initialMode;
 		int lastKeyChange = 0;
 		for (int i = 0; i < sectionIndex; i++) {
 			Section section = actualArrangement.getSections().get(i);
@@ -235,7 +236,7 @@ public class ArrangementGUI {
 
 	private List<? extends InstPart> getInstrumentParts(int instrument) {
 		List<InstPart> parts = panelController.getPartsFromPanels(getInstList(instrument), false,
-				GenerationGUI.lastRandomSeed);
+				context.getLastRandomSeed());
 		InstPart.sortParts(parts);
 		return parts;
 	}
@@ -255,8 +256,8 @@ public class ArrangementGUI {
 		JPanel panePanel = (JPanel) panelController.getInstPane(instrument)
 				.getViewport().getView();
 		List<InstPanel> panels = new ArrayList<>();
-		int seed = GenerationGUI.lastRandomSeed == 0
-				? GenerationGUI.randomSeed.getValue() : GenerationGUI.lastRandomSeed;
+		int lastSeed = context.getLastRandomSeed();
+		int seed = lastSeed == 0 ? context.getCurrentSeed() : lastSeed;
 		for (Component component : panePanel.getComponents()) {
 			if (component instanceof InstPanel) {
 				panels.add((InstPanel) component);
@@ -279,6 +280,9 @@ public class ArrangementGUI {
 		GUIConfig getSelectedConfigHistory();
 		void recalculateAfterSectionRecompose();
 		void regenerateAfterSectionRecomposeIfEnabled();
+		int getCurrentSeed();
+		int getLastRandomSeed();
+		boolean canRegenerateOnChange();
 	}
 
 	private void preparePartMaps(Arrangement target) {
@@ -894,7 +898,7 @@ public class ArrangementGUI {
 			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
 					Integer.parseInt(ArrangementGUI.pieceLength.getText()));
 			context.recalculateTabPaneCounts();
-			if (GenerationGUI.canRegenerateOnChange()) {
+			if (context.canRegenerateOnChange()) {
 				context.regenerate();
 			}
 		}, 90);
@@ -984,7 +988,7 @@ public class ArrangementGUI {
 		arrangementSettingsRight.add(copySelectedBtn);
 		arrangementSettingsRight.add(removeSelectedBtn);
 		arrangementSettingsRight.add(new JLabel("Seed"));
-		ArrangementGUI.arrangementSeed = new RandomValueButton(0);
+		ArrangementGUI.arrangementSeed = new RandomValueButton(0, context::getCurrentSeed);
 		arrangementSettingsRight.add(ArrangementGUI.arrangementSeed);
 		ArrangementGUI.arrangementSettings.add(arrangementSettingsRight);
 

@@ -40,6 +40,7 @@ import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
+import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
@@ -71,7 +72,6 @@ import java.util.stream.Collectors;
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_HEIGHT;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
-import static org.vibehistorian.vibecomposer.GenerationGUI.*;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
 import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
 import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
@@ -99,7 +99,7 @@ public class VibeComposerGUI extends JFrame
 			return VibeComposerGUI.getAffectedPanels(instrument);
 		}
 		@Override public boolean canRegenerateOnChange() {
-			return GenerationGUI.canRegenerateOnChange();
+			return generationGUI.canRegenerateOnChange();
 		}
 		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 	};
@@ -149,6 +149,9 @@ public class VibeComposerGUI extends JFrame
 				@Override public void repaintInstrumentTabs() { instrumentTabPane.repaint(); }
 				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 				@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
+				@Override public boolean canRegenerateOnChange() {
+					return generationGUI.canRegenerateOnChange();
+				}
 			}, instrument -> {
 				InstPanel panel = getOwnedInstrumentControls(instrument)
 						.createPanel(VibeComposerGUI.this);
@@ -157,7 +160,7 @@ public class VibeComposerGUI extends JFrame
 				configureInstrumentControlContext(panel);
 				removeComboBoxArrows(panel);
 				return panel;
-			}, this::getOwnedInstrumentControls, () -> GenerationGUI.lastRandomSeed);
+			}, this::getOwnedInstrumentControls, () -> this.generationGUI.lastRandomSeed);
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public INST getSelectedInstrument() {
 			return INST.fromIndex(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
@@ -170,6 +173,8 @@ public class VibeComposerGUI extends JFrame
 			VibeComposerGUI.this.recalculateGenerationCounts();
 			VibeComposerGUI.this.repaint();
 		}
+		@Override public int getCurrentSeed() { return generationGUI.getCurrentSeed(); }
+		@Override public int getLastRandomSeed() { return generationGUI.lastRandomSeed; }
 	};
 	private final MidiEditPopup.Context midiEditPopupContext = new MidiEditPopup.Context() {
 		@Override public Component getMainWindowComponent() { return VibeComposerGUI.this; }
@@ -181,7 +186,8 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public Pair<ScaleMode, Integer> getScaleKey(Section section) {
 			return ArrangementGUI.keyChangeAt(
-					ArrangementGUI.actualArrangement.getSections().indexOf(section));
+					ArrangementGUI.actualArrangement.getSections().indexOf(section),
+					ScaleMode.valueOf(generationGUI.scaleMode.getVal()));
 		}
 		@Override public int getTranspose() { return scoreGUI.getTranspose(); }
 		@Override public List<Integer> getMelodyBlockChoicePreference() {
@@ -275,7 +281,7 @@ public class VibeComposerGUI extends JFrame
 // seed / midi
 
 	MidiHandler mh = new MidiHandler(new MidiHandler.Context() {
-		@Override public void setBpm(int bpm) { GenerationGUI.mainBpm.setInt(bpm); }
+		@Override public void setBpm(int bpm) { generationGUI.mainBpm.setInt(bpm); }
 		@Override public int getInstrumentPartCount(INST instrument) {
 			return VibeComposerGUI.getInstList(instrument).size();
 		}
@@ -345,7 +351,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		playbackController = new PlaybackController(new PlaybackController.Context() {
 			@Override public void startMidiCcThread() { midiCcController.startMidiCcThread(); }
 			@Override public boolean startFromBar() { return ExtraSettingsGUI.startFromBar.isSelected(); }
-			@Override public int currentBpm() { return mainBpm.getInt(); }
+			@Override public int currentBpm() { return generationGUI.mainBpm.getInt(); }
 			@Override public boolean hasGeneratedChordData() { return !MidiGenerator.chordInts.isEmpty(); }
 		});
 		midiDeviceController = new MidiDeviceController(new MidiDeviceController.Context() {
@@ -416,6 +422,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void replaceSection() { arrangementGUI.replaceSection(); }
 			@Override public void recomposeSection() { arrangementGUI.recomposeSection(); }
+			@Override public void openExtraSettings() {
+				new ExtraSettingsPopup(generationGUI.mainBpm);
+			}
 		}, new MainWindowControls.ComposeContext() {
 			@Override public JButton makeButton(String name, String actionCommand) {
 				return VibeComposerGUI.this.makeButton(name, actionCommand);
@@ -436,7 +445,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void saveConfigFile(int rating) {
 				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
 				String currentMidiFileName = currentMidi != null ? currentMidi.getName() : "";
-				presetViewController.saveGuiConfigFile(rating, guiConfig, currentMidi, VibeComposerGUI.getFilenameForSaving(currentMidiFileName));
+				presetViewController.saveGuiConfigFile(rating, guiConfig, currentMidi,
+						VibeComposerGUI.this.getFilenameForSaving(currentMidiFileName));
 			}
 			@Override public void saveWavFile() { VibeComposerGUI.this.saveWavFile(); }
 			@Override public File getCurrentMidi() { return currentMidi; }
@@ -509,10 +519,15 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				recalculateSoloMuters();
 			}
 			@Override public void regenerateAfterSectionRecomposeIfEnabled() {
-				if (sequencer != null && regenerateWhenValuesChange.isSelected()) {
+				if (sequencer != null && generationGUI.regenerateWhenValuesChange.isSelected()) {
 					playbackController.stopMidi();
 					regenerate();
 				}
+			}
+			@Override public int getCurrentSeed() { return generationGUI.getCurrentSeed(); }
+			@Override public int getLastRandomSeed() { return generationGUI.lastRandomSeed; }
+			@Override public boolean canRegenerateOnChange() {
+				return generationGUI.canRegenerateOnChange();
 			}
 		}, playbackController, instrumentPanelController, chordGUI, instrumentTabPane,
 				midiEditPopupContext);
@@ -627,6 +642,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void setScoreTranspose(int transpose) {
 				scoreGUI.setTranspose(transpose);
 			}
+			@Override public boolean canRegenerateOnChange() {
+				return generationGUI.canRegenerateOnChange();
+			}
+			@Override public void setScaleMode(ScaleMode scaleMode) {
+				generationGUI.scaleMode.setVal(scaleMode.toString());
+			}
 			@Override public List<Double> getUserChordDurations() {
 				return chordGUI.getUserChordDurations();
 			}
@@ -656,6 +677,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public boolean isBeatDurationMultiplierBelowOne() {
 				return generationGUI.beatDurationMultiplier != null
 						&& generationGUI.beatDurationMultiplier.getVal() < 0.75;
+			}
+			@Override public ScaleMode getScaleMode() {
+				return ScaleMode.valueOf(generationGUI.scaleMode.getVal());
 			}
 			@Override
 			public void copyGUItoConfig() {
@@ -696,6 +720,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
 			}
+			@Override public int getLastRandomSeed() { return generationGUI.lastRandomSeed; }
 		}, instrumentPanelController);
 	}
 
@@ -715,7 +740,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		initArrangementGUI();
 		initScoreGUI();
 		midiAuditionController = new MidiAuditionController(instrumentPanelController,
-				midiDeviceController, scoreGUI);
+				midiDeviceController, scoreGUI,
+				() -> ScaleMode.valueOf(generationGUI.scaleMode.getVal()));
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
 
@@ -888,11 +914,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		KnobPanel globalTransposeControl = scoreGUI.createTransposeControl();
 		mainWindowControls.addComposeControls(everythingPanel, constraints, 410,
 				GridBagConstraints.CENTER, globalTransposeControl, ExtraSettingsGUI.bpmLow.getInt(),
-				ExtraSettingsGUI.bpmHigh.getInt(), chordGUI.currentChords, chordGUI);
+				ExtraSettingsGUI.bpmHigh.getInt(), chordGUI.currentChords, chordGUI, generationGUI);
 
 
 		// ---- PLAY PANEL ----
-		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
+		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420,
+				GridBagConstraints.CENTER, scoreGUI, generationGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
 		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, chordGUI, drumGUI,
 				arpGUI, melodyGUI, generationGUI);
@@ -1322,9 +1349,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 								}
 
 								if (sequencer != null) {
-									if (mainBpm.getInt() != (int) guiConfig.getBpm()) {
+									if (generationGUI.mainBpm.getInt() != (int) guiConfig.getBpm()) {
 										sequencer.setTempoFactor(
-												(float) (mainBpm.getInt() / guiConfig.getBpm()));
+												(float) (generationGUI.mainBpm.getInt() / guiConfig.getBpm()));
 									}
 									if (ExtraSettingsGUI.rememberLastPos.isSelected()) {
 										playbackController.savePauseInfo();
@@ -1349,7 +1376,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							} else if (generationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
 								mult = 2;
 							}
-							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
+							if (newSliderVal >= ((mult * generationGUI.loopBeatCount.getInt() * beatFromBpm(0))
 									- 50) || sequencerEnded) {
 								playbackController.stopMidi();
 								switch (mainWindowControls.getLoopBeatCompose().getVal()) {
@@ -1978,7 +2005,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			recalculateSoloMuters();
 		}
 
-		if (triggerRegenerate && GenerationGUI.canRegenerateOnChange()) {
+		if (triggerRegenerate && generationGUI.canRegenerateOnChange()) {
 			regenerate();
 		}
 
@@ -1997,7 +2024,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void clearAllSeeds() {
-		randomSeed.setValue(0);
+		generationGUI.randomSeed.setValue(0);
 		for (INST instrument : INST.values()) {
 			getInstList(instrument).forEach(e -> e.setPatternSeed(0));
 		}
@@ -2049,17 +2076,17 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	public void copyGUItoConfig(GUIConfig gc, boolean isNew) {
 		gc.setVersion(CURRENT_VERSION);
-		gc.setRandomSeed(lastRandomSeed);
+		gc.setRandomSeed(generationGUI.lastRandomSeed);
 		gc.setMidiMode(mainWindowControls.getMidiMode().isSelected());
-		gc.setBpm(Double.valueOf(mainBpm.getInt()));
-		gc.setScaleMode(ScaleMode.valueOf(scaleMode.getVal()));
+		gc.setBpm(Double.valueOf(generationGUI.mainBpm.getInt()));
+		gc.setScaleMode(ScaleMode.valueOf(generationGUI.scaleMode.getVal()));
 
-		arrangementGUI.saveToConfig(gc, isNew, lastRandomSeed, guiConfig.getPatternMaps());
-		melodyGUI.saveToConfig(gc, lastRandomSeed);
-		bassGUI.saveToConfig(gc, lastRandomSeed);
-		chordGUI.saveToConfig(gc, lastRandomSeed);
-		arpGUI.saveToConfig(gc, lastRandomSeed);
-		drumGUI.saveToConfig(gc, lastRandomSeed,
+		arrangementGUI.saveToConfig(gc, isNew, generationGUI.lastRandomSeed, guiConfig.getPatternMaps());
+		melodyGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
+		bassGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
+		chordGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
+		arpGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
+		drumGUI.saveToConfig(gc, generationGUI.lastRandomSeed,
 				mainWindowControls.getMidiMode().isSelected()
 						&& !mainWindowControls.getMidiModeDevices().getVal().contains("ervill"));
 		scoreGUI.saveToConfig(gc);
@@ -2077,10 +2104,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ArrangementGUI.arrSection.setVisible(false);
 		ArrangementGUI.arrSection.setSelectedIndex(0);
 		melodyGUI.randomMelodyOnRegenerate.setSelected(false);
-		randomSeed.setValue((int) gc.getRandomSeed());
-		lastRandomSeed = randomSeed.getValue();
+		generationGUI.randomSeed.setValue((int) gc.getRandomSeed());
+		generationGUI.lastRandomSeed = generationGUI.randomSeed.getValue();
 		mainWindowControls.getMidiMode().setSelected(gc.isMidiMode());
-		scaleMode.setVal(gc.getScaleMode().toString());
+		generationGUI.scaleMode.setVal(gc.getScaleMode().toString());
 
 		// Restore each module's controls and models before recreating its panels.
 		arrangementGUI.loadFromConfig(gc);
@@ -2094,9 +2121,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		ExtraSettingsGUI.loadFromConfig(gc);
 
 		int bpm = (int) Math.round(gc.getBpm());
-		mainBpm.getKnob().setMin(Math.min(GenerationGUI.mainBpm.getKnob().getMin(), bpm));
-		mainBpm.getKnob().setMax(Math.max(GenerationGUI.mainBpm.getKnob().getMax(), bpm));
-		mainBpm.setInt(bpm);
+		generationGUI.mainBpm.getKnob().setMin(Math.min(generationGUI.mainBpm.getKnob().getMin(), bpm));
+		generationGUI.mainBpm.getKnob().setMax(Math.max(generationGUI.mainBpm.getKnob().getMax(), bpm));
+		generationGUI.mainBpm.setInt(bpm);
 
 		melodyGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(
 				INST.MELODY, parts));
@@ -2154,7 +2181,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		refreshBannedInstruments();
 		instrumentPanelController.randomizePanel(panel);
-		if (GenerationGUI.canRegenerateOnChange()) {
+		if (generationGUI.canRegenerateOnChange()) {
 			regenerate();
 		}
 
@@ -2163,7 +2190,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		mainWindowControls.getMessageLabel().setText("::" + actionName + "::");
 	}
 
-	public static String getFilenameForSaving(String oldName) {
-		return oldName.replaceFirst("bpm[0-9]{1,3}_", "bpm" + mainBpm.getInt() + "_");
+	public String getFilenameForSaving(String oldName) {
+		return oldName.replaceFirst("bpm[0-9]{1,3}_", "bpm" + generationGUI.mainBpm.getInt() + "_");
 	}
 }

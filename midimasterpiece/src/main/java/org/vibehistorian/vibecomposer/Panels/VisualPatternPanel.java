@@ -5,7 +5,6 @@ import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.GenerationGUI;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.MidiGenerator;
@@ -556,7 +555,7 @@ public class VisualPatternPanel extends JPanel {
 						} else if (parentPanel != null) {
 							parentPanel.applyPauseChance(new Random(
 									parentPanel.getPatternSeed() != 0 ? parentPanel.getPatternSeed()
-											: GenerationGUI.lastRandomSeed));
+											: parentPanel.getLastRandomSeed()));
 						}
 
 					} else if (SwingUtilities.isMiddleMouseButton(evt) && parentPanel != null) {

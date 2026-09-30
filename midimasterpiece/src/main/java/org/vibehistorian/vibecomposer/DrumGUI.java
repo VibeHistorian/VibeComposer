@@ -121,6 +121,7 @@ public class DrumGUI extends InstGUI<DrumPanel> {
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
+		int getLastRandomSeed();
 	}
 
 	public void initDrumGenSettings() {
@@ -420,7 +421,7 @@ public class DrumGUI extends InstGUI<DrumPanel> {
 			}
 
 
-			/*DrumPart panelPart = dp.toDrumPart(GenerationGUI.lastRandomSeed);
+			/*DrumPart panelPart = dp.toDrumPart(context.getLastRandomSeed());
 			int[] drumPartArray = displayDrumPart(panelPart, chords, maxPatternPerChord);
 			for (int j = 0; j < drumPartArray.length; j++) {
 				drumHitGrid[j] += drumPartArray[j];
@@ -441,7 +442,7 @@ public class DrumGUI extends InstGUI<DrumPanel> {
 				!ip.getInstrumentBox().isEnabled() ? ip.getInstrument() : pitches.get(panelIndex));
 		int order = DrumDefaults.getOrder(dpart.getInstrument());
 		DrumSettings settings = DrumDefaults.drumSettings[order];
-		settings.applyToDrumPart(dpart, GenerationGUI.lastRandomSeed);
+		settings.applyToDrumPart(dpart, context.getLastRandomSeed());
 
 
 		dpart.setOrder(ip.getPanelOrder());
