@@ -226,15 +226,15 @@ public final class ComposeCoordinator {
                     : null;
 
             MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
-            MidiGenerator.FIRST_CHORD = ChordGUI.chordSelect(ChordGUI.firstChordSelection.getVal());
-            MidiGenerator.LAST_CHORD = ChordGUI.chordSelect(ChordGUI.lastChordSelection.getVal());
+            MidiGenerator.FIRST_CHORD = ChordGUI.chordSelect(chordGUI.firstChordSelection.getVal());
+            MidiGenerator.LAST_CHORD = ChordGUI.chordSelect(chordGUI.lastChordSelection.getVal());
 
-            boolean customChords = ChordGUI.userChordsEnabled.isSelected()
-                    && !ChordGUI.userChords.getChordletsRaw().isEmpty();
-            if (customChords || ChordGUI.userDurationsEnabled.isSelected()) {
-                List<String> chords = ChordGUI.userChords.getChordList();
+            boolean customChords = chordGUI.userChordsEnabled.isSelected()
+                    && !chordGUI.userChords.getChordletsRaw().isEmpty();
+            if (customChords || chordGUI.userDurationsEnabled.isSelected()) {
+                List<String> chords = chordGUI.userChords.getChordList();
 
-                MidiGenerator.userChordsDurations = ChordGUI.getUserChordDurations();
+                MidiGenerator.userChordsDurations = chordGUI.getUserChordDurations();
 
                 if (customChords) {
                     MidiGenerator.userChords = chords;

@@ -60,51 +60,51 @@ import static org.vibehistorian.vibecomposer.InstUtils.POOL;
 /** Builds and owns chord controls and their UI state. */
 public class ChordGUI extends InstGUI<ChordPanel> {
 
-    public static JPanel chordSettingsPanel;
-    public static JLabel currentChords = new JLabel("Chords:[]");
-    public static List<String> currentChordsInternal = new ArrayList<>();
-    public static JLabel tipLabel;
+    public JPanel chordSettingsPanel;
+    public JLabel currentChords = new JLabel("Chords:[]");
+    public List<String> currentChordsInternal = new ArrayList<>();
+    public JLabel tipLabel;
 
-    public static ScrollComboBox<String> chordProgressionLength;
-    public static JCheckBox allowChordRepeats;
-    public static JCheckBox randomChordsGenerateOnCompose;
-    public static JCheckBox randomChordDelay;
-    public static JCheckBox randomChordStrum;
-    public static KnobPanel randomChordStruminess;
-    public static JCheckBox randomChordSplit;
-    public static JCheckBox randomChordTranspose;
-    public static JCheckBox randomChordPattern;
-    public static JCheckBox randomChordVaryLength;
-    public static KnobPanel randomChordExpandChance;
-    public static KnobPanel randomChordSustainChance;
-    public static KnobPanel randomChordShiftChance;
-    public static KnobPanel randomChordVoicingChance;
-    public static KnobPanel randomChordMaxSplitChance;
-    public static JCheckBox randomChordUseChordFill;
-    public static ScrollComboBox<String> randomChordStretchType;
-    public static ScrollComboBox<Integer> randomChordStretchPicker;
-    public static KnobPanel randomChordStretchGenerationChance;
-    public static KnobPanel randomChordMaxStrumPauseChance;
-    public static KnobPanel randomChordMinVel;
-    public static KnobPanel randomChordMaxVel;
+    public ScrollComboBox<String> chordProgressionLength;
+    public JCheckBox allowChordRepeats;
+    public JCheckBox randomChordsGenerateOnCompose;
+    public JCheckBox randomChordDelay;
+    public JCheckBox randomChordStrum;
+    public KnobPanel randomChordStruminess;
+    public JCheckBox randomChordSplit;
+    public JCheckBox randomChordTranspose;
+    public JCheckBox randomChordPattern;
+    public JCheckBox randomChordVaryLength;
+    public KnobPanel randomChordExpandChance;
+    public KnobPanel randomChordSustainChance;
+    public KnobPanel randomChordShiftChance;
+    public KnobPanel randomChordVoicingChance;
+    public KnobPanel randomChordMaxSplitChance;
+    public JCheckBox randomChordUseChordFill;
+    public ScrollComboBox<String> randomChordStretchType;
+    public ScrollComboBox<Integer> randomChordStretchPicker;
+    public KnobPanel randomChordStretchGenerationChance;
+    public KnobPanel randomChordMaxStrumPauseChance;
+    public KnobPanel randomChordMinVel;
+    public KnobPanel randomChordMaxVel;
 
-    public static KnobPanel spiceChance;
-    public static KnobPanel chordSlashChance;
-    public static JCheckBox spiceAllowDimAug;
-    public static JCheckBox spiceAllow9th13th;
-    public static JCheckBox spiceFlattenBigChords;
-    public static JCheckBox squishChordsProgressively;
-    public static JCheckBox copyChordsAfterGenerate;
-    public static KnobPanel spiceParallelChance;
-    public static JCheckBox spiceForceScale;
-    public static ScrollComboBox<String> firstChordSelection;
-    public static ScrollComboBox<String> lastChordSelection;
-    public static JCheckBox useChordFormula;
-    public static KnobPanel longProgressionSimilarity;
-    public static CheckButton userChordsEnabled;
-    public static CheckButton userDurationsEnabled;
-    public static JTextField userChordsDurations;
-    public static ChordletPanel userChords;
+    public KnobPanel spiceChance;
+    public KnobPanel chordSlashChance;
+    public JCheckBox spiceAllowDimAug;
+    public JCheckBox spiceAllow9th13th;
+    public JCheckBox spiceFlattenBigChords;
+    public JCheckBox squishChordsProgressively;
+    public JCheckBox copyChordsAfterGenerate;
+    public KnobPanel spiceParallelChance;
+    public JCheckBox spiceForceScale;
+    public ScrollComboBox<String> firstChordSelection;
+    public ScrollComboBox<String> lastChordSelection;
+    public JCheckBox useChordFormula;
+    public KnobPanel longProgressionSimilarity;
+    public CheckButton userChordsEnabled;
+    public CheckButton userDurationsEnabled;
+    public JTextField userChordsDurations;
+    public ChordletPanel userChords;
 
     private final Context context;
 
@@ -184,12 +184,12 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         }
     }
 
-    public static void copyChords() {
+    public void copyChords() {
         userChords.setupChords(currentChordsInternal);
         LG.i("Copied chords: " + userChords.getChordListString());
     }
 
-    public static void setProgressionLength(int size) {
+    public void setProgressionLength(int size) {
         switch (size) {
         case 4:
             chordProgressionLength.setVal("4");
@@ -239,7 +239,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		void alignChordsWithMelody(ChordletPanel chordlets);
     }
 
-	public static void initExtraSettingsChords(JPanel chordChoicePanel) {
+	public void initExtraSettingsChords(JPanel chordChoicePanel) {
 		// CHORDS
 		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
 		useChordFormula = new CustomCheckBox("Chord Formula", true);
@@ -255,7 +255,32 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		chordChoicePanel.add(squishChordsProgressively);
 	}
 
-	public static int getMaxChordProgressionLength() {
+	public JCheckBox createExtraComposeControl() {
+		copyChordsAfterGenerate = SwingUtils.makeCheckBox(
+				"<html>Copy Chords<br>on Compose/Reg.</html>", true, true);
+		return copyChordsAfterGenerate;
+	}
+
+	public List<JPanel> initMacroControls() {
+		chordProgressionLength = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(new String[] { "4", "8", "RANDOM" }, chordProgressionLength);
+		setProgressionLength(4);
+		JPanel chordProgPanel = new JPanel();
+		chordProgPanel.add(new JLabel("# of Chords"));
+		chordProgPanel.add(chordProgressionLength);
+		chordProgPanel.setOpaque(false);
+
+		allowChordRepeats = new CustomCheckBox("Allow Chord Repeats", true);
+		JPanel allowRepPanel = new JPanel();
+		allowRepPanel.add(allowChordRepeats);
+		allowRepPanel.setOpaque(false);
+
+		chordProgPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		allowRepPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		return java.util.Arrays.asList(chordProgPanel, allowRepPanel);
+	}
+
+	public int getMaxChordProgressionLength() {
 		switch (chordProgressionLength.getSelectedIndex()) {
 		case 0:
 			return 4;
@@ -266,7 +291,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		}
 	}
 
-	public static List<Double> getUserChordDurations() {
+	public List<Double> getUserChordDurations() {
 		boolean forceDefault = !userDurationsEnabled.isSelected();
 
 		List<Double> durations = new ArrayList<>();
@@ -289,7 +314,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		return durations;
 	}
 
-	public static Pair<StrumType, Integer> getRandomStrumPair() {
+	public Pair<StrumType, Integer> getRandomStrumPair() {
 		StrumType type = selectTypeByStrumminess(randomChordStruminess.getInt());
 		Integer strum = MidiUtils.getRandom(new Random(), type.CHOICES.toArray(new Integer[] {}));
 		return Pair.of(type, strum);
@@ -764,8 +789,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		panelCount -= remainingPanels.size();
 
 		int fixedChordStretch = -1;
-		if (ChordGUI.randomChordStretchType.getVal().equals("FIXED")) {
-			fixedChordStretch = ChordGUI.randomChordStretchPicker.getVal();
+		if (randomChordStretchType.getVal().equals("FIXED")) {
+			fixedChordStretch = randomChordStretchPicker.getVal();
 		}
 
 		List<RhythmPattern> viablePatterns = RhythmPattern.VIABLE_PATTERNS;
@@ -787,7 +812,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 
 			if ((GenerationGUI.randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
 					&& ip.getInstrumentBox().isEnabled()) {
-				pool = (panelGenerator.nextInt(100) < ChordGUI.randomChordSustainChance.getInt())
+				pool = (panelGenerator.nextInt(100) < randomChordSustainChance.getInt())
 						? InstUtils.POOL.CHORD
 						: InstUtils.POOL.PLUCK;
 				ip.setInstPool(pool);
@@ -797,7 +822,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 
 			}
 
-			ip.setTransitionChance(panelGenerator.nextInt(ChordGUI.randomChordMaxSplitChance.getInt() + 1));
+			ip.setTransitionChance(panelGenerator.nextInt(randomChordMaxSplitChance.getInt() + 1));
 			ip.setTransitionSplit((OMNI.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_SPLIT, 0)));
 			if (ExtraSettingsGUI.orderedTransposeGeneration.isSelected()) {
 				ip.setTranspose((((ip.getPanelOrder()) % 3) - 1) * 12);
@@ -810,14 +835,14 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			Pair<StrumType, Integer> strumPair = getRandomStrumPair();
 			ip.setStrum(strumPair.getRight());
 			ip.setStrumType(strumPair.getLeft());
-			if (ChordGUI.randomChordDelay.isSelected()) {
+			if (randomChordDelay.isSelected()) {
 				ip.setOffset((OMNI.getRandomFromArray(panelGenerator, Constants.MILISECOND_ARRAY_DELAY, 0)));
 			} else {
 				ip.setOffset(0);
 			}
 
 
-			if (ChordGUI.randomChordUseChordFill.isSelected() && !pad) {
+			if (randomChordUseChordFill.isSelected() && !pad) {
 				ip.setChordSpanFill(ChordSpanFill.getWeighted(panelGenerator.nextInt(100)));
 			} else {
 				ip.setChordSpanFill(ChordSpanFill.ALL);
@@ -830,7 +855,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			// use pattern in 20% of the cases if checkbox selected
 			int patternChance = pool == InstUtils.POOL.PLUCK ? 25 : 10;
 			if (!pad && panelGenerator.nextInt(100) < patternChance) {
-				if (ChordGUI.randomChordPattern.isSelected()) {
+				if (randomChordPattern.isSelected()) {
 					pattern = viablePatterns.get(panelGenerator.nextInt(viablePatterns.size()));
 					if (pattern == RhythmPattern.MELODY1) {
 						pattern = RhythmPattern.FULL;
@@ -841,11 +866,11 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				}
 			}
 
-			if (!ChordGUI.randomChordStretchType.getVal().equals("NONE")
-					&& panelGenerator.nextInt(100) < ChordGUI.randomChordStretchGenerationChance.getInt()) {
+			if (!randomChordStretchType.getVal().equals("NONE")
+					&& panelGenerator.nextInt(100) < randomChordStretchGenerationChance.getInt()) {
 				ip.setStretchEnabled(true);
 				if (fixedChordStretch < 0) {
-					int atMost = ChordGUI.randomChordStretchPicker.getVal();
+					int atMost = randomChordStretchPicker.getVal();
 					ip.setChordNotesStretch(panelGenerator.nextInt(atMost - 3 + 1) + 3);
 				} else {
 					ip.setChordNotesStretch(fixedChordStretch);
@@ -858,7 +883,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			}
 
 			ip.setStrumPauseChance(
-					panelGenerator.nextInt(ChordGUI.randomChordMaxStrumPauseChance.getInt() + 1));
+					panelGenerator.nextInt(randomChordMaxStrumPauseChance.getInt() + 1));
 
 			ip.setPattern(pattern);
 			if ((pattern == RhythmPattern.FULL || pattern == RhythmPattern.MELODY1)
@@ -866,17 +891,17 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				ip.setStrum(ip.getStrum() / 4);
 			}
 
-			if (pad || panelGenerator.nextInt(100) < ChordGUI.randomChordExpandChance.getInt()) {
+			if (pad || panelGenerator.nextInt(100) < randomChordExpandChance.getInt()) {
 				ip.setPatternJoinMode(PatternJoinMode.EXPAND);
 			} else {
 				ip.setPatternJoinMode(PatternJoinMode.NOJOIN);
 			}
 
 
-			ip.setVelocityMax(ChordGUI.randomChordMaxVel.getInt());
-			ip.setVelocityMin(ChordGUI.randomChordMinVel.getInt());
+			ip.setVelocityMax(randomChordMaxVel.getInt());
+			ip.setVelocityMin(randomChordMinVel.getInt());
 
-			if (ChordGUI.randomChordVaryLength.isSelected()) {
+			if (randomChordVaryLength.isSelected()) {
 				if (pool == InstUtils.POOL.PLUCK) {
 					ip.setNoteLengthMultiplier(panelGenerator.nextInt(26) + 50);
 				} else {
@@ -885,10 +910,10 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 
 			}
 
-			if (panelGenerator.nextInt(100) < ChordGUI.randomChordShiftChance.getInt()) {
+			if (panelGenerator.nextInt(100) < randomChordShiftChance.getInt()) {
 				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
 				// test opposite check for shift distance
-				if (panelGenerator.nextInt(100) >= ChordGUI.randomChordShiftChance.getInt()) {
+				if (panelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
 					maxShift /= 2;
 				}
 				if ((GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75)) {

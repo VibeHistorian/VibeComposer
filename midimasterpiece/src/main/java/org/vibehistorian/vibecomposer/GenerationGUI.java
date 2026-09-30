@@ -75,14 +75,16 @@ public class GenerationGUI {
     private final InstrumentPanelController panelController;
     private final ArpGUI arpGUI;
     private final MelodyGUI melodyGUI;
+    private final ChordGUI chordGUI;
     private boolean onComposeOptionsEnabled = true;
 
     public GenerationGUI(Context context, InstrumentPanelController panelController,
-            ArpGUI arpGUI, MelodyGUI melodyGUI) {
+            ArpGUI arpGUI, MelodyGUI melodyGUI, ChordGUI chordGUI) {
         this.context = context;
         this.panelController = panelController;
         this.arpGUI = arpGUI;
         this.melodyGUI = melodyGUI;
+        this.chordGUI = chordGUI;
     }
 
     public JPanel initRandomButtons() {
@@ -113,7 +115,7 @@ public class GenerationGUI {
         JButton randomizeStrums = SwingUtils.makeButton("Randomize Strums", e -> {
             for (InstPanel p : panelController.getAffectedPanels(INST.CHORD)) {
                 ChordPanel cp = (ChordPanel) p;
-                Pair<StrumType, Integer> strumPair = ChordGUI.getRandomStrumPair();
+                Pair<StrumType, Integer> strumPair = chordGUI.getRandomStrumPair();
                 cp.setStrum(strumPair.getRight());
                 cp.setStrumType(strumPair.getLeft());
                 if (cp.getStretchEnabled() && cp.getChordNotesStretch() > 4
@@ -200,7 +202,7 @@ public class GenerationGUI {
         for (InstPanel panel : panelController.getInstList(INST.CHORD)) {
             ChordPanel chordPanel = (ChordPanel) panel;
             if (!chordPanel.getLockInst()) {
-                InstUtils.POOL pool = random.nextInt(100) < ChordGUI.randomChordSustainChance.getInt()
+                InstUtils.POOL pool = random.nextInt(100) < chordGUI.randomChordSustainChance.getInt()
                         ? InstUtils.POOL.CHORD : InstUtils.POOL.PLUCK;
                 chordPanel.setInstPool(pool);
                 chordPanel.getInstrumentBox().initInstPool(chordPanel.getInstPool());
@@ -318,21 +320,7 @@ public class GenerationGUI {
         macroParams.setOpaque(false);
         macroParams.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-        ChordGUI.chordProgressionLength = new ScrollComboBox<>(false);
-        ScrollComboBox.addAll(new String[] { "4", "8", "RANDOM" }, ChordGUI.chordProgressionLength);
-        ChordGUI.setProgressionLength(4);
-        JLabel chordDurationFixedLabel = new JLabel("# of Chords");
-        JPanel chordProgPanel = new JPanel();
-        chordProgPanel.add(chordDurationFixedLabel);
-        chordProgPanel.add(ChordGUI.chordProgressionLength);
-        chordProgPanel.setOpaque(false);
-        macroParams.add(chordProgPanel);
-
-        ChordGUI.allowChordRepeats = new CustomCheckBox("Allow Chord Repeats", true);
-        JPanel allowRepPanel = new JPanel();
-        allowRepPanel.add(ChordGUI.allowChordRepeats);
-        allowRepPanel.setOpaque(false);
-        macroParams.add(allowRepPanel);
+        chordGUI.initMacroControls().forEach(macroParams::add);
 
         JPanel globalSwingPanel = new JPanel();
         globalSwingOverride = new CustomCheckBox("<html>Global Swing<br>Override</html>", false);
@@ -355,8 +343,6 @@ public class GenerationGUI {
         useDoubledPanel.setOpaque(false);
         macroParams.add(useDoubledPanel);
 
-        chordProgPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        allowRepPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         globalSwingPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         useDoubledPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         return macroParams;

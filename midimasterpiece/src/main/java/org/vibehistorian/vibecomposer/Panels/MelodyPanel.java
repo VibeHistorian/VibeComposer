@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -49,6 +50,7 @@ public class MelodyPanel extends InstPanel {
 	private final KnobPanel startNoteChance = new KnobPanel("Start%", 80);
 	private final JCheckBox patternFlexible = new CustomCheckBox("Flex", true);
 	private final IntFunction<List<Integer>> noteTargetGenerator;
+	private final Supplier<List<Double>> userChordDurationProvider;
 
 	private PhraseNotes customDurationValues = new PhraseNotes();
 	private List<Integer> customDurationChances = new ArrayList<>(IntStream.iterate(50, e -> e).limit(CUSTOM_DURATIONS_LIMIT).boxed().collect(Collectors.toList()));
@@ -79,7 +81,8 @@ public class MelodyPanel extends InstPanel {
 			@Override
 			public void mousePressed(MouseEvent evt) {
 				LG.i(customDurationValues);
-				new CustomDurationsEditPopup(customDurationValues, customDurationChances, MelodyPanel.this);
+				new CustomDurationsEditPopup(customDurationValues, customDurationChances,
+						MelodyPanel.this, userChordDurationProvider);
 			}
 		});
 		speed.getKnobLockPane().add(bpo);
@@ -202,8 +205,10 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public MelodyPanel(SoloMuter.Context soloMuterContext,
-			IntFunction<List<Integer>> noteTargetGenerator) {
+			IntFunction<List<Integer>> noteTargetGenerator,
+			Supplier<List<Double>> userChordDurationProvider) {
 		this.noteTargetGenerator = noteTargetGenerator;
+		this.userChordDurationProvider = userChordDurationProvider;
 		initComponents(soloMuterContext);
 	}
 
@@ -426,4 +431,3 @@ public class MelodyPanel extends InstPanel {
 		this.customDurationChances = customDurationChances;
 	}
 }
-

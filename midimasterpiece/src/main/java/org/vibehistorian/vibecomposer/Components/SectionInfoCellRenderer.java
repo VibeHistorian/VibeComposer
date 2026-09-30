@@ -25,15 +25,17 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 	private int height = 10;
 	private int width = 10;
 	private int section = 0;
+	private final ChordGUI chordGUI;
 
 	private static final int fontSize = 8;
 	private static final float fontSizeMin = 7f;
 	private static final Font font = new Font("Tahoma", Font.PLAIN, fontSize);
 
-	public SectionInfoCellRenderer(int w, int h, int col) {
+	public SectionInfoCellRenderer(int w, int h, int col, ChordGUI chordGUI) {
 		height = h;
 		width = w;
 		section = col;
+		this.chordGUI = chordGUI;
 	}
 
 	@Override
@@ -63,12 +65,12 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 						|| sec.isDisplayAlternateChords())
 								? sec.getCustomChords().replaceAll(" ", "")
 								: "");
-				String guiUserChords = (ChordGUI.userChordsEnabled.isSelected()
-						? ChordGUI.userChords.getChordListString()
+				String guiUserChords = (chordGUI.userChordsEnabled.isSelected()
+						? chordGUI.userChords.getChordListString()
 						: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
 
-				String guiUserDurations = (ChordGUI.userDurationsEnabled.isSelected()
-						? ChordGUI.userChordsDurations.getText()
+				String guiUserDurations = (chordGUI.userDurationsEnabled.isSelected()
+						? chordGUI.userChordsDurations.getText()
 						: "4,4,4,4").replaceAll(" ", "");
 
 				if (customChords.trim().isEmpty() || guiUserChords.equalsIgnoreCase(customChords)) {

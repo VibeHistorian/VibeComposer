@@ -45,12 +45,14 @@ public class VariationPopup {
 	ScrollComboBox<String> scaleMode = new ScrollComboBox<>(false);
 
 	private final ArrangementGUI.VariationPopupActions arrangementActions;
+	private final ChordGUI chordGUI;
 
 	public VariationPopup(int section, Section sec, Point parentLoc, Dimension parentDim,
 			IntFunction<List<? extends InstPanel>> getInstList,
 			IntFunction<List<? extends InstPart>> partsForInstrument,
-			ArrangementGUI.VariationPopupActions arrangementActions) {
+			ChordGUI chordGUI, ArrangementGUI.VariationPopupActions arrangementActions) {
 		this.arrangementActions = arrangementActions;
+		this.chordGUI = chordGUI;
 		addFrameWindowOperation();
 		sectionOrder = section;
 		sectionObject = sec;
@@ -261,8 +263,8 @@ public class VariationPopup {
 		String tooltip = "Allowed chords: C/D/E/F/G/A/B + "
 				+ StringUtils.join(MidiUtils.SPICE_NAMES_LIST, " / ");
 
-		String guiUserChords = (ChordGUI.userChordsEnabled.isSelected()
-				? ChordGUI.userChords.getChordListString()
+		String guiUserChords = (chordGUI.userChordsEnabled.isSelected()
+				? chordGUI.userChords.getChordListString()
 				: StringUtils.join(MidiGenerator.chordInts, ","));
 		userChords = new ChordletPanel(300,
 				(sec.isCustomChordsEnabled() || sec.isDisplayAlternateChords())
@@ -286,7 +288,7 @@ public class VariationPopup {
 		});
 		userChordsDurations = new JTextField(
 				sec.isCustomDurationsEnabled() ? sec.getCustomDurations()
-						: ChordGUI.userChordsDurations.getText(),
+						: chordGUI.userChordsDurations.getText(),
 				7);
 		customChordsDurationsPanel.add(userChordsDurations);
 		customChordsDurationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);

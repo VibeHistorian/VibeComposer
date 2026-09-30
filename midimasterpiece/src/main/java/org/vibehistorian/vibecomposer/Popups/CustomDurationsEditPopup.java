@@ -5,7 +5,6 @@ import org.vibehistorian.vibecomposer.Components.MidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
-import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
@@ -22,6 +21,7 @@ import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.io.File;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
 
@@ -34,7 +34,8 @@ public class CustomDurationsEditPopup extends CloseablePopup {
 
     final int maxPitch = MelodyPanel.CUSTOM_DURATIONS_LIMIT-1;
 
-    public CustomDurationsEditPopup(PhraseNotes values, List<Integer> chances, InstPanel parentComponent) {
+    public CustomDurationsEditPopup(PhraseNotes values, List<Integer> chances, InstPanel parentComponent,
+            Supplier<List<Double>> userChordDurationProvider) {
         super("Custom Durations Editor", 15, new Point(0,0), parentComponent);
         part = parentComponent.getPartNum();
         partOrder = parentComponent.getPanelOrder();
@@ -44,7 +45,7 @@ public class CustomDurationsEditPopup extends CloseablePopup {
 
         JPanel cdMveaPanel = new JPanel();
         cdMveaPanel.setLayout(new BoxLayout(cdMveaPanel, BoxLayout.X_AXIS));
-        cdMvea = new MidiEditArea(0, maxPitch, values, ChordGUI::getUserChordDurations);
+        cdMvea = new MidiEditArea(0, maxPitch, values, userChordDurationProvider::get);
         cdMvea.splitNotesByGrid = true;
         cdMvea.drawNoteStrings = false;
         cdMvea.sectionLength = MidiGenerator.Durations.WHOLE_NOTE;
@@ -99,9 +100,7 @@ public class CustomDurationsEditPopup extends CloseablePopup {
         dndRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         generatedMidi.setCellRenderer(dndRenderer);
         generatedMidi.setBorder(new BevelBorder(BevelBorder.RAISED));
-        generatedMidi.setTransferHandler(new FileTransferHandler(e -> {
-            return buildMidiFileFromNotes();
-        }));
+        generatedMidi.setTransferHandler(new FileTransferHandler(e -> buildMidiFileFromNotes()));
         generatedMidi.setDragEnabled(true);
         generatedMidi.setListData(new File[]{new File("tempMidi.mid")});
 

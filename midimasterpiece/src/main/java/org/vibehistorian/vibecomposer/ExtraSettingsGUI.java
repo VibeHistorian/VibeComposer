@@ -93,16 +93,19 @@ public class ExtraSettingsGUI {
     }
 
     private final Context context;
-    private final DrumGUI drumGUI;
-    private final ArpGUI arpGUI;
+	private final DrumGUI drumGUI;
+	private final ChordGUI chordGUI;
+	private final ArpGUI arpGUI;
     private final MelodyGUI melodyGUI;
     private final InstrumentPanelController panelController;
     private final ScoreGUI scoreGUI;
 
-    public ExtraSettingsGUI(Context context, DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI,
-            InstrumentPanelController panelController, ScoreGUI scoreGUI) {
-        this.context = context;
-        this.drumGUI = drumGUI;
+	public ExtraSettingsGUI(Context context, DrumGUI drumGUI, ChordGUI chordGUI,
+			ArpGUI arpGUI, MelodyGUI melodyGUI,
+			InstrumentPanelController panelController, ScoreGUI scoreGUI) {
+		this.context = context;
+		this.drumGUI = drumGUI;
+		this.chordGUI = chordGUI;
         this.arpGUI = arpGUI;
         this.melodyGUI = melodyGUI;
         this.panelController = panelController;
@@ -183,7 +186,7 @@ public class ExtraSettingsGUI {
 		initExtraSettingsScore(scoreMidiPanel);
 		initExtraSettingsInstruments(instrumentsSettingsPanel);
 		initExtraSettingsPause(pauseBehaviorPanel);
-		ChordGUI.initExtraSettingsChords(chordChoicePanel);
+		chordGUI.initExtraSettingsChords(chordChoicePanel);
 		melodyGUI.initExtraSettingsMelody(melodyTweaksPanel);
 		initExtraSettingsBpm(bpmLowHighPanel);
 		initExtraSettingsDisplay(displayStylePanel);
@@ -418,13 +421,12 @@ public class ExtraSettingsGUI {
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
 		sidechainPatternsOnCompose = SwingUtils.makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
 				true, true);
-		ChordGUI.copyChordsAfterGenerate = SwingUtils.makeCheckBox("<html>Copy Chords<br>on Compose/Reg.</html>", true,
-				true);
+		JCheckBox copyChordsAfterGenerate = chordGUI.createExtraComposeControl();
 
 		composeSettingsPanel.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
 		composeSettingsPanel.add(randomizeTimingsOnCompose);
 		composeSettingsPanel.add(sidechainPatternsOnCompose);
-		composeSettingsPanel.add(ChordGUI.copyChordsAfterGenerate);
+		composeSettingsPanel.add(copyChordsAfterGenerate);
 	}
 
 	public void initGenerationSettings(JPanel generationSettingsPanel) {

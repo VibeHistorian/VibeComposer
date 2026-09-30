@@ -223,7 +223,7 @@ public final class MainWindowControls {
 
     public void addComposeControls(JPanel parent, GridBagConstraints constraints,
             int startY, int anchorSide, Component transposeControl, int minimumBpm,
-            int maximumBpm, JComponent currentChords) {
+            int maximumBpm, JComponent currentChords, ChordGUI chordGUI) {
         JPanel controlSettingsPanel = new JPanel();
         controlSettingsPanel.setOpaque(false);
         controlSettingsPanel.add(transposeControl);
@@ -266,7 +266,7 @@ public final class MainWindowControls {
             GenerationGUI.randomSeed.setValue(GenerationGUI.lastRandomSeed);
             LG.i("Copied to random seed: " + GenerationGUI.lastRandomSeed);
         });
-        JButton copyChords = SwingUtils.makeButton("Copy chords", e -> ChordGUI.copyChords());
+        JButton copyChords = SwingUtils.makeButton("Copy chords", e -> chordGUI.copyChords());
         JButton clearSeed = SwingUtils.makeButton("Clear All Seeds", e -> composeContext.clearAllSeeds());
 
         controlSettingsPanel.add(regenerate);

@@ -108,7 +108,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
 		return new MelodyPanel(soloMuterContext, seed -> MidiGeneratorUtils.generateNoteTargetOffsets(
 				MidiGenerator.chordInts, seed, melodyBlockTargetMode.getSelectedIndex(),
-				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem()));
+				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem()),
+				context::getUserChordDurations);
 	}
 
 	private void setUserMelodyScaleModes(List<String> modes) {
@@ -224,6 +225,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		PartManagerPanel.Context getPartManagerContext();
 		void regenerate();
 		void setScoreTranspose(int transpose);
+		List<Double> getUserChordDurations();
 	}
 
 	public void initMelodyGenSettings() {

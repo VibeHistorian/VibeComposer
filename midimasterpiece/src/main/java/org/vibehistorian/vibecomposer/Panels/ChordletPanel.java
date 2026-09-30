@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Panels;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -268,10 +267,6 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public void update() {
-		/*if (!ChordGUI.userChordsEnabled.isSelected()) {
-			ChordGUI.userChordsEnabled.setSelected(true);
-			ChordGUI.userChordsEnabled.repaint();
-		}*/
 		if (!chordletsDisplayed) {
 			rawChords.setText(getChordListString());
 		}

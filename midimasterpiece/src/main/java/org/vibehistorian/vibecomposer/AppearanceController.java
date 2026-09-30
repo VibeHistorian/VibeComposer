@@ -23,17 +23,19 @@ public final class AppearanceController {
 	private final Context context;
 	private final MainWindowControls mainWindowControls;
 	private final InstrumentPanelController instrumentPanelController;
+	private final ChordGUI chordGUI;
 	private final DrumGUI drumGUI;
 	private final ArpGUI arpGUI;
 	private final MelodyGUI melodyGUI;
 	private final GenerationGUI generationGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
-			InstrumentPanelController instrumentPanelController, DrumGUI drumGUI,
+			InstrumentPanelController instrumentPanelController, ChordGUI chordGUI, DrumGUI drumGUI,
 			ArpGUI arpGUI, MelodyGUI melodyGUI, GenerationGUI generationGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
 		this.instrumentPanelController = instrumentPanelController;
+		this.chordGUI = chordGUI;
 		this.drumGUI = drumGUI;
 		this.arpGUI = arpGUI;
 		this.melodyGUI = melodyGUI;
@@ -56,7 +58,7 @@ public final class AppearanceController {
 		toggledRegenerateColor = uiRegenerateTextColor();
 		mainWindowControls.toggleFgColors(toggledUIColor, toggledRegenerateColor,
 				toggledComposeColor);
-		ChordGUI.tipLabel.setForeground(toggledUIColor);
+		chordGUI.tipLabel.setForeground(toggledUIColor);
 		PlaybackState.currentTime.setForeground(toggledUIColor);
 		PlaybackState.totalTime.setForeground(toggledUIColor);
 		arpGUI.randomArpHitsPerPattern.setForeground(toggledUIColor);
@@ -121,7 +123,7 @@ public final class AppearanceController {
 
 	private void switchAllOnComposeCheckboxesForegrounds(Color foreground) {
 		melodyGUI.generateMelodiesOnCompose.setForeground(foreground);
-		ChordGUI.randomChordsGenerateOnCompose.setForeground(foreground);
+		chordGUI.randomChordsGenerateOnCompose.setForeground(foreground);
 		arpGUI.randomArpsGenerateOnCompose.setForeground(foreground);
 		drumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
 		generationGUI.randomizeBpmOnCompose.setForeground(foreground);
@@ -135,6 +137,6 @@ public final class AppearanceController {
 		generationGUI.switchOnComposeRandom.setForeground(foreground);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setForeground(foreground);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setForeground(foreground);
-		ChordGUI.copyChordsAfterGenerate.setForeground(foreground);
+		chordGUI.copyChordsAfterGenerate.setForeground(foreground);
 	}
 }

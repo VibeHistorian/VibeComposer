@@ -1,7 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import org.vibehistorian.vibecomposer.ApplicationSessionState;
-import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.INST;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
@@ -18,6 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class PatternManagerPopup extends CloseablePopup {
@@ -32,7 +32,7 @@ public class PatternManagerPopup extends CloseablePopup {
 
 	CustomCheckBox removeCB = new CustomCheckBox("Remove", false);
 
-	public PatternManagerPopup() {
+	public PatternManagerPopup(Supplier<List<Double>> userChordDurationProvider) {
 		super("Pattern Manager", 14, new Point(-200, -200));
 
 		JPanel allPanels = new JPanel();
@@ -42,7 +42,7 @@ public class PatternManagerPopup extends CloseablePopup {
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(panelWidth, 350));
 		mveaPanel.setMinimumSize(new Dimension(panelWidth, 350));
-		mvea = new MidiEditArea(126, 1, new PhraseNotes(), ChordGUI::getUserChordDurations);
+		mvea = new MidiEditArea(126, 1, new PhraseNotes(), userChordDurationProvider::get);
 		mvea.setRange(126, 1);
 		mvea.setPop(null);
 		mvea.setPreferredSize(new Dimension(panelWidth, 350));

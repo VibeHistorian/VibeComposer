@@ -152,15 +152,18 @@ public class ArrangementGUI {
 	private final Context context;
 	private final PlaybackController playbackController;
 	private final InstrumentPanelController panelController;
+	private final ChordGUI chordGUI;
 	private final JTabbedPane instrumentTabPane;
 	private final MidiEditPopup.Context midiEditPopupContext;
 
 	public ArrangementGUI(Context context, PlaybackController playbackController,
 			InstrumentPanelController panelController,
-			JTabbedPane instrumentTabPane, MidiEditPopup.Context midiEditPopupContext) {
+			ChordGUI chordGUI, JTabbedPane instrumentTabPane,
+			MidiEditPopup.Context midiEditPopupContext) {
 		this.context = context;
 		this.playbackController = playbackController;
 		this.panelController = panelController;
+		this.chordGUI = chordGUI;
 		this.instrumentTabPane = instrumentTabPane;
 		this.midiEditPopupContext = midiEditPopupContext;
 	}
@@ -1110,7 +1113,7 @@ public class ArrangementGUI {
 				int width = Math.max(GUIConstants.TABLE_COLUMN_MIN_WIDTH,
 						(int) ((UITheme.scrollPaneDimension.getWidth() - 60)
 								/ getModel().getColumnCount()) - 2);
-				if (row == 1) return new SectionInfoCellRenderer(width, height, col);
+				if (row == 1) return new SectionInfoCellRenderer(width, height, col, chordGUI);
 				Collection<?> stringables = value instanceof String
 						? Collections.singleton((String) value) : (Collection<?>) value;
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
@@ -1384,7 +1387,7 @@ public class ArrangementGUI {
 		recalculateActualArrangementSection(sectionOrder - 1);
 		varPopup = new VariationPopup(sectionOrder, actualArrangement.getSections().get(sectionOrder - 1),
 				context.getVariationPopupLocation(), context.getVariationPopupWindowSize(),
-				this::getInstList, this::getInstrumentParts, new VariationPopupActions() {
+				this::getInstList, this::getInstrumentParts, chordGUI, new VariationPopupActions() {
 					@Override public void recolorVariationPopupButton(int order) {
 						ArrangementGUI.this.recolorVariationPopupButton(order);
 					}
@@ -1419,6 +1422,6 @@ public class ArrangementGUI {
 	}
 
 	public void openPatternManagerPopup() {
-		new PatternManagerPopup();
+		new PatternManagerPopup(chordGUI::getUserChordDurations);
 	}
 }

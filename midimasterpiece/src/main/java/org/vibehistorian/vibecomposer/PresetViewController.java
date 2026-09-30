@@ -20,16 +20,18 @@ public final class PresetViewController {
 
 	private final MainWindowControls mainWindowControls;
 	private final ScoreGUI scoreGUI;
+	private final ChordGUI chordGUI;
 	private final DrumGUI drumGUI;
 	private final ArpGUI arpGUI;
 	private final MelodyGUI melodyGUI;
 	private final GenerationGUI generationGUI;
 
 	public PresetViewController(MainWindowControls mainWindowControls, ScoreGUI scoreGUI,
-			DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI,
+			ChordGUI chordGUI, DrumGUI drumGUI, ArpGUI arpGUI, MelodyGUI melodyGUI,
 			GenerationGUI generationGUI) {
 		this.mainWindowControls = mainWindowControls;
 		this.scoreGUI = scoreGUI;
+		this.chordGUI = chordGUI;
 		this.drumGUI = drumGUI;
 		this.arpGUI = arpGUI;
 		this.melodyGUI = melodyGUI;
@@ -235,22 +237,22 @@ public final class PresetViewController {
 		components.add(melodyGUI.melodyTargetNotesRandomizeOnCompose);
 
 		// chord panel
-		components.add(ChordGUI.randomChordsGenerateOnCompose);
-		components.add(ChordGUI.randomChordStruminess);
-		components.add(ChordGUI.randomChordUseChordFill);
-		components.add(ChordGUI.randomChordStretchType);
-		components.add(ChordGUI.randomChordStretchPicker);
-		components.add(ChordGUI.randomChordStretchGenerationChance);
-		components.add(ChordGUI.randomChordMaxStrumPauseChance);
-		components.add(ChordGUI.randomChordVaryLength);
-		components.add(ChordGUI.randomChordExpandChance);
-		components.add(ChordGUI.randomChordSustainChance);
-		components.add(ChordGUI.randomChordMaxSplitChance);
-		components.add(ChordGUI.chordSlashChance);
-		components.add(ChordGUI.randomChordMinVel);
-		components.add(ChordGUI.randomChordMaxVel);
-		components.add(ChordGUI.randomChordPattern);
-		components.add(ChordGUI.randomChordShiftChance);
+		components.add(chordGUI.randomChordsGenerateOnCompose);
+		components.add(chordGUI.randomChordStruminess);
+		components.add(chordGUI.randomChordUseChordFill);
+		components.add(chordGUI.randomChordStretchType);
+		components.add(chordGUI.randomChordStretchPicker);
+		components.add(chordGUI.randomChordStretchGenerationChance);
+		components.add(chordGUI.randomChordMaxStrumPauseChance);
+		components.add(chordGUI.randomChordVaryLength);
+		components.add(chordGUI.randomChordExpandChance);
+		components.add(chordGUI.randomChordSustainChance);
+		components.add(chordGUI.randomChordMaxSplitChance);
+		components.add(chordGUI.chordSlashChance);
+		components.add(chordGUI.randomChordMinVel);
+		components.add(chordGUI.randomChordMaxVel);
+		components.add(chordGUI.randomChordPattern);
+		components.add(chordGUI.randomChordShiftChance);
 
 		// arp panel
 		components.add(arpGUI.randomArpsGenerateOnCompose);
@@ -328,7 +330,7 @@ public final class PresetViewController {
 		components.add(null);
 		components.add(drumGUI.randomDrumsOverrandomize);
 		components.add(ExtraSettingsGUI.globalNoteLengthMultiplier);
-		components.add(ChordGUI.copyChordsAfterGenerate);
+		components.add(chordGUI.copyChordsAfterGenerate);
 		components.add(scoreGUI.getMiniScorePopup());
 		components.add(arpGUI.randomArpCorrectMelodyNotes);
 		components.add(ExtraSettingsGUI.reuseMidiChannelAfterCopy);

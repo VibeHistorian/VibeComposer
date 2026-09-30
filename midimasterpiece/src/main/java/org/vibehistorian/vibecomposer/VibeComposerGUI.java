@@ -200,6 +200,9 @@ public class VibeComposerGUI extends JFrame
 		@Override public void repaintActualArrangement() {
 			ArrangementGUI.scrollableArrangementActualTable.repaint();
 		}
+		@Override public List<Double> getUserChordDurations() {
+			return chordGUI.getUserChordDurations();
+		}
 	};
 
 	// instrument panels added into scrollpanes
@@ -451,7 +454,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				midiDeviceController.markSoundbankRefreshNeeded();
 			}
 			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
-		}, drumGUI, arpGUI, melodyGUI, instrumentPanelController, scoreGUI);
+		}, drumGUI, chordGUI, arpGUI, melodyGUI, instrumentPanelController, scoreGUI);
 		extraSettingsGUI.initExtraSettings();
 	}
 
@@ -465,7 +468,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public int getSelectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
 			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
-		}, instrumentPanelController, arpGUI, melodyGUI);
+		}, instrumentPanelController, arpGUI, melodyGUI, chordGUI);
 	}
 
 	private void initArrangementGUI() {
@@ -511,7 +514,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 					regenerate();
 				}
 			}
-		}, playbackController, instrumentPanelController, instrumentTabPane,
+		}, playbackController, instrumentPanelController, chordGUI, instrumentTabPane,
 				midiEditPopupContext);
 	}
 
@@ -621,6 +624,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void setScoreTranspose(int transpose) {
 				scoreGUI.setTranspose(transpose);
 			}
+			@Override public List<Double> getUserChordDurations() {
+				return chordGUI.getUserChordDurations();
+			}
 
 		}, instrumentPanelController);
 	}
@@ -681,11 +687,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void init() {
+		initChordGUI();
 		initMelodyGUI();
 		initBassGUI();
 		initArpGUI();
 		initDrumGUI();
-		initChordGUI();
 		initArrangementGUI();
 		initScoreGUI();
 		midiAuditionController = new MidiAuditionController(instrumentPanelController,
@@ -862,13 +868,13 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		KnobPanel globalTransposeControl = scoreGUI.createTransposeControl();
 		mainWindowControls.addComposeControls(everythingPanel, constraints, 410,
 				GridBagConstraints.CENTER, globalTransposeControl, ExtraSettingsGUI.bpmLow.getInt(),
-				ExtraSettingsGUI.bpmHigh.getInt(), ChordGUI.currentChords);
+				ExtraSettingsGUI.bpmHigh.getInt(), chordGUI.currentChords, chordGUI);
 
 
 		// ---- PLAY PANEL ----
 		mainWindowControls.addPlaybackControls(everythingPanel, constraints, 420, GridBagConstraints.CENTER, scoreGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
-		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, drumGUI,
+		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, chordGUI, drumGUI,
 				arpGUI, melodyGUI, generationGUI);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
@@ -1581,7 +1587,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private void switchAllOnComposeCheckboxes(boolean state) {
 		melodyGUI.generateMelodiesOnCompose.setSelected(state);
-		ChordGUI.randomChordsGenerateOnCompose.setSelected(state);
+		chordGUI.randomChordsGenerateOnCompose.setSelected(state);
 		arpGUI.randomArpsGenerateOnCompose.setSelected(state);
 		drumGUI.randomDrumsGenerateOnCompose.setSelected(state);
 		generationGUI.randomizeBpmOnCompose.setSelected(state);
@@ -1595,7 +1601,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		melodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setSelected(state);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setSelected(state);
-		ChordGUI.copyChordsAfterGenerate.setSelected(state);
+		chordGUI.copyChordsAfterGenerate.setSelected(state);
 	}
 
 	private void switchMidiButtons(boolean state) {
@@ -1666,8 +1672,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (appearanceController == null) {
 			appearanceController = new AppearanceController(new AppearanceController.Context() {
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
-			}, mainWindowControls, instrumentPanelController, drumGUI, arpGUI, melodyGUI,
-					generationGUI);
+			}, mainWindowControls, instrumentPanelController, chordGUI, drumGUI, arpGUI,
+				melodyGUI, generationGUI);
 		}
 		return appearanceController;
 	}
@@ -1866,7 +1872,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 		if (isCompose && getInstrumentControls(INST.CHORD).getEnabledCheckBox().isSelected()
-				&& ChordGUI.randomChordsGenerateOnCompose.isSelected()) {
+				&& chordGUI.randomChordsGenerateOnCompose.isSelected()) {
 			instrumentPanelController.generatePanels(INST.CHORD);
 		}
 		if (isCompose && getInstrumentControls(INST.ARP).getEnabledCheckBox().isSelected()
@@ -2086,7 +2092,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		ArrangementGUI.arrSection.setVisible(true);
 		if (MidiGenerator.chordInts.isEmpty()) {
-			MidiGenerator.chordInts = ChordGUI.userChords.getChordList();
+			MidiGenerator.chordInts = chordGUI.userChords.getChordList();
 		}
 	}
 

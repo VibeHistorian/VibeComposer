@@ -58,6 +58,7 @@ public class MidiEditPopup extends CloseablePopup {
 		void regenerateInPlace();
 		void markArrangementManual();
 		void repaintActualArrangement();
+		List<Double> getUserChordDurations();
 		void playNote(int pitch, int durationMs, int velocity, INST part, int partOrder,
 				Section section, boolean overrideLastPlayed);
 	}
@@ -129,7 +130,7 @@ public class MidiEditPopup extends CloseablePopup {
 		JPanel mveaPanel = new JPanel();
 		mveaPanel.setPreferredSize(new Dimension(1500, 600));
 		mveaPanel.setMinimumSize(new Dimension(1500, 600));
-		mvea = new MidiEditArea(126, 1, null, ChordGUI::getUserChordDurations);
+		mvea = new MidiEditArea(126, 1, null, context::getUserChordDurations);
 		mvea.setRange(0,127);
 		mvea.setPop(this);
 		mvea.setPreferredSize(new Dimension(1500, 600));
