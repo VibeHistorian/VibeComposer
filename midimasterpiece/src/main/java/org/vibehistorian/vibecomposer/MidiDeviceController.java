@@ -121,6 +121,9 @@ public final class MidiDeviceController {
 					synthesizer.open();
 					synthesizer.loadAllInstruments(soundfont);
 					needSoundbankRefresh = false;
+				} else {
+					// Keep using the already loaded soundbank synth on subsequent compositions.
+					synthesizer = synth;
 				}
 				LG.i("Playing using soundbank: " + soundbankFile);
 			} else {
