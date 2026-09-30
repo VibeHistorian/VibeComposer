@@ -1,30 +1,24 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
-import org.vibehistorian.vibecomposer.UITheme;
-
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Set;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Section;
-import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.PatternManagerPopup;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UITheme;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 
 public class MidiMVI extends JComponent {
 
@@ -38,8 +32,10 @@ public class MidiMVI extends JComponent {
 			BUTTON_WIDTH * ((BUTTONS.length + 1) / 2), BUTTON_HEIGHT * BUTTON_ROWS);
 	Dimension defaultSize = DEFAULT_SIZE;
 	InstPanel parent;
+	private final Supplier<List<Section>> arrangementSections;
 
-	public MidiMVI() {
+	public MidiMVI(Supplier<List<Section>> arrangementSections) {
+		this.arrangementSections = arrangementSections;
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
@@ -164,21 +160,23 @@ public class MidiMVI extends JComponent {
 			});
 
 			// pattern name must appear in at least one section
-			for (int secIndex = 0; secIndex < ArrangementGUI.actualArrangement.getSections()
-					.size(); secIndex++) {
-				Section sec = ArrangementGUI.actualArrangement.getSections().get(secIndex);
-				if (sec.containsPattern(partNum, panelOrder)) {
-					String secPatternName = sec.getPattern(partNum, panelOrder).getName();
-					if (StringUtils.isNotEmpty(secPatternName)) {
-						for (String name : patternNames) {
-							if (secPatternName.equals(name)) {
-								return true;
-							}
-
-						}
-					}
-				}
+			List<Section> sections = arrangementSections.get();
+			if (sections == null) {
+				return false;
 			}
+            for (Section sec : sections) {
+                if (sec.containsPattern(partNum, panelOrder)) {
+                    String secPatternName = sec.getPattern(partNum, panelOrder).getName();
+                    if (StringUtils.isNotEmpty(secPatternName)) {
+                        for (String name : patternNames) {
+                            if (secPatternName.equals(name)) {
+                                return true;
+                            }
+
+                        }
+                    }
+                }
+            }
 
 
 			return false;

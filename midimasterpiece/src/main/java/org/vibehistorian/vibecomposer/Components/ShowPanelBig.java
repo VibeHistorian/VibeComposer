@@ -39,6 +39,7 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
 
@@ -70,6 +71,7 @@ public class ShowPanelBig extends JPanel {
 		int getInstrumentPanelCount(INST instrument);
 		Set<Integer> getSoloMuterHighlightedTracks();
 		void repaintScore();
+		List<Section> getArrangementSections();
 	}
 
 	private static final long serialVersionUID = 1464206032589622048L;
@@ -296,7 +298,7 @@ public class ShowPanelBig extends JPanel {
 		areaPanel.setVisible(true);
 		pan.add("Center", areaScrollPane);
 		//add a ruler
-		ruler = new ShowRulerBig(this);
+		ruler = new ShowRulerBig(this, playbackActions::getArrangementSections);
 		ruler.setVisible(true);
 		ruler.addMouseListener(ml);
 		ruler.setAlignmentX(LEFT_ALIGNMENT);

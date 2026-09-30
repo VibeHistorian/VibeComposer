@@ -2,13 +2,13 @@ package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.PlaybackState;
 
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+import java.util.function.Supplier;
 
 /*
 
@@ -41,11 +41,13 @@ public class ShowRulerBig extends JComponent {
 	public static int maxHeight = 17;
 	private int timeSig = 2;
 	private ShowPanelBig sp;
+	private final Supplier<List<Section>> arrangementSections;
 	private Font font = new Font("Helvetica", Font.PLAIN, 10);
 
-	public ShowRulerBig(ShowPanelBig sp) {
+	public ShowRulerBig(ShowPanelBig sp, Supplier<List<Section>> arrangementSections) {
 		super();
 		this.sp = sp;
+		this.arrangementSections = arrangementSections;
 		this.setSize(sp.getBeatWidthBase(), ShowRulerBig.maxHeight);
 		this.setBackground(Color.lightGray);
 		//this.addMouseListener(this);
@@ -79,9 +81,10 @@ public class ShowRulerBig extends JComponent {
 		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		g.setFont(font);
 		int startOffset = MidiGenerator.START_TIME_DELAY > MidiGenerator.DBL_ERR ? 1 : 0;
-		if (ArrangementGUI.actualArrangement != null) {
+		List<Section> sections = arrangementSections.get();
+		if (sections != null) {
 			double durCounter = startOffset;
-			for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
+			for (Section sec : sections) {
 				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150, 200));
 				int xLocStart = (int) Math.round(durCounter * beatWidth);
 				durCounter += (sec.getSectionDuration() > 0 ? sec.getSectionDuration()
@@ -125,9 +128,9 @@ public class ShowRulerBig extends JComponent {
 							ShowRulerBig.maxHeight);
 			}
 		}
-		if (ArrangementGUI.actualArrangement != null) {
+		if (sections != null) {
 			double durCounter = startOffset;
-			for (Section sec : ArrangementGUI.actualArrangement.getSections()) {
+			for (Section sec : sections) {
 				int xLocStart = (int) Math.round(durCounter * beatWidth);
 				durCounter += (sec.getSectionDuration() > 0 ? sec.getSectionDuration()
 						: MidiGenerator.GENERATED_MEASURE_LENGTH) * sec.getMeasures();

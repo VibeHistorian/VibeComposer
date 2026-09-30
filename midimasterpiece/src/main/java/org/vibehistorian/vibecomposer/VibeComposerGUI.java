@@ -175,6 +175,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public int getCurrentSeed() { return generationGUI.getCurrentSeed(); }
 		@Override public int getLastRandomSeed() { return generationGUI.lastRandomSeed; }
+		@Override public List<Section> getArrangementSections() { return getGeneratedArrangementSections(); }
 	};
 	private final MidiEditPopup.Context midiEditPopupContext = new MidiEditPopup.Context() {
 		@Override public Component getMainWindowComponent() { return VibeComposerGUI.this; }
@@ -624,7 +625,14 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return tracks;
 			}
 			@Override public void repaintScore() { scoreGUI.repaintScoreDisplay(); }
+			@Override public List<Section> getArrangementSections() { return getGeneratedArrangementSections(); }
 		});
+	}
+
+	private List<Section> getGeneratedArrangementSections() {
+		return ArrangementGUI.actualArrangement == null
+				? java.util.Collections.emptyList()
+				: ArrangementGUI.actualArrangement.getSections();
 	}
 
 	private void initMelodyGUI() {

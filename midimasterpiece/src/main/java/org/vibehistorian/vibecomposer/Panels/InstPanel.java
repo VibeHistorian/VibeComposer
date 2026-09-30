@@ -53,6 +53,7 @@ public abstract class InstPanel extends JPanel {
 		void recalculateAfterCopy();
 		int getCurrentSeed();
 		int getLastRandomSeed();
+		List<Section> getArrangementSections();
 	}
 
 	private static final long serialVersionUID = 4381939543337887617L;
@@ -63,7 +64,7 @@ public abstract class InstPanel extends JPanel {
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
-	protected MidiMVI midiMVI = new MidiMVI();
+	protected MidiMVI midiMVI = new MidiMVI(this::getArrangementSections);
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, VisualPatternPanel.MAX_HITS);
 	protected KnobPanel chordSpan = new KnobPanel("Span", 1, 1, 4);
@@ -366,6 +367,10 @@ public abstract class InstPanel extends JPanel {
 		this.context = context;
 		this.panelController = panelController;
 		patternSeed.setCurrentSeedSupplier(context::getCurrentSeed);
+	}
+
+	private List<Section> getArrangementSections() {
+		return context == null ? Collections.emptyList() : context.getArrangementSections();
 	}
 
 	public int getCurrentSeed() {
