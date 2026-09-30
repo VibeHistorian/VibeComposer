@@ -1,12 +1,11 @@
 package org.vibehistorian.vibecomposer;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Panels.InstPanel;
-import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
+import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 
 import javax.sound.midi.InvalidMidiDataException;
 import java.util.Collections;
@@ -15,7 +14,8 @@ import java.util.function.Supplier;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.guiConfig;
 import static org.vibehistorian.vibecomposer.Constants.instNames;
-import static org.vibehistorian.vibecomposer.PlaybackState.*;
+import static org.vibehistorian.vibecomposer.PlaybackState.lastPlayedMs;
+import static org.vibehistorian.vibecomposer.PlaybackState.sequencer;
 
 /** Resolves and plays notes requested by the keyboard and MIDI editors. */
 public final class MidiAuditionController {

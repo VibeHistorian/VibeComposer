@@ -1,12 +1,11 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.ArrangementGUI;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -26,16 +25,19 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 	private int width = 10;
 	private int section = 0;
 	private final ChordGUI chordGUI;
+	private final Supplier<ArrangementTableRenderState> getArrangementRenderState;
 
 	private static final int fontSize = 8;
 	private static final float fontSizeMin = 7f;
 	private static final Font font = new Font("Tahoma", Font.PLAIN, fontSize);
 
-	public SectionInfoCellRenderer(int w, int h, int col, ChordGUI chordGUI) {
+	public SectionInfoCellRenderer(int w, int h, int col, ChordGUI chordGUI,
+			Supplier<ArrangementTableRenderState> getArrangementRenderState) {
 		height = h;
 		width = w;
 		section = col;
 		this.chordGUI = chordGUI;
+		this.getArrangementRenderState = getArrangementRenderState;
 	}
 
 	@Override
@@ -50,8 +52,9 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 
 		if (guh instanceof Graphics2D) {
 			Graphics2D g = (Graphics2D) guh;
-			if (section < ArrangementGUI.actualArrangement.getSections().size()) {
-				Section sec = ArrangementGUI.actualArrangement.getSections().get(section);
+			ArrangementTableRenderState arrangementState = getArrangementRenderState.get();
+			if (section < arrangementState.getArrangement().getSections().size()) {
+				Section sec = arrangementState.getArrangement().getSections().get(section);
 				g.setColor(new Color(100 + 15 * sec.getTypeMelodyOffset(), 150, 150));
 				g.fillRect(0, 0, width, height);
 

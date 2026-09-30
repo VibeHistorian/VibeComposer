@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
+import org.vibehistorian.vibecomposer.Components.ArrangementTableRenderState;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -103,6 +104,11 @@ public class ArrangementGUI {
 	public static JCheckBox arrangementScaleMidiVelocity;
 	public static JCheckBox arrangementResetCustomPanelsOnCompose;
 	private VariationPopup varPopup;
+
+	private ArrangementTableRenderState getTableRenderState() {
+		return new ArrangementTableRenderState(actualArrangement, copyDragging, copyDraggingOrigin,
+				highlightedTableCell, arrangementActualTableMousePoint != null);
+	}
 
 	public void saveToConfig(GUIConfig gc, boolean isNew, int seed, List<PatternMap> activePatternMaps) {
 		preparePartMaps(arrangement);
@@ -1107,11 +1113,14 @@ public class ArrangementGUI {
 				int width = Math.max(GUIConstants.TABLE_COLUMN_MIN_WIDTH,
 						(int) ((UITheme.scrollPaneDimension.getWidth() - 60)
 								/ getModel().getColumnCount()) - 2);
-				if (row == 1) return new SectionInfoCellRenderer(width, height, col, chordGUI);
+				if (row == 1) return new SectionInfoCellRenderer(width, height, col, chordGUI,
+						ArrangementGUI.this::getTableRenderState);
 				Collection<?> stringables = value instanceof String
 						? Collections.singleton((String) value) : (Collection<?>) value;
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
-						ArrangementGUI.this::getInstList, (part, panelOrder) -> panelController.getAbsoluteOrder(INST.fromIndex(part), panelOrder));
+						ArrangementGUI.this::getInstList,
+						(part, panelOrder) -> panelController.getAbsoluteOrder(INST.fromIndex(part), panelOrder),
+						ArrangementGUI.this::getTableRenderState);
 			}
 		};
 		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {

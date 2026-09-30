@@ -2,7 +2,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.ApplicationSessionState;
-import org.vibehistorian.vibecomposer.ArrangementGUI;
+import org.vibehistorian.vibecomposer.Arrangement;
 import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.OMNI;
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 import java.util.function.ToIntBiFunction;
 
 public class CollectionCellRenderer extends JComponent implements TableCellRenderer {
@@ -31,13 +32,15 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private int section = 0;
 	private final IntFunction<List<? extends InstPanel>> getInstList;
 	private final ToIntBiFunction<Integer, Integer> getAbsoluteOrder;
+	private final Supplier<ArrangementTableRenderState> getArrangementRenderState;
 	public static final int MIN_CELLS = 8;
 	public static final Color[] CUSTOM_PATTERN_COLORS = { UITheme.darkModeUIColor,
 			UITheme.lightModeUIColor, new Color(150, 200, 200), Color.red };
 
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
 			int col, IntFunction<List<? extends InstPanel>> getInstList,
-			ToIntBiFunction<Integer, Integer> getAbsoluteOrder) {
+			ToIntBiFunction<Integer, Integer> getAbsoluteOrder,
+			Supplier<ArrangementTableRenderState> getArrangementRenderState) {
 		stringables = itrs;
 		height = h;
 		width = w;
@@ -45,6 +48,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 		section = col;
 		this.getInstList = getInstList;
 		this.getAbsoluteOrder = getAbsoluteOrder;
+		this.getArrangementRenderState = getArrangementRenderState;
 	}
 
 	@Override
@@ -69,6 +73,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			Graphics2D g = (Graphics2D) guh;
 			Color panelC = UITheme.isDarkMode ? UITheme.panelColorLow
 					: UITheme.panelColorHigh;
+			ArrangementTableRenderState arrangementState = getArrangementRenderState.get();
+			Arrangement arrangement = arrangementState.getArrangement();
 			g.setColor(panelC);
 			g.fillRect(0, 0, width, height);
 			Color icolor = OMNI.mixColor(panelC, Constants.instColors[part],
@@ -88,8 +94,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			double widthDividerValue = (width / (double) widthDivider);
 
 			double x = 0;
-			if (section < ArrangementGUI.actualArrangement.getSections().size()) {
-				Section sec = ArrangementGUI.actualArrangement.getSections().get(section);
+			if (section < arrangement.getSections().size()) {
+				Section sec = arrangement.getSections().get(section);
 				double startX = x;
 				double endX = (x + widthDividerValue);
 				int counter = 0;
@@ -132,15 +138,15 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 							: (1 - sec.countVariationsForPartAndOrder(part, partOrder)) * 0.66);
 
 					// highlight copier/copiee
-					if (ArrangementGUI.copyDragging && (ArrangementGUI.copyDraggingOrigin != null)
-							&& ArrangementGUI.copyDraggingOrigin
-									.equals(Triple.of(part, partOrder, section))) {
+					if (arrangementState.isCopyDragging() && (arrangementState.getCopyDraggingOrigin() != null)
+							&& arrangementState.getCopyDraggingOrigin()
+								.equals(Triple.of(part, partOrder, section))) {
 						subcellColor = OMNI.mixColor(subcellColor, Color.green, 0.4);
-					} else if (ArrangementGUI.highlightedTableCell != null
-							&& ArrangementGUI.highlightedTableCell
-									.equals(Triple.of(part, partOrder, section))) {
+					} else if (arrangementState.getHighlightedCell() != null
+							&& arrangementState.getHighlightedCell()
+								.equals(Triple.of(part, partOrder, section))) {
 						subcellColor = OMNI.mixColor(subcellColor,
-								ArrangementGUI.copyDragging ? Color.red : Color.white, 0.3);
+								arrangementState.isCopyDragging() ? Color.red : Color.white, 0.3);
 						cellDescription = getInstList.apply(part).get(partOrder)
 								.getInstrumentBox().getVal();
 					}
@@ -224,8 +230,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 			g.drawRect(0, 0, width, height);
 
 			g.setColor(new Color(210, 210, 210));
-			if (cellDescription != null
-					&& ArrangementGUI.arrangementActualTableMousePoint != null) {
+			if (cellDescription != null && arrangementState.hasMousePoint()) {
 				g.drawString(cellDescription,
 						width / 2 - SwingUtils.getDrawStringWidth(cellDescription) / 2, 10);
 			}

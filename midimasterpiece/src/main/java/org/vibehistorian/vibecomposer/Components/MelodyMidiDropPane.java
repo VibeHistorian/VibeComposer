@@ -1,19 +1,17 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Dimension;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
+import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 
-import jm.music.data.Phrase;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class MelodyMidiDropPane extends MidiDropPane {
 
@@ -46,11 +44,6 @@ public class MelodyMidiDropPane extends MidiDropPane {
 			Consumer<Phrase> melodyCandidate) {
 		super(createMelodyMidiConverter(scaleModeOptions, melodyCandidate));
 		getMessage().setText(" * * Drag'n'Drop MIDI Here * * ");
-	}
-
-	@Override
-	public Dimension getPreferredSize() {
-		return new Dimension(200, 35);
 	}
 
 }
