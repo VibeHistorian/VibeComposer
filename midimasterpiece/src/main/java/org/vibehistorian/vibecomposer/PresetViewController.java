@@ -288,7 +288,7 @@ public final class PresetViewController {
 
 		// arrangement and randomization panels
 		components.add(ArrangementGUI.randomizeArrangementOnCompose);
-		components.add(GenerationGUI.randomizeInstOnComposeOrGen);
+		components.add(generationGUI.randomizeInstOnComposeOrGen);
 		components.add(generationGUI.randomizeBpmOnCompose);
 		components.add(generationGUI.randomizeTransposeOnCompose);
 

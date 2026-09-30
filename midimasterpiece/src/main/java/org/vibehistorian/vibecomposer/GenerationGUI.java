@@ -32,16 +32,16 @@ public class GenerationGUI {
         void regenerate();
     }
 
-    public static JCheckBox randomizeInstOnComposeOrGen;
+    public JCheckBox randomizeInstOnComposeOrGen;
     public JCheckBox randomizeBpmOnCompose;
     public JCheckBox randomizeTransposeOnCompose;
     public JButton switchOnComposeRandom;
-    public static JButton sidechainPatterns;
-    public static JButton sidechainPatternsTab;
-    public static JCheckBox globalSwingOverride;
-    public static KnobPanel globalSwingOverrideValue;
-    public static JButton globalSwingOverrideApplyButton;
-    public static ScrollComboBox<Double> beatDurationMultiplier;
+    public JButton sidechainPatterns;
+    public JButton sidechainPatternsTab;
+    public JCheckBox globalSwingOverride;
+    public KnobPanel globalSwingOverrideValue;
+    public JButton globalSwingOverrideApplyButton;
+    public ScrollComboBox<Double> beatDurationMultiplier;
     public static ScrollComboBox<String> scaleMode;
     public static KnobPanel loopBeatCount;
     public static KnobPanel mainBpm;
@@ -60,12 +60,12 @@ public class GenerationGUI {
                 && ArrangementGUI.arrSection.getSelectedIndex() == 0;
     }
 
-    public static void saveToConfig(GUIConfig gc) {
+    public void saveToConfig(GUIConfig gc) {
         gc.setBeatDurationMultiplierIndex(beatDurationMultiplier.getSelectedIndex());
         gc.setGlobalSwingOverride(globalSwingOverride.isSelected() ? globalSwingOverrideValue.getInt() : null);
     }
 
-    public static void loadFromConfig(GUIConfig gc) {
+    public void loadFromConfig(GUIConfig gc) {
         beatDurationMultiplier.setSelectedIndex(gc.getBeatDurationMultiplierIndex());
         globalSwingOverride.setSelected(gc.getGlobalSwingOverride() != null);
         if (gc.getGlobalSwingOverride() != null) globalSwingOverrideValue.setInt(gc.getGlobalSwingOverride());

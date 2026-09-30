@@ -234,6 +234,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
     /** Supplies shared window operations without coupling this module to the main window. */
     public interface Context {
         PartManagerPanel.Context getPartManagerContext();
+        boolean isRandomizeInstOnComposeOrGen();
+        boolean isBeatDurationMultiplierBelowOne();
         void copyGUItoConfig();
         void adjustScoreTranspose(int amount);
 		void alignChordsWithMelody(ChordletPanel chordlets);
@@ -810,7 +812,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			}
 			InstUtils.POOL pool = ip.getInstPool();
 
-			if ((GenerationGUI.randomizeInstOnComposeOrGen.isSelected() || onlyAdd)
+			if ((context.isRandomizeInstOnComposeOrGen() || onlyAdd)
 					&& ip.getInstrumentBox().isEnabled()) {
 				pool = (panelGenerator.nextInt(100) < randomChordSustainChance.getInt())
 						? InstUtils.POOL.CHORD
@@ -916,7 +918,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				if (panelGenerator.nextInt(100) >= randomChordShiftChance.getInt()) {
 					maxShift /= 2;
 				}
-				if ((GenerationGUI.beatDurationMultiplier != null && GenerationGUI.beatDurationMultiplier.getVal() < 0.75)) {
+				if (context.isBeatDurationMultiplierBelowOne()) {
 					maxShift /= 2;
 				}
 

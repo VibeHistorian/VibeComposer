@@ -617,6 +617,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
 			}
+			@Override public boolean isRandomizeInstOnComposeOrGen() {
+				return generationGUI.randomizeInstOnComposeOrGen.isSelected();
+			}
 			@Override
 			public void regenerate() {
 				VibeComposerGUI.this.regenerate();
@@ -636,6 +639,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
 			}
+			@Override public boolean isRandomizeInstOnComposeOrGen() {
+				return generationGUI.randomizeInstOnComposeOrGen.isSelected();
+			}
 		}, instrumentPanelController);
 	}
 
@@ -643,6 +649,13 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
+			}
+			@Override public boolean isRandomizeInstOnComposeOrGen() {
+				return generationGUI.randomizeInstOnComposeOrGen.isSelected();
+			}
+			@Override public boolean isBeatDurationMultiplierBelowOne() {
+				return generationGUI.beatDurationMultiplier != null
+						&& generationGUI.beatDurationMultiplier.getVal() < 0.75;
 			}
 			@Override
 			public void copyGUItoConfig() {
@@ -667,6 +680,13 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		arpGUI = new ArpGUI(new ArpGUI.Context() {
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
+			}
+			@Override public boolean isRandomizeInstOnComposeOrGen() {
+				return generationGUI.randomizeInstOnComposeOrGen.isSelected();
+			}
+			@Override public boolean isBeatDurationMultiplierBelowOne() {
+				return generationGUI.beatDurationMultiplier != null
+						&& generationGUI.beatDurationMultiplier.getVal() < 0.75;
 			}
 		}, instrumentPanelController);
 	}
@@ -763,8 +783,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 		}
 		LG.i("Gen settings: " + (System.currentTimeMillis() - sysTime) + " ms!");
-		boolean randomizeInstsTemp = GenerationGUI.randomizeInstOnComposeOrGen.isSelected();
-		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(true);
+		boolean randomizeInstsTemp = generationGUI.randomizeInstOnComposeOrGen.isSelected();
+		generationGUI.randomizeInstOnComposeOrGen.setSelected(true);
 		{
 			// ---- INSTRUMENT PANELS ----
 
@@ -828,7 +848,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 		}
-		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
+		generationGUI.randomizeInstOnComposeOrGen.setSelected(randomizeInstsTemp);
 		LG.i("Arr: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		scoreGUI.initScoreSettings();
 		LG.i("Scr: " + (System.currentTimeMillis() - sysTime) + " ms!");
@@ -1324,9 +1344,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							boolean sequencerEnded = slider.getMaximum()
 									- slider.getUpperValue() < 100 && !sequencer.isRunning();
 							double mult = 1;
-							if (GenerationGUI.beatDurationMultiplier.getSelectedIndex() == 0) {
+							if (generationGUI.beatDurationMultiplier.getSelectedIndex() == 0) {
 								mult = 0.5;
-							} else if (GenerationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
+							} else if (generationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
 								mult = 2;
 							}
 							if (newSliderVal >= ((mult * loopBeatCount.getInt() * beatFromBpm(0))
@@ -1592,7 +1612,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		drumGUI.randomDrumsGenerateOnCompose.setSelected(state);
 		generationGUI.randomizeBpmOnCompose.setSelected(state);
 		generationGUI.randomizeTransposeOnCompose.setSelected(state);
-		GenerationGUI.randomizeInstOnComposeOrGen.setSelected(state);
+		generationGUI.randomizeInstOnComposeOrGen.setSelected(state);
 		arpGUI.randomArpHitsPerPattern.setSelected(state);
 		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
@@ -1863,7 +1883,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			generationGUI.randomizeInstruments();
 			triggerRegenerate = true;
 		}
-		if (isCompose && GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
+		if (isCompose && generationGUI.randomizeInstOnComposeOrGen.isSelected()) {
 			generationGUI.randomizeInstruments();
 		}
 
@@ -2043,7 +2063,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				mainWindowControls.getMidiMode().isSelected()
 						&& !mainWindowControls.getMidiModeDevices().getVal().contains("ervill"));
 		scoreGUI.saveToConfig(gc);
-		GenerationGUI.saveToConfig(gc);
+		generationGUI.saveToConfig(gc);
 		ExtraSettingsGUI.saveToConfig(gc);
 	}
 
@@ -2070,7 +2090,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		arpGUI.loadFromConfig(gc);
 		drumGUI.loadFromConfig(gc);
 		scoreGUI.loadFromConfig(gc);
-		GenerationGUI.loadFromConfig(gc);
+		generationGUI.loadFromConfig(gc);
 		ExtraSettingsGUI.loadFromConfig(gc);
 
 		int bpm = (int) Math.round(gc.getBpm());

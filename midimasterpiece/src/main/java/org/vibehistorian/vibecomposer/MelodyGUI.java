@@ -223,6 +223,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	/** Supplies shared GUI operations without making this module depend on the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
+		boolean isRandomizeInstOnComposeOrGen();
 		void regenerate();
 		void setScoreTranspose(int transpose);
 		List<Double> getUserChordDurations();
@@ -662,7 +663,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 				panel = (MelodyPanel) panelController.addPanel(INST.MELODY);
 				needNewChannel = true;
 			}
-			if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
+			if (context.isRandomizeInstOnComposeOrGen()) {
 				panel.setInstrument(panel.getInstrumentBox().getRandomInstrument());
 			}
 

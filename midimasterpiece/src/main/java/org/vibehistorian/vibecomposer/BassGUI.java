@@ -80,6 +80,7 @@ public class BassGUI extends InstGUI<BassPanel> {
     /** Supplies shared window operations without making this module depend on the main window. */
     public interface Context {
         PartManagerPanel.Context getPartManagerContext();
+        boolean isRandomizeInstOnComposeOrGen();
     }
 
     /**
@@ -171,7 +172,7 @@ public class BassGUI extends InstGUI<BassPanel> {
                 ip = (BassPanel) panelController.addPanel(INST.BASS);
                 needNewChannel = true;
             }
-            if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected()) {
+            if (context.isRandomizeInstOnComposeOrGen()) {
                 ip.setInstrument(ip.getInstrumentBox().getRandomInstrument());
             }
             int panelOrder = ip.getPanelOrder();

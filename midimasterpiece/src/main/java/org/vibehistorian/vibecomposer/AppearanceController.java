@@ -128,7 +128,7 @@ public final class AppearanceController {
 		drumGUI.randomDrumsGenerateOnCompose.setForeground(foreground);
 		generationGUI.randomizeBpmOnCompose.setForeground(foreground);
 		generationGUI.randomizeTransposeOnCompose.setForeground(foreground);
-		GenerationGUI.randomizeInstOnComposeOrGen.setForeground(foreground);
+		generationGUI.randomizeInstOnComposeOrGen.setForeground(foreground);
 		ArrangementGUI.randomizeArrangementOnCompose.setForeground(foreground);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(foreground);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(foreground);

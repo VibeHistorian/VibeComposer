@@ -191,7 +191,7 @@ public final class ComposeCoordinator {
             }
 
             handleGeneratedMidi(regenerate, relPath, systemTime);
-            currentBeatMultiplier = beatDurationMultiplier.getSelectedItem();
+            currentBeatMultiplier = generationGUI.beatDurationMultiplier.getSelectedItem();
             arrangementGUI.resetSectionSelectionAfterGeneration();
             heavyBackgroundTasksInProgress = false;
 
@@ -291,18 +291,18 @@ public final class ComposeCoordinator {
         melodyGUI.generateRandomMelodyPanelsOnCompose(regenerate, lastRandomSeed);
 
         if (!regenerate && ExtraSettingsGUI.randomizeTimingsOnCompose.isSelected()) {
-            if (globalSwingOverride.isSelected()) {
-                globalSwingOverrideValue
+            if (generationGUI.globalSwingOverride.isSelected()) {
+                generationGUI.globalSwingOverrideValue
                         .setInt(50 + new Random().nextInt(drumGUI.randomDrumMaxSwingAdjust.getInt() * 2 + 1)
                                 - drumGUI.randomDrumMaxSwingAdjust.getInt());
             }
             double randomBeatMultiplier = new Random().nextDouble();
             if (randomBeatMultiplier < 0.85) {
-                beatDurationMultiplier.setSelectedIndex(1);
+                generationGUI.beatDurationMultiplier.setSelectedIndex(1);
             } else if (randomBeatMultiplier < 0.95) {
-                beatDurationMultiplier.setSelectedIndex(0);
+                generationGUI.beatDurationMultiplier.setSelectedIndex(0);
             } else {
-                beatDurationMultiplier.setSelectedIndex(2);
+                generationGUI.beatDurationMultiplier.setSelectedIndex(2);
             }
         }
 
@@ -568,9 +568,9 @@ public final class ComposeCoordinator {
             }
 
             double divisor = 1;
-            if (beatDurationMultiplier.getSelectedIndex() == 0) {
+            if (generationGUI.beatDurationMultiplier.getSelectedIndex() == 0) {
                 divisor = 0.5;
-            } else if (beatDurationMultiplier.getSelectedIndex() == 2) {
+            } else if (generationGUI.beatDurationMultiplier.getSelectedIndex() == 2) {
                 divisor = 2;
             }
             loopBeatCount.getKnob()

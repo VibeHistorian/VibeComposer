@@ -120,6 +120,8 @@ public class ArpGUI extends InstGUI<ArpPanel> {
 	/** Supplies shared window operations without coupling this module to the main window. */
 	public interface Context {
 		PartManagerPanel.Context getPartManagerContext();
+		boolean isRandomizeInstOnComposeOrGen();
+		boolean isBeatDurationMultiplierBelowOne();
 	}
 
 	public void initArpGenSettings() {
@@ -349,7 +351,7 @@ public class ArpGUI extends InstGUI<ArpPanel> {
 				ip.setHitsPerPattern(randomArpHitsPicker.getSelectedIndex() + 1);
 			}
 
-			if (GenerationGUI.randomizeInstOnComposeOrGen.isSelected() || onlyAdd) {
+			if (context.isRandomizeInstOnComposeOrGen() || onlyAdd) {
 				int instrument = ip.getInstrumentBox().getRandomInstrument();
 				if (randomArpAllSameInst.isSelected()) {
 					if (fixedInstrument >= 0) {
@@ -433,8 +435,7 @@ public class ArpGUI extends InstGUI<ArpPanel> {
 
 			if (panelGenerator.nextInt(100) < randomArpShiftChance.getInt()) {
 				int maxShift = Math.min(ip.getPattern().maxShift, ip.getHitsPerPattern() - 1);
-				if (GenerationGUI.beatDurationMultiplier != null
-						&& GenerationGUI.beatDurationMultiplier.getVal() < 0.75) {
+				if (context.isBeatDurationMultiplierBelowOne()) {
 					maxShift /= 2;
 				}
 				ip.setPatternShift(maxShift > 0 ? (panelGenerator.nextInt(maxShift) + 1) : 0);
