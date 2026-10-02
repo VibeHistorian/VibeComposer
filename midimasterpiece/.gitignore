@@ -14,8 +14,9 @@
 
 *.txt
 *.xml
+!GENERATOR_REFACTOR_TEST_GUICONFIG.xml
+!GENERATOR_REFACTOR_TEST_OUTPUT2.mid
 *.sf2
-*.txt
 *.wav
 *.7z
 *.zip
