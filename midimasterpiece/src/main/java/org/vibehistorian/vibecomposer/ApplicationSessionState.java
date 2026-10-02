@@ -3,7 +3,6 @@ package org.vibehistorian.vibecomposer;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import javax.sound.midi.Soundbank;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
@@ -13,7 +12,6 @@ public final class ApplicationSessionState {
 	}
 
 	public static GUIPreset defaultGuiPreset;
-	static Soundbank soundfont;
 	public static MidiGenerator melodyGen;
 	public static GUIConfig guiConfig = new GUIConfig();
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);

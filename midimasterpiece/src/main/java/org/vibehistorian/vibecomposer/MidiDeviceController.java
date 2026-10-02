@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static org.vibehistorian.vibecomposer.ApplicationSessionState.soundfont;
 import static org.vibehistorian.vibecomposer.PlaybackState.sequencer;
 import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated;
 
@@ -24,6 +23,7 @@ public final class MidiDeviceController {
 	private final Context context;
 	private MidiDevice device;
 	private Synthesizer synth;
+	private Soundbank soundfont;
 	private boolean isSoundbankSynth;
 	private boolean needSoundbankRefresh;
 
@@ -33,6 +33,10 @@ public final class MidiDeviceController {
 
 	public boolean hasMidiDevice() {
 		return device != null;
+	}
+
+	public Soundbank getSoundbank() {
+		return soundfont;
 	}
 
 	public void markSoundbankRefreshNeeded() {

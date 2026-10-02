@@ -399,7 +399,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void setTransmitterMode(boolean enabled) {
 				mainWindowControls.getMidiMode().setSelectedRaw(enabled);
 			}
-			@Override public Soundbank getSoundbank() { return soundfont; }
+			@Override public Soundbank getSoundbank() { return midiDeviceController.getSoundbank(); }
 			@Override public void sendAllMidiCc() { midiCcController.sendAllMidiCc(); }
 		});
 		mainWindowControls = new MainWindowControls(new MainWindowControls.HeaderContext() {
@@ -1598,7 +1598,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				f.applyPattern("yyMMdd-HH-mm-ss");
 				Date date = new Date();
 				defSynth = midiDeviceController.getSynthesizerForWaveExport();
-				String soundbankOptional = (soundfont != null) ? "SB_" : "";
+				String soundbankOptional = (midiDeviceController.getSoundbank() != null) ? "SB_" : "";
 				String filename = f.format(date) + "_" + soundbankOptional
 						+ getFilenameForSaving(currentMidi.getName());
 				File exportFolderDir = new File(Constants.EXPORT_FOLDER);
