@@ -4,18 +4,15 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import javax.sound.midi.Soundbank;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 
-/** Owns active configuration, editor session, and application-level services. */
+/** Owns active configuration and application-level services. */
 public final class ApplicationSessionState {
 	private ApplicationSessionState() {
 	}
 
 	public static GUIPreset defaultGuiPreset;
-	public static MidiEditPopup currentMidiEditorPopup;
-	public static int currentMidiEditorSectionIndex;
 	static Soundbank soundfont;
 	public static MidiGenerator melodyGen;
 	public static GUIConfig guiConfig = new GUIConfig();

@@ -52,6 +52,7 @@ public final class ComposeCoordinator {
     private final GenerationGUI generationGUI;
     private final ArrangementGUI arrangementGUI;
     private final ScoreGUI scoreGUI;
+    private final MidiEditorSession midiEditorSession;
     private final JLabel totalTime;
 
     private final boolean logPerformance = false;
@@ -65,6 +66,7 @@ public final class ComposeCoordinator {
                               DrumGUI drumGUI,
                               GenerationGUI generationGUI,
                               ArrangementGUI arrangementGUI, ScoreGUI scoreGUI,
+                              MidiEditorSession midiEditorSession,
                               JLabel totalTime) {
         this.context = context;
         this.playbackController = playbackController;
@@ -79,6 +81,7 @@ public final class ComposeCoordinator {
         this.generationGUI = generationGUI;
         this.arrangementGUI = arrangementGUI;
         this.scoreGUI = scoreGUI;
+        this.midiEditorSession = midiEditorSession;
         this.totalTime = totalTime;
     }
 
@@ -329,9 +332,9 @@ public final class ComposeCoordinator {
 
         arrangementGUI.prepareForCompose(regenerate, currentMidi != null, generationGUI.lastRandomSeed);
 
-        if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
+        if (midiEditorSession.isVisible()) {
             LG.i("MidiEditPopup is open - saving!");
-            currentMidiEditorPopup.saveNotes(false);
+            midiEditorSession.saveNotesBeforeCompose();
         }
     }
 
@@ -342,14 +345,8 @@ public final class ComposeCoordinator {
         arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
         arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(), guiConfig);
         scoreGUI.pianoRoll();
-        if (currentMidiEditorPopup != null && currentMidiEditorPopup.isVisible()) {
-            if (ArrangementGUI.actualArrangement.getSections().size() <= currentMidiEditorSectionIndex) {
-                currentMidiEditorPopup.close();
-                currentMidiEditorPopup = null;
-            } else {
-                currentMidiEditorPopup
-                        .setup(ArrangementGUI.actualArrangement.getSections().get(currentMidiEditorSectionIndex));
-            }
+        if (midiEditorSession.isVisible()) {
+            midiEditorSession.refreshAfterCompose(ArrangementGUI.actualArrangement.getSections());
         } else {
             LG.d("No midi editor is open!");
         }

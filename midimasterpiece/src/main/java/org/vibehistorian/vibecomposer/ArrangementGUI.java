@@ -40,7 +40,6 @@ import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Popups.ArrangementGlobalVariationPopup;
 import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
-import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.PatternManagerPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
@@ -160,18 +159,18 @@ public class ArrangementGUI {
 	private final InstrumentPanelController panelController;
 	private final ChordGUI chordGUI;
 	private final JTabbedPane instrumentTabPane;
-	private final MidiEditPopup.Context midiEditPopupContext;
+	private final MidiEditorSession midiEditorSession;
 
 	public ArrangementGUI(Context context, PlaybackController playbackController,
 			InstrumentPanelController panelController,
 			ChordGUI chordGUI, JTabbedPane instrumentTabPane,
-			MidiEditPopup.Context midiEditPopupContext) {
+			MidiEditorSession midiEditorSession) {
 		this.context = context;
 		this.playbackController = playbackController;
 		this.panelController = panelController;
 		this.chordGUI = chordGUI;
 		this.instrumentTabPane = instrumentTabPane;
-		this.midiEditPopupContext = midiEditPopupContext;
+		this.midiEditorSession = midiEditorSession;
 	}
 
 	public static boolean isCustomSection() {
@@ -579,10 +578,7 @@ public class ArrangementGUI {
 				Section section = actualArrangement.getSections().get(sectionOrder);
 				if (section.getPresence(instrument).contains(panelOrder)
 						&& section.containsPattern(instrument, panelOrder)) {
-					ApplicationSessionState.currentMidiEditorPopup = new MidiEditPopup(
-							midiEditPopupContext, section, instrument, panelOrder);
-					ApplicationSessionState.currentMidiEditorPopup.setSec(section);
-					ApplicationSessionState.currentMidiEditorSectionIndex = sectionOrder;
+					midiEditorSession.open(section, instrument, panelOrder, sectionOrder);
 				} else {
 					LG.i("Presence: " + section.getPresence(instrument).contains(panelOrder)
 							+ ", contains pattern: " + section.containsPattern(instrument, panelOrder));

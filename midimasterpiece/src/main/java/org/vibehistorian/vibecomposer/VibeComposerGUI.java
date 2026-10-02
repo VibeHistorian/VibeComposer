@@ -211,6 +211,7 @@ public class VibeComposerGUI extends JFrame
 			return chordGUI.getUserChordDurations();
 		}
 	};
+	private final MidiEditorSession midiEditorSession = new MidiEditorSession(midiEditPopupContext);
 
 	// instrument panels added into scrollpanes
 
@@ -531,7 +532,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return generationGUI.canRegenerateOnChange();
 			}
 		}, playbackController, instrumentPanelController, chordGUI, instrumentTabPane,
-				midiEditPopupContext);
+				midiEditorSession);
 	}
 
 	private PartManagerPanel.Context createPartManagerContext() {
@@ -574,10 +575,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void openMidiEditor(int sectionOrder, INST part, int panelOrder) {
 				Section section = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
-				currentMidiEditorPopup = new MidiEditPopup(midiEditPopupContext, section, part.getIndex(),
-						panelOrder);
-				currentMidiEditorPopup.setSec(section);
-				currentMidiEditorSectionIndex = sectionOrder;
+				midiEditorSession.open(section, part.getIndex(), panelOrder, sectionOrder);
 			}
 			@Override public void selectPanelFromScore(INST part, int panelOrder, int sectionOrder) {
 				instrumentTabPane.setSelectedIndex(part.getIndex());
@@ -1274,8 +1272,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							if (!isDragging && !isKeySeeking) {
 								queuePlayheadUpdate(allowedActionsOnZero == 0);
 								if (allowedActionsOnZero == 0) {
-									if ((currentMidiEditorPopup != null)
-											&& currentMidiEditorPopup.isVisible()) {
+									if (midiEditorSession.isVisible()) {
 										sleepTime = 20;
 									} else {
 										sleepTime = 10;
@@ -1783,7 +1780,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}, playbackController, midiDeviceController, midiCcController, soloMuteController,
 					mainWindowControls, melodyGUI, chordGUI, arpGUI, drumGUI, generationGUI,
-					arrangementGUI, scoreGUI, totalTime);
+					arrangementGUI, scoreGUI, midiEditorSession, totalTime);
 		}
 		return composeCoordinator;
 	}
