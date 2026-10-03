@@ -131,7 +131,7 @@ public class ArrangementGUI {
 		actualArrangement = gc.getActualArrangement();
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		setActualModel(actualArrangement.convertToActualTableModel());
-		refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons();
 		arrangementVariationChance.setInt(gc.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
 		arrangementScaleMidiVelocity.setSelected(gc.isScaleMidiVelocityInArrangement());
@@ -210,10 +210,6 @@ public class ArrangementGUI {
 		if (scrollableArrangementActualTable != null) {
 			scrollableArrangementActualTable.repaint();
 		}
-	}
-
-	public int getActualArrangementColumnCount() {
-		return scrollableArrangementActualTable.getColumnCount();
 	}
 
 	private int calculateSectionMeasureStart(int sectionIndex) {
@@ -417,7 +413,7 @@ public class ArrangementGUI {
 			} else {
 				arrSection.setSelectedIndex(0);
 			}
-			refreshVariationPopupButtons(scrollableArrangementActualTable.getColumnCount());
+			refreshVariationPopupButtons();
 			arrSection.getButtons().forEach(Component::repaint);
 			arrSection.repaint();
 		});
@@ -766,7 +762,7 @@ public class ArrangementGUI {
 			}
 		}
 		setActualModel(actualArrangement.convertToActualTableModel(), false);
-		refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons();
 		manualArrangement.setSelected(true);
 		manualArrangement.repaint();
 		scrollableArrangementActualTable.repaint();
@@ -797,7 +793,7 @@ public class ArrangementGUI {
 			section.setPresence(instrument, target.getMiddle());
 		notes.setApplied(true);
 		setActualModel(actualArrangement.convertToActualTableModel(), false);
-		refreshVariationPopupButtons(actualArrangement.getSections().size());
+		refreshVariationPopupButtons();
 		manualArrangement.setSelected(true);
 		manualArrangement.repaint();
 		scrollableArrangementActualTable.repaint();
@@ -844,7 +840,8 @@ public class ArrangementGUI {
 		component.setBackground(new Color(color + extraRed, color, color));
 	}
 
-	public void refreshVariationPopupButtons(int count) {
+	public void refreshVariationPopupButtons() {
+		int count = actualArrangement.getSections().size();
 		variationButtonsPanel.removeAll();
 		for (int i = 0; i < count; i++) {
 			int sectionIndex = i;
@@ -1249,7 +1246,7 @@ public class ArrangementGUI {
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
 		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
 		variationButtonsPanel = new JPanel();
-		refreshVariationPopupButtons(1);
+		refreshVariationPopupButtons();
 		actualArrangementCombinedPanel.add(variationButtonsPanel);
 		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
@@ -1429,7 +1426,7 @@ public class ArrangementGUI {
 				arrSection.setSelectedIndexWithProperty(index, true);
 			}
 			arrSection.repaint();
-			refreshVariationPopupButtons(actualArrangement.getSections().size());
+			refreshVariationPopupButtons();
 		}
 		if (checkManual) {
 			manualArrangement.setSelected(true);

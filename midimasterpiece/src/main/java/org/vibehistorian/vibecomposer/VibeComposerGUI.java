@@ -1696,8 +1696,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		for (DrumPanel dp : drumGUI.getPanels()) {
 			dp.getComboPanel().reapplyHits();
 		}
-		arrangementGUI.refreshVariationPopupButtons(
-				arrangementGUI.getActualArrangementColumnCount());
+		arrangementGUI.refreshVariationPopupButtons();
 		pack();
 	}
 
@@ -1720,8 +1719,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	private void switchDarkMode() {
 		getAppearanceController().switchDarkMode();
 
-		arrangementGUI.refreshVariationPopupButtons(
-				arrangementGUI.getActualArrangement().getSections().size());
+		arrangementGUI.refreshVariationPopupButtons();
 
 		if (scoreGUI.getScorePanel() != null) {
 			scoreGUI.getScorePanel().update();
