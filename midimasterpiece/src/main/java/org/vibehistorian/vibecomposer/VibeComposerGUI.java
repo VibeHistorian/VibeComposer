@@ -38,7 +38,6 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Popups.AboutPopup;
 import org.vibehistorian.vibecomposer.Popups.ApplyCustomSectionPopup;
-import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 import org.vibehistorian.vibecomposer.Popups.DrumLoopPopup;
 import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
@@ -104,6 +103,7 @@ public class VibeComposerGUI extends JFrame
 		@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
 	};
 	private final PlaybackController playbackController;
+	private final ConsoleOutputController consoleOutputController;
 	private final SoloMuteController soloMuteController =
 			new SoloMuteController(new SoloMuteController.Context() {
 				@Override public List<? extends InstPanel> getPanels(INST instrument) {
@@ -343,12 +343,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		vibeComposerGUI.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 	}
 
-	static {
-		System.setErr(ApplicationSessionState.dummyOut);
-	}
-
 	public VibeComposerGUI(String title) {
 		super(title);
+		consoleOutputController = new ConsoleOutputController();
 		vibeComposerGUI = this;
 		playbackController = new PlaybackController(new PlaybackController.Context() {
 			@Override public void startMidiCcThread() { midiCcController.startMidiCcThread(); }
@@ -1780,7 +1777,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}, playbackController, midiDeviceController, midiCcController, soloMuteController,
 					mainWindowControls, melodyGUI, chordGUI, arpGUI, drumGUI, generationGUI,
-					arrangementGUI, scoreGUI, midiEditorSession, totalTime);
+					arrangementGUI, scoreGUI, midiEditorSession, consoleOutputController, totalTime);
 		}
 		return composeCoordinator;
 	}
@@ -1816,7 +1813,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private void openDebugConsole() {
 		try {
-			dconsole = new DebugConsole();
+			consoleOutputController.openDebugConsole();
 		} catch (Exception e) {
 			// Auto-generated catch block
 			LG.e(e);

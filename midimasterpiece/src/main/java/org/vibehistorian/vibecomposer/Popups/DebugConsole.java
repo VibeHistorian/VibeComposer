@@ -1,7 +1,5 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.LG;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -42,12 +40,9 @@ public class DebugConsole {
 		frame.pack();
 		frame.setVisible(true);
 
-		redirectOut();
-
-		LG.d("Started debug console..");
 	}
 
-	public PrintStream redirectOut() {
+	public PrintStream createOutputStream() {
 		OutputStream out = new OutputStream() {
 			@Override
 			public void write(int b) throws IOException {
@@ -56,9 +51,6 @@ public class DebugConsole {
 			}
 		};
 		PrintStream ps = new PrintStream(out);
-
-		//System.setOut(ps);
-		System.setErr(ps);
 
 		return ps;
 	}

@@ -180,14 +180,21 @@ public class MidiGenerator implements JMC {
 
 	private final MelodyGenerator mgen;
 	private final SequenceTrackAssigner sequenceTrackAssigner;
+	private final ConsoleOutputController consoleOutputController;
 
 	public MidiGenerator(GUIConfig gc) {
-		this(gc, NO_SEQUENCE_TRACK_ASSIGNER);
+		this(gc, NO_SEQUENCE_TRACK_ASSIGNER, ConsoleOutputController.noOp());
 	}
 
 	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner) {
+		this(gc, sequenceTrackAssigner, ConsoleOutputController.noOp());
+	}
+
+	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner,
+			ConsoleOutputController consoleOutputController) {
 		MidiGenerator.gc = gc;
 		this.sequenceTrackAssigner = Objects.requireNonNull(sequenceTrackAssigner);
+		this.consoleOutputController = Objects.requireNonNull(consoleOutputController);
 		mgen = new MelodyGenerator(gc, this);
 	}
 
@@ -918,7 +925,7 @@ public class MidiGenerator implements JMC {
 						customInversionIndexList, userRootProgression);
 
 		if (!debugEnabled) {
-			System.setOut(ApplicationSessionState.dummyOut);
+			consoleOutputController.suppressStandardOutput();
 		}
 		if (logPerformance) {
 			LG.i("Generated chords, starting arrangement after: "
@@ -1294,18 +1301,13 @@ public class MidiGenerator implements JMC {
 
 		// write midi without log
 
-		System.setOut(ApplicationSessionState.dummyOut);
+		consoleOutputController.suppressStandardOutput();
 
 		LG.i("Printing score...");
 		JMusicUtilsCustom.midi(score, fileName);
 		LG.i("Printing scoreFull...");
 		JMusicUtilsCustom.midi(scoreFull, Constants.TEMPORARY_SEQUENCE_MIDI_NAME);
-		if (ApplicationSessionState.dconsole == null || !ApplicationSessionState.dconsole.getFrame().isVisible()) {
-			System.setOut(ApplicationSessionState.originalOut);
-			System.setErr(ApplicationSessionState.dummyOut);
-		} else {
-			ApplicationSessionState.dconsole.redirectOut();
-		}
+		consoleOutputController.restoreAfterMidiWrite();
 
 
 		// view midi

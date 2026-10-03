@@ -53,6 +53,7 @@ public final class ComposeCoordinator {
     private final ArrangementGUI arrangementGUI;
     private final ScoreGUI scoreGUI;
     private final MidiEditorSession midiEditorSession;
+    private final ConsoleOutputController consoleOutputController;
     private final JLabel totalTime;
 
     private final boolean logPerformance = false;
@@ -67,6 +68,7 @@ public final class ComposeCoordinator {
                               GenerationGUI generationGUI,
                               ArrangementGUI arrangementGUI, ScoreGUI scoreGUI,
                               MidiEditorSession midiEditorSession,
+                              ConsoleOutputController consoleOutputController,
                               JLabel totalTime) {
         this.context = context;
         this.playbackController = playbackController;
@@ -82,6 +84,7 @@ public final class ComposeCoordinator {
         this.arrangementGUI = arrangementGUI;
         this.scoreGUI = scoreGUI;
         this.midiEditorSession = midiEditorSession;
+        this.consoleOutputController = consoleOutputController;
         this.totalTime = totalTime;
     }
 
@@ -123,7 +126,8 @@ public final class ComposeCoordinator {
             GUIConfig midiConfig = new GUIConfig();
             context.copyGuiToConfig(midiConfig, true);
 
-            melodyGen = new MidiGenerator(midiConfig, context::assignSequenceTrack);
+            melodyGen = new MidiGenerator(midiConfig, context::assignSequenceTrack,
+                    consoleOutputController);
             fillUserParameters(regenerate, manual);
 
             File makeDir = new File(Constants.MIDIS_FOLDER);
