@@ -1,8 +1,9 @@
 package org.vibehistorian.vibecomposer;
 
-import java.util.List;
-
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+
+import java.util.List;
 
 /** Owns the active MIDI editor and its selected arrangement section for one window. */
 public final class MidiEditorSession {

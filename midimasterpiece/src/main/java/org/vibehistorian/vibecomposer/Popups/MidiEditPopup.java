@@ -21,7 +21,6 @@ import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -33,6 +32,7 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 public class MidiEditPopup extends CloseablePopup {
 

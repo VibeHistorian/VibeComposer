@@ -1,17 +1,20 @@
-package org.vibehistorian.vibecomposer;
-
-import java.util.List;
-import java.util.Random;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.music.data.Score;
 import jm.music.tools.Mod;
 import org.vibehistorian.vibecomposer.Components.ShowAreaBig;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
+import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+
+import java.util.List;
+import java.util.Random;
 
 /** Assigns generated instrument parts to score tracks and applies score-level processing. */
 final class MidiScoreBuilder {

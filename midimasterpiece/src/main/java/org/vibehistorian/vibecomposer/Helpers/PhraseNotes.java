@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer.Helpers;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

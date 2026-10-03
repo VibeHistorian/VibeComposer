@@ -42,6 +42,7 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

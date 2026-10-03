@@ -5,7 +5,6 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
@@ -13,6 +12,7 @@ import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.TextProcessingPopup;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 public class MidiEditArea extends JComponent {
 	@FunctionalInterface

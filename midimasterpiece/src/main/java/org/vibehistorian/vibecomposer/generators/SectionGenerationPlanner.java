@@ -1,10 +1,15 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
+import org.vibehistorian.vibecomposer.Arrangement;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.gui.DrumGUI;
 
 import java.util.ArrayList;

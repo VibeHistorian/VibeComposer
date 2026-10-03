@@ -1,12 +1,17 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
+import org.vibehistorian.vibecomposer.Rhythm;
+import org.vibehistorian.vibecomposer.Section;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +25,8 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
     }
 
     Result generate(BassPart ip, List<int[]> generatedRootProgression,
-                    List<Double> progressionDurations, Map<Integer, List<Integer>> melodyNotePatternMap,
-                    Section sec, List<Integer> variations, int sectionOrder, Timing timing) {
+					List<Double> progressionDurations, Map<Integer, List<Integer>> melodyNotePatternMap,
+					Section sec, List<Integer> variations, int sectionOrder, Timing timing) {
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();

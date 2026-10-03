@@ -25,6 +25,7 @@ import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import java.awt.*;
 import java.util.*;

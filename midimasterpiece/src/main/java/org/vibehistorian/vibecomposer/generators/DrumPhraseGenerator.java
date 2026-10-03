@@ -1,11 +1,13 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
+import org.vibehistorian.vibecomposer.Section;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,11 +37,11 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
     }
 
     DrumResult generate(DrumPart ip, List<int[]> actualProgression, List<Double> progressionDurations,
-                    List<String> chordInts, List<Integer> melodyNotePattern,
-                    Map<Integer, List<Integer>> melodyNotePatternMap,
-                    boolean sectionForcedDynamics, Section sec, int measures,
-                    List<Integer> variations,
-                    int sectionOrder, Timing timing) {
+                        List<String> chordInts, List<Integer> melodyNotePattern,
+                        Map<Integer, List<Integer>> melodyNotePatternMap,
+                        boolean sectionForcedDynamics, Section sec, int measures,
+                        List<Integer> variations,
+                        int sectionOrder, Timing timing) {
         boolean genVars = variations == null;
         Phrase phr = new PhraseExt(4, ip.getOrder(), sectionOrder);
 

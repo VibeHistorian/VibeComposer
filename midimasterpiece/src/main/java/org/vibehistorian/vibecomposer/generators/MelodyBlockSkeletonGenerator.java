@@ -1,12 +1,19 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Enums.BlockType;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Rhythm;
+import org.vibehistorian.vibecomposer.Section;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +25,9 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
 import static org.vibehistorian.vibecomposer.MidiUtils.getBasicChordsFromRoots;
+import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 final class MelodyBlockSkeletonGenerator {
     private final GUIConfig gc;

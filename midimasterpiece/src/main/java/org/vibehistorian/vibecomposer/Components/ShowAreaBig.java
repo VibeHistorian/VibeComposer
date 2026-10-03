@@ -30,9 +30,18 @@ package org.vibehistorian.vibecomposer.Components;
 
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.*;
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.GUIConstants;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;

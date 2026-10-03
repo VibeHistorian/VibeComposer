@@ -1,9 +1,8 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.PlaybackState;
-
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;

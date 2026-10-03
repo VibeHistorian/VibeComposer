@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import java.util.ArrayList;
 import java.util.List;

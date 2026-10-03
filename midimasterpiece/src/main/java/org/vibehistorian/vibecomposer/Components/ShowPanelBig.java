@@ -36,12 +36,12 @@ import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;

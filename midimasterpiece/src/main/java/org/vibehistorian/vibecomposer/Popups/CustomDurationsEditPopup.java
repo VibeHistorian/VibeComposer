@@ -12,9 +12,9 @@ import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -23,7 +23,7 @@ import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 public class CustomDurationsEditPopup extends CloseablePopup {
 

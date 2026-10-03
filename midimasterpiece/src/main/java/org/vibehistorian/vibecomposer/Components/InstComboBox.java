@@ -2,8 +2,8 @@ package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 
 import java.util.HashSet;
 import java.util.Random;

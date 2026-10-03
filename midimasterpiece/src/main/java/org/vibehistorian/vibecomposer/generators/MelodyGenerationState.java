@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.music.data.Note;
 import java.util.List;

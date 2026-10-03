@@ -1,8 +1,14 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.constants.Pitches;
 import jm.music.data.Note;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.Rhythm;
+import org.vibehistorian.vibecomposer.Section;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +36,7 @@ final class LegacyMelodySkeletonGenerator {
     }
 
     Vector<Note> generate(MelodyPart mp, List<int[]> chords, List<int[]> roots, int measures,
-            int notesSeedOffset, Section sec, List<Integer> variations) {
+                          int notesSeedOffset, Section sec, List<Integer> variations) {
         return algoGen2GenerateMelodySkeletonFromChords(mp, chords, roots, measures, notesSeedOffset, sec, variations);
     }
     private Vector<Note> algoGen2GenerateMelodySkeletonFromChords(MelodyPart mp, List<int[]> chords,

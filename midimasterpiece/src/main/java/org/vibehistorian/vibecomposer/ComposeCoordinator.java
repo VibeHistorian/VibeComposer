@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+import org.vibehistorian.vibecomposer.generators.MelodyGenerator;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 import org.vibehistorian.vibecomposer.gui.ArpGUI;
 import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;

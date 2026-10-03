@@ -1,4 +1,10 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,9 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
 
 import static org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 

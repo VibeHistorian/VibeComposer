@@ -1,9 +1,9 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;
 
 import javax.swing.*;

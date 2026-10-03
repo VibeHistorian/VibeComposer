@@ -1,16 +1,20 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.generators;
 
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MelodyUtils;
+import org.vibehistorian.vibecomposer.MidiUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import static org.vibehistorian.vibecomposer.MidiGenerator.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
+import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 final class MelodyChordInference {
     private final GUIConfig gc;

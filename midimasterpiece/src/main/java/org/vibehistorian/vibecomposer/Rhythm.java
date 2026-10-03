@@ -1,5 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
+import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
