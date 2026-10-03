@@ -55,6 +55,7 @@ public class MidiEditPopup extends CloseablePopup {
 		Pair<ScaleMode, Integer> getScaleKey(Section section);
 		int getTranspose();
 		List<Integer> getMelodyBlockChoicePreference();
+		MidiGenerator getMelodyGenerator();
 		void regenerateInPlace();
 		void markArrangementManual();
 		void repaintActualArrangement();
@@ -715,7 +716,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public PhraseNotes recomposePart(boolean isRandom) {
-		MidiGenerator mg = ApplicationSessionState.melodyGen;
+		MidiGenerator mg = context.getMelodyGenerator();
 		UsedPattern oldPattern = sec.getPattern(part, partOrder);
 		try {
 

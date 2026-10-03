@@ -8,10 +8,19 @@ import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 public final class MidiEditorSession {
 	private final MidiEditPopup.Context context;
 	private MidiEditPopup currentPopup;
+	private MidiGenerator melodyGenerator;
 	private int sectionIndex = -1;
 
 	public MidiEditorSession(MidiEditPopup.Context context) {
 		this.context = context;
+	}
+
+	public void setMelodyGenerator(MidiGenerator melodyGenerator) {
+		this.melodyGenerator = melodyGenerator;
+	}
+
+	public MidiGenerator getMelodyGenerator() {
+		return melodyGenerator;
 	}
 
 	public void open(Section section, int instrument, int panelOrder, int sectionIndex) {

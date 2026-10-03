@@ -7,8 +7,6 @@ public final class ApplicationSessionState {
 	private ApplicationSessionState() {
 	}
 
-	public static GUIPreset defaultGuiPreset;
-	public static MidiGenerator melodyGen;
 	public static GUIConfig guiConfig = new GUIConfig();
 	public static ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
 	public static boolean heavyBackgroundTasksInProgress;

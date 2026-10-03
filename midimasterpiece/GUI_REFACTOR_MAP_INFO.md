@@ -26,7 +26,7 @@ rg -n "Melody|melody" src/main/java/org/vibehistorian/vibecomposer/VibeComposerG
 Get-Content src/main/java/org/vibehistorian/vibecomposer/VibeComposerGUI.java | Select-Object -Skip 1700 -First 100
 ```
 
-`rg -n` is effective for locating scattered references; `Get-Content` with `Select-Object` is useful for reviewing a bounded source section. `mvn -DskipTests compile` successfully checked the MelodyGUI migration without running tests.
+`rg -n` is effective for locating scattered references; `Get-Content` with `Select-Object` is useful for reviewing a bounded source section.
 
-# Compilation
-mvn -DskipTests compile
+# Compilation - a generation test was added `GeneratorRegressionTest` to verify a test XML file still regenerates into the same MIDI
+mvn compile

@@ -91,6 +91,7 @@ public class VibeComposerGUI extends JFrame
 	private PresetViewController presetViewController;
 	private ComposeCoordinator composeCoordinator;
 	private AppearanceController appearanceController;
+	private GUIPreset defaultGuiPreset;
 	private final AtomicBoolean playheadUpdatePending = new AtomicBoolean();
 	private final AtomicBoolean playheadRefreshPending = new AtomicBoolean();
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
@@ -193,6 +194,9 @@ public class VibeComposerGUI extends JFrame
 		@Override public int getTranspose() { return scoreGUI.getTranspose(); }
 		@Override public List<Integer> getMelodyBlockChoicePreference() {
 			return melodyGUI.melodyBlockChoicePreference.getValues();
+		}
+		@Override public MidiGenerator getMelodyGenerator() {
+			return midiEditorSession.getMelodyGenerator();
 		}
 		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST part,

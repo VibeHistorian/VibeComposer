@@ -126,8 +126,9 @@ public final class ComposeCoordinator {
             GUIConfig midiConfig = new GUIConfig();
             context.copyGuiToConfig(midiConfig, true);
 
-            melodyGen = new MidiGenerator(midiConfig, context::assignSequenceTrack,
+            MidiGenerator melodyGenerator = new MidiGenerator(midiConfig, context::assignSequenceTrack,
                     consoleOutputController);
+            midiEditorSession.setMelodyGenerator(melodyGenerator);
             fillUserParameters(regenerate, manual);
 
             File makeDir = new File(Constants.MIDIS_FOLDER);
@@ -153,7 +154,7 @@ public final class ComposeCoordinator {
             if (logPerformance) {
                 LG.i("After setup: " + (System.currentTimeMillis() - systemTime));
             }
-            melodyGen.generateMasterpiece(masterpieceSeed, relPath);
+            melodyGenerator.generateMasterpiece(masterpieceSeed, relPath);
 
             guiConfig = midiConfig;
             soloMuteController.reapplyTracks();
