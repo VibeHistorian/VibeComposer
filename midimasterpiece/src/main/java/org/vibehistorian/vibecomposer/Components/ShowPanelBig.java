@@ -56,6 +56,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -79,30 +80,30 @@ public class ShowPanelBig extends JPanel {
 	public Score score;
 	protected double beatWidth; //10.0;
 	public static final int beatWidthBaseDefault = 1600;
-	public static int beatWidthBase = 1600;
-	public static final List<Integer> beatWidthBasesBig = Arrays.asList(new Integer[] { 1600, 1800,
-			2200, 2700, 3300, 4000, 4800, 5700, 6800, 8200, 10000, 12500 });
-	public static final List<Integer> beatWidthBasesSmall = Arrays.asList(
-			new Integer[] { 630, 800, 1050, 1300, 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700 });
-	public static List<Integer> beatWidthBases = beatWidthBasesBig;
-	public static int beatWidthBaseIndex = 0;
-	public static int panelMaxHeight = UITheme.scrollPaneDimension.height;
+	private int beatWidthBase = beatWidthBaseDefault;
+	private static final List<Integer> beatWidthBasesBig = Collections.unmodifiableList(Arrays.asList(
+			1600, 1800, 2200, 2700, 3300, 4000, 4800, 5700, 6800, 8200, 10000, 12500));
+	private static final List<Integer> beatWidthBasesSmall = Collections.unmodifiableList(Arrays.asList(
+			630, 800, 1050, 1300, 1550, 1800, 2200, 2700, 3300, 4000, 4800, 5700));
+	private List<Integer> beatWidthBases = beatWidthBasesBig;
+	private int beatWidthBaseIndex = 0;
+	private int panelMaxHeight = UITheme.scrollPaneDimension.height;
 	private final ShowAreaBig sa;
 	private final ShowRulerBig ruler;
 	private final JPanel pan;
 	private int panelHeight;
-	public static JScrollPane areaScrollPane;
-	public static JScrollPane rulerScrollPane;
-	public static JScrollPane horizontalPane;
-	public static CheckButton soloMuterHighlight;
-	public static double maxEndTime = 10.0;
+	private JScrollPane areaScrollPane;
+	private JScrollPane rulerScrollPane;
+	private JScrollPane horizontalPane;
+	private CheckButton soloMuterHighlight;
+	private double maxEndTime = 10.0;
 
-    private static CheckButton[] partsShown;
-    public static ScrollComboBox2<Integer> scoreBox;
-	public static ScrollComboBox<String> trimNoteLengthBox;
+    private CheckButton[] partsShown;
+    private ScrollComboBox2<Integer> scoreBox;
+	private ScrollComboBox<String> trimNoteLengthBox;
 
 	public ShowPanelBig(PlaybackActions playbackActions) {
-		this(new Dimension(beatWidthBase, panelMaxHeight), playbackActions);
+		this(new Dimension(beatWidthBaseDefault, UITheme.scrollPaneDimension.height), playbackActions);
 	}
 
 	public ShowPanelBig(Dimension size, PlaybackActions playbackActions) {
@@ -153,7 +154,7 @@ public class ShowPanelBig extends JPanel {
         JPanel scorePartPanel = new JPanel();
 		scorePartPanel.setLayout(new BoxLayout(scorePartPanel, BoxLayout.X_AXIS));
 		scorePartPanel
-				.setMaximumSize(new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight));
+				.setMaximumSize(new Dimension(beatWidthBase, ShowRulerBig.maxHeight));
 
 		scorePartPanel.add(new JLabel("Score History"));
 		scorePartPanel.add(scoreBox);
@@ -285,7 +286,7 @@ public class ShowPanelBig extends JPanel {
 		areaScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(ShowPanelBig.beatWidthBase, getHeight() - 70);
+				return new Dimension(beatWidthBase, getHeight() - 70);
 			}
 		};
 		areaScrollPane.setViewportView(areaPanel);
@@ -312,7 +313,7 @@ public class ShowPanelBig extends JPanel {
 		rulerScrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
-				return new Dimension(ShowPanelBig.beatWidthBase, ShowRulerBig.maxHeight + 10);
+				return new Dimension(beatWidthBase, ShowRulerBig.maxHeight + 10);
 			}
 		};
 		rulerScrollPane.setViewportView(rulerPanel);
@@ -440,7 +441,7 @@ public class ShowPanelBig extends JPanel {
 					//areaScrollPane.getVerticalScrollBar().setVisible(true);
 				} else if (e.isControlDown()) {
 					double originalWidth = Math.round(
-							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
+							(ShowAreaBig.noteOffsetXMargin + maxEndTime) * beatWidth);
 
 					Point horPanePoint = SwingUtilities.convertPoint(areaScrollPane, e.getPoint(),
 							horizontalPane);
@@ -450,7 +451,7 @@ public class ShowPanelBig extends JPanel {
 					beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
 					setScore();
 					double changeX = Math.round(
-							(ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth)
+							(ShowAreaBig.noteOffsetXMargin + maxEndTime) * beatWidth)
 							/ originalWidth;
 					playbackActions.repaintScore();
 
@@ -532,7 +533,7 @@ public class ShowPanelBig extends JPanel {
 		maxEndTime = score.getEndTime();
 		//LG.i("New score set with maxEndTime: " + maxEndTime);
 		this.score = scrCopy;
-		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime);
+		beatWidth = beatWidthBase / (ShowAreaBig.noteOffsetXMargin + maxEndTime);
 		if (beatWidth < 1.0)
 			beatWidth = 1.0;
 		update();
@@ -569,10 +570,21 @@ public class ShowPanelBig extends JPanel {
 	public JScrollPane getAreaScrollPane() { return areaScrollPane; }
 	public JScrollPane getHorizontalPane() { return horizontalPane; }
 	public ScrollComboBox2<Integer> getScoreBox() { return scoreBox; }
+	public boolean isSoloMuterHighlightEnabled() {
+		return soloMuterHighlight != null && soloMuterHighlight.isSelected();
+	}
+	public void useSmallDisplay() {
+		beatWidthBases = beatWidthBasesSmall;
+		beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
+	}
+	public void useBigDisplay() {
+		beatWidthBases = beatWidthBasesBig;
+		beatWidthBase = beatWidthBases.get(beatWidthBaseIndex);
+	}
 
 	public void update() {
 		int sizeX = (int) Math
-				.round((ShowAreaBig.noteOffsetXMargin + ShowPanelBig.maxEndTime) * beatWidth);
+				.round((ShowAreaBig.noteOffsetXMargin + maxEndTime) * beatWidth);
 		sa.setSize(sizeX, panelHeight);
 		ruler.setSize(sizeX, ShowRulerBig.maxHeight);
 		pan.repaint();

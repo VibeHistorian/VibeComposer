@@ -57,6 +57,9 @@ public class ScoreGUI {
 	public void setTranspose(int transpose) { transposeScore.setInt(transpose); }
 	public void adjustTranspose(int amount) { transposeScore.setInt(transposeScore.getInt() + amount); }
 	public ShowPanelBig getScorePanel() { return scorePanel; }
+	public boolean isSoloMuterHighlightEnabled() {
+		return scorePanel != null && scorePanel.isSoloMuterHighlightEnabled();
+	}
 	public JButton getShowScoreButton() { return showScore; }
 	public JCheckBox getHighlightScoreNotes() { return highlightScoreNotes; }
 	public JCheckBox getMiniScorePopup() { return miniScorePopup; }
@@ -108,7 +111,7 @@ public class ScoreGUI {
 			scorePanel = new ShowPanelBig(context);
 			((JPanel) scoreScrollPane.getViewport().getView()).add(scorePanel);
 		}
-		ShowPanelBig.scoreBox.setSelectedIndex(0);
+		scorePanel.getScoreBox().setSelectedIndex(0);
 		scorePanel.setScore();
 		scoreScrollPane.repaint();
 	}
@@ -136,16 +139,14 @@ public class ScoreGUI {
 			if (instrumentTabPane.getComponentCount() == 8) {
 				instrumentTabPane.remove(scoreScrollPane);
 				if (miniScorePopup.isSelected()) {
-					ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesSmall;
-					ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
-							.get(ShowPanelBig.beatWidthBaseIndex);
+					scorePanel.useSmallDisplay();
 					scorePanel.updatePanelHeight(300);
 					scorePanel.getShowArea().setNoteHeight(4);
 					scorePanel.setScore();
 					scorePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 					scoreScrollPane.repaint();
 					SwingUtilities.invokeLater(() ->
-							ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 0), 0.0, 0.0));
+							ShowPanelBig.zoomIn(scorePanel.getAreaScrollPane(), new Point(0, 0), 0.0, 0.0));
 				}
 				scorePopup = new ShowScorePopup(scoreScrollPane, instrumentTabPane,
 						context.getMainWindowComponent(), miniScorePopup.isSelected(),
@@ -161,16 +162,14 @@ public class ScoreGUI {
 	}
 
 	private void restoreScoreAfterPopup() {
-		ShowPanelBig.beatWidthBases = ShowPanelBig.beatWidthBasesBig;
-		ShowPanelBig.beatWidthBase = ShowPanelBig.beatWidthBases
-				.get(ShowPanelBig.beatWidthBaseIndex);
+		scorePanel.useBigDisplay();
 		scorePanel.updatePanelHeight(UITheme.scrollPaneDimension.height);
 		scorePanel.getShowArea().setNoteHeight(7);
 		scorePanel.setScore();
 		scoreScrollPane.repaint();
 		scorePopup = null;
 		SwingUtilities.invokeLater(() ->
-				ShowPanelBig.zoomIn(ShowPanelBig.areaScrollPane, new Point(0, 300), 0.0,
+				ShowPanelBig.zoomIn(scorePanel.getAreaScrollPane(), new Point(0, 300), 0.0,
 						(7 / 5.0) - 1.0));
 	}
 

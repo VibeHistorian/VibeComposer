@@ -24,7 +24,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.InstComboBox;
 import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.Helpers.MidiHandler;
 import org.vibehistorian.vibecomposer.MidiGenerator.Durations;
@@ -115,14 +114,12 @@ public class VibeComposerGUI extends JFrame
 					return getInstrumentControls(instrument).getEnabledCheckBox().isSelected();
 				}
 				@Override public void refreshScoreForSoloChange() {
-					if (ShowPanelBig.soloMuterHighlight != null
-							&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+					if (scoreGUI.isSoloMuterHighlightEnabled()) {
 						SwingUtilities.invokeLater(() -> scoreGUI.getScorePanel().setScore());
 					}
 				}
 				@Override public void refreshScoreForMuteChange() {
-					if (ShowPanelBig.soloMuterHighlight != null
-							&& ShowPanelBig.soloMuterHighlight.isSelected()) {
+					if (scoreGUI.isSoloMuterHighlightEnabled()) {
 						SwingUtilities.invokeLater(() -> scoreGUI.getScorePanel().update());
 					}
 				}
@@ -618,8 +615,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public Set<Integer> getSoloMuterHighlightedTracks() {
 				Set<Integer> tracks = new HashSet<>();
-				if (ShowPanelBig.soloMuterHighlight == null
-						|| !ShowPanelBig.soloMuterHighlight.isSelected()) {
+				if (!scoreGUI.isSoloMuterHighlightEnabled()) {
 					return tracks;
 				}
 				boolean checkMutes = globalSoloMuter.soloState == State.OFF;
@@ -1674,10 +1670,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		isBigMonitorMode = !isBigMonitorMode;
 		if (isBigMonitorMode) {
 			newPrefSize = new Dimension(1900, 600);
-			//ShowPanelBig.panelMaxHeight = 600;
 		} else {
 			newPrefSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT + 35);
-			//ShowPanelBig.panelMaxHeight = 400;
 		}
 		if (scoreGUI.getScorePanel() != null) {
 			scoreGUI.getScorePanel().updatePanelHeight(newPrefSize.height);
