@@ -64,7 +64,7 @@ public class VisualPatternPanel extends JPanel {
 	public static final List<Integer> FULL_PATTERN = IntStream.iterate(1, e -> e).limit(MAX_HITS)
 			.boxed().collect(Collectors.toList());
 
-	public static int mouseButton = 0;
+	private int mouseButton = 0;
 
 	/*public static List<Integer> sextuplets = Arrays.asList(new Integer[] { 6, 12, 24 });
 	public static List<Integer> quintuplets = Arrays.asList(new Integer[] { 5 });

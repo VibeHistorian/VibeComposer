@@ -217,8 +217,6 @@ public class ExtraSettingsGUI {
 				Arrays.asList(new Integer[] { 25, 50, 100, 150, 200, 300, 400 }));
 
 		//                  arrangement midi settings
-		ArrangementGUI.arrangementScaleMidiVelocity = new CustomCheckBox("Scale Midi Velocity in Arrangement",
-				true);
 		useMidiCC = new CustomCheckBox("Use Volume/Pan/Reverb/Chorus/Filter/.. MIDI CC", true);
 		useMidiCC.setToolTipText("Volume - 7, Reverb - 91, Chorus - 93, Filter - 74");
 
@@ -237,7 +235,7 @@ public class ExtraSettingsGUI {
 		scoreMidiPanel.add(drumMappingPanel);
 		scoreMidiPanel.add(useMidiCC);
 		scoreMidiPanel.add(stretchMidi);
-		scoreMidiPanel.add(ArrangementGUI.arrangementScaleMidiVelocity);
+		scoreMidiPanel.add(arrangementGUI.getArrangementScaleMidiVelocity());
 	}
 
     public void initExtraSettingsInstruments(JPanel instrumentsSettingsPanel) {
@@ -418,15 +416,13 @@ public class ExtraSettingsGUI {
 
     public void initExtraSettingsCompose(JPanel composeSettingsPanel) {
 		// COMPOSE
-		ArrangementGUI.arrangementResetCustomPanelsOnCompose = SwingUtils.makeCheckBox("Reset Customized Panels on Compose",
-				true, true);
 		randomizeTimingsOnCompose = SwingUtils.makeCheckBox(
 				"<html>Randomize Global Swing/Beat Multiplier<br>on Compose</html>", true, true);
 		sidechainPatternsOnCompose = SwingUtils.makeCheckBox("<html>Sidechain Patterns<br>on Compose</html>",
 				true, true);
 		JCheckBox copyChordsAfterGenerate = chordGUI.createExtraComposeControl();
 
-		composeSettingsPanel.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
+		composeSettingsPanel.add(arrangementGUI.getArrangementResetCustomPanelsOnCompose());
 		composeSettingsPanel.add(randomizeTimingsOnCompose);
 		composeSettingsPanel.add(sidechainPatternsOnCompose);
 		composeSettingsPanel.add(copyChordsAfterGenerate);

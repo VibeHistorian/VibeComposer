@@ -303,7 +303,7 @@ public final class PresetViewController {
 
 		// extra settings
 		components.add(ExtraSettingsGUI.useMidiCC);
-		components.add(ArrangementGUI.arrangementResetCustomPanelsOnCompose);
+		components.add(arrangementGUI.getArrangementResetCustomPanelsOnCompose());
 		components.add(null);
 		components.add(null);
 		components.add(mainWindowControls.getLoopBeatCompose());

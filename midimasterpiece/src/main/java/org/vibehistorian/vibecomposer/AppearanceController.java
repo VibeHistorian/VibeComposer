@@ -78,9 +78,9 @@ public final class AppearanceController {
 			panelColorHigh = panelColorHigh.darker();
 		}
 		if (arrangementGUI.isGlobalSectionSelected()) {
-			arrangementGUI.getManualArrangementSign().setBackground(panelColorHigh.brighter());
+			arrangementGUI.getSectionSelectionSign().setBackground(panelColorHigh.brighter());
 		} else {
-			arrangementGUI.getManualArrangementSign().setBackground(toggledUIColor.darker().darker());
+			arrangementGUI.getSectionSelectionSign().setBackground(toggledUIColor.darker().darker());
 		}
 		PlaybackState.sliderPanel.setBackground(panelColorLow);
 
@@ -134,7 +134,7 @@ public final class AppearanceController {
 		generationGUI.randomizeTransposeOnCompose.setForeground(foreground);
 		generationGUI.randomizeInstOnComposeOrGen.setForeground(foreground);
 		arrangementGUI.getRandomizeArrangementOnCompose().setForeground(foreground);
-		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(foreground);
+		arrangementGUI.getArrangementResetCustomPanelsOnCompose().setForeground(foreground);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(foreground);
 		melodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(foreground);
 		melodyGUI.melodyPatternRandomizeOnCompose.setForeground(foreground);

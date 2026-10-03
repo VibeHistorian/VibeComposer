@@ -25,6 +25,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.vibehistorian.vibecomposer.Components.ArrangementTableRenderState;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
+import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.SectionDropDownCheckButton;
@@ -76,7 +77,7 @@ public class ArrangementGUI {
 	private JScrollPane arrSectionPane;
 	private boolean switchTabPaneAfterApply;
 	private boolean switchTabPaneToScoreAfterApply;
-	private JPanel manualArrangementSign;
+	private JPanel sectionSelectionSign;
 	private ScrollComboBox<String> newSectionBox;
 	private static final int arrangementRowHeaderWidth = 120;
 	private JScrollPane arrangementScrollPane;
@@ -94,13 +95,29 @@ public class ArrangementGUI {
 	private static final int arrangementDarkModeLowestColor = 100;
 	private static final Color arrangementDarkModeText = new Color(50, 50, 50);
 	private static final int arrangementLightModeHighestColor = 180;
-	public static JCheckBox arrangementScaleMidiVelocity;
-	public static JCheckBox arrangementResetCustomPanelsOnCompose;
+	private JCheckBox arrangementScaleMidiVelocity;
+	private JCheckBox arrangementResetCustomPanelsOnCompose;
 	private VariationPopup varPopup;
 
 	private ArrangementTableRenderState getTableRenderState() {
 		return new ArrangementTableRenderState(actualArrangement, copyDragging, copyDraggingOrigin,
 				highlightedTableCell, arrangementActualTableMousePoint != null);
+	}
+
+	public JCheckBox getArrangementScaleMidiVelocity() {
+		if (arrangementScaleMidiVelocity == null) {
+			arrangementScaleMidiVelocity = new CustomCheckBox(
+					"Scale Midi Velocity in Arrangement", true);
+		}
+		return arrangementScaleMidiVelocity;
+	}
+
+	public JCheckBox getArrangementResetCustomPanelsOnCompose() {
+		if (arrangementResetCustomPanelsOnCompose == null) {
+			arrangementResetCustomPanelsOnCompose = SwingUtils.makeCheckBox(
+					"Reset Customized Panels on Compose", true, true);
+		}
+		return arrangementResetCustomPanelsOnCompose;
 	}
 
 	public void saveToConfig(GUIConfig gc, boolean isNew, int seed, List<PatternMap> activePatternMaps) {
@@ -121,7 +138,7 @@ public class ArrangementGUI {
 		gc.setActualArrangement(actualArrangement);
 		gc.setArrangementVariationChance(arrangementVariationChance.getInt());
 		gc.setArrangementPartVariationChance(arrangementPartVariationChance.getInt());
-		gc.setScaleMidiVelocityInArrangement(arrangementScaleMidiVelocity.isSelected());
+		gc.setScaleMidiVelocityInArrangement(getArrangementScaleMidiVelocity().isSelected());
 		gc.setArrangementEnabled(useArrangement.isSelected());
 		gc.setPieceLength(Integer.parseInt(pieceLength.getText()));
 	}
@@ -134,7 +151,7 @@ public class ArrangementGUI {
 		refreshVariationPopupButtons();
 		arrangementVariationChance.setInt(gc.getArrangementVariationChance());
 		arrangementPartVariationChance.setInt(gc.getArrangementPartVariationChance());
-		arrangementScaleMidiVelocity.setSelected(gc.isScaleMidiVelocityInArrangement());
+		getArrangementScaleMidiVelocity().setSelected(gc.isScaleMidiVelocityInArrangement());
 		arrangementSeed.setValue(arrangement.getSeed());
 		useArrangement.setSelected(gc.isArrangementEnabled());
 		manualArrangement.setSelected(true);
@@ -265,8 +282,8 @@ public class ArrangementGUI {
 		return randomizeArrangementOnCompose;
 	}
 
-	public JPanel getManualArrangementSign() {
-		return manualArrangementSign;
+	public JPanel getSectionSelectionSign() {
+		return sectionSelectionSign;
 	}
 
 	public boolean isManualArrangementSelected() {
@@ -430,7 +447,7 @@ public class ArrangementGUI {
 	}
 
 	public void prepareForCompose(boolean regenerate, boolean hasCurrentMidi, int seed) {
-		if (!regenerate && arrangementResetCustomPanelsOnCompose.isSelected()) {
+		if (!regenerate && getArrangementResetCustomPanelsOnCompose().isSelected()) {
 			actualArrangement.getSections().forEach(Section::resetCustomizedParts);
 		} else {
 			for (Section section : actualArrangement.getSections()) {
@@ -502,7 +519,7 @@ public class ArrangementGUI {
 		List<InstPanel> addedPanels = new ArrayList<>();
 		if (GLOBAL.equals(selectedItem)) {
 			LG.i("Resetting to normal panels!");
-			manualArrangementSign.setBackground(UITheme.panelColorHigh.brighter());
+			sectionSelectionSign.setBackground(UITheme.panelColorHigh.brighter());
 			for (INST instrument : INST.values()) {
 				int instrumentIndex = instrument.getIndex();
 				JScrollPane pane = getInstPane(instrumentIndex);
@@ -519,7 +536,7 @@ public class ArrangementGUI {
 			}
 		} else {
 			LG.i("Switching panels!");
-			manualArrangementSign.setBackground(UITheme.uiColor().darker().darker());
+			sectionSelectionSign.setBackground(UITheme.uiColor().darker().darker());
 			int sectionOrder = Integer.parseInt(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (INST instrument : INST.values()) {
@@ -581,7 +598,7 @@ public class ArrangementGUI {
 				addedPanels.addAll(sectionPanels);
 			}
 		}
-		manualArrangementSign.repaint();
+		sectionSelectionSign.repaint();
 		addedPanels.forEach(panel -> panel.setVisible(true));
 		context.toggleButtonEnabledForPanels();
 		for (INST instrument : INST.values()) {
@@ -1040,10 +1057,10 @@ public class ArrangementGUI {
 		arrangementSettingsLeft.add(arrangementGlobalVariationBtn);
 		arrangementSettingsLeft.add(patternManagerBtn);
 
-		manualArrangementSign = new JPanel();
-		manualArrangementSign.add(new JLabel("                                      "));
+		sectionSelectionSign = new JPanel();
+		sectionSelectionSign.add(new JLabel("                                      "));
 		arrangementSettings.add(arrangementSettingsLeft);
-		arrangementSettings.add(manualArrangementSign);
+		arrangementSettings.add(sectionSelectionSign);
 
 		manualArrangement = new CheckButton("MANUAL", false);
 		arrangementSettingsRight.add(manualArrangement);
