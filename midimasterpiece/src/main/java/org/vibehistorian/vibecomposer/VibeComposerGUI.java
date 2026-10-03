@@ -92,6 +92,8 @@ public class VibeComposerGUI extends JFrame
 	private ComposeCoordinator composeCoordinator;
 	private AppearanceController appearanceController;
 	private GUIPreset defaultGuiPreset;
+	private boolean heavyBackgroundTasksInProgress;
+	private final UndoManager instrumentTabUndoManager = new UndoManager();
 	private final AtomicBoolean playheadUpdatePending = new AtomicBoolean();
 	private final AtomicBoolean playheadRefreshPending = new AtomicBoolean();
 	private final InstrumentControlContext instrumentControlContext = new InstrumentControlContext() {
@@ -274,7 +276,9 @@ public class VibeComposerGUI extends JFrame
 				index = getComponents().length - 1;
 			}
 			super.setSelectedIndex(index);
-			instrumentTabUndoManager.saveToHistory(instrumentTabPane);
+			if (vibeComposerGUI != null) {
+				vibeComposerGUI.instrumentTabUndoManager.saveToHistory(instrumentTabPane);
+			}
 		}
 	};
 
@@ -481,6 +485,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public int getSelectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
 			@Override public void regenerate() { VibeComposerGUI.this.regenerate(); }
+			@Override public boolean isHeavyBackgroundTaskInProgress() {
+				return heavyBackgroundTasksInProgress;
+			}
 		}, instrumentPanelController, arpGUI, melodyGUI, chordGUI);
 	}
 
@@ -515,6 +522,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				return VibeComposerGUI.this.getSize();
 			}
 			@Override public GUIConfig getSelectedConfigHistory() {
+				ScrollComboBox<GUIConfig> configHistory = mainWindowControls.getConfigHistory();
 				return configHistory.getItemCount() > 0 ? configHistory.getVal() : null;
 			}
 			@Override public void recalculateAfterSectionRecompose() {
@@ -1778,6 +1786,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 				@Override public void recalculateTabPaneCounts() {
 					VibeComposerGUI.this.recalculateTabPaneCounts();
+				}
+				@Override public void setHeavyBackgroundTaskInProgress(boolean inProgress) {
+					heavyBackgroundTasksInProgress = inProgress;
 				}
 			}, playbackController, midiDeviceController, midiCcController, soloMuteController,
 					mainWindowControls, melodyGUI, chordGUI, arpGUI, drumGUI, generationGUI,

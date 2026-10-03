@@ -31,6 +31,7 @@ public class GenerationGUI {
         void switchAllOnComposeCheckboxes(boolean state);
         int getSelectedInstrumentTab();
         void regenerate();
+        boolean isHeavyBackgroundTaskInProgress();
     }
 
     public JCheckBox randomizeInstOnComposeOrGen;
@@ -58,7 +59,7 @@ public class GenerationGUI {
     public boolean canRegenerateOnChange() {
         return PlaybackState.sequencer != null && regenerateWhenValuesChange != null
                 && regenerateWhenValuesChange.isSelected()
-                && !ApplicationSessionState.heavyBackgroundTasksInProgress
+                && !context.isHeavyBackgroundTaskInProgress()
                 && ArrangementGUI.arrSection != null
                 && ArrangementGUI.arrSection.getSelectedIndex() == 0;
     }

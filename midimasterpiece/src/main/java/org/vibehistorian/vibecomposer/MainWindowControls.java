@@ -22,7 +22,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import static org.vibehistorian.vibecomposer.ApplicationSessionState.configHistory;
 import static org.vibehistorian.vibecomposer.GUIConstants.COMPOSE_COLOR;
 import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
 import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
@@ -68,6 +67,7 @@ public final class MainWindowControls {
     private final HeaderContext headerContext;
     private final ComposeContext composeContext;
     private final PlaybackContext playbackContext;
+    private final ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
     private VeloRect globalVolSlider;
     private VeloRect globalReverbSlider;
     private VeloRect globalChorusSlider;
@@ -95,6 +95,10 @@ public final class MainWindowControls {
         this.headerContext = headerContext;
         this.composeContext = composeContext;
         this.playbackContext = playbackContext;
+    }
+
+    public ScrollComboBox<GUIConfig> getConfigHistory() {
+        return configHistory;
     }
 
     public void addHeaderControls(JPanel parent, GridBagConstraints constraints,

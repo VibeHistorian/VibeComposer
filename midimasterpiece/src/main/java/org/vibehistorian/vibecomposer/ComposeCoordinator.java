@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
@@ -37,6 +38,7 @@ public final class ComposeCoordinator {
         int selectedInstrumentTab();
         void repaintMainWindow();
         void recalculateTabPaneCounts();
+        void setHeavyBackgroundTaskInProgress(boolean inProgress);
     }
 
     private final Context context;
@@ -91,7 +93,7 @@ public final class ComposeCoordinator {
     public void composeMidi(boolean regenerate, boolean manual) {
         LG.i("==========Compose Midi [" + (regenerate ? "Regenerate" : "Compose") + "|"
                 + (manual ? "Manual" : "OnChange") + "]: Starting...================");
-        heavyBackgroundTasksInProgress = true;
+        context.setHeavyBackgroundTaskInProgress(true);
         long systemTime = System.currentTimeMillis();
 
         try {
@@ -106,7 +108,7 @@ public final class ComposeCoordinator {
                     || ArrangementGUI.actualArrangement.getSections().stream().noneMatch(Section::hasPresence))) {
                 LG.i("Nothing to compose! Uncheck MANUAL arrangement!");
                 new TemporaryInfoPopup("Nothing to compose! Uncheck MANUAL arrangement!", 3000);
-                heavyBackgroundTasksInProgress = false;
+                context.setHeavyBackgroundTaskInProgress(false);
                 return;
             }
 
@@ -165,6 +167,7 @@ public final class ComposeCoordinator {
                 LG.i("After cleanup: " + (System.currentTimeMillis() - systemTime));
             }
 
+            ScrollComboBox<GUIConfig> configHistory = mainWindowControls.getConfigHistory();
             if (ExtraSettingsGUI.configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
                     || configHistory.getItemCount() == 0) {
                 midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
@@ -199,11 +202,11 @@ public final class ComposeCoordinator {
             handleGeneratedMidi(regenerate, relPath, systemTime);
             currentBeatMultiplier = generationGUI.beatDurationMultiplier.getSelectedItem();
             arrangementGUI.resetSectionSelectionAfterGeneration();
-            heavyBackgroundTasksInProgress = false;
+            context.setHeavyBackgroundTaskInProgress(false);
 
         } catch (Exception e) {
             LG.e("Exception during midi generation! Cause: " + e.getMessage(), e);
-            heavyBackgroundTasksInProgress = false;
+            context.setHeavyBackgroundTaskInProgress(false);
             new TemporaryInfoPopup(Constants.BUG_HUNT_MESSAGE, null);
             if (sequencer != null && sequencer.isRunning()) {
                 sequencer.stop();
