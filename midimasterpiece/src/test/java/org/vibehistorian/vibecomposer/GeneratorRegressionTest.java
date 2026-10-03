@@ -1,19 +1,14 @@
 package org.vibehistorian.vibecomposer;
 
 import org.junit.Test;
-import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
-import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
 
 import javax.xml.bind.JAXBContext;
-import javax.swing.JCheckBox;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -43,7 +38,7 @@ public class GeneratorRegressionTest {
 
         try {
             GUIConfig config = loadConfig(configPath.toFile());
-            prepareRegenerationState(config);
+            MidiGenerator.configureFromConfig(config);
 
             int seed = (int) config.getRandomSeed();
             new MidiGenerator(config).generateMasterpiece(seed, outputPath.toString());
@@ -65,57 +60,6 @@ public class GeneratorRegressionTest {
         try (FileReader reader = new FileReader(configFile)) {
             return (GUIConfig) context.createUnmarshaller().unmarshal(reader);
         }
-    }
-
-    /**
-     * Mirrors a regeneration run: persisted panel values are used as loaded and
-     * compose-time randomization is disabled. The other generator values mirror
-     * the application's default controls where those values are not in GUIConfig.
-     */
-    private static void prepareRegenerationState(GUIConfig config) {
-        MidiGenerator.recalculateDurations(100);
-        MidiGenerator.GLOBAL_DURATION_MULTIPLIER = 0.95;
-        MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
-        MidiGenerator.COLLAPSE_DRUM_TRACKS = true;
-        ExtraSettingsGUI.padGeneratedMidi = new JCheckBox();
-        ExtraSettingsGUI.padGeneratedMidi.setSelected(true);
-        ExtraSettingsGUI.padGeneratedMidiValues = new RandomIntegerListButton("3,2,5,5,6", null);
-        ExtraSettingsGUI.padGeneratedMidiValues.min = 1;
-        ExtraSettingsGUI.padGeneratedMidiValues.max = 12;
-        ExtraSettingsGUI.padGeneratedMidiValues.editableCount = false;
-        MidiGenerator.FIRST_CHORD = MidiUtils.MAJOR_CHORDS.contains(config.getFirstChord())
-                ? config.getFirstChord() : null;
-        MidiGenerator.LAST_CHORD = MidiUtils.MAJOR_CHORDS.contains(config.getLastChord())
-                ? config.getLastChord() : null;
-
-        List<String> customChords = config.isCustomChordsEnabled()
-                ? new ChordletPanel(600, config.getCustomChords()).getChordList()
-                : new ArrayList<>();
-        MidiGenerator.userChords = customChords;
-        MidiGenerator.userChordsDurations = composeChordDurations(config, customChords.size());
-
-        MelodyGenerator.RANDOMIZE_TARGET_NOTES = false;
-        MelodyGenerator.TARGET_NOTES = null;
-        MelodyGenerator.userMelody = config.getMelodyNotes() == null
-                ? null : config.getMelodyNotes().makePhrase();
-    }
-
-    private static List<Double> composeChordDurations(GUIConfig config, int chordCount) {
-        if (!config.isCustomChordsEnabled() && !config.isCustomDurationsEnabled()) {
-            return new ArrayList<>();
-        }
-
-        String[] durationValues = config.getCustomChordDurations().split(",");
-        boolean coversAllCustomChords = durationValues.length >= chordCount;
-        int count = config.isCustomChordsEnabled() && coversAllCustomChords
-                ? chordCount : durationValues.length;
-        List<Double> durations = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            durations.add(config.isCustomDurationsEnabled() && coversAllCustomChords
-                    ? Double.parseDouble(durationValues[i])
-                    : MidiGenerator.Durations.WHOLE_NOTE);
-        }
-        return durations;
     }
 
     private static void assertMidiMatches(Path expectedPath, Path actualPath) throws Exception {

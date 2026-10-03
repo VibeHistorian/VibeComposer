@@ -259,7 +259,7 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public List<String> getChordList() {
-		return chordlets.stream().map(e -> e.getChordText()).collect(Collectors.toList());
+		return chordlets.stream().map(Chordlet::getChordText).collect(Collectors.toList());
 	}
 
 	public String getChordListString() {

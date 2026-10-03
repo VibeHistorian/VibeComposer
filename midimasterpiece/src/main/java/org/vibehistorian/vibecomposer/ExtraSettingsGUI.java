@@ -74,6 +74,11 @@ public class ExtraSettingsGUI {
     public static JCheckBox allowValuesOutOfRange;
     public static ScrollComboBox<String> keyChangeTypeSelection;
 
+    public static MidiGenerator.OutputOptions getMidiOutputOptions() {
+        return new MidiGenerator.OutputOptions(padGeneratedMidi.isSelected(),
+                padGeneratedMidiValues.getValues());
+    }
+
     public static void saveToConfig(GUIConfig gc) {
         gc.setSoundbankName((String) soundbankFilename.getEditor().getItem());
         gc.setSwingUnitMultiplierIndex(swingUnitMultiplier.getSelectedIndex());

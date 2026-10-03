@@ -97,6 +97,8 @@ Treat mutable Swing controls, window references, editor view state, drag/selecti
 - **Instrument GUI base:** added abstract `InstGUI<P>` for the shared per-instrument controls, typed panel collection, scroll pane, parent panel, settings-row controls, and sorted part serialization. These UI fields are instance-owned. Melody, bass, chord, arp, and drum GUIs each implement panel creation and their randomization hook; panel creation and randomization now dispatch through the instrument GUI instead of a switch in `VibeComposerGUI`.
 - **Verification:** `mvn -DskipTests compile` succeeds. Tests were skipped; panel creation and MIDI drop behavior were not manually exercised.
 
+- **Generator regression setup seam:** extracted config-backed duration, chord-bound, custom-progression/duration, and melody setup into `MidiGenerator.configureFromConfig()`, now shared by `ComposeCoordinator` and `GeneratorRegressionTest`; chord strings are parsed by `MidiUtils` without constructing a chord panel. MIDI track padding is captured in per-generator `OutputOptions`, removing `MidiGenerator`'s direct reads from `ExtraSettingsGUI`. The regression test no longer constructs Swing controls or reimplements config-to-generator setup. `mvn -DskipTests test-compile` succeeds; the regression test was not run.
+
 ### Phase 5 completion criteria
 
 - Mutable state has a documented owner and lifetime, and static scope is retained only where application-wide sharing is a deliberate requirement.

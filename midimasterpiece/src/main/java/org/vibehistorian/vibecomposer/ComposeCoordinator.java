@@ -128,9 +128,9 @@ public final class ComposeCoordinator {
             context.copyGuiToConfig(midiConfig, true);
 
             MidiGenerator melodyGenerator = new MidiGenerator(midiConfig, context::assignSequenceTrack,
-                    consoleOutputController);
+                    consoleOutputController, ExtraSettingsGUI.getMidiOutputOptions());
             midiEditorSession.setMelodyGenerator(melodyGenerator);
-            fillUserParameters(regenerate, manual);
+            fillUserParameters(midiConfig, regenerate, manual);
 
             File makeDir = new File(Constants.MIDIS_FOLDER);
             makeDir.mkdir();
@@ -218,11 +218,15 @@ public final class ComposeCoordinator {
                 + (System.currentTimeMillis() - systemTime) + " ms ==========================");
     }
 
-    private void fillUserParameters(boolean regenerate, boolean manual) {
+    private void fillUserParameters(GUIConfig config, boolean regenerate, boolean manual) {
         try {
-            MidiGenerator.COLLAPSE_DRUM_TRACKS = drumGUI.combineDrumTracks.isSelected();
-            MidiGenerator.recalculateDurations(ExtraSettingsGUI.stretchMidi.getInt());
-            MidiGenerator.GLOBAL_DURATION_MULTIPLIER = ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0;
+            boolean validChordDurations = MidiGenerator.configureFromConfig(config,
+                    ExtraSettingsGUI.stretchMidi.getInt(),
+                    ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0,
+                    drumGUI.combineDrumTracks.isSelected());
+            if (!validChordDurations) {
+                new TemporaryInfoPopup("Invalid durations!", 3000);
+            }
             MelodyGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
                     && melodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected();
             MelodyGenerator.TARGET_NOTES = (melodyGUI.melody1ForcePatterns.isSelected()
@@ -233,30 +237,7 @@ public final class ComposeCoordinator {
                             MelodyPanel::getChordNoteChoices))
                     : null;
 
-            MidiGenerator.START_TIME_DELAY = MidiGenerator.Durations.QUARTER_NOTE;
-            MidiGenerator.FIRST_CHORD = ChordGUI.chordSelect(chordGUI.firstChordSelection.getVal());
-            MidiGenerator.LAST_CHORD = ChordGUI.chordSelect(chordGUI.lastChordSelection.getVal());
-
-            boolean customChords = chordGUI.userChordsEnabled.isSelected()
-                    && !chordGUI.userChords.getChordletsRaw().isEmpty();
-            if (customChords || chordGUI.userDurationsEnabled.isSelected()) {
-                List<String> chords = chordGUI.userChords.getChordList();
-
-                MidiGenerator.userChordsDurations = chordGUI.getUserChordDurations();
-
-                if (customChords) {
-                    MidiGenerator.userChords = chords;
-                } else {
-                    MidiGenerator.userChords.clear();
-                }
-            } else {
-                MidiGenerator.userChords.clear();
-                MidiGenerator.userChordsDurations.clear();
-            }
-
-            if (melodyGUI.getUserMelody() != null && melodyGUI.useUserMelody.isSelected()) {
-                MelodyGenerator.userMelody = melodyGUI.getUserMelody();
-            } else {
+            if (!melodyGUI.useUserMelody.isSelected()) {
                 MelodyGenerator.userMelody = null;
             }
         } catch (Exception e) {

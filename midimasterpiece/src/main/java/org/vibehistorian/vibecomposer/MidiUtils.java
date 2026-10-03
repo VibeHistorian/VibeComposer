@@ -568,6 +568,23 @@ public class MidiUtils {
 		return mappedChord(chordString, false);
 	}
 
+	public static List<String> parseChordList(String chordList) {
+		List<String> chords = new ArrayList<>();
+		if (StringUtils.isEmpty(chordList)) {
+			return chords;
+		}
+		for (String value : chordList.split(",")) {
+			String chord = value.trim();
+			if (mappedChord(chord) != null) {
+				if (Character.isLowerCase(chord.charAt(0))) {
+					chord = chord.substring(0, 1).toUpperCase() + chord.substring(1);
+				}
+				chords.add(chord);
+			}
+		}
+		return chords;
+	}
+
 	public static int[] mappedChord(String chordString, boolean ignoreInversion) {
 		if (StringUtils.isEmpty(chordString)) {
 			return null;

@@ -57,6 +57,25 @@ import static org.vibehistorian.vibecomposer.MidiUtils.cpRulesMap;
 import static org.vibehistorian.vibecomposer.MidiUtils.mappedChord;
 
 public class MidiGenerator implements JMC {
+	public static final class OutputOptions {
+		private final boolean padGeneratedTracks;
+		private final List<Integer> trackPadding;
+
+		public OutputOptions(boolean padGeneratedTracks, List<Integer> trackPadding) {
+			this.padGeneratedTracks = padGeneratedTracks;
+			this.trackPadding = trackPadding == null ? Collections.emptyList()
+					: new ArrayList<>(trackPadding);
+		}
+
+		public static OutputOptions defaults() {
+			return new OutputOptions(true, Arrays.asList(3, 2, 5, 5, 6));
+		}
+
+		private List<Integer> getTrackPadding() {
+			return padGeneratedTracks ? new ArrayList<>(trackPadding) : new ArrayList<>();
+		}
+	}
+
 	@FunctionalInterface
 	public interface SequenceTrackAssigner {
 		void assign(int instrument, int panelOrder, int trackNumber);
@@ -181,9 +200,58 @@ public class MidiGenerator implements JMC {
 	private final MelodyGenerator mgen;
 	private final SequenceTrackAssigner sequenceTrackAssigner;
 	private final ConsoleOutputController consoleOutputController;
+	private final OutputOptions outputOptions;
 
 	public MidiGenerator(GUIConfig gc) {
 		this(gc, NO_SEQUENCE_TRACK_ASSIGNER, ConsoleOutputController.noOp());
+	}
+
+	/** Applies config-backed generator inputs using fresh-window defaults. */
+	public static boolean configureFromConfig(GUIConfig config) {
+		return configureFromConfig(config, 100, 0.95, true);
+	}
+
+	public static boolean configureFromConfig(GUIConfig config, int stretchPercent,
+			double globalDurationMultiplier, boolean collapseDrumTracks) {
+		Objects.requireNonNull(config, "config");
+		recalculateDurations(stretchPercent);
+		GLOBAL_DURATION_MULTIPLIER = globalDurationMultiplier;
+		COLLAPSE_DRUM_TRACKS = collapseDrumTracks;
+		START_TIME_DELAY = Durations.QUARTER_NOTE;
+		FIRST_CHORD = MidiUtils.MAJOR_CHORDS.contains(config.getFirstChord())
+				? config.getFirstChord() : null;
+		LAST_CHORD = MidiUtils.MAJOR_CHORDS.contains(config.getLastChord())
+				? config.getLastChord() : null;
+
+		List<String> configuredChords = MidiUtils.parseChordList(config.getCustomChords());
+		boolean customChords = config.isCustomChordsEnabled() && !configuredChords.isEmpty();
+		userChords.clear();
+		if (customChords) {
+			userChords.addAll(configuredChords);
+		}
+		userChordsDurations.clear();
+		boolean validDurations = true;
+		if (customChords || config.isCustomDurationsEnabled()) {
+			String[] durationValues = config.getCustomChordDurations().split(",");
+			boolean coversAllCustomChords = durationValues.length >= configuredChords.size();
+			int durationCount = customChords && coversAllCustomChords
+					? configuredChords.size() : durationValues.length;
+			try {
+				for (int i = 0; i < durationCount; i++) {
+					userChordsDurations.add(config.isCustomDurationsEnabled() && coversAllCustomChords
+							? stretchPercent * Double.parseDouble(durationValues[i]) / 100.0
+							: Durations.WHOLE_NOTE);
+				}
+			} catch (NumberFormatException e) {
+				validDurations = false;
+			}
+		}
+
+		MelodyGenerator.RANDOMIZE_TARGET_NOTES = false;
+		MelodyGenerator.TARGET_NOTES = null;
+		MelodyGenerator.userMelody = config.getMelodyNotes() == null
+				? null : config.getMelodyNotes().makePhrase();
+		return validDurations;
 	}
 
 	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner) {
@@ -192,9 +260,15 @@ public class MidiGenerator implements JMC {
 
 	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner,
 			ConsoleOutputController consoleOutputController) {
+		this(gc, sequenceTrackAssigner, consoleOutputController, OutputOptions.defaults());
+	}
+
+	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner,
+			ConsoleOutputController consoleOutputController, OutputOptions outputOptions) {
 		MidiGenerator.gc = gc;
 		this.sequenceTrackAssigner = Objects.requireNonNull(sequenceTrackAssigner);
 		this.consoleOutputController = Objects.requireNonNull(consoleOutputController);
+		this.outputOptions = Objects.requireNonNull(outputOptions);
 		mgen = new MelodyGenerator(gc, this);
 	}
 
@@ -1340,9 +1414,7 @@ public class MidiGenerator implements JMC {
 			boolean allowCombination, boolean transposeBCA) {
 		int trackCounter = 1;
 
-		List<Integer> partPadding = ExtraSettingsGUI.padGeneratedMidi.isSelected()
-				? ExtraSettingsGUI.padGeneratedMidiValues.getValues()
-				: new ArrayList<>();
+		List<Integer> partPadding = outputOptions.getTrackPadding();
 		int lastPartTrackCount = 1;
 		for (int i = 0; i < melodyParts.size(); i++) {
 			MelodyPart part = gc.getMelodyParts().get(i);
