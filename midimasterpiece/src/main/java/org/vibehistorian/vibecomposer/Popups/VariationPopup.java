@@ -1,9 +1,9 @@
 package org.vibehistorian.vibecomposer.Popups;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
@@ -12,6 +12,7 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.TransparentablePanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.gui.ChordGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

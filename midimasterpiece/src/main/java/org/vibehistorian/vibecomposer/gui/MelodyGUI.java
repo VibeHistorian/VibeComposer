@@ -17,7 +17,7 @@ along with this program; if not,
 see <https://www.gnu.org/licenses/>.
 */
 
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.gui;
 
 import jm.music.data.Phrase;
 import jm.music.tools.Mod;
@@ -27,6 +27,7 @@ import org.vibehistorian.vibecomposer.Components.MelodyMidiDropPane;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;

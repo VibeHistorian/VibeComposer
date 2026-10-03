@@ -8,6 +8,7 @@ import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+import org.vibehistorian.vibecomposer.gui.ChordGUI;
 import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 
 import javax.sound.midi.MidiDevice;

@@ -1,21 +1,15 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.util.function.Supplier;
-
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
-
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.ChordGUI;
 import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.gui.ChordGUI;
+
+import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.util.function.Supplier;
 
 public class SectionInfoCellRenderer extends JComponent implements TableCellRenderer {
 

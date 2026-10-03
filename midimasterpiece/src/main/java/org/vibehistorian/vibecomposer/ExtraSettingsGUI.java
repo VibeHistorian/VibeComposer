@@ -9,6 +9,10 @@ import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.gui.ArpGUI;
+import org.vibehistorian.vibecomposer.gui.ChordGUI;
+import org.vibehistorian.vibecomposer.gui.DrumGUI;
+import org.vibehistorian.vibecomposer.gui.MelodyGUI;
 import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 
 import javax.swing.*;

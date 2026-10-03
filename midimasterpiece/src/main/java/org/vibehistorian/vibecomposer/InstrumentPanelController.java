@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer;
 
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.gui.InstGUI;
 
 import javax.swing.*;
 import javax.xml.bind.JAXBException;

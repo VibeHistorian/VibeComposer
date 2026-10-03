@@ -44,6 +44,7 @@ import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 import org.vibehistorian.vibecomposer.Popups.PatternManagerPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
+import org.vibehistorian.vibecomposer.gui.ChordGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

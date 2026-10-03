@@ -23,7 +23,7 @@ public final class UITheme {
 	public static Color toggledRegenerateColor = GUIConstants.REGENERATE_COLOR_TEXT;
 	public static Dimension scrollPaneDimension = new Dimension(GUIConstants.DEFAULT_WIDTH,
 			GUIConstants.DEFAULT_HEIGHT);
-	static final Set<Component> toggleableComponents = new HashSet<>();
+	public static final Set<Component> toggleableComponents = new HashSet<>();
 
 	public static Color uiColor() {
 		return isDarkMode ? darkModeUIColor : lightModeUIColor;

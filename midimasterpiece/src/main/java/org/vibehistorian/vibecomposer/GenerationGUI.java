@@ -15,6 +15,9 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+import org.vibehistorian.vibecomposer.gui.ArpGUI;
+import org.vibehistorian.vibecomposer.gui.ChordGUI;
+import org.vibehistorian.vibecomposer.gui.MelodyGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

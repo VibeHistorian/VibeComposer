@@ -17,7 +17,7 @@ along with this program; if not,
 see <https://www.gnu.org/licenses/>.
 */
 
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.gui;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,6 +26,7 @@ import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -814,7 +815,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 					needNewChannel = true;
 				}
 			}
-			InstUtils.POOL pool = ip.getInstPool();
+			POOL pool = ip.getInstPool();
 
 			if ((context.isRandomizeInstOnComposeOrGen() || onlyAdd)
 					&& ip.getInstrumentBox().isEnabled()) {
