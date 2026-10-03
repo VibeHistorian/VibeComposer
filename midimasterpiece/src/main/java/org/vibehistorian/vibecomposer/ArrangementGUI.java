@@ -131,8 +131,6 @@ public class ArrangementGUI {
 	public void loadFromConfig(GUIConfig gc) {
 		arrangement = gc.getArrangement();
 		actualArrangement = gc.getActualArrangement();
-		preparePartMaps(arrangement);
-		preparePartMaps(actualArrangement);
 		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		setActualModel(actualArrangement.convertToActualTableModel());
 		refreshVariationPopupButtons(actualArrangement.getSections().size());
@@ -143,6 +141,13 @@ public class ArrangementGUI {
 		useArrangement.setSelected(gc.isArrangementEnabled());
 		manualArrangement.setSelected(true);
 		pieceLength.setText(String.valueOf(gc.getPieceLength()));
+	}
+
+	public void recalculatePartMapsAfterPartsLoaded() {
+		preparePartMaps(arrangement);
+		preparePartMaps(actualArrangement);
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
+		setActualModel(actualArrangement.convertToActualTableModel());
 	}
 
 	private final Context context;

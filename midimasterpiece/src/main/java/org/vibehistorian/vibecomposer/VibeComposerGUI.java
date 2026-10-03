@@ -3967,6 +3967,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		chordGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(2, parts));
 		arpGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(3, parts));
 		drumGUI.loadPartsFromConfig(gc, parts -> instrumentPanelController.recreatePanels(4, parts));
+		arrangementGUI.recalculatePartMapsAfterPartsLoaded();
 
 		ArrangementGUI.arrSection.setVisible(true);
 		if (MidiGenerator.chordInts.isEmpty()) {
