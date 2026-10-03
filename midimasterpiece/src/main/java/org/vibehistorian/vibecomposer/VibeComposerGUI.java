@@ -71,8 +71,6 @@ import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_HEIGHT;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
-import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
-import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
 import static org.vibehistorian.vibecomposer.UITheme.*;
 
 // main class
@@ -112,6 +110,12 @@ public class VibeComposerGUI extends JFrame
 				}
 				@Override public boolean isInstrumentEnabled(INST instrument) {
 					return getInstrumentControls(instrument).getEnabledCheckBox().isSelected();
+				}
+				@Override public SoloMuter getGlobalSoloMuter() {
+					return mainWindowControls.getGlobalSoloMuter();
+				}
+				@Override public List<SoloMuter> getGroupSoloMuters() {
+					return mainWindowControls.getGroupSoloMuters();
 				}
 				@Override public void refreshScoreForSoloChange() {
 					if (scoreGUI.isSoloMuterHighlightEnabled()) {
@@ -599,11 +603,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void togglePanelSolo(INST part, int panelOrder) {
 				InstPanel panel = instrumentPanelController.getPanelByOrder(part, panelOrder);
-				boolean unsoloAll = globalSoloMuter.soloState != State.OFF
+				boolean unsoloAll = soloMuteController.getGlobalSoloMuter().soloState != State.OFF
 						&& soloMuteController.isSingleSolo()
 						&& panel.getSoloMuter().soloState == State.FULL;
 				if (!unsoloAll) {
-					globalSoloMuter.toggleSolo();
+					soloMuteController.getGlobalSoloMuter().toggleSolo();
 				}
 				panel.getSoloMuter().toggleSolo();
 			}
@@ -618,7 +622,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				if (!scoreGUI.isSoloMuterHighlightEnabled()) {
 					return tracks;
 				}
-				boolean checkMutes = globalSoloMuter.soloState == State.OFF;
+				boolean checkMutes = soloMuteController.getGlobalSoloMuter().soloState == State.OFF;
 				for (INST instrument : INST.values()) {
 					for (InstPanel panel : getInstList(instrument)) {
 						if (checkMutes ? panel.getSoloMuter().muteState == State.OFF
@@ -1220,32 +1224,32 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							.filter(e -> e.getSoloMuter().soloState == SoloMuter.State.FULL)
 							.count();
 					if (groupSoloCount < getInstList(instrument).size() && groupSoloCount > 0) {
-						groupSoloMuters.get(instrumentIndex).halfSolo();
+						soloMuteController.getGroupSoloMuters().get(instrumentIndex).halfSolo();
 					} else if (groupSoloCount == 0) {
-						groupSoloMuters.get(instrumentIndex).unsolo();
+						soloMuteController.getGroupSoloMuters().get(instrumentIndex).unsolo();
 					}
 					long groupMuteCount = getInstList(instrument).stream()
 							.filter(e -> e.getSoloMuter().muteState == SoloMuter.State.FULL)
 							.count();
 					if (groupMuteCount < getInstList(instrument).size() && groupMuteCount > 0) {
-						groupSoloMuters.get(instrumentIndex).halfMute();
+						soloMuteController.getGroupSoloMuters().get(instrumentIndex).halfMute();
 					} else if (groupMuteCount == 0) {
-						groupSoloMuters.get(instrumentIndex).unmute();
+						soloMuteController.getGroupSoloMuters().get(instrumentIndex).unmute();
 					}
 					totalSoloCount += groupSoloCount;
 					totalMuteCount += groupMuteCount;
 				}
 				if (totalSoloCount < totalCount && totalSoloCount > 0) {
-					globalSoloMuter.halfSolo();
+					soloMuteController.getGlobalSoloMuter().halfSolo();
 				} else if (totalSoloCount == 0) {
-					globalSoloMuter.unsolo();
+					soloMuteController.getGlobalSoloMuter().unsolo();
 				}
 
 
 				if (totalMuteCount < totalCount && totalMuteCount > 0) {
-					globalSoloMuter.halfMute();
+					soloMuteController.getGlobalSoloMuter().halfMute();
 				} else if (totalMuteCount == 0) {
-					globalSoloMuter.unmute();
+					soloMuteController.getGlobalSoloMuter().unmute();
 				}
 
 			}
@@ -1511,7 +1515,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							/ quarterNote
 					: Durations.WHOLE_NOTE;
 
-			boolean soloCondition = globalSoloMuter.soloState != State.OFF;
+			boolean soloCondition = soloMuteController.getGlobalSoloMuter().soloState != State.OFF;
 			INST instrument = INST.fromIndex(part);
 			List<InstPanel> panels = getAffectedPanels(instrument);
 			Set<Integer> presences = sec != null ? sec.getPresence(part) : null;
@@ -1727,7 +1731,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (appearanceController == null) {
 			appearanceController = new AppearanceController(new AppearanceController.Context() {
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
-			}, mainWindowControls, instrumentPanelController, chordGUI, drumGUI, arpGUI,
+			}, mainWindowControls, soloMuteController, instrumentPanelController,
+				chordGUI, drumGUI, arpGUI,
 				melodyGUI, generationGUI);
 		}
 		return appearanceController;
@@ -2053,6 +2058,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	@Override
 	public void onMuteToggled(SoloMuter soloMuter) {
 		soloMuteController.onMuteToggled(soloMuter);
+	}
+
+	@Override
+	public SoloMuter getGlobalSoloMuter() {
+		return mainWindowControls.getGlobalSoloMuter();
+	}
+
+	@Override
+	public SoloMuter getGroupSoloMuter(int instrumentIndex) {
+		return mainWindowControls.getGroupSoloMuter(instrumentIndex);
 	}
 
 	public void recalculateGeneratorAndTabCounts() {

@@ -23,8 +23,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 import static org.vibehistorian.vibecomposer.GUIConstants.COMPOSE_COLOR;
-import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
-import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
 import static org.vibehistorian.vibecomposer.UITheme.toggleableComponents;
 
 /** Builds the shared control rows in the main window. */
@@ -68,6 +66,8 @@ public final class MainWindowControls {
     private final ComposeContext composeContext;
     private final PlaybackContext playbackContext;
     private final ScrollComboBox<GUIConfig> configHistory = new ScrollComboBox<>(false);
+    private SoloMuter globalSoloMuter;
+    private final java.util.List<SoloMuter> groupSoloMuters = new java.util.ArrayList<>();
     private VeloRect globalVolSlider;
     private VeloRect globalReverbSlider;
     private VeloRect globalChorusSlider;
@@ -99,6 +99,18 @@ public final class MainWindowControls {
 
     public ScrollComboBox<GUIConfig> getConfigHistory() {
         return configHistory;
+    }
+
+    public SoloMuter getGlobalSoloMuter() {
+        return globalSoloMuter;
+    }
+
+    public SoloMuter getGroupSoloMuter(int instrumentIndex) {
+        return groupSoloMuters.get(instrumentIndex);
+    }
+
+    public java.util.List<SoloMuter> getGroupSoloMuters() {
+        return java.util.Collections.unmodifiableList(groupSoloMuters);
     }
 
     public void addHeaderControls(JPanel parent, GridBagConstraints constraints,
@@ -174,7 +186,7 @@ public final class MainWindowControls {
         emptySmLabel.setPreferredSize(new Dimension(1, 3));
         soloMuterTrackControlPanel.add(emptySmLabel);
 
-        groupSoloMuters = new java.util.ArrayList<>();
+        groupSoloMuters.clear();
         for (INST instrument : INST.values()) {
             SoloMuter soloMuter = new SoloMuter(instrument.getIndex(), SoloMuter.Type.GROUP,
                     soloMuterContext);

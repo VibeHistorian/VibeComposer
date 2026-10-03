@@ -1,6 +1,5 @@
 package org.vibehistorian.vibecomposer.Panels;
 
-import org.vibehistorian.vibecomposer.SoloMuteState;
 import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
@@ -15,6 +14,8 @@ public class SoloMuter extends JPanel {
 	public interface Context {
 		void onSoloToggled(SoloMuter soloMuter);
 		void onMuteToggled(SoloMuter soloMuter);
+		SoloMuter getGlobalSoloMuter();
+		SoloMuter getGroupSoloMuter(int instrumentIndex);
 	}
 
 	public enum Type {
@@ -53,10 +54,10 @@ public class SoloMuter extends JPanel {
 		this.type = type;
 		if (type == Type.GROUP) {
 			setPreferredSize(new Dimension(70, 35));
-			smParent = SoloMuteState.globalSoloMuter;
+			smParent = context.getGlobalSoloMuter();
 			setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		} else if (type == Type.SINGLE) {
-			smParent = SoloMuteState.groupSoloMuters.get(inst);
+			smParent = context.getGroupSoloMuter(inst);
 		}
 
 		this.inst = inst;
@@ -71,8 +72,8 @@ public class SoloMuter extends JPanel {
 				if (SwingUtilities.isLeftMouseButton(e)) {
 					toggleSolo();
 				} else if (SwingUtilities.isMiddleMouseButton(e) && type != Type.GLOBAL) {
-					if (SoloMuteState.globalSoloMuter.soloState != State.OFF) {
-						SoloMuteState.globalSoloMuter.toggleSolo();
+					if (context.getGlobalSoloMuter().soloState != State.OFF) {
+						context.getGlobalSoloMuter().toggleSolo();
 					}
 					toggleSolo();
 				}

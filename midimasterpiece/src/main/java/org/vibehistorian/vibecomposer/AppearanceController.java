@@ -10,8 +10,6 @@ import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.util.List;
 
-import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
-import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
 import static org.vibehistorian.vibecomposer.UITheme.*;
 
 /** Applies the shared look and feel and recolors controls owned by the feature GUIs. */
@@ -22,6 +20,7 @@ public final class AppearanceController {
 
 	private final Context context;
 	private final MainWindowControls mainWindowControls;
+	private final SoloMuteController soloMuteController;
 	private final InstrumentPanelController instrumentPanelController;
 	private final ChordGUI chordGUI;
 	private final DrumGUI drumGUI;
@@ -30,10 +29,12 @@ public final class AppearanceController {
 	private final GenerationGUI generationGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
-			InstrumentPanelController instrumentPanelController, ChordGUI chordGUI, DrumGUI drumGUI,
+			SoloMuteController soloMuteController, InstrumentPanelController instrumentPanelController,
+			ChordGUI chordGUI, DrumGUI drumGUI,
 			ArpGUI arpGUI, MelodyGUI melodyGUI, GenerationGUI generationGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
+		this.soloMuteController = soloMuteController;
 		this.instrumentPanelController = instrumentPanelController;
 		this.chordGUI = chordGUI;
 		this.drumGUI = drumGUI;
@@ -80,8 +81,8 @@ public final class AppearanceController {
 		}
 		PlaybackState.sliderPanel.setBackground(panelColorLow);
 
-		globalSoloMuter.reapplyTextColor();
-		for (SoloMuter soloMuter : groupSoloMuters) {
+		soloMuteController.getGlobalSoloMuter().reapplyTextColor();
+		for (SoloMuter soloMuter : soloMuteController.getGroupSoloMuters()) {
 			soloMuter.reapplyTextColor();
 		}
 

@@ -14,6 +14,8 @@ public final class SoloMuteController {
 	public interface Context {
 		List<? extends InstPanel> getPanels(INST instrument);
 		boolean isInstrumentEnabled(INST instrument);
+		SoloMuter getGlobalSoloMuter();
+		List<SoloMuter> getGroupSoloMuters();
 		void refreshScoreForSoloChange();
 		void refreshScoreForMuteChange();
 	}
@@ -24,6 +26,14 @@ public final class SoloMuteController {
 
 	public SoloMuteController(Context context) {
 		this.context = context;
+	}
+
+	public SoloMuter getGlobalSoloMuter() {
+		return context.getGlobalSoloMuter();
+	}
+
+	public List<SoloMuter> getGroupSoloMuters() {
+		return context.getGroupSoloMuters();
 	}
 
 	public void requestRecalculation() {
@@ -109,7 +119,7 @@ public final class SoloMuteController {
 	}
 
 	public void toggleExclude() {
-		boolean hasSoloSelection = SoloMuteState.globalSoloMuter.soloState != State.OFF;
+		boolean hasSoloSelection = context.getGlobalSoloMuter().soloState != State.OFF;
 		for (INST instrument : INST.values()) {
 			for (InstPanel panel : context.getPanels(instrument)) {
 				if (hasSoloSelection && panel.getSoloMuter().soloState == State.OFF) {
@@ -137,15 +147,15 @@ public final class SoloMuteController {
 	public void recalculateGlobals() {
 		boolean shouldSolo = false;
 		boolean shouldMute = false;
-		for (SoloMuter muter : SoloMuteState.groupSoloMuters) {
+		for (SoloMuter muter : context.getGroupSoloMuters()) {
 			shouldSolo |= muter.soloState != State.OFF;
 			shouldMute |= muter.muteState != State.OFF;
 		}
 		if (!shouldSolo) {
-			SoloMuteState.globalSoloMuter.unsolo();
+			context.getGlobalSoloMuter().unsolo();
 		}
 		if (!shouldMute) {
-			SoloMuteState.globalSoloMuter.unmute();
+			context.getGlobalSoloMuter().unmute();
 		}
 	}
 
@@ -153,7 +163,7 @@ public final class SoloMuteController {
 		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(instrument));
 		long soloCount = panels.stream()
 				.filter(panel -> panel.getSoloMuter().soloState == State.FULL).count();
-		SoloMuter groupMuter = SoloMuteState.groupSoloMuters.get(instrument);
+		SoloMuter groupMuter = context.getGroupSoloMuters().get(instrument);
 		if (soloCount == 0) {
 			groupMuter.unsolo();
 		} else if (soloCount < panels.size()) {
@@ -167,7 +177,7 @@ public final class SoloMuteController {
 		List<? extends InstPanel> panels = context.getPanels(INST.fromIndex(instrument));
 		long muteCount = panels.stream()
 				.filter(panel -> panel.getSoloMuter().muteState == State.FULL).count();
-		SoloMuter groupMuter = SoloMuteState.groupSoloMuters.get(instrument);
+		SoloMuter groupMuter = context.getGroupSoloMuters().get(instrument);
 		if (muteCount == 0) {
 			groupMuter.unmute();
 		} else if (muteCount < panels.size()) {
@@ -178,7 +188,7 @@ public final class SoloMuteController {
 	}
 
 	public void unsoloAllTracks() {
-		for (SoloMuter groupMuter : SoloMuteState.groupSoloMuters) {
+		for (SoloMuter groupMuter : context.getGroupSoloMuters()) {
 			unsoloGroup(groupMuter);
 		}
 	}
@@ -203,7 +213,7 @@ public final class SoloMuteController {
 		for (InstPanel panel : panels) {
 			panel.getSoloMuter().solo();
 		}
-		if (SoloMuteState.groupSoloMuters.stream()
+		if (context.getGroupSoloMuters().stream()
 				.filter(muter -> muter.soloState == State.FULL).count() == 5) {
 			groupMuter.smParent.solo();
 		} else {
@@ -218,7 +228,7 @@ public final class SoloMuteController {
 	}
 
 	public void unmuteAllTracks() {
-		for (SoloMuter groupMuter : SoloMuteState.groupSoloMuters) {
+		for (SoloMuter groupMuter : context.getGroupSoloMuters()) {
 			unmuteGroup(groupMuter);
 		}
 	}
@@ -243,7 +253,7 @@ public final class SoloMuteController {
 		for (InstPanel panel : panels) {
 			panel.getSoloMuter().mute();
 		}
-		if (SoloMuteState.groupSoloMuters.stream()
+		if (context.getGroupSoloMuters().stream()
 				.filter(muter -> muter.muteState == State.FULL).count() == 5) {
 			groupMuter.smParent.mute();
 		} else {
@@ -315,8 +325,8 @@ public final class SoloMuteController {
 
 	public boolean isSingleSolo() {
 		int groupIndex = -1;
-		for (int i = 0; i < SoloMuteState.groupSoloMuters.size(); i++) {
-			if (SoloMuteState.groupSoloMuters.get(i).soloState != State.OFF) {
+		for (int i = 0; i < context.getGroupSoloMuters().size(); i++) {
+			if (context.getGroupSoloMuters().get(i).soloState != State.OFF) {
 				if (groupIndex >= 0) {
 					return false;
 				}

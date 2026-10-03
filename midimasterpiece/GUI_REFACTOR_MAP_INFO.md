@@ -11,6 +11,7 @@
 - Keep obsolete members in `VibeComposerGUI` during the migration by prefixing their names with `__`; remove them only after the full migration is ready for cleanup.
 - Mutable controls on `MelodyGUI` and `GenerationGUI` are instance-owned by the composition root; consumers use the owner or a focused callback.
 - Arrangement state is exposed as static fields on `ArrangementGUI` while callers across the application are being migrated. Keep new arrangement references on `ArrangementGUI`.
+- Global and per-instrument solo/mute controls are owned by `MainWindowControls`; use its getters through `SoloMuteController` or `SoloMuter.Context` rather than introducing another shared holder.
 - Keep workflows that coordinate multiple instrument types in `VibeComposerGUI`; pass only the shared operations a module needs through its context interface.
 - Update component and popup callers when a moved field changes owner. Search the whole `src/main/java` tree, excluding the migration backup when checking active references.
 - The original extraction and phase 4 workflow moves are complete. Phase 5 now tracks the remaining ownership work. Treat mutable feature statics and concrete feature-GUI lookups as migration scaffolding to reduce gradually; use explicit instance owners and narrow contexts, and do not add new global state or pass the main window as a general-purpose context.
