@@ -27,11 +27,13 @@ public final class AppearanceController {
 	private final ArpGUI arpGUI;
 	private final MelodyGUI melodyGUI;
 	private final GenerationGUI generationGUI;
+	private final ArrangementGUI arrangementGUI;
 
 	public AppearanceController(Context context, MainWindowControls mainWindowControls,
 			SoloMuteController soloMuteController, InstrumentPanelController instrumentPanelController,
 			ChordGUI chordGUI, DrumGUI drumGUI,
-			ArpGUI arpGUI, MelodyGUI melodyGUI, GenerationGUI generationGUI) {
+			ArpGUI arpGUI, MelodyGUI melodyGUI, GenerationGUI generationGUI,
+			ArrangementGUI arrangementGUI) {
 		this.context = context;
 		this.mainWindowControls = mainWindowControls;
 		this.soloMuteController = soloMuteController;
@@ -41,6 +43,7 @@ public final class AppearanceController {
 		this.arpGUI = arpGUI;
 		this.melodyGUI = melodyGUI;
 		this.generationGUI = generationGUI;
+		this.arrangementGUI = arrangementGUI;
 	}
 
 	public void switchDarkMode() {
@@ -75,9 +78,9 @@ public final class AppearanceController {
 			panelColorHigh = panelColorHigh.darker();
 		}
 		if (ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
-			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(panelColorHigh.brighter());
+			arrangementGUI.getManualArrangementSign().setBackground(panelColorHigh.brighter());
 		} else {
-			ArrangementGUI.arrangementMiddleColoredPanel.setBackground(toggledUIColor.darker().darker());
+			arrangementGUI.getManualArrangementSign().setBackground(toggledUIColor.darker().darker());
 		}
 		PlaybackState.sliderPanel.setBackground(panelColorLow);
 
@@ -130,7 +133,7 @@ public final class AppearanceController {
 		generationGUI.randomizeBpmOnCompose.setForeground(foreground);
 		generationGUI.randomizeTransposeOnCompose.setForeground(foreground);
 		generationGUI.randomizeInstOnComposeOrGen.setForeground(foreground);
-		ArrangementGUI.randomizeArrangementOnCompose.setForeground(foreground);
+		arrangementGUI.getRandomizeArrangementOnCompose().setForeground(foreground);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setForeground(foreground);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(foreground);
 		melodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(foreground);

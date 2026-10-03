@@ -102,7 +102,7 @@ public final class ComposeCoordinator {
                 partAndOrderLastNoteIndexes.clear();
             }
 
-            if (ArrangementGUI.manualArrangement.isSelected()
+            if (arrangementGUI.isManualArrangementSelected()
                     && (arrangementGUI.getActualArrangement().getSections().isEmpty()
                     || arrangementGUI.getActualArrangement().getSections().stream().noneMatch(Section::hasPresence))) {
                 LG.i("Nothing to compose! Uncheck MANUAL arrangement!");

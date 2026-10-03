@@ -211,8 +211,7 @@ public class VibeComposerGUI extends JFrame
 					overrideLastPlayed);
 		}
 		@Override public void markArrangementManual() {
-			ArrangementGUI.manualArrangement.setSelected(true);
-			ArrangementGUI.manualArrangement.repaint();
+			arrangementGUI.setManualArrangementSelected(true);
 		}
 		@Override public void repaintActualArrangement() {
 			ArrangementGUI.scrollableArrangementActualTable.repaint();
@@ -596,11 +595,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void selectPanelFromScore(INST part, int panelOrder, int sectionOrder) {
 				instrumentTabPane.setSelectedIndex(part.getIndex());
-				if (ArrangementGUI.useArrangement.isSelected()) {
+				if (arrangementGUI.isArrangementEnabled()) {
 					ArrangementGUI.arrSection.setSelectedIndex(sectionOrder + 1);
 					ArrangementGUI.arrSection.getButtons().forEach(button -> button.repaint());
 					ArrangementGUI.arrSection.repaint();
-					ArrangementGUI.switchTabPaneToScoreAfterApply = true;
+					arrangementGUI.requestSwitchTabPaneToScoreAfterApply();
 				}
 			}
 			@Override public void togglePanelMute(INST part, int panelOrder) {
@@ -945,7 +944,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				GridBagConstraints.CENTER, scoreGUI, generationGUI);
 		initSliderPanel(440, GridBagConstraints.CENTER);
 		presetViewController = new PresetViewController(mainWindowControls, scoreGUI, chordGUI, drumGUI,
-				arpGUI, melodyGUI, generationGUI);
+				arpGUI, melodyGUI, generationGUI, arrangementGUI);
 		LG.i("Control, play, slider: " + (System.currentTimeMillis() - sysTime) + " ms!");
 		// --- GENERATED MIDI DRAG n DROP ---
 
@@ -1093,7 +1092,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				instrumentPanelController.generatePanels(instrument);
 			}
 		}
-		ArrangementGUI.manualArrangement.setSelected(false);
+		arrangementGUI.setManualArrangementSelected(false);
 		heavyBackgroundTasksInProgress = false;
 		LG.i("Default Panels generated!");
 	}
@@ -1665,7 +1664,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		generationGUI.randomizeTransposeOnCompose.setSelected(state);
 		generationGUI.randomizeInstOnComposeOrGen.setSelected(state);
 		arpGUI.randomArpHitsPerPattern.setSelected(state);
-		ArrangementGUI.randomizeArrangementOnCompose.setSelected(state);
+		arrangementGUI.getRandomizeArrangementOnCompose().setSelected(state);
 		ArrangementGUI.arrangementResetCustomPanelsOnCompose.setSelected(state);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setSelected(state);
 		melodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
@@ -1743,7 +1742,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				@Override public JFrame getWindow() { return VibeComposerGUI.this; }
 			}, mainWindowControls, soloMuteController, instrumentPanelController,
 				chordGUI, drumGUI, arpGUI,
-				melodyGUI, generationGUI);
+				melodyGUI, generationGUI, arrangementGUI);
 		}
 		return appearanceController;
 	}
@@ -2023,7 +2022,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		if (actionCommand.startsWith("Arrangement")) {
 			Random arrGen = new Random();
 			arrangementGUI.handleArrangementAction(actionCommand, arrGen.nextInt(),
-					Integer.valueOf(ArrangementGUI.pieceLength.getText()));
+					arrangementGUI.getConfiguredPieceLength());
 			tabPanePossibleChange = true;
 		}
 
@@ -2059,7 +2058,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		for (INST instrument : INST.values()) {
 			getInstList(instrument).forEach(e -> e.setPatternSeed(0));
 		}
-		ArrangementGUI.arrangementSeed.setValue(0);
+		arrangementGUI.clearArrangementSeed();
 	}
 
 	@Override

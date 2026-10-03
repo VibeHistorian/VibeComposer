@@ -22,8 +22,8 @@ package org.vibehistorian.vibecomposer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.ArrangementTableRenderState;
+import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
@@ -46,10 +46,6 @@ import org.vibehistorian.vibecomposer.Popups.VariationPopup;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.TableColumnModelEvent;
-import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -67,39 +63,37 @@ import java.util.Random;
 public class ArrangementGUI {
 	private Arrangement arrangement;
 	private Arrangement actualArrangement;
-	public static JPanel arrangementSettings;
-	public static KnobPanel arrangementVariationChance;
-	public static KnobPanel arrangementPartVariationChance;
-	public static CheckButton manualArrangement;
-	public static JTextField pieceLength;
-	public static RandomValueButton arrangementSeed;
-	public static CheckButton useArrangement;
-	public static JCheckBox randomizeArrangementOnCompose;
+	private JPanel arrangementSettings;
+	private KnobPanel arrangementVariationChance;
+	private KnobPanel arrangementPartVariationChance;
+	private CheckButton manualArrangement;
+	private JTextField pieceLength;
+	private RandomValueButton arrangementSeed;
+	private CheckButton useArrangement;
+	private JCheckBox randomizeArrangementOnCompose;
 	public static final String GLOBAL = "Global";
 	public static ArrangementSectionSelectorPanel arrSection;
 	public static JScrollPane arrSectionPane;
-	public static boolean switchTabPaneAfterApply;
-	public static boolean switchTabPaneToScoreAfterApply;
-	public static JPanel arrangementMiddleColoredPanel;
-	public static ScrollComboBox<String> newSectionBox;
-	public static int arrangementRowHeaderWidth = 120;
+	private boolean switchTabPaneAfterApply;
+	private boolean switchTabPaneToScoreAfterApply;
+	private JPanel manualArrangementSign;
+	private ScrollComboBox<String> newSectionBox;
+	private static final int arrangementRowHeaderWidth = 120;
 	public static JScrollPane arrangementScrollPane;
 	public static JScrollPane arrangementActualScrollPane;
 	public static JTable scrollableArrangementTable;
 	public static JTable scrollableArrangementActualTable;
-	public static boolean arrangementTableColumnDragging;
-	public static boolean actualArrangementTableColumnDragging;
-	public static JPanel actualArrangementCombinedPanel;
-	public static JPanel variationButtonsPanel;
-	public static boolean copyDragging;
-	public static Triple<Integer, Integer, Integer> highlightedTableCell;
-	public static Triple<Integer, Integer, Integer> copyDraggingOrigin;
-	public static Point arrangementActualTableMousePoint;
-	public static UsedPattern copyDraggedPattern;
-	public static Color arrangementLightModeText = new Color(220, 220, 220);
-	public static int arrangementDarkModeLowestColor = 100;
-	public static Color arrangementDarkModeText = new Color(50, 50, 50);
-	public static int arrangementLightModeHighestColor = 180;
+	private JPanel actualArrangementCombinedPanel;
+	private JPanel variationButtonsPanel;
+	private boolean copyDragging;
+	private Triple<Integer, Integer, Integer> highlightedTableCell;
+	private Triple<Integer, Integer, Integer> copyDraggingOrigin;
+	private Point arrangementActualTableMousePoint;
+	private UsedPattern copyDraggedPattern;
+	private static final Color arrangementLightModeText = new Color(220, 220, 220);
+	private static final int arrangementDarkModeLowestColor = 100;
+	private static final Color arrangementDarkModeText = new Color(50, 50, 50);
+	private static final int arrangementLightModeHighestColor = 180;
 	public static JCheckBox arrangementScaleMidiVelocity;
 	public static JCheckBox arrangementResetCustomPanelsOnCompose;
 	private VariationPopup varPopup;
@@ -221,6 +215,39 @@ public class ArrangementGUI {
 
 	public Arrangement getActualArrangement() {
 		return actualArrangement;
+	}
+
+	public void requestSwitchTabPaneToScoreAfterApply() {
+		switchTabPaneToScoreAfterApply = true;
+	}
+
+	public JCheckBox getRandomizeArrangementOnCompose() {
+		return randomizeArrangementOnCompose;
+	}
+
+	public JPanel getManualArrangementSign() {
+		return manualArrangementSign;
+	}
+
+	public boolean isManualArrangementSelected() {
+		return manualArrangement.isSelected();
+	}
+
+	public void setManualArrangementSelected(boolean selected) {
+		manualArrangement.setSelected(selected);
+		manualArrangement.repaint();
+	}
+
+	public boolean isArrangementEnabled() {
+		return useArrangement.isSelected();
+	}
+
+	public int getConfiguredPieceLength() {
+		return Integer.parseInt(pieceLength.getText());
+	}
+
+	public void clearArrangementSeed() {
+		arrangementSeed.setValue(0);
 	}
 
 	public void trySliderStartChange(int sectionIndex) {
@@ -435,7 +462,7 @@ public class ArrangementGUI {
 		List<InstPanel> addedPanels = new ArrayList<>();
 		if (GLOBAL.equals(selectedItem)) {
 			LG.i("Resetting to normal panels!");
-			arrangementMiddleColoredPanel.setBackground(UITheme.panelColorHigh.brighter());
+			manualArrangementSign.setBackground(UITheme.panelColorHigh.brighter());
 			for (INST instrument : INST.values()) {
 				int instrumentIndex = instrument.getIndex();
 				JScrollPane pane = getInstPane(instrumentIndex);
@@ -452,7 +479,7 @@ public class ArrangementGUI {
 			}
 		} else {
 			LG.i("Switching panels!");
-			arrangementMiddleColoredPanel.setBackground(UITheme.uiColor().darker().darker());
+			manualArrangementSign.setBackground(UITheme.uiColor().darker().darker());
 			int sectionOrder = Integer.parseInt(selectedItem.split(":")[0]) - 1;
 			Section section = actualArrangement.getSections().get(sectionOrder);
 			for (INST instrument : INST.values()) {
@@ -514,7 +541,7 @@ public class ArrangementGUI {
 				addedPanels.addAll(sectionPanels);
 			}
 		}
-		arrangementMiddleColoredPanel.repaint();
+		manualArrangementSign.repaint();
 		addedPanels.forEach(panel -> panel.setVisible(true));
 		context.toggleButtonEnabledForPanels();
 		for (INST instrument : INST.values()) {
@@ -880,9 +907,9 @@ public class ArrangementGUI {
 	}
 
 	public void initArrangementSettings(int startY, int anchorSide) {
-		ArrangementGUI.arrangementSettings = new JPanel();
-		ArrangementGUI.arrangementSettings.setOpaque(false);
-		ArrangementGUI.arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		arrangementSettings = new JPanel();
+		arrangementSettings.setOpaque(false);
+		arrangementSettings.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
 		JPanel arrangementSettingsLeft = new JPanel();
 		arrangementSettingsLeft.setOpaque(false);
@@ -890,14 +917,14 @@ public class ArrangementGUI {
 		JPanel arrangementSettingsRight = new JPanel();
 		arrangementSettingsRight.setOpaque(false);
 		arrangementSettingsRight.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		ArrangementGUI.useArrangement = new CheckButton("ARRANGE", false);
-		arrangementSettingsLeft.add(ArrangementGUI.useArrangement);
-		ArrangementGUI.pieceLength = new JTextField("12", 2);
+		useArrangement = new CheckButton("ARRANGE", false);
+		arrangementSettingsLeft.add(useArrangement);
+		pieceLength = new JTextField("12", 2);
 		JButton resetArrangementBtn = context.makeButton("Reset", "ArrangementReset", 60, 30);
 		JButton randomizeArrangementBtn = SwingUtils.makeButton("Randomize", e -> {
 			Random arrGen = new Random();
 			handleArrangementAction("ArrangementRandomize", arrGen.nextInt(),
-					Integer.parseInt(ArrangementGUI.pieceLength.getText()));
+					getConfiguredPieceLength());
 			context.recalculateTabPaneCounts();
 			if (context.canRegenerateOnChange()) {
 				context.regenerate();
@@ -909,7 +936,7 @@ public class ArrangementGUI {
 				e -> openGlobalVariationPopup(), 50);
 		JButton patternManagerBtn = SwingUtils.makeButton("Patterns", e -> openPatternManagerPopup(), 70);
 
-		ArrangementGUI.randomizeArrangementOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
+		randomizeArrangementOnCompose = SwingUtils.makeCheckBox("on Compose", true, true);
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70),
 				action -> handleArrangementAction(action, 0, 0)));
@@ -954,44 +981,44 @@ public class ArrangementGUI {
 
 		JButton copySelectedBtn = context.makeButton("Cc", "ArrangementAddLast", 30, 30);
 		JButton removeSelectedBtn = context.makeButton("X", "ArrangementRemoveLast", 30, 30);
-		ArrangementGUI.newSectionBox = new ScrollComboBox<>(false);
-		ArrangementGUI.newSectionBox.addItem(OMNI.EMPTYCOMBO);
+		newSectionBox = new ScrollComboBox<>(false);
+		newSectionBox.addItem(OMNI.EMPTYCOMBO);
 		for (Section.SectionType type : Section.SectionType.values()) {
-			ArrangementGUI.newSectionBox.addItem(type.toString());
+			newSectionBox.addItem(type.toString());
 		}
 		JButton addNewSectionBtn = context.makeButton("Add", "ArrangementAddNewSection", 35, 30);
 
 		arrangementSettingsLeft.add(randomizeArrangementBtn);
-		arrangementSettingsLeft.add(ArrangementGUI.randomizeArrangementOnCompose);
+		arrangementSettingsLeft.add(randomizeArrangementOnCompose);
 		arrangementSettingsLeft.add(resetArrangementBtn);
-		ArrangementGUI.arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
-		arrangementSettingsLeft.add(ArrangementGUI.arrangementVariationChance);
-		ArrangementGUI.arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
-		arrangementSettingsLeft.add(ArrangementGUI.arrangementPartVariationChance);
+		arrangementVariationChance = new DetachedKnobPanel("Section<br>Variations", 30);
+		arrangementSettingsLeft.add(arrangementVariationChance);
+		arrangementPartVariationChance = new DetachedKnobPanel("Part<br>Variations", 25);
+		arrangementSettingsLeft.add(arrangementPartVariationChance);
 		arrangementSettingsLeft.add(arrangementPartInclusionBtn);
 		arrangementSettingsLeft.add(arrangementGlobalVariationBtn);
 		arrangementSettingsLeft.add(patternManagerBtn);
 
-		ArrangementGUI.arrangementMiddleColoredPanel = new JPanel();
-		ArrangementGUI.arrangementMiddleColoredPanel.add(new JLabel("                                      "));
-		ArrangementGUI.arrangementSettings.add(arrangementSettingsLeft);
-		ArrangementGUI.arrangementSettings.add(ArrangementGUI.arrangementMiddleColoredPanel);
+		manualArrangementSign = new JPanel();
+		manualArrangementSign.add(new JLabel("                                      "));
+		arrangementSettings.add(arrangementSettingsLeft);
+		arrangementSettings.add(manualArrangementSign);
 
-		ArrangementGUI.manualArrangement = new CheckButton("MANUAL", false);
-		arrangementSettingsRight.add(ArrangementGUI.manualArrangement);
+		manualArrangement = new CheckButton("MANUAL", false);
+		arrangementSettingsRight.add(manualArrangement);
 		arrangementSettingsRight.add(commitPanelBtn);
 		arrangementSettingsRight.add(commitAllPanelBtn);
 		arrangementSettingsRight.add(undoPanelBtn);
 		arrangementSettingsRight.add(clearPanelBtn);
 		arrangementSettingsRight.add(clearAllPanelsBtn);
-		arrangementSettingsRight.add(ArrangementGUI.newSectionBox);
+		arrangementSettingsRight.add(newSectionBox);
 		arrangementSettingsRight.add(addNewSectionBtn);
 		arrangementSettingsRight.add(copySelectedBtn);
 		arrangementSettingsRight.add(removeSelectedBtn);
 		arrangementSettingsRight.add(new JLabel("Seed"));
-		ArrangementGUI.arrangementSeed = new RandomValueButton(0, context::getCurrentSeed);
-		arrangementSettingsRight.add(ArrangementGUI.arrangementSeed);
-		ArrangementGUI.arrangementSettings.add(arrangementSettingsRight);
+		arrangementSeed = new RandomValueButton(0, context::getCurrentSeed);
+		arrangementSettingsRight.add(arrangementSeed);
+		arrangementSettings.add(arrangementSettingsRight);
 
 		ArrangementGUI.arrSectionPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() {
@@ -1005,7 +1032,7 @@ public class ArrangementGUI {
 		ArrangementGUI.arrSectionPane.setOpaque(true);
 		ArrangementGUI.arrSection.setOpaque(true);
 		context.addArrangementComponents(ArrangementGUI.arrSectionPane,
-				ArrangementGUI.arrangementSettings, startY, anchorSide);
+				arrangementSettings, startY, anchorSide);
 
 		ArrangementGUI.scrollableArrangementTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 3846279087936376003L;
@@ -1057,7 +1084,7 @@ public class ArrangementGUI {
 		ArrangementGUI.arrangementScrollPane.setRowHeaderView(list);
 		ArrangementGUI.arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		ArrangementGUI.arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		if (ArrangementGUI.useArrangement.isSelected()) {
+		if (useArrangement.isSelected()) {
 			arrangement.setPreviewChorus(false);
 			actualArrangement.setPreviewChorus(false);
 		} else {
@@ -1069,21 +1096,11 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementTable.setColumnSelectionAllowed(true);
 		ArrangementGUI.scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(
 				UITheme.scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
-		ArrangementGUI.scrollableArrangementTable.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-			@Override public void columnMoved(TableColumnModelEvent e) {
-				ArrangementGUI.arrangementTableColumnDragging = true;
-			}
-			@Override public void columnAdded(TableColumnModelEvent e) { }
-			@Override public void columnRemoved(TableColumnModelEvent e) { }
-			@Override public void columnMarginChanged(ChangeEvent e) { }
-			@Override public void columnSelectionChanged(ListSelectionEvent e) { }
-		});
 		ArrangementGUI.scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.d("MOVED HEADER");
 				arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false,
 						ArrangementGUI.this::recolorAllVariationButtons);
-				ArrangementGUI.arrangementTableColumnDragging = false;
 			}
 		});
 		ArrangementGUI.scrollableArrangementTable.addMouseListener(new MouseAdapter() {
@@ -1133,7 +1150,7 @@ public class ArrangementGUI {
 				ArrangementGUI.this.processActualArrangementMouseEvent(evt);
 			}
 			@Override public void mouseReleased(MouseEvent evt) {
-				if (ArrangementGUI.copyDragging) {
+				if (ArrangementGUI.this.copyDragging) {
 					ArrangementGUI.this.processActualArrangementCopyDragging(evt);
 					ArrangementGUI.this.resetCopyDrag();
 				}
@@ -1147,10 +1164,10 @@ public class ArrangementGUI {
 				updateArrangementSubcell(e);
 			}
 			private void updateArrangementSubcell(MouseEvent e) {
-				boolean repaintAnyway = ArrangementGUI.highlightedTableCell != null;
-				ArrangementGUI.highlightedTableCell = ArrangementGUI.this.calculateCurrentTableSubcell(e);
-				ArrangementGUI.arrangementActualTableMousePoint = new Point(e.getPoint());
-				if (ArrangementGUI.highlightedTableCell != null || repaintAnyway) {
+				boolean repaintAnyway = ArrangementGUI.this.highlightedTableCell != null;
+				ArrangementGUI.this.highlightedTableCell = ArrangementGUI.this.calculateCurrentTableSubcell(e);
+				ArrangementGUI.this.arrangementActualTableMousePoint = new Point(e.getPoint());
+				if (ArrangementGUI.this.highlightedTableCell != null || repaintAnyway) {
 					ArrangementGUI.scrollableArrangementActualTable.repaint();
 				}
 			}
@@ -1171,37 +1188,26 @@ public class ArrangementGUI {
 		ArrangementGUI.arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		ArrangementGUI.scrollableArrangementActualTable.setColumnSelectionAllowed(true);
 		ArrangementGUI.scrollableArrangementActualTable.setRowSelectionAllowed(false);
-		ArrangementGUI.scrollableArrangementActualTable.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-			@Override public void columnMoved(TableColumnModelEvent e) {
-				ArrangementGUI.actualArrangementTableColumnDragging = true;
-			}
-			@Override public void columnAdded(TableColumnModelEvent e) { }
-			@Override public void columnRemoved(TableColumnModelEvent e) { }
-			@Override public void columnMarginChanged(ChangeEvent e) { }
-			@Override public void columnSelectionChanged(ListSelectionEvent e) { }
-		});
 		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.i("MOVED");
 				actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true,
 						ArrangementGUI.this::recolorAllVariationButtons);
-				ArrangementGUI.actualArrangementTableColumnDragging = false;
-				ArrangementGUI.manualArrangement.setSelected(true);
-				ArrangementGUI.manualArrangement.repaint();
+				setManualArrangementSelected(true);
 			}
 		});
 
-		ArrangementGUI.actualArrangementCombinedPanel = new JPanel();
-		ArrangementGUI.actualArrangementCombinedPanel.setLayout(
-				new BoxLayout(ArrangementGUI.actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
+		actualArrangementCombinedPanel = new JPanel();
+		actualArrangementCombinedPanel.setLayout(
+				new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
 		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(
 				UITheme.scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
-		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable.getTableHeader());
-		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable);
-		ArrangementGUI.variationButtonsPanel = new JPanel();
+		actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable.getTableHeader());
+		actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable);
+		variationButtonsPanel = new JPanel();
 		refreshVariationPopupButtons(1);
-		ArrangementGUI.actualArrangementCombinedPanel.add(ArrangementGUI.variationButtonsPanel);
-		ArrangementGUI.arrangementActualScrollPane.setViewportView(ArrangementGUI.actualArrangementCombinedPanel);
+		actualArrangementCombinedPanel.add(variationButtonsPanel);
+		ArrangementGUI.arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
 		instrumentTabPane.addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
 		instrumentTabPane.addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
 		UITheme.toggleableComponents.add(commitAllPanelBtn);
