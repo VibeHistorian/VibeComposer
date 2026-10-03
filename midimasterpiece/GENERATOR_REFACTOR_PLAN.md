@@ -98,3 +98,11 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 - Use the project’s established compile check at appropriate migration boundaries; do not treat the number of classes or lines as a success metric.
 
 **Completion signal:** the two generator classes act as understandable coordinators, collaborators have focused inputs and outputs, and remaining shared state is deliberate and documented.
+
+
+---------------------------------------------------------------
+
+# Verification
+
+Run mvn compile without skipping tests - GeneratorRegressionTest has to run and confirm that regeneration was identical.
+The test may be modified with user permission, in case the actual generation logic is changing (i.e. intent beyond refactoring).
