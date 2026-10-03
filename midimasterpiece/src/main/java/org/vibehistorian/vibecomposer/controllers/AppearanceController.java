@@ -1,9 +1,16 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MainWindowControls;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
+import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.gui.ArpGUI;
 import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;

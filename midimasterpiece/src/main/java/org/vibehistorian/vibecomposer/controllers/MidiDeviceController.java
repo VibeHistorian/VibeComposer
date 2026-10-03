@@ -1,4 +1,6 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
+
+import org.vibehistorian.vibecomposer.LG;
 
 import javax.sound.midi.*;
 import javax.swing.*;

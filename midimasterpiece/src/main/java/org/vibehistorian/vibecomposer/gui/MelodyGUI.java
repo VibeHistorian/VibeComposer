@@ -33,7 +33,6 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.INST;
-import org.vibehistorian.vibecomposer.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
@@ -46,6 +45,7 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 import org.vibehistorian.vibecomposer.generators.MidiGeneratorUtils;
 

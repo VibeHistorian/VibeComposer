@@ -29,7 +29,6 @@ import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
@@ -43,6 +42,7 @@ import org.vibehistorian.vibecomposer.Parts.Defaults.DrumSettings;
 import org.vibehistorian.vibecomposer.Parts.DrumPart;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

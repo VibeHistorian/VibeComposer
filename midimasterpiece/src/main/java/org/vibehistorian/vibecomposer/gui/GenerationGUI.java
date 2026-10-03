@@ -10,7 +10,6 @@ import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
@@ -24,6 +23,7 @@ import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

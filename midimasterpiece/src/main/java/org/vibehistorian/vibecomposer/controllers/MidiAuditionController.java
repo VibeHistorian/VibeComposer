@@ -1,11 +1,17 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
 
 import jm.music.data.Note;
 import jm.music.data.Part;
 import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
 import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 import org.vibehistorian.vibecomposer.gui.MelodyGUI;
@@ -85,7 +91,7 @@ public final class MidiAuditionController {
 	}
 
 	public void playNote(int pitch, int durationMs, int velocity, INST instrument, int panelOrder,
-			Section section, boolean overrideLastPlayed) {
+						 Section section, boolean overrideLastPlayed) {
 		if (sequencer == null || !sequencer.isOpen() || pitch < 0
 				|| (!overrideLastPlayed && System.currentTimeMillis() - lastPlayedMs < 100)) {
 			return;

@@ -3,12 +3,12 @@ package org.vibehistorian.vibecomposer.gui;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.INST;
-import org.vibehistorian.vibecomposer.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 
 import javax.swing.*;
 import java.awt.*;

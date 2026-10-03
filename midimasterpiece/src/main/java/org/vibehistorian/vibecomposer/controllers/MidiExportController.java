@@ -1,6 +1,7 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
 
 import com.sun.media.sound.AudioSynthesizer;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
 import javax.sound.midi.MidiEvent;

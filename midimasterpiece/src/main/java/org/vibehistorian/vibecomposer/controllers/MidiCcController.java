@@ -1,5 +1,8 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
 
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 
 import javax.sound.midi.InvalidMidiDataException;

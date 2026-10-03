@@ -1,8 +1,10 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
 
+import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
+import org.vibehistorian.vibecomposer.PlaybackState;
 
 import javax.sound.midi.Sequencer;
 import java.util.HashSet;

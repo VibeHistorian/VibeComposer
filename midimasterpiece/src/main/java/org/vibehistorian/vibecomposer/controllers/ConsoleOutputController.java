@@ -1,9 +1,10 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
+
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-
-import org.vibehistorian.vibecomposer.Popups.DebugConsole;
 
 /** Owns process output redirection and the optional debug console for the active window. */
 public final class ConsoleOutputController {

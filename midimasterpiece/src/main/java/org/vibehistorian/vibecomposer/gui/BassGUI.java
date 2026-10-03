@@ -25,13 +25,13 @@ import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.INST;
-import org.vibehistorian.vibecomposer.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.PartManagerPanel;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

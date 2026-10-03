@@ -1,7 +1,12 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.controllers;
 
+import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
+import org.vibehistorian.vibecomposer.PartPresetStore;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
 import org.vibehistorian.vibecomposer.gui.InstGUI;
 
