@@ -72,6 +72,8 @@ An `ArrangementGenerationPlanner` or `SectionGenerationPlanner` may fit the sect
 
 **Progress 2026-10-03:** chord progression preparation and score publication are named operations in `MidiGenerator`. `SectionGenerationPlanner` owns section variation selection, buildup variation, part substitution, custom chord/duration preparation, and instrument presence decisions. The top-level loop still sequences key-change and chord-swap decisions alongside phrase rendering.
 
+**Progress 2026-10-03:** transition selection, section key-change policy, and alternate melody-progression eligibility now live in `SectionGenerationPlanner`. The planner receives the existing variation random generator and makes its transition draw at the same point in the section sequence. Key-change selection still delegates to `ChordProgressionGenerator`, while the planner applies custom section key and scale settings and returns the pending values to the coordinator. The section loop still applies chord swaps and sequences N-1 replacement and phrase rendering.
+
 ### Phase 5 — Separate score assembly and instrument phrase generation
 
 - Move score and track construction, track assignment, track combination, padding, and score-level post-processing behind a focused score builder or assembler.

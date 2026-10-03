@@ -774,42 +774,8 @@ public class MidiGenerator implements JMC {
 			}
 			LG.i("Section Variations: " + StringUtils.join(includedSectionVarNames, ","));
 
-			// generate transition
-			if (!overridden) {
-				int transChance = variationGen.nextInt(100);
-				int[] rawChances = new int[Section.transitionChanceMultipliers.length];
-				for (int i = 0; i < rawChances.length; i++) {
-					rawChances[i] = (int) (gc.getArrangementVariationChance()
-							* Section.transitionChanceMultipliers[i]);
-				}
-				int transType = 0;
-				for (int i = 1; i < Section.transitionChanceMultipliers.length; i++) {
-					if (transChance >= rawChances[i]) {
-						continue;
-					}
-					if (i == 1) {
-						if ((secOrder < arr.getSections().size() - 1
-								&& arr.getSections().get(secOrder + 1).getTypeMelodyOffset() == 0
-								&& notesSeedOffset > 0)) {
-							transType = 1;
-							break;
-						}
-					} else if (i == 2) {
-						if ((secOrder < arr.getSections().size() - 1
-
-								&& notesSeedOffset == 0)) {
-							transType = 2;
-							break;
-						}
-					}
-					if (i > 2) {
-						transType = i;
-						break;
-					}
-
-				}
-				sec.setTransitionType(transType);
-			}
+			SectionGenerationPlanner.assignTransition(gc, arr, secOrder, sec, notesSeedOffset,
+					overridden, variationGen);
 			LG.i("Transition type: " + sec.getTransitionType() + ", MVI: " + notesSeedOffset);
 
 
@@ -818,11 +784,13 @@ public class MidiGenerator implements JMC {
 			if (sec.isCustomChordsEnabled() || sec.isCustomDurationsEnabled()) {
 				sectionChordsReplaced = replaceWithSectionCustomChordDurations(sec);
 			}
+			boolean useMelodyProgression = SectionGenerationPlanner.shouldUseMelodyProgression(
+					sectionVariations, sectionChordsReplaced, rootProgression,
+						generatedRootProgression, mgen.alternateChords);
 			if (!sectionChordsReplaced) {
 				sec.setGeneratedSectionBeatDurations(new ArrayList<>(progressionDurations));
 
-				if (sectionVariations.get(1) > 0 && mgen.alternateChords != null
-						&& !mgen.alternateChords.isEmpty()) {
+				if (useMelodyProgression) {
 					//LG.d("Section Variation: Chord Swap!");
 					rootProgression = mgen.melodyBasedRootProgression;
 					chordProgression = mgen.melodyBasedChordProgression;
@@ -836,32 +804,20 @@ public class MidiGenerator implements JMC {
 					sec.setDisplayAlternateChords(false);
 
 				}
-			} else if (rootProgression.size() == generatedRootProgression.size()) {
-				if (sectionVariations.get(1) > 0) {
-					//LG.d("Section Variation: Chord Swap!");
-					rootProgression = mgen.melodyBasedRootProgression;
-					chordProgression = mgen.melodyBasedChordProgression;
-					progressionDurations = actualDurations;
-				}
+			} else if (useMelodyProgression) {
+				//LG.d("Section Variation: Chord Swap!");
+				rootProgression = mgen.melodyBasedRootProgression;
+				chordProgression = mgen.melodyBasedChordProgression;
+				progressionDurations = actualDurations;
 			}
 
 			SectionConfig secC = sec.getSecConfig();
 
-			if (sectionVariations.get(4) > 0) {
-				//LG.d("Section Variation: Key Change (on next chord)!");
-				if (secC.getCustomKeyChange() == null && secC.getCustomScale() == null) {
-					transToSet = generateKeyChange(generatedRootProgression, arrSeed);
-					LG.i("Generated key change: " + transToSet);
-					secC.setCustomKeyChange(transToSet);
-				} else {
-					transToSet = secC.getCustomKeyChange() != null ? secC.getCustomKeyChange() : 0;
-					if (secC.getCustomScale() != null) {
-						scaleToSet = secC.getCustomScale();
-					}
-					LG.i("Using custom key change: " + transToSet + ", with ScaleMode: "
-							+ scaleToSet);
-				}
-			}
+			SectionGenerationPlanner.KeyChangeDecision keyChangeDecision =
+					SectionGenerationPlanner.chooseSectionKeyChange(gc, sec, sectionVariations,
+							generatedRootProgression, arrSeed, transToSet, modTrans, scaleToSet);
+			transToSet = keyChangeDecision.transpose;
+			scaleToSet = keyChangeDecision.scale;
 
 			boolean twoFiveOneChords = ((gc.getKeyChangeType() == KeyChangeType.TWOFIVEONE
 					|| secC.getCustomKeyChangeType() == 1) && (secC.getCustomKeyChangeType() != 2))
@@ -1522,12 +1478,6 @@ public class MidiGenerator implements JMC {
 
 		LG.d("Replaced LAST");
 		return true;
-
-	}
-
-	private int generateKeyChange(List<int[]> chords, int arrSeed) {
-		return ChordProgressionGenerator.chooseKeyChange(gc.getKeyChangeType(), modTrans,
-				chords, arrSeed);
 
 	}
 

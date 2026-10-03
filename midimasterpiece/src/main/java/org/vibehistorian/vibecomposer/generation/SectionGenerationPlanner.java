@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.generation;
 
 import org.vibehistorian.vibecomposer.Arrangement;
 import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.BassPart;
@@ -19,6 +20,16 @@ import java.util.Set;
 
 /** Makes arrangement decisions that configure an individual section. */
 final class SectionGenerationPlanner {
+
+    static final class KeyChangeDecision {
+        final Integer transpose;
+        final MidiUtils.ScaleMode scale;
+
+        private KeyChangeDecision(Integer transpose, MidiUtils.ScaleMode scale) {
+            this.transpose = transpose;
+            this.scale = scale;
+        }
+    }
 
     static final class CustomProgression {
         final List<int[]> chords;
@@ -84,6 +95,86 @@ final class SectionGenerationPlanner {
                 }
             }
         }
+    }
+
+    static void assignTransition(GUIConfig gc, Arrangement arrangement, int sectionOrder,
+                                 Section section, int notesSeedOffset, boolean overridden,
+                                 Random variationGenerator) {
+        if (!overridden) {
+            int transitionChance = variationGenerator.nextInt(100);
+            int[] rawChances = new int[Section.transitionChanceMultipliers.length];
+            for (int i = 0; i < rawChances.length; i++) {
+                rawChances[i] = (int) (gc.getArrangementVariationChance()
+                        * Section.transitionChanceMultipliers[i]);
+            }
+            int transitionType = 0;
+            for (int i = 1; i < Section.transitionChanceMultipliers.length; i++) {
+                if (transitionChance >= rawChances[i]) {
+                    continue;
+                }
+                if (i == 1) {
+                    if (sectionOrder < arrangement.getSections().size() - 1
+                            && arrangement.getSections().get(sectionOrder + 1)
+                                    .getTypeMelodyOffset() == 0
+                            && notesSeedOffset > 0) {
+                        transitionType = 1;
+                        break;
+                    }
+                } else if (i == 2) {
+                    if (sectionOrder < arrangement.getSections().size() - 1
+                            && notesSeedOffset == 0) {
+                        transitionType = 2;
+                        break;
+                    }
+                }
+                if (i > 2) {
+                    transitionType = i;
+                    break;
+                }
+            }
+            section.setTransitionType(transitionType);
+        }
+    }
+
+    static KeyChangeDecision chooseSectionKeyChange(GUIConfig gc, Section section,
+                                                    List<Integer> sectionVariations,
+                                                    List<int[]> generatedRootProgression,
+                                                    int arrangementSeed, Integer pendingTranspose,
+                                                    int currentTranspose,
+                                                    MidiUtils.ScaleMode currentScale) {
+        Integer transpose = pendingTranspose;
+        MidiUtils.ScaleMode scale = currentScale;
+        if (sectionVariations.get(4) > 0) {
+            SectionConfig sectionConfig = section.getSecConfig();
+            if (sectionConfig.getCustomKeyChange() == null
+                    && sectionConfig.getCustomScale() == null) {
+                transpose = ChordProgressionGenerator.chooseKeyChange(gc.getKeyChangeType(),
+                        currentTranspose, generatedRootProgression, arrangementSeed);
+                LG.i("Generated key change: " + transpose);
+                sectionConfig.setCustomKeyChange(transpose);
+            } else {
+                transpose = sectionConfig.getCustomKeyChange() != null
+                        ? sectionConfig.getCustomKeyChange() : 0;
+                if (sectionConfig.getCustomScale() != null) {
+                    scale = sectionConfig.getCustomScale();
+                }
+                LG.i("Using custom key change: " + transpose + ", with ScaleMode: " + scale);
+            }
+        }
+        return new KeyChangeDecision(transpose, scale);
+    }
+
+    static boolean shouldUseMelodyProgression(List<Integer> sectionVariations,
+                                              boolean sectionChordsReplaced,
+                                              List<int[]> currentRootProgression,
+                                              List<int[]> generatedRootProgression,
+                                              String alternateChords) {
+        if (sectionChordsReplaced) {
+            return currentRootProgression.size() == generatedRootProgression.size()
+                    && sectionVariations.get(1) > 0;
+        }
+        return sectionVariations.get(1) > 0
+                && alternateChords != null && !alternateChords.isEmpty();
     }
 
     static boolean replaceConfiguredParts(GUIConfig gc, Section section) {
