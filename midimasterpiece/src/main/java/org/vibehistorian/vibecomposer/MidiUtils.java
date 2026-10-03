@@ -143,7 +143,7 @@ public class MidiUtils {
 
 	public static final List<String> BANNED_DIM_AUG_6_LIST = Arrays.asList("dim", "aug", "maj6", "m6");
 	public static final List<String> BANNED_9_13_LIST = Arrays.asList("maj9", "m9", "maj13", "m13");
-	public static final List<String> BANNED_SUSSY_LIST = Arrays.asList("sus4", "sus2", "sus7");
+	public static final List<String> BANNED_SUS_LIST = Arrays.asList("sus4", "sus2", "sus7");
 
 	public static final List<String> SPICE_NAMES_LIST = Arrays
 			.asList("", "m", "maj7", "m7", "7", "mM7", "sus2", "sus4", "sus7",
@@ -1283,7 +1283,7 @@ public class MidiUtils {
 
 		List<String> allowedSpiceChords = new ArrayList<>(allowedSpiceChordsMiddle);
 		allowedSpiceChords.removeAll(BANNED_DIM_AUG_6_LIST);
-		allowedSpiceChords.removeAll(BANNED_SUSSY_LIST);
+		allowedSpiceChords.removeAll(BANNED_SUS_LIST);
 
 		Random rand = new Random();
 

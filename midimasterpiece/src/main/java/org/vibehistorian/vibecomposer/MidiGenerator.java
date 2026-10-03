@@ -470,164 +470,14 @@ public class MidiGenerator implements JMC {
 		generateChordProgression(mainGeneratorSeed, fixedLength);
 	}
 
-	private List<String> generateChordProgressionList(long mainGeneratorSeed, int fixedLength) {
-		List<String> chordProgList = new ArrayList<>();
-
-		Random generator = new Random(mainGeneratorSeed);
-		Random lengthGenerator = new Random(mainGeneratorSeed);
-		Random spiceGenerator = new Random(mainGeneratorSeed);
-		Random parallelGenerator = new Random(mainGeneratorSeed + 100);
-		Random similarityGenerator = new Random(mainGeneratorSeed + 102);
-
-		boolean isBackwards = !gc.isUseChordFormula();
-		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
-		String lastChord = (isBackwards) ? FIRST_CHORD : LAST_CHORD;
-		String firstChord = (isBackwards) ? LAST_CHORD : FIRST_CHORD;
-
-
-		if (fixedLength == 0) {
-			List<Integer> progLengths = Arrays.asList(4, 5, 6, 8);
-			fixedLength = progLengths.get(lengthGenerator.nextInt(progLengths.size()));
-		}
-		int maxLength = (fixedLength > 0) ? fixedLength : 8;
-		List<String> next = r.get("S");
-		if (firstChord != null) {
-			next = new ArrayList<>();
-			next.add(firstChord);
-		}
-		List<String> debugMsg = new ArrayList<>();
-
-
-		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
-		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
-			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAug6thEnabled() && MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
-				continue;
-			}
-			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
-				continue;
-			}
-			allowedSpiceChordsMiddle.add(chordString);
-		}
-
-		List<String> allowedSpiceChords = new ArrayList<>();
-		for (String s : allowedSpiceChordsMiddle) {
-			if (MidiUtils.BANNED_DIM_AUG_6_LIST.contains(s)
-					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
-				continue;
-			}
-			allowedSpiceChords.add(s);
-		}
-
-		String prevChord = null;
-		boolean canRepeatChord = true;
-		String lastUnspicedChord = null;
-		Random chordRepeatGenerator = new Random(mainGeneratorSeed);
-		for (int chordIndex = 0; chordIndex < maxLength; chordIndex++) {
-			if (next.isEmpty() && prevChord != null) {
-				LG.w("Next list is EMPTY! Adding default C chord!");
-				next.add("C");
-			}
-			int bSkipper = (!gc.isDimAug6thEnabled() && "Bdim".equals(next.get(next.size() - 1)))
-					? 1
-					: 0;
-			int nextInt = generator.nextInt(Math.max(next.size() - bSkipper, 1));
-
-			// if last and not empty first chord
-			boolean isLastChord = (chordIndex == maxLength - 1);
-			String chordString = null;
-			if (isLastChord && lastChord != null) {
-				chordString = lastChord;
-			} else {
-				if (gc.isAllowChordRepeats() && (fixedLength < 8 || !isLastChord) && canRepeatChord
-						&& chordProgList.size() == 1 && chordRepeatGenerator.nextInt(100) < 10) {
-					chordString = lastUnspicedChord;
-					canRepeatChord = false;
-				} else {
-					chordString = next.get(nextInt);
-				}
-			}
-
-
-			List<String> spicyChordList = (!isLastChord && prevChord != null)
-					? allowedSpiceChordsMiddle
-					: allowedSpiceChords;
-
-			String spicyChordString = chordString;
-			String tempSpicyChordString = MidiGeneratorUtils
-					.generateSpicyChordString(spiceGenerator, chordString, spicyChordList);
-
-			// Generate with SPICE CHANCE
-			if (generator.nextInt(100) < gc.getSpiceChance()
-					&& (chordProgList.size() < 7 || lastChord == null)) {
-				spicyChordString = tempSpicyChordString;
-			}
-
-			if (!gc.isDimAug6thEnabled()) {
-				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
-					int scaleOrder = gc.getScaleMode().ordinal();
-					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
-						spicyChordString = "Bdim";
-					}
-				}
-			}
-			if (parallelGenerator.nextInt(100) < gc.getSpiceParallelChance()) {
-				int chordOrder = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
-				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordOrder);
-				// #1 - is Ddim allowed?
-				if (chordOrder != 1 || gc.isDimAug6thEnabled()) {
-					spicyChordString = parallelChordString;
-					LG.d("PARALLEL: " + spicyChordString);
-				}
-			}
-
-			chordProgList.add(spicyChordString);
-
-			debugMsg.add("Generated int: " + nextInt + ", for chord: " + spicyChordString);
-			prevChord = spicyChordString;
-			next = r.get(chordString);
-
-			if (fixedLength == 8 && chordProgList.size() == 4 && lastChord == null) {
-				lastChord = chordString;
-			}
-
-			// if last and empty first chord
-			if (isLastChord && lastChord == null) {
-				lastChord = chordString;
-			}
-			lastUnspicedChord = chordString;
-		}
-		if (isBackwards) {
-			Collections.reverse(debugMsg);
-			Collections.reverse(chordProgList);
-		}
-
-		for (String s : debugMsg) {
-			LG.d(s);
-		}
-
-		// similarity generation - replace chords 4-7 with chords from 0-3
-		if (fixedLength == 8) {
-			int[] replacementOrder = new int[] { 4, 7, 5, 6 };
-			for (int i : replacementOrder) {
-				if (similarityGenerator.nextInt(100) < gc.getLongProgressionSimilarity()) {
-					chordProgList.set(i, chordProgList.get(i - 4));
-					LG.i("Replaced " + i + "-th chord!");
-				} else if (i == 5) {
-					break;
-				}
-			}
-		}
-
-		return chordProgList;
-	}
-
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength) {
-		Random generator = new Random(mainGeneratorSeed);
-		Random lengthGenerator = new Random(mainGeneratorSeed);
-		Random spiceGenerator = new Random(mainGeneratorSeed);
-		Random parallelGenerator = new Random(mainGeneratorSeed + 100);
-		Random similarityGenerator = new Random(mainGeneratorSeed + 102);
+		ChordProgressionGenerator.RandomStreams randomStreams =
+				ChordProgressionGenerator.createRandomStreams(mainGeneratorSeed);
+		Random generator = randomStreams.progression;
+		Random lengthGenerator = randomStreams.length;
+		Random spiceGenerator = randomStreams.spice;
+		Random parallelGenerator = randomStreams.parallel;
+		Random similarityGenerator = randomStreams.similarity;
 
 		boolean isBackwards = !gc.isUseChordFormula();
 		Map<String, List<String>> r = (isBackwards) ? cpRulesMap : MidiUtils.cpRulesForwardMap;
@@ -636,10 +486,7 @@ public class MidiGenerator implements JMC {
 		String firstChord = (isBackwards) ? LAST_CHORD : FIRST_CHORD;
 
 
-		if (fixedLength == 0) {
-			List<Integer> progLengths = Arrays.asList(new Integer[] { 4, 5, 6, 8 });
-			fixedLength = progLengths.get(lengthGenerator.nextInt(progLengths.size()));
-		}
+		fixedLength = ChordProgressionGenerator.chooseProgressionLength(fixedLength, lengthGenerator);
 		int maxLength = (fixedLength > 0) ? fixedLength : 8;
 		double maxDuration = fixedLength * Durations.WHOLE_NOTE;
 		double fixedDuration = maxDuration / maxLength;
@@ -653,26 +500,8 @@ public class MidiGenerator implements JMC {
 		List<String> debugMsg = new ArrayList<>();
 
 
-		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
-		for (int i = 2; i < MidiUtils.SPICE_NAMES_LIST.size(); i++) {
-			String chordString = MidiUtils.SPICE_NAMES_LIST.get(i);
-			if (!gc.isDimAug6thEnabled() && MidiUtils.BANNED_DIM_AUG_6_LIST.contains(chordString)) {
-				continue;
-			}
-			if (!gc.isEnable9th13th() && MidiUtils.BANNED_9_13_LIST.contains(chordString)) {
-				continue;
-			}
-			allowedSpiceChordsMiddle.add(chordString);
-		}
-
-		List<String> allowedSpiceChords = new ArrayList<>();
-		for (String s : allowedSpiceChordsMiddle) {
-			if (MidiUtils.BANNED_DIM_AUG_6_LIST.contains(s)
-					|| MidiUtils.BANNED_SUSSY_LIST.contains(s)) {
-				continue;
-			}
-			allowedSpiceChords.add(s);
-		}
+		List<String> allowedSpiceChordsMiddle = ChordProgressionGenerator.getAllowedSpiceChordsMiddle(gc);
+		List<String> allowedSpiceChords = ChordProgressionGenerator.getAllowedSpiceChords(allowedSpiceChordsMiddle);
 
 
 		List<int[]> cpr = new ArrayList<>();
@@ -711,36 +540,9 @@ public class MidiGenerator implements JMC {
 			}
 
 
-			List<String> spicyChordList = (!isLastChord && prevChord != null)
-					? allowedSpiceChordsMiddle
-					: allowedSpiceChords;
-
-			String spicyChordString = chordString;
-			String tempSpicyChordString = MidiGeneratorUtils
-					.generateSpicyChordString(spiceGenerator, chordString, spicyChordList);
-
-			// Generate with SPICE CHANCE
-			if (generator.nextInt(100) < gc.getSpiceChance()
-					&& (chordInts.size() < 7 || lastChord == null)) {
-				spicyChordString = tempSpicyChordString;
-			}
-
-			if (!gc.isDimAug6thEnabled()) {
-				if (gc.getScaleMode() != ScaleMode.IONIAN && gc.getScaleMode().ordinal() < 7) {
-					int scaleOrder = gc.getScaleMode().ordinal();
-					if (MidiUtils.MAJOR_CHORDS.indexOf(chordString) == 6 - scaleOrder) {
-						spicyChordString = "Bdim";
-					}
-				}
-			}
-			if (parallelGenerator.nextInt(100) < gc.getSpiceParallelChance()) {
-				int chordIndex = MidiUtils.MAJOR_CHORDS.indexOf(chordString);
-				String parallelChordString = MidiUtils.MINOR_CHORDS.get(chordIndex);
-				if (chordIndex != 1 || gc.isDimAug6thEnabled()) {
-					spicyChordString = parallelChordString;
-					LG.d("PARALLEL: " + spicyChordString);
-				}
-			}
+			String spicyChordString = ChordProgressionGenerator.applySpiceAndParallelChanges(gc,
+					chordString, isLastChord, prevChord != null, chordInts.size(), lastChord, generator,
+					spiceGenerator, parallelGenerator, allowedSpiceChordsMiddle, allowedSpiceChords);
 
 			chordInts.add(spicyChordString);
 
@@ -2074,7 +1876,8 @@ public class MidiGenerator implements JMC {
 						: Durations.WHOLE_NOTE * defaultDurationMultiplier);
 			}
 		} else {
-			chords = generateChordProgressionList(gc.getRandomSeed(), durations.size());
+			chords = ChordProgressionGenerator.generateChordProgressionList(gc, gc.getRandomSeed(),
+					durations.size(), FIRST_CHORD, LAST_CHORD);
 		}
 
 		List<int[]> mappedChords = new ArrayList<>();
