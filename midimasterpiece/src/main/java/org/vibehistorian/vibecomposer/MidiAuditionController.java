@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.vibehistorian.vibecomposer.ApplicationSessionState.guiConfig;
 import static org.vibehistorian.vibecomposer.Constants.instNames;
 import static org.vibehistorian.vibecomposer.PlaybackState.lastPlayedMs;
 import static org.vibehistorian.vibecomposer.PlaybackState.sequencer;
@@ -24,15 +23,17 @@ public final class MidiAuditionController {
 	private final ScoreGUI scoreGUI;
 	private final MelodyGUI melodyGUI;
 	private final Supplier<MidiUtils.ScaleMode> scaleMode;
+	private final Supplier<GUIConfig> guiConfig;
 
 	public MidiAuditionController(InstrumentPanelController panelController,
 			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI, MelodyGUI melodyGUI,
-			Supplier<MidiUtils.ScaleMode> scaleMode) {
+			Supplier<MidiUtils.ScaleMode> scaleMode, Supplier<GUIConfig> guiConfig) {
 		this.panelController = panelController;
 		this.midiDeviceController = midiDeviceController;
 		this.scoreGUI = scoreGUI;
 		this.melodyGUI = melodyGUI;
 		this.scaleMode = scaleMode;
+		this.guiConfig = guiConfig;
 	}
 
 	public void playNextNote(int keyboardTranspose, int velocity, INST instrument, int panelOrder) {
@@ -40,9 +41,10 @@ public final class MidiAuditionController {
 		int partOrder = panelOrder < 1 ? 1 : panelOrder;
 		int part = activeInstrument.getIndex();
 		LG.i(keyboardTranspose + ", " + velocity + ", " + part + ", " + partOrder);
+		GUIConfig config = guiConfig.get();
 
 		MelodyPart configuredMelody = activeInstrument == INST.MELODY
-				? guiConfig.getMelodyParts().get(partOrder - 1) : null;
+				? config.getMelodyParts().get(partOrder - 1) : null;
 		Phrase nextNoteMelody = configuredMelody != null && configuredMelody.getCustomMidi() != null
 				? configuredMelody.getCustomMidi().makePhrase() : null;
 		int transpose = keyboardTranspose;
@@ -68,7 +70,7 @@ public final class MidiAuditionController {
 		while ((note = nextNoteMelody.getNote(nextNoteIndex++)) != null) {
 			if (note.getPitch() >= 1) {
 				playNote(note.getPitch() + transpose,
-						(int) (note.getDuration() * 1000 * 60 / guiConfig.getBpm()), velocity,
+					(int) (note.getDuration() * 1000 * 60 / config.getBpm()), velocity,
 						activeInstrument, partOrder, ArrangementGUI.actualArrangement.getSections().get(0), true);
 				break;
 			}

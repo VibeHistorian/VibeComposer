@@ -1,7 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.LG;
@@ -33,13 +33,17 @@ public class MidiMVI extends JComponent {
 	Dimension defaultSize = DEFAULT_SIZE;
 	InstPanel parent;
 	private final Supplier<List<Section>> arrangementSections;
+	private final Supplier<GUIConfig> guiConfig;
 
-	public MidiMVI(Supplier<List<Section>> arrangementSections) {
+	public MidiMVI(Supplier<List<Section>> arrangementSections,
+			Supplier<GUIConfig> guiConfig) {
 		this.arrangementSections = arrangementSections;
+		this.guiConfig = guiConfig;
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
-				if (!isEnabled() || ApplicationSessionState.guiConfig.getPatternMaps().isEmpty()) {
+				GUIConfig config = guiConfig.get();
+				if (!isEnabled() || config.getPatternMaps().isEmpty()) {
 					return;
 				}
 				int butt = getButton(evt);
@@ -54,13 +58,13 @@ public class MidiMVI extends JComponent {
 					boolean activate = !isActive(butt);
 					for (int i = 0; i <= 2; i++) {
 						PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
-								UsedPattern.BASE_PATTERNS[i + 1], activate);
+								UsedPattern.BASE_PATTERNS[i + 1], activate, config);
 					}
 					if (!activate) {
 						PatternManagerPopup.unapply2(2, parent.getPartNum(), parent.getPanelOrder(),
-								false);
+								false, config);
 						PatternManagerPopup.unapply2(1, parent.getPartNum(), parent.getPanelOrder(),
-								false);
+								false, config);
 					}
 				}
 				repaint();
@@ -69,12 +73,12 @@ public class MidiMVI extends JComponent {
 			private void processButton(int butt) {
 				if (butt <= 2) {
 					PatternManagerPopup.toggle(parent.getPartNum(), parent.getPanelOrder(),
-							UsedPattern.BASE_PATTERNS[butt + 1], null);
+							UsedPattern.BASE_PATTERNS[butt + 1], null, guiConfig.get());
 				} else {
 					PatternManagerPopup.unapply2(2, parent.getPartNum(), parent.getPanelOrder(),
-							false);
+							false, guiConfig.get());
 					PatternManagerPopup.unapply2(1, parent.getPartNum(), parent.getPanelOrder(),
-							false);
+							false, guiConfig.get());
 				}
 			}
 		});
@@ -133,17 +137,18 @@ public class MidiMVI extends JComponent {
 	}
 
 	private boolean isActive(int i) {
-		if (ApplicationSessionState.guiConfig.getPatternMaps().isEmpty()) {
+		GUIConfig config = guiConfig.get();
+		if (config.getPatternMaps().isEmpty()) {
 			return false;
 		}
 		int partNum = parent.getPartNum();
 		int panelOrder = parent.getPanelOrder();
 		if (i <= 2) {
-			PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(parent.getPartNum(),
+			PhraseNotes pn = config.getPatternRaw(parent.getPartNum(),
 					parent.getPanelOrder(), UsedPattern.BASE_PATTERNS[i + 1]);
 			return (pn != null) && pn.isApplied();
 		} else {
-			Set<String> patternNames = ApplicationSessionState.guiConfig.getPatternMaps()
+			Set<String> patternNames = config.getPatternMaps()
 					.get(parent.getPartNum()).getPatternNames(parent.getPanelOrder());
 			if (patternNames == null) {
 				return false;
@@ -154,7 +159,7 @@ public class MidiMVI extends JComponent {
 
 			// remove not applied patterns
 			patternNames.removeIf(name -> {
-				PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(parent.getPartNum(),
+				PhraseNotes pn = config.getPatternRaw(parent.getPartNum(),
 						parent.getPanelOrder(), name);
 				return (pn == null || !pn.isApplied());
 			});

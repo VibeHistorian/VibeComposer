@@ -454,7 +454,8 @@ public class MidiEditArea extends JComponent {
 			dragMode.add(DM.VELOCITY);
 		} else if (pop != null && pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
 			int row = getPitchFromPosition(evt.getPoint().y) - currentMin;
-			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex());
+			List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex(),
+					pop.getContext().getGUIConfig());
 			if (row >= 0 && row < noteNotes.size()) {
 				pop.setupIdentifiers(INST.DRUM.getIndex(),
 				pop.getContext().getInstList(INST.DRUM).get(row).getPanelOrder());
@@ -1336,7 +1337,8 @@ public class MidiEditArea extends JComponent {
 
 			if (pop != null && pop.displayDrumHelper.isSelected() && pop.getSec() != null) {
 				g.setColor(OMNI.alphen(nonHighlightedColor, UITheme.isDarkMode ? 40 : 80));
-				List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex());
+				List<PhraseNotes> noteNotes = pop.getSec().getPatterns(INST.DRUM.getIndex(),
+						pop.getContext().getGUIConfig());
 				for (int i = 0; i < noteNotes.size(); i++) {
 					noteNotes.get(i).remakeNoteStartTimes();
 					for (int j = 0; j < noteNotes.get(i).size(); j++) {

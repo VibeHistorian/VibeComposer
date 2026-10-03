@@ -67,7 +67,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
+import static org.vibehistorian.vibecomposer.ApplicationSessionState.actionUndoManager;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_HEIGHT;
 import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
@@ -84,6 +84,7 @@ public class VibeComposerGUI extends JFrame
 	private final MidiCcController midiCcController;
 	private final MidiExportController midiExportController;
 	private final MainWindowControls mainWindowControls;
+	private GUIConfig guiConfig = new GUIConfig();
 	private PresetViewController presetViewController;
 	private ComposeCoordinator composeCoordinator;
 	private AppearanceController appearanceController;
@@ -179,6 +180,7 @@ public class VibeComposerGUI extends JFrame
 		@Override public int getCurrentSeed() { return generationGUI.getCurrentSeed(); }
 		@Override public int getLastRandomSeed() { return generationGUI.lastRandomSeed; }
 		@Override public List<Section> getArrangementSections() { return getGeneratedArrangementSections(); }
+		@Override public GUIConfig getGUIConfig() { return guiConfig; }
 	};
 	private final MidiEditPopup.Context midiEditPopupContext = new MidiEditPopup.Context() {
 		@Override public Component getMainWindowComponent() { return VibeComposerGUI.this; }
@@ -197,6 +199,7 @@ public class VibeComposerGUI extends JFrame
 		@Override public List<Integer> getMelodyBlockChoicePreference() {
 			return melodyGUI.melodyBlockChoicePreference.getValues();
 		}
+		@Override public GUIConfig getGUIConfig() { return guiConfig; }
 		@Override public MidiGenerator getMelodyGenerator() {
 			return midiEditorSession.getMelodyGenerator();
 		}
@@ -528,6 +531,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				ScrollComboBox<GUIConfig> configHistory = mainWindowControls.getConfigHistory();
 				return configHistory.getItemCount() > 0 ? configHistory.getVal() : null;
 			}
+			@Override public GUIConfig getGUIConfig() { return guiConfig; }
 			@Override public void recalculateAfterSectionRecompose() {
 				recalculateTabPaneCounts();
 				recalculateSoloMuters();
@@ -698,6 +702,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public ScaleMode getScaleMode() {
 				return ScaleMode.valueOf(generationGUI.scaleMode.getVal());
 			}
+			@Override public GUIConfig getGUIConfig() { return guiConfig; }
 			@Override
 			public void copyGUItoConfig() {
 				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
@@ -758,7 +763,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		initScoreGUI();
 		midiAuditionController = new MidiAuditionController(instrumentPanelController,
 				midiDeviceController, scoreGUI, melodyGUI,
-				() -> ScaleMode.valueOf(generationGUI.scaleMode.getVal()));
+				() -> ScaleMode.valueOf(generationGUI.scaleMode.getVal()), () -> guiConfig);
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
 
@@ -1137,11 +1142,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override
 			public void mouseReleased(MouseEvent e) {
 
-				if (isDragging) {
+				if (isPlayheadDragging()) {
 					playbackController.savePauseInfo();
 					if (sequencer != null)
 						playbackController.midiNavigate(slider.getUpperValue());
-					isDragging = false;
 				}
 			}
 		});
@@ -1278,7 +1282,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				while (true) {
 					try {
 						if (sequencer != null && sequencer.isRunning()) {
-							if (!isDragging && !isKeySeeking) {
+							if (!isPlayheadDragging() && !isKeySeeking) {
 								queuePlayheadUpdate(allowedActionsOnZero == 0);
 								if (allowedActionsOnZero == 0) {
 									if (midiEditorSession.isVisible()) {
@@ -1298,7 +1302,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 						if (allowedActionsOnZero == 0) {
 							if (ArrangementGUI.actualArrangement != null && slider.getMaximum() > 0) {
 								int val = sequencer != null && sequencer.isRunning()
-										&& !isDragging && !isKeySeeking
+										&& !isPlayheadDragging() && !isKeySeeking
 										? (int) (sequencer.getMicrosecondPosition() / 1000)
 										: slider.getUpperValue();
 								String newTime = OMNI.millisecondsToTimeString(val);
@@ -1337,7 +1341,6 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 										&& sectIndex < ArrangementGUI.actualArrangement.getSections().size()) {
 									sec = ArrangementGUI.actualArrangement.getSections().get(sectIndex);
 								}
-								currentSectionIndex = sectIndex;
 								int finalSectIndex = sectIndex;
 								String newText = null;
 								if (sec == null) {
@@ -1375,7 +1378,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 							}
 						}
 
-						if (loopBeat.isSelected() && !heavyBackgroundTasksInProgress && !isDragging
+						if (loopBeat.isSelected() && !heavyBackgroundTasksInProgress
+								&& !isPlayheadDragging()
 								&& (sequencer != null)) {
 							int startPos = delayed();
 							if (slider.getValue() > startPos) {
@@ -1447,7 +1451,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 		SwingUtilities.invokeLater(() -> {
 			boolean refresh = playheadRefreshPending.getAndSet(false);
-			if (sequencer != null && sequencer.isRunning() && !isDragging && !isKeySeeking) {
+			if (sequencer != null && sequencer.isRunning()
+					&& !isPlayheadDragging() && !isKeySeeking) {
 				int playheadPosition = (int) (sequencer.getMicrosecondPosition() / 1000);
 				if (refresh) {
 					slider.setUpperValue(playheadPosition);
@@ -1460,6 +1465,10 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				queuePlayheadUpdate(false);
 			}
 		});
+	}
+
+	private boolean isPlayheadDragging() {
+		return slider != null && slider.isUpperDragging();
 	}
 
 
@@ -1558,11 +1567,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 	}
 
-	public static int delayed() {
+	public int delayed() {
 		return (int) (MidiGenerator.START_TIME_DELAY * 1000 * 60 / guiConfig.getBpm());
 	}
 
-	public static int beatFromBpm(int speedAdjustment) {
+	public int beatFromBpm(int speedAdjustment) {
 		int finalVal = (int) (((1000 - speedAdjustment) * 60 * ExtraSettingsGUI.stretchMidi.getInt() / 100.0)
 				/ guiConfig.getBpm());
 		/*if (useDoubledDurations.isSelected()) {
@@ -1571,7 +1580,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		return finalVal;
 	}
 
-	public static int sliderMeasureWidth() {
+	public int sliderMeasureWidth() {
 		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH);
 	}
 
@@ -1773,14 +1782,16 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	private ComposeCoordinator getComposeCoordinator() {
 		if (composeCoordinator == null) {
 			composeCoordinator = new ComposeCoordinator(new ComposeCoordinator.Context() {
+				@Override public GUIConfig getGUIConfig() { return guiConfig; }
+				@Override public void setGUIConfig(GUIConfig config) { guiConfig = config; }
 				@Override public void copyGuiToConfig(GUIConfig config, boolean isNew) {
 					VibeComposerGUI.this.copyGUItoConfig(config, isNew);
 				}
 				@Override public void assignSequenceTrack(int instrument, int panelOrder, int trackNumber) {
 					VibeComposerGUI.this.assignSequenceTrack(instrument, panelOrder, trackNumber);
 				}
-				@Override public int sliderMeasureWidth() { return VibeComposerGUI.sliderMeasureWidth(); }
-				@Override public int delayed() { return VibeComposerGUI.delayed(); }
+				@Override public int sliderMeasureWidth() { return VibeComposerGUI.this.sliderMeasureWidth(); }
+				@Override public int delayed() { return VibeComposerGUI.this.delayed(); }
 				@Override public int selectedInstrumentTab() { return instrumentTabPane.getSelectedIndex(); }
 				@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
 				@Override public void recalculateTabPaneCounts() {

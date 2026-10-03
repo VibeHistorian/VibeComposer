@@ -1107,11 +1107,11 @@ public class Section {
 		return patterns.get(part).get(partOrder);
 	}
 
-	public List<PhraseNotes> getPatterns(int part) {
+	public List<PhraseNotes> getPatterns(int part, GUIConfig guiConfig) {
 		UsedPatternMap upMap = patterns.get(part);
 		List<PhraseNotes> patterns = new ArrayList<>();
 		for (Integer partOrder : upMap.keySet()) {
-			patterns.add(ApplicationSessionState.guiConfig.getPattern(upMap.get(partOrder)));
+			patterns.add(guiConfig.getPattern(upMap.get(partOrder)));
 		}
 		return patterns;
 	}

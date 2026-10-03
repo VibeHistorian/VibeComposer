@@ -1,10 +1,9 @@
 package org.vibehistorian.vibecomposer;
 
-/** Owns active configuration and application-level services. */
+/** Holds application-level services that still require a shared lifetime. */
 public final class ApplicationSessionState {
 	private ApplicationSessionState() {
 	}
 
-	public static GUIConfig guiConfig = new GUIConfig();
 	public static UndoManager actionUndoManager = new UndoManager();
 }

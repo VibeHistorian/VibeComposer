@@ -237,6 +237,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         boolean isRandomizeInstOnComposeOrGen();
         boolean isBeatDurationMultiplierBelowOne();
         MidiUtils.ScaleMode getScaleMode();
+        GUIConfig getGUIConfig();
         void copyGUItoConfig();
         void adjustScoreTranspose(int amount);
 		void alignChordsWithMelody(ChordletPanel chordlets);
@@ -589,7 +590,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			public void actionPerformed(ActionEvent e) {
 				context.copyGUItoConfig();
 				List<String> normalizedChords = MidiUtils
-						.respiceChords(userChords.getChordListString(), ApplicationSessionState.guiConfig);
+						.respiceChords(userChords.getChordListString(), context.getGUIConfig());
                 userChords.setupChords(normalizedChords);
             }
 		});
@@ -749,7 +750,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 
 	private void randomizeUserChords() {
 		context.copyGUItoConfig();
-		MidiGenerator mg = new MidiGenerator(ApplicationSessionState.guiConfig);
+		MidiGenerator mg = new MidiGenerator(context.getGUIConfig());
 		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
 		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
 		MidiGenerator.userChords.clear();

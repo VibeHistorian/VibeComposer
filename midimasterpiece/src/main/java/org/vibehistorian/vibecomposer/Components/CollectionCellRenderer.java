@@ -1,9 +1,9 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.apache.commons.lang3.tuple.Triple;
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.Arrangement;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.UsedPattern;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
@@ -33,6 +33,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	private final IntFunction<List<? extends InstPanel>> getInstList;
 	private final ToIntBiFunction<Integer, Integer> getAbsoluteOrder;
 	private final Supplier<ArrangementTableRenderState> getArrangementRenderState;
+	private final Supplier<GUIConfig> getGUIConfig;
 	public static final int MIN_CELLS = 8;
 	public static final Color[] CUSTOM_PATTERN_COLORS = { UITheme.darkModeUIColor,
 			UITheme.lightModeUIColor, new Color(150, 200, 200), Color.red };
@@ -40,7 +41,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 	public CollectionCellRenderer(Collection<? extends Object> itrs, int w, int h, int partNum,
 			int col, IntFunction<List<? extends InstPanel>> getInstList,
 			ToIntBiFunction<Integer, Integer> getAbsoluteOrder,
-			Supplier<ArrangementTableRenderState> getArrangementRenderState) {
+			Supplier<ArrangementTableRenderState> getArrangementRenderState,
+			Supplier<GUIConfig> getGUIConfig) {
 		stringables = itrs;
 		height = h;
 		width = w;
@@ -49,6 +51,7 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 		this.getInstList = getInstList;
 		this.getAbsoluteOrder = getAbsoluteOrder;
 		this.getArrangementRenderState = getArrangementRenderState;
+		this.getGUIConfig = getGUIConfig;
 	}
 
 	@Override
@@ -120,7 +123,8 @@ public class CollectionCellRenderer extends JComponent implements TableCellRende
 					boolean isCustomMidi = false;
 					if (sec.containsPattern(part, panelOrder)) {
 						UsedPattern pat = sec.getPattern(part, panelOrder);
-						isCustomMidi = pat.isCustom(part, panelOrder, ApplicationSessionState.guiConfig.getPatternRaw(pat));
+						isCustomMidi = pat.isCustom(part, panelOrder,
+								getGUIConfig.get().getPatternRaw(pat));
 					}
 
 					Color instCellColor = OMNI.mixColor(panelC, Constants.instColors[part],

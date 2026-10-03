@@ -60,6 +60,7 @@ public class MidiEditPopup extends CloseablePopup {
 		void markArrangementManual();
 		void repaintActualArrangement();
 		List<Double> getUserChordDurations();
+		GUIConfig getGUIConfig();
 		void playNote(int pitch, int durationMs, int velocity, INST part, int partOrder,
 				Section section, boolean overrideLastPlayed);
 	}
@@ -183,7 +184,7 @@ public class MidiEditPopup extends CloseablePopup {
 			sec.putPattern(secPartNum, secPartOrder, pat);
 		}
 		LG.i("Loading pattern: " + pat.toString());
-		PhraseNotes values = ApplicationSessionState.guiConfig.getPattern(pat);
+		PhraseNotes values = context.getGUIConfig().getPattern(pat);
 		if (values == null) {
 			LG.e("-----------------------LoadSecValues returns null!--------------");
 		} else {
@@ -445,7 +446,7 @@ public class MidiEditPopup extends CloseablePopup {
 							patternNameBox.addItem(pnm);
 							patternNameBox.setVal(pnm);
 							// store in current part as new
-							ApplicationSessionState.guiConfig.getPatternMaps().get(part).put(partOrder,
+							context.getGUIConfig().getPatternMaps().get(part).put(partOrder,
 									patternName, getValues());
 							apply();
 							setSelectedPattern(sec.getPattern(part, partOrder));
@@ -470,18 +471,18 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private void loadPartOrders() {
-		loadPartOrders(patternPartBox, patternPartOrderBox, patternNameBox);
+		loadPartOrders(context.getGUIConfig(), patternPartBox, patternPartOrderBox, patternNameBox);
 	}
 
-	public static void loadPartOrders(ScrollComboBox<String> parts,
+	public static void loadPartOrders(GUIConfig config, ScrollComboBox<String> parts,
 			ScrollComboBox<Integer> partOrders, ScrollComboBox<PatternNameMarker> names) {
 		names.removeAllItems();
 		partOrders.removeAllItems();
 		int part = parts.getSelectedIndex();
-		if (ApplicationSessionState.guiConfig.getPatternMaps().size() <= part) {
+		if (config.getPatternMaps().size() <= part) {
 			return;
 		}
-		ScrollComboBox.addAll(ApplicationSessionState.guiConfig.getPatternMaps().get(part).getKeys(),
+		ScrollComboBox.addAll(config.getPatternMaps().get(part).getKeys(),
 				partOrders);
 		if (partOrders.getItemCount() > 0) {
 			partOrders.setSelectedIndex(0);
@@ -489,25 +490,25 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	private void loadNames() {
-		loadNames(patternPartBox, patternPartOrderBox, patternNameBox);
+		loadNames(context.getGUIConfig(), patternPartBox, patternPartOrderBox, patternNameBox);
 	}
 
-	public static void loadNames(ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
+	public static void loadNames(GUIConfig config, ScrollComboBox<String> parts, ScrollComboBox<Integer> partOrders,
 			ScrollComboBox<PatternNameMarker> names) {
 		names.removeAllItems();
 		int part = parts.getSelectedIndex();
-		if (ApplicationSessionState.guiConfig.getPatternMaps().size() <= part) {
+		if (config.getPatternMaps().size() <= part) {
 			return;
 		}
 		Integer partOrder = partOrders.getSelectedItem();
 		if (partOrder == null) {
 			return;
 		}
-		Set<String> patternNames = ApplicationSessionState.guiConfig.getPatternMaps().get(part)
+		Set<String> patternNames = config.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
 		List<PatternNameMarker> namesWithMarkers = patternNames.stream()
 				.map(e -> new PatternNameMarker(e,
-						ApplicationSessionState.guiConfig.getPatternRaw(part, partOrder, e) != null))
+						config.getPatternRaw(part, partOrder, e) != null))
 				.collect(Collectors.toList());
 		Collections.sort(namesWithMarkers);
 		ScrollComboBox.addAll(namesWithMarkers, names);
@@ -530,7 +531,7 @@ public class MidiEditPopup extends CloseablePopup {
 		} else {
 			// import instead
 			UsedPattern pat = sec.getPattern(part, partOrder);
-			PhraseNotes oldPn = ApplicationSessionState.guiConfig.getPattern(pat);
+			PhraseNotes oldPn = context.getGUIConfig().getPattern(pat);
 
 			if (oldPn != null) {
 				pn.remakeNoteStartTimes();
@@ -576,7 +577,7 @@ public class MidiEditPopup extends CloseablePopup {
 			patternNameBox.addItem(pnm);
 			patternNameBox.setValRaw(pnm);
 			// store in current part as new
-			ApplicationSessionState.guiConfig.getPatternMaps().get(part).put(partOrder, patternName,
+			context.getGUIConfig().getPatternMaps().get(part).put(partOrder, patternName,
 					getValues());
 		} else {
 			// store in selected part
@@ -608,7 +609,7 @@ public class MidiEditPopup extends CloseablePopup {
 	}
 
 	public PatternMap getPatternMap() {
-		return ApplicationSessionState.guiConfig.getPatternMaps().get(patternPartBox.getSelectedIndex());
+		return context.getGUIConfig().getPatternMaps().get(patternPartBox.getSelectedIndex());
 	}
 
 	public void setupIdentifiers(int secPartNum, int secPartOrder) {
@@ -616,14 +617,14 @@ public class MidiEditPopup extends CloseablePopup {
 		partOrder = secPartOrder;
 		UsedPattern pat = sec.getPattern(part, partOrder);
 
-		if (pat != null && pat.isCustom(part, partOrder, ApplicationSessionState.guiConfig.getPatternRaw(pat))) {
+		if (pat != null && pat.isCustom(part, partOrder, context.getGUIConfig().getPatternRaw(pat))) {
 			setSelectedPattern(pat);
 		} else {
 			patternPartBox.setSelectedIndex(part);
 			patternPartOrderBox.setVal(partOrder);
 			String patName = sec.getPatternName(part, partOrder);
 			patternNameBox.setValRaw(new PatternNameMarker(patName,
-					ApplicationSessionState.guiConfig.getPatternRaw(part, partOrder, patName) != null));
+					context.getGUIConfig().getPatternRaw(part, partOrder, patName) != null));
 		}
 		frame.setTitle("Edit MIDI Phrase (Graphical) | Part: " + Constants.instNames[part]
 				+ ", Order: " + secPartOrder);
@@ -665,7 +666,7 @@ public class MidiEditPopup extends CloseablePopup {
 		if (mvea != null && mvea.getValues() != null) {
 			// TODO
 			UsedPattern pat = getSelectedPattern();
-			PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(pat);
+			PhraseNotes pn = context.getGUIConfig().getPatternRaw(pat);
 			if (pn != null) {
 				pn.setApplied(true);
 				sec.putPattern(part, partOrder, pat);
@@ -682,7 +683,7 @@ public class MidiEditPopup extends CloseablePopup {
 	public void applyNone() {
 		if (mvea != null && mvea.getValues() != null) {
 			UsedPattern pat = getSelectedPattern();
-			ApplicationSessionState.guiConfig.getPatternRaw(pat).setApplied(false);
+			context.getGUIConfig().getPatternRaw(pat).setApplied(false);
 			sec.putPattern(part, partOrder, new UsedPattern(part, partOrder, UsedPattern.NONE));
 			repaintMvea();
 			context.repaintActualArrangement();
@@ -769,7 +770,7 @@ public class MidiEditPopup extends CloseablePopup {
 		UsedPattern generatedPat = sec.getPattern(part, partOrder);
 		LG.i("Recompose, new pattern: " + generatedPat.toString());
 		PhraseNotes pn = MidiGenerator.gc.getPattern(generatedPat);
-		ApplicationSessionState.guiConfig.putPattern(generatedPat, pn);
+		context.getGUIConfig().putPattern(generatedPat, pn);
 
 		mvea.setCurrentMin(110);
 		mvea.setCurrentMax(10);
@@ -803,7 +804,7 @@ public class MidiEditPopup extends CloseablePopup {
 		if (sec != null) {
 			UsedPattern pat = sec.getPattern(part, partOrder);
 			String patName = (pat != null) ? pat.toString() : "<No pattern>";
-			PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(pat);
+			PhraseNotes pn = context.getGUIConfig().getPatternRaw(pat);
 			patName += (pn != null && pn.isApplied()) ? " - Applied" : " - Not Applied";
 			text.setText(patName);
 		}
@@ -893,7 +894,7 @@ public class MidiEditPopup extends CloseablePopup {
 			return false;
 		}
 		UsedPattern pat = sec.getPattern(part, partOrder);
-		return pat.isCustom(part, partOrder, ApplicationSessionState.guiConfig.getPatternRaw(pat));
+		return pat.isCustom(part, partOrder, context.getGUIConfig().getPatternRaw(pat));
 	}
 
 	public PhraseNotes getValues() {

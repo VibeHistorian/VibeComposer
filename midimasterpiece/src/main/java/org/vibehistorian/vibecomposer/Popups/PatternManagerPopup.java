@@ -1,6 +1,6 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.ApplicationSessionState;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.INST;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
@@ -29,11 +29,14 @@ public class PatternManagerPopup extends CloseablePopup {
 	MidiEditArea mvea = null;
 
 	int panelWidth = 1000;
+	private final Supplier<GUIConfig> guiConfig;
 
 	CustomCheckBox removeCB = new CustomCheckBox("Remove", false);
 
-	public PatternManagerPopup(Supplier<List<Double>> userChordDurationProvider) {
+	public PatternManagerPopup(Supplier<List<Double>> userChordDurationProvider,
+			Supplier<GUIConfig> guiConfig) {
 		super("Pattern Manager", 14, new Point(-200, -200));
+		this.guiConfig = guiConfig;
 
 		JPanel allPanels = new JPanel();
 		allPanels.setLayout(new BoxLayout(allPanels, BoxLayout.Y_AXIS));
@@ -78,7 +81,7 @@ public class PatternManagerPopup extends CloseablePopup {
 				}
 			}
 			if (depth == 3) {
-				PhraseNotes pn = ApplicationSessionState.guiConfig.getPattern(part, partOrder, name);
+				PhraseNotes pn = guiConfig.get().getPattern(part, partOrder, name);
 				if (pn != null) {
 					mvea.setCustomValues(pn);
 				}
@@ -131,12 +134,14 @@ public class PatternManagerPopup extends CloseablePopup {
 	}
 
 	private void loadPartOrders() {
-		MidiEditPopup.loadPartOrders(patternPartBox, patternPartOrderBox, patternNameBox);
+		MidiEditPopup.loadPartOrders(guiConfig.get(), patternPartBox, patternPartOrderBox,
+				patternNameBox);
 		patternPartOrderBox.addItem(null);
 	}
 
 	private void loadNames() {
-		MidiEditPopup.loadNames(patternPartBox, patternPartOrderBox, patternNameBox);
+		MidiEditPopup.loadNames(guiConfig.get(), patternPartBox, patternPartOrderBox,
+				patternNameBox);
 		patternNameBox.addItem(new PatternNameMarker("", true));
 	}
 
@@ -173,25 +178,25 @@ public class PatternManagerPopup extends CloseablePopup {
 		case 0:
 			for (INST instrument : INST.values()) {
 				int i = instrument.getIndex();
-				List<Integer> partOrders = ApplicationSessionState.guiConfig.getPatternMaps().get(i)
+				List<Integer> partOrders = guiConfig.get().getPatternMaps().get(i)
 						.getKeys();
 				for (Integer pO : partOrders) {
-					unapply2(mode, i, pO, remove);
+					unapply2(mode, i, pO, remove, guiConfig.get());
 				}
 			}
 			break;
 		case 1:
-			List<Integer> partOrders = ApplicationSessionState.guiConfig.getPatternMaps().get(part)
+			List<Integer> partOrders = guiConfig.get().getPatternMaps().get(part)
 					.getKeys();
 			for (Integer pO : partOrders) {
-				unapply2(mode, part, pO, remove);
+				unapply2(mode, part, pO, remove, guiConfig.get());
 			}
 			break;
 		case 2:
-			unapply2(mode, part, partOrder, remove);
+			unapply2(mode, part, partOrder, remove, guiConfig.get());
 			break;
 		case 3:
-			unapply3(part, partOrder, name, remove);
+			unapply3(part, partOrder, name, remove, guiConfig.get());
 			break;
 		default:
 			throw new UnsupportedOperationException("Mode too big.");
@@ -203,29 +208,32 @@ public class PatternManagerPopup extends CloseablePopup {
 
 	}
 
-	public static void unapply2(int mode, int part, Integer partOrder, boolean remove) {
-		Set<String> patNames = ApplicationSessionState.guiConfig.getPatternMaps().get(part)
+	public static void unapply2(int mode, int part, Integer partOrder, boolean remove,
+			GUIConfig config) {
+		Set<String> patNames = config.getPatternMaps().get(part)
 				.getPatternNames(partOrder);
 		patNames = patNames.stream().filter(e -> filter(mode, e)).collect(Collectors.toSet());
 		for (String pat : patNames) {
-			unapply3(part, partOrder, pat, remove);
+			unapply3(part, partOrder, pat, remove, config);
 		}
 	}
 
-	public static void unapply3(int part, Integer partOrder, String name, boolean remove) {
+	public static void unapply3(int part, Integer partOrder, String name, boolean remove,
+			GUIConfig config) {
 		if (remove) {
-			ApplicationSessionState.guiConfig.getPatternMaps().get(part).removePattern(partOrder, name);
+			config.getPatternMaps().get(part).removePattern(partOrder, name);
 		} else {
-			unapply(part, partOrder, name);
+			unapply(part, partOrder, name, config);
 		}
 	}
 
-	public static void unapply(int part, Integer partOrder, String pat) {
-		toggle(part, partOrder, pat, false);
+	public static void unapply(int part, Integer partOrder, String pat, GUIConfig config) {
+		toggle(part, partOrder, pat, false, config);
 	}
 
-	public static Boolean toggle(int part, Integer partOrder, String pat, Boolean forcedState) {
-		PhraseNotes pn = ApplicationSessionState.guiConfig.getPatternRaw(part, partOrder, pat);
+	public static Boolean toggle(int part, Integer partOrder, String pat, Boolean forcedState,
+			GUIConfig config) {
+		PhraseNotes pn = config.getPatternRaw(part, partOrder, pat);
 		if (pn == null) {
 			return null;
 		}

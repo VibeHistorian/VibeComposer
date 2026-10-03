@@ -1,7 +1,5 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.PlaybackState;
-
 import javax.swing.JTabbedPane;
 import java.util.function.BooleanSupplier;
 
@@ -22,7 +20,6 @@ public class PlayheadRangeSlider extends RangeSlider {
 	@Override
 	public void setUpperDragging(boolean upperDragging) {
 		super.setUpperDragging(upperDragging);
-		PlaybackState.isDragging = upperDragging;
 		if (instrumentTabPane.getTabCount() < 8
 				|| instrumentTabPane.getSelectedIndex() == 7) {
 			repaintScore.run();

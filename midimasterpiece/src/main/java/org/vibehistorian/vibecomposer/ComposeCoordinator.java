@@ -23,12 +23,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
 
 /** Coordinates the ordered preparation, generation, and playback setup workflow. */
 public final class ComposeCoordinator {
     public interface Context {
+        GUIConfig getGUIConfig();
+        void setGUIConfig(GUIConfig config);
         void copyGuiToConfig(GUIConfig config, boolean isNew);
         void assignSequenceTrack(int instrument, int panelOrder, int trackNumber);
         int sliderMeasureWidth();
@@ -117,7 +118,7 @@ public final class ComposeCoordinator {
             soloMuteController.requestRecalculation();
 
             Integer masterpieceSeed = prepareMainSeed(regenerate);
-            int regenerateCount = regenerate ? guiConfig.getRegenerateCount() + 1 : 0;
+            int regenerateCount = regenerate ? context.getGUIConfig().getRegenerateCount() + 1 : 0;
 
             prepareUI(regenerate, manual);
             if (logPerformance) {
@@ -156,7 +157,7 @@ public final class ComposeCoordinator {
             }
             melodyGenerator.generateMasterpiece(masterpieceSeed, relPath);
 
-            guiConfig = midiConfig;
+            context.setGUIConfig(midiConfig);
             soloMuteController.reapplyTracks();
 
             cleanUpUIAfterCompose(regenerate);
@@ -346,10 +347,12 @@ public final class ComposeCoordinator {
 
     private void cleanUpUIAfterCompose(boolean regenerate) {
         chordGUI.applyGeneratedChords(MidiGenerator.chordInts,
-                melodyGUI.getUserMelody() != null, guiConfig);
-        melodyGUI.applyGeneratedTargetNotes(regenerate, MelodyGenerator.TARGET_NOTES, guiConfig);
+                melodyGUI.getUserMelody() != null, context.getGUIConfig());
+        melodyGUI.applyGeneratedTargetNotes(regenerate, MelodyGenerator.TARGET_NOTES,
+                context.getGUIConfig());
         arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
-        arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(), guiConfig);
+        arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(),
+                context.getGUIConfig());
         scoreGUI.pianoRoll();
         if (midiEditorSession.isVisible()) {
             midiEditorSession.refreshAfterCompose(ArrangementGUI.actualArrangement.getSections());

@@ -54,6 +54,7 @@ public abstract class InstPanel extends JPanel {
 		int getCurrentSeed();
 		int getLastRandomSeed();
 		List<Section> getArrangementSections();
+		GUIConfig getGUIConfig();
 	}
 
 	private static final long serialVersionUID = 4381939543337887617L;
@@ -64,7 +65,8 @@ public abstract class InstPanel extends JPanel {
 	protected InstComboBox instrument = new InstComboBox();
 	protected InstUtils.POOL instPool = InstUtils.POOL.PLUCK;
 
-	protected MidiMVI midiMVI = new MidiMVI(this::getArrangementSections);
+	protected MidiMVI midiMVI = new MidiMVI(this::getArrangementSections,
+			this::getConfigForMidiMvi);
 
 	protected KnobPanel hitsPerPattern = new KnobPanel("Hits", 8, 1, VisualPatternPanel.MAX_HITS);
 	protected KnobPanel chordSpan = new KnobPanel("Span", 1, 1, 4);
@@ -121,6 +123,10 @@ public abstract class InstPanel extends JPanel {
 	private Context context;
 	private InstrumentPanelController panelController;
 	private InstrumentControlContext instrumentControlContext;
+
+	private GUIConfig getConfigForMidiMvi() {
+		return context.getGUIConfig();
+	}
 
 	protected Set<Component> toggleableComponents = new HashSet<>();
 

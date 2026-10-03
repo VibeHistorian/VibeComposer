@@ -31,9 +31,7 @@ public final class PlaybackState {
 	public static List<Integer> sliderBeatStartTimes;
 	public static JLabel currentTime;
 	public static JLabel totalTime;
-	public static int currentSectionIndex = -1;
 	public static JLabel sectionText;
-	public static boolean isDragging;
 
 	static boolean pauseInfoResettable = true;
 	static int pausedBpm = 50;

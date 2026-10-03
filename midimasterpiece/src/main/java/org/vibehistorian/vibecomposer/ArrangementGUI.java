@@ -278,6 +278,7 @@ public class ArrangementGUI {
 		int getCurrentSeed();
 		int getLastRandomSeed();
 		boolean canRegenerateOnChange();
+		GUIConfig getGUIConfig();
 	}
 
 	private void preparePartMaps(Arrangement target) {
@@ -614,7 +615,7 @@ public class ArrangementGUI {
 					if (event.isShiftDown()) {
 						UsedPattern pattern = section.getPattern(instrument, panel);
 						if (pattern != null) {
-							PhraseNotes notes = ApplicationSessionState.guiConfig.getPatternRaw(pattern);
+							PhraseNotes notes = context.getGUIConfig().getPatternRaw(pattern);
 							if (notes != null && notes.isApplied()) target.putPattern(instrument, panel, pattern);
 						}
 					}
@@ -704,7 +705,7 @@ public class ArrangementGUI {
 			LG.i("Can't copy custom midi - invalid part!");
 			return;
 		}
-		PhraseNotes notes = ApplicationSessionState.guiConfig.getPatternRaw(copyDraggedPattern);
+		PhraseNotes notes = context.getGUIConfig().getPatternRaw(copyDraggedPattern);
 		if (notes == null) {
 			new TemporaryInfoPopup("Invalid pattern for copying!", 1500);
 			return;
@@ -1116,7 +1117,7 @@ public class ArrangementGUI {
 				return new CollectionCellRenderer(stringables, width, height, row - 2, col,
 						ArrangementGUI.this::getInstList,
 						(part, panelOrder) -> panelController.getAbsoluteOrder(INST.fromIndex(part), panelOrder),
-						ArrangementGUI.this::getTableRenderState);
+						ArrangementGUI.this::getTableRenderState, context::getGUIConfig);
 			}
 		};
 		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {
@@ -1459,6 +1460,6 @@ public class ArrangementGUI {
 	}
 
 	public void openPatternManagerPopup() {
-		new PatternManagerPopup(chordGUI::getUserChordDurations);
+		new PatternManagerPopup(chordGUI::getUserChordDurations, context::getGUIConfig);
 	}
 }
