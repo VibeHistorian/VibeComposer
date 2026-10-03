@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.Enums.BlockType.BLOCK_CHANGE_MAP;
@@ -466,6 +469,44 @@ public class MelodyUtils {
 		LG.n("Others: " + others.size() + ", 16th: " + main16th.size() + ", 8th: "
 				+ main8th.size());
 		return sorted;
+	}
+
+	public static List<String> getChordsFromMelodyPitches(int orderOfMatch, List<Double> durations,
+			Map<Integer, List<Note>> melodyMap, Map<String, Set<Integer>> freqMap) {
+		List<String> chordStrings = new ArrayList<>();
+		String prevChordString = null;
+
+		for (int i = 0; i < melodyMap.size(); i++) {
+			List<Integer> chordFreqs = new ArrayList<>();
+			double totalDuration = 0;
+			for (Note n : melodyMap.get(i)) {
+				double dur = n.getRhythmValue();
+				double durCounter = 0.0;
+				int index = i;
+				if (index >= durations.size()) {
+					index = durations.size() - 1;
+				}
+				while (durCounter < dur && totalDuration < durations.get(index)) {
+					chordFreqs.add(n.getPitch() % 12);
+					durCounter += Durations.EIGHTH_NOTE;
+					totalDuration += Durations.EIGHTH_NOTE;
+				}
+			}
+
+			Map<Integer, Long> freqCounts = chordFreqs.stream()
+					.collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+
+			Map<Integer, Long> top3 = freqCounts.entrySet().stream()
+					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(4)
+					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+							(e1, e2) -> e1, LinkedHashMap::new));
+
+			String chordString = MidiUtils.applyChordFreqMap(top3, orderOfMatch, prevChordString, freqMap);
+			LG.d("Alternate chord #" + i + ": " + chordString);
+			chordStrings.add(chordString);
+			prevChordString = chordString;
+		}
+		return chordStrings;
 	}
 
 	public static Pair<Integer, Integer[]> generateBlockByBlockChangeAndLength(Integer blockChange,

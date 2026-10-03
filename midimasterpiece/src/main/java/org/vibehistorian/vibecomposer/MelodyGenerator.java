@@ -533,7 +533,7 @@ public class MelodyGenerator {
         }
 
         if (fillChordMelodyMap) {
-            List<String> chordStrings = getChordsFromMelodyPitches(2, mg.progressionDurations, chordMelodyMap1,
+            List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, mg.progressionDurations, chordMelodyMap1,
                     MidiUtils.baseFreqMap);
             int start = 1;
             int end = chordMelodyMap1.keySet().size() - 1;
@@ -862,7 +862,7 @@ public class MelodyGenerator {
         }
 
         if (fillChordMelodyMap) {
-            List<String> chordStrings = getChordsFromMelodyPitches(2, mg.progressionDurations, chordMelodyMap1,
+            List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, mg.progressionDurations, chordMelodyMap1,
                     MidiUtils.baseFreqMap);
             populateMelodyBasedProgression(chordStrings, 1, chordMelodyMap1.keySet().size() - 1);
 
@@ -1965,7 +1965,7 @@ public class MelodyGenerator {
                     .add(noteList.get(noteList.size() - 1));
         }
         LG.i("Processed melody, chords: " + (chordCounter + 1));
-        List<String> chordStrings = getChordsFromMelodyPitches(1, mg.progressionDurations,
+        List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(1, mg.progressionDurations,
                 chordMelodyMap1, MidiUtils.freqMap);
 		/*List<String> spicyChordStrings = getChordsFromMelodyPitches(1, chordMelodyMap1,
 				MidiUtils.freqMap);
@@ -2013,41 +2013,6 @@ public class MelodyGenerator {
 
     public static List<String> getChordsFromMelodyPitches(int orderOfMatch, List<Double> durations,
                                                           Map<Integer, List<Note>> melodyMap, Map<String, Set<Integer>> freqMap) {
-        List<String> chordStrings = new ArrayList<>();
-        String prevChordString = null;
-
-        for (int i = 0; i < melodyMap.keySet().size(); i++) {
-            List<Integer> chordFreqs = new ArrayList<>();
-            double totalDuration = 0;
-            for (Note n : melodyMap.get(i)) {
-                double dur = n.getRhythmValue();
-                double durCounter = 0.0;
-                int index = i;
-                if (index >= durations.size()) {
-                    index = durations.size() - 1;
-                }
-                while (durCounter < dur && totalDuration < durations.get(index)) {
-                    chordFreqs.add(n.getPitch() % 12);
-                    durCounter += MidiGenerator.Durations.EIGHTH_NOTE;
-                    totalDuration += MidiGenerator.Durations.EIGHTH_NOTE;
-                }
-            }
-
-            Map<Integer, Long> freqCounts = chordFreqs.stream()
-                    .collect(Collectors.groupingBy(e -> e, Collectors.counting()));
-
-            Map<Integer, Long> top3 = freqCounts.entrySet().stream()
-                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(4)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                            (e1, e2) -> e1, LinkedHashMap::new));
-
-            //top3.entrySet().stream().forEach(System.out::println);
-            // TODO: if prevChordString not a major chord, not indexed in circle -> never continue circle?
-            String chordString = applyChordFreqMap(top3, orderOfMatch, prevChordString, freqMap);
-            LG.d("Alternate chord #" + i + ": " + chordString);
-            chordStrings.add(chordString);
-            prevChordString = chordString;
-        }
-        return chordStrings;
+        return MelodyUtils.getChordsFromMelodyPitches(orderOfMatch, durations, melodyMap, freqMap);
     }
 }
