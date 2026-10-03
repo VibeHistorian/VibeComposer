@@ -122,7 +122,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         createRandomChordPanels(panelCount, onlyAdd, (ChordPanel) randomizedPanel);
     }
 
-    public void saveToConfig(GUIConfig gc, int seed) {
+    public void saveToConfig(GUIConfig gc, int seed, boolean preserveGeneratedChords) {
         gc.setChordsEnable(enabledCheckBox.isSelected());
         gc.setChordParts(createParts(seed, ChordPart.class));
         gc.setChordGenSettings(getChordSettingsFromUI());
@@ -134,7 +134,9 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         gc.setFirstChord(firstChordSelection.getVal());
         gc.setLastChord(lastChordSelection.getVal());
         gc.setCustomChordsEnabled(userChordsEnabled.isSelected());
-        gc.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+        gc.setCustomChords(preserveGeneratedChords
+                ? StringUtils.join(MidiGenerator.chordInts, ",")
+                : userChords.getChordListString());
         gc.setCustomChordDurations(userChordsDurations.getText());
         gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
         gc.setSpiceChance(spiceChance.getInt());

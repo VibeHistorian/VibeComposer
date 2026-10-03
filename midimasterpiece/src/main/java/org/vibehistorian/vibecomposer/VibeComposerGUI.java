@@ -78,6 +78,10 @@ public class VibeComposerGUI extends JFrame
 		implements ActionListener, ItemListener, WindowListener, SoloMuter.Context {
 
 	private static final long serialVersionUID = -677536546851756969L;
+	private enum ChordConfigSource {
+		CURRENT_SELECTION,
+		LAST_GENERATED
+	}
 
 	private final MidiDeviceController midiDeviceController;
 	private MidiAuditionController midiAuditionController;
@@ -425,7 +429,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 			}
 			@Override public void savePreset() {
-				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
+				VibeComposerGUI.this.copyGUItoConfig(guiConfig, false,
+						ChordConfigSource.LAST_GENERATED);
 				presetViewController.savePreset(guiConfig);
 			}
 			@Override public void resetAll() { VibeComposerGUI.this.resetAllFromHeader(); }
@@ -456,7 +461,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void playPlaybackButton() { playbackController.playMidi(false); }
 			@Override public void pausePlaybackButton() { playbackController.pauseMidi(); }
 			@Override public void saveConfigFile(int rating) {
-				VibeComposerGUI.this.copyGUItoConfig(guiConfig);
+				VibeComposerGUI.this.copyGUItoConfig(guiConfig, false,
+						ChordConfigSource.LAST_GENERATED);
 				String currentMidiFileName = currentMidi != null ? currentMidi.getName() : "";
 				presetViewController.saveGuiConfigFile(rating, guiConfig, currentMidi,
 						VibeComposerGUI.this.getFilenameForSaving(currentMidiFileName));
@@ -2112,6 +2118,11 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	public void copyGUItoConfig(GUIConfig gc, boolean isNew) {
+		copyGUItoConfig(gc, isNew, ChordConfigSource.CURRENT_SELECTION);
+	}
+
+	private void copyGUItoConfig(GUIConfig gc, boolean isNew,
+			ChordConfigSource chordConfigSource) {
 		gc.setVersion(CURRENT_VERSION);
 		gc.setRandomSeed(generationGUI.lastRandomSeed);
 		gc.setMidiMode(mainWindowControls.getMidiMode().isSelected());
@@ -2121,7 +2132,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		arrangementGUI.saveToConfig(gc, isNew, generationGUI.lastRandomSeed, guiConfig.getPatternMaps());
 		melodyGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
 		bassGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
-		chordGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
+		chordGUI.saveToConfig(gc, generationGUI.lastRandomSeed,
+				chordConfigSource == ChordConfigSource.LAST_GENERATED);
 		arpGUI.saveToConfig(gc, generationGUI.lastRandomSeed);
 		drumGUI.saveToConfig(gc, generationGUI.lastRandomSeed,
 				mainWindowControls.getMidiMode().isSelected()
