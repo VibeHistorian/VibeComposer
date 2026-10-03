@@ -8,6 +8,7 @@ import org.vibehistorian.vibecomposer.Components.VeloRect;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
@@ -292,7 +293,7 @@ public final class MainWindowControls {
     }
 
     public void addPlaybackControls(JPanel parent, GridBagConstraints constraints,
-            int startY, int anchorSide, ScoreGUI scoreGUI, GenerationGUI generationGUI) {
+                                    int startY, int anchorSide, ScoreGUI scoreGUI, GenerationGUI generationGUI) {
         JPanel playSavePanel = new JPanel();
         playSavePanel.setOpaque(false);
         stopMidi = SwingUtils.makeButton("STOP", e -> playbackContext.stopPlaybackButton());

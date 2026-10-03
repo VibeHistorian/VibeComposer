@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer;
 
 import org.apache.commons.io.FileUtils;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
+import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

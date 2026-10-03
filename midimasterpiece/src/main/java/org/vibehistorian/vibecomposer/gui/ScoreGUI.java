@@ -17,13 +17,16 @@ along with this program; if not,
 see <https://www.gnu.org/licenses/>.
 */
 
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.gui;
 
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.PlayheadRangeSlider;
 import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.MidiGenerator;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import java.awt.*;

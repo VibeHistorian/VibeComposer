@@ -9,6 +9,7 @@ import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

@@ -6,6 +6,7 @@ import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
+import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 
 import javax.sound.midi.InvalidMidiDataException;
 import java.util.Collections;
