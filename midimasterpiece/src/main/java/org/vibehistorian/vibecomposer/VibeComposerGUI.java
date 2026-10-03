@@ -164,7 +164,8 @@ public class VibeComposerGUI extends JFrame
 				configureInstrumentControlContext(panel);
 				removeComboBoxArrows(panel);
 				return panel;
-			}, this::getOwnedInstrumentControls, () -> this.generationGUI.lastRandomSeed);
+			}, this::getOwnedInstrumentControls, () -> this.generationGUI.lastRandomSeed,
+					() -> this.arrangementGUI);
 	private final InstPanel.Context instPanelContext = new InstPanel.Context() {
 		@Override public INST getSelectedInstrument() {
 			return INST.fromIndex(VibeComposerGUI.instrumentTabPane.getSelectedIndex());
@@ -191,8 +192,8 @@ public class VibeComposerGUI extends JFrame
 			return VibeComposerGUI.getInstList(instrument);
 		}
 		@Override public Pair<ScaleMode, Integer> getScaleKey(Section section) {
-			return ArrangementGUI.keyChangeAt(
-					ArrangementGUI.actualArrangement.getSections().indexOf(section),
+			return arrangementGUI.keyChangeAt(
+					arrangementGUI.getActualArrangement().getSections().indexOf(section),
 					ScaleMode.valueOf(generationGUI.scaleMode.getVal()));
 		}
 		@Override public int getTranspose() { return scoreGUI.getTranspose(); }
@@ -305,7 +306,7 @@ public class VibeComposerGUI extends JFrame
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST instrument,
 				int partOrder) {
 			midiAuditionController.playNote(pitch, durationMs, velocity, instrument, partOrder,
-					ArrangementGUI.actualArrangement.getSections().get(0), true);
+				arrangementGUI.getActualArrangement().getSections().get(0), true);
 		}
 	});
 
@@ -590,7 +591,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				playbackController.savePauseInfo();
 			}
 			@Override public void openMidiEditor(int sectionOrder, INST part, int panelOrder) {
-				Section section = ArrangementGUI.actualArrangement.getSections().get(sectionOrder);
+			Section section = arrangementGUI.getActualArrangement().getSections().get(sectionOrder);
 				midiEditorSession.open(section, part.getIndex(), panelOrder, sectionOrder);
 			}
 			@Override public void selectPanelFromScore(INST part, int panelOrder, int sectionOrder) {
@@ -643,9 +644,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private List<Section> getGeneratedArrangementSections() {
-		return ArrangementGUI.actualArrangement == null
+		return arrangementGUI.getActualArrangement() == null
 				? java.util.Collections.emptyList()
-				: ArrangementGUI.actualArrangement.getSections();
+				: arrangementGUI.getActualArrangement().getSections();
 	}
 
 	private void initMelodyGUI() {
@@ -762,7 +763,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		initArrangementGUI();
 		initScoreGUI();
 		midiAuditionController = new MidiAuditionController(instrumentPanelController,
-				midiDeviceController, scoreGUI, melodyGUI,
+				midiDeviceController, scoreGUI, melodyGUI, arrangementGUI,
 				() -> ScaleMode.valueOf(generationGUI.scaleMode.getVal()), () -> guiConfig);
 		long sysTime = System.currentTimeMillis();
 		everythingPanel = new JPanel() {
@@ -1300,7 +1301,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 
 						if (allowedActionsOnZero == 0) {
-							if (ArrangementGUI.actualArrangement != null && slider.getMaximum() > 0) {
+							if (arrangementGUI.getActualArrangement() != null && slider.getMaximum() > 0) {
 								int val = sequencer != null && sequencer.isRunning()
 										&& !isPlayheadDragging() && !isKeySeeking
 										? (int) (sequencer.getMicrosecondPosition() / 1000)
@@ -1313,9 +1314,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 								});
 								int sectIndex = -1;
 								if (sliderMeasureStartTimes != null
-										&& ArrangementGUI.actualArrangement.getSections().size() > 0) {
+										&& arrangementGUI.getActualArrangement().getSections().size() > 0) {
 									int sectIndexCounter = 0;
-									List<Integer> secMeasures = ArrangementGUI.actualArrangement.getSections()
+									List<Integer> secMeasures = arrangementGUI.getActualArrangement().getSections()
 											.stream().map(e -> e.getMeasures())
 											.collect(Collectors.toList());
 									int currentMeasure = secMeasures.get(0);
@@ -1338,8 +1339,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 								Section sec = null;
 								if (sectIndex >= 0
-										&& sectIndex < ArrangementGUI.actualArrangement.getSections().size()) {
-									sec = ArrangementGUI.actualArrangement.getSections().get(sectIndex);
+										&& sectIndex < arrangementGUI.getActualArrangement().getSections().size()) {
+									sec = arrangementGUI.getActualArrangement().getSections().get(sectIndex);
 								}
 								int finalSectIndex = sectIndex;
 								String newText = null;
@@ -1722,7 +1723,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		getAppearanceController().switchDarkMode();
 
 		arrangementGUI.refreshVariationPopupButtons(
-				ArrangementGUI.actualArrangement.getSections().size());
+				arrangementGUI.getActualArrangement().getSections().size());
 
 		if (scoreGUI.getScorePanel() != null) {
 			scoreGUI.getScorePanel().update();
@@ -2102,9 +2103,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		instrumentTabPane.setTitleAt(2, "Chords (" + chordGUI.getPanels().size() + ")");
 		instrumentTabPane.setTitleAt(3, " Arps  (" + arpGUI.getPanels().size() + ")");
 		instrumentTabPane.setTitleAt(4, " Drums (" + drumGUI.getPanels().size() + ")");
-		instrumentTabPane.setTitleAt(5, "Arrangement (" + ArrangementGUI.arrangement.getSections().size() + ")");
+		instrumentTabPane.setTitleAt(5, "Arrangement (" + arrangementGUI.getArrangement().getSections().size() + ")");
 		instrumentTabPane.setTitleAt(6,
-				"Generated Arrangement (" + ArrangementGUI.actualArrangement.getSections().size() + ")");
+				"Generated Arrangement (" + arrangementGUI.getActualArrangement().getSections().size() + ")");
 		if (instrumentTabPane.getComponentCount() >= 8) {
 			instrumentTabPane.setTitleAt(7, " Score ");
 		}

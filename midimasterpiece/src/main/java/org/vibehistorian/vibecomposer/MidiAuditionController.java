@@ -22,16 +22,19 @@ public final class MidiAuditionController {
 	private final MidiDeviceController midiDeviceController;
 	private final ScoreGUI scoreGUI;
 	private final MelodyGUI melodyGUI;
+	private final ArrangementGUI arrangementGUI;
 	private final Supplier<MidiUtils.ScaleMode> scaleMode;
 	private final Supplier<GUIConfig> guiConfig;
 
 	public MidiAuditionController(InstrumentPanelController panelController,
 			MidiDeviceController midiDeviceController, ScoreGUI scoreGUI, MelodyGUI melodyGUI,
+			ArrangementGUI arrangementGUI,
 			Supplier<MidiUtils.ScaleMode> scaleMode, Supplier<GUIConfig> guiConfig) {
 		this.panelController = panelController;
 		this.midiDeviceController = midiDeviceController;
 		this.scoreGUI = scoreGUI;
 		this.melodyGUI = melodyGUI;
+		this.arrangementGUI = arrangementGUI;
 		this.scaleMode = scaleMode;
 		this.guiConfig = guiConfig;
 	}
@@ -71,7 +74,7 @@ public final class MidiAuditionController {
 			if (note.getPitch() >= 1) {
 				playNote(note.getPitch() + transpose,
 					(int) (note.getDuration() * 1000 * 60 / config.getBpm()), velocity,
-						activeInstrument, partOrder, ArrangementGUI.actualArrangement.getSections().get(0), true);
+						activeInstrument, partOrder, arrangementGUI.getActualArrangement().getSections().get(0), true);
 				break;
 			}
 		}
@@ -91,8 +94,8 @@ public final class MidiAuditionController {
 		}
 		try {
 			if (instrument.getIndex() < 4 && ExtraSettingsGUI.transposeNotePreview.isSelected()) {
-				Pair<MidiUtils.ScaleMode, Integer> scaleKey = ArrangementGUI.keyChangeAt(
-						ArrangementGUI.actualArrangement.getSections().indexOf(section), scaleMode.get());
+				Pair<MidiUtils.ScaleMode, Integer> scaleKey = arrangementGUI.keyChangeAt(
+						arrangementGUI.getActualArrangement().getSections().indexOf(section), scaleMode.get());
 				int extraTranspose = instrument != INST.MELODY ? panel.getTranspose() : 0;
 				List<Note> notes = Collections.singletonList(new Note(
 						instrument != INST.MELODY ? pitch : pitch + panel.getTranspose(),

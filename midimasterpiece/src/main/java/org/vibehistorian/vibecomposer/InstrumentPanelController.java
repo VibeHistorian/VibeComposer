@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /** Owns the shared lifecycle of instrument panels inside their instrument tabs. */
@@ -33,15 +34,18 @@ public final class InstrumentPanelController {
 	private final Function<INST, InstPanel> setupInstPanel;
 	private final Function<INST, InstGUI<?>> instrumentGui;
 	private final IntSupplier currentSeed;
+	private final Supplier<ArrangementGUI> arrangementGUI;
 	private final PartPresetStore partPresetStore = new PartPresetStore();
 
 	public InstrumentPanelController(Context context,
 			Function<INST, InstPanel> setupInstPanel,
-			Function<INST, InstGUI<?>> instrumentGui, IntSupplier currentSeed) {
+			Function<INST, InstGUI<?>> instrumentGui, IntSupplier currentSeed,
+			Supplier<ArrangementGUI> arrangementGUI) {
 		this.context = context;
 		this.setupInstPanel = setupInstPanel;
 		this.instrumentGui = instrumentGui;
 		this.currentSeed = currentSeed;
+		this.arrangementGUI = arrangementGUI;
 	}
 
 	private InstGUI<?> instrumentGui(INST instrument) {
@@ -92,7 +96,7 @@ public final class InstrumentPanelController {
 
 	@SuppressWarnings("unchecked")
 	public List<InstPanel> getAffectedPanels(INST instrument) {
-		if (ArrangementGUI.isCustomSection()) {
+		if (arrangementGUI.get() != null && arrangementGUI.get().isCustomSection()) {
 			return getSectionPanelList(instrument);
 		}
 		return (List<InstPanel>) getInstList(instrument);
@@ -121,7 +125,7 @@ public final class InstrumentPanelController {
 
 		panel.getToggleableComponents().forEach(component ->
 				component.setVisible(UITheme.isFullMode));
-		if (ArrangementGUI.isCustomSection()) {
+		if (arrangementGUI.get() != null && arrangementGUI.get().isCustomSection()) {
 			panel.toggleGlobalElements(false);
 			panel.toggleEnabledCopyRemove(false);
 			if (instrument == INST.DRUM) {
@@ -138,8 +142,9 @@ public final class InstrumentPanelController {
 				initializingPart == null ? panelOrder : initializingPart.getOrderOffset());
 
 		affectedPanels.add(panelOrder - 1, panel);
-		if (recalculateArrangement && ArrangementGUI.actualArrangement != null
-				&& ArrangementGUI.actualArrangement.getSections() != null) {
+		if (recalculateArrangement && arrangementGUI.get() != null
+				&& arrangementGUI.get().getActualArrangement() != null
+				&& arrangementGUI.get().getActualArrangement().getSections() != null) {
 			context.recalculateArrangementPartMaps();
 		}
 
@@ -165,7 +170,7 @@ public final class InstrumentPanelController {
 	}
 
 	public void generatePanels(INST instrument, boolean triggerRegenerate) {
-		int panelCount = ArrangementGUI.isCustomSection()
+		int panelCount = arrangementGUI.get() != null && arrangementGUI.get().isCustomSection()
 				? getInstList(instrument).size()
 				: instrumentGui(instrument).getRandomPanelCount();
 		createRandomPanels(instrument, panelCount, false, null, null);
@@ -276,7 +281,7 @@ public final class InstrumentPanelController {
 
 	public boolean recreateImportedParts(INST instrument, List<InstPart> parts,
 										 boolean clearPreviousPanels) {
-		boolean customSection = ArrangementGUI.isCustomSection();
+		boolean customSection = arrangementGUI.get() != null && arrangementGUI.get().isCustomSection();
 		if (!clearPreviousPanels && customSection) {
 			return false;
 		}

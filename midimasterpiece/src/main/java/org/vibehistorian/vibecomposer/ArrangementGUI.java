@@ -65,8 +65,8 @@ import java.util.Random;
 
 /** Owns arrangement controls, data and operations. */
 public class ArrangementGUI {
-	public static Arrangement arrangement;
-	public static Arrangement actualArrangement;
+	private Arrangement arrangement;
+	private Arrangement actualArrangement;
 	public static JPanel arrangementSettings;
 	public static KnobPanel arrangementVariationChance;
 	public static KnobPanel arrangementPartVariationChance;
@@ -173,12 +173,12 @@ public class ArrangementGUI {
 		this.midiEditorSession = midiEditorSession;
 	}
 
-	public static boolean isCustomSection() {
+	public boolean isCustomSection() {
 		return arrSection != null && arrSection.getSelectedIndex() != 0
 				&& !GLOBAL.equals(arrSection.getVal());
 	}
 
-	public static int calculateSectionMeasureStart(int sectionIndex) {
+	private int calculateSectionMeasureStart(int sectionIndex) {
 		if (actualArrangement == null || actualArrangement.getSections() == null
 				|| PlaybackState.sliderMeasureStartTimes == null
 				|| PlaybackState.sliderMeasureStartTimes.isEmpty()
@@ -193,7 +193,7 @@ public class ArrangementGUI {
 		return OMNI.clamp(measureCounter, 0, PlaybackState.sliderMeasureStartTimes.size() - 1);
 	}
 
-	public static Pair<MidiUtils.ScaleMode, Integer> keyChangeAt(int sectionIndex,
+	public Pair<MidiUtils.ScaleMode, Integer> keyChangeAt(int sectionIndex,
 			MidiUtils.ScaleMode initialMode) {
 		if (actualArrangement == null || actualArrangement.getSections() == null || sectionIndex < 0
 				|| sectionIndex >= actualArrangement.getSections().size()) {
@@ -213,6 +213,14 @@ public class ArrangementGUI {
 			}
 		}
 		return Pair.of(lastMode, lastKeyChange);
+	}
+
+	public Arrangement getArrangement() {
+		return arrangement;
+	}
+
+	public Arrangement getActualArrangement() {
+		return actualArrangement;
 	}
 
 	public void trySliderStartChange(int sectionIndex) {
@@ -917,11 +925,11 @@ public class ArrangementGUI {
 						ArrangementGUI.arrSection.getSelectedIndex(), true), 30);
 		JButton clearPanelBtn = SwingUtils.makeButton("X*", e -> {
 			if (!GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
-				Section sec = ArrangementGUI.actualArrangement.getSections()
+				Section sec = actualArrangement.getSections()
 						.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
 					sec.resetCustomizedParts(instrumentTabPane.getSelectedIndex());
-					setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
+					setActualModel(actualArrangement.convertToActualTableModel(), false);
 					if (!sec.hasCustomizedParts()) {
 						CheckButton cb = ArrangementGUI.arrSection.getCurrentButton();
 						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
@@ -933,8 +941,8 @@ public class ArrangementGUI {
 			}
 		}, 30);
 		JButton clearAllPanelsBtn = SwingUtils.makeButton("CLR*", e -> {
-			ArrangementGUI.actualArrangement.getSections().forEach(Section::resetCustomizedParts);
-			setActualModel(ArrangementGUI.actualArrangement.convertToActualTableModel(), false);
+			actualArrangement.getSections().forEach(Section::resetCustomizedParts);
+			setActualModel(actualArrangement.convertToActualTableModel(), false);
 			ArrangementGUI.arrSection.getButtons().forEach(cb -> {
 				if (!GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
 					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
@@ -1032,10 +1040,10 @@ public class ArrangementGUI {
 			}
 		};
 
-		ArrangementGUI.arrangement = new Arrangement();
-		ArrangementGUI.actualArrangement = new Arrangement();
-		ArrangementGUI.arrangement.generateDefaultArrangement();
-		ArrangementGUI.scrollableArrangementTable.setModel(ArrangementGUI.arrangement.convertToTableModel());
+		arrangement = new Arrangement();
+		actualArrangement = new Arrangement();
+		arrangement.generateDefaultArrangement();
+		ArrangementGUI.scrollableArrangementTable.setModel(arrangement.convertToTableModel());
 		ArrangementGUI.arrangementScrollPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() { return UITheme.scrollPaneDimension; }
 		};
@@ -1050,12 +1058,12 @@ public class ArrangementGUI {
 		ArrangementGUI.arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		ArrangementGUI.arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		if (ArrangementGUI.useArrangement.isSelected()) {
-			ArrangementGUI.arrangement.setPreviewChorus(false);
-			ArrangementGUI.actualArrangement.setPreviewChorus(false);
+			arrangement.setPreviewChorus(false);
+			actualArrangement.setPreviewChorus(false);
 		} else {
-			ArrangementGUI.arrangement.setPreviewChorus(true);
-			ArrangementGUI.actualArrangement.setPreviewChorus(true);
-			ArrangementGUI.actualArrangement.resetArrangement();
+			arrangement.setPreviewChorus(true);
+			actualArrangement.setPreviewChorus(true);
+			actualArrangement.resetArrangement();
 		}
 		ArrangementGUI.scrollableArrangementTable.setRowSelectionAllowed(false);
 		ArrangementGUI.scrollableArrangementTable.setColumnSelectionAllowed(true);
@@ -1073,7 +1081,7 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.d("MOVED HEADER");
-				ArrangementGUI.arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false,
+				arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false,
 						ArrangementGUI.this::recolorAllVariationButtons);
 				ArrangementGUI.arrangementTableColumnDragging = false;
 			}
@@ -1150,7 +1158,7 @@ public class ArrangementGUI {
 
 		ArrangementGUI.scrollableArrangementActualTable.setRowHeight(35);
 		ArrangementGUI.scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
-		ArrangementGUI.scrollableArrangementActualTable.setModel(ArrangementGUI.actualArrangement.convertToActualTableModel());
+		ArrangementGUI.scrollableArrangementActualTable.setModel(actualArrangement.convertToActualTableModel());
 		ArrangementGUI.arrangementActualScrollPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() { return UITheme.scrollPaneDimension; }
 		};
@@ -1175,7 +1183,7 @@ public class ArrangementGUI {
 		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.i("MOVED");
-				ArrangementGUI.actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true,
+				actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true,
 						ArrangementGUI.this::recolorAllVariationButtons);
 				ArrangementGUI.actualArrangementTableColumnDragging = false;
 				ArrangementGUI.manualArrangement.setSelected(true);

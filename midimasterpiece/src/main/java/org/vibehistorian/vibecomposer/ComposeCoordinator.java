@@ -103,8 +103,8 @@ public final class ComposeCoordinator {
             }
 
             if (ArrangementGUI.manualArrangement.isSelected()
-                    && (ArrangementGUI.actualArrangement.getSections().isEmpty()
-                    || ArrangementGUI.actualArrangement.getSections().stream().noneMatch(Section::hasPresence))) {
+                    && (arrangementGUI.getActualArrangement().getSections().isEmpty()
+                    || arrangementGUI.getActualArrangement().getSections().stream().noneMatch(Section::hasPresence))) {
                 LG.i("Nothing to compose! Uncheck MANUAL arrangement!");
                 new TemporaryInfoPopup("Nothing to compose! Uncheck MANUAL arrangement!", 3000);
                 context.setHeavyBackgroundTaskInProgress(false);
@@ -355,7 +355,7 @@ public final class ComposeCoordinator {
                 context.getGUIConfig());
         scoreGUI.pianoRoll();
         if (midiEditorSession.isVisible()) {
-            midiEditorSession.refreshAfterCompose(ArrangementGUI.actualArrangement.getSections());
+            midiEditorSession.refreshAfterCompose(arrangementGUI.getActualArrangement().getSections());
         } else {
             LG.d("No midi editor is open!");
         }
@@ -422,7 +422,7 @@ public final class ComposeCoordinator {
             int sectIndex = 0;
             int realIndex = 1;
             Section prevSec = null;
-            int sectionMaxText = Math.max(20 - ArrangementGUI.actualArrangement.getSections().size(), 3);
+            int sectionMaxText = Math.max(20 - arrangementGUI.getActualArrangement().getSections().size(), 3);
             int explored = 0;
             int exploredSize = 0;
             boolean endDisplayed = false;
@@ -431,8 +431,8 @@ public final class ComposeCoordinator {
 
                 int sizeCounter = exploredSize;
 
-                for (int i = explored; i < ArrangementGUI.actualArrangement.getSections().size(); i++) {
-                    Section arrSec = ArrangementGUI.actualArrangement.getSections().get(i);
+                for (int i = explored; i < arrangementGUI.getActualArrangement().getSections().size(); i++) {
+                    Section arrSec = arrangementGUI.getActualArrangement().getSections().get(i);
                     if (sizeCounter == sectIndex
                             || (sectIndex < sizeCounter + arrSec.getMeasures())) {
                         sec = arrSec;
