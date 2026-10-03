@@ -86,6 +86,10 @@ Candidate names include `MidiScoreBuilder`, `MelodyPhraseBuilder`, `BassPhraseGe
 
 **Progress 2026-10-03:** score track assignment, padding, combination, transposition, and humanization now live in `MidiScoreBuilder`; `MidiGenerator.setupScore` delegates to it. Instrument phrase algorithms remain in `MidiGenerator` and are the remaining Phase 5 work.
 
+**Progress 2026-10-03:** drum, bass, and chord note-pattern algorithms now live in `DrumPhraseGenerator`, `BassPhraseGenerator`, and `ChordPhraseGenerator`. Their existing `MidiGenerator` methods remain compatibility entry points and handle section-pattern publication and final phrase processing. Shared chord-span slicing rules live in `PhrasePatternUtils`. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass, including the MIDI fixture comparison. Arpeggio and melody phrase rendering remain for Phase 5.
+
+**Progress 2026-10-03:** the three instrument renderers now extend `InstPhraseGenerator`, which owns their shared timing shape, base phrase-and-variation result, configuration, and variation callback. Chord and drum results extend the common result with their instrument-specific data. The compile and MIDI fixture regression check pass after this consolidation.
+
 ### Phase 6 — Migrate mutable state by lifetime
 
 Perform this phase incrementally alongside earlier extractions when a collaborator needs a clearer input. Avoid a single large static-state migration.
