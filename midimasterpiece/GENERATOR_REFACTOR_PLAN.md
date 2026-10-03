@@ -44,6 +44,8 @@ Possible collaborators include `MelodySkeletonGenerator`, `LegacyMelodySkeletonG
 
 **Completion signal:** `MelodyGenerator` primarily coordinates melody generation, and its algorithm collaborators receive explicit inputs and return explicit results.
 
+**Implemented 2026-10-03:** `MelodyGenerator` now selects between `MelodyBlockSkeletonGenerator` and `LegacyMelodySkeletonGenerator`, then delegates expansion to `MelodyExpansion`. User-melody parsing and inferred progression construction live in `MelodyChordInference`. `MelodyGenerationState` carries the shared melody outputs while the facade retains the public fields used by MIDI orchestration. Existing random streams and their call order remain inside the extracted algorithms.
+
 ### Phase 3 — Isolate chord progression generation
 
 - Move progression selection and key-change decisions out of `MidiGenerator` into a progression-focused collaborator.
