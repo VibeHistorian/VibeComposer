@@ -1,8 +1,8 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
+import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 
 import javax.swing.*;
 import java.awt.*;

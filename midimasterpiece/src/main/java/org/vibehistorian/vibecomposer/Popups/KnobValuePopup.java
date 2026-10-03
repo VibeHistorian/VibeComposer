@@ -1,13 +1,11 @@
 package org.vibehistorian.vibecomposer.Popups;
 
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
-
-
+import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.JKnob;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.NumPanel;
-import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
+import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;

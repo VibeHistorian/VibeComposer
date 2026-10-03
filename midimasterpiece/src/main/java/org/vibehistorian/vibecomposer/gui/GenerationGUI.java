@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.gui;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -7,6 +7,12 @@ import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomValueButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.InstrumentPanelController;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.Panels.ArpPanel;
 import org.vibehistorian.vibecomposer.Panels.BassPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
@@ -14,10 +20,10 @@ import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
+import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-import org.vibehistorian.vibecomposer.gui.ArpGUI;
-import org.vibehistorian.vibecomposer.gui.ChordGUI;
-import org.vibehistorian.vibecomposer.gui.MelodyGUI;
+import org.vibehistorian.vibecomposer.SwingUtils;
+import org.vibehistorian.vibecomposer.UITheme;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

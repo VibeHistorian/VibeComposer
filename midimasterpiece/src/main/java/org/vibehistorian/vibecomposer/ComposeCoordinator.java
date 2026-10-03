@@ -5,8 +5,11 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.gui.ArpGUI;
+import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;
 import org.vibehistorian.vibecomposer.gui.DrumGUI;
+import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
+import org.vibehistorian.vibecomposer.gui.GenerationGUI;
 import org.vibehistorian.vibecomposer.gui.MelodyGUI;
 import org.vibehistorian.vibecomposer.gui.ScoreGUI;
 

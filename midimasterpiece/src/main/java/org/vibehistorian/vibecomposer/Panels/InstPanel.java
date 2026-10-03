@@ -21,12 +21,21 @@ package org.vibehistorian.vibecomposer.Panels;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Components.*;
-import org.vibehistorian.vibecomposer.*;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.InstrumentPanelController;
+import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
+import org.vibehistorian.vibecomposer.Section;
+import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

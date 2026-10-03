@@ -1,19 +1,22 @@
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.gui;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;
+import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.INST;
+import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.InstrumentPanelController;
+import org.vibehistorian.vibecomposer.MidiGenerator;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.DetachedKnobPanel;
 import org.vibehistorian.vibecomposer.Panels.DrumPanel;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
-import org.vibehistorian.vibecomposer.gui.ArpGUI;
-import org.vibehistorian.vibecomposer.gui.ChordGUI;
-import org.vibehistorian.vibecomposer.gui.DrumGUI;
-import org.vibehistorian.vibecomposer.gui.MelodyGUI;
-import org.vibehistorian.vibecomposer.gui.ScoreGUI;
+import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.SwingUtils;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -40,6 +43,8 @@ public class ExtraSettingsGUI {
         void markSoundbankRefreshNeeded();
         void repaintMainWindow();
     }
+
+	private static final String SOUNDBANK_FOLDER = ".";
 
     public static JPanel extraSettingsPanel;
     public static JPanel currentSettingsMenuPanel;
@@ -269,7 +274,7 @@ public class ExtraSettingsGUI {
 		soundbankFilename = new ScrollComboBox<String>(false);
 		soundbankFilename.setEditable(true);
 		soundbankFilename.addItem(OMNI.EMPTYCOMBO);
-		File folder = new File(Constants.SOUNDBANK_FOLDER);
+		File folder = new File(SOUNDBANK_FOLDER);
 		if (folder.exists()) {
 			File[] listOfFiles = folder.listFiles();
 			if (listOfFiles != null) {

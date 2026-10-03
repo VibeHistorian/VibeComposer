@@ -1,11 +1,11 @@
 package org.vibehistorian.vibecomposer.Components;
 
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.VisualPatternPanel;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
+import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 
 import javax.swing.*;
 import java.awt.*;

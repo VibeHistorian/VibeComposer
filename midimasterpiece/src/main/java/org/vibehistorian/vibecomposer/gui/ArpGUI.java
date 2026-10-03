@@ -25,7 +25,6 @@ import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
-import org.vibehistorian.vibecomposer.ExtraSettingsGUI;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.InstrumentPanelController;

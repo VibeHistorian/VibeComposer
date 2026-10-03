@@ -17,11 +17,12 @@ along with this program; if not,
 see <https://www.gnu.org/licenses/>.
 */
 
-package org.vibehistorian.vibecomposer;
+package org.vibehistorian.vibecomposer.gui;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Components.ArrangementTableRenderState;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.CollectionCellRenderer;
@@ -44,7 +45,6 @@ import org.vibehistorian.vibecomposer.Popups.ArrangementPartInclusionPopup;
 import org.vibehistorian.vibecomposer.Popups.PatternManagerPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.VariationPopup;
-import org.vibehistorian.vibecomposer.gui.ChordGUI;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -246,7 +246,7 @@ public class ArrangementGUI {
 	}
 
 	public Pair<MidiUtils.ScaleMode, Integer> keyChangeAt(int sectionIndex,
-			MidiUtils.ScaleMode initialMode) {
+														  MidiUtils.ScaleMode initialMode) {
 		if (actualArrangement == null || actualArrangement.getSections() == null || sectionIndex < 0
 				|| sectionIndex >= actualArrangement.getSections().size()) {
 			return null;

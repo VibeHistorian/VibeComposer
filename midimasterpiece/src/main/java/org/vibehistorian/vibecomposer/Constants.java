@@ -31,7 +31,6 @@ public class Constants {
     static final String MIDI_HISTORY_FOLDER = MIDIS_FOLDER + "/midi_history";
     private static final String DRUMS_FOLDER = "drums";
     static final String PRESET_FOLDER = "presets";
-    static final String SOUNDBANK_FOLDER = ".";
     static final String EXPORT_FOLDER = "exports";
     static final String MID_EXTENSION = ".mid";
     static final String SAVED_MIDIS_FOLDER_BASE = "/saved_";

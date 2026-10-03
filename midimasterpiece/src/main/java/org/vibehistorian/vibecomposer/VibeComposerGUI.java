@@ -42,13 +42,7 @@ import org.vibehistorian.vibecomposer.Popups.ExtraSettingsPopup;
 import org.vibehistorian.vibecomposer.Popups.HelpPopup;
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-import org.vibehistorian.vibecomposer.gui.ArpGUI;
-import org.vibehistorian.vibecomposer.gui.BassGUI;
-import org.vibehistorian.vibecomposer.gui.ChordGUI;
-import org.vibehistorian.vibecomposer.gui.DrumGUI;
-import org.vibehistorian.vibecomposer.gui.InstGUI;
-import org.vibehistorian.vibecomposer.gui.MelodyGUI;
-import org.vibehistorian.vibecomposer.gui.ScoreGUI;
+import org.vibehistorian.vibecomposer.gui.*;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
