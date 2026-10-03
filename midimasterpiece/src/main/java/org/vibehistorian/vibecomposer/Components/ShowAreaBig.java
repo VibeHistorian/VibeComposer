@@ -49,11 +49,11 @@ public class ShowAreaBig extends JComponent {
 	private static final long serialVersionUID = -7925170286317013689L;
 	//attributes
 	private int oldXMouse;
-	public static int noteHeight = 5;
+	private int noteHeight = 5;
 	private int w = 2 * noteHeight; //width between stave lines
 	private int ePos = 5 * noteHeight; // position of e in the treble stave
 	private int e = ePos + noteHeight * 33;
-	public static int areaHeight = GUIConstants.DEFAULT_HEIGHT;
+	private int areaHeight = GUIConstants.DEFAULT_HEIGHT;
 	private int[] noteOffset = { 0, 0, noteHeight, noteHeight, noteHeight * 2, noteHeight * 3,
 			noteHeight * 3, noteHeight * 4, noteHeight * 4, noteHeight * 5, noteHeight * 5,
 			noteHeight * 6 };
@@ -61,10 +61,10 @@ public class ShowAreaBig extends JComponent {
 	private ShowPanelBig sp;
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
-	public static double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
+	private final double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
 			MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
-	public static Point mousePoint = null;
-	public static boolean consumed = false;
+	private Point mousePoint = null;
+	private boolean mouseClickConsumed = false;
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
@@ -194,13 +194,13 @@ public class ShowAreaBig extends JComponent {
 										actualStartingX, y - actualHeight, x, actualHeight * 2);
 								if (pointInRect) {
 									if (leftMouseOpenPopup) {
-										consumed = true;
+										mouseClickConsumed = true;
 										LG.i("Opening popup for section#: " + phrase.secOrder);
 										sp.openMidiEditor(phrase.secOrder, INST.fromIndex(phrase.part), phrase.partOrder);
 										return;
 									} else if (rightMouseOpenSectionTab) {
-										if (!consumed) {
-											consumed = true;
+										if (!mouseClickConsumed) {
+											mouseClickConsumed = true;
 											LG.i("Opening inst. tab for section#: " + (phrase.secOrder + 1));
 											SwingUtilities.invokeLater(() -> {
 												sp.selectPanelFromScore(INST.fromIndex(phrase.part), phrase.partOrder,
@@ -256,6 +256,20 @@ public class ShowAreaBig extends JComponent {
 	 */
 	public int getHeight() {
 		return areaHeight;
+	}
+
+	public int getNoteHeight() {
+		return noteHeight;
+	}
+
+	public boolean consumeMouseClick() {
+		boolean consumed = mouseClickConsumed;
+		mouseClickConsumed = false;
+		return consumed;
+	}
+
+	public void clearMouseClickConsumed() {
+		mouseClickConsumed = false;
 	}
 
 	/**

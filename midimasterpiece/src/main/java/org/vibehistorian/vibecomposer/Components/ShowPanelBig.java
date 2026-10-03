@@ -246,8 +246,7 @@ public class ShowPanelBig extends JPanel {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
-					if (ShowAreaBig.consumed) {
-						ShowAreaBig.consumed = false;
+					if (sa.consumeMouseClick()) {
 						return;
 					}
 					Double percentage = getSequencePosFromMousePos(SwingUtils.getMouseLocation());
@@ -269,7 +268,7 @@ public class ShowPanelBig extends JPanel {
 					}
 
 				} else if (SwingUtilities.isRightMouseButton(evt)) {
-					ShowAreaBig.consumed = false;
+					sa.clearMouseClickConsumed();
 				}
 			}
 		};
@@ -279,7 +278,7 @@ public class ShowPanelBig extends JPanel {
 
 		JPanel areaPanel = new JPanel();
 		areaPanel.setMaximumSize(new Dimension(beatWidthBases.get(beatWidthBases.size() - 1),
-				ShowAreaBig.areaHeight));
+				sa.getHeight()));
 		areaPanel.setAlignmentX(LEFT_ALIGNMENT);
 		areaPanel.add(sa);
 
@@ -341,10 +340,10 @@ public class ShowPanelBig extends JPanel {
 		repaint();
 
 		// set up a more zoomed in first view
-		double originalHeight = ShowAreaBig.noteHeight;
-		sa.setNoteHeight(ShowAreaBig.noteHeight + 2);
+		double originalHeight = sa.getNoteHeight();
+		sa.setNoteHeight(sa.getNoteHeight() + 2);
 		setScore();
-		double changeY = ShowAreaBig.noteHeight / originalHeight;
+		double changeY = sa.getNoteHeight() / originalHeight;
 		playbackActions.repaintScore();
 
 		SwingUtilities.invokeLater(() -> {
@@ -419,14 +418,14 @@ public class ShowPanelBig extends JPanel {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
-					if (e.getWheelRotation() > 0 && ShowAreaBig.noteHeight <= 4) {
+					if (e.getWheelRotation() > 0 && sa.getNoteHeight() <= 4) {
 						return;
 					}
-					double originalHeight = ShowAreaBig.noteHeight;
+					double originalHeight = sa.getNoteHeight();
 					sa.setNoteHeight(
-							ShowAreaBig.noteHeight + ((e.getWheelRotation() > 0) ? -1 : 1));
+							sa.getNoteHeight() + ((e.getWheelRotation() > 0) ? -1 : 1));
 					setScore();
-					double changeY = ShowAreaBig.noteHeight / originalHeight;
+					double changeY = sa.getNoteHeight() / originalHeight;
 					playbackActions.repaintScore();
 
 					if (e.getWheelRotation() > 0) {
