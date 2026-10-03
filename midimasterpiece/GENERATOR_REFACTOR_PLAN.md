@@ -57,6 +57,8 @@ A `ChordProgressionGenerator` is a likely home for this work; key-change policy 
 
 **Completion signal:** progression algorithms can be understood and changed without navigating score assembly or instrument phrase generation.
 
+**Implemented 2026-10-03:** `ChordProgressionGenerator` now owns both chord-name and mapped-chord progression algorithms, returning mapped chords, chord names, and durations together. It also owns key-change selection for pivot, direct, and two-five-one changes. `MidiGenerator` keeps its existing progression entry point and compatibility fields, applying returned values to those fields for current callers. Timing values, seed inputs, and configured endpoint chords are passed explicitly; the two progression algorithms remain distinct. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` passed, including the byte-for-byte MIDI fixture comparison.
+
 ### Phase 4 — Reduce `generateMasterpiece` to orchestration
 
 - Extract named operations for generation setup, progression preparation, per-section processing, score creation, and generated-result publication.
@@ -67,6 +69,8 @@ A `ChordProgressionGenerator` is a likely home for this work; key-change policy 
 An `ArrangementGenerationPlanner` or `SectionGenerationPlanner` may fit the section decisions. Keep cross-stage sequencing in `MidiGenerator` unless another owner clearly owns the whole workflow.
 
 **Completion signal:** the top-level generation method reads as a sequence of stages, with section rules separated from overall orchestration.
+
+**Progress 2026-10-03:** chord progression preparation and score publication are named operations in `MidiGenerator`. `SectionGenerationPlanner` owns section variation selection, buildup variation, part substitution, custom chord/duration preparation, and instrument presence decisions. The top-level loop still sequences key-change and chord-swap decisions alongside phrase rendering.
 
 ### Phase 5 — Separate score assembly and instrument phrase generation
 
@@ -79,6 +83,8 @@ An `ArrangementGenerationPlanner` or `SectionGenerationPlanner` may fit the sect
 Candidate names include `MidiScoreBuilder`, `MelodyPhraseBuilder`, `BassPhraseGenerator`, `ChordPhraseGenerator`, `ArpPhraseGenerator`, and `DrumPhraseGenerator`.
 
 **Completion signal:** score assembly and each instrument’s phrase rules have focused owners, while `MidiGenerator` coordinates their use.
+
+**Progress 2026-10-03:** score track assignment, padding, combination, transposition, and humanization now live in `MidiScoreBuilder`; `MidiGenerator.setupScore` delegates to it. Instrument phrase algorithms remain in `MidiGenerator` and are the remaining Phase 5 work.
 
 ### Phase 6 — Migrate mutable state by lifetime
 
