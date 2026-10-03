@@ -1,8 +1,8 @@
 package org.vibehistorian.vibecomposer.Enums;
 
 import jm.music.data.Note;
-import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.generators.MelodyUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -5,7 +5,6 @@ import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.MidiUtils;
 
 import java.util.ArrayList;

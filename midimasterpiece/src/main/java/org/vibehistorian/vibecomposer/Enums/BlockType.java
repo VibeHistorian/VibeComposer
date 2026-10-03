@@ -2,8 +2,8 @@ package org.vibehistorian.vibecomposer.Enums;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.vibehistorian.vibecomposer.MelodyUtils;
 import org.vibehistorian.vibecomposer.OMNI;
+import org.vibehistorian.vibecomposer.generators.MelodyUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
