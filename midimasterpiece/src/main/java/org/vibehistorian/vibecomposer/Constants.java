@@ -24,6 +24,7 @@ public class Constants {
             .collect(Collectors.toList());
     public static final int[] MILISECOND_ARRAY_DELAY = { 0, 62, 125, 250, 333 };
     public static final int[] MILISECOND_ARRAY_SPLIT = { 625, 750, 875 };
+    public static final double DBL_ERR = 0.01;
     static final String BUG_HUNT_MESSAGE = "You found a bug! Save your project as a new preset, and send the .xml to my email: vibehistorian@gmail.com!";
     static final String FILENAME_VALID_CHARACTERS = "[a-zA-Z0-9,\\-_ ']";
     static final String FILENAME_VALID_NAME = "^" + FILENAME_VALID_CHARACTERS + "+$";

@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 
 public class JMusicUtilsCustom implements JMC {
 

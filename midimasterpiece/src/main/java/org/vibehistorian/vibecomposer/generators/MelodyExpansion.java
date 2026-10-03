@@ -28,8 +28,8 @@ import java.util.Vector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 final class MelodyExpansion {
     private final GUIConfig gc;

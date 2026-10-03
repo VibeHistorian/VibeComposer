@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import jm.constants.Pitches;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.INST;
@@ -31,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 
 public class MidiEditArea extends JComponent {
 	@FunctionalInterface
@@ -289,7 +290,7 @@ public class MidiEditArea extends JComponent {
 	public void deleteSelected() {
 		if (!selectedNotes.isEmpty()) {
 			selectedNotes.forEach(e -> {
-				if (e.getRv() < MidiGenerator.DBL_ERR) {
+				if (e.getRv() < Constants.DBL_ERR) {
 					getValues().remove(e);
 				} else {
 					e.setPitch(Pitches.REST);

@@ -1054,7 +1054,7 @@ public class MidiUtils {
 		double closestDistance = Math.abs(valToFind - closest);
 		for (int i = 1; i < list.size(); i++) {
 			double distRaw = valToFind - list.get(i);
-			if (leanLeft && distRaw < MidiGenerator.DBL_ERR) {
+			if (leanLeft && distRaw < Constants.DBL_ERR) {
 				return closest;
 			}
 			double distance = Math.abs(distRaw);
@@ -1448,7 +1448,7 @@ public class MidiUtils {
 	}
 
 	public static boolean roughlyEqual(double first, double second) {
-		return Math.abs(first - second) < MidiGenerator.DBL_ERR;
+		return Math.abs(first - second) < Constants.DBL_ERR;
 	}
 
 	public static boolean isMultiple(double bigger, double smaller) {

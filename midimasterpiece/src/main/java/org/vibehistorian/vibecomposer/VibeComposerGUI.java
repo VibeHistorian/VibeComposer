@@ -1522,7 +1522,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			double quarterNotesInMeasure = (val
 					- sliderMeasureStartTimes.get(lastMeasureStartTimeIndex)) / quarterNote;
 			//LG.d(quarterNotesInMeasure + " qtn");
-			if (quarterNotesInMeasure < MidiGenerator.DBL_ERR) {
+			if (quarterNotesInMeasure < Constants.DBL_ERR) {
 				return;
 			}
 			// need current chord's duration!

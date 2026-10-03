@@ -25,9 +25,9 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
 import static org.vibehistorian.vibecomposer.MidiUtils.getBasicChordsFromRoots;
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 final class MelodyBlockSkeletonGenerator {
     private final GUIConfig gc;

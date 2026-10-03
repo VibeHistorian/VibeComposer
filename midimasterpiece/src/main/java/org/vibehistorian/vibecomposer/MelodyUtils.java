@@ -523,7 +523,7 @@ public class MelodyUtils {
 		List<Integer> pattern = new ArrayList<>();
 		List<Double> durationBuckets = new ArrayList<>();
 		for (int i = 1; i <= hits; i++) {
-			durationBuckets.add(timeForHit * i - MidiGenerator.DBL_ERR);
+			durationBuckets.add(timeForHit * i - Constants.DBL_ERR);
 			pattern.add(0);
 		}
 
@@ -540,7 +540,7 @@ public class MelodyUtils {
 			current += n.getRhythmValue();
 		}
 
-		boolean skipCounter = startTimes.get(0) < MidiGenerator.DBL_ERR;
+		boolean skipCounter = startTimes.get(0) < Constants.DBL_ERR;
 		if (skipCounter) {
 			pattern.set(0, (!notes.isEmpty() && notes.get(0).getPitch() < 0) ? 0
 					: notes.get(0).getPitch());

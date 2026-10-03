@@ -13,8 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
 
 final class MelodyChordInference {
     private final GUIConfig gc;

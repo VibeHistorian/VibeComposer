@@ -4,6 +4,7 @@ import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
@@ -562,7 +563,7 @@ public class MidiGeneratorUtils {
 				//LG.d("Note: " + n.getPitch() + ", RV: " + n.getRhythmValue());
 				boolean avoidAllLengths = true;
 				if (avoidAllLengths || (n.getRhythmValue() > MidiGenerator.Durations.EIGHTH_NOTE
-						- MidiGenerator.DBL_ERR)) {
+						- Constants.DBL_ERR)) {
 					if (avoidNotes.contains(oldPitch % 12)) {
 						int normalizedPitch = oldPitch % 12;
 						int pitchIndex = MidiUtils.MAJ_SCALE.indexOf(normalizedPitch);

@@ -53,7 +53,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 
 public class MidiEditPopup extends CloseablePopup {
 

@@ -1,7 +1,5 @@
 package org.vibehistorian.vibecomposer;
 
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -53,7 +51,7 @@ public class Rhythm {
 			double remainingDuration = durationLimit - durationSum;
 			double minimumRemainingDuration = remainingNotes * dur;
 			double maximumAllowedNoteDuration = remainingDuration - minimumRemainingDuration + dur
-					+ MidiGenerator.DBL_ERR;
+					+ Constants.DBL_ERR;
 			for (int i = maximum - 1; i >= 0; i--) {
 				if (durationPool[i] > maximumAllowedNoteDuration) {
 					maximum = i;
@@ -106,16 +104,16 @@ public class Rhythm {
 		int longestDurIndex = 0;
 		double longestDur = 0.0;
 
-		while (durationSum < durationLimit - MidiGenerator.DBL_ERR) {
+		while (durationSum < durationLimit - Constants.DBL_ERR) {
 			double dur = shortestNote;
 			int chance = generator.nextInt(100);
 			int chosenIndex = 0;
 			boolean lastNote = false;
 			for (int i = 0; i < durationPool.length; i++) {
 				if (i < (durationPool.length - 1) && (durationPool[i + 1] > (durationLimit
-						- durationSum + MidiGenerator.DBL_ERR))) {
+						- durationSum + Constants.DBL_ERR))) {
 					dur = durationLimit - durationSum;
-					if (dur < shortestNote - MidiGenerator.DBL_ERR && !durations.isEmpty()) {
+					if (dur < shortestNote - Constants.DBL_ERR && !durations.isEmpty()) {
 						longestDur = longestDur - shortestNote + dur;
 						//LG.d(longestDurIndex + ", " + longestDur);
 						durations.set(longestDurIndex, longestDur);

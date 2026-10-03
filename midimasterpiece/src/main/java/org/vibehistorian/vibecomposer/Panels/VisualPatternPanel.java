@@ -4,13 +4,13 @@ import org.vibehistorian.vibecomposer.Components.ColorCheckBox;
 import org.vibehistorian.vibecomposer.Components.InstrumentControlContext;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Helpers.CheckBoxIcon;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
 import org.vibehistorian.vibecomposer.generators.MidiGenerator.Durations;
 
 import javax.swing.*;
@@ -920,7 +920,7 @@ public class VisualPatternPanel extends JPanel {
 				patternRepeat /= 2;
 			}
 		}*/
-		if (chordSpan > 1 && patternRepeat > 1 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
+		if (chordSpan > 1 && patternRepeat > 1 && patternCoverage > 1 + Constants.DBL_ERR) {
 			int chordSpanPart = chordNumInMeasure % chordSpan;
 			double normalizedPercentage = percentage / patternCoverage;
 			// percentage within a chord part

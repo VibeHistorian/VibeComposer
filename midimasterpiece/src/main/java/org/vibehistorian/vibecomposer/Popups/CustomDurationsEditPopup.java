@@ -23,7 +23,7 @@ import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.vibehistorian.vibecomposer.generators.MidiGenerator.DBL_ERR;
+import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 
 public class CustomDurationsEditPopup extends CloseablePopup {
 

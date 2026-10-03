@@ -1,5 +1,6 @@
 package org.vibehistorian.vibecomposer.Components;
 
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.generators.MidiGenerator;
@@ -79,7 +80,7 @@ public class ShowRulerBig extends JComponent {
 		g.setColor(new Color(180, 180, 180));
 		g.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		g.setFont(font);
-		int startOffset = MidiGenerator.START_TIME_DELAY > MidiGenerator.DBL_ERR ? 1 : 0;
+		int startOffset = MidiGenerator.START_TIME_DELAY > Constants.DBL_ERR ? 1 : 0;
 		List<Section> sections = arrangementSections.get();
 		if (sections != null) {
 			double durCounter = startOffset;

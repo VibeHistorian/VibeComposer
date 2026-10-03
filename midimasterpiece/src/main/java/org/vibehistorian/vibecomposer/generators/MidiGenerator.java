@@ -81,7 +81,6 @@ public class MidiGenerator implements JMC {
 	private static final SequenceTrackAssigner NO_SEQUENCE_TRACK_ASSIGNER = (instrument, panelOrder,
 			trackNumber) -> { };
 
-	public static final double DBL_ERR = 0.01;
 	public static final double FILLER_NOTE_MIN_DURATION = 0.05;
 	public static double GLOBAL_DURATION_MULTIPLIER = 0.95;
 	public static double SPLIT_DURATION_MULTIPLIER = 0.97;
@@ -281,7 +280,7 @@ public class MidiGenerator implements JMC {
 		return new InstPhraseGenerator.Timing(Durations.SIXTEENTH_NOTE, Durations.EIGHTH_NOTE,
 				Durations.QUARTER_NOTE, Durations.DOTTED_QUARTER_NOTE, Durations.HALF_NOTE,
 				Durations.DOTTED_HALF_NOTE, Durations.WHOLE_NOTE, noteMultiplier,
-				GLOBAL_DURATION_MULTIPLIER, FILLER_NOTE_MIN_DURATION, DBL_ERR);
+				GLOBAL_DURATION_MULTIPLIER, FILLER_NOTE_MIN_DURATION, Constants.DBL_ERR);
 	}
 
 	private int getAbsoluteOrder(InstPart part) {
@@ -331,7 +330,7 @@ public class MidiGenerator implements JMC {
 		List<Integer> chordSeparators = new ArrayList<>();
 		for (int i = 0; i < notes.size(); i++) {
 			durCounter += notes.get(i).getRhythmValue();
-			if (durCounter + DBL_ERR > currentChordDur) {
+			if (durCounter + Constants.DBL_ERR > currentChordDur) {
 				chordSeparators.add(i);
 				chordCounter = (chordCounter + 1) % progressionDurations.size();
 				currentChordDur = progressionDurations.get(chordCounter);
@@ -341,7 +340,7 @@ public class MidiGenerator implements JMC {
 				LG.d("Dur: " + durCounter + ", chord counter: " + chordCounter);
 		}
 		// fix short notes at the end not going to next chord
-		if (durCounter > DBL_ERR) {
+		if (durCounter > Constants.DBL_ERR) {
 			chordSeparators.add(notes.size() - 1);
 		}
 		int chordSepIndex = 0;
@@ -351,7 +350,7 @@ public class MidiGenerator implements JMC {
 		for (int i = 0; i < notes.size(); i++) {
 			Note n = notes.get(i);
 			double adjDur = n.getRhythmValue();
-			if (adjDur < DBL_ERR) {
+			if (adjDur < Constants.DBL_ERR) {
 				continue;
 			}
 			if (i > chordSeparators.get(chordSepIndex)) {
@@ -377,12 +376,12 @@ public class MidiGenerator implements JMC {
 
 			// try to find latest note which can be added/subtracted with swingAdjust
 			if (swungNote == null) {
-				if (adjDur - Math.abs(swingAdjust) > DBL_ERR) {
+				if (adjDur - Math.abs(swingAdjust) > Constants.DBL_ERR) {
 					latestSuitableNote = n;
 				}
 				processed = true;
 			} else {
-				if ((adjDur - Math.abs(swingAdjust) > DBL_ERR) && latestSuitableNote == null) {
+				if ((adjDur - Math.abs(swingAdjust) > Constants.DBL_ERR) && latestSuitableNote == null) {
 					latestSuitableNote = n;
 					processed = true;
 				}
@@ -440,7 +439,7 @@ public class MidiGenerator implements JMC {
 			// 
 			if (!processed && !MidiUtils.isMultiple(durCounter, 2 * swingUnitOfTime)) {
 				if (swungNote != null) {
-					if ((adjDur - Math.abs(swingAdjust) > DBL_ERR) && latestSuitableNote == null) {
+					if ((adjDur - Math.abs(swingAdjust) > Constants.DBL_ERR) && latestSuitableNote == null) {
 						latestSuitableNote = n;
 					}
 				}
@@ -463,7 +462,7 @@ public class MidiGenerator implements JMC {
 			chordCounter = 0;
             for (Note note : notes) {
                 durCounter += note.getRhythmValue();
-                if (durCounter - DBL_ERR > currentChordDur) {
+                if (durCounter - Constants.DBL_ERR > currentChordDur) {
                     chordCounter = (chordCounter + 1) % progressionDurations.size();
                     currentChordDur = progressionDurations.get(chordCounter);
                     durCounter = 0.0;
@@ -483,7 +482,7 @@ public class MidiGenerator implements JMC {
 		ChordProgressionGenerator.MappedProgression generated =
 				ChordProgressionGenerator.generateMappedProgression(gc, mainGeneratorSeed,
 						fixedLength, FIRST_CHORD, LAST_CHORD, progressionDurations,
-						Durations.WHOLE_NOTE, Durations.QUARTER_NOTE, DBL_ERR);
+						Durations.WHOLE_NOTE, Durations.QUARTER_NOTE, Constants.DBL_ERR);
 		progressionDurations.clear();
 		progressionDurations.addAll(generated.durations);
 		chordInts.clear();
@@ -1044,7 +1043,7 @@ public class MidiGenerator implements JMC {
 					* measureLength; i += Durations.SIXTEENTH_NOTE) {
 				double time = i;
 				if (!(drumHitTimes.stream()
-						.anyMatch(drumTime -> Math.abs(drumTime - time) < DBL_ERR))) {
+						.anyMatch(drumTime -> Math.abs(drumTime - time) < Constants.DBL_ERR))) {
 					fullMeasureHits.add(i);
 				}
 			}
@@ -1087,7 +1086,7 @@ public class MidiGenerator implements JMC {
 						continue;
 					}
 
-					if (n.getDuration() - DBL_ERR < Durations.SIXTEENTH_NOTE) {
+					if (n.getDuration() - Constants.DBL_ERR < Durations.SIXTEENTH_NOTE) {
 						continue;
 					}
 
@@ -1097,9 +1096,9 @@ public class MidiGenerator implements JMC {
 
 					// small 32nd buffer to prevent cutting notes that would result in too small leftovers
 					double startTime = n.getOffset() + currTime + Durations.SIXTEENTH_NOTE / 2
-							+ DBL_ERR;
+							+ Constants.DBL_ERR;
 					double endTime = startTime + n.getDuration() - Durations.SIXTEENTH_NOTE / 2
-							- DBL_ERR;
+							- Constants.DBL_ERR;
 					if (startTime >= endTime) {
 						continue;
 					}
@@ -1127,7 +1126,7 @@ public class MidiGenerator implements JMC {
 					// |---x----------| -> |---|---------| -> old note's duration is intersection length, new note's offset is moved up by the same amount
 					double intersectionLength = intersection - currTime - n.getOffset();
 					// skip if either of the resulting 2 notes would be too short
-					if (intersectionLength - DBL_ERR < Durations.SIXTEENTH_NOTE/2 || (n.getDuration() - intersectionLength - DBL_ERR) < Durations.SIXTEENTH_NOTE/2) {
+					if (intersectionLength - Constants.DBL_ERR < Durations.SIXTEENTH_NOTE/2 || (n.getDuration() - intersectionLength - Constants.DBL_ERR) < Durations.SIXTEENTH_NOTE/2) {
 						continue;
 					}
 
@@ -1617,7 +1616,7 @@ public class MidiGenerator implements JMC {
 				}
 
                 for (PhraseNote n : pns) {
-                    if (n.getStartTime() > (cumulativeChordDur - DBL_ERR)) {
+                    if (n.getStartTime() > (cumulativeChordDur - Constants.DBL_ERR)) {
                         chordCounter = (chordCounter + 1) % numChords;
                         if (chordCounter == 0) {
                             measureCounter++;
@@ -1938,7 +1937,7 @@ public class MidiGenerator implements JMC {
 				int pulseListSize = Math.min(repeatedArpsPerChord, pitchPatternSpanned.size());
 				int pulse = 0;
 				double durationNow = 0;
-				while (!pitchPatternSpanned.isEmpty() && (durationNow + DBL_ERR < progressionDurations.get(chordIndex))) {
+				while (!pitchPatternSpanned.isEmpty() && (durationNow + Constants.DBL_ERR < progressionDurations.get(chordIndex))) {
 					int velocity = velocityPatternSpanned != null
 							? velocityPatternSpanned.get(pulse % velocityPatternSpanned.size())
 							: (velocityGenerator.nextInt(maxVel - minVel) + minVel);
@@ -2014,7 +2013,7 @@ public class MidiGenerator implements JMC {
 						}
 					}
 					double usedDuration = chordDurationArp;
-					if (durationNow + usedDuration - DBL_ERR > progressionDurations
+					if (durationNow + usedDuration - Constants.DBL_ERR > progressionDurations
 							.get(chordIndex)) {
 						usedDuration = progressionDurations.get(chordIndex) - durationNow;
 						if (usedDuration < FILLER_NOTE_MIN_DURATION) {
