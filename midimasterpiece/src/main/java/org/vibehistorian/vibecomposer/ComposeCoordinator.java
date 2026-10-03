@@ -514,7 +514,7 @@ public final class ComposeCoordinator {
                     startBeatCounter = 0;
                     pausedSliderPosition = 0;
                     pausedMeasureCounter = 0;
-                    ArrangementGUI.arrSection.setSelectedIndex(0);
+                    arrangementGUI.resetSectionSelection();
                 }
                 slider.setValue(sliderBeatStartTimes.get(startBeatCounter) + snapAdjustment);
             } else {

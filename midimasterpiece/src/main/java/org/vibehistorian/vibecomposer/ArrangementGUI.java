@@ -72,17 +72,17 @@ public class ArrangementGUI {
 	private CheckButton useArrangement;
 	private JCheckBox randomizeArrangementOnCompose;
 	public static final String GLOBAL = "Global";
-	public static ArrangementSectionSelectorPanel arrSection;
-	public static JScrollPane arrSectionPane;
+	private ArrangementSectionSelectorPanel arrSection;
+	private JScrollPane arrSectionPane;
 	private boolean switchTabPaneAfterApply;
 	private boolean switchTabPaneToScoreAfterApply;
 	private JPanel manualArrangementSign;
 	private ScrollComboBox<String> newSectionBox;
 	private static final int arrangementRowHeaderWidth = 120;
-	public static JScrollPane arrangementScrollPane;
-	public static JScrollPane arrangementActualScrollPane;
-	public static JTable scrollableArrangementTable;
-	public static JTable scrollableArrangementActualTable;
+	private JScrollPane arrangementScrollPane;
+	private JScrollPane arrangementActualScrollPane;
+	private JTable scrollableArrangementTable;
+	private JTable scrollableArrangementActualTable;
 	private JPanel actualArrangementCombinedPanel;
 	private JPanel variationButtonsPanel;
 	private boolean copyDragging;
@@ -170,6 +170,50 @@ public class ArrangementGUI {
 	public boolean isCustomSection() {
 		return arrSection != null && arrSection.getSelectedIndex() != 0
 				&& !GLOBAL.equals(arrSection.getVal());
+	}
+
+	public boolean isDefaultSectionSelected() {
+		return arrSection != null && arrSection.getSelectedIndex() == 0;
+	}
+
+	public boolean isGlobalSectionSelected() {
+		return arrSection != null && GLOBAL.equals(arrSection.getVal());
+	}
+
+	public void selectSectionAndRepaint(int sectionIndex) {
+		arrSection.setSelectedIndex(sectionIndex);
+		arrSection.getButtons().forEach(Component::repaint);
+		arrSection.repaint();
+	}
+
+	public void resetSectionSelection() {
+		arrSection.setSelectedIndex(0);
+	}
+
+	public void setSectionSelectorVisible(boolean visible) {
+		arrSection.setVisible(visible);
+	}
+
+	public void repaintSectionSelectorPane() {
+		arrSectionPane.repaint();
+	}
+
+	public JScrollPane getArrangementScrollPane() {
+		return arrangementScrollPane;
+	}
+
+	public JScrollPane getArrangementActualScrollPane() {
+		return arrangementActualScrollPane;
+	}
+
+	public void repaintActualArrangementTable() {
+		if (scrollableArrangementActualTable != null) {
+			scrollableArrangementActualTable.repaint();
+		}
+	}
+
+	public int getActualArrangementColumnCount() {
+		return scrollableArrangementActualTable.getColumnCount();
 	}
 
 	private int calculateSectionMeasureStart(int sectionIndex) {
@@ -940,7 +984,7 @@ public class ArrangementGUI {
 		List<CheckButton> defaultButtons = new ArrayList<>();
 		defaultButtons.add(new SectionDropDownCheckButton(GLOBAL, true, OMNI.alphen(Color.pink, 70),
 				action -> handleArrangementAction(action, 0, 0)));
-		ArrangementGUI.arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons,
+		arrSection = new ArrangementSectionSelectorPanel(new ArrayList<>(), defaultButtons,
 				this::switchPanelsForSectionSelection, this::openVariationPopup,
 				this::trySliderStartChange, () -> actualArrangement.getSections().size(),
 				action -> handleArrangementAction(action, 0, 0));
@@ -948,35 +992,35 @@ public class ArrangementGUI {
 		JButton commitPanelBtn = context.makeButton("Apply", "ArrangementApply", 50, 30);
 		JButton commitAllPanelBtn = SwingUtils.makeButton("Apply..", e -> context.openApplyCustomSectionPopup(), 60);
 		JButton undoPanelBtn = SwingUtils.makeButton("<-*",
-				e -> ArrangementGUI.arrSection.setSelectedIndexWithProperty(
-						ArrangementGUI.arrSection.getSelectedIndex(), true), 30);
+				e -> arrSection.setSelectedIndexWithProperty(
+						arrSection.getSelectedIndex(), true), 30);
 		JButton clearPanelBtn = SwingUtils.makeButton("X*", e -> {
-			if (!GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
+			if (!GLOBAL.equals(arrSection.getVal())) {
 				Section sec = actualArrangement.getSections()
-						.get(ArrangementGUI.arrSection.getSelectedIndex() - 1);
+						.get(arrSection.getSelectedIndex() - 1);
 				if (sec.hasCustomizedParts()) {
 					sec.resetCustomizedParts(instrumentTabPane.getSelectedIndex());
 					setActualModel(actualArrangement.convertToActualTableModel(), false);
 					if (!sec.hasCustomizedParts()) {
-						CheckButton cb = ArrangementGUI.arrSection.getCurrentButton();
+						CheckButton cb = arrSection.getCurrentButton();
 						cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 						cb.repaint();
 					}
-					ArrangementGUI.arrSection.setSelectedIndexWithProperty(
-							ArrangementGUI.arrSection.getSelectedIndex(), true);
+					arrSection.setSelectedIndexWithProperty(
+							arrSection.getSelectedIndex(), true);
 				}
 			}
 		}, 30);
 		JButton clearAllPanelsBtn = SwingUtils.makeButton("CLR*", e -> {
 			actualArrangement.getSections().forEach(Section::resetCustomizedParts);
 			setActualModel(actualArrangement.convertToActualTableModel(), false);
-			ArrangementGUI.arrSection.getButtons().forEach(cb -> {
+			arrSection.getButtons().forEach(cb -> {
 				if (!GLOBAL.equals(cb.getText()) && cb.getText().contains("*")) {
 					cb.setText(cb.getText().substring(0, cb.getText().length() - 1));
 					cb.repaint();
 				}
 			});
-			ArrangementGUI.scrollableArrangementActualTable.repaint();
+			scrollableArrangementActualTable.repaint();
 		}, 40);
 
 		JButton copySelectedBtn = context.makeButton("Cc", "ArrangementAddLast", 30, 30);
@@ -1020,21 +1064,21 @@ public class ArrangementGUI {
 		arrangementSettingsRight.add(arrangementSeed);
 		arrangementSettings.add(arrangementSettingsRight);
 
-		ArrangementGUI.arrSectionPane = new JScrollPane() {
+		arrSectionPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() {
 				return new Dimension(UITheme.scrollPaneDimension.width, 45);
 			}
 		};
-		ArrangementGUI.arrSectionPane.setViewportView(ArrangementGUI.arrSection);
-		ArrangementGUI.arrSectionPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		ArrangementGUI.arrSectionPane.getHorizontalScrollBar().setUnitIncrement(32);
-		ArrangementGUI.arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		ArrangementGUI.arrSectionPane.setOpaque(true);
-		ArrangementGUI.arrSection.setOpaque(true);
-		context.addArrangementComponents(ArrangementGUI.arrSectionPane,
+		arrSectionPane.setViewportView(arrSection);
+		arrSectionPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		arrSectionPane.getHorizontalScrollBar().setUnitIncrement(32);
+		arrSectionPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		arrSectionPane.setOpaque(true);
+		arrSection.setOpaque(true);
+		context.addArrangementComponents(arrSectionPane,
 				arrangementSettings, startY, anchorSide);
 
-		ArrangementGUI.scrollableArrangementTable = new JTable(5, 5) {
+		scrollableArrangementTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 3846279087936376003L;
 			@Override public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
@@ -1051,7 +1095,7 @@ public class ArrangementGUI {
 					return comp;
 				}
 				Object objValue = getModel().getValueAt(row,
-						ArrangementGUI.scrollableArrangementTable.convertColumnIndexToModel(col));
+						scrollableArrangementTable.convertColumnIndexToModel(col));
 				Integer value = (objValue instanceof String) ? Integer.valueOf((String) objValue)
 						: (Integer) objValue;
 				if (value > 100) {
@@ -1070,20 +1114,20 @@ public class ArrangementGUI {
 		arrangement = new Arrangement();
 		actualArrangement = new Arrangement();
 		arrangement.generateDefaultArrangement();
-		ArrangementGUI.scrollableArrangementTable.setModel(arrangement.convertToTableModel());
-		ArrangementGUI.arrangementScrollPane = new JScrollPane() {
+		scrollableArrangementTable.setModel(arrangement.convertToTableModel());
+		arrangementScrollPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() { return UITheme.scrollPaneDimension; }
 		};
-		ArrangementGUI.scrollableArrangementTable.setRowHeight(35);
-		ArrangementGUI.scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
-		ArrangementGUI.arrangementScrollPane.setViewportView(ArrangementGUI.scrollableArrangementTable);
+		scrollableArrangementTable.setRowHeight(35);
+		scrollableArrangementTable.setFont(new Font("Calibri", Font.PLAIN, 15));
+		arrangementScrollPane.setViewportView(scrollableArrangementTable);
 		JList<String> list = new JList<>();
 		list.setListData(new String[] { "Section", "Bars", "Melody%", "Bass%", "Chord%", "Arp%", "Drum%" });
-		list.setFixedCellHeight(ArrangementGUI.scrollableArrangementTable.getRowHeight()
-				+ ArrangementGUI.scrollableArrangementTable.getRowMargin());
-		ArrangementGUI.arrangementScrollPane.setRowHeaderView(list);
-		ArrangementGUI.arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		ArrangementGUI.arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		list.setFixedCellHeight(scrollableArrangementTable.getRowHeight()
+				+ scrollableArrangementTable.getRowMargin());
+		arrangementScrollPane.setRowHeaderView(list);
+		arrangementScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		arrangementScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		if (useArrangement.isSelected()) {
 			arrangement.setPreviewChorus(false);
 			actualArrangement.setPreviewChorus(false);
@@ -1092,21 +1136,21 @@ public class ArrangementGUI {
 			actualArrangement.setPreviewChorus(true);
 			actualArrangement.resetArrangement();
 		}
-		ArrangementGUI.scrollableArrangementTable.setRowSelectionAllowed(false);
-		ArrangementGUI.scrollableArrangementTable.setColumnSelectionAllowed(true);
-		ArrangementGUI.scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(
+		scrollableArrangementTable.setRowSelectionAllowed(false);
+		scrollableArrangementTable.setColumnSelectionAllowed(true);
+		scrollableArrangementTable.getTableHeader().setPreferredSize(new Dimension(
 				UITheme.scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
-		ArrangementGUI.scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
+		scrollableArrangementTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.d("MOVED HEADER");
-				arrangement.resortByIndexes(ArrangementGUI.scrollableArrangementTable, false,
+				arrangement.resortByIndexes(scrollableArrangementTable, false,
 						ArrangementGUI.this::recolorAllVariationButtons);
 			}
 		});
-		ArrangementGUI.scrollableArrangementTable.addMouseListener(new MouseAdapter() {
+		scrollableArrangementTable.addMouseListener(new MouseAdapter() {
 			@Override public void mousePressed(MouseEvent evt) {
-				int row = ArrangementGUI.scrollableArrangementTable.rowAtPoint(evt.getPoint());
-				int secOrder = ArrangementGUI.scrollableArrangementTable.columnAtPoint(evt.getPoint());
+				int row = scrollableArrangementTable.rowAtPoint(evt.getPoint());
+				int secOrder = scrollableArrangementTable.columnAtPoint(evt.getPoint());
 				if (row == 0 && secOrder >= 0) {
 					if (SwingUtilities.isRightMouseButton(evt)) {
 						handleArrangementAction("ArrangementRemove," + secOrder, 0, 0);
@@ -1117,12 +1161,12 @@ public class ArrangementGUI {
 			}
 		});
 
-		ArrangementGUI.scrollableArrangementActualTable = new JTable(5, 5) {
+		scrollableArrangementActualTable = new JTable(5, 5) {
 			private static final long serialVersionUID = 1L;
 			@Override public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
 				Component comp = super.prepareRenderer(renderer, row, col);
 				Object value = getModel().getValueAt(row,
-						ArrangementGUI.scrollableArrangementActualTable.convertColumnIndexToModel(col));
+						scrollableArrangementActualTable.convertColumnIndexToModel(col));
 				comp.setForeground(UITheme.isDarkMode ? ArrangementGUI.arrangementDarkModeText
 						: ArrangementGUI.arrangementLightModeText);
 				if (value == null || getModel().getColumnCount() <= col) return comp;
@@ -1145,7 +1189,7 @@ public class ArrangementGUI {
 						ArrangementGUI.this::getTableRenderState, context::getGUIConfig);
 			}
 		};
-		ArrangementGUI.scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {
+		scrollableArrangementActualTable.addMouseListener(new MouseAdapter() {
 			@Override public void mousePressed(MouseEvent evt) {
 				ArrangementGUI.this.processActualArrangementMouseEvent(evt);
 			}
@@ -1156,7 +1200,7 @@ public class ArrangementGUI {
 				}
 			}
 		});
-		ArrangementGUI.scrollableArrangementActualTable.addMouseMotionListener(new MouseMotionListener() {
+		scrollableArrangementActualTable.addMouseMotionListener(new MouseMotionListener() {
 			@Override public void mouseMoved(MouseEvent e) {
 				updateArrangementSubcell(e);
 			}
@@ -1168,30 +1212,30 @@ public class ArrangementGUI {
 				ArrangementGUI.this.highlightedTableCell = ArrangementGUI.this.calculateCurrentTableSubcell(e);
 				ArrangementGUI.this.arrangementActualTableMousePoint = new Point(e.getPoint());
 				if (ArrangementGUI.this.highlightedTableCell != null || repaintAnyway) {
-					ArrangementGUI.scrollableArrangementActualTable.repaint();
+					scrollableArrangementActualTable.repaint();
 				}
 			}
 		});
 
-		ArrangementGUI.scrollableArrangementActualTable.setRowHeight(35);
-		ArrangementGUI.scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
-		ArrangementGUI.scrollableArrangementActualTable.setModel(actualArrangement.convertToActualTableModel());
-		ArrangementGUI.arrangementActualScrollPane = new JScrollPane() {
+		scrollableArrangementActualTable.setRowHeight(35);
+		scrollableArrangementActualTable.setFont(new Font("Calibri", Font.PLAIN, 15));
+		scrollableArrangementActualTable.setModel(actualArrangement.convertToActualTableModel());
+		arrangementActualScrollPane = new JScrollPane() {
 			@Override public Dimension getPreferredSize() { return UITheme.scrollPaneDimension; }
 		};
 		JList<String> actualList = new JList<>();
 		actualList.setListData(new String[] { "", "Section", "Info", "Melody", "Bass", "Chord", "Arp", "Drum" });
-		actualList.setFixedCellHeight(ArrangementGUI.scrollableArrangementActualTable.getRowHeight()
-				+ ArrangementGUI.scrollableArrangementActualTable.getRowMargin());
-		ArrangementGUI.arrangementActualScrollPane.setRowHeaderView(actualList);
-		ArrangementGUI.arrangementActualScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		ArrangementGUI.arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		ArrangementGUI.scrollableArrangementActualTable.setColumnSelectionAllowed(true);
-		ArrangementGUI.scrollableArrangementActualTable.setRowSelectionAllowed(false);
-		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
+		actualList.setFixedCellHeight(scrollableArrangementActualTable.getRowHeight()
+				+ scrollableArrangementActualTable.getRowMargin());
+		arrangementActualScrollPane.setRowHeaderView(actualList);
+		arrangementActualScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		arrangementActualScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		scrollableArrangementActualTable.setColumnSelectionAllowed(true);
+		scrollableArrangementActualTable.setRowSelectionAllowed(false);
+		scrollableArrangementActualTable.getTableHeader().addMouseListener(new MouseAdapter() {
 			@Override public void mouseReleased(MouseEvent e) {
 				LG.i("MOVED");
-				actualArrangement.resortByIndexes(ArrangementGUI.scrollableArrangementActualTable, true,
+				actualArrangement.resortByIndexes(scrollableArrangementActualTable, true,
 						ArrangementGUI.this::recolorAllVariationButtons);
 				setManualArrangementSelected(true);
 			}
@@ -1200,16 +1244,16 @@ public class ArrangementGUI {
 		actualArrangementCombinedPanel = new JPanel();
 		actualArrangementCombinedPanel.setLayout(
 				new BoxLayout(actualArrangementCombinedPanel, BoxLayout.Y_AXIS));
-		ArrangementGUI.scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(
+		scrollableArrangementActualTable.getTableHeader().setPreferredSize(new Dimension(
 				UITheme.scrollPaneDimension.width - ArrangementGUI.arrangementRowHeaderWidth, 30));
-		actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable.getTableHeader());
-		actualArrangementCombinedPanel.add(ArrangementGUI.scrollableArrangementActualTable);
+		actualArrangementCombinedPanel.add(scrollableArrangementActualTable.getTableHeader());
+		actualArrangementCombinedPanel.add(scrollableArrangementActualTable);
 		variationButtonsPanel = new JPanel();
 		refreshVariationPopupButtons(1);
 		actualArrangementCombinedPanel.add(variationButtonsPanel);
-		ArrangementGUI.arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
-		instrumentTabPane.addTab("Arrangement", ArrangementGUI.arrangementScrollPane);
-		instrumentTabPane.addTab("Generated Arrangement", ArrangementGUI.arrangementActualScrollPane);
+		arrangementActualScrollPane.setViewportView(actualArrangementCombinedPanel);
+		instrumentTabPane.addTab("Arrangement", arrangementScrollPane);
+		instrumentTabPane.addTab("Generated Arrangement", arrangementActualScrollPane);
 		UITheme.toggleableComponents.add(commitAllPanelBtn);
 		UITheme.toggleableComponents.add(undoPanelBtn);
 		UITheme.toggleableComponents.add(clearPanelBtn);

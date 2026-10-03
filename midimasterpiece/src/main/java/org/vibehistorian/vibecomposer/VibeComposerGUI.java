@@ -214,7 +214,7 @@ public class VibeComposerGUI extends JFrame
 			arrangementGUI.setManualArrangementSelected(true);
 		}
 		@Override public void repaintActualArrangement() {
-			ArrangementGUI.scrollableArrangementActualTable.repaint();
+			arrangementGUI.repaintActualArrangementTable();
 		}
 		@Override public List<Double> getUserChordDurations() {
 			return chordGUI.getUserChordDurations();
@@ -477,7 +477,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				midiDeviceController.markSoundbankRefreshNeeded();
 			}
 			@Override public void repaintMainWindow() { VibeComposerGUI.this.repaint(); }
-		}, drumGUI, chordGUI, arpGUI, melodyGUI, instrumentPanelController, scoreGUI);
+		}, drumGUI, chordGUI, arpGUI, melodyGUI, instrumentPanelController, scoreGUI,
+				arrangementGUI);
 		extraSettingsGUI.initExtraSettings();
 	}
 
@@ -494,7 +495,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public boolean isHeavyBackgroundTaskInProgress() {
 				return heavyBackgroundTasksInProgress;
 			}
-		}, instrumentPanelController, arpGUI, melodyGUI, chordGUI);
+		}, instrumentPanelController, arpGUI, melodyGUI, chordGUI, arrangementGUI);
 	}
 
 	private void initArrangementGUI() {
@@ -596,9 +597,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void selectPanelFromScore(INST part, int panelOrder, int sectionOrder) {
 				instrumentTabPane.setSelectedIndex(part.getIndex());
 				if (arrangementGUI.isArrangementEnabled()) {
-					ArrangementGUI.arrSection.setSelectedIndex(sectionOrder + 1);
-					ArrangementGUI.arrSection.getButtons().forEach(button -> button.repaint());
-					ArrangementGUI.arrSection.repaint();
+					arrangementGUI.selectSectionAndRepaint(sectionOrder + 1);
 					arrangementGUI.requestSwitchTabPaneToScoreAfterApply();
 				}
 			}
@@ -875,7 +874,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 						}
 					} else if (indx == 6) {
 						arrangementGUI.refreshPartMapsFromOldData();
-						ArrangementGUI.scrollableArrangementActualTable.repaint();
+						arrangementGUI.repaintActualArrangementTable();
 					}
 				}
 			});
@@ -1021,8 +1020,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		for (INST instrument : INST.values()) {
 			SwingUtils.setupScrollpanePriorityScrolling(getInstPane(instrument));
 		}
-		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementScrollPane);
-		SwingUtils.setupScrollpanePriorityScrolling(ArrangementGUI.arrangementActualScrollPane);
+		SwingUtils.setupScrollpanePriorityScrolling(arrangementGUI.getArrangementScrollPane());
+		SwingUtils.setupScrollpanePriorityScrolling(arrangementGUI.getArrangementActualScrollPane());
 	}
 
 	protected void setAddInst(INST instrument, boolean enabled) {
@@ -1698,7 +1697,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			dp.getComboPanel().reapplyHits();
 		}
 		arrangementGUI.refreshVariationPopupButtons(
-				ArrangementGUI.scrollableArrangementActualTable.getColumnCount());
+				arrangementGUI.getActualArrangementColumnCount());
 		pack();
 	}
 
@@ -1729,7 +1728,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 		removeComboBoxArrows(everythingPanel);
 		repaint();
-		ArrangementGUI.arrSectionPane.repaint();
+		arrangementGUI.repaintSectionSelectorPane();
 		if (scoreGUI.getScorePanel() != null) {
 			scoreGUI.getScorePanel().setupMouseWheelListener();
 		}
@@ -1761,7 +1760,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	private void toggleButtonEnabledForPanels() {
-		toggleButtonEnabledForPanels(ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal()));
+		toggleButtonEnabledForPanels(arrangementGUI.isGlobalSectionSelected());
 	}
 
 	private void toggleButtonEnabledForPanels(boolean isOriginal) {
@@ -2141,8 +2140,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		}
 
 		// Prepare application state and clear transient controls before module settings load.
-		ArrangementGUI.arrSection.setVisible(false);
-		ArrangementGUI.arrSection.setSelectedIndex(0);
+		arrangementGUI.setSectionSelectorVisible(false);
+		arrangementGUI.resetSectionSelection();
 		melodyGUI.randomMelodyOnRegenerate.setSelected(false);
 		generationGUI.randomSeed.setValue((int) gc.getRandomSeed());
 		generationGUI.lastRandomSeed = generationGUI.randomSeed.getValue();
@@ -2177,7 +2176,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				INST.DRUM, parts));
         arrangementGUI.recalculatePartMapsAfterPartsLoaded();
 
-		ArrangementGUI.arrSection.setVisible(true);
+		arrangementGUI.setSectionSelectorVisible(true);
 		if (MidiGenerator.chordInts.isEmpty()) {
 			MidiGenerator.chordInts = chordGUI.userChords.getChordList();
 		}

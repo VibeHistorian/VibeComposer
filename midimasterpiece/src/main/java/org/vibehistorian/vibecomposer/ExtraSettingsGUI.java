@@ -98,11 +98,13 @@ public class ExtraSettingsGUI {
 	private final ArpGUI arpGUI;
     private final MelodyGUI melodyGUI;
     private final InstrumentPanelController panelController;
-    private final ScoreGUI scoreGUI;
+	private final ScoreGUI scoreGUI;
+	private final ArrangementGUI arrangementGUI;
 
 	public ExtraSettingsGUI(Context context, DrumGUI drumGUI, ChordGUI chordGUI,
 			ArpGUI arpGUI, MelodyGUI melodyGUI,
-			InstrumentPanelController panelController, ScoreGUI scoreGUI) {
+			InstrumentPanelController panelController, ScoreGUI scoreGUI,
+			ArrangementGUI arrangementGUI) {
 		this.context = context;
 		this.drumGUI = drumGUI;
 		this.chordGUI = chordGUI;
@@ -110,6 +112,7 @@ public class ExtraSettingsGUI {
         this.melodyGUI = melodyGUI;
         this.panelController = panelController;
         this.scoreGUI = scoreGUI;
+        this.arrangementGUI = arrangementGUI;
     }
 
     public void initExtraSettings() {
@@ -353,7 +356,7 @@ public class ExtraSettingsGUI {
 				for (INST instrument : INST.values()) {
 					panelController.getInstList(instrument)
 							.forEach(ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
-					if (ArrangementGUI.arrSection.getSelectedIndex() > 0) {
+					if (arrangementGUI.getSelectedSectionIndex() > 0) {
 						panelController.getAffectedPanels(instrument).forEach(
 								ipanel -> ipanel.toggleComponentTexts(isShowingTextInKnobs));
 					}

@@ -47,7 +47,7 @@ public final class AppearanceController {
 	}
 
 	public void switchDarkMode() {
-		ArrangementGUI.arrSection.setSelectedIndex(0);
+		arrangementGUI.resetSectionSelection();
 		LG.i("Switching dark mode!");
 		if (isDarkMode) {
 			FlatIntelliJLaf.install();
@@ -77,7 +77,7 @@ public final class AppearanceController {
 		} else {
 			panelColorHigh = panelColorHigh.darker();
 		}
-		if (ArrangementGUI.GLOBAL.equals(ArrangementGUI.arrSection.getVal())) {
+		if (arrangementGUI.isGlobalSectionSelected()) {
 			arrangementGUI.getManualArrangementSign().setBackground(panelColorHigh.brighter());
 		} else {
 			arrangementGUI.getManualArrangementSign().setBackground(toggledUIColor.darker().darker());

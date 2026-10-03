@@ -60,8 +60,7 @@ public class GenerationGUI {
         return PlaybackState.sequencer != null && regenerateWhenValuesChange != null
                 && regenerateWhenValuesChange.isSelected()
                 && !context.isHeavyBackgroundTaskInProgress()
-                && ArrangementGUI.arrSection != null
-                && ArrangementGUI.arrSection.getSelectedIndex() == 0;
+                && arrangementGUI.isDefaultSectionSelected();
     }
 
     public void initializeMainControls(int minimumBpm, int maximumBpm) {
@@ -92,15 +91,18 @@ public class GenerationGUI {
     private final ArpGUI arpGUI;
     private final MelodyGUI melodyGUI;
     private final ChordGUI chordGUI;
+    private final ArrangementGUI arrangementGUI;
     private boolean onComposeOptionsEnabled = true;
 
     public GenerationGUI(Context context, InstrumentPanelController panelController,
-            ArpGUI arpGUI, MelodyGUI melodyGUI, ChordGUI chordGUI) {
+            ArpGUI arpGUI, MelodyGUI melodyGUI, ChordGUI chordGUI,
+            ArrangementGUI arrangementGUI) {
         this.context = context;
         this.panelController = panelController;
         this.arpGUI = arpGUI;
         this.melodyGUI = melodyGUI;
         this.chordGUI = chordGUI;
+        this.arrangementGUI = arrangementGUI;
     }
 
     public JPanel initRandomButtons() {
