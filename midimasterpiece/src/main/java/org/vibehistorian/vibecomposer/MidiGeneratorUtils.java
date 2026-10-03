@@ -4,7 +4,9 @@ import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
+import org.vibehistorian.vibecomposer.Parts.DrumPart;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +21,53 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 public class MidiGeneratorUtils {
+
+	static List<Integer> makeRandomArpPattern(int hits, boolean repeatableNotes,
+			Random uiGenerator2arpPattern) {
+		int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MidiGenerator.MAXIMUM_PATTERN_LENGTH)
+				.limit(hits * 2).toArray();
+		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
+				.collect(Collectors.toList());
+		if (repeatableNotes) {
+			arpPattern.addAll(arpPattern);
+		}
+		arpPattern = arpPattern.subList(0, hits);
+		Collections.shuffle(arpPattern, uiGenerator2arpPattern);
+		return arpPattern;
+	}
+
+	static List<Integer> generateDrumPatternFromPart(DrumPart dp, List<Integer> melodyNotePattern,
+			int chordCount) {
+		Random uiGenerator1drumPattern = new Random(
+				dp.getPatternSeedWithPartOffset() + dp.getOrderOffset() - 1);
+		List<Integer> premadePattern;
+		if (melodyNotePattern != null && dp.getPattern() == RhythmPattern.MELODY1) {
+			dp.setHitsPerPattern(melodyNotePattern.size());
+			premadePattern = melodyNotePattern;
+			dp.setPatternShift(0);
+			dp.setChordSpan(chordCount);
+		} else {
+			premadePattern = dp.getFinalPatternCopy();
+		}
+
+		List<Integer> drumPattern = new ArrayList<>();
+		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
+			boolean blankDrum = uiGenerator1drumPattern.nextInt(100) < dp.getPauseChance()
+					|| premadePattern.get(j) < 1;
+			if (dp.isPatternFlip()) {
+				blankDrum = !blankDrum;
+			}
+			if (blankDrum) {
+				drumPattern.add(-1);
+			} else if (dp.getInstrument() == 42
+					&& uiGenerator1drumPattern.nextInt(100) < MidiGenerator.OPENHAT_CHANCE) {
+				drumPattern.add(46);
+			} else {
+				drumPattern.add(dp.getInstrument());
+			}
+		}
+		return drumPattern;
+	}
 
 	static List<Integer> generateMelodyOffsetDirectionsFromChordProgression(List<int[]> progression,
 			boolean roots, int randomSeed) {

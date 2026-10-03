@@ -280,87 +280,6 @@ public class MidiGenerator implements JMC {
 		return part.getAbsoluteOrder(gc.getInstParts(part.getPartNum()));
 	}
 
-	private Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap) {
-		Map<Integer, List<Integer>> patterns = new HashMap<>();
-		for (Integer chKey : fullMelodyMap.keySet()) {
-			//LG.d("chkey: " + chKey);
-			patterns.put(chKey, patternFromNotes(fullMelodyMap.get(chKey), 1,
-					progressionDurations.get(chKey % progressionDurations.size())));
-			//LG.d(StringUtils.join(patterns.get(chKey), ","));
-		}
-		//LG.d(StringUtils.join(pattern, ", "));
-		return patterns;
-	}
-
-	private List<Integer> patternFromNotes(List<Note> notes, int chordsTotal, Double measureTotal) {
-		// strategy: use 64 hits in pattern, then simplify if needed
-
-		int hits = (int) Math.round(
-				chordsTotal * MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
-		double mult = getBeatDurationMult();
-		measureTotal = (measureTotal == null) ? (chordsTotal * mult * Durations.WHOLE_NOTE)
-				: measureTotal;
-		double timeForHit = measureTotal / hits;
-		List<Integer> pattern = new ArrayList<>();
-		List<Double> durationBuckets = new ArrayList<>();
-		for (int i = 1; i <= hits; i++) {
-			durationBuckets.add(timeForHit * i - DBL_ERR);
-			pattern.add(0);
-		}
-
-		if (notes == null || notes.isEmpty()) {
-			return pattern;
-		}
-
-		double currentDuration = 0;
-		int explored = 0;
-
-		// 111 0 11111 000 11111
-
-		// 1 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0
-		int counter = 0;
-
-		List<Double> startTimes = new ArrayList<>();
-		double current = 0.0;
-		for (Note n : notes) {
-			startTimes.add(current + n.getOffset());
-			current += n.getRhythmValue();
-		}
-
-		boolean skipCounter = startTimes.get(0) < DBL_ERR;
-		if (skipCounter) {
-			pattern.set(0, (!notes.isEmpty() && notes.get(0).getPitch() < 0) ? 0
-					: notes.get(0).getPitch());
-		}
-
-		for (Note n : notes) {
-			if (counter == 0 && skipCounter) {
-				counter++;
-				continue;
-			}
-			/*LG.d("START TIME: " + startTimes.get(counter) + ", PITCH: " + n.getPitch()
-					+ ", OFFSET: " + n.getOffset());*/
-			for (int i = explored; i < hits; i++) {
-				if (startTimes.get(counter) < durationBuckets.get(i)) {
-					int nextPitch = Math.max(n.getPitch(), 0);
-					pattern.set(i, nextPitch);
-					explored = i;
-					break;
-				}
-			}
-			counter++;
-		}
-		if (gc.isMelodyPatternFlip()) {
-            pattern.replaceAll(integer -> integer > 0 ? 0 : 1);
-		}
-		//LG.i("Melody note pattern: " + StringUtils.join(pattern, ", "));
-		return pattern;
-	}
-
-	private double getBeatDurationMult() {
-		return getBeatDurationMult(currentSection);
-	}
-
 	public static double getBeatDurationMult(Section currSection) {
 		double mult = 1;
 		SectionConfig sc = (currSection != null) ? currSection.getSecConfig() : null;
@@ -2457,7 +2376,8 @@ public class MidiGenerator implements JMC {
 
 		if (ip.getOrder() == 1) {
 			List<Integer> notePattern = new ArrayList<>();
-			Map<Integer, List<Integer>> notePatternMap = patternsFromNotes(fullMelodyMap);
+			Map<Integer, List<Integer>> notePatternMap = MelodyUtils.patternsFromNotes(fullMelodyMap,
+					progressionDurations, getBeatDurationMult(currentSection), gc.isMelodyPatternFlip());
 			notePatternMap.keySet().forEach(e -> notePattern.addAll(notePatternMap.get(e)));
 			melodyNotePatternMap = notePatternMap;
 			melodyNotePattern = notePattern;
@@ -3535,7 +3455,8 @@ public class MidiGenerator implements JMC {
 
 		int chordsCount = actualProgression.size();
 
-		List<Integer> drumPattern = generateDrumPatternFromPart(ip);
+		List<Integer> drumPattern = MidiGeneratorUtils.generateDrumPatternFromPart(ip, melodyNotePattern,
+				chordInts.size());
 
 		if (!ip.isVelocityPattern() && drumPattern.indexOf(ip.getInstrument()) == -1) {
 			//drumPhrase.addNote(new Note(Pitches.REST, patternDurationTotal, 100));
@@ -3976,7 +3897,7 @@ public class MidiGenerator implements JMC {
 		}
 
 		List<Integer> arpPattern = (ap.getArpPattern() != ArpPattern.RANDOM) ? new ArrayList<>()
-				: makeRandomArpPattern(ap.getHitsPerPattern(), true, uiGenerator2arpPattern);
+				: MidiGeneratorUtils.makeRandomArpPattern(ap.getHitsPerPattern(), true, uiGenerator2arpPattern);
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 
 		Collections.rotate(arpPattern, -1 * ap.getArpPatternRotate());
@@ -4020,57 +3941,7 @@ public class MidiGenerator implements JMC {
 
 	public static List<Integer> makeRandomArpPattern(int hits, boolean repeatableNotes,
 			Random uiGenerator2arpPattern) {
-		int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MAXIMUM_PATTERN_LENGTH)
-				.limit(hits * 2).toArray();
-		List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
-				.collect(Collectors.toList());
-		if (repeatableNotes) {
-			arpPattern.addAll(arpPattern);
-		}
-		arpPattern = arpPattern.subList(0, hits);
-		Collections.shuffle(arpPattern, uiGenerator2arpPattern);
-		return arpPattern;
-	}
-
-	public static List<Integer> generateDrumPatternFromPart(DrumPart dp) {
-		Random uiGenerator1drumPattern = new Random(
-				dp.getPatternSeedWithPartOffset() + dp.getOrderOffset() - 1);
-		List<Integer> premadePattern = null;
-		if (melodyNotePattern != null && dp.getPattern() == RhythmPattern.MELODY1) {
-			//LG.d("Setting note pattern!");
-			dp.setHitsPerPattern(melodyNotePattern.size());
-			premadePattern = melodyNotePattern;
-			dp.setPatternShift(0);
-			//dp.setVelocityPattern(false);
-			dp.setChordSpan(chordInts.size());
-		} else {
-			premadePattern = dp.getFinalPatternCopy();
-		}
-
-		List<Integer> drumPattern = new ArrayList<>();
-		for (int j = 0; j < dp.getHitsPerPattern(); j++) {
-			// if random pause or not present in pattern: pause
-			boolean blankDrum = uiGenerator1drumPattern.nextInt(100) < dp.getPauseChance()
-					|| premadePattern.get(j) < 1;
-			if (dp.isPatternFlip()) {
-				blankDrum = !blankDrum;
-			}
-			if (blankDrum) {
-				drumPattern.add(-1);
-			} else {
-				if (dp.getInstrument() == 42
-						&& uiGenerator1drumPattern.nextInt(100) < OPENHAT_CHANCE) {
-					drumPattern.add(46);
-				} else {
-					drumPattern.add(dp.getInstrument());
-				}
-
-			}
-		}
-
-		/*System.out
-				.println("Drum pattern for " + dp.getInstrument() + " : " + drumPattern.toString());*/
-		return drumPattern;
+		return MidiGeneratorUtils.makeRandomArpPattern(hits, repeatableNotes, uiGenerator2arpPattern);
 	}
 
 	private List<Integer> generateDrumVelocityPatternFromPart(Section sec, DrumPart dp) {

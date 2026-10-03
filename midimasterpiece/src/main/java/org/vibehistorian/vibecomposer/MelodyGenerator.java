@@ -554,43 +554,6 @@ public class MelodyGenerator {
 
 
 
-    private List<Double> makeSurpriseTrioArpedDurations(List<Double> durations) {
-        List<Double> arpedDurations = new ArrayList<>(durations);
-        for (int trioIndex = 0; trioIndex < arpedDurations.size() - 2; trioIndex++) {
-            double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3).stream()
-                    .mapToDouble(e -> e).sum();
-            boolean valid = false;
-            if (MidiGeneratorUtils.isDottedNote(sumThirds)) {
-                sumThirds /= 3.0;
-                for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
-                    arpedDurations.set(trio, sumThirds);
-                }
-                valid = true;
-            } else if (MidiUtils.isMultiple(sumThirds, MidiGenerator.Durations.HALF_NOTE)) {
-                if (sumThirds > MidiGenerator.Durations.DOTTED_HALF_NOTE) {
-                    sumThirds /= 4.0;
-                    for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
-                        arpedDurations.set(trio, sumThirds);
-                    }
-                    arpedDurations.add(trioIndex, sumThirds);
-                } else {
-                    sumThirds /= 2.0;
-                    for (int trio = trioIndex + 1; trio < trioIndex + 3; trio++) {
-                        arpedDurations.set(trio, sumThirds);
-                    }
-                    arpedDurations.remove(trioIndex++);
-                }
-                valid = true;
-            }
-
-            if (valid) {
-                return arpedDurations;
-            }
-
-        }
-        return null;
-    }
-
     private Vector<Note> algoGen2GenerateMelodySkeletonFromChords(MelodyPart mp, List<int[]> chords,
                                                                   List<int[]> roots, int measures, int notesSeedOffset, Section sec,
                                                                   List<Integer> variations) {
@@ -744,7 +707,7 @@ public class MelodyGenerator {
                         if ((i % 2 == 0) || (durations.size() < 3)) {
                             durations.addAll(durations);
                         } else {
-                            List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
+                            List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations);
                             if (arpedDurations != null) {
                                 LG.d("Double pattern - surprise!");
                                 durations.addAll(arpedDurations);
@@ -754,7 +717,7 @@ public class MelodyGenerator {
                         }
                     } else if (i % 2 == 1 && durations.size() >= 4) {
 
-                        List<Double> arpedDurations = makeSurpriseTrioArpedDurations(durations);
+                        List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations);
                         if (arpedDurations != null) {
                             LG.d("Single pattern - surprise!");
                             durations = arpedDurations;

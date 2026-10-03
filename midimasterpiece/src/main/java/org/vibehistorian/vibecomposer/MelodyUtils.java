@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -507,6 +508,106 @@ public class MelodyUtils {
 			prevChordString = chordString;
 		}
 		return chordStrings;
+	}
+
+	public static Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap,
+			List<Double> progressionDurations, double beatDurationMultiplier, boolean flip) {
+		Map<Integer, List<Integer>> patterns = new HashMap<>();
+		for (Integer chordKey : fullMelodyMap.keySet()) {
+			patterns.put(chordKey, patternFromNotes(fullMelodyMap.get(chordKey), 1,
+					progressionDurations.get(chordKey % progressionDurations.size()), beatDurationMultiplier, flip));
+		}
+		return patterns;
+	}
+
+	private static List<Integer> patternFromNotes(List<Note> notes, int chordsTotal, Double measureTotal,
+			double beatDurationMultiplier, boolean flip) {
+		int hits = (int) Math.round(
+				chordsTotal * MidiGenerator.MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
+		measureTotal = (measureTotal == null) ? (chordsTotal * beatDurationMultiplier * Durations.WHOLE_NOTE)
+				: measureTotal;
+		double timeForHit = measureTotal / hits;
+		List<Integer> pattern = new ArrayList<>();
+		List<Double> durationBuckets = new ArrayList<>();
+		for (int i = 1; i <= hits; i++) {
+			durationBuckets.add(timeForHit * i - MidiGenerator.DBL_ERR);
+			pattern.add(0);
+		}
+
+		if (notes == null || notes.isEmpty()) {
+			return pattern;
+		}
+
+		int explored = 0;
+		int counter = 0;
+		List<Double> startTimes = new ArrayList<>();
+		double current = 0.0;
+		for (Note n : notes) {
+			startTimes.add(current + n.getOffset());
+			current += n.getRhythmValue();
+		}
+
+		boolean skipCounter = startTimes.get(0) < MidiGenerator.DBL_ERR;
+		if (skipCounter) {
+			pattern.set(0, (!notes.isEmpty() && notes.get(0).getPitch() < 0) ? 0
+					: notes.get(0).getPitch());
+		}
+
+		for (Note n : notes) {
+			if (counter == 0 && skipCounter) {
+				counter++;
+				continue;
+			}
+			for (int i = explored; i < hits; i++) {
+				if (startTimes.get(counter) < durationBuckets.get(i)) {
+					int nextPitch = Math.max(n.getPitch(), 0);
+					pattern.set(i, nextPitch);
+					explored = i;
+					break;
+				}
+			}
+			counter++;
+		}
+		if (flip) {
+			pattern.replaceAll(integer -> integer > 0 ? 0 : 1);
+		}
+		return pattern;
+	}
+
+	public static List<Double> makeSurpriseTrioArpedDurations(List<Double> durations) {
+		List<Double> arpedDurations = new ArrayList<>(durations);
+		for (int trioIndex = 0; trioIndex < arpedDurations.size() - 2; trioIndex++) {
+			double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3).stream()
+					.mapToDouble(e -> e).sum();
+			boolean valid = false;
+			if (MidiGeneratorUtils.isDottedNote(sumThirds)) {
+				sumThirds /= 3.0;
+				for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
+					arpedDurations.set(trio, sumThirds);
+				}
+				valid = true;
+			} else if (MidiUtils.isMultiple(sumThirds, Durations.HALF_NOTE)) {
+				if (sumThirds > Durations.DOTTED_HALF_NOTE) {
+					sumThirds /= 4.0;
+					for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
+						arpedDurations.set(trio, sumThirds);
+					}
+					arpedDurations.add(trioIndex, sumThirds);
+				} else {
+					sumThirds /= 2.0;
+					for (int trio = trioIndex + 1; trio < trioIndex + 3; trio++) {
+						arpedDurations.set(trio, sumThirds);
+					}
+					arpedDurations.remove(trioIndex++);
+				}
+				valid = true;
+			}
+
+			if (valid) {
+				return arpedDurations;
+			}
+		}
+		return null;
 	}
 
 	public static Pair<Integer, Integer[]> generateBlockByBlockChangeAndLength(Integer blockChange,
