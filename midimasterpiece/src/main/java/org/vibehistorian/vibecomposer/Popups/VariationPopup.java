@@ -19,7 +19,7 @@ import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SectionConfig;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;
 import org.vibehistorian.vibecomposer.gui.ExtraSettingsGUI;
 

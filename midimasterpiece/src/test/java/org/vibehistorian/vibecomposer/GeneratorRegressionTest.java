@@ -1,7 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import org.junit.Test;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.xml.bind.JAXBContext;
 import java.io.File;

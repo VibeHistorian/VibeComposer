@@ -16,7 +16,7 @@ import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

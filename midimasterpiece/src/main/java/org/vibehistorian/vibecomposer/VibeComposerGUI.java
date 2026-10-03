@@ -49,8 +49,8 @@ import org.vibehistorian.vibecomposer.controllers.MidiCcController;
 import org.vibehistorian.vibecomposer.controllers.MidiDeviceController;
 import org.vibehistorian.vibecomposer.controllers.MidiExportController;
 import org.vibehistorian.vibecomposer.controllers.SoloMuteController;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.gui.*;
 
 import javax.sound.midi.InvalidMidiDataException;

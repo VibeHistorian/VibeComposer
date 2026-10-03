@@ -14,8 +14,8 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter.State;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
 import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.Popups.CustomDurationsEditPopup;
-import org.vibehistorian.vibecomposer.generators.MelodyUtils;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MelodyUtils;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;

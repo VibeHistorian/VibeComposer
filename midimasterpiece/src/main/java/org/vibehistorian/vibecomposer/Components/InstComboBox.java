@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer.Components;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import java.util.HashSet;
 import java.util.Random;

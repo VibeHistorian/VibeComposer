@@ -1,7 +1,7 @@
 package org.vibehistorian.vibecomposer;
 
 import org.vibehistorian.vibecomposer.Popups.MidiEditPopup;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import java.util.List;
 

@@ -3,7 +3,7 @@ package org.vibehistorian.vibecomposer;
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;

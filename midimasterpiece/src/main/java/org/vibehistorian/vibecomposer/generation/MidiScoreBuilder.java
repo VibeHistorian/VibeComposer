@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.generators;
+package org.vibehistorian.vibecomposer.generation;
 
 import jm.music.data.Score;
 import jm.music.tools.Mod;

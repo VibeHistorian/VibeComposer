@@ -21,8 +21,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator.Durations;
-import org.vibehistorian.vibecomposer.generators.MidiGeneratorUtils;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.generation.MidiGeneratorUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

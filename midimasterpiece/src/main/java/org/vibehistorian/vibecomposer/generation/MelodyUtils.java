@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.generators;
+package org.vibehistorian.vibecomposer.generation;
 
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
@@ -9,7 +9,7 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
 
 import java.util.*;
 import java.util.stream.Collectors;

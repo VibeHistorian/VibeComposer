@@ -11,7 +11,7 @@ import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

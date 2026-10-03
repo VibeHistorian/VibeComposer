@@ -17,7 +17,7 @@ along with this program; if not,
 see <https://www.gnu.org/licenses/>.
 */
 
-package org.vibehistorian.vibecomposer.generators;
+package org.vibehistorian.vibecomposer.generation;
 
 import jm.JMC;
 import jm.constants.Pitches;

@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;

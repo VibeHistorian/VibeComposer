@@ -45,9 +45,9 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
-import org.vibehistorian.vibecomposer.generators.MelodyUtils;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
-import org.vibehistorian.vibecomposer.generators.MidiGeneratorUtils;
+import org.vibehistorian.vibecomposer.generation.MelodyUtils;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGeneratorUtils;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

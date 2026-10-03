@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.generators;
+package org.vibehistorian.vibecomposer.generation;
 
 import org.vibehistorian.vibecomposer.Arrangement;
 import org.vibehistorian.vibecomposer.GUIConfig;

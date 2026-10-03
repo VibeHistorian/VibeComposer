@@ -1,4 +1,4 @@
-package org.vibehistorian.vibecomposer.generators;
+package org.vibehistorian.vibecomposer.generation;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Enums.KeyChangeType;

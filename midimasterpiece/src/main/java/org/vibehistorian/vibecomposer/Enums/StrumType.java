@@ -2,7 +2,7 @@ package org.vibehistorian.vibecomposer.Enums;
 
 import jm.music.data.Note;
 import org.vibehistorian.vibecomposer.OMNI;
-import org.vibehistorian.vibecomposer.generators.MelodyUtils;
+import org.vibehistorian.vibecomposer.generation.MelodyUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

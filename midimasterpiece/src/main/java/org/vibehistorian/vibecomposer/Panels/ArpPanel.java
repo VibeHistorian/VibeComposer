@@ -9,7 +9,7 @@ import org.vibehistorian.vibecomposer.Enums.ArpPattern;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.Parts.InstPart;
-import org.vibehistorian.vibecomposer.generators.MelodyUtils;
+import org.vibehistorian.vibecomposer.generation.MelodyUtils;
 
 import javax.swing.*;
 import java.awt.*;

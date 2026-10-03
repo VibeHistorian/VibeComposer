@@ -26,7 +26,7 @@ import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;

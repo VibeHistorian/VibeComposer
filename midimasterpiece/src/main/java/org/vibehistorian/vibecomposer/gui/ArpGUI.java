@@ -39,7 +39,7 @@ import org.vibehistorian.vibecomposer.Parts.ArpPart;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
-import org.vibehistorian.vibecomposer.generators.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
