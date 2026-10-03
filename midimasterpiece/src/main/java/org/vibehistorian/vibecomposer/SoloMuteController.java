@@ -19,9 +19,35 @@ public final class SoloMuteController {
 	}
 
 	private final Context context;
+	private boolean recalculationRequested;
+	private boolean recalculationRequestedAfterSequenceGenerated;
 
 	public SoloMuteController(Context context) {
 		this.context = context;
+	}
+
+	public void requestRecalculation() {
+		recalculationRequested = true;
+	}
+
+	public void processRecalculationRequest(Runnable afterSoloMuterChange) {
+		if (!recalculationRequested) {
+			return;
+		}
+		recalculationRequested = false;
+		unapplyTracks();
+		reapplyTracks();
+		afterSoloMuterChange.run();
+	}
+
+	public void requestRecalculationAfterSequenceGenerated() {
+		recalculationRequestedAfterSequenceGenerated = true;
+	}
+
+	public boolean consumeRecalculationAfterSequenceGenerated() {
+		boolean requested = recalculationRequestedAfterSequenceGenerated;
+		recalculationRequestedAfterSequenceGenerated = false;
+		return requested;
 	}
 
 	public void unapplyTracks() {
@@ -105,7 +131,7 @@ public final class SoloMuteController {
 			recalculateGroupMute(instrument);
 		}
 		recalculateGlobals();
-		SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+		requestRecalculationAfterSequenceGenerated();
 	}
 
 	public void recalculateGlobals() {
@@ -252,9 +278,9 @@ public final class SoloMuteController {
 		}
 
 		if (sequenceReady()) {
-			SoloMuteState.needToRecalculateSoloMuters = true;
+			requestRecalculation();
 		} else {
-			SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+			requestRecalculationAfterSequenceGenerated();
 		}
 		context.refreshScoreForSoloChange();
 	}
@@ -280,9 +306,9 @@ public final class SoloMuteController {
 		}
 
 		if (sequenceReady()) {
-			SoloMuteState.needToRecalculateSoloMuters = true;
+			requestRecalculation();
 		} else {
-			SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated = true;
+			requestRecalculationAfterSequenceGenerated();
 		}
 		context.refreshScoreForMuteChange();
 	}

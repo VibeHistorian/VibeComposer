@@ -11,6 +11,4 @@ public final class SoloMuteState {
 
 	public static SoloMuter globalSoloMuter;
 	public static List<SoloMuter> groupSoloMuters;
-	public static boolean needToRecalculateSoloMuters;
-	public static boolean needToRecalculateSoloMutersAfterSequenceGenerated;
 }

@@ -74,7 +74,6 @@ import static org.vibehistorian.vibecomposer.GUIConstants.DEFAULT_WIDTH;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
 import static org.vibehistorian.vibecomposer.SoloMuteState.globalSoloMuter;
 import static org.vibehistorian.vibecomposer.SoloMuteState.groupSoloMuters;
-import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMuters;
 import static org.vibehistorian.vibecomposer.UITheme.*;
 
 // main class
@@ -376,6 +375,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				new TemporaryInfoPopup(
 						"Cannot create MIDI - VibeComposer is in a folder without write access!\n This can happen in restricted folders, e.g. Program Files.",
 						null);
+			}
+			@Override public void requestSoloMuteRecalculationAfterSequenceGenerated() {
+				soloMuteController.requestRecalculationAfterSequenceGenerated();
 			}
 		});
 		midiCcController = new MidiCcController(new MidiCcController.Context() {
@@ -1205,11 +1207,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 			private void recalculateSolosMutes() {
 				// recalc sequencer tracks from button colorings
-				if (needToRecalculateSoloMuters && !heavyBackgroundTasksInProgress) {
-					needToRecalculateSoloMuters = false;
-					soloMuteController.unapplyTracks();
-					soloMuteController.reapplyTracks();
-					recolorButtons();
+				if (!heavyBackgroundTasksInProgress) {
+					soloMuteController.processRecalculationRequest(
+							this::recolorButtons);
 				}
 			}
 

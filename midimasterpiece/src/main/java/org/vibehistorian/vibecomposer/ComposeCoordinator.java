@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.ApplicationSessionState.*;
 import static org.vibehistorian.vibecomposer.PlaybackState.*;
-import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMuters;
-import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated;
 
 /** Coordinates the ordered preparation, generation, and playback setup workflow. */
 public final class ComposeCoordinator {
@@ -116,7 +114,7 @@ public final class ComposeCoordinator {
             mainWindowControls.getSavedIndicatorLabel().setVisible(false);
             midiDeviceController.prepareForComposition();
 
-            needToRecalculateSoloMuters = true;
+            soloMuteController.requestRecalculation();
 
             Integer masterpieceSeed = prepareMainSeed(regenerate);
             int regenerateCount = regenerate ? guiConfig.getRegenerateCount() + 1 : 0;
@@ -584,9 +582,8 @@ public final class ComposeCoordinator {
             midiCcController.startMidiCcThread();
             context.recalculateTabPaneCounts();
             sequencer.setTempoFactor(1);
-            if (needToRecalculateSoloMutersAfterSequenceGenerated) {
-                needToRecalculateSoloMuters = true;
-                needToRecalculateSoloMutersAfterSequenceGenerated = false;
+            if (soloMuteController.consumeRecalculationAfterSequenceGenerated()) {
+                soloMuteController.requestRecalculation();
             }
             startBpm = generationGUI.mainBpm.getInt();
         } catch (MidiUnavailableException | InvalidMidiDataException ex) {

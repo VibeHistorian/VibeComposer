@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import static org.vibehistorian.vibecomposer.PlaybackState.sequencer;
-import static org.vibehistorian.vibecomposer.SoloMuteState.needToRecalculateSoloMutersAfterSequenceGenerated;
 
 /** Owns MIDI output devices and synthesizer lifecycle. */
 public final class MidiDeviceController {
@@ -18,6 +17,7 @@ public final class MidiDeviceController {
 		File getSoundbankFile();
 		void stopPlayback();
 		void showSequenceReadError();
+		void requestSoloMuteRecalculationAfterSequenceGenerated();
 	}
 
 	private final Context context;
@@ -62,7 +62,7 @@ public final class MidiDeviceController {
 			oldDevice.close();
 		}
 		LG.i("Closed oldDevice!");
-		needToRecalculateSoloMutersAfterSequenceGenerated = true;
+		context.requestSoloMuteRecalculationAfterSequenceGenerated();
 	}
 
 	/** Releases the active endpoint before a new composition, preserving mode-specific behavior. */
