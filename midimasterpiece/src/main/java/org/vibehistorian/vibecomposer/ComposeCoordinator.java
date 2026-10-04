@@ -237,7 +237,7 @@ public final class ComposeCoordinator {
     private void fillUserParameters(GUIConfig config, MidiGenerator midiGenerator,
                                     boolean regenerate, boolean manual) {
         try {
-            boolean validChordDurations = MidiGenerator.configureFromConfig(config,
+            boolean validChordDurations = midiGenerator.configureFromConfig(config,
                     ExtraSettingsGUI.stretchMidi.getInt(),
                     ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0,
                     drumGUI.combineDrumTracks.isSelected());
@@ -448,7 +448,7 @@ public final class ComposeCoordinator {
                 if (sec != null) {
                     List<Double> customDurations = (sec.getSectionBeatDurations() != null)
                             ? sec.getSectionBeatDurations()
-                            : MidiGenerator.userChordsDurations;
+                            : midiEditorSession.getMidiGenerator().getUserChordDurations();
                     if (!customDurations.isEmpty()) {
                         double adjustment = (measureWidth * customDurations.get(0)
                                 / fullMeasureNoteDuration);
@@ -580,9 +580,9 @@ public final class ComposeCoordinator {
                 divisor = 2;
             }
             generationGUI.loopBeatCount.getKnob()
-                    .setMax(!MidiGenerator.userChordsDurations.isEmpty()
+                    .setMax(!midiEditorSession.getMidiGenerator().getUserChordDurations().isEmpty()
                             ? (int) Math.ceil(
-                            OMNI.sumListDouble(MidiGenerator.userChordsDurations) / divisor)
+                            OMNI.sumListDouble(midiEditorSession.getMidiGenerator().getUserChordDurations()) / divisor)
                             : midiEditorSession.getMidiGenerator().getGeneratedChordNames().size() * 4);
             midiCcController.startMidiCcThread();
             context.recalculateTabPaneCounts();

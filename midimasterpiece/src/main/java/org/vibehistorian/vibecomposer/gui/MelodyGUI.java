@@ -31,6 +31,7 @@ import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -130,7 +131,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	@Override
 	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
 		return new MelodyPanel(soloMuterContext, seed -> MidiGeneratorUtils.generateNoteTargetOffsets(
-				MidiGenerator.chordInts, seed, melodyBlockTargetMode.getSelectedIndex(),
+				GeneratedChordState.getChordNames(), seed, melodyBlockTargetMode.getSelectedIndex(),
 				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem(),
 				melodyUseDirectionsFromProgression.isSelected()),
 				context::getUserChordDurations);

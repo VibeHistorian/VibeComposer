@@ -6,6 +6,7 @@ import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.RandomIntegerListButton;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
+import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.InstUtils.POOL;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
@@ -122,17 +123,17 @@ public class MelodyPanel extends InstPanel {
 			return noteTargetGenerator.apply(seed);
 		});
 		noteTargets.setHighlighterGenerator(e -> {
-			if (MidiGenerator.chordInts.isEmpty()) {
+			if (!GeneratedChordState.hasChordNames()) {
 				return null;
 			}
 
 			if (relatedSection == null) {
-				return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, true);
+				return MidiUtils.getHighlightTargetsFromChords(GeneratedChordState.getChordNames(), true);
 			} else {
 				return MidiUtils
 						.getHighlightTargetsFromChords(relatedSection.isCustomChordsEnabled()
 								? relatedSection.getCustomChordsList()
-								: MidiGenerator.chordInts, true);
+								: GeneratedChordState.getChordNames(), true);
 			}
 
 		});

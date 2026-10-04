@@ -114,7 +114,11 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Progress 2026-10-04:** melody transposition now reads the run's `GUIConfig` held by `MelodyGenerator`. Melody target-note generation receives the progression-direction setting explicitly, and chord-spice generation receives its force-scale setting from `ChordProgressionGenerator`; these algorithms no longer read those choices through `MidiGenerator.gc`. Removed `MidiGenerator.trackList` after confirming its only operations were declaration and an unconditional clear. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass, including the existing MIDI fixture comparison. This is an incremental state migration: shared chord/progression values, other `MidiGenerator.gc` callers, and mutable duration settings remain for later slices.
 
-**Progress 2026-10-04:** generated chord names are now stored on each `MidiGenerator` run and exposed as a read-only result. Melody skeleton generation, user-melody chord inference, arpeggio/drum generation, and `ComposeCoordinator` consume that run-owned value. The deprecated static `chordInts` field remains as a compatibility mirror for GUI consumers that still read or seed it; migrating those callers is still required before it can be removed. Shared custom-chord inputs, progression arrays, config access, and mutable duration settings also remain for later Phase 6 slices. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` passed, including the byte-for-byte MIDI fixture comparison.
+**Progress 2026-10-04:** generated chord names are stored on each `MidiGenerator` run and exposed as a read-only result. Melody skeleton generation, user-melody chord inference, arpeggio/drum generation, and `ComposeCoordinator` consume that run-owned value. At this point GUI consumers still use a compatibility mirror; the follow-up migration below removes that mirror. Shared custom-chord inputs, progression arrays, config access, and mutable duration settings remain for later Phase 6 slices.
+
+**Progress 2026-10-04:** generated chord names now have an explicit application-session view in `GeneratedChordState`, which publishes immutable snapshots for GUI consumers between runs. All GUI and utility callers have migrated, and the `MidiGenerator.chordInts` compatibility field has been removed. Per-run generation still owns its chord-name result.
+
+**Progress 2026-10-04:** custom progression names, custom chord durations, and first/last chord choices are now instance state on `MidiGenerator`. `ComposeCoordinator`, `ChordGUI`, and melody chord inference use the active generator's inputs; `configureFromConfig` is now an instance operation. The regression test uses the same per-run setup, and both `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass with the byte-for-byte MIDI fixture unchanged. Shared config access, progression arrays, and mutable duration settings remain for later Phase 6 slices.
 
 **Completion signal:** internal generation collaborators no longer depend on mutable global state for their inputs, and any remaining compatibility surface has known callers and a removal path.
 
@@ -127,7 +131,7 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Completion signal:** the two generator classes act as understandable coordinators, collaborators have focused inputs and outputs, and remaining shared state is deliberate and documented.
 
-**Progress 2026-10-04:** reviewed the Phase 6 ownership changes. `MidiGenerator` no longer uses its static generated-chord field internally, but direct GUI consumers remain, so the compatibility field and final consolidation are intentionally outstanding until those callers migrate.
+**Progress 2026-10-04:** reviewed the Phase 6 ownership changes. Generated chord names are run-owned during generation and published through `GeneratedChordState` for application-session GUI use; custom progression inputs and bounds are run-owned by `MidiGenerator`. No callers of the removed `MidiGenerator.chordInts` field remain. Final API consolidation is still outstanding while config access, progression arrays, and mutable duration settings remain shared.
 
 
 ---------------------------------------------------------------

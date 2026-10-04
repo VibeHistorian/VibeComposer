@@ -26,7 +26,7 @@ final class MelodyChordInference {
         this.state = state;
     }
     void processUserMelody(Phrase userMelody) {
-        if (!state.chordMelodyMap1.isEmpty() || !(MidiGenerator.userChords == null || MidiGenerator.userChords.isEmpty())) {
+        if (!state.chordMelodyMap1.isEmpty() || !mg.getUserChords().isEmpty()) {
             return;
         }
 

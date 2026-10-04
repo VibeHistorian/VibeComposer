@@ -32,6 +32,7 @@ import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
 import org.vibehistorian.vibecomposer.GUIConfig;
+import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.InstUtils;
 import org.vibehistorian.vibecomposer.LG;
@@ -146,7 +147,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         gc.setLastChord(lastChordSelection.getVal());
         gc.setCustomChordsEnabled(userChordsEnabled.isSelected());
         gc.setCustomChords(preserveGeneratedChords
-                ? StringUtils.join(MidiGenerator.chordInts, ",")
+                ? StringUtils.join(GeneratedChordState.getChordNames(), ",")
                 : userChords.getChordListString());
         gc.setCustomChordDurations(userChordsDurations.getText());
         gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
@@ -763,15 +764,14 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 
 	private void randomizeUserChords() {
 		context.copyGUItoConfig();
-		MidiGenerator mg = new MidiGenerator(context.getGUIConfig());
-		MidiGenerator.FIRST_CHORD = chordSelect(firstChordSelection.getVal());
-		MidiGenerator.LAST_CHORD = chordSelect(lastChordSelection.getVal());
-		MidiGenerator.userChords.clear();
+		GUIConfig config = context.getGUIConfig();
+		MidiGenerator mg = new MidiGenerator(config);
+		mg.configureFromConfig(config);
 		mg.generatePrettyUserChords(new Random().nextInt(),
 				userChords.chordCount() > 0 ? userChords.chordCount()
-						: MidiGenerator.gc.getFixedDuration(),
+						: config.getFixedDuration(),
 				4 * MidiGenerator.Durations.WHOLE_NOTE);
-		userChords.setupChords(MidiGenerator.chordInts);
+		userChords.setupChords(GeneratedChordState.getChordNames());
 	}
 
 	public static String chordSelect(String chord) {

@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 import jm.constants.Pitches;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
 import org.vibehistorian.vibecomposer.INST;
@@ -1401,12 +1402,12 @@ public class MidiEditArea extends JComponent {
 	}
 
 	public static Map<Integer, Set<Integer>> calculateHighlightedChords(Section sec) {
-		if (MidiGenerator.chordInts.isEmpty()) {
+		if (!GeneratedChordState.hasChordNames()) {
 			return null;
 		}
 
 		if (sec == null || !sec.isCustomChordsEnabled()) {
-			return MidiUtils.getHighlightTargetsFromChords(MidiGenerator.chordInts, false);
+			return MidiUtils.getHighlightTargetsFromChords(GeneratedChordState.getChordNames(), false);
 		} else {
 			return MidiUtils.getHighlightTargetsFromChords(sec.getCustomChordsList(), false);
 		}

@@ -39,10 +39,11 @@ public class GeneratorRegressionTest {
 
         try {
             GUIConfig config = loadConfig(configPath.toFile());
-            MidiGenerator.configureFromConfig(config);
+            MidiGenerator midiGenerator = new MidiGenerator(config);
+            midiGenerator.configureFromConfig(config);
 
             int seed = (int) config.getRandomSeed();
-            new MidiGenerator(config).generateMasterpiece(seed, outputPath.toString());
+            midiGenerator.generateMasterpiece(seed, outputPath.toString());
 
             assertMidiMatches(expectedPath, outputPath);
         } finally {

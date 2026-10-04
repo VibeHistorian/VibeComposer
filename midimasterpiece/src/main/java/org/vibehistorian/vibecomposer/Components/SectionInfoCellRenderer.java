@@ -1,9 +1,9 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;
 
 import javax.swing.*;
@@ -56,19 +56,19 @@ public class SectionInfoCellRenderer extends JComponent implements TableCellRend
 				g.drawString("" + sec.getMeasures(), 3, height / 2);
 
 				String customDurations = sec.isCustomDurationsEnabled()
-						? sec.getCustomDurations().replaceAll(" ", "")
+						? sec.getCustomDurations().replace(" ", "")
 						: "";
 				String customChords = ((sec.isCustomChordsEnabled()
 						|| sec.isDisplayAlternateChords())
-								? sec.getCustomChords().replaceAll(" ", "")
+								? sec.getCustomChords().replace(" ", "")
 								: "");
 				String guiUserChords = (chordGUI.userChordsEnabled.isSelected()
 						? chordGUI.userChords.getChordListString()
-						: StringUtils.join(MidiGenerator.chordInts, ",")).replaceAll(" ", "");
+						: StringUtils.join(GeneratedChordState.getChordNames(), ",")).replaceAll(" ", "");
 
 				String guiUserDurations = (chordGUI.userDurationsEnabled.isSelected()
 						? chordGUI.userChordsDurations.getText()
-						: "4,4,4,4").replaceAll(" ", "");
+						: "4,4,4,4").replace(" ", "");
 
 				if (customChords.trim().isEmpty() || guiUserChords.equalsIgnoreCase(customChords)) {
 					customChords = "";

@@ -32,6 +32,7 @@ public class OMNI {
 				intsList.add(Integer.valueOf(s.trim()));
 			}
 		} catch (Exception e) {
+			LG.e("Exception during parseIntsString: ", e);
 			return null;
 		}
 		return intsList;

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.Helpers.VariationsBooleanTableModel;
 import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.LG;
@@ -272,7 +273,7 @@ public class VariationPopup {
 
 		String guiUserChords = (chordGUI.userChordsEnabled.isSelected()
 				? chordGUI.userChords.getChordListString()
-				: StringUtils.join(MidiGenerator.chordInts, ","));
+				: StringUtils.join(GeneratedChordState.getChordNames(), ","));
 		userChords = new ChordletPanel(300,
 				(sec.isCustomChordsEnabled() || sec.isDisplayAlternateChords())
 						? sec.getCustomChords()

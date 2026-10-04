@@ -139,15 +139,7 @@ public class MidiGenerator implements JMC {
 
 	// visibles/settables
 
-	public static List<String> userChords = new ArrayList<>();
-	public static List<Double> userChordsDurations = new ArrayList<>();
-	/** Compatibility view for GUI consumers that have not migrated to the active run yet. */
-	@Deprecated
-	public static List<String> chordInts = new ArrayList<>();
 	public static double GENERATED_MEASURE_LENGTH = 0;
-
-	public static String FIRST_CHORD = null;
-	public static String LAST_CHORD = null;
 
 	public static boolean COLLAPSE_DRUM_TRACKS = true;
 
@@ -163,15 +155,27 @@ public class MidiGenerator implements JMC {
 	public List<int[]> chordProgression = new ArrayList<>();
 	public List<int[]> rootProgression = new ArrayList<>();
 	private final List<String> generatedChordNames = new ArrayList<>();
+	private final List<String> userChords = new ArrayList<>();
+	private final List<Double> userChordsDurations = new ArrayList<>();
+	private String firstChord;
+	private String lastChord;
 
 	public List<String> getGeneratedChordNames() {
 		return java.util.Collections.unmodifiableList(generatedChordNames);
 	}
 
+	public List<String> getUserChords() {
+		return java.util.Collections.unmodifiableList(userChords);
+	}
+
+	public List<Double> getUserChordDurations() {
+		return java.util.Collections.unmodifiableList(userChordsDurations);
+	}
+
 	void replaceGeneratedChordNames(List<String> chordNames) {
 		generatedChordNames.clear();
 		generatedChordNames.addAll(chordNames);
-		chordInts = new ArrayList<>(generatedChordNames);
+		GeneratedChordState.setChordNames(generatedChordNames);
 	}
 
 	public List<Double> progressionDurationsBackup = new ArrayList<>();
@@ -209,20 +213,20 @@ public class MidiGenerator implements JMC {
 	}
 
 	/** Applies config-backed generator inputs using fresh-window defaults. */
-	public static boolean configureFromConfig(GUIConfig config) {
+	public boolean configureFromConfig(GUIConfig config) {
 		return configureFromConfig(config, 100, 0.95, true);
 	}
 
-	public static boolean configureFromConfig(GUIConfig config, int stretchPercent,
+	public boolean configureFromConfig(GUIConfig config, int stretchPercent,
 			double globalDurationMultiplier, boolean collapseDrumTracks) {
 		Objects.requireNonNull(config, "config");
 		recalculateDurations(stretchPercent);
 		GLOBAL_DURATION_MULTIPLIER = globalDurationMultiplier;
 		COLLAPSE_DRUM_TRACKS = collapseDrumTracks;
 		START_TIME_DELAY = Durations.QUARTER_NOTE;
-		FIRST_CHORD = MidiUtils.MAJOR_CHORDS.contains(config.getFirstChord())
+		firstChord = MidiUtils.MAJOR_CHORDS.contains(config.getFirstChord())
 				? config.getFirstChord() : null;
-		LAST_CHORD = MidiUtils.MAJOR_CHORDS.contains(config.getLastChord())
+		lastChord = MidiUtils.MAJOR_CHORDS.contains(config.getLastChord())
 				? config.getLastChord() : null;
 
 		List<String> configuredChords = MidiUtils.parseChordList(config.getCustomChords());
@@ -497,10 +501,10 @@ public class MidiGenerator implements JMC {
 
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength) {
 		generatedChordNames.clear();
-		chordInts = new ArrayList<>();
+		GeneratedChordState.clear();
 		ChordProgressionGenerator.MappedProgression generated =
 				ChordProgressionGenerator.generateMappedProgression(gc, mainGeneratorSeed,
-						fixedLength, FIRST_CHORD, LAST_CHORD, progressionDurations,
+					fixedLength, firstChord, lastChord, progressionDurations,
 						Durations.WHOLE_NOTE, Durations.QUARTER_NOTE, Constants.DBL_ERR);
 		progressionDurations.clear();
 		progressionDurations.addAll(generated.durations);
@@ -1409,7 +1413,7 @@ public class MidiGenerator implements JMC {
 		SectionConfig sectionConfig = currentSection != null ? currentSection.getSecConfig() : null;
 		SectionGenerationPlanner.CustomProgression customProgression =
 				SectionGenerationPlanner.prepareCustomProgression(gc, sec, sectionConfig,
-						progressionDurations, FIRST_CHORD, LAST_CHORD, Durations.WHOLE_NOTE);
+						progressionDurations, firstChord, lastChord, Durations.WHOLE_NOTE);
 		if (customProgression == null) {
 			return false;
 		}
@@ -1456,10 +1460,8 @@ public class MidiGenerator implements JMC {
 			return;
 		}
 
-		List<int[]> altChordProgression = new ArrayList<>();
-		List<int[]> altRootProgression = new ArrayList<>();
-		altChordProgression.addAll(chordProgression);
-		altRootProgression.addAll(rootProgression);
+        List<int[]> altChordProgression = new ArrayList<>(chordProgression);
+        List<int[]> altRootProgression = new ArrayList<>(rootProgression);
 
 		int[] c = MidiUtils.mappedChord("CGCE");
 		altChordProgression.set(0, c);
@@ -1476,10 +1478,8 @@ public class MidiGenerator implements JMC {
 		if (size < 3) {
 			return false;
 		}
-		List<int[]> altChordProgression = new ArrayList<>();
-		List<int[]> altRootProgression = new ArrayList<>();
-		altChordProgression.addAll(chordProgression);
-		altRootProgression.addAll(rootProgression);
+        List<int[]> altChordProgression = new ArrayList<>(chordProgression);
+        List<int[]> altRootProgression = new ArrayList<>(rootProgression);
 		int[] dm = MidiUtils.transposeChord(MidiUtils.mappedChord("Dm"), transToSet);
 		int[] g7 = MidiUtils.transposeChord(MidiUtils.mappedChord("G7"), transToSet);
 		if (scaleToSet != null) {
@@ -1503,16 +1503,13 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void skipN1Chord() {
-		List<Double> altProgressionDurations = new ArrayList<>();
-		List<int[]> altChordProgression = new ArrayList<>();
-		List<int[]> altRootProgression = new ArrayList<>();
 
-		// TODO: other variations on how to generate alternates?
+        // TODO: other variations on how to generate alternates?
 		// 1: chord trick, max two measures
 		// 60 30 4 1 -> 60 30 1 - , 60 30 4 1
-		altProgressionDurations.addAll(progressionDurations);
-		altChordProgression.addAll(chordProgression);
-		altRootProgression.addAll(rootProgression);
+        List<Double> altProgressionDurations = new ArrayList<>(progressionDurations);
+        List<int[]> altChordProgression = new ArrayList<>(chordProgression);
+        List<int[]> altRootProgression = new ArrayList<>(rootProgression);
 
 		int size = progressionDurations.size();
 		if (size < 3) {

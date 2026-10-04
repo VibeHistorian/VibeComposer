@@ -376,7 +376,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			@Override public void startMidiCcThread() { midiCcController.startMidiCcThread(); }
 			@Override public boolean startFromBar() { return ExtraSettingsGUI.startFromBar.isSelected(); }
 			@Override public int currentBpm() { return generationGUI.mainBpm.getInt(); }
-			@Override public boolean hasGeneratedChordData() { return !MidiGenerator.chordInts.isEmpty(); }
+			@Override public boolean hasGeneratedChordData() { return GeneratedChordState.hasChordNames(); }
 		});
 		midiDeviceController = new MidiDeviceController(new MidiDeviceController.Context() {
 			@Override public boolean isTransmitterMode() {
@@ -1545,7 +1545,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			Set<Integer> presences = sec != null ? sec.getPresence(part) : null;
 			int totalChords = (sec != null && sec.getSectionBeatDurations() != null)
 					? sec.getSectionBeatDurations().size()
-					: MidiGenerator.chordInts.size();
+					: GeneratedChordState.getChordNames().size();
 			for (InstPanel ip : panels) {
 				boolean turnOff = ip.getMuteInst() || presences == null
 						|| !presences.contains(ip.getPanelOrder());
@@ -2197,8 +2197,8 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
         arrangementGUI.recalculatePartMapsAfterPartsLoaded();
 
 		arrangementGUI.setSectionSelectorVisible(true);
-		if (MidiGenerator.chordInts.isEmpty()) {
-			MidiGenerator.chordInts = chordGUI.userChords.getChordList();
+		if (!GeneratedChordState.hasChordNames()) {
+			GeneratedChordState.setChordNames(chordGUI.userChords.getChordList());
 		}
 	}
 
