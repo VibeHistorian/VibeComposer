@@ -193,7 +193,7 @@ public class ArpPanel extends InstPanel {
 	}
 
 	public List<Integer> getArpContour() {
-		return OMNI.parseIntsString(arpContour.getValue());
+		return arpContour.getParsedValues();
 	}
 
 	public void setArpContour(List<Integer> val) {

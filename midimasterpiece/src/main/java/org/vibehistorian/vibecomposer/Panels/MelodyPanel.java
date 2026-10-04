@@ -276,7 +276,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public List<Integer> getChordNoteChoices() {
-		return OMNI.parseIntsString(noteTargets.getValue());
+		return noteTargets.getParsedValues();
 	}
 
 	public void setChordNoteChoices(List<Integer> val) {
@@ -284,7 +284,7 @@ public class MelodyPanel extends InstPanel {
 	}
 
 	public List<Integer> getMelodyPatternOffsets() {
-		return OMNI.parseIntsString(patternStructure.getValue());
+		return patternStructure.getParsedValues();
 	}
 
 	public void setMelodyPatternOffsets(List<Integer> val) {

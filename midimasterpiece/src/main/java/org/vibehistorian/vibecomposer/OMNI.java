@@ -27,13 +27,8 @@ public class OMNI {
 
 	public static List<Integer> parseIntsString(String ints) {
 		List<Integer> intsList = new ArrayList<>();
-		try {
-			for (String s : ints.split(",")) {
-				intsList.add(Integer.valueOf(s.trim()));
-			}
-		} catch (Exception e) {
-			LG.e("Exception during parseIntsString: ", e);
-			return null;
+		for (String s : ints.split(",")) {
+			intsList.add(Integer.valueOf(s.trim()));
 		}
 		return intsList;
 	}

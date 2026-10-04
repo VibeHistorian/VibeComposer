@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.apache.commons.lang3.StringUtils;
+import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
@@ -89,6 +90,11 @@ public class RandomIntegerListButton extends JButton {
 
 		}
 		return values;
+	}
+
+	public List<Integer> getParsedValues() {
+		String value = getValue();
+		return value.isEmpty() ? null : OMNI.parseIntsString(value);
 	}
 
 	public String getValue() {
